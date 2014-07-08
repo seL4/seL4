@@ -27,10 +27,13 @@ void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap);
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
 /* PD slot reserved for storing the PD's allocated hardware ASID */
-#define PD_ASID_SLOT 0xff0
+#define PD_ASID_SLOT (0xff000000 >> (PT_BITS + PAGE_BITS))
 
 void idle_thread(void);
 #define idleThreadStart (&idle_thread)
+
+/* need a fake array to get the pointer from the linker script */
+extern char arm_vector_table[1];
 
 enum pde_pte_tag {
     ME_PDE,
@@ -59,6 +62,9 @@ struct lookupPTSlot_ret {
 };
 typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
 
+#ifdef ARM_HYP
+hw_asid_t getHWASID(asid_t asid);
+#endif
 void copyGlobalMappings(pde_t *newPD);
 word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 findPDForASID_ret_t findPDForASID(asid_t asid) VISIBLE;
@@ -87,12 +93,12 @@ exception_t decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cpt
 exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
                                           pde_t pde, pde_t *pdSlot);
 exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot);
-exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
+exception_t performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot,
                                         pte_t pte, pte_range_t pte_entries);
-exception_t performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot,
+exception_t performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot,
                                         pde_t pde, pde_range_t pde_entries);
-exception_t performPageInvocationRemapPTE(pte_t pte, pte_range_t pte_entries);
-exception_t performPageInvocationRemapPDE(pde_t pde, pde_range_t pde_entries);
+exception_t performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries);
+exception_t performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries);
 exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot);
 exception_t performASIDControlInvocation(void *frame, cte_t *slot,
                                          cte_t *parent, asid_t base);

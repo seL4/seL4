@@ -35,6 +35,11 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
     case fault_vm_fault:
         return true;
 
+#ifdef ARM_HYP
+    case fault_vgic_maintenance:
+        return true;
+#endif
+
     case fault_unknown_syscall: {
         unsigned int i;
         register_t r;

@@ -41,7 +41,7 @@ enum IRQConstants {
 //  INTERRUPT_RESERVED          =  22,
 //  INTERRUPT_RESERVED          =  23,
 //  INTERRUPT_RESERVED          =  24,
-    INTERRUPT_VIRT_MAINTENANCE  =  25,
+    INTERRUPT_VGIC_MAINTENANCE  =  25,
     INTERRUPT_CNTHPIRQ          =  26,
     INTERRUPT_CNTVIRQ           =  27,
 //  INTERRUPT_RESERVED          =  28,
@@ -179,7 +179,11 @@ enum IRQConstants {
     maxIRQ = 159
 } platform_interrupt_t;
 
+#ifdef ARM_HYP
+#define KERNEL_TIMER_IRQ INTERRUPT_CNTHPIRQ
+#else
 #define KERNEL_TIMER_IRQ INTERRUPT_CNTVIRQ
+#endif
 
 enum irqNumbers {
     irqInvalid = (irq_t) - 1

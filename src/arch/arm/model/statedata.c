@@ -27,8 +27,21 @@ asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
 asid_t armKSHWASIDTable[BIT(hwASIDBits)];
 hw_asid_t armKSNextASID;
 
+#ifndef ARM_HYP
 /* The global, privileged, physically-mapped PD */
 pde_t armKSGlobalPD[BIT(PD_BITS)] ALIGN_BSS(BIT(PD_SIZE_BITS));
 
 /* The global, privileged, page table. */
 pte_t armKSGlobalPT[BIT(PT_BITS)] ALIGN_BSS(BIT(PT_SIZE_BITS));
+#else
+/* The global, hypervisor, level 1 page table */
+pdeS1_t  armHSGlobalPGD[BIT(PGD_BITS)] ALIGN_BSS(BIT(PGD_SIZE_BITS));
+/* The global, hypervisor, level 2 page table */
+pdeS1_t  armHSGlobalPD[BIT(PT_BITS)]   ALIGN_BSS(BIT(PT_SIZE_BITS));
+/* The global, hypervisor, level 3 page table */
+pteS1_t  armHSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(PT_SIZE_BITS));
+/* User space global mappings */
+pte_t  armUSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(PT_SIZE_BITS));
+/* Current CPU */
+vcpu_t *ksCurCPU;
+#endif /* ARM_HYP */

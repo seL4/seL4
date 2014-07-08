@@ -75,8 +75,9 @@ struct mct_global_map {
     uint32_t reserved0[64];
     uint32_t cntl;           /* 0x100 Low word of count */
     uint32_t cnth;           /* 0x104 High word of count */
+    uint32_t reserved1[1];
     uint32_t cnt_wstat;      /* 0x110 Write status for cnt */
-    uint32_t reserved1[61];
+    uint32_t reserved2[60];
 
     uint32_t comp0l;         /* 0x200 Low word of Compare value */
     uint32_t comp0h;         /* 0x204 High word of Compare value*/
@@ -131,6 +132,24 @@ volatile struct mct_map* mct = (volatile struct mct_map*)EXYNOS_MCT_PPTR;
 #endif
 
 #ifdef ARM_CORTEX_A15
+
+#ifdef ARM_HYP
+/* Use Hypervisor Physical timer */
+#define CNT_TVAL CNTHP_TVAL
+#define CNT_CTL  CNTHP_CTL
+#define CNT_CVAL CNTHP_CVAL
+#elif 1
+/* Use virtual timer */
+#define CNT_TVAL CNTV_TVAL
+#define CNT_CTL  CNTV_CTL
+#define CNT_CVAL CNTV_CVAL
+#else
+/* Use Physical timer */
+#define CNT_TVAL CNTP_TVAL
+#define CNT_CTL  CNTP_CTL
+#define CNT_CVAL CNTP_CVAL
+#endif
+
 /* Use generic timer. This is ties to the MCT */
 
 /**
@@ -139,8 +158,8 @@ volatile struct mct_map* mct = (volatile struct mct_map*)EXYNOS_MCT_PPTR;
 void
 resetTimer(void)
 {
-    MCR(CNTV_TVAL, TIMER_TICKS);
-    MCR(CNTV_CTL, (1 << 0));
+    MCR(CNT_TVAL, TIMER_TICKS);
+    MCR(CNT_CTL, (1 << 0));
 }
 
 /**
@@ -159,7 +178,7 @@ initTimer(void)
     mct->global.wstat = GWSTAT_TCON;
 
     /* Setup compare regsiter to trigger in about 10000 years from now */
-    MCRR(CNTV_CVAL, 0xffffffffffffffff);
+    MCRR(CNT_CVAL, 0xffffffffffffffff);
 
     /* Reset the count down timer */
     resetTimer();

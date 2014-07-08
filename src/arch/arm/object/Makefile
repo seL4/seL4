@@ -11,3 +11,7 @@
 DIRECTORIES += src/arch/arm/object
 
 ARCH_C_SOURCES += object/interrupt.c object/objecttype.c object/tcb.c
+
+ifneq (ARM_HYP,)
+ARCH_C_SOURCES += object/vcpu.c
+endif

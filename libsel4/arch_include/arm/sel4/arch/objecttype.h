@@ -18,6 +18,9 @@ typedef enum _object {
     seL4_ARM_SuperSectionObject,
     seL4_ARM_PageTableObject,
     seL4_ARM_PageDirectoryObject,
+#ifdef ARM_HYP
+    seL4_ARM_VCPUObject,
+#endif
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 

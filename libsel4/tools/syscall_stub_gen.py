@@ -218,6 +218,7 @@ arch_types = {
         CapType("seL4_ARM_PageDirectory"),
         CapType("seL4_ARM_ASIDControl"),
         CapType("seL4_ARM_ASIDPool"),
+        CapType("seL4_ARM_VCPU"),
         StructType("seL4_UserContext", WORD_SIZE_BITS * 17),
         ],
 

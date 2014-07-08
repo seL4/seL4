@@ -20,7 +20,12 @@
 #define seL4_SlotBits 4
 #define seL4_TCBBits 9
 #define seL4_EndpointBits 4
+#ifdef ARM_HYP
+#define seL4_PageTableBits 12
+#else  /* ARM_HYP */
 #define seL4_PageTableBits 10
+#endif /* ARM_HYP */
+#define seL4_ARM_VCPUBits 12
 #define seL4_PageDirBits 14
 #define seL4_ASIDPoolBits 12
 
@@ -36,6 +41,7 @@ typedef seL4_CPtr seL4_ARM_PageTable;
 typedef seL4_CPtr seL4_ARM_PageDirectory;
 typedef seL4_CPtr seL4_ARM_ASIDControl;
 typedef seL4_CPtr seL4_ARM_ASIDPool;
+typedef seL4_CPtr seL4_ARM_VCPU;
 
 typedef struct {
     /* frame registers */

@@ -112,6 +112,11 @@ decodeIRQHandlerInvocation(word_t label, irq_t irq,
 
         if (cap_get_capType(aepCap) != cap_async_endpoint_cap ||
                 !cap_async_endpoint_cap_get_capAEPCanSend(aepCap)) {
+            if (cap_get_capType(aepCap) != cap_async_endpoint_cap) {
+                userError("IRQSetHandler: provided cap is not an async endpoint capablity.");
+            } else {
+                userError("IRQSetHandler: caller does not have send rights on the endpoint.");
+            }
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;

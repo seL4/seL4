@@ -42,12 +42,19 @@ config ARCH_IA32
        bool
        default y if ARCH_I386 || ARCH_X86_64
 
+config ARM_HYPERVISOR_SUPPORT
+       bool "Build as Hypervisor"
+       depends on ARM_CORTEX_A15
+       default n
+       help
+            Utilise ARM virtualisation extensions to build the kernel as a hypervisor
+
     choice
         prompt "ARM CPU selection"
         depends on ARCH_ARM
         help
             Select the ARM CPU version
-        
+
         config ARM1136JF_S
             bool "ARM1136JF-S"
             depends on ARCH_ARM
@@ -84,7 +91,7 @@ config ARCH_IA32
                 Support for Cortex A15 processor
 
     endchoice
-    
+
     choice
         prompt "Platform Type"
         help
@@ -315,6 +322,7 @@ menu "Build Options"
 
     config DANGEROUS_CODE_INJECTION
 	    bool "Build kernel with support for executing arbitrary code in protected mode"
+        depends on !ARM_HYPERVISOR_SUPPORT
         default n
         help
             Adds a system call that allows users to specify code to be run in kernel
@@ -359,7 +367,7 @@ menu "Build Options"
         help
             Do not enable branch prediction (also called program flow control)
             on startup. This makes execution time more deterministic at the
-            expense of drammatically decreasing performance. Primary use is for
+            expense of dramatically decreasing performance. Primary use is for
             debugging.
 
 endmenu

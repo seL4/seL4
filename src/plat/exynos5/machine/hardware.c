@@ -50,7 +50,8 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ CMU_R0X_PADDR         , /* .end */ CMU_R0X_PADDR          + (1 << PAGE_BITS) },
     { /* .start */ CMU_R1X_PADDR         , /* .end */ CMU_R1X_PADDR          + (1 << PAGE_BITS) },
     { /* .start */ CMU_CDREX_PADDR       , /* .end */ CMU_CDREX_PADDR        + (1 << PAGE_BITS) },
-    { /* .start */ ALIVE_PADDR           , /* .end */ ALIVE_PADDR            + (1 << PAGE_BITS) },
+    { /* .start */ CMU_MEM_PADDR         , /* .end */ CMU_MEM_PADDR          + (1 << PAGE_BITS) },
+    { /* .start */ ALIVE_PADDR           , /* .end */ ALIVE_PADDR            + (5 << PAGE_BITS) },
     { /* .start */ SYSREG_PADDR          , /* .end */ SYSREG_PADDR           + (1 << PAGE_BITS) },
     { /* .start */ TMU_PADDR             , /* .end */ TMU_PADDR              + (1 << PAGE_BITS) },
     { /* .start */ MONOTONIC_CNT_PADDR   , /* .end */ MONOTONIC_CNT_PADDR    + (1 << PAGE_BITS) },
@@ -61,6 +62,7 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ INT_COMB_CPU_PADDR    , /* .end */ INT_COMB_CPU_PADDR     + (1 << PAGE_BITS) },
     { /* .start */ INT_COMB_IOP_PADDR    , /* .end */ INT_COMB_IOP_PADDR     + (1 << PAGE_BITS) },
 //  { /* .start */ GIC_PADDR             , /* .end */ GIC_PADDR              + (8 << PAGE_BITS) },
+    { /* .start */ GIC_VCPU_PADDR        , /* .end */ GIC_VCPU_PADDR         + (1 << PAGE_BITS) },
     { /* .start */ GIC_IOPC_PADDR        , /* .end */ GIC_IOPC_PADDR         + (1 << PAGE_BITS) },
     { /* .start */ GIC_IOPD_PADDR        , /* .end */ GIC_IOPD_PADDR         + (1 << PAGE_BITS) },
     { /* .start */ MPCORE_PRIV_REG_PADDR , /* .end */ MPCORE_PRIV_REG_PADDR  + (1 << PAGE_BITS) },
@@ -274,13 +276,25 @@ get_dev_p_reg(unsigned int i)
 bool_t CONST
 isReservedIRQ(irq_t irq)
 {
-    return irq == INTERRUPT_WDT;
+    switch (irq) {
+    case KERNEL_TIMER_IRQ:
+    case INTERRUPT_VGIC_MAINTENANCE:
+        return true;
+    default:
+        return false;
+    }
 }
 
 /* Handle a platform-reserved IRQ. */
 void
 handleReservedIRQ(irq_t irq)
 {
+#ifdef ARM_HYP
+    if (irq == INTERRUPT_VGIC_MAINTENANCE) {
+        VGICMaintenance();
+        return;
+    }
+#endif
     printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
@@ -318,7 +332,17 @@ map_kernel_devices(void)
             false  /* armPageCacheable */
         )
     );
-
+#if defined(ARM_HYP)
+    map_kernel_frame(
+        GIC_VCPUCTRL_PADDR,
+        GIC_VCPUCTRL_PPTR,
+        VMKernelOnly,
+        vm_attributes_new(
+            false, /* armParityEnabled */
+            false  /* armPageCacheable */
+        )
+    );
+#endif
 #if defined(DEBUG)
     /* map kernel device: UART */
     map_kernel_frame(

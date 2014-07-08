@@ -17,14 +17,19 @@
 #define L2CC_PPTR                   0xfff03000
 #define GIC_DISTRIBUTOR_PPTR        0xfff04000
 #define GIC_CONTROLLER_PPTR         0xfff05000
-
+#if defined(ARM_HYP)
+#define GIC_VCPUCTRL_PPTR           0xfff06000
+#define GIC_PL400_VCPUCTRL_PPTR     GIC_VCPUCTRL_PPTR
+#endif
 
 #define L2CC_L2C310_PPTR            L2CC_PPTR
 #define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR
 #define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR
 
-#define GIC_DISTRIBUTOR_PADDR       GIC_PADDR + 0x1000
-#define GIC_CONTROLLER0_PADDR       GIC_PADDR + 0x2000
+#define GIC_DISTRIBUTOR_PADDR       (GIC_PADDR + 0x1000)
+#define GIC_CONTROLLER0_PADDR       (GIC_PADDR + 0x2000)
+#define GIC_VCPUCTRL_PADDR          (GIC_PADDR + 0x4000)
+#define GIC_VCPU_PADDR              (GIC_PADDR + 0x6000)
 
 #define EXYNOS_MCT_MHZ              24
 #define EXYNOS_MCT_PPTR             MCT_PPTR
@@ -40,6 +45,7 @@
 #define CMU_R0X_PADDR         0x10028000
 #define CMU_R1X_PADDR         0x1002C000
 #define CMU_CDREX_PADDR       0x10030000
+#define CMU_MEM_PADDR         0x10038000
 #define ALIVE_PADDR           0x10040000
 #define SYSREG_PADDR          0x10050000
 #define TMU_PADDR             0x10060000

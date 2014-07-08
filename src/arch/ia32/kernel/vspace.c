@@ -1634,7 +1634,6 @@ decodeIA32FrameInvocation(
 
             lu_ret = lookupPTSlot(pd, vaddr);
             if (lu_ret.status != EXCEPTION_NONE) {
-                userError("IA32FrameMap: Need a page table first.");
                 current_syscall_error.type = seL4_FailedLookup;
                 current_syscall_error.failedLookupWasSource = false;
                 /* current_lookup_fault will have been set by lookupPTSlot */

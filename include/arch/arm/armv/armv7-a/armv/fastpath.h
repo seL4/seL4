@@ -17,6 +17,7 @@
 #include <plat/machine/hardware.h>
 #include <arch/machine.h>
 
+#ifndef ARM_HYP
 /* Change the translation root by updating TTBR0. */
 static inline void
 setCurrentPD_fp(word_t pd_addr)
@@ -36,6 +37,12 @@ armv_contextSwitch_fp(pde_t* cap_pd, hw_asid_t hw_asid)
     setHardwareASID(hw_asid);
     setCurrentPD_fp(addrFromPPtr(cap_pd));
 }
-
+#else
+static inline void
+armv_contextSwitch_fp(pde_t* cap_pd, hw_asid_t hw_asid)
+{
+    writeContextIDAndPD(hw_asid, addrFromPPtr(cap_pd));
+}
+#endif
 
 #endif /* __ARMV_FASTPATH_H__ */

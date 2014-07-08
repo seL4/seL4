@@ -31,7 +31,7 @@
 #define UINTSP      0x0034 /* interrupt source pending */
 #define UINTM       0x0038 /* interrupt mask */
 
-//#define UART_REG(X) ((volatile uint32_t *)(UART2_PADDR + (X)))
+//#define UART_REG(X) ((volatile uint32_t *)(  ((gpd)? UART_PPTR : UART2_PADDR) + (X)))
 #define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 /* ULCON */

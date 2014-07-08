@@ -134,7 +134,11 @@ static void sendPD(unsigned int address)
         if (pde_get_pdeType(pde) == pde_pde_coarse && pde_pde_coarse_get_address(pde) != 0) {
             exists = 1;
         } else if (pde_get_pdeType(pde) == pde_pde_section && (pde_pde_section_get_address(pde) != 0 ||
+#ifdef ARM_HYP
+                                                               pde_pde_section_get_HAP(pde))) {
+#else
                                                                pde_pde_section_get_AP(pde))) {
+#endif
             exists = 1;
         }
         if (exists != 0 && i < kernelBase >> pageBitsForSize(ARMSection)) {
@@ -151,6 +155,12 @@ static void sendPT(unsigned int address)
     for (i = 0; i < PT_READ_SIZE; i++) {
         pte_t pte = start[i];
         exists = 0;
+#ifdef ARM_HYP
+        if (pte_get_pteType(pte) == pte_pte_small && (pte_pte_small_get_address(pte) != 0 ||
+                                                      pte_pte_small_get_HAP(pte))) {
+            exists = 1;
+        }
+#else
         if (pte_get_pteType(pte) == pte_pte_large && (pte_pte_large_get_address(pte) != 0 ||
                                                       pte_pte_large_get_AP(pte))) {
             exists = 1;
@@ -158,6 +168,7 @@ static void sendPT(unsigned int address)
                                                              pte_pte_small_get_AP(pte))) {
             exists = 1;
         }
+#endif
         if (exists != 0) {
             sendWord(i);
             sendWord(pte.words[0]);

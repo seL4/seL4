@@ -18,7 +18,10 @@
 #define SEL4_EXCEPT_IPC_LABEL      3
 #define SEL4_USER_EXCEPTION_LABEL  4
 #define SEL4_USER_EXCEPTION_LENGTH 5
-
+#ifdef ARM_HYP
+#define SEL4_VGIC_MAINTENANCE_LENGTH 1
+#define SEL4_VGIC_MAINTENANCE_LABEL  5
+#endif
 /*
  * Exception format for an Unknown system call exception.
  */

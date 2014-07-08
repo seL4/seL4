@@ -194,6 +194,12 @@ struct tcb {
 
     /* Previous and next pointers for endpoint & scheduler queues, 16 bytes */
     struct tcb *tcbSchedNext, *tcbSchedPrev, *tcbEPNext, *tcbEPPrev;
+
+#ifdef ARM_HYP
+    /* Pointer to associated VCPU. NULL if not associated.
+     * tcb->vcpu->tcb == tcb. */
+    struct vcpu* vcpu;
+#endif
 };
 typedef struct tcb tcb_t;
 
@@ -218,14 +224,32 @@ vmRightsFromWord(word_t w)
 {
     return (vm_rights_t)w;
 }
+#ifdef ARM_HYP
+#define PGDE_SIZE_BITS 3
+#define PDE_SIZE_BITS  3
+#define PTE_SIZE_BITS  3
+#define PGD_BITS 2
+#define PD_BITS 11
+#define PT_BITS 9
 
-#define PDE_SIZE_BITS 2
+#define VCPU_SIZE_BITS 12
+/* Generate a vcpu_t pointer from a vcpu block reference */
+#define VCPU_PTR(r)       ((struct vcpu *)(r))
+#define VCPU_REF(p)       ((unsigned int)(p))
+
+#else /* ARM_HYP */
+#define PDE_SIZE_BITS  2
+#define PTE_SIZE_BITS  2
+#define PD_BITS 12
+#define PT_BITS 8
+#endif /* ARM_HYP */
+
+
 #define PDE_PTR(r) ((pde_t *)(r))
 #define PDE_REF(p) ((unsigned int)p)
 
 #define PDE_PTR_PTR(r) ((pde_t **)r)
 
-#define PD_BITS 12
 #define PD_SIZE_BITS (PD_BITS+PDE_SIZE_BITS)
 #define PD_PTR(r) ((pde_t *)(r))
 #define PD_REF(p) ((unsigned int)p)
@@ -238,14 +262,27 @@ enum pde_type {
 };
 typedef uint32_t pde_type_t;
 
-#define PTE_SIZE_BITS 2
 #define PTE_PTR(r) ((pte_t *)r)
 #define PTE_REF(p) ((unsigned int)p)
 
-#define PT_BITS 8
 #define PT_SIZE_BITS (PT_BITS+PTE_SIZE_BITS)
 #define PT_PTR(r) ((pte_t *)r)
 #define PT_REF(p) ((unsigned int)p)
+
+
+/* LPAE */
+#define PGD_SIZE_BITS (PGD_BITS+PGDE_SIZE_BITS)
+#define LPAE_PGDE_PTR(r) ((lpae_pde_t *)(r))
+#define LPAE_PGDE_REF(p) ((unsigned int)p)
+#define LPAE_PGDE_PTR_PTR(r) ((lpae_pde_t **)r)
+#define LPAE_PGD_PTR(r) ((lpae_pde_t *)(r))
+#define LPAE_PGD_REF(p) ((unsigned int)p)
+
+#define LPAE_PTE_PTR(r) ((lpae_pte_t *)r)
+#define LPAE_PTE_REF(p) ((unsigned int)p)
+
+#define LPAE_PT_PTR(r) ((lpae_pte_t *)r)
+#define LPAE_PT_REF(p) ((unsigned int)p)
 
 #define WORD_SIZE_BITS 2
 #define WORD_BITS   (8 * sizeof(word_t))
@@ -496,6 +533,11 @@ cap_get_capSizeBits(cap_t cap)
     case cap_asid_control_cap:
         return 0;
 
+#ifdef ARM_HYP
+    case cap_vcpu_cap:
+        return VCPU_SIZE_BITS;
+#endif
+
     default:
         /* Unreachable, but GCC can't figure that out */
         return 0;
@@ -548,6 +590,11 @@ cap_get_capPtr(cap_t cap)
     case cap_irq_handler_cap:
     case cap_asid_control_cap:
         return NULL;
+
+#ifdef ARM_HYP
+    case cap_vcpu_cap:
+        return VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
+#endif
 
     default:
         /* Unreachable, but GCC can't figure that out */

@@ -15,6 +15,9 @@
 #include <arch/machine.h>
 #include <arch/model/statedata.h>
 #include <arch/object/objecttype.h>
+#ifdef ARM_HYP
+#include <arch/object/vcpu.h>
+#endif
 
 deriveCap_ret_t
 Arch_deriveCap(cte_t *slot, cap_t cap)
@@ -63,6 +66,13 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
         return ret;
+
+#ifdef ARM_HYP
+    case cap_vcpu_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
 
     default:
         /* This assert has no equivalent in haskell,
@@ -145,6 +155,14 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                       (void *)cap_frame_cap_get_capFBasePtr(cap));
         }
         break;
+
+#ifdef ARM_HYP
+    case cap_vcpu_cap:
+        if (final) {
+            vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        }
+        break;
+#endif
     }
 
     return cap_null_cap_new();
@@ -237,6 +255,14 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
         }
         return cap;
     }
+
+#ifdef ARM_HYP
+    case cap_vcpu_cap:
+        vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        vcpu_init(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        return cap;
+#endif
+
     default:
         fail("Arch_recycleCap: invalid cap type");
     }
@@ -301,6 +327,16 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_asid_pool_cap_get_capASIDPool(cap_b);
         }
         break;
+
+#ifdef ARM_HYP
+    case cap_vcpu_cap:
+        if (cap_get_capType(cap_b) == cap_vcpu_cap) {
+            return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
+                   cap_vcpu_cap_get_capVCPUPtr(cap_b);
+        }
+        break;
+#endif
+
     }
 
     return false;
@@ -347,6 +383,10 @@ Arch_getObjectSize(word_t t)
         return PTE_SIZE_BITS + PT_BITS;
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_BITS;
+#ifdef ARM_HYP
+    case seL4_ARM_VCPUObject:
+        return VCPU_SIZE_BITS;
+#endif /* ARM_HYP */
     default:
         fail("Invalid object type");
         return 0;
@@ -443,6 +483,12 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
         return cap_page_directory_cap_new(false, asidInvalid,
                                           (word_t)regionBase);
+#ifdef ARM_HYP
+    case seL4_ARM_VCPUObject:
+        memzero(regionBase, 1 << VCPU_SIZE_BITS);
+        vcpu_init(VCPU_PTR(regionBase));
+        return cap_vcpu_cap_new(VCPU_REF(regionBase));
+#endif
 
     default:
         /*
@@ -459,12 +505,24 @@ Arch_decodeInvocation(word_t label, unsigned int length, cptr_t cptr,
                       cte_t *slot, cap_t cap, extra_caps_t extraCaps,
                       word_t *buffer)
 {
+#ifdef ARM_HYP
+    if (cap_get_capType(cap) == cap_vcpu_cap) {
+        return decodeARMVCPUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+
+    }
+#endif /* ARM_HYP */
     return decodeARMMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
 }
 
 void
 Arch_prepareThreadDelete(tcb_t *thread)
 {
+#ifdef ARM_HYP
+    if (thread->vcpu) {
+        dissociateVcpuTcb(thread, thread->vcpu);
+    }
+#else  /* ARM_HYP */
     /* No action required on ARM. */
+#endif /* ARM_HYP */
 }
 

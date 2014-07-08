@@ -71,12 +71,22 @@
 #define PMODE_IRQ        0x12
 #define PMODE_SUPERVISOR 0x13
 #define PMODE_ABORT      0x17
+#define PMODE_HYPERVISOR 0x1a
 #define PMODE_UNDEFINED  0x1b
 #define PMODE_SYSTEM     0x1f
 /* Processor exception mask bits */
 #define PMASK_ASYNC_ABORT (1 << 8)
 #define PMASK_IRQ         (1 << 7)
 #define PMASK_FIRQ        (1 << 6)
+
+/* Kernel operating mode */
+#ifdef ARM_HYP
+#define PMODE_KERNEL     PMODE_HYPERVISOR
+#define PMODE_IDLE       PMODE_HYPERVISOR
+#else
+#define PMODE_KERNEL     PMODE_SUPERVISOR
+#define PMODE_IDLE       PMODE_SYSTEM
+#endif
 
 /* VM event types, this should match the encoding of vm_fault_type below */
 #define VM_EVENT_DATA_ABORT 0
@@ -96,15 +106,21 @@ enum vm_page_size {
     ARMSmallPage,
     ARMLargePage,
     ARMSection,
-    ARMSuperSection
+    ARMSuperSection,
 };
 typedef uint32_t vm_page_size_t;
+
 
 enum frameSizeConstants {
     ARMSmallPageBits    = 12,
     ARMLargePageBits    = 16,
+#ifndef ARM_HYP
     ARMSectionBits      = 20,
-    ARMSuperSectionBits = 24
+    ARMSuperSectionBits = 24,
+#else
+    ARMSectionBits      = 21,
+    ARMSuperSectionBits = 25,
+#endif
 };
 
 static inline unsigned int CONST

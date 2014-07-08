@@ -21,6 +21,7 @@ void setHardwareASID(hw_asid_t hw_asid)
 
 void armv_contextSwitch(pde_t* cap_pd, asid_t asid)
 {
+#ifndef ARM_HYP
     /*
      * On ARMv7, speculative refills that complete between switching
      * ASID and PD can cause TLB entries to be Tagged with the wrong
@@ -33,6 +34,12 @@ void armv_contextSwitch(pde_t* cap_pd, asid_t asid)
     setCurrentPD(addrFromPPtr(armKSGlobalPD));
     setCurrentASID(asid);
     setCurrentPD(addrFromPPtr(cap_pd));
+#else
+    hw_asid_t hw_asid;
+    assert(asid);
+    hw_asid = getHWASID(asid);
+    writeContextIDAndPD(hw_asid, addrFromPPtr(cap_pd));
+#endif
 }
 
 

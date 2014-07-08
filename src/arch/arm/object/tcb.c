@@ -127,6 +127,16 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                      fault_user_exception_get_code(sender->tcbFault));
     }
 
+#ifdef ARM_HYP
+    case fault_vgic_maintenance:
+        if (fault_vgic_maintenance_get_idxValid(sender->tcbFault)) {
+            return setMR(receiver, receiveIPCBuffer, 0,
+                         fault_vgic_maintenance_get_idx(sender->tcbFault));
+        } else {
+            return setMR(receiver, receiveIPCBuffer, 0, -1);
+        }
+#endif
+
     default:
         fail("Invalid fault");
     }

@@ -18,4 +18,9 @@ include ${SOURCE_ROOT}/src/arch/arm/machine/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/fastpath/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/armv/$(ARMV)/Makefile
 
-ARCH_ASM_SOURCES += traps.S halt.S idle.S head.S
+ARCH_ASM_SOURCES += halt.S idle.S head.S
+ifdef ARM_HYP
+ARCH_ASM_SOURCES += hyp_traps.S
+else
+ARCH_ASM_SOURCES += traps.S
+endif

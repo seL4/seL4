@@ -77,14 +77,17 @@
 
 .code 32
 .section .boot.text, "ax"
-
 BEGIN_FUNC(_start)
     /* Supervisor mode, interrupts disabled */
-    ldr r5, =CPSR_SUPERVISOR
+    ldr r5, =CPSR_KERNEL
     msr cpsr_fc, r5
 
     /* Initialise CP15 control register */
+#ifdef ARM_HYP
+    mrc p15, 4, r4, c1, c0, 0
+#else
     mrc p15, 0, r4, c1, c0, 0
+#endif
     ldr r5, =CR_BITS_SET
 
 #ifdef ARM1136_WORKAROUND
@@ -119,7 +122,15 @@ BEGIN_FUNC(_start)
     ldr r6, =CR_BITS_CLEAR
     orr r4, r4, r5
     bic r4, r4, r6
+#ifdef ARM_HYP
+    mcr p15, 4, r4, c1, c0, 0
+
+    /* Initialise vector base */
+    ldr r4, =PPTR_VECTOR_TABLE
+    mcr p15, 4, r4, c12, c0, 0
+#else
     mcr p15, 0, r4, c1, c0, 0
+#endif
 
     /*
      * Load kernel stack pointer. Note that in the traps pages, we
@@ -131,10 +142,13 @@ BEGIN_FUNC(_start)
     ldr sp, =arm_kernel_stack
     add sp, sp, #(PPTR_KERNEL_STACK_TOP - PPTR_KERNEL_STACK)
 
+    /* Hyp kernel always run in Hyp mode. */
+#ifndef ARM_HYP
     /* Initialise ABORT stack pointer */
     cps #PMODE_ABORT
     ldr sp, =_breakpoint_stack_top
     cps #PMODE_SUPERVISOR
+#endif
 
     /* Call bootstrapping implemented in C */
     blx init_kernel
@@ -142,7 +156,25 @@ BEGIN_FUNC(_start)
     /* Restore the initial thread */
     ldr r7, =ksCurThread
     ldr sp, [r7]
+#ifdef ARM_HYP
+    /* ELR */
+    ldr r0, [sp, #60]
+    msr elr_hyp, r0
+    /* SPSR */
+    ldr r0, [sp, #64]
+    msr spsr, r0
+    /* Pop user regs */
+    pop {r0-r12}
+    /* SP_usr */
+    pop {lr}
+    msr sp_usr, r0
+    /* pop the user lr */
+    pop {lr}
+    /* return from exception */
+    eret
+#else
     add sp, sp, #PT_LR_svc
     ldmdb sp, {r0-lr}^
     rfeia sp
+#endif
 END_FUNC(_start)

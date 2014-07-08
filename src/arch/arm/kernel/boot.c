@@ -130,6 +130,9 @@ init_irqs(cap_t root_cnode_cap)
         setIRQState(IRQInactive, i);
     }
     setIRQState(IRQTimer, KERNEL_TIMER_IRQ);
+#ifdef ARM_HYP
+    setIRQState(IRQReserved, INTERRUPT_VGIC_MAINTENANCE);
+#endif
 
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IRQ_CTRL), cap_irq_control_cap_new());
@@ -307,6 +310,9 @@ BOOT_CODE static void
 init_cpu(void)
 {
     activate_global_pd();
+#ifdef ARM_HYP
+    vcpu_restore(NULL);
+#endif
 }
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
@@ -477,6 +483,10 @@ try_init_kernel(
      * strictly neccessary, but performance is not critical here so clean and invalidate
      * everything to PoC */
     cleanInvalidateL1Caches();
+    invalidateTLB();
+#ifdef ARM_HYP
+    invalidateHypTLB();
+#endif
 
 #ifdef CONFIG_BENCHMARK
     armv_init_ccnt();

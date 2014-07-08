@@ -147,7 +147,12 @@ block page_table_cap {
     padding                   1
     field capPTIsMapped       1
     field capPTMappedASID    18
+#ifndef ARM_HYP
     field_high capPTMappedAddress 12
+#else
+    padding                   1
+    field_high capPTMappedAddress 11
+#endif
 
     field_high capPTBasePtr  22
     padding                   6
@@ -183,6 +188,15 @@ block asid_pool_cap {
     field capType          4
 }
 
+#ifdef ARM_HYP
+block vcpu_cap {
+    padding               32
+
+    field_high capVCPUPtr 24
+    field capType         8
+}
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     mask 4 0xe
@@ -214,6 +228,11 @@ tagged_union cap capType {
     tag irq_handler_cap     0x1e
     tag zombie_cap          0x2e
     tag domain_cap          0x3e
+
+    -- 8-bit tag arch caps
+#ifdef ARM_HYP
+    tag vcpu_cap                               0x0f
+#endif /* ARM_HYP */
 }
 
 ---- Arch-independent object types
@@ -351,9 +370,15 @@ block cap_fault {
 
 block vm_fault {
     field address 32
+#ifdef ARM_HYP
+    field FSR 26
+    padding 2
+    field instructionFault 1
+#else
     field FSR 12
     field instructionFault 1
     padding 16
+#endif
     field faultType 3
 }
 
@@ -369,12 +394,25 @@ block user_exception {
     field faultType 3
 }
 
+#ifdef ARM_HYP
+block vgic_maintenance {
+    field idx        6
+    field idxValid   1
+    padding         25
+    padding         29
+    field faultType  3
+}
+#endif
+
 tagged_union fault faultType {
     tag null_fault 0
     tag cap_fault 1
     tag vm_fault 2
     tag unknown_syscall 3
     tag user_exception 4
+#ifdef ARM_HYP
+    tag vgic_maintenance 5
+#endif
 }
 
 -- Thread state: size = 8 bytes
@@ -404,6 +442,9 @@ block stored_hw_asid {
     padding 21
     field pdeType 2
 }
+
+#ifndef ARM_HYP
+-- Short descriptors
 
 -- Page directory entries
 block pde_invalid {
@@ -490,8 +531,159 @@ tagged_union pte pteType {
     tag pte_small 2
 }
 
--- VM attributes
+#else /* !ARM_HYP */
+#define pdeS2         pde
+#define pdeS2Type     pdeType
+#define pdeS2_section pde_section
+#define pdeS2_coarse  pde_coarse
+#define pdeS2_invalid pde_invalid
 
+#define pteS2         pte
+#define pteS2Type     pteType
+#define pteS2_small   pte_small
+#define pteS2_invalid pte_invalid
+
+-- Stage 2 Long descriptors
+-- Page directory entries
+
+block pdeS2_invalid {
+    padding 32
+    field stored_hw_asid 8
+    field stored_asid_valid 1
+    padding 21
+    field pdeS2Type 2
+}
+
+block pdeS2_section {
+    padding 9
+    field XN 1
+    padding 1
+    field contiguous_hint 1
+    padding 12
+    padding 8
+    field_high address 20
+    padding 1
+    field AF 1
+    field SH 2
+    field HAP 2
+    field MemAttr 4
+    field pdeS2Type 2
+}
+
+block pdeS2_coarse {
+    padding 24
+    padding 8
+    field_high address 20
+    padding 10
+    field pdeS2Type 2
+}
+
+tagged_union pdeS2 pdeS2Type {
+    tag pdeS2_invalid  0
+    tag pdeS2_section  1
+    tag pdeS2_coarse   3
+}
+
+-- Page table entries
+block pteS2_invalid {
+    padding 62
+    field pteS2Type 2
+}
+
+block pteS2_small {
+    padding 9
+    field XN 1
+    padding 1
+    field contiguous_hint 1
+    padding 12
+    padding 8
+    field_high address 20
+    padding 1
+    field AF 1
+    field SH 2
+    field HAP 2
+    field MemAttr 4
+    field pteS2Type 2
+}
+
+tagged_union pteS2 pteS2Type {
+    tag pteS2_invalid  0
+    tag pteS2_small    3
+}
+
+-- Stage 1
+-- Page directory entries
+block pdeS1_invalid {
+    padding 62
+    field pdeS1Type 2
+}
+
+block pdeS1_section {
+    padding 9
+    field XN 1
+    field PXN 1
+    field contiguous_hint 1
+    padding 12
+    padding 8
+    field_high address 20
+    field nG 1
+    field AF 1
+    field SH 2
+    field AP 2
+    field NS 1
+    field AttrIndx 3
+    field pdeS1Type 2
+}
+
+block pdeS1_coarse {
+    field NSTable 1
+    field APTable 2
+    field XNTable 1
+    field PXNTable 1
+    padding 19
+    padding 8
+    field_high address 20
+    padding 10
+    field pdeS1Type 2
+}
+
+tagged_union pdeS1 pdeS1Type {
+    tag pdeS1_invalid  0
+    tag pdeS1_section  1
+    tag pdeS1_coarse   3
+}
+
+-- Page table entries
+block pteS1_invalid {
+    padding 62
+    field pteS1Type 2
+}
+
+block pteS1_small {
+    padding 9
+    field XN 1
+    field PXN 1
+    field contiguous_hint 1
+    padding 12
+    padding 8
+    field_high address 20
+    field nG 1
+    field AF 1
+    field SH 2
+    field AP 2
+    field NS 1
+    field AttrIndx 3
+    field pteS1Type 2
+}
+
+tagged_union pteS1 pteS1Type {
+    tag pteS1_invalid  0
+    tag pteS1_small    3
+}
+
+#endif /* !ARM_HYP */
+
+-- VM attributes
 block vm_attributes {
     padding 30
     field armParityEnabled 1

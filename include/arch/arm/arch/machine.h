@@ -24,6 +24,9 @@
 
 #include <machine/io.h>
 
+#ifdef ARM_HYP
+#include <arch/object/vcpu.h>
+#endif
 
 #define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
 #define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
@@ -77,9 +80,25 @@ static inline void flushBTAC(void)
 /** MODIFIES: [*] */
 static inline void writeContextID(word_t id)
 {
+#ifndef ARM_HYP
     asm volatile("mcr p15, 0, %0, c13, c0, 1" : : "r"(id));
+#else
+    word_t pd, vmid;
+    asm volatile("mrrc p15, 4, %0, %1, c2" : "=r"(pd), "=r"(vmid));
+    asm volatile("mcrr p15, 4, %0, %1, c2" : : "r"(pd), "r"(id << (48-32)));
+#endif
     isb();
 }
+
+#ifdef ARM_HYP
+/** MODIFIES: [*] */
+static inline void writeContextIDAndPD(word_t id, word_t pd)
+{
+    asm volatile("mcrr p15, 6, %0, %1, c2"  : : "r"(pd), "r"(id << (48-32)));
+    isb();
+}
+#endif
+
 
 /** MODIFIES: [*] */
 void setHardwareASID(hw_asid_t hw_asid);
@@ -88,6 +107,7 @@ void setHardwareASID(hw_asid_t hw_asid);
 /** MODIFIES: [*] */
 static inline void setCurrentPD(paddr_t addr)
 {
+#ifndef ARM_HYP
     /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
      * outer write-back cacheable, no allocate on write, inner non-cacheable.
      */
@@ -95,7 +115,59 @@ static inline void setCurrentPD(paddr_t addr)
     asm volatile("mcr p15, 0, %0, c2, c0, 0" : :
                  "r"((addr & 0xffffe000) | 0x18));
     isb();
+#else
+    word_t pd, vmid;
+    asm volatile("mrrc p15, 6, %0, %1, c2" : "=r"(pd), "=r"(vmid));
+    dsb();
+    asm volatile("mcrr p15, 6, %0, %1, c2" : : "r"(addr), "r"(vmid));
+    isb();
+#endif
 }
+
+/** MODIFIES: [*] */
+static inline void setCurrentHypPD(paddr_t addr)
+{
+    word_t zero = 0;
+    dsb();
+    asm volatile("mcrr p15, 4, %0, %1, c2" : : "r"(addr), "r"(zero));
+    isb();
+}
+
+/** MODIFIES: [*] */
+static inline void setVTCR(word_t r)
+{
+    dsb();
+    asm volatile("mcr p15, 4, %0, c2, c1, 2" : : "r"(r));
+    isb();
+}
+
+/** MODIFIES: [*] */
+static inline void setHCR(word_t r)
+{
+    dsb();
+    asm volatile("mcr p15, 4, %0, c1, c1, 0" : : "r"(r));
+    isb();
+}
+
+
+
+
+/** MODIFIES: [*] */
+static inline void setHMAIR(word_t hmair0, word_t hmair1)
+{
+    asm volatile("mcr p15, 4, %0, c10, c2, 0" : : "r"(hmair0));
+    asm volatile("mcr p15, 4, %0, c10, c2, 1" : : "r"(hmair1));
+    isb();
+}
+/** MODIFIES: [*] */
+static inline void setMAIR(word_t hmair0, word_t hmair1)
+{
+    asm volatile("mcr p15, 0, %0, c10, c2, 0" : : "r"(hmair0));
+    asm volatile("mcr p15, 0, %0, c10, c2, 1" : : "r"(hmair1));
+    isb();
+}
+
+
 
 /* TLB control */
 /** MODIFIES: [*] */
@@ -106,22 +178,40 @@ static inline void invalidateTLB(void)
     dsb();
     isb();
 }
+
 /** MODIFIES: [*] */
 static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
 {
+#ifdef ARM_HYP
+    invalidateTLB();
+#else
     dsb();
     asm volatile("mcr p15, 0, %0, c8, c7, 2" : : "r"(hw_asid));
     dsb();
     isb();
+#endif
 }
 /** MODIFIES: [*] */
 static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
 {
+#ifdef ARM_HYP
+    invalidateTLB();
+#else
     dsb();
     asm volatile("mcr p15, 0, %0, c8, c7, 1" : : "r"(mva_plus_asid));
     dsb();
     isb();
+#endif
 }
+/** MODIFIES: [*] */
+static inline void invalidateHypTLB(void)
+{
+    dsb();
+    asm volatile("mcr p15, 4, %0, c8, c7, 0" : : "r"(0));
+    dsb();
+    isb();
+}
+
 /** MODIFIES: [*] */
 void lockTLBEntry(vptr_t vaddr);
 
@@ -262,7 +352,50 @@ static inline word_t PURE getFAR(void)
     asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r"(FAR));
     return FAR;
 }
+#ifdef ARM_HYP
+/** MODIFIES: */
+static inline paddr_t PURE addressTranslateS1CPR(vptr_t vaddr)
+{
+    uint64_t ipa;
+    asm volatile ("mcr  p15, 0, %0, c7, c8, 0" :: "r"(vaddr));
+    isb();
+    asm volatile ("mrrc p15, 0, %Q0, %R0, c7"   : "=r"(ipa));
 
+    return ipa;
+}
+/** MODIFIES: */
+static inline word_t PURE getHSR(void)
+{
+    word_t HSR;
+    asm volatile("mrc p15, 4, %0, c5, c2, 0" : "=r"(HSR));
+    return HSR;
+}
+/** MODIFIES: */
+static inline word_t PURE getHDFAR(void)
+{
+    word_t HDFAR;
+    asm volatile("mrc p15, 4, %0, c6, c0, 0" : "=r"(HDFAR));
+    return HDFAR;
+}
+/** MODIFIES: */
+static inline word_t PURE getHIFAR(void)
+{
+    word_t HIFAR;
+    asm volatile("mrc p15, 4, %0, c6, c0, 2" : "=r"(HIFAR));
+    return HIFAR;
+}
+/** MODIFIES: */
+static inline word_t PURE getHPFAR(void)
+{
+    word_t HPFAR;
+    asm volatile("mrc p15, 4, %0, c6, c0, 4" : "=r"(HPFAR));
+    return HPFAR;
+}
+
+
+
+
+#endif
 /* Cleaning memory before user-level access */
 static inline void clearMemory(word_t* ptr, unsigned int bits)
 {
