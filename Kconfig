@@ -359,7 +359,7 @@ menu "Build Options"
         help
             Do not enable branch prediction (also called program flow control)
             on startup. This makes execution time more deterministic at the
-            expense of drammatically decreasing performance. Primary use is for
+            expense of dramatically decreasing performance. Primary use is for
             debugging.
 
 endmenu

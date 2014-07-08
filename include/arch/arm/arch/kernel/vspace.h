@@ -87,12 +87,12 @@ exception_t decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cpt
 exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
                                           pde_t pde, pde_t *pdSlot);
 exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot);
-exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
+exception_t performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot,
                                         pte_t pte, pte_range_t pte_entries);
-exception_t performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot,
+exception_t performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot,
                                         pde_t pde, pde_range_t pde_entries);
-exception_t performPageInvocationRemapPTE(pte_t pte, pte_range_t pte_entries);
-exception_t performPageInvocationRemapPDE(pde_t pde, pde_range_t pde_entries);
+exception_t performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries);
+exception_t performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries);
 exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot);
 exception_t performASIDControlInvocation(void *frame, cte_t *slot,
                                          cte_t *parent, asid_t base);

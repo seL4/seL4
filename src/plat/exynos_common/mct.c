@@ -75,8 +75,9 @@ struct mct_global_map {
     uint32_t reserved0[64];
     uint32_t cntl;           /* 0x100 Low word of count */
     uint32_t cnth;           /* 0x104 High word of count */
+    uint32_t reserved1[1];
     uint32_t cnt_wstat;      /* 0x110 Write status for cnt */
-    uint32_t reserved1[61];
+    uint32_t reserved2[60];
 
     uint32_t comp0l;         /* 0x200 Low word of Compare value */
     uint32_t comp0h;         /* 0x204 High word of Compare value*/

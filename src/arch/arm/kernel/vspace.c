@@ -65,6 +65,9 @@ static exception_t decodeARMPageDirectoryInvocation(word_t label,
                                                     extra_caps_t extraCaps, word_t *buffer);
 static pde_t PURE loadHWASID(asid_t asid);
 
+static bool_t PURE pteCheckIfMapped(pte_t *pte);
+static bool_t PURE pdeCheckIfMapped(pde_t *pde);
+
 static word_t CONST
 APFromVMRights(vm_rights_t vm_rights)
 {
@@ -1456,7 +1459,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
             }
 
             setThreadState(ksCurThread, ThreadState_Restart);
-            return performPageInvocationMapPTE(cap, cte,
+            return performPageInvocationMapPTE(asid, cap, cte,
                                                map_ret.pte,
                                                map_ret.pte_entries);
         } else {
@@ -1469,7 +1472,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
             }
 
             setThreadState(ksCurThread, ThreadState_Restart);
-            return performPageInvocationMapPDE(cap, cte,
+            return performPageInvocationMapPDE(asid, cap, cte,
                                                map_ret.pde,
                                                map_ret.pde_entries);
         }
@@ -1480,6 +1483,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
         paddr_t capFBasePtr;
         cap_t pdCap;
         pde_t *pd;
+        asid_t mappedASID;
         vm_rights_t capVMRights, vmRights;
         vm_page_size_t frameSize;
         vm_attributes_t attr;
@@ -1517,7 +1521,6 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
 
         {
             findPDForASID_ret_t find_ret;
-            asid_t mappedASID;
 
             mappedASID = generic_frame_cap_get_capFMappedASID(cap);
 
@@ -1566,7 +1569,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
             }
 
             setThreadState(ksCurThread, ThreadState_Restart);
-            return performPageInvocationRemapPTE(map_ret.pte,
+            return performPageInvocationRemapPTE(mappedASID, map_ret.pte,
                                                  map_ret.pte_entries);
         } else {
             create_mappings_pde_return_t map_ret;
@@ -1578,7 +1581,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
             }
 
             setThreadState(ksCurThread, ThreadState_Restart);
-            return performPageInvocationRemapPDE(map_ret.pde,
+            return performPageInvocationRemapPDE(mappedASID, map_ret.pde,
                                                  map_ret.pde_entries);
         }
     }
@@ -2005,13 +2008,30 @@ performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
+static bool_t PURE
+pteCheckIfMapped(pte_t *pte)
+{
+    return pte_ptr_get_pteType(pte) != pte_pte_invalid;
+}
+
+static bool_t PURE
+pdeCheckIfMapped(pde_t *pde)
+{
+    return pde_ptr_get_pdeType(pde) != pde_pde_invalid;
+}
+
 exception_t
-performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t pte,
+performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
     unsigned int i;
+    bool_t tlbflush_required;
 
     ctSlot->cap = cap;
+
+    /* we only need to check the first entries because of how createSafeMappingEntries
+     * works to preserve the consistency of tables */
+    tlbflush_required = pteCheckIfMapped(pte_entries.base);
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
@@ -2019,17 +2039,25 @@ performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t pte,
     cleanCacheRange_PoU((word_t)pte_entries.base,
                         LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
                         addrFromPPtr(pte_entries.base));
+    if (unlikely(tlbflush_required)) {
+        invalidateTLBByASID(asid);
+    }
 
     return EXCEPTION_NONE;
 }
 
 exception_t
-performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t pde,
+performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
     unsigned int i;
+    bool_t tlbflush_required;
 
     ctSlot->cap = cap;
+
+    /* we only need to check the first entries because of how createSafeMappingEntries
+     * works to preserve the consistency of tables */
+    tlbflush_required = pdeCheckIfMapped(pde_entries.base);
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.base[i] = pde;
@@ -2037,14 +2065,22 @@ performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t pde,
     cleanCacheRange_PoU((word_t)pde_entries.base,
                         LAST_BYTE_PDE(pde_entries.base, pde_entries.length),
                         addrFromPPtr(pde_entries.base));
+    if (unlikely(tlbflush_required)) {
+        invalidateTLBByASID(asid);
+    }
 
     return EXCEPTION_NONE;
 }
 
 exception_t
-performPageInvocationRemapPTE(pte_t pte, pte_range_t pte_entries)
+performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 {
     unsigned int i;
+    bool_t tlbflush_required;
+
+    /* we only need to check the first entries because of how createSafeMappingEntries
+     * works to preserve the consistency of tables */
+    tlbflush_required = pteCheckIfMapped(pte_entries.base);
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
@@ -2052,14 +2088,22 @@ performPageInvocationRemapPTE(pte_t pte, pte_range_t pte_entries)
     cleanCacheRange_PoU((word_t)pte_entries.base,
                         LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
                         addrFromPPtr(pte_entries.base));
+    if (unlikely(tlbflush_required)) {
+        invalidateTLBByASID(asid);
+    }
 
     return EXCEPTION_NONE;
 }
 
 exception_t
-performPageInvocationRemapPDE(pde_t pde, pde_range_t pde_entries)
+performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 {
     unsigned int i;
+    bool_t tlbflush_required;
+
+    /* we only need to check the first entries because of how createSafeMappingEntries
+     * works to preserve the consistency of tables */
+    tlbflush_required = pdeCheckIfMapped(pde_entries.base);
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.base[i] = pde;
@@ -2067,6 +2111,9 @@ performPageInvocationRemapPDE(pde_t pde, pde_range_t pde_entries)
     cleanCacheRange_PoU((word_t)pde_entries.base,
                         LAST_BYTE_PDE(pde_entries.base, pde_entries.length),
                         addrFromPPtr(pde_entries.base));
+    if (unlikely(tlbflush_required)) {
+        invalidateTLBByASID(asid);
+    }
 
     return EXCEPTION_NONE;
 }
