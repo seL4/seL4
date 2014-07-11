@@ -466,7 +466,7 @@ unmapAllPageTables(pde_t *pd)
         case pde_pde_coarse: {
             cap_t ptCap;
             cte_t *ptCte;
-            ptCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_coarse_get_address(pd[i])), BIT(PT_SIZE_BITS), 0, (uint32_t)(pd + i), cte_depth_bits_type(cap_page_table_cap));
+            ptCte = cdtFind(cap_page_table_cap_new(PD_REF(pd), i, (uint32_t)paddr_to_pptr(pde_pde_coarse_get_address(pd[i]))));
             assert(ptCte);
             ptCap = cap_page_table_cap_set_capPTMappedObject(ptCte->cap, 0);
             cdtUpdate(ptCte, ptCap);
@@ -478,7 +478,7 @@ unmapAllPageTables(pde_t *pd)
             if (pde_pde_section_get_size(pd[i])) {
                 cap_t frameCap;
                 cte_t *frameCte;
-                frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_section_get_address(pd[i])), BIT(ARMSuperSectionBits), 0, (uint32_t)(pd + i), cte_depth_bits_type(cap_frame_cap));
+                frameCte = cdtFind(cap_frame_cap_new(FMAPPED_OBJECT_HIGH(pd), i, ARMSuperSection, 0, FMAPPED_OBJECT_LOW(pd), (uint32_t)paddr_to_pptr(pde_pde_section_get_address(pd[i]))));
                 assert(frameCte);
                 frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
                 cdtUpdate(frameCte, frameCap);
@@ -487,7 +487,7 @@ unmapAllPageTables(pde_t *pd)
             } else {
                 cap_t frameCap;
                 cte_t *frameCte;
-                frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_section_get_address(pd[i])), BIT(ARMSectionBits), 0, (uint32_t)(pd + i), cte_depth_bits_type(cap_frame_cap));
+                frameCte = cdtFind(cap_frame_cap_new(FMAPPED_OBJECT_HIGH(pd), i, ARMSection, 0, FMAPPED_OBJECT_LOW(pd), (uint32_t)paddr_to_pptr(pde_pde_section_get_address(pd[i]))));
                 assert(frameCte);
                 frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
                 cdtUpdate(frameCte, frameCap);
@@ -523,7 +523,7 @@ void unmapPagePTE(vm_page_size_t page_size, pte_t *pt, unsigned int ptIndex, voi
 
     (void)addr;
 
-    ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
+    ptCte = cdtFindWithExtra(cap_page_table_cap_new(0, 0, PT_REF(pt)));
     assert(ptCte);
     pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
     pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
@@ -645,7 +645,7 @@ void unmapAllPages(pde_t *pd, uint32_t pdIndex, pte_t *pt)
         case pte_pte_small: {
             cte_t *frameCte;
             cap_t frameCap;
-            frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pte_pte_small_ptr_get_address(pt + i)), BIT(ARMSmallPageBits), 0, (uint32_t)(pt + i), cte_depth_bits_type(cap_frame_cap));
+            frameCte = cdtFind(cap_frame_cap_new(FMAPPED_OBJECT_HIGH(pt), i, ARMSmallPage, 0, FMAPPED_OBJECT_LOW(pt), (uint32_t)paddr_to_pptr(pte_pte_small_ptr_get_address(pt + i))));
             assert(frameCte);
             frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
             cdtUpdate(frameCte, frameCap);
@@ -656,7 +656,7 @@ void unmapAllPages(pde_t *pd, uint32_t pdIndex, pte_t *pt)
         case pte_pte_large: {
             cte_t *frameCte;
             cap_t frameCap;
-            frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pte_pte_large_ptr_get_address(pt + i)), BIT(ARMLargePageBits), 0, (uint32_t)(pt + i), cte_depth_bits_type(cap_frame_cap));
+            frameCte = cdtFind(cap_frame_cap_new(FMAPPED_OBJECT_HIGH(pt), i, ARMLargePage, 0, FMAPPED_OBJECT_LOW(pt), (uint32_t)paddr_to_pptr(pte_pte_large_ptr_get_address(pt + i))));
             assert(frameCte);
             frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
             cdtUpdate(frameCte, frameCap);
@@ -1019,7 +1019,7 @@ decodeARMPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(cdtCapFindWithExtra(cap))) {
+    if (unlikely(cdtFindWithExtra(cap))) {
         current_syscall_error.type =
             seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
@@ -1389,7 +1389,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
             }
             ptIndex = cap_frame_cap_get_capFMappedIndex(cap);
 
-            ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
+            ptCte = cdtFindWithExtra(cap_page_table_cap_new(0, 0, PT_REF(pt)));
             assert(ptCte);
             pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
             if (unlikely(!pd)) {

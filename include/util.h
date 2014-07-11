@@ -35,6 +35,7 @@
 #define SECTION(sec) __attribute__((__section__(sec)))
 #define UNUSED       __attribute__((unused))
 #define FASTCALL     __attribute__((fastcall))
+#define ARRAY_SIZE(x) (sizeof(typeof(x))/sizeof(typeof((x)[0])))
 
 #define OFFSETOF(type, member) \
     __builtin_offsetof(type, member)

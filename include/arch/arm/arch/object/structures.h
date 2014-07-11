@@ -92,8 +92,8 @@ typedef struct user_data user_data_t;
 
 #define HW_ASID_SIZE_BITS 1
 
-#define FMAPPED_OBJECT_LOW(a) ( ((a) >> 10) & MASK(2))
-#define FMAPPED_OBJECT_HIGH(a) ((a) >> 12)
+#define FMAPPED_OBJECT_LOW(a) ( ((uint32_t)(a) >> 10) & MASK(2))
+#define FMAPPED_OBJECT_HIGH(a) ((uint32_t)(a) >> 12)
 
 static inline uint32_t CONST
 cap_frame_cap_get_capFMappedObject(cap_t cap)

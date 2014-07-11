@@ -198,7 +198,7 @@ decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
 
     /* Check to see if this retype will collide with an existing child. */
     if (newType != seL4_UntypedObject && !cap_untyped_cap_get_capDeviceMemory(cap)) {
-        cte_t *child = cdtFindInRange(capSpaceTypedMemory, freeRef, nodeWindow << objectSize);
+        cte_t *child = cdtFindTypedInRange(freeRef, nodeWindow * objectSize);
         if (child) {
             userError("Untyped Retype: collision with existing child");
             current_syscall_error.type = seL4_RevokeFirst;

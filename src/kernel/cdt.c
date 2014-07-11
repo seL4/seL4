@@ -24,10 +24,15 @@ static cte_t *aaRemove(bool_t isSwapped, cte_t *rootSlot, cte_t *targetSlot);
 static cte_t *aaTraverseBackward(cte_t *slot);
 static cte_t *aaTraverseForward(cte_t *slot);
 
-static inline int CONST compare(int a, int b)
-{
-    return a == b ? EQ : (a > b ? GT : LT);
-}
+typedef int (*comp_t)(cte_t *, cte_t *);
+typedef int (*tie_comp_t)(cte_t *, cte_t *, comp_t);
+typedef int (*type_comp_t)(cte_t *, cte_t *, tie_comp_t);
+
+#define compare(a, b) \
+    ({ typeof(a) _a = (a); \
+       typeof(b) _b = (b); \
+       _a == _b ? EQ : (_a > _b ? GT : LT); \
+    })
 
 static inline bool_t
 capsEqual(cap_t a, cap_t b)
@@ -39,100 +44,305 @@ capsEqual(cap_t a, cap_t b)
            (cap_get_capExtraComp(a) == cap_get_capExtraComp(b));
 }
 
-static inline int _compSpace(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize)
+static inline int
+tie_break_comparator(cte_t *a, cte_t *b, comp_t pre_slot)
 {
     int cmp;
-    cmp = compare(cap_get_capSpaceType(a->cap), bSpaceType);
-    if (cmp != EQ) {
-        return cmp;
+    /* Check the depth */
+    cmp = compare(mdb_node_get_cdtDepth(a->cteMDBNode), mdb_node_get_cdtDepth(b->cteMDBNode));
+    if (cmp != EQ) return cmp;
+    if (pre_slot) {
+        cmp = pre_slot(a, b);
+        if (cmp != EQ) return cmp;
     }
-    cmp = compare((word_t)cap_get_capSpacePtr(a->cap), bSpacePtr);
-    if (cmp != EQ) {
-        return cmp;
-    }
-    return - compare(cap_get_capSpaceSize(a->cap), bSpaceSize);
-}
-
-static inline int _compBadge(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bBadge)
-{
-    int cmp;
-    cmp = _compSpace(a, bSpaceType, bSpacePtr, bSpaceSize);
-    if (cmp != EQ) {
-        return cmp;
-    }
-    return compare(cap_get_capBadge(a->cap), bBadge);
+    /* compare on the slot as a last resort */
+    return compare(a, b);
 }
 
 static inline int
-_compDepth(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bBadge, uint32_t bDepth)
+untyped_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 {
     int cmp;
-    cmp = _compBadge(a, bSpaceType, bSpacePtr, bSpaceSize, bBadge);
-    if (cmp != EQ) {
-        return cmp;
-    }
-    return compare(mdb_node_get_cdtDepth(a->cteMDBNode), bDepth);
+    /* Compare base address and size of the untyped object */
+    cmp = compare(cap_untyped_cap_get_capPtr(a->cap), cap_untyped_cap_get_capPtr(b->cap));
+    if (cmp != EQ) return cmp;
+    cmp = - compare(cap_untyped_cap_get_capBlockSize(a->cap), cap_untyped_cap_get_capBlockSize(b->cap));
+    if (cmp != EQ) return cmp;
+    /* Do common late comparisons */
+    return tie_break(a, b, NULL);
 }
 
 static inline int
-_compExtra(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bBadge, uint32_t bDepth, uint32_t bExtraComp)
+endpoint_cap_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 {
     int cmp;
-    cmp = _compDepth(a, bSpaceType, bSpacePtr, bSpaceSize, bBadge, bDepth);
-    if (cmp != EQ) {
-        return cmp;
-    }
-    return compare(cap_get_capExtraComp(a->cap), bExtraComp);
+    /* compare on the badge */
+    cmp = compare(cap_endpoint_cap_get_capEPBadge(a->cap), cap_endpoint_cap_get_capEPBadge(b->cap));
+    if (cmp != EQ) return cmp;
+    /* tiebreak as normal */
+    return tie_break(a, b, NULL);
 }
 
 static inline int
-compExtra(cte_t *a, cte_t *b)
+async_endpoint_cap_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 {
-    return _compExtra(a, cap_get_capSpaceType(b->cap), (word_t)cap_get_capSpacePtr(b->cap), cap_get_capSpaceSize(b->cap), cap_get_capBadge(b->cap), mdb_node_get_cdtDepth(b->cteMDBNode), cap_get_capExtraComp(b->cap));
+    int cmp;
+    /* compare on the badge */
+    cmp = compare(cap_async_endpoint_cap_get_capAEPBadge(a->cap), cap_async_endpoint_cap_get_capAEPBadge(b->cap));
+    if (cmp != EQ) return cmp;
+    /* tiebreak as normal */
+    return tie_break(a, b, NULL);
+}
+
+static inline int cap_extra_comp(cte_t *a, cte_t *b)
+{
+    return compare(cap_get_capExtraComp(a->cap), cap_get_capExtraComp(b->cap));
 }
 
 static inline int
-_compSlot(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bBadge, uint32_t bDepth, uint32_t bExtraComp, cte_t *b)
+frame_cap_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
+page_table_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
+page_directory_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
+pdpt_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
+io_page_table_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
+ept_pdpt_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
+ept_page_directory_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
+ept_page_table_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
+just_tie_break(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, NULL);
+}
+
+static inline int
+typed_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 {
     int cmp;
-    cmp = _compExtra(a, bSpaceType, bSpacePtr, bSpaceSize, bBadge, bDepth, bExtraComp);
-    if (cmp != EQ) {
-        return cmp;
+    cap_tag_t type;
+    type_comp_t comp;
+    static type_comp_t comparator[] = {
+        [cap_endpoint_cap]       = endpoint_cap_comparator,
+        [cap_async_endpoint_cap] = async_endpoint_cap_comparator,
+        [cap_cnode_cap]          = just_tie_break,
+        [cap_thread_cap]         = just_tie_break,
+        [cap_frame_cap]          = frame_cap_comparator,
+        [cap_page_table_cap]     = page_table_comparator,
+        [cap_page_directory_cap] = page_directory_comparator,
+#ifdef ARCH_IA32
+        [cap_pdpt_cap]           = pdpt_comparator,
+#endif
+        [cap_zombie_cap]         = just_tie_break,
+#ifdef CONFIG_IOMMU
+        [cap_io_page_table_cap]  = io_page_table_comparator,
+#endif
+#ifdef CONFIG_VTX
+        [cap_vcpu_cap]           = just_tie_break,
+        [cap_ept_page_directory_pointer_table_cap] = ept_pdpt_comparator,
+        [cap_ept_page_directory_cap]               = ept_page_directory_comparator,
+        [cap_ept_page_table_cap]                   = ept_page_table_comparator,
+#endif
+    };
+    /* Typed objects do not overlap, so sufficient to compare base address */
+    cmp = compare(cap_get_capPtr(a->cap), cap_get_capPtr(b->cap));
+    if (cmp != EQ) return cmp;
+    /* at this point we *know* the types must be equal, so call the
+     * per cap type comparator, if it needs one. */
+    type = cap_get_capType(a->cap);
+    assert(type < ARRAY_SIZE(comparator));
+    comp = comparator[type];
+    assert(comp);
+    return comp(a, b, tie_break);
+}
+
+static inline int
+reply_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    int cmp;
+    /* Distinguish reply caps by the tcb that they are from */
+    cmp = compare(cap_reply_cap_get_capTCBPtr(a->cap), cap_reply_cap_get_capTCBPtr(b->cap));
+    if (cmp != EQ) return cmp;
+    return tie_break(a, b, NULL);
+}
+
+static inline int
+irq_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    int cmp;
+    cap_tag_t typeA, typeB;
+    /* The IRQ control cap can be thought of as having an 'address' of 0 and a 'size' of
+     * the entire IRQ space. IRQ handlers then have an address that is their irq and a size
+     * of 1. Since IRQ control caps cannot be subdivided this is equivalent to putting
+     * all IRQ control caps first, then sorting IRQ handlers by their IRQ */
+    typeA = cap_get_capType(a->cap);
+    typeB = cap_get_capType(b->cap);
+    if (typeA == typeB) {
+        if (typeA == cap_irq_control_cap) {
+            /* both control caps, tie break */
+            return tie_break(a, b, NULL);
+        } else {
+            /* both irq handlers, compare on irq */
+            assert(typeA == cap_irq_handler_cap);
+            cmp = compare(cap_irq_handler_cap_get_capIRQ(a->cap), cap_irq_handler_cap_get_capIRQ(b->cap));
+            if (cmp != EQ) return cmp;
+            return tie_break(a, b, NULL);
+        }
+    } else if (typeA == cap_irq_control_cap) {
+        return LT;
+    } else {
+        assert(typeA == cap_irq_handler_cap);
+        return GT;
     }
-    return compare((word_t)a, (word_t)b);
+}
+
+#ifdef ARCH_IA32
+static inline int
+ioport_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    int cmp;
+    uint32_t firstA, firstB, lastA, lastB;
+    /* ioports have a base address and size that is defined by their start port and end port */
+    firstA = cap_io_port_cap_get_capIOPortFirstPort(a->cap);
+    firstB = cap_io_port_cap_get_capIOPortFirstPort(b->cap);
+    cmp = compare(firstA, firstB);
+    if (cmp != EQ) return cmp;
+    lastA = cap_io_port_cap_get_capIOPortLastPort(a->cap);
+    lastB = cap_io_port_cap_get_capIOPortLastPort(b->cap);
+    cmp = - compare(lastA- firstA, lastB - firstB);
+    if (cmp != EQ) return cmp;
+    return tie_break(a, b, NULL);
+}
+#endif
+
+#ifdef CONFIG_IOMMU
+static inline int
+iospace_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    int cmp;
+    /* order by pci device this is assigned to and then by domain ID */
+    cmp = compare(cap_io_space_cap_get_capPCIDevice(a->cap), cap_io_space_cap_get_capPCIDevice(b->cap));
+    if (cmp != EQ) return cmp;
+    cmp = compare(cap_io_space_cap_get_capDomainID(a->cap), cap_io_space_cap_get_capDomainID(b->cap));
+    if (cmp != EQ) return cmp;
+    return tie_break(a, b, NULL);
+}
+#endif
+
+static inline int
+compare_space(int space, cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    type_comp_t comp;
+    static type_comp_t comparator[] = {
+        [capSpaceUntypedMemory] = untyped_comparator,
+        [capSpaceTypedMemory] = typed_comparator,
+        [capSpaceReply] = reply_comparator,
+        [capSpaceDomain] = just_tie_break,
+        [capSpaceIRQ] = irq_comparator,
+#ifdef CONFIG_IOMMU
+        [capSpaceIOSpace] = iospace_comparator,
+#endif
+#ifdef ARCH_IA32
+        [capSpaceIOPort] = ioport_comparator,
+        [capSpaceIPI] = just_tie_break,
+#endif
+    };
+    assert(space < ARRAY_SIZE(comparator));
+    comp = comparator[space];
+    assert(comp);
+    return comp(a, b, tie_break);
+}
+
+static inline int
+compSlotWith(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    /* check space */
+    int spaceA = cap_get_capSpaceType(a->cap);
+    int spaceB = cap_get_capSpaceType(b->cap);
+    int cmp = compare(spaceA, spaceB);
+    if (cmp != EQ) return cmp;
+    /* now call the space specific comparator */
+    return compare_space(spaceA, a, b, tie_break);
 }
 
 static inline int
 compSlot(cte_t *a, cte_t *b)
 {
-    return _compSlot(a, cap_get_capSpaceType(b->cap), (word_t)cap_get_capSpacePtr(b->cap), cap_get_capSpaceSize(b->cap), cap_get_capBadge(b->cap), mdb_node_get_cdtDepth(b->cteMDBNode), cap_get_capExtraComp(b->cap), b);
+    /* We know nothing, call general comparator for caps and tie break on slots */
+    return compSlotWith(a, b, tie_break_comparator);
+}
+
+static inline int has_extra_comparator(cte_t *a, cte_t *b, comp_t pre_slot) {
+    int cmp;
+    /* Check depth as per normal */
+    cmp = compare(mdb_node_get_cdtDepth(a->cteMDBNode), mdb_node_get_cdtDepth(b->cteMDBNode));
+    if (cmp != EQ) return cmp;
+    assert(pre_slot);
+    cmp = pre_slot(a, b);
+    /* if the extra comparison was not equal then we found something, so we will claim that we found equality,
+     * otherwise return a psudo-random result */
+    if (cmp != EQ) return EQ;
+    return LT;
 }
 
 cte_t *
-cdtCapFindWithExtra(cap_t cap)
-{
-    return cdtFindWithExtra(cap_get_capSpaceType(cap), (word_t)cap_get_capSpacePtr(cap), cap_get_capSpaceSize(cap), cap_get_capBadge(cap), cte_depth_bits_cap(cap));
-}
-
-cte_t *
-cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int depth_bits)
+cdtFindWithExtra(cap_t hypothetical)
 {
     uint32_t i;
+    unsigned int depth_bits = cte_depth_bits_cap(hypothetical);
     for (i = 0; i < BIT(depth_bits); i++) {
         cte_t *current;
         cte_t *next;
+
+        cte_t slot = (cte_t) {
+            .cap = hypothetical,
+            .cteMDBNode = mdb_node_new(0, i, 0, 0)
+        };
 
         next = ksRootCTE;
         do {
             int cmp;
             current = next;
-            cmp = _compSpace(current, spaceType, paddr, size);
-            if (cmp == EQ) {
-                if (cap_get_capExtraComp(current->cap) != 0) {
-                    return current;
-                }
-                cmp = _compExtra(current, spaceType, paddr, size, badge, i, -1);
-            }
+            /* we are searching for a slot that is mostly equal to this node,
+             * except that it has a non zero extra component */
+            cmp = compSlotWith(current, &slot, has_extra_comparator);
             switch (cmp) {
             case LT:
                 next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
@@ -141,23 +351,44 @@ cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int ba
                 next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
                 break;
             case EQ:
-                fail("Cannot be equal here");
+                return current;
             }
         } while (next);
     }
     return NULL;
 }
 
+static inline int slot_eq_comparator(cte_t *a, cte_t *b, comp_t pre_slot) {
+    int cmp;
+    /* Check depth and pre_slot as per normal */
+    cmp = compare(mdb_node_get_cdtDepth(a->cteMDBNode), mdb_node_get_cdtDepth(b->cteMDBNode));
+    if (cmp != EQ) return cmp;
+    if (pre_slot) {
+        cmp = pre_slot(a, b);
+        if (cmp != EQ) return cmp;
+    }
+    /* Slot is always EQ */
+    return EQ;
+}
+
 cte_t *
-cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int extra, uint32_t depth)
+cdtFindAtDepth(cap_t hypothetical, uint32_t depth)
 {
     cte_t *current;
     cte_t *next;
 
+    cte_t slot = (cte_t) {
+        .cap = hypothetical,
+        .cteMDBNode = mdb_node_new(0, depth, 0, 0)
+    };
+
     next = ksRootCTE;
+    /* we want to find the entry in the tree that is equal to this node
+     * in every way except that it will have a different slot. So we will
+     * do a search with a comparator that always returns equality on slots */
     do {
         current = next;
-        switch (_compExtra(current, spaceType, paddr, size, badge, depth, extra)) {
+        switch (compSlotWith(current, &slot, slot_eq_comparator)) {
         case LT:
             next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
             break;
@@ -172,12 +403,13 @@ cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int badg
 }
 
 cte_t *
-cdtFind(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int extra, unsigned int depth_bits)
+cdtFind(cap_t hypothetical)
 {
     uint32_t i;
     cte_t *ret;
+    unsigned int depth_bits = cte_depth_bits_cap(hypothetical);
     for (i = 0; i < BIT(depth_bits); i++) {
-        ret = cdtFindAtDepth(spaceType, paddr, size, badge, extra, i);
+        ret = cdtFindAtDepth(hypothetical, i);
         if (ret) {
             return ret;
         }
@@ -205,86 +437,106 @@ cdtIsFinal(cte_t *slot)
     return true;
 }
 
-cte_t *
-cdtFindInRange(int spaceType, word_t addr, unsigned int size)
+static inline cap_t
+build_largest_child(cap_t cap)
 {
-    cte_t *current;
-    cte_t *next;
-    /* We are searching for a hypothetical node that is at paddr+size */
-    next = ksRootCTE;
-    do {
-        int cmp;
-        current = next;
-        cmp = _compSpace(current, spaceType, addr + size - 1, 0);
-        if (cmp == LT) {
-            if (cap_get_capSpaceType(current->cap) == spaceType &&
-                    (word_t)cap_get_capSpacePtr(current->cap) < addr + size &&
-                    (word_t)cap_get_capSpacePtr(current->cap) + cap_get_capSpaceSize(current->cap) > addr) {
-                return current;
-            }
-            next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
-        } else if (cmp == GT) {
-            next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
-        } else {
-            assert(!"Should never actually find this node as it has zero size");
+    switch(cap_get_capType(cap)) {
+    case cap_domain_cap:
+#ifdef ARCH_IA32
+    case cap_ipi_cap:
+#endif
+    case cap_reply_cap:
+    case cap_irq_handler_cap:
+    case cap_cnode_cap:
+    case cap_thread_cap:
+#ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+#endif
+    case cap_zombie_cap:
+        return cap;
+#ifdef CONFIG_IA32
+    case cap_io_port_cap:
+        /* We order on base address first, so set it has high as possible, size doesn't matter then.
+           But size shouldn't be zero */
+        return cap_io_port_cap_new(cap_io_port_cap_get_capIOPortLastPort(cap) - 1, 1);
+#endif
+    case cap_irq_control_cap:
+        /* Largest child is a irq handler with biggest irq */
+        return cap_irq_handler_cap_new(0xff);
+    case cap_untyped_cap:
+        /* untyped cap of smallest size at the end of this region */
+        return cap_untyped_cap_new(0, 4, cap_untyped_cap_get_capPtr(cap) + BIT(cap_untyped_cap_get_capBlockSize(cap)) - BIT(4));
+    case cap_endpoint_cap:
+        if (cap_endpoint_cap_get_capEPBadge(cap) == 0) {
+            return cap_endpoint_cap_new(BIT(29) - 1, 0, 0, 0, cap_endpoint_cap_get_capEPPtr(cap));
         }
-    } while (next);
-    return NULL;
+        return cap;
+    case cap_async_endpoint_cap:
+        if (cap_async_endpoint_cap_get_capAEPBadge(cap) == 0) {
+            return cap_async_endpoint_cap_new(BIT(29) - 1, 0, 0, cap_async_endpoint_cap_get_capAEPPtr(cap));
+        }
+        return cap;
+    /* We get away with not setting the extra higher as we will always be comparing
+     * with an infinite depth, hence any 'extra' is not relevant */
+    case cap_frame_cap:
+    case cap_page_table_cap:
+    case cap_page_directory_cap:
+#ifdef ARCH_IA32
+    case cap_pdpt_cap:
+#endif
+#ifdef CONFIG_VTX
+    case cap_ept_page_directory_pointer_table_cap:
+    case cap_ept_page_directory_cap:
+    case cap_ept_page_table_cap:
+#endif
+#ifdef CONFIG_IOMMU
+    case cap_io_page_table_cap:
+#endif
+        return cap;
+    default:
+        fail("Unknown cap type");
+    }
 }
 
-static bool_t isCDTParentOf(cte_t *parent, cte_t *child)
-{
-    word_t badgeA, badgeB;
-    /* child must be from the same region */
-    if (!sameRegionAs(parent->cap, child->cap)) {
-        return false;
-    }
-    /* check any badge. Badge 0 is parent of another
-     * other non zero badge */
-    badgeA = cap_get_capBadge(parent->cap);
-    badgeB = cap_get_capBadge(child->cap);
-    if (badgeA == 0 && badgeB != 0) {
-        return true;
-    } else if (badgeA != badgeB) {
-        return false;
-    }
-    return true;
+static inline int largest_child_comparator(cte_t *a, cte_t *b, comp_t pre_slot) {
+    /* Tie breaking for largest child is easy. Their depth is always less than ours */
+    return LT;
 }
 
-static cte_t *
-_cdtFindBadgedChild(cte_t *parentSlot)
+static inline int slot_lt_comparator(cte_t *a, cte_t *b, comp_t pre_slot) {
+    int cmp;
+    /* Check depth and pre_slot as per normal */
+    cmp = compare(mdb_node_get_cdtDepth(a->cteMDBNode), mdb_node_get_cdtDepth(b->cteMDBNode));
+    if (cmp != EQ) return cmp;
+    if (pre_slot) {
+        cmp = pre_slot(a, b);
+        if (cmp != EQ) return cmp;
+    }
+    /* Slot is always LT */
+    return LT;
+}
+
+static inline cte_t *
+aaFindFromBelow(cte_t *hypothetical, tie_comp_t tie_break)
 {
-    /* We are searching for a hypothetical node that is at
-     * identical to us but of strictly greater depth */
     cte_t *current;
     cte_t *largest;
     cte_t *next;
-    int spaceType = cap_get_capSpaceType(parentSlot->cap);
-    word_t paddr = (word_t)cap_get_capSpacePtr(parentSlot->cap);
-    unsigned int size = cap_get_capSpaceSize(parentSlot->cap);
-    unsigned int badge = cap_get_capBadge(parentSlot->cap);
-    /* We are searching for a hypothetical node in the cdt that is at paddr+size and of zero size */
     next = ksRootCTE;
     largest = NULL;
     do {
         int cmp;
         current = next;
-        cmp = _compDepth(current, spaceType, paddr, size, badge, BIT(cte_depth_bits_cap(parentSlot->cap)));
+        cmp = compSlotWith(current, hypothetical, tie_break);
         if (cmp == LT) {
-            if (!largest || compExtra(current, largest) == GT) {
+            next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
+            if (!largest || compSlot(current, largest) == GT) {
                 largest = current;
             }
-            next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
-        } else if (cmp == GT) {
-            next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
         } else {
-            assert(!"Should never actually find this node as it has zero size");
+            next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
         }
     } while (next);
-    /* Verify what we found is actually a child */
-    if (!largest || compExtra(largest, parentSlot) != GT || !isCDTParentOf(parentSlot, largest)) {
-        return NULL;
-    }
     return largest;
 }
 
@@ -298,35 +550,45 @@ _cdtFindBadgedChild(cte_t *parentSlot)
 static cte_t *
 _cdtFindChild(cte_t *parentSlot)
 {
-    cte_t *current;
-    cte_t *largest;
-    cte_t *next;
-    int spaceType = cap_get_capSpaceType(parentSlot->cap);
-    word_t paddr = (word_t)cap_get_capSpacePtr(parentSlot->cap);
-    unsigned int size = cap_get_capSpaceSize(parentSlot->cap);
-    /* We are searching for a hypothetical node in the cdt that is at paddr+size and of zero size */
-    next = ksRootCTE;
-    largest = NULL;
-    do {
-        int cmp;
-        current = next;
-        cmp = _compSpace(current, spaceType, paddr + size - 1, 0);
-        if (cmp == LT) {
-            if (!largest || compExtra(current, largest) == GT) {
-                largest = current;
-            }
-            next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
-        } else if (cmp == GT) {
-            next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
-        } else {
-            assert(!"Should never actually find this node as it has zero size");
-        }
-    } while (next);
-    /* Verify what we found is actually a child */
-    if (!largest || compExtra(largest, parentSlot) != GT || !sameRegionAs(parentSlot->cap, largest->cap)) {
+    cte_t *child;
+    /* Construct a hypothetical child. This needs to be the largest
+     * possible child such that anything greater than it would no
+     * longer be our child and anything less than it is either
+     * our sibling or our child. We do not worry about the depth
+     * as we will use a fake comparator that assumes our node
+     * is of infinite depth */
+    cte_t hypothetical = {
+        .cap = build_largest_child(parentSlot->cap),
+    };
+
+    /* Search for hypothetical cap from below. */
+    child = aaFindFromBelow(&hypothetical, largest_child_comparator);
+
+    /* Verify that this is in fact a child (we could have none). To ensure
+     * we did not find ourself or a sibling we ensure that we are strictly
+     * greater than ignoring slot tie breaks */
+    if (!child || compSlotWith(child, parentSlot, slot_lt_comparator) != GT) {
         return NULL;
     }
-    return largest;
+    return child;
+}
+
+cte_t *
+cdtFindTypedInRange(word_t base, unsigned int size_bits) {
+    cte_t *child;
+    /* Construct the smallest typed object we know about at the top
+     * of the memory range and search for it */
+    cte_t hypothetical = {
+        .cap = cap_endpoint_cap_new(0, 0, 0, 0, base + BIT(size_bits) - BIT(EP_SIZE_BITS)),
+    };
+    /* Search for it from below */
+    child = aaFindFromBelow(&hypothetical, largest_child_comparator);
+    /* Check we found something in the right range. Construct a fake untyped
+     * to reuse existing range checking */
+    if (child && sameRegionAs(cap_untyped_cap_new(0, size_bits, base), child->cap)) {
+        return child;
+    }
+    return NULL;
 }
 
 cte_t *
@@ -334,17 +596,12 @@ cdtFindChild(cte_t *parentSlot)
 {
     if (cap_get_capSpaceType(parentSlot->cap) == capSpaceUntypedMemory) {
         /* Find anything in this range that is typed */
-        cte_t *result = cdtFindInRange(capSpaceTypedMemory, (word_t)cap_get_capSpacePtr(parentSlot->cap), cap_get_capSpaceSize(parentSlot->cap));
+        cte_t *result = cdtFindTypedInRange(cap_untyped_cap_get_capPtr(parentSlot->cap), cap_untyped_cap_get_capBlockSize(parentSlot->cap));
         if (result) {
             return result;
         }
     }
-    if (cap_get_capBadge(parentSlot->cap) != 0) {
-        /* We are looking for a badged child */
-        return _cdtFindBadgedChild(parentSlot);
-    } else {
-        return _cdtFindChild(parentSlot);
-    }
+    return _cdtFindChild(parentSlot);
 }
 
 static inline void

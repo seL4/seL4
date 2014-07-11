@@ -248,7 +248,7 @@ void unmapAllPageDirectories(pdpte_t *pdpt)
             pde_t *pd = PD_PTR(paddr_to_pptr(pdpte_ptr_get_pd_base_address(pdpt + i)));
             cte_t *pdCte;
             cap_t pdCap;
-            pdCte = cdtFindAtDepth(capSpaceTypedMemory, PD_REF(pd), BIT(PD_SIZE_BITS), 0, (uint32_t)(pdpt + i), pdpte_ptr_get_avl_cte_depth(pdpt + i));
+            pdCte = cdtFindAtDepth(cap_page_directory_cap_new(PDPT_REF(pdpt), i, PD_REF(pd)), pdpte_ptr_get_avl_cte_depth(pdpt + i));
             assert(pdCte);
 
             pdCap = pdCte->cap;
@@ -276,7 +276,7 @@ void flushPageSmall(pte_t *pt, uint32_t ptIndex)
 
     /* We know this pt can only be mapped into one single pd. So
      * lets find a cap with that mapping information */
-    ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
+    ptCte = cdtFindWithExtra(cap_page_table_cap_new(0, 0, PT_REF(pt)));
     if (ptCte) {
         pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
         pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
@@ -285,7 +285,7 @@ void flushPageSmall(pte_t *pt, uint32_t ptIndex)
             cte_t *pdCte;
             pdpte_t *pdpt;
             uint32_t pdptIndex;
-            pdCte = cdtFindWithExtra(capSpaceTypedMemory, PD_REF(pd), BIT(PD_SIZE_BITS), 0, cte_depth_bits_type(cap_page_directory_cap));
+            pdCte = cdtFindWithExtra(cap_page_directory_cap_new(0, 0, PD_REF(pd)));
             if (pdCte) {
                 pdpt = PDPT_PTR(cap_page_directory_cap_get_capPDMappedObject(pdCte->cap));
                 pdptIndex = cap_page_directory_cap_get_capPDMappedIndex(pdCte->cap);
@@ -306,7 +306,7 @@ void flushPageLarge(pde_t *pd, uint32_t pdIndex)
     cap_t threadRoot;
     cte_t *pdCte;
 
-    pdCte = cdtFindWithExtra(capSpaceTypedMemory, PD_REF(pd), BIT(PD_SIZE_BITS), 0, cte_depth_bits_type(cap_page_directory_cap));
+    pdCte = cdtFindWithExtrap(cap_page_directory_cap_new(0, 0, PD_REF(pd)));
     if (pdCte) {
         pdpte_t *pdpt;
         uint32_t pdptIndex;
@@ -328,7 +328,7 @@ void flushAllPageTables(pde_t *pd)
     cap_t threadRoot;
     cte_t *pdCte;
 
-    pdCte = cdtFindWithExtra(capSpaceTypedMemory, PD_REF(pd), BIT(PD_SIZE_BITS), 0, cte_depth_bits_type(cap_page_directory_cap));
+    pdCte = cdtFindWithExtra(cap_page_directory_cap_new(0, 0, PD_REF(pd)));
     if (pdCte) {
         pdpte_t *pdpt;
         pdpt = PDPT_PTR(cap_page_directory_cap_get_capPDMappedObject(pdCte->cap));
@@ -395,7 +395,7 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cdtCapFindWithExtra(cap)) {
+    if (cdtFindWithExtra(cap)) {
         userError("IA32PageDirectory: Page direcotry is already mapped to a pdpt.");
         current_syscall_error.type =
             seL4_InvalidCapability;

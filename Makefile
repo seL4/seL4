@@ -382,7 +382,7 @@ endif
 WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 	missing-declarations undef pointer-arith no-nonnull declaration-after-statement
 
-CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
+CFLAGS += --std=gnu99 -nostdlib -nostdinc -ffreestanding \
 	${WARNINGS:%=-W%} ${INCLUDES}
 LDFLAGS += -nostdlib -nostdinc
 ASFLAGS += ${INCLUDES}

@@ -11,7 +11,7 @@
 #ifndef __ARCH_OBJECT_CAPSPACE_H
 #define __ARCH_OBJECT_CAPSPACE_H
 
-#define FMAPPED_OBJECT_HIGH(a) ((a) >> 12)
+#define FMAPPED_OBJECT_HIGH(a) ((uint32_t)(a) >> 12)
 
 enum capSpaceType {
     capSpaceUntypedMemory,

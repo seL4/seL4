@@ -11,8 +11,11 @@
 #ifndef __ARCH_OBJECT_CAPSPACE_H
 #define __ARCH_OBJECT_CAPSPACE_H
 
+#include <config.h>
+
 enum capSpaceType {
-    capSpaceUntypedMemory,
+    /* Start at 1 so we can detected unitialized elements in debug mode when doing array lookups */
+    capSpaceUntypedMemory = 1,
     capSpaceTypedMemory,
     capSpaceReply,
     capSpaceIRQ,
@@ -27,55 +30,45 @@ enum capSpaceType {
 static inline int CONST
 cap_get_capSpaceType(cap_t cap)
 {
-    switch (cap_get_capType(cap)) {
-    case cap_null_cap:
-        fail("null cap has no type");
-    case cap_endpoint_cap:
-    case cap_async_endpoint_cap:
-    case cap_cnode_cap:
-    case cap_thread_cap:
-    case cap_frame_cap:
-    case cap_page_table_cap:
-    case cap_page_directory_cap:
-    case cap_pdpt_cap:
-    case cap_zombie_cap:
-        return capSpaceTypedMemory;
-
-    case cap_domain_cap:
-        return capSpaceDomain;
-
-    case cap_untyped_cap:
-        return capSpaceUntypedMemory;
-
-    case cap_irq_control_cap:
-    case cap_irq_handler_cap:
-        return capSpaceIRQ;
-    case cap_reply_cap:
-        return capSpaceReply;
+    cap_tag_t c_type;
+    int type;
+    static const int spaceType[] = {
+        [cap_endpoint_cap]       = capSpaceTypedMemory,
+        [cap_async_endpoint_cap] = capSpaceTypedMemory,
+        [cap_cnode_cap]          = capSpaceTypedMemory,
+        [cap_thread_cap]         = capSpaceTypedMemory,
+        [cap_frame_cap]          = capSpaceTypedMemory,
+        [cap_page_table_cap]     = capSpaceTypedMemory,
+        [cap_page_directory_cap] = capSpaceTypedMemory,
+        [cap_pdpt_cap]           = capSpaceTypedMemory,
+        [cap_zombie_cap]         = capSpaceTypedMemory,
+        [cap_domain_cap]         = capSpaceDomain,
+        [cap_untyped_cap]        = capSpaceUntypedMemory,
+        [cap_irq_control_cap]    = capSpaceIRQ,
+        [cap_irq_handler_cap]    = capSpaceIRQ,
+        [cap_reply_cap]          = capSpaceReply,
 #ifdef CONFIG_VTX
-    case cap_vcpu_cap:
-        return capSpaceTypedMemory;
+        [cap_vcpu_cap]           = capSpaceTypedMemory,
 #endif
-    case cap_io_port_cap:
-        return capSpaceIOPort;
+        [cap_io_port_cap]        = capSpaceIOPort,
 #ifdef CONFIG_IOMMU
-    case cap_io_space_cap:
-        return capSpaceIOSpace;
-    case cap_io_page_table_cap:
-        return capSpaceTypedMemory;
+        [cap_io_space_cap]       = capSpaceIOSpace,
+        [cap_io_page_table_cap]  = capSpaceTypedMemory,
 #endif
 #ifdef CONFIG_VTX
-    case cap_ept_page_directory_pointer_table_cap:
-    case cap_ept_page_directory_cap:
-    case cap_ept_page_table_cap:
-        return capSpaceTypedMemory;
+        [cap_ept_page_directory_pointer_table_cap] = capSpaceTypedMemory,
+        [cap_ept_page_directory_cap]               = capSpaceTypedMemory,
+        [cap_ept_page_table_cap]                   = capSpaceTypedMemory,
 #endif
-    case cap_ipi_cap:
-        return capSpaceIPI;
-
-    default:
-        fail("Invalid arch cap type");
-    }
+        [cap_ipi_cap] = capSpaceIPI,
+    };
+    c_type = cap_get_capType(cap);
+    assert(c_type < ARRAY_SIZE(spaceType));
+    type = spaceType[cap_get_capType(cap)];
+    /* if type is 0 then it means the value returned by cap_get_capType was not
+     * defined in the lookup table and got a default value of 0 */
+    assert(type != 0);
+    return type;
 }
 
 static inline void * CONST

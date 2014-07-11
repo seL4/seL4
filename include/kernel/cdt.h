@@ -17,16 +17,15 @@
 
 void cdtInsert(cte_t *parentSlot, cte_t *newSlot);
 void cdtRemove(cte_t *slot);
-cte_t *cdtFindInRange(int spaceType, word_t addr, unsigned int size);
 cte_t *cdtFindChild(cte_t *parentSlot);
 void cdtMove(cte_t *oldSlot, cte_t *newSlot);
 void cdtSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2);
 bool_t cdtIsFinal(cte_t *slot);
 void cdtUpdate(cte_t *slot, cap_t newCap);
-cte_t *cdtFind(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int extra, unsigned int depth_bits);
-cte_t *cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int extra, uint32_t depth);
-cte_t *cdtCapFindWithExtra(cap_t cap);
-cte_t *cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int depth_bits);
+cte_t *cdtFind(cap_t hypothetical);
+cte_t *cdtFindAtDepth(cap_t hypothetical, uint32_t depth);
+cte_t *cdtFindWithExtra(cap_t hypothetical);
+cte_t *cdtFindTypedInRange(word_t base, unsigned int size_bits);
 
 #endif
 

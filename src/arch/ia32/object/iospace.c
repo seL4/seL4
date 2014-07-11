@@ -61,14 +61,14 @@ void unmapAllIOPT(vtd_pte_t *pt, int level)
             if (level == ia32KSnumIOPTLevels - 1) {
                 cap_t cap;
                 void *frame = paddr_to_pptr(vtd_pte_ptr_get_addr(pte));
-                cte_t *cte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(IA32_4K_bits), 0, (uint32_t)pte, depth);
+                cte_t *cte = cdtFindAtDepth(cap_frame_cap_new(IA32_SmallPage, VTD_PT_REF(pt), i, IA32_MAPPING_IO, 0, (uint32_t)frame), depth);
                 assert(cte);
                 cap = cap_frame_cap_set_capFMappedObject(cte->cap, 0);
                 cdtUpdate(cte, cap);
             } else {
                 cap_t cap;
                 vtd_pte_t *pt2 = VTD_PTE_PTR(paddr_to_pptr(vtd_pte_ptr_get_addr(pte)));
-                cte_t *cte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)pt2, BIT(VTD_PT_SIZE_BITS), 0, (uint32_t)pte, depth);
+                cte_t *cte = cdtFindAtDepth(cap_io_page_table_cap_new(0, VTD_PT_REF(pt), i, VTD_PT_REF(pt2)), depth);
                 assert(cte);
                 cap = cap_io_page_table_cap_set_capIOPTMappedObject(cte->cap, 0);
                 cdtUpdate(cte, cap);
@@ -93,7 +93,7 @@ void unmapVTDContextEntry(vtd_cte_t *vtd_context_slot)
     }
     /* Lookup the slot */
     vtd_pt = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
-    ptCte = cdtFindAtDepth(capSpaceTypedMemory, VTD_PT_REF(vtd_pt), BIT(VTD_PT_SIZE_BITS), 0, (uint32_t)vtd_context_slot, vtd_cte_ptr_get_cte_depth(vtd_context_slot));
+    ptCte = cdtFindAtDepth(cap_io_page_table_cap_new(0, (uint32_t)vtd_context_slot, 0, VTD_PT_REF(vtd_pt)), vtd_cte_ptr_get_cte_depth(vtd_context_slot));
     assert(ptCte);
     /* unmap */
     ptCap = cap_io_page_table_cap_set_capIOPTMappedObject(ptCte->cap, 0);
