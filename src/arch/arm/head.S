@@ -86,36 +86,6 @@ BEGIN_FUNC(_start)
     /* Initialise CP15 control register */
     mrc p15, 0, r4, c1, c0, 0
     ldr r5, =CR_BITS_SET
-
-#ifdef ARM1136_WORKAROUND
-    /*
-     * We need to potentially work around arm1136 errata #364296 which
-     * can cause data cache corruption. The fix involves disabling hit-under-miss
-     * via an undocumented bit in the aux control register, as well as the
-     * FI bit in the control register. The result of enabling these two bits
-     * is for fast interrupts to *not* be enabled, but hit-under-miss to be
-     * disabled. We only need to do this for a particular revision of the
-     * arm1136
-     */
-    ldr r6, =ARM1136_R0PX
-    /* Load processor id */
-    mrc p15, 0, r7, c0, c0, 0
-    /* Mask out bottom four part bits */
-    bic r7, r7, #0xf
-    teq r7, r6
-    bne 1f
-
-    /* Additionally enable the Fast Interrupts bit in the control register */
-    ldr r6, =BIT(CONTROL_FI)
-    orr r5, r5, r6
-
-    /* Set undocumented bit 31 in the auxiliary control register */
-    mrc p15, 0, r6, c1, c0, 1
-    orr r6, r6, #(1<<31)
-    mcr p15, 0, r6, c1, c0, 1
-1:
-#endif /* ARM1136_WORKAROUND */
-
     ldr r6, =CR_BITS_CLEAR
     orr r4, r4, r5
     bic r4, r4, r6
@@ -130,6 +100,11 @@ BEGIN_FUNC(_start)
      */
     ldr sp, =arm_kernel_stack
     add sp, sp, #(PPTR_KERNEL_STACK_TOP - PPTR_KERNEL_STACK)
+
+    /* Attempt to workaround any known ARM errata. */
+    push {r0-r3}
+    blx arm_errata
+    pop {r0-r3}
 
     /* Initialise ABORT stack pointer */
     cps #PMODE_ABORT
