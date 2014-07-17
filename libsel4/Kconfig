@@ -1,0 +1,26 @@
+#
+# Copyright 2014, NICTA
+#
+# This software may be distributed and modified according to the terms of
+# the BSD 2-Clause license. Note that NO WARRANTY is provided.
+# See "LICENSE_BSD2.txt" for details.
+#
+# @TAG(NICTA_BSD)
+#
+
+menuconfig LIB_SEL4
+    bool "Build sel4 library"
+    depends on HAVE_LIBC
+    default y
+    help
+        "Build the sel4 library"
+
+config LIB_SEL4_STUBS_USE_IPC_BUFFER_ONLY
+    bool "use only IPC buffer for syscalls"
+    depends on LIB_SEL4
+    default n
+    help
+        When generating syscall wrappers, only use the IPC buffer for
+        marshalling and unmarshalling arguments. Without this option set,
+        arguments will be passed in registers where possible for better
+        performance.

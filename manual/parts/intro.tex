@@ -1,0 +1,35 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\chapter{\label{ch:intro}Introduction}
+
+% FIXME: Use of service, mechanism and abstraction is munged through here and the rest of the manual
+
+The seL4 microkernel is an operating-system kernel designed to be
+a secure, safe, and reliable foundation for systems in a wide variety of
+application domains. As a microkernel, it provides a small number of
+services to applications, such as abstractions to create and manage virtual address
+spaces, threads, and inter-process communication (IPC). The small number
+of services provided by seL4 directly translates to a small
+implementation of approximately $8700$ lines of C code. This has allowed
+the ARMv6 version of the kernel to be formally proven in the Isabelle/HOL 
+theorem prover to adhere to its formal specification~\cite{Boyton_09,Cock_KS_08,Derrin_EKCC_06,Elkaduwe_GE_08,Klein_EHACDEEKNSTW_09,Tuch_KN_07,Winwood_KSACN_09}.
+
+This manual describes the seL4 kernel's API from a user's point of view.
+The document starts by giving a brief overview of the seL4 microkernel
+design, followed by a reference of the high-level API exposed by the
+seL4 kernel to userspace.
+
+While we have tried to ensure that this manual accurately reflects the
+behaviour of the seL4 kernel, this document is by no means a formal
+specification of the kernel. When the precise behaviour of the kernel
+under a particular circumstance needs to be known, users should refer to
+the seL4 abstract specification, which
+gives a formal description of the seL4 kernel.

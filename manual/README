@@ -1,0 +1,35 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+seL4 manual (including API). Default make target builds a PDF.
+
+Original text from paper template README follows...
+$Id: README,v 1.6 2007-03-07 15:09:26 gernot Exp $
+
+A note on referencing:
+
+The paper/report template can now handle the use of bibexport, and is set up to
+use this method by default. In your paper or report, instead of specifying your
+bibfile sources in the \bibliography{file0,file1} command, you simply specify
+\bibliography{references}. Specify your source bibfiles in the Makefile as
+described above.
+
+At make time, the build system will parse your targets for citations and then
+collate all the BibTeX entries in references.bib.
+This is useful for several reasons. If you need to hand edit BibTeX entries to
+save room in your paper, you don't need to edit the ERTOS bibfiles, or make
+duplicates on entries in extras.bib. It also means that BibTeX entries are stored
+with the paper in the repository.
+
+The Makefile is smart. If you add or remove a reference to a target, the build
+system will ask you whether you want to rebuild references.bib. This is to ensure
+that if you have made changes by hand to any references, these aren't overwritten.
+
+Consider updating this template when appropriate.

@@ -1,0 +1,31 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{cnode_savecaller}
+{CNode  -  Save Caller}
+{Save the reply capability from the last time the thread was called in the given CSpace so that it can be invoked later}
+{static inline int seL4\_CNode\_SaveCaller}
+{
+\param{seL4\_CNode}{\_service}{
+    CPTR to the CNode at the root of the CSpace where the capability is to be
+    saved. Must be at a depth of 32.
+}
+\param{seL4\_Word}{index}{
+    CPTR to the slot in which to save the capability. Resolved from the root of
+    the \_service parameter.
+}
+\param{uint8\_t}{depth}{
+    Number of bits of index to resolve to find the slot being targeted.
+}
+}
+{\errorenumdesc}
+{See \autoref{sec:cnode-ops}.}
+

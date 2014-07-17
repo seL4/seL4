@@ -1,0 +1,181 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\chapter{\label{ch:io}Hardware I/O}
+
+\section{Interrupt Delivery}
+\label{sec:interrupts}
+
+Interrupts are delivered in seL4 through \obj{AsyncEP} objects. A thread
+may configure the kernel to send a message to a particular \obj{AsyncEP}
+object each time a certain interrupt triggers. Threads may then wait for
+the interrupts to occur by calling \apifunc{seL4\_Wait}{sel4_wait} on
+that \obj{AsyncEP}. Each bit $n$ in the message content (modulo the
+word size) corresponds to whether IRQ $n$ was asserted; this allows a
+thread to multiplex the handling of multiple interrupts through a single
+\obj{AsyncEP}.
+
+\obj{IRQHandler} capabilities represent the ability of a thread to
+configure a certain interrupt. They have three methods:
+
+\begin{description}
+
+    \item[\apifunc{seL4\_IRQHandler\_SetEndpoint}{irq_handlersetendpoint}]
+    specifies the \obj{AsyncEP} that the kernel should
+    \apifunc{notify}{sel4_notify} when an interrupt occurs. A driver
+    may then call \apifunc{seL4\_Wait}{sel4_wait} on this endpoint to
+    wait for interrupts to arrive.
+
+    \item[\apifunc{seL4\_IRQHandler\_Ack}{irq_handleracknowledge}]
+    informs the kernel that the userspace driver has finished processing
+    the interrupt and the microkernel can send further pending or new
+    interrupts to the application.
+
+    \item[\apifunc{seL4\_IRQHandler\_Clear}{irq_handlerclear}]
+    de-registers the \obj{AsyncEP} from the \obj{IRQHandler} object.
+
+\end{description}
+
+When the system first starts, no \obj{IRQHandler} capabilities are
+present. Instead, the initial thread's CSpace contains a single
+\obj{IRQControl} capability. This capability may be used to produce
+a single \obj{IRQHandler} capability for each interrupt available in the
+system. Typically, the initial thread of a system will determine which
+IRQs are required by other components in the system, produce an
+\obj{IRQHandler} capability for each interrupt, and then delegate the
+resulting capabilities as appropriate. \obj{IRQControl} has one method:
+
+\begin{description}
+    \item[\apifunc{seL4\_IRQControl\_Get}{irq_controlget}] creates an
+    \obj{IRQHandler} capability for the specified interrupt source.
+\end{description}
+
+\ifxeightsix
+\section{IA-32-Specific I/O}
+
+\subsection{I/O Ports}
+\label{sec:ioports}
+
+On IA-32 platforms, seL4 provides access to I/O ports to user-level threads.
+Access to I/O ports is controlled by \obj{IO Port} capabilities. Each
+\obj{IO Port} capability identifies a range of ports that can be accessed with
+it. Reading from I/O ports is accomplished with the
+\apifunc{seL4\_IA32\_IOPort\_In8}{ia32_IO_portin8},
+\apifunc{seL4\_IA32\_IOPort\_In16}{ia32_IO_portin16}, and
+\apifunc{seL4\_IA32\_IOPort\_In32}{ia32_IO_portin32} methods, which
+allow for reading of 8-, 16- and 32-bit quantities.
+Similarly, writing to I/O ports is accomplished with the
+\apifunc{seL4\_IA32\_IOPort\_Out8}{ia32_IO_portout8},
+\apifunc{seL4\_IA32\_IOPort\_Out16}{ia32_IO_portout16}, and
+\apifunc{seL4\_IA32\_IOPort\_Out32}{ia32_IO_portout32} methods.
+Each of these methods takes as arguments an \obj{IO Port} capability
+and an unsigned integer~\texttt{port}, which indicates the I/O port to read from
+or write to, respectively.
+In each case, \texttt{port} must be within the range of I/O ports identified
+by the given \obj{IO Port} capability in order for the method to succeed.
+
+At system initialisation, the initial thread's \obj{CSpace} contains the
+master \obj{IO Port} capability, which allows access to all I/O ports.
+Other \obj{IO Port} capabilities, which authorise access to a specific
+range of I/O Ports, may be derived from this master capability using
+the \apifunc{seL4\_CNode\_Mint}{cnode_mint} method. 
+The range of I/O ports that the newly created capability should identify
+are specified via the 32-bit \texttt{badge} argument provided to 
+\apifunc{seL4\_CNode\_Mint}{cnode_mint}. The first port number in the range
+occupies the top 16 bits of \texttt{badge}, while the last port number in
+the range occupies the bottom 16 bits. The range is interpreted as being
+inclusive of these two numbers.
+
+The I/O port methods return error codes upon failure.
+A \texttt{seL4\_IllegalOperation} code is returned if port access is
+attempted outside the range allowed by the \obj{IO Port} capability. 
+Since invocations that
+read from I/O ports are required to return two values -- the value read
+and the error code -- a structure containing two members, \texttt{result}
+and \texttt{error}, is returned from these API calls.
+
+\subsection{I/O Space}
+\label{sec:iospace}
+
+I/O devices capable of DMA present a security risk because the CPU's MMU
+is bypassed when the device accesses memory. In seL4, device drivers run
+in user space to keep them out of the trusted computing base.
+A malicious or buggy device driver may, however, program the device to
+access or corrupt memory that is not part of its address space, thus
+subverting security. To mitigate this threat, seL4 provides support for
+the IOMMU on Intel IA-32-based platforms. An IOMMU allows memory to be
+remapped from the device's point of view. It acts as an MMU for the
+device, restricting the regions of system memory that it can access.
+More information can be obtained from Intel's IOMMU documentation \cite{extra:vtd}.
+
+seL4-based systems that wish to utilise DMA must have an IOMMU.
+This restriction results from the fact that seL4 provides no way to obtain the physical address of a \obj{Page} from its capability.
+Hence, applications are unable to accurately instruct devices,
+at which address they should directly address the physical memory.
+Instead, frames of memory must be mapped into the device's address space using seL4's IOMMU primitives.
+
+Two new objects are provided by the kernel to abstract the IOMMU:
+\begin{description}
+
+    \item[\obj{IOSpace}] This object represents the address space associated
+    with a hardware device on the PCI bus. It represents the right to
+    modify a device's memory mappings.
+
+    \item[\obj{IOPageTable}] This object represents a node in the multilevel
+    page-table structure used by IOMMU hardware to translate hardware
+    memory accesses.
+
+\end{description}
+
+\obj{Page} capabilities are used to represent the actual frames that are
+mapped into the I/O address space. A \obj{Page} can be mapped into
+either a \obj{VSpace} or an \obj{IOSpace} but never into both at the same time.
+
+\obj{IOSpace} and \obj{VSpace} fault handling differ significantly.
+\obj{VSpace} page faults are redirected to the thread's exception handler (see \autoref{sec:faults}), 
+which can take the
+appropriate action and restart the thread at the faulting instruction.
+There is no concept of an exception handler for an \obj{IOSpace}. Instead, faulting
+transactions are simply
+aborted; the device driver must correct the cause of the fault and retry
+the DMA transaction.
+
+An initial master \obj{IOSpace} capability is provided in the initial thread's
+CSpace. An \obj{IOSpace} capability for a specific device is created by
+using the \apifunc{seL4\_CNode\_Mint}{cnode_mint} method, passing the
+PCI identifier of the device as the low 16 bits of the \texttt{badge} argument, and
+a Domain ID as the high 16 bits of the \texttt{badge} argument.
+PCI identifiers are explained fully in the PCI specification 
+\cite{Shanley:PCISA}, but are briefly described here. A PCI identifier is
+a 16-bit quantity.  The first 8 bits identify the bus that the device is on.
+The next 5 bits are the device identifier: the number of the device on
+the bus. The last 3 bits are the function number. A single device may
+consist of several independent functions, each of which may be addressed
+by the PCI identifier.
+Domain IDs are explained fully in the Intel IOMMU documentation \cite{extra:vtd}.
+There is presently no way to query seL4 for how many Domain IDs are supported by
+the IOMMU and the \apifunc{seL4\_CNode\_Mint}{cnode_mint} method will fail if an
+unsupported value is chosen.
+
+The IOMMU page-table structure has three levels.
+Page tables are mapped into an \obj{IOSpace} using the \apifunc{seL4\_IA32\_IOPageTable\_Map}{ia32_io_pagetable_map} method.
+This method takes the \obj{IOPageTable} to map, the \obj{IOSpace} to map into 
+and the address to map at. Three levels of page tables must be mapped before
+a frame can be mapped successfully. A frame is mapped with the
+\apifunc{seL4\_IA32\_Page\_MapIO}{ia32_page_mapio} method whose parameters are analogous to
+the corresponding method that maps \obj{Page}s into \obj{VSpaces} (see \autoref{ch:vspace}), 
+namely \apifunc{seL4\_IA32\_Page\_Map}{ia32_page_map}.
+
+Unmapping is accomplished with the usual unmap (see \autoref{ch:vspace}) API 
+call,
+\apifunc{seL4\_IA32\_Page\_Unmap}{ia32_page_unmap}.
+
+More information about seL4's IOMMU abstractions can be found in \cite{Palande:M}.
+\fi

@@ -1,0 +1,58 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--
+     Copyright 2014, NICTA
+
+     This software may be distributed and modified according to the terms of
+     the BSD 2-Clause license. Note that NO WARRANTY is provided.
+     See "LICENSE_BSD2.txt" for details.
+
+     @TAG(NICTA_BSD)
+  -->
+
+    <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+            Syscall number generator schema.
+        </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:element name="syscalls" type="SyscallListType" />
+
+    <xsd:complexType name="SyscallListType">
+        <xsd:sequence>
+            <xsd:element name="api" type="ApiType" />
+            <xsd:element name="debug" type="DebugType" />
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="ApiType">
+        <xsd:sequence>
+            <xsd:element name="config" minOccurs="1" maxOccurs="1" type="ApiConfigType" />
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="ApiConfigType">
+        <xsd:sequence>
+            <xsd:element name="syscall" minOccurs="1" maxOccurs="unbounded" type="SyscallType"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" fixed="" />
+    </xsd:complexType>
+
+    <xsd:complexType name="DebugType">
+        <xsd:sequence>
+            <xsd:element name="config" type="ConfigType" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="ConfigType" >
+        <xsd:sequence>
+            <xsd:element name="syscall" minOccurs="1" maxOccurs="unbounded" type="SyscallType"/>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:NMTOKEN" />
+    </xsd:complexType>
+
+    <xsd:complexType name="SyscallType">
+        <xsd:attribute name="name" type="xsd:string" />
+    </xsd:complexType>
+
+
+</xsd:schema>

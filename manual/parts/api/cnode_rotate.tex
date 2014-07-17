@@ -1,0 +1,31 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{cnode_rotate}
+{CNode  -  Rotate}
+{Given 3 capability slots - a destination, pivot and source - move the capability in the pivot slot to the destination slot and the capability in the source slot to the pivot slot}
+{static inline int seL4\_CNode\_Rotate}
+{
+\param{seL4\_CNode}{\_service}{CPTR to the CNode at the root of the CSpace where the destination slot will be found. Must be at a depth of 32.}
+\param{seL4\_Word}{dest\_index}{CPTR to the destination slot. Resolved relative to \_service. Must be empty unless it refers to the same slot as the source slot.}
+\param{uint8\_t}{dest\_depth}{Depth to resolve dest\_index to.}
+\param{seL4\_CapData\_t}{dest\_badge}{The new capdata for the capability that ends up in the destination slot.}
+\param{seL4\_CNode}{pivot\_root}{CPTR to the CNode at the root of the CSpace where the pivot slot will be found. Must be at a depth of 32.}
+\param{seL4\_Word}{pivot\_index}{CPTR to the pivot slot. Resolved relative to pivot\_root. The resolved slot must not refer to the source or destination slots.}
+\param{uint8\_t}{pivot\_depth}{Depth to resolve pivot\_index to.}
+\param{seL4\_CapData\_t}{pivot\_badge}{The new capdata for the capability that ends up in the pivot slot.}
+\param{seL4\_CNode}{src\_root}{CPTR to the CNode at the root of the CSpace where the source slot will be found. Must be at a depth of 32.}
+\param{seL4\_Word}{src\_index}{CPTR to the source slot. Resolved relative to src\_root.}
+\param{uint8\_t}{src\_depth}{Depth to resolve src\_index to.}
+}
+{\errorenumdesc}
+{See \autoref{sec:cnode-ops}.}
+

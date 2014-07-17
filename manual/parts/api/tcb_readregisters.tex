@@ -1,0 +1,24 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{tcb_readregisters}
+{TCB - Read Registers}
+{Read a thread's registers}
+{static inline int seL4\_TCB\_ReadRegisters}
+{
+\param{seL4\_TCB}{\_service}{\tcbcapdesc}
+\param{bool}{suspend\_source}{\suspendsourcedesc}
+\param{uint8\_t}{arch\_flags}{\archflagsdesc}
+\param{seL4\_Word}{count}{The number of registers to read.}
+\param{seL4\_UserContext*}{regs}{The structure to read the registers into.}
+}
+{\errorenumdesc}
+{See \autoref{sec:read_write_registers}}

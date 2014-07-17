@@ -1,0 +1,26 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{tcb_copyregisters}
+{TCB - Copy Registers}
+{Copy the registers from one thread to another}
+{static inline int seL4\_TCB\_CopyRegisters }
+{
+\param{seL4\_TCB}{\_service}{\tcbcapdesc{} This is the destination TCB. }
+\param{seL4\_TCB}{source}{Cap to the source TCB.}
+\param{bool}{suspend\_source}{\suspendsourcedesc}
+\param{bool}{resume\_target}{\resumetargetdesc}
+\param{bool}{transfer\_frame}{Frame registers should be transferred.}
+\param{bool}{transfer\_integer}{Integer registers should be transferred.}
+\param{uint8\_t}{arch\_flags}{\archflagsdesc}
+}
+{\errorenumdesc}
+{In the context of this function, frame registers are those that are read, modified or preserved by a system call and integer registers are those that are not. Refer to the seL4 userland library source for specifics. \autoref{sec:thread_deactivation}}

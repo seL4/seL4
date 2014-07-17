@@ -1,0 +1,23 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{ia32_page_mapio}
+{IA32 Page - Map IO}
+{Map a page into an IOSpace}
+{static inline int seL4\_IA32\_Page\_MapIO}
+{
+\param{seL4\_IA32\_Page}{\_service}{The frame that is being mapped.}
+\param{seL4\_IA32\_IOSpace}{iospace}{The IOSpace that the frame is being mapped into.}
+\param{seL4\_CapRights}{rights}{\vmcaprightsdesc}
+\param{seL4\_Word}{ioaddr}{The address that the frame is being mapped at.}
+}
+{\errorenumdesc}
+{See \autoref{sec:iospace}}

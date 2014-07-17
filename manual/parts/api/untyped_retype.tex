@@ -1,0 +1,149 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{untyped_retype}
+{Untyped - Retype}
+{Retype an untyped object}
+{static inline int seL4\_Untyped\_Retype}
+{
+\param{seL4\_Untyped}{\_service}{CPTR to an untyped object.}
+\param{int}{type}{The seL4 object type that we are retyping to.}
+\param{int}{size\_bits}{Only valid for objects with various sizes. Explained below.}
+\param{seL4\_CNode}{root}{CPTR to the CNode at the root of the destination CSpace.}
+\param{int}{node\_index}{CPTR to the destination CNode. Resolved relative to the root parameter.}
+\param{int}{node\_depth}{Number of bits of node\_index to tranlate when addressing the destination CNode.}
+\param{int}{node\_offset}{Number of slots into the node at which capabilities start being placed.}
+\param{int}{num\_objects}{Number of capabilities to create.}
+}
+{\errorenumdesc}
+% FIXME: Move; Given the brief descriptions of the other functions, I don't
+% think this is the place to insert a lengthy discussion of how Untyped_Retype
+% works.
+{
+Given a capability, \texttt{\_service}, to an untyped object,  
+creates \texttt{num\_objects} of the requested type. Creates 
+\texttt{num\_objects} capabilities to the new objects starting 
+at \texttt{node\_offset} in the given CNode.
+
+The retype method can be
+complex because multiple capabilities may be created and some objects such as
+\obj{CNode}s may have varying sizes.
+
+Most kernel objects have a fixed size, and hence no further information
+must be given to the kernel about them. \obj{CNode}s and \obj{Untyped
+Memory} however have a variable size, and so the user must additionally
+give a value in the \texttt{size\_bits} parameter to specify the desired
+size for the objects to be created.
+For \obj{CNode}s, the number of slots in each \obj{CNode} is calculated as
+$2^{size\_bits}$ and hence the required amount of memory for each is
+16*$2^{size\_bits}$. For the case where \obj{Untyped Memory} is being split into
+smaller blocks of \obj{Untyped Memory},
+the size of each of the resulting \obj{Untyped Memory} blocks is 
+calculated as $2^{size\_bits}$. If the size of the memory area needed (calculated
+by the object size multiplied by \texttt{num\_objects}) is greater than the
+remaining unallocated memory of the untyped memory region, an error will result.
+Otherwise object allocation will proceed.
+
+Allocation is performed by choosing the region of memory closest to
+the start of the untyped memory object that is both unallocated, and aligned to the size of
+the type of object(s) being created. This may leave unallocated gaps between objects in 
+the parent untyped object, which are considered as allocated.
+
+The retype method places capabilities to the objects produced at consecutive
+locations in a CNode. The CNode is specified by the \texttt{root}, 
+\texttt{node\_index}
+and \texttt{node\_depth} parameters (see \autoref{sec:cap_addressing}). 
+The \texttt{node\_offset} parameter  specifies the
+index in the CNode at which the first capability will be placed. 
+The \texttt{num\_objects}
+parameter specifies the number of capabilities (and, hence, objects) 
+to create. All slots
+must be empty or an error will result. All resulting objects will be
+placed in the same CNode. 
+
+
+\subsection{Summary of Object Sizes}
+\label{sec:object_sizes}
+
+When retyping untyped memory it is useful to know how much memory the
+object will require. Object sizes are summarised in Tables
+\ref{tab:obj_sizes}\ifxeightsix, \ref{tab:intel_obj_sizes}\else\ \fi{} 
+and~\ref{tab:arm_obj_sizes}.
+
+\begin{table}[tbp]
+        \begin{center}
+            \begin{tabular}{ll}
+                \toprule
+                  Object                & Object Size \\
+                \midrule
+                  $n$-bit Untyped       & $2^n$ bytes (where $n \ge 4$) \\
+                  $n$-slot CNode        & $16n$ bytes (where $n \ge 2$) \\
+                  Synchronous Endpoint  & $16$ bytes \\
+                  Asynchronous Endpoint & $16$ bytes \\
+                  IRQ Control           & --- \\
+                  IRQ Handler           & --- \\
+                \bottomrule
+            \end{tabular}
+        \end{center}
+    \caption{Platform Independent Object Sizes}
+    \label{tab:obj_sizes}
+\end{table}
+
+\begin{table}[htbp]
+\ifxeightsix
+    \parbox{.45\linewidth}{
+        \begin{center}
+            \begin{tabular}{ l l }
+                \toprule
+                IA-32 Object              & Object Size \\
+                \midrule
+                Thread Control Block      & 1KiB \\
+                IA32 4K Frame             & 4KiB \\
+                IA32 4M Frame             & 4MiB \\
+                IA32 Page Directory       & 4KiB \\
+                IA32 Page Table           & 4KiB \\
+                IA32 ASID Control         & --- \\
+                IA32 ASID Pool            & 4KiB \\
+                IA32 Port                 & --- \\
+                IA32 IO Space             & --- \\
+                IA32 IO Page table        & 4KiB \\
+                \bottomrule
+            \end{tabular}
+        \end{center}
+    \caption{IA-32 Specific Object Sizes}
+    \label{tab:intel_obj_sizes}
+    }
+\hfill
+\fi
+    \parbox{.45\linewidth}{
+        \begin{center}
+            \begin{tabular}{ l l }
+                \toprule
+                ARM Object              & Object Size \\
+                \midrule
+                Thread Control Block    & 512 bytes \\
+                ARM Small Frame         & 4KiB \\
+                ARM Large Frame         & 64KiB \\
+                ARM Section             & 1MiB \\
+                ARM Supersection        & 16MiB \\
+                ARM Page Directory      & 16KiB \\
+                ARM Page Table          & 1KiB \\
+                ARM ASID Control        & --- \\
+                ARM ASID Pool           & 4KiB \\
+                \bottomrule
+            \end{tabular}
+        \end{center}
+    \caption{ARM Specific Object Sizes}
+    \label{tab:arm_obj_sizes}
+    }
+\end{table}
+}
+\label{sec:api-untyped-retype}

@@ -1,0 +1,451 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+config KERNEL_PATH
+    string
+    option env="KERNEL_ROOT_PATH"
+
+config ARCH_ARM_V6
+    bool
+    default n
+
+config ARCH_ARM_V7A
+    bool
+    default n
+
+config KERNEL_STABLE
+    bool
+    default y
+
+menu "seL4 System"
+
+    choice
+        prompt "Architecture Type"
+        default ARCH_I386
+        help
+            Select the architecture seL4 will be running on.
+
+        config ARCH_I386
+            bool "x86"
+
+        config ARCH_X86_64
+            bool "x86_64"
+
+        config ARCH_ARM
+            bool "ARM"
+    endchoice
+
+config ARCH_IA32
+       bool
+       default y if ARCH_I386 || ARCH_X86_64
+
+    choice
+        prompt "ARM CPU selection"
+        depends on ARCH_ARM
+        help
+            Select the ARM CPU version
+        
+        config ARM1136JF_S
+            bool "ARM1136JF-S"
+            depends on ARCH_ARM
+            select ARCH_ARM_V6
+            help
+                Support for ARM1136JF-S
+
+        config ARM926EJ_S
+            bool "ARM926EJ-S"
+            depends on ARCH_ARM
+            select ARCH_ARM_V5
+            help 
+                Support for ARM926EJ_S
+
+        config ARM_CORTEX_A8 
+            bool "Cortex A8"
+            depends on ARCH_ARM
+            select ARCH_ARM_V7A
+            help
+                Support for Cortex A8 processor
+
+        config ARM_CORTEX_A9
+            bool "Cortex A9"
+            depends on ARCH_ARM
+            select ARCH_ARM_V7A
+            help
+                Support for Cortex A9 processor
+
+        config ARM_CORTEX_A15
+            bool "Cortex A15"
+            depends on ARCH_ARM
+            select ARCH_ARM_V7A
+            help
+                Support for Cortex A15 processor
+
+    endchoice
+    
+    choice
+        prompt "Platform Type"
+        help
+            Select the platform for the architecture
+
+        config PLAT_KZM
+            bool "KZM iMX.31-based platform"
+            depends on ARCH_ARM
+            depends on ARM1136JF_S
+            help
+                Support for the KZM platform
+
+        config PLAT_INTEGRATORCP
+            bool "IntegratorCP Platform"
+            depends on ARCH_ARM
+            depends on ARM926EJ_S
+            help
+                Support for the IntegratorCP platform
+
+        config PLAT_OMAP3
+            bool "OMAP3 (BeagleBoard)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A8
+            help
+                Support for platforms based on OMAP3 SoCs.
+
+        config PLAT_AM335X
+            bool "AM335X (BeagleBone)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A8
+            help
+                Support for AM335x platform (BeagleBone).
+
+        config PLAT_EXYNOS4
+            bool "EXYNOS4 (ODROID-X)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A9
+            help
+                Support for EXYNOS4 platform (ODROID-X).
+
+        config PLAT_EXYNOS5410
+            bool "EXYNOS5410 (ODROID-XU)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A15
+            help
+                Support for EXYNOS5410 platform (ODROID-XU).
+
+        config PLAT_EXYNOS5250
+            bool "EXYNOS5250 (ARNDALE)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A15
+            help
+                Support for EXYNOS5250 platform (ARNDALE).
+
+
+        config PLAT_APQ8064
+            bool "Qualcomm Snapdrogon S4 APQ8064 (Inforce IFC6410)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A15
+            help
+                Support for Qualcomm Snapdragon S4 APQ8064 platforms (Inforce IFC6410).
+
+        config PLAT_IMX6
+            bool "iMX6 (Sabre Lite)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A9
+            help
+                Support for iMX6 platform (Sabre Lite).
+
+        config PLAT_PC99
+            bool "PC99"
+            depends on ARCH_I386 || ARCH_X86_64
+            help
+                Support for PC99 based platform
+    endchoice
+
+source "$KERNEL_PATH/src/plat/pc99/Kconfig"
+
+endmenu
+
+
+menu "seL4 System Parameters"
+
+    config ROOT_CNODE_SIZE_BITS
+        range 4 27
+        int "Root CNode Size (2^n slots)"
+        default 16
+        help
+            The acceptable range is 4-27, based on the kernel-supplied caps.
+            The root CNode needs at least enough space to contain up to
+            BI_CAP_DYN_START. Note that in practice your root CNode will need
+            to be several bits larger than 4 to fit device frame caps and
+            cannot be 27 bits as it won't fit in memory.
+
+    config TIMER_TICK_MS
+        int "Timer tick period in milliseconds"
+        default 20
+        help
+            The number of milliseconds between timer ticks.
+
+
+    config TIME_SLICE
+        int "Time slice"
+        default 5
+        help
+            Number of timer ticks until a thread is preempted.
+
+    config RETYPE_FAN_OUT_LIMIT
+        int "Retype fan out limit"
+        default 256
+        help
+            Maximum number of objects that can be created in a single Retype()
+            invocation.
+
+    config MAX_NUM_WORK_UNITS_PER_PREEMPTION
+        int "Max work units per preemption"
+        default 100
+        help
+            Maximum number of work units (delete/revoke iterations) until
+            the kernel checks for pending interrupts (and preempts the
+            currently running syscall if interrupts are pending).
+
+    config MAX_NUM_BOOTINFO_UNTYPED_CAPS
+        int "Max number of bootinfo untyped caps"
+        default 800
+
+    config MAX_NUM_NODES
+        int "Max number of cpu nodes"
+        range 1 256
+        depends on ARCH_I386
+        default 1
+
+    config MAX_MEM_REGIONS
+        int "Max number of memory regions to describe in bootinfo"
+        depends on ARCH_I386
+        default 10
+        help
+            Multiboot may describe where additional real memory is
+            that is not inside the kernel window.
+            These regions are passed to the roottask in the arch
+            bootinfo frame.
+
+    config MAX_RMRR_ENTRIES
+        int "Max number of RMRR entries to support finding in ACPI"
+        depends on IOMMU
+        default 32
+
+    config FASTPATH
+        bool "Enable fastpath"
+        default y
+        help
+            Enable IPC fastpath
+
+      config NUM_DOMAINS
+        int "Number of domains"
+        default 1
+        help
+            The number of scheduler domains in the system
+
+    config DOMAIN_SCHEDULE
+        string "Domain schedule"
+        help
+            A C file providing the symbols ksDomSchedule and
+            ksDomScheduleLength to be linked with the kernel as a scheduling
+            configuration.
+
+    config NUM_PRIORITIES
+        int "Numer of priority levels"
+        default 256
+        help
+            The number of priority levels per domain
+
+    config BENCHMARK
+        bool "Adds a log buffer to the kernel for instrumentation."
+        default n
+        help    
+            Enables a 1MB log buffer and functions for extracting data from it at user level.
+            Use TRACE_POINT_START and TRACE_POINT_STOP macros for recording data.
+            NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory.
+            This is not fully implemented for x86.
+
+    config AEP_BINDING
+        bool
+        default y
+
+    config ALLOW_NULL_CSPACE
+        bool "Null CSpace support"
+        default n
+        help
+            This option allows threads to be configured and run without a
+            CSpace. Where configuring a thread with a null cap as its CSpace is
+            usually not allowed, enabling this setting will permit this
+            operation.
+
+endmenu
+
+menu "Build Options"
+    
+    config DEBUG_BUILD
+        bool "Build the kernel with debug support"
+        default y
+        help
+            Enable the debug facilities in the kernel
+
+    config IRQ_REPORTING
+        bool "Report suprious or undelivered IRQs"
+        depends on DEBUG_BUILD
+        default y
+        help
+            seL4 does not properly check for and handle spurious interrupts
+            This can result in unnecessary output from the kernel during
+            debug builds. If you are CERTAIN these messages are benign
+            then use this config to turn them off
+
+    choice
+        prompt "Compiler optimisation flag"
+        default OPTIMISATION_O2
+        help
+            Select the compiler optimisation level
+
+        config OPTIMISATION_Os
+            bool "-Os"
+            help
+                Compiler optimisations tuned for size
+
+        config OPTIMISATION_O0
+            bool "-O0"
+            help
+                No optimisation
+
+        config OPTIMISATION_O1
+            bool "-O1"
+            help
+                Basic compiler optimisations
+
+        config OPTIMISATION_O2
+            bool "-O2"
+            help
+                Aggressive compiler optimisations
+
+        config OPTIMISATION_O3
+            bool "-O3"
+            help
+                Enable all optimisations (may increase code size)
+
+    endchoice
+
+    config DANGEROUS_CODE_INJECTION
+	    bool "Build kernel with support for executing arbitrary code in protected mode"
+        default n
+        help
+            Adds a system call that allows users to specify code to be run in kernel
+            mode. Useful for profiling.
+
+    config DANGEROUS_CODE_INJECTION_ON_UNDEF_INSTR
+        bool "Make undefined instructions execute code in protected mode"
+        depends on ARCH_ARM_V6
+        default n
+        help
+            Replaces the undefined instruction handler with a call to a function
+            pointer in r8. This is an alternative mechanism to the code
+            injection syscall. On ARMv6 the syscall interferes with the caches
+            and branch predictor in such a way that it is unsuitable for
+            benchmarking. This option has no effect on non-ARMv6 platforms.
+
+    config DEBUG_DISABLE_L2_CACHE
+        bool "Disable L2 cache"
+        depends on ARCH_ARM
+        default n
+        help
+            Do not enable the L2 cache on startup for debugging purposes.
+
+    config DEBUG_DISABLE_L1_ICACHE
+        bool "Disable L1 instruction cache"
+        depends on ARCH_ARM && DEBUG_DISABLE_L2_CACHE
+        default n
+        help
+            Do not enable the L1 instruction cache on startup for debugging purposes.
+
+    config DEBUG_DISABLE_L1_DCACHE
+        bool "Disable L1 data cache"
+        depends on ARCH_ARM && DEBUG_DISABLE_L2_CACHE
+        default n
+        help
+            Do not enable the L1 data cache on startup for debugging purposes.
+
+    config DEBUG_DISABLE_BRANCH_PREDICTION
+        bool "Disable branch prediction"
+        depends on ARCH_ARM
+        default n
+        help
+            Do not enable branch prediction (also called program flow control)
+            on startup. This makes execution time more deterministic at the
+            expense of drammatically decreasing performance. Primary use is for
+            debugging.
+
+endmenu
+
+menu "Boot options"
+    choice
+        depends on ARCH_IA32
+        prompt "Multiboot graphics mode"
+        help
+            The type of graphics mode to request from the boot loader.
+            This is encoded into the multiboot header and is merely a hint,
+            the boot loader is free to ignore or set some other mode
+        default  IA32_MULTIBOOT_GRAPHICS_MODE_NONE
+        config IA32_MULTIBOOT_GRAPHICS_MODE_NONE
+            bool "None"
+            help
+                Request no graphics mode
+        config IA32_MULTIBOOT_GRAPHICS_MODE_TEXT
+            bool "Text"
+            help
+                Request a text mode
+        config IA32_MULTIBOOT_GRAPHICS_MODE_LINEAR
+            bool "Linear"
+            help
+                Request a linear graphics mode
+    endchoice
+    config IA32_MULTIBOOT_GRAPHICS_MODE_WIDTH
+        int "Mode Width"
+        depends on IA32_MULTIBOOT_GRAPHICS_MODE_TEXT || IA32_MULTIBOOT_GRAPHICS_MODE_LINEAR
+        default 80 if IA32_MULTIBOOT_GRAPHICS_MODE_TEXT
+        default 1024 if IA32_MULTIBOOT_GRAPHICS_MODE_LINEAR
+        help
+            The width of the graphics mode to reqest. For a linear graphics mode this
+            is the number of pixels. For a text mode this is the number of characters.
+            Value of zero indicates no preference
+    config IA32_MULTIBOOT_GRAPHICS_MODE_HEIGHT
+        int "Mode Height"
+        depends on IA32_MULTIBOOT_GRAPHICS_MODE_TEXT || IA32_MULTIBOOT_GRAPHICS_MODE_LINEAR
+        default 25 if IA32_MULTIBOOT_GRAPHICS_MODE_TEXT
+        default 768 if IA32_MULTIBOOT_GRAPHICS_MODE_LINEAR
+        help
+            The height of the graphics mode to reqest. For a linear graphics mode this
+            is the number of pixels. For a text mode this is the number of characters
+            Value of zero indicates no preference
+     config IA32_MULTIBOOT_GRAPHICS_MODE_DEPTH
+        int "Mode Depth"
+        depends on IA32_MULTIBOOT_GRAPHICS_MODE_LINEAR
+        default 32
+        help
+            The bits per pixel of the linear graphics mode to request.
+            Value of zero indicates no preference
+endmenu
+
+menu "Errata"
+
+    config ARM_ERRATA_430973
+        bool "Enable workaround for 430973 Cortex-A8 (r1p0..r1p2) erratum"
+        depends on ARCH_ARM
+        depends on ARM_CORTEX_A8
+        default n
+        help
+            Enables a workaround for the 430973 Cortex-A8 (r1p0..r1p2) erratum. Error occurs
+            if code containing ARM/Thumb interworking branch is replaced by different code
+            at the same virtual address.
+
+endmenu

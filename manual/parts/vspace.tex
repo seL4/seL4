@@ -1,0 +1,223 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\chapter{\label{ch:vspace}Address Spaces and Virtual Memory}
+
+A virtual address space in seL4 is called a VSpace. In a similar
+way to a CSpace (see \autoref{ch:cspace}), a VSpace is composed of objects 
+provided by the microkernel. Unlike CSpaces, these objects for managing
+virtual memory largely correspond to those of the hardware;
+that is, a page directory pointing to page tables, which in turn map
+physical frames.  The kernel also includes \obj{ASID Pool} and
+\obj{ASID Control} objects for tracking the status of address spaces.
+
+These VSpace-related objects are sufficient to implement the
+hardware data structures required to create, manipulate, and destroy
+virtual memory address spaces. It should be noted that, as usual, the
+manipulator of a virtual memory space needs the appropriate
+capabilities to the required objects.
+
+\section{Overview}
+\ifxeightsix
+\paragraph{IA-32}
+
+IA-32 processors have a two-level page-table structure.
+The top-level page directory covers a 4\,GiB range and each page table covers a 4\,MiB range.
+Frames can be 4\,KiB or 4\,MiB.
+Before a 4KiB
+frame can be mapped, a page table covering the range that the frame will
+be mapped into must have been mapped, otherwise seL4 will return an
+error.
+4\,MiB frames are mapped directly into the page directory, thus,
+a page table does not need to be mapped first.
+\fi
+
+\paragraph{ARM}
+
+ARM processors \ifxeightsix{also }\fi have a two-level page-table structure.
+The top-level page directory covers a range of 4\,GiB and each page table covers a 1\,MiB range.
+Four page sizes are allowed: 4\,KiB, 64\,KiB, 1\,MiB and 16\,MiB.
+4\,KiB and 64\,KiB pages are mapped into the second-level page table.
+Before
+they can be mapped, a page table covering the range that they will be
+mapped into must have been installed.
+1\,MiB and 16\,MiB pages are installed directly into the page directory such that it is not necessary to map a page table first.
+Pages of 4\,KiB and 1\,MiB size occupy one slot in a page table and the page directory, respectively.
+Pages of 64\,KiB and 16\,MiB size occupy 16 slots in a page table and the page directory, respectively.
+
+
+\section{Objects}
+
+\paragraph{\obj{Page Directory}}
+
+The \obj{Page Directory} (PD) is the top-level page table of the 
+two-level page table structure. It has a hardware-defined format, but
+conceptually contains a number of page directory entries (PDEs).
+The \obj{Page Directory} has no methods itself, but it is used
+as an argument to several other virtual-memory related object invocations.
+
+\paragraph{\obj{Page Table}} The \obj{Page Table} (PT) object forms the
+second level of the page-table structure.
+It contains a number of slots, each of which contains a page-table entry (PTE).
+
+\newcommand{\vmfunc}[2]{{#1}\par{\addtolength{\leftskip}{2em}{#2}\par}}
+
+\obj{Page Table} objects possess only two methods:
+\vspace{2ex}\\
+\vmfunc{
+\apifunc{seL4\_ARM\_PageTable\_Map}{arm_pagetable_map}\\
+\ifxeightsix\apifunc{seL4\_IA32\_PageTable\_Map}{ia32_pagetable_map}\fi
+}{
+Takes a \obj{Page Directory} capability as an argument, and installs a reference to the invoked
+\obj{Page Table} in a specified slot in the \obj{Page Directory}.
+}
+\vspace{2ex}
+\vmfunc{
+\apifunc{seL4\_ARM\_PageTable\_Unmap}{arm_pagetable_unmap}\\
+\ifxeightsix\apifunc{seL4\_IA32\_PageTable\_Unmap}{ia32_pagetable_unmap}\fi
+}{
+Removes the reference to the invoked \obj{Page Table} from its containing
+\obj{Page Directory}.
+}
+
+\paragraph{\obj{Page}}
+
+A \obj{Page} object is a region of physical memory that is used to
+implement virtual memory pages in a virtual address space. The
+\obj{Page} object has the following methods:
+\vspace{2ex}\\
+\vmfunc{
+\apifunc{seL4\_ARM\_Page\_Map}{arm_page_map}\\
+\ifxeightsix\apifunc{seL4\_IA32\_Page\_Map}{ia32_page_map}\fi
+}{
+Takes a \obj{Page Directory} capability as an argument and installs a reference
+to the given \obj{Page} in the PD or PT slot corresponding to the given address.
+}\vspace{2ex}
+
+\vmfunc{
+\apifunc{seL4\_ARM\_Page\_Remap}{arm_page_remap}\\
+\ifxeightsix\apifunc{seL4\_IA32\_Page\_Remap}{ia32_page_remap}\fi
+}{
+Changes the permissions of an existing mapping.
+}\vspace{2ex}
+
+\vmfunc{
+\apifunc{seL4\_ARM\_Page\_Unmap}{arm_page_unmap}\\
+\ifxeightsix\apifunc{seL4\_IA32\_Page\_Unmap}{ia32_page_unmap}\fi
+}{
+Removes an existing mapping.
+}\vspace{2ex}
+
+The virtual address for a \obj{Page} mapping
+must be aligned to
+the size of the \obj{Page} and must be mapped to a suitable \obj{Page Directory}
+or \obj{Page Table}. To map a page readable, the capability
+to the page
+that is being invoked must have read permissions. To map the page
+writable, the capability must have write permissions. The requested
+mapping permissions are specified with an argument of type
+\texttt{seL4\_CapRights} given to the \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or \apifunc{seL4\_IA32\_Page\_Map}{ia32_page_map} \fi method.
+\texttt{seL4\_CanRead} and \texttt{seL4\_CanWrite} are the only valid
+permissions on \ifxeightsix both \else the \fi ARM \ifxeightsix and IA-32 \fi architecture\ifxeightsix{s}\fi. If the capability does not have
+sufficient permissions to authorise the given mapping, then
+the mapping permissions are silently downgraded.
+
+\paragraph{\obj{ASID Control}}
+
+For internal kernel book-keeping purposes, there is a fixed maximum
+number of applications the system can support.  In order to manage
+this limited resource, the microkernel provides an \obj{ASID Control}
+capability. The \obj{ASID Control} capability is used to generate a
+capability that authorises the use of a subset of available address-space identifiers.
+This newly created capability is called an
+\obj{ASID Pool}. \obj{ASID Control} only has a single method:
+\vspace{2ex}\\
+\vmfunc{
+\apifunc{seL4\_ARM\_ASIDControl\_MakePool}{arm_asidcontrol_makepool}\\
+\ifxeightsix\apifunc{seL4\_IA32\_ASIDControl\_MakePool}{ia32_ASID_controlmakepool}\fi
+}{
+Together with a capability to 
+\obj{Untyped Memory} as argument creates an \obj{ASID Pool}.
+}\vspace{2ex}
+
+The untyped
+capability given to the \apifunc{seL4\_ARM\_ASIDControl\_MakePool}{arm_asidcontrol_makepool} call must represent a 4K memory object.
+This will create an ASID pool with enough space for 1024 VSpaces.
+
+\paragraph{\obj{ASID Pool}}
+
+An \obj{ASID Pool} confers the right to create a subset of the available
+maximum applications. For a VSpace to be usable by an application, it
+must be assigned to an ASID. This is done using a capability to an
+\obj{ASID Pool}. The \obj{ASID Pool} object has a single method:
+\vspace{2ex}\\
+\vmfunc{
+\apifunc{seL4\_ARM\_ASIDPool\_Assign}{arm_asidpool_assign}\\
+\ifxeightsix\apifunc{seL4\_IA32\_ASIDPool\_Assign}{ia32_ASID_poolassign}\fi
+}{
+Assigns an ASID to the VSpace
+associated with the \obj{Page Directory} passed in as an argument.
+}
+
+\section{Mapping Attributes}
+A parameter of type \texttt{seL4\_ARM\_VMAttributes} or
+\texttt{seL4\_IA32\_VMAttributes} is used to specify the cache behaviour of the
+page being mapped; possible values for ARM are shown in \autoref{tbl:vmattr_arm} \ifxeightsix and values for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi.
+
+\begin{table}[htb]
+  \begin{center}
+    \begin{tabularx}{\textwidth}{p{0.33\textwidth}X}
+      \toprule
+      Attribute & Meaning \\
+      \midrule
+      \texttt{seL4\_ARM\_PageCacheable} & Enable data in this mapping
+      to be cached \\
+      \texttt{seL4\_ARM\_ParityEnabled} & Enable parity checking for
+      this mapping\\
+      \bottomrule
+    \end{tabularx}
+    \caption{\label{tbl:vmattr_arm} Virtual memory attributes for ARM page
+      table entries.}
+  \end{center}
+\end{table}
+
+\begin{table}[htb]
+  \begin{center}
+    \begin{tabularx}{\textwidth}{p{0.33\textwidth}X}
+      \toprule
+      Attribute & Meaning \\
+      \midrule
+      \texttt{seL4\_IA32\_CacheDisabled} & Prevent data in this mapping
+      from being cached \\
+      \texttt{seL4\_IA32\_WriteThrough} & Enable write through cacheing for this mapping \\
+      \texttt{seL4\_IA32\_WriteCombining} & Enable write combining for this mapping \\
+      \bottomrule
+    \end{tabularx}
+    \caption{\label{tbl:vmattr_ia32} Virtual memory attributes for IA32 page
+      table entries.}
+  \end{center}
+\end{table}
+
+\section{Sharing Memory}
+
+seL4 does not allow \obj{Page Table}s to be shared, but does allow
+pages to be shared between address spaces. 
+To share a page, the capability to the 
+\obj{Page} must first be
+duplicated using the \apifunc{seL4\_CNode\_Copy}{cnode_copy} method and the new copy must
+be used in the \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or \apifunc{seL4\_IA32\_Page\_Map}{ia32_page_map} \fi method that maps the page into the second
+address space. Attempting to map the same capability
+twice will result in an error. 
+
+
+\section{Page Faults}
+
+Page faults are reported to the exception handler of the executed thread.
+See \autoref{sec:vm-fault}.
