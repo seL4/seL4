@@ -66,9 +66,6 @@ static exception_t decodeARMPageDirectoryInvocation(word_t label,
                                                     extra_caps_t extraCaps, word_t *buffer);
 static pde_t PURE loadHWASID(pde_t *pd);
 
-static bool_t PURE pteCheckIfMapped(pte_t *pte);
-static bool_t PURE pdeCheckIfMapped(pde_t *pde);
-
 static word_t CONST
 APFromVMRights(vm_rights_t vm_rights)
 {
@@ -1608,32 +1605,15 @@ performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static bool_t PURE
-pteCheckIfMapped(pte_t *pte)
-{
-    return pte_ptr_get_pteType(pte) != pte_pte_invalid;
-}
-
-static bool_t PURE
-pdeCheckIfMapped(pde_t *pde)
-{
-    return pde_ptr_get_pdeType(pde) != pde_pde_invalid;
-}
-
 exception_t
 performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
     unsigned int i;
-    bool_t tlbflush_required;
 
     cap = cap_frame_cap_set_capFMappedObject(cap, PT_REF(pte_entries.pt));
     cap = cap_frame_cap_set_capFMappedIndex(cap, pte_entries.start);
     cdtUpdate(ctSlot, cap);
-
-    /* we only need to check the first entries because of how createSafeMappingEntries
-     * works to preserve the consistency of tables */
-    tlbflush_required = pteCheckIfMapped(pte_entries.base);
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.pt[pte_entries.start + i] = pte;
@@ -1641,9 +1621,6 @@ performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t pte,
     cleanCacheRange_PoU((word_t)(pte_entries.pt + pte_entries.start),
                         ((word_t)LAST_BYTE_PTE(pte_entries.pt + pte_entries.start, pte_entries.length)),
                         addrFromPPtr(pte_entries.pt + pte_entries.start));
-    if (unlikely(tlbflush_required)) {
-        invalidateTLBByASID(asid);
-    }
 
     return EXCEPTION_NONE;
 }
@@ -1653,15 +1630,10 @@ performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
     unsigned int i;
-    bool_t tlbflush_required;
 
     cap = cap_frame_cap_set_capFMappedObject(cap, PD_REF(pde_entries.pd));
     cap = cap_frame_cap_set_capFMappedIndex(cap, pde_entries.start);
     cdtUpdate(ctSlot, cap);
-    /* we only need to check the first entries because of how createSafeMappingEntries
-     * works to preserve the consistency of tables */
-    tlbflush_required = pdeCheckIfMapped(pde_entries.base);
-
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.pd[pde_entries.start + i] = pde;
@@ -1669,9 +1641,6 @@ performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t pde,
     cleanCacheRange_PoU((word_t)&pde_entries.pd[pde_entries.start],
                         ((word_t)LAST_BYTE_PDE(pde_entries.pd + pde_entries.start, pde_entries.length)),
                         addrFromPPtr(&pde_entries.pd[pde_entries.start]));
-    if (unlikely(tlbflush_required)) {
-        invalidateTLBByASID(asid);
-    }
 
     return EXCEPTION_NONE;
 }
