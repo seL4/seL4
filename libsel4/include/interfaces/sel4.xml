@@ -1,0 +1,155 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2014, NICTA
+
+     This software may be distributed and modified according to the terms of
+     the BSD 2-Clause license. Note that NO WARRANTY is provided.
+     See "LICENSE_BSD2.txt" for details.
+
+     @TAG(NICTA_BSD)
+  -->
+<api>	
+    <interface name="seL4_Untyped">
+       	<method id="UntypedRetype" name="Retype">
+            <param dir="in" name="type" type="int"/>
+			<param dir="in" name="size_bits" type="int"/>
+			<param dir="in" name="root" type="seL4_CNode"/>
+			<param dir="in" name="node_index" type="int"/>
+			<param dir="in" name="node_depth" type="int"/>
+			<param dir="in" name="node_offset" type="int"/>
+			<param dir="in" name="num_objects" type="int"/>
+		</method>
+	</interface>
+    <interface name="seL4_TCB">
+		<method id="TCBReadRegisters" name="ReadRegisters">
+			<param dir="in" name="suspend_source" type="bool"/>
+			<param dir="in" name="arch_flags" type="uint8_t"/>
+			<param dir="in" name="count" type="seL4_Word"/>
+			<param dir="out" name="regs" type="seL4_UserContext"/>
+		</method>
+		<method id="TCBWriteRegisters" name="WriteRegisters">
+			<param dir="in" name="resume_target" type="bool"/>
+			<param dir="in" name="arch_flags" type="uint8_t"/>
+			<param dir="in" name="count" type="seL4_Word"/>
+			<param dir="in" name="regs" type="seL4_UserContext"/>
+		</method>
+		<method id="TCBCopyRegisters" name="CopyRegisters">
+			<param dir="in" name="source" type="seL4_TCB"/>
+			<param dir="in" name="suspend_source" type="bool"/>
+			<param dir="in" name="resume_target" type="bool"/>
+			<param dir="in" name="transfer_frame" type="bool"/>
+			<param dir="in" name="transfer_integer" type="bool"/>
+			<param dir="in" name="arch_flags" type="uint8_t"/>
+		</method>
+		<method id="TCBConfigure" name="Configure">
+			<param dir="in" name="fault_ep" type="seL4_Word"/>
+			<param dir="in" name="priority" type="uint8_t"/>
+			<param dir="in" name="cspace_root" type="seL4_CNode"/>
+			<param dir="in" name="cspace_root_data" type="seL4_CapData_t"/>
+			<param dir="in" name="vspace_root" type="seL4_CNode"/>
+			<param dir="in" name="vspace_root_data" type="seL4_CapData_t"/>
+			<param dir="in" name="buffer" type="seL4_Word"/>
+			<param dir="in" name="bufferFrame" type="seL4_CPtr"/>
+		</method>
+		<method id="TCBSetPriority" name="SetPriority">
+			<param dir="in" name="priority" type="uint8_t"/>
+		</method>
+		<method id="TCBSetIPCBuffer" name="SetIPCBuffer">
+			<param dir="in" name="buffer" type="seL4_Word"/>
+			<param dir="in" name="bufferFrame" type="seL4_CPtr"/>
+		</method>
+		<method id="TCBSetSpace" name="SetSpace">
+			<param dir="in" name="fault_ep" type="seL4_Word"/>
+			<param dir="in" name="cspace_root" type="seL4_CNode"/>
+			<param dir="in" name="cspace_root_data" type="seL4_CapData_t"/>
+			<param dir="in" name="vspace_root" type="seL4_CNode"/>
+			<param dir="in" name="vspace_root_data" type="seL4_CapData_t"/>
+		</method>
+		<method id="TCBSuspend" name="Suspend"/>
+		<method id="TCBResume" name="Resume"/>
+	</interface>
+	<interface name="seL4_CNode">
+        <method id="CNodeRevoke" name="Revoke">
+			<param dir="in" name="index" type="seL4_Word"/>
+			<param dir="in" name="depth" type="uint8_t"/>
+		</method>
+		<method id="CNodeDelete" name="Delete">
+			<param dir="in" name="index" type="seL4_Word"/>
+			<param dir="in" name="depth" type="uint8_t"/>
+		</method>
+		<method id="CNodeRecycle" name="Recycle">
+			<param dir="in" name="index" type="seL4_Word"/>
+			<param dir="in" name="depth" type="uint8_t"/>
+		</method>
+        <method id="CNodeCopy" name="Copy">
+			<param dir="in" name="dest_index" type="seL4_Word"/>
+			<param dir="in" name="dest_depth" type="uint8_t"/>
+			<param dir="in" name="src_root" type="seL4_CNode"/>
+			<param dir="in" name="src_index" type="seL4_Word"/>
+			<param dir="in" name="src_depth" type="uint8_t"/>
+			<param dir="in" name="rights" type="seL4_CapRights"/>
+		</method>
+		<method id="CNodeMint" name="Mint">
+			<param dir="in" name="dest_index" type="seL4_Word"/>
+			<param dir="in" name="dest_depth" type="uint8_t"/>
+			<param dir="in" name="src_root" type="seL4_CNode"/>
+			<param dir="in" name="src_index" type="seL4_Word"/>
+			<param dir="in" name="src_depth" type="uint8_t"/>
+			<param dir="in" name="rights" type="seL4_CapRights"/>
+			<param dir="in" name="badge" type="seL4_CapData_t"/>
+		</method>
+		<method id="CNodeMove" name="Move">
+			<param dir="in" name="dest_index" type="seL4_Word"/>
+			<param dir="in" name="dest_depth" type="uint8_t"/>
+			<param dir="in" name="src_root" type="seL4_CNode"/>
+			<param dir="in" name="src_index" type="seL4_Word"/>
+			<param dir="in" name="src_depth" type="uint8_t"/>
+		</method>
+		<method id="CNodeMutate" name="Mutate">
+			<param dir="in" name="dest_index" type="seL4_Word"/>
+			<param dir="in" name="dest_depth" type="uint8_t"/>
+			<param dir="in" name="src_root" type="seL4_CNode"/>
+			<param dir="in" name="src_index" type="seL4_Word"/>
+			<param dir="in" name="src_depth" type="uint8_t"/>
+			<param dir="in" name="badge" type="seL4_CapData_t"/>
+		</method>
+		<method id="CNodeRotate" name="Rotate">
+			<param dir="in" name="dest_index" type="seL4_Word"/>
+			<param dir="in" name="dest_depth" type="uint8_t"/>
+			<param dir="in" name="dest_badge" type="seL4_CapData_t"/>
+			<param dir="in" name="pivot_root" type="seL4_CNode"/>
+			<param dir="in" name="pivot_index" type="seL4_Word"/>
+			<param dir="in" name="pivot_depth" type="uint8_t"/>
+			<param dir="in" name="pivot_badge" type="seL4_CapData_t"/>
+			<param dir="in" name="src_root" type="seL4_CNode"/>
+			<param dir="in" name="src_index" type="seL4_Word"/>
+			<param dir="in" name="src_depth" type="uint8_t"/>
+		</method>
+		<method id="CNodeSaveCaller" name="SaveCaller">
+			<param dir="in" name="index" type="seL4_Word"/>
+			<param dir="in" name="depth" type="uint8_t"/>
+		</method>
+	</interface>
+    <interface name="seL4_IRQControl">
+		<method id="IRQIssueIRQHandler" name="Get">
+			<param dir="in" name="irq" type="int"/>
+			<param dir="in" name="root" type="seL4_CNode"/>
+			<param dir="in" name="index" type="seL4_Word"/>
+			<param dir="in" name="depth" type="uint8_t"/>
+        </method>
+        <method id="IRQInterruptControl" name="Control"/>
+	</interface>
+    <interface name="seL4_IRQHandler">
+		<method id="IRQAckIRQ" name="Ack"/>
+		<method id="IRQSetIRQHandler" name="SetEndpoint">
+			<param dir="in" name="endpoint" type="seL4_CPtr"/>
+		</method>
+		<method id="IRQClearIRQHandler" name="Clear"/>
+    </interface>
+	<interface name="seL4_DomainSet">
+		<method id="DomainSetSet" name="Set">
+			<param dir="in" name="domain" type="uint8_t"/>
+			<param dir="in" name="thread" type="seL4_TCB"/>
+		</method>
+	</interface>
+</api>

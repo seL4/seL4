@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2014, General Dynamics C4 Systems
+
+     This software may be distributed and modified according to the terms of
+     the GNU General Public License version 2. Note that NO WARRANTY is provided.
+     See "LICENSE_GPLv2.txt" for details.
+
+     @TAG(GD_GPL)
+  -->
+<!-- Please see syscalls.xsd to see the format of this file -->
+<syscalls>
+    <!-- official API syscalls -->
+    <api>
+        <config>
+            <syscall name="Call"      />
+            <syscall name="ReplyWait" />
+            <syscall name="Send"      />
+            <syscall name="NBSend"    />
+            <syscall name="Wait"      />
+            <syscall name="Reply"     />
+            <syscall name="Yield"     />
+        </config>
+    </api>
+    <!-- Syscalls on the unknown syscall path. These definitions will be wrapped in #ifdef name -->
+    <debug>
+        <config name="DEBUG">
+            <syscall name="DebugPutChar"  />
+            <syscall name="DebugHalt"     />
+            <syscall name="DebugCapIdentify"   />
+            <syscall name="DebugSnapshot" />
+        </config>
+        <config name="DANGEROUS_CODE_INJECTION">
+            <syscall name="DebugRun"/>
+        </config>
+        <config name="CONFIG_BENCHMARK">
+            <syscall name="BenchmarkResetLog" />
+            <syscall name="BenchmarkDumpLog"  />
+            <syscall name="BenchmarkLogSize"  />
+        </config>
+    </debug>
+</syscalls>

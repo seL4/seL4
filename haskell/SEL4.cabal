@@ -1,0 +1,83 @@
+--
+-- Copyright 2014, General Dynamics C4 Systems
+--
+-- This software may be distributed and modified according to the terms of
+-- the GNU General Public License version 2. Note that NO WARRANTY is provided.
+-- See "LICENSE_GPLv2.txt" for details.
+--
+-- @TAG(GD_GPL)
+--
+
+name:                   SEL4
+version:                0.3
+cabal-version:          >= 1.8
+build-type:             Simple
+license:                AllRightsReserved
+author:                 Philip Derrin et. al.
+synopsis:               Executable specification for the seL4 Kernel
+tested-with:            GHC == 6.12.1, GHC == 7.0.3, GHC == 7.4.1
+
+Flag FFI
+    description:        Include the C language bindings
+    default:            True
+
+Library
+    exposed-modules:        SEL4
+                            SEL4.Machine.Target
+
+    build-depends:          mtl, base, array, containers
+    if flag(FFI)
+    -- be fixed.
+        build-depends:      unix
+        exposed-modules:    Simulation.FFIBindings
+        include-dirs:       include
+        install-includes:   sel4model.h
+                            dist/build/Simulation/FFIBindings_stub.h
+
+    other-modules:          SEL4.API
+                            SEL4.API.Syscall
+                            SEL4.API.Faults
+                            SEL4.API.Failures
+                            SEL4.API.Types
+                            SEL4.API.Types.Universal
+                            SEL4.API.Invocation
+                            SEL4.Kernel
+                            SEL4.Kernel.VSpace
+                            SEL4.Kernel.CSpace
+                            SEL4.Kernel.Init
+                            SEL4.Kernel.Thread
+                            SEL4.Kernel.FaultHandler
+                            SEL4.Object
+                            SEL4.Object.ObjectType
+                            SEL4.Object.CNode
+                            SEL4.Object.Endpoint
+                            SEL4.Object.TCB
+                            SEL4.Object.Instances
+                            SEL4.Object.Structures
+                            SEL4.Object.Interrupt
+                            SEL4.Object.AsyncEndpoint
+                            SEL4.Object.Untyped
+                            SEL4.Model
+                            SEL4.Model.StateData
+                            SEL4.Model.PSpace
+                            SEL4.Model.Failures
+                            SEL4.Model.Preemption
+                            SEL4.Model.Syscall
+                            SEL4.Machine
+                            SEL4.Machine.RegisterSet
+                            SEL4.Machine.Hardware
+                            SEL4.Config
+                            Data.BinaryTree
+                            Data.Helpers
+
+    $TARGET-SPECIFIC-STUFF  -- will be inserted by the Setup.hs script
+
+    hs-source-dirs:         src
+    ghc-prof-options:       -auto-all
+    ghc-options:            -Wall -Werror -O2 -fno-warn-unused-do-bind
+                            -fno-warn-missing-signatures -fno-warn-orphans
+                            -fno-spec-constr -fno-warn-name-shadowing
+                            -fno-warn-unrecognised-pragmas
+                            -fno-warn-unused-binds
+
+-- arch-tag: 65000561-3741-489c-91b4-ac5e8307447e

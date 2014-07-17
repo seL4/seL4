@@ -1,0 +1,24 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{arm_pagetable_map}
+{ARM Page Table - Map}
+{Map a page table into an address space}
+{static inline int seL4\_ARM\_PageTable\_Map}
+{
+\param{seL4\_ARM\_PageTable}{\_service}{Capability to the page table that will be mapped.}
+\param{seL4\_ARM\_PageDirectory}{pd}{\pdcapdesc}
+\param{seL4\_Word}{vaddr}{\vaddrdesc}
+\param{seL4\_ARM\_VMAttributes}{attr}{\vmattribsdescarm}
+}
+{\errorenumdesc}
+{See \autoref{ch:vspace}}
+

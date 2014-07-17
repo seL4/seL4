@@ -1,0 +1,307 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\chapter{\label{ch:ipc}Inter-process Communication}
+
+The seL4 microkernel provides a message-passing mechanism for communication
+between threads. The mechanism is also used for communication with
+kernel-provided services. Messages are sent by invoking a capability to a
+kernel object. Messages sent to \emph{synchronous} (\obj{Endpoint}) and
+\emph{asynchronous} (\obj{Async\-EP}) IPC endpoints are destined for other
+threads; messages sent to objects of other types are processed by the kernel. This
+chapter describes the common message format, the two types of endpoints,
+and how they can be used for communication between applications.
+
+\section{Message Registers}
+\label{sec:messageinfo}
+
+Each message contains a number of message words and optionally a number of
+capabilities.
+The message words are sent to or received from a thread by placing them in its \emph{message registers}.
+The message registers are numbered and the first few message registers are implemented
+using physical CPU registers, while the rest are backed by a fixed region of
+memory called the \emph{IPC buffer}.
+The reason for this design is efficiency:
+very short messages need not use the memory.
+The physical CPU registers used for the
+message registers are described in \ifxeightsix\autoref{tbl:mrs_x86} for x86
+% x86 is used rather than IA-32 to be vendor neutral.
+and \fi \autoref{tbl:mrs_arm} for ARM.
+The IPC buffer is assigned to the calling thread (see \autoref{sec:threads} and \autoref{api:tcb_setipcbuffer}).
+%FIXME: seL4_TCB_SetIPCBuffer is only mentioned in the API reference!
+
+\ifxeightsix
+\begin{table}[htb]
+    \begin{center}
+        \begin{tabular}{lc}
+            \toprule
+            Role                                    & CPU Register \\
+            \midrule
+            Capability register \emph{(in)}         & \texttt{ebx} \\
+            Badge register \emph{(out)}             & \texttt{ebx} \\
+            Message tag \emph{(in/out)}     & \texttt{esi} \\
+            Message register 1 \emph{(in/out)}      & \texttt{edi} \\
+            Message register 2 \emph{(in/out)}      & \texttt{ebp} \\
+            \bottomrule
+        \end{tabular}
+    \caption{\label{tbl:mrs_x86}Physical register allocation for IPC messages
+    on the x86 architecture.}
+    \end{center}
+\end{table}
+\fi
+
+\begin{table}[htb]
+    \begin{center}
+        \begin{tabular}{lc}
+            \toprule
+            Role                                    & CPU Register \\
+            \midrule
+            Capability register \emph{(in)}         & \texttt{r0} \\
+            Badge register \emph{(out)}             & \texttt{r0} \\
+            Message tag \emph{(in/out)}     & \texttt{r1} \\
+            Message register 1--4 \emph{(in/out)}   & \texttt{r2} -- \texttt{r5} \\
+            \bottomrule
+        \end{tabular}
+    \caption{\label{tbl:mrs_arm}Physical register allocation for IPC messages on the ARM architecture.}
+    \end{center}
+\end{table}
+
+Every IPC message also has a tag (structure \texttt{seL4\_MessageInfo\_t}).  The
+tag consists of four fields: the label, message length, number of capabilities
+(the \texttt{extraCaps} field) and the \texttt{capsUnwrapped} field.  The
+message length and number of capabilities determine either the number of
+message registers and capabilities that the sending thread wishes to transfer,
+or the number of message registers and capabilities that were actually
+transferred. The label is not interpreted by the
+kernel and is passed unmodified as the first data payload of the message. The
+label may, for example, be used to specify a requested operation. The
+\texttt{capsUnwrapped} field is used only on the receive side, to indicate the
+manner in which capabilities were received. It is described in
+\autoref{sec:cap-transfer}.
+
+% FIXME: a little too low-level, perhaps?
+
+\newcommand{\ipcparam}[4]{\texttt{#1} \emph{#2}&\texttt{#3}&#4\\ }
+\begin{table}[htb]
+    \begin{center}
+    \begin{tabularx}{\textwidth}{p{0.28\textwidth}p{0.18\textwidth}X}
+      \toprule
+      \textbf{Type} & \textbf{Name} & \textbf{Description} \\
+      \midrule
+        \ipcparam{seL4\_MessageInfo\_t}{}{tag}{Message tag}
+        \ipcparam{seL4\_Word[]}{}{msg}{Message contents}
+        \ipcparam{seL4\_Word}{}{userData}{Base address of the structure, used by
+        supporting user libraries}
+        \ipcparam{seL4\_CPtr[]}{(in)}{caps}{Capabilities to transfer}
+        \ipcparam{seL4\_CapData\_t[]}{(out)}{badges}{Badges for
+        endpoint capabilities received}
+        \ipcparam{seL4\_CPtr}{}{receiveCNode}{CPTR to a CNode from which to
+        find
+        the receive slot}
+        \ipcparam{seL4\_CPtr}{}{receiveIndex}{CPTR to the receive slot
+        relative to \texttt{receiveCNode}}
+        \ipcparam{seL4\_Word}{}{receiveDepth}{Number of bits of
+        \texttt{receiveIndex} to
+        use}
+        \bottomrule
+      \end{tabularx}
+    \caption{\label{tbl:ipcbuffer}Fields of the
+      \texttt{seL4\_IPCBuffer} structure.  Note that
+      \texttt{badges} and \texttt{caps} use the same area of memory in
+      the structure.}
+    \end{center}
+\end{table}
+
+The kernel assumes that the IPC buffer contains a structure of type
+\texttt{seL4\_IPCBuffer} as defined in \autoref{tbl:ipcbuffer}. The
+kernel uses as many physical registers as possible to transfer IPC
+messages. When more arguments are transferred than physical message
+registers are available, the kernel begins using the IPC buffer's
+\texttt{msg} field to transfer arguments. However, it leaves room in
+this array for the physical message registers. For example, if an IPC
+transfer or kernel object invocation required
+4 message registers (and there are only 2 physical message registers
+available on this architecture) then arguments 1 and 2 would be
+transferred via message registers and arguments 3 and 4 would be in
+\texttt{msg[2]} and \texttt{msg[3]}.
+This allows the user-level object-invocation stubs to copy the arguments passed in physical registers to
+the space left in the \texttt{msg} array if desired.
+The situation is similar for the tag field.
+There is space for this field in the \texttt{seL4\_IPCBuffer} structure, which the kernel ignores.
+User level stubs
+may wish to copy the message tag from its CPU register to this field, although
+the user level stubs provided with the kernel do not do this.
+
+\section{Synchronous Endpoints}
+
+Synchronous endpoints (or simply \obj{Endpoint}s) allow a small amount
+of data and small number of capabilities (namely the IPC buffer) to be transferred between two
+threads. \obj{Endpoints} are called
+`synchronous' because a message transfer will not take
+place until both the sender is ready to send the message and a receiver is
+ready to receive it.
+
+\obj{Endpoint} objects are invoked directly using the seL4 system calls
+described in \autoref{sec:syscalls}. Note that \obj{Endpoint} objects may queue
+threads either to send or to receive. If no receiver is ready, threads
+performing the \apifunc{seL4\_Send}{sel4_send} or \apifunc{seL4\_Call}{sel4_call}
+system calls will wait in a queue for the first available receiver. Likewise if
+no sender is ready, threads performing the \apifunc{seL4\_Wait}{sel4_wait}
+system call or the second half of \apifunc{seL4\_ReplyWait}{sel4_replywait}
+will wait for the first available sender.
+
+\subsection{Endpoint Badges}
+\label{sec:ep-badges}
+
+Synchronous endpoint capabilities may be \emph{minted} to
+create a new endpoint capability with a \emph{badge} attached to it. The
+badge is a word of data that is associated with a particular endpoint
+capability. When a message is sent to an endpoint using a badged
+capability, the badge is transferred to the receiving thread's
+\texttt{badge} register.
+
+An endpoint capability with a zero badge is said to be \emph{unbadged}.
+Such a capability can be badged with the \apifunc{seL4\_CNode\_Mutate}{cnode_mutate} or \apifunc{seL4\_CNode\_Mint}{cnode_mint}
+invocations on the \obj{CNode} containing the capability. Endpoint
+capabilities with badges cannot be unbadged, rebadged or used to create
+child capabilities with different badges.
+
+\subsection{Capability Transfer}
+\label{sec:cap-transfer}
+
+Messages in seL4 may contain capabilities. Messages containing capabilities can
+be sent across synchronous endpoints, provided that the endpoint capability
+invoked by the sending thread has Grant rights. An attempt to transfer
+capabilities without Grant rights can still result in the message being sent,
+but no capabilities will be transferred.
+
+Capabilities to be sent with a message are specified in the sending thread's
+IPC buffer in the \texttt{caps} field. Each entry in that array is interpreted
+as a CPTR in the sending thread's capability space. The number of capabilities
+to send is specified in the \texttt{extraCaps} field of the message tag.
+
+The receiver specifies the slot,
+in which it is willing to receive a capability, with three fields within the IPC buffer: \texttt{receiveCNode}, \texttt{receiveIndex} and \texttt{receiveDepth}.
+These fields specify the root CNode, capability address and number of bits to resolve, respectively, to find
+the slot in which to put the capability. Capability
+addressing is described in \autoref{sec:cap_addressing}.
+
+A received capability has the same rights as the original except if the receiving endpoint capability does not have the Write right.
+In this case, the rights on the sent capability are \emph{diminished}, by
+removing from the received copy of that capability the Write right.
+
+Note that receiving threads may specify only one receive slot, whereas a
+sending thread may include multiple capabilities in the message. Messages
+containing more than one capability may be interpreted by kernel objects. They
+may also be sent to receiving threads in the case where some of the extra
+capabilities in the message can be \emph{unwrapped}.
+
+If the n-th capability in the message refers to the same endpoint as the one
+the
+message is being sent through, it is \emph{unwrapped}. Its badge is placed in
+the n-th
+position of the receiver's badges array and the n-th bit (counting from the
+least significant) is set in the \texttt{capsUnwrapped} field of the message
+tag. The capability itself is not transferred, so the receive slot may be used
+for another one.
+
+If a receiver gets a message whose tag has an \texttt{extraCaps} of 2 and a
+\texttt{capsUnwrapped} of 2, then the first capability in the message was
+transferred to the specified receive slot and the second capability was
+unwrapped, placing its badge in \texttt{badges[1]}. There may have been a
+third capability in the sender's message which could not be unwrapped.
+
+\subsection{Errors}
+
+% FIXME : will this actually issue a fault? TS: in the send phase? yes, yes it will
+
+Errors in capability transfers can occur at two places: in the send
+phase or in the receive phase. In the send phase, all capabilities that
+the caller is attempting to send are looked up to ensure that they exist
+before the send is initiated in the kernel. If the lookup fails for any
+reason, \apifunc{seL4\_Send}{sel4_send} and \apifunc{seL4\_Call}{sel4_call} system calls immediately abort and
+no IPC or capability transfer takes place. The system call will return
+a lookup failure error as described in \autoref{sec:errors}.
+
+In the receive phase, seL4 transfers capabilities in the order that they
+are found in the sending thread's IPC buffer \texttt{caps} array
+and terminates as soon as an error is encountered. Possible error
+conditions are:
+
+\begin{itemize}
+    \item A source capability cannot be looked up. Although the presence
+    of the source capabilities is checked when the sending thread
+    performs the send system call, this error may still occur. The sending
+    thread may have been blocked on the endpoint for some time before it
+    was paired with a receiving thread. During this time, its
+    CSpace may have changed and the source capability pointers may
+    no longer be valid.
+
+    \item The destination slot cannot be looked up. Unlike the send
+    system call, the \apifunc{seL4\_Wait}{sel4_wait} system call does not check that the
+    destination slot exists and is empty before it initiates the wait.
+    Hence, the \apifunc{seL4\_Wait}{sel4_wait} system call will not fail with an error if the
+    destination slot is invalid and will instead transfer badged
+    capabilities until an attempt to save a capability to the
+    destination slot is made.
+
+    \item The capability being transferred cannot be derived. See
+    \autoref{sec:cap_derivation} for details.
+\end{itemize}
+
+An error will not void the entire transfer, it will just end it
+prematurely. The capabilities processed before the failure are still
+transferred and the \texttt{extraCaps} field in the receiver's IPC
+buffer is set to the number of capabilities transferred up to failure.
+No error message will be returned to the receiving thread in any of the
+above cases.
+
+\section{Asynchronous Endpoints}
+
+Asynchronous endpoints (\obj{AsyncEP}s)
+allow senders to perform IPC without blocking.
+However, capabilities cannot be transferred over asynchronous endpoints.
+
+Each asynchronous endpoint stores a single word of data. This word of
+data may be written to using \apifunc{seL4\_Notify}{sel4_notify}, causing the
+first message register of the sending thread to be bitwise or-ed with
+the asynchronous endpoint's data word.
+
+Note that \apifunc{seL4\_Notify}{sel4_notify} is not a proper system call
+known by the kernel. Rather, it is a convenience
+wrapper provided by the seL4 userland library which calls
+\apifunc{seL4\_Send}{sel4_send} with a single parameter. It is
+useful for notifying an asynchronous endpoint.
+
+Additionally, the \apifunc{seL4\_Wait}{sel4_wait} system call may be used with an
+asynchronous endpoint, allowing the calling thread to retrieve all set
+bits from the asynchronous endpoint and clearing the endpoint in the
+process. If no \apifunc{seL4\_Notify}{sel4_notify} system calls have taken place since the last
+\apifunc{seL4\_Wait}{sel4_wait} call, the calling thread will block until the next
+\apifunc{seL4\_Notify}{sel4_notify} takes place.
+
+\subsection{Asynchronous Endpoint Badges}
+
+Like synchronous endpoints, asynchronous endpoint capabilities may also
+be minted to create a new capability with a \emph{badge} attached to it (see \autoref{sec:ep-badges}).
+The badge is a word of data that is associated with a particular
+endpoint capability. When a message is sent to an endpoint using
+a badged capability, the badge becomes part of the message received: in
+particular, the badge is bitwise or-ed with the badges from
+previous send system calls that have occurred since that last receive
+on the endpoint.
+
+Like synchronous endpoints, an asynchronous endpoint capability with
+a zero badge is said to be \emph{unbadged}. Such a capability can be
+badged with the \apifunc{seL4\_CNode\_Mutate}{cnode_mutate} or \apifunc{seL4\_CNode\_Mint}{cnode_mint} invocations on the
+\obj{CNode} containing the capability. Asynchronous endpoint
+capabilities with badges cannot be unbadged, rebadged or used to create
+child capabilities with different badges.
+

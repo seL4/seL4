@@ -1,0 +1,21 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+### include DFT
+dft ertos@nicta.com.au--private/documentation-framework-project--devel--0.2--patch-106
+
+### include nicta if building a nicta/ertos document (USUALLY YOU WANT THIS)
+dft/TeX/nicta ertos@nicta.com.au--private/documentation-framework-project--extension-nicta
+dft/TeX/nicta/images ertos@nicta.com.au--private/images--nicta-logos
+
+### include if you want ERTOS bib
+dft/BibTeX ertos@nicta.com.au--private/bibtex--ertos
+
+# arch-tag: CAD0D30E-BB79-4386-8060-60E2BA51FD4B

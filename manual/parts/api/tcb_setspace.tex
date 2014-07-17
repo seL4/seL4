@@ -1,0 +1,25 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{tcb_setspace}
+{TCB - Set Space}
+{Set the fault endpoint, CSpace and VSpace of a thread}
+{static inline int seL4\_TCB\_SetSpace}
+{
+\param{seL4\_TCB}{\_service}{\tcbcapdesc}
+\param{seL4\_Word}{fault\_ep}{\excepthanddesc}
+\param{seL4\_CNode}{cspace\_root}{\threadcspacerootdesc}
+\param{seL4\_CapData\_t}{cspace\_root\_data}{\threadcspacedatadesc}
+\param{seL4\_CNode}{vspace\_root}{\threadvspacerootdesc}
+\param{seL4\_CapData\_t}{vspace\_root\_data}{\threadvspacedatadesc}
+}
+{\errorenumdesc}
+{See \autoref{sec:threads}}

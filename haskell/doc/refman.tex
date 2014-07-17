@@ -1,0 +1,305 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\documentclass{ertos-book}
+
+\title{seL4 Reference Manual}
+\author{Philip Derrin, Dhammika Elkaduwe, Kevin Elphinstone}
+\documentnumber=10200
+% \documentrevision=0
+\copyrightyear=2006
+\licence{restricted}
+\input{version.aux}
+
+\usepackage{comment}
+\usepackage{ifxetex,ifpdf}
+
+% Definitions of the appearance of the typeset Haskell code
+\ifxetex
+\usepackage{fontspec}
+\defaultfontfeatures{Scale=MatchLowerCase,Mapping=tex-text}
+%\newfontfamily\hsfamily[Scale=0.85,BoldFont={Latin Modern Mono}, SmallCapsFont={Latin Modern Mono Caps}]{Latin Modern Mono Light}
+\newfontfamily\hsfamily[Scale=0.91,SmallCapsFont={Fontin Sans Small Caps}]{Fontin Sans}
+\else
+%\newcommand{\hsfamily}{\ttfamily}
+\newcommand{\hsfamily}{\sffamily}
+\fi
+
+% Command used to mark Haskell-specific implementation details so we can easily remove them from the manual
+%\includecomment{impdetails}
+\excludecomment{impdetails}
+%\newif \ifimpdetails \impdetailstrue
+%\newenvironment{impdetails}{
+% \ifimpdetails\begin{comment}\fi}{\ifimpdetails\end{comment}\fi}
+
+\usepackage{cite}
+\usepackage{lambdaTeX}
+
+% Workaround for conflict between PDFTeX and lambdaTeX
+\catcode`\<=12
+\catcode`\>=12
+
+% XXX work around broken tex-text mapping
+\ifxetex\typeset{`}{\hbox{\hsfamily\addfontfeatures{Mapping=none} `}}\fi
+
+% Symbols for bitwise AND and OR
+\typeset{.|.}{$\ddot{\vee}$}
+\typeset{.&.}{$\ddot{\wedge}$}
+
+% Symbols for monad bind operators
+\typeset{>>}{$\gg$}
+\typeset{<<}{$\ll$}
+\typeset{>>=}{$\gg\joinrel\joinrel\Relbar$}
+\typeset{=<<}{$\Relbar\joinrel\joinrel\ll$}
+
+\typeout{If TeX stops here, run mkfunctions.pl to generate functions.aux}
+\input{functions.aux}
+
+\bibliographystyle{plain}
+
+\hyphenation{C-Space C-Spaces C-Node C-Nodes Has-kell Send-Wait Ex-change-Reg-ist-ers Thread-Con-trol}
+
+\begin{document}
+
+% Re-enable lambdaTeX's active < and >
+\catcode`\<=\active
+\catcode`\>=\active
+
+\chapter*{Acknowledgements}
+
+The seL4 project team would like to acknowledge the following people
+and teams (in no particular order) who have contributed to seL4 in
+some way. Apologies if we missed you.
+
+seL4 is a descendant of L4 itself, and thus owes a lot to Jochen
+Liedtke's work on microkernels.
+
+The L4Ka team at the University of Karlsruhe and Hermann H\"{a}rtig's
+operating system group at TU Dresden have provided many fruitful
+discussions that have influenced seL4's design.
+
+Jonathon Shapiro has also provided insightful interaction on many
+occasions, and his work on EROS and its successor Coyotos has also
+influenced seL4's design.
+
+We would also like to thank Gerwin Klein and his \emph{l4.verified}
+ project team at NICTA for their insights and continual feedback on
+ our work. David Cock deserves special mention for his work on
+ bringing the ARM simulator into being.
+
+Finally, we would like to thank members of the ERTOS program here at
+NICTA for their daily interaction and input.
+
+National ICT Australia is funded by the Australian Government's
+Department of Communications, Information Technology, and the Arts and
+the Australian Research Council through \emph{Backing Australia's
+Ability} and the ICT Research Centre of Excellence programs.
+
+\part{Introduction}
+
+\chapter{Introduction}
+
+This manual documents the seL4 kernel reference implementation, which
+is written in Haskell. It provides annotated Haskell source code
+describing the high-level, architecture independent behaviour of the
+three services that the kernel provides --- threads, address spaces,
+and communication --- including the system calls used to control them
+from user level. This source code is executable --- not pseudocode ---
+and forms part of a simulator which can be used to examine the
+behaviour of a running seL4 kernel.
+
+\Autoref{sec:overview} provides an overview of the seL4 API. \Autoref{sec:haskell} briefly discusses Haskell, and the manner in which we have applied it to construct the reference implementation. The remaining chapters are generated directly from the Haskell source code of the reference implementation, and contain all of the code (apart from some Haskell-specific implementation details, such as compiler and pre-processor directives).
+
+\chapter[overview]{seL4 Overview}
+\input{overview.tex}
+
+\chapter[haskell]{Haskell Model Overview}
+\input{haskell.tex}
+
+\part{Annotated Source Code}
+
+\chapter[api]{Kernel API}
+
+This chapter documents the parts of the kernel that interact directly with user-level code.
+
+\section[types]{Kernel Object Types}
+\input{../src/SEL4/API/Types.lhs}
+
+\section[types.universal]{Machine-Independent Object Types}
+\input{../src/SEL4/API/Types/Universal.lhs}
+
+\section[invocation]{Kernel Object Invocations}
+\input{../src/SEL4/API/Invocation.lhs}
+
+\section[syscall]{System Calls}
+\input{../src/SEL4/API/Syscall.lhs}
+
+\section[failures]{System Call Failures}
+\input{../src/SEL4/API/Failures.lhs}
+
+\section[faults]{Faults and Exceptions}
+\input{../src/SEL4/API/Faults.lhs}
+
+\chapter[kernel]{Kernel Operations}
+
+This chapter documents operations within the kernel that are not directly related to a single kernel object.
+
+\section[cspace]{Capability Space Lookups}
+\input{../src/SEL4/Kernel/CSpace.lhs}
+
+\section[thread]{Threads and Scheduling}
+\input{../src/SEL4/Kernel/Thread.lhs}
+
+\section[init]{Bootstrapping the Kernel}
+\input{../src/SEL4/Kernel/Init.lhs}
+
+\section[faulthandler]{Handling Faults}
+\input{../src/SEL4/Kernel/FaultHandler.lhs}
+
+\section[vspace]{Virtual Memory}
+\input{../src/SEL4/Kernel/VSpace.lhs}
+
+\chapter[object]{Kernel Objects}
+
+This chapter defines the first-class kernel objects, including their representation in physical memory, and the operations that may be performed on them by user-level threads and by other kernel-level code.
+
+\section[structures]{Data Structures}
+\input{../src/SEL4/Object/Structures.lhs}
+
+\section[tcb]{Thread Control Blocks}
+\input{../src/SEL4/Object/TCB.lhs}
+
+\section[cnode]{Capability Nodes}
+\input{../src/SEL4/Object/CNode.lhs}
+
+\section[endpoint]{Synchronous Endpoints}
+\input{../src/SEL4/Object/Endpoint.lhs}
+
+\section[asyncendpoint]{Asynchronous Endpoints}
+\input{../src/SEL4/Object/AsyncEndpoint.lhs}
+
+\section[untyped]{Untyped Objects}
+\input{../src/SEL4/Object/Untyped.lhs}
+
+\section[interrupt]{Interrupt Controller and Handler Objects}
+\input{../src/SEL4/Object/Interrupt.lhs}
+
+\section[objecttype]{Type-Specific Operations}
+\input{../src/SEL4/Object/ObjectType.lhs}
+
+\section[instances]{Storing Objects}
+\input{../src/SEL4/Object/Instances.lhs}
+
+\chapter[model]{Haskell Model Details}
+
+This chapter describes implementation details of the Haskell kernel. It should not be necessary to read this section to understand the API; however, it may help in understanding the way the model works.
+
+\section[statedata]{System State}
+\input{../src/SEL4/Model/StateData.lhs}
+
+\section[pspace]{Physical Address Space Model}
+\input{../src/SEL4/Model/PSpace.lhs}
+
+\section[syscall]{System Calls}
+\input{../src/SEL4/Model/Syscall.lhs}
+
+\section[failures]{Failures}
+\input{../src/SEL4/Model/Failures.lhs}
+
+\section[preemption]{Preemption}
+\input{../src/SEL4/Model/Preemption.lhs}
+
+\chapter[machine]{Modelling the Hardware}\label{ch:code:machine}
+
+This chapter defines the interface that is used by the rest of the kernel to represent the underlying hardware.
+
+\section[registerset]{Words and Registers}
+\input{../src/SEL4/Machine/RegisterSet.lhs}
+
+\section[hardware]{Hardware Functions}
+\input{../src/SEL4/Machine/Hardware.lhs}
+
+\part{Architecture-Specific Features}
+
+\chapter{Generic Implementations}
+
+This chapter contains default definitions for platforms with no special requirements.
+
+\section{Capability-based Virtual Address Space}
+\input{../src/SEL4/Kernel/VSpace/CSpace.lhs}
+
+\chapter{ARM}
+
+This chapter defines the implementation-specific parts of the API for the ARM architecture. The ARM support is designed for version 6 or later of the ARM architecture. In particular, it uses the ARMv6 page table format, and does not make use of the Fast Context Switch Extension which is performance-critical on ARMv5 and earlier.
+
+\section{Register Set}
+\input{../src/SEL4/Machine/RegisterSet/ARM.lhs}
+
+\section{Hardware Interface}
+\input{../src/SEL4/Machine/Hardware/ARM.lhs}
+
+\section{Kernel Object Types}
+\input{../src/SEL4/API/Types/ARM.lhs}
+
+\section{Kernel Object Invocations}
+\input{../src/SEL4/API/Invocation/ARM.lhs}
+
+\section{Kernel Object Data}
+\input{../src/SEL4/Object/Structures/ARM.lhs}
+
+\section{Type-Specific Operations}
+\input{../src/SEL4/Object/ObjectType/ARM.lhs}
+
+\section{Storing Objects}
+\input{../src/SEL4/Object/Instances/ARM.lhs}
+
+\section{Global Kernel Data}
+\input{../src/SEL4/Model/StateData/ARM.lhs}
+
+\section{Interrupt Handling}
+\input{../src/SEL4/Object/Interrupt/ARM.lhs}
+
+\section{Virtual Address Space}
+\input{../src/SEL4/Kernel/VSpace/ARM.lhs}
+
+\section{Switching Threads}
+\input{../src/SEL4/Kernel/Thread/ARM.lhs}
+
+\section{Copying Coprocessor Registers}
+\input{../src/SEL4/Object/TCB/ARM.lhs}
+
+\begin{impdetails}
+
+\chapter{Simple Haskell-based Simulator}
+
+This chapter defines a language and interpreter that may be used for writing simple test programs for the seL4 API. The language is intended to look similar to the assembly language of a simple RISC processor. This chapter also defines implementation-specific API features for the simulated machine.
+
+\section{Register Set}
+\input{../src/SEL4/Machine/RegisterSet/HaskellCPU.lhs}
+
+\section{Hardware Interface}
+\input{../src/SEL4/Machine/Hardware/HaskellCPU.lhs}
+
+\section{API}
+\input{../src/SEL4/API/Types/HaskellCPU.lhs}
+
+\section{Kernel Objects}
+\input{../src/SEL4/Object/ObjectType/HaskellCPU.lhs}
+
+\section{Virtual Address Space}
+\input{../src/SEL4/Kernel/VSpace/HaskellCPU.lhs}
+
+\end{impdetails}
+
+\bibliography{defs,pubs}
+
+\end{document}
+
+% arch-tag: 5B7117E0-AB6D-11D9-ABCA-000393DEF6D6

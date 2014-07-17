@@ -1,0 +1,25 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+* Intel VT-d (I/O MMU) support
+
+Intel VT-d support in seL4 was tested for the following chipsets:
+- Intel Q35 Express
+- Intel 5500
+
+On other chipsets with Intel VT-d support, seL4 might:
+- complain and disable IOMMU support
+- hang during bootstrapping
+- have some weird behaviour during runtime
+
+In any case, the workaround is to disable VT-d support, either:
+- in the BIOS, or
+- by including "disable_iommu" into the MultiBoot (e.g. GRUB) command line
+  as described in the seL4 documentation

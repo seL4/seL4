@@ -1,0 +1,323 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\chapter{\label{ch:objects}Kernel Services and Objects}
+
+A limited number of service primitives are provided by the microkernel;
+more complex services may be implemented as applications on top of these
+primitives. In this way, the functionality of the system can be extended
+without increasing the code and complexity in privileged mode, while
+still supporting a potentially wide number of services for varied
+application domains.
+
+The basic services seL4 provides are as follows:
+\begin{description}
+    \item[Threads] are an abstraction of CPU execution that supports
+    running software;
+
+    \item[Address spaces] are virtual memory spaces that each contain an
+    application. Applications are limited to accessing memory in their
+    address space;
+
+    \item[Inter-process communication] (IPC) via \emph{endpoints} allows
+    threads to communicate using message passing;
+
+    \item[Device primitives] allow device drivers to be implemented as
+    unprivileged applications.  The kernel exports hardware device
+    interrupts via IPC messages; and
+
+    \item[Capability spaces] store capabilities (i.e., access rights) to
+    kernel services along with their book-keeping information.
+\end{description}
+
+This chapter gives an overview of these services, describes how kernel
+objects are accessed by userspace applications, and describes how new
+objects can be created.
+
+\section{Capability-based Access Control}
+\label{sec:cap-access-control}
+
+The seL4 microkernel provides a capability-based access-control model.
+Access control governs all kernel services; in order to perform an
+operation, an application must \emph{invoke} a capability in its
+possession that has sufficient access rights for the requested service.
+With this, the system can be configured to isolate software components from
+each other, and also to enable authorised, controlled communication
+between components by selectively granting specific communication
+capabilities.  This enables software-component isolation with a high
+degree of assurance, as only those operations explicitly authorised by
+capability possession are permitted.
+
+A capability is an unforgeable token that references a specific kernel
+object (such as a thread control block) and carries access rights that
+control what methods may be invoked.
+Conceptually, a capability resides in an application's \emph{capability
+space}; an address in this space refers to a \emph{slot} which may or
+may not contain a capability.  An application may refer to
+a capability---to request a kernel service, for example---using the
+address of the slot holding that capability.  This means, the seL4 
+capability model is an instance of a \emph{segregated} (or \emph{partitioned})
+capability model, where capabilities are managed by the kernel.
+
+Capability spaces are implemented as a directed graph of kernel-managed
+\emph{capability nodes} (\obj{CNode}s).  A \obj{CNode} is a table of
+slots, where each slot may contain further \obj{CNode} capabilities. An
+address in a capability space is then the concatenation of the indices
+of the \obj{CNode} capabilities forming the path to the destination
+slot; we discuss \obj{CNode} objects in detail in \autoref{ch:cspace}.
+
+Capabilities can be copied and moved within capability spaces, and
+also sent via IPC. This allows creation of applications with specific
+access rights, the delegation of authority to another application, and
+passing to an application authority to a newly created (or selected)
+kernel service. Furthermore, capabilities can be \emph{minted} to
+create a derived capability with a subset of the rights of the
+original capability (never with more rights). A newly minted
+capability can be used for partial delegation of authority.
+
+Capabilities can also be revoked to withdraw
+authority. Revocation recursively removes any capabilities that have
+been derived from the original capability being revoked. The propagation of
+capabilities through the system is controlled by a
+\emph{take-grant}-based model~\cite{Elkaduwe_GE_08,Boyton_09}.
+
+\section{System Calls}
+\label{sec:syscalls}
+\label{sec:sys_send}
+\label{sec:sys_wait}
+\label{sec:sys_call}
+\label{sec:sys_reply}
+\label{sec:sys_nbsend}
+\label{sec:sys_replywait}
+\label{sec:sys_yield}
+
+The seL4 kernel provides a message-passing service for communication between
+threads. This mechanism is also used for communication with kernel-provided
+services. There is a standard message format, each message containing a
+number of data words and possibly some capabilities. The structure and encoding
+of these messages are described in detail in \autoref{ch:ipc}. 
+
+Threads send messages by invoking capabilities within their capability space.
+When an endpoint capability is invoked in this way the message will be
+transferred through the kernel to another thread. When capabilities to kernel
+objects are invoked, the message will be interpreted as a method invocation in a
+manner specific to the type of kernel object. For example, invoking a thread
+control block (TCB) capability with a correctly formatted message will suspend
+the target thread.
+
+The kernel provides the following system calls:
+\begin{description}
+    \item[\apifunc{seL4\_Send}{sel4_send}] delivers a message through the named
+    capability and then allows the application to continue. If the invoked
+    capability is an endpoint and no receiver is ready to receive the message
+    immediately, the sending thread will be blocked until the message can be
+    delivered. No error code or response will be returned by the receiving
+    thread or kernel object.
+
+    \item[\apifunc{seL4\_NBSend}{sel4_nbsend}] performs a non-blocking send. It
+    is similar to \apifunc{seL4\_Send}{sel4_send} except that if the message
+    cannot be received immediately, the message is silently dropped. Like
+    \apifunc{seL4\_Send}{sel4_send}, no error code or response will be returned
+    by the object.
+
+    \item[\apifunc{seL4\_Call}{sel4_call}] is a \apifunc{seL4\_Send}{sel4_send}
+    that blocks the sending thread until a reply message is received. When the
+    sent message is delivered to another thread (via an \obj{Endpoint}), an
+    additional `\emph{reply}' capability is added to the message and delivered
+    to the receiver to give it the right to reply to the sender. The reply
+    capability is stored in a special purpose slot in the receiver's \obj{TCB}.
+    When invoking capabilities to kernel services, using
+    \apifunc{seL4\_Call}{sel4_call} allows the kernel to return an error code
+    or other response within a reply message.
+
+    \item[\apifunc{seL4\_Wait}{sel4_wait}] is used by a thread to receive
+    messages through endpoints. If no message is ready to be sent, the thread
+    will block until a message is sent. This system call works only on
+    endpoint capabilities, raising a fault (see section \ref{sec:faults}) when
+    attempted with other capability types.
+
+    \item[\apifunc{seL4\_Reply}{sel4_reply}] is used to respond to a
+    \apifunc{seL4\_Call}{sel4_call}, using the capability generated by the
+    \apifunc{seL4\_Call}{sel4_call} system call and stored in the replying
+    thread's TCB. It delivers the message to the calling thread, waking it in
+    the process.
+
+    There is space for only one reply capability in each thread's TCB, so the
+    \apifunc{seL4\_Reply}{sel4_reply} syscall can be used to reply to the most
+    recent caller only. The \apifunc{seL4\_CNode\_SaveCaller}{cnode_savecaller}
+    method that will be described later can be used to save the reply
+    capability into regular capability space, where it can be used with
+    \apifunc{seL4\_Send}{sel4_send}.
+
+    \item[\apifunc{seL4\_ReplyWait}{sel4_replywait}] is a combination of \apifunc{seL4\_Reply}{sel4_reply} and
+    \apifunc{seL4\_Wait}{sel4_wait}. It exists for efficiency reasons: the common case of
+    replying to a request and waiting for the next can be performed in
+    a single kernel system call instead of two.
+
+    \item[\apifunc{seL4\_Yield}{sel4_yield}] is the only system call that does not require
+    a capability to be used. It causes the calling thread to give up the
+    remainder of its timeslice to another runnable thread of the
+    same priority level. If there are no runnable threads with the same
+    priority, the calling thread is resumed and the system call has no
+    effect.
+\end{description}
+
+\section{Kernel Objects}
+\label{s:sel4_internals}
+
+In this section we give a brief overview of the kernel-implemented
+object types whose instances (also simply called \emph{objects}) can be invoked by applications. The interface to these
+objects forms the interface to the kernel itself. The creation and use
+of the high-level kernel services is achieved by the creation,
+manipulation, and combination of these kernel objects:
+
+\begin{description}
+
+    \item[\obj{CNodes}] (see \autoref{ch:cspace}) store capabilities, giving threads permission to
+    invoke methods on particular objects.
+    Each \obj{CNode} has a fixed number of slots,
+    always a power of two, determined when the \obj{CNode} is created. Slots
+    can be empty or contain a capability.
+
+    \item[Thread Control Blocks] (\obj{TCB}s; see \autoref{ch:threads}) represent a thread of
+    execution in seL4. Threads are the unit of execution that is
+    scheduled, blocked, unblocked, etc., depending on the application's
+    interaction with other threads.
+
+    \item[IPC Endpoints] (see \autoref{ch:ipc}) may be used to facilitate interprocess
+    communication between threads. The seL4 microkernel supports two
+    types of endpoints:
+    \begin{itemize}
+        \item \emph{Synchronous} endpoints (\obj{Endpoint}),
+        which cause the sending thread to block until its message
+        is received; and
+
+        \item \emph{Asynchronous} endpoints (\obj{AsyncEP}),
+        which only allow short messages to be sent, but do not
+        cause the sender to block.
+    \end{itemize}
+
+    A capability to an endpoint can be restricted to be
+    send-only or receive-only. Additionally, capabilities to \obj{Endpoint}
+    objects may be configured to allow capabilities to be transferred across to
+    other threads.
+
+    \item[Virtual Address Space Objects] (see \autoref{ch:vspace}) 
+    are used to construct a virtual
+    address space (or VSpace) for one or more threads. These
+    objects largely directly correspond to those of the hardware; that
+    is, a page directory pointing to page tables, which in turn map
+    physical frames. The kernel also includes \obj{ASID
+    Pool} and \obj{ASID Control} objects for tracking the status of
+    address spaces.
+
+    \item[Interrupt Objects] (see \autoref{ch:io}) give applications the ability to receive
+    and acknowledge interrupts from hardware devices.
+    Initially, there is a capability to \obj{IRQControl},
+    which allows for the creation of \obj{IRQHandler} capabilities.
+    An \obj{IRQHandler} capability permits the management of a specific 
+    interrupt source associated with a specific device.
+    It is delegated to
+    a device driver to access an interrupt source. The \obj{IRQHandler}
+    object allows threads to wait for and acknowledge individual
+    interrupts.
+
+    \item[Untyped Memory] (see \autoref{sec:kernmemalloc}) is the foundation of memory allocation
+    in the seL4 kernel.  Untyped memory capabilities have a single method
+    which allows the creation of new kernel objects. If the method
+    succeeds, the calling thread gains access to capabilities to the
+    newly-created objects. Additionally, untyped memory objects can be
+    divided into a group of smaller untyped memory objects allowing
+    delegation of part (or all) of the system's memory.  We discuss
+    memory management in general in the following sections.
+
+\end{description}
+
+\section{Kernel Memory Allocation}
+\label{sec:kernmemalloc}
+
+The seL4 microkernel does not dynamically allocate memory for kernel objects.
+Kernel objects must be explicitly created from application-controlled memory
+regions via \obj{Untyped Memory} capabilities.  Applications must have
+explicit authority to memory (through these \obj{Untyped Memory} capabilities) in
+order to create new objects, and all objects consume constant memory once
+created. These mechanisms can be used to precisely control
+the specific amount of physical memory available to applications,
+including being able to enforce isolation of physical memory access
+between applications or a device.  There are no arbitrary resource
+limits in the kernel apart from those dictated by the
+hardware\footnote{The treatment of virtual ASIDs imposes a fixed number
+of address spaces. This limitation is to be removed in future
+versions of seL4.}, and so many denial-of-service attacks via resource
+exhaustion are avoided.
+
+At boot time, seL4 pre-allocates the memory required for the kernel
+itself, including the code, data, and stack sections (seL4 is a single
+kernel-stack operating system). The remainder of the memory is given to
+the initial thread in the form of capabilities to \obj{Untyped Memory}, and
+some additional capabilities to kernel objects that were required to
+bootstrap the initial thread.  These \obj{Untyped Memory} regions can then be split into
+smaller regions or other kernel objects using the
+\apifunc{seL4\_Untyped\_Retype}{untyped_retype} method; the created objects are termed \emph{children} of
+the original untyped memory object.
+
+The user-level application that creates an object using \apifunc{seL4\_Untyped\_Retype}{untyped_retype}
+receives full authority over the resulting object. It can then delegate
+all or part of the authority it possesses over this object to one or
+more of its clients.
+
+\subsection{Reusing Memory}
+\label{s:memRevoke}
+
+The model described thus far is sufficient for applications to
+allocate kernel objects, distribute authority among client
+applications, and obtain various kernel services provided by these
+objects.  This alone is sufficient for a simple static system
+configuration.
+
+The seL4 kernel also allows \obj{Untyped Memory} regions to be reused.
+Reusing a region of memory is allowed only
+when there are no dangling references (i.e., capabilities) left to the
+objects inside that memory.  The kernel tracks
+\emph{capability derivations}, i.e., the children generated by the
+methods \apifunc{seL4\_Untyped\_Retype}{untyped_retype}, \apifunc{seL4\_CNode\_Mint}{cnode_mint}, \apifunc{seL4\_CNode\_Copy}{cnode_copy}, and
+\apifunc{seL4\_CNode\_Mutate}{cnode_mutate}.
+
+The tree structure so generated is termed the \emph{capability
+derivation tree} (CDT).\footnote{Although the CDT conceptually is a separate
+data structure, it is implemented as part of the CNode object and so
+requires no additional kernel meta-data.}  For example, when a user
+creates new kernel objects by retyping untyped memory, the newly created
+capabilities would be inserted into the CDT as children of the untyped
+memory capability.
+
+For each \obj{Untyped Memory} region, the kernel keeps
+a \emph{watermark} recording how much of region has previously been
+allocated. Whenever a user requests the kernel to create new objects in
+an untyped memory region, the kernel will carry out one of two actions:
+if there are already existing objects allocated in the region, the
+kernel will allocate the new objects at the current watermark level, and
+increase the watermark. If all objects previously allocated in the
+region have been deleted, the kernel will reset the watermark and start
+allocating new objects from the beginning of the region again.
+
+Finally, the \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} method provided by \obj{CNode} objects
+destroys all capabilities derived from the argument capability. Revoking
+the last capability to a kernel object triggers the \emph{destroy}
+operation on the now unreferenced object. This simply cleans up any in-kernel dependencies between
+it, other objects and the kernel.
+
+By calling \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} on the original capability to an untyped memory
+object, the user removes all of the untyped memory object's
+children---that is, all capabilities pointing to objects in the untyped
+memory region.  Thus, after this invocation there are no valid references
+to any object within the untyped region, and the region may be safely
+retyped and reused.
+

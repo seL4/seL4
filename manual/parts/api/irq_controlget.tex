@@ -1,0 +1,24 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{irq_controlget}
+{IRQ Control - Get}
+{Create an IRQ handler capability}
+{static inline int seL4\_IRQControl\_Get }
+{
+\param{seL4\_IRQControl}{\_service}{An IRQControl capability. This gives you the authority to make this call.}
+\param{int}{irq}{The IRQ that you want this capability to handle.}
+\param{seL4\_CNode}{root}{\destcspacedesc}
+\param{seL4\_Word}{index}{\destindexdesc}
+\param{uint8\_t}{depth}{\destdepthdesc}
+}
+{\errorenumdesc}
+{See \autoref{sec:interrupts}}

@@ -1,0 +1,129 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+This chapter describes the construction of the Haskell model presented in the following chapters. It is not necessary to read this chapter to understand the seL4 API, but it will be helpful for those who wish to read the Haskell code.
+
+\section[intro]{Introduction to Haskell}
+
+Haskell is a general purpose functional programming language~\cite{peytonjones03haskell}. It is in widespread use in the research and education communities; several universities use it in introductory programming courses.
+
+The features of Haskell that are most relevant to this project are:
+\begin{itemize}
+\item The type system performs strict checks at compile time; it must be possible to determine the type of every expression. Invalid values such as null pointers are impossible, as are unsafe or implicit type conversions. This simplifies debugging, as most incorrect code will not compile.
+\item There is a formal definition of the language's semantics~\cite{Fax:static}. There is only one case in which it is ambiguous; that case is unlikely and easily avoided. The pure functional semantics and strict typing make Haskell quite similar to HOL, which is being used in the ongoing L4 verification project~\cite{Tuch-KH-05}.
+\item By using constructs called \emph{monads}, it is possible to write functions that process state changes in a manner that superficially resembles an imperative language. These are easier to read than non-monadic functional programs when performing complex and inherently imperative state transformations, especially for developers who have no experience with functional languages. This is discussed further in section \ref{sec:haskell.state-monads}.
+\end{itemize}
+
+A more detailed introduction to Haskell is outside the scope of this document. Please refer to the online Haskell tutorials~\cite{haskell-tutorial,monad-tutorial} for more information.
+
+\section[modules]{Modules}
+
+The Haskell model is split into a hierarchy of modules. At the top level is "module SEL4", which contains no real code, but exports the entire external interface of the kernel model. Below this are five modules that serve to separate the high-level and low-level parts of the model; each of these corresponds to one of the following five chapters in this report.
+
+The five modules have the following purposes:
+\begin{description}
+\item[API] defines the interface between the kernel and the user-level threads running under it (other than the parts relating to specific kernel objects). See \autoref{sec:api}.
+\item[Kernel] defines internal procedures of the kernel that do not relate to a specific kernel object --- most importantly, the scheduler and the capability space lookup functions. See \autoref{sec:kernel}.
+\item[Object] defines the first-class kernel objects exposed by the seL4 API, and the operations that may be performed on them. See \autoref{sec:object}.
+\item[Model] contains the implementation of the low-level parts of the Haskell kernel --- the physical memory model and the kernel state monads. See \autoref{sec:model}.
+\item[Machine] contains the kernel's interface to the underlying hardware --- specifically the register set, the kernel's uses for each register, the word type, and the virtual page size. See \autoref{sec:machine}.
+\end{description}
+
+Each of these modules is further divided into smaller modules implementing separate functional areas. For example, "module SEL4.Kernel" contains a module implementing capability space lookups, "module SEL4.Kernel.CSpace".
+
+\section[state-monads]{System State and Monads}
+
+\subsection{The State Monad}
+
+Haskell is a \emph{pure} functional language, meaning that expressions in the language must neither depend on the global state of the system, nor change it as a side effect\footnote{There are a few exceptions to this rule, including functions in the {\hsfamily\scshape IO} monad and the foreign function interface. These are special cases, and can only be used under specific conditions.}. This makes it fundamentally very different to imperative languages such as C, which are typically used for kernel implementations.
+
+One problem with pure functional programming is that systems that operate in a complex state space --- for example, models of operating system kernels --- must pass their entire state around in function parameters and return values. This clutters the code and results in programs that are difficult to read, especially for people unfamiliar with functional programming. As a trivial example, this is a function for which the state data is an integer; it adds a given value to the state, and returns the new value converted to a string:
+
+\functions (updateAndShow)
+
+> updateAndShow :: Integer -> Integer -> (Integer, String)
+> updateAndShow step state = (new_state, show new_state)
+>         where new_state = state + step
+
+Note that the function must both accept and return an extra "Integer" value representing its state. Also, the entire result must be constructed in one expression. If the computation conceptually involves a sequence of imperative steps, representing it this way can be quite difficult.
+
+However, Haskell includes support for \emph{monadic} programming~\cite{wadler92essence}, and provides a \emph{monad} called "State". This monad provides a means to hide the explicit state parameters, and express sequences of state transitions in a form that superficially resembles an imperative program. To repeat the previous example using "State":
+
+\functions (get, put)
+
+> updateAndShow :: Integer -> State Integer String
+> updateAndShow step = do
+>         old_value <- get
+>         let new_value = old_value + step
+>         put new_value
+>         return (show new_value)
+
+The "get" and "put" functions used in this example are for fetching and setting the current state. Note that due to Haskell's strict typing requirements, transitions between functions that are not in the "State" monad and those that are must be explicit --- using the "runState" function to evaluate expressions in "State" from outside the monad, and the "let" statement to evaluate non-monadic expressions from inside the monad.
+
+For complex state transformations, writing programs in monadic style provides a significant improvement in readability over traditional functional programming. Monadic style has been used extensively in this specification. Nearly all of the functions in the model are in "KernelMonad", which is an application of the "State" monad to the "KernelState" type\footnote{In fact, {\hsfamily\scshape KernelMonad} is an application of the {\hsfamily\scshape StateT KernelState} monad transformer to another monad that represents the state of the hardware; the exact type of the latter depends on which simulator is being attached to the model. The result can be used as if it were the {\hsfamily\scshape State KernelState} monad, except that it also allows access to the underlying hardware state monad.}. Both are defined in \autoref{sec:model.statedata}. The "KernelState" type is described briefly in \autoref{sec:haskell.state-monads.system-state}.
+
+\subsection{Errors and Faults}
+
+One limitation of the "State" monad is that there is no straightforward way to interrupt processing of a sequence of operations when an error occurs. The "ErrorT" monad transformer provides a mechanism for doing so.
+
+Using "ErrorT" allows sequences of computations in a monad to fail and return an error value. Further expressions in the sequence will not be evaluated; the error will be passed up the call stack in a manner that resembles a C++ or Java exception, until it reaches a call to "catchError". For example, to extend the "updateAndShow" function defined above so it returns an error message if the "step" is not positive:
+
+\functions (throwError, unless, increaseAndShow)
+
+> increaseAndShow :: Integer -> ErrorT String (State Integer) String
+> increaseAndShow step = do
+>         unless (step > 0) $ throwError "step must be positive"
+>         lift $ updateAndShow step
+
+Again, Haskell's strict typing requires all transitions in and out of the "ErrorT" monad transformer to be explicit. The "runErrorT" function enters the monad; "let" evaluates a non-monadic expression; and the function "lift" adds the "ErrorT" transformer to the type of a function that is already in "State".
+
+The Haskell kernel model makes use of the "ErrorT" transformer to abort operations that are preempted or cannot complete successfully. The first type parameter of "ErrorT" is a type that represents the error; there are several such types defined in seL4, in \autoref{sec:model.failures} and \autoref{sec:model.preemption}.
+
+\subsection[system-state]{System State}
+
+The state of the simulated kernel is stored in values of type "KernelState". Most functions in the model are in the monad "KernelMonad", and are therefore state transformation functions that operate on a value of type "KernelState".
+
+The state data structure contains a value of type "PSpace", which is used to store data which is dynamically allocated by calls from user level. See \autoref{sec:haskell.state-monads.pspace} for details.
+
+The other values present in the "KernelState" structure are global kernel data, such as a pointer to the current thread.
+
+The "KernelState" value is added to "KernelMonad" by a monad transformer, "StateT". This adds the state to an existing monad, the \emph{machine monad}, the type of which depends on the machine being simulated. See \autoref{sec:haskell.simulator.monad}.
+
+\subsection[pspace]{Physical Memory Model}
+
+The simulated kernel's physical memory is modelled by the Haskell type "PSpace", defined in \autoref{sec:model.pspace}. The contents of each address in this space are typed; that is, the model keeps a record of whether they are allocated, and whether they contain either integer data, or a specific type of kernel object. Accesses to objects of the wrong type, or with an incorrectly aligned address, are detected by the model and disallowed.
+
+For simulator performance reasons, and to make the operation of the virtual memory related parts of the model more realistic, the "PSpace" contains only typed kernel objects; it does not contain data accessible to user level. Instead, regions occupied by such data are represented by a "UserData" object, which has no contents. The actual data is stored separately, and is accessed via the machine monad.
+
+\section[simulator]{The Simulator}
+
+The kernel model functions as one half of a complete system model. The other half is the CPU simulator, responsible for modelling the execution of user-level programs and the operation of hardware devices.
+
+\subsection{Events}
+
+When the state of the simulated system changes in a way that the kernel must respond to, the simulator sends the kernel an \emph{event}. These events correspond to situations that would cause kernel code to execute on a real system: specifically hardware exceptions and interrupts, and user-level software traps.
+
+The set of events supported by the Haskell model is defined by the type "Event", found in \autoref{sec:api.types}.
+
+\subsection{Hardware Parameters}
+
+Several aspects of the kernel's API and behaviour vary depending on the architecture of the host machine. The model contains abstract interfaces to the components that change; the interfaces are implemented in separate modules, selected using the preprocessor.
+
+\subsection[monad]{Simulator Interface}
+
+The state of the simulated machine is accessed via a monad, the type of which depends on which CPU simulator is in use --- again, selected using the preprocessor. For example, for a simulator implemented entirely in Haskell, this monad is likely to be "State", with a data structure containing the machine's state data. If the simulator is implemented externally, and communicates with the kernel via the Haskell foreign function interface, then the machine monad will be "IO" (or some transformation of "IO"), allowing functions in it to call out to the external simulator.
+
+\section{Literate Haskell}
+
+The Haskell code presented in this document is \emph{literate Haskell}; it can be compiled directly by the Haskell compiler, but is also a valid \LaTeX\ document. The code is typeset using the \lambdaTeX\ package, in a {\hsfamily different typeface}, as are Haskell symbols that are mentioned in the text. Data and type constructors, which always begin with a capital letter, are set in {\hsfamily\scshape SmallCaps}, and variable names are set in {\hsfamily\itshape italics}.
+
+Some of the Haskell code is omitted for clarity. In particular, we omit most "import" statements (other than those which are qualified with local module names), compiler directives, and preprocessor directives. We also omit some modules that implement the interface between the kernel model and the external user-level simulators.
+
+% arch-tag: 22cb2f60-c0a2-47c5-87ba-dc1224f9c075

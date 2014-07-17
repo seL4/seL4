@@ -1,0 +1,850 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+#GDB macros for displaying seL4 data structures. Currently a work in progress.
+#TODO: macros for examining an address space
+
+set print pretty on
+
+define sel4
+end
+
+document sel4
+  This is a set of macros to interpret sel4 data structures. Available commands:
+
+  runqueues
+  currthread 
+  sched_action
+  current_lookup_fault
+  current_fault
+  current_syscall_error
+  resolve_cap
+  resolve_cap_current
+  currthread_cnode
+  disp_cap
+  disp_ep
+  disp_ep_queue
+  dump_cnode
+  dump_currthread_cnode
+  get_thread_vspace
+  get_thread_cspace
+  get_thread_reply_slot
+  get_thread_most_recent_ipc_sender
+  get_thread_ipc_buffer
+  dump_thread_info
+
+  Type help <command> for more information on a specific command
+end
+
+define runqueues
+  set $found=0
+  while($found<255)
+    set $queue = ksReadyQueues[$found]
+    if($queue.head != 0x0)
+      set $current = $queue.head
+      while($current != $queue->end)
+        print *$current
+        set $current = $current->tcbSchedNext
+      end
+      print *$current
+    end
+    set $found++
+  end
+end
+
+document runqueues
+  Print TCBs of all runnable threads
+end
+
+define runqueues_c
+  set $found=0
+  while($found<255)
+    set $queue = ksReadyQueues[$found]
+    if($queue.head != 0x0)
+      set $current = $queue.head
+      while($current != $queue->end)
+        print_condensed_tcb $current
+        set $current = $current->tcbSchedNext
+      end
+      print_condensed_tcb $current
+    end
+    set $found++
+  end
+end
+
+define print_condensed_tcb
+  printf "%d\n", $arg0->tcbPriority
+end
+
+define currthread
+  print *ksCurThread
+end
+
+document currthread
+  Print TCB of current thread
+end
+
+define sched_action
+  if(ksSchedulerAction == 0x0)
+    printf "ResumeCurrentThread\n"
+  else 
+    if (ksSchedulerAction == ~0x0)
+      printf "ChooseNewThread\n"
+    else
+      printf "SwitchToThread:\n"
+      print *ksSchedulerAction
+    end
+  end
+end
+
+document sched_action
+  Print the next scheduler action
+end
+
+define current_lookup_fault
+#print current_lookup_fault
+  if((current_lookup_fault.words[0] & 0x3)==lookup_fault_invalid_root)
+    printf "invalid root\n"
+  else
+    if((current_lookup_fault.words[0] & 0x3)==lookup_fault_missing_capability)
+      printf "missing capability\n"
+    else
+      if ((current_lookup_fault.words[0] & 0x3)==lookup_fault_depth_mismatch)
+        printf "depth mismatch\n"
+      else 
+        if((current_lookup_fault.words[0] & 0x3)==lookup_fault_guard_mismatch)
+          printf "guard mismatch\n"
+        else
+          printf "unknown lookup fault\n"
+        end
+      end
+    end
+  end
+end
+
+document current_lookup_fault
+  Decodes the current_lookup_fault variable to determine what went wrong with the last lookup
+end
+
+define current_fault
+  print current_fault
+end
+
+document current_fault
+  Prints the last fault
+end
+
+define current_syscall_error
+  print current_syscall_error
+end
+
+document current_syscall_error
+  Prints the last syscall error
+end
+
+define cap_type
+  return ($arg1.words[0]>>28) & 0xf
+end
+
+define mask
+  ((1<< $arg0)-1)
+end
+
+define currthread_cnode
+  set $cnode = ((cte_t *)((unsigned int)ksCurThread&~((1<<9)-1)))
+  print $cnode->cap
+end
+
+document currthread_cnode
+  Prints the root CNode of the current thread
+end
+
+define cnode_for_thread
+  set $cnode = ((cte_t *)((unsigned int)($arg0)&~((1<<9)-1)))
+  print $cnode->cap
+end
+
+define disp_ep
+  set $ep = *(endpoint_t *)$arg0
+  printf "Queue head: %x\n", ($ep.words[1] & 0xfffffff0)
+  printf "Queue tail: %x\n", ($ep.words[0] & 0xfffffff0)
+  print ((enum endpoint_state)($ep.words[0] & 0x3))
+end
+
+document disp_ep
+  Display basic information about an endpoint. arg0: pointer to an endpoint data structure in-kernel memory. This can be obtained from resolve_cap.
+end
+
+define disp_ep_queue
+  set $ep = *(endpoint_t *)$arg0
+  set $current = (tcb_t *)($ep.words[1] & 0xfffffff0)
+  set $tail = (tcb_t *)($ep.words[0] & 0xfffffff0)
+  if( $current == 0)
+    printf "empty\n"
+  else
+    while( $current != $tail)
+      print *$current
+      set $current = $current->tcbEPNext
+    end
+    print *$current
+  end
+end
+
+document disp_ep_queue
+  Display all TCBs in an endpoint's queue. arg0: pointer to an endpoint data structure in kernel memory. This can be obtained from resolve_cap.
+end
+
+define disp_cap
+  set $cap = $arg0
+  set $type = (cap_tag_t)(($cap.words[0] >> 28) & 0xf)
+
+  if( $type == cap_null_cap )
+    printf "Type: cap_null_cap\n"
+  end
+
+  if( $type == cap_untyped_cap )
+    printf "Type: cap_untyped_cap\n"
+    printf "blocksize: %x\n", $cap.words[1] & 0x1f
+    printf "capPtr: %x\n", ($cap.words[0]>>28) & 0xf
+  end
+
+  if( $type == cap_endpoint_cap )
+    printf "Type: cap_endpoint_cap\n"
+    printf "badge: %x\n", ($cap.words[1] & 0xfffffff8) >> 3
+    printf "EPPtr: %x\n", ($cap.words[0] & 0xfffffff) << 4
+  end
+
+  if( $type == cap_async_endpoint_cap )
+    printf "Type: cap_async_endpoint_cap\n"
+    printf "badge: %x\n", ($cap.words[1] & 0xfffffff8) >> 3
+    printf "AEPPtr: %x\n", ($cap.words[0] & 0xfffffff) << 4
+  end
+
+  if( $type == cap_reply_cap )
+    printf "Type: cap_reply_cap\n"
+  end
+
+  if( $type == cap_cnode_cap)
+    printf "Type: cap_cnode_cap\n"
+    printf "Radix: %x\n", ($cap.words[1] & 0xf800000) >> 23
+    printf "Guard size: %x\n", ($cap.words[1] & 0x7c0000) >> 18
+    printf "Guard: %x\n", ($cap.words[1] & 0x3ffff) >> 0
+    printf "CNode ptr: %x\n", ($cap.words[0] & 0x7ffffff) << 5
+  end
+
+  if( $type == cap_thread_cap)
+    printf "Type: cap_thread_cap\n"
+    printf "TCBPtr: %x\n", ($cap.words[0] & 0xfffffff) << 4
+  end
+
+  if( $type == cap_irq_handler_cap )
+    printf "Type: cap_irq_handler_cap\n"
+    printf "capIRQ: %x\n", ($cap.words[1] & 0xff) >> 0
+  end
+
+  if( $type == cap_irq_control_cap )
+    printf "Type: cap_irq_control_cap\n"
+    printf "not implemented\n"
+  end
+
+  if( $type == cap_zombie_cap )
+    printf "Type: cap_zombie_cap\n"
+  end
+
+  if( $type == cap_subtype_cap )
+    printf "Type: cap_subtype_cap\n"
+
+    set $subtype = (subcap_tag_t)(($cap.words[0] & 0xf000000) >> 24)
+
+    if( $subtype == subcap_asid_control_cap )
+      printf "Subtype: subcap_asid_control_cap\n"
+    end
+
+    if( $subtype == subcap_asid_pool_cap )
+      printf "Subtype: subcap_asid_pool_cap\n"
+      printf "capASIDBase: %x\n", $cap.words[1] & 0xffff
+      printf "capType: %x\n", ($cap.words[0] >> 28) & 0xf
+      printf "capASIDPool %x\n", ($cap.words[0] << 12)
+    end
+
+    if( $subtype == subcap_io_port_cap )
+      printf "Subtype: subcap_io_port_cap\n"
+      printf "capType: %x\n", ($cap.words[0] >> 28) & 0xf
+    end
+
+    if( $subtype == subcap_io_space_cap )
+      printf "Subtype: subcap_io_space_cap\n"
+    end
+
+    if( $subtype == subcap_io_page_table_cap )
+      printf "Subtype: subcap_io_page_table_cap\n"
+    end
+
+  end
+
+  if( $type == cap_frame_cap )
+    printf "Type: cap_frame_cap\n"
+    printf "FMappedAddress: %x\n", ($cap.words[1] & 0xfffff) << 12
+    printf "FBasePtr: %x\n", ($cap.words[0] & 0xfffff) << 12
+    printf "FMappedASIDLow: %x\n", ($cap.words[1] & 0x3ff00000) >> 20
+    printf "FMappedASIDHigh: %x\n", ($cap.words[0] & 0xfc00000) >> 22
+    printf "Frame size: %x\n", ($cap.words[1] & 0x80000000) >> 31
+  end
+
+  if( $type == cap_page_table_cap )
+    printf "Type: cap_page_table_cap\n"
+    printf "not implemented\n"
+  end
+
+  if( $type == cap_page_directory_cap )
+    printf "Type: cap_page_directory_cap\n"
+    printf "Is mapped: %x\n", ($cap.words[1] & 0x10000) >> 16
+    printf "ASID: %x\n", ($cap->words[1] & 0xffff) >> 0
+    printf "CapPDBasePTR: %x\n", $cap->words[1] << 12
+  end
+
+  print $cap
+end
+
+document disp_cap
+  Determines the type of a cap and prints relevant information. arg0: a kernel capability data structure (not a pointer). This can be obtained from resolve_cap.
+end
+
+define get_thread_cap
+  set $result = ((cte_t *)(((unsigned int) $arg0 )&~((1<<10)-1))) + $arg1
+  set $result = $result->cap
+end
+
+document get_thread_cap
+  Gets one of the caps associated with a TCB e.g. root CNode, VSpace, ipc_buffer. arg0: pointer to tcb struct, arg1: index of cap
+end
+
+define get_thread_cspace
+  get_thread_cap $arg0 0
+end
+
+document get_thread_cspace
+  Get the CTE for the root CNode of a thread. arg0: the in-kernel data structure representing the thread cap
+end
+
+define get_thread_vspace
+  get_thread_cap $arg0 1
+end
+
+document get_thread_vspace
+  Get the CTE for the vspace of a thread. arg0: the in-kernel data structure representing the thread cap
+end
+
+define get_thread_reply_slot
+  get_thread_cap $arg0 2
+end
+
+document get_thread_reply_slot
+  Get the CTE for the reply slot of a thread. arg0: the in-kernel data structure representing the thread cap
+end
+
+define get_thread_most_recent_ipc_sender
+  get_thread_cap $arg0 3
+end
+
+document get_thread_most_recent_ipc_sender
+  Get the CTE for the most recent IPC sender of a thread. arg0: the in-kernel data structure representing the thread cap
+end
+
+define get_thread_ipc_buffer
+  get_thread_cap $arg0 4
+end
+
+document get_thread_ipc_buffer
+  Get the CTE for the IPC buffer of a thread. arg0: the in-kernel data structure representing the thread cap
+end
+
+define dump_thread_info
+  set $tcbptr = $arg0
+  printf "\nCSpace:\n"
+  get_thread_cspace $tcbptr
+  disp_cap $result
+  printf "\nVSpace:\n"
+  get_thread_vspace $tcbptr
+  disp_cap $result
+  printf "\nReply slot:\n"
+  get_thread_reply_slot $tcbptr
+  disp_cap $result
+  printf "\nMost recent IPC sender:\n"
+  get_thread_most_recent_ipc_sender $tcbptr
+  disp_cap $result
+  printf "\nIPC buffer:\n"
+  get_thread_ipc_buffer $tcbptr
+  disp_cap $result
+end
+
+document dump_thread_info
+  Dump the extra caps associated with a thread (root CNode, VSpace etc). arg0: the in-kernel data structure representing the thread cap
+end
+
+define pd_for_asid
+  set $asid = $arg0
+  set $poolPtr = ia32KSASIDTable[$asid >> asidLowBits];
+  set $pd = poolPtr->array[$asid & ((1<<asidLowBits)-1)];
+  if( !$asid || !$poolPtr )
+    printf "Something went wrong\n"
+  else
+    print $pd
+  end
+end
+
+define resolve_cap
+  set $nodeCap = $arg0
+  set $capptr = (int)$arg1
+  set $n_bits = (int)$arg2
+
+  while(1) 
+#printf "loop: remaining: %d\n", $n_bits
+    #test cap type
+    if((( $nodeCap.words[0]>>28)&0xf) != cap_cnode_cap)
+      printf "Error: not a CNode\n"
+      loop_break
+    end
+    set $radixBits = ($nodeCap.words[1] & 0xf800000) >> 23
+    set $guardBits = ($nodeCap.words[1] & 0x7c0000) >> 18
+    set $levelBits = $radixBits + $guardBits
+    set $capGuard = ($nodeCap.words[1] & 0x3ffff) >> 0
+
+    set $guard = ($capptr >> ($n_bits - $guardBits)) & ((1<<$guardBits)-1)
+    
+    if( ($guardBits > $n_bits) || ($guard != $capGuard))
+      printf "levelbits: %d, radixbits: %d, guardbits: %d, n_bits: %d\n", $levelBits, $radixBits, $guardBits, $n_bits
+      printf "guard: %x, capguard: %x", $guard, $capGuard
+      printf "lookup fault guard mismatch\n"
+      loop_break
+    end
+
+    if( $levelBits > $n_bits )
+      printf "lookup fault depth mismatch\n"
+      loop_break
+    end
+
+    set $offset = ($capptr >> ($n_bits - $levelBits)) & ((1<<$radixBits)-1)
+    set $slot = ((cte_t *)(($nodeCap.words[0] & 0x7ffffff) << 5)) + $offset
+
+    if( $n_bits <= $levelBits)
+      disp_cap $slot->cap
+      loop_break
+    end
+
+    set $n_bits -= $levelBits
+    set $nodeCap = $slot->cap
+
+    #test cap type
+    if((( $nodeCap.words[0]>>28)&0xf) != cap_cnode_cap)
+      printf "warning: terminating because node is not a CNode, not because all bits were resolved\n"
+      disp_cap $nodeCap
+      loop_break
+    end
+
+  end
+
+end
+
+document resolve_cap
+  Resolve a capPtr and print its contents using disp_cap. arg0: CNode to start resolving at, arg1: the cap to resolve (an integer), arg2: the depth to resolve to (an integer). The currthread_cnode macro may be useful to obtain the first argument.
+end
+
+define resolve_cap_current
+  currthread_cnode
+  resolve_cap $cnode->cap $arg0 $arg1
+end
+
+document resolve_cap_current
+  Resolve a capPtr and print its contents. Caps are resolved relative to root CNode of current thread. arg1: the cap to resolve, arg2: the depth.
+end
+
+define dump_cnode
+  set $nodeCap = $arg0
+
+  if((( $nodeCap.words[0]>>28)&0xf) != cap_cnode_cap)
+    printf "Error: not a CNode\n"
+  end
+
+  set $radixBits = ($nodeCap.words[1] & 0xf800000) >> 23
+  set $guardBits = ($nodeCap.words[1] & 0x7c0000) >> 18
+  set $levelBits = $radixBits + $guardBits
+
+  set $count = 0
+
+  while( $count < (1<<$radixBits))
+    set $slot = ((cte_t *)(($nodeCap.words[0] & 0x7ffffff) << 5)) + $count
+    if((($slot->cap.words[0]>>28)&0xf) != cap_null_cap)
+      printf "offset: %d\n", $count
+      disp_cap $slot->cap 
+      printf "\n"
+    end
+    set $count = $count+1
+  end
+end
+
+document dump_cnode
+  Dump the contents of a CNode. arg1: the CNode to dump
+end
+
+define dump_currthread_cnode
+  printf "Top level CNode: \n"
+  currthread_cnode
+  printf "\n\n"
+  dump_cnode $cnode->cap
+end
+
+document dump_currthread_cnode
+  Dump the contents of the root CNode of the current thread. No arguments.
+end
+
+define irq_handler
+  set $slot = intStateIRQNode + $arg0
+  set $cap = $slot->cap
+  if((cap_tag_t)(($cap.words[0] >> 28) & 0xf) != cap_async_endpoint_cap)
+    printf "no handler\n"
+  else
+    set $cap = (async_endpoint_t *)(($cap.words[0] & 0xfffffff) << 4)
+    disp_ep *$cap
+    disp_ep_queue *$cap
+  end
+end
+
+document irq_handler
+  Print the endpoints and handling threads for an IRQ. arg0: the IRQ number
+end
+
+define wombat_current
+  print ((struct thread_info *)per_cpu___l4_current_tinfo)->task
+end
+
+define finish_irq
+  set $current_sel4_thread = ksCurThread
+#set $current = ((struct thread_info *)per_cpu___l4_current_tinfo)->task
+  tbreak *0xf012102a if (ksCurThread==$current_sel4_thread)  
+  continue
+  stepi
+end
+
+document finish_irq
+  Run until the end of the IRQ handler. This is useful if you are stepping through userland code and an interrupt occurs and control moves to the kernel. As far as I know there is no way to disable interrupts in qemu to avoid this.
+end
+
+define n2
+  next
+  if $eip>0xf0000000
+    printf "IRQ happened\n"
+    finish_irq
+  end
+end
+
+document n2
+  Like next but if it detects that an IRQ happens it executes that and returns.
+end
+
+define vtd_root
+  print ia32KSvtdRootTable
+end
+
+define decode_vtd_root_entry
+  set $vtd_root_entry = (vtd_root_entry_t)$arg0
+  set $vtd_re_ctp = ($vtd_root_entry.words[0] & 0xfffff000)
+  set $vtd_re_present = ($vtd_root_entry.words[0] & 0x1)
+end
+
+document decode_vtd_root_entry
+  "Decodes the vtd root entry into its component parts"
+end
+
+define print_vtd_root_entry
+  printf "ctp: %x\n", $vtd_re_ctp
+  printf "present: %x\n", $vtd_re_present
+end
+
+document print_vtd_root_entry
+  "Print the fields of an earlier decoded vtd root entry"
+end
+
+define print_vtd_root_table 
+  set $vtd_root_entry_ptr = ia32KSvtdRootTable
+  set $count = 0
+  while($count < 256)
+    decode_vtd_root_entry $vtd_root_entry_ptr[$count] 
+    if($vtd_re_present)
+      printf "Index: %x\n", $count
+      print_vtd_root_entry 
+    end
+    set $count++
+  end
+end
+
+document print_vtd_root_table
+  "Prints all of the entries in the vtd root table. There is one entry for each PCI bus"
+end
+
+define decode_vtd_context_entry
+  set $vtd_context_entry = (vtd_context_entry_t)$arg0
+  set $vtd_ce_did = ($vtd_context_entry.words[2] & 0xffff00) >> 8
+  set $vtd_ce_aw = ($vtd_context_entry.words[2] & 0x7)
+  set $vtd_ce_asr = ($vtd_context_entry.words[0] & 0xfffff000)
+  set $vtd_ce_present = ($vtd_context_entry.words[0] & 0x1)
+end
+
+document decode_vtd_context_entry
+  "Decodes a vtd context entry into its component parts. arg0: pointer to the entry"
+end
+
+define print_vtd_context_entry
+  printf "did: %x\n", $vtd_ce_did
+  printf "aw: %x\n", $vtd_ce_aw
+  printf "asr: %x\n", $vtd_ce_asr
+  printf "present: %x\n", $vtd_ce_present
+end
+
+document print_vtd_context_entry 
+  "Print the fields of an earlier decoded vtd context entry"
+end
+
+define print_vtd_context_table
+  set $vtd_context_entry_ptr = (vtd_context_entry_t *)$arg0
+  set $count = 0
+  while($count < 256)
+    decode_vtd_context_entry $vtd_context_entry_ptr[$count]
+    if($vtd_ce_present)
+      printf "index %x\n", $count
+      print_vtd_context_entry
+    end
+    set $count++
+  end
+end
+
+document print_vtd_context_table
+  "Prints all of the fields in a vtd context table. There is one entry for each (dev, fn) in the bus. arg0: a pointer to the context table"
+end
+
+define decode_vtd_page_table_entry
+  set $vtd_page_table_entry = (vtd_pte_t)$arg0
+  set $vtd_pte_addr =  ($vtd_page_table_entry.words[0] & 0xfffff000)
+  set $vtd_pte_write = ($vtd_page_table_entry.words[0] & 0x2) >> 1
+  set $vtd_pte_read = ($vtd_page_table_entry.words[0] & 0x1)
+end
+
+document decode_vtd_page_table_entry
+  "Decodes a vtd PTE info its component parts. arg0: pointer to the entry"
+end
+
+define print_vtd_page_table_entry
+  printf "addr: %x\n", $vtd_pte_addr
+  printf "write: %x\n", $vtd_pte_write
+  printf "read: %x\n", $vtd_pte_read
+end
+
+document print_vtd_page_table_entry 
+  "Print the fields of an earlier decoded vtd page table entry"
+end
+
+define print_vtd_page_table
+  set $vtd_pte_ptr = (vtd_pte_t *)$arg0
+  set $count = 0
+  while($count < 256)
+    decode_vtd_page_table_entry $vtd_pte_ptr[$count]
+    if($vtd_pte_read || $vtd_pte_write)
+      printf "index: %x\n", $count
+      print_vtd_page_table_entry 
+    end
+    set $count++
+  end
+end
+
+document print_vtd_page_table
+  "Prints all of the fields in a vtd page table. arg0: a pointer to the page table"
+end
+
+define paddr_to_vaddr
+  set $var = (unsigned int)$arg0
+  set $vaddr = ($var + 0xf0000000)
+end
+
+document paddr_to_vaddr
+  "Convert a physical address to the locaction to which it is mapped in the kernel"
+end
+
+define vaddr_to_paddr
+  set $paddr = ($arg0 - 0xf0000000)
+end
+
+document vaddr_to_paddr
+  "Convert a virtual address in the kernel to a physical address"
+end
+
+define lookup_vtd_address
+  set $bus = $arg0
+  set $devfn = $arg1
+  set $address = $arg2
+
+  set $vtd_root_entry_ptr = ia32KSvtdRootTable
+  decode_vtd_root_entry $vtd_root_entry_ptr[$bus]
+  if($vtd_re_present)
+    printf "Root entry: \n"
+    print_vtd_root_entry
+    paddr_to_vaddr $vtd_re_ctp
+    set $vtd_context_entry_ptr = (vtd_context_entry_t *)$vaddr
+    decode_vtd_context_entry $vtd_context_entry_ptr[$devfn]
+    if($vtd_ce_present)
+      printf "Context entry: \n"
+      print_vtd_context_entry
+      walk_vtd_pgtables $vtd_ce_asr $address
+    else
+      printf "Error: context entry not present\n"
+    end
+  else
+    printf "Error: root entry not present\n"
+  end
+end
+
+document lookup_vtd_address
+  "Looks up an address in the address space of a given PCI device. arg0: PCI bus number, arg1: PCI devfn number, arg2: virtual address to look up"
+end
+
+define walk_vtd_pgtables
+  set $pg_tab = (vtd_pte_t *)$arg0
+  set $address = (unsigned long long int)$arg1
+  set $count=0
+  if(($address & 0xffffff8000000000) == 0x0)
+    set $address = $address << 25
+    while(1)
+      set $index = ($address & 0xff80000000000000) >> (64-9)
+      printf "index: %x\n", $index
+      set $address = ($address << 9)
+      paddr_to_vaddr $pg_tab
+      set $pg_tab = (vtd_pte_t *)$vaddr
+      decode_vtd_page_table_entry $pg_tab[$index]
+      if($vtd_pte_read || $vtd_pte_write)
+        printf "Page table entry: \n"
+        print_vtd_page_table_entry
+#TODO check for superpages
+        set $count++
+        if($count==3)
+          printf "Translation complete. Physical address: %llx\n", $vtd_pte_addr 
+          loop_break
+        else
+          set $pg_tab = (vtd_pte_t *)$vtd_pte_addr
+        end
+      else 
+        printf "Error: Page table entry not present\n"
+        printf "Page table: "
+        print_vtd_page_table_entry 
+        loop_break
+      end
+    end
+  else
+    printf "Error: bits 63:39 must be 0\n"
+  end
+end
+
+document walk_vtd_pgtables
+  "Walks the IOMMU page table to resolve a virtual address starting at the given page table. arg0: pointer to page table (in seL4 virtual memory), arg1: virtual address to resolve"
+end
+
+define decode_pte
+  set $pte_addr = $arg0 & 0xfffff000
+  set $pte_present = $arg0 & 1
+  set $pte_rw = ($arg0 >> 1) & 1
+  set $pte_usr = ($arg0 >> 2) & 1
+  set $pte_pwt = ($arg0 >> 3) & 1
+  set $pte_pcd = ($arg0 >> 4) & 1
+  set $pte_accessed = ($arg0 >> 5) & 1
+  set $pte_dirty = ($arg0 >> 6) & 1
+  set $pte_pse = ($arg0 >> 7) & 1
+  set $pte_pat = ($arg0 >> 12) & 1
+  set $pte_avl = ($arg0 >> 9) & 7
+  set $pte_global = ($arg0 >> 8) & 1
+end
+
+document decode_pte
+ Decode an IA32 page table leaf entry into its component parts.
+ If the PRESENT bit is 0 then the rest of the bits can be anything
+ (OSs typically reuse them for swap housekeeping)
+end
+
+define maybe_print
+  if $arg0
+    printf $arg1
+  else
+    printf $arg2
+  end
+end
+
+document maybe_print
+ If arg0 is non-zero print arg1 otherwise print arg2.
+end
+
+# Can't use the obvious printf formulation for this because gdb tries
+# to call malloc in the target --- which doesn't work in SeL4
+define print_pte
+  printf "Address 0x%x ", $pte_addr
+  printf "  attributes: "
+  maybe_print $pte_present "P" "-"
+  maybe_print $pte_rw  "w"  "r"
+  maybe_print $pte_usr  "U"  "S"
+  maybe_print $pte_pwt " WT "  " WB "
+  maybe_print $pte_pcd "NC "  "C "
+  maybe_print $pte_accessed  "A"  "-"
+  maybe_print $pte_dirty  "d"  "-"
+  maybe_print $pte_pse  "4M"  "4k"
+  maybe_print $pte_pat " PAT " ""
+  maybe_print $pte_global "g" ""
+
+  printf "AVL%x\n", $pte_avl
+end
+
+document print_pte
+  Print the PTE parts split out by decode_pte.
+  You must invoke decode_pte before invoking this function.
+end
+
+define pgd
+  set $idx = 0
+  set $pgdptr = $arg0
+  while ($idx < 1024)
+    set $pte = *(long *)$pgdptr
+#printf "PGD@0x%x is 0x%x\n", $pgdptr, $pte
+    decode_pte $pte
+    set $mapped_addr =  $idx * (4 * 1024 * 1024)
+    set $idx = $idx + 1
+    set $pgdptr = $pgdptr + 4
+    if (! $pte_present)
+       loop_continue
+    end
+    if $pte_pse
+       printf "HUGE (4G) V 0x%x ", $mapped_addr
+       print_pte
+    else
+      set $pteptr = (long)$pte_addr + 0xe0000000
+      set $n = 0
+      while ($n < 1024)
+        set $pte = *(long *)$pteptr
+        decode_pte $pte
+        if $pte_present
+          printf  "V:%08x ", $mapped_addr
+          print_pte
+        end
+        set $pteptr = $pteptr + 4
+        set $mapped_addr = $mapped_addr + 4096
+        set $n = $n + 1
+      end
+    end
+  end
+end
+
+document pgd
+  Print a page table, starting at the page global directory.
+  Assumes 2-level (non-PAE) page tables,
+end

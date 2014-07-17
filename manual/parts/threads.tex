@@ -1,0 +1,341 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\chapter{\label{ch:threads}Threads and Execution}
+
+\section{Threads}
+\label{sec:threads}
+
+seL4 provides threads to represent an execution context and manage
+processor time. A thread is represented in seL4 by its thread control block
+object (\obj{TCB}). Each \obj{TCB} has an associated CSpace (see
+\autoref{ch:cspace}) and VSpace (see \autoref{ch:vspace}) which
+may be shared with other threads. A \obj{TCB} may also have an IPC buffer
+(see  \autoref{ch:ipc}), which is used to pass extra arguments during IPC
+or kernel object invocation that do not fit in the architecture-defined message
+registers. While it is not compulsory that a thread has an IPC buffer,
+it will not be able to perform most kernel invocations, as they require
+cap transfer.
+Each thread belongs to exactly one security domain (see 
+\autoref{sec:domains}).
+%FIXME: there is much more information held in the TCB!
+
+\subsection{Thread Creation}
+
+Like other objects, \obj{TCB}s are created with the
+\apifunc{seL4\_Untyped\_Retype}{untyped_retype} method (see
+\autoref{sec:kernmemalloc}). A newly created thread is initially inactive. It
+is configured by setting its CSpace and VSpace with the
+\apifunc{seL4\_TCB\_SetSpace}{tcb_setspace}
+or \apifunc{seL4\_TCB\_Configure}{tcb_configure} methods and then calling
+\apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} with an initial stack pointer and instruction
+pointer. The thread can then be activated either by setting the
+\texttt{resume\_target} parameter in the \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} invocation to true
+or by seperately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method.
+
+\subsection{Thread Deactivation}
+\label{sec:thread_deactivation}
+
+The \apifunc{seL4\_TCB\_Suspend}{tcb_suspend} method deactivates a thread.
+Suspended threads can later be resumed.
+Their suspended state can be retrieved with the 
+\apifunc{seL4\_TCB\_ReadRegisters}{tcb_readregisters} and
+\apifunc{seL4\_TCB\_CopyRegisters}{tcb_copyregisters} methods.
+They can also be reconfigured and
+reused or left suspended indefinitely if not needed. Threads will be
+automatically suspended when the last capability to their \obj{TCB} is
+deleted.
+% an example of which is demonstrated in \nameref{ex:second_thread}.
+
+\subsection{Scheduling}
+\label{sec:sched}
+
+seL4 uses a preemptive round-robin scheduler with 256 priority levels.
+When a thread creates or modifies another thread, it can only set the
+other thread's priority to be lower than or equal to its own. Thread priority can be
+set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
+\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority} methods.
+
+\subsection{Exceptions}
+
+Each thread has an associated exception-handler endpoint. If the thread
+causes an exception, the kernel creates an IPC message with the relevant
+details and forwards this to a thread waiting on the endpoint. This
+thread can then take the appropriate action. Fault IPC messages are
+described in \autoref{sec:faults}.
+
+In order to enable exception handlers a capability to the exception-handler
+endpoint must exist in the CSpace of the thread that generates the exception.
+The exception-handler
+endpoint can be set with the \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or
+\apifunc{seL4\_TCB\_Configure}{tcb_configure} method.
+With these methods, a capability address for the exception handler can be associated with a thread.
+This address is then used to lookup the handler endpoint when an exception is generated.
+Note, however, that these methods make no attempt to check whether an endpoint capability exists at the specified
+address in the CSpace of the thread. The capability is only looked up
+when an exception actually happens and if the lookup fails then no
+exception message is delivered and the thread is suspended indefinitely.
+
+The exception endpoint must have send and grant rights. Replying to the
+IPC restarts the thread. For certain exception types, the contents of
+the reply message may be used to set the values in the registers of the
+thread being restarted.
+See \autoref{sec:faults} for details.
+
+
+
+\subsection{Message Layout of the Read-/Write-Registers Methods}
+\label{sec:read_write_registers}
+
+The registers of a thread can be read and written with the
+\apifunc{seL4\_TCB\_ReadRegisters}{tcb_readregisters} and \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} methods. The register contents are transferred via the IPC buffer. The IPC buffer locations that registers are copied to/from are given below.
+
+\ifxeightsix
+\subsubsection{IA-32}
+
+\begin{tabularx}{\textwidth}{p{0.5\textwidth}X}
+\toprule
+\textbf{Register} & \textbf{IPC Buffer location} \\
+\midrule
+\reg{EIP} & \ipcbloc{IPCBuffer[0]} \\
+\reg{ESP} & \ipcbloc{IPCBuffer[1]} \\
+\reg{EFLAGS} & \ipcbloc{IPCBuffer[2]} \\
+\reg{EAX} & \ipcbloc{IPCBuffer[3]} \\
+\reg{EBX} & \ipcbloc{IPCBuffer[4]} \\
+\reg{ECX} & \ipcbloc{IPCBuffer[5]} \\
+\reg{EDX} & \ipcbloc{IPCBuffer[6]} \\
+\reg{ESI} & \ipcbloc{IPCBuffer[7]} \\
+\reg{EDI} & \ipcbloc{IPCBuffer[8]} \\
+\reg{EBP} & \ipcbloc{IPCBuffer[9]} \\
+\reg{TLS\_BASE} & \ipcbloc{IPCBuffer[10]} \\
+\reg{FS} & \ipcbloc{IPCBuffer[11]} \\
+\reg{GS} & \ipcbloc{IPCBuffer[12]} \\
+\bottomrule
+\end{tabularx}
+\fi
+
+\subsubsection{ARM}
+
+\begin{tabularx}{\textwidth}{p{0.5\textwidth}X}
+\toprule
+\textbf{Register} & \textbf{IPC Buffer location} \\
+\midrule
+\reg{PC} & \ipcbloc{IPCBuffer[0]} \\
+\reg{SP} & \ipcbloc{IPCBuffer[1]} \\
+\reg{CPSR} & \ipcbloc{IPCBuffer[2]} \\
+\reg{R0-R1} & \ipcbloc{IPCBuffer[3-4]} \\
+\reg{R8-R12} & \ipcbloc{IPCBuffer[5-9]} \\
+\reg{R2-R7} & \ipcbloc{IPCBuffer[10-15]} \\
+\reg{R14} & \ipcbloc{IPCBuffer[16]} \\
+\bottomrule
+\end{tabularx}
+
+
+\section{Faults}
+\label{sec:faults}
+
+A thread's actions may result in a fault. Faults are delivered to the
+thread's exception handler so that it can take the appropriate action.
+The fault type is specified in the message label and is one of:
+seL4\_CapFault, seL4\_VMFault, seL4\_UnknownSyscall, seL4\_UserException
+or seL4\_Interrupt.
+
+\subsection{Capability Faults}
+
+Capability faults may occur in two places. Firstly, a capability fault
+can occur when lookup of a capability referenced by a
+\apifunc{seL4\_Call}{sel4_call} or \apifunc{seL4\_Send}{sel4_send} system call
+failed (\apifunc{seL4\_NBSend}{sel4_nbsend} calls on
+invalid capabilities silently fail). In this case, the capability
+on which the fault occurred may be the capability being invoked or an
+extra capability passed in the \texttt{caps} field in the IPC buffer.
+
+Secondly, a capability fault can occur when \apifunc{seL4\_Wait}{sel4_wait} is
+called on a capability that
+does not exist, is not an endpoint capability or does not have
+receive permissions.
+
+Replying to the fault IPC will restart the faulting thread. The contents of the
+IPC message are given in \autoref{tbl:ipc_contents}.\\
+
+\begin{table}[htb]
+\noindent\begin{tabularx}{\textwidth}{XX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer Location} \\
+\midrule
+Program counter to restart execution at & \ipcbloc{IPCBuffer[0]} \\
+Capability address & \ipcbloc{IPCBuffer[1]}\\
+In receive phase (1 if the fault happened during a wait system call, 0
+otherwise) & \ipcbloc{IPCBuffer[2]}\\
+Lookup failure description. As described in \autoref{sec:lookup_fail_desc} &
+\ipcbloc{IPCBuffer[3..]}\\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:ipc_contents}Contents of an IPC message.}
+\end{table}
+
+\subsection{Unknown Syscall}
+\label{sec:unknown-syscall}
+
+This fault occurs when a thread executes a system call with a syscall
+number that is unknown to seL4.
+The register set
+of the faulting thread is passed to the thread's exception handler so that it
+may, for example, emulate the system call if a thread is being
+virtualised.
+
+Replying to the fault IPC allows the thread to be restarted
+and/or the thread's register set to be modified. If the reply has
+a label of zero, the thread will be restarted. Additionally, if the
+message length is non-zero, the faulting thread's register set will be
+updated as shown in \autoref{tbl:unknown_syscall_result_arm} \ifxeightsix and
+\autoref{tbl:unknown_syscall_result_ia32}\fi. In this case, the number of
+registers updated is controlled with the length field of the message
+tag.
+
+\subsubsection{ARM}
+
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
+\midrule
+\reg{R0-R7} & (same) & \ipcbloc{IPCBuffer[0-7]} \\
+\reg{FaultInstruction} & (same) & \ipcbloc{IPCBuffer[8]} \\
+\reg{SP} & (same) & \ipcbloc{IPCBuffer[9]} \\
+\reg{LR} & (same) & \ipcbloc{IPCBuffer[10]} \\
+\reg{CPSR} & (same) & \ipcbloc{IPCBuffer[11]} \\
+Syscall number & --- & \ipcbloc{IPCBuffer[12]} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:unknown_syscall_result_arm}Unknown system call outcome on
+the ARM architecture.}
+\end{table}
+
+\ifxeightsix
+\subsubsection{IA-32}
+% FIXME: This table now reflows onto the following page with the paragraph after
+% inserted here :(
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
+\midrule
+\reg{EAX} & (same) & \ipcbloc{IPCBuffer[0]} \\
+\reg{EBX} & (same) & \ipcbloc{IPCBuffer[1]} \\
+\reg{ECX} & (same) & \ipcbloc{IPCBuffer[2]} \\
+\reg{EDX} & (same) & \ipcbloc{IPCBuffer[3]} \\
+\reg{ESI} & (same) & \ipcbloc{IPCBuffer[4]} \\
+\reg{EDI} & (same) & \ipcbloc{IPCBuffer[5]} \\
+\reg{EBP} & (same) & \ipcbloc{IPCBuffer[6]} \\
+\reg{EIP} & (same) & \ipcbloc{IPCBuffer[7]} \\
+\reg{ESP} & (same) & \ipcbloc{IPCBuffer[8]} \\
+\reg{EFLAGS} & (same) & \ipcbloc{IPCBuffer[9]} \\
+Syscall number & --- & \ipcbloc{IPCBuffer[10]} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:unknown_syscall_result_ia32}Unknown system call outcome on
+the IA-32 architecture.}
+\end{table}
+\fi
+
+
+\subsection{User Exception}
+
+User exceptions are used to deliver architecture-defined exceptions. For
+example, such an exception could occur if a user thread attempted to
+divide a number by zero.
+
+Replying to the fault IPC allows the thread to be restarted
+and/or the thread's register set to be modified. If the reply has
+a label of zero, the thread will be restarted. Additionally, if the
+message length is non-zero, the faulting thread's register set will be
+updated as shown in \autoref{tbl:user_exception_result_arm} \ifxeightsix and
+\autoref{tbl:user_exception_result_ia32}\fi. In this case, the number of
+registers updated is controlled with the length field of the message
+tag.
+
+\subsubsection{ARM}
+
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
+\midrule
+\reg{FaultInstruction} & (same) & \ipcbloc{IPCBuffer[0]} \\
+\reg{SP} & (same) & \ipcbloc{IPCBuffer[1]} \\
+\reg{CPSR} & (same) & \ipcbloc{IPCBuffer[2]} \\
+Exception number & --- & \ipcbloc{IPCBuffer[3]} \\
+Exception code & --- & \ipcbloc{IPCBuffer[4]} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:user_exception_result_arm}User exception outcome on the ARM
+architecture.}
+\end{table}
+
+\ifxeightsix
+\subsubsection{IA-32}
+
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
+\midrule
+\reg{EIP} & (same) & \ipcbloc{IPCBuffer[0]} \\
+\reg{ESP} & (same) & \ipcbloc{IPCBuffer[1]} \\
+\reg{EFLAGS} & (same) & \ipcbloc{IPCBuffer[2]} \\
+Exception number & --- & \ipcbloc{IPCBuffer[3]} \\
+Exception code & --- & \ipcbloc{IPCBuffer[4]} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:user_exception_result_ia32}User exception outcome on the
+IA-32 architecture.}
+\end{table}
+\fi
+
+\subsection{VM Fault}
+\label{sec:vm-fault}
+
+The thread caused a page fault. Replying to the fault IPC will restart
+the thread. The contents of the IPC message are given below.\\
+
+% FIXME This table appears to be unified to make it architecture-independent,
+% but all the other tables are broken down into ARM and IA-32, so this one
+% should be as well for consistency.
+\noindent\begin{tabularx}{\textwidth}{XX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer location} \\
+\midrule
+Program counter to restart execution at. & \ipcbloc{IPCBuffer[0]} \\
+Address that caused the fault. & \ipcbloc{IPCBuffer[1]} \\
+Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{IPCBuffer[2]}  \\
+Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{IPCBuffer[3]} \\
+\bottomrule
+\end{tabularx}\\ \\
+
+\section{Domains}
+\label{sec:domains}
+
+Domains are used to isolate independent subsystems, so as to limit 
+information flow between them.
+The kernel switches between domains according to a fixed, time-triggered 
+schedule.
+The fixed schedule is compiled into the kernel via the constant 
+\texttt{CONFIG\_NUM\_DOMAINS} and the global variable \texttt{ksDomSchedule}.
+
+A thread belongs to exactly one domain, and will only run when that domain 
+is active.
+The \apifunc{seL4\_DomainSet\_Set}{domainset_set} method changes the domain 
+of a thread.
+The caller must possess a \obj{Domain} cap and the thread's \obj{TCB} cap.
+The initial thread starts with a \obj{Domain} cap (see 
+\autoref{sec:messageinfo}).
+
+

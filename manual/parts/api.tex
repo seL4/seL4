@@ -1,0 +1,314 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+%macros for API documentation
+\newcommand{\param}[3]{\texttt{#1}&\texttt{#2}&#3\\ }
+
+\newcommand{\inputapidoc}[1] {\input{parts/api/#1.tex}}
+
+\newcommand{\apidoc}[7]
+{
+    \subsection{\label{api:#1}#2}
+
+    \texttt{#4}
+    \vspace*{6pt}
+
+    #3
+
+    \begin{center}
+    \begin{minipage}{0.95\textwidth}
+    \begin{tabularx}{\textwidth}{llX}
+    \toprule
+    \textbf{Type} & \textbf{Name} & \textbf{Description} \\ 
+    \midrule
+    #5
+    \bottomrule
+    \end{tabularx}
+    \end{minipage}
+    \end{center}
+
+    \textit{Return value:} #6 \par
+
+    \textit{Description:} #7 \par
+
+    \vfill
+}
+
+%Common parameter descriptions
+\newcommand{\destcspacedesc}{CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32.}
+\newcommand{\destindexdesc}{CPTR to the destination slot. Resolved from the root of the destination CSpace.}
+\newcommand{\destdepthdesc}{Number of bits of dest\_index to resolve to find the destination slot.}
+\newcommand{\srccspacedesc}{CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32.}
+\newcommand{\srcindexdesc}{CPTR to the source slot. Resolved from the root of the source CSpace.}
+\newcommand{\srcdepthdesc}{Number of bits of src\_index to resolve to find the source slot.}
+\newcommand{\rightsdesc}{The rights inherited by the new capability. Possible values for this type are given in \autoref{sec:cap_rights}.}
+\newcommand{\badgedesc}{Badge to be applied to the new capability.}
+
+\newcommand{\cspacedesc}{CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32.}
+\newcommand{\indexdesc}{CPTR to the capability. Resolved from the root of the \_service parameter.}
+\newcommand{\depthdesc}{Number of bits of index to resolve to find the capability being operated on.}
+
+\newcommand{\ioportcapdesc}{An IO port capability.}
+\newcommand{\ioportdescread}{The port to read from.}
+\newcommand{\ioportdescwrite}{The port to write to.}
+\newcommand{\ioportdatadesc}{Data to write to the IO port.}
+
+\newcommand{\pagecapdesc}{Capability to the page to map.}
+\newcommand{\pdcapdesc}{Capability to the VSpace which will contain the mapping.}
+\newcommand{\vaddrdesc}{Virtual address to map the page into.}
+\newcommand{\vmcaprightsdesc}{Rights for the mapping. Possible values for this type are given in \autoref{sec:cap_rights}.}
+\newcommand{\vmattribsdescarm}{VM Attributes for the mapping. Possible values for this type are given in \autoref{ch:vspace}.}
+
+\ifxeightsix
+\newcommand{\vmattribsdescintel}{VM Attributes for the
+  mapping. Possible values for this type are given in \autoref{ch:vspace}. }
+\fi
+
+\newcommand{\tcbcapdesc}{Capability to the TCB which is being operated on.}
+
+\newcommand{\irqhandlercapdesc}{The IRQ handler capability.}
+
+\newcommand{\invokedcapdesc}{The capability to be invoked.}
+\newcommand{\messageinfodesc}{The messageinfo structure for the IPC.}
+\newcommand{\senderdesc}{The badge of the endpoint capability that was invoked by the sender is written to this address. This parameter is ignored if \texttt{NULL}.}
+\newcommand{\resumetargetdesc}{The invocation should also resume the destination thread.}
+\newcommand{\suspendsourcedesc}{The invocation should also suspend the source thread.}
+\newcommand{\archflagsdesc}{Architecture dependent flags. These have no meaning on \ifxeightsix{either IA-32 or}\fi{} ARM.}
+
+\newcommand{\threadpriodesc}{The thread's new priority.}
+\newcommand{\threadcspacerootdesc}{The new CSpace root.}
+\newcommand{\threadcspacedatadesc}{Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect.}
+\newcommand{\threadvspacerootdesc}{The new VSpace root.}
+\newcommand{\threadvspacedatadesc}{Has no effect on \ifxeightsix{IA-32 or}\fi{} ARM processors.}
+\newcommand{\threadbufferdesc}{Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary.}
+\newcommand{\threadbufferpagedesc}{Capability to a page containing the thread's IPC buffer.}
+\newcommand{\excepthanddesc}{CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured.}
+
+\newcommand{\asidassignpooldesc}{The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.}
+\newcommand{\asidassignpddesc}{The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.}
+
+%Return value descriptions
+\newcommand{\messageinforetdesc}{A \texttt{seL4\_MessageInfo\_t} structure as described in \autoref{sec:messageinfo}.}
+\newcommand{\noret}{This method does not return anything.}
+\newcommand{\errorenumdesc}{A return value of \texttt{0} indicates success. A non-zero value indicates that an error occurred. See \autoref{sec:errors} for a description of the message register and tag contents upon error.}
+
+\newcommand{\domcapdesc}{Capability allowing domain configuration.}
+\newcommand{\domargdesc}{The thread's new domain.}
+
+\section{Error Codes}
+\label{sec:errors}
+
+Invoking a capability with invalid parameters will result in an error.
+seL4 system calls return an error code in the message tag and a short
+error description in the message registers to aid the programmer in
+determining the cause of errors.\\
+
+\subsection{Invalid Argument}
+
+A non-capability argument is invalid.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_InvalidArgument} \\
+    \ipcbloc{IPCBuffer[0]} & Invalid argument number \\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\subsection{Invalid Capability}
+
+A capability argument is invalid.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_InvalidCapability} \\
+    \ipcbloc{IPCBuffer[0]} & Invalid capability argument number \\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\subsection{Illegal Operation}
+
+The requested operation is not permitted.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_IllegalOperation} \\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\subsection{Range Error}
+
+An argument is out of the allowed range.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_RangeError} \\
+    \ipcbloc{IPCBuffer[0]} & Minimum allowed value \\
+    \ipcbloc{IPCBuffer[1]} & Maximum allowed value \\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\subsection{Alignment Error}
+
+A supplied argument does not meet the alignment requirements.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_AlignmentError} \\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\subsection{Failed Lookup}
+
+A capability could not be looked up.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_FailedLookup} \\
+    \ipcbloc{IPCBuffer[0]} & 1 if the lookup failed for a source capability, 0 otherwise\\
+    \ipcbloc{IPCBuffer[1]} & Type of lookup failure\\
+    \ipcbloc{IPCBuffer[2..]} & Lookup failure description as described in \autoref{sec:lookup_fail_desc}\\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\subsection{Delete First}
+
+A destination slot specified in the syscall arguments is occupied.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_DeleteFirst} \\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\subsection{Revoke First}
+
+The object currently has other objects derived from it and the requested
+invocation cannot be performed until either these objects are deleted or
+the revoke invocation is performed on the capability.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_RevokeFirst} \\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\subsection{Not Enough Memory}
+
+The \obj{Untyped Memory} object does not have enough unallocated space to
+complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_NotEnoughMemory} \\
+    \ipcbloc{IPCBuffer[0]} & Amount of memory available in bytes\\
+\bottomrule
+\end{tabularx}
+\vfill
+
+\section{System Calls}
+\inputapidoc{sel4_send}
+\inputapidoc{sel4_wait}
+\inputapidoc{sel4_call}
+\inputapidoc{sel4_reply}
+\inputapidoc{sel4_nbsend}
+\inputapidoc{sel4_replywait}
+\inputapidoc{sel4_yield}
+\inputapidoc{sel4_notify}
+\clearpage
+
+\section{Architecture-Independent Object Methods}
+\label{sec:kobj_api}
+\inputapidoc{cnode_copy}
+\inputapidoc{cnode_delete}
+\inputapidoc{cnode_mint}
+\inputapidoc{cnode_move}
+\inputapidoc{cnode_mutate}
+\inputapidoc{cnode_recycle}
+\inputapidoc{cnode_revoke}
+\inputapidoc{cnode_rotate}
+\inputapidoc{cnode_savecaller}
+\inputapidoc{debug_halt}
+\inputapidoc{debug_putchar}
+\inputapidoc{domainset_set}
+\inputapidoc{irq_controlget}
+\inputapidoc{irq_handleracknowledge}
+\inputapidoc{irq_handlerclear}
+\inputapidoc{irq_handlersetendpoint}
+\inputapidoc{tcb_configure}
+\inputapidoc{tcb_copyregisters}
+\inputapidoc{tcb_readregisters}
+\inputapidoc{tcb_resume}
+\inputapidoc{tcb_setipcbuffer}
+\inputapidoc{tcb_setpriority}
+\inputapidoc{tcb_setspace}
+\inputapidoc{tcb_suspend}
+\inputapidoc{tcb_writeregisters}
+\inputapidoc{untyped_retype}
+
+\ifxeightsix
+\clearpage
+
+\section{IA-32-Specific Object Methods}
+\label{sec:kobj_api_intel}
+\inputapidoc{ia32_ASID_controlmakepool}
+\inputapidoc{ia32_ASID_poolassign}
+\inputapidoc{ia32_IO_portin8}
+\inputapidoc{ia32_IO_portin16}
+\inputapidoc{ia32_IO_portin32}
+\inputapidoc{ia32_IO_portout8}
+\inputapidoc{ia32_IO_portout16}
+\inputapidoc{ia32_IO_portout32}
+\inputapidoc{ia32_io_pagetable_map}
+\inputapidoc{ia32_page_mapio}
+\inputapidoc{ia32_page_map}
+\inputapidoc{ia32_page_remap}
+\inputapidoc{ia32_page_unmap}
+\inputapidoc{ia32_pagetable_map}
+\inputapidoc{ia32_pagetable_unmap}
+\fi
+
+\clearpage
+
+\section{ARM-Specific Object Methods}
+\label{sec:kobj_api_arm}
+\inputapidoc{arm_asidcontrol_makepool}
+\inputapidoc{arm_asidpool_assign}
+\inputapidoc{arm_page_flushcaches}
+\inputapidoc{arm_page_map}
+\inputapidoc{arm_page_remap}
+\inputapidoc{arm_page_unmap}
+\inputapidoc{arm_pagetable_map}
+\inputapidoc{arm_pagetable_unmap}

@@ -1,0 +1,153 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\documentclass[a4paper,11pt,twoside]{report}
+\usepackage[colour,nictaonly]{disy}
+
+% Setting this to true turns on the `draft' watermark
+\newif \ifDraft \Draftfalse
+
+\newif \ifxeightsix   \xeightsixtrue
+
+\usepackage[margin=33mm]{geometry}
+\usepackage{graphicx}
+\usepackage{cite,url,fancyhdr}
+
+% Draft support
+\ifDraft
+  \usepackage{draftcopy}
+  \newcommand{\Comment}[1]{\textbf{\textsl{#1}}}
+  \newcommand{\FIXME}[1]{\textbf{\textsl{FIXME: #1}}}
+  \date{}
+\else
+  \newcommand{\Comment}[1]{\relax}
+  \newcommand{\FIXME}[1]{\relax}
+  \date{}
+\fi
+
+\pagestyle{fancyplain}
+\lhead[\fancyplain{}{\sl\thepage}]{\fancyplain{}{\sl\rightmark}}
+\chead{}
+\rhead[\fancyplain{}{\sl\leftmark}]{\fancyplain{}{\sl\thepage}}
+\lfoot[\fancyplain{\sl\thepage}{}]{}
+\cfoot{\ifDraft\textsf{NICTA Confidential}\fi}
+\rfoot[]{\fancyplain{\sl\thepage}{}}
+
+\usepackage{listings}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{verbatim}
+\usepackage[small,bf,up,width=0.75\textwidth]{caption}
+\usepackage[htt]{hyphenat}
+\renewcommand{\captionfont}{\small}
+
+% Hyperlinks and Colors
+\usepackage{color}
+%\definecolor{linkcolor}{rgb}{.000,.348,.508}
+\definecolor{linkcolor}{rgb}{0, 0, 0}
+\usepackage[colorlinks=true,linkcolor=linkcolor,citecolor=linkcolor,
+            filecolor=linkcolor,pagecolor=linkcolor,urlcolor=linkcolor]{hyperref}
+\renewcommand{\chapterautorefname}{Chapter}
+\renewcommand{\sectionautorefname}{Section}
+\renewcommand{\subsectionautorefname}{Section}
+\renewcommand{\subsubsectionautorefname}{Section}
+\renewcommand{\appendixautorefname}{Appendix}
+\renewcommand{\Hfootnoteautorefname}{Footnote}
+\newcommand{\Htextbf}[1]{\textbf{\hyperpage{#1}}}
+\urlstyle{rm}
+
+% API functions / Kernel Objects
+\newcommand{\obj}[1]{\textsf{\small #1}}
+\newcommand{\apifunc}[2]{\hyperref[api:#2]{\texttt{#1()}}}
+\newcommand{\enummem}[1]{\texttt{#1}}
+\newcommand{\ipcbloc}[1]{\texttt{#1}}
+\newcommand{\reg}[1]{\texttt{#1}}
+
+\newcommand{\version}{\input{VERSION}}
+
+% Read information about the repository.
+\input{env}
+
+% Don't indent paragraphs; instead, just leave some vertical space.
+\parindent 0pt\parskip 6pt
+
+\begin{document}
+
+  \title{seL4 Reference Manual\\API version \version}
+
+  \author{Trustworthy~Systems~Team, NICTA}
+  \AuthorEmail{ssrg@nicta.com.au}
+  \date{\commitdate}
+
+  \maketitle
+
+  \urlstyle{sf}
+  \thispagestyle{empty}
+
+  \vfill
+
+  \copyright~{\commityear} Open Kernel Labs, Inc.\\
+
+  \textsc{All rights reserved}. This document is made available under
+  the terms of the Open Kernel Labs, Inc.\ \textsc{Non-Commercial
+    License Agreement}. A copy of the license is available in the
+  top-level directory of this distribution.
+
+  % Acknowledgements
+  \thispagestyle{empty}
+  \vfill
+  \renewcommand{\abstractname}{Acknowledgements}
+  \begin{abstract}
+% This list of contributors is based on the hg log. If you make commits please
+% add your name in alphabetical order.
+The primary authors of this document are Matthew Grosvenor and Adam Walker,
+with contributions from Adrian Danis, Andrew Boyton, David Greenaway, Etienne
+Le Sueur, Gernot Heiser, Gerwin Klein, Godfrey van der Linden, Kevin
+Elphinstone, Matthew Fernandez, Matthias Daum, Michael von Tessin, Peter Chubb,
+Simon Winwood, Thomas Sewell, Timothy Bourke and Toby Murray. All authors 
+and contributors can be contacted at firstname.lastname@nicta.com.au.
+  \end{abstract}
+  \thispagestyle{empty}
+
+  \cleardoublepage
+  \setcounter{page}{1}
+  \tableofcontents
+  \listoftables
+  \listoffigures
+
+  \cleardoublepage
+  \setcounter{page}{1}
+  \pagenumbering{arabic}
+
+  % Introduction
+  \input{parts/intro}
+
+  % Chapters
+  \input{parts/objects}
+  \input{parts/cspace}
+  \input{parts/ipc}
+  \input{parts/threads}
+  \input{parts/vspace}
+  \input{parts/io}
+  \input{parts/bootup}
+
+  % API Reference
+  \chapter{seL4 API Reference}
+  \label{sec:api_reference}
+  \input{parts/api}
+
+  % Bibliography
+  \cleardoublepage
+  \bibliographystyle{alpha}
+  \bibliography{references}
+
+\end{document}

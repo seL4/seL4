@@ -1,0 +1,60 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+This file lists known caveats in the seL4 API and implementation.
+
+* Implementation Correctness
+
+Only the ARMv6 version on the imx31 platform of seL4 has a correctness proof.
+This proof covers the functional behaviour of the C code of the kernel. It
+does not cover machine code, compiler, linker, boot code, cache and TLB
+management. The proof shows that the seL4 C code implements the abstract API
+specification of seL4. Although the API is intended to provide strong security
+mechanisms, the proof does not guarantee that it does.
+
+
+* Real Time
+
+seL4 version 1.2 is not a real-time kernel. Version 1.2 has a small number of
+potentially long-running kernel operations that are not preemptable (e.g.,
+endpoint deletion and recycling, scheduling, frame and CNode initialisation).
+This may change in future versions.
+
+
+* Recycle Operation
+
+The Recycle operation will not necessarily reset all aspects of an object to
+its initial state. For instance, Recycle for a badged endpoint capability will
+only cancel messages with this badge. Recycle for a page directory will not
+revoke all installed page caps, it will only unmap them. For the precise
+behaviour see the specification.
+
+
+* IPC buffer in globals frame may be stale
+
+When a thread invokes its own TCB object to (re-)register its IPC buffer and
+the thread is re-scheduled immediately, the userland IPC buffer pointer in the
+globals frame may still show the old value. It is updated on the next thread
+switch.
+
+
+* Re-using Address Spaces (ARM and x86):
+
+Before an ASID/page directory/page table can be reused, all frame caps
+installed in it should be revoked. The kernel will not do this automatically
+for the user.
+
+If, for instance, page cap c is installed in the address space denoted by a
+page directory under ASID A, and the page directory is subsequently revoked or
+deleted, and then a new page directory is installed under that same ASID A,
+the page cap c will still retain some authority in the new page directory,
+even though the user intention might be to run the new page directory under a
+new security context. The authority retained is to perform the unmap operation
+on the page the cap c refers to.

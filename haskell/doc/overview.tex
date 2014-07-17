@@ -1,0 +1,580 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\section[intro]{Introduction}
+
+This chapter provides an overview of the \emph{seL4} kernel. It
+concentrates on the conceptual differences between seL4 and existing
+L4 specifications.
+
+The seL4 kernel's design focuses on two general issues with the
+existing L4 API: authorisation of system calls and kernel resource
+management. seL4 addresses these general areas by using capabilities
+to authorise system calls and making kernel data structures first
+class objects whose allocation is performed by user-level operating
+system personalities.
+
+\section[caps]{Capabilities, Endpoints, and System Calls}
+
+Each user-space thread in the system possesses a set of \emph{capabilities}. A
+capability provides the thread that possesses it with the ability to perform one
+or more kernel operations. A thread may address its capabilities using their
+locations in that thread's \emph{capability address space} (henceforth
+abbreviated \emph{CSpace}).
+
+A capability contains a reference to an area of memory that is used to support
+the kernel services that the capability provides. It also contains data
+identifying the type of services provided. Capabilities are immutable and
+opaque from the point of view of the user threads possessing them; once a
+capability has been created, its contents are only visible to the kernel.
+
+\subsection{Capability Invocation}
+
+Capabilities may be \emph{invoked} by passing their CSpace addresses to one of
+the kernel's two basic operations --- \emph{Send} and \emph{Wait}. The former
+is used to send a message to the object represented by the capability, and the
+latter to wait for a reply.
+
+All communication channels in seL4 are one-way; under normal circumstances, a
+user-level thread will never perform both Send and Wait operations using a
+single capability. In fact, many capabilities will only allow one of these two
+operations, and attempting to perform the other will fail.
+
+The potential recipients or senders of a message through an invoked capability
+depend on the type of the kernel object that the capability refers to. For
+most object types, the kernel itself is the recipient of the message; however,
+messages may also be sent to other user-level threads.
+
+\subsection[ipc]{Synchronous Endpoints and IPC}
+
+The basic inter-process communication (or \emph{IPC}) operation is coordinated
+using \emph{endpoint} objects. An endpoint is a small kernel object which
+contains a queue of threads, and a state flag that indicates whether the
+threads in the queue are waiting for Send operations or Wait operations. It
+acts as a one-way channel for communication between one or more senders and
+one or more recipients. Unlike previous versions of L4, the global identities
+of the participants in IPC are not exposed; threads send and receive IPC using
+only the local addresses of their endpoints.
+
+Multiple threads may perform Send or Wait operations on the same endpoint.
+When a pair of threads invoke an endpoint, performing a Send operation and a
+Wait operation respectively, the kernel will perform a \emph{message transfer}
+between them. Threads which cannot immediately be paired are suspended until a
+partner arrives. If multiple threads are suspended on one endpoint, the
+kernel's algorithm for choosing a thread to resume is not specified, but
+typically will be first in, first out order.
+
+\subsubsection{Badged Messages}
+
+\begin{figure}
+\centering \includegraphics{figures/ipctransfer}
+\caption[ipctransfer]{IPC operation, without message buffers. The solid lines represent
+references to kernel objects; the dashed lines represent the transfer of
+control and data between the threads.}
+\end{figure}
+
+Since it is only possible to wait for messages from one specific endpoint at a
+time, a server wishing to provide multiple interfaces or to service requests
+from multiple clients must provide capabilities to the same endpoint for every
+interface or client. The kernel provides the server with a means to identify
+the capability used to send a message (and therefore the client or interface):
+\emph{badged} endpoint capabilities.
+
+Threads holding an endpoint capability with the right to perform the
+Mint operation on it may create new capabilities to that endpoint which
+are marked with badges. A badge is a data word with a meaning defined by
+the user-level server that creates it; typically it will be an index into a
+table of interfaces provided by the server. The badge on a capability is
+immutable and opaque: a badged capability cannot be used with the Mint operation, and a badge cannot be inspected by any means other than receiving a message that was sent with it.
+
+When a message is sent using a badged endpoint capability, the badge is passed
+to the recipient along with the rest of the message. See
+\autoref{fig:.ipctransfer} for an example.
+
+\subsubsection{Message Transfers}
+
+\begin{figure}
+\centering \includegraphics{figures/truncation}
+\caption[truncation]{Truncation of a message when one of the IPC buffer capabilities is
+missing.}
+\end{figure}
+
+Message transfers work by transferring the contents of a certain number of
+\emph{message words} from the sender to the recipient. A small number of
+these will be transferred in the CPU's general purpose registers --- the number
+of registers used for this purpose depends on the architecture. If there is
+more data to be transferred, then per-thread \emph{message buffers} are used.
+
+The first word of the message contains parameters that affect the transfer of
+the message, including the number of words after the first that will be
+transferred. If the kernel is unable to perform the transfer as requested, the
+recipient (but \emph{not} the sender) will receive a modified version of the
+first word that reflects the actual transfer performed.
+
+If the message buffer must be used to transfer the requested number of message
+words, and either the
+sender's or the recipient's message buffer capability is missing, the message
+will be truncated as shown in \autoref{fig:.truncation}. Note that the
+sender cannot tell that this has happened, as informing it would open a covert
+channel from the recipient to the sender. The recipient is not explicitly
+notified either, though the message length specified in the first word will be
+reduced to reflect the amount of data actually sent. The recipient may then use
+protocol-specific means to detect truncation.
+
+It is the responsibility of each of the two
+threads involved, and their pagers, to ensure that their message buffers are
+present when an IPC transfer occurs. Pagers will typically consider pages
+containing these buffers to be pinned, and never unmap them while a thread is
+running, unless that thread is expected to be able to handle the resulting 
+truncation of all of its messages.
+
+\subsubsection{Capability Registers}
+
+The message words can be used to transfer arbitrary untyped data. However, since seL4 capabilities are opaque to user threads, a user thread cannot use message words to transfer capabilities to another thread. The kernel provides a small number of \emph{capability registers} in the IPC buffer; if there are valid capability pointers in those registers, and the sender indicates that the message includes capabilities, then the kernel will send the capabilities along with the message. There are two slightly different motivations for sending a capability along with a message; are two corresponding mechanisms for receiving them at the other end. 
+
+An obvious reason to send a capability is to allow the receiver to invoke it in future. For example, a client may send an asynchronous endpoint capability to a server, to be used for notifications when asynchronous operations complete; or a server may return a capability representing a newly created object. For such capabilities, the receiver must specify a CSpace slot that the capability can be copied into; this is done by setting fields in the IPC buffer that correspond to the destination arguments of a CNode Copy operation (see \autoref{sec:overview.cspace.cnodes}).
+
+Sometimes, however, a capability is sent solely to prove to the receiver that the sender holds it. This is the case when an operation is being performed that affects two or more objects that are implemented by the same server. In this case, there is no reason to transfer real copies of the capability arguments to the receiver. Therefore, if any of the capability arguments refer to the same endpoint that is being used to send the message, the kernel copies the capability's badge into the receiver's corresponding capability register instead of copying the capability itself.
+
+Note that client threads need not be aware of whether two objects are implemented by the same server, or of which transfer mechanism is used for a given call --- the kernel decides which mechanism to use for each capability argument, and informs the server of these choices. This means that objects conforming to an interface can be transparently distributed between servers.
+
+Both types of capability transfer may be restricted by modifying the rights on the endpoint capabilities. The sender must have the grant right to allow either type of capability transfer; also, if the receiver does not have the send right on the endpoint, then any capability copied to it via IPC will be made read-only.
+
+\subsubsection{Non-Blocking Invocations}
+
+In some instances, a thread may need to send a message through an endpoint
+provided by another, untrusted, thread. In this situation, the sender must not
+assume that the endpoint capability is valid, or that there will ever be a
+partner available to receive the message. To avoid making those assumptions,
+the sender may use the non-blocking send operation, \emph{NBSend}.
+
+A non-blocking invocation
+will not fail or fault if the invoked capability is absent, and will not
+suspend the sender if no partner is waiting on the endpoint. It is the
+untrusted recipient's responsibility to provide a valid endpoint capability
+and to perform a Wait operation on it before the message is sent; otherwise
+the message will be silently dropped. The kernel does not inform the sender
+that the non-blocking invocation has been dropped, as doing so would open a
+covert channel.
+
+\subsubsection{Calls and Replies}
+
+Synchronous IPC is often used to implement remote procedure calls (or \emph{RPC}). In order to simplify the process of sending and replying to RPC, the kernel provides special versions of the Send and Wait operations designed specifically for use on the client and server sides of an RPC interface.
+
+To send an RPC, the client marshals arguments in the same way as for an ordinary Send operation, and then performs a \emph{Call} operation. The only difference between Send and Call is that when the message is transferred, a Call will block the sending thread, create a \emph{resume capability} that wakes the sender when invoked, and transfer it to a special slot belonging to the receiving thread: the \emph{caller slot}. This transfer is subject to the same restrictions as an explicit capability transfer: it only happens if the sender possesses the grant right for the endpoint, and the receiver must have the send right on the endpoint or it will receive a read-only capability (which in this case is effectively a null capability).
+
+The caller slot does not exist in the receiver's CSpace. Instead, the receiver can either invoke it using a special \emph{Reply} operation, or move its contents into the CSpace using a CNode method called \emph{SaveCaller}, and invoke it later using a normal Send call. In either case, the resume capability only ever exists in one place --- it cannot be copied --- and is deleted as soon as the calling thread is resumed.
+
+When the resume capability is invoked --- either when the receiver uses Reply, or when some thread sends a message to the capability after the receiver has moved it using SaveCaller --- a message transfer is immediately performed between the replying thread and the blocked client thread. The client thread is then resumed, which has a side-effect of deleting the resume capability.
+
+The Reply operation is always non-blocking. If the resume capability is not valid --- because the sender used Send rather than Call, the sender has already been resumed, the resume capability has been saved in the CSpace, or even if there has never been a sender yet --- then the Reply operation does nothing.
+
+Servers generally run a loop which waits for a message, handles the received message, sends a reply and then returns to waiting. To avoid excessive switching between user and kernel modes, the kernel provides a \emph{ReplyWait} operation, which is simply a Reply followed by Wait.
+
+\subsection{System Calls}
+
+\Autoref{fig:.clientkernel} shows a request being made of the kernel by a
+client thread. The client possesses a capability to a kernel object, and a
+designated \emph{reply capability}, which is an endpoint capability that the
+client (or a system thread controlling the client) has nominated to be used
+for receiving replies to requests. It performs a Call or Send operation to the kernel
+object, which transfers a message to the kernel along with a reference to the
+invoked kernel object.
+
+\begin{figure}
+\centering \includegraphics{figures/clientkernel}
+\caption[clientkernel]{A request by a client for a kernel service. The dotted lines
+represent the conceptual flow of control and data during the
+request.}
+\end{figure}
+
+After receiving a message from a client thread, the kernel determines which
+operation is being requested, based on the invoked object's type and the
+contents of the message; it then performs the operation if possible. If the user sent the request using a Call operation (rather than Send), the kernel replies with a message that either indicates that the operation succeeded, or gives the reason it did not succeed.
+
+\begin{figure}
+\centering \includegraphics{figures/clientserver}
+\caption[clientserver]{A request by a client for a service provided by a user-level server.}
+\end{figure}
+
+\Autoref{fig:.clientserver} shows the procedure followed when a client
+requests a service provided by a user-level server thread. Rather than invoke
+a kernel object capability, the client invokes an endpoint which represents
+the service; the server thread receives the message, determines the identity
+of the client using the sending capability's badge, performs the operation,
+and sends the result to the client's reply capability. Generally, a server
+will possess a single capability used to receive requests, and also one reply
+capability for each of its clients; a client will have a single reply
+capability, and one capability for each object or server it is permitted to
+access.
+
+\subsection{System Call Monitors}\label{sec:sel4:monitors}
+
+Client-server communication and client-kernel communication are quite similar.
+In fact, if the scheduler can guarantee that the client will never be
+scheduled while the operation is running, the two are indistinguishable from
+the client's point of view. This allows kernel operations to be intercepted by
+a \emph{system call monitor} thread, by replacing the client's kernel object
+capabilities with capabilities to an endpoint which the monitor can receive
+from. The monitor may then selectively deny, log or modify each system call
+before forwarding it to the kernel, possibly logging or forging the kernel's
+reply as well.
+
+Note that capability references are sometimes passed to the kernel as system
+call arguments, in which case the monitor will need to replace the references
+with valid ones in the monitor's address space.
+
+\section{Untyped Memory and Kernel Memory Allocation}\label{sec:sel4:alloc}
+
+The kernel memory management issues with existing L4 kernels are addressed in
+seL4 by managing \emph{all} dynamic memory allocation at user level. The
+kernel never allocates memory after user-space code begins running.
+
+The CSpace of the initial user-space thread includes, among other things, a
+set of capabilities to \emph{untyped memory objects} representing all of the
+system's unallocated physical memory. Initially most of these capabilities
+represent large regions of memory --- they may represent any power of two
+size, up to the size of the entire unallocated region. The initial thread is
+free to allocate these regions for specific purposes, or to hand out the
+capabilities to other user-space threads that it creates.
+
+To allocate objects in an untyped memory region, the user-level thread that
+possesses it must send a message to it, specifying the type of object to
+create, the size of the created objects (for object types with variable
+sizes), and a capability reference to an area of a CSpace that will be used to
+store capabilities to the newly allocated objects. This operation is called
+\emph{Retype}. Retype's effect on CSpace is to fill a contiguous empty CSpace
+region specified by the caller with new capabilities. If the operation is
+successful, the kernel returns the number of capabilities created. The
+construction of CSpace is discussed further in \autoref{sec:overview.cspace}.
+
+Allocated objects may be \emph{deactivated} by the \emph{Revoke} or
+\emph{Delete} operations (discussed in \autoref{sec:overview.cspace.cnodes}),
+which delete capabilities. If either of these operations causes all existing
+capabilities to a specific object to be deleted, then the kernel will abort any
+operations involving that object and remove all references to it as a typed
+object. It is then no longer possible to use that object, until the memory is
+reused to create a new object.
+
+If the kernel were to allow a region of memory to be simultaneously used by two
+different objects, it might be possible for a malicious or buggy thread to gain
+direct access to the contents of a kernel data structure. Therefore, the
+Retype operation will fail with a "RevokeFirst" error if there are already
+existing objects in the region. The caller should call Revoke on the Untyped
+object's capability first, if there is any possibility that it already contains
+other objects.
+
+Each Retype operation creates kernel objects of one of the possible types. The
+types present in all implementations are:
+
+\begin{description}
+\item [Untyped memory] objects, which can be created with a Retype operation
+in order to split up a large memory region;
+\item [Virtual memory] objects, which can be mapped in the virtual address
+space (using some implementation-specific process as described in
+\autoref{sec:overview.vm});
+\item [Thread Control Block] objects, which each provide the resources needed
+for a single user-level thread (see \autoref{sec:overview.threads});
+\item [CNode] objects, which are nodes in the guarded page tables used to
+translate CSpace addresses (see \autoref{sec:overview.cspace});
+\item [Endpoint] objects, which contain queues for synchronous IPC (as
+described in \autoref{sec:overview.caps.ipc}); and
+\item [Asynchronous Endpoint] objects, which contain message buffers for
+asynchronous IPC (see \autoref{sec:overview.async-ipc}).
+\end{description}
+
+There may also be implementation-specific object types. The untyped
+memory, virtual memory and CNode objects may be of variable size (limited to
+powers of two), though the minimum and maximum sizes are specific to each
+implementation and type. Other objects are of fixed, implementation-specific
+size.
+
+\section[threads]{Threads}
+
+Unlike previous versions of L4, threads in seL4 have no global identifier
+visible outside the kernel. A thread is identified only by the CSpace address
+of a capability that refers to its \emph{thread control block}, or \emph{TCB}.
+A thread may or may not possess a capability to its own TCB; in a typical
+system, most threads would not.
+
+There are several operations provided by TCB objects, which can be used to
+manipulate the state of the corresponding thread:
+
+\begin{description}
+\item [CopyRegisters] is used for modifying the state of a thread; it is similar to the old L4 \emph{ExchangeRegisters} operation. It is given an additional capability argument, which must refer to a TCB that will be used as the source of the transfer; the invoked thread is the destination. The caller may select which of several subsets of the register context will be transferred between the threads. The operation may also suspend the source thread, and resume the destination thread.
+
+There are always at least two subsets of the context that may be copied. The first contains the parts of the register state that are used or preserved by system calls, including the instruction and stack pointers, and the argument and message registers. The second contains the remaining integer registers. Other subsets are architecture-defined, and typically include coprocessor registers such as the floating point registers.
+
+Note that many integer registers are modified or trashed by system calls, so it is not generally useful to use CopyRegisters to copy integer registers to or from the current thread. The kernel therefore provides two specialised operations for those purposes; they are described below.
+
+\item [ReadRegisters] is a variant of CopyRegisters for which the destination is the calling thread. It uses the message registers to transfer the two subsets of the integer registers; the message format has the more commonly transferred instruction pointer, stack pointer and argument registers at the start, and will be truncated at the caller's request if the other registers are not required. It also does not have an option to restart the destination thread, since it is obviously already running.
+
+\item [WriteRegisters] is a variant of CopyRegisters for which the source is the calling thread. It uses the message registers to transfer the integer registers, in the same order used by \emph{ReadRegisters}. It may be truncated if the later registers are not required; an explicit length argument is given to allow error detection when the message is inadvertently truncated by a missing IPC buffer.
+
+\item [SetPriority] configures the thread's scheduling parameters. In the current version of seL4, this is simply a priority for the round-robin scheduler.
+
+\item [SetIPCBuffer] configures the thread's local storage, particularly the IPC buffer used for sending parts of the message payload that don't fit in hardware registers.
+
+\item [SetSpace] configures the thread's virtual memory and capability address spaces. It sets the roots of the trees (or other architecture-specific page table structures) that represent the two address spaces, and also nominates the endpoint that the kernel uses to notify the thread's pager of faults and exceptions.
+
+\item [Configure] is a batched version of the three configuration system calls: SetPriority, SetIPCBuffer, and SetSpace. This is the approximate equivalent of the \emph{ThreadControl} system call in earlier versions of L4.
+
+\item[Resume] will resume execution of a thread that is inactive or waiting
+for a kernel operation to complete. If the invoked thread is waiting for a
+kernel operation, Resume will modify the thread's state so that it will attempt
+to perform the faulting or aborted operation again. Resuming a thread that is
+already ready has no effect. Resuming a thread that is in the waiting phase of
+a Call operation may cause the sending phase to be performed again, even if
+it has previously succeeded.
+
+A CopyRegisters or WriteRegisters operation may optionally include a Resume operation on the destination thread.
+
+\item[Suspend] will make a thread inactive. The thread will not be scheduled
+again until a Resume operation is performed on it.
+
+An CopyRegisters or ReadRegisters operation may optionally include a Suspend operation on the source thread.
+\end{description}
+
+\section[cspace]{Capability Address Spaces}
+
+The capability space is represented by a \emph{guarded capability table},
+which is similar to a guarded page table~\cite{Liedtke-94a}. The nodes of the
+table are individual kernel objects allocated using the Retype system call,
+and are called \emph{capability nodes}, abbreviated \emph{CNodes}.
+
+Each CNode has a power-of-two number of \emph{slots}; the number is determined
+at the time the CNode is created. Each slot contains a \emph{capability table
+entry}, which can store a single capability; the contents of the entry are
+opaque to user-space code. The format of entries is the same at all levels of
+the table. There is also a slot in each TCB, which is used to store a
+capability to the root CNode.
+
+% XXX describe entry format?
+
+The capability table is constructed by copying a capability to the root CNode
+into the TCB's root slot, capabilities to lower-level CNodes into the root
+CNode's slots, and so on. The number of address bits resolved by each CNode
+depends on the node's size and on the number of \emph{guard bits} of the CNode. 
+A capability will appear in the user thread's CSpace when it can be reached by
+translating address bits starting at the page table root capability.
+
+Note that all CNodes are required to resolve at least one address bit, to
+prevent infinite loops in the capability lookup code.
+
+\subsection[mdb]{The Mapping Database}
+
+The kernel keeps a record of the \emph{derivation tree} for capabilities. This
+tree is stored in the \emph{mapping database}, and is used when revoking a
+capability to locate the capabilities which must be deleted. This is similar to
+previous L4 kernels, except that the storage for the mapping database is not
+dynamically allocated in seL4 --- every capability table slot includes some
+space reserved for a mapping database node.
+
+For implementation reasons, the kernel imposes limitations on the structure of
+the derivation tree. In particular, the tree may not have unlimited depth. The
+exact nature of these limitations is implementation-defined.
+
+The mapping database is optional. With some minor modifications to the API, it
+can be removed from the kernel entirely; this halves the size of a CNode slot,
+and therefore considerably reduces kernel resource usage. However, it also
+prevents the kernel from implementing the Revoke operation, and makes multiple
+uses of the Retype operation on a single memory region unsafe. Therefore its
+removal is only appropriate for systems that never need to revoke or reuse
+system resources, or that completely trust any user-level thread that has
+access to untyped memory.
+
+This document describes the API for kernels that have a mapping database.
+
+\subsection[cnodes]{CNode Operations}
+
+User-level tasks possessing a capability to a CNode may perform any of five
+operations on the capabilities stored in the tree of which that CNode is the
+root. Each operation modifies at least one capability slot in the tree; the
+caller must specify an address within the tree and the number of significant
+bits in that address.
+
+\begin{description}
+\item[Mint] creates a new capability in a specified CNode slot, given a
+reference to a slot containing an existing capability. The newly created
+capability may differ from the original --- it may have fewer rights, and its
+type-specific data (such as the IPC badge on an endpoint capability) may be
+changed ---  but it will always refer to the same kernel object.
+
+If the source capability is an endpoint, it must not have previously had
+new capability data set; otherwise, use of this operation will not be permitted.
+
+\item[Copy] is similar to Mint, but does not change the capability's
+type-specific data.
+
+\item[Move] moves a capability between two specified capability slots. It does
+not change the rights on the capability, but it may change type-specific data
+on capabilities other than endpoints.
+
+\item[Rotate] moves two capabilities between three specified capability slots. It is essentially two Move operations; one from the second specified slot to the first, and one from the third to the second. The first and third specified slots may be the same, in which case the capability in it is swapped with the capability in the second slot. The operation is atomic; either both capabilities are moved successfully, or neither is moved.
+
+\item[Delete] will remove a capability from the specified slot. If the capability is the last one that refers to a given kernel object, the object will be \emph{destroyed}, which removes any references to it in other parts of the kernel and makes the memory storing it safe for reuse.
+
+\item[Revoke] is equivalent to calling Delete on each derivation tree
+child of the specified capability. It has no effect on the capability itself.
+
+\item[Recycle] is equivalent to Revoke, except that it also returns the object to its initial state. It may only be performed on the original capability to a typed object.
+
+\item[SaveCaller] moves a kernel-generated reply capability from the special TCB slot it was created in, into the designated CSpace slot.
+\end{description}
+
+Delete, Revoke and Recycle are potentially very long-running operations, especially if:
+\begin{itemize}
+\item a capability is revoked while it has a large number of children in the
+derivation tree, or
+\item a CNode is recycled, or the last capability to a CNode is destroyed (either by a direct Delete call, or a Revoke call on the Untyped capability controlling the CNode's storage), while that CNode still contains valid capabilities.
+\end{itemize}
+
+Systems with real-time constraints should avoid using Revoke, Recycle or Delete unless
+they can ensure that only a small number of capabilities will be deleted.
+Implementations of the seL4 API may include preemption points in this operation; the points at which preemption is safe are indicated in the Haskell code by "preemptionPoint" calls. Note that these preemption points allow certain operations to fail non-deterministically --- specifically, if any capabilities that were used to request the operation are deleted by it, then the operation will return a missing capability error if it is preempted. Deliberate execution of such an operation is not recommended, though it is unlikely to ever be necessary.
+
+Copy, Mint, Move and Retype operations require their destination slot
+or slots to be empty; that is, they must not contain valid capabilities. If any
+of these operations finds a valid capability in a destination slot, it will
+fail with a "DeleteFirst" error. As the error name suggests, the caller should
+call Delete on destination slots first, if there is any possibility that they
+might contain valid capabilities. This restriction also applies to the destination slot for Rotate, unless it is the same as the second source slot.
+
+\subsection[rights]{Capability Rights}
+
+The set of operations which may be performed on a given capability are
+determined by the type of the object that the capability refers to, and a set
+of \emph{rights} specific to the capability. The rights are a small set of bits corresponding to classes of operation:
+
+\begin{description}
+\item[Write] allows data to be sent or written to the capability's object. For
+example, an endpoint capability must have this right if it is to be used to
+send messages. If an endpoint capability that does not have this right is used to receive other capabilities, the received capabilities will be \emph{diminished} by removing this right.
+
+\item[Read] allows data to be received or read from the object.
+
+\item[Grant] allows capabilities to be sent to the object. Endpoint capabilities must have this right to be used for transferring capabilities via IPC.
+\end{description}
+
+Newly created capabilities have all rights. They may be reduced when performing
+Copy, Mint or Move operations, either via a CSpace invocation or a capability
+transfer IPC. 
+
+\section[faults]{Faults and Exceptions}
+
+Whenever a user-level task raises a fault, the kernel will suspend
+it and send a \emph{fault call} to the thread's \emph{fault handler
+capability}. The latter is a capability reference stored in the thread's TCB,
+and can be set or changed using the ThreadControl system call. The faulting thread will remain suspended until the recipient of the fault call replies to the call; if the fault handler endpoint is not valid, it will remain suspended indefinitely.
+
+The fault message contains information about the nature and cause of the
+fault, sufficient for the recipient of the fault call to recover from the
+fault if possible. The recipient may take any appropriate action to handle the fault. If it replies to the fault call, the kernel will adjust the state and context of the thread depending on the content of the reply.
+
+Events that generate fault calls include missing capabilities, missing virtual memory mappings, non-seL4 system calls, and architecture-defined exceptions such as illegal instructions. The content of the fault calls, and the semantics of the replies, depends on the type of fault. Definitions for specific types of fault can be found in \autoref{sec:api.faults}
+
+\section[vm]{Virtual Address Spaces}
+
+Many modern hardware architectures dictate specific page table formats to be
+used by the kernel to implement virtual memory. These usually require the
+dynamic allocation of memory to be used for page tables; since the seL4 kernel
+never dynamically allocates its own memory, the page tables must therefore be
+exposed to user level somehow.
+
+The kernel's interface for virtual memory management is
+implementation-defined, but will generally fit into one of two categories:
+architectures with hardware-loaded TLBs and hardware-defined page table
+structures, and those with software-loaded TLBs.
+
+\subsection{Software Loaded TLBs}
+
+On architectures with software-loaded TLBs, the kernel simply uses a structure
+similar to that of CSpace, constructed from CNodes, to implement the virtual
+address space. There is a separate root node in each TCB --- though it may
+contain a capability to a CNode that is also present in the CSpace, if the
+system requires CSpace and VSpace addresses to be consistent.
+
+\subsection{Hardware Loaded TLBs}
+
+On architectures with hardware-defined page table structures, such as ARM and
+x86, a separate address space is used in parallel with CSpace. This address
+space is known as \emph{VSpace}, an abbreviation of \emph{virtual address
+space}.
+
+The details of the VSpace interface are architecture-dependent. Typically they
+include one or more new object types, from which a page table can be
+constructed in a manner similar to the construction of CSpace. Messages sent
+to the new objects are used to request operations similar to those provided by
+CNode objects. As the source parameters of such operations are always
+capabilities (in the CSpace), it is not possible to copy mappings between
+different locations in VSpace without possessing an appropriate capability.
+
+\section[async-ipc]{Asynchronous IPC}
+
+In some situations, it is appropriate to provide an asynchronous notification
+of an event. The kernel provides an \emph{asynchronous IPC} operation for this
+purpose. It is implemented using \emph{asynchronous endpoint} objects, which
+contain a fixed size buffer of two machine words -- identifier and message word. 
+Each asynchronous endpoint capability is marked with a badge, which is set when
+the capability is created. A thread may perform \emph{Send} or \emph{Wait}
+operations on an asynchronous endpoint, by invoking the corresponding
+capability. 
+
+When a Send operation is performed, the badge of the invoked capability and the
+user specified message are bitwise ORed with the corresponding values in the
+endpoint to produce its new contents. This operation is guaranteed not to block
+a sufficiently authorised sender, even if there is no thread waiting to receive
+the message. The Wait operation, on the other hand, is blocking --- if the
+buffer is empty, the thread is blocked until a message arrives. However, in
+case of a non-empty buffer, the Wait operation will read the contents of the
+buffer, reset it to zero, and returns the value immediately. 
+
+Similar to synchronous endpoints, multiple threads may perform Send or Wait
+operations on the same asynchronous endpoint. When there are multiple messages
+sent to an endpoint before any thread attempts to receive from it, the
+identifier and the message delivered to the receiver are the bitwise OR of
+capability badges used by the senders and the messages sent by them,
+respectively. It is the responsibility of the user level tasks to define a
+suitable protocol for identifying the individual event. When multiple receivers
+are waiting on the same endpoint when a message is sent to it, the kernel
+chooses one of them to deliver the message. The algorithm for choosing a thread
+is not specified, but typically will be first in, first out order.
+
+\section[interrupts]{Interrupts}
+
+Interrupt handling in seL4 is performed using two special types of kernel 
+capability. These capabilities cannot be created using the Retype operation,
+because they do not represent dynamically allocated memory resources.
+
+The system has a single global \emph{IRQ control} capability, which is provided 
+to the initial user-level task at boot time. Copies of this capability may be
+made in the usual fashion, but every copy permits access to the same global
+state.
+
+The IRQ control capability is used to create \emph{IRQ handler} capabilities.
+Each IRQ handler capability refers to a single hardware IRQ line, specified when 
+the capability is created; creation only succeeds if the specified IRQ is valid
+and has no existing handler (including any internal handler in the kernel, such
+as for the timer interrupt).
+
+The IRQ handler capability is used to set the mechanism used by the kernel for 
+dispatching interrupts on the corresponding IRQ line, and to enable and disable 
+the IRQ. The capability's IRQ is enabled when a delivery mechanism is set, or
+when the \emph{Ack} operation is performed. It is masked when the last handler
+capability for the IRQ is deleted, when an interrupt is delivered, or when the
+delivery mechanism becomes invalid (due to a \emph{Clear} operation on the IRQ
+handler capability, or revocation of a capability required for delivery).
+
+In the present Haskell implementation, only one delivery mechanism is supported: 
+delivery via asynchronous IPC to a specified endpoint. This may be complemented
+or replaced by a callback-based delivery model in future versions or
+real-hardware implementations.
+
+% arch-tag: 81b78ea5-309f-4aa5-bfed-b5d489c36d33

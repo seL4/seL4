@@ -1,0 +1,22 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{sel4_replywait}
+{Reply Wait}
+{Perform a reply followed by a wait in one system call}
+{static inline seL4\_MessageInfo\_t seL4\_ReplyWait}
+{
+\param{seL4\_CPtr}{dest}{\invokedcapdesc}
+\param{seL4\_MessageInfo\_t}{msgInfo}{\messageinfodesc}
+\param{seL4\_Word*}{sender}{\senderdesc}
+}
+{\messageinforetdesc}
+{See \autoref{sec:sys_replywait}}

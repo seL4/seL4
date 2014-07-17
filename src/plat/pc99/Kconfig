@@ -1,0 +1,24 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+config PCI
+    bool "PCI support"
+        depends on ARCH_IA32
+        default y
+        help
+            PCI support, normal should be yes for current
+            x86 based PCs
+
+config IOMMU
+    bool "IOMMU support"
+        depends on ARCH_IA32
+        default y
+        help
+            IOMMU support for VT-d enabled chipset

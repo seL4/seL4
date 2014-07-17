@@ -1,0 +1,29 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{sel4_notify}
+{Notify}
+{Send a one-word message}
+{static inline void seL4\_Notify}
+{
+\param{seL4\_CPtr}{dest}{\invokedcapdesc}
+\param{seL4\_Word}{msg}{The single word to send.}
+}
+{\noret}
+{
+This is not a proper system call
+known by the kernel. Rather, it is a convenience
+wrapper provided by the seL4 userland library which calls
+\apifunc{seL4\_Send}{sel4_send} with a single parameter. It is
+useful for notifying an asynchronous endpoint.
+
+See the description of \apifunc{seL4\_Send}{sel4_send} in \autoref{sec:sys_send}
+}

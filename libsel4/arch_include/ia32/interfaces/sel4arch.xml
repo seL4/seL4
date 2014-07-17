@@ -1,0 +1,104 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2014, NICTA
+
+     This software may be distributed and modified according to the terms of
+     the BSD 2-Clause license. Note that NO WARRANTY is provided.
+     See "LICENSE_BSD2.txt" for details.
+
+     @TAG(NICTA_BSD)
+  -->
+<api>
+	<registers>
+		<register name="EIP"/>
+		<register name="ESP"/>
+		<register name="EFlags"/>
+		<register name="EAX"/>
+		<register name="EBX"/>
+		<register name="ECX"/>
+		<register name="EDX"/>
+		<register name="ESI"/>
+		<register name="EDI"/>
+		<register name="EBP"/>
+		<register name="TLS_Base"/>
+		<register name="FS"/>
+		<register name="GS"/>
+	</registers>
+	<interface name="seL4_IA32_PageDirectory"/>
+	<interface name="seL4_IA32_PageTable">
+		<method id="IA32PageTableMap" name="Map">
+			<param dir="in" name="pd" type="seL4_IA32_PageDirectory"/>
+			<param dir="in" name="vaddr" type="seL4_Word"/>
+			<param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+		</method>
+        <method id="IA32PageTableUnmap" name="Unmap">
+        </method>
+	</interface>
+	<interface name="seL4_IA32_IOPageTable">
+		<method id="IA32IOPageTableMap" name="Map">
+			<param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
+			<param dir="in" name="ioaddr" type="seL4_Word"/>
+		</method>
+	</interface>
+	<interface name="seL4_IA32_Page">
+		<method id="IA32PageMap" name="Map">
+			<param dir="in" name="pd" type="seL4_IA32_PageDirectory"/>
+			<param dir="in" name="vaddr" type="seL4_Word"/>
+			<param dir="in" name="rights" type="seL4_CapRights"/>
+			<param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+		</method>
+		<method id="IA32PageRemap" name="Remap">
+			<param dir="in" name="pd" type="seL4_IA32_PageDirectory"/>
+			<param dir="in" name="rights" type="seL4_CapRights"/>
+			<param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+		</method>
+		<method id="IA32PageUnmap" name="Unmap"/>
+		<method id="IA32PageMapIO" name="MapIO">
+			<param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
+			<param dir="in" name="rights" type="seL4_CapRights"/>
+			<param dir="in" name="ioaddr" type="seL4_Word"/>
+		</method>
+	</interface>
+	<interface name="seL4_IA32_ASIDControl">
+		<method id="IA32ASIDControlMakePool" name="MakePool">
+			<param dir="in" name="untyped" type="seL4_Untyped"/>
+			<param dir="in" name="root" type="seL4_CNode"/>
+			<param dir="in" name="index" type="seL4_Word"/>
+			<param dir="in" name="depth" type="uint8_t"/>
+		</method>
+	</interface>
+	<interface name="seL4_IA32_ASIDPool">
+		<method id="IA32ASIDPoolAssign" name="Assign">
+			<param dir="in" name="vroot" type="seL4_IA32_PageDirectory"/>
+		</method>
+	</interface>
+	<interface name="seL4_IA32_IOPort">
+		<method id="IA32IOPortIn8" name="In8">
+			<param dir="out" name="result" type="uint8_t"/>
+			<param dir="in" name="port" type="uint16_t"/>
+		</method>
+		<method id="IA32IOPortIn16" name="In16">
+			<param dir="out" name="result" type="uint16_t"/>
+			<param dir="in" name="port" type="uint16_t"/>
+		</method>
+		<method id="IA32IOPortIn32" name="In32">
+			<param dir="out" name="result" type="uint32_t"/>
+			<param dir="in" name="port" type="uint16_t"/>
+		</method>
+		<method id="IA32IOPortOut8" name="Out8">
+			<param dir="in" name="port" type="uint16_t"/>
+			<param dir="in" name="data" type="uint8_t"/>
+		</method>
+		<method id="IA32IOPortOut16" name="Out16">
+			<param dir="in" name="port" type="uint16_t"/>
+			<param dir="in" name="data" type="uint16_t"/>
+		</method>
+		<method id="IA32IOPortOut32" name="Out32">
+			<param dir="in" name="port" type="uint16_t"/>
+			<param dir="in" name="data" type="uint32_t"/>
+		</method>
+    </interface>
+	<interface name="seL4_IA32_IOSpace">
+	    <method id="IA32IOSpaceRemovePassthrough" name="RemovePassthrough"/>
+	</interface>
+</api>

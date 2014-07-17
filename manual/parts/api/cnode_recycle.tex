@@ -1,0 +1,31 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{cnode_recycle}
+{CNode  -  Recycle}
+{The recycle method is intended roughly as a short cut for reusing an
+object within the same protection domain. The method will first revoke the
+capability and will then reset some but not necessarily all aspects of an
+object to its neutral state. Recycling badged endpoint caps will only cancel
+IPCs for this badge. Recycled frames, page tables and directories should only
+be re-used in the same protection domain, not all authority to them is
+rescinded. For full reuse in a different protection domain, revoke and retype
+the untyped cap that was used to create the object. For the precise behaviour
+of recycle, see the formal specification.}
+{static inline int seL4\_CNode\_Recycle}
+{
+\param{seL4\_CNode}{\_service}{\cspacedesc}
+\param{seL4\_Word}{index}{\indexdesc}
+\param{uint8\_t}{depth}{\depthdesc}
+}
+{\errorenumdesc}
+{See \autoref{sec:cnode-ops}.}
+
