@@ -21,6 +21,8 @@ void printCTE(char *msg, cte_t *cte);
 
 static cte_t *aaInsert(cte_t *rootSlot, cte_t *newSlot);
 static cte_t *aaRemove(bool_t isSwapped, cte_t *rootSlot, cte_t *targetSlot);
+static cte_t *aaTraverseBackward(cte_t *slot);
+static cte_t *aaTraverseForward(cte_t *slot);
 
 static inline int CONST compare(int a, int b)
 {
@@ -33,6 +35,7 @@ capsEqual(cap_t a, cap_t b)
     return (cap_get_capSpaceType(a) == cap_get_capSpaceType(b)) &&
            ((word_t)cap_get_capSpacePtr(a) == (word_t)cap_get_capSpacePtr(b)) &&
            (cap_get_capSpaceSize(a) == cap_get_capSpaceSize(b)) &&
+           (cap_get_capBadge(a)   == cap_get_capBadge(b)) &&
            (cap_get_capExtraComp(a) == cap_get_capExtraComp(b));
 }
 
@@ -50,11 +53,21 @@ static inline int _compSpace(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigne
     return - compare(cap_get_capSpaceSize(a->cap), bSpaceSize);
 }
 
-static inline int
-_compDepth(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bDepth)
+static inline int _compBadge(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bBadge)
 {
     int cmp;
     cmp = _compSpace(a, bSpaceType, bSpacePtr, bSpaceSize);
+    if (cmp != EQ) {
+        return cmp;
+    }
+    return compare(cap_get_capBadge(a->cap), bBadge);
+}
+
+static inline int
+_compDepth(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bBadge, uint32_t bDepth)
+{
+    int cmp;
+    cmp = _compBadge(a, bSpaceType, bSpacePtr, bSpaceSize, bBadge);
     if (cmp != EQ) {
         return cmp;
     }
@@ -62,10 +75,10 @@ _compDepth(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, 
 }
 
 static inline int
-_compExtra(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bDepth, uint32_t bExtraComp)
+_compExtra(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bBadge, uint32_t bDepth, uint32_t bExtraComp)
 {
     int cmp;
-    cmp = _compDepth(a, bSpaceType, bSpacePtr, bSpaceSize, bDepth);
+    cmp = _compDepth(a, bSpaceType, bSpacePtr, bSpaceSize, bBadge, bDepth);
     if (cmp != EQ) {
         return cmp;
     }
@@ -75,14 +88,14 @@ _compExtra(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, 
 static inline int
 compExtra(cte_t *a, cte_t *b)
 {
-    return _compExtra(a, cap_get_capSpaceType(b->cap), (word_t)cap_get_capSpacePtr(b->cap), cap_get_capSpaceSize(b->cap), mdb_node_get_cdtDepth(b->cteMDBNode), cap_get_capExtraComp(b->cap));
+    return _compExtra(a, cap_get_capSpaceType(b->cap), (word_t)cap_get_capSpacePtr(b->cap), cap_get_capSpaceSize(b->cap), cap_get_capBadge(b->cap), mdb_node_get_cdtDepth(b->cteMDBNode), cap_get_capExtraComp(b->cap));
 }
 
 static inline int
-_compSlot(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bDepth, uint32_t bExtraComp, cte_t *b)
+_compSlot(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, uint32_t bBadge, uint32_t bDepth, uint32_t bExtraComp, cte_t *b)
 {
     int cmp;
-    cmp = _compExtra(a, bSpaceType, bSpacePtr, bSpaceSize, bDepth, bExtraComp);
+    cmp = _compExtra(a, bSpaceType, bSpacePtr, bSpaceSize, bBadge, bDepth, bExtraComp);
     if (cmp != EQ) {
         return cmp;
     }
@@ -92,17 +105,17 @@ _compSlot(cte_t *a, int bSpaceType, word_t bSpacePtr, unsigned int bSpaceSize, u
 static inline int
 compSlot(cte_t *a, cte_t *b)
 {
-    return _compSlot(a, cap_get_capSpaceType(b->cap), (word_t)cap_get_capSpacePtr(b->cap), cap_get_capSpaceSize(b->cap), mdb_node_get_cdtDepth(b->cteMDBNode), cap_get_capExtraComp(b->cap), b);
+    return _compSlot(a, cap_get_capSpaceType(b->cap), (word_t)cap_get_capSpacePtr(b->cap), cap_get_capSpaceSize(b->cap), cap_get_capBadge(b->cap), mdb_node_get_cdtDepth(b->cteMDBNode), cap_get_capExtraComp(b->cap), b);
 }
 
 cte_t *
 cdtCapFindWithExtra(cap_t cap)
 {
-    return cdtFindWithExtra(cap_get_capSpaceType(cap), (word_t)cap_get_capSpacePtr(cap), cap_get_capSpaceSize(cap), cte_depth_bits_cap(cap));
+    return cdtFindWithExtra(cap_get_capSpaceType(cap), (word_t)cap_get_capSpacePtr(cap), cap_get_capSpaceSize(cap), cap_get_capBadge(cap), cte_depth_bits_cap(cap));
 }
 
 cte_t *
-cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int depth_bits)
+cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int depth_bits)
 {
     uint32_t i;
     for (i = 0; i < BIT(depth_bits); i++) {
@@ -118,7 +131,7 @@ cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int de
                 if (cap_get_capExtraComp(current->cap) != 0) {
                     return current;
                 }
-                cmp = _compExtra(current, spaceType, paddr, size, i, -1);
+                cmp = _compExtra(current, spaceType, paddr, size, badge, i, -1);
             }
             switch (cmp) {
             case LT:
@@ -136,7 +149,7 @@ cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int de
 }
 
 cte_t *
-cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int extra, uint32_t depth)
+cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int extra, uint32_t depth)
 {
     cte_t *current;
     cte_t *next;
@@ -144,7 +157,7 @@ cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int extr
     next = ksRootCTE;
     do {
         current = next;
-        switch (_compExtra(current, spaceType, paddr, size, depth, extra)) {
+        switch (_compExtra(current, spaceType, paddr, size, badge, depth, extra)) {
         case LT:
             next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
             break;
@@ -159,12 +172,12 @@ cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int extr
 }
 
 cte_t *
-cdtFind(int spaceType, word_t paddr, unsigned int size, unsigned int extra, unsigned int depth_bits)
+cdtFind(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int extra, unsigned int depth_bits)
 {
     uint32_t i;
     cte_t *ret;
     for (i = 0; i < BIT(depth_bits); i++) {
-        ret = cdtFindAtDepth(spaceType, paddr, size, extra, i);
+        ret = cdtFindAtDepth(spaceType, paddr, size, badge, extra, i);
         if (ret) {
             return ret;
         }
@@ -175,92 +188,18 @@ cdtFind(int spaceType, word_t paddr, unsigned int size, unsigned int extra, unsi
 bool_t
 cdtIsFinal(cte_t *slot)
 {
-    cte_t *current;
-    cte_t *next;
     cte_t *closest;
-    cte_t *search_for;
-    word_t addr, size;
-    int spaceType;
-    uint32_t depth, extra;
 
-    spaceType = cap_get_capSpaceType(slot->cap);
-    addr = (word_t)cap_get_capSpacePtr(slot->cap);
-    size = cap_get_capSpaceSize(slot->cap);
-    extra = cap_get_capExtraComp(slot->cap);
-    depth = mdb_node_get_cdtDepth(slot->cteMDBNode);
-
-    /* We know that any capability to this same object will occur just 'next to'
-       this object (if you consider the cdt tree as a flattened list). If we search
-       for two hypothetical nodes, one position just before this node and one position
-       justafter, then we can observe the closest nodes we find in either case */
-
-    /* First search for one just before */
-    search_for = slot - 1;
-    next = ksRootCTE;
-    closest = NULL;
-    do {
-        int cmp;
-        current = next;
-        cmp = _compDepth(current, spaceType, addr, size, depth);
-        if (cmp == EQ) {
-            /* If we are equal check the extra. if the extra is different then
-               we already know we have found to things that are the same object */
-            if (cap_get_capExtraComp(current->cap) != extra) {
-                assert(sameObjectAs(current->cap, slot->cap));
-                return false;
-            }
-            /* We break ties at this point on slot addresses */
-            cmp = compare((word_t)current, (word_t)search_for);
-        }
-        if (cmp == LT) {
-            if (!closest || compExtra(current, closest) == GT) {
-                closest = current;
-            }
-            next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
-        } else if (cmp == GT) {
-            next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
-        } else {
-            /* There is a remote chance that the slot we crafted does actually exist.
-               In this case just return it early */
-            return false;
-        }
-    } while (next);
+    /* For finality testing it is sufficient to check the objects immediately
+     * before and after us in cdt ordering. This is because we are only
+     * interested in equivalent objects, not whether something is actually
+     * a parent or not */
+    closest = aaTraverseForward(slot);
     if (closest && sameObjectAs(closest->cap, slot->cap)) {
         return false;
     }
-
-    /* Now search for one just after */
-    search_for = slot + 1;
-    next = ksRootCTE;
-    closest = NULL;
-    do {
-        int cmp;
-        current = next;
-        cmp = _compDepth(current, spaceType, addr, size, depth);
-        if (cmp == EQ) {
-            /* If we are equal check the extra. if the extra is different then
-               we already know we have found to things that are the same object */
-            if (cap_get_capExtraComp(current->cap) != extra) {
-                assert(sameObjectAs(current->cap, slot->cap));
-                return false;
-            }
-            /* We break ties at this point on slot address */
-            cmp = compare((word_t)current, (word_t)search_for);
-        }
-        if (cmp == GT) {
-            if (!closest || compExtra(current, closest) == LT) {
-                closest = current;
-            }
-            next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
-        } else if (cmp == LT) {
-            next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
-        } else {
-            /* There is a remote chance that the slot we crafted does actually exist.
-               In this case just return it early */
-            return false;
-        }
-    } while (next);
-    if (closest && sameObjectAs(slot->cap, closest->cap)) {
+    closest = aaTraverseBackward(slot);
+    if (closest && sameObjectAs(closest->cap, slot->cap)) {
         return false;
     }
     return true;
@@ -293,6 +232,69 @@ cdtFindInRange(int spaceType, word_t addr, unsigned int size)
     return NULL;
 }
 
+static bool_t isCDTParentOf(cte_t *parent, cte_t *child)
+{
+    word_t badgeA, badgeB;
+    /* child must be from the same region */
+    if (!sameRegionAs(parent->cap, child->cap)) {
+        return false;
+    }
+    /* check any badge. Badge 0 is parent of another
+     * other non zero badge */
+    badgeA = cap_get_capBadge(parent->cap);
+    badgeB = cap_get_capBadge(child->cap);
+    if (badgeA == 0 && badgeB != 0) {
+        return true;
+    } else if (badgeA != badgeB) {
+        return false;
+    }
+    return true;
+}
+
+static cte_t *
+_cdtFindBadgedChild(cte_t *parentSlot)
+{
+    /* We are searching for a hypothetical node that is at
+     * identical to us but of strictly greater depth */
+    cte_t *current;
+    cte_t *largest;
+    cte_t *next;
+    int spaceType = cap_get_capSpaceType(parentSlot->cap);
+    word_t paddr = (word_t)cap_get_capSpacePtr(parentSlot->cap);
+    unsigned int size = cap_get_capSpaceSize(parentSlot->cap);
+    unsigned int badge = cap_get_capBadge(parentSlot->cap);
+    /* We are searching for a hypothetical node in the cdt that is at paddr+size and of zero size */
+    next = ksRootCTE;
+    largest = NULL;
+    do {
+        int cmp;
+        current = next;
+        cmp = _compDepth(current, spaceType, paddr, size, badge, BIT(cte_depth_bits_cap(parentSlot->cap)));
+        if (cmp == LT) {
+            if (!largest || compExtra(current, largest) == GT) {
+                largest = current;
+            }
+            next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
+        } else if (cmp == GT) {
+            next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
+        } else {
+            assert(!"Should never actually find this node as it has zero size");
+        }
+    } while (next);
+    /* Verify what we found is actually a child */
+    if (!largest || compExtra(largest, parentSlot) != GT || !isCDTParentOf(parentSlot, largest)) {
+        return NULL;
+    }
+    return largest;
+}
+
+/* Finding a child is complicated because your child may not
+ * live directly after you in cdt order. That is, if you take
+ * ever node in the tree and squash it into a list, directly
+ * after you may be some N number of siblings, then your
+ * children. This is why we need to do a creative search
+ * where as cdtIsFinal was able to get away with checking
+ * neighbouring nodes */
 static cte_t *
 _cdtFindChild(cte_t *parentSlot)
 {
@@ -321,7 +323,7 @@ _cdtFindChild(cte_t *parentSlot)
         }
     } while (next);
     /* Verify what we found is actually a child */
-    if (!largest || compExtra(largest, parentSlot) != GT || (word_t)cap_get_capSpacePtr(largest->cap) + cap_get_capSpaceSize(largest->cap) <= paddr || (word_t)cap_get_capSpacePtr(largest->cap) + cap_get_capSpaceSize(largest->cap) > paddr + size) {
+    if (!largest || compExtra(largest, parentSlot) != GT || !sameRegionAs(parentSlot->cap, largest->cap)) {
         return NULL;
     }
     return largest;
@@ -337,7 +339,12 @@ cdtFindChild(cte_t *parentSlot)
             return result;
         }
     }
-    return _cdtFindChild(parentSlot);
+    if (cap_get_capBadge(parentSlot->cap) != 0) {
+        /* We are looking for a badged child */
+        return _cdtFindBadgedChild(parentSlot);
+    } else {
+        return _cdtFindChild(parentSlot);
+    }
 }
 
 static inline void
@@ -436,7 +443,7 @@ static cte_t *aaDecLevel(cte_t *slot);
 static cte_t *aaSkew(cte_t *slot);
 static cte_t *aaSplit(cte_t *slot);
 
-static inline cte_t * aaSucc(cte_t *slot)
+static cte_t * aaSucc(cte_t *slot)
 {
     cte_t *left;
 
@@ -448,7 +455,7 @@ static inline cte_t * aaSucc(cte_t *slot)
     return slot;
 }
 
-static inline cte_t * aaPred(cte_t *slot)
+static cte_t * aaPred(cte_t *slot)
 {
     cte_t *right;
 
@@ -458,6 +465,73 @@ static inline cte_t * aaPred(cte_t *slot)
         right = CTE_PTR(mdb_node_get_cdtRight(slot->cteMDBNode));
     }
     return slot;
+}
+
+static cte_t *aaParent(cte_t *slot)
+{
+    cte_t *current = NULL;
+    cte_t *next;
+
+    next = ksRootCTE;
+    while (next != slot) {
+        current = next;
+        switch (compSlot(current, slot)) {
+        case LT:
+            next = CTE_PTR(mdb_node_get_cdtRight(current->cteMDBNode));
+            break;
+        case GT:
+            next = CTE_PTR(mdb_node_get_cdtLeft(current->cteMDBNode));
+            break;
+        case EQ:
+            return current;
+        }
+    }
+    return current;
+}
+
+static cte_t *aaTraverseBackward(cte_t *slot)
+{
+    cte_t *parent;
+    cte_t *left;
+    /* Optimistically see if we our predecessor is a child */
+    left = CTE_PTR(mdb_node_get_cdtLeft(slot->cteMDBNode));
+    if (left) {
+        return aaPred(left);
+    }
+    /* We need to find our parent. This is actually hard so we
+     * need to find ourselves and perform a trace as we do so */
+
+    /* search upwards until we find an ancestor on a right link,
+     * we have then found something before us */
+    parent = aaParent(slot);
+    while (parent && CTE_PTR(mdb_node_get_cdtRight(parent->cteMDBNode)) != slot) {
+        slot = parent;
+        parent = aaParent(parent);
+    }
+    return parent;
+}
+
+static cte_t *aaTraverseForward(cte_t *slot)
+{
+    cte_t *parent;
+    cte_t *right;
+    /* Optimistically see if we our successor is a child */
+    right = CTE_PTR(mdb_node_get_cdtRight(slot->cteMDBNode));
+    if (right) {
+        return aaSucc(right);
+    }
+    /* We need to find our parent. This is actually hard so we
+     * need to find ourselves and perform a trace as we do so */
+
+
+    /* search upwards until we find an ancestor on a left link,
+     * we have then found something before us */
+    parent = aaParent(slot);
+    while (parent && CTE_PTR(mdb_node_get_cdtLeft(parent->cteMDBNode)) != slot) {
+        slot = parent;
+        parent = aaParent(parent);
+    }
+    return parent;
 }
 
 static inline int
@@ -737,7 +811,7 @@ printCTE(char *msg, cte_t *cte)
     if (!cte) {
         printf("%s [NULL]@0x%x", msg, cte);
     } else  {
-        printf("%s [%d %s(%d) { addr = 0x%x, size = 0x%x } left: 0x%x right: 0x%x depth: %d extra: 0x%x]@0x%x\n",
+        printf("%s [%d %s(%d) { addr = 0x%x, size = 0x%x } left: 0x%x right: 0x%x badge: %d depth: %d extra: 0x%x]@0x%x\n",
                msg,
                mdb_node_get_cdtLevel(cte->cteMDBNode),
                printCap(cte->cap),
@@ -746,6 +820,7 @@ printCTE(char *msg, cte_t *cte)
                cap_get_capType(cte->cap) == cap_null_cap ? 0 : cap_get_capSpaceSize(cte->cap),
                mdb_node_get_cdtLeft(cte->cteMDBNode),
                mdb_node_get_cdtRight(cte->cteMDBNode),
+               cap_get_capBadge(cte->cap),
                mdb_node_get_cdtDepth(cte->cteMDBNode),
                cap_get_capType(cte->cap) == cap_null_cap ? 0 : cap_get_capExtraComp(cte->cap),
                cte);

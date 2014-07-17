@@ -66,6 +66,9 @@ static exception_t decodeARMPageDirectoryInvocation(word_t label,
                                                     extra_caps_t extraCaps, word_t *buffer);
 static pde_t PURE loadHWASID(pde_t *pd);
 
+static bool_t PURE pteCheckIfMapped(pte_t *pte);
+static bool_t PURE pdeCheckIfMapped(pde_t *pde);
+
 static word_t CONST
 APFromVMRights(vm_rights_t vm_rights)
 {
@@ -462,7 +465,7 @@ unmapAllPageTables(pde_t *pd)
         case pde_pde_coarse: {
             cap_t ptCap;
             cte_t *ptCte;
-            ptCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_coarse_get_address(pd[i])), BIT(PT_SIZE_BITS), (uint32_t)(pd + i), cte_depth_bits_type(cap_page_table_cap));
+            ptCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_coarse_get_address(pd[i])), BIT(PT_SIZE_BITS), 0, (uint32_t)(pd + i), cte_depth_bits_type(cap_page_table_cap));
             assert(ptCte);
             ptCap = cap_page_table_cap_set_capPTMappedObject(ptCte->cap, 0);
             cdtUpdate(ptCte, ptCap);
@@ -474,7 +477,7 @@ unmapAllPageTables(pde_t *pd)
             if (pde_pde_section_get_size(pd[i])) {
                 cap_t frameCap;
                 cte_t *frameCte;
-                frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_section_get_address(pd[i])), BIT(ARMSuperSectionBits), (uint32_t)(pd + i), cte_depth_bits_type(cap_frame_cap));
+                frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_section_get_address(pd[i])), BIT(ARMSuperSectionBits), 0, (uint32_t)(pd + i), cte_depth_bits_type(cap_frame_cap));
                 assert(frameCte);
                 frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
                 cdtUpdate(frameCte, frameCap);
@@ -483,7 +486,7 @@ unmapAllPageTables(pde_t *pd)
             } else {
                 cap_t frameCap;
                 cte_t *frameCte;
-                frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_section_get_address(pd[i])), BIT(ARMSectionBits), (uint32_t)(pd + i), cte_depth_bits_type(cap_frame_cap));
+                frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pde_pde_section_get_address(pd[i])), BIT(ARMSectionBits), 0, (uint32_t)(pd + i), cte_depth_bits_type(cap_frame_cap));
                 assert(frameCte);
                 frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
                 cdtUpdate(frameCte, frameCap);
@@ -507,7 +510,7 @@ void unmapPagePTE(vm_page_size_t page_size, pte_t *pt, unsigned int ptIndex, voi
 
     (void)addr;
 
-    ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), cte_depth_bits_type(cap_page_table_cap));
+    ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
     assert(ptCte);
     pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
     pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
@@ -629,7 +632,7 @@ void unmapAllPages(pde_t *pd, uint32_t pdIndex, pte_t *pt)
         case pte_pte_small: {
             cte_t *frameCte;
             cap_t frameCap;
-            frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pte_pte_small_ptr_get_address(pt + i)), BIT(ARMSmallPageBits), (uint32_t)(pt + i), cte_depth_bits_type(cap_frame_cap));
+            frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pte_pte_small_ptr_get_address(pt + i)), BIT(ARMSmallPageBits), 0, (uint32_t)(pt + i), cte_depth_bits_type(cap_frame_cap));
             assert(frameCte);
             frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
             cdtUpdate(frameCte, frameCap);
@@ -640,7 +643,7 @@ void unmapAllPages(pde_t *pd, uint32_t pdIndex, pte_t *pt)
         case pte_pte_large: {
             cte_t *frameCte;
             cap_t frameCap;
-            frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pte_pte_large_ptr_get_address(pt + i)), BIT(ARMLargePageBits), (uint32_t)(pt + i), cte_depth_bits_type(cap_frame_cap));
+            frameCte = cdtFind(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pte_pte_large_ptr_get_address(pt + i)), BIT(ARMLargePageBits), 0, (uint32_t)(pt + i), cte_depth_bits_type(cap_frame_cap));
             assert(frameCte);
             frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
             cdtUpdate(frameCte, frameCap);
@@ -1363,7 +1366,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
         }
         ptIndex = cap_frame_cap_get_capFMappedIndex(cap);
 
-        ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), cte_depth_bits_type(cap_page_table_cap));
+        ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
         assert(ptCte);
         pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
         if (unlikely(!pd)) {
@@ -1605,15 +1608,32 @@ performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
+static bool_t PURE
+pteCheckIfMapped(pte_t *pte)
+{
+    return pte_ptr_get_pteType(pte) != pte_pte_invalid;
+}
+
+static bool_t PURE
+pdeCheckIfMapped(pde_t *pde)
+{
+    return pde_ptr_get_pdeType(pde) != pde_pde_invalid;
+}
+
 exception_t
 performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
     unsigned int i;
+    bool_t tlbflush_required;
 
     cap = cap_frame_cap_set_capFMappedObject(cap, PT_REF(pte_entries.pt));
     cap = cap_frame_cap_set_capFMappedIndex(cap, pte_entries.start);
     cdtUpdate(ctSlot, cap);
+
+    /* we only need to check the first entries because of how createSafeMappingEntries
+     * works to preserve the consistency of tables */
+    tlbflush_required = pteCheckIfMapped(pte_entries.base);
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.pt[pte_entries.start + i] = pte;
@@ -1621,6 +1641,9 @@ performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t pte,
     cleanCacheRange_PoU((word_t)(pte_entries.pt + pte_entries.start),
                         ((word_t)LAST_BYTE_PTE(pte_entries.pt + pte_entries.start, pte_entries.length)),
                         addrFromPPtr(pte_entries.pt + pte_entries.start));
+    if (unlikely(tlbflush_required)) {
+        invalidateTLBByASID(asid);
+    }
 
     return EXCEPTION_NONE;
 }
@@ -1630,10 +1653,15 @@ performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
     unsigned int i;
+    bool_t tlbflush_required;
 
     cap = cap_frame_cap_set_capFMappedObject(cap, PD_REF(pde_entries.pd));
     cap = cap_frame_cap_set_capFMappedIndex(cap, pde_entries.start);
     cdtUpdate(ctSlot, cap);
+    /* we only need to check the first entries because of how createSafeMappingEntries
+     * works to preserve the consistency of tables */
+    tlbflush_required = pdeCheckIfMapped(pde_entries.base);
+
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.pd[pde_entries.start + i] = pde;
@@ -1641,6 +1669,9 @@ performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t pde,
     cleanCacheRange_PoU((word_t)&pde_entries.pd[pde_entries.start],
                         ((word_t)LAST_BYTE_PDE(pde_entries.pd + pde_entries.start, pde_entries.length)),
                         addrFromPPtr(&pde_entries.pd[pde_entries.start]));
+    if (unlikely(tlbflush_required)) {
+        invalidateTLBByASID(asid);
+    }
 
     return EXCEPTION_NONE;
 }

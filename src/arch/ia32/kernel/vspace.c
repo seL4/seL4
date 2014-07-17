@@ -1169,7 +1169,7 @@ void unmapAllPageTables(pde_t *pd)
             pte_t *pt = PT_PTR(paddr_to_pptr(pde_pde_4k_ptr_get_pt_base_address(pd + i)));
             cte_t *ptCte;
             cap_t ptCap;
-            ptCte = cdtFindAtDepth(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), (uint32_t)(pd + i), pde_pde_4k_ptr_get_avl_cte_depth(pd + i));
+            ptCte = cdtFindAtDepth(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, (uint32_t)(pd + i), pde_pde_4k_ptr_get_avl_cte_depth(pd + i));
             assert(ptCte);
 
             ptCap = ptCte->cap;
@@ -1179,7 +1179,7 @@ void unmapAllPageTables(pde_t *pd)
             void *frame = paddr_to_pptr(pde_pde_4m_ptr_get_page_base_address(pd + i));
             cte_t *frameCte;
             cap_t frameCap;
-            frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(PAGE_BITS), (uint32_t)(pd + i), pde_pde_4m_ptr_get_avl_cte_depth(pd + i));
+            frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(PAGE_BITS), 0, (uint32_t)(pd + i), pde_pde_4m_ptr_get_avl_cte_depth(pd + i));
             assert(frameCte);
             frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
             cdtUpdate(frameCte, frameCap);
@@ -1195,7 +1195,7 @@ void unmapAllPages(pde_t *pd, unsigned int pdIndex, pte_t *pt)
 
     for (i = 0; i < BIT(PT_BITS); i++) {
         if (pte_ptr_get_present(pt + i)) {
-            frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pte_ptr_get_page_base_address(pt + i)), BIT(PAGE_BITS), (uint32_t)(pt + i), pte_ptr_get_avl_cte_depth(pt + i));
+            frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)paddr_to_pptr(pte_ptr_get_page_base_address(pt + i)), BIT(PAGE_BITS), 0, (uint32_t)(pt + i), pte_ptr_get_avl_cte_depth(pt + i));
             assert(frameCte);
             newCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
             cdtUpdate(frameCte, newCap);
@@ -1226,7 +1226,7 @@ void flushPage4K(pte_t *pt, uint32_t ptIndex)
 
     /* We know this pt can only be mapped into one single pd. So
      * lets find a cap with that mapping information */
-    ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), cte_depth_bits_type(cap_page_table_cap));
+    ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
     assert(ptCte);
 
     pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
@@ -1767,7 +1767,7 @@ ept_pdpte_t *lookupEPTPDPTFromPD(ept_pde_t *pd)
     cte_t *pd_cte;
 
     /* First query the cdt and find the cap */
-    pd_cte = cdtFindWithExtra(capSpaceTypedMemory, EPT_PD_REF(pd), BIT(EPT_PD_SIZE_BITS), cte_depth_bits_type(cap_ept_page_directory_cap));
+    pd_cte = cdtFindWithExtra(capSpaceTypedMemory, EPT_PD_REF(pd), BIT(EPT_PD_SIZE_BITS), 0, cte_depth_bits_type(cap_ept_page_directory_cap));
     /* We will not be returned a slot if there was no 'extra' information (aka if it is not mapped) */
     if (!pd_cte) {
         return NULL;
@@ -1784,7 +1784,7 @@ static ept_pdpte_t *lookupEPTPDPTFromPT(ept_pte_t *pt)
     ept_pde_t *pd;
 
     /* First query the cdt and find the cap */
-    pt_cte = cdtFindWithExtra(capSpaceTypedMemory, EPT_PT_REF(pt), BIT(EPT_PT_SIZE_BITS), cte_depth_bits_type(cap_ept_page_table_cap));
+    pt_cte = cdtFindWithExtra(capSpaceTypedMemory, EPT_PT_REF(pt), BIT(EPT_PT_SIZE_BITS), 0, cte_depth_bits_type(cap_ept_page_table_cap));
     /* We will not be returned a slot if there was no 'extra' information (aka if it is not mapped) */
     if (!pt_cte) {
         return NULL;
@@ -1833,7 +1833,7 @@ void unmapAllEPTPD(ept_pdpte_t *pdpt)
 
             ept_pde_t *pd = EPT_PD_PTR(paddr_to_pptr(ept_pdpte_ptr_get_pd_base_address(pdpte)));
             uint32_t depth = ept_pdpte_ptr_get_avl_cte_depth(pdpte);
-            pdCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)pd, BIT(EPT_PD_SIZE_BITS), (uint32_t)(pdpte), depth);
+            pdCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)pd, BIT(EPT_PD_SIZE_BITS), 0, (uint32_t)(pdpte), depth);
             assert(pdCte);
 
             cap = pdCte->cap;
@@ -1857,7 +1857,7 @@ void unmapAllEPTPT(ept_pde_t *pd)
 
                 ept_pte_t *pt = EPT_PT_PTR(paddr_to_pptr(ept_pde_ept_pde_4k_ptr_get_pt_base_address(pde)));
                 uint32_t depth = ept_pde_ept_pde_4k_ptr_get_avl_cte_depth(pde);
-                ptCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)pt, BIT(EPT_PT_SIZE_BITS), (uint32_t)(pde), depth);
+                ptCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)pt, BIT(EPT_PT_SIZE_BITS), 0, (uint32_t)(pde), depth);
                 assert(ptCte);
 
                 cap = ptCte->cap;
@@ -1872,7 +1872,7 @@ void unmapAllEPTPT(ept_pde_t *pd)
 
                 void *frame = paddr_to_pptr(ept_pde_ept_pde_2m_ptr_get_page_base_address(pde));
                 uint32_t depth = ept_pde_ept_pde_2m_ptr_get_avl_cte_depth(pde);
-                frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(IA32_4M_bits), (uint32_t)(pde), depth);
+                frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(IA32_4M_bits), 0, (uint32_t)(pde), depth);
                 assert(frameCte);
 
                 newCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
@@ -1900,7 +1900,7 @@ void unmapAllEPTPages(ept_pte_t *pt)
 
             void *frame = paddr_to_pptr(ept_pte_ptr_get_page_base_address(pte));
             uint32_t depth = ept_pte_ptr_get_avl_cte_depth(pte);
-            frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(IA32_4K_bits), (uint32_t)(pte), depth);
+            frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(IA32_4K_bits), 0, (uint32_t)(pte), depth);
             assert(frameCte);
 
             newCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);

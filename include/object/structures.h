@@ -352,6 +352,18 @@ cap_get_capPtr(cap_t cap)
     }
 }
 
+static inline unsigned int CONST
+cap_get_capBadge(cap_t cap)
+{
+    switch (cap_get_capType(cap)) {
+    case cap_endpoint_cap:
+        return cap_endpoint_cap_get_capEPBadge(cap);
+    case cap_async_endpoint_cap:
+        return cap_async_endpoint_cap_get_capAEPBadge(cap);
+    }
+    return 0;
+}
+
 #include <arch/object/capspace.h>
 
 #endif

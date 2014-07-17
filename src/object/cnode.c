@@ -516,7 +516,9 @@ finaliseSlot(cte_t *slot, bool_t immediate)
     finaliseSlot_ret_t ret;
 
     while (cap_get_capType(slot->cap) != cap_null_cap) {
-        final = cdtIsFinal(slot);
+        /* If we have a zombie cap then we know it is final and can
+         * avoid an expensive cdtIsFinal check */
+        final = (cap_get_capType(slot->cap) == cap_zombie_cap) || cdtIsFinal(slot);
         fc_ret = finaliseCap(slot->cap, final, false);
 
         if (capRemovable(fc_ret.remainder, slot)) {
@@ -526,7 +528,11 @@ finaliseSlot(cte_t *slot, bool_t immediate)
             return ret;
         }
 
-        cdtUpdate(slot, fc_ret.remainder);
+        /* if we have a zombie then we actually don't need to call
+         * cdtUpdate as the cap actually hasn't changed */
+        if (cap_get_capType(slot->cap) != cap_zombie_cap) {
+            cdtUpdate(slot, fc_ret.remainder);
+        }
 
         if (!immediate && capCyclicZombie(fc_ret.remainder, slot)) {
             ret.status = EXCEPTION_NONE;
@@ -592,7 +598,12 @@ reduceZombie(cte_t* slot, bool_t immediate)
                     cap_zombie_cap_get_capZombieNumber(slot->cap) == n &&
                     cap_zombie_cap_get_capZombieType(slot->cap) == type) {
                 assert(cap_get_capType(endSlot->cap) == cap_null_cap);
-                cdtUpdate(slot, cap_zombie_cap_set_capZombieNumber(slot->cap, n - 1));
+                /* We could call cdtUpdate here, but we know it is not necessary
+                 * because a zombie is not ordered in the aaTree by its zombieNumber
+                 * and so cdtUpdate will always be a noop. Skipping the call to cdtUpdate
+                 * here is to make revoking large cnodes faster as this gets called
+                 * for every slot in the cnode */
+                slot->cap =  cap_zombie_cap_set_capZombieNumber(slot->cap, n - 1);
             } else {
                 /* Haskell error:
                  * "Expected new Zombie to be self-referential."

@@ -23,10 +23,10 @@ void cdtMove(cte_t *oldSlot, cte_t *newSlot);
 void cdtSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2);
 bool_t cdtIsFinal(cte_t *slot);
 void cdtUpdate(cte_t *slot, cap_t newCap);
-cte_t *cdtFind(int spaceType, word_t paddr, unsigned int size, unsigned int extra, unsigned int depth_bits);
-cte_t *cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int extra, uint32_t depth);
+cte_t *cdtFind(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int extra, unsigned int depth_bits);
+cte_t *cdtFindAtDepth(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int extra, uint32_t depth);
 cte_t *cdtCapFindWithExtra(cap_t cap);
-cte_t *cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int depth_bits);
+cte_t *cdtFindWithExtra(int spaceType, word_t paddr, unsigned int size, unsigned int badge, unsigned int depth_bits);
 
 #endif
 

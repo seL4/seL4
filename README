@@ -19,8 +19,8 @@ build using make, follow these instructions:
 
  * Ensure that the appropriate cross-compiler is installed.
 
- * Set the TOOLPREFIX environment variable.  eg. arm-none-eabi- if the ERTOS
-   compilers are in your PATH.
+ * Set the TOOLPREFIX environment variable to your cross-compiler's prefix. E.g.
+   arm-none-eabi-.
 
  * Set the ARCH, PLAT, ARMV and CPU variables for the intended target
    architecture and platform, chosen from the following lists:
@@ -32,4 +32,4 @@ build using make, follow these instructions:
     arm    am335x  armv7-a   cortex-a8
     ia32   pc99
 
- * For a debug build, append -DDEBUG.
+ * For a debug build, append "DEBUG=y".
