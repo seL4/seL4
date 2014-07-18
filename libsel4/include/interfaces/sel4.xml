@@ -67,6 +67,11 @@
 		</method>
 		<method id="TCBSuspend" name="Suspend"/>
 		<method id="TCBResume" name="Resume"/>
+		<method id="TCBBindAEP" name="BindAEP">
+			<param dir="in" name="async_endpoint" type="seL4_CPtr"/>
+		</method>
+		<method id="TCBUnbindAEP" name="UnbindAEP">
+		</method>
 	</interface>
 	<interface name="seL4_CNode">
         <method id="CNodeRevoke" name="Revoke">

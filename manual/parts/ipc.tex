@@ -305,3 +305,18 @@ badged with the \apifunc{seL4\_CNode\_Mutate}{cnode_mutate} or \apifunc{seL4\_CN
 capabilities with badges cannot be unbadged, rebadged or used to create
 child capabilities with different badges.
 
+\subsection{Binding Asynchronous Endpoints}
+\label{sec:asyncep-binding}
+
+\obj{AsyncEP}s and \obj{TCB}s can be bound together in a 1-to-1 relationship
+through the \apifunc{seL4\_TCB\_BindAEP}{tcb_bindaep} invocation. When an
+\obj{AsyncEP} is bound to a \obj{TCB}, then messages to that asynchronous
+endpoint will be delivered if the thread is waiting on any synchronous
+endpoint. To distinguish the whether the received message was asynchronous
+or synchronous, developers should check the badge value. By reserving a
+specific badge (or range of badges) for capabilities to the bound
+asynchronous endpoint -- distinct from synchronous endpoint badges -- the
+message source can be determined.
+
+Once an asynchronous endpoint has been bound, the only thread that may perform
+\apifunc{seL4\_Wait}{sel4_wait} on the endpoint is the bound thread.

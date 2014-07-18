@@ -305,6 +305,12 @@ decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
     case TCBSetSpace:
         return decodeSetSpace(cap, length, slot, extraCaps, buffer);
 
+    case TCBBindAEP:
+        return decodeBindAEP(cap, extraCaps);
+
+    case TCBUnbindAEP:
+        return decodeUnbindAEP(cap);
+
     default:
         /* Haskell: "throw IllegalOperation" */
         userError("TCB: Illegal operation.");
@@ -761,6 +767,72 @@ decodeDomainInvocation(word_t label, unsigned int length, extra_caps_t extraCaps
     return EXCEPTION_NONE;
 }
 
+exception_t
+decodeBindAEP(cap_t cap, extra_caps_t extraCaps)
+{
+    async_endpoint_t *aepptr;
+    tcb_t *tcb;
+    cap_t aep_cap;
+
+    if (extraCaps.excaprefs[0] == NULL) {
+        userError("TCB BindAEP: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+
+    if (tcb->boundAsyncEndpoint) {
+        userError("TCB BindAEP: TCB already has AEP.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    aep_cap = extraCaps.excaprefs[0]->cap;
+
+    if (cap_get_capType(aep_cap) == cap_async_endpoint_cap) {
+        aepptr = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(aep_cap));
+    } else {
+        userError("TCB BindAEP: Async endpoint is invalid.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (!cap_async_endpoint_cap_get_capAEPCanReceive(aep_cap)) {
+        userError("TCB BindAEP: Insufficient access rights");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if ((tcb_t*)async_endpoint_ptr_get_aepQueue_head(aepptr)
+            || (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aepptr)) {
+        userError("TCB BindAEP: AEP cannot be bound.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeTCB_AEPControl(tcb, aepptr);
+}
+
+exception_t
+decodeUnbindAEP(cap_t cap)
+{
+    tcb_t *tcb;
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+
+    if (!tcb->boundAsyncEndpoint) {
+        userError("TCB UnbindAEP: TCB already has no bound AEP.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeTCB_AEPControl(tcb, NULL);
+}
+
 /* The following functions sit in the preemption monad and implement the
  * preemptible, non-faulting bottom end of a TCB invocation. */
 exception_t
@@ -987,6 +1059,18 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
 
     if (resumeTarget) {
         restart(dest);
+    }
+
+    return EXCEPTION_NONE;
+}
+
+exception_t
+invokeTCB_AEPControl(tcb_t *tcb, async_endpoint_t *aepptr)
+{
+    if (aepptr) {
+        bindAsyncEndpoint(tcb, aepptr);
+    } else {
+        unbindAsyncEndpoint(tcb);
     }
 
     return EXCEPTION_NONE;

@@ -338,8 +338,13 @@ handleWait(void)
         receiveIPC(ksCurThread, lu_ret.cap);
         break;
 
-    case cap_async_endpoint_cap:
-        if (unlikely(!cap_async_endpoint_cap_get_capAEPCanReceive(lu_ret.cap))) {
+    case cap_async_endpoint_cap: {
+        async_endpoint_t *aepptr;
+        tcb_t *boundTCB;
+        aepptr = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(lu_ret.cap));
+        boundTCB = (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aepptr);
+        if (unlikely(!cap_async_endpoint_cap_get_capAEPCanReceive(lu_ret.cap)
+                     || (boundTCB && boundTCB != ksCurThread))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
             current_fault = fault_cap_fault_new(epCPtr, true);
             handleFault(ksCurThread);
@@ -348,7 +353,7 @@ handleWait(void)
 
         receiveAsyncIPC(ksCurThread, lu_ret.cap);
         break;
-
+    }
     default:
         current_lookup_fault = lookup_fault_missing_capability_new(0);
         current_fault = fault_cap_fault_new(epCPtr, true);

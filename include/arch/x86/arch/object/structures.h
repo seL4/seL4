@@ -29,13 +29,17 @@
 /* TCB CNode: size = 256 bytes */
 /* typedef cte_t[16] tcb_cnode; */
 
-/* TCB: size = 652 bytes, alignment = 256 bytes */
+/* TCB: size = 656 bytes, alignment = 256 bytes */
 struct tcb {
     /* Saved user-level context of thread, 592 bytes */
     user_context_t tcbContext;
 
     /* Thread state, 12 bytes */
     thread_state_t tcbState;
+
+    /* Async endpoint that this TCB is bound to. If this is set, when this tcb waits
+     * on any sync endpoint, it may receive an async notification from the AEP */
+    async_endpoint_t *boundAsyncEndpoint;
 
     /* Current fault, 8 bytes */
     fault_t tcbFault;

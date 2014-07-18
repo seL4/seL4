@@ -14,7 +14,9 @@
 #include <kernel/thread.h>
 #include <object/structures.h>
 #include <object/tcb.h>
+#include <object/endpoint.h>
 #include <model/statedata.h>
+#include <machine/io.h>
 
 #include <object/asyncendpoint.h>
 
@@ -36,16 +38,36 @@ aep_ptr_set_queue(async_endpoint_t *aepptr, tcb_queue_t aep_queue)
     async_endpoint_ptr_set_aepQueue_tail(aepptr, (word_t)aep_queue.end);
 }
 
+static inline void
+aep_set_active(async_endpoint_t *aepptr, word_t badge)
+{
+    async_endpoint_ptr_set_state(aepptr, AEPState_Active);
+    async_endpoint_ptr_set_aepMsgIdentifier(aepptr, badge);
+}
+
+
 void
-sendAsyncIPC(async_endpoint_t *aepptr, word_t badge, word_t val)
+sendAsyncIPC(async_endpoint_t *aepptr, word_t badge)
 {
     switch (async_endpoint_ptr_get_state(aepptr)) {
-    case AEPState_Idle:
-        async_endpoint_ptr_set_state(aepptr, AEPState_Active);
-        async_endpoint_ptr_set_aepMsgIdentifier(aepptr, badge);
-        async_endpoint_ptr_set_aepData(aepptr, val);
+    case AEPState_Idle: {
+        tcb_t *tcb = (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aepptr);
+        /* Check if we are bound and that thread is waiting for a message */
+        if (tcb) {
+            if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
+                /* Send and start thread running */
+                ipcCancel(tcb);
+                setThreadState(tcb, ThreadState_Running);
+                setRegister(tcb, badgeRegister, badge);
+                switchIfRequiredTo(tcb);
+            } else {
+                aep_set_active(aepptr, badge);
+            }
+        } else {
+            aep_set_active(aepptr, badge);
+        }
         break;
-
+    }
     case AEPState_Waiting: {
         tcb_queue_t aep_queue;
         tcb_t *dest;
@@ -60,27 +82,24 @@ sendAsyncIPC(async_endpoint_t *aepptr, word_t badge, word_t val)
         aep_queue = tcbEPDequeue(dest, aep_queue);
         aep_ptr_set_queue(aepptr, aep_queue);
 
+        /* set the thread state to idle if the queue is empty */
         if (!aep_queue.head) {
             async_endpoint_ptr_set_state(aepptr, AEPState_Idle);
         }
 
         setThreadState(dest, ThreadState_Running);
-        doAsyncTransfer(badge, val, dest);
+        setRegister(dest, badgeRegister, badge);
         switchIfRequiredTo(dest);
         break;
     }
 
     case AEPState_Active: {
-        word_t badge2, val2;
-
-        val2 = async_endpoint_ptr_get_aepData(aepptr);
-        val2 |= val;
+        word_t badge2;
 
         badge2 = async_endpoint_ptr_get_aepMsgIdentifier(aepptr);
         badge2 |= badge;
 
         async_endpoint_ptr_set_aepMsgIdentifier(aepptr, badge2);
-        async_endpoint_ptr_set_aepData(aepptr, val2);
         break;
     }
     }
@@ -108,15 +127,16 @@ receiveAsyncIPC(tcb_t *thread, cap_t cap)
         /* Enqueue TCB */
         aep_queue = aep_ptr_get_queue(aepptr);
         aep_queue = tcbEPAppend(thread, aep_queue);
+
         async_endpoint_ptr_set_state(aepptr, AEPState_Waiting);
         aep_ptr_set_queue(aepptr, aep_queue);
         break;
     }
 
     case AEPState_Active:
-        doAsyncTransfer(
-            async_endpoint_ptr_get_aepMsgIdentifier(aepptr),
-            async_endpoint_ptr_get_aepData(aepptr), thread);
+        setRegister(
+            thread, badgeRegister,
+            async_endpoint_ptr_get_aepMsgIdentifier(aepptr));
         async_endpoint_ptr_set_state(aepptr, AEPState_Idle);
         break;
     }
@@ -162,3 +182,54 @@ asyncIPCCancel(tcb_t *threadPtr, async_endpoint_t *aepptr)
     /* Make thread inactive */
     setThreadState(threadPtr, ThreadState_Inactive);
 }
+
+void
+completeAsyncIPC(async_endpoint_t *aepptr, tcb_t *tcb)
+{
+    word_t badge;
+
+    if (likely(tcb && async_endpoint_ptr_get_state(aepptr) == AEPState_Active)) {
+        badge = async_endpoint_ptr_get_aepMsgIdentifier(aepptr);
+        setRegister(tcb, badgeRegister, badge);
+        async_endpoint_ptr_set_state(aepptr, AEPState_Idle);
+    } else {
+        fail("tried to complete async ipc with inactive aep");
+    }
+}
+
+static void
+doUnbindAEP(async_endpoint_t *aepptr, tcb_t *tcbptr)
+{
+    async_endpoint_ptr_set_aepBoundTCB(aepptr, (word_t) 0);
+    tcbptr->boundAsyncEndpoint = NULL;
+}
+
+void
+unbindMaybeAEP(async_endpoint_t *aepptr)
+{
+    tcb_t *boundTCB;
+    boundTCB = (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aepptr);
+
+    if (boundTCB) {
+        doUnbindAEP(aepptr, boundTCB);
+    }
+}
+
+void
+unbindAsyncEndpoint(tcb_t *tcb)
+{
+    async_endpoint_t *aepptr;
+    aepptr = tcb->boundAsyncEndpoint;
+
+    if (aepptr) {
+        doUnbindAEP(aepptr, tcb);
+    }
+}
+
+void
+bindAsyncEndpoint(tcb_t *tcb, async_endpoint_t *aepptr)
+{
+    async_endpoint_ptr_set_aepBoundTCB(aepptr, (word_t)tcb);
+    tcb->boundAsyncEndpoint = aepptr;
+}
+

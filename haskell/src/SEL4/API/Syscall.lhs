@@ -29,6 +29,7 @@ modules.
 > import SEL4.Kernel.VSpace
 > import SEL4.Kernel.FaultHandler
 > import SEL4.Object
+> import SEL4.Object.Structures
 > import SEL4.Model
 > import SEL4.Machine
 > import Data.Bits
@@ -186,8 +187,12 @@ The "Wait" system call blocks waiting to receive a message through a specified e
 >                 withoutFailure $ do 
 >                     deleteCallerCap thread
 >                     receiveIPC thread epCap
->             AsyncEndpointCap { capAEPCanReceive = True } ->
->                 withoutFailure $ receiveAsyncIPC thread epCap
+>             AsyncEndpointCap { capAEPCanReceive = True, capAEPPtr = ptr } -> do
+>                 aep <- withoutFailure $ getAsyncEP ptr
+>                 boundTCB <- return $ aepBoundTCB aep
+>                 if boundTCB == Just thread || boundTCB == Nothing
+>                  then withoutFailure $ receiveAsyncIPC thread epCap
+>                  else throw $ MissingCapability { missingCapBitsLeft = 0 }
 >             _ -> throw $ MissingCapability { missingCapBitsLeft = 0 })
 >       `catchFailure` handleFault thread
 >     return ()

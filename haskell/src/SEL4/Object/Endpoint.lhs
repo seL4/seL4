@@ -18,6 +18,9 @@ This module specifies the contents and behaviour of a synchronous IPC endpoint.
 
 \begin{impdetails}
 
+% {-# BOOT-IMPORTS: SEL4.Machine SEL4.Model SEL4.Object.Structures #-}
+% {-# BOOT-EXPORTS: ipcCancel #-}
+
 > import SEL4.API.Types
 > import SEL4.Machine
 > import SEL4.Model
@@ -30,6 +33,7 @@ This module specifies the contents and behaviour of a synchronous IPC endpoint.
 > import {-# SOURCE #-} SEL4.Kernel.VSpace
 
 > import Data.List
+> import Data.Maybe
 
 \end{impdetails}
 
@@ -105,13 +109,21 @@ Empty receive endpoints are invalid.
 
 The IPC receive operation is essentially the same as the send operation, but with the send and receive states swapped. There are a few other differences: the badge must be retrieved from the TCB when completing an operation, and is not set when adding a TCB to the queue; also, the operation always blocks if no partner is immediately available; lastly, the receivers thread state does not need updating to Running however the senders state may.
 
-> receiveIPC :: PPtr TCB -> Capability -> Kernel ()
+> isActive :: AsyncEndpoint -> Bool 
+> isActive (AEP (ActiveAEP _) _) = True
+> isActive _ = False
 
+> receiveIPC :: PPtr TCB -> Capability -> Kernel ()
 > receiveIPC thread cap@(EndpointCap {}) = do
 >         let epptr = capEPPtr cap
 >         ep <- getEndpoint epptr
 >         let diminish = not $ capEPCanSend cap
->         case ep of
+>         -- check if anything is waiting on aep
+>         aepptr <- getBoundAEP thread
+>         aep <- maybe (return $ AEP IdleAEP Nothing) (getAsyncEP) aepptr
+>         if (isJust aepptr && isActive aep)
+>           then completeAsyncIPC (fromJust aepptr) thread
+>           else case ep of
 >             IdleEP -> do
 >                 setThreadState (BlockedOnReceive {
 >                     blockingIPCEndpoint = epptr,
@@ -189,7 +201,8 @@ If the thread is blocking on an endpoint, then the endpoint is fetched and the t
 >                 slot <- getThreadReplySlot tptr
 >                 callerCap <- liftM (mdbNext . cteMDBNode) $ getCTE slot
 >                 when (callerCap /= nullPointer) $ do
->                     stateAssert (capHasProperty callerCap isReplyCap)
+>                     stateAssert (capHasProperty callerCap (\cap -> isReplyCap cap &&
+>                                                                  not (capReplyMaster cap)))
 >                         "replyIPCCancel: expected a reply cap"
 >                     cteDeleteOne callerCap
 >             blockedIPCCancel state = do

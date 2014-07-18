@@ -23,7 +23,7 @@ We use the C preprocessor to select a target architecture.
 \begin{impdetails}
 
 % {-# BOOT-IMPORTS: SEL4.Model SEL4.Machine SEL4.Object.Structures SEL4.Object.Instances() SEL4.API.Types #-}
-% {-# BOOT-EXPORTS: setDomain setPriority getThreadState setThreadState doIPCTransfer isRunnable restart suspend doAsyncTransfer doReplyTransfer attemptSwitchTo switchIfRequiredTo tcbSchedEnqueue tcbSchedDequeue rescheduleRequired timerTick #-}
+% {-# BOOT-EXPORTS: setDomain setPriority getThreadState setThreadState setBoundAEP getBoundAEP doIPCTransfer isRunnable restart suspend  doReplyTransfer attemptSwitchTo switchIfRequiredTo tcbSchedEnqueue tcbSchedDequeue rescheduleRequired timerTick #-}
 
 > import SEL4.Config
 > import SEL4.API.Types
@@ -292,17 +292,6 @@ This function is called when an IPC message includes a capability to transfer. I
 
 In the case of asynchronous IPC, the message from the asynchronous endpoint's message buffer is loaded into the receiver's IPC buffer.
 
-> doAsyncTransfer :: Word -> Word -> PPtr TCB -> Kernel ()
-> doAsyncTransfer badge msgWord thread = do 
->         receiveBuffer <- lookupIPCBuffer True thread
->         msgTransferred <- setMRs thread receiveBuffer [msgWord]
->         asUser thread $ setRegister badgeRegister badge
->         setMessageInfo thread $ MI {
->             msgLength = msgTransferred,
->             msgExtraCaps = 0,
->             msgCapsUnwrapped = 0,
->             msgLabel = 0 }
-
 \subsection{Scheduling}
 
 \subsubsection{The Scheduler}
@@ -484,6 +473,14 @@ When setting the scheduler state, we check for blocking of the current thread; i
 >         action <- getSchedulerAction
 >         when (not runnable && curThread == tptr && action == ResumeCurrentThread) $
 >             rescheduleRequired
+
+\subsubsection{Bound AEPs}
+
+> getBoundAEP :: PPtr TCB -> Kernel (Maybe (PPtr AsyncEndpoint))
+> getBoundAEP = threadGet tcbBoundAEP
+
+> setBoundAEP :: Maybe (PPtr AsyncEndpoint) -> PPtr TCB -> Kernel ()
+> setBoundAEP aepptr tptr = threadSet (\t -> t { tcbBoundAEP = aepptr }) tptr
 
 \subsubsection{Scheduler Queue Manipulation}
 

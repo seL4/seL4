@@ -41,6 +41,7 @@ We use the C preprocessor to select a target architecture.
 > import {-# SOURCE #-} SEL4.Kernel.Thread
 
 > import Data.Bits
+> import Data.Maybe
 
 \end{impdetails}
 
@@ -99,7 +100,9 @@ When the last capability to an endpoint is deleted, any IPC operations currently
 >     return (NullCap, Nothing)
 
 > finaliseCap (AsyncEndpointCap { capAEPPtr = ptr }) final _ = do
->     when final $ aepCancelAll ptr
+>     when final $ do
+>         unbindMaybeAEP ptr
+>         aepCancelAll ptr
 >     return (NullCap, Nothing)
 
 > finaliseCap (ReplyCap {}) _ _ = return (NullCap, Nothing)
@@ -122,6 +125,7 @@ Threads are treated as special capability nodes; they also become zombies when t
 
 > finaliseCap (ThreadCap { capTCBPtr = tcb}) True _ = do
 >     cte_ptr <- getThreadCSpaceRoot tcb
+>     unbindAsyncEndpoint tcb
 >     suspend tcb
 >     return (Zombie cte_ptr ZombieTCB 5, Nothing)
 
@@ -169,9 +173,7 @@ Zombie capabilities must be transformed back into their original types. Also, TC
 >                 let tcbPtr = (PPtr . fromPPtr) ptr
 >                 tcb <- threadGet id tcbPtr
 >                 flip assert "Zombie cap should point at inactive thread."
->                     $ case tcbState tcb of
->                         Inactive -> True
->                         _ -> False
+>                     $ tcbState tcb == Inactive && isNothing (tcbBoundAEP tcb)
 >                 flip assert "Zombie cap should not point at queued thread."
 >                     $ not (tcbQueued tcb)
 >                 curdom <- curDomain
@@ -423,11 +425,8 @@ The "decodeInvocation" function parses the message, determines the operation tha
 >     return $ InvokeEndpoint
 >         (capEPPtr cap) (capEPBadge cap) (capEPCanGrant cap)
 >
-> decodeInvocation _ args _ _ cap@(AsyncEndpointCap {capAEPCanSend=True}) _ = do
->     let msg = case args of
->             (x:_) -> x
->             _ -> 0
->     return $ InvokeAsyncEndpoint (capAEPPtr cap) (capAEPBadge cap) msg
+> decodeInvocation _ _ _ _ cap@(AsyncEndpointCap {capAEPCanSend=True}) _ = do
+>     return $ InvokeAsyncEndpoint (capAEPPtr cap) (capAEPBadge cap) 
 >
 > decodeInvocation _ _ _ slot cap@(ReplyCap {capReplyMaster=False}) _ = do
 >     return $ InvokeReply (capTCBPtr cap) slot
@@ -480,8 +479,8 @@ This function just dispatches invocations to the type-specific invocation functi
 >     sendIPC block call badge canGrant thread ep
 >     return $! []
 > 
-> performInvocation _ _ (InvokeAsyncEndpoint ep badge message) = do
->     withoutPreemption $ sendAsyncIPC ep badge message
+> performInvocation _ _ (InvokeAsyncEndpoint ep badge) = do
+>     withoutPreemption $ sendAsyncIPC ep badge 
 >     return $! []
 >
 > performInvocation _ _ (InvokeReply thread slot) = withoutPreemption $ do

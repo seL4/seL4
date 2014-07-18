@@ -214,8 +214,7 @@ handleInterrupt(irq_t irq)
         if (cap_get_capType(cap) == cap_async_endpoint_cap &&
                 cap_async_endpoint_cap_get_capAEPCanSend(cap)) {
             sendAsyncIPC(AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap)),
-                         cap_async_endpoint_cap_get_capAEPBadge(cap),
-                         (((uint32_t) 1) << (irq % WORD_BITS)));
+                         cap_async_endpoint_cap_get_capAEPBadge(cap));
         } else {
 #ifdef CONFIG_IRQ_REPORTING
             printf("Undelivered IRQ: %d\n", (int)irq);

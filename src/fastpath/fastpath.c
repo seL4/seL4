@@ -194,6 +194,12 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
         slowpath(SysReplyWait);
     }
 
+    /* Check there is nothing waiting on the async endpoint */
+    if (ksCurThread->boundAsyncEndpoint &&
+            async_endpoint_ptr_get_state(ksCurThread->boundAsyncEndpoint) == AEPState_Active) {
+        slowpath(SysReplyWait);
+    }
+
     /* Get the endpoint address */
     ep_ptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(ep_cap));
 

@@ -37,6 +37,11 @@ struct tcb {
     /* Thread state, 12 bytes */
     thread_state_t tcbState;
 
+    /* Async endpoint that this TCB is bound to. If this is set, when this TCB waits on
+     * any sync endpoint, it may receive an async notification from the AEP.
+     * 4 bytes*/
+    async_endpoint_t *boundAsyncEndpoint;
+
     /* Current fault, 8 bytes */
     fault_t tcbFault;
 
