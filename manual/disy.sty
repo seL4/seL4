@@ -67,7 +67,7 @@
 \newcommand{\AuthorEmail}[1]{\def\AuthorEmailString{#1}}
 
 \newcommand{\CrestFileName}{\ifColor unicrest-colour\else unicrest-screen\fi}
-\newcommand{\LogoFileName}{\ifColor nicta-col\else nicta-bw\fi}
+%\newcommand{\LogoFileName}{\ifColor nicta-col\else nicta-bw\fi}
 \AuthorEmail{disy@cse.unsw.edu.au}
 
 \newlength{\centeroffset}
@@ -93,7 +93,7 @@
       %\addtolength{\ERTOSw}{-\LogoW}\addtolength{\ERTOSw}{-2em}%
       \settowidth{\ERTOSw}{{\sf\large http://ssrg.nicta.com.au/}}%
       %\settowidth{\ERTOSw}{{\sf\large Operating Systems Group}}%
-      \newcommand{\NICTAlogo}{\includegraphics[width=\LogoW]{imgs/\LogoFileName}}%
+      %\newcommand{\NICTAlogo}{\includegraphics[width=\LogoW]{imgs/\LogoFileName}}%
       \noindent\sf%
       \begin{minipage}[b]{\textwidth}\sf\large%
 	\hspace*{-10mm}%
@@ -104,12 +104,12 @@
  	  \url{http://ssrg.nicta.com.au/}\\~
 	  \end{minipage}
 	  \hfill
-	  \ifx\undefined\hyperref%
-	    \NICTAlogo%
- 	  \else%
-	    \raisebox{2mm}{\href{http://nicta.com.au}{\NICTAlogo}}%
-	  \fi%
-	\else~
+%	  \ifx\undefined\hyperref%
+%	    \NICTAlogo%
+% 	  \else%
+%	    \raisebox{2mm}{\href{http://nicta.com.au}{\NICTAlogo}}%
+%	  \fi%
+%	\else~
 	\fi%
       \end{minipage}%
       \hspace*{-4mm}%
