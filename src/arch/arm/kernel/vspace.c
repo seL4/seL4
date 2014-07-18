@@ -60,6 +60,7 @@ static exception_t performPDFlush(int label, pde_t *pd, asid_t asid,
                                   vptr_t start, vptr_t end, paddr_t pstart);
 static exception_t performPageFlush(int label, pde_t *pd, asid_t asid,
                                     vptr_t start, vptr_t end, paddr_t pstart);
+static exception_t performPageGetAddress(void *vbase_ptr);
 static exception_t decodeARMPageDirectoryInvocation(word_t label,
                                                     unsigned int length, cptr_t cptr, cte_t *cte, cap_t cap,
                                                     extra_caps_t extraCaps, word_t *buffer);
@@ -1659,6 +1660,16 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
         return performPageFlush(label, pd.pd, asid, start, end - 1, pstart);
     }
 
+    case ARMPageGetAddress: {
+
+
+        /* Check that there are enough message registers */
+        assert(n_msgRegisters >= 1);
+
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return performPageGetAddress((void*)generic_frame_cap_get_capFBasePtr(cap));
+    }
+
     default:
         current_syscall_error.type = seL4_IllegalOperation;
 
@@ -2004,6 +2015,22 @@ performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
         clearMemory((void *)pt, cap_get_capSizeBits(cap));
     }
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
+
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+performPageGetAddress(void *vbase_ptr)
+{
+    paddr_t capFBasePtr;
+
+    /* Get the physical address of this frame. */
+    capFBasePtr = addrFromPPtr(vbase_ptr);
+
+    /* return it in the first message register */
+    setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
+    setRegister(ksCurThread, msgInfoRegister,
+                wordFromMessageInfo(message_info_new(0, 0, 0, 1)));
 
     return EXCEPTION_NONE;
 }
