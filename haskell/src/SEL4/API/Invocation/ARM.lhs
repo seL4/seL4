@@ -80,6 +80,8 @@ There are five ARM-specific object types; however, only four of them may be invo
 >         pageFlushPStart :: PAddr,
 >         pageFlushPD :: PPtr PDE,
 >         pageFlushASID :: ASID } 
+>     | PageGetAddr {
+>         pageGetBasePtr :: PPtr Word }
 >     deriving Show
 
 > data FlushType

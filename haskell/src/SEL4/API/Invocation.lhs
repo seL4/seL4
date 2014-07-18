@@ -186,6 +186,7 @@ This datatype is defined globally over architectures as well as object types.
 >         | ARMPageInvalidate_Data
 >         | ARMPageCleanInvalidate_Data
 >         | ARMPageUnify_Instruction
+>         | ARMPageGetAddress
 >         | ARMASIDControlMakePool
 >         | ARMASIDPoolAssign
 >         deriving (Enum, Bounded, Eq)

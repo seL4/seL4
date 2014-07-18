@@ -1139,6 +1139,7 @@ Virtual page capabilities may each represent a single mapping into a page table.
 >         (ARMPageInvalidate_Data, _, _) -> decodeARMPageFlush label args cap
 >         (ARMPageCleanInvalidate_Data, _, _) -> decodeARMPageFlush label args cap
 >         (ARMPageUnify_Instruction, _, _) -> decodeARMPageFlush label args cap
+>         (ARMPageGetAddress, _, _) -> return $ InvokePage $ PageGetAddr (capVPBasePtr cap)
 >         _ -> throw IllegalOperation
 
 
@@ -1326,6 +1327,17 @@ Don't flush an empty range.
 >         when root_switched $ do
 >             tcb <- getCurThread
 >             setVMRoot tcb
+>
+> performPageInvocation (PageGetAddr ptr) = do
+>     let paddr = fromPAddr $ addrFromPPtr ptr
+>     ct <- getCurThread
+>     msgTransferred <- setMRs ct Nothing [paddr]
+>     msgInfo <- return $ MI {
+>             msgLength = msgTransferred,
+>             msgExtraCaps = 0,
+>             msgCapsUnwrapped = 0,
+>             msgLabel = 0 }
+>     setMessageInfo ct msgInfo
 
 > performASIDControlInvocation :: ASIDControlInvocation -> Kernel ()
 > performASIDControlInvocation (MakePool frame slot parent base) = do
