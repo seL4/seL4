@@ -1106,6 +1106,7 @@ Virtual page capabilities may each represent a single mapping into a page table.
 >                 (attribsFromWord attr) pd
 >             ensureSafeMapping entries
 >             return $ InvokePage $ PageMap {
+>                 pageMapASID = asid,
 >                 pageMapCap = ArchObjectCap $
 >                     cap { capVPMappedAddress = Just (asid, VPtr vaddr) },
 >                 pageMapCTSlot = cte,
@@ -1130,6 +1131,7 @@ Virtual page capabilities may each represent a single mapping into a page table.
 >                 vaddr (capVPSize cap) vmRights (attribsFromWord attr) pd
 >             ensureSafeMapping entries
 >             return $ InvokePage $ PageRemap {
+>                 pageRemapASID = asidCheck,
 >                 pageRemapEntries = entries }
 >         (ARMPageRemap, _, _) -> throw TruncatedMessage
 >         (ARMPageUnmap, _, _) -> return $ InvokePage $ PageUnmap {
@@ -1280,36 +1282,59 @@ Don't flush an empty range.
 >     updateCap ctSlot (ArchObjectCap $
 >                            cap { capPTMappedAddress = Nothing })
 
+When checking if there was already something mapped before a PageMap or PageRemap,
+we need only check the first slot because ensureSafeMapping tells us that
+the PT/PD is consistent.
+
+> pteCheckIfMapped :: PPtr PTE -> Kernel Bool
+> pteCheckIfMapped slot = do
+>     pt <- getObject slot
+>     return $ pt /= InvalidPTE
+
+> pdeCheckIfMapped :: PPtr PDE -> Kernel Bool
+> pdeCheckIfMapped slot = do
+>     pd <- getObject slot
+>     return $ pd /= InvalidPDE
+
 > performPageInvocation :: PageInvocation -> Kernel ()
 >
-> performPageInvocation (PageMap cap ctSlot entries) = do
+> performPageInvocation (PageMap asid cap ctSlot entries) = do
 >     updateCap ctSlot cap
 >     case entries of
 >         Left (pte, slots) -> do
+>             tlbFlush <- pteCheckIfMapped (head slots)
 >             mapM (flip storePTE pte) slots
 >             doMachineOp $
 >                 cleanCacheRange_PoU (VPtr $ fromPPtr $ head slots)
 >                                     (VPtr $ (fromPPtr (last slots)) + (bit (objBits (undefined::PTE)) - 1))
 >                                     (addrFromPPtr (head slots))
+>             when tlbFlush $ invalidateTLBByASID asid
 >         Right (pde, slots) -> do
+>             tlbFlush <- pdeCheckIfMapped (head slots)
 >             mapM (flip storePDE pde) slots
 >             doMachineOp $
 >                 cleanCacheRange_PoU (VPtr $ fromPPtr $ head slots)
 >                                     (VPtr $ (fromPPtr (last slots)) + (bit (objBits (undefined::PDE)) - 1))
 >                                     (addrFromPPtr (head slots))
+>             when tlbFlush $ invalidateTLBByASID asid
 >
-> performPageInvocation (PageRemap (Left (pte, slots))) = do
->     mapM_ (flip storePTE pte) slots
+> performPageInvocation (PageRemap asid (Left (pte, slots))) = do
+>     tlbFlush <- pteCheckIfMapped (head slots)
+>     mapM (flip storePTE pte) slots
 >     doMachineOp $
 >         cleanCacheRange_PoU (VPtr $ fromPPtr $ head slots)
 >                             (VPtr $ (fromPPtr (last slots)) + (bit (objBits (undefined::PTE)) - 1))
 >                             (addrFromPPtr (head slots))
-> performPageInvocation (PageRemap (Right (pde, slots))) = do
->     mapM_ (flip storePDE pde) slots
+>     when tlbFlush $ invalidateTLBByASID asid
+>
+> performPageInvocation (PageRemap asid (Right (pde, slots))) = do
+>     tlbFlush <- pdeCheckIfMapped (head slots)
+>     mapM (flip storePDE pde) slots
 >     doMachineOp $
 >         cleanCacheRange_PoU (VPtr $ fromPPtr $ head slots)
 >                             (VPtr $ (fromPPtr (last slots)) + (bit (objBits (undefined::PDE)) - 1))
 >                             (addrFromPPtr (head slots))
+>     when tlbFlush $ invalidateTLBByASID asid
 >
 > performPageInvocation (PageUnmap cap ctSlot) = do
 >     case capVPMappedAddress cap of

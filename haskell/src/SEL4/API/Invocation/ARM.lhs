@@ -65,10 +65,12 @@ There are five ARM-specific object types; however, only four of them may be invo
 > -- FIXME: should we consolidate start, end into a tuple
 > data PageInvocation
 >     = PageMap {
+>         pageMapASID :: ASID,
 >         pageMapCap :: Capability,
 >         pageMapCTSlot :: PPtr CTE,
 >         pageMapEntries :: Either (PTE, [PPtr PTE]) (PDE, [PPtr PDE]) }
 >     | PageRemap {
+>         pageRemapASID :: ASID,
 >         pageRemapEntries :: Either (PTE, [PPtr PTE]) (PDE, [PPtr PDE]) }
 >     | PageUnmap {
 >         pageUnmapCap :: ArchCapability,
