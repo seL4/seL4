@@ -1,3 +1,10 @@
+verbatimtex
+\documentclass[12pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\begin{document}
+etex;
+
 input boxes;
 beginfig(1);
 

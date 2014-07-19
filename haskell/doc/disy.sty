@@ -1,0 +1,178 @@
+%
+% Copyright 2014, NICTA
+%
+% This software may be distributed and modified according to the terms of
+% the BSD 2-Clause license. Note that NO WARRANTY is provided.
+% See "LICENSE_BSD2.txt" for details.
+%
+% @TAG(NICTA_BSD)
+%
+
+% disy.sty
+%
+% Document style for reports by the UNSW Distributed Systems and
+% Operating Systems (DiSy) group.
+%
+% Uses Andrew O'Brien's fancy title page...
+%
+% Written 2000-08-12 by Gernot Heiser <gernot@unsw.edu.au>
+%
+% $Id: disy.sty,v 1.2 2009-02-04 03:13:15 ikuz Exp $
+
+% OPTIONS:
+%   color:      use colour logos
+%   cmyk:       will generate cmyk colours rather than rgb colours
+%               this may prove more reliable on some printers
+%               but is inclined to look odd on monitors
+%   nicta:      use NICTA logo besides UNSW
+%   nictaonly:  use NICTA logo but no UNSW
+%
+% COMMANDS:
+%   \AuthorEmail	Author's email address (default: disy@cse)
+
+\ProvidesPackage{disy}
+\RequirePackage{graphicx}
+\RequirePackage{url}
+\RequirePackage{color}
+
+\DeclareOption{color}{\Colortrue}
+\DeclareOption{colour}{\Colortrue}
+\DeclareOption{cmyk}{\CMYKtrue}
+\DeclareOption{nicta}{\NICTAtrue}
+\DeclareOption{nictaonly}{\NICTAtrue\UNSWfalse}
+
+\newif\ifColor	\Colorfalse
+\newif\ifNICTA  \NICTAfalse
+\newif\ifCMYK   \CMYKfalse
+\newif\ifUNSW   \UNSWtrue	% for historic reasons
+
+\ProcessOptions
+
+\ifColor
+  \ifCMYK
+    \definecolor{nictablue}{cmyk}{1.0,0.18,0.0,0.51}
+    \definecolor{nictagreen}{cmyk}{1.0,0.0,0.69,0.43}
+  \else
+    \definecolor{nictablue}{rgb}{.000,.348,.508}
+    \definecolor{nictagreen}{rgb}{.020,.426,.328}
+  \fi
+\else
+  \definecolor{nictablue}{cmyk}{0,0,0,1}  % black
+  \definecolor{nictagreen}{cmyk}{0,0,0,1} % black
+\fi
+\newif\ifHave@HyperRef\Have@HyperReffalse
+
+\AtBeginDocument{\@ifpackageloaded{hyperref}{\Have@HyperReftrue}{}}
+
+\newcommand{\AuthorEmail}[1]{\def\AuthorEmailString{#1}}
+
+\newcommand{\CrestFileName}{\ifColor unicrest-colour\else unicrest-screen\fi}
+%\newcommand{\LogoFileName}{\ifColor nicta-col\else nicta-bw\fi}
+\AuthorEmail{disy@cse.unsw.edu.au}
+
+\newlength{\centeroffset}
+\setlength{\centeroffset}{-0.5\oddsidemargin}
+\addtolength{\centeroffset}{0.5\evensidemargin}
+
+\def\maketitle{
+  % to suppress overfull bars in ``draft'' mode:
+  \newlength{\saveOverfullRule}
+  \setlength{\saveOverfullRule}{\overfullrule}
+  \setlength\overfullrule{0pt}
+
+  \thispagestyle{empty}
+  \vspace*{\stretch{1}}
+  \noindent\hspace*{\centeroffset}
+
+  \begin{minipage}{\textwidth}\flushright%
+    \urlstyle{sf}%
+    \raisebox{34mm}[0pt][0pt]{%
+      \newcommand{\LogoW}{21mm}%
+      \newlength{\ERTOSw}%
+      %\setlength{\ERTOSw}{\textwidth}%
+      %\addtolength{\ERTOSw}{-\LogoW}\addtolength{\ERTOSw}{-2em}%
+      \settowidth{\ERTOSw}{{\sf\large http://ssrg.nicta.com.au/}}%
+      %\settowidth{\ERTOSw}{{\sf\large Operating Systems Group}}%
+      %\newcommand{\NICTAlogo}{\includegraphics[width=\LogoW]{imgs/\LogoFileName}}%
+      \noindent\sf%
+      \begin{minipage}[b]{\textwidth}\sf\large%
+	\hspace*{-10mm}%
+	\ifNICTA%
+	  \color{nictablue}%
+          \begin{minipage}[b]{1.1\ERTOSw}\urlstyle{sf}%
+            Trustworthy Systems\\
+ 	  \url{http://ssrg.nicta.com.au/}\\~
+	  \end{minipage}
+	  \hfill
+%	  \ifx\undefined\hyperref%
+%	    \NICTAlogo%
+% 	  \else%
+%	    \raisebox{2mm}{\href{http://nicta.com.au}{\NICTAlogo}}%
+%	  \fi%
+%	\else~
+	\fi%
+      \end{minipage}%
+      \hspace*{-4mm}%
+    }%
+    %
+    \flushright
+	{\Huge\bfseries
+	  \@title\\}
+	\vspace*{\stretch{2}}
+	\noindent\rule[-1ex]{\textwidth}{5pt}\\[2.5ex]
+		      {\Large \bfseries \@author}\\
+		      \ifUNSW
+		        \vspace{2ex}
+		      \else
+		        \urlstyle{sf}
+			\ifHave@HyperRef
+			  \url{\AuthorEmailString}\\[2ex]
+			\else
+			  \AuthorEmailString\\[2ex]
+			\fi
+		      \fi
+		      {\sf \hfill{\Large \@date}}\\[2ex]
+  \end{minipage}
+
+  \vspace{\stretch{1}}
+  \noindent\hspace*{\centeroffset}\begin{minipage}{\textwidth}
+    \flushright
+
+  \end{minipage}
+  \vspace{\stretch{2}}
+
+  \vfill
+
+  \begin{minipage}{\textwidth}
+    \flushright
+	{\noindent\sf%
+	  \ifUNSW
+	    \newcommand{\DiSyCrest}
+		       {\includegraphics[height=25mm,clip]{imgs/\CrestFileName}}%
+	    \newlength{\DiSyCrestwdth}\settowidth{~\DiSyCrestwdth}{\DiSyCrest}%
+	    \newlength{\DiSyFtwdth}%
+	    \setlength{\DiSyFtwdth}{\textwidth}%
+	    \addtolength{\DiSyFtwdth}{-\DiSyCrestwdth}%
+	    \addtolength{\DiSyFtwdth}{-1em}%
+	    \begin{minipage}[b]{0.7\textwidth}\flushright
+	      \urlstyle{sf}
+	      \ifHave@HyperRef
+	      \url{\AuthorEmailString}\\
+	      \else
+	      \AuthorEmailString\\
+	      \fi
+	      \url{http://www.cse.unsw.edu.au/~disy/}\\
+	      Operating Systems and Distributed Systems Group\\
+	      School of Computer Science and Engineering\\
+	      The University of New South Wales\\
+	      UNSW Sydney 2052, Australia%\vspace*{0.6ex}%
+	    \end{minipage}%
+	    \hspace{1em}\DiSyCrest%
+	  \fi
+	}
+  \end{minipage}
+
+  \clearpage
+  % reset overfull rule
+  \setlength{\overfullrule}{\saveOverfullRule}
+}%\maketitle

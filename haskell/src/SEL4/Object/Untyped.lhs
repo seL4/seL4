@@ -41,12 +41,12 @@ This module defines the behavior of untyped objects.
 \subsection{Invocation}
 
 Invocation of an untyped object retypes the memory region, possibly creating
-new typed kernel objects. As shown in \autoref{fig:.derive}, the
+new typed kernel objects. As shown in \autoref{fig:derive}, the
 retype operation will generate one or more new capabilities, which are inserted in the mapping database as children of the initial capability. These newly created capabilities will have all access rights, and other object specific fields will be initialised to some sensible value. 
 
 \begin{figure}[htp]
 \centering \includegraphics{figures/derive}
-\caption[derive]{Invoking an Untyped Object}
+\caption{Invoking an Untyped Object}\label{fig:derive}
 \end{figure}
 
 We start by defining a simple function to align one value to a power-of-two boundard. In particular, this function aligns its first argument up to the next power-of-two specified by the second argument.

@@ -285,7 +285,7 @@ The maximum domain is derived from the configuration parameter "numDomains"
 
 \subsection{Other Types}
 
-\subsubsection[mdbnode]{Mapping Database Node}
+\subsubsection{Mapping Database Node}
 
 The mapping database consists of a tree structure for each physical
 page that can be mapped at user level. It is used to keep track of all

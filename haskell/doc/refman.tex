@@ -8,18 +8,33 @@
 % @TAG(GD_GPL)
 %
 
-\documentclass{ertos-book}
-
-\title{seL4 Reference Manual}
-\author{Philip Derrin, Dhammika Elkaduwe, Kevin Elphinstone}
-\documentnumber=10200
-% \documentrevision=0
-\copyrightyear=2006
-\licence{restricted}
-\input{version.aux}
+\documentclass[a4paper,11pt,twoside]{report}
+\usepackage[colour,nictaonly]{disy}
 
 \usepackage{comment}
 \usepackage{ifxetex,ifpdf}
+\usepackage{alltt}
+\usepackage[T1]{fontenc}
+
+\usepackage[margin=33mm]{geometry}
+\usepackage{cite,fancyhdr,microtype,tocloft}
+
+\pagestyle{fancyplain}
+\lhead[\fancyplain{}{\sl\thepage}]{\fancyplain{}{\sl\rightmark}}
+\chead{}
+\rhead[\fancyplain{}{\sl\leftmark}]{\fancyplain{}{\sl\thepage}}
+\lfoot[\fancyplain{\sl\thepage}{}]{}
+\cfoot{}
+\rfoot[]{\fancyplain{\sl\thepage}{}}
+
+\definecolor{linkcolor}{rgb}{0,0,0.4}
+\usepackage[colorlinks=true,linkcolor=linkcolor,citecolor=linkcolor,
+            filecolor=linkcolor,urlcolor=linkcolor]{hyperref}
+
+\setlength{\cftsubsecnumwidth}{4em}
+\setlength{\cftsecnumwidth}{6ex}
+
+\newcommand{\softwareversion}{\input{version.txt}}
 
 % Definitions of the appearance of the typeset Haskell code
 \ifxetex
@@ -39,7 +54,6 @@
 %\newenvironment{impdetails}{
 % \ifimpdetails\begin{comment}\fi}{\ifimpdetails\end{comment}\fi}
 
-\usepackage{cite}
 \usepackage{lambdaTeX}
 
 % Workaround for conflict between PDFTeX and lambdaTeX
@@ -62,18 +76,31 @@
 \typeout{If TeX stops here, run mkfunctions.pl to generate functions.aux}
 \input{functions.aux}
 
-\bibliographystyle{plain}
-
 \hyphenation{C-Space C-Spaces C-Node C-Nodes Has-kell Send-Wait Ex-change-Reg-ist-ers Thread-Con-trol}
 
 \begin{document}
 
-% Re-enable lambdaTeX's active < and >
-\catcode`\<=\active
-\catcode`\>=\active
+\title{seL4 Haskell Manual}
+\author{Trustworthy~Systems~Team, NICTA}
+\AuthorEmail{ssrg@nicta.com.au}
+\date{\softwareversion}
 
-\chapter*{Acknowledgements}
+\maketitle
 
+  \urlstyle{sf}
+  \thispagestyle{empty}
+
+  \vfill
+
+  \copyright\ General Dynamics C4 Systems.\\
+
+  \textsc{All rights reserved}.
+
+  % Acknowledgements
+  \thispagestyle{empty}
+  \vfill
+  \renewcommand{\abstractname}{Acknowledgements}
+  \begin{abstract}
 The seL4 project team would like to acknowledge the following people
 and teams (in no particular order) who have contributed to seL4 in
 some way. Apologies if we missed you.
@@ -89,18 +116,37 @@ Jonathon Shapiro has also provided insightful interaction on many
 occasions, and his work on EROS and its successor Coyotos has also
 influenced seL4's design.
 
-We would also like to thank Gerwin Klein and his \emph{l4.verified}
- project team at NICTA for their insights and continual feedback on
- our work. David Cock deserves special mention for his work on
- bringing the ARM simulator into being.
+We would also like to thank Gerwin Klein and his L4.verified
+project team at NICTA for their insights and continual feedback on
+our work. David Cock deserves special mention for his work on
+bringing the ARM simulator into being.
 
-Finally, we would like to thank members of the ERTOS program here at
-NICTA for their daily interaction and input.
+\vspace{5ex}
+\begin{center}
+{\large\textbf{Warning}}
+\end{center}
+This manual is currently out of date. While the Haskell code itself is kept
+up-to-date, the text in this manual describes an old version of seL4 and uses
+outdated/deprecated terminology.
+\begin{center}
+Use with caution.
+\end{center}
+\end{abstract}
 
-National ICT Australia is funded by the Australian Government's
-Department of Communications, Information Technology, and the Arts and
-the Australian Research Council through \emph{Backing Australia's
-Ability} and the ICT Research Centre of Excellence programs.
+  \thispagestyle{empty}
+
+  \cleardoublepage
+  \setcounter{page}{1}
+  \tableofcontents
+
+  \cleardoublepage
+  \setcounter{page}{1}
+  \pagenumbering{arabic}
+  
+% Re-enable lambdaTeX's active < and >
+\catcode`\<=\active
+\catcode`\>=\active
+
 
 \part{Introduction}
 
@@ -115,115 +161,115 @@ from user level. This source code is executable --- not pseudocode ---
 and forms part of a simulator which can be used to examine the
 behaviour of a running seL4 kernel.
 
-\Autoref{sec:overview} provides an overview of the seL4 API. \Autoref{sec:haskell} briefly discusses Haskell, and the manner in which we have applied it to construct the reference implementation. The remaining chapters are generated directly from the Haskell source code of the reference implementation, and contain all of the code (apart from some Haskell-specific implementation details, such as compiler and pre-processor directives).
+\autoref{sec:overview} provides an overview of the seL4 API. \autoref{sec:haskell} briefly discusses Haskell, and the manner in which we have applied it to construct the reference implementation. The remaining chapters are generated directly from the Haskell source code of the reference implementation, and contain all of the code (apart from some Haskell-specific implementation details, such as compiler and pre-processor directives).
 
-\chapter[overview]{seL4 Overview}
+\chapter{seL4 Overview}\label{sec:overview}
 \input{overview.tex}
 
-\chapter[haskell]{Haskell Model Overview}
+\chapter{Haskell Model Overview}\label{sec:haskell}
 \input{haskell.tex}
 
 \part{Annotated Source Code}
 
-\chapter[api]{Kernel API}
+\chapter{Kernel API}\label{sec:api}
 
 This chapter documents the parts of the kernel that interact directly with user-level code.
 
-\section[types]{Kernel Object Types}
+\section{Kernel Object Types}\label{sec:api.types}
 \input{../src/SEL4/API/Types.lhs}
 
-\section[types.universal]{Machine-Independent Object Types}
+\section{Machine-Independent Object Types}\label{sec:api.types.universal}
 \input{../src/SEL4/API/Types/Universal.lhs}
 
-\section[invocation]{Kernel Object Invocations}
+\section{Kernel Object Invocations}\label{sec:api.invocation}
 \input{../src/SEL4/API/Invocation.lhs}
 
-\section[syscall]{System Calls}
+\section{System Calls}\label{sec:api.syscall}
 \input{../src/SEL4/API/Syscall.lhs}
 
-\section[failures]{System Call Failures}
+\section{System Call Failures}\label{sec:api.failures}
 \input{../src/SEL4/API/Failures.lhs}
 
-\section[faults]{Faults and Exceptions}
+\section{Faults and Exceptions}\label{sec:api.faults}
 \input{../src/SEL4/API/Faults.lhs}
 
-\chapter[kernel]{Kernel Operations}
+\chapter{Kernel Operations}\label{sec:kernel}
 
 This chapter documents operations within the kernel that are not directly related to a single kernel object.
 
-\section[cspace]{Capability Space Lookups}
+\section{Capability Space Lookups}\label{sec:kernel.cspace}
 \input{../src/SEL4/Kernel/CSpace.lhs}
 
-\section[thread]{Threads and Scheduling}
+\section{Threads and Scheduling}\label{sec:kernel.thread}
 \input{../src/SEL4/Kernel/Thread.lhs}
 
-\section[init]{Bootstrapping the Kernel}
+\section{Bootstrapping the Kernel}\label{sec:kernel.init}
 \input{../src/SEL4/Kernel/Init.lhs}
 
-\section[faulthandler]{Handling Faults}
+\section{Handling Faults}\label{sec:kernel.faulthandler}
 \input{../src/SEL4/Kernel/FaultHandler.lhs}
 
-\section[vspace]{Virtual Memory}
+\section{Virtual Memory}\label{sec:kernel.vspace}
 \input{../src/SEL4/Kernel/VSpace.lhs}
 
-\chapter[object]{Kernel Objects}
+\chapter{Kernel Objects}\label{sec:object}
 
 This chapter defines the first-class kernel objects, including their representation in physical memory, and the operations that may be performed on them by user-level threads and by other kernel-level code.
 
-\section[structures]{Data Structures}
+\section{Data Structures}\label{sec:object.structures}
 \input{../src/SEL4/Object/Structures.lhs}
 
-\section[tcb]{Thread Control Blocks}
+\section{Thread Control Blocks}\label{sec:object.tcb}
 \input{../src/SEL4/Object/TCB.lhs}
 
-\section[cnode]{Capability Nodes}
+\section{Capability Nodes}\label{sec:object.cnode}
 \input{../src/SEL4/Object/CNode.lhs}
 
-\section[endpoint]{Synchronous Endpoints}
+\section{Synchronous Endpoints}\label{sec:object.endpoint}
 \input{../src/SEL4/Object/Endpoint.lhs}
 
-\section[asyncendpoint]{Asynchronous Endpoints}
+\section{Asynchronous Endpoints}\label{sec:object.asyncendpoint}
 \input{../src/SEL4/Object/AsyncEndpoint.lhs}
 
-\section[untyped]{Untyped Objects}
+\section{Untyped Objects}\label{sec:object.untyped}
 \input{../src/SEL4/Object/Untyped.lhs}
 
-\section[interrupt]{Interrupt Controller and Handler Objects}
+\section{Interrupt Controller and Handler Objects}\label{sec:object.interrupt}
 \input{../src/SEL4/Object/Interrupt.lhs}
 
-\section[objecttype]{Type-Specific Operations}
+\section{Type-Specific Operations}\label{sec:object.objecttype}
 \input{../src/SEL4/Object/ObjectType.lhs}
 
-\section[instances]{Storing Objects}
+\section{Storing Objects}\label{sec:object.instances}
 \input{../src/SEL4/Object/Instances.lhs}
 
-\chapter[model]{Haskell Model Details}
+\chapter{Haskell Model Details}\label{sec:model}
 
 This chapter describes implementation details of the Haskell kernel. It should not be necessary to read this section to understand the API; however, it may help in understanding the way the model works.
 
-\section[statedata]{System State}
+\section{System State}\label{sec:model.statedata}
 \input{../src/SEL4/Model/StateData.lhs}
 
-\section[pspace]{Physical Address Space Model}
+\section{Physical Address Space Model}\label{sec:model.pspace}
 \input{../src/SEL4/Model/PSpace.lhs}
 
-\section[syscall]{System Calls}
+\section{System Calls}\label{sec:model.syscall}
 \input{../src/SEL4/Model/Syscall.lhs}
 
-\section[failures]{Failures}
+\section{Failures}\label{sec:model.failures}
 \input{../src/SEL4/Model/Failures.lhs}
 
-\section[preemption]{Preemption}
+\section{Preemption}\label{sec:model.preemption}
 \input{../src/SEL4/Model/Preemption.lhs}
 
-\chapter[machine]{Modelling the Hardware}\label{ch:code:machine}
+\chapter{Modelling the Hardware}\label{sec:machine}\label{ch:code:machine}
 
 This chapter defines the interface that is used by the rest of the kernel to represent the underlying hardware.
 
-\section[registerset]{Words and Registers}
+\section{Words and Registers}\label{sec:machine.registerset}
 \input{../src/SEL4/Machine/RegisterSet.lhs}
 
-\section[hardware]{Hardware Functions}
+\section{Hardware Functions}\label{sec:machine.hardware}
 \input{../src/SEL4/Machine/Hardware.lhs}
 
 \part{Architecture-Specific Features}
@@ -298,7 +344,8 @@ This chapter defines a language and interpreter that may be used for writing sim
 
 \end{impdetails}
 
-\bibliography{defs,pubs}
+\bibliographystyle{plain}
+\bibliography{pubs}
 
 \end{document}
 

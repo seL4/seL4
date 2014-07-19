@@ -8,7 +8,7 @@
 % @TAG(GD_GPL)
 %
 
-\section[intro]{Introduction}
+\section{Introduction}\label{sec:overview.intro}
 
 This chapter provides an overview of the \emph{seL4} kernel. It
 concentrates on the conceptual differences between seL4 and existing
@@ -21,7 +21,7 @@ to authorise system calls and making kernel data structures first
 class objects whose allocation is performed by user-level operating
 system personalities.
 
-\section[caps]{Capabilities, Endpoints, and System Calls}
+\section{Capabilities, Endpoints, and System Calls}\label{sec:overview.caps}
 
 Each user-space thread in the system possesses a set of \emph{capabilities}. A
 capability provides the thread that possesses it with the ability to perform one
@@ -52,7 +52,7 @@ depend on the type of the kernel object that the capability refers to. For
 most object types, the kernel itself is the recipient of the message; however,
 messages may also be sent to other user-level threads.
 
-\subsection[ipc]{Synchronous Endpoints and IPC}
+\subsection{Synchronous Endpoints and IPC}\label{sec:overview.caps.ipc}
 
 The basic inter-process communication (or \emph{IPC}) operation is coordinated
 using \emph{endpoint} objects. An endpoint is a small kernel object which
@@ -75,9 +75,10 @@ typically will be first in, first out order.
 
 \begin{figure}
 \centering \includegraphics{figures/ipctransfer}
-\caption[ipctransfer]{IPC operation, without message buffers. The solid lines represent
+\caption{IPC operation, without message buffers. The solid lines represent
 references to kernel objects; the dashed lines represent the transfer of
 control and data between the threads.}
+\label{fig:ipctransfer}
 \end{figure}
 
 Since it is only possible to wait for messages from one specific endpoint at a
@@ -96,14 +97,15 @@ immutable and opaque: a badged capability cannot be used with the Mint operation
 
 When a message is sent using a badged endpoint capability, the badge is passed
 to the recipient along with the rest of the message. See
-\autoref{fig:.ipctransfer} for an example.
+\autoref{fig:ipctransfer} for an example.
 
 \subsubsection{Message Transfers}
 
 \begin{figure}
 \centering \includegraphics{figures/truncation}
-\caption[truncation]{Truncation of a message when one of the IPC buffer capabilities is
+\caption{Truncation of a message when one of the IPC buffer capabilities is
 missing.}
+\label{fig:truncation}
 \end{figure}
 
 Message transfers work by transferring the contents of a certain number of
@@ -121,7 +123,7 @@ first word that reflects the actual transfer performed.
 If the message buffer must be used to transfer the requested number of message
 words, and either the
 sender's or the recipient's message buffer capability is missing, the message
-will be truncated as shown in \autoref{fig:.truncation}. Note that the
+will be truncated as shown in \autoref{fig:truncation}. Note that the
 sender cannot tell that this has happened, as informing it would open a covert
 channel from the recipient to the sender. The recipient is not explicitly
 notified either, though the message length specified in the first word will be
@@ -180,7 +182,7 @@ Servers generally run a loop which waits for a message, handles the received mes
 
 \subsection{System Calls}
 
-\Autoref{fig:.clientkernel} shows a request being made of the kernel by a
+\autoref{fig:clientkernel} shows a request being made of the kernel by a
 client thread. The client possesses a capability to a kernel object, and a
 designated \emph{reply capability}, which is an endpoint capability that the
 client (or a system thread controlling the client) has nominated to be used
@@ -190,9 +192,10 @@ invoked kernel object.
 
 \begin{figure}
 \centering \includegraphics{figures/clientkernel}
-\caption[clientkernel]{A request by a client for a kernel service. The dotted lines
+\caption{A request by a client for a kernel service. The dotted lines
 represent the conceptual flow of control and data during the
 request.}
+\label{fig:clientkernel}
 \end{figure}
 
 After receiving a message from a client thread, the kernel determines which
@@ -201,10 +204,11 @@ contents of the message; it then performs the operation if possible. If the user
 
 \begin{figure}
 \centering \includegraphics{figures/clientserver}
-\caption[clientserver]{A request by a client for a service provided by a user-level server.}
+\caption{A request by a client for a service provided by a user-level server.}
+\label{fig:clientserver}
 \end{figure}
 
-\Autoref{fig:.clientserver} shows the procedure followed when a client
+\autoref{fig:clientserver} shows the procedure followed when a client
 requests a service provided by a user-level server thread. Rather than invoke
 a kernel object capability, the client invokes an endpoint which represents
 the service; the server thread receives the message, determines the identity
@@ -296,7 +300,7 @@ powers of two), though the minimum and maximum sizes are specific to each
 implementation and type. Other objects are of fixed, implementation-specific
 size.
 
-\section[threads]{Threads}
+\section{Threads}\label{sec:overview.threads}
 
 Unlike previous versions of L4, threads in seL4 have no global identifier
 visible outside the kernel. A thread is identified only by the CSpace address
@@ -342,7 +346,7 @@ again until a Resume operation is performed on it.
 An CopyRegisters or ReadRegisters operation may optionally include a Suspend operation on the source thread.
 \end{description}
 
-\section[cspace]{Capability Address Spaces}
+\section{Capability Address Spaces}\label{sec:overview.cspace}
 
 The capability space is represented by a \emph{guarded capability table},
 which is similar to a guarded page table~\cite{Liedtke-94a}. The nodes of the
@@ -356,8 +360,6 @@ opaque to user-space code. The format of entries is the same at all levels of
 the table. There is also a slot in each TCB, which is used to store a
 capability to the root CNode.
 
-% XXX describe entry format?
-
 The capability table is constructed by copying a capability to the root CNode
 into the TCB's root slot, capabilities to lower-level CNodes into the root
 CNode's slots, and so on. The number of address bits resolved by each CNode
@@ -368,7 +370,7 @@ translating address bits starting at the page table root capability.
 Note that all CNodes are required to resolve at least one address bit, to
 prevent infinite loops in the capability lookup code.
 
-\subsection[mdb]{The Mapping Database}
+\subsection{The Mapping Database}\label{sec:overview.cspace.mdb}
 
 The kernel keeps a record of the \emph{derivation tree} for capabilities. This
 tree is stored in the \emph{mapping database}, and is used when revoking a
@@ -392,7 +394,7 @@ access to untyped memory.
 
 This document describes the API for kernels that have a mapping database.
 
-\subsection[cnodes]{CNode Operations}
+\subsection{CNode Operations}\label{sec:overview.cspace.cnodes}
 
 User-level tasks possessing a capability to a CNode may perform any of five
 operations on the capabilities stored in the tree of which that CNode is the
@@ -447,7 +449,7 @@ fail with a "DeleteFirst" error. As the error name suggests, the caller should
 call Delete on destination slots first, if there is any possibility that they
 might contain valid capabilities. This restriction also applies to the destination slot for Rotate, unless it is the same as the second source slot.
 
-\subsection[rights]{Capability Rights}
+\subsection{Capability Rights}\label{sec:overview.cspace.rights}
 
 The set of operations which may be performed on a given capability are
 determined by the type of the object that the capability refers to, and a set
@@ -467,7 +469,7 @@ Newly created capabilities have all rights. They may be reduced when performing
 Copy, Mint or Move operations, either via a CSpace invocation or a capability
 transfer IPC. 
 
-\section[faults]{Faults and Exceptions}
+\section{Faults and Exceptions}\label{sec:overview.faults}
 
 Whenever a user-level task raises a fault, the kernel will suspend
 it and send a \emph{fault call} to the thread's \emph{fault handler
@@ -480,7 +482,7 @@ fault if possible. The recipient may take any appropriate action to handle the f
 
 Events that generate fault calls include missing capabilities, missing virtual memory mappings, non-seL4 system calls, and architecture-defined exceptions such as illegal instructions. The content of the fault calls, and the semantics of the replies, depends on the type of fault. Definitions for specific types of fault can be found in \autoref{sec:api.faults}
 
-\section[vm]{Virtual Address Spaces}
+\section{Virtual Address Spaces}\label{sec:overview.vm}
 
 Many modern hardware architectures dictate specific page table formats to be
 used by the kernel to implement virtual memory. These usually require the
@@ -516,7 +518,7 @@ CNode objects. As the source parameters of such operations are always
 capabilities (in the CSpace), it is not possible to copy mappings between
 different locations in VSpace without possessing an appropriate capability.
 
-\section[async-ipc]{Asynchronous IPC}
+\section{Asynchronous IPC}\label{sec:overview.async-ipc}
 
 In some situations, it is appropriate to provide an asynchronous notification
 of an event. The kernel provides an \emph{asynchronous IPC} operation for this
@@ -547,7 +549,7 @@ are waiting on the same endpoint when a message is sent to it, the kernel
 chooses one of them to deliver the message. The algorithm for choosing a thread
 is not specified, but typically will be first in, first out order.
 
-\section[interrupts]{Interrupts}
+\section{Interrupts}\label{sec:overview.interrupts}
 
 Interrupt handling in seL4 is performed using two special types of kernel 
 capability. These capabilities cannot be created using the Retype operation,

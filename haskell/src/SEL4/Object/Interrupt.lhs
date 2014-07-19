@@ -49,9 +49,9 @@ The architecture-specific definitions are imported qualified with the "Arch" pre
 
 \end{impdetails}
 
-\subsection[invoke]{Interrupt Capability Invocations}
+\subsection{Interrupt Capability Invocations}
 
-\subsubsection[control]{Interrupt Controller Capabilities}
+\subsubsection{Interrupt Controller Capabilities}
 
 There is a single, global interrupt controller object; a capability to it is provided to the initial thread at boot time. Interrupt controller capabilities may be used to generate handler capabilities for specific interrupts (see \autoref{sec:object.interrupt.invoke.handler}), or to change architecture-specific interrupt controller parameters.
 
@@ -85,7 +85,8 @@ There is a single, global interrupt controller object; a capability to it is pro
 > invokeIRQControl (InterruptControl invok) =
 >     Arch.invokeInterruptControl invok
 
-\subsubsection[handler]{IRQ Handler Capabilities}
+\subsubsection{IRQ Handler Capabilities}
+\label{sec:object.interrupt.invoke.handler}
 
 An IRQ handler capability allows a thread possessing it to set an endpoint which will be notified of incoming interrupts, and to acknowledge received interrupts.
 
@@ -113,7 +114,7 @@ An IRQ handler capability allows a thread possessing it to set an endpoint which
 >     irqSlot <- getIRQSlot irq
 >     cteDeleteOne irqSlot
 
-\subsection[kernel]{Kernel Functions}
+\subsection{Kernel Functions}
 
 \subsubsection{Deleting IRQ Handlers}
 
@@ -148,7 +149,8 @@ This function is called during bootstrap to set up the initial state of the inte
 >         setIRQState IRQTimer timerIRQ
 >     return IRQControlCap
 
-\subsubsection[handling]{Handling Interrupts}
+\subsubsection{Handling Interrupts}
+\label{sec:object.interrupt.kernel.handling}
 
 This function is called when the kernel receives an interrupt event.
 
