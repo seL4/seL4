@@ -194,4 +194,4 @@ The following functions are used within this module to access the global interru
 >     node <- liftM intStateIRQNode getInterruptState
 >     locateSlot node (fromIntegral $ fromEnum irq)
 
-% arch-tag: 7FC1EAA1-BAFF-460B-A97C-32EB5CB6CD3E
+

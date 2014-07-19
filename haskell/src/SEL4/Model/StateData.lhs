@@ -263,4 +263,4 @@ The function "findM" searches a list, returning the first item for which the giv
 >     r <- f x
 >     if r then return $ Just x else findM f xs
 
-% arch-tag: CBFB52AC-5491-11D9-AB6E-000393DEF6D6
+

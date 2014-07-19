@@ -1402,4 +1402,4 @@ The kernel model's ARM targets use an external simulation of the physical addres
 >     setObject slot pte
 >     doMachineOp $ storeWordVM (PPtr $ fromPPtr slot) $ wordFromPTE pte
 
-% arch-tag: 288d2398-c68c-4e33-ba29-94ef0bab3e3a
+

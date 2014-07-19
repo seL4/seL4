@@ -82,4 +82,3 @@ flatten :: BinaryTree a -> BinaryTree a
 flatten (Node Empty Empty) = Empty
 flatten t = t
 
--- arch-tag: 3f1c974e-fce2-47ba-a67a-56b1b7653a3b

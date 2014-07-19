@@ -43,4 +43,4 @@ This module defines the ARM register set.
 > sanitiseRegister CPSR v = (v .&. 0xf8000000) .|. 0x150
 > sanitiseRegister _ v = v
 
-% arch-tag: 7389f665-221a-4922-99f8-3769d9516056
+

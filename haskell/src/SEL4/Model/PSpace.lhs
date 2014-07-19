@@ -313,4 +313,4 @@ The following predicate is used above to assert that the pointer is a valid poin
 > pointerInUserData :: PPtr Word -> KernelState -> Bool
 > pointerInUserData _ _ = True
 
-% arch-tag: D34743A6-5491-11D9-A5ED-000393DEF6D6
+

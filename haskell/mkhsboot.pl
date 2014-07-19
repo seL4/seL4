@@ -73,4 +73,3 @@ while($exports =~ / ([a-z][a-zA-Z0-9']*)/g) {
     }
 }
 
-# arch-tag: D4C153F6-9E5E-11D9-99C4-000393DEF6D6

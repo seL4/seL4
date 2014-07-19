@@ -695,4 +695,4 @@ Various functions in this module use "rangesBy" to split a sorted list into cont
 > isAligned :: (Num a, Bits a) => a -> Int -> Bool
 > isAligned x n = x .&. mask n == 0
 
-% arch-tag: 8E06EFB3-5FA2-11D9-8AF8-000393DEF6D6
+

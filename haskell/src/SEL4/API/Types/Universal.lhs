@@ -46,4 +46,4 @@ The following is the definition of the five object types that are always availab
 > apiGetObjectSize CapTableObject size = cteSizeBits + size
 
 
-% arch-tag: f244aef3-c45a-4efb-b0d6-6c885e50ee7e
+

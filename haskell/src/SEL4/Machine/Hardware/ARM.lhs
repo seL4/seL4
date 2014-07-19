@@ -527,4 +527,4 @@ ARM page directories and page tables occupy four frames and one quarter of a fra
 > cacheLineBits = Platform.cacheLineBits
 > cacheLine = Platform.cacheLine
 
-% arch-tag: 3e8808f8-c45e-4d7d-9111-4f3fccda1091
+

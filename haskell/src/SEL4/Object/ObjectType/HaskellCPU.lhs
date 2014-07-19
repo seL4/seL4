@@ -27,4 +27,4 @@ This module contains operations on machine-specific object types for the Haskell
 >         KernelF Fault (Maybe (Word, [Word]))
 > invokeObject = undefined
 
-% arch-tag: 41639328-da7f-40c1-a873-0eb90e0a682a
+

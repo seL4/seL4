@@ -29,4 +29,4 @@ This module defines the machine-specific interrupt handling routines for the ARM
 > invokeInterruptControl :: InterruptControl -> KernelP ()
 > invokeInterruptControl _ = fail "invokeInterruptControl: not defined"
 
-% arch-tag: 247C86BB-973A-41B4-AA68-9373A40DB338
+

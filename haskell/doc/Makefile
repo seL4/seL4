@@ -54,4 +54,3 @@ clean:
 	rm -f *.aux *.toc *.bbl *.blg *.dvi *.log *.out \
 		figures/*.mps figures/*.pdf figures/*.log ${Target}
 
-# arch-tag: b2d385a6-aa7d-4404-86e2-722e2adc58cd

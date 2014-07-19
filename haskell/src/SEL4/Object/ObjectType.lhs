@@ -551,4 +551,4 @@ The following two functions returns the base and size of the object a capability
 > capUntypedSize (IRQHandlerCap {})
 >     = 1 -- error in haskell
 
-% arch-tag: 64E4C155-9DEB-11D9-BC66-000393DEF6D6
+

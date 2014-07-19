@@ -68,4 +68,4 @@ There are three ARM-specific object types: virtual pages, page tables, and page 
 > getObjectSize PageDirectoryObject _ = pdBits
 > getObjectSize (APIObjectType apiObjectType) size = apiGetObjectSize apiObjectType size
 
-% arch-tag: fd7d859b-4a4d-4601-a96c-dad4a60069dd
+

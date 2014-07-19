@@ -429,4 +429,4 @@ This type is used to represent a frame in the user's address space.
 > maxFreeIndex :: Int -> Int
 > maxFreeIndex sizeBits = bit sizeBits
 
-% arch-tag: f7061313-650e-4ae7-addc-0d730b86722f
+

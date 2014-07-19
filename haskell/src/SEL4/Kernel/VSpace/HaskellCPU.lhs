@@ -16,4 +16,4 @@ The generic Haskell-based CPU uses the capability space for virtual memory.
 
 > import SEL4.Kernel.VSpace.CSpace
 
-% arch-tag: 0d0d5f20-d838-47f1-88b7-afdd7427dde8
+

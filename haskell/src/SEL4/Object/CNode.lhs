@@ -793,4 +793,4 @@ This helper function is used to load the capability transfer data from an IPC bu
 >             ctReceiveIndex = CPtr w1,
 >             ctReceiveDepth = fromIntegral w2 }
 
-% arch-tag: AB52E196-5491-11D9-A15C-000393DEF6D6
+

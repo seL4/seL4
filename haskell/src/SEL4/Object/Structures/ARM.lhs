@@ -97,4 +97,4 @@ ASIDs are mapped to address space roots by a global two-level table. The actual 
 > asidHighBitsOf :: ASID -> ASID
 > asidHighBitsOf asid = (asid `shiftR` asidLowBits) .&. mask asidHighBits
 
-% arch-tag: 814D2696-C9C8-4A95-A7AC-BBFC197BAB71
+

@@ -67,4 +67,4 @@
 > getFaultingPC = getRegister (Register HaskellCPU.PC)
 > setNextPC = setRegister (Register HaskellCPU.PC)
 
-% arch-tag: 42bf0d02-88a4-45e2-8ec0-432beb5f20d1
+

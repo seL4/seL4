@@ -212,4 +212,3 @@ foreign import ccall unsafe "qemu_arm_get_dfsr"
 foreign import ccall unsafe "qemu_arm_get_far"
     getFAR :: Ptr CallbackData -> IO VPtr
 
--- arch-tag: 4371ACC8-49A8-4133-BCB5-EC346558446C
