@@ -448,4 +448,14 @@ menu "Errata"
             if code containing ARM/Thumb interworking branch is replaced by different code
             at the same virtual address.
 
+    config ARM_ERRATA_773022
+        bool "Enable workaround for 773022 Cortex-A15 (r0p0..r0p4) erratum"
+        depends on ARCH_ARM
+        depends on ARM_CORTEX_A15
+        default y
+        help
+            Enables a workaround for the 773022 Cortex-A15 (r0p0..r0p4) erratum. Error occurs
+            on rare sequences of instructions and results in the loop buffer delivering
+            incorrect instructions. The work around is to disable the loop buffer
+
 endmenu

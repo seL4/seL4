@@ -62,6 +62,38 @@ void setNextPC(tcb_t *thread, word_t v);
 /* Architecture specific machine operations */
 
 /** MODIFIES: [*] */
+static inline uint32_t getProcessorID(void)
+{
+    uint32_t processor_id;
+    MRC("p15, 0, %0, c0, c0, 0", processor_id);
+    return processor_id;
+}
+
+static inline uint32_t readSystemControlRegister(void)
+{
+    uint32_t scr;
+    MRC("p15, 0, %0, c1, c0, 0", scr);
+    return scr;
+}
+
+static inline void writeSystemControlRegister(uint32_t scr)
+{
+    MCR("p15, 0, %0, c1, c0, 0", scr);
+}
+
+static inline uint32_t readAuxiliaryControlRegister(void)
+{
+    uint32_t acr;
+    MRC("p15, 0, %0, c1, c0, 1", acr);
+    return acr;
+}
+
+static inline void writeAuxiliaryControlRegister(uint32_t acr)
+{
+    MCR("p15, 0, %0, c1, c0, 1", acr);
+}
+
+/** MODIFIES: [*] */
 static inline void clearExMonitor(void)
 {
     word_t tmp;

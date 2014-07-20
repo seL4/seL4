@@ -84,5 +84,6 @@
 		<method id="ARMPageGetAddress" name="GetAddress">
 			<param dir="out" name="paddr" type="seL4_Word"/>
 		</method>
+		</method>
 	</interface>
 </api>

@@ -57,6 +57,7 @@
 		<method id="IA32PageGetAddress" name="GetAddress">
 			<param dir="out" name="paddr" type="seL4_Word"/>
 		</method>
+		</method>
 	</interface>
 	<interface name="seL4_IA32_IOPort">
 		<method id="IA32IOPortIn8" name="In8">

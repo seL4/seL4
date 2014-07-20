@@ -1297,6 +1297,23 @@ void copyGlobalMappings(pde_t* newPD)
     }
 }
 
+static exception_t
+performPageGetAddress(void *vbase_ptr)
+{
+    paddr_t capFBasePtr;
+
+    /* Get the physical address of this frame. */
+    capFBasePtr = pptr_to_paddr(vbase_ptr);
+
+    /* return it in the first message register */
+    setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
+    setRegister(ksCurThread, msgInfoRegister,
+                wordFromMessageInfo(message_info_new(0, 0, 0, 1)));
+
+    return EXCEPTION_NONE;
+}
+
+
 static inline bool_t
 checkVPAlignment(vm_page_size_t sz, word_t w)
 {
@@ -1908,6 +1925,15 @@ void unmapAllEPTPages(ept_pte_t *pt)
         }
     }
 }
+
+    case IA32PageGetAddress: {
+        /* Return it in the first message register. */
+        assert(n_msgRegisters >= 1);
+
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
+    }
+
 
 enum ept_cache_options {
     EPTUncacheable = 0,
