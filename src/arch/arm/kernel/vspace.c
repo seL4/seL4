@@ -1409,29 +1409,13 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
     }
 
     case ARMPageGetAddress: {
-        paddr_t capFBasePtr;
-
-        /* Get the physical address of this frame. */
-        capFBasePtr = addrFromPPtr((void*)cap_frame_cap_get_capFBasePtr(cap));
-
-        /* Return it in the first message register. */
-        assert(n_msgRegisters >= 1);
-        setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
-        setRegister(ksCurThread, msgInfoRegister,
-                    wordFromMessageInfo(message_info_new(0, 0, 0, 1)));
-
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return EXCEPTION_NONE;
-    }
-
-    case ARMPageGetAddress: {
 
 
         /* Check that there are enough message registers */
         assert(n_msgRegisters >= 1);
 
         setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageGetAddress((void*)generic_frame_cap_get_capFBasePtr(cap));
+        return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
     }
 
     default:
