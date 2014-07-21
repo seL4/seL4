@@ -1926,13 +1926,14 @@ void unmapAllEPTPages(ept_pte_t *pt)
     }
 }
 
-    case IA32PageGetAddress: {
-        /* Return it in the first message register. */
-        assert(n_msgRegisters >= 1);
+case IA32PageGetAddress:
+{
+    /* Return it in the first message register. */
+    assert(n_msgRegisters >= 1);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
-    }
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
+}
 
 
 enum ept_cache_options {
