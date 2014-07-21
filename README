@@ -8,6 +8,12 @@
 # @TAG(GD_GPL)
 #
 
+**Warning**
+===========
+
+This is the experimental branch of seL4 with unverified features and changes.
+
+
 'make' instructions
 ===================
 
