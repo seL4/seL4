@@ -1647,8 +1647,7 @@ decodeIA32FrameInvocation(
     }
 #endif
 
-    case IA32PageGetAddress:
-    {
+    case IA32PageGetAddress: {
         /* Return it in the first message register. */
         assert(n_msgRegisters >= 1);
 
