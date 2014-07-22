@@ -474,7 +474,6 @@ static void
 emptySlot(cte_t *slot, irq_t irq)
 {
     if (cap_get_capType(slot->cap) != cap_null_cap) {
-        assert(cap_get_capType(slot->cap) != cap_reply_cap);
         cdtRemove(slot);
         slot->cap = cap_null_cap_new();
 
