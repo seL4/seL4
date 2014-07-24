@@ -339,16 +339,14 @@ DEFINES += -DFASTPATH
 endif
 
 ifeq (${ARCH}, arm)
-CFLAGS += -mtune=${CPU} -marm
+CFLAGS += -mtune=${CPU} -marm -mcpu=${CPU}
 ASFLAGS += -mcpu=${CPU}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 ifeq (${CPU},cortex-a8)
 DEFINES += -DARM_CORTEX_A8
-CFLAGS += -march=${ARCH}
 else
 ifeq (${CPU},cortex-a9)
 DEFINES += -DARM_CORTEX_A9
-CFLAGS += -march=${ARCH}
 endif
 endif
 endif
