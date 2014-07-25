@@ -81,7 +81,12 @@ enum IRQConstants {
     INTERRUPT_INTG30            =  62,
     INTERRUPT_INTG31            =  63,
     INTERRUPT_EINT16_31         =  64,
+#if defined(PLAT_EXYNOS5250)
     INTERRUPT_MDMA0_CORE        =  65,
+#elif defined(PLAT_EXYNOS5410)
+    INTERRUPT_TMU_CPU0          =  65,
+#else
+#endif
     INTERRUPT_PDMA0             =  66,
     INTERRUPT_PDMA1             =  67,
     INTERRUPT_TIMER0            =  68,
@@ -176,7 +181,20 @@ enum IRQConstants {
     INTERRUPT_CAM_A             = 157,
     INTERRUPT_CAM_B             = 158,
     INTERRUPT_RP_TIMER          = 159,
-    maxIRQ = 159
+
+    INTERRUPT_TMU_CPU1          = 183,
+    INTERRUPT_TMU_CPU2          = 184,
+    INTERRUPT_TMU_CPU3          = 185,
+
+    INTERRUPT_TMU_GPU           = 215,
+
+    INTERRUPT_216               = 216,
+    INTERRUPT_217               = 217,
+    INTERRUPT_218               = 218,
+    INTERRUPT_219               = 219,
+    INTERRUPT_220               = 220,
+    INTERRUPT_232               = 232,
+    maxIRQ = 232
 } platform_interrupt_t;
 
 #ifdef ARM_HYP

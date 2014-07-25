@@ -35,6 +35,7 @@
 #define EXYNOS_MCT_PPTR             MCT_PPTR
 
 /* Generic devices */
+#define SECURE_FIRMWARE       0x02070000
 #define CHIP_ID_PADDR         0x10000000
 #define CMU_CPU_PADDR         0x10010000
 #define CMU_CORE_PADDR        0x10014000
@@ -48,7 +49,11 @@
 #define CMU_MEM_PADDR         0x10038000
 #define ALIVE_PADDR           0x10040000
 #define SYSREG_PADDR          0x10050000
-#define TMU_PADDR             0x10060000
+#define TMU0_PADDR            0x10060000
+#define TMU1_PADDR            0x10064000
+#define TMU2_PADDR            0x10068000
+#define TMU3_PADDR            0x1006C000
+#define TMU_GPU_PADDR         0x100A0000
 #define MONOTONIC_CNT_PADDR   0x100C0000
 #define HDMI_CEC_PADDR        0x101B0000
 #define MCT_PADDR             0x101C0000
@@ -104,21 +109,6 @@
 #define JPEG_PADDR            0x11E00000
 #define SYSMMU_JPEG_PADDR     0x11F20000
 #define USB3_DEV_LINK_PADDR   0x12000000
-// #define USB3_DEV_LINK_PADDR   0x12010000
-// #define USB3_DEV_LINK_PADDR   0x12020000
-// #define USB3_DEV_LINK_PADDR   0x12030000
-// #define USB3_DEV_LINK_PADDR   0x12040000
-// #define USB3_DEV_LINK_PADDR   0x12050000
-// #define USB3_DEV_LINK_PADDR   0x12060000
-// #define USB3_DEV_LINK_PADDR   0x12070000
-// #define USB3_DEV_LINK_PADDR   0x12080000
-// #define USB3_DEV_LINK_PADDR   0x12090000
-// #define USB3_DEV_LINK_PADDR   0x120A0000
-// #define USB3_DEV_LINK_PADDR   0x120B0000
-// #define USB3_DEV_LINK_PADDR   0x120C0000
-// #define USB3_DEV_LINK_PADDR   0x120D0000
-// #define USB3_DEV_LINK_PADDR   0x120E0000
-// #define USB3_DEV_LINK_PADDR   0x120F0000
 #define USB3_DEV_CTRL_PADDR   0x12100000
 #define USB2_HOST_EHCI_PADDR  0x12110000
 #define USB2_HOST_OHCI_PADDR  0x12120000
@@ -146,6 +136,8 @@
 #define SYSMMU_RTIC_PADDR     0x12370000
 #define AS_A_IOP_FD64X_PADDR  0x12380000
 #define AS_A_AUDIO_PADDR      0x12390000
+#define USB_PADDR             0x12400000
+#define USB3_PHY1_PADDR       0x12500000
 #define AXI_GPS_PADDR         0x12600000
 // #define AXI_GPS_PADDR         0x12610000
 #define AS_A_GPSCPU_PADDR     0x12620000
@@ -250,79 +242,20 @@
 #define HDMI_5_PADDR          0x14580000
 #define HDMI_6_PADDR          0x14590000
 #define DP1_1_PADDR           0x145B0000
+#define HDMI_0_PHY_PADDR      0x145D0000
 #define SYSMMU_DISP1_PADDR    0x14640000
 #define SYSMMU_TV_PADDR       0x14650000
 #define AS_A_TV_PADDR         0x146D0000
 #define AES0EF0_PADDR         0x18000000
-// #define AES0EF0_PADDR         0x18010000
-// #define AES0EF0_PADDR         0x18020000
-// #define AES0EF0_PADDR         0x18030000
-// #define AES0EF0_PADDR         0x18040000
-// #define AES0EF0_PADDR         0x18050000
-// #define AES0EF0_PADDR         0x18060000
-// #define AES0EF0_PADDR         0x18070000
-// #define AES0EF0_PADDR         0x18080000
-// #define AES0EF0_PADDR         0x18090000
-// #define AES0EF0_PADDR         0x180A0000
-// #define AES0EF0_PADDR         0x180B0000
-// #define AES0EF0_PADDR         0x180C0000
-// #define AES0EF0_PADDR         0x180D0000
-// #define AES0EF0_PADDR         0x180E0000
-// #define AES0EF0_PADDR         0x180F0000
-// #define AES0EF0_PADDR         0x18100000
-// #define AES0EF0_PADDR         0x18110000
-// #define AES0EF0_PADDR         0x18120000
-// #define AES0EF0_PADDR         0x18130000
-// #define AES0EF0_PADDR         0x18140000
-// #define AES0EF0_PADDR         0x18150000
-// #define AES0EF0_PADDR         0x18160000
-// #define AES0EF0_PADDR         0x18170000
-// #define AES0EF0_PADDR         0x18180000
-// #define AES0EF0_PADDR         0x18190000
-// #define AES0EF0_PADDR         0x181A0000
-// #define AES0EF0_PADDR         0x181B0000
-// #define AES0EF0_PADDR         0x181C0000
-// #define AES0EF0_PADDR         0x181D0000
-// #define AES0EF0_PADDR         0x181E0000
-// #define AES0EF0_PADDR         0x181F0000
 #define EFCON0_SFR_PADDR      0x18200000
 #define AES0_SFR_PADDR        0x18300000
 #define AES1EF1_PADDR         0x18400000
-// #define AES1EF1_PADDR         0x18410000
-// #define AES1EF1_PADDR         0x18420000
-// #define AES1EF1_PADDR         0x18430000
-// #define AES1EF1_PADDR         0x18440000
-// #define AES1EF1_PADDR         0x18450000
-// #define AES1EF1_PADDR         0x18460000
-// #define AES1EF1_PADDR         0x18470000
-// #define AES1EF1_PADDR         0x18480000
-// #define AES1EF1_PADDR         0x18490000
-// #define AES1EF1_PADDR         0x184A0000
-// #define AES1EF1_PADDR         0x184B0000
-// #define AES1EF1_PADDR         0x184C0000
-// #define AES1EF1_PADDR         0x184D0000
-// #define AES1EF1_PADDR         0x184E0000
-// #define AES1EF1_PADDR         0x184F0000
-// #define AES1EF1_PADDR         0x18500000
-// #define AES1EF1_PADDR         0x18510000
-// #define AES1EF1_PADDR         0x18520000
-// #define AES1EF1_PADDR         0x18530000
-// #define AES1EF1_PADDR         0x18540000
-// #define AES1EF1_PADDR         0x18550000
-// #define AES1EF1_PADDR         0x18560000
-// #define AES1EF1_PADDR         0x18570000
-// #define AES1EF1_PADDR         0x18580000
-// #define AES1EF1_PADDR         0x18590000
-// #define AES1EF1_PADDR         0x185A0000
-// #define AES1EF1_PADDR         0x185B0000
-// #define AES1EF1_PADDR         0x185C0000
-// #define AES1EF1_PADDR         0x185D0000
-// #define AES1EF1_PADDR         0x185E0000
-// #define AES1EF1_PADDR         0x185F0000
 #define EFCON1_SFR_PADDR      0x18600000
 #define NS_NDMA_PADDR         0x18680000
 #define S_NDMA_PADDR          0x18690000
 #define AES1_SFR_PADDR        0x18700000
+
+#define AUDSS_PADDR           0x03810000
 
 /* SoC specific devices */
 #if defined(PLAT_EXYNOS5250)   /* Arndale */
