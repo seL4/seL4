@@ -338,9 +338,12 @@ ifdef FASTPATH
 DEFINES += -DFASTPATH
 endif
 
+# Only set CFLAGS if we're building standalone.
+# common/Makefile.Flags sets NK_CFLAGS  in Kbuild environments.
+ifndef NK_CFLAGS
 ifeq (${ARCH}, arm)
 CFLAGS += -mtune=${CPU} -marm -march=${ARMV}
-ASFLAGS += -mcpu=${CPU}
+ASFLAGS += -mcpu=${CPU} -march=${ARMV}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 ifeq (${CPU},cortex-a8)
 DEFINES += -DARM_CORTEX_A8
@@ -354,6 +357,7 @@ endif
 ifeq (${ARCH}, ia32)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += --32
+endif
 endif
 
 ifeq (${CPU}, arm1136jf-s)
