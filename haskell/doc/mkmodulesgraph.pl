@@ -68,4 +68,3 @@ foreach $source (@lhsfiles) {
 
 print "}\n";
 
-# arch-tag: 5a41c5c3-7b6f-4d75-80ee-488342b7973a

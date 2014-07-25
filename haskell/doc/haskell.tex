@@ -10,7 +10,7 @@
 
 This chapter describes the construction of the Haskell model presented in the following chapters. It is not necessary to read this chapter to understand the seL4 API, but it will be helpful for those who wish to read the Haskell code.
 
-\section[intro]{Introduction to Haskell}
+\section{Introduction to Haskell}\label{sec:haskell.intro}
 
 Haskell is a general purpose functional programming language~\cite{peytonjones03haskell}. It is in widespread use in the research and education communities; several universities use it in introductory programming courses.
 
@@ -23,7 +23,7 @@ The features of Haskell that are most relevant to this project are:
 
 A more detailed introduction to Haskell is outside the scope of this document. Please refer to the online Haskell tutorials~\cite{haskell-tutorial,monad-tutorial} for more information.
 
-\section[modules]{Modules}
+\section{Modules}\label{sec:haskell.modules}
 
 The Haskell model is split into a hierarchy of modules. At the top level is "module SEL4", which contains no real code, but exports the entire external interface of the kernel model. Below this are five modules that serve to separate the high-level and low-level parts of the model; each of these corresponds to one of the following five chapters in this report.
 
@@ -38,7 +38,7 @@ The five modules have the following purposes:
 
 Each of these modules is further divided into smaller modules implementing separate functional areas. For example, "module SEL4.Kernel" contains a module implementing capability space lookups, "module SEL4.Kernel.CSpace".
 
-\section[state-monads]{System State and Monads}
+\section{System State and Monads}\label{sec:haskell.state-monads}
 
 \subsection{The State Monad}
 
@@ -86,7 +86,8 @@ Again, Haskell's strict typing requires all transitions in and out of the "Error
 
 The Haskell kernel model makes use of the "ErrorT" transformer to abort operations that are preempted or cannot complete successfully. The first type parameter of "ErrorT" is a type that represents the error; there are several such types defined in seL4, in \autoref{sec:model.failures} and \autoref{sec:model.preemption}.
 
-\subsection[system-state]{System State}
+\subsection{System State}
+\label{sec:haskell.state-monads.system-state}
 
 The state of the simulated kernel is stored in values of type "KernelState". Most functions in the model are in the monad "KernelMonad", and are therefore state transformation functions that operate on a value of type "KernelState".
 
@@ -96,13 +97,13 @@ The other values present in the "KernelState" structure are global kernel data, 
 
 The "KernelState" value is added to "KernelMonad" by a monad transformer, "StateT". This adds the state to an existing monad, the \emph{machine monad}, the type of which depends on the machine being simulated. See \autoref{sec:haskell.simulator.monad}.
 
-\subsection[pspace]{Physical Memory Model}
+\subsection{Physical Memory Model}\label{sec:haskell.state-monads.pspace}
 
 The simulated kernel's physical memory is modelled by the Haskell type "PSpace", defined in \autoref{sec:model.pspace}. The contents of each address in this space are typed; that is, the model keeps a record of whether they are allocated, and whether they contain either integer data, or a specific type of kernel object. Accesses to objects of the wrong type, or with an incorrectly aligned address, are detected by the model and disallowed.
 
 For simulator performance reasons, and to make the operation of the virtual memory related parts of the model more realistic, the "PSpace" contains only typed kernel objects; it does not contain data accessible to user level. Instead, regions occupied by such data are represented by a "UserData" object, which has no contents. The actual data is stored separately, and is accessed via the machine monad.
 
-\section[simulator]{The Simulator}
+\section{The Simulator}\label{sec:haskell.simulator}
 
 The kernel model functions as one half of a complete system model. The other half is the CPU simulator, responsible for modelling the execution of user-level programs and the operation of hardware devices.
 
@@ -116,7 +117,7 @@ The set of events supported by the Haskell model is defined by the type "Event",
 
 Several aspects of the kernel's API and behaviour vary depending on the architecture of the host machine. The model contains abstract interfaces to the components that change; the interfaces are implemented in separate modules, selected using the preprocessor.
 
-\subsection[monad]{Simulator Interface}
+\subsection{Simulator Interface}\label{sec:haskell.simulator.monad}
 
 The state of the simulated machine is accessed via a monad, the type of which depends on which CPU simulator is in use --- again, selected using the preprocessor. For example, for a simulator implemented entirely in Haskell, this monad is likely to be "State", with a data structure containing the machine's state data. If the simulator is implemented externally, and communicates with the kernel via the Haskell foreign function interface, then the machine monad will be "IO" (or some transformation of "IO"), allowing functions in it to call out to the external simulator.
 
@@ -126,4 +127,4 @@ The Haskell code presented in this document is \emph{literate Haskell}; it can b
 
 Some of the Haskell code is omitted for clarity. In particular, we omit most "import" statements (other than those which are qualified with local module names), compiler directives, and preprocessor directives. We also omit some modules that implement the interface between the kernel model and the external user-level simulators.
 
-% arch-tag: 22cb2f60-c0a2-47c5-87ba-dc1224f9c075
+

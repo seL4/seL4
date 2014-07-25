@@ -83,4 +83,4 @@ This module contains definitions of the VSpace functions for platforms that do n
 >         Nothing -> fail "Couldn't find appropriate size for device"
 >     return $ FrameCap wptr (pageBitsForSize size) True True
 
-% arch-tag: 4dfc18a3-24ab-47cf-b109-4455770f4de9
+

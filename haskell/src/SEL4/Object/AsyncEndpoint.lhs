@@ -145,4 +145,4 @@ The following functions are specialisations of the "getObject" and "setObject" f
 > setAsyncEP :: PPtr AsyncEndpoint -> AsyncEndpoint -> Kernel ()
 > setAsyncEP = setObject
 
-% arch-tag: b0b6ba36-9713-415b-a96c-ad5b0f02c41d
+

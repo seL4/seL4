@@ -83,4 +83,4 @@ If a fault IPC cannot be sent because the fault handler endpoint capability is m
 >                 ++ "\nat address " ++ (show faultPC)
 >         doMachineOp $ debugPrint errmsg
 
-% arch-tag: 4790525E-5E0A-11D9-BCED-000393DEF6D6
+

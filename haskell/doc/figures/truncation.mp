@@ -1,3 +1,10 @@
+verbatimtex
+\documentclass[12pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\begin{document}
+etex;
+
 input boxes;
 beginfig(1);
 
@@ -40,4 +47,4 @@ drawarrow(shmrs.e -- rhmrs.w) dashed evenly;
 
 endfig;
 end.
-% arch-tag: 7fa4aace-a858-473e-b3e5-54114cd6194b
+

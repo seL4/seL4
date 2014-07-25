@@ -14,4 +14,4 @@ This module contains an instance of the machine-specific kernel API for the Hask
 
 > import SEL4.API.Types.Universal
 
-% arch-tag: c95a5990-a310-4c01-96a1-2caef0d1a11b
+

@@ -297,4 +297,4 @@ Create an architecture-specific object.
 > capUntypedSize (ASIDControlCap {}) = 1 `shiftL` (asidHighBits + 2)
 > capUntypedSize (ASIDPoolCap {}) = 1 `shiftL` (asidLowBits + 2)
 
-% arch-tag: 0377d618-8fc7-4c7f-b4bb-df6da4be9bed
+

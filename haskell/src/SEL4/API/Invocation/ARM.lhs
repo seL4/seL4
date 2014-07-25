@@ -65,10 +65,12 @@ There are five ARM-specific object types; however, only four of them may be invo
 > -- FIXME: should we consolidate start, end into a tuple
 > data PageInvocation
 >     = PageMap {
+>         pageMapASID :: ASID,
 >         pageMapCap :: Capability,
 >         pageMapCTSlot :: PPtr CTE,
 >         pageMapEntries :: Either (PTE, [PPtr PTE]) (PDE, [PPtr PDE]) }
 >     | PageRemap {
+>         pageRemapASID :: ASID,
 >         pageRemapEntries :: Either (PTE, [PPtr PTE]) (PDE, [PPtr PDE]) }
 >     | PageUnmap {
 >         pageUnmapCap :: ArchCapability,
@@ -80,6 +82,8 @@ There are five ARM-specific object types; however, only four of them may be invo
 >         pageFlushPStart :: PAddr,
 >         pageFlushPD :: PPtr PDE,
 >         pageFlushASID :: ASID } 
+>     | PageGetAddr {
+>         pageGetBasePtr :: PPtr Word }
 >     deriving Show
 
 > data FlushType
@@ -115,4 +119,4 @@ The ARM platform currently does not define any additional register sets for the 
 > data CopyRegisterSets = ARMNoExtraRegisters
 >     deriving Show
 
-% arch-tag: EA7C9D75-7DCC-4904-906D-CCC1E6B7B020
+

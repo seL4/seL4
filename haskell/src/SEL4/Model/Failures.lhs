@@ -119,4 +119,4 @@ This trivial helper function is used to check that an argument is within an acce
 >     unless (value >= fromIntegral minV && value <= fromIntegral maxV) $
 >         throw $ RangeError (fromIntegral minV) (fromIntegral maxV)
 
-% arch-tag: 31C1388C-9B60-11D9-8215-000393DEF6D6
+

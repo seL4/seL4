@@ -221,7 +221,7 @@ The function "invokeCNode" dispatches an invocation to one of the handlers defin
 >         ReplyCap { capReplyMaster = False } -> cteMove cap srcSlot destSlot
 >         _ -> fail "caller capability must be null or reply"
 
-\subsection[ops]{CNode Operations}
+\subsection{CNode Operations}
 
 The following functions define the operations that can be performed by a CNode invocation.
 
@@ -368,7 +368,8 @@ Determine whether the CTE is valid, and has children to be deleted. If a child i
 >             preemptionPoint
 >             cteRevoke slot
 
-\subsubsection[delete]{Deleting Capabilities}
+\subsubsection{Deleting Capabilities}
+\label{sec:object.cnode.ops.delete}
 
 This function deletes the capability in a given slot. If it is the last remaining capability for the given object, the object will be destroyed.
 
@@ -612,7 +613,8 @@ This function is used in the assertion above; it returns "True" if no reply capa
 > noReplyCapsFor :: PPtr TCB -> KernelState -> Bool
 > noReplyCapsFor _ _ = True
 
-\subsection[mdb]{MDB Operations}
+\subsection{MDB Operations}
+\label{sec:object.cnode.mdb}
 
 The Mapping Database (MDB) is used to keep track of the derivation hierachy of seL4 capabilities, so all existing capabilities to an object can be revoked before that object is reused or deleted. A similar structure is used in L4Ka::Pistachio\cite{Pistachio:URL} to support that kernel's Unmap operation.
 
@@ -793,4 +795,4 @@ This helper function is used to load the capability transfer data from an IPC bu
 >             ctReceiveIndex = CPtr w1,
 >             ctReceiveDepth = fromIntegral w2 }
 
-% arch-tag: AB52E196-5491-11D9-A15C-000393DEF6D6
+

@@ -86,6 +86,9 @@
 		    <param dir="in" name="start_offset" type="seL4_Word"/>
 		    <param dir="in" name="end_offset" type="seL4_Word"/>
 		</method>
+		<method id="ARMPageGetAddress" name="GetAddress">
+			<param dir="out" name="paddr" type="seL4_Word"/>
+		</method>
 	</interface>
 	<interface name="seL4_ARM_ASIDControl">
 		<method id="ARMASIDControlMakePool" name="MakePool">

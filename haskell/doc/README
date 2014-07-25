@@ -8,9 +8,4 @@
 # @TAG(GD_GPL)
 #
 
-To build the documentation:
-
-1. make
-   Alternatively, if you have xelatex, and the necessary fonts
-   (Times, Helvetica, Courier, and Fontin Sans) are installed:
-   make xelatex=yes
+To build the documentation, run `make`

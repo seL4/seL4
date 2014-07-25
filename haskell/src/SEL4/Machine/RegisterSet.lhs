@@ -168,4 +168,4 @@ The "mask" function is a trivial function which, given a number of bits, returns
 > mask :: (Bits w, Num w) => Int -> w
 > mask bits = bit bits - 1
 
-% arch-tag: 2261b75e-5d0a-4b42-a807-ea4e33e42f9c
+

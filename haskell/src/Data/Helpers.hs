@@ -18,4 +18,3 @@ funPartialArray f b = listArray b $ (map f) $ range b
 funArray :: (Ix i, Bounded i) => (i -> a) -> Array i a
 funArray f = funPartialArray f (minBound, maxBound)
 
--- arch-tag: 3f1c974e-fce2-47ba-a67a-56b1b7653a3b

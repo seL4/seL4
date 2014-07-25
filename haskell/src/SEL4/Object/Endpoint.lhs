@@ -260,4 +260,4 @@ The following two functions are specialisations of "getObject" and
 > setEndpoint :: PPtr Endpoint -> Endpoint -> Kernel ()
 > setEndpoint = setObject
 
-% arch-tag: BD8F199C-5491-11D9-AE0C-000393DEF6D6
+

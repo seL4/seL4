@@ -138,5 +138,4 @@ generateHSBoot = mapM_ generateHSBoot' bootFiles
                                           ++ n ++ "-boot")
                         unless (r == ExitSuccess) $ error "Couldn't generate boot file"
 
--- arch-tag: df8db3ce-f891-4526-aff0-b7a3cf5036c4
 

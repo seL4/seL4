@@ -60,7 +60,7 @@ The architecture-specific definitions are imported qualified with the "Arch" pre
 
 > import qualified SEL4.Object.TCB.TARGET as Arch
 
-\subsection[decode]{Decoding TCB Invocations}
+\subsection{Decoding TCB Invocations}
 
 There are ten types of invocation for a thread control block. All require write permission for the TCB object. In addition, "SetSpace" and "Configure" operations require grant permission. Checking for appropriate permission is done by the caller (see \autoref{sec:object.objecttype}).
 
@@ -79,7 +79,7 @@ There are ten types of invocation for a thread control block. All require write 
 >         TCBSetSpace -> decodeSetSpace args cap slot extraCaps
 >         _ -> throw IllegalOperation
 
-\subsubsection[exregs]{Reading, Writing and Copying Registers}
+\subsubsection{Reading, Writing and Copying Registers}
 
 The kernel provides three methods for accessing the register state of a thread; they read, write, and copy the state of the invoked thread, respectively. The implementations of these methods are in \autoref{sec:object.tcb.invoke.exregs}.
 
@@ -158,7 +158,7 @@ For both of these operations, the first argument is a flags field. The lowest bi
 >         writeRegsArch = transferArch }
 > decodeWriteRegisters _ _ = throw TruncatedMessage
 
-\subsubsection[configure]{The Configure Call}
+\subsubsection{The Configure Call}
 
 The "Configure" call is a batched call to "SetPriority", "SetIPCParams" and "SetSpace". 
 
@@ -182,7 +182,7 @@ The "Configure" call is a batched call to "SetPriority", "SetIPCParams" and "Set
 >         tcNewIPCBuffer = tcNewIPCBuffer setIPCParams }
 > decodeTCBConfigure _ _ _ _ = throw TruncatedMessage
 
-\subsubsection[setprio]{The Set Priority Call}
+\subsubsection{The Set Priority Call}
 
 Setting the thread's priority is only allowed if the new priority is lower than or equal to the current thread's. This prevents untrusted clients that hold untyped or TCB capabilities from performing denial of service attacks by creating new maximum-priority threads. This is a temporary solution; there may be significant changes to the scheduler in future versions to provide better partitioning of CPU time.
 
@@ -203,7 +203,7 @@ Setting the thread's priority is only allowed if the new priority is lower than 
 >         tcNewIPCBuffer = Nothing }
 > decodeSetPriority _ _ = throw TruncatedMessage
 
-\subsubsection[setipcbuf]{The Set IPC Buffer Call}
+\subsubsection{The Set IPC Buffer Call}
 
 The two thread parameters related to IPC and system call handling are the IPC buffer pointer, and a capability to access the frame containing the buffer. The kernel uses the virtual address to determine the buffer's location in the frame, and also exposes it to the thread in a well-defined location; it does not necessarily ensure that the buffer frame is actually mapped at the given address. There may be architecture-defined requirements for the pointer and frame capability; typically the only requirement is that the buffer fits inside the given frame.
 
@@ -227,7 +227,8 @@ The two thread parameters related to IPC and system call handling are the IPC bu
 >         tcNewIPCBuffer = Just (ipcBuffer, bufferFrame) }
 > decodeSetIPCBuffer _ _ _ _ = throw TruncatedMessage
 
-\subsubsection[setspace]{The Set Space Call}
+\subsubsection{The Set Space Call}
+\label{sec:object.tcb.decode.setspace}
 
 Setting the capability space and virtual address space roots is similar to a pair of CNode Insert operation, except that any previous root is implicitly deleted rather than causing an error, and the new roots must be valid capabilities of the appropriate types. The fault endpoint, like the result endpoint, is not checked for validity at this point; messages sent to it will be silently dropped if it is not valid.
 
@@ -270,11 +271,11 @@ This is to ensure that the source capability is not made invalid by the deletion
 >         tcNewIPCBuffer = Nothing }
 > decodeSetSpace _ _ _ _ = throw TruncatedMessage
 
-\subsection[invoke]{Performing TCB Invocations}
+\subsection{Performing TCB Invocations}
 
 > invokeTCB :: TCBInvocation -> KernelP [Word]
 
-\subsubsection[sched]{Scheduler Operations}
+\subsubsection{Scheduler Operations}
 
 The "Suspend" and "Resume" calls are simple scheduler operations.
 
@@ -287,7 +288,7 @@ The "Suspend" and "Resume" calls are simple scheduler operations.
 >         restart thread
 >         return []
 
-\subsubsection[tc]{Thread Control Operations}
+\subsubsection{Thread Control Operations}
 
 The "ThreadControl" operation is used to implement the "SetSpace", "SetPriority", "SetIPCParams" and "Configure" methods.
 
@@ -334,7 +335,8 @@ The use of "checkCapAt" addresses a corner case in which the only capability to 
 >             buffer
 >         return []
 
-\subsubsection[exregs]{Register State}
+\subsubsection{Register State}
+\label{sec:object.tcb.invoke.exregs}
 
 There are three operations that read or write register state. The most general is "CopyRegisters", which transfers subsets of the register state from one specified thread to another.
 
@@ -395,7 +397,7 @@ The "ReadRegisters" and "WriteRegisters" functions are similar to "CopyRegisters
 >     when resumeTarget $ restart dest
 >     return []
 
-\subsection[domain]{Decoding Domain Invocations}
+\subsection{Decoding Domain Invocations}
 
 The domain cap is invoked to set the domain of a given TCB object to a given value.
 
@@ -654,4 +656,4 @@ identified by "tcbPtr".
 >         threadSet (\tcb -> tcb { tcbContext = uc' }) tptr
 >         return a
 
-% arch-tag: 71d10ec9-496e-45bf-9718-b12726324443
+

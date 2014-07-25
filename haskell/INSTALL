@@ -26,9 +26,6 @@ To build it:
         arm-isabuilder
 - build the library:
         runhaskell Setup.hs build
-  There will be a few warnings about unused definitions in the -boot files;
-  if building with -fvia-C (the default for GHC 6.6) there will also be many
-  warnings about implicitly defined functions. These are ok.
 - install:
         runhaskell Setup.hs install --user
 

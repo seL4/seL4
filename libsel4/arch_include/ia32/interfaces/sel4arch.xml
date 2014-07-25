@@ -58,6 +58,9 @@
 			<param dir="in" name="rights" type="seL4_CapRights"/>
 			<param dir="in" name="ioaddr" type="seL4_Word"/>
 		</method>
+		<method id="IA32PageGetAddress" name="GetAddress">
+			<param dir="out" name="paddr" type="seL4_Word"/>
+		</method>
 	</interface>
 	<interface name="seL4_IA32_ASIDControl">
 		<method id="IA32ASIDControlMakePool" name="MakePool">

@@ -29,5 +29,3 @@ digraph modules {
 	objtypes [label=Types]; Object -> objtypes;
 	Object -> Untyped;
 }
-
-// arch-tag: 626b173f-3ee0-4d62-9744-eef2715af924

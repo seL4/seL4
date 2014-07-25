@@ -81,7 +81,8 @@ Other capabilities do not require modification.
 
 > deriveCap _ cap = return cap
 
-\subsection[finalise]{Finalising Capabilities}
+\subsection{Finalising Capabilities}
+\label{sec:object.objecttype.finalise}
 
 Similarly, when deleting a capability, it may be necessary to change other parts of the kernel or machine state that refer to that specific capability. If the deleted capability is the last one referring to the object, it is also necessary to clean up any references to the object itself.
 
@@ -148,7 +149,8 @@ For any other capability, no special action is required.
 
 > finaliseCap _ _ _ = return (NullCap, Nothing)
 
-\subsection[recycle]{Recycling Capabilities}
+\subsection{Recycling Capabilities}
+\label{sec:object.objecttype.recycle}
 
 When an object is recycled, its final capability will be finalised (see above) to clean up any in-kernel references to the object. Then, the object and capability must both be returned to their initial states. The "recycleCap" operation, given a capability to a finalised object, re-initialises the object and returns a capability to it.
 
@@ -407,7 +409,7 @@ New threads are placed in the current security domain, which must be the domain 
 >             archCap <- Arch.createObject t regionBase userSize
 >             return $! ArchObjectCap archCap
 
-\subsection[invoke]{Invoking Objects}
+\subsection{Invoking Objects}
 
 The following functions are used to handle messages that are sent to kernel objects by user level code using a "Send" or "SendWait" system call.
 
@@ -551,4 +553,4 @@ The following two functions returns the base and size of the object a capability
 > capUntypedSize (IRQHandlerCap {})
 >     = 1 -- error in haskell
 
-% arch-tag: 64E4C155-9DEB-11D9-BC66-000393DEF6D6
+
