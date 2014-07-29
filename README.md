@@ -19,8 +19,8 @@ please see the [`sel4.systems`][1] website and associated [FAQ][2].
 This repository is usually not used in isolation, but as part of the build
 system in a larger project.
 
-  [1]: http://sel4.systems/
-  [2]: http://sel4.systems/FAQ/
+  [1]: https://sel4.systems/
+  [2]: https://sel4.systems/FAQ/
 
 
 Repository Overview
