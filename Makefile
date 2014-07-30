@@ -147,7 +147,7 @@ default: all
 ### Paths
 ############################################################
 
-PYTHONPATH = ${SOURCE_ROOT}/tools
+PYTHONPATH := ${PYTHONPATH}:${SOURCE_ROOT}/tools
 export PYTHONPATH
 
 vpath %.c   ${SOURCE_ROOT}
