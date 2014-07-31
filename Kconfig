@@ -55,13 +55,6 @@ config ARCH_IA32
             help
                 Support for ARM1136JF-S
 
-        config ARM926EJ_S
-            bool "ARM926EJ-S"
-            depends on ARCH_ARM
-            select ARCH_ARM_V5
-            help 
-                Support for ARM926EJ_S
-
         config ARM_CORTEX_A8 
             bool "Cortex A8"
             depends on ARCH_ARM
@@ -96,13 +89,6 @@ config ARCH_IA32
             depends on ARM1136JF_S
             help
                 Support for the KZM platform
-
-        config PLAT_INTEGRATORCP
-            bool "IntegratorCP Platform"
-            depends on ARCH_ARM
-            depends on ARM926EJ_S
-            help
-                Support for the IntegratorCP platform
 
         config PLAT_OMAP3
             bool "OMAP3 (BeagleBoard)"
