@@ -2642,6 +2642,12 @@ performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
 void
 doFlush(int label, vptr_t start, vptr_t end, paddr_t pstart)
 {
+#ifdef ARM_HYP
+    /* The hypervisor does not share an AS with userspace so we must flush
+     * by kernel MVA instead. ARMv7 caches are PIPT so it makes no difference */
+    end = (vptr_t)paddr_to_pptr(pstart) + (end - start);
+    start = (vptr_t)paddr_to_pptr(pstart);
+#endif
     switch (label) {
     case ARMPDClean_Data:
     case ARMPageClean_Data:
