@@ -42,6 +42,7 @@ repository (in alphabetical order).
 * Sam McNally, NICTA
 * Toby Murray, NICTA & UNSW
 * Ameya Palande, NICTA
+* Max R.D. Parmer
 * Sean Peters, NICTA
 * Simon Rodgers, NICTA
 * Sean Seefried, NICTA
