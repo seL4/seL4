@@ -13,14 +13,19 @@ The seL4 Repository
 
 This repository contains the source code of seL4 microkernel.
 
-For details about the seL4 microkernel, including details about the proof,
-please see the [`sel4.systems`][1] website and associated [FAQ][2].
+For details about the seL4 microkernel, including details about its formal
+correctness proof, please see the [`sel4.systems`][1] website and associated
+[FAQ][2].
+
+We welcome contributions to seL4. Please see the website for information
+on [how to contribute][3].
 
 This repository is usually not used in isolation, but as part of the build
 system in a larger project.
 
   [1]: http://sel4.systems/
   [2]: http://sel4.systems/FAQ/
+  [3]: http://sel4.systems/Contributing/
 
 
 Repository Overview
@@ -31,7 +36,7 @@ Repository Overview
   * `haskell`: Haskell model of the seL4 kernel,
                kept in sync with the C version.
   * `libsel4`: C bindings for the seL4 ABI
-  * `manual`: LaTeX sourced of the seL4 reference manual
+  * `manual`: LaTeX sources of the seL4 reference manual
 
 
 Build Instructions
@@ -62,6 +67,10 @@ build using `make`, follow these instructions:
     ia32 | pc99   |         |
 
  * For a debug build, append `DEBUG=y`.
+
+See the seL4 website for more [comprehensive build instructions][4].
+
+ [4]: http://sel4.systems/Download/
 
 
 License
