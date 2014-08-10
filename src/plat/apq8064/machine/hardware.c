@@ -22,6 +22,7 @@
 
 /* Available physical memory regions on platform (RAM) */
 /* NOTE: Regions are not allowed to be adjacent! */
+/*       and must be page-aligned                */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
     /* 2 GiB -1 page to prevent uin32_t overflow */
     { /* .start = */ 0x80000000, /* .end = */ 0xfffff000 }
@@ -38,7 +39,10 @@ get_avail_p_reg(unsigned int i)
 {
     return avail_p_regs[i];
 }
-
+/*
+ * We're limited to one page of boot data.
+ * Exclude some devices.
+ */
 const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ RPM_PADDR                 , /* .end */ RPM_PADDR                 + (1 << PAGE_BITS) },
     { /* .start */ RPM_TIMERS_PADDR          , /* .end */ RPM_TIMERS_PADDR          + (1 << PAGE_BITS) },
@@ -145,27 +149,49 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ SIC_APU_PADDR             , /* .end */ SIC_APU_PADDR             + (1 << PAGE_BITS) },
     { /* .start */ SIC_NON_SECURE_PADDR      , /* .end */ SIC_NON_SECURE_PADDR      + (1 << PAGE_BITS) },
     { /* .start */ INTCTL0_PADDR             , /* .end */ INTCTL0_PADDR             + (1 << PAGE_BITS) },
+#if (INTCTL1_PADDR & 0xfff) == 0
     { /* .start */ INTCTL1_PADDR             , /* .end */ INTCTL1_PADDR             + (1 << PAGE_BITS) },
+#endif
+#if (INTCTL2_PADDR & 0xfff) == 0
     { /* .start */ INTCTL2_PADDR             , /* .end */ INTCTL2_PADDR             + (1 << PAGE_BITS) },
+#endif
+#if (INTCTL3_PADDR & 0xfff) == 0
     { /* .start */ INTCTL3_PADDR             , /* .end */ INTCTL3_PADDR             + (1 << PAGE_BITS) },
+#endif
+#if (INTCTL4_PADDR & 0xfff) == 0
     { /* .start */ INTCTL4_PADDR             , /* .end */ INTCTL4_PADDR             + (1 << PAGE_BITS) },
+#endif
+#if (INTCTL5_PADDR & 0xfff) == 0
     { /* .start */ INTCTL5_PADDR             , /* .end */ INTCTL5_PADDR             + (1 << PAGE_BITS) },
+#endif
+#if (INTCTL6_PADDR & 0xfff) == 0
     { /* .start */ INTCTL6_PADDR             , /* .end */ INTCTL6_PADDR             + (1 << PAGE_BITS) },
+#endif
+#if (INTCTL7_PADDR & 0xfff) == 0
     { /* .start */ INTCTL7_PADDR             , /* .end */ INTCTL7_PADDR             + (1 << PAGE_BITS) },
+#endif
     { /* .start */ SDC2_PADDR                , /* .end */ SDC2_PADDR                + (1 << PAGE_BITS) },
+#if (SDC2_DML_PADDR & 0xfff) == 0
     { /* .start */ SDC2_DML_PADDR            , /* .end */ SDC2_DML_PADDR            + (1 << PAGE_BITS) },
+#endif
     { /* .start */ SDC2_BAM_PADDR            , /* .end */ SDC2_BAM_PADDR            + (1 << PAGE_BITS) },
     { /* .start */ SDC3_PADDR                , /* .end */ SDC3_PADDR                + (1 << PAGE_BITS) },
+#if (SDC3_DML_PADDR & 0xfff) == 0
     { /* .start */ SDC3_DML_PADDR            , /* .end */ SDC3_DML_PADDR            + (1 << PAGE_BITS) },
+#endif
     { /* .start */ SDC3_BAM_PADDR            , /* .end */ SDC3_BAM_PADDR            + (1 << PAGE_BITS) },
     { /* .start */ SDC4_PADDR                , /* .end */ SDC4_PADDR                + (1 << PAGE_BITS) },
+#if (SDC4_DML_PADDR & 0xfff) == 0
     { /* .start */ SDC4_DML_PADDR            , /* .end */ SDC4_DML_PADDR            + (1 << PAGE_BITS) },
+#endif
     { /* .start */ SDC4_BAM_PADDR            , /* .end */ SDC4_BAM_PADDR            + (1 << PAGE_BITS) },
     { /* .start */ BAM_DMA_PADDR             , /* .end */ BAM_DMA_PADDR             + (1 << PAGE_BITS) },
     { /* .start */ BAM_DMA_BAM_PADDR         , /* .end */ BAM_DMA_BAM_PADDR         + (1 << PAGE_BITS) },
     { /* .start */ BAM_DMA_BAM_XPU_PADDR     , /* .end */ BAM_DMA_BAM_XPU_PADDR     + (1 << PAGE_BITS) },
     { /* .start */ SDC1_PADDR                , /* .end */ SDC1_PADDR                + (1 << PAGE_BITS) },
+#if (SDC1_DML_PADDR & 0xfff) == 0
     { /* .start */ SDC1_DML_PADDR            , /* .end */ SDC1_DML_PADDR            + (1 << PAGE_BITS) },
+#endif
     { /* .start */ SDC1_BAM_PADDR            , /* .end */ SDC1_BAM_PADDR            + (1 << PAGE_BITS) },
     { /* .start */ SPS_GSBI1_PADDR           , /* .end */ SPS_GSBI1_PADDR           + (1 << PAGE_BITS) },
     { /* .start */ SPS_UART1_DM_PADDR        , /* .end */ SPS_UART1_DM_PADDR        + (1 << PAGE_BITS) },
