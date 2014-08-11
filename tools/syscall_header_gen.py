@@ -41,13 +41,14 @@ kernel_header_template = \
 #define SYSCALL_{{upper(syscall)}} ({{syscall_number}})
     {{py:syscall_number -= 1}}
     {{endfor}}
-    {{py:syscall_max = -len(list)}}
 {{endfor}}
+
+#endif
 
 #define SYSCALL_MAX (-1)
 #define SYSCALL_MIN ({{syscall_number + 1}})
 
-#else /* C definitions */
+#ifndef __ASSEMBLER__
 
 enum syscall {
 {{py:syscall_number = -1}}
@@ -66,7 +67,7 @@ enum syscall {
 };
 typedef uint32_t syscall_t;
 
-#endif /* ASSEMBLER */
+#endif
 
 #endif /* __ARCH_API_SYSCALL_H */
 """

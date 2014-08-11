@@ -15,6 +15,8 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/model/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/machine/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/fastpath/Makefile
 
+ARCH_C_SOURCES += c_traps.c
+
 ARCH_ASM_SOURCES += machine_asm.S \
                     traps.S \
                     halt.S \

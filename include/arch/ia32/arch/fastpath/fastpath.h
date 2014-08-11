@@ -17,7 +17,7 @@
 #include <api/syscall.h>
 
 void slowpath(syscall_t syscall)
-VISIBLE FASTCALL NORETURN;
+NORETURN;
 
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 VISIBLE FASTCALL NORETURN;
