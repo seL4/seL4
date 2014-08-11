@@ -17,6 +17,9 @@ For details about the seL4 microkernel, including details about its formal
 correctness proof, please see the [`sel4.systems`][1] website and associated
 [FAQ][2].
 
+DOIs for citing recent releases of this repository:
+  * [![DOI][4]](http://dx.doi.org/10.5281/zenodo.11247)
+
 We welcome contributions to seL4. Please see the website for information
 on [how to contribute][3].
 
@@ -26,7 +29,7 @@ system in a larger project.
   [1]: http://sel4.systems/
   [2]: http://sel4.systems/FAQ/
   [3]: http://sel4.systems/Contributing/
-
+  [4]: https://zenodo.org/badge/doi/10.5281/zenodo.11247.png
 
 Repository Overview
 -------------------
@@ -68,9 +71,9 @@ build using `make`, follow these instructions:
 
  * For a debug build, append `DEBUG=y`.
 
-See the seL4 website for more [comprehensive build instructions][4].
+See the seL4 website for more [comprehensive build instructions][5].
 
- [4]: http://sel4.systems/Download/
+ [5]: http://sel4.systems/Download/
 
 
 License
