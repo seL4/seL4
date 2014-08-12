@@ -83,15 +83,14 @@ decodeIRQControlInvocation(word_t label, unsigned int length,
 exception_t
 invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot)
 {
-    setIRQState(IRQNotifyAEP, irq);
     cteInsert(cap_irq_handler_cap_new(irq), controlSlot, handlerSlot);
 
     return EXCEPTION_NONE;
 }
 
 exception_t
-decodeIRQHandlerInvocation(word_t label, irq_t irq,
-                           extra_caps_t extraCaps)
+decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
+                           extra_caps_t extraCaps, word_t *buffer)
 {
     switch (label) {
     case IRQAckIRQ:
@@ -123,6 +122,7 @@ decodeIRQHandlerInvocation(word_t label, irq_t irq,
         }
 
         setThreadState(ksCurThread, ThreadState_Restart);
+        setIRQState(IRQNotifyAEP, irq);
         invokeIRQHandler_SetIRQHandler(irq, aepCap, slot);
         return EXCEPTION_NONE;
     }
@@ -130,6 +130,15 @@ decodeIRQHandlerInvocation(word_t label, irq_t irq,
     case IRQClearIRQHandler:
         setThreadState(ksCurThread, ThreadState_Restart);
         invokeIRQHandler_ClearIRQHandler(irq);
+        return EXCEPTION_NONE;
+    case IRQSetMode:
+        if (length < 2) {
+            userError("IRQSetMode: Not enough arguments", length);
+            current_syscall_error.type = seL4_TruncatedMessage;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        setThreadState(ksCurThread, ThreadState_Restart);
+        setInterruptMode(irq, !!getSyscallArg(0, buffer), !!getSyscallArg(1, buffer));
         return EXCEPTION_NONE;
 
     default:

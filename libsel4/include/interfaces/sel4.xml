@@ -145,6 +145,10 @@
 			<param dir="in" name="endpoint" type="seL4_CPtr"/>
 		</method>
 		<method id="IRQClearIRQHandler" name="Clear"/>
+        <method id="IRQSetMode" name="SetMode">
+            <param dir="in" name="level_trigger" type="uint32_t"/>
+            <param dir="in" name="low_polarity" type="uint32_t"/>
+        </method>
     </interface>
 	<interface name="seL4_DomainSet">
 		<method id="DomainSetSet" name="Set">

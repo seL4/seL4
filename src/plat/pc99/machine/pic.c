@@ -33,6 +33,16 @@ pic_remap_irqs(interrupt_t interrupt)
     out8(PIC2_BASE + 1, 0x0);
 }
 
+BOOT_CODE void pic_disable(void)
+{
+    /* We assume that pic_remap_irqs has already been called and
+     * just mask all the irqs */
+    out8(PIC1_BASE + 1, 0xff);
+    out8(PIC2_BASE + 1, 0xff);
+}
+
+#ifdef CONFIG_IRQ_PIC
+
 void pic_mask_irq(bool_t mask, irq_t irq)
 {
     uint8_t  bit_mask;
@@ -84,3 +94,5 @@ void pic_ack_active_irq(void)
     /* ack master PIC */
     out8(PIC1_BASE, 0x20);
 }
+
+#endif

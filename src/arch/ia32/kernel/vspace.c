@@ -575,6 +575,10 @@ map_kernel_window(
     pde_t*     pd,
     pte_t*     pt,
     p_region_t ndks_p_reg
+#ifdef CONFIG_IRQ_IOAPIC
+    , uint32_t num_ioapic,
+    paddr_t*   ioapic_paddrs
+#endif
 #ifdef CONFIG_IOMMU
     , uint32_t   num_drhu,
     paddr_t*   drhu_list
@@ -585,9 +589,7 @@ map_kernel_window(
     uint32_t idx;
     pde_t    pde;
     pte_t    pte;
-#ifdef CONFIG_IOMMU
-    unsigned int i;
-#endif
+    unsigned int UNUSED i;
 
     /* Mapping of PPTR_BASE (virtual address) to kernel's PADDR_BASE
      * up to end of virtual address space except for the last 4M.
@@ -730,6 +732,49 @@ map_kernel_window(
     pt[idx] = pte;
     idx++;
 
+#ifdef CONFIG_IRQ_IOAPIC
+    for (i = 0; i < num_ioapic; i++) {
+        phys = ioapic_paddrs[i];
+        pte = pte_new(
+                  phys,   /* page_base_address    */
+                  0,      /* avl                  */
+                  1,      /* global               */
+                  0,      /* pat                  */
+                  0,      /* dirty                */
+                  0,      /* accessed             */
+                  1,      /* cache_disabled       */
+                  1,      /* write_through        */
+                  0,      /* super_user           */
+                  1,      /* read_write           */
+                  1       /* present              */
+              );
+        assert(idx == ( (PPTR_IOAPIC_START + i * BIT(pageBitsForSize(IA32_4K))) & MASK(pageBitsForSize(IA32_4M))) >> pageBitsForSize(IA32_4K));
+        pt[idx] = pte;
+        idx++;
+        if (idx == BIT(PT_BITS)) {
+            return false;
+        }
+    }
+    /* put in null mappings for any extra IOAPICs */
+    for (; i < CONFIG_MAX_NUM_IOAPIC; i++) {
+        pte = pte_new(
+                  0,      /* page_base_address    */
+                  0,      /* avl                  */
+                  0,      /* global               */
+                  0,      /* pat                  */
+                  0,      /* dirty                */
+                  0,      /* accessed             */
+                  0,      /* cache_disabled       */
+                  0,      /* write_through        */
+                  0,      /* super_user           */
+                  0,      /* read_write           */
+                  0       /* present              */
+              );
+        assert(idx == ( (PPTR_IOAPIC_START + i * BIT(pageBitsForSize(IA32_4K))) & MASK(pageBitsForSize(IA32_4M))) >> pageBitsForSize(IA32_4K));
+        pt[idx] = pte;
+        idx++;
+    }
+#endif
 
 #ifdef CONFIG_IOMMU
     /* map kernel devices: IOMMUs */
