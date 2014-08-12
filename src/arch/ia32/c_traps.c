@@ -17,7 +17,8 @@
 #include <api/syscall.h>
 
 void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_context(void);
-void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_context(void) {
+void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_context(void)
+{
     /* set the tss.esp0 */
     tss_ptr_set_esp0(&ia32KStss, ((uint32_t)ksCurThread) + 0x4c);
     if (unlikely(ksCurThread == ia32KSfpuOwner)) {
@@ -78,12 +79,12 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_
             "pop %%ecx\n"
             "sti\n"
             "sysexit\n"
-                 :
-                 : "r"(&ksCurThread->tcbContext.registers[EAX])
-                 // Clobber memory so the compiler is forced to complete all stores
-                 // before running this assembler
-                 : "memory"
-                );
+            :
+            : "r"(&ksCurThread->tcbContext.registers[EAX])
+            // Clobber memory so the compiler is forced to complete all stores
+            // before running this assembler
+            : "memory"
+        );
     } else {
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
@@ -102,18 +103,19 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_
             // skip faulteip, tls_base, error
             "addl $12, %%esp\n"
             "iret\n"
-                 :
-                 : "r"(&ksCurThread->tcbContext.registers[EAX])
-                 // Clobber memory so the compiler is forced to complete all stores
-                 // before running this assembler
-                 : "memory"
-                );
+            :
+            : "r"(&ksCurThread->tcbContext.registers[EAX])
+            // Clobber memory so the compiler is forced to complete all stores
+            // before running this assembler
+            : "memory"
+        );
     }
-    while(1);
+    while (1);
 }
 
 void __attribute__((fastcall)) __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall);
-void __attribute__((fastcall)) __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall) {
+void __attribute__((fastcall)) __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall)
+{
     if (irq == int_unimpl_dev) {
         handleUnimplementedDevice();
     } else if (irq == int_page_fault) {
