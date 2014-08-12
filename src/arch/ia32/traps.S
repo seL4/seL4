@@ -10,9 +10,6 @@
 
 #include <config.h>
 #include <machine/assembler.h>
-#include <arch/api/syscall.h>
-
-# minimum and maximum seL4 syscall number
 
 # On kernel entry, ESP points to the end of the thread's registers array.
 # Hardware pushes onto the stack SS, ESP, EFLAGS, CS, NextEIP and Error,
@@ -353,70 +350,14 @@ handle_interrupt:
     andb    %bl, %dl         # we have a kernel exception if both BL and DL are 1
     jnz     kernel_exception
 
-    # save ESP (which now points to the current TCB)
-    movl    %esp, %edx
-
-    # save ECX (which contains the interrupt vector)
-    movl    %ecx, ia32KScurInterrupt
-
     # switch to kernel stack
     leal    _kernel_stack_top, %esp
 
-    # the code below assumes:
-    # - EAX contains the syscall number
-    # - ECX contains the interrupt vector
-    # - EDX contains the current TCB
+    # Place the syscall number in the second argument slot
+    movl    %eax, %edx
 
-    # depending on the interrupt vector, call appropriate handling function
-    cmpl    $0x07, %ecx # 0x07 = int_unimpl_dev
-    je      handle_unimplemented_device
-    cmpl    $0x0e, %ecx # 0x0e = int_page_fault
-    je      handle_page_fault
-    cmpl    $0x20, %ecx # 0x20 = int_irq_isa_min
-    jb      handle_fault
-    cmpl    $0x50, %ecx # 0x50 = int_trap_min
-    jb      handle_IRQ
-    cmpl    $0xff, %ecx # 0xff = int_spurious
-    je      restore_user_context # ignore and do not ack spurious interrupt
-
-    # Here we know we have a trap. It is interpreted as unknown syscall.
-    # We have to adjust the FaultEIP to point to the trapping INT instruction
-    # by subtracting 2. EDX contains the current TCB.
-    subl    $2, 0x2c(%edx)
-
-    # The trap number is stored in the MSB and the 24-bit syscall number
-    # in the LSBs of EAX.
-    shll    $24, %ecx
-    andl    $0x00ffffff, %eax
-    orl     %ecx, %eax
-
-    jmp     undefined_syscall
-
-handle_fault:
-    # fault code corresponds to error code of the exception
-    pushl   0x34(%edx) # push Error
-    # fault number corresponds to exception vector number
-    pushl   %ecx
-    call    handleUserLevelFault
-    addl    $8, %esp
-    jmp     restore_user_context
-
-handle_page_fault:
-    movl    0x34(%edx), %edx # get Error code from TCB
-    shrl    $4, %edx         # get I/D flag
-    andl    $1, %edx         # mask rest of error code
-    pushl   %edx             # vm_fault_type_t (0 = data, 1 = instruction)
-    call    handleVMFaultEvent
-    addl    $4, %esp
-    jmp     restore_user_context
-
-handle_unimplemented_device:
-    call    handleUnimplementedDevice
-    jmp     restore_user_context
-
-handle_IRQ:
-    call    handleInterruptEntry
-    jmp     restore_user_context
+    # gtfo to C land, we will not return
+    call    c_handle_interrupt
 
 # Handle a kernel exception
 
@@ -474,27 +415,6 @@ handle_vmexit:
     jmp     restore_user_context
 #endif
 
-#ifdef FASTPATH
-
-# Calls the slowpath from the fastpath
-# Defined with fastcall calling convention
-BEGIN_FUNC(slowpath)
-    # indicate int_invalid as the interrupt currently being served
-    movl    $-1, ia32KScurInterrupt
-
-    # syscall is in ECX
-    pushl %ecx
-
-    # Update NextEIP
-    movl    ksCurThread, %ecx
-    addl    $2, 56(%ecx)
-
-    call handleSyscall
-    jmp restore_user_context
-END_FUNC(slowpath)
-
-#endif
-
 #define SET_SEL(sel, offset, val) \
     cmpl $val, (offset)(%esp); \
     je 1f; \
@@ -537,164 +457,15 @@ BEGIN_FUNC(handle_syscall)
     SET_SEL(ds, 7  * 4, 0x23)
     SET_SEL(es, 8  * 4, 0x23)
 
-    # Perform this comparison as soon as we stop doing operations that clobber the FLAGS
-#ifdef FASTPATH
-    cmpl    $SYSCALL_REPLY_WAIT, %eax
-#endif
-
     # switch to kernel stack
     leal    _kernel_stack_top, %esp
 
-#ifdef FASTPATH
-    # Shuffle some register to suit the fastcall calling convention
-    movl    %ebx, %ecx
-    movl    %esi, %edx
-    je      fastpath_reply_wait
-    cmpl    $SYSCALL_CALL, %eax
-    je      fastpath_call
-#endif
+    # Push all the arguments for c_handle_syscall
+    pushl   %esi # msgInfo
+    pushl   %ebx # cptr
+    pushl   %eax # syscall number
 
-    # indicate int_invalid as the interrupt currently being served
-    movl    $-1, ia32KScurInterrupt
+    # gtfo to C land, we will not return
+    call    c_handle_syscall
 
-    # increment NextEIP
-    movl    ksCurThread, %ecx
-    addl    $2, 56(%ecx)
-
-    # check that syscall number is in range
-    cmpl    $SYSCALL_MAX, %eax
-    jg      undefined_syscall
-    cmpl    $SYSCALL_MIN, %eax
-    jl      undefined_syscall
-
-    # we have a seL4 syscall
-    pushl   %eax
-    call    handleSyscall
-    jmp     restore_user_context
-
-undefined_syscall:
-    pushl   %eax
-    call    handleUnknownSyscall
-    # fall through to restore_user_context
 END_FUNC(handle_syscall)
-
-#define POP_SEL(sel, val) \
-    cmpl    $val, (%esp); \
-    je 1f; \
-    popl    %sel; \
-    jmp 2f; \
-1: \
-    addl    $4, %esp; \
-2:
-
-BEGIN_FUNC(restore_user_context)
-    # save kernel ESP to TSS for next kernel entry
-    movl    ksCurThread, %esp # point ESP to current user_context_t
-    addl    $0x4c, %esp       # size of registers array (0x4c bytes)
-    leal    ia32KStss, %ecx
-    movl    %esp, 4(%ecx)     # tss.esp0 = pointer to end of thread's registers array
-    subl    $0x4c, %esp       # restore ESP to point to current TCB
-
-#ifdef CONFIG_VTX
-    # determine whether we are using vmx.
-    # it handles FPU ownership itself.
-    cmpl    $0, 0x250(%esp)   # if (ksCurThread->vcpu != NULL)
-    jne     restore_vmx
-#endif
-
-    # disable the FPU, unless owned by the current thread
-    cmpl    %esp, ia32KSfpuOwner
-    je      fpu_enable
-    movl    %cr0, %eax
-    orl     $0x8, %eax
-    movl    %eax, %cr0
-
-fpu_done:
-    # determine whether we entered via interrupt or syscall
-    cmpl    $-1, 0x34(%esp) # if (Error == -1)
-    je      restore_syscall
-
-    # we entered via interrupt, i.e. we return via iret
-    # precondition: ESP == ksCurThread
-    popl    %eax
-    popl    %ebx
-    popl    %ecx
-    popl    %edx
-    popl    %esi
-    popl    %edi
-    popl    %ebp
-    popl    %ds
-    popl    %es
-    popl    %fs
-    popl    %gs
-    addl    $4, %esp # skip FaultEIP
-    addl    $4, %esp # skip TLS_BASE
-    addl    $4, %esp # skip the error code
-    iret
-
-fpu_enable:
-    clts
-    jmp     fpu_done
-
-restore_syscall:
-    # we entered via sysenter, i.e. we return via sysexit
-    # precondition: ESP == ksCurThread
-    popl    %eax             # restore EAX (syscall number)
-    popl    %ebx             # restore EBX (cap/badge register)
-    addl    $8, %esp         # skip    ECX and EDX (will contain ESP and NextEIP)
-    popl    %esi             # restore ESI (msgInfo register)
-    popl    %edi             # restore EDI (message register)
-    popl    %ebp             # restore EBP (message register)
-# Only pop the code and data selectors if their values have changed from the default
-    POP_SEL(ds, 0x23)
-    POP_SEL(es, 0x23)
-# Have to reload fs and gs for update to the selectors to become visible
-    popl    %fs
-    popl    %gs
-    addl    $4, %esp         # skip    FaultEIP
-    addl    $4, %esp         # skip    TLS_BASE
-    addl    $4, %esp         # skip    Error
-
-    popl    %edx             # restore NextEIP (passed in EDX)
-    addl    $4, %esp         # skip    CS
-    andl    $~0x200, (%esp)  # clear interrupt bit before popping into EFLAGS
-    popfl                    # restore EFLAGS with interrupts off
-    orl     $0x200, -4(%esp) # set interrupt bit again 
-    popl    %ecx             # restore ESP (passed in ECX)
-                             # skip    SS
-
-    # We have following register contents when returning:
-    #   EAX : syscall number (needed to restart syscall)
-    #   ECX : user ESP
-    #   EDX : user NextEIP
-
-    sti                      # now enable the interrupts, which were disabled
-                             # by sysenter (will be enabled AFTER sysexit)
-    sysexit                  # return to user space
-END_FUNC(restore_user_context)
-
-#ifdef CONFIG_VTX
-restore_vmx:
-    # Switch back to the kernel stack so we can store TCB state in the VMCS.
-    leal    _kernel_stack_top, %esp
-    call    restoreVMCS
-    
-    movl    ksCurThread, %esp # point esp to current user_context_t
-    popl    %eax
-    popl    %ebx
-    popl    %ecx
-    popl    %edx
-    popl    %esi
-    popl    %edi
-    popl    %ebp
-    cmpl    $-2, 0x18(%esp)
-    jne     1f
-    vmresume
-    jmp     2f
-1:
-    vmlaunch
-2:
-    leal    _kernel_stack_top, %esp
-    call    handleVmEntryFail
-    jmp     restore_user_context
-#endif
