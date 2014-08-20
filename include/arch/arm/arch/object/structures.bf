@@ -351,9 +351,9 @@ block cap_fault {
 
 block vm_fault {
     field address 32
-    field FSR 12
+    field FSR 14
     field instructionFault 1
-    padding 16
+    padding 14
     field faultType 3
 }
 
