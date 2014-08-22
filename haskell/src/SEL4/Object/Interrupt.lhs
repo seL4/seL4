@@ -105,7 +105,7 @@ An IRQ handler capability allows a thread possessing it to set an endpoint which
 >         _ -> throw IllegalOperation
 
 > toBool :: Word -> Bool
-> toBool w = if w == 0 then False else True
+> toBool w = w /= 0
 
 > invokeIRQHandler :: IRQHandlerInvocation -> Kernel ()
 > invokeIRQHandler (AckIRQ irq) =
