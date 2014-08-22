@@ -122,7 +122,6 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         }
 
         setThreadState(ksCurThread, ThreadState_Restart);
-        setIRQState(IRQNotifyAEP, irq);
         invokeIRQHandler_SetIRQHandler(irq, aepCap, slot);
         return EXCEPTION_NONE;
     }
@@ -131,15 +130,21 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         setThreadState(ksCurThread, ThreadState_Restart);
         invokeIRQHandler_ClearIRQHandler(irq);
         return EXCEPTION_NONE;
-    case IRQSetMode:
+    case IRQSetMode: {
+        bool_t trig, pol;
+
         if (length < 2) {
             userError("IRQSetMode: Not enough arguments", length);
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
+        trig = getSyscallArg(0, buffer);
+        pol = getSyscallArg(1, buffer);
+
         setThreadState(ksCurThread, ThreadState_Restart);
-        setInterruptMode(irq, !!getSyscallArg(0, buffer), !!getSyscallArg(1, buffer));
+        invokeIRQHandler_SetMode(irq, !!trig, !!pol);
         return EXCEPTION_NONE;
+    }
 
     default:
         userError("IRQHandler: Illegal operation.");
@@ -154,11 +159,17 @@ invokeIRQHandler_AckIRQ(irq_t irq)
     maskInterrupt(false, irq);
 }
 
+void invokeIRQHandler_SetMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) 
+{
+    setInterruptMode(irq, levelTrigger, polarityLow);
+}
+
 void
 invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
 {
     cte_t *irqSlot;
 
+    setIRQState(IRQNotifyAEP, irq);
     irqSlot = intStateIRQNode + irq;
     cteDeleteOne(irqSlot);
     cteInsert(cap, slot, irqSlot);

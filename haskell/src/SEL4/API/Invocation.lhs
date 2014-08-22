@@ -138,6 +138,10 @@ The following data type defines the set of possible invocations for IRQ capabili
 >             setIRQHandlerCap :: Capability,
 >             setIRQHandlerSlot :: PPtr CTE }
 >         | ClearIRQHandler { irqHandlerIRQ :: IRQ }
+>         | SetMode {
+>             modeIRQ :: IRQ,
+>             modeTrigger :: Bool,
+>             modePolarity :: Bool }
 >         deriving Show
 
 \subsection{Invocation Labels}
@@ -172,6 +176,7 @@ This datatype is defined globally over architectures as well as object types.
 >         | IRQAckIRQ
 >         | IRQSetIRQHandler
 >         | IRQClearIRQHandler
+>         | IRQSetMode
 >         | DomainSetSet
 >         | ARMPDClean_Data
 >         | ARMPDInvalidate_Data

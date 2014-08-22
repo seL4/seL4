@@ -79,9 +79,7 @@ There is a single, global interrupt controller object; a capability to it is pro
 
 > invokeIRQControl :: IRQControlInvocation -> KernelP ()
 > invokeIRQControl (IssueIRQHandler irq handlerSlot controlSlot) =
->   withoutPreemption $ do
->     setIRQState (IRQNotifyAEP) irq
->     cteInsert (IRQHandlerCap irq) controlSlot handlerSlot
+>   withoutPreemption $ cteInsert (IRQHandlerCap irq) controlSlot handlerSlot
 > invokeIRQControl (InterruptControl invok) =
 >     Arch.invokeInterruptControl invok
 
@@ -90,9 +88,9 @@ There is a single, global interrupt controller object; a capability to it is pro
 
 An IRQ handler capability allows a thread possessing it to set an endpoint which will be notified of incoming interrupts, and to acknowledge received interrupts.
 
-> decodeIRQHandlerInvocation :: Word -> IRQ -> [(Capability, PPtr CTE)] ->
+> decodeIRQHandlerInvocation :: Word -> [Word] -> IRQ -> [(Capability, PPtr CTE)] ->
 >         KernelF SyscallError IRQHandlerInvocation
-> decodeIRQHandlerInvocation label irq extraCaps =
+> decodeIRQHandlerInvocation label args irq extraCaps =
 >     case (invocationType label,extraCaps) of
 >         (IRQAckIRQ,_) -> return $ AckIRQ irq
 >         (IRQSetIRQHandler,(cap,slot):_) -> case cap of
@@ -101,18 +99,27 @@ An IRQ handler capability allows a thread possessing it to set an endpoint which
 >                 _ -> throw $ InvalidCapability 0
 >         (IRQSetIRQHandler,_) -> throw TruncatedMessage
 >         (IRQClearIRQHandler,_) -> return $ ClearIRQHandler irq
+>         (IRQSetMode,_) -> case args of
+>                 trig:pol:_ -> return $ SetMode irq (toBool trig) (toBool pol)
+>                 _ -> throw TruncatedMessage
 >         _ -> throw IllegalOperation
+
+> toBool :: Word -> Bool
+> toBool w = if w == 0 then False else True
 
 > invokeIRQHandler :: IRQHandlerInvocation -> Kernel ()
 > invokeIRQHandler (AckIRQ irq) =
 >     doMachineOp $ maskInterrupt False irq
 > invokeIRQHandler (SetIRQHandler irq cap slot) = do
+>     setIRQState (IRQNotifyAEP) irq
 >     irqSlot <- getIRQSlot irq
 >     cteDeleteOne irqSlot
 >     cteInsert cap slot irqSlot
 > invokeIRQHandler (ClearIRQHandler irq) = do
 >     irqSlot <- getIRQSlot irq
 >     cteDeleteOne irqSlot
+> invokeIRQHandler (SetMode irq trig pol) = 
+>     doMachineOp $ setInterruptMode irq trig pol
 
 \subsection{Kernel Functions}
 
