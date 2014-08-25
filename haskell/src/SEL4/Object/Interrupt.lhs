@@ -79,7 +79,9 @@ There is a single, global interrupt controller object; a capability to it is pro
 
 > invokeIRQControl :: IRQControlInvocation -> KernelP ()
 > invokeIRQControl (IssueIRQHandler irq handlerSlot controlSlot) =
->   withoutPreemption $ cteInsert (IRQHandlerCap irq) controlSlot handlerSlot
+>   withoutPreemption $ do
+>     setIRQState (IRQNotifyAEP) irq
+>     cteInsert (IRQHandlerCap irq) controlSlot handlerSlot
 > invokeIRQControl (InterruptControl invok) =
 >     Arch.invokeInterruptControl invok
 
@@ -111,7 +113,6 @@ An IRQ handler capability allows a thread possessing it to set an endpoint which
 > invokeIRQHandler (AckIRQ irq) =
 >     doMachineOp $ maskInterrupt False irq
 > invokeIRQHandler (SetIRQHandler irq cap slot) = do
->     setIRQState (IRQNotifyAEP) irq
 >     irqSlot <- getIRQSlot irq
 >     cteDeleteOne irqSlot
 >     cteInsert cap slot irqSlot

@@ -83,6 +83,7 @@ decodeIRQControlInvocation(word_t label, unsigned int length,
 exception_t
 invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot)
 {
+    setIRQState(IRQNotifyAEP, irq);
     cteInsert(cap_irq_handler_cap_new(irq), controlSlot, handlerSlot);
 
     return EXCEPTION_NONE;
@@ -169,7 +170,6 @@ invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
 {
     cte_t *irqSlot;
 
-    setIRQState(IRQNotifyAEP, irq);
     irqSlot = intStateIRQNode + irq;
     cteDeleteOne(irqSlot);
     cteInsert(cap, slot, irqSlot);
