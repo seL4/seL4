@@ -160,7 +160,7 @@ invokeIRQHandler_AckIRQ(irq_t irq)
     maskInterrupt(false, irq);
 }
 
-void invokeIRQHandler_SetMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) 
+void invokeIRQHandler_SetMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
 {
     setInterruptMode(irq, levelTrigger, polarityLow);
 }
