@@ -75,6 +75,7 @@ lookup_fp(cap_t cap, cptr_t cptr)
     return cap;
 }
 
+/** DONT_TRANSLATE */
 static inline void
 clearExMonitor_fp(void)
 {

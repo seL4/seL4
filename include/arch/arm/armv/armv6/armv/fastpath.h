@@ -17,6 +17,7 @@
 #include <plat/machine/hardware.h>
 #include <arch/machine.h>
 
+/** DONT_TRANSLATE */
 static inline void dsb_fp(void)
 {
     /*
@@ -31,6 +32,7 @@ static inline void dsb_fp(void)
 }
 
 /* Change the translation root by updating TTBR0. */
+/** DONT_TRANSLATE */
 static inline void
 setCurrentPD_fp(word_t pd_addr)
 {
@@ -43,6 +45,7 @@ setCurrentPD_fp(word_t pd_addr)
 }
 
 /* Change the current hardware ASID. */
+/** DONT_TRANSLATE */
 static inline void
 setHardwareASID_fp(hw_asid_t asid)
 {
