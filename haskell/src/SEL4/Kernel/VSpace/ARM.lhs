@@ -554,12 +554,12 @@ If the kernel receives a VM fault from the CPU, it must determine the address an
 > handleVMFault _ ARMDataAbort = do
 >     addr <- withoutFailure $ doMachineOp getFAR
 >     fault <- withoutFailure $ doMachineOp getDFSR
->     throw $ VMFault addr [0, fault .&. mask 12]
+>     throw $ VMFault addr [0, fault .&. mask 14]
 >
 > handleVMFault thread ARMPrefetchAbort = do
 >     pc <- withoutFailure $ asUser thread $ getRestartPC
 >     fault <- withoutFailure $ doMachineOp getIFSR
->     throw $ VMFault (VPtr pc) [1, fault .&. mask 12]
+>     throw $ VMFault (VPtr pc) [1, fault .&. mask 14]
 
 \subsection{Unmapping and Deletion}
 
