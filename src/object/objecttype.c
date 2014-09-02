@@ -678,8 +678,8 @@ decodeInvocation(word_t label, unsigned int length,
                                           extraCaps, buffer);
 
     case cap_irq_handler_cap:
-        return decodeIRQHandlerInvocation(label,
-                                          cap_irq_handler_cap_get_capIRQ(cap), extraCaps);
+        return decodeIRQHandlerInvocation(label, length,
+                                          cap_irq_handler_cap_get_capIRQ(cap), extraCaps, buffer);
 
     default:
         fail("Invalid cap type");

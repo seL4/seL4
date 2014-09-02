@@ -21,3 +21,30 @@ config VTX
         default y
         help
             VTX support
+
+choice
+    prompt "IRQ Controller"
+    depends on ARCH_IA32
+    default IRQ_PIC
+    help
+        Select the IRQ controller seL4 will use. Code for others may
+        still be included if needed to disable at run time
+    config IRQ_PIC
+        bool "PIC"
+        help
+            Use the legacy PIC controller
+    config IRQ_IOAPIC
+        bool "IOAPIC"
+        help
+            Use one or more IOAPIC controllers
+endchoice
+
+config MAX_NUM_IOAPIC
+    prompt "Max supported IOAPICs"
+    depends on ARCH_IA32
+    int
+    default 1
+    help
+        Configure the maximum number of IOAPIC controllers that can
+        be supported. SeL4 will detect IOAPICs regardless of whether
+        the IOAPIC will actually be used as the final IRQ controller

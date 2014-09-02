@@ -13,6 +13,7 @@ DIRECTORIES += src/plat/$(PLAT)/machine
 PLAT_C_SOURCES += machine/acpi.c \
                   machine/hardware.c \
                   machine/pic.c \
+                  machine/ioapic.c \
                   machine/pit.c \
                   machine/io.c
 ifdef DEBUG

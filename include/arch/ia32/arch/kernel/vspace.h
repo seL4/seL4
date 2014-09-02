@@ -22,6 +22,10 @@ bool_t map_kernel_window(
     pde_t*     pd,
     pte_t*     pt,
     p_region_t ndks_p_reg
+#ifdef CONFIG_IRQ_IOAPIC
+    , uint32_t num_ioapic,
+    paddr_t*   ioapic_paddrs
+#endif
 #ifdef CONFIG_IOMMU
     , uint32_t   num_drhu,
     paddr_t*   drhu_list

@@ -21,11 +21,12 @@ exception_t decodeIRQControlInvocation(word_t label, unsigned int length,
                                        cte_t *srcSlot, extra_caps_t extraCaps,
                                        word_t *buffer);
 exception_t invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot);
-exception_t decodeIRQHandlerInvocation(word_t label, irq_t irq,
-                                       extra_caps_t extraCaps);
+exception_t decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
+                                       extra_caps_t extraCaps, word_t *buffer);
 void invokeIRQHandler_AckIRQ(irq_t irq);
 void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot);
 void invokeIRQHandler_ClearIRQHandler(irq_t irq);
+void invokeIRQHandler_SetMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow);
 void deletingIRQHandler(irq_t irq);
 void deletedIRQHandler(irq_t irq);
 void handleInterrupt(irq_t irq);

@@ -40,19 +40,24 @@ extern uint32_t kernel_pd_list[CONFIG_MAX_NUM_NODES][BIT(PD_BITS)];
 /* functions exactly corresponding to abstract specification */
 
 BOOT_CODE static void
-init_irqs(cap_t root_cnode_cap, bool_t mask_legacy_irqs)
+init_irqs(cap_t root_cnode_cap, bool_t mask_irqs)
 {
     irq_t i;
 
     for (i = 0; i <= maxIRQ; i++) {
         if (i == irq_timer) {
             setIRQState(IRQTimer, i);
-        } else if (i == irq_iommu || i == 2 /* cascaded legacy PIC */) {
+        } else if (i == irq_iommu) {
             setIRQState(IRQReserved, i);
-        } else if (i >= irq_isa_min && i <= irq_isa_max)
-            if (mask_legacy_irqs)
+#ifdef CONFIG_IRQ_PIC
+        } else if (i == 2) {
+            /* cascaded legacy PIC */
+            setIRQState(IRQReserved, i);
+#endif
+        } else if (i >= irq_controller_min && i <= irq_controller_max)
+            if (mask_irqs)
                 /* Don't use setIRQState() here because it implicitly also enables */
-                /* the IRQ on the PIC which only node 0 is allowed to do. */
+                /* the IRQ on the interrupt controller which only node 0 is allowed to do. */
             {
                 intStateIRQTable[i] = IRQReserved;
             } else {

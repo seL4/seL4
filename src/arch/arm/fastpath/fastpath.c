@@ -90,6 +90,7 @@ cap_page_directory_cap_get_capPDBasePtr_np(cap_t cap)
     return (cap.words[0] & 0xffffffe0);
 }
 
+/** DONT_TRANSLATE */
 static inline void
 clearExMonitor_fp(void)
 {

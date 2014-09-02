@@ -257,7 +257,9 @@ BOOT_CODE uint32_t
 acpi_madt_scan(
     acpi_rsdt_t* acpi_rsdt,
     cpu_id_t*    cpu_list,
-    uint32_t     max_list_len
+    uint32_t     max_list_len,
+    uint32_t*    num_ioapic,
+    paddr_t*     ioapic_paddrs
 )
 {
     unsigned int entries;
@@ -271,6 +273,7 @@ acpi_madt_scan(
     acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
 
     num_cpu = 0;
+    *num_ioapic = 0;
 
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
     entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
@@ -308,6 +311,19 @@ acpi_madt_scan(
                         ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_addr,
                         ((acpi_madt_ioapic_t*)acpi_madt_header)->gsib
                     );
+                    if (*num_ioapic == CONFIG_MAX_NUM_IOAPIC) {
+                        printf("ACPI: Not recording this IOAPIC, only support %d\n", CONFIG_MAX_NUM_IOAPIC);
+                    } else {
+                        ioapic_paddrs[*num_ioapic] = ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_addr;
+                        (*num_ioapic)++;
+                    }
+                    break;
+                case MADT_ISO:
+                    printf("ACIP: MADT_ISO bus=%d source=%d gsi=%d flags=0x%x\n",
+                           ((acpi_madt_iso_t*)acpi_madt_header)->bus,
+                           ((acpi_madt_iso_t*)acpi_madt_header)->source,
+                           ((acpi_madt_iso_t*)acpi_madt_header)->gsi,
+                           ((acpi_madt_iso_t*)acpi_madt_header)->flags);
                     break;
                 default:
                     break;

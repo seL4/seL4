@@ -22,6 +22,7 @@
 #include <plat/machine/acpi.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/pic.h>
+#include <plat/machine/ioapic.h>
 
 /* addresses defined in linker script */
 /* need a fake array to get the pointer from the linker script */
@@ -70,6 +71,8 @@ typedef struct glks {
     ui_info_t    ui_info_list   [CONFIG_MAX_NUM_NODES]; /* info about userland images */
     dev_p_regs_t dev_p_regs;  /* device memory regions */
     uint32_t     apic_khz;    /* frequency of APIC/bus */
+    uint32_t     num_ioapic;  /* number of IOAPICs detected */
+    paddr_t      ioapic_paddr[CONFIG_MAX_NUM_IOAPIC];
     vesa_info_t  vesa_info;   /* vesa information given by multiboot */
     ia32_mem_region_t mem_regions[CONFIG_MAX_MEM_REGIONS]; /* memory regions as given by multiboot */
 #ifdef CONFIG_IOMMU
@@ -285,6 +288,10 @@ lift_ndks(node_id_t node_id)
                 (pde_t*)kernel_pd_list[node_id],
                 (pte_t*)kernel_pt_list[node_id],
                 ndks_p_reg
+#ifdef CONFIG_IRQ_IOAPIC
+                , glks.num_ioapic,
+                glks.ioapic_paddr
+#endif
 #ifdef CONFIG_IOMMU
                 , node_id == 0 ? glks.num_drhu : 0,
                 glks.drhu_list
@@ -355,7 +362,11 @@ try_boot_node(void)
     /* initialise the CPU */
     if (!init_node_cpu(
                 glks.apic_khz,
+#ifdef CONFIG_IRQ_IOAPIC
+                1
+#else
                 node_id != 0
+#endif
             )) {
         return false;
     }
@@ -504,6 +515,11 @@ try_boot_sys(
 
     /* remapping legacy IRQs to their correct vectors */
     pic_remap_irqs(IRQ_INT_OFFSET);
+#ifdef CONFIG_IRQ_IOAPIC
+    /* Disable the PIC so that it does not generate any interrupts. We need to
+     * do this *before* we initialize the apic */
+    pic_disable();
+#endif
 
     /* Prepare for accepting device regions from here on */
     glks.dev_p_regs.count = 0;
@@ -530,11 +546,21 @@ try_boot_sys(
 #endif
 
     /* query available CPUs from ACPI */
-    glks.num_nodes = acpi_madt_scan(acpi_rsdt, glks.cpu_list, CONFIG_MAX_NUM_NODES);
+    glks.num_nodes = acpi_madt_scan(acpi_rsdt, glks.cpu_list, CONFIG_MAX_NUM_NODES, &glks.num_ioapic, glks.ioapic_paddr);
     if (glks.num_nodes == 0) {
         printf("No CPUs detected\n");
         return false;
     }
+#ifdef CONFIG_IRQ_IOAPIC
+    if (glks.num_ioapic == 0) {
+        printf("No IOAPICs detected\n");
+        return false;
+    }
+#else
+    if (glks.num_ioapic > 0) {
+        printf("Detected %d IOAPICs, but configured to use PIC instead\n", glks.num_ioapic);
+    }
+#endif
 
     if (glks.num_nodes > cmdline_opt.max_num_nodes) {
         glks.num_nodes = cmdline_opt.max_num_nodes;
@@ -655,6 +681,11 @@ try_boot_sys(
     if (!try_boot_node()) {
         return false;
     }
+
+#ifdef CONFIG_IRQ_IOAPIC
+    /* Now that NDKS have been lifted we can access the IOAPIC and program it */
+    ioapic_init(glks.num_nodes, glks.cpu_list, glks.num_ioapic);
+#endif
 
     /* start up other CPUs and initialise their nodes */
     for (i = 1; i < glks.num_nodes; i++) {

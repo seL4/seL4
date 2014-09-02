@@ -35,6 +35,7 @@ void maskInterrupt(bool_t mask, irq_t irq);
 void ackInterrupt(irq_t irq);
 irq_t getActiveIRQ(void);
 bool_t isIRQPending(void);
+void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow);
 void resetTimer(void);
 
 void handleSpuriousIRQ(void);
