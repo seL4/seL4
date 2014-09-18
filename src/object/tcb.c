@@ -412,7 +412,6 @@ decodeReadRegisters(cap_t cap, unsigned int length, bool_t call,
                     word_t *buffer)
 {
     word_t transferArch, flags, n;
-    tcb_t* thread;
 
     if (length < 2) {
         userError("TCB ReadRegisters: Truncated message.");
@@ -434,13 +433,6 @@ decodeReadRegisters(cap_t cap, unsigned int length, bool_t call,
     }
 
     transferArch = Arch_decodeTransfer(flags >> 8);
-
-    thread = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-    if (thread == ksCurThread) {
-        userError("TCB ReadRegisters: Attempted to read our own registers.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ReadRegisters(
@@ -479,11 +471,6 @@ decodeWriteRegisters(cap_t cap, unsigned int length, word_t *buffer)
     transferArch = Arch_decodeTransfer(flags >> 8);
 
     thread = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-    if (thread == ksCurThread) {
-        userError("TCB WriteRegisters: Attempted to write our own registers.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_WriteRegisters(thread,
