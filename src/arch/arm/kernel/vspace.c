@@ -1425,11 +1425,13 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
     }
 }
 
+static const resolve_ret_t default_resolve_ret_t;
+
 static resolve_ret_t
 resolveVAddr(pde_t *pd, vptr_t vaddr)
 {
     pde_t *pde = pd + (vaddr >> 20);
-    resolve_ret_t ret;
+    resolve_ret_t ret = default_resolve_ret_t;
 
     ret.valid = true;
 
