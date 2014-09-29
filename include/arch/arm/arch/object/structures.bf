@@ -375,9 +375,9 @@ block vm_fault {
     padding 2
     field instructionFault 1
 #else
-    field FSR 12
+    field FSR 14
     field instructionFault 1
-    padding 16
+    padding 14
 #endif
     field faultType 3
 }
@@ -684,6 +684,7 @@ tagged_union pteS1 pteS1Type {
 #endif /* !ARM_HYP */
 
 -- VM attributes
+
 block vm_attributes {
     padding 30
     field armParityEnabled 1

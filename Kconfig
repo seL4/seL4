@@ -202,7 +202,7 @@ menu "seL4 System Parameters"
 
     config MAX_NUM_BOOTINFO_DEVICE_REGIONS
         int "Max number of bootinfo device regions"
-        default 200
+        default 199
 
     config MAX_NUM_BOOTINFO_UNTYPED_CAPS
         int "Max number of bootinfo untyped caps"

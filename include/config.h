@@ -55,7 +55,7 @@
 /* maximum number of device regions in bootinfo */
 /* WARNING: must match value in libsel4! */
 #ifndef CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS
-#define CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS 200
+#define CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS 199
 #endif
 
 /* maximum number of untyped caps in bootinfo */

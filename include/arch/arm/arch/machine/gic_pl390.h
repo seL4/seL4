@@ -33,6 +33,8 @@ bool_t isIRQPending(void);
 void maskInterrupt(bool_t disable, interrupt_t irq);
 /** MODIFIES: [*] */
 void ackInterrupt(irq_t irq);
+/** MODIFIES: [*] */
+static inline void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) { }
 
 /** MODIFIES: [*] */
 void initIRQController(void);

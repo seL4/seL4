@@ -452,9 +452,9 @@ The "decodeInvocation" function parses the message, determines the operation tha
 >     liftM InvokeIRQControl $
 >         decodeIRQControlInvocation label args slot $ map fst extraCaps
 > 
-> decodeInvocation label _ _ _ (IRQHandlerCap { capIRQ = irq }) extraCaps =
+> decodeInvocation label args _ _ (IRQHandlerCap { capIRQ = irq }) extraCaps =
 >     liftM InvokeIRQHandler $
->         decodeIRQHandlerInvocation label irq extraCaps
+>         decodeIRQHandlerInvocation label args irq extraCaps
 >
 > decodeInvocation label args capIndex slot (ArchObjectCap cap) extraCaps =
 >     liftM InvokeArchObject $

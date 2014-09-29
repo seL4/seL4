@@ -91,6 +91,8 @@ Arch_initFpu(void)
     /* Enable FPU / SSE / SSE2 / SSE3 / SSSE3 / SSE4 Extensions. */
     write_cr4(read_cr4() | CR4_OSFXSR);
 
-    /* Enable the FPU in general. */
-    write_cr0((read_cr0() & ~CR0_EMULATION) | CR0_MONITOR_COPROC | CR0_NUMERIC_ERROR);
+    /* Enable the FPU in general. Although leave it in a state where it will
+     * generate a fault if someone tries to use it as we implement lazy
+     * switching */
+    write_cr0((read_cr0() & ~CR0_EMULATION) | CR0_MONITOR_COPROC | CR0_NUMERIC_ERROR | CR0_TASK_SWITCH);
 }
