@@ -77,9 +77,16 @@ ifeq ($V, 2)
 	quiet =
 	Q =
 else
+ifeq ($V, 3)
+	BUILD_VERBOSE = 1
+	MAKE_SILENT =
+	quiet =
+	Q =
+else
 	MAKE_SILENT = -s
 	quiet = quiet_
 	Q = @
+endif
 endif
 endif
 
