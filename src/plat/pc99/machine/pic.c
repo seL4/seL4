@@ -85,7 +85,8 @@ bool_t pic_is_irq_pending(void)
     return irr != 0;
 }
 
-static uint16_t pic_get_isr(void) {
+static uint16_t pic_get_isr(void)
+{
     out8(PIC1_BASE, 0x0b);
     out8(PIC2_BASE, 0x0b);
     return (((uint16_t)in8(PIC2_BASE)) << 8) | in8(PIC1_BASE);
