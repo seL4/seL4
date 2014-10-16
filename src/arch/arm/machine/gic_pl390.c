@@ -85,11 +85,11 @@ struct gic_cpu_iface_map {
     uint32_t eoi;                   /*  0x010         */
     uint32_t run_priority;          /*  0x014         */
     uint32_t hi_pend;               /*  0x018         */
-    uint32_t ns_alias_bp_c;          /*  0x01C         */
-    uint32_t ns_alias_ack;             /*  0x020 GIC400 only */
-    uint32_t ns_alias_eoi;             /*  0x024 GIC400 only */
-    uint32_t ns_alias_hi_pend;         /*  0x028 GIC400 only */
-   
+    uint32_t ns_alias_bp_c;         /*  0x01C         */
+    uint32_t ns_alias_ack;          /*  0x020 GIC400 only */
+    uint32_t ns_alias_eoi;          /*  0x024 GIC400 only */
+    uint32_t ns_alias_hi_pend;      /*  0x028 GIC400 only */
+
     uint32_t res1[5];               /* [0x02C, 0x040) */
 
     uint32_t integ_en_c;            /*  0x040 PL390 only */
