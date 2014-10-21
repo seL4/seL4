@@ -265,7 +265,7 @@ allocate_bi_frame(
     BI_PTR(pptr)->num_iopt_levels = 0;
     BI_PTR(pptr)->ipcbuf_vptr = ipcbuf_vptr;
     BI_PTR(pptr)->it_cnode_size_bits = CONFIG_ROOT_CNODE_SIZE_BITS;
-    BI_PTR(pptr)->it_domain = (uint8_t)ksDomSchedule[ksDomScheduleIdx].domain;
+    BI_PTR(pptr)->it_domain = ksDomSchedule[ksDomScheduleIdx].domain;
 
     return pptr;
 }
