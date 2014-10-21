@@ -68,7 +68,7 @@ typedef struct bi {
     uint8_t       it_cnode_size_bits; /* initial thread's root CNode size (2^n slots) */
     uint32_t      num_dev_regs;       /* number of device regions */
     bi_dev_reg_t  dev_reg_list[CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS]; /* device regions */
-    uint8_t       it_domain;       /* initial thread's domain ID */
+    dom_t         it_domain;       /* initial thread's domain ID */
 } bi_t;
 
 /* adjust constants in config.h if this assert fails */
