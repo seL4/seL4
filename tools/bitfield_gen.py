@@ -25,6 +25,8 @@ import yacc
 
 import umm
 
+import bf_autocorres
+
 # Whether debugging is enabled (turn on with command line option --debug).
 DEBUG = False
 
@@ -2461,6 +2463,10 @@ if __name__ == '__main__':
                       choices=INCLUDES.keys())
     parser.add_option('--hol_defs', action='store_true', default=False)
     parser.add_option('--hol_proofs', action='store_true', default=False)
+    parser.add_option('--autocorres_defs', action='store_true', default=False,
+        help='Output function definition suitable for AutoCorres')
+    parser.add_option('--autocorres_proofs', action='store_true', default=False,
+        help='Output WP proofs suitable for AutoCorres')
     parser.add_option('--sorry_lemmas', action='store_true',
                       dest='sorry', default=False)
     parser.add_option('--prune', action='append',
@@ -2675,6 +2681,10 @@ if __name__ == '__main__':
                 e.generate_hol_proofs(options, type_map)
 
                 print >>out_file, "end"
+    elif options.autocorres_defs:
+        bf_autocorres.generate_defs(symtab, out_file)
+    elif options.autocorres_proofs:
+        bf_autocorres.generate_proofs(symtab, out_file)
     else:
         guard = re.sub(r'[^a-zA-Z0-9_]', '_', out_file.filename.upper())
         print >>out_file, "#ifndef %(guard)s\n#define %(guard)s\n" % \
