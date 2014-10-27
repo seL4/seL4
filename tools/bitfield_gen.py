@@ -2501,6 +2501,8 @@ if __name__ == '__main__':
         if len(args) <= 1:
             if options.thy_output_path is None:
                 parser.error("Theory output path was not specified")
+            if out_file == sys.stdout:
+                parser.error('Output file name must be given when generating HOL definitions or proofs')
             out_file.filename = os.path.abspath(options.thy_output_path)
 
     del parser
