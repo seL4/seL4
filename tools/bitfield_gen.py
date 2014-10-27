@@ -1728,16 +1728,18 @@ class TaggedUnion:
                     else:
                         mask = (1 << size) - 1
 
-                    field_inits.append("/* fail if user has passed bits that we will override */")
                     field_inits.append(
-                        "    assert((%s & ~0x%x) == 0);\n" % (f_value, mask))
+                        "    /* fail if user has passed bits that we will override */")
+                    field_inits.append(
+                        "    assert((%s & ~0x%x) == 0);" % (f_value, mask))
                     field_inits.append(
                         "    %s.words[%d] |= (%s & 0x%x) %s %d;" % \
                          (self.name, index, f_value, mask, shift_op, shift))
 
-                    ptr_field_inits.append("/* fail if user has passed bits that we will override */")
                     ptr_field_inits.append(
-                        "    assert((%s & ~0x%x) == 0);\n" % (f_value, mask))
+                        "    /* fail if user has passed bits that we will override */")
+                    ptr_field_inits.append(
+                        "    assert((%s & ~0x%x) == 0);" % (f_value, mask))
                     ptr_field_inits.append(
                         "    %s_ptr->words[%d] |= (%s & 0x%x) %s %d;" % \
                         (self.name, index, f_value, mask, shift_op, shift))
@@ -2313,16 +2315,18 @@ class Block:
                 else:
                     mask = (1 << size) - 1
 
-                field_inits.append("/* fail if user has passed bits that we will override */")
                 field_inits.append(
-                    "    assert((%s & ~0x%x) == 0);\n" % (field, mask))
+                    "    /* fail if user has passed bits that we will override */")
+                field_inits.append(
+                    "    assert((%s & ~0x%x) == 0);" % (field, mask))
                 field_inits.append(
                     "    %s.words[%d] |= (%s & 0x%x) %s %d;" % \
                     (self.name, index, field, mask, shift_op, shift))
 
-                ptr_field_inits.append("/* fail if user has passed bits that we will override */")
                 ptr_field_inits.append(
-                    "    assert((%s & ~0x%x) == 0);\n" % (field, mask))
+                    "    /* fail if user has passed bits that we will override */")
+                ptr_field_inits.append(
+                    "    assert((%s & ~0x%x) == 0);" % (field, mask))
                 ptr_field_inits.append(
                     "    %s_ptr->words[%d] |= (%s & 0x%x) %s %d;" % \
                     (self.name, index, field, mask, shift_op, shift))
