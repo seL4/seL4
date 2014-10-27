@@ -2505,6 +2505,9 @@ if __name__ == '__main__':
                 parser.error('Output file name must be given when generating HOL definitions or proofs')
             out_file.filename = os.path.abspath(options.thy_output_path)
 
+    if options.hol_proofs and not options.umm_types_file:
+        parser.error('--umm_types must be specified when generating HOL proofs')
+
     del parser
 
     options.output = out_file
