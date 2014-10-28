@@ -1711,7 +1711,7 @@ class TaggedUnion:
                 offset, size, high = ref.field_map[field]
 
                 if field == self.tagname:
-                    f_value = "%s_%s" % (self.name, name)
+                    f_value = "(uint%d_t)%s_%s" % (self.base, self.name, name)
                 else:
                     f_value = field
 
