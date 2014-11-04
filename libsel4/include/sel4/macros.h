@@ -17,7 +17,7 @@
  * the same size as an 'int'.
  */
 #define SEL4_FORCE_LONG_ENUM(type) \
-        _enum_pad_ ## type = (1U << ((sizeof(int)*8) - 1))
+        _enum_pad_ ## type = (1U << ((sizeof(int)*8) - 1)) - 1
 
 #ifndef CONST
 #define CONST        __attribute__((__const__))

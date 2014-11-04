@@ -67,7 +67,7 @@ typedef struct bi {
     paddr_t       ut_obj_paddr_list    [CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* physical address of each UT cap */
     uint8_t       ut_obj_size_bits_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* size (2^n) bytes of each UT cap */
     uint8_t       it_cnode_size_bits; /* initial thread's root CNode size (2^n slots) */
-    uint8_t       it_domain;       /* initial thread's domain ID */
+    dom_t         it_domain;       /* initial thread's domain ID */
 } bi_t;
 
 /* adjust constants in config.h if this assert fails */

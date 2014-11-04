@@ -46,7 +46,6 @@ exception_t decodeReadRegisters(cap_t cap, unsigned int length, bool_t call,
 exception_t decodeWriteRegisters(cap_t cap, unsigned int length, word_t *buffer);
 exception_t decodeTCBConfigure(cap_t cap, unsigned int length,
                                cte_t* slot, extra_caps_t rootCaps, word_t *buffer);
-exception_t decodeSetDomainAttributes(cap_t cap, unsigned int length, word_t *buffer);
 exception_t decodeSetPriority(cap_t cap, unsigned int length, word_t *buffer);
 exception_t decodeSetIPCBuffer(cap_t cap, unsigned int length,
                                cte_t* slot, extra_caps_t extraCaps, word_t *buffer);

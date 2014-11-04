@@ -52,7 +52,7 @@ typedef struct {
     seL4_Word         untypedPaddrList   [CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* physical address of each untyped cap */
     uint8_t           untypedSizeBitsList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* size (2^n) bytes of each untyped cap */
     uint8_t           initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
-    uint8_t           initThreadDomain; /* Initial thread's domain ID */
+    uint32_t          initThreadDomain; /* Initial thread's domain ID */
 } seL4_BootInfo;
 
 /* function declarations */

@@ -69,10 +69,33 @@ seL4_GetBadge(int i)
     };
 }
 
+static inline seL4_CPtr
+seL4_GetCap(int i)
+{
+    return (seL4_CPtr)seL4_GetIPCBuffer()->caps_or_badges[i];
+}
+
 static inline void
 seL4_SetCap(int i, seL4_CPtr cptr)
 {
     seL4_GetIPCBuffer()->caps_or_badges[i] = (seL4_Word)cptr;
+}
+
+static inline void
+seL4_GetCapReceivePath(seL4_CPtr* receiveCNode, seL4_CPtr* receiveIndex, seL4_Word* receiveDepth)
+{
+    seL4_IPCBuffer* ipcbuffer = seL4_GetIPCBuffer();
+    if (receiveCNode != 0) {
+        *receiveCNode = ipcbuffer->receiveCNode;
+    }
+
+    if (receiveIndex != 0) {
+        *receiveIndex = ipcbuffer->receiveIndex;
+    }
+
+    if (receiveDepth != 0) {
+        *receiveDepth = ipcbuffer->receiveDepth;
+    }
 }
 
 static inline void

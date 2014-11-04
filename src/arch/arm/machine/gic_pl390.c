@@ -33,7 +33,7 @@
 #define SPECIAL_IRQ_START 1020
 #define IRQ_NONE          1023
 
-/* Memory map for GIC distributer */
+/* Memory map for GIC distributor */
 struct gic_dist_map {
     uint32_t enable;                /* 0x000 */
     uint32_t ic_type;               /* 0x004 */
@@ -85,24 +85,30 @@ struct gic_cpu_iface_map {
     uint32_t eoi;                   /*  0x010         */
     uint32_t run_priority;          /*  0x014         */
     uint32_t hi_pend;               /*  0x018         */
-    uint32_t alias_nsbp_c;          /*  0x01C         */
+    uint32_t ns_alias_bp_c;         /*  0x01C         */
+    uint32_t ns_alias_ack;          /*  0x020 GIC400 only */
+    uint32_t ns_alias_eoi;          /*  0x024 GIC400 only */
+    uint32_t ns_alias_hi_pend;      /*  0x028 GIC400 only */
 
-    uint32_t res1[8];               /* [0x020, 0x040) */
+    uint32_t res1[5];               /* [0x02C, 0x040) */
 
-    uint32_t integ_en_c;            /*  0x040         */
-    uint32_t interrupt_out;         /*  0x044         */
-    uint32_t res2[2];               /* [0x048, 0x050) */
+    uint32_t integ_en_c;            /*  0x040 PL390 only */
+    uint32_t interrupt_out;         /*  0x044 PL390 only */
+    uint32_t res2[2];               /* [0x048, 0x050)    */
 
-    uint32_t match_c;               /*  0x050         */
-    uint32_t enable_c;              /*  0x054         */
+    uint32_t match_c;               /*  0x050 PL390 only */
+    uint32_t enable_c;              /*  0x054 PL390 only */
 
-    uint32_t res3[41];              /* [0x58, 0x0FC)  */
+    uint32_t res3[30];              /* [0x058, 0x0FC)  */
+    uint32_t active_priority[4];    /* [0x0D0, 0xDC] GIC400 only */
+    uint32_t ns_active_priority[4]; /* [0xE0,0xEC] GIC400 only */
+    uint32_t res4[3];
 
     uint32_t cpu_if_ident;          /*  0x0FC         */
-    uint32_t res4[943];             /* [0x100. 0xFBC) */
+    uint32_t res5[948];             /* [0x100. 0xFC0) */
 
-    uint32_t periph_id[8];          /* [0xFC0, 9xFF0) */
-    uint32_t component_id[4];       /* [0xFF0, 0xFFF] */
+    uint32_t periph_id[8];          /* [0xFC0, 9xFF0) PL390 only */
+    uint32_t component_id[4];       /* [0xFF0, 0xFFF] PL390 only */
 };
 
 #ifndef GIC_PL390_DISTRIBUTOR_PPTR
@@ -225,7 +231,10 @@ dist_init(void)
         gic_dist->priority[i / 4] = 0x0;
     }
 
-    /* reset int target to cpu 0 only */
+    /*
+     * reset int target to cpu 0
+     * (Should really query which processor we're running on and use that)
+     */
     for (i = 0; i < nirqs; i += 4) {
         gic_dist->targets[i / 4] = TARGET_CPU0_ALLINT;
     }
@@ -250,7 +259,7 @@ cpu_iface_init(void)
 {
     uint32_t i;
 
-    /* the registers are banked per CPU, need to clear them */
+    /* For non-Exynos4, the registers are banked per CPU, need to clear them */
     gic_dist->enable_clr[0] = IRQ_SET_ALL;
     gic_dist->pending_clr[0] = IRQ_SET_ALL;
     gic_dist->priority[0] = 0x0;
@@ -265,10 +274,9 @@ cpu_iface_init(void)
     gic_cpuiface->pri_msk_c = 0x000000f0;
     gic_cpuiface->pb_c = 0x00000003;
 
-    while ( (i = gic_cpuiface->int_ack) != IRQ_NONE) {
+    while (((i = gic_cpuiface->int_ack) & IRQ_MASK) != IRQ_NONE) {
         gic_cpuiface->eoi = i;
     }
-
     gic_cpuiface->icontrol = 1;
 }
 
@@ -285,10 +293,11 @@ initIRQController(void)
 
 
 /*
- * The only sane way to get an GIC IRQ number that can be properly ACKED later is
- * through the int_ack register. Unfortunately, reading this register changes the
- * interrupt state to pending so future reads will not return the same value
- * For this reason, we have a global variable to store the IRQ number.
+ * The only sane way to get an GIC IRQ number that can be properly
+ * ACKED later is through the int_ack register. Unfortunately, reading
+ * this register changes the interrupt state to pending so future
+ * reads will not return the same value For this reason, we have a
+ * global variable to store the IRQ number.
  */
 static uint32_t active_irq = IRQ_NONE;
 

@@ -315,8 +315,6 @@ copyGlobalMappings(pde_t *newPD)
     }
 }
 
-#define intSize (wordBits / 8)
-
 word_t * PURE
 lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
@@ -696,9 +694,6 @@ isValidVTableRoot(cap_t cap)
 {
     return cap_get_capType(cap) == cap_page_directory_cap;
 }
-
-#define wSize (capTransferDataSize + msgMaxLength + msgMaxExtraCaps + 2)
-#define bSize (wSize * intSize)
 
 exception_t
 checkValidIPCBuffer(vptr_t vptr, cap_t cap)
