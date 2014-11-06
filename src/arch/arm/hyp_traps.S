@@ -136,6 +136,8 @@ BEGIN_FUNC(arm_hyp_trap)
     and lr, lr, #(HSREC_MASK)
     cmp lr, #(HSREC_SVC << HSREC_SHIFT)
     beq arm_syscall
+    cmp lr, #(HSREC_HVC << HSREC_SHIFT)
+    beq arm_syscall
     cmp lr, #(HSREC_PREFETCH_ABORT << HSREC_SHIFT)
     beq arm_prefetch_abort
     cmp lr, #(HSREC_DATA_ABORT << HSREC_SHIFT)
