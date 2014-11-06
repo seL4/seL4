@@ -23,7 +23,7 @@
 /* NOTE: Regions are not allowed to be adjacent! */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
     /* 2 GiB */
-    { /* .start = */ 0x40000000, /* .end = */ 0xC0000000 }
+    { /* .start = */ 0x60000000, /* .end = */ 0xC0000000 }
 };
 
 BOOT_CODE int
@@ -39,6 +39,7 @@ get_avail_p_reg(unsigned int i)
 }
 
 const p_region_t BOOT_RODATA dev_p_regs[] = {
+    { /* ,start */ 0x40000000            , /* .end */ 0x60000000                                },
     { /* ,start */ SECURE_FIRMWARE       , /* .end */ SECURE_FIRMWARE        + (16 << PAGE_BITS) },
     { /* .start */ AUDSS_PADDR           , /* .end */ AUDSS_PADDR            + (1 << PAGE_BITS) },
     { /* .start */ AUDIO_GPIO_PADDR      , /* .end */ AUDIO_GPIO_PADDR       + (1 << PAGE_BITS) },
