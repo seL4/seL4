@@ -37,3 +37,7 @@ haskell/doc/figures/truncation.pdf
 # haskell generated files
 **.lhs-boot
 haskell/dist
+
+# Generated headers
+libsel4/arch_include/arm/sel4/arch/invocation.h
+libsel4/arch_include/ia32/sel4/arch/invocation.h
