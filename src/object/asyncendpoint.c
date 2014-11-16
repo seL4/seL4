@@ -198,7 +198,7 @@ completeAsyncIPC(async_endpoint_t *aepptr, tcb_t *tcb)
         badge = async_endpoint_ptr_get_aepMsgIdentifier(aepptr);
         setRegister(tcb, badgeRegister, badge);
     } else {
-        fail("tried to complete async ipc with unactive aep");
+        fail("tried to complete async ipc with inactive AEP");
     }
 }
 
