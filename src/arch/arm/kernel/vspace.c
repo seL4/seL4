@@ -1749,7 +1749,7 @@ decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
 
         /* Check sanity of arguments */
         if (end <= start) {
-            userError("PD FLush: Invalid range");
+            userError("PD Flush: Invalid range");
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 1;
             return EXCEPTION_SYSCALL_ERROR;
