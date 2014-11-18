@@ -40,7 +40,7 @@
 #define PAR32      "p15, 0, %0, c7, c4, 0"
 #define PAR64      "p15, 0, %Q, %R, c7"
 
-#define SCTLR_DEFAULT 0xc5187e
+#define SCTLR_DEFAULT 0xc5187c
 #define ACTLR_DEFAULT 0x40
 
 #define VGIC_HCR_EOI_INVALID_COUNT(hcr) (((hcr) >> 27) & 0x1f)
