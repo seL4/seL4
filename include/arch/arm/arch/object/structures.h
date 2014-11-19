@@ -570,4 +570,33 @@ isArchCap(cap_t cap)
     return (cap_get_capType(cap) % 2);
 }
 
+/* We need to supply different type getters for the bitfield generated PTE type
+ * because there is an implicit third type that PTEs can be. If the type bit is
+ * set but the reserved bit is not set, the type of the PTE is invalid, not a
+ * large PTE.
+ */
+enum { pte_pte_invalid = 2 };
+ 
+static inline uint32_t __attribute__((__const__))
+pte_get_pteType(pte_t pte) {
+    if (pte_get_pteSize(pte) == pte_pte_small) {
+        return pte_pte_small;
+    } else if (pte_pte_large_get_reserved(pte) == 1) {
+        return pte_pte_large;
+    } else {
+        return pte_pte_invalid;
+    }
+}
+
+static inline uint32_t __attribute__((__pure__))
+pte_ptr_get_pteType(pte_t *pte_ptr) {
+    if (pte_ptr_get_pteSize(pte_ptr) == pte_pte_small) {
+        return pte_pte_small;
+    } else if (pte_pte_large_ptr_get_reserved(pte_ptr) == 1) {
+        return pte_pte_large;
+    } else {
+        return pte_pte_invalid;
+    }
+}
+
 #endif

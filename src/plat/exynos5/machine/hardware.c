@@ -295,7 +295,8 @@ map_kernel_devices(void)
         VMKernelOnly,
         vm_attributes_new(
             false, /* armParityEnabled */
-            false  /* armPageCacheable */
+            false, /* armPageCacheable */
+            false  /* armExecuteNever */
         )
     );
 
@@ -306,7 +307,8 @@ map_kernel_devices(void)
         VMKernelOnly,
         vm_attributes_new(
             false, /* armParityEnabled */
-            false  /* armPageCacheable */
+            false, /* armPageCacheable */
+            false  /* armExecuteNever */
         )
     );
     map_kernel_frame(
@@ -315,7 +317,8 @@ map_kernel_devices(void)
         VMKernelOnly,
         vm_attributes_new(
             false, /* armParityEnabled */
-            false  /* armPageCacheable */
+            false, /* armPageCacheable */
+            false  /* armExecuteNever */
         )
     );
 
@@ -327,7 +330,8 @@ map_kernel_devices(void)
         VMKernelOnly,
         vm_attributes_new(
             false, /* armParityEnabled */
-            false  /* armPageCacheable */
+            false, /* armPageCacheable */
+            false  /* armExecuteNever */
         )
     );
 #endif /* DEBUG */
