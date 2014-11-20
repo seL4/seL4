@@ -433,12 +433,14 @@ The following types are Haskell representations of an entry in an ARMv6 page tab
 >         pdeDomain :: Word,
 >         pdeCacheable :: Bool,
 >         pdeGlobal :: Bool,
+>         pdeExecuteNever :: Bool,
 >         pdeRights :: VMRights }
 >     | SuperSectionPDE {
 >         pdeFrame :: PAddr,
 >         pdeParity :: Bool,
 >         pdeCacheable :: Bool,
 >         pdeGlobal :: Bool,
+>         pdeExecuteNever :: Bool,
 >         pdeRights :: VMRights }
 >     deriving (Show, Eq)
 
@@ -448,18 +450,20 @@ The following types are Haskell representations of an entry in an ARMv6 page tab
 >     (fromIntegral table .&. 0xfffffc00) .|.
 >     (if parity then bit 9 else 0) .|.
 >     ((domain .&. 0xf) `shiftL` 5)
-> wordFromPDE (SectionPDE frame parity domain cacheable global rights) = 2 .|.
+> wordFromPDE (SectionPDE frame parity domain cacheable global xn rights) = 2 .|.
 >     (fromIntegral frame .&. 0xfff00000) .|.
 >     (if parity then bit 9 else 0) .|.
 >     (if cacheable then bit 2 .|. bit 3 else 0) .|.
+>     (if xn then bit 4 else 0) .|.
 >     ((domain .&. 0xf) `shiftL` 5) .|.
 >     (if global then 0 else bit 17) .|.
 >     (fromIntegral $ fromEnum rights `shiftL` 10)
-> wordFromPDE (SuperSectionPDE frame parity cacheable global rights) = 2 .|.
+> wordFromPDE (SuperSectionPDE frame parity cacheable global xn rights) = 2 .|.
 >     bit 18 .|.
 >     (fromIntegral frame .&. 0xff000000) .|.
 >     (if parity then bit 9 else 0) .|.
 >     (if cacheable then bit 2 .|. bit 3 else 0) .|.
+>     (if xn then bit 4 else 0) .|.
 >     (if global then 0 else bit 17) .|.
 >     (fromIntegral $ fromEnum rights `shiftL` 10)
 
@@ -469,46 +473,30 @@ The following types are Haskell representations of an entry in an ARMv6 page tab
 >         pteFrame :: PAddr,
 >         pteCacheable :: Bool,
 >         pteGlobal :: Bool,
+>         pteExecuteNever :: Bool,
 >         pteRights :: VMRights }
 >     | SmallPagePTE {
 >         pteFrame :: PAddr,
 >         pteCacheable :: Bool,
 >         pteGlobal :: Bool,
+>         pteExecuteNever :: Bool,
 >         pteRights :: VMRights }
 >     deriving (Show, Eq)
 
 > wordFromPTE :: PTE -> Word
 > wordFromPTE InvalidPTE = 0
-
-\iffalse
-#ifdef PLATFORM_QEmu
-
-> wordFromPTE (LargePagePTE frame cacheable _ rights) = 1 .|.
->     (fromIntegral frame .&. 0xffff0000) .|.
->     (if cacheable then bit 2 .|. bit 3 else 0) .|.
->     (fromIntegral $ fromEnum rights * 0x55 `shiftL` 4)
-> wordFromPTE (SmallPagePTE frame cacheable _ rights) = 2 .|.
->     (fromIntegral frame .&. 0xfffff000) .|.
->     (if cacheable then bit 2 .|. bit 3 else 0) .|.
->     (fromIntegral $ fromEnum rights * 0x55 `shiftL` 4)
-
-#else
-\fi
-
-> wordFromPTE (LargePagePTE frame cacheable global rights) = 1 .|.
+> wordFromPTE (LargePagePTE frame cacheable global xn rights) = 1 .|.
 >     (fromIntegral frame .&. 0xffff0000) .|.
 >     (if cacheable then bit 2 .|. bit 3 else 0) .|.
 >     (if global then 0 else bit 11) .|.
+>     (if xn then bit 15 else 0) .|.
 >     (fromIntegral $ fromEnum rights `shiftL` 4)
-> wordFromPTE (SmallPagePTE frame cacheable global rights) = 2 .|.
+> wordFromPTE (SmallPagePTE frame cacheable global xn rights) = 2 .|.
 >     (fromIntegral frame .&. 0xfffff000) .|.
+>     (if xn then 1 else 0) .|.
 >     (if cacheable then bit 2 .|. bit 3 else 0) .|.
 >     (if global then 0 else bit 11) .|.
 >     (fromIntegral $ fromEnum rights `shiftL` 4)
-
-\iffalse
-#endif
-\fi
 
 > data VMRights
 >     = VMNoAccess
@@ -518,7 +506,7 @@ The following types are Haskell representations of an entry in an ARMv6 page tab
 >     deriving (Show, Eq, Enum)
 
 > data VMAttributes = VMAttributes {
->     armPageCacheable, armParityEnabled :: Bool }
+>     armPageCacheable, armParityEnabled, armExecuteNever :: Bool }
 
 ARM page directories and page tables occupy four frames and one quarter of a frame, respectively.
 
