@@ -175,7 +175,7 @@ then flushes the kernel's mapping from the virtually-indexed caches.
 
 > clearMemory :: PPtr Word -> Int -> MachineMonad ()
 > clearMemory ptr byteLength = do
->     let wordSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>     let wordSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >     let ptr' = PPtr $ fromPPtr ptr
 >     let ptrs = [ptr', ptr' + wordSize .. ptr' + fromIntegral byteLength - 1]
 >     mapM_ (\p -> storeWord p 0) ptrs
@@ -205,7 +205,7 @@ caches must be done separately.
 
 > clearMemoryVM :: PPtr Word -> Int -> MachineMonad ()
 > clearMemoryVM ptr bits = do
->     let wordSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>     let wordSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >     let ptr' = PPtr $ fromPPtr ptr
 >     let ptrs = [ptr', ptr' + wordSize .. ptr' + 1 `shiftL` bits - 1]
 >     mapM_ (\p -> storeWordVM p 0) ptrs

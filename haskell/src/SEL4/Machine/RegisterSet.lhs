@@ -44,7 +44,7 @@ The architecture must define two types: one for the type of the machine's word, 
 The type "Word" represents the native word size of the modelled machine. It must be an instance of the type classes that allow bitwise arithmetic, use as an integer, use as a foreign type (for the external simulator interface), and conversion to a string.
 
 > newtype Word = Word Arch.Word
->     deriving (Eq, Ord, Enum, Real, Num, Bits, Integral, Bounded, Storable, Show)
+>     deriving (Eq, Ord, Enum, Real, Num, Bits, FiniteBits, Integral, Bounded, Storable, Show)
 
 \subsubsection{Register Names}
 
@@ -71,10 +71,10 @@ Also, these types derive "Num", which requires a GHC extension.
 The types defined here are used for kernel and user pointers. Depending on the architecture, kernel pointers may either be unmodified physical pointers, or virtual pointers into a region that is direct-mapped (with a fixed offset) to physical memory. Note that another pointer type, "PAddr", is defined by the "SEL4.Machine.Hardware" module in \autoref{sec:machine.hardware}; it always represents a physical pointer, and may or may not be equivalent to "PPtr a".
 
 > newtype PPtr a = PPtr { fromPPtr :: Word }
->         deriving (Show, Eq, Num, Bits, Ord, Enum, Bounded)
+>         deriving (Show, Eq, Num, Bits, FiniteBits, Ord, Enum, Bounded)
 
 > newtype VPtr = VPtr { fromVPtr :: Word }
->         deriving (Show, Eq, Num, Bits, Ord, Enum, Bounded)
+>         deriving (Show, Eq, Num, Bits, FiniteBits, Ord, Enum, Bounded)
 
 \subsubsection{User-level Context}
 

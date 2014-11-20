@@ -45,7 +45,7 @@
 > type UserText = Map.Map PPtr Instruction
 
 > intSize :: Word
-> intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+> intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 
 > onMachine :: State H.MachineState () -> IO ()
 > onMachine program = do

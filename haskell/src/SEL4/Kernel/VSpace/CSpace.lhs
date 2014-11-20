@@ -37,7 +37,7 @@ This module contains definitions of the VSpace functions for platforms that do n
 >         threadRoot <- withoutFailure $ getSlotCap threadRootSlot
 
 >         let cptr = CPtr $ fromVPtr vptr
->         let bits = bitSize cptr
+>         let bits = finiteBitSize cptr
 >         (slot,endBits) <-
 >             resolveAddressBits threadRoot cptr bits
 >         cap <- withoutFailure $ getSlotCap slot

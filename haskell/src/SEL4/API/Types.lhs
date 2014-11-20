@@ -130,7 +130,7 @@ The priority of a thread is represented by an 8-bit unsigned integer.
 The type "CPtr" is a reference to a capability in a user-level thread's capability space; that is, a \emph{capability pointer}.
 
 > newtype CPtr = CPtr { fromCPtr :: Word }
->         deriving (Show, Eq, Num, Bits, Ord, Bounded)
+>         deriving (Show, Eq, Num, Bits, FiniteBits, Ord, Bounded)
 
 \subsection{Message Parameters}
 

@@ -158,7 +158,7 @@ This function is called once to allocate a root-level CNode and make its slots a
 >     rootCNCap <- doKernelOp $
 >         createObject (fromAPIType CapTableObject) frame levelBits
 >     let rootCNCap' = rootCNCap {
->             capCNodeGuardSize = bitSize frame - pageBits - levelBits }
+>             capCNodeGuardSize = finiteBitSize frame - pageBits - levelBits }
 >     rootSlots <- mapM (\n -> doKernelOp $ do
 >         slot <- locateSlot (capCNodePtr rootCNCap') n
 >         let cptr = CPtr $ n `shiftL` pageBits
@@ -314,7 +314,7 @@ The kernel is bootstrapped by calling "initKernel". The arguments are the addres
 Define some useful constants.
 
 >         let pageSize = bit pageBits
->         let wordSize = bitSize entry
+>         let wordSize = finiteBitSize entry
 
 Determine the available memory regions.
 
@@ -452,7 +452,7 @@ Create empty regions corresponding to any free L1 frames.
 The boot data page is filled in.
 
 >         let bootInfoWords = wordsFromBootInfo bootInfo
->         let intSize = bitSize (undefined::Word) `div` 8
+>         let intSize = finiteBitSize (undefined::Word) `div` 8
 >         assert (length bootInfoWords * intSize < 1 `shiftL` pageBits) $
 >             "Boot info must fit in one page: " ++ show bootInfo
 >         zipWithM_ storeWordUser
@@ -578,7 +578,7 @@ Given the base and top addresses of a contiguous region of unallocated memory, t
 > makeBlockList :: PAddr -> PAddr -> [(PAddr, Int)]
 > makeBlockList s e = returnVal result
 >     where
->         n = bitSize s
+>         n = finiteBitSize s
 >         sizes = [0 .. n - 1]
 >         makeLowBlock ((start, end), xs, ys) b =
 >             if start `testBit` b && start <= end

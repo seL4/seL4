@@ -79,7 +79,7 @@ The second argument specifies the size of the object, for the types for which th
 The value of this argument is the base 2 logarithm of the actual required size. The unit depends on the object type: one byte for untyped memory objects, the architecture's minimum page size for data frames, and one capability slot for CNodes.
 
 >     let userObjSize = fromIntegral userObjSizeW
->     rangeCheck userObjSize 0 $ bitSize nullPointer - 2 
+>     rangeCheck userObjSize 0 $ finiteBitSize nullPointer - 2 
 
 The kernel does not allow creation of CNodes containing only one entry; this is done to avoid non-terminating loops in capability lookup. Note that it is possible for a single entry CNode to translate bits using its guard; this is not allowed, however, to avoid having to check for it during capability lookups.
 

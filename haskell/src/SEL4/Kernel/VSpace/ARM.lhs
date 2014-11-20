@@ -277,7 +277,7 @@ The CSpace root should resolve the right number of bits for its slots to cover t
 >     assert (capCNodeGuard cRoot == 0) $
 >         "populateInitialRoot: CSpace root guard must be 0"
 >     assert (capCNodeBits cRoot + capCNodeGuardSize cRoot + pageBits ==
->             bitSize (undefined::Word)) $
+>             finiteBitSize (undefined::Word)) $
 >         "populateInitialRoot: CSpace region must match page table region"
 
 Any frame capabilities present in the node are mapped into the VSpace.

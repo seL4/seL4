@@ -401,7 +401,7 @@ Each entry in the domain schedule specifies a domain and a length (a number of t
 The following function selects one of two alternatives depending on the size of the machine word (32 or 64 bits).
 
 > wordSizeCase :: a -> a -> a
-> wordSizeCase a b = case bitSize (undefined::Word) of
+> wordSizeCase a b = case finiteBitSize (undefined::Word) of
 >         32 -> a
 >         64 -> b
 >         _ -> error "Unknown word size"

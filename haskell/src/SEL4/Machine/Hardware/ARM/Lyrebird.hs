@@ -25,7 +25,7 @@ data IRQ = TimerInterrupt
     deriving (Enum, Bounded, Ord, Ix, Eq, Show)
 
 newtype PAddr = PAddr { fromPAddr :: Word }
-    deriving (Show, Eq, Ord, Bounded, Real, Enum, Integral, Num, Bits)
+    deriving (Show, Eq, Ord, Bounded, Real, Enum, Integral, Num, Bits, FiniteBits)
 
 ptrFromPAddr :: PAddr -> PPtr a
 ptrFromPAddr (PAddr addr) = PPtr addr

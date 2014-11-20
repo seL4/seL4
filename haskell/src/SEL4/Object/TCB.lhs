@@ -456,7 +456,7 @@ The "setMRs" function returns the number of words of message data successfully t
 
 > setMRs :: PPtr TCB -> Maybe (PPtr Word) -> [Word] -> Kernel Word
 > setMRs thread buffer messageData = do
->         let intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >         let hardwareMRs = msgRegisters
 >         let bufferMRs = case buffer of
 >                 Just bufferPtr ->
@@ -475,7 +475,7 @@ The "setMRs" function returns the number of words of message data successfully t
 > getMRs :: PPtr TCB -> Maybe (PPtr Word) -> MessageInfo ->
 >         Kernel [Word]
 > getMRs thread buffer info = do
->         let intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >         let hardwareMRs = msgRegisters
 >         hardwareMRValues <- asUser thread $ mapM getRegister hardwareMRs
 >         bufferMRValues <- case buffer of
@@ -496,7 +496,7 @@ This function's first argument is the maximum number of message registers to cop
 >            PPtr TCB -> Maybe (PPtr Word) ->
 >            Word -> Kernel Word
 > copyMRs sender sendBuf receiver recvBuf n = do
->         let intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >         let hardwareMRs = take (fromIntegral n) msgRegisters
 >         forM hardwareMRs $ \r -> do
 >             v <- asUser sender $ getRegister r
@@ -517,7 +517,7 @@ The following functions read and set the extra capability fields of the IPC buff
 > getExtraCPtrs :: Maybe (PPtr Word) -> MessageInfo ->
 >         Kernel [CPtr]
 > getExtraCPtrs buffer (MI { msgExtraCaps = count }) = do
->         let intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >         case buffer of
 >             Just bufferPtr -> do
 >                 let offset = msgMaxLength+1
@@ -540,7 +540,7 @@ mapM (getExtraCPtr buffer) [0..count-1]
 
 > getExtraCPtr :: PPtr Word -> Int -> Kernel CPtr
 > getExtraCPtr buffer n = do
->         let intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >         let ptr = buffer + bufferCPtrOffset + 
 >                   PPtr ((fromIntegral n) * intSize)
 >         cptr <- loadWordUser ptr
@@ -550,14 +550,14 @@ Write the unwrapped badge into the IPC buffer for cap n.
 
 > setExtraBadge :: PPtr Word -> Word -> Int -> Kernel ()
 > setExtraBadge buffer badge n = do
->         let intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >         let badgePtr = buffer + bufferCPtrOffset + 
 >                        PPtr ((fromIntegral n) * intSize)
 >         storeWordUser badgePtr badge
 
 > bufferCPtrOffset :: PPtr Word
 > bufferCPtrOffset = 
->         let intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 >         in PPtr ((msgMaxLength+2)*intSize)
 
 \subsection{Creating and Destroying the Caller Capability}

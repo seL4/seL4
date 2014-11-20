@@ -111,6 +111,7 @@ The ARM platform presently does not require any additional interrupt control cal
 
 > data InterruptControl
 > instance Show InterruptControl
+>     where show _ = "Uninhabited type: InterruptControl"
 
 \subsection{Additional Register Subsets}
 

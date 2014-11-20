@@ -312,7 +312,7 @@ Endpoint badges can never be changed once a nonzero badge is set; if the existin
 The total of the guard size and the radix of the node cannot exceed the number of bits to be resolved in the entire address space. This prevents an overflow in the encoding used for CNode capabilities in the ARM implementation. Note that a CNode capability violating this restriction could never be used to look up a capability, so nothing is lost by enforcing it on all platforms.
 
 > updateCapData _ w cap@(CNodeCap {})
->     | guardSize + capCNodeBits cap > bitSize w = NullCap
+>     | guardSize + capCNodeBits cap > finiteBitSize w = NullCap
 >     | otherwise = cap {
 >         capCNodeGuard = guard,
 >         capCNodeGuardSize = guardSize }
@@ -322,11 +322,11 @@ The total of the guard size and the radix of the node cannot exceed the number o
 >         guardSize = fromIntegral $ (w `shiftR` rightsBits) .&.
 >             mask guardSizeBits
 >         rightsBits = 3
->         guardBits = case bitSize w of
+>         guardBits = case finiteBitSize w of
 >             32 -> 18
 >             64 -> 48
 >             _ -> error "Unknown word size"
->         guardSizeBits = case bitSize w of
+>         guardSizeBits = case finiteBitSize w of
 >             32 -> 5
 >             64 -> 6
 >             _ -> error "Unknown word size"

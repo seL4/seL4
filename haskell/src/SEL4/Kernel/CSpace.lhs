@@ -80,7 +80,7 @@ reported as faults.
 > lookupSlotForThread thread capptr = do
 >         threadRootSlot <- withoutFailure $ getThreadCSpaceRoot thread
 >         threadRoot <- withoutFailure $ getSlotCap threadRootSlot
->         let bits = bitSize $ fromCPtr capptr
+>         let bits = finiteBitSize $ fromCPtr capptr
 >         (s, _) <- resolveAddressBits threadRoot capptr bits
 >         return s
 
@@ -90,7 +90,7 @@ When a pager is manipulating a capability space using a system call, the root an
 >         Bool -> Capability -> CPtr -> Int ->
 >         KernelF SyscallError (PPtr CTE)
 > lookupSlotForCNodeOp isSource root@(CNodeCap {}) capptr depth = do
->     rangeCheck depth 1 $ bitSize capptr
+>     rangeCheck depth 1 $ finiteBitSize capptr
 >     lookupErrorOnFailure isSource $ do
 >         result <- resolveAddressBits root capptr depth
 >         case result of
