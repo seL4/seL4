@@ -75,9 +75,9 @@ map_kernel_devices(void)
         DMTIMER0_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
-            false, /* armPageCacheable */
-            false  /* armExecuteNever */
+            false  /* armPageCacheable */
         )
     );
 
@@ -87,9 +87,9 @@ map_kernel_devices(void)
         INTC_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
-            false, /* armPageCacheable */
-            false  /* armExecuteNever */
+            false  /* armPageCacheable */
         )
     );
 
@@ -100,9 +100,9 @@ map_kernel_devices(void)
         UART0_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
-            false, /* armPageCacheable */
-            false  /* armExecuteNever */
+            false  /* armPageCacheable */
         )
     );
 #endif
