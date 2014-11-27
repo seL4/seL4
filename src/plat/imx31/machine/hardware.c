@@ -228,6 +228,7 @@ map_kernel_devices(void)
         EPIT_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -239,6 +240,7 @@ map_kernel_devices(void)
         AVIC_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -250,6 +252,7 @@ map_kernel_devices(void)
         L2CC_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -262,6 +265,7 @@ map_kernel_devices(void)
         UART_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )

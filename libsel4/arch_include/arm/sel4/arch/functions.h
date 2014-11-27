@@ -85,15 +85,15 @@ static inline void
 seL4_GetCapReceivePath(seL4_CPtr* receiveCNode, seL4_CPtr* receiveIndex, seL4_Word* receiveDepth)
 {
     seL4_IPCBuffer* ipcbuffer = seL4_GetIPCBuffer();
-    if (receiveCNode != 0) {
+    if (receiveCNode != (void*)0) {
         *receiveCNode = ipcbuffer->receiveCNode;
     }
 
-    if (receiveIndex != 0) {
+    if (receiveIndex != (void*)0) {
         *receiveIndex = ipcbuffer->receiveIndex;
     }
 
-    if (receiveDepth != 0) {
+    if (receiveDepth != (void*)0) {
         *receiveDepth = ipcbuffer->receiveDepth;
     }
 }

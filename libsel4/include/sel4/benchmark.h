@@ -29,7 +29,7 @@ seL4_BenchmarkDumpFullLog()
         uint32_t requested = chunk > MAX_IPC_BUFFER ? MAX_IPC_BUFFER : chunk;
         uint32_t recorded = seL4_BenchmarkDumpLog(j, requested);
         for (uint32_t i = 0; i < recorded; i++) {
-            printf("%u ", seL4_GetMR(i));
+            printf("%u\t", seL4_GetMR(i));
         }
         printf("\n");
         /* we filled the log buffer */

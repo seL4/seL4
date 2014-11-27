@@ -294,6 +294,7 @@ map_kernel_devices(void)
         MCT_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -305,6 +306,7 @@ map_kernel_devices(void)
         GIC_CONTROLLER_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -314,6 +316,7 @@ map_kernel_devices(void)
         GIC_DISTRIBUTOR_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -326,6 +329,7 @@ map_kernel_devices(void)
         UART_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )

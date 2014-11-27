@@ -122,7 +122,8 @@ map_it_frame_cap(cap_t frame_cap)
                       0, /* TEX = 0 */
                       APFromVMRights(VMReadWrite),
                       1, /* cacheable */
-                      1  /* write-back caching */
+                      1, /* write-back caching */
+                      0  /* executable */
                   );
 }
 
@@ -142,7 +143,8 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
             0, /* TEX = 0 */
             APFromVMRights(vm_rights),
             vm_attributes_get_armPageCacheable(attributes),
-            1  /* Write-back caching */
+            1, /* Write-back caching */
+            0  /* executable */
         );
 }
 
@@ -257,8 +259,9 @@ map_kernel_window(void)
         PPTR_VECTOR_TABLE,
         VMKernelOnly,
         vm_attributes_new(
-            true, /* armParityEnabled */
-            true  /* armPageCacheable */
+            false, /* armExecuteNever */
+            true,  /* armParityEnabled */
+            true   /* armPageCacheable */
         )
     );
 
@@ -268,8 +271,9 @@ map_kernel_window(void)
         PPTR_GLOBALS_PAGE,
         VMReadOnly,
         vm_attributes_new(
-            true, /* armParityEnabled */
-            true  /* armPageCacheable */
+            false, /* armExecuteNever */
+            true,  /* armParityEnabled */
+            true   /* armPageCacheable */
         )
     );
 
@@ -279,8 +283,9 @@ map_kernel_window(void)
         PPTR_KERNEL_STACK,
         VMKernelOnly,
         vm_attributes_new(
-            true, /* armParityEnabled */
-            true  /* armPageCacheable */
+            false, /* armExecuteNever */
+            true,  /* armParityEnabled */
+            true   /* armPageCacheable */
         )
     );
 
@@ -495,6 +500,18 @@ unmapAllPageTables(pde_t *pd)
             break;
         }
     }
+}
+
+static pte_t pte_pte_invalid_new(void)
+{
+    /* Invalid as every PTE must have bit 0 set (large PTE) or bit 1 set (small
+     * PTE). 0 == 'translation fault' in ARM parlance.
+     */
+    return (pte_t) {
+        {
+            0
+        }
+    };
 }
 
 void unmapPagePTE(vm_page_size_t page_size, pte_t *pt, unsigned int ptIndex, void *pptr)
@@ -861,7 +878,7 @@ flushTable(pde_t* pd, word_t vptr, pte_t* pt)
 
 static pte_t CONST
 makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
-            bool_t cacheable, vm_rights_t vm_rights)
+            bool_t cacheable, bool_t nonexecutable, vm_rights_t vm_rights)
 {
     pte_t pte;
     word_t ap;
@@ -877,7 +894,8 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     0, /* APX = 0, privileged full access */
                                     5, /* TEX = 0b101, outer write-back, write-allocate */
                                     ap,
-                                    0, 1 /* Inner write-back, write-allocate (except on ARM11) */);
+                                    0, 1, /* Inner write-back, write-allocate (except on ARM11) */
+                                    nonexecutable);
         } else {
             pte = pte_pte_small_new(paddr,
                                     1, /* not global */
@@ -885,7 +903,8 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     0, /* APX = 0, privileged full access */
                                     0, /* TEX = 0b000, strongly-ordered. */
                                     ap,
-                                    0, 0);
+                                    0, 0,
+                                    nonexecutable);
         }
         break;
     }
@@ -893,22 +912,24 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
     case ARMLargePage: {
         if (cacheable) {
             pte = pte_pte_large_new(paddr,
-                                    0, /* XN not set */
+                                    nonexecutable,
                                     5, /* TEX = 0b101, outer write-back, write-allocate */
                                     1, /* not global */
                                     0, /* not shared */
                                     0, /* APX = 0, privileged full access */
                                     ap,
-                                    0, 1 /* Inner write-back, write-allocate (except on ARM11) */);
+                                    0, 1, /* Inner write-back, write-allocate (except on ARM11) */
+                                    1 /* reserved */);
         } else {
             pte = pte_pte_large_new(paddr,
-                                    0, /* XN not set */
+                                    nonexecutable,
                                     0, /* TEX = 0b000, strongly-ordered */
                                     1, /* not global */
                                     1, /* shared */
                                     0, /* APX = 0, privileged full access */
                                     ap,
-                                    0, 0);
+                                    0, 0,
+                                    1 /* reserved */);
         }
         break;
     }
@@ -922,7 +943,8 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
 
 static pde_t CONST
 makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
-            bool_t cacheable, word_t domain, vm_rights_t vm_rights)
+            bool_t cacheable, bool_t nonexecutable, word_t domain,
+            vm_rights_t vm_rights)
 {
     word_t ap, size2;
 
@@ -947,8 +969,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
                                    0, /* not shared */
                                    0, /* APX = 0, privileged full access */
                                    5, /* TEX = 0b101, outer write-back, write-allocate */
-                                   ap, parity, domain,
-                                   0, /* XN not set */
+                                   ap, parity, domain, nonexecutable,
                                    0, 1 /* Inner write-back, write-allocate (except on ARM11) */);
     } else {
         return pde_pde_section_new(paddr, size2,
@@ -956,8 +977,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
                                    1, /* shared */
                                    0, /* APX = 0, privileged full access */
                                    0, /* TEX = 0b000, strongly-ordered */
-                                   ap, parity, domain,
-                                   0, /* XN not set */
+                                   ap, parity, domain, nonexecutable,
                                    0, 0);
     }
 }
@@ -1084,6 +1104,7 @@ createSafeMappingEntries_PTE
 
         ret.pte = makeUserPTE(ARMSmallPage, base,
                               vm_attributes_get_armPageCacheable(attr),
+                              vm_attributes_get_armExecuteNever(attr),
                               vmRights);
 
         lu_ret = lookupPTSlot(pd, vaddr);
@@ -1121,6 +1142,7 @@ createSafeMappingEntries_PTE
 
         ret.pte = makeUserPTE(ARMLargePage, base,
                               vm_attributes_get_armPageCacheable(attr),
+                              vm_attributes_get_armExecuteNever(attr),
                               vmRights);
 
         lu_ret = lookupPTSlot(pd, vaddr);
@@ -1179,7 +1201,9 @@ createSafeMappingEntries_PDE
         ret.pde = makeUserPDE(ARMSection, base,
                               vm_attributes_get_armParityEnabled(attr),
                               vm_attributes_get_armPageCacheable(attr),
-                              0, vmRights);
+                              vm_attributes_get_armExecuteNever(attr),
+                              0,
+                              vmRights);
 
         currentPDEType =
             pde_get_pdeType(ret.pde_entries.pd[ret.pde_entries.start]);
@@ -1202,7 +1226,9 @@ createSafeMappingEntries_PDE
         ret.pde = makeUserPDE(ARMSuperSection, base,
                               vm_attributes_get_armParityEnabled(attr),
                               vm_attributes_get_armPageCacheable(attr),
-                              0, vmRights);
+                              vm_attributes_get_armExecuteNever(attr),
+                              0,
+                              vmRights);
 
         for (i = 0; i < SECTIONS_PER_SUPER_SECTION; i++) {
             currentPDEType =
@@ -1495,7 +1521,7 @@ decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
 
         /* Check sanity of arguments */
         if (end <= start) {
-            userError("PD FLush: Invalid range");
+            userError("PD Flush: Invalid range");
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 1;
             return EXCEPTION_SYSCALL_ERROR;
