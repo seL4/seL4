@@ -578,7 +578,8 @@ static pte_t pte_pte_invalid_new(void)
     /* Invalid as every PTE must have bit 0 set (large PTE) or bit 1 set (small
      * PTE). 0 == 'translation fault' in ARM parlance.
      */
-    return (pte_t) {{
+    return (pte_t) {
+        {
             0
         }
     };
@@ -1311,7 +1312,7 @@ createSafeMappingEntries_PDE
 
     switch (frameSize) {
 
-        /* PDE mappings */
+    /* PDE mappings */
     case ARMSection:
         ret.pde_entries.base = lookupPDSlot(pd, vaddr);
         ret.pde_entries.length = 1;
