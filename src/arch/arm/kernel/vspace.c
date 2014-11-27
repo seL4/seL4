@@ -573,11 +573,15 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     }
 }
 
-static pte_t pte_pte_invalid_new(void) {
+static pte_t pte_pte_invalid_new(void)
+{
     /* Invalid as every PTE must have bit 0 set (large PTE) or bit 1 set (small
      * PTE). 0 == 'translation fault' in ARM parlance.
      */
-    return (pte_t){{ 0 }};
+    return (pte_t) {{
+            0
+        }
+    };
 }
 
 void

@@ -576,9 +576,10 @@ isArchCap(cap_t cap)
  * large PTE.
  */
 enum { pte_pte_invalid = 2 };
- 
+
 static inline uint32_t __attribute__((__const__))
-pte_get_pteType(pte_t pte) {
+pte_get_pteType(pte_t pte)
+{
     if (pte_get_pteSize(pte) == pte_pte_small) {
         return pte_pte_small;
     } else if (pte_pte_large_get_reserved(pte) == 1) {
@@ -589,7 +590,8 @@ pte_get_pteType(pte_t pte) {
 }
 
 static inline uint32_t __attribute__((__pure__))
-pte_ptr_get_pteType(pte_t *pte_ptr) {
+pte_ptr_get_pteType(pte_t *pte_ptr)
+{
     if (pte_ptr_get_pteSize(pte_ptr) == pte_pte_small) {
         return pte_pte_small;
     } else if (pte_pte_large_ptr_get_reserved(pte_ptr) == 1) {
