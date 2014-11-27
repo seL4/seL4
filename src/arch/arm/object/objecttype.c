@@ -46,8 +46,8 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         }
         return ret;
 
-    /* This is a deviation from haskell, which has only
-     * one frame cap type on ARM */
+        /* This is a deviation from haskell, which has only
+         * one frame cap type on ARM */
     case cap_small_frame_cap:
         ret.cap = cap_small_frame_cap_set_capFMappedASID(cap, asidInvalid);
         ret.status = EXCEPTION_NONE;
