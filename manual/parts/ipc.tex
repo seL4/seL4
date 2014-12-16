@@ -289,8 +289,10 @@ process. If no \apifunc{seL4\_Notify}{sel4_notify} system calls have taken place
 
 An asynchronous endpoint is the only object that may have
 \apifunc{seL4\_Poll}{sel4_poll} used on it. If a message was received then the
-label field of the \texttt{seL4\_MessageInfo} structure will be
-\texttt{seL4\_Interrupt}.
+returned badge will be a bitwise or of the badge(s) of the sender(s). Otherwise
+the badge will be zero. Note that this means the receiver cannot detect
+messages sent using unbadged capabilities, and thus the sender should use a
+badged capability
 
 \subsection{Asynchronous Endpoint Badges}
 
