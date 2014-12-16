@@ -274,9 +274,8 @@ transferCaps(message_info_t info, extra_caps_t caps,
 
 void doPollFailedTransfer(tcb_t *thread)
 {
-    message_info_t msgInfo = message_info_new(0, 0, 0, 0);
-    setRegister(thread, msgInfoRegister,
-                wordFromMessageInfo(msgInfo));
+    /* Set the badge register to 0 to indicate there was no message */
+    setRegister(thread, badgeRegister, 0);
 }
 
 static void
