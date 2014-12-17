@@ -154,6 +154,13 @@ config ARCH_IA32
             help
                 Support for iMX6 platform (Sabre Lite).
 
+        config PLAT_ZYNQ7000
+            bool "Zynq-7000 (Xilinx ZC706)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A9
+            help
+                Support for Xilinx Zynq-7000 platforms.
+
         config PLAT_PC99
             bool "PC99"
             depends on ARCH_I386 || ARCH_X86_64

@@ -285,6 +285,9 @@ initL2Cache(void)
 #elif defined(IMX6) /* ! (EXYNOS4 || OMAP4) */
     aux |= CTRL_AUX_WAYSIZE_64K;
 
+#elif defined(PLAT_ZYNQ7000)
+    aux |= CTRL_AUX_WAYSIZE_64K;
+
 #else /* ! (EXYNOS4 || OMAP4 || IMX6) */
 #error Unknown platform for L2C-310
 #endif /* EXYNOS4 || OMAP4 || IMX6 */
