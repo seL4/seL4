@@ -28,7 +28,7 @@ We use the C preprocessor to select a target architecture. Also, this file makes
 > import SEL4.Machine
 
 > import Data.Bits
-> import Data.Word(Word8)
+> import Data.Word(Word8 , Word32)
 
 \end{impdetails}
 
@@ -203,86 +203,44 @@ The top-level structure is "BootInfo", which contains an IPC buffer pointer,
 information about the initial untyped capabilities, and an array of virtual
 address space regions.
 
-> data BootInfo = BootInfo {
->         biIPCBuffer :: VPtr,
->         -- insert (length biRegions) here
->         biRegions :: [BootRegion] }
->     deriving Show
+> newtype Region = Region { fromRegion :: (PPtr Word, PPtr Word) }
+>     deriving (Show, Eq)
 
-> wordsFromBootInfo :: BootInfo -> [Word]
-> wordsFromBootInfo bi = [
->         fromVPtr $ biIPCBuffer bi,
->         fromIntegral $ length $ biRegions bi ]
->         ++ (concat $ map wordsFromBootRegion $ biRegions bi)
+> ptrFromPAddrRegion :: (PAddr, PAddr) -> Region
+> ptrFromPAddrRegion (start, end) = Region (ptrFromPAddr start, ptrFromPAddr end)
 
-Each region descriptor has start and end pointers (with the latter pointing to
-the last address in the region, rather than the first address after it), a
-type, and some data whose use depends on the type.
+> newtype SlotRegion = SlotRegion (Word, Word)
+>     deriving (Show, Eq)
 
-> data BootRegion = BootRegion {
->         brBase :: CPtr,
->         brEnd :: CPtr,
->         brType :: BootRegionType,
->         brData :: Word }
->     deriving Show
+> data BIDeviceRegion = BIDeviceRegion {
+>         bidrBasePAddr :: PAddr,
+>         bidrFrameSizeBits :: Word32,
+>         bidrFrameCaps :: SlotRegion }
+>     deriving (Show, Eq)
 
-> wordsFromBootRegion :: BootRegion -> [Word]
-> wordsFromBootRegion br = [
->         fromCPtr $ brBase br,
->         fromCPtr $ brEnd br,
->         fromIntegral $ fromEnum $ brType br,
->         brData br ]
+> data BIFrameData = BIFrameData {
+>         bifNodeID :: Word32, --Word?
+>         bifNumNodes :: Word32, --Int?
+>         bifNumIOPTLevels :: Word32, --Int?
+>         bifIPCBufVPtr :: VPtr,
+>         bifNullCaps :: [Word],
+>         bifSharedFrameCaps :: [Word],
+>         bifUIFrameCaps :: [Word],
+>         bifUIPTCaps :: [Word],
+>         bifUntypedObjCaps :: [Word],
+>         bifUntypedObjPAddrs :: [PAddr],
+>         bifUntypedObjSizeBits :: [Word8], --combine these into one list?
+>         bifITCNodeSizeBits :: Word8,
+>         bifNumDeviceRegions :: Word32,
+>         bifDeviceRegions :: [BIDeviceRegion] }
+>     deriving (Show, Eq)
 
-The boot regions are of various types, and are used for three separate purposes: describing what \emph{can} appear in a specific region of the address space, describing what \emph{is} in the initial task's address space, and describing the structure of the capability table. Regions with different purposes may overlap as noted below.
-
-> data BootRegionType
-
-\begin{description}
-
-\item[Empty] regions are not used by capabilities or virtual memory mappings in the initial task's address space.
-
->         = BREmpty
-
-\item[RootTask] regions contain the root task's mapped text or data, backed by one or more page-sized frames.
-
->         | BRRootTask
-
-\item[CapsOnly] regions cannot be used for virtual memory mappings, but are still usable for capabilities. This may be, for example, because the kernel maps its own data at these addresses, or because the hardware MMU does not implement addressing of the region. This may overlap any region other than "BRRootTask".
-
->         | BRCapsOnly
-
-\item[NodeL1] appears once, and represents the area covered by the initial thread's root page table node. The data word contains the radix of the node.
-
->         | BRNodeL1
-
-\item[NodeL2] regions represent second-level nodes in the initial capability table. Again, the data word contains the radix of the node. They all occur within the "BRNodeL1" region.
-
->         | BRNodeL2
-
-Regions of any of the types below only appear in "BRNodeL2" regions.
-
-\item[FreeSlots] regions contain empty capability slots accessible in the root task's CSpace, which may be used to bootstrap the system's capability management. The data word gives the CSpace depth required by the Retype call to locate the CNode containing the slots.
-
->         | BRFreeSlots
-
-\item[InitCaps] is the region containing the root task's six guaranteed initial capabilities; it always appears exactly once with a base address of zero. Address 0 contains a null capability (which should not be replaced with a valid one). It is followed by the initial thread's TCB, CSpace root, VSpace root, and reply endpoint, and then .
-
->         | BRInitCaps
-
-\item[SmallBlocks] regions are filled with untyped memory objects of a single size, generally the platform's standard page size. The minimum number of page-sized untyped blocks that will be provided to the root task by the kernel is fixed at compile time. The data word contains the block size, in address bits.
-
->         | BRSmallBlocks
-
-\item[LargeBlocks] regions are filled with untyped memory objects of varying sizes. The kernel provides large blocks for any physical memory not already covered by other memory regions. The blocks are in order from smallest to largest, with at most one of each size; the sizes present have the corresponding bits in the region's data word set. In spite of the name, some of these blocks may have sizes less than one page. There may be multiple large block regions.
-
->         | BRLargeBlocks
-
-\item[DeviceCaps] regions each contain the capabilities required to access one hardware device. The meaning of the data word is implementation-defined.
-
->         | BRDeviceCaps
-
-\end{description}
-
->     deriving (Show, Enum)
+> data InitData = InitData {
+>     initFreeMemory :: [Region], -- Filled in initFreemem
+>     initSlotPosCur :: Word, --Word?
+>     initSlotPosMax :: Word, -- Filled in makeRootCNode ?
+>     initBootInfo :: BIFrameData,
+>     initBootInfoFrame :: PAddr } --PAddr?
+>     deriving (Show, Eq)
 
 

@@ -31,6 +31,7 @@ We use the C preprocessor to select a target architecture.
 > import SEL4.Model
 > import SEL4.Object
 > import SEL4.API.Failures
+> import SEL4.API.Types
 > import {-# SOURCE #-} SEL4.Kernel.Init
 
 \end{impdetails}
@@ -48,12 +49,42 @@ This module defines architecture-specific virtual memory management procedures. 
 \item preparing the virtual memory environment, if any, that the kernel requires to run;
 
 > initKernelVM :: Kernel ()
-> initKernelVM = Arch.initKernelVM
+> initKernelVM = Arch.mapKernelWindow
 
-\item creating the initial address space, given the slot containing the root CSpace capability and an empty slot in which the root VSpace capability should be placed;
+> initPlatform :: Kernel ()
+> initPlatform = do
+>   doMachineOp $ configureTimer
+>   initL2Cache
 
-> initVSpace :: PPtr CTE -> PPtr CTE -> KernelInit ()
-> initVSpace = Arch.initVSpace
+> initL2Cache = return ()
+
+> initCPU :: Kernel ()
+> initCPU = Arch.activateGlobalPD
+
+
+> createIPCBufferFrame :: Capability -> VPtr -> KernelInit Capability
+> createIPCBufferFrame  = Arch.createIPCBufferFrame
+
+> createBIFrame  = Arch.createBIFrame
+
+> createFramesOfRegion :: Capability -> Region -> Bool -> VPtr -> KernelInit () 
+> createFramesOfRegion = Arch.createFramesOfRegion
+
+> createITPDPTs :: Capability -> VPtr -> VPtr -> KernelInit Capability
+> createITPDPTs = Arch.createITPDPTs
+
+> writeITPDPTs :: Capability -> Capability -> KernelInit ()
+> writeITPDPTs = Arch.writeITPDPTs 
+
+> createITASIDPool :: Capability -> KernelInit Capability
+> createITASIDPool = Arch.createITASIDPool
+
+> writeITASIDPool :: Capability -> Capability -> Kernel ()
+> writeITASIDPool = Arch.writeITASIDPool
+
+> createDeviceFrames :: Capability -> KernelInit ()
+> createDeviceFrames = Arch.createDeviceFrames
+
 
 \item handling virtual memory faults, given the current thread, the faulting address, and a boolean value that is true for write accesses;
 
@@ -74,14 +105,6 @@ This module defines architecture-specific virtual memory management procedures. 
 
 > lookupIPCBuffer :: Bool -> PPtr TCB -> Kernel (Maybe (PPtr Word))
 > lookupIPCBuffer = Arch.lookupIPCBuffer
-
-\item and creating new capabilities to virtual memory pages and devices mapped by the bootstrap code.
-
-> createInitPage :: PAddr -> Kernel Capability
-> createInitPage = Arch.createInitPage
-> 
-> createDeviceCap :: (PAddr, PAddr) -> Kernel Capability
-> createDeviceCap = Arch.createDeviceCap
 
 \end{itemize}
 

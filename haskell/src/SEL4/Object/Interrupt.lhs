@@ -141,20 +141,22 @@ When the last IRQ handler capability for a given IRQ is deleted, the capability 
 
 This function is called during bootstrap to set up the initial state of the interrupt controller. It allocates a frame and converts its contents to capability slots, which are used as a table endpoints that are notified of incoming interrupts. It also sets the global interrupt controller state, which contains a pointer to each slot and a Boolean flag indicating whether a handler capability has been generated for each IRQ. An interrupt controller capability is provided to the initial thread.
 
-> initInterruptController :: KernelInit Capability
-> initInterruptController = do
+> initInterruptController :: Capability -> Word -> KernelInit Capability
+> initInterruptController rootCNCap biCapIRQC= do
 >     frame <- allocFrame
 >     doKernelOp $ do
 >         assert (length [minBound..(maxBound::IRQ)]
 >                `shiftL` (objBits (makeObject :: CTE)) <= bit pageBits)
 >             "Interrupt vector slots must fit in one frame"
 >         placeNewObject (ptrFromPAddr frame) (makeObject :: CTE)
->               (bit pageBits `shiftR` objBits (makeObject :: CTE))
+>               (pageBits - objBits (makeObject :: CTE))
 >         doMachineOp $ mapM_ (maskInterrupt True) [minBound .. maxBound]
 >         let irqTable = funArray $ const IRQInactive
 >         setInterruptState $ InterruptState (ptrFromPAddr frame) irqTable
 >         timerIRQ <- doMachineOp configureTimer
 >         setIRQState IRQTimer timerIRQ
+>         slot <- locateSlot (capCNodePtr rootCNCap) biCapIRQC
+>         insertInitCap slot IRQControlCap
 >     return IRQControlCap
 
 \subsubsection{Handling Interrupts}

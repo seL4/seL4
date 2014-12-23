@@ -40,6 +40,7 @@ All four of the failure types must have an instance of the "Error" class to be u
 > instance Error Fault
 > instance Error SyscallError
 > instance Error LookupFailure
+> instance Error InitFailure
 
 \subsection{Failure Handling}
 

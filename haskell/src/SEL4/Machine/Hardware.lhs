@@ -55,6 +55,8 @@ Depending on the architecture, real physical addresses may be the same as the ad
 > addrFromPPtr :: PPtr a -> PAddr
 > addrFromPPtr = Arch.addrFromPPtr
 
+> fromPAddr = Arch.fromPAddr
+
 \subsubsection{Interrupts}
 
 An interrupt request from an external device, or from the CPU's timer, is represented by the type "IRQ".
