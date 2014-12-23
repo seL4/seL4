@@ -29,11 +29,8 @@ This module contains functions that create a new kernel state and set up the add
 > import SEL4.Kernel.Thread
 > import SEL4.Kernel.VSpace
 > import SEL4.Kernel.BootInfo
->-- import SEL4.Machine.Hardware.ARM (pageBitsForSize)
->-- import SEL4.Object.Structures (maxPriority)
 
 > import Data.Bits
->-- import Data.List
 > import Control.Monad.State(StateT, runStateT)
 > import Control.Monad.Error
 > import Data.Word(Word8)
@@ -82,7 +79,7 @@ The KernelInit monad can fail - however, we do not care what type of failure occ
 >    let snd' = snd . fromRegion
 >    let subUI = \r  ->
 >            if fst region >= fst' r  && snd region <= snd' r --assumes uiRegion within one region
->            then [(fst' r, fst region), (fst region, snd' r)]
+>            then [(fst' r, fst region), (snd region, snd' r)]
 >            else [(fst' r, snd' r)]
 >    let freeRegions = concat $ map subUI memRegions
 >    let freeRegions' = take maxNumFreememRegions $ freeRegions ++
@@ -105,8 +102,8 @@ The KernelInit monad can fail - however, we do not care what type of failure occ
 >                 (small, r':rest) -> do
 >                     let (b, t) = fromRegion r'
 >                     let result = align b
->                     let below = if result == b then [] else [Region (b, result - 1)]
->                     let above = if result + s - 1 == t then [] else [Region (result + s, t)]
+>                     let below = if result == b then [] else [Region (b, result)]
+>                     let above = if result + s == t then [] else [Region (result + s, t)]
 >                     modify (\st -> st { initFreeMemory = small++below++above++rest })
 >                     return $ addrFromPPtr result
 >                 _ -> fail "Unable to allocate memory"
@@ -133,13 +130,13 @@ The kernel is bootstrapped by calling "initKernel". The arguments are the addres
 Define some useful constants.
 
 >         let wordSize = finiteBitSize entry
->         let uiRegion = coverOf $ map (\x -> Region (ptrFromPAddr x, (ptrFromPAddr x) + bit (pageBits) - 1)) initFrames
->         let kernelRegion = coverOf $ map (\x -> Region (ptrFromPAddr x, (ptrFromPAddr x) + bit (pageBits) - 1)) kernelFrames
+>         let uiRegion = coverOf $ map (\x -> Region (ptrFromPAddr x, (ptrFromPAddr x) + bit (pageBits))) initFrames
+>         let kernelRegion = coverOf $ map (\x -> Region (ptrFromPAddr x, (ptrFromPAddr x) + bit (pageBits))) kernelFrames
 >         let kePPtr = fst $ fromRegion $ uiRegion
 >         let kfEndPAddr = addrFromPPtr kePPtr 
 >         (startPPtr,endPPtr) <- return $ fromRegion uiRegion 
 >         let vptrStart = (VPtr (fromPAddr $ addrFromPPtr $ startPPtr )) + initOffset
->         let vptrEnd = (VPtr (fromPAddr $ addrFromPPtr $ endPPtr + 1)) + initOffset
+>         let vptrEnd = (VPtr (fromPAddr $ addrFromPPtr $ endPPtr )) + initOffset
 
 Determine the available memory regions.
 
@@ -199,11 +196,15 @@ Create InitialThread and switch to it
 
 >                 createInitialThread rootCNCap itPDCap ipcBufferCap entry ipcBufferVPtr biFrameVPtr
 
->--               createUntypedObject rootCNCap Region (KernelBase,KernelBase)
+>                 createUntypedObject rootCNCap (Region (0,0))
 
 Create Device Frames
 
 >                 createDeviceFrames rootCNCap
+
+Set the NullCaps in BIFrame
+
+>                 finaliseBIFrame
 
 Searilize BIFrame into memory 
 
@@ -212,6 +213,12 @@ Searilize BIFrame into memory
 We should clean cache, but we did not have a good interface so far.
 
 >--               doKernelOp $ doMachineOp $ cleanCache
+
+> finaliseBIFrame :: KernelInit ()
+> finaliseBIFrame = do
+>   cur <- gets $ initSlotPosCur
+>   max <- gets $ initSlotPosMax
+>   modify (\s -> s { initBootInfo = (initBootInfo s) {bifNullCaps = [cur .. max - 1]}})
 
 > runInit :: KernelInit () -> Kernel ()
 > runInit oper = do
@@ -304,8 +311,8 @@ FIX ME: Seems we need to setCurThread and setSchedulerAction here, otherwise err
 >     slotAfter <- gets initSlotPosCur
 >     modify (\s -> s { initFreeMemory = freemem', 
 >                       initBootInfo = (initBootInfo s) { 
->                            bifUntypedObjCaps = [slotBefore .. slotAfter] }})
->     syncBIFrame
+>                            bifUntypedObjCaps = [slotBefore .. slotAfter - 1] }})
+>--   syncBIFrame
 
 
 > mapTaskRegions :: [(PAddr,VPtr)] -> KernelInit ((VPtr,PPtr CTE),(VPtr,PPtr Word))
@@ -323,9 +330,10 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 > makeRootCNode = do
 >       let slotBits = objBits (undefined::CTE)
 >       let levelBits = rootCNodeSize
->       let levelSize = (1::Int) `shiftL` levelBits
 >       frame <- liftM ptrFromPAddr $ allocRegion (levelBits + slotBits)
+
 >       rootCNCap <- doKernelOp $ createObject (fromAPIType CapTableObject) frame levelBits
+>       rootCNCap <- return $ rootCNCap {capCNodeGuardSize = 32 - levelBits}
 >       slot <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapITCNode
 >       doKernelOp $ insertInitCap slot rootCNCap
 >       return rootCNCap 
@@ -352,7 +360,6 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 >     let bootInfo' = bootInfo { bifUntypedObjPAddrs = untypedObjs ++ [pptr],
 >                                bifUntypedObjSizeBits = untypedObjs' ++ [sizeBits] }
 >     modify (\st -> st { initBootInfo = bootInfo' })
->     syncBIFrame
 >     provideCap rootCNodeCap $ UntypedCap {
 >                                   capPtr = ptrFromPAddr pptr,
 >                                   capBlockSize = fromIntegral sizeBits,
@@ -372,7 +379,7 @@ Various functions in this module use "rangesBy" to split a sorted list into cont
 >         r = rangesBy adj (y:xs)
 
 > coverOf :: [Region] -> Region
-> coverOf [] = Region (0xffffffff,0) 
+> coverOf [] = Region (0,0) 
 > coverOf [x] = x
 > coverOf (x:xs) = Region (ln, hn)
 >     where 

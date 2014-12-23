@@ -10,6 +10,7 @@ This module contains functions that maintaining the bootinfo structure for init-
 > import Control.Monad.State
 
 > import SEL4.API.Types
+> import SEL4.Config
 > import SEL4.Object.Structures
 > import SEL4.Machine
 
@@ -64,10 +65,6 @@ This module contains functions that maintaining the bootinfo structure for init-
 
 Warning: rootCNodeSizeBits should be rootCNodeSize + objBits (undefined::CTE)
 
-> rootCNodeSizeBits :: Int
-> rootCNodeSizeBits = 12 -- FIXME: duplication (maybe, check)
-
-
 
 \subsection{Default Bootinfo}
 
@@ -84,7 +81,7 @@ Warning: rootCNodeSizeBits should be rootCNodeSize + objBits (undefined::CTE)
 >         bifUntypedObjCaps = [],
 >         bifUntypedObjPAddrs = [],
 >         bifUntypedObjSizeBits = [],
->         bifITCNodeSizeBits = fromIntegral rootCNodeSizeBits, -- Initialized here is fine
+>         bifITCNodeSizeBits = fromIntegral rootCNodeSize, -- Initialized here is fine
 >         bifNumDeviceRegions = 0,
 >         bifDeviceRegions = [] 
 >         }
@@ -101,14 +98,15 @@ Functions for serialize BIFrameData into Memory
 
 Warning: For little endian system we should use this size instead of intsize - size - 1
 
->        byte <- return $ (value `shiftR` (8 * (intsize - size -1))) .&. ((bit 8) - 1)
+>        byte <- return $ (value `shiftR` (8 * size )) .&. ((bit 8) - 1)
 >        serializeByte byte
 
 > serializeByte :: Word -> Serializer ()
 > serializeByte input = do
 >    ptr <- gets ptrCursor
 >    byte <- gets value
->    value <- return $ input .|. ((fromIntegral byte) `shiftL` 8)
+>    mod4 <- return $ fromIntegral $ fromPPtr $ (ptr .&. 3)
+>    value <- return $ (input `shiftL` (mod4 * 8)) .|. (fromIntegral byte)
 >    if (ptr .&. 3) == 3
 >      then do
 >        lift $ storeWordVM ((ptr `shiftR` 2) `shiftL` 2) value
@@ -156,7 +154,7 @@ It will write boot info back into the memory.
 >                         serializeStore 0 4
 >                       else do
 >                         serializeStore (head ls) 4
->                         serializeStore (last ls) 4
+>                         serializeStore (1 + last ls) 4
 >            serializeRange $ bifNullCaps frameData
 >            serializeRange $ bifSharedFrameCaps frameData
 >            serializeRange $ bifUIFrameCaps frameData
@@ -164,7 +162,7 @@ It will write boot info back into the memory.
 >            serializeRange $ bifUntypedObjCaps frameData
 
 >            ptr <- gets ptrCursor
->            ptr <- return $ ptr + (PPtr $ maxBIUntypedCaps `shiftL` 2)
+>            ptr <- return $ ptr + (PPtr $ (maxBIUntypedCaps `shiftL` 2))
 >            untypedAddrs <- return $ bifUntypedObjPAddrs frameData
 >            (flip mapM_) untypedAddrs $ \addr -> do
 >                serializeStore (fromPAddr addr) 4

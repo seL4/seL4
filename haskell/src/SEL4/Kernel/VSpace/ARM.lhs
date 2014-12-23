@@ -49,7 +49,7 @@ All virtual addresses above "kernelBase" cannot be mapped by user-level tasks. W
 > kernelBase = VPtr 0xf0000000
 
 > globalsBase :: VPtr
-> globalsBase = VPtr 0xff000000
+> globalsBase = VPtr 0xffffc000
 
 The idle thread's code is at an arbitrary location in kernel memory. For convenience in the Haskell model, we place it in the globals frame, but there is no need for it to be in user-accessible memory.
 
@@ -89,9 +89,9 @@ However we assume that the result of getMemoryRegions is actually [0,1<<24] and 
 >     globalPTs <- gets $ armKSGlobalPTs . ksArchState
 >     deleteObjects (PPtr $ fromPPtr globalPD) pdBits
 >     placeNewObject (PPtr $ fromPPtr globalPD) (makeObject :: PDE) pdSize
->     forM_ [vbase, vbase+16 .. (bit pageBits) - 16 - 1] $ \v -> do
+>     forM_ [vbase, vbase+16 .. (bit pdSize) - 16 - 1] $ \v -> do
 >           let offset = fromVPtr v
->           let virt = v `shiftL` pageBitsForSize (ARMSection)
+>           let virt = (v - vbase) `shiftL` (pageBitsForSize (ARMSuperSection) - 4)
 >           let phys = addrFromPPtr $ PPtr $ fromVPtr virt
 >           let pde = SuperSectionPDE {
 >                   pdeFrame = phys,
@@ -103,7 +103,7 @@ However we assume that the result of getMemoryRegions is actually [0,1<<24] and 
 >           let slots = map (\n -> globalPD + PPtr (n `shiftL` pdeBits))
 >                   [offset .. offset + 15]
 >           (flip $ mapM_ ) slots (\slot -> storePDE slot pde)
->     forM_ [(bit pageBits) - 16, (bit pageBits) - 2] $ \v -> do
+>     forM_ [(bit pdSize) - 16, (bit pdSize) - 2] $ \v -> do
 >           let offset = fromVPtr v
 >           let virt = v `shiftL` pageBitsForSize (ARMSection)
 >           let phys = addrFromPPtr $ PPtr $ fromVPtr virt
@@ -119,7 +119,7 @@ However we assume that the result of getMemoryRegions is actually [0,1<<24] and 
 >           storePDE slot pde
 >     let paddr = addrFromPPtr $ PPtr $ fromPPtr $ head globalPTs
 >     let pde = PageTablePDE {pdeTable = paddr ,pdeParity = True, pdeDomain = 0}
->     let slot = globalPD + PPtr (((bit pageBits) - 1) `shiftL` pdeBits)
+>     let slot = globalPD + PPtr (((bit pdBits) - 1) `shiftL` pdeBits)
 >     deleteObjects (PPtr $ fromPPtr $ head globalPTs) ptBits
 >     placeNewObject (PPtr $ fromPPtr $ head globalPTs) (makeObject :: PTE) ptSize
 >     storePDE slot pde
@@ -357,12 +357,24 @@ Function "mapGlobalsFrame" inserts an entry into the global PD for the globals f
 >     mapKernelFrame (addrFromPPtr globalsFrame) globalsBase VMReadOnly $
 >         VMAttributes True True True
 
+we also need to put the code of idlethread into memory
+
+>     writeIdleCode
+
+> writeIdleCode :: Kernel ()
+> writeIdleCode = do
+>     globalsFrame <- gets $ armKSGlobalsFrame . ksArchState
+>     let offset = fromVPtr $ idleThreadStart - globalsBase
+>     doMachineOp $ zipWithM_ storeWord
+>         [globalsFrame + PPtr offset, globalsFrame + PPtr offset + 4 ..]
+>         idleThreadCode
+
 
 The "mapKernelFrame" helper function is used when mapping the globals frame, kernel IO devices, and the trap frame. We simply store pte into our globalPT 
 
 > mapKernelFrame :: PAddr -> VPtr -> VMRights -> VMAttributes -> Kernel ()
 > mapKernelFrame paddr vaddr vmrights attributes = do
->     let idx = fromVPtr $ (vaddr .&. (mask $ pageBitsForSize ARMSection)
+>     let idx = fromVPtr $ ( (vaddr .&. (mask $ pageBitsForSize ARMSection))
 >                           `shiftR` pageBitsForSize ARMSmallPage)
 >     globalPT <- getARMGlobalPT
 >     let pte = SmallPagePTE {
@@ -371,7 +383,6 @@ The "mapKernelFrame" helper function is used when mapping the globals frame, ker
 >                  pteGlobal = True,
 >                  pteExecuteNever = False,
 >                  pteRights = vmrights }
->     let  base = PPtr $ fromPPtr globalPT
 >     storePTE (PPtr ((fromPPtr globalPT) + (idx `shiftL` 2))) pte
 
 > getARMGlobalPT :: Kernel (PPtr PTE)
