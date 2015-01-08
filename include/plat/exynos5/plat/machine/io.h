@@ -14,11 +14,11 @@
 #include <types.h>
 
 #ifdef DEBUG
-void exynos5_uart_putchar(char c);
+void exynos_uart_putchar(char c);
 void putDebugChar(unsigned char c);
 unsigned char getDebugChar(void);
 
-#define kernel_putchar(c) exynos5_uart_putchar(c)
+#define kernel_putchar(c) exynos_uart_putchar(c)
 #else /* !DEBUG */
 #define kernel_putchar(c) ((void)(0))
 #endif /* DEBUG */

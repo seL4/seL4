@@ -279,7 +279,7 @@ map_kernel_devices(void)
     /* map kernel device: UART */
     map_kernel_frame(
         UART1_PADDR,
-        UART1_PPTR,
+        UART_PPTR,
         VMKernelOnly,
         vm_attributes_new(
             false, /* armExecuteNever */

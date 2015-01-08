@@ -8,7 +8,7 @@
 # @TAG(GD_GPL)
 #
 
-DIRECTORIES += src/plat/exynos/machine
+DIRECTORIES += src/plat/${PLAT}/machine
 
 PLAT_C_SOURCES += machine/hardware.c 
 

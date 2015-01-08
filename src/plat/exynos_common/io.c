@@ -31,19 +31,16 @@
 #define UINTSP      0x0034 /* interrupt source pending */
 #define UINTM       0x0038 /* interrupt mask */
 
-#define UART_REG(X) ((volatile uint32_t *)(UART1_PPTR + (X)))
-
-/* ULCON */
-#define WORD_LENGTH_8   (3<<0)
+#define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 /* UTRSTAT */
-#define TX_EMPTY        (1<<2)
-#define TXBUF_EMPTY     (1<<1)
-#define RXBUF_READY     (1<<0)
+#define TX_EMPTY        BIT(2)
+#define TXBUF_EMPTY     BIT(1)
+#define RXBUF_READY     BIT(0)
 
 
 void
-exynos4_uart_putchar(char c)
+exynos_uart_putchar(char c)
 {
     putDebugChar(c);
     if (c == '\n') {

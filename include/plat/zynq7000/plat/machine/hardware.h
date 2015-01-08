@@ -13,7 +13,7 @@
 
 #define physBase          0x00000000
 #define PADDR_BASE        physBase /* for compatibility with proofs */
-#define kernelBase        0xf0000000
+#define kernelBase        0xe0000000
 #define physMappingOffset (kernelBase - physBase)
 #define BASE_OFFSET       physMappingOffset
 
