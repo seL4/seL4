@@ -316,7 +316,9 @@ seL4_Poll(seL4_CPtr src, seL4_Word* sender)
     if (sender) {
         *sender = src_and_badge;
     }
-    return (seL4_MessageInfo_t){.words = {info.words[0]}};
+    return (seL4_MessageInfo_t) {
+        .words = {info.words[0]}
+    };
 }
 
 static inline seL4_MessageInfo_t
