@@ -35,16 +35,13 @@ menu "seL4 System"
         config ARCH_I386
             bool "x86"
 
-        config ARCH_X86_64
-            bool "x86_64"
-
         config ARCH_ARM
             bool "ARM"
     endchoice
 
 config ARCH_IA32
        bool
-       default y if ARCH_I386 || ARCH_X86_64
+       default y if ARCH_I386
 
     choice
         prompt "ARM CPU selection"
@@ -167,7 +164,7 @@ config ARCH_IA32
 
         config PLAT_PC99
             bool "PC99"
-            depends on ARCH_I386 || ARCH_X86_64
+            depends on ARCH_I386
             help
                 Support for PC99 based platform
     endchoice
