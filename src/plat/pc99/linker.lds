@@ -31,8 +31,8 @@ SECTIONS
         . = . + 2K;
         . = ALIGN(4K);
         _boot_stack_top = .;
-        _boot_pd = .;
-        . = . + 4K;
+        *(.phys)
+        *(.phys.*)
     }
 
     . = . + BASE_OFFSET;
