@@ -239,7 +239,7 @@ decodeIA32IOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cap_frame_cap_get_capFSize(cap) != IA32_4K) {
+    if (cap_frame_cap_get_capFSize(cap) != IA32_SmallPage) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;

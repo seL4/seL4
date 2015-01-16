@@ -135,14 +135,14 @@ static void sendPD(unsigned int address)
     for (i = 0; i < PD_READ_SIZE; i++) {
         pde_t pde = start[i];
         exists = 1;
-        if (pde_get_page_size(pde) == pde_pde_4k && (pde_pde_4k_get_pt_base_address(pde) == 0 ||
-                                                     !pde_pde_4k_get_present(pde) || !pde_pde_4k_get_super_user(pde))) {
+        if (pde_get_page_size(pde) == pde_pde_small && (pde_pde_small_get_pt_base_address(pde) == 0 ||
+                                                        !pde_pde_small_get_present(pde) || !pde_pde_small_get_super_user(pde))) {
             exists = 0;
-        } else if (pde_get_page_size(pde) == pde_pde_4m && (pde_pde_4m_get_page_base_address(pde) == 0 ||
-                                                            !pde_pde_4m_get_present(pde) || !pde_pde_4m_get_super_user(pde))) {
+        } else if (pde_get_page_size(pde) == pde_pde_large && (pde_pde_large_get_page_base_address(pde) == 0 ||
+                                                               !pde_pde_large_get_present(pde) || !pde_pde_large_get_super_user(pde))) {
             exists = 0;
         }
-        if (exists != 0 && i < PPTR_BASE >> pageBitsForSize(IA32_4M)) {
+        if (exists != 0 && i < PPTR_BASE >> pageBitsForSize(IA32_LargePage)) {
             sendWord(i);
             sendWord(pde.words[0]);
         }

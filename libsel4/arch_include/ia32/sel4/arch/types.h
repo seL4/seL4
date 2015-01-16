@@ -11,17 +11,30 @@
 #ifndef __LIBSEL4_ARCH_TYPES_H
 #define __LIBSEL4_ARCH_TYPES_H
 
+#include <autoconf.h>
 #include <stdint.h>
 
 #define seL4_WordBits        32
 #define seL4_PageBits        12
-#define seL4_4MBits          22
 #define seL4_SlotBits         4
 #define seL4_TCBBits         10
 #define seL4_EndpointBits     4
 #define seL4_PageTableBits   12
 #define seL4_PageDirBits     12
 #define seL4_IOPageTableBits 12
+
+#ifdef CONFIG_PAE_PAGING
+#define seL4_PDPTBits         5
+#define seL4_LargePageBits    21
+#else
+#define seL4_LargePageBits    22
+#endif
+
+/* Previously large frames were explicitly assumed to be 4M. If not using
+ * PAE assuming a legacy environment and leave the old definition */
+#ifndef CONFIG_PAE_PAGING
+#define seL4_4MBits           seL4_LargePageBits
+#endif
 
 typedef uint32_t  seL4_Word;
 typedef seL4_Word seL4_CPtr;

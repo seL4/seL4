@@ -11,17 +11,20 @@
 #ifndef ARCH_BENCHMARK_H
 #define ARCH_BENCHMARK_H
 
+#include <config.h>
+#include <arch/object/structures.h>
+
 #ifdef CONFIG_BENCHMARK
 
-/* we have 4MB of word sized entries */
-#define MAX_LOG_SIZE 1048576
+/* we have one large page of word sized entries */
+#define MAX_LOG_SIZE (BIT(LARGE_PAGE_BITS) / sizeof(word_t))
 
 extern uint64_t ksEntry;
 extern uint64_t ksExit;
 extern uint32_t ksLogIndex;
 extern uint32_t *ksLog;
 
-#define IA32_KSLOG_IDX 1022
+#define IA32_KSLOG_IDX (BIT(PD_BITS + PDPT_BITS) - 2)
 
 static inline uint64_t
 timestamp(void)

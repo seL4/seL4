@@ -226,36 +226,56 @@ compile_assert(tcb_size_sane,
 
 #define IDT_ENTRIES 256
 
+#ifdef CONFIG_PAE_PAGING
+#define PDPTE_SIZE_BITS 3
+#define PDPT_BITS    2
+#define PDE_SIZE_BITS  3
+#define PD_BITS      9
+#define PTE_SIZE_BITS 3
+#define PT_BITS      9
+#else
+#define PDPTE_SIZE_BITS 0
+#define PDPT_BITS 0
 #define PDE_SIZE_BITS  2
-#define PDE_PTR(r)     ((pde_t *)(r))
-#define PDE_PTR_PTR(r) ((pde_t **)r)
-#define PDE_REF(p)     ((unsigned int)p)
-
 #define PD_BITS      10
+#define PTE_SIZE_BITS 2
+#define PT_BITS      10
+#endif
+
+#define PDPTE_PTR(r)   ((pdpte_t *)(r))
+#define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
+#define PDPTE_REF(p)   ((unsigned int)(p))
+
+#define PDPT_SIZE_BITS (PDPT_BITS + PDPTE_SIZE_BITS)
+#define PDPT_PTR(r)    ((pdpte_t*)(r))
+#define PDPT_PREF(p)   ((unsigned int)(p))
+
+#define PDE_PTR(r)     ((pde_t *)(r))
+#define PDE_PTR_PTR(r) ((pde_t **)(r))
+#define PDE_REF(p)     ((unsigned int)(p))
+
 #define PD_SIZE_BITS (PD_BITS + PDE_SIZE_BITS)
 #define PD_PTR(r)    ((pde_t *)(r))
-#define PD_REF(p)    ((unsigned int)p)
+#define PD_REF(p)    ((unsigned int)(p))
 
-#define PTE_SIZE_BITS 2
-#define PTE_PTR(r)    ((pte_t *)r)
-#define PTE_REF(p)    ((unsigned int)p)
+#define PTE_PTR(r)    ((pte_t *)(r))
+#define PTE_REF(p)    ((unsigned int)(p))
 
-#define PT_BITS      10
 #define PT_SIZE_BITS (PT_BITS + PTE_SIZE_BITS)
-#define PT_PTR(r)    ((pte_t *)r)
-#define PT_REF(p)    ((unsigned int)p)
+#define PT_PTR(r)    ((pte_t *)(r))
+#define PT_REF(p)    ((unsigned int)(p))
 
 #ifdef CONFIG_IOMMU
 
 #define VTD_RT_SIZE_BITS  12
 
 #define VTD_CTE_SIZE_BITS 3
-#define VTD_CTE_PTR(r)    ((vtd_cte_t*)r)
+#define VTD_CTE_PTR(r)    ((vtd_cte_t*)(r))
 #define VTD_CT_BITS       9
 #define VTD_CT_SIZE_BITS  (VTD_CT_BITS + VTD_CTE_SIZE_BITS)
 
 #define VTD_PTE_SIZE_BITS 3
-#define VTD_PTE_PTR(r)    ((vtd_pte_t*)r)
+#define VTD_PTE_PTR(r)    ((vtd_pte_t*)(r))
 #define VTD_PT_BITS       9
 #define VTD_PT_SIZE_BITS  (VTD_PT_BITS + VTD_PTE_SIZE_BITS)
 
@@ -274,7 +294,7 @@ compile_assert(gdt_idt_ptr_packed,
 #define WORD_SIZE_BITS 2
 #define WORD_BITS   (8 * sizeof(word_t))
 #define WORD_PTR(r) ((word_t *)(r))
-#define WORD_REF(p) ((unsigned int)p)
+#define WORD_REF(p) ((unsigned int)(p))
 
 enum vm_rights {
     VMKernelOnly = 1,
@@ -301,7 +321,7 @@ enum asidSizeConstants {
 };
 
 struct asid_pool {
-    pde_t* array[BIT(asidLowBits)];
+    void* array[BIT(asidLowBits)];
 };
 
 typedef struct asid_pool asid_pool_t;
@@ -342,6 +362,24 @@ cap_frame_cap_ptr_set_capFMappedASID(cap_t* cap, asid_t asid)
     *cap = cap_frame_cap_set_capFMappedASID(*cap, asid);
 }
 
+static inline asid_t PURE
+cap_get_capMappedASID(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+    case cap_pdpt_cap:
+        return cap_pdpt_cap_get_capPDPTMappedASID(cap);
+
+    case cap_page_directory_cap:
+        return cap_page_directory_cap_get_capPDMappedASID(cap);
+
+    default:
+        fail("Invalid arch cap type");
+    }
+}
 
 static inline unsigned int CONST
 cap_get_capSizeBits(cap_t cap)
@@ -449,6 +487,9 @@ cap_get_capPtr(cap_t cap)
 
     case cap_page_directory_cap:
         return PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
+
+    case cap_pdpt_cap:
+        return PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
 
     case cap_zombie_cap:
         return CTE_PTR(cap_zombie_cap_get_capZombiePtr(cap));

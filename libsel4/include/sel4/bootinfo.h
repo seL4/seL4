@@ -21,7 +21,7 @@ enum {
     seL4_CapNull                =  0, /* null cap */
     seL4_CapInitThreadTCB       =  1, /* initial thread's TCB cap */
     seL4_CapInitThreadCNode     =  2, /* initial thread's root CNode cap */
-    seL4_CapInitThreadPD        =  3, /* initial thread's PD cap */
+    seL4_CapInitThreadVSpace    =  3, /* initial thread's VSpace cap */
     seL4_CapIRQControl          =  4, /* global IRQ controller cap */
     seL4_CapASIDControl         =  5, /* global ASID controller cap */
     seL4_CapInitThreadASIDPool  =  6, /* initial thread's ASID pool cap */
@@ -31,6 +31,10 @@ enum {
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */
     seL4_CapDomain              = 11  /* global domain controller cap */
 };
+
+/* Legacy code will have assumptions on the vspace root being a Page Directory
+ * type, so for now we define one to the other */
+#define seL4_CapInitThreadPD seL4_CapInitThreadVSpace
 
 /* types */
 
@@ -53,6 +57,7 @@ typedef struct {
     seL4_SlotRegion   empty;           /* empty slots (null caps) */
     seL4_SlotRegion   sharedFrames;    /* shared-frame caps (shared between seL4 nodes) */
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */
+    seL4_SlotRegion   userImagePDs;    /* userland-image PD caps */
     seL4_SlotRegion   userImagePTs;    /* userland-image PT caps */
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
     seL4_Word         untypedPaddrList   [CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* physical address of each untyped cap */
