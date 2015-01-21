@@ -15,14 +15,22 @@ This file lists known caveats in the seL4 API and implementation.
 Only the ARMv6 version on the imx31 platform of seL4 has a correctness proof.
 This proof covers the functional behaviour of the C code of the kernel. It
 does not cover machine code, compiler, linker, boot code, cache and TLB
-management. The proof shows that the seL4 C code implements the abstract API
-specification of seL4. Although the API is intended to provide strong security
-mechanisms, the proof does not guarantee that it does.
+management. Compiler and linker can be removed from this list by additionally
+running the binary verification phase of the proof. The proof shows that the
+seL4 C code implements the abstract API specification of seL4, and that this
+specification satisfies the following high-level security properties:
+  * integrity (no write without authority), 
+  * confidentiality (no read without authority), and
+  * intransitive non-interference (isolation between adequately 
+    configured user-level components).
+
+The security property proofs depend on additional assumptions on the correct
+configuration of the system.
 
 
 * Real Time
 
-seL4 version 1.2 is not a real-time kernel. Version 1.2 has a small number of
+This version of seL4 is not a real-time kernel. It has a small number of
 potentially long-running kernel operations that are not preemptable (e.g.,
 endpoint deletion and recycling, scheduling, frame and CNode initialisation).
 This may change in future versions.

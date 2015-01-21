@@ -9,13 +9,13 @@
 --
 
 name:                   SEL4
-version:                0.3
+version:                1.4-pre
 cabal-version:          >= 1.8
 build-type:             Simple
 license:                AllRightsReserved
 author:                 Philip Derrin et. al.
 synopsis:               Executable specification for the seL4 Kernel
-tested-with:            GHC == 6.12.1, GHC == 7.0.3, GHC == 7.4.1
+tested-with:            GHC == 7.8.3
 
 Flag FFI
     description:        Include the C language bindings

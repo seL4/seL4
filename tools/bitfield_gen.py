@@ -25,13 +25,15 @@ import yacc
 
 import umm
 
+import bf_autocorres
+
 # Whether debugging is enabled (turn on with command line option --debug).
 DEBUG = False
 
 # Headers to include depending on which environment we are generating code for.
 INCLUDES = {
     'sel4':['assert.h', 'config.h', 'stdint.h', 'util.h'],
-    'libsel4':['assert.h', 'autoconf.h', 'stdint.h'],
+    'libsel4':['assert.h', 'autoconf.h', 'sel4/macros.h', 'stdint.h'],
 }
 
 ### Parser
@@ -1711,7 +1713,7 @@ class TaggedUnion:
                 offset, size, high = ref.field_map[field]
 
                 if field == self.tagname:
-                    f_value = "%s_%s" % (self.name, name)
+                    f_value = "(uint%d_t)%s_%s" % (self.base, self.name, name)
                 else:
                     f_value = field
 
@@ -1728,16 +1730,18 @@ class TaggedUnion:
                     else:
                         mask = (1 << size) - 1
 
-                    field_inits.append("/* fail if user has passed bits that we will override */")
                     field_inits.append(
-                        "    assert((%s & ~0x%x) == 0);\n" % (f_value, mask))
+                        "    /* fail if user has passed bits that we will override */")
+                    field_inits.append(
+                        "    assert((%s & ~0x%x) == 0);" % (f_value, mask))
                     field_inits.append(
                         "    %s.words[%d] |= (%s & 0x%x) %s %d;" % \
                          (self.name, index, f_value, mask, shift_op, shift))
 
-                    ptr_field_inits.append("/* fail if user has passed bits that we will override */")
                     ptr_field_inits.append(
-                        "    assert((%s & ~0x%x) == 0);\n" % (f_value, mask))
+                        "    /* fail if user has passed bits that we will override */")
+                    ptr_field_inits.append(
+                        "    assert((%s & ~0x%x) == 0);" % (f_value, mask))
                     ptr_field_inits.append(
                         "    %s_ptr->words[%d] |= (%s & 0x%x) %s %d;" % \
                         (self.name, index, f_value, mask, shift_op, shift))
@@ -2313,16 +2317,18 @@ class Block:
                 else:
                     mask = (1 << size) - 1
 
-                field_inits.append("/* fail if user has passed bits that we will override */")
                 field_inits.append(
-                    "    assert((%s & ~0x%x) == 0);\n" % (field, mask))
+                    "    /* fail if user has passed bits that we will override */")
+                field_inits.append(
+                    "    assert((%s & ~0x%x) == 0);" % (field, mask))
                 field_inits.append(
                     "    %s.words[%d] |= (%s & 0x%x) %s %d;" % \
                     (self.name, index, field, mask, shift_op, shift))
 
-                ptr_field_inits.append("/* fail if user has passed bits that we will override */")
                 ptr_field_inits.append(
-                    "    assert((%s & ~0x%x) == 0);\n" % (field, mask))
+                    "    /* fail if user has passed bits that we will override */")
+                ptr_field_inits.append(
+                    "    assert((%s & ~0x%x) == 0);" % (field, mask))
                 ptr_field_inits.append(
                     "    %s_ptr->words[%d] |= (%s & 0x%x) %s %d;" % \
                     (self.name, index, field, mask, shift_op, shift))
@@ -2457,6 +2463,10 @@ if __name__ == '__main__':
                       choices=INCLUDES.keys())
     parser.add_option('--hol_defs', action='store_true', default=False)
     parser.add_option('--hol_proofs', action='store_true', default=False)
+    parser.add_option('--autocorres_defs', action='store_true', default=False,
+        help='Output function definition suitable for AutoCorres')
+    parser.add_option('--autocorres_proofs', action='store_true', default=False,
+        help='Output WP proofs suitable for AutoCorres')
     parser.add_option('--sorry_lemmas', action='store_true',
                       dest='sorry', default=False)
     parser.add_option('--prune', action='append',
@@ -2497,7 +2507,12 @@ if __name__ == '__main__':
         if len(args) <= 1:
             if options.thy_output_path is None:
                 parser.error("Theory output path was not specified")
+            if out_file == sys.stdout:
+                parser.error('Output file name must be given when generating HOL definitions or proofs')
             out_file.filename = os.path.abspath(options.thy_output_path)
+
+    if options.hol_proofs and not options.umm_types_file:
+        parser.error('--umm_types must be specified when generating HOL proofs')
 
     del parser
 
@@ -2666,6 +2681,10 @@ if __name__ == '__main__':
                 e.generate_hol_proofs(options, type_map)
 
                 print >>out_file, "end"
+    elif options.autocorres_defs:
+        bf_autocorres.generate_defs(symtab, out_file)
+    elif options.autocorres_proofs:
+        bf_autocorres.generate_proofs(symtab, out_file)
     else:
         guard = re.sub(r'[^a-zA-Z0-9_]', '_', out_file.filename.upper())
         print >>out_file, "#ifndef %(guard)s\n#define %(guard)s\n" % \

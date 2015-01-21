@@ -265,7 +265,7 @@ allocate_bi_frame(
     BI_PTR(pptr)->num_iopt_levels = 0;
     BI_PTR(pptr)->ipcbuf_vptr = ipcbuf_vptr;
     BI_PTR(pptr)->it_cnode_size_bits = CONFIG_ROOT_CNODE_SIZE_BITS;
-    BI_PTR(pptr)->it_domain = (uint8_t)ksDomSchedule[ksDomScheduleIdx].domain;
+    BI_PTR(pptr)->it_domain = ksDomSchedule[ksDomScheduleIdx].domain;
 
     return pptr;
 }
@@ -370,6 +370,7 @@ create_initial_thread(
     pptr_t pptr;
     cap_t  cap;
     tcb_t* tcb;
+    deriveCap_ret_t dc_ret;
 
     /* allocate TCB */
     pptr = alloc_region(TCB_BLOCK_SIZE_BITS);
@@ -381,6 +382,13 @@ create_initial_thread(
     tcb = TCB_PTR(pptr + TCB_OFFSET);
     tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
     Arch_initContext(&tcb->tcbContext);
+
+    /* derive a copy of the IPC buffer cap for inserting */
+    dc_ret = deriveCap(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_IPCBUF), ipcbuf_cap);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        printf("Failed to derive copy of IPC Buffer\n");
+        return false;
+    }
 
     /* initialise TCB (corresponds directly to abstract specification) */
     cteInsert(
@@ -394,7 +402,7 @@ create_initial_thread(
         SLOT_PTR(pptr, tcbVTable)
     );
     cteInsert(
-        ipcbuf_cap,
+        dc_ret.cap,
         SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_IPCBUF),
         SLOT_PTR(pptr, tcbBuffer)
     );

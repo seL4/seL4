@@ -85,6 +85,12 @@ config ARM_HYPERVISOR_SUPPORT
 
     endchoice
 
+    config PLAT_EXYNOS54XX
+       bool
+       default n
+       help
+          Common flag for Exynos 54210 and 5422
+
     choice
         prompt "Platform Type"
         help
@@ -120,10 +126,19 @@ config ARM_HYPERVISOR_SUPPORT
 
         config PLAT_EXYNOS5410
             bool "EXYNOS5410 (ODROID-XU)"
+	    select PLAT_EXYNOS54XX
             depends on ARCH_ARM
             depends on ARM_CORTEX_A15
             help
                 Support for EXYNOS5410 platform (ODROID-XU).
+
+        config PLAT_EXYNOS5422
+            bool "EXYNOS5422 (ODROID-XU3)"
+	    select PLAT_EXYNOS54XX
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A15
+            help
+                Support for EXYNOS5422 platform (ODROID-XU3).
 
         config PLAT_EXYNOS5250
             bool "EXYNOS5250 (ARNDALE)"
@@ -131,7 +146,6 @@ config ARM_HYPERVISOR_SUPPORT
             depends on ARM_CORTEX_A15
             help
                 Support for EXYNOS5250 platform (ARNDALE).
-
 
         config PLAT_APQ8064
             bool "Qualcomm Snapdrogon S4 APQ8064 (Inforce IFC6410)"

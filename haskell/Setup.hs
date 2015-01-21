@@ -21,7 +21,7 @@ import Distribution.PackageDescription.Parse
 import Distribution.Verbosity
 import qualified Distribution.ModuleName
 import Distribution.Simple.Setup
-import System.Cmd
+import System.Process
 import System.Exit
 import System.Environment(getArgs)
 import Data.List(isPrefixOf, find)

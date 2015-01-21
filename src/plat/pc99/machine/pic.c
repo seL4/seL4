@@ -85,14 +85,30 @@ bool_t pic_is_irq_pending(void)
     return irr != 0;
 }
 
+static uint16_t pic_get_isr(void)
+{
+    out8(PIC1_BASE, 0x0b);
+    out8(PIC2_BASE, 0x0b);
+    return (((uint16_t)in8(PIC2_BASE)) << 8) | in8(PIC1_BASE);
+}
+
 void pic_ack_active_irq(void)
 {
-    if (getActiveIRQ() >= irq_isa_min + 8) {
-        /* ack slave PIC */
-        out8(PIC2_BASE, 0x20);
+    irq_t irq = getActiveIRQ();
+    if (irq >= irq_isa_min + 8) {
+        /* ack slave PIC, unless we got a spurious irq 15
+         * It is spurious if the bit is not set in the ISR
+         * Even if it was spurious we will still need to
+         * acknowledge the master PIC */
+        if (irq != irq_isa_min + 15 || (pic_get_isr() & BIT(15))) {
+            out8(PIC2_BASE, 0x20);
+        }
     }
-    /* ack master PIC */
-    out8(PIC1_BASE, 0x20);
+    /* ack master PIC, unless we got a spurious IRQ 7
+     * It is spurious if the bit is not set in the ISR */
+    if (irq != irq_isa_min + 7 || (pic_get_isr() & BIT(7))) {
+        out8(PIC1_BASE, 0x20);
+    }
 }
 
 #endif

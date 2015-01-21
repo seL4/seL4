@@ -13,10 +13,10 @@
 
 #ifdef CONFIG_BENCHMARK
 
-#ifdef CONFIG_PLAT_IMX6
+#if defined(CONFIG_PLAT_IMX6) || defined(CONFIG_PLAT_EXYNOS5410)
 #define KS_LOG_PADDR 0xffe00000
 #else
-//TODO implement this for other platforms
+//TODO test/implement this for other platforms
 #error "Log address unclear and untested!"
 #endif
 

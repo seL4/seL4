@@ -30,7 +30,7 @@ instance Bounded IRQ where
     maxBound = IRQ 31
 
 newtype PAddr = PAddr { fromPAddr :: Word }
-    deriving (Integral, Real, Show, Eq, Num, Bits, Ord, Enum, Bounded)
+    deriving (Integral, Real, Show, Eq, Num, Bits, FiniteBits, Ord, Enum, Bounded)
 
 physMappingOffset = 0xf0000000
 

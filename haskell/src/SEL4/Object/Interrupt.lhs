@@ -172,7 +172,7 @@ This function is called when the kernel receives an interrupt event.
 >             case cap of
 >                 AsyncEndpointCap { capAEPCanSend = True } ->
 >                     sendAsyncIPC (capAEPPtr cap) (capAEPBadge cap)
->                         (bit (fromEnum irq `mod` bitSize (undefined::Word)))
+>                         (bit (fromEnum irq `mod` finiteBitSize (undefined::Word)))
 >                 _ -> doMachineOp $ debugPrint $
 >                     "Undelivered interrupt: " ++ show irq
 >             doMachineOp $ maskInterrupt True irq

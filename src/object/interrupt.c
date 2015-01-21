@@ -113,7 +113,7 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         if (cap_get_capType(aepCap) != cap_async_endpoint_cap ||
                 !cap_async_endpoint_cap_get_capAEPCanSend(aepCap)) {
             if (cap_get_capType(aepCap) != cap_async_endpoint_cap) {
-                userError("IRQSetHandler: provided cap is not an async endpoint capablity.");
+                userError("IRQSetHandler: provided cap is not an async endpoint capability.");
             } else {
                 userError("IRQSetHandler: caller does not have send rights on the endpoint.");
             }

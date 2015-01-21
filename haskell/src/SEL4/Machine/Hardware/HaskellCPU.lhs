@@ -29,7 +29,7 @@
 > pageBits = 12
 
 > intSize :: Word
-> intSize = fromIntegral $ bitSize (undefined::Word) `div` 8
+> intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
 
 > getMemoryTop :: MachineMonad PPtr
 > getMemoryTop = return maxBound

@@ -581,8 +581,6 @@ copyGlobalMappings(pde_t *newPD)
 #endif
 }
 
-#define intSize (wordBits / 8)
-
 word_t * PURE
 lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
@@ -1032,9 +1030,6 @@ isValidVTableRoot(cap_t cap)
     return cap_get_capType(cap) == cap_page_directory_cap &&
            cap_page_directory_cap_get_capPDIsMapped(cap);
 }
-
-#define wSize (capTransferDataSize + msgMaxLength + msgMaxExtraCaps + 2)
-#define bSize (wSize * intSize)
 
 exception_t
 checkValidIPCBuffer(vptr_t vptr, cap_t cap)
@@ -2193,7 +2188,7 @@ decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
 
         /* Check sanity of arguments */
         if (end <= start) {
-            userError("PD FLush: Invalid range");
+            userError("PD Flush: Invalid range");
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 1;
             return EXCEPTION_SYSCALL_ERROR;
