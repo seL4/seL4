@@ -274,13 +274,6 @@ This chapter defines the interface that is used by the rest of the kernel to rep
 
 \part{Architecture-Specific Features}
 
-\chapter{Generic Implementations}
-
-This chapter contains default definitions for platforms with no special requirements.
-
-\section{Capability-based Virtual Address Space}
-\input{../src/SEL4/Kernel/VSpace/CSpace.lhs}
-
 \chapter{ARM}
 
 This chapter defines the implementation-specific parts of the API for the ARM architecture. The ARM support is designed for version 6 or later of the ARM architecture. In particular, it uses the ARMv6 page table format, and does not make use of the Fast Context Switch Extension which is performance-critical on ARMv5 and earlier.
