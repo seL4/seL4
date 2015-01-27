@@ -97,7 +97,7 @@ switchToThread_fp(tcb_t *thread, pde_t *pd)
     ksCurThread = thread;
 }
 
-/* Custom implementation of functions for maniuplating some data structures generated
+/* Custom implementation of functions for manipulating some data structures generated
    from arch/object/structures.bf */
 
 static inline void
@@ -333,7 +333,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /*
      * --- POINT OF NO RETURN ---
      *
-     * At this stage, we have commited to performing the IPC.
+     * At this stage, we have committed to performing the IPC.
      */
 
     /* Need to update NextEIP in the calling thread */
@@ -459,7 +459,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     /*
      * --- POINT OF NO RETURN ---
      *
-     * At this stage, we have commited to performing the IPC.
+     * At this stage, we have committed to performing the IPC.
      */
 
     /* Need to update NextEIP in the calling thread */

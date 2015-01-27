@@ -423,7 +423,7 @@ BEGIN_FUNC(handle_syscall)
     pushl   %ebx            # save EBX (cap/badge register)
     pushl   %eax            # save EAX (syscall number)
 
-    # set kernel data segments (ds and es) if neccessary (set them to the user value though)
+    # set kernel data segments (ds and es) if necessary (set them to the user value though)
     SET_SEL(ds, 7  * 4, 0x23)
     SET_SEL(es, 8  * 4, 0x23)
 
