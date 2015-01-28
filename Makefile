@@ -489,9 +489,13 @@ kernel_final.c: kernel_all.c_pp
 
 LINKER_SCRIPT = src/plat/${PLAT}/linker.lds
 
-kernel.elf: ${OBJECTS} ${LINKER_SCRIPT}
+linker.lds_pp: ${LINKER_SCRIPT}
+	@echo " [CPP] $@"
+	$(Q)${CPP} ${CPPFLAGS} -P -E -o $@ -x c $<
+
+kernel.elf: ${OBJECTS} linker.lds_pp
 	@echo " [LD] $@"
-	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -Wl,-T -Wl,${SOURCE_ROOT}/${LINKER_SCRIPT} \
+	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -Wl,-T -Wl,linker.lds_pp \
 		-o $@ ${OBJECTS}
 
 ############################################################

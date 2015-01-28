@@ -15,6 +15,7 @@
    indicating that the structure of the image should be taken from its ELF
    headers. */
 
+#include <config.h>
 #include <machine/assembler.h>
 #include <config.h>
 
@@ -72,7 +73,15 @@ BEGIN_FUNC(enable_paging)
     orl  $0x10, %eax
     movl %eax,  %cr4
 
-    # Load the boot PD address into CR3
+#ifdef CONFIG_PAE_PAGING
+    # Set PAE (bit 5) so that we will switch to PAE paging mode
+    # when we enable paging below
+    movl %cr4, %eax
+    orl $0x20, %eax
+    movl %eax, %cr4
+#endif
+
+    # Load the boot PD (or PDPT) address into CR3
     leal _boot_pd, %eax
     movl %eax,     %cr3
 

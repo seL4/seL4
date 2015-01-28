@@ -193,8 +193,8 @@ acpi_table_init(void* entry, enum acpi_type table_type)
     unsigned int pages_for_header = 1;
 
     /* if we need to map another page to read header */
-    uint32_t offset_in_page = (uint32_t)entry & MASK(pageBitsForSize(IA32_4M));
-    if (MASK(pageBitsForSize(IA32_4M)) - offset_in_page < sizeof(acpi_rsdp_t)) {
+    uint32_t offset_in_page = (uint32_t)entry & MASK(LARGE_PAGE_BITS);
+    if (MASK(LARGE_PAGE_BITS) - offset_in_page < sizeof(acpi_rsdp_t)) {
         pages_for_header++;
     }
 
@@ -204,12 +204,12 @@ acpi_table_init(void* entry, enum acpi_type table_type)
     switch (table_type) {
     case ACPI_RSDP: {
         acpi_rsdp_t *rsdp_entry = (acpi_rsdp_t*)entry;
-        pages_for_table = (rsdp_entry->length + offset_in_page) / MASK(pageBitsForSize(IA32_4M)) + 1;
+        pages_for_table = (rsdp_entry->length + offset_in_page) / MASK(LARGE_PAGE_BITS) + 1;
         break;
     }
     case ACPI_RSDT: { // RSDT, MADT, DMAR etc.
         acpi_rsdt_t *rsdt_entry = (acpi_rsdt_t*)entry;
-        pages_for_table = (rsdt_entry->header.length + offset_in_page) / MASK(pageBitsForSize(IA32_4M)) + 1;
+        pages_for_table = (rsdt_entry->header.length + offset_in_page) / MASK(LARGE_PAGE_BITS) + 1;
         break;
     }
     default:

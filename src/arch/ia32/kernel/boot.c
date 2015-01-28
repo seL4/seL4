@@ -32,11 +32,6 @@
 #include <arch/object/vtx.h>
 #endif
 
-#ifdef CONFIG_BENCHMARK
-/* defined in boot_sys.c */
-extern uint32_t kernel_pd_list[CONFIG_MAX_NUM_NODES][BIT(PD_BITS)];
-#endif /* CONFIG_BENCHMARK */
-
 /* functions exactly corresponding to abstract specification */
 
 BOOT_CODE static void
@@ -82,9 +77,9 @@ create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
     vm_page_size_t frame_size;
 
     if (use_large) {
-        frame_size = IA32_4M;
+        frame_size = IA32_LargePage;
     } else {
-        frame_size = IA32_4K;
+        frame_size = IA32_SmallPage;
     }
     return
         cap_frame_cap_new(
@@ -132,7 +127,7 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, bool_t use_la
 /* Create a page table for the initial thread */
 
 static BOOT_CODE cap_t
-create_it_page_table_cap(cap_t pd, pptr_t pptr, vptr_t vptr)
+create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     uint32_t pd_index = vptr >> (PT_BITS + PAGE_BITS);
@@ -142,6 +137,23 @@ create_it_page_table_cap(cap_t pd, pptr_t pptr, vptr_t vptr)
               pptr                                         /* capPTBasePtr      */
           );
     map_it_pt_cap(cap);
+        map_it_pt_cap(vspace_cap, cap);
+    }
+    return cap;
+}
+
+static BOOT_CODE cap_t
+create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+{
+    cap_t cap;
+    cap = cap_page_directory_cap_new(
+              true,    /* capPDIsMapped   */
+              IT_ASID, /* capPDMappedASID */
+              vptr,    /* capPDMappedAddress */
+              pptr  /* capPDBasePtr    */
+          );
+    if (asid != asidInvalid && cap_get_capType(vspace_cap) != cap_null_cap) {
+        map_it_pd_cap(vspace_cap, cap);
     return cap;
 }
 
@@ -150,39 +162,96 @@ create_it_page_table_cap(cap_t pd, pptr_t pptr, vptr_t vptr)
 BOOT_CODE static cap_t
 create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
-    cap_t      pd_cap;
-    vptr_t     pt_vptr;
-    pptr_t     pt_pptr;
+    cap_t      vspace_cap;
+    vptr_t     vptr;
+    pptr_t     pptr;
     slot_pos_t slot_pos_before;
     slot_pos_t slot_pos_after;
-    pptr_t pd_pptr;
 
-    /* create PD obj and cap */
-    pd_pptr = alloc_region(PD_SIZE_BITS);
-    if (!pd_pptr) {
-        return cap_null_cap_new();
+    slot_pos_before = ndks_boot.slot_pos_cur;
+    if (PDPT_BITS == 0) {
+        cap_t pd_cap;
+        pptr_t pd_pptr;
+        /* just create single PD obj and cap */
+        pd_pptr = alloc_region(PD_SIZE_BITS);
+        if (!pd_pptr) {
+            return cap_null_cap_new();
+        }
+        memzero(PDE_PTR(pd_pptr), 1 << PD_SIZE_BITS);
+        copyGlobalMappings(PDE_PTR(pd_pptr));
+        pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
+        if (!provide_cap(root_cnode_cap, pd_cap)) {
+            return cap_null_cap_new();
+        }
+        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE), pd_cap);
+        vspace_cap = pd_cap;
+    } else {
+        cap_t pdpt_cap;
+        pptr_t pdpt_pptr;
+        unsigned int i;
+        /* create a PDPT obj and cap */
+        pdpt_pptr = alloc_region(PDPT_SIZE_BITS);
+        if (!pdpt_pptr) {
+            return cap_null_cap_new();
+        }
+        memzero(PDPTE_PTR(pdpt_pptr), 1 << PDPT_SIZE_BITS);
+        pdpt_cap = cap_pdpt_cap_new(
+                       true,       /* capPDPTISMapped */
+                       IT_ASID,    /* capPDPTMappedASID */
+                       pdpt_pptr        /* capPDPTBasePtr */
+                   );
+        /* create all PD objs and caps necessary to cover userland image. For simplicity
+         * to ensure we also cover the kernel window we create all PDs */
+        for (i = 0; i < BIT(PDPT_BITS); i++) {
+            /* The compiler is under the mistaken belief here that this shift could be
+             * undefined. However, in the case that it would be undefined this code path
+             * is not reachable because PDPT_BITS == 0 (see if statement at the top of
+             * this function), so to work around it we must both put in a redundant
+             * if statement AND place the shift in a variable. While the variable
+             * will get compiled away it prevents the compiler from evaluating
+             * the 1 << 32 as a constant when it shouldn't
+             * tl;dr gcc evaluates constants even if code is unreachable */
+            int shift = (PD_BITS + PT_BITS + PAGE_BITS);
+            if (shift != 32) {
+                vptr = i << shift;
+            } else {
+                return cap_null_cap_new();
+            }
+
+            pptr = alloc_region(PD_SIZE_BITS);
+            if (!pptr) {
+                return cap_null_cap_new();
+            }
+            memzero(PDE_PTR(pptr), 1 << PD_SIZE_BITS);
+            if (!provide_cap(root_cnode_cap,
+                             create_it_page_directory_cap(pdpt_cap, pptr, vptr, IT_ASID))
+               ) {
+                return cap_null_cap_new();
+            }
+        }
+        /* now that PDs exist we can copy the global mappings */
+        copyGlobalMappings(PDPTE_PTR(pdpt_pptr));
+        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE), pdpt_cap);
+        vspace_cap = pdpt_cap;
     }
-    memzero(PDE_PTR(pd_pptr), 1 << PD_SIZE_BITS);
-    copyGlobalMappings(PDE_PTR(pd_pptr));
-    pd_cap =
-        cap_page_directory_cap_new(
-            pd_pptr  /* capPDBasePtr    */
-        );
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_PD), pd_cap);
 
+    slot_pos_after = ndks_boot.slot_pos_cur;
+    ndks_boot.bi_frame->ui_pd_caps = (slot_region_t) {
+        slot_pos_before, slot_pos_after
+    };
     /* create all PT objs and caps necessary to cover userland image */
     slot_pos_before = ndks_boot.slot_pos_cur;
 
-    for (pt_vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
-            pt_vptr < it_v_reg.end;
-            pt_vptr += BIT(PT_BITS + PAGE_BITS)) {
-        pt_pptr = alloc_region(PT_SIZE_BITS);
-        if (!pt_pptr) {
+    for (vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
+            vptr < it_v_reg.end;
+            vptr += BIT(PT_BITS + PAGE_BITS)) {
+        pptr = alloc_region(PT_SIZE_BITS);
+        if (!pptr) {
             return cap_null_cap_new();
         }
-        memzero(PTE_PTR(pt_pptr), 1 << PT_SIZE_BITS);
+        memzero(PTE_PTR(pptr), 1 << PT_SIZE_BITS);
         if (!provide_cap(root_cnode_cap,
-                         create_it_page_table_cap(pd_cap, pt_pptr, pt_vptr))
+                         create_it_page_table_cap(vspace_cap, pptr, vptr, IT_ASID))
            ) {
             return cap_null_cap_new();
         }
@@ -193,7 +262,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         slot_pos_before, slot_pos_after
     };
 
-    return pd_cap;
+    return vspace_cap;
 }
 
 BOOT_CODE static bool_t
@@ -270,6 +339,7 @@ init_node_state(
     uint32_t      num_nodes,
     cpu_id_t*     cpu_list,
     /* parameters below not modeled in abstract specification */
+    pdpte_t*      kernel_pdpt,
     pde_t*        kernel_pd,
     pte_t*        kernel_pt,
     vesa_info_t*  vesa_info,
@@ -286,7 +356,7 @@ init_node_state(
     vptr_t        arch_bi_frame_vptr;
     vptr_t        bi_frame_vptr;
     vptr_t        ipcbuf_vptr;
-    cap_t         it_pd_cap;
+    cap_t         it_vspace_cap;
     cap_t         ipcbuf_cap;
     pptr_t        bi_frame_pptr;
     pptr_t        arch_bi_frame_pptr;
@@ -325,7 +395,7 @@ init_node_state(
     }
 
     /* initialise virtual-memory-related data structures (not in abstract spec) */
-    if (!init_vm_state(kernel_pd, kernel_pt)) {
+    if (!init_vm_state(kernel_pdpt, kernel_pd, kernel_pt)) {
         return false;
     }
 
@@ -333,10 +403,10 @@ init_node_state(
     /* allocate and create the log buffer */
     buffer_attr.words[0] = IA32_PAT_MT_WRITE_THROUGH;
 
-    paddr = pptr_to_paddr((void *) alloc_region(pageBitsForSize(IA32_4M)));
+    paddr = pptr_to_paddr((void *) alloc_region(pageBitsForSize(IA32_LargePage)));
 
-    /* allocate a 4MB buffer for logging */
-    pde = pde_pde_4m_new(
+    /* allocate a large frame for logging */
+    pde = pde_pde_large_new(
               paddr,                                   /* page_base_address    */
               vm_attributes_get_ia32PATBit(buffer_attr),      /* pat                  */
               0,                                       /* avl_cte_depth        */
@@ -351,7 +421,7 @@ init_node_state(
           );
 
     /* TODO this shouldn't be hardcoded */
-    ((pde_t *) kernel_pd_list[0])[IA32_KSLOG_IDX] = pde;
+    ia32KSkernelPD[IA32_KSLOG_IDX] = pde;
 
 
     /* flush the tlb */
@@ -397,15 +467,15 @@ init_node_state(
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
-    it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
-    if (cap_get_capType(it_pd_cap) == cap_null_cap) {
+    it_vspace_cap = create_it_address_space(root_cnode_cap, it_v_reg);
+    if (cap_get_capType(it_vspace_cap) == cap_null_cap) {
         return false;
     }
 
     /* Create and map bootinfo frame cap */
     create_bi_frame_cap(
         root_cnode_cap,
-        it_pd_cap,
+        it_vspace_cap,
         bi_frame_pptr,
         bi_frame_vptr
     );
@@ -418,7 +488,7 @@ init_node_state(
                          );
 
     /* create the initial thread's IPC buffer */
-    ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
+    ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_vspace_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
         return false;
     }
@@ -427,7 +497,7 @@ init_node_state(
     create_frames_ret =
         create_frames_of_region(
             root_cnode_cap,
-            it_pd_cap,
+            it_vspace_cap,
             ui_reg,
             true,
             ui_info.pv_offset
@@ -454,7 +524,7 @@ init_node_state(
     /* create the initial thread */
     if (!create_initial_thread(
                 root_cnode_cap,
-                it_pd_cap,
+                it_vspace_cap,
                 ui_info.v_entry,
                 bi_frame_vptr,
                 ipcbuf_vptr,
@@ -501,7 +571,7 @@ init_node_state(
     create_frames_ret =
         create_frames_of_region(
             root_cnode_cap,
-            it_pd_cap,
+            it_vspace_cap,
             sh_reg,
             false,
             0

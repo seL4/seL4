@@ -25,7 +25,7 @@
 #define BI_CAP_NULL          0 /* null cap */
 #define BI_CAP_IT_TCB        1 /* initial thread's TCB cap */
 #define BI_CAP_IT_CNODE      2 /* initial thread's root CNode cap */
-#define BI_CAP_IT_PD         3 /* initial thread's PD cap */
+#define BI_CAP_IT_VSPACE     3 /* initial thread's vspace root cap */
 #define BI_CAP_IRQ_CTRL      4 /* global IRQ controller cap */
 #define BI_CAP_IO_PORT       5 /* global IO port cap (null cap if not supported) */
 #define BI_CAP_IO_SPACE      6 /* global IO space cap (null cap if no IOMMU support) */
@@ -61,6 +61,7 @@ typedef struct bi {
     slot_region_t null_caps;       /* null caps (empty slots) */
     slot_region_t sh_frame_caps;   /* shared-frame caps */
     slot_region_t ui_frame_caps;   /* userland-image frame caps */
+    slot_region_t ui_pd_caps;      /* userland-image PD caps */
     slot_region_t ui_pt_caps;      /* userland-image PT caps */
     slot_region_t ut_obj_caps;     /* untyped-object caps (UT caps) */
     slot_region_t ut_device_obj_caps; /* untyped-objects caps for device frames */

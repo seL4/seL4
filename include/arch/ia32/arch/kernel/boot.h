@@ -50,6 +50,7 @@ bool_t init_node_state(
     uint32_t      num_nodes,
     cpu_id_t*     cpu_list,
     /* parameters below not modeled in abstract specification */
+    pdpte_t*      kernel_pdpt,
     pde_t*        kernel_pd,
     pte_t*        kernel_pt,
     vesa_info_t*  vesa_info,

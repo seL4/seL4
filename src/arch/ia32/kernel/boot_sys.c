@@ -104,13 +104,27 @@ char kernel_stack_alloc[4096];
 BOOT_DATA_GLOB
 cmdline_opt_t cmdline_opt;
 
-/* the array type is uint32_t instead of pde_t due to a c-parser limitation */
-DATA_GLOB ALIGN(BIT(PD_SIZE_BITS))
-uint32_t kernel_pd_list[CONFIG_MAX_NUM_NODES][BIT(PD_BITS)];
+#ifdef CONFIG_PAE_PAGING
+DATA_GLOB ALIGN(BIT(PDPT_BITS))
+uint64_t kernel_pdpt_list[CONFIG_MAX_NUM_NODES][BIT(PDPT_BITS)];
+#define paging_structure_t uint64_t
+#else
+/* In non PAE paging we define the pdpt to be the pd. This is just to
+ * allow for there to be common boot code for paging structures on
+ * both platforms. This common code detects if it is passed a pdpt
+ * and pd at the same address, and ignores the pdpt if this happens
+ */
+#define kernel_pdpt_list kernel_pd_list
+#define paging_structure_t uint32_t
+#endif
 
-/* the array type is uint32_t instead of pte_t due to a c-parser limitation */
+/* the array type is explicit instead of pde_t due to a c-parser limitation */
+DATA_GLOB ALIGN(BIT(PD_SIZE_BITS))
+paging_structure_t kernel_pd_list[CONFIG_MAX_NUM_NODES][BIT(PD_BITS + PDPT_BITS)];
+
+/* the array type is explicit instead of pte_t due to a c-parser limitation */
 DATA_GLOB ALIGN(BIT(PT_SIZE_BITS))
-uint32_t kernel_pt_list[CONFIG_MAX_NUM_NODES][BIT(PT_BITS)];
+paging_structure_t kernel_pt_list[CONFIG_MAX_NUM_NODES][BIT(PT_BITS)];
 
 #ifdef DEBUG
 
@@ -171,7 +185,7 @@ load_boot_module(node_id_t node, multiboot_module_t* boot_module, paddr_t load_p
         printf("Userland image virtual start address must be 4KB-aligned\n");
         return 0;
     }
-    if (v_reg.end + 2 * BIT(PAGE_BITS) > PPTR_BASE) {
+    if (v_reg.end + 2 * BIT(PAGE_BITS) > PPTR_USER_TOP) {
         /* for IPC buffer frame and bootinfo frame, need 2*4K of additional userland virtual memory */
         printf("Userland image virtual end address too high\n");
         return 0;
@@ -285,6 +299,7 @@ lift_ndks(node_id_t node_id)
     ndks_p_reg.end = ndks_p_reg.start + NDKS_SIZE;
 
     if (!map_kernel_window(
+                (pdpte_t*)kernel_pdpt_list[node_id],
                 (pde_t*)kernel_pd_list[node_id],
                 (pte_t*)kernel_pt_list[node_id],
                 ndks_p_reg
@@ -299,7 +314,7 @@ lift_ndks(node_id_t node_id)
             )) {
         return false;
     }
-    write_cr3(pptr_to_paddr(kernel_pd_list[node_id]));
+    write_cr3(pptr_to_paddr(kernel_pdpt_list[node_id]));
     /* Sync up the compilers view of the world here to force the PD to actually
      * be set *right now* instead of delayed */
     asm volatile("" ::: "memory");
@@ -345,6 +360,7 @@ try_boot_node(void)
                 num_nodes,
                 glks.cpu_list,
                 /* parameters below not modeled in abstract specification */
+                (pdpte_t*)kernel_pdpt_list[node_id],
                 (pde_t*)kernel_pd_list[node_id],
                 (pte_t*)kernel_pt_list[node_id],
                 &glks.vesa_info,

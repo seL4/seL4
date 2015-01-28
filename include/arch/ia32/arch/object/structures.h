@@ -63,21 +63,41 @@ compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) ==
 
 #define IDT_ENTRIES 256
 
+#ifdef CONFIG_PAE_PAGING
+#define PDPTE_SIZE_BITS 3
+#define PDPT_BITS    2
+#define PDE_SIZE_BITS  3
+#define PD_BITS      9
+#define PTE_SIZE_BITS 3
+#define PT_BITS      9
+#else
+#define PDPTE_SIZE_BITS 0
+#define PDPT_BITS 0
 #define PDE_SIZE_BITS  2
+#define PD_BITS      10
+#define PTE_SIZE_BITS 2
+#define PT_BITS      10
+#endif
+
+#define PDPTE_PTR(r)   ((pdpte_t *)(r))
+#define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
+#define PDPTE_REF(p)   ((unsigned int)(p))
+
+#define PDPT_SIZE_BITS (PDPT_BITS + PDPTE_SIZE_BITS)
+#define PDPT_PTR(r)    ((pdpte_t*)(r))
+#define PDPT_PREF(p)   ((unsigned int)(p))
+
 #define PDE_PTR(r)     ((pde_t *)(r))
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
 #define PDE_REF(p)     ((unsigned int)(p))
 
-#define PD_BITS      10
 #define PD_SIZE_BITS (PD_BITS + PDE_SIZE_BITS)
 #define PD_PTR(r)    ((pde_t *)(r))
 #define PD_REF(p)    ((unsigned int)(p))
 
-#define PTE_SIZE_BITS 2
-#define PTE_PTR(r)    ((pte_t *)r)
+#define PTE_PTR(r)    ((pte_t *)(r))
 #define PTE_REF(p)    ((unsigned int)(p))
 
-#define PT_BITS      10
 #define PT_SIZE_BITS (PT_BITS + PTE_SIZE_BITS)
 #define PT_PTR(r)    ((pte_t *)(r))
 #define PT_REF(p)    ((unsigned int)(p))
@@ -175,6 +195,24 @@ vmRightsFromWord(word_t w)
     return (vm_rights_t)w;
 }
 
+static inline asid_t PURE
+cap_get_capMappedASID(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+    case cap_pdpt_cap:
+        return cap_pdpt_cap_get_capPDPTMappedASID(cap);
+
+    case cap_page_directory_cap:
+        return cap_page_directory_cap_get_capPDMappedASID(cap);
+
+    default:
+        fail("Invalid arch cap type");
+    }
+}
 static inline unsigned int CONST
 cap_get_archCapSizeBits(cap_t cap)
 {
@@ -243,6 +281,9 @@ cap_get_archCapPtr(cap_t cap)
 
     case cap_page_directory_cap:
         return PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
+
+    case cap_pdpt_cap:
+        return PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
 
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:

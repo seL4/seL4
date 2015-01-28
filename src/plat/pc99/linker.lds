@@ -8,6 +8,8 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
+
 ENTRY(_start)
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
@@ -72,7 +74,11 @@ SECTIONS
 
     /* The NDKS section is allocated and mapped per node in boot_sys.c */
 
+#ifdef CONFIG_PAE_PAGING
+    .ndks 0xffe01000 (DSECT) :
+#else
     .ndks 0xffc01000 (DSECT) :
+#endif
     {
         _ndks_start = .;
 

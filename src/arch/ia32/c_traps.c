@@ -111,7 +111,7 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_
             "movl %0, %%esp\n"
             // restore syscall number
             "popl %%eax\n"
-            // cap/badge reigster
+            // cap/badge register
             "popl %%ebx\n"
             // skip ecx and edx, these will contain esp and nexteip due to sysenter/sysexit convention
             "addl $8, %%esp\n"
