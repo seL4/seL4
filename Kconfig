@@ -250,7 +250,7 @@ menu "seL4 System Parameters"
             configuration.
 
     config NUM_PRIORITIES
-        int "Numer of priority levels"
+        int "Number of priority levels"
         default 256
         help
             The number of priority levels per domain
