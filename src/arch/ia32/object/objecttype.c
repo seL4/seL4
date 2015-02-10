@@ -44,20 +44,13 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
         return ret;
 
     case cap_page_directory_cap:
-        ret.cap = cap;
+        ret.cap = cap_page_directory_cap_set_capPDMappedObject(cap, 0);
         ret.status = EXCEPTION_NONE;
         return ret;
 
     case cap_pdpt_cap:
-        if (cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
-            ret.cap = cap;
-            ret.status = EXCEPTION_NONE;
-        } else {
-            userError("Deriving a PDPT cap without an assigned ASID");
-            current_syscall_error.type = seL4_IllegalOperation;
-            ret.cap = cap_null_cap_new();
-            ret.status = EXCEPTION_SYSCALL_ERROR;
-        }
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
         return ret;
 
     case cap_frame_cap:
@@ -175,13 +168,13 @@ static void finalisePDMappedFrame(cap_t cap)
     void *object = (void*)cap_frame_cap_get_capFMappedObject(cap);
     uint32_t index = cap_frame_cap_get_capFMappedIndex(cap);
     switch (cap_frame_cap_get_capFSize(cap)) {
-    case IA32_4K:
-        unmapPage4K(PT_PTR(object), index);
-        flushPage4K(PT_PTR(object), index);
+    case IA32_SmallPage:
+        unmapPageSmall(PT_PTR(object), index);
+        flushPageSmall(PT_PTR(object), index);
         break;
-    case IA32_4M:
-        unmapPage4M(PD_PTR(object), index);
-        flushPage4M(PD_PTR(object), index);
+    case IA32_LargePage:
+        unmapPageLarge(PD_PTR(object), index);
+        flushPageLarge(PD_PTR(object), index);
         break;
     default:
         fail("Unknown frame size");
@@ -192,24 +185,36 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
 {
     switch (cap_get_capType(cap)) {
     case cap_pdpt_cap:
-        if (final && cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
-            deleteASID(
-                cap_pdpt_cap_get_capPDPTMappedASID(cap),
-                PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap))
-            );
+        if (final) {
+            pdpte_t *capPtr = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
+            unmapAllPageDirectories(capPtr);
+            flushAllPageDirectories(capPtr);
+            clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+            copyGlobalMappings(capPtr);
         }
         break;
 
     case cap_page_directory_cap:
-        if (final) {
-            pde_t *capPtr = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
+        if (cap_page_directory_cap_get_capPDMappedObject(cap)) {
             unmapPageDirectory(
-            unmapAllPageTables(capPtr);
-                cap_page_directory_cap_get_capPDMappedASID(cap),
-                cap_page_directory_cap_get_capPDMappedAddress(cap),
-            memzero(capPtr, (PPTR_BASE >> IA32_4M_bits) << PDE_SIZE_BITS);
-                PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap))
+                PDPT_PTR(cap_page_directory_cap_get_capPDMappedObject(cap)),
+                cap_page_directory_cap_get_capPDMappedIndex(cap),
+                PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap))
             );
+        }
+        if (final) {
+            unmapAllPageTables(
+                PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap))
+            );
+            flushAllPageTables(PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap)));
+            clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+#ifndef CONFIG_PAE_PAGING
+            copyGlobalMappings((void*)cap_get_capPtr(cap));
+#endif
+        }
+        if (cap_page_directory_cap_get_capPDMappedObject(cap) || final) {
+            invalidateTLB();
+            invalidatePageStructureCache();
         }
         break;
 
@@ -217,14 +222,11 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
         if (cap_page_table_cap_get_capPTMappedObject(cap)) {
             unmapPageTable(
                 PD_PTR(cap_page_table_cap_get_capPTMappedObject(cap)),
-                cap_page_table_cap_get_capPTMappedIndex(cap),
-                PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap))
+                cap_page_table_cap_get_capPTMappedIndex(cap)
             );
         }
         if (final) {
             unmapAllPages(
-                PD_PTR(cap_page_table_cap_get_capPTMappedObject(cap)),
-                cap_page_table_cap_get_capPTMappedIndex(cap),
                 PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap))
             );
             clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
@@ -357,6 +359,8 @@ resetMemMapping(cap_t cap)
         return cap_frame_cap_set_capFMappedObject(cap, 0);
     case cap_page_table_cap:
         return cap_page_table_cap_set_capPTMappedObject(cap, 0);
+    case cap_page_directory_cap:
+        return cap_page_directory_cap_set_capPDMappedObject(cap, 0);
 #ifdef CONFIG_VTX
     case cap_ept_page_directory_cap:
         return cap_ept_page_directory_cap_set_capPDMappedObject(cap, 0);
@@ -364,9 +368,6 @@ resetMemMapping(cap_t cap)
         return cap_ept_page_table_cap_set_capPTMappedObject(cap, 0);
 #endif
 #ifdef CONFIG_IOMMU
-    case cap_pdpt_cap:
-        /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
-        return cap_pdpt_cap_set_capPDPTIsMapped(cap, 0);
     case cap_io_page_table_cap:
         return cap_io_page_table_cap_set_capIOPTMappedObject(cap, 0);
 #endif
@@ -393,22 +394,10 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
 
     case cap_page_directory_cap:
         Arch_finaliseCap(cap, true);
-        clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
-        if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
-            unmapPageDirectory(
-                cap_page_directory_cap_get_capPDMappedASID(cap),
-                cap_page_directory_cap_get_capPDMappedAddress(cap),
-                PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap))
-            );
-        }
-        Arch_finaliseCap(cap, is_final);
-        if (is_final) {
-            return resetMemMapping(cap);
-        }
-        return cap;
+        return resetMemMapping(cap);
 
     case cap_pdpt_cap:
-        clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        Arch_finaliseCap(cap, true);
         return cap;
 
 #ifdef CONFIG_VTX
@@ -489,11 +478,6 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_page_directory_cap_get_capPDBasePtr(cap_b);
         }
         break;
-#ifdef CONFIG_VTX
-    case cap_vcpu_cap:
-        if (cap_get_capType(cap_b) == cap_vcpu_cap) {
-            return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
-                   cap_vcpu_cap_get_capVCPUPtr(cap_b);
     case cap_pdpt_cap:
         if (cap_get_capType(cap_b) == cap_pdpt_cap) {
             return cap_pdpt_cap_get_capPDPTBasePtr(cap_a) ==
@@ -501,6 +485,11 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
+#ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        if (cap_get_capType(cap_b) == cap_vcpu_cap) {
+            return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
+                   cap_vcpu_cap_get_capVCPUPtr(cap_b);
         }
         break;
 #endif
@@ -609,7 +598,7 @@ Arch_isFrameType(word_t t)
     switch (t) {
     case seL4_IA32_4K:
         return true;
-    case seL4_IA32_4M:
+    case seL4_IA32_LargePage:
         return true;
     default:
         return false;
@@ -622,7 +611,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
     switch (t) {
     case seL4_IA32_4K:
         if (!deviceMemory) {
-        memzero(regionBase, 1 << pageBitsForSize(IA32_SmallPage));
+            memzero(regionBase, 1 << pageBitsForSize(IA32_SmallPage));
         }
         return cap_frame_cap_new(
                    IA32_SmallPage,         /* capFSize             */
@@ -635,7 +624,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
 
     case seL4_IA32_LargePage:
         if (!deviceMemory) {
-        memzero(regionBase, 1 << pageBitsForSize(IA32_LargePage));
+            memzero(regionBase, 1 << pageBitsForSize(IA32_LargePage));
         }
         return cap_frame_cap_new(
                    IA32_LargePage,         /* capFSize             */
@@ -660,10 +649,9 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
         copyGlobalMappings(regionBase);
 #endif
         return cap_page_directory_cap_new(
-                   0,                  /* capPDIsMapped    */
-                   asidInvalid,        /* capPDMappedASID  */
-                   0,                  /* capPDMappedAddress */
-                   (word_t)regionBase  /* capPDBasePtr     */
+                   0,                  /* capPDmappedObject */
+                   0,                  /* capPDMappedIndex  */
+                   (word_t)regionBase  /* capPDBasePtr      */
                );
 
 #ifdef CONFIG_PAE_PAGING
@@ -672,8 +660,6 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
         copyGlobalMappings(regionBase);
 
         return cap_pdpt_cap_new(
-                   0,                  /* capPDPTIsMapped */
-                   asidInvalid,        /* capPDPTMappedAsid*/
                    (word_t)regionBase  /* capPDPTBasePtr */
                );
 #endif

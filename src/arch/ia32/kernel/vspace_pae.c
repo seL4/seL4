@@ -129,74 +129,14 @@ init_boot_pd(void)
 }
 
 BOOT_CODE void
-map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
+map_it_pd_cap(cap_t pd_cap)
 {
-    pdpte_t *pdpt = PDPTE_PTR(pptr_of_cap(vspace_cap));
-    pde_t *pd;
-    pte_t *pt;
-    void *frame = (void*)cap_frame_cap_get_capFBasePtr(frame_cap);
-    vptr_t vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
-
-    assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
-    pdpt += (vptr >> IA32_1G_bits);
-    assert(pdpte_ptr_get_present(pdpt));
-    pd = paddr_to_pptr(pdpte_ptr_get_pd_base_address(pdpt));
-    pd += ( (vptr & MASK(IA32_1G_bits)) >> IA32_2M_bits);
-    assert(pde_pde_small_ptr_get_present(pd));
-    pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
-    pte_ptr_new(
-        pt + ((vptr & MASK(IA32_2M_bits)) >> IA32_4K_bits),
-        pptr_to_paddr(frame),
-        0, /* avl */
-        0, /* global */
-        0, /* pat */
-        0, /* dirty */
-        0, /* accessed */
-        0, /* cache_disabled */
-        0, /* write_through */
-        1, /* super_user */
-        1, /* read_write */
-        1  /* present */
-    );
-    invalidatePageStructureCache();
-}
-
-BOOT_CODE void
-map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
-{
-    pdpte_t *pdpt = PDPTE_PTR(pptr_of_cap(vspace_cap));
-    pde_t *pd;
-    pte_t *pt = PT_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
-    vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
-
-    assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
-    pdpt += (vptr >> IA32_1G_bits);
-    assert(pdpte_ptr_get_present(pdpt));
-    pd = paddr_to_pptr(pdpte_ptr_get_pd_base_address(pdpt));
-    pde_pde_small_ptr_new(
-        pd + (vptr >> IA32_2M_bits),
-        pptr_to_paddr(pt),
-        0, /* avl*/
-        0, /* accessed */
-        0, /* cache_disabled */
-        0, /* write_through */
-        1, /* super_user */
-        1, /* read_write */
-        1  /* present */
-    );
-    invalidatePageStructureCache();
-}
-
-BOOT_CODE void
-map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
-{
-    pdpte_t *pdpt = PDPTE_PTR(pptr_of_cap(vspace_cap));
+    pdpte_t *pdpt = PDPTE_PTR(cap_page_directory_cap_get_capPDMappedObject(pd_cap));
     pde_t *pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
-    vptr_t vptr = cap_page_directory_cap_get_capPDMappedAddress(pd_cap);
+    uint32_t index = cap_page_directory_cap_get_capPDMappedIndex(pd_cap);
 
-    assert(cap_page_directory_cap_get_capPDIsMapped(pd_cap));
     pdpte_ptr_new(
-        pdpt + (vptr >> IA32_1G_bits),
+        pdpt + index,
         pptr_to_paddr(pd),
         0, /* avl */
         0, /* cache_disabled */
@@ -225,11 +165,7 @@ bool_t CONST isVTableRoot(cap_t cap)
 
 bool_t CONST isValidVTableRoot(cap_t cap)
 {
-    if (!isVTableRoot(cap) ||
-            !cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
-        return false;
-    }
-    return true;
+    return isVTableRoot(cap);
 }
 
 void *getValidVSpaceRoot(cap_t vspace_cap)
@@ -268,47 +204,137 @@ lookupPDSlot_ret_t lookupPDSlot(void *vspace, vptr_t vptr)
         pdSlot = pd + pdIndex;
 
         ret.pdSlot = pdSlot;
+        ret.pd = pd;
+        ret.pdIndex = pdIndex;
         ret.status = EXCEPTION_NONE;
         return ret;
     }
 }
 
-exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* vspaceCapSlot)
+void unmapPageDirectory(pdpte_t *pdpt, uint32_t pdptIndex, pde_t *pd)
 {
-    cap_pdpt_cap_ptr_set_capPDPTMappedASID(&vspaceCapSlot->cap, asid);
-    cap_pdpt_cap_ptr_set_capPDPTIsMapped(&vspaceCapSlot->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vspaceCapSlot->cap));
-
-    return EXCEPTION_NONE;
+    cap_t threadRoot;
+    pdpt[pdptIndex] = pdpte_new(
+                          0, /* pdpt_base_address */
+                          0, /* val */
+                          0, /* cache_disabled */
+                          0, /* write_through */
+                          0  /* present */
+                      );
+    /* according to the intel manual if we modify a pdpt we must
+     * reload cr3 */
+    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == (void*)pdpt) {
+        write_cr3(read_cr3());
+    }
 }
 
-void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
+void unmapAllPageDirectories(pdpte_t *pdpt)
 {
-    findVSpaceForASID_ret_t find_ret;
-    cap_t threadRoot;
-    pdpte_t *pdptSlot;
+    uint32_t i;
 
-    find_ret = findVSpaceForASID(asid);
-    if (find_ret.status != EXCEPTION_NONE) {
-        return;
+    for (i = 0; i < PPTR_USER_TOP >> IA32_1G_bits; i++) {
+        if (pdpte_ptr_get_present(pdpt + i)) {
+            pde_t *pd = PD_PTR(paddr_to_pptr(pdpte_ptr_get_pd_base_address(pdpt + i)));
+            cte_t *pdCte;
+            cap_t pdCap;
+            pdCte = cdtFindAtDepth(capSpaceTypedMemory, PD_REF(pd), BIT(PD_SIZE_BITS), 0, (uint32_t)(pdpt + i), pdpte_ptr_get_avl_cte_depth(pdpt + i));
+            assert(pdCte);
+
+            pdCap = pdCte->cap;
+            pdCap = cap_page_directory_cap_set_capPDMappedObject(pdCap, 0);
+            cdtUpdate(pdCte, pdCap);
+        }
     }
+}
 
-    pdptSlot = lookupPDPTSlot(find_ret.vspace_root, vaddr);
-
-    /* check if page directory belongs to current address space */
+void flushAllPageDirectories(pdpte_t *pdpt)
+{
+    cap_t threadRoot;
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
+    if (PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(threadRoot)) == pdpt) {
         invalidateTLB();
     }
+}
 
-    *pdptSlot = pdpte_new(
-                    0,  /* pd_base_address  */
-                    0,  /* avl              */
-                    0,  /* cache_disabled   */
-                    0,  /* write_through    */
-                    0   /* present          */
-                );
-    invalidatePageStructureCache();
+void flushPageSmall(pte_t *pt, uint32_t ptIndex)
+{
+    cap_t threadRoot;
+    cte_t *ptCte;
+    pde_t *pd;
+    uint32_t pdIndex;
+
+    /* We know this pt can only be mapped into one single pd. So
+     * lets find a cap with that mapping information */
+    ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
+    if (ptCte) {
+        pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
+        pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
+
+        if (pd) {
+            cte_t *pdCte;
+            pdpte_t *pdpt;
+            uint32_t pdptIndex;
+            pdCte = cdtFindWithExtra(capSpaceTypedMemory, PD_REF(pd), BIT(PD_SIZE_BITS), 0, cte_depth_bits_type(cap_page_directory_cap));
+            if (pdCte) {
+                pdpt = PDPT_PTR(cap_page_directory_cap_get_capPDMappedObject(pdCte->cap));
+                pdptIndex = cap_page_directory_cap_get_capPDMappedIndex(pdCte->cap);
+
+                /* check if page belongs to current address space */
+                threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+                if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == pdpt) {
+                    invalidateTLBentry( (pdptIndex << (PD_BITS + PT_BITS + PAGE_BITS)) | (pdIndex << (PT_BITS + PAGE_BITS)) | (ptIndex << PAGE_BITS));
+                    invalidatePageStructureCache();
+                }
+            }
+        }
+    }
+}
+
+void flushPageLarge(pde_t *pd, uint32_t pdIndex)
+{
+    cap_t threadRoot;
+    cte_t *pdCte;
+
+    pdCte = cdtFindWithExtra(capSpaceTypedMemory, PD_REF(pd), BIT(PD_SIZE_BITS), 0, cte_depth_bits_type(cap_page_directory_cap));
+    if (pdCte) {
+        pdpte_t *pdpt;
+        uint32_t pdptIndex;
+        pdpt = PDPT_PTR(cap_page_directory_cap_get_capPDMappedObject(pdCte->cap));
+        pdptIndex = cap_page_directory_cap_get_capPDMappedIndex(pdCte->cap);
+
+        /* check if page belongs to current address space */
+        threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+        if (cap_get_capType(threadRoot) == cap_pdpt_cap &&
+                PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(threadRoot)) == pdpt) {
+            invalidateTLBentry( (pdIndex << (PT_BITS + PAGE_BITS)) | (pdptIndex << IA32_1G_bits));
+            invalidatePageStructureCache();
+        }
+    }
+}
+
+void flushAllPageTables(pde_t *pd)
+{
+    cap_t threadRoot;
+    cte_t *pdCte;
+
+    pdCte = cdtFindWithExtra(capSpaceTypedMemory, PD_REF(pd), BIT(PD_SIZE_BITS), 0, cte_depth_bits_type(cap_page_directory_cap));
+    if (pdCte) {
+        pdpte_t *pdpt;
+        pdpt = PDPT_PTR(cap_page_directory_cap_get_capPDMappedObject(pdCte->cap));
+        /* check if this is the current address space */
+        threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+        if (cap_get_capType(threadRoot) == cap_pdpt_cap &&
+                PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(threadRoot)) == pdpt) {
+            invalidateTLB();
+        }
+        invalidatePageStructureCache();
+    }
+}
+
+void flushPageDirectory(pdpte_t *pdpt, uint32_t pdptIndex, pde_t *pd)
+{
+    flushAllPageDirectories(pdpt);
 }
 
 exception_t
@@ -323,31 +349,26 @@ decodeIA32PageDirectoryInvocation(
 {
     word_t          vaddr;
     vm_attributes_t attr;
-    pdpte_t*        pdptSlot;
+    pdpte_t *       pdpt;
+    pdpte_t *       pdptSlot;
+    unsigned int    pdptIndex;
     cap_t           vspaceCap;
-    void*           vspace;
     pdpte_t         pdpte;
     paddr_t         paddr;
-    asid_t          asid;
+    cap_t           threadRoot;
 
     if (label == IA32PageDirectoryUnmap) {
-        if (!isFinalCapability(cte)) {
-            current_syscall_error.type = seL4_RevokeFirst;
-            userError("IA32PageDirectory: Cannot unmap if more than one cap exists.");
-            return EXCEPTION_SYSCALL_ERROR;
-        }
         setThreadState(ksCurThread, ThreadState_Restart);
 
-        if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
+        pdpt = PDPTE_PTR(cap_page_directory_cap_get_capPDMappedObject(cap));
+        if (pdpt) {
             pde_t *pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
-            unmapPageDirectory(
-                cap_page_directory_cap_get_capPDMappedASID(cap),
-                cap_page_directory_cap_get_capPDMappedAddress(cap),
-                pd
-            );
+            pdptIndex = cap_page_directory_cap_get_capPDMappedIndex(cap);
+            unmapPageDirectory(pdpt, pdptIndex, pd);
+            flushPageDirectory(pdpt, pdptIndex, pd);
             clearMemory((void *)pd, cap_get_capSizeBits(cap));
         }
-        cap_page_directory_cap_ptr_set_capPDIsMapped(&(cte->cap), 0);
+        cdtUpdate(cte, cap_page_directory_cap_set_capPDMappedObject(cap, 0));
 
         return EXCEPTION_NONE;
     }
@@ -364,10 +385,12 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
-        userError("IA32PageDirectory: Page directory is already mapped to a PDPT.");
-        current_syscall_error.type = seL4_InvalidCapability;
+    if (cdtCapFindWithExtra(cap)) {
+        userError("IA32PageDirectory: Page direcotry is already mapped to a pdpt.");
+        current_syscall_error.type =
+            seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
+
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -381,8 +404,7 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vspace = (void*)pptr_of_cap(vspaceCap);
-    asid = cap_get_capMappedASID(vspaceCap);
+    pdpt = (void*)pptr_of_cap(vspaceCap);
 
     if (vaddr >= PPTR_USER_TOP) {
         userError("IA32PageDirectory: Mapping address too high.");
@@ -391,24 +413,8 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    {
-        findVSpaceForASID_ret_t find_ret;
-
-        find_ret = findVSpaceForASID(asid);
-        if (find_ret.status != EXCEPTION_NONE) {
-            current_syscall_error.type = seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource = false;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (find_ret.vspace_root != vspace) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-    }
-
-    pdptSlot = lookupPDPTSlot(vspace, vaddr);
+    pdptIndex = vaddr >> IA32_1G_bits;
+    pdptSlot = pdpt + pdptIndex;
 
     if (pdpte_ptr_get_present(pdptSlot)) {
         current_syscall_error.type = seL4_DeleteFirst;
@@ -418,18 +424,24 @@ decodeIA32PageDirectoryInvocation(
     paddr = pptr_to_paddr(PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap)));
     pdpte = pdpte_new(
                 paddr,                                      /* pd_base_address  */
-                0,                                          /* avl              */
-                vm_attributes_get_ia32PCDBit(attr),      /* cache_disabled   */
-                vm_attributes_get_ia32PWTBit(attr),      /* write_through    */
+                mdb_node_get_cdtDepth(cte->cteMDBNode),     /* avl_cte_depth    */
+                vm_attributes_get_ia32PCDBit(attr),         /* cache_disabled   */
+                vm_attributes_get_ia32PWTBit(attr),         /* write_through    */
                 1                                           /* present          */
             );
 
-    cap = cap_page_directory_cap_set_capPDIsMapped(cap, 1);
-    cap = cap_page_directory_cap_set_capPDMappedASID(cap, asid);
-    cap = cap_page_directory_cap_set_capPDMappedAddress(cap, vaddr);
+    cap = cap_page_directory_cap_set_capPDMappedObject(cap, PDPT_REF(pdpt));
+    cap = cap_page_directory_cap_set_capPDMappedIndex(cap, pdptIndex);
 
-    cte->cap = cap;
+    cdtUpdate(cte, cap);
     *pdptSlot = pdpte;
+
+    /* according to the intel manual if we modify a pdpt we must
+     * reload cr3 */
+    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == (void*)pptr_of_cap(vspaceCap)) {
+        write_cr3(read_cr3());
+    }
 
     setThreadState(ksCurThread, ThreadState_Restart);
     invalidatePageStructureCache();

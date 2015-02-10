@@ -37,6 +37,7 @@ cap_get_capSpaceType(cap_t cap)
     case cap_frame_cap:
     case cap_page_table_cap:
     case cap_page_directory_cap:
+    case cap_pdpt_cap:
     case cap_zombie_cap:
         return capSpaceTypedMemory;
 
@@ -138,9 +139,9 @@ cap_get_capExtraComp(cap_t cap)
         switch (cap_frame_cap_get_capFMappedType(cap)) {
         case IA32_MAPPING_PD:
             switch (cap_frame_cap_get_capFSize(cap)) {
-            case IA32_4K:
+            case IA32_SmallPage:
                 return PTE_REF(PTE_PTR(cap_frame_cap_get_capFMappedObject(cap)) + cap_frame_cap_get_capFMappedIndex(cap));
-            case IA32_4M:
+            case IA32_LargePage:
                 return PDE_REF(PDE_PTR(cap_frame_cap_get_capFMappedObject(cap)) + cap_frame_cap_get_capFMappedIndex(cap));
             default:
                 fail ("Unknown frame size");
@@ -148,9 +149,9 @@ cap_get_capExtraComp(cap_t cap)
 #ifdef CONFIG_VTX
         case IA32_MAPPING_EPT:
             switch (cap_frame_cap_get_capFSize(cap)) {
-            case IA32_4K:
+            case IA32_SmallPage:
                 return EPT_PTE_REF(EPT_PTE_PTR(cap_frame_cap_get_capFMappedObject(cap)) + cap_frame_cap_get_capFMappedIndex(cap));
-            case IA32_4M:
+            case IA32_LargePage:
                 return EPT_PDE_REF(EPT_PDE_PTR(cap_frame_cap_get_capFMappedObject(cap)) + cap_frame_cap_get_capFMappedIndex(cap));
             default:
                 fail ("Unknown frame size");
@@ -159,9 +160,9 @@ cap_get_capExtraComp(cap_t cap)
 #ifdef CONFIG_IOMMU
         case IA32_MAPPING_IO:
             switch (cap_frame_cap_get_capFSize(cap)) {
-            case IA32_4K:
+            case IA32_SmallPage:
                 return VTD_PTE_REF(VTD_PTE_PTR(cap_frame_cap_get_capFMappedObject(cap)) + cap_frame_cap_get_capFMappedIndex(cap));
-            case IA32_4M:
+            case IA32_LargePage:
                 return VTD_PTE_REF(VTD_PTE_PTR(cap_frame_cap_get_capFMappedObject(cap)) + cap_frame_cap_get_capFMappedIndex(cap));
             default:
                 fail ("Unknown frame size");
@@ -175,6 +176,11 @@ cap_get_capExtraComp(cap_t cap)
             return 0;
         }
         return PDE_REF(PDE_PTR(cap_page_table_cap_get_capPTMappedObject(cap)) + cap_page_table_cap_get_capPTMappedIndex(cap));
+    case cap_page_directory_cap:
+        if (!cap_page_directory_cap_get_capPDMappedObject(cap)) {
+            return 0;
+        }
+        return PD_REF(PD_PTR(cap_page_directory_cap_get_capPDMappedObject(cap)) + cap_page_directory_cap_get_capPDMappedIndex(cap));
 #ifdef CONFIG_VTX
     case cap_ept_page_directory_cap:
         if (!cap_ept_page_directory_cap_get_capPDMappedObject(cap)) {
@@ -223,6 +229,8 @@ cte_depth_bits_type(cap_tag_t ctag)
     case cap_io_page_table_cap:
         return 3;
 #endif /* CONFIG_IOMMU */
+    case cap_page_directory_cap:
+        return 3;
     case cap_page_table_cap:
         return 3;
     case cap_frame_cap:

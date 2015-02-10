@@ -93,15 +93,24 @@ create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 }
 
 BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, bool_t use_large)
+create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, bool_t use_large)
 {
-    pde_t *pd = PD_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
-    uint32_t pd_index = vptr >> (PT_BITS + PAGE_BITS);
     cap_t cap;
+    int shift = PT_BITS + PD_BITS + PAGE_BITS;
+    pde_t *pd;
+    uint32_t pd_index;
+    if (shift == 32) {
+        pd = PD_PTR(cap_page_directory_cap_get_capPDBasePtr(vspace_cap));
+    } else {
+        uint32_t pdpt_index = vptr >> shift;
+        pdpte_t *pdpt = PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vspace_cap));
+        pd = paddr_to_pptr(pdpte_get_pd_base_address(pdpt[pdpt_index]));
+    }
+    pd_index = vptr >> (PT_BITS + PAGE_BITS);
 
     if (use_large) {
         cap = cap_frame_cap_new(
-                  IA32_4M,                       /* capFSize           */
+                  IA32_LargePage,                /* capFSize           */
                   PD_REF(pd),                    /* capFMappedObject   */
                   pd_index,                      /* capFMappedIndex    */
                   IA32_MAPPING_PD,               /* capFMappedType     */
@@ -110,9 +119,9 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, bool_t use_la
               );
     } else {
         uint32_t pt_index = (vptr >> PAGE_BITS) & MASK(PT_BITS);
-        pte_t *pt = paddr_to_pptr(pde_pde_4k_get_pt_base_address(pd[pd_index]));
+        pte_t *pt = paddr_to_pptr(pde_pde_small_get_pt_base_address(pd[pd_index]));
         cap = cap_frame_cap_new(
-                  IA32_4K,                       /* capFSize           */
+                  IA32_SmallPage,                /* capFSize           */
                   PT_REF(pt),                    /* capFMappedObject   */
                   pt_index,                      /* capFMappedIndex    */
                   IA32_MAPPING_PD,               /* capFMappedType     */
@@ -127,33 +136,51 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, bool_t use_la
 /* Create a page table for the initial thread */
 
 static BOOT_CODE cap_t
-create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr)
 {
     cap_t cap;
-    uint32_t pd_index = vptr >> (PT_BITS + PAGE_BITS);
+    int shift = PT_BITS + PD_BITS + PAGE_BITS;
+    pde_t *pd;
+    uint32_t pd_index;
+    if (shift == 32) {
+        pd = PD_PTR(cap_page_directory_cap_get_capPDBasePtr(vspace_cap));
+    } else {
+        uint32_t pdpt_index = vptr >> shift;
+        pdpte_t *pdpt = PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vspace_cap));
+        pd = paddr_to_pptr(pdpte_get_pd_base_address(pdpt[pdpt_index]));
+    }
+    pd_index = vptr >> (PT_BITS + PAGE_BITS);
     cap = cap_page_table_cap_new(
-              cap_page_directory_cap_get_capPDBasePtr(pd), /* capPTMappedObject */
-              pd_index,                                    /* capPTMappedIndex  */
-              pptr                                         /* capPTBasePtr      */
+              PD_REF(pd),   /* capPTMappedObject */
+              pd_index,     /* capPTMappedIndex  */
+              pptr          /* capPTBasePtr      */
           );
     map_it_pt_cap(cap);
-        map_it_pt_cap(vspace_cap, cap);
-    }
     return cap;
 }
 
 static BOOT_CODE cap_t
-create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr)
 {
     cap_t cap;
+    int shift = PT_BITS + PD_BITS + PAGE_BITS;
+    uint32_t pdpt_index;
+    pdpte_t *pdpt;
+    if (shift == 32) {
+        pdpt = NULL;
+        pdpt_index = 0;
+    } else {
+        pdpt = PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vspace_cap));
+        pdpt_index = vptr >> shift;
+    }
     cap = cap_page_directory_cap_new(
-              true,    /* capPDIsMapped   */
-              IT_ASID, /* capPDMappedASID */
-              vptr,    /* capPDMappedAddress */
-              pptr  /* capPDBasePtr    */
+              PDPT_REF(pdpt),   /* capPDMappedObject */
+              pdpt_index,       /* capPDMappedIndex  */
+              pptr              /* capPDBasePtr      */
           );
-    if (asid != asidInvalid && cap_get_capType(vspace_cap) != cap_null_cap) {
-        map_it_pd_cap(vspace_cap, cap);
+    if (cap_get_capType(vspace_cap) != cap_null_cap) {
+        map_it_pd_cap(cap);
+    }
     return cap;
 }
 
@@ -179,7 +206,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         }
         memzero(PDE_PTR(pd_pptr), 1 << PD_SIZE_BITS);
         copyGlobalMappings(PDE_PTR(pd_pptr));
-        pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
+        pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0);
         if (!provide_cap(root_cnode_cap, pd_cap)) {
             return cap_null_cap_new();
         }
@@ -196,8 +223,6 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         }
         memzero(PDPTE_PTR(pdpt_pptr), 1 << PDPT_SIZE_BITS);
         pdpt_cap = cap_pdpt_cap_new(
-                       true,       /* capPDPTISMapped */
-                       IT_ASID,    /* capPDPTMappedASID */
                        pdpt_pptr        /* capPDPTBasePtr */
                    );
         /* create all PD objs and caps necessary to cover userland image. For simplicity
@@ -224,7 +249,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
             }
             memzero(PDE_PTR(pptr), 1 << PD_SIZE_BITS);
             if (!provide_cap(root_cnode_cap,
-                             create_it_page_directory_cap(pdpt_cap, pptr, vptr, IT_ASID))
+                             create_it_page_directory_cap(pdpt_cap, pptr, vptr))
                ) {
                 return cap_null_cap_new();
             }
@@ -251,7 +276,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         }
         memzero(PTE_PTR(pptr), 1 << PT_SIZE_BITS);
         if (!provide_cap(root_cnode_cap,
-                         create_it_page_table_cap(vspace_cap, pptr, vptr, IT_ASID))
+                         create_it_page_table_cap(vspace_cap, pptr, vptr))
            ) {
             return cap_null_cap_new();
         }
@@ -483,7 +508,7 @@ init_node_state(
     /* Create and map arch bootinfo frame cap */
     arch_bi_frame_pptr = create_arch_bi_frame_cap(
                              root_cnode_cap,
-                             it_pd_cap,
+                             it_vspace_cap,
                              arch_bi_frame_vptr
                          );
 

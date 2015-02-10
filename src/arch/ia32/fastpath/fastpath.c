@@ -141,9 +141,9 @@ static inline bool_t
 isValidVTableRoot_fp(cap_t pd_cap)
 {
 #ifdef CONFIG_PAE_PAGING
-    return cap_capType_equals(pd_cap, cap_pdpt_cap) && cap_pdpt_cap_get_capPDPTIsMapped(pd_cap);
+    return cap_capType_equals(pd_cap, cap_pdpt_cap);
 #else
-    return cap_capType_equals(pd_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(pd_cap);
+    return cap_capType_equals(pd_cap, cap_page_directory_cap);
 #endif
 }
 

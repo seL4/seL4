@@ -141,10 +141,9 @@ block page_table_cap {
 
 -- First-level page table (page directory)
 block page_directory_cap {
-    padding                         13
-    field       capPDIsMapped       1
-    field       capPDMappedASID     16
-    field_high  capPDMappedAddress  2
+    padding                         3
+    field_high  capPDMappedObject   27
+    field       capPDMappedIndex    2
 
     padding                         8
     field_high  capPDBasePtr        20
@@ -152,9 +151,7 @@ block page_directory_cap {
 }
 
 block pdpt_cap {
-    padding                         15
-    field       capPDPTIsMapped     1
-    field       capPDPTMappedASID   16
+    padding                         32
 
     padding                         1
     field_high  capPDPTBasePtr      27
@@ -279,8 +276,7 @@ tagged_union cap capType {
     tag io_page_table_cap   9
     tag io_space_cap        11
 #endif /* CONFIG_IOMMU */   
-    tag io_port_cap         13
-    tag ipi_cap             15
+    tag ipi_cap             13
 
     -- Do not extend odd 4-bit caps types beyond 13, as we use 
     -- 15 (0xf) to determine which caps are 8-bit.
@@ -292,12 +288,12 @@ tagged_union cap capType {
     tag domain_cap	        0x3e
 
     -- 8-bit tag arch caps
+    tag io_port_cap                            0x0f
 #ifdef CONFIG_VTX
-    tag vcpu_cap                               0x0f
-    tag ept_page_table_cap                     0x1f
-    tag ept_page_directory_pointer_table_cap   0x2f
-    tag ept_page_directory_cap                 0x3f
-    tag io_port_cap         0x4f
+    tag vcpu_cap                               0x1f
+    tag ept_page_table_cap                     0x2f
+    tag ept_page_directory_pointer_table_cap   0x3f
+    tag ept_page_directory_cap                 0x4f
 #endif /* CONFIG_VTX */
 }
 
@@ -677,7 +673,7 @@ block pdpte {
     padding 32
 
     field_high  pd_base_address     20
-    field       avl                 3
+    field       avl_cte_depth       3
     padding                         4
     field       cache_disabled      1
     field       write_through       1

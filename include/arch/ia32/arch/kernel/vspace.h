@@ -17,8 +17,10 @@
 #include <object/structures.h>
 
 struct lookupPDSlot_ret {
-    exception_t status;
-    pde_t*      pdSlot;
+    exception_t     status;
+    pde_t*          pdSlot;
+    pde_t*          pd;
+    unsigned int    pdIndex;
 };
 typedef struct lookupPDSlot_ret lookupPDSlot_ret_t;
 
@@ -47,7 +49,6 @@ void init_dtrs(void);
 void map_it_pt_cap(cap_t pt_cap);
 void map_it_pd_cap(cap_t pd_cap);
 void map_it_frame_cap(cap_t frame_cap);
-void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap);
 bool_t init_pat_msr(void);
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
@@ -56,20 +57,22 @@ void idle_thread(void);
 #define idleThreadStart (&idle_thread)
 
 bool_t isVTableRoot(cap_t cap);
-exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* vspaceCapSlot);
 lookupPDSlot_ret_t lookupPDSlot(void *vspace, vptr_t vptr);
 void copyGlobalMappings(void* new_vspace);
 word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
 void flushAllPageTables(pde_t *pd);
-void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd);
+void unmapAllPageDirectories(pdpte_t *pdpt);
+void flushAllPageDirectories(pdpte_t *pdpt);
+void unmapPageDirectory(pdpte_t *pdpt, uint32_t pdptIndex, pde_t *pd);
 void unmapAllPageTables(pde_t *pd);
-void unmapPageTable(pde_t *pd, uint32_t pdIndex, pte_t* pt);
-void unmapAllPages(pde_t *pd, uint32_t pdIndex, pte_t *pt);
-void unmapPage4K(pte_t *pt, uint32_t ptIndex);
-void flushPage4K(pte_t *pt, uint32_t ptIndex);
-void unmapPage4M(pde_t *pd, uint32_t pdIndex);
-void flushPage4M(pde_t *pd, uint32_t pdIndex);
+void unmapPageTable(pde_t *pd, uint32_t pdIndex);
+void unmapAllPages(pte_t *pt);
+void unmapPageSmall(pte_t *pt, uint32_t ptIndex);
+void flushPageSmall(pte_t *pt, uint32_t ptIndex);
+void unmapPageLarge(pde_t *pd, uint32_t pdIndex);
+void flushPageLarge(pde_t *pd, uint32_t pdIndex);
+void flushPageDirectory(pdpte_t *pdpt, uint32_t pdptIndex, pde_t *pd);
 void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);

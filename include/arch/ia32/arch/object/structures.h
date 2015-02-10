@@ -85,7 +85,7 @@ compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) ==
 
 #define PDPT_SIZE_BITS (PDPT_BITS + PDPTE_SIZE_BITS)
 #define PDPT_PTR(r)    ((pdpte_t*)(r))
-#define PDPT_PREF(p)   ((unsigned int)(p))
+#define PDPT_REF(p)   ((unsigned int)(p))
 
 #define PDE_PTR(r)     ((pde_t *)(r))
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
@@ -195,24 +195,6 @@ vmRightsFromWord(word_t w)
     return (vm_rights_t)w;
 }
 
-static inline asid_t PURE
-cap_get_capMappedASID(cap_t cap)
-{
-    cap_tag_t ctag;
-
-    ctag = cap_get_capType(cap);
-
-    switch (ctag) {
-    case cap_pdpt_cap:
-        return cap_pdpt_cap_get_capPDPTMappedASID(cap);
-
-    case cap_page_directory_cap:
-        return cap_page_directory_cap_get_capPDMappedASID(cap);
-
-    default:
-        fail("Invalid arch cap type");
-    }
-}
 static inline unsigned int CONST
 cap_get_archCapSizeBits(cap_t cap)
 {
@@ -229,6 +211,9 @@ cap_get_archCapSizeBits(cap_t cap)
 
     case cap_page_directory_cap:
         return PD_SIZE_BITS;
+
+    case cap_pdpt_cap:
+        return PDPT_SIZE_BITS;
 
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:

@@ -25,6 +25,14 @@ static exception_t decodeIA32EPTFrameMap(cap_t pdptCap, cte_t *cte, cap_t cap, v
 
 #endif
 
+struct lookupPTSlot_ret {
+    exception_t status;
+    pte_t*          ptSlot;
+    pte_t*          pt;
+    unsigned int    ptIndex;
+};
+typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
+
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.
  */
@@ -758,6 +766,57 @@ map_kernel_window(
     return true;
 }
 
+BOOT_CODE void
+map_it_pt_cap(cap_t pt_cap)
+{
+    pde_t* pd   = PDE_PTR(cap_page_table_cap_get_capPTMappedObject(pt_cap));
+    pte_t* pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
+    uint32_t index = cap_page_table_cap_get_capPTMappedIndex(pt_cap);
+
+    /* Assume the capabilities for the initial page tables are at a depth of 0 */
+    pde_pde_small_ptr_new(
+        pd + index,
+        pptr_to_paddr(pt), /* pt_base_address */
+        0,                 /* avl_cte_depth   */
+        0,                 /* accessed        */
+        0,                 /* cache_disabled  */
+        0,                 /* write_through   */
+        1,                 /* super_user      */
+        1,                 /* read_write      */
+        1                  /* present         */
+    );
+    invalidatePageStructureCache();
+}
+
+BOOT_CODE void
+map_it_frame_cap(cap_t frame_cap)
+{
+    pte_t *pt;
+    pte_t *targetSlot;
+    uint32_t index;
+    void *frame = (void*)cap_frame_cap_get_capFBasePtr(frame_cap);
+
+    pt = PT_PTR(cap_frame_cap_get_capFMappedObject(frame_cap));
+    index = cap_frame_cap_get_capFMappedIndex(frame_cap);
+    targetSlot = pt + index;
+    /* Assume the capabilities for the inital frames are at a depth of 0 */
+    pte_ptr_new(
+        targetSlot,
+        pptr_to_paddr(frame), /* page_base_address */
+        0,                    /* avl_cte_depth     */
+        0,                    /* global            */
+        0,                    /* pat               */
+        0,                    /* dirty             */
+        0,                    /* accessed          */
+        0,                    /* cache_disabled    */
+        0,                    /* write_through     */
+        1,                    /* super_user        */
+        1,                    /* read_write        */
+        1                     /* present           */
+    );
+    invalidatePageStructureCache();
+}
+
 /* Note: this function will invalidate any pointers previously returned from this function */
 BOOT_CODE void*
 map_temp_boot_page(void* entry, uint32_t large_pages)
@@ -838,25 +897,6 @@ init_dtrs(void)
     ia32_install_tss(SEL_TSS);
 }
 
-BOOT_CODE void
-map_it_pt_cap(cap_t pt_cap)
-{
-    pde_t* pd   = PDE_PTR(cap_page_table_cap_get_capPTMappedObject(pt_cap));
-    uint32_t index = cap_page_table_cap_get_capPTMappedIndex(pt_cap);
-    /* Assume the capabilities for the initial page tables are at a depth of 0 */
-        pd + index,
-        0,                 /* avl_cte_depth   */
-map_it_frame_cap(cap_t frame_cap)
-    pte_t *pt;
-    pte_t *targetSlot;
-    uint32_t index;
-    void *frame = (void*)cap_frame_cap_get_capFBasePtr(frame_cap);
-    pt = PT_PTR(cap_frame_cap_get_capFMappedObject(frame_cap));
-    index = cap_frame_cap_get_capFMappedIndex(frame_cap);
-    targetSlot = pt + index;
-    /* Assume the capabilities for the inital frames are at a depth of 0 */
-        targetSlot,
-        0,                    /* avl_cte_depth     */
 BOOT_CODE bool_t
 init_pat_msr(void)
 {
@@ -1001,6 +1041,8 @@ static lookupPTSlot_ret_t lookupPTSlot(void *vspace, vptr_t vptr)
         ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
         ptSlot = pt + ptIndex;
 
+        ret.pt = pt;
+        ret.ptIndex = ptIndex;
         ret.ptSlot = ptSlot;
         ret.status = EXCEPTION_NONE;
         return ret;
@@ -1067,29 +1109,21 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_ma
     return VMKernelOnly;
 }
 
-static void flushTable(void *vspace, word_t vptr, pte_t* pt)
+static void flushTable(void *vspace, uint32_t pdIndex, pte_t *pt)
 {
-    unsigned int i;
     cap_t        threadRoot;
 
     /* check if page table belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
     if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == vspace) {
-        /* find valid mappings */
-        for (i = 0; i < BIT(PT_BITS); i++) {
-            if (pte_get_present(pt[i])) {
-                invalidateTLBentry((pdIndex << (PT_BITS + PAGE_BITS)) | (i << PAGE_BITS));
-            }
-        }
+        invalidateTLB();
+        invalidatePageStructureCache();
     }
-    invalidatePageStructureCache();
-}
-
 }
 
 void setVMRoot(tcb_t* tcb)
 {
-    cap_t               threadRoot;
+    cap_t threadRoot;
     void *vspace_root;
 
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
@@ -1100,46 +1134,38 @@ void setVMRoot(tcb_t* tcb)
         return;
     }
 
-    pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(threadRoot));
-
     /* only set PD if we change it, otherwise we flush the TLB needlessly */
     if (getCurrentPD() != pptr_to_paddr(vspace_root)) {
         setCurrentPD(pptr_to_paddr(vspace_root));
     }
 }
 
-void flushAllPageTables(pde_t *pd)
-{
-    cap_t threadRoot;
-    /* check if this is the current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (cap_get_capType(threadRoot) == cap_page_directory_cap &&
-            PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(threadRoot)) == pd) {
-        invalidateTLB();
-    }
-    invalidatePageStructureCache();
-}
-
 void unmapAllPageTables(pde_t *pd)
 {
-    uint32_t i;
+    uint32_t i, max;
+    assert(pd);
 
-    for (i = 0; i < PPTR_BASE >> pageBitsForSize(IA32_4M); i++) {
-        if (pde_ptr_get_page_size(pd + i) == pde_pde_4k && pde_pde_4k_ptr_get_present(pd + i)) {
-            pte_t *pt = PT_PTR(paddr_to_pptr(pde_pde_4k_ptr_get_pt_base_address(pd + i)));
+#ifdef CONFIG_PAE_PAGING
+    max = BIT(PD_BITS);
+#else
+    max = PPTR_USER_TOP >> LARGE_PAGE_BITS;
+#endif
+    for (i = 0; i < max; i++) {
+        if (pde_ptr_get_page_size(pd + i) == pde_pde_small && pde_pde_small_ptr_get_present(pd + i)) {
+            pte_t *pt = PT_PTR(paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd + i)));
             cte_t *ptCte;
             cap_t ptCap;
-            ptCte = cdtFindAtDepth(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, (uint32_t)(pd + i), pde_pde_4k_ptr_get_avl_cte_depth(pd + i));
+            ptCte = cdtFindAtDepth(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, (uint32_t)(pd + i), pde_pde_small_ptr_get_avl_cte_depth(pd + i));
             assert(ptCte);
 
             ptCap = ptCte->cap;
             ptCap = cap_page_table_cap_set_capPTMappedObject(ptCap, 0);
             cdtUpdate(ptCte, ptCap);
-        } else if (pde_ptr_get_page_size(pd + i) == pde_pde_4m && pde_pde_4m_ptr_get_present(pd + i)) {
-            void *frame = paddr_to_pptr(pde_pde_4m_ptr_get_page_base_address(pd + i));
+        } else if (pde_ptr_get_page_size(pd + i) == pde_pde_large && pde_pde_large_ptr_get_present(pd + i)) {
+            void *frame = paddr_to_pptr(pde_pde_large_ptr_get_page_base_address(pd + i));
             cte_t *frameCte;
             cap_t frameCap;
-            frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(PAGE_BITS), 0, (uint32_t)(pd + i), pde_pde_4m_ptr_get_avl_cte_depth(pd + i));
+            frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(PAGE_BITS), 0, (uint32_t)(pd + i), pde_pde_large_ptr_get_avl_cte_depth(pd + i));
             assert(frameCte);
             frameCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
             cdtUpdate(frameCte, frameCap);
@@ -1147,7 +1173,7 @@ void unmapAllPageTables(pde_t *pd)
     }
 }
 
-void unmapAllPages(pde_t *pd, unsigned int pdIndex, pte_t *pt)
+void unmapAllPages(pte_t *pt)
 {
     cte_t* frameCte;
     cap_t newCap;
@@ -1163,9 +1189,9 @@ void unmapAllPages(pde_t *pd, unsigned int pdIndex, pte_t *pt)
     }
 }
 
-void unmapPageTable(pde_t* pd, uint32_t pdIndex, pte_t* pt)
+void unmapPageTable(pde_t* pd, uint32_t pdIndex)
 {
-    pd[pdIndex] = pde_pde_4k_new(
+    pd[pdIndex] = pde_pde_small_new(
                       0,  /* pt_base_address  */
                       0,  /* avl_cte_Depth    */
                       0,  /* accessed         */
@@ -1177,31 +1203,7 @@ void unmapPageTable(pde_t* pd, uint32_t pdIndex, pte_t* pt)
                   );
 }
 
-void flushPage4K(pte_t *pt, uint32_t ptIndex)
-{
-    cap_t               threadRoot;
-    cte_t *ptCte;
-    pde_t *pd;
-    uint32_t pdIndex;
-
-    /* We know this pt can only be mapped into one single pd. So
-     * lets find a cap with that mapping information */
-    ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
-    assert(ptCte);
-
-    pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
-    pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
-
-    /* check if page belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
-            PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(threadRoot)) == pd) {
-        invalidateTLBentry( (pdIndex << (PT_BITS + PAGE_BITS)) | (ptIndex << PAGE_BITS));
-    }
-    invalidatePageStructureCache();
-}
-
-void unmapPage4K(pte_t *pt, uint32_t ptIndex)
+void unmapPageSmall(pte_t *pt, uint32_t ptIndex)
 {
     pt[ptIndex] = pte_new(
                       0,      /* page_base_address    */
@@ -1218,22 +1220,9 @@ void unmapPage4K(pte_t *pt, uint32_t ptIndex)
                   );
 }
 
-void flushPage4M(pde_t *pd, uint32_t pdIndex)
+void unmapPageLarge(pde_t *pd, uint32_t pdIndex)
 {
-    cap_t               threadRoot;
-
-    /* check if page belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (cap_get_capType(threadRoot) == cap_page_directory_cap &&
-            PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(threadRoot)) == pd) {
-        invalidateTLBentry(pdIndex << (PT_BITS + PAGE_BITS));
-    }
-    invalidatePageStructureCache();
-}
-
-void unmapPage4M(pde_t *pd, uint32_t pdIndex)
-{
-    pd[pdIndex] = pde_pde_4m_new(
+    pd[pdIndex] = pde_pde_large_new(
                       0,      /* page_base_address    */
                       0,      /* pat                  */
                       0,      /* avl_cte_depth        */
@@ -1285,6 +1274,7 @@ decodeIA32PageTableInvocation(
     cap_t           vspaceCap;
     void*           vspace;
     pde_t           pde;
+    pde_t *         pd;
     paddr_t         paddr;
 
     if (label == IA32PageTableUnmap) {
@@ -1294,7 +1284,7 @@ decodeIA32PageTableInvocation(
         if (pd) {
             pte_t *pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
             uint32_t pdIndex = cap_page_table_cap_get_capPTMappedIndex(cap);
-            unmapPageTable(pd, pdIndex, pt);
+            unmapPageTable(pd, pdIndex);
             flushTable(pd, pdIndex, pt);
             clearMemory((void *)pt, cap_get_capSizeBits(cap));
         }
@@ -1328,7 +1318,7 @@ decodeIA32PageTableInvocation(
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
     vspaceCap = extraCaps.excaprefs[0]->cap;
 
-    if (cap_get_capType(pdCap) != cap_page_directory_cap) {
+    if (!isValidVTableRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
@@ -1372,8 +1362,8 @@ decodeIA32PageTableInvocation(
               1                                           /* present          */
           );
 
-    cap = cap_page_table_cap_set_capPTMappedObject(cap, PD_REF(pd));
-    cap = cap_page_table_cap_set_capPTMappedIndex(cap, pdIndex);
+    cap = cap_page_table_cap_set_capPTMappedObject(cap, PD_REF(pdSlot.pd));
+    cap = cap_page_table_cap_set_capPTMappedIndex(cap, pdSlot.pdIndex);
 
     cdtUpdate(cte, cap);
     *pdSlot.pdSlot = pde;
@@ -1385,27 +1375,26 @@ decodeIA32PageTableInvocation(
 
 static exception_t
 decodeIA32PDFrameMap(
-    cap_t pdCap,
+    cap_t vspaceCap,
     cte_t *cte,
     cap_t cap,
     vm_rights_t vmRights,
     vm_attributes_t vmAttr,
     word_t vaddr)
 {
-    pde_t *pd;
+    void * vspace;
     word_t vtop;
     paddr_t paddr;
     vm_page_size_t  frameSize;
-        vaddr = getSyscallArg(0, buffer) & (~MASK(pageBitsForSize(frameSize)));
-
-    pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCap));
 
     frameSize = cap_frame_cap_get_capFSize(cap);
 
     vtop = vaddr + BIT(pageBitsForSize(frameSize));
 
-        if (vtop > PPTR_USER_TOP) {
-            userError("IA32Frame: Mapping address too high.");
+    vspace = (void*)pptr_of_cap(vspaceCap);
+
+    if (vtop > PPTR_USER_TOP) {
+        userError("IA32Frame: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
 
@@ -1416,35 +1405,28 @@ decodeIA32PDFrameMap(
 
     switch (frameSize) {
         /* PTE mappings */
-        case IA32_SmallPage: {
-        pde_t* pdSlot;
-        pte_t* ptSlot;
-        pte_t* pt;
-        uint32_t ptIndex;
+    case IA32_SmallPage: {
+        lookupPTSlot_ret_t lu_ret;
 
-            lu_ret = lookupPTSlot(vspace, vaddr);
-        if ((pde_ptr_get_page_size(pdSlot) != pde_pde_4k) ||
-                !pde_pde_4k_ptr_get_present(pdSlot)) {
+        lu_ret = lookupPTSlot(vspace, vaddr);
+
+        if (lu_ret.status != EXCEPTION_NONE) {
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
-            current_lookup_fault = lookup_fault_missing_capability_new(22);
+            /* current_lookup_fault will have been set by lookupPTSlot */
             return EXCEPTION_SYSCALL_ERROR;
         }
-        pt = PTE_PTR(paddr_to_pptr(pde_pde_4k_ptr_get_pt_base_address(pdSlot)));
-        ptIndex = (vaddr >> PAGE_BITS) & MASK(PT_BITS);
-        ptSlot = pt + ptIndex;
-
-        if (pte_get_present(*ptSlot)) {
+        if (pte_get_present(*lu_ret.ptSlot)) {
             userError("IA32FrameMap: Mapping already present");
             current_syscall_error.type = seL4_DeleteFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        cap = cap_frame_cap_set_capFMappedObject(cap, PT_REF(pt));
-        cap = cap_frame_cap_set_capFMappedIndex(cap, ptIndex);
+        cap = cap_frame_cap_set_capFMappedObject(cap, PT_REF(lu_ret.pt));
+        cap = cap_frame_cap_set_capFMappedIndex(cap, lu_ret.ptIndex);
         cap = cap_frame_cap_set_capFMappedType(cap, IA32_MAPPING_PD);
         cdtUpdate(cte, cap);
-        *ptSlot = makeUserPTE(paddr, vmAttr, vmRights, mdb_node_get_cdtDepth(cte->cteMDBNode));
+        *lu_ret.ptSlot = makeUserPTE(paddr, vmAttr, vmRights, mdb_node_get_cdtDepth(cte->cteMDBNode));
 
         invalidatePageStructureCache();
         setThreadState(ksCurThread, ThreadState_Restart);
@@ -1452,30 +1434,27 @@ decodeIA32PDFrameMap(
     }
 
     /* PDE mappings */
-        case IA32_LargePage: {
-        pde_t* pdSlot;
-        uint32_t pdIndex;
+    case IA32_LargePage: {
+        lookupPDSlot_ret_t lu_ret;
 
-        pdIndex = vaddr >> (PAGE_BITS + PT_BITS);
-        pdSlot = pd + pdIndex;
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                /* current_lookup_fault will have been set by lookupPDSlot */
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            pdeSlot = lu_ret.pdSlot;
-
-        if ( (pde_ptr_get_page_size(pdSlot) == pde_pde_4k && (pde_pde_4k_ptr_get_present(pdSlot))) ||
-                (pde_ptr_get_page_size(pdSlot) == pde_pde_4m && (pde_pde_4m_ptr_get_present(pdSlot)))) {
+        lu_ret = lookupPDSlot(vspace, vaddr);
+        if (lu_ret.status != EXCEPTION_NONE) {
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
+            /* current_lookup_fault will have been set by lookupPDSlot */
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if ( (pde_ptr_get_page_size(lu_ret.pdSlot) == pde_pde_small && (pde_pde_small_ptr_get_present(lu_ret.pdSlot))) ||
+                (pde_ptr_get_page_size(lu_ret.pdSlot) == pde_pde_large && (pde_pde_large_ptr_get_present(lu_ret.pdSlot)))) {
             userError("IA32FrameMap: Mapping already present");
             current_syscall_error.type = seL4_DeleteFirst;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        *pdSlot = makeUserPDE(paddr, vmAttr, vmRights, mdb_node_get_cdtDepth(cte->cteMDBNode));
-        cap = cap_frame_cap_set_capFMappedObject(cap, PD_REF(pd));
-        cap = cap_frame_cap_set_capFMappedIndex(cap, pdIndex);
+        *lu_ret.pdSlot = makeUserPDE(paddr, vmAttr, vmRights, mdb_node_get_cdtDepth(cte->cteMDBNode));
+        cap = cap_frame_cap_set_capFMappedObject(cap, PD_REF(lu_ret.pd));
+        cap = cap_frame_cap_set_capFMappedIndex(cap, lu_ret.pdIndex);
         cap = cap_frame_cap_set_capFMappedType(cap, IA32_MAPPING_PD);
         cdtUpdate(cte, cap);
 
@@ -1494,13 +1473,13 @@ static void IA32PageUnmapPD(cap_t cap)
     void *object = (void*)cap_frame_cap_get_capFMappedObject(cap);
     uint32_t index = cap_frame_cap_get_capFMappedIndex(cap);
     switch (cap_frame_cap_get_capFSize(cap)) {
-    case IA32_4K:
-        unmapPage4K(PTE_PTR(object), index);
-        flushPage4K(PTE_PTR(object), index);
+    case IA32_SmallPage:
+        unmapPageSmall(PTE_PTR(object), index);
+        flushPageSmall(PTE_PTR(object), index);
         break;
-    case IA32_4M:
-        unmapPage4M(PDE_PTR(object), index);
-        flushPage4M(PDE_PTR(object), index);
+    case IA32_LargePage:
+        unmapPageLarge(PDE_PTR(object), index);
+        flushPageLarge(PDE_PTR(object), index);
         break;
     default:
         fail("Invalid page type");
@@ -1521,18 +1500,14 @@ decodeIA32FrameInvocation(
     case IA32PageMap: { /* Map */
         word_t          vaddr;
         word_t          w_rightsMask;
-        cap_t           pdCap;
         cap_t           vspaceCap;
-        void*           vspace;
         vm_rights_t     capVMRights;
         vm_rights_t     vmRights;
         vm_attributes_t vmAttr;
         vm_page_size_t  frameSize;
-            userError("IA32FrameRemap: Attempting to remap frame mapped into an IOSpace");
 
         if (length < 3 || extraCaps.excaprefs[0] == NULL) {
             userError("IA32Frame: Truncated message");
-            userError("IA32FrameRemap: Truncated message");
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -1540,8 +1515,8 @@ decodeIA32FrameInvocation(
 
         vaddr = getSyscallArg(0, buffer);
         w_rightsMask = getSyscallArg(1, buffer);
-        vspaceCap = extraCaps.excaprefs[0]->cap;
         vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
+        vspaceCap = extraCaps.excaprefs[0]->cap;
 
         frameSize = cap_frame_cap_get_capFSize(cap);
         capVMRights = cap_frame_cap_get_capFVMRights(cap);
@@ -1554,29 +1529,25 @@ decodeIA32FrameInvocation(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vaddr       = cap_frame_cap_get_capFMappedAddress(cap);
         vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
 
+        if (!checkVPAlignment(frameSize, vaddr)) {
             userError("IA32Frame: Alignment error when mapping");
-        if (cap_get_capType(pdCap) == cap_page_directory_cap) {
-            return decodeIA32PDFrameMap(pdCap, cte, cap, vmRights, vmAttr, vaddr);
+            current_syscall_error.type = seL4_AlignmentError;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (isVTableRoot(vspaceCap)) {
+            return decodeIA32PDFrameMap(vspaceCap, cte, cap, vmRights, vmAttr, vaddr);
 #ifdef CONFIG_VTX
-        } else if (cap_get_capType(pdCap) == cap_ept_page_directory_pointer_table_cap) {
-            return decodeIA32EPTFrameMap(pdCap, cte, cap, vmRights, vmAttr, vaddr);
+        } else if (cap_get_capType(vspaceCap) == cap_ept_page_directory_pointer_table_cap) {
+            return decodeIA32EPTFrameMap(vspaceCap, cte, cap, vmRights, vmAttr, vaddr);
 #endif
         } else {
             userError("IA32Frame: Attempting to map frame into invalid page directory cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
-
-            lookupPDSlot_ret_t lu_ret;
-            if (lu_ret.status != EXCEPTION_NONE) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                /* current_lookup_fault will have been set by lookupPDSlot */
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            pdeSlot = lu_ret.pdSlot;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -1855,14 +1826,16 @@ void unmapAllEPTPT(ept_pde_t *pd)
 
                 void *frame = paddr_to_pptr(ept_pde_ept_pde_2m_ptr_get_page_base_address(pde));
                 uint32_t depth = ept_pde_ept_pde_2m_ptr_get_avl_cte_depth(pde);
-                frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(IA32_4M_bits), 0, (uint32_t)(pde), depth);
+                frameCte = cdtFindAtDepth(capSpaceTypedMemory, (uint32_t)frame, BIT(LARGE_PAGE_BITS), 0, (uint32_t)(pde), depth);
                 assert(frameCte);
 
                 newCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
                 cdtUpdate(frameCte, newCap);
-                /* If we found a 2m mapping then the next entry will be the other half
-                 * of this 4M frame, so skip it */
-                i++;
+                if (LARGE_PAGE_BITS == IA32_4M_bits) {
+                    /* If we found a 2m mapping then the next entry will be the other half
+                    * of this 4M frame, so skip it */
+                    i++;
+                }
             }
             break;
         default:
@@ -2113,7 +2086,7 @@ decodeIA32EPTPageTableInvocation(
 
     if (cap_get_capType(pdptCap) != cap_ept_page_directory_pointer_table_cap) {
         userError("IA32EPTPageTableMap: Not a valid EPT page directory pointer table.");
-            userError("IA32ASIDPool: Invalid vspace root.");
+        userError("IA32ASIDPool: Invalid vspace root.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
@@ -2192,7 +2165,7 @@ decodeIA32EPTFrameMap(
 
     switch (frameSize) {
         /* PTE mappings */
-    case IA32_4K: {
+    case IA32_SmallPage: {
         lookupEPTPTSlot_ret_t lu_ret;
         ept_pte_t *ptSlot;
 
@@ -2233,7 +2206,7 @@ decodeIA32EPTFrameMap(
     }
 
     /* PDE mappings */
-    case IA32_4M: {
+    case IA32_LargePage: {
         lookupEPTPDSlot_ret_t lu_ret;
         ept_pde_t *pdSlot;
 
@@ -2267,14 +2240,16 @@ decodeIA32EPTFrameMap(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pdSlot[1] = ept_pde_ept_pde_2m_new(
-                        paddr + (1 << 21),
-                        mdb_node_get_cdtDepth(cte->cteMDBNode),
-                        0,
-                        eptCacheFromVmAttr(vmAttr),
-                        1,
-                        WritableFromVMRights(vmRights),
-                        1);
+        if (LARGE_PAGE_BITS == IA32_4M_bits) {
+            pdSlot[1] = ept_pde_ept_pde_2m_new(
+                            paddr + (1 << 21),
+                            mdb_node_get_cdtDepth(cte->cteMDBNode),
+                            0,
+                            eptCacheFromVmAttr(vmAttr),
+                            1,
+                            WritableFromVMRights(vmRights),
+                            1);
+        }
         pdSlot[0] = ept_pde_ept_pde_2m_new(
                         paddr,
                         mdb_node_get_cdtDepth(cte->cteMDBNode),
@@ -2318,16 +2293,18 @@ void IA32PageUnmapEPT(cap_t cap)
     uint32_t index = cap_frame_cap_get_capFMappedIndex(cap);
     ept_pdpte_t *pdpt;
     switch (cap_frame_cap_get_capFSize(cap)) {
-    case IA32_4K: {
+    case IA32_SmallPage: {
         ept_pte_t *pt = EPT_PT_PTR(object);
         pt[index] = ept_pte_new(0, 0, 0, 0, 0, 0, 0);
         pdpt = lookupEPTPDPTFromPT(pt);
         break;
     }
-    case IA32_4M: {
+    case IA32_LargePage: {
         ept_pde_t *pd = EPT_PD_PTR(object);
         pd[index] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
-        pd[index + 1] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
+        if (LARGE_PAGE_BITS == IA32_2M_bits) {
+            pd[index + 1] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
+        }
         pdpt = lookupEPTPDPTFromPD(pd);
         break;
     }
