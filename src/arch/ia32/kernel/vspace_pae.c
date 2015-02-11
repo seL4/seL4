@@ -295,12 +295,6 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 
     pdptSlot = lookupPDPTSlot(find_ret.vspace_root, vaddr);
 
-    /* check if page directory belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
-        invalidateTLB();
-    }
-
     *pdptSlot = pdpte_new(
                     0,  /* pd_base_address  */
                     0,  /* avl              */
@@ -308,6 +302,13 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
                     0,  /* write_through    */
                     0   /* present          */
                 );
+    /* check if page directory belongs to current address space */
+    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
+        /* according to the intel manual if we modify a pdpt we must
+         * reload cr3 */
+        write_cr3(read_cr3());
+    }
     invalidatePageStructureCache();
 }
 
@@ -329,6 +330,7 @@ decodeIA32PageDirectoryInvocation(
     pdpte_t         pdpte;
     paddr_t         paddr;
     asid_t          asid;
+    cap_t           threadRoot;
 
     if (label == IA32PageDirectoryUnmap) {
         if (!isFinalCapability(cte)) {
@@ -430,6 +432,13 @@ decodeIA32PageDirectoryInvocation(
 
     cte->cap = cap;
     *pdptSlot = pdpte;
+
+    /* according to the intel manual if we modify a pdpt we must
+     * reload cr3 */
+    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == (void*)pptr_of_cap(vspaceCap)) {
+        write_cr3(read_cr3());
+    }
 
     setThreadState(ksCurThread, ThreadState_Restart);
     invalidatePageStructureCache();
