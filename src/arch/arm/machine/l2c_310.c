@@ -276,7 +276,7 @@ initL2Cache(void)
                | CTRL_AUX_ASSOCIATIVITY_16WAY
                | CTRL_AUS_REPLPOLICY_RROBIN;
 
-#if defined(EXYNOS4) || defined(IMX6) || defined(PLAT_ZYNQ7000)
+#if defined(EXYNOS4) || defined(IMX6) || defined(PLAT_ZYNQ7000) || defined(PLAT_ALLWINNERA20)
     aux |= CTRL_AUX_WAYSIZE_64K;
 #elif defined(OMAP4)
     aux |= CTRL_AUX_WAYSIZE_32K;

@@ -167,6 +167,13 @@ config ARCH_IA32
             depends on ARCH_I386
             help
                 Support for PC99 based platform
+
+        config PLAT_ALLWINNERA20
+            bool "ALLWINNERA20 (CUBIETRUCK)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A15
+            help
+                Support for ALLWINNERA20 platform (CUBIETRUCK).
     endchoice
 
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"
