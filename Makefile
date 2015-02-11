@@ -358,10 +358,12 @@ ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 ifeq (${CPU},cortex-a8)
 DEFINES += -DARM_CORTEX_A8
-else
+endif
 ifeq (${CPU},cortex-a9)
 DEFINES += -DARM_CORTEX_A9
 endif
+ifeq (${CPU},cortex-a15)
+DEFINES += -DARM_CORTEX_A15
 endif
 endif
 
