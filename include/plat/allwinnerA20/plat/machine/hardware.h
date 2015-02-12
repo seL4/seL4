@@ -26,6 +26,8 @@
 #include <plat/machine.h>
 #include <plat/machine/hardware_gen.h>
 
+#define PADDR_BASE        physBase /* for compatibility with proofs */
+
 static inline void* CONST
 ptrFromPAddr(paddr_t paddr)
 {
@@ -36,25 +38,6 @@ static inline paddr_t CONST
 addrFromPPtr(void* pptr)
 {
     return (paddr_t)pptr - physMappingOffset;
-}
-
-#define paddr_to_pptr ptrFromPAddr
-#define pptr_to_paddr addrFromPPtr
-
-static inline region_t CONST
-paddr_to_pptr_reg(p_region_t p_reg)
-{
-    return (region_t) {
-        p_reg.start + physMappingOffset, p_reg.end + physMappingOffset
-    };
-}
-
-static inline p_region_t CONST
-pptr_to_paddr_reg(region_t reg)
-{
-    return (p_region_t) {
-        reg.start - physMappingOffset, reg.end - physMappingOffset
-    };
 }
 
 int get_num_avail_p_regs(void);
