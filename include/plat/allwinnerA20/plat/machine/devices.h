@@ -34,14 +34,14 @@
 #define UART0_PADDR 				0x01C28000
 
 /* CCU, Interrupt, Timer, OWA */
-/* Timer = PPTR + 0xC00 */ 
+/* Timer = PPTR + 0xC00 */
 #define TIMER0_PADDR 				0x01C20000
 
 #define GIC_PADDR 					0x01C80000
 
 /* TODO: Add other devices PADDRs */
 
-#define SPI0_PADDR  0x01C05000 
+#define SPI0_PADDR  0x01C05000
 #define SPI1_PADDR  0x01C06000
 
 #endif
