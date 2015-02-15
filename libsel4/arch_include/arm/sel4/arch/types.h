@@ -34,7 +34,7 @@ typedef seL4_CPtr seL4_ARM_Page;
 typedef seL4_CPtr seL4_ARM_PageTable;
 typedef seL4_CPtr seL4_ARM_PageDirectory;
 
-typedef struct {
+typedef struct seL4_UserContext_ {
     /* frame registers */
     seL4_Word pc, sp, cpsr, r0, r1, r8, r9, r10, r11, r12;
     /* other integer registers */

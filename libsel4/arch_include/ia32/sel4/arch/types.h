@@ -44,7 +44,7 @@ typedef seL4_CPtr seL4_IA32_IPI;
 
 /* User context as used by seL4_TCB_ReadRegisters / seL4_TCB_WriteRegisters */
 
-typedef struct {
+typedef struct seL4_UserContext_ {
     /* frameRegisters */
     seL4_Word eip, esp, eflags, eax, ebx, ecx, edx, esi, edi, ebp;
     /* gpRegisters */

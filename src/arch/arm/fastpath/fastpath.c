@@ -23,7 +23,7 @@
 #include <armv/fastpath.h>
 #include <arch/machine/registerset.h>
 
-/* When building the fastapth the assembler in traps.S makes these
+/* When building the fastpath the assembler in traps.S makes these
  * assumptions. Because compile_asserts are hard to do in assembler,
  * we place them here */
 compile_assert(SysCall_Minus1, SysCall == -1)
@@ -308,7 +308,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /*
      * --- POINT OF NO RETURN ---
      *
-     * At this stage, we have commited to performing the IPC.
+     * At this stage, we have committed to performing the IPC.
      */
 
     /* Dequeue the destination. */
@@ -459,7 +459,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     /*
      * --- POINT OF NO RETURN ---
      *
-     * At this stage, we have commited to performing the IPC.
+     * At this stage, we have committed to performing the IPC.
      */
 
     /* Set thread state to BlockedOnReceive */
