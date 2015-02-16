@@ -182,7 +182,7 @@ getActiveIRQ(void)
         /* XXX - should never happen? */
         printf("spurious irq %d / %x\n", irq, intcps_sir_irq);
     }
-    
+
     /* No interrupt. */
     return irqInvalid;
 }
@@ -291,11 +291,13 @@ disableWatchdog(void)
 
     // am335x ref man, sec 20.4.3.8
     *WDT_REG(wdt, WDT_REG_WSPR) = 0xaaaa;
-    while((*WDT_REG(wdt, WDT_REG_WWPS) & WDT_WWPS_PEND_WSPR))
+    while ((*WDT_REG(wdt, WDT_REG_WWPS) & WDT_WWPS_PEND_WSPR)) {
         continue;
+    }
     *WDT_REG(wdt, WDT_REG_WSPR) = 0x5555;
-    while((*WDT_REG(wdt, WDT_REG_WWPS) & WDT_WWPS_PEND_WSPR))
+    while ((*WDT_REG(wdt, WDT_REG_WWPS) & WDT_WWPS_PEND_WSPR)) {
         continue;
+    }
 }
 
 /* Configure dmtimer0 as kernel preemption timer */
