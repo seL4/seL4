@@ -219,9 +219,6 @@ isReservedIRQ(interrupt_t irq)
 void handleReservedIRQ(irq_t irq)
 {
     printf("Received reserved IRQ: %d\n", (int)irq);
-    /* We shouldn't be receiving any reserved IRQs anyway. */
-    //maskInterrupt(true, irq);
-    //return;
 }
 
 void
