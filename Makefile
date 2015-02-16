@@ -17,7 +17,7 @@
 
 ARCH_LIST:=arm ia32
 CPU_LIST:=arm1136jf-s ixp420 cortex-a8 cortex-a9 cortex-a15
-PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 apq8064 zynq7000
+PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 apq8064 zynq7000 allwinnerA20
 ARMV_LIST:=armv6 armv7-a
 
 ifndef SOURCE_ROOT
@@ -354,10 +354,12 @@ ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 ifeq (${CPU},cortex-a8)
 DEFINES += -DARM_CORTEX_A8
-else
+endif
 ifeq (${CPU},cortex-a9)
 DEFINES += -DARM_CORTEX_A9
 endif
+ifeq (${CPU},cortex-a15)
+DEFINES += -DARM_CORTEX_A15
 endif
 endif
 
