@@ -220,7 +220,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
             IT_ASID, /* capPDMappedASID */
             pd_pptr  /* capPDBasePtr    */
         );
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_PD), pd_cap);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE), pd_cap);
 
     /* create all PT objs and caps necessary to cover userland image */
     slot_pos_before = ndks_boot.slot_pos_cur;
