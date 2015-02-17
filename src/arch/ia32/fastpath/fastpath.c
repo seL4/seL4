@@ -158,7 +158,7 @@ endpoint_ptr_set_epQueue_head_np(endpoint_t *ep_ptr, word_t epQueue_head)
 
 
 static inline bool_t
-isValidVTableRoot_fp(cap_t pd_cap)
+isValidNativeRoot_fp(cap_t pd_cap)
 {
 #ifdef CONFIG_PAE_PAGING
     return cap_capType_equals(pd_cap, cap_pdpt_cap) && cap_pdpt_cap_get_capPDPTIsMapped(pd_cap);
@@ -323,7 +323,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure that the destination has a valid VTable. */
-    if (unlikely(! isValidVTableRoot_fp(newVTable))) {
+    if (unlikely(! isValidNativeRoot_fp(newVTable))) {
         slowpath(SysCall);
     }
 
@@ -459,7 +459,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure that the destination has a valid MMU. */
-    if (unlikely(! isValidVTableRoot_fp (newVTable))) {
+    if (unlikely(! isValidNativeRoot_fp (newVTable))) {
         slowpath(SysReplyWait);
     }
 

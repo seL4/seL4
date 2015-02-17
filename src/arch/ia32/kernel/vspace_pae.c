@@ -223,7 +223,7 @@ bool_t CONST isVTableRoot(cap_t cap)
     return cap_get_capType(cap) == cap_pdpt_cap;
 }
 
-bool_t CONST isValidVTableRoot(cap_t cap)
+bool_t CONST isValidNativeRoot(cap_t cap)
 {
     if (!isVTableRoot(cap) ||
             !cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
@@ -232,9 +232,13 @@ bool_t CONST isValidVTableRoot(cap_t cap)
     return true;
 }
 
-void *getValidVSpaceRoot(cap_t vspace_cap)
+bool_t CONST isValidVTableRoot(cap_t cap) {
+    return isValidNativeRoot(cap);
+}
+
+void *getValidNativeRoot(cap_t vspace_cap)
 {
-    if (isValidVTableRoot(vspace_cap)) {
+    if (isValidNativeRoot(vspace_cap)) {
         return PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vspace_cap));
     }
     return NULL;
@@ -304,7 +308,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
                 );
     /* check if page directory belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
+    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
         /* according to the intel manual if we modify a pdpt we must
          * reload cr3 */
         write_cr3(read_cr3());
@@ -377,7 +381,7 @@ decodeIA32PageDirectoryInvocation(
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
     vspaceCap = extraCaps.excaprefs[0]->cap;
 
-    if (!isValidVTableRoot(vspaceCap)) {
+    if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
@@ -436,7 +440,7 @@ decodeIA32PageDirectoryInvocation(
     /* according to the intel manual if we modify a pdpt we must
      * reload cr3 */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == (void*)pptr_of_cap(vspaceCap)) {
+    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == (void*)pptr_of_cap(vspaceCap)) {
         write_cr3(read_cr3());
     }
 
