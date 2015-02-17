@@ -1115,7 +1115,7 @@ static void flushTable(void *vspace, uint32_t pdIndex, pte_t *pt)
 
     /* check if page table belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidVTableRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == vspace) {
+    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == vspace) {
         invalidateTLB();
         invalidatePageStructureCache();
     }
@@ -1128,7 +1128,7 @@ void setVMRoot(tcb_t* tcb)
 
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
-    vspace_root = getValidVSpaceRoot(threadRoot);
+    vspace_root = getValidNativeRoot(threadRoot);
     if (!vspace_root) {
         setCurrentPD(pptr_to_paddr(ia32KSkernelPDPT));
         return;
@@ -1318,7 +1318,7 @@ decodeIA32PageTableInvocation(
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
     vspaceCap = extraCaps.excaprefs[0]->cap;
 
-    if (!isValidVTableRoot(vspaceCap)) {
+    if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
