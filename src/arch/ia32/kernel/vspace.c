@@ -2302,7 +2302,7 @@ void IA32PageUnmapEPT(cap_t cap)
     case IA32_LargePage: {
         ept_pde_t *pd = EPT_PD_PTR(object);
         pd[index] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
-        if (LARGE_PAGE_BITS == IA32_2M_bits) {
+        if (LARGE_PAGE_BITS == IA32_4M_bits) {
             pd[index + 1] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
         }
         pdpt = lookupEPTPDPTFromPD(pd);
