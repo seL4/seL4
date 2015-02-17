@@ -168,7 +168,8 @@ bool_t CONST isValidNativeRoot(cap_t cap)
     return isVTableRoot(cap);
 }
 
-bool_t CONST isValidVTableRoot(cap_t cap) {
+bool_t CONST isValidVTableRoot(cap_t cap)
+{
 #ifdef CONFIG_VTX
     if (cap_get_capType(cap) == cap_ept_page_directory_pointer_table_cap) {
         return true;
