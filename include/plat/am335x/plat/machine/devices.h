@@ -15,6 +15,8 @@
 #define INTC_PPTR  0xfff01000
 #define UART0_PPTR  0xfff02000
 #define DMTIMER0_PPTR  0xfff03000
+#define WDT1_PPTR 0xfff04000
+
 
 /* Other devices on the SoC. */
 #define INTC_PADDR  0x48200000
@@ -26,5 +28,7 @@
 #define DMTIMER5_PADDR  0x48046000
 #define DMTIMER6_PADDR  0x48048000
 #define DMTIMER7_PADDR  0x4804A000
+#define WDT1_PADDR 0x44e35000
+
 
 #endif

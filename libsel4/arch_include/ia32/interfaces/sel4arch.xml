@@ -24,7 +24,15 @@
 		<register name="FS"/>
 		<register name="GS"/>
 	</registers>
-	<interface name="seL4_IA32_PageDirectory"/>
+	<interface name="seL4_IA32_PageDirectory">
+	    <method id="IA32PageDirectoryMap" name="Map">
+	        <param dir="in" name="pdpt" type="seL4_IA32_PageDirectory"/>
+	        <param dir="in" name="vaddr" type="seL4_Word"/>
+	        <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+	    </method>
+	    <method id="IA32PageDirectoryUnmap" name="Unmap">
+	    </method>
+	</interface>
 	<interface name="seL4_IA32_PageTable">
 		<method id="IA32PageTableMap" name="Map">
 			<param dir="in" name="pd" type="seL4_IA32_PageDirectory"/>

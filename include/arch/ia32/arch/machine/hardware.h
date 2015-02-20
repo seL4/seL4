@@ -11,6 +11,7 @@
 #ifndef __ARCH_MACHINE_HARDWARE_H
 #define __ARCH_MACHINE_HARDWARE_H
 
+#include <config.h>
 #include <arch/types.h>
 #include <arch/linker.h>
 
@@ -21,17 +22,25 @@ enum vm_fault_type {
 typedef uint32_t vm_fault_type_t;
 
 enum vm_page_size {
-    IA32_4K,
-    IA32_4M
+    IA32_SmallPage,
+    IA32_LargePage
 };
 typedef uint32_t vm_page_size_t;
 
 enum frameSizeConstants {
     IA32_4K_bits = 12,
-    IA32_4M_bits = 22
+    IA32_2M_bits = 21,
+    IA32_4M_bits = 22,
+    IA32_1G_bits = 30
 };
 
-#define PAGE_BITS 12
+#define PAGE_BITS IA32_4K_bits
+
+#ifdef CONFIG_PAE_PAGING
+#define LARGE_PAGE_BITS IA32_2M_bits
+#else
+#define LARGE_PAGE_BITS IA32_4M_bits
+#endif
 
 /* Any changes to this function need to be replicated in pageBitsForSize_phys.
  */
@@ -39,11 +48,11 @@ static inline unsigned int CONST
 pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
-    case IA32_4K:
-        return IA32_4K_bits;
+    case IA32_SmallPage:
+        return PAGE_BITS;
 
-    case IA32_4M:
-        return IA32_4M_bits;
+    case IA32_LargePage:
+        return LARGE_PAGE_BITS;
 
     default:
         fail("Invalid page size");
@@ -59,11 +68,11 @@ static inline unsigned int CONST
 pageBitsForSize_phys(vm_page_size_t pagesize)
 {
     switch (pagesize) {
-    case IA32_4K:
-        return IA32_4K_bits;
+    case IA32_SmallPage:
+        return PAGE_BITS;
 
-    case IA32_4M:
-        return IA32_4M_bits;
+    case IA32_LargePage:
+        return LARGE_PAGE_BITS;
 
     default:
         fail("Invalid page size");

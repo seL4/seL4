@@ -8,12 +8,13 @@
 # @TAG(GD_GPL)
 #
 
-DIRECTORIES += src/plat/exynos4/machine
+DIRECTORIES += src/plat/${PLAT}/machine
+DIRECTORIES += src/plat/exynos_common
 
 PLAT_C_SOURCES += machine/hardware.c
 
 PLAT_C_SOURCES += ../exynos_common/mct.c
 
 ifdef DEBUG
-    PLAT_C_SOURCES += machine/io.c
+    PLAT_C_SOURCES += ../exynos_common/io.c
 endif

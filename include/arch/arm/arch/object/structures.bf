@@ -492,11 +492,6 @@ tagged_union pde pdeType {
 }
 
 -- Page table entries
-block pte_invalid {
-    padding 30
-    field pteType 2
-}
-
 block pte_large {
     field_high address 16
     field XN 1
@@ -508,7 +503,8 @@ block pte_large {
     field AP 2
     field C 1
     field B 1
-    field pteType 2
+    field pteSize 1
+    field reserved 1 -- must be set
 }
 
 block pte_small {
@@ -520,15 +516,13 @@ block pte_small {
     field AP 2
     field C 1
     field B 1
-    -- The lower bit of pteType is used to store the XN bit for small pages
-    -- We ignore this here, and use tag 2 for small pages which sets XN always to 0.
-    field pteType 2
+    field pteSize 1
+    field XN 1
 }
 
-tagged_union pte pteType {
-    tag pte_invalid 0
-    tag pte_large 1
-    tag pte_small 2
+tagged_union pte pteSize {
+    tag pte_large 0
+    tag pte_small 1
 }
 
 #else /* !ARM_HYP */
@@ -686,7 +680,8 @@ tagged_union pteS1 pteS1Type {
 -- VM attributes
 
 block vm_attributes {
-    padding 30
+    padding 29
+    field armExecuteNever  1
     field armParityEnabled 1
     field armPageCacheable 1
 }

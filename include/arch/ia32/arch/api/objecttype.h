@@ -13,9 +13,10 @@
 
 typedef enum _object {
     seL4_IA32_4K = seL4_NonArchObjectTypeCount,
-    seL4_IA32_4M,
+    seL4_IA32_LargePage,
     seL4_IA32_PageTableObject,
     seL4_IA32_PageDirectoryObject,
+    seL4_IA32_PDPTObject,
 #ifdef CONFIG_IOMMU
     seL4_IA32_IOPageTableObject,
 #endif

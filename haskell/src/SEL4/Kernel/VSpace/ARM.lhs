@@ -136,6 +136,7 @@ The kernel creates mappings for all physical memory regions in the global page d
 >                   pdeDomain = 0,
 >                   pdeCacheable = True,
 >                   pdeGlobal = True,
+>                   pdeExecuteNever = False,
 >                   pdeRights = VMKernelOnly }
 >           let offset = fromVPtr virt `shiftR` pageBitsForSize ARMSection
 >           let slot = globalPD + PPtr (offset `shiftL` pdeBits)
@@ -148,6 +149,7 @@ The kernel creates mappings for all physical memory regions in the global page d
 >                   pdeParity = True,
 >                   pdeCacheable = True,
 >                   pdeGlobal = True,
+>                   pdeExecuteNever = False,
 >                   pdeRights = VMKernelOnly }
 >           let offset = fromVPtr virt `shiftR` pageBitsForSize ARMSection
 >           let slots = map (\n -> globalPD + PPtr (n `shiftL` pdeBits))
@@ -184,6 +186,7 @@ The "mapKernelFrame" helper function is used when mapping the globals frame, ker
 >                 pteFrame = paddr,
 >                 pteCacheable = armPageCacheable attributes,
 >                 pteGlobal = True,
+>                 pteExecuteNever = False,
 >                 pteRights = rights }
 >             storePTE ptSlot pte'
 >         _ -> fail "mapKernelFrame: frame already mapped"
@@ -205,7 +208,7 @@ Any IO devices used directly by the kernel --- generally including the interrupt
 > mapKernelDevice :: (PAddr, PPtr Word) -> Kernel ()
 > mapKernelDevice (addr, ptr) = do
 >     let vptr = VPtr $ fromPPtr ptr
->     mapKernelFrame addr vptr VMKernelOnly $ VMAttributes False False
+>     mapKernelFrame addr vptr VMKernelOnly $ VMAttributes False False False
 
 The globals frame is a user-readable frame mapped at a well-known location, "globalsBase", in the kernel's virtual memory region.
 
@@ -225,7 +228,7 @@ Insert an entry into the global PD for the globals frame.
 > mapGlobalsFrame = do
 >     globalsFrame <- gets $ armKSGlobalsFrame . ksArchState
 >     mapKernelFrame (addrFromPPtr globalsFrame) globalsBase VMReadOnly $
->         VMAttributes True True
+>         VMAttributes True True False
 
 Create the initial thread's page directory and allocate an ASID for it. Returns the page directory capability, which it also stores in the given slot.
 
@@ -337,6 +340,7 @@ Any frame capabilities present in the node are mapped into the VSpace.
 >                     pteFrame = paddr,
 >                     pteCacheable = True,
 >                     pteGlobal = False,
+>                     pteExecuteNever = False,
 >                     pteRights = VMReadWrite }
 >                 storePTE ptSlot pte'
 >             _ -> fail "mapUserFrame: frame already mapped"
@@ -368,6 +372,7 @@ When a frame is being mapped, or an existing mapping updated, the following func
 >         pteFrame = base,
 >         pteCacheable = armPageCacheable attrib,
 >         pteGlobal = False,
+>         pteExecuteNever = armExecuteNever attrib,
 >         pteRights = vmRights }, [p])
 >
 > createMappingEntries base vptr ARMLargePage vmRights attrib pd = do
@@ -376,6 +381,7 @@ When a frame is being mapped, or an existing mapping updated, the following func
 >         pteFrame = base,
 >         pteCacheable = armPageCacheable attrib,
 >         pteGlobal = False,
+>         pteExecuteNever = armExecuteNever attrib,
 >         pteRights = vmRights }, [p, p + 4 .. p + 60])
 >
 > createMappingEntries base vptr ARMSection vmRights attrib pd = do
@@ -386,6 +392,7 @@ When a frame is being mapped, or an existing mapping updated, the following func
 >         pdeDomain = 0,
 >         pdeCacheable = armPageCacheable attrib,
 >         pdeGlobal = False,
+>         pdeExecuteNever = armExecuteNever attrib,
 >         pdeRights = vmRights }, [p])
 >
 > createMappingEntries base vptr ARMSuperSection vmRights attrib pd = do
@@ -395,6 +402,7 @@ When a frame is being mapped, or an existing mapping updated, the following func
 >         pdeParity = armParityEnabled attrib,
 >         pdeCacheable = armPageCacheable attrib,
 >         pdeGlobal = False,
+>         pdeExecuteNever = armExecuteNever attrib,
 >         pdeRights = vmRights }, [p, p + 4 .. p + 60])
 
 The following function is called before creating or modifying mappings in a page table or page directory, and is responsible for ensuring that the mapping is safe --- that is, that inserting it will behave predictably and will not damage the hardware. The ARMv6 specifications require that there are never two mappings of different sizes at any virtual address in the active address space, so this function will throw a fault if the requested operation would change the size of the mapping of any existing valid entry.
@@ -795,7 +803,8 @@ ARM memory mappings may be marked cacheable or non-cacheable. Also, parity check
 > attribsFromWord :: Word -> VMAttributes
 > attribsFromWord w = VMAttributes {
 >     armPageCacheable = w `testBit` 0,
->     armParityEnabled = w `testBit` 1 }
+>     armParityEnabled = w `testBit` 1,
+>     armExecuteNever = w `testBit` 2 }
 
 \subsection{ARM Hardware ASID allocation}
 
@@ -976,15 +985,15 @@ round-robin.
 >     let pdSlot = lookupPDSlot pd vaddr
 >     pde <- getObject pdSlot
 >     case pde of
->         SectionPDE frame _ _ _ _ _ -> return $ Just (ARMSection, frame)
->         SuperSectionPDE frame _ _ _ _ -> return $ Just (ARMSuperSection, frame)
+>         SectionPDE frame _ _ _ _ _ _ -> return $ Just (ARMSection, frame)
+>         SuperSectionPDE frame _ _ _ _ _ -> return $ Just (ARMSuperSection, frame)
 >         PageTablePDE table _ _ -> do
 >             let pt = ptrFromPAddr table
 >             let pteSlot = lookupPTSlot_nofail pt vaddr
 >             pte <- getObject pteSlot
 >             case pte of
->                 LargePagePTE frame _ _ _ -> return $ Just (ARMLargePage, frame)
->                 SmallPagePTE frame _ _ _ -> return $ Just (ARMSmallPage, frame)
+>                 LargePagePTE frame _ _ _ _ -> return $ Just (ARMLargePage, frame)
+>                 SmallPagePTE frame _ _ _ _ -> return $ Just (ARMSmallPage, frame)
 >                 _ -> return Nothing 
 >         _ -> return Nothing
 >     

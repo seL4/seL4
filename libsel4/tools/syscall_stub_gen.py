@@ -339,7 +339,7 @@ def generate_marshal_expressions(params, num_mrs, registers):
             word_array[target_word + i].append(expr)
 
 
-    # Get their mashalling positions
+    # Get their marshalling positions
     positions = get_parameter_positions(params)
 
     # Generate marshal code.
@@ -385,7 +385,7 @@ def generate_unmarshal_expressions(params):
             return ["(%%(w%d)s >> %d) & %#x" % (
                     first_word, bit_offset, (1 << num_bits) - 1)]
 
-    # Get their mashalling positions
+    # Get their marshalling positions
     positions = get_parameter_positions(params)
 
     # Generate the unmarshal code.
@@ -548,7 +548,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
     result.append("")
 
     #
-    # Generate unmarshaling code.
+    # Generate unmarshalling code.
     #
     if len(output_params) > 0:
         result.append("\t/* Unmarshal result. */")
@@ -588,7 +588,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
 
 def parse_xml_file(input_file, valid_types):
     """
-    Parse an XML file containing method defintions.
+    Parse an XML file containing method definitions.
     """
 
     # Create a dictionary of type name to type.
@@ -671,7 +671,7 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
 """);
 
     #
-    # Emit code to ensure that all of our type sizes are consistant with
+    # Emit code to ensure that all of our type sizes are consistent with
     # the compiler's.
     #
     result.append("""

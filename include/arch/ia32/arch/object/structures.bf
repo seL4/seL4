@@ -131,10 +131,10 @@ block frame_cap {
 
 -- Second-level page table
 block page_table_cap {
-    padding                         5
+    padding                         4
     field       capPTIsMapped       1
     field       capPTMappedASID     16
-    field_high  capPTMappedAddress  10
+    field_high  capPTMappedAddress  11
 
     padding                         8
     field_high  capPTBasePtr        20
@@ -143,12 +143,23 @@ block page_table_cap {
 
 -- First-level page table (page directory)
 block page_directory_cap {
-    padding                         15
+    padding                         13
     field       capPDIsMapped       1
     field       capPDMappedASID     16
+    field_high  capPDMappedAddress  2
 
     padding                         8
     field_high  capPDBasePtr        20
+    field       capType             4
+}
+
+block pdpt_cap {
+    padding                         15
+    field       capPDPTIsMapped     1
+    field       capPDPTMappedASID   16
+
+    padding                         1
+    field_high  capPDPTBasePtr      27
     field       capType             4
 }
 
@@ -174,8 +185,8 @@ block io_port_cap {
     field   capIOPortFirstPort 16
     field   capIOPortLastPort  16
 
-    padding                    28
-    field   capType            4
+    padding                    24
+    field   capType            8
 }
 
 block io_port_capdata {
@@ -232,9 +243,9 @@ tagged_union cap capType {
     tag frame_cap           1
     tag page_table_cap      3
     tag page_directory_cap  5
-    tag asid_control_cap    7
-    tag asid_pool_cap       9  
-    tag io_port_cap         11
+    tag pdpt_cap            7
+    tag asid_control_cap    9
+    tag asid_pool_cap       11
 #ifdef CONFIG_IOMMU
     tag io_space_cap        13
 #endif /* CONFIG_IOMMU */
@@ -251,6 +262,7 @@ tagged_union cap capType {
 #ifdef CONFIG_IOMMU
     tag io_page_table_cap   0x0f
 #endif /* CONFIG_IOMMU */
+    tag io_port_cap         0x1f
 }
 
 ---- Arch-independent object types
@@ -613,7 +625,22 @@ block tss {
 
 -- PDs and PTs
 
-block pde_4k {
+block pdpte {
+    padding 32
+
+    field_high  pd_base_address     20
+    field       avl                 3
+    padding                         4
+    field       cache_disabled      1
+    field       write_through       1
+    padding                         2
+    field       present             1
+}
+
+block pde_small {
+#ifdef CONFIG_PAE_PAGING
+    padding                         32
+#endif
     field_high  pt_base_address     20
     field       avl                 3
     padding                         1
@@ -627,9 +654,12 @@ block pde_4k {
     field       present             1
 }
 
-block pde_4m {
-    field_high  page_base_address   10
-    padding                         9
+block pde_large {
+#ifdef CONFIG_PAE_PAGING
+    padding                         32
+#endif
+    field_high  page_base_address   11
+    padding                         8
     field       pat                 1
     field       avl                 3
     field       global              1
@@ -644,11 +674,14 @@ block pde_4m {
 }
 
 tagged_union pde page_size {
-    tag pde_4k 0
-    tag pde_4m 1
+    tag pde_small 0
+    tag pde_large 1
 }
 
 block pte {
+#ifdef CONFIG_PAE_PAGING
+    padding                         32
+#endif
     field_high  page_base_address   20
     field       avl                 3
     field       global              1

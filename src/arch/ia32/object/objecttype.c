@@ -54,6 +54,18 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
         }
         return ret;
 
+    case cap_pdpt_cap:
+        if (cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        } else {
+            userError("Deriving a PDPT cap without an assigned ASID");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+        }
+        return ret;
+
     case cap_frame_cap:
 #ifdef CONFIG_IOMMU
         cap = cap_frame_cap_set_capFIsIOSpace(cap, 0);
@@ -157,10 +169,20 @@ cap_t CONST Arch_maskCapRights(cap_rights_t cap_rights_mask, cap_t cap)
 cap_t Arch_finaliseCap(cap_t cap, bool_t final)
 {
     switch (cap_get_capType(cap)) {
+    case cap_pdpt_cap:
+        if (final && cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
+            deleteASID(
+                cap_pdpt_cap_get_capPDPTMappedASID(cap),
+                PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap))
+            );
+        }
+        break;
+
     case cap_page_directory_cap:
         if (final && cap_page_directory_cap_get_capPDIsMapped(cap)) {
-            deleteASID(
+            unmapPageDirectory(
                 cap_page_directory_cap_get_capPDMappedASID(cap),
+                cap_page_directory_cap_get_capPDMappedAddress(cap),
                 PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap))
             );
         }
@@ -231,6 +253,9 @@ resetMemMapping(cap_t cap)
     case cap_page_directory_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_page_directory_cap_set_capPDIsMapped(cap, 0);
+    case cap_pdpt_cap:
+        /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
+        return cap_pdpt_cap_set_capPDPTIsMapped(cap, 0);
     }
 
     return cap;
@@ -239,7 +264,6 @@ resetMemMapping(cap_t cap)
 cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
 {
     asid_pool_t* ptr;
-    pde_t* capPtr;
     word_t base;
 
     switch (cap_get_capType(cap)) {
@@ -264,8 +288,22 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
 
     case cap_page_directory_cap:
-        capPtr = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
-        memzero(capPtr, (PPTR_BASE >> IA32_4M_bits) << PDE_SIZE_BITS);
+        clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
+            unmapPageDirectory(
+                cap_page_directory_cap_get_capPDMappedASID(cap),
+                cap_page_directory_cap_get_capPDMappedAddress(cap),
+                PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap))
+            );
+        }
+        Arch_finaliseCap(cap, is_final);
+        if (is_final) {
+            return resetMemMapping(cap);
+        }
+        return cap;
+
+    case cap_pdpt_cap:
+        clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
         Arch_finaliseCap(cap, is_final);
         if (is_final) {
             return resetMemMapping(cap);
@@ -345,6 +383,13 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
+    case cap_pdpt_cap:
+        if (cap_get_capType(cap_b) == cap_pdpt_cap) {
+            return cap_pdpt_cap_get_capPDPTBasePtr(cap_a) ==
+                   cap_pdpt_cap_get_capPDPTBasePtr(cap_b);
+        }
+        break;
+
     case cap_asid_control_cap:
         if (cap_get_capType(cap_b) == cap_asid_control_cap) {
             return true;
@@ -401,13 +446,15 @@ Arch_getObjectSize(word_t t)
 {
     switch (t) {
     case seL4_IA32_4K:
-        return pageBitsForSize(IA32_4K);
-    case seL4_IA32_4M:
-        return pageBitsForSize(IA32_4M);
+        return pageBitsForSize(IA32_SmallPage);
+    case seL4_IA32_LargePage:
+        return pageBitsForSize(IA32_LargePage);
     case seL4_IA32_PageTableObject:
         return PTE_SIZE_BITS + PT_BITS;
     case seL4_IA32_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_BITS;
+    case seL4_IA32_PDPTObject:
+        return PDPTE_SIZE_BITS + PDPT_BITS;
 #ifdef CONFIG_IOMMU
     case seL4_IA32_IOPageTableObject:
         return VTD_PT_SIZE_BITS;
@@ -423,9 +470,9 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 {
     switch (t) {
     case seL4_IA32_4K:
-        memzero(regionBase, 1 << pageBitsForSize(IA32_4K));
+        memzero(regionBase, 1 << pageBitsForSize(IA32_SmallPage));
         return cap_frame_cap_new(
-                   IA32_4K,                /* capFSize             */
+                   IA32_SmallPage,         /* capFSize             */
 #ifdef CONFIG_IOMMU
                    0,                      /* capFIsIOSpace        */
 #endif
@@ -436,10 +483,10 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
                    (word_t)regionBase      /* capFBasePtr          */
                );
 
-    case seL4_IA32_4M:
-        memzero(regionBase, 1 << pageBitsForSize(IA32_4M));
+    case seL4_IA32_LargePage:
+        memzero(regionBase, 1 << pageBitsForSize(IA32_LargePage));
         return cap_frame_cap_new(
-                   IA32_4M,                /* capFSize             */
+                   IA32_LargePage,         /* capFSize             */
 #ifdef CONFIG_IOMMU
                    0,                      /* capFIsIOSpace        */
 #endif
@@ -461,12 +508,27 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
     case seL4_IA32_PageDirectoryObject:
         memzero(regionBase, 1 << PD_SIZE_BITS);
+#ifndef CONFIG_PAE_PAGING
         copyGlobalMappings(regionBase);
+#endif
         return cap_page_directory_cap_new(
-                   0,                  /* capPTIsMapped    */
+                   0,                  /* capPDIsMapped    */
                    asidInvalid,        /* capPDMappedASID  */
-                   (word_t)regionBase  /* capPTBasePtr     */
+                   0,                  /* capPDMappedAddress */
+                   (word_t)regionBase  /* capPDBasePtr     */
                );
+
+#ifdef CONFIG_PAE_PAGING
+    case seL4_IA32_PDPTObject:
+        memzero(regionBase, 1 << PDPT_SIZE_BITS);
+        copyGlobalMappings(regionBase);
+
+        return cap_pdpt_cap_new(
+                   0,                  /* capPDPTIsMapped */
+                   asidInvalid,        /* capPDPTMappedAsid*/
+                   (word_t)regionBase  /* capPDPTBasePtr */
+               );
+#endif
 
 #ifdef CONFIG_IOMMU
     case seL4_IA32_IOPageTableObject:
@@ -502,6 +564,7 @@ Arch_decodeInvocation(
 )
 {
     switch (cap_get_capType(cap)) {
+    case cap_pdpt_cap:
     case cap_page_directory_cap:
     case cap_page_table_cap:
     case cap_frame_cap:

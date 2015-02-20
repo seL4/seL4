@@ -11,6 +11,7 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
+#include <config.h>
 #include <types.h>
 #include <plat/machine.h>
 #include <plat/machine/hardware_gen.h>
@@ -19,12 +20,18 @@
 #define PADDR_BASE  0x00000000
 #define PADDR_LOAD  0x00100000
 #define PPTR_BASE   0xe0000000
-#ifdef CONFIG_BENCHMARK
-#define PPTR_TOP    0xff800000
+#ifdef CONFIG_PAE_PAGING
+#define PPTR_USER_TOP (PPTR_BASE & (~MASK(IA32_1G_bits)))
 #else
-#define PPTR_TOP    0xffc00000
+#define PPTR_USER_TOP (PPTR_BASE & (~MASK(IA32_4M_bits)))
+#endif
+#ifdef CONFIG_BENCHMARK
+#define PPTR_TOP    (-BIT(LARGE_PAGE_BITS + 1))
+#define PPTR_NDKS   (PPTR_TOP + 0x1000 + BIT(LARGE_PAGE_BITS))
+#else
+#define PPTR_TOP    (-BIT(LARGE_PAGE_BITS))
+#define PPTR_NDKS   (PPTR_TOP + 0x1000)
 #endif /* CONFIG_BENCHMARK */
-#define PPTR_NDKS   0xffc01000
 #define PPTR_KDEV   0xffff0000
 #define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
 #define PADDR_TOP   (PPTR_TOP - BASE_OFFSET)

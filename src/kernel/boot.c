@@ -398,7 +398,7 @@ create_initial_thread(
     );
     cteInsert(
         it_pd_cap,
-        SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_PD),
+        SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE),
         SLOT_PTR(pptr, tcbVTable)
     );
     cteInsert(

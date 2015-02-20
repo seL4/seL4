@@ -16,6 +16,9 @@
 /* code that is linked to physical addresses */
 #define PHYS_CODE SECTION(".phys.text")
 
+/* data that is linked to physical addresses */
+#define PHYS_DATA SECTION(".phys.data")
+
 /* code that is only used during kernel bootstrapping */
 #define BOOT_CODE SECTION(".boot.text")
 

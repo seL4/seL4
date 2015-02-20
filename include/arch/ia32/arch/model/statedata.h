@@ -28,6 +28,7 @@ extern tss_t ia32KStss;
 extern gdt_entry_t ia32KSgdt[];
 extern asid_pool_t* ia32KSASIDTable[];
 extern tcb_t *ia32KSfpuOwner;
+extern pdpte_t *ia32KSkernelPDPT;
 extern pde_t* ia32KSkernelPD;
 extern pte_t* ia32KSkernelPT;
 extern uint32_t ia32KScacheLineSizeBits;

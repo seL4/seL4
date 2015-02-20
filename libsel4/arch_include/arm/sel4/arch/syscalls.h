@@ -237,7 +237,9 @@ seL4_Wait(seL4_CPtr src, seL4_Word* sender)
     if (sender) {
         *sender = src_and_badge;
     }
-    return info;
+    return (seL4_MessageInfo_t) {
+        .words = {info.words[0]}
+    };
 }
 
 static inline seL4_MessageInfo_t
@@ -279,7 +281,9 @@ seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
     if (sender) {
         *sender = src_and_badge;
     }
-    return info;
+    return (seL4_MessageInfo_t) {
+        .words = {info.words[0]}
+    };
 }
 
 static inline seL4_MessageInfo_t
@@ -308,7 +312,9 @@ seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
     seL4_SetMR(2, msg2);
     seL4_SetMR(3, msg3);
 
-    return info;
+    return (seL4_MessageInfo_t) {
+        .words = {info.words[0]}
+    };
 }
 
 static inline seL4_MessageInfo_t
@@ -359,7 +365,9 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
         *mr3 = msg3;
     }
 
-    return info;
+    return (seL4_MessageInfo_t) {
+        .words = {info.words[0]}
+    };
 }
 
 static inline seL4_MessageInfo_t
@@ -392,7 +400,9 @@ seL4_ReplyWait(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
     if (sender) {
         *sender = src_and_badge;
     }
-    return info;
+    return (seL4_MessageInfo_t) {
+        .words = {info.words[0]}
+    };
 }
 
 static inline seL4_MessageInfo_t
@@ -447,7 +457,9 @@ seL4_ReplyWaitWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *send
     if (sender) {
         *sender = src_and_badge;
     }
-    return info;
+    return (seL4_MessageInfo_t) {
+        .words = {info.words[0]}
+    };
 }
 
 static inline void

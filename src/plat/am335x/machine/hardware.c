@@ -51,6 +51,7 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start = */ DMTIMER5_PADDR, /* .end = */ DMTIMER5_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER6_PADDR, /* .end = */ DMTIMER6_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER7_PADDR, /* .end = */ DMTIMER7_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ WDT1_PADDR, /* .end = */ WDT1_PADDR + (1 << PAGE_BITS) },
     /* Board devices. */
     /* TODO: This should ultimately be replaced with a more general solution. */
 };
@@ -75,6 +76,7 @@ map_kernel_devices(void)
         DMTIMER0_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -86,6 +88,19 @@ map_kernel_devices(void)
         INTC_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
+            false, /* armParityEnabled */
+            false  /* armPageCacheable */
+        )
+    );
+
+    /* map kernel device: WDT1 */
+    map_kernel_frame(
+        WDT1_PADDR,
+        WDT1_PPTR,
+        VMKernelOnly,
+        vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -98,12 +113,19 @@ map_kernel_devices(void)
         UART0_PPTR,
         VMKernelOnly,
         vm_attributes_new(
+            false, /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
     );
 #endif
 }
+
+
+#define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
+#define INTCPS_SYSSTATUS_RESETDONE BIT(0)
+#define INTCPS_CONTROL_NEWIRQAGR BIT(0)
+#define INTCPS_SIR_IRQ_SPURIOUSIRQFLAG 0xffffff80
 
 /*
  * The struct below is used to discourage the compiler from generating literals
@@ -133,10 +155,10 @@ volatile struct INTC_map {
         uint32_t intcps_isr_clear;
         uint32_t intcps_pending_irq;
         uint32_t intcps_pending_fiq;
-    } intcps_n[3];
-    uint32_t padding5[8];
-    uint32_t intcps_ilr[96];
+    } intcps_n[4];
+    uint32_t intcps_ilr[128];
 } *intc = (volatile void*)INTC_PPTR;
+
 
 /**
    DONT_TRANSLATE
@@ -145,23 +167,30 @@ volatile struct INTC_map {
 interrupt_t
 getActiveIRQ(void)
 {
-    interrupt_t irq = intc->intcps_sir_irq;
+    uint32_t intcps_sir_irq = intc->intcps_sir_irq;
+    interrupt_t irq = (interrupt_t)(intcps_sir_irq & 0x7f);
+
     /* Ignore spurious interrupts. */
-    if ((irq & ~0b1111111) == 0) {
-        assert(irq <= maxIRQ);
+    if ((intcps_sir_irq & INTCPS_SIR_IRQ_SPURIOUSIRQFLAG) == 0) {
+        assert((irq / 32) < (sizeof intc->intcps_n / sizeof intc->intcps_n[0]));
         if (intc->intcps_n[irq / 32].intcps_pending_irq & (1 << (irq & 31))) {
             return irq;
+        } else {
+            /* XXX happening a lot for irq=66! */
         }
+    } else {
+        /* XXX - should never happen? */
+        printf("spurious irq %d / %x\n", irq, intcps_sir_irq);
     }
 
     /* No interrupt. */
-    return 0xff;
+    return irqInvalid;
 }
 
 /* Check for pending IRQ */
 bool_t isIRQPending(void)
 {
-    return getActiveIRQ() != 0xff;
+    return getActiveIRQ() != irqInvalid;
 }
 
 /* Enable or disable irq according to the 'disable' flag. */
@@ -171,6 +200,7 @@ bool_t isIRQPending(void)
 void
 maskInterrupt(bool_t disable, interrupt_t irq)
 {
+    assert(irq <= maxIRQ);
     if (disable) {
         intc->intcps_n[irq / 32].intcps_mir_set = 1 << (irq & 31);
     } else {
@@ -182,22 +212,19 @@ maskInterrupt(bool_t disable, interrupt_t irq)
 bool_t
 isReservedIRQ(interrupt_t irq)
 {
-    return false;
+    return irq == KERNEL_TIMER_IRQ;
 }
 
 /* Handle a platform-reserved IRQ. */
 void handleReservedIRQ(irq_t irq)
 {
-    /* We shouldn't be receiving any reserved IRQs anyway. */
-    maskInterrupt(true, irq);
-
-    return;
+    printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
 void
 ackInterrupt(irq_t irq)
 {
-    intc->intcps_control = 1;
+    intc->intcps_control = INTCPS_CONTROL_NEWIRQAGR;
     /* Ensure the ack has hit the interrupt controller before potentially
      * re-enabling interrupts. */
     dsb();
@@ -252,6 +279,27 @@ resetTimer(void)
     ackInterrupt(DMTIMER0_IRQ);
 }
 
+#define WDT_REG(base, off) ((volatile uint32_t *)((base) + (off)))
+#define WDT_REG_WWPS 0x34
+#define WDT_REG_WSPR 0x48
+#define WDT_WWPS_PEND_WSPR BIT(4)
+
+static BOOT_CODE void
+disableWatchdog(void)
+{
+    uint32_t wdt = WDT1_PPTR;
+
+    // am335x ref man, sec 20.4.3.8
+    *WDT_REG(wdt, WDT_REG_WSPR) = 0xaaaa;
+    while ((*WDT_REG(wdt, WDT_REG_WWPS) & WDT_WWPS_PEND_WSPR)) {
+        continue;
+    }
+    *WDT_REG(wdt, WDT_REG_WSPR) = 0x5555;
+    while ((*WDT_REG(wdt, WDT_REG_WWPS) & WDT_WWPS_PEND_WSPR)) {
+        continue;
+    }
+}
+
 /* Configure dmtimer0 as kernel preemption timer */
 /**
    DONT_TRANSLATE
@@ -261,11 +309,14 @@ initTimer(void)
 {
     int timeout;
 
+    disableWatchdog();
+
     timer->cfg = TIOCP_CFG_SOFTRESET;
 
     for (timeout = 10000; (timer->cfg & TIOCP_CFG_SOFTRESET) && timeout > 0; timeout--)
         ;
     if (!timeout) {
+        printf("init timer failed\n");
         return;
     }
 
@@ -290,12 +341,15 @@ initTimer(void)
 BOOT_CODE void
 initIRQController(void)
 {
-    /* Do nothing */
+    intc->intcps_sysconfig = INTCPS_SYSCONFIG_SOFTRESET;
+    while (!(intc->intcps_sysstatus & INTCPS_SYSSTATUS_RESETDONE)) ;
 }
 
 void
 handleSpuriousIRQ(void)
 {
-    /* Do nothing */
+    /* Reset and re-enable IRQs. */
+    intc->intcps_control = INTCPS_CONTROL_NEWIRQAGR;
+    dsb();
 }
 

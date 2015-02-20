@@ -10,8 +10,6 @@
 -- @TAG(GD_GPL)
 --
 
--- This is to shut GHC up about defaultUserHooks.
-
 module Main where
 import Control.Applicative((<$>))
 import Distribution.Simple
@@ -28,8 +26,7 @@ import Data.List(isPrefixOf, find)
 import Control.Monad(unless, liftM)
 
 targets =
-    [ ("arm-qemu",     ("ARM", "QEmu"))
-    , ("arm-lyrebird", ("ARM", "Lyrebird"))]
+    [ ("arm-qemu",     ("ARM", "QEmu")) ]
 
 bootModules =
     [ "Kernel/CSpace"
@@ -86,10 +83,6 @@ main = do
     let targetArg = find (targetPrefix `isPrefixOf`) args
     let targetName = liftM (drop (length targetPrefix)) targetArg
     let args' = filter (not . isPrefixOf targetPrefix) args
-              -- n.b.  GHC 7.0.3 whinges about defaultUserHooks being
-              -- deprecated, and demands simpleUserHooks or autoconfUserHooks
-              -- instead.  Neither of those actually works here, so I'm stuck
-              -- with defaultUserHooks.
     let hooks = simpleUserHooks {
                     preBuild = \args flags -> do
                         generateHSBoot

@@ -97,7 +97,7 @@ switchToThread_fp(tcb_t *thread, pde_t *pd)
     ksCurThread = thread;
 }
 
-/* Custom implementation of functions for maniuplating some data structures generated
+/* Custom implementation of functions for manipulating some data structures generated
    from arch/object/structures.bf */
 
 static inline void
@@ -160,7 +160,11 @@ endpoint_ptr_set_epQueue_head_np(endpoint_t *ep_ptr, word_t epQueue_head)
 static inline bool_t
 isValidVTableRoot_fp(cap_t pd_cap)
 {
+#ifdef CONFIG_PAE_PAGING
+    return cap_capType_equals(pd_cap, cap_pdpt_cap) && cap_pdpt_cap_get_capPDPTIsMapped(pd_cap);
+#else
     return cap_capType_equals(pd_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(pd_cap);
+#endif
 }
 
 static inline void
@@ -272,7 +276,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     word_t badge;
     cte_t *replySlot, *callerSlot;
     cap_t newVTable;
-    pde_t *cap_pd;
+    void *vspace;
     uint32_t fault_type;
 
     /* Get message info, length, and fault type. */
@@ -311,8 +315,12 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Get destination thread.*/
     newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
 
-    /* Get Page Directory. */
-    cap_pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+    /* Get vspace root. */
+#ifdef CONFIG_PAE_PAGING
+    vspace = PDE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
+#else
+    vspace = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+#endif
 
     /* Ensure that the destination has a valid VTable. */
     if (unlikely(! isValidVTableRoot_fp(newVTable))) {
@@ -333,7 +341,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /*
      * --- POINT OF NO RETURN ---
      *
-     * At this stage, we have commited to performing the IPC.
+     * At this stage, we have committed to performing the IPC.
      */
 
     /* Need to update NextEIP in the calling thread */
@@ -370,7 +378,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&dest->tcbState,
                                    ThreadState_Running);
-    switchToThread_fp(dest, cap_pd);
+    switchToThread_fp(dest, vspace);
 
     msgInfo = wordFromMessageInfo(message_info_set_msgCapsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo);
@@ -391,7 +399,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     uint32_t fault_type;
 
     cap_t newVTable;
-    pde_t *cap_pd;
+    void *vspace;
 
     /* Get message info and length */
     info = messageInfoFromWord(msgInfo);
@@ -443,8 +451,12 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     /* Get destination thread.*/
     newVTable = TCB_PTR_CTE_PTR(caller, tcbVTable)->cap;
 
-    /* Get Page Directory. */
-    cap_pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+    /* Get vspace root. */
+#ifdef CONFIG_PAE_PAGING
+    vspace = PDE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
+#else
+    vspace = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+#endif
 
     /* Ensure that the destination has a valid MMU. */
     if (unlikely(! isValidVTableRoot_fp (newVTable))) {
@@ -459,7 +471,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     /*
      * --- POINT OF NO RETURN ---
      *
-     * At this stage, we have commited to performing the IPC.
+     * At this stage, we have committed to performing the IPC.
      */
 
     /* Need to update NextEIP in the calling thread */
@@ -509,7 +521,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&caller->tcbState,
                                    ThreadState_Running);
-    switchToThread_fp(caller, cap_pd);
+    switchToThread_fp(caller, vspace);
 
     msgInfo = wordFromMessageInfo(message_info_set_msgCapsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo);

@@ -31,16 +31,13 @@ menu "seL4 System"
         config ARCH_I386
             bool "x86"
 
-        config ARCH_X86_64
-            bool "x86_64"
-
         config ARCH_ARM
             bool "ARM"
     endchoice
 
 config ARCH_IA32
        bool
-       default y if ARCH_I386 || ARCH_X86_64
+       default y if ARCH_I386
 
 config ARM_HYPERVISOR_SUPPORT
        bool "Build as Hypervisor"
@@ -161,11 +158,25 @@ config ARM_HYPERVISOR_SUPPORT
             help
                 Support for iMX6 platform (Sabre Lite).
 
+        config PLAT_ZYNQ7000
+            bool "Zynq-7000 (Xilinx ZC706)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A9
+            help
+                Support for Xilinx Zynq-7000 platforms.
+
         config PLAT_PC99
             bool "PC99"
-            depends on ARCH_I386 || ARCH_X86_64
+            depends on ARCH_I386
             help
                 Support for PC99 based platform
+
+        config PLAT_ALLWINNERA20
+            bool "ALLWINNERA20 (CUBIETRUCK)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A15
+            help
+                Support for ALLWINNERA20 platform (CUBIETRUCK).
     endchoice
 
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"
@@ -253,7 +264,7 @@ menu "seL4 System Parameters"
             configuration.
 
     config NUM_PRIORITIES
-        int "Numer of priority levels"
+        int "Number of priority levels"
         default 256
         help
             The number of priority levels per domain

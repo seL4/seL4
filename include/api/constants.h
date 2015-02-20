@@ -26,8 +26,9 @@ enum seL4_MsgLimits {
     seL4_MsgExtraCapBits = 2
 };
 
-
-#define seL4_MsgMaxLength 120
+enum {
+    seL4_MsgMaxLength = 120,
+};
 #define seL4_MsgMaxExtraCaps (BIT(seL4_MsgExtraCapBits)-1)
 
 #endif /* __API_CONSTANTS_H */

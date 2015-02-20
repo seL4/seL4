@@ -13,7 +13,7 @@ version:                1.4-pre
 cabal-version:          >= 1.8
 build-type:             Simple
 license:                AllRightsReserved
-author:                 Philip Derrin et. al.
+author:                 Philip Derrin et. al., NICTA
 synopsis:               Executable specification for the seL4 Kernel
 tested-with:            GHC == 7.8.3
 

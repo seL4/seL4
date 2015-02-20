@@ -21,23 +21,23 @@ To build it:
   - install `Cabal 1.18` or later. This is included with GHC 7.8. 
   - configure the sources:
   
-        runhaskell Setup.hs configure --with-target=<arch>-<platform>
-        
-    Valid target options are: `arm-qemu`, `arm-lyrebird`
-    
+        runhaskell Setup.hs configure --with-target=arm-qemu
+
+Further target options may be supported again in the future.
+
   - build the library:
   
         runhaskell Setup.hs build
-        
+
   - install:
   
         runhaskell Setup.hs install --user
 
 
 After that, you can compile Haskell programs using the simulator by adding
-`-package SEL4` to the `ghc` command line. Note that the qemu and lyrebird
-targets require some callback functions to be accessible via the FFI, so
-it is not possible to load a model compiled for those targets in GHCi.
+`-package SEL4` to the `ghc` command line. Note that the qemu target requires
+some callback functions to be accessible via the FFI, so it is not possible to
+load a model compiled for those targets in GHCi.
 
 Currently, the simulator interface is out of date, so this model is currently
 only useful as documentation and as intermediate artefact in the seL4
