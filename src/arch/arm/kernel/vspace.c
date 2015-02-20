@@ -2755,7 +2755,6 @@ void kernelDataAbort(word_t pc) VISIBLE;
 
 #ifdef ARM_HYP
 
-void kernelUnhandledTrap(word_t pc) VISIBLE;
 void kernelUndefinedInstruction(word_t pc) VISIBLE;
 
 void
@@ -2789,19 +2788,6 @@ kernelUndefinedInstruction(word_t pc)
     word_t sr = getHSR();
 
     printf("\n\nKERNEL UNDEFINED INSTRUCTION!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("HSR: 0x%x\n", (unsigned int)sr);
-
-    halt();
-}
-
-
-void
-kernelUnhandledTrap(word_t pc)
-{
-    word_t sr = getHSR();
-
-    printf("\n\nKERNEL UNHANDLED TRAP!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
     printf("HSR: 0x%x\n", (unsigned int)sr);
 

@@ -13,7 +13,8 @@
 #include <arch/object/vcpu.h>
 #include <plat/machine/devices.h>
 
-#define HCR_TGE      (1U << 27)
+#define HCR_TGE      (1U << 27) /* Trap general exceptions */
+#define HCR_TSC      (1U << 19) /* Trap SMC instructions   */
 #define SCTLR_MMUEN  (1U <<  0)
 #define HSCTLR_MMUEN (1U <<  0)
 
@@ -174,9 +175,11 @@ vcpu_restore(vcpu_t *cpu)
         MCR(SCTLR, cpu->cpx.sctlr);
         MCR(ACTLR, cpu->cpx.actlr);
 
-        /* Don't trap general exceptions */
         MRC(HCR, hcr);
+        /* Don't trap general exceptions */
         hcr &= ~HCR_TGE;
+        /* Trap SMC instructions */
+        hcr |= HCR_TSC;
         MCR(HCR, hcr);
         isb();
 
@@ -491,6 +494,15 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
     associateVcpuTcb(tcb, vcpu);
 
     return EXCEPTION_NONE;
+}
+
+void
+handleVCPUFault(word_t hsr)
+{
+    current_fault = fault_vcpu_fault_new(hsr);
+    handleFault(ksCurThread);
+    schedule();
+    activateThread();
 }
 
 #endif

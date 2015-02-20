@@ -21,6 +21,8 @@
 #ifdef ARM_HYP
 #define SEL4_VGIC_MAINTENANCE_LENGTH 1
 #define SEL4_VGIC_MAINTENANCE_LABEL  5
+#define SEL4_VCPU_FAULT_LENGTH       1
+#define SEL4_VCPU_FAULT_LABEL        6
 #endif
 /*
  * Exception format for an Unknown system call exception.

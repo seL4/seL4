@@ -145,14 +145,25 @@ BEGIN_FUNC(arm_hyp_trap)
     cmp lr, #(HSREC_UNKNOWN << HSREC_SHIFT)
     beq arm_undefined_inst
 
-    /* We should never get here */
-#ifdef DEBUG
-    mrs r0, elr_hyp
-    blx kernelUnhandledTrap
-#endif
-    mrc HSR(r9)
-1: b 1b
+    /** Everything else is assumed to be a VCPU trap **/
+
+    /* Store FaultInstruction */
+    mrs lr, elr_hyp
+    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
+    /* Stack all user registers */
+    push {r0-r12}
+    /* Load the kernel's real stack pointer */
+    mov sp, #(PPTR_KERNEL_STACK_TOP)
+
+    /* Call out to the user */
+    ldr r7, =ksCurThread
+    mrc HSR(r0)
+    blx handleVCPUFault
+
+    /* Exception return */
+    RET_TO_USER r7
 END_FUNC(arm_hyp_trap)
+
 
 BEGIN_FUNC(arm_undefined_inst)
     /* Store FaultInstruction */

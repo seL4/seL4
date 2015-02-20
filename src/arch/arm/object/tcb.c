@@ -143,6 +143,8 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
         } else {
             return setMR(receiver, receiveIPCBuffer, 0, -1);
         }
+    case fault_vcpu_fault:
+        return setMR(receiver, receiveIPCBuffer, 0, fault_vcpu_fault_get_hsr(sender->tcbFault));
 #endif
 
     default:

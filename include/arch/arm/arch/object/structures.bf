@@ -402,6 +402,12 @@ block vgic_maintenance {
     padding         29
     field faultType  3
 }
+
+block vcpu_fault {
+    field hsr       32
+    padding         29
+    field faultType  3
+}
 #endif
 
 tagged_union fault faultType {
@@ -412,6 +418,7 @@ tagged_union fault faultType {
     tag user_exception 4
 #ifdef ARM_HYP
     tag vgic_maintenance 5
+    tag vcpu_fault       6
 #endif
 }
 
