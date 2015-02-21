@@ -170,20 +170,12 @@ getActiveIRQ(void)
     uint32_t intcps_sir_irq = intc->intcps_sir_irq;
     interrupt_t irq = (interrupt_t)(intcps_sir_irq & 0x7f);
 
-    /* Ignore spurious interrupts. */
     if ((intcps_sir_irq & INTCPS_SIR_IRQ_SPURIOUSIRQFLAG) == 0) {
         assert((irq / 32) < (sizeof intc->intcps_n / sizeof intc->intcps_n[0]));
         if (intc->intcps_n[irq / 32].intcps_pending_irq & (1 << (irq & 31))) {
             return irq;
-        } else {
-            /* XXX happening a lot for irq=66! */
         }
-    } else {
-        /* XXX - should never happen? */
-        printf("spurious irq %d / %x\n", irq, intcps_sir_irq);
     }
-
-    /* No interrupt. */
     return irqInvalid;
 }
 
@@ -224,9 +216,14 @@ void handleReservedIRQ(irq_t irq)
 void
 ackInterrupt(irq_t irq)
 {
+    /*
+     * am335x ref man, sec 6.2.2 only requires a DSB after NEWIRQAGR.
+     * I found that without dsb() or more code before, I get interrupts
+     * without the associated pending bit being set. Perhaps this
+     * indicates a missing barrier in code elsewhere? -TimN
+     */
+    dsb();
     intc->intcps_control = INTCPS_CONTROL_NEWIRQAGR;
-    /* Ensure the ack has hit the interrupt controller before potentially
-     * re-enabling interrupts. */
     dsb();
 }
 
