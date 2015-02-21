@@ -172,6 +172,7 @@ config ARCH_IA32
                 Support for ALLWINNERA20 platform (CUBIETRUCK).
     endchoice
 
+source "$KERNEL_PATH/src/arch/arm/Kconfig"
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"
 
 endmenu

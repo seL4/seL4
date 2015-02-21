@@ -54,6 +54,9 @@
 #define CNTHP_TVAL " p15, 4,  %0, c14,  c2, 0" /* 32-bit RW PL2 Physical TimerValue register */
 #define CNTHP_CTL  " p15, 4,  %0, c14,  c2, 1" /* 32-bit RW PL2 Physical Timer Control register */
 #define CNTHP_CVAL " p15, 6, %Q0, %R0, c14   " /* 64-bit RW PL2 Physical Timer CompareValue register */
+#define PMUSERENR  " p15, 0,  %0,  c9, c14, 0" /* 32-bit RW PMU PL0 enable */
+#define ID_DFR0    " p15, 0,  %0,  c0,  c1, 2" /* 32-bit RO Debug feature register */
+#define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
 
 
 word_t PURE getRestartPC(tcb_t *thread);
