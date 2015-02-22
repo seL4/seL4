@@ -54,7 +54,7 @@ The first 12 slots contain specific capabilities as listed in
 \\
       0x9 & \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
       0xa & \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
-      0xb & \texttt{seL4\_CapDom}                 & domain cap (see \autoref{sec:domains}) \\
+      0xb & \texttt{seL4\_CapDomain}              & domain cap (see \autoref{sec:domains}) \\
       \bottomrule
     \end{tabularx}
   \end{center}
@@ -105,6 +105,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{uint8\_t}             & \texttt{initThreadCNodeSizeBits} & CNode size ($2^n$ slots) \\
       \texttt{seL4\_Word}           & \texttt{numDeviceRegions}        & number of device memory regions \\
       \texttt{seL4\_DeviceRegion[]} & \texttt{deviceRegions}           & device memory regions (see \autoref{tab:device_region_struct}) \\
+      \texttt{uint32\_t}            & \texttt{initThreadDomain}        & domain of the initial thread (see \autoref{sec:domains}) \\
       \bottomrule
     \end{tabularx}
   \end{center}
