@@ -1365,6 +1365,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
         paddr_t pstart;
         word_t page_size;
         word_t page_base;
+        vm_page_size_t frameSize;
         pte_t *pt;
         unsigned int ptIndex;
         unsigned int pdIndex;
@@ -1377,26 +1378,40 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pt = PT_PTR(cap_frame_cap_get_capFMappedObject(cap));
-        if (unlikely(!pt)) {
-            userError("Page Flush: Frame is not mapped.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
+        frameSize = cap_frame_cap_get_capFSize(cap);
+
+        if (frameSize == ARMSmallPage || frameSize == ARMLargePage) {
+            pt = PT_PTR(cap_frame_cap_get_capFMappedObject(cap));
+            if (unlikely(!pt)) {
+                userError("Page Flush: Frame is not mapped.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            ptIndex = cap_frame_cap_get_capFMappedIndex(cap);
+
+            ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
+            assert(ptCte);
+            pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
+            if (unlikely(!pd)) {
+                userError("Page Flush: Page Table is not mapped.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
+
+            vaddr = (pdIndex << 20) |  (ptIndex << 12);
+        } else {
+            pd = PD_PTR(cap_frame_cap_get_capFMappedObject(cap));
+            if (unlikely(!pd)) {
+                userError("Page Flush: Frame is not mapped.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            pdIndex = cap_frame_cap_get_capFMappedIndex(cap);
+
+            vaddr = (pdIndex << 20);
         }
-        ptIndex = cap_frame_cap_get_capFMappedIndex(cap);
-
-        ptCte = cdtFindWithExtra(capSpaceTypedMemory, PT_REF(pt), BIT(PT_SIZE_BITS), 0, cte_depth_bits_type(cap_page_table_cap));
-        assert(ptCte);
-        pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
-        if (unlikely(!pd)) {
-            userError("Page Flush: Page Table is not mapped.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
-
-        vaddr = (pdIndex << 20) |  (ptIndex << 12);
 
         /* start and end are currently relative inside this page */
         start = getSyscallArg(0, buffer);
@@ -1410,7 +1425,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        page_size = 1 << pageBitsForSize(cap_frame_cap_get_capFSize(cap));
+        page_size = 1 << pageBitsForSize(frameSize);
         page_base = addrFromPPtr((void*)cap_frame_cap_get_capFBasePtr(cap));
 
         if (start >= page_size || end > page_size) {
