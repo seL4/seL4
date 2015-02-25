@@ -1,0 +1,44 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+config HAVE_ARCH_TIMER
+    bool
+    default y
+    depends on ARM_CORTEX_A15
+
+config EXPORT_PMU_USER
+    bool "PL0 access to PMU"
+    default n
+    depends on ARCH_ARM_V7A
+    help
+        Grant user access to Performance Monitoring Unit.
+        WARNING: While useful for evaluating performance,
+        this option opens timing and covert channels.
+
+config EXPORT_PCNT_USER
+    bool "PL0 access to generic timer CNTPCT and CNTFRQ"
+    default y
+    depends on HAVE_ARCH_TIMER
+    help
+        Grant user access to physical counter and counter
+        frequency registers of the generic timer.
+        WARNING: selecting this option opens a timing
+        channel
+
+config EXPORT_VCNT_USER
+    bool "PL0 access to generic timer CNTVCT and CNTFRQ"
+    default y
+    depends on HAVE_ARCH_TIMER
+    help
+        Grant user access to virtual counter and counter
+        frequency registers of the generic timer.
+        WARNING: selecting this option opens a timing
+        channel
+

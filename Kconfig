@@ -179,6 +179,7 @@ config ARM_HYPERVISOR_SUPPORT
                 Support for ALLWINNERA20 platform (CUBIETRUCK).
     endchoice
 
+source "$KERNEL_PATH/src/arch/arm/Kconfig"
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"
 
 endmenu

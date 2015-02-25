@@ -41,7 +41,7 @@ bool_t map_kernel_window(
 #endif
 );
 
-void *getValidVSpaceRoot(cap_t vspace_cap);
+void *getValidNativeRoot(cap_t vspace_cap);
 pde_t *get_boot_pd(void);
 void* map_temp_boot_page(void* entry, uint32_t large_pages);
 bool_t init_vm_state(pdpte_t *kernel_pdpt, pde_t* kernel_pd, pte_t* kernel_pt);
@@ -70,6 +70,7 @@ void deleteASID(asid_t asid, void* vspace);
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr);
 void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
+bool_t CONST isValidNativeRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask);
 exception_t decodeIA32MMUInvocation(word_t label, unsigned int length, cptr_t cptr, cte_t *cte, cap_t cap, extra_caps_t extraCaps, word_t* buffer);

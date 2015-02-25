@@ -17,6 +17,7 @@
 #include <arch/kernel/boot.h>
 #include <arch/kernel/vspace.h>
 #include <arch/benchmark.h>
+#include <arch/user_access.h>
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
@@ -497,6 +498,9 @@ try_init_kernel(
 #ifdef CONFIG_BENCHMARK
     armv_init_ccnt();
 #endif /* CONFIG_BENCHMARK */
+
+    /* Export selected CPU features for access by PL0 */
+    armv_init_user_access();
 
     /* kernel successfully initialized */
     return true;
