@@ -108,7 +108,7 @@ map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
 }
 
 BOOT_CODE void
-map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
+map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 {
     pte_t* pt;
     pte_t* targetSlot;
@@ -131,7 +131,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
                       APFromVMRights(VMReadWrite),
                       1, /* cacheable */
                       1, /* write-back caching */
-                      0  /* executable */
+                      !executable
                   );
 }
 

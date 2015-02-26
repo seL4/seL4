@@ -218,7 +218,7 @@ create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
     clearMemory((void*)pptr, PAGE_BITS);
 
     /* create a cap of it and write it into the root CNode */
-    cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, IT_ASID, false);
+    cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, IT_ASID, false, false);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_IPCBUF), cap);
 
     return cap;
@@ -235,7 +235,7 @@ create_bi_frame_cap(
     cap_t cap;
 
     /* create a cap of it and write it into the root CNode */
-    cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, IT_ASID, false);
+    cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, IT_ASID, false, false);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_BI_FRAME), cap);
 }
 
@@ -300,7 +300,7 @@ create_frames_of_region(
 
     for (f = reg.start; f < reg.end; f += BIT(PAGE_BITS)) {
         if (do_map) {
-            frame_cap = create_mapped_it_frame_cap(pd_cap, f, f - BASE_OFFSET - pv_offset, IT_ASID, false);
+            frame_cap = create_mapped_it_frame_cap(pd_cap, f, f - BASE_OFFSET - pv_offset, IT_ASID, false, true);
         } else {
             frame_cap = create_unmapped_it_frame_cap(f, false);
         }
