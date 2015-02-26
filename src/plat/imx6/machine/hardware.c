@@ -205,7 +205,7 @@ map_kernel_devices(void)
         ARM_MP_PPTR1,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -217,7 +217,7 @@ map_kernel_devices(void)
         ARM_MP_PPTR2,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -229,7 +229,7 @@ map_kernel_devices(void)
         L2CC_PL310_PPTR,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -243,7 +243,7 @@ map_kernel_devices(void)
         UART_PPTR,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
