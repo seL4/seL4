@@ -14,17 +14,23 @@ This is the top-level module; it defines the interface between the kernel and th
 >     module SEL4.Machine,
 >     Event(..), Syscall(..), callKernel, asUser, putUC, getUC,
 >     Kernel, KernelState, getCurThread,
+>     lookupCap,
+>     module SEL4.API.Types,
 >     module SEL4.Kernel.Init,
+>     module SEL4.Object.Structures,
 >     ) where
 
 > import SEL4.API
 > import SEL4.Machine
 > import SEL4.Kernel.Init
+> import SEL4.API.Types
+> import SEL4.Kernel.CSpace(lookupCap)
 > import SEL4.Kernel.Thread(schedule, activateThread)
-> import SEL4.Object.TCB(asUser)
-> import SEL4.Object.Interrupt(handleInterrupt)
 > import SEL4.Model.StateData(KernelState, Kernel, getCurThread, doMachineOp)
 > import SEL4.Model.Preemption(withoutPreemption)
+> import SEL4.Object.Structures
+> import SEL4.Object.TCB(asUser)
+> import SEL4.Object.Interrupt(handleInterrupt)
 > import Control.Monad.Error
 > import Control.Monad.State
 > import Data.Maybe

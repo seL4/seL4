@@ -10,7 +10,7 @@
 
 name:                   SEL4
 version:                1.4-pre
-cabal-version:          >= 1.8
+cabal-version:          >= 1.18
 build-type:             Simple
 license:                AllRightsReserved
 author:                 Philip Derrin et. al., NICTA
@@ -74,10 +74,11 @@ Library
     $TARGET-SPECIFIC-STUFF  -- will be inserted by the Setup.hs script
 
     hs-source-dirs:         src
-    ghc-prof-options:       -auto-all
+    ghc-prof-options:       -auto-all -fprof-auto
     ghc-options:            -Wall -Werror -O2 -fno-warn-unused-do-bind
                             -fno-warn-missing-signatures -fno-warn-orphans
                             -fno-spec-constr -fno-warn-name-shadowing
                             -fno-warn-unrecognised-pragmas
                             -fno-warn-unused-binds
+    Default-Language: Haskell98
 

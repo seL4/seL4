@@ -43,6 +43,9 @@ Each simulator must define a monad that encapsulates the state of the underlying
 
 > type MachineMonad = Arch.MachineMonad
 
+> initL2Cache :: MachineMonad ()
+> initL2Cache = return ()
+
 \subsubsection{Physical Addresses}
 
 Depending on the architecture, real physical addresses may be the same as the addresses the kernel uses to access kernel objects, or they may be offset by a constant. The "PAddr" type is used to represent a real physical address; functions are provided that convert between this and the kernel pointer type, "PPtr".

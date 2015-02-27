@@ -86,16 +86,16 @@ The KernelInit monad can fail - however, we do not care what type of failure occ
 >                       (if (length freeRegions < maxNumFreememRegions)
 >                        then replicate (maxNumFreememRegions - length freeRegions) (PPtr 0, PPtr 0)
 >                        else [])
->    modify (\st -> st { initFreeMemory = map Region freeRegions' })
+>    lift $ modify (\st -> st { initFreeMemory = map Region freeRegions' })
 
 > allocRegion :: Int -> KernelInit PAddr
 > allocRegion bits = do
->     freeMem <- gets initFreeMemory
+>     freeMem <- lift $ gets initFreeMemory
 >     case isAlignedUsable `break` freeMem of
 >         (small, r:rest) -> do
 >             let (b, t) = fromRegion r
 >             let (result, region) = if align b == b then (b, Region (b + s, t)) else (t - s, Region (b, t - s))
->             modify (\st -> st { initFreeMemory = small++ [region] ++rest })
+>             lift $ modify (\st -> st { initFreeMemory = small++ [region] ++rest })
 >             return $ addrFromPPtr result
 >         (_, []) ->
 >             case isUsable `break` freeMem of
@@ -104,7 +104,7 @@ The KernelInit monad can fail - however, we do not care what type of failure occ
 >                     let result = align b
 >                     let below = if result == b then [] else [Region (b, result)]
 >                     let above = if result + s == t then [] else [Region (result + s, t)]
->                     modify (\st -> st { initFreeMemory = small++below++above++rest })
+>                     lift $ modify (\st -> st { initFreeMemory = small++below++above++rest })
 >                     return $ addrFromPPtr result
 >                 _ -> fail "Unable to allocate memory"
 >     where
@@ -216,9 +216,9 @@ We should clean cache, but we did not have a good interface so far.
 
 > finaliseBIFrame :: KernelInit ()
 > finaliseBIFrame = do
->   cur <- gets $ initSlotPosCur
->   max <- gets $ initSlotPosMax
->   modify (\s -> s { initBootInfo = (initBootInfo s) {bifNullCaps = [cur .. max - 1]}})
+>   cur <- lift $ gets $ initSlotPosCur
+>   max <- lift $ gets $ initSlotPosMax
+>   lift $ modify (\s -> s { initBootInfo = (initBootInfo s) {bifNullCaps = [cur .. max - 1]}})
 
 > runInit :: KernelInit () -> Kernel ()
 > runInit oper = do
@@ -252,6 +252,7 @@ createInitalThread, setup caps in initial thread, set idleThread to be the curer
 >          destSlot <- getThreadBufferSlot tcbPPtr
 >          cteInsert ipcBufferCap srcSlot destSlot
 >          threadSet (\t-> t{tcbIPCBuffer = ipcBufferVPtr}) tcbPPtr 
+
 >          activateInitialThread tcbPPtr entry biFrameVPtr 
 
 Insert thread into rootCNodeCap 
@@ -281,18 +282,18 @@ FIX ME: Seems we need to setCurThread and setSchedulerAction here, otherwise err
 >     let regStartPAddr = (addrFromPPtr . regStart)
 >     let regEnd = (snd . fromRegion)
 >     let regEndPAddr = (addrFromPPtr . regEnd)
->     slotBefore <- gets initSlotPosCur
+>     slotBefore <- lift $ gets initSlotPosCur
 >     mapM_ (\i -> provideUntypedCap rootCNodeCap i (fromIntegral pageBits) slotBefore) 
 >              [regStartPAddr bootMemReuseReg, (regStartPAddr bootMemReuseReg + bit pageBits) .. (regEndPAddr bootMemReuseReg - 1)]
->     currSlot <- gets initSlotPosCur
+>     currSlot <- lift $ gets initSlotPosCur
 >     mapM_ (\_ -> do
 >              paddr <- allocRegion pageBits
 >              provideUntypedCap rootCNodeCap paddr (fromIntegral pageBits) slotBefore)
 >           [(currSlot - slotBefore) .. (fromIntegral minNum4kUntypedObj - 1)]
->     freemem <- gets initFreeMemory
+>     freemem <- lift $ gets initFreeMemory
 >     (flip mapM) (take maxNumFreememRegions freemem)
 >         (\reg -> do
->             (\f -> foldM f reg [4 .. (finiteBitSize (undefined::Word)) - 2]) 
+>             (\f -> mapM (f reg) [4 .. (finiteBitSize (undefined::Word)) - 2]) 
 >                 (\reg bits -> do
 >                     reg' <- (if not (isAligned (regStartPAddr reg) (bits + 1)) 
 >                                 && (regEndPAddr reg) - (regStartPAddr reg) >= bit bits 
@@ -308,8 +309,8 @@ FIX ME: Seems we need to setCurThread and setSchedulerAction here, otherwise err
 >         )
 >     let emptyReg = Region (PPtr 0, PPtr 0)
 >     let freemem' = replicate maxNumFreememRegions emptyReg
->     slotAfter <- gets initSlotPosCur
->     modify (\s -> s { initFreeMemory = freemem', 
+>     slotAfter <- lift $ gets initSlotPosCur
+>     lift $ modify (\s -> s { initFreeMemory = freemem', 
 >                       initBootInfo = (initBootInfo s) { 
 >                            bifUntypedObjCaps = [slotBefore .. slotAfter - 1] }})
 >--   syncBIFrame
@@ -341,25 +342,25 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 
 > provideCap :: Capability -> Capability -> KernelInit ()
 > provideCap rootCNodeCap cap = do
->     currSlot <- gets initSlotPosCur
->     maxSlot <- gets initSlotPosMax
+>     currSlot <- lift $ gets initSlotPosCur
+>     maxSlot <- lift $ gets initSlotPosMax
 >     when (currSlot >= maxSlot) $ throwError InitFailure
 >     slot <- doKernelOp $ locateSlot (capCNodePtr rootCNodeCap) currSlot
 >     doKernelOp $ insertInitCap slot cap
->     modify (\st -> st { initSlotPosCur = currSlot + 1 })  
+>     lift $ modify (\st -> st { initSlotPosCur = currSlot + 1 })  
 
 > provideUntypedCap :: Capability -> PAddr -> Word8 -> Word -> KernelInit ()
 > provideUntypedCap rootCNodeCap pptr sizeBits slotPosBefore = do
->     currSlot <- gets initSlotPosCur
+>     currSlot <- lift $ gets initSlotPosCur
 >     let i = currSlot - slotPosBefore
->     untypedObjs <- gets (bifUntypedObjPAddrs . initBootInfo)
+>     untypedObjs <- lift $ gets (bifUntypedObjPAddrs . initBootInfo)
 >     assert (length untypedObjs == fromIntegral i) "Untyped Object List is inconsistent"
->     untypedObjs' <- gets (bifUntypedObjSizeBits . initBootInfo)
+>     untypedObjs' <- lift $ gets (bifUntypedObjSizeBits . initBootInfo)
 >     assert (length untypedObjs' == fromIntegral i) "Untyped Object List is inconsistent"
->     bootInfo <- gets initBootInfo
+>     bootInfo <- lift $ gets initBootInfo
 >     let bootInfo' = bootInfo { bifUntypedObjPAddrs = untypedObjs ++ [pptr],
 >                                bifUntypedObjSizeBits = untypedObjs' ++ [sizeBits] }
->     modify (\st -> st { initBootInfo = bootInfo' })
+>     lift $ modify (\st -> st { initBootInfo = bootInfo' })
 >     provideCap rootCNodeCap $ UntypedCap {
 >                                   capPtr = ptrFromPAddr pptr,
 >                                   capBlockSize = fromIntegral sizeBits,

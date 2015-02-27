@@ -33,6 +33,7 @@ We use the C preprocessor to select a target architecture.
 > import SEL4.API.Failures
 > import SEL4.API.Types
 > import {-# SOURCE #-} SEL4.Kernel.Init
+> import Data.Word(Word32)
 
 \end{impdetails}
 
@@ -54,9 +55,7 @@ This module defines architecture-specific virtual memory management procedures. 
 > initPlatform :: Kernel ()
 > initPlatform = do
 >   doMachineOp $ configureTimer
->   initL2Cache
-
-> initL2Cache = return ()
+>   doMachineOp $ initL2Cache
 
 > initCPU :: Kernel ()
 > initCPU = Arch.activateGlobalPD
@@ -65,6 +64,7 @@ This module defines architecture-specific virtual memory management procedures. 
 > createIPCBufferFrame :: Capability -> VPtr -> KernelInit Capability
 > createIPCBufferFrame  = Arch.createIPCBufferFrame
 
+> createBIFrame :: Capability -> VPtr -> Word32 -> Word32 -> KernelInit Capability
 > createBIFrame  = Arch.createBIFrame
 
 > createFramesOfRegion :: Capability -> Region -> Bool -> VPtr -> KernelInit () 

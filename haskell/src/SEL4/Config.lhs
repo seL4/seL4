@@ -29,7 +29,7 @@ The initial task is guaranteed to receive at least this many page-sized untyped 
 The size of the root node of the initial capability space determines the area of the initial address space that may be used by mappings for the root task.
 
 > rootCNodeSize :: Int
-> rootCNodeSize = 13 
+> rootCNodeSize = 12
 
 \subsection{Timing Parameters}
 

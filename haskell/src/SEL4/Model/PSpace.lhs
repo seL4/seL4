@@ -32,6 +32,7 @@ This module contains the data structure and operations for the physical memory m
 > import SEL4.Machine.RegisterSet
 > import SEL4.Machine.Hardware
 
+
 \end{impdetails}
 
 \subsection{Physical Address Space}
