@@ -90,22 +90,7 @@ However we assume that the result of getMemoryRegions is actually [0,1<<24] and 
 >     globalPTs <- gets $ armKSGlobalPTs . ksArchState
 >     deleteObjects (PPtr $ fromPPtr globalPD) pdBits
 >     placeNewObject (PPtr $ fromPPtr globalPD) (makeObject :: PDE) pdSize
->     forM_ [vbase, vbase+16 .. (bit pdSize) - 16 - 1] $ \v -> do
->           let offset = fromVPtr v
->           let virt = (v - vbase) `shiftL` (pageBitsForSize (ARMSuperSection) - 4)
->           let phys = addrFromPPtr $ PPtr $ fromVPtr virt
->           let pde = SuperSectionPDE {
->                   pdeFrame = phys,
->                   pdeParity = True,
->                   pdeCacheable = True,
->                   pdeGlobal = True,
->                   pdeExecuteNever = False,
->                   pdeRights = VMKernelOnly }
->           let slots = map (\n -> globalPD + PPtr (n `shiftL` pdeBits))
->                   [offset .. offset + 15]
->           (flip $ mapM_ ) slots (\slot -> do 
->                      storePDE slot pde
->                   )
+>     forM_ [vbase, vbase+16 .. (bit pdSize) - 16 - 1] $ createSectionPDE
 >     forM_ [(bit pdSize) - 16, (bit pdSize) - 2] $ \v -> do
 >           let offset = fromVPtr v
 >           let virt = v `shiftL` pageBitsForSize (ARMSection)
@@ -134,6 +119,30 @@ FIX ME: We might still need to map vector table
 >     mapGlobalsFrame
 >     kernelDevices <- doMachineOp getKernelDevices
 >     mapM_ mapKernelDevice kernelDevices
+
+
+Helper function used above to create PDE for Section:
+
+> createSectionPDE :: VPtr -> Kernel () 
+> createSectionPDE v = do
+>     let vbase = kernelBase `shiftR` pageBitsForSize (ARMSection)
+>     let pdeBits = objBits (undefined :: PDE)
+>     let pteBits = objBits (undefined :: PTE)
+>     globalPD <- gets $ armKSGlobalPD . ksArchState
+>     let offset = fromVPtr v
+>     let virt = (v - vbase) `shiftL` (pageBitsForSize (ARMSuperSection) - 4)
+>     let phys = addrFromPPtr $ PPtr $ fromVPtr virt
+>     let pde = SuperSectionPDE {
+>             pdeFrame = phys,
+>             pdeParity = True,
+>             pdeCacheable = True,
+>             pdeGlobal = True,
+>             pdeExecuteNever = False,
+>             pdeRights = VMKernelOnly }
+>     let slots = map (\n -> globalPD + PPtr (n `shiftL` pdeBits))
+>             [offset .. offset + 15]
+>     (flip $ mapM_ ) slots (\slot ->  storePDE slot pde)
+
 
 
 Any IO devices used directly by the kernel --- generally including the interrupt controller, one of the timer devices, and optionally a serial port for debugging --- must be mapped in the global address space. This implementation limits device mappings to one page; it may need to be extended to support multiple-page mappings.
@@ -805,8 +814,7 @@ If the current thread has no page directory, or if it has an invalid ASID, the h
 >                     capPDBasePtr = pd }) -> checkPDNotInASIDMap pd
 >                 _ -> return ()
 >             globalPD <- gets (armKSGlobalPD . ksArchState)
->             doMachineOp $ setCurrentPD $ addrFromPPtr globalPD
->         )
+>             doMachineOp $ setCurrentPD $ addrFromPPtr globalPD )
 
 When cleaning the cache by user virtual address on ARM11, the active address space must be the one that contains the mappings being cleaned. The following function is used to temporarily switch to a given page directory and ASID, in order to clean the cache. It returns "True" if the address space was not the same as the current one, in which case the caller must switch back to the current address space once the cache is clean.
 
