@@ -38,6 +38,8 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
 #ifdef ARM_HYP
     case fault_vgic_maintenance:
         return true;
+    case fault_vcpu_fault:
+        return true;
 #endif
 
     case fault_unknown_syscall: {
