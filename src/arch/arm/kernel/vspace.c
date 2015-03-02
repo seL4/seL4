@@ -545,15 +545,6 @@ activate_global_pd(void)
     /* Long descriptor format (not that we have a choice) */
     r |= (1 << 31);
     setVTCR(r);
-
-    /* Enable the Stage 2 MMU */
-    r = 0;
-    r |= (1 << 27);  /* Trap general exceptions (TGE) */
-    r |= (0x0 << 6); /* Dont generate FIQ/IRQ/ASYNC virtual exceptions */
-    r |= (0x7 << 3); /* Override CPSR FIQ/IRQ/ASYNC */
-    r |= (1 << 12);   /* PL1/0 default cachable when MMU is off */
-    r |= (1 << 0);   /* VMMU enable */
-    setHCR(r);
 }
 
 #endif /* ARM_HYP */
