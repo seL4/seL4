@@ -199,42 +199,27 @@ setupCallerCap(tcb_t *sender, tcb_t *receiver)
 
     setThreadState(sender, ThreadState_BlockedOnReply);
     replySlot = TCB_PTR_CTE_PTR(sender, tcbReply);
+    callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
     masterCap = replySlot->cap;
     /* Haskell error: "Sender must have a valid master reply cap" */
     assert(cap_get_capType(masterCap) == cap_reply_cap);
     assert(cap_reply_cap_get_capReplyMaster(masterCap));
     assert(TCB_PTR(cap_reply_cap_get_capTCBPtr(masterCap)) == NULL);
-    cap_reply_cap_ptr_set_capTCBPtr(&replySlot->cap, TCB_REF(receiver));
-    callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
+    cap_reply_cap_ptr_set_capCallerSlot(&replySlot->cap, CTE_REF(callerSlot));
     callerCap = callerSlot->cap;
     /* Haskell error: "Caller cap must not already exist" */
     assert(cap_get_capType(callerCap) == cap_null_cap);
-    callerSlot->cap = cap_reply_cap_new(false, false, TCB_REF(sender));
+    callerSlot->cap = cap_reply_cap_new(CTE_REF(NULL), false, TCB_REF(sender));
 }
 
 void
 deleteCallerCap(tcb_t *receiver)
 {
-    cte_t *callerSlot, *replySlot;
-    tcb_t *replyTCB;
+    cte_t *callerSlot;
 
     callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
     if (cap_get_capType(callerSlot->cap) == cap_reply_cap) {
-        replyTCB = TCB_PTR(cap_reply_cap_get_capTCBPtr(callerSlot->cap));
-        /* Is it possible for a caller cap to exist without a valid replyTCB? */
-        if (replyTCB) {
-            replySlot = TCB_PTR_CTE_PTR(replyTCB, tcbReply);
-            assert(cap_get_capType(replySlot->cap) == cap_reply_cap);
-            assert(cap_reply_cap_get_capInCDT(callerSlot->cap) == cap_reply_cap_get_capInCDT(replySlot->cap));
-            if (cap_reply_cap_get_capInCDT(replySlot->cap)) {
-                cdtRemove(replySlot);
-                cap_reply_cap_ptr_set_capInCDT(&replySlot->cap, false);
-            }
-            cap_reply_cap_ptr_set_capTCBPtr(&replySlot->cap, TCB_REF(NULL));
-        }
-        if (cap_reply_cap_get_capInCDT(callerSlot->cap)) {
-            cdtRemove(callerSlot);
-        }
+        finaliseCap(callerSlot->cap, true, true);
         callerSlot->cap = cap_null_cap_new();
     }
 }

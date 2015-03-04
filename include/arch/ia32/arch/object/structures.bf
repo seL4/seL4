@@ -51,8 +51,8 @@ block async_endpoint_cap {
 }
 
 block reply_cap {
-    padding 30
-    field capInCDT 1
+    field_high capCallerSlot 28
+    padding 3
     field capReplyMaster 1
 
     field_high capTCBPtr 28

@@ -111,16 +111,18 @@ thread_state_ptr_set_blockingIPCDiminish_np(thread_state_t *ts_ptr, word_t dim)
 }
 
 static inline void
-cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capTCBPtr)
+cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capCallerSlot)
 {
-    cap_ptr->words[0] = TCB_REF(capTCBPtr) | cap_reply_cap;
+    /* 1 is capReplyMaster */
+    cap_ptr->words[1] = CTE_REF(capCallerSlot) | 1;
+    cap_ptr->words[0] = cap_reply_cap;
 }
 
 static inline void
-cap_reply_cap_ptr_new_np2(cap_t *cap_ptr, word_t inCDT, word_t isMaster, word_t capTCBPtr)
+cap_reply_cap_ptr_new_np2(cap_t *cap_ptr, word_t isMaster, word_t capTCBPtr)
 {
     cap_ptr->words[0] = TCB_REF(capTCBPtr) | cap_reply_cap;
-    cap_ptr->words[1] = isMaster | (inCDT << 1);
+    cap_ptr->words[1] = isMaster;
 }
 
 static inline void
@@ -359,8 +361,8 @@ fastpath_call(word_t cptr, word_t msgInfo)
     callerSlot = TCB_PTR_CTE_PTR(dest, tcbCaller);
 
     /* Insert reply cap */
-    cap_reply_cap_ptr_new_np2(&callerSlot->cap, 0, 0, TCB_REF(ksCurThread));
-    cap_reply_cap_ptr_new_np(&replySlot->cap, TCB_REF(dest));
+    cap_reply_cap_ptr_new_np2(&callerSlot->cap, 0, TCB_REF(ksCurThread));
+    cap_reply_cap_ptr_new_np(&replySlot->cap, CTE_REF(callerSlot));
 
     fastpath_copy_mrs (length, ksCurThread, dest);
 
@@ -509,7 +511,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     }
 
     /* Delete the reply cap. */
-    cap_reply_cap_ptr_new_np(&replySlot->cap, TCB_REF(NULL));
+    cap_reply_cap_ptr_new_np(&replySlot->cap, CTE_REF(NULL));
     callerSlot->cap = cap_null_cap_new();
 
     /* I know there's no fault, so straight to the transfer. */

@@ -16,7 +16,6 @@
 enum capSpaceType {
     capSpaceUntypedMemory,
     capSpaceTypedMemory,
-    capSpaceReply,
     capSpaceIRQ,
     capSpaceDomain,
 };
@@ -42,8 +41,6 @@ cap_get_capSpaceType(cap_t cap)
     case cap_untyped_cap:
         return capSpaceUntypedMemory;
 
-    case cap_reply_cap:
-        return capSpaceReply;
     case cap_irq_control_cap:
         return capSpaceIRQ;
     case cap_irq_handler_cap:

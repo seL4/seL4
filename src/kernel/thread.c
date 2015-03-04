@@ -153,17 +153,8 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
             setThreadState(receiver, ThreadState_Inactive);
         }
     }
-    if (cap_reply_cap_get_capInCDT(slot->cap)) {
-        cte_t *replySlot = TCB_PTR_CTE_PTR(receiver, tcbReply);
-        assert(cap_get_capType(replySlot->cap) == cap_reply_cap);
-        assert(cap_reply_cap_get_capInCDT(replySlot->cap));
-        cdtRemove(replySlot);
-        cdtRemove(slot);
-        slot->cap = cap_null_cap_new();
-        replySlot->cap = cap_reply_cap_new(false, true, TCB_REF(NULL));
-    } else {
-        deleteCallerCap(sender);
-    }
+    finaliseCap(slot->cap, true, true);
+    slot->cap = cap_null_cap_new();
 }
 
 void

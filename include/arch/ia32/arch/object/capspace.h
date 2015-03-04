@@ -17,7 +17,6 @@ enum capSpaceType {
     /* Start at 1 so we can detected unitialized elements in debug mode when doing array lookups */
     capSpaceUntypedMemory = 1,
     capSpaceTypedMemory,
-    capSpaceReply,
     capSpaceIRQ,
     capSpaceIOPort,
 #ifdef CONFIG_IOMMU
@@ -46,7 +45,6 @@ cap_get_capSpaceType(cap_t cap)
         [cap_untyped_cap]        = capSpaceUntypedMemory,
         [cap_irq_control_cap]    = capSpaceIRQ,
         [cap_irq_handler_cap]    = capSpaceIRQ,
-        [cap_reply_cap]          = capSpaceReply,
 #ifdef CONFIG_VTX
         [cap_vcpu_cap]           = capSpaceTypedMemory,
 #endif

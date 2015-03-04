@@ -260,35 +260,19 @@ ipcCancel(tcb_t *tptr)
 
     case ThreadState_BlockedOnReply: {
         cte_t *slot, *callerCap;
-        tcb_t *callerTCB;
 
         fault_null_fault_ptr_new(&tptr->tcbFault);
 
         /* Get the reply cap slot */
         slot = TCB_PTR_CTE_PTR(tptr, tcbReply);
-        assert(cap_get_capType(slot->cap) == cap_reply_cap);
-        callerTCB = TCB_PTR(cap_reply_cap_get_capTCBPtr(slot->cap));
 
-        assert(callerTCB || !cap_reply_cap_get_capInCDT(slot->cap));
-
-        /* Delete our child, if we have one */
-        if (callerTCB) {
-            if (cap_reply_cap_get_capInCDT(slot->cap)) {
-                assert(callerTCB == tptr);
-                callerCap = cdtFindChild(slot);
-                /* This cap may have already been deleted in the past? What is the invariant on this? */
-                if (callerCap) {
-                    cdtRemove(callerCap);
-                }
-                cdtRemove(slot);
-            } else {
-                callerCap = TCB_PTR_CTE_PTR(callerTCB, tcbCaller);
-                assert(TCB_PTR(cap_reply_cap_get_capTCBPtr(callerCap->cap)) == tptr);
-            }
+        callerCap = CTE_PTR(cap_reply_cap_get_capCallerSlot(slot->cap));
+        if (callerCap) {
+            finaliseCap(callerCap->cap, true, true);
             callerCap->cap = cap_null_cap_new();
-            cap_reply_cap_ptr_set_capTCBPtr(&slot->cap, TCB_REF(NULL));
-            cap_reply_cap_ptr_set_capInCDT(&slot->cap, false);
         }
+        cap_reply_cap_ptr_set_capCallerSlot(&slot->cap, CTE_REF(NULL));
+
         break;
     }
     }

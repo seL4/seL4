@@ -194,16 +194,6 @@ typed_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 }
 
 static inline int
-reply_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
-{
-    int cmp;
-    /* Distinguish reply caps by the tcb that they are from */
-    cmp = compare(cap_reply_cap_get_capTCBPtr(a->cap), cap_reply_cap_get_capTCBPtr(b->cap));
-    if (cmp != EQ) return cmp;
-    return tie_break(a, b, NULL);
-}
-
-static inline int
 irq_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 {
     int cmp;
@@ -273,7 +263,6 @@ compare_space(int space, cte_t *a, cte_t *b, tie_comp_t tie_break)
     static type_comp_t comparator[] = {
         [capSpaceUntypedMemory] = untyped_comparator,
         [capSpaceTypedMemory] = typed_comparator,
-        [capSpaceReply] = reply_comparator,
         [capSpaceDomain] = just_tie_break,
         [capSpaceIRQ] = irq_comparator,
 #ifdef CONFIG_IOMMU
@@ -445,7 +434,6 @@ build_largest_child(cap_t cap)
 #ifdef ARCH_IA32
     case cap_ipi_cap:
 #endif
-    case cap_reply_cap:
     case cap_irq_handler_cap:
     case cap_cnode_cap:
     case cap_thread_cap:

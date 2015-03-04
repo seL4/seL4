@@ -125,10 +125,10 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     case cap_reply_cap: {
         tcb_t *callee;
         cte_t *replySlot;
-        assert(cap_reply_cap_get_capInCDT(cap));
         callee = TCB_PTR(cap_reply_cap_get_capTCBPtr(cap));
         replySlot = TCB_PTR_CTE_PTR(callee, tcbReply);
-        replySlot->cap = cap_reply_cap_new(false, true, TCB_REF(NULL));
+        /* Remove the reference to us */
+        cap_reply_cap_ptr_set_capCallerSlot(&replySlot->cap, CTE_REF(NULL));
         fc_ret.remainder = cap_null_cap_new();
         fc_ret.irq = irqInvalid;
         return fc_ret;
@@ -171,7 +171,6 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             suspend(tcb);
             replySlot = TCB_PTR_CTE_PTR(tcb, tcbReply);
             if (cap_get_capType(replySlot->cap) == cap_reply_cap) {
-                assert(!cap_reply_cap_get_capInCDT(replySlot->cap));
                 assert(cap_reply_cap_get_capTCBPtr(replySlot->cap) == 0);
                 replySlot->cap = cap_null_cap_new();
             }

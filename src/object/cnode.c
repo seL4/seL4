@@ -368,24 +368,12 @@ invokeCNodeSaveCaller(cte_t *destSlot)
         userError("CNode SaveCaller: Reply cap not present.");
         break;
 
-    case cap_reply_cap: {
-        tcb_t *callee;
-        cte_t *calleeSlot;
-
-        /* Put the master in the cdt */
-        callee = TCB_PTR(cap_reply_cap_get_capTCBPtr(cap));
-        calleeSlot = TCB_PTR_CTE_PTR(callee, tcbReply);
-        cap_reply_cap_ptr_set_capInCDT(&calleeSlot->cap, true);
-        cap_reply_cap_ptr_set_capTCBPtr(&calleeSlot->cap, TCB_REF(callee));
-        cdtInsert(NULL, calleeSlot);
-
-        /* Now move the child */
-        cap_reply_cap_ptr_set_capInCDT(&cap, true);
-        destSlot->cap = cap;
-        srcSlot->cap = cap_null_cap_new();
-        cdtInsert(calleeSlot, destSlot);
+    case cap_reply_cap:
+        if (!cap_reply_cap_get_capReplyMaster(cap)) {
+            cteMove(cap, srcSlot, destSlot);
+        }
         break;
-    }
+
     default:
         fail("caller capability must be null or reply");
         break;
@@ -411,7 +399,13 @@ cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
     assert(cap_get_capType(destSlot->cap) == cap_null_cap);
 
     destSlot->cap = newCap;
-    cdtMove(srcSlot, destSlot);
+    if (cap_get_capType(newCap) == cap_reply_cap) {
+        tcb_t *replyTCB = TCB_PTR(cap_reply_cap_get_capTCBPtr(newCap));
+        cte_t *replySlot = TCB_PTR_CTE_PTR(replyTCB, tcbReply);
+        cap_reply_cap_ptr_set_capCallerSlot(&replySlot->cap, CTE_REF(destSlot));
+    } else {
+        cdtMove(srcSlot, destSlot);
+    }
     srcSlot->cap = cap_null_cap_new();
 }
 
@@ -687,7 +681,7 @@ setupReplyMaster(tcb_t *thread)
     if (cap_get_capType(slot->cap) == cap_null_cap) {
         /* Haskell asserts that no reply caps exist for this thread here. This
          * cannot be translated. */
-        slot->cap = cap_reply_cap_new(false, true, TCB_REF(NULL));
+        slot->cap = cap_reply_cap_new(CTE_REF(NULL), true, TCB_REF(NULL));
     }
 }
 
