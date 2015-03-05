@@ -34,7 +34,6 @@ This module defines the handling of the ARM hardware-defined page tables.
 > import Data.List
 > import Data.Array
 > import Data.Word(Word32)
-> import Control.Monad.Error
 
 \end{impdetails}
 
@@ -171,7 +170,7 @@ Function pair "createITPDPTs" + "writeITPDPTs" init the memory space for the ini
 >     pdCap <- return $ ArchObjectCap $ PageDirectoryCap (ptrFromPAddr pdPPtr) (Just itASID)
 >     slot  <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapITPD
 >     doKernelOp $ insertInitCap slot $ pdCap
->     slotBefore <- lift $ gets $ initSlotPosCur
+>     slotBefore <- noInitFailure $ gets $ initSlotPosCur
 >     let btmVPtr = vptrStart `shiftR` (pdSize + pageBits) `shiftL` (pdSize + pageBits)
 >     let step = 1 `shiftL` (ptSize + pageBits)
 >     let topVPtr = biFrameVPtr + (bit biFrameSizeBits) - 1
@@ -179,10 +178,10 @@ Function pair "createITPDPTs" + "writeITPDPTs" init the memory space for the ini
 >         ptPPtr <- allocRegion ptBits
 >         doKernelOp $ placeNewObject (ptrFromPAddr ptPPtr) (makeObject::PTE) ptSize -- create a pageTable
 >         provideCap rootCNCap $ ArchObjectCap $ PageTableCap (ptrFromPAddr ptPPtr) (Just (itASID, vptr))
->     slotAfter <- lift $ gets initSlotPosCur
->     bootInfo <- lift $ gets initBootInfo
+>     slotAfter <- noInitFailure $ gets initSlotPosCur
+>     bootInfo <- noInitFailure $ gets initBootInfo
 >     let bootInfo' = bootInfo { bifUIPTCaps = [slotBefore .. slotAfter - 1] }
->     lift $ modify (\s -> s { initBootInfo = bootInfo' })
+>     noInitFailure $ modify (\s -> s { initBootInfo = bootInfo' })
 >     return pdCap
 
 > writeITPDPTs :: Capability -> Capability -> KernelInit ()
@@ -190,14 +189,14 @@ Function pair "createITPDPTs" + "writeITPDPTs" init the memory space for the ini
 >   case pdCap of
 >     ArchObjectCap cap -> do
 >       doKernelOp $ copyGlobalMappings $ capPDBasePtr cap
->       ptSlots <- lift $ gets $ bifUIPTCaps . initBootInfo
+>       ptSlots <- noInitFailure $ gets $ bifUIPTCaps . initBootInfo
 >       doKernelOp $ do
 >           (flip mapM) ptSlots (\pos-> do
 >               slot <- locateSlot (capCNodePtr rootCNCap) pos
 >               cte <- getCTE slot
 >               mapITPTCap pdCap (cteCap cte)
 >            )
->       frameSlots <- lift $ gets $ bifUIFrameCaps . initBootInfo
+>       frameSlots <- noInitFailure $ gets $ bifUIFrameCaps . initBootInfo
 >       doKernelOp $ do
 >            (flip mapM) frameSlots (\pos -> do
 >               slot <- locateSlot (capCNodePtr rootCNCap) pos
@@ -308,9 +307,9 @@ The address of this ipcbuffer  starts from the end of uiRegion
 >       cap <- createITFrameCap (ptrFromPAddr pptr) vptr (Just itASID) False
 >       slot <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapITIPCBuf
 >       doKernelOp $ insertInitCap slot cap
->       bootInfo <- lift $ gets (initBootInfo)
+>       bootInfo <- noInitFailure $ gets (initBootInfo)
 >       let bootInfo' = bootInfo { bifIPCBufVPtr = vptr}
->       lift $ modify (\s -> s {initBootInfo = bootInfo' })
+>       noInitFailure $ modify (\s -> s {initBootInfo = bootInfo' })
 >       return cap
 
 Function "createBIFrame" will create the biframe cap for the initial thread
@@ -318,10 +317,10 @@ Function "createBIFrame" will create the biframe cap for the initial thread
 > createBIFrame :: Capability -> VPtr -> Word32 -> Word32 -> KernelInit Capability
 > createBIFrame rootCNCap vptr nodeId numNodes = do
 >       pptr <- allocFrame
->       bootInfo <- lift $ gets initBootInfo
+>       bootInfo <- noInitFailure $ gets initBootInfo
 >       let bootInfo' = bootInfo { bifNodeID = nodeId,
 >                                  bifNumNodes = numNodes }
->       lift $ modify (\s -> s {
+>       noInitFailure $ modify (\s -> s {
 >           initBootInfo = bootInfo',
 >           initBootInfoFrame = pptr,
 >           initSlotPosCur = biCapDynStart
@@ -347,7 +346,7 @@ Function "createBIFrame" will create the biframe cap for the initial thread
 
 > createFramesOfRegion :: Capability -> Region -> Bool -> VPtr -> KernelInit ()
 > createFramesOfRegion rootCNCap region doMap pvOffset = do
->     curSlotPos <- lift $ gets initSlotPosCur
+>     curSlotPos <- noInitFailure $ gets initSlotPosCur
 >     (startPPtr, endPPtr) <- return $ fromRegion region
 >     forM_ [startPPtr,startPPtr + (bit pageBits) .. endPPtr] $ \ptr -> do
 >         let paddr = fromPAddr $ addrFromPPtr ptr
@@ -355,10 +354,10 @@ Function "createBIFrame" will create the biframe cap for the initial thread
 >                     createITFrameCap ptr ((VPtr paddr) + pvOffset ) (Just itASID) False
 >                     else createITFrameCap ptr 0 Nothing False
 >         provideCap rootCNCap frameCap
->     slotPosAfter <- lift $ gets initSlotPosCur
->     bootInfo <- lift $ gets initBootInfo
+>     slotPosAfter <- noInitFailure $ gets initSlotPosCur
+>     bootInfo <- noInitFailure $ gets initBootInfo
 >     let bootInfo' = bootInfo { bifUIFrameCaps = [curSlotPos .. slotPosAfter - 1] }
->     lift $ modify (\s -> s { initBootInfo = bootInfo' })
+>     noInitFailure $ modify (\s -> s { initBootInfo = bootInfo' })
 
 
 Function "mapGlobalsFrame" inserts an entry into the global PD for the globals frame.
@@ -423,12 +422,12 @@ The "mapKernelFrame" helper function is used when mapping the globals frame, ker
 >         let devRegions' = devRegions ++ [biDeviceRegion]
 >         bootInfo <- gets (initBootInfo)
 >         let bootInfo' = bootInfo { bifDeviceRegions = devRegions' }
->         lift $ modify (\st -> st { initBootInfo = bootInfo' })
+>         noInitFailure $ modify (\st -> st { initBootInfo = bootInfo' })
 >         --syncBIFrame
 >         )
 >     bInfo <- gets (initBootInfo)
 >     let bInfo' = bInfo { bifNumDeviceRegions = (fromIntegral . length . bifDeviceRegions) bInfo }
->     lift $ modify (\st -> st { initBootInfo = bInfo' })
+>     noInitFailure $ modify (\st -> st { initBootInfo = bInfo' })
 
 \subsubsection{Creating a New Address Space}
 

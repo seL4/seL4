@@ -11,14 +11,14 @@
 This module contains functions that create a new kernel state and set up the address space and context of the initial user-level task.
 
 > module SEL4.Kernel.Init(
->         initKernel, newKernelState,
->         KernelInit, doKernelOp, allocRegion,allocFrame,provideCap
+>         initKernel, newKernelState, noInitFailure,
+>         KernelInit, KernelInitState, doKernelOp, allocRegion,allocFrame,provideCap
 >     ) where
 
 \begin{impdetails}
 
 % {-# BOOT-IMPORTS: SEL4.Machine SEL4.Model SEL4.API.Failures SEL4.Object.Structures SEL4.API.Types Control.Monad.State Control.Monad.Error #-}
-% {-# BOOT-EXPORTS: #InitData KernelInit allocRegion allocFrame provideCap doKernelOp #-}
+% {-# BOOT-EXPORTS: #InitData KernelInitState KernelInit allocRegion allocFrame provideCap doKernelOp noInitFailure #-}
 
 > import SEL4.Config
 > import SEL4.API.Types
@@ -49,10 +49,14 @@ The various kernel initialisation functions run in a monad that extends the usua
 
 The KernelInit monad can fail - however, we do not care what type of failure occurred, only that a failure has happened.
 
-> type KernelInit = ErrorT InitFailure (StateT InitData Kernel)
+> type KernelInitState = StateT InitData Kernel
+> type KernelInit = ErrorT InitFailure KernelInitState
 
 > doKernelOp :: Kernel a -> KernelInit a
 > doKernelOp = lift . lift
+
+> noInitFailure :: KernelInitState a -> KernelInit a
+> noInitFailure = lift
 
 \subsubsection{Allocating Frames and Pages}
 
@@ -86,16 +90,16 @@ The KernelInit monad can fail - however, we do not care what type of failure occ
 >                       (if (length freeRegions < maxNumFreememRegions)
 >                        then replicate (maxNumFreememRegions - length freeRegions) (PPtr 0, PPtr 0)
 >                        else [])
->    lift $ modify (\st -> st { initFreeMemory = map Region freeRegions' })
+>    noInitFailure $ modify (\st -> st { initFreeMemory = map Region freeRegions' })
 
 > allocRegion :: Int -> KernelInit PAddr
 > allocRegion bits = do
->     freeMem <- lift $ gets initFreeMemory
+>     freeMem <- noInitFailure $ gets initFreeMemory
 >     case isAlignedUsable `break` freeMem of
 >         (small, r:rest) -> do
 >             let (b, t) = fromRegion r
 >             let (result, region) = if align b == b then (b, Region (b + s, t)) else (t - s, Region (b, t - s))
->             lift $ modify (\st -> st { initFreeMemory = small++ [region] ++rest })
+>             noInitFailure $ modify (\st -> st { initFreeMemory = small++ [region] ++rest })
 >             return $ addrFromPPtr result
 >         (_, []) ->
 >             case isUsable `break` freeMem of
@@ -104,7 +108,7 @@ The KernelInit monad can fail - however, we do not care what type of failure occ
 >                     let result = align b
 >                     let below = if result == b then [] else [Region (b, result)]
 >                     let above = if result + s == t then [] else [Region (result + s, t)]
->                     lift $ modify (\st -> st { initFreeMemory = small++below++above++rest })
+>                     noInitFailure $ modify (\st -> st { initFreeMemory = small++below++above++rest })
 >                     return $ addrFromPPtr result
 >                 _ -> fail "Unable to allocate memory"
 >     where
@@ -216,9 +220,9 @@ We should clean cache, but we did not have a good interface so far.
 
 > finaliseBIFrame :: KernelInit ()
 > finaliseBIFrame = do
->   cur <- lift $ gets $ initSlotPosCur
->   max <- lift $ gets $ initSlotPosMax
->   lift $ modify (\s -> s { initBootInfo = (initBootInfo s) {bifNullCaps = [cur .. max - 1]}})
+>   cur <- noInitFailure $ gets $ initSlotPosCur
+>   max <- noInitFailure $ gets $ initSlotPosMax
+>   noInitFailure $ modify (\s -> s { initBootInfo = (initBootInfo s) {bifNullCaps = [cur .. max - 1]}})
 
 > runInit :: KernelInit () -> Kernel ()
 > runInit oper = do
@@ -282,15 +286,15 @@ FIX ME: Seems we need to setCurThread and setSchedulerAction here, otherwise err
 >     let regStartPAddr = (addrFromPPtr . regStart)
 >     let regEnd = (snd . fromRegion)
 >     let regEndPAddr = (addrFromPPtr . regEnd)
->     slotBefore <- lift $ gets initSlotPosCur
+>     slotBefore <- noInitFailure $ gets initSlotPosCur
 >     mapM_ (\i -> provideUntypedCap rootCNodeCap i (fromIntegral pageBits) slotBefore) 
 >              [regStartPAddr bootMemReuseReg, (regStartPAddr bootMemReuseReg + bit pageBits) .. (regEndPAddr bootMemReuseReg - 1)]
->     currSlot <- lift $ gets initSlotPosCur
+>     currSlot <- noInitFailure $ gets initSlotPosCur
 >     mapM_ (\_ -> do
 >              paddr <- allocRegion pageBits
 >              provideUntypedCap rootCNodeCap paddr (fromIntegral pageBits) slotBefore)
 >           [(currSlot - slotBefore) .. (fromIntegral minNum4kUntypedObj - 1)]
->     freemem <- lift $ gets initFreeMemory
+>     freemem <- noInitFailure $ gets initFreeMemory
 >     (flip mapM) (take maxNumFreememRegions freemem)
 >         (\reg -> do
 >             (\f -> mapM (f reg) [4 .. (finiteBitSize (undefined::Word)) - 2]) 
@@ -309,8 +313,8 @@ FIX ME: Seems we need to setCurThread and setSchedulerAction here, otherwise err
 >         )
 >     let emptyReg = Region (PPtr 0, PPtr 0)
 >     let freemem' = replicate maxNumFreememRegions emptyReg
->     slotAfter <- lift $ gets initSlotPosCur
->     lift $ modify (\s -> s { initFreeMemory = freemem', 
+>     slotAfter <- noInitFailure $ gets initSlotPosCur
+>     noInitFailure $ modify (\s -> s { initFreeMemory = freemem', 
 >                       initBootInfo = (initBootInfo s) { 
 >                            bifUntypedObjCaps = [slotBefore .. slotAfter - 1] }})
 >--   syncBIFrame
@@ -342,25 +346,25 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 
 > provideCap :: Capability -> Capability -> KernelInit ()
 > provideCap rootCNodeCap cap = do
->     currSlot <- lift $ gets initSlotPosCur
->     maxSlot <- lift $ gets initSlotPosMax
+>     currSlot <- noInitFailure $ gets initSlotPosCur
+>     maxSlot <- noInitFailure $ gets initSlotPosMax
 >     when (currSlot >= maxSlot) $ throwError InitFailure
 >     slot <- doKernelOp $ locateSlot (capCNodePtr rootCNodeCap) currSlot
 >     doKernelOp $ insertInitCap slot cap
->     lift $ modify (\st -> st { initSlotPosCur = currSlot + 1 })  
+>     noInitFailure $ modify (\st -> st { initSlotPosCur = currSlot + 1 })  
 
 > provideUntypedCap :: Capability -> PAddr -> Word8 -> Word -> KernelInit ()
 > provideUntypedCap rootCNodeCap pptr sizeBits slotPosBefore = do
->     currSlot <- lift $ gets initSlotPosCur
+>     currSlot <- noInitFailure $ gets initSlotPosCur
 >     let i = currSlot - slotPosBefore
->     untypedObjs <- lift $ gets (bifUntypedObjPAddrs . initBootInfo)
+>     untypedObjs <- noInitFailure $ gets (bifUntypedObjPAddrs . initBootInfo)
 >     assert (length untypedObjs == fromIntegral i) "Untyped Object List is inconsistent"
->     untypedObjs' <- lift $ gets (bifUntypedObjSizeBits . initBootInfo)
+>     untypedObjs' <- noInitFailure $ gets (bifUntypedObjSizeBits . initBootInfo)
 >     assert (length untypedObjs' == fromIntegral i) "Untyped Object List is inconsistent"
->     bootInfo <- lift $ gets initBootInfo
+>     bootInfo <- noInitFailure $ gets initBootInfo
 >     let bootInfo' = bootInfo { bifUntypedObjPAddrs = untypedObjs ++ [pptr],
 >                                bifUntypedObjSizeBits = untypedObjs' ++ [sizeBits] }
->     lift $ modify (\st -> st { initBootInfo = bootInfo' })
+>     noInitFailure $ modify (\st -> st { initBootInfo = bootInfo' })
 >     provideCap rootCNodeCap $ UntypedCap {
 >                                   capPtr = ptrFromPAddr pptr,
 >                                   capBlockSize = fromIntegral sizeBits,
