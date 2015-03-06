@@ -408,24 +408,24 @@ The "mapKernelFrame" helper function is used when mapping the globals frame, ker
 >         frameSize <- return $ if (isAligned start (pageBitsForSize ARMSection))
 >                          && isAligned end (pageBitsForSize ARMSection)
 >             then ARMSection else ARMSmallPage
->         slotBefore <- gets initSlotPosCur
+>         slotBefore <- noInitFailure $ gets initSlotPosCur
 >         (flip mapM_) [start, (start + (bit (pageBitsForSize frameSize))) .. (end - 1)]
 >               (\f -> do
 >                   frameCap <- createITFrameCap (ptrFromPAddr f) 0 Nothing (frameSize == ARMSection)
 >                   provideCap rootCNodeCap frameCap)
->         slotAfter <- gets initSlotPosCur
+>         slotAfter <- noInitFailure $ gets initSlotPosCur
 >         let biDeviceRegion = BIDeviceRegion {
 >                                   bidrBasePAddr = start,
 >                                   bidrFrameSizeBits = fromIntegral $ pageBitsForSize frameSize,
 >                                   bidrFrameCaps = SlotRegion (slotBefore, slotAfter) }
->         devRegions <- gets (bifDeviceRegions . initBootInfo)
+>         devRegions <- noInitFailure $ gets (bifDeviceRegions . initBootInfo)
 >         let devRegions' = devRegions ++ [biDeviceRegion]
->         bootInfo <- gets (initBootInfo)
+>         bootInfo <- noInitFailure $ gets (initBootInfo)
 >         let bootInfo' = bootInfo { bifDeviceRegions = devRegions' }
 >         noInitFailure $ modify (\st -> st { initBootInfo = bootInfo' })
 >         --syncBIFrame
 >         )
->     bInfo <- gets (initBootInfo)
+>     bInfo <- noInitFailure $ gets (initBootInfo)
 >     let bInfo' = bInfo { bifNumDeviceRegions = (fromIntegral . length . bifDeviceRegions) bInfo }
 >     noInitFailure $ modify (\st -> st { initBootInfo = bInfo' })
 
