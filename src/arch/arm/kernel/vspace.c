@@ -123,7 +123,7 @@ map_it_frame_cap(cap_t frame_cap)
                       APFromVMRights(VMReadWrite),
                       1, /* cacheable */
                       1, /* write-back caching */
-                      !executable
+                      0  /* executable */
                   );
 }
 

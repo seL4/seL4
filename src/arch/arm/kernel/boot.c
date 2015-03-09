@@ -154,7 +154,7 @@ create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 }
 
 BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, bool_t use_large)
+create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, bool_t use_large, bool_t executable)
 {
     pde_t *pd = PD_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
     uint32_t pd_index = vptr >> pageBitsForSize(ARMSection);

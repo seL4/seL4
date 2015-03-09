@@ -94,7 +94,7 @@ create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 }
 
 BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, bool_t use_large)
+create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, bool_t use_large, bool_t executable)
 {
     cap_t cap;
     int shift = PT_BITS + PD_BITS + PAGE_BITS;
@@ -346,7 +346,7 @@ create_arch_bi_frame_cap(
     clearMemory((void*)pptr, PAGE_BITS);
 
     /* create a cap and write it into the root cnode */
-    cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, false);
+    cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, false, false);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_BI_ARCH_FRAME), cap);
 
     return pptr;
