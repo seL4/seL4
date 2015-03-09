@@ -23,6 +23,7 @@
 #include <arch/machine/fpu.h>
 #include <arch/object/ioport.h>
 #include <arch/linker.h>
+#include <util.h>
 
 #ifdef CONFIG_IOMMU
 #include <plat/machine/intel-vtd.h>

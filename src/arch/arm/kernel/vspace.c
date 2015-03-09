@@ -123,7 +123,7 @@ map_it_frame_cap(cap_t frame_cap)
                       APFromVMRights(VMReadWrite),
                       1, /* cacheable */
                       1, /* write-back caching */
-                      0  /* executable */
+                      !executable
                   );
 }
 
@@ -271,7 +271,7 @@ map_kernel_window(void)
         PPTR_GLOBALS_PAGE,
         VMReadOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             true,  /* armParityEnabled */
             true   /* armPageCacheable */
         )
@@ -283,7 +283,7 @@ map_kernel_window(void)
         PPTR_KERNEL_STACK,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             true,  /* armParityEnabled */
             true   /* armPageCacheable */
         )

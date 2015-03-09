@@ -38,7 +38,7 @@ typedef struct vesa_info {
 } vesa_info_t;
 
 cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large);
-cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, bool_t use_large);
+cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, bool_t use_large, bool_t executable);
 
 bool_t init_node_state(
     p_region_t    avail_p_reg,

@@ -178,7 +178,7 @@ map_kernel_devices(void)
         GPTIMER11_PPTR,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -190,7 +190,7 @@ map_kernel_devices(void)
         INTC_PPTR,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
@@ -203,7 +203,7 @@ map_kernel_devices(void)
         UART3_PPTR,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             false, /* armParityEnabled */
             false  /* armPageCacheable */
         )
