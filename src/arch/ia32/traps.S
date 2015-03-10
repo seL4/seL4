@@ -394,13 +394,13 @@ END_FUNC(kernel_exception)
 # in the VMCS. We need to save general purpose registers here.
 #ifdef CONFIG_VTX
 handle_vmexit:
-    pushl   %ebp            # save EBP (message register)
-    pushl   %edi            # save EDI (message register)
-    pushl   %esi            # save ESI (msgInfo register)
-    pushl   %edx            # save EDX (contains FaultEIP)
-    pushl   %ecx            # save ECX (contains ESP)
-    pushl   %ebx            # save EBX (cap/badge register)
-    pushl   %eax            # save EAX (syscall number)
+    pushl   %ebp
+    pushl   %edi
+    pushl   %esi
+    pushl   %edx
+    pushl   %ecx
+    pushl   %ebx
+    pushl   %eax
     # indicate int_invalid as the interrupt currently being served
     movl    $-1, ia32KScurInterrupt;
 

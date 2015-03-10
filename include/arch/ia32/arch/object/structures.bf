@@ -451,24 +451,12 @@ block user_exception {
     field faultType 3
 }
 
-#ifdef CONFIG_VTX
-block vmx_fault {
-    field qualification 32
-    field reason 16
-    padding 13
-    field faultType 3
-}
-#endif
-
 tagged_union fault faultType {
     tag null_fault 0
     tag cap_fault 1
     tag vm_fault 2
     tag unknown_syscall 3
     tag user_exception 4
-#ifdef CONFIG_VTX
-    tag vmx_fault 5
-#endif
 }
 
 -- Thread state: size = 8 bytes

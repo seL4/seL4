@@ -232,6 +232,7 @@ arch_types = {
         CapType("seL4_IA32_EPTPageTable"),
         CapType("seL4_IA32_IPI"),
         StructType("seL4_UserContext", WORD_SIZE_BITS * 13),
+        StructType("seL4_VCPUContext", WORD_SIZE_BITS * 7),
         ]
     }
 

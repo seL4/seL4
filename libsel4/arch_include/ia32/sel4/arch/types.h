@@ -64,6 +64,10 @@ typedef struct seL4_UserContext_ {
     seL4_Word tls_base, fs, gs;
 } seL4_UserContext;
 
+typedef struct seL4_VCPUContext_ {
+    seL4_Word eax, ebx, ecx, edx, esi, edi, ebp;
+} seL4_VCPUContext;
+
 typedef enum {
     seL4_IA32_Default_VMAttributes = 0,
     seL4_IA32_WriteBack = 0,

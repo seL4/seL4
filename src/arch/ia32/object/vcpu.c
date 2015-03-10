@@ -253,11 +253,27 @@ exception_t decodeIA32VCPUInvocation(
         return decodeSetIOPort(cap, length, buffer, extraCaps);
     case IA32VCPUSetIOPortMask:
         return decodeSetIOPortMask(cap, length, buffer);
+    case IA32VCPUWriteRegisters:
+        return decodeVCPUWriteRegisters(cap, length, buffer);
     default:
         userError("VCPU: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
+}
+
+exception_t
+decodeVCPUWriteRegisters(cap_t cap, unsigned int length, word_t *buffer)
+{
+    vcpu_t *vcpu;
+    if (length < 7) {
+        userError("VCPU WriteRegisters: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    vcpu = VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeVCPUWriteRegisters(vcpu, buffer);
 }
 
 exception_t
@@ -339,6 +355,16 @@ decodeSetIOPort(cap_t cap, unsigned int length, word_t* buffer, extra_caps_t ext
 }
 
 exception_t
+invokeVCPUWriteRegisters(vcpu_t *vcpu, word_t *buffer)
+{
+    int i;
+    for (i = 0; i <= EBP; i++) {
+        vcpu->gp_registers[i] = getSyscallArg(i, buffer);
+    }
+    return EXCEPTION_NONE;
+}
+
+exception_t
 invokeSetIOPort(vcpu_t *vcpu, cap_t cap)
 {
     uint32_t high, low;
@@ -376,6 +402,8 @@ decodeWriteVMCS(cap_t cap, unsigned int length, word_t* buffer)
         uint32_t field = getSyscallArg(i * 2 + 0, buffer);
         uint32_t value = getSyscallArg(i * 2 + 1, buffer);
         switch (field) {
+        case VMX_GUEST_RIP:
+        case VMX_GUEST_RSP:
         case VMX_GUEST_ES_SELECTOR:
         case VMX_GUEST_CS_SELECTOR:
         case VMX_GUEST_SS_SELECTOR:
@@ -516,6 +544,8 @@ decodeReadVMCS(cap_t cap, unsigned int length, word_t* buffer)
     for (i = 0; i < num_fields; i++) {
         uint32_t field = getSyscallArg(i, buffer);
         switch (field) {
+        case VMX_GUEST_RIP:
+        case VMX_GUEST_RSP:
         case VMX_GUEST_ES_SELECTOR:
         case VMX_GUEST_CS_SELECTOR:
         case VMX_GUEST_SS_SELECTOR:

@@ -22,6 +22,10 @@
 #define TCB_CNODE_RADIX 4
 #define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS + 1)
 
+enum tcb_arch_cnode_index {
+    tcbArchCNodeEntries = tcbCNodeEntries
+};
+
 typedef struct arch_tcb {
     /* saved user-level context of thread (72 bytes) */
     user_context_t tcbContext;

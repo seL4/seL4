@@ -47,6 +47,28 @@ enum async_endpoint_state {
 };
 typedef uint32_t async_endpoint_state_t;
 
+/* A TCB CNode and a TCB are always allocated together, and adjacently,
+ *  * such that they fill a 1024-byte aligned block. The CNode comes first. */
+enum tcb_cnode_index {
+    /* CSpace root, 16 bytes */
+    tcbCTable = 0,
+
+    /* VSpace root, 16 bytes */
+    tcbVTable = 1,
+
+    /* Reply cap slot, 16 bytes */
+    tcbReply = 2,
+
+    /* TCB of most recent IPC sender, 16 bytes */
+    tcbCaller = 3,
+
+    /* IPC buffer cap slot, 16 bytes */
+    tcbBuffer = 4,
+
+    tcbCNodeEntries
+};
+typedef uint32_t tcb_cnode_index_t;
+
 #define CTE_DEPTH_BITS 5
 
 #include <arch/object/structures.h>
@@ -167,32 +189,11 @@ enum _thread_state {
     ThreadState_BlockedOnSend,
     ThreadState_BlockedOnReply,
     ThreadState_BlockedOnAsyncEvent,
+    ThreadState_RunningVM,
     ThreadState_IdleThreadState
 };
 typedef uint32_t _thread_state_t;
 
-
-/* A TCB CNode and a TCB are always allocated together, and adjacently,
- *  * such that they fill a 1024-byte aligned block. The CNode comes first. */
-enum tcb_cnode_index {
-    /* CSpace root, 16 bytes */
-    tcbCTable = 0,
-
-    /* VSpace root, 16 bytes */
-    tcbVTable = 1,
-
-    /* Reply cap slot, 16 bytes */
-    tcbReply = 2,
-
-    /* TCB of most recent IPC sender, 16 bytes */
-    tcbCaller = 3,
-
-    /* IPC buffer cap slot, 16 bytes */
-    tcbBuffer = 4,
-
-    tcbCNodeEntries
-};
-typedef uint32_t tcb_cnode_index_t;
 
 /* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 struct tcb {

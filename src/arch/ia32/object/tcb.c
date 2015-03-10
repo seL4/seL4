@@ -137,38 +137,6 @@ unsigned int setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuff
         }
     }
 
-#ifdef CONFIG_VTX
-    case fault_vmx_fault: {
-        unsigned int i;
-        setRegister(receiver, msgRegisters[0],
-                    fault_vmx_fault_get_reason(sender->tcbFault));
-        setRegister(receiver, msgRegisters[1],
-                    fault_vmx_fault_get_qualification(sender->tcbFault));
-        if (!receiveIPCBuffer) {
-            return 2;
-        }
-
-        assert(sender->tcbArch.vcpu);
-        if (current_vmcs != sender->tcbArch.vcpu) {
-            vmptrld(sender->tcbArch.vcpu);
-        }
-        receiveIPCBuffer[3] = vmread(VMX_DATA_EXIT_INSTRUCTION_LENGTH);
-        receiveIPCBuffer[4] = vmread(VMX_DATA_GUEST_PHYSICAL);
-        receiveIPCBuffer[5] = vmread(VMX_GUEST_RFLAGS);
-        receiveIPCBuffer[6] = vmread(VMX_GUEST_INTERRUPTABILITY);
-        receiveIPCBuffer[7] = vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO);
-        receiveIPCBuffer[8] = vmread(VMX_GUEST_CR3);
-
-        for (i = 0; i < n_frameRegisters; i++) {
-            receiveIPCBuffer[i + 8 + 1] = getRegister(sender, frameRegisters[i]);
-        }
-        for (i = 0; i < n_gpRegisters; i++) {
-            receiveIPCBuffer[i + n_frameRegisters + 8 + 1] = getRegister(sender, gpRegisters[i]);
-        }
-        return 8 + n_frameRegisters + n_gpRegisters;
-    }
-#endif
-
     default:
         fail("Invalid fault");
     }

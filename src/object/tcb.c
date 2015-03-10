@@ -347,6 +347,9 @@ decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
     case TCBUnbindAEP:
         return decodeUnbindAEP(cap);
 
+    case TCBSetEPTRoot:
+        return decodeSetEPTRoot(cap, extraCaps);
+
     default:
         /* Haskell: "throw IllegalOperation" */
         userError("TCB: Illegal operation.");
@@ -844,6 +847,37 @@ exception_t decodeUnbindAEP(cap_t cap)
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_AEPControl(tcb, NULL);
+}
+
+exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t extraCaps)
+{
+    tcb_t *tcb;
+    cte_t *rootSlot;
+    exception_t e;
+
+    if (extraCaps.excaprefs[0] == NULL) {
+        userError("TCB SetEPTRoot: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (cap_get_capType(extraCaps.excaprefs[0]->cap) != cap_ept_page_directory_pointer_table_cap) {
+        userError("TCB SetEPTRoot: EPT PDPT is invalid.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    rootSlot = TCB_PTR_CTE_PTR(tcb, tcbArchEPTRoot);
+    e = cteDelete(rootSlot, true);
+    if (e != EXCEPTION_NONE) {
+        return e;
+    }
+
+    cteInsert(extraCaps.excaprefs[0]->cap, extraCaps.excaprefs[0], rootSlot);
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return EXCEPTION_NONE;
 }
 
 /* The following functions sit in the preemption monad and implement the

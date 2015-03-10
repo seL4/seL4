@@ -113,6 +113,46 @@ BOOT_CODE void vtx_enable(void)
     }
 }
 
+static void setMRs_vmexit(uint32_t reason, uint32_t qualification)
+{
+    word_t *buffer;
+    int i;
+
+    setRegister(ksCurThread, msgRegisters[0], reason);
+    setRegister(ksCurThread, msgRegisters[1], qualification);
+
+    buffer = lookupIPCBuffer(true, ksCurThread);
+    if (!buffer) {
+        return;
+    }
+
+    buffer[3] = vmread(VMX_DATA_EXIT_INSTRUCTION_LENGTH);
+    buffer[4] = vmread(VMX_DATA_GUEST_PHYSICAL);
+    buffer[5] = vmread(VMX_GUEST_RFLAGS);
+    buffer[6] = vmread(VMX_GUEST_INTERRUPTABILITY);
+    buffer[7] = vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO);
+    buffer[8] = vmread(VMX_GUEST_CR3);
+
+    for (i = 0; i <= EBP; i++) {
+        buffer[9 + i] = ksCurThread->tcbArch.vcpu->gp_registers[i];
+    }
+}
+
+static void handleVmxFault(uint32_t reason, uint32_t qualification)
+{
+    /* Indicate that we are returning the from VMEnter with a fault */
+    setRegister(ksCurThread, msgInfoRegister, 1);
+
+    setMRs_vmexit(reason, qualification);
+
+    /* Set the thread back to running */
+    setThreadState(ksCurThread, ThreadState_Running);
+
+    /* No need to schedule because this wasn't an interrupt and
+     * we run at the same priority */
+    activateThread();
+}
+
 exception_t
 handleVmexit(void)
 {
@@ -137,12 +177,14 @@ handleVmexit(void)
                 case 0: { /* mov to CR0 */
                     register_t source = crExitRegs[(qualification >> 8) & 0x7];
                     uint32_t value;
-                    value = getRegister(ksCurThread, source);
-                    ksCurThread->tcbArch.vcpu->cr0 = (ksCurThread->tcbArch.vcpu->cr0 & ~BIT(0x3)) |
+                    if (source != ESP) {
+                        value = ksCurThread->tcbArch.vcpu->gp_registers[source];
+                        ksCurThread->tcbArch.vcpu->cr0 = (ksCurThread->tcbArch.vcpu->cr0 & ~BIT(0x3)) |
                                                      (value & BIT(0x3));
-                    if (!((value ^ ksCurThread->tcbArch.vcpu->cr0_shadow) &
-                            ksCurThread->tcbArch.vcpu->cr0_mask)) {
-                        return EXCEPTION_NONE;
+                        if (!((value ^ ksCurThread->tcbArch.vcpu->cr0_shadow) &
+                                ksCurThread->tcbArch.vcpu->cr0_mask)) {
+                            return EXCEPTION_NONE;
+                        }
                     }
                     break;
                 }
@@ -191,24 +233,16 @@ handleVmexit(void)
     default:
         qualification = 0;
     }
-    current_fault = fault_vmx_fault_new(qualification, reason);
-    handleFault(ksCurThread);
 
-    schedule();
-    activateThread();
+    handleVmxFault(reason, qualification);
 
     return EXCEPTION_NONE;
 }
 
-
 exception_t
 handleVmEntryFail(void)
 {
-    current_fault = fault_vmx_fault_new(-1, -1);
-    handleFault(ksCurThread);
-
-    schedule();
-    activateThread();
+    handleVmxFault(-1, -1);
 
     return EXCEPTION_NONE;
 }
@@ -216,10 +250,6 @@ handleVmEntryFail(void)
 void
 finishVmexitSaving(void)
 {
-    setRegister(ksCurThread, FaultEIP, vmread(VMX_GUEST_RIP));
-    setRegister(ksCurThread, Error, -2);
-    setRegister(ksCurThread, NextEIP, vmread(VMX_GUEST_RIP) + vmread(VMX_DATA_EXIT_INSTRUCTION_LENGTH));
-    setRegister(ksCurThread, ESP, vmread(VMX_GUEST_RSP));
     ksCurThread->tcbArch.vcpu->launched = true;
     if (ksCurThread != ia32KSfpuOwner) {
         ksCurThread->tcbArch.vcpu->cr0 = (vmread(VMX_GUEST_CR0) & ~BIT(3)) | (ksCurThread->tcbArch.vcpu->cr0 & BIT(3));
@@ -300,14 +330,10 @@ restoreVMCS(void)
         vmptrld(expected_vmcs);
     }
 
-    /* Copy registers back from the TCB. */
-    vmwrite(VMX_GUEST_RIP, getRegister(ksCurThread, FaultEIP));
-    vmwrite(VMX_GUEST_RSP, getRegister(ksCurThread, ESP));
-
     /* Set host SP to point just beyond the first field to be stored on exit. */
-    vmwrite(VMX_HOST_RSP, (uint32_t)&ksCurThread->tcbArch.tcbContext.registers[DS]);
+    vmwrite(VMX_HOST_RSP, (uint32_t)&expected_vmcs->gp_registers[EBP + 1]);
     vmwrite(VMX_HOST_CR3, get_cr3());
-    setEPTRoot(TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap, ksCurThread->tcbArch.vcpu);
+    setEPTRoot(TCB_PTR_CTE_PTR(ksCurThread, tcbArchEPTRoot)->cap, expected_vmcs);
     setIOPort(ksCurThread->tcbArch.vcpu);
     handleLazyFpu();
 }

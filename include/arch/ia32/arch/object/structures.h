@@ -24,6 +24,13 @@
 #define TCB_CNODE_RADIX 3
 #define TCB_BLOCK_SIZE_BITS 10
 
+enum tcb_arch_cnode_index {
+    /* VSpace root for running any associated VCPU in */
+    tcbArchEPTRoot = tcbCNodeEntries,
+
+    tcbArchCNodeEntries
+};
+
 typedef struct arch_tcb {
     user_context_t tcbContext;
 

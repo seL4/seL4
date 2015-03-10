@@ -88,31 +88,6 @@ bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
         }
     }
     return (label == 0);
-#ifdef CONFIG_VTX
-    case fault_vmx_fault: {
-        unsigned int i;
-        word_t*      sendBuf;
-
-        sendBuf = lookupIPCBuffer(false, sender);
-
-        /* Assume n_msgRegisters < n_frameRegisters */
-        for (i = 0; i < length && i < n_msgRegisters; i++) {
-            word_t v = getRegister(sender, msgRegisters[i]);
-            setRegister(receiver, frameRegisters[i], sanitiseRegister(frameRegisters[i], v));
-        }
-        if (sendBuf) {
-            for (; i < length && i < n_frameRegisters; i++) {
-                word_t v = sendBuf[i + 1];
-                setRegister(receiver, frameRegisters[i], sanitiseRegister(frameRegisters[i], v));
-            }
-            for (i = 0; i < n_gpRegisters && i + n_frameRegisters < length; i++) {
-                word_t v = sendBuf[i + n_frameRegisters + 1];
-                setRegister(receiver, gpRegisters[i], sanitiseRegister(gpRegisters[i], v));
-            }
-        }
-    }
-    return (label == 0);
-#endif
 
     default:
         fail("Invalid fault");

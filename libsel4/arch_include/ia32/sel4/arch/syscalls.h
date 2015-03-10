@@ -196,6 +196,43 @@ seL4_Wait(seL4_CPtr src, seL4_Word* sender)
     return info;
 }
 
+static inline seL4_Word
+seL4_VMEnter(seL4_CPtr vcpu, seL4_Word *sender)
+{
+    seL4_Word fault;
+    seL4_Word badge;
+    seL4_Word mr0;
+    seL4_Word mr1;
+
+    asm volatile (
+        "pushl %%ebp       \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "movl %%ebp, %%ecx \n"
+        "popl %%ebp        \n"
+        :
+        "=b" (badge),
+        "=S" (fault),
+        "=D" (mr0),
+        "=c" (mr1)
+        : "a" (seL4_SysVMEnter),
+        "b" (vcpu)
+        : "%edx", "memory"
+    );
+
+    if (fault) {
+        seL4_SetMR(0, mr0);
+        seL4_SetMR(1, mr1);
+    } else {
+        if (sender) {
+            *sender = badge;
+        }
+    }
+    return fault;
+}
+
 static inline seL4_MessageInfo_t
 seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
                  seL4_Word *mr0, seL4_Word *mr1)

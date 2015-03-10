@@ -148,9 +148,6 @@ def parse_xml(xml_file):
         sys.exit(-1)
     
     configs = api[0].getElementsByTagName("config")
-    if len(configs) != 1:
-        print >>sys.stderr, "Error: api element only supports 1 config element"
-        sys.exit(-1)
 
     if len(configs[0].getAttribute("name")) != 0:
         print >>sys.stderr, "Error: api element config only supports an empty name"

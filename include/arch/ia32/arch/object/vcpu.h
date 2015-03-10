@@ -17,6 +17,10 @@ struct vcpu {
     char vmcs[4096];
     uint32_t io[2048];
 
+    /* General purpose registers that we have to save and restore as they
+     * are not part of the vmcs */
+    uint32_t gp_registers[EBP + 1];
+
     /* TCB associated with this VCPU. */
     struct tcb *tcb;
     bool_t launched;
@@ -60,5 +64,7 @@ exception_t invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb);
 exception_t invokeSetIOPort(vcpu_t *vcpu, cap_t cap);
 exception_t decodeSetIOPortMask(cap_t cap, unsigned int length, word_t *buffer);
 exception_t invokeSetIOPortMask(vcpu_t *vcpu, uint32_t low, uint32_t high, int mask);
+exception_t decodeVCPUWriteRegisters(cap_t cap, unsigned int length, word_t *buffer);
+exception_t invokeVCPUWriteRegisters(vcpu_t *vcpu, word_t *buffer);
 
 #endif

@@ -60,6 +60,11 @@ sendAsyncIPC(async_endpoint_t *aepptr, word_t badge)
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
                 attemptSwitchTo(tcb);
+            } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
+                setThreadState(tcb, ThreadState_Running);
+                setRegister(tcb, badgeRegister, badge);
+                setRegister(tcb, msgInfoRegister, 0);
+                attemptSwitchTo(tcb);
             } else {
                 aep_set_active(aepptr, badge);
             }

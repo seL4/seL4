@@ -178,7 +178,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =
                 Zombie_new(
-                    tcbCNodeEntries,
+                    tcbArchCNodeEntries,
                     ZombieType_ZombieTCB,
                     CTE_REF(cte_ptr)
                 );

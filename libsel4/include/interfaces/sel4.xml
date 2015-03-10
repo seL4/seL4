@@ -73,6 +73,9 @@
 		</method>
 		<method id="TCBUnbindAEP" name="UnbindAEP">
 		</method>
+		<method id="TCBSetEPTRoot" name="SetEPTRoot">
+		    <param dir="in" name="vcpu" type="seL4_CPtr"/>
+		</method>
 	</interface>
 	<interface name="seL4_CNode">
         <method id="CNodeRevoke" name="Revoke">

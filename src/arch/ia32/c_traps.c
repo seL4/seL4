@@ -15,6 +15,7 @@
 #include <arch/fastpath/fastpath.h>
 #ifdef CONFIG_VTX
 #include <arch/object/vtx.h>
+#include <arch/object/vcpu.h>
 #endif
 
 #include <api/syscall.h>
@@ -33,7 +34,7 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) vmlaunch_fail
 static inline void __attribute__((noreturn)) restore_vmx(void)
 {
     restoreVMCS();
-    if (ksCurThread->tcbArch.tcbContext.registers[Error] == -2) {
+    if (ksCurThread->tcbArch.vcpu->launched) {
         /* attempt to do a vmresume */
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
@@ -51,7 +52,7 @@ static inline void __attribute__((noreturn)) restore_vmx(void)
             "leal _kernel_stack_top, %%esp\n"
             "jmp vmlaunch_failed\n"
             :
-            : "r"(&ksCurThread->tcbArch.tcbContext.registers[EAX])
+            : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX])
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -74,7 +75,7 @@ static inline void __attribute__((noreturn)) restore_vmx(void)
             "leal _kernel_stack_top, %%esp\n"
             "jmp vmlaunch_failed\n"
             :
-            : "r"(&ksCurThread->tcbArch.tcbContext.registers[EAX])
+            : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX])
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -89,7 +90,7 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_
     /* set the tss.esp0 */
     tss_ptr_set_esp0(&ia32KStss, ((uint32_t)ksCurThread) + 0x4c);
 #ifdef CONFIG_VTX
-    if (ksCurThread->tcbArch.vcpu) {
+    if (thread_state_ptr_get_tsType(&ksCurThread->tcbState) == ThreadState_RunningVM) {
         restore_vmx();
     }
 #endif
@@ -236,6 +237,19 @@ void __attribute__((externally_visible)) c_handle_syscall(syscall_t syscall, wor
         fastpath_call(cptr, msgInfo);
     } else if (syscall == SysReplyWait) {
         fastpath_reply_wait(cptr, msgInfo);
+    }
+#endif
+#ifdef CONFIG_VTX
+    if (syscall == SysVMEnter) {
+        ksCurThread->tcbArch.tcbContext.registers[NextEIP] += 2;
+        if (ksCurThread->boundAsyncEndpoint && async_endpoint_ptr_get_state(ksCurThread->boundAsyncEndpoint) == AEPState_Active) {
+            completeAsyncIPC(ksCurThread->boundAsyncEndpoint, ksCurThread);
+            setRegister(ksCurThread, msgInfoRegister, 0);
+            restore_user_context();
+        } else {
+            setThreadState(ksCurThread, ThreadState_RunningVM);
+            restore_vmx();
+        }
     }
 #endif
 

@@ -48,6 +48,7 @@ isRunnable(const tcb_t *thread)
 {
     switch (thread_state_get_tsType(thread->tcbState)) {
     case ThreadState_Running:
+    case ThreadState_RunningVM:
     case ThreadState_Restart:
         return true;
 
@@ -68,6 +69,7 @@ activateThread(void)
 {
     switch (thread_state_get_tsType(ksCurThread->tcbState)) {
     case ThreadState_Running:
+    case ThreadState_RunningVM:
         break;
 
     case ThreadState_Restart: {
@@ -447,8 +449,7 @@ scheduleTCB(tcb_t *tptr)
 void
 timerTick(void)
 {
-    if (likely(thread_state_get_tsType(ksCurThread->tcbState) ==
-               ThreadState_Running)) {
+    if (likely(isRunnable(ksCurThread))) {
         if (ksCurThread->tcbTimeSlice > 1) {
             ksCurThread->tcbTimeSlice--;
         } else {
