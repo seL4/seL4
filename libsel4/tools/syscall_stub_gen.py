@@ -234,6 +234,12 @@ arch_types = {
         ]
     }
 
+# Retrieve a member list for a given struct type
+def struct_members(type, structs):
+    members = [member for struct_name, member in structs if struct_name == type.name]
+    assert len(members) == 1
+    return members[0]
+
 # Keep increasing the given number 'x' until 'x % a == 0'.
 def align_up(x, a):
     if x % a == 0:
@@ -286,7 +292,7 @@ def generate_param_list(input_params, output_params):
     return ", ".join(params)
 
 
-def generate_marshal_expressions(params, num_mrs, registers):
+def generate_marshal_expressions(params, num_mrs, structs):
     """
     Generate marshalling expressions for the given set of inputs.
 
@@ -334,7 +340,7 @@ def generate_marshal_expressions(params, num_mrs, registers):
         assert target_offset == 0
         num_words = num_bits / WORD_SIZE_BITS
         for i in range(num_words):
-            expr = param.type.c_expression(param.name, i, registers);
+            expr = param.type.c_expression(param.name, i, struct_members(param.type, structs));
             word_array[target_word + i].append(expr)
 
 
@@ -436,7 +442,7 @@ def generate_result_struct(interface_name, method_name, output_params):
 
     return "\n".join(result)
 
-def generate_stub(arch, interface_name, method_name, method_id, input_params, output_params, registers, use_only_ipc_buffer):
+def generate_stub(arch, interface_name, method_name, method_id, input_params, output_params, structs, use_only_ipc_buffer):
     result = []
 
     if use_only_ipc_buffer:
@@ -477,7 +483,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
     #
     # Get a list of expressions for our caps and inputs.
     #
-    input_expressions = generate_marshal_expressions(standard_params, num_mrs, registers)
+    input_expressions = generate_marshal_expressions(standard_params, num_mrs, structs)
     cap_expressions = [x.name for x in cap_params]
     service_cap = cap_expressions[0]
     cap_expressions = cap_expressions[1:]
@@ -560,8 +566,9 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
         unmashalled_params = generate_unmarshal_expressions(output_params)
         for (param, words) in unmashalled_params:
             if param.type.pass_by_reference():
+                members = struct_members(param.type, structs);
                 for i in range(len(words)):
-                    result.append("\t%s->%s = %s;" % (param.name, registers[i], words[i] % source_words))
+                    result.append("\t%s->%s = %s;" % (param.name, members[i], words[i] % source_words))
             else:
                 if param.type.double_word:
                     result.append("\tresult.%s = ((uint64_t)%s + ((uint64_t)%s << 32));" % (param.name, words[0] % source_words, words[1] % source_words))
@@ -597,12 +604,16 @@ def parse_xml_file(input_file, valid_types):
 
     # Parse the XML to generate method structures.
     methods = []
-    registers = []
+    structs = []
     doc = xml.dom.minidom.parse(input_file)
 
-    for register in doc.getElementsByTagName("register"):
-        register_name = (register.getAttribute("name")).lower()
-        registers.append(register_name)
+    for struct in doc.getElementsByTagName("struct"):
+        struct_members = []
+        struct_name = struct.getAttribute("name")
+        for members in struct.getElementsByTagName("member"):
+            member_name = members.getAttribute("name")
+            struct_members.append(member_name)
+        structs.append( (struct_name, struct_members) )
 
     for interface in doc.getElementsByTagName("interface"):
         interface_name = interface.getAttribute("name")
@@ -630,7 +641,7 @@ def parse_xml_file(input_file, valid_types):
                     output_params.append(Parameter(param_name, param_type))
             methods.append((interface_name, method_name, method_id, input_params, output_params))
 
-    return (methods, registers)
+    return (methods, structs)
 
 def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
     """
@@ -645,11 +656,11 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
 
     # Parse XML
     methods = []
-    registers = []
+    structs = []
     for file in input_files:
-        method, register = parse_xml_file(file, types + arch_types[arch])
+        method, struct = parse_xml_file(file, types + arch_types[arch])
         methods += method
-        registers += register
+        structs += struct
 
     # Print header.
     result.append("""
@@ -711,7 +722,7 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
     result.append(" */")
     for (interface_name, method_name, method_id, inputs, outputs) in methods:
         result.append(generate_stub(arch, interface_name, method_name,
-                method_id, inputs, outputs, registers, use_only_ipc_buffer))
+                method_id, inputs, outputs, structs, use_only_ipc_buffer))
 
     # Print footer.
     result.append("#endif /* __LIBSEL4_SEL4_CLIENT_H */")
