@@ -9,21 +9,21 @@
      @TAG(NICTA_BSD)
   -->
 <api>
-	<registers>
-		<register name="EIP"/>
-		<register name="ESP"/>
-		<register name="EFlags"/>
-		<register name="EAX"/>
-		<register name="EBX"/>
-		<register name="ECX"/>
-		<register name="EDX"/>
-		<register name="ESI"/>
-		<register name="EDI"/>
-		<register name="EBP"/>
-		<register name="TLS_Base"/>
-		<register name="FS"/>
-		<register name="GS"/>
-	</registers>
+    <struct name="seL4_UserContext">
+		<member name="eip"/>
+		<member name="esp"/>
+		<member name="eflags"/>
+		<member name="eax"/>
+		<member name="ebx"/>
+		<member name="ecx"/>
+		<member name="edx"/>
+		<member name="esi"/>
+		<member name="edi"/>
+		<member name="ebp"/>
+		<member name="tls_base"/>
+		<member name="fs"/>
+		<member name="gs"/>
+    </struct>
 	<interface name="seL4_IA32_PageDirectory">
 	    <method id="IA32PageDirectoryMap" name="Map">
 	        <param dir="in" name="pdpt" type="seL4_IA32_PageDirectory"/>
