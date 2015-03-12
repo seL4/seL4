@@ -8,12 +8,13 @@
      @TAG(NICTA_BSD)
   -->
 
-<!ELEMENT api (registers*,interface*)>
+<!ELEMENT api (struct*,interface*)>
 
-<!ELEMENT registers (register*)>
+<!ELEMENT struct (member*)>
+<!ATTLIST struct name CDATA #REQUIRED>
 
-<!ELEMENT register EMPTY>
-<!ATTLIST register name CDATA #REQUIRED>
+<!ELEMENT member EMPTY>
+<!ATTLIST member name CDATA #REQUIRED>
 
 <!ELEMENT interface (method*)>
 <!ATTLIST interface name CDATA #REQUIRED>
