@@ -42,9 +42,7 @@ BOOT_CODE p_region_t get_avail_p_reg(unsigned int i)
 
 const p_region_t BOOT_RODATA dev_p_regs[] = {
     /* SoC devices: */
-#ifndef DEBUG
     { /* .start = */ UART0_PADDR, /* .end = */ UART0_PADDR + (1 << PAGE_BITS) },
-#endif
     { /* .start = */ DMTIMER2_PADDR, /* .end = */ DMTIMER2_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER3_PADDR, /* .end = */ DMTIMER3_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER4_PADDR, /* .end = */ DMTIMER4_PADDR + (1 << PAGE_BITS) },
