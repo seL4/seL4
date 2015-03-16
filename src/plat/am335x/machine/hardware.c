@@ -42,14 +42,15 @@ BOOT_CODE p_region_t get_avail_p_reg(unsigned int i)
 
 const p_region_t BOOT_RODATA dev_p_regs[] = {
     /* SoC devices: */
-    { /* .start = */ UART0_PADDR, /* .end = */ UART0_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ UART0_PADDR,    /* .end = */ UART0_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER2_PADDR, /* .end = */ DMTIMER2_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER3_PADDR, /* .end = */ DMTIMER3_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER4_PADDR, /* .end = */ DMTIMER4_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER5_PADDR, /* .end = */ DMTIMER5_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER6_PADDR, /* .end = */ DMTIMER6_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER7_PADDR, /* .end = */ DMTIMER7_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ WDT1_PADDR, /* .end = */ WDT1_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ WDT1_PADDR,     /* .end = */ WDT1_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ CMPER_PADDR,    /* .end = */ CMPER_PADDR + (1 << PAGE_BITS) },
     /* Board devices. */
     /* TODO: This should ultimately be replaced with a more general solution. */
 };
@@ -104,6 +105,18 @@ map_kernel_devices(void)
         )
     );
 
+    /* map kernel device: CMPER */
+    map_kernel_frame(
+        CMPER_PADDR,
+        CMPER_PPTR,
+        VMKernelOnly,
+        vm_attributes_new(
+            true,  /* armExecuteNever */
+            false, /* armParityEnabled */
+            false  /* armPageCacheable */
+        )
+    );
+
 #ifdef DEBUG
     /* map kernel device: UART */
     map_kernel_frame(
@@ -118,6 +131,13 @@ map_kernel_devices(void)
     );
 #endif
 }
+
+#define CMPER_REG(base, off) ((volatile uint32_t *)((base) + (off)))
+#define CMPER_TIMER3_CLKCTRL    0x84
+#define CMPER_CLKCTRL_DISABLE   0
+#define CMPER_CLKCTRL_ENABLE    2
+#define CMPER_CLKSEL_TIMER3     0x50c
+#define CMPER_CKLSEL_MOSC       1
 
 
 #define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
@@ -295,6 +315,27 @@ disableWatchdog(void)
     }
 }
 
+/*
+ * Enable DMTIMER clocks, otherwise their registers wont be accessible.
+ * This could be moved out of kernel.
+ */
+static BOOT_CODE void
+enableTimers(void)
+{
+    uint32_t cmper = CMPER_PPTR;
+
+    /* XXX repeat this for DMTIMER4..7 */
+    /* select clock */
+    *CMPER_REG(cmper, CMPER_CLKSEL_TIMER3) = CMPER_CKLSEL_MOSC;
+    while((*CMPER_REG(cmper, CMPER_CLKSEL_TIMER3) & 3) != CMPER_CKLSEL_MOSC)
+        continue;
+
+    /* enable clock */
+    *CMPER_REG(cmper, CMPER_TIMER3_CLKCTRL) = CMPER_CLKCTRL_ENABLE;
+    while((*CMPER_REG(cmper, CMPER_TIMER3_CLKCTRL) & 3) != CMPER_CLKCTRL_ENABLE)
+        continue;
+}
+    
 /* Configure dmtimer0 as kernel preemption timer */
 /**
    DONT_TRANSLATE
@@ -305,6 +346,7 @@ initTimer(void)
     int timeout;
 
     disableWatchdog();
+    enableTimers();
 
     timer->cfg = TIOCP_CFG_SOFTRESET;
 
