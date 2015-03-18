@@ -282,15 +282,29 @@ setIOPort(vcpu_t* vcpu)
     }
 }
 
+static void invvpid_context(uint16_t vpid)
+{
+    struct {
+        uint64_t vpid : 16;
+        uint64_t rsvd : 48;
+        uint64_t address;
+    } __attribute__((packed)) operand = {vpid, 0, 0};
+    asm volatile(INVVPID_OPCODE :: "a"(&operand), "c"(1) : "cc");
+}
+
 static void
 setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
 {
+    uint32_t ept_root;
     if (cap_get_capType(vmxSpace) != cap_ept_page_directory_pointer_table_cap) {
-        vmwrite(VMX_CONTROL_EPT_POINTER, null_ept_space);
-        vmwrite(VMX_CONTROL_VPID, (null_ept_space) >> 13);
+        ept_root = null_ept_space;
     } else {
-        vmwrite(VMX_CONTROL_EPT_POINTER, (pptr_to_paddr((void*)cap_ept_page_directory_pointer_table_cap_get_capPDPTBasePtr(vmxSpace)) - EPT_PDPT_OFFSET) | (3 << 3) | 6);
-        vmwrite(VMX_CONTROL_VPID, (pptr_to_paddr((void*)cap_ept_page_directory_pointer_table_cap_get_capPDPTBasePtr(vmxSpace)) - EPT_PDPT_OFFSET) >> 13);
+        ept_root = pptr_to_paddr((void*)cap_ept_page_directory_pointer_table_cap_get_capPDPTBasePtr(vmxSpace)) - EPT_PDPT_OFFSET;
+    }
+    if (ept_root != vcpu->last_ept_root) {
+        vcpu->last_ept_root = ept_root;
+        vmwrite(VMX_CONTROL_EPT_POINTER, ept_root | (3 << 3) | 6);
+        invvpid_context(vpid_for_vcpu(vcpu));
     }
 }
 

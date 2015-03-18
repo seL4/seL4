@@ -172,7 +172,6 @@ vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_HOST_GS_SELECTOR, 0);
     vmwrite(VMX_HOST_TR_SELECTOR, SEL_TSS);
 
-
     /* Set fixed VMCS control fields. */
     vmwrite(VMX_CONTROL_PIN_EXECUTION_CONTROLS, applyFixedBits(0, pin_control_high, pin_control_low));
     vmwrite(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS, applyFixedBits(0, primary_control_high, primary_control_low));
@@ -182,6 +181,8 @@ vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_CONTROL_MSR_ADDRESS, (uint32_t)pptr_to_paddr(msr_bitmap));
     vmwrite(VMX_GUEST_CR0, applyFixedBits(0, cr0_high, cr0_low));
     vmwrite(VMX_GUEST_CR4, applyFixedBits(0, cr4_high, cr4_low));
+    /* VPID is the same as the VCPU */
+    vmwrite(VMX_CONTROL_VPID, vpid_for_vcpu(vcpu));
 
     vmwrite(VMX_GUEST_VMCS_LINK_POINTER, ~0);
     vmwrite(VMX_GUEST_VMCS_LINK_POINTER_HIGH, ~0);
@@ -716,5 +717,11 @@ invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 
     return EXCEPTION_NONE;
 }
+
+uint16_t vpid_for_vcpu(vcpu_t *vcpu)
+{
+    return (((uint32_t)vcpu) >> 13) & MASK(16);
+}
+
 
 #endif

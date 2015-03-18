@@ -32,6 +32,9 @@ struct vcpu {
     uint32_t cr0_shadow;
     uint32_t cr0_mask;
     uint32_t cr0;
+
+    /* Last used EPT root */
+    uint32_t last_ept_root;
 };
 typedef struct vcpu vcpu_t;
 
@@ -39,6 +42,8 @@ bool_t init_vtx_fixed_values(bool_t useTrueMsrs);
 void vcpu_init(vcpu_t *vcpu);
 
 void vcpu_finalise(vcpu_t *vcpu);
+
+uint16_t vpid_for_vcpu(vcpu_t *vcpu);
 
 void associateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu);
 

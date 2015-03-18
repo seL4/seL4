@@ -165,6 +165,7 @@
 
 // As borrowed from kvm: "invept (%eax), %ecx"
 #define INVEPT_OPCODE   ".byte 0x66,0x0f,0x38,0x80, 0x08\n"
+#define INVVPID_OPCODE  ".byte 0x66,0x0f,0x38,0x81, 0x08\n"
 #define MSR_VMX_EPT_VPID_CAP 0x48C
 
 /* Exit reasons. */
