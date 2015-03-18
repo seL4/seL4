@@ -247,7 +247,6 @@ void vmclear(void *vmcs_ptr);
 void invept(void* ept_pml4);
 
 uint32_t get_cr0(void);
-uint32_t get_cr3(void);
 uint32_t get_cr4(void);
 #endif
 

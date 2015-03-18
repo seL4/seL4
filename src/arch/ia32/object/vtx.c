@@ -344,7 +344,10 @@ restoreVMCS(void)
         vmptrld(expected_vmcs);
     }
 
-    vmwrite(VMX_HOST_CR3, get_cr3());
+    if (getCurrentPD() != expected_vmcs->last_host_cr3) {
+        expected_vmcs->last_host_cr3 = getCurrentPD();
+        vmwrite(VMX_HOST_CR3, getCurrentPD());
+    }
     setEPTRoot(TCB_PTR_CTE_PTR(ksCurThread, tcbArchEPTRoot)->cap, expected_vmcs);
     setIOPort(ksCurThread->tcbArch.vcpu);
     handleLazyFpu();
@@ -376,20 +379,6 @@ vmwrite(uint32_t field, uint32_t value)
     if (error) {
         printf("error setting field %x\n", field);
     }
-}
-
-uint32_t
-get_cr3(void)
-{
-    uint32_t reg_eax;
-
-    asm volatile (
-        "mov %%cr3, %%eax\n"
-        : "=a"(reg_eax)
-        :
-        : "cc"
-    );
-    return reg_eax;
 }
 
 int

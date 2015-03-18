@@ -35,6 +35,9 @@ struct vcpu {
 
     /* Last used EPT root */
     uint32_t last_ept_root;
+
+    /* Last set host cr3 */
+    uint32_t last_host_cr3;
 };
 typedef struct vcpu vcpu_t;
 
