@@ -344,8 +344,6 @@ restoreVMCS(void)
         vmptrld(expected_vmcs);
     }
 
-    /* Set host SP to point just beyond the first field to be stored on exit. */
-    vmwrite(VMX_HOST_RSP, (uint32_t)&expected_vmcs->gp_registers[EBP + 1]);
     vmwrite(VMX_HOST_CR3, get_cr3());
     setEPTRoot(TCB_PTR_CTE_PTR(ksCurThread, tcbArchEPTRoot)->cap, expected_vmcs);
     setIOPort(ksCurThread->tcbArch.vcpu);

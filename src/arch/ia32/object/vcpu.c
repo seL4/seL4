@@ -161,7 +161,8 @@ vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_HOST_SYSENTER_CS, (uint32_t)SEL_CS_0);
     vmwrite(VMX_HOST_SYSENTER_EIP, (uint32_t)&handle_syscall);
     vmwrite(VMX_HOST_SYSENTER_ESP, (uint32_t)&ia32KStss.words[1]);
-    /* VMX_HOST_RSP is set dyanamically. */
+    /* Set host SP to point just beyond the first field to be stored on exit. */
+    vmwrite(VMX_HOST_RSP, (uint32_t)&vcpu->gp_registers[EBP + 1]);
     vmwrite(VMX_HOST_RIP, (uint32_t)&handle_vmexit);
 
     vmwrite(VMX_HOST_ES_SELECTOR, SEL_DS_0);
