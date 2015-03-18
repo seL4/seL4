@@ -180,7 +180,7 @@ handleVmexit(void)
                     if (source != ESP) {
                         value = ksCurThread->tcbArch.vcpu->gp_registers[source];
                         ksCurThread->tcbArch.vcpu->cr0 = (ksCurThread->tcbArch.vcpu->cr0 & ~BIT(0x3)) |
-                                                     (value & BIT(0x3));
+                                                         (value & BIT(0x3));
                         if (!((value ^ ksCurThread->tcbArch.vcpu->cr0_shadow) &
                                 ksCurThread->tcbArch.vcpu->cr0_mask)) {
                             return EXCEPTION_NONE;
