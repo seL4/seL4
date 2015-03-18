@@ -1429,6 +1429,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
 
             find_ret = findPDForASID(asid);
             if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+                userError("ARMPageMap: No PD for ASID");
                 current_syscall_error.type =
                     seL4_FailedLookup;
                 current_syscall_error.failedLookupWasSource =
@@ -1548,6 +1549,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
 
             find_ret = findPDForASID(mappedASID);
             if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+                userError("ARMPageRemap: No PD for ASID");
                 current_syscall_error.type =
                     seL4_FailedLookup;
                 current_syscall_error.failedLookupWasSource = false;
