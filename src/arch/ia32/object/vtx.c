@@ -250,11 +250,13 @@ handleVmEntryFail(void)
 void
 finishVmexitSaving(void)
 {
-    ksCurThread->tcbArch.vcpu->launched = true;
+    vcpu_t *vcpu = ksCurThread->tcbArch.vcpu;
+    vcpu->launched = true;
+    vcpu->written_cr0 = vmread(VMX_GUEST_CR0);
     if (ksCurThread != ia32KSfpuOwner) {
-        ksCurThread->tcbArch.vcpu->cr0 = (vmread(VMX_GUEST_CR0) & ~BIT(3)) | (ksCurThread->tcbArch.vcpu->cr0 & BIT(3));
+        vcpu->cr0 = (vcpu->written_cr0 & ~BIT(3)) | (ksCurThread->tcbArch.vcpu->cr0 & BIT(3));
     } else {
-        ksCurThread->tcbArch.vcpu->cr0 = vmread(VMX_GUEST_CR0);
+        vcpu->cr0 = vcpu->written_cr0;
     }
 }
 
@@ -311,26 +313,46 @@ setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
 static void
 handleLazyFpu(void)
 {
+    uint32_t cr0;
+    uint32_t exception_bitmap;
+    uint32_t cr0_mask;
+    uint32_t cr0_shadow;
+    vcpu_t *vcpu = ksCurThread->tcbArch.vcpu;
     if (ksCurThread != ia32KSfpuOwner) {
-        vmwrite(VMX_GUEST_CR0, ksCurThread->tcbArch.vcpu->cr0 | BIT(3));
-        vmwrite(VMX_CONTROL_EXCEPTION_BITMAP, ksCurThread->tcbArch.vcpu->exception_mask | BIT(0x7));
+        cr0 = vcpu->cr0 | BIT(3);
+        exception_bitmap = vcpu->exception_mask | BIT(0x7);
         if (ksCurThread->tcbArch.vcpu->cr0_mask & BIT(3)) {
             /* Don't replace the userland read shadow value if userland is
              * masking CR0.TS. The important thing is that it is masked so the
              * guest can't modify it. We don't care about the read shadow
              * value. */
-            vmwrite(VMX_CONTROL_CR0_MASK, ksCurThread->tcbArch.vcpu->cr0_mask);
-            vmwrite(VMX_CONTROL_CR0_READ_SHADOW, ksCurThread->tcbArch.vcpu->cr0_shadow);
+            cr0_mask = vcpu->cr0_mask;
+            cr0_shadow = vcpu->cr0_shadow;
         } else {
-            vmwrite(VMX_CONTROL_CR0_MASK, ksCurThread->tcbArch.vcpu->cr0_mask | BIT(3));
-            vmwrite(VMX_CONTROL_CR0_READ_SHADOW, (ksCurThread->tcbArch.vcpu->cr0 & BIT(3)) |
-                    (ksCurThread->tcbArch.vcpu->cr0_shadow & ~BIT(3)));
+            cr0_mask = vcpu->cr0_mask | BIT(3);
+            cr0_shadow = (vcpu->cr0 & BIT(3)) | (vcpu->cr0_shadow & ~BIT(3));
         }
     } else {
-        vmwrite(VMX_GUEST_CR0, ksCurThread->tcbArch.vcpu->cr0);
-        vmwrite(VMX_CONTROL_EXCEPTION_BITMAP, ksCurThread->tcbArch.vcpu->exception_mask);
-        vmwrite(VMX_CONTROL_CR0_MASK, ksCurThread->tcbArch.vcpu->cr0_mask);
-        vmwrite(VMX_CONTROL_CR0_READ_SHADOW, ksCurThread->tcbArch.vcpu->cr0_shadow);
+        cr0 = vcpu->cr0;
+        exception_bitmap = vcpu->exception_mask;
+        cr0_mask = vcpu->cr0_mask;
+        cr0_shadow = vcpu->cr0_shadow;
+    }
+    if (cr0 != vcpu->written_cr0) {
+        vmwrite(VMX_GUEST_CR0, cr0);
+        vcpu->written_cr0 = cr0;
+    }
+    if (exception_bitmap != vcpu->written_exception_mask) {
+        vmwrite(VMX_CONTROL_EXCEPTION_BITMAP, exception_bitmap);
+        vcpu->written_exception_mask = exception_bitmap;
+    }
+    if (cr0_mask != vcpu->written_cr0_mask) {
+        vmwrite(VMX_CONTROL_CR0_MASK, cr0_mask);
+        vcpu->written_cr0_mask = cr0_mask;
+    }
+    if (cr0_shadow != vcpu->written_cr0_shadow) {
+        vmwrite(VMX_CONTROL_CR0_READ_SHADOW, cr0_shadow);
+        vcpu->written_cr0_shadow = cr0_shadow;
     }
 }
 

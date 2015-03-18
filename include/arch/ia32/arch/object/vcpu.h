@@ -28,10 +28,17 @@ struct vcpu {
     cap_t io_port;
     uint32_t io_min;
     uint32_t io_max;
+    /* These are the values the user last set these to. We may have written
+     * other values for the purposes of lazy fpu management */
     uint32_t exception_mask;
     uint32_t cr0_shadow;
     uint32_t cr0_mask;
     uint32_t cr0;
+    /* Last values we wrote the VMCS */
+    uint32_t written_exception_mask;
+    uint32_t written_cr0_shadow;
+    uint32_t written_cr0_mask;
+    uint32_t written_cr0;
 
     /* Last used EPT root */
     uint32_t last_ept_root;

@@ -513,16 +513,16 @@ invokeWriteVMCS(vcpu_t *vcpu, int num_fields, uint32_t *fields, uint32_t *values
         uint32_t value = values[i];
         switch (field) {
         case VMX_CONTROL_EXCEPTION_BITMAP:
-            vcpu->exception_mask = value;
+            vcpu->exception_mask = vcpu->written_exception_mask = value;
             break;
         case VMX_GUEST_CR0:
-            vcpu->cr0 = value;
+            vcpu->cr0 = vcpu->written_cr0 = value;
             break;
         case VMX_CONTROL_CR0_MASK:
-            vcpu->cr0_mask = value;
+            vcpu->cr0_mask = vcpu->written_cr0_mask = value;
             break;
         case VMX_CONTROL_CR0_READ_SHADOW:
-            vcpu->cr0_shadow = value;
+            vcpu->cr0_shadow = vcpu->written_cr0_shadow = value;
             break;
         }
         setRegister(thread, msgRegisters[0], value);
