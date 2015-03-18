@@ -199,6 +199,28 @@ exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_d
     return EXCEPTION_NONE;
 }
 
+void Arch_leaveVMAsyncTransfer(tcb_t *tcb)
+{
+#ifdef CONFIG_VTX
+    vcpu_t *vcpu = tcb->tcbArch.vcpu;
+    word_t *buffer;
+    if (vcpu) {
+        if (current_vmcs != vcpu) {
+            vmptrld(vcpu);
+        }
+
+        setRegister(tcb, msgRegisters[0], vmread(VMX_GUEST_RIP));
+        setRegister(tcb, msgRegisters[1], vmread(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS));
+        buffer = lookupIPCBuffer(true, tcb);
+        if (!buffer) {
+            return;
+        }
+
+        buffer[3] = vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO);
+    }
+#endif
+}
+
 #ifdef CONFIG_VTX
 exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t extraCaps)
 {

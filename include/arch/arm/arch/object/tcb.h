@@ -20,5 +20,6 @@ unsigned int setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer);
 word_t CONST Arch_decodeTransfer(word_t flags);
 exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src,
                                        tcb_t *tcb_dest);
+void Arch_leaveVMAsyncTransfer(tcb_t *tcb);
 
 #endif

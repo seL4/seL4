@@ -724,5 +724,19 @@ uint16_t vpid_for_vcpu(vcpu_t *vcpu)
     return (((uint32_t)vcpu) >> 13) & MASK(16);
 }
 
+void vcpu_update_vmenter_state(vcpu_t *vcpu)
+{
+    word_t *buffer;
+    if (current_vmcs != vcpu) {
+        vmptrld(vcpu);
+    }
+    vmwrite(VMX_GUEST_RIP, getRegister(ksCurThread, msgRegisters[0]));
+    vmwrite(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS, applyFixedBits(getRegister(ksCurThread, msgRegisters[1]), primary_control_high, primary_control_low));
+    buffer = lookupIPCBuffer(false, ksCurThread);
+    if (!buffer) {
+        return;
+    }
+    vmwrite(VMX_CONTROL_ENTRY_INTERRUPTION_INFO, buffer[3] & (~(MASK(31 - 12) << 12)));
+}
 
 #endif

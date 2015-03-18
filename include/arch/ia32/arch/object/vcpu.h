@@ -69,6 +69,7 @@ exception_t decodeIA32VCPUInvocation(
     word_t* buffer
 );
 
+void vcpu_update_vmenter_state(vcpu_t *vcpu);
 exception_t decodeReadVMCS(cap_t cap, unsigned int length, word_t* buffer);
 exception_t decodeWriteVMCS(cap_t cap, unsigned int length, word_t* buffer);
 exception_t decodeSetTCB(cap_t cap, unsigned int length, word_t* buffer, extra_caps_t extraCaps);

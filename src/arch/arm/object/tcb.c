@@ -185,3 +185,8 @@ Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest)
 {
     return EXCEPTION_NONE;
 }
+
+void
+Arch_leaveVMAsyncTransfer(tcb_t *tcb)
+{
+}

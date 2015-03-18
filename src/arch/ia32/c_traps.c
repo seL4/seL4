@@ -241,10 +241,14 @@ void __attribute__((externally_visible)) c_handle_syscall(syscall_t syscall, wor
 #endif
 #ifdef CONFIG_VTX
     if (syscall == SysVMEnter) {
+        vcpu_update_vmenter_state(ksCurThread->tcbArch.vcpu);
         ksCurThread->tcbArch.tcbContext.registers[NextEIP] += 2;
         if (ksCurThread->boundAsyncEndpoint && async_endpoint_ptr_get_state(ksCurThread->boundAsyncEndpoint) == AEPState_Active) {
             completeAsyncIPC(ksCurThread->boundAsyncEndpoint, ksCurThread);
             setRegister(ksCurThread, msgInfoRegister, 0);
+            /* Any guest state that we should return is in the same
+             * register position as sent to us, so we can just return
+             * and let the user pick up the values they put in */
             restore_user_context();
         } else {
             setThreadState(ksCurThread, ThreadState_RunningVM);

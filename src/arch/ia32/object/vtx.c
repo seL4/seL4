@@ -118,23 +118,26 @@ static void setMRs_vmexit(uint32_t reason, uint32_t qualification)
     word_t *buffer;
     int i;
 
-    setRegister(ksCurThread, msgRegisters[0], reason);
-    setRegister(ksCurThread, msgRegisters[1], qualification);
+    setRegister(ksCurThread, msgRegisters[0], vmread(VMX_GUEST_RIP));
+    setRegister(ksCurThread, msgRegisters[1], vmread(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS));
 
     buffer = lookupIPCBuffer(true, ksCurThread);
     if (!buffer) {
         return;
     }
 
-    buffer[3] = vmread(VMX_DATA_EXIT_INSTRUCTION_LENGTH);
-    buffer[4] = vmread(VMX_DATA_GUEST_PHYSICAL);
-    buffer[5] = vmread(VMX_GUEST_RFLAGS);
-    buffer[6] = vmread(VMX_GUEST_INTERRUPTABILITY);
-    buffer[7] = vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO);
-    buffer[8] = vmread(VMX_GUEST_CR3);
+    buffer[3] = vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO);
+    buffer[4] = reason;
+    buffer[5] = qualification;
+
+    buffer[6] = vmread(VMX_DATA_EXIT_INSTRUCTION_LENGTH);
+    buffer[7] = vmread(VMX_DATA_GUEST_PHYSICAL);
+    buffer[8] = vmread(VMX_GUEST_RFLAGS);
+    buffer[9] = vmread(VMX_GUEST_INTERRUPTABILITY);
+    buffer[10] = vmread(VMX_GUEST_CR3);
 
     for (i = 0; i <= EBP; i++) {
-        buffer[9 + i] = ksCurThread->tcbArch.vcpu->gp_registers[i];
+        buffer[11 + i] = ksCurThread->tcbArch.vcpu->gp_registers[i];
     }
 }
 

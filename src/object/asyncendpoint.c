@@ -64,6 +64,7 @@ sendAsyncIPC(async_endpoint_t *aepptr, word_t badge)
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
                 setRegister(tcb, msgInfoRegister, 0);
+                Arch_leaveVMAsyncTransfer(tcb);
                 attemptSwitchTo(tcb);
             } else {
                 aep_set_active(aepptr, badge);
