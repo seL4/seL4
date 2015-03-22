@@ -33,6 +33,10 @@
                              | PMODE_SUPERVISOR   \
                              | CPSR_EXTRA_FLAGS   )
 
+#define CPSR_IDLETHREAD      ( PMASK_FIRQ         \
+                             | PMODE_SUPERVISOR   \
+                             | CPSR_EXTRA_FLAGS   )
+
 #ifdef __ASSEMBLER__
 
 /* Offsets within the user context, these need to match the order in
