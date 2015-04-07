@@ -492,12 +492,12 @@ build_largest_child(cap_t cap)
         return cap_untyped_cap_new(0, 4, cap_untyped_cap_get_capPtr(cap) + BIT(cap_untyped_cap_get_capBlockSize(cap)) - BIT(4));
     case cap_endpoint_cap:
         if (cap_endpoint_cap_get_capEPBadge(cap) == 0) {
-            return cap_endpoint_cap_new(BIT(29) - 1, 0, 0, 0, cap_endpoint_cap_get_capEPPtr(cap));
+            return cap_endpoint_cap_new(BIT(28) - 1, 0, 0, 0, cap_endpoint_cap_get_capEPPtr(cap));
         }
         return cap;
     case cap_async_endpoint_cap:
         if (cap_async_endpoint_cap_get_capAEPBadge(cap) == 0) {
-            return cap_async_endpoint_cap_new(BIT(29) - 1, 0, 0, cap_async_endpoint_cap_get_capAEPPtr(cap));
+            return cap_async_endpoint_cap_new(BIT(28) - 1, 0, 0, cap_async_endpoint_cap_get_capAEPPtr(cap));
         }
         return cap;
         /* We get away with not setting the extra higher as we will always be comparing
