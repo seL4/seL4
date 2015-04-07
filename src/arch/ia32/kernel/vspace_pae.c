@@ -306,7 +306,7 @@ void flushPageLarge(pde_t *pd, uint32_t pdIndex)
     cap_t threadRoot;
     cte_t *pdCte;
 
-    pdCte = cdtFindWithExtrap(cap_page_directory_cap_new(0, 0, PD_REF(pd)));
+    pdCte = cdtFindWithExtra(cap_page_directory_cap_new(0, 0, PD_REF(pd)));
     if (pdCte) {
         pdpte_t *pdpt;
         uint32_t pdptIndex;
