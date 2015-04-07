@@ -38,7 +38,7 @@ exception_t decodeIA32IOPTInvocation(word_t label, uint32_t length, cte_t* slot,
 exception_t decodeIA32IOMapInvocation(word_t label, uint32_t length, cte_t* slot, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
 void unmapIOPage(cap_t cap);
 vtd_cte_t *lookupVTDContextSlot(cap_t cap);
-void unmapVTDContextEntry(vtd_cte_t *vtd_context_slot);
+void unmapVTDContextEntry(cap_t cap);
 void unmapVTDPT(vtd_pte_t *parent, vtd_pte_t *child, uint32_t index);
 void unmapAllIOPT(vtd_pte_t *pt, int level);
 void unmapIOPTCap(cap_t cap);

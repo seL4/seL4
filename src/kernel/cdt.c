@@ -142,6 +142,12 @@ io_page_table_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 }
 
 static inline int
+io_space_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+{
+    return tie_break(a, b, cap_extra_comp);
+}
+
+static inline int
 ept_pdpt_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 {
     return tie_break(a, b, cap_extra_comp);
@@ -185,6 +191,7 @@ typed_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
         [cap_zombie_cap]         = just_tie_break,
 #ifdef CONFIG_IOMMU
         [cap_io_page_table_cap]  = io_page_table_comparator,
+        [cap_io_space_cap]       = io_space_comparator,
 #endif
 #ifdef CONFIG_VTX
         [cap_vcpu_cap]           = just_tie_break,
@@ -515,6 +522,7 @@ build_largest_child(cap_t cap)
 #endif
 #ifdef CONFIG_IOMMU
     case cap_io_page_table_cap:
+    case cap_io_space_cap:
 #endif
         return cap;
     default:

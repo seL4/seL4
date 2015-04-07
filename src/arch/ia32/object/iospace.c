@@ -77,12 +77,13 @@ void unmapAllIOPT(vtd_pte_t *pt, int level)
     }
 }
 
-void unmapVTDContextEntry(vtd_cte_t *vtd_context_slot)
+static void unmapVTDContextEntryAt(vtd_cte_t *cte, uint32_t index)
 {
     /* Lookup the page table and unmap it */
     vtd_pte_t *vtd_pt;
     cte_t *ptCte;
     cap_t ptCap;
+    vtd_cte_t *vtd_context_slot = cte + index;
     /* First see if there is a page table */
     if (!vtd_cte_ptr_get_present(vtd_context_slot)) {
         return;
@@ -93,7 +94,7 @@ void unmapVTDContextEntry(vtd_cte_t *vtd_context_slot)
     }
     /* Lookup the slot */
     vtd_pt = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
-    ptCte = cdtFindAtDepth(cap_io_page_table_cap_new(0, (uint32_t)vtd_context_slot, 0, VTD_PT_REF(vtd_pt)), vtd_cte_ptr_get_cte_depth(vtd_context_slot));
+    ptCte = cdtFindAtDepth(cap_io_page_table_cap_new(0, (uint32_t)cte, index, VTD_PT_REF(vtd_pt)), vtd_cte_ptr_get_cte_depth(vtd_context_slot));
     assert(ptCte);
     /* unmap */
     ptCap = cap_io_page_table_cap_set_capIOPTMappedObject(ptCte->cap, 0);
@@ -140,6 +141,12 @@ vtd_cte_t *lookupVTDContextSlot(cap_t cap)
 {
     lookupVTDContextSlot_ret_t ret = lookupVTDContextSlot_helper(cap);
     return ret.cte + ret.index;
+}
+
+void unmapVTDContextEntry(cap_t cap)
+{
+    lookupVTDContextSlot_ret_t ret = lookupVTDContextSlot_helper(cap);
+    unmapVTDContextEntryAt(ret.cte, ret.index);
 }
 
 static lookupIOPTSlot_ret_t lookupIOPTSlot_helper(vtd_pte_t* iopt, word_t translation, word_t levels)
@@ -194,9 +201,8 @@ unmapIOPTCap(cap_t cap)
     if (level == 0) {
         vtd_cte_t *ct = VTD_CTE_PTR(cap_io_page_table_cap_get_capIOPTMappedObject(cap));
         uint32_t index = cap_io_page_table_cap_get_capIOPTMappedIndex(cap);
-        vtd_cte_t *cte = ct + index;
         if (ct) {
-            unmapVTDContextEntry(cte);
+            unmapVTDContextEntryAt(ct, index);
         }
     } else {
         vtd_pte_t *parent = VTD_PTE_PTR(cap_io_page_table_cap_get_capIOPTMappedObject(cap));

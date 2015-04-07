@@ -277,7 +277,7 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_io_space_cap:
         if (final) {
             /* Unmap any first level page table. */
-            unmapVTDContextEntry(lookupVTDContextSlot(cap));
+            unmapVTDContextEntry(cap);
         }
         break;
     case cap_io_page_table_cap: {
