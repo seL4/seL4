@@ -62,7 +62,7 @@ cap_get_capSpaceType(cap_t cap)
     };
     c_type = cap_get_capType(cap);
     assert(c_type < ARRAY_SIZE(spaceType));
-    type = spaceType[cap_get_capType(cap)];
+    type = spaceType[c_type];
     /* if type is 0 then it means the value returned by cap_get_capType was not
      * defined in the lookup table and got a default value of 0 */
     assert(type != 0);
