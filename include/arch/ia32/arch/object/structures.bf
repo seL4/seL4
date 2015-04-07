@@ -31,7 +31,8 @@ block untyped_cap {
 }
 
 block endpoint_cap {
-    field capEPBadge 29
+    field capEPBadge 28
+    padding 1
     field capCanGrant 1
     field capCanSend 1
     field capCanReceive 1
@@ -41,8 +42,8 @@ block endpoint_cap {
 }
 
 block async_endpoint_cap {
-    field capAEPBadge 29
-    padding 1
+    field capAEPBadge 28
+    padding 2
     field capAEPCanSend 1
     field capAEPCanReceive 1
 
