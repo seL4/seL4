@@ -25,6 +25,29 @@
 #define IA32_SYSENTER_ESP_MSR   0x175
 #define IA32_SYSENTER_EIP_MSR   0x176
 
+#define BROADWELL_MODEL_ID      0xD4
+#define HASWELL_MODEL_ID        0xC3
+#define IVY_BRIDGE_MODEL_ID     0xA9
+#define SANDY_BRIDGE_1_MODEL_ID 0x2A /* Sandy Bridge */
+#define SANDY_BRIDGE_2_MODEL_ID 0x2D /* Sandy Bridge-E, Sandy Bridge-EN and Sandy Bridge-EP */
+#define WESTMERE_1_MODEL_ID     0x25 /* Arrandale and Clarksdale */
+#define WESTMERE_2_MODEL_ID     0x2C /* Gulftown and Westmere-EP */
+#define WESTMERE_3_MODEL_ID     0x2F /* Westemere-EX */
+#define NEHALEM_1_MODEL_ID      0x1E /* Clarksfield, Lynnfield and Jasper Forest */
+#define NEHALEM_2_MODEL_ID      0x1A /* Bloomfield and Nehalem-EP */
+#define NEHALEM_3_MODEL_ID      0x2E /* Nehalem-EX */
+
+#define MODEL_ID(x) ( ((x & 0xf0000) >> 16) + (x & 0xf0) )
+
+/* This article discloses prefetcher control on Intel processors; Nehalem, Westmere, Sandy Bridge, 
+   Ivy Bridge, Haswell, and Broadwell. It is currently undocumented in the regular intel manuals.
+   https://software.intel.com/en-us/articles/disclosure-of-hw-prefetcher-control-on-some-intel-processors */
+#define IA32_PREFETCHER_MSR                 0x1A4
+#define IA32_PREFETCHER_MSR_L2              BIT(0)
+#define IA32_PREFETCHER_MSR_L2_ADJACENT     BIT(1)
+#define IA32_PREFETCHER_MSR_DCU             BIT(2)
+#define IA32_PREFETCHER_MSR_DCU_IP          BIT(3)
+
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
 
@@ -87,6 +110,7 @@ void ia32_wrmsr(const uint32_t reg, const uint32_t val_high, const uint32_t val_
 
 /* Read different parts of CPUID */
 uint32_t ia32_cpuid_edx(uint32_t eax, uint32_t ecx);
+uint32_t ia32_cpuid_eax(uint32_t eax, uint32_t ecx);
 
 /* Read/write memory fence */
 void ia32_mfence(void);

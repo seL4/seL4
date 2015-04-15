@@ -117,6 +117,15 @@ BEGIN_FUNC(ia32_cpuid_edx)
     ret
 END_FUNC(ia32_cpuid_edx)
 
+BEGIN_FUNC(ia32_cpuid_eax)
+    movl 4(%esp), %eax
+    movl 8(%esp), %ecx
+    pushl %ebx
+    cpuid
+    popl %ebx
+    ret
+END_FUNC(ia32_cpuid_eax)
+
 .section .text
 
 BEGIN_FUNC(invalidateTLB)

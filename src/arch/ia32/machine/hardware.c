@@ -82,3 +82,37 @@ void flushCacheRange(void* vaddr, uint32_t size_bits)
     }
     ia32_mfence();
 }
+
+/* Disables as many prefetchers as possible */
+BOOT_CODE bool_t 
+disablePrefetchers()
+{
+    uint32_t version_info;
+    uint32_t low, high; 
+    int i;
+
+    uint32_t valid_models[] = { BROADWELL_MODEL_ID, HASWELL_MODEL_ID, IVY_BRIDGE_MODEL_ID, 
+        SANDY_BRIDGE_1_MODEL_ID, SANDY_BRIDGE_2_MODEL_ID, WESTMERE_1_MODEL_ID, WESTMERE_2_MODEL_ID, 
+        WESTMERE_3_MODEL_ID, NEHALEM_1_MODEL_ID, NEHALEM_2_MODEL_ID, NEHALEM_3_MODEL_ID };
+
+    version_info = ia32_cpuid_eax(0x1, 0x0);
+
+    for (i = 0; i < ARRAY_SIZE(valid_models); ++i) {
+        if (MODEL_ID(version_info) == valid_models[i]) {
+            low = ia32_rdmsr_low(IA32_PREFETCHER_MSR);
+            high = ia32_rdmsr_high(IA32_PREFETCHER_MSR);
+
+            low |= IA32_PREFETCHER_MSR_L2;
+            low |= IA32_PREFETCHER_MSR_L2_ADJACENT;
+            low |= IA32_PREFETCHER_MSR_DCU;
+            low |= IA32_PREFETCHER_MSR_DCU_IP;
+
+            ia32_wrmsr(IA32_PREFETCHER_MSR, high, low);
+
+            return true;
+        }
+    }
+
+    printf("Disabling prefetchers not implemented for CPU model: %x\n", MODEL_ID(version_info));
+    return false;
+}
