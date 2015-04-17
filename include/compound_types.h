@@ -17,14 +17,14 @@
 #include <arch/types.h>
 
 struct pde_range {
-    pde_t *base;
+    pde_t *pd;
     unsigned int start;
     unsigned int length;
 };
 typedef struct pde_range pde_range_t;
 
 struct pte_range {
-    pte_t *base;
+    pte_t *pt;
     unsigned int start;
     unsigned int length;
 };
