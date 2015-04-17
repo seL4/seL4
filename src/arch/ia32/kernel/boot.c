@@ -660,5 +660,11 @@ init_node_cpu(
     vtx_enable();
 #endif
 
+#ifdef CONFIG_DEBUG_DISABLE_PREFETCHERS
+    if (!disablePrefetchers()) {
+        return false;
+    }
+#endif
+
     return true;
 }
