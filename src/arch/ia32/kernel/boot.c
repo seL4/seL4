@@ -575,7 +575,7 @@ init_node_cpu(
     if (!apic_init(apic_khz, mask_legacy_irqs)) {
         return false;
     }
- 
+
 #ifdef CONFIG_DEBUG_DISABLE_PREFETCHERS
     if (!disablePrefetchers()) {
         return false;

@@ -39,7 +39,7 @@
 
 #define MODEL_ID(x) ( ((x & 0xf0000) >> 16) + (x & 0xf0) )
 
-/* This article discloses prefetcher control on Intel processors; Nehalem, Westmere, Sandy Bridge, 
+/* This article discloses prefetcher control on Intel processors; Nehalem, Westmere, Sandy Bridge,
    Ivy Bridge, Haswell, and Broadwell. It is currently undocumented in the regular intel manuals.
    https://software.intel.com/en-us/articles/disclosure-of-hw-prefetcher-control-on-some-intel-processors */
 #define IA32_PREFETCHER_MSR                 0x1A4
