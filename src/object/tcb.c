@@ -199,6 +199,7 @@ deleteCallerCap(tcb_t *receiver)
     cte_t *callerSlot;
 
     callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
+    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
     cteDeleteOne(callerSlot);
 }
 
