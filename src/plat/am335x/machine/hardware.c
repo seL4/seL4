@@ -327,15 +327,17 @@ enableTimers(void)
     /* XXX repeat this for DMTIMER4..7 */
     /* select clock */
     *CMPER_REG(cmper, CMPER_CLKSEL_TIMER3) = CMPER_CKLSEL_MOSC;
-    while((*CMPER_REG(cmper, CMPER_CLKSEL_TIMER3) & 3) != CMPER_CKLSEL_MOSC)
+    while ((*CMPER_REG(cmper, CMPER_CLKSEL_TIMER3) & 3) != CMPER_CKLSEL_MOSC) {
         continue;
+    }
 
     /* enable clock */
     *CMPER_REG(cmper, CMPER_TIMER3_CLKCTRL) = CMPER_CLKCTRL_ENABLE;
-    while((*CMPER_REG(cmper, CMPER_TIMER3_CLKCTRL) & 3) != CMPER_CLKCTRL_ENABLE)
+    while ((*CMPER_REG(cmper, CMPER_TIMER3_CLKCTRL) & 3) != CMPER_CLKCTRL_ENABLE) {
         continue;
+    }
 }
-    
+
 /* Configure dmtimer0 as kernel preemption timer */
 /**
    DONT_TRANSLATE
