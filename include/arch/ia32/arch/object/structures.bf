@@ -13,21 +13,12 @@
 ---- Default base size: uint32_t
 base 32
 
+-- Including the common structures.bf is neccessary because
+-- we need the structures to be visible here when building
+-- the capType
+#include <object/structures.bf>
+
 ---- Arch-independent caps
-block null_cap {
-    padding 32
-
-    padding 28
-    field capType 4
-}
-
-block untyped_cap {
-    field capFreeIndex 27
-    field capBlockSize 5
-
-    field_high capPtr 28
-    field capType     4
-}
 
 block endpoint_cap {
     field capEPBadge 29
@@ -73,42 +64,6 @@ block cnode_capdata {
     field guard 18
     field guardSize 5
     padding 3
-}
-
-block thread_cap {
-    padding              32
-
-    field_high capTCBPtr 28
-    field capType         4
-}
-
-block irq_control_cap {
-    padding       32
-    padding       24
-    field capType  8
-}
-
-block irq_handler_cap {
-    padding       24
-    field capIRQ   8
-
-    padding       24
-    field capType  8
-}
-
-block zombie_cap {
-    field capZombieID     32
-
-    padding               18
-    field capZombieType   6
-    field capType         8
-}
-
-block domain_cap {
-    padding 32
-
-    padding 24
-    field capType 8
 }
 
 ---- IA32-specific cap types
