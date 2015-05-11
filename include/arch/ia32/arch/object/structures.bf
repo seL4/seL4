@@ -20,16 +20,6 @@ base 32
 
 ---- Arch-independent caps
 
-block endpoint_cap {
-    field capEPBadge 29
-    field capCanGrant 1
-    field capCanSend 1
-    field capCanReceive 1
-
-    field_high capEPPtr 28
-    field capType 4
-}
-
 block async_endpoint_cap {
     field capAEPBadge 29
     padding 1

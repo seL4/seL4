@@ -26,6 +26,18 @@ block untyped_cap {
     field capType     4
 }
 
+block endpoint_cap(capEPBadge, capCanGrant, capCanSend, capCanReceive,
+                   capEPPtr, capType) {
+    field_high capEPPtr 28
+    padding 1
+    field capCanGrant 1
+    field capCanReceive 1
+    field capCanSend 1
+
+    field capEPBadge 28
+    field capType 4
+}
+
 block thread_cap {
     padding              32
 
