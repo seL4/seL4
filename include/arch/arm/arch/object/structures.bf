@@ -16,37 +16,6 @@ base 32
 -- the capType
 #include <object/structures.bf>
 
----- Arch-independent caps
-
-block reply_cap(capReplyMaster, capTCBPtr, capType) {
-    padding 32
-
-    field_high capTCBPtr 27
-    field capReplyMaster 1
-    field capType 4
-}
-
--- This structure is modified on ARM for performance reasons. The user-visible
--- format of the data word is defined by cnode_capdata, below.
-block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
-                capCNodePtr, capType) {
-    padding 4
-    field capCNodeGuardSize 5
-    field capCNodeRadix 5
-    field capCNodeGuard 18
-
-    field_high capCNodePtr 27
-    padding 1
-    field capType 4
-}
-
-block cnode_capdata {
-    padding 6
-    field guard 18
-    field guardSize 5
-    padding 3
-}
-
 ---- ARM-specific caps
 
 -- 4k frame (these have a separate cap type as there is no room to

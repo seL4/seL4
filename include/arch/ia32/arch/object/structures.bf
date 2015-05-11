@@ -18,34 +18,6 @@ base 32
 -- the capType
 #include <object/structures.bf>
 
----- Arch-independent caps
-
-block reply_cap {
-    padding 31
-    field capReplyMaster 1
-
-    field_high capTCBPtr 28
-    field capType 4
-}
-
-block cnode_cap {
-    padding 4
-    field capCNodeRadix     5
-    field capCNodeGuardSize 5
-    field capCNodeGuard     18
-
-    padding                 1
-    field_high capCNodePtr  27
-    field capType           4
-}
-
-block cnode_capdata {
-    padding 6
-    field guard 18
-    field guardSize 5
-    padding 3
-}
-
 ---- IA32-specific cap types
 
 block frame_cap {

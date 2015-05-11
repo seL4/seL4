@@ -48,6 +48,34 @@ block async_endpoint_cap {
     field capType 4
 }
 
+block reply_cap(capReplyMaster, capTCBPtr, capType) {
+    padding 32
+
+    field_high capTCBPtr 27
+    field capReplyMaster 1
+    field capType 4
+}
+
+-- The user-visible format of the data word is defined by cnode_capdata, below.
+block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
+                capCNodePtr, capType) {
+    padding 4
+    field capCNodeGuardSize 5
+    field capCNodeRadix 5
+    field capCNodeGuard 18
+
+    field_high capCNodePtr 27
+    padding 1
+    field capType 4
+}
+
+block cnode_capdata {
+    padding 6
+    field guard 18
+    field guardSize 5
+    padding 3
+}
+
 block thread_cap {
     padding              32
 
@@ -84,4 +112,3 @@ block domain_cap {
     padding 24
     field capType 8
 }
-
