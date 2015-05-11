@@ -20,7 +20,7 @@
 #include <config.h>
 #include <assert.h>
 #include <arch/fastpath/fastpath.h>
-#include <armv/fastpath.h>
+#include <armv/context_switch.h>
 
 /* When building the fastpath the assembler in traps.S makes these
  * assumptions. Because compile_asserts are hard to do in assembler,
@@ -95,7 +95,7 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
 
     hw_asid = pde_pde_invalid_get_stored_hw_asid(stored_hw_asid);
 
-    armv_contextSwitch_fp(cap_pd, hw_asid);
+    armv_contextSwitch_HWASID(cap_pd, hw_asid);
 
     *armKSGlobalsFrame = thread->tcbIPCBuffer;
     ksCurThread = thread;

@@ -859,7 +859,7 @@ findFreeHWASID(void)
     return hw_asid;
 }
 
-static hw_asid_t
+hw_asid_t
 getHWASID(asid_t asid)
 {
     pde_t stored_hw_asid;
@@ -874,16 +874,6 @@ getHWASID(asid_t asid)
         storeHWASID(asid, new_hw_asid);
         return new_hw_asid;
     }
-}
-
-void
-setCurrentASID(asid_t asid)
-{
-    hw_asid_t hw_asid;
-
-    assert(asid);
-    hw_asid = getHWASID(asid);
-    setHardwareASID(hw_asid);
 }
 
 /* Cache and TLB consistency */
