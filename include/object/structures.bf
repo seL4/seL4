@@ -38,6 +38,16 @@ block endpoint_cap(capEPBadge, capCanGrant, capCanSend, capCanReceive,
     field capType 4
 }
 
+block async_endpoint_cap {
+    field capAEPBadge 28
+    padding 2
+    field capAEPCanReceive 1
+    field capAEPCanSend 1
+
+    field_high capAEPPtr 28
+    field capType 4
+}
+
 block thread_cap {
     padding              32
 
