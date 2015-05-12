@@ -174,137 +174,6 @@ tagged_union cap capType {
 
 ---- Arch-independent object types
 
--- Endpoint: size = 16 bytes
-block endpoint {
-    padding 64
-
-    field_high epQueue_head 28
-    padding 4
-
-    field_high epQueue_tail 28
-    padding 2
-    field state 2
-}
-
--- Async endpoint: size = 16 bytes
-block async_endpoint {
-    field aepData 32
-
-    field aepMsgIdentifier 32
-
-    field_high aepQueue_head 28
-    padding 4
-
-    field_high aepQueue_tail 28
-    padding 2
-    field state 2
-}
-
--- Mapping database (MDB) node: size = 8 bytes
-block mdb_node {
-    field_high mdbNext 29
-    padding 1
-    field mdbRevocable 1
-    field mdbFirstBadged 1
-
-    field_high mdbPrev 29
-    padding 3
-}
-
--- Thread state data
---
--- tsType
--- * Running
--- * Restart
--- * Inactive
--- * BlockedOnReceive
---   - DiminishCaps
---   - Endpoint
--- * BlockedOnSend
---   - Endpoint
---   - CanGrant
---   - IsCall
---   - IPCBadge
---   - Fault
---     - faultType
---     * CapFault
---       - Address
---       - InReceivePhase
---       - LookupFailure
---         - lufType
---         * InvalidRoot
---         * MissingCapability
---           - BitsLeft
---         * DepthMismatch
---           - BitsFound
---           - BitsLeft
---         * GuardMismatch
---           - GuardFound
---           - BitsLeft
---           - GuardSize
---     * VMFault
---       - Address
---       - FSR
---       - FaultType
---     * UnknownSyscall
---       - Number
---     * UserException
---       - Number
---       - Code
--- * BlockedOnReply
--- * BlockedOnFault
---   - Fault
--- * BlockedOnAsyncEvent
---   - AEP
--- * Idle
-
--- Lookup fault: size = 8 bytes
-block invalid_root {
-    padding 62
-    field lufType 2
-}
-
-block missing_capability {
-    padding 56
-    field bitsLeft 6
-    field lufType 2
-}
-
-block depth_mismatch {
-    padding 50
-    field bitsFound 6
-    field bitsLeft 6
-    field lufType 2
-}
-
-block guard_mismatch {
-    field guardFound 32
-    padding 18
-    field bitsLeft 6
-    field bitsFound 6
-    field lufType 2
-}
-
-tagged_union lookup_fault lufType {
-    tag invalid_root 0
-    tag missing_capability 1
-    tag depth_mismatch 2
-    tag guard_mismatch 3
-}
-
--- Fault: size = 8 bytes
-block null_fault {
-    padding 61
-    field faultType 3
-}
-
-block cap_fault {
-    field address 32
-    field inReceivePhase 1
-    padding 28
-    field faultType 3
-}
-
 block vm_fault {
     field     address           32
     field     FSR               5
@@ -314,38 +183,12 @@ block vm_fault {
     field     faultType         3
 }
 
-block unknown_syscall {
-    field syscallNumber 32
-    padding 29
-    field faultType 3
-}
-
-block user_exception {
-    field number 32
-    field code 29
-    field faultType 3
-}
-
 tagged_union fault faultType {
     tag null_fault 0
     tag cap_fault 1
     tag vm_fault 2
     tag unknown_syscall 3
     tag user_exception 4
-}
-
--- Thread state: size = 8 bytes
-block thread_state {
-    field blockingIPCBadge 29
-    field blockingIPCCanGrant 1
-    field blockingIPCIsCall 1
-    field tcbQueued 1
-
-    padding 31
-    field blockingIPCDiminishCaps 1
-
-    field_high blockingIPCEndpoint 28
-    field tsType 4
 }
 
 -- VM attributes
