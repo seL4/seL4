@@ -8,10 +8,6 @@
 # @TAG(GD_GPL)
 #
 
-ifdef FASTPATH
+DIRECTORIES += src/fastpath
 
-DIRECTORIES += src/arch/arm/fastpath
-
-ARCH_C_SOURCES += fastpath/fastpath.c
-
-endif
+C_SOURCES += src/fastpath/fastpath.c
