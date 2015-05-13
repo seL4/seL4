@@ -543,7 +543,7 @@ PRUNES = $(foreach file,${STATICSOURCES} ${STATICHEADERS}, \
            --prune ${file} )
 
 TOPLEVELTYPES=cte_C tcb_C endpoint_C async_endpoint_C pte_C \
-              pde_C adglobs_struct user_data_C
+              pde_C user_data_C
 TOPTYPES = $(foreach tp,${TOPLEVELTYPES}, \
            --toplevel ${tp} )
 
