@@ -194,6 +194,11 @@ struct tcb {
 
     /* Previous and next pointers for endpoint & scheduler queues, 16 bytes */
     struct tcb *tcbSchedNext, *tcbSchedPrev, *tcbEPNext, *tcbEPPrev;
+
+#ifdef DEBUG
+    /* Use any remaining space for a thread name */
+    char tcbName[];
+#endif
 };
 typedef struct tcb tcb_t;
 
