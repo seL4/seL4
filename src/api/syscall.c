@@ -20,6 +20,7 @@
 #include <machine/io.h>
 #include <object/interrupt.h>
 #include <model/statedata.h>
+#include <string.h>
 
 #ifdef DEBUG
 #include <arch/machine/capdl.h>
@@ -69,6 +70,32 @@ handleUnknownSyscall(word_t w)
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
         uint32_t cap_type = cap_get_capType(lu_ret.cap);
         setRegister(ksCurThread, capRegister, cap_type);
+        return EXCEPTION_NONE;
+    }
+    if (w == SysDebugNameThread) {
+        /* This is a syscall meant to aid debugging, so if anything goes wrong wrong
+         * then assume the system is completely misconfigured and halt */
+        const char *name;
+        word_t cptr = getRegister(ksCurThread, capRegister);
+        lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
+        /* ensure we got a TCB cap */
+        uint32_t cap_type = cap_get_capType(lu_ret.cap);
+        if (cap_type != cap_thread_cap) {
+            userError("SysDebugNameThread: cap is not a TCB, halting");
+            halt();
+        }
+        /* Add 1 to the IPC buffer to skip the message info word */
+        name = (const char*)(lookupIPCBuffer(true, ksCurThread) + 1);
+        if (!name) {
+            userError("SysDebugNameThread: Failed to lookup IPC buffer, halting");
+            halt();
+        }
+        /* ensure the name isn't too long */
+        if (name[strnlen(name, seL4_MsgMaxLength * sizeof(word_t))] != '\0') {
+            userError("SysDebugNameThread: Name too long, halting");
+            halt();
+        }
+        setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return EXCEPTION_NONE;
     }
 #endif

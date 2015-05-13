@@ -22,6 +22,7 @@
 #include <kernel/vspace.h>
 #include <model/statedata.h>
 #include <util.h>
+#include <string.h>
 
 static inline void
 addToBitmap(word_t dom, word_t prio)
@@ -1079,3 +1080,11 @@ invokeTCB_AEPControl(tcb_t *tcb, async_endpoint_t *aepptr)
 
     return EXCEPTION_NONE;
 }
+
+#ifdef DEBUG
+void
+setThreadName(tcb_t *tcb, const char *name)
+{
+    strlcpy(tcb->tcbName, name, TCB_NAME_LENGTH);
+}
+#endif

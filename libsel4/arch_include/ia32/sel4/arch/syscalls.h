@@ -574,6 +574,27 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 }
 #endif
 
+#ifdef SEL4_DEBUG_KERNEL
+char *strcpy(char *, const char *);
+static inline void
+seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
+{
+    strcpy((char*)seL4_GetIPCBuffer()->msg, name);
+
+    asm volatile (
+        "pushl %%ebp       \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "popl %%ebp        \n"
+        :
+        : "a"(seL4_SysDebugNameThread), "b"(tcb)
+        : "%ecx", "%edx", "%esi", "%edi", "memory"
+    );
+}
+#endif
+
 #if defined(SEL4_DANGEROUS_CODE_INJECTION_KERNEL)
 static inline void
 seL4_DebugRun(void (*userfn) (void *), void* userarg)

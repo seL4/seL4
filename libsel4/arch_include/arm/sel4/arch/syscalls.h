@@ -554,6 +554,23 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 }
 #endif
 
+#ifdef SEL4_DEBUG_KERNEL
+
+char *strcpy(char *, const char *);
+static inline void
+seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
+{
+    strcpy((char*)seL4_GetIPCBuffer()->msg, name);
+
+    register seL4_Word arg1 asm("r0") = tcb;
+    register seL4_Word scno asm("r7") = seL4_SysDebugNameThread;
+    asm volatile ("swi %[swi_num]"
+                  : "+r"(arg1)
+                  : [swi_num] "i" __SWINUM(seL4_SysDebugNameThread), "r"(scno)
+                  : "memory");
+}
+#endif
+
 #ifdef SEL4_DANGEROUS_CODE_INJECTION_KERNEL
 static inline void
 seL4_DebugRun(void (* userfn) (void *), void* userarg)

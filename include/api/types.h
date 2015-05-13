@@ -115,8 +115,8 @@ wordFromMessageInfo(message_info_t mi)
 #define userError(...) \
     do {                                                                     \
         printf(ANSI_DARK "<<" ANSI_GREEN "seL4" ANSI_DARK                    \
-                " [%s/%d T%x @%x]: ",                                        \
-                __func__, __LINE__, (int)ksCurThread,                        \
+                " [%s/%d T%x \"%s\" @%x]: ",                                 \
+                __func__, __LINE__, (int)ksCurThread, ksCurThread->tcbName,  \
                 (int)getRestartPC(ksCurThread));                             \
         printf(__VA_ARGS__);                                                 \
         printf(">>" ANSI_RESET "\n");                                        \

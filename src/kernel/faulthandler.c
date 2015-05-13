@@ -111,7 +111,7 @@ handleDoubleFault(tcb_t *tptr, fault_t ex1)
     print_fault(ex2);
     printf("\nwhile trying to handle:\n");
     print_fault(ex1);
-    printf("\nin thread 0x%x ", (unsigned int)tptr);
+    printf("\nin thread 0x%x \"%s\" ", (unsigned int)tptr, tptr->tcbName);
     printf("at address 0x%x\n", (unsigned int)getRestartPC(tptr));
 #endif
 
