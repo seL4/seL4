@@ -10,43 +10,7 @@
 
 #include <machine/assembler.h>
 
-.section .phys.text
-
-BEGIN_FUNC(out8_phys)
-    movb 8(%esp), %al
-    movw 4(%esp), %dx
-    outb %al,     %dx
-    ret
-END_FUNC(out8_phys)
-
-BEGIN_FUNC(in8_phys)
-    movw 4(%esp), %dx
-    inb  %dx,     %al
-    ret
-END_FUNC(in8_phys)
-
 .section .boot.text
-
-BEGIN_FUNC(ia32_rdmsr_low_boot)
-    movl 4(%esp),  %ecx     # MSR register index
-    rdmsr                   # 8 bytes output will be in EDX:EAX
-    ret
-END_FUNC(ia32_rdmsr_low_boot)
-
-BEGIN_FUNC(ia32_rdmsr_high_boot)
-    movl 4(%esp),  %ecx     # MSR register index
-    rdmsr                   # 8 bytes output will be in EDX:EAX
-    movl %edx,     %eax     # Move the high bytes to the return register
-    ret
-END_FUNC(ia32_rdmsr_high_boot)
-
-BEGIN_FUNC(ia32_wrmsr)
-    movl 4(%esp),  %ecx     # MSR register index
-    movl 8(%esp),  %edx     # 4 most significant bytes
-    movl 12(%esp), %eax     # 4 least significant bytes
-    wrmsr
-    ret
-END_FUNC(ia32_wrmsr)
 
 BEGIN_FUNC(ia32_install_gdt)
     movl 4(%esp), %eax
@@ -78,28 +42,6 @@ BEGIN_FUNC(ia32_install_tss)
     ret
 END_FUNC(ia32_install_tss)
 
-BEGIN_FUNC(read_cr0_boot)
-    movl %cr0, %eax
-    ret
-END_FUNC(read_cr0_boot)
-
-BEGIN_FUNC(read_cr4_boot)
-    movl %cr4, %eax
-    ret
-END_FUNC(read_cr4_boot)
-
-BEGIN_FUNC(write_cr0_boot)
-    movl 4(%esp), %eax
-    movl %eax,    %cr0
-    ret
-END_FUNC(write_cr0_boot)
-
-BEGIN_FUNC(write_cr4_boot)
-    movl 4(%esp), %eax
-    movl %eax,    %cr4
-    ret
-END_FUNC(write_cr4_boot)
-
 BEGIN_FUNC(getCacheLineSize)
     pushl %ebx
     movl  $1,    %eax
@@ -112,89 +54,7 @@ BEGIN_FUNC(getCacheLineSize)
     ret
 END_FUNC(getCacheLineSize)
 
-BEGIN_FUNC(ia32_cpuid_edx)
-    movl 4(%esp), %eax
-    movl 8(%esp), %ecx
-    pushl %ebx
-    cpuid
-    popl %ebx
-    movl %edx, %eax
-    ret
-END_FUNC(ia32_cpuid_edx)
-
-BEGIN_FUNC(ia32_cpuid_eax)
-    movl 4(%esp), %eax
-    movl 8(%esp), %ecx
-    pushl %ebx
-    cpuid
-    popl %ebx
-    ret
-END_FUNC(ia32_cpuid_eax)
-
 .section .text
-
-BEGIN_FUNC(invalidateTLB)
-    movl %cr3, %eax
-    movl %eax, %cr3
-    ret
-END_FUNC(invalidateTLB)
-
-BEGIN_FUNC(invalidateTLBentry)
-    movl 4(%esp), %eax
-    invlpg (%eax)
-    ret
-END_FUNC(invalidateTLBentry)
-
-BEGIN_FUNC(invalidatePageStructureCache)
-    // Force an invalidate by flushing an arbitrary entry
-    // from the TLB
-    movl $0, %eax
-    invlpg (%eax)
-    ret
-END_FUNC(invalidatePageStructureCache)
-
-BEGIN_FUNC(flushCacheLine)
-    movl 4(%esp), %eax
-    clflush (%eax)
-    ret
-END_FUNC(flushCacheLine)
-
-BEGIN_FUNC(getFaultAddr)
-    movl %cr2, %eax
-    ret
-END_FUNC(getFaultAddr)
-
-BEGIN_FUNC(get_current_esp)
-    movl %esp, %eax
-    ret
-END_FUNC(get_current_esp)
-
-BEGIN_FUNC(ia32_wbinvd)
-    wbinvd
-    ret
-END_FUNC(ia32_wbinvd)
-
-BEGIN_FUNC(ia32_mfence)
-    mfence
-    ret
-END_FUNC(ia32_mfence)
-
-BEGIN_FUNC(saveFpuState)
-    movl 4(%esp), %eax
-    fxsave (%eax)
-    ret
-END_FUNC(saveFpuState)
-
-BEGIN_FUNC(loadFpuState)
-    movl 4(%esp), %eax
-    fxrstor (%eax)
-    ret
-END_FUNC(loadFpuState)
-
-BEGIN_FUNC(resetFpu)
-    finit
-    ret
-END_FUNC(resetFpu)
 
 BEGIN_FUNC(out8)
     movb 8(%esp), %al
@@ -234,28 +94,3 @@ BEGIN_FUNC(in32)
     inl  %dx,     %eax
     ret
 END_FUNC(in32)
-
-BEGIN_FUNC(ia32_rdmsr_low)
-    movl 4(%esp),  %ecx     # MSR register index
-    rdmsr                   # 8 bytes output will be in EDX:EAX
-    ret
-END_FUNC(ia32_rdmsr_low)
-
-BEGIN_FUNC(ia32_rdmsr_high)
-    movl 4(%esp),  %ecx     # MSR register index
-    rdmsr                   # 8 bytes output will be in EDX:EAX
-    movl %edx,     %eax     # Move the high bytes to the return register
-    ret
-END_FUNC(ia32_rdmsr_high)
-
-BEGIN_FUNC(read_cr4)
-    movl %cr4, %eax
-    ret
-END_FUNC(read_cr4)
-
-BEGIN_FUNC(write_cr4)
-    movl 4(%esp), %eax
-    movl %eax,    %cr4
-    ret
-END_FUNC(write_cr4)
-

@@ -48,12 +48,23 @@ static inline void write_cr0(uint32_t val)
     asm volatile("movl %0, %%cr0" :: "r"(val), "m"(__control_reg_order));
 }
 
-uint32_t read_cr4(void);
-void write_cr4(uint32_t value);
+static inline uint32_t read_cr2(void)
+{
+    uint32_t val;
+    asm volatile("movl %%cr2, %0" : "=r"(val), "=m"(__control_reg_order));
+    return val;
+}
 
-/* Variants that can be called from within BOOT_CODE */
-uint32_t read_cr0_boot(void);
-uint32_t read_cr4_boot(void);
-void write_cr0_boot(uint32_t value);
-void write_cr4_boot(uint32_t value);
+static inline uint32_t read_cr4(void)
+{
+    uint32_t val;
+    asm volatile("movl %%cr4, %0" : "=r"(val), "=m"(__control_reg_order));
+    return val;
+}
+
+static inline void write_cr4(uint32_t value)
+{
+    asm volatile("movl %0, %%cr4" :: "r"(value), "m"(__control_reg_order));
+}
+
 #endif

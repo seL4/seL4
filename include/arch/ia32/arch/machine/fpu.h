@@ -28,13 +28,22 @@ void Arch_fpuThreadDelete(tcb_t *thread);
 exception_t handleUnimplementedDevice(void);
 
 /* Store state in the FPU registers into memory. */
-void saveFpuState(user_fpu_state_t *dest);
+static inline void saveFpuState(user_fpu_state_t *dest)
+{
+    asm volatile("fxsave %[dest]" : [dest] "=m"(*dest));
+}
 
 /* Load FPU state from memory into the FPU registers. */
-void loadFpuState(user_fpu_state_t *src);
+static inline void loadFpuState(user_fpu_state_t *src)
+{
+    asm volatile("fxrstor %[src]" :: [src] "m"(*src));
+}
 
 /* Reset the FPU registers into their initial blank state. */
-void resetFpu(void);
+static inline void resetFpu(void)
+{
+    asm volatile("finit" :: "m"(__control_reg_order));
+}
 
 /*
  * Enable the FPU to be used without faulting.
