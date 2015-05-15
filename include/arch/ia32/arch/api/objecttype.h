@@ -11,6 +11,10 @@
 #ifndef __ARCH_OBJECT_TYPE_H
 #define __ARCH_OBJECT_TYPE_H
 
+#ifdef HAVE_AUTOCONF
+#include <autoconf.h>
+#endif /* HAVE_AUTOCONF */
+
 typedef enum _object {
     seL4_IA32_4K = seL4_NonArchObjectTypeCount,
     seL4_IA32_LargePage,
@@ -23,5 +27,11 @@ typedef enum _object {
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 typedef uint32_t object_t;
+
+/* Previously frame types were explcitly 4K and 4M. If not PAE
+ * we assume legacy environment and emulate old definitions */
+#ifndef CONFIG_PAE_PAGING
+#define seL4_IA32_4M seL4_IA32_LargePage
+#endif
 
 #endif
