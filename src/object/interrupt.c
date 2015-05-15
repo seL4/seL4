@@ -171,7 +171,7 @@ invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot)
     cte_t *irqSlot;
 
     irqSlot = intStateIRQNode + irq;
-    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_async_endpoint_cap))" */
+    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc -1)" */
     cteDeleteOne(irqSlot);
     cteInsert(cap, slot, irqSlot);
 }
@@ -182,7 +182,7 @@ invokeIRQHandler_ClearIRQHandler(irq_t irq)
     cte_t *irqSlot;
 
     irqSlot = intStateIRQNode + irq;
-    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_async_endpoint_cap))" */
+    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc -1)" */
     cteDeleteOne(irqSlot);
 }
 
