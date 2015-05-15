@@ -168,7 +168,7 @@ Set up the kernel's VM environment.
 \end{impdetails}
 
 \begin{impdetails}
-FIX ME: is the follwing still necessary in haskell?
+FIXME: is the follwing still necessary in haskell?
 
 >         initCPU
 >         initPlatform
@@ -267,7 +267,7 @@ Insert thread into rootCNodeCap
 >       return ()
 
 create idle thread and set the Current Thread to Idle Thread
-FIX ME: Seems we need to setCurThread and setSchedulerAction here, otherwise errors raised.
+FIXME: Seems we need to setCurThread and setSchedulerAction here, otherwise errors raised.
 
 > createIdleThread :: KernelInit ()
 > createIdleThread = do

@@ -113,7 +113,7 @@ However we assume that the result of getMemoryRegions is actually [0,1<<24] and 
 
 In c-code we need to Detype the armGlobalPagetTable which is c-equvilance to memzero(armKSGlobalPT,1 << PT_SIZE_BITS)
 
-FIX ME: We might still need to map vector table
+FIXME: We might still need to map vector table
 
 >     mapGlobalsFrame
 >     kernelDevices <- doMachineOp getKernelDevices
