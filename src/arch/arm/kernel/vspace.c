@@ -2066,7 +2066,7 @@ exception_t
 performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
-    unsigned int i;
+    unsigned int i, j;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2074,6 +2074,9 @@ performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
     /* we only need to check the first entries because of how createSafeMappingEntries
      * works to preserve the consistency of tables */
     tlbflush_required = pteCheckIfMapped(pte_entries.base);
+
+    j = pte_entries.length;
+    /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
@@ -2092,7 +2095,7 @@ exception_t
 performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
-    unsigned int i;
+    unsigned int i, j;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2100,6 +2103,9 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
     /* we only need to check the first entries because of how createSafeMappingEntries
      * works to preserve the consistency of tables */
     tlbflush_required = pdeCheckIfMapped(pde_entries.base);
+
+    j = pde_entries.length;
+    /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.base[i] = pde;
@@ -2117,12 +2123,15 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
 exception_t
 performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 {
-    unsigned int i;
+    unsigned int i, j;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries
      * works to preserve the consistency of tables */
     tlbflush_required = pteCheckIfMapped(pte_entries.base);
+
+    j = pte_entries.length;
+    /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
@@ -2140,12 +2149,15 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 exception_t
 performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 {
-    unsigned int i;
+    unsigned int i, j;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries
      * works to preserve the consistency of tables */
     tlbflush_required = pdeCheckIfMapped(pde_entries.base);
+
+    j = pde_entries.length;
+    /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.base[i] = pde;
@@ -2212,6 +2224,10 @@ performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
 void
 doFlush(int label, vptr_t start, vptr_t end, paddr_t pstart)
 {
+    /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+        \<and> \<acute>start <= \<acute>end, id)" */
+    
     switch (label) {
     case ARMPDClean_Data:
     case ARMPageClean_Data:

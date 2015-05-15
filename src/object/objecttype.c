@@ -565,10 +565,16 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
     word_t objectSize;
     void *nextFreeArea;
     unsigned int i;
+    word_t totalObjectSize;
+
+    /* ghost check that we're visiting less bytes than the max object size */
+    objectSize = getObjectSize(t, userSize);
+    totalObjectSize = slots.length << objectSize;
+    /** GHOSTUPD: "(gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+        \<or> \<acute>totalObjectSize <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state, id)" */
 
     /* Create the objects. */
     nextFreeArea = regionBase;
-    objectSize = getObjectSize(t, userSize);
     for (i = 0; i < slots.length; i++) {
         /* Create the object. */
         /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
