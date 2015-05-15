@@ -11,7 +11,9 @@
 #ifndef __ARCH_OBJECT_TYPE_H
 #define __ARCH_OBJECT_TYPE_H
 
+#ifdef HAVE_AUTOCONF
 #include <autoconf.h>
+#endif /* HAVE_AUTOCONF */
 
 typedef enum _object {
     seL4_IA32_4K = seL4_NonArchObjectTypeCount,
