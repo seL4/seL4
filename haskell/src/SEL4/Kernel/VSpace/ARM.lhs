@@ -781,15 +781,15 @@ This helper function checks that the mapping installed at a given PT or PD slot 
 >         _ -> throw InvalidRoot
 
 
-> armv_contextSwitch_HWASID :: PPtr PDE -> HardwareASID -> Kernel ()
+> armv_contextSwitch_HWASID :: PPtr PDE -> HardwareASID -> MachineMonad ()
 > armv_contextSwitch_HWASID pd hwasid = do
->    doMachineOp $ setCurrentPD $ addrFromPPtr pd
+>    setCurrentPD $ addrFromPPtr pd
 >    setHardwareASID hwasid
 
 > armv_contextSwitch :: PPtr PDE -> ASID -> Kernel ()
 > armv_contextSwitch pd asid = do
->    doMachineOp $ setCurrentPD $ addrFromPPtr pd
->    setCurrentASID asid
+>    hwasid <- getHWASID asid
+>    doMachineOp $ armv_contextSwitch_HWASID pd hwasid
 
 
 \subsection{Address Space Switching}
