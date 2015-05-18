@@ -212,10 +212,16 @@ caches must be done separately.
 
 \subsubsection{Address Space Setup}
 
+> writeTTBR0 :: PAddr -> MachineMonad ()
+> writeTTBR0 pd = do
+>     cbptr <- ask
+>     liftIO $ Platform.writeTTBR0 cbptr pd
+
 > setCurrentPD :: PAddr -> MachineMonad ()
 > setCurrentPD pd = do
->     cbptr <- ask
->     liftIO $ Platform.setCurrentPD cbptr pd
+>     dsb
+>     writeTTBR0 pd
+>     isb
 
 > setHardwareASID :: HardwareASID -> MachineMonad ()
 > setHardwareASID (HardwareASID hw_asid) = do

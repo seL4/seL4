@@ -192,7 +192,7 @@ foreign import ccall unsafe "qemu_set_asid"
     setHardwareASID :: Ptr CallbackData -> Word8 -> IO ()
 
 foreign import ccall unsafe "qemu_set_root"
-    setCurrentPD :: Ptr CallbackData -> PAddr -> IO ()
+    writeTTBR0 :: Ptr CallbackData -> PAddr -> IO ()
 
 foreign import ccall unsafe "qemu_arm_get_ifsr"
     getIFSR :: Ptr CallbackData -> IO Word
