@@ -26,16 +26,13 @@ typedef struct acpi_header {
     uint32_t     oem_revision;
     char         creater_id[4];
     uint32_t     creater_revision;
-} acpi_header_t;
-compile_assert(acpi_header_packed, sizeof(acpi_header_t) == 36)
+} PACKED acpi_header_t;
 
 /* Root System Descriptor Table */
 typedef struct acpi_rsdt {
     acpi_header_t  header;
     uint32_t entry[1];
-} acpi_rsdt_t;
-compile_assert(acpi_rsdt_packed,
-               sizeof(acpi_rsdt_t) == sizeof(acpi_header_t) + sizeof(uint32_t))
+} PACKED acpi_rsdt_t;
 
 acpi_rsdt_t* acpi_init(void);
 
