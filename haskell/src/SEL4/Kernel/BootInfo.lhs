@@ -10,7 +10,7 @@
 
 
 
-This module contains functions that maintaining the bootinfo structure for init-thread .
+This module contains functions for maintaining the bootinfo structure that is passed to the initial user thread.
 
 > module SEL4.Kernel.BootInfo where
 
