@@ -23,6 +23,7 @@
 
 #define NULL ((void *)0)
 
+#define PACKED       __attribute__((packed))
 #define NORETURN     __attribute__((__noreturn__))
 #define CONST        __attribute__((__const__))
 #define PURE         __attribute__((__pure__))

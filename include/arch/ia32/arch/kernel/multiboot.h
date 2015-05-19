@@ -23,7 +23,7 @@ typedef struct multiboot_module {
     uint32_t  end;
     uint32_t  name;
     uint32_t reserved;
-} multiboot_module_t;
+} PACKED multiboot_module_t;
 
 typedef struct multiboot_info {
     uint32_t flags;
@@ -34,7 +34,7 @@ typedef struct multiboot_info {
     uint32_t mod_count;
     uint32_t mod_list;
     /* the multiboot spec includes more fields we don't need */
-} multiboot_info_t;
+} PACKED multiboot_info_t;
 
 #define MULTIBOOT_INFO_MEM_FLAG     BIT(0)
 #define MULTIBOOT_INFO_CMDLINE_FLAG BIT(2)
