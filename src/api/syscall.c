@@ -73,7 +73,7 @@ handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     }
     if (w == SysDebugNameThread) {
-        /* This is a syscall meant to aid debugging, so if anything goes wrong wrong
+        /* This is a syscall meant to aid debugging, so if anything goes wrong
          * then assume the system is completely misconfigured and halt */
         const char *name;
         word_t cptr = getRegister(ksCurThread, capRegister);
