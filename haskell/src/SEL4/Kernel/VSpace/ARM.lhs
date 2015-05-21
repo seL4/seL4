@@ -833,8 +833,7 @@ When cleaning the cache by user virtual address on ARM11, the active address spa
 >                 capPDMappedASID = Just _,
 >                 capPDBasePtr = cur_pd }) | cur_pd == pd -> return False
 >         _ -> do
->             doMachineOp $ setCurrentPD $ addrFromPPtr pd
->             setCurrentASID asid
+>             armv_contextSwitch pd asid
 >             return True
 
 \subsection{Helper Functions}
@@ -965,11 +964,6 @@ round-robin.
 >             new_hw_asid <- findFreeHWASID
 >             storeHWASID asid new_hw_asid
 >             return new_hw_asid
-
-> setCurrentASID :: ASID -> Kernel ()
-> setCurrentASID asid = do
->     hw_asid <- getHWASID asid
->     doMachineOp $ setHardwareASID hw_asid
 
 \subsection {ARM Cache and TLB consistency}
 
