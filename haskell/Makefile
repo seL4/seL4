@@ -19,6 +19,7 @@ all: build pdf
 	
 build: $(BOOT_FILES)
 	cabal sandbox init
+	cabal install --dependencies-only
 	cabal configure
 	cabal build
 
