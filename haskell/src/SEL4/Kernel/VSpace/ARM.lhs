@@ -75,8 +75,10 @@ Function mapKernelWindow will create a virtialll address space for the initial t
 
 An abstract version looks like:
 
+\begin{verbatim}
   allMemory <- doMachineOp getMemoryRegions
   mapM_ mapKernelRegion allMemory
+\end{verbatim}
 
 However we assume that the result of getMemoryRegions is actually [0,1<<24] and do the following
 
@@ -111,9 +113,8 @@ However we assume that the result of getMemoryRegions is actually [0,1<<24] and 
 >     placeNewObject (PPtr $ fromPPtr $ head globalPTs) (makeObject :: PTE) ptSize
 >     storePDE slot pde
 
-In c-code we need to Detype the armGlobalPagetTable which is c-equvilance to memzero(armKSGlobalPT,1 << PT_SIZE_BITS)
-
-FIXME: We might still need to map vector table
+In C code we need to detype the armGlobalPagetTable which is C equivalent to
+\verb+memzero(armKSGlobalPT,1 << PT_SIZE_BITS)+
 
 >     mapGlobalsFrame
 >     kernelDevices <- doMachineOp getKernelDevices
