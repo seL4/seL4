@@ -8,11 +8,11 @@
 -- @TAG(GD_GPL)
 --
 
-name:                   SEL4
+name:                   SEL4-ARM
 version:                1.4-pre
-cabal-version:          >= 1.18
+cabal-version:          >= 1.20
 build-type:             Simple
-license:                AllRightsReserved
+license:                GPL
 author:                 Philip Derrin et. al., NICTA
 synopsis:               Executable specification for the seL4 Kernel
 tested-with:            GHC == 7.8.3
@@ -71,7 +71,21 @@ Library
                             Data.BinaryTree
                             Data.Helpers
 
-    $TARGET-SPECIFIC-STUFF  -- will be inserted by the Setup.hs script
+                            SEL4.Machine.Hardware.ARM.QEmu
+
+                            SEL4.API.Types.ARM
+                            SEL4.API.Invocation.ARM
+                            SEL4.Kernel.VSpace.ARM
+                            SEL4.Kernel.Thread.ARM
+                            SEL4.Object.ObjectType.ARM
+                            SEL4.Object.Structures.ARM
+                            SEL4.Object.Interrupt.ARM
+                            SEL4.Object.Instances.ARM
+                            SEL4.Object.TCB.ARM
+                            SEL4.Model.StateData.ARM
+                            SEL4.Machine.RegisterSet.ARM
+                            SEL4.Machine.Hardware.ARM
+                           
 
     hs-source-dirs:         src
     ghc-prof-options:       -auto-all -fprof-auto
@@ -80,5 +94,12 @@ Library
                             -fno-spec-constr -fno-warn-name-shadowing
                             -fno-warn-unrecognised-pragmas
                             -fno-warn-unused-binds
+
+    cpp-options:
+                            -DTARGET=ARM
+                            -DTARGET_ARM
+                            -DPLATFORM=QEmu
+                            -DPLATFORM_QEmu
+                            
     Default-Language: Haskell98
 
