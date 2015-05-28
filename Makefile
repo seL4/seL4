@@ -561,12 +561,12 @@ else
   SM_ARG=
 endif
 
-${DEFTHEORIES}: %_defs.thy: %.bf ${BF_GEN_PATH} ${STATICSOURCES} \
+${DEFTHEORIES}: %_defs.thy: %.pbf ${BF_GEN_PATH} ${STATICSOURCES} \
                 ${STATICHEADERS} ${SOURCE_ROOT}/Makefile | ${DIRECTORIES}
 	@echo " [BF_DEFS] $@"
 	$(Q)${BF_GEN_PATH} --cspec-dir ${CSPEC_DIR} --hol_defs $< $@ ${PRUNES} ${SM_ARG}
 
-${PROOFTHEORIES}: %_proofs.thy: %.bf ${BF_GEN_PATH} ${STATICSOURCES} \
+${PROOFTHEORIES}: %_proofs.thy: %.pbf ${BF_GEN_PATH} ${STATICSOURCES} \
                   ${STATICHEADERS} ${SOURCE_ROOT}/Makefile ${UMM_TYPES} | ${DIRECTORIES}
 	@echo " [BF_PROOFS] $@"
 	@$(if ${UMM_TYPES}, , echo "UMM_TYPES unset" ; false)

@@ -25,19 +25,6 @@
 manual/env.tex
 manual/manual.pdf
 
-haskell/doc/refman.pdf
-haskell/doc/version.txt
-
-haskell/doc/figures/clientkernel.pdf
-haskell/doc/figures/clientserver.pdf
-haskell/doc/figures/derive.pdf
-haskell/doc/figures/ipctransfer.pdf
-haskell/doc/figures/truncation.pdf
-
-# haskell generated files
-**.lhs-boot
-haskell/dist
-
 # Generated headers
 libsel4/arch_include/arm/sel4/arch/invocation.h
 libsel4/arch_include/ia32/sel4/arch/invocation.h

@@ -22,47 +22,47 @@
 /* We use a dummy variable to synchronize reads and writes to the control registers.
  * this allows us to write inline asm blocks that do not have enforced memory
  * clobbers for ordering. */
-static uint32_t __control_reg_order;
+static unsigned long __control_reg_order;
 
-static inline uint32_t read_cr3(void)
+static inline unsigned long read_cr3(void)
 {
-    uint32_t val;
+    unsigned long val;
     asm volatile("movl %%cr3, %0" : "=r"(val), "=m"(__control_reg_order));
     return val;
 }
 
-static inline void write_cr3(uint32_t val)
+static inline void write_cr3(unsigned long val)
 {
     asm volatile("movl %0, %%cr3" :: "r"(val), "m"(__control_reg_order));
 }
 
-static inline uint32_t read_cr0(void)
+static inline unsigned long read_cr0(void)
 {
-    uint32_t val;
+    unsigned long val;
     asm volatile("movl %%cr0, %0" : "=r"(val), "=m"(__control_reg_order));
     return val;
 }
 
-static inline void write_cr0(uint32_t val)
+static inline void write_cr0(unsigned long val)
 {
     asm volatile("movl %0, %%cr0" :: "r"(val), "m"(__control_reg_order));
 }
 
-static inline uint32_t read_cr2(void)
+static inline unsigned long read_cr2(void)
 {
-    uint32_t val;
+    unsigned long val;
     asm volatile("movl %%cr2, %0" : "=r"(val), "=m"(__control_reg_order));
     return val;
 }
 
-static inline uint32_t read_cr4(void)
+static inline unsigned long read_cr4(void)
 {
-    uint32_t val;
+    unsigned long val;
     asm volatile("movl %%cr4, %0" : "=r"(val), "=m"(__control_reg_order));
     return val;
 }
 
-static inline void write_cr4(uint32_t value)
+static inline void write_cr4(unsigned long value)
 {
     asm volatile("movl %0, %%cr4" :: "r"(value), "m"(__control_reg_order));
 }

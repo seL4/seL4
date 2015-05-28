@@ -19,11 +19,11 @@
 #include <types.h>
 
 typedef struct multiboot_module {
-    paddr_t  start;
-    paddr_t  end;
-    char*    name;
+    uint32_t  start;
+    uint32_t  end;
+    uint32_t  name;
     uint32_t reserved;
-} multiboot_module_t;
+} PACKED multiboot_module_t;
 
 typedef struct vbe_control_info {
     /* We do not need to interpret the contents, just get the size right */
@@ -47,9 +47,9 @@ typedef struct multiboot_info {
     uint32_t mem_lower;
     uint32_t mem_upper;
     uint32_t boot_device;
-    char*    cmdline;
+    uint32_t cmdline;
     uint32_t mod_count;
-    multiboot_module_t* mod_list;
+    uint32_t mod_list;
     uint32_t syms[4];
     uint32_t mmap_length;
     void *mmap_addr;

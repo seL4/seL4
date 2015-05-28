@@ -426,6 +426,7 @@ try_boot_sys(
     paddr_t load_paddr;
     unsigned int i;
     p_region_t ui_p_regs;
+    multiboot_module_t *modules = (multiboot_module_t*)mbi->mod_list;
 
     glks.num_nodes = 1; /* needed to enable console output */
 
@@ -433,7 +434,7 @@ try_boot_sys(
         printf("Boot loader not multiboot compliant\n");
         return false;
     }
-    cmdline_parse(mbi->cmdline, &cmdline_opt);
+    cmdline_parse((const char *)mbi->cmdline, &cmdline_opt);
 
     /* assert correct NDKS location and size */
     assert((uint32_t)_ndks_start == PPTR_NDKS);
@@ -595,17 +596,17 @@ try_boot_sys(
         printf(
             "  module #%d: start=0x%x end=0x%x size=0x%x name='%s'\n",
             i,
-            mbi->mod_list[i].start,
-            mbi->mod_list[i].end,
-            mbi->mod_list[i].end - mbi->mod_list[i].start,
-            mbi->mod_list[i].name
+            modules[i].start,
+            modules[i].end,
+            modules[i].end - modules[i].start,
+            modules[i].name
         );
-        if ((int32_t)(mbi->mod_list[i].end - mbi->mod_list[i].start) <= 0) {
+        if ((int32_t)(modules[i].end - modules[i].start) <= 0) {
             printf("Invalid boot module size! Possible cause: boot module file not found by QEMU\n");
             return false;
         }
-        if (mods_end_paddr < mbi->mod_list[i].end) {
-            mods_end_paddr = mbi->mod_list[i].end;
+        if (mods_end_paddr < modules[i].end) {
+            mods_end_paddr = modules[i].end;
         }
     }
     mods_end_paddr = ROUND_UP(mods_end_paddr, PAGE_BITS);
@@ -621,7 +622,7 @@ try_boot_sys(
 
     for (i = 0; i < mbi->mod_count && i < glks.num_nodes; i++) {
         printf("  module #%d for node #%d: ", i, i);
-        load_paddr = load_boot_module(i, mbi->mod_list + i, load_paddr);
+        load_paddr = load_boot_module(i, modules + i, load_paddr);
         if (!load_paddr) {
             return false;
         }
@@ -629,7 +630,7 @@ try_boot_sys(
 
     for (i = mbi->mod_count; i < glks.num_nodes; i++) {
         printf("  module #%d for node #%d: ", mbi->mod_count - 1, i);
-        load_paddr = load_boot_module(i, mbi->mod_list + mbi->mod_count - 1, load_paddr);
+        load_paddr = load_boot_module(i, modules + mbi->mod_count - 1, load_paddr);
         if (!load_paddr) {
             return false;
         }
