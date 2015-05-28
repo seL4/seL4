@@ -45,9 +45,9 @@ static inline void armv_contextSwitch_HWASID(pde_t *cap_pd, hw_asid_t hw_asid)
     isb();
 }
 
-static inline void armv_contextSwitch(pde_t* cap_pd, asid_t asid)
+static inline void armv_contextSwitch(pde_t* pd)
 {
-    armv_contextSwitch_HWASID(cap_pd, getHWASID(asid));
+    armv_contextSwitch_HWASID(pd, getHWASID(pd));
 }
 
 #endif /* __ARMV_CONTEXT_SWITCH_H__ */
