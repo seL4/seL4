@@ -10,7 +10,7 @@
 
 ifdef FASTPATH
 
-DIRECTORIES += src/arch/ia32/fastpath
+DIRECTORIES += src/arch/x86/fastpath
 
 ARCH_C_SOURCES += fastpath/fastpath.c
 
