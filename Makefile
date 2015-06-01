@@ -363,7 +363,7 @@ DEFINES += -DARM_CORTEX_A15
 endif
 endif
 
-ifeq (${ARCH}, ia32)
+ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
 endif
