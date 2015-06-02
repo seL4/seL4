@@ -26,7 +26,8 @@ config IOMMU
 choice
     prompt "IRQ Controller"
     depends on PLAT_PC99
-    default IRQ_PIC
+    default IRQ_PIC if ARCH_IA32
+    default IRQ_IOAPIC if ARCH_X86_64
     help
         Select the IRQ controller seL4 will use. Code for others may
         still be included if needed to disable at run time
@@ -57,3 +58,39 @@ config PAE_PAGING
     help
         PAE paging uses 4K/2M pages and has three levels of paging. If this
         is not used the old 32-bit paging with 4K/4M pages will be used
+
+config HUGE_PAGE
+    bool "Use 1GB Huge Page"
+    depends on ARCH_X86_64
+    default y
+    help
+        Add support for 1GB huge page. Not all recent processor models support
+        this feature.
+
+config INVPCID
+    bool "Use INVPCID instruction"
+    depends on ARCH_X86_64
+    default y
+    help
+        The INVPCID instruction invalidate TLBs and paging-structure caches
+        based on process-context identifier (PCID).
+
+choice
+    prompt "Setting FS/GS Base Addresses"
+    depends on ARCH_X86_64
+    default FSGSBASE_INST
+    help
+        There are two ways to to set FS/GS base addresses in 64-bit mode:
+        IA32_FS/GS_BASE MSRs and fsgsbase instructions. The latter is not
+        supported by all micro-architectures.
+
+    config FSGSBASE_MSR
+        bool "IA32_FS/GS_BASE MSRs"
+        help
+            Use MSRs to change base addresses.
+
+    config FSGSBASE_INST
+        bool "FSGSBASE Instructions"
+        help
+            Use rdfs/gsbase, wrfs/gsbase instructions to change base adddresses.
+endchoice

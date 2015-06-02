@@ -26,6 +26,7 @@ config ARCH_ARM_V7A
 config WORD_SIZE
     int
     default 32 if ARCH_IA32 || ARCH_ARM
+    default 64 if ARCH_X86_64
 
 menu "seL4 System"
 
@@ -42,9 +43,14 @@ menu "seL4 System"
             bool "ARM"
     endchoice
 
+    config ARCH_X86_64
+        bool "64-bit kernel"
+        default n
+        depends on ARCH_X86
+
     config ARCH_IA32
         bool
-        default y if ARCH_X86
+        default y if !ARCH_X86_64 && ARCH_X86
 
     choice
         prompt "ARM CPU selection"
