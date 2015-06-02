@@ -14,10 +14,12 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/kernel/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/model/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/machine/Makefile
 
-ARCH_C_SOURCES += c_traps.c
+ifeq ($(__X86_32__),y)
+ARCH_C_SOURCES += c_traps_32.c
+ARCH_ASM_SOURCES += machine_asm_32.S \
+                    traps_32.S \
+                    head_32.S
+endif
 
-ARCH_ASM_SOURCES += machine_asm.S \
-                    traps.S \
-                    halt.S \
-                    idle.S \
-                    head.S
+ARCH_ASM_SOURCES += halt.S \
+                    idle.S

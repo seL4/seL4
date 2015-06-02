@@ -10,8 +10,11 @@
 
 DIRECTORIES += src/arch/$(ARCH)/machine
 
+ifeq ($(__X86_32__),y)
+ARCH_C_SOURCES += machine/registerset_32.c
+endif
+
 ARCH_C_SOURCES += machine/hardware.c \
-                  machine/registerset.c \
                   machine/fpu.c
 
 ifdef DEBUG
