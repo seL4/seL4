@@ -28,3 +28,4 @@ manual/manual.pdf
 # Generated headers
 libsel4/arch_include/arm/sel4/arch/invocation.h
 libsel4/arch_include/ia32/sel4/arch/invocation.h
+libsel4/arch_include/x86/sel4/arch/invocation.h
