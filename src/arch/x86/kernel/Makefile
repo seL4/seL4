@@ -10,10 +10,7 @@
 
 DIRECTORIES += src/arch/$(ARCH)/kernel
 
-ARCH_C_SOURCES += kernel/thread.c \
-                  kernel/vspace.c \
-                  kernel/vspace_32paging.c \
-                  kernel/vspace_pae.c \
+ARCH_C_SOURCES += kernel/vspace.c \
                   kernel/apic.c \
                   kernel/boot_sys.c \
                   kernel/boot.c \
