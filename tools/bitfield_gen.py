@@ -208,13 +208,13 @@ ptr_generator_template = \
 reader_template = \
 """static inline uint%(base)d_t CONST
 %(block)s_get_%(field)s(%(block)s_t %(block)s) {
-    return (%(block)s.words[%(index)d] & 0x%(mask)x) %(r_shift_op)s %(shift)d;
+    return (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
 }"""
 
 ptr_reader_template = \
 """static inline uint%(base)d_t PURE
 %(block)s_ptr_get_%(field)s(%(block)s_t *%(block)s_ptr) {
-    return (%(block)s_ptr->words[%(index)d] & 0x%(mask)x) """ \
+    return (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
 }"""
 
@@ -223,8 +223,8 @@ writer_template = \
 %(block)s_set_%(field)s(%(block)s_t %(block)s, uint%(base)d_t v) {
     /* fail if user has passed bits that we will override */
     assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
-    %(block)s.words[%(index)d] &= ~0x%(mask)x;
-    %(block)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x;
+    %(block)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
+    %(block)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(block)s;
 }"""
 
@@ -233,7 +233,7 @@ ptr_writer_template = \
 %(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, uint%(base)d_t v) {
     /* fail if user has passed bits that we will override */
     assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
-    %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x;
+    %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s_ptr->words[%(index)d] |= (v %(w_shift_op)s """ \
     """%(shift)d) & 0x%(mask)x;
 }"""
@@ -264,7 +264,7 @@ union_reader_template = \
     assert(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    return (%(union)s.words[%(index)d] & 0x%(mask)x) %(r_shift_op)s %(shift)d;
+    return (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
 }"""
 
 ptr_union_reader_template = \
@@ -274,7 +274,7 @@ ptr_union_reader_template = \
     """%(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    return (%(union)s_ptr->words[%(index)d] & 0x%(mask)x) """ \
+    return (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
 }"""
 
@@ -284,10 +284,10 @@ union_writer_template = \
     assert(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == 0);
 
-    %(union)s.words[%(index)d] &= ~0x%(mask)x;
-    %(union)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x;
+    %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
+    %(union)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(union)s;
 }"""
 
@@ -300,11 +300,11 @@ ptr_union_writer_template = \
            %(union)s_%(block)s);
 
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == 0);
 
-    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x;
+    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s_ptr->words[%(index)d] |= """ \
-    """(v %(w_shift_op)s %(shift)d) & 0x%(mask)x;
+    """(v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
 }"""
 
 tag_reader_header_template = \
@@ -314,11 +314,11 @@ tag_reader_header_template = \
 
 tag_reader_entry_template = \
 """    if ((%(union)s.words[%(index)d] & 0x%(classmask)x) != 0x%(classmask)x)
-        return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x;
+        return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;
 """
 
 tag_reader_final_template = \
-"""    return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x;"""
+"""    return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;"""
 
 tag_reader_footer_template = \
 """
@@ -331,11 +331,11 @@ tag_eq_reader_header_template = \
 
 tag_eq_reader_entry_template = \
 """    if ((%(union)s_type_tag & 0x%(classmask)x) != 0x%(classmask)x)
-        return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x) == %(union)s_type_tag;
+        return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s) == %(union)s_type_tag;
 """
 
 tag_eq_reader_final_template = \
-"""    return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x) == %(union)s_type_tag;"""
+"""    return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s) == %(union)s_type_tag;"""
 
 tag_eq_reader_footer_template = \
 """
@@ -348,11 +348,11 @@ ptr_tag_reader_header_template = \
 
 ptr_tag_reader_entry_template = \
 """    if ((%(union)s_ptr->words[%(index)d] & 0x%(classmask)x) != 0x%(classmask)x)
-        return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x;
+        return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;
 """
 
 ptr_tag_reader_final_template = \
-"""    return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x;"""
+"""    return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;"""
 
 ptr_tag_reader_footer_template = \
 """
@@ -362,10 +362,10 @@ tag_writer_template = \
 """static inline %(union)s_t CONST
 %(union)s_set_%(tagname)s(%(union)s_t %(union)s, uint%(base)d_t v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == 0);
 
-    %(union)s.words[%(index)d] &= ~0x%(mask)x;
-    %(union)s.words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x;
+    %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
+    %(union)s.words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
     return %(union)s;
 }"""
 
@@ -373,10 +373,10 @@ ptr_tag_writer_template = \
 """static inline void
 %(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, uint%(base)d_t v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == 0);
 
-    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x;
-    %(union)s_ptr->words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x;
+    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
+    %(union)s_ptr->words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
 }"""
 
 # HOL definition templates
@@ -1145,6 +1145,7 @@ class TaggedUnion:
     def __init__(self, name, tagname, classes, tags):
         self.name = name
         self.tagname = tagname
+        self.constant_suffix = ''
 
         # Check for duplicate tags
         used_names = set()
@@ -1200,9 +1201,10 @@ class TaggedUnion:
         self.union_base = union_base
         self.union_size = union_size
 
-    def set_base(self, base):
+    def set_base(self, base, suffix):
         self.base = base
         self.multiple = self.union_size / base
+        self.constant_suffix = suffix
 
         tag_index = None
         for w in self.tag_offset:
@@ -1636,7 +1638,8 @@ class TaggedUnion:
         subs = {\
             'union': self.name, \
             'base':  self.union_base, \
-            'tagname': self.tagname}
+            'tagname': self.tagname, \
+            'suf' : self.constant_suffix}
 
         # Generate tag reader
         templates = ([tag_reader_entry_template] * (len(self.widths) - 1)
@@ -1729,22 +1732,23 @@ class TaggedUnion:
                         mask = ((1 << size) - 1) << (self.base - size)
                     else:
                         mask = (1 << size) - 1
+                    suf = self.constant_suffix
 
                     field_inits.append(
                         "    /* fail if user has passed bits that we will override */")
                     field_inits.append(
-                        "    assert((%s & ~0x%x) == 0);" % (f_value, mask))
+                        "    assert((%s & ~0x%x%s) == 0);" % (f_value, mask, suf))
                     field_inits.append(
-                        "    %s.words[%d] |= (%s & 0x%x) %s %d;" % \
-                         (self.name, index, f_value, mask, shift_op, shift))
+                        "    %s.words[%d] |= (%s & 0x%x%s) %s %d;" % \
+                         (self.name, index, f_value, mask, suf, shift_op, shift))
 
                     ptr_field_inits.append(
                         "    /* fail if user has passed bits that we will override */")
                     ptr_field_inits.append(
-                        "    assert((%s & ~0x%x) == 0);" % (f_value, mask))
+                        "    assert((%s & ~0x%x%s) == 0);" % (f_value, mask, suf))
                     ptr_field_inits.append(
-                        "    %s_ptr->words[%d] |= (%s & 0x%x) %s %d;" % \
-                        (self.name, index, f_value, mask, shift_op, shift))
+                        "    %s_ptr->words[%d] |= (%s & 0x%x%s) %s %d;" % \
+                        (self.name, index, f_value, mask, suf, shift_op, shift))
                 else:
                     field_inits.append(
                             "       %s.words[%d] |= %s %s %d;" % \
@@ -1802,7 +1806,8 @@ class TaggedUnion:
                     "tagindex": tagnameoffset / self.base, \
                     "tagshift": tagnameoffset % self.base, \
                     "tagmask": tagmask, \
-                    "union": self.name}
+                    "union": self.name, \
+                    "suf": self.constant_suffix}
 
                 # Reader
                 emit_named("%s_%s_get_%s" % (self.name, ref.name, field),
@@ -2026,6 +2031,7 @@ class Block:
         _fields = []
         self.size = sum(size for _name, size, _high in fields)
         offset = self.size
+        self.constant_suffix = ''
 
         if visible_order is None:
             self.visible_order = []
@@ -2058,8 +2064,9 @@ class Block:
 
             self.visible_order = visible_order
 
-    def set_base(self, base):
+    def set_base(self, base, suffix):
         self.base = base
+        self.constant_suffix = suffix
         if self.size % base != 0:
             raise ValueError("Size of block %s not a multiple of base" \
                              % self.name)
@@ -2316,22 +2323,23 @@ class Block:
                     mask = ((1 << size) - 1) << (self.base - size)
                 else:
                     mask = (1 << size) - 1
+                suf = self.constant_suffix
 
                 field_inits.append(
                     "    /* fail if user has passed bits that we will override */")
                 field_inits.append(
-                    "    assert((%s & ~0x%x) == 0);" % (field, mask))
+                    "    assert((%s & ~0x%x%s) == 0);" % (field, mask, suf))
                 field_inits.append(
-                    "    %s.words[%d] |= (%s & 0x%x) %s %d;" % \
-                    (self.name, index, field, mask, shift_op, shift))
+                    "    %s.words[%d] |= (%s & 0x%x%s) %s %d;" % \
+                    (self.name, index, field, mask, suf, shift_op, shift))
 
                 ptr_field_inits.append(
                     "    /* fail if user has passed bits that we will override */")
                 ptr_field_inits.append(
-                    "    assert((%s & ~0x%x) == 0);" % (field, mask))
+                    "    assert((%s & ~0x%x%s) == 0);" % (field, mask, suf))
                 ptr_field_inits.append(
-                    "    %s_ptr->words[%d] |= (%s & 0x%x) %s %d;" % \
-                    (self.name, index, field, mask, shift_op, shift))
+                    "    %s_ptr->words[%d] |= (%s & 0x%x%s) %s %d;" % \
+                    (self.name, index, field, mask, suf, shift_op, shift))
             else:
                 field_inits.append(
                     "    %s.words[%d] |= %s %s %d;" % \
@@ -2377,7 +2385,8 @@ class Block:
                 "shift": shift, \
                 "r_shift_op": read_shift, \
                 "w_shift_op": write_shift, \
-                "mask": mask}
+                "mask": mask, \
+                "suf": self.constant_suffix}
 
             # Reader
             emit_named("%s_get_%s" % (self.name, field), params,
@@ -2524,14 +2533,15 @@ if __name__ == '__main__':
     base, blocks, unions = yacc.parse(in_file.read())
     if not base in [8,16,32,64]:
         raise ValueError("Invalid base size: %d" % base)
+    constant_suffix = {8 : 'ul', 16 : 'ul', 32 : 'ul', 64 : 'ull'}[base];
     symtab = {}
     symtab.update(blocks)
     symtab.update(unions)
     for b in blocks.values():
-        b.set_base(base)
+        b.set_base(base, constant_suffix)
     for u in unions.values():
         u.resolve(options, symtab)
-        u.set_base(base)
+        u.set_base(base, constant_suffix)
 
     if not in_filename is None:
         base_filename = os.path.basename(in_filename).split('.')[0]
