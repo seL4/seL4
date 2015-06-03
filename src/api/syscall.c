@@ -57,11 +57,11 @@ handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     }
     if (w == SysDebugHalt) {
-        printf("Debug halt syscall from user thread 0x%x\n", (unsigned int)ksCurThread);
+        printf("Debug halt syscall from user thread %p\n", ksCurThread);
         halt();
     }
     if (w == SysDebugSnapshot) {
-        printf("Debug snapshot syscall from user thread 0x%x\n", (unsigned int)ksCurThread);
+        printf("Debug snapshot syscall from user thread %p\n", ksCurThread);
         capDL();
         return EXCEPTION_NONE;
     }
@@ -220,7 +220,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     lu_ret = lookupCapAndSlot(thread, cptr);
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-        userError("Invocation of invalid cap #%d.", (int)cptr);
+        userError("Invocation of invalid cap #%lu.", cptr);
         current_fault = fault_cap_fault_new(cptr, false);
 
         if (isBlocking) {

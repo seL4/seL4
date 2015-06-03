@@ -44,13 +44,13 @@ enum notification_state {
 typedef uint32_t notification_state_t;
 
 #define EP_PTR(r) ((endpoint_t *)(r))
-#define EP_REF(p) ((unsigned int)(p))
+#define EP_REF(p) ((unsigned long)(p))
 
 #define NTFN_PTR(r) ((notification_t *)(r))
-#define NTFN_REF(p) ((unsigned int)(p))
+#define NTFN_REF(p) ((unsigned long)(p))
 
 #define CTE_PTR(r) ((cte_t *)(r))
-#define CTE_REF(p) ((unsigned int)(p))
+#define CTE_REF(p) ((unsigned long)(p))
 
 #define CNODE_MIN_BITS 1
 #define CNODE_PTR(r) (CTE_PTR(r))
@@ -63,15 +63,15 @@ typedef uint32_t notification_state_t;
 /* Generate a tcb_t or cte_t pointer from a tcb block reference */
 #define TCB_PTR(r)       ((tcb_t *)(r))
 #define TCB_CTE_PTR(r,i) (((cte_t *)(r))+(i))
-#define TCB_REF(p)       ((unsigned int)(p))
+#define TCB_REF(p)       ((unsigned long)(p))
 
 /* Generate a cte_t pointer from a tcb_t pointer */
 #define TCB_PTR_CTE_PTR(p,i) \
-    (((cte_t *)((unsigned int)(p)&~MASK(TCB_BLOCK_SIZE_BITS)))+(i))
+    (((cte_t *)((unsigned long)(p)&~MASK(TCB_BLOCK_SIZE_BITS)))+(i))
 
 #define WORD_BITS   (8 * sizeof(word_t))
 #define WORD_PTR(r) ((word_t *)(r))
-#define WORD_REF(p) ((unsigned int)(p))
+#define WORD_REF(p) ((unsigned long)(p))
 
 #define ZombieType_ZombieTCB        BIT(5)
 #define ZombieType_ZombieCNode(n)   ((n) & MASK(5))
