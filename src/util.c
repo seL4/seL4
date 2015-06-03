@@ -16,7 +16,7 @@
  * memzero need sa custom type that allows us to use a word
  * that has the aliasing properties of a char.
  */
-typedef uint32_t __attribute__((__may_alias__)) u32_alias;
+typedef unsigned long __attribute__((__may_alias__)) ulong_alias;
 
 /*
  * Zero 'n' bytes of memory starting from 's'.
@@ -24,13 +24,13 @@ typedef uint32_t __attribute__((__may_alias__)) u32_alias;
  * 'n' and 's' must be word aligned.
  */
 void
-memzero(void *s, unsigned int n)
+memzero(void *s, unsigned long n)
 {
     uint8_t *p = s;
 
     /* Ensure alignment constraints are met. */
-    assert((unsigned int)s % 4 == 0);
-    assert(n % 4 == 0);
+    assert((unsigned long)s % sizeof(unsigned long) == 0);
+    assert(n % sizeof(unsigned long) == 0);
 
     /* We will never memzero an area larger than the largest current
        live object */
@@ -39,14 +39,14 @@ memzero(void *s, unsigned int n)
 
     /* Write out words. */
     while (n != 0) {
-        *(u32_alias *)p = 0;
-        p += 4;
-        n -= 4;
+        *(ulong_alias *)p = 0;
+        p += sizeof(ulong_alias);
+        n -= sizeof(ulong_alias);
     }
 }
 
 void*
-memset(void *s, unsigned int c, unsigned int n)
+memset(void *s, unsigned long c, unsigned long n)
 {
     uint8_t *p;
 
@@ -54,7 +54,7 @@ memset(void *s, unsigned int c, unsigned int n)
      * If we are only writing zeros and we are word aligned, we can
      * use the optimized 'memzero' function.
      */
-    if (likely(c == 0 && ((uint32_t)s % 4) == 0 && (n % 4) == 0)) {
+    if (likely(c == 0 && ((unsigned long)s % sizeof(unsigned long)) == 0 && (n % sizeof(unsigned long)) == 0)) {
         memzero(s, n);
     } else {
         /* Otherwise, we use a slower, simple memset. */
@@ -67,7 +67,7 @@ memset(void *s, unsigned int c, unsigned int n)
 }
 
 void*
-memcpy(void* ptr_dst, const void* ptr_src, unsigned int n)
+memcpy(void* ptr_dst, const void* ptr_src, unsigned long n)
 {
     uint8_t *p;
     const uint8_t *q;
@@ -95,8 +95,8 @@ strncmp(const char* s1, const char* s2, int n)
     return 0;
 }
 
-int CONST
-char_to_int(char c)
+long CONST
+char_to_long(char c)
 {
     if (c >= '0' && c <= '9') {
         return c - '0';
@@ -108,12 +108,12 @@ char_to_int(char c)
     return -1;
 }
 
-int PURE
-str_to_int(const char* str)
+long PURE
+str_to_long(const char* str)
 {
     unsigned int base;
-    int res;
-    int val = 0;
+    long res;
+    long val = 0;
     char c;
 
     /*check for "0x" */
@@ -130,7 +130,7 @@ str_to_int(const char* str)
 
     c = *str;
     while (c != '\0') {
-        res = char_to_int(c);
+        res = char_to_long(c);
         if (res == -1 || res >= base) {
             return -1;
         }

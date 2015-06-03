@@ -64,12 +64,12 @@
         halt_spec: "\<Gamma> \<turnstile> {} Call halt_'proc {}"
 */
 void halt(void) NORETURN;
-void memzero(void *s, unsigned int n);
-void *memset(void *s, unsigned int c, unsigned int n);
-void *memcpy(void* ptr_dst, const void* ptr_src, unsigned int n);
+void memzero(void *s, unsigned long n);
+void *memset(void *s, unsigned long c, unsigned long n);
+void *memcpy(void* ptr_dst, const void* ptr_src, unsigned long n);
 int strncmp(const char *s1, const char *s2, int n);
-int CONST char_to_int(char c);
-int PURE str_to_int(const char* str);
+long CONST char_to_long(char c);
+long PURE str_to_long(const char* str);
 
 #endif /* !__ASSEMBLER__ */
 
