@@ -464,7 +464,7 @@ void
 cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 {
     mdb_node_t mdb;
-    uint32_t prev_ptr, next_ptr;
+    word_t prev_ptr, next_ptr;
 
     /* Haskell error: "cteMove to non-empty destination" */
     assert(cap_get_capType(destSlot->cap) == cap_null_cap);
@@ -510,7 +510,7 @@ void
 cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
 {
     mdb_node_t mdb1, mdb2;
-    uint32_t next_ptr, prev_ptr;
+    word_t next_ptr, prev_ptr;
 
     slot1->cap = cap2;
     slot2->cap = cap1;
