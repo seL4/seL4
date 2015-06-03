@@ -97,45 +97,48 @@ bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
 #ifdef DEBUG
 
 void handleKernelException(
-    uint32_t vector,
-    uint32_t errcode,
-    uint32_t eip,
-    uint32_t esp,
-    uint32_t eflags,
-    uint32_t cr0,
-    uint32_t cr2,
-    uint32_t cr3,
-    uint32_t cr4
+    word_t vector,
+    word_t errcode,
+    word_t ip,
+    word_t sp,
+    word_t flags,
+    word_t cr0,
+    word_t cr2,
+    word_t cr3,
+    word_t cr4
 );
+
+extern char kernel_stack_alloc[];
 
 VISIBLE
 void handleKernelException(
-    uint32_t vector,
-    uint32_t errcode,
-    uint32_t eip,
-    uint32_t esp,
-    uint32_t eflags,
-    uint32_t cr0,
-    uint32_t cr2,
-    uint32_t cr3,
-    uint32_t cr4
+    word_t vector,
+    word_t errcode,
+    word_t ip,
+    word_t sp,
+    word_t flags,
+    word_t cr0,
+    word_t cr2,
+    word_t cr3,
+    word_t cr4
 )
 {
     unsigned int i;
 
     printf("\n========== KERNEL EXCEPTION ==========\n");
-    printf("Vector:  0x%x\n", vector);
-    printf("ErrCode: 0x%x\n", errcode);
-    printf("EIP:     0x%x\n", eip);
-    printf("ESP:     0x%x\n", esp);
-    printf("EFLAGS:  0x%x\n", eflags);
-    printf("CR0:     0x%x\n", cr0);
-    printf("CR2:     0x%x (page-fault address)\n", cr2);
-    printf("CR3:     0x%x (page-directory physical address)\n", cr3);
-    printf("CR4:     0x%x\n", cr4);
+    printf("Vector:  0x%lx\n", vector);
+    printf("ErrCode: 0x%lx\n", errcode);
+    printf("IP:      0x%lx\n", ip);
+    printf("SP:      0x%lx\n", sp);
+    printf("FLAGS:   0x%lx\n", flags);
+    printf("CR0:     0x%lx\n", cr0);
+    printf("CR2:     0x%lx (page-fault address)\n", cr2);
+    printf("CR3:     0x%lx (page-directory physical address)\n", cr3);
+    printf("CR4:     0x%lx\n", cr4);
     printf("\nStack Dump:\n");
     for (i = 0; i < 20; i++) {
-        printf("*0x%x == 0x%x\n", esp + i * 4, *(uint32_t*)(esp + i * 4));
+        word_t stack = sp + i * sizeof(word_t);
+        printf("*0x%lx == 0x%lx\n", stack, *(word_t*)stack);
     }
     printf("\nHalting...\n");
 }
