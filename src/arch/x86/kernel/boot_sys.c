@@ -158,7 +158,7 @@ debug_port_of_node(node_id_t node_id)
 BOOT_CODE static paddr_t
 load_boot_module(node_id_t node, multiboot_module_t* boot_module, paddr_t load_paddr)
 {
-    Elf32_Header_t* elf_file = (Elf32_Header_t*)boot_module->start;
+    Elf32_Header_t* elf_file = (Elf32_Header_t*)(word_t)boot_module->start;
     v_region_t v_reg;
 
     if (!elf32_checkFile(elf_file)) {
@@ -433,7 +433,7 @@ try_boot_sys(
     paddr_t load_paddr;
     unsigned int i;
     p_region_t ui_p_regs;
-    multiboot_module_t *modules = (multiboot_module_t*)mbi->mod_list;
+    multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->mod_list;
 
     glks.num_nodes = 1; /* needed to enable console output */
 
@@ -444,10 +444,10 @@ try_boot_sys(
         printf("Boot loader not multiboot compliant\n");
         return false;
     }
-    cmdline_parse((const char *)mbi->cmdline, &cmdline_opt);
+    cmdline_parse((const char *)(word_t)mbi->cmdline, &cmdline_opt);
 
     /* assert correct NDKS location and size */
-    assert((uint32_t)_ndks_start == PPTR_NDKS);
+    assert((word_t)_ndks_start == PPTR_NDKS);
     assert(_ndks_end - _ndks_start <= NDKS_SIZE);
 
     if ((mbi->flags & MULTIBOOT_INFO_MEM_FLAG) == 0) {
