@@ -47,14 +47,14 @@ PHYS_CODE
 static inline uint32_t FORCE_INLINE
 apic_read_reg_(uint32_t addr, apic_reg_t reg)
 {
-    return *(volatile uint32_t*)(addr + reg);
+    return *(volatile uint32_t*)(word_t)(addr + reg);
 }
 
 PHYS_CODE
 static inline void FORCE_INLINE
 apic_write_reg_(uint32_t addr, apic_reg_t reg, uint32_t val)
 {
-    *(volatile uint32_t*)(addr + reg) = val;
+    *(volatile uint32_t*)(word_t)(addr + reg) = val;
 }
 
 static inline uint32_t

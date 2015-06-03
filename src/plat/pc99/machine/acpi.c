@@ -238,7 +238,7 @@ acpi_init(void)
     acpi_rsdp = acpi_table_init(acpi_rsdp, ACPI_RSDP);
     printf("ACPI: RSDP vaddr=0x%lx\n", (unsigned long)acpi_rsdp);
 
-    acpi_rsdt = (acpi_rsdt_t*)acpi_rsdp->rsdt_address;
+    acpi_rsdt = (acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address;
     printf("ACPI: RSDT paddr=0x%lx\n", (unsigned long)acpi_rsdt);
     acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
     printf("ACPI: RSDT vaddr=0x%lx\n", (unsigned long)acpi_rsdt_mapped);
@@ -277,7 +277,7 @@ acpi_madt_scan(
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
     entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
     for (count = 0; count < entries; count++) {
-        acpi_madt = (acpi_madt_t*)acpi_rsdt_mapped->entry[count];
+        acpi_madt = (acpi_madt_t*)(word_t)acpi_rsdt_mapped->entry[count];
         acpi_madt_mapped = (acpi_madt_t*)acpi_table_init(acpi_madt, ACPI_RSDT);
 
         if (strncmp(acpi_str_apic, acpi_madt_mapped->header.signature, 4) == 0) {
@@ -386,7 +386,7 @@ acpi_dmar_scan(
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
     entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
     for (count = 0; count < entries; count++) {
-        acpi_dmar = (acpi_dmar_t*)acpi_rsdt_mapped->entry[count];
+        acpi_dmar = (acpi_dmar_t*)(word_t)acpi_rsdt_mapped->entry[count];
         acpi_dmar_mapped = (acpi_dmar_t*)acpi_table_init(acpi_dmar, ACPI_RSDT);
 
         if (strncmp("DMAR", acpi_dmar_mapped->header.signature, 4) == 0) {
