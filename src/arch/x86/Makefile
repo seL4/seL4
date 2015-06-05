@@ -22,7 +22,8 @@ ARCH_ASM_SOURCES += machine_asm_32.S \
 endif
 
 ifeq ($(__X86_64__),y)
-ARCH_ASM_SOURCES += head_64.S
+ARCH_ASM_SOURCES += head_64.S \
+                    machine_asm_64.S
 endif
 
 ARCH_C_SOURCES += c_traps.c
