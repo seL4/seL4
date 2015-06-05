@@ -21,8 +21,7 @@ uint16_t debug_port_of_node(node_id_t node_id);
 
 void boot_sys(
     unsigned long multiboot_magic,
-    multiboot_info_t* mbi,
-    uint32_t apic_khz
+    multiboot_info_t* mbi
 );
 void boot_node(void);
 void insert_dev_p_reg(p_region_t reg);

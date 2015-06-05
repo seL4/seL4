@@ -84,17 +84,7 @@ BEGIN_FUNC(_start)
     pushl $0
     popf
 
-    /* Load APIC address into EAX */
-    movl $IA32_APIC_BASE_MSR, %ecx
-    rdmsr
-    andl $0xfffff000, %eax
-    
-    /* Measure APIC/bus frequency */
-    pushl %eax
-    call apic_measure_freq
-
     /* Already push parameters for calling boot_sys later */
-    pushl %eax /* 3rd parameter: apic_khz */
     pushl %esi /* 2nd parameter: multiboot_info_ptr */
     pushl %edi /* 1st parameter: multiboot_magic    */
 
