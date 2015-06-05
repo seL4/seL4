@@ -18,6 +18,8 @@
 
 #if defined(X86_32)
 #include <plat/machine/hardware_32.h>
+#elif defined(X86_64)
+#include <plat/machine/hardware_64.h>
 #endif
 
 void handleReservedIRQ(irq_t irq);
