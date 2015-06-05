@@ -70,7 +70,6 @@ typedef struct glks {
     cpu_id_t     cpu_list       [CONFIG_MAX_NUM_NODES]; /* CPUs assigned to nodes */
     ui_info_t    ui_info_list   [CONFIG_MAX_NUM_NODES]; /* info about userland images */
     dev_p_regs_t dev_p_regs;  /* device memory regions */
-    uint32_t     apic_khz;    /* frequency of APIC/bus */
     uint32_t     num_ioapic;  /* number of IOAPICs detected */
     paddr_t      ioapic_paddr[CONFIG_MAX_NUM_IOAPIC];
 #ifdef CONFIG_IOMMU
@@ -384,7 +383,6 @@ try_boot_node(void)
 
     /* initialise the CPU */
     if (!init_node_cpu(
-                glks.apic_khz,
 #ifdef CONFIG_IRQ_IOAPIC
                 1
 #else
@@ -422,8 +420,7 @@ start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
 static BOOT_CODE bool_t
 try_boot_sys(
     unsigned long multiboot_magic,
-    multiboot_info_t* mbi,
-    uint32_t apic_khz
+    multiboot_info_t* mbi
 )
 {
     /* ==== following code corresponds to the "select" in abstract specification ==== */
@@ -489,9 +486,6 @@ try_boot_sys(
            (paddr_t)_start
           );
     printf("Kernel stack size: 0x%x\n", _kernel_stack_top - _kernel_stack_bottom);
-
-    glks.apic_khz = apic_khz;
-    printf("APIC: Bus frequency is %d MHz\n", glks.apic_khz / 1000);
 
     /* remapping legacy IRQs to their correct vectors */
     pic_remap_irqs(IRQ_INT_OFFSET);
@@ -665,11 +659,10 @@ try_boot_sys(
 BOOT_CODE VISIBLE void
 boot_sys(
     unsigned long multiboot_magic,
-    multiboot_info_t* mbi,
-    uint32_t apic_khz)
+    multiboot_info_t* mbi)
 {
     bool_t result;
-    result = try_boot_sys(multiboot_magic, mbi, apic_khz);
+    result = try_boot_sys(multiboot_magic, mbi);
 
     if (!result) {
         fail("boot_sys failed for some reason :(\n");

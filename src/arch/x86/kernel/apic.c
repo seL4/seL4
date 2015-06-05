@@ -43,20 +43,6 @@ typedef enum _apic_reg_t {
     APIC_TIMER_DIVIDE   = 0x3E0
 } apic_reg_t;
 
-PHYS_CODE
-static inline uint32_t FORCE_INLINE
-apic_read_reg_(uint32_t addr, apic_reg_t reg)
-{
-    return *(volatile uint32_t*)(word_t)(addr + reg);
-}
-
-PHYS_CODE
-static inline void FORCE_INLINE
-apic_write_reg_(uint32_t addr, apic_reg_t reg, uint32_t val)
-{
-    *(volatile uint32_t*)(word_t)(addr + reg) = val;
-}
-
 static inline uint32_t
 apic_read_reg(apic_reg_t reg)
 {
@@ -69,22 +55,22 @@ apic_write_reg(apic_reg_t reg, uint32_t val)
     *(volatile uint32_t*)(PPTR_APIC + reg) = val;
 }
 
-PHYS_CODE VISIBLE uint32_t
-apic_measure_freq(paddr_t paddr_apic)
+static BOOT_CODE uint32_t
+apic_measure_freq(void)
 {
     pit_init();
     /* wait for 1st PIT wraparound */
     pit_wait_wraparound();
 
     /* start APIC timer countdown */
-    apic_write_reg_(paddr_apic, APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
-    apic_write_reg_(paddr_apic, APIC_TIMER_COUNT, 0xffffffff);
+    apic_write_reg(APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
+    apic_write_reg(APIC_TIMER_COUNT, 0xffffffff);
 
     /* wait for 2nd PIT wraparound */
     pit_wait_wraparound();
 
     /* calculate APIC/bus cycles per ms = frequency in kHz */
-    return (0xffffffff - apic_read_reg_(paddr_apic, APIC_TIMER_CURRENT)) / PIT_WRAPAROUND_MS;
+    return (0xffffffff - apic_read_reg(APIC_TIMER_CURRENT)) / PIT_WRAPAROUND_MS;
 }
 
 BOOT_CODE paddr_t
@@ -101,10 +87,13 @@ apic_get_base_paddr(void)
 }
 
 BOOT_CODE bool_t
-apic_init(uint32_t apic_khz, bool_t mask_legacy_irqs)
+apic_init(bool_t mask_legacy_irqs)
 {
     apic_version_t apic_version;
     uint32_t num_lvt_entries;
+    uint32_t apic_khz;
+
+    apic_khz = apic_measure_freq();
 
     apic_version.words[0] = apic_read_reg(APIC_VERSION);
 
