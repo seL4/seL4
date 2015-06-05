@@ -13,6 +13,9 @@ DIRECTORIES += src/arch/$(ARCH)/object
 ifeq ($(__X86_32__),y)
 ARCH_C_SOURCES += object/objecttype_32.c
 endif
+ifeq ($(__X86_64__),y)
+ARCH_C_SOURCES += object/objecttype_64.c
+endif
 
 ARCH_C_SOURCES += object/interrupt.c \
                   object/ioport.c \
