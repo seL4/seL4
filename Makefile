@@ -186,6 +186,7 @@ LD = ${TOOLPREFIX}ld
 STRIP = ${TOOLPREFIX}strip
 BF_GEN = bitfield_gen.py
 CHANGED = ${SOURCE_ROOT}/tools/changed.sh
+CC_LD = ${SOURCE_ROOT}/tools/cc_ld
 CPP_GEN = ${SOURCE_ROOT}/tools/cpp_gen.sh
 SYSCALL_ID_GEN = syscall_header_gen.py
 INVOCATION_ID_GEN = invocation_header_gen.py
@@ -539,7 +540,7 @@ linker.lds_pp: ${LINKER_SCRIPT}
 
 kernel.elf: ${OBJECTS} linker.lds_pp
 	@echo " [LD] $@"
-	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -Wl,-T -Wl,linker.lds_pp \
+	$(Q)${CHANGED} $@ ${CC_LD} ${LD} ${LDFLAGS} -Wl,-T -Wl,linker.lds_pp \
 		-o $@ ${OBJECTS}
 
 autoconf.h: include/plat/${PLAT}/autoconf.h
