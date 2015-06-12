@@ -438,6 +438,9 @@ try_boot_sys(
     glks.num_nodes = 1; /* needed to enable console output */
 
     if (multiboot_magic != MULTIBOOT_MAGIC) {
+        /* We cannot actually print here, as the cmdline needs to be
+         * initialized before the serial ports get initialized
+         * so you will not actually see this print if it happens */
         printf("Boot loader not multiboot compliant\n");
         return false;
     }
