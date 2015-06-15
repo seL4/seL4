@@ -17,6 +17,11 @@ PADDR_BASE = 0x00000000;
 PADDR_LOAD = 0x00100000;
 KERNEL_BASE  = 0xe0000000;
 KERNEL_OFFSET = KERNEL_BASE - PADDR_BASE;
+#ifdef CONFIG_PAE_PAGING
+NDKS_BASE = 0xffe01000;
+#else
+NDKS_BASE = 0xffc01000;
+#endif
 
 SECTIONS
 {
@@ -74,11 +79,7 @@ SECTIONS
 
     /* The NDKS section is allocated and mapped per node in boot_sys.c */
 
-#ifdef CONFIG_PAE_PAGING
-    .ndks 0xffe01000 (DSECT) :
-#else
-    .ndks 0xffc01000 (DSECT) :
-#endif
+    .ndks NDKS_BASE (DSECT) :
     {
         _ndks_start = .;
 
