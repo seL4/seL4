@@ -346,7 +346,7 @@ try_boot_node(void)
     /* if we only boot up one node, we can reuse boot code/data memory */
     if (num_nodes == 1) {
         boot_mem_reuse_p_reg.start = PADDR_LOAD;
-        boot_mem_reuse_p_reg.end = (paddr_t)ki_boot_end - BASE_OFFSET;
+        boot_mem_reuse_p_reg.end = (paddr_t)ki_boot_end - KERNEL_BASE_OFFSET;
     } else {
         boot_mem_reuse_p_reg = P_REG_EMPTY;
     }
