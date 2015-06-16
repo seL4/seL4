@@ -16,6 +16,9 @@
 
 /* Pointer to the head of the scheduler queue for each priority */
 tcb_queue_t ksReadyQueues[NUM_READY_QUEUES];
+word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS];
+word_t ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1];
+compile_assert(ksReadyQueuesL1BitmapBigEnough, (CONFIG_NUM_PRIORITIES / wordBits) <= wordBits)
 
 /* Current thread TCB pointer */
 tcb_t *ksCurThread;

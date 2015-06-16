@@ -17,6 +17,8 @@
 #include <arch/model/statedata.h>
 
 extern tcb_queue_t ksReadyQueues[] VISIBLE;
+extern word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS] VISIBLE;
+extern word_t ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1] VISIBLE;
 extern tcb_t *ksCurThread VISIBLE;
 extern tcb_t *ksIdleThread VISIBLE;
 extern tcb_t *ksSchedulerAction VISIBLE;
