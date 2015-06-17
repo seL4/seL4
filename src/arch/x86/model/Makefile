@@ -10,4 +10,8 @@
 
 DIRECTORIES += src/arch/$(ARCH)/model
 
+ifeq ($(__X86_32__),y)
+ARCH_C_SOURCES += model/statedata_32.c
+endif
+
 ARCH_C_SOURCES += model/statedata.c
