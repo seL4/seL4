@@ -21,6 +21,8 @@
 #include <arch/object/iospace.h>
 #include <plat/machine/hardware.h>
 
+#include <mode/model/statedata.h>
+
 extern interrupt_t ia32KScurInterrupt;
 extern tss_t ia32KStss;
 extern gdt_entry_t ia32KSgdt[];
@@ -29,10 +31,6 @@ extern tcb_t *ia32KSfpuOwner;
 extern uint32_t ia32KScacheLineSizeBits;
 extern idt_entry_t ia32KSidt[];
 extern user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
-extern paddr_t ia32KSCurrentPD;
-extern pdpte_t ia32KSGlobalPDPT[BIT(PDPT_BITS)];
-extern pde_t ia32KSGlobalPD[BIT(PD_BITS + PDPT_BITS)];
-extern pte_t ia32KSGlobalPT[BIT(PT_BITS)];
 
 extern uint32_t ia32KSnumDrhu;
 extern vtd_rte_t* ia32KSvtdRootTable;
