@@ -90,20 +90,22 @@ def p_entity_list_empty(t):
 
 def p_entity_list_base(t):
     """entity_list : entity_list base"""
-    base, blocks, unions = t[1]
-    t[0] = (t[2], blocks, unions)
+    current_base, block_map, union_map = t[1]
+    block_map.setdefault(t[2], {})
+    union_map.setdefault(t[2], {})
+    t[0] = (t[2], block_map, union_map)
 
 def p_entity_list_block(t):
     """entity_list : entity_list block"""
-    base, blocks, unions = t[1]
-    blocks[t[2].name] = t[2]
-    t[0] = (base, blocks, unions)
+    current_base, block_map, union_map = t[1]
+    block_map[current_base][t[2].name] = t[2]
+    t[0] = (current_base, block_map, union_map)
 
 def p_entity_list_union(t):
     """entity_list : entity_list tagged_union"""
-    base, blocks, unions = t[1]
-    unions[t[2].name] = t[2]
-    t[0] = (base, blocks, unions)
+    current_base, block_map, union_map = t[1]
+    union_map[current_base][t[2].name] = t[2]
+    t[0] = (current_base, block_map, union_map)
 
 def p_base(t):
     """base : BASE INTLIT"""
@@ -2530,18 +2532,31 @@ if __name__ == '__main__':
     # Parse the spec
     lex.lex()
     yacc.yacc(debug=0)
-    base, blocks, unions = yacc.parse(in_file.read())
-    if not base in [8,16,32,64]:
-        raise ValueError("Invalid base size: %d" % base)
-    constant_suffix = {8 : 'ul', 16 : 'ul', 32 : 'ul', 64 : 'ull'}[base];
+    blocks = {}
+    unions = {}
+    _, block_map, union_map = yacc.parse(in_file.read())
+    base_list = [8, 16, 32, 64]
+    suffix_map = {8 : 'ul', 16 : 'ul', 32 : 'ul', 64 : 'ull'}
+    for base, block_list in block_map.items():
+        for name, b in block_list.items():
+            if not base in base_list:
+                raise ValueError("Invalid base size: %d" % base)
+            suffix = suffix_map[base]
+            b.set_base(base, suffix)
+            blocks[name] = b
+
     symtab = {}
     symtab.update(blocks)
+    for base, union_list in union_map.items():
+        unions.update(union_list)
     symtab.update(unions)
-    for b in blocks.values():
-        b.set_base(base, constant_suffix)
-    for u in unions.values():
-        u.resolve(options, symtab)
-        u.set_base(base, constant_suffix)
+    for base, union_list in union_map.items():
+        for u in union_list.values():
+            if not base in base_list:
+                raise ValueError("Invalid base size: %d" % base)
+            suffix = suffix_map[base]
+            u.resolve(options, symtab)
+            u.set_base(base, suffix)
 
     if not in_filename is None:
         base_filename = os.path.basename(in_filename).split('.')[0]
