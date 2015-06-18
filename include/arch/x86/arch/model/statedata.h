@@ -23,6 +23,8 @@
 
 #if defined(X86_32)
 #include <arch/model/statedata_32.h>
+#elif defined(X86_64)
+#include <arch/model/statedata_64.h>
 #endif
 
 extern interrupt_t x86KScurInterrupt;
