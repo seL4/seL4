@@ -70,6 +70,13 @@ SECTIONS
         *(COMMON)
     }
 
+    .ehframe : AT(ADDR(.ehframe) - KERNEL_OFFSET)
+    {
+        _ehframe = .;
+        *(.eh_frame)
+        . = ALIGN(4K);
+    }
+
     . = ALIGN(4K);
     ki_end = .;
 
