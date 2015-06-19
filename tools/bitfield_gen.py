@@ -107,9 +107,13 @@ def p_entity_list_union(t):
     union_map[current_base][t[2].name] = t[2]
     t[0] = (current_base, block_map, union_map)
 
-def p_base(t):
+def p_base_simple(t):
     """base : BASE INTLIT"""
-    t[0] = t[2]
+    t[0] = (t[2], t[2], 0)
+
+def p_base_mask(t):
+    """base : BASE INTLIT LPAREN INTLIT COMMA INTLIT RPAREN"""
+    t[0] = (t[2], t[4], t[6])
 
 def p_block(t):
     """block : BLOCK IDENTIFIER opt_visible_order_spec""" \
@@ -210,21 +214,33 @@ ptr_generator_template = \
 reader_template = \
 """static inline uint%(base)d_t CONST
 %(block)s_get_%(field)s(%(block)s_t %(block)s) {
-    return (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
+    uint%(base)d_t ret;
+    ret = (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
+    /* Possibly sign extend */
+    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+        ret |= 0x%(high_bits)x;
+    }
+    return ret;
 }"""
 
 ptr_reader_template = \
 """static inline uint%(base)d_t PURE
 %(block)s_ptr_get_%(field)s(%(block)s_t *%(block)s_ptr) {
-    return (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
+    uint%(base)d_t ret;
+    ret = (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
+    /* Possibly sign extend */
+    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+        ret |= 0x%(high_bits)x;
+    }
+    return ret;
 }"""
 
 writer_template = \
 """static inline %(block)s_t CONST
 %(block)s_set_%(field)s(%(block)s_t %(block)s, uint%(base)d_t v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
     %(block)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(block)s;
@@ -234,7 +250,7 @@ ptr_writer_template = \
 """static inline void
 %(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, uint%(base)d_t v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
     %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s_ptr->words[%(index)d] |= (v %(w_shift_op)s """ \
     """%(shift)d) & 0x%(mask)x;
@@ -263,21 +279,33 @@ ptr_union_generator_template = \
 union_reader_template = \
 """static inline uint%(base)d_t CONST
 %(union)s_%(block)s_get_%(field)s(%(union)s_t %(union)s) {
+    uint%(base)d_t ret;
     assert(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    return (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
+    ret = (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
+    /* Possibly sign extend */
+    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+        ret |= 0x%(high_bits)x;
+    }
+    return ret;
 }"""
 
 ptr_union_reader_template = \
 """static inline uint%(base)d_t PURE
 %(union)s_%(block)s_ptr_get_%(field)s(%(union)s_t *%(union)s_ptr) {
+    uint%(base)d_t ret;
     assert(((%(union)s_ptr->words[%(tagindex)d] >> """ \
     """%(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    return (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
+    ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
+    /* Possibly sign extend */
+    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+        ret |= 0x%(high_bits)x;
+    }
+    return ret;
 }"""
 
 union_writer_template = \
@@ -286,7 +314,7 @@ union_writer_template = \
     assert(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
@@ -302,7 +330,7 @@ ptr_union_writer_template = \
            %(union)s_%(block)s);
 
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s_ptr->words[%(index)d] |= """ \
@@ -364,7 +392,7 @@ tag_writer_template = \
 """static inline %(union)s_t CONST
 %(union)s_set_%(tagname)s(%(union)s_t %(union)s, uint%(base)d_t v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s.words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
@@ -375,7 +403,7 @@ ptr_tag_writer_template = \
 """static inline void
 %(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, uint%(base)d_t v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == 0);
+    assert(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s_ptr->words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
@@ -1203,10 +1231,12 @@ class TaggedUnion:
         self.union_base = union_base
         self.union_size = union_size
 
-    def set_base(self, base, suffix):
+    def set_base(self, base, base_bits, base_sign_extend, suffix):
         self.base = base
         self.multiple = self.union_size / base
         self.constant_suffix = suffix
+        self.base_bits = base_bits
+        self.base_sign_extend = base_sign_extend
 
         tag_index = None
         for w in self.tag_offset:
@@ -1725,13 +1755,21 @@ class TaggedUnion:
                 index = offset / self.base
                 if high:
                     shift_op = ">>"
-                    shift = self.base - size - (offset % self.base)
+                    shift = self.base_bits - size - (offset % self.base)
+                    if self.base_sign_extend:
+                        high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                    else:
+                        high_bits = 0
+                    if shift < 0:
+                        shift = -shift
+                        shift_op = "<<"
                 else:
                     shift_op = "<<"
                     shift = offset % self.base
+                    high_bits = 0
                 if size < self.base:
                     if high:
-                        mask = ((1 << size) - 1) << (self.base - size)
+                        mask = ((1 << size) - 1) << (self.base_bits - size)
                     else:
                         mask = (1 << size) - 1
                     suf = self.constant_suffix
@@ -1739,7 +1777,7 @@ class TaggedUnion:
                     field_inits.append(
                         "    /* fail if user has passed bits that we will override */")
                     field_inits.append(
-                        "    assert((%s & ~0x%x%s) == 0);" % (f_value, mask, suf))
+                        "    assert((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (f_value, mask, suf, self.base_sign_extend, f_value, suf, self.base_bits - 1, high_bits))
                     field_inits.append(
                         "    %s.words[%d] |= (%s & 0x%x%s) %s %d;" % \
                          (self.name, index, f_value, mask, suf, shift_op, shift))
@@ -1747,7 +1785,7 @@ class TaggedUnion:
                     ptr_field_inits.append(
                         "    /* fail if user has passed bits that we will override */")
                     ptr_field_inits.append(
-                        "    assert((%s & ~0x%x%s) == 0);" % (f_value, mask, suf))
+                        "    assert((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (f_value, mask, suf, self.base_sign_extend, f_value, suf, self.base_bits - 1, high_bits))
                     ptr_field_inits.append(
                         "    %s_ptr->words[%d] |= (%s & 0x%x%s) %s %d;" % \
                         (self.name, index, f_value, mask, suf, shift_op, shift))
@@ -1789,11 +1827,20 @@ class TaggedUnion:
                 if high:
                     write_shift = ">>"
                     read_shift = "<<"
-                    shift = self.base - size - (offset % self.base)
+                    shift = self.base_bits - size - (offset % self.base)
+                    if shift < 0:
+                        shift = -shift
+                        write_shift = "<<"
+                        read_shift = ">>"
+                    if self.base_sign_extend:
+                        high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                    else:
+                        high_bits = 0
                 else:
                     write_shift = "<<"
                     read_shift = ">>"
                     shift = offset % self.base
+                    high_bits = 0
                 mask = ((1 << size) - 1) << (offset % self.base)
                 
                 subs = {\
@@ -1809,7 +1856,10 @@ class TaggedUnion:
                     "tagshift": tagnameoffset % self.base, \
                     "tagmask": tagmask, \
                     "union": self.name, \
-                    "suf": self.constant_suffix}
+                    "suf": self.constant_suffix,
+                    "high_bits": high_bits,
+                    "sign_extend": self.base_sign_extend and high,
+                    "extend_bit": self.base_bits - 1}
 
                 # Reader
                 emit_named("%s_%s_get_%s" % (self.name, ref.name, field),
@@ -2066,9 +2116,11 @@ class Block:
 
             self.visible_order = visible_order
 
-    def set_base(self, base, suffix):
+    def set_base(self, base, base_bits, base_sign_extend, suffix):
         self.base = base
         self.constant_suffix = suffix
+        self.base_bits = base_bits
+        self.base_sign_extend = base_sign_extend
         if self.size % base != 0:
             raise ValueError("Size of block %s not a multiple of base" \
                              % self.name)
@@ -2129,7 +2181,7 @@ class Block:
 
                 if size < self.base:
                     if high:
-                        mask = ((1 << size) - 1) << (self.base - size)
+                        mask = ((1 << size) - 1) << (self.base_bits - size)
                     else:
                         mask = (1 << size) - 1
 
@@ -2316,13 +2368,21 @@ class Block:
             index = offset / self.base
             if high:
                 shift_op = ">>"
-                shift = self.base - size - (offset % self.base)
+                shift = self.base_bits - size - (offset % self.base)
+                if self.base_sign_extend:
+                    high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                else:
+                    high_bits = 0
+                if shift < 0:
+                    shift = -shift
+                    shift_op = "<<"
             else:
                 shift_op = "<<"
                 shift = offset % self.base
+                high_bits = 0
             if size < self.base:
                 if high:
-                    mask = ((1 << size) - 1) << (self.base - size)
+                    mask = ((1 << size) - 1) << (self.base_bits - size)
                 else:
                     mask = (1 << size) - 1
                 suf = self.constant_suffix
@@ -2330,7 +2390,7 @@ class Block:
                 field_inits.append(
                     "    /* fail if user has passed bits that we will override */")
                 field_inits.append(
-                    "    assert((%s & ~0x%x%s) == 0);" % (field, mask, suf))
+                    "    assert((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (field, mask, suf, self.base_sign_extend, field, suf, self.base_bits - 1, high_bits))
                 field_inits.append(
                     "    %s.words[%d] |= (%s & 0x%x%s) %s %d;" % \
                     (self.name, index, field, mask, suf, shift_op, shift))
@@ -2338,7 +2398,7 @@ class Block:
                 ptr_field_inits.append(
                     "    /* fail if user has passed bits that we will override */")
                 ptr_field_inits.append(
-                    "    assert((%s & ~0x%x%s) == 0);" % (field, mask, suf))
+                    "    assert((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (field, mask, suf, self.base_sign_extend, field, suf, self.base_bits - 1, high_bits))
                 ptr_field_inits.append(
                     "    %s_ptr->words[%d] |= (%s & 0x%x%s) %s %d;" % \
                     (self.name, index, field, mask, suf, shift_op, shift))
@@ -2372,11 +2432,20 @@ class Block:
             if high:
                 write_shift = ">>"
                 read_shift = "<<"
-                shift = self.base - size - (offset % self.base)
+                shift = self.base_bits - size - (offset % self.base)
+                if shift < 0:
+                    shift = -shift
+                    write_shift = "<<"
+                    read_shift = ">>"
+                if self.base_sign_extend:
+                    high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                else:
+                    high_bits = 0
             else:
                 write_shift = "<<"
                 read_shift = ">>"
                 shift = offset % self.base
+                high_bits = 0
             mask = ((1 << size) - 1) << (offset % self.base)
             
             subs = {\
@@ -2388,7 +2457,10 @@ class Block:
                 "r_shift_op": read_shift, \
                 "w_shift_op": write_shift, \
                 "mask": mask, \
-                "suf": self.constant_suffix}
+                "suf": self.constant_suffix, \
+                "high_bits": high_bits, \
+                "sign_extend": self.base_sign_extend and high,
+                "extend_bit": self.base_bits - 1}
 
             # Reader
             emit_named("%s_get_%s" % (self.name, field), params,
@@ -2537,12 +2609,13 @@ if __name__ == '__main__':
     _, block_map, union_map = yacc.parse(in_file.read())
     base_list = [8, 16, 32, 64]
     suffix_map = {8 : 'ul', 16 : 'ul', 32 : 'ul', 64 : 'ull'}
-    for base, block_list in block_map.items():
+    for base_info, block_list in block_map.items():
+        base, base_bits, base_sign_extend = base_info
         for name, b in block_list.items():
             if not base in base_list:
                 raise ValueError("Invalid base size: %d" % base)
             suffix = suffix_map[base]
-            b.set_base(base, suffix)
+            b.set_base(base, base_bits, base_sign_extend, suffix)
             blocks[name] = b
 
     symtab = {}
@@ -2550,13 +2623,14 @@ if __name__ == '__main__':
     for base, union_list in union_map.items():
         unions.update(union_list)
     symtab.update(unions)
-    for base, union_list in union_map.items():
+    for base_info, union_list in union_map.items():
+        base, base_bits, base_sign_extend = base_info
         for u in union_list.values():
             if not base in base_list:
                 raise ValueError("Invalid base size: %d" % base)
             suffix = suffix_map[base]
             u.resolve(options, symtab)
-            u.set_base(base, suffix)
+            u.set_base(base, base_bits, base_sign_extend, suffix)
 
     if not in_filename is None:
         base_filename = os.path.basename(in_filename).split('.')[0]
