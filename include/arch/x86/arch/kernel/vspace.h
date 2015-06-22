@@ -73,6 +73,7 @@ void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap);
 void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap);
 void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap);
 bool_t init_pat_msr(void);
+cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg);
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
