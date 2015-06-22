@@ -190,8 +190,11 @@ initTimer(void)
 
     /* Configure the comparator */
     mct->global.comp0_add_inc = TIMER_TICKS;
-    mct->global.comp0h = mct->global.cntl;
-    mct->global.comp0l = mct->global.cntl + TIMER_TICKS;
+
+    const uint64_t comparator_value =
+        ((((uint64_t) mct->global.cnth) << 32) | mct->global.cntl) + TIMER_TICKS;
+    mct->global.comp0h = (uint32_t)(comparator_value >> 32);
+    mct->global.comp0l = (uint32_t)comparator_value;
     /* Enable interrupts */
     mct->global.int_en = GINT_COMP0_IRQ;
 
