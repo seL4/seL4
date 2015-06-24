@@ -12,8 +12,9 @@
 #define __LIBSEL4_ARCH_SYSCALLS_H
 
 #include <autoconf.h>
+#include <sel4/arch/functions.h>
 #include <sel4/types.h>
-#include <stdint.h>
+#include <libsel4_stdint.h>
 
 #define __SWINUM(x) ((x) & 0x00ffffff)
 

@@ -12,7 +12,7 @@
 #define __LIBSEL4_ARCH_TYPES_H
 
 #include <sel4/macros.h>
-#include <stdint.h>
+#include <libsel4_stdint.h>
 
 #define seL4_WordBits 32
 

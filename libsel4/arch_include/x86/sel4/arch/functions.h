@@ -12,7 +12,7 @@
 #define __LIBSEL4_ARCH_FUNCTIONS_H
 
 #include <sel4/types.h>
-#include <stddef.h> /* for NULL */
+#include <libsel4_stddef.h> /* for NULL */
 
 /* the segment loaded into GS points directly to the IPC buffer */
 

@@ -13,7 +13,7 @@
 
 #include <autoconf.h>
 #include <sel4/types.h>
-#include <stdint.h>
+#include <libsel4_stdint.h>
 
 /* caps with fixed slot potitions in the root CNode */
 

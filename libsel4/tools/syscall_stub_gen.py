@@ -671,9 +671,9 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
 #ifndef __LIBSEL4_SEL4_CLIENT_H
 #define __LIBSEL4_SEL4_CLIENT_H
 
-#include <stddef.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <libsel4_stddef.h>
+#include <libsel4_stdbool.h>
+#include <libsel4_stdint.h>
 #include "sel4/types.h"
 #include "sel4/invocation.h"
 #include "sel4/arch/functions.h"

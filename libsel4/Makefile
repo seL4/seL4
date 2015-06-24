@@ -22,7 +22,12 @@ TARGETS          := libsel4.a
 
 # Source files required to build the target
 CFILES := \
-	$(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.c))
+	$(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.c)) \
+	$(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/${ARCH}/*.c))
+
+ASMFILES := \
+	$(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/*.S)) \
+	$(patsubst $(SOURCE_DIR)/%,%,$(wildcard $(SOURCE_DIR)/src/${ARCH}/*.S))
 
 # Header files/directories this library provides
 # Note: sel4_client.h may not have been built at the time this is evaluated.

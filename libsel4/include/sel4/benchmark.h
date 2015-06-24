@@ -17,7 +17,8 @@
 #define MAX_IPC_BUFFER (1024 - 1)
 
 #include <sel4/sel4.h>
-#include <stdint.h>
+#include <libsel4_stdint.h>
+#include <libsel4_io.h>
 
 static inline void
 seL4_BenchmarkDumpFullLog()
@@ -29,18 +30,18 @@ seL4_BenchmarkDumpFullLog()
         uint32_t requested = chunk > MAX_IPC_BUFFER ? MAX_IPC_BUFFER : chunk;
         uint32_t recorded = seL4_BenchmarkDumpLog(j, requested);
         for (uint32_t i = 0; i < recorded; i++) {
-            printf("%u\t", seL4_GetMR(i));
+            libsel4_printf("%u\t", seL4_GetMR(i));
         }
-        printf("\n");
+        libsel4_printf("\n");
         /* we filled the log buffer */
         if (requested != recorded) {
-            printf("Dumped %u of %u potential logs\n", j + recorded, potential_size);
+            libsel4_printf("Dumped %u of %u potential logs\n", j + recorded, potential_size);
             return;
         }
     }
 
     /* logged amount was smaller than log buffer */
-    printf("Dumped entire log, size %u\n", potential_size);
+    libsel4_printf("Dumped entire log, size %u\n", potential_size);
 }
 
 #endif /* CONFIG_BENCHMARK */
