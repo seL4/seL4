@@ -18,9 +18,11 @@
 typedef enum _object {
     seL4_IA32_4K = seL4_NonArchObjectTypeCount,
     seL4_IA32_LargePage,
+    seL4_IA32_HugePage,
     seL4_IA32_PageTableObject,
     seL4_IA32_PageDirectoryObject,
     seL4_IA32_PDPTObject,
+    seL4_IA32_PML4Object,
     seL4_IA32_IOPageTableObject,
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;

@@ -24,9 +24,17 @@ typedef word_t vm_fault_type_t;
 
 enum vm_page_size {
     IA32_SmallPage,
-    IA32_LargePage
+    IA32_LargePage,
+    IA32_HugePage
 };
 typedef word_t vm_page_size_t;
+
+enum vm_page_map_type {
+    X86_MAPPING_NONE = 0,
+    X86_MAPPING_VSPACE,
+    X86_MAPPING_IOSPACE
+};
+typedef uint32_t vm_page_map_type_t;
 
 enum frameSizeConstants {
     X86_4K_bits = 12,
@@ -35,13 +43,17 @@ enum frameSizeConstants {
     X86_1G_bits = 30
 };
 
-#define PAGE_BITS X86_4K_bits
+#define PAGE_BITS       X86_4K_bits
+#define PAGE_1G_BITS    X86_1G_bits
 
-#ifdef CONFIG_PAE_PAGING
+#if defined(CONFIG_PAE_PAGING) || defined(X86_64)
 #define LARGE_PAGE_BITS X86_2M_bits
 #else
 #define LARGE_PAGE_BITS X86_4M_bits
 #endif
+
+#define HUGE_PAGE_BITS  X86_1G_bits
+
 
 /* Any changes to this function need to be replicated in pageBitsForSize_phys.
  */
@@ -54,6 +66,9 @@ pageBitsForSize(vm_page_size_t pagesize)
 
     case IA32_LargePage:
         return LARGE_PAGE_BITS;
+
+    case IA32_HugePage:
+        return HUGE_PAGE_BITS;
 
     default:
         fail("Invalid page size");
