@@ -345,7 +345,9 @@ decodeIA32IOMapInvocation(
             current_syscall_error.invalidArgumentNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
+#ifdef X86_32
         cap = cap_frame_cap_set_capFIsIOSpace(cap, 1);
+#endif
         cap = cap_frame_cap_set_capFMappedASID(cap, pci_request_id);
         cap = cap_frame_cap_set_capFMappedAddress(cap, io_address);
 
@@ -444,8 +446,11 @@ decodeIA32IOUnMapInvocation(
 )
 {
     unmapIOPage(slot->cap);
+
     slot->cap = cap_frame_cap_set_capFMappedAddress(slot->cap, 0);
+#ifdef X86_32
     slot->cap = cap_frame_cap_set_capFIsIOSpace(slot->cap, 0);
+#endif
     slot->cap = cap_frame_cap_set_capFMappedASID(slot->cap, asidInvalid);
 
     setThreadState(ksCurThread, ThreadState_Restart);
