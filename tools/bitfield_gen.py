@@ -261,7 +261,7 @@ writer_template = \
 """static inline %(block)s_t CONST
 %(block)s_set_%(field)s(%(block)s_t %(block)s, %(type)s v) {
     /* fail if user has passed bits that we will override */
-    %(assert)s(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
     %(block)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(block)s;
@@ -271,7 +271,7 @@ ptr_writer_template = \
 """static inline void
 %(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, %(type)s v) {
     /* fail if user has passed bits that we will override */
-    %(assert)s(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
     %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s_ptr->words[%(index)d] |= (v %(w_shift_op)s """ \
     """%(shift)d) & 0x%(mask)x;
@@ -335,7 +335,7 @@ union_writer_template = \
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
     /* fail if user has passed bits that we will override */
-    %(assert)s(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
@@ -351,7 +351,7 @@ ptr_union_writer_template = \
            %(union)s_%(block)s);
 
     /* fail if user has passed bits that we will override */
-    %(assert)s(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s_ptr->words[%(index)d] |= """ \
@@ -413,7 +413,7 @@ tag_writer_template = \
 """static inline %(union)s_t CONST
 %(union)s_set_%(tagname)s(%(union)s_t %(union)s, %(type)s v) {
     /* fail if user has passed bits that we will override */
-    %(assert)s(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s.words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
@@ -424,7 +424,7 @@ ptr_tag_writer_template = \
 """static inline void
 %(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, %(type)s v) {
     /* fail if user has passed bits that we will override */
-    %(assert)s(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s_ptr->words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
