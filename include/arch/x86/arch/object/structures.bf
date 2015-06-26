@@ -12,6 +12,8 @@
 
 #if defined(X86_32)
 #include <arch/object/structures_32.bf>
+#elif defined(X86_64)
+#include <arch/object/structures_64.bf>
 #else
 #error Unknown architecture
 #endif

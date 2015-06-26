@@ -68,6 +68,8 @@ typedef uint32_t vm_rights_t;
 
 #if defined(X86_32)
 #include <arch/object/structures_32.h>
+#elif defined(X86_64)
+#include <arch/object/structures_64.h>
 #endif
 
 #endif
