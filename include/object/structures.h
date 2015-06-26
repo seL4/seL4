@@ -77,9 +77,9 @@ typedef uint32_t notification_state_t;
 #define ZombieType_ZombieCNode(n)   ((n) & MASK(5))
 
 static inline cap_t CONST
-Zombie_new(uint32_t number, uint32_t type, uint32_t ptr)
+Zombie_new(uint32_t number, uint32_t type, word_t ptr)
 {
-    uint32_t mask;
+    word_t mask;
 
     if (type == ZombieType_ZombieTCB) {
         mask = MASK(TCB_CNODE_RADIX + 1);
@@ -107,7 +107,7 @@ cap_zombie_cap_get_capZombieNumber(cap_t cap)
     return cap_zombie_cap_get_capZombieID(cap) & MASK(radix + 1);
 }
 
-static inline uint32_t CONST
+static inline word_t CONST
 cap_zombie_cap_get_capZombiePtr(cap_t cap)
 {
     uint32_t radix = cap_zombie_cap_get_capZombieBits(cap);
@@ -118,7 +118,7 @@ static inline cap_t CONST
 cap_zombie_cap_set_capZombieNumber(cap_t cap, uint32_t n)
 {
     uint32_t radix = cap_zombie_cap_get_capZombieBits(cap);
-    uint32_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
+    word_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
     return cap_zombie_cap_set_capZombieID(cap, ptr | (n & MASK(radix + 1)));
 }
 
