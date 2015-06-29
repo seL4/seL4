@@ -20,7 +20,8 @@ ARCH_C_SOURCES += kernel/vspace_32.c \
 endif
 
 ifeq ($(__X86_64__),y)
-ARCH_C_SOURCES += kernel/vspace_64.c
+ARCH_C_SOURCES += kernel/vspace_64.c \
+                  kernel/thread_64.c
 endif
 
 ARCH_C_SOURCES += kernel/apic.c \
