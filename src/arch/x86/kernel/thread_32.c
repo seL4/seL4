@@ -40,7 +40,7 @@ BOOT_CODE void
 Arch_configureIdleThread(tcb_t* tcb)
 {
     setRegister(tcb, EFLAGS, BIT(9) | BIT(1)); /* enable interrupts and set bit 1 which is always 1 */
-    setRegister(tcb, NextEIP, (word_t)idleThreadStart);
+    setRegister(tcb, NextIP, (word_t)idleThreadStart);
     setRegister(tcb, CS, SEL_CS_0);
     setRegister(tcb, DS, SEL_DS_0);
     setRegister(tcb, ES, SEL_DS_0);

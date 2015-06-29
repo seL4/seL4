@@ -58,9 +58,9 @@ bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
                 setRegister(receiver, r, sanitiseRegister(r, v));
             }
         }
-        /* HACK: Copy NextEIP to FaultEIP because FaultEIP will be copied */
-        /* back to NextEIP later on (and we don't wanna lose NextEIP)     */
-        setRegister(receiver, FaultEIP, getRegister(receiver, NextEIP));
+        /* HACK: Copy NextIP to FaultIP because FaultIP will be copied */
+        /* back to NextIP later on (and we don't wanna lose NextIP)     */
+        setRegister(receiver, FaultIP, getRegister(receiver, NextIP));
     }
     return (label == 0);
 

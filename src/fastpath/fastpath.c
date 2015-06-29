@@ -110,8 +110,8 @@ fastpath_call(word_t cptr, word_t msgInfo)
      */
 
 #ifdef ARCH_X86
-    /* Need to update NextEIP in the calling thread */
-    setRegister(ksCurThread, NextEIP, getRegister(ksCurThread, NextEIP) + 2);
+    /* Need to update NextIP in the calling thread */
+    setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
 #endif
 
     /* Dequeue the destination. */
@@ -269,8 +269,8 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
      */
 
 #ifdef ARCH_X86
-    /* Need to update NextEIP in the calling thread */
-    setRegister(ksCurThread, NextEIP, getRegister(ksCurThread, NextEIP) + 2);
+    /* Need to update NextIP in the calling thread */
+    setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
 #endif
 
     /* Set thread state to BlockedOnReceive */
