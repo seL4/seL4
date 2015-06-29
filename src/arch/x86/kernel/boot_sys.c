@@ -449,5 +449,8 @@ boot_sys(
     if (!result) {
         fail("boot_sys failed for some reason :(\n");
     }
+
+    schedule();
+    activateThread();
 }
 

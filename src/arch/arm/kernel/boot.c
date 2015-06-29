@@ -513,5 +513,8 @@ init_kernel(
     if (!result) {
         fail ("Kernel init failed for some reason :(");
     }
+
+    schedule();
+    activateThread();
 }
 

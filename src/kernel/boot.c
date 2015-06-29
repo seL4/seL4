@@ -414,14 +414,11 @@ create_initial_thread(
     tcb->tcbPriority = seL4_MaxPrio;
     setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
-    ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
+    ksSchedulerAction = tcb;
     ksCurThread = ksIdleThread;
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
     ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
     assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
-
-    /* initialise current thread pointer */
-    switchToThread(tcb); /* initialises ksCurThread */
 
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));
