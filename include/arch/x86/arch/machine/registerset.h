@@ -17,6 +17,8 @@
 
 #if defined(X86_32)
 #include <arch/machine/registerset_32.h>
+#elif defined(X86_64)
+#include <arch/machine/registerset_64.h>
 #endif
 
 /* Number of bytes required to store FPU state. */

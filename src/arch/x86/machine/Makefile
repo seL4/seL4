@@ -14,6 +14,10 @@ ifeq ($(__X86_32__),y)
 ARCH_C_SOURCES += machine/registerset_32.c
 endif
 
+ifeq ($(__X86_64__),y)
+ARCH_C_SOURCES += machine/registerset_64.c
+endif
+
 ARCH_C_SOURCES += machine/hardware.c \
                   machine/fpu.c
 
