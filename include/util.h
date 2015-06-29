@@ -81,13 +81,13 @@ long PURE str_to_long(const char* str);
       \<acute>ret__int :== PROC clz(\<acute>x)
     \<lbrace> \<acute>ret__int = of_nat (word_clz (x_' s)) \<rbrace>"
 */
-static inline int
-CONST clz(unsigned int x)
+static inline long
+CONST clzl(unsigned long x)
 {
-    return __builtin_clz(x);
+    return __builtin_clzl(x);
 }
 
-#define CTZ(x) __builtin_ctz(x)
-#define CLZ(x) clz(x)
+#define CTZL(x) __builtin_ctzl(x)
+#define CLZL(x) clzl(x)
 
 #endif /* __UTIL_H */
