@@ -20,6 +20,8 @@
 
 #if defined(X86_32)
 #include <arch/machine_32.h>
+#elif defined(X86_64)
+#include <arch/machine_64.h>
 #endif
 
 #define IA32_APIC_BASE_MSR      0x01B
