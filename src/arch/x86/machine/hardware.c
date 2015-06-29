@@ -28,12 +28,12 @@ init_sysenter_msrs(void)
 
 word_t PURE getRestartPC(tcb_t *thread)
 {
-    return getRegister(thread, FaultEIP);
+    return getRegister(thread, FaultIP);
 }
 
 void setNextPC(tcb_t *thread, word_t v)
 {
-    setRegister(thread, NextEIP, v);
+    setRegister(thread, NextIP, v);
 }
 
 /* Returns the size of CPU's cacheline */
