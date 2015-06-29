@@ -48,9 +48,6 @@ idt_entry_t x86KSidt[IDT_ENTRIES];
 /* A valid initial FPU state, copied to every new thread. */
 user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 
-/* Current active page directory. This is really just a shadow of CR3 */
-paddr_t ia32KSCurrentPD VISIBLE;
-
 /* Number of IOMMUs (DMA Remapping Hardware Units) */
 uint32_t ia32KSnumDrhu;
 

@@ -33,7 +33,6 @@ extern tcb_t *ia32KSfpuOwner;
 extern uint32_t x86KScacheLineSizeBits;
 extern idt_entry_t x86KSidt[];
 extern user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
-extern paddr_t ia32KSCurrentPD;
 
 extern uint32_t ia32KSnumDrhu;
 extern vtd_rte_t* ia32KSvtdRootTable;
