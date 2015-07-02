@@ -25,6 +25,8 @@ static unsigned long control_reg_order;
 
 #if defined(X86_32)
 #include <arch/machine/cpu_registers_32.h>
+#elif defined(X86_64)
+#include <arch/machine/cpu_registers_64.h>
 #endif
 
 #endif
