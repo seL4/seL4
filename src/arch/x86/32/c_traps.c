@@ -114,8 +114,8 @@ void NORETURN VISIBLE restore_user_context(void)
     while (1);
 }
 
-void FASTCALL VISIBLE c_handle_interrupt(int irq, int syscall);
-void FASTCALL VISIBLE c_handle_interrupt(int irq, int syscall)
+void VISIBLE c_handle_interrupt(int irq, int syscall);
+void VISIBLE c_handle_interrupt(int irq, int syscall)
 {
     if (irq == int_unimpl_dev) {
         handleUnimplementedDevice();

@@ -12,7 +12,7 @@
 
 void
 #ifdef ARCH_X86
-FASTCALL NORETURN
+NORETURN
 #endif
 fastpath_call(word_t cptr, word_t msgInfo)
 {
@@ -152,9 +152,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
 }
 
 void
-#ifdef ARCH_IA32
-FASTCALL
-#endif
 fastpath_reply_recv(word_t cptr, word_t msgInfo)
 {
     message_info_t info;

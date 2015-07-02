@@ -349,8 +349,9 @@ handle_interrupt:
     # switch to kernel stack
     leal    kernel_stack_alloc + 4096, %esp
 
-    # Place the syscall number in the second argument slot
-    movl    %eax, %edx
+    # Place the arguments on the stack
+    pushl   %eax
+    pushl   %ecx
 
     # gtfo to C land, we will not return
     call    c_handle_interrupt
