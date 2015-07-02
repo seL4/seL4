@@ -8,8 +8,8 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __ARCH_MACHINE_CPU_REGISTERS_H
-#define __ARCH_MACHINE_CPU_REGISTERS_H
+#ifndef __ARCH_MACHINE_CPU_REGISTERS_32_H
+#define __ARCH_MACHINE_CPU_REGISTERS_32_H
 
 #define CR0_MONITOR_COPROC  BIT(1)  /* Trap on FPU "WAIT" commands. */
 #define CR0_EMULATION       BIT(2)  /* Enable OS emulation of FPU. */

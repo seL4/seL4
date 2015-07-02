@@ -8,8 +8,8 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __ARCH_MACHINE_H
-#define __ARCH_MACHINE_H
+#ifndef __ARCH_MACHINE_32_H
+#define __ARCH_MACHINE_32_H
 
 #include <arch/types.h>
 #include <arch/object/structures.h>
