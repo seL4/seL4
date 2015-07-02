@@ -8,8 +8,8 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __ARCH_MACHINE_REGISTERSET_H
-#define __ARCH_MACHINE_REGISTERSET_H
+#ifndef __MODE_MACHINE_REGISTERSET_H
+#define __MODE_MACHINE_REGISTERSET_H
 
 #include <arch/types.h>
 #include <util.h>
