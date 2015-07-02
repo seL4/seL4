@@ -761,7 +761,7 @@ cteDeleteOne(cte_t* slot)
         bool_t final;
         finaliseCap_ret_t fc_ret UNUSED;
 
-        /** GHOSTUPD: "(gs_get_assn cteDeleteOne_'proc \<acute>ghost'state = -1
+        /** GHOSTUPD: "(gs_get_assn cteDeleteOne_'proc \<acute>ghost'state = (-1)
             \<or> gs_get_assn cteDeleteOne_'proc \<acute>ghost'state = \<acute>cap_type, id)" */
 
         final = isFinalCapability(slot);
