@@ -77,10 +77,10 @@ void handleReservedIRQ(irq_t irq)
 /* Get the IRQ number currently working on. */
 irq_t getActiveIRQ(void)
 {
-    if (ia32KScurInterrupt == int_invalid) {
+    if (x86KScurInterrupt == int_invalid) {
         return irqInvalid;
     } else {
-        return ia32KScurInterrupt - IRQ_INT_OFFSET;
+        return x86KScurInterrupt - IRQ_INT_OFFSET;
     }
 }
 

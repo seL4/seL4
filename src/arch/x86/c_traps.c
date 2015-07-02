@@ -29,7 +29,7 @@ void __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall
     } else if (irq < int_irq_min) {
         handleUserLevelFault(irq, ksCurThread->tcbArch.tcbContext.registers[Error]);
     } else if (likely(irq < int_trap_min)) {
-        ia32KScurInterrupt = irq;
+        x86KScurInterrupt = irq;
         handleInterruptEntry();
     } else if (irq == int_spurious) {
         /* fall through to restore_user_context and do nothing */
@@ -49,7 +49,7 @@ void __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall
 void __attribute__((noreturn))
 slowpath(syscall_t syscall)
 {
-    ia32KScurInterrupt = -1;
+    x86KScurInterrupt = -1;
     /* increment NextIP to skip sysenter */
     ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
     /* check for undefined syscall */

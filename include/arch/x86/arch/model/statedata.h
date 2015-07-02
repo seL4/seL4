@@ -23,7 +23,7 @@
 
 #include <mode/model/statedata.h>
 
-extern interrupt_t ia32KScurInterrupt;
+extern interrupt_t x86KScurInterrupt;
 extern tss_t x86KStss;
 extern gdt_entry_t x86KSgdt[];
 extern asid_pool_t* x86KSASIDTable[];
