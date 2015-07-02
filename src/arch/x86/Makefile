@@ -18,5 +18,7 @@ ifeq ($(__X86_32__),y)
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/Makefile
 endif
 
+ARCH_C_SOURCES += c_traps.c
+
 ARCH_ASM_SOURCES += halt.S \
                     idle.S
