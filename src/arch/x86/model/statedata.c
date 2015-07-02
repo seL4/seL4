@@ -18,7 +18,7 @@
 /* ==== read/write kernel state not preserved across kernel entries ==== */
 
 /* Interrupt currently being handled */
-interrupt_t ia32KScurInterrupt VISIBLE;
+interrupt_t x86KScurInterrupt VISIBLE;
 
 /* ==== proper read/write kernel state ==== */
 
