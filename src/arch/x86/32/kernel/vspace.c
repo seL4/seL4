@@ -278,7 +278,7 @@ map_kernel_window(
               0,                 /* accessed         */
               0,                 /* cache_disabled   */
               0,                 /* write_through    */
-              1,                 /* super_user       */
+              0,                 /* super_user       */
               1,                 /* read_write       */
               1                  /* present          */
           );
