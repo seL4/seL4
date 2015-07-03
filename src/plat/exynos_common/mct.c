@@ -184,6 +184,8 @@ resetTimer(void)
 BOOT_CODE void
 initTimer(void)
 {
+    uint64_t comparator_value;
+
     /* Clear write status */
     mct->global.wstat = mct->global.wstat;
     mct->global.cnt_wstat = mct->global.cnt_wstat;
@@ -191,8 +193,7 @@ initTimer(void)
     /* Configure the comparator */
     mct->global.comp0_add_inc = TIMER_TICKS;
 
-    const uint64_t comparator_value =
-        ((((uint64_t) mct->global.cnth) << 32) | mct->global.cntl) + TIMER_TICKS;
+    comparator_value = ((((uint64_t) mct->global.cnth) << 32) | mct->global.cntl) + TIMER_TICKS;
     mct->global.comp0h = (uint32_t)(comparator_value >> 32);
     mct->global.comp0l = (uint32_t)comparator_value;
     /* Enable interrupts */
