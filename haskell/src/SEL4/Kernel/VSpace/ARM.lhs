@@ -1093,7 +1093,9 @@ Capabilities for page directories --- the top level of the hardware-defined page
 >                 -- Fail if there is nothing mapped here
 >                 Nothing -> return $ InvokePageDirectory PageDirectoryNothing
 >                 Just frameInfo -> do
->                     withoutFailure $ stateAssert $ validMappingSize (fst frameInfo)
+>                     withoutFailure $ stateAssert 
+>                         (validMappingSize (fst frameInfo))
+>                         "mapping found in PD is of invalid size"
 >                     let baseStart = pageBase (VPtr start) (fst frameInfo)
 >                     let baseEnd = pageBase (VPtr end - 1) (fst frameInfo)
 >                     when (baseStart /= baseEnd) $
