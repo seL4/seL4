@@ -1540,7 +1540,7 @@ decodeIA32FrameInvocation(
         cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);
 
         switch (frameSize) {
-        /* PTE mappings */
+            /* PTE mappings */
         case IA32_SmallPage: {
             pte_t              pte;
             lookupPTSlot_ret_t lu_ret;
@@ -1672,7 +1672,7 @@ decodeIA32FrameInvocation(
         vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
 
         switch (frameSize) {
-        /* PTE mappings */
+            /* PTE mappings */
         case IA32_SmallPage: {
             pte_t              pte;
             lookupPTSlot_ret_t lu_ret;
