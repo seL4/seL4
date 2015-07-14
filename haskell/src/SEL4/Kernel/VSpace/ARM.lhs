@@ -1093,9 +1093,7 @@ Capabilities for page directories --- the top level of the hardware-defined page
 >                 -- Fail if there is nothing mapped here
 >                 Nothing -> return $ InvokePageDirectory PageDirectoryNothing
 >                 Just frameInfo -> do
->                     withoutFailure $ stateAssert 
->                         (validMappingSize (fst frameInfo))
->                         "mapping found in PD is of invalid size"
+>                     withoutFailure $ checkValidMappingSize (fst frameInfo)
 >                     let baseStart = pageBase (VPtr start) (fst frameInfo)
 >                     let baseEnd = pageBase (VPtr end - 1) (fst frameInfo)
 >                     when (baseStart /= baseEnd) $
@@ -1313,8 +1311,8 @@ When we fetch a mapping in which to perform a page flush, we assert that its
 size is valid. This check is ignored in Haskell, but the Isabelle model has a
 notion of the largest permitted object size, and checks it appropriately.
 
-> validMappingSize :: VMPageSize -> KernelState -> Bool
-> validMappingSize _ = const True
+> checkValidMappingSize :: VMPageSize -> Kernel ()
+> checkValidMappingSize _ = return ()
 
 \subsection{Invocation Implementations}
 

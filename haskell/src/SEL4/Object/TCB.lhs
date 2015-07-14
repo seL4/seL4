@@ -587,7 +587,7 @@ When a new "Wait" operation begins, the caller slot in the waiting thread's TCB 
 > deleteCallerCap receiver = do
 >     callerSlot <- getThreadCallerSlot receiver
 >     callerCap <- getSlotCap callerSlot
->     assert (isReplyCap callerCap || callerCap == NullCap)
+>     assert (isReplyCap callerCap || isNullCap callerCap)
 >         "Caller cap must be a reply cap"
 >     cteDeleteOne callerSlot
 
