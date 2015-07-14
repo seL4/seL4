@@ -1302,7 +1302,7 @@ createSafeMappingEntries_PDE
 
     switch (frameSize) {
 
-        /* PDE mappings */
+    /* PDE mappings */
     case ARMSection:
         ret.pde_entries.base = lookupPDSlot(pd, vaddr);
         ret.pde_entries.length = 1;
@@ -2066,7 +2066,7 @@ exception_t
 performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
-    unsigned int i, j;
+    unsigned int i, j UNUSED;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2095,7 +2095,7 @@ exception_t
 performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
-    unsigned int i, j;
+    unsigned int i, j UNUSED;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2123,7 +2123,7 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
 exception_t
 performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 {
-    unsigned int i, j;
+    unsigned int i, j UNUSED;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries
@@ -2149,7 +2149,7 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 exception_t
 performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 {
-    unsigned int i, j;
+    unsigned int i, j UNUSED;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries
@@ -2227,7 +2227,7 @@ doFlush(int label, vptr_t start, vptr_t end, paddr_t pstart)
     /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
             \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
         \<and> \<acute>start <= \<acute>end, id)" */
-    
+
     switch (label) {
     case ARMPDClean_Data:
     case ARMPageClean_Data:

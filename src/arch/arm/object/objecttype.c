@@ -46,8 +46,8 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         }
         return ret;
 
-        /* This is a deviation from haskell, which has only
-         * one frame cap type on ARM */
+    /* This is a deviation from haskell, which has only
+     * one frame cap type on ARM */
     case cap_small_frame_cap:
         ret.cap = cap_small_frame_cap_set_capFMappedASID(cap, asidInvalid);
         ret.status = EXCEPTION_NONE;
@@ -178,9 +178,9 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
     case cap_small_frame_cap:
     case cap_frame_cap:
         sz = cap_get_capSizeBits(cap);
-    /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
-        \<or> 2 ^ unat \<acute>sz___int <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
-        \<and> \<acute>sz___int < 32, id)" */
+        /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> 2 ^ unat \<acute>sz___int <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+            \<and> \<acute>sz___int < 32, id)" */
 
         clearMemory((void *)cap_get_capPtr(cap), sz);
         Arch_finaliseCap(cap, is_final);

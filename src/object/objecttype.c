@@ -565,7 +565,7 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
     word_t objectSize;
     void *nextFreeArea;
     unsigned int i;
-    word_t totalObjectSize;
+    word_t totalObjectSize UNUSED;
 
     /* ghost check that we're visiting less bytes than the max object size */
     objectSize = getObjectSize(t, userSize);
