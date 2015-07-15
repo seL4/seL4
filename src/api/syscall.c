@@ -308,8 +308,6 @@ handleWait(void)
     word_t epCPtr;
     lookupCap_ret_t lu_ret;
 
-    deleteCallerCap(ksCurThread);
-
     epCPtr = getRegister(ksCurThread, capRegister);
 
     lu_ret = lookupCap(ksCurThread, epCPtr);
@@ -322,6 +320,7 @@ handleWait(void)
 
     switch (cap_get_capType(lu_ret.cap)) {
     case cap_endpoint_cap:
+
         if (unlikely(!cap_endpoint_cap_get_capCanReceive(lu_ret.cap))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
             current_fault = fault_cap_fault_new(epCPtr, true);
@@ -329,6 +328,7 @@ handleWait(void)
             break;
         }
 
+        deleteCallerCap(ksCurThread);
         receiveIPC(ksCurThread, lu_ret.cap);
         break;
 
