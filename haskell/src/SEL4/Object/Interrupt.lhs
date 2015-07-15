@@ -131,6 +131,9 @@ When the last IRQ handler capability for a given IRQ is deleted, the capability 
 > deletingIRQHandler :: IRQ -> Kernel ()
 > deletingIRQHandler irq = do
 >     slot <- getIRQSlot irq
+>     cap <- getSlotCap slot
+>     assert (isAsyncEndpointCap cap || isNullCap cap)
+>         "Cap in IRQ handler slot should be AsyncEP or Null."
 >     cteDeleteOne slot
 
 > deletedIRQHandler :: IRQ -> Kernel ()
