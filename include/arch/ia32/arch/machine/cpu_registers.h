@@ -47,7 +47,23 @@ static inline void write_cr0(uint32_t val)
     asm volatile("movl %0, %%cr0" :: "r"(val), "m"(__control_reg_order));
 }
 
-uint32_t read_cr4(void);
-void write_cr4(uint32_t value);
+static inline uint32_t read_cr2(void)
+{
+    uint32_t val;
+    asm volatile("movl %%cr2, %0" : "=r"(val), "=m"(__control_reg_order));
+    return val;
+}
+
+static inline uint32_t read_cr4(void)
+{
+    uint32_t val;
+    asm volatile("movl %%cr4, %0" : "=r"(val), "=m"(__control_reg_order));
+    return val;
+}
+
+static inline void write_cr4(uint32_t value)
+{
+    asm volatile("movl %0, %%cr4" :: "r"(value), "m"(__control_reg_order));
+}
 
 #endif

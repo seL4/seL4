@@ -40,6 +40,7 @@ repository (in alphabetical order).
 * Anna Lyons, NICTA & UNSW
 * Stephanie McArthur, NICTA
 * Sam McNally, NICTA
+* Tim Newsham
 * Toby Murray, NICTA & UNSW
 * Ameya Palande, NICTA
 * Max R.D. Parmer
@@ -48,6 +49,7 @@ repository (in alphabetical order).
 * Sean Seefried, NICTA
 * Thomas Sewell, NICTA & UNSW
 * Michael von Tessin, NICTA & UNSW
+* Robbie Van Vossen
 * Adam Walker, NICTA
 * James Wilmot, NICTA
 * Simon Winwood, NICTA

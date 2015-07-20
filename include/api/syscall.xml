@@ -29,6 +29,7 @@
             <syscall name="DebugHalt"     />
             <syscall name="DebugCapIdentify"   />
             <syscall name="DebugSnapshot" />
+            <syscall name="DebugNameThread"/>
         </config>
         <config name="DANGEROUS_CODE_INJECTION">
             <syscall name="DebugRun"/>

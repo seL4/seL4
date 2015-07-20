@@ -18,6 +18,11 @@
 #include <arch/object/tcb.h>
 #include <object/cnode.h>
 
+#ifdef DEBUG
+/* Maximum length of the tcb name, including null terminator */
+#define TCB_NAME_LENGTH (BIT(TCB_SIZE_BITS) - sizeof(tcb_t))
+#endif
+
 struct tcb_queue {
     tcb_t *head;
     tcb_t *end;
@@ -84,5 +89,8 @@ cptr_t PURE getExtraCPtr(word_t *bufferPtr, unsigned int i);
 void setExtraBadge(word_t *bufferPtr, word_t badge, unsigned int i);
 
 exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info);
+#ifdef DEBUG
+void setThreadName(tcb_t *thread, const char *name);
+#endif
 
 #endif

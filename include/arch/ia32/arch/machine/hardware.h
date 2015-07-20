@@ -11,6 +11,7 @@
 #ifndef __ARCH_MACHINE_HARDWARE_H
 #define __ARCH_MACHINE_HARDWARE_H
 
+#include <types.h>
 #include <config.h>
 #include <arch/types.h>
 #include <arch/linker.h>
@@ -84,7 +85,14 @@ uint32_t CONST getCacheLineSize(void);
 uint32_t CONST getCacheLineSizeBits(void);
 
 /* Flushes a specific memory range from the CPU cache */
-void flushCacheLine(void* vaddr);
+static inline void flushCacheLine(void* vaddr)
+{
+    asm volatile("clflush %[vaddr]" :: [vaddr] "m"(vaddr));
+}
+
 void flushCacheRange(void* vaddr, uint32_t size_bits);
+
+/* Disables a variety of prefetchers */
+bool_t disablePrefetchers(void);
 
 #endif

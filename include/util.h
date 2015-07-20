@@ -17,6 +17,7 @@
 #define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
 #define CTZ(x) __builtin_ctz(x)
 #define CLZ(x) __builtin_clz(x)
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 #ifndef __ASSEMBLER__
 

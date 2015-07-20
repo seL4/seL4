@@ -43,7 +43,7 @@ check_export_arch_timer(void)
     v |= CNTKCTL_PL0PCTEN;
 #endif
 #ifdef CONFIG_EXPORT_VCNT_USER
-    v |= CNTKCTL_PL0PCTEN;
+    v |= CNTKCTL_PL0VCTEN;
 #endif
     MCR(CNTKCTL, v);
 }

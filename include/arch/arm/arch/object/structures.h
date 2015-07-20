@@ -200,6 +200,10 @@ struct tcb {
      * tcb->vcpu->tcb == tcb. */
     struct vcpu* vcpu;
 #endif
+#ifdef DEBUG
+    /* Use any remaining space for a thread name */
+    char tcbName[];
+#endif
 };
 typedef struct tcb tcb_t;
 

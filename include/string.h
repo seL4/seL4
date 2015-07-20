@@ -8,10 +8,17 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __TYPES_H
-#define __TYPES_H
+#ifndef __STRING_H
+#define __STRING_H
 
-#include <basic_types.h>
-#include <compound_types.h>
+#ifdef DEBUG
+
+#include <stdint.h>
+
+unsigned int strnlen(const char *s, unsigned int maxlen);
+unsigned int strlcpy(char *dest, const char *src, unsigned int size);
+unsigned int strlcat(char *dest, const char *src, unsigned int size);
+
+#endif
 
 #endif

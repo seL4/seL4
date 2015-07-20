@@ -165,7 +165,7 @@ map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
 }
 
 BOOT_CODE void
-map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
+map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 {
     pte_t* pt;
     pte_t* targetSlot;
@@ -189,7 +189,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
                       APFromVMRights(VMReadWrite),
                       1, /* cacheable */
                       1, /* write-back caching */
-                      0  /* executable */
+                      !executable
                   );
 #else
     *targetSlot = pte_pte_small_new(
@@ -364,7 +364,7 @@ map_kernel_window(void)
         PPTR_GLOBALS_PAGE,
         VMReadOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             true,  /* armParityEnabled */
             true   /* armPageCacheable */
         )
@@ -376,7 +376,7 @@ map_kernel_window(void)
         PPTR_KERNEL_STACK,
         VMKernelOnly,
         vm_attributes_new(
-            false, /* armExecuteNever */
+            true,  /* armExecuteNever */
             true,  /* armParityEnabled */
             true   /* armPageCacheable */
         )
@@ -1839,6 +1839,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
 
             find_ret = findPDForASID(asid);
             if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+                userError("ARMPageMap: No PD for ASID");
                 current_syscall_error.type =
                     seL4_FailedLookup;
                 current_syscall_error.failedLookupWasSource =
@@ -1958,6 +1959,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
 
             find_ret = findPDForASID(mappedASID);
             if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+                userError("ARMPageRemap: No PD for ASID");
                 current_syscall_error.type =
                     seL4_FailedLookup;
                 current_syscall_error.failedLookupWasSource = false;

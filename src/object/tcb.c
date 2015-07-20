@@ -22,6 +22,7 @@
 #include <kernel/vspace.h>
 #include <model/statedata.h>
 #include <util.h>
+#include <string.h>
 
 static inline PURE
 unsigned int
@@ -989,3 +990,11 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
 
     return EXCEPTION_NONE;
 }
+
+#ifdef DEBUG
+void
+setThreadName(tcb_t *tcb, const char *name)
+{
+    strlcpy(tcb->tcbName, name, TCB_NAME_LENGTH);
+}
+#endif

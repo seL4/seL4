@@ -382,6 +382,15 @@ menu "Build Options"
             expense of dramatically decreasing performance. Primary use is for
             debugging.
 
+    config DEBUG_DISABLE_PREFETCHERS
+        bool "Disable prefetchers"
+        depends on ARCH_IA32
+        default n
+        help
+            On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 
+            adjacent cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher.
+            Currently unimplemented on other platforms.
+
 endmenu
 
 menu "Errata"

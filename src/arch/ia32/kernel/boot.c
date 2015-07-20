@@ -21,6 +21,7 @@
 #include <arch/machine/fpu.h>
 #include <arch/object/ioport.h>
 #include <arch/linker.h>
+#include <util.h>
 
 #ifdef CONFIG_IOMMU
 #include <plat/machine/intel-vtd.h>
@@ -95,7 +96,7 @@ create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 }
 
 BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
+create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
 {
     cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large);
     map_it_frame_cap(vspace_cap, cap);
@@ -574,6 +575,12 @@ init_node_cpu(
     if (!apic_init(apic_khz, mask_legacy_irqs)) {
         return false;
     }
+
+#ifdef CONFIG_DEBUG_DISABLE_PREFETCHERS
+    if (!disablePrefetchers()) {
+        return false;
+    }
+#endif
 
     return true;
 }
