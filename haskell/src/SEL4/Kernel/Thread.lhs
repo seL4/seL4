@@ -36,6 +36,7 @@ We use the C preprocessor to select a target architecture.
 > import {-# SOURCE #-} SEL4.Kernel.Init
 
 > import Data.Bits
+> import Data.Array
 
 \end{impdetails}
 
@@ -284,8 +285,7 @@ This function is called when an IPC message includes a capability to transfer. I
 >             _ -> return $ mi { msgExtraCaps = fromIntegral n }
 >     where
 >        transferAgain = transferCapsToSlots ep diminish rcvBuffer (n + 1) caps
->        bitN = 1 `shiftL` n
->        miCapUnfolded = mi { msgCapsUnwrapped = msgCapsUnwrapped mi .|. bitN }
+>        miCapUnfolded = mi { msgCapsUnwrapped = msgCapsUnwrapped mi .|. bit n}
 >        (cap, srcSlot) = arg
 
 \subsubsection{Asynchronous IPC}
@@ -327,29 +327,38 @@ If the current thread is no longer runnable, has used its entire timeslice, an I
 >                 setSchedulerAction ResumeCurrentThread
 
 Threads are scheduled using a simple multiple-priority round robin algorithm.
-It iterates through the ready queues, starting with the highest priority
-queue; when it finds a non-empty ready queue, it selects the first
-thread in the queue, and makes it the current thread.
-
+It checks the priority bitmaps to find the highest priority with a non-empty
+queue. It selects the first thread in that queue and makes it the current
+thread.
 Note that the ready queues are a separate structure in the kernel
 model. In a real implementation, to avoid requiring
 dynamically-allocated kernel memory, these queues would be linked
 lists using the TCBs themselves as nodes.
 
+> countLeadingZeros :: (Bits b, FiniteBits b) => b -> Int
+> countLeadingZeros w =
+>     length . takeWhile not . reverse . map (testBit w) $ [0 .. finiteBitSize w - 1]
+
+> wordLog2 :: (Bits b, FiniteBits b) => b -> Int
+> wordLog2 w = finiteBitSize w - 1 - countLeadingZeros w
+
 > chooseThread :: Kernel ()
 > chooseThread = do
->         curdom <- curDomain
->         r <- findM (chooseThread' curdom) (reverse [0 .. maxPriority])
->         when (r == Nothing) $ switchToIdleThread
->     where
->         chooseThread' :: Domain -> Priority -> Kernel Bool
->         chooseThread' qdom prio = do
->             q <- getQueue qdom prio
->             case q of
->                 thread : _ -> do
->                    switchToThread thread
->                    return True
->                 [] -> return False
+>     curdom <- if numDomains > 1 then curDomain else return 0
+>     l1 <- getReadyQueuesL1Bitmap curdom
+>     if l1 /= 0
+>         then do
+>             let l1index = wordLog2 l1
+>             l2 <- getReadyQueuesL2Bitmap curdom l1index
+>             let l2index = wordLog2 l2
+>             let prio = l1IndexToPrio l1index .|. fromIntegral l2index
+>             queue <- getQueue curdom prio
+>             let thread = head queue
+>             runnable <- isRunnable thread
+>             assert runnable "Scheduled a non-runnable thread"
+>             switchToThread thread
+>         else
+>             switchToIdleThread
 
 \subsubsection{Switching Threads}
 
@@ -486,6 +495,49 @@ When setting the scheduler state, we check for blocking of the current thread; i
 
 The following two functions place a thread at the beginning or end of its priority's ready queue, unless it is already queued.
 
+FIXME DOCUMENT TWEAK AND MOVE
+
+> prioToL1Index :: Priority -> Int
+> prioToL1Index prio = fromIntegral $ prio `shiftR` wordRadix
+
+> l1IndexToPrio :: Int -> Priority
+> l1IndexToPrio i = (fromIntegral i) `shiftL` wordRadix
+
+> getReadyQueuesL1Bitmap :: Domain -> Kernel (Word)
+> getReadyQueuesL1Bitmap tdom = gets (\ks -> ksReadyQueuesL1Bitmap ks ! tdom)
+
+> modifyReadyQueuesL1Bitmap :: Domain -> (Word -> Word) -> Kernel ()
+> modifyReadyQueuesL1Bitmap tdom f = do
+>     l1 <- getReadyQueuesL1Bitmap tdom
+>     modify (\ks -> ks { ksReadyQueuesL1Bitmap =
+>                             ksReadyQueuesL1Bitmap ks // [(tdom, f l1)]})
+
+> getReadyQueuesL2Bitmap :: Domain -> Int -> Kernel (Word)
+> getReadyQueuesL2Bitmap tdom i = gets (\ks -> ksReadyQueuesL2Bitmap ks ! (tdom, i))
+
+> modifyReadyQueuesL2Bitmap :: Domain -> Int -> (Word -> Word) -> Kernel ()
+> modifyReadyQueuesL2Bitmap tdom i f = do
+>     l2 <- getReadyQueuesL2Bitmap tdom i
+>     modify (\ks -> ks { ksReadyQueuesL2Bitmap =
+>                             ksReadyQueuesL2Bitmap ks // [((tdom, i), f l2)]})
+
+> addToBitmap :: Domain -> Priority -> Kernel ()
+> addToBitmap tdom prio = do
+>     let l1index = prioToL1Index prio
+>     let l2bit = fromIntegral ((fromIntegral prio .&. mask wordRadix)::Word)
+>     modifyReadyQueuesL1Bitmap tdom $ \w -> w .|. bit l1index
+>     modifyReadyQueuesL2Bitmap tdom l1index
+>         (\w -> w .|. bit l2bit)
+
+> removeFromBitmap :: Domain -> Priority -> Kernel ()
+> removeFromBitmap tdom prio = do
+>     let l1index = prioToL1Index prio
+>     let l2bit = fromIntegral((fromIntegral prio .&. mask wordRadix)::Word)
+>     modifyReadyQueuesL2Bitmap tdom l1index $ \w -> w .&. (complement $ bit l2bit)
+>     l2 <- getReadyQueuesL2Bitmap tdom l1index
+>     when (l2 == 0) $
+>         modifyReadyQueuesL1Bitmap tdom $ \w -> w .&. (complement $ bit l1index)
+
 > tcbSchedEnqueue :: PPtr TCB -> Kernel ()
 > tcbSchedEnqueue thread = do
 >     queued <- threadGet tcbQueued thread
@@ -494,6 +546,7 @@ The following two functions place a thread at the beginning or end of its priori
 >         prio <- threadGet tcbPriority thread
 >         queue <- getQueue tdom prio
 >         setQueue tdom prio $ thread : queue
+>         when (null queue) $ addToBitmap tdom prio
 >         threadSet (\t -> t { tcbQueued = True }) thread
 
 > tcbSchedAppend :: PPtr TCB -> Kernel ()
@@ -504,6 +557,7 @@ The following two functions place a thread at the beginning or end of its priori
 >         prio <- threadGet tcbPriority thread
 >         queue <- getQueue tdom prio
 >         setQueue tdom prio $ queue ++ [thread]
+>         when (null queue) $ addToBitmap tdom prio
 >         threadSet (\t -> t { tcbQueued = True }) thread
 
 The following function dequeues a thread, if it is queued.
@@ -515,7 +569,9 @@ The following function dequeues a thread, if it is queued.
 >         tdom <- threadGet tcbDomain thread
 >         prio <- threadGet tcbPriority thread
 >         queue <- getQueue tdom prio
->         setQueue tdom prio $ filter (/=thread) queue
+>         let queue' = filter (/=thread) queue
+>         setQueue tdom prio queue'
+>         when (null queue') $ removeFromBitmap tdom prio
 >         threadSet (\t -> t { tcbQueued = False }) thread
 
 \subsubsection{Timer Ticks}

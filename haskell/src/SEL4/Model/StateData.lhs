@@ -77,6 +77,11 @@ The top-level kernel state structure is called "KernelState". It contains:
 
 >         ksReadyQueues :: Array (Domain, Priority) ReadyQueue,
 
+\item a bitmap for each domain; each bit represents the presence of a runnable thread for a specific priority
+
+>         ksReadyQueuesL1Bitmap :: Array (Domain) Word,
+>         ksReadyQueuesL2Bitmap :: Array (Domain, Int) Word,
+
 \item a pointer to the current thread's control block;
 
 >         ksCurThread :: PPtr TCB,
@@ -104,6 +109,8 @@ The top-level kernel state structure is called "KernelState". It contains:
 \end{itemize}
 
 Note that this definition of "KernelState" assumes a single processor. The behaviour of the kernel on multi-processor systems is not specified by this document.
+
+Note that the priority bitmap is split up into two levels. In order to check to see whether a priority has a runnable thread on a 32-bit system with a maximum priority of 255, we use the high 3 bits of the priority as an index into the level 1 bitmap. If the bit at that index is set, we use those same three bits to obtain a word from the level 2 bitmap. We then use the remaining 5 bits to index into that word. If the bit is set, the queue for that priority is non-empty.
 
 \subsubsection{Monads}
 
@@ -219,6 +226,10 @@ A new kernel state structure contains an empty physical address space, a set of 
 >         ksReadyQueues =
 >             funPartialArray (const [])
 >                             ((0, 0), (fromIntegral numDomains, fromIntegral numPriorities)),
+>         ksReadyQueuesL1Bitmap = funPartialArray (const 0) (0, fromIntegral numDomains),
+>         ksReadyQueuesL2Bitmap =
+>             funPartialArray (const 0)
+>                 ((0, 0), (fromIntegral numDomains, numPriorities `div` wordBits + 1)),
 >         ksCurThread = error "No initial thread",
 >         ksIdleThread = error "Idle thread has not been created",
 >         ksSchedulerAction = error "scheduler action has not been set",

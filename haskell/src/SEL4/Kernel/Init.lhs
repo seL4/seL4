@@ -25,6 +25,7 @@ This module contains functions that create a new kernel state and set up the add
 > import SEL4.API.Failures
 > import SEL4.Model
 > import SEL4.Object
+> import SEL4.Object.Structures
 > import SEL4.Machine
 > import SEL4.Kernel.Thread
 > import SEL4.Kernel.VSpace
@@ -133,7 +134,6 @@ The kernel is bootstrapped by calling "initKernel". The arguments are the addres
 
 Define some useful constants.
 
->         let wordSize = finiteBitSize entry
 >         let uiRegion = coverOf $ map (\x -> Region (ptrFromPAddr x, (ptrFromPAddr x) + bit (pageBits))) initFrames
 >         let kernelRegion = coverOf $ map (\x -> Region (ptrFromPAddr x, (ptrFromPAddr x) + bit (pageBits))) kernelFrames
 >         let kePPtr = fst $ fromRegion $ uiRegion
@@ -297,7 +297,7 @@ FIXME: Seems we need to setCurThread and setSchedulerAction here, otherwise erro
 >     freemem <- noInitFailure $ gets initFreeMemory
 >     (flip mapM) (take maxNumFreememRegions freemem)
 >         (\reg -> do
->             (\f -> mapM (f reg) [4 .. (finiteBitSize (undefined::Word)) - 2]) 
+>             (\f -> mapM (f reg) [4 .. wordBits - 2])
 >                 (\reg bits -> do
 >                     reg' <- (if not (isAligned (regStartPAddr reg) (bits + 1)) 
 >                                 && (regEndPAddr reg) - (regStartPAddr reg) >= bit bits 
