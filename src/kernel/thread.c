@@ -139,11 +139,13 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
 
     if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
         doIPCTransfer(sender, NULL, 0, true, receiver, false);
+        /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         setThreadState(receiver, ThreadState_Running);
         attemptSwitchTo(receiver);
     } else {
         bool_t restart;
 
+        /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         restart = handleFaultReply(receiver, sender);
         fault_null_fault_ptr_new(&receiver->tcbFault);
         if (restart) {

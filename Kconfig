@@ -24,6 +24,13 @@ config KERNEL_STABLE
     bool
     default y
 
+# Native word size of the current platform. This is primarily intended for use
+# in code generators that need to know, at generation-time, the word size of
+# the target platform.
+config WORD_SIZE
+    int
+    default 32 if ARCH_IA32 || ARCH_ARM
+
 menu "seL4 System"
 
     choice

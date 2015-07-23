@@ -626,10 +626,13 @@ reduceZombie(cte_t* slot, bool_t immediate)
 void
 cteDeleteOne(cte_t* slot)
 {
-    if (cap_get_capType(slot->cap) != cap_null_cap) {
+    uint32_t cap_type = cap_get_capType(slot->cap);
+    if (cap_type != cap_null_cap) {
         bool_t final;
         finaliseCap_ret_t fc_ret UNUSED;
         final = cdtIsFinal(slot);
+        /** GHOSTUPD: "(gs_get_assn cteDeleteOne_'proc \<acute>ghost'state = (-1)
+            \<or> gs_get_assn cteDeleteOne_'proc \<acute>ghost'state = \<acute>cap_type, id)" */
         fc_ret = finaliseCap(slot->cap, final, true);
         /* Haskell error: "cteDeleteOne: cap should be removable" */
         assert(capRemovable(fc_ret.remainder, slot) &&

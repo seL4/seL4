@@ -19,8 +19,12 @@
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
 
-#define TCB_CNODE_RADIX 4
-#define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS + 1)
+/* Object sizes */
+
+#define EP_SIZE_BITS 4
+#define AEP_SIZE_BITS 4
+#define CTE_SIZE_BITS 4
+#define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS+1)
 
 enum tcb_arch_cnode_index {
     tcbArchCNodeEntries = tcbCNodeEntries
@@ -38,18 +42,6 @@ enum vm_rights {
     VMReadWrite = 3
 };
 typedef uint32_t vm_rights_t;
-
-static inline word_t CONST
-wordFromVMRights(vm_rights_t vm_rights)
-{
-    return (word_t)vm_rights;
-}
-
-static inline vm_rights_t CONST
-vmRightsFromWord(word_t w)
-{
-    return (vm_rights_t)w;
-}
 
 #define PDE_SIZE_BITS 2
 #define PDE_PTR(r) ((pde_t *)(r))
@@ -80,9 +72,6 @@ typedef uint32_t pde_type_t;
 #define PT_REF(p) ((unsigned int)(p))
 
 #define WORD_SIZE_BITS 2
-#define WORD_BITS   (8 * sizeof(word_t))
-#define WORD_PTR(r) ((word_t *)(r))
-#define WORD_REF(p) ((unsigned int)(p))
 
 struct user_data {
     word_t words[BIT(ARMSmallPageBits) / sizeof(word_t)];

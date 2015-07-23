@@ -134,8 +134,16 @@ resetMemMapping(cap_t cap)
 cap_t
 Arch_recycleCap(bool_t is_final, cap_t cap)
 {
+    int sz;
+
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
+        sz = cap_get_capSizeBits(cap);
+        /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> 2 ^ unat \<acute>sz___int <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+            \<and> \<acute>sz___int < 32, id)" */
+
+        clearMemory((void *)cap_get_capPtr(cap), sz);
         Arch_finaliseCap(cap, is_final);
         clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
         return resetMemMapping(cap);

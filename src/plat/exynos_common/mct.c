@@ -100,7 +100,7 @@ struct mct_global_map {
     uint32_t comp3_res;
 
     uint32_t tcon;           /* 0x240 Timer control */
-    uint32_t int_stat;       /* 0x244 Interupt pending status */
+    uint32_t int_stat;       /* 0x244 Interrupt pending status */
     uint32_t int_en;         /* 0x248 Interrupt enable */
     uint32_t wstat;          /* 0x24C  write status */
     uint32_t reserved3[44];
@@ -159,7 +159,7 @@ initTimer(void)
     while (mct->global.wstat != GWSTAT_TCON);
     mct->global.wstat = GWSTAT_TCON;
 
-    /* Setup compare regsiter to trigger in about 10000 years from now */
+    /* Setup compare register to trigger in about 10000 years from now */
     MCRR(CNTV_CVAL, 0xffffffffffffffff);
 
     /* Reset the count down timer */
@@ -184,14 +184,18 @@ resetTimer(void)
 BOOT_CODE void
 initTimer(void)
 {
+    uint64_t comparator_value;
+
     /* Clear write status */
     mct->global.wstat = mct->global.wstat;
     mct->global.cnt_wstat = mct->global.cnt_wstat;
 
-    /* Configure the comparitor */
+    /* Configure the comparator */
     mct->global.comp0_add_inc = TIMER_TICKS;
-    mct->global.comp0h = mct->global.cntl;
-    mct->global.comp0l = mct->global.cntl + TIMER_TICKS;
+
+    comparator_value = ((((uint64_t) mct->global.cnth) << 32) | mct->global.cntl) + TIMER_TICKS;
+    mct->global.comp0h = (uint32_t)(comparator_value >> 32);
+    mct->global.comp0l = (uint32_t)comparator_value;
     /* Enable interrupts */
     mct->global.int_en = GINT_COMP0_IRQ;
 

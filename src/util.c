@@ -26,6 +26,11 @@ memzero(void *s, unsigned int n)
     assert((unsigned int)s % 4 == 0);
     assert(n % 4 == 0);
 
+    /* We will never memzero an area larger than the largest current
+       live object */
+    /** GHOSTUPD: "(gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+        \<or> \<acute>n <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state, id)" */
+
     /* Write out words. */
     while (n != 0) {
         *(uint32_t *)p = 0;

@@ -21,7 +21,10 @@
 #include <arch/machine/registerset.h>
 #include <plat/machine/hardware_gen.h>
 
-#define TCB_CNODE_RADIX 3
+/* Object sizes*/
+#define EP_SIZE_BITS 4
+#define AEP_SIZE_BITS 4
+#define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
 
 enum tcb_arch_cnode_index {
@@ -47,7 +50,6 @@ typedef struct arch_tcb {
  * offset in traps.S, and match it here */
 compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) == 0x250);
 #endif
-
 
 #define GDT_NULL    0
 #define GDT_CS_0    1
@@ -179,9 +181,6 @@ compile_assert(gdt_idt_ptr_packed,
                sizeof(gdt_idt_ptr_t) == sizeof(uint16_t) * 3)
 
 #define WORD_SIZE_BITS 2
-#define WORD_BITS   (8 * sizeof(word_t))
-#define WORD_PTR(r) ((word_t *)(r))
-#define WORD_REF(p) ((unsigned int)(p))
 
 enum vm_rights {
     VMKernelOnly = 1,
@@ -189,18 +188,6 @@ enum vm_rights {
     VMReadWrite = 3
 };
 typedef uint32_t vm_rights_t;
-
-static inline word_t CONST
-wordFromVMRights(vm_rights_t vm_rights)
-{
-    return (word_t)vm_rights;
-}
-
-static inline vm_rights_t CONST
-vmRightsFromWord(word_t w)
-{
-    return (vm_rights_t)w;
-}
 
 static inline unsigned int CONST
 cap_get_archCapSizeBits(cap_t cap)

@@ -260,7 +260,7 @@ block user_exception {
     field faultType 3
 }
 
--- Thread state: size = 8 bytes
+-- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingIPCDiminishCaps, blockingIPCEndpoint,
                    tsType) {
