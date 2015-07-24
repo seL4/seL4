@@ -11,7 +11,7 @@
 #ifndef __ARCH_KERNEL_LOCK_H
 #define __ARCH_KERNEL_LOCK_H
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 #include <types.h>
 

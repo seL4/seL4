@@ -126,7 +126,7 @@ paging_structure_t kernel_pd_list[CONFIG_MAX_NUM_NODES][BIT(PD_BITS + PDPT_BITS)
 DATA_GLOB ALIGN(BIT(PT_SIZE_BITS))
 paging_structure_t kernel_pt_list[CONFIG_MAX_NUM_NODES][BIT(PT_BITS)];
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 /* Determine whether we are in bootstrapping phase or runtime phase.
  * Is currently only needed to determine console port in debug mode.

@@ -83,7 +83,7 @@ static int parse_bool(const char *cmdline, const char *opt)
 }
 #endif
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 static void parse_uint16_array(char* str, uint16_t* array, int array_size)
 {
     char* last;
@@ -113,7 +113,7 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
 {
     int  i;
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
     /* initialise to default */
     for (i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         cmdline_opt->console_port[i] = 0;
