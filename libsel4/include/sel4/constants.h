@@ -16,7 +16,7 @@
 enum priorityConstants {
     seL4_InvalidPrio = -1,
     seL4_MinPrio = 0,
-    seL4_MaxPrio = 255
+    seL4_MaxPrio = CONFIG_NUM_PRIORITIES - 1
 };
 
 /* message_info_t defined in api/types.bf */
