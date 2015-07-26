@@ -25,7 +25,6 @@
 #define AEP_SIZE_BITS 4
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS+1)
-
 enum tcb_arch_cnode_index {
     tcbArchCNodeEntries = tcbCNodeEntries
 };

@@ -1658,6 +1658,9 @@ performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t pte,
     j = pte_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+    j = pte_entries.length;
+    /** GHOSTUPD: "(\<acute>j <= 16, id)" */
+
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.pt[pte_entries.start + i] = pte;
     }
@@ -1673,7 +1676,6 @@ performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
     unsigned int i;
-
 
     cap = cap_frame_cap_set_capFMappedObject(cap, PD_REF(pde_entries.pd));
     cap = cap_frame_cap_set_capFMappedIndex(cap, pde_entries.start);

@@ -26,11 +26,9 @@
 #define AEP_SIZE_BITS 4
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
-
 enum tcb_arch_cnode_index {
     /* VSpace root for running any associated VCPU in */
     tcbArchEPTRoot = tcbCNodeEntries,
-
     tcbArchCNodeEntries
 };
 
@@ -43,7 +41,6 @@ typedef struct arch_tcb {
     struct vcpu *vcpu;
 #endif
 } arch_tcb_t;
-
 #ifdef CONFIG_VTX
 /* Access to the VCPU element of the tcb is done through a hard coded offset in traps.S
  * this assert makes sure they remain consistent. If this assert fails update the
