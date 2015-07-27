@@ -12,6 +12,7 @@
 #define __LIBSEL4_ARCH_SYSCALLS_H
 
 #include <autoconf.h>
+#include <sel4/arch/functions.h>
 #include <sel4/types.h>
 #include <stdint.h>
 
@@ -61,16 +62,16 @@ seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
     register seL4_Word msg3 asm("r5");
     register seL4_Word scno asm("r7") = seL4_SysSend;
 
-    if (mr0 != NULL && seL4_MessageInfo_get_length(msgInfo) > 0) {
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
     }
-    if (mr1 != NULL && seL4_MessageInfo_get_length(msgInfo) > 1) {
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
         msg1 = *mr1;
     }
-    if (mr2 != NULL && seL4_MessageInfo_get_length(msgInfo) > 2) {
+    if (mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 2) {
         msg2 = *mr2;
     }
-    if (mr3 != NULL && seL4_MessageInfo_get_length(msgInfo) > 3) {
+    if (mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 3) {
         msg3 = *mr3;
     }
 
@@ -117,16 +118,16 @@ seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
     register seL4_Word msg3 asm("r5");
     register seL4_Word scno asm("r7") = seL4_SysNBSend;
 
-    if (mr0 != NULL && seL4_MessageInfo_get_length(msgInfo) > 0) {
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
     }
-    if (mr1 != NULL && seL4_MessageInfo_get_length(msgInfo) > 1) {
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
         msg1 = *mr1;
     }
-    if (mr2 != NULL && seL4_MessageInfo_get_length(msgInfo) > 2) {
+    if (mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 2) {
         msg2 = *mr2;
     }
-    if (mr3 != NULL && seL4_MessageInfo_get_length(msgInfo) > 3) {
+    if (mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 3) {
         msg3 = *mr3;
     }
 
@@ -171,16 +172,16 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
     register seL4_Word msg3 asm("r5");
     register seL4_Word scno asm("r7") = seL4_SysReply;
 
-    if (mr0 != NULL && seL4_MessageInfo_get_length(msgInfo) > 0) {
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
     }
-    if (mr1 != NULL && seL4_MessageInfo_get_length(msgInfo) > 1) {
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
         msg1 = *mr1;
     }
-    if (mr2 != NULL && seL4_MessageInfo_get_length(msgInfo) > 2) {
+    if (mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 2) {
         msg2 = *mr2;
     }
-    if (mr3 != NULL && seL4_MessageInfo_get_length(msgInfo) > 3) {
+    if (mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 3) {
         msg3 = *mr3;
     }
 
@@ -264,16 +265,16 @@ seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
                   : "memory");
 
     /* Write the message back out to memory. */
-    if (mr0 != NULL) {
+    if (mr0 != seL4_Null) {
         *mr0 = msg0;
     }
-    if (mr1 != NULL) {
+    if (mr1 != seL4_Null) {
         *mr1 = msg1;
     }
-    if (mr2 != NULL) {
+    if (mr2 != seL4_Null) {
         *mr2 = msg2;
     }
-    if (mr3 != NULL) {
+    if (mr3 != seL4_Null) {
         *mr3 = msg3;
     }
 
@@ -331,16 +332,16 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
     register seL4_Word scno asm("r7") = seL4_SysCall;
 
     /* Load beginning of the message into registers. */
-    if (mr0 != NULL && seL4_MessageInfo_get_length(msgInfo) > 0) {
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
     }
-    if (mr1 != NULL && seL4_MessageInfo_get_length(msgInfo) > 1) {
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
         msg1 = *mr1;
     }
-    if (mr2 != NULL && seL4_MessageInfo_get_length(msgInfo) > 2) {
+    if (mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 2) {
         msg2 = *mr2;
     }
-    if (mr3 != NULL && seL4_MessageInfo_get_length(msgInfo) > 3) {
+    if (mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 3) {
         msg3 = *mr3;
     }
 
@@ -352,16 +353,16 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                   : "memory");
 
     /* Write out the data back to memory. */
-    if (mr0 != NULL) {
+    if (mr0 != seL4_Null) {
         *mr0 = msg0;
     }
-    if (mr1 != NULL) {
+    if (mr1 != seL4_Null) {
         *mr1 = msg1;
     }
-    if (mr2 != NULL) {
+    if (mr2 != seL4_Null) {
         *mr2 = msg2;
     }
-    if (mr3 != NULL) {
+    if (mr3 != seL4_Null) {
         *mr3 = msg3;
     }
 
@@ -419,16 +420,16 @@ seL4_ReplyWaitWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *send
     register seL4_Word msg3 asm("r5");
     register seL4_Word scno asm("r7") = seL4_SysReplyWait;
 
-    if (mr0 != NULL && seL4_MessageInfo_get_length(msgInfo) > 0) {
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
     }
-    if (mr1 != NULL && seL4_MessageInfo_get_length(msgInfo) > 1) {
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
         msg1 = *mr1;
     }
-    if (mr2 != NULL && seL4_MessageInfo_get_length(msgInfo) > 2) {
+    if (mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 2) {
         msg2 = *mr2;
     }
-    if (mr3 != NULL && seL4_MessageInfo_get_length(msgInfo) > 3) {
+    if (mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 3) {
         msg3 = *mr3;
     }
 
@@ -440,16 +441,16 @@ seL4_ReplyWaitWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *send
                   : "memory");
 
     /* Write out the data back to memory. */
-    if (mr0 != NULL) {
+    if (mr0 != seL4_Null) {
         *mr0 = msg0;
     }
-    if (mr1 != NULL) {
+    if (mr1 != seL4_Null) {
         *mr1 = msg1;
     }
-    if (mr2 != NULL) {
+    if (mr2 != seL4_Null) {
         *mr2 = msg2;
     }
-    if (mr3 != NULL) {
+    if (mr3 != seL4_Null) {
         *mr3 = msg3;
     }
 
@@ -507,7 +508,7 @@ seL4_DebugSnapshot(void)
 #endif
 
 #ifdef SEL4_DEBUG_KERNEL
-static inline uint32_t
+static inline seL4_Uint32
 seL4_DebugCapIdentify(seL4_CPtr cap)
 {
     register seL4_Word arg1 asm("r0") = cap;
@@ -515,7 +516,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
     asm volatile ("swi %[swi_num]"
                   : "+r"(arg1)
                   : [swi_num] "i" __SWINUM(seL4_SysDebugCapIdentify), "r"(scno));
-    return (uint32_t)arg1;
+    return (seL4_Uint32)arg1;
 }
 #endif
 
@@ -566,7 +567,7 @@ seL4_BenchmarkResetLog(void)
 /* read size words from the log starting from start into the ipc buffer.
  * @return the amount sucessfully read. Will cap at ipc buffer size and at size of
  * recorded log */
-static inline uint32_t
+static inline seL4_Uint32
 seL4_BenchmarkDumpLog(seL4_Word start, seL4_Word size)
 {
 
@@ -577,13 +578,13 @@ seL4_BenchmarkDumpLog(seL4_Word start, seL4_Word size)
                   : "+r" (arg1)
                   : [swi_num] "i" __SWINUM(seL4_SysBenchmarkDumpLog), "r" (arg1), "r" (arg2), "r"(scno));
 
-    return (uint32_t) arg1;
+    return (seL4_Uint32) arg1;
 
 }
 
 /* Return the amount of things we tried to log. This could be greater than
  * the size of the log itself */
-static inline uint32_t
+static inline seL4_Uint32
 seL4_BenchmarkLogSize(void)
 {
 
@@ -593,7 +594,7 @@ seL4_BenchmarkLogSize(void)
                   : "+r" (arg1)
                   : [swi_num] "i" __SWINUM(seL4_SysBenchmarkLogSize), "r"(scno));
 
-    return (uint32_t) arg1;
+    return (seL4_Uint32) arg1;
 
 }
 
