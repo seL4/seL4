@@ -14,7 +14,6 @@
 #include <autoconf.h>
 #include <sel4/arch/functions.h>
 #include <sel4/types.h>
-#include <stdint.h>
 
 #define __SWINUM(x) ((x) & 0x00ffffff)
 
