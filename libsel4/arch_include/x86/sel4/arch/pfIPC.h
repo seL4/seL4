@@ -56,22 +56,22 @@ static inline seL4_Word seL4_isPageFault_Tag(seL4_MessageInfo_t tag)
     return seL4_MessageInfo_get_label(tag) == SEL4_PFIPC_LABEL;
 }
 
-static inline bool seL4_Fault_isWriteFault(seL4_Word FaultStatusRegister)
+static inline seL4_Bool seL4_Fault_isWriteFault(seL4_Word FaultStatusRegister)
 {
     return (FaultStatusRegister & 0x2);
 }
 
-static inline bool seL4_Fault_isReadFault(seL4_Word FaultStatusRegister)
+static inline seL4_Bool seL4_Fault_isReadFault(seL4_Word FaultStatusRegister)
 {
     return !(FaultStatusRegister & 0x2);
 }
 
-static inline bool seL4_Fault_isProtectionFault(seL4_Word FaultStatusRegister)
+static inline seL4_Bool seL4_Fault_isProtectionFault(seL4_Word FaultStatusRegister)
 {
     return (FaultStatusRegister & 0x1);
 }
 
-static inline bool seL4_Fault_isNonPresentFault(seL4_Word FaultStatusRegister)
+static inline seL4_Bool seL4_Fault_isNonPresentFault(seL4_Word FaultStatusRegister)
 {
     return !(FaultStatusRegister & 0x1);
 }

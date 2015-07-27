@@ -11,8 +11,7 @@
 #ifndef __LIBSEL4_ARCH_TYPES_H
 #define __LIBSEL4_ARCH_TYPES_H
 
-#include <sel4/macros.h>
-#include <stdint.h>
+#include <sel4/simple_types.h>
 
 #define seL4_WordBits 32
 
@@ -27,7 +26,7 @@
 #define seL4_Frame_MRs 7
 #define seL4_Frame_HasNPC 0
 
-typedef uint32_t seL4_Word;
+typedef seL4_Uint32 seL4_Word;
 typedef seL4_Word seL4_CPtr;
 
 typedef seL4_CPtr seL4_ARM_Page;

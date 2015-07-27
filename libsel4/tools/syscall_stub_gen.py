@@ -61,6 +61,18 @@ MESSAGE_REGISTERS_FOR_ARCH = {
     "x86": 2,
 }
 
+# Headers to include
+INCLUDES = [
+    'autoconf.h', 'sel4/types.h'
+]
+
+TYPES = {
+    8:  "seL4_Uint8",
+    16: "seL4_Uint16",
+    32: "seL4_Uint32",
+    64: "seL4_Uint64"
+}
+
 class Type(object):
     """
     This class represents a C type (such as an 'int', structure or
@@ -119,9 +131,9 @@ class Type(object):
         assert(word_num == 0 or word_num == 1)
         
         if word_num == 0:
-            return "(uint{0}_t) {1}".format(WORD_SIZE_BITS, var_name)
+            return "({0}) {1}".format(TYPES[WORD_SIZE_BITS], var_name)
         elif word_num == 1:
-            return "(uint{0}_t) ({1} >> {0})".format(WORD_SIZE_BITS, var_name)
+            return "({0}) ({1} >> {0})".format(TYPES[WORD_SIZE_BITS], var_name)
         
 
 class PointerType(Type):
@@ -184,13 +196,14 @@ class Parameter(object):
 #
 types = [
         # Simple Types
-        Type("uint8_t", 8),
-        Type("uint16_t", 16),
-        Type("uint32_t", 32),
-        Type("uint64_t", 64, double_word=True),
         Type("int", WORD_SIZE_BITS),
-        Type("bool", 1, native_size_bits=8),
+
+        Type("seL4_Uint8", 8),
+        Type("seL4_Uint16", 16),
+        Type("seL4_Uint32", 32),
+        Type("seL4_Uint64", 64, double_word=True),
         Type("seL4_Word", WORD_SIZE_BITS),
+        Type("seL4_Bool", 1, native_size_bits=8),
         Type("seL4_CapRights", WORD_SIZE_BITS),
 
         # seL4 Structures
@@ -543,7 +556,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
         if i < max(input_param_words, output_param_words):
             call_arguments.append("&mr%d" % i)
         else:
-            call_arguments.append("NULL")
+            call_arguments.append("seL4_Null")
     if use_only_ipc_buffer:
         result.append("\t/* Perform the call. */")
         result.append("\toutput_tag = seL4_Call(%s, tag);" % service_cap)
@@ -573,7 +586,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
                     result.append("\t%s->%s = %s;" % (param.name, members[i], words[i] % source_words))
             else:
                 if param.type.double_word:
-                    result.append("\tresult.%s = ((uint64_t)%s + ((uint64_t)%s << 32));" % (param.name, words[0] % source_words, words[1] % source_words))
+                    result.append("\tresult.%s = ((%s)%s + ((%s)%s << 32));" % (TYPES[64], param.name, words[0] % source_words, words[1] % source_words))
                 else:
                     for word in words:
                         result.append("\tresult.%s = %s;" % (param.name, word % source_words))
@@ -672,15 +685,10 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
 
 #ifndef __LIBSEL4_SEL4_CLIENT_H
 #define __LIBSEL4_SEL4_CLIENT_H
-
-#include <stddef.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include "sel4/types.h"
-#include "sel4/invocation.h"
-#include "sel4/arch/functions.h"
-#include "sel4/arch/syscalls.h"
 """);
+
+    # Emit the includes
+    result.append('\n'.join(map(lambda x: '#include <%s>' % x, INCLUDES)))
 
     #
     # Emit code to ensure that all of our type sizes are consistent with
@@ -740,7 +748,7 @@ def main():
     # Read command line arguments.
     #
     parser = optparse.OptionParser(
-            usage = "usage: %prog -a <arch> [-o <ouput file] <input XML> [<input XML> ...]")
+            usage = "usage: %prog -a <arch> -e [sel4 | libsel4] [-o <ouput file] <input XML> [<input XML> ...]")
     parser.add_option("-a", "--arch",
             dest="arch", help="Architecture to generate stubs for.")
     parser.add_option("-o", "--output",
@@ -760,6 +768,7 @@ def main():
     input_files = args
 
     # Generate the stubs.
+
     generate_stub_file(options.arch, input_files, options.output, options.buffer)
 
 main()

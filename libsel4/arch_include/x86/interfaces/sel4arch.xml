@@ -77,28 +77,28 @@
 	</interface>
 	<interface name="seL4_IA32_IOPort">
 		<method id="IA32IOPortIn8" name="In8">
-			<param dir="out" name="result" type="uint8_t"/>
-			<param dir="in" name="port" type="uint16_t"/>
+			<param dir="out" name="result" type="seL4_Uint8"/>
+			<param dir="in" name="port" type="seL4_Uint16"/>
 		</method>
 		<method id="IA32IOPortIn16" name="In16">
-			<param dir="out" name="result" type="uint16_t"/>
-			<param dir="in" name="port" type="uint16_t"/>
+			<param dir="out" name="result" type="seL4_Uint16"/>
+			<param dir="in" name="port" type="seL4_Uint16"/>
 		</method>
 		<method id="IA32IOPortIn32" name="In32">
-			<param dir="out" name="result" type="uint32_t"/>
-			<param dir="in" name="port" type="uint16_t"/>
+			<param dir="out" name="result" type="seL4_Uint32"/>
+			<param dir="in" name="port" type="seL4_Uint16"/>
 		</method>
 		<method id="IA32IOPortOut8" name="Out8">
-			<param dir="in" name="port" type="uint16_t"/>
-			<param dir="in" name="data" type="uint8_t"/>
+			<param dir="in" name="port" type="seL4_Uint16"/>
+			<param dir="in" name="data" type="seL4_Uint8"/>
 		</method>
 		<method id="IA32IOPortOut16" name="Out16">
-			<param dir="in" name="port" type="uint16_t"/>
-			<param dir="in" name="data" type="uint16_t"/>
+			<param dir="in" name="port" type="seL4_Uint16"/>
+			<param dir="in" name="data" type="seL4_Uint16"/>
 		</method>
 		<method id="IA32IOPortOut32" name="Out32">
-			<param dir="in" name="port" type="uint16_t"/>
-			<param dir="in" name="data" type="uint32_t"/>
+			<param dir="in" name="port" type="seL4_Uint16"/>
+			<param dir="in" name="data" type="seL4_Uint32"/>
 		</method>
     </interface>
     <interface name="seL4_IA32_IOSpace">
@@ -108,21 +108,21 @@
 			<param dir="in" name="tcb" type="seL4_CNode" />
 		</method>
 		<method id="IA32VCPUReadVMCS" name="ReadVMCS">
-			<param dir="in" name="field" type="uint32_t"/>
-			<param dir="out" name="value" type="uint32_t"/>
+			<param dir="in" name="field" type="seL4_Uint32"/>
+			<param dir="out" name="value" type="seL4_Uint32"/>
 		</method>
 		<method id="IA32VCPUWriteVMCS" name="WriteVMCS">
-			<param dir="in" name="field" type="uint32_t"/>
-			<param dir="in" name="value" type="uint32_t"/>
-			<param dir="out" name="written" type="uint32_t"/>
+			<param dir="in" name="field" type="seL4_Uint32"/>
+			<param dir="in" name="value" type="seL4_Uint32"/>
+			<param dir="out" name="written" type="seL4_Uint32"/>
 		</method>
 		<method id="IA32VCPUSetIOPort" name="SetIOPort">
 			<param dir="in" name="ioPort" type="seL4_CNode"/>
 		</method>
 		<method id="IA32VCPUSetIOPortMask" name="SetIOPortMask">
-		    <param dir="in" name="low" type="uint32_t"/>
-		    <param dir="in" name="high" type="uint32_t"/>
-		    <param dir="in" name="mask" type="uint32_t"/>
+		    <param dir="in" name="low" type="seL4_Uint32"/>
+		    <param dir="in" name="high" type="seL4_Uint32"/>
+		    <param dir="in" name="mask" type="seL4_Uint32"/>
 		</method>
 		<method id="IA32VCPUWriteRegisters" name="WriteRegisters">
 		    <param dir="in" name="regs" type="seL4_VCPUContext"/>
@@ -148,8 +148,8 @@
 	</interface>
     <interface name="seL4_IA32_IPI">
         <method id="IA32IPISend" name="Send">
-            <param dir="in" name="node_id" type="uint8_t"/>
-            <param dir="in" name="irq" type="uint8_t"/>
+            <param dir="in" name="node_id" type="seL4_Uint8"/>
+            <param dir="in" name="irq" type="seL4_Uint8"/>
         </method>
     </interface>
 </api>

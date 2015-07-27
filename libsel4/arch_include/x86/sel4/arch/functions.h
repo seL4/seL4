@@ -12,7 +12,6 @@
 #define __LIBSEL4_ARCH_FUNCTIONS_H
 
 #include <sel4/types.h>
-#include <stddef.h> /* for NULL */
 
 /* the segment loaded into GS points directly to the IPC buffer */
 
@@ -83,15 +82,15 @@ seL4_SetCap(int i, seL4_CPtr cptr)
 static inline void
 seL4_GetCapReceivePath(seL4_CPtr* receiveCNode, seL4_CPtr* receiveIndex, seL4_Word* receiveDepth)
 {
-    if (receiveCNode != NULL) {
+    if (receiveCNode != seL4_Null) {
         asm volatile ("movl %%gs:500, %0" : "=r"(*receiveCNode));
     }
 
-    if (receiveIndex != NULL) {
+    if (receiveIndex != seL4_Null) {
         asm volatile ("movl %%gs:504, %0" : "=r"(*receiveIndex));
     }
 
-    if (receiveDepth != NULL) {
+    if (receiveDepth != seL4_Null) {
         asm volatile ("movl %%gs:508, %0" : "=r"(*receiveDepth));
     }
 }

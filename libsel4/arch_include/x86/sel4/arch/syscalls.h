@@ -12,6 +12,7 @@
 #define __LIBSEL4_ARCH_SYSCALLS_H
 
 #include <autoconf.h>
+#include <sel4/arch/functions.h>
 #include <sel4/types.h>
 
 static inline void
@@ -51,8 +52,8 @@ seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
         : "a" (seL4_SysSend),
         "b" (dest),
         "S" (msgInfo.words[0]),
-        "D" (mr0 != NULL ? *mr0 : 0),
-        "c" (mr1 != NULL ? *mr1 : 0)
+        "D" (mr0 != seL4_Null ? *mr0 : 0),
+        "c" (mr1 != seL4_Null ? *mr1 : 0)
         : "%edx"
     );
 }
@@ -94,8 +95,8 @@ seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
         : "a" (seL4_SysNBSend),
         "b" (dest),
         "S" (msgInfo.words[0]),
-        "D" (mr0 != NULL ? *mr0 : 0),
-        "c" (mr1 != NULL ? *mr1 : 0)
+        "D" (mr0 != seL4_Null ? *mr0 : 0),
+        "c" (mr1 != seL4_Null ? *mr1 : 0)
         : "%edx"
     );
 }
@@ -135,8 +136,8 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
         :
         : "a" (seL4_SysReply),
         "S" (msgInfo.words[0]),
-        "D" (mr0 != NULL ? *mr0 : 0),
-        "c" (mr1 != NULL ? *mr1 : 0)
+        "D" (mr0 != seL4_Null ? *mr0 : 0),
+        "c" (mr1 != seL4_Null ? *mr1 : 0)
         : "%ebx", "%edx"
     );
 }
@@ -260,10 +261,10 @@ seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
         : "%edx", "memory"
     );
 
-    if (mr0 != NULL) {
+    if (mr0 != seL4_Null) {
         *mr0 = msg0;
     }
-    if (mr1 != NULL) {
+    if (mr1 != seL4_Null) {
         *mr1 = msg1;
     }
 
@@ -353,10 +354,10 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
     seL4_Word msg0 = 0;
     seL4_Word msg1 = 0;
 
-    if (mr0 != NULL && seL4_MessageInfo_get_length(msgInfo) > 0) {
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
     }
-    if (mr1 != NULL && seL4_MessageInfo_get_length(msgInfo) > 1) {
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
         msg1 = *mr1;
     }
 
@@ -382,10 +383,10 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
         : "%edx", "memory"
     );
 
-    if (mr0 != NULL) {
+    if (mr0 != seL4_Null) {
         *mr0 = msg0;
     }
-    if (mr1 != NULL) {
+    if (mr1 != seL4_Null) {
         *mr1 = msg1;
     }
 
@@ -441,10 +442,10 @@ seL4_ReplyWaitWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
     seL4_Word msg0 = 0;
     seL4_Word msg1 = 0;
 
-    if (mr0 != NULL && seL4_MessageInfo_get_length(msgInfo) > 0) {
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
     }
-    if (mr1 != NULL && seL4_MessageInfo_get_length(msgInfo) > 1) {
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
         msg1 = *mr1;
     }
 
@@ -470,10 +471,10 @@ seL4_ReplyWaitWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
         : "%edx", "memory"
     );
 
-    if (mr0 != NULL) {
+    if (mr0 != seL4_Null) {
         *mr0 = msg0;
     }
-    if (mr1 != NULL) {
+    if (mr1 != seL4_Null) {
         *mr1 = msg1;
     }
 
@@ -556,7 +557,7 @@ seL4_DebugSnapshot(void)
 #endif
 
 #ifdef SEL4_DEBUG_KERNEL
-static inline uint32_t
+static inline seL4_Uint32
 seL4_DebugCapIdentify(seL4_CPtr cap)
 {
     asm volatile (
@@ -570,7 +571,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
         : "a"(seL4_SysDebugCapIdentify), "b"(cap)
         : "%ecx", "%edx", "%esi", "%edi", "memory"
     );
-    return (uint32_t)cap;
+    return (seL4_Uint32)cap;
 }
 #endif
 
@@ -632,7 +633,7 @@ seL4_BenchmarkResetLog(void)
     );
 }
 
-static inline uint32_t
+static inline seL4_Uint32
 seL4_BenchmarkDumpLog(seL4_Word start, seL4_Word size)
 {
     asm volatile (
@@ -649,14 +650,14 @@ seL4_BenchmarkDumpLog(seL4_Word start, seL4_Word size)
         : "%ecx", "%edx", "%edi", "memory"
     );
 
-    return (uint32_t) start;
+    return (seL4_Uint32) start;
 }
 
 
-static inline uint32_t
+static inline seL4_Uint32
 seL4_BenchmarkLogSize(void)
 {
-    uint32_t ret = 0;
+    seL4_Uint32 ret = 0;
     asm volatile (
         "pushl %%ebp        \n"
         "movl %%esp, %%ecx  \n"
