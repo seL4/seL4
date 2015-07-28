@@ -101,6 +101,10 @@ This is the type used to represent a capability.
 > isUntypedCap (UntypedCap {}) = True
 > isUntypedCap _ = False
 
+> isAsyncEndpointCap :: Capability -> Bool
+> isAsyncEndpointCap (AsyncEndpointCap {}) = True
+> isAsyncEndpointCap _ = False
+
 \subsection{Kernel Objects}
 
 When stored in the physical memory model (described in \autoref{sec:model.pspace}), kernel objects must be encapsulated in "KernelObject", so the stored type is independent of the real type of the object.

@@ -37,7 +37,7 @@ This module defines instances of "PSpaceStorable" for ARM-specific kernel object
 
 > instance PSpaceStorable ASIDPool where
 >     makeObject = ASIDPool $
->         funArray (const Nothing) 
+>         funPartialArray (const Nothing) (0,1023)
 >     injectKO = KOArch . KOASIDPool
 >     projectKO o = case o of
 >         KOArch (KOASIDPool e) -> return e

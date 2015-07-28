@@ -143,21 +143,30 @@ static inline void writeContextIDAndPD(word_t id, word_t pd)
 #endif
 
 
-/** MODIFIES: [*] */
-void setHardwareASID(hw_asid_t hw_asid);
-
+#ifndef ARM_HYP
 /* Address space control */
 /** MODIFIES: [*] */
 /** DONT_TRANSLATE */
+static inline void writeTTBR0(paddr_t addr)
+{
+    /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
+     * outer write-back cacheable, no allocate on write, inner non-cacheable.
+     */
+    asm volatile("mcr p15, 0, %0, c2, c0, 0" : :
+                 "r"((addr & 0xffffe000) | 0x18));
+}
+#endif /* ARM_HYP */
+
 static inline void setCurrentPD(paddr_t addr)
 {
 #ifndef ARM_HYP
     /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
      * outer write-back cacheable, no allocate on write, inner non-cacheable.
      */
+    /* Before changing the PD ensure all memory stores have completed */
     dsb();
-    asm volatile("mcr p15, 0, %0, c2, c0, 0" : :
-                 "r"((addr & 0xffffe000) | 0x18));
+    writeTTBR0(addr);
+    /* Ensure the PD switch completes before we do anything else */
     isb();
 #else
     word_t pd, vmid;

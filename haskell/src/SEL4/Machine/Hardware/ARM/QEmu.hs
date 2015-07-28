@@ -17,8 +17,6 @@ import Foreign.Ptr
 import Data.Bits
 import Data.Word(Word8)
 import Data.Ix
-import Data.Maybe
-import Control.Monad
 
 data CallbackData
 
@@ -44,41 +42,33 @@ pageColourBits :: Int
 pageColourBits = 0 -- qemu has no cache
 
 getMemoryRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
-getMemoryRegions _ = return [(0, 1 `shiftL` 24)]
+getMemoryRegions _ = return [(0, 0x8 `shiftL` 24)]
 
 getDeviceRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
 getDeviceRegions _ = return devices
     where devices = [
-            (0x101e3000, 0x101e4000), -- second SP804; kernel uses first
-            (0x10010000, 0x10011000) -- SMC91C111 ethernet
+            (0x53f98000, 0x53f99000) -- second SP804; kernel uses first
             ]
 
-timerPPtr = PPtr 0xff001000
-timerAddr = PAddr 0x101e2000
-timerIRQ = IRQ 4
+timerPPtr = PPtr 0xfff00000
+timerAddr = PAddr 0x53f94000
+timerIRQ = IRQ 28
 
-pl190PPtr = PPtr 0xff002000
-pl190Addr = PAddr 0x10140000
+avicPPtr = PPtr 0xfff01000
+avicAddr = PAddr 0x68000000
 
 getKernelDevices :: Ptr CallbackData -> IO [(PAddr, PPtr Word)]
 getKernelDevices _ = return devices
     where devices = [
             (timerAddr, timerPPtr), -- kernel timer
-            (pl190Addr, pl190PPtr) -- interrupt controller
+            (avicAddr, avicPPtr) -- interrupt controller
             ]
 
 maskInterrupt :: Ptr CallbackData -> Bool -> IRQ -> IO ()
 maskInterrupt env mask (IRQ irq) = do
-    let value = bit $ fromIntegral irq
-    let pl190Reg = if mask then 0x14 else 0x10
-    storeWordCallback env (pl190Addr + pl190Reg) value
-    when (irq >= 21 && irq <= 30) $ do
-        -- these IRQs go via a a separate secondary interrupt controller,
-        -- which can either multiplex them to IRQ 31 or pass them through
-        -- to the PL190. We choose the latter.
-        let vpbSICBase = PAddr 0x10003000
-        let vpbSICReg = PAddr $ if mask then 0x24 else 0x20
-        storeWordCallback env (vpbSICBase + vpbSICReg) value
+    let value = fromIntegral irq
+    offset <- return $ if (mask == True) then 0xc else 0x8
+    storeWordCallback env (avicAddr + offset) value
 
 -- We don't need to acknowledge interrupts explicitly because we don't use
 -- the vectored interrupt controller.
@@ -93,14 +83,10 @@ interruptCallback env = do
     -- No need to call back to the simulator here; we just check the PIC's
     -- active interrupt register. This will probably work for real ARMs too,
     -- as long as we're not using vectored interrupts
-    active <- loadWordCallback env pl190Addr
-    -- the following line is equivalent to the ARMv5 CLZ instruction. This
-    -- means the kernel will handle higher IRQ numbers earlier, but this has
-    -- little significance --- *any* IRQ will cause an immediate kernel entry.
-    -- It does have a small effect on accounting of CPU time usage by the
-    -- kernel during the IRQ handler, depending on the timer's IRQ number.
-    return $ listToMaybe $
-        [ IRQ $ fromIntegral x | x <- reverse [0..31], testBit active x ]
+    active <- loadWordCallback env (avicAddr + 64)
+    return $ if active == 0xFFFF0000
+        then Nothing
+        else (Just $ IRQ $ fromIntegral (active `shiftR` 16))
 
 getActiveIRQ :: Ptr CallbackData -> IO (Maybe IRQ)
 getActiveIRQ env = do
@@ -117,13 +103,18 @@ timerLimit = 1000000 `div` timerFreq
 configureTimer :: Ptr CallbackData -> IO IRQ
 configureTimer env = do
     -- enabled, periodic, interrupts enabled
-    let timerCtrl = bit 7 .|. bit 6 .|. bit 5
-    storeWordCallback env (timerAddr+0x8) timerCtrl
-    storeWordCallback env timerAddr timerLimit
+    storeWordCallback env timerAddr 0
+    let timerCtrl = bit 24 .|. bit 17 .|. bit 3 .|. bit 2 .|. bit 1
+    storeWordCallback env timerAddr timerCtrl
+    storeWordCallback env (timerAddr+0x8) (100 * 1000 * 1000) 
+    storeWordCallback env (timerAddr+0xc) 0
+    storeWordCallback env (timerAddr+0x4) 1
+    let timerCtrl2 = timerCtrl .|. 1
+    storeWordCallback env timerAddr timerCtrl2
     return timerIRQ
 
 resetTimer :: Ptr CallbackData -> IO ()
-resetTimer env = storeWordCallback env (timerAddr+0xc) 0
+resetTimer env = storeWordCallback env (timerAddr+0x4) 1 
 
 foreign import ccall unsafe "qemu_load_word_phys"
     loadWordCallback :: Ptr CallbackData -> PAddr -> IO Word
@@ -201,7 +192,7 @@ foreign import ccall unsafe "qemu_set_asid"
     setHardwareASID :: Ptr CallbackData -> Word8 -> IO ()
 
 foreign import ccall unsafe "qemu_set_root"
-    setCurrentPD :: Ptr CallbackData -> PAddr -> IO ()
+    writeTTBR0 :: Ptr CallbackData -> PAddr -> IO ()
 
 foreign import ccall unsafe "qemu_arm_get_ifsr"
     getIFSR :: Ptr CallbackData -> IO Word

@@ -261,6 +261,8 @@ ipcCancel(tcb_t *tptr)
 
         callerCap = CTE_PTR(mdb_node_get_mdbNext(slot->cteMDBNode));
         if (callerCap) {
+            /** GHOSTUPD: "(True,
+                gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
             cteDeleteOne(callerCap);
         }
 

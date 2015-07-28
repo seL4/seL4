@@ -20,24 +20,31 @@ config ARCH_ARM_V7A
     bool
     default n
 
+# Native word size of the current platform. This is primarily intended for use
+# in code generators that need to know, at generation-time, the word size of
+# the target platform.
+config WORD_SIZE
+    int
+    default 32 if ARCH_IA32 || ARCH_ARM
+
 menu "seL4 System"
 
     choice
         prompt "Architecture Type"
-        default ARCH_I386
+        default ARCH_X86
         help
             Select the architecture seL4 will be running on.
 
-        config ARCH_I386
+        config ARCH_X86
             bool "x86"
 
         config ARCH_ARM
             bool "ARM"
     endchoice
 
-config ARCH_IA32
-       bool
-       default y if ARCH_I386
+    config ARCH_IA32
+        bool
+        default y if ARCH_X86
 
 config ARM_HYPERVISOR_SUPPORT
        bool "Build as Hypervisor"
@@ -167,7 +174,7 @@ config ARM_HYPERVISOR_SUPPORT
 
         config PLAT_PC99
             bool "PC99"
-            depends on ARCH_I386
+            depends on ARCH_X86
             help
                 Support for PC99 based platform
 
@@ -237,7 +244,7 @@ menu "seL4 System Parameters"
     config MAX_NUM_NODES
         int "Max number of cpu nodes"
         range 1 256
-        depends on ARCH_I386
+        depends on ARCH_X86
         default 1
 
     config MAX_NUM_PASSTHROUGH_DEVICES
@@ -267,6 +274,7 @@ menu "seL4 System Parameters"
     config NUM_PRIORITIES
         int "Number of priority levels"
         default 256
+        range 1 256
         help
             The number of priority levels per domain
 

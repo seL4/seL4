@@ -95,7 +95,7 @@
 			<param dir="in" name="untyped" type="seL4_Untyped"/>
 			<param dir="in" name="root" type="seL4_CNode"/>
 			<param dir="in" name="index" type="seL4_Word"/>
-			<param dir="in" name="depth" type="uint8_t"/>
+			<param dir="in" name="depth" type="seL4_Uint8"/>
 		</method>
 	</interface>
 	<interface name="seL4_ARM_ASIDPool">
@@ -108,18 +108,18 @@
 			<param dir="in" name="tcb" type="seL4_TCB" />
 		</method>
 		<method id="ARMVCPUInjectIRQ" name="InjectIRQ">
-			<param dir="in" name="virq" type="uint16_t"/>
-			<param dir="in" name="priority" type="uint8_t"/>
-			<param dir="in" name="group" type="uint8_t"/>
-			<param dir="in" name="index" type="uint8_t"/>
+			<param dir="in" name="virq" type="seL4_Uint16"/>
+			<param dir="in" name="priority" type="seL4_Uint8"/>
+			<param dir="in" name="group" type="seL4_Uint8"/>
+			<param dir="in" name="index" type="seL4_Uint8"/>
 		</method>
 		<method id="ARMVCPUReadReg" name="ReadRegs">
-			<param dir="in" name="field" type="uint32_t"/>
-			<param dir="out" name="value" type="uint32_t"/>
+			<param dir="in" name="field" type="seL4_Uint32"/>
+			<param dir="out" name="value" type="seL4_Uint32"/>
 		</method>
 		<method id="ARMVCPUWriteReg" name="WriteRegs">
-			<param dir="in" name="field" type="uint32_t"/>
-			<param dir="in" name="value" type="uint32_t"/>
+			<param dir="in" name="field" type="seL4_Uint32"/>
+			<param dir="in" name="value" type="seL4_Uint32"/>
 		</method>
 	</interface>
 </api>

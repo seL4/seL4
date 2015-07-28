@@ -33,7 +33,28 @@ DEBUG = False
 # Headers to include depending on which environment we are generating code for.
 INCLUDES = {
     'sel4':['assert.h', 'config.h', 'stdint.h', 'util.h'],
-    'libsel4':['assert.h', 'autoconf.h', 'sel4/macros.h', 'stdint.h'],
+    'libsel4':['autoconf.h', 'sel4/simple_types.h', 'sel4/debug_assert.h'],
+}
+
+ASSERTS = {
+    'sel4': 'assert',
+    'libsel4': 'seL4_DebugAssert'
+}
+
+TYPES = {
+    "sel4": {
+        8:  "uint8_t",
+        16: "uint16_t",
+        32: "uint32_t",
+        64: "uint64_t"
+    },
+
+    "libsel4": {
+        8:  "seL4_Uint8",
+        16: "seL4_Uint16",
+        32: "seL4_Uint32",
+        64: "seL4_Uint64"
+    }
 }
 
 ### Parser
@@ -90,24 +111,30 @@ def p_entity_list_empty(t):
 
 def p_entity_list_base(t):
     """entity_list : entity_list base"""
-    base, blocks, unions = t[1]
-    t[0] = (t[2], blocks, unions)
+    current_base, block_map, union_map = t[1]
+    block_map.setdefault(t[2], {})
+    union_map.setdefault(t[2], {})
+    t[0] = (t[2], block_map, union_map)
 
 def p_entity_list_block(t):
     """entity_list : entity_list block"""
-    base, blocks, unions = t[1]
-    blocks[t[2].name] = t[2]
-    t[0] = (base, blocks, unions)
+    current_base, block_map, union_map = t[1]
+    block_map[current_base][t[2].name] = t[2]
+    t[0] = (current_base, block_map, union_map)
 
 def p_entity_list_union(t):
     """entity_list : entity_list tagged_union"""
-    base, blocks, unions = t[1]
-    unions[t[2].name] = t[2]
-    t[0] = (base, blocks, unions)
+    current_base, block_map, union_map = t[1]
+    union_map[current_base][t[2].name] = t[2]
+    t[0] = (current_base, block_map, union_map)
 
-def p_base(t):
+def p_base_simple(t):
     """base : BASE INTLIT"""
-    t[0] = t[2]
+    t[0] = (t[2], t[2], 0)
+
+def p_base_mask(t):
+    """base : BASE INTLIT LPAREN INTLIT COMMA INTLIT RPAREN"""
+    t[0] = (t[2], t[4], t[6])
 
 def p_block(t):
     """block : BLOCK IDENTIFIER opt_visible_order_spec""" \
@@ -181,7 +208,7 @@ def p_error(t):
 
 typedef_template = \
 """struct %(name)s {
-    uint%(base)d_t words[%(multiple)d];
+    %(type)s words[%(multiple)d];
 };
 typedef struct %(name)s %(name)s_t;"""
 
@@ -206,34 +233,46 @@ ptr_generator_template = \
 }"""
 
 reader_template = \
-"""static inline uint%(base)d_t CONST
+"""static inline %(type)s CONST
 %(block)s_get_%(field)s(%(block)s_t %(block)s) {
-    return (%(block)s.words[%(index)d] & 0x%(mask)x) %(r_shift_op)s %(shift)d;
+    %(type)s ret;
+    ret = (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
+    /* Possibly sign extend */
+    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+        ret |= 0x%(high_bits)x;
+    }
+    return ret;
 }"""
 
 ptr_reader_template = \
-"""static inline uint%(base)d_t PURE
+"""static inline %(type)s PURE
 %(block)s_ptr_get_%(field)s(%(block)s_t *%(block)s_ptr) {
-    return (%(block)s_ptr->words[%(index)d] & 0x%(mask)x) """ \
+    %(type)s ret;
+    ret = (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
+    /* Possibly sign extend */
+    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+        ret |= 0x%(high_bits)x;
+    }
+    return ret;
 }"""
 
 writer_template = \
 """static inline %(block)s_t CONST
-%(block)s_set_%(field)s(%(block)s_t %(block)s, uint%(base)d_t v) {
+%(block)s_set_%(field)s(%(block)s_t %(block)s, %(type)s v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
-    %(block)s.words[%(index)d] &= ~0x%(mask)x;
-    %(block)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x;
+    %(assert)s(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(block)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
+    %(block)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(block)s;
 }"""
 
 ptr_writer_template = \
 """static inline void
-%(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, uint%(base)d_t v) {
+%(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, %(type)s v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
-    %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x;
+    %(assert)s(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(block)s_ptr->words[%(index)d] |= (v %(w_shift_op)s """ \
     """%(shift)d) & 0x%(mask)x;
 }"""
@@ -259,66 +298,78 @@ ptr_union_generator_template = \
 }"""
 
 union_reader_template = \
-"""static inline uint%(base)d_t CONST
+"""static inline %(type)s CONST
 %(union)s_%(block)s_get_%(field)s(%(union)s_t %(union)s) {
-    assert(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
+    %(type)s ret;
+    %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    return (%(union)s.words[%(index)d] & 0x%(mask)x) %(r_shift_op)s %(shift)d;
+    ret = (%(union)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
+    /* Possibly sign extend */
+    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+        ret |= 0x%(high_bits)x;
+    }
+    return ret;
 }"""
 
 ptr_union_reader_template = \
-"""static inline uint%(base)d_t PURE
+"""static inline %(type)s PURE
 %(union)s_%(block)s_ptr_get_%(field)s(%(union)s_t *%(union)s_ptr) {
-    assert(((%(union)s_ptr->words[%(tagindex)d] >> """ \
+    %(type)s ret;
+    %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
     """%(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
-    return (%(union)s_ptr->words[%(index)d] & 0x%(mask)x) """ \
+    ret = (%(union)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
     """%(r_shift_op)s %(shift)d;
+    /* Possibly sign extend */
+    if (%(sign_extend)d && (ret & (1%(suf)s << (%(extend_bit)d)))) {
+        ret |= 0x%(high_bits)x;
+    }
+    return ret;
 }"""
 
 union_writer_template = \
 """static inline %(union)s_t CONST
-%(union)s_%(block)s_set_%(field)s(%(union)s_t %(union)s, uint%(base)d_t v) {
-    assert(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
+%(union)s_%(block)s_set_%(field)s(%(union)s_t %(union)s, %(type)s v) {
+    %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    %(assert)s(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
-    %(union)s.words[%(index)d] &= ~0x%(mask)x;
-    %(union)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x;
+    %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
+    %(union)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(union)s;
 }"""
 
 ptr_union_writer_template = \
 """static inline void
 %(union)s_%(block)s_ptr_set_%(field)s(%(union)s_t *%(union)s_ptr,
-                                      uint%(base)d_t v) {
-    assert(((%(union)s_ptr->words[%(tagindex)d] >> """ \
+                                      %(type)s v) {
+    %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
     """%(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    %(assert)s(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
-    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x;
+    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s_ptr->words[%(index)d] |= """ \
-    """(v %(w_shift_op)s %(shift)d) & 0x%(mask)x;
+    """(v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
 }"""
 
 tag_reader_header_template = \
-"""static inline uint%(base)d_t CONST
+"""static inline %(type)s CONST
 %(union)s_get_%(tagname)s(%(union)s_t %(union)s) {
 """
 
 tag_reader_entry_template = \
 """    if ((%(union)s.words[%(index)d] & 0x%(classmask)x) != 0x%(classmask)x)
-        return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x;
+        return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;
 """
 
 tag_reader_final_template = \
-"""    return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x;"""
+"""    return (%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;"""
 
 tag_reader_footer_template = \
 """
@@ -326,33 +377,33 @@ tag_reader_footer_template = \
 
 tag_eq_reader_header_template = \
 """static inline int CONST
-%(union)s_%(tagname)s_equals(%(union)s_t %(union)s, uint%(base)d_t %(union)s_type_tag) {
+%(union)s_%(tagname)s_equals(%(union)s_t %(union)s, %(type)s %(union)s_type_tag) {
 """
 
 tag_eq_reader_entry_template = \
 """    if ((%(union)s_type_tag & 0x%(classmask)x) != 0x%(classmask)x)
-        return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x) == %(union)s_type_tag;
+        return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s) == %(union)s_type_tag;
 """
 
 tag_eq_reader_final_template = \
-"""    return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x) == %(union)s_type_tag;"""
+"""    return ((%(union)s.words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s) == %(union)s_type_tag;"""
 
 tag_eq_reader_footer_template = \
 """
 }"""
 
 ptr_tag_reader_header_template = \
-"""static inline uint%(base)d_t PURE
+"""static inline %(type)s PURE
 %(union)s_ptr_get_%(tagname)s(%(union)s_t *%(union)s_ptr) {
 """
 
 ptr_tag_reader_entry_template = \
 """    if ((%(union)s_ptr->words[%(index)d] & 0x%(classmask)x) != 0x%(classmask)x)
-        return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x;
+        return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;
 """
 
 ptr_tag_reader_final_template = \
-"""    return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x;"""
+"""    return (%(union)s_ptr->words[%(index)d] >> %(shift)d) & 0x%(mask)x%(suf)s;"""
 
 ptr_tag_reader_footer_template = \
 """
@@ -360,23 +411,23 @@ ptr_tag_reader_footer_template = \
 
 tag_writer_template = \
 """static inline %(union)s_t CONST
-%(union)s_set_%(tagname)s(%(union)s_t %(union)s, uint%(base)d_t v) {
+%(union)s_set_%(tagname)s(%(union)s_t %(union)s, %(type)s v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    %(assert)s(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
-    %(union)s.words[%(index)d] &= ~0x%(mask)x;
-    %(union)s.words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x;
+    %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
+    %(union)s.words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
     return %(union)s;
 }"""
 
 ptr_tag_writer_template = \
 """static inline void
-%(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, uint%(base)d_t v) {
+%(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, %(type)s v) {
     /* fail if user has passed bits that we will override */
-    assert(((~0x%(mask)x %(r_shift_op)s %(shift)d) & v) == 0);
+    %(assert)s(((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
-    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x;
-    %(union)s_ptr->words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x;
+    %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
+    %(union)s_ptr->words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
 }"""
 
 # HOL definition templates
@@ -1145,6 +1196,7 @@ class TaggedUnion:
     def __init__(self, name, tagname, classes, tags):
         self.name = name
         self.tagname = tagname
+        self.constant_suffix = ''
 
         # Check for duplicate tags
         used_names = set()
@@ -1200,9 +1252,12 @@ class TaggedUnion:
         self.union_base = union_base
         self.union_size = union_size
 
-    def set_base(self, base):
+    def set_base(self, base, base_bits, base_sign_extend, suffix):
         self.base = base
         self.multiple = self.union_size / base
+        self.constant_suffix = suffix
+        self.base_bits = base_bits
+        self.base_sign_extend = base_sign_extend
 
         tag_index = None
         for w in self.tag_offset:
@@ -1616,7 +1671,7 @@ class TaggedUnion:
 
         # Generate typedef
         print >>output, typedef_template % \
-                        {"base": self.base, \
+                        {"type": TYPES[options.environment][self.base], \
                          "name": self.name, \
                          "multiple": self.multiple}
         print >>output
@@ -1635,8 +1690,9 @@ class TaggedUnion:
         
         subs = {\
             'union': self.name, \
-            'base':  self.union_base, \
-            'tagname': self.tagname}
+            'type':  TYPES[options.environment][self.union_base], \
+            'tagname': self.tagname, \
+            'suf' : self.constant_suffix}
 
         # Generate tag reader
         templates = ([tag_reader_entry_template] * (len(self.widths) - 1)
@@ -1689,7 +1745,7 @@ class TaggedUnion:
         
         for name, value, ref in self.tags:
             # Generate generators
-            arg_list = ["uint%d_t %s" % (self.base, field) for \
+            arg_list = ["%s %s" % (TYPES[options.environment][self.base], field) for \
                             field in ref.visible_order if
                             field != self.tagname]
 
@@ -1713,38 +1769,47 @@ class TaggedUnion:
                 offset, size, high = ref.field_map[field]
 
                 if field == self.tagname:
-                    f_value = "(uint%d_t)%s_%s" % (self.base, self.name, name)
+                    f_value = "(%s)%s_%s" % (TYPES[options.environment][self.base], self.name, name)
                 else:
                     f_value = field
 
                 index = offset / self.base
                 if high:
                     shift_op = ">>"
-                    shift = self.base - size - (offset % self.base)
+                    shift = self.base_bits - size - (offset % self.base)
+                    if self.base_sign_extend:
+                        high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                    else:
+                        high_bits = 0
+                    if shift < 0:
+                        shift = -shift
+                        shift_op = "<<"
                 else:
                     shift_op = "<<"
                     shift = offset % self.base
+                    high_bits = 0
                 if size < self.base:
                     if high:
-                        mask = ((1 << size) - 1) << (self.base - size)
+                        mask = ((1 << size) - 1) << (self.base_bits - size)
                     else:
                         mask = (1 << size) - 1
+                    suf = self.constant_suffix
 
                     field_inits.append(
                         "    /* fail if user has passed bits that we will override */")
                     field_inits.append(
-                        "    assert((%s & ~0x%x) == 0);" % (f_value, mask))
+                        "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (ASSERTS[options.environment], f_value, mask, suf, self.base_sign_extend, f_value, suf, self.base_bits - 1, high_bits))
                     field_inits.append(
-                        "    %s.words[%d] |= (%s & 0x%x) %s %d;" % \
-                         (self.name, index, f_value, mask, shift_op, shift))
+                        "    %s.words[%d] |= (%s & 0x%x%s) %s %d;" % \
+                         (self.name, index, f_value, mask, suf, shift_op, shift))
 
                     ptr_field_inits.append(
                         "    /* fail if user has passed bits that we will override */")
                     ptr_field_inits.append(
-                        "    assert((%s & ~0x%x) == 0);" % (f_value, mask))
+                        "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (ASSERTS[options.environment], f_value, mask, suf, self.base_sign_extend, f_value, suf, self.base_bits - 1, high_bits))
                     ptr_field_inits.append(
-                        "    %s_ptr->words[%d] |= (%s & 0x%x) %s %d;" % \
-                        (self.name, index, f_value, mask, shift_op, shift))
+                        "    %s_ptr->words[%d] |= (%s & 0x%x%s) %s %d;" % \
+                        (self.name, index, f_value, mask, suf, shift_op, shift))
                 else:
                     field_inits.append(
                             "       %s.words[%d] |= %s %s %d;" % \
@@ -1783,17 +1848,27 @@ class TaggedUnion:
                 if high:
                     write_shift = ">>"
                     read_shift = "<<"
-                    shift = self.base - size - (offset % self.base)
+                    shift = self.base_bits - size - (offset % self.base)
+                    if shift < 0:
+                        shift = -shift
+                        write_shift = "<<"
+                        read_shift = ">>"
+                    if self.base_sign_extend:
+                        high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                    else:
+                        high_bits = 0
                 else:
                     write_shift = "<<"
                     read_shift = ">>"
                     shift = offset % self.base
+                    high_bits = 0
                 mask = ((1 << size) - 1) << (offset % self.base)
                 
                 subs = {\
                     "block": ref.name, \
                     "field": field, \
-                    "base": ref.base, \
+                    "type": TYPES[options.environment][ref.base], \
+                    "assert": ASSERTS[options.environment], \
                     "index": index, \
                     "shift": shift, \
                     "r_shift_op": read_shift, \
@@ -1802,7 +1877,11 @@ class TaggedUnion:
                     "tagindex": tagnameoffset / self.base, \
                     "tagshift": tagnameoffset % self.base, \
                     "tagmask": tagmask, \
-                    "union": self.name}
+                    "union": self.name, \
+                    "suf": self.constant_suffix,
+                    "high_bits": high_bits,
+                    "sign_extend": self.base_sign_extend and high,
+                    "extend_bit": self.base_bits - 1}
 
                 # Reader
                 emit_named("%s_%s_get_%s" % (self.name, ref.name, field),
@@ -2026,6 +2105,7 @@ class Block:
         _fields = []
         self.size = sum(size for _name, size, _high in fields)
         offset = self.size
+        self.constant_suffix = ''
 
         if visible_order is None:
             self.visible_order = []
@@ -2058,8 +2138,11 @@ class Block:
 
             self.visible_order = visible_order
 
-    def set_base(self, base):
+    def set_base(self, base, base_bits, base_sign_extend, suffix):
         self.base = base
+        self.constant_suffix = suffix
+        self.base_bits = base_bits
+        self.base_sign_extend = base_sign_extend
         if self.size % base != 0:
             raise ValueError("Size of block %s not a multiple of base" \
                              % self.name)
@@ -2120,7 +2203,7 @@ class Block:
 
                 if size < self.base:
                     if high:
-                        mask = ((1 << size) - 1) << (self.base - size)
+                        mask = ((1 << size) - 1) << (self.base_bits - size)
                     else:
                         mask = (1 << size) - 1
 
@@ -2279,13 +2362,13 @@ class Block:
 
         # Type definition
         print >>output, typedef_template % \
-                        {"base": self.base, \
+                        {"type": TYPES[options.environment][self.base], \
                          "name": self.name, \
                          "multiple": self.multiple}
         print >>output
 
         # Generator
-        arg_list = ["uint%d_t %s" % (self.base, field) for \
+        arg_list = ["%s %s" % (TYPES[options.environment][self.base], field) for \
                         field in self.visible_order]
         if len(arg_list) == 0:
             args = 'void'
@@ -2307,31 +2390,40 @@ class Block:
             index = offset / self.base
             if high:
                 shift_op = ">>"
-                shift = self.base - size - (offset % self.base)
+                shift = self.base_bits - size - (offset % self.base)
+                if self.base_sign_extend:
+                    high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                else:
+                    high_bits = 0
+                if shift < 0:
+                    shift = -shift
+                    shift_op = "<<"
             else:
                 shift_op = "<<"
                 shift = offset % self.base
+                high_bits = 0
             if size < self.base:
                 if high:
-                    mask = ((1 << size) - 1) << (self.base - size)
+                    mask = ((1 << size) - 1) << (self.base_bits - size)
                 else:
                     mask = (1 << size) - 1
+                suf = self.constant_suffix
 
                 field_inits.append(
                     "    /* fail if user has passed bits that we will override */")
                 field_inits.append(
-                    "    assert((%s & ~0x%x) == 0);" % (field, mask))
+                    "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (ASSERTS[options.environment], field, mask, suf, self.base_sign_extend, field, suf, self.base_bits - 1, high_bits))
                 field_inits.append(
-                    "    %s.words[%d] |= (%s & 0x%x) %s %d;" % \
-                    (self.name, index, field, mask, shift_op, shift))
+                    "    %s.words[%d] |= (%s & 0x%x%s) %s %d;" % \
+                    (self.name, index, field, mask, suf, shift_op, shift))
 
                 ptr_field_inits.append(
                     "    /* fail if user has passed bits that we will override */")
                 ptr_field_inits.append(
-                    "    assert((%s & ~0x%x) == 0);" % (field, mask))
+                    "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (ASSERTS[options.environment], field, mask, suf, self.base_sign_extend, field, suf, self.base_bits - 1, high_bits))
                 ptr_field_inits.append(
-                    "    %s_ptr->words[%d] |= (%s & 0x%x) %s %d;" % \
-                    (self.name, index, field, mask, shift_op, shift))
+                    "    %s_ptr->words[%d] |= (%s & 0x%x%s) %s %d;" % \
+                    (self.name, index, field, mask, suf, shift_op, shift))
             else:
                 field_inits.append(
                     "    %s.words[%d] |= %s %s %d;" % \
@@ -2362,22 +2454,36 @@ class Block:
             if high:
                 write_shift = ">>"
                 read_shift = "<<"
-                shift = self.base - size - (offset % self.base)
+                shift = self.base_bits - size - (offset % self.base)
+                if shift < 0:
+                    shift = -shift
+                    write_shift = "<<"
+                    read_shift = ">>"
+                if self.base_sign_extend:
+                    high_bits = ((self.base_sign_extend << (self.base - self.base_bits)) - 1) << self.base_bits
+                else:
+                    high_bits = 0
             else:
                 write_shift = "<<"
                 read_shift = ">>"
                 shift = offset % self.base
+                high_bits = 0
             mask = ((1 << size) - 1) << (offset % self.base)
             
             subs = {\
                 "block": self.name, \
                 "field": field, \
-                "base": self.base, \
+                "type": TYPES[options.environment][self.base], \
+                "assert": ASSERTS[options.environment], \
                 "index": index, \
                 "shift": shift, \
                 "r_shift_op": read_shift, \
                 "w_shift_op": write_shift, \
-                "mask": mask}
+                "mask": mask, \
+                "suf": self.constant_suffix, \
+                "high_bits": high_bits, \
+                "sign_extend": self.base_sign_extend and high,
+                "extend_bit": self.base_bits - 1}
 
             # Reader
             emit_named("%s_get_%s" % (self.name, field), params,
@@ -2521,17 +2627,33 @@ if __name__ == '__main__':
     # Parse the spec
     lex.lex()
     yacc.yacc(debug=0)
-    base, blocks, unions = yacc.parse(in_file.read())
-    if not base in [8,16,32,64]:
-        raise ValueError("Invalid base size: %d" % base)
+    blocks = {}
+    unions = {}
+    _, block_map, union_map = yacc.parse(in_file.read())
+    base_list = [8, 16, 32, 64]
+    suffix_map = {8 : 'ul', 16 : 'ul', 32 : 'ul', 64 : 'ull'}
+    for base_info, block_list in block_map.items():
+        base, base_bits, base_sign_extend = base_info
+        for name, b in block_list.items():
+            if not base in base_list:
+                raise ValueError("Invalid base size: %d" % base)
+            suffix = suffix_map[base]
+            b.set_base(base, base_bits, base_sign_extend, suffix)
+            blocks[name] = b
+
     symtab = {}
     symtab.update(blocks)
+    for base, union_list in union_map.items():
+        unions.update(union_list)
     symtab.update(unions)
-    for b in blocks.values():
-        b.set_base(base)
-    for u in unions.values():
-        u.resolve(options, symtab)
-        u.set_base(base)
+    for base_info, union_list in union_map.items():
+        base, base_bits, base_sign_extend = base_info
+        for u in union_list.values():
+            if not base in base_list:
+                raise ValueError("Invalid base size: %d" % base)
+            suffix = suffix_map[base]
+            u.resolve(options, symtab)
+            u.set_base(base, base_bits, base_sign_extend, suffix)
 
     if not in_filename is None:
         base_filename = os.path.basename(in_filename).split('.')[0]

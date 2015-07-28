@@ -17,27 +17,15 @@ stand-alone; it must be integrated into a simulator that can run user-level
 binaries and generate events that the kernel model can process.
 
 To build it:
-  - install `GHC 7.8` or later
-  - install `Cabal 1.18` or later. This is included with GHC 7.8. 
-  - configure the sources:
-  
-        runhaskell Setup.hs configure --with-target=arm-qemu
-
-Further target options may be supported again in the future.
-
-  - build the library:
-  
-        runhaskell Setup.hs build
-
-  - install:
-  
-        runhaskell Setup.hs install --user
+  - install `GHC 7.8.x`
+  - install `Cabal 1.20.x`. This is usually included with GHC 7.8. 
+  - run `make`
 
 
 After that, you can compile Haskell programs using the simulator by adding
-`-package SEL4` to the `ghc` command line. Note that the qemu target requires
-some callback functions to be accessible via the FFI, so it is not possible to
-load a model compiled for those targets in GHCi.
+`-package SEL4-ARM` to the `ghc` command line. Note that the qemu target
+requires some callback functions to be accessible via the FFI, so it is not
+possible to load a model compiled for those targets in GHCi.
 
 Currently, the simulator interface is out of date, so this model is currently
 only useful as documentation and as intermediate artefact in the seL4

@@ -33,6 +33,9 @@ cleanInvalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
 {
     vptr_t line;
     word_t index;
+    /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+        \<and> \<acute>start <= \<acute>end, id)" */
 
     /* First clean the L1 range */
     cleanCacheRange_PoC(start, end, pstart);
@@ -58,11 +61,21 @@ cleanInvalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
 void
 cleanCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
 {
+    /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+        \<and> \<acute>start <= \<acute>end
+        \<and> \<acute>pstart <= \<acute>pstart + (\<acute>end - \<acute>start), id)" */
+
     /* clean l1 to l2 */
     cleanCacheRange_PoC(start, end, pstart);
 
     /* ensure cache operation completes before cleaning l2 */
     dsb();
+
+    /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+        \<and> \<acute>start <= \<acute>end
+        \<and> \<acute>pstart <= \<acute>pstart + (\<acute>end - \<acute>start), id)" */
 
     /* now clean l2 to RAM */
     plat_cleanL2Range(pstart, pstart + (end - start));
@@ -73,6 +86,11 @@ cleanCacheRange_PoU(vptr_t start, vptr_t end, paddr_t pstart)
 {
     vptr_t line;
     word_t index;
+
+    /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+        \<and> \<acute>start <= \<acute>end
+        \<and> \<acute>pstart <= \<acute>pstart + (\<acute>end - \<acute>start), id)" */
 
     for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {
         line = index << L1_CACHE_LINE_SIZE_BITS;
@@ -99,10 +117,20 @@ invalidateCacheRange_RAM(vptr_t start, vptr_t end, paddr_t pstart)
         cleanCacheRange_RAM(line, line, pstart + (line - start));
     }
 
+    /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+        \<and> \<acute>start <= \<acute>end
+        \<and> \<acute>pstart <= \<acute>pstart + (\<acute>end - \<acute>start), id)" */
+
     /* Invalidate L2 range. Invalidating the L2 before the L1 is the order
      * given in the l2c_310 manual, as an L1 line might be allocated from the L2
      * before the L2 can be invalidated. */
     plat_invalidateL2Range(pstart, pstart + (end - start));
+
+    /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
+            \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
+        \<and> \<acute>start <= \<acute>end
+        \<and> \<acute>pstart <= \<acute>pstart + (\<acute>end - \<acute>start), id)" */
 
     /* Now invalidate L1 range */
     for (index = LINE_INDEX(start); index < LINE_INDEX(end) + 1; index++) {

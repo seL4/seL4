@@ -32,6 +32,7 @@ This module contains the data structure and operations for the physical memory m
 > import SEL4.Machine.RegisterSet
 > import SEL4.Machine.Hardware
 
+
 \end{impdetails}
 
 \subsection{Physical Address Space}
@@ -75,7 +76,7 @@ The default definitions are sufficient for most kernel objects. There is one exc
 >     loadObject :: (Monad m) => Word -> Word -> Maybe Word ->
 >                                 KernelObject -> m a
 >     loadObject ptr ptr' next obj = do
->         unless (ptr == ptr') $ fail "no object at address given in pspace"
+>         unless (ptr == ptr') $ fail $ "no object at address given in pspace,target=" ++ (show ptr) ++",lookup=" ++ (show ptr')
 >         val <- projectKO obj 
 >         alignCheck ptr (objBits val)
 >         sizeCheck ptr next (objBits val)
@@ -84,7 +85,7 @@ The default definitions are sufficient for most kernel objects. There is one exc
 >     updateObject :: (Monad m) => a -> KernelObject -> Word ->
 >                         Word -> Maybe Word -> m KernelObject
 >     updateObject val oldObj ptr ptr' next = do 
->         unless (ptr == ptr') $ fail "no object at address given in pspace"
+>         unless (ptr == ptr') $ fail $ "no object at address given in pspace,target=" ++ (show ptr) ++",lookup=" ++ (show ptr')
 >         liftM (asTypeOf val) $ projectKO oldObj -- for the type error
 >         alignCheck ptr (objBits val)
 >         sizeCheck ptr next (objBits val)
@@ -230,7 +231,7 @@ No type checks are performed when deleting objects; "deleteObjects" simply delet
 >             "Object deletion would leave dangling pointers"
 >         doMachineOp $ freeMemory (PPtr (fromPPtr ptr)) bits
 >         ps <- gets ksPSpace
->         let inRange = (\x -> x .&. (- mask bits) - 1 == fromPPtr ptr)
+>         let inRange = (\x -> x .&. ((- mask bits) - 1) == fromPPtr ptr)
 >         let map' = Data.Map.filterWithKey
 >                         (\x _ -> not (inRange x))
 >                         (psMap ps)

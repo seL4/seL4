@@ -20,6 +20,6 @@ typedef enum api_object {
     seL4_NonArchObjectTypeCount,
 } seL4_ObjectType;
 
-typedef uint32_t api_object_t;
+typedef seL4_Uint32 api_object_t;
 
 #endif

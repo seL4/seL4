@@ -193,6 +193,7 @@ decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
     objectSize = getObjectSize(newType, userObjSize);
     untypedFreeBytes = BIT(cap_untyped_cap_get_capBlockSize(cap)) -
                        FREE_INDEX_TO_OFFSET(freeIndex);
+
     if (objectSize >= wordBits || (untypedFreeBytes >> objectSize) < nodeWindow) {
         userError("Untyped Retype: Insufficient memory "
                   "(%u * %u bytes needed, %u bytes available).",

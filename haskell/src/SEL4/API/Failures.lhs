@@ -42,6 +42,12 @@ The procedure for handling faults is defined in \autoref{sec:kernel.faulthandler
 >             userExceptionErrorCode :: Word }
 >         deriving Show
 
+\subsection{Kernel Init Failure}
+
+Data type InitFailure can be thrown during SysInit
+
+> data InitFailure = InitFailure
+
 \subsection{System Call Errors}
 
 The following data type defines the set of errors that can be returned from a kernel object method call.

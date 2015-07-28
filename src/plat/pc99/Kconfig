@@ -10,7 +10,7 @@
 
 config PCI
     bool "PCI support"
-        depends on ARCH_IA32
+        depends on PLAT_PC99
         default y
         help
             PCI support, normal should be yes for current
@@ -18,14 +18,14 @@ config PCI
 
 config IOMMU
     bool "IOMMU support"
-        depends on ARCH_IA32
+        depends on PLAT_PC99
         default y
         help
             IOMMU support for VT-d enabled chipset
 
 choice
     prompt "IRQ Controller"
-    depends on ARCH_IA32
+    depends on PLAT_PC99
     default IRQ_PIC
     help
         Select the IRQ controller seL4 will use. Code for others may
@@ -42,7 +42,7 @@ endchoice
 
 config MAX_NUM_IOAPIC
     prompt "Max supported IOAPICs"
-    depends on ARCH_IA32
+    depends on PLAT_PC99
     int
     default 1
     help

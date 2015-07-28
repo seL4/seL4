@@ -15,7 +15,7 @@
 ### Build parameters
 ############################################################
 
-ARCH_LIST:=arm ia32
+ARCH_LIST:=arm x86
 CPU_LIST:=arm1136jf-s ixp420 cortex-a8 cortex-a9 cortex-a15
 PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 apq8064 zynq7000 allwinnerA20
 ARMV_LIST:=armv6 armv7-a
@@ -29,7 +29,7 @@ endif
 # we don't ARCH or PLAT for the style target, but other 
 # targets fail -- so just bluff.
 ifeq (${MAKECMDGOALS}, style)
-ARCH:=ia32
+ARCH:=x86
 PLAT:=pc99
 endif
 
@@ -363,7 +363,7 @@ DEFINES += -DARM_CORTEX_A15
 endif
 endif
 
-ifeq (${ARCH}, ia32)
+ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
 endif
@@ -557,12 +557,12 @@ else
   SM_ARG=
 endif
 
-${DEFTHEORIES}: %_defs.thy: %.bf ${BF_GEN_PATH} ${STATICSOURCES} \
+${DEFTHEORIES}: %_defs.thy: %.pbf ${BF_GEN_PATH} ${STATICSOURCES} \
                 ${STATICHEADERS} ${SOURCE_ROOT}/Makefile | ${DIRECTORIES}
 	@echo " [BF_DEFS] $@"
 	$(Q)${BF_GEN_PATH} --cspec-dir ${CSPEC_DIR} --hol_defs $< $@ ${PRUNES} ${SM_ARG}
 
-${PROOFTHEORIES}: %_proofs.thy: %.bf ${BF_GEN_PATH} ${STATICSOURCES} \
+${PROOFTHEORIES}: %_proofs.thy: %.pbf ${BF_GEN_PATH} ${STATICSOURCES} \
                   ${STATICHEADERS} ${SOURCE_ROOT}/Makefile ${UMM_TYPES} | ${DIRECTORIES}
 	@echo " [BF_PROOFS] $@"
 	@$(if ${UMM_TYPES}, , echo "UMM_TYPES unset" ; false)

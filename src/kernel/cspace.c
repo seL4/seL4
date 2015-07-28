@@ -190,6 +190,8 @@ resolveAddressBits(cap_t nodeCap, cptr_t capptr, unsigned int n_bits)
             return ret;
         }
 
+        /** GHOSTUPD: "(\<acute>levelBits > 0, id)" */
+
         n_bits -= levelBits;
         nodeCap = slot->cap;
 
