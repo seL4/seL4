@@ -586,7 +586,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
                     result.append("\t%s->%s = %s;" % (param.name, members[i], words[i] % source_words))
             else:
                 if param.type.double_word:
-                    result.append("\tresult.%s = ((%s)%s + ((%s)%s << 32));" % (TYPES[64], param.name, words[0] % source_words, words[1] % source_words))
+                    result.append("\tresult.%s = ((%s)%s + ((%s)%s << 32));" % (param.name, TYPES[64], words[0] % source_words, TYPES[64], words[1] % source_words))
                 else:
                     for word in words:
                         result.append("\tresult.%s = %s;" % (param.name, word % source_words))

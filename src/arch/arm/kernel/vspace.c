@@ -17,7 +17,6 @@
 #include <kernel/thread.h>
 #include <kernel/cdt.h>
 #include <machine/io.h>
-#include <model/preemption.h>
 #include <model/statedata.h>
 #include <object/cnode.h>
 #include <object/untyped.h>
