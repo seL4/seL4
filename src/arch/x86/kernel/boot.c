@@ -613,7 +613,7 @@ init_node_state(
     /* finalise the bootinfo frame */
     bi_finalise();
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
     ia32KSconsolePort = console_port_of_node(node_id);
     ia32KSdebugPort = debug_port_of_node(node_id);
 #endif

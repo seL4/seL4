@@ -43,7 +43,7 @@ extern uint32_t ia32KSnumIODomainIDBits;
 extern int ia32KSFirstValidIODomain;
 #endif
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 extern uint16_t ia32KSconsolePort;
 extern uint16_t ia32KSdebugPort;
 #endif

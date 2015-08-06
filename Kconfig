@@ -306,12 +306,27 @@ menu "seL4 System Parameters"
 endmenu
 
 menu "Build Options"
-    
-    config DEBUG_BUILD
-        bool "Build the kernel with debug support"
-        default y
-        help
-            Enable the debug facilities in the kernel
+   
+    choice 
+        prompt "Build type - Debug or Release?"
+        default DEBUG_BUILD
+
+        config DEBUG_BUILD
+            bool "Build the kernel with debug support"
+            help
+                Enable the debug facilities in the kernel
+
+        config RELEASE_PRINTF
+            bool "Release build with release_printf"
+            help 
+                Enable 'release_printf' to allow printing in an otherwise 
+                release build.
+
+        config RELEASE_BUILD
+            bool "Release build"
+            help
+                A release kernel with no debugging symbols, print support or asserts.
+    endchoice
 
     config IRQ_REPORTING
         bool "Report suprious or undelivered IRQs"

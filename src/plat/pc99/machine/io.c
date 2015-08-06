@@ -13,7 +13,7 @@
 #include <arch/model/statedata.h>
 #include <plat/machine/io.h>
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 static uint16_t get_console_port(void)
 {

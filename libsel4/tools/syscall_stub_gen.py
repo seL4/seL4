@@ -133,7 +133,7 @@ class Type(object):
         if word_num == 0:
             return "({0}) {1}".format(TYPES[WORD_SIZE_BITS], var_name)
         elif word_num == 1:
-            return "({0}) ({1} >> {0})".format(TYPES[WORD_SIZE_BITS], var_name)
+            return "({0}) ({1} >> {2})".format(TYPES[WORD_SIZE_BITS], var_name, WORD_SIZE_BITS)
         
 
 class PointerType(Type):

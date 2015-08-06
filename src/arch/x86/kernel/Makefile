@@ -23,3 +23,7 @@ ARCH_C_SOURCES += kernel/thread.c \
 ifdef DEBUG
 ARCH_C_SOURCES += kernel/lock.c
 endif
+
+ifdef RELEASE_PRINTF
+ARCH_C_SOURCES += kernel/lock.c
+endif

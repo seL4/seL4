@@ -13,7 +13,7 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 #define UTHR 0x00 /* UART Transmit Holding Register */
 #define ULSR 0x14 /* UART Line Status Register */

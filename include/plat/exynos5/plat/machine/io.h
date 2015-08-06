@@ -13,7 +13,7 @@
 
 #include <types.h>
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 void exynos_uart_putchar(char c);
 void putDebugChar(unsigned char c);
 unsigned char getDebugChar(void);

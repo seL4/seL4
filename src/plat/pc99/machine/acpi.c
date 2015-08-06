@@ -369,8 +369,8 @@ acpi_dmar_scan(
     *num_drhu = 0;
     rmrr_count = 0;
 
-    assert(acpi_rsdt->header.length >= sizeof(acpi_header_t));
-    entries = (acpi_rsdt->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
+    assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
+    entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
     for (count = 0; count < entries; count++) {
         acpi_dmar = (acpi_dmar_t*)acpi_rsdt_mapped->entry[count];
         acpi_dmar_mapped = (acpi_dmar_t*)acpi_table_init(acpi_dmar, ACPI_RSDT);

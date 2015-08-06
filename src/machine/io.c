@@ -11,7 +11,7 @@
 #include <stdarg.h>
 #include <machine/io.h>
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 static unsigned int
 print_string(const char *s)
@@ -218,8 +218,17 @@ vprintf(const char *format, va_list ap)
     return n;
 }
 
+unsigned int puts(const char *s)
+{
+    for (; *s; s++) {
+        kernel_putchar(*s);
+    }
+    kernel_putchar('\n');
+    return 0;
+}
+
 unsigned int
-printf(const char *format, ...)
+kprintf(const char *format, ...)
 {
     va_list args;
     unsigned int i;
@@ -230,13 +239,4 @@ printf(const char *format, ...)
     return i;
 }
 
-unsigned int puts(const char *s)
-{
-    for (; *s; s++) {
-        kernel_putchar(*s);
-    }
-    kernel_putchar('\n');
-    return 0;
-}
-
-#endif
+#endif /* defined DEBUG || RELEASE_PRINTF */

@@ -64,7 +64,7 @@ uint32_t ia32KSnumIODomainIDBits;
 int ia32KSFirstValidIODomain;
 #endif
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 uint16_t ia32KSconsolePort;
 uint16_t ia32KSdebugPort;
 #endif
