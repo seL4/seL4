@@ -96,7 +96,7 @@ ndks_t ndks_list[CONFIG_MAX_NUM_NODES];
  * The following definition, in conjunction with the linker script, tells the
  * linker to reserve space in virtual memory at the start of the NDKS section.
  */
-SECTION(".ndks.stack") ALIGN(BIT(PAGE_BITS))
+SECTION(".ndks.stack") ALIGN(BIT(PAGE_BITS)) VISIBLE
 char kernel_stack_alloc[4096];
 
 /* global variables (not covered by abstract specification) */
