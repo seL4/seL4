@@ -356,6 +356,7 @@ ifeq (${ARCH}, arm)
 CFLAGS += -mtune=${CPU} -marm -march=${ARMV}
 ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
+DEFINES += -DARCH_ARM
 ifeq (${CPU},cortex-a8)
 DEFINES += -DARM_CORTEX_A8
 endif
