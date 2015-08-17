@@ -9,9 +9,9 @@
 %
 
 \apidoc
-{sel4_notify}
-{Notify}
-{Send a one-word message}
+{sel4_signal}
+{Signal}
+{Signal a notification}
 {static inline void seL4\_Notify}
 {
 \param{seL4\_CPtr}{dest}{\invokedcapdesc}
@@ -22,8 +22,8 @@
 This is not a proper system call
 known by the kernel. Rather, it is a convenience
 wrapper provided by the seL4 userland library which calls
-\apifunc{seL4\_Send}{sel4_send} with a single parameter. It is
-useful for notifying an asynchronous endpoint.
+\apifunc{seL4\_Send}{sel4_send}. It is
+useful for signalling a notification.
 
 See the description of \apifunc{seL4\_Send}{sel4_send} in \autoref{sec:sys_send}
 }

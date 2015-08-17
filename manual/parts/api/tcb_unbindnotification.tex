@@ -9,13 +9,12 @@
 %
 
 \apidoc
-{tcb_bindaep}
-{TCB - Bind Asynchronous Endpoint}
-{Binds an asynchronous endpoint to a \obj{TCB} }
-{static inline int seL4\_TCB\_BindAEP}
+{tcb_unbindnotification}
+{TCB - Unbind Notification}
+{Unbinds any notification object from a \obj{TCB}}
+{static inline int seL4\_TCB\_UnbindNotification}
 {
 \param{seL4\_TCB}{\_service}{\tcbcapdesc}
-\param{seL4\_CPtr}{endpoint}{Asynchronous endpoint to bind.}
 }
 {\errorenumdesc}
-{See \autoref{sec:asyncep-binding}}
+{See \autoref{sec:notification-binding}}
