@@ -558,7 +558,7 @@ autoconf.h: include/plat/${PLAT}/autoconf.h
 # Header generation
 ###################
 
-arch/api/invocation.h: ${SOURCE_ROOT}/libsel4/arch_include/${ARCH}/interfaces/sel4arch.xml | ${DIRECTORIES}
+arch/api/invocation.h: ${SOURCE_ROOT}/libsel4/arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml | ${DIRECTORIES}
 	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/invocation.h
 	$(Q)${INVOCATION_ID_GEN_PATH} --arch --xml $< \
 		--dest $@

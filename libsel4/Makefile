@@ -17,7 +17,7 @@ CHANGED_PATH := ${SOURCE_DIR}/tools/changed.sh
 
 # Targets
 PRIORITY_TARGETS := include/interfaces/sel4_client.h include/sel4/types_gen.h include/sel4/syscall.h \
-					include/sel4/invocation.h arch_include/${ARCH}/sel4/arch/invocation.h
+					include/sel4/invocation.h arch_include/${SEL4_ARCH}/sel4/arch/invocation.h
 TARGETS          := libsel4.a
 
 # Source files required to build the target
@@ -28,7 +28,7 @@ CFILES := \
 # Note: sel4_client.h may not have been built at the time this is evaluated.
 HDRFILES := \
 	$(wildcard $(SOURCE_DIR)/include/*) \
-	$(wildcard $(SOURCE_DIR)/arch_include/$(ARCH)/*) \
+	$(wildcard $(SOURCE_DIR)/arch_include/$(SEL4_ARCH)/*) \
 	$(BUILD_DIR)/include/sel4 \
 	$(BUILD_DIR)/include/interfaces  #TODO proper prefix instruction
 
@@ -53,7 +53,7 @@ include/sel4/invocation.h: ${SOURCE_DIR}/include/interfaces/sel4.xml
 	@${CHANGED_PATH} $@ python ${INVOCATION_ID_GEN_PATH} \
 		--xml $< --libsel4 --dest $@
 
-arch_include/${ARCH}/sel4/arch/invocation.h: ${SOURCE_DIR}/arch_include/${ARCH}/interfaces/sel4arch.xml 
+arch_include/${SEL4_ARCH}/sel4/arch/invocation.h: ${SOURCE_DIR}/arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml 
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} ${SOURCE_DIR}/$@ python ${INVOCATION_ID_GEN_PATH} \
@@ -79,7 +79,7 @@ include/sel4/types_gen.h: \
 
 # Stub generator
 include/interfaces/sel4_client.h: \
-		${SOURCE_DIR}/arch_include/${ARCH}/interfaces/sel4arch.xml \
+		${SOURCE_DIR}/arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml \
 		${SOURCE_DIR}/include/interfaces/sel4.xml
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
