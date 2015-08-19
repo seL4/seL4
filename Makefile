@@ -457,7 +457,7 @@ ASM_SOURCES += $(patsubst %, src/plat/${PLAT}/%, ${PLAT_ASM_SOURCES})
 GENHEADERS = $(patsubst %.bf, %.pbf, ${BF_SOURCES}) \
   $(patsubst %.bf, %_gen.h, ${BF_SOURCES})
 
-GENHEADERS += arch/api/invocation.h api/invocation.h arch/api/syscall.h
+GENHEADERS += arch/api/invocation.h arch/api/sel4_invocation.h api/invocation.h arch/api/syscall.h
 
 DEFTHEORIES = $(patsubst %.bf, %_defs.thy, ${BF_SOURCES})
 PROOFTHEORIES = $(patsubst %.bf, %_proofs.thy, ${BF_SOURCES})
@@ -568,6 +568,11 @@ autoconf.h: include/plat/${PLAT}/autoconf.h
 arch/api/invocation.h: ${SOURCE_ROOT}/libsel4/arch_include/${ARCH}/interfaces/sel4arch.xml | ${DIRECTORIES}
 	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/invocation.h
 	$(Q)${INVOCATION_ID_GEN_PATH} --arch --xml $< \
+		--dest $@
+
+arch/api/sel4_invocation.h: ${SOURCE_ROOT}/libsel4/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml | ${DIRECTORIES}
+	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/sel4_invocation.h
+	$(Q)${INVOCATION_ID_GEN_PATH} --sel4_arch --xml $< \
 		--dest $@
 
 

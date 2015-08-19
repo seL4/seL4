@@ -8,9 +8,7 @@
  * @TAG(NICTA_BSD)
  */
 
-#ifndef __LIBSEL4_ARCH_MAPPING
-#define __LIBSEL4_ARCH_MAPPING
-
-#include <sel4/sel4_arch/mapping.h>
+#ifndef __LIBSEL4_SEL4_ARCH_EXCEPTION_IPC
+#define __LIBSEL4_SEL4_ARCH_EXCEPTION_IPC
 
 #endif

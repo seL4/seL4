@@ -16,20 +16,23 @@
 #endif /* HAVE_AUTOCONF */
 
 typedef enum _object {
-    seL4_IA32_4K = seL4_NonArchObjectTypeCount,
+    seL4_IA32_4K = seL4_ModeObjectTypeCount,
     seL4_IA32_LargePage,
     seL4_IA32_PageTableObject,
     seL4_IA32_PageDirectoryObject,
-    seL4_IA32_PDPTObject,
+#ifdef CONFIG_IOMMU
     seL4_IA32_IOPageTableObject,
+#endif
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 typedef seL4_Word object_t;
 
-/* Previously frame types were explcitly 4K and 4M. If not PAE
- * we assume legacy environment and emulate old definitions */
 #ifndef CONFIG_PAE_PAGING
 #define seL4_IA32_4M seL4_IA32_LargePage
+#endif
+
+#ifndef CONFIG_IOMMU
+#define seL4_IA32_IOPageTableObject 0xffffff
 #endif
 
 #endif

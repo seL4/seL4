@@ -8,9 +8,8 @@
  * @TAG(NICTA_BSD)
  */
 
-#ifndef __LIBSEL4_ARCH_MAPPING
-#define __LIBSEL4_ARCH_MAPPING
+#ifndef __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
+#define __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
 
-#include <sel4/sel4_arch/mapping.h>
+#endif // __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
 
-#endif

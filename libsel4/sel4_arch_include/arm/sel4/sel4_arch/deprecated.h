@@ -8,9 +8,7 @@
  * @TAG(NICTA_BSD)
  */
 
-#ifndef __LIBSEL4_ARCH_MAPPING
-#define __LIBSEL4_ARCH_MAPPING
+#ifndef __LIBSEL4_SEL4_ARCH_DEPRECATED_H
+#define __LIBSEL4_SEL4_ARCH_DEPRECATED_H
 
-#include <sel4/sel4_arch/mapping.h>
-
-#endif
+#endif /* __ARCH_DEPRECATED_H__ */

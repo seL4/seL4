@@ -13,13 +13,10 @@
 
 #include <autoconf.h>
 
-#define TLS_GDT_ENTRY 6
-#define TLS_GDT_SELECTOR ((TLS_GDT_ENTRY << 3) | 3)
-
-#define IPCBUF_GDT_ENTRY 7
-#define IPCBUF_GDT_SELECTOR ((IPCBUF_GDT_ENTRY << 3) | 3)
+#include <sel4/sel4_arch/constants.h>
 
 #ifndef __ASM__
+#include <sel4/sel4_arch/objecttype.h>
 #include <sel4/arch/objecttype.h>
 #endif
 

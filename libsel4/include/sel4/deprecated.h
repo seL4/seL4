@@ -12,6 +12,7 @@
 #define __LIBSEL4_DEPRECATED_H
 
 #include <sel4/arch/deprecated.h>
+#include <sel4/sel4_arch/deprecated.h>
 
 static inline int __attribute__((deprecated("use seL4_IRQHandler_SetNotification")))
 seL4_IRQHandler_SetEndpoint(seL4_CPtr irq_handler, seL4_CPtr endpoint)

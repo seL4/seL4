@@ -58,7 +58,7 @@ MAX_MESSAGE_LENGTH = 32
 
 MESSAGE_REGISTERS_FOR_ARCH = {
     "arm": 4,
-    "x86": 2,
+    "ia32": 2,
 }
 
 # Headers to include
@@ -233,7 +233,7 @@ arch_types = {
         StructType("seL4_UserContext", WORD_SIZE_BITS * 17),
         ],
 
-    "x86" : [
+    "ia32" : [
         Type("seL4_IA32_VMAttributes", WORD_SIZE_BITS),
         CapType("seL4_IA32_ASIDControl"),
         CapType("seL4_IA32_ASIDPool"),
