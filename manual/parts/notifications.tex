@@ -1,0 +1,58 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\chapter{\label{ch:notifications}Notifications}
+
+\BEGCHECK
+Notifications are a simple, non-blocking signalling mechanism that
+logically represents a set of binary semaphores.
+
+\section{Notification Objects}
+
+A \obj{Notification} object contains a single data word, called the
+\emph{notification word}. Such an object supports two operations:
+\apifunc{seL4\_Signal}{sel4_signal} and
+\apifunc{seL4\_Wait}{sel4_wait}.
+
+\obj{Notification} capabilities can be badged, using
+\apifunc{seL4\_CNode\_Mutate}{cnode_mutate} or
+\apifunc{seL4\_CNode\_Mint}{cnode_mint}, just like \obj{Endpoint}
+capabilities (see \autoref{sec:ep-badges}). As with \obj{Endpoint}
+capabilities, badged \obj{Notification} capabilities cannot be
+  unbadged, rebadged or used to create child capabilities with
+  different badges. \label{s:notif-badge}
+
+\section{Signalling and Waiting}
+
+The \apifunc{seL4\_Signal}{sel4_signal} method updates the
+notification word by bit-wise \texttt{or}-ing it with the \emph{badge}
+of the invoked notification capability. It also unblocks the first
+thread waiting on the notification (if any). As such,
+\apifunc{seL4\_Signal}{sel4_signal} works like concurrently signalling
+multiple semaphores (those indicated by the bits set in the badge).
+
+The \apifunc{seL4\_Wait}{sel4_wait} method works similar to a
+select-like wait on the set of semaphores: If the notification word is
+zero at the time \apifunc{seL4\_Wait}{sel4_wait} is called, the
+invoker blocks. Else, the call returns immediately, setting the
+notification word to zero and returning to the invoker the previous
+notification-word value.
+
+If threads are waiting on the \obj{Notification} object at the time
+\apifunc{seL4\_Signal}{sel4_signal} is invoked, first queued thread
+receives the notification, while all others keep waiting until the
+next time the notification is signalled. 
+
+If \apifunc{seL4\_Signal}{sel4_signal} is invoked with an unbadged
+capability, the first queued thread is unblocked (with a zero return
+value). If no thread is waiting, the
+\apifunc{seL4\_Signal}{sel4_signal} operation is a no-op.
+
+\ENDCHECK
