@@ -8,15 +8,14 @@
 % @TAG(GD_GPL)
 %
 
-\chapter{\label{ch:ipc}Inter-process Communication}
+\chapter{\label{ch:ipc}Message Passing (IPC)}
 
-The seL4 microkernel provides a message-passing mechanism for communication
-between threads. The mechanism is also used for communication with
+The seL4 microkernel provides a message-passing IPC mechanism for communication
+between threads. The same mechanism is also used for communication with
 kernel-provided services. Messages are sent by invoking a capability to a
-kernel object. Messages sent to \emph{synchronous} (\obj{Endpoint}) and
-\emph{asynchronous} (\obj{Async\-EP}) IPC endpoints are destined for other
-threads; messages sent to objects of other types are processed by the kernel. This
-chapter describes the common message format, the two types of endpoints,
+kernel object. Messages sent to \obj{Endpoint} are destined for other
+threads, while messages sent to other objects are processed by the kernel. This
+chapter describes the common message format, endpoints,
 and how they can be used for communication between applications.
 
 \section{Message Registers}
@@ -139,31 +138,28 @@ User level stubs
 may wish to copy the message tag from its CPU register to this field, although
 the user level stubs provided with the kernel do not do this.
 
-\section{Synchronous Endpoints}
+\section{Endpoints}
 
-Synchronous endpoints (or simply \obj{Endpoint}s) allow a small amount
-of data and small number of capabilities (namely the IPC buffer) to be transferred between two
-threads. \obj{Endpoints} are called
-`synchronous' because a message transfer will not take
-place until both the sender is ready to send the message and a receiver is
-ready to receive it.
+\obj{Endpoint}s allow a small amount
+of data and capabilities (namely the IPC buffer) to be transferred between two
+threads. \obj{Endpoint} objects are invoked directly using the seL4 system calls
+described in \autoref{sec:syscalls}. 
 
-\obj{Endpoint} objects are invoked directly using the seL4 system calls
-described in \autoref{sec:syscalls}. Note that \obj{Endpoint} objects may queue
+IPC \obj{Endpoints} uses a rendezvous model and as such is
+synchronous and blocking. An \obj{Endpoint} object  may queue
 threads either to send or to receive. If no receiver is ready, threads
 performing the \apifunc{seL4\_Send}{sel4_send} or \apifunc{seL4\_Call}{sel4_call}
-system calls will wait in a queue for the first available receiver. Likewise if
+system calls will wait in a queue for the first available receiver. Likewise, if
 no sender is ready, threads performing the \apifunc{seL4\_Wait}{sel4_wait}
 system call or the second half of \apifunc{seL4\_ReplyWait}{sel4_replywait}
 will wait for the first available sender.
 
-\subsection{Endpoint Badges}
+\subsection{Endpoint Badges\label{s:ep-badge}}
 \label{sec:ep-badges}
 
-Synchronous endpoint capabilities may be \emph{minted} to
-create a new endpoint capability with a \emph{badge} attached to it. The
-badge is a word of data that is associated with a particular endpoint
-capability. When a message is sent to an endpoint using a badged
+Endpoint capabilities may be \emph{minted} to
+create a new endpoint capability with a \emph{badge} attached to it, a data
+word chosen by the invoker of the \emph{mint} operation. When a message is sent to an endpoint using a badged
 capability, the badge is transferred to the receiving thread's
 \texttt{badge} register.
 
@@ -176,26 +172,27 @@ child capabilities with different badges.
 \subsection{Capability Transfer}
 \label{sec:cap-transfer}
 
-Messages in seL4 may contain capabilities. Messages containing capabilities can
-be sent across synchronous endpoints, provided that the endpoint capability
-invoked by the sending thread has Grant rights. An attempt to transfer
-capabilities without Grant rights can still result in the message being sent,
-but no capabilities will be transferred.
+Messages may contain capabilities, which will be transferred to the
+receiver, provided that the endpoint capability
+invoked by the sending thread has Grant rights. An attempt to send
+capabilities using an endpoint capability without the Grant right will
+result in transfer of the raw message, without any capability transfer.
 
-Capabilities to be sent with a message are specified in the sending thread's
+Capabilities to be sent in a message are specified in the sending thread's
 IPC buffer in the \texttt{caps} field. Each entry in that array is interpreted
 as a CPTR in the sending thread's capability space. The number of capabilities
 to send is specified in the \texttt{extraCaps} field of the message tag.
 
-The receiver specifies the slot,
+The receiver specifies the slot
 in which it is willing to receive a capability, with three fields within the IPC buffer: \texttt{receiveCNode}, \texttt{receiveIndex} and \texttt{receiveDepth}.
 These fields specify the root CNode, capability address and number of bits to resolve, respectively, to find
 the slot in which to put the capability. Capability
 addressing is described in \autoref{sec:cap_addressing}.
 
-A received capability has the same rights as the original except if the receiving endpoint capability does not have the Write right.
+A received capability has the same rights as the original, except if
+the \emph{receiving} endpoint capability lacks the Write right.
 In this case, the rights on the sent capability are \emph{diminished}, by
-removing from the received copy of that capability the Write right.
+stripping the Write right from the received copy of the capability.
 
 Note that receiving threads may specify only one receive slot, whereas a
 sending thread may include multiple capabilities in the message. Messages
@@ -203,14 +200,13 @@ containing more than one capability may be interpreted by kernel objects. They
 may also be sent to receiving threads in the case where some of the extra
 capabilities in the message can be \emph{unwrapped}.
 
-If the n-th capability in the message refers to the same endpoint as the one
-the
-message is being sent through, it is \emph{unwrapped}. Its badge is placed in
+If the n-th capability in the message refers to the endpoint through
+which the message is sent, the capability is \emph{unwrapped}: its badge is placed into
 the n-th
-position of the receiver's badges array and the n-th bit (counting from the
-least significant) is set in the \texttt{capsUnwrapped} field of the message
+position of the receiver's badges array, and the kernel sets the n-th bit (counting from the
+least significant) in the \texttt{capsUnwrapped} field of the message
 tag. The capability itself is not transferred, so the receive slot may be used
-for another one.
+for another capability.
 
 If a receiver gets a message whose tag has an \texttt{extraCaps} of 2 and a
 \texttt{capsUnwrapped} of 2, then the first capability in the message was
@@ -262,46 +258,3 @@ transferred and the \texttt{extraCaps} field in the receiver's IPC
 buffer is set to the number of capabilities transferred up to failure.
 No error message will be returned to the receiving thread in any of the
 above cases.
-
-\section{Asynchronous Endpoints}
-
-Asynchronous endpoints (\obj{AsyncEP}s)
-allow senders to perform IPC without blocking.
-However, capabilities cannot be transferred over asynchronous endpoints.
-
-Each asynchronous endpoint stores a single word of data. This word of
-data may be written to using \apifunc{seL4\_Notify}{sel4_notify}, causing the
-first message register of the sending thread to be bitwise or-ed with
-the asynchronous endpoint's data word.
-
-Note that \apifunc{seL4\_Notify}{sel4_notify} is not a proper system call
-known by the kernel. Rather, it is a convenience
-wrapper provided by the seL4 userland library which calls
-\apifunc{seL4\_Send}{sel4_send} with a single parameter. It is
-useful for notifying an asynchronous endpoint.
-
-Additionally, the \apifunc{seL4\_Wait}{sel4_wait} system call may be used with an
-asynchronous endpoint, allowing the calling thread to retrieve all set
-bits from the asynchronous endpoint and clearing the endpoint in the
-process. If no \apifunc{seL4\_Notify}{sel4_notify} system calls have taken place since the last
-\apifunc{seL4\_Wait}{sel4_wait} call, the calling thread will block until the next
-\apifunc{seL4\_Notify}{sel4_notify} takes place.
-
-\subsection{Asynchronous Endpoint Badges}
-
-Like synchronous endpoints, asynchronous endpoint capabilities may also
-be minted to create a new capability with a \emph{badge} attached to it (see \autoref{sec:ep-badges}).
-The badge is a word of data that is associated with a particular
-endpoint capability. When a message is sent to an endpoint using
-a badged capability, the badge becomes part of the message received: in
-particular, the badge is bitwise or-ed with the badges from
-previous send system calls that have occurred since that last receive
-on the endpoint.
-
-Like synchronous endpoints, an asynchronous endpoint capability with
-a zero badge is said to be \emph{unbadged}. Such a capability can be
-badged with the \apifunc{seL4\_CNode\_Mutate}{cnode_mutate} or \apifunc{seL4\_CNode\_Mint}{cnode_mint} invocations on the
-\obj{CNode} containing the capability. Asynchronous endpoint
-capabilities with badges cannot be unbadged, rebadged or used to create
-child capabilities with different badges.
-
