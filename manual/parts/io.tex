@@ -13,26 +13,24 @@
 \section{Interrupt Delivery}
 \label{sec:interrupts}
 
-\BEGCHECK
-Interrupts are delivered as notifications. A thread
-may configure the kernel to signal a particular \obj{Notification}
+Interrupts are delivered in seL4 through \obj{AsyncEP} objects. A thread
+may configure the kernel to send a message to a particular \obj{AsyncEP}
 object each time a certain interrupt triggers. Threads may then wait for
 the interrupts to occur by calling \apifunc{seL4\_Wait}{sel4_wait} on
-that \obj{Notification}. In the  notification word returned from
-\apifunc{seL4\_Wait}{sel4_wait},  bit $n$  (modulo
-word size) represents IRQ $n$, the bit will be set if the
-corresponding IRQ was asserted. This supports the use of a single handler for
-multiple IRQs.
+that \obj{AsyncEP}. Each bit $n$ in the message content (modulo the
+word size) corresponds to whether IRQ $n$ was asserted; this allows a
+thread to multiplex the handling of multiple interrupts through a single
+\obj{AsyncEP}.
 
 \obj{IRQHandler} capabilities represent the ability of a thread to
 configure a certain interrupt. They have three methods:
 
 \begin{description}
 
-    \item[\apifunc{seL4\_IRQHandler\_SetNotification}{irq_handlersetnotification}]
-    specifies the \obj{Notification} the kernel should
-    \apifunc{signal}{sel4_signal} when an interrupt occurs. A driver
-    may then call \apifunc{seL4\_Wait}{sel4_wait} on this notification to
+    \item[\apifunc{seL4\_IRQHandler\_SetEndpoint}{irq_handlersetendpoint}]
+    specifies the \obj{AsyncEP} that the kernel should
+    \apifunc{notify}{sel4_notify} when an interrupt occurs. A driver
+    may then call \apifunc{seL4\_Wait}{sel4_wait} on this endpoint to
     wait for interrupts to arrive.
 
     \item[\apifunc{seL4\_IRQHandler\_Ack}{irq_handleracknowledge}]
@@ -41,9 +39,9 @@ configure a certain interrupt. They have three methods:
     interrupts to the application.
 
     \item[\apifunc{seL4\_IRQHandler\_Clear}{irq_handlerclear}]
-    de-registers the \obj{Notification} from the \obj{IRQHandler} object.
+    de-registers the \obj{AsyncEP} from the \obj{IRQHandler} object.
+
 \end{description}
-\ENDCHECK
 
 When the system first starts, no \obj{IRQHandler} capabilities are
 present. Instead, the initial thread's CSpace contains a single

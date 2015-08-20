@@ -29,9 +29,6 @@ The basic services seL4 provides are as follows:
     \item[Inter-process communication] (IPC) via \emph{endpoints} allows
     threads to communicate using message passing;
 
-    \item[Notifications] provide a non-blocking signalling mechanism
-      similar to binary semaphores;
-
     \item[Device primitives] allow device drivers to be implemented as
     unprivileged applications.  The kernel exports hardware device
     interrupts via IPC messages; and
@@ -108,81 +105,48 @@ number of data words and possibly some capabilities. The structure and encoding
 of these messages are described in detail in \autoref{ch:ipc}. 
 
 Threads send messages by invoking capabilities within their capability space.
-When an endpoint capability is invoked in this way, the message will be
+When an endpoint capability is invoked in this way the message will be
 transferred through the kernel to another thread. When capabilities to kernel
 objects are invoked, the message will be interpreted as a method invocation in a
 manner specific to the type of kernel object. For example, invoking a thread
 control block (TCB) capability with a correctly formatted message will suspend
 the target thread.
 
-\BEGCHECK
-Logically, the kernel provides three system calls, \emph{Send},
-\emph{Receive} and \emph{Yield}. However, there are also combinations
-and variants of the basic \emph{Send} and \emph{Receive} calls, e.g.\
-the \emph{Call} operation, which consists of a send followed by a
-\emph{Receive} from the same object. Methods on kernel objects other
-than endpoints and notifications are all mapped to \emph{Send} or
-\emph{Call}, depending on whether or not the method returns a
-result. The \emph{Yield} system call is not associated with any kernel
-object and is the only operation that does not invoke a capability.
-
-The complete set of system calls is:
+The kernel provides the following system calls:
 \begin{description}
     \item[\apifunc{seL4\_Send}{sel4_send}] delivers a message through the named
-    capability and the application to continue. If the invoked
-    capability is an endpoint, and no receiver is ready to receive the message
-    immediately, the sending thread will block until the message can be
+    capability and then allows the application to continue. If the invoked
+    capability is an endpoint and no receiver is ready to receive the message
+    immediately, the sending thread will be blocked until the message can be
     delivered. No error code or response will be returned by the receiving
-    object.
+    thread or kernel object.
 
-    \item[\apifunc{seL4\_NBSend}{sel4_nbsend}] performs a polling send
-      on an endpoint. It
-    is similar to \apifunc{seL4\_Send}{sel4_send}, except that it is
-    guaranteed not to block. If the message
-    cannot be delivered immediately, i.e.\ there is no receiver waiting
-    on the destination \obj{Endpoint}, the message is silently dropped. Like
-    \apifunc{seL4\_Send}{sel4_send}, no error code or response will be returned.
+    \item[\apifunc{seL4\_NBSend}{sel4_nbsend}] performs a non-blocking send. It
+    is similar to \apifunc{seL4\_Send}{sel4_send} except that if the message
+    cannot be received immediately, the message is silently dropped. Like
+    \apifunc{seL4\_Send}{sel4_send}, no error code or response will be returned
+    by the object.
 
-    \item[\apifunc{seL4\_Call}{sel4_call}] combines \apifunc{seL4\_Send}{sel4_send}
-      and \apifunc{seL4\_Wait}{sel4_wait}. The call
-      blocks the sending thread until its message is delivered and a reply message is received. When the
-    sent message is delivered to another thread (via an
-    \obj{Endpoint}), the kernel adds an
-    additional `\emph{reply}' capability to the message that is delivered
-    to the receiver, giving the latter the right to reply to the original sender. The reply
-    capability is deposited in a dedicated slot in the receiver's
-    \obj{TCB}, and is a single-use right, meaning that the kernel
-    invalidates it as soon as it has been invoked.
-
-    The \apifunc{seL4\_Call}{sel4_call} operation exists not only for
-    efficiency reasons (combining two operations into a single system
-    call). It differs from
-    \apifunc{seL4\_Send}{sel4_send} immediately followed by
-    \apifunc{seL4\_Wait}{sel4_wait} in two ways:
-    \begin{enumerate}
-    \item the single-use reply capability is created to establish a 
-      reply channel with minimal trust;
-    \item the transition from send to wait phase is atomic, meaning it
-      cannot be preempted, and the receiver can reply without any risk
-      of blocking.
-    \end{enumerate}
-
+    \item[\apifunc{seL4\_Call}{sel4_call}] is a \apifunc{seL4\_Send}{sel4_send}
+    that blocks the sending thread until a reply message is received. When the
+    sent message is delivered to another thread (via an \obj{Endpoint}), an
+    additional `\emph{reply}' capability is added to the message and delivered
+    to the receiver to give it the right to reply to the sender. The reply
+    capability is stored in a special purpose slot in the receiver's \obj{TCB}.
     When invoking capabilities to kernel services, using
     \apifunc{seL4\_Call}{sel4_call} allows the kernel to return an error code
-    or other response through the reply message.
+    or other response within a reply message.
 
     \item[\apifunc{seL4\_Wait}{sel4_wait}] is used by a thread to receive
-    messages through endpoints or notifications. If no sender or
-    notification is pending, the caller
-    will block until a message or notification can be delivered. This system call works only on
-    \obj{Endpoint} or \obj{Notification} capabilities, raising a fault (see section \ref{sec:faults}) when
+    messages through endpoints. If no message is ready to be sent, the thread
+    will block until a message is sent. This system call works only on
+    endpoint capabilities, raising a fault (see section \ref{sec:faults}) when
     attempted with other capability types.
 
     \item[\apifunc{seL4\_Reply}{sel4_reply}] is used to respond to a
-    \apifunc{seL4\_Call}{sel4_call}, using the reply capability generated by the
+    \apifunc{seL4\_Call}{sel4_call}, using the capability generated by the
     \apifunc{seL4\_Call}{sel4_call} system call and stored in the replying
-    thread's TCB. It delivers the message to the thread that invoked
-    the \apifunc{seL4\_Call}{sel4_call}, waking it in
+    thread's TCB. It delivers the message to the calling thread, waking it in
     the process.
 
     There is space for only one reply capability in each thread's TCB, so the
@@ -192,20 +156,18 @@ The complete set of system calls is:
     capability into regular capability space, where it can be used with
     \apifunc{seL4\_Send}{sel4_send}.
 
-    \item[\apifunc{seL4\_ReplyWait}{sel4_replywait}] combines \apifunc{seL4\_Reply}{sel4_reply} and
-    \apifunc{seL4\_Wait}{sel4_wait}. It exists mostly for efficiency reasons: the common case of
+    \item[\apifunc{seL4\_ReplyWait}{sel4_replywait}] is a combination of \apifunc{seL4\_Reply}{sel4_reply} and
+    \apifunc{seL4\_Wait}{sel4_wait}. It exists for efficiency reasons: the common case of
     replying to a request and waiting for the next can be performed in
-    a single kernel system call instead of two. The transition from
-    the reply to the wait phase is also atomic.
+    a single kernel system call instead of two.
 
     \item[\apifunc{seL4\_Yield}{sel4_yield}] is the only system call that does not require
-    a capability to be used. It forfeits the remainder of the calling thread's
-    timeslice and causes invocation of the kernel's scheduler.
-    If there are no other runnable threads with the same
-    priority as the caller, the calling thread will immediately be
-    scheduled with a fresh timeslice.
+    a capability to be used. It causes the calling thread to give up the
+    remainder of its timeslice to another runnable thread of the
+    same priority level. If there are no runnable threads with the same
+    priority, the calling thread is resumed and the system call has no
+    effect.
 \end{description}
-\ENDCHECK
 
 \section{Kernel Objects}
 \label{s:sel4_internals}
@@ -213,7 +175,7 @@ The complete set of system calls is:
 In this section we give a brief overview of the kernel-implemented
 object types whose instances (also simply called \emph{objects}) can be invoked by applications. The interface to these
 objects forms the interface to the kernel itself. The creation and use
-of kernel services is achieved by the creation,
+of the high-level kernel services is achieved by the creation,
 manipulation, and combination of these kernel objects:
 
 \begin{description}
@@ -229,27 +191,23 @@ manipulation, and combination of these kernel objects:
     scheduled, blocked, unblocked, etc., depending on the application's
     interaction with other threads.
 
-\BEGCHECK
-    \item[\obj{Endpoints}] (see \autoref{ch:ipc}) facilitate message-passing
-    communication between threads. IPC is synchronous: A thread
-    trying to send or receive on an endpoint blocks until the message
-    can be delivered. This means that message delivery only happens if
-    there a sender and a receiver rendezvous at the endpoint, and the
-    kernel can deliver the message with a single copy (or without
-    copying for short messages using only registers).
+    \item[IPC Endpoints] (see \autoref{ch:ipc}) may be used to facilitate interprocess
+    communication between threads. The seL4 microkernel supports two
+    types of endpoints:
+    \begin{itemize}
+        \item \emph{Synchronous} endpoints (\obj{Endpoint}),
+        which cause the sending thread to block until its message
+        is received; and
+
+        \item \emph{Asynchronous} endpoints (\obj{AsyncEP}),
+        which only allow short messages to be sent, but do not
+        cause the sender to block.
+    \end{itemize}
 
     A capability to an endpoint can be restricted to be
-    send-only or receive-only. Additionally, \obj{Endpoint}
-    capabilities can have the grant right, which allows sending
-    capabilities as part of the message.
-
-    \item[\obj{Notification} Objects] (see \autoref{ch:notifications})
-      provide a simple signalling mechanism. A \obj{Notification}
-      is a word-size array of binary semaphores. Operations
-      are \emph{signalling} a non-empty subset in a single operation,
-      and waiting until any are signalled. Notification capabilities
-      can be signal-only or wait-only.
-\ENDCHECK
+    send-only or receive-only. Additionally, capabilities to \obj{Endpoint}
+    objects may be configured to allow capabilities to be transferred across to
+    other threads.
 
     \item[Virtual Address Space Objects] (see \autoref{ch:vspace}) 
     are used to construct a virtual

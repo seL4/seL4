@@ -13,7 +13,7 @@
 
 % Setting this to true turns on the `draft' watermark
 \newif \ifDraft \Draftfalse
-\Drafttrue
+%\Drafttrue
 
 \newif \ifxeightsix   \xeightsixtrue
 
@@ -26,16 +26,12 @@
   \usepackage{draftcopy}
   \newcommand{\Comment}[1]{\textbf{\textsl{#1}}}
   \newcommand{\FIXME}[1]{\textbf{\textsl{FIXME: #1}}}
-  \newcommand{\BEGCHECK}{\par\noindent\rule{\linewidth}{2pt}\\\Comment{BEGIN CHECK}\par}
-  \newcommand{\ENDCHECK}{\par\noindent\Comment{END CHECK}\\\noindent\rule{\linewidth}{2pt}\par}
   \date{}
 \else
   \newcommand{\Comment}[1]{\relax}
   \newcommand{\FIXME}[1]{\relax}
-  \newcommand{\BEGCHECK}{\relax}
-  \newcommand{\ENDCHECK}{\relax
   \date{}
-\fi 
+\fi
 
 \pagestyle{fancyplain}
 \lhead[\fancyplain{}{\sl\thepage}]{\fancyplain{}{\sl\rightmark}}
@@ -137,7 +133,6 @@ and contributors can be contacted at firstname.lastname@nicta.com.au.
   \input{parts/objects}
   \input{parts/cspace}
   \input{parts/ipc}
-  \input{parts/notifications}
   \input{parts/threads}
   \input{parts/vspace}
   \input{parts/io}

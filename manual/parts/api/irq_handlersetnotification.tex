@@ -9,15 +9,14 @@
 %
 
 \apidoc
-{irq_handlersetnotification}
-{IRQ Handler - Set Notification}
-{Set the notification which the kernel will signal on interrupts
-controlled by the supplied IRQ handler capability}
+{irq_handlersetendpoint}
+{IRQ Handler - Set Endpoint}
+{Set the endpoint which will receive interrupts controlled by the supplied IRQ
+handler capability}
 {static inline int seL4\_IRQHandler\_SetEndpoint}
 {
 \param{seL4\_IRQHandler}{\_service}{\irqhandlercapdesc}
-\param{seL4\_CPtr}{notification}{The notification which will the IRQs
-will signal.}
+\param{seL4\_CPtr}{endpoint}{The endpoint which will receive the IRQs.}
 }
 {\errorenumdesc}
 {See \autoref{sec:interrupts}}

@@ -159,7 +159,7 @@ extra capability passed in the \texttt{caps} field in the IPC buffer.
 
 Secondly, a capability fault can occur when \apifunc{seL4\_Wait}{sel4_wait} is
 called on a capability that
-does not exist, is not an endpoint or notification capability or does not have
+does not exist, is not an endpoint capability or does not have
 receive permissions.
 
 Replying to the fault IPC will restart the faulting thread. The contents of the

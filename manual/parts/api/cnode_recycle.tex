@@ -11,13 +11,11 @@
 \apidoc
 {cnode_recycle}
 {CNode  -  Recycle}
-{The recycle method is intended roughly as a shortcut for reusing an
+{The recycle method is intended roughly as a short cut for reusing an
 object within the same protection domain. The method will first revoke the
 capability and will then reset some but not necessarily all aspects of an
 object to its neutral state. Recycling badged endpoint caps will only cancel
-IPCs for this badge. 
-\FIXME{I assume there's no issue with recycling badged notification caps.}
-Recycled frames, page tables and directories should only
+IPCs for this badge. Recycled frames, page tables and directories should only
 be re-used in the same protection domain, not all authority to them is
 rescinded. For full reuse in a different protection domain, revoke and retype
 the untyped cap that was used to create the object. For the precise behaviour

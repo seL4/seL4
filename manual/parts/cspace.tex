@@ -127,9 +127,8 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
 
 As mentioned previously, some capability types have \emph{access
   rights} associated with them. Currently, access rights are
-associated with capabilities for \obj{Endpoint}s (see
-\autoref{ch:ipc}), \obj{Notification}s (see
-\autoref{ch:notifications}) and \obj{Page}s (see \autoref{ch:vspace}).  The
+associated with capabilities for \obj{Endpoint}s, \obj{AsyncEP}s (see
+\autoref{ch:ipc}) and \obj{Page}s (see \autoref{ch:vspace}).  The
 access rights associated with a capability determine the methods that
 can be invoked.  seL4 supports three orthogonal access rights, which
 are Read, Write and Grant.  The meaning of each right is interpreted
@@ -151,7 +150,7 @@ silently downgraded to those of the source.
     Type & Read & Write & Grant \\
     \midrule
     \obj{Endpoint} & Required to wait. & Required to send. & Required to send capabilities (including reply capabilities).\\
-    \obj{Notification} & Required to wait. & Required to signal. & N/A \\
+    \obj{AsyncEP} & Required to wait. & Required to send. & N/A \\
     \obj{Page} & Required to map the page readable. & Required to map the page writable. & N/A \\
     \bottomrule
   \end{tabularx}
@@ -212,11 +211,11 @@ children of the untyped capability they were created from.
 Ordinary original capabilities can have one level of derived
 capabilities.  Further copies of these derived capabilities will
 create siblings, in this case remaining on level 5. There is an
-exception to this scheme for \obj{Endpoint} and \obj{Notification} capabilities --- they support an
-additional layer of depth though \emph{badging}.
-The original \obj{Endpoint} or \emph{Notification} capability will be unbadged. Using
-the mint method, a copy of the capability with a specific \emph{badge} can be
-created (see \autoref{s:ep-badge}, \autoref{s:notif-badge}). This new, badged capability to the same object is treated as
+exception to this scheme for endpoint capabilities --- they support an
+additional layer of depth with the concept of badged and unbadged
+endpoints. The original endpoint capability will be unbadged. Using
+the mint method, a copy of the capability with a specific badge can be
+created. This new, badged capability to the same object is treated as
 an original capability (the ``original badged endpoint capability'')
 and supports one level of derived children like other capabilities.
 
@@ -288,7 +287,7 @@ destroy operation as in \apifunc{seL4\_CNode\_Delete}{cnode_delete}
 will be executed. Otherwise, not all aspects of the object will be
 reset: for badged endpoint capabilities, only IPC with this badge will
 be cancelled in the endpoint, for TCBs the capabilities will be reset,
-for CNodes, the guard on the capability will be reset. \FIXME{Notifications???}
+for CNodes, the guard on the capability will be reset.
 
 Note that for page tables and page directories, neither
 \apifunc{seL4\_CNode\_Revoke}{cnode_revoke} nor
