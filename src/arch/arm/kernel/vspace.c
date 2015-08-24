@@ -517,15 +517,8 @@ void unmapPagePTE(vm_page_size_t page_size, pte_t *pt, unsigned int ptIndex, voi
 {
     paddr_t addr = addrFromPPtr(pptr);
     cte_t *ptCte;
-    pde_t *pd;
-    unsigned int pdIndex;
 
     (void)addr;
-
-    ptCte = cdtFindWithExtra(cap_page_table_cap_new(0, 0, PT_REF(pt)));
-    assert(ptCte);
-    pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
-    pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
 
     switch (page_size) {
     case ARMSmallPage: {
@@ -571,8 +564,13 @@ void unmapPagePTE(vm_page_size_t page_size, pte_t *pt, unsigned int ptIndex, voi
         fail("Invalid page size");
     }
 
-    if (pd) {
-        flushPage(page_size, pd, (pdIndex << 20) |  (ptIndex << 12));
+    ptCte = cdtFindWithExtra(cap_page_table_cap_new(0, 0, PT_REF(pt)));
+    if (ptCte) {
+        pde_t *pd = PD_PTR(cap_page_table_cap_get_capPTMappedObject(ptCte->cap));
+        if (pd) {
+            unsigned int pdIndex = cap_page_table_cap_get_capPTMappedIndex(ptCte->cap);
+            flushPage(page_size, pd, (pdIndex << 20) |  (ptIndex << 12));
+        }
     }
 }
 void
