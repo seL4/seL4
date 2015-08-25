@@ -40,7 +40,7 @@ init_tss(tss_t* tss)
 {
     tss_ptr_new(
         tss,
-        0,              /* io_map_base  */
+        MASK(16),       /* io_map_base  */
         0,              /* trap         */
         SEL_NULL,       /* sel_ldt      */
         SEL_NULL,       /* gs           */
