@@ -47,7 +47,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
      * test that again.
      */
 
-    while(1);
+    while (1);
 }
 
 /** DONT_TRANSLATE */
