@@ -371,6 +371,7 @@ endif
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
+DEFINES += -DARCH_IA32
 endif
 endif
 
