@@ -20,7 +20,13 @@ spaces, threads, and inter-process communication (IPC). The small number
 of services provided by seL4 directly translates to a small
 implementation of approximately $8700$ lines of C code. This has allowed
 the ARMv6 version of the kernel to be formally proven in the Isabelle/HOL 
-theorem prover to adhere to its formal specification~\cite{Boyton_09,Cock_KS_08,Derrin_EKCC_06,Elkaduwe_GE_08,Klein_EHACDEEKNSTW_09,Tuch_KN_07,Winwood_KSACN_09}.
+theorem prover to adhere to its formal
+specification~\cite{Boyton_09,Cock_KS_08,Derrin_EKCC_06,Elkaduwe_GE_08,Klein_EHACDEEKNSTW_09,Tuch_KN_07,Winwood_KSACN_09},
+which in turn enabled proofs of the kernel's enforcement of
+integrity~\cite{Sewell_WGMAK_11} and
+confidentiality~\cite{Murray_MBGBSLGK_13}. The kernel's small size was
+also instrumental in performing a complete and sound analysis of
+worst-case execution time~\cite{Blackham_SCRH_11,Blackham_SH_12}.
 
 This manual describes the seL4 kernel's API from a user's point of view.
 The document starts by giving a brief overview of the seL4 microkernel

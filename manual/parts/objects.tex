@@ -64,7 +64,7 @@ may not contain a capability.  An application may refer to
 a capability---to request a kernel service, for example---using the
 address of the slot holding that capability.  This means, the seL4 
 capability model is an instance of a \emph{segregated} (or \emph{partitioned})
-capability model, where capabilities are managed by the kernel.
+capability system, where capabilities are managed by the kernel.
 
 Capability spaces are implemented as a directed graph of kernel-managed
 \emph{capability nodes} (\obj{CNode}s).  A \obj{CNode} is a table of
@@ -219,9 +219,8 @@ manipulation, and combination of these kernel objects:
     \item[Virtual Address Space Objects] (see \autoref{ch:vspace}) 
     are used to construct a virtual
     address space (or VSpace) for one or more threads. These
-    objects largely directly correspond to those of the hardware; that
-    is, a page directory pointing to page tables, which in turn map
-    physical frames. The kernel also includes \obj{ASID
+    objects largely directly correspond to those of the hardware, and
+    as such are architecture-dependent. The kernel also includes \obj{ASID
     Pool} and \obj{ASID Control} objects for tracking the status of
     address spaces.
 
@@ -251,10 +250,10 @@ manipulation, and combination of these kernel objects:
 \label{sec:kernmemalloc}
 
 The seL4 microkernel does not dynamically allocate memory for kernel objects.
-Kernel objects must be explicitly created from application-controlled memory
+Instead, objects must be explicitly created from application-controlled memory
 regions via \obj{Untyped Memory} capabilities.  Applications must have
 explicit authority to memory (through these \obj{Untyped Memory} capabilities) in
-order to create new objects, and all objects consume constant memory once
+order to create new objects, and all objects consume a fixed amount of memory once
 created. These mechanisms can be used to precisely control
 the specific amount of physical memory available to applications,
 including being able to enforce isolation of physical memory access
@@ -267,7 +266,9 @@ exhaustion are avoided.
 
 At boot time, seL4 pre-allocates the memory required for the kernel
 itself, including the code, data, and stack sections (seL4 is a single
-kernel-stack operating system). The remainder of the memory is given to
+kernel-stack operating system). It then creates an initial user
+thread (with an appropriate address and capability space).
+The kernel than hands all remaining memory to
 the initial thread in the form of capabilities to \obj{Untyped Memory}, and
 some additional capabilities to kernel objects that were required to
 bootstrap the initial thread.  These \obj{Untyped Memory} regions can then be split into
@@ -306,7 +307,7 @@ capabilities would be inserted into the CDT as children of the untyped
 memory capability.
 
 For each \obj{Untyped Memory} region, the kernel keeps
-a \emph{watermark} recording how much of region has previously been
+a \emph{watermark} recording how much of the region has previously been
 allocated. Whenever a user requests the kernel to create new objects in
 an untyped memory region, the kernel will carry out one of two actions:
 if there are already existing objects allocated in the region, the

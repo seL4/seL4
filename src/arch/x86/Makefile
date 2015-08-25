@@ -13,7 +13,6 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/object/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/kernel/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/model/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/machine/Makefile
-include ${SOURCE_ROOT}/src/arch/$(ARCH)/fastpath/Makefile
 
 ARCH_C_SOURCES += c_traps.c
 
