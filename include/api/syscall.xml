@@ -38,6 +38,7 @@
             <syscall name="BenchmarkResetLog" />
             <syscall name="BenchmarkDumpLog"  />
             <syscall name="BenchmarkLogSize"  />
+            <syscall name="BenchmarkFinalizeLog"  />
         </config>
     </debug>
 </syscalls>

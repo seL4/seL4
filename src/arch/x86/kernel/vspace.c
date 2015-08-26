@@ -560,7 +560,7 @@ map_kernel_window(
     /* mark the address of the log. We will map it
         * in later with the correct attributes, but we need
         * to wait until we can call alloc_region. */
-    ksLog = (word_t *) paddr_to_pptr(phys);
+    ksLog = (ks_log_entry_t *) paddr_to_pptr(phys);
     phys += BIT(LARGE_PAGE_BITS);
     assert(idx == IA32_KSLOG_IDX);
     idx++;

@@ -70,6 +70,11 @@
 #define CONFIG_TIMER_TICK_MS 2
 #endif
 
+/* maximum number of different tracepoints which can be placed in the kernel */
+#ifndef CONFIG_MAX_NUM_TRACE_POINTS
+#define CONFIG_MAX_NUM_TRACE_POINTS 8
+#endif
+
 /* Configuration parameters below are for IA-32 only. */
 
 /* maximum number of nodes supported (if 1, a uniprocessor version is compiled) */

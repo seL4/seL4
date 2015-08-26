@@ -41,4 +41,7 @@
 #define MSI_MAX 0x1d
 #endif
 
+/* size of kernel log buffer in bytes */
+#define seL4_LogBufferSize (BIT(seL4_LargePageBits))
+
 #endif

@@ -116,7 +116,7 @@ handleUnknownSyscall(word_t w)
         word_t *buffer = lookupIPCBuffer(true, ksCurThread);
         word_t start = getRegister(ksCurThread, capRegister);
         word_t size = getRegister(ksCurThread, msgInfoRegister);
-        word_t logSize = ksLogIndex > MAX_LOG_SIZE ? MAX_LOG_SIZE : ksLogIndex;
+        word_t logSize = ksLogIndexFinalized > MAX_LOG_SIZE ? MAX_LOG_SIZE : ksLogIndexFinalized;
 
         if (buffer == NULL) {
             userError("Cannot dump benchmarking log to a thread without an ipc buffer\n");
@@ -143,7 +143,10 @@ handleUnknownSyscall(word_t w)
 
         /* write to ipc buffer */
         for (i = 0; i < size; i++) {
-            buffer[i + 1] = ksLog[i + start];
+            int base_index = i * 2 + 1;
+            ks_log_entry_t *log = &ksLog[i + start];
+            buffer[base_index] = log->key;
+            buffer[base_index + 1] = log->data;
         }
 
         /* Return the amount written */
@@ -151,7 +154,10 @@ handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkLogSize) {
         /* Return the amount of log items we tried to log (may exceed max size) */
-        setRegister(ksCurThread, capRegister, ksLogIndex);
+        setRegister(ksCurThread, capRegister, ksLogIndexFinalized);
+        return EXCEPTION_NONE;
+    } else if (w == SysBenchmarkFinalizeLog) {
+        ksLogIndexFinalized = ksLogIndex;
         return EXCEPTION_NONE;
     }
 #endif /* CONFIG_BENCHMARK */

@@ -233,7 +233,7 @@ map_kernel_window(void)
               0  /* Write-through to minimise perf hit */
           );
     armKSGlobalPD[idx] = pde;
-    ksLog = (word_t *) ptrFromPAddr(phys);
+    ksLog = (ks_log_entry_t *) ptrFromPAddr(phys);
 
     /* we remove the address PADDR_TOP - 1MB from the
      * available physical memory for the sabre.
@@ -241,7 +241,7 @@ map_kernel_window(void)
      * if you are using a different platform this may need
      * adjusting or you may need to do something completely different
      * to get a 1mb, write through buffer*/
-    assert(ksLog == ((word_t *) KS_LOG_PADDR));
+    assert(ksLog == ((ks_log_entry_t *) KS_LOG_PADDR));
     phys += BIT(pageBitsForSize(ARMSection));
     idx++;
 #endif /* CONFIG_BENCHMARK */

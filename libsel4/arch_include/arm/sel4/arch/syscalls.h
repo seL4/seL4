@@ -597,6 +597,15 @@ seL4_BenchmarkLogSize(void)
 
 }
 
+static inline void
+seL4_BenchmarkFinalizeLog(void)
+{
+    register seL4_Word scno asm("r7") = seL4_SysBenchmarkFinalizeLog;
+    asm volatile ("swi %[swi_num]"
+                  : /* no outputs */
+                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkFinalizeLog), "r"(scno)
+                 );
+}
 
 #endif /* CONFIG_BENCHMARK */
 

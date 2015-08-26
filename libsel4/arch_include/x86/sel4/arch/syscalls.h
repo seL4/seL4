@@ -600,5 +600,21 @@ seL4_BenchmarkLogSize(void)
     return ret;
 }
 
+static inline void
+seL4_BenchmarkFinalizeLog(void)
+{
+    asm volatile (
+        "pushl %%ebp        \n"
+        "movl %%esp, %%ecx  \n"
+        "leal 1f, %%edx     \n"
+        "1:                 \n"
+        "sysenter           \n"
+        "popl %%ebp         \n"
+        :
+        : "a" (seL4_SysBenchmarkFinalizeLog)
+        : "%ecx", "%edx", "%edi", "memory"
+    );
+}
+
 #endif /* CONFIG_BENCHMARK */
 #endif

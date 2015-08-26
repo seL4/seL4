@@ -13,4 +13,7 @@
 
 #include <sel4/arch/objecttype.h>
 
+/* size of kernel log buffer in bytes */
+#define seL4_LogBufferSize (1<<20)
+
 #endif

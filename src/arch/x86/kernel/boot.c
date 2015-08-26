@@ -397,9 +397,9 @@ init_node_state(
     /* if we crash here, the log isn't working */
 #ifdef CONFIG_DEBUG_BUILD
     printf("Testing log\n");
-    ksLog[0] = 0xdeadbeef;
-    printf("Wrote to ksLog %x\n", ksLog[0]);
-    assert(ksLog[0] == 0xdeadbeef);
+    ksLog[0].data = 0xdeadbeef;
+    printf("Wrote to ksLog %x\n", ksLog[0].data);
+    assert(ksLog[0].data == 0xdeadbeef);
 #endif /* CONFIG_DEBUG_BUILD */
 #endif /* CONFIG_BENCHMARK */
 

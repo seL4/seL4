@@ -276,9 +276,19 @@ menu "seL4 System Parameters"
         default n
         help    
             Enables a 1MB log buffer and functions for extracting data from it at user level.
-            Use TRACE_POINT_START and TRACE_POINT_STOP macros for recording data.
+            Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, where k
+            is an integer used to identify log entries.
             NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory.
             This is not fully implemented for x86.
+
+    config MAX_NUM_TRACE_POINTS
+        int "Maximum number of tracepoints"
+        depends on BENCHMARK
+        default 8
+        help
+            The maximum number of different trace point identifiers which can be used.
+            When using TRACE_POINT_START(k) and TRACE_POINT_STOP(k), the values of k must be from 0
+            to this value - 1. This value must be at most (2 ^ NUM_TRACE_POINT_ID_BITS).
 
 endmenu
 
