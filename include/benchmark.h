@@ -15,7 +15,7 @@
 #include <machine/io.h>
 #include <arch/api/constants.h>
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 #define TRACE_POINT_START(x) trace_point_start(x)
 #define TRACE_POINT_STOP(x)   trace_point_stop(x)
 
@@ -68,6 +68,6 @@ trace_point_stop(word_t id)
 #define TRACE_POINT_START(x)
 #define TRACE_POINT_STOP(x)
 
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
 #endif /* BENCHMARK_H */

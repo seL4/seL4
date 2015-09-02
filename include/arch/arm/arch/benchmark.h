@@ -11,7 +11,7 @@
 #ifndef ARCH_BENCHMARK_H
 #define ARCH_BENCHMARK_H
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
 #include <armv/benchmark.h>
 
@@ -19,6 +19,6 @@ typedef uint32_t timestamp_t;
 
 void armv_init_ccnt(void);
 
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
 #endif /* ARCH_BENCHMARK_H */

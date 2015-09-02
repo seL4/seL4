@@ -72,7 +72,7 @@
 
 /* maximum number of different tracepoints which can be placed in the kernel */
 #ifndef CONFIG_MAX_NUM_TRACE_POINTS
-#define CONFIG_MAX_NUM_TRACE_POINTS 8
+#define CONFIG_MAX_NUM_TRACE_POINTS 0
 #endif
 
 /* Configuration parameters below are for IA-32 only. */

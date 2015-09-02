@@ -107,7 +107,7 @@ handleUnknownSyscall(word_t w)
     }
 #endif
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
     if (w == SysBenchmarkResetLog) {
         ksLogIndex = 0;
         return EXCEPTION_NONE;
@@ -160,7 +160,7 @@ handleUnknownSyscall(word_t w)
         ksLogIndexFinalized = ksLogIndex;
         return EXCEPTION_NONE;
     }
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
     current_fault = fault_unknown_syscall_new(w);
     handleFault(ksCurThread);
