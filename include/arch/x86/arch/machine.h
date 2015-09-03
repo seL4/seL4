@@ -130,6 +130,12 @@ static inline void x86_mfence(void)
     asm volatile("mfence" ::: "memory");
 }
 
+/* Get page fault address from CR2 register */
+static inline unsigned long getFaultAddr(void)
+{
+    return read_cr2();
+}
+
 /* sysenter entry point */
 void handle_syscall(void);
 

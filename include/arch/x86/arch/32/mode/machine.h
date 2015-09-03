@@ -54,12 +54,6 @@ void ia32_install_ldt(uint32_t ldt_sel);
 /* TSS installation */
 void ia32_install_tss(uint32_t tss_sel);
 
-/* Get page fault address from CR2 register */
-static inline uint32_t getFaultAddr(void)
-{
-    return read_cr2();
-}
-
 /* Get current stack pointer */
 static inline void* get_current_esp(void)
 {
