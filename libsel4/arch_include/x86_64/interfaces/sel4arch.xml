@@ -1,0 +1,174 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2014, NICTA
+
+     This software may be distributed and modified according to the terms of
+     the BSD 2-Clause license. Note that NO WARRANTY is provided.
+     See "LICENSE_BSD2.txt" for details.
+
+     @TAG(NICTA_BSD)
+  -->
+<api>
+    <struct name="seL4_UserContext">
+        <member name="rip"/>
+        <member name="rsp"/>
+        <member name="rflags"/>
+        <member name="rax"/>
+        <member name="rbx"/>
+        <member name="rcx"/>
+        <member name="rdx"/>
+        <member name="rsi"/>
+        <member name="rdi"/>
+        <member name="rbp"/>
+        <member name="r8"/>
+        <member name="r9"/>
+        <member name="r10"/>
+        <member name="r11"/>
+        <member name="r12"/>
+        <member name="r13"/>
+        <member name="r14"/>
+        <member name="r15"/>
+        <member name="tls_base"/>
+        <member name="fs"/>
+        <member name="gs"/>
+    </struct>
+
+    <interface name="seL4_IA32_PML4">
+        <method id="IA32PML4Map" name="Map">
+        </method>
+        <method id="IA32PML4Unmap" name="Unmap">
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_PDPT">
+        <method id="IA32PDPTMap" name="Map">
+            <param dir="in" name="pml4" type="seL4_IA32_PML4"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
+        <method id="IA32PDPTUnmap" name="Unmap">
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_PageDirectory">
+        <method id="IA32PageDirectoryMap" name="Map">
+            <param dir="in" name="pml4" type="seL4_IA32_PML4"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
+        <method id="IA32PageDirectoryUnmap" name="Unmap">
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_PageTable">
+        <method id="IA32PageTableMap" name="Map">
+            <param dir="in" name="pml4" type="seL4_IA32_PML4"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
+        <method id="IA32PageTableUnmap" name="Unmap">
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_IOPageTable">
+        <method id="IA32IOPageTableMap" name="Map">
+            <param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
+            <param dir="in" name="ioaddr" type="seL4_Word"/>
+        </method>
+        <method id="IA32IOPageTableUnmap" name="Unmap">
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_Page">
+        <method id="IA32PageMap" name="Map">
+            <param dir="in" name="pml4" type="seL4_IA32_PML4"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
+        <method id="IA32PageRemap" name="Remap">
+            <param dir="in" name="pml4" type="seL4_IA32_PML4"/>
+            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
+        <method id="IA32PageUnmap" name="Unmap"/>
+        <method id="IA32PageMapIO" name="MapIO">
+            <param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
+            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="ioaddr" type="seL4_Word"/>
+        </method>
+        <method id="IA32PageGetAddress" name="GetAddress">
+            <param dir="out" name="paddr" type="seL4_Word"/>
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_ASIDControl">
+        <method id="IA32ASIDControlMakePool" name="MakePool">
+            <param dir="in" name="untyped" type="seL4_Untyped"/>
+            <param dir="in" name="root" type="seL4_CNode"/>
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Uint8"/>
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_ASIDPool">
+        <method id="IA32ASIDPoolAssign" name="Assign">
+            <param dir="in" name="vroot" type="seL4_IA32_PageDirectory"/>
+        </method>
+    </interface>
+
+    <interface name="seL4_X86_IOPort">
+        <method id="X86IOPortIn8" name="In8">
+            <param dir="out" name="result" type="seL4_Uint8"/>
+            <param dir="in" name="port" type="seL4_Uint16"/>
+        </method>
+        <method id="X86IOPortIn16" name="In16">
+            <param dir="out" name="result" type="seL4_Uint16"/>
+            <param dir="in" name="port" type="seL4_Uint16"/>
+        </method>
+        <method id="X86IOPortIn32" name="In32">
+            <param dir="out" name="result" type="seL4_Uint32"/>
+            <param dir="in" name="port" type="seL4_Uint16"/>
+        </method>
+        <method id="X86IOPortOut8" name="Out8">
+            <param dir="in" name="port" type="seL4_Uint16"/>
+            <param dir="in" name="data" type="seL4_Uint8"/>
+        </method>
+        <method id="X86IOPortOut16" name="Out16">
+            <param dir="in" name="port" type="seL4_Uint16"/>
+            <param dir="in" name="data" type="seL4_Uint16"/>
+        </method>
+        <method id="X86IOPortOut32" name="Out32">
+            <param dir="in" name="port" type="seL4_Uint16"/>
+            <param dir="in" name="data" type="seL4_Uint32"/>
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_IOSpace">
+        <method id="IA32IOSpaceRemovePassthrough" name="RemovePassthrough"/>
+        <method id="IA32IOSpaceUnmap" name="Unmap"/>
+    </interface>
+
+    <interface name="seL4_IRQControl">
+        <method id="IA32IRQIssueIRQHandlerIOAPIC" name="GetIOAPIC">
+            <param dir="in" name="root" type="seL4_CNode"/>
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Word"/>
+            <param dir="in" name="ioapic" type="seL4_Word"/>
+            <param dir="in" name="pin" type="seL4_Word"/>
+            <param dir="in" name="level" type="seL4_Word"/>
+            <param dir="in" name="polarity" type="seL4_Word"/>
+            <param dir="in" name="irq" type="seL4_Word"/>
+        </method>
+        <method id="IA32IRQIssueIRQHandlerMSI" name="GetMSI">
+            <param dir="in" name="root" type="seL4_CNode"/>
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Word"/>
+            <param dir="in" name="pci_bus" type="seL4_Word"/>
+            <param dir="in" name="pci_dev" type="seL4_Word"/>
+            <param dir="in" name="pci_func" type="seL4_Word"/>
+            <param dir="in" name="handle" type="seL4_Word"/>
+            <param dir="in" name="irq" type="seL4_Word"/>
+        </method>
+    </interface>
+</api>

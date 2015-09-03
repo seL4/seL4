@@ -54,6 +54,7 @@ import optparse
 WORD_SIZE_BITS_ARCH = {
     "arm": 32,
     "ia32": 32,
+    "x86_64": 64,
 }
 
 WORD_CONST_SUFFIX_BITS = {
@@ -67,6 +68,7 @@ MAX_MESSAGE_LENGTH = 32
 MESSAGE_REGISTERS_FOR_ARCH = {
     "arm": 4,
     "ia32": 2,
+    "x86_64": 2,
 }
 
 # Headers to include
@@ -207,7 +209,8 @@ def InitTypes():
     global arch_types
     types = [
         # Simple Types
-        Type("int", WORD_SIZE_BITS),
+        Type("int", 32),
+        Type("long", WORD_SIZE_BITS),
 
         Type("seL4_Uint8", 8),
         Type("seL4_Uint16", 16),
@@ -255,7 +258,22 @@ def InitTypes():
             CapType("seL4_IA32_PageTable"),
             CapType("seL4_IA32_IOPageTable"),
             StructType("seL4_UserContext", WORD_SIZE_BITS * 13),
-        ]
+        ],
+
+        "x86_64" : [
+            Type("seL4_IA32_VMAttributes", WORD_SIZE_BITS),
+            CapType("seL4_X86_IOPort"),
+            CapType("seL4_IA32_ASIDControl"),
+            CapType("seL4_IA32_ASIDPool"),
+            CapType("seL4_IA32_IOSpace"),
+            CapType("seL4_IA32_Page"),
+            CapType("seL4_IA32_PML4"),
+            CapType("seL4_IA32_PDPT"),
+            CapType("seL4_IA32_PageDirectory"),
+            CapType("seL4_IA32_PageTable"),
+            CapType("seL4_IA32_IOPageTable"),
+            StructType("seL4_UserContext", WORD_SIZE_BITS * 21),
+        ]        
     }
 
 # Retrieve a member list for a given struct type
@@ -490,7 +508,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
         return_type = "%s_%s_t" % (interface_name, method_name)
         returning_struct = True
     else:
-        return_type = "int"
+        return_type = "long"
 
     #
     # Print function header.
