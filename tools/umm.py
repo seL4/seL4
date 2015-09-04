@@ -11,9 +11,6 @@
 #
 
 import sys
-import os.path
-import optparse
-import re
 
 ## We assume length tp > 0
 def parse_type(tps):
