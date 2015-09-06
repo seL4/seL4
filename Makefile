@@ -401,7 +401,7 @@ endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
-DEFINES += -DARCH_IA32
+DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32
 LDFLAGS += -Wl,-m,elf_i386 
 endif # ARCH=x86
 else # NK_CFLAGS
