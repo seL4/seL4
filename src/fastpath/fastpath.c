@@ -11,7 +11,7 @@
 #include <fastpath/fastpath.h>
 
 void
-#ifdef ARCH_IA32
+#ifdef ARCH_X86
 FASTCALL NORETURN
 #endif
 fastpath_call(word_t cptr, word_t msgInfo)
@@ -109,7 +109,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
      * At this stage, we have committed to performing the IPC.
      */
 
-#ifdef ARCH_IA32
+#ifdef ARCH_X86
     /* Need to update NextEIP in the calling thread */
     setRegister(ksCurThread, NextEIP, getRegister(ksCurThread, NextEIP) + 2);
 #endif
@@ -268,7 +268,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
      * At this stage, we have committed to performing the IPC.
      */
 
-#ifdef ARCH_IA32
+#ifdef ARCH_X86
     /* Need to update NextEIP in the calling thread */
     setRegister(ksCurThread, NextEIP, getRegister(ksCurThread, NextEIP) + 2);
 #endif
