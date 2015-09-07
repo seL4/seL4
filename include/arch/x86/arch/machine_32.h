@@ -20,10 +20,20 @@ static inline paddr_t getCurrentPD(void)
     return ia32KSCurrentPD;
 }
 
+static inline paddr_t getCurrentVSpaceRoot(void)
+{
+    return getCurrentPD();
+}
+
 static inline void setCurrentPD(paddr_t addr)
 {
     ia32KSCurrentPD = addr;
     write_cr3(addr);
+}
+
+static inline void setCurrentVSpaceRoot(paddr_t addr)
+{
+    setCurrentPD(addr);
 }
 
 /* TLB control */

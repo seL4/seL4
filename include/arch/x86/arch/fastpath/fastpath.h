@@ -22,8 +22,8 @@ switchToThread_fp(tcb_t *thread, pde_t *pd, pde_t stored_hw_asid)
     word_t base;
     uint32_t new_pd = pptr_to_paddr(pd);
 
-    if (likely(getCurrentPD() != new_pd)) {
-        setCurrentPD(new_pd);
+    if (likely(getCurrentVSpaceRoot() != new_pd)) {
+        setCurrentVSpaceRoot(new_pd);
     }
 
     /* Code equivalent to in Arch_switchToThread, see arch/object/structures.bf
