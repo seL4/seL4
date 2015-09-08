@@ -47,7 +47,7 @@
         <xsd:sequence>
             <xsd:element name="syscall" minOccurs="1" maxOccurs="unbounded" type="SyscallType"/>
         </xsd:sequence>
-        <xsd:attribute name="name" type="xsd:NMTOKEN" />
+        <xsd:attribute name="condition" type="xsd:string" />
     </xsd:complexType>
 
     <xsd:complexType name="SyscallType">

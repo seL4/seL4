@@ -71,6 +71,11 @@ typedef seL4_CPtr seL4_DomainSet;
 
 #define seL4_NilData seL4_CapData_Badge_new(0)
 
+typedef struct {
+    seL4_Word key;
+    seL4_Word data;
+} seL4_LogEntry;
+
 #include <sel4/arch/constants.h>
 
 #endif

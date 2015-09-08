@@ -22,12 +22,12 @@
 /* NOTE: Regions are not allowed to be adjacent! */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
     /* 1 GiB */
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
     /* 1MB stolen for logging */
     { /* .start = */ 0x10000000, /* .end = */ 0x2fd00000 }
 #else
     { /* .start = */ 0x10000000, /* .end = */ 0x50000000 }
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 };
 
 BOOT_CODE int

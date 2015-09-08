@@ -543,7 +543,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 }
 #endif
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 static inline void
 seL4_BenchmarkResetLog(void)
 {
@@ -600,5 +600,21 @@ seL4_BenchmarkLogSize(void)
     return ret;
 }
 
-#endif /* CONFIG_BENCHMARK */
+static inline void
+seL4_BenchmarkFinalizeLog(void)
+{
+    asm volatile (
+        "pushl %%ebp        \n"
+        "movl %%esp, %%ecx  \n"
+        "leal 1f, %%edx     \n"
+        "1:                 \n"
+        "sysenter           \n"
+        "popl %%ebp         \n"
+        :
+        : "a" (seL4_SysBenchmarkFinalizeLog)
+        : "%ecx", "%edx", "%edi", "memory"
+    );
+}
+
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 #endif

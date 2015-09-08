@@ -190,13 +190,13 @@ map_kernel_window(void)
         phys += BIT(pageBitsForSize(ARMSuperSection));
         idx += SECTIONS_PER_SUPER_SECTION;
     }
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
     /* steal the last MB for logging */
     while (idx < BIT(PD_BITS) - 2) {
 #else
     /* mapping of the next 15M using 1M frames */
     while (idx < BIT(PD_BITS) - 1) {
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
         pde = pde_pde_section_new(
                   phys,
                   0, /* Section */
@@ -216,7 +216,7 @@ map_kernel_window(void)
         idx++;
     }
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
     /* allocate a 1M buffer for logging */
     pde = pde_pde_section_new(
               phys,
@@ -233,7 +233,7 @@ map_kernel_window(void)
               0  /* Write-through to minimise perf hit */
           );
     armKSGlobalPD[idx] = pde;
-    ksLog = (word_t *) ptrFromPAddr(phys);
+    ksLog = (ks_log_entry_t *) ptrFromPAddr(phys);
 
     /* we remove the address PADDR_TOP - 1MB from the
      * available physical memory for the sabre.
@@ -241,10 +241,10 @@ map_kernel_window(void)
      * if you are using a different platform this may need
      * adjusting or you may need to do something completely different
      * to get a 1mb, write through buffer*/
-    assert(ksLog == ((word_t *) KS_LOG_PADDR));
+    assert(ksLog == ((ks_log_entry_t *) KS_LOG_PADDR));
     phys += BIT(pageBitsForSize(ARMSection));
     idx++;
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);

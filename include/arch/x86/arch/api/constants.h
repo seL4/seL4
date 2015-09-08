@@ -8,14 +8,9 @@
  * @TAG(GD_GPL)
  */
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifndef __ARCH_API_CONSTANTS_H
+#define __ARCH_API_CONSTANTS_H
 
-void
-armv_init_ccnt(void)
-{
+#define seL4_LogBufferSize (BIT(LARGE_PAGE_BITS))
 
-    /* TODO initialise cycle counter */
-#error "Not implemented"
-}
-
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif
