@@ -11,6 +11,8 @@
 #ifndef __ARCH_API_CONSTANTS_H
 #define __ARCH_API_CONSTANTS_H
 
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 #define seL4_LogBufferSize (1<<20)
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
 #endif
