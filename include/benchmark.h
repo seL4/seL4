@@ -52,7 +52,9 @@ trace_point_stop(word_t id)
     if (likely(ksStarted[id])) {
         ksStarted[id] = false;
         if (likely(ksLogIndex < MAX_LOG_SIZE)) {
-            ksLog[ksLogIndex] = (ks_log_entry_t) {id, ksExit - ksEntries[id]};
+            ksLog[ksLogIndex] = (ks_log_entry_t) {
+                id, ksExit - ksEntries[id]
+            };
         }
         /* increment the log index even if we have exceeded the log size
          * this is so we can tell if we need a bigger log */
