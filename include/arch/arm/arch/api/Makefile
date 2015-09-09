@@ -8,5 +8,5 @@
 # @TAG(GD_GPL)
 #
 
-include ${SOURCE_ROOT}/include/arch/$(ARCH)/arch/object/Makefile
-include ${SOURCE_ROOT}/include/arch/$(ARCH)/arch/api/Makefile
+BF_SOURCES += arch/api/shared_types.bf
+

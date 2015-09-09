@@ -11,6 +11,7 @@
 #ifndef __ARCH_API_TYPES_H
 #define __ARCH_API_TYPES_H
 
+#include <arch/api/shared_types_gen.h>
 #include <api/objecttype.h>
 #include <mode/api/objecttype.h>
 #include <arch/api/objecttype.h>
