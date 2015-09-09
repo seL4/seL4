@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 '''
 Functions related to generating AutoCorres-based definitions and proofs from
 the bitfield generator.
