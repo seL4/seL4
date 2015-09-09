@@ -12,6 +12,8 @@
 
 #if CONFIG_WORD_SIZE == 32
 #include "types_32.bf"
+#elif CONFIG_WORD_SIZE == 64
+#include "types_64.bf"
 #else
 #error Unsupported word size
 #endif
