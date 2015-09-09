@@ -24,9 +24,9 @@ block Badge {
     field Badge 28
 }
 
-# The ordering of these tags is important. The padding bits in the guard
-# Can be set and will be ignored by the kernel, but the padding bits in Badge
-# must be 0
+-- The ordering of these tags is important. The padding bits in the guard
+-- Can be set and will be ignored by the kernel, but the padding bits in Badge
+-- must be 0
 tagged_union seL4_CapData CapDataType {
     tag Badge 0
     tag Guard 1

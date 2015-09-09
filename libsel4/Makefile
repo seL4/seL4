@@ -69,13 +69,18 @@ include/sel4/syscall.h: ${SOURCE_DIR}/include/api/syscall.xsd \
 	--xml ${SOURCE_DIR}/include/api/syscall.xml \
 	--libsel4_header $@
 
+include/sel4/types.pbf: ${SOURCE_DIR}/include/sel4/types.bf $(srctree)/include/generated/autoconf.h
+	@echo " [PBF_GEN] $@"
+	@mkdir -p $(dir $@)
+	$(Q)${CPP} ${CPPFLAGS} -P $< > $@
+
 # Bitfield generator
 include/sel4/types_gen.h: \
-		${SOURCE_DIR}/include/sel4/types.bf \
+		include/sel4/types.pbf \
 		${BF_GEN_PATH}
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
-	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 "${SOURCE_DIR}/include/sel4/types.bf" include/sel4/types_gen.h
+	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 "include/sel4/types.pbf" include/sel4/types_gen.h
 
 # Stub generator
 include/interfaces/sel4_client.h: \
