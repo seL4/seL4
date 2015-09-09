@@ -56,6 +56,11 @@ WORD_SIZE_BITS_ARCH = {
     "ia32": 32,
 }
 
+WORD_CONST_SUFFIX_BITS = {
+    32: "ul",
+    64: "ull",
+}
+
 # Maximum number of words that will be in a message.
 MAX_MESSAGE_LENGTH = 32
 
@@ -349,7 +354,7 @@ def generate_marshal_expressions(params, num_mrs, structs):
         # Part of a word?
         if num_bits < WORD_SIZE_BITS:
             expr = param.type.c_expression(param.name);
-            expr = "(%s & %#x)" % (expr, (1 << num_bits) - 1)
+            expr = "(%s & %#x%s)" % (expr, (1 << num_bits) - 1, WORD_CONST_SUFFIX)
             if target_offset:
                 expr = "(%s << %d)" % (expr, target_offset)
             word_array[target_word].append(expr)
@@ -674,7 +679,9 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
                 " or ".join(arch_types.keys()))
 
     global WORD_SIZE_BITS
+    global WORD_CONST_SUFFIX
     WORD_SIZE_BITS = WORD_SIZE_BITS_ARCH[arch]
+    WORD_CONST_SUFFIX = WORD_CONST_SUFFIX_BITS[WORD_SIZE_BITS]
     InitTypes()
 
     # Parse XML
