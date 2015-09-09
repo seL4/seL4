@@ -747,8 +747,7 @@ def main():
     #
     # Read command line arguments.
     #
-    parser = optparse.OptionParser(
-            usage = "usage: %prog -a <arch> -e [sel4 | libsel4] [-o <ouput file] <input XML> [<input XML> ...]")
+    parser = optparse.OptionParser()
     parser.add_option("-a", "--arch",
             dest="arch", help="Architecture to generate stubs for.")
     parser.add_option("-o", "--output",

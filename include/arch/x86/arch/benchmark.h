@@ -11,18 +11,9 @@
 #ifndef ARCH_BENCHMARK_H
 #define ARCH_BENCHMARK_H
 
-#include <config.h>
-#include <arch/object/structures.h>
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
-#ifdef CONFIG_BENCHMARK
-
-/* we have one large page of word sized entries */
-#define MAX_LOG_SIZE (BIT(LARGE_PAGE_BITS) / sizeof(word_t))
-
-extern uint64_t ksEntry;
-extern uint64_t ksExit;
-extern uint32_t ksLogIndex;
-extern uint32_t *ksLog;
+typedef uint64_t timestamp_t;
 
 #define IA32_KSLOG_IDX (BIT(PD_BITS + PDPT_BITS) - 2)
 
@@ -49,5 +40,5 @@ timestamp(void)
     return ((uint64_t) high) << 32llu | (uint64_t) low;
 }
 
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 #endif /* ARCH_BENCHMARK_H */

@@ -8,16 +8,19 @@
  * @TAG(GD_GPL)
  */
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
 #include <benchmark.h>
 #include <arch/benchmark.h>
 #include <arch/machine/hardware.h>
+#include <stdbool.h>
 
-DATA_GLOB uint64_t ksEntry;
-DATA_GLOB uint64_t ksExit;
+DATA_GLOB timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
+DATA_GLOB bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
+DATA_GLOB timestamp_t ksExit;
 DATA_GLOB uint32_t ksLogIndex = 0;
-DATA_GLOB uint32_t *ksLog;
+DATA_GLOB uint32_t ksLogIndexFinalized = 0;
+DATA_GLOB ks_log_entry_t *ksLog;
 
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
