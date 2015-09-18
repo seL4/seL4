@@ -27,7 +27,7 @@ This repository is usually not used in isolation, but as part of the build
 system in a larger project.
 
   [1]: http://sel4.systems/
-  [2]: http://sel4.systems/FAQ/
+  [2]: http://sel4.systems/Info/FAQ/
   [3]: http://sel4.systems/Contributing/
   [4]: https://zenodo.org/badge/doi/10.5281/zenodo.11247.png
 
