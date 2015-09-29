@@ -599,20 +599,20 @@ decodeInvocation(word_t label, unsigned int length,
 
     switch (cap_get_capType(cap)) {
     case cap_null_cap:
-        userError("Attempted to invoke a null cap #%u.", capIndex);
+        userError("Attempted to invoke a null cap #%lu.", capIndex);
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_zombie_cap:
-        userError("Attempted to invoke a zombie cap #%u.", capIndex);
+        userError("Attempted to invoke a zombie cap #%lu.", capIndex);
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_endpoint_cap:
         if (unlikely(!cap_endpoint_cap_get_capCanSend(cap))) {
-            userError("Attempted to invoke a read-only endpoint cap #%u.",
+            userError("Attempted to invoke a read-only endpoint cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -629,7 +629,7 @@ decodeInvocation(word_t label, unsigned int length,
         word_t msg;
 
         if (unlikely(!cap_async_endpoint_cap_get_capAEPCanSend(cap))) {
-            userError("Attempted to invoke a read-only async-endpoint cap #%u.",
+            userError("Attempted to invoke a read-only async-endpoint cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -650,7 +650,7 @@ decodeInvocation(word_t label, unsigned int length,
 
     case cap_reply_cap:
         if (unlikely(cap_reply_cap_get_capReplyMaster(cap))) {
-            userError("Attempted to invoke an invalid reply cap #%u.",
+            userError("Attempted to invoke an invalid reply cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
