@@ -98,7 +98,7 @@ pci_scan_bars(uint8_t bus, uint8_t dev, uint8_t fun, uint8_t count)
         bar.words[0] = pci_read_reg32(bus, dev, fun, reg);
         if (bar.words[0] != 0) {
             /* BAR is in use */
-            printf("PCI:     BAR[%d] ", i);
+            printf("PCI:     BAR[%ld] ", i);
             if (pci_bar_get_pci_space(bar) == pci_bar_pci_bar_mem) {
                 map_size = ~(pci_bar_pci_bar_mem_get_base_address(bar) - 1);
                 if (map_size < BIT(PAGE_BITS)) {
@@ -118,7 +118,7 @@ pci_scan_bars(uint8_t bus, uint8_t dev, uint8_t fun, uint8_t count)
                             if (pci_read_reg32(bus, dev, fun, reg + 4) != 0) {
                                 printf("ignored: 64 bit BAR address above 4 GB\n");
                             } else {
-                                printf("address=0x%x size=0x%x", map_base, map_size);
+                                printf("address=0x%lx size=0x%lx", map_base, map_size);
                                 insert_dev_p_reg(
                                 (p_region_t) {
                                     .start = map_base, .end = map_base + map_size
@@ -127,7 +127,7 @@ pci_scan_bars(uint8_t bus, uint8_t dev, uint8_t fun, uint8_t count)
                             }
                             i++;
                         } else {
-                            printf("address=0x%x size=0x%x",  map_base, map_size);
+                            printf("address=0x%lx size=0x%lx",  map_base, map_size);
                             insert_dev_p_reg(
                             (p_region_t) {
                                 .start = map_base, .end = map_base + map_size
@@ -135,10 +135,10 @@ pci_scan_bars(uint8_t bus, uint8_t dev, uint8_t fun, uint8_t count)
                             );
                         }
                     } else {
-                        printf("ignored: size corrupted (not a power of two): 0x%x\n", map_size);
+                        printf("ignored: size corrupted (not a power of two): 0x%lx\n", map_size);
                     }
                 } else {
-                    printf("ignored: address=0x%x not 4K aligned (size=0x%x)\n", map_base, map_size);
+                    printf("ignored: address=0x%lx not 4K aligned (size=0x%lx)\n", map_base, map_size);
                 }
             } else {
                 /* pci_bar_pci_bar_io */

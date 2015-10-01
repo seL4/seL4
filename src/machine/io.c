@@ -187,15 +187,44 @@ vprintf(const char *format, va_list ap)
                 break;
 
             case 'l':
-                if (*(format + 1) == 'l' && *(format + 2) == 'x') {
-                    uint64_t arg = va_arg(ap, unsigned long long);
-                    n += print_unsigned_long_long(arg, 16);
+                format++;
+                switch (*format) {
+                case 'd': {
+                    long x = va_arg(ap, long);
+
+                    if (x < 0) {
+                        kernel_putchar('-');
+                        n++;
+                        x = -x;
+                    }
+
+                    n += print_unsigned_long((unsigned long)x, 10);
+                    format++;
                 }
-                format += 3;
+                break;
+                case 'l':
+                    if (*(format + 1) == 'x') {
+                        n += print_unsigned_long_long(va_arg(ap, unsigned long long), 16);
+                    }
+                    format += 2;
+                    break;
+                case 'u':
+                    n += print_unsigned_long(va_arg(ap, unsigned long), 10);
+                    format++;
+                    break;
+                case 'x':
+                    n += print_unsigned_long(va_arg(ap, unsigned long), 16);
+                    format++;
+                    break;
+
+                default:
+                    /* format not supported */
+                    return -1;
+                }
                 break;
             default:
-                format++;
-                break;
+                /* format not supported */
+                return -1;
             }
 
             formatting = 0;
