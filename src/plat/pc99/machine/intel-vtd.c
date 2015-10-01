@@ -348,7 +348,7 @@ vtd_enable(cpu_id_t cpu_id)
         vtd_write32(i, GCMD_REG, BIT(WBF));
         while (((vtd_read32(i, GSTS_REG) >> WBFS) & 1));
 
-        printf("IOMMU 0x%x: enabling...", i);
+        printf("IOMMU 0x%lx: enabling...", i);
 
         /* Enable the DMA translation by setting TE bit in GCMD_REG */
         vtd_write32(i, GCMD_REG, (1U << TE));
