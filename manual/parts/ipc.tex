@@ -312,7 +312,7 @@ child capabilities with different badges.
 through the \apifunc{seL4\_TCB\_BindAEP}{tcb_bindaep} invocation. When an
 \obj{AsyncEP} is bound to a \obj{TCB}, then messages to that asynchronous
 endpoint will be delivered if the thread is waiting on any synchronous
-endpoint. To distinguish the whether the received message was asynchronous
+endpoint. To distinguish whether the received message was asynchronous
 or synchronous, developers should check the badge value. By reserving a
 specific badge (or range of badges) for capabilities to the bound
 asynchronous endpoint -- distinct from synchronous endpoint badges -- the
