@@ -106,7 +106,7 @@ sendAsyncIPC(async_endpoint_t *aepptr, word_t badge)
 }
 
 void
-receiveAsyncIPC(tcb_t *thread, cap_t cap)
+receiveAsyncIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 {
     async_endpoint_t *aepptr;
 
@@ -117,19 +117,23 @@ receiveAsyncIPC(tcb_t *thread, cap_t cap)
     case AEPState_Waiting: {
         tcb_queue_t aep_queue;
 
-        /* Block thread on endpoint */
-        thread_state_ptr_set_tsType(&thread->tcbState,
-                                    ThreadState_BlockedOnAsyncEvent);
-        thread_state_ptr_set_blockingIPCEndpoint(&thread->tcbState,
-                                                 AEP_REF(aepptr));
-        scheduleTCB(thread);
+        if (isBlocking) {
+            /* Block thread on endpoint */
+            thread_state_ptr_set_tsType(&thread->tcbState,
+                                        ThreadState_BlockedOnAsyncEvent);
+            thread_state_ptr_set_blockingIPCEndpoint(&thread->tcbState,
+                                                     AEP_REF(aepptr));
+            scheduleTCB(thread);
 
-        /* Enqueue TCB */
-        aep_queue = aep_ptr_get_queue(aepptr);
-        aep_queue = tcbEPAppend(thread, aep_queue);
+            /* Enqueue TCB */
+            aep_queue = aep_ptr_get_queue(aepptr);
+            aep_queue = tcbEPAppend(thread, aep_queue);
 
-        async_endpoint_ptr_set_state(aepptr, AEPState_Waiting);
-        aep_ptr_set_queue(aepptr, aep_queue);
+            async_endpoint_ptr_set_state(aepptr, AEPState_Waiting);
+            aep_ptr_set_queue(aepptr, aep_queue);
+        } else {
+            doNBWaitFailedTransfer(thread);
+        }
         break;
     }
 

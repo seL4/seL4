@@ -111,7 +111,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
 }
 
 void
-receiveIPC(tcb_t *thread, cap_t cap)
+receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 {
     endpoint_t *epptr;
     bool_t diminish;
@@ -133,21 +133,25 @@ receiveIPC(tcb_t *thread, cap_t cap)
         case EPState_Recv: {
             tcb_queue_t queue;
 
-            /* Set thread state to BlockedOnReceive */
-            thread_state_ptr_set_tsType(&thread->tcbState,
-                                        ThreadState_BlockedOnReceive);
-            thread_state_ptr_set_blockingIPCEndpoint(
-                &thread->tcbState, EP_REF(epptr));
-            thread_state_ptr_set_blockingIPCDiminishCaps(
-                &thread->tcbState, diminish);
+            if (isBlocking) {
+                /* Set thread state to BlockedOnReceive */
+                thread_state_ptr_set_tsType(&thread->tcbState,
+                                            ThreadState_BlockedOnReceive);
+                thread_state_ptr_set_blockingIPCEndpoint(
+                    &thread->tcbState, EP_REF(epptr));
+                thread_state_ptr_set_blockingIPCDiminishCaps(
+                    &thread->tcbState, diminish);
 
-            scheduleTCB(thread);
+                scheduleTCB(thread);
 
-            /* Place calling thread in endpoint queue */
-            queue = ep_ptr_get_queue(epptr);
-            queue = tcbEPAppend(thread, queue);
-            endpoint_ptr_set_state(epptr, EPState_Recv);
-            ep_ptr_set_queue(epptr, queue);
+                /* Place calling thread in endpoint queue */
+                queue = ep_ptr_get_queue(epptr);
+                queue = tcbEPAppend(thread, queue);
+                endpoint_ptr_set_state(epptr, EPState_Recv);
+                ep_ptr_set_queue(epptr, queue);
+            } else {
+                doNBWaitFailedTransfer(thread);
+            }
             break;
         }
 

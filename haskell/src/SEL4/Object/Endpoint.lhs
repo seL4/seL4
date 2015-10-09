@@ -113,8 +113,8 @@ The IPC receive operation is essentially the same as the send operation, but wit
 > isActive (AEP (ActiveAEP _) _) = True
 > isActive _ = False
 
-> receiveIPC :: PPtr TCB -> Capability -> Kernel ()
-> receiveIPC thread cap@(EndpointCap {}) = do
+> receiveIPC :: PPtr TCB -> Capability -> Bool -> Kernel ()
+> receiveIPC thread cap@(EndpointCap {}) isBlocking = do
 >         let epptr = capEPPtr cap
 >         ep <- getEndpoint epptr
 >         let diminish = not $ capEPCanSend cap
@@ -124,16 +124,20 @@ The IPC receive operation is essentially the same as the send operation, but wit
 >         if (isJust aepptr && isActive aep)
 >           then completeAsyncIPC (fromJust aepptr) thread
 >           else case ep of
->             IdleEP -> do
->                 setThreadState (BlockedOnReceive {
->                     blockingIPCEndpoint = epptr,
->                     blockingIPCDiminishCaps = diminish }) thread
->                 setEndpoint epptr $ RecvEP [thread]
->             RecvEP queue -> do
->                 setThreadState (BlockedOnReceive {
->                     blockingIPCEndpoint = epptr,
->                     blockingIPCDiminishCaps = diminish }) thread
->                 setEndpoint epptr $ RecvEP $ queue ++ [thread]
+>             IdleEP -> case isBlocking of 
+>               True -> do
+>                   setThreadState (BlockedOnReceive {
+>                       blockingIPCEndpoint = epptr,
+>                       blockingIPCDiminishCaps = diminish }) thread
+>                   setEndpoint epptr $ RecvEP [thread]
+>               False -> doNBWaitFailedTransfer thread
+>             RecvEP queue -> case isBlocking of
+>               True -> do
+>                   setThreadState (BlockedOnReceive {
+>                       blockingIPCEndpoint = epptr,
+>                       blockingIPCDiminishCaps = diminish }) thread
+>                   setEndpoint epptr $ RecvEP $ queue ++ [thread]
+>               False -> doNBWaitFailedTransfer thread 
 >             SendEP (sender:queue) -> do
 >                 setEndpoint epptr $ case queue of
 >                     [] -> IdleEP
@@ -155,7 +159,7 @@ The IPC receive operation is essentially the same as the send operation, but wit
 >                     _ -> setThreadState Inactive sender
 >             SendEP [] -> fail "Send endpoint queue must not be empty"
 
-> receiveIPC _ _ = fail "receiveIPC: invalid cap"
+> receiveIPC _ _ _ = fail "receiveIPC: invalid cap"
 
 \subsection{Kernel Invocation Replies}
 
