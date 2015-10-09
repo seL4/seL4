@@ -1105,9 +1105,9 @@ printCTE(char *msg, cte_t *cte)
 {
     (void)printCap;
     if (!cte) {
-        printf("%s [NULL]@0x%x", msg, cte);
+        printf("%s [NULL]@0x%p", msg, (void *) cte);
     } else  {
-        printf("%s [%d %s(%d) { addr = 0x%x, size = 0x%x } left: 0x%x right: 0x%x badge: %d depth: %d extra: 0x%x]@0x%x\n",
+        printf("%s [%ld %s(%ld) { addr = 0x%lx, size = 0x%x } left: 0x%lx right: 0x%lx badge: %d depth: %ld extra: 0x%x]@0x%p\n",
                msg,
                mdb_node_get_cdtLevel(cte->cteMDBNode),
                printCap(cte->cap),

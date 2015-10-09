@@ -110,12 +110,8 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     case cap_async_endpoint_cap:
         if (final) {
             async_endpoint_t *aep = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap));
-            tcb_t *boundTCB = (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aep);;
 
-            if (boundTCB) {
-                unbindAsyncEndpoint(boundTCB);
-            }
-
+            unbindMaybeAEP(aep);
             aepCancelAll(aep);
         }
         fc_ret.remainder = cap_null_cap_new();
@@ -616,20 +612,20 @@ decodeInvocation(word_t label, unsigned int length,
 
     switch (cap_get_capType(cap)) {
     case cap_null_cap:
-        userError("Attempted to invoke a null cap #%u.", capIndex);
+        userError("Attempted to invoke a null cap #%lu.", capIndex);
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_zombie_cap:
-        userError("Attempted to invoke a zombie cap #%u.", capIndex);
+        userError("Attempted to invoke a zombie cap #%lu.", capIndex);
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_endpoint_cap:
         if (unlikely(!cap_endpoint_cap_get_capCanSend(cap))) {
-            userError("Attempted to invoke a read-only endpoint cap #%u.",
+            userError("Attempted to invoke a read-only endpoint cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -644,7 +640,7 @@ decodeInvocation(word_t label, unsigned int length,
 
     case cap_async_endpoint_cap: {
         if (unlikely(!cap_async_endpoint_cap_get_capAEPCanSend(cap))) {
-            userError("Attempted to invoke a read-only async-endpoint cap #%u.",
+            userError("Attempted to invoke a read-only async-endpoint cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -659,7 +655,7 @@ decodeInvocation(word_t label, unsigned int length,
 
     case cap_reply_cap:
         if (unlikely(cap_reply_cap_get_capReplyMaster(cap))) {
-            userError("Attempted to invoke an invalid reply cap #%u.",
+            userError("Attempted to invoke an invalid reply cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;

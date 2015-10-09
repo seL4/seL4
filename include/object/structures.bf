@@ -141,7 +141,8 @@ block async_endpoint {
     padding 4
 
     field_high aepQueue_tail 28
-    padding 2
+    padding 1
+    field bound 1
     field state 2
 }
 

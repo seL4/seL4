@@ -15,11 +15,14 @@
 #include <arch/types.h>
 #include <plat/machine/io.h>
 
+#define FORMAT(archetype, string_index, first_to_check) \
+        __attribute__((format(archetype, string_index, first_to_check)))
+
 #if defined DEBUG || defined RELEASE_PRINTF
 unsigned int puts(const char *s) VISIBLE;
 /* for prints that you want enabled in both DEBUG and RELEASE_PRINTF modes,
    use kprintf directly */
-unsigned int kprintf(const char *format, ...) VISIBLE;
+unsigned int kprintf(const char *format, ...) VISIBLE FORMAT(printf, 1, 2);
 unsigned int print_unsigned_long(unsigned long x, unsigned int ui_base) VISIBLE;
 #endif
 

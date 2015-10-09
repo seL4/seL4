@@ -402,7 +402,7 @@ vmwrite(uint32_t field, uint32_t value)
         : "cc"
     );
     if (error) {
-        printf("error setting field %x\n", field);
+        printf("error setting field %lx\n", field);
     }
 }
 

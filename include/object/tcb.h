@@ -61,6 +61,8 @@ exception_t decodeUnbindAEP(cap_t cap);
 exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t extraCaps);
 exception_t decodeDomainInvocation(word_t label, unsigned int length,
                                    extra_caps_t extraCaps, word_t *buffer);
+exception_t decodeBindAEP(cap_t cap, extra_caps_t extraCaps);
+exception_t decodeUnbindAEP(cap_t cap);
 
 enum thread_control_flag {
     thread_control_update_priority = 0x1,

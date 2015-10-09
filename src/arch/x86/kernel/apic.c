@@ -117,7 +117,7 @@ apic_init(uint32_t apic_khz, bool_t mask_legacy_irqs)
     /* check for correct number of LVT entries */
     num_lvt_entries = apic_version_get_max_lvt_entry(apic_version) + 1;
     if (num_lvt_entries < 3) {
-        printf("APIC: number of LVT entries: %d\n", num_lvt_entries);
+        printf("APIC: number of LVT entries: %ld\n", num_lvt_entries);
         printf("APIC: number of LVT entries must be >= 3\n");
         return false;
     }

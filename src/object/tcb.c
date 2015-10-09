@@ -759,7 +759,7 @@ decodeDomainInvocation(word_t label, unsigned int length, extra_caps_t extraCaps
     } else {
         domain = getSyscallArg(0, buffer);
         if (domain >= CONFIG_NUM_DOMAINS) {
-            userError("Domain Configure: invalid domain (%u >= %u).",
+            userError("Domain Configure: invalid domain (%lu >= %u).",
                       domain, CONFIG_NUM_DOMAINS);
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
@@ -786,20 +786,16 @@ decodeDomainInvocation(word_t label, unsigned int length, extra_caps_t extraCaps
     return EXCEPTION_NONE;
 }
 
-exception_t decodeBindAEP(cap_t cap, extra_caps_t extraCaps)
+exception_t
+decodeBindAEP(cap_t cap, extra_caps_t extraCaps)
 {
     async_endpoint_t *aepptr;
     tcb_t *tcb;
+    cap_t aep_cap;
 
     if (extraCaps.excaprefs[0] == NULL) {
         userError("TCB BindAEP: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (cap_get_capType(extraCaps.excaprefs[0]->cap) != cap_async_endpoint_cap) {
-        userError("TCB BindAEP: Async endpoint is invalid.");
-        current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -811,18 +807,36 @@ exception_t decodeBindAEP(cap_t cap, extra_caps_t extraCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    aepptr = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(extraCaps.excaprefs[0]->cap));
-    if ((tcb_t*)async_endpoint_ptr_get_aepQueue_head(aepptr)) {
+    aep_cap = extraCaps.excaprefs[0]->cap;
+
+    if (cap_get_capType(aep_cap) == cap_async_endpoint_cap) {
+        aepptr = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(aep_cap));
+    } else {
+        userError("TCB BindAEP: Async endpoint is invalid.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (!cap_async_endpoint_cap_get_capAEPCanReceive(aep_cap)) {
+        userError("TCB BindAEP: Insufficient access rights");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if ((tcb_t*)async_endpoint_ptr_get_aepQueue_head(aepptr)
+            || (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aepptr)) {
         userError("TCB BindAEP: AEP cannot be bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_AEPControl(tcb, aepptr);
 }
 
-exception_t decodeUnbindAEP(cap_t cap)
+exception_t
+decodeUnbindAEP(cap_t cap)
 {
     tcb_t *tcb;
 

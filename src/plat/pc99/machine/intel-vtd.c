@@ -234,8 +234,8 @@ static void vtd_process_faults(drhu_id_t i)
 
             printf("IOMMU: DMA %s page fault ", fault_type ? "read" : "write");
             printf("from bus/dev/fun 0x%x ", source_id);
-            printf("on address 0x%x:%x ", address[1], address[0]);
-            printf("with reason code 0x%x\n", reason);
+            printf("on address 0x%lx:%lx ", address[1], address[0]);
+            printf("with reason code 0x%lx\n", reason);
 
             vtd_clear_fault(i, fr_reg);
 
@@ -346,7 +346,7 @@ vtd_create_context_table(
         fail("Failed to allocate context table");
     }
 
-    printf("IOMMU: Create VTD context table for PCI bus 0x%x (pptr=0x%x)\n", bus, (uint32_t)vtd_context_table);
+    printf("IOMMU: Create VTD context table for PCI bus 0x%x (pptr=0x%lx)\n", bus, (uint32_t)vtd_context_table);
     memzero(vtd_context_table, 1 << VTD_CT_SIZE_BITS);
     flushCacheRange(vtd_context_table, VTD_CT_SIZE_BITS);
 
@@ -413,7 +413,7 @@ vtd_enable(cpu_id_t cpu_id)
         vtd_write32(i, GCMD_REG, BIT(WBF));
         while (((vtd_read32(i, GSTS_REG) >> WBFS) & 1));
 
-        printf("IOMMU 0x%x: enabling...", i);
+        printf("IOMMU 0x%lx: enabling...", i);
 
         /* Enable the DMA translation by setting TE bit in GCMD_REG */
         vtd_write32(i, GCMD_REG, (1U << TE));
@@ -452,7 +452,7 @@ vtd_init(
     for (i = 0; i < ia32KSnumDrhu; i++) {
         uint32_t bits_supported = 4 + 2 * (vtd_read32(i, CAP_REG) & 7);
         aw_bitmask &= vtd_read32(i, CAP_REG) >> SAGAW;
-        printf("IOMMU 0x%x: %d-bit domain IDs supported\n", i, bits_supported);
+        printf("IOMMU 0x%lx: %ld-bit domain IDs supported\n", i, bits_supported);
         if (bits_supported < num_domain_id_bits) {
             num_domain_id_bits = bits_supported;
         }
@@ -490,7 +490,7 @@ vtd_init(
         return false;
     }
 
-    printf("IOMMU: Using %d page-table levels (max. supported: %d)\n", ia32KSnumIOPTLevels, max_num_iopt_levels);
+    printf("IOMMU: Using %ld page-table levels (max. supported: %ld)\n", ia32KSnumIOPTLevels, max_num_iopt_levels);
 
     vtd_create_root_table();
 

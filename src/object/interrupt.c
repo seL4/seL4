@@ -135,7 +135,7 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         bool_t trig, pol;
 
         if (length < 2) {
-            userError("IRQSetMode: Not enough arguments", length);
+            userError("IRQSetMode: Not enough arguments: %d", length);
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }

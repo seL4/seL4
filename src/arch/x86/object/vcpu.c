@@ -489,7 +489,7 @@ decodeWriteVMCS(cap_t cap, unsigned int length, word_t* buffer)
             value = applyFixedBits(value, cr4_high, cr4_low);
             break;
         default:
-            userError("VCPU WriteVMCS: Invalid field %x.", field);
+            userError("VCPU WriteVMCS: Invalid field %lx.", field);
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -629,7 +629,7 @@ decodeReadVMCS(cap_t cap, unsigned int length, word_t* buffer)
         case VMX_GUEST_CR4:
             break;
         default:
-            userError("VCPU ReadVMCS: Invalid field %x.", field);
+            userError("VCPU ReadVMCS: Invalid field %lx.", field);
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }

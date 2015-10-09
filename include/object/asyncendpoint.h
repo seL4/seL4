@@ -19,6 +19,7 @@ void receiveAsyncIPC(tcb_t *thread, cap_t cap, bool_t isBlocking);
 void aepCancelAll(async_endpoint_t *aepptr);
 void asyncIPCCancel(tcb_t *threadPtr, async_endpoint_t *aepptr);
 void completeAsyncIPC(async_endpoint_t *aepptr, tcb_t *tcb);
+void unbindMaybeAEP(async_endpoint_t *aepptr);
 void unbindAsyncEndpoint(tcb_t *tcb);
 void bindAsyncEndpoint(tcb_t *tcb, async_endpoint_t *aepptr);
 

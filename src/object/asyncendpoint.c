@@ -59,13 +59,7 @@ sendAsyncIPC(async_endpoint_t *aepptr, word_t badge)
                 ipcCancel(tcb);
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
-                attemptSwitchTo(tcb);
-            } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
-                setThreadState(tcb, ThreadState_Running);
-                setRegister(tcb, badgeRegister, badge);
-                setRegister(tcb, msgInfoRegister, 0);
-                Arch_leaveVMAsyncTransfer(tcb);
-                attemptSwitchTo(tcb);
+                switchIfRequiredTo(tcb);
             } else {
                 aep_set_active(aepptr, badge);
             }
@@ -200,11 +194,29 @@ completeAsyncIPC(async_endpoint_t *aepptr, tcb_t *tcb)
     word_t badge;
 
     if (likely(tcb && async_endpoint_ptr_get_state(aepptr) == AEPState_Active)) {
-        async_endpoint_ptr_set_state(aepptr, AEPState_Idle);
         badge = async_endpoint_ptr_get_aepMsgIdentifier(aepptr);
         setRegister(tcb, badgeRegister, badge);
+        async_endpoint_ptr_set_state(aepptr, AEPState_Idle);
     } else {
-        fail("tried to complete async ipc with inactive AEP");
+        fail("tried to complete async ipc with inactive aep");
+    }
+}
+
+static void
+doUnbindAEP(async_endpoint_t *aepptr, tcb_t *tcbptr)
+{
+    async_endpoint_ptr_set_aepBoundTCB(aepptr, (word_t) 0);
+    tcbptr->boundAsyncEndpoint = NULL;
+}
+
+void
+unbindMaybeAEP(async_endpoint_t *aepptr)
+{
+    tcb_t *boundTCB;
+    boundTCB = (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aepptr);
+
+    if (boundTCB) {
+        doUnbindAEP(aepptr, boundTCB);
     }
 }
 
@@ -215,8 +227,7 @@ unbindAsyncEndpoint(tcb_t *tcb)
     aepptr = tcb->boundAsyncEndpoint;
 
     if (aepptr) {
-        async_endpoint_ptr_set_aepBoundTCB(aepptr, (word_t) 0);
-        tcb->boundAsyncEndpoint = NULL;
+        doUnbindAEP(aepptr, tcb);
     }
 }
 
@@ -226,5 +237,4 @@ bindAsyncEndpoint(tcb_t *tcb, async_endpoint_t *aepptr)
     async_endpoint_ptr_set_aepBoundTCB(aepptr, (word_t)tcb);
     tcb->boundAsyncEndpoint = aepptr;
 }
-
 
