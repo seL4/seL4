@@ -509,8 +509,8 @@ createObject(object_t t, void *regionBase, word_t userSize)
         tcb_t *tcb;
         memzero(regionBase, 1UL << TCB_BLOCK_SIZE_BITS);
         tcb = TCB_PTR((word_t)regionBase + TCB_OFFSET);
-        /** AUXUPD: "(True, ptr_retyps 5
-          (Ptr ((ptr_val \<acute>tcb) - 0x100) :: cte_C ptr)
+        /** AUXUPD: "(True, ptr_retyps 1
+          (Ptr ((ptr_val \<acute>tcb) - 0x100) :: (cte_C[5]) ptr)
             o (ptr_retyp \<acute>tcb))" */
 
         /* Setup non-zero parts of the TCB. */
@@ -544,7 +544,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
 
     case seL4_CapTableObject:
         memzero(regionBase, 1UL << (CTE_SIZE_BITS + userSize));
-        /** AUXUPD: "(True, ptr_retyps (2 ^ (unat \<acute>userSize))
+        /** AUXUPD: "(True, ptr_arr_retyps (2 ^ (unat \<acute>userSize))
           (Ptr (ptr_val \<acute>regionBase) :: cte_C ptr))" */
         /** GHOSTUPD: "(True, gs_new_cnodes (unat \<acute>userSize)
                                 (ptr_val \<acute>regionBase)
