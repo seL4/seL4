@@ -191,7 +191,6 @@ deletingIRQHandler(irq_t irq)
 {
     cte_t *slot;
 
-    userError("IRQ %ld", irq);
     slot = intStateIRQNode + irq;
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_async_endpoint_cap))" */
     cteDeleteOne(slot);
