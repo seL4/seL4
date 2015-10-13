@@ -77,7 +77,7 @@
 
 \newcommand{\invokedcapdesc}{The capability to be invoked.}
 \newcommand{\messageinfodesc}{The messageinfo structure for the IPC.}
-\newcommand{\senderdesc}{The badge of the endpoint capability that was invoked by the sender is written to this address. This parameter is ignored if \texttt{NULL}.}
+\newcommand{\senderdesc}{The address to write sender information to. The sender information is the badge of the endpoint capability that was invoked by the sender, or the notification word of the notification object that was signalled. This parameter is ignored if \texttt{NULL}.}
 \newcommand{\resumetargetdesc}{The invocation should also resume the destination thread.}
 \newcommand{\suspendsourcedesc}{The invocation should also suspend the source thread.}
 \newcommand{\archflagsdesc}{Architecture dependent flags. These have no meaning on \ifxeightsix{either IA-32 or}\fi{} ARM.}

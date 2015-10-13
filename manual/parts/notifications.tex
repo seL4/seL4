@@ -36,6 +36,8 @@ of the invoked notification capability. It also unblocks the first
 thread waiting on the notification (if any). As such,
 \apifunc{seL4\_Signal}{sel4_signal} works like concurrently signalling
 multiple semaphores (those indicated by the bits set in the badge).
+If the signal sender capability was unbadged or 0-badged, the operation degrades
+to just waking up the first thread waiting on the notification (also see below).
 
 The \apifunc{seL4\_Wait}{sel4_wait} method works similarly to a
 select-style wait on the set of semaphores: If the notification word is
@@ -49,10 +51,10 @@ If threads are waiting on the \obj{Notification} object at the time
 receives the notification. All other threads keep waiting until the
 next time the notification is signalled. 
 
-If \apifunc{seL4\_Signal}{sel4_signal} is invoked with an unbadged
-capability, the first queued thread is unblocked (with a zero return value).
-If no thread is waiting, the \apifunc{seL4\_Signal}{sel4_signal} operation
-has no effect with an unbadged capability.
+If \apifunc{seL4\_Signal}{sel4_signal} is invoked with an unbadged or 0-badged
+capability, the first queued thread is unblocked with a zero return value. If
+no thread is waiting, the \apifunc{\mbox{seL4\_Signal}}{sel4_signal} operation with
+an unbadged capability has no effect.
 
 
 \section{Binding Notifications}
