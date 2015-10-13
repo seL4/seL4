@@ -26,10 +26,18 @@
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
 
+/* Ensure object sizes are sane */
+compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << CTE_SIZE_BITS))
+compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << EP_SIZE_BITS))
+compile_assert(aep_size_sane, sizeof(async_endpoint_t) <= (1 << AEP_SIZE_BITS))
+
 /* TCB CNode: size = 256 bytes */
 /* typedef cte_t[16] tcb_cnode; */
 
-/* TCB: size = 656 bytes, alignment = 256 bytes */
+/* update this when you modify the tcb struct */
+#define EXPECTED_TCB_SIZE 660
+
+/* TCB: alignment = 1024 bytes */
 struct tcb {
     /* Saved user-level context of thread, 592 bytes */
     user_context_t tcbContext;
@@ -74,6 +82,9 @@ struct tcb {
 #endif
 };
 typedef struct tcb tcb_t;
+
+/* Ensure TCB size is what we expected */
+compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
 
 /* IA32-specific object types */
 
