@@ -388,7 +388,7 @@ WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
 	${WARNINGS:%=-W%} ${INCLUDES}
 LDFLAGS += -nostdlib -nostdinc
-LDFLAGS += --build-id=none
+LDFLAGS += -Wl,--build-id=none
 ASFLAGS += ${INCLUDES}
 
 # Compiler optimisation level. Note that you can't build the kernel with
