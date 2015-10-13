@@ -46,10 +46,12 @@ repository (in alphabetical order).
 * Max R.D. Parmer
 * Sean Peters, NICTA
 * Simon Rodgers, NICTA
+* Wink Saville
 * Sean Seefried, NICTA
 * Thomas Sewell, NICTA & UNSW
+* Stephen Sherratt, NICTA
 * Michael von Tessin, NICTA & UNSW
-* Robbie Van Vossen
+* Robbie Van Vossen, Dornerworks
 * Adam Walker, NICTA
 * James Wilmot, NICTA
 * Simon Winwood, NICTA
