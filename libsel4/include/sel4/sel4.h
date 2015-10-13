@@ -20,4 +20,6 @@
 
 #include <sel4/bootinfo.h>
 
+#include <sel4/deprecated.h>
+
 #endif // __LIBSEL4_SEL4_H

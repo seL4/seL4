@@ -305,10 +305,10 @@ decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
     case TCBSetSpace:
         return decodeSetSpace(cap, length, slot, extraCaps, buffer);
 
-    case TCBBindAEP:
+    case TCBBindNotification:
         return decodeBindAEP(cap, extraCaps);
 
-    case TCBUnbindAEP:
+    case TCBUnbindNotification:
         return decodeUnbindAEP(cap);
 
     default:

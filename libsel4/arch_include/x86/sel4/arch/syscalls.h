@@ -143,7 +143,7 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
 }
 
 static inline void
-seL4_Notify(seL4_CPtr dest, seL4_Word msg)
+seL4_Signal(seL4_CPtr dest)
 {
     asm volatile (
         "pushl %%ebp       \n"
@@ -156,9 +156,14 @@ seL4_Notify(seL4_CPtr dest, seL4_Word msg)
         : "a" (seL4_SysSend),
         "b" (dest),
         "S" (seL4_MessageInfo_new(0, 0, 0, 1).words[0]),
-        "D" (msg)
         : "%ecx", "%edx"
     );
+}
+
+static inline void __attribute__((deprecated("use seL4_Signal")))
+seL4_Notify(seL4_CPtr dest,  __attribute__((unused)) seL4_Word msg)
+{
+    seL4_Signal(dest);
 }
 
 static inline seL4_MessageInfo_t
