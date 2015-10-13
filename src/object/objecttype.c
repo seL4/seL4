@@ -40,7 +40,7 @@ word_t getObjectSize(word_t t, word_t userObjSize)
             return TCB_BLOCK_SIZE_BITS;
         case seL4_EndpointObject:
             return EP_SIZE_BITS;
-        case seL4_AsyncEndpointObject:
+        case seL4_NotificationObject:
             return AEP_SIZE_BITS;
         case seL4_CapTableObject:
             return CTE_SIZE_BITS + userObjSize;
@@ -535,7 +535,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
         return cap_endpoint_cap_new(0, true, true, true,
                                     EP_REF(regionBase));
 
-    case seL4_AsyncEndpointObject:
+    case seL4_NotificationObject:
         memzero(regionBase, 1UL << AEP_SIZE_BITS);
         /** AUXUPD: "(True, ptr_retyp
               (Ptr (ptr_val \<acute>regionBase) :: async_endpoint_C ptr))" */
