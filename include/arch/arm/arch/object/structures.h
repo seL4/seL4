@@ -29,6 +29,9 @@ enum tcb_arch_cnode_index {
     tcbArchCNodeEntries = tcbCNodeEntries
 };
 
+/* sizeof (tcb_t) + sizeof (arch_tcb_t) */
+#define EXPECTED_TCB_SIZE 140
+
 typedef struct arch_tcb {
     /* saved user-level context of thread (72 bytes) */
     user_context_t tcbContext;

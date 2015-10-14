@@ -5,8 +5,8 @@ Contributions to the seL4 kernel repository are welcome!
 
 Please note that GD and NICTA require a contributor license agreement (CLA)
 to be signed for all external contributions. Please see
-https://seL4.systems/Contributing for details (it is a fairly short and
-standard CLA).
+https://seL4.systems/Community/Contributing for details (it is a fairly short
+and standard CLA).
 
 For the `seL4/seL4` repository, we can review pull requests directly on
 github if we have a signed CLA on file.
@@ -20,7 +20,7 @@ comment.
 
 ## Kernel Development Process
 
-Please read https://seL4.systems/Contributing
+Please read https://seL4.systems/Community/Contributing
 
 
 ## Build/Test

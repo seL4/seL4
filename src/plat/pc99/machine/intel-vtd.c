@@ -233,7 +233,7 @@ static void vtd_process_faults(drhu_id_t i)
             reason = vtd_read32(i, fr_reg + 12) & FR_MASK;
 
             printf("IOMMU: DMA %s page fault ", fault_type ? "read" : "write");
-            printf("from bus/dev/fun 0x%x ", source_id);
+            printf("from bus/dev/fun 0x%lx ", source_id);
             printf("on address 0x%lx:%lx ", address[1], address[0]);
             printf("with reason code 0x%lx\n", reason);
 

@@ -230,7 +230,7 @@ static inline void mdb_node_ptr_set_cdtRight(mdb_node_t *mdb, word_t cte)
     mdb_node_ptr_set_cdtRight_(mdb, (cte & 0x1FFFFFFF) >> 2);
 }
 
-/* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: aligned to nearest power of 2 */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
@@ -278,6 +278,7 @@ typedef struct tcb tcb_t;
 /* Ensure TCB size is sane. */
 compile_assert(tcb_size_sane,
                (1 << TCB_SIZE_BITS) + sizeof(tcb_t) <= (1 << TCB_BLOCK_SIZE_BITS))
+compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
 
 
 /* helper functions */

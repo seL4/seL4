@@ -376,6 +376,7 @@ ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
 DEFINES += -DARCH_IA32
+LDFLAGS += -Wl,-m,elf_i386 
 endif
 endif
 
@@ -391,6 +392,7 @@ WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 CFLAGS += --std=gnu99 -nostdlib -nostdinc -ffreestanding \
 	${WARNINGS:%=-W%} ${INCLUDES}
 LDFLAGS += -nostdlib -nostdinc
+LDFLAGS += -Wl,--build-id=none
 ASFLAGS += ${INCLUDES}
 
 # Compiler optimisation level. Note that you can't build the kernel with

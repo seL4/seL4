@@ -77,7 +77,7 @@
 
 \newcommand{\invokedcapdesc}{The capability to be invoked.}
 \newcommand{\messageinfodesc}{The messageinfo structure for the IPC.}
-\newcommand{\senderdesc}{The badge of the endpoint capability that was invoked by the sender is written to this address. This parameter is ignored if \texttt{NULL}.}
+\newcommand{\senderdesc}{The address to write sender information to. The sender information is the badge of the endpoint capability that was invoked by the sender, or the notification word of the notification object that was signalled. This parameter is ignored if \texttt{NULL}.}
 \newcommand{\resumetargetdesc}{The invocation should also resume the destination thread.}
 \newcommand{\suspendsourcedesc}{The invocation should also suspend the source thread.}
 \newcommand{\archflagsdesc}{Architecture dependent flags. These have no meaning on \ifxeightsix{either IA-32 or}\fi{} ARM.}
@@ -247,7 +247,7 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{sel4_replywait}
 \inputapidoc{sel4_poll}
 \inputapidoc{sel4_yield}
-\inputapidoc{sel4_notify}
+\inputapidoc{sel4_signal}
 \clearpage
 
 \section{Architecture-Independent Object Methods}
@@ -267,9 +267,9 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{irq_controlget}
 \inputapidoc{irq_handleracknowledge}
 \inputapidoc{irq_handlerclear}
-\inputapidoc{irq_handlersetendpoint}
-\inputapidoc{tcb_bindaep}
-\inputapidoc{tcb_unbindaep}
+\inputapidoc{irq_handlersetnotification}
+\inputapidoc{tcb_bindnotification}
+\inputapidoc{tcb_unbindnotification}
 \inputapidoc{tcb_configure}
 \inputapidoc{tcb_copyregisters}
 \inputapidoc{tcb_readregisters}

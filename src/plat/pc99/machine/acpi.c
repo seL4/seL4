@@ -470,7 +470,7 @@ acpi_dmar_scan(
         }
     }
     rmrr_list->num = rmrr_count;
-    printf("ACPI: %d IOMMUs detected\n", *num_drhu);
+    printf("ACPI: %ld IOMMUs detected\n", *num_drhu);
 }
 
 #endif /* IOMMU */

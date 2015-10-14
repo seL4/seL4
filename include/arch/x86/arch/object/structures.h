@@ -26,6 +26,7 @@
 #define AEP_SIZE_BITS 4
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
+
 enum tcb_arch_cnode_index {
     /* VSpace root for running any associated VCPU in */
     tcbArchEPTRoot = tcbCNodeEntries,
@@ -41,11 +42,19 @@ typedef struct arch_tcb {
     struct vcpu *vcpu;
 #endif
 } arch_tcb_t;
+
 #ifdef CONFIG_VTX
 /* Access to the VCPU element of the tcb is done through a hard coded offset in traps.S
  * this assert makes sure they remain consistent. If this assert fails update the
  * offset in traps.S, and match it here */
 compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) == 0x250);
+#endif
+
+/* sizeof (tcb_t) + sizeof (arch_tcb_t) */
+#ifdef CONFIG_VTX
+#define EXPECTED_TCB_SIZE 664 
+#else 
+#define EXPECTED_TCB_SIZE 660
 #endif
 
 #define GDT_NULL    0
