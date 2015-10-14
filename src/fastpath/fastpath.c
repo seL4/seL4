@@ -47,12 +47,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
-    /* Check there is nothing waiting on the async endpoint */
-    if (ksCurThread->boundAsyncEndpoint &&
-            async_endpoint_ptr_get_state(ksCurThread->boundAsyncEndpoint) == AEPState_Active) {
-        slowpath(SysCall);
-    }
-
     /* Lookup the cap */
     ep_cap = lookup_fp(TCB_PTR_CTE_PTR(ksCurThread, tcbCTable)->cap, cptr);
 
