@@ -52,8 +52,8 @@ compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) ==
 
 /* sizeof (tcb_t) + sizeof (arch_tcb_t) */
 #ifdef CONFIG_VTX
-#define EXPECTED_TCB_SIZE 664 
-#else 
+#define EXPECTED_TCB_SIZE 664
+#else
 #define EXPECTED_TCB_SIZE 660
 #endif
 
