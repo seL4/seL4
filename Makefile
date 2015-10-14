@@ -366,7 +366,40 @@ endif
 ifeq (${CPU},cortex-a15)
 DEFINES += -DARM_CORTEX_A15
 endif
+ifeq ($(PLAT),imx6)
+DEFINES += -DIMX6
 endif
+ifeq ($(PLAT),imx31)
+DEFINES += -DIMX31
+endif
+ifeq ($(PLAT),pc99)
+DEFINES += -DPC99
+endif
+ifeq ($(PLAT),ixp420)
+DEFINES += -DIXP420
+endif
+ifeq ($(PLAT),omap3)
+DEFINES += -DOMAP3
+endif
+ifeq ($(PLAT),am335x)
+DEFINES += -DAM335X
+endif
+ifeq ($(PLAT),exynos4)
+DEFINES += -DEXYNOS4
+endif
+ifeq ($(PLAT),exynos5)
+DEFINES += -DEXYNOS5
+endif
+ifeq ($(PLAT),apq8064)
+DEFINES += -DAPQ8064
+endif
+ifeq ($(PLAT),zynq7000)
+DEFINES += -DZYNQ7000
+endif
+ifeq ($(PLAT),allwinnerA20)
+DEFINES += -DALLWINNERA20
+endif
+endif # NK_CFLAGS
 
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
