@@ -21,72 +21,13 @@
 #include <arch/machine/registerset.h>
 
 /* Object sizes*/
-#define EP_SIZE_BITS 4
-#define AEP_SIZE_BITS 4
-#define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
-
-/* Ensure object sizes are sane */
-compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << CTE_SIZE_BITS))
-compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << EP_SIZE_BITS))
-compile_assert(aep_size_sane, sizeof(async_endpoint_t) <= (1 << AEP_SIZE_BITS))
-
-/* TCB CNode: size = 256 bytes */
-/* typedef cte_t[16] tcb_cnode; */
+typedef struct arch_tcb {
+    user_context_t tcbContext;
+} arch_tcb_t;
 
 /* update this when you modify the tcb struct */
 #define EXPECTED_TCB_SIZE 660
-
-/* TCB: alignment = 1024 bytes */
-struct tcb {
-    /* Saved user-level context of thread, 592 bytes */
-    user_context_t tcbContext;
-
-    /* Thread state, 12 bytes */
-    thread_state_t tcbState;
-
-    /* Async endpoint that this TCB is bound to. If this is set, when this tcb waits
-     * on any sync endpoint, it may receive an async notification from the AEP */
-    async_endpoint_t *boundAsyncEndpoint;
-
-    /* Current fault, 8 bytes */
-    fault_t tcbFault;
-
-    /* Current lookup failure, 8 bytes */
-    lookup_fault_t tcbLookupFailure;
-
-    /* Domain, 1 byte (packed to 4) */
-    uint32_t tcbDomain;
-
-    /* Priority, 1 byte (packed to 4) */
-    uint32_t tcbPriority;
-
-    /* Timeslice remaining, 4 bytes */
-    word_t tcbTimeSlice;
-
-    /* Capability pointer to thread fault handler, 4 bytes */
-    cptr_t tcbFaultHandler;
-
-    /* userland virtual address of thread IPC buffer, 4 bytes */
-    word_t tcbIPCBuffer;
-
-    /* Previous and next pointers for endpoint & scheduler queues, 16 bytes */
-    struct tcb* tcbSchedNext;
-    struct tcb* tcbSchedPrev;
-    struct tcb* tcbEPNext;
-    struct tcb* tcbEPPrev;
-
-#ifdef DEBUG
-    /* Use any remaining space for a thread name */
-    char tcbName[];
-#endif
-};
-typedef struct tcb tcb_t;
-
-/* Ensure TCB size is what we expected */
-compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
-
-/* IA32-specific object types */
 
 #define GDT_NULL    0
 #define GDT_CS_0    1
@@ -250,29 +191,13 @@ cap_get_capMappedASID(cap_t cap)
 }
 
 static inline unsigned int CONST
-cap_get_capSizeBits(cap_t cap)
+cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
-    uint32_t  type;
 
     ctag = cap_get_capType(cap);
 
     switch (ctag) {
-    case cap_untyped_cap:
-        return cap_untyped_cap_get_capBlockSize(cap);
-
-    case cap_endpoint_cap:
-        return EP_SIZE_BITS;
-
-    case cap_async_endpoint_cap:
-        return AEP_SIZE_BITS;
-
-    case cap_cnode_cap:
-        return cap_cnode_cap_get_capCNodeRadix(cap) + CTE_SIZE_BITS;
-
-    case cap_thread_cap:
-        return TCB_BLOCK_SIZE_BITS;
-
     case cap_frame_cap:
         return pageBitsForSize(cap_frame_cap_get_capFSize(cap));
 
@@ -281,28 +206,6 @@ cap_get_capSizeBits(cap_t cap)
 
     case cap_page_directory_cap:
         return PD_SIZE_BITS;
-
-    case cap_zombie_cap:
-        type = cap_zombie_cap_get_capZombieType(cap);
-        if (type == ZombieType_ZombieTCB) {
-            return TCB_BLOCK_SIZE_BITS;
-        }
-        return ZombieType_ZombieCNode(type) + CTE_SIZE_BITS;
-
-    case cap_null_cap:
-        return 0;
-
-    case cap_domain_cap:
-        return 0;
-
-    case cap_reply_cap:
-        return 0;
-
-    case cap_irq_control_cap:
-        return 0;
-
-    case cap_irq_handler_cap:
-        return 0;
 
     case cap_io_port_cap:
         return 0;
@@ -325,27 +228,13 @@ cap_get_capSizeBits(cap_t cap)
 }
 
 static inline void * CONST
-cap_get_capPtr(cap_t cap)
+cap_get_archCapPtr(cap_t cap)
 {
     cap_tag_t ctag;
 
     ctag = cap_get_capType(cap);
 
     switch (ctag) {
-    case cap_untyped_cap:
-        return WORD_PTR(cap_untyped_cap_get_capPtr(cap));
-
-    case cap_endpoint_cap:
-        return EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
-
-    case cap_async_endpoint_cap:
-        return AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap));
-
-    case cap_cnode_cap:
-        return CTE_PTR(cap_cnode_cap_get_capCNodePtr(cap));
-
-    case cap_thread_cap:
-        return TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), 0);
 
     case cap_frame_cap:
         return (void *)(cap_frame_cap_get_capFBasePtr(cap));
@@ -358,24 +247,6 @@ cap_get_capPtr(cap_t cap)
 
     case cap_pdpt_cap:
         return PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
-
-    case cap_zombie_cap:
-        return CTE_PTR(cap_zombie_cap_get_capZombiePtr(cap));
-
-    case cap_null_cap:
-        return NULL;
-
-    case cap_domain_cap:
-        return NULL;
-
-    case cap_reply_cap:
-        return NULL;
-
-    case cap_irq_control_cap:
-        return NULL;
-
-    case cap_irq_handler_cap:
-        return NULL;
 
     case cap_io_port_cap:
         return NULL;
@@ -395,12 +266,6 @@ cap_get_capPtr(cap_t cap)
     default:
         fail("Invalid arch cap type");
     }
-}
-
-static inline word_t CONST
-isArchCap(cap_t cap)
-{
-    return (cap_get_capType(cap) % 2);
 }
 
 #endif

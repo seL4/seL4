@@ -381,7 +381,7 @@ create_initial_thread(
     memzero((void*)pptr, 1 << TCB_BLOCK_SIZE_BITS);
     tcb = TCB_PTR(pptr + TCB_OFFSET);
     tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
-    Arch_initContext(&tcb->tcbContext);
+    Arch_initContext(&tcb->tcbArch.tcbContext);
 
     /* derive a copy of the IPC buffer cap for inserting */
     dc_ret = deriveCap(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_IPCBUF), ipcbuf_cap);
