@@ -325,10 +325,9 @@ chooseThread(void)
         assert(thread);
         assert(isRunnable(thread));
         switchToThread(thread);
-        return;
+    } else {
+        switchToIdleThread();
     }
-
-    switchToIdleThread();
 }
 
 void
