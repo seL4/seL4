@@ -114,6 +114,6 @@ disablePrefetchers()
         }
     }
 
-    printf("Disabling prefetchers not implemented for CPU model: %x\n", MODEL_ID(version_info));
+    printf("Disabling prefetchers not implemented for CPU model: %lx\n", MODEL_ID(version_info));
     return false;
 }

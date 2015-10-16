@@ -19,6 +19,7 @@
 #define seL4_SlotBits 4
 #define seL4_TCBBits 9
 #define seL4_EndpointBits 4
+#define seL4_NotificationBits 4
 #ifdef ARM_HYP
 #define seL4_PageTableBits 12
 #else  /* ARM_HYP */

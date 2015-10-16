@@ -46,12 +46,14 @@ This module uses the C preprocessor to select a target architecture.
 > import SEL4.Object.Instances()
 > import SEL4.Object.CNode
 > import SEL4.Object.ObjectType
+> import SEL4.Object.AsyncEndpoint
 > import {-# SOURCE #-} SEL4.Kernel.Thread
 > import {-# SOURCE #-} SEL4.Kernel.CSpace
 > import {-# SOURCE #-} SEL4.Kernel.VSpace
 
 > import Data.Bits
 > import Data.List(genericTake, genericLength)
+> import Data.Maybe()
 > import Control.Monad.State(runState)
 
 \end{impdetails}
@@ -62,7 +64,7 @@ The architecture-specific definitions are imported qualified with the "Arch" pre
 
 \subsection{Decoding TCB Invocations}
 
-There are ten types of invocation for a thread control block. All require write permission for the TCB object. In addition, "SetSpace" and "Configure" operations require grant permission. Checking for appropriate permission is done by the caller (see \autoref{sec:object.objecttype}).
+There are eleven types of invocation for a thread control block. All require write permission for the TCB object. In addition, "SetSpace" and "Configure" operations require grant permission. Checking for appropriate permission is done by the caller (see \autoref{sec:object.objecttype}).
 
 > decodeTCBInvocation :: Word -> [Word] -> Capability -> PPtr CTE ->
 >         [(Capability, PPtr CTE)] -> KernelF SyscallError TCBInvocation
@@ -77,6 +79,8 @@ There are ten types of invocation for a thread control block. All require write 
 >         TCBSetPriority -> decodeSetPriority args cap
 >         TCBSetIPCBuffer -> decodeSetIPCBuffer args cap slot extraCaps
 >         TCBSetSpace -> decodeSetSpace args cap slot extraCaps
+>         TCBBindAEP -> decodeBindAEP cap extraCaps
+>         TCBUnbindAEP -> decodeUnbindAEP cap
 >         _ -> throw IllegalOperation
 
 \subsubsection{Reading, Writing and Copying Registers}
@@ -271,7 +275,48 @@ This is to ensure that the source capability is not made invalid by the deletion
 >         tcNewIPCBuffer = Nothing }
 > decodeSetSpace _ _ _ _ = throw TruncatedMessage
 
-\subsection{Performing TCB Invocations}
+\subsubsection{Decode Bound AEP Invocations}
+
+> decodeBindAEP :: Capability -> [(Capability, PPtr CTE)] -> KernelF SyscallError TCBInvocation
+> decodeBindAEP cap extraCaps = do
+>     -- if no aep cap supplied
+>     when (null extraCaps) $ throw TruncatedMessage
+>     let tcb = capTCBPtr cap
+>     aEP <- withoutFailure $ getBoundAEP tcb
+>     -- check if tcb already has bound aep
+>     case aEP of
+>         Just _ -> throw IllegalOperation
+>         Nothing -> return ()
+>     -- get ptr to aep
+>     (aepptr, rights) <- case fst (head extraCaps) of
+>         AsyncEndpointCap ptr _ _ recv  -> return (ptr, recv)
+>         _ -> throw IllegalOperation 
+>     when (not rights) $ throw IllegalOperation
+>     -- check if aep is bound
+>     -- check if anything is waiting on the aep
+>     aep <- withoutFailure $ getAsyncEP aepptr
+>     case (aepObj aep, aepBoundTCB aep) of
+>         (IdleAEP, Nothing) -> return ()
+>         (ActiveAEP _, Nothing) -> return ()
+>         _ -> throw IllegalOperation
+>     return AsyncEndpointControl {
+>         aepTCB = tcb,
+>         aepPtr = Just aepptr }
+
+
+> decodeUnbindAEP :: Capability -> KernelF SyscallError TCBInvocation
+> decodeUnbindAEP cap = do
+>     let tcb = capTCBPtr cap
+>     aEP <- withoutFailure $ getBoundAEP tcb
+>     case aEP of
+>         Nothing -> throw IllegalOperation
+>         Just _ -> return ()
+>     return AsyncEndpointControl {
+>         aepTCB = tcb,
+>         aepPtr = Nothing }
+
+
+\subsection[invoke]{Performing TCB Invocations}
 
 > invokeTCB :: TCBInvocation -> KernelP [Word]
 
@@ -395,6 +440,21 @@ The "ReadRegisters" and "WriteRegisters" functions are similar to "CopyRegisters
 >         pc <- getRestartPC
 >         setNextPC pc
 >     when resumeTarget $ restart dest
+>     return []
+
+\subsubsection{Invoking Async Endpoint Control}
+
+> -- notes: we know that the aep is not bound, and is not waiting.
+> -- BIND
+> invokeTCB (AsyncEndpointControl tcb (Just aepptr)) =
+>   withoutPreemption $ do
+>     bindAsyncEndpoint tcb aepptr
+>     return []
+
+> -- UNBIND
+> invokeTCB (AsyncEndpointControl tcb Nothing) =
+>   withoutPreemption $ do 
+>     unbindAsyncEndpoint tcb
 >     return []
 
 \subsection{Decoding Domain Invocations}

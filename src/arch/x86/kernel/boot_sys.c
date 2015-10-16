@@ -96,7 +96,7 @@ ndks_t ndks_list[CONFIG_MAX_NUM_NODES];
  * The following definition, in conjunction with the linker script, tells the
  * linker to reserve space in virtual memory at the start of the NDKS section.
  */
-SECTION(".ndks.stack") ALIGN(BIT(PAGE_BITS))
+SECTION(".ndks.stack") ALIGN(BIT(PAGE_BITS)) VISIBLE
 char kernel_stack_alloc[4096];
 
 /* global variables (not covered by abstract specification) */
@@ -126,7 +126,7 @@ paging_structure_t kernel_pd_list[CONFIG_MAX_NUM_NODES][BIT(PD_BITS + PDPT_BITS)
 DATA_GLOB ALIGN(BIT(PT_SIZE_BITS))
 paging_structure_t kernel_pt_list[CONFIG_MAX_NUM_NODES][BIT(PT_BITS)];
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 /* Determine whether we are in bootstrapping phase or runtime phase.
  * Is currently only needed to determine console port in debug mode.
@@ -174,7 +174,7 @@ load_boot_module(node_id_t node, multiboot_module_t* boot_module, paddr_t load_p
     }
     v_reg.end = ROUND_UP(v_reg.end, PAGE_BITS);
 
-    printf("size=0x%x v_entry=0x%x v_start=0x%x v_end=0x%x ",
+    printf("size=0x%lx v_entry=0x%lx v_start=0x%lx v_end=0x%lx ",
            v_reg.end - v_reg.start,
            elf_file->e_entry,
            v_reg.start,
@@ -202,7 +202,7 @@ load_boot_module(node_id_t node, multiboot_module_t* boot_module, paddr_t load_p
     glks.ui_info_list[node].p_reg.end = load_paddr;
     glks.ui_info_list[node].v_entry = elf_file->e_entry;
 
-    printf("p_start=0x%x p_end=0x%x\n",
+    printf("p_start=0x%lx p_end=0x%lx\n",
            glks.ui_info_list[node].p_reg.start,
            glks.ui_info_list[node].p_reg.end
           );
@@ -470,7 +470,7 @@ try_boot_sys(
         glks.avail_p_reg.end = PADDR_TOP;
     }
 
-    printf("Physical memory usable by seL4: start=0x%x end=0x%x size=0x%x\n",
+    printf("Physical memory usable by seL4: start=0x%lx end=0x%lx size=0x%lx\n",
            glks.avail_p_reg.start,
            glks.avail_p_reg.end,
            glks.avail_p_reg.end - glks.avail_p_reg.start
@@ -479,7 +479,7 @@ try_boot_sys(
     glks.ki_p_reg.start = PADDR_LOAD;
     glks.ki_p_reg.end = pptr_to_paddr(ki_end);
 
-    printf("Kernel loaded to: start=0x%x end=0x%x size=0x%x entry=0x%x\n",
+    printf("Kernel loaded to: start=0x%lx end=0x%lx size=0x%lx entry=0x%lx\n",
            glks.ki_p_reg.start,
            glks.ki_p_reg.end,
            glks.ki_p_reg.end - glks.ki_p_reg.start,
@@ -488,7 +488,7 @@ try_boot_sys(
     printf("Kernel stack size: 0x%x\n", _kernel_stack_top - _kernel_stack_bottom);
 
     glks.apic_khz = apic_khz;
-    printf("APIC: Bus frequency is %d MHz\n", glks.apic_khz / 1000);
+    printf("APIC: Bus frequency is %ld MHz\n", glks.apic_khz / 1000);
 
     /* remapping legacy IRQs to their correct vectors */
     pic_remap_irqs(IRQ_INT_OFFSET);
@@ -537,31 +537,31 @@ try_boot_sys(
     }
 #else
     if (glks.num_ioapic > 0) {
-        printf("Detected %d IOAPICs, but configured to use PIC instead\n", glks.num_ioapic);
+        printf("Detected %ld IOAPICs, but configured to use PIC instead\n", glks.num_ioapic);
     }
 #endif
 
     if (glks.num_nodes > cmdline_opt.max_num_nodes) {
         glks.num_nodes = cmdline_opt.max_num_nodes;
     }
-    printf("Will boot up %d seL4 node(s)\n", glks.num_nodes);
+    printf("Will boot up %ld seL4 node(s)\n", glks.num_nodes);
 
     if (!(mbi->flags & MULTIBOOT_INFO_MODS_FLAG)) {
         printf("Boot loader did not provide information about boot modules\n");
         return false;
     }
 
-    printf("Detected %d boot module(s):\n", mbi->mod_count);
+    printf("Detected %ld boot module(s):\n", mbi->mod_count);
     mods_end_paddr = 0;
 
     for (i = 0; i < mbi->mod_count; i++) {
         printf(
-            "  module #%d: start=0x%x end=0x%x size=0x%x name='%s'\n",
+            "  module #%d: start=0x%lx end=0x%lx size=0x%lx name='%s'\n",
             i,
             modules[i].start,
             modules[i].end,
             modules[i].end - modules[i].start,
-            modules[i].name
+            (char *) modules[i].name
         );
         if ((int32_t)(modules[i].end - modules[i].start) <= 0) {
             printf("Invalid boot module size! Possible cause: boot module file not found by QEMU\n");
@@ -591,7 +591,7 @@ try_boot_sys(
     }
 
     for (i = mbi->mod_count; i < glks.num_nodes; i++) {
-        printf("  module #%d for node #%d: ", mbi->mod_count - 1, i);
+        printf("  module #%ld for node #%d: ", mbi->mod_count - 1, i);
         load_paddr = load_boot_module(i, modules + mbi->mod_count - 1, load_paddr);
         if (!load_paddr) {
             return false;
@@ -603,7 +603,7 @@ try_boot_sys(
     ui_p_regs.end = ui_p_regs.start + load_paddr - mods_end_paddr;
 
     printf(
-        "Moving loaded userland images to final location: from=0x%x to=0x%x size=0x%x\n",
+        "Moving loaded userland images to final location: from=0x%lx to=0x%lx size=0x%lx\n",
         mods_end_paddr,
         ui_p_regs.start,
         ui_p_regs.end - ui_p_regs.start

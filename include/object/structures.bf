@@ -129,7 +129,8 @@ block endpoint {
 
 -- Async endpoint: size = 16 bytes
 block async_endpoint {
-    field aepData 32
+    field_high aepBoundTCB 28
+    padding 4
 
     field aepMsgIdentifier 32
 
@@ -137,7 +138,8 @@ block async_endpoint {
     padding 4
 
     field_high aepQueue_tail 28
-    padding 2
+    padding 1
+    field bound 1
     field state 2
 }
 

@@ -137,7 +137,6 @@ BEGIN_FUNC(arm_swi_undefined_syscall)
     RET_TO_USER r8
 END_FUNC(arm_swi_undefined_syscall)
 
-#ifdef FASTPATH
 BEGIN_FUNC(slowpath)
     /*
      * We enter here only via the fastpath.
@@ -160,7 +159,6 @@ BEGIN_FUNC(fastpath_restore)
 
     rfeia sp
 END_FUNC(fastpath_restore)
-#endif /* FASTPATH */
 
 BEGIN_FUNC(arm_prefetch_abort_exception)
     /* Full save/restore, documented in arm_swi_syscall */

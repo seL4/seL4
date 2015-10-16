@@ -8,6 +8,7 @@
 # @TAG(GD_GPL)
 #
 
+include ${SOURCE_ROOT}/src/fastpath/Makefile
 include ${SOURCE_ROOT}/src/api/Makefile
 include ${SOURCE_ROOT}/src/kernel/Makefile
 include ${SOURCE_ROOT}/src/object/Makefile

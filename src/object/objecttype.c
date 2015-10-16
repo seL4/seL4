@@ -40,7 +40,7 @@ word_t getObjectSize(word_t t, word_t userObjSize)
             return TCB_BLOCK_SIZE_BITS;
         case seL4_EndpointObject:
             return EP_SIZE_BITS;
-        case seL4_AsyncEndpointObject:
+        case seL4_NotificationObject:
             return AEP_SIZE_BITS;
         case seL4_CapTableObject:
             return CTE_SIZE_BITS + userObjSize;
@@ -118,8 +118,10 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
     case cap_async_endpoint_cap:
         if (final) {
-            aepCancelAll(AEP_PTR(
-                             cap_async_endpoint_cap_get_capAEPPtr(cap)));
+            async_endpoint_t *aep = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap));
+
+            unbindMaybeAEP(aep);
+            aepCancelAll(aep);
         }
         fc_ret.remainder = cap_null_cap_new();
         fc_ret.irq = irqInvalid;
@@ -159,6 +161,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
             tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
+            unbindAsyncEndpoint(tcb);
             suspend(tcb);
             Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =
@@ -231,6 +234,9 @@ recycleCap(bool_t is_final, cap_t cap)
             /* Haskell error:
              * "Zombie cap should not point at queued thread" */
             assert(!thread_state_get_tcbQueued(tcb->tcbState));
+            /* Haskell error:
+             * "Zombie cap should not point at bound thread" */
+            assert(tcb->boundAsyncEndpoint == NULL);
 
             /* makeObject doesn't exist in C, objects are initialised by
              * zeroing. The effect of recycle in Haskell is to reinitialise
@@ -529,7 +535,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
         return cap_endpoint_cap_new(0, true, true, true,
                                     EP_REF(regionBase));
 
-    case seL4_AsyncEndpointObject:
+    case seL4_NotificationObject:
         memzero(regionBase, 1UL << AEP_SIZE_BITS);
         /** AUXUPD: "(True, ptr_retyp
               (Ptr (ptr_val \<acute>regionBase) :: async_endpoint_C ptr))" */
@@ -599,20 +605,20 @@ decodeInvocation(word_t label, unsigned int length,
 
     switch (cap_get_capType(cap)) {
     case cap_null_cap:
-        userError("Attempted to invoke a null cap #%u.", capIndex);
+        userError("Attempted to invoke a null cap #%lu.", capIndex);
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_zombie_cap:
-        userError("Attempted to invoke a zombie cap #%u.", capIndex);
+        userError("Attempted to invoke a zombie cap #%lu.", capIndex);
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_endpoint_cap:
         if (unlikely(!cap_endpoint_cap_get_capCanSend(cap))) {
-            userError("Attempted to invoke a read-only endpoint cap #%u.",
+            userError("Attempted to invoke a read-only endpoint cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -626,31 +632,23 @@ decodeInvocation(word_t label, unsigned int length,
                    cap_endpoint_cap_get_capCanGrant(cap), block, call);
 
     case cap_async_endpoint_cap: {
-        word_t msg;
-
         if (unlikely(!cap_async_endpoint_cap_get_capAEPCanSend(cap))) {
-            userError("Attempted to invoke a read-only async-endpoint cap #%u.",
+            userError("Attempted to invoke a read-only async-endpoint cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (length == 0) {
-            msg = 0;
-        } else {
-            msg = getSyscallArg(0, buffer);
-        }
-
         setThreadState(ksCurThread, ThreadState_Restart);
         return performInvocation_AsyncEndpoint(
                    AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap)),
-                   cap_async_endpoint_cap_get_capAEPBadge(cap), msg);
+                   cap_async_endpoint_cap_get_capAEPBadge(cap));
     }
 
     case cap_reply_cap:
         if (unlikely(cap_reply_cap_get_capReplyMaster(cap))) {
-            userError("Attempted to invoke an invalid reply cap #%u.",
+            userError("Attempted to invoke an invalid reply cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -699,10 +697,9 @@ performInvocation_Endpoint(endpoint_t *ep, word_t badge,
 }
 
 exception_t
-performInvocation_AsyncEndpoint(async_endpoint_t *aep, word_t badge,
-                                word_t message)
+performInvocation_AsyncEndpoint(async_endpoint_t *aep, word_t badge)
 {
-    sendAsyncIPC(aep, badge, message);
+    sendAsyncIPC(aep, badge);
 
     return EXCEPTION_NONE;
 }

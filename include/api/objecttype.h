@@ -15,10 +15,12 @@ typedef enum api_object {
     seL4_UntypedObject,
     seL4_TCBObject,
     seL4_EndpointObject,
-    seL4_AsyncEndpointObject,
+    seL4_NotificationObject,
     seL4_CapTableObject,
     seL4_NonArchObjectTypeCount,
 } seL4_ObjectType;
+
+__attribute__((deprecated("use seL4_NotificationObject"))) static const seL4_ObjectType seL4_AsyncEndpointObject = seL4_NotificationObject;
 
 typedef uint32_t api_object_t;
 

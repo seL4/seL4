@@ -83,7 +83,7 @@ static int parse_bool(const char *cmdline, const char *opt)
 }
 #endif
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 static void parse_uint16_array(char* str, uint16_t* array, int array_size)
 {
     char* last;
@@ -113,7 +113,7 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
 {
     int  i;
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
     /* initialise to default */
     for (i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         cmdline_opt->console_port[i] = 0;
@@ -167,7 +167,7 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
             cmdline_opt->max_num_nodes = i;
         }
     }
-    printf("Boot config: max_num_nodes = %d\n", cmdline_opt->max_num_nodes);
+    printf("Boot config: max_num_nodes = %ld\n", cmdline_opt->max_num_nodes);
 
     /* parse num_sh_frames option */
     cmdline_opt->num_sh_frames = 0; /* default */
@@ -177,5 +177,5 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
             cmdline_opt->num_sh_frames = i;
         }
     }
-    printf("Boot config: num_sh_frames = 0x%x\n", cmdline_opt->num_sh_frames);
+    printf("Boot config: num_sh_frames = 0x%lx\n", cmdline_opt->num_sh_frames);
 }

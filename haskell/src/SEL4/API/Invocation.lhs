@@ -39,7 +39,7 @@ The following type can specify any kernel object invocation. It contains physica
 > data Invocation
 >         = InvokeUntyped UntypedInvocation
 >         | InvokeEndpoint (PPtr Endpoint) Word Bool
->         | InvokeAsyncEndpoint (PPtr AsyncEndpoint) Word Word
+>         | InvokeAsyncEndpoint (PPtr AsyncEndpoint) Word 
 >         | InvokeReply (PPtr TCB) (PPtr CTE)
 >         | InvokeDomain (PPtr TCB) Domain
 >         | InvokeTCB TCBInvocation
@@ -79,6 +79,9 @@ The following data type defines the set of possible TCB invocation operations. T
 >             tcNewIPCBuffer :: Maybe (VPtr, Maybe (Capability, PPtr CTE)) }
 >         | Suspend { suspendThread :: PPtr TCB }
 >         | Resume { resumeThread :: PPtr TCB }
+>         | AsyncEndpointControl { 
+>             aepTCB :: PPtr TCB,
+>             aepPtr :: Maybe (PPtr AsyncEndpoint) }
 >         deriving Show
 
 \subsubsection{CNode Invocations}
@@ -162,6 +165,8 @@ This datatype is defined globally over architectures as well as object types.
 >         | TCBSetSpace
 >         | TCBSuspend
 >         | TCBResume
+>         | TCBBindAEP
+>         | TCBUnbindAEP
 >         | CNodeRevoke
 >         | CNodeDelete
 >         | CNodeRecycle

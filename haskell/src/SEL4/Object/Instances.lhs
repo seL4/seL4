@@ -50,7 +50,7 @@ The following are the instances of "Storable" for the four main types of kernel 
 \subsubsection{Asynchronous IPC Endpoint}
 
 > instance PSpaceStorable AsyncEndpoint where 
->     makeObject = IdleAEP
+>     makeObject = AEP IdleAEP Nothing
 >     injectKO   = KOAEndpoint
 >     projectKO o = case o of
 >         KOAEndpoint e -> return e
@@ -140,6 +140,7 @@ By default, new threads are unable to change the security domains of other threa
 >         tcbTimeSlice = timeSlice,
 >         tcbFaultHandler = CPtr 0,
 >         tcbIPCBuffer = VPtr 0,
+>         tcbBoundAEP = Nothing,
 >         tcbContext = newContext }
 >     injectKO   = KOTCB
 >     projectKO o = case o of

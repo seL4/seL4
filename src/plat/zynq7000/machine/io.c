@@ -13,7 +13,7 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 #define UART_CONTROL                 0x00
 #define UART_MODE                    0x04

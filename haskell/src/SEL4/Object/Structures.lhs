@@ -169,22 +169,26 @@ a list of pointers to waiting threads.
 Asynchronous endpoints are represented in the physical memory model 
 using the "AsyncEndpoint" data structure.
 
-> data AsyncEndpoint
+> data AEP
 
 There are three possible states for an asynchronous endpoint:
 \begin{itemize}
 \item idle;
 
->         = IdleAEP  
+>         = IdleAEP
 
 \item waiting for one or more send operations to complete, with a list of  pointers to the waiting threads;
 
 >         | WaitingAEP { aepQueue :: [PPtr TCB] }
 
-\item or active, ready to deliver a notification message consisting of one data word and one message identifier word. 
+\item or active, ready to deliver a notification message consisting of one data word and one message identifier word.
 
->         | ActiveAEP { aepMsgIdentifier :: Word, aepData :: Word }
+>         | ActiveAEP { aepMsgIdentifier :: Word }
 >     deriving Show
+
+> data AsyncEndpoint = AEP {
+>     aepObj :: AEP,
+>     aepBoundTCB :: Maybe (PPtr TCB) }
 
 \end{itemize}
 
@@ -252,6 +256,10 @@ The TCB is used to store various data about the thread's current state:
 \item the virtual address of the thread's IPC buffer, which is readable at user level as thread-local data (by an architecture-defined mechanism), and is also used by the kernel to determine the buffer's offset within its frame;
 
 >         tcbIPCBuffer :: VPtr,
+
+\item the thread's currently bound asynchronous endpoint;
+
+>         tcbBoundAEP :: Maybe (PPtr AsyncEndpoint),
 
 \item and the saved user-level context of the thread.
 
@@ -353,7 +361,7 @@ A user thread may be in the following states:
 \item or in a special state used only by the idle thread.
 
 >     | IdleThreadState
->     deriving Show
+>     deriving (Show, Eq)
 
 \end{itemize}
 

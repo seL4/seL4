@@ -193,18 +193,23 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
 }
 
 static inline void
-seL4_Notify(seL4_CPtr dest, seL4_Word msg)
+seL4_Signal(seL4_CPtr dest)
 {
     register seL4_Word destptr asm("r0") = (seL4_Word)dest;
     register seL4_Word info asm("r1") = seL4_MessageInfo_new(0, 0, 0, 1).words[0];
-    register seL4_Word msg0 asm("r2") = msg;
 
     /* Perform the system call. */
     register seL4_Word scno asm("r7") = seL4_SysSend;
     asm volatile ("swi %[swi_num]"
-                  : "+r" (destptr), "+r" (msg0), "+r" (info)
+                  : "+r" (destptr), "+r" (info)
                   : [swi_num] "i" __SWINUM(seL4_SysSend), "r"(scno)
                   : "memory");
+}
+
+static inline void __attribute__((deprecated("use seL4_Signal")))
+seL4_Notify(seL4_CPtr dest, __attribute__((unused)) seL4_Word msg)
+{
+    seL4_Signal(dest);
 }
 
 static inline seL4_MessageInfo_t
@@ -551,7 +556,7 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg)
 }
 #endif
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 /* set the log index back to 0 */
 static inline void
 seL4_BenchmarkResetLog(void)
@@ -597,8 +602,17 @@ seL4_BenchmarkLogSize(void)
 
 }
 
+static inline void
+seL4_BenchmarkFinalizeLog(void)
+{
+    register seL4_Word scno asm("r7") = seL4_SysBenchmarkFinalizeLog;
+    asm volatile ("swi %[swi_num]"
+                  : /* no outputs */
+                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkFinalizeLog), "r"(scno)
+                 );
+}
 
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
 #undef __SWINUM
 

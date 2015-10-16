@@ -143,7 +143,7 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
 }
 
 static inline void
-seL4_Notify(seL4_CPtr dest, seL4_Word msg)
+seL4_Signal(seL4_CPtr dest)
 {
     asm volatile (
         "pushl %%ebp       \n"
@@ -155,10 +155,15 @@ seL4_Notify(seL4_CPtr dest, seL4_Word msg)
         :
         : "a" (seL4_SysSend),
         "b" (dest),
-        "S" (seL4_MessageInfo_new(0, 0, 0, 1).words[0]),
-        "D" (msg)
+        "S" (seL4_MessageInfo_new(0, 0, 0, 1).words[0])
         : "%ecx", "%edx"
     );
+}
+
+static inline void __attribute__((deprecated("use seL4_Signal")))
+seL4_Notify(seL4_CPtr dest,  __attribute__((unused)) seL4_Word msg)
+{
+    seL4_Signal(dest);
 }
 
 static inline seL4_MessageInfo_t
@@ -543,7 +548,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 }
 #endif
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 static inline void
 seL4_BenchmarkResetLog(void)
 {
@@ -600,5 +605,21 @@ seL4_BenchmarkLogSize(void)
     return ret;
 }
 
-#endif /* CONFIG_BENCHMARK */
+static inline void
+seL4_BenchmarkFinalizeLog(void)
+{
+    asm volatile (
+        "pushl %%ebp        \n"
+        "movl %%esp, %%ecx  \n"
+        "leal 1f, %%edx     \n"
+        "1:                 \n"
+        "sysenter           \n"
+        "popl %%ebp         \n"
+        :
+        : "a" (seL4_SysBenchmarkFinalizeLog)
+        : "%ecx", "%edx", "%edi", "memory"
+    );
+}
+
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 #endif

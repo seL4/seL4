@@ -333,6 +333,10 @@ DEFINES += -DDEBUG
 CFLAGS  += -ggdb -g3
 endif
 
+ifdef RELEASE_PRINTF
+DEFINES += -DRELEASE_PRINTF
+endif
+
 ifdef DANGEROUS_CODE_INJECTION
 DEFINES += -DDANGEROUS_CODE_INJECTION
 endif
@@ -352,6 +356,7 @@ ifeq (${ARCH}, arm)
 CFLAGS += -mtune=${CPU} -marm -march=${ARMV}
 ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
+DEFINES += -DARCH_ARM
 ifeq (${CPU},cortex-a8)
 DEFINES += -DARM_CORTEX_A8
 endif
@@ -361,11 +366,46 @@ endif
 ifeq (${CPU},cortex-a15)
 DEFINES += -DARM_CORTEX_A15
 endif
+ifeq ($(PLAT),imx6)
+DEFINES += -DIMX6
 endif
+ifeq ($(PLAT),imx31)
+DEFINES += -DIMX31
+endif
+ifeq ($(PLAT),pc99)
+DEFINES += -DPC99
+endif
+ifeq ($(PLAT),ixp420)
+DEFINES += -DIXP420
+endif
+ifeq ($(PLAT),omap3)
+DEFINES += -DOMAP3
+endif
+ifeq ($(PLAT),am335x)
+DEFINES += -DAM335X
+endif
+ifeq ($(PLAT),exynos4)
+DEFINES += -DEXYNOS4
+endif
+ifeq ($(PLAT),exynos5)
+DEFINES += -DEXYNOS5
+endif
+ifeq ($(PLAT),apq8064)
+DEFINES += -DAPQ8064
+endif
+ifeq ($(PLAT),zynq7000)
+DEFINES += -DZYNQ7000
+endif
+ifeq ($(PLAT),allwinnerA20)
+DEFINES += -DALLWINNERA20
+endif
+endif # NK_CFLAGS
 
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
+DEFINES += -DARCH_IA32
+LDFLAGS += -Wl,-m,elf_i386 
 endif
 endif
 
@@ -381,6 +421,7 @@ WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
 	${WARNINGS:%=-W%} ${INCLUDES}
 LDFLAGS += -nostdlib -nostdinc
+LDFLAGS += -Wl,--build-id=none
 ASFLAGS += ${INCLUDES}
 
 # Compiler optimisation level. Note that you can't build the kernel with

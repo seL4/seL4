@@ -19,7 +19,7 @@
 \param{int}{size\_bits}{Only valid for objects with various sizes. Explained below.}
 \param{seL4\_CNode}{root}{CPTR to the CNode at the root of the destination CSpace.}
 \param{int}{node\_index}{CPTR to the destination CNode. Resolved relative to the root parameter.}
-\param{int}{node\_depth}{Number of bits of node\_index to tranlate when addressing the destination CNode.}
+\param{int}{node\_depth}{Number of bits of node\_index to translate when addressing the destination CNode.}
 \param{int}{node\_offset}{Number of slots into the node at which capabilities start being placed.}
 \param{int}{num\_objects}{Number of capabilities to create.}
 }
@@ -86,14 +86,14 @@ and~\ref{tab:arm_obj_sizes}.
                 \midrule
                   $n$-bit Untyped       & $2^n$ bytes (where $n \ge 4$) \\
                   $n$-slot CNode        & $16n$ bytes (where $n \ge 2$) \\
-                  Synchronous Endpoint  & $16$ bytes \\
-                  Asynchronous Endpoint & $16$ bytes \\
+                  Endpoint              & $16$ bytes \\
+                  Notification          & $16$ bytes \\
                   IRQ Control           & --- \\
                   IRQ Handler           & --- \\
                 \bottomrule
             \end{tabular}
         \end{center}
-    \caption{Platform Independent Object Sizes}
+    \caption{Platform-independent object sizes.}
     \label{tab:obj_sizes}
 \end{table}
 
@@ -118,7 +118,7 @@ and~\ref{tab:arm_obj_sizes}.
                 \bottomrule
             \end{tabular}
         \end{center}
-    \caption{IA-32 Specific Object Sizes}
+    \caption{IA-32-specific object sizes.}
     \label{tab:intel_obj_sizes}
     }
 \hfill
@@ -141,7 +141,7 @@ and~\ref{tab:arm_obj_sizes}.
                 \bottomrule
             \end{tabular}
         \end{center}
-    \caption{ARM Specific Object Sizes}
+    \caption{ARM-specific object sizes.}
     \label{tab:arm_obj_sizes}
     }
 \end{table}

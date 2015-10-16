@@ -261,31 +261,6 @@ transferCaps(message_info_t info, extra_caps_t caps,
     return message_info_set_msgExtraCaps(info, i);
 }
 
-void
-doAsyncTransfer(word_t badge, word_t msgWord, tcb_t *thread)
-{
-    message_info_t msgInfo;
-    unsigned int msgTransferred;
-
-    if (n_msgRegisters < 1) {
-        word_t *ipcBuffer;
-        ipcBuffer = lookupIPCBuffer(true, thread);
-        if (ipcBuffer != NULL) {
-            ipcBuffer[1] = msgWord;
-            msgTransferred = 1;
-        } else {
-            msgTransferred = 0;
-        }
-    } else {
-        setRegister(thread, msgRegisters[0], msgWord);
-        msgTransferred = 1;
-    }
-    setRegister(thread, badgeRegister, badge);
-    msgInfo = message_info_new(0, 0, 0, msgTransferred);
-    setRegister(thread, msgInfoRegister,
-                wordFromMessageInfo(msgInfo));
-}
-
 static void
 nextDomain(void)
 {

@@ -278,24 +278,41 @@ menu "seL4 System Parameters"
         help
             The number of priority levels per domain
 
-    config BENCHMARK
-        bool "Adds a log buffer to the kernel for instrumentation."
-        default n
-        help    
-            Enables a 1MB log buffer and functions for extracting data from it at user level.
-            Use TRACE_POINT_START and TRACE_POINT_STOP macros for recording data.
+    config MAX_NUM_TRACE_POINTS
+        int "Maximum number of tracepoints"
+        default 0
+        help
+            Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it
+            at user level. Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data,
+            where k is an integer between 0 and this value - 1.
             NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory.
             This is not fully implemented for x86.
+            The maximum number of different trace point identifiers which can be used.
 
 endmenu
 
 menu "Build Options"
-    
-    config DEBUG_BUILD
-        bool "Build the kernel with debug support"
-        default y
-        help
-            Enable the debug facilities in the kernel
+   
+    choice 
+        prompt "Build type - Debug or Release?"
+        default DEBUG_BUILD
+
+        config DEBUG_BUILD
+            bool "Build the kernel with debug support"
+            help
+                Enable the debug facilities in the kernel
+
+        config RELEASE_PRINTF
+            bool "Release build with release_printf"
+            help 
+                Enable 'release_printf' to allow printing in an otherwise 
+                release build.
+
+        config RELEASE_BUILD
+            bool "Release build"
+            help
+                A release kernel with no debugging symbols, print support or asserts.
+    endchoice
 
     config IRQ_REPORTING
         bool "Report suprious or undelivered IRQs"

@@ -115,6 +115,7 @@ receiveIPC(tcb_t *thread, cap_t cap)
 {
     endpoint_t *epptr;
     bool_t diminish;
+    async_endpoint_t *aepptr;
 
     /* Haskell error "receiveIPC: invalid cap" */
     assert(cap_get_capType(cap) == cap_endpoint_cap);
@@ -122,76 +123,82 @@ receiveIPC(tcb_t *thread, cap_t cap)
     epptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
     diminish = !cap_endpoint_cap_get_capCanSend(cap);
 
-    switch (endpoint_ptr_get_state(epptr)) {
-    case EPState_Idle:
-    case EPState_Recv: {
-        tcb_queue_t queue;
+    /* Check for anything waiting in the async endpoint*/
+    aepptr = thread->boundAsyncEndpoint;
+    if (aepptr && async_endpoint_ptr_get_state(aepptr) == AEPState_Active) {
+        completeAsyncIPC(aepptr, thread);
+    } else {
+        switch (endpoint_ptr_get_state(epptr)) {
+        case EPState_Idle:
+        case EPState_Recv: {
+            tcb_queue_t queue;
 
-        /* Set thread state to BlockedOnReceive */
-        thread_state_ptr_set_tsType(&thread->tcbState,
-                                    ThreadState_BlockedOnReceive);
-        thread_state_ptr_set_blockingIPCEndpoint(
-            &thread->tcbState, EP_REF(epptr));
-        thread_state_ptr_set_blockingIPCDiminishCaps(
-            &thread->tcbState, diminish);
+            /* Set thread state to BlockedOnReceive */
+            thread_state_ptr_set_tsType(&thread->tcbState,
+                                        ThreadState_BlockedOnReceive);
+            thread_state_ptr_set_blockingIPCEndpoint(
+                &thread->tcbState, EP_REF(epptr));
+            thread_state_ptr_set_blockingIPCDiminishCaps(
+                &thread->tcbState, diminish);
 
-        scheduleTCB(thread);
+            scheduleTCB(thread);
 
-        /* Place calling thread in endpoint queue */
-        queue = ep_ptr_get_queue(epptr);
-        queue = tcbEPAppend(thread, queue);
-        endpoint_ptr_set_state(epptr, EPState_Recv);
-        ep_ptr_set_queue(epptr, queue);
-        break;
-    }
-
-    case EPState_Send: {
-        tcb_queue_t queue;
-        tcb_t *sender;
-        word_t badge;
-        bool_t canGrant;
-        bool_t do_call;
-
-        /* Get the head of the endpoint queue. */
-        queue = ep_ptr_get_queue(epptr);
-        sender = queue.head;
-
-        /* Haskell error "Send endpoint queue must not be empty" */
-        assert(sender);
-
-        /* Dequeue the first TCB */
-        queue = tcbEPDequeue(sender, queue);
-        ep_ptr_set_queue(epptr, queue);
-
-        if (!queue.head) {
-            endpoint_ptr_set_state(epptr, EPState_Idle);
+            /* Place calling thread in endpoint queue */
+            queue = ep_ptr_get_queue(epptr);
+            queue = tcbEPAppend(thread, queue);
+            endpoint_ptr_set_state(epptr, EPState_Recv);
+            ep_ptr_set_queue(epptr, queue);
+            break;
         }
 
-        /* Get sender IPC details */
-        badge = thread_state_ptr_get_blockingIPCBadge(&sender->tcbState);
-        canGrant =
-            thread_state_ptr_get_blockingIPCCanGrant(&sender->tcbState);
+        case EPState_Send: {
+            tcb_queue_t queue;
+            tcb_t *sender;
+            word_t badge;
+            bool_t canGrant;
+            bool_t do_call;
 
-        /* Do the transfer */
-        doIPCTransfer(sender, epptr, badge,
-                      canGrant, thread, diminish);
+            /* Get the head of the endpoint queue. */
+            queue = ep_ptr_get_queue(epptr);
+            sender = queue.head;
 
-        do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
+            /* Haskell error "Send endpoint queue must not be empty" */
+            assert(sender);
 
-        if (do_call ||
-                fault_get_faultType(sender->tcbFault) != fault_null_fault) {
-            if (canGrant && !diminish) {
-                setupCallerCap(sender, thread);
-            } else {
-                setThreadState(sender, ThreadState_Inactive);
+            /* Dequeue the first TCB */
+            queue = tcbEPDequeue(sender, queue);
+            ep_ptr_set_queue(epptr, queue);
+
+            if (!queue.head) {
+                endpoint_ptr_set_state(epptr, EPState_Idle);
             }
-        } else {
-            setThreadState(sender, ThreadState_Running);
-            switchIfRequiredTo(sender);
-        }
 
-        break;
-    }
+            /* Get sender IPC details */
+            badge = thread_state_ptr_get_blockingIPCBadge(&sender->tcbState);
+            canGrant =
+                thread_state_ptr_get_blockingIPCCanGrant(&sender->tcbState);
+
+            /* Do the transfer */
+            doIPCTransfer(sender, epptr, badge,
+                          canGrant, thread, diminish);
+
+            do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
+
+            if (do_call ||
+                    fault_get_faultType(sender->tcbFault) != fault_null_fault) {
+                if (canGrant && !diminish) {
+                    setupCallerCap(sender, thread);
+                } else {
+                    setThreadState(sender, ThreadState_Inactive);
+                }
+            } else {
+                setThreadState(sender, ThreadState_Running);
+                switchIfRequiredTo(sender);
+            }
+
+            break;
+        }
+        }
     }
 }
 

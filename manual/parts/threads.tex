@@ -67,11 +67,11 @@ set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
 
 Each thread has an associated exception-handler endpoint. If the thread
 causes an exception, the kernel creates an IPC message with the relevant
-details and forwards this to a thread waiting on the endpoint. This
+details and sends this to the endpoint. This
 thread can then take the appropriate action. Fault IPC messages are
 described in \autoref{sec:faults}.
 
-In order to enable exception handlers a capability to the exception-handler
+In order to enable exception handlers, a capability to the exception-handler
 endpoint must exist in the CSpace of the thread that generates the exception.
 The exception-handler
 endpoint can be set with the \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or
@@ -84,7 +84,7 @@ when an exception actually happens and if the lookup fails then no
 exception message is delivered and the thread is suspended indefinitely.
 
 The exception endpoint must have send and grant rights. Replying to the
-IPC restarts the thread. For certain exception types, the contents of
+exception message restarts the thread. For certain exception types, the contents of
 the reply message may be used to set the values in the registers of the
 thread being restarted.
 See \autoref{sec:faults} for details.
@@ -159,7 +159,7 @@ extra capability passed in the \texttt{caps} field in the IPC buffer.
 
 Secondly, a capability fault can occur when \apifunc{seL4\_Wait}{sel4_wait} is
 called on a capability that
-does not exist, is not an endpoint capability or does not have
+does not exist, is not an endpoint or notification capability or does not have
 receive permissions.
 
 Replying to the fault IPC will restart the faulting thread. The contents of the
@@ -170,7 +170,7 @@ IPC message are given in \autoref{tbl:ipc_contents}.\\
 \toprule
 \textbf{Meaning} & \textbf{IPC buffer Location} \\
 \midrule
-Program counter to restart execution at & \ipcbloc{IPCBuffer[0]} \\
+Address at which to restart execution & \ipcbloc{IPCBuffer[0]} \\
 Capability address & \ipcbloc{IPCBuffer[1]}\\
 In receive phase (1 if the fault happened during a wait system call, 0
 otherwise) & \ipcbloc{IPCBuffer[2]}\\

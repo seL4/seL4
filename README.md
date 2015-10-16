@@ -27,8 +27,8 @@ This repository is usually not used in isolation, but as part of the build
 system in a larger project.
 
   [1]: http://sel4.systems/
-  [2]: http://sel4.systems/FAQ/
-  [3]: http://sel4.systems/Contributing/
+  [2]: http://sel4.systems/Info/FAQ/
+  [3]: http://sel4.systems/Community/Contributing/
   [4]: https://zenodo.org/badge/doi/10.5281/zenodo.11247.png
 
 Repository Overview
@@ -73,7 +73,7 @@ build using `make`, follow these instructions:
 
 See the seL4 website for more [comprehensive build instructions][5].
 
- [5]: http://sel4.systems/Download/
+ [5]: http://sel4.systems/Info/GettingStarted/
 
 
 License

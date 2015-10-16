@@ -8,7 +8,7 @@
  * @TAG(GD_GPL)
  */
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
 #include <arch/benchmark.h>
 
@@ -42,4 +42,4 @@ armv_init_ccnt(void)
     );
 }
 
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */

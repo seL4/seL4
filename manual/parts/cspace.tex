@@ -127,8 +127,9 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
 
 As mentioned previously, some capability types have \emph{access
   rights} associated with them. Currently, access rights are
-associated with capabilities for \obj{Endpoint}s, \obj{AsyncEP}s (see
-\autoref{ch:ipc}) and \obj{Page}s (see \autoref{ch:vspace}).  The
+associated with capabilities for \obj{Endpoint}s (see
+\autoref{ch:ipc}), \obj{Notification}s (see
+\autoref{ch:notifications}) and \obj{Page}s (see \autoref{ch:vspace}).  The
 access rights associated with a capability determine the methods that
 can be invoked.  seL4 supports three orthogonal access rights, which
 are Read, Write and Grant.  The meaning of each right is interpreted
@@ -150,7 +151,7 @@ silently downgraded to those of the source.
     Type & Read & Write & Grant \\
     \midrule
     \obj{Endpoint} & Required to wait. & Required to send. & Required to send capabilities (including reply capabilities).\\
-    \obj{AsyncEP} & Required to wait. & Required to send. & N/A \\
+    \obj{Notification} & Required to wait. & Required to signal. & N/A \\
     \obj{Page} & Required to map the page readable. & Required to map the page writable. & N/A \\
     \bottomrule
   \end{tabularx}
@@ -187,7 +188,7 @@ derived once.
     \obj{IO Page Table (IA-32 only)} & Must be mapped & \enummem{seL4\_IllegalOperation}\\
     \fi \bottomrule
   \end{tabularx}
-  \caption{Capability Derivation\label{tab:cap-derivation}}
+  \caption{Capability derivation.\label{tab:cap-derivation}}
 \end{table}
 
 \begin{figure}[th]
@@ -211,11 +212,11 @@ children of the untyped capability they were created from.
 Ordinary original capabilities can have one level of derived
 capabilities.  Further copies of these derived capabilities will
 create siblings, in this case remaining on level 5. There is an
-exception to this scheme for endpoint capabilities --- they support an
-additional layer of depth with the concept of badged and unbadged
-endpoints. The original endpoint capability will be unbadged. Using
-the mint method, a copy of the capability with a specific badge can be
-created. This new, badged capability to the same object is treated as
+exception to this scheme for \obj{Endpoint} and \obj{Notification} capabilities --- they support an
+additional layer of depth though \emph{badging}.
+The original \obj{Endpoint} or \emph{Notification} capability will be unbadged. Using
+the mint method, a copy of the capability with a specific \emph{badge} can be
+created (see \autoref{s:ep-badge}, \autoref{s:notif-badge}). This new, badged capability to the same object is treated as
 an original capability (the ``original badged endpoint capability'')
 and supports one level of derived children like other capabilities.
 
@@ -404,7 +405,7 @@ in this CSpace.
 \begin{figure}[tb]
   \begin{center}
     \includegraphics[scale=0.5]{figs/fig2-1.pdf}
-    \caption{An arbitrary CSpace layout}
+    \caption{An arbitrary CSpace layout.}
     \label{fig2.1}
   \end{center}
 \end{figure}

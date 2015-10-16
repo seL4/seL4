@@ -275,7 +275,7 @@ map_kernel_devices(void)
         )
     );
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
     /* map kernel device: UART */
     map_kernel_frame(
         UART1_PADDR,

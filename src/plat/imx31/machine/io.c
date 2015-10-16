@@ -13,7 +13,7 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 #define URXD  0x00 /* UART Receiver Register */
 #define UTXD  0x40 /* UART Transmitter Register */

@@ -133,7 +133,7 @@ class Type(object):
         if word_num == 0:
             return "({0}) {1}".format(TYPES[WORD_SIZE_BITS], var_name)
         elif word_num == 1:
-            return "({0}) ({1} >> {0})".format(TYPES[WORD_SIZE_BITS], var_name)
+            return "({0}) ({1} >> {2})".format(TYPES[WORD_SIZE_BITS], var_name, WORD_SIZE_BITS)
         
 
 class PointerType(Type):
@@ -746,8 +746,7 @@ def main():
     #
     # Read command line arguments.
     #
-    parser = optparse.OptionParser(
-            usage = "usage: %prog -a <arch> -e [sel4 | libsel4] [-o <ouput file] <input XML> [<input XML> ...]")
+    parser = optparse.OptionParser()
     parser.add_option("-a", "--arch",
             dest="arch", help="Architecture to generate stubs for.")
     parser.add_option("-o", "--output",

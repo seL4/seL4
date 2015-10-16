@@ -13,7 +13,7 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 #define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #define USR                   0x08

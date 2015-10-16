@@ -338,7 +338,7 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
     case 0:
         break;
     default:
-        userError("VCPUWriteReg: Invalid field 0x%x.", field);
+        userError("VCPUWriteReg: Invalid field 0x%lx.", field);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
@@ -374,7 +374,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
     case 0:
         break;
     default:
-        userError("VCPUReadReg: Invalid field 0x%x.", field);
+        userError("VCPUReadReg: Invalid field 0x%lx.", field);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;

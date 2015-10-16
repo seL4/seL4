@@ -18,3 +18,6 @@ PLAT_C_SOURCES += ../exynos_common/mct.c
 ifdef DEBUG
     PLAT_C_SOURCES += ../exynos_common/io.c
 endif
+ifdef RELEASE_PRINTF
+    PLAT_C_SOURCES += machine/io.c
+endif

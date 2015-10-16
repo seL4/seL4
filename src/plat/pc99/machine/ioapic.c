@@ -45,7 +45,7 @@ static uint32_t num_ioapics = 0;
 
 /* In debug mode we track whether an unmasked vector has
  * had its mode set. This is to catch bad user level code */
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 static bool_t done_set_mode[IOAPIC_IRQ_LINES * CONFIG_MAX_NUM_IOAPIC] = { 0 };
 #endif
 
@@ -137,7 +137,7 @@ void ioapic_mask_irq(bool_t mask, irq_t irq)
         ioredtbl_state[irq] |= IOREDTBL_LOW_INTERRUPT_MASK;
     } else {
         ioredtbl_state[irq] &= ~IOREDTBL_LOW_INTERRUPT_MASK;
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
         if (!done_set_mode[irq]) {
             printf("Unmasking IOAPIC source %d on ioapic %d without ever setting its mode!\n", index, ioapic);
             /* Set the flag so we don't repeatedly warn */
@@ -167,7 +167,7 @@ void ioapic_set_mode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
     } else {
         ioredtbl_state[irq] &= ~IOREDTBL_LOW_POLARITY_LOW;
     }
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
     done_set_mode[irq] = 1;
 #endif
     ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_LOW(index));

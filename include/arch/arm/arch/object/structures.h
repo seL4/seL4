@@ -26,16 +26,29 @@
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS+1)
 
+/* Ensure object sizes are sane */
+compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << CTE_SIZE_BITS))
+compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << EP_SIZE_BITS))
+compile_assert(aep_size_sane, sizeof(async_endpoint_t) <= (1 << AEP_SIZE_BITS))
+
 /* TCB CNode: size = 256 bytes */
 /* typedef cte_t[16] tcb_cnode; */
 
-/* TCB: size = 136 bytes, alignment = 256 bytes */
+/* update this when you modify the tcb struct */
+#define EXPECTED_TCB_SIZE 144
+
+/* TCB: alignment = 256 bytes */
 struct tcb {
     /* Saved user-level context of thread, 72 bytes */
     user_context_t tcbContext;
 
     /* Thread state, 12 bytes */
     thread_state_t tcbState;
+
+    /* Async endpoint that this TCB is bound to. If this is set, when this TCB waits on
+     * any sync endpoint, it may receive an async notification from the AEP.
+     * 4 bytes*/
+    async_endpoint_t *boundAsyncEndpoint;
 
     /* Current fault, 8 bytes */
     fault_t tcbFault;
@@ -72,6 +85,11 @@ struct tcb {
 #endif
 };
 typedef struct tcb tcb_t;
+
+/* Ensure TCB size is sane. */
+compile_assert(tcb_size_sane,
+               (1 << TCB_SIZE_BITS) + sizeof(tcb_t) <= (1 << TCB_BLOCK_SIZE_BITS))
+compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
 
 /* ARM-specific object types */
 

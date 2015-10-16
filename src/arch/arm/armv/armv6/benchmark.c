@@ -8,7 +8,7 @@
  * @TAG(GD_GPL)
  */
 
-#ifdef CONFIG_BENCHMARK
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
 void
 armv_init_ccnt(void)
@@ -18,4 +18,4 @@ armv_init_ccnt(void)
 #error "Not implemented"
 }
 
-#endif /* CONFIG_BENCHMARK */
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */

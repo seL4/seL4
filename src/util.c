@@ -13,6 +13,12 @@
 #include <util.h>
 
 /*
+ * memzero need sa custom type that allows us to use a word
+ * that has the aliasing properties of a char.
+ */
+typedef uint32_t __attribute__((__may_alias__)) u32_alias;
+
+/*
  * Zero 'n' bytes of memory starting from 's'.
  *
  * 'n' and 's' must be word aligned.
@@ -33,7 +39,7 @@ memzero(void *s, unsigned int n)
 
     /* Write out words. */
     while (n != 0) {
-        *(uint32_t *)p = 0;
+        *(u32_alias *)p = 0;
         p += 4;
         n -= 4;
     }

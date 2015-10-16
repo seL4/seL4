@@ -35,7 +35,7 @@ in8_phys(uint16_t port)
     return value;
 }
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 void serial_init(uint16_t port);
 void console_putchar(char c);

@@ -15,7 +15,6 @@ include ${SOURCE_ROOT}/src/arch/arm/object/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/kernel/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/model/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/machine/Makefile
-include ${SOURCE_ROOT}/src/arch/arm/fastpath/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/armv/$(ARMV)/Makefile
 
 ARCH_ASM_SOURCES += halt.S idle.S head.S

@@ -67,6 +67,11 @@
 		</method>
 		<method id="TCBSuspend" name="Suspend"/>
 		<method id="TCBResume" name="Resume"/>
+		<method id="TCBBindNotification" name="BindNotification">
+			<param dir="in" name="notification" type="seL4_CPtr"/>
+		</method>
+		<method id="TCBUnbindNotification" name="UnbindNotification">
+		</method>
 	</interface>
 	<interface name="seL4_CNode">
         <method id="CNodeRevoke" name="Revoke">
@@ -140,10 +145,10 @@
         <method id="IRQInterruptControl" name="Control"/>
 	</interface>
     <interface name="seL4_IRQHandler">
-		<method id="IRQAckIRQ" name="Ack"/>
-		<method id="IRQSetIRQHandler" name="SetEndpoint">
-			<param dir="in" name="endpoint" type="seL4_CPtr"/>
-		</method>
+        <method id="IRQAckIRQ" name="Ack"/>
+        <method id="IRQSetIRQHandler" name="SetNotification">
+			<param dir="in" name="notification" type="seL4_CPtr"/>
+        </method>
 		<method id="IRQClearIRQHandler" name="Clear"/>
         <method id="IRQSetMode" name="SetMode">
             <param dir="in" name="level_trigger" type="seL4_Uint32"/>

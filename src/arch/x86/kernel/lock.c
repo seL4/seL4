@@ -8,7 +8,7 @@
  * @TAG(GD_GPL)
  */
 
-#ifdef DEBUG
+#if defined DEBUG || defined RELEASE_PRINTF
 
 #include <arch/kernel/lock.h>
 #include <arch/linker.h>
