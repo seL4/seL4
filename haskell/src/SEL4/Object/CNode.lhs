@@ -252,8 +252,8 @@ If the new capability is an endpoint capability, then it can be an MDB parent if
 
 >                 EndpointCap {} ->
 >                     capEPBadge newCap /= capEPBadge srcCap
->                 AsyncEndpointCap {} ->
->                     capAEPBadge newCap /= capAEPBadge srcCap
+>                 NotificationCap {} ->
+>                     capNtfnBadge newCap /= capNtfnBadge srcCap
 
 If the new capability is the first IRQ handler for a given IRQ, then it can be an MDB parent.
 
@@ -633,8 +633,8 @@ If "a" is an endpoint capability with a badge set, then it is the parent of "b" 
 
 >         EndpointCap { capEPBadge = badge } | badge /= 0 ->
 >             (badge == capEPBadge b) && (not $ mdbFirstBadged mdbB)
->         AsyncEndpointCap { capAEPBadge = badge } | badge /= 0 ->
->             (badge == capAEPBadge b) && (not $ mdbFirstBadged mdbB)
+>         NotificationCap { capNtfnBadge = badge } | badge /= 0 ->
+>             (badge == capNtfnBadge b) && (not $ mdbFirstBadged mdbB)
 
 Otherwise, the object is not an endpoint, and "a" is the parent of "b".
 

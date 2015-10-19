@@ -56,7 +56,7 @@ Library
                             SEL4.Object.Instances
                             SEL4.Object.Structures
                             SEL4.Object.Interrupt
-                            SEL4.Object.AsyncEndpoint
+                            SEL4.Object.Notification
                             SEL4.Object.Untyped
                             SEL4.Model
                             SEL4.Model.StateData

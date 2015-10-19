@@ -141,7 +141,7 @@ truncation of all of its messages.
 
 The message words can be used to transfer arbitrary untyped data. However, since seL4 capabilities are opaque to user threads, a user thread cannot use message words to transfer capabilities to another thread. The kernel provides a small number of \emph{capability registers} in the IPC buffer; if there are valid capability pointers in those registers, and the sender indicates that the message includes capabilities, then the kernel will send the capabilities along with the message. There are two slightly different motivations for sending a capability along with a message; are two corresponding mechanisms for receiving them at the other end. 
 
-An obvious reason to send a capability is to allow the receiver to invoke it in future. For example, a client may send an asynchronous endpoint capability to a server, to be used for notifications when asynchronous operations complete; or a server may return a capability representing a newly created object. For such capabilities, the receiver must specify a CSpace slot that the capability can be copied into; this is done by setting fields in the IPC buffer that correspond to the destination arguments of a CNode Copy operation (see \autoref{sec:overview.cspace.cnodes}).
+An obvious reason to send a capability is to allow the receiver to invoke it in future. For example, a client may send a notification capability to a server, to be used for notifications when asynchronous operations complete; or a server may return a capability representing a newly created object. For such capabilities, the receiver must specify a CSpace slot that the capability can be copied into; this is done by setting fields in the IPC buffer that correspond to the destination arguments of a CNode Copy operation (see \autoref{sec:overview.cspace.cnodes}).
 
 Sometimes, however, a capability is sent solely to prove to the receiver that the sender holds it. This is the case when an operation is being performed that affects two or more objects that are implemented by the same server. In this case, there is no reason to transfer real copies of the capability arguments to the receiver. Therefore, if any of the capability arguments refer to the same endpoint that is being used to send the message, the kernel copies the capability's badge into the receiver's corresponding capability register instead of copying the capability itself.
 
@@ -290,8 +290,8 @@ for a single user-level thread (see \autoref{sec:overview.threads});
 translate CSpace addresses (see \autoref{sec:overview.cspace});
 \item [Endpoint] objects, which contain queues for synchronous IPC (as
 described in \autoref{sec:overview.caps.ipc}); and
-\item [Asynchronous Endpoint] objects, which contain message buffers for
-asynchronous IPC (see \autoref{sec:overview.async-ipc}).
+\item [Notification] objects, which contain message buffers for
+signals (see \autoref{sec:overview.signals}).
 \end{description}
 
 There may also be implementation-specific object types. The untyped
@@ -518,15 +518,15 @@ CNode objects. As the source parameters of such operations are always
 capabilities (in the CSpace), it is not possible to copy mappings between
 different locations in VSpace without possessing an appropriate capability.
 
-\section{Asynchronous IPC}\label{sec:overview.async-ipc}
+\section{Signals}\label{sec:overview.signals}
 
 In some situations, it is appropriate to provide an asynchronous notification
-of an event. The kernel provides an \emph{asynchronous IPC} operation for this
-purpose. It is implemented using \emph{asynchronous endpoint} objects, which
+of an event. The kernel provides a \emph{signal} operation for this
+purpose. It is implemented using \emph{notification} objects, which
 contain a fixed size buffer of two machine words -- identifier and message word. 
-Each asynchronous endpoint capability is marked with a badge, which is set when
+Each notification capability is marked with a badge, which is set when
 the capability is created. A thread may perform \emph{Send} or \emph{Wait}
-operations on an asynchronous endpoint, by invoking the corresponding
+operations on a notification, by invoking the corresponding
 capability. 
 
 When a Send operation is performed, the badge of the invoked capability and the
@@ -538,8 +538,8 @@ buffer is empty, the thread is blocked until a message arrives. However, in
 case of a non-empty buffer, the Wait operation will read the contents of the
 buffer, reset it to zero, and returns the value immediately. 
 
-Similar to synchronous endpoints, multiple threads may perform Send or Wait
-operations on the same asynchronous endpoint. When there are multiple messages
+Similar to synchronous endpoints, multiple threads may perform Signal or Wait
+operations on the same notification. When there are multiple messages
 sent to an endpoint before any thread attempts to receive from it, the
 identifier and the message delivered to the receiver are the bitwise OR of
 capability badges used by the senders and the messages sent by them,
@@ -575,7 +575,7 @@ delivery mechanism becomes invalid (due to a \emph{Clear} operation on the IRQ
 handler capability, or revocation of a capability required for delivery).
 
 In the present Haskell implementation, only one delivery mechanism is supported: 
-delivery via asynchronous IPC to a specified endpoint. This may be complemented
+delivery via signal to a specified notification. This may be complemented
 or replaced by a callback-based delivery model in future versions or
 real-hardware implementations.
 

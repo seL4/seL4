@@ -146,7 +146,7 @@ The "Send" system call sends a message to an object. The object is specified by 
 
 \subsubsection{Call System Call}
 
-The "Call" system call is similar to "Send", but it also requests a reply. For kernel capabilities, the kernel will provide information about the result of the operation directly. For synchronous endpoint capabilities, the receiver of the message will be provided with a single-use reply capability which it can use to send a reply and restart the caller. Asynchronous endpoint and reply capabilities will immediately reply with a 0-length message.
+The "Call" system call is similar to "Send", but it also requests a reply. For kernel capabilities, the kernel will provide information about the result of the operation directly. For synchronous endpoint capabilities, the receiver of the message will be provided with a single-use reply capability which it can use to send a reply and restart the caller. Notification and reply capabilities will immediately reply with a 0-length message.
 
 > handleCall :: KernelP ()
 > handleCall = handleInvocation True True
@@ -189,11 +189,11 @@ The "Wait" system call blocks waiting to receive a message through a specified e
 >                 withoutFailure $ do 
 >                     deleteCallerCap thread
 >                     receiveIPC thread epCap isBlocking
->             AsyncEndpointCap { capAEPCanReceive = True, capAEPPtr = ptr } -> do
->                 aep <- withoutFailure $ getAsyncEP ptr
->                 boundTCB <- return $ aepBoundTCB aep
+>             NotificationCap { capNtfnCanReceive = True, capNtfnPtr = ntfnPtr } -> do
+>                 ntfn <- withoutFailure $ getNotification ntfnPtr
+>                 boundTCB <- return $ ntfnBoundTCB ntfn
 >                 if boundTCB == Just thread || boundTCB == Nothing
->                  then withoutFailure $ receiveAsyncIPC thread epCap isBlocking
+>                  then withoutFailure $ receiveSignal thread epCap isBlocking
 >                  else throw $ MissingCapability { missingCapBitsLeft = 0 }
 >             _ -> throw $ MissingCapability { missingCapBitsLeft = 0 })
 >       `catchFailure` handleFault thread

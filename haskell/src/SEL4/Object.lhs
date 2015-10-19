@@ -10,7 +10,7 @@
 
 > module SEL4.Object (
 >     module SEL4.Object.Endpoint,
->     module SEL4.Object.AsyncEndpoint,
+>     module SEL4.Object.Notification,
 >     module SEL4.Object.CNode,
 >     module SEL4.Object.TCB,
 >     module SEL4.Object.ObjectType,
@@ -20,7 +20,7 @@
 >     ) where
 
 > import SEL4.Object.Endpoint
-> import SEL4.Object.AsyncEndpoint
+> import SEL4.Object.Notification
 > import SEL4.Object.CNode
 > import SEL4.Object.TCB
 > import SEL4.Object.ObjectType
@@ -29,7 +29,7 @@
 > import SEL4.Object.Instances()
 > import SEL4.Object.Structures(
 >     ThreadState(..), SchedulerAction(..),
->     CTE, Endpoint, AsyncEndpoint, TCB, 
+>     CTE, Endpoint, Notification, TCB, 
 >     Capability(..), KernelObject(..), UserData(..),
 >     isNullCap)
 

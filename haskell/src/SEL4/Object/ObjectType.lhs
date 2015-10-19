@@ -35,7 +35,7 @@ We use the C preprocessor to select a target architecture.
 > import SEL4.Object.Untyped
 > import {-# SOURCE #-} SEL4.Object.CNode
 > import SEL4.Object.Endpoint
-> import SEL4.Object.AsyncEndpoint
+> import SEL4.Object.Notification
 > import SEL4.Object.Interrupt
 > import {-# SOURCE #-} SEL4.Object.TCB
 > import {-# SOURCE #-} SEL4.Kernel.Thread
@@ -96,13 +96,13 @@ During the unbounded capability clearing operation, the capability to the slots 
 When the last capability to an endpoint is deleted, any IPC operations currently using it are aborted.
 
 > finaliseCap (EndpointCap { capEPPtr = ptr }) final _ = do
->     when final $ epCancelAll ptr
+>     when final $ cancelAllIPC ptr
 >     return (NullCap, Nothing)
 
-> finaliseCap (AsyncEndpointCap { capAEPPtr = ptr }) final _ = do
+> finaliseCap (NotificationCap { capNtfnPtr = ptr }) final _ = do
 >     when final $ do
->         unbindMaybeAEP ptr
->         aepCancelAll ptr
+>         unbindMaybeNotification ptr
+>         cancelAllSignals ptr
 >     return (NullCap, Nothing)
 
 > finaliseCap (ReplyCap {}) _ _ = return (NullCap, Nothing)
@@ -125,7 +125,7 @@ Threads are treated as special capability nodes; they also become zombies when t
 
 > finaliseCap (ThreadCap { capTCBPtr = tcb}) True _ = do
 >     cte_ptr <- getThreadCSpaceRoot tcb
->     unbindAsyncEndpoint tcb
+>     unbindNotification tcb
 >     suspend tcb
 >     return (Zombie cte_ptr ZombieTCB 5, Nothing)
 
@@ -173,7 +173,7 @@ Zombie capabilities must be transformed back into their original types. Also, TC
 >                 let tcbPtr = (PPtr . fromPPtr) ptr
 >                 tcb <- threadGet id tcbPtr
 >                 flip assert "Zombie cap should point at inactive thread."
->                     $ tcbState tcb == Inactive && isNothing (tcbBoundAEP tcb)
+>                     $ tcbState tcb == Inactive && isNothing (tcbBoundNotification tcb)
 >                 flip assert "Zombie cap should not point at queued thread."
 >                     $ not (tcbQueued tcb)
 >                 curdom <- curDomain
@@ -193,7 +193,7 @@ Recycling a badged synchronous endpoint capability will abort all messages sent 
 Note that if the badge is 0, then this was the original endpoint capability, and all of the messages on it have been cancelled already.
 
 > recycleCap _ (cap@EndpointCap { capEPPtr = ep, capEPBadge = b }) = do
->     when (b /= 0) $ epCancelBadgedSends ep b
+>     when (b /= 0) $ cancelBadgedSends ep b
 >     return cap
 
 Architecture-specific capabilities are handled in the target module.
@@ -220,9 +220,9 @@ rights.
 >                                 capEPCanReceive = True, 
 >                                 capEPCanGrant = True }) = True
 > hasRecycleRights (EndpointCap {}) = False
-> hasRecycleRights (AsyncEndpointCap { capAEPCanSend = True, 
->                                      capAEPCanReceive = True }) = True
-> hasRecycleRights (AsyncEndpointCap {}) = False
+> hasRecycleRights (NotificationCap { capNtfnCanSend = True, 
+>                                      capNtfnCanReceive = True }) = True
+> hasRecycleRights (NotificationCap {}) = False
 > hasRecycleRights (ArchObjectCap cap) = Arch.hasRecycleRights cap
 > hasRecycleRights _ = True
 
@@ -246,8 +246,8 @@ This function assumes that its arguments are in MDB order.
 > sameRegionAs (a@EndpointCap {}) (b@EndpointCap {}) =
 >     capEPPtr a == capEPPtr b
 
-> sameRegionAs (a@AsyncEndpointCap {}) (b@AsyncEndpointCap {}) =
->     capAEPPtr a == capAEPPtr b
+> sameRegionAs (a@NotificationCap {}) (b@NotificationCap {}) =
+>     capNtfnPtr a == capNtfnPtr b
 
 > sameRegionAs (a@CNodeCap {}) (b@CNodeCap {}) =
 >     capCNodePtr a == capCNodePtr b && capCNodeBits a == capCNodeBits b
@@ -307,8 +307,8 @@ Endpoint badges can never be changed once a nonzero badge is set; if the existin
 >     | not preserve && capEPBadge cap == 0 = cap { capEPBadge = new .&. mask badgeBits }
 >     | otherwise = NullCap
 
-> updateCapData preserve new cap@(AsyncEndpointCap {})
->     | not preserve && capAEPBadge cap == 0 = cap { capAEPBadge = new .&. mask badgeBits }
+> updateCapData preserve new cap@(NotificationCap {})
+>     | not preserve && capNtfnBadge cap == 0 = cap { capNtfnBadge = new .&. mask badgeBits }
 >     | otherwise = NullCap
 
 The total of the guard size and the radix of the node cannot exceed the number of bits to be resolved in the entire address space. This prevents an overflow in the encoding used for CNode capabilities in the ARM implementation. Note that a CNode capability violating this restriction could never be used to look up a capability, so nothing is lost by enforcing it on all platforms.
@@ -356,9 +356,9 @@ The "maskCapRights" function restricts the operations that can be performed on a
 >     capEPCanReceive = capEPCanReceive c && capAllowRead r,
 >     capEPCanGrant = capEPCanGrant c && capAllowGrant r }
 
-> maskCapRights r c@(AsyncEndpointCap {}) = c {
->     capAEPCanSend = capAEPCanSend c && capAllowWrite r,
->     capAEPCanReceive = capAEPCanReceive c && capAllowRead r }
+> maskCapRights r c@(NotificationCap {}) = c {
+>     capNtfnCanSend = capNtfnCanSend c && capAllowWrite r,
+>     capNtfnCanReceive = capNtfnCanReceive c && capAllowRead r }
 
 > maskCapRights _ c@(ReplyCap {}) = c
 
@@ -397,9 +397,9 @@ New threads are placed in the current security domain, which must be the domain 
 >         Just EndpointObject -> do
 >             placeNewObject regionBase (makeObject :: Endpoint) 0
 >             return $! EndpointCap (PPtr $ fromPPtr regionBase) 0 True True True
->         Just AsyncEndpointObject -> do
->             placeNewObject (PPtr $ fromPPtr regionBase) (makeObject :: AsyncEndpoint) 0
->             return $! AsyncEndpointCap (PPtr $ fromPPtr regionBase) 0 True True
+>         Just NotificationObject -> do
+>             placeNewObject (PPtr $ fromPPtr regionBase) (makeObject :: Notification) 0
+>             return $! NotificationCap (PPtr $ fromPPtr regionBase) 0 True True
 >         Just CapTableObject -> do
 >             placeNewObject (PPtr $ fromPPtr regionBase) (makeObject :: CTE) userSize
 >             modify (\ks -> ks { gsCNodes =
@@ -425,8 +425,8 @@ The "decodeInvocation" function parses the message, determines the operation tha
 >     return $ InvokeEndpoint
 >         (capEPPtr cap) (capEPBadge cap) (capEPCanGrant cap)
 >
-> decodeInvocation _ _ _ _ cap@(AsyncEndpointCap {capAEPCanSend=True}) _ = do
->     return $ InvokeAsyncEndpoint (capAEPPtr cap) (capAEPBadge cap) 
+> decodeInvocation _ _ _ _ cap@(NotificationCap {capNtfnCanSend=True}) _ = do
+>     return $ InvokeNotification (capNtfnPtr cap) (capNtfnBadge cap) 
 >
 > decodeInvocation _ _ _ slot cap@(ReplyCap {capReplyMaster=False}) _ = do
 >     return $ InvokeReply (capTCBPtr cap) slot
@@ -479,8 +479,8 @@ This function just dispatches invocations to the type-specific invocation functi
 >     sendIPC block call badge canGrant thread ep
 >     return $! []
 > 
-> performInvocation _ _ (InvokeAsyncEndpoint ep badge) = do
->     withoutPreemption $ sendAsyncIPC ep badge 
+> performInvocation _ _ (InvokeNotification ep badge) = do
+>     withoutPreemption $ sendSignal ep badge 
 >     return $! []
 >
 > performInvocation _ _ (InvokeReply thread slot) = withoutPreemption $ do
@@ -516,7 +516,7 @@ The following two functions returns the base and size of the object a capability
 > capUntypedPtr NullCap = error "No valid pointer"
 > capUntypedPtr (UntypedCap { capPtr = p }) = p
 > capUntypedPtr (EndpointCap { capEPPtr = PPtr p }) = PPtr p
-> capUntypedPtr (AsyncEndpointCap { capAEPPtr = PPtr p }) = PPtr p
+> capUntypedPtr (NotificationCap { capNtfnPtr = PPtr p }) = PPtr p
 > capUntypedPtr (ReplyCap { capTCBPtr = PPtr p }) = PPtr p
 > capUntypedPtr (CNodeCap { capCNodePtr = PPtr p }) = PPtr p
 > capUntypedPtr (ThreadCap { capTCBPtr = PPtr p }) = PPtr p
@@ -533,8 +533,8 @@ The following two functions returns the base and size of the object a capability
 >     = 1 `shiftL` (objBits (undefined::CTE) + c)
 > capUntypedSize (EndpointCap {})
 >     = 1 `shiftL` objBits (undefined::Endpoint)
-> capUntypedSize (AsyncEndpointCap {})
->     = 1 `shiftL` objBits (undefined::AsyncEndpoint) 
+> capUntypedSize (NotificationCap {})
+>     = 1 `shiftL` objBits (undefined::Notification) 
 > capUntypedSize (ThreadCap {})
 >     = 1 `shiftL` objBits (undefined::TCB)
 > capUntypedSize (DomainCap {})

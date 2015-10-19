@@ -13,7 +13,7 @@
 
 #include <object/structures.h>
 #include <object/objecttype.h>
-#include <object/asyncendpoint.h>
+#include <object/notification.h>
 #include <object/cnode.h>
 #include <object/endpoint.h>
 #include <object/interrupt.h>

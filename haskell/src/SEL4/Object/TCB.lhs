@@ -46,7 +46,7 @@ This module uses the C preprocessor to select a target architecture.
 > import SEL4.Object.Instances()
 > import SEL4.Object.CNode
 > import SEL4.Object.ObjectType
-> import SEL4.Object.AsyncEndpoint
+> import SEL4.Object.Notification
 > import {-# SOURCE #-} SEL4.Kernel.Thread
 > import {-# SOURCE #-} SEL4.Kernel.CSpace
 > import {-# SOURCE #-} SEL4.Kernel.VSpace
@@ -79,8 +79,8 @@ There are eleven types of invocation for a thread control block. All require wri
 >         TCBSetPriority -> decodeSetPriority args cap
 >         TCBSetIPCBuffer -> decodeSetIPCBuffer args cap slot extraCaps
 >         TCBSetSpace -> decodeSetSpace args cap slot extraCaps
->         TCBBindAEP -> decodeBindAEP cap extraCaps
->         TCBUnbindAEP -> decodeUnbindAEP cap
+>         TCBBindNotification -> decodeBindNotification cap extraCaps
+>         TCBUnbindNotification -> decodeUnbindNotification cap
 >         _ -> throw IllegalOperation
 
 \subsubsection{Reading, Writing and Copying Registers}
@@ -275,45 +275,45 @@ This is to ensure that the source capability is not made invalid by the deletion
 >         tcNewIPCBuffer = Nothing }
 > decodeSetSpace _ _ _ _ = throw TruncatedMessage
 
-\subsubsection{Decode Bound AEP Invocations}
+\subsubsection{Decode Bound Notification Invocations}
 
-> decodeBindAEP :: Capability -> [(Capability, PPtr CTE)] -> KernelF SyscallError TCBInvocation
-> decodeBindAEP cap extraCaps = do
->     -- if no aep cap supplied
+> decodeBindNotification :: Capability -> [(Capability, PPtr CTE)] -> KernelF SyscallError TCBInvocation
+> decodeBindNotification cap extraCaps = do
+>     -- if no notification cap supplied
 >     when (null extraCaps) $ throw TruncatedMessage
 >     let tcb = capTCBPtr cap
->     aEP <- withoutFailure $ getBoundAEP tcb
->     -- check if tcb already has bound aep
->     case aEP of
+>     ntfn <- withoutFailure $ getBoundNotification tcb
+>     -- check if tcb already has bound notification
+>     case ntfn of
 >         Just _ -> throw IllegalOperation
 >         Nothing -> return ()
->     -- get ptr to aep
->     (aepptr, rights) <- case fst (head extraCaps) of
->         AsyncEndpointCap ptr _ _ recv  -> return (ptr, recv)
+>     -- get ptr to notification
+>     (ntfnPtr, rights) <- case fst (head extraCaps) of
+>         NotificationCap ptr _ _ recv  -> return (ptr, recv)
 >         _ -> throw IllegalOperation 
 >     when (not rights) $ throw IllegalOperation
->     -- check if aep is bound
->     -- check if anything is waiting on the aep
->     aep <- withoutFailure $ getAsyncEP aepptr
->     case (aepObj aep, aepBoundTCB aep) of
->         (IdleAEP, Nothing) -> return ()
->         (ActiveAEP _, Nothing) -> return ()
+>     -- check if notification is bound
+>     -- check if anything is waiting on the notification
+>     notification <- withoutFailure $ getNotification ntfnPtr
+>     case (ntfnObj notification, ntfnBoundTCB notification) of
+>         (IdleNtfn, Nothing) -> return ()
+>         (ActiveNtfn _, Nothing) -> return ()
 >         _ -> throw IllegalOperation
->     return AsyncEndpointControl {
->         aepTCB = tcb,
->         aepPtr = Just aepptr }
+>     return NotificationControl {
+>         notificationTCB = tcb,
+>         notificationPtr = Just ntfnPtr }
 
 
-> decodeUnbindAEP :: Capability -> KernelF SyscallError TCBInvocation
-> decodeUnbindAEP cap = do
+> decodeUnbindNotification :: Capability -> KernelF SyscallError TCBInvocation
+> decodeUnbindNotification cap = do
 >     let tcb = capTCBPtr cap
->     aEP <- withoutFailure $ getBoundAEP tcb
->     case aEP of
+>     ntfn <- withoutFailure $ getBoundNotification tcb
+>     case ntfn of
 >         Nothing -> throw IllegalOperation
 >         Just _ -> return ()
->     return AsyncEndpointControl {
->         aepTCB = tcb,
->         aepPtr = Nothing }
+>     return NotificationControl {
+>         notificationTCB = tcb,
+>         notificationPtr = Nothing }
 
 
 \subsection[invoke]{Performing TCB Invocations}
@@ -442,19 +442,19 @@ The "ReadRegisters" and "WriteRegisters" functions are similar to "CopyRegisters
 >     when resumeTarget $ restart dest
 >     return []
 
-\subsubsection{Invoking Async Endpoint Control}
+\subsubsection{Invoking Notication Control}
 
-> -- notes: we know that the aep is not bound, and is not waiting.
+> -- notes: we know that the notification is not bound, and is not waiting.
 > -- BIND
-> invokeTCB (AsyncEndpointControl tcb (Just aepptr)) =
+> invokeTCB (NotificationControl tcb (Just ntfnPtr)) =
 >   withoutPreemption $ do
->     bindAsyncEndpoint tcb aepptr
+>     bindNotification tcb ntfnPtr
 >     return []
 
 > -- UNBIND
-> invokeTCB (AsyncEndpointControl tcb Nothing) =
+> invokeTCB (NotificationControl tcb Nothing) =
 >   withoutPreemption $ do 
->     unbindAsyncEndpoint tcb
+>     unbindNotification tcb
 >     return []
 
 \subsection{Decoding Domain Invocations}

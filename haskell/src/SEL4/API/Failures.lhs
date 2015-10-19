@@ -28,18 +28,18 @@ When user-level code causes a kernel event, processing of that event may fail in
 The procedure for handling faults is defined in \autoref{sec:kernel.faulthandler}; the fault messages sent and received by the kernel are defined in \autoref{sec:api.faults}.
 
 > data Fault
->         = CapFault {
->             capFaultAddress :: CPtr,
->             capFaultInReceivePhase :: Bool,
->             capFaultFailure :: LookupFailure }
+>         = UserException {
+>             userExceptionNumber :: Word,
+>             userExceptionErrorCode :: Word }
 >         | VMFault {
 >             vmFaultAddress :: VPtr,
 >             vmFaultArchData :: [Word] }
+>         | CapFault {
+>             capFaultAddress :: CPtr,
+>             capFaultInReceivePhase :: Bool,
+>             capFaultFailure :: LookupFailure }
 >         | UnknownSyscallException {
 >             unknownSyscallNumber :: Word }
->         | UserException {
->             userExceptionNumber :: Word,
->             userExceptionErrorCode :: Word }
 >         deriving Show
 
 \subsection{Kernel Init Failure}
@@ -53,22 +53,22 @@ Data type InitFailure can be thrown during SysInit
 The following data type defines the set of errors that can be returned from a kernel object method call.
 
 > data SyscallError
->         = InvalidArgument {
+>         = IllegalOperation
+>         | InvalidArgument {
 >             invalidArgumentNumber :: Int }
->         | InvalidCapability {
->             invalidCapNumber :: Int }
->         | IllegalOperation
+>         | TruncatedMessage
+>         | DeleteFirst
 >         | RangeError {
 >             rangeErrorMin, rangeErrorMax :: Word }
->         | AlignmentError
 >         | FailedLookup {
 >             failedLookupWasSource :: Bool,
 >             failedLookupDescription :: LookupFailure }
->         | TruncatedMessage
->         | DeleteFirst
+>         | InvalidCapability {
+>             invalidCapNumber :: Int }
 >         | RevokeFirst
 >         | NotEnoughMemory {
 >             memoryLeft :: Word }
+>         | AlignmentError
 >         deriving Show
 
 \subsubsection{Lookup Failures}
@@ -79,13 +79,9 @@ A capability or virtual address space lookup may fail in several different ways:
 
 \begin{itemize}
 
-\item the root of the address space is not valid (that is, it is not of the correct type, or is not writable for the destination of a CNode operation, or is not readable for the source of a CNode operation);
-
->         = InvalidRoot
-
 \item a slot on the lookup path contains no capability;
 
->         | MissingCapability {
+>         = MissingCapability {
 >             missingCapBitsLeft :: Int }
 
 \item there is no slot at the requested depth, or a page capability was found at the wrong depth;
@@ -93,6 +89,10 @@ A capability or virtual address space lookup may fail in several different ways:
 >         | DepthMismatch {
 >             depthMismatchBitsLeft :: Int,
 >             depthMismatchBitsFound :: Int }
+
+\item the root of the address space is not valid (that is, it is not of the correct type, or is not writable for the destination of a CNode operation, or is not readable for the source of a CNode operation);
+
+>         | InvalidRoot
 
 \item or there is a CNode with a guard making the requested slot unreachable.
 

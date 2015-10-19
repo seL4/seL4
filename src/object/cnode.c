@@ -416,10 +416,10 @@ cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
                              cap_endpoint_cap_get_capEPBadge(srcCap));
         break;
 
-    case cap_async_endpoint_cap:
+    case cap_notification_cap:
         newCapIsRevocable =
-            (cap_async_endpoint_cap_get_capAEPBadge(newCap) !=
-             cap_async_endpoint_cap_get_capAEPBadge(srcCap));
+            (cap_notification_cap_get_capNtfnBadge(newCap) !=
+             cap_notification_cap_get_capNtfnBadge(srcCap));
         break;
 
     case cap_irq_handler_cap:
@@ -853,15 +853,15 @@ isMDBParentOf(cte_t *cte_a, cte_t *cte_b)
         break;
     }
 
-    case cap_async_endpoint_cap: {
+    case cap_notification_cap: {
         word_t badge;
 
-        badge = cap_async_endpoint_cap_get_capAEPBadge(cte_a->cap);
+        badge = cap_notification_cap_get_capNtfnBadge(cte_a->cap);
         if (badge == 0) {
             return true;
         }
         return
-            (badge == cap_async_endpoint_cap_get_capAEPBadge(cte_b->cap)) &&
+            (badge == cap_notification_cap_get_capNtfnBadge(cte_b->cap)) &&
             !mdb_node_get_mdbFirstBadged(cte_b->cteMDBNode);
         break;
     }

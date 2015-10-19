@@ -39,7 +39,7 @@ The following type can specify any kernel object invocation. It contains physica
 > data Invocation
 >         = InvokeUntyped UntypedInvocation
 >         | InvokeEndpoint (PPtr Endpoint) Word Bool
->         | InvokeAsyncEndpoint (PPtr AsyncEndpoint) Word 
+>         | InvokeNotification (PPtr Notification) Word 
 >         | InvokeReply (PPtr TCB) (PPtr CTE)
 >         | InvokeDomain (PPtr TCB) Domain
 >         | InvokeTCB TCBInvocation
@@ -54,22 +54,8 @@ The following type can specify any kernel object invocation. It contains physica
 The following data type defines the set of possible TCB invocation operations. The operations are discussed and defined in more detail in \autoref{sec:object.tcb}.
 
 > data TCBInvocation
->         = ReadRegisters {
->             readRegsThread :: PPtr TCB,
->             readRegsSuspend :: Bool,
->             readRegsLength :: Word,
->             readRegsArch :: Arch.CopyRegisterSets }
->         | WriteRegisters {
->             writeRegsThread :: PPtr TCB,
->             writeRegsResume :: Bool,
->             writeRegsValues :: [Word],
->             writeRegsArch :: Arch.CopyRegisterSets }
->         | CopyRegisters {
->             copyRegsTarget :: PPtr TCB,
->             copyRegsSource :: PPtr TCB,
->             copyRegsSuspendSource, copyRegsResumeTarget :: Bool, 
->             copyRegsTransferFrame, copyRegsTransferInteger :: Bool,
->             copyRegsTransferArch :: Arch.CopyRegisterSets }
+>         = Suspend { suspendThread :: PPtr TCB }
+>         | Resume { resumeThread :: PPtr TCB }
 >         | ThreadControl {
 >             tcThread :: PPtr TCB,
 >             tcThreadCapSlot :: PPtr CTE,
@@ -77,11 +63,25 @@ The following data type defines the set of possible TCB invocation operations. T
 >             tcNewPriority :: Maybe Priority,
 >             tcNewCRoot, tcNewVRoot :: Maybe (Capability, PPtr CTE),
 >             tcNewIPCBuffer :: Maybe (VPtr, Maybe (Capability, PPtr CTE)) }
->         | Suspend { suspendThread :: PPtr TCB }
->         | Resume { resumeThread :: PPtr TCB }
->         | AsyncEndpointControl { 
->             aepTCB :: PPtr TCB,
->             aepPtr :: Maybe (PPtr AsyncEndpoint) }
+>         | NotificationControl { 
+>             notificationTCB :: PPtr TCB,
+>             notificationPtr :: Maybe (PPtr Notification) }
+>         | WriteRegisters {
+>             writeRegsThread :: PPtr TCB,
+>             writeRegsResume :: Bool,
+>             writeRegsValues :: [Word],
+>             writeRegsArch :: Arch.CopyRegisterSets }
+>         | ReadRegisters {
+>             readRegsThread :: PPtr TCB,
+>             readRegsSuspend :: Bool,
+>             readRegsLength :: Word,
+>             readRegsArch :: Arch.CopyRegisterSets }
+>         | CopyRegisters {
+>             copyRegsTarget :: PPtr TCB,
+>             copyRegsSource :: PPtr TCB,
+>             copyRegsSuspendSource, copyRegsResumeTarget :: Bool, 
+>             copyRegsTransferFrame, copyRegsTransferInteger :: Bool,
+>             copyRegsTransferArch :: Arch.CopyRegisterSets }
 >         deriving Show
 
 \subsubsection{CNode Invocations}
@@ -89,20 +89,20 @@ The following data type defines the set of possible TCB invocation operations. T
 The following data type defines the set of possible CNode invocation operations. The operations are discussed and defined in more detail in \autoref{sec:object.cnode}.
 
 > data CNodeInvocation
->         = Revoke { targetSlot :: PPtr CTE }
->         | Delete { targetSlot :: PPtr CTE }
->         | Recycle { targetSlot :: PPtr CTE }
->         | Insert {
+>         = Insert {
 >             insertCap :: Capability,
->             sourceSlot, targetSlot :: PPtr CTE }
->         | Move {
->             moveCap :: Capability,
 >             sourceSlot, targetSlot :: PPtr CTE }
 >         | Rotate {
 >             moveCap1, moveCap2 :: Capability,
 >             sourceSlot, pivotSlot, targetSlot :: PPtr CTE }
+>         | Revoke { targetSlot :: PPtr CTE }
+>         | Move {
+>             moveCap :: Capability,
+>             sourceSlot, targetSlot :: PPtr CTE }
+>         | Recycle { targetSlot :: PPtr CTE }
 >         | SaveCaller {
 >             targetSlot :: PPtr CTE }
+>         | Delete { targetSlot :: PPtr CTE }
 >         deriving Show
 
 \subsubsection{Untyped Invocations}
@@ -124,10 +124,10 @@ The following data type defines the parameters expected for invocations of Untyp
 The following data type defines the set of possible invocations for interrupt controller capabilities.
 
 > data IRQControlInvocation
->         = IssueIRQHandler {
+>         = InterruptControl { interruptControlArch :: Arch.InterruptControl }
+>         | IssueIRQHandler {
 >             issueHandlerIRQ :: IRQ,
 >             issueHandlerSlot, issueHandlerControllerSlot :: PPtr CTE }
->         | InterruptControl { interruptControlArch :: Arch.InterruptControl }
 >         deriving Show
 
 \subsubsection{IRQ Handler Invocations}
@@ -136,15 +136,15 @@ The following data type defines the set of possible invocations for IRQ capabili
 
 > data IRQHandlerInvocation
 >         = AckIRQ { irqHandlerIRQ :: IRQ }
->         | SetIRQHandler {
->             irqHandlerIRQ :: IRQ,
->             setIRQHandlerCap :: Capability,
->             setIRQHandlerSlot :: PPtr CTE }
 >         | ClearIRQHandler { irqHandlerIRQ :: IRQ }
 >         | SetMode {
 >             modeIRQ :: IRQ,
 >             modeTrigger :: Bool,
 >             modePolarity :: Bool }
+>         | SetIRQHandler {
+>             irqHandlerIRQ :: IRQ,
+>             setIRQHandlerCap :: Capability,
+>             setIRQHandlerSlot :: PPtr CTE }
 >         deriving Show
 
 \subsection{Invocation Labels}
@@ -165,8 +165,8 @@ This datatype is defined globally over architectures as well as object types.
 >         | TCBSetSpace
 >         | TCBSuspend
 >         | TCBResume
->         | TCBBindAEP
->         | TCBUnbindAEP
+>         | TCBBindNotification
+>         | TCBUnbindNotification
 >         | CNodeRevoke
 >         | CNodeDelete
 >         | CNodeRecycle

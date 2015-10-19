@@ -337,12 +337,12 @@ handleWait(bool_t isBlocking)
         receiveIPC(ksCurThread, lu_ret.cap, isBlocking);
         break;
 
-    case cap_async_endpoint_cap: {
-        async_endpoint_t *aepptr;
+    case cap_notification_cap: {
+        notification_t *ntfnPtr;
         tcb_t *boundTCB;
-        aepptr = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(lu_ret.cap));
-        boundTCB = (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aepptr);
-        if (unlikely(!cap_async_endpoint_cap_get_capAEPCanReceive(lu_ret.cap)
+        ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(lu_ret.cap));
+        boundTCB = (tcb_t*)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+        if (unlikely(!cap_notification_cap_get_capNtfnCanReceive(lu_ret.cap)
                      || (boundTCB && boundTCB != ksCurThread))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
             current_fault = fault_cap_fault_new(epCPtr, true);
@@ -350,7 +350,7 @@ handleWait(bool_t isBlocking)
             break;
         }
 
-        receiveAsyncIPC(ksCurThread, lu_ret.cap, isBlocking);
+        receiveSignal(ksCurThread, lu_ret.cap, isBlocking);
         break;
     }
     default:

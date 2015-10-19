@@ -36,7 +36,7 @@ This module uses the C preprocessor to select a target architecture.
 
 \subsection{Type Class Instances}
 
-The following are the instances of "Storable" for the four main types of kernel object: synchronous IPC endpoints, asynchronous IPC endpoints, thread control blocks, and capability table entries. 
+The following are the instances of "Storable" for the four main types of kernel object: synchronous IPC endpoints, notification objects, thread control blocks, and capability table entries. 
 
 \subsubsection{Synchronous IPC Endpoint}
 
@@ -47,14 +47,14 @@ The following are the instances of "Storable" for the four main types of kernel 
 >         KOEndpoint e -> return e
 >         _ -> typeError "Endpoint" o
 
-\subsubsection{Asynchronous IPC Endpoint}
+\subsubsection{Notification objects}
 
-> instance PSpaceStorable AsyncEndpoint where 
->     makeObject = AEP IdleAEP Nothing
->     injectKO   = KOAEndpoint
+> instance PSpaceStorable Notification where 
+>     makeObject = NTFN IdleNtfn Nothing
+>     injectKO   = KONotification
 >     projectKO o = case o of
->         KOAEndpoint e -> return e
->         _ -> typeError "AsyncEndpoint" o
+>         KONotification e -> return e
+>         _ -> typeError "Notification" o
 
 \subsubsection{Capability Table Entry}
 
@@ -140,7 +140,7 @@ By default, new threads are unable to change the security domains of other threa
 >         tcbTimeSlice = timeSlice,
 >         tcbFaultHandler = CPtr 0,
 >         tcbIPCBuffer = VPtr 0,
->         tcbBoundAEP = Nothing,
+>         tcbBoundNotification = Nothing,
 >         tcbContext = newContext }
 >     injectKO   = KOTCB
 >     projectKO o = case o of

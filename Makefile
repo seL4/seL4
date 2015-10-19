@@ -582,7 +582,7 @@ arch/api/syscall.h: ${SOURCE_ROOT}/include/api/syscall.xsd ${SOURCE_ROOT}/includ
 PRUNES = $(foreach file,${STATICSOURCES} ${STATICHEADERS}, \
            --prune ${file} )
 
-TOPLEVELTYPES=cte_C tcb_C endpoint_C async_endpoint_C asid_pool_C pte_C \
+TOPLEVELTYPES=cte_C tcb_C endpoint_C notification_C asid_pool_C pte_C \
               pde_C user_data_C
 TOPTYPES = $(foreach tp,${TOPLEVELTYPES}, \
            --toplevel ${tp} )

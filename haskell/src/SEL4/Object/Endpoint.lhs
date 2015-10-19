@@ -13,20 +13,20 @@ This module specifies the contents and behaviour of a synchronous IPC endpoint.
 > module SEL4.Object.Endpoint (
 >         sendIPC, receiveIPC,
 >         replyFromKernel,
->         ipcCancel, epCancelAll, epCancelBadgedSends
+>         cancelIPC, cancelAllIPC, cancelBadgedSends
 >     ) where
 
 \begin{impdetails}
 
 % {-# BOOT-IMPORTS: SEL4.Machine SEL4.Model SEL4.Object.Structures #-}
-% {-# BOOT-EXPORTS: ipcCancel #-}
+% {-# BOOT-EXPORTS: cancelIPC #-}
 
 > import SEL4.API.Types
 > import SEL4.Machine
 > import SEL4.Model
 > import SEL4.Object.Structures
 > import SEL4.Object.Instances()
-> import SEL4.Object.AsyncEndpoint
+> import SEL4.Object.Notification
 > import {-# SOURCE #-} SEL4.Object.CNode
 > import {-# SOURCE #-} SEL4.Object.TCB
 > import {-# SOURCE #-} SEL4.Kernel.Thread
@@ -54,7 +54,7 @@ If the endpoint is idle, and this is a blocking IPC operation, then the current 
 
 >             IdleEP | blocking -> do
 >                 setThreadState (BlockedOnSend {
->                     blockingIPCEndpoint = epptr,
+>                     blockingObject = epptr,
 >                     blockingIPCBadge = badge,
 >                     blockingIPCCanGrant = canGrant,
 >                     blockingIPCIsCall = call }) thread
@@ -64,7 +64,7 @@ If the endpoint is already in the sending state, and this is a blocking IPC oper
 
 >             SendEP queue | blocking -> do
 >                 setThreadState (BlockedOnSend {
->                     blockingIPCEndpoint = epptr,
+>                     blockingObject = epptr,
 >                     blockingIPCBadge = badge,
 >                     blockingIPCCanGrant = canGrant,
 >                     blockingIPCIsCall = call }) thread
@@ -109,8 +109,8 @@ Empty receive endpoints are invalid.
 
 The IPC receive operation is essentially the same as the send operation, but with the send and receive states swapped. There are a few other differences: the badge must be retrieved from the TCB when completing an operation, and is not set when adding a TCB to the queue; also, the operation always blocks if no partner is immediately available; lastly, the receivers thread state does not need updating to Running however the senders state may.
 
-> isActive :: AsyncEndpoint -> Bool 
-> isActive (AEP (ActiveAEP _) _) = True
+> isActive :: Notification -> Bool 
+> isActive (NTFN (ActiveNtfn _) _) = True
 > isActive _ = False
 
 > receiveIPC :: PPtr TCB -> Capability -> Bool -> Kernel ()
@@ -118,23 +118,23 @@ The IPC receive operation is essentially the same as the send operation, but wit
 >         let epptr = capEPPtr cap
 >         ep <- getEndpoint epptr
 >         let diminish = not $ capEPCanSend cap
->         -- check if anything is waiting on aep
->         aepptr <- getBoundAEP thread
->         aep <- maybe (return $ AEP IdleAEP Nothing) (getAsyncEP) aepptr
->         if (isJust aepptr && isActive aep)
->           then completeAsyncIPC (fromJust aepptr) thread
+>         -- check if anything is waiting on bound ntfn
+>         ntfnPtr <- getBoundNotification thread
+>         ntfn <- maybe (return $ NTFN IdleNtfn Nothing) (getNotification) ntfnPtr
+>         if (isJust ntfnPtr && isActive ntfn)
+>           then completeSignal (fromJust ntfnPtr) thread
 >           else case ep of
 >             IdleEP -> case isBlocking of 
 >               True -> do
 >                   setThreadState (BlockedOnReceive {
->                       blockingIPCEndpoint = epptr,
+>                       blockingObject = epptr,
 >                       blockingIPCDiminishCaps = diminish }) thread
 >                   setEndpoint epptr $ RecvEP [thread]
 >               False -> doNBWaitFailedTransfer thread
 >             RecvEP queue -> case isBlocking of
 >               True -> do
 >                   setThreadState (BlockedOnReceive {
->                       blockingIPCEndpoint = epptr,
+>                       blockingObject = epptr,
 >                       blockingIPCDiminishCaps = diminish }) thread
 >                   setEndpoint epptr $ RecvEP $ queue ++ [thread]
 >               False -> doNBWaitFailedTransfer thread 
@@ -181,8 +181,8 @@ A system call reply from the kernel is an IPC transfer with no badge and no addi
 
 If a thread is waiting for an IPC operation, it may be necessary to move the thread into a state where it is no longer waiting; for example if the thread is deleted. The following function, given a pointer to a thread, cancels any IPC that thread is involved in.
 
-> ipcCancel :: PPtr TCB -> Kernel ()
-> ipcCancel tptr = do
+> cancelIPC :: PPtr TCB -> Kernel ()
+> cancelIPC tptr = do
 >         state <- getThreadState tptr
 >         case state of
 
@@ -190,7 +190,7 @@ Threads blocked waiting for endpoints will simply be removed from the endpoint q
 
 >             BlockedOnSend {} -> blockedIPCCancel state
 >             BlockedOnReceive {} -> blockedIPCCancel state
->             BlockedOnAsyncEvent {} -> asyncIPCCancel tptr (waitingOnAsyncEP state)
+>             BlockedOnNotification {} -> cancelSignal tptr (waitingOnNotification state)
 
 Threads that are waiting for an ipc reply or a fault response must have their reply capability revoked.
 
@@ -210,7 +210,7 @@ If the thread is blocking on an endpoint, then the endpoint is fetched and the t
 >                         "replyIPCCancel: expected a reply cap"
 >                     cteDeleteOne callerCap
 >             blockedIPCCancel state = do
->                 let epptr = blockingIPCEndpoint state
+>                 let epptr = blockingObject state
 >                 ep <- getEndpoint epptr
 >                 assert (not $ isIdle ep)
 >                     "blockedIPCCancel: endpoint must not be idle"
@@ -229,8 +229,8 @@ Finally, replace the IPC block with a fault block (which will retry the operatio
 
 If an endpoint is deleted, then every pending IPC operation using it must be cancelled.
 
-> epCancelAll :: PPtr Endpoint -> Kernel ()
-> epCancelAll epptr = do 
+> cancelAllIPC :: PPtr Endpoint -> Kernel ()
+> cancelAllIPC epptr = do 
 >         ep <- getEndpoint epptr 
 >         case ep of 
 >             IdleEP ->   
@@ -244,8 +244,8 @@ If an endpoint is deleted, then every pending IPC operation using it must be can
 
 If a badged endpoint is recycled, then cancel every pending send operation using a badge equal to the recycled capability's badge. Receive operations are not affected.
 
-> epCancelBadgedSends :: PPtr Endpoint -> Word -> Kernel ()
-> epCancelBadgedSends epptr badge = do
+> cancelBadgedSends :: PPtr Endpoint -> Word -> Kernel ()
+> cancelBadgedSends epptr badge = do
 >     ep <- getEndpoint epptr
 >     case ep of
 >         IdleEP -> return ()

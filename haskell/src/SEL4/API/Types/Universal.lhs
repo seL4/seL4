@@ -22,7 +22,7 @@ The following is the definition of the five object types that are always availab
 >         = Untyped
 >         | TCBObject
 >         | EndpointObject
->         | AsyncEndpointObject
+>         | NotificationObject
 >         | CapTableObject
 >         deriving (Enum, Bounded, Eq, Show)
 
@@ -32,8 +32,8 @@ The following is the definition of the five object types that are always availab
 > epSizeBits :: Int
 > epSizeBits = 4
 
-> aepSizeBits :: Int
-> aepSizeBits = 4
+> ntfnSizeBits :: Int
+> ntfnSizeBits = 4
 
 > cteSizeBits :: Int
 > cteSizeBits = 4
@@ -42,7 +42,7 @@ The following is the definition of the five object types that are always availab
 > apiGetObjectSize Untyped size = size
 > apiGetObjectSize TCBObject _ = tcbBlockSizeBits
 > apiGetObjectSize EndpointObject _ = epSizeBits
-> apiGetObjectSize AsyncEndpointObject _ = aepSizeBits
+> apiGetObjectSize NotificationObject _ = ntfnSizeBits
 > apiGetObjectSize CapTableObject size = cteSizeBits + size
 
 

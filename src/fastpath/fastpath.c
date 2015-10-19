@@ -195,8 +195,8 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     }
 
     /* Check there is nothing waiting on the async endpoint */
-    if (ksCurThread->boundAsyncEndpoint &&
-            async_endpoint_ptr_get_state(ksCurThread->boundAsyncEndpoint) == AEPState_Active) {
+    if (ksCurThread->tcbBoundNotification &&
+            notification_ptr_get_state(ksCurThread->tcbBoundNotification) == NtfnState_Active) {
         slowpath(SysReplyWait);
     }
 
@@ -274,7 +274,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
 #endif
 
     /* Set thread state to BlockedOnReceive */
-    thread_state_ptr_mset_blockingIPCEndpoint_tsType(
+    thread_state_ptr_mset_blockingObject_tsType(
         &ksCurThread->tcbState, (word_t)ep_ptr, ThreadState_BlockedOnReceive);
     thread_state_ptr_set_blockingIPCDiminish_np(
         &ksCurThread->tcbState, ! cap_endpoint_cap_get_capCanSend(ep_cap));

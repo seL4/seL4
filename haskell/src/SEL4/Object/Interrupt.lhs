@@ -37,7 +37,7 @@ The architecture-specific definitions are imported qualified with the "Arch" pre
 > import SEL4.API.Invocation
 > import SEL4.API.Types
 > import SEL4.Object.Structures
-> import SEL4.Object.AsyncEndpoint
+> import SEL4.Object.Notification
 > import {-# SOURCE #-} SEL4.Object.CNode
 > import {-# SOURCE #-} SEL4.Kernel.CSpace
 > import {-# SOURCE #-} SEL4.Kernel.Thread
@@ -80,7 +80,7 @@ There is a single, global interrupt controller object; a capability to it is pro
 > invokeIRQControl :: IRQControlInvocation -> KernelP ()
 > invokeIRQControl (IssueIRQHandler irq handlerSlot controlSlot) =
 >   withoutPreemption $ do
->     setIRQState (IRQNotifyAEP) irq
+>     setIRQState (IRQSignal) irq
 >     cteInsert (IRQHandlerCap irq) controlSlot handlerSlot
 > invokeIRQControl (InterruptControl invok) =
 >     Arch.invokeInterruptControl invok
@@ -96,7 +96,7 @@ An IRQ handler capability allows a thread possessing it to set an endpoint which
 >     case (invocationType label,extraCaps) of
 >         (IRQAckIRQ,_) -> return $ AckIRQ irq
 >         (IRQSetIRQHandler,(cap,slot):_) -> case cap of
->                 AsyncEndpointCap { capAEPCanSend = True } ->
+>                 NotificationCap { capNtfnCanSend = True } ->
 >                     return $ SetIRQHandler irq cap slot
 >                 _ -> throw $ InvalidCapability 0
 >         (IRQSetIRQHandler,_) -> throw TruncatedMessage
@@ -132,8 +132,8 @@ When the last IRQ handler capability for a given IRQ is deleted, the capability 
 > deletingIRQHandler irq = do
 >     slot <- getIRQSlot irq
 >     cap <- getSlotCap slot
->     assert (isAsyncEndpointCap cap || isNullCap cap)
->         "Cap in IRQ handler slot should be AsyncEP or Null."
+>     assert (isNotificationCap cap || isNullCap cap)
+>         "Cap in IRQ handler slot should be Notification or Null."
 >     cteDeleteOne slot
 
 > deletedIRQHandler :: IRQ -> Kernel ()
@@ -171,12 +171,12 @@ This function is called when the kernel receives an interrupt event.
 > handleInterrupt irq = do
 >     st <- getIRQState irq
 >     case st of
->         IRQNotifyAEP -> do
+>         IRQSignal -> do
 >             slot <- getIRQSlot irq
 >             cap <- getSlotCap slot
 >             case cap of
->                 AsyncEndpointCap { capAEPCanSend = True } ->
->                     sendAsyncIPC (capAEPPtr cap) (capAEPBadge cap)
+>                 NotificationCap { capNtfnCanSend = True } ->
+>                     sendSignal (capNtfnPtr cap) (capNtfnBadge cap)
 >                 _ -> doMachineOp $ debugPrint $
 >                     "Undelivered interrupt: " ++ show irq
 >             doMachineOp $ maskInterrupt True irq

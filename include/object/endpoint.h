@@ -17,9 +17,9 @@
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
              bool_t canGrant, tcb_t *thread, endpoint_t *epptr);
 void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking);
-void ipcCancel(tcb_t *tptr);
-void epCancelAll(endpoint_t *epptr);
-void epCancelBadgedSends(endpoint_t *epptr, word_t badge);
+void cancelIPC(tcb_t *tptr);
+void cancelAllIPC(endpoint_t *epptr);
+void cancelBadgedSends(endpoint_t *epptr, word_t badge);
 void replyFromKernel_error(tcb_t *thread);
 void replyFromKernel_success_empty(tcb_t *thread);
 
