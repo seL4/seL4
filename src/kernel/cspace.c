@@ -93,7 +93,6 @@ lookupSlotForCNodeOp(bool_t isSource, cap_t root, cptr_t capptr,
         ret.status = EXCEPTION_SYSCALL_ERROR;
         return ret;
     }
-
     res_ret = resolveAddressBits(root, capptr, depth);
     if (unlikely(res_ret.status != EXCEPTION_NONE)) {
         current_syscall_error.type = seL4_FailedLookup;
@@ -136,11 +135,11 @@ lookupPivotSlot(cap_t root, cptr_t capptr, unsigned int depth)
 }
 
 resolveAddressBits_ret_t
-resolveAddressBits(cap_t nodeCap, cptr_t capptr, unsigned int n_bits)
+resolveAddressBits(cap_t nodeCap, cptr_t capptr, word_t n_bits)
 {
     resolveAddressBits_ret_t ret;
-    unsigned int radixBits, guardBits, levelBits, offset;
-    word_t guard, capGuard;
+    word_t radixBits, guardBits, levelBits, guard;
+    word_t capGuard, offset;
     cte_t *slot;
 
     ret.bitsRemaining = n_bits;
@@ -165,7 +164,8 @@ resolveAddressBits(cap_t nodeCap, cptr_t capptr, unsigned int n_bits)
         /* sjw --- the MASK(5) here is to avoid the case where n_bits = 32
            and guardBits = 0, as it violates the C spec to >> by more
            than 31 */
-        guard = (capptr >> ((n_bits - guardBits) & MASK(5))) & MASK(guardBits);
+
+        guard = (capptr >> ((n_bits - guardBits) & MASK(wordRadix))) & MASK(guardBits);
         if (unlikely(guardBits > n_bits || guard != capGuard)) {
             current_lookup_fault =
                 lookup_fault_guard_mismatch_new(capGuard, n_bits, guardBits);
