@@ -104,19 +104,41 @@ create_device_frames(
     return true;
 }
 
+BOOT_CODE static void
+init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs) {
+    word_t i;
+    /* we are guaranteed that we started loading the user image after the kernel
+     * so we only include addresses aboe ui_info.p_reg.end */
+    pptr_t floor = ui_p_reg.end;
+    for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
+        ndks_boot.freemem[i] = REG_EMPTY;
+    }
+    for (i = 0; i < mem_p_regs.count; i++) {
+        pptr_t start = mem_p_regs.list[i].start;
+        pptr_t end = mem_p_regs.list[i].end;
+        if (start < floor) {
+            start = floor;
+        }
+        if (end < floor) {
+            end = floor;
+        }
+        insert_region(paddr_to_pptr_reg((p_region_t){start, end}));
+    }
+}
+
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
 
 BOOT_CODE bool_t
 init_sys_state(
     cpu_id_t      cpu_id,
-    p_region_t    avail_p_reg,
     dev_p_regs_t* dev_p_regs,
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
-    acpi_rmrr_list_t *rmrr_list
+    acpi_rmrr_list_t *rmrr_list,
+    mem_p_regs_t  mem_p_regs
 )
 {
     cap_t         root_cnode_cap;
@@ -127,7 +149,6 @@ init_sys_state(
     cap_t         ipcbuf_cap;
     pptr_t        bi_frame_pptr;
     create_frames_of_region_ret_t create_frames_ret;
-    int i;
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
     vm_attributes_t buffer_attr = {{ 0 }};
     uint32_t paddr;
@@ -135,7 +156,6 @@ init_sys_state(
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
     /* convert from physical addresses to kernel pptrs */
-    region_t avail_reg          = paddr_to_pptr_reg(avail_p_reg);
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
 
@@ -152,11 +172,7 @@ init_sys_state(
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
 
-    /* make the free memory available to alloc_region() */
-    ndks_boot.freemem[0] = avail_reg;
-    for (i = 1; i < MAX_NUM_FREEMEM_REG; i++) {
-        ndks_boot.freemem[i] = REG_EMPTY;
-    }
+    init_freemem(ui_info.p_reg, mem_p_regs);
 
     /* initialise virtual-memory-related data structures (not in abstract spec) */
     if (!init_vm_state()) {

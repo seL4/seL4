@@ -25,6 +25,13 @@ typedef struct multiboot_module {
     uint32_t reserved;
 } PACKED multiboot_module_t;
 
+typedef struct multiboot_mmap {
+    uint32_t size;
+    uint64_t base_addr;
+    uint64_t length;
+    uint32_t type;
+} PACKED multiboot_mmap_t;
+
 typedef struct multiboot_info {
     uint32_t flags;
     uint32_t mem_lower;
@@ -33,11 +40,20 @@ typedef struct multiboot_info {
     uint32_t cmdline;
     uint32_t mod_count;
     uint32_t mod_list;
+    uint32_t syms[4];
+    uint32_t mmap_length;
+    uint32_t mmap_addr;
     /* the multiboot spec includes more fields we don't need */
 } PACKED multiboot_info_t;
 
 #define MULTIBOOT_INFO_MEM_FLAG     BIT(0)
 #define MULTIBOOT_INFO_CMDLINE_FLAG BIT(2)
 #define MULTIBOOT_INFO_MODS_FLAG    BIT(3)
+#define MULTIBOOT_INFO_MMAP_FLAG    BIT(6)
+#define MULTIBOOT_MMAP_USEABLE_TYPE     1
+#define MULTIBOOT_MMAP_RESERVED_TYPE    2
+#define MULTIBOOT_MMAP_ACPI_TYPE        3
+#define MULTIBOOT_MMAP_ACPI_NVS_TYPE    4
+#define MULTIBOOT_MMAP_BAD_TYPE         5
 
 #endif
