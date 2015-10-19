@@ -62,6 +62,6 @@ lookupSlot_ret_t lookupPivotSlot(cap_t root, cptr_t capptr,
                                  unsigned int depth);
 resolveAddressBits_ret_t resolveAddressBits(cap_t nodeCap,
                                             cptr_t capptr,
-                                            unsigned int n_bits);
+                                            word_t n_bits);
 
 #endif
