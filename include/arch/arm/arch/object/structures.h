@@ -35,7 +35,11 @@ compile_assert(aep_size_sane, sizeof(async_endpoint_t) <= (1 << AEP_SIZE_BITS))
 /* typedef cte_t[16] tcb_cnode; */
 
 /* update this when you modify the tcb struct */
+#ifdef ARM_HYP
 #define EXPECTED_TCB_SIZE 144
+#else
+#define EXPECTED_TCB_SIZE 140
+#endif
 
 /* TCB: alignment = 256 bytes */
 struct tcb {
