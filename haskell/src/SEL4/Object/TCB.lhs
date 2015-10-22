@@ -659,31 +659,27 @@ This function will return a physical pointer to a thread's root capability table
 
 > getThreadCSpaceRoot :: PPtr TCB -> Kernel (PPtr CTE)
 > getThreadCSpaceRoot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbCTableSlot
+>         locateSlotTCB thread tcbCTableSlot
 
 This function will return a physical pointer to a thread's page table root, given a pointer to its "TCB".
 
 > getThreadVSpaceRoot :: PPtr TCB -> Kernel (PPtr CTE)
-> getThreadVSpaceRoot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbVTableSlot
+> getThreadVSpaceRoot thread = locateSlotTCB thread tcbVTableSlot
 
 This function will return a physical pointer to a thread's reply slot, which is used when creating or revoking its reply capability.
 
 > getThreadReplySlot :: PPtr TCB -> Kernel (PPtr CTE)
-> getThreadReplySlot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbReplySlot
+> getThreadReplySlot thread = locateSlotTCB thread tcbReplySlot
 
 This function will return a physical pointer to a thread's caller slot, used by the "Call" and "Reply" system calls.
 
 > getThreadCallerSlot :: PPtr TCB -> Kernel (PPtr CTE)
-> getThreadCallerSlot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbCallerSlot
+> getThreadCallerSlot thread = locateSlotTCB thread tcbCallerSlot
 
 This function will return a physical pointer to a thread's IPC buffer slot, used to quickly access the thread's IPC buffer.
 
 > getThreadBufferSlot :: PPtr TCB -> Kernel (PPtr CTE)
-> getThreadBufferSlot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbIPCBufferSlot
+> getThreadBufferSlot thread = locateSlotTCB thread tcbIPCBufferSlot
 
 \subsubsection{Fetching or Modifying TCB Fields}
 

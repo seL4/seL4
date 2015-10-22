@@ -169,7 +169,7 @@ Function pair "createITPDPTs" + "writeITPDPTs" init the memory space for the ini
 >     pdPPtr <- allocRegion pdBits
 >     doKernelOp $ placeNewObject (ptrFromPAddr pdPPtr) (makeObject::PDE) pdSize -- create a pageDirectory
 >     pdCap <- return $ ArchObjectCap $ PageDirectoryCap (ptrFromPAddr pdPPtr) (Just itASID)
->     slot  <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapITPD
+>     slot  <- doKernelOp $ locateSlotCap rootCNCap biCapITPD
 >     doKernelOp $ insertInitCap slot $ pdCap
 >     slotBefore <- noInitFailure $ gets $ initSlotPosCur
 >     let btmVPtr = vptrStart `shiftR` (pdSize + pageBits) `shiftL` (pdSize + pageBits)
@@ -193,20 +193,20 @@ Function pair "createITPDPTs" + "writeITPDPTs" init the memory space for the ini
 >       ptSlots <- noInitFailure $ gets $ bifUIPTCaps . initBootInfo
 >       doKernelOp $ do
 >           (flip mapM) ptSlots (\pos-> do
->               slot <- locateSlot (capCNodePtr rootCNCap) pos
+>               slot <- locateSlotCap rootCNCap pos
 >               cte <- getCTE slot
 >               mapITPTCap pdCap (cteCap cte)
 >            )
 >       frameSlots <- noInitFailure $ gets $ bifUIFrameCaps . initBootInfo
 >       doKernelOp $ do
 >            (flip mapM) frameSlots (\pos -> do
->               slot <- locateSlot (capCNodePtr rootCNCap) pos
+>               slot <- locateSlotCap rootCNCap pos
 >               cte <- getCTE slot
 >               mapITFrameCap pdCap (cteCap cte))
->            slot <- locateSlot (capCNodePtr rootCNCap) biCapITIPCBuf
+>            slot <- locateSlotCap rootCNCap biCapITIPCBuf
 >            cte <- getCTE slot
 >            mapITFrameCap pdCap (cteCap cte)
->            slot <- locateSlot (capCNodePtr rootCNCap) biCapBIFrame
+>            slot <- locateSlotCap rootCNCap biCapBIFrame
 >            cte <- getCTE slot
 >            mapITFrameCap pdCap (cteCap cte)
 >     _ -> fail $ (show pdCap) ++ " is not an ArchObjectCap."
@@ -218,10 +218,10 @@ Function pair "createITASIDPool" + "writeITASIDPool" init the asidpool cap for t
 > createITASIDPool rootCNCap = do
 >     apPPtr <- allocRegion $ objBits (undefined :: ASIDPool)
 >     doKernelOp $ placeNewObject (ptrFromPAddr apPPtr) (makeObject::ASIDPool) 0
->     slot <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapITASIDPool
+>     slot <- doKernelOp $ locateSlotCap rootCNCap biCapITASIDPool
 >     asidPoolCap <- return $ ArchObjectCap $ ASIDPoolCap (ptrFromPAddr apPPtr) 0
 >     doKernelOp $ insertInitCap slot asidPoolCap
->     slot <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapASIDControl
+>     slot <- doKernelOp $ locateSlotCap rootCNCap biCapASIDControl
 >     asidControlCap <- return $ ArchObjectCap $ ASIDControlCap
 >     doKernelOp $ insertInitCap slot asidControlCap
 >     return asidPoolCap
@@ -306,7 +306,7 @@ The address of this ipcbuffer  starts from the end of uiRegion
 >       pptr <- allocFrame
 >       doKernelOp $ doMachineOp $ clearMemory (ptrFromPAddr pptr) (1 `shiftL` pageBits)
 >       cap <- createITFrameCap (ptrFromPAddr pptr) vptr (Just itASID) False
->       slot <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapITIPCBuf
+>       slot <- doKernelOp $ locateSlotCap rootCNCap biCapITIPCBuf
 >       doKernelOp $ insertInitCap slot cap
 >       bootInfo <- noInitFailure $ gets (initBootInfo)
 >       let bootInfo' = bootInfo { bifIPCBufVPtr = vptr}
@@ -328,7 +328,7 @@ Function "createBIFrame" will create the biframe cap for the initial thread
 >           })
 >       doKernelOp $ doMachineOp $ clearMemory (ptrFromPAddr pptr) (1 `shiftL` pageBits)
 >       cap <- createITFrameCap (ptrFromPAddr pptr) vptr (Just itASID) False
->       slot <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapBIFrame
+>       slot <- doKernelOp $ locateSlotCap rootCNCap biCapBIFrame
 >       doKernelOp $ insertInitCap slot cap
 >       return cap
 
@@ -602,8 +602,7 @@ These checks are too expensive to run in haskell. The first function checks that
 > checkPDAt :: PPtr PDE -> Kernel ()
 > checkPDAt _ = return ()
 
-
-> checkPTAt :: PPtr PDE -> Kernel ()
+> checkPTAt :: PPtr PTE -> Kernel ()
 > checkPTAt _ = return ()
 
 > checkPDASIDMapMembership :: PPtr PDE -> [ASID] -> Kernel ()
@@ -626,11 +625,15 @@ The "lookupPTSlot" function locates the page table slot that maps a given virtua
 >     case pde of
 >         PageTablePDE {} -> do
 >             let pt = ptrFromPAddr $ pdeTable pde
->             let ptIndex = fromVPtr $ vptr `shiftR` 12 .&. 0xff
->             let ptSlot = pt + (PPtr $ ptIndex `shiftL` 2)
->             withoutFailure $ checkPTAt pt
->             return ptSlot
+>             withoutFailure $ lookupPTSlotFromPT pt vptr
 >         _ -> throw $ MissingCapability 20
+
+> lookupPTSlotFromPT :: PPtr PTE -> VPtr -> Kernel (PPtr PTE)
+> lookupPTSlotFromPT pt vptr = do
+>     let ptIndex = fromVPtr $ vptr `shiftR` 12 .&. 0xff
+>     let ptSlot = pt + (PPtr $ ptIndex `shiftL` 2)
+>     checkPTAt pt
+>     return ptSlot
 
 Similarly, "lookupPDSlot" locates a slot in the top-level page directory. However, it does not access the kernel state and never throws a fault, so it is not in the kernel monad.
 
@@ -1040,11 +1043,6 @@ round-robin.
 > pageBase :: VPtr -> VMPageSize -> VPtr
 > pageBase vaddr size = vaddr .&. (complement $ mask (pageBitsForSize size))
 
-> lookupPTSlot_nofail :: PPtr PTE -> VPtr -> PPtr PTE
-> lookupPTSlot_nofail pt vptr = 
->     let ptIndex = fromVPtr $ (vptr `shiftR` 12) .&. mask 8
->     in pt + (PPtr $ ptIndex `shiftL` 2) 
-
 > resolveVAddr :: PPtr PDE -> VPtr -> Kernel (Maybe (VMPageSize, PAddr))
 > resolveVAddr pd vaddr = do
 >     let pdSlot = lookupPDSlot pd vaddr
@@ -1054,7 +1052,7 @@ round-robin.
 >         SuperSectionPDE frame _ _ _ _ _ -> return $ Just (ARMSuperSection, frame)
 >         PageTablePDE table _ _ -> do
 >             let pt = ptrFromPAddr table
->             let pteSlot = lookupPTSlot_nofail pt vaddr
+>             pteSlot <- lookupPTSlotFromPT pt vaddr
 >             pte <- getObject pteSlot
 >             case pte of
 >                 LargePagePTE frame _ _ _ _ -> return $ Just (ARMLargePage, frame)

@@ -246,13 +246,13 @@ createInitalThread, setup caps in initial thread, set idleThread to be the curre
 >       let tcbPPtr = ptrFromPAddr tcb'
 >       doKernelOp $ do
 >          placeNewObject tcbPPtr (makeObject::TCB) 0
->          srcSlot <- locateSlot (capCNodePtr rootCNCap) biCapITCNode
+>          srcSlot <- locateSlotCap rootCNCap biCapITCNode
 >          destSlot <- getThreadCSpaceRoot tcbPPtr 
 >          cteInsert rootCNCap srcSlot destSlot
->          srcSlot <- locateSlot (capCNodePtr rootCNCap) biCapITPD
+>          srcSlot <- locateSlotCap rootCNCap biCapITPD
 >          destSlot <- getThreadVSpaceRoot tcbPPtr
 >          cteInsert itPDCap srcSlot destSlot
->          srcSlot <- locateSlot (capCNodePtr rootCNCap) biCapITIPCBuf
+>          srcSlot <- locateSlotCap rootCNCap biCapITIPCBuf
 >          destSlot <- getThreadBufferSlot tcbPPtr
 >          cteInsert ipcBufferCap srcSlot destSlot
 >          threadSet (\t-> t{tcbIPCBuffer = ipcBufferVPtr}) tcbPPtr 
@@ -262,7 +262,7 @@ createInitalThread, setup caps in initial thread, set idleThread to be the curre
 Insert thread into rootCNodeCap 
 
 >          cap <- return $ ThreadCap tcbPPtr 
->          slot <- locateSlot (capCNodePtr rootCNCap) biCapITTCB
+>          slot <- locateSlotCap rootCNCap biCapITTCB
 >          insertInitCap slot cap
 >       return ()
 
@@ -339,7 +339,7 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 
 >       rootCNCap <- doKernelOp $ createObject (fromAPIType CapTableObject) frame levelBits
 >       rootCNCap <- return $ rootCNCap {capCNodeGuardSize = 32 - levelBits}
->       slot <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapITCNode
+>       slot <- doKernelOp $ locateSlotCap rootCNCap biCapITCNode
 >       doKernelOp $ insertInitCap slot rootCNCap
 >       return rootCNCap 
 
@@ -349,7 +349,7 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 >     currSlot <- noInitFailure $ gets initSlotPosCur
 >     maxSlot <- noInitFailure $ gets initSlotPosMax
 >     when (currSlot >= maxSlot) $ throwError InitFailure
->     slot <- doKernelOp $ locateSlot (capCNodePtr rootCNodeCap) currSlot
+>     slot <- doKernelOp $ locateSlotCap rootCNodeCap currSlot
 >     doKernelOp $ insertInitCap slot cap
 >     noInitFailure $ modify (\st -> st { initSlotPosCur = currSlot + 1 })  
 

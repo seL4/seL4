@@ -159,7 +159,7 @@ contains the next capability to be visited.
 
 >         let offset = (fromCPtr capptr `shiftR` (bits-levelBits)) .&. 
 >                    (mask radixBits)
->         slot <- withoutFailure $ locateSlot (capCNodePtr nodeCap) offset
+>         slot <- withoutFailure $ locateSlotCap nodeCap offset
 
 If all of the remaining bits in the address have been resolved, then
 "slot" is the final result.

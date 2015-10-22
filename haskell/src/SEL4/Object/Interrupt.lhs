@@ -158,7 +158,7 @@ This function is called during bootstrap to set up the initial state of the inte
 >         setInterruptState $ InterruptState (ptrFromPAddr frame) irqTable
 >         timerIRQ <- doMachineOp configureTimer
 >         setIRQState IRQTimer timerIRQ
->         slot <- locateSlot (capCNodePtr rootCNCap) biCapIRQC
+>         slot <- locateSlotCap rootCNCap biCapIRQC
 >         insertInitCap slot IRQControlCap
 >     return IRQControlCap
 
@@ -206,6 +206,6 @@ The following functions are used within this module to access the global interru
 > getIRQSlot :: IRQ -> Kernel (PPtr CTE)
 > getIRQSlot irq = do
 >     node <- liftM intStateIRQNode getInterruptState
->     locateSlot node (fromIntegral $ fromEnum irq)
+>     locateSlotBasic node (fromIntegral $ fromEnum irq)
 
 

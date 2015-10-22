@@ -16,7 +16,7 @@ This module contains the data structure and operations for the physical memory m
 >         objBits, injectKO, projectKO, makeObject, loadObject, updateObject,
 >         getObject, setObject, deleteObjects, reserveFrame,
 >         typeError, alignError, alignCheck, sizeCheck,
->         loadWordUser, storeWordUser, placeNewObject
+>         loadWordUser, storeWordUser, placeNewObject,
 >     ) where
 
 \begin{impdetails}
@@ -238,11 +238,12 @@ No type checks are performed when deleting objects; "deleteObjects" simply delet
 >         let ps' = ps { psMap = map' }
 >         modify (\ks -> ks { ksPSpace = ps'})
 
-delete the ghost state just in case the deleted objects have been user pages or cnodes.
-
+Clear the ghost state for user pages and cnodes within the deleted range.
 
 >         modify (\ks -> ks { gsUserPages = (\x -> if inRange x
 >                                    then Nothing else gsUserPages ks x) })
+>         stateAssert (\x -> not (cNodePartialOverlap (gsCNodes x) inRange))
+>             "Object deletion would split CNodes."
 >         modify (\ks -> ks { gsCNodes = (\x -> if inRange x
 >                                    then Nothing else gsCNodes ks x) })
 >         stateAssert ksASIDMapSafe "Object deletion would leave dangling PD pointers"
@@ -251,6 +252,11 @@ In "deleteObjects" above, we assert "deletionIsSafe"; that is, that there are no
 
 > deletionIsSafe :: PPtr a -> Int -> KernelState -> Bool
 > deletionIsSafe _ _ _ = True
+
+We also assert that the ghost CNodes are all either completely deleted or unchanged; no CNode should be partially in the range and partially deleted. Again, this assertion requires logical quantifiers, and is inserted in translation.
+
+> cNodePartialOverlap :: (Word -> Maybe Int) -> (Word -> Bool) -> Bool
+> cNodePartialOverlap _ _ = True
 
 After deletion, we assert ksASIDMapSafe which states that there are page directories at the addresses in the asid map. Again, the real assertion is only inserted in the translation to the theorem prover. 
 

@@ -17,8 +17,8 @@ creating the "Capability" objects used at higher levels of the kernel.
 > module SEL4.Object.CNode (
 >         cteRevoke, cteDelete, cteInsert, cteDeleteOne,
 >         ensureNoChildren, ensureEmptySlot, slotCapLongRunningDelete,
->         getSlotCap, locateSlot, getReceiveSlots,
->         getCTE, setupReplyMaster,
+>         getSlotCap, locateSlotTCB, locateSlotCNode, locateSlotCap,
+>         locateSlotBasic, getReceiveSlots, getCTE, setupReplyMaster,
 >         insertInitCap, decodeCNodeInvocation, invokeCNode,
 >         updateCap, isFinalCapability, createNewObjects
 >     ) where
@@ -26,7 +26,7 @@ creating the "Capability" objects used at higher levels of the kernel.
 \begin{impdetails}
 
 > {-# BOOT-IMPORTS: SEL4.Machine SEL4.API.Types SEL4.API.Failures SEL4.Model SEL4.Object.Structures SEL4.API.Invocation #-}
-> {-# BOOT-EXPORTS: ensureNoChildren getSlotCap locateSlot ensureEmptySlot insertInitCap cteInsert cteDelete cteDeleteOne decodeCNodeInvocation invokeCNode getCTE updateCap isFinalCapability createNewObjects #-}
+> {-# BOOT-EXPORTS: ensureNoChildren getSlotCap locateSlotTCB locateSlotCNode locateSlotCap locateSlotBasic ensureEmptySlot insertInitCap cteInsert cteDelete cteDeleteOne decodeCNodeInvocation invokeCNode getCTE updateCap isFinalCapability createNewObjects #-}
 
 > import SEL4.API.Types
 > import SEL4.API.Failures
@@ -493,7 +493,7 @@ When the "Zombie" is not exposed, a swap operation is performed, moving the "Zom
 When the Zombie is exposed, the reduction operation deletes the contents of one of the slots the Zombie points to. The Zombie is then reduced in size. A corner case exists when the deletion operation, which is unexposed, swaps a Zombie capability discovered back into the slot in which our Zombie was or even clears our slot entirely. In this case the deletion operation may even fail to clear the slot. For this reason, we check whether the Zombie is unchanged before shrinking it.
 
 > reduceZombie z@(Zombie { capZombiePtr = ptr, capZombieNumber = n }) slot True = do
->     endSlot <- withoutPreemption $ locateSlot ptr (fromIntegral (n - 1))
+>     endSlot <- withoutPreemption $ locateSlotCap z (fromIntegral (n - 1))
 >     cteDelete endSlot False
 >     ourCTE  <- withoutPreemption $ getCTE slot
 >     case (cteCap ourCTE) of
@@ -599,7 +599,7 @@ The following function is called when a thread is restarted, to ensure that the 
 
 > setupReplyMaster :: PPtr TCB -> Kernel ()
 > setupReplyMaster thread = do
->     slot <- locateSlot (PPtr $ fromPPtr thread) tcbReplySlot
+>     slot <- locateSlotTCB thread tcbReplySlot
 >     oldCTE <- getCTE slot
 >     when (isNullCap $ cteCap oldCTE) $ do
 >         stateAssert (noReplyCapsFor thread)
@@ -675,12 +675,35 @@ When creating or deriving new capabilities, the destination slot must be empty.
 
 \subsubsection{Locating Slots}
 
-This function is used for locating a slot at a given offset in a CNode.
+These functions are used for locating a slot at a given offset in a CNode. When
+performing an offset into a regular CNode, the offset is checked against the
+ghost state. This check is skipped for the CNode within TCBs.
 
-> locateSlot :: PPtr CTE -> Word -> Kernel (PPtr CTE)
-> locateSlot cnode offset = do
+> locateSlotBasic :: PPtr CTE -> Word -> Kernel (PPtr CTE)
+> locateSlotBasic cnode offset = do
 >         let slotSize = 1 `shiftL` objBits (undefined::CTE)
 >         return $ PPtr $ fromPPtr $ cnode + PPtr (slotSize * offset)
+
+> locateSlotTCB :: PPtr TCB -> Word -> Kernel (PPtr CTE)
+> locateSlotTCB tcb offset = locateSlotBasic (PPtr $ fromPPtr tcb) offset
+
+> locateSlotCNode :: PPtr CTE -> Word -> Kernel (PPtr CTE)
+> locateSlotCNode cnode offset = do
+>         flip stateAssert "locateSlotCNode: must be in CNode"
+>             (\s -> case gsCNodes s (fromPPtr cnode) of
+>                 Nothing -> False
+>                 Just n -> offset < 2 ^ n)
+>         locateSlotBasic cnode offset
+
+> locateSlotCap :: Capability -> Word -> Kernel (PPtr CTE)
+> locateSlotCap (cap @ (CNodeCap {})) offset
+>     = locateSlotCNode (capCNodePtr cap) offset
+> locateSlotCap (cap @ (ThreadCap {})) offset
+>     = locateSlotTCB (capTCBPtr cap) offset
+> locateSlotCap (cap @ (Zombie {})) offset = case capZombieType cap of
+>     ZombieTCB -> locateSlotTCB (PPtr $ fromPPtr $ capZombiePtr cap) offset
+>     ZombieCNode _ -> locateSlotCNode (capZombiePtr cap) offset
+> locateSlotCap _ _ = fail "locateSlotCap: not a cap with slots"
 
 \subsubsection{Loading and Storing Entries}
 
