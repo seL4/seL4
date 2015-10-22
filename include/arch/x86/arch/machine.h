@@ -19,7 +19,8 @@
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/statedata.h>
 
-#define wordBits 32
+#define wordRadix 5
+#define wordBits (1 << wordRadix)
 
 #define IA32_APIC_BASE_MSR      0x01B
 #define IA32_SYSENTER_CS_MSR    0x174

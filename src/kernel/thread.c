@@ -267,7 +267,7 @@ transferCaps(message_info_t info, extra_caps_t caps,
     return message_info_set_msgExtraCaps(info, i);
 }
 
-void doPollFailedTransfer(tcb_t *thread)
+void doNBWaitFailedTransfer(tcb_t *thread)
 {
     /* Set the badge register to 0 to indicate there was no message */
     setRegister(thread, badgeRegister, 0);
@@ -324,18 +324,16 @@ chooseThread(void)
     }
 
     if (likely(ksReadyQueuesL1Bitmap[dom])) {
-        uint32_t l1index = (wordBits - 1) - CLZ(ksReadyQueuesL1Bitmap[dom]);
-        uint32_t l2index = (wordBits - 1) - CLZ(ksReadyQueuesL2Bitmap[dom][l1index]);
+        word_t l1index = (wordBits - 1) - CLZ(ksReadyQueuesL1Bitmap[dom]);
+        word_t l2index = (wordBits - 1) - CLZ(ksReadyQueuesL2Bitmap[dom][l1index]);
         prio = l1index_to_prio(l1index) | l2index;
         thread = ksReadyQueues[ready_queues_index(dom, prio)].head;
         assert(thread);
         assert(isRunnable(thread));
         switchToThread(thread);
-        return;
+    } else {
+        switchToIdleThread();
     }
-
-    switchToIdleThread();
-
 }
 
 void
@@ -442,7 +440,8 @@ scheduleTCB(tcb_t *tptr)
 void
 timerTick(void)
 {
-    if (likely(isRunnable(ksCurThread))) {
+    if (likely(thread_state_get_tsType(ksCurThread->tcbState) ==
+               ThreadState_Running)) {
         if (ksCurThread->tcbTimeSlice > 1) {
             ksCurThread->tcbTimeSlice--;
         } else {

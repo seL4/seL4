@@ -292,7 +292,7 @@ seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
 }
 
 static inline seL4_MessageInfo_t
-seL4_Poll(seL4_CPtr src, seL4_Word* sender)
+seL4_NBWait(seL4_CPtr src, seL4_Word* sender)
 {
     register seL4_Word src_and_badge asm("r0") = (seL4_Word)src;
     register seL4_MessageInfo_t info asm("r1");
@@ -304,11 +304,11 @@ seL4_Poll(seL4_CPtr src, seL4_Word* sender)
     register seL4_Word msg3 asm("r5");
 
     /* Perform the system call. */
-    register seL4_Word scno asm("r7") = seL4_SysPoll;
+    register seL4_Word scno asm("r7") = seL4_SysNBWait;
     asm volatile ("swi %[swi_num]"
                   : "=r" (msg0), "=r" (msg1), "=r" (msg2), "=r" (msg3),
                   "=r" (info), "+r" (src_and_badge)
-                  : [swi_num] "i" __SWINUM(seL4_SysPoll), "r"(scno)
+                  : [swi_num] "i" __SWINUM(seL4_SysNBWait), "r"(scno)
                   : "memory");
 
     /* Write the message back out to memory. */
@@ -322,7 +322,7 @@ seL4_Poll(seL4_CPtr src, seL4_Word* sender)
         *sender = src_and_badge;
     }
     return (seL4_MessageInfo_t) {
-        .words = {info.words[0]}
+        .words = { info.words[0]}
     };
 }
 

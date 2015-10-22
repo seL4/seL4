@@ -27,20 +27,20 @@
 static inline void
 addToBitmap(word_t dom, word_t prio)
 {
-    uint32_t l1index;
+    word_t l1index;
 
     l1index = prio_to_l1index(prio);
     ksReadyQueuesL1Bitmap[dom] |= BIT(l1index);
-    ksReadyQueuesL2Bitmap[dom][l1index] |= BIT(prio & MASK(5));
+    ksReadyQueuesL2Bitmap[dom][l1index] |= BIT(prio & MASK(wordRadix));
 }
 
 static inline void
 removeFromBitmap(word_t dom, word_t prio)
 {
-    uint32_t l1index;
+    word_t l1index;
 
     l1index = prio_to_l1index(prio);
-    ksReadyQueuesL2Bitmap[dom][l1index] &= ~BIT(prio & MASK(5));
+    ksReadyQueuesL2Bitmap[dom][l1index] &= ~BIT(prio & MASK(wordRadix));
     if (unlikely(!ksReadyQueuesL2Bitmap[dom][l1index])) {
         ksReadyQueuesL1Bitmap[dom] &= ~BIT(l1index);
     }

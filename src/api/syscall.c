@@ -294,7 +294,6 @@ handleReply(void)
          * "handleReply: caller must not be the current thread" */
         assert(caller != ksCurThread);
         doReplyTransfer(ksCurThread, caller, callerSlot);
-        //deleteCallerCap(ksCurThread);
         return;
     }
 
@@ -322,13 +321,13 @@ handleWait(bool_t isBlocking)
         /* current_lookup_fault has been set by lookupCap */
         current_fault = fault_cap_fault_new(epCPtr, true);
         handleFault(ksCurThread);
+
         return;
     }
 
     switch (cap_get_capType(lu_ret.cap)) {
     case cap_endpoint_cap:
-
-        if (unlikely(!cap_endpoint_cap_get_capCanReceive(lu_ret.cap) || !isBlocking)) {
+        if (unlikely(!cap_endpoint_cap_get_capCanReceive(lu_ret.cap))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
             current_fault = fault_cap_fault_new(epCPtr, true);
             handleFault(ksCurThread);
@@ -336,7 +335,7 @@ handleWait(bool_t isBlocking)
         }
 
         deleteCallerCap(ksCurThread);
-        receiveIPC(ksCurThread, lu_ret.cap);
+        receiveIPC(ksCurThread, lu_ret.cap, isBlocking);
         break;
 
     case cap_async_endpoint_cap: {
@@ -421,7 +420,7 @@ handleSyscall(syscall_t syscall)
         handleWait(true);
         break;
 
-    case SysPoll:
+    case SysNBWait:
         handleWait(false);
         break;
 

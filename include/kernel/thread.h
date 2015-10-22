@@ -14,9 +14,10 @@
 #include <types.h>
 #include <util.h>
 #include <object/structures.h>
+#include <arch/machine.h>
 
-static inline PURE uint32_t
-ready_queues_index(uint32_t dom, uint32_t prio)
+static inline PURE word_t
+ready_queues_index(word_t dom, word_t prio)
 {
     if (CONFIG_NUM_DOMAINS > 1) {
         return dom * CONFIG_NUM_PRIORITIES + prio;
@@ -26,17 +27,16 @@ ready_queues_index(uint32_t dom, uint32_t prio)
     }
 }
 
-/* the l1 index is the top 32 bits of prio (2^5 == 32) */
-static inline PURE uint32_t
-prio_to_l1index(uint32_t prio)
+static inline PURE word_t
+prio_to_l1index(word_t prio)
 {
-    return (prio >> 5);
+    return (prio >> wordRadix);
 }
 
-static inline PURE uint32_t
-l1index_to_prio(uint32_t l1index)
+static inline PURE word_t
+l1index_to_prio(word_t l1index)
 {
-    return (l1index << 5);
+    return (l1index << wordRadix);
 }
 
 void configureIdleThread(tcb_t *tcb);
@@ -52,7 +52,7 @@ void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                       word_t *receiveBuffer, bool_t diminish);
 void doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
                      word_t *receiverIPCBuffer);
-void doPollFailedTransfer(tcb_t *thread);
+void doNBWaitFailedTransfer(tcb_t *thread);
 void schedule(void);
 void chooseThread(void);
 void switchToThread(tcb_t *thread) VISIBLE;

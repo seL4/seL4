@@ -20,7 +20,7 @@
             <syscall name="Wait"      />
             <syscall name="Reply"     />
             <syscall name="Yield"     />
-            <syscall name="Poll"      />
+            <syscall name="NBWait"      />
         </config>
         <config name="CONFIG_VTX">
             <syscall name="VMEnter"/>

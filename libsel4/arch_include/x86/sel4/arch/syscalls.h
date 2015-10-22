@@ -281,7 +281,7 @@ seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
 }
 
 static inline seL4_MessageInfo_t
-seL4_Poll(seL4_CPtr src, seL4_Word* sender)
+seL4_NBWait(seL4_CPtr src, seL4_Word* sender)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -301,7 +301,7 @@ seL4_Poll(seL4_CPtr src, seL4_Word* sender)
         "=S" (info.words[0]),
         "=D" (mr0),
         "=c" (mr1)
-        : "a" (seL4_SysPoll),
+        : "a" (seL4_SysNBWait),
         "b" (src)
         : "%edx", "memory"
     );

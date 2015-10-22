@@ -20,9 +20,9 @@
             <syscall name="Wait"      />
             <syscall name="Reply"     />
             <syscall name="Yield"     />
-            <syscall name="Poll"      />
+            <syscall name="NBWait"      />
         </config>
-        <config name="ARCH_IA32">
+        <config condition="defined ARCH_IA32">
             <syscall name="VMEnter"/>
         </config>
     </api>

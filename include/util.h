@@ -15,8 +15,7 @@
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
 #define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
-#define CTZ(x) __builtin_ctz(x)
-#define CLZ(x) __builtin_clz(x)
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 #ifndef __ASSEMBLER__
 
@@ -36,7 +35,6 @@
 #define SECTION(sec) __attribute__((__section__(sec)))
 #define UNUSED       __attribute__((unused))
 #define FASTCALL     __attribute__((fastcall))
-#define ARRAY_SIZE(x) (sizeof(typeof(x))/sizeof(typeof((x)[0])))
 
 #define OFFSETOF(type, member) \
     __builtin_offsetof(type, member)
@@ -73,5 +71,22 @@ int CONST char_to_int(char c);
 int PURE str_to_int(const char* str);
 
 #endif /* !__ASSEMBLER__ */
+
+/** MODIFIES: */
+/** DONT_TRANSLATE */
+/** FNSPEC clz_spec:
+  "\<forall>s. \<Gamma> \<turnstile>
+    {\<sigma>. s = \<sigma> \<and> x_' s \<noteq> 0 }
+      \<acute>ret__int :== PROC clz(\<acute>x)
+    \<lbrace> \<acute>ret__int = of_nat (word_clz (x_' s)) \<rbrace>"
+*/
+static inline int
+CONST clz(unsigned int x)
+{
+    return __builtin_clz(x);
+}
+
+#define CTZ(x) __builtin_ctz(x)
+#define CLZ(x) clz(x)
 
 #endif /* __UTIL_H */

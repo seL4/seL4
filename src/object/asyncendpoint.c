@@ -114,7 +114,6 @@ receiveAsyncIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
     switch (async_endpoint_ptr_get_state(aepptr)) {
     case AEPState_Idle:
-        /* Fall through */
     case AEPState_Waiting: {
         tcb_queue_t aep_queue;
 
@@ -133,7 +132,7 @@ receiveAsyncIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             async_endpoint_ptr_set_state(aepptr, AEPState_Waiting);
             aep_ptr_set_queue(aepptr, aep_queue);
         } else {
-            doPollFailedTransfer(thread);
+            doNBWaitFailedTransfer(thread);
         }
         break;
     }

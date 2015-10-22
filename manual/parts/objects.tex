@@ -99,7 +99,7 @@ capabilities through the system is controlled by a
 \label{sec:sys_reply}
 \label{sec:sys_nbsend}
 \label{sec:sys_replywait}
-\label{sec:sys_poll}
+\label{sec:sys_nbwait}
 \label{sec:sys_yield}
 
 The seL4 kernel provides a message-passing service for communication between
@@ -198,9 +198,9 @@ The complete set of system calls is:
     a single kernel system call instead of two. The transition from
     the reply to the wait phase is also atomic.
 
-    \item[\apifunc{seL4\_Poll}{sel4_poll}] is used by a thread to check for
-    messages waiting to be sent through an endpoint without blocking on
-    that endpoint. This system call works only on asynchronous endpoint
+    \item[\apifunc{seL4\_NBWait}{sel4_nbwait}] is used by a thread to check for
+    messages waiting to be sent through an notification without blocking on
+    that notification. This system call works only on notification object 
     capabilities, raising a fault (see section \ref{sec:faults}) when attempted
     with other capability types.
 
