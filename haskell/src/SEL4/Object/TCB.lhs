@@ -593,7 +593,7 @@ The following functions read and set the extra capability fields of the IPC buff
 >         mapM (\cptr ->
 >           capFaultOnFailure cptr False $ lookupCapAndSlot thread cptr) cptrs
 
-The next function is for convience in transferCapsLoop. It is equivalent in
+The next function is for convenience in transferCapsLoop. It is equivalent in
 the sense that 
 getExtraCPtrs (Some buffer) (MI { msgExtraCaps = count }) = 
 mapM (getExtraCPtr buffer) [0..count-1] 
@@ -704,7 +704,7 @@ Actions performed by user-level code, or by the kernel when modifying
 the user-level context of a thread, access only the "UserContext"
 structure in the thread's TCB.
 
-The following function performs an operation in the user-levl context of a specified
+The following function performs an operation in the user-level context of a specified
 thread. The operation is represented by a function in the
 "State" monad operating on the thread's "UserContext" structure.
 

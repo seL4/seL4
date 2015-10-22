@@ -555,7 +555,7 @@ Create a set of new capabilities (and possibly the objects backing them) and
 insert them in given empty slots. The required parameters are an object type;
 a pointer to the source capability's slot; a list of pointers to empty slots;
 the region of memory where the objects will be created; and an integer
-repesenting the size of the objects to be created.
+representing the size of the objects to be created.
 
 > createNewObjects :: ObjectType -> PPtr CTE -> [PPtr CTE] -> PPtr () -> Int -> Kernel ()
 > createNewObjects newType srcSlot destSlots regionBase userSizeBits = do
@@ -566,7 +566,7 @@ repesenting the size of the objects to be created.
 >       insertNewCap srcSlot slot cap)
 >       [0 .. fromIntegral (length destSlots - 1)] destSlots
 
-The following function inserts a new revokable cap as a child of another.
+The following function inserts a new revocable cap as a child of another.
 
 > insertNewCap :: PPtr CTE -> PPtr CTE -> Capability -> Kernel ()
 > insertNewCap parent slot cap = do
@@ -616,7 +616,7 @@ This function is used in the assertion above; it returns "True" if no reply capa
 \subsection{MDB Operations}
 \label{sec:object.cnode.mdb}
 
-The Mapping Database (MDB) is used to keep track of the derivation hierachy of seL4 capabilities, so all existing capabilities to an object can be revoked before that object is reused or deleted. A similar structure is used in L4Ka::Pistachio\cite{Pistachio:URL} to support that kernel's Unmap operation.
+The Mapping Database (MDB) is used to keep track of the derivation hierarchy of seL4 capabilities, so all existing capabilities to an object can be revoked before that object is reused or deleted. A similar structure is used in L4Ka::Pistachio\cite{Pistachio:URL} to support that kernel's Unmap operation.
 
 The MDB is a double-linked list that is equivalent to a prefix traversal of the derivation tree. It is possible to compare two capabilities to determine whether one is an ancestor of the other in the derivation tree.
 

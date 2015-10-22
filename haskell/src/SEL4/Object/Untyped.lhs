@@ -49,7 +49,7 @@ retype operation will generate one or more new capabilities, which are inserted 
 \caption{Invoking an Untyped Object}\label{fig:derive}
 \end{figure}
 
-We start by defining a simple function to align one value to a power-of-two boundard. In particular, this function aligns its first argument up to the next power-of-two specified by the second argument.
+We start by defining a simple function to align one value to a power-of-two boundary. In particular, this function aligns its first argument up to the next power-of-two specified by the second argument.
 
 > alignUp :: Word -> Int -> Word
 > alignUp baseValue alignment =

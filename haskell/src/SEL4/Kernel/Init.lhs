@@ -152,7 +152,7 @@ Configure the physical address space model. This is an implementation detail spe
 >         initPSpace $ map (\(s, e) -> (ptrFromPAddr s, ptrFromPAddr e))
 >                          allMemory
 
-Warning: Currenlty we assume that the bootFrames (probably get from qemu) is always []
+Warning: Currently we assume that the bootFrames (probably get from qemu) is always []
 
 Warning: We used to reserve the PSpace regions used by the kernel and the root task. This must be done first, since some of these reserved regions will be turned into kernel objects by "initKernelVM", below. Again, this is specific to the Haskell model's implementation and is not relevant on real hardware.
 
@@ -168,7 +168,7 @@ Set up the kernel's VM environment.
 \end{impdetails}
 
 \begin{impdetails}
-FIXME: is the follwing still necessary in haskell?
+FIXME: is the following still necessary in haskell?
 
 >         initCPU
 >         initPlatform
@@ -210,7 +210,7 @@ Set the NullCaps in BIFrame
 
 >                 finaliseBIFrame
 
-Searilize BIFrame into memory 
+Serialize BIFrame into memory 
 
 >                 syncBIFrame
 
@@ -237,7 +237,7 @@ We should clean cache, but we did not have a good interface so far.
 >         either (\_ -> fail $ "initFailure") return result
 >     return ()
 
-createInitalThread, setup caps in initial thread, set idleThread to be the curerntThread and switch to the initialThread.
+createInitalThread, setup caps in initial thread, set idleThread to be the currentThread and switch to the initialThread.
 
 > createInitialThread :: Capability -> Capability -> Capability -> VPtr -> VPtr -> VPtr-> KernelInit ()
 > createInitialThread rootCNCap itPDCap ipcBufferCap entry ipcBufferVPtr biFrameVPtr = do
