@@ -136,7 +136,7 @@ setVCR(uint32_t x)
 static inline uint32_t
 getBVR(int n)
 {
-    uint32_t x;
+    uint32_t x = 0;
 
     switch (n) {
     case 0:
@@ -204,7 +204,7 @@ setBVR(int n, uint32_t x)
 static inline uint32_t
 getBCR(int n)
 {
-    uint32_t x;
+    uint32_t x = 0;
 
     switch (n) {
     case 0:
