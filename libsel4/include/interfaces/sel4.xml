@@ -134,7 +134,12 @@
 			<param dir="in" name="index" type="seL4_Word"/>
 			<param dir="in" name="depth" type="seL4_Uint8"/>
 		</method>
-	</interface>
+        <method id="CNodeSaveTCBCaller" name="SaveTCBCaller">
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Uint8"/>
+            <param dir="in" name="tcb" type="seL4_CPtr" />
+        </method>
+    </interface>
     <interface name="seL4_IRQControl">
 		<method id="IRQIssueIRQHandler" name="Get">
 			<param dir="in" name="irq" type="int"/>

@@ -188,7 +188,7 @@ The complete set of system calls is:
     There is space for only one reply capability in each thread's TCB, so the
     \apifunc{seL4\_Reply}{sel4_reply} syscall can be used to reply to the most
     recent caller only. The \apifunc{seL4\_CNode\_SaveCaller}{cnode_savecaller}
-    method that will be described later can be used to save the reply
+    and \apifunc{seL4\_CNode\_SaveTCBCaller} methods that will be described later can be used to save the reply
     capability into regular capability space, where it can be used with
     \apifunc{seL4\_Send}{sel4_send}.
 

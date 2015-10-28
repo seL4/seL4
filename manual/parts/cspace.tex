@@ -117,6 +117,10 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
   kernel-generated reply capability of the current thread from the
   special \obj{TCB} slot it was created in, into the designated CSpace
   slot.
+\item[\apifunc{seL4\_CNode\_SaveTCBCaller}{cnode_savetcbcaller}] moves a
+  kernel-generated reply capability of a target thread from the
+  special \obj{TCB} slot it was created in, into the designated CSpace
+  slot.
 \item[\apifunc{seL4\_CNode\_Recycle}{cnode_recycle}] is similar to
   \apifunc{seL4\_CNode\_Revoke}{cnode_revoke}, except that it also
   resets some aspects of the object to its initial state.
