@@ -189,7 +189,7 @@ vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size 68 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
@@ -213,6 +213,9 @@ struct tcb {
 
     /* Priority, 1 byte (packed to 4) */
     prio_t tcbPriority;
+
+    /* max priority, 1 byte (packed to 4) */
+    prio_t tcbMaxPriority;
 
     /* Timeslice remaining, 4 bytes */
     word_t tcbTimeSlice;

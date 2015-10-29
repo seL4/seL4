@@ -20,7 +20,6 @@
 #include <api/constants.h>
 
 /* cap_rights_t defined in api/types.bf */
-
 typedef word_t prio_t;
 typedef word_t  dom_t;
 typedef word_t cptr_t;

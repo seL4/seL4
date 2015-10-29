@@ -25,3 +25,11 @@ block message_info {
     field msgExtraCaps 2
     field msgLength 7
 }
+
+-- TCB priority
+block seL4_Prio {
+    field prio     8
+    field max_prio 8
+    padding        16
+}
+

@@ -24,6 +24,36 @@
 #include <util.h>
 #include <string.h>
 
+#define NULL_PRIO (seL4_Prio_new(seL4_MinPrio, seL4_MinPrio))
+
+static exception_t
+checkMaxPrio(prio_t max_prio)
+{
+    /* can't create a thread with max_prio greater than our own */
+    if (max_prio > ksCurThread->tcbMaxPriority) {
+        userError("TCB Configure: Requested priority %lu too high (max %lu).",
+                  (unsigned long) max_prio, (unsigned long) ksCurThread->tcbMaxPriority);
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+checkPrio(prio_t prio)
+{
+    /* can't create a thread with prio greater than our own */
+    if (prio > ksCurThread->tcbMaxPriority) {
+        userError("TCB Configure: Requested priority %lu too high (max %lu).",
+                  (unsigned long) prio, (unsigned long) ksCurThread->tcbMaxPriority);
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    return EXCEPTION_NONE;
+}
+
 static inline void
 addToBitmap(word_t dom, word_t prio)
 {
@@ -319,6 +349,9 @@ decodeTCBInvocation(word_t label, word_t length, cap_t cap,
     case TCBSetPriority:
         return decodeSetPriority(cap, length, buffer);
 
+    case TCBSetMaxPriority:
+        return decodeSetMaxPriority(cap, length, buffer);
+
     case TCBSetIPCBuffer:
         return decodeSetIPCBuffer(cap, length, slot, extraCaps, buffer);
 
@@ -486,8 +519,9 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     cap_t bufferCap, cRootCap, vRootCap;
     deriveCap_ret_t dc_ret;
     cptr_t faultEP;
-    word_t prio;
     word_t cRootData, vRootData, bufferAddr;
+    seL4_Prio_t prio;
+    exception_t status;
 
     if (length < 5 || rootCaps.excaprefs[0] == NULL
             || rootCaps.excaprefs[1] == NULL
@@ -497,11 +531,11 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    faultEP    = getSyscallArg(0, buffer);
-    prio       = getSyscallArg(1, buffer);
-    cRootData  = getSyscallArg(2, buffer);
-    vRootData  = getSyscallArg(3, buffer);
-    bufferAddr = getSyscallArg(4, buffer);
+    faultEP       = getSyscallArg(0, buffer);
+    prio.words[0] = getSyscallArg(1, buffer);
+    cRootData     = getSyscallArg(2, buffer);
+    vRootData     = getSyscallArg(3, buffer);
+    bufferAddr    = getSyscallArg(4, buffer);
 
     cRootSlot  = rootCaps.excaprefs[0];
     cRootCap   = rootCaps.excaprefs[0]->cap;
@@ -510,13 +544,14 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     bufferSlot = rootCaps.excaprefs[2];
     bufferCap  = rootCaps.excaprefs[2]->cap;
 
-    prio = prio & MASK(8);
+    status = checkPrio(seL4_Prio_get_prio(prio));
+    if (status != EXCEPTION_NONE) {
+        return status;
+    }
 
-    if (prio > ksCurThread->tcbPriority) {
-        userError("TCB Configure: Requested priority %d too high (max %d).",
-                  (int)prio, (int)(ksCurThread->tcbPriority));
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
+    status = checkMaxPrio(seL4_Prio_get_max_prio(prio));
+    if (status != EXCEPTION_NONE) {
+        return status;
     }
 
     if (bufferAddr == 0) {
@@ -590,6 +625,8 @@ exception_t
 decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
 {
     prio_t newPrio;
+    exception_t status;
+    tcb_t *tcb;
 
     if (length < 1) {
         userError("TCB SetPriority: Truncated message.");
@@ -597,22 +634,49 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    newPrio = getSyscallArg(0, buffer);
+    newPrio = (prio_t) getSyscallArg(0, buffer);
 
-    /* assuming here seL4_MaxPrio is of form 2^n - 1 */
-    newPrio = newPrio & MASK(8);
+    status = checkPrio(newPrio);
+    if (status != EXCEPTION_NONE) {
+        return status;
+    }
 
-    if (newPrio > ksCurThread->tcbPriority) {
-        userError("TCB SetPriority: Requested priority %d too high (max %d).",
-                  (int)newPrio, (int)ksCurThread->tcbPriority);
-        current_syscall_error.type = seL4_IllegalOperation;
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeTCB_ThreadControl(
+               tcb, NULL,
+               0, seL4_Prio_new(newPrio, tcb->tcbMaxPriority),
+               cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
+               0, cap_null_cap_new(),
+               NULL, thread_control_update_priority);
+}
+
+exception_t
+decodeSetMaxPriority(cap_t cap, word_t length, word_t *buffer)
+{
+    prio_t newMaxPrio;
+    exception_t status;
+    tcb_t *tcb;
+
+    if (length < 1) {
+        userError("TCB SetPriority: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    newMaxPrio = (prio_t) getSyscallArg(0, buffer);
+
+    status = checkMaxPrio(newMaxPrio);
+    if (status != EXCEPTION_NONE) {
+        return status;
+    }
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
-               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
-               0, newPrio,
+               tcb, NULL,
+               0, seL4_Prio_new(tcb->tcbPriority, newMaxPrio),
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(),
@@ -658,7 +722,7 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                0,
-               0, /* used to be prioInvalid, but it doesn't matter */
+               NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                cptr_bufferPtr, bufferCap,
@@ -736,7 +800,7 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                faultEP,
-               0, /* used to be prioInvalid, but it doesn't matter */
+               NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                0, cap_null_cap_new(), NULL, thread_control_update_space);
@@ -871,7 +935,7 @@ invokeTCB_Resume(tcb_t *thread)
 
 exception_t
 invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
-                        cptr_t faultep, prio_t priority,
+                        cptr_t faultep, seL4_Prio_t priority,
                         cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
                         cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
                         word_t bufferAddr, cap_t bufferCap,

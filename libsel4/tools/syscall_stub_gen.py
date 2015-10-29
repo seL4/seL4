@@ -207,6 +207,7 @@ types = [
         Type("seL4_CapRights", WORD_SIZE_BITS),
 
         # seL4 Structures
+        BitFieldType("seL4_Prio_t", WORD_SIZE_BITS),
         BitFieldType("seL4_CapData_t", WORD_SIZE_BITS),
 
         # Object types

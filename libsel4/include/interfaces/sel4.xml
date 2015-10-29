@@ -43,7 +43,7 @@
 		</method>
 		<method id="TCBConfigure" name="Configure">
 			<param dir="in" name="fault_ep" type="seL4_Word"/>
-			<param dir="in" name="priority" type="seL4_Uint8"/>
+			<param dir="in" name="priority" type="seL4_Prio_t"/>
 			<param dir="in" name="cspace_root" type="seL4_CNode"/>
 			<param dir="in" name="cspace_root_data" type="seL4_CapData_t"/>
 			<param dir="in" name="vspace_root" type="seL4_CNode"/>
@@ -53,7 +53,10 @@
 		</method>
 		<method id="TCBSetPriority" name="SetPriority">
 			<param dir="in" name="priority" type="seL4_Uint8"/>
-		</method>
+        </method>
+        <method id="TCBSetMaxPriority" name="SetMaxPriority">
+            <param dir="in" name="max_priority" type="seL4_Uint8"/>
+        </method>
 		<method id="TCBSetIPCBuffer" name="SetIPCBuffer">
 			<param dir="in" name="buffer" type="seL4_Word"/>
 			<param dir="in" name="bufferFrame" type="seL4_CPtr"/>

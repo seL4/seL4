@@ -38,3 +38,10 @@ block seL4_MessageInfo {
     field extraCaps 2
     field length 7
 }
+
+block seL4_Prio {
+    field prio     8
+    field max_prio 8
+    padding        16
+}
+

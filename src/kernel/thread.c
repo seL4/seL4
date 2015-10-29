@@ -359,10 +359,11 @@ setDomain(tcb_t *tptr, dom_t dom)
 }
 
 void
-setPriority(tcb_t *tptr, prio_t prio)
+setPriority(tcb_t *tptr, seL4_Prio_t prio)
 {
     tcbSchedDequeue(tptr);
-    tptr->tcbPriority = prio;
+    tptr->tcbPriority = seL4_Prio_get_prio(prio);
+    tptr->tcbMaxPriority = seL4_Prio_get_max_prio(prio);
     if (isRunnable(tptr)) {
         tcbSchedEnqueue(tptr);
     }
