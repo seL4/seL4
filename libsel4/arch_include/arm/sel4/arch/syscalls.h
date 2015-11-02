@@ -17,15 +17,6 @@
 
 #define __SWINUM(x) ((x) & 0x00ffffff)
 
-#ifndef __OPTIMIZE__
-/* With no optimisations (-O0) GCC's register allocator clobbers the
- * syscall arguments before you reach the 'swi' and you invoke the kernel
- * incorrectly.
- * See SELFOUR-187
- */
-#warning you are compiling with -O0; syscall WithMRs variants will not work
-#endif
-
 static inline void
 seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
@@ -47,6 +38,7 @@ seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
                   : "memory");
 }
 
+#ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
 static inline void
 seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
@@ -81,6 +73,7 @@ seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                   : [swi_num] "i" __SWINUM(seL4_SysSend), "r"(scno)
                   : "memory");
 }
+#endif
 
 static inline void
 seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
@@ -103,6 +96,7 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
                   : "memory");
 }
 
+#ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
 static inline void
 seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                    seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
@@ -137,6 +131,7 @@ seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                   : [swi_num] "i" __SWINUM(seL4_SysNBSend), "r"(scno)
                   : "memory");
 }
+#endif
 
 static inline void
 seL4_Reply(seL4_MessageInfo_t msgInfo)
@@ -158,6 +153,7 @@ seL4_Reply(seL4_MessageInfo_t msgInfo)
                   : "memory");
 }
 
+#ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
 static inline void
 seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
                   seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
@@ -191,6 +187,7 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
                   : [swi_num] "i" __SWINUM(seL4_SysReply), "r"(scno)
                   : "memory");
 }
+#endif
 
 static inline void
 seL4_Signal(seL4_CPtr dest)
@@ -247,6 +244,7 @@ seL4_Wait(seL4_CPtr src, seL4_Word* sender)
     };
 }
 
+#ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
 static inline seL4_MessageInfo_t
 seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
@@ -290,6 +288,7 @@ seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
         .words = {info.words[0]}
     };
 }
+#endif
 
 static inline seL4_MessageInfo_t
 seL4_NBWait(seL4_CPtr src, seL4_Word* sender)
@@ -357,6 +356,7 @@ seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
     };
 }
 
+#ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
 static inline seL4_MessageInfo_t
 seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
@@ -409,6 +409,7 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
         .words = {info.words[0]}
     };
 }
+#endif
 
 static inline seL4_MessageInfo_t
 seL4_ReplyWait(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
@@ -445,6 +446,7 @@ seL4_ReplyWait(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
     };
 }
 
+#ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
 static inline seL4_MessageInfo_t
 seL4_ReplyWaitWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
                       seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
@@ -501,6 +503,7 @@ seL4_ReplyWaitWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *send
         .words = {info.words[0]}
     };
 }
+#endif
 
 static inline void
 seL4_Yield(void)
