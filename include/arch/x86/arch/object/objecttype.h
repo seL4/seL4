@@ -31,4 +31,14 @@ exception_t Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr, cte_
 void Arch_prepareThreadDelete(tcb_t *thread);
 word_t Arch_getObjectSize(word_t t);
 
+/* the following functions are specific to 32-bit and 64-bit */
+
+deriveCap_ret_t Mode_deriveCap(cte_t *slot, cap_t cap);
+cap_t Mode_finaliseCap(cap_t cap, bool_t final);
+cap_t Mode_recycleCap(bool_t is_final, cap_t cap);
+cap_t CONST Mode_resetMemMapping(cap_t cap);
+bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b);
+cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize);
+exception_t Mode_decodeInvocation(word_t label, unsigned int length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
+word_t Mode_getObjectSize(word_t t);
 #endif

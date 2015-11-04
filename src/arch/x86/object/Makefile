@@ -10,6 +10,10 @@
 
 DIRECTORIES += src/arch/$(ARCH)/object
 
+ifeq ($(__X86_32__),y)
+ARCH_C_SOURCES += object/objecttype_32.c
+endif
+
 ARCH_C_SOURCES += object/interrupt.c \
                   object/ioport.c \
                   object/objecttype.c \
