@@ -21,9 +21,9 @@
 
 /* cap_rights_t defined in api/types.bf */
 
-typedef uint32_t prio_t;
-typedef uint32_t  dom_t;
-typedef uint32_t cptr_t;
+typedef word_t prio_t;
+typedef word_t  dom_t;
+typedef word_t cptr_t;
 
 enum domainConstants {
     minDom = 0,

@@ -283,8 +283,8 @@ acpi_madt_scan(
         if (strncmp(acpi_str_apic, acpi_madt_mapped->header.signature, 4) == 0) {
             printf("ACPI: MADT paddr=0x%x\n", (unsigned int)acpi_madt);
             printf("ACPI: MADT vaddr=0x%x\n", (unsigned int)acpi_madt_mapped);
-            printf("ACPI: MADT apic_addr=0x%lx\n", acpi_madt_mapped->apic_addr);
-            printf("ACPI: MADT flags=0x%lx\n", acpi_madt_mapped->flags);
+            printf("ACPI: MADT apic_addr=0x%x\n", acpi_madt_mapped->apic_addr);
+            printf("ACPI: MADT flags=0x%x\n", acpi_madt_mapped->flags);
 
             acpi_madt_header = (acpi_madt_header_t*)(acpi_madt_mapped + 1);
 
@@ -305,7 +305,7 @@ acpi_madt_scan(
                 }
                 case MADT_IOAPIC:
                     printf(
-                        "ACPI: MADT_IOAPIC ioapic_id=%d ioapic_addr=0x%lx gsib=%ld\n",
+                        "ACPI: MADT_IOAPIC ioapic_id=%d ioapic_addr=0x%x gsib=%d\n",
                         ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_id,
                         ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_addr,
                         ((acpi_madt_ioapic_t*)acpi_madt_header)->gsib
@@ -318,7 +318,7 @@ acpi_madt_scan(
                     }
                     break;
                 case MADT_ISO:
-                    printf("ACIP: MADT_ISO bus=%d source=%d gsi=%ld flags=0x%x\n",
+                    printf("ACIP: MADT_ISO bus=%d source=%d gsi=%d flags=0x%x\n",
                            ((acpi_madt_iso_t*)acpi_madt_header)->bus,
                            ((acpi_madt_iso_t*)acpi_madt_header)->source,
                            ((acpi_madt_iso_t*)acpi_madt_header)->gsi,
@@ -332,7 +332,7 @@ acpi_madt_scan(
         }
     }
 
-    printf("ACPI: %ld CPU(s) detected\n", num_cpu);
+    printf("ACPI: %d CPU(s) detected\n", num_cpu);
 
     return num_cpu;
 }
@@ -432,7 +432,7 @@ acpi_dmar_scan(
                     insert_dev_p_reg((p_region_t) {
                         .start = acpi_dmar_rmrr->reg_base[0], .end = acpi_dmar_rmrr->reg_limit[0] + 2
                     });
-                    printf("ACPI: RMRR providing region 0x%lx-0x%lx\n", acpi_dmar_rmrr->reg_base[0], acpi_dmar_rmrr->reg_limit[0]);
+                    printf("ACPI: RMRR providing region 0x%x-0x%x\n", acpi_dmar_rmrr->reg_base[0], acpi_dmar_rmrr->reg_limit[0]);
 
                     for (i = 0; i <= (acpi_dmar_header->length - sizeof(acpi_dmar_rmrr_t)) / sizeof(acpi_dmar_devscope_t); i++) {
                         acpi_dmar_devscope = &acpi_dmar_rmrr->devscope_0 + i;
@@ -488,7 +488,7 @@ acpi_dmar_scan(
             }
         }
     }
-    printf("ACPI: %ld IOMMUs detected\n", *num_drhu);
+    printf("ACPI: %d IOMMUs detected\n", *num_drhu);
 }
 
 #endif /* IOMMU */

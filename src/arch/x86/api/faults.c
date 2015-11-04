@@ -124,18 +124,18 @@ void handleKernelException(
     unsigned int i;
 
     printf("\n========== KERNEL EXCEPTION ==========\n");
-    printf("Vector:  0x%lx\n", vector);
-    printf("ErrCode: 0x%lx\n", errcode);
-    printf("EIP:     0x%lx\n", eip);
-    printf("ESP:     0x%lx\n", esp);
-    printf("EFLAGS:  0x%lx\n", eflags);
-    printf("CR0:     0x%lx\n", cr0);
-    printf("CR2:     0x%lx (page-fault address)\n", cr2);
-    printf("CR3:     0x%lx (page-directory physical address)\n", cr3);
-    printf("CR4:     0x%lx\n", cr4);
+    printf("Vector:  0x%x\n", vector);
+    printf("ErrCode: 0x%x\n", errcode);
+    printf("EIP:     0x%x\n", eip);
+    printf("ESP:     0x%x\n", esp);
+    printf("EFLAGS:  0x%x\n", eflags);
+    printf("CR0:     0x%x\n", cr0);
+    printf("CR2:     0x%x (page-fault address)\n", cr2);
+    printf("CR3:     0x%x (page-directory physical address)\n", cr3);
+    printf("CR4:     0x%x\n", cr4);
     printf("\nStack Dump:\n");
     for (i = 0; i < 20; i++) {
-        printf("*0x%lx == 0x%lx\n", esp + i * 4, *(uint32_t*)(esp + i * 4));
+        printf("*0x%x == 0x%x\n", esp + i * 4, *(uint32_t*)(esp + i * 4));
     }
     printf("\nHalting...\n");
 }
