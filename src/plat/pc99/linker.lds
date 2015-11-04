@@ -13,11 +13,18 @@
 ENTRY(_start)
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
+#if defined(X86_32)
 PADDR_BASE = 0x00000000;
 PADDR_LOAD = 0x00100000;
 KERNEL_BASE  = 0xe0000000;
 OUTPUT_ARCH(i386)
 OUTPUT_FORMAT(elf32-i386)
+#elif defined(X86_64)
+PADDR_BASE = 0x00000000;
+PADDR_LOAD = 0x00100000;
+KERNEL_BASE = 0xffffffff80000000;
+OUTPUT_FORMAT(elf64-x86-64)
+#endif
 
 KERNEL_OFFSET = KERNEL_BASE - PADDR_BASE;
 
