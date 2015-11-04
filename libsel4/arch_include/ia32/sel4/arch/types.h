@@ -43,7 +43,7 @@ typedef seL4_Word seL4_CPtr;
 typedef seL4_CPtr seL4_IA32_ASIDControl;
 typedef seL4_CPtr seL4_IA32_ASIDPool;
 typedef seL4_CPtr seL4_IA32_IOSpace;
-typedef seL4_CPtr seL4_IA32_IOPort;
+typedef seL4_CPtr seL4_X86_IOPort;
 typedef seL4_CPtr seL4_IA32_Page;
 typedef seL4_CPtr seL4_IA32_PageDirectory;
 typedef seL4_CPtr seL4_IA32_PageTable;

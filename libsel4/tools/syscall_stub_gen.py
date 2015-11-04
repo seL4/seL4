@@ -241,10 +241,10 @@ def InitTypes():
 
         "ia32" : [
             Type("seL4_IA32_VMAttributes", WORD_SIZE_BITS),
+            CapType("seL4_X86_IOPort"),
             CapType("seL4_IA32_ASIDControl"),
             CapType("seL4_IA32_ASIDPool"),
             CapType("seL4_IA32_IOSpace"),
-            CapType("seL4_IA32_IOPort"),
             CapType("seL4_IA32_Page"),
             CapType("seL4_IA32_PageDirectory"),
             CapType("seL4_IA32_PageTable"),

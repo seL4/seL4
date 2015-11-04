@@ -17,6 +17,6 @@
 
 #define NUM_IO_PORTS BIT(16)
 
-exception_t decodeIA32PortInvocation(word_t label, word_t length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
+exception_t decodeX86PortInvocation(word_t label, word_t length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
 
 #endif
