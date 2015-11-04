@@ -21,3 +21,11 @@ Arch_decodeIRQControlInvocation(word_t label, word_t length,
     current_syscall_error.type = seL4_IllegalOperation;
     return EXCEPTION_SYSCALL_ERROR;
 }
+
+
+exception_t Arch_decodeIRQControl(word_t label, word_t length, cte_t *srcSlot, extra_caps_t extraCaps, word_t *buffer)
+{
+    userError("IRQControl: Illegal operation.");
+    current_syscall_error.type = seL4_IllegalOperation;
+    return EXCEPTION_SYSCALL_ERROR;
+}

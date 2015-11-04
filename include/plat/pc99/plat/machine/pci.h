@@ -16,6 +16,10 @@
 #define get_pci_fun(x) ((x) & 0x7)
 #define get_dev_id(bus, dev, fun) (((bus) << 8) | ((dev) << 3) | (fun))
 
+#define PCI_BUS_MAX     255
+#define PCI_DEV_MAX     31
+#define PCI_FUNC_MAX    7
+
 void pci_scan(void);
 
 #endif

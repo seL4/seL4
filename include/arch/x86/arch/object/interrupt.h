@@ -14,9 +14,15 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
+#include <plat/machine.h>
 
 exception_t Arch_decodeIRQControlInvocation(word_t label, word_t length,
                                             cte_t *srcSlot, extra_caps_t extraCaps,
                                             word_t *buffer);
+void Arch_irqStateInit(void);
+void Arch_updateIRQState(word_t irq, x86_irq_state_t state);
+exception_t Arch_checkIRQ(word_t irq);
+void Arch_maskInterrupt(bool_t disable, irq_t irq);
+void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow);
 
 #endif

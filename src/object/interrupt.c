@@ -46,6 +46,11 @@ decodeIRQControlInvocation(word_t label, word_t length,
 
         cnodeCap = extraCaps.excaprefs[0]->cap;
 
+        status = Arch_checkIRQ(irq);
+        if (status != EXCEPTION_NONE) {
+            return status;
+        }
+
         if (irq_w > maxIRQ) {
             current_syscall_error.type = seL4_RangeError;
             current_syscall_error.rangeErrorMin = 0;
@@ -153,7 +158,7 @@ decodeIRQHandlerInvocation(word_t label, word_t length, irq_t irq,
 void
 invokeIRQHandler_AckIRQ(irq_t irq)
 {
-    maskInterrupt(false, irq);
+    Arch_maskInterrupt(false, irq);
 }
 
 void invokeIRQHandler_SetMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
@@ -216,7 +221,7 @@ handleInterrupt(irq_t irq)
             printf("Undelivered IRQ: %d\n", (int)irq);
 #endif
         }
-        maskInterrupt(true, irq);
+        Arch_maskInterrupt(true, irq);
         break;
     }
 
@@ -235,7 +240,7 @@ handleInterrupt(irq_t irq)
          * platform code is broken. Hopefully masking it again should make
          * the interrupt go away.
          */
-        maskInterrupt(true, irq);
+        Arch_maskInterrupt(true, irq);
 #ifdef CONFIG_IRQ_REPORTING
         printf("Received disabled IRQ: %d\n", (int)irq);
 #endif
@@ -259,5 +264,5 @@ void
 setIRQState(irq_state_t irqState, irq_t irq)
 {
     intStateIRQTable[irq] = irqState;
-    maskInterrupt(irqState == IRQInactive, irq);
+    Arch_maskInterrupt(irqState == IRQInactive, irq);
 }

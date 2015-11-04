@@ -113,5 +113,29 @@
     </interface>
 	<interface name="seL4_IA32_IOSpace">
 	    <method id="IA32IOSpaceRemovePassthrough" name="RemovePassthrough"/>
+        <method id="IA32IOSpaceUnmap" name="Unmap"/>
 	</interface>
+
+    <interface name="seL4_IRQControl">
+        <method id="IA32IRQIssueIRQHandlerIOAPIC" name="GetIOAPIC">
+            <param dir="in" name="root" type="seL4_CNode"/>
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Word"/>
+            <param dir="in" name="ioapic" type="seL4_Word"/>
+            <param dir="in" name="pin" type="seL4_Word"/>
+            <param dir="in" name="level" type="seL4_Word"/>
+            <param dir="in" name="polarity" type="seL4_Word"/>
+            <param dir="in" name="vec" type="seL4_Word"/>
+        </method>
+        <method id="IA32IRQIssueIRQHandlerMSI" name="GetMSI">
+            <param dir="in" name="root" type="seL4_CNode"/>
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Word"/>
+            <param dir="in" name="pci_bus" type="seL4_Word"/>
+            <param dir="in" name="pci_dev" type="seL4_Word"/>
+            <param dir="in" name="pci_func" type="seL4_Word"/>
+            <param dir="in" name="handle" type="seL4_Word"/>
+            <param dir="in" name="vec" type="seL4_Word"/>
+        </method>
+    </interface>
 </api>

@@ -14,9 +14,29 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
+#include <plat/hardware.h>
 
 exception_t Arch_decodeIRQControlInvocation(word_t label, word_t length,
                                             cte_t *srcSlot, extra_caps_t extraCaps,
                                             word_t *buffer);
+
+
+static inline void
+Arch_maskInterrupt(bool_t disable, irq_t irq)
+{
+    maskInterrupt(disable, irq);
+}
+
+static inline exception_t
+Arch_checkIRQ(word_t irq)
+{
+    if (irq > maxIRQ) {
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = 0;
+        current_syscall_error.rangeErrorMax = maxIRQ;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    return EXCEPTION_NONE;
+}
 
 #endif

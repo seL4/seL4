@@ -35,35 +35,6 @@ void platAddDevices(void)
 
 /* ============================== interrupts/IRQs ============================== */
 
-/* Enable or disable irq according to the 'mask' flag. */
-void maskInterrupt(bool_t mask, irq_t irq)
-{
-    assert(irq <= maxIRQ);
-
-    if (config_set(CONFIG_IRQ_IOAPIC) && irq <= irq_ioapic_max) {
-        ioapic_mask_irq(mask, irq);
-    } else if (config_set(CONFIG_IRQ_PIC) && irq <= irq_isa_max) {
-        pic_mask_irq(mask, irq);
-    } else {
-        /* we can't mask/unmask specific APIC vectors (e.g. MSIs/IPIs) */
-    }
-}
-
-/* Set mode of an irq */
-void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
-{
-    if (config_set(CONFIG_IRQ_IOAPIC)) {
-        assert(irq >= irq_ioapic_min);
-        assert(irq <= maxIRQ);
-
-        if (irq <= irq_ioapic_max) {
-            ioapic_set_mode(irq, levelTrigger, polarityLow);
-        } else {
-            /* No mode setting for specific APIC vectors */
-        }
-    }
-}
-
 /* Handle a platform-reserved IRQ. */
 void handleReservedIRQ(irq_t irq)
 {

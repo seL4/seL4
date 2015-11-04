@@ -91,3 +91,46 @@ block apic_icr2 {
     field       dest                8
     padding                         24
 }
+
+-- x86-specific IRQ state structure
+
+block irq_ioapic {
+    field   irqType         4
+    field   id              5
+    field   pin             5
+    field   level           1
+    field   polarity_low    1
+    field   masked          1
+    field   fixed           1
+    padding                 14
+    padding                 32
+}
+
+block irq_msi {
+    field   irqType     4
+    field   bus         8
+    field   dev         5
+    field   func        3
+    padding             12
+
+    field   handle      32
+}
+
+block irq_free {
+    field   irqType     4
+    padding             28
+    padding             32
+}
+
+block irq_reserved {
+    field   irqType     4
+    padding             28
+    padding             32
+}
+
+tagged_union x86_irq_state irqType {
+    tag irq_free        0
+    tag irq_ioapic      1
+    tag irq_msi         2
+    tag irq_reserved    3
+}

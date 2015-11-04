@@ -13,6 +13,7 @@
 #include <machine/io.h>
 #include <model/statedata.h>
 #include <object/interrupt.h>
+#include <arch/object/interrupt.h>
 #include <arch/machine.h>
 #include <arch/kernel/apic.h>
 #include <arch/kernel/boot.h>
@@ -40,15 +41,23 @@ init_irqs(cap_t root_cnode_cap)
         } else if (i == 2 && config_set(CONFIG_IRQ_PIC)) {
             /* cascaded legacy PIC */
             setIRQState(IRQReserved, i);
-        } else if (   (config_set(CONFIG_IRQ_PIC) && i >= irq_isa_min && i <= irq_isa_max)
-                   || (config_set(CONFIG_IRQ_IOAPIC) && i >= irq_ioapic_min && i <= irq_ioapic_max)) {
-            setIRQState(IRQInactive, i);
-        }
-        else if (i >= irq_msi_min && i <= irq_msi_max) {
-            setIRQState(IRQInactive, i);
+        } else if (i >= irq_isa_min && i <= irq_isa_max) {
+            if (config_set(CONFIG_IRQ_PIC)) {
+                setIRQState(IRQInactive, i);
+            } else {
+                setIRQState(IRQReserved, i);
+            }
+        } else if (i >= irq_user_min && i <= irq_user_max) {
+            if (config_set(CONFIG_IRQ_IOAPIC)) {
+                setIRQState(IRQInactive, i);
+            } else {
+                setIRQState(IRQReserved, i);
+            }
+        } else {
+            setIRQState(IRQReserved, i);
         }
     }
-
+    Arch_irqStateInit();
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IRQ_CTRL), cap_irq_control_cap_new());
 }

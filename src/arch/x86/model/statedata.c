@@ -61,3 +61,7 @@ int ia32KSFirstValidIODomain;
 uint16_t ia32KSconsolePort;
 uint16_t ia32KSdebugPort;
 #endif
+
+/* State data tracking what IRQ source is related to each
+ * CPU vector */
+x86_irq_state_t x86KSIRQState[maxIRQ + 1];

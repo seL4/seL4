@@ -20,46 +20,31 @@
 
 typedef enum _interrupt_t {
     int_invalid        = -1,
-    int_unimpl_dev     = 0x07,
-    int_page_fault     = 0x0e,
+    int_unimpl_dev     = 7,
+    int_page_fault     = 14,
     int_irq_min        = IRQ_INT_OFFSET, /* First IRQ. */
-    /* The ISA and IOAPIC interrupts overlap in the interrupt list
-     * We define the ISA interrupts first so that the MSI interrupts
-     * end up after the IOAPIC block. This means if you are not using
-     * the IOAPICs there is a block (the difference between ISA and IOAPIC)
-     * of interrupts that are not used */
-    int_irq_isa_min    = int_irq_min,
-    int_irq_isa_max    = int_irq_min + PIC_IRQ_LINES - 1,
-    int_irq_ioapic_min = int_irq_min,
-    int_irq_ioapic_max = (int_irq_ioapic_min + (CONFIG_MAX_NUM_IOAPIC * IOAPIC_IRQ_LINES)) - 1,
-    int_irq_msi_min,
-    int_irq_msi_max    = int_irq_msi_min + 0xd,
-    int_iommu,
-    int_timer,
-    int_irq_max        = int_timer, /* Last IRQ. */
-    int_trap_min,
-    int_trap_max       = 0xfe,
-    int_spurious       = 0xff,
-    int_max            = 0xff
+    int_irq_isa_min    = IRQ_INT_OFFSET, /* Beginning of PIC IRQs */
+    int_irq_isa_max    = IRQ_INT_OFFSET + PIC_IRQ_LINES - 1, /* End of PIC IRQs */
+    int_irq_user_min   = IRQ_INT_OFFSET + PIC_IRQ_LINES, /* First user available vector */
+    int_irq_user_max   = 157,
+    int_iommu          = 158,
+    int_timer          = 159,
+    int_irq_max        = 159, /* int_timer is the max irq */
+    int_trap_min       = 160,
+    int_trap_max       = 254,
+    int_spurious       = 255,
+    int_max            = 255
 } interrupt_t;
 
-/* Construction of most of the interrupt numbers was relative by padding
- * off previous values. Therefore to ensure we didn't overflow just need
- * to ensure int_trap_min is less than int_trap_max */
-compile_assert(interrupt_numbers_not_overflow, int_trap_min < int_trap_max)
-
-
 typedef enum _irq_t {
-    irqInvalid  = -1,
-    irq_ioapic_min = int_irq_ioapic_min - IRQ_INT_OFFSET,
-    irq_ioapic_max = int_irq_ioapic_max - IRQ_INT_OFFSET,
-    irq_isa_min = int_irq_isa_min - IRQ_INT_OFFSET,
-    irq_isa_max = int_irq_isa_max - IRQ_INT_OFFSET,
-    irq_msi_min = int_irq_msi_min - IRQ_INT_OFFSET,
-    irq_msi_max = int_irq_msi_max - IRQ_INT_OFFSET,
-    irq_iommu   = int_iommu       - IRQ_INT_OFFSET,
-    irq_timer   = int_timer       - IRQ_INT_OFFSET,
-    maxIRQ      = int_timer       - IRQ_INT_OFFSET
+    irqInvalid   = -1,
+    irq_isa_min  = int_irq_isa_min  - IRQ_INT_OFFSET,
+    irq_isa_max  = int_irq_isa_max  - IRQ_INT_OFFSET,
+    irq_user_min = int_irq_user_min - IRQ_INT_OFFSET,
+    irq_user_max = int_irq_user_max - IRQ_INT_OFFSET,
+    irq_iommu    = int_iommu        - IRQ_INT_OFFSET,
+    irq_timer    = int_timer        - IRQ_INT_OFFSET,
+    maxIRQ       = int_irq_max      - IRQ_INT_OFFSET
 } irq_t;
 
 #define BIOS_PADDR_START 0x0e0000
