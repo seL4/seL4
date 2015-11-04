@@ -297,9 +297,7 @@ init_sys_state(
     /* parameters below not modeled in abstract specification */
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
-    uint32_t      num_passthrough_dev,
-    dev_id_t*     passthrough_dev_list,
-    uint32_t*     pci_bus_used_bitmap
+    acpi_rmrr_list_t *rmrr_list
 )
 {
     cap_t         root_cnode_cap;
@@ -482,7 +480,7 @@ init_sys_state(
 
     if (config_set(CONFIG_IOMMU)) {
         /* initialise VTD-related data structures and the IOMMUs */
-        if (!vtd_init(cpu_id, num_drhu, pci_bus_used_bitmap, num_passthrough_dev, passthrough_dev_list)) {
+        if (!vtd_init(cpu_id, num_drhu, rmrr_list)) {
             return false;
         }
 

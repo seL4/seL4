@@ -75,12 +75,14 @@
 #define CONFIG_MAX_NUM_TRACE_POINTS 0
 #endif
 
-/* Configuration parameters below are for IA-32 only. */
+/* maximum number of IOMMU RMRR entries we can record while ACPI parsing */
+#ifndef CONFIG_MAX_RMRR_ENTRIES
+#define CONFIG_MAX_RMRR_ENTRIES 32
+#endif
 
-/* maximum number of PCI devices that can be marked as passthrough (IOMMU RMRR device scopes) */
-
-#ifndef CONFIG_MAX_NUM_PASSTHROUGH_DEVICES
-#define CONFIG_MAX_NUM_PASSTHROUGH_DEVICES 20
+/* maximum number of IOAPIC supported */
+#ifndef CONFIG_MAX_NUM_IOAPIC
+#define CONFIG_MAX_NUM_IOAPIC  1
 #endif
 
 #endif /* __CONFIG_H */

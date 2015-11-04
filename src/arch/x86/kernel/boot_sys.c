@@ -60,9 +60,7 @@ typedef struct boot_state {
     paddr_t      ioapic_paddr[CONFIG_MAX_NUM_IOAPIC];
     uint32_t     num_drhu; /* number of IOMMUs */
     paddr_t      drhu_list[MAX_NUM_DRHU]; /* list of physical addresses of the IOMMUs */
-    uint32_t     num_passthrough_dev;
-    dev_id_t     passthrough_dev_list[CONFIG_MAX_NUM_PASSTHROUGH_DEVICES];
-    uint32_t     pci_bus_used_bitmap[32]; /* 256 bit map of PCI buses in use */
+    acpi_rmrr_list_t rmrr_list;
 } boot_state_t;
 
 BOOT_DATA
@@ -214,9 +212,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
                 /* parameters below not modeled in abstract specification */
                 boot_state.num_drhu,
                 boot_state.drhu_list,
-                boot_state.num_passthrough_dev,
-                boot_state.passthrough_dev_list,
-                boot_state.pci_bus_used_bitmap
+                &boot_state.rmrr_list
             )) {
         return false;
     }
@@ -338,9 +334,7 @@ try_boot_sys(
             boot_state.drhu_list,
             &boot_state.num_drhu,
             MAX_NUM_DRHU,
-            boot_state.passthrough_dev_list,
-            &boot_state.num_passthrough_dev,
-            CONFIG_MAX_NUM_PASSTHROUGH_DEVICES
+            &boot_state.rmrr_list
         );
     }
 

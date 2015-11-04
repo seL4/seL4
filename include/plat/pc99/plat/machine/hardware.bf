@@ -45,8 +45,8 @@ block vtd_rte {
 block vtd_cte {
     padding                         40
     field       did                 16
-    --- Not using AVAIL and making it Reserved
-    padding                         5
+    padding     4
+    field       rmrr                1
     field       aw                  3
     padding                         32
     field_high  asr                 20

@@ -108,10 +108,9 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
         io_space_capdata_t w = { { data } };
         uint16_t PCIDevice = io_space_capdata_get_PCIDevice(w);
         uint16_t domainID = io_space_capdata_get_domainID(w);
-        vtd_cte_t *vtd_context_table = (vtd_cte_t*)vtd_rte_get_ctp(ia32KSvtdRootTable[get_pci_bus(data)]);
         if (!preserve && cap_io_space_cap_get_capPCIDevice(cap) == 0 &&
-                vtd_rte_get_present(ia32KSvtdRootTable[get_pci_bus(data)]) &&
-                (!vtd_cte_get_present(vtd_context_table[PCIDevice & 0xff]) || vtd_cte_get_translation_type(vtd_context_table[PCIDevice & 0xff]) != 2) &&
+                domainID >= ia32KSFirstValidIODomain &&
+                domainID != 0                        &&
                 domainID <= MASK(ia32KSnumIODomainIDBits)) {
             return cap_io_space_cap_new(domainID, PCIDevice);
         } else {
@@ -216,6 +215,8 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_asid_control_cap:
     case cap_io_port_cap:
         break;
+    case cap_io_space_cap:
+        break;
     case cap_io_page_table_cap:
         if (final && cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
             deleteIOPageTable(cap);
@@ -315,13 +316,12 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
 
     case cap_io_space_cap:
+        Arch_finaliseCap(cap, is_final);
         return cap;
 
     case cap_io_page_table_cap:
-        memzero(
-            (void*)cap_io_page_table_cap_get_capIOPTBasePtr(cap),
-            BIT(VTD_PT_SIZE_BITS)
-        );
+        clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        Arch_finaliseCap(cap, is_final);
         return cap;
 
     default:

@@ -25,7 +25,7 @@ void platAddDevices(void)
 {
     /* discover PCI devices and their regions */
     /* pci_scan() calls insert_dev_p_reg() for each device region */
-    pci_scan(boot_state.pci_bus_used_bitmap);
+    pci_scan();
     /* Add the text mode (EGA) frame buffer. 1 frame is enough for the
      * standard 80x25 text mode. This whole thing is a bit of a hack */
     insert_dev_p_reg( (p_region_t) {

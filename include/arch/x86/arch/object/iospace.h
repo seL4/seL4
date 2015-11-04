@@ -15,6 +15,16 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
+static inline int vtd_get_root_index(dev_id_t dev)
+{
+    return (dev >> 8) & 0xff;
+}
+
+static inline int vtd_get_context_index(dev_id_t dev)
+{
+    return dev & 0xff;
+}
+
 struct lookupIOPTSlot_ret {
     exception_t status;
     vtd_pte_t*  ioptSlot;
