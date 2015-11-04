@@ -63,6 +63,7 @@ uint32_t ia32KSnumDrhu;
 vtd_rte_t* ia32KSvtdRootTable;
 uint32_t ia32KSnumIOPTLevels;
 uint32_t ia32KSnumIODomainIDBits;
+int ia32KSFirstValidIODomain;
 
 #if defined DEBUG || defined RELEASE_PRINTF
 uint16_t ia32KSconsolePort;

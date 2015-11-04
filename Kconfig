@@ -234,10 +234,13 @@ menu "seL4 System Parameters"
         int "Max number of bootinfo untyped caps"
         default 167
 
-    config MAX_NUM_PASSTHROUGH_DEVICES
-        int "Max number of passthrough devices"
+    config MAX_RMRR_ENTRIES
+        int "Max number of RMRR entries to support finding in ACPI"
         depends on IOMMU
-        default 20
+        default 32
+        help
+            Sets the maximum number of Reserved Memory Region Reporting
+            structures we support recording from the ACPI tables
 
     config FASTPATH
         bool "Enable fastpath"

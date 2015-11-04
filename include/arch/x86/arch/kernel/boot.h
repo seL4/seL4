@@ -13,6 +13,7 @@
 
 #include <config.h>
 #include <types.h>
+#include <plat/machine/acpi.h>
 
 typedef struct dev_p_regs {
     word_t count;
@@ -37,9 +38,7 @@ bool_t init_sys_state(
     /* parameters below not modeled in abstract specification */
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
-    uint32_t      num_passthrough_dev,
-    dev_id_t*     passthrough_dev_list,
-    uint32_t*     pci_bus_used_bitmap
+    acpi_rmrr_list_t *rmrr_list
 );
 
 bool_t init_cpu(
