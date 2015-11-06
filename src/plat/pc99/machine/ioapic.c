@@ -139,7 +139,7 @@ void ioapic_mask_irq(bool_t mask, irq_t irq)
         ioredtbl_state[irq] &= ~IOREDTBL_LOW_INTERRUPT_MASK;
 #if defined DEBUG || defined RELEASE_PRINTF
         if (!done_set_mode[irq]) {
-            printf("Unmasking IOAPIC source %d on ioapic %d without ever setting its mode!\n", index, ioapic);
+            printf("Unmasking IOAPIC source %ld on ioapic %ld without ever setting its mode!\n", index, ioapic);
             /* Set the flag so we don't repeatedly warn */
             done_set_mode[irq] = 1;
         }
