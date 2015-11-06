@@ -28,21 +28,18 @@ typedef struct ui_info {
 cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large);
 cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable);
 
-bool_t init_node_state(
+bool_t init_sys_state(
+    cpu_id_t      cpu_id,
     p_region_t    avail_p_reg,
-    p_region_t    sh_p_reg,
     dev_p_regs_t* dev_p_regs,
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
-    node_id_t     node_id,
-    uint32_t      num_nodes,
     /* parameters below not modeled in abstract specification */
     pdpte_t*      kernel_pdpt,
     pde_t*        kernel_pd,
     pte_t*        kernel_pt
 #ifdef CONFIG_IOMMU
-    , cpu_id_t      cpu_id,
-    uint32_t      num_drhu,
+    , uint32_t      num_drhu,
     paddr_t*      drhu_list,
     uint32_t      num_passthrough_dev,
     dev_id_t*     passthrough_dev_list,
@@ -50,7 +47,7 @@ bool_t init_node_state(
 #endif
 );
 
-bool_t init_node_cpu(
+bool_t init_cpu(
     bool_t   mask_legacy_irqs
 );
 

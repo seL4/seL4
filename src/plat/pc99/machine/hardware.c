@@ -28,7 +28,7 @@ void platAddDevices(void)
     /* discover PCI devices and their regions */
     /* pci_scan() calls insert_dev_p_reg() for each device region */
 #ifdef CONFIG_IOMMU
-    pci_scan(glks.pci_bus_used_bitmap);
+    pci_scan(boot_state.pci_bus_used_bitmap);
 #else
     pci_scan(NULL);
 #endif

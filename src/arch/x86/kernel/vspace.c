@@ -493,8 +493,7 @@ BOOT_CODE bool_t
 map_kernel_window(
     pdpte_t*   pdpt,
     pde_t*     pd,
-    pte_t*     pt,
-    p_region_t ndks_p_reg
+    pte_t*     pt
 #ifdef CONFIG_IRQ_IOAPIC
     , uint32_t num_ioapic,
     paddr_t*   ioapic_paddrs
@@ -597,27 +596,6 @@ map_kernel_window(
     pt[idx] = pte;
     idx++;
 
-    /* establish NDKS (node kernel state) mappings in page table */
-    phys = ndks_p_reg.start;
-    while (idx - 1 < (ndks_p_reg.end - ndks_p_reg.start) >> PAGE_BITS) {
-        pte = pte_new(
-                  phys,   /* page_base_address    */
-                  0,      /* avl                  */
-                  1,      /* global               */
-                  0,      /* pat                  */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  0,      /* cache_disabled       */
-                  0,      /* write_through        */
-                  0,      /* super_user           */
-                  1,      /* read_write           */
-                  1       /* present              */
-              );
-        pt[idx] = pte;
-        phys += BIT(PAGE_BITS);
-        idx++;
-    }
-
     /* null mappings up to PPTR_KDEV */
 
     while (idx < (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
@@ -635,7 +613,6 @@ map_kernel_window(
                   0       /* present              */
               );
         pt[idx] = pte;
-        phys += BIT(PAGE_BITS);
         idx++;
     }
 
