@@ -26,12 +26,12 @@
 #endif
 
 extern interrupt_t ia32KScurInterrupt;
-extern tss_t ia32KStss;
-extern gdt_entry_t ia32KSgdt[];
-extern asid_pool_t* ia32KSASIDTable[];
+extern tss_t x86KStss;
+extern gdt_entry_t x86KSgdt[];
+extern asid_pool_t* x86KSASIDTable[];
 extern tcb_t *ia32KSfpuOwner;
-extern uint32_t ia32KScacheLineSizeBits;
-extern idt_entry_t ia32KSidt[];
+extern uint32_t x86KScacheLineSizeBits;
+extern idt_entry_t x86KSidt[];
 extern user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 extern paddr_t ia32KSCurrentPD;
 

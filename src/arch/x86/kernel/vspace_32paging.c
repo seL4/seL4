@@ -188,11 +188,6 @@ bool_t CONST isValidNativeRoot(cap_t cap)
            cap_page_directory_cap_get_capPDIsMapped(cap);
 }
 
-bool_t CONST isValidVTableRoot(cap_t cap)
-{
-    return isValidNativeRoot(cap);
-}
-
 void *getValidNativeRoot(cap_t vspace_cap)
 {
     if (isValidNativeRoot(vspace_cap)) {

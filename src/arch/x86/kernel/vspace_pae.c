@@ -233,11 +233,6 @@ bool_t CONST isValidNativeRoot(cap_t cap)
     return true;
 }
 
-bool_t CONST isValidVTableRoot(cap_t cap)
-{
-    return isValidNativeRoot(cap);
-}
-
 void *getValidNativeRoot(cap_t vspace_cap)
 {
     if (isValidNativeRoot(vspace_cap)) {

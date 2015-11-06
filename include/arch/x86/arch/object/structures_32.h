@@ -217,4 +217,38 @@ cap_get_archCapPtr(cap_t cap)
     }
 }
 
+static inline pte_t
+x86_make_device_pte(paddr_t phys) {
+    return pte_new(
+                   phys,   /* page_base_address    */
+                   0,      /* avl                  */
+                   1,      /* global               */
+                   0,      /* pat                  */
+                   0,      /* dirty                */
+                   0,      /* accessed             */
+                   1,      /* cache_disabled       */
+                   1,      /* write_through        */
+                   0,      /* super_user           */
+                   1,      /* read_write           */
+                   1       /* present              */
+    );
+}
+
+static inline pte_t
+x86_make_empty_pte(void) {
+    return pte_new(
+                   0,      /* page_base_address    */
+                   0,      /* avl                  */
+                   0,      /* global               */
+                   0,      /* pat                  */
+                   0,      /* dirty                */
+                   0,      /* accessed             */
+                   0,      /* cache_disabled       */
+                   0,      /* write_through        */
+                   0,      /* super_user           */
+                   0,      /* read_write           */
+                   0       /* present              */
+    );
+}
+
 #endif

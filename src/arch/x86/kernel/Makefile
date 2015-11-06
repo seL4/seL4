@@ -13,7 +13,8 @@ DIRECTORIES += src/arch/$(ARCH)/kernel
 ARCH_C_SOURCES += kernel/vspace.c
 
 ifeq ($(__X86_32__),y)
-ARCH_C_SOURCES += kernel/vspace_32paging.c \
+ARCH_C_SOURCES += kernel/vspace_32.c \
+                  kernel/vspace_32paging.c \
                   kernel/vspace_pae.c \
                   kernel/thread_32.c
 endif
@@ -31,3 +32,5 @@ endif
 ifdef RELEASE_PRINTF
 ARCH_C_SOURCES += kernel/lock.c
 endif
+
+ARCH_C_SOURCES += kernel/vspace.c

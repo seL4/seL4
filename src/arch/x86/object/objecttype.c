@@ -305,10 +305,10 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
     case cap_asid_pool_cap:
         base = cap_asid_pool_cap_get_capASIDBase(cap);
         ptr = ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
-        if (ia32KSASIDTable[base >> asidLowBits] == ptr) {
+        if (x86KSASIDTable[base >> asidLowBits] == ptr) {
             deleteASIDPool(base, ptr);
             memzero(ptr, BIT(ASID_POOL_SIZE_BITS));
-            ia32KSASIDTable[base >> asidLowBits] = ptr;
+            x86KSASIDTable[base >> asidLowBits] = ptr;
         }
         return cap;
 
@@ -548,11 +548,11 @@ Arch_decodeInvocation(
     case cap_page_directory_cap:
     case cap_page_table_cap:
     case cap_frame_cap:
-        return decodeIA32MMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+        return decodeX86MMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
 
     case cap_asid_control_cap:
     case cap_asid_pool_cap:
-        return decodeIA32MMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+        return decodeX86MMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
     case cap_io_port_cap:
         return decodeIA32PortInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
     case cap_io_space_cap:
