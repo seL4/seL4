@@ -401,8 +401,9 @@ endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
-DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32
+DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32 -D__KERNEL_32__
 LDFLAGS += -Wl,-m,elf_i386 
+export __X86_32__ = y
 endif # ARCH=x86
 else # NK_CFLAGS
 # Require autoconf to be provided if larger build
