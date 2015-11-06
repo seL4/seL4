@@ -356,13 +356,13 @@ ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 DEFINES += -DARCH_ARM
 ifeq (${CPU},cortex-a8)
-DEFINES += -DARM_CORTEX_A8
+DEFINES += -DARM_CORTEX_A8 -D__KERNEL_32__
 endif
 ifeq (${CPU},cortex-a9)
-DEFINES += -DARM_CORTEX_A9
+DEFINES += -DARM_CORTEX_A9 -D__KERNEL_32__
 endif
 ifeq (${CPU},cortex-a15)
-DEFINES += -DARM_CORTEX_A15
+DEFINES += -DARM_CORTEX_A15 -D__KERNEL_32__
 endif
 ifeq ($(PLAT),imx6)
 DEFINES += -DIMX6
@@ -401,8 +401,9 @@ endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
-DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32
+DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32 -D__KERNEL_32__
 LDFLAGS += -Wl,-m,elf_i386 
+export __X86_32__ = y
 endif # ARCH=x86
 else # NK_CFLAGS
 # Require autoconf to be provided if larger build
