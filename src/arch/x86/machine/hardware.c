@@ -21,9 +21,9 @@
 BOOT_CODE void
 init_sysenter_msrs(void)
 {
-    ia32_wrmsr(IA32_SYSENTER_CS_MSR,  0, (uint32_t)SEL_CS_0);
-    ia32_wrmsr(IA32_SYSENTER_EIP_MSR, 0, (uint32_t)&handle_syscall);
-    ia32_wrmsr(IA32_SYSENTER_ESP_MSR, 0, (uint32_t)&ia32KStss.words[1]);
+    x86_wrmsr(IA32_SYSENTER_CS_MSR,  (uint64_t)(word_t)SEL_CS_0);
+    x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
+    x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)&ia32KStss.words[1]);
 }
 
 word_t PURE getRestartPC(tcb_t *thread)
@@ -73,14 +73,14 @@ void flushCacheRange(void* vaddr, uint32_t size_bits)
     assert(size_bits < WORD_BITS);
     assert(IS_ALIGNED((uint32_t)vaddr, size_bits));
 
-    ia32_mfence();
+    x86_mfence();
 
     for (v = ROUND_DOWN((uint32_t)vaddr, ia32KScacheLineSizeBits);
             v < (uint32_t)vaddr + BIT(size_bits);
             v += BIT(ia32KScacheLineSizeBits)) {
         flushCacheLine((void*)v);
     }
-    ia32_mfence();
+    x86_mfence();
 }
 
 /* Disables as many prefetchers as possible */
@@ -96,19 +96,19 @@ disablePrefetchers()
                                 WESTMERE_3_MODEL_ID, NEHALEM_1_MODEL_ID, NEHALEM_2_MODEL_ID, NEHALEM_3_MODEL_ID
                               };
 
-    version_info = ia32_cpuid_eax(0x1, 0x0);
+    version_info = x86_cpuid_eax(0x1, 0x0);
 
     for (i = 0; i < ARRAY_SIZE(valid_models); ++i) {
         if (MODEL_ID(version_info) == valid_models[i]) {
-            low = ia32_rdmsr_low(IA32_PREFETCHER_MSR);
-            high = ia32_rdmsr_high(IA32_PREFETCHER_MSR);
+            low = x86_rdmsr_low(IA32_PREFETCHER_MSR);
+            high = x86_rdmsr_high(IA32_PREFETCHER_MSR);
 
             low |= IA32_PREFETCHER_MSR_L2;
             low |= IA32_PREFETCHER_MSR_L2_ADJACENT;
             low |= IA32_PREFETCHER_MSR_DCU;
             low |= IA32_PREFETCHER_MSR_DCU_IP;
 
-            ia32_wrmsr(IA32_PREFETCHER_MSR, high, low);
+            x86_wrmsr(IA32_PREFETCHER_MSR, ((uint64_t)high) << 32 | low);
 
             return true;
         }

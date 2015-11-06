@@ -88,7 +88,7 @@ static inline void clearMemory(void* ptr, word_t bits)
 /* Initialises MSRs required to setup sysenter and sysexit */
 void init_sysenter_msrs(void);
 
-static uint64_t ia32_rdmsr(const uint32_t reg)
+static uint64_t x86_rdmsr(const uint32_t reg)
 {
     uint64_t value;
     asm volatile("rdmsr" : "=A"(value) : "c"(reg));
@@ -96,25 +96,24 @@ static uint64_t ia32_rdmsr(const uint32_t reg)
 }
 
 /* Read model specific register */
-static inline uint32_t ia32_rdmsr_low(const uint32_t reg)
+static inline uint32_t x86_rdmsr_low(const uint32_t reg)
 {
-    return (uint32_t)ia32_rdmsr(reg);
+    return (uint32_t)x86_rdmsr(reg);
 }
 
-static inline uint32_t ia32_rdmsr_high(const uint32_t reg)
+static inline uint32_t x86_rdmsr_high(const uint32_t reg)
 {
-    return (uint32_t)(ia32_rdmsr(reg) >> 32ull);
+    return (uint32_t)(x86_rdmsr(reg) >> 32ull);
 }
 
 /* Write model specific register */
-static inline void ia32_wrmsr(const uint32_t reg, const uint32_t val_high, const uint32_t val_low)
+static inline void x86_wrmsr(const uint32_t reg, const uint64_t val)
 {
-    uint64_t val = ((uint64_t)val_high << 32ull) | (uint64_t)val_low;
     asm volatile("wrmsr" :: "A"(val), "c"(reg));
 }
 
 /* Read different parts of CPUID */
-static inline uint32_t ia32_cpuid_edx(uint32_t eax, uint32_t ecx)
+static inline uint32_t x86_cpuid_edx(uint32_t eax, uint32_t ecx)
 {
     uint32_t edx, ebx;
     asm volatile("cpuid"
@@ -127,7 +126,7 @@ static inline uint32_t ia32_cpuid_edx(uint32_t eax, uint32_t ecx)
     return edx;
 }
 
-static inline uint32_t ia32_cpuid_eax(uint32_t eax, uint32_t ecx)
+static inline uint32_t x86_cpuid_eax(uint32_t eax, uint32_t ecx)
 {
     uint32_t edx, ebx;
     asm volatile("cpuid"
@@ -141,7 +140,7 @@ static inline uint32_t ia32_cpuid_eax(uint32_t eax, uint32_t ecx)
 }
 
 /* Read/write memory fence */
-static inline void ia32_mfence(void)
+static inline void x86_mfence(void)
 {
     asm volatile("mfence" ::: "memory");
 }

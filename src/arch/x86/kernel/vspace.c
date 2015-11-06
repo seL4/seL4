@@ -853,12 +853,12 @@ init_pat_msr(void)
     ia32_pat_msr_t pat_msr;
     /* First verify PAT is supported by the machine.
      *      See section 11.12.1 of Volume 3 of the Intel manual */
-    if ( (ia32_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
+    if ( (x86_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
         printf("PAT support not found\n");
         return false;
     }
-    pat_msr.words[0] = ia32_rdmsr_low(IA32_PAT_MSR);
-    pat_msr.words[1] = ia32_rdmsr_high(IA32_PAT_MSR);
+    pat_msr.words[0] = x86_rdmsr_low(IA32_PAT_MSR);
+    pat_msr.words[1] = x86_rdmsr_high(IA32_PAT_MSR);
     /* Set up the PAT MSR to the Intel defaults, just in case
      * they have been changed but a bootloader somewhere along the way */
     ia32_pat_msr_ptr_set_pa0(&pat_msr, IA32_PAT_MT_WRITE_BACK);
@@ -867,7 +867,7 @@ init_pat_msr(void)
     ia32_pat_msr_ptr_set_pa3(&pat_msr, IA32_PAT_MT_UNCACHEABLE);
     /* Add the WriteCombining cache type to the PAT */
     ia32_pat_msr_ptr_set_pa4(&pat_msr, IA32_PAT_MT_WRITE_COMBINING);
-    ia32_wrmsr(IA32_PAT_MSR, pat_msr.words[1], pat_msr.words[0]);
+    x86_wrmsr(IA32_PAT_MSR, ((uint64_t)pat_msr.words[1]) << 32 | pat_msr.words[0]);
     return true;
 }
 
