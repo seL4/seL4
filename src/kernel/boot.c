@@ -151,7 +151,7 @@ create_root_cnode(void)
     cap =
         cap_cnode_cap_new(
             CONFIG_ROOT_CNODE_SIZE_BITS,      /* radix      */
-            32 - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
+            wordBits - CONFIG_ROOT_CNODE_SIZE_BITS, /* guard size */
             0,                                /* guard      */
             pptr                              /* pptr       */
         );
