@@ -824,14 +824,12 @@ init_dtrs(void)
 {
     /* setup the GDT pointer and limit and load into GDTR */
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
-    gdt_idt_ptr.basel = (uint32_t)ia32KSgdt;
-    gdt_idt_ptr.baseh = (uint16_t)((uint32_t)ia32KSgdt >> 16);
+    gdt_idt_ptr.base = (uint32_t)ia32KSgdt;
     ia32_install_gdt(&gdt_idt_ptr);
 
     /* setup the IDT pointer and limit and load into IDTR */
     gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1)) - 1;
-    gdt_idt_ptr.basel = (uint32_t)ia32KSidt;
-    gdt_idt_ptr.baseh = (uint16_t)((uint32_t)ia32KSidt >> 16);
+    gdt_idt_ptr.base = (uint32_t)ia32KSidt;
     ia32_install_idt(&gdt_idt_ptr);
 
     /* load NULL LDT selector into LDTR */
