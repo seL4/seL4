@@ -112,9 +112,9 @@ wordFromMessageInfo(message_info_t mi)
 #define userError(...) \
     do {                                                                     \
         printf(ANSI_DARK "<<" ANSI_GREEN "seL4" ANSI_DARK                    \
-                " [%s/%d T%lx \"%s\" @%lx]: ",                               \
-                __func__, __LINE__, (long)ksCurThread, ksCurThread->tcbName, \
-                (long)getRestartPC(ksCurThread));                            \
+                " [%s/%d T%p \"%s\" @%lx]: ",                                \
+                __func__, __LINE__, ksCurThread, ksCurThread->tcbName,       \
+                (word_t)getRestartPC(ksCurThread));                          \
         printf(__VA_ARGS__);                                                 \
         printf(">>" ANSI_RESET "\n");                                        \
     } while (0)
