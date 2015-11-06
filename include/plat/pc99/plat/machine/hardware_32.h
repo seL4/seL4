@@ -11,11 +11,6 @@
 #ifndef __PLAT_MACHINE_HARDWARE_32_H
 #define __PLAT_MACHINE_HARDWARE_32_H
 
-#include <config.h>
-#include <types.h>
-#include <plat/machine.h>
-#include <plat/machine/hardware_gen.h>
-
 /* WARNING: some of these constants are also defined in linker.lds */
 #define PADDR_BASE  0x00000000
 #define PADDR_LOAD  0x00100000
@@ -63,16 +58,5 @@ pptr_to_paddr_reg(region_t reg)
         reg.start - BASE_OFFSET, reg.end - BASE_OFFSET
     };
 }
-
-void handleReservedIRQ(irq_t irq);
-void maskInterrupt(bool_t mask, irq_t irq);
-void ackInterrupt(irq_t irq);
-irq_t getActiveIRQ(void);
-bool_t isIRQPending(void);
-void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow);
-void resetTimer(void);
-void platAddDevices(void);
-
-void handleSpuriousIRQ(void);
 
 #endif

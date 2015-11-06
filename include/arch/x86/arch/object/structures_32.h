@@ -11,24 +11,11 @@
 #ifndef __ARCH_OBJECT_STRUCTURES_32_H
 #define __ARCH_OBJECT_STRUCTURES_32_H
 
-#include <assert.h>
-#include <config.h>
-#include <util.h>
-#include <api/types.h>
-#include <arch/types.h>
-#include <arch/object/structures_gen.h>
-#include <arch/machine/hardware.h>
-#include <arch/machine/registerset.h>
-
 /* Object sizes*/
 #define EP_SIZE_BITS  4
 #define NTFN_SIZE_BITS 4
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
-typedef struct arch_tcb {
-    user_context_t tcbContext;
-} arch_tcb_t;
-
 /* update this when you modify the tcb struct */
 #define EXPECTED_TCB_SIZE 660
 
@@ -41,17 +28,6 @@ typedef struct arch_tcb {
 #define GDT_TLS     6
 #define GDT_IPCBUF  7
 #define GDT_ENTRIES 8
-
-#define SEL_NULL    GDT_NULL
-#define SEL_CS_0    (GDT_CS_0 << 3)
-#define SEL_DS_0    (GDT_DS_0 << 3)
-#define SEL_CS_3    ((GDT_CS_3 << 3) | 3)
-#define SEL_DS_3    ((GDT_DS_3 << 3) | 3)
-#define SEL_TSS     (GDT_TSS << 3)
-#define SEL_TLS     ((GDT_TLS << 3) | 3)
-#define SEL_IPCBUF  ((GDT_IPCBUF << 3) | 3)
-
-#define IDT_ENTRIES 256
 
 #ifdef CONFIG_PAE_PAGING
 #define PDPTE_SIZE_BITS 3
@@ -92,40 +68,10 @@ typedef struct arch_tcb {
 #define PT_PTR(r)    ((pte_t *)(r))
 #define PT_REF(p)    ((word_t)(p))
 
-#ifdef CONFIG_IOMMU
-
-#define VTD_RT_SIZE_BITS  12
-
-#define VTD_CTE_SIZE_BITS 3
-#define VTD_CTE_PTR(r)    ((vtd_cte_t*)(r))
-#define VTD_CT_BITS       9
-#define VTD_CT_SIZE_BITS  (VTD_CT_BITS + VTD_CTE_SIZE_BITS)
-
-#define VTD_PTE_SIZE_BITS 3
-#define VTD_PTE_PTR(r)    ((vtd_pte_t*)(r))
-#define VTD_PT_BITS       9
-#define VTD_PT_SIZE_BITS  (VTD_PT_BITS + VTD_PTE_SIZE_BITS)
-
-#endif
-
-/* helper structure for filling descriptor registers */
-typedef struct gdt_idt_ptr {
-    uint16_t limit;
-    uint16_t basel;
-    uint16_t baseh;
-} gdt_idt_ptr_t;
-
 compile_assert(gdt_idt_ptr_packed,
                sizeof(gdt_idt_ptr_t) == sizeof(uint16_t) * 3)
 
 #define WORD_SIZE_BITS 2
-
-enum vm_rights {
-    VMKernelOnly = 1,
-    VMReadOnly = 2,
-    VMReadWrite = 3
-};
-typedef word_t vm_rights_t;
 
 enum asidSizeConstants {
     asidHighBits = 6,
