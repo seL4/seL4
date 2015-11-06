@@ -334,11 +334,19 @@ DEFINES += -DALLWINNERA20
 endif
 endif # ARCH=arm
 ifeq (${ARCH}, x86)
+ifeq (${SEL4_ARCH}, x86_64)
+CFLAGS += -m64 -mno-red-zone -mcmodel=kernel -fno-asynchronous-unwind-tables
+ASFLAGS += -Wa,--64
+DEFINES += -DARCH_X86 -DX86_64 -DCONFIG_X86_64=y -D__KERNEL_64__ -DKERNEL_64=y -D__X86_64__=y
+export __X86_64__ = y
+endif
+ifeq (${SEL4_ARCH}, ia32)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
 DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32 -D__KERNEL_32__
 LDFLAGS += -Wl,-m,elf_i386 
 export __X86_32__ = y
+endif
 endif # ARCH=x86
 else # NK_CFLAGS
 # Require autoconf to be provided if larger build
