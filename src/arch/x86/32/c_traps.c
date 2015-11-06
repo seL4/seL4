@@ -21,7 +21,7 @@ void NORETURN VISIBLE restore_user_context(void);
 void NORETURN VISIBLE restore_user_context(void)
 {
     /* set the tss.esp0 */
-    tss_ptr_set_esp0(&ia32KStss, ((uint32_t)ksCurThread) + 0x4c);
+    tss_ptr_set_esp0(&x86KStss, ((uint32_t)ksCurThread) + 0x4c);
     if (unlikely(ksCurThread == ia32KSfpuOwner)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();

@@ -23,7 +23,7 @@ init_sysenter_msrs(void)
 {
     x86_wrmsr(IA32_SYSENTER_CS_MSR,  (uint64_t)(word_t)SEL_CS_0);
     x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
-    x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)&ia32KStss.words[1]);
+    x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)&x86KStss.words[1]);
 }
 
 word_t PURE getRestartPC(tcb_t *thread)
@@ -75,9 +75,9 @@ void flushCacheRange(void* vaddr, uint32_t size_bits)
 
     x86_mfence();
 
-    for (v = ROUND_DOWN((uint32_t)vaddr, ia32KScacheLineSizeBits);
+    for (v = ROUND_DOWN((uint32_t)vaddr, x86KScacheLineSizeBits);
             v < (uint32_t)vaddr + BIT(size_bits);
-            v += BIT(ia32KScacheLineSizeBits)) {
+            v += BIT(x86KScacheLineSizeBits)) {
         flushCacheLine((void*)v);
     }
     x86_mfence();

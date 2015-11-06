@@ -17,8 +17,8 @@
 #include <arch/linker.h>
 
 enum vm_fault_type {
-    IA32DataFault = 0,
-    IA32InstructionFault = 1
+    X86DataFault = 0,
+    X86InstructionFault = 1
 };
 typedef word_t vm_fault_type_t;
 
