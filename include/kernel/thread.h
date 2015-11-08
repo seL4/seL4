@@ -16,7 +16,7 @@
 #include <object/structures.h>
 #include <arch/machine.h>
 
-static inline PURE word_t
+static inline CONST word_t
 ready_queues_index(word_t dom, word_t prio)
 {
     if (CONFIG_NUM_DOMAINS > 1) {
@@ -27,13 +27,13 @@ ready_queues_index(word_t dom, word_t prio)
     }
 }
 
-static inline PURE word_t
+static inline CONST word_t
 prio_to_l1index(word_t prio)
 {
     return (prio >> wordRadix);
 }
 
-static inline PURE word_t
+static inline CONST word_t
 l1index_to_prio(word_t l1index)
 {
     return (l1index << wordRadix);

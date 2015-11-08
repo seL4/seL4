@@ -72,7 +72,7 @@ BEGIN_FUNC(arm_undefined_inst_exception)
     ldr r8, [sp]
     sub r8, r8, #4
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
     ldr r7, =ksCurThread
 
@@ -107,7 +107,7 @@ BEGIN_FUNC(arm_swi_syscall)
     stmdb sp, {r0-lr}^
 
     /* Load the kernel's real stack pointer */
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
 #ifdef FASTPATH
     /*
@@ -131,7 +131,7 @@ BEGIN_FUNC(arm_swi_syscall)
     ldr r8, =ksCurThread
 
     /* Check that syscall number is in range */
-    sub r2, r0, #SYSCALL_MIN
+    add r2, r0, #(-SYSCALL_MIN)
     cmp r2, #(SYSCALL_MAX - SYSCALL_MIN + 1)
     bhs arm_swi_undefined_syscall
 
@@ -153,7 +153,7 @@ BEGIN_FUNC(slowpath)
      * trashed.
      */
     ldr r7, =ksCurThread
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
     blx handleSyscall
     RET_TO_USER r7
 END_FUNC(slowpath)
@@ -178,7 +178,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
     ldr r7, =ksCurThread
     mov r0, #VM_EVENT_PREFETCH_ABORT
@@ -189,7 +189,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
 kernel_prefetch_fault:
 #ifdef DEBUG
     mov r0, r8
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
     blx kernelPrefetchAbort
     /* Fallthrough to infinite loop should we foolishly return. */
 #endif
@@ -225,7 +225,7 @@ BEGIN_FUNC(arm_data_abort_exception)
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
     ldr r7, =ksCurThread
     mov r0, #VM_EVENT_DATA_ABORT
@@ -236,7 +236,7 @@ BEGIN_FUNC(arm_data_abort_exception)
 kernel_data_fault:
 #ifdef DEBUG
     mov r0, r8
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
     blx kernelDataAbort
     /* Fallthrough to infinite loop should we foolishly return. */
 #endif
@@ -262,7 +262,7 @@ BEGIN_FUNC(arm_irq_exception)
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
 
     ldr r7, =ksCurThread
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
     blx handleInterruptEntry
 
     RET_TO_USER r7
