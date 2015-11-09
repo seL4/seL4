@@ -214,11 +214,9 @@ try_boot_sys_node(cpu_id_t cpu_id)
     if (!map_kernel_window(
                 (pdpte_t*)kernel_pdpt_global,
                 (pde_t*)kernel_pd_global,
-                (pte_t*)kernel_pt_global
-#ifdef CONFIG_IRQ_IOAPIC
-                , boot_state.num_ioapic,
+                (pte_t*)kernel_pt_global,
+                boot_state.num_ioapic,
                 boot_state.ioapic_paddr
-#endif
 #ifdef CONFIG_IOMMU
                 , boot_state.num_drhu,
                 boot_state.drhu_list
@@ -258,13 +256,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
     }
 
     /* initialise the CPU */
-    if (!init_cpu(
-#ifdef CONFIG_IRQ_IOAPIC
-                1
-#else
-                0
-#endif
-            )) {
+    if (!init_cpu(config_set(CONFIG_IRQ_IOAPIC) ? 1 : 0)) {
         return false;
     }
     return true;
@@ -356,11 +348,11 @@ try_boot_sys(
 
     /* remapping legacy IRQs to their correct vectors */
     pic_remap_irqs(IRQ_INT_OFFSET);
-#ifdef CONFIG_IRQ_IOAPIC
-    /* Disable the PIC so that it does not generate any interrupts. We need to
-     * do this *before* we initialize the apic */
-    pic_disable();
-#endif
+    if (config_set(CONFIG_IRQ_IOAPIC)) {
+        /* Disable the PIC so that it does not generate any interrupts. We need to
+         * do this *before* we initialize the apic */
+        pic_disable();
+    }
 
     /* Prepare for accepting device regions from here on */
     boot_state.dev_p_regs.count = 0;
@@ -396,16 +388,16 @@ try_boot_sys(
     } else {
         printf("Detected %d CPUs. Only just 1\n", num_cpus);
     }
-#ifdef CONFIG_IRQ_IOAPIC
-    if (boot_state.num_ioapic == 0) {
-        printf("No IOAPICs detected\n");
-        return false;
+    if (config_set(CONFIG_IRQ_IOAPIC)) {
+        if (boot_state.num_ioapic == 0) {
+            printf("No IOAPICs detected\n");
+            return false;
+        }
+    } else {
+        if (boot_state.num_ioapic > 0) {
+            printf("Detected %d IOAPICs, but configured to use PIC instead\n", boot_state.num_ioapic);
+        }
     }
-#else
-    if (boot_state.num_ioapic > 0) {
-        printf("Detected %d IOAPICs, but configured to use PIC instead\n", boot_state.num_ioapic);
-    }
-#endif
 
     if (!(mbi->flags & MULTIBOOT_INFO_MODS_FLAG)) {
         printf("Boot loader did not provide information about boot modules\n");
@@ -482,9 +474,9 @@ try_boot_sys(
         return false;
     }
 
-#ifdef CONFIG_IRQ_IOAPIC
-    ioapic_init(1, cpus, boot_state.num_ioapic);
-#endif
+    if (config_set(CONFIG_IRQ_IOAPIC)) {
+        ioapic_init(1, cpus, boot_state.num_ioapic);
+    }
 
     /* No other CPUs to start up right now */
     (void)start_cpu;

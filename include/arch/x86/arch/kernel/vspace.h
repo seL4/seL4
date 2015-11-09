@@ -29,11 +29,9 @@ void enable_paging(void);
 bool_t map_kernel_window(
     pdpte_t*   pdpt,
     pde_t*     pd,
-    pte_t*     pt
-#ifdef CONFIG_IRQ_IOAPIC
-    , uint32_t num_ioapic,
+    pte_t*     pt,
+    uint32_t num_ioapic,
     paddr_t*   ioapic_paddrs
-#endif
 #ifdef CONFIG_IOMMU
     , uint32_t   num_drhu,
     paddr_t*   drhu_list
