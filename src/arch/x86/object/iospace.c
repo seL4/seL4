@@ -10,8 +10,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_IOMMU
-
 #include <api/syscall.h>
 #include <machine/io.h>
 #include <kernel/thread.h>
@@ -458,5 +456,3 @@ exception_t decodeIA32IOSpaceInvocation(word_t label, cap_t cap)
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
-
-#endif

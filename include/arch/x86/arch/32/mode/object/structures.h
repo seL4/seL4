@@ -161,13 +161,11 @@ cap_get_archCapSizeBits(cap_t cap)
 
     case cap_io_port_cap:
         return 0;
-#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         return 0;
 
     case cap_io_page_table_cap:
         return VTD_PT_SIZE_BITS;
-#endif
     case cap_asid_control_cap:
         return 0;
 
@@ -202,13 +200,13 @@ cap_get_archCapPtr(cap_t cap)
 
     case cap_io_port_cap:
         return NULL;
-#ifdef CONFIG_IOMMU
+
     case cap_io_space_cap:
         return NULL;
 
     case cap_io_page_table_cap:
         return (void *)(cap_io_page_table_cap_get_capIOPTBasePtr(cap));
-#endif
+
     case cap_asid_control_cap:
         return NULL;
 

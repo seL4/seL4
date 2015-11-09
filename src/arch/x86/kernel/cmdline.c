@@ -61,7 +61,6 @@ static int UNUSED parse_opt(const char *cmdline, const char *opt, char *value, i
     return len;
 }
 
-#ifdef CONFIG_IOMMU
 static int parse_bool(const char *cmdline, const char *opt)
 {
     const char *optptr = NULL;
@@ -81,7 +80,6 @@ static int parse_bool(const char *cmdline, const char *opt)
         }
     }
 }
-#endif
 
 #if defined DEBUG || defined RELEASE_PRINTF
 static void parse_uint16_array(char* str, uint16_t* array, int array_size)
@@ -143,10 +141,8 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
     }
 #endif
 
-#ifdef CONFIG_IOMMU
     cmdline_opt->disable_iommu = parse_bool(cmdline, cmdline_str_disable_iommu);
     printf("Boot config: disable_iommu = %s\n", cmdline_opt->disable_iommu ? "true" : "false");
-#endif
 
 #ifdef DEBUG
     ia32KSconsolePort = cmdline_opt->console_port;

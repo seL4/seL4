@@ -23,9 +23,7 @@
 #include <arch/linker.h>
 #include <util.h>
 
-#ifdef CONFIG_IOMMU
 #include <plat/machine/intel-vtd.h>
-#endif
 
 /* functions exactly corresponding to abstract specification */
 
@@ -71,9 +69,7 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
     return
         cap_frame_cap_new(
             frame_size,                    /* capFSize           */
-#ifdef CONFIG_IOMMU
             0,                             /* capFIsIOSpace      */
-#endif
             ASID_LOW(asid),                /* capFMappedASIDLow  */
             vptr,                          /* capFMappedAddress  */
             ASID_HIGH(asid),               /* capFMappedASIDHigh */
@@ -301,14 +297,12 @@ init_sys_state(
     /* parameters below not modeled in abstract specification */
     pdpte_t*      kernel_pdpt,
     pde_t*        kernel_pd,
-    pte_t*        kernel_pt
-#ifdef CONFIG_IOMMU
-    , uint32_t      num_drhu,
+    pte_t*        kernel_pt,
+    uint32_t      num_drhu,
     paddr_t*      drhu_list,
     uint32_t      num_passthrough_dev,
     dev_id_t*     passthrough_dev_list,
     uint32_t*     pci_bus_used_bitmap
-#endif
 )
 {
     cap_t         root_cnode_cap;
@@ -489,18 +483,20 @@ init_sys_state(
         return false;
     }
 
-#ifdef CONFIG_IOMMU
-    /* initialise VTD-related data structures and the IOMMUs */
-    if (!vtd_init(cpu_id, num_drhu, pci_bus_used_bitmap, num_passthrough_dev, passthrough_dev_list)) {
-        return false;
+    if (config_set(CONFIG_IOMMU)) {
+        /* initialise VTD-related data structures and the IOMMUs */
+        if (!vtd_init(cpu_id, num_drhu, pci_bus_used_bitmap, num_passthrough_dev, passthrough_dev_list)) {
+            return false;
+        }
+
+        /* write number of IOMMU PT levels into bootinfo */
+        ndks_boot.bi_frame->num_iopt_levels = ia32KSnumIOPTLevels;
+
+        /* write IOSpace master cap */
+        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IO_SPACE), master_iospace_cap());
+    } else {
+        ndks_boot.bi_frame->num_iopt_levels = -1;
     }
-
-    /* write number of IOMMU PT levels into bootinfo */
-    ndks_boot.bi_frame->num_iopt_levels = ia32KSnumIOPTLevels;
-
-    /* write IOSpace master cap */
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IO_SPACE), master_iospace_cap());
-#endif
 
     /* convert the remaining free memory into UT objects and provide the caps */
     if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {

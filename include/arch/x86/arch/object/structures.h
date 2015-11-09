@@ -35,8 +35,6 @@ typedef struct arch_tcb {
 
 #define IDT_ENTRIES 256
 
-#ifdef CONFIG_IOMMU
-
 #define VTD_RT_SIZE_BITS  12
 
 #define VTD_CTE_SIZE_BITS 3
@@ -48,8 +46,6 @@ typedef struct arch_tcb {
 #define VTD_PTE_PTR(r)    ((vtd_pte_t*)(r))
 #define VTD_PT_BITS       9
 #define VTD_PT_SIZE_BITS  (VTD_PT_BITS + VTD_PTE_SIZE_BITS)
-
-#endif
 
 /* helper structure for filling descriptor registers */
 typedef struct gdt_idt_ptr {

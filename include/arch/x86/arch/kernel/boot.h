@@ -37,14 +37,12 @@ bool_t init_sys_state(
     /* parameters below not modeled in abstract specification */
     pdpte_t*      kernel_pdpt,
     pde_t*        kernel_pd,
-    pte_t*        kernel_pt
-#ifdef CONFIG_IOMMU
-    , uint32_t      num_drhu,
+    pte_t*        kernel_pt,
+    uint32_t      num_drhu,
     paddr_t*      drhu_list,
     uint32_t      num_passthrough_dev,
     dev_id_t*     passthrough_dev_list,
     uint32_t*     pci_bus_used_bitmap
-#endif
 );
 
 bool_t init_cpu(

@@ -58,13 +58,11 @@ typedef struct boot_state {
     dev_p_regs_t dev_p_regs;  /* device memory regions */
     uint32_t     num_ioapic;  /* number of IOAPICs detected */
     paddr_t      ioapic_paddr[CONFIG_MAX_NUM_IOAPIC];
-#ifdef CONFIG_IOMMU
     uint32_t     num_drhu; /* number of IOMMUs */
     paddr_t      drhu_list[MAX_NUM_DRHU]; /* list of physical addresses of the IOMMUs */
     uint32_t     num_passthrough_dev;
     dev_id_t     passthrough_dev_list[CONFIG_MAX_NUM_PASSTHROUGH_DEVICES];
     uint32_t     pci_bus_used_bitmap[32]; /* 256 bit map of PCI buses in use */
-#endif
 } boot_state_t;
 
 BOOT_DATA
@@ -216,11 +214,9 @@ try_boot_sys_node(cpu_id_t cpu_id)
                 (pde_t*)kernel_pd_global,
                 (pte_t*)kernel_pt_global,
                 boot_state.num_ioapic,
-                boot_state.ioapic_paddr
-#ifdef CONFIG_IOMMU
-                , boot_state.num_drhu,
+                boot_state.ioapic_paddr,
+                boot_state.num_drhu,
                 boot_state.drhu_list
-#endif
             )) {
         return false;
     }
@@ -243,14 +239,12 @@ try_boot_sys_node(cpu_id_t cpu_id)
                 /* parameters below not modeled in abstract specification */
                 (pdpte_t*)kernel_pdpt_global,
                 (pde_t*)kernel_pd_global,
-                (pte_t*)kernel_pt_global
-#ifdef CONFIG_IOMMU
-                , boot_state.num_drhu,
+                (pte_t*)kernel_pt_global,
+                boot_state.num_drhu,
                 boot_state.drhu_list,
                 boot_state.num_passthrough_dev,
                 boot_state.passthrough_dev_list,
                 boot_state.pci_bus_used_bitmap
-#endif
             )) {
         return false;
     }
@@ -360,8 +354,7 @@ try_boot_sys(
         return false;
     }
 
-#ifdef CONFIG_IOMMU
-    if (cmdline_opt.disable_iommu) {
+    if (!config_set(CONFIG_IOMMU) || cmdline_opt.disable_iommu) {
         boot_state.num_drhu = 0;
     } else {
         /* query available IOMMUs from ACPI */
@@ -375,7 +368,6 @@ try_boot_sys(
             CONFIG_MAX_NUM_PASSTHROUGH_DEVICES
         );
     }
-#endif
 
     /* query available CPUs from ACPI */
     num_cpus = acpi_madt_scan(acpi_rsdt, cpus, sizeof(cpus) / sizeof(cpus[0]), &boot_state.num_ioapic, boot_state.ioapic_paddr);
