@@ -495,11 +495,9 @@ map_kernel_window(
     pde_t*     pd,
     pte_t*     pt,
     uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs
-#ifdef CONFIG_IOMMU
-    , uint32_t   num_drhu,
+    paddr_t*   ioapic_paddrs,
+    uint32_t   num_drhu,
     paddr_t*   drhu_list
-#endif
 )
 {
     paddr_t  phys;
@@ -681,7 +679,6 @@ map_kernel_window(
         idx++;
     }
 
-#ifdef CONFIG_IOMMU
     /* map kernel devices: IOMMUs */
     for (i = 0; i < num_drhu; i++) {
         phys = (paddr_t)drhu_list[i];
@@ -706,7 +703,6 @@ map_kernel_window(
             return false;
         }
     }
-#endif
 
     /* mark unused kernel-device pages as 'not present' */
     while (idx < BIT(PT_BITS)) {
@@ -1578,14 +1574,12 @@ decodeIA32FrameInvocation(
         vm_page_size_t  frameSize;
         asid_t          asid;
 
-#ifdef CONFIG_IOMMU
         if (cap_frame_cap_get_capFIsIOSpace(cap)) {
             userError("IA32FrameRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-#endif
 
         if (length < 2 || extraCaps.excaprefs[0] == NULL) {
             userError("IA32FrameRemap: Truncated message");
@@ -1698,11 +1692,9 @@ decodeIA32FrameInvocation(
 
     case IA32PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-#ifdef CONFIG_IOMMU
             if (cap_frame_cap_get_capFIsIOSpace(cap)) {
                 return decodeIA32IOUnMapInvocation(label, length, cte, cap, extraCaps);
             }
-#endif
             unmapPage(
                 cap_frame_cap_get_capFSize(cap),
                 cap_frame_cap_get_capFMappedASID(cap),
@@ -1717,11 +1709,9 @@ decodeIA32FrameInvocation(
         return EXCEPTION_NONE;
     }
 
-#ifdef CONFIG_IOMMU
     case IA32PageMapIO: { /* MapIO */
         return decodeIA32IOMapInvocation(label, length, cte, cap, extraCaps, buffer);
     }
-#endif
 
     case IA32PageGetAddress: {
         /* Return it in the first message register. */

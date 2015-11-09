@@ -17,9 +17,7 @@
 #include <plat/machine/ioapic.h>
 #include <plat/machine.h>
 
-#ifdef CONFIG_IOMMU
 #include <plat/machine/intel-vtd.h>
-#endif
 
 /* Device discovery. For the pc99 platform we assume a pci bus and the presence of the
  * standard bios regions */
@@ -27,11 +25,7 @@ void platAddDevices(void)
 {
     /* discover PCI devices and their regions */
     /* pci_scan() calls insert_dev_p_reg() for each device region */
-#ifdef CONFIG_IOMMU
     pci_scan(boot_state.pci_bus_used_bitmap);
-#else
-    pci_scan(NULL);
-#endif
     /* Add the text mode (EGA) frame buffer. 1 frame is enough for the
      * standard 80x25 text mode. This whole thing is a bit of a hack */
     insert_dev_p_reg( (p_region_t) {
@@ -73,12 +67,10 @@ void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
 /* Handle a platform-reserved IRQ. */
 void handleReservedIRQ(irq_t irq)
 {
-#ifdef CONFIG_IOMMU
-    if (irq == irq_iommu) {
+    if (config_set(CONFIG_IOMMU) && irq == irq_iommu) {
         vtd_handle_fault();
         return;
     }
-#endif
     printf("Received reserved IRQ: %d\n", (int)irq);
 }
 

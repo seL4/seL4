@@ -31,11 +31,9 @@ bool_t map_kernel_window(
     pde_t*     pd,
     pte_t*     pt,
     uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs
-#ifdef CONFIG_IOMMU
-    , uint32_t   num_drhu,
+    paddr_t*   ioapic_paddrs,
+    uint32_t   num_drhu,
     paddr_t*   drhu_list
-#endif
 );
 
 void *getValidNativeRoot(cap_t vspace_cap);

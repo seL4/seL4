@@ -44,7 +44,6 @@ uint32_t acpi_madt_scan(
     paddr_t*     ioapic_addrs
 );
 
-#ifdef CONFIG_IOMMU
 void acpi_dmar_scan(
     acpi_rsdt_t* acpi_rsdt,
     paddr_t*     drhu_list,
@@ -54,6 +53,5 @@ void acpi_dmar_scan(
     uint32_t*    num_passthrough_dev,
     uint32_t     max_passthrough_dev_list_len
 );
-#endif
 
 #endif

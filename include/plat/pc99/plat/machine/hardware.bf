@@ -33,7 +33,6 @@ tagged_union pci_bar pci_space {
     tag pci_bar_io  1
 }
 
-#ifdef CONFIG_IOMMU
 -- Intel VT-d Root Table Entry
 block vtd_rte {
     padding                         96
@@ -68,4 +67,3 @@ block vtd_pte {
     field       write               1
     field       read                1
 }
-#endif

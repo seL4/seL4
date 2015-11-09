@@ -18,9 +18,7 @@ typedef struct cmdline_opt {
     uint16_t console_port;
     uint16_t debug_port;
 #endif
-#ifdef CONFIG_IOMMU
     bool_t   disable_iommu;
-#endif
 } cmdline_opt_t;
 
 void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt);

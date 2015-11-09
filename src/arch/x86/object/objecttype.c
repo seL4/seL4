@@ -20,10 +20,8 @@
 #include <arch/object/ioport.h>
 #include <plat/machine/pci.h>
 
-#ifdef CONFIG_IOMMU
 #include <arch/object/iospace.h>
 #include <plat/machine/intel-vtd.h>
-#endif
 
 deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
 {
@@ -67,9 +65,7 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
         return ret;
 
     case cap_frame_cap:
-#ifdef CONFIG_IOMMU
         cap = cap_frame_cap_set_capFIsIOSpace(cap, 0);
-#endif
         ret.cap = cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
         ret.status = EXCEPTION_NONE;
         return ret;
@@ -83,7 +79,6 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
         return ret;
-#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -98,7 +93,6 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
             ret.status = EXCEPTION_SYSCALL_ERROR;
         }
         return ret;
-#endif
 
     default:
         /* This assert has no equivalent in haskell,
@@ -110,7 +104,6 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
     switch (cap_get_capType(cap)) {
-#ifdef CONFIG_IOMMU
     case cap_io_space_cap: {
         io_space_capdata_t w = { { data } };
         uint16_t PCIDevice = io_space_capdata_get_PCIDevice(w);
@@ -125,7 +118,6 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
             return cap_null_cap_new();
         }
     }
-#endif
     case cap_io_port_cap: {
         io_port_capdata_t w = { .words = { data } };
         uint16_t firstPort = io_port_capdata_get_firstPort(w);
@@ -200,12 +192,10 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_frame_cap:
         if (cap_frame_cap_get_capFMappedASID(cap)) {
-#ifdef CONFIG_IOMMU
             if (cap_frame_cap_get_capFIsIOSpace(cap)) {
                 unmapIOPage(cap);
                 break;
             }
-#endif
             unmapPage(
                 cap_frame_cap_get_capFSize(cap),
                 cap_frame_cap_get_capFMappedASID(cap),
@@ -226,13 +216,11 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_asid_control_cap:
     case cap_io_port_cap:
         break;
-#ifdef CONFIG_IOMMU
     case cap_io_page_table_cap:
         if (final && cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
             deleteIOPageTable(cap);
         }
         break;
-#endif
 
     default:
         fail("Invalid arch cap type");
@@ -325,7 +313,7 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
 
     case cap_io_port_cap:
         return cap;
-#ifdef CONFIG_IOMMU
+
     case cap_io_space_cap:
         return cap;
 
@@ -335,7 +323,7 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
             BIT(VTD_PT_SIZE_BITS)
         );
         return cap;
-#endif
+
     default:
         fail("Invalid arch cap type");
     }
@@ -408,7 +396,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             return true;
         }
         break;
-#ifdef CONFIG_IOMMU
+
     case cap_io_space_cap:
         if (cap_get_capType(cap_b) == cap_io_space_cap) {
             return cap_io_space_cap_get_capPCIDevice(cap_a) ==
@@ -422,7 +410,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_io_page_table_cap_get_capIOPTBasePtr(cap_b);
         }
         break;
-#endif
+
     }
 
     return false;
@@ -455,10 +443,8 @@ Arch_getObjectSize(word_t t)
         return PDE_SIZE_BITS + PD_BITS;
     case seL4_IA32_PDPTObject:
         return PDPTE_SIZE_BITS + PDPT_BITS;
-#ifdef CONFIG_IOMMU
     case seL4_IA32_IOPageTableObject:
         return VTD_PT_SIZE_BITS;
-#endif
     default:
         fail("Invalid object type");
         return 0;
@@ -473,9 +459,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
         memzero(regionBase, 1 << pageBitsForSize(IA32_SmallPage));
         return cap_frame_cap_new(
                    IA32_SmallPage,         /* capFSize             */
-#ifdef CONFIG_IOMMU
                    0,                      /* capFIsIOSpace        */
-#endif
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
                    0,                      /* capFMappedAddress    */
                    ASID_HIGH(asidInvalid), /* capFMappedASIDHigh   */
@@ -487,9 +471,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
         memzero(regionBase, 1 << pageBitsForSize(IA32_LargePage));
         return cap_frame_cap_new(
                    IA32_LargePage,         /* capFSize             */
-#ifdef CONFIG_IOMMU
                    0,                      /* capFIsIOSpace        */
-#endif
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
                    0,                      /* capFMappedAddress    */
                    ASID_HIGH(asidInvalid), /* capFMappedASIDHigh   */
@@ -530,7 +512,6 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
                );
 #endif
 
-#ifdef CONFIG_IOMMU
     case seL4_IA32_IOPageTableObject:
         memzero(regionBase, 1 << VTD_PT_SIZE_BITS);
         return cap_io_page_table_cap_new(
@@ -540,7 +521,6 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
                    0,  /* capIOPTIOASID        */
                    (word_t)regionBase  /* capIOPTBasePtr */
                );
-#endif
 
     default:
         /*
@@ -575,12 +555,10 @@ Arch_decodeInvocation(
         return decodeIA32MMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
     case cap_io_port_cap:
         return decodeIA32PortInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
-#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         return decodeIA32IOSpaceInvocation(label, cap);
     case cap_io_page_table_cap:
         return decodeIA32IOPTInvocation(label, length, slot, cap, extraCaps, buffer);
-#endif
 
     default:
         current_syscall_error.type = seL4_InvalidCapability;

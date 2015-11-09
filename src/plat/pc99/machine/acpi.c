@@ -338,8 +338,6 @@ acpi_madt_scan(
     return num_cpu;
 }
 
-#ifdef CONFIG_IOMMU
-
 BOOT_CODE static bool_t
 acpi_dev_in_list(dev_id_t* dev_list, uint32_t list_len, dev_id_t dev)
 {
@@ -491,5 +489,3 @@ acpi_dmar_scan(
     }
     printf("ACPI: %d IOMMUs detected\n", *num_drhu);
 }
-
-#endif /* IOMMU */

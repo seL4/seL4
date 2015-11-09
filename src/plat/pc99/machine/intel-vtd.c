@@ -10,8 +10,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_IOMMU
-
 #include <kernel/boot.h>
 #include <machine/io.h>
 #include <arch/kernel/apic.h>
@@ -452,5 +450,3 @@ vtd_init(
     }
     return true;
 }
-
-#endif
