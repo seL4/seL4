@@ -20,7 +20,7 @@
 
 #ifdef DEBUG
 /* Maximum length of the tcb name, including null terminator */
-#define TCB_NAME_LENGTH (BIT(TCB_SIZE_BITS) - sizeof(tcb_t))
+#define TCB_NAME_LENGTH (BIT(TCB_BLOCK_SIZE_BITS) - BIT(TCB_SIZE_BITS) - sizeof(tcb_t))
 #endif
 
 struct tcb_queue {
