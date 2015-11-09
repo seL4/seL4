@@ -35,6 +35,7 @@ void tcbSchedDequeue(tcb_t *tcb);
 
 tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
+tcb_queue_t tcbEPReorder(tcb_t *tcb, tcb_queue_t queue, prio_t oldPrio);
 
 void setupCallerCap(tcb_t *sender, tcb_t *receiver);
 void deleteCallerCap(tcb_t *receiver);

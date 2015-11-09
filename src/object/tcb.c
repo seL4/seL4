@@ -174,18 +174,48 @@ tcbSchedDequeue(tcb_t *tcb)
     }
 }
 
-/* Add TCB to the end of an endpoint queue */
+/* Add TCB to the ordered endpoint queue */
 tcb_queue_t
 tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)
 {
     if (!queue.head) { /* Empty list */
         queue.head = tcb;
+        queue.end = tcb;
+        tcb->tcbEPPrev = NULL;
+        tcb->tcbEPNext = NULL;
     } else {
-        queue.end->tcbEPNext = tcb;
+        /* insert ordered */
+        tcb_t *prev = NULL;
+        tcb_t *current = queue.head;
+
+        /* find a place to put the tcb */
+        while (current != NULL && tcb->tcbPriority <= current->tcbPriority) {
+            prev = current;
+            current = current->tcbEPNext;
+        }
+
+        /* there is at least one other tcb in the queue (since queue.head exists)
+         * so we are inserting distinctly at the head, tail or middle. */
+        if (prev == NULL) {
+            /* insert at head */
+            queue.head = tcb;
+            tcb->tcbEPNext = current;
+            tcb->tcbEPPrev = NULL;
+            current->tcbEPPrev = tcb;
+        } else if (current == NULL) {
+            /* insert at end */
+            queue.end = tcb;
+            prev->tcbEPNext = tcb;
+            tcb->tcbEPPrev = prev;
+            tcb->tcbEPNext = NULL;
+        } else {
+            /* insert between current and prev */
+            prev->tcbEPNext = tcb;
+            current->tcbEPPrev = tcb;
+            tcb->tcbEPPrev = prev;
+            tcb->tcbEPNext = current;
+        }
     }
-    tcb->tcbEPPrev = queue.end;
-    tcb->tcbEPNext = NULL;
-    queue.end = tcb;
 
     return queue;
 }
@@ -208,6 +238,91 @@ tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
 
     return queue;
 }
+
+/* reorder a tcb in an ipc endpoint queue */
+tcb_queue_t
+tcbEPReorder(tcb_t *tcb, tcb_queue_t queue, prio_t oldPrio)
+{
+    word_t newPrio = tcb->tcbPriority;
+
+    if (newPrio == oldPrio) {
+        /* nothing to do, prio didn't change */
+    } else if (newPrio > oldPrio) {
+        /* move tcb up in the queue */
+        tcb_t *prev = tcb->tcbEPPrev;
+
+        if (prev == NULL || newPrio < prev->tcbPriority) {
+            /* nothing to do, tcb is at head of the list or in the right place */
+            return queue;
+        }
+
+        /* tcb is not in the right place - take it out */
+        queue = tcbEPDequeue(tcb, queue);
+
+        /* now find the correct place */
+        while (prev != NULL && prev->tcbPriority < newPrio) {
+            prev = prev->tcbEPPrev;
+        }
+
+        /* this can't happen, as if we are being placed at the end of the queue we have
+         * the lowest prio in the queue and aren't changing position -> which means we exited above */
+        assert(prev != queue.end);
+
+        if (prev == NULL) {
+            /* place at head */
+            tcb->tcbEPNext = queue.head;
+            tcb->tcbEPPrev = NULL;
+            queue.head->tcbEPPrev = tcb;
+            queue.head = tcb;
+        } else {
+            /* tcb goes after prev */
+            tcb->tcbEPNext = prev->tcbEPNext;
+            tcb->tcbEPPrev = prev;
+            /* tcb->tcbEPPrev can't be NULL as we would have taken the first branch */
+            assert(tcb->tcbEPPrev != NULL);
+            tcb->tcbEPNext->tcbEPPrev = tcb;
+            prev->tcbEPNext = tcb;
+        }
+    } else { /* newPrio < oldPrio */
+        /* move tcb down in the queue */
+        tcb_t *next = tcb->tcbEPNext;
+
+        if (next == NULL || newPrio >= next->tcbPriority) {
+            /* nothing to do, tcb is at the tail of the list or in the correct place */
+            return queue;
+        }
+
+        /* tcb is not in the right place - take it out */
+        queue = tcbEPDequeue(tcb, queue);
+
+        /* now find the correct place */
+        while (next != NULL && next->tcbPriority >= newPrio) {
+            next = next->tcbEPNext;
+        }
+
+        /* this can't happen, as if we are being placed at the head of the queue we have
+         * the highest prio in the queue and aren't changing potition -> which means
+         * we exited above */
+        assert(next != queue.head);
+
+        if (next == NULL) {
+            /* tcb goes to the tail */
+            tcb->tcbEPPrev = queue.end;
+            tcb->tcbEPNext = NULL;
+            queue.end->tcbEPNext = tcb;
+            queue.end = tcb;
+        } else {
+            /* tcb goes before next */
+            tcb->tcbEPNext = next;
+            tcb->tcbEPPrev = next->tcbEPPrev;
+            next->tcbEPPrev->tcbEPNext = tcb;
+            next->tcbEPPrev = tcb;
+        }
+    }
+
+    return queue;
+}
+
 
 cptr_t PURE
 getExtraCPtr(word_t *bufferPtr, word_t i)

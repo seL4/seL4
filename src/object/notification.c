@@ -45,6 +45,17 @@ ntfn_set_active(notification_t *ntfnPtr, word_t badge)
     notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
 }
 
+void
+reorderNtfnQueue(tcb_t *thread, prio_t old_prio)
+{
+    notification_t *ntfn;
+    tcb_queue_t queue;
+
+    ntfn = NTFN_PTR(thread_state_get_blockingObject(thread->tcbState));
+    queue = ntfn_ptr_get_queue(ntfn);
+    queue = tcbEPReorder(thread, queue, old_prio);
+    ntfn_ptr_set_queue(ntfn, queue);
+}
 
 void
 sendSignal(notification_t *ntfnPtr, word_t badge)

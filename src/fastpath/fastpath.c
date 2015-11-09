@@ -290,14 +290,8 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(ksCurThread),
                                              EPState_Recv);
     } else {
-        /* Append current thread onto the queue. */
-        endpointTail->tcbEPNext = ksCurThread;
-        ksCurThread->tcbEPPrev = endpointTail;
-        ksCurThread->tcbEPNext = NULL;
-
-        /* Update tail of queue. */
-        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(ksCurThread),
-                                             EPState_Recv);
+        /* Place thread in correct order in queue */
+        ep_ptr_set_queue(ep_ptr, tcbEPAppend(ksCurThread, ep_ptr_get_queue(ep_ptr)));
     }
 
     /* Delete the reply cap. */

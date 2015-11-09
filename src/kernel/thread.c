@@ -359,16 +359,34 @@ setDomain(tcb_t *tptr, dom_t dom)
 }
 
 void
-setPriority(tcb_t *tptr, seL4_Prio_t prio)
+setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
 {
+    prio_t old_prio = tptr->tcbPriority;
+
+    /* lazy dequeue */
     tcbSchedDequeue(tptr);
-    tptr->tcbPriority = seL4_Prio_get_prio(prio);
-    tptr->tcbMaxPriority = seL4_Prio_get_max_prio(prio);
-    if (isRunnable(tptr)) {
+
+    tptr->tcbPriority = seL4_Prio_get_prio(new_prio);
+    tptr->tcbMaxPriority = seL4_Prio_get_max_prio(new_prio);
+
+    switch (thread_state_ptr_get_tsType(&tptr->tcbState)) {
+    case ThreadState_BlockedOnReceive:
+    case ThreadState_BlockedOnSend:
+        reorderIPCQueue(tptr, old_prio);
+        break;
+    case ThreadState_BlockedOnNotification:
+        reorderNtfnQueue(tptr, old_prio);
+        break;
+    case ThreadState_Running:
+    case ThreadState_Restart:
         tcbSchedEnqueue(tptr);
-    }
-    if (tptr == ksCurThread) {
-        rescheduleRequired();
+        if (tptr == ksCurThread) {
+            rescheduleRequired();
+        }
+        break;
+    default:
+        /* nothing to do - thread is inactive, idle or blocked on reply */
+        break;
     }
 }
 
