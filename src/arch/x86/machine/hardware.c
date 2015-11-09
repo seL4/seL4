@@ -100,7 +100,7 @@ disablePrefetchers()
 
     version_info = x86_cpuid_eax(0x1, 0x0);
 
-    for (i = 0; i < ARRAY_SIZE(valid_models); ++i) {
+    for (i = 0; i < ARRAY_SIZE(valid_models); i++) {
         if (MODEL_ID(version_info) == valid_models[i]) {
             low = x86_rdmsr_low(IA32_PREFETCHER_MSR);
             high = x86_rdmsr_high(IA32_PREFETCHER_MSR);
