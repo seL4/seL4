@@ -35,9 +35,6 @@ bool_t init_sys_state(
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */
-    pdpte_t*      kernel_pdpt,
-    pde_t*        kernel_pd,
-    pte_t*        kernel_pt,
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
     uint32_t      num_passthrough_dev,

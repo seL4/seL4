@@ -485,9 +485,6 @@ init_idt(idt_entry_t* idt)
 
 BOOT_CODE bool_t
 map_kernel_window(
-    pdpte_t*   pdpt,
-    pde_t*     pd,
-    pte_t*     pt,
     uint32_t num_ioapic,
     paddr_t*   ioapic_paddrs,
     uint32_t   num_drhu,
@@ -500,10 +497,10 @@ map_kernel_window(
     pte_t    pte;
     unsigned int UNUSED i;
 
-    if ((void*)pdpt != (void*)pd) {
+    if (config_set(CONFIG_PAE_PAGING)) {
         for (idx = 0; idx < BIT(PDPT_BITS); idx++) {
-            pdpte_ptr_new(pdpt + idx,
-                          pptr_to_paddr(pd + (idx * BIT(PD_BITS))),
+            pdpte_ptr_new(&ia32KSGlobalPDPT[idx],
+                          pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_BITS)]),
                           0, /* avl*/
                           0, /* cache_disabled */
                           0, /* write_through */
@@ -537,7 +534,7 @@ map_kernel_window(
                   1,      /* read_write           */
                   1       /* present              */
               );
-        pd[idx] = pde;
+        ia32KSGlobalPD[idx] = pde;
         phys += BIT(LARGE_PAGE_BITS);
         idx++;
     }
@@ -557,7 +554,7 @@ map_kernel_window(
 
     /* map page table of last 4M of virtual address space to page directory */
     pde = pde_pde_small_new(
-              pptr_to_paddr(pt), /* pt_base_address  */
+              pptr_to_paddr(ia32KSGlobalPT), /* pt_base_address  */
               0,                 /* avl              */
               0,                 /* accessed         */
               0,                 /* cache_disabled   */
@@ -566,7 +563,7 @@ map_kernel_window(
               1,                 /* read_write       */
               1                  /* present          */
           );
-    pd[idx] = pde;
+    ia32KSGlobalPD[idx] = pde;
 
     /* Start with an empty guard page preceding the stack. */
     idx = 0;
@@ -583,7 +580,7 @@ map_kernel_window(
               0,      /* read_write           */
               0       /* present              */
           );
-    pt[idx] = pte;
+    ia32KSGlobalPT[idx] = pte;
     idx++;
 
     /* null mappings up to PPTR_KDEV */
@@ -602,7 +599,7 @@ map_kernel_window(
                   0,      /* read_write           */
                   0       /* present              */
               );
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
     }
 
@@ -628,7 +625,7 @@ map_kernel_window(
           );
 
     assert(idx == (PPTR_APIC & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-    pt[idx] = pte;
+    ia32KSGlobalPT[idx] = pte;
     idx++;
 
     for (i = 0; i < num_ioapic; i++) {
@@ -647,7 +644,7 @@ map_kernel_window(
                   1       /* present              */
               );
         assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
         if (idx == BIT(PT_BITS)) {
             return false;
@@ -669,7 +666,7 @@ map_kernel_window(
                   0       /* present              */
               );
         assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
     }
 
@@ -691,7 +688,7 @@ map_kernel_window(
               );
 
         assert(idx == ((PPTR_DRHU_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
         if (idx == BIT(PT_BITS)) {
             return false;
@@ -713,7 +710,7 @@ map_kernel_window(
                   0,      /* read_write           */
                   0       /* present              */
               );
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
     }
 
@@ -765,15 +762,12 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
 }
 
 BOOT_CODE bool_t
-init_vm_state(pdpte_t *kernel_pdpt, pde_t* kernel_pd, pte_t* kernel_pt)
+init_vm_state(void)
 {
     ia32KScacheLineSizeBits = getCacheLineSizeBits();
     if (!ia32KScacheLineSizeBits) {
         return false;
     }
-    ia32KSkernelPDPT = kernel_pdpt;
-    ia32KSkernelPD = kernel_pd;
-    ia32KSkernelPT = kernel_pt;
     init_tss(&ia32KStss);
     init_gdt(ia32KSgdt, &ia32KStss);
     init_idt(ia32KSidt);
@@ -1073,14 +1067,22 @@ void setVMRoot(tcb_t* tcb)
 
     vspace_root = getValidNativeRoot(threadRoot);
     if (!vspace_root) {
-        setCurrentPD(pptr_to_paddr(ia32KSkernelPDPT));
+        if (config_set(CONFIG_PAE_PAGING)) {
+            setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
+        } else {
+            setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
+        }
         return;
     }
 
     asid = cap_get_capMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspace_root) {
-        setCurrentPD(pptr_to_paddr(ia32KSkernelPDPT));
+        if (config_set(CONFIG_PAE_PAGING)) {
+            setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
+        } else {
+            setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
+        }
         return;
     }
 

@@ -40,9 +40,9 @@ tcb_t *ia32KSfpuOwner VISIBLE;
 /* ==== read-only kernel state (only written during bootstrapping) ==== */
 
 /* The privileged kernel mapping PD & PT */
-pdpte_t* ia32KSkernelPDPT;
-pde_t* ia32KSkernelPD;
-pte_t* ia32KSkernelPT;
+pdpte_t ia32KSGlobalPDPT[BIT(PDPT_BITS)] ALIGN(BIT(PDPT_SIZE_BITS));
+pde_t ia32KSGlobalPD[BIT(PD_BITS + PDPT_BITS)] ALIGN(BIT(PD_SIZE_BITS));
+pte_t ia32KSGlobalPT[BIT(PT_BITS)] ALIGN(BIT(PT_SIZE_BITS));
 
 /* CPU Cache Line Size */
 uint32_t ia32KScacheLineSizeBits;
