@@ -487,11 +487,9 @@ BOOT_CODE bool_t
 map_kernel_window(
     pdpte_t*   pdpt,
     pde_t*     pd,
-    pte_t*     pt
-#ifdef CONFIG_IRQ_IOAPIC
-    , uint32_t num_ioapic,
+    pte_t*     pt,
+    uint32_t num_ioapic,
     paddr_t*   ioapic_paddrs
-#endif
 #ifdef CONFIG_IOMMU
     , uint32_t   num_drhu,
     paddr_t*   drhu_list
@@ -635,7 +633,6 @@ map_kernel_window(
     pt[idx] = pte;
     idx++;
 
-#ifdef CONFIG_IRQ_IOAPIC
     for (i = 0; i < num_ioapic; i++) {
         phys = ioapic_paddrs[i];
         pte = pte_new(
@@ -677,7 +674,6 @@ map_kernel_window(
         pt[idx] = pte;
         idx++;
     }
-#endif
 
 #ifdef CONFIG_IOMMU
     /* map kernel devices: IOMMUs */

@@ -10,8 +10,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_IRQ_IOAPIC
-
 #include <arch/linker.h>
 #include <plat/machine/io.h>
 #include <plat/machine/hardware.h>
@@ -173,5 +171,3 @@ void ioapic_set_mode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
     ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_LOW(index));
     ioapic_write(ioapic, IOAPIC_WINDOW, ioredtbl_state[irq]);
 }
-
-#endif /* CONFIG_IOAPIC */

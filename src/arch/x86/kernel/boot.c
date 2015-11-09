@@ -39,12 +39,11 @@ init_irqs(cap_t root_cnode_cap)
             setIRQState(IRQTimer, i);
         } else if (i == irq_iommu) {
             setIRQState(IRQReserved, i);
-#ifdef CONFIG_IRQ_PIC
-        } else if (i == 2) {
+        } else if (i == 2 && config_set(CONFIG_IRQ_PIC)) {
             /* cascaded legacy PIC */
             setIRQState(IRQReserved, i);
-#endif
-        } else if (i >= irq_controller_min && i <= irq_controller_max) {
+        } else if (   (config_set(CONFIG_IRQ_PIC) && i >= irq_isa_min && i <= irq_isa_max)
+                      || (config_set(CONFIG_IRQ_IOAPIC) && i >= irq_ioapic_min && i <= irq_ioapic_max)) {
             setIRQState(IRQInactive, i);
         }
         else if (i >= irq_msi_min && i <= irq_msi_max) {

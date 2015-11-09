@@ -19,12 +19,8 @@
 void pic_remap_irqs(interrupt_t vector);
 void pic_disable(void);
 
-#ifdef CONFIG_IRQ_PIC
-
 void pic_mask_irq(bool_t mask, irq_t irq);
 bool_t pic_is_irq_pending(void);
 void pic_ack_active_irq(void);
-
-#endif
 
 #endif
