@@ -212,10 +212,6 @@ STATICHEADERS := $(shell find ${SOURCE_ROOT}/include/ -name "*.h" \
                  $(shell find ${SOURCE_ROOT}/include/arch/${ARCH} -name "*.h") \
                  $(shell find ${SOURCE_ROOT}/include/plat/${PLAT} -name "*.h")
 
-ifeq (${HAVE_AUTOCONF}, 1)
-	STATICHEADERS += $(srctree)/include/generated/autoconf.h
-endif
-
 STATICSOURCES = $(foreach file,${C_SOURCES_WITH_PARSE} ${ASM_SOURCES}, \
                           ${SOURCE_ROOT}/${file})
 
@@ -356,6 +352,8 @@ endif
 # Only set CFLAGS if we're building standalone.
 # common/Makefile.Flags sets NK_CFLAGS  in Kbuild environments.
 ifndef NK_CFLAGS
+STATICHEADERS += autoconf.h
+DEFINES += -DHAVE_AUTOCONF
 ifeq (${ARCH}, arm)
 CFLAGS += -mtune=${CPU} -marm -march=${ARMV}
 ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
@@ -403,15 +401,18 @@ endif
 ifeq ($(PLAT),allwinnerA20)
 DEFINES += -DALLWINNERA20
 endif
-endif # NK_CFLAGS
-
+endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
 DEFINES += -DARCH_IA32
 LDFLAGS += -Wl,-m,elf_i386 
-endif
-endif
+endif # ARCH=x86
+else # NK_CFLAGS
+# Require autoconf to be provided if larger build
+$(if ${HAVE_AUTOCONF},,$(error autoconf.h not provided))
+STATICHEADERS += $(srctree)/include/generated/autoconf.h
+endif # NK_CFLAGS
 
 ifeq (${CPU}, arm1136jf-s)
 DEFINES += -DARM1136_WORKAROUND
@@ -541,6 +542,9 @@ kernel.elf: ${OBJECTS} linker.lds_pp
 	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -Wl,-T -Wl,linker.lds_pp \
 		-o $@ ${OBJECTS}
 
+autoconf.h: include/plat/${PLAT}/autoconf.h
+	${Q}cp $< $@
+
 ############################################################
 ### Pattern rules
 ############################################################
@@ -574,7 +578,6 @@ arch/api/syscall.h: ${SOURCE_ROOT}/include/api/syscall.xsd ${SOURCE_ROOT}/includ
 	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/syscall.h
 	$(Q)${SYSCALL_ID_GEN_PATH} --xml $(word 2, $^) \
 		--kernel_header $@
-
 
 ####################
 # Bitfield generation
@@ -642,7 +645,7 @@ endif
 ### Utility targets
 ############################################################
 
-CLEANTARGETS = kernel.elf kernel.elf.strip ${GENHEADERS} ${OBJECTS} \
+CLEANTARGETS = kernel.elf kernel.elf.strip ${GENHEADERS} ${OBJECTS} autoconf.h \
   parser.out parsetab.py \
   kernel_final.s kernel_final.c kernel_all.c kernel_all.c_pp \
   ${PPFILES} ${THEORIES} c-parser.log c-parser-all.log \
