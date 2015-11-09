@@ -27,9 +27,6 @@ typedef struct lookupPDSlot_ret lookupPDSlot_ret_t;
 void init_boot_pd(void);
 void enable_paging(void);
 bool_t map_kernel_window(
-    pdpte_t*   pdpt,
-    pde_t*     pd,
-    pte_t*     pt,
     uint32_t num_ioapic,
     paddr_t*   ioapic_paddrs,
     uint32_t   num_drhu,
@@ -39,7 +36,7 @@ bool_t map_kernel_window(
 void *getValidNativeRoot(cap_t vspace_cap);
 pde_t *get_boot_pd(void);
 void* map_temp_boot_page(void* entry, uint32_t large_pages);
-bool_t init_vm_state(pdpte_t *kernel_pdpt, pde_t* kernel_pd, pte_t* kernel_pt);
+bool_t init_vm_state(void);
 void init_dtrs(void);
 void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap);
 void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap);
