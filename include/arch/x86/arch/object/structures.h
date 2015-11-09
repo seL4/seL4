@@ -24,6 +24,12 @@ typedef struct arch_tcb {
     user_context_t tcbContext;
 } arch_tcb_t;
 
+struct user_data {
+    word_t words[BIT(PAGE_BITS) / sizeof(word_t)];
+};
+
+typedef struct user_data user_data_t;
+
 #define SEL_NULL    GDT_NULL
 #define SEL_CS_0    (GDT_CS_0 << 3)
 #define SEL_DS_0    (GDT_DS_0 << 3)
