@@ -397,19 +397,18 @@ endif
 ifeq ($(PLAT),allwinnerA20)
 DEFINES += -DALLWINNERA20
 endif
-else
-# Require autoconf to be provided if larger build
-$(if ${HAVE_AUTOCONF},,$(error autoconf.h not provided))
-STATICHEADERS += $(srctree)/include/generated/autoconf.h
-endif # NK_CFLAGS
-
+endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
 DEFINES += -DARCH_IA32
 LDFLAGS += -Wl,-m,elf_i386 
-endif
-endif
+endif # ARCH=x86
+else # NK_CFLAGS
+# Require autoconf to be provided if larger build
+$(if ${HAVE_AUTOCONF},,$(error autoconf.h not provided))
+STATICHEADERS += $(srctree)/include/generated/autoconf.h
+endif # NK_CFLAGS
 
 ifeq (${CPU}, arm1136jf-s)
 DEFINES += -DARM1136_WORKAROUND
