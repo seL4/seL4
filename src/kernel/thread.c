@@ -99,7 +99,7 @@ suspend(tcb_t *target)
 void
 restart(tcb_t *target)
 {
-    if (isBlocked(target)) {
+    if (isBlocked(target) && target->tcbSchedContext != NULL) {
         cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
@@ -452,10 +452,10 @@ timerTick(void)
 {
     if (likely(thread_state_get_tsType(ksCurThread->tcbState) ==
                ThreadState_Running)) {
-        if (ksCurThread->tcbTimeSlice > 1) {
-            ksCurThread->tcbTimeSlice--;
+        if (ksCurThread->tcbSchedContext->budget > 1) {
+            ksCurThread->tcbSchedContext->budget--;
         } else {
-            ksCurThread->tcbTimeSlice = CONFIG_TIME_SLICE;
+            ksCurThread->tcbSchedContext->budget = CONFIG_TIME_SLICE;
             tcbSchedAppend(ksCurThread);
             rescheduleRequired();
         }

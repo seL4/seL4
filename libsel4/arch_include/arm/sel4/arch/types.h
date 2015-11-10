@@ -23,6 +23,7 @@
 #define seL4_PageTableBits 10
 #define seL4_PageDirBits 14
 #define seL4_ASIDPoolBits 12
+#define seL4_SchedContextBits 6
 
 #define seL4_Frame_Args 4
 #define seL4_Frame_MRs 7

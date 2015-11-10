@@ -65,6 +65,10 @@ typedef word_t notification_state_t;
 #define TCB_CTE_PTR(r,i) (((cte_t *)(r))+(i))
 #define TCB_REF(p)       ((word_t)(p))
 
+#define SC_REF(p) ((unsigned int) (p))
+#define SC_PTR(r) ((sched_context_t *) (r))
+#define SC_SIZE_BITS 6
+
 /* Generate a cte_t pointer from a tcb_t pointer */
 #define TCB_PTR_CTE_PTR(p,i) \
     (((cte_t *)((word_t)(p)&~MASK(TCB_BLOCK_SIZE_BITS)))+(i))
@@ -190,6 +194,8 @@ vmAttributesFromWord(word_t w)
 }
 
 /* TCB: size 68 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+typedef struct sched_context sched_context_t;
+
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
@@ -217,8 +223,8 @@ struct tcb {
     /* max priority, 1 byte (packed to 4) */
     prio_t tcbMaxPriority;
 
-    /* Timeslice remaining, 4 bytes */
-    word_t tcbTimeSlice;
+    /* sched context object for this tcb, 4 bytes */
+    sched_context_t *tcbSchedContext;
 
     /* Capability pointer to thread fault handler, 4 bytes */
     cptr_t tcbFaultHandler;
@@ -240,6 +246,14 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
+struct sched_context {
+    /* budget (timeslice) for this tcb */
+    time_t budget;
+
+    /* tcb that is currently running on this scheduling context */
+    tcb_t *tcb;
+};
+
 /* Ensure object sizes are sane */
 compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << CTE_SIZE_BITS))
 compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
@@ -247,7 +261,7 @@ compile_assert(tcb_size_sane,
                (1 << TCB_SIZE_BITS) + sizeof(tcb_t) <= (1 << TCB_BLOCK_SIZE_BITS))
 compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << EP_SIZE_BITS))
 compile_assert(notification_size_sane, sizeof(notification_t) <= (1 << NTFN_SIZE_BITS))
-
+compile_assert(sc_size_sane, sizeof(sched_context_t) <= (1 << SC_SIZE_BITS))
 
 /* helper functions */
 
@@ -304,6 +318,9 @@ cap_get_capSizeBits(cap_t cap)
     case cap_irq_handler_cap:
         return 0;
 
+    case cap_sched_context_cap:
+        return SC_SIZE_BITS;
+
     default:
         return cap_get_archCapSizeBits(cap);
     }
@@ -335,6 +352,9 @@ cap_get_capPtr(cap_t cap)
 
     case cap_zombie_cap:
         return CTE_PTR(cap_zombie_cap_get_capZombiePtr(cap));
+
+    case cap_sched_context_cap:
+        return SC_PTR(cap_sched_context_cap_get_capPtr(cap));
 
     case cap_domain_cap:
         return NULL;

@@ -34,7 +34,8 @@
 #define BI_CAP_BI_FRAME      9 /* bootinfo frame cap */
 #define BI_CAP_IT_IPCBUF    10 /* initial thread's IPC buffer frame cap */
 #define BI_CAP_DOM          11 /* domain cap */
-#define BI_CAP_DYN_START    12 /* slot where dynamically allocated caps start */
+#define BI_CAP_IT_SC        12 /* initial thread's scheduling context cap */
+#define BI_CAP_DYN_START    13 /* slot where dynamically allocated caps start */
 
 /* type definitions */
 

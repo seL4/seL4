@@ -115,6 +115,7 @@ tagged_union cap capType {
     tag irq_handler_cap     0x1e
     tag zombie_cap          0x2e
     tag domain_cap          0x3e
+    tag sched_context_cap   0x4e
 }
 
 ---- Arch-independent object types

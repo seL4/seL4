@@ -631,14 +631,16 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
                    extra_caps_t rootCaps, word_t *buffer)
 {
     cte_t *bufferSlot, *cRootSlot, *vRootSlot;
-    cap_t bufferCap, cRootCap, vRootCap;
+    cap_t bufferCap, cRootCap, vRootCap, scCap;
+    sched_context_t *sched_context;
     deriveCap_ret_t dc_ret;
     cptr_t faultEP;
     word_t cRootData, vRootData, bufferAddr;
     seL4_Prio_t prio;
     exception_t status;
+    lookupSlot_raw_ret_t lsrrt;
 
-    if (length < 5 || rootCaps.excaprefs[0] == NULL
+    if (length < 6 || rootCaps.excaprefs[0] == NULL
             || rootCaps.excaprefs[1] == NULL
             || rootCaps.excaprefs[2] == NULL) {
         userError("TCB Configure: Truncated message.");
@@ -648,9 +650,16 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
 
     faultEP       = getSyscallArg(0, buffer);
     prio.words[0] = getSyscallArg(1, buffer);
-    cRootData     = getSyscallArg(2, buffer);
-    vRootData     = getSyscallArg(3, buffer);
-    bufferAddr    = getSyscallArg(4, buffer);
+    /* sc cap is 2nd arg */
+    cRootData     = getSyscallArg(3, buffer);
+    vRootData     = getSyscallArg(4, buffer);
+    bufferAddr    = getSyscallArg(5, buffer);
+
+    lsrrt = lookupSlot(ksCurThread, getSyscallArg(2, buffer));
+    if (lsrrt.status != EXCEPTION_NONE) {
+        return lsrrt.status;
+    }
+    scCap = lsrrt.slot->cap;
 
     cRootSlot  = rootCaps.excaprefs[0];
     cRootCap   = rootCaps.excaprefs[0]->cap;
@@ -658,6 +667,12 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     vRootCap   = rootCaps.excaprefs[1]->cap;
     bufferSlot = rootCaps.excaprefs[2];
     bufferCap  = rootCaps.excaprefs[2]->cap;
+
+    if (likely(cap_get_capType(scCap) == cap_sched_context_cap)) {
+        sched_context = SC_PTR(cap_sched_context_cap_get_capPtr(scCap));
+    } else {
+        sched_context = NULL;
+    }
 
     status = checkPrio(seL4_Prio_get_prio(prio));
     if (status != EXCEPTION_NONE) {
@@ -733,7 +748,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                bufferAddr, bufferCap,
-               bufferSlot, thread_control_update_all);
+               bufferSlot, sched_context, thread_control_update_all);
 }
 
 exception_t
@@ -763,7 +778,7 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
                0, seL4_Prio_new(newPrio, tcb->tcbMaxPriority),
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
-               0, cap_null_cap_new(),
+               0, cap_null_cap_new(), NULL,
                NULL, thread_control_update_priority);
 }
 
@@ -794,7 +809,7 @@ decodeSetMaxPriority(cap_t cap, word_t length, word_t *buffer)
                0, seL4_Prio_new(tcb->tcbPriority, newMaxPrio),
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
-               0, cap_null_cap_new(),
+               0, cap_null_cap_new(), NULL,
                NULL, thread_control_update_priority);
 }
 
@@ -841,7 +856,7 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                cptr_bufferPtr, bufferCap,
-               bufferSlot, thread_control_update_ipc_buffer);
+               bufferSlot, NULL, thread_control_update_ipc_buffer);
 }
 
 exception_t
@@ -918,7 +933,7 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
                NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
-               0, cap_null_cap_new(), NULL, thread_control_update_space);
+               0, cap_null_cap_new(), NULL, NULL, thread_control_update_space);
 }
 
 exception_t
@@ -1055,6 +1070,7 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
                         cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
                         word_t bufferAddr, cap_t bufferCap,
                         cte_t *bufferSrcSlot,
+                        sched_context_t *sched_context,
                         thread_control_flag_t updateFlags)
 {
     exception_t e;
@@ -1066,6 +1082,13 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
 
     if (updateFlags & thread_control_update_priority) {
         setPriority(target, priority);
+    }
+
+    if (updateFlags & thread_control_update_sc) {
+        target->tcbSchedContext = sched_context;
+        if (sched_context != NULL) {
+            sched_context->tcb = target;
+        }
     }
 
     if (updateFlags & thread_control_update_space) {

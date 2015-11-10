@@ -28,7 +28,8 @@ enum {
     seL4_CapBootInfoFrame       =  9, /* bootinfo frame cap */
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */
     seL4_CapDomain              = 11, /* global domain controller cap */
-    seL4_NumInitialCaps         = 12
+    seL4_CapInitThreadSC        = 12,  /* initial thread's scheduling context cap */
+    seL4_NumInitialCaps         = 13
 };
 
 /* Legacy code will have assumptions on the vspace root being a Page Directory

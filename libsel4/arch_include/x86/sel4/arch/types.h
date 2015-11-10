@@ -23,6 +23,7 @@
 #define seL4_PageTableBits   12
 #define seL4_PageDirBits     12
 #define seL4_IOPageTableBits 12
+#define seL4_SchedContextBits 6
 
 #ifdef CONFIG_PAE_PAGING
 #define seL4_PDPTBits         5

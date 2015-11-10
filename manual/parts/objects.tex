@@ -22,6 +22,8 @@ The basic services seL4 provides are as follows:
     \item[Threads] are an abstraction of CPU execution that supports
     running software;
 
+    \item[Scheduling contexts] are an abstraction of CPU execution time.
+
     \item[Address spaces] are virtual memory spaces that each contain an
     application. Applications are limited to accessing memory in their
     address space;
@@ -233,6 +235,9 @@ manipulation, and combination of these kernel objects:
     execution in seL4. Threads are the unit of execution that is
     scheduled, blocked, unblocked, etc., depending on the application's
     interaction with other threads.
+
+   \item[Scheduling contexts] (\obj{SchedulingContext}s; see \autoref{ch:threads}) represent 
+    CPU time in seL4.
 
     \item[\obj{Endpoints}] (see \autoref{ch:ipc}) facilitate message-passing
     communication between threads. IPC is synchronous: A thread

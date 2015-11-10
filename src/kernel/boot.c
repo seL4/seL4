@@ -342,6 +342,27 @@ create_it_asid_pool(cap_t root_cnode_cap)
     return ap_cap;
 }
 
+BOOT_CODE static bool_t
+create_sched_context(tcb_t *tcb)
+{
+    pptr_t sc_pptr;
+    sched_context_t *sc;
+
+    sc_pptr = alloc_region(SC_SIZE_BITS);
+    if (!sc_pptr) {
+        printf("Kernel init failed: unable to allocate sched context for start-up thread\n");
+        return false;
+    }
+
+    memzero((void *) sc_pptr, 1 << SC_SIZE_BITS);
+    sc = SC_PTR(sc_pptr);
+    tcb->tcbSchedContext = sc;
+    sc->tcb = tcb;
+    sc->budget = CONFIG_TIME_SLICE;
+
+    return true;
+}
+
 BOOT_CODE bool_t
 create_idle_thread(void)
 {
@@ -354,7 +375,7 @@ create_idle_thread(void)
     memzero((void *)pptr, 1 << TCB_BLOCK_SIZE_BITS);
     ksIdleThread = TCB_PTR(pptr + TCB_OFFSET);
     configureIdleThread(ksIdleThread);
-    return true;
+    return create_sched_context(ksIdleThread);
 }
 
 BOOT_CODE bool_t
@@ -380,7 +401,6 @@ create_initial_thread(
     }
     memzero((void*)pptr, 1 << TCB_BLOCK_SIZE_BITS);
     tcb = TCB_PTR(pptr + TCB_OFFSET);
-    tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
     Arch_initContext(&tcb->tcbArch.tcbContext);
 
     /* derive a copy of the IPC buffer cap for inserting */
@@ -411,6 +431,9 @@ create_initial_thread(
     setNextPC(tcb, ui_v_entry);
 
     /* initialise TCB */
+    if (!create_sched_context(tcb)) {
+        return false;
+    }
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMaxPriority = seL4_MaxPrio;
     setupReplyMaster(tcb);
@@ -427,6 +450,8 @@ create_initial_thread(
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_TCB), cap);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_SC),
+               cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext)));
 
 #ifdef DEBUG
     setThreadName(tcb, "rootserver");

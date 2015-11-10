@@ -42,6 +42,8 @@ word_t getObjectSize(word_t t, word_t userObjSize)
             return EP_SIZE_BITS;
         case seL4_NotificationObject:
             return NTFN_SIZE_BITS;
+        case seL4_SchedContextObject:
+            return SC_SIZE_BITS;
         case seL4_CapTableObject:
             return CTE_SIZE_BITS + userObjSize;
         case seL4_UntypedObject:
@@ -163,6 +165,10 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
             suspend(tcb);
+            if (tcb->tcbSchedContext) {
+                tcb->tcbSchedContext->tcb = NULL;
+                tcb->tcbSchedContext = NULL;
+            }
             Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =
                 Zombie_new(
@@ -175,7 +181,23 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         }
         break;
     }
+    case cap_sched_context_cap:
+        if (final) {
+            sched_context_t *sc;
 
+            sc = SC_PTR(cap_sched_context_cap_get_capPtr(cap));
+            if (sc->tcb) {
+                /* tcb's without scheduling contexts are not schedulable */
+                suspend(sc->tcb);
+                sc->tcb->tcbSchedContext = NULL;
+                sc->tcb = NULL;
+            }
+
+            fc_ret.remainder = cap_null_cap_new();
+            fc_ret.irq = irqInvalid;
+            return fc_ret;
+        }
+        break;
     case cap_zombie_cap:
         fc_ret.remainder = cap;
         fc_ret.irq = irqInvalid;
@@ -216,6 +238,8 @@ recycleCap(bool_t is_final, cap_t cap)
         return cap;
     case cap_thread_cap:
         return cap;
+    case cap_sched_context_cap:
+        return cap;
     case cap_zombie_cap: {
         word_t type;
 
@@ -245,7 +269,6 @@ recycleCap(bool_t is_final, cap_t cap)
              * the CNode alone. */
             memzero(tcb, sizeof (tcb_t));
             Arch_initContext(&tcb->tcbArch.tcbContext);
-            tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
             tcb->tcbDomain = ksCurDomain;
 
             return cap_thread_cap_new(TCB_REF(tcb));
@@ -340,7 +363,12 @@ sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_thread_cap_get_capTCBPtr(cap_b);
         }
         break;
-
+    case cap_sched_context_cap:
+        if (cap_get_capType(cap_b) == cap_sched_context_cap) {
+            return cap_sched_context_cap_get_capPtr(cap_a) ==
+                   cap_sched_context_cap_get_capPtr(cap_b);
+        }
+        break;
     case cap_reply_cap:
         if (cap_get_capType(cap_b) == cap_reply_cap) {
             return cap_reply_cap_get_capTCBPtr(cap_a) ==
@@ -459,6 +487,7 @@ maskCapRights(cap_rights_t cap_rights, cap_t cap)
     case cap_irq_handler_cap:
     case cap_zombie_cap:
     case cap_thread_cap:
+    case cap_sched_context_cap:
         return cap;
 
     case cap_endpoint_cap: {
@@ -505,6 +534,13 @@ createObject(object_t t, void *regionBase, word_t userSize)
 
     /* Create objects. */
     switch ((api_object_t)t) {
+    case seL4_SchedContextObject: {
+        sched_context_t *sc;
+        memzero(regionBase, 1UL << SC_SIZE_BITS);
+        sc = SC_PTR(regionBase);
+        sc->budget = CONFIG_TIME_SLICE;
+        return cap_sched_context_cap_new(SC_REF(sc));
+    }
     case seL4_TCBObject: {
         tcb_t *tcb;
         memzero(regionBase, 1UL << TCB_BLOCK_SIZE_BITS);
@@ -516,7 +552,6 @@ createObject(object_t t, void *regionBase, word_t userSize)
         /* Setup non-zero parts of the TCB. */
 
         Arch_initContext(&tcb->tcbArch.tcbContext);
-        tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
         tcb->tcbDomain = ksCurDomain;
 
 #ifdef DEBUG
@@ -681,6 +716,10 @@ decodeInvocation(word_t label, word_t length,
         return decodeIRQHandlerInvocation(label, length,
                                           cap_irq_handler_cap_get_capIRQ(cap), extraCaps, buffer);
 
+    case cap_sched_context_cap:
+        /* no current sched context invocations */
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
     default:
         fail("Invalid cap type");
     }
