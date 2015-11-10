@@ -326,7 +326,7 @@ static inline word_t PURE getFAR(void)
 }
 
 /* Cleaning memory before user-level access */
-static inline void clearMemory(word_t* ptr, unsigned int bits)
+static inline void clearMemory(word_t* ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
     cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,

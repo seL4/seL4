@@ -17,11 +17,11 @@
 #include <arch/object/interrupt.h>
 #include <plat/machine.h>
 
-exception_t decodeIRQControlInvocation(word_t label, unsigned int length,
+exception_t decodeIRQControlInvocation(word_t label, word_t length,
                                        cte_t *srcSlot, extra_caps_t extraCaps,
                                        word_t *buffer);
 exception_t invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot);
-exception_t decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
+exception_t decodeIRQHandlerInvocation(word_t label, word_t length, irq_t irq,
                                        extra_caps_t extraCaps, word_t *buffer);
 void invokeIRQHandler_AckIRQ(irq_t irq);
 void invokeIRQHandler_SetIRQHandler(irq_t irq, cap_t cap, cte_t *slot);

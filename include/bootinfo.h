@@ -15,7 +15,7 @@
 #include <types.h>
 
 #define BI_PTR(r) ((bi_t*)(r))
-#define BI_REF(p) ((unsigned int)(p))
+#define BI_REF(p) ((word_t)(p))
 
 /* bootinfo data structures (directly corresponding to abstract specification) */
 

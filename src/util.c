@@ -82,7 +82,7 @@ memcpy(void* ptr_dst, const void* ptr_src, unsigned long n)
 int
 strncmp(const char* s1, const char* s2, int n)
 {
-    unsigned int i;
+    word_t i;
     int diff;
 
     for (i = 0; i < n; i++) {

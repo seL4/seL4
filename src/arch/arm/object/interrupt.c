@@ -14,7 +14,7 @@
 #include <arch/object/interrupt.h>
 
 exception_t
-Arch_decodeInterruptControl(unsigned int length, extra_caps_t extraCaps)
+Arch_decodeInterruptControl(word_t length, extra_caps_t extraCaps)
 {
     current_syscall_error.type = seL4_IllegalOperation;
     return EXCEPTION_SYSCALL_ERROR;

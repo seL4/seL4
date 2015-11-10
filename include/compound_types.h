@@ -18,13 +18,13 @@
 
 struct pde_range {
     pde_t *base;
-    unsigned int length;
+    word_t length;
 };
 typedef struct pde_range pde_range_t;
 
 struct pte_range {
     pte_t *base;
-    unsigned int length;
+    word_t length;
 };
 typedef struct pte_range pte_range_t;
 

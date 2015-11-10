@@ -1770,7 +1770,7 @@ decodeIA32FrameInvocation(
 exception_t
 decodeIA32MMUInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
     cptr_t cptr,
     cte_t* cte,
     cap_t cap,

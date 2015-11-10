@@ -51,8 +51,8 @@ xmod(unsigned long x, unsigned int denom)
     }
 }
 
-unsigned int
-print_unsigned_long(unsigned long x, unsigned int ui_base)
+word_t
+print_unsigned_long(unsigned long x, word_t ui_base)
 {
     char out[sizeof(unsigned long) * 2 + 3];
     unsigned int i, j;
@@ -251,7 +251,7 @@ vprintf(const char *format, va_list ap)
     return n;
 }
 
-unsigned int puts(const char *s)
+word_t puts(const char *s)
 {
     for (; *s; s++) {
         kernel_putchar(*s);
@@ -260,7 +260,7 @@ unsigned int puts(const char *s)
     return 0;
 }
 
-unsigned int
+word_t
 kprintf(const char *format, ...)
 {
     va_list args;

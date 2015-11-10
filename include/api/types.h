@@ -33,7 +33,7 @@ enum domainConstants {
 struct cap_transfer {
     cptr_t ctReceiveRoot;
     cptr_t ctReceiveIndex;
-    unsigned int ctReceiveDepth;
+    word_t ctReceiveDepth;
 };
 typedef struct cap_transfer cap_transfer_t;
 
@@ -63,7 +63,7 @@ capTransferFromWords(word_t *wptr)
 
     transfer.ctReceiveRoot  = (cptr_t)wptr[0];
     transfer.ctReceiveIndex = (cptr_t)wptr[1];
-    transfer.ctReceiveDepth = (unsigned int)wptr[2];
+    transfer.ctReceiveDepth = wptr[2];
     return transfer;
 }
 

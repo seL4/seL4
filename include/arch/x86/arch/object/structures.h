@@ -71,26 +71,26 @@ typedef struct arch_tcb {
 
 #define PDPTE_PTR(r)   ((pdpte_t *)(r))
 #define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
-#define PDPTE_REF(p)   ((unsigned int)(p))
+#define PDPTE_REF(p)   ((word_t)(p))
 
 #define PDPT_SIZE_BITS (PDPT_BITS + PDPTE_SIZE_BITS)
 #define PDPT_PTR(r)    ((pdpte_t*)(r))
-#define PDPT_PREF(p)   ((unsigned int)(p))
+#define PDPT_PREF(p)   ((word_t)(p))
 
 #define PDE_PTR(r)     ((pde_t *)(r))
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
-#define PDE_REF(p)     ((unsigned int)(p))
+#define PDE_REF(p)     ((word_t)(p))
 
 #define PD_SIZE_BITS (PD_BITS + PDE_SIZE_BITS)
 #define PD_PTR(r)    ((pde_t *)(r))
-#define PD_REF(p)    ((unsigned int)(p))
+#define PD_REF(p)    ((word_t)(p))
 
 #define PTE_PTR(r)    ((pte_t *)(r))
-#define PTE_REF(p)    ((unsigned int)(p))
+#define PTE_REF(p)    ((word_t)(p))
 
 #define PT_SIZE_BITS (PT_BITS + PTE_SIZE_BITS)
 #define PT_PTR(r)    ((pte_t *)(r))
-#define PT_REF(p)    ((unsigned int)(p))
+#define PT_REF(p)    ((word_t)(p))
 
 #ifdef CONFIG_IOMMU
 
@@ -141,7 +141,7 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_POOL_BITS      asidLowBits
 #define ASID_POOL_SIZE_BITS (ASID_POOL_BITS + WORD_SIZE_BITS)
 #define ASID_POOL_PTR(r)    ((asid_pool_t*)r)
-#define ASID_POOL_REF(p)    ((unsigned int)p)
+#define ASID_POOL_REF(p)    ((word_t)p)
 #define ASID_BITS           (asidHighBits + asidLowBits)
 #define nASIDPools          BIT(asidHighBits)
 #define ASID_LOW(a)         (a & MASK(asidLowBits))
@@ -193,7 +193,7 @@ cap_get_capMappedASID(cap_t cap)
     }
 }
 
-static inline unsigned int CONST
+static inline word_t CONST
 cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;

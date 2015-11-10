@@ -321,7 +321,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 exception_t
 decodeIA32PageDirectoryInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
     cte_t* cte,
     cap_t cap,
     extra_caps_t extraCaps,
