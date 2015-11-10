@@ -26,8 +26,8 @@ compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 static inline void
 clearExMonitor_fp(void)
 {
-    uint32_t temp1 = 0;
-    uint32_t temp2;
+    word_t temp1 = 0;
+    word_t temp2;
     asm volatile (
         "strex %[output], %[mem], [%[mem]]"
         : [output]"+r"(temp1)

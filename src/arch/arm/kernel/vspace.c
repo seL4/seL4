@@ -137,7 +137,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 BOOT_CODE void
 map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attributes_t attributes)
 {
-    uint32_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
+    word_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
 
     assert(vaddr >= PPTR_TOP); /* vaddr lies in the region the global PT covers */
 
@@ -159,7 +159,7 @@ BOOT_CODE void
 map_kernel_window(void)
 {
     paddr_t  phys;
-    uint32_t idx;
+    word_t idx;
     pde_t    pde;
 
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
@@ -168,7 +168,7 @@ map_kernel_window(void)
     idx = kernelBase >> pageBitsForSize(ARMSection);
 
     while (idx < BIT(PD_BITS) - SECTIONS_PER_SUPER_SECTION) {
-        uint32_t idx2;
+        word_t idx2;
 
         pde = pde_pde_section_new(
                   phys,

@@ -27,7 +27,7 @@ extern irq_state_t intStateIRQTable[] VISIBLE;
 extern cte_t *intStateIRQNode VISIBLE;
 extern const dschedule_t ksDomSchedule[];
 extern const unsigned int ksDomScheduleLength;
-extern uint32_t ksDomScheduleIdx;
+extern word_t ksDomScheduleIdx;
 extern dom_t ksCurDomain;
 extern word_t ksDomainTime;
 

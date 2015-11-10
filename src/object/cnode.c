@@ -756,7 +756,7 @@ reduceZombie(cte_t* slot, bool_t immediate)
 void
 cteDeleteOne(cte_t* slot)
 {
-    uint32_t cap_type = cap_get_capType(slot->cap);
+    word_t cap_type = cap_get_capType(slot->cap);
     if (cap_type != cap_null_cap) {
         bool_t final;
         finaliseCap_ret_t fc_ret UNUSED;

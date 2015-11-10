@@ -22,6 +22,6 @@ enum asidConstants {
 
 #define asidMax (BIT(asidLowBits+asidHighBits)-1)
 
-typedef uint32_t asid_t;
+typedef word_t asid_t;
 
 #endif
