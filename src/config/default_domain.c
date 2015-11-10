@@ -16,5 +16,5 @@ const dschedule_t ksDomSchedule[] = {
     { .domain = 0, .length = 1 },
 };
 
-const unsigned int ksDomScheduleLength = sizeof(ksDomSchedule) / sizeof(dschedule_t);
+const word_t ksDomScheduleLength = sizeof(ksDomSchedule) / sizeof(dschedule_t);
 

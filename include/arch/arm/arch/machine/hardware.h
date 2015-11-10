@@ -107,7 +107,7 @@ enum frameSizeConstants {
     ARMSuperSectionBits = 24
 };
 
-static inline unsigned int CONST
+static inline word_t CONST
 pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {

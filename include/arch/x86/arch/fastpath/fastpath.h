@@ -75,7 +75,7 @@ isValidVTableRoot_fp(cap_t pd_cap)
 }
 
 static inline void
-fastpath_copy_mrs(unsigned int length, tcb_t *src, tcb_t *dest)
+fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
     if (length == 2) {
         setRegister(dest, EBP, getRegister(src, EBP));

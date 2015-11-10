@@ -45,7 +45,7 @@ enum frameSizeConstants {
 
 /* Any changes to this function need to be replicated in pageBitsForSize_phys.
  */
-static inline unsigned int CONST
+static inline word_t CONST
 pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
@@ -65,7 +65,7 @@ pageBitsForSize(vm_page_size_t pagesize)
  * be replicated in pageBitsForSize.
  */
 PHYS_CODE
-static inline unsigned int CONST
+static inline word_t CONST
 pageBitsForSize_phys(vm_page_size_t pagesize)
 {
     switch (pagesize) {

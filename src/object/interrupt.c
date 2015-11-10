@@ -23,7 +23,7 @@
 #include <model/statedata.h>
 
 exception_t
-decodeIRQControlInvocation(word_t label, unsigned int length,
+decodeIRQControlInvocation(word_t label, word_t length,
                            cte_t *srcSlot, extra_caps_t extraCaps,
                            word_t *buffer)
 {
@@ -90,7 +90,7 @@ invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot)
 }
 
 exception_t
-decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
+decodeIRQHandlerInvocation(word_t label, word_t length, irq_t irq,
                            extra_caps_t extraCaps, word_t *buffer)
 {
     switch (label) {
@@ -135,7 +135,7 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         bool_t trig, pol;
 
         if (length < 2) {
-            userError("IRQSetMode: Not enough arguments: %d", length);
+            userError("IRQSetMode: Not enough arguments: %ld", length);
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }

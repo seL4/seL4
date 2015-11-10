@@ -68,7 +68,7 @@ setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
     }
 }
 
-unsigned int
+word_t
 setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 {
     switch (fault_get_faultType(sender->tcbFault)) {
@@ -132,7 +132,7 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
     }
 }
 
-unsigned int
+word_t
 setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
 {
     switch (current_syscall_error.type) {

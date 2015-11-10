@@ -262,7 +262,7 @@ generic_frame_cap_get_capFMappedAddress(cap_t cap)
     }
 }
 
-static inline unsigned int CONST
+static inline word_t CONST
 cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;

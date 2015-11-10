@@ -71,7 +71,7 @@ lookupSlot(tcb_t *thread, cptr_t capptr)
 
 lookupSlot_ret_t
 lookupSlotForCNodeOp(bool_t isSource, cap_t root, cptr_t capptr,
-                     unsigned int depth)
+                     word_t depth)
 {
     resolveAddressBits_ret_t res_ret;
     lookupSlot_ret_t ret;
@@ -117,19 +117,19 @@ lookupSlotForCNodeOp(bool_t isSource, cap_t root, cptr_t capptr,
 }
 
 lookupSlot_ret_t
-lookupSourceSlot(cap_t root, cptr_t capptr, unsigned int depth)
+lookupSourceSlot(cap_t root, cptr_t capptr, word_t depth)
 {
     return lookupSlotForCNodeOp(true, root, capptr, depth);
 }
 
 lookupSlot_ret_t
-lookupTargetSlot(cap_t root, cptr_t capptr, unsigned int depth)
+lookupTargetSlot(cap_t root, cptr_t capptr, word_t depth)
 {
     return lookupSlotForCNodeOp(false, root, capptr, depth);
 }
 
 lookupSlot_ret_t
-lookupPivotSlot(cap_t root, cptr_t capptr, unsigned int depth)
+lookupPivotSlot(cap_t root, cptr_t capptr, word_t depth)
 {
     return lookupSlotForCNodeOp(true, root, capptr, depth);
 }

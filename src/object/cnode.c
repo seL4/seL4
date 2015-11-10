@@ -38,7 +38,7 @@ static void emptySlot(cte_t *slot, irq_t irq);
 static exception_t reduceZombie(cte_t* slot, bool_t exposed);
 
 exception_t
-decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
+decodeCNodeInvocation(word_t label, word_t length, cap_t cap,
                       extra_caps_t extraCaps, word_t *buffer)
 {
     lookupSlot_ret_t lu_ret;

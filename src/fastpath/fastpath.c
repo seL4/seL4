@@ -19,7 +19,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     message_info_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
-    unsigned int length;
+    word_t length;
     tcb_t *dest;
     word_t badge;
     cte_t *replySlot, *callerSlot;
@@ -160,7 +160,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     message_info_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
-    unsigned int length;
+    word_t length;
     cte_t *callerSlot;
     cap_t callerCap;
     tcb_t *caller;

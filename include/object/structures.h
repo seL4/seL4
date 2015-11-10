@@ -254,7 +254,7 @@ isArchCap(cap_t cap)
     return (cap_get_capType(cap) % 2);
 }
 
-static inline unsigned int CONST
+static inline word_t CONST
 cap_get_capSizeBits(cap_t cap)
 {
 
@@ -279,7 +279,7 @@ cap_get_capSizeBits(cap_t cap)
         return TCB_BLOCK_SIZE_BITS;
 
     case cap_zombie_cap: {
-        uint32_t type = cap_zombie_cap_get_capZombieType(cap);
+        word_t type = cap_zombie_cap_get_capZombieType(cap);
         if (type == ZombieType_ZombieTCB) {
             return TCB_BLOCK_SIZE_BITS;
         }
