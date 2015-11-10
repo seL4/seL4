@@ -21,11 +21,11 @@ enum irq_state {
     IRQTimer     = 2,
     IRQReserved  = 3,
 };
-typedef uint32_t irq_state_t;
+typedef word_t irq_state_t;
 
 typedef struct dschedule {
     dom_t domain;
-    uint32_t length;
+    word_t length;
 } dschedule_t;
 
 /* Arch-independent object types */
@@ -34,14 +34,14 @@ enum endpoint_state {
     EPState_Send = 1,
     EPState_Recv = 2
 };
-typedef uint32_t endpoint_state_t;
+typedef word_t endpoint_state_t;
 
 enum notification_state {
     NtfnState_Idle    = 0,
     NtfnState_Waiting = 1,
     NtfnState_Active  = 2
 };
-typedef uint32_t notification_state_t;
+typedef word_t notification_state_t;
 
 #define EP_PTR(r) ((endpoint_t *)(r))
 #define EP_REF(p) ((word_t)(p))
@@ -77,7 +77,7 @@ typedef uint32_t notification_state_t;
 #define ZombieType_ZombieCNode(n)   ((n) & MASK(5))
 
 static inline cap_t CONST
-Zombie_new(uint32_t number, uint32_t type, word_t ptr)
+Zombie_new(word_t number, word_t type, word_t ptr)
 {
     word_t mask;
 
@@ -90,34 +90,34 @@ Zombie_new(uint32_t number, uint32_t type, word_t ptr)
     return cap_zombie_cap_new((ptr & ~mask) | (number & mask), type);
 }
 
-static inline uint32_t CONST
+static inline word_t CONST
 cap_zombie_cap_get_capZombieBits(cap_t cap)
 {
-    uint32_t type = cap_zombie_cap_get_capZombieType(cap);
+    word_t type = cap_zombie_cap_get_capZombieType(cap);
     if (type == ZombieType_ZombieTCB) {
         return TCB_CNODE_RADIX;
     }
     return ZombieType_ZombieCNode(type); /* cnode radix */
 }
 
-static inline uint32_t CONST
+static inline word_t CONST
 cap_zombie_cap_get_capZombieNumber(cap_t cap)
 {
-    uint32_t radix = cap_zombie_cap_get_capZombieBits(cap);
+    word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     return cap_zombie_cap_get_capZombieID(cap) & MASK(radix + 1);
 }
 
 static inline word_t CONST
 cap_zombie_cap_get_capZombiePtr(cap_t cap)
 {
-    uint32_t radix = cap_zombie_cap_get_capZombieBits(cap);
+    word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     return cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
 }
 
 static inline cap_t CONST
-cap_zombie_cap_set_capZombieNumber(cap_t cap, uint32_t n)
+cap_zombie_cap_set_capZombieNumber(cap_t cap, word_t n)
 {
-    uint32_t radix = cap_zombie_cap_get_capZombieBits(cap);
+    word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     word_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
     return cap_zombie_cap_set_capZombieID(cap, ptr | (n & MASK(radix + 1)));
 }
@@ -142,7 +142,7 @@ enum _thread_state {
     ThreadState_BlockedOnNotification,
     ThreadState_IdleThreadState
 };
-typedef uint32_t _thread_state_t;
+typedef word_t _thread_state_t;
 
 /* A TCB CNode and a TCB are always allocated together, and adjacently.
  * The CNode comes first. */
@@ -164,7 +164,7 @@ enum tcb_cnode_index {
 
     tcbCNodeEntries
 };
-typedef uint32_t tcb_cnode_index_t;
+typedef word_t tcb_cnode_index_t;
 
 #include <arch/object/structures.h>
 
@@ -209,10 +209,10 @@ struct tcb {
     lookup_fault_t tcbLookupFailure;
 
     /* Domain, 1 byte (packed to 4) */
-    uint32_t tcbDomain;
+    dom_t tcbDomain;
 
     /* Priority, 1 byte (packed to 4) */
-    uint32_t tcbPriority;
+    prio_t tcbPriority;
 
     /* Timeslice remaining, 4 bytes */
     word_t tcbTimeSlice;

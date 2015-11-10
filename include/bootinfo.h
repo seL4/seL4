@@ -38,7 +38,7 @@
 
 /* type definitions */
 
-typedef uint32_t slot_pos_t;
+typedef word_t slot_pos_t;
 
 typedef struct slot_region {
     slot_pos_t start;

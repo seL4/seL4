@@ -68,7 +68,7 @@ handleUnknownSyscall(word_t w)
     if (w == SysDebugCapIdentify) {
         word_t cptr = getRegister(ksCurThread, capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
-        uint32_t cap_type = cap_get_capType(lu_ret.cap);
+        word_t cap_type = cap_get_capType(lu_ret.cap);
         setRegister(ksCurThread, capRegister, cap_type);
         return EXCEPTION_NONE;
     }
@@ -79,7 +79,7 @@ handleUnknownSyscall(word_t w)
         word_t cptr = getRegister(ksCurThread, capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
         /* ensure we got a TCB cap */
-        uint32_t cap_type = cap_get_capType(lu_ret.cap);
+        word_t cap_type = cap_get_capType(lu_ret.cap);
         if (cap_type != cap_thread_cap) {
             userError("SysDebugNameThread: cap is not a TCB, halting");
             halt();

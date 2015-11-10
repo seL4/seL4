@@ -125,7 +125,7 @@ enum vm_rights {
     VMReadOnly = 2,
     VMReadWrite = 3
 };
-typedef uint32_t vm_rights_t;
+typedef word_t vm_rights_t;
 
 enum asidSizeConstants {
     asidHighBits = 6,

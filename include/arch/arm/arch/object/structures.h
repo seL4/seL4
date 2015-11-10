@@ -38,7 +38,7 @@ enum vm_rights {
     VMReadOnly = 2,
     VMReadWrite = 3
 };
-typedef uint32_t vm_rights_t;
+typedef word_t vm_rights_t;
 
 #define PDE_SIZE_BITS 2
 #define PDE_PTR(r) ((pde_t *)(r))
@@ -57,7 +57,7 @@ enum pde_type {
     PDECoarse  = 1,
     PDEMapping = 2
 };
-typedef uint32_t pde_type_t;
+typedef word_t pde_type_t;
 
 #define PTE_SIZE_BITS 2
 #define PTE_PTR(r) ((pte_t *)r)
@@ -330,7 +330,7 @@ cap_get_archCapPtr(cap_t cap)
  */
 enum { pte_pte_invalid = 2 };
 
-static inline uint32_t CONST
+static inline word_t CONST
 pte_get_pteType(pte_t pte)
 {
     if (pte_get_pteSize(pte) == pte_pte_small) {
@@ -342,7 +342,7 @@ pte_get_pteType(pte_t pte)
     }
 }
 
-static inline uint32_t PURE
+static inline word_t PURE
 pte_ptr_get_pteType(pte_t *pte_ptr)
 {
     if (pte_ptr_get_pteSize(pte_ptr) == pte_pte_small) {

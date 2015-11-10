@@ -68,7 +68,7 @@ enum thread_control_flag {
     thread_control_update_all = 0x7,
 };
 
-typedef uint32_t thread_control_flag_t;
+typedef word_t thread_control_flag_t;
 
 exception_t invokeTCB_Suspend(tcb_t *thread);
 exception_t invokeTCB_Resume(tcb_t *thread);

@@ -258,7 +258,7 @@ create_device_frames(cap_t root_cnode_cap)
     region_t       dev_reg;
     bi_dev_reg_t   bi_dev_reg;
     cap_t          frame_cap;
-    uint32_t       i;
+    word_t         i;
     pptr_t         f;
 
     ndks_boot.bi_frame->num_dev_regs = get_num_dev_p_regs();

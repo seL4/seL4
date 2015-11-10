@@ -24,9 +24,9 @@ enum exception {
     EXCEPTION_SYSCALL_ERROR,
     EXCEPTION_PREEMPTED
 };
-typedef uint32_t exception_t;
+typedef word_t exception_t;
 
-typedef uint32_t syscall_error_type_t;
+typedef word_t syscall_error_type_t;
 
 struct syscall_error {
     unsigned int invalidArgumentNumber;

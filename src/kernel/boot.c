@@ -42,14 +42,14 @@ insert_region(region_t reg)
     return false;
 }
 
-BOOT_CODE static inline uint32_t
+BOOT_CODE static inline word_t
 reg_size(region_t reg)
 {
     return reg.end - reg.start;
 }
 
 BOOT_CODE pptr_t
-alloc_region(uint32_t size_bits)
+alloc_region(word_t size_bits)
 {
     unsigned int i;
     unsigned int reg_index = 0; /* gcc cannot work out that this will not be used uninitialized */
@@ -242,7 +242,7 @@ create_bi_frame_cap(
 BOOT_CODE pptr_t
 allocate_bi_frame(
     node_id_t  node_id,
-    uint32_t   num_nodes,
+    word_t   num_nodes,
     vptr_t ipcbuf_vptr
 )
 {
@@ -438,7 +438,7 @@ BOOT_CODE static bool_t
 provide_untyped_cap(
     cap_t      root_cnode_cap,
     pptr_t     pptr,
-    uint32_t   size_bits,
+    word_t     size_bits,
     slot_pos_t first_untyped_slot
 )
 {
@@ -478,8 +478,8 @@ create_untypeds_for_region(
     slot_pos_t first_untyped_slot
 )
 {
-    uint32_t align_bits;
-    uint32_t size_bits;
+    word_t align_bits;
+    word_t size_bits;
 
     while (!is_reg_empty(reg)) {
         /* Determine the maximum size of the region */
@@ -507,7 +507,7 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
     slot_pos_t slot_pos_before;
     slot_pos_t slot_pos_after;
-    uint32_t   i;
+    word_t     i;
     region_t   reg;
 
     slot_pos_before = ndks_boot.slot_pos_cur;

@@ -20,13 +20,13 @@ enum vm_fault_type {
     IA32DataFault = 0,
     IA32InstructionFault = 1
 };
-typedef uint32_t vm_fault_type_t;
+typedef word_t vm_fault_type_t;
 
 enum vm_page_size {
     IA32_SmallPage,
     IA32_LargePage
 };
-typedef uint32_t vm_page_size_t;
+typedef word_t vm_page_size_t;
 
 enum frameSizeConstants {
     IA32_4K_bits = 12,

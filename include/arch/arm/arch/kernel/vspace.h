@@ -36,7 +36,7 @@ enum pde_pte_tag {
     ME_PDE,
     ME_PTE
 };
-typedef uint32_t pde_pte_tag_t;
+typedef word_t pde_pte_tag_t;
 
 struct createMappingEntries_ret {
     exception_t status;
