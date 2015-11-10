@@ -36,8 +36,6 @@ enum endpoint_state {
 };
 typedef uint32_t endpoint_state_t;
 
-#define EP_SIZE_BITS 4
-
 enum notification_state {
     NtfnState_Idle    = 0,
     NtfnState_Waiting = 1,
@@ -48,11 +46,9 @@ typedef uint32_t notification_state_t;
 #define EP_PTR(r) ((endpoint_t *)(r))
 #define EP_REF(p) ((unsigned int)(p))
 
-#define NTFN_SIZE_BITS 4
 #define NTFN_PTR(r) ((notification_t *)(r))
 #define NTFN_REF(p) ((unsigned int)(p))
 
-#define CTE_SIZE_BITS 4
 #define CTE_PTR(r) ((cte_t *)(r))
 #define CTE_REF(p) ((unsigned int)(p))
 

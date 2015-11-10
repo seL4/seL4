@@ -20,6 +20,9 @@
 #include <arch/machine/registerset.h>
 
 /* Object sizes */
+#define EP_SIZE_BITS  4
+#define NTFN_SIZE_BITS 4
+#define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS+1)
 typedef struct arch_tcb {
     /* saved user-level context of thread (72 bytes) */
