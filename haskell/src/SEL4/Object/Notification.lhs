@@ -14,7 +14,7 @@ This module specifies the behavior of notification objects.
 >         sendSignal, receiveSignal, 
 >         cancelAllSignals, cancelSignal, completeSignal,
 >         getNotification, setNotification, doUnbindNotification, unbindNotification,
->         unbindMaybeNotification, bindNotification, doNBWaitFailedTransfer
+>         unbindMaybeNotification, bindNotification, doNBRecvFailedTransfer
 >     ) where
 
 \begin{impdetails}
@@ -90,8 +90,8 @@ If the notification object is active, new values are calculated and stored in th
 
 This function performs an receive signal operation, given a thread pointer and a capability to a notification object. The receive can be either blocking (the thread will be blocked on the notification until a signal arrives) or non-blocking depending on the isBlocking flag.
 
-> doNBWaitFailedTransfer :: PPtr TCB -> Kernel ()
-> doNBWaitFailedTransfer thread = asUser thread $ setRegister badgeRegister 0 
+> doNBRecvFailedTransfer :: PPtr TCB -> Kernel ()
+> doNBRecvFailedTransfer thread = asUser thread $ setRegister badgeRegister 0 
 
 
 > receiveSignal :: PPtr TCB -> Capability -> Bool -> Kernel ()
@@ -111,7 +111,7 @@ If the notification object is idle, then it becomes a waiting notification objec
 >                       setThreadState (BlockedOnNotification {
 >                                          waitingOnNotification = ntfnPtr } ) thread
 >                       setNotification ntfnPtr $ ntfn {ntfnObj = WaitingNtfn ([thread]) }
->                 False -> doNBWaitFailedTransfer thread
+>                 False -> doNBRecvFailedTransfer thread
 
 If the notification object is already waiting, the current thread is blocked and added to the queue. Note that this case cannot occur when the notification object is bound, as only the associated thread can wait on it.  
 
@@ -120,7 +120,7 @@ If the notification object is already waiting, the current thread is blocked and
 >                       setThreadState (BlockedOnNotification {
 >                                          waitingOnNotification = ntfnPtr } ) thread
 >                       setNotification ntfnPtr $ ntfn {ntfnObj = WaitingNtfn (queue ++ [thread]) }
->                 False -> doNBWaitFailedTransfer thread
+>                 False -> doNBRecvFailedTransfer thread
 
 If the notification object is active, the badge of the invoked notification object capability will be loaded to the badge of the receiving thread and the notification object will be marked as idle.
 

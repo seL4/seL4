@@ -132,7 +132,7 @@ receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
             notification_ptr_set_state(ntfnPtr, NtfnState_Waiting);
             ntfn_ptr_set_queue(ntfnPtr, ntfn_queue);
         } else {
-            doNBWaitFailedTransfer(thread);
+            doNBRecvFailedTransfer(thread);
         }
 
         break;

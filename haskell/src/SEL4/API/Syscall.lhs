@@ -60,11 +60,11 @@ the enumerated type "Syscall":
 >         = SysSend
 >         | SysNBSend
 >         | SysCall
->         | SysWait
+>         | SysRecv
 >         | SysReply
->         | SysReplyWait
+>         | SysReplyRecv
 >         | SysYield
->         | SysNBWait
+>         | SysNBRecv
 >         deriving (Show, Enum, Bounded, Eq)
 
 \subsection{Handling Events}
@@ -83,13 +83,13 @@ System call events are dispatched here to the appropriate system call handlers, 
 >         SysSend -> handleSend True
 >         SysNBSend -> handleSend False
 >         SysCall -> handleCall
->         SysWait -> withoutPreemption $ handleWait True
+>         SysRecv -> withoutPreemption $ handleRecv True
 >         SysReply -> withoutPreemption handleReply
->         SysReplyWait -> withoutPreemption $ do
+>         SysReplyRecv -> withoutPreemption $ do
 >             handleReply
->             handleWait True
+>             handleRecv True
 >         SysYield -> withoutPreemption handleYield
->         SysNBWait -> withoutPreemption $ handleWait False
+>         SysNBRecv -> withoutPreemption $ handleRecv False
 
 \subsubsection{Interrupts}
 
@@ -153,9 +153,9 @@ The "Call" system call is similar to "Send", but it also requests a reply. For k
 
 \subsubsection{Reply System Call}
 
-The "Reply" system call attempts to perform an immediate IPC transfer to the thread that sent the message received by the last successful "Wait" call. If this is not possible, the reply will be silently dropped. The transfer will succeed if:
+The "Reply" system call attempts to perform an immediate IPC transfer to the thread that sent the message received by the last successful "Recv" call. If this is not possible, the reply will be silently dropped. The transfer will succeed if:
 \begin{itemize}
-  \item there has been no other "Reply" call since the last successful "Wait" call;
+  \item there has been no other "Reply" call since the last successful "Recv" call;
   \item the sender used "Call" to generate a reply capability;
   \item the sender has not been halted or restarted while waiting for a reply; and
   \item the reply capability has not been moved aside.
@@ -174,12 +174,12 @@ The "Reply" system call attempts to perform an immediate IPC transfer to the thr
 >         NullCap -> return ()
 >         _ -> fail "handleReply: invalid caller cap"
 
-\subsubsection{Wait System Call}
+\subsubsection{Recv System Call}
 
-The "Wait" system call blocks waiting to receive a message through a specified endpoint. It will fail if the specified capability does not refer to an endpoint object.
+The "Recv" system call blocks waiting to receive a message through a specified endpoint. It will fail if the specified capability does not refer to an endpoint object.
 
-> handleWait :: Bool -> Kernel ()
-> handleWait isBlocking = do
+> handleRecv :: Bool -> Kernel ()
+> handleRecv isBlocking = do
 >     thread <- getCurThread
 >     epCPtr <- asUser thread $ liftM CPtr $ getRegister capRegister
 >     (capFaultOnFailure epCPtr True $ do

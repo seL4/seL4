@@ -261,7 +261,7 @@ transferCaps(message_info_t info, extra_caps_t caps,
     return message_info_set_msgExtraCaps(info, i);
 }
 
-void doNBWaitFailedTransfer(tcb_t *thread)
+void doNBRecvFailedTransfer(tcb_t *thread)
 {
     /* Set the badge register to 0 to indicate there was no message */
     setRegister(thread, badgeRegister, 0);

@@ -9,13 +9,13 @@
 %
 
 \apidoc
-{sel4_nbwait}
-{NBWait}
-{Perform a non-blocking wait on an endpoint or notification object}
-{static inline seL4\_MessageInfo\_t seL4\_NBWait}
+{sel4_recv}
+{Recv}
+{Block until a message is received on an endpoint}
+{static inline seL4\_MessageInfo\_t seL4\_Recv}
 {
 \param{seL4\_CPtr}{src}{\invokedcapdesc}
 \param{seL4\_Word*}{sender}{\senderdesc}
 }
 {\messageinforetdesc}
-{See \autoref{sec:sys_nbwait}}
+{See \autoref{sec:sys_recv}}

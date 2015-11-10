@@ -28,7 +28,7 @@ capabilities, badged \obj{Notification} capabilities cannot be
   unbadged, rebadged or used to create child capabilities with
   different badges. \label{s:notif-badge}
 
-\section{Signalling and Waiting}
+\section{Signalling, Polling and Waiting}
 
 The \apifunc{seL4\_Signal}{sel4_signal} method updates the
 notification word by bit-wise \texttt{or}-ing it with the \emph{badge}
@@ -46,6 +46,10 @@ invoker blocks. Else, the call returns immediately, setting the
 notification word to zero and returning to the invoker the previous
 notification-word value.
 
+The \apifunc{seL4\_Poll}{sel4_poll} is the same as \apifunc{seL4\_Wait}{sel4_wait}, except if 
+no signals are pending (the notification word is 0) the call will return immediately
+without blocking.
+
 If threads are waiting on the \obj{Notification} object at the time
 \apifunc{seL4\_Signal}{sel4_signal} is invoked, the first queued thread
 receives the notification. All other threads keep waiting until the
@@ -62,8 +66,8 @@ an unbadged capability has no effect.
 
 \obj{Notification} objects and \obj{TCB}s can be bound together in a 1-to-1 relationship
 through the \apifunc{seL4\_TCB\_BindNotification}{tcb_bindnotification} invocation. When a
-\obj{Notification} is bound to a \obj{TCB}, messages to that notification
-will be delivered even if the thread is waiting on an IPC
+\obj{Notification} is bound to a \obj{TCB}, signals to that notification object
+will be delivered even if the thread is receiving from an IPC
 endpoint. To distinguish whether the received message was a notification
 or an IPC, developers should check the badge value. By reserving a
 specific badge (or range of badges) for capabilities to the bound

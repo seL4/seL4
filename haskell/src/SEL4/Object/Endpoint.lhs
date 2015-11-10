@@ -130,14 +130,14 @@ The IPC receive operation is essentially the same as the send operation, but wit
 >                       blockingObject = epptr,
 >                       blockingIPCDiminishCaps = diminish }) thread
 >                   setEndpoint epptr $ RecvEP [thread]
->               False -> doNBWaitFailedTransfer thread
+>               False -> doNBRecvFailedTransfer thread
 >             RecvEP queue -> case isBlocking of
 >               True -> do
 >                   setThreadState (BlockedOnReceive {
 >                       blockingObject = epptr,
 >                       blockingIPCDiminishCaps = diminish }) thread
 >                   setEndpoint epptr $ RecvEP $ queue ++ [thread]
->               False -> doNBWaitFailedTransfer thread 
+>               False -> doNBRecvFailedTransfer thread 
 >             SendEP (sender:queue) -> do
 >                 setEndpoint epptr $ case queue of
 >                     [] -> IdleEP

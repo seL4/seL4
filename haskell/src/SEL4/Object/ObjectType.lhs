@@ -413,7 +413,7 @@ New threads are placed in the current security domain, which must be the domain 
 
 \subsection{Invoking Objects}
 
-The following functions are used to handle messages that are sent to kernel objects by user level code using a "Send" or "SendWait" system call.
+The following functions are used to handle messages that are sent to kernel objects by user level code using a "Send" or "SendRecv" system call.
 
 The "decodeInvocation" function parses the message, determines the operation that is being performed, and checks for any error conditions. If it returns successfully, the invocation is guaranteed to complete without any errors.
 

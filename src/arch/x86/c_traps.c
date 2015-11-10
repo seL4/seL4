@@ -163,8 +163,8 @@ void VISIBLE c_handle_syscall(syscall_t syscall, word_t cptr, word_t msgInfo)
 #ifdef FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);
-    } else if (syscall == SysReplyWait) {
-        fastpath_reply_wait(cptr, msgInfo);
+    } else if (syscall == SysReplyRecv) {
+        fastpath_reply_recv(cptr, msgInfo);
     }
 #endif
 
