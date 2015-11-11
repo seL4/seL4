@@ -46,6 +46,10 @@ pptr_to_paddr(void* pptr)
     return (paddr_t)pptr - BASE_OFFSET;
 }
 
+/* define paddr_to_kpptr and kpptr_to_paddr for 32-bit */
+#define paddr_to_kpptr(x) paddr_to_pptr(x)
+#define kpptr_to_paddr(x) pptr_to_paddr(x)
+
 static inline region_t CONST
 paddr_to_pptr_reg(p_region_t p_reg)
 {

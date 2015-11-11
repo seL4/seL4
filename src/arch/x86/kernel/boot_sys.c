@@ -212,7 +212,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
             )) {
         return false;
     }
-    write_cr3(pptr_to_paddr(X86_GLOBAL_VSPACE_ROOT));
+    write_cr3(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT));
     /* Sync up the compilers view of the world here to force the PD to actually
      * be set *right now* instead of delayed */
     asm volatile("" ::: "memory");
@@ -355,7 +355,7 @@ try_boot_sys(
     }
 
     boot_state.ki_p_reg.start = PADDR_LOAD;
-    boot_state.ki_p_reg.end = pptr_to_paddr(ki_end);
+    boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
 
     printf("Kernel loaded to: start=0x%lx end=0x%lx size=0x%lx entry=0x%lx\n",
            boot_state.ki_p_reg.start,
