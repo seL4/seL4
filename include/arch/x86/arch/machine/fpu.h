@@ -42,7 +42,7 @@ static inline void loadFpuState(user_fpu_state_t *src)
 /* Reset the FPU registers into their initial blank state. */
 static inline void resetFpu(void)
 {
-    asm volatile("finit" :: "m"(__control_reg_order));
+    asm volatile("finit" :: "m"(control_reg_order));
 }
 
 /*
@@ -51,7 +51,7 @@ static inline void resetFpu(void)
  */
 static inline void enableFpu(void)
 {
-    asm volatile("clts" :: "m" (__control_reg_order));
+    asm volatile("clts" :: "m" (control_reg_order));
 }
 
 /*
