@@ -12,6 +12,7 @@
 #include <api/types.h>
 #include <arch/machine.h>
 #include <arch/machine/hardware.h>
+#include <util.h>
 
 /* Prototyped here as this is referenced from assembly */
 void arm_errata(void);
@@ -67,7 +68,7 @@ BOOT_CODE static void errata_armA15_773022(void)
 }
 #endif
 
-BOOT_CODE void  __attribute__((externally_visible)) arm_errata(void)
+BOOT_CODE void VISIBLE arm_errata(void)
 {
 #ifdef ARM1136_WORKAROUND
     errata_arm1136();
