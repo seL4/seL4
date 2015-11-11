@@ -21,6 +21,7 @@
 #include <object/endpoint.h>
 #include <object/cnode.h>
 #include <object/interrupt.h>
+#include <object/schedcontext.h>
 #include <object/tcb.h>
 #include <object/untyped.h>
 #include <model/statedata.h>
@@ -396,6 +397,13 @@ sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
+    case cap_sched_control_cap:
+        if (cap_get_capType(cap_b) == cap_sched_control_cap) {
+            return true;
+        }
+        break;
+
+
     default:
         if (isArchCap(cap_a) &&
                 isArchCap(cap_b)) {
@@ -488,6 +496,7 @@ maskCapRights(cap_rights_t cap_rights, cap_t cap)
     case cap_zombie_cap:
     case cap_thread_cap:
     case cap_sched_context_cap:
+    case cap_sched_control_cap:
         return cap;
 
     case cap_endpoint_cap: {
@@ -538,7 +547,6 @@ createObject(object_t t, void *regionBase, word_t userSize)
         sched_context_t *sc;
         memzero(regionBase, 1UL << SC_SIZE_BITS);
         sc = SC_PTR(regionBase);
-        sc->budget = CONFIG_TIME_SLICE;
         return cap_sched_context_cap_new(SC_REF(sc));
     }
     case seL4_TCBObject: {
@@ -715,6 +723,9 @@ decodeInvocation(word_t label, word_t length,
     case cap_irq_handler_cap:
         return decodeIRQHandlerInvocation(label, length,
                                           cap_irq_handler_cap_get_capIRQ(cap), extraCaps, buffer);
+
+    case cap_sched_control_cap:
+        return decodeSchedControlInvocation(label, length, extraCaps, buffer);
 
     case cap_sched_context_cap:
         /* no current sched context invocations */

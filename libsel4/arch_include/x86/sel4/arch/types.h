@@ -38,6 +38,7 @@
 #define seL4_4MBits           seL4_LargePageBits
 #endif
 
+typedef seL4_Uint64 seL4_Time;
 typedef seL4_Uint32 seL4_Word;
 typedef seL4_Word seL4_CPtr;
 

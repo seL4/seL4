@@ -64,6 +64,9 @@ other thread's priority and max-priority to be lower than or equal to its own ma
 set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
 \apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMaxPriority}{tcb\_setmaxpriority} methods.
 
+A thread's timeslice is determined by its scheduling context, which can be adjusted with 
+\apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}.
+
 \subsection{Exceptions}
 
 Each thread has an associated exception-handler endpoint. If the thread

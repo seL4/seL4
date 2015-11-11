@@ -247,8 +247,11 @@ struct tcb {
 typedef struct tcb tcb_t;
 
 struct sched_context {
-    /* budget (timeslice) for this tcb */
+    /* budget for this tcb -- remaining is refilled from this value */
     time_t budget;
+
+    /* current budget for this tcb (timeslice) -- will be refilled from budget */
+    time_t remaining;
 
     /* tcb that is currently running on this scheduling context */
     tcb_t *tcb;
@@ -321,6 +324,9 @@ cap_get_capSizeBits(cap_t cap)
     case cap_sched_context_cap:
         return SC_SIZE_BITS;
 
+    case cap_sched_control_cap:
+        return 0;
+
     default:
         return cap_get_archCapSizeBits(cap);
     }
@@ -367,6 +373,10 @@ cap_get_capPtr(cap_t cap)
 
     case cap_irq_handler_cap:
         return NULL;
+
+    case cap_sched_control_cap:
+        return NULL;
+
     default:
         return cap_get_archCapPtr(cap);
 

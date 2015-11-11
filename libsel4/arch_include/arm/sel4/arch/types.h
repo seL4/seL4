@@ -29,6 +29,7 @@
 #define seL4_Frame_MRs 7
 #define seL4_Frame_HasNPC 0
 
+typedef seL4_Uint64 seL4_Time;
 typedef seL4_Uint32 seL4_Word;
 typedef seL4_Word seL4_CPtr;
 

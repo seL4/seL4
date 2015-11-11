@@ -452,10 +452,10 @@ timerTick(void)
 {
     if (likely(thread_state_get_tsType(ksCurThread->tcbState) ==
                ThreadState_Running)) {
-        if (ksCurThread->tcbSchedContext->budget > 1) {
-            ksCurThread->tcbSchedContext->budget--;
+        if (ksCurThread->tcbSchedContext->remaining > 1) {
+            ksCurThread->tcbSchedContext->remaining--;
         } else {
-            ksCurThread->tcbSchedContext->budget = CONFIG_TIME_SLICE;
+            ksCurThread->tcbSchedContext->remaining = ksCurThread->tcbSchedContext->budget;
             tcbSchedAppend(ksCurThread);
             rescheduleRequired();
         }

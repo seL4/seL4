@@ -20,9 +20,9 @@ block cap_rights {
 
 -- Message info word
 block message_info {
-    field msgLabel 20
+    field msgLabel 19
     field msgCapsUnwrapped 3
-    field msgExtraCaps 2
+    field msgExtraCaps 3
     field msgLength 7
 }
 

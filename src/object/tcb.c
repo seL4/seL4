@@ -630,7 +630,7 @@ exception_t
 decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
                    extra_caps_t rootCaps, word_t *buffer)
 {
-    cte_t *bufferSlot, *cRootSlot, *vRootSlot;
+    cte_t *bufferSlot, *cRootSlot, *vRootSlot, *scSlot;
     cap_t bufferCap, cRootCap, vRootCap, scCap;
     sched_context_t *sched_context;
     deriveCap_ret_t dc_ret;
@@ -638,11 +638,11 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     word_t cRootData, vRootData, bufferAddr;
     seL4_Prio_t prio;
     exception_t status;
-    lookupSlot_raw_ret_t lsrrt;
 
-    if (length < 6 || rootCaps.excaprefs[0] == NULL
+    if (length < 5 || rootCaps.excaprefs[0] == NULL
             || rootCaps.excaprefs[1] == NULL
-            || rootCaps.excaprefs[2] == NULL) {
+            || rootCaps.excaprefs[2] == NULL
+            || rootCaps.excaprefs[3] == NULL) {
         userError("TCB Configure: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -650,29 +650,18 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
 
     faultEP       = getSyscallArg(0, buffer);
     prio.words[0] = getSyscallArg(1, buffer);
-    /* sc cap is 2nd arg */
-    cRootData     = getSyscallArg(3, buffer);
-    vRootData     = getSyscallArg(4, buffer);
-    bufferAddr    = getSyscallArg(5, buffer);
+    cRootData     = getSyscallArg(2, buffer);
+    vRootData     = getSyscallArg(3, buffer);
+    bufferAddr    = getSyscallArg(4, buffer);
 
-    lsrrt = lookupSlot(ksCurThread, getSyscallArg(2, buffer));
-    if (lsrrt.status != EXCEPTION_NONE) {
-        return lsrrt.status;
-    }
-    scCap = lsrrt.slot->cap;
-
-    cRootSlot  = rootCaps.excaprefs[0];
-    cRootCap   = rootCaps.excaprefs[0]->cap;
-    vRootSlot  = rootCaps.excaprefs[1];
-    vRootCap   = rootCaps.excaprefs[1]->cap;
-    bufferSlot = rootCaps.excaprefs[2];
-    bufferCap  = rootCaps.excaprefs[2]->cap;
-
-    if (likely(cap_get_capType(scCap) == cap_sched_context_cap)) {
-        sched_context = SC_PTR(cap_sched_context_cap_get_capPtr(scCap));
-    } else {
-        sched_context = NULL;
-    }
+    scSlot     = rootCaps.excaprefs[0];
+    scCap      = rootCaps.excaprefs[0]->cap;
+    cRootSlot  = rootCaps.excaprefs[1];
+    cRootCap   = rootCaps.excaprefs[1]->cap;
+    vRootSlot  = rootCaps.excaprefs[2];
+    vRootCap   = rootCaps.excaprefs[2]->cap;
+    bufferSlot = rootCaps.excaprefs[3];
+    bufferCap  = rootCaps.excaprefs[3]->cap;
 
     status = checkPrio(seL4_Prio_get_prio(prio));
     if (status != EXCEPTION_NONE) {
@@ -737,6 +726,25 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
 
     if (!isValidVTableRoot(vRootCap)) {
         userError("TCB Configure: VSpace cap is invalid.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    dc_ret = deriveCap(scSlot, scCap);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret.status;
+    }
+    scCap = dc_ret.cap;
+
+    switch (cap_get_capType(scCap)) {
+    case cap_sched_context_cap:
+        sched_context = SC_PTR(cap_sched_context_cap_get_capPtr(scCap));
+        break;
+    case cap_null_cap:
+        sched_context = NULL;
+        break;
+    default:
+        userError("TCB Configure: sched context cap is invalid");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }

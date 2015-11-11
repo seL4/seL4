@@ -25,6 +25,13 @@ typedef word_t  dom_t;
 typedef word_t cptr_t;
 typedef uint64_t time_t;
 
+typedef struct {
+    /* number of words parsing this argument took */
+    word_t words;
+    /* the argument value */
+    time_t arg;
+} parseTime_ret_t;
+
 enum domainConstants {
     minDom = 0,
     maxDom = CONFIG_NUM_DOMAINS - 1

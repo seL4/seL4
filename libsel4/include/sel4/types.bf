@@ -33,9 +33,9 @@ tagged_union seL4_CapData CapDataType {
 }
 
 block seL4_MessageInfo {
-    field label 20
+    field label 19
     field capsUnwrapped 3
-    field extraCaps 2
+    field extraCaps 3
     field length 7
 }
 

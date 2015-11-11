@@ -35,7 +35,8 @@
 #define BI_CAP_IT_IPCBUF    10 /* initial thread's IPC buffer frame cap */
 #define BI_CAP_DOM          11 /* domain cap */
 #define BI_CAP_IT_SC        12 /* initial thread's scheduling context cap */
-#define BI_CAP_DYN_START    13 /* slot where dynamically allocated caps start */
+#define BI_CAP_SCHED_CTRL   13 /* global sched control cap */
+#define BI_CAP_DYN_START    14 /* slot where dynamically allocated caps start */
 
 /* type definitions */
 

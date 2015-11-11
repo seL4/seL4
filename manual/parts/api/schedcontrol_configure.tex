@@ -1,0 +1,22 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{schedcontrol_configure}
+{SchedControl - Configure}
+{Set the parameters of a scheduling context by invoking the scheduling control capability}
+{static inline int seL4\_SchedControl\_Configure }
+{
+\param{seL4\_SchedControl}{\_service}{\schedcontrolcapdesc}
+\param{seL4\_CPtr\_t}{schedcontext}{\schedcontextcapdesc}
+\param{seL4\_Time\_t}{budget}{\budgetdesc}
+}
+{\errorenumdesc}
+{See \autoref{sec:sched}}

@@ -237,7 +237,11 @@ manipulation, and combination of these kernel objects:
     interaction with other threads.
 
    \item[Scheduling contexts] (\obj{SchedulingContext}s; see \autoref{ch:threads}) represent 
-    CPU time in seL4.
+       CPU time in seL4. Users can create scheduling contexts from untyped objects, however on
+       creation scheduling contexts are \textit{empty} and do not represent any time. 
+       Initially, there is a capability to \obj{SchedControl}, which 
+       allows scheduling context to be populated with parameters, which combined with priority
+       control threads access to CPU time. 
 
     \item[\obj{Endpoints}] (see \autoref{ch:ipc}) facilitate message-passing
     communication between threads. IPC is synchronous: A thread

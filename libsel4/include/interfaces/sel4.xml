@@ -44,8 +44,7 @@
 		<method id="TCBConfigure" name="Configure">
 			<param dir="in" name="fault_ep" type="seL4_Word"/>
             <param dir="in" name="priority" type="seL4_Prio_t"/>
-            <!-- we've run out of caps in the ipc buffer -->
-            <param dir="in" name="sched_context" type="seL4_Word"/>
+            <param dir="in" name="sched_context" type="seL4_CPtr"/>
 			<param dir="in" name="cspace_root" type="seL4_CNode"/>
 			<param dir="in" name="cspace_root_data" type="seL4_CapData_t"/>
 			<param dir="in" name="vspace_root" type="seL4_CNode"/>
@@ -170,5 +169,11 @@
 			<param dir="in" name="domain" type="seL4_Uint8"/>
 			<param dir="in" name="thread" type="seL4_TCB"/>
 		</method>
-	</interface>
+    </interface>
+    <interface name="seL4_SchedControl">
+        <method id="SchedControlConfigure" name="Configure">
+            <param dir="in" name="target" type="seL4_SchedContext" />
+            <param dir="in" name="budget" type="seL4_Uint64" />
+        </method>
+    </interface>
 </api>

@@ -426,6 +426,10 @@ init_node_state(
     /* initialise the IRQ states and provide the IRQ control cap */
     init_irqs(root_cnode_cap, node_id != 0);
 
+    /* create sched control cap */
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_SCHED_CTRL),
+               cap_sched_control_cap_new());
+
     /* create the bootinfo frame */
     bi_frame_pptr = allocate_bi_frame(node_id, num_nodes, ipcbuf_vptr);
     if (!bi_frame_pptr) {

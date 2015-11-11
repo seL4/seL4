@@ -55,6 +55,8 @@ The first 12 slots contain specific capabilities as listed in
       0x9 & \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
       0xa & \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
       0xb & \texttt{seL4\_CapDomain}              & domain cap (see \autoref{sec:domains}) \\
+      0xc & \texttt{seL4\_CapInitThreadTCB}       & initial thread's scheduling scontext (see\autoref{sec:sched})\\
+      0xd & \texttt{seL4\_CapSchedControl}        & globel scheduling cap for managing CPU time (see \autoref{sec:sched}\\
       \bottomrule
     \end{tabularx}
   \end{center}
