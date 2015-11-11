@@ -154,6 +154,7 @@ compile_assert(acpi_madt_iso_packed,
 /* workaround because string literals are not supported by C parser */
 const char acpi_str_rsd[]  = {'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ', 0};
 const char acpi_str_apic[] = {'A', 'P', 'I', 'C', 0};
+const char acpi_str_dmar[] = {'D', 'M', 'A', 'R', 0};
 
 BOOT_CODE static uint8_t
 acpi_calc_checksum(char* start, uint32_t length)
@@ -373,7 +374,7 @@ acpi_dmar_scan(
         acpi_dmar = (acpi_dmar_t*)(word_t)acpi_rsdt_mapped->entry[count];
         acpi_dmar_mapped = (acpi_dmar_t*)acpi_table_init(acpi_dmar, ACPI_RSDT);
 
-        if (strncmp("DMAR", acpi_dmar_mapped->header.signature, 4) == 0) {
+        if (strncmp(acpi_str_dmar, acpi_dmar_mapped->header.signature, 4) == 0) {
             printf("ACPI: DMAR paddr=%p\n", acpi_dmar);
             printf("ACPI: DMAR vaddr=%p\n", acpi_dmar_mapped);
             printf("ACPI: IOMMU host address width: %d\n", acpi_dmar_mapped->host_addr_width + 1);
