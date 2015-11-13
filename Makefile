@@ -652,7 +652,7 @@ clean:
 	rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/invocation.h
 	rm -f ${SOURCE_ROOT}/include/api/invocation.h
 	rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/syscall.h
-	$(Q)rm -Rf ${CLEANTARGETS}
+	rm -Rf ${CLEANTARGETS}
 
 .PHONY: distclean
 distclean: clean
