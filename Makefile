@@ -586,7 +586,7 @@ arch/api/syscall.h: ${SOURCE_ROOT}/include/api/syscall.xsd ${SOURCE_ROOT}/includ
 PRUNES = $(foreach file,${STATICSOURCES} ${STATICHEADERS}, \
            --prune ${file} )
 
-TOPLEVELTYPES=cte_C tcb_C endpoint_C async_endpoint_C pte_C \
+TOPLEVELTYPES=cte_C tcb_C endpoint_C notification_C pte_C \
               pde_C user_data_C
 TOPTYPES = $(foreach tp,${TOPLEVELTYPES}, \
            --toplevel ${tp} )
@@ -656,7 +656,7 @@ clean:
 	rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/invocation.h
 	rm -f ${SOURCE_ROOT}/include/api/invocation.h
 	rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/syscall.h
-	$(Q)rm -Rf ${CLEANTARGETS}
+	rm -Rf ${CLEANTARGETS}
 
 .PHONY: distclean
 distclean: clean

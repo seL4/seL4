@@ -34,18 +34,16 @@ void _assert_fail(
 #define assert(expr) \
     if(!(expr)) _assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__)
 
-/* Create an assert that will trigger a compile error if it fails. */
-#define compile_assert(name, expr) \
-        typedef int __assert_failed_##name[(expr) ? 1 : -1];
-
 #else /* !DEBUG */
 
 #define fail(s) halt()
 
 #define assert(expr)
 
-#define compile_assert(name, expr)
-
 #endif /* DEBUG */
+
+/* Create an assert that will trigger a compile error if it fails. */
+#define compile_assert(name, expr) \
+        typedef int __assert_failed_##name[(expr) ? 1 : -1];
 
 #endif

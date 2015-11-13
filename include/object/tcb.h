@@ -20,7 +20,7 @@
 
 #ifdef DEBUG
 /* Maximum length of the tcb name, including null terminator */
-#define TCB_NAME_LENGTH (BIT(TCB_SIZE_BITS) - sizeof(tcb_t))
+#define TCB_NAME_LENGTH (BIT(TCB_BLOCK_SIZE_BITS) - BIT(TCB_SIZE_BITS) - sizeof(tcb_t))
 #endif
 
 struct tcb_queue {
@@ -61,8 +61,8 @@ exception_t decodeUnbindAEP(cap_t cap);
 exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t extraCaps);
 exception_t decodeDomainInvocation(word_t label, unsigned int length,
                                    extra_caps_t extraCaps, word_t *buffer);
-exception_t decodeBindAEP(cap_t cap, extra_caps_t extraCaps);
-exception_t decodeUnbindAEP(cap_t cap);
+exception_t decodeBindNotification(cap_t cap, extra_caps_t extraCaps);
+exception_t decodeUnbindNotification(cap_t cap);
 
 enum thread_control_flag {
     thread_control_update_priority = 0x1,
@@ -89,7 +89,7 @@ exception_t invokeTCB_ReadRegisters(tcb_t *src, bool_t suspendSource,
                                     unsigned int n, word_t arch, bool_t call);
 exception_t invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
                                      unsigned int n, word_t arch, word_t *buffer);
-exception_t invokeTCB_AEPControl(tcb_t *tcb, async_endpoint_t *aepptr);
+exception_t invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr);
 
 cptr_t PURE getExtraCPtr(word_t *bufferPtr, unsigned int i);
 void setExtraBadge(word_t *bufferPtr, word_t badge, unsigned int i);

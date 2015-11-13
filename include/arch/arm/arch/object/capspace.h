@@ -29,7 +29,7 @@ cap_get_capSpaceType(cap_t cap)
 
     switch (ctag) {
     case cap_endpoint_cap:
-    case cap_async_endpoint_cap:
+    case cap_notification_cap:
     case cap_cnode_cap:
     case cap_thread_cap:
     case cap_frame_cap:
@@ -65,7 +65,7 @@ cap_get_capSpacePtr(cap_t cap)
 
     switch (ctag) {
     case cap_endpoint_cap:
-    case cap_async_endpoint_cap:
+    case cap_notification_cap:
     case cap_cnode_cap:
     case cap_thread_cap:
     case cap_frame_cap:
@@ -101,7 +101,7 @@ cap_get_capSpaceSize(cap_t cap)
 
     switch (ctag) {
     case cap_endpoint_cap:
-    case cap_async_endpoint_cap:
+    case cap_notification_cap:
     case cap_cnode_cap:
     case cap_thread_cap:
     case cap_frame_cap:

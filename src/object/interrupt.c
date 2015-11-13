@@ -17,7 +17,7 @@
 #include <object/structures.h>
 #include <object/interrupt.h>
 #include <object/cnode.h>
-#include <object/asyncendpoint.h>
+#include <object/notification.h>
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <model/statedata.h>
@@ -83,7 +83,7 @@ decodeIRQControlInvocation(word_t label, unsigned int length,
 exception_t
 invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot)
 {
-    setIRQState(IRQNotifyAEP, irq);
+    setIRQState(IRQSignal, irq);
     cteInsert(cap_irq_handler_cap_new(irq), controlSlot, handlerSlot);
 
     return EXCEPTION_NONE;
@@ -100,20 +100,20 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         return EXCEPTION_NONE;
 
     case IRQSetIRQHandler: {
-        cap_t aepCap;
+        cap_t ntfnCap;
         cte_t *slot;
 
         if (extraCaps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        aepCap = extraCaps.excaprefs[0]->cap;
+        ntfnCap = extraCaps.excaprefs[0]->cap;
         slot = extraCaps.excaprefs[0];
 
-        if (cap_get_capType(aepCap) != cap_async_endpoint_cap ||
-                !cap_async_endpoint_cap_get_capAEPCanSend(aepCap)) {
-            if (cap_get_capType(aepCap) != cap_async_endpoint_cap) {
-                userError("IRQSetHandler: provided cap is not an async endpoint capability.");
+        if (cap_get_capType(ntfnCap) != cap_notification_cap ||
+                !cap_notification_cap_get_capNtfnCanSend(ntfnCap)) {
+            if (cap_get_capType(ntfnCap) != cap_notification_cap) {
+                userError("IRQSetHandler: provided cap is not a notification capability.");
             } else {
                 userError("IRQSetHandler: caller does not have send rights on the endpoint.");
             }
@@ -123,7 +123,7 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         }
 
         setThreadState(ksCurThread, ThreadState_Restart);
-        invokeIRQHandler_SetIRQHandler(irq, aepCap, slot);
+        invokeIRQHandler_SetIRQHandler(irq, ntfnCap, slot);
         return EXCEPTION_NONE;
     }
 
@@ -192,7 +192,7 @@ deletingIRQHandler(irq_t irq)
     cte_t *slot;
 
     slot = intStateIRQNode + irq;
-    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_async_endpoint_cap))" */
+    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_notification_cap))" */
     cteDeleteOne(slot);
 }
 
@@ -206,15 +206,15 @@ void
 handleInterrupt(irq_t irq)
 {
     switch (intStateIRQTable[irq]) {
-    case IRQNotifyAEP: {
+    case IRQSignal: {
         cap_t cap;
 
         cap = intStateIRQNode[irq].cap;
 
-        if (cap_get_capType(cap) == cap_async_endpoint_cap &&
-                cap_async_endpoint_cap_get_capAEPCanSend(cap)) {
-            sendAsyncIPC(AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap)),
-                         cap_async_endpoint_cap_get_capAEPBadge(cap));
+        if (cap_get_capType(cap) == cap_notification_cap &&
+                cap_notification_cap_get_capNtfnCanSend(cap)) {
+            sendSignal(NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)),
+                       cap_notification_cap_get_capNtfnBadge(cap));
         } else {
 #ifdef CONFIG_IRQ_REPORTING
             printf("Undelivered IRQ: %d\n", (int)irq);

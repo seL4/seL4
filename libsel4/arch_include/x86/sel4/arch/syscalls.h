@@ -160,12 +160,6 @@ seL4_Signal(seL4_CPtr dest)
     );
 }
 
-static inline void __attribute__((deprecated("use seL4_Signal")))
-seL4_Notify(seL4_CPtr dest,  __attribute__((unused)) seL4_Word msg)
-{
-    seL4_Signal(dest);
-}
-
 static inline seL4_MessageInfo_t
 seL4_Wait(seL4_CPtr src, seL4_Word* sender)
 {

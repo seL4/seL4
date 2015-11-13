@@ -243,8 +243,8 @@ void __attribute__((externally_visible)) c_handle_syscall(syscall_t syscall, wor
     if (syscall == SysVMEnter) {
         vcpu_update_vmenter_state(ksCurThread->tcbArch.vcpu);
         ksCurThread->tcbArch.tcbContext.registers[NextEIP] += 2;
-        if (ksCurThread->boundAsyncEndpoint && async_endpoint_ptr_get_state(ksCurThread->boundAsyncEndpoint) == AEPState_Active) {
-            completeAsyncIPC(ksCurThread->boundAsyncEndpoint, ksCurThread);
+        if (ksCurThread->tcbBoundNotification && notification_ptr_get_state(ksCurThread->tcbBoundNotification) == NtfnState_Active) {
+            completeSignal(ksCurThread->tcbBoundNotification, ksCurThread);
             setRegister(ksCurThread, msgInfoRegister, 0);
             /* Any guest state that we should return is in the same
              * register position as sent to us, so we can just return

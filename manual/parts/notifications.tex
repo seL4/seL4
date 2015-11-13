@@ -61,7 +61,7 @@ an unbadged capability has no effect.
 \label{sec:notification-binding}
 
 \obj{Notification} objects and \obj{TCB}s can be bound together in a 1-to-1 relationship
-through the \apifunc{seL4\_TCB\_BindAEP}{tcb_bindnotification} invocation. When a
+through the \apifunc{seL4\_TCB\_BindNotification}{tcb_bindnotification} invocation. When a
 \obj{Notification} is bound to a \obj{TCB}, messages to that notification
 will be delivered even if the thread is waiting on an IPC
 endpoint. To distinguish whether the received message was a notification

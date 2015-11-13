@@ -22,8 +22,8 @@
 #include <plat/machine/hardware_gen.h>
 
 /* Object sizes*/
-#define EP_SIZE_BITS 4
-#define AEP_SIZE_BITS 4
+#define EP_SIZE_BITS  4
+#define NTFN_SIZE_BITS 4
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
 
@@ -42,7 +42,6 @@ typedef struct arch_tcb {
     struct vcpu *vcpu;
 #endif
 } arch_tcb_t;
-
 #ifdef CONFIG_VTX
 /* Access to the VCPU element of the tcb is done through a hard coded offset in traps.S
  * this assert makes sure they remain consistent. If this assert fails update the
@@ -214,7 +213,6 @@ cap_get_archCapSizeBits(cap_t cap)
 
     case cap_pdpt_cap:
         return PDPT_SIZE_BITS;
-
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:
         return VTX_VCPU_BITS;
@@ -274,7 +272,6 @@ cap_get_archCapPtr(cap_t cap)
     case cap_vcpu_cap:
         return (void*)(cap_vcpu_cap_get_capVCPUPtr(cap));
 #endif
-
     case cap_io_port_cap:
         return NULL;
 #ifdef CONFIG_IOMMU
@@ -304,5 +301,4 @@ cap_get_archCapPtr(cap_t cap)
     }
 }
 
-#endif /* __ARCH_OBJECT_STRUCTURES_H */
-
+#endif

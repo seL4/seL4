@@ -34,7 +34,7 @@ isBlocked(const tcb_t *thread)
     case ThreadState_Inactive:
     case ThreadState_BlockedOnReceive:
     case ThreadState_BlockedOnSend:
-    case ThreadState_BlockedOnAsyncEvent:
+    case ThreadState_BlockedOnNotification:
     case ThreadState_BlockedOnReply:
         return true;
 
@@ -93,7 +93,7 @@ activateThread(void)
 void
 suspend(tcb_t *target)
 {
-    ipcCancel(target);
+    cancelIPC(target);
     /*if (cap_get_capType(TCB_PTR_CTE_PTR(target, tcbCaller)->cap) == cap_reply_cap)*/
     {
         deleteCallerCap(target);
@@ -106,7 +106,7 @@ void
 restart(tcb_t *target)
 {
     if (isBlocked(target)) {
-        ipcCancel(target);
+        cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
         tcbSchedEnqueue(target);

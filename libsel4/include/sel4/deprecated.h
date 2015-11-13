@@ -17,4 +17,10 @@ seL4_IRQHandler_SetEndpoint(seL4_CPtr irq_handler, seL4_CPtr endpoint)
     return seL4_IRQHandler_SetNotification(irq_handler, endpoint);
 }
 
+static inline void __attribute__((deprecated("use seL4_Signal")))
+seL4_Notify(seL4_CPtr dest, __attribute__((unused)) seL4_Word msg)
+{
+    seL4_Signal(dest);
+}
+
 #endif // __LIBSEL4_DEPRECATED_H

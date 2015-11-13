@@ -20,22 +20,19 @@
 #include <arch/machine/registerset.h>
 
 /* Object sizes */
-
-#define EP_SIZE_BITS 4
-#define AEP_SIZE_BITS 4
+#define EP_SIZE_BITS  4
+#define NTFN_SIZE_BITS 4
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS+1)
+
 enum tcb_arch_cnode_index {
     tcbArchCNodeEntries = tcbCNodeEntries
 };
-
-/* sizeof (tcb_t) + sizeof (arch_tcb_t) */
-#define EXPECTED_TCB_SIZE 140
-
 typedef struct arch_tcb {
     /* saved user-level context of thread (72 bytes) */
     user_context_t tcbContext;
 } arch_tcb_t;
+#define EXPECTED_TCB_SIZE 140
 
 enum vm_rights {
     VMNoAccess = 0,
@@ -140,7 +137,6 @@ cap_get_archCapPtr(cap_t cap)
     ctag = cap_get_capType(cap);
 
     switch (ctag) {
-
     case cap_frame_cap:
         return (void *)(cap_frame_cap_get_capFBasePtr(cap));
 

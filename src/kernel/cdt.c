@@ -94,11 +94,11 @@ endpoint_cap_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 }
 
 static inline int
-async_endpoint_cap_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
+notification_cap_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
 {
     int cmp;
     /* compare on the badge */
-    cmp = compare(cap_async_endpoint_cap_get_capAEPBadge(a->cap), cap_async_endpoint_cap_get_capAEPBadge(b->cap));
+    cmp = compare(cap_notification_cap_get_capNtfnBadge(a->cap), cap_notification_cap_get_capNtfnBadge(b->cap));
     if (cmp != EQ) {
         return cmp;
     }
@@ -179,7 +179,7 @@ typed_comparator(cte_t *a, cte_t *b, tie_comp_t tie_break)
     type_comp_t comp;
     static type_comp_t comparator[] = {
         [cap_endpoint_cap]       = endpoint_cap_comparator,
-        [cap_async_endpoint_cap] = async_endpoint_cap_comparator,
+        [cap_notification_cap] = notification_cap_comparator,
         [cap_cnode_cap]          = just_tie_break,
         [cap_thread_cap]         = just_tie_break,
         [cap_frame_cap]          = frame_cap_comparator,
@@ -502,9 +502,9 @@ build_largest_child(cap_t cap)
             return cap_endpoint_cap_new(BIT(28) - 1, 0, 0, 0, cap_endpoint_cap_get_capEPPtr(cap));
         }
         return cap;
-    case cap_async_endpoint_cap:
-        if (cap_async_endpoint_cap_get_capAEPBadge(cap) == 0) {
-            return cap_async_endpoint_cap_new(BIT(28) - 1, 0, 0, cap_async_endpoint_cap_get_capAEPPtr(cap));
+    case cap_notification_cap:
+        if (cap_notification_cap_get_capNtfnBadge(cap) == 0) {
+            return cap_notification_cap_new(BIT(28) - 1, 0, 0, cap_notification_cap_get_capNtfnPtr(cap));
         }
         return cap;
         /* We get away with not setting the extra higher as we will always be comparing
@@ -1087,8 +1087,8 @@ printCap(cap_t cap)
         return "Untyped";
     case cap_endpoint_cap:
         return "Endpoint";
-    case cap_async_endpoint_cap:
-        return "AsyncEndpoint";
+    case cap_notification_cap:
+        return "Notification";
     case cap_reply_cap:
         return "Reply";
     case cap_cnode_cap:

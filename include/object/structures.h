@@ -17,7 +17,7 @@
 
 enum irq_state {
     IRQInactive  = 0,
-    IRQNotifyAEP = 1,
+    IRQSignal    = 1,
     IRQTimer     = 2,
     IRQReserved  = 3,
 };
@@ -37,26 +37,18 @@ enum endpoint_state {
 };
 typedef uint32_t endpoint_state_t;
 
-#define EP_SIZE_BITS 4
-#define EP_PTR(r) ((endpoint_t *)(r))
-#define EP_REF(p) ((unsigned int)(p))
-
-enum async_endpoint_state {
-    AEPState_Idle    = 0,
-    AEPState_Waiting = 1,
-    AEPState_Active  = 2
+enum notification_state {
+    NtfnState_Idle    = 0,
+    NtfnState_Waiting = 1,
+    NtfnState_Active  = 2
 };
-typedef uint32_t async_endpoint_state_t;
+typedef uint32_t notification_state_t;
 
-/* Declare object casts. As the sizes of objects may
- * differ by architecture, they are declared in the
- * arch structures.h
- */
 #define EP_PTR(r) ((endpoint_t *)(r))
 #define EP_REF(p) ((unsigned int)(p))
 
-#define AEP_PTR(r) ((async_endpoint_t *)(r))
-#define AEP_REF(p) ((unsigned int)(p))
+#define NTFN_PTR(r) ((notification_t *)(r))
+#define NTFN_REF(p) ((unsigned int)(p))
 
 #define CTE_PTR(r) ((cte_t *)(r))
 #define CTE_REF(p) ((unsigned int)(p))
@@ -148,7 +140,7 @@ enum _thread_state {
     ThreadState_BlockedOnReceive,
     ThreadState_BlockedOnSend,
     ThreadState_BlockedOnReply,
-    ThreadState_BlockedOnAsyncEvent,
+    ThreadState_BlockedOnNotification,
     ThreadState_RunningVM,
     ThreadState_IdleThreadState
 };
@@ -201,11 +193,6 @@ vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* Ensure object sizes are sane */
-compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << CTE_SIZE_BITS))
-compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << EP_SIZE_BITS))
-compile_assert(aep_size_sane, sizeof(async_endpoint_t) <= (1 << AEP_SIZE_BITS))
-
 static inline word_t mdb_node_get_cdtLeft(mdb_node_t mdb)
 {
     word_t cte = mdb_node_get_cdtLeft_(mdb) << 2;
@@ -230,7 +217,7 @@ static inline void mdb_node_ptr_set_cdtRight(mdb_node_t *mdb, word_t cte)
     mdb_node_ptr_set_cdtRight_(mdb, (cte & 0x1FFFFFFF) >> 2);
 }
 
-/* TCB: aligned to nearest power of 2 */
+/* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
@@ -238,8 +225,10 @@ struct tcb {
     /* Thread state, 12 bytes */
     thread_state_t tcbState;
 
-    /* Bound AEP 4 bytes */
-    async_endpoint_t *boundAsyncEndpoint;
+    /* Notification that this TCB is bound to. If this is set, when this TCB waits on
+     * any sync endpoint, it may receive a signal from a Notification object.
+     * 4 bytes*/
+    notification_t *tcbBoundNotification;
 
     /* Current fault, 8 bytes */
     fault_t tcbFault;
@@ -262,9 +251,10 @@ struct tcb {
     /* userland virtual address of thread IPC buffer, 4 bytes */
     word_t tcbIPCBuffer;
 
-    /* Previous and next pointers for endpoint & scheduler queues, 16 bytes */
+    /* Previous and next pointers for scheduler queues , 8 bytes */
     struct tcb* tcbSchedNext;
     struct tcb* tcbSchedPrev;
+    /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
     struct tcb* tcbEPNext;
     struct tcb* tcbEPPrev;
 
@@ -275,11 +265,13 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
-/* Ensure TCB size is sane. */
+/* Ensure object sizes are sane */
+compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << CTE_SIZE_BITS))
+compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
 compile_assert(tcb_size_sane,
                (1 << TCB_SIZE_BITS) + sizeof(tcb_t) <= (1 << TCB_BLOCK_SIZE_BITS))
-compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
-
+compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << EP_SIZE_BITS))
+compile_assert(notification_size_sane, sizeof(notification_t) <= (1 << NTFN_SIZE_BITS))
 
 /* helper functions */
 
@@ -304,8 +296,8 @@ cap_get_capSizeBits(cap_t cap)
     case cap_endpoint_cap:
         return EP_SIZE_BITS;
 
-    case cap_async_endpoint_cap:
-        return AEP_SIZE_BITS;
+    case cap_notification_cap:
+        return NTFN_SIZE_BITS;
 
     case cap_cnode_cap:
         return cap_cnode_cap_get_capCNodeRadix(cap) + CTE_SIZE_BITS;
@@ -356,8 +348,8 @@ cap_get_capPtr(cap_t cap)
     case cap_endpoint_cap:
         return EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
 
-    case cap_async_endpoint_cap:
-        return AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap));
+    case cap_notification_cap:
+        return NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
 
     case cap_cnode_cap:
         return CTE_PTR(cap_cnode_cap_get_capCNodePtr(cap));
@@ -391,12 +383,13 @@ cap_get_capBadge(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_endpoint_cap:
         return cap_endpoint_cap_get_capEPBadge(cap);
-    case cap_async_endpoint_cap:
-        return cap_async_endpoint_cap_get_capAEPBadge(cap);
+    case cap_notification_cap:
+        return cap_notification_cap_get_capNtfnBadge(cap);
     }
     return 0;
 }
 
 #include <arch/object/capspace.h>
+
 
 #endif

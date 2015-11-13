@@ -67,7 +67,6 @@
 \newcommand{\AuthorEmail}[1]{\def\AuthorEmailString{#1}}
 
 \newcommand{\CrestFileName}{\ifColor unicrest-colour\else unicrest-screen\fi}
-\newcommand{\LogoFileName}{nicta-col}
 \AuthorEmail{disy@cse.unsw.edu.au}
 
 \newlength{\centeroffset}
@@ -103,12 +102,6 @@
             NICTA Trustworthy Systems\\
             \url{http://ssrg.nicta.com.au/projects/TS/}\\~
 	  \end{minipage}
-	  \hfill
-	  \ifx\undefined\hyperref%
-	    \NICTAlogo%
- 	  \else%
-	    \raisebox{2mm}{\href{http://nicta.com.au}{\NICTAlogo}}%
-	  \fi%
 	\else~
 	\fi%
       \end{minipage}%

@@ -328,10 +328,10 @@ decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
         return decodeSetSpace(cap, length, slot, extraCaps, buffer);
 
     case TCBBindNotification:
-        return decodeBindAEP(cap, extraCaps);
+        return decodeBindNotification(cap, extraCaps);
 
     case TCBUnbindNotification:
-        return decodeUnbindAEP(cap);
+        return decodeUnbindNotification(cap);
 
         /* This is temporary until arch specific TCB operations are implemented */
 #ifdef CONFIG_VTX
@@ -787,69 +787,69 @@ decodeDomainInvocation(word_t label, unsigned int length, extra_caps_t extraCaps
 }
 
 exception_t
-decodeBindAEP(cap_t cap, extra_caps_t extraCaps)
+decodeBindNotification(cap_t cap, extra_caps_t extraCaps)
 {
-    async_endpoint_t *aepptr;
+    notification_t *ntfnPtr;
     tcb_t *tcb;
-    cap_t aep_cap;
+    cap_t ntfn_cap;
 
     if (extraCaps.excaprefs[0] == NULL) {
-        userError("TCB BindAEP: Truncated message.");
+        userError("TCB BindNotification: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
 
-    if (tcb->boundAsyncEndpoint) {
-        userError("TCB BindAEP: TCB already has AEP.");
+    if (tcb->tcbBoundNotification) {
+        userError("TCB BindNotification: TCB already has a bound notification.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    aep_cap = extraCaps.excaprefs[0]->cap;
+    ntfn_cap = extraCaps.excaprefs[0]->cap;
 
-    if (cap_get_capType(aep_cap) == cap_async_endpoint_cap) {
-        aepptr = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(aep_cap));
+    if (cap_get_capType(ntfn_cap) == cap_notification_cap) {
+        ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(ntfn_cap));
     } else {
-        userError("TCB BindAEP: Async endpoint is invalid.");
+        userError("TCB BindNotification: Notification is invalid.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (!cap_async_endpoint_cap_get_capAEPCanReceive(aep_cap)) {
-        userError("TCB BindAEP: Insufficient access rights");
+    if (!cap_notification_cap_get_capNtfnCanReceive(ntfn_cap)) {
+        userError("TCB BindNotification: Insufficient access rights");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if ((tcb_t*)async_endpoint_ptr_get_aepQueue_head(aepptr)
-            || (tcb_t*)async_endpoint_ptr_get_aepBoundTCB(aepptr)) {
-        userError("TCB BindAEP: AEP cannot be bound.");
+    if ((tcb_t*)notification_ptr_get_ntfnQueue_head(ntfnPtr)
+            || (tcb_t*)notification_ptr_get_ntfnBoundTCB(ntfnPtr)) {
+        userError("TCB BindNotification: Notification cannot be bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
 
     setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeTCB_AEPControl(tcb, aepptr);
+    return invokeTCB_NotificationControl(tcb, ntfnPtr);
 }
 
 exception_t
-decodeUnbindAEP(cap_t cap)
+decodeUnbindNotification(cap_t cap)
 {
     tcb_t *tcb;
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
 
-    if (!tcb->boundAsyncEndpoint) {
-        userError("TCB UnbindAEP: TCB already has no bound AEP.");
+    if (!tcb->tcbBoundNotification) {
+        userError("TCB UnbindNotification: TCB already has no bound Notification.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeTCB_AEPControl(tcb, NULL);
+    return invokeTCB_NotificationControl(tcb, NULL);
 }
 
 /* The following functions sit in the preemption monad and implement the
@@ -1084,12 +1084,12 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
 }
 
 exception_t
-invokeTCB_AEPControl(tcb_t *tcb, async_endpoint_t *aepptr)
+invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr)
 {
-    if (aepptr) {
-        bindAsyncEndpoint(tcb, aepptr);
+    if (ntfnPtr) {
+        bindNotification(tcb, ntfnPtr);
     } else {
-        unbindAsyncEndpoint(tcb);
+        unbindNotification(tcb);
     }
 
     return EXCEPTION_NONE;
