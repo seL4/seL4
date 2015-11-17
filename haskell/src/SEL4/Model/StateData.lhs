@@ -31,7 +31,7 @@ The architecture-specific definitions are imported qualified with the "Arch" pre
 
 \begin{impdetails}
 
-> import SEL4.Config (numDomains, numPriorities)
+> import SEL4.Config (numDomains)
 > import SEL4.API.Types
 > import {-# SOURCE #-} SEL4.Model.PSpace
 > import SEL4.Object.Structures
@@ -225,7 +225,7 @@ A new kernel state structure contains an empty physical address space, a set of 
 >         ksDomainTime = 15,
 >         ksReadyQueues =
 >             funPartialArray (const [])
->                             ((0, 0), (fromIntegral numDomains, fromIntegral numPriorities)),
+>                             ((0, 0), (fromIntegral numDomains, maxPriority)),
 >         ksReadyQueuesL1Bitmap = funPartialArray (const 0) (0, fromIntegral numDomains),
 >         ksReadyQueuesL2Bitmap =
 >             funPartialArray (const 0)

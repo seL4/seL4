@@ -46,7 +46,7 @@ The procedure for handling faults is defined in \autoref{sec:kernel.faulthandler
 
 Data type InitFailure can be thrown during SysInit
 
-> data InitFailure = InitFailure
+> data InitFailure = IFailure {msg :: String}
 
 \subsection{System Call Errors}
 

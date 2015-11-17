@@ -83,19 +83,20 @@ An abstract version looks like:
 
 However we assume that the result of getMemoryRegions is actually [0,1<<24] and do the following
 
->     let vbase = kernelBase `shiftR` pageBitsForSize (ARMSection)
+>     let baseoffset = kernelBase `shiftR` pageBitsForSize (ARMSection)
+
 >     let pdeBits = objBits (undefined :: PDE)
 >     let pteBits = objBits (undefined :: PTE)
 >     let ptSize = ptBits - pteBits
 >     let pdSize = pdBits - pdeBits
 >     globalPD <- gets $ armKSGlobalPD . ksArchState
 >     globalPTs <- gets $ armKSGlobalPTs . ksArchState
->     deleteObjects (PPtr $ fromPPtr globalPD) pdBits
->     placeNewObject (PPtr $ fromPPtr globalPD) (makeObject :: PDE) pdSize
->     forM_ [vbase, vbase+16 .. (bit pdSize) - 16 - 1] $ createSectionPDE
->     forM_ [(bit pdSize) - 16, (bit pdSize) - 2] $ \v -> do
->           let offset = fromVPtr v
->           let virt = v `shiftL` pageBitsForSize (ARMSection)
+>     startentry <- return $ (PPtr (fromPPtr globalPD ))
+>     deleteObjects (startentry) pdBits
+>     placeNewObject (startentry) (makeObject :: PDE) pdSize
+>     forM_ [baseoffset, baseoffset+16 .. (bit pdSize) - 16 - 1] $ createSectionPDE
+>     forM_ [(bit pdSize) - 16, (bit pdSize) - 2] $ \offset -> do
+>           let virt = offset `shiftL` pageBitsForSize (ARMSection)
 >           let phys = addrFromPPtr $ PPtr $ fromVPtr virt
 >           let pde = SectionPDE {
 >                   pdeFrame = phys,
@@ -105,8 +106,9 @@ However we assume that the result of getMemoryRegions is actually [0,1<<24] and 
 >                   pdeGlobal = True,
 >                   pdeExecuteNever = False,
 >                   pdeRights = VMKernelOnly }
->           let slot = globalPD + PPtr (offset `shiftL` pdeBits)
+>           let slot = globalPD + PPtr ((fromVPtr offset) `shiftL` pdeBits)
 >           storePDE slot pde
+
 >     let paddr = addrFromPPtr $ PPtr $ fromPPtr $ head globalPTs
 >     let pde = PageTablePDE {pdeTable = paddr ,pdeParity = True, pdeDomain = 0}
 >     let slot = globalPD + PPtr (((bit pdSize) - 1) `shiftL` pdeBits)
@@ -125,14 +127,13 @@ In C code we need to detype the armGlobalPageTable which is C equivalent to
 Helper function used above to create PDE for Section:
 
 > createSectionPDE :: VPtr -> Kernel () 
-> createSectionPDE v = do
->     let vbase = kernelBase `shiftR` pageBitsForSize (ARMSection)
+> createSectionPDE offset = do
 >     let pdeBits = objBits (undefined :: PDE)
 >     let pteBits = objBits (undefined :: PTE)
 >     globalPD <- gets $ armKSGlobalPD . ksArchState
->     let offset = fromVPtr v
->     let virt = (v - vbase) `shiftL` (pageBitsForSize (ARMSuperSection) - 4)
->     let phys = addrFromPPtr $ PPtr $ fromVPtr virt
+>     let virt = fromVPtr $ offset `shiftL` pageBitsForSize (ARMSection)
+>     let phys = addrFromPPtr $ PPtr virt
+>     let base = fromVPtr offset
 >     let pde = SuperSectionPDE {
 >             pdeFrame = phys,
 >             pdeParity = True,
@@ -141,7 +142,7 @@ Helper function used above to create PDE for Section:
 >             pdeExecuteNever = False,
 >             pdeRights = VMKernelOnly }
 >     let slots = map (\n -> globalPD + PPtr (n `shiftL` pdeBits))
->             [offset .. offset + 15]
+>             [base .. base + 15]
 >     (flip $ mapM_ ) slots (\slot ->  storePDE slot pde)
 
 
@@ -182,7 +183,7 @@ Function pair "createITPDPTs" + "writeITPDPTs" init the memory space for the ini
 >         provideCap rootCNCap $ ArchObjectCap $ PageTableCap (ptrFromPAddr ptPPtr) (Just (itASID, vptr))
 >     slotAfter <- noInitFailure $ gets initSlotPosCur
 >     bootInfo <- noInitFailure $ gets initBootInfo
->     let bootInfo' = bootInfo { bifUIPTCaps = [slotBefore .. slotAfter - 1] }
+>     let bootInfo' = bootInfo {bifUIPDCaps = [slotBefore - 1 .. slotBefore - 1], bifUIPTCaps = [slotBefore .. slotAfter - 1] }
 >     noInitFailure $ modify (\s -> s { initBootInfo = bootInfo' })
 >     return pdCap
 
@@ -346,14 +347,19 @@ Function "createBIFrame" will create the biframe cap for the initial thread
 >              capVPMappedAddress = addr }
 >     return $ ArchObjectCap $ frame
 
-> createFramesOfRegion :: Capability -> Region -> Bool -> VPtr -> KernelInit ()
-> createFramesOfRegion rootCNCap region doMap pvOffset = do
+> vptrFromPPtr :: PPtr a -> KernelInit VPtr
+> vptrFromPPtr (PPtr ptr) = do
+>     offset <- gets initVPtrOffset
+>     return $ (VPtr ptr) + offset
+
+> createFramesOfRegion :: Capability -> Region -> Bool -> KernelInit ()
+> createFramesOfRegion rootCNCap region doMap = do
 >     curSlotPos <- noInitFailure $ gets initSlotPosCur
 >     (startPPtr, endPPtr) <- return $ fromRegion region
 >     forM_ [startPPtr,startPPtr + (bit pageBits) .. endPPtr] $ \ptr -> do
->         let paddr = fromPAddr $ addrFromPPtr ptr
+>         vptr <- vptrFromPPtr $ ptr
 >         frameCap <- if doMap then
->                     createITFrameCap ptr ((VPtr paddr) + pvOffset ) (Just itASID) False
+>                     createITFrameCap ptr vptr (Just itASID) False
 >                     else createITFrameCap ptr 0 Nothing False
 >         provideCap rootCNCap frameCap
 >     slotPosAfter <- noInitFailure $ gets initSlotPosCur
@@ -425,7 +431,6 @@ The "mapKernelFrame" helper function is used when mapping the globals frame, ker
 >         bootInfo <- noInitFailure $ gets (initBootInfo)
 >         let bootInfo' = bootInfo { bifDeviceRegions = devRegions' }
 >         noInitFailure $ modify (\st -> st { initBootInfo = bootInfo' })
->         --syncBIFrame
 >         )
 >     bInfo <- noInitFailure $ gets (initBootInfo)
 >     let bInfo' = bInfo { bifNumDeviceRegions = (fromIntegral . length . bifDeviceRegions) bInfo }

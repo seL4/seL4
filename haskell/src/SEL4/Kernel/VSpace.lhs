@@ -67,7 +67,7 @@ This module defines architecture-specific virtual memory management procedures. 
 > createBIFrame :: Capability -> VPtr -> Word32 -> Word32 -> KernelInit Capability
 > createBIFrame  = Arch.createBIFrame
 
-> createFramesOfRegion :: Capability -> Region -> Bool -> VPtr -> KernelInit () 
+> createFramesOfRegion :: Capability -> Region -> Bool -> KernelInit () 
 > createFramesOfRegion = Arch.createFramesOfRegion
 
 > createITPDPTs :: Capability -> VPtr -> VPtr -> KernelInit Capability
@@ -105,6 +105,11 @@ This module defines architecture-specific virtual memory management procedures. 
 
 > lookupIPCBuffer :: Bool -> PPtr TCB -> Kernel (Maybe (PPtr Word))
 > lookupIPCBuffer = Arch.lookupIPCBuffer
+
+\item determining the virtual address of user proc in kernel init
+
+> vptrFromPPtr :: PPtr a -> KernelInit VPtr
+> vptrFromPPtr = Arch.vptrFromPPtr
 
 \end{itemize}
 

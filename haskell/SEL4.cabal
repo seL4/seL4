@@ -72,10 +72,9 @@ Library
                             Data.BinaryTree
                             Data.Helpers
 
-                            SEL4.Machine.Hardware.ARM.QEmu
---                             SEL4.Machine.Hardware.ARM.KZM
---                             SEL4.Machine.Hardware.ARM.Exynos4210
---                             SEL4.Machine.Hardware.ARM.Sabre
+                            SEL4.Machine.Hardware.ARM.KZM
+                            SEL4.Machine.Hardware.ARM.Exynos4210
+                            SEL4.Machine.Hardware.ARM.Sabre
 
                             SEL4.API.Types.ARM
                             SEL4.API.InvocationLabels.ARM

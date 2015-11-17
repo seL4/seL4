@@ -521,4 +521,7 @@ ARM page directories and page tables occupy four frames and one quarter of a fra
 > cacheLineBits = Platform.cacheLineBits
 > cacheLine = Platform.cacheLine
 
+\subsection{Constants}
 
+> physBase :: PAddr
+> physBase = toPAddr Platform.physBase

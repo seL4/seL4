@@ -10,7 +10,7 @@
 
 {-# LANGUAGE EmptyDataDecls, ForeignFunctionInterface, GeneralizedNewtypeDeriving #-}
 
-module SEL4.Machine.Hardware.ARM.QEmu where
+module SEL4.Machine.Hardware.ARM.KZM where
 
 import SEL4.Machine.RegisterSet
 import Foreign.Ptr
@@ -30,7 +30,8 @@ instance Bounded IRQ where
 newtype PAddr = PAddr { fromPAddr :: Word }
     deriving (Integral, Real, Show, Eq, Num, Bits, FiniteBits, Ord, Enum, Bounded)
 
-physMappingOffset = 0xf0000000
+physBase = 0x80000000
+physMappingOffset = 0xf0000000 - physBase
 
 ptrFromPAddr :: PAddr -> PPtr a
 ptrFromPAddr (PAddr addr) = PPtr $ addr + physMappingOffset
@@ -42,7 +43,7 @@ pageColourBits :: Int
 pageColourBits = 0 -- qemu has no cache
 
 getMemoryRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
-getMemoryRegions _ = return [(0, 0x8 `shiftL` 24)]
+getMemoryRegions _ = return [(0x80000000, 0x80000000 + (0x8 `shiftL` 24))]
 
 getDeviceRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
 getDeviceRegions _ = return devices

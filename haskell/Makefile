@@ -20,7 +20,7 @@ all: build pdf
 build: $(BOOT_FILES)
 	cabal sandbox init
 	cabal install --dependencies-only
-	cabal configure --configure-option="arm-qemu"
+	cabal configure --configure-option="arm-kzm"
 	cabal build
 pdf:
 	cd doc && make
