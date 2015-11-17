@@ -633,7 +633,7 @@ decodeInvocation(word_t label, unsigned int length,
 
     case cap_notification_cap: {
         if (unlikely(!cap_notification_cap_get_capNtfnCanSend(cap))) {
-            userError("Attempted to invoke a read-only async-endpoint cap #%lu.",
+            userError("Attempted to invoke a read-only notification cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;

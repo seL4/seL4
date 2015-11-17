@@ -194,7 +194,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
         slowpath(SysReplyWait);
     }
 
-    /* Check there is nothing waiting on the async endpoint */
+    /* Check there is nothing waiting on the notification */
     if (ksCurThread->tcbBoundNotification &&
             notification_ptr_get_state(ksCurThread->tcbBoundNotification) == NtfnState_Active) {
         slowpath(SysReplyWait);

@@ -123,7 +123,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
     epptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
     diminish = !cap_endpoint_cap_get_capCanSend(cap);
 
-    /* Check for anything waiting in the async endpoint*/
+    /* Check for anything waiting in the notification */
     ntfnPtr = thread->tcbBoundNotification;
     if (ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
         completeSignal(ntfnPtr, thread);

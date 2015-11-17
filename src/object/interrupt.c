@@ -113,7 +113,7 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         if (cap_get_capType(ntfnCap) != cap_notification_cap ||
                 !cap_notification_cap_get_capNtfnCanSend(ntfnCap)) {
             if (cap_get_capType(ntfnCap) != cap_notification_cap) {
-                userError("IRQSetHandler: provided cap is not an async endpoint capability.");
+                userError("IRQSetHandler: provided cap is not an notification capability.");
             } else {
                 userError("IRQSetHandler: caller does not have send rights on the endpoint.");
             }
