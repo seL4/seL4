@@ -21,7 +21,6 @@
 
 /* cap_rights_t defined in api/types.bf */
 typedef word_t prio_t;
-typedef word_t  dom_t;
 typedef word_t cptr_t;
 typedef uint64_t time_t;
 
@@ -31,11 +30,6 @@ typedef struct {
     /* the argument value */
     time_t arg;
 } parseTime_ret_t;
-
-enum domainConstants {
-    minDom = 0,
-    maxDom = CONFIG_NUM_DOMAINS - 1
-};
 
 struct cap_transfer {
     cptr_t ctReceiveRoot;

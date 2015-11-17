@@ -217,7 +217,6 @@ types = [
         CapType("seL4_IRQControl"),
         CapType("seL4_TCB"),
         CapType("seL4_Untyped"),
-        CapType("seL4_DomainSet"),
         CapType("seL4_SchedContext"),
         CapType("seL4_SchedControl"),
         ]

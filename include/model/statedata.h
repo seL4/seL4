@@ -17,23 +17,18 @@
 #include <arch/model/statedata.h>
 
 extern tcb_queue_t ksReadyQueues[] VISIBLE;
-extern word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS] VISIBLE;
-extern word_t ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1] VISIBLE;
+extern word_t ksReadyQueuesL1Bitmap VISIBLE;
+extern word_t ksReadyQueuesL2Bitmap[(CONFIG_NUM_PRIORITIES / wordBits) + 1] VISIBLE;
 extern tcb_t *ksCurThread VISIBLE;
 extern tcb_t *ksIdleThread VISIBLE;
 extern tcb_t *ksSchedulerAction VISIBLE;
 extern word_t ksWorkUnitsCompleted;
 extern irq_state_t intStateIRQTable[] VISIBLE;
 extern cte_t *intStateIRQNode VISIBLE;
-extern const dschedule_t ksDomSchedule[];
-extern const word_t ksDomScheduleLength;
-extern word_t ksDomScheduleIdx;
-extern dom_t ksCurDomain;
-extern word_t ksDomainTime;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)
 
-#define NUM_READY_QUEUES (CONFIG_NUM_DOMAINS * CONFIG_NUM_PRIORITIES)
+#define NUM_READY_QUEUES (CONFIG_NUM_PRIORITIES)
 
 #endif

@@ -55,24 +55,24 @@ checkPrio(prio_t prio)
 }
 
 static inline void
-addToBitmap(word_t dom, word_t prio)
+addToBitmap(word_t prio)
 {
     word_t l1index;
 
     l1index = prio_to_l1index(prio);
-    ksReadyQueuesL1Bitmap[dom] |= BIT(l1index);
-    ksReadyQueuesL2Bitmap[dom][l1index] |= BIT(prio & MASK(wordRadix));
+    ksReadyQueuesL1Bitmap |= BIT(l1index);
+    ksReadyQueuesL2Bitmap[l1index] |= BIT(prio & MASK(wordRadix));
 }
 
 static inline void
-removeFromBitmap(word_t dom, word_t prio)
+removeFromBitmap(word_t prio)
 {
     word_t l1index;
 
     l1index = prio_to_l1index(prio);
-    ksReadyQueuesL2Bitmap[dom][l1index] &= ~BIT(prio & MASK(wordRadix));
-    if (unlikely(!ksReadyQueuesL2Bitmap[dom][l1index])) {
-        ksReadyQueuesL1Bitmap[dom] &= ~BIT(l1index);
+    ksReadyQueuesL2Bitmap[l1index] &= ~BIT(prio & MASK(wordRadix));
+    if (unlikely(!ksReadyQueuesL2Bitmap[l1index])) {
+        ksReadyQueuesL1Bitmap &= ~BIT(l1index);
     }
 }
 
@@ -82,18 +82,16 @@ tcbSchedEnqueue(tcb_t *tcb)
 {
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
-        dom_t dom;
         prio_t prio;
         word_t idx;
 
-        dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
-        idx = ready_queues_index(dom, prio);
+        idx = prio;
         queue = ksReadyQueues[idx];
 
         if (!queue.end) { /* Empty list */
             queue.end = tcb;
-            addToBitmap(dom, prio);
+            addToBitmap(prio);
         } else {
             queue.head->tcbSchedPrev = tcb;
         }
@@ -113,18 +111,16 @@ tcbSchedAppend(tcb_t *tcb)
 {
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
-        dom_t dom;
         prio_t prio;
         word_t idx;
 
-        dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
-        idx = ready_queues_index(dom, prio);
+        idx = prio;
         queue = ksReadyQueues[idx];
 
         if (!queue.head) { /* Empty list */
             queue.head = tcb;
-            addToBitmap(dom, prio);
+            addToBitmap(prio);
         } else {
             queue.end->tcbSchedNext = tcb;
         }
@@ -144,13 +140,11 @@ tcbSchedDequeue(tcb_t *tcb)
 {
     if (thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
-        dom_t dom;
         prio_t prio;
         word_t idx;
 
-        dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
-        idx = ready_queues_index(dom, prio);
+        idx = prio;
         queue = ksReadyQueues[idx];
 
         if (tcb->tcbSchedPrev) {
@@ -158,7 +152,7 @@ tcbSchedDequeue(tcb_t *tcb)
         } else {
             queue.head = tcb->tcbSchedNext;
             if (likely(!tcb->tcbSchedNext)) {
-                removeFromBitmap(dom, prio);
+                removeFromBitmap(prio);
             }
         }
 
@@ -942,51 +936,6 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                0, cap_null_cap_new(), NULL, NULL, thread_control_update_space);
-}
-
-exception_t
-decodeDomainInvocation(word_t label, word_t length, extra_caps_t extraCaps, word_t *buffer)
-{
-    word_t domain;
-    cap_t tcap;
-
-    if (unlikely(label != DomainSetSet)) {
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(length == 0)) {
-        userError("Domain Configure: Truncated message.");
-        current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    } else {
-        domain = getSyscallArg(0, buffer);
-        if (domain >= CONFIG_NUM_DOMAINS) {
-            userError("Domain Configure: invalid domain (%lu >= %u).",
-                      domain, CONFIG_NUM_DOMAINS);
-            current_syscall_error.type = seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-    }
-
-    if (unlikely(extraCaps.excaprefs[0] == NULL)) {
-        userError("Domain Configure: Truncated message.");
-        current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    tcap = extraCaps.excaprefs[0]->cap;
-    if (unlikely(cap_get_capType(tcap) != cap_thread_cap)) {
-        userError("Domain Configure: thread cap required.");
-        current_syscall_error.type = seL4_InvalidArgument;
-        current_syscall_error.invalidArgumentNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    setThreadState(ksCurThread, ThreadState_Restart);
-    setDomain(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
-    return EXCEPTION_NONE;
 }
 
 exception_t

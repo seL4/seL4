@@ -98,11 +98,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
     }
 #endif
 
-    /* Ensure the original caller is in the current domain and can be scheduled directly. */
-    if (unlikely(dest->tcbDomain != ksCurDomain && maxDom)) {
-        slowpath(SysCall);
-    }
-
     /*
      * --- POINT OF NO RETURN ---
      *
@@ -256,11 +251,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 #endif
-
-    /* Ensure the original caller is in the current domain and can be scheduled directly. */
-    if (unlikely(caller->tcbDomain != ksCurDomain && maxDom)) {
-        slowpath(SysReplyRecv);
-    }
 
     /*
      * --- POINT OF NO RETURN ---

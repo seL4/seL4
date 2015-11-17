@@ -267,18 +267,6 @@ void doNBRecvFailedTransfer(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
 }
 
-static void
-nextDomain(void)
-{
-    ksDomScheduleIdx++;
-    if (ksDomScheduleIdx >= ksDomScheduleLength) {
-        ksDomScheduleIdx = 0;
-    }
-    ksWorkUnitsCompleted = 0;
-    ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
-}
-
 void
 schedule(void)
 {
@@ -288,9 +276,6 @@ schedule(void)
     if (action == (word_t)SchedulerAction_ChooseNewThread) {
         if (isRunnable(ksCurThread)) {
             tcbSchedEnqueue(ksCurThread);
-        }
-        if (ksDomainTime == 0) {
-            nextDomain();
         }
         chooseThread();
         ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
@@ -308,20 +293,13 @@ void
 chooseThread(void)
 {
     word_t prio;
-    word_t dom;
     tcb_t *thread;
 
-    if (CONFIG_NUM_DOMAINS > 1) {
-        dom = ksCurDomain;
-    } else {
-        dom = 0;
-    }
-
-    if (likely(ksReadyQueuesL1Bitmap[dom])) {
-        word_t l1index = (wordBits - 1) - CLZL(ksReadyQueuesL1Bitmap[dom]);
-        word_t l2index = (wordBits - 1) - CLZL(ksReadyQueuesL2Bitmap[dom][l1index]);
+    if (likely(ksReadyQueuesL1Bitmap)) {
+        word_t l1index = (wordBits - 1) - CLZL(ksReadyQueuesL1Bitmap);
+        word_t l2index = (wordBits - 1) - CLZL(ksReadyQueuesL2Bitmap[l1index]);
         prio = l1index_to_prio(l1index) | l2index;
-        thread = ksReadyQueues[ready_queues_index(dom, prio)].head;
+        thread = ksReadyQueues[prio].head;
         assert(thread);
         assert(isRunnable(thread));
         switchToThread(thread);
@@ -343,19 +321,6 @@ switchToIdleThread(void)
 {
     Arch_switchToIdleThread();
     ksCurThread = ksIdleThread;
-}
-
-void
-setDomain(tcb_t *tptr, dom_t dom)
-{
-    tcbSchedDequeue(tptr);
-    tptr->tcbDomain = dom;
-    if (isRunnable(tptr)) {
-        tcbSchedEnqueue(tptr);
-    }
-    if (tptr == ksCurThread) {
-        rescheduleRequired();
-    }
 }
 
 void
@@ -393,28 +358,22 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
 static void
 possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
 {
-    dom_t curDom, targetDom;
     prio_t curPrio, targetPrio;
     tcb_t *action;
 
-    curDom = ksCurDomain;
     curPrio = ksCurThread->tcbPriority;
-    targetDom = target->tcbDomain;
     targetPrio = target->tcbPriority;
     action = ksSchedulerAction;
-    if (targetDom != curDom) {
-        tcbSchedEnqueue(target);
+
+    if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
+            && action == SchedulerAction_ResumeCurrentThread) {
+        ksSchedulerAction = target;
     } else {
-        if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
-                && action == SchedulerAction_ResumeCurrentThread) {
-            ksSchedulerAction = target;
-        } else {
-            tcbSchedEnqueue(target);
-        }
-        if (action != SchedulerAction_ResumeCurrentThread
-                && action != SchedulerAction_ChooseNewThread) {
-            rescheduleRequired();
-        }
+        tcbSchedEnqueue(target);
+    }
+    if (action != SchedulerAction_ResumeCurrentThread
+            && action != SchedulerAction_ChooseNewThread) {
+        rescheduleRequired();
     }
 }
 
@@ -457,13 +416,6 @@ timerTick(void)
         } else {
             ksCurThread->tcbSchedContext->remaining = ksCurThread->tcbSchedContext->budget;
             tcbSchedAppend(ksCurThread);
-            rescheduleRequired();
-        }
-    }
-
-    if (CONFIG_NUM_DOMAINS > 1) {
-        ksDomainTime--;
-        if (ksDomainTime == 0) {
             rescheduleRequired();
         }
     }

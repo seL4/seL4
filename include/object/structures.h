@@ -23,11 +23,6 @@ enum irq_state {
 };
 typedef word_t irq_state_t;
 
-typedef struct dschedule {
-    dom_t domain;
-    word_t length;
-} dschedule_t;
-
 /* Arch-independent object types */
 enum endpoint_state {
     EPState_Idle = 0,
@@ -193,7 +188,7 @@ vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* TCB: size 68 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 typedef struct sched_context sched_context_t;
 
 struct tcb {
@@ -213,9 +208,6 @@ struct tcb {
 
     /* Current lookup failure, 8 bytes */
     lookup_fault_t tcbLookupFailure;
-
-    /* Domain, 1 byte (packed to 4) */
-    dom_t tcbDomain;
 
     /* Priority, 1 byte (packed to 4) */
     prio_t tcbPriority;
@@ -309,9 +301,6 @@ cap_get_capSizeBits(cap_t cap)
     case cap_null_cap:
         return 0;
 
-    case cap_domain_cap:
-        return 0;
-
     case cap_reply_cap:
         return 0;
 
@@ -361,9 +350,6 @@ cap_get_capPtr(cap_t cap)
 
     case cap_sched_context_cap:
         return SC_PTR(cap_sched_context_cap_get_capPtr(cap));
-
-    case cap_domain_cap:
-        return NULL;
 
     case cap_reply_cap:
         return NULL;

@@ -54,7 +54,6 @@ bool_t create_idle_thread(void);
 bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg);
 void bi_finalise(void);
 bool_t create_irq_cnode(void);
-void create_domain_cap(cap_t root_cnode_cap);
 
 cap_t create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
 

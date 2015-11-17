@@ -251,19 +251,6 @@ menu "seL4 System Parameters"
         help
             Enable IPC fastpath
 
-      config NUM_DOMAINS
-        int "Number of domains"
-        default 1
-        help
-            The number of scheduler domains in the system
-
-    config DOMAIN_SCHEDULE
-        string "Domain schedule"
-        help
-            A C file providing the symbols ksDomSchedule and
-            ksDomScheduleLength to be linked with the kernel as a scheduling
-            configuration.
-
     config NUM_PRIORITIES
         int "Number of priority levels"
         default 256

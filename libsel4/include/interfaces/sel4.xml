@@ -164,12 +164,6 @@
             <param dir="in" name="low_polarity" type="seL4_Uint32"/>
         </method>
     </interface>
-	<interface name="seL4_DomainSet">
-		<method id="DomainSetSet" name="Set">
-			<param dir="in" name="domain" type="seL4_Uint8"/>
-			<param dir="in" name="thread" type="seL4_TCB"/>
-		</method>
-    </interface>
     <interface name="seL4_SchedControl">
         <method id="SchedControlConfigure" name="Configure">
             <param dir="in" name="target" type="seL4_SchedContext" />

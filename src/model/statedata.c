@@ -18,8 +18,8 @@
 
 /* Pointer to the head of the scheduler queue for each priority */
 tcb_queue_t ksReadyQueues[NUM_READY_QUEUES];
-word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS];
-word_t ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1];
+word_t ksReadyQueuesL1Bitmap;
+word_t ksReadyQueuesL2Bitmap[(CONFIG_NUM_PRIORITIES / wordBits) + 1];
 compile_assert(ksReadyQueuesL1BitmapBigEnough, (CONFIG_NUM_PRIORITIES / wordBits) <= wordBits)
 
 /* Current thread TCB pointer */
@@ -41,14 +41,6 @@ word_t ksWorkUnitsCompleted;
 irq_state_t intStateIRQTable[maxIRQ + 1];
 cte_t *intStateIRQNode;
 
-/* Currently active domain */
-dom_t ksCurDomain;
-
-/* Domain timeslice remaining */
-word_t ksDomainTime;
-
-/* An index into ksDomSchedule for active domain and length. */
-word_t ksDomScheduleIdx;
 
 #ifdef DEBUG
 debug_entry_t ksKernelEntry;

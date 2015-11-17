@@ -27,11 +27,6 @@
 #define CONFIG_TIME_SLICE 5
 #endif
 
-/* the number of scheduler domains */
-#ifndef CONFIG_NUM_DOMAINS
-#define CONFIG_NUM_DOMAINS 16
-#endif
-
 /* number of priorities per domain */
 #ifndef CONFIG_NUM_PRIORITIES
 #define CONFIG_NUM_PRIORITIES 256

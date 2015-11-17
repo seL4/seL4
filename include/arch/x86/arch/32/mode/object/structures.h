@@ -30,7 +30,7 @@ typedef struct arch_tcb {
 } arch_tcb_t;
 
 /* update this when you modify the tcb struct */
-#define EXPECTED_TCB_SIZE 664
+#define EXPECTED_TCB_SIZE 660
 
 #define GDT_NULL    0
 #define GDT_CS_0    1

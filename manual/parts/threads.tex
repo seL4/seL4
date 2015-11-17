@@ -23,8 +23,6 @@ or kernel object invocation that do not fit in the architecture-defined message
 registers. While it is not compulsory that a thread has an IPC buffer,
 it will not be able to perform most kernel invocations, as they require
 cap transfer.
-Each thread belongs to exactly one security domain (see 
-\autoref{sec:domains}).
 %FIXME: there is much more information held in the TCB!
 
 \subsection{Thread Creation}
@@ -322,23 +320,5 @@ Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcblo
 Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{IPCBuffer[3]} \\
 \bottomrule
 \end{tabularx}\\ \\
-
-\section{Domains}
-\label{sec:domains}
-
-Domains are used to isolate independent subsystems, so as to limit 
-information flow between them.
-The kernel switches between domains according to a fixed, time-triggered 
-schedule.
-The fixed schedule is compiled into the kernel via the constant 
-\texttt{CONFIG\_NUM\_DOMAINS} and the global variable \texttt{ksDomSchedule}.
-
-A thread belongs to exactly one domain, and will only run when that domain 
-is active.
-The \apifunc{seL4\_DomainSet\_Set}{domainset_set} method changes the domain 
-of a thread.
-The caller must possess a \obj{Domain} cap and the thread's \obj{TCB} cap.
-The initial thread starts with a \obj{Domain} cap (see 
-\autoref{sec:messageinfo}).
 
 

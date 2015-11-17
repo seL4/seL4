@@ -106,13 +106,6 @@ block zombie_cap {
     field capType         8
 }
 
-block domain_cap {
-    padding 32
-
-    padding 24
-    field capType 8
-}
-
 block sched_context_cap {
     field_high capPtr 28
     padding            4

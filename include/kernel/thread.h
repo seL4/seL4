@@ -17,17 +17,6 @@
 #include <arch/machine.h>
 
 static inline CONST word_t
-ready_queues_index(word_t dom, word_t prio)
-{
-    if (CONFIG_NUM_DOMAINS > 1) {
-        return dom * CONFIG_NUM_PRIORITIES + prio;
-    } else {
-        assert(dom == 0);
-        return prio;
-    }
-}
-
-static inline CONST word_t
 prio_to_l1index(word_t prio)
 {
     return (prio >> wordRadix);
@@ -57,7 +46,6 @@ void schedule(void);
 void chooseThread(void);
 void switchToThread(tcb_t *thread) VISIBLE;
 void switchToIdleThread(void);
-void setDomain(tcb_t *tptr, dom_t dom);
 void setPriority(tcb_t *tptr, seL4_Prio_t prio);
 void scheduleTCB(tcb_t *tptr);
 void attemptSwitchTo(tcb_t *tptr);

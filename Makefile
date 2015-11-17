@@ -48,17 +48,6 @@ $(if $(filter ${ARMV},${ARMV_LIST}),, \
 	$(error ARMV ${ARMV} invalid or undefined, should be one of [${ARMV_LIST}]))
 endif
 
-# If no domain configuration file was specified, use a default
-# configuration of just a single domain.
-ifeq (${CONFIG_DOMAIN_SCHEDULE},)
-DOMAIN_CONFIG_FILE=${SOURCE_ROOT}/src/config/default_domain.c
-else
-DOMAIN_CONFIG_FILE=$(wildcard ${CONFIG_DOMAIN_SCHEDULE})
-ifeq ($(DOMAIN_CONFIG_FILE),)
-$(error Domain schedule, ${CONFIG_DOMAIN_SCHEDULE}, does not exist)
-endif
-endif
-
 ### Verbose building
 ########################################
 
@@ -121,7 +110,6 @@ endif
 CONFIG_DEFS += $(strip $(foreach var, \
   CONFIG_ROOT_CNODE_SIZE_BITS \
   CONFIG_TIME_SLICE \
-  CONFIG_NUM_DOMAINS \
   CONFIG_NUM_PRIORITIES \
   CONFIG_RETYPE_FAN_OUT_LIMIT \
   CONFIG_MAX_NUM_WORK_UNITS_PER_PREEMPTION \
@@ -520,7 +508,7 @@ sources_list_updated: ${STATICHEADERS} ${MAKEFILES}
 	@echo " [TOUCH] $@"
 	$(Q)touch $@
 
-kernel_all.c: sources_list_updated ${C_SOURCES_WITH_PARSE} ${DOMAIN_CONFIG_FILE}
+kernel_all.c: sources_list_updated ${C_SOURCES_WITH_PARSE}
 	@echo " [CPP_GEN] $@"
 	$(Q)${CPP_GEN} $(wordlist 2, $(words $^), $^) > $@
 

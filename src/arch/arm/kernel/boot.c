@@ -377,9 +377,6 @@ try_init_kernel(
         return false;
     }
 
-    /* create the cap for managing thread domains */
-    create_domain_cap(root_cnode_cap);
-
     /* create the IRQ CNode */
     if (!create_irq_cnode()) {
         return false;

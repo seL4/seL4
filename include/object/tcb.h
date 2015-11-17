@@ -58,8 +58,6 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t extraCaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
                            cte_t* slot, extra_caps_t extraCaps, word_t *buffer);
-exception_t decodeDomainInvocation(word_t label, word_t length,
-                                   extra_caps_t extraCaps, word_t *buffer);
 exception_t decodeBindNotification(cap_t cap, extra_caps_t extraCaps);
 exception_t decodeUnbindNotification(cap_t cap);
 
