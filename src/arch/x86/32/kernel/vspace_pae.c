@@ -209,7 +209,7 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-void copyGlobalMappings(void* new_vspace)
+void copyGlobalMappings(vspace_root_t* new_vspace)
 {
     word_t i;
     pdpte_t *pdpt = (pdpte_t*)new_vspace;
@@ -233,7 +233,7 @@ bool_t CONST isValidNativeRoot(cap_t cap)
     return true;
 }
 
-void *getValidNativeRoot(cap_t vspace_cap)
+vspace_root_t *getValidNativeRoot(cap_t vspace_cap)
 {
     if (isValidNativeRoot(vspace_cap)) {
         return PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vspace_cap));
@@ -241,13 +241,13 @@ void *getValidNativeRoot(cap_t vspace_cap)
     return NULL;
 }
 
-static inline pdpte_t *lookupPDPTSlot(void *vspace, vptr_t vptr)
+static inline pdpte_t *lookupPDPTSlot(vspace_root_t *vspace, vptr_t vptr)
 {
     pdpte_t *pdpt = PDPT_PTR(vspace);
     return pdpt + (vptr >> X86_1G_bits);
 }
 
-lookupPDSlot_ret_t lookupPDSlot(void *vspace, vptr_t vptr)
+lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
 {
     pdpte_t *pdptSlot;
     lookupPDSlot_ret_t ret;
@@ -305,7 +305,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
                 );
     /* check if page directory belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
+    if (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
         /* according to the intel manual if we modify a pdpt we must
          * reload cr3 */
         write_cr3(read_cr3());
@@ -327,7 +327,7 @@ decodeIA32PageDirectoryInvocation(
     vm_attributes_t attr;
     pdpte_t*        pdptSlot;
     cap_t           vspaceCap;
-    void*           vspace;
+    vspace_root_t*  vspace;
     pdpte_t         pdpte;
     paddr_t         paddr;
     asid_t          asid;
@@ -384,7 +384,7 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vspace = (void*)pptr_of_cap(vspaceCap);
+    vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
     asid = cap_get_capMappedASID(vspaceCap);
 
     if (vaddr >= PPTR_USER_TOP) {
@@ -437,7 +437,7 @@ decodeIA32PageDirectoryInvocation(
     /* according to the intel manual if we modify a pdpt we must
      * reload cr3 */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == (void*)pptr_of_cap(vspaceCap)) {
+    if (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == (vspace_root_t*)pptr_of_cap(vspaceCap)) {
         write_cr3(read_cr3());
     }
 

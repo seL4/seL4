@@ -164,7 +164,7 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
         if (final && cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
             deleteASID(
                 cap_pdpt_cap_get_capPDPTMappedASID(cap),
-                PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap))
+                (vspace_root_t*)cap_pdpt_cap_get_capPDPTBasePtr(cap)
             );
         }
         break;
