@@ -40,7 +40,7 @@ typedef struct lookupPDPTSlot_ret lookupPDPTSlot_ret_t;
 
 struct findVSpaceForASID_ret {
     exception_t status;
-    void *vspace_root;
+    vspace_root_t *vspace_root;
 };
 typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
 
@@ -63,7 +63,7 @@ bool_t map_kernel_window_devices(
 void init_tss(tss_t *tss);
 void init_gdt(gdt_entry_t *gdt, tss_t *tss);
 void init_idt_entry(idt_entry_t* idt, interrupt_t interrupt, void(*handler)(void));
-void *getValidNativeRoot(cap_t vspace_cap);
+vspace_root_t *getValidNativeRoot(cap_t vspace_cap);
 pde_t *get_boot_pd(void);
 void* map_temp_boot_page(void* entry, uint32_t large_pages);
 bool_t init_vm_state(void);
@@ -83,9 +83,9 @@ void idle_thread(void);
 
 bool_t isVTableRoot(cap_t cap);
 
-lookupPTSlot_ret_t lookupPTSlot(void *vspace, vptr_t vptr);
-lookupPDSlot_ret_t lookupPDSlot(void *vspace, vptr_t vptr);
-void copyGlobalMappings(void* new_vspace);
+lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr);
+lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr);
+void copyGlobalMappings(vspace_root_t *new_vspace);
 word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
 #ifdef X86_64
@@ -99,7 +99,7 @@ exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* 
 exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t *parent, asid_t asid_base);
 void hwASIDInvalidate(asid_t asid);
 void deleteASIDPool(asid_t asid_base, asid_pool_t* pool);
-void deleteASID(asid_t asid, void* vspace);
+void deleteASID(asid_t asid, vspace_root_t *vspace);
 findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid);
 
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr);
@@ -108,7 +108,7 @@ bool_t CONST isValidVTableRoot(cap_t cap);
 bool_t CONST isValidNativeRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask);
-void    flushTable(void *vspace, word_t vptr, pte_t *pt);
+void    flushTable(vspace_root_t *vspace, word_t vptr, pte_t *pt);
 
 exception_t decodeX86MMUInvocation(word_t label, word_t length, cptr_t cptr, cte_t *cte, 
         cap_t cap, extra_caps_t extraCaps, word_t *buffer);

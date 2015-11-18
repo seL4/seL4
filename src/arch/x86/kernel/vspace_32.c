@@ -671,7 +671,7 @@ bool_t CONST isIOSpaceFrame(cap_t cap)
 void setVMRoot(tcb_t* tcb)
 {
     cap_t               threadRoot;
-    void *vspace_root;
+    vspace_root_t *vspace_root;
     asid_t              asid;
     findVSpaceForASID_ret_t find_ret;
 

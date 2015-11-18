@@ -165,7 +165,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-lookupPDSlot_ret_t lookupPDSlot(void *vspace, vptr_t vptr)
+lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
 {
     lookupPDSlot_ret_t pdSlot;
     pde_t *pd = PDE_PTR(vspace);
@@ -188,7 +188,7 @@ bool_t CONST isValidNativeRoot(cap_t cap)
            cap_page_directory_cap_get_capPDIsMapped(cap);
 }
 
-void *getValidNativeRoot(cap_t vspace_cap)
+vspace_root_t *getValidNativeRoot(cap_t vspace_cap)
 {
     if (isValidNativeRoot(vspace_cap)) {
         return PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vspace_cap));
@@ -196,7 +196,7 @@ void *getValidNativeRoot(cap_t vspace_cap)
     return NULL;
 }
 
-void copyGlobalMappings(void* new_vspace)
+void copyGlobalMappings(vspace_root_t* new_vspace)
 {
     unsigned int i;
     pde_t *newPD = (pde_t*)new_vspace;
