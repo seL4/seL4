@@ -54,6 +54,7 @@ This module defines architecture-specific virtual memory management procedures. 
 
 > initPlatform :: Kernel ()
 > initPlatform = do
+>   doMachineOp $ initIRQController
 >   doMachineOp $ configureTimer
 >   doMachineOp $ initL2Cache
 

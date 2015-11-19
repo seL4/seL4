@@ -22,7 +22,6 @@ This module defines the low-level ARM hardware interface.
 
 > import SEL4.Machine.RegisterSet
 
-> import Foreign.Ptr
 > import Control.Monad.Reader
 > import Data.Bits
 > import Data.Word(Word8)
@@ -33,22 +32,23 @@ This module defines the low-level ARM hardware interface.
 The ARM-specific register set definitions are qualified with the "ARM" prefix, and the platform-specific hardware access functions are qualified with the "Platform" prefix. The latter module is outside the scope of the reference manual; for the executable model, it is specific to the external simulator used for user-level code.
 
 > import qualified SEL4.Machine.RegisterSet.ARM as ARM
+> import qualified SEL4.Machine.Hardware.ARM.Callbacks as Common
 > import qualified SEL4.Machine.Hardware.ARM.PLATFORM as Platform
 
 \subsection{Data Types}
 
 The machine monad contains a platform-specific opaque pointer, used by the external simulator interface.
 
-> type MachineMonad = ReaderT MachineData IO
+> type MachineData = Common.MachineData
 
-> type MachineData = Ptr Platform.CallbackData
+> type MachineMonad = ReaderT MachineData IO
 
 > type IRQ = Platform.IRQ
 
 > newtype HardwareASID = HardwareASID { fromHWASID :: Word8 }
 >     deriving (Num, Enum, Bounded, Ord, Ix, Eq, Show)
 
-> toPAddr = Platform.PAddr
+> toPAddr = Common.PAddr
 
 \subsubsection{Virtual Memory}
 
@@ -72,7 +72,7 @@ ARM virtual memory faults are handled by one of two trap handlers: one for data 
 
 The ARM MMU does not allow access to physical addresses while translation is enabled; the kernel must access its objects via virtual addresses. Depending on the platform, these virtual addresses may either be the same as the physical addresses, or offset by a constant.
 
-> type PAddr = Platform.PAddr
+> type PAddr = Common.PAddr
 
 > ptrFromPAddr :: PAddr -> PPtr a
 > ptrFromPAddr = Platform.ptrFromPAddr
@@ -81,7 +81,7 @@ The ARM MMU does not allow access to physical addresses while translation is ena
 > addrFromPPtr = Platform.addrFromPPtr
 
 > fromPAddr :: PAddr -> Word
-> fromPAddr = Platform.fromPAddr
+> fromPAddr = Common.fromPAddr
 
 \subsection{Hardware Access}
 
@@ -114,12 +114,12 @@ The following functions define the ARM-specific interface between the kernel and
 > loadWord :: PPtr Word -> MachineMonad Word
 > loadWord ptr = do
 >     cbptr <- ask
->     liftIO $ Platform.loadWordCallback cbptr $ addrFromPPtr ptr
+>     liftIO $ Common.loadWordCallback cbptr $ addrFromPPtr ptr
 
 > storeWord :: PPtr Word -> Word -> MachineMonad ()
 > storeWord ptr val = do
 >     cbptr <- ask
->     liftIO $ Platform.storeWordCallback cbptr (addrFromPPtr ptr) val
+>     liftIO $ Common.storeWordCallback cbptr (addrFromPPtr ptr) val
 
 > storeWordVM :: PPtr Word -> Word -> MachineMonad ()
 > storeWordVM ptr val = storeWord ptr val
@@ -146,6 +146,12 @@ The following functions define the ARM-specific interface between the kernel and
 > configureTimer = do
 >     cbptr <- ask
 >     liftIO $ Platform.configureTimer cbptr
+
+> initIRQController :: MachineMonad ()
+> initIRQController = do
+>     cbptr <- ask
+>     liftIO $ Platform.initIRQController cbptr
+
 
 > resetTimer :: MachineMonad ()
 > resetTimer = do
@@ -211,7 +217,7 @@ caches must be done separately.
 > writeTTBR0 :: PAddr -> MachineMonad ()
 > writeTTBR0 pd = do
 >     cbptr <- ask
->     liftIO $ Platform.writeTTBR0 cbptr pd
+>     liftIO $ Common.writeTTBR0 cbptr pd
 
 > setCurrentPD :: PAddr -> MachineMonad ()
 > setCurrentPD pd = do
@@ -222,7 +228,7 @@ caches must be done separately.
 > setHardwareASID :: HardwareASID -> MachineMonad ()
 > setHardwareASID (HardwareASID hw_asid) = do
 >     cbptr <- ask
->     liftIO $ Platform.setHardwareASID cbptr hw_asid
+>     liftIO $ Common.setHardwareASID cbptr hw_asid
 
 \subsubsection{Memory Barriers}
 
@@ -246,17 +252,17 @@ caches must be done separately.
 > invalidateTLB :: MachineMonad ()
 > invalidateTLB = do
 >     cbptr <- ask
->     liftIO $ Platform.invalidateTLBCallback cbptr
+>     liftIO $ Common.invalidateTLBCallback cbptr
 
 > invalidateTLB_ASID :: HardwareASID -> MachineMonad ()
 > invalidateTLB_ASID (HardwareASID hw_asid) = do
 >     cbptr <- ask
->     liftIO $ Platform.invalidateTLB_ASIDCallback cbptr hw_asid
+>     liftIO $ Common.invalidateTLB_ASIDCallback cbptr hw_asid
 
 > invalidateTLB_VAASID :: Word -> MachineMonad ()
 > invalidateTLB_VAASID mva_plus_asid = do
 >     cbptr <- ask
->     liftIO $ Platform.invalidateTLB_VAASIDCallback cbptr mva_plus_asid
+>     liftIO $ Common.invalidateTLB_VAASIDCallback cbptr mva_plus_asid
 
 > cleanByVA :: VPtr -> PAddr -> MachineMonad ()
 > cleanByVA mva pa = do
@@ -405,17 +411,17 @@ implementation assumes the monitor is not modelled in our simulator.
 > getIFSR :: MachineMonad Word
 > getIFSR = do
 >     cbptr <- ask
->     liftIO $ Platform.getIFSR cbptr
+>     liftIO $ Common.getIFSR cbptr
 
 > getDFSR :: MachineMonad Word
 > getDFSR = do
 >     cbptr <- ask
->     liftIO $ Platform.getDFSR cbptr
+>     liftIO $ Common.getDFSR cbptr
 
 > getFAR :: MachineMonad VPtr
 > getFAR = do
 >     cbptr <- ask
->     liftIO $ Platform.getFAR cbptr
+>     liftIO $ Common.getFAR cbptr
 
 \subsubsection{Page Table Structure}
 

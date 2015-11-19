@@ -31,7 +31,7 @@ The architecture-specific definitions are imported qualified with the "Arch" pre
 
 \begin{impdetails}
 
-> import SEL4.Config (numDomains)
+> import SEL4.Config (numDomains,numPriorities)
 > import SEL4.API.Types
 > import {-# SOURCE #-} SEL4.Model.PSpace
 > import SEL4.Object.Structures

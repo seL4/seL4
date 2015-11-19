@@ -31,7 +31,7 @@ Library
         build-depends:      unix
         exposed-modules:    Simulation.FFIBindings
         include-dirs:       include
-        install-includes:   sel4model.h
+        install-includes:   sel4model.h gic.h
                             dist/build/Simulation/FFIBindings_stub.h
 
     other-modules:          SEL4.API
@@ -75,6 +75,8 @@ Library
                             SEL4.Machine.Hardware.ARM.KZM
                             SEL4.Machine.Hardware.ARM.Exynos4210
                             SEL4.Machine.Hardware.ARM.Sabre
+                            SEL4.Machine.Hardware.ARM.Callbacks
+                            SEL4.Machine.Hardware.GICInterface
 
                             SEL4.API.Types.ARM
                             SEL4.API.InvocationLabels.ARM

@@ -25,7 +25,6 @@ This module contains functions that create a new kernel state and set up the add
 > import SEL4.API.Failures
 > import SEL4.Model
 > import SEL4.Object
-> import SEL4.Object.Structures
 > import SEL4.Machine
 > import SEL4.Kernel.Thread
 > import SEL4.Kernel.VSpace
