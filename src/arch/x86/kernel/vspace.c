@@ -673,12 +673,6 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         return;
     }
 
-    /* check if page belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
-        invalidateTLBentry(vptr);
-    }
-
     switch (page_size) {
     case IA32_SmallPage:
         lu_ret = lookupPTSlot(find_ret.vspace_root, vptr);
@@ -712,8 +706,11 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         fail("Invalid page type");
     }
 
-    /* TLB entry should be invalidated with the unmapped virtual address */
-    invalidateTLBentry(vptr);
+    /* check if page belongs to current address space */
+    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
+        invalidateTLBentry(vptr);
+    }
 }
 void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 {
