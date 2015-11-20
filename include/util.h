@@ -26,6 +26,7 @@
 #define CONST        __attribute__((__const__))
 #define PURE         __attribute__((__pure__))
 #define ALIGN(n)     __attribute__((__aligned__(n)))
+#define FASTCALL     __attribute__((fastcall))
 #ifdef __clang__
 #define VISIBLE      __attribute__((visibility("default")))
 #else

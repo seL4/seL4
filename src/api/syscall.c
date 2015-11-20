@@ -309,7 +309,7 @@ handleReply(void)
 }
 
 static void
-handleWait(bool_t isBlocking)
+handleRecv(bool_t isBlocking)
 {
     word_t epCPtr;
     lookupCap_ret_t lu_ret;
@@ -407,21 +407,21 @@ handleSyscall(syscall_t syscall)
         }
         break;
 
-    case SysWait:
-        handleWait(true);
+    case SysRecv:
+        handleRecv(true);
         break;
 
     case SysReply:
         handleReply();
         break;
 
-    case SysReplyWait:
+    case SysReplyRecv:
         handleReply();
-        handleWait(true);
+        handleRecv(true);
         break;
 
-    case SysNBWait:
-        handleWait(false);
+    case SysNBRecv:
+        handleRecv(false);
         break;
 
     case SysYield:

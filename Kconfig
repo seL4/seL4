@@ -292,10 +292,6 @@ menu "seL4 System Parameters"
             This is not fully implemented for x86.
             The maximum number of different trace point identifiers which can be used.
 
-    config AEP_BINDING
-        bool
-        default y
-
     config ALLOW_NULL_CSPACE
         bool "Null CSpace support"
         default n

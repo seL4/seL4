@@ -161,7 +161,7 @@ void
 #ifdef ARCH_IA32
 FASTCALL
 #endif
-fastpath_reply_wait(word_t cptr, word_t msgInfo)
+fastpath_reply_recv(word_t cptr, word_t msgInfo)
 {
     message_info_t info;
     cap_t ep_cap;
@@ -194,7 +194,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
      * saved fault. */
     if (unlikely(fastpath_mi_check(msgInfo) ||
                  fault_type != fault_null_fault)) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 
     /* Lookup the cap */
@@ -204,13 +204,13 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
     /* Check it's an endpoint */
     if (unlikely(!cap_capType_equals(ep_cap, cap_endpoint_cap) ||
                  !cap_endpoint_cap_get_capCanReceive(ep_cap))) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 
-    /* Check there is nothing waiting on the notification endpoint */
+    /* Check there is nothing waiting on the notification */
     if (ksCurThread->tcbBoundNotification &&
             notification_ptr_get_state(ksCurThread->tcbBoundNotification) == NtfnState_Active) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 
     /* Get the endpoint address */
@@ -220,12 +220,12 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
 
     /* Check that there's not a thread waiting to send */
     if (unlikely(endpoint_ptr_get_state(ep_ptr) == EPState_Send)) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 
     /* Only reply if the reply cap is valid. */
     if (unlikely(!fastpath_reply_cap_check(callerCap))) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 
     /* Determine who the caller is. */
@@ -241,7 +241,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
        reply is generated instead. */
     fault_type = fault_get_faultType(caller->tcbFault);
     if (unlikely(fault_type != fault_null_fault)) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 
     /* Get vspace root. */
@@ -253,7 +253,7 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
 
     /* Ensure that the destination has a valid MMU. */
     if (unlikely(! isValidVTableRoot_fp (newVTable))) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 
 #ifdef ARCH_ARM
@@ -263,19 +263,19 @@ fastpath_reply_wait(word_t cptr, word_t msgInfo)
 
     /* Ensure the original caller can be scheduled directly. */
     if (unlikely(caller->tcbPriority < ksCurThread->tcbPriority)) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 
 #ifdef ARCH_ARM
     /* Ensure the HWASID is valid. */
     if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
-        slowpath(SysReplyWait);
+        slowpath(SysReplyRecv);
     }
 #endif
 
     /* Ensure the original caller is in the current domain and can be scheduled directly. */
-    if (CONFIG_NUM_DOMAINS > 1 && unlikely(caller->tcbDomain != ksCurDomain)) {
-        slowpath(SysReplyWait);
+    if (unlikely(caller->tcbDomain != ksCurDomain && maxDom)) {
+        slowpath(SysReplyRecv);
     }
 
     /*

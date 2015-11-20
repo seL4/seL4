@@ -150,7 +150,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 endpoint_ptr_set_state(epptr, EPState_Recv);
                 ep_ptr_set_queue(epptr, queue);
             } else {
-                doNBWaitFailedTransfer(thread);
+                doNBRecvFailedTransfer(thread);
             }
             break;
         }

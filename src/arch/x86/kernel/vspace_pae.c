@@ -13,15 +13,16 @@
 #include <kernel/boot.h>
 #include <model/statedata.h>
 #include <arch/kernel/vspace.h>
+#include <util.h>
 
 #ifdef CONFIG_PAE_PAGING
 
 /* The boot pd is referenced by code that runs before paging, so
  * place it in PHYS_DATA. In PAE mode the top level is actually
  * a PDPTE, but we call it _boot_pd for compatibility */
-pdpte_t _boot_pd[BIT(PDPT_BITS)] __attribute__((aligned(BIT(PAGE_BITS)))) VISIBLE  PHYS_DATA;
+pdpte_t _boot_pd[BIT(PDPT_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE  PHYS_DATA;
 /* Allocate enough page directories to fill every slot in the PDPT */
-pde_t _boot_pds[BIT(PD_BITS + PDPT_BITS)] __attribute__((aligned(BIT(PAGE_BITS)))) VISIBLE PHYS_DATA;
+pde_t _boot_pds[BIT(PD_BITS + PDPT_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
 
 BOOT_CODE
 pde_t *get_boot_pd()

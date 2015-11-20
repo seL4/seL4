@@ -184,7 +184,7 @@ NORETURN;
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 VISIBLE FASTCALL NORETURN;
 
-void fastpath_reply_wait(word_t cptr, word_t r_msgInfo)
+void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
 VISIBLE FASTCALL NORETURN;
 
 #endif

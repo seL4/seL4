@@ -14,13 +14,13 @@
     <api>
         <config>
             <syscall name="Call"      />
-            <syscall name="ReplyWait" />
+            <syscall name="ReplyRecv" />
             <syscall name="Send"      />
             <syscall name="NBSend"    />
-            <syscall name="Wait"      />
+            <syscall name="Recv"      />
             <syscall name="Reply"     />
             <syscall name="Yield"     />
-            <syscall name="NBWait"      />
+            <syscall name="NBRecv"      />
         </config>
         <config condition="defined ARCH_IA32">
             <syscall name="VMEnter"/>
