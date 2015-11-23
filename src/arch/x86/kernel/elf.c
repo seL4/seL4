@@ -74,6 +74,8 @@ elf32_load(Elf32_Header_t* elfFile, int32_t offset)
     }
 }
 
+#ifdef X86_64
+/* compiler errors for 32-bit kernel */
 BOOT_CODE bool_t
 elf64_checkFile(Elf64_Header_t *elf)
 {
@@ -129,3 +131,4 @@ elf64_load(Elf64_Header_t *elf, uint64_t offset)
         memset((void *)dst, 0, phdr[i].p_memsz - len);
     }
 }
+#endif

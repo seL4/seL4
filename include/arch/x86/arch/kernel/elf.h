@@ -76,9 +76,15 @@ typedef struct Elf64_Phdr {
 bool_t elf32_checkFile(Elf32_Header_t* elfFile);
 v_region_t elf32_getMemoryBounds(Elf32_Header_t* elfFile);
 void elf32_load(Elf32_Header_t* elfFile, int32_t offset);
-
+#ifdef X86_64
 bool_t elf64_checkFile(Elf64_Header_t *elf);
 v_region_t  elf64_getMemoryBounds(Elf64_Header_t *elf);
 void elf64_load(Elf64_Header_t *elf, uint64_t offset);
+#else
+/* used in boot_sys.c file, without guards */
+static inline bool_t elf64_checkFile(Elf64_Header_t *elf) { return false; }
+static inline v_region_t elf64_getMemoryBounds(Elf64_Header_t *elf) { return (v_region_t){0, 0}; }
+static inline void elf64_load(Elf64_Header_t *elf, uint64_t offset) {}
+#endif
 
 #endif
