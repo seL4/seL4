@@ -38,7 +38,7 @@ extern uint32_t ia32KSnumDrhu;
 extern vtd_rte_t* ia32KSvtdRootTable;
 extern uint32_t ia32KSnumIOPTLevels;
 extern uint32_t ia32KSnumIODomainIDBits;
-extern int ia32KSFirstValidIODomain;
+extern uint32_t ia32KSFirstValidIODomain;
 
 #if defined DEBUG || defined RELEASE_PRINTF
 extern uint16_t ia32KSconsolePort;
