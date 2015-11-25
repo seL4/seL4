@@ -445,7 +445,9 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
             return cap_null_cap_new();
         }
         memzero(PDE_PTR(pd_pptr), 1 << PD_SIZE_BITS);
+#if !PDPT_BITS
         copyGlobalMappings(PDE_PTR(pd_pptr));
+#endif
         pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
         if (!provide_cap(root_cnode_cap, pd_cap)) {
             return cap_null_cap_new();
@@ -496,8 +498,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
                 return cap_null_cap_new();
             }
         }
+#if PDPT_BITS
+        /* 32-bit compiler error when PAE is not enabled */
         /* now that PDs exist we can copy the global mappings */
         copyGlobalMappings(PDPTE_PTR(pdpt_pptr));
+#endif
         write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE), pdpt_cap);
         vspace_cap = pdpt_cap;
     }
