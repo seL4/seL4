@@ -13,6 +13,8 @@
 
 #if defined(X86_32)
 #include <arch/fastpath/fastpath_32.h>
+#elif defined(X86_64)
+#include <arch/fastpath/fastpath_64.h>
 #endif
 
 static inline int

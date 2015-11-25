@@ -57,7 +57,7 @@ lookup_fp(cap_t cap, cptr_t cptr)
 
     return cap;
 }
-
+/* make sure the fastpath functions conform with structure_*.bf */
 static inline void
 thread_state_ptr_set_tsType_np(thread_state_t *ts_ptr, word_t tsType)
 {
@@ -69,28 +69,44 @@ thread_state_ptr_mset_blockingObject_tsType(thread_state_t *ts_ptr,
                                             word_t ep_ref,
                                             word_t tsType)
 {
+#ifdef X86_64
+    ts_ptr->words[0] = (ep_ref << 16) | tsType;
+#else
     ts_ptr->words[0] = ep_ref | tsType;
+#endif
 }
 
 static inline void
 cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyMaster,
                          word_t capTCBPtr)
 {
+#ifdef X86_64
+    cap_ptr->words[0] = (TCB_REF(capTCBPtr) & 0xffffffffffff) | (capReplyMaster << 58) | ((word_t)cap_reply_cap << 59);
+#else
     cap_ptr->words[0] = TCB_REF(capTCBPtr) | (capReplyMaster << 4) |
                         cap_reply_cap ;
+#endif
 }
 
 static inline void
 endpoint_ptr_mset_epQueue_tail_state(endpoint_t *ep_ptr, word_t epQueue_tail,
                                      word_t state)
 {
+#ifdef X86_64
+    ep_ptr->words[0] = (epQueue_tail << 16) | state;
+#else
     ep_ptr->words[0] = epQueue_tail | state;
+#endif
 }
 
 static inline void
 endpoint_ptr_set_epQueue_head_np(endpoint_t *ep_ptr, word_t epQueue_head)
 {
+#ifdef X86_64
+    ep_ptr->words[1] = epQueue_head << 16;
+#else
     ep_ptr->words[1] = epQueue_head;
+#endif
 }
 
 #include <arch/fastpath/fastpath.h>
