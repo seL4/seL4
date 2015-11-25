@@ -73,17 +73,15 @@ There is a single, global interrupt controller object; a capability to it is pro
 >             
 >             return $ IssueIRQHandler irq destSlot srcSlot
 >         (IRQIssueIRQHandler,_,_) -> throw TruncatedMessage
->         (IRQInterruptControl,_,_) -> liftM InterruptControl $
->             Arch.decodeInterruptControl args extraCaps
->         _ -> throw IllegalOperation
+>         _ -> liftM ArchIRQControl $ Arch.decodeIRQControlInvocation label args srcSlot extraCaps
 
 > invokeIRQControl :: IRQControlInvocation -> KernelP ()
 > invokeIRQControl (IssueIRQHandler irq handlerSlot controlSlot) =
 >   withoutPreemption $ do
 >     setIRQState (IRQSignal) irq
 >     cteInsert (IRQHandlerCap irq) controlSlot handlerSlot
-> invokeIRQControl (InterruptControl invok) =
->     Arch.invokeInterruptControl invok
+> invokeIRQControl (ArchIRQControl invok) =
+>     Arch.invokeIRQControl invok
 
 \subsubsection{IRQ Handler Capabilities}
 \label{sec:object.interrupt.invoke.handler}

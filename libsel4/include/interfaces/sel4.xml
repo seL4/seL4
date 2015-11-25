@@ -142,7 +142,6 @@
 			<param dir="in" name="index" type="seL4_Word"/>
 			<param dir="in" name="depth" type="seL4_Uint8"/>
         </method>
-        <method id="IRQInterruptControl" name="Control"/>
 	</interface>
     <interface name="seL4_IRQHandler">
         <method id="IRQAckIRQ" name="Ack"/>
