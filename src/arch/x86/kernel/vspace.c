@@ -703,7 +703,8 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         break;
 
     default:
-        fail("Invalid page type");
+        modeUnmapPage(page_size, find_ret.vspace_root, vptr, pptr);
+        break;
     }
 
     /* check if page belongs to current address space */
@@ -878,9 +879,17 @@ exception_t decodeX86FrameInvocation(
             break;
         }
 
-        default:
-            fail("Invalid page type");
+        default: {
+            exception_t ret = modeMapRemapPage(frameSize, vspace, vaddr, paddr, vmRights, vmAttr);
+            if (ret != EXCEPTION_NONE) {
+                return ret;
+            }
+
+            cte->cap = cap;
+            break;
         }
+        }
+
         invalidatePageStructureCache();
         setThreadState(ksCurThread, ThreadState_Restart);
         return EXCEPTION_NONE;
@@ -1006,8 +1015,13 @@ exception_t decodeX86FrameInvocation(
             break;
         }
 
-        default:
-            fail("Invalid page type");
+        default: {
+            exception_t ret = modeMapRemapPage(frameSize, vspace, vaddr, paddr, vmRights, vmAttr);
+            if (ret != EXCEPTION_NONE) {
+                return ret;
+            }
+            break;
+        }
         }
 
         invalidatePageStructureCache();

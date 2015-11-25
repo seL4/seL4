@@ -733,3 +733,15 @@ decodeX86ModeMMUInvocation(
         fail("Invalid arch cap type");
     }
 }
+
+
+void modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr, void *pptr)
+{
+    fail("Invalid page type");
+
+}
+
+exception_t modeMapRemapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+{
+    fail("Invalid Page type");
+}
