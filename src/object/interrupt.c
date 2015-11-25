@@ -71,12 +71,8 @@ decodeIRQControlInvocation(word_t label, word_t length,
 
         setThreadState(ksCurThread, ThreadState_Restart);
         return invokeIRQControl(irq, destSlot, srcSlot);
-    } else if (label == IRQInterruptControl) {
-        return Arch_decodeInterruptControl(length, extraCaps);
     } else {
-        userError("IRQControl: Illegal operation.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
+        return Arch_decodeIRQControlInvocation(label, length, srcSlot, extraCaps, buffer);
     }
 }
 

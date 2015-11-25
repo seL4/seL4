@@ -15,6 +15,8 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-exception_t Arch_decodeInterruptControl(word_t length, extra_caps_t extraCaps);
+exception_t Arch_decodeIRQControlInvocation(word_t label, word_t length,
+                                            cte_t *srcSlot, extra_caps_t extraCaps,
+                                            word_t *buffer);
 
 #endif
