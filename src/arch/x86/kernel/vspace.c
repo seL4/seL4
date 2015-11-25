@@ -767,7 +767,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         frameSize = cap_frame_cap_get_capFSize(cap);
-        vaddr = getSyscallArg(0, buffer) & (~MASK(pageBitsForSize(frameSize)));
+        vaddr = getSyscallArg(0, buffer);
         w_rightsMask = getSyscallArg(1, buffer);
         vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
         vspaceCap = excaps.excaprefs[0]->cap;
