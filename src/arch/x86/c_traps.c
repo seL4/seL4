@@ -65,9 +65,9 @@ void __attribute__((externally_visible)) c_handle_syscall(syscall_t syscall, wor
 void __attribute__((externally_visible)) c_handle_syscall(syscall_t syscall, word_t cptr, word_t msgInfo)
 {
 #ifdef FASTPATH
-    if (syscall == SysCall) {
+    if (syscall == (syscall_t)SysCall) {
         fastpath_call(cptr, msgInfo);
-    } else if (syscall == SysReplyRecv) {
+    } else if (syscall == (syscall_t)SysReplyRecv) {
         fastpath_reply_recv(cptr, msgInfo);
     }
 #endif
