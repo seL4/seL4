@@ -98,6 +98,8 @@ void deleteASID(asid_t asid, vspace_root_t *vspace);
 findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid);
 
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr);
+void modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vptr, void *pptr);
+exception_t modeMapRemapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vptr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr);
 void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
 bool_t CONST isValidNativeRoot(cap_t cap);
