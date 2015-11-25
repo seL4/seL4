@@ -391,6 +391,11 @@ init_dtrs(void)
 
     /* load TSS selector into Task Register (TR) */
     ia32_install_tss(SEL_TSS);
+
+    if (config_set(CONFIG_FSGSBASE_MSR)) {
+        ia32_load_fs(SEL_TLS);
+        ia32_load_gs(SEL_IPCBUF);
+    }
 }
 
 static BOOT_CODE cap_t
