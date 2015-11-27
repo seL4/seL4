@@ -54,6 +54,9 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
 
 exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent, asid_t asid_base)
 {
+    cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
+                                         MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
+
     memzero(frame, 1 << pageBitsForSize(IA32_SmallPage));
     cteInsert(
         cap_asid_pool_cap_new(
