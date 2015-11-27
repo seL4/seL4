@@ -210,6 +210,9 @@ cap_get_archCapSizeBits(cap_t cap)
     case cap_page_directory_cap:
         return PD_SIZE_BITS;
 
+    case cap_pdpt_cap:
+        return PDPT_SIZE_BITS;
+
     case cap_io_port_cap:
         return 0;
 #ifdef CONFIG_IOMMU
