@@ -12,95 +12,136 @@
 #define __LIBSEL4_ARCH_FUNCTIONS_H
 
 #include <sel4/types.h>
+#include <sel4/macros.h>
 
 /* the segment loaded into GS points directly to the IPC buffer */
+
+#define SEL4_GET_IPCBUF_SCALE(field, i, res) \
+    do {\
+        asm volatile ("movl %%gs:%c2(,%1,%c3), %0"\
+                      : [result] "=r" (res) /* outputs */\
+                      : [scale] "r" (i), /* inputs */\
+                        [offset] "i" (SEL4_OFFSETOF(seL4_IPCBuffer, field)),\
+                        [scale_factor] "i" (sizeof(seL4_Word))\
+                       /* no clobber */);\
+    } while(0)
+
+
+#define SEL4_SET_IPCBUF_SCALE(field, i, val) \
+    do {\
+        asm volatile ("movl %0, %%gs:%c2(,%1,%c3)"\
+                      : /* no outputs */\
+                      : [value] "r" (val), /* inputs */\
+                        [scale] "r" (i),\
+                        [offset] "i" (SEL4_OFFSETOF(seL4_IPCBuffer, field)),\
+                        [scale_factor] "i" (sizeof(seL4_Word))\
+                      : "memory"); /* clobber */\
+    } while(0)
+
+#define SEL4_GET_IPCBUF(field, res) \
+    do {\
+        asm volatile ("movl %%gs:%c1, %0"\
+                      : [result] "=r" (res) /* inputs */\
+                      : [offset] "i" (SEL4_OFFSETOF(seL4_IPCBuffer, field)) /* outputs */\
+                       /* no clobber */);\
+    } while(0)
+
+
+#define SEL4_SET_IPCBUF(field, val) \
+    do {\
+        asm volatile ("movl %0, %%gs:%c1"\
+                      : /* no outputs */\
+                      : [value] "r" (val), /* inputs */\
+                        [offset] "i" (SEL4_OFFSETOF(seL4_IPCBuffer, field))\
+                      : "memory"); /* clobber */\
+    } while(0)
 
 static inline seL4_MessageInfo_t
 seL4_GetTag(void)
 {
     seL4_MessageInfo_t tag;
-    asm volatile ("movl %%gs:0, %0" : "=r"(tag));
+    SEL4_GET_IPCBUF(tag, tag.words[0]);
     return tag;
 }
 
 static inline void
 seL4_SetTag(seL4_MessageInfo_t tag)
 {
-    asm volatile ("movl %0, %%gs:0" :: "r"(tag) : "memory");
+    SEL4_SET_IPCBUF(tag, tag.words[0]);
 }
 
 static inline seL4_Word
 seL4_GetMR(int i)
 {
     seL4_Word mr;
-    asm volatile ("movl %%gs:4(,%1,0x4), %0" : "=r"(mr) : "r"(i));
+    SEL4_GET_IPCBUF_SCALE(msg, i, mr);
     return mr;
 }
 
 static inline void
 seL4_SetMR(int i, seL4_Word mr)
 {
-    asm volatile ("movl %0, %%gs:4(,%1,0x4)" :: "r"(mr), "r"(i) : "memory");
+    SEL4_SET_IPCBUF_SCALE(msg, i, mr);
 }
 
 static inline seL4_Word
 seL4_GetUserData(void)
 {
     seL4_Word data;
-    asm volatile ("movl %%gs:484, %0" : "=r"(data));
+    SEL4_GET_IPCBUF(userData, data);
     return data;
 }
 
 static inline void
 seL4_SetUserData(seL4_Word data)
 {
-    asm volatile ("movl %0, %%gs:484" :: "r"(data) : "memory");
+    SEL4_SET_IPCBUF(userData, data);
 }
 
 static inline seL4_CapData_t
 seL4_GetBadge(int i)
 {
     seL4_CapData_t badge;
-    asm volatile ("movl %%gs:488(,%1,0x4), %0" : "=r"(badge) : "r"(i));
+    SEL4_GET_IPCBUF_SCALE(caps_or_badges, i, badge.words[0]);
     return badge;
 }
 
 static inline seL4_CPtr
 seL4_GetCap(int i)
 {
-    seL4_CPtr cptr;
-    asm volatile ("movl %%gs:488(,%1,0x4), %0" : "=r"(cptr) : "r"(i));
-    return cptr;
+    seL4_CPtr cap;
+    SEL4_GET_IPCBUF_SCALE(caps_or_badges, i, cap);
+    return cap;
 }
 
 static inline void
 seL4_SetCap(int i, seL4_CPtr cptr)
 {
-    asm volatile ("movl %0, %%gs:488(,%1,0x4)" :: "r"(cptr), "r"(i) : "memory");
+    SEL4_SET_IPCBUF_SCALE(caps_or_badges, i, cptr);
 }
 
 static inline void
 seL4_GetCapReceivePath(seL4_CPtr* receiveCNode, seL4_CPtr* receiveIndex, seL4_Word* receiveDepth)
 {
     if (receiveCNode != seL4_Null) {
-        asm volatile ("movl %%gs:500, %0" : "=r"(*receiveCNode));
+        SEL4_GET_IPCBUF(receiveCNode, *receiveCNode);
     }
 
     if (receiveIndex != seL4_Null) {
-        asm volatile ("movl %%gs:504, %0" : "=r"(*receiveIndex));
+        SEL4_GET_IPCBUF(receiveIndex, *receiveIndex);
     }
 
     if (receiveDepth != seL4_Null) {
-        asm volatile ("movl %%gs:508, %0" : "=r"(*receiveDepth));
+        SEL4_GET_IPCBUF(receiveDepth, *receiveDepth);
     }
 }
 
 static inline void
 seL4_SetCapReceivePath(seL4_CPtr receiveCNode, seL4_CPtr receiveIndex, seL4_Word receiveDepth)
 {
-    asm volatile ("movl %0, %%gs:500" :: "r"(receiveCNode) : "memory");
-    asm volatile ("movl %0, %%gs:504" :: "r"(receiveIndex) : "memory");
-    asm volatile ("movl %0, %%gs:508" :: "r"(receiveDepth) : "memory");
+    SEL4_SET_IPCBUF(receiveCNode, receiveCNode);
+    SEL4_SET_IPCBUF(receiveIndex, receiveIndex);
+    SEL4_SET_IPCBUF(receiveDepth, receiveDepth);
 }
 
 static inline seL4_IPCBuffer*

@@ -27,4 +27,6 @@
 #define PURE         __attribute__((__pure__))
 #endif
 
+#define SEL4_OFFSETOF(type, member) __builtin_offsetof(type, member)
+
 #endif
