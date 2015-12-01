@@ -687,22 +687,22 @@ ghost state. This check is skipped for the CNode within TCBs.
 > locateSlotTCB :: PPtr TCB -> Word -> Kernel (PPtr CTE)
 > locateSlotTCB tcb offset = locateSlotBasic (PPtr $ fromPPtr tcb) offset
 
-> locateSlotCNode :: PPtr CTE -> Word -> Kernel (PPtr CTE)
-> locateSlotCNode cnode offset = do
+> locateSlotCNode :: PPtr CTE -> Int -> Word -> Kernel (PPtr CTE)
+> locateSlotCNode cnode bits offset = do
 >         flip stateAssert "locateSlotCNode: must be in CNode"
 >             (\s -> case gsCNodes s (fromPPtr cnode) of
 >                 Nothing -> False
->                 Just n -> offset < 2 ^ n)
+>                 Just n -> n == bits && offset < 2 ^ n)
 >         locateSlotBasic cnode offset
 
 > locateSlotCap :: Capability -> Word -> Kernel (PPtr CTE)
 > locateSlotCap (cap @ (CNodeCap {})) offset
->     = locateSlotCNode (capCNodePtr cap) offset
+>     = locateSlotCNode (capCNodePtr cap) (capCNodeBits cap) offset
 > locateSlotCap (cap @ (ThreadCap {})) offset
 >     = locateSlotTCB (capTCBPtr cap) offset
 > locateSlotCap (cap @ (Zombie {})) offset = case capZombieType cap of
 >     ZombieTCB -> locateSlotTCB (PPtr $ fromPPtr $ capZombiePtr cap) offset
->     ZombieCNode _ -> locateSlotCNode (capZombiePtr cap) offset
+>     ZombieCNode bits -> locateSlotCNode (capZombiePtr cap) bits offset
 > locateSlotCap _ _ = fail "locateSlotCap: not a cap with slots"
 
 \subsubsection{Loading and Storing Entries}
