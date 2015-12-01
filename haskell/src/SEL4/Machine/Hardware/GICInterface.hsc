@@ -25,9 +25,6 @@ data GicData = GicState { env :: Ptr CallbackData ,
 
 type GicMonad = StateT GicData IO
 
-plusPtr :: PAddr -> Int -> PAddr
-plusPtr a b = a + (fromIntegral b)
-
 gicpoke :: PAddr -> Word -> GicMonad ()
 gicpoke paddr value = do
     env <- gets env
@@ -55,7 +52,7 @@ newtype IRQ = IRQ Word32
 
 instance Bounded IRQ where
     minBound = IRQ 0
-    maxBound = IRQ 1023
+    maxBound = IRQ 255
 
 --paddrToPtr :: PAddr -> Ptr Word
 --wordPtrToPtr . fromIntegral
@@ -68,19 +65,22 @@ replicateOffset n = [0 .. n-1]
 distInit :: GicMonad ()
 distInit = do
     gic_dist_base <- gets (gicDistBase)
+    maxvec <- gicpeek (#{ptr gic_dist_map, ic_type} gic_dist_base)
+    nirqs <- return $ fromIntegral $ (maxvec + 1) `shiftL` 5 
+    lift $ putStrLn $ show nirqs
     gicpoke (#{ptr gic_dist_map, enable} gic_dist_base) 0
     gicpokeArray (#{ptr gic_dist_map, enable_clr} gic_dist_base)
-       (replicateOffset 32) irqSetAll
+       (replicateOffset $ nirqs `div` 32) irqSetAll
     gicpokeArray (#{ptr gic_dist_map, pending_clr} gic_dist_base)
-       (replicateOffset 32) irqSetAll
+       (replicateOffset $ nirqs `div` 32) irqSetAll
     gicpokeArray (#{ptr gic_dist_map, priority} gic_dist_base) 
-       (replicateOffset 32) 0
+       (replicateOffset $ nirqs `div` 32) 0
     gicpokeArray (#{ptr gic_dist_map, targets} gic_dist_base) 
-       (replicateOffset 32) 0
+       (replicateOffset $ nirqs `div` 4) 0x01010101
     gicpokeArray (#{ptr gic_dist_map, config} gic_dist_base)
-       (replicateOffset 32) 0x55555555
+       (replicateOffset $ nirqs `div` 32) 0x55555555
     gicpokeArray (#{ptr gic_dist_map, security} gic_dist_base)
-       (replicateOffset 32) 0
+       (replicateOffset $ nirqs `div` 32) 0
     gicpoke (#{ptr gic_dist_map, enable} gic_dist_base) 1
     gicpokeOffset (#{ptr gic_dist_map, enable_clr} gic_dist_base) 0 irqSetAll
     gicpokeOffset (#{ptr gic_dist_map, pending_clr} gic_dist_base) 0 irqSetAll
@@ -164,16 +164,17 @@ initIRQController = do
 
 getActiveIRQ :: GicMonad (Maybe IRQ)
 getActiveIRQ = do
-    gic_dist_base <- gets (gicIFBase)
-    irq <- gicpeek $ (#{ptr gic_cpu_iface_map, int_ack} gic_dist_base)
+    gic_cpu_base <- gets (gicIFBase)
+    irq <- gicpeek $ (#{ptr gic_cpu_iface_map, int_ack} gic_cpu_base)
     return $ Just $ fromIntegral irq
 
 maskInterrupt :: Bool -> IRQ -> GicMonad ()
-maskInterrupt disable irq = do
-    if disable then (distEnableClr irq) else (distEnableSet irq)
+maskInterrupt disable irq = if disable then (distEnableClr irq) else (distEnableSet irq)
 
 ackInterrupt :: IRQ -> GicMonad ()
-ackInterrupt _ = return ()
+ackInterrupt irq = do
+    gic_cpu_base <- gets (gicIFBase)
+    gicpoke (#{ptr gic_cpu_iface_map, eoi} gic_cpu_base) (fromIntegral irq)
 
 callGICApi :: GicData -> GicMonad a -> IO a
 callGICApi gic oper = do

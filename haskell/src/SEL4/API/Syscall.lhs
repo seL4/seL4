@@ -34,6 +34,8 @@ modules.
 > import SEL4.Machine
 > import Data.Bits
 
+>-- import Control.Monad.State
+
 \end{impdetails}
 
 \subsection{Types}
@@ -252,6 +254,7 @@ While the system call is running, the thread's state is set to "Restart", so any
 
 >         (\oper -> do
 >             withoutPreemption $ setThreadState Restart thread
+>--             lift $ doMachineOp $ debugPrint $ "hsel:" ++ (show oper)
 >             reply <- performInvocation isBlocking isCall oper
 >             withoutPreemption $ do
 >                 state <- getThreadState thread

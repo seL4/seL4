@@ -245,7 +245,7 @@ createInitalThread, setup caps in initial thread, set idleThread to be the curre
 >       tcb' <- allocRegion tcbBits 
 >       let tcbPPtr = ptrFromPAddr tcb'
 >       doKernelOp $ do
->          placeNewObject tcbPPtr (makeObject::TCB) 0
+>          placeNewObject tcbPPtr initTCB 0
 >          srcSlot <- locateSlotCap rootCNCap biCapITCNode
 >          destSlot <- getThreadCSpaceRoot tcbPPtr 
 >          cteInsert rootCNCap srcSlot destSlot
@@ -349,10 +349,8 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 > provideCap rootCNodeCap cap = do
 >     currSlot <- noInitFailure $ gets initSlotPosCur
 >     maxSlot <- noInitFailure $ gets initSlotPosMax
-<<<<<<< HEAD
 >     when (currSlot >= maxSlot) $ throwError $ IFailure "cap slot number overflow"
 >     slot <- doKernelOp $ locateSlotCap rootCNodeCap currSlot
->>>>>>> Some fixes on kernel init and some progress on multi platform support
 >     doKernelOp $ insertInitCap slot cap
 >     noInitFailure $ modify (\st -> st { initSlotPosCur = currSlot + 1 })  
 

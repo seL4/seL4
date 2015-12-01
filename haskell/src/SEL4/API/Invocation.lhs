@@ -142,4 +142,3 @@ The following data type defines the set of possible invocations for IRQ capabili
 >             setIRQHandlerCap :: Capability,
 >             setIRQHandlerSlot :: PPtr CTE }
 >         deriving Show
-

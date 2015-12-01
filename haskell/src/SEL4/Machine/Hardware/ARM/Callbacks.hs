@@ -25,6 +25,9 @@ type MachineData = Ptr CallbackData
 newtype PAddr = PAddr { fromPAddr :: Word }
     deriving (Integral, Real, Show, Eq, Num, Bits, FiniteBits, Ord, Enum, Bounded)
 
+plusPtr :: PAddr -> Int -> PAddr
+plusPtr a b = a + (fromIntegral b)
+
 foreign import ccall unsafe "qemu_load_word_phys"
     loadWordCallback :: Ptr CallbackData -> PAddr -> IO Word
 

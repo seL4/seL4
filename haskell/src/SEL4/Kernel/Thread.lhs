@@ -358,6 +358,7 @@ lists using the TCBs themselves as nodes.
 >             assert runnable "Scheduled a non-runnable thread"
 >             switchToThread thread
 >         else
+>             error "trying to switch to idle thread"
 >             switchToIdleThread
 
 \subsubsection{Switching Threads}
@@ -604,6 +605,13 @@ If there is more than one security domain and the domain timeslice has expired, 
 >       decDomainTime
 >       domainTime <- getDomainTime
 >       when (domainTime == 0) $ rescheduleRequired
+
+\section{Kernel Init}
+
+Kernel init will created a initial thread whose tcbPriority is max priority.
+
+> initTCB = (makeObject::TCB){ tcbPriority=maxBound }
+
 
 %
 

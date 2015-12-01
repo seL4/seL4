@@ -16,6 +16,7 @@ import SEL4.Machine.RegisterSet
 import SEL4.Machine.Hardware.ARM.Callbacks
 import SEL4.Machine.Hardware.GICInterface hiding (IRQ, maskInterrupt)
 import qualified SEL4.Machine.Hardware.GICInterface as GIC
+import qualified SEL4.Machine.Hardware.MCTInterface as MCT
 import Foreign.Ptr
 import Data.Bits
 
@@ -29,6 +30,7 @@ gicDistributor = (PAddr 0x10490000, PPtr 0xfff05000)
 
 gicInterfaceBase = PAddr 0x10480000
 gicDistributorBase = PAddr 0x10490000
+mctBase = PAddr 0x10050000
 
 physBase = 0x40000000
 physMappingOffset = 0xe0000000 - physBase
@@ -47,13 +49,11 @@ getMemoryRegions _ = return [(0x40000000, 0x40000000 + (0x8 `shiftL` 24))]
 
 getDeviceRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
 getDeviceRegions _ = return devices
-    where devices = []
+    where devices = [(0x139D0000,0x139D0000 + (1 `shiftL` 12))]
 
 type IRQ = GIC.IRQ
 
-mctPPtr = PPtr 0xfff00000
-timerAddr = PAddr 0x53f94000
-timerIRQ = GIC.IRQ 28
+timerIRQ = GIC.IRQ 89
 
 
 getKernelDevices :: Ptr CallbackData -> IO [(PAddr, PPtr Word)]
@@ -84,13 +84,16 @@ foreign import ccall unsafe "qemu_run_devices"
 getActiveIRQ :: Ptr CallbackData -> IO (Maybe IRQ)
 getActiveIRQ env = do
     runDevicesCallback
-    callGICApi gicdata $ GIC.getActiveIRQ
+    active <- callGICApi gicdata $ GIC.getActiveIRQ
+    case active of 
+        Just 0x3FF -> return Nothing
+        _ -> return active
       where gicdata = GicState { env = env, 
         gicDistBase = gicDistributorBase,
         gicIFBase = gicInterfaceBase }
 
 
--- 1kHz tick; qemu's SP804s always run at 1MHz 
+-- FIXME: This is not accurate, need to check MCT Freq 
 timerFreq :: Word
 timerFreq = 100
 
@@ -98,9 +101,11 @@ timerLimit :: Word
 timerLimit = 1000000 `div` timerFreq
 
 configureTimer :: Ptr CallbackData -> IO IRQ
-configureTimer _ = do
-    -- enabled, periodic, interrupts enabled
+configureTimer env = do
+    MCT.callMCTApi mctdata $ MCT.mctInit 
     return timerIRQ
+      where mctdata = MCT.MCTState { MCT.env = env, 
+        MCT.mctBase = mctBase }
 
 initIRQController :: Ptr CallbackData -> IO ()
 initIRQController env = callGICApi gicdata $ GIC.initIRQController
@@ -109,7 +114,11 @@ initIRQController env = callGICApi gicdata $ GIC.initIRQController
     gicIFBase = gicInterfaceBase }
 
 resetTimer :: Ptr CallbackData -> IO ()
-resetTimer _ = return ()
+resetTimer env = do
+    MCT.callMCTApi mctdata $ MCT.resetTimer
+      where mctdata = MCT.MCTState { MCT.env = env, 
+        MCT.mctBase = mctBase }
+
 
 isbCallback :: Ptr CallbackData -> IO ()
 isbCallback _ = return ()
