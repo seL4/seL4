@@ -35,7 +35,7 @@ boxjoin();
 circleit.send("Reply"); send.dx = send.dy;
 send.w = kep.e + (15bp, 0bp);
 drawboxed(send);
-circleit.wait("Wait"); wait.dx = wait.dy;
+circleit.wait("Recv"); wait.dx = wait.dy;
 wait.c = (xpart send.c, ypart ko.c);
 drawboxed(wait);
 boxit.kernel();

@@ -9,20 +9,21 @@
 %
 
 \apidoc
-{sel4_wait}
-{Wait}
-{Perform a receive on a notification object.}
-{static inline void seL4\_Wait}
+{sel4_poll}
+{Poll}
+{Perform a non-blocking recv on a notification object.}
+{static inline void seL4\_Poll}
 {
 \param{seL4\_CPtr}{src}{\invokedcapdesc}
 \param{seL4\_Word*}{sender}{\senderdesc}
 }
 {\noret}
-{This is not a proper system call
+{
+This is not a proper system call
 known by the kernel. Rather, it is a convenience
 wrapper provided by the seL4 userland library which calls
-\apifunc{seL4\_Recv}{sel4_recv}.
+\apifunc{seL4\_NBRecv}{sel4_nbrecv}. It is
+useful for doing a non-blocking wait on a notification.
 
-See the description of \apifunc{seL4\_Recv}{sel4_recv} in \autoref{sec:sys_recv}
+See the description of \apifunc{seL4\_NBRecv}{sel4_nbrecv} in \autoref{sec:sys_nbrecv}
 }
-    

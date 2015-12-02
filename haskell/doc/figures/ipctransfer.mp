@@ -74,11 +74,11 @@ drawboxed(re, rf, rg);
 label.top("Recipient CSpace", re.n);
 drawarrow(rb.e{right} .. re.ne{dir 225});
 
-% Wait System Call
+% Recv System Call
 pair wsc;
 wsc = rf.e + (36bp, 0bp);
 drawarrow wsc--rf.e dashed withdots;
-label.rt("Wait", wsc);
+label.rt("Recv", wsc);
 
 % Endpoint
 boxjoin();

@@ -138,6 +138,17 @@ Determine the number of bits that this CNode can resolve.
 >         let levelBits = radixBits + guardBits
 >         assert (levelBits /= 0) "All CNodes must resolve bits"
 
+If the current CNode is valid, then locate the slot in it that contains the next capability to be visited.
+
+\begin{impdetails}
+This check is performed as soon as possible, so that the correctness conditions
+in locateSlotCap are checked.
+\end{impdetails}
+
+>         let offset = (fromCPtr capptr `shiftR` (bits-levelBits)) .&. 
+>                    (mask radixBits)
+>         slot <- withoutFailure $ locateSlotCap nodeCap offset
+
 Check that the guard does not resolve too many bits, and that it matches the expected value.
 
 >         let guard = (fromCPtr capptr `shiftR` (bits-guardBits)) .&. 
@@ -153,13 +164,6 @@ If the lookup has exceeded the expected depth, then the table is badly formed. I
 >         when (levelBits > bits) $ throw $ DepthMismatch {
 >             depthMismatchBitsLeft = bits,
 >             depthMismatchBitsFound = levelBits }
-
-If the current CNode is valid, then locate the slot in it that
-contains the next capability to be visited.
-
->         let offset = (fromCPtr capptr `shiftR` (bits-levelBits)) .&. 
->                    (mask radixBits)
->         slot <- withoutFailure $ locateSlot (capCNodePtr nodeCap) offset
 
 If all of the remaining bits in the address have been resolved, then
 "slot" is the final result.

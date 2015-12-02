@@ -23,7 +23,7 @@ We use the C preprocessor to select a target architecture.
 \begin{impdetails}
 
 % {-# BOOT-IMPORTS: SEL4.Model SEL4.Machine SEL4.Object.Structures SEL4.Object.Instances() SEL4.API.Types #-}
-% {-# BOOT-EXPORTS: setDomain setPriority getThreadState setThreadState setBoundAEP getBoundAEP doIPCTransfer isRunnable restart suspend  doReplyTransfer attemptSwitchTo switchIfRequiredTo tcbSchedEnqueue tcbSchedDequeue rescheduleRequired timerTick #-}
+% {-# BOOT-EXPORTS: setDomain setPriority getThreadState setThreadState setBoundNotification getBoundNotification doIPCTransfer isRunnable restart suspend  doReplyTransfer attemptSwitchTo switchIfRequiredTo tcbSchedEnqueue tcbSchedDequeue rescheduleRequired timerTick #-}
 
 > import SEL4.Config
 > import SEL4.API.Types
@@ -100,7 +100,7 @@ The following functions are used by the scheduler to determine whether a particu
 >             Inactive -> True
 >             BlockedOnReceive {} -> True
 >             BlockedOnSend {} -> True
->             BlockedOnAsyncEvent {} -> True
+>             BlockedOnNotification {} -> True
 >             BlockedOnReply -> True
 >             _ -> False
 
@@ -120,7 +120,7 @@ When a thread is suspended, either explicitly by a TCB invocation or implicitly 
 
 > suspend :: PPtr TCB -> Kernel ()
 > suspend target = do
->     ipcCancel target
+>     cancelIPC target
 >     setThreadState Inactive target
 >     tcbSchedDequeue target
 
@@ -134,7 +134,7 @@ The invoked thread will return to the instruction that caused it to enter the ke
 > restart target = do
 >     blocked <- isBlocked target
 >     when blocked $ do
->         ipcCancel target
+>         cancelIPC target
 >         setupReplyMaster target
 >         setThreadState Restart target
 >         tcbSchedEnqueue target
@@ -168,7 +168,7 @@ If the sent message is a fault IPC, the stored fault is transferred.
 >             Just _ -> do
 >                 doFaultTransfer badge sender receiver receiveBuffer
 
-Replies sent by the "Reply" and "ReplyWait" system calls can either be normal IPC replies, or fault replies. In the former case, the transfer is the same as for an IPC send, but there is never a fault, capability grants are always allowed, the badge is always 0, and capabilities are never received with diminished rights.
+Replies sent by the "Reply" and "ReplyRecv" system calls can either be normal IPC replies, or fault replies. In the former case, the transfer is the same as for an IPC send, but there is never a fault, capability grants are always allowed, the badge is always 0, and capabilities are never received with diminished rights.
 
 > doReplyTransfer :: PPtr TCB -> PPtr TCB -> PPtr CTE -> Kernel ()
 > doReplyTransfer sender receiver slot = do
@@ -288,9 +288,9 @@ This function is called when an IPC message includes a capability to transfer. I
 >        miCapUnfolded = mi { msgCapsUnwrapped = msgCapsUnwrapped mi .|. bit n}
 >        (cap, srcSlot) = arg
 
-\subsubsection{Asynchronous IPC}
+\subsubsection{Notification Objects}
 
-In the case of asynchronous IPC, the message from the asynchronous endpoint's message buffer is loaded into the receiver's IPC buffer.
+In the case of notification, the badge from the notification object's data word is loaded into the receiver's badge.
 
 \subsection{Scheduling}
 
@@ -483,13 +483,13 @@ When setting the scheduler state, we check for blocking of the current thread; i
 >         when (not runnable && curThread == tptr && action == ResumeCurrentThread) $
 >             rescheduleRequired
 
-\subsubsection{Bound AEPs}
+\subsubsection{Bound Notificaion objects}
 
-> getBoundAEP :: PPtr TCB -> Kernel (Maybe (PPtr AsyncEndpoint))
-> getBoundAEP = threadGet tcbBoundAEP
+> getBoundNotification :: PPtr TCB -> Kernel (Maybe (PPtr Notification))
+> getBoundNotification = threadGet tcbBoundNotification
 
-> setBoundAEP :: Maybe (PPtr AsyncEndpoint) -> PPtr TCB -> Kernel ()
-> setBoundAEP aepptr tptr = threadSet (\t -> t { tcbBoundAEP = aepptr }) tptr
+> setBoundNotification :: Maybe (PPtr Notification) -> PPtr TCB -> Kernel ()
+> setBoundNotification ntfnPtr tptr = threadSet (\t -> t { tcbBoundNotification = ntfnPtr }) tptr
 
 \subsubsection{Scheduler Queue Manipulation}
 

@@ -15,9 +15,10 @@
 #include <arch/fastpath/fastpath.h>
 
 #include <api/syscall.h>
+#include <util.h>
 
-void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_context(void);
-void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_context(void)
+void NORETURN VISIBLE restore_user_context(void);
+void NORETURN VISIBLE restore_user_context(void)
 {
     /* set the tss.esp0 */
     tss_ptr_set_esp0(&ia32KStss, ((uint32_t)ksCurThread) + 0x4c);
@@ -113,8 +114,8 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_
     while (1);
 }
 
-void __attribute__((fastcall)) __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall);
-void __attribute__((fastcall)) __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall)
+void FASTCALL VISIBLE c_handle_interrupt(int irq, int syscall);
+void FASTCALL VISIBLE c_handle_interrupt(int irq, int syscall)
 {
     if (irq == int_unimpl_dev) {
         handleUnimplementedDevice();
@@ -141,7 +142,7 @@ void __attribute__((fastcall)) __attribute__((externally_visible)) c_handle_inte
     restore_user_context();
 }
 
-void __attribute__((noreturn))
+void NORETURN
 slowpath(syscall_t syscall)
 {
     ia32KScurInterrupt = -1;
@@ -156,14 +157,14 @@ slowpath(syscall_t syscall)
     restore_user_context();
 }
 
-void __attribute__((externally_visible)) c_handle_syscall(syscall_t syscall, word_t cptr, word_t msgInfo);
-void __attribute__((externally_visible)) c_handle_syscall(syscall_t syscall, word_t cptr, word_t msgInfo)
+void VISIBLE c_handle_syscall(syscall_t syscall, word_t cptr, word_t msgInfo);
+void VISIBLE c_handle_syscall(syscall_t syscall, word_t cptr, word_t msgInfo)
 {
 #ifdef FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);
-    } else if (syscall == SysReplyWait) {
-        fastpath_reply_wait(cptr, msgInfo);
+    } else if (syscall == SysReplyRecv) {
+        fastpath_reply_recv(cptr, msgInfo);
     }
 #endif
 

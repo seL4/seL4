@@ -470,8 +470,8 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
     case seL4_ARM_PageTableObject:
         memzero(regionBase, 1 << (PTE_SIZE_BITS + PT_BITS));
-        /** AUXUPD: "(True, ptr_retyps 256
-              (Ptr (ptr_val \<acute>regionBase) :: pte_C ptr))" */
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[256]) ptr))" */
         cleanCacheRange_PoU((word_t)regionBase,
                             (word_t)regionBase + (1 << (PT_BITS + PTE_SIZE_BITS)) - 1,
                             addrFromPPtr(regionBase));
@@ -481,8 +481,8 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
     case seL4_ARM_PageDirectoryObject:
         memzero(regionBase, 1 << (PDE_SIZE_BITS + PD_BITS));
-        /** AUXUPD: "(True, ptr_retyps 4096
-              (Ptr (ptr_val \<acute>regionBase) :: pde_C ptr))" */
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pde_C[4096]) ptr))" */
         copyGlobalMappings((pde_t *)regionBase);
         cleanCacheRange_PoU((word_t)regionBase,
                             (word_t)regionBase + (1 << (PD_BITS + PDE_SIZE_BITS)) - 1,

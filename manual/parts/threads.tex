@@ -157,9 +157,8 @@ invalid capabilities silently fail). In this case, the capability
 on which the fault occurred may be the capability being invoked or an
 extra capability passed in the \texttt{caps} field in the IPC buffer.
 
-Secondly, a capability fault can occur when \apifunc{seL4\_Wait}{sel4_wait} is
-called on a capability that
-does not exist, is not an endpoint or notification capability or does not have
+Secondly, a capability fault can occur when \apifunc{seL4\_Recv}{sel4_recv} or \apifunc{seL4\_NBRecv}{sel4_nbrecv}
+is called on a capability that does not exist, is not an endpoint or notification capability or does not have
 receive permissions.
 
 Replying to the fault IPC will restart the faulting thread. The contents of the
@@ -172,7 +171,7 @@ IPC message are given in \autoref{tbl:ipc_contents}.\\
 \midrule
 Address at which to restart execution & \ipcbloc{IPCBuffer[0]} \\
 Capability address & \ipcbloc{IPCBuffer[1]}\\
-In receive phase (1 if the fault happened during a wait system call, 0
+In receive phase (1 if the fault happened during a receive system call, 0
 otherwise) & \ipcbloc{IPCBuffer[2]}\\
 Lookup failure description. As described in \autoref{sec:lookup_fail_desc} &
 \ipcbloc{IPCBuffer[3..]}\\

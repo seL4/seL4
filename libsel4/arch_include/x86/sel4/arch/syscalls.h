@@ -160,14 +160,8 @@ seL4_Signal(seL4_CPtr dest)
     );
 }
 
-static inline void __attribute__((deprecated("use seL4_Signal")))
-seL4_Notify(seL4_CPtr dest,  __attribute__((unused)) seL4_Word msg)
-{
-    seL4_Signal(dest);
-}
-
 static inline seL4_MessageInfo_t
-seL4_Wait(seL4_CPtr src, seL4_Word* sender)
+seL4_Recv(seL4_CPtr src, seL4_Word* sender)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -187,7 +181,7 @@ seL4_Wait(seL4_CPtr src, seL4_Word* sender)
         "=S" (info.words[0]),
         "=D" (mr0),
         "=c" (mr1)
-        : "a" (seL4_SysWait),
+        : "a" (seL4_SysRecv),
         "b" (src)
         : "%edx", "memory"
     );
@@ -202,8 +196,14 @@ seL4_Wait(seL4_CPtr src, seL4_Word* sender)
     return info;
 }
 
+static inline void
+seL4_Wait(seL4_CPtr src, seL4_Word *sender)
+{
+    seL4_Recv(src, sender);
+}
+
 static inline seL4_MessageInfo_t
-seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
+seL4_RecvWithMRs(seL4_CPtr src, seL4_Word* sender,
                  seL4_Word *mr0, seL4_Word *mr1)
 {
     seL4_MessageInfo_t info;
@@ -224,7 +224,7 @@ seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
         "=S" (info.words[0]),
         "=D" (msg0),
         "=c" (msg1)
-        : "a" (seL4_SysWait),
+        : "a" (seL4_SysRecv),
         "b" (src)
         : "%edx", "memory"
     );
@@ -244,7 +244,7 @@ seL4_WaitWithMRs(seL4_CPtr src, seL4_Word* sender,
 }
 
 static inline seL4_MessageInfo_t
-seL4_NBWait(seL4_CPtr src, seL4_Word* sender)
+seL4_NBRecv(seL4_CPtr src, seL4_Word* sender)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -264,7 +264,7 @@ seL4_NBWait(seL4_CPtr src, seL4_Word* sender)
         "=S" (info.words[0]),
         "=D" (mr0),
         "=c" (mr1)
-        : "a" (seL4_SysNBWait),
+        : "a" (seL4_SysNBRecv),
         "b" (src)
         : "%edx", "memory"
     );
@@ -277,6 +277,12 @@ seL4_NBWait(seL4_CPtr src, seL4_Word* sender)
     }
 
     return info;
+}
+
+static inline seL4_MessageInfo_t
+seL4_Poll(seL4_CPtr src, seL4_Word *sender)
+{
+    return seL4_NBRecv(src, sender);
 }
 
 static inline seL4_MessageInfo_t
@@ -362,7 +368,7 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
 }
 
 static inline seL4_MessageInfo_t
-seL4_ReplyWait(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
+seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -383,7 +389,7 @@ seL4_ReplyWait(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
         "=S" (info.words[0]),
         "=D" (mr0),
         "=c" (mr1)
-        : "a" (seL4_SysReplyWait),
+        : "a" (seL4_SysReplyRecv),
         "b" (dest),
         "S" (msgInfo.words[0]),
         "D" (mr0),
@@ -402,7 +408,7 @@ seL4_ReplyWait(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
 }
 
 static inline seL4_MessageInfo_t
-seL4_ReplyWaitWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
+seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
                       seL4_Word *mr0, seL4_Word *mr1)
 {
     seL4_MessageInfo_t info;
@@ -431,7 +437,7 @@ seL4_ReplyWaitWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
         "=S" (info.words[0]),
         "=D" (msg0),
         "=c" (msg1)
-        : "a" (seL4_SysReplyWait),
+        : "a" (seL4_SysReplyRecv),
         "b" (dest),
         "S" (msgInfo.words[0]),
         "D" (msg0),

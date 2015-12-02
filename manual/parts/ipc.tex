@@ -150,8 +150,8 @@ synchronous and blocking. An \obj{Endpoint} object  may queue
 threads either to send or to receive. If no receiver is ready, threads
 performing the \apifunc{seL4\_Send}{sel4_send} or \apifunc{seL4\_Call}{sel4_call}
 system calls will wait in a queue for the first available receiver. Likewise, if
-no sender is ready, threads performing the \apifunc{seL4\_Wait}{sel4_wait}
-system call or the second half of \apifunc{seL4\_ReplyWait}{sel4_replywait}
+no sender is ready, threads performing the \apifunc{seL4\_Recv}{sel4_recv}
+system call or the second half of \apifunc{seL4\_ReplyRecv}{sel4_replyrecv}
 will wait for the first available sender.
 
 \subsection{Endpoint Badges\label{s:ep-badge}}
@@ -239,9 +239,9 @@ conditions are:
     no longer be valid.
 
     \item The destination slot cannot be looked up. Unlike the send
-    system call, the \apifunc{seL4\_Wait}{sel4_wait} system call does not check that the
-    destination slot exists and is empty before it initiates the wait.
-    Hence, the \apifunc{seL4\_Wait}{sel4_wait} system call will not fail with an error if the
+    system call, the \apifunc{seL4\_Recv}{sel4_recv} system call does not check that the
+    destination slot exists and is empty before it initiates the receive.
+    Hence, the \apifunc{seL4\_Recv}{sel4_recv} system call will not fail with an error if the
     destination slot is invalid and will instead transfer badged
     capabilities until an attempt to save a capability to the
     destination slot is made.

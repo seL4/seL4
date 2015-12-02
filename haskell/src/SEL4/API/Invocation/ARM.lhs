@@ -41,40 +41,31 @@ There are five ARM-specific object types; however, only four of them may be invo
 >     deriving Show
 
 > data PageTableInvocation
->     = PageTableMap {
+>     = PageTableUnmap {
+>         ptUnmapCap :: ArchCapability,
+>         ptUnmapCapSlot :: PPtr CTE }
+>     | PageTableMap {
 >         ptMapCap :: Capability,
 >         ptMapCTSlot :: PPtr CTE,
 >         ptMapPDE :: PDE,
 >         ptMapPDSlot :: PPtr PDE }
->     | PageTableUnmap {
->         ptUnmapCap :: ArchCapability,
->         ptUnmapCapSlot :: PPtr CTE }
 >     deriving Show
 
 > data PageDirectoryInvocation
->     = PageDirectoryFlush {
+>     = PageDirectoryNothing
+>     | PageDirectoryFlush {
 >         pdFlushType :: FlushType,
 >         pdFlushStart :: VPtr,
 >         pdFlushEnd :: VPtr,
 >         pdFlushPStart :: PAddr,
 >         pdFlushPD :: PPtr PDE,
 >         pdFlushASID :: ASID }
->     | PageDirectoryNothing
 >     deriving Show
 
 > -- FIXME: should we consolidate start, end into a tuple
 > data PageInvocation
->     = PageMap {
->         pageMapASID :: ASID,
->         pageMapCap :: Capability,
->         pageMapCTSlot :: PPtr CTE,
->         pageMapEntries :: Either (PTE, [PPtr PTE]) (PDE, [PPtr PDE]) }
->     | PageRemap {
->         pageRemapASID :: ASID,
->         pageRemapEntries :: Either (PTE, [PPtr PTE]) (PDE, [PPtr PDE]) }
->     | PageUnmap {
->         pageUnmapCap :: ArchCapability,
->         pageUnmapCapSlot :: PPtr CTE }
+>     = PageGetAddr {
+>         pageGetBasePtr :: PPtr Word }
 >     | PageFlush {
 >         pageFlushType :: FlushType,
 >         pageFlushStart :: VPtr,
@@ -82,8 +73,17 @@ There are five ARM-specific object types; however, only four of them may be invo
 >         pageFlushPStart :: PAddr,
 >         pageFlushPD :: PPtr PDE,
 >         pageFlushASID :: ASID } 
->     | PageGetAddr {
->         pageGetBasePtr :: PPtr Word }
+>     | PageRemap {
+>         pageRemapASID :: ASID,
+>         pageRemapEntries :: Either (PTE, [PPtr PTE]) (PDE, [PPtr PDE]) }
+>     | PageMap {
+>         pageMapASID :: ASID,
+>         pageMapCap :: Capability,
+>         pageMapCTSlot :: PPtr CTE,
+>         pageMapEntries :: Either (PTE, [PPtr PTE]) (PDE, [PPtr PDE]) }
+>     | PageUnmap {
+>         pageUnmapCap :: ArchCapability,
+>         pageUnmapCapSlot :: PPtr CTE }
 >     deriving Show
 
 > data FlushType

@@ -9,14 +9,14 @@
 %
 
 \apidoc
-{sel4_replywait}
-{Reply Wait}
-{Perform a reply followed by a wait in one system call}
-{static inline seL4\_MessageInfo\_t seL4\_ReplyWait}
+{sel4_replyrecv}
+{Reply Recv}
+{Perform a reply followed by a recv in one system call}
+{static inline seL4\_MessageInfo\_t seL4\_ReplyRecv}
 {
 \param{seL4\_CPtr}{dest}{\invokedcapdesc}
 \param{seL4\_MessageInfo\_t}{msgInfo}{\messageinfodesc}
 \param{seL4\_Word*}{sender}{\senderdesc}
 }
 {\messageinforetdesc}
-{See \autoref{sec:sys_replywait}}
+{See \autoref{sec:sys_replyrecv}}

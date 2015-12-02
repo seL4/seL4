@@ -20,7 +20,7 @@
  * assumptions. Because compile_asserts are hard to do in assembler,
  * we place them here */
 compile_assert(SysCall_Minus1, SysCall == -1)
-compile_assert(SysReplyWait_Minus2, SysReplyWait == -2)
+compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 
 /** DONT_TRANSLATE */
 static inline void
@@ -120,8 +120,8 @@ VISIBLE NORETURN;
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 VISIBLE NORETURN SECTION(".vectors.fastpath_call");
 
-void fastpath_reply_wait(word_t cptr, word_t r_msgInfo)
-VISIBLE NORETURN SECTION(".vectors.fastpath_reply_wait");
+void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
+VISIBLE NORETURN SECTION(".vectors.fastpath_reply_recv");
 
 #endif
 

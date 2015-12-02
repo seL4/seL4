@@ -34,7 +34,7 @@ isBlocked(const tcb_t *thread)
     case ThreadState_Inactive:
     case ThreadState_BlockedOnReceive:
     case ThreadState_BlockedOnSend:
-    case ThreadState_BlockedOnAsyncEvent:
+    case ThreadState_BlockedOnNotification:
     case ThreadState_BlockedOnReply:
         return true;
 
@@ -91,7 +91,7 @@ activateThread(void)
 void
 suspend(tcb_t *target)
 {
-    ipcCancel(target);
+    cancelIPC(target);
     setThreadState(target, ThreadState_Inactive);
     tcbSchedDequeue(target);
 }
@@ -100,7 +100,7 @@ void
 restart(tcb_t *target)
 {
     if (isBlocked(target)) {
-        ipcCancel(target);
+        cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
         tcbSchedEnqueue(target);
@@ -261,7 +261,7 @@ transferCaps(message_info_t info, extra_caps_t caps,
     return message_info_set_msgExtraCaps(info, i);
 }
 
-void doNBWaitFailedTransfer(tcb_t *thread)
+void doNBRecvFailedTransfer(tcb_t *thread)
 {
     /* Set the badge register to 0 to indicate there was no message */
     setRegister(thread, badgeRegister, 0);

@@ -65,9 +65,9 @@ thread_state_ptr_set_tsType_np(thread_state_t *ts_ptr, word_t tsType)
 }
 
 static inline void
-thread_state_ptr_mset_blockingIPCEndpoint_tsType(thread_state_t *ts_ptr,
-                                                 word_t ep_ref,
-                                                 word_t tsType)
+thread_state_ptr_mset_blockingObject_tsType(thread_state_t *ts_ptr,
+                                            word_t ep_ref,
+                                            word_t tsType)
 {
     ts_ptr->words[0] = ep_ref | tsType;
 }

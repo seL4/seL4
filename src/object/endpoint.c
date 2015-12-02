@@ -13,7 +13,7 @@
 #include <kernel/vspace.h>
 #include <machine/registerset.h>
 #include <model/statedata.h>
-#include <object/asyncendpoint.h>
+#include <object/notification.h>
 #include <object/cnode.h>
 #include <object/endpoint.h>
 #include <object/tcb.h>
@@ -49,7 +49,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             /* Set thread state to BlockedOnSend */
             thread_state_ptr_set_tsType(&thread->tcbState,
                                         ThreadState_BlockedOnSend);
-            thread_state_ptr_set_blockingIPCEndpoint(
+            thread_state_ptr_set_blockingObject(
                 &thread->tcbState, EP_REF(epptr));
             thread_state_ptr_set_blockingIPCBadge(
                 &thread->tcbState, badge);
@@ -115,7 +115,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 {
     endpoint_t *epptr;
     bool_t diminish;
-    async_endpoint_t *aepptr;
+    notification_t *ntfnPtr;
 
     /* Haskell error "receiveIPC: invalid cap" */
     assert(cap_get_capType(cap) == cap_endpoint_cap);
@@ -123,10 +123,10 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
     epptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
     diminish = !cap_endpoint_cap_get_capCanSend(cap);
 
-    /* Check for anything waiting in the async endpoint*/
-    aepptr = thread->boundAsyncEndpoint;
-    if (aepptr && async_endpoint_ptr_get_state(aepptr) == AEPState_Active) {
-        completeAsyncIPC(aepptr, thread);
+    /* Check for anything waiting in the notification */
+    ntfnPtr = thread->tcbBoundNotification;
+    if (ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
+        completeSignal(ntfnPtr, thread);
     } else {
         switch (endpoint_ptr_get_state(epptr)) {
         case EPState_Idle:
@@ -137,7 +137,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 /* Set thread state to BlockedOnReceive */
                 thread_state_ptr_set_tsType(&thread->tcbState,
                                             ThreadState_BlockedOnReceive);
-                thread_state_ptr_set_blockingIPCEndpoint(
+                thread_state_ptr_set_blockingObject(
                     &thread->tcbState, EP_REF(epptr));
                 thread_state_ptr_set_blockingIPCDiminishCaps(
                     &thread->tcbState, diminish);
@@ -150,7 +150,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 endpoint_ptr_set_state(epptr, EPState_Recv);
                 ep_ptr_set_queue(epptr, queue);
             } else {
-                doNBWaitFailedTransfer(thread);
+                doNBRecvFailedTransfer(thread);
             }
             break;
         }
@@ -228,7 +228,7 @@ replyFromKernel_success_empty(tcb_t *thread)
 }
 
 void
-ipcCancel(tcb_t *tptr)
+cancelIPC(tcb_t *tptr)
 {
     thread_state_t *state = &tptr->tcbState;
 
@@ -239,7 +239,7 @@ ipcCancel(tcb_t *tptr)
         endpoint_t *epptr;
         tcb_queue_t queue;
 
-        epptr = EP_PTR(thread_state_ptr_get_blockingIPCEndpoint(state));
+        epptr = EP_PTR(thread_state_ptr_get_blockingObject(state));
 
         /* Haskell error "blockedIPCCancel: endpoint must not be idle" */
         assert(endpoint_ptr_get_state(epptr) != EPState_Idle);
@@ -257,9 +257,9 @@ ipcCancel(tcb_t *tptr)
         break;
     }
 
-    case ThreadState_BlockedOnAsyncEvent:
-        asyncIPCCancel(tptr,
-                       AEP_PTR(thread_state_ptr_get_blockingIPCEndpoint(state)));
+    case ThreadState_BlockedOnNotification:
+        cancelSignal(tptr,
+                     NTFN_PTR(thread_state_ptr_get_blockingObject(state)));
         break;
 
     case ThreadState_BlockedOnReply: {
@@ -283,7 +283,7 @@ ipcCancel(tcb_t *tptr)
 }
 
 void
-epCancelAll(endpoint_t *epptr)
+cancelAllIPC(endpoint_t *epptr)
 {
     switch (endpoint_ptr_get_state(epptr)) {
     case EPState_Idle:
@@ -310,7 +310,7 @@ epCancelAll(endpoint_t *epptr)
 }
 
 void
-epCancelBadgedSends(endpoint_t *epptr, word_t badge)
+cancelBadgedSends(endpoint_t *epptr, word_t badge)
 {
     switch (endpoint_ptr_get_state(epptr)) {
     case EPState_Idle:

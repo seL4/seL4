@@ -20,6 +20,9 @@
 #include <arch/machine/registerset.h>
 
 /* Object sizes */
+#define EP_SIZE_BITS  4
+#define NTFN_SIZE_BITS 4
+#define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS+1)
 typedef struct arch_tcb {
     /* saved user-level context of thread (72 bytes) */
@@ -378,7 +381,7 @@ cap_get_archCapPtr(cap_t cap)
  */
 enum { pte_pte_invalid = 2 };
 
-static inline uint32_t __attribute__((__const__))
+static inline uint32_t CONST
 pte_get_pteType(pte_t pte)
 {
     if (pte_get_pteSize(pte) == pte_pte_small) {
@@ -390,7 +393,7 @@ pte_get_pteType(pte_t pte)
     }
 }
 
-static inline uint32_t __attribute__((__pure__))
+static inline uint32_t PURE
 pte_ptr_get_pteType(pte_t *pte_ptr)
 {
     if (pte_ptr_get_pteSize(pte_ptr) == pte_pte_small) {

@@ -152,7 +152,7 @@ Configure the physical address space model. This is an implementation detail spe
 >         initPSpace $ map (\(s, e) -> (ptrFromPAddr s, ptrFromPAddr e))
 >                          allMemory
 
-Warning: Currenlty we assume that the bootFrames (probably get from qemu) is always []
+Warning: Currently we assume that the bootFrames (probably get from qemu) is always []
 
 Warning: We used to reserve the PSpace regions used by the kernel and the root task. This must be done first, since some of these reserved regions will be turned into kernel objects by "initKernelVM", below. Again, this is specific to the Haskell model's implementation and is not relevant on real hardware.
 
@@ -168,7 +168,7 @@ Set up the kernel's VM environment.
 \end{impdetails}
 
 \begin{impdetails}
-FIXME: is the follwing still necessary in haskell?
+FIXME: is the following still necessary in haskell?
 
 >         initCPU
 >         initPlatform
@@ -210,7 +210,7 @@ Set the NullCaps in BIFrame
 
 >                 finaliseBIFrame
 
-Searilize BIFrame into memory 
+Serialize BIFrame into memory 
 
 >                 syncBIFrame
 
@@ -237,7 +237,7 @@ We should clean cache, but we did not have a good interface so far.
 >         either (\_ -> fail $ "initFailure") return result
 >     return ()
 
-createInitalThread, setup caps in initial thread, set idleThread to be the curerntThread and switch to the initialThread.
+createInitalThread, setup caps in initial thread, set idleThread to be the currentThread and switch to the initialThread.
 
 > createInitialThread :: Capability -> Capability -> Capability -> VPtr -> VPtr -> VPtr-> KernelInit ()
 > createInitialThread rootCNCap itPDCap ipcBufferCap entry ipcBufferVPtr biFrameVPtr = do
@@ -246,13 +246,13 @@ createInitalThread, setup caps in initial thread, set idleThread to be the curer
 >       let tcbPPtr = ptrFromPAddr tcb'
 >       doKernelOp $ do
 >          placeNewObject tcbPPtr (makeObject::TCB) 0
->          srcSlot <- locateSlot (capCNodePtr rootCNCap) biCapITCNode
+>          srcSlot <- locateSlotCap rootCNCap biCapITCNode
 >          destSlot <- getThreadCSpaceRoot tcbPPtr 
 >          cteInsert rootCNCap srcSlot destSlot
->          srcSlot <- locateSlot (capCNodePtr rootCNCap) biCapITPD
+>          srcSlot <- locateSlotCap rootCNCap biCapITPD
 >          destSlot <- getThreadVSpaceRoot tcbPPtr
 >          cteInsert itPDCap srcSlot destSlot
->          srcSlot <- locateSlot (capCNodePtr rootCNCap) biCapITIPCBuf
+>          srcSlot <- locateSlotCap rootCNCap biCapITIPCBuf
 >          destSlot <- getThreadBufferSlot tcbPPtr
 >          cteInsert ipcBufferCap srcSlot destSlot
 >          threadSet (\t-> t{tcbIPCBuffer = ipcBufferVPtr}) tcbPPtr 
@@ -262,7 +262,7 @@ createInitalThread, setup caps in initial thread, set idleThread to be the curer
 Insert thread into rootCNodeCap 
 
 >          cap <- return $ ThreadCap tcbPPtr 
->          slot <- locateSlot (capCNodePtr rootCNCap) biCapITTCB
+>          slot <- locateSlotCap rootCNCap biCapITTCB
 >          insertInitCap slot cap
 >       return ()
 
@@ -339,7 +339,7 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 
 >       rootCNCap <- doKernelOp $ createObject (fromAPIType CapTableObject) frame levelBits
 >       rootCNCap <- return $ rootCNCap {capCNodeGuardSize = 32 - levelBits}
->       slot <- doKernelOp $ locateSlot (capCNodePtr rootCNCap) biCapITCNode
+>       slot <- doKernelOp $ locateSlotCap rootCNCap biCapITCNode
 >       doKernelOp $ insertInitCap slot rootCNCap
 >       return rootCNCap 
 
@@ -349,7 +349,7 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 >     currSlot <- noInitFailure $ gets initSlotPosCur
 >     maxSlot <- noInitFailure $ gets initSlotPosMax
 >     when (currSlot >= maxSlot) $ throwError InitFailure
->     slot <- doKernelOp $ locateSlot (capCNodePtr rootCNodeCap) currSlot
+>     slot <- doKernelOp $ locateSlotCap rootCNodeCap currSlot
 >     doKernelOp $ insertInitCap slot cap
 >     noInitFailure $ modify (\st -> st { initSlotPosCur = currSlot + 1 })  
 

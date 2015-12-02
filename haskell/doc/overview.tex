@@ -38,14 +38,9 @@ capability has been created, its contents are only visible to the kernel.
 \subsection{Capability Invocation}
 
 Capabilities may be \emph{invoked} by passing their CSpace addresses to one of
-the kernel's two basic operations --- \emph{Send} and \emph{Wait}. The former
+the kernel's two basic operations --- \emph{Send} and \emph{Recv}. The former
 is used to send a message to the object represented by the capability, and the
 latter to wait for a reply.
-
-All communication channels in seL4 are one-way; under normal circumstances, a
-user-level thread will never perform both Send and Wait operations using a
-single capability. In fact, many capabilities will only allow one of these two
-operations, and attempting to perform the other will fail.
 
 The potential recipients or senders of a message through an invoked capability
 depend on the type of the kernel object that the capability refers to. For
@@ -57,15 +52,15 @@ messages may also be sent to other user-level threads.
 The basic inter-process communication (or \emph{IPC}) operation is coordinated
 using \emph{endpoint} objects. An endpoint is a small kernel object which
 contains a queue of threads, and a state flag that indicates whether the
-threads in the queue are waiting for Send operations or Wait operations. It
+threads in the queue are waiting for Send operations or Recv operations. It
 acts as a one-way channel for communication between one or more senders and
 one or more recipients. Unlike previous versions of L4, the global identities
 of the participants in IPC are not exposed; threads send and receive IPC using
 only the local addresses of their endpoints.
 
-Multiple threads may perform Send or Wait operations on the same endpoint.
+Multiple threads may perform Send or Recv operations on the same endpoint.
 When a pair of threads invoke an endpoint, performing a Send operation and a
-Wait operation respectively, the kernel will perform a \emph{message transfer}
+Recv operation respectively, the kernel will perform a \emph{message transfer}
 between them. Threads which cannot immediately be paired are suspended until a
 partner arrives. If multiple threads are suspended on one endpoint, the
 kernel's algorithm for choosing a thread to resume is not specified, but
@@ -141,7 +136,7 @@ truncation of all of its messages.
 
 The message words can be used to transfer arbitrary untyped data. However, since seL4 capabilities are opaque to user threads, a user thread cannot use message words to transfer capabilities to another thread. The kernel provides a small number of \emph{capability registers} in the IPC buffer; if there are valid capability pointers in those registers, and the sender indicates that the message includes capabilities, then the kernel will send the capabilities along with the message. There are two slightly different motivations for sending a capability along with a message; are two corresponding mechanisms for receiving them at the other end. 
 
-An obvious reason to send a capability is to allow the receiver to invoke it in future. For example, a client may send an asynchronous endpoint capability to a server, to be used for notifications when asynchronous operations complete; or a server may return a capability representing a newly created object. For such capabilities, the receiver must specify a CSpace slot that the capability can be copied into; this is done by setting fields in the IPC buffer that correspond to the destination arguments of a CNode Copy operation (see \autoref{sec:overview.cspace.cnodes}).
+An obvious reason to send a capability is to allow the receiver to invoke it in future. For example, a client may send a notification capability to a server, to be used for notifications when asynchronous operations complete; or a server may return a capability representing a newly created object. For such capabilities, the receiver must specify a CSpace slot that the capability can be copied into; this is done by setting fields in the IPC buffer that correspond to the destination arguments of a CNode Copy operation (see \autoref{sec:overview.cspace.cnodes}).
 
 Sometimes, however, a capability is sent solely to prove to the receiver that the sender holds it. This is the case when an operation is being performed that affects two or more objects that are implemented by the same server. In this case, there is no reason to transfer real copies of the capability arguments to the receiver. Therefore, if any of the capability arguments refer to the same endpoint that is being used to send the message, the kernel copies the capability's badge into the receiver's corresponding capability register instead of copying the capability itself.
 
@@ -161,14 +156,14 @@ A non-blocking invocation
 will not fail or fault if the invoked capability is absent, and will not
 suspend the sender if no partner is waiting on the endpoint. It is the
 untrusted recipient's responsibility to provide a valid endpoint capability
-and to perform a Wait operation on it before the message is sent; otherwise
+and to perform a Recv operation on it before the message is sent; otherwise
 the message will be silently dropped. The kernel does not inform the sender
 that the non-blocking invocation has been dropped, as doing so would open a
 covert channel.
 
 \subsubsection{Calls and Replies}
 
-Synchronous IPC is often used to implement remote procedure calls (or \emph{RPC}). In order to simplify the process of sending and replying to RPC, the kernel provides special versions of the Send and Wait operations designed specifically for use on the client and server sides of an RPC interface.
+IPC is often used to implement remote procedure calls (or \emph{RPC}). In order to simplify the process of sending and replying to RPC, the kernel provides special versions of the Send and Recv operations designed specifically for use on the client and server sides of an RPC interface.
 
 To send an RPC, the client marshals arguments in the same way as for an ordinary Send operation, and then performs a \emph{Call} operation. The only difference between Send and Call is that when the message is transferred, a Call will block the sending thread, create a \emph{resume capability} that wakes the sender when invoked, and transfer it to a special slot belonging to the receiving thread: the \emph{caller slot}. This transfer is subject to the same restrictions as an explicit capability transfer: it only happens if the sender possesses the grant right for the endpoint, and the receiver must have the send right on the endpoint or it will receive a read-only capability (which in this case is effectively a null capability).
 
@@ -178,7 +173,7 @@ When the resume capability is invoked --- either when the receiver uses Reply, o
 
 The Reply operation is always non-blocking. If the resume capability is not valid --- because the sender used Send rather than Call, the sender has already been resumed, the resume capability has been saved in the CSpace, or even if there has never been a sender yet --- then the Reply operation does nothing.
 
-Servers generally run a loop which waits for a message, handles the received message, sends a reply and then returns to waiting. To avoid excessive switching between user and kernel modes, the kernel provides a \emph{ReplyWait} operation, which is simply a Reply followed by Wait.
+Servers generally run a loop which waits for a message, handles the received message, sends a reply and then returns to waiting. To avoid excessive switching between user and kernel modes, the kernel provides a \emph{ReplyRecv} operation, which is simply a Reply followed by Recv.
 
 \subsection{System Calls}
 
@@ -290,8 +285,8 @@ for a single user-level thread (see \autoref{sec:overview.threads});
 translate CSpace addresses (see \autoref{sec:overview.cspace});
 \item [Endpoint] objects, which contain queues for synchronous IPC (as
 described in \autoref{sec:overview.caps.ipc}); and
-\item [Asynchronous Endpoint] objects, which contain message buffers for
-asynchronous IPC (see \autoref{sec:overview.async-ipc}).
+\item [Notification] objects, which contain message buffers for
+signals (see \autoref{sec:overview.signals}).
 \end{description}
 
 There may also be implementation-specific object types. The untyped
@@ -518,28 +513,27 @@ CNode objects. As the source parameters of such operations are always
 capabilities (in the CSpace), it is not possible to copy mappings between
 different locations in VSpace without possessing an appropriate capability.
 
-\section{Asynchronous IPC}\label{sec:overview.async-ipc}
+\section{Signals}\label{sec:overview.signals}
 
 In some situations, it is appropriate to provide an asynchronous notification
-of an event. The kernel provides an \emph{asynchronous IPC} operation for this
-purpose. It is implemented using \emph{asynchronous endpoint} objects, which
+of an event. The kernel provides a \emph{signal} operation for this
+purpose. It is implemented using \emph{notification} objects, which
 contain a fixed size buffer of two machine words -- identifier and message word. 
-Each asynchronous endpoint capability is marked with a badge, which is set when
-the capability is created. A thread may perform \emph{Send} or \emph{Wait}
-operations on an asynchronous endpoint, by invoking the corresponding
+Each notification capability is marked with a badge, which is set when
+the capability is created. A thread may perform \emph{Send} or \emph{Recv}
+operations on a notification, by invoking the corresponding
 capability. 
 
-When a Send operation is performed, the badge of the invoked capability and the
-user specified message are bitwise ORed with the corresponding values in the
+When a Send operation is performed, the badge of the invoked capability is bitwise ORed with the corresponding values in the
 endpoint to produce its new contents. This operation is guaranteed not to block
 a sufficiently authorised sender, even if there is no thread waiting to receive
-the message. The Wait operation, on the other hand, is blocking --- if the
+the message. The Recv operation, on the other hand, can be blocking --- unless the operation is specifically non-blocking, if the
 buffer is empty, the thread is blocked until a message arrives. However, in
-case of a non-empty buffer, the Wait operation will read the contents of the
+case of a non-empty buffer, the Recv operation will read the contents of the
 buffer, reset it to zero, and returns the value immediately. 
 
-Similar to synchronous endpoints, multiple threads may perform Send or Wait
-operations on the same asynchronous endpoint. When there are multiple messages
+Similar to synchronous endpoints, multiple threads may perform Signal or Recv
+operations on the same notification. When there are multiple messages
 sent to an endpoint before any thread attempts to receive from it, the
 identifier and the message delivered to the receiver are the bitwise OR of
 capability badges used by the senders and the messages sent by them,
@@ -575,7 +569,7 @@ delivery mechanism becomes invalid (due to a \emph{Clear} operation on the IRQ
 handler capability, or revocation of a capability required for delivery).
 
 In the present Haskell implementation, only one delivery mechanism is supported: 
-delivery via asynchronous IPC to a specified endpoint. This may be complemented
+delivery via signal to a specified notification. This may be complemented
 or replaced by a callback-based delivery model in future versions or
 real-hardware implementations.
 

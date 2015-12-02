@@ -42,40 +42,40 @@ This module uses the C preprocessor to select a target architecture.
 This is the type used to represent a capability.
 
 > data Capability 
->         = NullCap
->         | UntypedCap {
->             capPtr :: PPtr (), 
->             capBlockSize :: Int,
->             capFreeIndex :: Int }
+>         = ThreadCap {
+>             capTCBPtr :: PPtr TCB }
+>         | NullCap
+>         | NotificationCap { 
+>             capNtfnPtr :: PPtr Notification,
+>             capNtfnBadge :: Word,
+>             capNtfnCanSend, capNtfnCanReceive :: Bool }
+>         | IRQHandlerCap {
+>             capIRQ :: IRQ }
 >         | EndpointCap {
 >             capEPPtr :: PPtr Endpoint,
 >             capEPBadge :: Word,
 >             capEPCanSend, capEPCanReceive :: Bool,
 >             capEPCanGrant :: Bool }
->         | AsyncEndpointCap { 
->             capAEPPtr :: PPtr AsyncEndpoint,
->             capAEPBadge :: Word,
->             capAEPCanSend, capAEPCanReceive :: Bool }
+>         | DomainCap
+>         | Zombie {
+>             capZombiePtr :: PPtr CTE,
+>             capZombieType :: ZombieType,
+>             capZombieNumber :: Int }
+>         | ArchObjectCap {
+>             capCap :: ArchCapability }
 >         | ReplyCap {
 >             capTCBPtr :: PPtr TCB,
 >             capReplyMaster :: Bool }
+>         | UntypedCap {
+>             capPtr :: PPtr (), 
+>             capBlockSize :: Int,
+>             capFreeIndex :: Int }
 >         | CNodeCap {
 >             capCNodePtr :: PPtr CTE,
 >             capCNodeBits :: Int,
 >             capCNodeGuard :: Word,
 >             capCNodeGuardSize :: Int }
->         | ThreadCap {
->             capTCBPtr :: PPtr TCB }
->         | DomainCap
 >         | IRQControlCap
->         | IRQHandlerCap {
->             capIRQ :: IRQ }
->         | ArchObjectCap {
->             capCap :: ArchCapability }
->         | Zombie {
->             capZombiePtr :: PPtr CTE,
->             capZombieType :: ZombieType,
->             capZombieNumber :: Int }
 >         deriving Show
 
 > data ZombieType = ZombieTCB | ZombieCNode { zombieCTEBits :: Int }
@@ -101,9 +101,9 @@ This is the type used to represent a capability.
 > isUntypedCap (UntypedCap {}) = True
 > isUntypedCap _ = False
 
-> isAsyncEndpointCap :: Capability -> Bool
-> isAsyncEndpointCap (AsyncEndpointCap {}) = True
-> isAsyncEndpointCap _ = False
+> isNotificationCap :: Capability -> Bool
+> isNotificationCap (NotificationCap {}) = True
+> isNotificationCap _ = False
 
 \subsection{Kernel Objects}
 
@@ -111,7 +111,7 @@ When stored in the physical memory model (described in \autoref{sec:model.pspace
 
 > data KernelObject 
 >     = KOEndpoint  Endpoint
->     | KOAEndpoint AsyncEndpoint
+>     | KONotification Notification
 >     | KOKernelData
 >     | KOUserData
 >     | KOTCB       TCB
@@ -122,7 +122,7 @@ When stored in the physical memory model (described in \autoref{sec:model.pspace
 > kernelObjectTypeName o = 
 >     case o of 
 >         KOEndpoint   _ -> "Endpoint"
->         KOAEndpoint  _ -> "AsyncEndpoint"
+>         KONotification  _ -> "Notification"
 >         KOKernelData   -> "KernelData"
 >         KOUserData     -> "UserData"
 >         KOTCB        _ -> "TCB"
@@ -131,7 +131,7 @@ When stored in the physical memory model (described in \autoref{sec:model.pspace
 
 > objBitsKO :: KernelObject -> Int
 > objBitsKO (KOEndpoint _) = wordSizeCase 4 5
-> objBitsKO (KOAEndpoint _) = wordSizeCase 4 5
+> objBitsKO (KONotification _) = wordSizeCase 4 5
 > objBitsKO (KOCTE _) = wordSizeCase 4 5
 > objBitsKO (KOTCB _) = 9
 > objBitsKO (KOUserData) = pageBits
@@ -147,48 +147,49 @@ using the "Endpoint" data structure.
 
 There are three possible states for a synchronous endpoint:
 \begin{itemize}
+
+\item waiting for one or more receive operations to complete, with
+a list of pointers to waiting threads.
+
+>         = RecvEP { epQueue :: [PPtr TCB] }
+
 \item idle;
 
->         = IdleEP
+>         | IdleEP
 
-\item waiting for one or more send operations to complete, with a
+\item or waiting for one or more send operations to complete, with a
 list of pointers to waiting threads;
 
 >         | SendEP { epQueue :: [PPtr TCB] }
-
-\item or waiting for one or more receive operations to complete, with
-a list of pointers to waiting threads.
-
->         | RecvEP { epQueue :: [PPtr TCB] }
 >     deriving Show
 
 \end{itemize}
 
-\subsubsection{Asynchronous Endpoints}
+\subsubsection{Notification Objects}
 
-Asynchronous endpoints are represented in the physical memory model 
-using the "AsyncEndpoint" data structure.
+Notification objects are represented in the physical memory model 
+using the "Notification" data structure.
 
-> data AEP
+> data NTFN
 
-There are three possible states for an asynchronous endpoint:
+There are three possible states for a notification:
 \begin{itemize}
 \item idle;
 
->         = IdleAEP
+>         = IdleNtfn
 
-\item waiting for one or more send operations to complete, with a list of  pointers to the waiting threads;
+\item active, ready to deliver a notification message consisting of one data word and one message identifier word.
 
->         | WaitingAEP { aepQueue :: [PPtr TCB] }
+>         | ActiveNtfn { ntfnMsgIdentifier :: Word }
 
-\item or active, ready to deliver a notification message consisting of one data word and one message identifier word.
+\item or waiting for one or more send operations to complete, with a list of  pointers to the waiting threads;
 
->         | ActiveAEP { aepMsgIdentifier :: Word }
+>         | WaitingNtfn { ntfnQueue :: [PPtr TCB] }
 >     deriving Show
 
-> data AsyncEndpoint = AEP {
->     aepObj :: AEP,
->     aepBoundTCB :: Maybe (PPtr TCB) }
+> data Notification = NTFN {
+>     ntfnObj :: NTFN,
+>     ntfnBoundTCB :: Maybe (PPtr TCB) }
 
 \end{itemize}
 
@@ -257,9 +258,9 @@ The TCB is used to store various data about the thread's current state:
 
 >         tcbIPCBuffer :: VPtr,
 
-\item the thread's currently bound asynchronous endpoint;
+\item the thread's currently bound notification object;
 
->         tcbBoundAEP :: Maybe (PPtr AsyncEndpoint),
+>         tcbBoundNotification :: Maybe (PPtr Notification),
 
 \item and the saved user-level context of the thread.
 
@@ -322,45 +323,48 @@ The basic structure is a double-linked list. The algorithm used to determine the
 
 A user thread may be in the following states:
 
+%FIXME: Mangled for datatype constructor order
+
+
 > data ThreadState
 
 \begin{itemize}
 
-\item ready to start executing the next instruction;
-
->     = Running
-
-\item ready to start executing at the current instruction (after a fault, an interrupted system call, or an explicitly set program counter);
-
->     | Restart
-
-\item waiting to be explicitly started;
-
->     | Inactive
-
 \item blocked on a synchronous IPC send or receive (which require the presence of additional data about the operation);
 
->     | BlockedOnReceive {
->         blockingIPCEndpoint :: PPtr Endpoint,
+>     = BlockedOnReceive {
+>         blockingObject :: PPtr Endpoint,
 >         blockingIPCDiminishCaps :: Bool }
->     | BlockedOnSend {
->         blockingIPCEndpoint :: PPtr Endpoint,
->         blockingIPCBadge :: Word,
->         blockingIPCCanGrant :: Bool,
->         blockingIPCIsCall :: Bool }
 
 \item blocked waiting for a reply to a previously sent message;
 
 >     | BlockedOnReply
 
-\item blocked on an asynchronous notification;
+\item blocked on an notification;
 
->     | BlockedOnAsyncEvent { 
->         waitingOnAsyncEP :: PPtr AsyncEndpoint }
+>     | BlockedOnNotification { 
+>         waitingOnNotification :: PPtr Notification }
+
+\item ready to start executing the next instruction;
+
+>     | Running
+
+\item waiting to be explicitly started;
+
+>     | Inactive
 
 \item or in a special state used only by the idle thread.
 
 >     | IdleThreadState
+>     | BlockedOnSend {
+>         blockingObject :: PPtr Endpoint,
+>         blockingIPCBadge :: Word,
+>         blockingIPCCanGrant :: Bool,
+>         blockingIPCIsCall :: Bool }
+
+\item ready to start executing at the current instruction (after a fault, an interrupted system call, or an explicitly set program counter);
+
+>     | Restart
 >     deriving (Show, Eq)
 
 \end{itemize}
@@ -398,7 +402,7 @@ The interrupt controller state consists of an array with one entry for each of t
 
 > data IRQState 
 >     = IRQInactive
->     | IRQNotifyAEP
+>     | IRQSignal
 >     | IRQTimer
 >     deriving (Show, Eq)
 

@@ -38,13 +38,13 @@ block endpoint_cap(capEPBadge, capCanGrant, capCanSend, capCanReceive,
     field capType 4
 }
 
-block async_endpoint_cap {
-    field capAEPBadge 28
+block notification_cap {
+    field capNtfnBadge 28
     padding 2
-    field capAEPCanReceive 1
-    field capAEPCanSend 1
+    field capNtfnCanReceive 1
+    field capNtfnCanSend 1
 
-    field_high capAEPPtr 28
+    field_high capNtfnPtr 28
     field capType 4
 }
 
@@ -128,16 +128,16 @@ block endpoint {
 }
 
 -- Async endpoint: size = 16 bytes
-block async_endpoint {
-    field_high aepBoundTCB 28
+block notification {
+    field_high ntfnBoundTCB 28
     padding 4
 
-    field aepMsgIdentifier 32
+    field ntfnMsgIdentifier 32
 
-    field_high aepQueue_head 28
+    field_high ntfnQueue_head 28
     padding 4
 
-    field_high aepQueue_tail 28
+    field_high ntfnQueue_tail 28
     padding 1
     field bound 1
     field state 2
@@ -197,8 +197,8 @@ block mdb_node {
 -- * BlockedOnReply
 -- * BlockedOnFault
 --   - Fault
--- * BlockedOnAsyncEvent
---   - AEP
+-- * BlockedOnNotification
+--   - Notification
 -- * Idle
 
 -- Lookup fault: size = 8 bytes
@@ -262,7 +262,7 @@ block user_exception {
 
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
-                   tcbQueued, blockingIPCDiminishCaps, blockingIPCEndpoint,
+                   tcbQueued, blockingIPCDiminishCaps, blockingObject,
                    tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
@@ -275,7 +275,7 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
     padding 31
     field tcbQueued 1
 
-    field_high blockingIPCEndpoint 28
+    field_high blockingObject 28
     field tsType 4
 }
 

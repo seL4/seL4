@@ -221,8 +221,8 @@ define disp_cap
     printf "EPPtr: %x\n", ($cap.words[0] & 0xfffffff) << 4
   end
 
-  if( $type == cap_async_endpoint_cap )
-    printf "Type: cap_async_endpoint_cap\n"
+  if( $type == cap_notification_cap )
+    printf "Type: cap_notification_cap\n"
     printf "badge: %x\n", ($cap.words[1] & 0xfffffff8) >> 3
     printf "AEPPtr: %x\n", ($cap.words[0] & 0xfffffff) << 4
   end
@@ -508,7 +508,7 @@ end
 define irq_handler
   set $slot = intStateIRQNode + $arg0
   set $cap = $slot->cap
-  if((cap_tag_t)(($cap.words[0] >> 28) & 0xf) != cap_async_endpoint_cap)
+  if((cap_tag_t)(($cap.words[0] >> 28) & 0xf) != cap_notification_cap)
     printf "no handler\n"
   else
     set $cap = (async_endpoint_t *)(($cap.words[0] & 0xfffffff) << 4)

@@ -49,7 +49,7 @@ retype operation will generate one or more new capabilities, which are inserted 
 \caption{Invoking an Untyped Object}\label{fig:derive}
 \end{figure}
 
-We start by defining a simple function to align one value to a power-of-two boundard. In particular, this function aligns its first argument up to the next power-of-two specified by the second argument.
+We start by defining a simple function to align one value to a power-of-two boundary. In particular, this function aligns its first argument up to the next power-of-two specified by the second argument.
 
 > alignUp :: Word -> Int -> Word
 > alignUp baseValue alignment =
@@ -117,7 +117,7 @@ The node offset and window arguments specify the start and the length of a conti
 >     rangeCheck nodeWindow 1 $ nodeSize - nodeOffset
 >     
 >     slots <- withoutFailure $
->         mapM (locateSlot $ capCNodePtr nodeCap)
+>         mapM (locateSlotCap nodeCap)
 >             [nodeOffset .. nodeOffset+nodeWindow - 1]
 
 The destination slots must all be empty. If any of them contains a capability, the operation will fail with a "DeleteFirst" error.
@@ -171,11 +171,22 @@ The following code removes any existing objects in the physical memory region. T
 
 Update the untyped capability we are using to create these objects to record that this space now has objects in it.
 
+For verification purposes a check is made that the region the objects are created in does not overlap with any existing CNodes.
+
 >     let totalObjectSize = (length destSlots) `shiftL` (getObjectSize newType userSize)
+>     stateAssert (\x -> not (cNodeOverlap (gsCNodes x)
+>             (\x -> fromPPtr freeRegionBase <= x
+>                 && x <= fromPPtr freeRegionBase + fromIntegral totalObjectSize - 1)))
+>         "CNodes present in region to be retyped."
 >     let freeRef = freeRegionBase + PPtr (fromIntegral totalObjectSize)
 >     updateCap srcSlot (cap {capFreeIndex = getFreeIndex base freeRef})
 
 Create the new objects and insert caps to these objects into the destination slots.
 
 >     createNewObjects newType srcSlot destSlots freeRegionBase userSize
+
+This function performs the check that CNodes do not overlap with the retyping region. Its actual definition is provided in the Isabelle translation.
+
+> cNodeOverlap :: (Word -> Maybe Int) -> (Word -> Bool) -> Bool
+> cNodeOverlap _ _ = True
 

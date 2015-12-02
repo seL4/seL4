@@ -139,7 +139,7 @@ tagged_union cap capType {
     tag null_cap            0
     tag untyped_cap         2
     tag endpoint_cap        4
-    tag async_endpoint_cap  6
+    tag notification_cap    6
     tag reply_cap           8
     tag cnode_cap           10
     tag thread_cap          12

@@ -227,7 +227,7 @@ BEGIN_FUNC(arm_syscall)
     str lr, [sp, #(PT_FaultInstruction - PT_SP)]
 
 #ifdef FASTPATH
-    cmp r7, #SYSCALL_REPLY_WAIT
+    cmp r7, #SYSCALL_REPLY_RECV
 #endif
 
     /* Stack all user registers */
@@ -244,7 +244,7 @@ BEGIN_FUNC(arm_syscall)
      * greater than -2.
      */
     bhi fastpath_call
-    beq fastpath_reply_wait
+    beq fastpath_reply_recv
 #endif
 
     /* Load system call number for handleSyscall and handleUnknownSyscall() */

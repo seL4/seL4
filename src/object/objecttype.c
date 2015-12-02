@@ -17,7 +17,7 @@
 #include <machine/io.h>
 #include <object/objecttype.h>
 #include <object/structures.h>
-#include <object/asyncendpoint.h>
+#include <object/notification.h>
 #include <object/endpoint.h>
 #include <object/cnode.h>
 #include <object/interrupt.h>
@@ -41,7 +41,7 @@ word_t getObjectSize(word_t t, word_t userObjSize)
         case seL4_EndpointObject:
             return EP_SIZE_BITS;
         case seL4_NotificationObject:
-            return AEP_SIZE_BITS;
+            return NTFN_SIZE_BITS;
         case seL4_CapTableObject:
             return CTE_SIZE_BITS + userObjSize;
         case seL4_UntypedObject:
@@ -109,19 +109,19 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     switch (cap_get_capType(cap)) {
     case cap_endpoint_cap:
         if (final) {
-            epCancelAll(EP_PTR(cap_endpoint_cap_get_capEPPtr(cap)));
+            cancelAllIPC(EP_PTR(cap_endpoint_cap_get_capEPPtr(cap)));
         }
 
         fc_ret.remainder = cap_null_cap_new();
         fc_ret.irq = irqInvalid;
         return fc_ret;
 
-    case cap_async_endpoint_cap:
+    case cap_notification_cap:
         if (final) {
-            async_endpoint_t *aep = AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap));
+            notification_t *ntfn = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
 
-            unbindMaybeAEP(aep);
-            aepCancelAll(aep);
+            unbindMaybeNotification(ntfn);
+            cancelAllSignals(ntfn);
         }
         fc_ret.remainder = cap_null_cap_new();
         fc_ret.irq = irqInvalid;
@@ -161,7 +161,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
             tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
-            unbindAsyncEndpoint(tcb);
+            unbindNotification(tcb);
             suspend(tcb);
             Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =
@@ -236,7 +236,7 @@ recycleCap(bool_t is_final, cap_t cap)
             assert(!thread_state_get_tcbQueued(tcb->tcbState));
             /* Haskell error:
              * "Zombie cap should not point at bound thread" */
-            assert(tcb->boundAsyncEndpoint == NULL);
+            assert(tcb->tcbBoundNotification == NULL);
 
             /* makeObject doesn't exist in C, objects are initialised by
              * zeroing. The effect of recycle in Haskell is to reinitialise
@@ -259,7 +259,7 @@ recycleCap(bool_t is_final, cap_t cap)
         if (badge) {
             endpoint_t* ep = (endpoint_t*)
                              cap_endpoint_cap_get_capEPPtr(cap);
-            epCancelBadgedSends(ep, badge);
+            cancelBadgedSends(ep, badge);
         }
         return cap;
     }
@@ -281,9 +281,9 @@ hasRecycleRights(cap_t cap)
                cap_endpoint_cap_get_capCanReceive(cap) &&
                cap_endpoint_cap_get_capCanGrant(cap);
 
-    case cap_async_endpoint_cap:
-        return cap_async_endpoint_cap_get_capAEPCanSend(cap) &&
-               cap_async_endpoint_cap_get_capAEPCanReceive(cap);
+    case cap_notification_cap:
+        return cap_notification_cap_get_capNtfnCanSend(cap) &&
+               cap_notification_cap_get_capNtfnCanReceive(cap);
 
     default:
         if (isArchCap(cap)) {
@@ -318,10 +318,10 @@ sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
-    case cap_async_endpoint_cap:
-        if (cap_get_capType(cap_b) == cap_async_endpoint_cap) {
-            return cap_async_endpoint_cap_get_capAEPPtr(cap_a) ==
-                   cap_async_endpoint_cap_get_capAEPPtr(cap_b);
+    case cap_notification_cap:
+        if (cap_get_capType(cap_b) == cap_notification_cap) {
+            return cap_notification_cap_get_capNtfnPtr(cap_a) ==
+                   cap_notification_cap_get_capNtfnPtr(cap_b);
         }
         break;
 
@@ -410,9 +410,9 @@ updateCapData(bool_t preserve, word_t newData, cap_t cap)
             return cap_null_cap_new();
         }
 
-    case cap_async_endpoint_cap:
-        if (!preserve && cap_async_endpoint_cap_get_capAEPBadge(cap) == 0) {
-            return cap_async_endpoint_cap_set_capAEPBadge(cap, newData);
+    case cap_notification_cap:
+        if (!preserve && cap_notification_cap_get_capNtfnBadge(cap) == 0) {
+            return cap_notification_cap_set_capNtfnBadge(cap, newData);
         } else {
             return cap_null_cap_new();
         }
@@ -477,15 +477,15 @@ maskCapRights(cap_rights_t cap_rights, cap_t cap)
         return new_cap;
     }
 
-    case cap_async_endpoint_cap: {
+    case cap_notification_cap: {
         cap_t new_cap;
 
-        new_cap = cap_async_endpoint_cap_set_capAEPCanSend(
-                      cap, cap_async_endpoint_cap_get_capAEPCanSend(cap) &
+        new_cap = cap_notification_cap_set_capNtfnCanSend(
+                      cap, cap_notification_cap_get_capNtfnCanSend(cap) &
                       cap_rights_get_capAllowWrite(cap_rights));
-        new_cap = cap_async_endpoint_cap_set_capAEPCanReceive(new_cap,
-                                                              cap_async_endpoint_cap_get_capAEPCanReceive(cap) &
-                                                              cap_rights_get_capAllowRead(cap_rights));
+        new_cap = cap_notification_cap_set_capNtfnCanReceive(new_cap,
+                                                             cap_notification_cap_get_capNtfnCanReceive(cap) &
+                                                             cap_rights_get_capAllowRead(cap_rights));
 
         return new_cap;
     }
@@ -509,8 +509,8 @@ createObject(object_t t, void *regionBase, word_t userSize)
         tcb_t *tcb;
         memzero(regionBase, 1UL << TCB_BLOCK_SIZE_BITS);
         tcb = TCB_PTR((word_t)regionBase + TCB_OFFSET);
-        /** AUXUPD: "(True, ptr_retyps 5
-          (Ptr ((ptr_val \<acute>tcb) - 0x100) :: cte_C ptr)
+        /** AUXUPD: "(True, ptr_retyps 1
+          (Ptr ((ptr_val \<acute>tcb) - 0x100) :: (cte_C[5]) ptr)
             o (ptr_retyp \<acute>tcb))" */
 
         /* Setup non-zero parts of the TCB. */
@@ -536,15 +536,15 @@ createObject(object_t t, void *regionBase, word_t userSize)
                                     EP_REF(regionBase));
 
     case seL4_NotificationObject:
-        memzero(regionBase, 1UL << AEP_SIZE_BITS);
+        memzero(regionBase, 1UL << NTFN_SIZE_BITS);
         /** AUXUPD: "(True, ptr_retyp
-              (Ptr (ptr_val \<acute>regionBase) :: async_endpoint_C ptr))" */
-        return cap_async_endpoint_cap_new(0, true, true,
-                                          AEP_REF(regionBase));
+              (Ptr (ptr_val \<acute>regionBase) :: notification_C ptr))" */
+        return cap_notification_cap_new(0, true, true,
+                                        NTFN_REF(regionBase));
 
     case seL4_CapTableObject:
         memzero(regionBase, 1UL << (CTE_SIZE_BITS + userSize));
-        /** AUXUPD: "(True, ptr_retyps (2 ^ (unat \<acute>userSize))
+        /** AUXUPD: "(True, ptr_arr_retyps (2 ^ (unat \<acute>userSize))
           (Ptr (ptr_val \<acute>regionBase) :: cte_C ptr))" */
         /** GHOSTUPD: "(True, gs_new_cnodes (unat \<acute>userSize)
                                 (ptr_val \<acute>regionBase)
@@ -631,9 +631,9 @@ decodeInvocation(word_t label, unsigned int length,
                    cap_endpoint_cap_get_capEPBadge(cap),
                    cap_endpoint_cap_get_capCanGrant(cap), block, call);
 
-    case cap_async_endpoint_cap: {
-        if (unlikely(!cap_async_endpoint_cap_get_capAEPCanSend(cap))) {
-            userError("Attempted to invoke a read-only async-endpoint cap #%lu.",
+    case cap_notification_cap: {
+        if (unlikely(!cap_notification_cap_get_capNtfnCanSend(cap))) {
+            userError("Attempted to invoke a read-only notification cap #%lu.",
                       capIndex);
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -641,9 +641,9 @@ decodeInvocation(word_t label, unsigned int length,
         }
 
         setThreadState(ksCurThread, ThreadState_Restart);
-        return performInvocation_AsyncEndpoint(
-                   AEP_PTR(cap_async_endpoint_cap_get_capAEPPtr(cap)),
-                   cap_async_endpoint_cap_get_capAEPBadge(cap));
+        return performInvocation_Notification(
+                   NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)),
+                   cap_notification_cap_get_capNtfnBadge(cap));
     }
 
     case cap_reply_cap:
@@ -697,9 +697,9 @@ performInvocation_Endpoint(endpoint_t *ep, word_t badge,
 }
 
 exception_t
-performInvocation_AsyncEndpoint(async_endpoint_t *aep, word_t badge)
+performInvocation_Notification(notification_t *ntfn, word_t badge)
 {
-    sendAsyncIPC(aep, badge);
+    sendSignal(ntfn, badge);
 
     return EXCEPTION_NONE;
 }

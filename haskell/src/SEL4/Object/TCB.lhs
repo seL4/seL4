@@ -46,7 +46,7 @@ This module uses the C preprocessor to select a target architecture.
 > import SEL4.Object.Instances()
 > import SEL4.Object.CNode
 > import SEL4.Object.ObjectType
-> import SEL4.Object.AsyncEndpoint
+> import SEL4.Object.Notification
 > import {-# SOURCE #-} SEL4.Kernel.Thread
 > import {-# SOURCE #-} SEL4.Kernel.CSpace
 > import {-# SOURCE #-} SEL4.Kernel.VSpace
@@ -79,8 +79,8 @@ There are eleven types of invocation for a thread control block. All require wri
 >         TCBSetPriority -> decodeSetPriority args cap
 >         TCBSetIPCBuffer -> decodeSetIPCBuffer args cap slot extraCaps
 >         TCBSetSpace -> decodeSetSpace args cap slot extraCaps
->         TCBBindAEP -> decodeBindAEP cap extraCaps
->         TCBUnbindAEP -> decodeUnbindAEP cap
+>         TCBBindNotification -> decodeBindNotification cap extraCaps
+>         TCBUnbindNotification -> decodeUnbindNotification cap
 >         _ -> throw IllegalOperation
 
 \subsubsection{Reading, Writing and Copying Registers}
@@ -275,45 +275,45 @@ This is to ensure that the source capability is not made invalid by the deletion
 >         tcNewIPCBuffer = Nothing }
 > decodeSetSpace _ _ _ _ = throw TruncatedMessage
 
-\subsubsection{Decode Bound AEP Invocations}
+\subsubsection{Decode Bound Notification Invocations}
 
-> decodeBindAEP :: Capability -> [(Capability, PPtr CTE)] -> KernelF SyscallError TCBInvocation
-> decodeBindAEP cap extraCaps = do
->     -- if no aep cap supplied
+> decodeBindNotification :: Capability -> [(Capability, PPtr CTE)] -> KernelF SyscallError TCBInvocation
+> decodeBindNotification cap extraCaps = do
+>     -- if no notification cap supplied
 >     when (null extraCaps) $ throw TruncatedMessage
 >     let tcb = capTCBPtr cap
->     aEP <- withoutFailure $ getBoundAEP tcb
->     -- check if tcb already has bound aep
->     case aEP of
+>     ntfn <- withoutFailure $ getBoundNotification tcb
+>     -- check if tcb already has bound notification
+>     case ntfn of
 >         Just _ -> throw IllegalOperation
 >         Nothing -> return ()
->     -- get ptr to aep
->     (aepptr, rights) <- case fst (head extraCaps) of
->         AsyncEndpointCap ptr _ _ recv  -> return (ptr, recv)
+>     -- get ptr to notification
+>     (ntfnPtr, rights) <- case fst (head extraCaps) of
+>         NotificationCap ptr _ _ recv  -> return (ptr, recv)
 >         _ -> throw IllegalOperation 
 >     when (not rights) $ throw IllegalOperation
->     -- check if aep is bound
->     -- check if anything is waiting on the aep
->     aep <- withoutFailure $ getAsyncEP aepptr
->     case (aepObj aep, aepBoundTCB aep) of
->         (IdleAEP, Nothing) -> return ()
->         (ActiveAEP _, Nothing) -> return ()
+>     -- check if notification is bound
+>     -- check if anything is waiting on the notification
+>     notification <- withoutFailure $ getNotification ntfnPtr
+>     case (ntfnObj notification, ntfnBoundTCB notification) of
+>         (IdleNtfn, Nothing) -> return ()
+>         (ActiveNtfn _, Nothing) -> return ()
 >         _ -> throw IllegalOperation
->     return AsyncEndpointControl {
->         aepTCB = tcb,
->         aepPtr = Just aepptr }
+>     return NotificationControl {
+>         notificationTCB = tcb,
+>         notificationPtr = Just ntfnPtr }
 
 
-> decodeUnbindAEP :: Capability -> KernelF SyscallError TCBInvocation
-> decodeUnbindAEP cap = do
+> decodeUnbindNotification :: Capability -> KernelF SyscallError TCBInvocation
+> decodeUnbindNotification cap = do
 >     let tcb = capTCBPtr cap
->     aEP <- withoutFailure $ getBoundAEP tcb
->     case aEP of
+>     ntfn <- withoutFailure $ getBoundNotification tcb
+>     case ntfn of
 >         Nothing -> throw IllegalOperation
 >         Just _ -> return ()
->     return AsyncEndpointControl {
->         aepTCB = tcb,
->         aepPtr = Nothing }
+>     return NotificationControl {
+>         notificationTCB = tcb,
+>         notificationPtr = Nothing }
 
 
 \subsection[invoke]{Performing TCB Invocations}
@@ -442,19 +442,19 @@ The "ReadRegisters" and "WriteRegisters" functions are similar to "CopyRegisters
 >     when resumeTarget $ restart dest
 >     return []
 
-\subsubsection{Invoking Async Endpoint Control}
+\subsubsection{Invoking Notication Control}
 
-> -- notes: we know that the aep is not bound, and is not waiting.
+> -- notes: we know that the notification is not bound, and is not waiting.
 > -- BIND
-> invokeTCB (AsyncEndpointControl tcb (Just aepptr)) =
+> invokeTCB (NotificationControl tcb (Just ntfnPtr)) =
 >   withoutPreemption $ do
->     bindAsyncEndpoint tcb aepptr
+>     bindNotification tcb ntfnPtr
 >     return []
 
 > -- UNBIND
-> invokeTCB (AsyncEndpointControl tcb Nothing) =
+> invokeTCB (NotificationControl tcb Nothing) =
 >   withoutPreemption $ do 
->     unbindAsyncEndpoint tcb
+>     unbindNotification tcb
 >     return []
 
 \subsection{Decoding Domain Invocations}
@@ -593,7 +593,7 @@ The following functions read and set the extra capability fields of the IPC buff
 >         mapM (\cptr ->
 >           capFaultOnFailure cptr False $ lookupCapAndSlot thread cptr) cptrs
 
-The next function is for convience in transferCapsLoop. It is equivalent in
+The next function is for convenience in transferCapsLoop. It is equivalent in
 the sense that 
 getExtraCPtrs (Some buffer) (MI { msgExtraCaps = count }) = 
 mapM (getExtraCPtr buffer) [0..count-1] 
@@ -641,7 +641,7 @@ When a message is transferred after a "Call" operation or a fault, the kernel pl
 >         "Caller cap must not already exist"
 >     cteInsert (ReplyCap sender False) replySlot callerSlot
 
-When a new "Wait" operation begins, the caller slot in the waiting thread's TCB is cleared. This removes any ambiguity about the source of the capability in the caller slot: if one is present, it was always generated by the most recent "Wait".
+When a new "Recv" operation begins, the caller slot in the waiting thread's TCB is cleared. This removes any ambiguity about the source of the capability in the caller slot: if one is present, it was always generated by the most recent "Recv".
 
 > deleteCallerCap :: PPtr TCB -> Kernel ()
 > deleteCallerCap receiver = do
@@ -659,31 +659,27 @@ This function will return a physical pointer to a thread's root capability table
 
 > getThreadCSpaceRoot :: PPtr TCB -> Kernel (PPtr CTE)
 > getThreadCSpaceRoot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbCTableSlot
+>         locateSlotTCB thread tcbCTableSlot
 
 This function will return a physical pointer to a thread's page table root, given a pointer to its "TCB".
 
 > getThreadVSpaceRoot :: PPtr TCB -> Kernel (PPtr CTE)
-> getThreadVSpaceRoot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbVTableSlot
+> getThreadVSpaceRoot thread = locateSlotTCB thread tcbVTableSlot
 
 This function will return a physical pointer to a thread's reply slot, which is used when creating or revoking its reply capability.
 
 > getThreadReplySlot :: PPtr TCB -> Kernel (PPtr CTE)
-> getThreadReplySlot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbReplySlot
+> getThreadReplySlot thread = locateSlotTCB thread tcbReplySlot
 
 This function will return a physical pointer to a thread's caller slot, used by the "Call" and "Reply" system calls.
 
 > getThreadCallerSlot :: PPtr TCB -> Kernel (PPtr CTE)
-> getThreadCallerSlot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbCallerSlot
+> getThreadCallerSlot thread = locateSlotTCB thread tcbCallerSlot
 
 This function will return a physical pointer to a thread's IPC buffer slot, used to quickly access the thread's IPC buffer.
 
 > getThreadBufferSlot :: PPtr TCB -> Kernel (PPtr CTE)
-> getThreadBufferSlot thread = do
->         locateSlot (PPtr $ fromPPtr thread) tcbIPCBufferSlot
+> getThreadBufferSlot thread = locateSlotTCB thread tcbIPCBufferSlot
 
 \subsubsection{Fetching or Modifying TCB Fields}
 
@@ -704,7 +700,7 @@ Actions performed by user-level code, or by the kernel when modifying
 the user-level context of a thread, access only the "UserContext"
 structure in the thread's TCB.
 
-The following function performs an operation in the user-levl context of a specified
+The following function performs an operation in the user-level context of a specified
 thread. The operation is represented by a function in the
 "State" monad operating on the thread's "UserContext" structure.
 

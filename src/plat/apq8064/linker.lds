@@ -37,7 +37,7 @@ SECTIONS
 
         /* Fastpath code */
         *(.vectors.fastpath_call)
-        *(.vectors.fastpath_reply_wait)
+        *(.vectors.fastpath_reply_recv)
         *(.vectors.text)
 
         /* Anything else that should be in the vectors page. */

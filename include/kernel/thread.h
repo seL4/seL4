@@ -52,7 +52,7 @@ void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                       word_t *receiveBuffer, bool_t diminish);
 void doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
                      word_t *receiverIPCBuffer);
-void doNBWaitFailedTransfer(tcb_t *thread);
+void doNBRecvFailedTransfer(tcb_t *thread);
 void schedule(void);
 void chooseThread(void);
 void switchToThread(tcb_t *thread) VISIBLE;

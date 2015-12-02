@@ -76,7 +76,7 @@
 \typeout{If TeX stops here, run mkfunctions.pl to generate functions.aux}
 \input{functions.aux}
 
-\hyphenation{C-Space C-Spaces C-Node C-Nodes Has-kell Send-Wait Ex-change-Reg-ist-ers Thread-Con-trol}
+\hyphenation{C-Space C-Spaces C-Node C-Nodes Has-kell Send-Recv Ex-change-Reg-ist-ers Thread-Con-trol}
 
 \begin{document}
 
@@ -228,8 +228,8 @@ This chapter defines the first-class kernel objects, including their representat
 \section{Synchronous Endpoints}\label{sec:object.endpoint}
 \input{../src/SEL4/Object/Endpoint.lhs}
 
-\section{Asynchronous Endpoints}\label{sec:object.asyncendpoint}
-\input{../src/SEL4/Object/AsyncEndpoint.lhs}
+\section{Notifications}\label{sec:object.notification}
+\input{../src/SEL4/Object/Notification.lhs}
 
 \section{Untyped Objects}\label{sec:object.untyped}
 \input{../src/SEL4/Object/Untyped.lhs}

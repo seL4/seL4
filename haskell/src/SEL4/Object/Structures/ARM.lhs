@@ -35,7 +35,11 @@ This module makes use of the GHC extension allowing declaration of types with no
 There are six ARM-specific capability types: the global ASID control capability, ASID pools, page tables, page directories, and pages.
 
 > data ArchCapability
->     = PageCap {
+>     = ASIDPoolCap {
+>         capASIDPool :: PPtr ASIDPool,
+>         capASIDBase :: ASID }
+>     | ASIDControlCap
+>     | PageCap {
 >         capVPBasePtr :: PPtr Word,
 >         capVPRights :: VMRights,
 >         capVPSize :: VMPageSize,
@@ -46,10 +50,6 @@ There are six ARM-specific capability types: the global ASID control capability,
 >     | PageDirectoryCap {
 >         capPDBasePtr :: PPtr PDE,
 >         capPDMappedASID :: Maybe ASID }
->     | ASIDControlCap
->     | ASIDPoolCap {
->         capASIDPool :: PPtr ASIDPool,
->         capASIDBase :: ASID }
 >     deriving (Eq, Show)
 
 \subsection{Kernel Objects}

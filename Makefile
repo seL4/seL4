@@ -401,7 +401,7 @@ endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
-DEFINES += -DARCH_IA32
+DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32
 LDFLAGS += -Wl,-m,elf_i386 
 endif # ARCH=x86
 else # NK_CFLAGS
@@ -554,6 +554,20 @@ autoconf.h: include/plat/${PLAT}/autoconf.h
 	$(Q)${CC} ${ASFLAGS} -c $< -o $@
 
 
+############################################################
+### Sanity -- check files that should be the same are the same
+############################################################
+
+DIFF_CMD:= ${SOURCE_ROOT}/tools/sanity.sh
+
+.PHONY sanity:
+	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/sel4/constants.h ${SOURCE_ROOT}/include/api/constants.h 
+	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/arch_include/${ARCH}/sel4/arch/objecttype.h ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/objecttype.h 
+	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/api/syscall.xml ${SOURCE_ROOT}/include/api/syscall.xml
+	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/api/syscall.xsd ${SOURCE_ROOT}/include/api/syscall.xsd 
+	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/sel4/errors.h ${SOURCE_ROOT}/include/api/errors.h
+	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/sel4/objecttype.h ${SOURCE_ROOT}/include/api/objecttype.h
+
 ###################
 # Header generation
 ###################
@@ -582,7 +596,7 @@ arch/api/syscall.h: ${SOURCE_ROOT}/include/api/syscall.xsd ${SOURCE_ROOT}/includ
 PRUNES = $(foreach file,${STATICSOURCES} ${STATICHEADERS}, \
            --prune ${file} )
 
-TOPLEVELTYPES=cte_C tcb_C endpoint_C async_endpoint_C asid_pool_C pte_C \
+TOPLEVELTYPES=cte_C tcb_C endpoint_C notification_C asid_pool_C pte_C \
               pde_C user_data_C
 TOPTYPES = $(foreach tp,${TOPLEVELTYPES}, \
            --toplevel ${tp} )
@@ -652,7 +666,7 @@ clean:
 	rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/invocation.h
 	rm -f ${SOURCE_ROOT}/include/api/invocation.h
 	rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/syscall.h
-	$(Q)rm -Rf ${CLEANTARGETS}
+	rm -Rf ${CLEANTARGETS}
 
 .PHONY: distclean
 distclean: clean

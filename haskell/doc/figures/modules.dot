@@ -19,7 +19,7 @@ digraph modules {
 	Model -> Storable;
 	modeltypes [label=Types]; Model -> modeltypes;
 	SEL4 -> Object;
-	Object -> AsyncEndpoint;
+	Object -> Notification;
 	Object -> CNode;
 	Object -> Endpoint;
 	Object -> Instances;
