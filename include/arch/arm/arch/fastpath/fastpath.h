@@ -42,7 +42,7 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
 
     hw_asid = pde_pde_invalid_get_stored_hw_asid(stored_hw_asid);
 #ifdef ARM_HYP
-    vcpu_switch(thread->vcpu);
+    vcpu_switch(thread->tcbArch.vcpu);
 #endif
     armv_contextSwitch_HWASID(cap_pd, hw_asid);
 

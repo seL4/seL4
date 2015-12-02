@@ -98,8 +98,8 @@ fastpath_mi_check(word_t msgInfo)
 
 static inline bool_t hasDefaultSelectors(tcb_t *thread)
 {
-    return thread->tcbContext.registers[DS] == SEL_DS_3   &&
-           thread->tcbContext.registers[ES] == SEL_DS_3;
+    return thread->tcbArch.tcbContext.registers[DS] == SEL_DS_3   &&
+           thread->tcbArch.tcbContext.registers[ES] == SEL_DS_3;
 }
 
 static inline void FASTCALL NORETURN
@@ -116,7 +116,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
          * is currently disabled */
     }
     tss_ptr_set_esp0(&ia32KStss, ((uint32_t)cur_thread) + 0x4c);
-    cur_thread->tcbContext.registers[EFLAGS] &= ~0x200;
+    cur_thread->tcbArch.tcbContext.registers[EFLAGS] &= ~0x200;
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile("\
                 movl %%ecx, %%esp \n\
@@ -134,8 +134,8 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
                 sysexit \n\
             "
                      :
-                     : "c"(&cur_thread->tcbContext.registers[EDI]),
-                     "a" (cur_thread->tcbContext.registers[EAX]),
+                     : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
+                     "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
                      "b" (badge),
                      "S" (msgInfo)
                      : "memory"
@@ -158,8 +158,8 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
                 sysexit \n\
             "
                      :
-                     : "c"(&cur_thread->tcbContext.registers[EDI]),
-                     "a" (cur_thread->tcbContext.registers[EAX]),
+                     : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
+                     "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
                      "b" (badge),
                      "S" (msgInfo)
                      : "memory"

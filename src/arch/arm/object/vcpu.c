@@ -294,23 +294,23 @@ vcpu_finalise(vcpu_t *vcpu)
 void
 associateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
 {
-    if (tcb->vcpu) {
-        dissociateVcpuTcb(tcb, tcb->vcpu);
+    if (tcb->tcbArch.vcpu) {
+        dissociateVcpuTcb(tcb, tcb->tcbArch.vcpu);
     }
     if (vcpu->tcb) {
         dissociateVcpuTcb(vcpu->tcb, vcpu);
     }
     vcpu->tcb = tcb;
-    tcb->vcpu = vcpu;
+    tcb->tcbArch.vcpu = vcpu;
 }
 
 void
 dissociateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
 {
-    if (tcb->vcpu != vcpu || vcpu->tcb != tcb) {
+    if (tcb->tcbArch.vcpu != vcpu || vcpu->tcb != tcb) {
         fail("TCB and VCPU not associated.");
     }
-    tcb->vcpu = NULL;
+    tcb->tcbArch.vcpu = NULL;
     vcpu->tcb = NULL;
 }
 

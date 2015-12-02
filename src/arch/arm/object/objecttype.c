@@ -525,8 +525,8 @@ void
 Arch_prepareThreadDelete(tcb_t *thread)
 {
 #ifdef ARM_HYP
-    if (thread->vcpu) {
-        dissociateVcpuTcb(thread, thread->vcpu);
+    if (thread->tcbArch.vcpu) {
+        dissociateVcpuTcb(thread, thread->tcbArch.vcpu);
     }
 #else  /* ARM_HYP */
     /* No action required on ARM. */

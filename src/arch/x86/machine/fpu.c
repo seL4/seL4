@@ -33,10 +33,10 @@ switchFpuOwner(tcb_t *new_owner)
 {
     enableFpu();
     if (ia32KSfpuOwner) {
-        saveFpuState(&ia32KSfpuOwner->tcbContext.fpuState);
+        saveFpuState(&ia32KSfpuOwner->tcbArch.tcbContext.fpuState);
     }
     if (new_owner) {
-        loadFpuState(&new_owner->tcbContext.fpuState);
+        loadFpuState(&new_owner->tcbArch.tcbContext.fpuState);
     } else {
         disableFpu();
     }

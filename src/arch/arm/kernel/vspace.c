@@ -1014,7 +1014,7 @@ setVMRoot(tcb_t *tcb)
 
     armv_contextSwitch(pd, asid);
 #ifdef ARM_HYP
-    vcpu_switch(tcb->vcpu);
+    vcpu_switch(tcb->tcbArch.vcpu);
 #endif
 }
 

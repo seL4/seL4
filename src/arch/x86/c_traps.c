@@ -32,8 +32,8 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_
          * is currently disabled */
     }
     /* see if we entered via syscall */
-    if (likely(ksCurThread->tcbContext.registers[Error] == -1)) {
-        ksCurThread->tcbContext.registers[EFLAGS] &= ~0x200;
+    if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1)) {
+        ksCurThread->tcbArch.tcbContext.registers[EFLAGS] &= ~0x200;
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movl %0, %%esp\n"
@@ -80,7 +80,7 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_
             "sti\n"
             "sysexit\n"
             :
-            : "r"(&ksCurThread->tcbContext.registers[EAX])
+            : "r"(&ksCurThread->tcbArch.tcbContext.registers[EAX])
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -104,7 +104,7 @@ void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_
             "addl $12, %%esp\n"
             "iret\n"
             :
-            : "r"(&ksCurThread->tcbContext.registers[EAX])
+            : "r"(&ksCurThread->tcbArch.tcbContext.registers[EAX])
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -120,9 +120,9 @@ void __attribute__((fastcall)) __attribute__((externally_visible)) c_handle_inte
         handleUnimplementedDevice();
     } else if (irq == int_page_fault) {
         /* Error code is in Error. Pull out bit 5, which is whether it was instruction or data */
-        handleVMFaultEvent((ksCurThread->tcbContext.registers[Error] >> 4) & 1);
+        handleVMFaultEvent((ksCurThread->tcbArch.tcbContext.registers[Error] >> 4) & 1);
     } else if (irq < int_irq_min) {
-        handleUserLevelFault(irq, ksCurThread->tcbContext.registers[Error]);
+        handleUserLevelFault(irq, ksCurThread->tcbArch.tcbContext.registers[Error]);
     } else if (likely(irq < int_trap_min)) {
         ia32KScurInterrupt = irq;
         handleInterruptEntry();
@@ -133,7 +133,7 @@ void __attribute__((fastcall)) __attribute__((externally_visible)) c_handle_inte
         /* Adjust FaultEIP to point to trapping INT
          * instruction by subtracting 2 */
         int sys_num;
-        ksCurThread->tcbContext.registers[FaultEIP] -= 2;
+        ksCurThread->tcbArch.tcbContext.registers[FaultEIP] -= 2;
         /* trap number is MSBs of the syscall number and the LSBS of EAX */
         sys_num = (irq << 24) | (syscall & 0x00ffffff);
         handleUnknownSyscall(sys_num);
@@ -146,7 +146,7 @@ slowpath(syscall_t syscall)
 {
     ia32KScurInterrupt = -1;
     /* increment nextEIP to skip sysenter */
-    ksCurThread->tcbContext.registers[NextEIP] += 2;
+    ksCurThread->tcbArch.tcbContext.registers[NextEIP] += 2;
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
         handleUnknownSyscall(syscall);

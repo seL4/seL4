@@ -244,7 +244,7 @@ recycleCap(bool_t is_final, cap_t cap)
              * here by zeroing the TCB part of the structure, while leaving
              * the CNode alone. */
             memzero(tcb, sizeof (tcb_t));
-            Arch_initContext(&tcb->tcbContext);
+            Arch_initContext(&tcb->tcbArch.tcbContext);
             tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
             tcb->tcbDomain = ksCurDomain;
 
@@ -515,7 +515,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
 
         /* Setup non-zero parts of the TCB. */
 
-        Arch_initContext(&tcb->tcbContext);
+        Arch_initContext(&tcb->tcbArch.tcbContext);
         tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
         tcb->tcbDomain = ksCurDomain;
 
