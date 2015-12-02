@@ -21,13 +21,6 @@
  * replacing it with their own.
  */
 
-#define TIMER_INTERVAL_US  (CONFIG_TIMER_TICK_MS * 1000)
-#define TIMER_MHZ          24ULL
-#define TIMER_TICKS        (TIMER_MHZ * TIMER_INTERVAL_US)
-#if TIMER_TICKS > 0xffffffff
-#error MCT timer compare value out of range
-#endif
-
 #define GCNTWSTAT_CNTH       (1U << 1)
 #define GCNTWSTAT_CNTL       (1U << 0)
 
@@ -138,10 +131,52 @@ volatile struct mct_map* mct = (volatile struct mct_map*)EXYNOS_MCT_PPTR;
    DONT_TRANSLATE
  */
 void
-resetTimer(void)
+setDeadline(time_t deadline)
 {
-    MCR(CNTV_TVAL, TIMER_TICKS);
-    MCR(CNTV_CTL, (1 << 0));
+    MCRR(CNTV_CVAL, deadline);
+}
+
+time_t
+getCurrentTime(void)
+{
+    time_t time;
+    MRRC(CNTVCT, time);
+    return time;
+}
+
+/**
+   DONT_TRANSLATE
+ */
+void
+ackDeadlineIRQ(void)
+{
+    MCRR(CNTV_CVAL, UINT64_MAX);
+}
+
+time_t CONST
+getMaxTimerUs(void)
+{
+    return UINT64_MAX / TIMER_MHZ;
+}
+
+time_t CONST
+getMinTimerUs(void)
+{
+    return 2;
+}
+
+time_t CONST
+getTimerPrecision(void)
+{
+    return getMinTimerUs() * TIMER_MHZ;
+}
+
+CONST time_t
+usToTicks(time_t us)
+{
+    assert(us <= getMaxTimerUs());
+    assert(us >= getMinTimerUs());
+    return us * TIMER_MHZ;
 }
 
 /**
@@ -162,8 +197,11 @@ initTimer(void)
     /* Setup compare register to trigger in about 10000 years from now */
     MCRR(CNTV_CVAL, 0xffffffffffffffff);
 
-    /* Reset the count down timer */
-    resetTimer();
+    /* enable the timer */
+    MCR(CNTV_CTL, (1u << 0));
+    /* TODO remove once SELFOUR-365 is implemented
+     * allow user mode to read the timer (CNTPCT) */
+    MCR(CNTKCTL, 1u);
 }
 
 #else /* ARM_CORTEX_A15 */
