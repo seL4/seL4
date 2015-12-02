@@ -25,6 +25,9 @@ extern tcb_t *ksSchedulerAction VISIBLE;
 extern word_t ksWorkUnitsCompleted;
 extern irq_state_t intStateIRQTable[] VISIBLE;
 extern cte_t *intStateIRQNode VISIBLE;
+extern time_t ksConsumed VISIBLE;
+extern time_t ksCurrentTime VISIBLE;
+extern bool_t ksReprogram VISIBLE;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)

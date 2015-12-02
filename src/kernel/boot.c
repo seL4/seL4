@@ -333,7 +333,8 @@ create_sched_context(tcb_t *tcb)
     sc = SC_PTR(sc_pptr);
     tcb->tcbSchedContext = sc;
     sc->tcb = tcb;
-    sc->budget = CONFIG_TIME_SLICE;
+    sc->budget = usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_PER_MS);
+    sc->remaining = sc->budget;
 
     return true;
 }
@@ -414,6 +415,9 @@ create_initial_thread(
     setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
     ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
+    ksReprogram = true;
+    ksConsumed = 0u;
+    ksCurrentTime = getCurrentTime();
     ksCurThread = ksIdleThread;
 
     /* initialise current thread pointer */

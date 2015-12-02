@@ -51,7 +51,8 @@ void scheduleTCB(tcb_t *tptr);
 void attemptSwitchTo(tcb_t *tptr);
 void switchIfRequiredTo(tcb_t *tptr);
 void setThreadState(tcb_t *tptr, _thread_state_t ts) VISIBLE;
-void timerTick(void);
+void updateTimestamp(void);
+bool_t checkBudget(void);
 void rescheduleRequired(void);
-
+void recharge(sched_context_t *sc);
 #endif

@@ -24,6 +24,8 @@
 exception_t
 invokeSchedControl_Configure(sched_context_t *target, time_t budget)
 {
+    budget = usToTicks(budget);
+
     /* if the target has an active budget, extend it by the difference
       between the old budget and the new */
     if (target->tcb) {
@@ -53,8 +55,16 @@ decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buf
 
     budget = arch_parseTimeArg(1, buffer).arg;
 
-    if (budget == 0llu) {
-        userError("SchedControl_Configure: budget too small.");
+    if (budget > getMaxTimerUs()) {
+        userError("SchedControl_Configure: budget too large, max for this platform %llu.", getMaxTimerUs());
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (budget < getMinTimerUs()) {
+        userError("SchedControl_Configure: budget too small, min for this platform %llx (got %llx).",
+                  getMinTimerUs(), budget);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;

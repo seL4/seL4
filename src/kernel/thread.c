@@ -99,7 +99,10 @@ suspend(tcb_t *target)
 void
 restart(tcb_t *target)
 {
-    if (isBlocked(target) && target->tcbSchedContext != NULL) {
+    if (isBlocked(target) && target->tcbSchedContext != NULL &&
+            target->tcbSchedContext->budget > 0) {
+
+        recharge(target->tcbSchedContext);
         cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
@@ -287,6 +290,11 @@ schedule(void)
         switchToThread(ksSchedulerAction);
         ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
     }
+
+    if (ksReprogram) {
+        setDeadline(ksCurrentTime + ksCurThread->tcbSchedContext->remaining);
+        ksReprogram = false;
+    }
 }
 
 void
@@ -311,8 +319,15 @@ chooseThread(void)
 void
 switchToThread(tcb_t *thread)
 {
+    /* first bill the previous thread */
+    ksCurThread->tcbSchedContext->remaining -= ksConsumed;
+    ksConsumed = 0llu;
+
+    /* now switch */
     Arch_switchToThread(thread);
     tcbSchedDequeue(thread);
+    assert(thread->tcbSchedContext->remaining > getTimerPrecision());
+    ksCurrentTime += 1llu;
     ksCurThread = thread;
 }
 
@@ -407,17 +422,57 @@ scheduleTCB(tcb_t *tptr)
 }
 
 void
-timerTick(void)
+recharge(sched_context_t *sc)
 {
-    if (likely(thread_state_get_tsType(ksCurThread->tcbState) ==
-               ThreadState_Running)) {
-        if (ksCurThread->tcbSchedContext->remaining > 1) {
-            ksCurThread->tcbSchedContext->remaining--;
-        } else {
-            ksCurThread->tcbSchedContext->remaining = ksCurThread->tcbSchedContext->budget;
-            tcbSchedAppend(ksCurThread);
-            rescheduleRequired();
-        }
+    sc->remaining = sc->budget;
+}
+
+/* update the kernel timestamp and store much
+ * time we have consumed since the last update
+ */
+void
+updateTimestamp(void)
+{
+    time_t prev = ksCurrentTime;
+    ksCurrentTime = getCurrentTime();
+    ksConsumed = ksCurrentTime - prev;
+}
+
+/*
+ * Check if the current threads budget has expired.
+ *
+ * If it has, bill the thread, add it to the scheduler
+ * and set up a reschedule.
+ *
+ * return true if the thread has enough budget to get through
+ *             the current kernel operation.
+ */
+bool_t
+checkBudget(void)
+{
+    /* we enter this function on 2 different types of path:
+     * kernel entry (for whatever reason) and when handling
+     * a timer interrupt during a preemption point. For the
+     * former, all threads should be runnable on kernel entry.
+     * For the latter, all threads being preempted are currently
+     * doing something so they should be running
+     */
+    assert(isRunnable(ksCurThread));
+
+    /* does this thread have enough time to continue? */
+    if (unlikely(ksConsumed + getTimerPrecision() > ksCurThread->tcbSchedContext->remaining)) {
+        /* timeslice ended - refill budget */
+        recharge(ksCurThread->tcbSchedContext);
+        /* make sure we don't bill the thread twice */
+        ksConsumed = 0u;
+        /* restart the kernel operation once the thread is scheduled again */
+        setThreadState(ksCurThread, ThreadState_Restart);
+        tcbSchedAppend(ksCurThread);
+        rescheduleRequired();
+        return false;
+    } else {
+        /* thread is good to go to do whatever it is up to */
+        return true;
     }
 }
 
@@ -429,5 +484,6 @@ rescheduleRequired(void)
         tcbSchedEnqueue(ksSchedulerAction);
     }
     ksSchedulerAction = SchedulerAction_ChooseNewThread;
+    ksReprogram = true;
 }
 

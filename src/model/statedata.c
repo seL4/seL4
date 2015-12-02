@@ -41,6 +41,12 @@ word_t ksWorkUnitsCompleted;
 irq_state_t intStateIRQTable[maxIRQ + 1];
 cte_t *intStateIRQNode;
 
+/* the amount of time passed since the kernel time was last updated */
+time_t ksConsumed;
+/* the current kernel time (recoreded on kernel entry) */
+time_t ksCurrentTime;
+/* whether we need to reprogram the timer before exiting the kernel */
+bool_t ksReprogram;
 
 #ifdef DEBUG
 debug_entry_t ksKernelEntry;

@@ -18,6 +18,7 @@
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
 #include <machine/io.h>
+#include <machine/timer.h>
 #include <object/interrupt.h>
 #include <model/statedata.h>
 #include <string.h>
@@ -169,8 +170,13 @@ handleUnknownSyscall(word_t w)
     }
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
-    current_fault = fault_unknown_syscall_new(w);
-    handleFault(ksCurThread);
+    /* we don't account for unknown syscalls that are for debugging or benchmarking,
+     * so don't record the kernel entry time until now */
+    updateTimestamp();
+    if (likely(checkBudget())) {
+        current_fault = fault_unknown_syscall_new(w);
+        handleFault(ksCurThread);
+    }
 
     schedule();
     activateThread();
@@ -187,8 +193,11 @@ handleUserLevelFault(word_t w_a, word_t w_b)
     ksKernelEntry.code = w_b;
 #endif /* DEBUG */
 
-    current_fault = fault_user_exception_new(w_a, w_b);
-    handleFault(ksCurThread);
+    updateTimestamp();
+    if (likely(checkBudget())) {
+        current_fault = fault_user_exception_new(w_a, w_b);
+        handleFault(ksCurThread);
+    }
 
     schedule();
     activateThread();
@@ -205,9 +214,12 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
     ksKernelEntry.fault_type = vm_faultType;
 #endif /* DEBUG */
 
-    status = handleVMFault(ksCurThread, vm_faultType);
-    if (status != EXCEPTION_NONE) {
-        handleFault(ksCurThread);
+    updateTimestamp();
+    if (likely(checkBudget())) {
+        status = handleVMFault(ksCurThread, vm_faultType);
+        if (status != EXCEPTION_NONE) {
+            handleFault(ksCurThread);
+        }
     }
 
     schedule();
@@ -402,60 +414,54 @@ handleSyscall(syscall_t syscall)
     ksKernelEntry.syscall_no = syscall;
 #endif /* DEBUG */
 
-    switch (syscall) {
-    case SysSend:
-        ret = handleInvocation(false, true);
+    ret = EXCEPTION_NONE;
+    updateTimestamp();
+    if (checkBudget()) {
+        switch (syscall) {
+        case SysSend:
+            ret = handleInvocation(false, true);
+            break;
+
+        case SysNBSend:
+            ret = handleInvocation(false, false);
+            break;
+
+        case SysCall:
+            ret = handleInvocation(true, true);
+            break;
+
+        case SysRecv:
+            handleRecv(true);
+            break;
+
+        case SysReply:
+            handleReply();
+            break;
+
+        case SysReplyRecv:
+            handleReply();
+            handleRecv(true);
+            break;
+
+        case SysNBRecv:
+            handleRecv(false);
+            break;
+
+        case SysYield:
+            handleYield();
+            break;
+
+        default:
+            fail("Invalid syscall");
+        }
+
+        /* this will occur if any preemption points where triggered */
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
                 handleInterrupt(irq);
             }
         }
-        break;
-
-    case SysNBSend:
-        ret = handleInvocation(false, false);
-        if (unlikely(ret != EXCEPTION_NONE)) {
-            irq = getActiveIRQ();
-            if (irq != irqInvalid) {
-                handleInterrupt(irq);
-            }
-        }
-        break;
-
-    case SysCall:
-        ret = handleInvocation(true, true);
-        if (unlikely(ret != EXCEPTION_NONE)) {
-            irq = getActiveIRQ();
-            if (irq != irqInvalid) {
-                handleInterrupt(irq);
-            }
-        }
-        break;
-
-    case SysRecv:
-        handleRecv(true);
-        break;
-
-    case SysReply:
-        handleReply();
-        break;
-
-    case SysReplyRecv:
-        handleReply();
-        handleRecv(true);
-        break;
-
-    case SysNBRecv:
-        handleRecv(false);
-        break;
-
-    case SysYield:
-        handleYield();
-        break;
-
-    default:
-        fail("Invalid syscall");
     }
 
     schedule();
