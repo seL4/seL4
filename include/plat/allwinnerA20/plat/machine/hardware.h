@@ -66,11 +66,6 @@ void map_kernel_devices(void);
 bool_t CONST isReservedIRQ(irq_t irq);
 void handleReservedIRQ(irq_t irq);
 
-/** MODIFIES: [*] */
-void resetTimer(void);
-/** MODIFIES: [*] */
-void initTimer(void);
-
 /* L2 cache control */
 /** MODIFIES: [*] */
 void initL2Cache(void);

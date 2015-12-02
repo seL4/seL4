@@ -70,11 +70,6 @@ bool_t CONST isReservedIRQ(irq_t irq);
 void handleReservedIRQ(irq_t irq);
 
 /** MODIFIES: [*] */
-void resetTimer(void);
-/** MODIFIES: [*] */
-void initTimer(void);
-
-/** MODIFIES: [*] */
 void initL2Cache(void);
 
 /** MODIFIES: [*] */

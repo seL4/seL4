@@ -78,11 +78,6 @@ void map_kernel_devices(void);
 bool_t CONST isReservedIRQ(irq_t irq);
 void handleReservedIRQ(irq_t irq);
 
-/** MODIFIES: [*] */
-void resetTimer(void);
-/** MODIFIES: [*] */
-void initTimer(void);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* !__PLAT_MACHINE_HARDWARE_H */
