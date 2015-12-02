@@ -27,6 +27,7 @@
 #define PPTR_TOP          0xfff00000
 #define PADDR_TOP         (PPTR_TOP - BASE_OFFSET)
 
+#define CLK_MHZ 498llu
 
 #ifndef __ASSEMBLER__
 
@@ -37,7 +38,6 @@
 
 #include <arch/machine/gic_pl390.h>
 #include <arch/machine/l2c_310.h>
-#include <arch/machine/priv_timer.h>
 
 static inline void * CONST
 ptrFromPAddr(paddr_t paddr)

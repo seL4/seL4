@@ -23,7 +23,7 @@ ifeq ($(PLAT), exynos4)
     # if exynos4412 has MPCORE peripherals, then
     # samsung has NOT documented their location
 else
-    ARCH_C_SOURCES += machine/priv_timer.c
+    ARCH_C_SOURCES += machine/global_timer.c
 endif
 
 endif
