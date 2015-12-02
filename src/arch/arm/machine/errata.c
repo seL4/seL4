@@ -73,7 +73,6 @@ BOOT_CODE void  __attribute__((externally_visible)) arm_errata(void)
     errata_arm1136();
 #endif
 #ifdef CONFIG_ARM_ERRATA_773022
-    (void)errata_armA15_773022;
     errata_armA15_773022();
 #endif
 }

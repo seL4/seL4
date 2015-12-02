@@ -64,6 +64,7 @@ the enumerated type "Syscall":
 >         | SysReply
 >         | SysReplyWait
 >         | SysYield
+>         | SysNBWait
 >         deriving (Show, Enum, Bounded, Eq)
 
 \subsection{Handling Events}
@@ -82,12 +83,13 @@ System call events are dispatched here to the appropriate system call handlers, 
 >         SysSend -> handleSend True
 >         SysNBSend -> handleSend False
 >         SysCall -> handleCall
->         SysWait -> withoutPreemption handleWait
+>         SysWait -> withoutPreemption $ handleWait True
 >         SysReply -> withoutPreemption handleReply
 >         SysReplyWait -> withoutPreemption $ do
 >             handleReply
->             handleWait
+>             handleWait True
 >         SysYield -> withoutPreemption handleYield
+>         SysNBWait -> withoutPreemption $ handleWait False
 
 \subsubsection{Interrupts}
 
@@ -176,22 +178,22 @@ The "Reply" system call attempts to perform an immediate IPC transfer to the thr
 
 The "Wait" system call blocks waiting to receive a message through a specified endpoint. It will fail if the specified capability does not refer to an endpoint object.
 
-> handleWait :: Kernel ()
-> handleWait = do
+> handleWait :: Bool -> Kernel ()
+> handleWait isBlocking = do
 >     thread <- getCurThread
 >     epCPtr <- asUser thread $ liftM CPtr $ getRegister capRegister
 >     (capFaultOnFailure epCPtr True $ do
 >         epCap <- lookupCap thread epCPtr
 >         case epCap of
->             EndpointCap { capEPCanReceive = True } ->
+>             EndpointCap { capEPCanReceive = True } -> do
 >                 withoutFailure $ do 
 >                     deleteCallerCap thread
->                     receiveIPC thread epCap
+>                     receiveIPC thread epCap isBlocking
 >             AsyncEndpointCap { capAEPCanReceive = True, capAEPPtr = ptr } -> do
 >                 aep <- withoutFailure $ getAsyncEP ptr
 >                 boundTCB <- return $ aepBoundTCB aep
 >                 if boundTCB == Just thread || boundTCB == Nothing
->                  then withoutFailure $ receiveAsyncIPC thread epCap
+>                  then withoutFailure $ receiveAsyncIPC thread epCap isBlocking
 >                  else throw $ MissingCapability { missingCapBitsLeft = 0 }
 >             _ -> throw $ MissingCapability { missingCapBitsLeft = 0 })
 >       `catchFailure` handleFault thread

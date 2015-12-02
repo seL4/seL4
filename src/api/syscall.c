@@ -309,7 +309,7 @@ handleReply(void)
 }
 
 static void
-handleWait(void)
+handleWait(bool_t isBlocking)
 {
     word_t epCPtr;
     lookupCap_ret_t lu_ret;
@@ -326,7 +326,6 @@ handleWait(void)
 
     switch (cap_get_capType(lu_ret.cap)) {
     case cap_endpoint_cap:
-
         if (unlikely(!cap_endpoint_cap_get_capCanReceive(lu_ret.cap))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
             current_fault = fault_cap_fault_new(epCPtr, true);
@@ -335,7 +334,7 @@ handleWait(void)
         }
 
         deleteCallerCap(ksCurThread);
-        receiveIPC(ksCurThread, lu_ret.cap);
+        receiveIPC(ksCurThread, lu_ret.cap, isBlocking);
         break;
 
     case cap_async_endpoint_cap: {
@@ -351,7 +350,7 @@ handleWait(void)
             break;
         }
 
-        receiveAsyncIPC(ksCurThread, lu_ret.cap);
+        receiveAsyncIPC(ksCurThread, lu_ret.cap, isBlocking);
         break;
     }
     default:
@@ -408,7 +407,7 @@ handleSyscall(syscall_t syscall)
         break;
 
     case SysWait:
-        handleWait();
+        handleWait(true);
         break;
 
     case SysReply:
@@ -417,7 +416,11 @@ handleSyscall(syscall_t syscall)
 
     case SysReplyWait:
         handleReply();
-        handleWait();
+        handleWait(true);
+        break;
+
+    case SysNBWait:
+        handleWait(false);
         break;
 
     case SysYield:

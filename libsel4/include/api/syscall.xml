@@ -20,6 +20,7 @@
             <syscall name="Wait"      />
             <syscall name="Reply"     />
             <syscall name="Yield"     />
+            <syscall name="NBWait"      />
         </config>
     </api>
     <!-- Syscalls on the unknown syscall path. These definitions will be wrapped in #ifdef name -->

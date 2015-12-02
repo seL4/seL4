@@ -261,6 +261,12 @@ transferCaps(message_info_t info, extra_caps_t caps,
     return message_info_set_msgExtraCaps(info, i);
 }
 
+void doNBWaitFailedTransfer(tcb_t *thread)
+{
+    /* Set the badge register to 0 to indicate there was no message */
+    setRegister(thread, badgeRegister, 0);
+}
+
 static void
 nextDomain(void)
 {
@@ -301,20 +307,27 @@ schedule(void)
 void
 chooseThread(void)
 {
-    int p;
+    word_t prio;
+    word_t dom;
     tcb_t *thread;
 
-    for (p = seL4_MaxPrio; p != -1; p--) {
-        unsigned int domprio = ksCurDomain * CONFIG_NUM_PRIORITIES + p;
-        thread = ksReadyQueues[domprio].head;
-        if (thread != NULL) {
-            assert(isRunnable(thread));
-            switchToThread(thread);
-            return;
-        }
+    if (CONFIG_NUM_DOMAINS > 1) {
+        dom = ksCurDomain;
+    } else {
+        dom = 0;
     }
 
-    switchToIdleThread();
+    if (likely(ksReadyQueuesL1Bitmap[dom])) {
+        word_t l1index = (wordBits - 1) - CLZ(ksReadyQueuesL1Bitmap[dom]);
+        word_t l2index = (wordBits - 1) - CLZ(ksReadyQueuesL2Bitmap[dom][l1index]);
+        prio = l1index_to_prio(l1index) | l2index;
+        thread = ksReadyQueues[ready_queues_index(dom, prio)].head;
+        assert(thread);
+        assert(isRunnable(thread));
+        switchToThread(thread);
+    } else {
+        switchToIdleThread();
+    }
 }
 
 void

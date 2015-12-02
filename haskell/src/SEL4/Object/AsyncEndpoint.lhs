@@ -14,7 +14,7 @@ This module specify the behavior of a asynchronous IPC endpoints.
 >         sendAsyncIPC, receiveAsyncIPC, 
 >         aepCancelAll, asyncIPCCancel, completeAsyncIPC,
 >         getAsyncEP, setAsyncEP, doUnbindAEP, unbindAsyncEndpoint,
->         unbindMaybeAEP, bindAsyncEndpoint
+>         unbindMaybeAEP, bindAsyncEndpoint, doNBWaitFailedTransfer
 >     ) where
 
 \begin{impdetails}
@@ -88,11 +88,17 @@ If the endpoint is active, new values are calculated and stored in the endpoint.
 
 \subsection{Receiving Messages}
 
-This function performs an asynchronous IPC receive operation, given a thread pointer and a capability to an asynchronous endpoint. The receive is blocking -- the thread will be blocked on the endpoint till a message arrives.
+This function performs an asynchronous IPC receive operation, given a thread pointer and a capability to an asynchronous endpoint. 
+The receive can be either blocking (the thread will be blocked on the endpoint till a message arrives) or non-blocking
+depending on the isBlocking flag.
 
-> receiveAsyncIPC :: PPtr TCB -> Capability -> Kernel ()
+> doNBWaitFailedTransfer :: PPtr TCB -> Kernel ()
+> doNBWaitFailedTransfer thread = asUser thread $ setRegister badgeRegister 0 
 
-> receiveAsyncIPC thread cap = do 
+
+> receiveAsyncIPC :: PPtr TCB -> Capability -> Bool -> Kernel ()
+
+> receiveAsyncIPC thread cap isBlocking = do 
 
 Fetch the asynchronous endpoint, and select the operation based on its state.
 
@@ -102,17 +108,22 @@ Fetch the asynchronous endpoint, and select the operation based on its state.
 
 If the asynchronous endpoint is idle, then it becomes a waiting asynchronous endpoint, with the current thread in its queue. The thread is blocked.
 
->             IdleAEP -> do 
->                 setThreadState (BlockedOnAsyncEvent {
->                      waitingOnAsyncEP = aepptr } ) thread
->                 setAsyncEP aepptr $ aep {aepObj = WaitingAEP [thread] }
+>             IdleAEP -> case isBlocking of 
+>                 True -> do 
+>                       setThreadState (BlockedOnAsyncEvent {
+>                                          waitingOnAsyncEP = aepptr } ) thread
+>                       setAsyncEP aepptr $ aep {aepObj = WaitingAEP ([thread]) }
+>                 False -> doNBWaitFailedTransfer thread
 
-If the asynchronous endpoint is already waiting, the current thread is blocked and added to the queue. Note that this case cannot occur when the asynchronous endpoint is bound, as only the associated thread can wait on it. 
+If the asynchronous endpoint is already waiting, the current thread is blocked and added to the queue. Note that this case cannot occur when the asynchronous endpoint is bound, 
+as only the associated thread can wait on it.  
 
->             WaitingAEP queue -> do 
->                 setThreadState (BlockedOnAsyncEvent {
->                     waitingOnAsyncEP = aepptr } ) thread
->                 setAsyncEP aepptr $ aep {aepObj = WaitingAEP (queue ++ [thread]) }
+>             WaitingAEP queue -> case isBlocking of 
+>                 True -> do 
+>                       setThreadState (BlockedOnAsyncEvent {
+>                                          waitingOnAsyncEP = aepptr } ) thread
+>                       setAsyncEP aepptr $ aep {aepObj = WaitingAEP (queue ++ [thread]) }
+>                 False -> doNBWaitFailedTransfer thread
 
 If the asynchronous endpoint is active, the message will be loaded to the MRs of the thread and the endpoint will be marked as idle.
 

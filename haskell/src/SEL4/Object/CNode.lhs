@@ -780,13 +780,13 @@ This helper function is used to load the capability transfer data from an IPC bu
 
 > loadCapTransfer :: PPtr Word -> Kernel CapTransfer
 > loadCapTransfer buffer = do
->         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral wordSize
 >         let offset = msgMaxLength + msgMaxExtraCaps + 2
 >         capTransferFromWords (buffer + PPtr (offset*intSize))
 
 > capTransferFromWords :: PPtr Word -> Kernel CapTransfer
 > capTransferFromWords ptr = do
->         let intSize = fromIntegral $ finiteBitSize (undefined::Word) `div` 8
+>         let intSize = fromIntegral wordSize
 >         w0 <- loadWordUser ptr
 >         w1 <- loadWordUser $ ptr + PPtr intSize
 >         w2 <- loadWordUser $ ptr + PPtr (2 * intSize)

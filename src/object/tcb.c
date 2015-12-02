@@ -24,11 +24,26 @@
 #include <util.h>
 #include <string.h>
 
-static inline PURE
-unsigned int
-ready_queues_index(unsigned int dom, unsigned int prio)
+static inline void
+addToBitmap(word_t dom, word_t prio)
 {
-    return dom * CONFIG_NUM_PRIORITIES + prio;
+    word_t l1index;
+
+    l1index = prio_to_l1index(prio);
+    ksReadyQueuesL1Bitmap[dom] |= BIT(l1index);
+    ksReadyQueuesL2Bitmap[dom][l1index] |= BIT(prio & MASK(wordRadix));
+}
+
+static inline void
+removeFromBitmap(word_t dom, word_t prio)
+{
+    word_t l1index;
+
+    l1index = prio_to_l1index(prio);
+    ksReadyQueuesL2Bitmap[dom][l1index] &= ~BIT(prio & MASK(wordRadix));
+    if (unlikely(!ksReadyQueuesL2Bitmap[dom][l1index])) {
+        ksReadyQueuesL1Bitmap[dom] &= ~BIT(l1index);
+    }
 }
 
 /* Add TCB to the head of a scheduler queue */
@@ -48,6 +63,7 @@ tcbSchedEnqueue(tcb_t *tcb)
 
         if (!queue.end) { /* Empty list */
             queue.end = tcb;
+            addToBitmap(dom, prio);
         } else {
             queue.head->tcbSchedPrev = tcb;
         }
@@ -78,6 +94,7 @@ tcbSchedAppend(tcb_t *tcb)
 
         if (!queue.head) { /* Empty list */
             queue.head = tcb;
+            addToBitmap(dom, prio);
         } else {
             queue.end->tcbSchedNext = tcb;
         }
@@ -110,6 +127,9 @@ tcbSchedDequeue(tcb_t *tcb)
             tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
         } else {
             queue.head = tcb->tcbSchedNext;
+            if (likely(!tcb->tcbSchedNext)) {
+                removeFromBitmap(dom, prio);
+            }
         }
 
         if (tcb->tcbSchedNext) {
