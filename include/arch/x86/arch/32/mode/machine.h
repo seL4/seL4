@@ -25,6 +25,7 @@
 #define IA32_SYSENTER_CS_MSR    0x174
 #define IA32_SYSENTER_ESP_MSR   0x175
 #define IA32_SYSENTER_EIP_MSR   0x176
+#define IA32_DEADLINE_MSR       0x6e0
 
 #define BROADWELL_MODEL_ID      0xD4
 #define HASWELL_MODEL_ID        0xC3
@@ -176,6 +177,32 @@ static inline uint32_t ia32_cpuid_eax(uint32_t eax, uint32_t ecx)
                  : "a" (eax), "c" (ecx)
                  : "memory");
     return eax;
+}
+
+static inline uint32_t ia32_cpuid_ecx(uint32_t eax, uint32_t ecx)
+{
+    uint32_t edx, ebx;
+    asm volatile("cpuid"
+                 : "=a" (eax),
+                 "=b" (ebx),
+                 "=c" (ecx),
+                 "=d" (edx)
+                 : "a" (eax), "c" (ecx)
+                 : "memory");
+    return ecx;
+}
+
+static inline uint64_t ia32_rdtsc(void)
+{
+    uint32_t hi, lo;
+
+    asm volatile (
+        "rdtsc"
+        : "=a" (lo),
+        "=d" (hi)
+    );
+
+    return ((uint64_t) hi) << 32llu | (uint64_t) lo;
 }
 
 /* Read/write memory fence */

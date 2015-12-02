@@ -35,6 +35,7 @@ extern uint32_t ia32KScacheLineSizeBits;
 extern idt_entry_t ia32KSidt[];
 extern user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 extern paddr_t ia32KSCurrentPD;
+extern word_t ia32KStscMhz;
 
 #ifdef CONFIG_IOMMU
 extern uint32_t ia32KSnumDrhu;

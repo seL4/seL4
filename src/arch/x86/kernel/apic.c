@@ -16,6 +16,8 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/pit.h>
 
+#define CPUID_TSC_DEADLINE_BIT 24u
+
 typedef enum _apic_reg_t {
     APIC_ID             = 0x020,
     APIC_VERSION        = 0x030,
@@ -111,10 +113,6 @@ apic_init(bool_t mask_legacy_irqs)
         return false;
     }
 
-    /* initialise APIC timer */
-    apic_write_reg(APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
-    apic_write_reg(APIC_TIMER_COUNT, apic_khz * CONFIG_TIMER_TICK_MS);
-
     /* enable APIC using SVR register */
     apic_write_reg(
         APIC_SVR,
@@ -155,11 +153,35 @@ apic_init(bool_t mask_legacy_irqs)
         ).words[0]
     );
 
+    /* Check APIC for tsc-deadline mode support */
+    cpuid_value = ia32_cpuid_ecx(0x1, 0x0);
+
+    if (!(cpuid_value & BIT(CPUID_TSC_DEADLINE_BIT))) {
+        printf("APIC: unsupported platform, TSC-deadline mode is not supported\n");
+        return false;
+    }
+
+    /* Check APIC for tsc-deadline mode support */
+    cpuid_value = ia32_cpuid_ecx(0x1, 0x0);
+
+    if (!(cpuid_value & BIT(CPUID_TSC_DEADLINE_BIT))) {
+        printf("APIC: unsupported platform, TSC-deadline mode is not supported\n");
+        return false;
+    }
+
+    /* Check APIC for tsc-deadline mode support */
+    cpuid_value = ia32_cpuid_ecx(0x1, 0x0);
+
+    if (!(cpuid_value & BIT(CPUID_TSC_DEADLINE_BIT))) {
+        printf("APIC: unsupported platform, TSC-deadline mode is not supported\n");
+        return false;
+    }
+
     /* initialise timer */
     apic_write_reg(
         APIC_LVT_TIMER,
         apic_lvt_new(
-            1,        /* timer_mode      */
+            2,        /* timer_mode - tsc_deadline */
             0,        /* masked          */
             0,        /* trigger_mode    */
             0,        /* remote_irr      */

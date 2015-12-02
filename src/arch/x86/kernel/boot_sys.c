@@ -70,6 +70,7 @@ typedef struct glks {
     cpu_id_t     cpu_list       [CONFIG_MAX_NUM_NODES]; /* CPUs assigned to nodes */
     ui_info_t    ui_info_list   [CONFIG_MAX_NUM_NODES]; /* info about userland images */
     dev_p_regs_t dev_p_regs;  /* device memory regions */
+    uint32_t     tsc_mhz;     /* frequency of the tsc */
     uint32_t     num_ioapic;  /* number of IOAPICs detected */
     paddr_t      ioapic_paddr[CONFIG_MAX_NUM_IOAPIC];
 #ifdef CONFIG_IOMMU
@@ -368,7 +369,8 @@ try_boot_node(void)
                 /* parameters below not modeled in abstract specification */
                 (pdpte_t*)kernel_pdpt_list[node_id],
                 (pde_t*)kernel_pd_list[node_id],
-                (pte_t*)kernel_pt_list[node_id]
+                (pte_t*)kernel_pt_list[node_id],
+                glks.tsc_mhz
 #ifdef CONFIG_IOMMU
                 , cpu_id,
                 node_id == 0 ? glks.num_drhu : 0,
