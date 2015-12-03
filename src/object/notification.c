@@ -171,7 +171,7 @@ cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
 {
     tcb_queue_t ntfn_queue;
 
-    /* Haskell error "asyncIPCCancel: notification object must be in a waiting" state */
+    /* Haskell error "cancelSignal: notification object must be in a waiting" state */
     assert(notification_ptr_get_state(ntfnPtr) == NtfnState_Waiting);
 
     /* Dequeue TCB */
