@@ -406,6 +406,8 @@ create_initial_thread(
     setRegister(tcb, capRegister, bi_frame_vptr);
     setNextPC(tcb, ui_v_entry);
 
+    ksCurrentTime = getCurrentTime();
+
     /* initialise TCB */
     if (!create_sched_context(tcb)) {
         return false;

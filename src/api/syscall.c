@@ -176,6 +176,9 @@ handleUnknownSyscall(word_t w)
     if (likely(checkBudget())) {
         current_fault = fault_unknown_syscall_new(w);
         handleFault(ksCurThread);
+    } else {
+        /* try again when the thread has budget */
+        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();
@@ -197,6 +200,9 @@ handleUserLevelFault(word_t w_a, word_t w_b)
     if (likely(checkBudget())) {
         current_fault = fault_user_exception_new(w_a, w_b);
         handleFault(ksCurThread);
+    } else {
+        /* try again when the thread has budget */
+        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();
@@ -220,6 +226,9 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
         if (status != EXCEPTION_NONE) {
             handleFault(ksCurThread);
         }
+    } else {
+        /* try again when the thread has budget */
+        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();
@@ -456,12 +465,15 @@ handleSyscall(syscall_t syscall)
         }
 
         /* this will occur if any preemption points where triggered */
-        if (unlikely(ret != EXCEPTION_NONE)) {
+        if (unlikely(ret == EXCEPTION_PREEMPTED)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
                 handleInterrupt(irq);
             }
         }
+    } else {
+        /* try again when the thread has budget */
+        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();

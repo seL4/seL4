@@ -43,7 +43,7 @@ getMaxTimerUs(void)
 time_t CONST
 getMinTimerUs(void)
 {
-    return 2;
+    return 10u;
 }
 
 time_t CONST
@@ -64,7 +64,7 @@ void
 setDeadline(time_t deadline)
 {
     /* if this fails the caller code is wrong */
-    if (deadline < ksCurrentTime) {
+    if (deadline < (ksCurrentTime + getTimerPrecision())) {
         printf("deadline %llx current %llx\n", deadline, ksCurrentTime);
     }
     assert(deadline > ksCurrentTime);
@@ -77,7 +77,7 @@ setDeadline(time_t deadline)
     /* enable cmp */
     globalTimer->control |= BIT(COMP_ENABLE);
     /* if this fails PRECISION is too low */
-    assert(getCurrentTime() < deadline || globalTimer->isr == 1);
+    assert(getCurrentTime() < deadline || globalTimer->isr == 1u);
 }
 
 void

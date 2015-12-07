@@ -466,7 +466,6 @@ checkBudget(void)
         /* make sure we don't bill the thread twice */
         ksConsumed = 0u;
         /* restart the kernel operation once the thread is scheduled again */
-        setThreadState(ksCurThread, ThreadState_Restart);
         tcbSchedAppend(ksCurThread);
         rescheduleRequired();
         return false;

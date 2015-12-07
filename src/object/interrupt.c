@@ -211,15 +211,7 @@ handleInterrupt(irq_t irq)
 
         updateTimestamp();
         cap = intStateIRQNode[irq].cap;
-        /* Accounting time for IRQs is complicated. If the signal
-         * gets recieved immediately and the reciever is waiting, then
-         * the overhead for kernel handling of the IRQ is billed to the
-         * receiving thread.
-         *
-         * If the recieving thread is not present, the current thread
-         * will be billed for the kernel handling of the IRQ. This will be
-         * revisted when SELFOUR-337 is addressed
-         */
+
         if (cap_get_capType(cap) == cap_notification_cap &&
                 cap_notification_cap_get_capNtfnCanSend(cap)) {
             sendSignal(NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)),
@@ -230,12 +222,28 @@ handleInterrupt(irq_t irq)
 #endif
         }
         maskInterrupt(true, irq);
+
+        /* Bill the current thread. We know it has enough budget, as
+         * otherwise we would be dealing with a timer interrupt not a signal
+         * interrupt
+         */
+        if (likely(ksCurThread->tcbSchedContext->remaining > ksConsumed + getTimerPrecision())) {
+            ksCurThread->tcbSchedContext->remaining -= ksConsumed;
+        } else {
+            recharge(ksCurThread->tcbSchedContext);
+            if (isRunnable(ksCurThread)) {
+                tcbSchedAppend(ksCurThread);
+            }
+            rescheduleRequired();
+        }
+        ksConsumed = 0llu;
         break;
     }
 
     case IRQTimer:
         updateTimestamp();
         ackDeadlineIRQ();
+        ksReprogram = true;
         if (likely(ksCurThread != ksIdleThread)) {
             checkBudget();
         }

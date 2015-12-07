@@ -15,6 +15,7 @@
 #include <util.h>
 #include <object/structures.h>
 #include <arch/machine.h>
+#include <machine/timer.h>
 
 static inline CONST word_t
 prio_to_l1index(word_t prio)
