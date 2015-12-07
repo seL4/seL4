@@ -23,7 +23,7 @@ interrupt_t x86KScurInterrupt VISIBLE;
 /* ==== proper read/write kernel state ==== */
 
 /* Task State Segment (TSS), contains currently running TCB in ESP0 */
-tss_t x86KStss VISIBLE;
+tss_io_t x86KStss VISIBLE;
 
 /* Global Descriptor Table (GDT) */
 gdt_entry_t x86KSgdt[GDT_ENTRIES];

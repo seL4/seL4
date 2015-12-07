@@ -23,8 +23,16 @@
 
 #include <mode/model/statedata.h>
 
+
+#define TSS_IO_MAP_SIZE (65536 / 8 / sizeof(word_t) + 1)
+
+typedef struct {
+    tss_t   tss;
+    word_t  io_map[TSS_IO_MAP_SIZE];
+} PACKED tss_io_t;
+
+extern tss_io_t x86KStss;
 extern interrupt_t x86KScurInterrupt;
-extern tss_t x86KStss;
 extern gdt_entry_t x86KSgdt[];
 extern asid_pool_t* x86KSASIDTable[];
 extern tcb_t *x86KSfpuOwner;

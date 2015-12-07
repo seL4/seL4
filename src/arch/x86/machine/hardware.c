@@ -25,7 +25,7 @@ init_sysenter_msrs(void)
     x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
     /* manually add 4 bytes to x86KStss so that it is valid for both
      * 32-bit and 64-bit */
-    x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&x86KStss.words[0] + 4));
+    x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&x86KStss.tss.words[0] + 4));
 }
 
 word_t PURE getRestartPC(tcb_t *thread)

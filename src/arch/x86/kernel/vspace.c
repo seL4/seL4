@@ -459,8 +459,8 @@ init_vm_state(void)
     if (!x86KScacheLineSizeBits) {
         return false;
     }
-    init_tss(&x86KStss);
-    init_gdt(x86KSgdt, &x86KStss);
+    init_tss(&x86KStss.tss);
+    init_gdt(x86KSgdt, &x86KStss.tss);
     init_idt(x86KSidt);
     return true;
 }
