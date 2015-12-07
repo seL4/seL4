@@ -592,7 +592,6 @@ lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
     if ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_small) ||
             !pde_pde_small_ptr_get_present(pdSlot.pdSlot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_BITS);
-
         ret.ptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
@@ -731,6 +730,13 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
         return;
     }
 
+    /* check if the PD actually refers to the PT */
+    if (! (pde_ptr_get_page_size(lu_ret.pdSlot) == pde_pde_small &&
+           pde_pde_small_ptr_get_present(lu_ret.pdSlot) &&
+           (pde_pde_small_ptr_get_pt_base_address(lu_ret.pdSlot) == pptr_to_paddr(pt)))) {
+        return;
+    }
+
     flushTable(find_ret.vspace_root, vaddr, pt);
 
     *lu_ret.pdSlot = makeUserPDEPageTableInvalid();
@@ -849,6 +855,11 @@ exception_t decodeX86FrameInvocation(
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
+            if (pte_ptr_get_present(lu_ret.ptSlot)) {
+                current_syscall_error.type = seL4_DeleteFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
             pte = makeUserPTE(paddr, vmAttr, vmRights);
             cte->cap = cap;
             *lu_ret.ptSlot = pte;
@@ -869,8 +880,17 @@ exception_t decodeX86FrameInvocation(
             }
             pdeSlot = lu_ret.pdSlot;
 
+            /* check for existing page table */
             if ((pde_ptr_get_page_size(pdeSlot) == pde_pde_small) &&
                     (pde_pde_small_ptr_get_present(pdeSlot))) {
+                current_syscall_error.type = seL4_DeleteFirst;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            /* check for existing large page */
+            if ((pde_ptr_get_page_size(pdeSlot) == pde_pde_large) &&
+                (pde_pde_large_ptr_get_present(pdeSlot))) {
                 current_syscall_error.type = seL4_DeleteFirst;
 
                 return EXCEPTION_SYSCALL_ERROR;
@@ -883,7 +903,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         default: {
-            exception_t ret = modeMapRemapPage(frameSize, vspace, vaddr, paddr, vmRights, vmAttr);
+            exception_t ret = modeMapRemapPage(invLabel, frameSize, vspace, vaddr, paddr, vmRights, vmAttr);
             if (ret != EXCEPTION_NONE) {
                 return ret;
             }
@@ -1019,7 +1039,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         default: {
-            exception_t ret = modeMapRemapPage(frameSize, vspace, vaddr, paddr, vmRights, vmAttr);
+            exception_t ret = modeMapRemapPage(invLabel, frameSize, vspace, vaddr, paddr, vmRights, vmAttr);
             if (ret != EXCEPTION_NONE) {
                 return ret;
             }

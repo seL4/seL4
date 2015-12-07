@@ -295,6 +295,11 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
     }
 
     pdptSlot = lookupPDPTSlot(find_ret.vspace_root, vaddr);
+    /* check if the PDPT has the PD */
+    if (! (pdpte_ptr_get_present(pdptSlot) &&
+           (pdpte_ptr_get_pd_base_address(pdptSlot) == pptr_to_paddr(pd)))) {
+        return;
+    }
 
     *pdptSlot = pdpte_new(
                     0,  /* pd_base_address  */
