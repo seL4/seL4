@@ -56,15 +56,6 @@ END_FUNC(getCacheLineSize)
 
 .section .text
 
-BEGIN_FUNC(ia32_wrmsr)
-    movl 4(%esp),  %ecx     # MSR register index
-    movl 8(%esp),  %edx     # 4 most significant bytes
-    movl 12(%esp), %eax     # 4 least significant bytes
-    wrmsr
-    ret
-END_FUNC(ia32_wrmsr)
-
-
 BEGIN_FUNC(out8)
     movb 8(%esp), %al
     movw 4(%esp), %dx
