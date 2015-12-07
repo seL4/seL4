@@ -22,7 +22,7 @@
             <syscall name="Yield"     />
             <syscall name="NBRecv"      />
         </config>
-        <config name="CONFIG_VTX">
+        <config name="defined CONFIG_VTX">
             <syscall name="VMEnter"/>
         </config>
     </api>
