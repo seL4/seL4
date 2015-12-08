@@ -582,7 +582,7 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
     nextFreeArea = regionBase;
     for (i = 0; i < slots.length; i++) {
         /* Create the object. */
-        /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i___unsigned_long) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
+        /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
         cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i << objectSize)), userSize);
 
         /* Insert the cap into the user's cspace. */
