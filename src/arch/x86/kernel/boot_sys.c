@@ -276,7 +276,7 @@ discover_devices(void)
 /* split a region of physical memory into n mutually disjoint pieces */
 
 BOOT_CODE static p_region_t
-split_region(unsigned int i, unsigned int n, p_region_t reg)
+split_region(word_t i, unsigned int n, p_region_t reg)
 {
     uint32_t offset;
     uint32_t total_frames = (reg.end - reg.start) >> PAGE_BITS;
@@ -431,7 +431,7 @@ try_boot_sys(
     acpi_rsdt_t* acpi_rsdt; /* physical address of ACPI root */
     paddr_t mods_end_paddr; /* physical address where boot modules end */
     paddr_t load_paddr;
-    unsigned int i;
+    word_t i;
     p_region_t ui_p_regs;
     multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->mod_list;
 

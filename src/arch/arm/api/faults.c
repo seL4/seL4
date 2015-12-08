@@ -36,7 +36,7 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
         return true;
 
     case fault_unknown_syscall: {
-        unsigned int i;
+        word_t i;
         register_t r;
         word_t v;
         word_t *sendBuf;
@@ -61,7 +61,7 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
     return (label == 0);
 
     case fault_user_exception: {
-        unsigned int i;
+        word_t i;
         register_t r;
         word_t v;
 

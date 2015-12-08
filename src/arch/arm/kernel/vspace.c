@@ -325,7 +325,7 @@ write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 void
 copyGlobalMappings(pde_t *newPD)
 {
-    unsigned int i;
+    word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
     for (i = kernelBase >> ARMSectionBits; i < BIT(PD_BITS); i++) {
@@ -619,7 +619,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     case ARMLargePage: {
         lookupPTSlot_ret_t lu_ret;
-        unsigned int i;
+        word_t i;
 
         lu_ret = lookupPTSlot(find_ret.pd, vptr);
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
@@ -666,7 +666,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     case ARMSuperSection: {
         pde_t *pd;
-        unsigned int i;
+        word_t i;
 
         pd = lookupPDSlot(find_ret.pd, vptr);
 
@@ -1203,7 +1203,7 @@ createSafeMappingEntries_PTE
 
     create_mappings_pte_return_t ret;
     lookupPTSlot_ret_t lu_ret;
-    unsigned int i;
+    word_t i;
 
     switch (frameSize) {
 
@@ -1297,7 +1297,7 @@ createSafeMappingEntries_PDE
 
     create_mappings_pde_return_t ret;
     pde_tag_t currentPDEType;
-    unsigned int i;
+    word_t i;
 
     switch (frameSize) {
 
@@ -1866,7 +1866,7 @@ decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
                                          cap, extraCaps, buffer);
 
     case cap_asid_control_cap: {
-        unsigned int i;
+        word_t i;
         asid_t asid_base;
         word_t index, depth;
         cap_t untyped, root;
@@ -1941,7 +1941,7 @@ decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
         cap_t pdCap;
         cte_t *pdCapSlot;
         asid_pool_t *pool;
-        unsigned int i;
+        word_t i;
         asid_t asid;
 
         if (unlikely(label != ARMASIDPoolAssign)) {
@@ -2065,7 +2065,7 @@ exception_t
 performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2094,7 +2094,7 @@ exception_t
 performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2122,7 +2122,7 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
 exception_t
 performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries
@@ -2148,7 +2148,7 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 exception_t
 performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries

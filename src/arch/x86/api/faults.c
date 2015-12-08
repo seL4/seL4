@@ -37,7 +37,7 @@ bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
         return true;
 
     case fault_unknown_syscall: {
-        unsigned int i;
+        word_t i;
         register_t   r;
         word_t       v;
         word_t*      sendBuf;
@@ -65,7 +65,7 @@ bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
     return (label == 0);
 
     case fault_user_exception: {
-        unsigned int i;
+        word_t i;
         register_t   r;
         word_t       v;
         word_t*      sendBuf;
@@ -123,7 +123,7 @@ void handleKernelException(
     word_t cr4
 )
 {
-    unsigned int i;
+    word_t i;
 
     printf("\n========== KERNEL EXCEPTION ==========\n");
     printf("Vector:  0x%lx\n", vector);

@@ -196,7 +196,7 @@ apic_init(uint32_t apic_khz, bool_t mask_legacy_irqs)
 
 bool_t apic_is_interrupt_pending(void)
 {
-    unsigned int i;
+    word_t i;
 
     /* read 256-bit register: each 32-bit word is 16 byte aligned */
     assert(int_irq_min % 32 == 0);

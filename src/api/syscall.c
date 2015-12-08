@@ -112,7 +112,7 @@ handleUnknownSyscall(word_t w)
         ksLogIndex = 0;
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkDumpLog) {
-        int i;
+        word_t i;
         word_t *buffer = lookupIPCBuffer(true, ksCurThread);
         word_t start = getRegister(ksCurThread, capRegister);
         word_t size = getRegister(ksCurThread, msgInfoRegister);

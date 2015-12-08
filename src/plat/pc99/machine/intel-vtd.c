@@ -275,7 +275,7 @@ vtd_create_context_table(
     dev_id_t* passthrough_dev_list
 )
 {
-    unsigned int i;
+    word_t i;
     vtd_cte_t* vtd_context_table = (vtd_cte_t*)alloc_region(VTD_CT_SIZE_BITS);
 
     printf("IOMMU: Create VTD context table for PCI bus 0x%x (pptr=%p)\n", bus, vtd_context_table);

@@ -72,7 +72,7 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
 BOOT_CODE static void
 init_freemem(region_t ui_reg)
 {
-    unsigned int i;
+    word_t i;
     bool_t result UNUSED;
     region_t cur_reg;
     region_t res_reg[] = {

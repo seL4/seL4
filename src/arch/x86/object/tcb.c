@@ -94,7 +94,7 @@ word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
         return 4;
 
     case fault_unknown_syscall: {
-        unsigned int i;
+        word_t i;
 
         for (i = 0; i < n_msgRegisters; i++) {
             setRegister(receiver, msgRegisters[i],
@@ -115,7 +115,7 @@ word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
     }
 
     case fault_user_exception: {
-        unsigned int i;
+        word_t i;
 
         for (i = 0; i < n_msgRegisters; i++) {
             setRegister(receiver, msgRegisters[i],

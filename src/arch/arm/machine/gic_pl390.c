@@ -215,7 +215,7 @@ dist_enable_set(irq_t irq)
 BOOT_CODE static void
 dist_init(void)
 {
-    int i;
+    word_t i;
     int nirqs = 32 * ((gic_dist->ic_type & 0x1f) + 1);
     gic_dist->enable = 0;
 

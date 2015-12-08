@@ -55,7 +55,7 @@ word_t
 print_unsigned_long(unsigned long x, word_t ui_base)
 {
     char out[sizeof(unsigned long) * 2 + 3];
-    unsigned int i, j;
+    word_t i, j;
     unsigned int d;
 
     /*
@@ -264,7 +264,7 @@ word_t
 kprintf(const char *format, ...)
 {
     va_list args;
-    unsigned int i;
+    word_t i;
 
     va_start(args, format);
     i = vprintf(format, args);

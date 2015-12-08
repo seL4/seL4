@@ -343,7 +343,7 @@ acpi_madt_scan(
 BOOT_CODE static bool_t
 acpi_dev_in_list(dev_id_t* dev_list, uint32_t list_len, dev_id_t dev)
 {
-    unsigned int i = 0;
+    word_t i = 0;
 
     while (i < list_len) {
         if (dev_list[i] == dev) {
@@ -365,7 +365,7 @@ acpi_dmar_scan(
     uint32_t     max_passthrough_dev_list_len
 )
 {
-    unsigned int i;
+    word_t i;
     unsigned int entries;
     uint32_t count;
     uint32_t reg_basel, reg_baseh;

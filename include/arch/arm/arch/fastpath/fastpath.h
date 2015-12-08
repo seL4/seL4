@@ -92,7 +92,7 @@ fastpath_mi_check(word_t msgInfo)
 static inline void
 fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
-    unsigned int i;
+    word_t i;
     register_t reg;
 
     /* assuming that length < n_msgRegisters */

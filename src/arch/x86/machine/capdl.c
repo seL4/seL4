@@ -214,7 +214,7 @@ static void sendIOSpace(uint32_t pci_request_id)
 
 static void sendRunqueues(void)
 {
-    unsigned int i;
+    word_t i;
     sendWord((unsigned long)ksCurThread);
     for (i = 0; i < NUM_READY_QUEUES; i++) {
         tcb_t *current = ksReadyQueues[i].head;
