@@ -43,7 +43,7 @@ struct createMappingEntries_ret {
     pde_pte_tag_t tag;
     void *pde_pte_ptr;
     unsigned int offset;
-    unsigned int size;
+    word_t size;
 };
 typedef struct createMappingEntries_ret createMappingEntries_ret_t;
 
