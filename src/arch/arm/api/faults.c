@@ -20,7 +20,7 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
     message_info_t tag;
     word_t label;
     fault_t fault;
-    unsigned int length;
+    word_t length;
 
     /* These lookups are moved inward from doReplyTransfer */
     tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));

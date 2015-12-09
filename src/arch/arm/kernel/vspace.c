@@ -61,7 +61,7 @@ static exception_t performPageFlush(int label, pde_t *pd, asid_t asid,
                                     vptr_t start, vptr_t end, paddr_t pstart);
 static exception_t performPageGetAddress(void *vbase_ptr);
 static exception_t decodeARMPageDirectoryInvocation(word_t label,
-                                                    unsigned int length, cptr_t cptr, cte_t *cte, cap_t cap,
+                                                    word_t length, cptr_t cptr, cte_t *cte, cap_t cap,
                                                     extra_caps_t extraCaps, word_t *buffer);
 static pde_t PURE loadHWASID(asid_t asid);
 
@@ -1076,7 +1076,7 @@ checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t
-decodeARMPageTableInvocation(word_t label, unsigned int length,
+decodeARMPageTableInvocation(word_t label, word_t length,
                              cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                              word_t *buffer)
 {
@@ -1363,7 +1363,7 @@ createSafeMappingEntries_PDE
 }
 
 static exception_t
-decodeARMFrameInvocation(word_t label, unsigned int length,
+decodeARMFrameInvocation(word_t label, word_t length,
                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                          word_t *buffer)
 {
@@ -1739,7 +1739,7 @@ pageBase(vptr_t vaddr, vm_page_size_t size)
 }
 
 static exception_t
-decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
+decodeARMPageDirectoryInvocation(word_t label, word_t length,
                                  cptr_t cptr, cte_t *cte, cap_t cap,
                                  extra_caps_t extraCaps, word_t *buffer)
 {
@@ -1847,7 +1847,7 @@ decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
 }
 
 exception_t
-decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
+decodeARMMMUInvocation(word_t label, word_t length, cptr_t cptr,
                        cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                        word_t *buffer)
 {

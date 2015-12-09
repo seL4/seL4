@@ -81,7 +81,7 @@ void flushPage(vm_page_size_t page_size, pde_t* pd, asid_t asid, word_t vptr);
 void flushTable(pde_t* pd, asid_t asid, word_t vptr, pte_t* pt);
 void flushSpace(asid_t asid);
 void invalidateTLBByASID(asid_t asid);
-exception_t decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
+exception_t decodeARMMMUInvocation(word_t label, word_t length, cptr_t cptr,
                                    cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                    word_t *buffer);
 exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
