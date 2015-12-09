@@ -78,8 +78,8 @@ long PURE str_to_long(const char* str);
 /** FNSPEC clzl_spec:
   "\<forall>s. \<Gamma> \<turnstile>
     {\<sigma>. s = \<sigma> \<and> x_' s \<noteq> 0 }
-      \<acute>ret__int :== PROC clzl(\<acute>x)
-    \<lbrace> \<acute>ret__int = of_nat (word_clz (x_' s)) \<rbrace>"
+      \<acute>ret__long :== PROC clzl(\<acute>x)
+    \<lbrace> \<acute>ret__long = of_nat (word_clz (x_' s)) \<rbrace>"
 */
 static inline long
 CONST clzl(unsigned long x)
