@@ -28,8 +28,8 @@ fi
 
 # make copies of the files, skipping the first 10 lines 
 # and transforming uintXX_t types to seL4_UintXX types
-tail -n +10 $1 | sed 's/uint\([0-9]*\)_t/seL4_Uint\1/' > $1.tmp
-tail -n +10 $2 | sed 's/uint\([0-9]*\)_t/seL4_Uint\1/' > $2.tmp
+tail -n +10 $1 | sed 's/uint\([0-9]*\)_t/seL4_Uint\1/' | sed 's/word_t/seL4_Word/' > $1.tmp
+tail -n +10 $2 | sed 's/uint\([0-9]*\)_t/seL4_Uint\1/' | sed 's/word_t/seL4_Word/' > $2.tmp
 
 # diff the files without the license tags
 diff=$(diff "$1".tmp "$2".tmp)
