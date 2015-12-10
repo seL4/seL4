@@ -57,21 +57,21 @@ software_breakpoint(uint32_t va, user_context_t *context)
 
     printf("Software breakpoint at %x, context:\n", (unsigned int)va);
     for (i = 0; i < 10; i++) {
-        printf("r%d  %x\n", i, (unsigned int)context->registers[i]);
+        printf("r%ld  %x\n", i, (unsigned int)context->registers[i]);
     }
     for (i = 10; i < 15; i++) {
-        printf("r%d %x\n", i, (unsigned int)context->registers[i]);
+        printf("r%ld %x\n", i, (unsigned int)context->registers[i]);
     }
     printf("LR_abt %x\n", (unsigned int)context->registers[15]);
     printf("CPSR %x\n", (unsigned int)context->registers[16]);
 
     printf("ksCurThread context:\n");
     for (i = 0; i < 10; i++) {
-        printf("r%d  %x\n", i,
+        printf("r%ld  %x\n", i,
                (unsigned int)ksCurThread->tcbArch.tcbContext.registers[i]);
     }
     for (i = 10; i < 15; i++) {
-        printf("r%d %x\n", i,
+        printf("r%ld %x\n", i,
                (unsigned int)ksCurThread->tcbArch.tcbContext.registers[i]);
     }
     printf("LR_abt %x\n", (unsigned int)ksCurThread->tcbArch.tcbContext.registers[15]);

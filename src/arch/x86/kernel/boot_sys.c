@@ -556,7 +556,7 @@ try_boot_sys(
 
     for (i = 0; i < mbi->mod_count; i++) {
         printf(
-            "  module #%d: start=0x%x end=0x%x size=0x%x name='%s'\n",
+            "  module #%ld: start=0x%x end=0x%x size=0x%x name='%s'\n",
             i,
             modules[i].start,
             modules[i].end,
@@ -583,7 +583,7 @@ try_boot_sys(
     load_paddr = mods_end_paddr;
 
     for (i = 0; i < mbi->mod_count && i < glks.num_nodes; i++) {
-        printf("  module #%d for node #%d: ", i, i);
+        printf("  module #%ld for node #%ld: ", i, i);
         load_paddr = load_boot_module(i, modules + i, load_paddr);
         if (!load_paddr) {
             return false;
@@ -591,7 +591,7 @@ try_boot_sys(
     }
 
     for (i = mbi->mod_count; i < glks.num_nodes; i++) {
-        printf("  module #%d for node #%d: ", mbi->mod_count - 1, i);
+        printf("  module #%d for node #%ld: ", mbi->mod_count - 1, i);
         load_paddr = load_boot_module(i, modules + mbi->mod_count - 1, load_paddr);
         if (!load_paddr) {
             return false;
@@ -653,7 +653,7 @@ try_boot_sys(
 
     /* start up other CPUs and initialise their nodes */
     for (i = 1; i < glks.num_nodes; i++) {
-        printf("Starting node #%d\n", i);
+        printf("Starting node #%ld\n", i);
         start_cpu(glks.cpu_list[i], BOOT_NODE_PADDR);
     }
     return true;
