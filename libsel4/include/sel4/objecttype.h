@@ -22,6 +22,6 @@ typedef enum api_object {
 
 __attribute__((deprecated("use seL4_NotificationObject"))) static const seL4_ObjectType seL4_AsyncEndpointObject = seL4_NotificationObject;
 
-typedef seL4_Uint32 api_object_t;
+typedef seL4_Word api_object_t;
 
 #endif

@@ -118,7 +118,9 @@ print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
             n++;
             mask = mask >> 4;
             shifts++;
-            if (shifts == 8) break;
+            if (shifts == 8) {
+                break;
+            }
         }
     }
     /* print last 32 bits */

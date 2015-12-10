@@ -40,7 +40,7 @@ void setupCallerCap(tcb_t *sender, tcb_t *receiver);
 void deleteCallerCap(tcb_t *receiver);
 
 word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
-                     word_t *recvBuf, word_t n);
+               word_t *recvBuf, word_t n);
 exception_t decodeTCBInvocation(word_t label, word_t length, cap_t cap,
                                 cte_t* slot, extra_caps_t extraCaps, bool_t call,
                                 word_t *buffer);
