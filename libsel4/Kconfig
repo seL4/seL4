@@ -16,6 +16,16 @@ menu "libsel4"
         help
             seL4 API library
 
+config LIB_SEL4_INLINE_INVOCATIONS
+    bool "Inline generated syscall invocations"
+    depends on LIB_SEL4
+    default y
+    help
+        When set to true will mark generated functions as 'inline', allowing
+        them to be inlined by the callee user code. This may be undesirable
+        for verification, so setting to 'n' will forcively prevent the function
+        from being inlined
+
 config LIB_SEL4_HAVE_REGISTER_STUBS
     bool "Support syscall stubs without IPC buffer"
     depends on LIB_SEL4 && !USER_OPTIMISATION_O0 && ARCH_ARM
