@@ -80,7 +80,7 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask);
 exception_t decodeIA32MMUInvocation(word_t label, word_t length, cptr_t cptr, cte_t *cte, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
 void *mapSpare4MFrame(paddr_t phys);
-exception_t decodeIA32PageDirectoryInvocation(word_t label, unsigned int length, cte_t* cte, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
+exception_t decodeIA32PageDirectoryInvocation(word_t label, word_t length, cte_t* cte, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
 void unmapSpare4MFrame(void);
 void *mapSpare4KFrame(paddr_t phyS);
 void unmapSpare4KFrame(void);

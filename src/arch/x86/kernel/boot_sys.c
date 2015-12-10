@@ -477,7 +477,7 @@ try_boot_sys(
                 glks.mem_regions[i].paddr = map->addr;
                 glks.mem_regions[i].len = map->len;
                 i++;
-                printf("Found memory at 0x%lx:0x%lx - 0x%lx:0x%lx\n", (uint32_t)(map->addr >> 32), (uint32_t)map->addr, (uint32_t)( (map->addr + map->len) >> 32), (uint32_t)(map->addr + map->len));
+                printf("Found memory at 0x%x:0x%x - 0x%x:0x%x\n", (uint32_t)(map->addr >> 32), (uint32_t)map->addr, (uint32_t)( (map->addr + map->len) >> 32), (uint32_t)(map->addr + map->len));
             }
             /* The 'size' element in the multiboot struct is technically at offset -4 in the struct
              * so we need to add 4 here for everything to work. Please don't think on this too hard */
@@ -499,7 +499,7 @@ try_boot_sys(
     /* copy CPU bootup code to lower memory */
     memcpy((void*)BOOT_NODE_PADDR, _boot_cpu_start, _boot_cpu_end - _boot_cpu_start);
 
-    printf("Physical high memory given to seL4: start=0x%x end=0x%lx size=0x%lx\n",
+    printf("Physical high memory given to seL4: start=0x%x end=0x%x size=0x%x\n",
            MULTIBOOT_HIGHMEM_START,
            mbi->mem_upper << 10,
            (mbi->mem_upper << 10) - MULTIBOOT_HIGHMEM_START);
