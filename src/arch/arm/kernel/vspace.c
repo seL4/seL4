@@ -61,7 +61,7 @@ static exception_t performPageFlush(int label, pde_t *pd, asid_t asid,
                                     vptr_t start, vptr_t end, paddr_t pstart);
 static exception_t performPageGetAddress(void *vbase_ptr);
 static exception_t decodeARMPageDirectoryInvocation(word_t label,
-                                                    unsigned int length, cptr_t cptr, cte_t *cte, cap_t cap,
+                                                    word_t length, cptr_t cptr, cte_t *cte, cap_t cap,
                                                     extra_caps_t extraCaps, word_t *buffer);
 static pde_t PURE loadHWASID(asid_t asid);
 
@@ -137,7 +137,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 BOOT_CODE void
 map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attributes_t attributes)
 {
-    uint32_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
+    word_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
 
     assert(vaddr >= PPTR_TOP); /* vaddr lies in the region the global PT covers */
 
@@ -159,7 +159,7 @@ BOOT_CODE void
 map_kernel_window(void)
 {
     paddr_t  phys;
-    uint32_t idx;
+    word_t idx;
     pde_t    pde;
 
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
@@ -168,7 +168,7 @@ map_kernel_window(void)
     idx = kernelBase >> pageBitsForSize(ARMSection);
 
     while (idx < BIT(PD_BITS) - SECTIONS_PER_SUPER_SECTION) {
-        uint32_t idx2;
+        word_t idx2;
 
         pde = pde_pde_section_new(
                   phys,
@@ -325,7 +325,7 @@ write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 void
 copyGlobalMappings(pde_t *newPD)
 {
-    unsigned int i;
+    word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
     for (i = kernelBase >> ARMSectionBits; i < BIT(PD_BITS); i++) {
@@ -619,7 +619,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     case ARMLargePage: {
         lookupPTSlot_ret_t lu_ret;
-        unsigned int i;
+        word_t i;
 
         lu_ret = lookupPTSlot(find_ret.pd, vptr);
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
@@ -666,7 +666,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     case ARMSuperSection: {
         pde_t *pd;
-        unsigned int i;
+        word_t i;
 
         pd = lookupPDSlot(find_ret.pd, vptr);
 
@@ -1076,7 +1076,7 @@ checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t
-decodeARMPageTableInvocation(word_t label, unsigned int length,
+decodeARMPageTableInvocation(word_t label, word_t length,
                              cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                              word_t *buffer)
 {
@@ -1203,7 +1203,7 @@ createSafeMappingEntries_PTE
 
     create_mappings_pte_return_t ret;
     lookupPTSlot_ret_t lu_ret;
-    unsigned int i;
+    word_t i;
 
     switch (frameSize) {
 
@@ -1297,7 +1297,7 @@ createSafeMappingEntries_PDE
 
     create_mappings_pde_return_t ret;
     pde_tag_t currentPDEType;
-    unsigned int i;
+    word_t i;
 
     switch (frameSize) {
 
@@ -1363,7 +1363,7 @@ createSafeMappingEntries_PDE
 }
 
 static exception_t
-decodeARMFrameInvocation(word_t label, unsigned int length,
+decodeARMFrameInvocation(word_t label, word_t length,
                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                          word_t *buffer)
 {
@@ -1739,7 +1739,7 @@ pageBase(vptr_t vaddr, vm_page_size_t size)
 }
 
 static exception_t
-decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
+decodeARMPageDirectoryInvocation(word_t label, word_t length,
                                  cptr_t cptr, cte_t *cte, cap_t cap,
                                  extra_caps_t extraCaps, word_t *buffer)
 {
@@ -1847,7 +1847,7 @@ decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
 }
 
 exception_t
-decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
+decodeARMMMUInvocation(word_t label, word_t length, cptr_t cptr,
                        cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                        word_t *buffer)
 {
@@ -1866,7 +1866,7 @@ decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
                                          cap, extraCaps, buffer);
 
     case cap_asid_control_cap: {
-        unsigned int i;
+        word_t i;
         asid_t asid_base;
         word_t index, depth;
         cap_t untyped, root;
@@ -1941,7 +1941,7 @@ decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
         cap_t pdCap;
         cte_t *pdCapSlot;
         asid_pool_t *pool;
-        unsigned int i;
+        word_t i;
         asid_t asid;
 
         if (unlikely(label != ARMASIDPoolAssign)) {
@@ -2065,7 +2065,7 @@ exception_t
 performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2094,7 +2094,7 @@ exception_t
 performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2122,7 +2122,7 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
 exception_t
 performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries
@@ -2148,7 +2148,7 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 exception_t
 performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries

@@ -19,14 +19,14 @@ fastpath_call(word_t cptr, word_t msgInfo)
     message_info_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
-    unsigned int length;
+    word_t length;
     tcb_t *dest;
     word_t badge;
     cte_t *replySlot, *callerSlot;
     cap_t newVTable;
     pde_t *cap_pd;
     pde_t stored_hw_asid;
-    uint32_t fault_type;
+    word_t fault_type;
 
     /* Get message info, length, and fault type. */
     info = messageInfoFromWord_raw(msgInfo);
@@ -160,13 +160,13 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     message_info_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
-    unsigned int length;
+    word_t length;
     cte_t *callerSlot;
     cap_t callerCap;
     tcb_t *caller;
     word_t badge;
     tcb_t *endpointTail;
-    uint32_t fault_type;
+    word_t fault_type;
 
     cap_t newVTable;
     pde_t *cap_pd;

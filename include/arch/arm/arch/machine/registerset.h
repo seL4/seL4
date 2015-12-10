@@ -90,7 +90,7 @@ enum _register {
     n_contextRegisters = 18,
 };
 
-typedef uint32_t register_t;
+typedef word_t register_t;
 
 enum messageSizes {
     n_msgRegisters = 4,

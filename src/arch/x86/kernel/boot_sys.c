@@ -158,7 +158,7 @@ debug_port_of_node(node_id_t node_id)
 BOOT_CODE static paddr_t
 load_boot_module(node_id_t node, multiboot_module_t* boot_module, paddr_t load_paddr)
 {
-    Elf32_Header_t* elf_file = (Elf32_Header_t*)boot_module->start;
+    Elf32_Header_t* elf_file = (Elf32_Header_t*)(word_t)boot_module->start;
     v_region_t v_reg;
 
     if (!elf32_checkFile(elf_file)) {
@@ -174,7 +174,7 @@ load_boot_module(node_id_t node, multiboot_module_t* boot_module, paddr_t load_p
     }
     v_reg.end = ROUND_UP(v_reg.end, PAGE_BITS);
 
-    printf("size=0x%lx v_entry=0x%lx v_start=0x%lx v_end=0x%lx ",
+    printf("size=0x%lx v_entry=%x v_start=0x%lx v_end=0x%lx ",
            v_reg.end - v_reg.start,
            elf_file->e_entry,
            v_reg.start,
@@ -276,7 +276,7 @@ discover_devices(void)
 /* split a region of physical memory into n mutually disjoint pieces */
 
 BOOT_CODE static p_region_t
-split_region(unsigned int i, unsigned int n, p_region_t reg)
+split_region(word_t i, unsigned int n, p_region_t reg)
 {
     uint32_t offset;
     uint32_t total_frames = (reg.end - reg.start) >> PAGE_BITS;
@@ -431,9 +431,9 @@ try_boot_sys(
     acpi_rsdt_t* acpi_rsdt; /* physical address of ACPI root */
     paddr_t mods_end_paddr; /* physical address where boot modules end */
     paddr_t load_paddr;
-    unsigned int i;
+    word_t i;
     p_region_t ui_p_regs;
-    multiboot_module_t *modules = (multiboot_module_t*)mbi->mod_list;
+    multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->mod_list;
 
     glks.num_nodes = 1; /* needed to enable console output */
 
@@ -441,10 +441,10 @@ try_boot_sys(
         printf("Boot loader not multiboot compliant\n");
         return false;
     }
-    cmdline_parse((const char *)mbi->cmdline, &cmdline_opt);
+    cmdline_parse((const char *)(word_t)mbi->cmdline, &cmdline_opt);
 
     /* assert correct NDKS location and size */
-    assert((uint32_t)_ndks_start == PPTR_NDKS);
+    assert((word_t)_ndks_start == PPTR_NDKS);
     assert(_ndks_end - _ndks_start <= NDKS_SIZE);
 
     if ((mbi->flags & MULTIBOOT_INFO_MEM_FLAG) == 0) {
@@ -488,7 +488,7 @@ try_boot_sys(
     printf("Kernel stack size: 0x%x\n", _kernel_stack_top - _kernel_stack_bottom);
 
     glks.apic_khz = apic_khz;
-    printf("APIC: Bus frequency is %ld MHz\n", glks.apic_khz / 1000);
+    printf("APIC: Bus frequency is %d MHz\n", glks.apic_khz / 1000);
 
     /* remapping legacy IRQs to their correct vectors */
     pic_remap_irqs(IRQ_INT_OFFSET);
@@ -537,31 +537,31 @@ try_boot_sys(
     }
 #else
     if (glks.num_ioapic > 0) {
-        printf("Detected %ld IOAPICs, but configured to use PIC instead\n", glks.num_ioapic);
+        printf("Detected %d IOAPICs, but configured to use PIC instead\n", glks.num_ioapic);
     }
 #endif
 
     if (glks.num_nodes > cmdline_opt.max_num_nodes) {
         glks.num_nodes = cmdline_opt.max_num_nodes;
     }
-    printf("Will boot up %ld seL4 node(s)\n", glks.num_nodes);
+    printf("Will boot up %d seL4 node(s)\n", glks.num_nodes);
 
     if (!(mbi->flags & MULTIBOOT_INFO_MODS_FLAG)) {
         printf("Boot loader did not provide information about boot modules\n");
         return false;
     }
 
-    printf("Detected %ld boot module(s):\n", mbi->mod_count);
+    printf("Detected %d boot module(s):\n", mbi->mod_count);
     mods_end_paddr = 0;
 
     for (i = 0; i < mbi->mod_count; i++) {
         printf(
-            "  module #%d: start=0x%lx end=0x%lx size=0x%lx name='%s'\n",
+            "  module #%d: start=0x%x end=0x%x size=0x%x name='%s'\n",
             i,
             modules[i].start,
             modules[i].end,
             modules[i].end - modules[i].start,
-            (char *) modules[i].name
+            (char *) (long)modules[i].name
         );
         if ((int32_t)(modules[i].end - modules[i].start) <= 0) {
             printf("Invalid boot module size! Possible cause: boot module file not found by QEMU\n");
@@ -591,7 +591,7 @@ try_boot_sys(
     }
 
     for (i = mbi->mod_count; i < glks.num_nodes; i++) {
-        printf("  module #%ld for node #%d: ", mbi->mod_count - 1, i);
+        printf("  module #%d for node #%d: ", mbi->mod_count - 1, i);
         load_paddr = load_boot_module(i, modules + mbi->mod_count - 1, load_paddr);
         if (!load_paddr) {
             return false;

@@ -15,7 +15,7 @@
 #include <types.h>
 
 #define BI_PTR(r) ((bi_t*)(r))
-#define BI_REF(p) ((unsigned int)(p))
+#define BI_REF(p) ((word_t)(p))
 
 /* bootinfo data structures (directly corresponding to abstract specification) */
 
@@ -38,7 +38,7 @@
 
 /* type definitions */
 
-typedef uint32_t slot_pos_t;
+typedef word_t slot_pos_t;
 
 typedef struct slot_region {
     slot_pos_t start;

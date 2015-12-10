@@ -158,7 +158,7 @@ doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                  word_t badge, bool_t canGrant, tcb_t *receiver,
                  word_t *receiveBuffer, bool_t diminish)
 {
-    unsigned int msgTransferred;
+    word_t msgTransferred;
     message_info_t tag;
     exception_t status;
     extra_caps_t caps;
@@ -190,7 +190,7 @@ void
 doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
                 word_t *receiverIPCBuffer)
 {
-    unsigned int sent;
+    word_t sent;
     message_info_t msgInfo;
 
     sent = setMRs_fault(sender, receiver, receiverIPCBuffer);
@@ -206,7 +206,7 @@ transferCaps(message_info_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
              word_t *receiveBuffer, bool_t diminish)
 {
-    unsigned int i;
+    word_t i;
     cte_t* destSlot;
 
     info = message_info_set_msgExtraCaps(info, 0);
@@ -318,8 +318,8 @@ chooseThread(void)
     }
 
     if (likely(ksReadyQueuesL1Bitmap[dom])) {
-        word_t l1index = (wordBits - 1) - CLZ(ksReadyQueuesL1Bitmap[dom]);
-        word_t l2index = (wordBits - 1) - CLZ(ksReadyQueuesL2Bitmap[dom][l1index]);
+        word_t l1index = (wordBits - 1) - CLZL(ksReadyQueuesL1Bitmap[dom]);
+        word_t l2index = (wordBits - 1) - CLZL(ksReadyQueuesL2Bitmap[dom][l1index]);
         prio = l1index_to_prio(l1index) | l2index;
         thread = ksReadyQueues[ready_queues_index(dom, prio)].head;
         assert(thread);

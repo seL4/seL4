@@ -72,7 +72,7 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
 BOOT_CODE static void
 init_freemem(region_t ui_reg)
 {
-    unsigned int i;
+    word_t i;
     bool_t result UNUSED;
     region_t cur_reg;
     region_t res_reg[] = {
@@ -258,7 +258,7 @@ create_device_frames(cap_t root_cnode_cap)
     region_t       dev_reg;
     bi_dev_reg_t   bi_dev_reg;
     cap_t          frame_cap;
-    uint32_t       i;
+    word_t         i;
     pptr_t         f;
 
     ndks_boot.bi_frame->num_dev_regs = get_num_dev_p_regs();

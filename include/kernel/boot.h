@@ -43,7 +43,7 @@ is_reg_empty(region_t reg)
     return reg.start == reg.end;
 }
 
-pptr_t alloc_region(uint32_t size_bits);
+pptr_t alloc_region(word_t size_bits);
 bool_t insert_region(region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);
 cap_t create_root_cnode(void);
@@ -58,7 +58,7 @@ void create_domain_cap(cap_t root_cnode_cap);
 
 cap_t create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
 
-pptr_t allocate_bi_frame(node_id_t node_id, uint32_t num_nodes, vptr_t ipcbuf_vptr);
+pptr_t allocate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr);
 
 void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, pptr_t pptr, vptr_t vptr);
 

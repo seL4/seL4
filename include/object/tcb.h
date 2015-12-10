@@ -39,24 +39,24 @@ tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
 void setupCallerCap(tcb_t *sender, tcb_t *receiver);
 void deleteCallerCap(tcb_t *receiver);
 
-unsigned int copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
-                     word_t *recvBuf, unsigned int n);
-exception_t decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
+word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
+                     word_t *recvBuf, word_t n);
+exception_t decodeTCBInvocation(word_t label, word_t length, cap_t cap,
                                 cte_t* slot, extra_caps_t extraCaps, bool_t call,
                                 word_t *buffer);
-exception_t decodeCopyRegisters(cap_t cap, unsigned int length,
+exception_t decodeCopyRegisters(cap_t cap, word_t length,
                                 extra_caps_t extraCaps, word_t *buffer);
-exception_t decodeReadRegisters(cap_t cap, unsigned int length, bool_t call,
+exception_t decodeReadRegisters(cap_t cap, word_t length, bool_t call,
                                 word_t *buffer);
-exception_t decodeWriteRegisters(cap_t cap, unsigned int length, word_t *buffer);
-exception_t decodeTCBConfigure(cap_t cap, unsigned int length,
+exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeTCBConfigure(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t rootCaps, word_t *buffer);
-exception_t decodeSetPriority(cap_t cap, unsigned int length, word_t *buffer);
-exception_t decodeSetIPCBuffer(cap_t cap, unsigned int length,
+exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t extraCaps, word_t *buffer);
-exception_t decodeSetSpace(cap_t cap, unsigned int length,
+exception_t decodeSetSpace(cap_t cap, word_t length,
                            cte_t* slot, extra_caps_t extraCaps, word_t *buffer);
-exception_t decodeDomainInvocation(word_t label, unsigned int length,
+exception_t decodeDomainInvocation(word_t label, word_t length,
                                    extra_caps_t extraCaps, word_t *buffer);
 exception_t decodeBindNotification(cap_t cap, extra_caps_t extraCaps);
 exception_t decodeUnbindNotification(cap_t cap);
@@ -68,7 +68,7 @@ enum thread_control_flag {
     thread_control_update_all = 0x7,
 };
 
-typedef uint32_t thread_control_flag_t;
+typedef word_t thread_control_flag_t;
 
 exception_t invokeTCB_Suspend(tcb_t *thread);
 exception_t invokeTCB_Resume(tcb_t *thread);
@@ -83,13 +83,13 @@ exception_t invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *src,
                                     bool_t transferFrame, bool_t transferInteger,
                                     word_t transferArch);
 exception_t invokeTCB_ReadRegisters(tcb_t *src, bool_t suspendSource,
-                                    unsigned int n, word_t arch, bool_t call);
+                                    word_t n, word_t arch, bool_t call);
 exception_t invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
-                                     unsigned int n, word_t arch, word_t *buffer);
+                                     word_t n, word_t arch, word_t *buffer);
 exception_t invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr);
 
-cptr_t PURE getExtraCPtr(word_t *bufferPtr, unsigned int i);
-void setExtraBadge(word_t *bufferPtr, word_t badge, unsigned int i);
+cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i);
+void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 
 exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info);
 #ifdef DEBUG

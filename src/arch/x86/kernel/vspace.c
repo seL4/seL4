@@ -766,7 +766,7 @@ BOOT_CODE void*
 map_temp_boot_page(void* entry, uint32_t large_pages)
 {
     void* replacement_vaddr;
-    unsigned int i;
+    word_t i;
     unsigned int offset_in_page;
 
     unsigned int phys_pg_start = (unsigned int)(entry) & ~MASK(LARGE_PAGE_BITS);
@@ -1055,7 +1055,7 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_ma
 
 static void flushTable(void *vspace, word_t vptr, pte_t* pt)
 {
-    unsigned int i;
+    word_t i;
     cap_t        threadRoot;
 
     assert(IS_ALIGNED(vptr, PT_BITS + PAGE_BITS));
@@ -1770,7 +1770,7 @@ decodeIA32FrameInvocation(
 exception_t
 decodeIA32MMUInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
     cptr_t cptr,
     cte_t* cte,
     cap_t cap,
@@ -1870,7 +1870,7 @@ decodeIA32MMUInvocation(
         cap_t        vspaceCap;
         cte_t*       vspaceCapSlot;
         asid_pool_t* pool;
-        unsigned int i;
+        word_t i;
         asid_t       asid;
 
         if (label != IA32ASIDPoolAssign) {

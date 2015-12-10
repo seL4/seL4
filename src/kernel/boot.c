@@ -27,7 +27,7 @@ ndks_boot_t ndks_boot BOOT_DATA;
 BOOT_CODE bool_t
 insert_region(region_t reg)
 {
-    unsigned int i;
+    word_t i;
 
     assert(reg.start <= reg.end);
     if (is_reg_empty(reg)) {
@@ -42,17 +42,17 @@ insert_region(region_t reg)
     return false;
 }
 
-BOOT_CODE static inline uint32_t
+BOOT_CODE static inline word_t
 reg_size(region_t reg)
 {
     return reg.end - reg.start;
 }
 
 BOOT_CODE pptr_t
-alloc_region(uint32_t size_bits)
+alloc_region(word_t size_bits)
 {
-    unsigned int i;
-    unsigned int reg_index = 0; /* gcc cannot work out that this will not be used uninitialized */
+    word_t i;
+    word_t reg_index = 0; /* gcc cannot work out that this will not be used uninitialized */
     region_t reg = REG_EMPTY;
     region_t rem_small = REG_EMPTY;
     region_t rem_large = REG_EMPTY;
@@ -109,8 +109,8 @@ alloc_region(uint32_t size_bits)
     /* Add the remaining regions in largest to smallest order */
     insert_region(rem_large);
     if (!insert_region(rem_small)) {
-        printf("alloc_region(): wasted 0x%x bytes due to alignment, try to increase MAX_NUM_FREEMEM_REG\n",
-               (unsigned int)(rem_small.end - rem_small.start));
+        printf("alloc_region(): wasted 0x%lx bytes due to alignment, try to increase MAX_NUM_FREEMEM_REG\n",
+               (word_t)(rem_small.end - rem_small.start));
     }
     return reg.start;
 }
@@ -189,7 +189,7 @@ BOOT_CODE void
 create_domain_cap(cap_t root_cnode_cap)
 {
     cap_t cap;
-    unsigned int i;
+    word_t i;
 
     /* Check domain scheduler assumptions. */
     assert(ksDomScheduleLength > 0);
@@ -242,7 +242,7 @@ create_bi_frame_cap(
 BOOT_CODE pptr_t
 allocate_bi_frame(
     node_id_t  node_id,
-    uint32_t   num_nodes,
+    word_t   num_nodes,
     vptr_t ipcbuf_vptr
 )
 {
@@ -438,12 +438,12 @@ BOOT_CODE static bool_t
 provide_untyped_cap(
     cap_t      root_cnode_cap,
     pptr_t     pptr,
-    uint32_t   size_bits,
+    word_t     size_bits,
     slot_pos_t first_untyped_slot
 )
 {
     bool_t ret;
-    unsigned int i = ndks_boot.slot_pos_cur - first_untyped_slot;
+    word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->ut_obj_paddr_list[i] = pptr_to_paddr((void*)pptr);
         ndks_boot.bi_frame->ut_obj_size_bits_list[i] = size_bits;
@@ -458,17 +458,17 @@ provide_untyped_cap(
 /**
   DONT_TRANSLATE
 */
-BOOT_CODE static uint32_t boot_clz (uint32_t x)
+BOOT_CODE static word_t boot_clzl (word_t x)
 {
-    return CLZ (x);
+    return CLZL (x);
 }
 
 /**
   DONT_TRANSLATE
 */
-BOOT_CODE static uint32_t boot_ctz (uint32_t x)
+BOOT_CODE static word_t boot_ctzl (word_t x)
 {
-    return CTZ (x);
+    return CTZL (x);
 }
 
 BOOT_CODE static bool_t
@@ -478,15 +478,15 @@ create_untypeds_for_region(
     slot_pos_t first_untyped_slot
 )
 {
-    uint32_t align_bits;
-    uint32_t size_bits;
+    word_t align_bits;
+    word_t size_bits;
 
     while (!is_reg_empty(reg)) {
         /* Determine the maximum size of the region */
-        size_bits = WORD_BITS - 1 - boot_clz(reg.end - reg.start);
+        size_bits = WORD_BITS - 1 - boot_clzl(reg.end - reg.start);
 
         /* Determine the alignment of the region */
-        align_bits = boot_ctz(reg.start);
+        align_bits = boot_ctzl(reg.start);
 
         /* Reduce size bits to align if needed */
         if (align_bits < size_bits) {
@@ -507,7 +507,7 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
     slot_pos_t slot_pos_before;
     slot_pos_t slot_pos_after;
-    uint32_t   i;
+    word_t     i;
     region_t   reg;
 
     slot_pos_before = ndks_boot.slot_pos_cur;

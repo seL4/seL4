@@ -25,7 +25,7 @@ enum irqNumbers {
     irqInvalid = 255
 };
 
-typedef uint32_t interrupt_t;
-typedef uint32_t irq_t;
+typedef word_t interrupt_t;
+typedef word_t irq_t;
 
 #endif

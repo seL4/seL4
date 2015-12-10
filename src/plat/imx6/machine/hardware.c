@@ -37,7 +37,7 @@ get_num_avail_p_regs(void)
 }
 
 BOOT_CODE p_region_t
-get_avail_p_reg(unsigned int i)
+get_avail_p_reg(word_t i)
 {
     return avail_p_regs[i];
 }
@@ -175,7 +175,7 @@ get_num_dev_p_regs(void)
 }
 
 BOOT_CODE p_region_t
-get_dev_p_reg(unsigned int i)
+get_dev_p_reg(word_t i)
 {
     return dev_p_regs[i];
 }

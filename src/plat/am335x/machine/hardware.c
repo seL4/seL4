@@ -35,7 +35,7 @@ BOOT_CODE int get_num_avail_p_regs(void)
     return sizeof(avail_p_regs) / sizeof(p_region_t);
 }
 
-BOOT_CODE p_region_t get_avail_p_reg(unsigned int i)
+BOOT_CODE p_region_t get_avail_p_reg(word_t i)
 {
     return avail_p_regs[i];
 }
@@ -60,7 +60,7 @@ BOOT_CODE int get_num_dev_p_regs(void)
     return sizeof(dev_p_regs) / sizeof(p_region_t);
 }
 
-BOOT_CODE p_region_t get_dev_p_reg(unsigned int i)
+BOOT_CODE p_region_t get_dev_p_reg(word_t i)
 {
     return dev_p_regs[i];
 }

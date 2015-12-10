@@ -38,7 +38,7 @@ static void emptySlot(cte_t *slot, irq_t irq);
 static exception_t reduceZombie(cte_t* slot, bool_t exposed);
 
 exception_t
-decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
+decodeCNodeInvocation(word_t label, word_t length, cap_t cap,
                       extra_caps_t extraCaps, word_t *buffer)
 {
     lookupSlot_ret_t lu_ret;
@@ -464,7 +464,7 @@ void
 cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 {
     mdb_node_t mdb;
-    uint32_t prev_ptr, next_ptr;
+    word_t prev_ptr, next_ptr;
 
     /* Haskell error: "cteMove to non-empty destination" */
     assert(cap_get_capType(destSlot->cap) == cap_null_cap);
@@ -510,7 +510,7 @@ void
 cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
 {
     mdb_node_t mdb1, mdb2;
-    uint32_t next_ptr, prev_ptr;
+    word_t next_ptr, prev_ptr;
 
     slot1->cap = cap2;
     slot2->cap = cap1;
@@ -756,7 +756,7 @@ reduceZombie(cte_t* slot, bool_t immediate)
 void
 cteDeleteOne(cte_t* slot)
 {
-    uint32_t cap_type = cap_get_capType(slot->cap);
+    word_t cap_type = cap_get_capType(slot->cap);
     if (cap_type != cap_null_cap) {
         bool_t final;
         finaliseCap_ret_t fc_ret UNUSED;

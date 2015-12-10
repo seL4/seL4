@@ -61,9 +61,9 @@ pptr_to_paddr_reg(region_t reg)
 }
 
 int get_num_avail_p_regs(void);
-p_region_t get_avail_p_reg(unsigned int i);
+p_region_t get_avail_p_reg(word_t i);
 int get_num_dev_p_regs(void);
-p_region_t get_dev_p_reg(unsigned int i);
+p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
 
 bool_t CONST isReservedIRQ(irq_t irq);

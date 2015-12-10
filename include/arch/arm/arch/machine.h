@@ -29,7 +29,7 @@
 #define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
 #define MCR(cpreg, v)                               \
     do {                                            \
-        uint32_t _v = v;                            \
+        word_t _v = v;                            \
         asm volatile("mcr  " cpreg :: "r" (_v));    \
     }while(0)
 #define MCRR(cpreg, v)                              \
@@ -66,37 +66,37 @@ void setNextPC(tcb_t *thread, word_t v);
 
 /** MODIFIES: [*] */
 /** DONT_TRANSLATE */
-static inline uint32_t getProcessorID(void)
+static inline word_t getProcessorID(void)
 {
-    uint32_t processor_id;
+    word_t processor_id;
     MRC("p15, 0, %0, c0, c0, 0", processor_id);
     return processor_id;
 }
 
 /** DONT_TRANSLATE */
-static inline uint32_t readSystemControlRegister(void)
+static inline word_t readSystemControlRegister(void)
 {
-    uint32_t scr;
+    word_t scr;
     MRC("p15, 0, %0, c1, c0, 0", scr);
     return scr;
 }
 
 /** DONT_TRANSLATE */
-static inline void writeSystemControlRegister(uint32_t scr)
+static inline void writeSystemControlRegister(word_t scr)
 {
     MCR("p15, 0, %0, c1, c0, 0", scr);
 }
 
 /** DONT_TRANSLATE */
-static inline uint32_t readAuxiliaryControlRegister(void)
+static inline word_t readAuxiliaryControlRegister(void)
 {
-    uint32_t acr;
+    word_t acr;
     MRC("p15, 0, %0, c1, c0, 1", acr);
     return acr;
 }
 
 /** DONT_TRANSLATE */
-static inline void writeAuxiliaryControlRegister(uint32_t acr)
+static inline void writeAuxiliaryControlRegister(word_t acr)
 {
     MCR("p15, 0, %0, c1, c0, 1", acr);
 }
@@ -326,7 +326,7 @@ static inline word_t PURE getFAR(void)
 }
 
 /* Cleaning memory before user-level access */
-static inline void clearMemory(word_t* ptr, unsigned int bits)
+static inline void clearMemory(word_t* ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
     cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
