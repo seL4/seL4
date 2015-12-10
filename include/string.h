@@ -15,9 +15,9 @@
 
 #include <stdint.h>
 
-unsigned int strnlen(const char *s, unsigned int maxlen);
-unsigned int strlcpy(char *dest, const char *src, unsigned int size);
-unsigned int strlcat(char *dest, const char *src, unsigned int size);
+word_t strnlen(const char *s, word_t maxlen);
+word_t strlcpy(char *dest, const char *src, word_t size);
+word_t strlcat(char *dest, const char *src, word_t size);
 
 #endif
 

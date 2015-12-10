@@ -20,13 +20,13 @@ enum vm_fault_type {
     IA32DataFault = 0,
     IA32InstructionFault = 1
 };
-typedef uint32_t vm_fault_type_t;
+typedef word_t vm_fault_type_t;
 
 enum vm_page_size {
     IA32_SmallPage,
     IA32_LargePage
 };
-typedef uint32_t vm_page_size_t;
+typedef word_t vm_page_size_t;
 
 enum vm_page_map_type {
     IA32_MAPPING_PD = 0,
@@ -52,7 +52,7 @@ enum frameSizeConstants {
 
 /* Any changes to this function need to be replicated in pageBitsForSize_phys.
  */
-static inline unsigned int CONST
+static inline word_t CONST
 pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
@@ -72,7 +72,7 @@ pageBitsForSize(vm_page_size_t pagesize)
  * be replicated in pageBitsForSize.
  */
 PHYS_CODE
-static inline unsigned int CONST
+static inline word_t CONST
 pageBitsForSize_phys(vm_page_size_t pagesize)
 {
     switch (pagesize) {

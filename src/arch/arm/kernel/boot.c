@@ -72,7 +72,7 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
 BOOT_CODE static void
 init_freemem(region_t ui_reg)
 {
-    unsigned int i;
+    word_t i;
     bool_t result UNUSED;
     region_t cur_reg;
     region_t res_reg[] = {
@@ -260,7 +260,7 @@ create_device_untypeds(cap_t root_cnode_cap)
 {
     slot_pos_t     slot_pos_before;
     slot_pos_t     slot_pos_after;
-    uint32_t       i;
+    word_t         i;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
     for (i = 0; i < get_num_dev_p_regs(); i++) {

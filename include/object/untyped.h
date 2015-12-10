@@ -19,7 +19,7 @@
 
 #define GET_FREE_REF(base,freeIndex) ((word_t)(((word_t)(base)) + (freeIndex)))
 
-exception_t decodeUntypedInvocation(word_t label, unsigned int length,
+exception_t decodeUntypedInvocation(word_t label, word_t length,
                                     cte_t *slot, cap_t cap,
                                     extra_caps_t extraCaps, bool_t call,
                                     word_t *buffer);

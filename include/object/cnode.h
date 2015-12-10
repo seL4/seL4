@@ -17,12 +17,12 @@
 
 struct slot_range {
     cte_t *cnode;
-    unsigned int offset;
-    unsigned int length;
+    word_t offset;
+    word_t length;
 };
 typedef struct slot_range slot_range_t;
 
-exception_t decodeCNodeInvocation(word_t label, unsigned int length,
+exception_t decodeCNodeInvocation(word_t label, word_t length,
                                   cap_t cap, extra_caps_t extraCaps,
                                   word_t *buffer);
 exception_t invokeCNodeRevoke(cte_t *destSlot);

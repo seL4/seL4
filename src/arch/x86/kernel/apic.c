@@ -47,14 +47,14 @@ PHYS_CODE
 static inline uint32_t FORCE_INLINE
 apic_read_reg_(uint32_t addr, apic_reg_t reg)
 {
-    return *(volatile uint32_t*)(addr + reg);
+    return *(volatile uint32_t*)(word_t)(addr + reg);
 }
 
 PHYS_CODE
 static inline void FORCE_INLINE
 apic_write_reg_(uint32_t addr, apic_reg_t reg, uint32_t val)
 {
-    *(volatile uint32_t*)(addr + reg) = val;
+    *(volatile uint32_t*)(word_t)(addr + reg) = val;
 }
 
 static inline uint32_t
@@ -117,7 +117,7 @@ apic_init(uint32_t apic_khz, bool_t mask_legacy_irqs)
     /* check for correct number of LVT entries */
     num_lvt_entries = apic_version_get_max_lvt_entry(apic_version) + 1;
     if (num_lvt_entries < 3) {
-        printf("APIC: number of LVT entries: %ld\n", num_lvt_entries);
+        printf("APIC: number of LVT entries: %d\n", num_lvt_entries);
         printf("APIC: number of LVT entries must be >= 3\n");
         return false;
     }
@@ -196,7 +196,7 @@ apic_init(uint32_t apic_khz, bool_t mask_legacy_irqs)
 
 bool_t apic_is_interrupt_pending(void)
 {
-    unsigned int i;
+    word_t i;
 
     /* read 256-bit register: each 32-bit word is 16 byte aligned */
     assert(int_irq_min % 32 == 0);

@@ -32,7 +32,7 @@ typedef enum _object {
 #endif
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
-typedef uint32_t object_t;
+typedef word_t object_t;
 
 /* Previously frame types were explcitly 4K and 4M. If not PAE
  * we assume legacy environment and emulate old definitions */

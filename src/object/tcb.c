@@ -54,7 +54,7 @@ tcbSchedEnqueue(tcb_t *tcb)
         tcb_queue_t queue;
         UNUSED dom_t dom;
         prio_t prio;
-        unsigned int idx;
+        word_t idx;
 
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
@@ -85,7 +85,7 @@ tcbSchedAppend(tcb_t *tcb)
         tcb_queue_t queue;
         UNUSED dom_t dom;
         prio_t prio;
-        unsigned int idx;
+        word_t idx;
 
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
@@ -116,7 +116,7 @@ tcbSchedDequeue(tcb_t *tcb)
         tcb_queue_t queue;
         UNUSED dom_t dom;
         prio_t prio;
-        unsigned int idx;
+        word_t idx;
 
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
@@ -180,14 +180,14 @@ tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
 }
 
 cptr_t PURE
-getExtraCPtr(word_t *bufferPtr, unsigned int i)
+getExtraCPtr(word_t *bufferPtr, word_t i)
 {
     return (cptr_t)bufferPtr[seL4_MsgMaxLength + 2 + i];
 }
 
 void
 setExtraBadge(word_t *bufferPtr, word_t badge,
-              unsigned int i)
+              word_t i)
 {
     bufferPtr[seL4_MsgMaxLength + 2 + i] = badge;
 }
@@ -232,7 +232,7 @@ lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info)
 {
     lookupSlot_raw_ret_t lu_ret;
     cptr_t cptr;
-    unsigned int i, length;
+    word_t i, length;
 
     if (!bufferPtr) {
         current_extra_caps.excaprefs[0] = NULL;
@@ -260,11 +260,11 @@ lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info)
 }
 
 /* Copy IPC MRs from one thread to another */
-unsigned int
+word_t
 copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
-        word_t *recvBuf, unsigned int n)
+        word_t *recvBuf, word_t n)
 {
-    unsigned int i;
+    word_t i;
 
     /* Copy inline words */
     for (i = 0; i < n && i < n_msgRegisters; i++) {
@@ -289,7 +289,7 @@ copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
  * functions directly.  This is a significant deviation from the Haskell
  * spec. */
 exception_t
-decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
+decodeTCBInvocation(word_t label, word_t length, cap_t cap,
                     cte_t* slot, extra_caps_t extraCaps, bool_t call,
                     word_t *buffer)
 {
@@ -355,7 +355,7 @@ enum CopyRegistersFlags {
 };
 
 exception_t
-decodeCopyRegisters(cap_t cap, unsigned int length,
+decodeCopyRegisters(cap_t cap, word_t length,
                     extra_caps_t extraCaps, word_t *buffer)
 {
     word_t transferArch;
@@ -400,7 +400,7 @@ enum ReadRegistersFlags {
 };
 
 exception_t
-decodeReadRegisters(cap_t cap, unsigned int length, bool_t call,
+decodeReadRegisters(cap_t cap, word_t length, bool_t call,
                     word_t *buffer)
 {
     word_t transferArch, flags, n;
@@ -438,7 +438,7 @@ enum WriteRegistersFlags {
 };
 
 exception_t
-decodeWriteRegisters(cap_t cap, unsigned int length, word_t *buffer)
+decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 {
     word_t flags, w;
     word_t transferArch;
@@ -474,14 +474,14 @@ decodeWriteRegisters(cap_t cap, unsigned int length, word_t *buffer)
  * specialisations of TCBConfigure. */
 
 exception_t
-decodeTCBConfigure(cap_t cap, unsigned int length, cte_t* slot,
+decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
                    extra_caps_t rootCaps, word_t *buffer)
 {
     cte_t *bufferSlot, *cRootSlot, *vRootSlot;
     cap_t bufferCap, cRootCap, vRootCap;
     deriveCap_ret_t dc_ret;
     cptr_t faultEP;
-    unsigned int prio;
+    word_t prio;
     word_t cRootData, vRootData, bufferAddr;
 
     if (length < 5 || rootCaps.excaprefs[0] == NULL
@@ -584,7 +584,7 @@ decodeTCBConfigure(cap_t cap, unsigned int length, cte_t* slot,
 }
 
 exception_t
-decodeSetPriority(cap_t cap, unsigned int length, word_t *buffer)
+decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
 {
     prio_t newPrio;
 
@@ -617,7 +617,7 @@ decodeSetPriority(cap_t cap, unsigned int length, word_t *buffer)
 }
 
 exception_t
-decodeSetIPCBuffer(cap_t cap, unsigned int length, cte_t* slot,
+decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
                    extra_caps_t extraCaps, word_t *buffer)
 {
     cptr_t cptr_bufferPtr;
@@ -663,7 +663,7 @@ decodeSetIPCBuffer(cap_t cap, unsigned int length, cte_t* slot,
 }
 
 exception_t
-decodeSetSpace(cap_t cap, unsigned int length, cte_t* slot,
+decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
                extra_caps_t extraCaps, word_t *buffer)
 {
     cptr_t faultEP;
@@ -742,7 +742,7 @@ decodeSetSpace(cap_t cap, unsigned int length, cte_t* slot,
 }
 
 exception_t
-decodeDomainInvocation(word_t label, unsigned int length, extra_caps_t extraCaps, word_t *buffer)
+decodeDomainInvocation(word_t label, word_t length, extra_caps_t extraCaps, word_t *buffer)
 {
     word_t domain;
     cap_t tcap;
@@ -949,7 +949,7 @@ invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
     }
 
     if (transferFrame) {
-        unsigned int i;
+        word_t i;
         word_t v;
         word_t pc;
 
@@ -963,7 +963,7 @@ invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
     }
 
     if (transferInteger) {
-        unsigned int i;
+        word_t i;
         word_t v;
 
         for (i = 0; i < n_gpRegisters; i++) {
@@ -983,9 +983,9 @@ invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
  */
 exception_t
 invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
-                        unsigned int n, word_t arch, bool_t call)
+                        word_t n, word_t arch, bool_t call)
 {
-    unsigned int i, j;
+    word_t i, j;
     exception_t e;
     tcb_t *thread;
 
@@ -1044,9 +1044,9 @@ invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
 
 exception_t
 invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
-                         unsigned int n, word_t arch, word_t *buffer)
+                         word_t n, word_t arch, word_t *buffer)
 {
-    unsigned int i;
+    word_t i;
     word_t pc;
     exception_t e;
 

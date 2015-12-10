@@ -15,6 +15,6 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-exception_t Arch_decodeInterruptControl(unsigned int length, extra_caps_t extraCaps);
+exception_t Arch_decodeInterruptControl(word_t length, extra_caps_t extraCaps);
 
 #endif

@@ -18,7 +18,7 @@
 #include <plat/machine/acpi.h>
 
 typedef struct dev_p_regs {
-    uint32_t count;
+    word_t count;
     p_region_t list[10];
 } dev_p_regs_t;
 

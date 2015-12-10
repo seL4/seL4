@@ -11,15 +11,18 @@
 #ifndef __ARCH_TYPES_H
 #define __ARCH_TYPES_H
 
+#include <assert.h>
 #include <stdint.h>
 
-typedef uint32_t word_t;
-typedef uint32_t vptr_t;
-typedef uint32_t paddr_t;
-typedef uint32_t pptr_t;
+compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
 
-typedef uint32_t dev_id_t;
-typedef uint32_t cpu_id_t;
-typedef uint32_t node_id_t;
+typedef unsigned long word_t;
+typedef word_t vptr_t;
+typedef word_t paddr_t;
+typedef word_t pptr_t;
+
+typedef word_t dev_id_t;
+typedef word_t cpu_id_t;
+typedef word_t node_id_t;
 
 #endif

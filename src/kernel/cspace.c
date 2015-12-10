@@ -71,7 +71,7 @@ lookupSlot(tcb_t *thread, cptr_t capptr)
 
 lookupSlot_ret_t
 lookupSlotForCNodeOp(bool_t isSource, cap_t root, cptr_t capptr,
-                     unsigned int depth)
+                     word_t depth)
 {
     resolveAddressBits_ret_t res_ret;
     lookupSlot_ret_t ret;
@@ -93,7 +93,6 @@ lookupSlotForCNodeOp(bool_t isSource, cap_t root, cptr_t capptr,
         ret.status = EXCEPTION_SYSCALL_ERROR;
         return ret;
     }
-
     res_ret = resolveAddressBits(root, capptr, depth);
     if (unlikely(res_ret.status != EXCEPTION_NONE)) {
         current_syscall_error.type = seL4_FailedLookup;
@@ -118,28 +117,28 @@ lookupSlotForCNodeOp(bool_t isSource, cap_t root, cptr_t capptr,
 }
 
 lookupSlot_ret_t
-lookupSourceSlot(cap_t root, cptr_t capptr, unsigned int depth)
+lookupSourceSlot(cap_t root, cptr_t capptr, word_t depth)
 {
     return lookupSlotForCNodeOp(true, root, capptr, depth);
 }
 
 lookupSlot_ret_t
-lookupTargetSlot(cap_t root, cptr_t capptr, unsigned int depth)
+lookupTargetSlot(cap_t root, cptr_t capptr, word_t depth)
 {
     return lookupSlotForCNodeOp(false, root, capptr, depth);
 }
 
 lookupSlot_ret_t
-lookupPivotSlot(cap_t root, cptr_t capptr, unsigned int depth)
+lookupPivotSlot(cap_t root, cptr_t capptr, word_t depth)
 {
     return lookupSlotForCNodeOp(true, root, capptr, depth);
 }
 
 resolveAddressBits_ret_t
-resolveAddressBits(cap_t nodeCap, cptr_t capptr, unsigned int n_bits)
+resolveAddressBits(cap_t nodeCap, cptr_t capptr, word_t n_bits)
 {
     resolveAddressBits_ret_t ret;
-    unsigned int radixBits, guardBits, levelBits, offset;
+    word_t radixBits, guardBits, levelBits, offset;
     cte_t *slot;
 
     ret.bitsRemaining = n_bits;

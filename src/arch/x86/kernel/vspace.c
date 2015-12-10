@@ -822,7 +822,7 @@ BOOT_CODE void*
 map_temp_boot_page(void* entry, uint32_t large_pages)
 {
     void* replacement_vaddr;
-    unsigned int i;
+    word_t i;
     unsigned int offset_in_page;
 
     unsigned int phys_pg_start = (unsigned int)(entry) & ~MASK(LARGE_PAGE_BITS);
@@ -1607,7 +1607,7 @@ decodeIA32FrameInvocation(
 exception_t
 decodeIA32MMUInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
     cptr_t cptr,
     cte_t* cte,
     cap_t cap,

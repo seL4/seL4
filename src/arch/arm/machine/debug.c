@@ -27,7 +27,7 @@ debug_init(void)
 {
     uint32_t didr;
     int version, variant, revision;
-    unsigned int i;
+    word_t i;
 
     didr = getDIDR();
     n_breakpoints = ((didr >> DIDR_BRP_OFFSET) & MASK(DIDR_BRP_SIZE)) + 1;
@@ -53,7 +53,7 @@ debug_init(void)
 void
 software_breakpoint(uint32_t va, user_context_t *context)
 {
-    unsigned int i;
+    word_t i;
 
     printf("Software breakpoint at %x, context:\n", (unsigned int)va);
     for (i = 0; i < 10; i++) {
@@ -81,7 +81,7 @@ software_breakpoint(uint32_t va, user_context_t *context)
 void
 breakpoint_multiplexer(uint32_t va, user_context_t *context)
 {
-    unsigned int i;
+    word_t i;
 
     for (i = 0; i < n_breakpoints && (breakpoints[i].va != va ||
                                       !breakpoints[i].handler); i++);
@@ -96,7 +96,7 @@ breakpoint_multiplexer(uint32_t va, user_context_t *context)
 int
 set_breakpoint(uint32_t va, break_handler_t handler)
 {
-    unsigned int i;
+    word_t i;
 
     for (i = 0; i < n_breakpoints && breakpoints[i].handler; i++);
 
@@ -121,7 +121,7 @@ set_breakpoint(uint32_t va, break_handler_t handler)
 void
 clear_breakpoint(uint32_t va)
 {
-    unsigned int i;
+    word_t i;
 
     for (i = 0; i < n_breakpoints; i++) {
         if (breakpoints[i].va == va && breakpoints[i].handler) {

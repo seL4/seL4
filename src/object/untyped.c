@@ -23,13 +23,13 @@
 #include <util.h>
 
 static word_t
-alignUp(word_t baseValue, unsigned int alignment)
+alignUp(word_t baseValue, word_t alignment)
 {
     return (baseValue + (BIT(alignment) - 1)) & ~MASK(alignment);
 }
 
 exception_t
-decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
+decodeUntypedInvocation(word_t label, word_t length, cte_t *slot,
                         cap_t cap, extra_caps_t extraCaps,
                         bool_t call, word_t *buffer)
 {
@@ -40,7 +40,7 @@ decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
     cap_t nodeCap;
     lookupSlot_ret_t lu_ret;
     word_t nodeSize;
-    unsigned int i;
+    word_t i;
     slot_range_t slots;
     word_t freeRef, objectSize, untypedSize;
     word_t freeIndex, alignedFreeIndex;

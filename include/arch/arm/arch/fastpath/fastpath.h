@@ -54,8 +54,8 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 static inline void
 clearExMonitor_fp(void)
 {
-    uint32_t temp1 = 0;
-    uint32_t temp2;
+    word_t temp1 = 0;
+    word_t temp2;
     asm volatile (
         "strex %[output], %[mem], [%[mem]]"
         : [output]"+r"(temp1)
@@ -116,7 +116,7 @@ fastpath_mi_check(word_t msgInfo)
 }
 
 static inline void
-fastpath_copy_mrs(unsigned int length, tcb_t *src, tcb_t *dest)
+fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
     if (likely(!length)) {
         return;

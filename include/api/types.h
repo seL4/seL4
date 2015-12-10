@@ -21,9 +21,9 @@
 
 /* cap_rights_t defined in api/types.bf */
 
-typedef uint32_t prio_t;
-typedef uint32_t  dom_t;
-typedef uint32_t cptr_t;
+typedef word_t prio_t;
+typedef word_t  dom_t;
+typedef word_t cptr_t;
 
 enum domainConstants {
     minDom = 0,
@@ -33,7 +33,7 @@ enum domainConstants {
 struct cap_transfer {
     cptr_t ctReceiveRoot;
     cptr_t ctReceiveIndex;
-    unsigned int ctReceiveDepth;
+    word_t ctReceiveDepth;
 };
 typedef struct cap_transfer cap_transfer_t;
 
@@ -63,7 +63,7 @@ capTransferFromWords(word_t *wptr)
 
     transfer.ctReceiveRoot  = (cptr_t)wptr[0];
     transfer.ctReceiveIndex = (cptr_t)wptr[1];
-    transfer.ctReceiveDepth = (unsigned int)wptr[2];
+    transfer.ctReceiveDepth = wptr[2];
     return transfer;
 }
 
@@ -120,9 +120,9 @@ wordFromMessageInfo(message_info_t mi)
 #define userError(...) \
     do {                                                                     \
         printf(ANSI_DARK "<<" ANSI_GREEN "seL4" ANSI_DARK                    \
-                " [%s/%d T%x \"%s\" @%x]: ",                                 \
-                __func__, __LINE__, (int)ksCurThread, ksCurThread->tcbName,  \
-                (int)getRestartPC(ksCurThread));                             \
+                " [%s/%d T%p \"%s\" @%lx]: ",                                \
+                __func__, __LINE__, ksCurThread, ksCurThread->tcbName,       \
+                (word_t)getRestartPC(ksCurThread));                          \
         printf(__VA_ARGS__);                                                 \
         printf(">>" ANSI_RESET "\n");                                        \
     } while (0)

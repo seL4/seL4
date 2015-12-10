@@ -67,7 +67,7 @@ pde_pde_large_ptr_new_phys(pde_t *pde_ptr, uint32_t page_base_address,
 PHYS_CODE VISIBLE void
 init_boot_pd(void)
 {
-    unsigned int i;
+    word_t i;
 
     /* identity mapping from 0 up to PPTR_BASE (virtual address) */
     for (i = 0; i < (PPTR_BASE >> IA32_4M_bits); i++) {
@@ -159,7 +159,7 @@ void *getValidNativeRoot(cap_t vspace_cap)
 
 void copyGlobalMappings(void* new_vspace)
 {
-    unsigned int i;
+    word_t i;
     pde_t *newPD = (pde_t*)new_vspace;
 
     for (i = PPTR_BASE >> IA32_4M_bits; i < BIT(PD_BITS); i++) {
@@ -235,7 +235,7 @@ void flushPageDirectory(pdpte_t *pdpt, uint32_t pdptIndex, pde_t *pd)
 exception_t
 decodeIA32PageDirectoryInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
     cte_t* cte,
     cap_t cap,
     extra_caps_t extraCaps,

@@ -62,7 +62,7 @@ static exception_t performPageFlush(int label, pde_t *pd,
                                     vptr_t start, vptr_t end, paddr_t pstart);
 static exception_t performPageGetAddress(void *vbase_ptr);
 static exception_t decodeARMPageDirectoryInvocation(word_t label,
-                                                    unsigned int length, cptr_t cptr, cte_t *cte, cap_t cap,
+                                                    word_t length, cptr_t cptr, cte_t *cte, cap_t cap,
                                                     extra_caps_t extraCaps, word_t *buffer);
 static pde_t PURE loadHWASID(pde_t *pd);
 
@@ -129,7 +129,7 @@ map_it_frame_cap(cap_t frame_cap)
 BOOT_CODE void
 map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attributes_t attributes)
 {
-    uint32_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
+    word_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
 
     assert(vaddr >= PPTR_TOP); /* vaddr lies in the region the global PT covers */
 
@@ -151,7 +151,7 @@ BOOT_CODE void
 map_kernel_window(void)
 {
     paddr_t  phys;
-    uint32_t idx;
+    word_t idx;
     pde_t    pde;
 
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
@@ -160,7 +160,7 @@ map_kernel_window(void)
     idx = kernelBase >> pageBitsForSize(ARMSection);
 
     while (idx < BIT(PD_BITS) - SECTIONS_PER_SUPER_SECTION) {
-        uint32_t idx2;
+        word_t idx2;
 
         pde = pde_pde_section_new(
                   phys,
@@ -309,7 +309,7 @@ activate_global_pd(void)
 void
 copyGlobalMappings(pde_t *newPD)
 {
-    unsigned int i;
+    word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
     for (i = kernelBase >> ARMSectionBits; i < BIT(PD_BITS); i++) {
@@ -539,7 +539,7 @@ void unmapPagePTE(vm_page_size_t page_size, pte_t *pt, unsigned int ptIndex, voi
     }
 
     case ARMLargePage: {
-        unsigned int i;
+        word_t i;
 
         /* When recycling a cap the finaliseCap function gets called twice. Unfortunately
          * there is no way to distinguish when this is going to be a duplicate call, vs
@@ -602,7 +602,7 @@ unmapPagePDE(vm_page_size_t page_size, pde_t *pd, unsigned int pdIndex, void *pp
     }
 
     case ARMSuperSection: {
-        unsigned int i;
+        word_t i;
 
         /* When recycling a cap the finaliseCap function gets called twice. Unfortunately
          * there is no way to distinguish when this is going to be a duplicate call, vs
@@ -977,7 +977,7 @@ checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t
-decodeARMPageTableInvocation(word_t label, unsigned int length,
+decodeARMPageTableInvocation(word_t label, word_t length,
                              cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                              word_t *buffer)
 {
@@ -1080,7 +1080,7 @@ createSafeMappingEntries_PTE
 
     create_mappings_pte_return_t ret;
     lookupPTSlot_ret_t lu_ret;
-    unsigned int i;
+    word_t i;
 
     switch (frameSize) {
 
@@ -1176,7 +1176,7 @@ createSafeMappingEntries_PDE
 
     create_mappings_pde_return_t ret;
     pde_tag_t currentPDEType;
-    unsigned int i;
+    word_t i;
 
     switch (frameSize) {
 
@@ -1240,7 +1240,7 @@ createSafeMappingEntries_PDE
 }
 
 static exception_t
-decodeARMFrameInvocation(word_t label, unsigned int length,
+decodeARMFrameInvocation(word_t label, word_t length,
                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                          word_t *buffer)
 {
@@ -1499,7 +1499,7 @@ pageBase(vptr_t vaddr, vm_page_size_t size)
 }
 
 static exception_t
-decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
+decodeARMPageDirectoryInvocation(word_t label, word_t length,
                                  cptr_t cptr, cte_t *cte, cap_t cap,
                                  extra_caps_t extraCaps, word_t *buffer)
 {
@@ -1580,7 +1580,7 @@ decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
 }
 
 exception_t
-decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
+decodeARMMMUInvocation(word_t label, word_t length, cptr_t cptr,
                        cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                        word_t *buffer)
 {
@@ -1646,7 +1646,7 @@ exception_t
 performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
 
     cap = cap_frame_cap_set_capFMappedObject(cap, PT_REF(pte_entries.pt));
     cap = cap_frame_cap_set_capFMappedIndex(cap, pte_entries.start);
@@ -1672,7 +1672,7 @@ exception_t
 performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
-    unsigned int i;
+    word_t i;
 
     cap = cap_frame_cap_set_capFMappedObject(cap, PD_REF(pde_entries.pd));
     cap = cap_frame_cap_set_capFMappedIndex(cap, pde_entries.start);

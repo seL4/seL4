@@ -89,7 +89,7 @@ disablePrefetchers()
 {
     uint32_t version_info;
     uint32_t low, high;
-    int i;
+    word_t i;
 
     uint32_t valid_models[] = { BROADWELL_MODEL_ID, HASWELL_MODEL_ID, IVY_BRIDGE_MODEL_ID,
                                 SANDY_BRIDGE_1_MODEL_ID, SANDY_BRIDGE_2_MODEL_ID, WESTMERE_1_MODEL_ID, WESTMERE_2_MODEL_ID,
@@ -114,6 +114,6 @@ disablePrefetchers()
         }
     }
 
-    printf("Disabling prefetchers not implemented for CPU model: %lx\n", MODEL_ID(version_info));
+    printf("Disabling prefetchers not implemented for CPU model: %x\n", MODEL_ID(version_info));
     return false;
 }

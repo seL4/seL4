@@ -576,7 +576,7 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 {
     word_t objectSize;
     void *nextFreeArea;
-    unsigned int i;
+    word_t i;
     word_t totalObjectSize UNUSED;
 
     /* ghost check that we're visiting less bytes than the max object size */
@@ -600,7 +600,7 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 }
 
 exception_t
-decodeInvocation(word_t label, unsigned int length,
+decodeInvocation(word_t label, word_t length,
                  cptr_t capIndex, cte_t *slot, cap_t cap,
                  extra_caps_t extraCaps, bool_t block, bool_t call,
                  word_t *buffer)

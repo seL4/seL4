@@ -57,18 +57,18 @@ handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     }
     if (w == SysDebugHalt) {
-        printf("Debug halt syscall from user thread 0x%x\n", (unsigned int)ksCurThread);
+        printf("Debug halt syscall from user thread %p\n", ksCurThread);
         halt();
     }
     if (w == SysDebugSnapshot) {
-        printf("Debug snapshot syscall from user thread 0x%x\n", (unsigned int)ksCurThread);
+        printf("Debug snapshot syscall from user thread %p\n", ksCurThread);
         capDL();
         return EXCEPTION_NONE;
     }
     if (w == SysDebugCapIdentify) {
         word_t cptr = getRegister(ksCurThread, capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
-        uint32_t cap_type = cap_get_capType(lu_ret.cap);
+        word_t cap_type = cap_get_capType(lu_ret.cap);
         setRegister(ksCurThread, capRegister, cap_type);
         return EXCEPTION_NONE;
     }
@@ -79,7 +79,7 @@ handleUnknownSyscall(word_t w)
         word_t cptr = getRegister(ksCurThread, capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
         /* ensure we got a TCB cap */
-        uint32_t cap_type = cap_get_capType(lu_ret.cap);
+        word_t cap_type = cap_get_capType(lu_ret.cap);
         if (cap_type != cap_thread_cap) {
             userError("SysDebugNameThread: cap is not a TCB, halting");
             halt();
@@ -112,7 +112,7 @@ handleUnknownSyscall(word_t w)
         ksLogIndex = 0;
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkDumpLog) {
-        int i;
+        word_t i;
         word_t *buffer = lookupIPCBuffer(true, ksCurThread);
         word_t start = getRegister(ksCurThread, capRegister);
         word_t size = getRegister(ksCurThread, msgInfoRegister);
@@ -220,7 +220,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     lu_ret = lookupCapAndSlot(thread, cptr);
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-        userError("Invocation of invalid cap #%d.", (int)cptr);
+        userError("Invocation of invalid cap #%lu.", cptr);
         current_fault = fault_cap_fault_new(cptr, false);
 
         if (isBlocking) {

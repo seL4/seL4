@@ -65,7 +65,7 @@ enum syscall {
     {{endif}}
 {{endfor}}
 };
-typedef uint32_t syscall_t;
+typedef word_t syscall_t;
 
 #endif
 

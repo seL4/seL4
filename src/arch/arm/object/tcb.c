@@ -37,7 +37,7 @@ setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
                       lookup_fault_t luf, unsigned int offset)
 {
     word_t lufType = lookup_fault_get_lufType(luf);
-    unsigned int i;
+    word_t i;
 
     i = setMR(receiver, receiveIPCBuffer, offset, lufType + 1);
 
@@ -68,7 +68,7 @@ setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
     }
 }
 
-unsigned int
+word_t
 setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 {
     switch (fault_get_faultType(sender->tcbFault)) {
@@ -91,7 +91,7 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                      fault_vm_fault_get_FSR(sender->tcbFault));
 
     case fault_unknown_syscall: {
-        unsigned int i;
+        word_t i;
 
         assert (n_syscallMessage >= n_msgRegisters);
         for (i = 0; i < n_msgRegisters; i++) {
@@ -113,7 +113,7 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
     }
 
     case fault_user_exception: {
-        unsigned int i;
+        word_t i;
 
         assert (n_exceptionMessage < n_msgRegisters);
         for (i = 0; i < n_exceptionMessage; i++) {
@@ -132,7 +132,7 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
     }
 }
 
-unsigned int
+word_t
 setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
 {
     switch (current_syscall_error.type) {

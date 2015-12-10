@@ -209,7 +209,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 void
 replyFromKernel_error(tcb_t *thread)
 {
-    unsigned int len;
+    word_t len;
     word_t *ipcBuffer;
 
     ipcBuffer = lookupIPCBuffer(true, thread);

@@ -30,6 +30,9 @@ import bf_autocorres
 # Whether debugging is enabled (turn on with command line option --debug).
 DEBUG = False
 
+# parametrisation for the win
+return_name = 'ret__unsigned'
+
 # Headers to include depending on which environment we are generating code for.
 INCLUDES = {
     'sel4':['assert.h', 'config.h', 'stdint.h', 'util.h'],
@@ -587,8 +590,8 @@ direct_ptr_name = '\<^bsup>s\<^esup>%(name)s_ptr'
 path_ptr_name = '(cparent \<^bsup>s\<^esup>%(name)s_ptr [%(path)s] :: %(toptp)s ptr)'
 
 def ptr_get_template(ptrname):
-    return ptr_basic_template('get_%(field)s', ptrname, '\<acute>ret__unsigned_long :== ', '',
-                              '''\<lbrace>\<acute>ret__unsigned_long = ''' \
+    return ptr_basic_template('get_%(field)s', ptrname, '\<acute>%(ret_name)s :== ', '',
+                              '''\<lbrace>\<acute>%(ret_name)s = ''' \
                               '''%(name)s_CL.%(field)s_CL ''' \
                               '''(%(name)s_lift (%(access_path)s))\<rbrace>''') #  AND %(mask)s
 
@@ -613,8 +616,8 @@ def ptr_new_template(ptrname):
                               }''')
 
 def ptr_get_tag_template(ptrname):
-    return ptr_basic_template('get_%(tagname)s', ptrname, '\<acute>ret__unsigned_long :== ', '', 
-                              '''\<lbrace>\<acute>ret__unsigned_long = %(name)s_get_tag (%(access_path)s)\<rbrace>''')
+    return ptr_basic_template('get_%(tagname)s', ptrname, '\<acute>%(ret_name)s :== ', '', 
+                              '''\<lbrace>\<acute>%(ret_name)s = %(name)s_get_tag (%(access_path)s)\<rbrace>''')
 
 
 def ptr_empty_union_new_template(ptrname):
@@ -639,9 +642,9 @@ def ptr_union_new_template(ptrname):
 
 def ptr_union_get_template(ptrname):
     return ptr_union_basic_template('get_%(field)s', ptrname,
-                                    '\<acute>ret__unsigned_long :== ', '',
+                                    '\<acute>%(ret_name)s :== ', '',
                                     '\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
-                                    '''\<lbrace>\<acute>ret__unsigned_long = ''' \
+                                    '''\<lbrace>\<acute>%(ret_name)s = ''' \
                                     '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
                                     '''(%(name)s_%(block)s_lift %(access_path)s)\<rbrace>''') #  AND %(mask)s --- given by _lift?
 
@@ -730,7 +733,7 @@ done'''],
 
  apply(clarsimp simp:guard_simps)
  apply(simp add:o_def)
- apply(simp add:shift_over_ao_dists mask_def)
+ apply(simp add:shift_over_ao_dists mask_def ucast_id)
  apply(unfold %(name)s_lift_def)
  apply(simp add:shift_over_ao_dists)
  apply(((simp add:word_ao_dist),
@@ -752,9 +755,9 @@ done'''],
 'get_spec' : [
 '''lemma (in ''' + loc_name + ''') %(name)s_get_%(field)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__unsigned_long :== ''' \
+       \<acute>%(ret_name)s :== ''' \
        '''PROC %(name)s_get_%(field)s(\<acute>%(name)s)
-       \<lbrace>\<acute>ret__unsigned_long = ''' \
+       \<lbrace>\<acute>%(ret_name)s = ''' \
        '''%(name)s_CL.%(field)s_CL ''' \
        '''(%(name)s_lift \<^bsup>s\<^esup>%(name)s)\<rbrace>"''', #  AND %(mask)s
 ''' apply(rule allI, rule conseqPre, vcg)
@@ -774,7 +777,7 @@ done'''],
        '''%(name)s_CL.%(field)s_CL ''' \
        ''':= \<^bsup>s\<^esup>v AND %(mask) s \<rparr>\<rbrace>"''',
 ''' apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp simp:guard_simps
+ apply(clarsimp simp:guard_simps ucast_id
                      %(name)s_lift_def
                      mask_def shift_over_ao_dists
                      multi_shift_simps word_size
@@ -876,9 +879,9 @@ done'''],
 'get_tag_spec' : [
 '''lemma (in ''' + loc_name + ''') %(name)s_get_%(tagname)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__unsigned_long :== ''' \
+       \<acute>ret__unsigned :== ''' \
     '''PROC %(name)s_get_%(tagname)s(\<acute>%(name)s)
-       \<lbrace>\<acute>ret__unsigned_long = ''' \
+       \<lbrace>\<acute>ret__unsigned = ''' \
     '''%(name)s_get_tag \<^bsup>s\<^esup>%(name)s\<rbrace>"''',
 ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp)
@@ -958,7 +961,7 @@ done'''],
  apply(simp add:shift_over_ao_dists mask_def)
  apply(simp add:%(name)s_%(block)s_lift_def)
  apply(subst %(name)s_lift_%(block)s)
-  apply(simp add:%(name)s_get_tag_def
+  apply(simp add:%(name)s_get_tag_def ucast_id
                  mask_def
                  %(name)s_%(block)s_def
                  shift_over_ao_dists
@@ -1029,9 +1032,9 @@ done'''],
   "\<forall>s. \<Gamma> \<turnstile> ''' \
 '''\<lbrace>s. %(name)s_get_tag \<acute>%(name)s = ''' \
             '''scast %(name)s_%(block)s\<rbrace>
-       \<acute>ret__unsigned_long :== ''' \
+       \<acute>%(ret_name)s :== ''' \
        '''PROC %(name)s_%(block)s_get_%(field)s(\<acute>%(name)s)
-       \<lbrace>\<acute>ret__unsigned_long = ''' \
+       \<lbrace>\<acute>%(ret_name)s = ''' \
        '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
        '''(%(name)s_%(block)s_lift \<^bsup>s\<^esup>%(name)s)''' \
        '''\<rbrace>"''', # AND %(mask)s
@@ -1303,7 +1306,8 @@ class TaggedUnion:
 
         # Generate get_tag specs
         substs = {"name": self.name,
-                  "tagname": self.tagname}
+                  "tagname": self.tagname,
+                  "ret_name": return_name}
 
         if not params.skip_modifies:
             emit_named("%(name)s_get_%(tagname)s" % substs, params,
@@ -1424,7 +1428,8 @@ class TaggedUnion:
                           "block": ref.name, \
                           "field": field, \
                           "mask":  mask, \
-                          "tag_mask_helpers" : tag_mask_helpers}
+                          "tag_mask_helpers" : tag_mask_helpers,
+                          "ret_name": return_name}
 
                 # Get modifies spec
                 if not params.skip_modifies:
@@ -2297,7 +2302,8 @@ class Block:
 
             substs = {"name": self.name, \
                       "field": field, \
-                      "mask": mask}
+                      "mask": mask,
+                      "ret_name": return_name}
 
             if not params.skip_modifies:
                 # Get modifies spec

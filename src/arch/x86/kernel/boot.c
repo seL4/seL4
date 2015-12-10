@@ -216,7 +216,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     } else {
         cap_t pdpt_cap;
         pptr_t pdpt_pptr;
-        unsigned int i;
+        word_t i;
         /* create a PDPT obj and cap */
         pdpt_pptr = alloc_region(PDPT_SIZE_BITS);
         if (!pdpt_pptr) {
@@ -387,7 +387,7 @@ init_node_state(
     pptr_t        bi_frame_pptr;
     pptr_t        arch_bi_frame_pptr;
     create_frames_of_region_ret_t create_frames_ret;
-    int i;
+    word_t i;
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
     vm_attributes_t buffer_attr = {{ 0 }};
     uint32_t paddr;

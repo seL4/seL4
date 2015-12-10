@@ -49,5 +49,5 @@ dom_t ksCurDomain;
 word_t ksDomainTime;
 
 /* An index into ksDomSchedule for active domain and length. */
-uint32_t ksDomScheduleIdx;
+word_t ksDomScheduleIdx;
 

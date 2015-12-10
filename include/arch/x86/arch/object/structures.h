@@ -95,26 +95,26 @@ compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) ==
 
 #define PDPTE_PTR(r)   ((pdpte_t *)(r))
 #define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
-#define PDPTE_REF(p)   ((unsigned int)(p))
+#define PDPTE_REF(p)   ((word_t)(p))
 
 #define PDPT_SIZE_BITS (PDPT_BITS + PDPTE_SIZE_BITS)
 #define PDPT_PTR(r)    ((pdpte_t*)(r))
-#define PDPT_REF(p)   ((unsigned int)(p))
+#define PDPT_REF(p)    ((word_t)(p))
 
 #define PDE_PTR(r)     ((pde_t *)(r))
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
-#define PDE_REF(p)     ((unsigned int)(p))
+#define PDE_REF(p)     ((word_t)(p))
 
 #define PD_SIZE_BITS (PD_BITS + PDE_SIZE_BITS)
 #define PD_PTR(r)    ((pde_t *)(r))
-#define PD_REF(p)    ((unsigned int)(p))
+#define PD_REF(p)    ((word_t)(p))
 
 #define PTE_PTR(r)    ((pte_t *)(r))
-#define PTE_REF(p)    ((unsigned int)(p))
+#define PTE_REF(p)    ((word_t)(p))
 
 #define PT_SIZE_BITS (PT_BITS + PTE_SIZE_BITS)
 #define PT_PTR(r)    ((pte_t *)(r))
-#define PT_REF(p)    ((unsigned int)(p))
+#define PT_REF(p)    ((word_t)(p))
 
 #ifdef CONFIG_IOMMU
 
@@ -192,9 +192,9 @@ enum vm_rights {
     VMReadOnly = 2,
     VMReadWrite = 3
 };
-typedef uint32_t vm_rights_t;
+typedef word_t vm_rights_t;
 
-static inline unsigned int CONST
+static inline word_t CONST
 cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
