@@ -11,6 +11,8 @@
 #ifndef __LIBSEL4_MACROS_H
 #define __LIBSEL4_MACROS_H
 
+#include <autoconf.h>
+
 /*
  * Some compilers attempt to pack enums into the smallest possible type.
  * For ABI compatability with the kernel, we need to ensure they remain
@@ -28,5 +30,11 @@
 #endif
 
 #define SEL4_OFFSETOF(type, member) __builtin_offsetof(type, member)
+
+#ifdef CONFIG_LIB_SEL4_INLINE_INVOCATIONS
+#define LIBSEL4_INLINE static inline
+#else
+#define LIBSEL4_INLINE __attribute__((noinline)) __attribute__((unused)) __attribute__((weak))
+#endif
 
 #endif

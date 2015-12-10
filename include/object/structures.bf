@@ -130,7 +130,7 @@ block endpoint {
     field state 2
 }
 
--- Async endpoint: size = 16 bytes
+-- Notification object: size = 16 bytes
 block notification {
     field_high ntfnBoundTCB 28
     padding 4

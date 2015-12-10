@@ -490,7 +490,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
     #   seL4_Untyped_Retype(...)
     #   {
     #
-    result.append("static inline %s" % return_type)
+    result.append("LIBSEL4_INLINE %s" % return_type)
     result.append("%s_%s(%s)" % (interface_name, method_name,
         generate_param_list(input_params, output_params)))
     result.append("{")
