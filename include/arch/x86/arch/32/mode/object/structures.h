@@ -258,4 +258,21 @@ x86_make_empty_pte(void)
            );
 }
 
+static inline pde_t
+x86_make_pde_mapping(word_t paddr, vm_attributes_t attr) {
+    return pde_pde_large_new(
+              paddr,                                   /* page_base_address    */
+              vm_attributes_get_x86PATBit(attr),       /* pat                  */
+              0,                                       /* avl_cte_depth        */
+              1,                                       /* global               */
+              0,                                       /* dirty                */
+              0,                                       /* accessed             */
+              vm_attributes_get_x86PCDBit(attr),       /* cache_disabled       */
+              vm_attributes_get_x86PWTBit(attr),       /* write_through        */
+              0,                                       /* super_user           */
+              1,                                       /* read_write           */
+              1                                        /* present              */
+          );
+}
+
 #endif
