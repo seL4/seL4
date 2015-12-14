@@ -346,6 +346,11 @@ $(if ${HAVE_AUTOCONF},,$(error autoconf.h not provided))
 STATICHEADERS += $(srctree)/include/generated/autoconf.h
 endif # NK_CFLAGS
 
+ifeq (${ARCH}, x86)
+INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/32"
+INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/32"
+endif
+
 ifeq (${CPU}, arm1136jf-s)
 DEFINES += -DARM1136_WORKAROUND
 # Add definition for verified platform to support standalone kernel builds
