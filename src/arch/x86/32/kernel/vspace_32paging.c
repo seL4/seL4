@@ -14,6 +14,7 @@
 #include <kernel/boot.h>
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
+#include <kernel/cdt.h>
 #include <model/statedata.h>
 #include <object/cnode.h>
 #include <arch/api/invocation.h>
