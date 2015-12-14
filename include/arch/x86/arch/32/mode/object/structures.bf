@@ -13,10 +13,10 @@
 ---- Default base size: uint32_t
 base 32
 
--- Including the common structures.bf is neccessary because
+-- Including the common structures_32.bf is neccessary because
 -- we need the structures to be visible here when building
 -- the capType
-#include <object/structures.bf>
+#include <object/structures_32.bf>
 
 ---- IA32-specific cap types
 
@@ -229,25 +229,6 @@ block vm_attributes {
     field ia32PATBit 1
     field ia32PCDBit 1
     field ia32PWTBit 1
-}
-
-block ia32_pat_msr {
-    padding     5
-    field pa7   3
-    padding     5
-    field pa6   3
-    padding     5
-    field pa5   3
-    padding     5
-    field pa4   3
-    padding     5
-    field pa3   3
-    padding     5
-    field pa2   3
-    padding     5
-    field pa1   3
-    padding     5
-    field pa0   3
 }
 
 ---- IA32 specific object types
@@ -540,58 +521,3 @@ block ept_pte {
     field        read               1
 }
 #endif
-
--- Local APIC
-
-block apic_base_msr {
-    field_high  base_addr           20
-    field       enabled             1
-    padding                         2
-    field       is_bsp              1
-    padding                         8
-}
-
-block apic_version {
-    padding                         8
-    field       max_lvt_entry       8
-    padding                         8
-    field       version             8
-}
-
-block apic_svr {
-    padding                         22
-    field       focus_processor_chk 1
-    field       enabled             1
-    field       spurious_vector     8
-}
-
-block apic_lvt {
-    padding                         13
-    field       timer_mode          2
-    field       masked              1
-    field       trigger_mode        1
-    field       remote_irr          1
-    field       pin_polarity        1
-    field       delivery_status     1
-    padding                         1
-    field       delivery_mode       3
-    field       vector              8
-}
-
-block apic_icr1 {
-    padding                         12
-    field       dest_shorthand      2
-    padding                         2
-    field       trigger_mode        1
-    field       level               1
-    padding                         1
-    field       delivery_status     1
-    field       dest_mode           1
-    field       delivery_mode       3
-    field       vector              8
-}
-
-block apic_icr2 {
-    field       dest                8
-    padding                         24
-}
