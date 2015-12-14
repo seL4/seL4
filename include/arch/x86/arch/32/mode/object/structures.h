@@ -8,8 +8,8 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __ARCH_OBJECT_STRUCTURES_H
-#define __ARCH_OBJECT_STRUCTURES_H
+#ifndef __MODE_OBJECT_STRUCTURES_H
+#define __MODE_OBJECT_STRUCTURES_H
 
 #include <assert.h>
 #include <config.h>

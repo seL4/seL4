@@ -8,8 +8,8 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __PLAT_MACHINE_HARDWARE_H
-#define __PLAT_MACHINE_HARDWARE_H
+#ifndef __PLAT_MODE_MACHINE_HARDWARE_H
+#define __PLAT_MODE_MACHINE_HARDWARE_H
 
 #include <config.h>
 #include <types.h>
