@@ -16,6 +16,10 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/machine/Makefile
 
 ifeq ($(__X86_32__),y)
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/Makefile
+else
+ifeq ($(__X86_64__),y)
+include ${SOURCE_ROOT}/src/arch/$(ARCH)/64/Makefile
+endif
 endif
 
 ARCH_C_SOURCES += c_traps.c

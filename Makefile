@@ -362,9 +362,14 @@ $(if ${HAVE_AUTOCONF},,$(error autoconf.h not provided))
 STATICHEADERS += $(srctree)/include/generated/autoconf.h
 endif # NK_CFLAGS
 
-ifeq (${ARCH}, x86)
+ifeq (${SEL4_ARCH}, ia32)
 INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/32"
 INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/32"
+else
+ifeq ($(SEL4_ARCH), x86_64)
+INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/64"
+INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/64"
+endif
 endif
 
 ifeq ($(SEL4_ARCH), aarch32)
