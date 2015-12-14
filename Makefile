@@ -155,71 +155,6 @@ endif
 default: all
 
 ############################################################
-### Paths
-############################################################
-
-PYTHONPATH := ${PYTHONPATH}:${SOURCE_ROOT}/tools
-export PYTHONPATH
-
-vpath %.c   ${SOURCE_ROOT}
-vpath %.S   ${SOURCE_ROOT}
-vpath %.h   ${SOURCE_ROOT}
-vpath %.bf  ${SOURCE_ROOT}/include \
-            ${SOURCE_ROOT}/include/arch/${ARCH} \
-            ${SOURCE_ROOT}/include/plat/${PLAT}
-vpath %.lds ${SOURCE_ROOT}
-
-INCLUDE_DIRS = ${SOURCE_ROOT}/include ${SOURCE_ROOT}/include/arch/${ARCH} \
-               ${SOURCE_ROOT}/include/plat/${PLAT} .
-
-############################################################
-### Sub-makefiles
-############################################################
-
-include ${SOURCE_ROOT}/include/arch/${ARCH}/arch/Makefile
-include ${SOURCE_ROOT}/include/plat/${PLAT}/plat/Makefile
-include ${SOURCE_ROOT}/src/arch/${ARCH}/Makefile
-include ${SOURCE_ROOT}/src/plat/${PLAT}/Makefile
-include ${SOURCE_ROOT}/include/Makefile
-include ${SOURCE_ROOT}/src/Makefile
-
-DIRECTORIES += arch plat src arch/api
-
-############################################################
-### Sources and targets
-############################################################
-
-C_SOURCES += $(patsubst %, src/arch/${ARCH}/%, ${ARCH_C_SOURCES})
-ASM_SOURCES += $(patsubst %, src/arch/${ARCH}/%, ${ARCH_ASM_SOURCES})
-
-C_SOURCES += $(patsubst %, src/plat/${PLAT}/%, ${PLAT_C_SOURCES})
-ASM_SOURCES += $(patsubst %, src/plat/${PLAT}/%, ${PLAT_ASM_SOURCES})
-
-GENHEADERS = $(patsubst %.bf, %.pbf, ${BF_SOURCES}) \
-  $(patsubst %.bf, %_gen.h, ${BF_SOURCES})
-
-GENHEADERS += arch/api/invocation.h api/invocation.h arch/api/syscall.h
-
-DEFTHEORIES = $(patsubst %.bf, %_defs.thy, ${BF_SOURCES})
-PROOFTHEORIES = $(patsubst %.bf, %_proofs.thy, ${BF_SOURCES})
-THEORIES = ${DEFTHEORIES} ${PROOFTHEORIES}
-
-C_SOURCES_WITH_PARSE = $(sort ${C_SOURCES})
-
-STATICHEADERS := $(shell find ${SOURCE_ROOT}/include/ -name "*.h" \
-                              ! -regex ".*include/arch.*" \
-                              ! -regex ".*include/plat.*") \
-                 $(shell find ${SOURCE_ROOT}/include/arch/${ARCH} -name "*.h") \
-                 $(shell find ${SOURCE_ROOT}/include/plat/${PLAT} -name "*.h")
-
-STATICSOURCES = $(foreach file,${C_SOURCES_WITH_PARSE} ${ASM_SOURCES}, \
-                          ${SOURCE_ROOT}/${file})
-
-OBJECTS = ${ASM_SOURCES:.S=.o} kernel.o
-
-MAKEFILES := $(shell find ${SOURCE_ROOT} -name "Makefile")
-
-############################################################
 ### Tool setup
 ############################################################
 
@@ -360,13 +295,13 @@ ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 DEFINES += -DARCH_ARM
 ifeq (${CPU},cortex-a8)
-DEFINES += -DARM_CORTEX_A8
+DEFINES += -DARM_CORTEX_A8 -D__KERNEL_32__
 endif
 ifeq (${CPU},cortex-a9)
-DEFINES += -DARM_CORTEX_A9
+DEFINES += -DARM_CORTEX_A9 -D__KERNEL_32__
 endif
 ifeq (${CPU},cortex-a15)
-DEFINES += -DARM_CORTEX_A15
+DEFINES += -DARM_CORTEX_A15 -D__KERNEL_32__
 endif
 ifeq ($(PLAT),imx6)
 DEFINES += -DIMX6
@@ -405,14 +340,20 @@ endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
 ASFLAGS += -Wa,--32
-DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32
+DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32 -D__KERNEL_32__
 LDFLAGS += -Wl,-m,elf_i386 
+export __X86_32__ = y
 endif # ARCH=x86
 else # NK_CFLAGS
 # Require autoconf to be provided if larger build
 $(if ${HAVE_AUTOCONF},,$(error autoconf.h not provided))
 STATICHEADERS += $(srctree)/include/generated/autoconf.h
 endif # NK_CFLAGS
+
+ifeq (${ARCH}, x86)
+INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/32"
+INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/32"
+endif
 
 ifeq (${CPU}, arm1136jf-s)
 DEFINES += -DARM1136_WORKAROUND
@@ -477,6 +418,75 @@ $(info ASFLAGS  = ${ASFLAGS})
 $(info CPPFLAGS = ${CPPFLAGS})
 $(info LDFLAGS  = ${LDFLAGS})
 endif
+
+############################################################
+### Paths
+############################################################
+
+PYTHONPATH := ${PYTHONPATH}:${SOURCE_ROOT}/tools
+export PYTHONPATH
+
+vpath %.c   ${SOURCE_ROOT}
+vpath %.S   ${SOURCE_ROOT}
+vpath %.h   ${SOURCE_ROOT}
+vpath %.bf  ${SOURCE_ROOT}/include \
+            ${SOURCE_ROOT}/include/arch/${ARCH} \
+            ${SOURCE_ROOT}/include/plat/${PLAT}
+vpath %.lds ${SOURCE_ROOT}
+
+INCLUDE_DIRS = ${SOURCE_ROOT}/include ${SOURCE_ROOT}/include/arch/${ARCH} \
+               ${SOURCE_ROOT}/include/plat/${PLAT} .
+
+############################################################
+### Sub-makefiles
+############################################################
+
+include ${SOURCE_ROOT}/include/arch/${ARCH}/arch/Makefile
+include ${SOURCE_ROOT}/include/plat/${PLAT}/plat/Makefile
+include ${SOURCE_ROOT}/src/arch/${ARCH}/Makefile
+include ${SOURCE_ROOT}/src/plat/${PLAT}/Makefile
+include ${SOURCE_ROOT}/include/Makefile
+include ${SOURCE_ROOT}/src/Makefile
+
+DIRECTORIES += arch plat src arch/api
+
+############################################################
+### Sources and targets
+############################################################
+
+C_SOURCES += $(patsubst %, src/arch/${ARCH}/%, ${ARCH_C_SOURCES})
+ASM_SOURCES += $(patsubst %, src/arch/${ARCH}/%, ${ARCH_ASM_SOURCES})
+
+C_SOURCES += $(patsubst %, src/plat/${PLAT}/%, ${PLAT_C_SOURCES})
+ASM_SOURCES += $(patsubst %, src/plat/${PLAT}/%, ${PLAT_ASM_SOURCES})
+
+GENHEADERS = $(patsubst %.bf, %.pbf, ${BF_SOURCES}) \
+  $(patsubst %.bf, %_gen.h, ${BF_SOURCES})
+
+GENHEADERS += arch/api/invocation.h api/invocation.h arch/api/syscall.h
+
+DEFTHEORIES = $(patsubst %.bf, %_defs.thy, ${BF_SOURCES})
+PROOFTHEORIES = $(patsubst %.bf, %_proofs.thy, ${BF_SOURCES})
+THEORIES = ${DEFTHEORIES} ${PROOFTHEORIES}
+
+C_SOURCES_WITH_PARSE = $(sort ${C_SOURCES})
+
+STATICHEADERS := $(shell find ${SOURCE_ROOT}/include/ -name "*.h" \
+                              ! -regex ".*include/arch.*" \
+                              ! -regex ".*include/plat.*") \
+                 $(shell find ${SOURCE_ROOT}/include/arch/${ARCH} -name "*.h") \
+                 $(shell find ${SOURCE_ROOT}/include/plat/${PLAT} -name "*.h")
+
+ifeq (${HAVE_AUTOCONF}, 1)
+	STATICHEADERS += $(srctree)/include/generated/autoconf.h
+endif
+
+STATICSOURCES = $(foreach file,${C_SOURCES_WITH_PARSE} ${ASM_SOURCES}, \
+                          ${SOURCE_ROOT}/${file})
+
+OBJECTS = ${ASM_SOURCES:.S=.o} kernel.o
+
+MAKEFILES := $(shell find ${SOURCE_ROOT} -name "Makefile")
 
 ############################################################
 ### Top-level targets

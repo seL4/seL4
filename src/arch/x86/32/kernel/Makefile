@@ -8,11 +8,6 @@
 # @TAG(GD_GPL)
 #
 
-DIRECTORIES += src/arch/$(ARCH)/machine
-
-ARCH_C_SOURCES += machine/hardware.c \
-                  machine/fpu.c
-
-ifdef DEBUG
-    ARCH_C_SOURCES += machine/capdl.c
-endif
+ARCH_C_SOURCES += 32/kernel/vspace_32paging.c \
+                  32/kernel/vspace_pae.c \
+                  32/kernel/thread.c
