@@ -227,13 +227,16 @@ handleInterrupt(irq_t irq)
          * otherwise we would be dealing with a timer interrupt not a signal
          * interrupt
          */
-        if (likely(ksCurThread->tcbSchedContext->remaining > ksConsumed + getTimerPrecision())) {
+        if (likely(!expired(ksCurThread))) {
             ksCurThread->tcbSchedContext->remaining -= ksConsumed;
-        } else {
+        } else if (ready(ksCurThread)) {
             recharge(ksCurThread->tcbSchedContext);
             if (isRunnable(ksCurThread)) {
                 tcbSchedAppend(ksCurThread);
             }
+            rescheduleRequired();
+        } else {
+            postpone(ksCurThread->tcbSchedContext);
             rescheduleRequired();
         }
         ksConsumed = 0llu;
@@ -244,9 +247,7 @@ handleInterrupt(irq_t irq)
         updateTimestamp();
         ackDeadlineIRQ();
         ksReprogram = true;
-        if (likely(ksCurThread != ksIdleThread)) {
-            checkBudget();
-        }
+        checkBudget();
         break;
 
     case IRQReserved:

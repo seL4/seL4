@@ -131,15 +131,17 @@ volatile struct mct_map* mct = (volatile struct mct_map*)EXYNOS_MCT_PPTR;
    DONT_TRANSLATE
  */
 void
-setDeadline(time_t deadline)
+setDeadline(ticks_t deadline)
 {
+    assert(deadline >= ksCurrentTime);
     MCRR(CNTV_CVAL, deadline);
+    assert(deadline >= getCurrentTime());
 }
 
-time_t
+ticks_t
 getCurrentTime(void)
 {
-    time_t time;
+    ticks_t time;
     MRRC(CNTVCT, time);
     return time;
 }
@@ -150,32 +152,32 @@ getCurrentTime(void)
 void
 ackDeadlineIRQ(void)
 {
-    MCRR(CNTV_CVAL, UINT64_MAX);
+    setDeadline(UINT64_MAX);
 }
 
-time_t CONST
+PURE time_t
 getMaxTimerUs(void)
 {
     return UINT64_MAX / TIMER_MHZ;
 }
 
-time_t CONST
-getMinTimerUs(void)
+CONST time_t
+getKernelWcetUs(void)
 {
-    return 2;
+    return 10u;
 }
 
-time_t CONST
+PURE ticks_t
 getTimerPrecision(void)
 {
-    return getMinTimerUs() * TIMER_MHZ;
+    return TIMER_MHZ;
 }
 
-CONST time_t
+PURE ticks_t
 usToTicks(time_t us)
 {
     assert(us <= getMaxTimerUs());
-    assert(us >= getMinTimerUs());
+    assert(us >= getKernelWcetUs());
     return us * TIMER_MHZ;
 }
 

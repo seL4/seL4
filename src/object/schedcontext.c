@@ -22,49 +22,72 @@
 #include <object/schedcontext.h>
 
 exception_t
-invokeSchedControl_Configure(sched_context_t *target, time_t budget)
+invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t period)
 {
     budget = usToTicks(budget);
-
-    /* if the target has an active budget, extend it by the difference
-      between the old budget and the new */
-    if (target->tcb) {
-        if (budget > target->budget) {
-            target->remaining += (budget - target->budget);
-        }
-        /* reduced budgets will take effect next time */
-    }
+    period = usToTicks(period);
 
     target->budget = budget;
+    target->period = period;
+
+    recharge(target);
 
     return EXCEPTION_NONE;
+}
+
+static bool_t
+validTemporalParam(time_t param)
+{
+
+    if (param > getMaxTimerUs()) {
+        userError("SchedControl_Configure: param too large, max for this platform %llu.", getMaxTimerUs());
+        return false;
+    }
+
+    if (param < getKernelWcetUs()) {
+        userError("SchedControl_Configure: param too small, min for this platform %llx (got %llx).",
+                  getKernelWcetUs(), param);
+        return false;
+    }
+
+    return true;
 }
 
 exception_t
 decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buffer)
 {
-    time_t budget;
+    parseTime_ret_t ret;
+    time_t budget, period;
     cap_t targetCap;
     sched_context_t *target;
 
-    if (unlikely(length < 1 || extra_caps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || extra_caps.excaprefs[0] == NULL)) {
         userError("SchedControl_Configure: truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    budget = arch_parseTimeArg(1, buffer).arg;
+    ret = arch_parseTimeArg(0, buffer);
+    budget = ret.arg;
+    ret = arch_parseTimeArg(ret.words, buffer);
+    period = ret.arg;
 
-    if (budget > getMaxTimerUs()) {
-        userError("SchedControl_Configure: budget too large, max for this platform %llu.", getMaxTimerUs());
+    if (unlikely(!validTemporalParam(budget))) {
+        userError("Budget invalid");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (budget < getMinTimerUs()) {
-        userError("SchedControl_Configure: budget too small, min for this platform %llx (got %llx).",
-                  getMinTimerUs(), budget);
+    if (unlikely(!validTemporalParam(period))) {
+        userError("Period invalid");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 2;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (budget > period) {
+        userError("SchedControl_Configure: budget cannot be greater than period");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
@@ -81,7 +104,7 @@ decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buf
 
     target = SC_PTR(cap_sched_context_cap_get_capPtr(targetCap));
     setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeSchedControl_Configure(target, budget);
+    return invokeSchedControl_Configure(target, budget, period);
 }
 
 exception_t

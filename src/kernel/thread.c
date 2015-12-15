@@ -56,6 +56,13 @@ isRunnable(const tcb_t *thread)
     }
 }
 
+static inline bool_t PURE
+isSchedulable(const tcb_t *thread)
+{
+    return isRunnable(thread) && thread->tcbSchedContext != NULL &&
+           !thread_state_get_inReleaseQueue(thread->tcbState);
+}
+
 BOOT_CODE void
 configureIdleThread(tcb_t *tcb)
 {
@@ -94,20 +101,29 @@ suspend(tcb_t *target)
     cancelIPC(target);
     setThreadState(target, ThreadState_Inactive);
     tcbSchedDequeue(target);
+    tcbReleaseRemove(target);
 }
 
 void
 restart(tcb_t *target)
 {
     if (isBlocked(target) && target->tcbSchedContext != NULL &&
-            target->tcbSchedContext->budget > 0) {
+            target->tcbSchedContext->budget > 0llu) {
 
-        recharge(target->tcbSchedContext);
+        if (ready(target)) {
+            recharge(target->tcbSchedContext);
+        }
+
         cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
-        tcbSchedEnqueue(target);
-        switchIfRequiredTo(target);
+
+        if (target->tcbSchedContext->remaining < getKernelWcetTicks()) {
+            postpone(target->tcbSchedContext);
+        } else {
+            tcbSchedEnqueue(target);
+            switchIfRequiredTo(target);
+        }
     }
 }
 
@@ -270,31 +286,55 @@ void doNBRecvFailedTransfer(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
 }
 
+static void
+setNextInterrupt(void)
+{
+    /* the next interrupt is when the current thread's budget expires */
+    time_t next_interrupt = ksCurrentTime + ksCurThread->tcbSchedContext->remaining;
+
+    /* or when the next thread in the release queue is due to awaken */
+    if (likely(ksReleaseHead != NULL &&
+               ksReleaseHead->tcbSchedContext->next < next_interrupt)) {
+        next_interrupt = ksReleaseHead->tcbSchedContext->next;
+    }
+
+    setDeadline(next_interrupt - getTimerPrecision());
+}
+
 void
 schedule(void)
 {
     word_t action;
 
+    if (ksReprogram) {
+        /* wake any threads that need it */
+        awaken();
+    }
+
     action = (word_t)ksSchedulerAction;
     if (action == (word_t)SchedulerAction_ChooseNewThread) {
-        if (isRunnable(ksCurThread)) {
+        if (isSchedulable(ksCurThread)) {
             tcbSchedEnqueue(ksCurThread);
         }
         chooseThread();
         ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
     } else if (action != (word_t)SchedulerAction_ResumeCurrentThread) {
-        if (isRunnable(ksCurThread)) {
+        if (isSchedulable(ksCurThread)) {
             tcbSchedEnqueue(ksCurThread);
         }
         /* SwitchToThread */
         switchToThread(ksSchedulerAction);
         ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
+    } else {
+        ksCurThread->tcbSchedContext->remaining -= ksConsumed;
+        ksConsumed = 0;
     }
 
     if (ksReprogram) {
-        setDeadline(ksCurrentTime + ksCurThread->tcbSchedContext->remaining);
+        setNextInterrupt();
         ksReprogram = false;
     }
+    assert(ksConsumed == 0);
 }
 
 void
@@ -310,6 +350,8 @@ chooseThread(void)
         thread = ksReadyQueues[prio].head;
         assert(thread);
         assert(isRunnable(thread));
+        assert(isSchedulable(thread));
+        assert(thread->tcbSchedContext->remaining >= getKernelWcetTicks());
         switchToThread(thread);
     } else {
         switchToIdleThread();
@@ -320,13 +362,16 @@ void
 switchToThread(tcb_t *thread)
 {
     /* first bill the previous thread */
+    assert(ksCurThread->tcbSchedContext->remaining >= ksConsumed);
+
     ksCurThread->tcbSchedContext->remaining -= ksConsumed;
     ksConsumed = 0llu;
 
     /* now switch */
     Arch_switchToThread(thread);
     tcbSchedDequeue(thread);
-    assert(thread->tcbSchedContext->remaining > getTimerPrecision());
+    assert(!thread_state_get_inReleaseQueue(thread->tcbState));
+    assert(thread->tcbSchedContext->remaining >= getKernelWcetTicks());
     ksCurrentTime += 1llu;
     ksCurThread = thread;
 }
@@ -334,6 +379,13 @@ switchToThread(tcb_t *thread)
 void
 switchToIdleThread(void)
 {
+    /* first bill the previous thread */
+    assert(ksCurThread->tcbSchedContext->remaining >= ksConsumed);
+
+    ksCurThread->tcbSchedContext->remaining -= ksConsumed;
+    ksConsumed = 0llu;
+    /* make sure the calculation in setNextInterrupt doesn't overflow for the idle thread */
+    ksIdleThread->tcbSchedContext->remaining = UINT64_MAX - ksCurrentTime;
     Arch_switchToIdleThread();
     ksCurThread = ksIdleThread;
 }
@@ -359,9 +411,11 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
         break;
     case ThreadState_Running:
     case ThreadState_Restart:
-        tcbSchedEnqueue(tptr);
-        if (tptr == ksCurThread) {
-            rescheduleRequired();
+        if (!thread_state_get_inReleaseQueue(tptr->tcbState)) {
+            tcbSchedEnqueue(tptr);
+            if (tptr == ksCurThread) {
+                rescheduleRequired();
+            }
         }
         break;
     default:
@@ -380,15 +434,18 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
     targetPrio = target->tcbPriority;
     action = ksSchedulerAction;
 
-    if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
-            && action == SchedulerAction_ResumeCurrentThread) {
-        ksSchedulerAction = target;
-    } else {
-        tcbSchedEnqueue(target);
-    }
-    if (action != SchedulerAction_ResumeCurrentThread
-            && action != SchedulerAction_ChooseNewThread) {
-        rescheduleRequired();
+    if (likely(isSchedulable(target))) {
+        if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
+                && action == SchedulerAction_ResumeCurrentThread) {
+            ksSchedulerAction = target;
+        } else {
+            tcbSchedEnqueue(target);
+        }
+
+        if (action != SchedulerAction_ResumeCurrentThread
+                && action != SchedulerAction_ChooseNewThread) {
+            rescheduleRequired();
+        }
     }
 }
 
@@ -425,6 +482,20 @@ void
 recharge(sched_context_t *sc)
 {
     sc->remaining = sc->budget;
+    assert(sc->budget > 0);
+    sc->next = ksCurrentTime + sc->period;
+}
+
+void
+postpone(sched_context_t *sc)
+{
+    /* this isn't technically neccessary however
+     * we don't want to leave threads with budget when they
+     * have used / abadondoned it as various assertions around
+     * the kernel will cease to guard if this is not 0
+     */
+    sc->remaining = 0llu;
+    tcbReleaseEnqueue(sc->tcb);
 }
 
 /* update the kernel timestamp and store much
@@ -450,23 +521,33 @@ updateTimestamp(void)
 bool_t
 checkBudget(void)
 {
-    /* we enter this function on 2 different types of path:
-     * kernel entry (for whatever reason) and when handling
-     * a timer interrupt during a preemption point. For the
-     * former, all threads should be runnable on kernel entry.
-     * For the latter, all threads being preempted are currently
-     * doing something so they should be running
-     */
-    assert(isRunnable(ksCurThread));
-
     /* does this thread have enough time to continue? */
-    if (unlikely(ksConsumed + getTimerPrecision() > ksCurThread->tcbSchedContext->remaining)) {
-        /* timeslice ended - refill budget */
-        recharge(ksCurThread->tcbSchedContext);
-        /* make sure we don't bill the thread twice */
+    if (unlikely(expired(ksCurThread))) {
+        /* since we never bill the idle thread this shouldn't ever happen */
+        assert(ksCurThread != ksIdleThread);
+
+        /* we enter this function on 2 different types of path:
+         * kernel entry (for whatever reason) and when handling
+         * a timer interrupt. For the
+         * former, all threads should be runnable on kernel entry.
+         * For the latter, all threads being preempted are currently
+         * doing something so they should be running
+         */
+        assert(isRunnable(ksCurThread));
+
         ksConsumed = 0u;
-        /* restart the kernel operation once the thread is scheduled again */
-        tcbSchedAppend(ksCurThread);
+        /* timeslice ended - refill budget */
+        if (ready(ksCurThread)) {
+            /* thread is ready to go */
+            recharge(ksCurThread->tcbSchedContext);
+            /* apply round robin */
+            tcbSchedAppend(ksCurThread);
+        } else {
+            /* schedule thread to wake up when budget is due to be recharged */
+            postpone(ksCurThread->tcbSchedContext);
+        }
+
+        /* consumed time has been billed */
         rescheduleRequired();
         return false;
     } else {
@@ -479,10 +560,28 @@ void
 rescheduleRequired(void)
 {
     if (ksSchedulerAction != SchedulerAction_ResumeCurrentThread
-            && ksSchedulerAction != SchedulerAction_ChooseNewThread) {
+            && ksSchedulerAction != SchedulerAction_ChooseNewThread
+            && isSchedulable(ksSchedulerAction)) {
+
         tcbSchedEnqueue(ksSchedulerAction);
     }
     ksSchedulerAction = SchedulerAction_ChooseNewThread;
     ksReprogram = true;
+}
+
+/* wake any threads in the release queue that are ready to
+ * have their budgets replenished
+ */
+void
+awaken(void)
+{
+    tcb_t *awakened;
+
+    while (ksReleaseHead != NULL && ready(ksReleaseHead)) {
+        awakened = tcbReleaseDequeue();
+        recharge(awakened->tcbSchedContext);
+        tcbSchedAppend(awakened);
+        rescheduleRequired();
+    }
 }
 

@@ -76,6 +76,7 @@
 \newcommand{\schedcontrolcapdesc}{The SchedControl capability.}
 \newcommand{\schedcontextcapdesc}{Capability to the scheduling context to populate with parameters.}
 \newcommand{\budgetdesc}{Timeslice in microseconds, when the budget expires the thread will be preempted.}
+\newcommand{\perioddesc}{Period in microseconds, the budget is replenished every time the period exipires.}
 
 \newcommand{\irqhandlercapdesc}{The IRQ handler capability.}
 
@@ -88,7 +89,7 @@
 
 \newcommand{\threadpriodesc}{The thread's new priority.}
 \newcommand{\threadmaxpriodesc}{The threads new maximum priority.}
-\newcommand{\threadcombinedpriodesc}{A \texttt{seL4\_Prio\_t} structure as described in \autoref{sec:prio}.}
+\newcommand{\threadcombinedpriodesc}{A \texttt{seL4\_Prio\_t} structure as described in \autoref{sec:sched}.}
 \newcommand{\threadcspacerootdesc}{The new CSpace root.}
 \newcommand{\threadcspacedatadesc}{Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect.}
 \newcommand{\threadvspacerootdesc}{The new VSpace root.}
@@ -286,7 +287,7 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{tcb_suspend}
 \inputapidoc{tcb_writeregisters}
 \inputapidoc{untyped_retype}
-
+\inputapidoc{schedcontrol_configure}
 \ifxeightsix
 \clearpage
 

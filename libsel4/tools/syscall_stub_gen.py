@@ -202,6 +202,7 @@ types = [
         Type("seL4_Uint16", 16),
         Type("seL4_Uint32", 32),
         Type("seL4_Uint64", 64, double_word=True),
+        Type("seL4_Time",   64, double_word=True),
         Type("seL4_Word", WORD_SIZE_BITS),
         Type("seL4_Bool", 1, native_size_bits=8),
         Type("seL4_CapRights", WORD_SIZE_BITS),

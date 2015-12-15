@@ -11,12 +11,14 @@
 \apidoc
 {schedcontrol_configure}
 {SchedControl - Configure}
-{Set the parameters of a scheduling context by invoking the scheduling control capability}
+{Set the parameters of a scheduling context by invoking the scheduling control capability.
+This call will return seL4\_Invalid\_Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).}
 {static inline int seL4\_SchedControl\_Configure }
 {
 \param{seL4\_SchedControl}{\_service}{\schedcontrolcapdesc}
 \param{seL4\_CPtr\_t}{schedcontext}{\schedcontextcapdesc}
 \param{seL4\_Time\_t}{budget}{\budgetdesc}
+\param{seL4\_Time\_t}{period}{\perioddesc}
 }
 {\errorenumdesc}
 {See \autoref{sec:sched}}

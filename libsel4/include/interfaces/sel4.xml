@@ -167,7 +167,8 @@
     <interface name="seL4_SchedControl">
         <method id="SchedControlConfigure" name="Configure">
             <param dir="in" name="target" type="seL4_SchedContext" />
-            <param dir="in" name="budget" type="seL4_Uint64" />
+            <param dir="in" name="budget" type="seL4_Time" />
+            <param dir="in" name="period" type="seL4_Time" />
         </method>
     </interface>
 </api>

@@ -23,6 +23,7 @@
 typedef word_t prio_t;
 typedef word_t cptr_t;
 typedef uint64_t time_t;
+typedef uint64_t ticks_t;
 
 typedef struct {
     /* number of words parsing this argument took */

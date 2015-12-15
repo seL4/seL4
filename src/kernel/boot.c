@@ -318,7 +318,7 @@ create_it_asid_pool(cap_t root_cnode_cap)
 }
 
 BOOT_CODE static bool_t
-create_sched_context(tcb_t *tcb)
+create_sched_context(tcb_t *tcb, ticks_t timeslice)
 {
     pptr_t sc_pptr;
     sched_context_t *sc;
@@ -329,12 +329,14 @@ create_sched_context(tcb_t *tcb)
         return false;
     }
 
-    memzero((void *) sc_pptr, 1 << SC_SIZE_BITS);
+    memzero((void *) sc_pptr, BIT(SC_SIZE_BITS));
     sc = SC_PTR(sc_pptr);
     tcb->tcbSchedContext = sc;
     sc->tcb = tcb;
-    sc->budget = usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_PER_MS);
+    sc->budget = timeslice;
+    sc->period = sc->budget;
     sc->remaining = sc->budget;
+    sc->next = ksCurrentTime + sc->period;
 
     return true;
 }
@@ -351,7 +353,7 @@ create_idle_thread(void)
     memzero((void *)pptr, 1 << TCB_BLOCK_SIZE_BITS);
     ksIdleThread = TCB_PTR(pptr + TCB_OFFSET);
     configureIdleThread(ksIdleThread);
-    return create_sched_context(ksIdleThread);
+    return create_sched_context(ksIdleThread, UINT64_MAX);
 }
 
 BOOT_CODE bool_t
@@ -406,10 +408,12 @@ create_initial_thread(
     setRegister(tcb, capRegister, bi_frame_vptr);
     setNextPC(tcb, ui_v_entry);
 
+    /* initialise temporal globals */
+    ksConsumed = 0u;
     ksCurrentTime = getCurrentTime();
 
     /* initialise TCB */
-    if (!create_sched_context(tcb)) {
+    if (!create_sched_context(tcb, usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_PER_MS))) {
         return false;
     }
     tcb->tcbPriority = seL4_MaxPrio;
@@ -418,8 +422,7 @@ create_initial_thread(
     setThreadState(tcb, ThreadState_Running);
     ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
     ksReprogram = true;
-    ksConsumed = 0u;
-    ksCurrentTime = getCurrentTime();
+    ksReleaseHead = NULL;
     ksCurThread = ksIdleThread;
 
     /* initialise current thread pointer */

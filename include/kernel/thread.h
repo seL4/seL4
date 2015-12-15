@@ -29,6 +29,22 @@ l1index_to_prio(word_t l1index)
     return (l1index << wordRadix);
 }
 
+/* return true if the threads scheduling context's
+ * period has expired and the budget is ready to be
+ * recharged
+ */
+static inline bool_t
+ready(tcb_t *tcb)
+{
+    return (ksCurrentTime + getKernelWcetTicks()) >= tcb->tcbSchedContext->next;
+}
+
+static inline bool_t
+expired(tcb_t *tcb)
+{
+    return tcb->tcbSchedContext->remaining < (ksConsumed + getKernelWcetTicks());
+}
+
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void) VISIBLE;
 void suspend(tcb_t *target);
@@ -56,4 +72,6 @@ void updateTimestamp(void);
 bool_t checkBudget(void);
 void rescheduleRequired(void);
 void recharge(sched_context_t *sc);
+void awaken(void);
+void postpone(sched_context_t *sc);
 #endif

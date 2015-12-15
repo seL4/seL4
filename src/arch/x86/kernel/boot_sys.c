@@ -369,8 +369,7 @@ try_boot_node(void)
                 /* parameters below not modeled in abstract specification */
                 (pdpte_t*)kernel_pdpt_list[node_id],
                 (pde_t*)kernel_pd_list[node_id],
-                (pte_t*)kernel_pt_list[node_id],
-                glks.tsc_mhz
+                (pte_t*)kernel_pt_list[node_id]
 #ifdef CONFIG_IOMMU
                 , cpu_id,
                 node_id == 0 ? glks.num_drhu : 0,

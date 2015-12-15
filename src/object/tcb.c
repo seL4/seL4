@@ -80,6 +80,9 @@ removeFromBitmap(word_t prio)
 void
 tcbSchedEnqueue(tcb_t *tcb)
 {
+    assert(isSchedulable(tcb));
+    assert(tcb->tcbSchedContext->remaining >= getKernelWcetTicks());
+
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
         prio_t prio;
@@ -109,6 +112,9 @@ tcbSchedEnqueue(tcb_t *tcb)
 void
 tcbSchedAppend(tcb_t *tcb)
 {
+    assert(isSchedulable(tcb));
+    assert(tcb->tcbSchedContext->remaining >= getKernelWcetTicks());
+
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
         prio_t prio;
@@ -166,6 +172,92 @@ tcbSchedDequeue(tcb_t *tcb)
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, false);
     }
+}
+
+/* remove a TCB from the release queue */
+void
+tcbReleaseRemove(tcb_t *tcb)
+{
+    if (likely(thread_state_get_inReleaseQueue(tcb->tcbState))) {
+        if (tcb->tcbSchedPrev) {
+            tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
+            tcb->tcbSchedPrev = NULL;
+        } else {
+            ksReleaseHead = tcb->tcbSchedNext;
+            /* the head has changed, we might need to set an new timeout */
+            ksReprogram = true;
+        }
+
+        if (tcb->tcbSchedNext) {
+            tcb->tcbSchedNext->tcbSchedPrev = tcb->tcbSchedPrev;
+            tcb->tcbSchedNext = NULL;
+        }
+
+        thread_state_ptr_set_inReleaseQueue(&tcb->tcbState, false);
+    }
+}
+
+/* insert a TCB into the release queue - ordered */
+void
+tcbReleaseEnqueue(tcb_t *tcb)
+{
+    assert(thread_state_get_inReleaseQueue(tcb->tcbState) == false);
+
+    if (ksReleaseHead == NULL ||
+            tcb->tcbSchedContext->next < ksReleaseHead->tcbSchedContext->next) {
+        /* insert at head */
+        tcb->tcbSchedNext = ksReleaseHead;
+        tcb->tcbSchedPrev = NULL;
+        ksReleaseHead = tcb;
+        if (tcb->tcbSchedNext) {
+            tcb->tcbSchedNext->tcbSchedPrev = tcb;
+        }
+        ksReprogram = true;
+    } else {
+        /* find a place in the list */
+        tcb_t *node = ksReleaseHead;
+        tcb_t *prev = NULL;
+        while (node != NULL && tcb->tcbSchedContext->next >= node->tcbSchedContext->next) {
+            prev = node;
+            node = node->tcbSchedNext;
+        }
+
+        /* prev cannot be NULL or we would have taken the other branch */
+        assert(prev != NULL);
+
+        tcb->tcbSchedNext = node;
+        tcb->tcbSchedPrev = prev;
+        prev->tcbSchedNext = tcb;
+
+        if (node != NULL) {
+            node->tcbSchedPrev = tcb;
+        }
+    }
+
+    thread_state_ptr_set_inReleaseQueue(&tcb->tcbState, true);
+}
+
+/* remove the head of the release queue */
+tcb_t *
+tcbReleaseDequeue(void)
+{
+    tcb_t *detached_head;
+
+    assert(ksReleaseHead != NULL);
+    assert(ksReleaseHead->tcbSchedPrev == NULL);
+
+    detached_head = ksReleaseHead;
+    ksReleaseHead = ksReleaseHead->tcbSchedNext;
+
+    if (detached_head->tcbSchedNext) {
+        detached_head->tcbSchedNext->tcbSchedPrev = NULL;
+        detached_head->tcbSchedNext = NULL;
+    }
+
+    thread_state_ptr_set_inReleaseQueue(&detached_head->tcbState, false);
+    ksReprogram = true;
+
+    return detached_head;
 }
 
 /* Add TCB to the ordered endpoint queue */

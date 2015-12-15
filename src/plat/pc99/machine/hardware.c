@@ -142,10 +142,10 @@ clz64(uint64_t n)
     uint32_t lz = 0;
 
     if (upper_n != 0) {
-        lz += CLZ(upper_n);
+        lz += CLZL(upper_n);
     }
 
-    return lz + CLZ((uint32_t) n);
+    return lz + CLZL((uint32_t) n);
 }
 
 static CONST uint64_t
@@ -162,7 +162,7 @@ div64(uint64_t numerator, uint32_t denominator)
     assert(denominator > 0);
 
     /* align denominator to numerator */
-    c = 32u + CLZ(denominator) - clz64(numerator);
+    c = 32u + CLZL(denominator) - clz64(numerator);
     long_denom = long_denom << c;
 
     /* perform binary long division */
@@ -183,6 +183,8 @@ tsc_init(void)
 {
     time_t old_ticks, new_ticks, diff;
     uint32_t cycles_per_ms;
+
+    pit_init();
 
     /* wait for pit to wraparound */
     pit_wait_wraparound();
@@ -211,44 +213,44 @@ tsc_init(void)
 PURE time_t
 getMaxTimerUs(void)
 {
-    /* TODO initialise this during boot */
     return div64(UINT64_MAX, ia32KStscMhz);
 }
 
 CONST time_t
-getMinTimerUs(void)
+getKernelWcetUs(void)
 {
-    return  1;
+    return  10u;
 }
 
-PURE time_t
+PURE ticks_t
 getTimerPrecision(void)
 {
     return ia32KStscMhz;
 }
 
-time_t PURE
+PURE ticks_t
 usToTicks(time_t us)
 {
     assert(ia32KStscMhz > 0);
-    assert(us > getMinTimerUs() && us < getMaxTimerUs());
+    assert(us >= getKernelWcetUs() && us <= getMaxTimerUs());
     return us * ia32KStscMhz;
 }
 
-CONST void
+void
 ackDeadlineIRQ(void)
 {
 }
 
-time_t
+ticks_t
 getCurrentTime(void)
 {
     return ia32_rdtsc();
 }
 
 void
-setDeadline(time_t deadline)
+setDeadline(ticks_t deadline)
 {
+    assert(deadline > ksCurrentTime);
     ia32_wrmsr(IA32_TSC_DEADLINE_MSR, (uint32_t) (deadline >> 32llu), (uint32_t) (deadline));
 }
 

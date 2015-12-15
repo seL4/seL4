@@ -39,8 +39,7 @@ bool_t init_node_state(
     /* parameters below not modeled in abstract specification */
     pdpte_t*      kernel_pdpt,
     pde_t*        kernel_pd,
-    pte_t*        kernel_pt,
-    word_t        tsc_mhz
+    pte_t*        kernel_pt
 #ifdef CONFIG_IOMMU
     , cpu_id_t      cpu_id,
     uint32_t      num_drhu,

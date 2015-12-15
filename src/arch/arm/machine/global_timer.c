@@ -34,39 +34,35 @@ enum control {
     RESERVED_2 = 16
 };
 
-time_t CONST
+PURE time_t
 getMaxTimerUs(void)
 {
     return UINT64_MAX / CLK_MHZ;
 }
 
-time_t CONST
-getMinTimerUs(void)
+CONST time_t
+getKernelWcetUs(void)
 {
     return 10u;
 }
 
-time_t CONST
+PURE ticks_t
 getTimerPrecision(void)
 {
-    return getMinTimerUs() * CLK_MHZ;
+    return 2 * CLK_MHZ;
 }
 
-time_t CONST
+PURE ticks_t
 usToTicks(time_t us)
 {
     assert(us <= getMaxTimerUs());
-    assert(us > getMinTimerUs());
+    assert(us >= getKernelWcetUs());
     return us * CLK_MHZ;
 }
 
 void
-setDeadline(time_t deadline)
+setDeadline(ticks_t deadline)
 {
-    /* if this fails the caller code is wrong */
-    if (deadline < (ksCurrentTime + getTimerPrecision())) {
-        printf("deadline %llx current %llx\n", deadline, ksCurrentTime);
-    }
     assert(deadline > ksCurrentTime);
     /* disable cmp */
     globalTimer->control &= ~(BIT(COMP_ENABLE));
@@ -87,7 +83,7 @@ ackDeadlineIRQ(void)
     globalTimer->isr = 1;
 }
 
-time_t
+ticks_t
 getCurrentTime(void)
 {
     uint32_t upper, upper2, lower;
@@ -102,7 +98,7 @@ getCurrentTime(void)
         lower = globalTimer->countLower;
     }
 
-    return (((time_t) upper2 << 32llu) + (time_t) lower);
+    return (((ticks_t) upper2 << 32llu) + (ticks_t) lower);
 }
 
 BOOT_CODE void

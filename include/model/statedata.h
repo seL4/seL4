@@ -28,6 +28,7 @@ extern cte_t *intStateIRQNode VISIBLE;
 extern time_t ksConsumed VISIBLE;
 extern time_t ksCurrentTime VISIBLE;
 extern bool_t ksReprogram VISIBLE;
+extern tcb_t *ksReleaseHead VISIBLE;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)

@@ -11,7 +11,7 @@
 \apidoc
 {sel4_yield}
 {Yield}
-{Donate the remaining timeslice to a thread of the same priority}
+{Surrender remaining timeslice, which will be refilled when the budget is due to be replenished. If the budget is already due to be replenished and there are no other threads at the caller's priority, the caller will be rescheduled immediately.}
 {static inline void seL4\_Yield}
 {
 \param{void}{}{}

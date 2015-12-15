@@ -311,8 +311,7 @@ init_node_state(
     /* parameters below not modeled in abstract specification */
     pdpte_t*      kernel_pdpt,
     pde_t*        kernel_pd,
-    pte_t*        kernel_pt,
-    uint32_t      tsc_mhz
+    pte_t*        kernel_pt
 #ifdef CONFIG_IOMMU
     , cpu_id_t      cpu_id,
     uint32_t      num_drhu,
@@ -485,7 +484,11 @@ init_node_state(
     resetFpu();
     saveFpuState(&ia32KSnullFpuState);
     ia32KSfpuOwner = NULL;
-    ia32KStscMhz = tsc_mhz;
+    ia32KStscMhz = tsc_init();
+    if (ia32KStscMhz == 0) {
+        return false;
+    }
+
     /* create the idle thread */
     if (!create_idle_thread()) {
         return false;
@@ -575,11 +578,6 @@ init_node_cpu(
 
     /* initialise local APIC */
     if (!apic_init(mask_legacy_irqs)) {
-        return false;
-    }
-
-    ia32KStscMhz = tsc_init();
-    if (ia32KStscMhz == 0) {
         return false;
     }
 

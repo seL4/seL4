@@ -407,8 +407,21 @@ handleRecv(bool_t isBlocking)
 static void
 handleYield(void)
 {
-    tcbSchedDequeue(ksCurThread);
-    tcbSchedAppend(ksCurThread);
+
+    /* ksCurThread should never be in the scheduler queue */
+    assert(!thread_state_get_tcbQueued(ksCurThread->tcbState));
+
+    /* thread has abandoned the rest of its current budget, either: */
+    if (ready(ksCurThread)) {
+        /* recharge and apply round robin */
+        recharge(ksCurThread->tcbSchedContext);
+        tcbSchedAppend(ksCurThread);
+    } else {
+        /* or postpone until budget is due to be recharged again */
+        postpone(ksCurThread->tcbSchedContext);
+    }
+
+    ksConsumed = 0llu;
     rescheduleRequired();
 }
 

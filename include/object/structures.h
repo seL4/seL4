@@ -60,7 +60,7 @@ typedef word_t notification_state_t;
 #define TCB_CTE_PTR(r,i) (((cte_t *)(r))+(i))
 #define TCB_REF(p)       ((word_t)(p))
 
-#define SC_REF(p) ((unsigned int) (p))
+#define SC_REF(p) ((word_t) (p))
 #define SC_PTR(r) ((sched_context_t *) (r))
 #define SC_SIZE_BITS 6
 
@@ -240,10 +240,16 @@ typedef struct tcb tcb_t;
 
 struct sched_context {
     /* budget for this tcb -- remaining is refilled from this value */
-    time_t budget;
+    ticks_t budget;
+
+    /* period for this tcb -- controls rate at which budget is replenished */
+    ticks_t period;
 
     /* current budget for this tcb (timeslice) -- will be refilled from budget */
-    time_t remaining;
+    ticks_t remaining;
+
+    /* timestamp when this scheduling context is next due for a budget recharge */
+    ticks_t next;
 
     /* tcb that is currently running on this scheduling context */
     tcb_t *tcb;

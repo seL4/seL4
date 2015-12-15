@@ -33,6 +33,10 @@ void tcbSchedEnqueue(tcb_t *tcb);
 void tcbSchedAppend(tcb_t *tcb);
 void tcbSchedDequeue(tcb_t *tcb);
 
+void tcbReleaseRemove(tcb_t *tcb);
+void tcbReleaseEnqueue(tcb_t *tcb);
+tcb_t *tcbReleaseDequeue(void);
+
 tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPReorder(tcb_t *tcb, tcb_queue_t queue, prio_t oldPrio);
