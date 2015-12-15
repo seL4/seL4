@@ -35,6 +35,10 @@ handleInterruptEntry(void)
     irq_t irq;
 
     irq = getActiveIRQ();
+#ifdef DEBUG
+    ksKernelEntry.path = Debug_Interrupt;
+    ksKernelEntry.irq = irq;
+#endif /* DEBUG */
     if (irq != irqInvalid) {
         handleInterrupt(irq);
     } else {
@@ -52,6 +56,9 @@ exception_t
 handleUnknownSyscall(word_t w)
 {
 #ifdef DEBUG
+    ksKernelEntry.path = Debug_UnknownSyscall;
+    ksKernelEntry.word = w;
+
     if (w == SysDebugPutChar) {
         kernel_putchar(getRegister(ksCurThread, capRegister));
         return EXCEPTION_NONE;
@@ -174,6 +181,12 @@ handleUnknownSyscall(word_t w)
 exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
+#ifdef DEBUG
+    ksKernelEntry.path = Debug_UserLevelFault;
+    ksKernelEntry.number = w_a;
+    ksKernelEntry.code = w_b;
+#endif /* DEBUG */
+
     current_fault = fault_user_exception_new(w_a, w_b);
     handleFault(ksCurThread);
 
@@ -187,6 +200,10 @@ exception_t
 handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     exception_t status;
+#ifdef DEBUG
+    ksKernelEntry.path = Debug_VMFault;
+    ksKernelEntry.fault_type = vm_faultType;
+#endif /* DEBUG */
 
     status = handleVMFault(ksCurThread, vm_faultType);
     if (status != EXCEPTION_NONE) {
@@ -218,6 +235,11 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
 
     /* faulting section */
     lu_ret = lookupCapAndSlot(thread, cptr);
+
+#ifdef DEBUG
+    ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
+    ksKernelEntry.invocation_tag = message_info_get_msgLabel(info);
+#endif /* DEBUG */
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Invocation of invalid cap #%lu.", cptr);
@@ -375,6 +397,11 @@ handleSyscall(syscall_t syscall)
 {
     exception_t ret;
     irq_t irq;
+
+#ifdef DEBUG
+    ksKernelEntry.path = Debug_Syscall;
+    ksKernelEntry.syscall_no = syscall;
+#endif /* DEBUG */
 
     switch (syscall) {
     case SysSend:

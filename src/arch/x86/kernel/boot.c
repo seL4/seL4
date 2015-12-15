@@ -632,7 +632,6 @@ init_node_state(
 
 BOOT_CODE bool_t
 init_node_cpu(
-    uint32_t apic_khz,
     bool_t   mask_legacy_irqs
 )
 {
@@ -651,7 +650,7 @@ init_node_cpu(
     Arch_initFpu();
 
     /* initialise local APIC */
-    if (!apic_init(apic_khz, mask_legacy_irqs)) {
+    if (!apic_init(mask_legacy_irqs)) {
         return false;
     }
 
