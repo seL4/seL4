@@ -19,7 +19,7 @@ arch_parseTimeArg(word_t i, word_t *buffer)
 {
     return (parseTime_ret_t) {
         .words = 2,
-         .arg = (((time_t) getSyscallArg(1, buffer)) << 32llu) + getSyscallArg(0, buffer),
+         .arg = (((time_t) getSyscallArg(i + 1, buffer)) << 32llu) + getSyscallArg(i + 0, buffer),
     };
 }
 
