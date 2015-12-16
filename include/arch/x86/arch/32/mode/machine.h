@@ -11,6 +11,9 @@
 #ifndef __MODE_MACHINE_H
 #define __MODE_MACHINE_H
 
+#include <arch/model/statedata.h>
+#include <arch/machine/cpu_registers.h>
+
 #define wordRadix 5
 #define wordBits (1 << wordRadix)
 
