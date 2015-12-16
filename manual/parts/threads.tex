@@ -60,8 +60,7 @@ Thread priority (structure \texttt{seL4\_Prio\_t}) consists of two values, prior
 When a thread creates or modifies another thread, it can only set the
 other thread's priority and max-priority to be lower than or equal to its own max-priority. Thread priority and max-priority can be
 set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
-\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMaxPriority}{tcb\_setmaxpriority} methods.
-
+\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMaxPriority}{tcb_setmaxpriority} methods.
 A thread's reservation is determined by its scheduling context, which can be adjusted with 
 \apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, and is expressed as a tuple of 
 \textit{budget (b)} and \textit{period (p)}, both in microseconds.
