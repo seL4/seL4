@@ -824,14 +824,12 @@ init_dtrs(void)
 {
     /* setup the GDT pointer and limit and load into GDTR */
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
-    gdt_idt_ptr.basel = (uint32_t)ia32KSgdt;
-    gdt_idt_ptr.baseh = (uint16_t)((uint32_t)ia32KSgdt >> 16);
+    gdt_idt_ptr.base = (uint32_t)ia32KSgdt;
     ia32_install_gdt(&gdt_idt_ptr);
 
     /* setup the IDT pointer and limit and load into IDTR */
     gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1)) - 1;
-    gdt_idt_ptr.basel = (uint32_t)ia32KSidt;
-    gdt_idt_ptr.baseh = (uint16_t)((uint32_t)ia32KSidt >> 16);
+    gdt_idt_ptr.base = (uint32_t)ia32KSidt;
     ia32_install_idt(&gdt_idt_ptr);
 
     /* load NULL LDT selector into LDTR */
@@ -855,12 +853,12 @@ init_pat_msr(void)
     ia32_pat_msr_t pat_msr;
     /* First verify PAT is supported by the machine.
      *      See section 11.12.1 of Volume 3 of the Intel manual */
-    if ( (ia32_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
+    if ( (x86_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
         printf("PAT support not found\n");
         return false;
     }
-    pat_msr.words[0] = ia32_rdmsr_low(IA32_PAT_MSR);
-    pat_msr.words[1] = ia32_rdmsr_high(IA32_PAT_MSR);
+    pat_msr.words[0] = x86_rdmsr_low(IA32_PAT_MSR);
+    pat_msr.words[1] = x86_rdmsr_high(IA32_PAT_MSR);
     /* Set up the PAT MSR to the Intel defaults, just in case
      * they have been changed but a bootloader somewhere along the way */
     ia32_pat_msr_ptr_set_pa0(&pat_msr, IA32_PAT_MT_WRITE_BACK);
@@ -869,7 +867,7 @@ init_pat_msr(void)
     ia32_pat_msr_ptr_set_pa3(&pat_msr, IA32_PAT_MT_UNCACHEABLE);
     /* Add the WriteCombining cache type to the PAT */
     ia32_pat_msr_ptr_set_pa4(&pat_msr, IA32_PAT_MT_WRITE_COMBINING);
-    ia32_wrmsr(IA32_PAT_MSR, pat_msr.words[1], pat_msr.words[0]);
+    x86_wrmsr(IA32_PAT_MSR, ((uint64_t)pat_msr.words[1]) << 32 | pat_msr.words[0]);
     return true;
 }
 

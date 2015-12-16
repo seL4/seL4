@@ -11,6 +11,22 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
+#include <config.h>
+#include <types.h>
+#include <plat/machine.h>
+#include <plat/machine/hardware_gen.h>
+
 #include <plat_mode/machine/hardware.h>
+
+void handleReservedIRQ(irq_t irq);
+void maskInterrupt(bool_t mask, irq_t irq);
+void ackInterrupt(irq_t irq);
+irq_t getActiveIRQ(void);
+bool_t isIRQPending(void);
+void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow);
+void resetTimer(void);
+void platAddDevices(void);
+
+void handleSpuriousIRQ(void);
 
 #endif
