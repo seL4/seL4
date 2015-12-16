@@ -38,28 +38,6 @@ config LIB_SEL4_HAVE_REGISTER_STUBS
         as a result these stubs are known to be broken, and are disabled,
         at -O0
 
-if LIB_SEL4_HAVE_REGISTER_STUBS || !(ARCH_ARM)
-config LIB_SEL4_STUBS_USE_IPC_BUFFER_ONLY
-    bool "use only IPC buffer for syscalls"
-    depends on LIB_SEL4
-    default n
-    help
-        When generating syscall wrappers, only use the IPC buffer for
-        marshalling and unmarshalling arguments. Without this option set,
-        arguments will be passed in registers where possible for better
-        performance.
-endif
-
-if !(LIB_SEL4_HAVE_REGISTER_STUBS || !(ARCH_ARM))
-menu "libsel4 hidden"
-    visible if false
-    config LIB_SEL4_STUBS_USE_IPC_BUFFER_ONLY
-        bool "Use only IPC buffer for syscalls"
-        depends on LIB_SEL4
-        default y
-endmenu
-endif
-
 config HAVE_LIB_SEL4
     bool
 endmenu
