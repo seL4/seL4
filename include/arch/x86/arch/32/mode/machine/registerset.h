@@ -11,17 +11,7 @@
 #ifndef __MODE_MACHINE_REGISTERSET_H
 #define __MODE_MACHINE_REGISTERSET_H
 
-#include <arch/types.h>
-#include <util.h>
-#include <assert.h>
 #include <config.h>
-
-/* Number of bytes required to store FPU state. */
-#define FPU_STATE_SIZE 512
-
-/* Minimum hardware-enforced alignment needed for FPU state. */
-#define MIN_FPU_ALIGNMENT 16
-
 /* These are the indices of the registers in the
  * saved thread context. The values are determined
  * by the order in which they're saved in the trap
@@ -88,33 +78,6 @@ extern const register_t syscallMessage[];
 extern const register_t crExitRegs[];
 #endif
 
-/* IA32 FPU context. */
-struct user_fpu_state {
-    uint8_t state[FPU_STATE_SIZE];
-};
-typedef struct user_fpu_state user_fpu_state_t;
-
-/* IA32 user-code context */
-struct user_context {
-    /* 76 bytes */
-    word_t registers[n_contextRegisters];
-
-    /*
-     * Padding to 16-byte boundary, required by the IA32 FPU state saving
-     * and restoring commands.
-     */
-    word_t padding;
-
-    /* 512 bytes. */
-    user_fpu_state_t fpuState;
-};
-typedef struct user_context user_context_t;
-
-void Arch_initContext(user_context_t* context);
-word_t sanitiseRegister(register_t reg, word_t v);
-
-/* Ensure FPU state is aligned within user context. */
-compile_assert(fpu_state_alignment_valid,
-               OFFSETOF(user_context_t, fpuState) % MIN_FPU_ALIGNMENT == 0)
+#define FPU_PADDING word_t padding;
 
 #endif
