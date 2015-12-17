@@ -233,7 +233,7 @@ static void vtd_process_faults(drhu_id_t i)
             reason = vtd_read32(i, fr_reg + 12) & FR_MASK;
 
             printf("IOMMU: DMA %s page fault ", fault_type ? "read" : "write");
-            printf("from bus/dev/fun 0x%lx ", source_id);
+            printf("from bus/dev/fun 0x%x ", source_id);
             printf("on address 0x%x:%x ", address[1], address[0]);
             printf("with reason code 0x%x\n", reason);
 
@@ -308,7 +308,7 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
         if (VTD_PT_BITS * i >= 32) {
             iopt_index = 0;
         } else {
-            iopt_index = ( (addr >> IA32_4K_bits) >> (VTD_PT_BITS * i)) & MASK(VTD_PT_BITS);
+            iopt_index = ( (addr >> X86_4K_bits) >> (VTD_PT_BITS * i)) & MASK(VTD_PT_BITS);
         }
         vtd_pte_slot = iopt + iopt_index;
         if (i == 0) {
@@ -360,7 +360,7 @@ vtd_create_context_table(
     for (i = 0; i < rmrr_list->num; i++) {
         if (vtd_get_root_index(rmrr_list->entries[i].device) == bus) {
             uint32_t addr;
-            for (addr = rmrr_list->entries[i].base; addr < rmrr_list->entries[i].limit; addr += BIT(IA32_4K_bits)) {
+            for (addr = rmrr_list->entries[i].base; addr < rmrr_list->entries[i].limit; addr += BIT(X86_4K_bits)) {
                 (void)vtd_map_reserved_page;
                 vtd_map_reserved_page(vtd_context_table, vtd_get_context_index(rmrr_list->entries[i].device), addr);
             }

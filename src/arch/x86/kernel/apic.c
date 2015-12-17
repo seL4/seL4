@@ -78,7 +78,7 @@ apic_get_base_paddr(void)
 {
     apic_base_msr_t apic_base_msr;
 
-    apic_base_msr.words[0] = ia32_rdmsr_low(IA32_APIC_BASE_MSR);
+    apic_base_msr.words[0] = x86_rdmsr_low(IA32_APIC_BASE_MSR);
     if (!apic_base_msr_get_enabled(apic_base_msr)) {
         printf("APIC: Enabled bit not set\n");
     }

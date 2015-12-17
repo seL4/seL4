@@ -64,8 +64,8 @@ BOOT_CODE bool_t vtx_allocate(void)
 BOOT_CODE void vtx_enable(void)
 {
     if (is_vtx_supported()) {
-        uint64_t feature_control = ((uint64_t)ia32_rdmsr_high(MSR_FEATURE_CONTROL)) << 32 | (uint64_t)ia32_rdmsr_low(MSR_FEATURE_CONTROL);
-        uint64_t vm_basic = ((uint64_t)ia32_rdmsr_high(MSR_VM_BASIC)) << 32 | (uint64_t)ia32_rdmsr_low(MSR_VM_BASIC);
+        uint64_t feature_control = ((uint64_t)x86_rdmsr_high(MSR_FEATURE_CONTROL)) << 32 | (uint64_t)x86_rdmsr_low(MSR_FEATURE_CONTROL);
+        uint64_t vm_basic = ((uint64_t)x86_rdmsr_high(MSR_VM_BASIC)) << 32 | (uint64_t)x86_rdmsr_low(MSR_VM_BASIC);
         vmcs_revision = vm_basic;
         if ((feature_control & FEATURE_CONTROL_MASK) == FEATURE_CONTROL_MASK) {
             uint32_t vm_basic_high = vm_basic >> 32;
@@ -99,7 +99,7 @@ BOOT_CODE void vtx_enable(void)
                     null_ept_space |= (3 << 3) | 6;
                     vtx_enabled = 1;
                 }
-                vpid_capability = ((uint64_t)ia32_rdmsr_high(MSR_VMX_EPT_VPID_CAP)) << 32 | (uint64_t)ia32_rdmsr_low(MSR_VMX_EPT_VPID_CAP);
+                vpid_capability = ((uint64_t)x86_rdmsr_high(MSR_VMX_EPT_VPID_CAP)) << 32 | (uint64_t)x86_rdmsr_low(MSR_VMX_EPT_VPID_CAP);
             } else {
                 printf("vt-x: disabled due to lack of required features\n");
             }

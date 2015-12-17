@@ -17,9 +17,9 @@
 #define PPTR_BASE   0xe0000000
 #define kernelBase  PPTR_BASE
 #ifdef CONFIG_PAE_PAGING
-#define PPTR_USER_TOP (PPTR_BASE & (~MASK(IA32_1G_bits)))
+#define PPTR_USER_TOP (PPTR_BASE & (~MASK(X86_1G_bits)))
 #else
-#define PPTR_USER_TOP (PPTR_BASE & (~MASK(IA32_4M_bits)))
+#define PPTR_USER_TOP (PPTR_BASE & (~MASK(X86_4M_bits)))
 #endif
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 #define PPTR_TOP    (-BIT(LARGE_PAGE_BITS + 1))

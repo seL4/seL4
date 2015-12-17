@@ -71,10 +71,10 @@ init_boot_pd(void)
     word_t i;
 
     /* identity mapping from 0 up to PPTR_BASE (virtual address) */
-    for (i = 0; i < (PPTR_BASE >> IA32_4M_bits); i++) {
+    for (i = 0; i < (PPTR_BASE >> X86_4M_bits); i++) {
         pde_pde_large_ptr_new_phys(
             _boot_pd + i,
-            i << IA32_4M_bits, /* physical address */
+            i << X86_4M_bits, /* physical address */
             0, /* pat            */
             0, /* avl            */
             1, /* global         */
@@ -89,10 +89,10 @@ init_boot_pd(void)
     }
 
     /* mapping of PPTR_BASE (virtual address) to PADDR_BASE up to end of virtual address space */
-    for (i = 0; i < ((-PPTR_BASE) >> IA32_4M_bits); i++) {
+    for (i = 0; i < ((-PPTR_BASE) >> X86_4M_bits); i++) {
         pde_pde_large_ptr_new_phys(
-            _boot_pd + i + (PPTR_BASE >> IA32_4M_bits),
-            (i << IA32_4M_bits) + PADDR_BASE, /* physical address */
+            _boot_pd + i + (PPTR_BASE >> X86_4M_bits),
+            (i << X86_4M_bits) + PADDR_BASE, /* physical address */
             0, /* pat            */
             0, /* avl            */
             1, /* global         */
@@ -163,7 +163,7 @@ void copyGlobalMappings(void* new_vspace)
     word_t i;
     pde_t *newPD = (pde_t*)new_vspace;
 
-    for (i = PPTR_BASE >> IA32_4M_bits; i < BIT(PD_BITS); i++) {
+    for (i = PPTR_BASE >> X86_4M_bits; i < BIT(PD_BITS); i++) {
         newPD[i] = ia32KSkernelPD[i];
     }
 }

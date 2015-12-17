@@ -403,7 +403,7 @@ BOOT_CODE static void
 start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
 {
     /* memory fence needed before starting the other CPU */
-    ia32_mfence();
+    x86_mfence();
 
     /* starting the other CPU */
     apic_send_init_ipi(cpu_id);

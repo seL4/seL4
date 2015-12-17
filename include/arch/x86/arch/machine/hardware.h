@@ -36,18 +36,18 @@ enum vm_page_map_type {
 typedef uint32_t vm_page_map_type_t;
 
 enum frameSizeConstants {
-    IA32_4K_bits = 12,
-    IA32_2M_bits = 21,
-    IA32_4M_bits = 22,
-    IA32_1G_bits = 30
+    X86_4K_bits = 12,
+    X86_2M_bits = 21,
+    X86_4M_bits = 22,
+    X86_1G_bits = 30
 };
 
-#define PAGE_BITS IA32_4K_bits
+#define PAGE_BITS X86_4K_bits
 
 #ifdef CONFIG_PAE_PAGING
-#define LARGE_PAGE_BITS IA32_2M_bits
+#define LARGE_PAGE_BITS X86_2M_bits
 #else
-#define LARGE_PAGE_BITS IA32_4M_bits
+#define LARGE_PAGE_BITS X86_4M_bits
 #endif
 
 /* Any changes to this function need to be replicated in pageBitsForSize_phys.

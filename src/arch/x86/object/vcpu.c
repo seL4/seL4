@@ -61,8 +61,8 @@ applyHardwareFixedBits(uint32_t msr, uint32_t* high, uint32_t* low)
     uint32_t old_high UNUSED, old_low UNUSED;
     old_high = *high;
     old_low = *low;
-    *high |= ia32_rdmsr_low(msr);
-    *low &= ia32_rdmsr_high(msr);
+    *high |= x86_rdmsr_low(msr);
+    *low &= x86_rdmsr_high(msr);
 }
 
 static void
@@ -71,8 +71,8 @@ applyHardwareFixedBitsSplit(uint32_t msr_high, uint32_t msr_low, uint32_t* high,
     uint32_t old_high UNUSED, old_low UNUSED;
     old_high = *high;
     old_low = *low;
-    *high |= ia32_rdmsr_low(msr_high);
-    *low &= ia32_rdmsr_low(msr_low);
+    *high |= x86_rdmsr_low(msr_high);
+    *low &= x86_rdmsr_low(msr_low);
 }
 
 bool_t

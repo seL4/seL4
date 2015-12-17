@@ -93,10 +93,10 @@ init_boot_pd(void)
     }
 
     /* identity mapping from 0 up to PPTR_BASE (virtual address) */
-    for (i = 0; (i << IA32_2M_bits) < PPTR_BASE; i++) {
+    for (i = 0; (i << X86_2M_bits) < PPTR_BASE; i++) {
         pde_pde_large_ptr_new_phys(
             _boot_pds + i,
-            i << IA32_2M_bits, /* physical address */
+            i << X86_2M_bits, /* physical address */
             0, /* pat            */
             0, /* avl            */
             1, /* global         */
@@ -111,10 +111,10 @@ init_boot_pd(void)
     }
 
     /* mapping of PPTR_BASE (virtual address) to PADDR_BASE up to end of virtual address space */
-    for (i = 0; (i << IA32_2M_bits) < -PPTR_BASE; i++) {
+    for (i = 0; (i << X86_2M_bits) < -PPTR_BASE; i++) {
         pde_pde_large_ptr_new_phys(
-            _boot_pds + i + (PPTR_BASE >> IA32_2M_bits),
-            (i << IA32_2M_bits) + PADDR_BASE, /* physical address */
+            _boot_pds + i + (PPTR_BASE >> X86_2M_bits),
+            (i << X86_2M_bits) + PADDR_BASE, /* physical address */
             0, /* pat            */
             0, /* avl            */
             1, /* global         */
@@ -154,7 +154,7 @@ void copyGlobalMappings(void* new_vspace)
     word_t i;
     pdpte_t *pdpt = (pdpte_t*)new_vspace;
 
-    for (i = PPTR_BASE >> IA32_1G_bits; i < BIT(PDPT_BITS); i++) {
+    for (i = PPTR_BASE >> X86_1G_bits; i < BIT(PDPT_BITS); i++) {
         pdpt[i] = ia32KSkernelPDPT[i];
     }
 }
@@ -190,7 +190,7 @@ void *getValidNativeRoot(cap_t vspace_cap)
 static inline pdpte_t *lookupPDPTSlot(void *vspace, vptr_t vptr)
 {
     pdpte_t *pdpt = PDPT_PTR(vspace);
-    return pdpt + (vptr >> IA32_1G_bits);
+    return pdpt + (vptr >> X86_1G_bits);
 }
 
 lookupPDSlot_ret_t lookupPDSlot(void *vspace, vptr_t vptr)
@@ -405,7 +405,7 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vaddr = getSyscallArg(0, buffer) & (~MASK(IA32_1G_bits));
+    vaddr = getSyscallArg(0, buffer) & (~MASK(X86_1G_bits));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
     vspaceCap = extraCaps.excaprefs[0]->cap;
 

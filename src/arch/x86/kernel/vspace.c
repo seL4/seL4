@@ -901,12 +901,12 @@ init_pat_msr(void)
     ia32_pat_msr_t pat_msr;
     /* First verify PAT is supported by the machine.
      *      See section 11.12.1 of Volume 3 of the Intel manual */
-    if ( (ia32_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
+    if ( (x86_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
         printf("PAT support not found\n");
         return false;
     }
-    pat_msr.words[0] = ia32_rdmsr_low(IA32_PAT_MSR);
-    pat_msr.words[1] = ia32_rdmsr_high(IA32_PAT_MSR);
+    pat_msr.words[0] = x86_rdmsr_low(IA32_PAT_MSR);
+    pat_msr.words[1] = x86_rdmsr_high(IA32_PAT_MSR);
     /* Set up the PAT MSR to the Intel defaults, just in case
      * they have been changed but a bootloader somewhere along the way */
     ia32_pat_msr_ptr_set_pa0(&pat_msr, IA32_PAT_MT_WRITE_BACK);
@@ -915,7 +915,7 @@ init_pat_msr(void)
     ia32_pat_msr_ptr_set_pa3(&pat_msr, IA32_PAT_MT_UNCACHEABLE);
     /* Add the WriteCombining cache type to the PAT */
     ia32_pat_msr_ptr_set_pa4(&pat_msr, IA32_PAT_MT_WRITE_COMBINING);
-    ia32_wrmsr(IA32_PAT_MSR, pat_msr.words[1], pat_msr.words[0]);
+    x86_wrmsr(IA32_PAT_MSR, ((uint64_t)pat_msr.words[1]) << 32 | pat_msr.words[0]);
     return true;
 }
 
@@ -1829,7 +1829,7 @@ void unmapAllEPTPT(ept_pde_t *pd)
 
                 newCap = cap_frame_cap_set_capFMappedObject(frameCte->cap, 0);
                 cdtUpdate(frameCte, newCap);
-                if (LARGE_PAGE_BITS == IA32_4M_bits) {
+                if (LARGE_PAGE_BITS == X86_4M_bits) {
                     /* If we found a 2m mapping then the next entry will be the other half
                     * of this 4M frame, so skip it */
                     i++;
@@ -2238,7 +2238,7 @@ decodeIA32EPTFrameMap(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (LARGE_PAGE_BITS == IA32_4M_bits) {
+        if (LARGE_PAGE_BITS == X86_4M_bits) {
             pdSlot[1] = ept_pde_ept_pde_2m_new(
                             paddr + (1 << 21),
                             mdb_node_get_cdtDepth(cte->cteMDBNode),
@@ -2300,7 +2300,7 @@ void IA32PageUnmapEPT(cap_t cap)
     case IA32_LargePage: {
         ept_pde_t *pd = EPT_PD_PTR(object);
         pd[index] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
-        if (LARGE_PAGE_BITS == IA32_4M_bits) {
+        if (LARGE_PAGE_BITS == X86_4M_bits) {
             pd[index + 1] = ept_pde_ept_pde_2m_new(0, 0, 0, 0, 0, 0, 0);
         }
         pdpt = lookupEPTPDPTFromPD(pd);
