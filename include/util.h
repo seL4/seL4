@@ -88,6 +88,5 @@ CONST clzl(unsigned long x)
 }
 
 #define CTZL(x) __builtin_ctzl(x)
-#define CLZL(x) clzl(x)
 
 #endif /* __UTIL_H */
