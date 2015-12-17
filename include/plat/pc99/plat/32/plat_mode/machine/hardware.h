@@ -36,6 +36,11 @@
 #define PPTR_KDEV   0xffff0000
 #define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
 #define PADDR_TOP   (PPTR_TOP - BASE_OFFSET)
+/* The kernel base offset is a way to translate the kernel image segment
+ * from virtual to physical. This translation must be a single offset for
+ * for the entire segment (i.e. the kernel image must be contiguous both
+ * virtually and physically) */
+#define KERNEL_BASE_OFFSET BASE_OFFSET
 
 void handleReservedIRQ(irq_t irq);
 void maskInterrupt(bool_t mask, irq_t irq);

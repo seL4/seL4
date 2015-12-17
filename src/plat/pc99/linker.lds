@@ -15,8 +15,13 @@ ENTRY(_start)
 /* WARNING: constants also defined in plat/machine/hardware.h */
 PADDR_BASE = 0x00000000;
 PADDR_LOAD = 0x00100000;
-PPTR_BASE  = 0xe0000000;
-BASE_OFFSET = PPTR_BASE - PADDR_BASE;
+KERNEL_BASE  = 0xe0000000;
+KERNEL_OFFSET = KERNEL_BASE - PADDR_BASE;
+#ifdef CONFIG_PAE_PAGING
+NDKS_BASE = 0xffe01000;
+#else
+NDKS_BASE = 0xffc01000;
+#endif
 
 SECTIONS
 {
@@ -37,9 +42,9 @@ SECTIONS
         *(.phys.*)
     }
 
-    . = . + BASE_OFFSET;
+    . = . + KERNEL_OFFSET;
 
-    .boot . : AT(ADDR(.boot) - BASE_OFFSET)
+    .boot . : AT(ADDR(.boot) - KERNEL_OFFSET)
     {
         *(.boot.text)
         *(.boot.glob)
@@ -48,23 +53,23 @@ SECTIONS
 
     ki_boot_end = .;
 
-    .text . : AT(ADDR(.text) - BASE_OFFSET)
+    .text . : AT(ADDR(.text) - KERNEL_OFFSET)
     {
         *(.text)
     }
 
-    .rodata . : AT(ADDR(.rodata) - BASE_OFFSET)
+    .rodata . : AT(ADDR(.rodata) - KERNEL_OFFSET)
     {
         *(.rodata)
         *(.rodata.*)
     }
 
-    .glob . : AT(ADDR(.glob) - BASE_OFFSET)
+    .glob . : AT(ADDR(.glob) - KERNEL_OFFSET)
     {
         *(.glob)
     }
     
-    .data . : AT(ADDR(.data) - BASE_OFFSET)
+    .data . : AT(ADDR(.data) - KERNEL_OFFSET)
     {
         *(.data)
     }
@@ -74,11 +79,7 @@ SECTIONS
 
     /* The NDKS section is allocated and mapped per node in boot_sys.c */
 
-#ifdef CONFIG_PAE_PAGING
-    .ndks 0xffe01000 (DSECT) :
-#else
-    .ndks 0xffc01000 (DSECT) :
-#endif
+    .ndks NDKS_BASE (DSECT) :
     {
         _ndks_start = .;
 

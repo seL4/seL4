@@ -127,8 +127,8 @@ BEGIN_FUNC(_start)
     call enable_paging
 
     /* Adjust ESP/EBP to their virtual address */
-    addl $BASE_OFFSET, %esp
-    addl $BASE_OFFSET, %ebp
+    addl $KERNEL_BASE, %esp
+    addl $KERNEL_BASE, %ebp
 
     /* Call boot_sys() (takes 3 parameters) and set restore_user_context() as  */
     /* return EIP. This will start the roottask as soon as boot_sys() returns. */
@@ -182,8 +182,8 @@ BEGIN_FUNC(_boot_cpu_start)
     call enable_paging
 
     /* Adjust ESP/EBP to their virtual address */
-    addl $BASE_OFFSET, %esp
-    addl $BASE_OFFSET, %ebp
+    addl $KERNEL_BASE, %esp
+    addl $KERNEL_BASE, %ebp
 
     /* Call boot_node() and set restore_user_context() as return EIP. */
     /* This will start the roottask as soon as boot_node() returns.   */
