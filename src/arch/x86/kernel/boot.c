@@ -43,8 +43,7 @@ init_irqs(cap_t root_cnode_cap)
         } else if (   (config_set(CONFIG_IRQ_PIC) && i >= irq_isa_min && i <= irq_isa_max)
                       || (config_set(CONFIG_IRQ_IOAPIC) && i >= irq_ioapic_min && i <= irq_ioapic_max)) {
             setIRQState(IRQInactive, i);
-        }
-        else if (i >= irq_msi_min && i <= irq_msi_max) {
+        } else if (i >= irq_msi_min && i <= irq_msi_max) {
             setIRQState(IRQInactive, i);
         }
     }
