@@ -24,6 +24,12 @@ struct lookupPDSlot_ret {
 };
 typedef struct lookupPDSlot_ret lookupPDSlot_ret_t;
 
+struct findVSpaceForASID_ret {
+    exception_t status;
+    void *vspace_root;
+};
+typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
+
 void init_boot_pd(void);
 void enable_paging(void);
 bool_t map_kernel_window(
@@ -66,6 +72,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd);
 void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt);
 void deleteASIDPool(asid_t asid_base, asid_pool_t* pool);
 void deleteASID(asid_t asid, void* vspace);
+findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid);
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr);
 void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
