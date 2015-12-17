@@ -50,7 +50,7 @@ static inline void __attribute__((noreturn)) restore_vmx(void)
             // Now do the vmresume
             "vmresume\n"
             // if we get here we failed
-            "leal _kernel_stack_top, %%esp\n"
+            "leal kernel_stack_alloc, %%esp\n"
             "jmp vmlaunch_failed\n"
             :
             : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX])
@@ -73,7 +73,7 @@ static inline void __attribute__((noreturn)) restore_vmx(void)
             // Now do the vmresume
             "vmlaunch\n"
             // if we get here we failed
-            "leal _kernel_stack_top, %%esp\n"
+            "leal kernel_stack_alloc, %%esp\n"
             "jmp vmlaunch_failed\n"
             :
             : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX])

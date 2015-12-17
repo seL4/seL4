@@ -60,8 +60,6 @@ compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) ==
 
 #define IDT_ENTRIES 256
 
-#ifdef CONFIG_IOMMU
-
 #define VTD_RT_SIZE_BITS  12
 
 #define VTD_CTE_SIZE_BITS 3
@@ -73,8 +71,6 @@ compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) ==
 #define VTD_PTE_PTR(r)    ((vtd_pte_t*)(r))
 #define VTD_PT_BITS       9
 #define VTD_PT_SIZE_BITS  (VTD_PT_BITS + VTD_PTE_SIZE_BITS)
-
-#endif
 
 #ifdef CONFIG_VTX
 
@@ -114,6 +110,7 @@ compile_assert(vcpu_offset_correct, __builtin_offsetof(struct arch_tcb, vcpu) ==
 /* Generate a vcpu_t pointer from a vcpu block reference */
 #define VCPU_PTR(r)       ((vcpu_t *)(r))
 #define VCPU_REF(p)       ((unsigned int)(p))
+
 #endif
 
 /* helper structure for filling descriptor registers */

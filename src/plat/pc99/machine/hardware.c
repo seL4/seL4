@@ -17,24 +17,19 @@
 #include <plat/machine/ioapic.h>
 #include <plat/machine.h>
 
-#ifdef CONFIG_IOMMU
 #include <plat/machine/intel-vtd.h>
-#endif
 
 /* ============================== interrupts/IRQs ============================== */
 
 /* Enable or disable irq according to the 'mask' flag. */
 void maskInterrupt(bool_t mask, irq_t irq)
 {
-    assert(irq >= irq_controller_min);
     assert(irq <= maxIRQ);
 
-    if (irq <= irq_controller_max) {
-#ifdef CONFIG_IRQ_IOAPIC
+    if (config_set(CONFIG_IRQ_IOAPIC) && irq <= irq_ioapic_max) {
         ioapic_mask_irq(mask, irq);
-#else
+    } else if (config_set(CONFIG_IRQ_PIC) && irq <= irq_isa_max) {
         pic_mask_irq(mask, irq);
-#endif
     } else {
         /* we can't mask/unmask specific APIC vectors (e.g. MSIs/IPIs) */
     }
@@ -43,27 +38,25 @@ void maskInterrupt(bool_t mask, irq_t irq)
 /* Set mode of an irq */
 void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
 {
-#ifdef CONFIG_IRQ_IOAPIC
-    assert(irq >= irq_ioapic_min);
-    assert(irq <= maxIRQ);
+    if (config_set(CONFIG_IRQ_IOAPIC)) {
+        assert(irq >= irq_ioapic_min);
+        assert(irq <= maxIRQ);
 
-    if (irq <= irq_ioapic_max) {
-        ioapic_set_mode(irq, levelTrigger, polarityLow);
-    } else {
-        /* No mode setting for specific APIC vectors */
+        if (irq <= irq_ioapic_max) {
+            ioapic_set_mode(irq, levelTrigger, polarityLow);
+        } else {
+            /* No mode setting for specific APIC vectors */
+        }
     }
-#endif
 }
 
 /* Handle a platform-reserved IRQ. */
 void handleReservedIRQ(irq_t irq)
 {
-#ifdef CONFIG_IOMMU
-    if (irq == irq_iommu) {
+    if (config_set(CONFIG_IOMMU) && irq == irq_iommu) {
         vtd_handle_fault();
         return;
     }
-#endif
     printf("Received reserved IRQ: %d\n", (int)irq);
 }
 

@@ -24,21 +24,22 @@ struct lookupPDSlot_ret {
 };
 typedef struct lookupPDSlot_ret lookupPDSlot_ret_t;
 
+struct findVSpaceForASID_ret {
+    exception_t status;
+    void *vspace_root;
+};
+typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
+
 void init_boot_pd(void);
 void enable_paging(void);
 bool_t map_kernel_window(
     pdpte_t*   pdpt,
     pde_t*     pd,
     pte_t*     pt,
-    p_region_t ndks_p_reg
-#ifdef CONFIG_IRQ_IOAPIC
-    , uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs
-#endif
-#ifdef CONFIG_IOMMU
-    , uint32_t   num_drhu,
+    uint32_t num_ioapic,
+    paddr_t*   ioapic_paddrs,
+    uint32_t   num_drhu,
     paddr_t*   drhu_list
-#endif
 );
 
 void *getValidNativeRoot(cap_t vspace_cap);

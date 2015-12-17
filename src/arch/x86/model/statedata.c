@@ -53,7 +53,6 @@ user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 /* Current active page directory. This is really just a shadow of CR3 */
 paddr_t ia32KSCurrentPD VISIBLE;
 
-#ifdef CONFIG_IOMMU
 /* Number of IOMMUs (DMA Remapping Hardware Units) */
 uint32_t ia32KSnumDrhu;
 
@@ -62,7 +61,6 @@ vtd_rte_t* ia32KSvtdRootTable;
 uint32_t ia32KSnumIOPTLevels;
 uint32_t ia32KSnumIODomainIDBits;
 int ia32KSFirstValidIODomain;
-#endif
 
 #if defined DEBUG || defined RELEASE_PRINTF
 uint16_t ia32KSconsolePort;

@@ -25,9 +25,7 @@
 #include <arch/linker.h>
 #include <util.h>
 
-#ifdef CONFIG_IOMMU
 #include <plat/machine/intel-vtd.h>
-#endif
 
 #ifdef CONFIG_VTX
 #include <arch/object/vtx.h>
@@ -36,7 +34,7 @@
 /* functions exactly corresponding to abstract specification */
 
 BOOT_CODE static void
-init_irqs(cap_t root_cnode_cap, bool_t mask_irqs)
+init_irqs(cap_t root_cnode_cap)
 {
     irq_t i;
 
@@ -45,21 +43,13 @@ init_irqs(cap_t root_cnode_cap, bool_t mask_irqs)
             setIRQState(IRQTimer, i);
         } else if (i == irq_iommu) {
             setIRQState(IRQReserved, i);
-#ifdef CONFIG_IRQ_PIC
-        } else if (i == 2) {
+        } else if (i == 2 && config_set(CONFIG_IRQ_PIC)) {
             /* cascaded legacy PIC */
             setIRQState(IRQReserved, i);
-#endif
-        } else if (i >= irq_controller_min && i <= irq_controller_max)
-            if (mask_irqs)
-                /* Don't use setIRQState() here because it implicitly also enables */
-                /* the IRQ on the interrupt controller which only node 0 is allowed to do. */
-            {
-                intStateIRQTable[i] = IRQReserved;
-            } else {
-                setIRQState(IRQInactive, i);
-            }
-        else if (i >= irq_msi_min && i <= irq_msi_max) {
+        } else if (   (config_set(CONFIG_IRQ_PIC) && i >= irq_isa_min && i <= irq_isa_max)
+                      || (config_set(CONFIG_IRQ_IOAPIC) && i >= irq_ioapic_min && i <= irq_ioapic_max)) {
+            setIRQState(IRQInactive, i);
+        } else if (i >= irq_msi_min && i <= irq_msi_max) {
             setIRQState(IRQInactive, i);
         } else if (i >= irq_ipi_min && i <= irq_ipi_max) {
             setIRQState(IRQInactive, i);
@@ -355,27 +345,21 @@ create_arch_bi_frame_cap(
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
 
 BOOT_CODE bool_t
-init_node_state(
+init_sys_state(
+    cpu_id_t      cpu_id,
     p_region_t    avail_p_reg,
-    p_region_t    sh_p_reg,
     dev_p_regs_t* dev_p_regs,
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
-    node_id_t     node_id,
-    uint32_t      num_nodes,
-    cpu_id_t*     cpu_list,
     /* parameters below not modeled in abstract specification */
     pdpte_t*      kernel_pdpt,
     pde_t*        kernel_pd,
     pte_t*        kernel_pt,
     vesa_info_t*  vesa_info,
-    ia32_mem_region_t* mem_regions
-#ifdef CONFIG_IOMMU
-    , cpu_id_t      cpu_id,
+    ia32_mem_region_t* mem_regions,
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
     acpi_rmrr_list_t *rmrr_list
-#endif
 )
 {
     cap_t         root_cnode_cap;
@@ -397,7 +381,6 @@ init_node_state(
     /* convert from physical addresses to kernel pptrs */
     region_t avail_reg          = paddr_to_pptr_reg(avail_p_reg);
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
-    region_t sh_reg             = paddr_to_pptr_reg(sh_p_reg);
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
 
     /* convert from physical addresses to userland vptrs */
@@ -483,10 +466,10 @@ init_node_state(
     }
 
     /* initialise the IRQ states and provide the IRQ control cap */
-    init_irqs(root_cnode_cap, node_id != 0);
+    init_irqs(root_cnode_cap);
 
     /* create the bootinfo frame */
-    bi_frame_pptr = allocate_bi_frame(node_id, num_nodes, ipcbuf_vptr);
+    bi_frame_pptr = allocate_bi_frame(0, 1, ipcbuf_vptr);
     if (!bi_frame_pptr) {
         return false;
     }
@@ -559,21 +542,20 @@ init_node_state(
         return false;
     }
 
-#ifdef CONFIG_IOMMU
-    /* initialise VTD-related data structures and the IOMMUs */
-    if (!vtd_init(cpu_id, num_drhu, rmrr_list)) {
-        return false;
-    }
+    if (config_set(CONFIG_IOMMU)) {
+        /* initialise VTD-related data structures and the IOMMUs */
+        if (!vtd_init(cpu_id, num_drhu, rmrr_list)) {
+            return false;
+        }
 
-    /* write number of IOMMU PT levels into bootinfo */
-    ndks_boot.bi_frame->num_iopt_levels = ia32KSnumIOPTLevels;
+        /* write number of IOMMU PT levels into bootinfo */
+        ndks_boot.bi_frame->num_iopt_levels = ia32KSnumIOPTLevels;
+    }
 
     /* write IOSpace master cap */
     if (ia32KSnumDrhu != 0) {
         write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IO_SPACE), master_iospace_cap());
     }
-#endif
-
 #ifdef CONFIG_VTX
     /* allow vtx to allocate any memory it may need before we give
        the rest away */
@@ -593,34 +575,11 @@ init_node_state(
         return false;
     }
 
-    /* create all shared frames */
-    create_frames_ret =
-        create_frames_of_region(
-            root_cnode_cap,
-            it_vspace_cap,
-            sh_reg,
-            false,
-            0
-        );
-    if (!create_frames_ret.success) {
-        return false;
-    }
-    ndks_boot.bi_frame->sh_frame_caps = create_frames_ret.region;;
-
     /* create ia32 specific bootinfo frame */
     create_ia32_bootinfo( (ia32_bootinfo_frame_t*)arch_bi_frame_pptr, vesa_info, mem_regions);
 
     /* finalise the bootinfo frame */
     bi_finalise();
-
-#if defined DEBUG || defined RELEASE_PRINTF
-    ia32KSconsolePort = console_port_of_node(node_id);
-    ia32KSdebugPort = debug_port_of_node(node_id);
-#endif
-
-    ia32KSNodeID = node_id;
-    ia32KSNumNodes = num_nodes;
-    ia32KSCPUList = cpu_list;
 
     /* write IPI cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IPI), cap_ipi_cap_new());
@@ -631,7 +590,7 @@ init_node_state(
 /* This function initialises the CPU. It does NOT initialise any kernel state. */
 
 BOOT_CODE bool_t
-init_node_cpu(
+init_cpu(
     bool_t   mask_legacy_irqs
 )
 {

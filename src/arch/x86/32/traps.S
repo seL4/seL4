@@ -351,7 +351,7 @@ handle_interrupt:
     jnz     kernel_exception
 
     # switch to kernel stack
-    leal    _kernel_stack_top, %esp
+    leal    kernel_stack_alloc + 4096, %esp
 
     # Place the syscall number in the second argument slot
     movl    %eax, %edx
@@ -409,7 +409,7 @@ handle_vmexit:
     movl    %edx,  %es
 
     # switch to kernel stack
-    leal    _kernel_stack_top, %esp
+    leal    kernel_stack_alloc, %esp
     # Handle the vmexit.
     call    handleVmexit
     jmp     restore_user_context
@@ -458,7 +458,7 @@ BEGIN_FUNC(handle_syscall)
     SET_SEL(es, 8  * 4, 0x23)
 
     # switch to kernel stack
-    leal    _kernel_stack_top, %esp
+    leal    kernel_stack_alloc + 4096, %esp
 
     # Push all the arguments for c_handle_syscall
     pushl   %esi # msgInfo

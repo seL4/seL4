@@ -18,10 +18,8 @@
 #include <arch/types.h>
 #include <plat/machine/devices.h>
 
-#ifdef CONFIG_IOMMU
 #include <arch/object/iospace.h>
 #include <plat/machine/hardware.h>
-#endif
 
 extern interrupt_t ia32KScurInterrupt;
 extern tss_t ia32KStss;
@@ -35,13 +33,11 @@ extern idt_entry_t ia32KSidt[];
 extern user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 extern paddr_t ia32KSCurrentPD;
 
-#ifdef CONFIG_IOMMU
 extern uint32_t ia32KSnumDrhu;
 extern vtd_rte_t* ia32KSvtdRootTable;
 extern uint32_t ia32KSnumIOPTLevels;
 extern uint32_t ia32KSnumIODomainIDBits;
 extern int ia32KSFirstValidIODomain;
-#endif
 
 #if defined DEBUG || defined RELEASE_PRINTF
 extern uint16_t ia32KSconsolePort;

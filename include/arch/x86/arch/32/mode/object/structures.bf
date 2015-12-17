@@ -81,7 +81,6 @@ block io_port_capdata {
     field   lastPort           16
 }
 
-#ifdef CONFIG_IOMMU
 -- IO Space Cap
 block io_space_cap {
     field       capDomainID     16
@@ -106,7 +105,6 @@ block io_page_table_cap {
     field_high  capIOPTBasePtr  20
     field       capType         4
 }
-#endif
 
 -- IPI cap 
 block ipi_cap {
@@ -177,10 +175,8 @@ tagged_union cap capType {
     tag page_table_cap      3
     tag page_directory_cap  5
     tag pdpt_cap            7
-#ifdef CONFIG_IOMMU
     tag io_page_table_cap   9
     tag io_space_cap        11
-#endif /* CONFIG_IOMMU */   
     tag ipi_cap             13
 
     -- Do not extend odd 4-bit caps types beyond 13, as we use 

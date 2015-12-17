@@ -15,15 +15,6 @@
 
 #if defined DEBUG || defined RELEASE_PRINTF
 
-static uint16_t get_console_port(void)
-{
-    if (in_boot_phase()) {
-        return console_port_of_node(node_of_cpu(cur_cpu_id()));
-    } else {
-        return ia32KSconsolePort;
-    }
-}
-
 void serial_init(uint16_t port)
 {
     while (!(in8(port + 5) & 0x60)); /* wait until not busy */
@@ -42,7 +33,7 @@ void serial_init(uint16_t port)
 
 void console_putchar(char c)
 {
-    uint16_t port = get_console_port();
+    uint16_t port = ia32KSconsolePort;
 
     lock_acquire(&lock_debug);
 

@@ -10,8 +10,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_IOMMU
-
 #include <api/syscall.h>
 #include <machine/io.h>
 #include <kernel/thread.h>
@@ -464,5 +462,3 @@ void unmapIOPage(cap_t cap)
     flushCacheRange(vtd_pte, VTD_PTE_SIZE_BITS);
     invalidate_iotlb();
 }
-
-#endif

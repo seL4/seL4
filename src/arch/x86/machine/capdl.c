@@ -142,8 +142,6 @@ static void sendPT(unsigned long address)
     }
 }
 
-#ifdef CONFIG_IOMMU
-
 static void sendIOPT(unsigned long address, unsigned int level)
 {
     unsigned long i;
@@ -184,8 +182,6 @@ static void sendIOSpace(uint32_t pci_request_id)
         sendWord(0);
     }
 }
-
-#endif
 
 static void sendRunqueues(void)
 {
@@ -279,7 +275,6 @@ void capDL(void)
                 putDebugChar(END);
             }
             break;
-#ifdef CONFIG_IOMMU
             case IO_PT_COMMAND: {
                 /*io pt table */
                 unsigned long address, level;
@@ -306,7 +301,6 @@ void capDL(void)
                 putDebugChar(END);
             }
             break;
-#endif
             case RQ_COMMAND: {
                 /*runqueues */
                 sendRunqueues();

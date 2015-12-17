@@ -234,12 +234,6 @@ menu "seL4 System Parameters"
         int #"Max number of bootinfo untyped caps"
         default 800
 
-    config MAX_NUM_NODES
-        int "Max number of cpu nodes"
-        range 1 256
-        depends on ARCH_X86
-        default 1
-
     config MAX_MEM_REGIONS
         int "Max number of memory regions to describe in bootinfo"
         depends on ARCH_IA32

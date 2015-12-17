@@ -71,11 +71,6 @@
 
 /* Configuration parameters below are for IA-32 only. */
 
-/* maximum number of nodes supported (if 1, a uniprocessor version is compiled) */
-#ifndef CONFIG_MAX_NUM_NODES
-#define CONFIG_MAX_NUM_NODES 8 /* must be between 1 and 256 */
-#endif
-
 /* maximum number of memory regions to report in bootinfo */
 #ifndef CONFIG_MAX_MEM_REGIONS
 #define CONFIG_MAX_MEM_REGIONS 10

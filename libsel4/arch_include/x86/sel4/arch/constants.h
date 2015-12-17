@@ -32,14 +32,11 @@
 /* Range for MSI irqs. Currently no proper way of getting at the corresponding
  * definition inside seL4, but the vector table is setup such that MSIs start
  * after all the IRQs for the external interrupt controller (PIC or IOAPIC).
- * PIC has 0x10 lines and for the IOAPIC there are 24 for each IOAPIC */
-#ifdef CONFIG_IRQ_IOAPIC
+ * Regardless of whether the IOAPIC is used or not the MSI
+ * block is after what would be the IOAPIC vector block. There are
+ * 24 lines per IOAPIC */
 #define MSI_MIN (24 * CONFIG_MAX_NUM_IOAPIC)
 #define MSI_MAX (MSI_MIN + 0xd)
-#else
-#define MSI_MIN 0x10
-#define MSI_MAX 0x1d
-#endif
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 /* size of kernel log buffer in bytes */

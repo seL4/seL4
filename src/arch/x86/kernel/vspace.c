@@ -24,7 +24,6 @@
 static exception_t decodeIA32EPTFrameMap(cap_t pdptCap, cte_t *cte, cap_t cap, vm_rights_t vmRights, vm_attributes_t vmAttr, word_t vaddr);
 
 #endif
-
 struct lookupPTSlot_ret {
     exception_t status;
     pte_t*          ptSlot;
@@ -499,15 +498,10 @@ map_kernel_window(
     pdpte_t*   pdpt,
     pde_t*     pd,
     pte_t*     pt,
-    p_region_t ndks_p_reg
-#ifdef CONFIG_IRQ_IOAPIC
-    , uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs
-#endif
-#ifdef CONFIG_IOMMU
-    , uint32_t   num_drhu,
+    uint32_t num_ioapic,
+    paddr_t*   ioapic_paddrs,
+    uint32_t   num_drhu,
     paddr_t*   drhu_list
-#endif
 )
 {
     paddr_t  phys;
@@ -602,27 +596,6 @@ map_kernel_window(
     pt[idx] = pte;
     idx++;
 
-    /* establish NDKS (node kernel state) mappings in page table */
-    phys = ndks_p_reg.start;
-    while (idx - 1 < (ndks_p_reg.end - ndks_p_reg.start) >> PAGE_BITS) {
-        pte = pte_new(
-                  phys,   /* page_base_address    */
-                  0,      /* avl_cte_depth        */
-                  1,      /* global               */
-                  0,      /* pat                  */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  0,      /* cache_disabled       */
-                  0,      /* write_through        */
-                  0,      /* super_user           */
-                  1,      /* read_write           */
-                  1       /* present              */
-              );
-        pt[idx] = pte;
-        phys += BIT(PAGE_BITS);
-        idx++;
-    }
-
     /* null mappings up to PPTR_KDEV */
 
     while (idx < (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
@@ -640,7 +613,6 @@ map_kernel_window(
                   0       /* present              */
               );
         pt[idx] = pte;
-        phys += BIT(PAGE_BITS);
         idx++;
     }
 
@@ -669,7 +641,6 @@ map_kernel_window(
     pt[idx] = pte;
     idx++;
 
-#ifdef CONFIG_IRQ_IOAPIC
     for (i = 0; i < num_ioapic; i++) {
         phys = ioapic_paddrs[i];
         pte = pte_new(
@@ -711,9 +682,7 @@ map_kernel_window(
         pt[idx] = pte;
         idx++;
     }
-#endif
 
-#ifdef CONFIG_IOMMU
     /* map kernel devices: IOMMUs */
     for (i = 0; i < num_drhu; i++) {
         phys = (paddr_t)drhu_list[i];
@@ -738,7 +707,6 @@ map_kernel_window(
             return false;
         }
     }
-#endif
 
     /* mark unused kernel-device pages as 'not present' */
     while (idx < BIT(PT_BITS)) {
@@ -1565,11 +1533,9 @@ decodeIA32FrameInvocation(
                 IA32PageUnmapEPT(cap);
                 break;
 #endif
-#ifdef CONFIG_IOMMU
             case IA32_MAPPING_IO:
                 unmapIOPage(cap);
                 break;
-#endif
             default:
                 fail("Unknown mapping type for frame");
             }
@@ -1581,11 +1547,9 @@ decodeIA32FrameInvocation(
         return EXCEPTION_NONE;
     }
 
-#ifdef CONFIG_IOMMU
     case IA32PageMapIO: { /* MapIO */
         return decodeIA32IOMapInvocation(label, length, cte, cap, extraCaps, buffer);
     }
-#endif
 
     case IA32PageGetAddress: {
         /* Return it in the first message register. */
