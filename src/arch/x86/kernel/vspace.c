@@ -16,12 +16,6 @@
 #include <arch/kernel/vspace.h>
 #include <arch/api/invocation.h>
 
-struct findVSpaceForASID_ret {
-    exception_t status;
-    void *vspace_root;
-};
-typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
-
 struct lookupPTSlot_ret {
     exception_t status;
     pte_t*      ptSlot;
@@ -1070,7 +1064,7 @@ static void flushTable(void *vspace, word_t vptr, pte_t* pt)
     }
 }
 
-static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
+findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 {
     findVSpaceForASID_ret_t ret;
     asid_pool_t*        poolPtr;
