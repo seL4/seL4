@@ -13,4 +13,4 @@ DIRECTORIES += src/object
 C_SOURCES += src/object/notification.c src/object/cnode.c \
              src/object/endpoint.c src/object/interrupt.c \
              src/object/objecttype.c src/object/tcb.c \
-             src/object/untyped.c src/object/schedcontext.c 
+             src/object/untyped.c src/object/schedcontrol.c

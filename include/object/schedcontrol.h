@@ -8,8 +8,8 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __OBJECT_SCHED_CONTEXT_H
-#define __OBJECT_SCHED_CONTEXT_H
+#ifndef __OBJECT_SCHED_CONTROL_H
+#define __OBJECT_SCHED_CONTROL_H
 
 #include <types.h>
 #include <api/failures.h>

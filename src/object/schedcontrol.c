@@ -19,7 +19,7 @@
 #include <object/endpoint.h>
 #include <object/tcb.h>
 
-#include <object/schedcontext.h>
+#include <object/schedcontrol.h>
 
 exception_t
 invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t period)

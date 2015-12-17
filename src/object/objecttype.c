@@ -21,7 +21,7 @@
 #include <object/endpoint.h>
 #include <object/cnode.h>
 #include <object/interrupt.h>
-#include <object/schedcontext.h>
+#include <object/schedcontrol.h>
 #include <object/tcb.h>
 #include <object/untyped.h>
 #include <model/statedata.h>
