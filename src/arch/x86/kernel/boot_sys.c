@@ -79,7 +79,7 @@ BOOT_DATA
 cmdline_opt_t cmdline_opt;
 
 #ifdef CONFIG_PAE_PAGING
-ALIGN(BIT(PDPT_BITS))
+ALIGN(BIT(PDPT_SIZE_BITS))
 uint64_t kernel_pdpt_global[BIT(PDPT_BITS)];
 #define paging_structure_t uint64_t
 #else
