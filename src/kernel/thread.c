@@ -318,8 +318,8 @@ chooseThread(void)
     }
 
     if (likely(ksReadyQueuesL1Bitmap[dom])) {
-        word_t l1index = (wordBits - 1) - CLZL(ksReadyQueuesL1Bitmap[dom]);
-        word_t l2index = (wordBits - 1) - CLZL(ksReadyQueuesL2Bitmap[dom][l1index]);
+        word_t l1index = (wordBits - 1) - clzl(ksReadyQueuesL1Bitmap[dom]);
+        word_t l2index = (wordBits - 1) - clzl(ksReadyQueuesL2Bitmap[dom][l1index]);
         prio = l1index_to_prio(l1index) | l2index;
         thread = ksReadyQueues[ready_queues_index(dom, prio)].head;
         assert(thread);
