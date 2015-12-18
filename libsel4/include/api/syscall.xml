@@ -19,7 +19,6 @@
             <syscall name="NBSend"    />
             <syscall name="Recv"      />
             <syscall name="Reply"     />
-            <syscall name="Yield"     />
             <syscall name="NBRecv"      />
         </config>
     </api>

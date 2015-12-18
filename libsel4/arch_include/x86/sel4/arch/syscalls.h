@@ -459,22 +459,6 @@ seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
     return info;
 }
 
-static inline void
-seL4_Yield(void)
-{
-    asm volatile (
-        "pushl %%ebp       \n"
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        "popl %%ebp        \n"
-        :
-        : "a" (seL4_SysYield)
-        : "%ebx", "%ecx", "%edx", "%esi", "%edi", "memory"
-    );
-}
-
 #if defined(SEL4_DEBUG_KERNEL)
 static inline void
 seL4_DebugPutChar(char c)

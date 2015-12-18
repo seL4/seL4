@@ -512,16 +512,6 @@ seL4_ReplyRecvWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *send
 }
 #endif
 
-static inline void
-seL4_Yield(void)
-{
-    register seL4_Word scno asm("r7") = seL4_SysYield;
-    asm volatile ("swi %[swi_num]"
-                  : /* no outputs */
-                  : [swi_num] "i" __SWINUM(seL4_SysYield), "r"(scno)
-                  : "memory");
-}
-
 #ifdef SEL4_DEBUG_KERNEL
 static inline void
 seL4_DebugPutChar(char c)
