@@ -15,12 +15,12 @@
 #include <arch/machine/hardware.h>
 #include <stdbool.h>
 
-DATA_GLOB timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
-DATA_GLOB bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
-DATA_GLOB timestamp_t ksExit;
-DATA_GLOB uint32_t ksLogIndex = 0;
-DATA_GLOB uint32_t ksLogIndexFinalized = 0;
-DATA_GLOB ks_log_entry_t *ksLog;
+timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
+bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
+timestamp_t ksExit;
+uint32_t ksLogIndex = 0;
+uint32_t ksLogIndexFinalized = 0;
+ks_log_entry_t *ksLog;
 
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 

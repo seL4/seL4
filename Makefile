@@ -114,10 +114,8 @@ CONFIG_DEFS += $(strip $(foreach var, \
   CONFIG_RETYPE_FAN_OUT_LIMIT \
   CONFIG_MAX_NUM_WORK_UNITS_PER_PREEMPTION \
   CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS \
-  CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS \
-  CONFIG_MAX_NUM_NODES \
-  CONFIG_MAX_NUM_PASSTHROUGH_DEVICES, \
-  $(if $(value ${var}), ${var}=$(value ${var}), )))
+  CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS, \
+	$(if $(value ${var}), ${var}=$(value ${var}), )))
 
 ifdef BUILD_VERBOSE
 $(info seL4 build options:)

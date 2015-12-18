@@ -24,27 +24,25 @@ struct lookupPDSlot_ret {
 };
 typedef struct lookupPDSlot_ret lookupPDSlot_ret_t;
 
+struct findVSpaceForASID_ret {
+    exception_t status;
+    void *vspace_root;
+};
+typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
+
 void init_boot_pd(void);
 void enable_paging(void);
 bool_t map_kernel_window(
-    pdpte_t*   pdpt,
-    pde_t*     pd,
-    pte_t*     pt,
-    p_region_t ndks_p_reg
-#ifdef CONFIG_IRQ_IOAPIC
-    , uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs
-#endif
-#ifdef CONFIG_IOMMU
-    , uint32_t   num_drhu,
+    uint32_t num_ioapic,
+    paddr_t*   ioapic_paddrs,
+    uint32_t   num_drhu,
     paddr_t*   drhu_list
-#endif
 );
 
 void *getValidNativeRoot(cap_t vspace_cap);
 pde_t *get_boot_pd(void);
 void* map_temp_boot_page(void* entry, uint32_t large_pages);
-bool_t init_vm_state(pdpte_t *kernel_pdpt, pde_t* kernel_pd, pte_t* kernel_pt);
+bool_t init_vm_state(void);
 void init_dtrs(void);
 void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap);
 void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap);
@@ -67,6 +65,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd);
 void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt);
 void deleteASIDPool(asid_t asid_base, asid_pool_t* pool);
 void deleteASID(asid_t asid, void* vspace);
+findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid);
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr);
 void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);

@@ -10,8 +10,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_IRQ_IOAPIC
-
 #include <arch/linker.h>
 #include <plat/machine/io.h>
 #include <plat/machine/hardware.h>
@@ -102,7 +100,7 @@ static void single_ioapic_init(word_t ioapic, cpu_id_t ioapic_id, cpu_id_t deliv
 
 /* To guarantee we will be able to find enough free apic ids there needs to be less than
  * 2^4 cpus + ioapics in the system */
-compile_assert(ioapic_id_will_not_overflow, CONFIG_MAX_NUM_NODES + CONFIG_MAX_NUM_IOAPIC < 16);
+compile_assert(ioapic_id_will_not_overflow, 1 + CONFIG_MAX_NUM_IOAPIC < 16);
 
 void ioapic_init(uint32_t num_nodes, cpu_id_t *cpu_list, uint32_t num_ioapic)
 {
@@ -173,5 +171,3 @@ void ioapic_set_mode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
     ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_LOW(index));
     ioapic_write(ioapic, IOAPIC_WINDOW, ioredtbl_state[irq]);
 }
-
-#endif /* CONFIG_IOAPIC */

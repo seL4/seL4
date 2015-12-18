@@ -47,6 +47,8 @@
 			<param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
 			<param dir="in" name="ioaddr" type="seL4_Word"/>
 		</method>
+		<method id="IA32IOPageTableUnmap" name="Unmap">
+		</method>
 	</interface>
 	<interface name="seL4_IA32_Page">
 		<method id="IA32PageMap" name="Map">

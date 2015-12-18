@@ -62,7 +62,7 @@ apic_get_base_paddr(void)
 {
     apic_base_msr_t apic_base_msr;
 
-    apic_base_msr.words[0] = ia32_rdmsr_low(IA32_APIC_BASE_MSR);
+    apic_base_msr.words[0] = x86_rdmsr_low(IA32_APIC_BASE_MSR);
     if (!apic_base_msr_get_enabled(apic_base_msr)) {
         printf("APIC: Enabled bit not set\n");
     }
@@ -134,23 +134,7 @@ apic_init(bool_t mask_legacy_irqs)
     );
 
     /* Check APIC for tsc-deadline mode support */
-    cpuid_value = ia32_cpuid_ecx(0x1, 0x0);
-
-    if (!(cpuid_value & BIT(CPUID_TSC_DEADLINE_BIT))) {
-        printf("APIC: unsupported platform, TSC-deadline mode is not supported\n");
-        return false;
-    }
-
-    /* Check APIC for tsc-deadline mode support */
-    cpuid_value = ia32_cpuid_ecx(0x1, 0x0);
-
-    if (!(cpuid_value & BIT(CPUID_TSC_DEADLINE_BIT))) {
-        printf("APIC: unsupported platform, TSC-deadline mode is not supported\n");
-        return false;
-    }
-
-    /* Check APIC for tsc-deadline mode support */
-    cpuid_value = ia32_cpuid_ecx(0x1, 0x0);
+    cpuid_value = x86_cpuid_ecx(0x1, 0x0);
 
     if (!(cpuid_value & BIT(CPUID_TSC_DEADLINE_BIT))) {
         printf("APIC: unsupported platform, TSC-deadline mode is not supported\n");

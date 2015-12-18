@@ -13,17 +13,13 @@
 
 #include <arch/kernel/multiboot.h>
 
+void boot_node(void);
 bool_t in_boot_phase(void);
-cpu_id_t cur_cpu_id(void);
-node_id_t node_of_cpu(cpu_id_t);
-uint16_t console_port_of_node(node_id_t node_id);
-uint16_t debug_port_of_node(node_id_t node_id);
 
 void boot_sys(
     unsigned long multiboot_magic,
     multiboot_info_t* mbi
 );
-void boot_node(void);
 void insert_dev_p_reg(p_region_t reg);
 
 #endif

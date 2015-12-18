@@ -21,9 +21,7 @@ typedef enum _object {
     seL4_IA32_PageTableObject,
     seL4_IA32_PageDirectoryObject,
     seL4_IA32_PDPTObject,
-#ifdef CONFIG_IOMMU
     seL4_IA32_IOPageTableObject,
-#endif
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 typedef word_t object_t;

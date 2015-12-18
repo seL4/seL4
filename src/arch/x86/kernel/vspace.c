@@ -16,12 +16,6 @@
 #include <arch/kernel/vspace.h>
 #include <arch/api/invocation.h>
 
-struct findVSpaceForASID_ret {
-    exception_t status;
-    void *vspace_root;
-};
-typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
-
 struct lookupPTSlot_ret {
     exception_t status;
     pte_t*      ptSlot;
@@ -491,18 +485,10 @@ init_idt(idt_entry_t* idt)
 
 BOOT_CODE bool_t
 map_kernel_window(
-    pdpte_t*   pdpt,
-    pde_t*     pd,
-    pte_t*     pt,
-    p_region_t ndks_p_reg
-#ifdef CONFIG_IRQ_IOAPIC
-    , uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs
-#endif
-#ifdef CONFIG_IOMMU
-    , uint32_t   num_drhu,
+    uint32_t num_ioapic,
+    paddr_t*   ioapic_paddrs,
+    uint32_t   num_drhu,
     paddr_t*   drhu_list
-#endif
 )
 {
     paddr_t  phys;
@@ -511,10 +497,10 @@ map_kernel_window(
     pte_t    pte;
     unsigned int UNUSED i;
 
-    if ((void*)pdpt != (void*)pd) {
+    if (config_set(CONFIG_PAE_PAGING)) {
         for (idx = 0; idx < BIT(PDPT_BITS); idx++) {
-            pdpte_ptr_new(pdpt + idx,
-                          pptr_to_paddr(pd + (idx * BIT(PD_BITS))),
+            pdpte_ptr_new(&ia32KSGlobalPDPT[idx],
+                          pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_BITS)]),
                           0, /* avl*/
                           0, /* cache_disabled */
                           0, /* write_through */
@@ -548,7 +534,7 @@ map_kernel_window(
                   1,      /* read_write           */
                   1       /* present              */
               );
-        pd[idx] = pde;
+        ia32KSGlobalPD[idx] = pde;
         phys += BIT(LARGE_PAGE_BITS);
         idx++;
     }
@@ -568,7 +554,7 @@ map_kernel_window(
 
     /* map page table of last 4M of virtual address space to page directory */
     pde = pde_pde_small_new(
-              pptr_to_paddr(pt), /* pt_base_address  */
+              pptr_to_paddr(ia32KSGlobalPT), /* pt_base_address  */
               0,                 /* avl              */
               0,                 /* accessed         */
               0,                 /* cache_disabled   */
@@ -577,7 +563,7 @@ map_kernel_window(
               1,                 /* read_write       */
               1                  /* present          */
           );
-    pd[idx] = pde;
+    ia32KSGlobalPD[idx] = pde;
 
     /* Start with an empty guard page preceding the stack. */
     idx = 0;
@@ -594,29 +580,8 @@ map_kernel_window(
               0,      /* read_write           */
               0       /* present              */
           );
-    pt[idx] = pte;
+    ia32KSGlobalPT[idx] = pte;
     idx++;
-
-    /* establish NDKS (node kernel state) mappings in page table */
-    phys = ndks_p_reg.start;
-    while (idx - 1 < (ndks_p_reg.end - ndks_p_reg.start) >> PAGE_BITS) {
-        pte = pte_new(
-                  phys,   /* page_base_address    */
-                  0,      /* avl                  */
-                  1,      /* global               */
-                  0,      /* pat                  */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  0,      /* cache_disabled       */
-                  0,      /* write_through        */
-                  0,      /* super_user           */
-                  1,      /* read_write           */
-                  1       /* present              */
-              );
-        pt[idx] = pte;
-        phys += BIT(PAGE_BITS);
-        idx++;
-    }
 
     /* null mappings up to PPTR_KDEV */
 
@@ -634,8 +599,7 @@ map_kernel_window(
                   0,      /* read_write           */
                   0       /* present              */
               );
-        pt[idx] = pte;
-        phys += BIT(PAGE_BITS);
+        ia32KSGlobalPT[idx] = pte;
         idx++;
     }
 
@@ -661,10 +625,9 @@ map_kernel_window(
           );
 
     assert(idx == (PPTR_APIC & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-    pt[idx] = pte;
+    ia32KSGlobalPT[idx] = pte;
     idx++;
 
-#ifdef CONFIG_IRQ_IOAPIC
     for (i = 0; i < num_ioapic; i++) {
         phys = ioapic_paddrs[i];
         pte = pte_new(
@@ -681,7 +644,7 @@ map_kernel_window(
                   1       /* present              */
               );
         assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
         if (idx == BIT(PT_BITS)) {
             return false;
@@ -703,12 +666,10 @@ map_kernel_window(
                   0       /* present              */
               );
         assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
     }
-#endif
 
-#ifdef CONFIG_IOMMU
     /* map kernel devices: IOMMUs */
     for (i = 0; i < num_drhu; i++) {
         phys = (paddr_t)drhu_list[i];
@@ -727,13 +688,12 @@ map_kernel_window(
               );
 
         assert(idx == ((PPTR_DRHU_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
         if (idx == BIT(PT_BITS)) {
             return false;
         }
     }
-#endif
 
     /* mark unused kernel-device pages as 'not present' */
     while (idx < BIT(PT_BITS)) {
@@ -750,7 +710,7 @@ map_kernel_window(
                   0,      /* read_write           */
                   0       /* present              */
               );
-        pt[idx] = pte;
+        ia32KSGlobalPT[idx] = pte;
         idx++;
     }
 
@@ -802,15 +762,12 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
 }
 
 BOOT_CODE bool_t
-init_vm_state(pdpte_t *kernel_pdpt, pde_t* kernel_pd, pte_t* kernel_pt)
+init_vm_state(void)
 {
     ia32KScacheLineSizeBits = getCacheLineSizeBits();
     if (!ia32KScacheLineSizeBits) {
         return false;
     }
-    ia32KSkernelPDPT = kernel_pdpt;
-    ia32KSkernelPD = kernel_pd;
-    ia32KSkernelPT = kernel_pt;
     init_tss(&ia32KStss);
     init_gdt(ia32KSgdt, &ia32KStss);
     init_idt(ia32KSidt);
@@ -824,14 +781,12 @@ init_dtrs(void)
 {
     /* setup the GDT pointer and limit and load into GDTR */
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
-    gdt_idt_ptr.basel = (uint32_t)ia32KSgdt;
-    gdt_idt_ptr.baseh = (uint16_t)((uint32_t)ia32KSgdt >> 16);
+    gdt_idt_ptr.base = (uint32_t)ia32KSgdt;
     ia32_install_gdt(&gdt_idt_ptr);
 
     /* setup the IDT pointer and limit and load into IDTR */
     gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1)) - 1;
-    gdt_idt_ptr.basel = (uint32_t)ia32KSidt;
-    gdt_idt_ptr.baseh = (uint16_t)((uint32_t)ia32KSidt >> 16);
+    gdt_idt_ptr.base = (uint32_t)ia32KSidt;
     ia32_install_idt(&gdt_idt_ptr);
 
     /* load NULL LDT selector into LDTR */
@@ -855,12 +810,12 @@ init_pat_msr(void)
     ia32_pat_msr_t pat_msr;
     /* First verify PAT is supported by the machine.
      *      See section 11.12.1 of Volume 3 of the Intel manual */
-    if ( (ia32_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
+    if ( (x86_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
         printf("PAT support not found\n");
         return false;
     }
-    pat_msr.words[0] = ia32_rdmsr_low(IA32_PAT_MSR);
-    pat_msr.words[1] = ia32_rdmsr_high(IA32_PAT_MSR);
+    pat_msr.words[0] = x86_rdmsr_low(IA32_PAT_MSR);
+    pat_msr.words[1] = x86_rdmsr_high(IA32_PAT_MSR);
     /* Set up the PAT MSR to the Intel defaults, just in case
      * they have been changed but a bootloader somewhere along the way */
     ia32_pat_msr_ptr_set_pa0(&pat_msr, IA32_PAT_MT_WRITE_BACK);
@@ -869,7 +824,7 @@ init_pat_msr(void)
     ia32_pat_msr_ptr_set_pa3(&pat_msr, IA32_PAT_MT_UNCACHEABLE);
     /* Add the WriteCombining cache type to the PAT */
     ia32_pat_msr_ptr_set_pa4(&pat_msr, IA32_PAT_MT_WRITE_COMBINING);
-    ia32_wrmsr(IA32_PAT_MSR, pat_msr.words[1], pat_msr.words[0]);
+    x86_wrmsr(IA32_PAT_MSR, ((uint64_t)pat_msr.words[1]) << 32 | pat_msr.words[0]);
     return true;
 }
 
@@ -1072,7 +1027,7 @@ static void flushTable(void *vspace, word_t vptr, pte_t* pt)
     }
 }
 
-static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
+findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 {
     findVSpaceForASID_ret_t ret;
     asid_pool_t*        poolPtr;
@@ -1112,14 +1067,22 @@ void setVMRoot(tcb_t* tcb)
 
     vspace_root = getValidNativeRoot(threadRoot);
     if (!vspace_root) {
-        setCurrentPD(pptr_to_paddr(ia32KSkernelPDPT));
+        if (config_set(CONFIG_PAE_PAGING)) {
+            setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
+        } else {
+            setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
+        }
         return;
     }
 
     asid = cap_get_capMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspace_root) {
-        setCurrentPD(pptr_to_paddr(ia32KSkernelPDPT));
+        if (config_set(CONFIG_PAE_PAGING)) {
+            setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
+        } else {
+            setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
+        }
         return;
     }
 
@@ -1607,14 +1570,12 @@ decodeIA32FrameInvocation(
         vm_page_size_t  frameSize;
         asid_t          asid;
 
-#ifdef CONFIG_IOMMU
         if (cap_frame_cap_get_capFIsIOSpace(cap)) {
             userError("IA32FrameRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-#endif
 
         if (length < 2 || extraCaps.excaprefs[0] == NULL) {
             userError("IA32FrameRemap: Truncated message");
@@ -1727,11 +1688,9 @@ decodeIA32FrameInvocation(
 
     case IA32PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-#ifdef CONFIG_IOMMU
             if (cap_frame_cap_get_capFIsIOSpace(cap)) {
                 return decodeIA32IOUnMapInvocation(label, length, cte, cap, extraCaps);
             }
-#endif
             unmapPage(
                 cap_frame_cap_get_capFSize(cap),
                 cap_frame_cap_get_capFMappedASID(cap),
@@ -1746,11 +1705,9 @@ decodeIA32FrameInvocation(
         return EXCEPTION_NONE;
     }
 
-#ifdef CONFIG_IOMMU
     case IA32PageMapIO: { /* MapIO */
         return decodeIA32IOMapInvocation(label, length, cte, cap, extraCaps, buffer);
     }
-#endif
 
     case IA32PageGetAddress: {
         /* Return it in the first message register. */

@@ -22,11 +22,7 @@ base 32
 
 block frame_cap {
     field       capFSize            1
-#ifdef CONFIG_IOMMU
     field       capFIsIOSpace       1
-#else
-    padding                         1
-#endif
     field       capFMappedASIDLow   10
     field_high  capFMappedAddress   20
 
@@ -101,7 +97,6 @@ block io_port_capdata {
     field   lastPort           16
 }
 
-#ifdef CONFIG_IOMMU
 -- IO Space Cap
 block io_space_cap {
     field       capDomainID     16
@@ -128,7 +123,6 @@ block io_page_table_cap {
     field_high  capIOPTBasePtr  20
     field       capType         8
 }
-#endif
 
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
@@ -153,9 +147,7 @@ tagged_union cap capType {
     tag pdpt_cap            7
     tag asid_control_cap    9
     tag asid_pool_cap       11
-#ifdef CONFIG_IOMMU
     tag io_space_cap        13
-#endif /* CONFIG_IOMMU */
     -- Do not extend odd 4-bit caps types beyond 13, as we use 
     -- 15 (0xf) to determine which caps are 8-bit.
     
@@ -167,9 +159,7 @@ tagged_union cap capType {
     tag sched_control_cap   0x4e
 
     -- 8-bit tag arch caps
-#ifdef CONFIG_IOMMU
     tag io_page_table_cap   0x0f
-#endif /* CONFIG_IOMMU */
     tag io_port_cap         0x1f
 }
 

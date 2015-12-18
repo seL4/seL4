@@ -275,7 +275,7 @@ create_frames_of_region(
 
     for (f = reg.start; f < reg.end; f += BIT(PAGE_BITS)) {
         if (do_map) {
-            frame_cap = create_mapped_it_frame_cap(pd_cap, f, f - BASE_OFFSET - pv_offset, IT_ASID, false, true);
+            frame_cap = create_mapped_it_frame_cap(pd_cap, f, pptr_to_paddr((void*)(f - pv_offset)), IT_ASID, false, true);
         } else {
             frame_cap = create_unmapped_it_frame_cap(f, false);
         }

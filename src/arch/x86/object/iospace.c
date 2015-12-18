@@ -10,8 +10,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_IOMMU
-
 #include <api/syscall.h>
 #include <machine/io.h>
 #include <kernel/thread.h>
@@ -131,6 +129,14 @@ decodeIA32IOPTInvocation(
     vtd_cte_t* vtd_context_slot;
     vtd_pte_t* vtd_pte;
 
+    if (label == IA32IOPageTableUnmap) {
+        deleteIOPageTable(slot->cap);
+        slot->cap = cap_io_page_table_cap_set_capIOPTIsMapped(slot->cap, 0);
+
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return EXCEPTION_NONE;
+    }
+
     if (extraCaps.excaprefs[0] == NULL || length < 1) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -156,8 +162,8 @@ decodeIA32IOPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pci_request_id = cap_io_space_cap_get_capPCIDevice(cap);
-    domain_id = cap_io_space_cap_get_capDomainID(cap);
+    pci_request_id = cap_io_space_cap_get_capPCIDevice(io_space);
+    domain_id = cap_io_space_cap_get_capDomainID(io_space);
     if (pci_request_id == asidInvalid) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
@@ -173,6 +179,7 @@ decodeIA32IOPTInvocation(
         vtd_cte_ptr_new(
             vtd_context_slot,
             domain_id,               /* Domain ID */
+            false,                   /* RMRR */
             ia32KSnumIOPTLevels - 2, /* Address Width (x = levels - 2)       */
             paddr,                   /* Address Space Root                   */
             0,                       /* Translation Type                     */
@@ -370,11 +377,12 @@ void deleteIOPageTable(cap_t io_pt_cap)
             }
             vtd_cte_ptr_new(
                 vtd_context_slot,
-                0,  /* Domain ID          */
-                0,  /* Address Width      */
-                0,  /* Address Space Root */
-                0,  /* Translation Type   */
-                0   /* Present            */
+                0,      /* Domain ID          */
+                false,  /* RMRR               */
+                0,      /* Address Width      */
+                0,      /* Address Space Root */
+                0,      /* Translation Type   */
+                0       /* Present            */
             );
             flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
         } else {
@@ -458,5 +466,3 @@ exception_t decodeIA32IOSpaceInvocation(word_t label, cap_t cap)
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
-
-#endif

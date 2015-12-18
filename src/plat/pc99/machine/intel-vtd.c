@@ -10,16 +10,14 @@
 
 #include <config.h>
 
-#ifdef CONFIG_IOMMU
-
 #include <kernel/boot.h>
+#include <machine.h>
 #include <machine/io.h>
 #include <arch/kernel/apic.h>
 #include <arch/model/statedata.h>
 #include <arch/linker.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/intel-vtd.h>
-#include <plat/machine/pci.h>
 #include <util.h>
 
 #define RTADDR_REG  0x20
@@ -233,7 +231,7 @@ static void vtd_process_faults(drhu_id_t i)
             reason = vtd_read32(i, fr_reg + 12) & FR_MASK;
 
             printf("IOMMU: DMA %s page fault ", fault_type ? "read" : "write");
-            printf("from bus=0x%x dev=0x%x fun=0x%x ", get_pci_bus(source_id), get_pci_dev(source_id), get_pci_fun(source_id));
+            printf("from bus/dev/fun 0x%x ", source_id);
             printf("on address 0x%x:%x ", address[1], address[0]);
             printf("with reason code 0x%x\n", reason);
 
@@ -267,19 +265,87 @@ vtd_create_root_table(void)
     memzero((void*)ia32KSvtdRootTable, 1 << VTD_RT_SIZE_BITS);
 }
 
+/* This function is a simplistic duplication of some of the logic
+ * in iospace.c
+ */
+BOOT_CODE static void
+vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t addr)
+{
+    int i;
+    vtd_pte_t *iopt;
+    vtd_pte_t *vtd_pte_slot;
+    /* first check for the first page table */
+    vtd_cte_t *vtd_context_slot = vtd_context_table + context_index;
+    if (!vtd_cte_ptr_get_present(vtd_context_slot)) {
+        iopt = (vtd_pte_t*)alloc_region(VTD_PT_SIZE_BITS);
+        if (!iopt) {
+            fail("Failed to allocate IO page table");
+        }
+        memzero(iopt, 1 << VTD_PT_SIZE_BITS);
+        flushCacheRange(iopt, VTD_PT_SIZE_BITS);
+
+        vtd_cte_ptr_new(
+            vtd_context_slot,
+            ia32KSFirstValidIODomain, /* Domain ID                              */
+            true,                     /* RMRR Mapping                           */
+            ia32KSnumIOPTLevels - 2,  /* Address Width                          */
+            pptr_to_paddr(iopt),      /* Address Space Root                     */
+            0,                        /* Translation Type                       */
+            true);                    /* Present                                */
+        ia32KSFirstValidIODomain++;
+        flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
+    } else {
+        iopt = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
+    }
+    /* now recursively find and map page tables */
+    for (i = ia32KSnumIOPTLevels - 1; i >= 0; i--) {
+        uint32_t iopt_index;
+        /* If we are still looking up bits beyond the 32bit of physical
+         * that we support then we select entry 0 in the current PT */
+        if (VTD_PT_BITS * i >= 32) {
+            iopt_index = 0;
+        } else {
+            iopt_index = ( (addr >> X86_4K_bits) >> (VTD_PT_BITS * i)) & MASK(VTD_PT_BITS);
+        }
+        vtd_pte_slot = iopt + iopt_index;
+        if (i == 0) {
+            /* Now put the mapping in */
+            vtd_pte_ptr_new(vtd_pte_slot, addr, 1, 1);
+            flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
+        } else {
+            if (!vtd_pte_ptr_get_write(vtd_pte_slot)) {
+                iopt = (vtd_pte_t*)alloc_region(VTD_PT_SIZE_BITS);
+                if (!iopt) {
+                    fail("Failed to allocate IO page table");
+                }
+                memzero(iopt, BIT(VTD_PT_SIZE_BITS));
+                flushCacheRange(iopt, VTD_PT_SIZE_BITS);
+
+                vtd_pte_ptr_new(vtd_pte_slot, pptr_to_paddr(iopt), 1, 1);
+                flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
+            } else {
+                iopt = (vtd_pte_t*)paddr_to_pptr(vtd_pte_ptr_get_addr(vtd_pte_slot));
+            }
+        }
+    }
+}
+
 BOOT_CODE static void
 vtd_create_context_table(
     uint8_t   bus,
     uint32_t  max_num_iopt_levels,
-    uint32_t  num_passthrough_dev,
-    dev_id_t* passthrough_dev_list
+    acpi_rmrr_list_t *rmrr_list
 )
 {
     word_t i;
     vtd_cte_t* vtd_context_table = (vtd_cte_t*)alloc_region(VTD_CT_SIZE_BITS);
+    if (!vtd_context_table) {
+        fail("Failed to allocate context table");
+    }
 
     printf("IOMMU: Create VTD context table for PCI bus 0x%x (pptr=%p)\n", bus, vtd_context_table);
     memzero(vtd_context_table, 1 << VTD_CT_SIZE_BITS);
+    flushCacheRange(vtd_context_table, VTD_CT_SIZE_BITS);
 
     ia32KSvtdRootTable[bus] =
         vtd_rte_new(
@@ -287,20 +353,16 @@ vtd_create_context_table(
             true                              /* Present               */
         );
 
-    /* set passthrough bit on all devices marked for IOMMU passthrough */
-    for (i = 0; i < num_passthrough_dev; i++) {
-        if (get_pci_bus(passthrough_dev_list[i]) == bus) {
-            vtd_cte_ptr_new(
-                vtd_context_table + (passthrough_dev_list[i] & 0xff),
-                0,                       /* Domain ID                          */
-                max_num_iopt_levels - 2, /* Address Width                      */
-                0,                       /* Address Space Root                 */
-                2,                       /* Translation Type (2 = passthrough) */
-                true                     /* Present                            */
-            );
+    /* map in any RMRR regions */
+    for (i = 0; i < rmrr_list->num; i++) {
+        if (vtd_get_root_index(rmrr_list->entries[i].device) == bus) {
+            uint32_t addr;
+            for (addr = rmrr_list->entries[i].base; addr < rmrr_list->entries[i].limit; addr += BIT(X86_4K_bits)) {
+                (void)vtd_map_reserved_page;
+                vtd_map_reserved_page(vtd_context_table, vtd_get_context_index(rmrr_list->entries[i].device), addr);
+            }
         }
     }
-    flushCacheRange(vtd_context_table, VTD_CT_SIZE_BITS);
 }
 
 BOOT_CODE static bool_t
@@ -367,9 +429,7 @@ BOOT_CODE bool_t
 vtd_init(
     cpu_id_t  cpu_id,
     uint32_t  num_drhu,
-    uint32_t* pci_bus_used_bitmap,
-    uint32_t  num_passthrough_dev,
-    dev_id_t* passthrough_dev_list
+    acpi_rmrr_list_t *rmrr_list
 )
 {
     drhu_id_t i;
@@ -380,6 +440,7 @@ vtd_init(
     uint32_t  num_domain_id_bits = 16;
 
     ia32KSnumDrhu = num_drhu;
+    ia32KSFirstValidIODomain = 0;
 
     if (ia32KSnumDrhu == 0) {
         return true;
@@ -391,10 +452,6 @@ vtd_init(
         printf("IOMMU 0x%x: %d-bit domain IDs supported\n", i, bits_supported);
         if (bits_supported < num_domain_id_bits) {
             num_domain_id_bits = bits_supported;
-        }
-        if (!supports_passthrough(i)) {
-            printf("IOMMU: passthrough support required\n");
-            return false;
         }
     }
 
@@ -435,14 +492,11 @@ vtd_init(
     vtd_create_root_table();
 
     for (bus = 0; bus < 256; bus++) {
-        if (pci_bus_used_bitmap[bus >> 5] & BIT(bus & MASK(5))) {
-            vtd_create_context_table(
-                bus,
-                max_num_iopt_levels,
-                num_passthrough_dev,
-                passthrough_dev_list
-            );
-        }
+        vtd_create_context_table(
+            bus,
+            max_num_iopt_levels,
+            rmrr_list
+        );
     }
 
     flushCacheRange(ia32KSvtdRootTable, VTD_RT_SIZE_BITS);
@@ -452,5 +506,3 @@ vtd_init(
     }
     return true;
 }
-
-#endif

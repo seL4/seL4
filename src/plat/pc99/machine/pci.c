@@ -194,20 +194,17 @@ pci_scan_fun(uint8_t bus, uint8_t dev, uint8_t fun)
 }
 
 BOOT_CODE void
-pci_scan(uint32_t* bus_used_bitmap)
+pci_scan(void)
 {
-    bool_t    bus_used;
     uint16_t  bus;
     uint8_t   dev;
     uint8_t   fun;
     bool_t    multifunction;
 
     for (bus = 0; bus < 256; bus++) {
-        bus_used = false;
         for (dev = 0; dev < 32; dev++) {
             if (pci_scan_fun(bus, dev, 0)) {
                 multifunction = !!(pci_read_reg8(bus, dev, 0, PCI_CONF_REG_HDR_TYPE) & 0x80);
-                bus_used = true;
                 if (!multifunction) {
                     continue;
                 }
@@ -218,9 +215,6 @@ pci_scan(uint32_t* bus_used_bitmap)
             for (fun = 1; fun < 8; fun++) {
                 pci_scan_fun(bus, dev, fun);
             }
-        }
-        if (bus_used_bitmap && bus_used) {
-            bus_used_bitmap[bus >> 5] |= BIT(bus & MASK(5));
         }
     }
 }

@@ -338,37 +338,20 @@ acpi_madt_scan(
     return num_cpu;
 }
 
-#ifdef CONFIG_IOMMU
-
-BOOT_CODE static bool_t
-acpi_dev_in_list(dev_id_t* dev_list, uint32_t list_len, dev_id_t dev)
-{
-    word_t i = 0;
-
-    while (i < list_len) {
-        if (dev_list[i] == dev) {
-            return true;
-        }
-        i++;
-    }
-    return false;
-}
-
 BOOT_CODE void
 acpi_dmar_scan(
     acpi_rsdt_t* acpi_rsdt,
     paddr_t*     drhu_list,
     uint32_t*    num_drhu,
     uint32_t     max_drhu_list_len,
-    dev_id_t*    passthrough_dev_list,
-    uint32_t*    num_passthrough_dev,
-    uint32_t     max_passthrough_dev_list_len
+    acpi_rmrr_list_t *rmrr_list
 )
 {
     word_t i;
     unsigned int entries;
     uint32_t count;
     uint32_t reg_basel, reg_baseh;
+    int rmrr_count;
     dev_id_t dev_id;
 
     acpi_dmar_t*          acpi_dmar;
@@ -382,7 +365,7 @@ acpi_dmar_scan(
     acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
 
     *num_drhu = 0;
-    *num_passthrough_dev = 0;
+    rmrr_count = 0;
 
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
     entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
@@ -429,12 +412,6 @@ acpi_dmar_scan(
                         return ;
                     }
 
-                    /* Provide the region to user level */
-                    insert_dev_p_reg((p_region_t) {
-                        .start = acpi_dmar_rmrr->reg_base[0], .end = acpi_dmar_rmrr->reg_limit[0] + 2
-                    });
-                    printf("ACPI: RMRR providing region 0x%x-0x%x\n", acpi_dmar_rmrr->reg_base[0], acpi_dmar_rmrr->reg_limit[0]);
-
                     for (i = 0; i <= (acpi_dmar_header->length - sizeof(acpi_dmar_rmrr_t)) / sizeof(acpi_dmar_devscope_t); i++) {
                         acpi_dmar_devscope = &acpi_dmar_rmrr->devscope_0 + i;
 
@@ -459,22 +436,21 @@ acpi_dmar_scan(
                                 acpi_dmar_devscope->path_0.fun
                             );
 
-                        if (!acpi_dev_in_list(passthrough_dev_list, *num_passthrough_dev, dev_id)) {
-                            /* FIXME - bugzilla bug 171 */
-                            printf("ACPI: registering device for IOMMU passthrough: bus=0x%x dev=0x%x fun=0x%x\n",
-                                   acpi_dmar_devscope->start_bus,
-                                   acpi_dmar_devscope->path_0.dev,
-                                   acpi_dmar_devscope->path_0.fun
-                                  );
-                            if (*num_passthrough_dev == max_passthrough_dev_list_len) {
-                                printf("ACPI: too many passthrough devices, disabling IOMMU support\n");
-                                /* try to increase MAX_NUM_PASSTHROUGH_DEV in config.h */
-                                *num_drhu = 0; /* report zero IOMMUs */
-                                return;
-                            }
-                            passthrough_dev_list[*num_passthrough_dev] = dev_id;
-                            (*num_passthrough_dev)++;
+                        if (rmrr_count == CONFIG_MAX_RMRR_ENTRIES) {
+                            printf("ACPI: Too many RMRR entries, disabling IOMMU support\n");
+                            *num_drhu = 0;
+                            return;
                         }
+                        printf("\tACPI: registering RMRR entry for region for device: bus=0x%x dev=0x%x fun=0x%x\n",
+                               acpi_dmar_devscope->start_bus,
+                               acpi_dmar_devscope->path_0.dev,
+                               acpi_dmar_devscope->path_0.fun
+                              );
+
+                        rmrr_list->entries[rmrr_count].device = dev_id;
+                        rmrr_list->entries[rmrr_count].base = acpi_dmar_rmrr->reg_base[0];
+                        rmrr_list->entries[rmrr_count].limit = acpi_dmar_rmrr->reg_limit[0];
+                        rmrr_count++;
                     }
                     break;
 
@@ -489,7 +465,6 @@ acpi_dmar_scan(
             }
         }
     }
+    rmrr_list->num = rmrr_count;
     printf("ACPI: %d IOMMUs detected\n", *num_drhu);
 }
-
-#endif /* IOMMU */

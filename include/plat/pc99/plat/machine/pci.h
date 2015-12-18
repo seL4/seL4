@@ -16,6 +16,6 @@
 #define get_pci_fun(x) ((x) & 0x7)
 #define get_dev_id(bus, dev, fun) (((bus) << 8) | ((dev) << 3) | (fun))
 
-void pci_scan(uint32_t* bus_used_bitmap);
+void pci_scan(void);
 
 #endif
