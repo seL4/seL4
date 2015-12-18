@@ -413,8 +413,6 @@ acpi_dmar_scan(
                         return ;
                     }
 
-                    printf("ACPI: RMRR providing region 0x%x-0x%x\n", acpi_dmar_rmrr->reg_base[0], acpi_dmar_rmrr->reg_limit[0]);
-
                     for (i = 0; i <= (acpi_dmar_header->length - sizeof(acpi_dmar_rmrr_t)) / sizeof(acpi_dmar_devscope_t); i++) {
                         acpi_dmar_devscope = &acpi_dmar_rmrr->devscope_0 + i;
 

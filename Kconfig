@@ -248,6 +248,9 @@ menu "seL4 System Parameters"
         int "Max number of RMRR entries to support finding in ACPI"
         depends on IOMMU
         default 32
+        help
+            Sets the maximum number of Reserved Memory Region Reporting
+            structures we support recording from the ACPI tables
 
     config FASTPATH
         bool "Enable fastpath"
