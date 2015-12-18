@@ -110,7 +110,7 @@ restart(tcb_t *target)
     if (isBlocked(target) && target->tcbSchedContext != NULL &&
             target->tcbSchedContext->budget > 0llu) {
 
-        if (ready(target)) {
+        if (ready(target->tcbSchedContext)) {
             recharge(target->tcbSchedContext);
         }
 
@@ -522,7 +522,7 @@ bool_t
 checkBudget(void)
 {
     /* does this thread have enough time to continue? */
-    if (unlikely(expired(ksCurThread))) {
+    if (unlikely(currentThreadExpired())) {
         /* since we never bill the idle thread this shouldn't ever happen */
         assert(ksCurThread != ksIdleThread);
 
@@ -536,16 +536,7 @@ checkBudget(void)
         assert(isRunnable(ksCurThread));
 
         ksConsumed = 0u;
-        /* timeslice ended - refill budget */
-        if (ready(ksCurThread)) {
-            /* thread is ready to go */
-            recharge(ksCurThread->tcbSchedContext);
-            /* apply round robin */
-            tcbSchedAppend(ksCurThread);
-        } else {
-            /* schedule thread to wake up when budget is due to be recharged */
-            postpone(ksCurThread->tcbSchedContext);
-        }
+        endTimeslice(ksCurThread->tcbSchedContext);
 
         /* consumed time has been billed */
         rescheduleRequired();
@@ -553,6 +544,25 @@ checkBudget(void)
     } else {
         /* thread is good to go to do whatever it is up to */
         return true;
+    }
+}
+
+void
+endTimeslice(sched_context_t *sc)
+{
+    assert(sc->tcb != NULL);
+    assert(isSchedulable(sc->tcb));
+
+    tcbSchedDequeue(sc->tcb);
+
+    if (ready(sc)) {
+        /* refill budget */
+        recharge(sc);
+        /* apply round robin */
+        tcbSchedAppend(sc->tcb);
+    } else {
+        /* schedule thread to wake up when budget is due to be recharged */
+        postpone(sc);
     }
 }
 
@@ -577,7 +587,7 @@ awaken(void)
 {
     tcb_t *awakened;
 
-    while (ksReleaseHead != NULL && ready(ksReleaseHead)) {
+    while (ksReleaseHead != NULL && ready(ksReleaseHead->tcbSchedContext)) {
         awakened = tcbReleaseDequeue();
         recharge(awakened->tcbSchedContext);
         tcbSchedAppend(awakened);

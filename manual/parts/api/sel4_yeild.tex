@@ -9,10 +9,12 @@
 %
 
 \apidoc
-{sel4_yield}
-{Yield}
-{Surrender remaining timeslice, which will be refilled when the budget is due to be replenished. If the budget is already due to be replenished and there are no other threads at the caller's priority, the caller will be rescheduled immediately.}
-{static inline void seL4\_Yield}
+{schedcontext_yield}
+{SchedContext - Yield}
+{Surrender remaining timeslice, which will be refilled when the budget is due to be replenished and place the thread bound to this scheduling context at the end of the scheduling queue for it's priority. 
+
+If this operation is invoked on the scheduling context of the currently running thread and the budget is already due to be replenished and there are no other threads at the caller's priority, the caller will be rescheduled immediately.}
+{static inline void seL4\_SchedContext\_Yield}
 {
 \param{void}{}{}
 }

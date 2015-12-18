@@ -102,7 +102,6 @@ capabilities through the system is controlled by a
 \label{sec:sys_nbsend}
 \label{sec:sys_replyrecv}
 \label{sec:sys_nbrecv}
-\label{sec:sys_yield}
 
 The seL4 kernel provides a message-passing service for communication between
 threads. This mechanism is also used for communication with kernel-provided
@@ -118,15 +117,14 @@ manner specific to the type of kernel object. For example, invoking a thread
 control block (TCB) capability with a correctly formatted message will suspend
 the target thread.
 
-Logically, the kernel provides three system calls, \emph{Send},
-\emph{Receive} and \emph{Yield}. However, there are also combinations
+Logically, the kernel provides two system calls, \emph{Send},
+\emph{Receive}. However, there are also combinations
 and variants of the basic \emph{Send} and \emph{Receive} calls, e.g.\
 the \emph{Call} operation, which consists of a send followed by a
 \emph{Receive} from the same object. Methods on kernel objects other
 than endpoints and notifications are all mapped to \emph{Send} or
 \emph{Call}, depending on whether or not the method returns a
-result. The \emph{Yield} system call is not associated with any kernel
-object and is the only operation that does not invoke a capability.
+result.
 
 The complete set of system calls is:
 \begin{description}
@@ -205,13 +203,6 @@ The complete set of system calls is:
     This system call works only on endpoints and notification object 
     capabilities, raising a fault (see section \ref{sec:faults}) when attempted
     with other capability types.
-
-    \item[\apifunc{seL4\_Yield}{sel4_yield}] is the only system call that does not require
-    a capability to be used. It forfeits the remainder of the calling thread's
-    timeslice and causes invocation of the kernel's scheduler.
-    If there are no other runnable threads with the same
-    priority as the caller, the calling thread will immediately be
-    scheduled with a fresh timeslice.
 \end{description}
 
 \section{Kernel Objects}

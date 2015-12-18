@@ -34,15 +34,15 @@ l1index_to_prio(word_t l1index)
  * recharged
  */
 static inline bool_t
-ready(tcb_t *tcb)
+ready(sched_context_t *sc)
 {
-    return (ksCurrentTime + getKernelWcetTicks()) >= tcb->tcbSchedContext->next;
+    return (ksCurrentTime + getKernelWcetTicks()) >= sc->next;
 }
 
 static inline bool_t
-expired(tcb_t *tcb)
+currentThreadExpired(void)
 {
-    return tcb->tcbSchedContext->remaining < (ksConsumed + getKernelWcetTicks());
+    return ksCurThread->tcbSchedContext->remaining < (ksConsumed + getKernelWcetTicks());
 }
 
 void configureIdleThread(tcb_t *tcb);
@@ -70,6 +70,7 @@ void switchIfRequiredTo(tcb_t *tptr);
 void setThreadState(tcb_t *tptr, _thread_state_t ts) VISIBLE;
 void updateTimestamp(void);
 bool_t checkBudget(void);
+void endTimeslice(sched_context_t *sc);
 void rescheduleRequired(void);
 void recharge(sched_context_t *sc);
 void awaken(void);

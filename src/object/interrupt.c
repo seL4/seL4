@@ -227,16 +227,10 @@ handleInterrupt(irq_t irq)
          * otherwise we would be dealing with a timer interrupt not a signal
          * interrupt
          */
-        if (likely(!expired(ksCurThread))) {
+        if (likely(!currentThreadExpired())) {
             ksCurThread->tcbSchedContext->remaining -= ksConsumed;
-        } else if (ready(ksCurThread)) {
-            recharge(ksCurThread->tcbSchedContext);
-            if (isRunnable(ksCurThread)) {
-                tcbSchedAppend(ksCurThread);
-            }
-            rescheduleRequired();
         } else {
-            postpone(ksCurThread->tcbSchedContext);
+            endTimeslice(ksCurThread->tcbSchedContext);
             rescheduleRequired();
         }
         ksConsumed = 0llu;

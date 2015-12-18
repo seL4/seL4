@@ -22,6 +22,7 @@
 #include <object/cnode.h>
 #include <object/interrupt.h>
 #include <object/schedcontrol.h>
+#include <object/schedcontext.h>
 #include <object/tcb.h>
 #include <object/untyped.h>
 #include <model/statedata.h>
@@ -712,9 +713,8 @@ decodeInvocation(word_t label, word_t length,
         return decodeSchedControlInvocation(label, length, extraCaps, buffer);
 
     case cap_sched_context_cap:
-        /* no current sched context invocations */
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
+        return decodeSchedContextInvocation(label, cap);
+
     default:
         fail("Invalid cap type");
     }

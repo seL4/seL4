@@ -171,4 +171,7 @@
             <param dir="in" name="period" type="seL4_Time" />
         </method>
     </interface>
+    <interface name="seL4_SchedContext">
+        <method id="SchedContextYield" name="Yield"/>
+    </interface>
 </api>
