@@ -35,6 +35,7 @@
 #define PD_BITS      9
 #define PTE_SIZE_BITS 3
 #define PT_BITS      9
+#define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPDPT
 #else
 #define PDPTE_SIZE_BITS 0
 #define PDPT_BITS 0
@@ -42,6 +43,7 @@
 #define PD_BITS      10
 #define PTE_SIZE_BITS 2
 #define PT_BITS      10
+#define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPD
 #endif
 
 #define PDPTE_PTR(r)   ((pdpte_t *)(r))

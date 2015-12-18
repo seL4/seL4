@@ -352,9 +352,6 @@ init_sys_state(
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */
-    pdpte_t*      kernel_pdpt,
-    pde_t*        kernel_pd,
-    pte_t*        kernel_pt,
     vesa_info_t*  vesa_info,
     ia32_mem_region_t* mem_regions,
     uint32_t      num_drhu,
@@ -404,7 +401,7 @@ init_sys_state(
     }
 
     /* initialise virtual-memory-related data structures (not in abstract spec) */
-    if (!init_vm_state(kernel_pdpt, kernel_pd, kernel_pt)) {
+    if (!init_vm_state()) {
         return false;
     }
 
@@ -430,7 +427,7 @@ init_sys_state(
           );
 
     /* TODO this shouldn't be hardcoded */
-    ia32KSkernelPD[IA32_KSLOG_IDX] = pde;
+    ia32KSGlobalPD[IA32_KSLOG_IDX] = pde;
 
 
     /* flush the tlb */

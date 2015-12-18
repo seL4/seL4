@@ -78,28 +78,6 @@ char kernel_stack_alloc[4096];
 BOOT_DATA
 cmdline_opt_t cmdline_opt;
 
-#ifdef CONFIG_PAE_PAGING
-ALIGN(BIT(PDPT_BITS))
-uint64_t kernel_pdpt_global[BIT(PDPT_BITS)];
-#define paging_structure_t uint64_t
-#else
-/* In non PAE paging we define the pdpt to be the pd. This is just to
- * allow for there to be common boot code for paging structures on
- * both platforms. This common code detects if it is passed a pdpt
- * and pd at the same address, and ignores the pdpt if this happens
- */
-#define kernel_pdpt_global kernel_pd_global
-#define paging_structure_t uint32_t
-#endif
-
-/* the array type is explicit instead of pde_t due to a c-parser limitation */
-ALIGN(BIT(PD_SIZE_BITS))
-paging_structure_t kernel_pd_global[BIT(PD_BITS + PDPT_BITS)];
-
-/* the array type is explicit instead of pte_t due to a c-parser limitation */
-ALIGN(BIT(PT_SIZE_BITS))
-paging_structure_t kernel_pt_global[BIT(PT_BITS)];
-
 #if defined DEBUG || defined RELEASE_PRINTF
 
 /* Determine whether we are in bootstrapping phase or runtime phase.
@@ -203,9 +181,6 @@ try_boot_sys_node(cpu_id_t cpu_id)
     p_region_t boot_mem_reuse_p_reg;
 
     if (!map_kernel_window(
-                (pdpte_t*)kernel_pdpt_global,
-                (pde_t*)kernel_pd_global,
-                (pte_t*)kernel_pt_global,
                 boot_state.num_ioapic,
                 boot_state.ioapic_paddr,
                 boot_state.num_drhu,
@@ -213,7 +188,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
             )) {
         return false;
     }
-    write_cr3(pptr_to_paddr(kernel_pdpt_global));
+    write_cr3(pptr_to_paddr(X86_GLOBAL_VSPACE_ROOT));
     /* Sync up the compilers view of the world here to force the PD to actually
      * be set *right now* instead of delayed */
     asm volatile("" ::: "memory");
@@ -230,9 +205,6 @@ try_boot_sys_node(cpu_id_t cpu_id)
                 boot_state.ui_info,
                 boot_mem_reuse_p_reg,
                 /* parameters below not modeled in abstract specification */
-                (pdpte_t*)kernel_pdpt_global,
-                (pde_t*)kernel_pd_global,
-                (pte_t*)kernel_pt_global,
                 &boot_state.vesa_info,
                 boot_state.mem_regions,
                 boot_state.num_drhu,

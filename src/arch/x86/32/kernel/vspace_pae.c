@@ -155,7 +155,7 @@ void copyGlobalMappings(void* new_vspace)
     pdpte_t *pdpt = (pdpte_t*)new_vspace;
 
     for (i = PPTR_BASE >> X86_1G_bits; i < BIT(PDPT_BITS); i++) {
-        pdpt[i] = ia32KSkernelPDPT[i];
+        pdpt[i] = ia32KSGlobalPDPT[i];
     }
 }
 
