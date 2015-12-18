@@ -311,6 +311,17 @@ menu "Build Options"
             debug builds. If you are CERTAIN these messages are benign
             then use this config to turn them off
 
+    config COLOUR_PRINTING
+        bool "Print error messages in colour"
+        depends on DEBUG_BUILD
+        default y
+        help
+            In debug mode, seL4 prints diagnostic messages to its serial output
+            describing, e.g., the cause of system call errors. This setting
+            determines whether ANSI escape codes are applied to colour code
+            these error messages. You may wish to disable this setting if your
+            serial output is redirected to a file or pipe.
+
     choice
         prompt "Compiler optimisation flag"
         default OPTIMISATION_O2
