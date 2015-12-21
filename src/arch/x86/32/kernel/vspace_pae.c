@@ -318,6 +318,43 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
     invalidatePageStructureCache();
 }
 
+static exception_t
+performIA32PageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
+{
+
+    if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
+        pde_t *pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
+        unmapPageDirectory(
+            cap_page_directory_cap_get_capPDMappedASID(cap),
+            cap_page_directory_cap_get_capPDMappedAddress(cap),
+            pd
+        );
+        clearMemory((void *)pd, cap_get_capSizeBits(cap));
+    }
+    cap_page_directory_cap_ptr_set_capPDIsMapped(&(ctSlot->cap), 0);
+
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+performIA32PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, cap_t threadRootCap, cap_t vspaceCap)
+{
+
+    ctSlot->cap = cap;
+    *pdptSlot = pdpte;
+
+
+    /* according to the intel manual if we modify a pdpt we must
+     * reload cr3 */
+    if (isValidNativeRoot(threadRootCap) && (vspace_root_t *)pptr_of_cap(threadRootCap) == (vspace_root_t *)pptr_of_cap(vspaceCap)) {
+        write_cr3(read_cr3());
+    }
+
+    invalidatePageStructureCache();
+
+    return EXCEPTION_NONE;
+}
+
 exception_t
 decodeIA32PageDirectoryInvocation(
     word_t invLabel,
@@ -346,18 +383,7 @@ decodeIA32PageDirectoryInvocation(
         }
         setThreadState(ksCurThread, ThreadState_Restart);
 
-        if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
-            pde_t *pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
-            unmapPageDirectory(
-                cap_page_directory_cap_get_capPDMappedASID(cap),
-                cap_page_directory_cap_get_capPDMappedAddress(cap),
-                pd
-            );
-            clearMemory((void *)pd, cap_get_capSizeBits(cap));
-        }
-        cap_page_directory_cap_ptr_set_capPDIsMapped(&(cte->cap), 0);
-
-        return EXCEPTION_NONE;
+        return performIA32PageDirectoryInvocationUnmap(cap, cte);
     }
 
     if (invLabel != X86PageDirectoryMap) {
@@ -436,19 +462,10 @@ decodeIA32PageDirectoryInvocation(
     cap = cap_page_directory_cap_set_capPDMappedASID(cap, asid);
     cap = cap_page_directory_cap_set_capPDMappedAddress(cap, vaddr);
 
-    cte->cap = cap;
-    *pdptSlot = pdpte;
-
-    /* according to the intel manual if we modify a pdpt we must
-     * reload cr3 */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == (vspace_root_t*)pptr_of_cap(vspaceCap)) {
-        write_cr3(read_cr3());
-    }
 
     setThreadState(ksCurThread, ThreadState_Restart);
-    invalidatePageStructureCache();
-    return EXCEPTION_NONE;
+    return performIA32PageDirectoryInvocationMap(cap, cte, pdpte, pdptSlot, threadRoot, vspaceCap);
 }
 
 #endif

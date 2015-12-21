@@ -744,6 +744,56 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     invalidatePageStructureCache();
 }
 
+static exception_t
+performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pte)
+{
+    ctSlot->cap = cap;
+    *ptSlot = pte;
+    invalidatePageStructureCache();
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pde)
+{
+    ctSlot->cap = cap;
+    *pdSlot = pde;
+    invalidatePageStructureCache();
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+performX86PageInvocationRemapPTE(pte_t *ptSlot, pte_t pte)
+{
+    *ptSlot = pte;
+    invalidatePageStructureCache();
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+performX86PageInvocationRemapPDE(pde_t *pdSlot, pde_t pde)
+{
+    *pdSlot = pde;
+    invalidatePageStructureCache();
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+performX86PageInvocationUnmap(cap_t cap, cte_t *ctSlot)
+{
+    unmapPage(
+        cap_frame_cap_get_capFSize(cap),
+        cap_frame_cap_get_capFMappedASID(cap),
+        cap_frame_cap_get_capFMappedAddress(cap),
+        (void *)cap_frame_cap_get_capFBasePtr(cap)
+    );
+
+    cap_frame_cap_ptr_set_capFMappedAddress(&ctSlot->cap, 0);
+    cap_frame_cap_ptr_set_capFMappedASID(&ctSlot->cap, asidInvalid);
+
+    return EXCEPTION_NONE;
+}
+
 exception_t decodeX86FrameInvocation(
     word_t invLabel,
     word_t length,
@@ -861,14 +911,14 @@ exception_t decodeX86FrameInvocation(
             }
 
             pte = makeUserPTE(paddr, vmAttr, vmRights);
-            cte->cap = cap;
-            *lu_ret.ptSlot = pte;
-            break;
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performX86PageInvocationMapPTE(cap, cte, lu_ret.ptSlot, pte);
         }
 
         /* PDE mappings */
         case X86_LargePage: {
             pde_t* pdeSlot;
+            pde_t  pde;
             lookupPDSlot_ret_t lu_ret;
 
             lu_ret = lookupPDSlot(vspace, vaddr);
@@ -896,26 +946,17 @@ exception_t decodeX86FrameInvocation(
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            *pdeSlot = makeUserPDELargePage(paddr, vmAttr, vmRights);
-            cte->cap = cap;
-
-            break;
+            pde = makeUserPDELargePage(paddr, vmAttr, vmRights);
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performX86PageInvocationMapPDE(cap, cte, lu_ret.pdSlot, pde);
         }
 
         default: {
-            exception_t ret = modeMapRemapPage(invLabel, frameSize, vspace, vaddr, paddr, vmRights, vmAttr);
-            if (ret != EXCEPTION_NONE) {
-                return ret;
-            }
-
-            cte->cap = cap;
-            break;
+            return decodeX86ModeMapRemapPage(invLabel, frameSize, cte, cap, vspace, vaddr, paddr, vmRights, vmAttr);
         }
         }
 
-        invalidatePageStructureCache();
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return EXCEPTION_NONE;
+        return EXCEPTION_SYSCALL_ERROR;
     }
 
     case X86PageRemap: { /* Remap */
@@ -1007,14 +1048,16 @@ exception_t decodeX86FrameInvocation(
             }
 
             pte = makeUserPTE(paddr, vmAttr, vmRights);
-            *lu_ret.ptSlot = pte;
 
-            break;
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performX86PageInvocationRemapPTE(lu_ret.ptSlot, pte);
+
         }
 
         /* PDE mappings */
         case X86_LargePage: {
             pde_t* pdeSlot;
+            pde_t  pde;
             lookupPDSlot_ret_t lu_ret;
 
             lu_ret = lookupPDSlot(vspace, vaddr);
@@ -1033,41 +1076,30 @@ exception_t decodeX86FrameInvocation(
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            *pdeSlot = makeUserPDELargePage(paddr, vmAttr, vmRights);
+            pde = makeUserPDELargePage(paddr, vmAttr, vmRights);
 
-            break;
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performX86PageInvocationRemapPDE(pdeSlot, pde);
         }
 
         default: {
-            exception_t ret = modeMapRemapPage(invLabel, frameSize, vspace, vaddr, paddr, vmRights, vmAttr);
-            if (ret != EXCEPTION_NONE) {
-                return ret;
-            }
-            break;
+            return decodeX86ModeMapRemapPage(invLabel, frameSize, cte, cap, vspace, vaddr, paddr, vmRights, vmAttr);
         }
         }
 
-        invalidatePageStructureCache();
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return EXCEPTION_NONE;
+        return EXCEPTION_SYSCALL_ERROR;
     }
 
     case X86PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
             if (isIOSpaceFrame(cap)) {
                 return decodeX86IOUnMapInvocation(invLabel, length, cte, cap, excaps);
+            } else {
+                setThreadState(ksCurThread, ThreadState_Restart);
+                return performX86PageInvocationUnmap(cap, cte);
             }
-            unmapPage(
-                cap_frame_cap_get_capFSize(cap),
-                cap_frame_cap_get_capFMappedASID(cap),
-                cap_frame_cap_get_capFMappedAddress(cap),
-                (void *)cap_frame_cap_get_capFBasePtr(cap)
-            );
         }
-        cap_frame_cap_ptr_set_capFMappedAddress(&cte->cap, 0);
-        cap_frame_cap_ptr_set_capFMappedASID(&cte->cap, asidInvalid);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
         return EXCEPTION_NONE;
     }
 
@@ -1088,6 +1120,33 @@ exception_t decodeX86FrameInvocation(
 
         return EXCEPTION_SYSCALL_ERROR;
     }
+}
+
+static exception_t
+performX86PageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
+{
+
+    if (cap_page_table_cap_get_capPTIsMapped(cap)) {
+        pte_t *pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+        unmapPageTable(
+            cap_page_table_cap_get_capPTMappedASID(cap),
+            cap_page_table_cap_get_capPTMappedAddress(cap),
+            pt
+        );
+        clearMemory((void *)pt, cap_get_capSizeBits(cap));
+    }
+    cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
+
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdSlot)
+{
+    ctSlot->cap = cap;
+    *pdSlot = pde;
+    invalidatePageStructureCache();
+    return EXCEPTION_NONE;
 }
 
 static exception_t
@@ -1115,19 +1174,7 @@ decodeX86PageTableInvocation(
             return EXCEPTION_SYSCALL_ERROR;
         }
         setThreadState(ksCurThread, ThreadState_Restart);
-
-        if (cap_page_table_cap_get_capPTIsMapped(cap)) {
-            pte_t *pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-            unmapPageTable(
-                cap_page_table_cap_get_capPTMappedASID(cap),
-                cap_page_table_cap_get_capPTMappedAddress(cap),
-                pt
-            );
-            clearMemory((void *)pt, cap_get_capSizeBits(cap));
-        }
-        cap_page_table_cap_ptr_set_capPTIsMapped(&(cte->cap), 0);
-
-        return EXCEPTION_NONE;
+        return performX86PageTableInvocationUnmap(cap, cte);
     }
 
     if (invLabel != X86PageTableMap ) {
@@ -1214,12 +1261,8 @@ decodeX86PageTableInvocation(
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
 
-    cte->cap = cap;
-    *pdSlot.pdSlot = pde;
-
     setThreadState(ksCurThread, ThreadState_Restart);
-    invalidatePageStructureCache();
-    return EXCEPTION_NONE;
+    return performX86PageTableInvocationMap(cap, cte, pde, pdSlot.pdSlot);
 }
 
 exception_t decodeX86MMUInvocation(
