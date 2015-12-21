@@ -57,7 +57,7 @@ exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent
     cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
                                          MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
 
-    memzero(frame, 1 << pageBitsForSize(X86_SmallPage));
+    memzero(frame, BIT(pageBitsForSize(X86_SmallPage)));
     cteInsert(
         cap_asid_pool_cap_new(
             asid_base,          /* capASIDBase  */

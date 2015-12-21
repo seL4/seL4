@@ -15,7 +15,7 @@
 ### Build parameters
 ############################################################
 
-SEL4_ARCH_LIST:=aarch32 ia32
+SEL4_ARCH_LIST:=aarch32 ia32 x86_64
 ARCH_LIST:=arm x86
 CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15 cortex-a53 cortex-a57
 PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1 hikey bcm2837
@@ -350,11 +350,19 @@ DEFINES += -DHIKEY
 endif
 endif # ARCH=arm
 ifeq (${ARCH}, x86)
+ifeq (${SEL4_ARCH}, x86_64)
+CFLAGS += -m64 -fno-asynchronous-unwind-tables
+ASFLAGS += -Wa,--64
+DEFINES += -DARCH_X86 -DX86_64 -DCONFIG_X86_64=y -D__KERNEL_64__ -DKERNEL_64=y -D__X86_64__=y
+export __X86_64__ = y
+endif
+ifeq (${SEL4_ARCH}, ia32)
 CFLAGS += -m32
 ASFLAGS += -Wa,--32
 DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32 -D__KERNEL_32__
 LDFLAGS += -Wl,-m,elf_i386 
 export __X86_32__ = y
+endif
 endif # ARCH=x86
 else # NK_CFLAGS
 # Require autoconf to be provided if larger build
@@ -428,6 +436,9 @@ endif
 # only apply to building the kernel, and nothing else
 ifeq (${ARCH}, x86)
 CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-3dnow
+endif
+ifeq (${SEL4_ARCH}, x86_64)
+CFLAGS += -mcmodel=kernel
 endif
 
 # Allow overriding of the CFLAGS. Use with caution.
@@ -584,8 +595,8 @@ linker.lds_pp: ${LINKER_SCRIPT}
 
 kernel.elf: ${OBJECTS} linker.lds_pp
 	@echo " [LD] $@"
-	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -Wl,-T -Wl,linker.lds_pp \
-		-o $@ ${OBJECTS}
+	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -T linker.lds_pp -Wl,-n \
+	     -o $@ ${OBJECTS}
 
 autoconf.h: include/plat/${PLAT}/autoconf.h
 	${Q}cp $< $@
