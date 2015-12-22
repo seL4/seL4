@@ -106,10 +106,10 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_ma
 void    flushTable(void *vspace, word_t vptr, pte_t *pt);
 
 exception_t decodeX86MMUInvocation(word_t label, word_t length, cptr_t cptr, cte_t *cte,
-        cap_t cap, extra_caps_t extraCaps, word_t *buffer);
+                                   cap_t cap, extra_caps_t extraCaps, word_t *buffer);
 
 exception_t decodeX86ModeMMUInvocation(word_t label, word_t length, cptr_t cptr, cte_t *cte,
-        cap_t cap, extra_caps_t extraCaps, word_t *buffer);
+                                       cap_t cap, extra_caps_t extraCaps, word_t *buffer);
 
 exception_t decodeIA32PageDirectoryInvocation(word_t label, word_t length, cte_t* cte, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
 

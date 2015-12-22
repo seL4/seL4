@@ -592,15 +592,15 @@ pde_t CONST makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_righ
 pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
 {
     return pde_pde_small_new(
-              paddr,                                      /* pt_base_address  */
-              0,                                          /* avl              */
-              0,                                          /* accessed         */
-              vm_attributes_get_ia32PCDBit(vm_attr),      /* cache_disabled   */
-              vm_attributes_get_ia32PWTBit(vm_attr),      /* write_through    */
-              1,                                          /* super_user       */
-              1,                                          /* read_write       */
-              1                                           /* present          */
-          );
+               paddr,                                      /* pt_base_address  */
+               0,                                          /* avl              */
+               0,                                          /* accessed         */
+               vm_attributes_get_ia32PCDBit(vm_attr),      /* cache_disabled   */
+               vm_attributes_get_ia32PWTBit(vm_attr),      /* write_through    */
+               1,                                          /* super_user       */
+               1,                                          /* read_write       */
+               1                                           /* present          */
+           );
 }
 
 pde_t CONST makeUserPDELargePageInvalid(void)
@@ -623,15 +623,15 @@ pde_t CONST makeUserPDELargePageInvalid(void)
 pde_t CONST makeUserPDEPageTableInvalid(void)
 {
     return pde_pde_small_new(
-                0,  /* pt_base_address  */
-                0,  /* avl              */
-                0,  /* accessed         */
-                0,  /* cache_disabled   */
-                0,  /* write_through    */
-                0,  /* super_user       */
-                0,  /* read_write       */
-                0   /* present          */
-            );
+               0,  /* pt_base_address  */
+               0,  /* avl              */
+               0,  /* accessed         */
+               0,  /* cache_disabled   */
+               0,  /* write_through    */
+               0,  /* super_user       */
+               0,  /* read_write       */
+               0   /* present          */
+           );
 }
 
 pte_t CONST makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
