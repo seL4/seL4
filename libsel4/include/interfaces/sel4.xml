@@ -173,5 +173,9 @@
     </interface>
     <interface name="seL4_SchedContext">
         <method id="SchedContextYield" name="Yield"/>
+        <method id="SchedContextBindTCB" name="BindTCB">
+            <param dir="in" name="tcb" type="seL4_CPtr" />
+        </method>
+        <method id ="SchedContextUnbindTCB" name="UnbindTCB" />
     </interface>
 </api>

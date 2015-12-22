@@ -50,20 +50,16 @@ They can also be reconfigured and
 reused or left suspended indefinitely if not needed. Threads will be
 automatically suspended when the last capability to their \obj{TCB} is
 deleted.
+When threads are suspended, any active IPCs or signals are cancelled.
 % an example of which is demonstrated in \nameref{ex:second_thread}.
 
-\subsection{Scheduling}
-\label{sec:sched}
+\subsection{Scheduling Contexts}
+\sec{sec:scheduling_contexts}
 
-seL4 uses a preemptive, tickless, rerservation-based scheduler with 256 priority levels (0 --- 255).
-Thread priority (structure \texttt{seL4\_Prio\_t}) consists of two values, priority and max-priority.
-When a thread creates or modifies another thread, it can only set the
-other thread's priority and max-priority to be lower than or equal to its own max-priority. Thread priority and max-priority can be
-set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
-\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMaxPriority}{tcb_setmaxpriority} methods.
-A thread's reservation is determined by its scheduling context, which can be adjusted with 
-\apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, and is expressed as a tuple of 
-\textit{budget (b)} and \textit{period (p)}, both in microseconds.
+Thread's access to CPU execution time is controlled through the scheduling context objects that they are 
+bound to. 
+Scheduling contexts consist of a a tuple of 
+\textit{budget (b)} and \textit{period (p)}, both in microseconds, set by \apifunc{seL4\_SchedContext\_Configure}.
 The tuple $(b, p)$ forms an upper bound on the thread's execution -- 
 the kernel will not permit a thread to run for more than $b$ out of every $p$ microseconds.
 However, $\frac{b}{p}$ does not represent a lower bound on execution, as a thread must have the highest or equal highest of all runnable threads to be guaranteed to be scheduled at all.
@@ -75,7 +71,28 @@ If more than one thread at the same priority has budget available, they will be 
 When a thread's budget expires, the next thread at that priority with budget available will be chosen by the scheduler.
 When $b = p$, $b$ simply acts as a timeslice for a thread in a round-robin scheduler, as the budget is always replenished immediately after it expires.
 
-The system call \apifunc{seL4\_Yield} can be used to sacrifice any remaining budget and block until the budget is replenished.
+The system call \apifunc{seL4\_SchedContext\_Yield} can be used to sacrifice any remaining budget and block until the budget is replenished.
+
+Threads can be bound to scheduling contexts using \apifunc{seL4\_TCB\_Configure}{tcb_configure} or 
+\apifunc{seL4\_SchedContext\_BindTCB}{schedcontext_bindtcb}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure} allows more thread fields to be set with only one kernel entry. 
+When a thread is bound to a scheduling context, if it is in a runnable state and the scheduling context has budget
+available, it will be added to the scheduler.
+
+Threads can be unbound from a scheduling context with 
+\apifunc{seL4\_SchedContext\_UnbindTCB}{schedcontext_unbindtcb}. 
+This is distinct from suspending a thread, in that threads that are blocked an endpoint or notification will remain 
+in the queue and can still recieve messages and signals. 
+However, the unbound thread will not be schedulable again until it receives a scheduling context.
+
+\subsection{Scheduling}
+\label{sec:sched}
+
+seL4 uses a preemptive, tickless, scheduler with 256 priority levels (0 --- 255).
+Thread priority (structure \texttt{seL4\_Prio\_t}) consists of two values, priority and max-priority.
+When a thread creates or modifies another thread, it can only set the
+other thread's priority and max-priority to be lower than or equal to its own max-priority. Thread priority and max-priority can be
+set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
+\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMaxPriority}{tcb_setmaxpriority} methods.
 
 \subsection{Exceptions}
 

@@ -165,11 +165,9 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
+            unbindSchedContext(tcb->tcbSchedContext);
             suspend(tcb);
-            if (tcb->tcbSchedContext) {
-                tcb->tcbSchedContext->tcb = NULL;
-                tcb->tcbSchedContext = NULL;
-            }
+
             Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =
                 Zombie_new(
@@ -187,12 +185,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             sched_context_t *sc;
 
             sc = SC_PTR(cap_sched_context_cap_get_capPtr(cap));
-            if (sc->tcb) {
-                /* tcb's without scheduling contexts are not schedulable */
-                suspend(sc->tcb);
-                sc->tcb->tcbSchedContext = NULL;
-                sc->tcb = NULL;
-            }
+            unbindSchedContext(sc);
 
             fc_ret.remainder = cap_null_cap_new();
             fc_ret.irq = irqInvalid;
@@ -713,7 +706,7 @@ decodeInvocation(word_t label, word_t length,
         return decodeSchedControlInvocation(label, length, extraCaps, buffer);
 
     case cap_sched_context_cap:
-        return decodeSchedContextInvocation(label, cap);
+        return decodeSchedContextInvocation(label, cap, extraCaps);
 
     default:
         fail("Invalid cap type");
