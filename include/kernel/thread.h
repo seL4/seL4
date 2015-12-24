@@ -29,6 +29,14 @@ l1index_to_prio(word_t l1index)
     return (l1index << wordRadix);
 }
 
+static inline PURE word_t
+highestPrio(void)
+{
+    word_t l1index = (wordBits - 1) - CLZL(ksReadyQueuesL1Bitmap);
+    word_t l2index = (wordBits - 1) - CLZL(ksReadyQueuesL2Bitmap[l1index]);
+    return l1index_to_prio(l1index) | l2index;
+}
+
 /* return true if the threads scheduling context's
  * period has expired and the budget is ready to be
  * recharged
@@ -52,7 +60,7 @@ void restart(tcb_t *target);
 void doIPCTransfer(tcb_t *sender, endpoint_t *endpoint,
                    word_t badge, bool_t grant, tcb_t *receiver,
                    bool_t diminish);
-void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot);
+void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *sc);
 void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                       word_t badge, bool_t canGrant, tcb_t *receiver,
                       word_t *receiveBuffer, bool_t diminish);
@@ -63,10 +71,11 @@ void schedule(void);
 void chooseThread(void);
 void switchToThread(tcb_t *thread) VISIBLE;
 void switchToIdleThread(void);
+void switchSchedContext(void) VISIBLE;
 void setPriority(tcb_t *tptr, seL4_Prio_t prio);
 void scheduleTCB(tcb_t *tptr);
-void attemptSwitchTo(tcb_t *tptr);
-void switchIfRequiredTo(tcb_t *tptr);
+void attemptSwitchTo(tcb_t *tptr, bool_t donate);
+void switchIfRequiredTo(tcb_t *tptr, bool_t donate);
 void setThreadState(tcb_t *tptr, _thread_state_t ts) VISIBLE;
 void updateTimestamp(void);
 bool_t checkBudget(void);

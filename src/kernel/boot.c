@@ -427,6 +427,7 @@ create_initial_thread(
 
     /* initialise current thread pointer */
     switchToThread(tcb); /* initialises ksCurThread */
+    ksCurSchedContext = tcb->tcbSchedContext;
 
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));

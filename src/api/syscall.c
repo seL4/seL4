@@ -239,7 +239,7 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 
 
 static exception_t
-handleInvocation(bool_t isCall, bool_t isBlocking)
+handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate)
 {
     message_info_t info;
     cptr_t cptr;
@@ -292,7 +292,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     }
     status = decodeInvocation(message_info_get_msgLabel(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
-                              current_extra_caps, isBlocking, isCall,
+                              current_extra_caps, isBlocking, isCall, canDonate,
                               buffer);
 
     if (unlikely(status == EXCEPTION_PREEMPTED)) {
@@ -336,7 +336,8 @@ handleReply(void)
         /* Haskell error:
          * "handleReply: caller must not be the current thread" */
         assert(caller != ksCurThread);
-        doReplyTransfer(ksCurThread, caller, callerSlot);
+        doReplyTransfer(ksCurThread, caller, callerSlot,
+                        SC_PTR(cap_reply_cap_get_schedcontext(callerCap)));
         return;
     }
 
@@ -352,12 +353,9 @@ handleReply(void)
 }
 
 static void
-handleRecv(bool_t isBlocking)
+handleRecv(bool_t isBlocking, bool_t canDonate, word_t epCPtr)
 {
-    word_t epCPtr;
     lookupCap_ret_t lu_ret;
-
-    epCPtr = getRegister(ksCurThread, capRegister);
 
     lu_ret = lookupCap(ksCurThread, epCPtr);
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
@@ -377,7 +375,7 @@ handleRecv(bool_t isBlocking)
         }
 
         deleteCallerCap(ksCurThread);
-        receiveIPC(ksCurThread, lu_ret.cap, isBlocking);
+        receiveIPC(ksCurThread, lu_ret.cap, isBlocking, canDonate);
         break;
 
     case cap_notification_cap: {
@@ -420,34 +418,50 @@ handleSyscall(syscall_t syscall)
     if (checkBudget()) {
         switch (syscall) {
         case SysSend:
-            ret = handleInvocation(false, true);
+            ret = handleInvocation(false, true, false);
             break;
 
         case SysNBSend:
-            ret = handleInvocation(false, false);
+            ret = handleInvocation(false, false, false);
             break;
 
         case SysCall:
-            ret = handleInvocation(true, true);
+            ret = handleInvocation(true, true, true);
             break;
 
-        case SysRecv:
-            handleRecv(true);
+        case SysRecv: {
+            word_t epCPtr = getRegister(ksCurThread, capRegister);
+            handleRecv(true, false, epCPtr);
             break;
+        }
 
         case SysReply:
             handleReply();
             break;
 
-        case SysReplyRecv:
+        case SysReplyRecv: {
+            word_t epCPtr = getRegister(ksCurThread, capRegister);
             handleReply();
-            handleRecv(true);
+            handleRecv(true, false, epCPtr);
             break;
+        }
 
-        case SysNBRecv:
-            handleRecv(false);
+        case SysNBRecv: {
+            word_t epCPtr = getRegister(ksCurThread, capRegister);
+            handleRecv(false, false, epCPtr);
             break;
+        }
 
+        case SysNBSendRecv:
+            ret = handleInvocation(false, false, true);
+            if (likely(ret == EXCEPTION_NONE)) {
+                word_t *buffer = lookupIPCBuffer(true, ksCurThread);
+                /* TODO do this offset better */
+                word_t epCPtr = buffer[1 + seL4_MsgMaxLength + 1 + seL4_MsgMaxExtraCaps + 3];
+                handleRecv(true, false, epCPtr);
+            }
+
+            break;
         default:
             fail("Invalid syscall");
         }

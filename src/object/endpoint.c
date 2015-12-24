@@ -32,7 +32,7 @@ reorderIPCQueue(tcb_t *thread, prio_t old_prio)
 
 
 void
-sendIPC(bool_t blocking, bool_t do_call, word_t badge,
+sendIPC(bool_t blocking, bool_t do_call, bool_t canDonate, word_t badge,
         bool_t canGrant, tcb_t *thread, endpoint_t *epptr)
 {
     switch (endpoint_ptr_get_state(epptr)) {
@@ -67,6 +67,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         tcb_queue_t queue;
         tcb_t *dest;
         bool_t diminish;
+        bool_t donated;
 
         /* Get the head of the endpoint queue. */
         queue = ep_ptr_get_queue(epptr);
@@ -89,12 +90,13 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         doIPCTransfer(thread, epptr, badge, canGrant, dest, diminish);
 
         setThreadState(dest, ThreadState_Running);
-        attemptSwitchTo(dest);
+        donated = canDonate && dest->tcbSchedContext == NULL;
+        attemptSwitchTo(dest, donated);
 
         if (do_call ||
                 fault_ptr_get_faultType(&thread->tcbFault) != fault_null_fault) {
             if (canGrant && !diminish) {
-                setupCallerCap(thread, dest);
+                setupCallerCap(thread, dest, donated ? dest->tcbSchedContext : NULL);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
@@ -106,7 +108,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
 }
 
 void
-receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
+receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate)
 {
     endpoint_t *epptr;
     bool_t diminish;
@@ -156,6 +158,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             word_t badge;
             bool_t canGrant;
             bool_t do_call;
+            bool_t doDonate;
 
             /* Get the head of the endpoint queue. */
             queue = ep_ptr_get_queue(epptr);
@@ -182,17 +185,18 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                           canGrant, thread, diminish);
 
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
+            doDonate = thread->tcbSchedContext == NULL && canDonate;
 
             if (do_call ||
                     fault_get_faultType(sender->tcbFault) != fault_null_fault) {
                 if (canGrant && !diminish) {
-                    setupCallerCap(sender, thread);
+                    setupCallerCap(sender, thread, doDonate ? sender->tcbSchedContext : 0);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }
             } else {
                 setThreadState(sender, ThreadState_Running);
-                switchIfRequiredTo(sender);
+                switchIfRequiredTo(sender, doDonate);
             }
 
             break;

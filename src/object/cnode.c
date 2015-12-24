@@ -507,6 +507,16 @@ cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
     destSlot->cteMDBNode = mdb;
     srcSlot->cteMDBNode = nullMDBNode;
 
+    /* a reply cap has no object to point to, so if a
+     * reply cap gets moved we need to update the back pointer in
+     * the scheduling context */
+    if (unlikely(cap_get_capType(newCap) == cap_reply_cap)) {
+        sched_context_t *sc = SC_PTR(cap_reply_cap_get_schedcontext(newCap));
+        if (sc) {
+            sc->replySlot = destSlot;
+        }
+    }
+
     prev_ptr = mdb_node_get_mdbPrev(mdb);
     if (prev_ptr)
         mdb_node_ptr_set_mdbNext(
@@ -853,7 +863,7 @@ setupReplyMaster(tcb_t *thread)
     if (cap_get_capType(slot->cap) == cap_null_cap) {
         /* Haskell asserts that no reply caps exist for this thread here. This
          * cannot be translated. */
-        slot->cap = cap_reply_cap_new(true, TCB_REF(thread));
+        slot->cap = cap_reply_cap_new(true, TCB_REF(thread), 0);
         slot->cteMDBNode = nullMDBNode;
         mdb_node_ptr_set_mdbRevocable(&slot->cteMDBNode, true);
         mdb_node_ptr_set_mdbFirstBadged(&slot->cteMDBNode, true);

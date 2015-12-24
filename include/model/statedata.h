@@ -20,6 +20,7 @@ extern tcb_queue_t ksReadyQueues[] VISIBLE;
 extern word_t ksReadyQueuesL1Bitmap VISIBLE;
 extern word_t ksReadyQueuesL2Bitmap[(CONFIG_NUM_PRIORITIES / wordBits) + 1] VISIBLE;
 extern tcb_t *ksCurThread VISIBLE;
+extern sched_context_t *ksCurSchedContext VISIBLE;
 extern tcb_t *ksIdleThread VISIBLE;
 extern tcb_t *ksSchedulerAction VISIBLE;
 extern word_t ksWorkUnitsCompleted;

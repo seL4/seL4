@@ -253,6 +253,12 @@ struct sched_context {
 
     /* tcb that is currently running on this scheduling context */
     tcb_t *tcb;
+
+    /* if this scheduling context was donated over IPC, this field stores the pointer
+     * to the reply cap over which the donation occured, so that the scheduling context
+     * can get back to the original caller even if a different thread replies on
+     * behalf of the caller */
+    cte_t *replySlot;
 };
 
 /* Ensure object sizes are sane */

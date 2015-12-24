@@ -337,7 +337,7 @@ tcbEPReorder(tcb_t *tcb, tcb_queue_t queue, prio_t oldPrio)
         /* move tcb up in the queue */
         tcb_t *prev = tcb->tcbEPPrev;
 
-        if (prev == NULL || newPrio < prev->tcbPriority) {
+        if (prev == NULL || newPrio <= prev->tcbPriority) {
             /* nothing to do, tcb is at head of the list or in the right place */
             return queue;
         }
@@ -424,7 +424,7 @@ setExtraBadge(word_t *bufferPtr, word_t badge,
 }
 
 void
-setupCallerCap(tcb_t *sender, tcb_t *receiver)
+setupCallerCap(tcb_t *sender, tcb_t *receiver, sched_context_t *donated)
 {
     cte_t *replySlot, *callerSlot;
     cap_t masterCap UNUSED, callerCap UNUSED;
@@ -440,8 +440,11 @@ setupCallerCap(tcb_t *sender, tcb_t *receiver)
     callerCap = callerSlot->cap;
     /* Haskell error: "Caller cap must not already exist" */
     assert(cap_get_capType(callerCap) == cap_null_cap);
-    cteInsert(cap_reply_cap_new(false, TCB_REF(sender)),
+    cteInsert(cap_reply_cap_new(false, TCB_REF(sender), SC_REF(donated)),
               replySlot, callerSlot);
+    if (donated) {
+        donated->replySlot = callerSlot;
+    }
 }
 
 void

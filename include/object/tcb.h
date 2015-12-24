@@ -14,6 +14,7 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
+#include <object/schedcontext.h>
 
 #include <arch/object/tcb.h>
 #include <object/cnode.h>
@@ -41,7 +42,7 @@ tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPReorder(tcb_t *tcb, tcb_queue_t queue, prio_t oldPrio);
 
-void setupCallerCap(tcb_t *sender, tcb_t *receiver);
+void setupCallerCap(tcb_t *sender, tcb_t *receiver, sched_context_t *sched_context);
 void deleteCallerCap(tcb_t *receiver);
 
 word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,

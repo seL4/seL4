@@ -86,6 +86,11 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
+    /* Only hit the fastpath if we will stay on the same scheduling context */
+    if (unlikely(dest->tcbSchedContext != NULL)) {
+        slowpath(SysCall);
+    }
+
     /* Ensure that the endpoint has standard non-diminishing rights. */
     if (unlikely(!cap_endpoint_cap_get_capCanGrant(ep_cap) ||
                  thread_state_ptr_get_blockingIPCDiminishCaps(&dest->tcbState))) {
@@ -245,6 +250,10 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
+    if (unlikely(caller->tcbSchedContext != NULL)) {
+        slowpath(SysReplyRecv);
+    }
+
 #ifdef ARCH_ARM
     /* Ensure the HWASID is valid. */
     if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
@@ -288,6 +297,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
         &CTE_PTR(mdb_node_get_mdbPrev(callerSlot->cteMDBNode))->cteMDBNode,
         0, 1, 1);
+    ksCurSchedContext->replySlot = NULL;
     callerSlot->cap = cap_null_cap_new();
     callerSlot->cteMDBNode = nullMDBNode;
 

@@ -70,7 +70,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 cancelIPC(tcb);
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
-                switchIfRequiredTo(tcb);
+                switchIfRequiredTo(tcb, false);
             } else {
                 ntfn_set_active(ntfnPtr, badge);
             }
@@ -100,7 +100,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
 
         setThreadState(dest, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
-        switchIfRequiredTo(dest);
+        switchIfRequiredTo(dest, false);
         break;
     }
 
