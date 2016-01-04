@@ -11,7 +11,7 @@
 #ifndef __API_CONSTANTS_H
 #define __API_CONSTANTS_H
 
-#define BIT(n) (1ul<<(n))
+#define LIBSEL4_BIT(n) (1ul<<(n))
 
 enum priorityConstants {
     seL4_InvalidPrio = -1,
@@ -29,6 +29,6 @@ enum seL4_MsgLimits {
 enum {
     seL4_MsgMaxLength = 120,
 };
-#define seL4_MsgMaxExtraCaps (BIT(seL4_MsgExtraCapBits)-1)
+#define seL4_MsgMaxExtraCaps (LIBSEL4_BIT(seL4_MsgExtraCapBits)-1)
 
 #endif /* __API_CONSTANTS_H */
