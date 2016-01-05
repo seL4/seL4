@@ -17,15 +17,15 @@
 bool_t
 handleFaultReply(tcb_t *receiver, tcb_t *sender)
 {
-    message_info_t tag;
+    seL4_MessageInfo_t tag;
     word_t label;
     fault_t fault;
     word_t length;
 
     /* These lookups are moved inward from doReplyTransfer */
     tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));
-    label = message_info_get_msgLabel(tag);
-    length = message_info_get_msgLength(tag);
+    label = seL4_MessageInfo_get_label(tag);
+    length = seL4_MessageInfo_get_length(tag);
     fault = receiver->tcbFault;
 
     switch (fault_get_faultType(fault)) {

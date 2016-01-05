@@ -35,7 +35,7 @@ performPageGetAddress(void *vbase_ptr)
     /* return it in the first message register */
     setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
     setRegister(ksCurThread, msgInfoRegister,
-                wordFromMessageInfo(message_info_new(0, 0, 0, 1)));
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
 
     return EXCEPTION_NONE;
 }
@@ -738,15 +738,15 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 }
 
 exception_t decodeX86FrameInvocation(
-    word_t label,
+    word_t invLabel,
     word_t length,
     cte_t* cte,
     cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
-    switch (label) {
+    switch (invLabel) {
     case IA32PageMap: { /* Map */
         word_t          vaddr;
         word_t          vtop;
@@ -760,7 +760,7 @@ exception_t decodeX86FrameInvocation(
         vm_page_size_t  frameSize;
         asid_t          asid;
 
-        if (length < 3 || extraCaps.excaprefs[0] == NULL) {
+        if (length < 3 || excaps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -770,7 +770,7 @@ exception_t decodeX86FrameInvocation(
         vaddr = getSyscallArg(0, buffer) & (~MASK(pageBitsForSize(frameSize)));
         w_rightsMask = getSyscallArg(1, buffer);
         vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        vspaceCap = extraCaps.excaprefs[0]->cap;
+        vspaceCap = excaps.excaprefs[0]->cap;
 
         capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
@@ -908,7 +908,7 @@ exception_t decodeX86FrameInvocation(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+        if (length < 2 || excaps.excaprefs[0] == NULL) {
             userError("IA32FrameRemap: Truncated message");
             current_syscall_error.type = seL4_TruncatedMessage;
 
@@ -917,7 +917,7 @@ exception_t decodeX86FrameInvocation(
 
         w_rightsMask = getSyscallArg(0, buffer);
         vmAttr = vmAttributesFromWord(getSyscallArg(1, buffer));
-        vspaceCap = extraCaps.excaprefs[0]->cap;
+        vspaceCap = excaps.excaprefs[0]->cap;
 
         if (!isValidNativeRoot(vspaceCap)) {
             userError("IA32FrameRemap: Attempting to map frame into invalid page directory.");
@@ -1021,7 +1021,7 @@ exception_t decodeX86FrameInvocation(
     case IA32PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
             if (isIOSpaceFrame(cap)) {
-                return decodeIA32IOUnMapInvocation(label, length, cte, cap, extraCaps);
+                return decodeIA32IOUnMapInvocation(invLabel, length, cte, cap, excaps);
             }
             unmapPage(
                 cap_frame_cap_get_capFSize(cap),
@@ -1038,7 +1038,7 @@ exception_t decodeX86FrameInvocation(
     }
 
     case IA32PageMapIO: { /* MapIO */
-        return decodeIA32IOMapInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeIA32IOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
     }
 
     case IA32PageGetAddress: {
@@ -1058,10 +1058,10 @@ exception_t decodeX86FrameInvocation(
 
 static exception_t
 decodeX86PageTableInvocation(
-    word_t label,
+    word_t invLabel,
     word_t length,
     cte_t* cte, cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
@@ -1074,7 +1074,7 @@ decodeX86PageTableInvocation(
     paddr_t         paddr;
     asid_t          asid;
 
-    if (label == IA32PageTableUnmap) {
+    if (invLabel == IA32PageTableUnmap) {
         if (! isFinalCapability(cte)) {
             current_syscall_error.type = seL4_RevokeFirst;
             userError("IA32PageTable: Cannot unmap if more than one cap exists.");
@@ -1096,13 +1096,13 @@ decodeX86PageTableInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (label != IA32PageTableMap ) {
+    if (invLabel != IA32PageTableMap ) {
         userError("IA32PageTable: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 2 || excaps.excaprefs[0] == NULL) {
         userError("IA32PageTable: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1119,7 +1119,7 @@ decodeX86PageTableInvocation(
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(PT_BITS + PAGE_BITS));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    vspaceCap = extraCaps.excaprefs[0]->cap;
+    vspaceCap = excaps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -1189,22 +1189,22 @@ decodeX86PageTableInvocation(
 }
 
 exception_t decodeX86MMUInvocation(
-    word_t label,
+    word_t invLabel,
     word_t length,
     cptr_t cptr,
     cte_t* cte,
     cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
     switch (cap_get_capType(cap)) {
 
     case cap_frame_cap:
-        return decodeX86FrameInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeX86FrameInvocation(invLabel, length, cte, cap, excaps, buffer);
 
     case cap_page_table_cap:
-        return decodeX86PageTableInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeX86PageTableInvocation(invLabel, length, cte, cap, excaps, buffer);
 
     case cap_asid_control_cap: {
         word_t     i;
@@ -1219,23 +1219,23 @@ exception_t decodeX86MMUInvocation(
         void*            frame;
         exception_t      status;
 
-        if (label != IA32ASIDControlMakePool) {
+        if (invLabel != IA32ASIDControlMakePool) {
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (length < 2 || extraCaps.excaprefs[0] == NULL
-                || extraCaps.excaprefs[1] == NULL) {
+        if (length < 2 || excaps.excaprefs[0] == NULL
+                || excaps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = extraCaps.excaprefs[0];
+        parentSlot = excaps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = extraCaps.excaprefs[1]->cap;
+        root = excaps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && x86KSASIDTable[i]; i++);
@@ -1287,18 +1287,18 @@ exception_t decodeX86MMUInvocation(
         word_t i;
         asid_t       asid;
 
-        if (label != IA32ASIDPoolAssign) {
+        if (invLabel != IA32ASIDPoolAssign) {
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (extraCaps.excaprefs[0] == NULL) {
+        if (excaps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspaceCapSlot = extraCaps.excaprefs[0];
+        vspaceCapSlot = excaps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
         if (!isVTableRoot(vspaceCap) ||
@@ -1341,6 +1341,6 @@ exception_t decodeX86MMUInvocation(
     }
 
     default:
-        return decodeX86ModeMMUInvocation(label, length, cptr, cte, cap, extraCaps, buffer);
+        return decodeX86ModeMMUInvocation(invLabel, length, cptr, cte, cap, excaps, buffer);
     }
 }

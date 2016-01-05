@@ -22,8 +22,8 @@
 #include <machine/registerset.h>
 #include <arch/linker.h>
 
-static message_info_t
-transferCaps(message_info_t info, extra_caps_t caps,
+static seL4_MessageInfo_t
+transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
              word_t *receiveBuffer, bool_t diminish);
 
@@ -159,7 +159,7 @@ doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                  word_t *receiveBuffer, bool_t diminish)
 {
     word_t msgTransferred;
-    message_info_t tag;
+    seL4_MessageInfo_t tag;
     exception_t status;
     extra_caps_t caps;
 
@@ -177,11 +177,11 @@ doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
     }
 
     msgTransferred = copyMRs(sender, sendBuffer, receiver, receiveBuffer,
-                             message_info_get_msgLength(tag));
+                             seL4_MessageInfo_get_length(tag));
 
     tag = transferCaps(tag, caps, endpoint, receiver, receiveBuffer, diminish);
 
-    tag = message_info_set_msgLength(tag, msgTransferred);
+    tag = seL4_MessageInfo_set_length(tag, msgTransferred);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(tag));
     setRegister(receiver, badgeRegister, badge);
 }
@@ -191,26 +191,26 @@ doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
                 word_t *receiverIPCBuffer)
 {
     word_t sent;
-    message_info_t msgInfo;
+    seL4_MessageInfo_t msgInfo;
 
     sent = setMRs_fault(sender, receiver, receiverIPCBuffer);
-    msgInfo = message_info_new(
+    msgInfo = seL4_MessageInfo_new(
                   fault_get_faultType(sender->tcbFault), 0, 0, sent);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(msgInfo));
     setRegister(receiver, badgeRegister, badge);
 }
 
 /* Like getReceiveSlots, this is specialised for single-cap transfer. */
-static message_info_t
-transferCaps(message_info_t info, extra_caps_t caps,
+static seL4_MessageInfo_t
+transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
              word_t *receiveBuffer, bool_t diminish)
 {
     word_t i;
     cte_t* destSlot;
 
-    info = message_info_set_msgExtraCaps(info, 0);
-    info = message_info_set_msgCapsUnwrapped(info, 0);
+    info = seL4_MessageInfo_set_extraCaps(info, 0);
+    info = seL4_MessageInfo_set_capsUnwrapped(info, 0);
 
     if (likely(!caps.excaprefs[0] || !receiveBuffer)) {
         return info;
@@ -229,8 +229,8 @@ transferCaps(message_info_t info, extra_caps_t caps,
             setExtraBadge(receiveBuffer,
                           cap_endpoint_cap_get_capEPBadge(cap), i);
 
-            info = message_info_set_msgCapsUnwrapped(info,
-                                                     message_info_get_msgCapsUnwrapped(info) | (1 << i));
+            info = seL4_MessageInfo_set_capsUnwrapped(info,
+                                                      seL4_MessageInfo_get_capsUnwrapped(info) | (1 << i));
 
         } else {
             deriveCap_ret_t dc_ret;
@@ -258,7 +258,7 @@ transferCaps(message_info_t info, extra_caps_t caps,
         }
     }
 
-    return message_info_set_msgExtraCaps(info, i);
+    return seL4_MessageInfo_set_extraCaps(info, i);
 }
 
 void doNBRecvFailedTransfer(tcb_t *thread)

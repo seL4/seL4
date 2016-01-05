@@ -534,12 +534,12 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
 exception_t
 Arch_decodeInvocation(
-    word_t label,
+    word_t invLabel,
     word_t length,
     cptr_t cptr,
     cte_t* slot,
     cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
@@ -548,17 +548,17 @@ Arch_decodeInvocation(
     case cap_page_directory_cap:
     case cap_page_table_cap:
     case cap_frame_cap:
-        return decodeX86MMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+        return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
 
     case cap_asid_control_cap:
     case cap_asid_pool_cap:
-        return decodeX86MMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+        return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_port_cap:
-        return decodeIA32PortInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+        return decodeIA32PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_space_cap:
-        return decodeIA32IOSpaceInvocation(label, cap);
+        return decodeIA32IOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
-        return decodeIA32IOPTInvocation(label, length, slot, cap, extraCaps, buffer);
+        return decodeIA32IOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
 
     default:
         current_syscall_error.type = seL4_InvalidCapability;

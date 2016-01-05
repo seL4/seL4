@@ -27,9 +27,9 @@ bool_t CONST Arch_hasRecycleRights(cap_t cap);
 bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b);
 bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b);
 cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize);
-exception_t Arch_decodeInvocation(word_t label, word_t length,
+exception_t Arch_decodeInvocation(word_t invLabel, word_t length,
                                   cptr_t cptr, cte_t *slot, cap_t cap,
-                                  extra_caps_t extraCaps, word_t *buffer);
+                                  extra_caps_t excaps, word_t *buffer);
 void Arch_prepareThreadDelete(tcb_t *thread);
 word_t Arch_getObjectSize(word_t t);
 

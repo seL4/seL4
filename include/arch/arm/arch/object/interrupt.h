@@ -16,6 +16,6 @@
 #include <object/structures.h>
 
 exception_t Arch_decodeInterruptControl(word_t length,
-                                        extra_caps_t extraCaps);
+                                        extra_caps_t excaps);
 
 #endif

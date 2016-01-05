@@ -220,7 +220,7 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 static exception_t
 handleInvocation(bool_t isCall, bool_t isBlocking)
 {
-    message_info_t info;
+    seL4_MessageInfo_t info;
     cptr_t cptr;
     lookupCapAndSlot_ret_t lu_ret;
     word_t *buffer;
@@ -238,7 +238,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
 
 #ifdef DEBUG
     ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
-    ksKernelEntry.invocation_tag = message_info_get_msgLabel(info);
+    ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
 #endif /* DEBUG */
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
@@ -265,11 +265,11 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     }
 
     /* Syscall error/Preemptible section */
-    length = message_info_get_msgLength(info);
+    length = seL4_MessageInfo_get_length(info);
     if (unlikely(length > n_msgRegisters && !buffer)) {
         length = n_msgRegisters;
     }
-    status = decodeInvocation(message_info_get_msgLabel(info), length,
+    status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
                               current_extra_caps, isBlocking, isCall,
                               buffer);

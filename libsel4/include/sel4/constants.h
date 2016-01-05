@@ -19,7 +19,7 @@ enum priorityConstants {
     seL4_MaxPrio = CONFIG_NUM_PRIORITIES - 1
 };
 
-/* message_info_t defined in api/types.bf */
+/* seL4_MessageInfo_t defined in api/shared_types.bf */
 
 enum seL4_MsgLimits {
     seL4_MsgLengthBits = 7,

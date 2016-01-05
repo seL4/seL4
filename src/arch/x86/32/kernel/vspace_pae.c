@@ -315,11 +315,11 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 
 exception_t
 decodeIA32PageDirectoryInvocation(
-    word_t label,
+    word_t invLabel,
     word_t length,
     cte_t* cte,
     cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
@@ -333,7 +333,7 @@ decodeIA32PageDirectoryInvocation(
     asid_t          asid;
     cap_t           threadRoot;
 
-    if (label == IA32PageDirectoryUnmap) {
+    if (invLabel == IA32PageDirectoryUnmap) {
         if (!isFinalCapability(cte)) {
             current_syscall_error.type = seL4_RevokeFirst;
             userError("IA32PageDirectory: Cannot unmap if more than one cap exists.");
@@ -355,13 +355,13 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (label != IA32PageDirectoryMap) {
+    if (invLabel != IA32PageDirectoryMap) {
         userError("IA32PageDirectory: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 2 || excaps.excaprefs[0] == NULL) {
         userError("IA32PageDirectory: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -376,7 +376,7 @@ decodeIA32PageDirectoryInvocation(
 
     vaddr = getSyscallArg(0, buffer) & (~MASK(X86_1G_bits));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    vspaceCap = extraCaps.excaprefs[0]->cap;
+    vspaceCap = excaps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;

@@ -18,10 +18,3 @@ block cap_rights {
     field capAllowWrite 1
 }
 
--- Message info word
-block message_info {
-    field msgLabel 20
-    field msgCapsUnwrapped 3
-    field msgExtraCaps 2
-    field msgLength 7
-}
