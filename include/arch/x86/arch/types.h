@@ -25,4 +25,8 @@ typedef word_t dev_id_t;
 typedef word_t cpu_id_t;
 typedef word_t node_id_t;
 
+/* for libsel4 headers that the kernel shares */
+typedef word_t seL4_Word;
+typedef uint32_t seL4_Uint32;
+
 #endif

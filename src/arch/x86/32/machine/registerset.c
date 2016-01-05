@@ -17,7 +17,7 @@ const register_t msgRegisters[] = {
 };
 
 const register_t frameRegisters[] = {
-    FaultEIP, ESP, EFLAGS, EAX, EBX, ECX, EDX, ESI, EDI, EBP
+    FaultIP, ESP, EFLAGS, EAX, EBX, ECX, EDX, ESI, EDI, EBP
 };
 
 const register_t gpRegisters[] = {
@@ -25,11 +25,11 @@ const register_t gpRegisters[] = {
 };
 
 const register_t exceptionMessage[] = {
-    FaultEIP, ESP, EFLAGS
+    FaultIP, ESP, EFLAGS
 };
 
 const register_t syscallMessage[] = {
-    EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextEIP, ESP, EFLAGS
+    EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextIP, ESP, EFLAGS
 };
 
 void Arch_initContext(user_context_t* context)
@@ -47,8 +47,8 @@ void Arch_initContext(user_context_t* context)
     context->registers[GS] = SEL_NULL;
     context->registers[TLS_BASE] = 0;
     context->registers[Error] = 0;
-    context->registers[FaultEIP] = 0;
-    context->registers[NextEIP] = 0;            /* overwritten by setNextPC() later on */
+    context->registers[FaultIP] = 0;
+    context->registers[NextIP] = 0;            /* overwritten by setNextPC() later on */
     context->registers[CS] = SEL_CS_3;
     context->registers[EFLAGS] = BIT(9) | BIT(1); /* enable interrupts and set bit 1 which is always 1 */
     context->registers[ESP] = 0;                /* userland has to set it after entry */

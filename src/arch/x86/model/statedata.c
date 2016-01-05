@@ -18,18 +18,18 @@
 /* ==== read/write kernel state not preserved across kernel entries ==== */
 
 /* Interrupt currently being handled */
-interrupt_t ia32KScurInterrupt VISIBLE;
+interrupt_t x86KScurInterrupt VISIBLE;
 
 /* ==== proper read/write kernel state ==== */
 
 /* Task State Segment (TSS), contains currently running TCB in ESP0 */
-tss_t ia32KStss VISIBLE;
+tss_t x86KStss VISIBLE;
 
 /* Global Descriptor Table (GDT) */
-gdt_entry_t ia32KSgdt[GDT_ENTRIES];
+gdt_entry_t x86KSgdt[GDT_ENTRIES];
 
 /* The top level ASID table */
-asid_pool_t* ia32KSASIDTable[BIT(asidHighBits)];
+asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
 
 /*
  * Current thread whose state is installed in the FPU, or NULL if
@@ -39,25 +39,17 @@ tcb_t *ia32KSfpuOwner VISIBLE;
 
 /* ==== read-only kernel state (only written during bootstrapping) ==== */
 
-/* The privileged kernel mapping PD & PT */
-pdpte_t ia32KSGlobalPDPT[BIT(PDPT_BITS)] ALIGN(BIT(PDPT_SIZE_BITS));
-pde_t ia32KSGlobalPD[BIT(PD_BITS + PDPT_BITS)] ALIGN(BIT(PD_SIZE_BITS));
-pte_t ia32KSGlobalPT[BIT(PT_BITS)] ALIGN(BIT(PT_SIZE_BITS));
-
 /* CPU Cache Line Size */
-uint32_t ia32KScacheLineSizeBits;
+uint32_t x86KScacheLineSizeBits;
 
 /* Interrupt Descriptor Table (IDT) */
-idt_entry_t ia32KSidt[IDT_ENTRIES];
+idt_entry_t x86KSidt[IDT_ENTRIES];
 
 /* A valid initial FPU state, copied to every new thread. */
 user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 
-/* Current active page directory. This is really just a shadow of CR3 */
-paddr_t ia32KSCurrentPD VISIBLE;
-
 /* frequency of the tsc */
-uint32_t ia32KStscMhz;
+uint32_t x86KStscMhz;
 
 /* Number of IOMMUs (DMA Remapping Hardware Units) */
 uint32_t ia32KSnumDrhu;

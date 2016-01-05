@@ -12,7 +12,7 @@
 
 void
 #ifdef ARCH_X86
-FASTCALL NORETURN
+NORETURN
 #endif
 fastpath_call(word_t cptr, word_t msgInfo)
 {
@@ -105,8 +105,8 @@ fastpath_call(word_t cptr, word_t msgInfo)
      */
 
 #ifdef ARCH_X86
-    /* Need to update NextEIP in the calling thread */
-    setRegister(ksCurThread, NextEIP, getRegister(ksCurThread, NextEIP) + 2);
+    /* Need to update NextIP in the calling thread */
+    setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
 #endif
 
     /* Dequeue the destination. */
@@ -147,9 +147,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
 }
 
 void
-#ifdef ARCH_IA32
-FASTCALL
-#endif
 fastpath_reply_recv(word_t cptr, word_t msgInfo)
 {
     message_info_t info;
@@ -259,8 +256,8 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
      */
 
 #ifdef ARCH_X86
-    /* Need to update NextEIP in the calling thread */
-    setRegister(ksCurThread, NextEIP, getRegister(ksCurThread, NextEIP) + 2);
+    /* Need to update NextIP in the calling thread */
+    setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
 #endif
 
     /* Set thread state to BlockedOnReceive */

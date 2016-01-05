@@ -40,7 +40,7 @@
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 /* size of kernel log buffer in bytes */
-#define seL4_LogBufferSize (BIT(seL4_LargePageBits))
+#define seL4_LogBufferSize (LIBSEL4_BIT(seL4_LargePageBits))
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
 #endif

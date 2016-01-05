@@ -8,7 +8,4 @@
 # @TAG(GD_GPL)
 #
 
-ARCH_C_SOURCES += 32/kernel/vspace_32paging.c \
-                  32/kernel/vspace_pae.c \
-                  32/kernel/thread.c \
-                  32/kernel/vspace.c
+ARCH_C_SOURCES += 32/model/statedata.c

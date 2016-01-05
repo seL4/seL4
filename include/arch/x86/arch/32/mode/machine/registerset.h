@@ -43,13 +43,13 @@ enum _register {
 
     /* virtual registers (not actually present in hardware) */
 
-    /* 0x2C */  FaultEIP = 11,
+    /* 0x2C */  FaultIP  = 11,
     /* 0x30 */  TLS_BASE = 12,
 
     /* values pushed by the CPU directly */
 
     /* 0x34 */  Error    = 13,
-    /* 0x38 */  NextEIP  = 14,
+    /* 0x38 */  NextIP   = 14,
     /* 0x3C */  CS       = 15,
     /* 0x40 */  EFLAGS   = 16,
     /* 0x44 */  ESP      = 17,

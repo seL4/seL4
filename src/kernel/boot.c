@@ -420,13 +420,10 @@ create_initial_thread(
     tcb->tcbMaxPriority = seL4_MaxPrio;
     setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
-    ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
+    ksSchedulerAction = tcb;
     ksReprogram = true;
     ksReleaseHead = NULL;
     ksCurThread = ksIdleThread;
-
-    /* initialise current thread pointer */
-    switchToThread(tcb); /* initialises ksCurThread */
 
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));

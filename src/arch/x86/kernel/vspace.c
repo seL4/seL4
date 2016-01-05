@@ -16,195 +16,161 @@
 #include <arch/kernel/vspace.h>
 #include <arch/api/invocation.h>
 
-struct lookupPTSlot_ret {
-    exception_t status;
-    pte_t*      ptSlot;
-};
-typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
 
-/* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
- * It is only used in init_drts(), which therefore is non-reentrant.
- */
-gdt_idt_ptr_t gdt_idt_ptr;
-
-/* initialise the Task State Segment (TSS) */
-
-BOOT_CODE static void
-init_tss(tss_t* tss)
+static inline bool_t
+checkVPAlignment(vm_page_size_t sz, word_t w)
 {
-    tss_ptr_new(
-        tss,
-        MASK(16),       /* io_map_base  */
-        0,              /* trap         */
-        SEL_NULL,       /* sel_ldt      */
-        SEL_NULL,       /* gs           */
-        SEL_NULL,       /* fs           */
-        SEL_NULL,       /* ds           */
-        SEL_NULL,       /* ss           */
-        SEL_NULL,       /* cs           */
-        SEL_NULL,       /* es           */
-        0,              /* edi          */
-        0,              /* esi          */
-        0,              /* ebp          */
-        0,              /* esp          */
-        0,              /* ebx          */
-        0,              /* edx          */
-        0,              /* ecx          */
-        0,              /* eax          */
-        0,              /* eflags       */
-        0,              /* eip          */
-        0,              /* cr3          */
-        SEL_NULL,       /* ss2          */
-        0,              /* esp2         */
-        SEL_NULL,       /* ss1          */
-        0,              /* esp1         */
-        SEL_DS_0,       /* ss0          */
-        0,              /* esp0         */
-        0               /* prev_task    */
+    return IS_ALIGNED(w, pageBitsForSize(sz));
+}
+
+
+static exception_t
+performPageGetAddress(void *vbase_ptr)
+{
+    paddr_t capFBasePtr;
+
+    /* Get the physical address of this frame. */
+    capFBasePtr = pptr_to_paddr(vbase_ptr);
+
+    /* return it in the first message register */
+    setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
+    setRegister(ksCurThread, msgInfoRegister,
+                wordFromMessageInfo(message_info_new(0, 0, 0, 1)));
+
+    return EXCEPTION_NONE;
+}
+
+
+void deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
+{
+    /* Haskell error: "ASID pool's base must be aligned" */
+    assert(IS_ALIGNED(asid_base, asidLowBits));
+
+    if (x86KSASIDTable[asid_base >> asidLowBits] == pool) {
+        x86KSASIDTable[asid_base >> asidLowBits] = NULL;
+        setVMRoot(ksCurThread);
+    }
+}
+
+exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent, asid_t asid_base)
+{
+    memzero(frame, 1 << pageBitsForSize(IA32_SmallPage));
+    cteInsert(
+        cap_asid_pool_cap_new(
+            asid_base,          /* capASIDBase  */
+            WORD_REF(frame)     /* capASIDPool  */
+        ),
+        parent,
+        slot
     );
-}
-/* initialise Global Descriptor Table (GDT) */
+    /* Haskell error: "ASID pool's base must be aligned" */
+    assert((asid_base & MASK(asidLowBits)) == 0);
+    x86KSASIDTable[asid_base >> asidLowBits] = (asid_pool_t*)frame;
 
-BOOT_CODE static void
-init_gdt(gdt_entry_t* gdt, tss_t* tss)
-{
-    uint32_t tss_addr = (uint32_t)tss;
-
-    /* Set the NULL descriptor */
-    gdt[GDT_NULL] = gdt_entry_gdt_null_new();
-
-    /* 4GB flat kernel code segment on ring 0 descriptor */
-    gdt[GDT_CS_0] = gdt_entry_gdt_code_new(
-                        0,      /* Base high 8 bits             */
-                        1,      /* Granularity                  */
-                        1,      /* Operation size               */
-                        0,      /* Available                    */
-                        0xf,    /* Segment limit high 4 bits    */
-                        1,      /* Present                      */
-                        0,      /* Descriptor privilege level   */
-                        1,      /* readable                     */
-                        1,      /* accessed                     */
-                        0,      /* Base middle 8 bits           */
-                        0,      /* Base low 16 bits             */
-                        0xffff  /* Segment limit low 16 bits    */
-                    );
-
-    /* 4GB flat kernel data segment on ring 0 descriptor */
-    gdt[GDT_DS_0] = gdt_entry_gdt_data_new(
-                        0,      /* Base high 8 bits             */
-                        1,      /* Granularity                  */
-                        1,      /* Operation size               */
-                        0,      /* Available                    */
-                        0xf,    /* Segment limit high 4 bits    */
-                        1,      /* Present                      */
-                        0,      /* Descriptor privilege level   */
-                        1,      /* writable                     */
-                        1,      /* accessed                     */
-                        0,      /* Base middle 8 bits           */
-                        0,      /* Base low 16 bits             */
-                        0xffff  /* Segment limit low 16 bits    */
-                    );
-
-    /* 4GB flat userland code segment on ring 3 descriptor */
-    gdt[GDT_CS_3] = gdt_entry_gdt_code_new(
-                        0,      /* Base high 8 bits             */
-                        1,      /* Granularity                  */
-                        1,      /* Operation size               */
-                        0,      /* Available                    */
-                        0xf,    /* Segment limit high 4 bits    */
-                        1,      /* Present                      */
-                        3,      /* Descriptor privilege level   */
-                        1,      /* readable                     */
-                        1,      /* accessed                     */
-                        0,      /* Base middle 8 bits           */
-                        0,      /* Base low 16 bits             */
-                        0xffff  /* Segment limit low 16 bits    */
-                    );
-
-    /* 4GB flat userland data segment on ring 3 descriptor */
-    gdt[GDT_DS_3] = gdt_entry_gdt_data_new(
-                        0,      /* Base high 8 bits             */
-                        1,      /* Granularity                  */
-                        1,      /* Operation size               */
-                        0,      /* Available                    */
-                        0xf,    /* Segment limit high 4 bits    */
-                        1,      /* Present                      */
-                        3,      /* Descriptor privilege level   */
-                        1,      /* writable                     */
-                        1,      /* accessed                     */
-                        0,      /* Base middle 8 bits           */
-                        0,      /* Base low 16 bits             */
-                        0xffff  /* Segment limit low 16 bits    */
-                    );
-
-    /* Task State Segment (TSS) descriptor */
-    gdt[GDT_TSS] = gdt_entry_gdt_tss_new(
-                       tss_addr >> 24,            /* base_high 8 bits     */
-                       0,                           /* granularity          */
-                       0,                           /* avl                  */
-                       0,                           /* limit_high 4 bits    */
-                       1,                           /* present              */
-                       0,                           /* dpl                  */
-                       0,                           /* busy                 */
-                       1,                           /* always_true          */
-                       (tss_addr >> 16) & 0xff,     /* base_mid 8 bits      */
-                       (tss_addr & 0xffff),         /* base_low 16 bits     */
-                       sizeof(tss_t) - 1            /* limit_low 16 bits    */
-                   );
-
-    /* pre-init the userland data segment used for TLS */
-    gdt[GDT_TLS] = gdt_entry_gdt_data_new(
-                       0,      /* Base high 8 bits             */
-                       1,      /* Granularity                  */
-                       1,      /* Operation size               */
-                       0,      /* Available                    */
-                       0xf,    /* Segment limit high 4 bits    */
-                       1,      /* Present                      */
-                       3,      /* Descriptor privilege level   */
-                       1,      /* writable                     */
-                       1,      /* accessed                     */
-                       0,      /* Base middle 8 bits           */
-                       0,      /* Base low 16 bits             */
-                       0xffff  /* Segment limit low 16 bits    */
-                   );
-
-    /* pre-init the userland data segment used for the IPC buffer */
-    gdt[GDT_IPCBUF] = gdt_entry_gdt_data_new(
-                          0,      /* Base high 8 bits             */
-                          1,      /* Granularity                  */
-                          1,      /* Operation size               */
-                          0,      /* Available                    */
-                          0xf,    /* Segment limit high 4 bits    */
-                          1,      /* Present                      */
-                          3,      /* Descriptor privilege level   */
-                          1,      /* writable                     */
-                          1,      /* accessed                     */
-                          0,      /* Base middle 8 bits           */
-                          0,      /* Base low 16 bits             */
-                          0xffff  /* Segment limit low 16 bits    */
-                      );
+    return EXCEPTION_NONE;
 }
 
-/* initialise the Interrupt Descriptor Table (IDT) */
-
-BOOT_CODE static void
-init_idt_entry(idt_entry_t* idt, interrupt_t interrupt, void(*handler)(void))
+void deleteASID(asid_t asid, void* vspace)
 {
-    uint32_t handler_addr = (uint32_t)handler;
-    uint32_t dpl = 3;
+    asid_pool_t* poolPtr;
 
-    if (interrupt < int_trap_min) {
-        dpl = 0;
+    poolPtr = x86KSASIDTable[asid >> asidLowBits];
+    hwASIDInvalidate(asid);
+    if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
+        poolPtr->array[asid & MASK(asidLowBits)] = NULL;
+        setVMRoot(ksCurThread);
+    }
+}
+
+word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
+{
+    word_t      w_bufferPtr;
+    cap_t       bufferCap;
+    vm_rights_t vm_rights;
+
+    w_bufferPtr = thread->tcbIPCBuffer;
+    bufferCap = TCB_PTR_CTE_PTR(thread, tcbBuffer)->cap;
+
+    if (cap_get_capType(bufferCap) != cap_frame_cap) {
+        return NULL;
     }
 
-    idt[interrupt] = idt_entry_interrupt_gate_new(
-                         handler_addr >> 16,   /* offset_high  */
-                         1,                    /* present      */
-                         dpl,                  /* dpl          */
-                         1,                    /* gate_size    */
-                         SEL_CS_0,             /* seg_selector */
-                         handler_addr & 0xffff /* offset_low   */
-                     );
+    vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
+    if (vm_rights == VMReadWrite || (!isReceiver && vm_rights == VMReadOnly)) {
+        word_t basePtr;
+        unsigned int pageBits;
+
+        basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
+        pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
+        return (word_t *)(basePtr + (w_bufferPtr & MASK(pageBits)));
+    } else {
+        return NULL;
+    }
+}
+
+bool_t CONST isValidVTableRoot(cap_t cap)
+{
+    return isValidNativeRoot(cap);
+}
+
+
+bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr_t* ioapic_paddrs, uint32_t num_drhu, paddr_t* drhu_list)
+{
+    word_t idx = (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS;
+    paddr_t phys;
+    pte_t pte;
+    unsigned int i;
+    /* map kernel devices: APIC */
+    phys = apic_get_base_paddr();
+    if (!phys) {
+        return false;
+    }
+    pte = x86_make_device_pte(phys);
+
+    assert(idx == (PPTR_APIC & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
+    pt[idx] = pte;
+    idx++;
+    for (i = 0; i < num_ioapic; i++) {
+        phys = ioapic_paddrs[i];
+        pte = x86_make_device_pte(phys);
+        assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
+        pt[idx] = pte;
+        idx++;
+        if (idx == BIT(PT_BITS)) {
+            return false;
+        }
+    }
+    /* put in null mappings for any extra IOAPICs */
+    for (; i < CONFIG_MAX_NUM_IOAPIC; i++) {
+        pte = x86_make_empty_pte();
+        assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
+        pt[idx] = pte;
+        idx++;
+    }
+
+    /* map kernel devices: IOMMUs */
+    for (i = 0; i < num_drhu; i++) {
+        phys = (paddr_t)drhu_list[i];
+        pte = x86_make_device_pte(phys);
+
+        assert(idx == ((PPTR_DRHU_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
+        pt[idx] = pte;
+        idx++;
+        if (idx == BIT(PT_BITS)) {
+            return false;
+        }
+    }
+
+    /* mark unused kernel-device pages as 'not present' */
+    while (idx < BIT(PT_BITS)) {
+        pte = x86_make_empty_pte();
+        pt[idx] = pte;
+        idx++;
+    }
+
+    /* Check we haven't added too many kernel-device mappings.*/
+    assert(idx == BIT(PT_BITS));
+    return true;
 }
 
 BOOT_CODE static void
@@ -484,324 +450,16 @@ init_idt(idt_entry_t* idt)
 }
 
 BOOT_CODE bool_t
-map_kernel_window(
-    uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs,
-    uint32_t   num_drhu,
-    paddr_t*   drhu_list
-)
-{
-    paddr_t  phys;
-    uint32_t idx;
-    pde_t    pde;
-    pte_t    pte;
-    unsigned int UNUSED i;
-
-    if (config_set(CONFIG_PAE_PAGING)) {
-        for (idx = 0; idx < BIT(PDPT_BITS); idx++) {
-            pdpte_ptr_new(&ia32KSGlobalPDPT[idx],
-                          pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_BITS)]),
-                          0, /* avl*/
-                          0, /* cache_disabled */
-                          0, /* write_through */
-                          1  /* present */
-                         );
-        }
-    }
-
-    /* Mapping of PPTR_BASE (virtual address) to kernel's PADDR_BASE
-     * up to end of virtual address space except for the last large page.
-     */
-    phys = PADDR_BASE;
-    idx = PPTR_BASE >> LARGE_PAGE_BITS;
-
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
-    /* steal the last large for logging */
-    while (idx < BIT(PD_BITS + PDPT_BITS) - 2) {
-#else
-    while (idx < BIT(PD_BITS + PDPT_BITS) - 1) {
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
-        pde = pde_pde_large_new(
-                  phys,   /* page_base_address    */
-                  0,      /* pat                  */
-                  0,      /* avl                  */
-                  1,      /* global               */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  0,      /* cache_disabled       */
-                  0,      /* write_through        */
-                  0,      /* super_user           */
-                  1,      /* read_write           */
-                  1       /* present              */
-              );
-        ia32KSGlobalPD[idx] = pde;
-        phys += BIT(LARGE_PAGE_BITS);
-        idx++;
-    }
-
-    /* crosscheck whether we have mapped correctly so far */
-    assert(phys == PADDR_TOP);
-
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
-    /* mark the address of the log. We will map it
-        * in later with the correct attributes, but we need
-        * to wait until we can call alloc_region. */
-    ksLog = (ks_log_entry_t *) paddr_to_pptr(phys);
-    phys += BIT(LARGE_PAGE_BITS);
-    assert(idx == IA32_KSLOG_IDX);
-    idx++;
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
-
-    /* map page table of last 4M of virtual address space to page directory */
-    pde = pde_pde_small_new(
-              pptr_to_paddr(ia32KSGlobalPT), /* pt_base_address  */
-              0,                 /* avl              */
-              0,                 /* accessed         */
-              0,                 /* cache_disabled   */
-              0,                 /* write_through    */
-              1,                 /* super_user       */
-              1,                 /* read_write       */
-              1                  /* present          */
-          );
-    ia32KSGlobalPD[idx] = pde;
-
-    /* Start with an empty guard page preceding the stack. */
-    idx = 0;
-    pte = pte_new(
-              0,      /* page_base_address    */
-              0,      /* avl                  */
-              0,      /* global               */
-              0,      /* pat                  */
-              0,      /* dirty                */
-              0,      /* accessed             */
-              0,      /* cache_disabled       */
-              0,      /* write_through        */
-              0,      /* super_user           */
-              0,      /* read_write           */
-              0       /* present              */
-          );
-    ia32KSGlobalPT[idx] = pte;
-    idx++;
-
-    /* null mappings up to PPTR_KDEV */
-
-    while (idx < (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
-        pte = pte_new(
-                  0,      /* page_base_address    */
-                  0,      /* avl                  */
-                  0,      /* global               */
-                  0,      /* pat                  */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  0,      /* cache_disabled       */
-                  0,      /* write_through        */
-                  0,      /* super_user           */
-                  0,      /* read_write           */
-                  0       /* present              */
-              );
-        ia32KSGlobalPT[idx] = pte;
-        idx++;
-    }
-
-    /* map kernel devices (devices only used by the kernel) */
-
-    /* map kernel devices: APIC */
-    phys = apic_get_base_paddr();
-    if (!phys) {
-        return false;
-    }
-    pte = pte_new(
-              phys,   /* page_base_address    */
-              0,      /* avl                  */
-              1,      /* global               */
-              0,      /* pat                  */
-              0,      /* dirty                */
-              0,      /* accessed             */
-              1,      /* cache_disabled       */
-              1,      /* write_through        */
-              0,      /* super_user           */
-              1,      /* read_write           */
-              1       /* present              */
-          );
-
-    assert(idx == (PPTR_APIC & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-    ia32KSGlobalPT[idx] = pte;
-    idx++;
-
-    for (i = 0; i < num_ioapic; i++) {
-        phys = ioapic_paddrs[i];
-        pte = pte_new(
-                  phys,   /* page_base_address    */
-                  0,      /* avl                  */
-                  1,      /* global               */
-                  0,      /* pat                  */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  1,      /* cache_disabled       */
-                  1,      /* write_through        */
-                  0,      /* super_user           */
-                  1,      /* read_write           */
-                  1       /* present              */
-              );
-        assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        ia32KSGlobalPT[idx] = pte;
-        idx++;
-        if (idx == BIT(PT_BITS)) {
-            return false;
-        }
-    }
-    /* put in null mappings for any extra IOAPICs */
-    for (; i < CONFIG_MAX_NUM_IOAPIC; i++) {
-        pte = pte_new(
-                  0,      /* page_base_address    */
-                  0,      /* avl                  */
-                  0,      /* global               */
-                  0,      /* pat                  */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  0,      /* cache_disabled       */
-                  0,      /* write_through        */
-                  0,      /* super_user           */
-                  0,      /* read_write           */
-                  0       /* present              */
-              );
-        assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        ia32KSGlobalPT[idx] = pte;
-        idx++;
-    }
-
-    /* map kernel devices: IOMMUs */
-    for (i = 0; i < num_drhu; i++) {
-        phys = (paddr_t)drhu_list[i];
-        pte = pte_new(
-                  phys,   /* page_base_address    */
-                  0,      /* avl                  */
-                  1,      /* global               */
-                  0,      /* pat                  */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  1,      /* cache_disabled       */
-                  1,      /* write_through        */
-                  0,      /* super_user           */
-                  1,      /* read_write           */
-                  1       /* present              */
-              );
-
-        assert(idx == ((PPTR_DRHU_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
-        ia32KSGlobalPT[idx] = pte;
-        idx++;
-        if (idx == BIT(PT_BITS)) {
-            return false;
-        }
-    }
-
-    /* mark unused kernel-device pages as 'not present' */
-    while (idx < BIT(PT_BITS)) {
-        pte = pte_new(
-                  0,      /* page_base_address    */
-                  0,      /* avl                  */
-                  0,      /* global               */
-                  0,      /* pat                  */
-                  0,      /* dirty                */
-                  0,      /* accessed             */
-                  0,      /* cache_disabled       */
-                  0,      /* write_through        */
-                  0,      /* super_user           */
-                  0,      /* read_write           */
-                  0       /* present              */
-              );
-        ia32KSGlobalPT[idx] = pte;
-        idx++;
-    }
-
-    /* Check we haven't added too many kernel-device mappings.*/
-    assert(idx == BIT(PT_BITS));
-
-    invalidatePageStructureCache();
-    return true;
-}
-
-/* Note: this function will invalidate any pointers previously returned from this function */
-BOOT_CODE void*
-map_temp_boot_page(void* entry, uint32_t large_pages)
-{
-    void* replacement_vaddr;
-    word_t i;
-    unsigned int offset_in_page;
-
-    unsigned int phys_pg_start = (unsigned int)(entry) & ~MASK(LARGE_PAGE_BITS);
-    unsigned int virt_pd_start = (PPTR_BASE >> LARGE_PAGE_BITS) - large_pages;
-    unsigned int virt_pg_start = PPTR_BASE - (large_pages << LARGE_PAGE_BITS);
-
-    for (i = 0; i < large_pages; ++i) {
-        unsigned int pg_offset = i << LARGE_PAGE_BITS; // num pages since start * page size
-
-        pde_pde_large_ptr_new(get_boot_pd() + virt_pd_start + i,
-                              phys_pg_start + pg_offset, /* physical address */
-                              0, /* pat            */
-                              0, /* avl            */
-                              1, /* global         */
-                              0, /* dirty          */
-                              0, /* accessed       */
-                              0, /* cache_disabled */
-                              0, /* write_through  */
-                              0, /* super_user     */
-                              1, /* read_write     */
-                              1  /* present        */
-                             );
-        invalidateTLBentry(virt_pg_start + pg_offset);
-    }
-
-    // assign replacement virtual addresses page
-    offset_in_page = (unsigned int)(entry) & MASK(LARGE_PAGE_BITS);
-    replacement_vaddr = (void*)(virt_pg_start + offset_in_page);
-
-    invalidatePageStructureCache();
-
-    return replacement_vaddr;
-}
-
-BOOT_CODE bool_t
 init_vm_state(void)
 {
-    ia32KScacheLineSizeBits = getCacheLineSizeBits();
-    if (!ia32KScacheLineSizeBits) {
+    x86KScacheLineSizeBits = getCacheLineSizeBits();
+    if (!x86KScacheLineSizeBits) {
         return false;
     }
-    init_tss(&ia32KStss);
-    init_gdt(ia32KSgdt, &ia32KStss);
-    init_idt(ia32KSidt);
+    init_tss(&x86KStss);
+    init_gdt(x86KSgdt, &x86KStss);
+    init_idt(x86KSidt);
     return true;
-}
-
-/* initialise CPU's descriptor table registers (GDTR, IDTR, LDTR, TR) */
-
-BOOT_CODE void
-init_dtrs(void)
-{
-    /* setup the GDT pointer and limit and load into GDTR */
-    gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
-    gdt_idt_ptr.base = (uint32_t)ia32KSgdt;
-    ia32_install_gdt(&gdt_idt_ptr);
-
-    /* setup the IDT pointer and limit and load into IDTR */
-    gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1)) - 1;
-    gdt_idt_ptr.base = (uint32_t)ia32KSidt;
-    ia32_install_idt(&gdt_idt_ptr);
-
-    /* load NULL LDT selector into LDTR */
-    ia32_install_ldt(SEL_NULL);
-
-    /* load TSS selector into Task Register (TR) */
-    ia32_install_tss(SEL_TSS);
-}
-
-BOOT_CODE void
-write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
-{
-    asid_pool_t* ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
-    ap->array[IT_ASID] = PDE_PTR(pptr_of_cap(it_vspace_cap));
-    ia32KSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
 
 BOOT_CODE bool_t
@@ -828,130 +486,41 @@ init_pat_msr(void)
     return true;
 }
 
-/* ==================== BOOT CODE FINISHES HERE ==================== */
-
-static uint32_t CONST WritableFromVMRights(vm_rights_t vm_rights)
+BOOT_CODE void
+write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
 {
-    switch (vm_rights) {
-    case VMReadOnly:
-        return 0;
-
-    case VMKernelOnly:
-    case VMReadWrite:
-        return 1;
-
-    default:
-        fail("Invalid VM rights");
-    }
+    asid_pool_t* ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
+    ap->array[IT_ASID] = PDE_PTR(pptr_of_cap(it_vspace_cap));
+    x86KSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
 
-static uint32_t CONST SuperUserFromVMRights(vm_rights_t vm_rights)
+findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 {
-    switch (vm_rights) {
-    case VMKernelOnly:
-        return 0;
+    findVSpaceForASID_ret_t ret;
+    asid_pool_t*        poolPtr;
+    void*               vspace_root;
 
-    case VMReadOnly:
-    case VMReadWrite:
-        return 1;
+    poolPtr = x86KSASIDTable[asid >> asidLowBits];
+    if (!poolPtr) {
+        current_lookup_fault = lookup_fault_invalid_root_new();
 
-    default:
-        fail("Invalid VM rights");
-    }
-}
-
-static pde_t CONST makeUserPDE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
-{
-    return pde_pde_large_new(
-               paddr,                                          /* page_base_address    */
-               vm_attributes_get_ia32PATBit(vm_attr),          /* pat                  */
-               0,                                              /* avl                  */
-               0,                                              /* global               */
-               0,                                              /* dirty                */
-               0,                                              /* accessed             */
-               vm_attributes_get_ia32PCDBit(vm_attr),          /* cache_disabled       */
-               vm_attributes_get_ia32PWTBit(vm_attr),          /* write_through        */
-               SuperUserFromVMRights(vm_rights),               /* super_user           */
-               WritableFromVMRights(vm_rights),                /* read_write           */
-               1                                               /* present              */
-           );
-}
-
-static pte_t CONST makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
-{
-    return pte_new(
-               paddr,                                          /* page_base_address    */
-               0,                                              /* avl                  */
-               0,                                              /* global               */
-               vm_attributes_get_ia32PATBit(vm_attr),          /* pat                  */
-               0,                                              /* dirty                */
-               0,                                              /* accessed             */
-               vm_attributes_get_ia32PCDBit(vm_attr),          /* cache_disabled       */
-               vm_attributes_get_ia32PWTBit(vm_attr),          /* write_through        */
-               SuperUserFromVMRights(vm_rights),               /* super_user           */
-               WritableFromVMRights(vm_rights),                /* read_write           */
-               1                                               /* present              */
-           );
-}
-
-word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
-{
-    word_t      w_bufferPtr;
-    cap_t       bufferCap;
-    vm_rights_t vm_rights;
-
-    w_bufferPtr = thread->tcbIPCBuffer;
-    bufferCap = TCB_PTR_CTE_PTR(thread, tcbBuffer)->cap;
-
-    if (cap_get_capType(bufferCap) != cap_frame_cap) {
-        return NULL;
-    }
-
-    vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
-    if (vm_rights == VMReadWrite || (!isReceiver && vm_rights == VMReadOnly)) {
-        word_t basePtr;
-        unsigned int pageBits;
-
-        basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
-        pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
-        return (word_t *)(basePtr + (w_bufferPtr & MASK(pageBits)));
-    } else {
-        return NULL;
-    }
-}
-
-static lookupPTSlot_ret_t lookupPTSlot(void *vspace, vptr_t vptr)
-{
-    lookupPTSlot_ret_t ret;
-    lookupPDSlot_ret_t pdSlot;
-
-    pdSlot = lookupPDSlot(vspace, vptr);
-    if (pdSlot.status != EXCEPTION_NONE) {
-        ret.ptSlot = NULL;
-        ret.status = pdSlot.status;
-        return ret;
-    }
-
-    if ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_small) ||
-            !pde_pde_small_ptr_get_present(pdSlot.pdSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_BITS);
-
-        ret.ptSlot = NULL;
+        ret.vspace_root = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
-    } else {
-        pte_t* pt;
-        pte_t* ptSlot;
-        unsigned int ptIndex;
+    }
 
-        pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot.pdSlot));
-        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
-        ptSlot = pt + ptIndex;
+    vspace_root = poolPtr->array[asid & MASK(asidLowBits)];
+    if (!vspace_root) {
+        current_lookup_fault = lookup_fault_invalid_root_new();
 
-        ret.ptSlot = ptSlot;
-        ret.status = EXCEPTION_NONE;
+        ret.vspace_root = NULL;
+        ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
     }
+
+    ret.vspace_root = vspace_root;
+    ret.status = EXCEPTION_NONE;
+    return ret;
 }
 
 exception_t handleVMFault(tcb_t* thread, vm_fault_type_t vm_faultType)
@@ -963,16 +532,79 @@ exception_t handleVMFault(tcb_t* thread, vm_fault_type_t vm_faultType)
     fault = getRegister(thread, Error);
 
     switch (vm_faultType) {
-    case IA32DataFault:
+    case X86DataFault:
         current_fault = fault_vm_fault_new(addr, fault, false);
         return EXCEPTION_FAULT;
 
-    case IA32InstructionFault:
+    case X86InstructionFault:
         current_fault = fault_vm_fault_new(addr, fault, true);
         return EXCEPTION_FAULT;
 
     default:
         fail("Invalid VM fault type");
+    }
+}
+
+uint32_t CONST WritableFromVMRights(vm_rights_t vm_rights)
+{
+    switch (vm_rights) {
+    case VMReadOnly:
+        return 0;
+
+    case VMKernelOnly:
+    case VMReadWrite:
+        return 1;
+
+    default:
+        fail("Invalid VM rights");
+    }
+}
+
+uint32_t CONST SuperUserFromVMRights(vm_rights_t vm_rights)
+{
+    switch (vm_rights) {
+    case VMKernelOnly:
+        return 0;
+
+    case VMReadOnly:
+    case VMReadWrite:
+        return 1;
+
+    default:
+        fail("Invalid VM rights");
+    }
+}
+
+lookupPTSlot_ret_t lookupPTSlot(void *vspace, vptr_t vptr)
+{
+    lookupPTSlot_ret_t ret;
+    lookupPDSlot_ret_t pdSlot;
+
+    pdSlot = lookupPDSlot(vspace, vptr);
+    if (pdSlot.status != EXCEPTION_NONE) {
+        ret.ptSlot = NULL;
+        ret.status = pdSlot.status;
+        return ret;
+    }
+    if ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_small) ||
+            !pde_pde_small_ptr_get_present(pdSlot.pdSlot)) {
+        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_BITS);
+
+        ret.ptSlot = NULL;
+        ret.status = EXCEPTION_LOOKUP_FAULT;
+        return ret;
+    } else {
+        pte_t* pt;
+        pte_t* ptSlot;
+        word_t ptIndex;
+
+        pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot.pdSlot));
+        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
+        ptSlot = pt + ptIndex;
+
+        ret.ptSlot = ptSlot;
+        ret.status = EXCEPTION_NONE;
+        return ret;
     }
 }
 
@@ -1008,7 +640,7 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_ma
     return VMKernelOnly;
 }
 
-static void flushTable(void *vspace, word_t vptr, pte_t* pt)
+void flushTable(void *vspace, word_t vptr, pte_t* pt)
 {
     word_t i;
     cap_t        threadRoot;
@@ -1027,123 +659,6 @@ static void flushTable(void *vspace, word_t vptr, pte_t* pt)
     }
 }
 
-findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
-{
-    findVSpaceForASID_ret_t ret;
-    asid_pool_t*        poolPtr;
-    void*               vspace_root;
-
-    poolPtr = ia32KSASIDTable[asid >> asidLowBits];
-    if (!poolPtr) {
-        current_lookup_fault = lookup_fault_invalid_root_new();
-
-        ret.vspace_root = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    }
-
-    vspace_root = poolPtr->array[asid & MASK(asidLowBits)];
-    if (!vspace_root) {
-        current_lookup_fault = lookup_fault_invalid_root_new();
-
-        ret.vspace_root = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    }
-
-    ret.vspace_root = vspace_root;
-    ret.status = EXCEPTION_NONE;
-    return ret;
-}
-
-void setVMRoot(tcb_t* tcb)
-{
-    cap_t               threadRoot;
-    void *vspace_root;
-    asid_t              asid;
-    findVSpaceForASID_ret_t find_ret;
-
-    threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
-
-    vspace_root = getValidNativeRoot(threadRoot);
-    if (!vspace_root) {
-        if (config_set(CONFIG_PAE_PAGING)) {
-            setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
-        } else {
-            setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
-        }
-        return;
-    }
-
-    asid = cap_get_capMappedASID(threadRoot);
-    find_ret = findVSpaceForASID(asid);
-    if (find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspace_root) {
-        if (config_set(CONFIG_PAE_PAGING)) {
-            setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
-        } else {
-            setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
-        }
-        return;
-    }
-
-    /* only set PD if we change it, otherwise we flush the TLB needlessly */
-    if (getCurrentPD() != pptr_to_paddr(vspace_root)) {
-        setCurrentPD(pptr_to_paddr(vspace_root));
-    }
-}
-
-void deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
-{
-    /* Haskell error: "ASID pool's base must be aligned" */
-    assert(IS_ALIGNED(asid_base, asidLowBits));
-
-    if (ia32KSASIDTable[asid_base >> asidLowBits] == pool) {
-        ia32KSASIDTable[asid_base >> asidLowBits] = NULL;
-        setVMRoot(ksCurThread);
-    }
-}
-
-void deleteASID(asid_t asid, void* vspace)
-{
-    asid_pool_t* poolPtr;
-
-    poolPtr = ia32KSASIDTable[asid >> asidLowBits];
-
-    if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
-        poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(ksCurThread);
-    }
-}
-
-void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
-{
-    findVSpaceForASID_ret_t find_ret;
-    lookupPDSlot_ret_t    lu_ret;
-
-    find_ret = findVSpaceForASID(asid);
-    if (find_ret.status != EXCEPTION_NONE) {
-        return;
-    }
-
-    lu_ret = lookupPDSlot(find_ret.vspace_root, vaddr);
-    if (lu_ret.status != EXCEPTION_NONE) {
-        return;
-    }
-
-    flushTable(find_ret.vspace_root, vaddr, pt);
-
-    *lu_ret.pdSlot = pde_pde_small_new(
-                         0,  /* pt_base_address  */
-                         0,  /* avl              */
-                         0,  /* accessed         */
-                         0,  /* cache_disabled   */
-                         0,  /* write_through    */
-                         0,  /* super_user       */
-                         0,  /* read_write       */
-                         0   /* present          */
-                     );
-    invalidatePageStructureCache();
-}
 
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 {
@@ -1175,19 +690,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
                     == pptr_to_paddr(pptr)))) {
             return;
         }
-        *lu_ret.ptSlot = pte_new(
-                             0,      /* page_base_address    */
-                             0,      /* avl                  */
-                             0,      /* global               */
-                             0,      /* pat                  */
-                             0,      /* dirty                */
-                             0,      /* accessed             */
-                             0,      /* cache_disabled       */
-                             0,      /* write_through        */
-                             0,      /* super_user           */
-                             0,      /* read_write           */
-                             0       /* present              */
-                         );
+        *lu_ret.ptSlot = makeUserPTEInvalid();
         break;
 
     case IA32_LargePage:
@@ -1202,71 +705,361 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
                     == pptr_to_paddr(pptr)))) {
             return;
         }
-        *pde = pde_pde_large_new(
-                   0,      /* page_base_address    */
-                   0,      /* pat                  */
-                   0,      /* avl                  */
-                   0,      /* global               */
-                   0,      /* dirty                */
-                   0,      /* accessed             */
-                   0,      /* cache_disabled       */
-                   0,      /* write_through        */
-                   0,      /* super_user           */
-                   0,      /* read_write           */
-                   0       /* present              */
-               );
+        *pde = makeUserPDELargePageInvalid();
         break;
 
     default:
         fail("Invalid page type");
     }
+
+    /* TLB entry should be invalidated with the unmapped virtual address */
+    invalidateTLBentry(vptr);
+}
+void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
+{
+    findVSpaceForASID_ret_t find_ret;
+    lookupPDSlot_ret_t    lu_ret;
+
+    find_ret = findVSpaceForASID(asid);
+    if (find_ret.status != EXCEPTION_NONE) {
+        return;
+    }
+
+    lu_ret = lookupPDSlot(find_ret.vspace_root, vaddr);
+    if (lu_ret.status != EXCEPTION_NONE) {
+        return;
+    }
+
+    flushTable(find_ret.vspace_root, vaddr, pt);
+
+    *lu_ret.pdSlot = makeUserPDEPageTableInvalid();
+
     invalidatePageStructureCache();
 }
 
-static exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent, asid_t asid_base)
-{
-    memzero(frame, 1 << pageBitsForSize(IA32_SmallPage));
-    cteInsert(
-        cap_asid_pool_cap_new(
-            asid_base,          /* capASIDBase  */
-            WORD_REF(frame)     /* capASIDPool  */
-        ),
-        parent,
-        slot
-    );
-    /* Haskell error: "ASID pool's base must be aligned" */
-    assert((asid_base & MASK(asidLowBits)) == 0);
-    ia32KSASIDTable[asid_base >> asidLowBits] = (asid_pool_t*)frame;
-
-    return EXCEPTION_NONE;
-}
-
-static exception_t
-performPageGetAddress(void *vbase_ptr)
-{
-    paddr_t capFBasePtr;
-
-    /* Get the physical address of this frame. */
-    capFBasePtr = pptr_to_paddr(vbase_ptr);
-
-    /* return it in the first message register */
-    setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
-    setRegister(ksCurThread, msgInfoRegister,
-                wordFromMessageInfo(message_info_new(0, 0, 0, 1)));
-
-    return EXCEPTION_NONE;
-}
-
-static inline bool_t
-checkVPAlignment(vm_page_size_t sz, word_t w)
-{
-    return IS_ALIGNED(w, pageBitsForSize(sz));
-}
-
-static exception_t
-decodeIA32PageTableInvocation(
+exception_t decodeX86FrameInvocation(
     word_t label,
-    unsigned int length,
+    word_t length,
+    cte_t* cte,
+    cap_t cap,
+    extra_caps_t extraCaps,
+    word_t* buffer
+)
+{
+    switch (label) {
+    case IA32PageMap: { /* Map */
+        word_t          vaddr;
+        word_t          vtop;
+        word_t          w_rightsMask;
+        paddr_t         paddr;
+        cap_t           vspaceCap;
+        void*           vspace;
+        vm_rights_t     capVMRights;
+        vm_rights_t     vmRights;
+        vm_attributes_t vmAttr;
+        vm_page_size_t  frameSize;
+        asid_t          asid;
+
+        if (length < 3 || extraCaps.excaprefs[0] == NULL) {
+            current_syscall_error.type = seL4_TruncatedMessage;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        frameSize = cap_frame_cap_get_capFSize(cap);
+        vaddr = getSyscallArg(0, buffer) & (~MASK(pageBitsForSize(frameSize)));
+        w_rightsMask = getSyscallArg(1, buffer);
+        vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
+        vspaceCap = extraCaps.excaprefs[0]->cap;
+
+        capVMRights = cap_frame_cap_get_capFVMRights(cap);
+
+        if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
+            userError("IA32Frame: Frame already mapped.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (!isValidNativeRoot(vspaceCap)) {
+            userError("IA32Frame: Attempting to map frame into invalid page directory cap.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        vspace = (void*)pptr_of_cap(vspaceCap);
+        asid = cap_get_capMappedASID(vspaceCap);
+
+        {
+            findVSpaceForASID_ret_t find_ret;
+
+            find_ret = findVSpaceForASID(asid);
+            if (find_ret.status != EXCEPTION_NONE) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            if (find_ret.vspace_root != vspace) {
+                current_syscall_error.type = seL4_InvalidCapability;
+                current_syscall_error.invalidCapNumber = 1;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+        }
+
+        vtop = vaddr + BIT(pageBitsForSize(frameSize));
+
+        if (vtop > PPTR_USER_TOP) {
+            userError("IA32Frame: Mapping address too high.");
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 0;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
+
+        if (!checkVPAlignment(frameSize, vaddr)) {
+            current_syscall_error.type = seL4_AlignmentError;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        paddr = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
+
+        cap = cap_frame_cap_set_capFMappedASID(cap, asid);
+        cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);
+
+        switch (frameSize) {
+            /* PTE mappings */
+        case IA32_SmallPage: {
+            pte_t              pte;
+            lookupPTSlot_ret_t lu_ret;
+
+            lu_ret = lookupPTSlot(vspace, vaddr);
+            if (lu_ret.status != EXCEPTION_NONE) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+                /* current_lookup_fault will have been set by lookupPTSlot */
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            pte = makeUserPTE(paddr, vmAttr, vmRights);
+            cte->cap = cap;
+            *lu_ret.ptSlot = pte;
+            break;
+        }
+
+        /* PDE mappings */
+        case IA32_LargePage: {
+            pde_t* pdeSlot;
+            lookupPDSlot_ret_t lu_ret;
+
+            lu_ret = lookupPDSlot(vspace, vaddr);
+            if (lu_ret.status != EXCEPTION_NONE) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+                /* current_lookup_fault will have been set by lookupPDSlot */
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            pdeSlot = lu_ret.pdSlot;
+
+            if ((pde_ptr_get_page_size(pdeSlot) == pde_pde_small) &&
+                    (pde_pde_small_ptr_get_present(pdeSlot))) {
+                current_syscall_error.type = seL4_DeleteFirst;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            *pdeSlot = makeUserPDELargePage(paddr, vmAttr, vmRights);
+            cte->cap = cap;
+
+            break;
+        }
+
+        default:
+            fail("Invalid page type");
+        }
+        invalidatePageStructureCache();
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return EXCEPTION_NONE;
+    }
+
+    case IA32PageRemap: { /* Remap */
+        word_t          vaddr;
+        word_t          w_rightsMask;
+        paddr_t         paddr;
+        cap_t           vspaceCap;
+        void*           vspace;
+        vm_rights_t     capVMRights;
+        vm_rights_t     vmRights;
+        vm_attributes_t vmAttr;
+        vm_page_size_t  frameSize;
+        asid_t          asid;
+
+        if (isIOSpaceFrame(cap)) {
+            userError("IA32FrameRemap: Attempting to remap frame mapped into an IOSpace");
+            current_syscall_error.type = seL4_IllegalOperation;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+            userError("IA32FrameRemap: Truncated message");
+            current_syscall_error.type = seL4_TruncatedMessage;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        w_rightsMask = getSyscallArg(0, buffer);
+        vmAttr = vmAttributesFromWord(getSyscallArg(1, buffer));
+        vspaceCap = extraCaps.excaprefs[0]->cap;
+
+        if (!isValidNativeRoot(vspaceCap)) {
+            userError("IA32FrameRemap: Attempting to map frame into invalid page directory.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        vspace = (void*)pptr_of_cap(vspaceCap);
+        asid = cap_get_capMappedASID(vspaceCap);
+
+        if (cap_frame_cap_get_capFMappedASID(cap) == asidInvalid) {
+            userError("IA32PageRemap: Frame must already have been mapped.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        {
+            findVSpaceForASID_ret_t find_ret;
+
+            find_ret = findVSpaceForASID(asid);
+            if (find_ret.status != EXCEPTION_NONE) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            if (find_ret.vspace_root != vspace) {
+                current_syscall_error.type = seL4_InvalidCapability;
+                current_syscall_error.invalidCapNumber = 1;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+        }
+
+        vaddr       = cap_frame_cap_get_capFMappedAddress(cap);
+        frameSize   = cap_frame_cap_get_capFSize(cap);
+        capVMRights = cap_frame_cap_get_capFVMRights(cap);
+        paddr       = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
+
+        vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
+
+        switch (frameSize) {
+            /* PTE mappings */
+        case IA32_SmallPage: {
+            pte_t              pte;
+            lookupPTSlot_ret_t lu_ret;
+
+            lu_ret = lookupPTSlot(vspace, vaddr);
+            if (lu_ret.status != EXCEPTION_NONE) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+                /* current_lookup_fault will have been set by lookupPTSlot */
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            pte = makeUserPTE(paddr, vmAttr, vmRights);
+            *lu_ret.ptSlot = pte;
+
+            break;
+        }
+
+        /* PDE mappings */
+        case IA32_LargePage: {
+            pde_t* pdeSlot;
+            lookupPDSlot_ret_t lu_ret;
+
+            lu_ret = lookupPDSlot(vspace, vaddr);
+            if (lu_ret.status != EXCEPTION_NONE) {
+                current_syscall_error.type = seL4_FailedLookup;
+                current_syscall_error.failedLookupWasSource = false;
+                /* current_lookup_fault will have been set by lookupPDSlot */
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            pdeSlot = lu_ret.pdSlot;
+
+            if ((pde_ptr_get_page_size(pdeSlot) == pde_pde_small) &&
+                    (pde_pde_small_ptr_get_present(pdeSlot))) {
+                current_syscall_error.type = seL4_DeleteFirst;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            *pdeSlot = makeUserPDELargePage(paddr, vmAttr, vmRights);
+
+            break;
+        }
+
+        default:
+            fail("Invalid page type");
+        }
+
+        invalidatePageStructureCache();
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return EXCEPTION_NONE;
+    }
+
+    case IA32PageUnmap: { /* Unmap */
+        if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
+            if (isIOSpaceFrame(cap)) {
+                return decodeIA32IOUnMapInvocation(label, length, cte, cap, extraCaps);
+            }
+            unmapPage(
+                cap_frame_cap_get_capFSize(cap),
+                cap_frame_cap_get_capFMappedASID(cap),
+                cap_frame_cap_get_capFMappedAddress(cap),
+                (void *)cap_frame_cap_get_capFBasePtr(cap)
+            );
+        }
+        cap_frame_cap_ptr_set_capFMappedAddress(&cte->cap, 0);
+        cap_frame_cap_ptr_set_capFMappedASID(&cte->cap, asidInvalid);
+
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return EXCEPTION_NONE;
+    }
+
+    case IA32PageMapIO: { /* MapIO */
+        return decodeIA32IOMapInvocation(label, length, cte, cap, extraCaps, buffer);
+    }
+
+    case IA32PageGetAddress: {
+        /* Return it in the first message register. */
+        assert(n_msgRegisters >= 1);
+
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
+    }
+
+    default:
+        current_syscall_error.type = seL4_IllegalOperation;
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+}
+
+static exception_t
+decodeX86PageTableInvocation(
+    word_t label,
+    word_t length,
     cte_t* cte, cap_t cap,
     extra_caps_t extraCaps,
     word_t* buffer
@@ -1381,16 +1174,7 @@ decodeIA32PageTableInvocation(
     }
 
     paddr = pptr_to_paddr(PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
-    pde = pde_pde_small_new(
-              paddr,                                      /* pt_base_address  */
-              0,                                          /* avl              */
-              0,                                          /* accessed         */
-              vm_attributes_get_ia32PCDBit(attr),      /* cache_disabled   */
-              vm_attributes_get_ia32PWTBit(attr),      /* write_through    */
-              1,                                          /* super_user       */
-              1,                                          /* read_write       */
-              1                                           /* present          */
-          );
+    pde = makeUserPDEPageTable(paddr, attr);
 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
@@ -1404,328 +1188,7 @@ decodeIA32PageTableInvocation(
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeIA32FrameInvocation(
-    word_t label,
-    unsigned int length,
-    cte_t* cte,
-    cap_t cap,
-    extra_caps_t extraCaps,
-    word_t* buffer
-)
-{
-    switch (label) {
-    case IA32PageMap: { /* Map */
-        word_t          vaddr;
-        word_t          vtop;
-        word_t          w_rightsMask;
-        paddr_t         paddr;
-        cap_t           vspaceCap;
-        void*           vspace;
-        vm_rights_t     capVMRights;
-        vm_rights_t     vmRights;
-        vm_attributes_t vmAttr;
-        vm_page_size_t  frameSize;
-        asid_t          asid;
-
-        if (length < 3 || extraCaps.excaprefs[0] == NULL) {
-            current_syscall_error.type = seL4_TruncatedMessage;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        frameSize = cap_frame_cap_get_capFSize(cap);
-        vaddr = getSyscallArg(0, buffer) & (~MASK(pageBitsForSize(frameSize)));
-        w_rightsMask = getSyscallArg(1, buffer);
-        vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        vspaceCap = extraCaps.excaprefs[0]->cap;
-
-        capVMRights = cap_frame_cap_get_capFVMRights(cap);
-
-        if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            userError("IA32Frame: Frame already mapped.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (!isValidNativeRoot(vspaceCap)) {
-            userError("IA32Frame: Attempting to map frame into invalid page directory cap.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-        vspace = (void*)pptr_of_cap(vspaceCap);
-        asid = cap_get_capMappedASID(vspaceCap);
-
-        {
-            findVSpaceForASID_ret_t find_ret;
-
-            find_ret = findVSpaceForASID(asid);
-            if (find_ret.status != EXCEPTION_NONE) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            if (find_ret.vspace_root != vspace) {
-                current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 1;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-        }
-
-        vtop = vaddr + BIT(pageBitsForSize(frameSize));
-
-        if (vtop > PPTR_USER_TOP) {
-            userError("IA32Frame: Mapping address too high.");
-            current_syscall_error.type = seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-
-        if (!checkVPAlignment(frameSize, vaddr)) {
-            current_syscall_error.type = seL4_AlignmentError;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        paddr = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
-
-        cap = cap_frame_cap_set_capFMappedASID(cap, asid);
-        cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);
-
-        switch (frameSize) {
-            /* PTE mappings */
-        case IA32_SmallPage: {
-            pte_t              pte;
-            lookupPTSlot_ret_t lu_ret;
-
-            lu_ret = lookupPTSlot(vspace, vaddr);
-            if (lu_ret.status != EXCEPTION_NONE) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                /* current_lookup_fault will have been set by lookupPTSlot */
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            pte = makeUserPTE(paddr, vmAttr, vmRights);
-            cte->cap = cap;
-            *lu_ret.ptSlot = pte;
-
-            break;
-        }
-
-        /* PDE mappings */
-        case IA32_LargePage: {
-            pde_t* pdeSlot;
-            lookupPDSlot_ret_t lu_ret;
-
-            lu_ret = lookupPDSlot(vspace, vaddr);
-            if (lu_ret.status != EXCEPTION_NONE) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                /* current_lookup_fault will have been set by lookupPDSlot */
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            pdeSlot = lu_ret.pdSlot;
-
-            if ((pde_ptr_get_page_size(pdeSlot) == pde_pde_small) &&
-                    (pde_pde_small_ptr_get_present(pdeSlot))) {
-                current_syscall_error.type = seL4_DeleteFirst;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            *pdeSlot = makeUserPDE(paddr, vmAttr, vmRights);
-            cte->cap = cap;
-
-            break;
-        }
-
-        default:
-            fail("Invalid page type");
-        }
-        invalidatePageStructureCache();
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return EXCEPTION_NONE;
-    }
-
-    case IA32PageRemap: { /* Remap */
-        word_t          vaddr;
-        word_t          w_rightsMask;
-        paddr_t         paddr;
-        cap_t           vspaceCap;
-        void*           vspace;
-        vm_rights_t     capVMRights;
-        vm_rights_t     vmRights;
-        vm_attributes_t vmAttr;
-        vm_page_size_t  frameSize;
-        asid_t          asid;
-
-        if (cap_frame_cap_get_capFIsIOSpace(cap)) {
-            userError("IA32FrameRemap: Attempting to remap frame mapped into an IOSpace");
-            current_syscall_error.type = seL4_IllegalOperation;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (length < 2 || extraCaps.excaprefs[0] == NULL) {
-            userError("IA32FrameRemap: Truncated message");
-            current_syscall_error.type = seL4_TruncatedMessage;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        w_rightsMask = getSyscallArg(0, buffer);
-        vmAttr = vmAttributesFromWord(getSyscallArg(1, buffer));
-        vspaceCap = extraCaps.excaprefs[0]->cap;
-
-        if (!isValidNativeRoot(vspaceCap)) {
-            userError("IA32FrameRemap: Attempting to map frame into invalid page directory.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-        vspace = (void*)pptr_of_cap(vspaceCap);
-        asid = cap_get_capMappedASID(vspaceCap);
-
-        if (cap_frame_cap_get_capFMappedASID(cap) == asidInvalid) {
-            userError("IA32PageRemap: Frame must already have been mapped.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        {
-            findVSpaceForASID_ret_t find_ret;
-
-            find_ret = findVSpaceForASID(asid);
-            if (find_ret.status != EXCEPTION_NONE) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            if (find_ret.vspace_root != vspace) {
-                current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 1;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-        }
-
-        vaddr       = cap_frame_cap_get_capFMappedAddress(cap);
-        frameSize   = cap_frame_cap_get_capFSize(cap);
-        capVMRights = cap_frame_cap_get_capFVMRights(cap);
-        paddr       = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
-
-        vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-
-        switch (frameSize) {
-            /* PTE mappings */
-        case IA32_SmallPage: {
-            pte_t              pte;
-            lookupPTSlot_ret_t lu_ret;
-
-            lu_ret = lookupPTSlot(vspace, vaddr);
-            if (lu_ret.status != EXCEPTION_NONE) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                /* current_lookup_fault will have been set by lookupPTSlot */
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            pte = makeUserPTE(paddr, vmAttr, vmRights);
-            *lu_ret.ptSlot = pte;
-
-            break;
-        }
-
-        /* PDE mappings */
-        case IA32_LargePage: {
-            pde_t* pdeSlot;
-            lookupPDSlot_ret_t lu_ret;
-
-            lu_ret = lookupPDSlot(vspace, vaddr);
-            if (lu_ret.status != EXCEPTION_NONE) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                /* current_lookup_fault will have been set by lookupPDSlot */
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            pdeSlot = lu_ret.pdSlot;
-
-            if ((pde_ptr_get_page_size(pdeSlot) == pde_pde_small) &&
-                    (pde_pde_small_ptr_get_present(pdeSlot))) {
-                current_syscall_error.type = seL4_DeleteFirst;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            *pdeSlot = makeUserPDE(paddr, vmAttr, vmRights);
-
-            break;
-        }
-
-        default:
-            fail("Invalid page type");
-        }
-        invalidatePageStructureCache();
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return EXCEPTION_NONE;
-    }
-
-    case IA32PageUnmap: { /* Unmap */
-        if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            if (cap_frame_cap_get_capFIsIOSpace(cap)) {
-                return decodeIA32IOUnMapInvocation(label, length, cte, cap, extraCaps);
-            }
-            unmapPage(
-                cap_frame_cap_get_capFSize(cap),
-                cap_frame_cap_get_capFMappedASID(cap),
-                cap_frame_cap_get_capFMappedAddress(cap),
-                (void *)cap_frame_cap_get_capFBasePtr(cap)
-            );
-        }
-        cap_frame_cap_ptr_set_capFMappedAddress(&cte->cap, 0);
-        cap_frame_cap_ptr_set_capFMappedASID(&cte->cap, asidInvalid);
-
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return EXCEPTION_NONE;
-    }
-
-    case IA32PageMapIO: { /* MapIO */
-        return decodeIA32IOMapInvocation(label, length, cte, cap, extraCaps, buffer);
-    }
-
-    case IA32PageGetAddress: {
-        /* Return it in the first message register. */
-        assert(n_msgRegisters >= 1);
-
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
-    }
-
-    default:
-        current_syscall_error.type = seL4_IllegalOperation;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-}
-
-exception_t
-decodeIA32MMUInvocation(
+exception_t decodeX86MMUInvocation(
     word_t label,
     word_t length,
     cptr_t cptr,
@@ -1736,21 +1199,15 @@ decodeIA32MMUInvocation(
 )
 {
     switch (cap_get_capType(cap)) {
-    case cap_pdpt_cap:
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-
-    case cap_page_directory_cap:
-        return decodeIA32PageDirectoryInvocation(label, length, cte, cap, extraCaps, buffer);
-
-    case cap_page_table_cap:
-        return decodeIA32PageTableInvocation(label, length, cte, cap, extraCaps, buffer);
 
     case cap_frame_cap:
-        return decodeIA32FrameInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeX86FrameInvocation(label, length, cte, cap, extraCaps, buffer);
+
+    case cap_page_table_cap:
+        return decodeX86PageTableInvocation(label, length, cte, cap, extraCaps, buffer);
 
     case cap_asid_control_cap: {
-        unsigned int     i;
+        word_t     i;
         asid_t           asid_base;
         word_t           index;
         word_t           depth;
@@ -1771,7 +1228,6 @@ decodeIA32MMUInvocation(
         if (length < 2 || extraCaps.excaprefs[0] == NULL
                 || extraCaps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
-
             return EXCEPTION_SYSCALL_ERROR;
         }
 
@@ -1782,7 +1238,7 @@ decodeIA32MMUInvocation(
         root = extraCaps.excaprefs[1]->cap;
 
         /* Find first free pool */
-        for (i = 0; i < nASIDPools && ia32KSASIDTable[i]; i++);
+        for (i = 0; i < nASIDPools && x86KSASIDTable[i]; i++);
 
         if (i == nASIDPools) {
             /* no unallocated pool is found */
@@ -1792,6 +1248,7 @@ decodeIA32MMUInvocation(
         }
 
         asid_base = i << asidLowBits;
+
 
         if (cap_get_capType(untyped) != cap_untyped_cap ||
                 cap_untyped_cap_get_capBlockSize(untyped) != ASID_POOL_SIZE_BITS) {
@@ -1835,7 +1292,6 @@ decodeIA32MMUInvocation(
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-
         if (extraCaps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
@@ -1854,7 +1310,7 @@ decodeIA32MMUInvocation(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pool = ia32KSASIDTable[cap_asid_pool_cap_get_capASIDBase(cap) >> asidLowBits];
+        pool = x86KSASIDTable[cap_asid_pool_cap_get_capASIDBase(cap) >> asidLowBits];
         if (!pool) {
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
@@ -1885,6 +1341,6 @@ decodeIA32MMUInvocation(
     }
 
     default:
-        fail("Invalid arch cap type");
+        return decodeX86ModeMMUInvocation(label, length, cptr, cte, cap, extraCaps, buffer);
     }
 }
