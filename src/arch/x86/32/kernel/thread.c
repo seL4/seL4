@@ -25,22 +25,22 @@ Arch_switchToThread(tcb_t* tcb)
 
     /* update the GDT_TLS entry with the thread's TLS_BASE address */
     base = getRegister(tcb, TLS_BASE);
-    gdt_entry_gdt_data_ptr_set_base_low(ia32KSgdt + GDT_TLS, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(ia32KSgdt + GDT_TLS,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(ia32KSgdt + GDT_TLS, (base >> 24) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_low(x86KSgdt + GDT_TLS, base);
+    gdt_entry_gdt_data_ptr_set_base_mid(x86KSgdt + GDT_TLS,  (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_high(x86KSgdt + GDT_TLS, (base >> 24) & 0xFF);
 
     /* update the GDT_IPCBUF entry with the thread's IPC buffer address */
     base = tcb->tcbIPCBuffer;
-    gdt_entry_gdt_data_ptr_set_base_low(ia32KSgdt + GDT_IPCBUF, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(ia32KSgdt + GDT_IPCBUF,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(ia32KSgdt + GDT_IPCBUF, (base >> 24) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_low(x86KSgdt + GDT_IPCBUF, base);
+    gdt_entry_gdt_data_ptr_set_base_mid(x86KSgdt + GDT_IPCBUF,  (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_high(x86KSgdt + GDT_IPCBUF, (base >> 24) & 0xFF);
 }
 
 BOOT_CODE void
 Arch_configureIdleThread(tcb_t* tcb)
 {
     setRegister(tcb, EFLAGS, BIT(9) | BIT(1)); /* enable interrupts and set bit 1 which is always 1 */
-    setRegister(tcb, NextEIP, (word_t)idleThreadStart);
+    setRegister(tcb, NextIP, (word_t)idleThreadStart);
     setRegister(tcb, CS, SEL_CS_0);
     setRegister(tcb, DS, SEL_DS_0);
     setRegister(tcb, ES, SEL_DS_0);

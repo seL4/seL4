@@ -11,6 +11,7 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+#define BIT(n) (1ul << (n))
 #define MASK(n) (BIT(n)-1ul)
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))

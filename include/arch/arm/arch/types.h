@@ -30,4 +30,8 @@ enum hwASIDConstants {
     hwASIDBits = 8
 };
 
+/* for libsel4 headers that the kernel shares */
+typedef word_t seL4_Word;
+typedef uint32_t seL4_Uint32;
+
 #endif

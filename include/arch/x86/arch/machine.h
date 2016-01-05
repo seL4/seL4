@@ -66,8 +66,10 @@ static inline void invalidatePageStructureCache(void)
 
 static uint64_t x86_rdmsr(const uint32_t reg)
 {
+    uint32_t low, high;
     uint64_t value;
-    asm volatile("rdmsr" : "=A"(value) : "c"(reg));
+    asm volatile("rdmsr" : "=a"(low), "=d"(high) : "c"(reg));
+    value = ((uint64_t)high << 32) | (uint64_t)low;
     return value;
 }
 
@@ -85,7 +87,9 @@ static inline uint32_t x86_rdmsr_high(const uint32_t reg)
 /* Write model specific register */
 static inline void x86_wrmsr(const uint32_t reg, const uint64_t val)
 {
-    asm volatile("wrmsr" :: "A"(val), "c"(reg));
+    uint32_t low = (uint32_t)val;
+    uint32_t high = (uint32_t)(val >> 32);
+    asm volatile("wrmsr" :: "a"(low), "d"(high), "c"(reg));
 }
 
 /* Read different parts of CPUID */
@@ -155,6 +159,12 @@ void init_sysenter_msrs(void);
 static inline void x86_mfence(void)
 {
     asm volatile("mfence" ::: "memory");
+}
+
+/* Get page fault address from CR2 register */
+static inline unsigned long getFaultAddr(void)
+{
+    return read_cr2();
 }
 
 /* sysenter entry point */

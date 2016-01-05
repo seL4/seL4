@@ -23,17 +23,19 @@ init_sysenter_msrs(void)
 {
     x86_wrmsr(IA32_SYSENTER_CS_MSR,  (uint64_t)(word_t)SEL_CS_0);
     x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
-    x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)&ia32KStss.words[1]);
+    /* manually add 4 bytes to x86KStss so that it is valid for both
+     * 32-bit and 64-bit */
+    x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&x86KStss.words[0] + 4));
 }
 
 word_t PURE getRestartPC(tcb_t *thread)
 {
-    return getRegister(thread, FaultEIP);
+    return getRegister(thread, FaultIP);
 }
 
 void setNextPC(tcb_t *thread, word_t v)
 {
-    setRegister(thread, NextEIP, v);
+    setRegister(thread, NextIP, v);
 }
 
 /* Returns the size of CPU's cacheline */
@@ -68,16 +70,16 @@ getCacheLineSizeBits(void)
 
 void flushCacheRange(void* vaddr, uint32_t size_bits)
 {
-    uint32_t v;
+    word_t v;
 
     assert(size_bits < WORD_BITS);
-    assert(IS_ALIGNED((uint32_t)vaddr, size_bits));
+    assert(IS_ALIGNED((word_t)vaddr, size_bits));
 
     x86_mfence();
 
-    for (v = ROUND_DOWN((uint32_t)vaddr, ia32KScacheLineSizeBits);
-            v < (uint32_t)vaddr + BIT(size_bits);
-            v += BIT(ia32KScacheLineSizeBits)) {
+    for (v = ROUND_DOWN((word_t)vaddr, x86KScacheLineSizeBits);
+            v < (word_t)vaddr + BIT(size_bits);
+            v += BIT(x86KScacheLineSizeBits)) {
         flushCacheLine((void*)v);
     }
     x86_mfence();

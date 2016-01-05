@@ -21,7 +21,7 @@ void NORETURN VISIBLE restore_user_context(void);
 void NORETURN VISIBLE restore_user_context(void)
 {
     /* set the tss.esp0 */
-    tss_ptr_set_esp0(&ia32KStss, ((uint32_t)ksCurThread) + 0x4c);
+    tss_ptr_set_esp0(&x86KStss, ((uint32_t)ksCurThread) + (n_contextRegisters * sizeof(word_t)));
     if (unlikely(ksCurThread == ia32KSfpuOwner)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
@@ -42,7 +42,7 @@ void NORETURN VISIBLE restore_user_context(void)
             "popl %%eax\n"
             // cap/badge register
             "popl %%ebx\n"
-            // skip ecx and edx, these will contain esp and nexteip due to sysenter/sysexit convention
+            // skip ecx and edx, these will contain esp and NextIP due to sysenter/sysexit convention
             "addl $8, %%esp\n"
             // message info register
             "popl %%esi\n"
@@ -67,9 +67,9 @@ void NORETURN VISIBLE restore_user_context(void)
             //have to reload other selectors
             "popl %%fs\n"
             "popl %%gs\n"
-            // skip faulteip, tls_base and error (these are fake registers)
+            // skip FaultIP, tls_base and error (these are fake registers)
             "addl $12, %%esp\n"
-            // restore nexteip
+            // restore NextIP
             "popl %%edx\n"
             // skip cs
             "addl $4,  %%esp\n"
@@ -101,7 +101,7 @@ void NORETURN VISIBLE restore_user_context(void)
             "popl %%es\n"
             "popl %%fs\n"
             "popl %%gs\n"
-            // skip faulteip, tls_base, error
+            // skip FaultIP, tls_base, error
             "addl $12, %%esp\n"
             "iret\n"
             :
@@ -112,61 +112,4 @@ void NORETURN VISIBLE restore_user_context(void)
         );
     }
     while (1);
-}
-
-void FASTCALL VISIBLE c_handle_interrupt(int irq, int syscall);
-void FASTCALL VISIBLE c_handle_interrupt(int irq, int syscall)
-{
-    if (irq == int_unimpl_dev) {
-        handleUnimplementedDevice();
-    } else if (irq == int_page_fault) {
-        /* Error code is in Error. Pull out bit 5, which is whether it was instruction or data */
-        handleVMFaultEvent((ksCurThread->tcbArch.tcbContext.registers[Error] >> 4) & 1);
-    } else if (irq < int_irq_min) {
-        handleUserLevelFault(irq, ksCurThread->tcbArch.tcbContext.registers[Error]);
-    } else if (likely(irq < int_trap_min)) {
-        ia32KScurInterrupt = irq;
-        handleInterruptEntry();
-    } else if (irq == int_spurious) {
-        /* fall through to restore_user_context and do nothing */
-    } else {
-        /* Interpret a trap as an unknown syscall */
-        /* Adjust FaultEIP to point to trapping INT
-         * instruction by subtracting 2 */
-        int sys_num;
-        ksCurThread->tcbArch.tcbContext.registers[FaultEIP] -= 2;
-        /* trap number is MSBs of the syscall number and the LSBS of EAX */
-        sys_num = (irq << 24) | (syscall & 0x00ffffff);
-        handleUnknownSyscall(sys_num);
-    }
-    restore_user_context();
-}
-
-void NORETURN
-slowpath(syscall_t syscall)
-{
-    ia32KScurInterrupt = -1;
-    /* increment nextEIP to skip sysenter */
-    ksCurThread->tcbArch.tcbContext.registers[NextEIP] += 2;
-    /* check for undefined syscall */
-    if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
-        handleUnknownSyscall(syscall);
-    } else {
-        handleSyscall(syscall);
-    }
-    restore_user_context();
-}
-
-void VISIBLE c_handle_syscall(syscall_t syscall, word_t cptr, word_t msgInfo);
-void VISIBLE c_handle_syscall(syscall_t syscall, word_t cptr, word_t msgInfo)
-{
-#ifdef FASTPATH
-    if (syscall == SysCall) {
-        fastpath_call(cptr, msgInfo);
-    } else if (syscall == SysReplyRecv) {
-        fastpath_reply_recv(cptr, msgInfo);
-    }
-#endif
-
-    slowpath(syscall);
 }

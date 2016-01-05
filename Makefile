@@ -528,7 +528,7 @@ linker.lds_pp: ${LINKER_SCRIPT}
 	@echo " [CPP] $@"
 	$(Q)${CPP} ${CPPFLAGS} -P -E -o $@ -x c $<
 
-kernel.elf: sanity ${OBJECTS} linker.lds_pp
+kernel.elf: ${OBJECTS} linker.lds_pp
 	@echo " [LD] $@"
 	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -Wl,-T -Wl,linker.lds_pp \
 		-o $@ ${OBJECTS}
@@ -547,21 +547,6 @@ autoconf.h: include/plat/${PLAT}/autoconf.h
 %.o: %.s | ${DIRECTORIES}
 	@echo " [AS] $@"
 	$(Q)${CC} ${ASFLAGS} -c $< -o $@
-
-
-############################################################
-### Sanity -- check files that should be the same are the same
-############################################################
-
-DIFF_CMD:= ${SOURCE_ROOT}/tools/sanity.sh
-
-.PHONY sanity:
-	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/sel4/constants.h ${SOURCE_ROOT}/include/api/constants.h 
-	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/arch_include/${ARCH}/sel4/arch/objecttype.h ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/objecttype.h 
-	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/api/syscall.xml ${SOURCE_ROOT}/include/api/syscall.xml
-	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/api/syscall.xsd ${SOURCE_ROOT}/include/api/syscall.xsd 
-	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/sel4/errors.h ${SOURCE_ROOT}/include/api/errors.h
-	$(Q)${DIFF_CMD} ${SOURCE_ROOT}/libsel4/include/sel4/objecttype.h ${SOURCE_ROOT}/include/api/objecttype.h
 
 ###################
 # Header generation

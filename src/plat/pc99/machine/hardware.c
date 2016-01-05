@@ -85,10 +85,10 @@ void handleReservedIRQ(irq_t irq)
 /* Get the IRQ number currently working on. */
 irq_t getActiveIRQ(void)
 {
-    if (ia32KScurInterrupt == int_invalid) {
+    if (x86KScurInterrupt == int_invalid) {
         return irqInvalid;
     } else {
-        return ia32KScurInterrupt - IRQ_INT_OFFSET;
+        return x86KScurInterrupt - IRQ_INT_OFFSET;
     }
 }
 
@@ -202,7 +202,7 @@ tsc_init(void)
 PURE time_t
 getMaxTimerUs(void)
 {
-    return div64(UINT64_MAX, ia32KStscMhz);
+    return div64(UINT64_MAX, x86KStscMhz);
 }
 
 CONST time_t
@@ -214,15 +214,15 @@ getKernelWcetUs(void)
 PURE ticks_t
 getTimerPrecision(void)
 {
-    return ia32KStscMhz;
+    return x86KStscMhz;
 }
 
 PURE ticks_t
 usToTicks(time_t us)
 {
-    assert(ia32KStscMhz > 0);
+    assert(x86KStscMhz > 0);
     assert(us >= getKernelWcetUs() && us <= getMaxTimerUs());
-    return us * ia32KStscMhz;
+    return us * x86KStscMhz;
 }
 
 void

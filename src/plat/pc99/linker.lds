@@ -16,6 +16,9 @@ ENTRY(_start)
 PADDR_BASE = 0x00000000;
 PADDR_LOAD = 0x00100000;
 KERNEL_BASE  = 0xe0000000;
+OUTPUT_ARCH(i386)
+OUTPUT_FORMAT(elf32-i386)
+
 KERNEL_OFFSET = KERNEL_BASE - PADDR_BASE;
 
 SECTIONS
@@ -68,6 +71,13 @@ SECTIONS
     {
         *(.bss)
         *(COMMON)
+    }
+
+    .ehframe : AT(ADDR(.ehframe) - KERNEL_OFFSET)
+    {
+        _ehframe = .;
+        *(.eh_frame)
+        . = ALIGN(4K);
     }
 
     . = ALIGN(4K);
