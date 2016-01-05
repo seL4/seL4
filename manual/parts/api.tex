@@ -74,7 +74,7 @@
 \newcommand{\tcbcapdesc}{Capability to the TCB which is being operated on.}
 \newcommand{\threadschedcontextcapdesc}{Capability to the scheduling context that the TCB should run on.}
 \newcommand{\schedcontrolcapdesc}{The SchedControl capability.}
-\newcommand{\schedcontextcapdesc}{Capability to the scheduling context to populate with parameters.}
+\newcommand{\schedcontextcapdesc}{Capability to the scheduling context which is being operated on.}
 \newcommand{\budgetdesc}{Timeslice in microseconds, when the budget expires the thread will be preempted.}
 \newcommand{\perioddesc}{Period in microseconds, the budget is replenished every time the period exipires.}
 
@@ -254,6 +254,7 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{sel4_signal}
 \inputapidoc{sel4_wait}
 \inputapidoc{sel4_poll}
+\inputapidoc{sel4_nbsendrecv}
 \clearpage
 
 \section{Architecture-Independent Object Methods}
