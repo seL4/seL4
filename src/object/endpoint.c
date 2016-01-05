@@ -215,7 +215,7 @@ replyFromKernel_error(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
     len = setMRs_syscall_error(thread, ipcBuffer);
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                    message_info_new(current_syscall_error.type, 0, 0, len)));
+                    seL4_MessageInfo_new(current_syscall_error.type, 0, 0, len)));
 }
 
 void
@@ -223,7 +223,7 @@ replyFromKernel_success_empty(tcb_t *thread)
 {
     setRegister(thread, badgeRegister, 0);
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                    message_info_new(0, 0, 0, 0)));
+                    seL4_MessageInfo_new(0, 0, 0, 0)));
 }
 
 void

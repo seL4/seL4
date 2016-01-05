@@ -18,18 +18,3 @@ block cap_rights {
     field capAllowWrite 1
 }
 
--- Message info word
-block message_info {
-    field msgLabel 19
-    field msgCapsUnwrapped 3
-    field msgExtraCaps 3
-    field msgLength 7
-}
-
--- TCB priority
-block seL4_Prio {
-    field prio     8
-    field max_prio 8
-    padding        16
-}
-

@@ -460,7 +460,7 @@ deleteCallerCap(tcb_t *receiver)
 extra_caps_t current_extra_caps;
 
 exception_t
-lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info)
+lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info)
 {
     lookupSlot_raw_ret_t lu_ret;
     cptr_t cptr;
@@ -471,7 +471,7 @@ lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info)
         return EXCEPTION_NONE;
     }
 
-    length = message_info_get_msgExtraCaps(info);
+    length = seL4_MessageInfo_get_extraCaps(info);
 
     for (i = 0; i < length; i++) {
         cptr = getExtraCPtr(bufferPtr, i);
@@ -1291,7 +1291,7 @@ invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
         }
 
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                        message_info_new(0, 0, 0, i + j)));
+                        seL4_MessageInfo_new(0, 0, 0, i + j)));
     }
     setThreadState(thread, ThreadState_Running);
 

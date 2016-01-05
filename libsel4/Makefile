@@ -17,7 +17,8 @@ CHANGED_PATH := ${SOURCE_DIR}/tools/changed.sh
 
 # Targets
 PRIORITY_TARGETS := include/interfaces/sel4_client.h include/sel4/types_gen.h include/sel4/syscall.h \
-					include/sel4/invocation.h arch_include/${ARCH}/sel4/arch/invocation.h
+					include/sel4/invocation.h arch_include/${ARCH}/sel4/arch/invocation.h \
+					include/sel4/shared_types_gen.h
 TARGETS          := libsel4.a
 
 # Source files required to build the target
@@ -76,6 +77,14 @@ include/sel4/types_gen.h: \
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 "${SOURCE_DIR}/include/sel4/types.bf" include/sel4/types_gen.h
+
+# Bitfield generator
+include/sel4/shared_types_gen.h: \
+		${SOURCE_DIR}/include/sel4/shared_types.bf \
+		${BF_GEN_PATH}
+	@echo " [GEN] $@"
+	@mkdir -p $(dir $@)
+	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 "${SOURCE_DIR}/include/sel4/shared_types.bf" include/sel4/shared_types_gen.h
 
 # Stub generator
 include/interfaces/sel4_client.h: \

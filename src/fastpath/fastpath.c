@@ -16,7 +16,7 @@ NORETURN
 #endif
 fastpath_call(word_t cptr, word_t msgInfo)
 {
-    message_info_t info;
+    seL4_MessageInfo_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
     word_t length;
@@ -30,7 +30,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
     /* Get message info, length, and fault type. */
     info = messageInfoFromWord_raw(msgInfo);
-    length = message_info_get_msgLength(info);
+    length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -147,14 +147,14 @@ fastpath_call(word_t cptr, word_t msgInfo)
                                    ThreadState_Running);
     switchToThread_fp(dest, cap_pd, stored_hw_asid);
 
-    msgInfo = wordFromMessageInfo(message_info_set_msgCapsUnwrapped(info, 0));
+    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo, ksCurThread);
 }
 
 void
 fastpath_reply_recv(word_t cptr, word_t msgInfo)
 {
-    message_info_t info;
+    seL4_MessageInfo_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
     word_t length;
@@ -171,7 +171,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* Get message info and length */
     info = messageInfoFromWord_raw(msgInfo);
-    length = message_info_get_msgLength(info);
+    length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -310,6 +310,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
                                    ThreadState_Running);
     switchToThread_fp(caller, cap_pd, stored_hw_asid);
 
-    msgInfo = wordFromMessageInfo(message_info_set_msgCapsUnwrapped(info, 0));
+    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo, ksCurThread);
 }

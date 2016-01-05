@@ -2044,7 +2044,7 @@ performPageGetAddress(void *vbase_ptr)
     /* return it in the first message register */
     setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
     setRegister(ksCurThread, msgInfoRegister,
-                wordFromMessageInfo(message_info_new(0, 0, 0, 1)));
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
 
     return EXCEPTION_NONE;
 }
