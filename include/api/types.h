@@ -19,6 +19,7 @@
 #include <arch/api/types.h>
 #include <arch/types.h>
 #include <api/constants.h>
+#include <api/shared_types.h>
 
 /* cap_rights_t defined in api/types.bf */
 
