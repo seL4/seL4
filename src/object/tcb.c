@@ -442,8 +442,8 @@ setupCallerCap(tcb_t *sender, tcb_t *receiver, sched_context_t *donated)
     assert(cap_get_capType(callerCap) == cap_null_cap);
     cteInsert(cap_reply_cap_new(false, TCB_REF(sender), SC_REF(donated)),
               replySlot, callerSlot);
-    if (donated) {
-        donated->replySlot = callerSlot;
+    if (donated != NULL) {
+        donated->reply = sender;
     }
 }
 

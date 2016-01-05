@@ -122,7 +122,7 @@ restart(tcb_t *target)
             postpone(target->tcbSchedContext);
         } else {
             tcbSchedEnqueue(target);
-            switchIfRequiredTo(target, false);
+            switchIfRequiredTo(target);
         }
     }
 }
@@ -153,11 +153,9 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *re
 
     assert(reply_sc == NULL || reply_sc->remaining > getKernelWcetTicks());
 
-    if (unlikely(reply_sc != sender->tcbSchedContext && reply_sc != NULL)) {
-        /* this case occurs when someone else replies on behalf of the original
-         * calling thread, so return the scheduling context */
-        receiver->tcbSchedContext = reply_sc;
-        reply_sc->tcb = receiver;
+    if (likely(reply_sc != NULL && receiver->tcbSchedContext == NULL)) {
+        donateSchedContext(receiver, reply_sc);
+        reply_sc->reply = NULL;
     }
 
     if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
@@ -165,7 +163,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *re
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
         setThreadState(receiver, ThreadState_Running);
-        attemptSwitchTo(receiver, reply_sc == sender->tcbSchedContext && reply_sc != NULL);
+        attemptSwitchTo(receiver);
     } else {
         bool_t restart;
 
@@ -175,7 +173,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *re
         fault_null_fault_ptr_new(&receiver->tcbFault);
         if (restart) {
             setThreadState(receiver, ThreadState_Restart);
-            attemptSwitchTo(receiver, reply_sc == sender->tcbSchedContext && reply_sc != NULL);
+            attemptSwitchTo(receiver);
         } else {
             setThreadState(receiver, ThreadState_Inactive);
         }
@@ -447,8 +445,23 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
     }
 }
 
+void
+donateSchedContext(tcb_t *to, sched_context_t *sc)
+{
+    assert(to != NULL);
+    assert(sc != NULL);
+
+    if (sc->tcb) {
+        /* thread must not be in the scheduling queue */
+        assert(!thread_state_get_tcbQueued(sc->tcb->tcbState));
+        sc->tcb->tcbSchedContext = NULL;
+    }
+    sc->tcb = to;
+    to->tcbSchedContext = sc;
+}
+
 static void
-possibleSwitchTo(tcb_t* target, bool_t onSamePriority, bool_t donate)
+possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
 {
     prio_t curPrio, targetPrio;
     tcb_t *action;
@@ -457,48 +470,34 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority, bool_t donate)
     targetPrio = target->tcbPriority;
     action = ksSchedulerAction;
 
-    if (likely(donate)) {
-        assert(target->tcbSchedContext == NULL);
-        /* if we are donating our scheduling context, the current prio doesn't matter
-         * as this thread will be blocked
-         */
-        targetPrio = seL4_MaxPrio + 1;
-
-        /* do the donation */
-        target->tcbSchedContext = ksCurSchedContext;
-        ksCurSchedContext->tcb = target;
-        ksCurThread->tcbSchedContext = NULL;
-    } else if (onSamePriority) {
-        /* if we accept threads of the same priority,
-         * increate the effective target prio so the >
-         * in the following comparison works */
-        targetPrio++;
-    }
-
-    if (likely(target->tcbSchedContext != NULL)) {
-        if (likely((targetPrio > curPrio) && action == SchedulerAction_ResumeCurrentThread)) {
+    if (unlikely(target->tcbSchedContext != NULL)) {
+        if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
+                && action == SchedulerAction_ResumeCurrentThread) {
             ksSchedulerAction = target;
-        } else  {
+        } else {
             tcbSchedEnqueue(target);
         }
 
-        if (unlikely(action != SchedulerAction_ResumeCurrentThread
-                     && action != SchedulerAction_ChooseNewThread)) {
+        if (action != SchedulerAction_ResumeCurrentThread &&
+                action != SchedulerAction_ChooseNewThread) {
+            rescheduleRequired();
+        } else if (ksCurThread->tcbSchedContext == NULL &&
+                   ksSchedulerAction == SchedulerAction_ResumeCurrentThread) {
             rescheduleRequired();
         }
     }
 }
 
 void
-attemptSwitchTo(tcb_t* target, bool_t donate)
+attemptSwitchTo(tcb_t* target)
 {
-    possibleSwitchTo(target, true, donate);
+    possibleSwitchTo(target, true);
 }
 
 void
-switchIfRequiredTo(tcb_t* target, bool_t donate)
+switchIfRequiredTo(tcb_t* target)
 {
-    possibleSwitchTo(target, false, donate);
+    possibleSwitchTo(target, false);
 }
 
 void

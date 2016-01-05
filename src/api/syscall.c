@@ -402,6 +402,25 @@ handleRecv(bool_t isBlocking, bool_t canDonate, word_t epCPtr)
     }
 }
 
+static exception_t
+handleNBSendRecv(void)
+{
+    exception_t ret = handleInvocation(false, false, true);
+    if (likely(ret == EXCEPTION_NONE)) {
+        seL4_IPCBuffer *buffer = (seL4_IPCBuffer *) lookupIPCBuffer(true, ksCurThread);
+        if (unlikely(buffer == NULL)) {
+            current_lookup_fault = lookup_fault_missing_capability_new(0);
+            current_fault = fault_cap_fault_new(0, true);
+            handleFault(ksCurThread);
+        } else {
+            word_t epCPtr = buffer->reserved;
+            handleRecv(true, false, epCPtr);
+        }
+    }
+
+    return ret;
+}
+
 exception_t
 handleSyscall(syscall_t syscall)
 {
@@ -453,14 +472,7 @@ handleSyscall(syscall_t syscall)
         }
 
         case SysNBSendRecv:
-            ret = handleInvocation(false, false, true);
-            if (likely(ret == EXCEPTION_NONE)) {
-                word_t *buffer = lookupIPCBuffer(true, ksCurThread);
-                /* TODO do this offset better */
-                word_t epCPtr = buffer[1 + seL4_MsgMaxLength + 1 + seL4_MsgMaxExtraCaps + 3];
-                handleRecv(true, false, epCPtr);
-            }
-
+            ret = handleNBSendRecv();
             break;
         default:
             fail("Invalid syscall");

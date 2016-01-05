@@ -465,7 +465,7 @@ seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_
     register seL4_Word msg2 asm("r4") = seL4_GetMR(2);
     register seL4_Word msg3 asm("r5") = seL4_GetMR(3);
 
-    register seL4_Word scno asm("r7") = seL4_SysSendWait;
+    register seL4_Word scno asm("r7") = seL4_SysNBSendRecv;
 
     /* the third syscall argument is placed in the kernel reserved word of the ipc buffer */
     seL4_GetIPCBuffer()->reserved = src;
@@ -473,7 +473,7 @@ seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_
     asm volatile (" swi %[swi_num]\n"
                   : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
                   "+r" (info), "+r" (dest_and_badge)
-                  : [swi_num] "i" __SWINUM(seL4_SysSendWait), "r"(scno),
+                  : [swi_num] "i" __SWINUM(seL4_SysNBSendRecv), "r"(scno)
                   : "memory");
 
     /* Write the message back out to memory. */
@@ -501,7 +501,7 @@ seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_MessageInfo_t msgInfo
     register seL4_Word msg1 asm("r3");
     register seL4_Word msg2 asm("r4");
     register seL4_Word msg3 asm("r5");
-    register seL4_Word scno asm("r7") = seL4_SysSendWait;
+    register seL4_Word scno asm("r7") = seL4_SysNBSendRecv;
 
     if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
@@ -523,7 +523,7 @@ seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_MessageInfo_t msgInfo
     asm volatile (" swi %[swi_num]\n"
                   : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
                   "+r" (info), "+r" (dest_and_badge)
-                  : [swi_num] "i" __SWINUM(seL4_SysSendWait), "r"(scno)
+                  : [swi_num] "i" __SWINUM(seL4_SysNBSendRecv), "r"(scno)
                   : "memory");
 
     /* Write out the data back to memory. */

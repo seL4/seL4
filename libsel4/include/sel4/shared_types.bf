@@ -13,8 +13,14 @@
 base 32
 
 block seL4_MessageInfo {
-    field label 20
+    field label 19
     field capsUnwrapped 3
-    field extraCaps 2
+    field extraCaps 3
     field length 7
+}
+
+block seL4_Prio {
+    field prio     8
+    field max_prio 8
+    padding        16
 }

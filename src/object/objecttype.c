@@ -135,8 +135,9 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         sched_context_t *sc;
 
         sc = SC_PTR(cap_reply_cap_get_schedcontext(cap));
-        if (sc) {
-            sc->replySlot = NULL;
+        if (sc != NULL && sc->reply != NULL) {
+            donateSchedContext(sc->reply, sc);
+            sc->reply = NULL;
         }
 
         fc_ret.remainder = cap_null_cap_new();

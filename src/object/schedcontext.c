@@ -115,7 +115,7 @@ bindSchedContext(sched_context_t *sc, tcb_t *tcb)
         if (sc->remaining < getKernelWcetTicks()) {
             postpone(sc);
         } else {
-            switchIfRequiredTo(tcb, false);
+            switchIfRequiredTo(tcb);
         }
     }
 }

@@ -67,7 +67,7 @@ sendIPC(bool_t blocking, bool_t do_call, bool_t canDonate, word_t badge,
         tcb_queue_t queue;
         tcb_t *dest;
         bool_t diminish;
-        bool_t donated;
+        sched_context_t *donated = NULL;
 
         /* Get the head of the endpoint queue. */
         queue = ep_ptr_get_queue(epptr);
@@ -89,14 +89,18 @@ sendIPC(bool_t blocking, bool_t do_call, bool_t canDonate, word_t badge,
             thread_state_get_blockingIPCDiminishCaps(dest->tcbState);
         doIPCTransfer(thread, epptr, badge, canGrant, dest, diminish);
 
+        if (canDonate && dest->tcbSchedContext == NULL) {
+            donateSchedContext(dest, ksCurSchedContext);
+            donated = ksCurSchedContext;
+        }
+
         setThreadState(dest, ThreadState_Running);
-        donated = canDonate && dest->tcbSchedContext == NULL;
-        attemptSwitchTo(dest, donated);
+        attemptSwitchTo(dest);
 
         if (do_call ||
                 fault_ptr_get_faultType(&thread->tcbFault) != fault_null_fault) {
             if (canGrant && !diminish) {
-                setupCallerCap(thread, dest, donated ? dest->tcbSchedContext : NULL);
+                setupCallerCap(thread, dest, donated);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
@@ -158,7 +162,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate)
             word_t badge;
             bool_t canGrant;
             bool_t do_call;
-            bool_t doDonate;
+            sched_context_t *donated = NULL;
 
             /* Get the head of the endpoint queue. */
             queue = ep_ptr_get_queue(epptr);
@@ -185,18 +189,22 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate)
                           canGrant, thread, diminish);
 
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
-            doDonate = thread->tcbSchedContext == NULL && canDonate;
+
+            if (thread->tcbSchedContext == NULL && canDonate) {
+                donateSchedContext(thread, ksCurSchedContext);
+                donated = ksCurSchedContext;
+            }
 
             if (do_call ||
                     fault_get_faultType(sender->tcbFault) != fault_null_fault) {
                 if (canGrant && !diminish) {
-                    setupCallerCap(sender, thread, doDonate ? sender->tcbSchedContext : 0);
+                    setupCallerCap(sender, thread, donated);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }
             } else {
                 setThreadState(sender, ThreadState_Running);
-                switchIfRequiredTo(sender, doDonate);
+                switchIfRequiredTo(sender);
             }
 
             break;

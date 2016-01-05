@@ -21,6 +21,7 @@ typedef struct seL4_IPCBuffer_ {
     seL4_CPtr receiveCNode;
     seL4_CPtr receiveIndex;
     seL4_Word receiveDepth;
+    seL4_Word reserved;
 } seL4_IPCBuffer __attribute__ ((__aligned__ (sizeof(struct seL4_IPCBuffer_))));
 
 #endif

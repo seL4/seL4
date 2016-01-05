@@ -134,6 +134,9 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Get dest caller slot */
     callerSlot = TCB_PTR_CTE_PTR(dest, tcbCaller);
 
+    /* insert back pointer into sched context */
+    ksCurSchedContext->reply = dest;
+
     /* Insert reply cap */
     cap_reply_cap_ptr_new_np(&callerSlot->cap, 0, TCB_REF(ksCurThread));
     mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, CTE_REF(replySlot));
@@ -294,7 +297,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
         &CTE_PTR(mdb_node_get_mdbPrev(callerSlot->cteMDBNode))->cteMDBNode,
         0, 1, 1);
-    ksCurSchedContext->replySlot = NULL;
+    ksCurSchedContext->reply = NULL;
     callerSlot->cap = cap_null_cap_new();
     callerSlot->cteMDBNode = nullMDBNode;
 
