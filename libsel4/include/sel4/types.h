@@ -20,6 +20,7 @@
 #include <sel4/objecttype.h>
 #include <sel4/errors.h>
 #include <sel4/constants.h>
+#include <sel4/shared_types.h>
 
 typedef enum {
     seL4_NoFault = 0,
@@ -51,17 +52,6 @@ typedef enum {
 #define seL4_GuardSizeBits 5
 #define seL4_GuardBits 18
 #define seL4_BadgeBits 28
-
-typedef struct seL4_IPCBuffer_ {
-    seL4_MessageInfo_t tag;
-    seL4_Word msg[seL4_MsgMaxLength];
-    seL4_Word userData;
-    seL4_Word caps_or_badges[seL4_MsgMaxExtraCaps];
-    seL4_CPtr receiveCNode;
-    seL4_CPtr receiveIndex;
-    seL4_Word receiveDepth;
-    seL4_Word reserved;
-} seL4_IPCBuffer __attribute__ ((__aligned__ (sizeof(struct seL4_IPCBuffer_))));
 
 typedef seL4_CPtr seL4_CNode;
 typedef seL4_CPtr seL4_IRQHandler;
