@@ -90,16 +90,16 @@
             <param dir="in" name="port" type="seL4_Uint16"/>
         </method>
         <method id="IA32IOPortOut8" name="Out8">
-            <param dir="in" name="port" type="seL4_Uint16"/>
-            <param dir="in" name="data" type="seL4_Uint8"/>
+            <param dir="in" name="port" type="seL4_Word"/>
+            <param dir="in" name="data" type="seL4_Word"/>
         </method>
         <method id="IA32IOPortOut16" name="Out16">
-            <param dir="in" name="port" type="seL4_Uint16"/>
-            <param dir="in" name="data" type="seL4_Uint16"/>
+            <param dir="in" name="port" type="seL4_Word"/>
+            <param dir="in" name="data" type="seL4_Word"/>
         </method>
         <method id="IA32IOPortOut32" name="Out32">
-            <param dir="in" name="port" type="seL4_Uint16"/>
-            <param dir="in" name="data" type="seL4_Uint32"/>
+            <param dir="in" name="port" type="seL4_Word"/>
+            <param dir="in" name="data" type="seL4_Word"/>
         </method>
     </interface>
     <interface name="seL4_IA32_IOSpace">
