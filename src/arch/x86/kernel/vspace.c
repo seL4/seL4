@@ -754,7 +754,7 @@ exception_t decodeX86FrameInvocation(
 )
 {
     switch (invLabel) {
-    case IA32PageMap: { /* Map */
+    case X86PageMap: { /* Map */
         word_t          vaddr;
         word_t          vtop;
         word_t          w_rightsMask;
@@ -918,7 +918,7 @@ exception_t decodeX86FrameInvocation(
         return EXCEPTION_NONE;
     }
 
-    case IA32PageRemap: { /* Remap */
+    case X86PageRemap: { /* Remap */
         word_t          vaddr;
         word_t          w_rightsMask;
         paddr_t         paddr;
@@ -1052,7 +1052,7 @@ exception_t decodeX86FrameInvocation(
         return EXCEPTION_NONE;
     }
 
-    case IA32PageUnmap: { /* Unmap */
+    case X86PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
             if (isIOSpaceFrame(cap)) {
                 return decodeIA32IOUnMapInvocation(invLabel, length, cte, cap, excaps);
@@ -1071,11 +1071,11 @@ exception_t decodeX86FrameInvocation(
         return EXCEPTION_NONE;
     }
 
-    case IA32PageMapIO: { /* MapIO */
+    case X86PageMapIO: { /* MapIO */
         return decodeIA32IOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
     }
 
-    case IA32PageGetAddress: {
+    case X86PageGetAddress: {
         /* Return it in the first message register. */
         assert(n_msgRegisters >= 1);
 
@@ -1108,7 +1108,7 @@ decodeX86PageTableInvocation(
     paddr_t         paddr;
     asid_t          asid;
 
-    if (invLabel == IA32PageTableUnmap) {
+    if (invLabel == X86PageTableUnmap) {
         if (! isFinalCapability(cte)) {
             current_syscall_error.type = seL4_RevokeFirst;
             userError("IA32PageTable: Cannot unmap if more than one cap exists.");
@@ -1130,7 +1130,7 @@ decodeX86PageTableInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (invLabel != IA32PageTableMap ) {
+    if (invLabel != X86PageTableMap ) {
         userError("IA32PageTable: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1253,7 +1253,7 @@ exception_t decodeX86MMUInvocation(
         void*            frame;
         exception_t      status;
 
-        if (invLabel != IA32ASIDControlMakePool) {
+        if (invLabel != X86ASIDControlMakePool) {
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -1321,7 +1321,7 @@ exception_t decodeX86MMUInvocation(
         word_t i;
         asid_t       asid;
 
-        if (invLabel != IA32ASIDPoolAssign) {
+        if (invLabel != X86ASIDPoolAssign) {
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;

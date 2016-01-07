@@ -338,7 +338,7 @@ decodeIA32PageDirectoryInvocation(
     asid_t          asid;
     cap_t           threadRoot;
 
-    if (invLabel == IA32PageDirectoryUnmap) {
+    if (invLabel == X86PageDirectoryUnmap) {
         if (!isFinalCapability(cte)) {
             current_syscall_error.type = seL4_RevokeFirst;
             userError("IA32PageDirectory: Cannot unmap if more than one cap exists.");
@@ -360,7 +360,7 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (invLabel != IA32PageDirectoryMap) {
+    if (invLabel != X86PageDirectoryMap) {
         userError("IA32PageDirectory: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;

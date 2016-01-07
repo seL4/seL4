@@ -58,7 +58,7 @@ decodeIA32PortInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (invLabel == IA32IOPortOut8 || invLabel == IA32IOPortOut16 || invLabel == IA32IOPortOut32) {
+    if (invLabel == X86IOPortOut8 || invLabel == X86IOPortOut16 || invLabel == X86IOPortOut32) {
         /* Ensure the incoming message is long enough for the write. */
         if (length < 2) {
             userError("IOPort Out32: Truncated message.");
@@ -71,7 +71,7 @@ decodeIA32PortInvocation(
     port = getSyscallArg(0, buffer) & 0xffff;
 
     switch (invLabel) {
-    case IA32IOPortIn8: { /* inport 8 bits */
+    case X86IOPortIn8: { /* inport 8 bits */
 
         /* Check we are allowed to perform the operation. */
         ret = ensurePortOperationAllowed(cap, port, 1);
@@ -85,7 +85,7 @@ decodeIA32PortInvocation(
         break;
     }
 
-    case IA32IOPortIn16: { /* inport 16 bits */
+    case X86IOPortIn16: { /* inport 16 bits */
 
         /* Check we are allowed to perform the operation. */
         ret = ensurePortOperationAllowed(cap, port, 2);
@@ -99,7 +99,7 @@ decodeIA32PortInvocation(
         break;
     }
 
-    case IA32IOPortIn32: { /* inport 32 bits */
+    case X86IOPortIn32: { /* inport 32 bits */
 
         /* Check we are allowed to perform the operation. */
         ret = ensurePortOperationAllowed(cap, port, 4);
@@ -113,7 +113,7 @@ decodeIA32PortInvocation(
         break;
     }
 
-    case IA32IOPortOut8: { /* outport 8 bits */
+    case X86IOPortOut8: { /* outport 8 bits */
         uint8_t data;
 
         /* Check we are allowed to perform the operation. */
@@ -129,7 +129,7 @@ decodeIA32PortInvocation(
         break;
     }
 
-    case IA32IOPortOut16: { /* outport 16 bits */
+    case X86IOPortOut16: { /* outport 16 bits */
         uint16_t data;
 
         /* Check we are allowed to perform the operation. */
@@ -145,7 +145,7 @@ decodeIA32PortInvocation(
         break;
     }
 
-    case IA32IOPortOut32: { /* outport 32 bits */
+    case X86IOPortOut32: { /* outport 32 bits */
         uint32_t data;
 
         /* Check we are allowed to perform the operation. */

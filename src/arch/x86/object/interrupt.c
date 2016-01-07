@@ -168,7 +168,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
     }
 
     switch (invLabel) {
-    case IA32IRQIssueIRQHandlerIOAPIC: {
+    case X86IRQIssueIRQHandlerIOAPIC: {
         word_t ioapic = getSyscallArg(2, buffer);
         word_t pin = getSyscallArg(3, buffer);
         word_t level = getSyscallArg(4, buffer);
@@ -189,7 +189,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
         return invokeIssueIRQHandlerIOAPIC(irq, ioapic, pin, level, polarity, vector, destSlot, srcSlot);
     }
     break;
-    case IA32IRQIssueIRQHandlerMSI: {
+    case X86IRQIssueIRQHandlerMSI: {
         word_t pci_bus = getSyscallArg(2, buffer);
         word_t pci_dev = getSyscallArg(3, buffer);
         word_t pci_func = getSyscallArg(4, buffer);

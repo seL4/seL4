@@ -16,23 +16,19 @@
 #endif /* HAVE_AUTOCONF */
 
 typedef enum _object {
-    seL4_IA32_4K = seL4_ModeObjectTypeCount,
-    seL4_IA32_LargePage,
-    seL4_IA32_PageTableObject,
-    seL4_IA32_PageDirectoryObject,
+    seL4_X86_4K = seL4_ModeObjectTypeCount,
+    seL4_X86_LargePageObject,
+    seL4_X86_PageTableObject,
+    seL4_X86_PageDirectoryObject,
 #ifdef CONFIG_IOMMU
-    seL4_IA32_IOPageTableObject,
+    seL4_X86_IOPageTableObject,
 #endif
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 typedef seL4_Word object_t;
 
-#ifndef CONFIG_PAE_PAGING
-#define seL4_IA32_4M seL4_IA32_LargePage
-#endif
-
 #ifndef CONFIG_IOMMU
-#define seL4_IA32_IOPageTableObject 0xffffff
+#define seL4_X86_IOPageTableObject 0xffffff
 #endif
 
 #endif

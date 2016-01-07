@@ -395,17 +395,17 @@ word_t
 Arch_getObjectSize(word_t t)
 {
     switch (t) {
-    case seL4_IA32_4K:
+    case seL4_X86_4K:
         return pageBitsForSize(IA32_SmallPage);
-    case seL4_IA32_LargePage:
+    case seL4_X86_LargePageObject:
         return pageBitsForSize(IA32_LargePage);
-    case seL4_IA32_PageTableObject:
+    case seL4_X86_PageTableObject:
         return seL4_PageTableBits;
-    case seL4_IA32_PageDirectoryObject:
+    case seL4_X86_PageDirectoryObject:
         return seL4_PageDirBits;
     case seL4_IA32_PDPTObject:
         return seL4_PDPTBits;
-    case seL4_IA32_IOPageTableObject:
+    case seL4_X86_IOPageTableObject:
         return VTD_PT_SIZE_BITS;
     default:
         return Mode_getObjectSize(t);
