@@ -260,6 +260,9 @@ struct sched_context {
      * to can get back to the original caller even if a different thread replies on
      * behalf of the caller or the reply cap is deleted */
     tcb_t *reply;
+
+    /* notification this scheduling context is optionally bound to */
+    notification_t *notification;
 };
 
 /* Ensure object sizes are sane */

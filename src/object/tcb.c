@@ -1138,9 +1138,9 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
 
     if (updateFlags & thread_control_update_sc) {
         if (sched_context != NULL) {
-            bindSchedContext(sched_context, target);
+            schedContext_bindTCB(sched_context, target);
         } else {
-            unbindSchedContext(target->tcbSchedContext);
+            schedContext_unbindTCB(target->tcbSchedContext);
         }
     }
 

@@ -178,7 +178,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
-            unbindSchedContext(tcb->tcbSchedContext);
+            schedContext_unbindTCB(tcb->tcbSchedContext);
             suspend(tcb);
 
             Arch_prepareThreadDelete(tcb);
@@ -198,7 +198,8 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             sched_context_t *sc;
 
             sc = SC_PTR(cap_sched_context_cap_get_capPtr(cap));
-            unbindSchedContext(sc);
+            schedContext_unbindTCB(sc);
+            schedContext_unbindNtfn(sc);
 
             fc_ret.remainder = cap_null_cap_new();
             fc_ret.irq = irqInvalid;

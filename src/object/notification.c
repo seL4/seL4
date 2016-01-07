@@ -70,6 +70,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 cancelIPC(tcb);
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
+                maybeDonateSchedContext(tcb, ntfnPtr);
                 switchIfRequiredTo(tcb);
             } else {
                 ntfn_set_active(ntfnPtr, badge);
@@ -98,6 +99,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
             notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
         }
 
+        maybeDonateSchedContext(dest, ntfnPtr);
         setThreadState(dest, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
         switchIfRequiredTo(dest);
@@ -134,6 +136,11 @@ receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
                                         ThreadState_BlockedOnNotification);
             thread_state_ptr_set_blockingObject(&thread->tcbState,
                                                 NTFN_REF(ntfnPtr));
+
+            /* return scheduling context */
+            maybeReturnSchedContext(ntfnPtr, thread);
+
+
             scheduleTCB(thread);
 
             /* Enqueue TCB */
@@ -154,6 +161,7 @@ receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
             thread, badgeRegister,
             notification_ptr_get_ntfnMsgIdentifier(ntfnPtr));
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+        maybeDonateSchedContext(thread, ntfnPtr);
         break;
     }
 }
@@ -208,6 +216,7 @@ completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
         badge = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
         setRegister(tcb, badgeRegister, badge);
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+        maybeDonateSchedContext(tcb, ntfnPtr);
     } else {
         fail("tried to complete signal with inactive notification object");
     }
@@ -224,13 +233,19 @@ void
 unbindMaybeNotification(notification_t *ntfnPtr)
 {
     tcb_t *boundTCB;
+    sched_context_t *boundSC;
+
     boundTCB = (tcb_t*)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
+    boundSC = (sched_context_t *) notification_ptr_get_ntfnSchedContext(ntfnPtr);
 
     if (boundTCB) {
         doUnbindNotification(ntfnPtr, boundTCB);
     }
-}
 
+    if (boundSC) {
+        schedContext_unbindNtfn(boundSC);
+    }
+}
 void
 unbindNotification(tcb_t *tcb)
 {
@@ -247,5 +262,27 @@ bindNotification(tcb_t *tcb, notification_t *ntfnPtr)
 {
     notification_ptr_set_ntfnBoundTCB(ntfnPtr, (word_t)tcb);
     tcb->tcbBoundNotification = ntfnPtr;
+}
+
+void
+maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
+{
+    if (tcb->tcbSchedContext == NULL) {
+        sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+        if (sc != NULL && sc->tcb == NULL) {
+            assert(sc->tcb == NULL);
+            donateSchedContext(tcb, sc);
+        }
+    }
+}
+
+void
+maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *thread)
+{
+    sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+    if (sc == thread->tcbSchedContext) {
+        thread->tcbSchedContext = NULL;
+        sc->tcb = NULL;
+    }
 }
 

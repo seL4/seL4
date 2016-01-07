@@ -23,5 +23,7 @@ void unbindMaybeNotification(notification_t *ntfnPtr);
 void unbindNotification(tcb_t *tcb);
 void bindNotification(tcb_t *tcb, notification_t *ntfnPtr);
 void reorderNtfnQueue(tcb_t *thread, prio_t oldPrio);
+void maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr);
+void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *thread);
 
 #endif

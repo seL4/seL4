@@ -124,11 +124,19 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate)
     epptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
     diminish = !cap_endpoint_cap_get_capCanSend(cap);
 
-    /* Check for anything waiting in the notification */
     ntfnPtr = thread->tcbBoundNotification;
+    /* Check for anything waiting in the notification */
     if (ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
+        /* if the notification is active we do not need to return the scheduling context
+         * as it will just be donated again */
         completeSignal(ntfnPtr, thread);
     } else {
+        /* this is effectively waiting on the bound endpoint, so return the scheduling
+         * context */
+        if (ntfnPtr) {
+            maybeReturnSchedContext(ntfnPtr, thread);
+        }
+
         switch (endpoint_ptr_get_state(epptr)) {
         case EPState_Idle:
         case EPState_Recv: {
