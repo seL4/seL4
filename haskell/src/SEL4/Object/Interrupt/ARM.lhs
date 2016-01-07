@@ -30,3 +30,5 @@ Apparently ARM does not have any.
 > performIRQControl :: ArchInv.IRQControlInvocation -> KernelP ()
 > performIRQControl _ = fail "performIRQControl: not defined"
 
+> checkIRQ :: Word -> KernelF SyscallError ()
+> checkIRQ irq = rangeCheck irq (fromEnum minIRQ) (fromEnum maxIRQ)

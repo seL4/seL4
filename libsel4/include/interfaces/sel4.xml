@@ -149,10 +149,6 @@
 			<param dir="in" name="notification" type="seL4_CPtr"/>
         </method>
 		<method id="IRQClearIRQHandler" name="Clear"/>
-        <method id="IRQSetMode" name="SetMode">
-            <param dir="in" name="level_trigger" type="seL4_Uint32"/>
-            <param dir="in" name="low_polarity" type="seL4_Uint32"/>
-        </method>
     </interface>
 	<interface name="seL4_DomainSet">
 		<method id="DomainSetSet" name="Set">

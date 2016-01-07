@@ -137,10 +137,6 @@ The following data type defines the set of possible invocations for IRQ capabili
 > data IRQHandlerInvocation
 >         = AckIRQ { irqHandlerIRQ :: IRQ }
 >         | ClearIRQHandler { irqHandlerIRQ :: IRQ }
->         | SetMode {
->             modeIRQ :: IRQ,
->             modeTrigger :: Bool,
->             modePolarity :: Bool }
 >         | SetIRQHandler {
 >             irqHandlerIRQ :: IRQ,
 >             setIRQHandlerCap :: Capability,

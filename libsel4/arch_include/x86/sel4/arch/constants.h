@@ -20,24 +20,21 @@
 #include <sel4/arch/objecttype.h>
 #endif
 
-/* MSI IRQs need to be offset by this value in order to come
- * in along the right vector. Get the seL4_IRQHandler for
- * the irq number you want, then add IRQ_OFFSET to it when
- * programming the device */
-#define IRQ_OFFSET 0x20
+/* Currently MSIs do not go through a vt-d translation by
+ * the kernel, therefore when the user programs an MSI they
+ * need to know how the 'vector' they allocated relates to
+ * the actual vector table. In this case if they allocate
+ * vector X they need to program their MSI to interrupt
+ * vector X + IRQ_OFFSET */
+#define IRQ_OFFSET (0x20 + 16)
 
-/* Range for MSI irqs. Currently no proper way of getting at the corresponding
- * definition inside seL4, but the vector table is setup such that MSIs start
- * after all the IRQs for the external interrupt controller (PIC or IOAPIC).
- * Regardless of whether the IOAPIC is used or not the MSI
- * block is after what would be the IOAPIC vector block. There are
- * 24 lines per IOAPIC */
-#define MSI_MIN (24 * CONFIG_MAX_NUM_IOAPIC)
-#define MSI_MAX (MSI_MIN + 0xd)
+/* When allocating vectors for IOAPIC or MSI interrupts,
+ * this represent the valid range */
+#define VECTOR_MIN (0)
+#define VECTOR_MAX (109)
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
-/* size of kernel log buffer in bytes */
-#define seL4_LogBufferSize (LIBSEL4_BIT(seL4_LargePageBits))
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+/* Legacy definitions */
+#define MSI_MIN VECTOR_MIN
+#define MSI_MAX VECTOR_MAX
 
 #endif
