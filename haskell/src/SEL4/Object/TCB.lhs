@@ -200,7 +200,8 @@ Setting the thread's priority is only allowed if the new priority is lower than 
 >         throw IllegalOperation
 >     return $! ThreadControl {
 >         tcThread = capTCBPtr cap,
->         tcThreadCapSlot = error "tcThreadCapSlot unused",
+>--         tcThreadCapSlot = error "tcThreadCapSlot unused",
+>         tcThreadCapSlot = 0,
 >         tcNewFaultEP = Nothing,
 >         tcNewPriority = Just $ fromIntegral newPrio,
 >         tcNewCRoot = Nothing,

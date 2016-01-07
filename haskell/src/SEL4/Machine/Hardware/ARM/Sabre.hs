@@ -13,24 +13,30 @@
 module SEL4.Machine.Hardware.ARM.Sabre where
 
 import SEL4.Machine.RegisterSet
+import SEL4.Machine.Hardware.ARM.Callbacks
+import SEL4.Machine.Hardware.GICInterface hiding (IRQ, maskInterrupt)
+import qualified SEL4.Machine.Hardware.GICInterface as GIC
+import qualified SEL4.Machine.Hardware.MPTimerInterface as MPT
 import Foreign.Ptr
 import Data.Bits
-import Data.Word(Word8)
-import Data.Ix
 
-data CallbackData
+-- Following harded coded address pair are used in getKernelDevices 
+-- and will get mapped into kernel address space via mapKernelFrame
+gicControllerBase = PAddr 0x00A00000
+gicDistributorBase = PAddr 0x00A01000
+l2ccBase = PAddr 0x00A02000
+uartBase = PAddr 0x021E8000
 
-newtype IRQ = IRQ Word8
-    deriving (Enum, Ord, Ix, Eq, Show)
+uart = (uartBase, PPtr 0xfff01000) 
+l2cc = (l2ccBase, PPtr 0xfff03000)
+gicController = (gicControllerBase, PPtr 0xfff04000)
+gicDistributor = (gicDistributorBase, PPtr 0xfff05000)
 
-instance Bounded IRQ where
-    minBound = IRQ 0
-    maxBound = IRQ 31
 
-newtype PAddr = PAddr { fromPAddr :: Word }
-    deriving (Integral, Real, Show, Eq, Num, Bits, FiniteBits, Ord, Enum, Bounded)
+gicInterfaceBase = gicControllerBase + 0x100
+mptBase = gicControllerBase + 0x600
 
-physBase = 0x40000000
+physBase = 0x10000000
 physMappingOffset = 0xe0000000 - physBase
 
 ptrFromPAddr :: PAddr -> PPtr a
@@ -43,103 +49,73 @@ pageColourBits :: Int
 pageColourBits = 0 -- qemu has no cache
 
 getMemoryRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
-getMemoryRegions _ = return [(0x40000000, 0x40000000 + (0x8 `shiftL` 24))]
+getMemoryRegions _ = return [(PAddr physBase, (PAddr physBase) + (0x8 `shiftL` 24))]
+
+
+userTimer = 0x020D4000
 
 getDeviceRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
 getDeviceRegions _ = return devices
-    where devices = []
+    where devices = [(userTimer,userTimer + (1 `shiftL` 12))]
 
--- Following harded coded address pair are used in getKernelDevices 
--- and will get mapped into kernel address space via mapKernelFrame
-uart = (PAddr 0x13810000, PPtr 0xfff01000) 
-mct = (PAddr 0x10050000, PPtr 0xfff02000)
-l2cc = (PAddr 0x10502000, PPtr 0xfff03000)
-gicController = (PAddr 0x10480000, PPtr 0xfff04000)
-gicDistributor = (PAddr 0x10490000, PPtr 0xfff05000)
+type IRQ = GIC.IRQ
 
-
-mctPPtr = PPtr 0xfff00000
-timerAddr = PAddr 0x53f94000
-timerIRQ = IRQ 28
-
-avicPPtr = PPtr 0xfff01000
-avicAddr = PAddr 0x68000000
+timerIRQ = GIC.IRQ 29
 
 getKernelDevices :: Ptr CallbackData -> IO [(PAddr, PPtr Word)]
 getKernelDevices _ = return devices
     where devices = [
-            mct,-- kernel timer
             gicController, -- interrupt controller
             gicDistributor, -- interrupt controller
             uart
             ]
 
 maskInterrupt :: Ptr CallbackData -> Bool -> IRQ -> IO ()
-maskInterrupt env mask (IRQ irq) = do
-    let value = fromIntegral irq
-    offset <- return $ if (mask == True) then 0xc else 0x8
-    storeWordCallback env (avicAddr + offset) value
+maskInterrupt env mask irq = do
+     callGICApi (GicState { env = env, gicDistBase = gicDistributorBase, gicIFBase = gicInterfaceBase })
+       (GIC.maskInterrupt mask irq)
 
 -- We don't need to acknowledge interrupts explicitly because we don't use
 -- the vectored interrupt controller.
 ackInterrupt :: Ptr CallbackData -> IRQ -> IO ()
-ackInterrupt _ _ = return ()
+ackInterrupt env irq = do
+  callGICApi gic (GIC.ackInterrupt irq)
+      where gic = GicState { env = env, 
+        gicDistBase = gicDistributorBase,
+        gicIFBase = gicInterfaceBase }
 
 foreign import ccall unsafe "qemu_run_devices"
     runDevicesCallback :: IO ()
 
-interruptCallback :: Ptr CallbackData -> IO (Maybe IRQ)
-interruptCallback env = do
-    -- No need to call back to the simulator here; we just check the PIC's
-    -- active interrupt register. This will probably work for real ARMs too,
-    -- as long as we're not using vectored interrupts
-    active <- loadWordCallback env (avicAddr + 64)
-    return $ if active == 0xFFFF0000
-        then Nothing
-        else (Just $ IRQ $ fromIntegral (active `shiftR` 16))
-
 getActiveIRQ :: Ptr CallbackData -> IO (Maybe IRQ)
 getActiveIRQ env = do
     runDevicesCallback
-    interruptCallback env
-
--- 1kHz tick; qemu's SP804s always run at 1MHz 
-timerFreq :: Word
-timerFreq = 100
-
-timerLimit :: Word
-timerLimit = 1000000 `div` timerFreq
+    active <- callGICApi gicdata $ GIC.getActiveIRQ
+    case active of 
+        Just 0x3FF -> return Nothing
+        _ -> return active
+      where gicdata = GicState { env = env, 
+        gicDistBase = gicDistributorBase,
+        gicIFBase = gicInterfaceBase }
 
 configureTimer :: Ptr CallbackData -> IO IRQ
 configureTimer env = do
-    -- enabled, periodic, interrupts enabled
-    storeWordCallback env timerAddr 0
-    let timerCtrl = bit 24 .|. bit 17 .|. bit 3 .|. bit 2 .|. bit 1
-    storeWordCallback env timerAddr timerCtrl
-    storeWordCallback env (timerAddr+0x8) (100 * 1000 * 1000) 
-    storeWordCallback env (timerAddr+0xc) 0
-    storeWordCallback env (timerAddr+0x4) 1
-    let timerCtrl2 = timerCtrl .|. 1
-    storeWordCallback env timerAddr timerCtrl2
+    MPT.callMPTimerApi mptdata $ MPT.mpTimerInit 
     return timerIRQ
+      where mptdata = MPT.MPTimerState { MPT.env = env, 
+        MPT.mptBase = mptBase }
+
+initIRQController :: Ptr CallbackData -> IO ()
+initIRQController env = callGICApi gicdata $ GIC.initIRQController
+  where gicdata = GicState { env = env, 
+    gicDistBase = gicDistributorBase,
+    gicIFBase = gicInterfaceBase }
 
 resetTimer :: Ptr CallbackData -> IO ()
-resetTimer env = storeWordCallback env (timerAddr+0x4) 1 
-
-foreign import ccall unsafe "qemu_load_word_phys"
-    loadWordCallback :: Ptr CallbackData -> PAddr -> IO Word
-
-foreign import ccall unsafe "qemu_store_word_phys"
-    storeWordCallback :: Ptr CallbackData -> PAddr -> Word -> IO ()
-
-foreign import ccall unsafe "qemu_tlb_flush"
-    invalidateTLBCallback :: Ptr CallbackData -> IO ()
-
-foreign import ccall unsafe "qemu_tlb_flush_asid"
-    invalidateTLB_ASIDCallback :: Ptr CallbackData -> Word8 -> IO ()
-
-foreign import ccall unsafe "qemu_tlb_flush_vptr"
-    invalidateTLB_VAASIDCallback :: Ptr CallbackData -> Word -> IO ()
+resetTimer env = do
+    MPT.callMPTimerApi mptdata $ MPT.resetTimer
+      where mptdata = MPT.MPTimerState { MPT.env = env, 
+        MPT.mptBase = mptBase }
 
 isbCallback :: Ptr CallbackData -> IO ()
 isbCallback _ = return ()
@@ -191,25 +167,9 @@ cacheInvalidateL2RangeCallback _ _ _ = return ()
 cacheCleanL2RangeCallback :: Ptr CallbackData -> PAddr -> PAddr -> IO ()
 cacheCleanL2RangeCallback _ _ _ = return ()
 
--- For the ARM1136
+-- FIXME: This is not correct now, we do not have l2cc interface abstracted.
 cacheLine :: Int
 cacheLine = 32
 
 cacheLineBits :: Int
 cacheLineBits = 5
-
-foreign import ccall unsafe "qemu_set_asid"
-    setHardwareASID :: Ptr CallbackData -> Word8 -> IO ()
-
-foreign import ccall unsafe "qemu_set_root"
-    writeTTBR0 :: Ptr CallbackData -> PAddr -> IO ()
-
-foreign import ccall unsafe "qemu_arm_get_ifsr"
-    getIFSR :: Ptr CallbackData -> IO Word
-
-foreign import ccall unsafe "qemu_arm_get_dfsr"
-    getDFSR :: Ptr CallbackData -> IO Word
-
-foreign import ccall unsafe "qemu_arm_get_far"
-    getFAR :: Ptr CallbackData -> IO VPtr
-

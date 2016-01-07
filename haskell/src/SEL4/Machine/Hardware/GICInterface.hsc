@@ -95,6 +95,10 @@ interfaceInit = do
     gicpoke (#{ptr gic_cpu_iface_map, icontrol} gic_interface_base) 0x0 
     gicpoke (#{ptr gic_cpu_iface_map, pri_msk_c} gic_interface_base) 0xf0 
     gicpoke (#{ptr gic_cpu_iface_map, pb_c} gic_interface_base) 0x3
+
+    intack <- gicpeek(#{ptr gic_cpu_iface_map, int_ack} gic_interface_base)
+    gicpoke (#{ptr gic_cpu_iface_map, eoi} gic_interface_base) (intack .&. 0x3ff)
+    
     gicpoke (#{ptr gic_cpu_iface_map, icontrol} gic_interface_base) 0x1
 
 

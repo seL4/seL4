@@ -78,6 +78,7 @@ Library
                             SEL4.Machine.Hardware.ARM.Callbacks
                             SEL4.Machine.Hardware.GICInterface
                             SEL4.Machine.Hardware.MCTInterface
+                            SEL4.Machine.Hardware.MPTimerInterface
 
                             SEL4.API.Types.ARM
                             SEL4.API.InvocationLabels.ARM

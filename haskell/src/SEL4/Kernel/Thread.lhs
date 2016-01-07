@@ -358,7 +358,6 @@ lists using the TCBs themselves as nodes.
 >             assert runnable "Scheduled a non-runnable thread"
 >             switchToThread thread
 >         else
->             error "trying to switch to idle thread"
 >             switchToIdleThread
 
 \subsubsection{Switching Threads}

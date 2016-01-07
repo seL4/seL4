@@ -35,8 +35,6 @@ This module defines the handling of the ARM hardware-defined page tables.
 > import Data.Array
 > import Data.Word(Word32)
 
->-- import Control.Monad.State
-
 \end{impdetails}
 
 The ARM-specific invocations are imported with the "ArchInv" prefix. This is necessary to avoid namespace conflicts with the generic invocations.
@@ -64,8 +62,8 @@ The idle thread executes a short loop that drains the CPU's write buffer and the
 > idleThreadCode :: [Word]
 > idleThreadCode =
 >     [ 0xe3a00000 -- mov r0, \#0
->     , 0xee070f9a -- 1: mcr p15, 0, r0, c7, c10, 4 -- drain write buffer
->     , 0xee070f90 -- mcr p15, 0, r0, c7, c0, 4 -- wait for interrupt
+>--     , 0xee070f9a -- 1: mcr p15, 0, r0, c7, c10, 4 -- drain write buffer
+>--     , 0xee070f90 -- mcr p15, 0, r0, c7, c0, 4 -- wait for interrupt
 >     , 0xeafffffc -- b 1b
 >     ]
 
@@ -120,7 +118,6 @@ However we assume that the result of getMemoryRegions is actually [0,1<<24] and 
 
 >     mapGlobalsFrame
 >     kernelDevices <- doMachineOp getKernelDevices
->     doMachineOp $ debugPrint $ "kernelDevices" ++ (show kernelDevices)
 >     mapM_ mapKernelDevice kernelDevices
 
 
@@ -431,7 +428,6 @@ The "mapKernelFrame" helper function is used when mapping the globals frame, ker
 >         bootInfo <- noInitFailure $ gets (initBootInfo)
 >         let bootInfo' = bootInfo { bifDeviceRegions = devRegions' }
 >         noInitFailure $ modify (\st -> st { initBootInfo = bootInfo' })
->         doKernelOp $ doMachineOp $ debugPrint $ "createDeviceFrames " ++ (show slotBefore) ++ "," ++ (show slotAfter)
 >         )
 >     bInfo <- noInitFailure $ gets (initBootInfo)
 >     let bInfo' = bInfo { bifNumDeviceRegions = (fromIntegral . length . bifDeviceRegions) bInfo }
@@ -1163,7 +1159,6 @@ Virtual page capabilities may each represent a single mapping into a page table.
 
 > decodeARMMMUInvocation label args _ cte cap@(PageCap {}) extraCaps =
 >  do 
->--    lift $ doMachineOp $ debugPrint $ (show $invocationType label)
 >     case (invocationType label, args, extraCaps) of
 >         (ArchInvocationLabel ARMPageMap, vaddr:rightsMask:attr:_, (pdCap,_):_) -> do
 >             when (isJust $ capVPMappedAddress cap) $

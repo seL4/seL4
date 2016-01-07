@@ -41,7 +41,7 @@ The default number of timer ticks between scheduling and preemption. Note that t
 The default number of security domains.
 
 > numDomains :: Int
-> numDomains = 0
+> numDomains = 16
 
 The number of priority levels per domain. There is one ready queue per domain and per priority.
 
