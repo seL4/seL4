@@ -15,6 +15,7 @@
 ### Build parameters
 ############################################################
 
+SEL4_ARCH_LIST:=arm ia32
 ARCH_LIST:=arm x86
 CPU_LIST:=arm1136jf-s ixp420 cortex-a8 cortex-a9 cortex-a15
 PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 apq8064 zynq7000 allwinnerA20
@@ -31,6 +32,7 @@ endif
 ifeq (${MAKECMDGOALS}, style)
 ARCH:=x86
 PLAT:=pc99
+SEL4_ARCH:=ia32
 endif
 
 # we do need them if we want to build anything else
@@ -46,7 +48,11 @@ $(if $(filter ${CPU},${CPU_LIST}),, \
 
 $(if $(filter ${ARMV},${ARMV_LIST}),, \
 	$(error ARMV ${ARMV} invalid or undefined, should be one of [${ARMV_LIST}]))
+SEL4_ARCH:=arm
 endif
+
+$(if $(filter ${SEL4_ARCH},${SEL4_ARCH_LIST}),, \
+    $(error SEL4_ARCH ${SEL4_ARCH} invalid or undefined, should be one of [${SEL4_ARCH_LIST}]))
 
 # If no domain configuration file was specified, use a default
 # configuration of just a single domain.
