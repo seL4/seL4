@@ -108,7 +108,7 @@ void
 restart(tcb_t *target)
 {
     if (isBlocked(target) && target->tcbSchedContext != NULL &&
-            target->tcbSchedContext->budget > 0llu) {
+            target->tcbSchedContext->scBudget > 0llu) {
 
         if (ready(target->tcbSchedContext)) {
             recharge(target->tcbSchedContext);
@@ -118,7 +118,7 @@ restart(tcb_t *target)
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
 
-        if (target->tcbSchedContext->remaining < getKernelWcetTicks()) {
+        if (target->tcbSchedContext->scRemaining < getKernelWcetTicks()) {
             postpone(target->tcbSchedContext);
         } else {
             tcbSchedEnqueue(target);
@@ -151,11 +151,11 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *re
     assert(thread_state_get_tsType(receiver->tcbState) ==
            ThreadState_BlockedOnReply);
 
-    assert(reply_sc == NULL || reply_sc->remaining > getKernelWcetTicks());
+    assert(reply_sc == NULL || reply_sc->scRemaining > getKernelWcetTicks());
 
     if (likely(reply_sc != NULL && receiver->tcbSchedContext == NULL)) {
         donateSchedContext(receiver, reply_sc);
-        reply_sc->reply = NULL;
+        reply_sc->scReply = NULL;
     }
 
     if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
@@ -298,12 +298,12 @@ static void
 setNextInterrupt(void)
 {
     /* the next interrupt is when the current thread's budget expires */
-    time_t next_interrupt = ksCurrentTime + ksCurThread->tcbSchedContext->remaining;
+    time_t next_interrupt = ksCurrentTime + ksCurThread->tcbSchedContext->scRemaining;
 
     /* or when the next thread in the release queue is due to awaken */
     if (likely(ksReleaseHead != NULL &&
-               ksReleaseHead->tcbSchedContext->next < next_interrupt)) {
-        next_interrupt = ksReleaseHead->tcbSchedContext->next;
+               ksReleaseHead->tcbSchedContext->scNext < next_interrupt)) {
+        next_interrupt = ksReleaseHead->tcbSchedContext->scNext;
     }
 
     setDeadline(next_interrupt - getTimerPrecision());
@@ -347,7 +347,7 @@ schedule(void)
      * this optimised scheduling context donation on the fastpath
      */
     ksCurThread->tcbSchedContext = NULL;
-    ksCurSchedContext->tcb = NULL;
+    ksCurSchedContext->scTcb = NULL;
 }
 
 void
@@ -362,7 +362,7 @@ chooseThread(void)
         assert(thread);
         assert(isRunnable(thread));
         assert(isSchedulable(thread));
-        assert(thread->tcbSchedContext->remaining >= getKernelWcetTicks());
+        assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
         switchToThread(thread);
     } else {
         switchToIdleThread();
@@ -378,7 +378,7 @@ switchToThread(tcb_t *thread)
     }
     tcbSchedDequeue(thread);
     assert(!thread_state_get_inReleaseQueue(thread->tcbState));
-    assert(thread->tcbSchedContext->remaining >= getKernelWcetTicks());
+    assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
     ksCurThread = thread;
 }
 
@@ -386,7 +386,7 @@ void
 switchToIdleThread(void)
 {
     /* make sure the calculation in setNextInterrupt doesn't overflow for the idle thread */
-    ksIdleThread->tcbSchedContext->remaining = UINT64_MAX - ksCurrentTime - 1;
+    ksIdleThread->tcbSchedContext->scRemaining = UINT64_MAX - ksCurrentTime - 1;
     Arch_switchToIdleThread();
     ksCurThread = ksIdleThread;
 }
@@ -395,12 +395,12 @@ void
 switchSchedContext(void)
 {
 
-    assert(ksCurSchedContext->remaining >= ksConsumed);
+    assert(ksCurSchedContext->scRemaining >= ksConsumed);
 
     if (unlikely(ksCurSchedContext != ksCurThread->tcbSchedContext)) {
         /* we are changing scheduling contexts */
         ksReprogram = true;
-        ksCurSchedContext->remaining -= ksConsumed;
+        ksCurSchedContext->scRemaining -= ksConsumed;
         ksConsumed = 0llu;
         ksCurrentTime += 1llu;
     } else {
@@ -451,12 +451,12 @@ donateSchedContext(tcb_t *to, sched_context_t *sc)
     assert(to != NULL);
     assert(sc != NULL);
 
-    if (sc->tcb) {
+    if (sc->scTcb) {
         /* thread must not be in the scheduling queue */
-        assert(!thread_state_get_tcbQueued(sc->tcb->tcbState));
-        sc->tcb->tcbSchedContext = NULL;
+        assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
+        sc->scTcb->tcbSchedContext = NULL;
     }
-    sc->tcb = to;
+    sc->scTcb = to;
     to->tcbSchedContext = sc;
 }
 
@@ -520,9 +520,9 @@ scheduleTCB(tcb_t *tptr)
 void
 recharge(sched_context_t *sc)
 {
-    sc->remaining = sc->budget;
-    assert(sc->budget > 0);
-    sc->next = ksCurrentTime + sc->period;
+    sc->scRemaining = sc->scBudget;
+    assert(sc->scBudget > 0);
+    sc->scNext = ksCurrentTime + sc->scPeriod;
 }
 
 void
@@ -533,8 +533,8 @@ postpone(sched_context_t *sc)
      * have used / abadondoned it as various assertions around
      * the kernel will cease to guard if this is not 0
      */
-    sc->remaining = 0llu;
-    tcbReleaseEnqueue(sc->tcb);
+    sc->scRemaining = 0llu;
+    tcbReleaseEnqueue(sc->scTcb);
 }
 
 /* update the kernel timestamp and store much
@@ -549,7 +549,7 @@ updateTimestamp(void)
 
     /* restore sched context binding */
     ksCurThread->tcbSchedContext = ksCurSchedContext;
-    ksCurSchedContext->tcb = ksCurThread;
+    ksCurSchedContext->scTcb = ksCurThread;
 }
 
 /*
@@ -593,16 +593,16 @@ checkBudget(void)
 void
 endTimeslice(sched_context_t *sc)
 {
-    assert(sc->tcb != NULL);
-    assert(isSchedulable(sc->tcb));
+    assert(sc->scTcb != NULL);
+    assert(isSchedulable(sc->scTcb));
 
-    tcbSchedDequeue(sc->tcb);
+    tcbSchedDequeue(sc->scTcb);
 
     if (ready(sc)) {
         /* refill budget */
         recharge(sc);
         /* apply round robin */
-        tcbSchedAppend(sc->tcb);
+        tcbSchedAppend(sc->scTcb);
     } else {
         /* schedule thread to wake up when budget is due to be recharged */
         postpone(sc);

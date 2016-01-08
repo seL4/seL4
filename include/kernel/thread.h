@@ -44,13 +44,13 @@ highestPrio(void)
 static inline bool_t
 ready(sched_context_t *sc)
 {
-    return (ksCurrentTime + getKernelWcetTicks()) >= sc->next;
+    return (ksCurrentTime + getKernelWcetTicks()) >= sc->scNext;
 }
 
 static inline bool_t
 currentThreadExpired(void)
 {
-    return ksCurThread->tcbSchedContext->remaining < (ksConsumed + getKernelWcetTicks());
+    return ksCurThread->tcbSchedContext->scRemaining < (ksConsumed + getKernelWcetTicks());
 }
 
 void configureIdleThread(tcb_t *tcb);

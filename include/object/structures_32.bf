@@ -48,8 +48,8 @@ block notification_cap {
     field capType 4
 }
 
-block reply_cap(capReplyMaster, capTCBPtr, capType, schedcontext) {
-    field schedcontext 32
+block reply_cap(capReplyMaster, capTCBPtr, capType, capSchedContext) {
+    field capSchedContext 32
 
     field_high capTCBPtr 27
     field capReplyMaster 1

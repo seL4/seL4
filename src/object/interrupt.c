@@ -228,7 +228,7 @@ handleInterrupt(irq_t irq)
          * interrupt
          */
         if (likely(!currentThreadExpired())) {
-            ksCurThread->tcbSchedContext->remaining -= ksConsumed;
+            ksCurThread->tcbSchedContext->scRemaining -= ksConsumed;
         } else {
             endTimeslice(ksCurThread->tcbSchedContext);
             rescheduleRequired();

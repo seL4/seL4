@@ -27,8 +27,8 @@ invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t peri
     budget = usToTicks(budget);
     period = usToTicks(period);
 
-    target->budget = budget;
-    target->period = period;
+    target->scBudget = budget;
+    target->scPeriod = period;
 
     recharge(target);
 

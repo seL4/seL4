@@ -19,9 +19,9 @@
 exception_t
 invokeSchedContext_Yield(sched_context_t *sc)
 {
-    if (likely(sc->tcb && isSchedulable(sc->tcb))) {
+    if (likely(sc->scTcb && isSchedulable(sc->scTcb))) {
         endTimeslice(sc);
-        if (likely(sc->tcb == ksCurThread)) {
+        if (likely(sc->scTcb == ksCurThread)) {
             ksConsumed = 0llu;
             rescheduleRequired();
         }
@@ -67,7 +67,7 @@ decodeSchedContext_BindTCB(sched_context_t *sc, extra_caps_t rootCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (sc->tcb != NULL) {
+    if (sc->scTcb != NULL) {
         userError("SchedContext_BindTCB: scheduling context already bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -113,7 +113,7 @@ decodeSchedContext_BindNtfn(sched_context_t *sc, extra_caps_t rootCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(sc->notification != NULL)) {
+    if (unlikely(sc->scNotification != NULL)) {
         userError("SchedContext_BindNotification: scheduling context already bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -159,14 +159,14 @@ void
 schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 {
     tcb->tcbSchedContext = sc;
-    sc->tcb = tcb;
+    sc->scTcb = tcb;
 
     if (isRunnable(tcb)) {
         if (ready(sc)) {
             recharge(sc);
         }
 
-        if (sc->remaining < getKernelWcetTicks()) {
+        if (sc->scRemaining < getKernelWcetTicks()) {
             postpone(sc);
         } else {
             switchIfRequiredTo(tcb);
@@ -181,16 +181,16 @@ schedContext_unbindTCB(sched_context_t *sc)
      * it will get to run again when it receives a scheduling
      * context.
      */
-    if (sc && sc->tcb) {
-        tcbSchedDequeue(sc->tcb);
-        tcbReleaseRemove(sc->tcb);
+    if (sc && sc->scTcb) {
+        tcbSchedDequeue(sc->scTcb);
+        tcbReleaseRemove(sc->scTcb);
 
-        if (sc->tcb == ksCurThread) {
+        if (sc->scTcb == ksCurThread) {
             rescheduleRequired();
         }
 
-        sc->tcb->tcbSchedContext = NULL;
-        sc->tcb = NULL;
+        sc->scTcb->tcbSchedContext = NULL;
+        sc->scTcb = NULL;
     }
 }
 
@@ -198,15 +198,15 @@ void
 schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn)
 {
     notification_ptr_set_ntfnSchedContext(ntfn, SC_REF(sc));
-    sc->notification = ntfn;
+    sc->scNotification = ntfn;
 }
 
 void
 schedContext_unbindNtfn(sched_context_t *sc)
 {
-    if (sc && sc->notification) {
-        notification_ptr_set_ntfnSchedContext(sc->notification, SC_REF(0));
-        sc->notification = NULL;
+    if (sc && sc->scNotification) {
+        notification_ptr_set_ntfnSchedContext(sc->scNotification, SC_REF(0));
+        sc->scNotification = NULL;
     }
 }
 

@@ -134,10 +134,10 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     case cap_reply_cap: {
         sched_context_t *sc;
 
-        sc = SC_PTR(cap_reply_cap_get_schedcontext(cap));
-        if (sc != NULL && sc->reply != NULL) {
-            donateSchedContext(sc->reply, sc);
-            sc->reply = NULL;
+        sc = SC_PTR(cap_reply_cap_get_capSchedContext(cap));
+        if (sc != NULL && sc->scReply != NULL) {
+            donateSchedContext(sc->scReply, sc);
+            sc->scReply = NULL;
         }
 
         fc_ret.remainder = cap_null_cap_new();
@@ -696,7 +696,7 @@ decodeInvocation(word_t label, word_t length,
         setThreadState(ksCurThread, ThreadState_Restart);
         return performInvocation_Reply(
                    TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot,
-                   SC_PTR(cap_reply_cap_get_schedcontext(cap)));
+                   SC_PTR(cap_reply_cap_get_capSchedContext(cap)));
 
     case cap_thread_cap:
         return decodeTCBInvocation(label, length, cap,

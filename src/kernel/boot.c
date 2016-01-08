@@ -332,11 +332,11 @@ create_sched_context(tcb_t *tcb, ticks_t timeslice)
     memzero((void *) sc_pptr, BIT(SC_SIZE_BITS));
     sc = SC_PTR(sc_pptr);
     tcb->tcbSchedContext = sc;
-    sc->tcb = tcb;
-    sc->budget = timeslice;
-    sc->period = sc->budget;
-    sc->remaining = sc->budget;
-    sc->next = ksCurrentTime + sc->period;
+    sc->scTcb = tcb;
+    sc->scBudget = timeslice;
+    sc->scPeriod = sc->scBudget;
+    sc->scRemaining = sc->scBudget;
+    sc->scNext = ksCurrentTime + sc->scPeriod;
 
     return true;
 }

@@ -269,8 +269,8 @@ maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
 {
     if (tcb->tcbSchedContext == NULL) {
         sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
-        if (sc != NULL && sc->tcb == NULL) {
-            assert(sc->tcb == NULL);
+        if (sc != NULL && sc->scTcb == NULL) {
+            assert(sc->scTcb == NULL);
             donateSchedContext(tcb, sc);
         }
     }
@@ -282,7 +282,7 @@ maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *thread)
     sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
     if (sc == thread->tcbSchedContext) {
         thread->tcbSchedContext = NULL;
-        sc->tcb = NULL;
+        sc->scTcb = NULL;
     }
 }
 
