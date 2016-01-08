@@ -52,7 +52,7 @@ sendFaultIPC(tcb_t *tptr)
         if (fault_get_faultType(current_fault) == fault_cap_fault) {
             tptr->tcbLookupFailure = original_lookup_fault;
         }
-        sendIPC(true, false,
+        sendIPC(true, false, true,
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
                 true, tptr,
                 EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));

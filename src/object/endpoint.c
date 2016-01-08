@@ -32,7 +32,7 @@ reorderIPCQueue(tcb_t *thread, prio_t old_prio)
 
 
 void
-sendIPC(bool_t blocking, bool_t do_call, word_t badge,
+sendIPC(bool_t blocking, bool_t do_call, bool_t canDonate, word_t badge,
         bool_t canGrant, tcb_t *thread, endpoint_t *epptr)
 {
     switch (endpoint_ptr_get_state(epptr)) {
@@ -67,6 +67,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         tcb_queue_t queue;
         tcb_t *dest;
         bool_t diminish;
+        sched_context_t *donated = NULL;
 
         /* Get the head of the endpoint queue. */
         queue = ep_ptr_get_queue(epptr);
@@ -88,13 +89,18 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             thread_state_get_blockingIPCDiminishCaps(dest->tcbState);
         doIPCTransfer(thread, epptr, badge, canGrant, dest, diminish);
 
+        if (canDonate && dest->tcbSchedContext == NULL) {
+            donateSchedContext(dest, ksCurSchedContext);
+            donated = ksCurSchedContext;
+        }
+
         setThreadState(dest, ThreadState_Running);
         attemptSwitchTo(dest);
 
         if (do_call ||
                 fault_ptr_get_faultType(&thread->tcbFault) != fault_null_fault) {
             if (canGrant && !diminish) {
-                setupCallerCap(thread, dest);
+                setupCallerCap(thread, dest, donated);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
@@ -106,7 +112,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
 }
 
 void
-receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
+receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate)
 {
     endpoint_t *epptr;
     bool_t diminish;
@@ -156,6 +162,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             word_t badge;
             bool_t canGrant;
             bool_t do_call;
+            sched_context_t *donated = NULL;
 
             /* Get the head of the endpoint queue. */
             queue = ep_ptr_get_queue(epptr);
@@ -183,10 +190,15 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
+            if (thread->tcbSchedContext == NULL && canDonate) {
+                donateSchedContext(thread, ksCurSchedContext);
+                donated = ksCurSchedContext;
+            }
+
             if (do_call ||
                     fault_get_faultType(sender->tcbFault) != fault_null_fault) {
                 if (canGrant && !diminish) {
-                    setupCallerCap(sender, thread);
+                    setupCallerCap(sender, thread, donated);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }
@@ -211,7 +223,7 @@ replyFromKernel_error(tcb_t *thread)
     setRegister(thread, badgeRegister, 0);
     len = setMRs_syscall_error(thread, ipcBuffer);
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                    message_info_new(current_syscall_error.type, 0, 0, len)));
+                    seL4_MessageInfo_new(current_syscall_error.type, 0, 0, len)));
 }
 
 void
@@ -219,7 +231,7 @@ replyFromKernel_success_empty(tcb_t *thread)
 {
     setRegister(thread, badgeRegister, 0);
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                    message_info_new(0, 0, 0, 0)));
+                    seL4_MessageInfo_new(0, 0, 0, 0)));
 }
 
 void

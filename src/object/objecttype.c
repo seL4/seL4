@@ -131,7 +131,20 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         fc_ret.irq = irqInvalid;
         return fc_ret;
 
-    case cap_reply_cap:
+    case cap_reply_cap: {
+        sched_context_t *sc;
+
+        sc = SC_PTR(cap_reply_cap_get_schedcontext(cap));
+        if (sc != NULL && sc->reply != NULL) {
+            donateSchedContext(sc->reply, sc);
+            sc->reply = NULL;
+        }
+
+        fc_ret.remainder = cap_null_cap_new();
+        fc_ret.irq = irqInvalid;
+        return fc_ret;
+    }
+
     case cap_null_cap:
         fc_ret.remainder = cap_null_cap_new();
         fc_ret.irq = irqInvalid;
@@ -619,7 +632,7 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 exception_t
 decodeInvocation(word_t label, word_t length,
                  cptr_t capIndex, cte_t *slot, cap_t cap,
-                 extra_caps_t extraCaps, bool_t block, bool_t call,
+                 extra_caps_t extraCaps, bool_t block, bool_t call, bool_t donate,
                  word_t *buffer)
 {
     if (isArchCap(cap)) {
@@ -653,7 +666,7 @@ decodeInvocation(word_t label, word_t length,
         return performInvocation_Endpoint(
                    EP_PTR(cap_endpoint_cap_get_capEPPtr(cap)),
                    cap_endpoint_cap_get_capEPBadge(cap),
-                   cap_endpoint_cap_get_capCanGrant(cap), block, call);
+                   cap_endpoint_cap_get_capCanGrant(cap), block, call, donate);
 
     case cap_notification_cap: {
         if (unlikely(!cap_notification_cap_get_capNtfnCanSend(cap))) {
@@ -681,7 +694,8 @@ decodeInvocation(word_t label, word_t length,
 
         setThreadState(ksCurThread, ThreadState_Restart);
         return performInvocation_Reply(
-                   TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot);
+                   TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot,
+                   SC_PTR(cap_reply_cap_get_schedcontext(cap)));
 
     case cap_thread_cap:
         return decodeTCBInvocation(label, length, cap,
@@ -716,9 +730,9 @@ decodeInvocation(word_t label, word_t length,
 exception_t
 performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                            bool_t canGrant, bool_t block,
-                           bool_t call)
+                           bool_t call, bool_t donate)
 {
-    sendIPC(block, call, badge, canGrant, ksCurThread, ep);
+    sendIPC(block, call, donate, badge, canGrant, ksCurThread, ep);
 
     return EXCEPTION_NONE;
 }
@@ -732,8 +746,8 @@ performInvocation_Notification(notification_t *ntfn, word_t badge)
 }
 
 exception_t
-performInvocation_Reply(tcb_t *thread, cte_t *slot)
+performInvocation_Reply(tcb_t *thread, cte_t *slot, sched_context_t *sc)
 {
-    doReplyTransfer(ksCurThread, thread, slot);
+    doReplyTransfer(ksCurThread, thread, slot, sc);
     return EXCEPTION_NONE;
 }

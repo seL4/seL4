@@ -424,6 +424,7 @@ create_initial_thread(
     ksReprogram = true;
     ksReleaseHead = NULL;
     ksCurThread = ksIdleThread;
+    ksCurSchedContext = tcb->tcbSchedContext;
 
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));

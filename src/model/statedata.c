@@ -28,6 +28,9 @@ tcb_t *ksCurThread;
 /* Idle thread TCB pointer */
 tcb_t *ksIdleThread;
 
+/* current scheduling context pointer */
+sched_context_t *ksCurSchedContext;
+
 /* Values of 0 and ~0 encode ResumeCurrentThread and ChooseNewThread
  * respectively; other values encode SwitchToThread and must be valid
  * tcb pointers */

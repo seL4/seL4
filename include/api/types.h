@@ -14,14 +14,15 @@
 #include <config.h>
 #include <stdint.h>
 #include <util.h>
+#include <api/shared_types_gen.h>
 #include <api/types_gen.h>
 #include <arch/api/types.h>
 #include <arch/types.h>
 #include <api/constants.h>
+#include <api/shared_types.h>
 
 /* cap_rights_t defined in api/types.bf */
 typedef word_t prio_t;
-typedef word_t cptr_t;
 typedef uint64_t time_t;
 typedef uint64_t ticks_t;
 
@@ -69,33 +70,33 @@ capTransferFromWords(word_t *wptr)
     return transfer;
 }
 
-static inline message_info_t CONST
+static inline seL4_MessageInfo_t CONST
 messageInfoFromWord_raw(word_t w)
 {
-    message_info_t mi;
+    seL4_MessageInfo_t mi;
 
     mi.words[0] = w;
     return mi;
 }
 
-static inline message_info_t CONST
+static inline seL4_MessageInfo_t CONST
 messageInfoFromWord(word_t w)
 {
-    message_info_t mi;
+    seL4_MessageInfo_t mi;
     word_t len;
 
     mi.words[0] = w;
 
-    len = message_info_get_msgLength(mi);
+    len = seL4_MessageInfo_get_length(mi);
     if (len > seL4_MsgMaxLength) {
-        mi = message_info_set_msgLength(mi, seL4_MsgMaxLength);
+        mi = seL4_MessageInfo_set_length(mi, seL4_MsgMaxLength);
     }
 
     return mi;
 }
 
 static inline word_t CONST
-wordFromMessageInfo(message_info_t mi)
+wordFromMessageInfo(seL4_MessageInfo_t mi)
 {
     return mi.words[0];
 }

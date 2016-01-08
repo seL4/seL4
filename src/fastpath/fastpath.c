@@ -16,7 +16,7 @@ NORETURN
 #endif
 fastpath_call(word_t cptr, word_t msgInfo)
 {
-    message_info_t info;
+    seL4_MessageInfo_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
     word_t length;
@@ -30,7 +30,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
     /* Get message info, length, and fault type. */
     info = messageInfoFromWord_raw(msgInfo);
-    length = message_info_get_msgLength(info);
+    length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -86,6 +86,11 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
+    /* Only hit the fastpath if we will stay on the same scheduling context */
+    if (unlikely(dest->tcbSchedContext != NULL)) {
+        slowpath(SysCall);
+    }
+
     /* Ensure that the endpoint has standard non-diminishing rights. */
     if (unlikely(!cap_endpoint_cap_get_capCanGrant(ep_cap) ||
                  thread_state_ptr_get_blockingIPCDiminishCaps(&dest->tcbState))) {
@@ -129,6 +134,9 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Get dest caller slot */
     callerSlot = TCB_PTR_CTE_PTR(dest, tcbCaller);
 
+    /* insert back pointer into sched context */
+    ksCurSchedContext->reply = dest;
+
     /* Insert reply cap */
     cap_reply_cap_ptr_new_np(&callerSlot->cap, 0, TCB_REF(ksCurThread));
     mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, CTE_REF(replySlot));
@@ -142,14 +150,14 @@ fastpath_call(word_t cptr, word_t msgInfo)
                                    ThreadState_Running);
     switchToThread_fp(dest, cap_pd, stored_hw_asid);
 
-    msgInfo = wordFromMessageInfo(message_info_set_msgCapsUnwrapped(info, 0));
+    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo, ksCurThread);
 }
 
 void
 fastpath_reply_recv(word_t cptr, word_t msgInfo)
 {
-    message_info_t info;
+    seL4_MessageInfo_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
     word_t length;
@@ -166,7 +174,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* Get message info and length */
     info = messageInfoFromWord_raw(msgInfo);
-    length = message_info_get_msgLength(info);
+    length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -242,6 +250,10 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
+    if (unlikely(caller->tcbSchedContext != NULL)) {
+        slowpath(SysReplyRecv);
+    }
+
 #ifdef ARCH_ARM
     /* Ensure the HWASID is valid. */
     if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
@@ -285,6 +297,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
         &CTE_PTR(mdb_node_get_mdbPrev(callerSlot->cteMDBNode))->cteMDBNode,
         0, 1, 1);
+    ksCurSchedContext->reply = NULL;
     callerSlot->cap = cap_null_cap_new();
     callerSlot->cteMDBNode = nullMDBNode;
 
@@ -300,6 +313,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
                                    ThreadState_Running);
     switchToThread_fp(caller, cap_pd, stored_hw_asid);
 
-    msgInfo = wordFromMessageInfo(message_info_set_msgCapsUnwrapped(info, 0));
+    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo, ksCurThread);
 }

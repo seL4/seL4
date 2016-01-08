@@ -1,0 +1,23 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{sel4_nbsendrecv}
+{Polling Send, Blocking Recv}
+{Perform a polling send to a capability, then wait on another capability.}
+{static inline void seL4\_NBSendRecv}
+{
+\param{seL4\_CPtr}{dest}{Endpoint or notification object to send a message to or signal}
+\param{seL4\_MessageInfo\_t}{msgInfo}{\messageinfodesc}
+\param{seL4\_CPtr}{source}{Endpoint or notification object to block on.}
+\param{seL4\_Word*}{badge}{\badgedesc}
+}
+{\noret}
+{See \autoref{sec:sys_nbsendrecv}}

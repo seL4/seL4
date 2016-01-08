@@ -22,8 +22,8 @@
 #include <machine/registerset.h>
 #include <arch/linker.h>
 
-static message_info_t
-transferCaps(message_info_t info, extra_caps_t caps,
+static seL4_MessageInfo_t
+transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
              word_t *receiveBuffer, bool_t diminish);
 
@@ -145,10 +145,18 @@ doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
 }
 
 void
-doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
+doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *reply_sc)
 {
+
     assert(thread_state_get_tsType(receiver->tcbState) ==
            ThreadState_BlockedOnReply);
+
+    assert(reply_sc == NULL || reply_sc->remaining > getKernelWcetTicks());
+
+    if (likely(reply_sc != NULL && receiver->tcbSchedContext == NULL)) {
+        donateSchedContext(receiver, reply_sc);
+        reply_sc->reply = NULL;
+    }
 
     if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
         doIPCTransfer(sender, NULL, 0, true, receiver, false);
@@ -178,7 +186,7 @@ doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                  word_t *receiveBuffer, bool_t diminish)
 {
     word_t msgTransferred;
-    message_info_t tag;
+    seL4_MessageInfo_t tag;
     exception_t status;
     extra_caps_t caps;
 
@@ -196,11 +204,11 @@ doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
     }
 
     msgTransferred = copyMRs(sender, sendBuffer, receiver, receiveBuffer,
-                             message_info_get_msgLength(tag));
+                             seL4_MessageInfo_get_length(tag));
 
     tag = transferCaps(tag, caps, endpoint, receiver, receiveBuffer, diminish);
 
-    tag = message_info_set_msgLength(tag, msgTransferred);
+    tag = seL4_MessageInfo_set_length(tag, msgTransferred);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(tag));
     setRegister(receiver, badgeRegister, badge);
 }
@@ -210,26 +218,26 @@ doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
                 word_t *receiverIPCBuffer)
 {
     word_t sent;
-    message_info_t msgInfo;
+    seL4_MessageInfo_t msgInfo;
 
     sent = setMRs_fault(sender, receiver, receiverIPCBuffer);
-    msgInfo = message_info_new(
+    msgInfo = seL4_MessageInfo_new(
                   fault_get_faultType(sender->tcbFault), 0, 0, sent);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(msgInfo));
     setRegister(receiver, badgeRegister, badge);
 }
 
 /* Like getReceiveSlots, this is specialised for single-cap transfer. */
-static message_info_t
-transferCaps(message_info_t info, extra_caps_t caps,
+static seL4_MessageInfo_t
+transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
              word_t *receiveBuffer, bool_t diminish)
 {
     word_t i;
     cte_t* destSlot;
 
-    info = message_info_set_msgExtraCaps(info, 0);
-    info = message_info_set_msgCapsUnwrapped(info, 0);
+    info = seL4_MessageInfo_set_extraCaps(info, 0);
+    info = seL4_MessageInfo_set_capsUnwrapped(info, 0);
 
     if (likely(!caps.excaprefs[0] || !receiveBuffer)) {
         return info;
@@ -248,8 +256,8 @@ transferCaps(message_info_t info, extra_caps_t caps,
             setExtraBadge(receiveBuffer,
                           cap_endpoint_cap_get_capEPBadge(cap), i);
 
-            info = message_info_set_msgCapsUnwrapped(info,
-                                                     message_info_get_msgCapsUnwrapped(info) | (1 << i));
+            info = seL4_MessageInfo_set_capsUnwrapped(info,
+                                                      seL4_MessageInfo_get_capsUnwrapped(info) | (1 << i));
 
         } else {
             deriveCap_ret_t dc_ret;
@@ -277,7 +285,7 @@ transferCaps(message_info_t info, extra_caps_t caps,
         }
     }
 
-    return message_info_set_msgExtraCaps(info, i);
+    return seL4_MessageInfo_set_extraCaps(info, i);
 }
 
 void doNBRecvFailedTransfer(tcb_t *thread)
@@ -325,16 +333,21 @@ schedule(void)
         /* SwitchToThread */
         switchToThread(ksSchedulerAction);
         ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
-    } else {
-        ksCurThread->tcbSchedContext->remaining -= ksConsumed;
-        ksConsumed = 0;
     }
+
+    switchSchedContext();
 
     if (ksReprogram) {
         setNextInterrupt();
         ksReprogram = false;
     }
     assert(ksConsumed == 0);
+
+    /* ksCurThread is implicitly bound to ksCurSchedContext -
+     * this optimised scheduling context donation on the fastpath
+     */
+    ksCurThread->tcbSchedContext = NULL;
+    ksCurSchedContext->tcb = NULL;
 }
 
 void
@@ -344,9 +357,7 @@ chooseThread(void)
     tcb_t *thread;
 
     if (likely(ksReadyQueuesL1Bitmap)) {
-        word_t l1index = (wordBits - 1) - CLZL(ksReadyQueuesL1Bitmap);
-        word_t l2index = (wordBits - 1) - CLZL(ksReadyQueuesL2Bitmap[l1index]);
-        prio = l1index_to_prio(l1index) | l2index;
+        prio = highestPrio();
         thread = ksReadyQueues[prio].head;
         assert(thread);
         assert(isRunnable(thread));
@@ -361,33 +372,43 @@ chooseThread(void)
 void
 switchToThread(tcb_t *thread)
 {
-    /* first bill the previous thread */
-    assert(ksCurThread->tcbSchedContext->remaining >= ksConsumed);
-
-    ksCurThread->tcbSchedContext->remaining -= ksConsumed;
-    ksConsumed = 0llu;
-
     /* now switch */
-    Arch_switchToThread(thread);
+    if (likely(thread != ksCurThread)) {
+        Arch_switchToThread(thread);
+    }
     tcbSchedDequeue(thread);
     assert(!thread_state_get_inReleaseQueue(thread->tcbState));
     assert(thread->tcbSchedContext->remaining >= getKernelWcetTicks());
-    ksCurrentTime += 1llu;
     ksCurThread = thread;
 }
 
 void
 switchToIdleThread(void)
 {
-    /* first bill the previous thread */
-    assert(ksCurThread->tcbSchedContext->remaining >= ksConsumed);
-
-    ksCurThread->tcbSchedContext->remaining -= ksConsumed;
-    ksConsumed = 0llu;
     /* make sure the calculation in setNextInterrupt doesn't overflow for the idle thread */
-    ksIdleThread->tcbSchedContext->remaining = UINT64_MAX - ksCurrentTime;
+    ksIdleThread->tcbSchedContext->remaining = UINT64_MAX - ksCurrentTime - 1;
     Arch_switchToIdleThread();
     ksCurThread = ksIdleThread;
+}
+
+void
+switchSchedContext(void)
+{
+
+    assert(ksCurSchedContext->remaining >= ksConsumed);
+
+    if (unlikely(ksCurSchedContext != ksCurThread->tcbSchedContext)) {
+        /* we are changing scheduling contexts */
+        ksReprogram = true;
+        ksCurSchedContext->remaining -= ksConsumed;
+        ksConsumed = 0llu;
+        ksCurrentTime += 1llu;
+    } else {
+        /* go back in time and skip reprogramming the timer */
+        ksCurrentTime -= ksConsumed;
+        ksConsumed = 0llu;
+    }
+    ksCurSchedContext = ksCurThread->tcbSchedContext;
 }
 
 void
@@ -424,6 +445,21 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
     }
 }
 
+void
+donateSchedContext(tcb_t *to, sched_context_t *sc)
+{
+    assert(to != NULL);
+    assert(sc != NULL);
+
+    if (sc->tcb) {
+        /* thread must not be in the scheduling queue */
+        assert(!thread_state_get_tcbQueued(sc->tcb->tcbState));
+        sc->tcb->tcbSchedContext = NULL;
+    }
+    sc->tcb = to;
+    to->tcbSchedContext = sc;
+}
+
 static void
 possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
 {
@@ -434,7 +470,7 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
     targetPrio = target->tcbPriority;
     action = ksSchedulerAction;
 
-    if (likely(isSchedulable(target))) {
+    if (unlikely(target->tcbSchedContext != NULL)) {
         if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
                 && action == SchedulerAction_ResumeCurrentThread) {
             ksSchedulerAction = target;
@@ -442,8 +478,11 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
             tcbSchedEnqueue(target);
         }
 
-        if (action != SchedulerAction_ResumeCurrentThread
-                && action != SchedulerAction_ChooseNewThread) {
+        if (action != SchedulerAction_ResumeCurrentThread &&
+                action != SchedulerAction_ChooseNewThread) {
+            rescheduleRequired();
+        } else if (ksCurThread->tcbSchedContext == NULL &&
+                   ksSchedulerAction == SchedulerAction_ResumeCurrentThread) {
             rescheduleRequired();
         }
     }
@@ -507,6 +546,10 @@ updateTimestamp(void)
     time_t prev = ksCurrentTime;
     ksCurrentTime = getCurrentTime();
     ksConsumed = ksCurrentTime - prev;
+
+    /* restore sched context binding */
+    ksCurThread->tcbSchedContext = ksCurSchedContext;
+    ksCurSchedContext->tcb = ksCurThread;
 }
 
 /*

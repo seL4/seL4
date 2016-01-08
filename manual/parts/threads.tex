@@ -10,12 +10,18 @@
 
 \chapter{\label{ch:threads}Threads and Execution}
 
-\section{Threads}
+\section{Threads \& Scheduling Contexts}
 \label{sec:threads}
 
-seL4 provides threads to represent an execution context and manage
-processor time. A thread is represented in seL4 by its thread control block
-object (\obj{TCB}). Each \obj{TCB} has an associated CSpace (see
+seL4 provides threads to represent an execution context, while scheduling contexts are used to manage
+processor time. 
+A thread is represented in seL4 by its thread control block
+object (\obj{TCB}) and a scheduling context by a scheduling context object.
+Threads cannot run unless they are bound to, or receive a scheduling context.
+
+\subsection{Thread control blocks}
+
+Each \obj{TCB} has an associated CSpace (see
 \autoref{ch:cspace}) and VSpace (see \autoref{ch:vspace}) which
 may be shared with other threads. A \obj{TCB} may also have an IPC buffer
 (see  \autoref{ch:ipc}), which is used to pass extra arguments during IPC
@@ -23,6 +29,7 @@ or kernel object invocation that do not fit in the architecture-defined message
 registers. While it is not compulsory that a thread has an IPC buffer,
 it will not be able to perform most kernel invocations, as they require
 cap transfer.
+
 %FIXME: there is much more information held in the TCB!
 
 \subsection{Thread Creation}
@@ -54,45 +61,73 @@ When threads are suspended, any active IPCs or signals are cancelled.
 % an example of which is demonstrated in \nameref{ex:second_thread}.
 
 \subsection{Scheduling Contexts}
-\sec{sec:scheduling_contexts}
+\label{sec:scheduling_contexts}
 
-Thread's access to CPU execution time is controlled through the scheduling context objects that they are 
-bound to. 
-Scheduling contexts consist of a a tuple of 
-\textit{budget (b)} and \textit{period (p)}, both in microseconds, set by \apifunc{seL4\_SchedContext\_Configure}.
+Access to CPU execution time is controlled through scheduling context objects.
+Scheduling contexts consist of a tuple of 
+\textit{budget (b)} and \textit{period (p)}, both in microseconds, set by \apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure} (see \autoref{sec:sc_creation}).
 The tuple $(b, p)$ forms an upper bound on the thread's execution -- 
 the kernel will not permit a thread to run for more than $b$ out of every $p$ microseconds.
-However, $\frac{b}{p}$ does not represent a lower bound on execution, as a thread must have the highest or equal highest of all runnable threads to be guaranteed to be scheduled at all.
+However, $\frac{b}{p}$ does not represent a lower bound on execution, as a thread must have the highest or equal highest priority of all runnable threads to be guaranteed to be scheduled at all.
 
-Whenever a thread is executing it cosumes the budget from its scheduling context.
-When the budget expires the thread is preempted and will not be schedulable again until the period has passed, at which 
+A scheduling context that has budget available is reffered to as \emph{active}.
+Whenever a thread is executing it consumes the budget from its current scheduling context.
+Once the budget is exhausted the thread is preempted and will not be schedulable again until the period has passed, at which 
 point the budget will be replenished.
-If more than one thread at the same priority has budget available, they will be scheduled first-in first-out.
-When a thread's budget expires, the next thread at that priority with budget available will be chosen by the scheduler.
-When $b = p$, $b$ simply acts as a timeslice for a thread in a round-robin scheduler, as the budget is always replenished immediately after it expires.
+When a thread's budget is exhausted, the next runnable thread at that priority with an active scheduling context will be chosen by the scheduler.
+When $b = p$, $b$ simply acts as a timeslice for a thread, as the budget is always replenished immediately after it expires, however the thread will be preempted.
 
-The system call \apifunc{seL4\_SchedContext\_Yield} can be used to sacrifice any remaining budget and block until the budget is replenished.
+The system call \apifunc{seL4\_SchedContext\_Yield}{schedcontext_yield} can be used to sacrifice any remaining budget and block until the budget is replenished.
 
 Threads can be bound to scheduling contexts using \apifunc{seL4\_TCB\_Configure}{tcb_configure} or 
-\apifunc{seL4\_SchedContext\_BindTCB}{schedcontext_bindtcb}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure} allows more thread fields to be set with only one kernel entry. 
-When a thread is bound to a scheduling context, if it is in a runnable state and the scheduling context has budget
-available, it will be added to the scheduler.
+\apifunc{seL4\_SchedContext\_BindTCB}{schedcontext_bindtcb}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure}{tcb_configure} allows more thread fields to be set with only one kernel entry. 
+When a thread is bound to a scheduling context, if it is in a runnable state and the scheduling context is active, it will be added to the scheduler.
 
-Threads can be unbound from a scheduling context with 
-\apifunc{seL4\_SchedContext\_UnbindTCB}{schedcontext_unbindtcb}. 
-This is distinct from suspending a thread, in that threads that are blocked an endpoint or notification will remain 
+\subsection{Passive Threads}
+\label{sec:passive}
+
+Threads can be unbound from a scheduling context with \apifunc{seL4\_SchedContext\_UnbindTCB}{schedcontext_unbindtcb}. 
+This is distinct from suspending a thread, in that threads that are blocked waiting in an endpoint or notification queue will remain 
 in the queue and can still recieve messages and signals. 
 However, the unbound thread will not be schedulable again until it receives a scheduling context.
+Threads without scheduling contexts are referred to as \emph{passive} threads, as they cannot execute without the action of another thread. 
 
-\subsection{Scheduling}
+\subsection{Scheduling Context Creation}
+\label{sec:sc_creation}
+
+Like other objects, scheduling contexts are created from untyped memory using \apifunc{seL4\_UntypedRetype}{untyped_retype}.
+On creation, scheduling contexts are empty, representing 0\% of CPU execution time.
+To populate a scheduling context with parameters, one must invoke the \obj{SchedControl} capability, which provides access to CPU time management and is provided to the initial task at run time.
+Scheduling context parameters can then be set and updated using \apifunc{seL4\_SchedControl\_Configure}, which allows the budget and period to be specified.
+
+The kernel does not conduct any schedulability tests, as task admission is left to user-level policy and can be conducted online or offine, statically or dynamically or not at all. 
+
+\subsection{Scheduling context donation and borrowing}
+
+In addition to explictly binding and removing scheduling contexts through \apifunc{seL4\_SchedContext\_BindTCB}{schedcontext_bindtcb} and \apifunc{seL4\_SchedContext\_UnbindTCB}{schedcontext_unbindtcb}, scheduling contexts can move between threads over IPC.
+Scheduling contexts are donated implicitly when the system calls \apifunc{seL4\_Call}{sel4_call} and \apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} are used to communicate with a passive thread.
+When \apifunc{seL4\_Call}{sel4_call} is used, the generated reply cap ensures that the callee is merely borrowing the scheduling context: when the reply cap is consumed by a reply message being sent, or otherwise deleted, the scheduling context will be returned to the caller.
+\apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} only offers scheduling context donation: there is no guarantee that the scheduling context will return.
+
+\subsection{Scheduling algorithm}
 \label{sec:sched}
 
 seL4 uses a preemptive, tickless, scheduler with 256 priority levels (0 --- 255).
 Thread priority (structure \texttt{seL4\_Prio\_t}) consists of two values, priority and max-priority.
+Threads are only added to the scheduler if they are in a runnable state and have an active scheduling context.
+
+\subsection{Priorities}
+
+Scheduling contexts provide access to and an upper bound on exection CPU time, however when a thread executes is determined by thread priority.
+
+All threads have a max-priority and priority.
 When a thread creates or modifies another thread, it can only set the
-other thread's priority and max-priority to be lower than or equal to its own max-priority. Thread priority and max-priority can be
+other thread's priority and max-priority to be less than or equal to its own max-priority. Thread priority and max-priority can be
 set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
 \apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMaxPriority}{tcb_setmaxpriority} methods.
+
+Consequently, access to CPU is a function of thread max-priorities, scheduling contexts and the \obj{SchedControl} capability.
+The kernel will enforce that threads do not exceeed the budget in their scheduling context for any given period, and that the highest priority thread will always run, however it is up to the system designer to make sure the entire system is schedulable.
 
 \subsection{Exceptions}
 

@@ -459,6 +459,104 @@ seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
     return info;
 }
 
+static inline seL4_MessageInfo_t
+seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word* sender)
+{
+    seL4_MessageInfo_t info;
+    seL4_Word badge;
+    seL4_Word mr0 = seL4_GetMR(0);
+    seL4_Word mr1 = seL4_GetMR(1);
+
+    /* the third syscall argument is placed in the kernel reserved word of the ipc buffer */
+    seL4_GetIPCBuffer()->reserved = src;
+
+    asm volatile (
+        "pushl %%ebp       \n"
+        "movl %%ecx, %%ebp \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "movl %%ebp, %%ecx \n"
+        "popl %%ebp        \n"
+        :
+        "=b" (badge),
+        "=S" (info.words[0]),
+        "=D" (mr0),
+        "=c" (mr1)
+        : "a" (seL4_SysNBSendRecv),
+        "b" (dest),
+        "S" (msgInfo.words[0]),
+        "D" (mr0),
+        "c" (mr1)
+        : "%edx", "memory"
+    );
+
+    seL4_SetMR(0, mr0);
+    seL4_SetMR(1, mr1);
+
+    if (sender) {
+        *sender = badge;
+    }
+
+    return info;
+}
+
+static inline seL4_MessageInfo_t
+seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
+                       seL4_Word *mr0, seL4_Word *mr1)
+{
+    seL4_MessageInfo_t info;
+    seL4_Word badge;
+    seL4_Word msg0 = 0;
+    seL4_Word msg1 = 0;
+
+    /* the third syscall argument is placed in the kernel reserved word of the ipc buffer */
+    seL4_GetIPCBuffer()->reserved = src;
+
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
+        msg0 = *mr0;
+    }
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
+        msg1 = *mr1;
+    }
+
+    asm volatile (
+        "pushl %%ebp       \n"
+        "movl %%ecx, %%ebp \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "movl %%ebp, %%ecx \n"
+        "popl %%ebp        \n"
+        :
+        "=b" (badge),
+        "=S" (info.words[0]),
+        "=D" (msg0),
+        "=c" (msg1)
+        : "a" (seL4_SysNBSendRecv),
+        "b" (dest),
+        "S" (msgInfo.words[0]),
+        "D" (msg0),
+        "c" (msg1)
+        : "%edx", "memory"
+    );
+
+    if (mr0 != seL4_Null) {
+        *mr0 = msg0;
+    }
+    if (mr1 != seL4_Null) {
+        *mr1 = msg1;
+    }
+
+    if (sender) {
+        *sender = badge;
+    }
+
+    return info;
+}
+
 #if defined(SEL4_DEBUG_KERNEL)
 static inline void
 seL4_DebugPutChar(char c)

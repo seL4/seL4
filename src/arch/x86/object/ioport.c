@@ -183,7 +183,7 @@ decodeIA32PortInvocation(
         }
     }
     setRegister(ksCurThread, msgInfoRegister,
-                wordFromMessageInfo(message_info_new(0, 0, 0, len)));
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, len)));
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;

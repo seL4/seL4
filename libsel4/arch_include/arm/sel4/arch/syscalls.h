@@ -453,6 +453,101 @@ seL4_ReplyRecv(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
     };
 }
 
+static inline seL4_MessageInfo_t
+seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word* sender)
+{
+    register seL4_Word dest_and_badge asm("r0") = (seL4_Word) dest;
+    register seL4_MessageInfo_t info asm("r1") = msgInfo;
+
+    /* Load beginning of the message into registers. */
+    register seL4_Word msg0 asm("r2") = seL4_GetMR(0);
+    register seL4_Word msg1 asm("r3") = seL4_GetMR(1);
+    register seL4_Word msg2 asm("r4") = seL4_GetMR(2);
+    register seL4_Word msg3 asm("r5") = seL4_GetMR(3);
+
+    register seL4_Word scno asm("r7") = seL4_SysNBSendRecv;
+
+    /* the third syscall argument is placed in the kernel reserved word of the ipc buffer */
+    seL4_GetIPCBuffer()->reserved = src;
+
+    asm volatile (" swi %[swi_num]\n"
+                  : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
+                  "+r" (info), "+r" (dest_and_badge)
+                  : [swi_num] "i" __SWINUM(seL4_SysNBSendRecv), "r"(scno)
+                  : "memory");
+
+    /* Write the message back out to memory. */
+    seL4_SetMR(0, msg0);
+    seL4_SetMR(1, msg1);
+    seL4_SetMR(2, msg2);
+    seL4_SetMR(3, msg3);
+
+    /* Return back sender and message information. */
+    if (sender) {
+        *sender = dest_and_badge;
+    }
+    return info;
+}
+
+static inline seL4_MessageInfo_t
+seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
+                       seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
+{
+    register seL4_Word dest_and_badge asm("r0") = (seL4_Word) dest;
+    register seL4_MessageInfo_t info asm("r1") = msgInfo;
+
+    /* Load beginning of the message into registers. */
+    register seL4_Word msg0 asm("r2");
+    register seL4_Word msg1 asm("r3");
+    register seL4_Word msg2 asm("r4");
+    register seL4_Word msg3 asm("r5");
+    register seL4_Word scno asm("r7") = seL4_SysNBSendRecv;
+
+    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
+        msg0 = *mr0;
+    }
+    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
+        msg1 = *mr1;
+    }
+    if (mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 2) {
+        msg2 = *mr2;
+    }
+    if (mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 3) {
+        msg3 = *mr3;
+    }
+
+    /* the third syscall argument is placed in the kernel reserved word of the ipc buffer */
+    seL4_GetIPCBuffer()->reserved = src;
+
+    /* Perform the syscall. */
+    asm volatile (" swi %[swi_num]\n"
+                  : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
+                  "+r" (info), "+r" (dest_and_badge)
+                  : [swi_num] "i" __SWINUM(seL4_SysNBSendRecv), "r"(scno)
+                  : "memory");
+
+    /* Write out the data back to memory. */
+    if (mr0 != seL4_Null) {
+        *mr0 = msg0;
+    }
+    if (mr1 != seL4_Null) {
+        *mr1 = msg1;
+    }
+    if (mr2 != seL4_Null) {
+        *mr2 = msg2;
+    }
+    if (mr3 != seL4_Null) {
+        *mr3 = msg3;
+    }
+
+    /* Return back sender and message information. */
+    if (sender) {
+        *sender = dest_and_badge;
+    }
+
+    return info;
+}
+
 #ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
 static inline seL4_MessageInfo_t
 seL4_ReplyRecvWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender,

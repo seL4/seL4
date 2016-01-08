@@ -14,6 +14,7 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
+#include <object/schedcontext.h>
 
 #include <arch/object/tcb.h>
 #include <object/cnode.h>
@@ -41,7 +42,7 @@ tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPReorder(tcb_t *tcb, tcb_queue_t queue, prio_t oldPrio);
 
-void setupCallerCap(tcb_t *sender, tcb_t *receiver);
+void setupCallerCap(tcb_t *sender, tcb_t *receiver, sched_context_t *sched_context);
 void deleteCallerCap(tcb_t *receiver);
 
 word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
@@ -97,7 +98,7 @@ exception_t invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr);
 cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i);
 void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 
-exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info);
+exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info);
 #ifdef DEBUG
 void setThreadName(tcb_t *thread, const char *name);
 #endif

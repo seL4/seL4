@@ -102,6 +102,7 @@ capabilities through the system is controlled by a
 \label{sec:sys_nbsend}
 \label{sec:sys_replyrecv}
 \label{sec:sys_nbrecv}
+\label{sec:sys_nbsendrecv}
 
 The seL4 kernel provides a message-passing service for communication between
 threads. This mechanism is also used for communication with kernel-provided
@@ -203,6 +204,10 @@ The complete set of system calls is:
     This system call works only on endpoints and notification object 
     capabilities, raising a fault (see section \ref{sec:faults}) when attempted
     with other capability types.
+
+    \item[\apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv}] combines a \apifunc{seL4\_NBSend}{sel4_nbsend} with a \apifunc{seL4\_Recv}{sel4_recv}, and can be called on two different objects (notification objects or endpoints).
+    Regardless of the success of the non-blocking send, the receive operation will continue. 
+
 \end{description}
 
 \section{Kernel Objects}

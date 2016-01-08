@@ -16,6 +16,7 @@ The seL4 kernel creates a minimal boot environment for the initial thread.
 This environment consists of the initial thread's TCB, CSpace and VSpace,
 consisting of frames that contain the userland image (code/data of the initial
 thread) and the IPC buffer.
+The kernel creates a scheduling context for the root task with a configurable budget that defaults to 10 milliseconds. 
 The initial thread's CSpace consists of exactly one CNode
 which contains capabilities to the initial
 thread's own resources was well as to all available global resources.
@@ -54,8 +55,8 @@ The first 12 slots contain specific capabilities as listed in
 \\
       0x9 & \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
       0xa & \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
-      0xb & \texttt{seL4\_CapInitThreadSchedContext}   & initial thread's scheduling scontext (see\autoref{sec:sched})\\
-      0xc & \texttt{seL4\_CapSchedControl}        & global scheduling cap for managing CPU time (see \autoref{sec:sched}\\
+      0xb & \texttt{seL4\_CapInitThreadSchedContext}   & initial thread's scheduling scontext (see \autoref{sec:scheduling_contexts})\\
+      0xc & \texttt{seL4\_CapSchedControl}        & global scheduling cap for managing CPU time (see \autoref{sec:sc_creation}\\
       \bottomrule
     \end{tabularx}
   \end{center}
