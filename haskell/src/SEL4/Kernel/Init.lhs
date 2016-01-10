@@ -349,7 +349,7 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 > provideCap rootCNodeCap cap = do
 >     currSlot <- noInitFailure $ gets initSlotPosCur
 >     maxSlot <- noInitFailure $ gets initSlotPosMax
->     when (currSlot >= maxSlot) $ throwError $ IFailure "cap slot number overflow"
+>     when (currSlot >= maxSlot) $ throwError $ IFailure
 >     slot <- doKernelOp $ locateSlotCap rootCNodeCap currSlot
 >     doKernelOp $ insertInitCap slot cap
 >     noInitFailure $ modify (\st -> st { initSlotPosCur = currSlot + 1 })  

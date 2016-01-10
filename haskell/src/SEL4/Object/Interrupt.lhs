@@ -167,7 +167,6 @@ This function is called when the kernel receives an interrupt event.
 > handleInterrupt :: IRQ -> Kernel ()
 > handleInterrupt irq = do
 >     st <- getIRQState irq
->--     doMachineOp $ debugPrint $ "handleInterrupt : " ++ (show irq) ++ "," ++ (show st)
 >     case st of
 >         IRQSignal -> do
 >             slot <- getIRQSlot irq
