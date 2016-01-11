@@ -19,6 +19,7 @@
 #include <arch/kernel/vspace.h>
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
+#include <util.h>
 
 /* (node-local) state accessed only during bootstrapping */
 
@@ -455,14 +456,6 @@ provide_untyped_cap(
 /**
   DONT_TRANSLATE
 */
-BOOT_CODE static word_t boot_clzl (word_t x)
-{
-    return CLZL (x);
-}
-
-/**
-  DONT_TRANSLATE
-*/
 BOOT_CODE static word_t boot_ctzl (word_t x)
 {
     return CTZL (x);
@@ -480,7 +473,7 @@ create_untypeds_for_region(
 
     while (!is_reg_empty(reg)) {
         /* Determine the maximum size of the region */
-        size_bits = WORD_BITS - 1 - boot_clzl(reg.end - reg.start);
+        size_bits = WORD_BITS - 1 - clzl(reg.end - reg.start);
 
         /* Determine the alignment of the region */
         align_bits = boot_ctzl(reg.start);

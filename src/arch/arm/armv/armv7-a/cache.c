@@ -80,7 +80,7 @@ clean_D_PoU(void)
             word_t s = readCacheSize(l, 0);
             int lbits = LINEBITS(s);
             int assoc = ASSOC(s);
-            int assoc_bits = wordBits - CLZL(assoc - 1);
+            int assoc_bits = wordBits - clzl(assoc - 1);
             int nsets = NSETS(s);
             int w;
 
@@ -108,7 +108,7 @@ cleanInvalidate_D_PoC(void)
             word_t s = readCacheSize(l, 0);
             int lbits = LINEBITS(s);
             int assoc = ASSOC(s);
-            int assoc_bits = wordBits - CLZL(assoc - 1);
+            int assoc_bits = wordBits - clzl(assoc - 1);
             int nsets = NSETS(s);
             int w;
 
