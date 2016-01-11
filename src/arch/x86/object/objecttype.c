@@ -447,7 +447,7 @@ Arch_decodeInvocation(
     case cap_asid_pool_cap:
         return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_port_cap:
-        return decodeIA32PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+        return decodeX86PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_space_cap:
         return decodeX86IOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
