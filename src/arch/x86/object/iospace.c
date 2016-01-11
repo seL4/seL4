@@ -113,11 +113,11 @@ static inline lookupIOPTSlot_ret_t lookupIOPTSlot(vtd_pte_t* iopt, word_t io_add
 
 exception_t
 decodeIA32IOPTInvocation(
-    word_t       label,
+    word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,
     cap_t        cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t*      buffer
 )
 {
@@ -129,7 +129,7 @@ decodeIA32IOPTInvocation(
     vtd_cte_t* vtd_context_slot;
     vtd_pte_t* vtd_pte;
 
-    if (label == IA32IOPageTableUnmap) {
+    if (invLabel == IA32IOPageTableUnmap) {
         deleteIOPageTable(slot->cap);
         slot->cap = cap_io_page_table_cap_set_capIOPTIsMapped(slot->cap, 0);
 
@@ -137,17 +137,17 @@ decodeIA32IOPTInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (extraCaps.excaprefs[0] == NULL || length < 1) {
+    if (excaps.excaprefs[0] == NULL || length < 1) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (label != IA32IOPageTableMap ) {
+    if (invLabel != IA32IOPageTableMap ) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    io_space     = extraCaps.excaprefs[0]->cap;
+    io_space     = excaps.excaprefs[0]->cap;
     io_address   = getSyscallArg(0, buffer) & ~MASK(PAGE_BITS);
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
@@ -226,11 +226,11 @@ decodeIA32IOPTInvocation(
 
 exception_t
 decodeIA32IOMapInvocation(
-    word_t       label,
+    word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,
     cap_t        cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t*      buffer
 )
 {
@@ -241,7 +241,7 @@ decodeIA32IOMapInvocation(
     vtd_pte_t* vtd_pte;
     paddr_t    paddr;
 
-    if (extraCaps.excaprefs[0] == NULL || length < 2) {
+    if (excaps.excaprefs[0] == NULL || length < 2) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -258,7 +258,7 @@ decodeIA32IOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    io_space    = extraCaps.excaprefs[0]->cap;
+    io_space    = excaps.excaprefs[0]->cap;
     io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
     paddr       = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
 
@@ -436,11 +436,11 @@ void unmapIOPage(cap_t cap)
 
 exception_t
 decodeIA32IOUnMapInvocation(
-    word_t       label,
+    word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,
     cap_t        cap,
-    extra_caps_t extraCaps
+    extra_caps_t excaps
 )
 {
     unmapIOPage(slot->cap);
@@ -452,10 +452,10 @@ decodeIA32IOUnMapInvocation(
     return EXCEPTION_NONE;
 }
 
-exception_t decodeIA32IOSpaceInvocation(word_t label, cap_t cap)
+exception_t decodeIA32IOSpaceInvocation(word_t invLabel, cap_t cap)
 {
     vtd_cte_t *cte;
-    if (label != IA32IOSpaceRemovePassthrough) {
+    if (invLabel != IA32IOSpaceRemovePassthrough) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }

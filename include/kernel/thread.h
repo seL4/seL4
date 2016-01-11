@@ -32,8 +32,8 @@ l1index_to_prio(word_t l1index)
 static inline PURE word_t
 highestPrio(void)
 {
-    word_t l1index = (wordBits - 1) - CLZL(ksReadyQueuesL1Bitmap);
-    word_t l2index = (wordBits - 1) - CLZL(ksReadyQueuesL2Bitmap[l1index]);
+    word_t l1index = (wordBits - 1) - clzl(ksReadyQueuesL1Bitmap);
+    word_t l2index = (wordBits - 1) - clzl(ksReadyQueuesL2Bitmap[l1index]);
     return l1index_to_prio(l1index) | l2index;
 }
 

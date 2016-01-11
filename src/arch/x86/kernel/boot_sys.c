@@ -29,12 +29,12 @@
 /* need a fake array to get the pointer from the linker script */
 
 /* start/end of CPU boot code */
-extern char _boot_cpu_start[1];
-extern char _boot_cpu_end[1];
+extern char boot_cpu_start[1];
+extern char boot_cpu_end[1];
 
 /* start/end of boot stack */
-extern char _boot_stack_bottom[1];
-extern char _boot_stack_top[1];
+extern char boot_stack_bottom[1];
+extern char boot_stack_top[1];
 
 /* locations in kernel image */
 extern char ki_boot_end[1];
@@ -62,6 +62,7 @@ typedef struct boot_state {
     uint32_t     num_drhu; /* number of IOMMUs */
     paddr_t      drhu_list[MAX_NUM_DRHU]; /* list of physical addresses of the IOMMUs */
     acpi_rmrr_list_t rmrr_list;
+    cpu_id_t     cpus[16];
 } boot_state_t;
 
 BOOT_DATA
@@ -88,7 +89,7 @@ in_boot_phase()
     paddr_t esp = pptr_to_paddr(get_current_esp());
 
     return (esp <= BOOT_NODE_PADDR ||
-            (esp <= (paddr_t)_boot_stack_top && esp > (paddr_t)_boot_stack_bottom));
+            (esp <= (paddr_t)boot_stack_top && esp > (paddr_t)boot_stack_bottom));
 }
 
 #endif
@@ -258,7 +259,6 @@ try_boot_sys(
     word_t i;
     p_region_t ui_p_regs;
     multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->mod_list;
-    cpu_id_t cpus[16];
     uint32_t num_cpus;
 
     if (multiboot_magic != MULTIBOOT_MAGIC) {
@@ -272,14 +272,14 @@ try_boot_sys(
         return false;
     }
 
-    assert(_boot_cpu_end - _boot_cpu_start < 0x400);
+    assert(boot_cpu_end - boot_cpu_start < 0x400);
     if ((mbi->mem_lower << 10) < BOOT_NODE_PADDR + 0x400) {
         printf("Need at least 513K of available lower physical memory\n");
         return false;
     }
 
     /* copy CPU bootup code to lower memory */
-    memcpy((void*)BOOT_NODE_PADDR, _boot_cpu_start, _boot_cpu_end - _boot_cpu_start);
+    memcpy((void*)BOOT_NODE_PADDR, boot_cpu_start, boot_cpu_end - boot_cpu_start);
 
     /* calculate available physical memory (above 1M) */
     boot_state.avail_p_reg.start = 0x100000;
@@ -337,7 +337,7 @@ try_boot_sys(
     }
 
     /* query available CPUs from ACPI */
-    num_cpus = acpi_madt_scan(acpi_rsdt, cpus, sizeof(cpus) / sizeof(cpus[0]), &boot_state.num_ioapic, boot_state.ioapic_paddr);
+    num_cpus = acpi_madt_scan(acpi_rsdt, boot_state.cpus, sizeof(boot_state.cpus) / sizeof(boot_state.cpus[0]), &boot_state.num_ioapic, boot_state.ioapic_paddr);
     if (num_cpus == 0) {
         printf("No CPUs detected\n");
         return false;
@@ -426,12 +426,12 @@ try_boot_sys(
     discover_devices();
 
     printf("Starting node #0\n");
-    if (!try_boot_sys_node(cpus[0])) {
+    if (!try_boot_sys_node(boot_state.cpus[0])) {
         return false;
     }
 
     if (config_set(CONFIG_IRQ_IOAPIC)) {
-        ioapic_init(1, cpus, boot_state.num_ioapic);
+        ioapic_init(1, boot_state.cpus, boot_state.num_ioapic);
     }
 
     /* No other CPUs to start up right now */

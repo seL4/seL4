@@ -13,6 +13,7 @@
 
 #include <api/objecttype.h>
 #include <config.h>
+#include <mode/api/objecttype.h>
 #include <arch/api/objecttype.h>
 
 #define pageType PageObject4K

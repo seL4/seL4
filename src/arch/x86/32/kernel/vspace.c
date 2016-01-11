@@ -718,12 +718,12 @@ void hwASIDInvalidate(asid_t asid)
 
 exception_t
 decodeX86ModeMMUInvocation(
-    word_t label,
+    word_t invLabel,
     word_t length,
     cptr_t cptr,
     cte_t* cte,
     cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
@@ -733,7 +733,7 @@ decodeX86ModeMMUInvocation(
         return EXCEPTION_SYSCALL_ERROR;
 
     case cap_page_directory_cap:
-        return decodeIA32PageDirectoryInvocation(label, length, cte, cap, extraCaps, buffer);
+        return decodeIA32PageDirectoryInvocation(invLabel, length, cte, cap, excaps, buffer);
 
     default:
         fail("Invalid arch cap type");

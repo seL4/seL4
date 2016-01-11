@@ -105,16 +105,16 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask);
 void    flushTable(void *vspace, word_t vptr, pte_t *pt);
 
-exception_t decodeX86MMUInvocation(word_t label, word_t length, cptr_t cptr, cte_t *cte,
-                                   cap_t cap, extra_caps_t extraCaps, word_t *buffer);
+exception_t decodeX86MMUInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *cte,
+                                   cap_t cap, extra_caps_t excaps, word_t *buffer);
 
-exception_t decodeX86ModeMMUInvocation(word_t label, word_t length, cptr_t cptr, cte_t *cte,
-                                       cap_t cap, extra_caps_t extraCaps, word_t *buffer);
+exception_t decodeX86ModeMMUInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *cte,
+                                       cap_t cap, extra_caps_t excaps, word_t *buffer);
 
-exception_t decodeIA32PageDirectoryInvocation(word_t label, word_t length, cte_t* cte, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
+exception_t decodeIA32PageDirectoryInvocation(word_t invLabel, word_t length, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
 
 /* common functions for x86 */
-exception_t decodeX86FrameInvocation(word_t label, word_t length, cte_t *cte, cap_t cap, extra_caps_t extraCaps, word_t *buffer);
+exception_t decodeX86FrameInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps, word_t *buffer);
 
 uint32_t CONST WritableFromVMRights(vm_rights_t vm_rights);
 uint32_t CONST SuperUserFromVMRights(vm_rights_t vm_rights);

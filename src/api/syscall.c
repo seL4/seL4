@@ -43,7 +43,9 @@ handleInterruptEntry(void)
     if (irq != irqInvalid) {
         handleInterrupt(irq);
     } else {
+#ifdef CONFIG_IRQ_REPORTING
         printf("Spurious interrupt\n");
+#endif
         handleSpuriousIRQ();
     }
 

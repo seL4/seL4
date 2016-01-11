@@ -30,6 +30,7 @@ CFILES := \
 HDRFILES := \
 	$(wildcard $(SOURCE_DIR)/include/*) \
 	$(wildcard $(SOURCE_DIR)/arch_include/$(ARCH)/*) \
+	$(wildcard $(SOURCE_DIR)/sel4_arch_include/$(SEL4_ARCH)/*) \
 	$(BUILD_DIR)/include/sel4 \
 	$(BUILD_DIR)/include/interfaces  #TODO proper prefix instruction
 
@@ -53,6 +54,12 @@ include/sel4/invocation.h: ${SOURCE_DIR}/include/interfaces/sel4.xml
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} $@ python ${INVOCATION_ID_GEN_PATH} \
 		--xml $< --libsel4 --dest $@
+
+sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/invocation.h: ${SOURCE_DIR}/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml 
+	@echo " [GEN] $@"
+	@mkdir -p $(dir $@)
+	@${CHANGED_PATH} ${SOURCE_DIR}/$@ python ${INVOCATION_ID_GEN_PATH} \
+		--xml $< --libsel4 --sel4_arch --dest ${SOURCE_DIR}/$@
 
 arch_include/${ARCH}/sel4/arch/invocation.h: ${SOURCE_DIR}/arch_include/${ARCH}/interfaces/sel4arch.xml 
 	@echo " [GEN] $@"
@@ -78,7 +85,6 @@ include/sel4/types_gen.h: \
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 "${SOURCE_DIR}/include/sel4/types.bf" include/sel4/types_gen.h
 
-# Bitfield generator
 include/sel4/shared_types_gen.h: \
 		${SOURCE_DIR}/include/sel4/shared_types.bf \
 		${BF_GEN_PATH}
@@ -88,11 +94,12 @@ include/sel4/shared_types_gen.h: \
 
 # Stub generator
 include/interfaces/sel4_client.h: \
-		${SOURCE_DIR}/arch_include/${ARCH}/interfaces/sel4arch.xml \
+		${SOURCE_DIR}/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml \
+        ${SOURCE_DIR}/arch_include/${ARCH}/interfaces/sel4arch.xml \
 		${SOURCE_DIR}/include/interfaces/sel4.xml
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} $@ \
         python ${SOURCE_DIR}/tools/syscall_stub_gen.py \
         --buffer \
-        -a $(ARCH) -o $@ $^
+        -a $(SEL4_ARCH) -o $@ $^

@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2014, NICTA
+
+     This software may be distributed and modified according to the terms of
+     the BSD 2-Clause license. Note that NO WARRANTY is provided.
+     See "LICENSE_BSD2.txt" for details.
+
+     @TAG(NICTA_BSD)
+  -->
+<api>
+    <struct name="seL4_UserContext">
+        <member name="eip"/>
+        <member name="esp"/>
+        <member name="eflags"/>
+        <member name="eax"/>
+        <member name="ebx"/>
+        <member name="ecx"/>
+        <member name="edx"/>
+        <member name="esi"/>
+        <member name="edi"/>
+        <member name="ebp"/>
+        <member name="tls_base"/>
+        <member name="fs"/>
+        <member name="gs"/>
+    </struct>
+</api>

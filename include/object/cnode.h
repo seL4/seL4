@@ -23,8 +23,8 @@ struct slot_range {
 typedef struct slot_range slot_range_t;
 
 exception_t decodeCNodeSaveCaller(cte_t *destSlot, tcb_t *target);
-exception_t decodeCNodeInvocation(word_t label, word_t length,
-                                  cap_t cap, extra_caps_t extraCaps,
+exception_t decodeCNodeInvocation(word_t invLabel, word_t length,
+                                  cap_t cap, extra_caps_t excaps,
                                   word_t *buffer);
 exception_t invokeCNodeRevoke(cte_t *destSlot);
 exception_t invokeCNodeDelete(cte_t *destSlot);

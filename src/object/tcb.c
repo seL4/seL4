@@ -521,11 +521,11 @@ copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
  * functions directly.  This is a significant deviation from the Haskell
  * spec. */
 exception_t
-decodeTCBInvocation(word_t label, word_t length, cap_t cap,
-                    cte_t* slot, extra_caps_t extraCaps, bool_t call,
+decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
+                    cte_t* slot, extra_caps_t excaps, bool_t call,
                     word_t *buffer)
 {
-    switch (label) {
+    switch (invLabel) {
     case TCBReadRegisters:
         /* Second level of decoding */
         return decodeReadRegisters(cap, length, call, buffer);
@@ -534,7 +534,7 @@ decodeTCBInvocation(word_t label, word_t length, cap_t cap,
         return decodeWriteRegisters(cap, length, buffer);
 
     case TCBCopyRegisters:
-        return decodeCopyRegisters(cap, length, extraCaps, buffer);
+        return decodeCopyRegisters(cap, length, excaps, buffer);
 
     case TCBSuspend:
         /* Jump straight to the invoke */
@@ -548,7 +548,7 @@ decodeTCBInvocation(word_t label, word_t length, cap_t cap,
                    TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
 
     case TCBConfigure:
-        return decodeTCBConfigure(cap, length, slot, extraCaps, buffer);
+        return decodeTCBConfigure(cap, length, slot, excaps, buffer);
 
     case TCBSetPriority:
         return decodeSetPriority(cap, length, buffer);
@@ -557,13 +557,13 @@ decodeTCBInvocation(word_t label, word_t length, cap_t cap,
         return decodeSetMaxPriority(cap, length, buffer);
 
     case TCBSetIPCBuffer:
-        return decodeSetIPCBuffer(cap, length, slot, extraCaps, buffer);
+        return decodeSetIPCBuffer(cap, length, slot, excaps, buffer);
 
     case TCBSetSpace:
-        return decodeSetSpace(cap, length, slot, extraCaps, buffer);
+        return decodeSetSpace(cap, length, slot, excaps, buffer);
 
     case TCBBindNotification:
-        return decodeBindNotification(cap, extraCaps);
+        return decodeBindNotification(cap, excaps);
 
     case TCBUnbindNotification:
         return decodeUnbindNotification(cap);
@@ -585,14 +585,14 @@ enum CopyRegistersFlags {
 
 exception_t
 decodeCopyRegisters(cap_t cap, word_t length,
-                    extra_caps_t extraCaps, word_t *buffer)
+                    extra_caps_t excaps, word_t *buffer)
 {
     word_t transferArch;
     tcb_t *srcTCB;
     cap_t source_cap;
     word_t flags;
 
-    if (length < 1 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 1 || excaps.excaprefs[0] == NULL) {
         userError("TCB CopyRegisters: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -602,7 +602,7 @@ decodeCopyRegisters(cap_t cap, word_t length,
 
     transferArch = Arch_decodeTransfer(flags >> 8);
 
-    source_cap = extraCaps.excaprefs[0]->cap;
+    source_cap = excaps.excaprefs[0]->cap;
 
     if (cap_get_capType(source_cap) == cap_thread_cap) {
         srcTCB = TCB_PTR(cap_thread_cap_get_capTCBPtr(source_cap));
@@ -912,21 +912,21 @@ decodeSetMaxPriority(cap_t cap, word_t length, word_t *buffer)
 
 exception_t
 decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
-                   extra_caps_t extraCaps, word_t *buffer)
+                   extra_caps_t excaps, word_t *buffer)
 {
     cptr_t cptr_bufferPtr;
     cap_t bufferCap;
     cte_t *bufferSlot;
 
-    if (length < 1 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 1 || excaps.excaprefs[0] == NULL) {
         userError("TCB SetIPCBuffer: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     cptr_bufferPtr  = getSyscallArg(0, buffer);
-    bufferSlot = extraCaps.excaprefs[0];
-    bufferCap  = extraCaps.excaprefs[0]->cap;
+    bufferSlot = excaps.excaprefs[0];
+    bufferCap  = excaps.excaprefs[0]->cap;
 
     if (cptr_bufferPtr == 0) {
         bufferSlot = NULL;
@@ -958,7 +958,7 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
 
 exception_t
 decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
-               extra_caps_t extraCaps, word_t *buffer)
+               extra_caps_t excaps, word_t *buffer)
 {
     cptr_t faultEP;
     word_t cRootData, vRootData;
@@ -966,8 +966,8 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
     cap_t cRootCap, vRootCap;
     deriveCap_ret_t dc_ret;
 
-    if (length < 3 || extraCaps.excaprefs[0] == NULL
-            || extraCaps.excaprefs[1] == NULL) {
+    if (length < 3 || excaps.excaprefs[0] == NULL
+            || excaps.excaprefs[1] == NULL) {
         userError("TCB SetSpace: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -977,10 +977,10 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
     cRootData = getSyscallArg(1, buffer);
     vRootData = getSyscallArg(2, buffer);
 
-    cRootSlot  = extraCaps.excaprefs[0];
-    cRootCap   = extraCaps.excaprefs[0]->cap;
-    vRootSlot  = extraCaps.excaprefs[1];
-    vRootCap   = extraCaps.excaprefs[1]->cap;
+    cRootSlot  = excaps.excaprefs[0];
+    cRootCap   = excaps.excaprefs[0]->cap;
+    vRootSlot  = excaps.excaprefs[1];
+    vRootCap   = excaps.excaprefs[1]->cap;
 
     if (slotCapLongRunningDelete(
                 TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbCTable)) ||
@@ -1034,13 +1034,13 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
 }
 
 exception_t
-decodeBindNotification(cap_t cap, extra_caps_t extraCaps)
+decodeBindNotification(cap_t cap, extra_caps_t excaps)
 {
     notification_t *ntfnPtr;
     tcb_t *tcb;
     cap_t ntfn_cap;
 
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (excaps.excaprefs[0] == NULL) {
         userError("TCB BindNotification: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1054,7 +1054,7 @@ decodeBindNotification(cap_t cap, extra_caps_t extraCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    ntfn_cap = extraCaps.excaprefs[0]->cap;
+    ntfn_cap = excaps.excaprefs[0]->cap;
 
     if (cap_get_capType(ntfn_cap) == cap_notification_cap) {
         ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(ntfn_cap));

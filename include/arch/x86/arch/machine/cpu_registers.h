@@ -21,7 +21,7 @@
 /* We use a dummy variable to synchronize reads and writes to the control registers.
  * this allows us to write inline asm blocks that do not have enforced memory
  * clobbers for ordering. */
-static unsigned long __control_reg_order;
+static unsigned long control_reg_order;
 
 #include <mode/machine/cpu_registers.h>
 

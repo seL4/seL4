@@ -87,7 +87,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
         ntfn_queue = ntfn_ptr_get_queue(ntfnPtr);
         dest = ntfn_queue.head;
 
-        /* Haskell error "WaitingNtfn N must have non-empty queue" */
+        /* Haskell error "WaitingNtfn Notification must have non-empty queue" */
         assert(dest);
 
         /* Dequeue TCB */

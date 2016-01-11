@@ -462,11 +462,11 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 }
 
 exception_t
-Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
-                      cte_t *slot, cap_t cap, extra_caps_t extraCaps,
+Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
+                      cte_t *slot, cap_t cap, extra_caps_t excaps,
                       word_t *buffer)
 {
-    return decodeARMMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
 }
 
 void

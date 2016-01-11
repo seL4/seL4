@@ -47,11 +47,11 @@ void deleteCallerCap(tcb_t *receiver);
 
 word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
                word_t *recvBuf, word_t n);
-exception_t decodeTCBInvocation(word_t label, word_t length, cap_t cap,
-                                cte_t* slot, extra_caps_t extraCaps, bool_t call,
+exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
+                                cte_t* slot, extra_caps_t excaps, bool_t call,
                                 word_t *buffer);
 exception_t decodeCopyRegisters(cap_t cap, word_t length,
-                                extra_caps_t extraCaps, word_t *buffer);
+                                extra_caps_t excaps, word_t *buffer);
 exception_t decodeReadRegisters(cap_t cap, word_t length, bool_t call,
                                 word_t *buffer);
 exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer);
@@ -60,10 +60,10 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length,
 exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeSetMaxPriority(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
-                               cte_t* slot, extra_caps_t extraCaps, word_t *buffer);
+                               cte_t* slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
-                           cte_t* slot, extra_caps_t extraCaps, word_t *buffer);
-exception_t decodeBindNotification(cap_t cap, extra_caps_t extraCaps);
+                           cte_t* slot, extra_caps_t excaps, word_t *buffer);
+exception_t decodeBindNotification(cap_t cap, extra_caps_t excaps);
 exception_t decodeUnbindNotification(cap_t cap);
 
 enum thread_control_flag {

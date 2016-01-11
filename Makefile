@@ -15,6 +15,7 @@
 ### Build parameters
 ############################################################
 
+SEL4_ARCH_LIST:=arm ia32
 ARCH_LIST:=arm x86
 CPU_LIST:=arm1136jf-s ixp420 cortex-a8 cortex-a9 cortex-a15
 PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 apq8064 zynq7000 allwinnerA20
@@ -31,6 +32,7 @@ endif
 ifeq (${MAKECMDGOALS}, style)
 ARCH:=x86
 PLAT:=pc99
+SEL4_ARCH:=ia32
 endif
 
 # we do need them if we want to build anything else
@@ -46,7 +48,11 @@ $(if $(filter ${CPU},${CPU_LIST}),, \
 
 $(if $(filter ${ARMV},${ARMV_LIST}),, \
 	$(error ARMV ${ARMV} invalid or undefined, should be one of [${ARMV_LIST}]))
+SEL4_ARCH:=arm
 endif
+
+$(if $(filter ${SEL4_ARCH},${SEL4_ARCH_LIST}),, \
+    $(error SEL4_ARCH ${SEL4_ARCH} invalid or undefined, should be one of [${SEL4_ARCH_LIST}]))
 
 ### Verbose building
 ########################################
@@ -444,7 +450,7 @@ ASM_SOURCES += $(patsubst %, src/plat/${PLAT}/%, ${PLAT_ASM_SOURCES})
 GENHEADERS = $(patsubst %.bf, %.pbf, ${BF_SOURCES}) \
   $(patsubst %.bf, %_gen.h, ${BF_SOURCES})
 
-GENHEADERS += arch/api/invocation.h api/invocation.h arch/api/syscall.h
+GENHEADERS += arch/api/invocation.h arch/api/sel4_invocation.h api/invocation.h arch/api/syscall.h
 
 DEFTHEORIES = $(patsubst %.bf, %_defs.thy, ${BF_SOURCES})
 PROOFTHEORIES = $(patsubst %.bf, %_proofs.thy, ${BF_SOURCES})
@@ -555,6 +561,11 @@ autoconf.h: include/plat/${PLAT}/autoconf.h
 arch/api/invocation.h: ${SOURCE_ROOT}/libsel4/arch_include/${ARCH}/interfaces/sel4arch.xml | ${DIRECTORIES}
 	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/invocation.h
 	$(Q)${INVOCATION_ID_GEN_PATH} --arch --xml $< \
+		--dest $@
+
+arch/api/sel4_invocation.h: ${SOURCE_ROOT}/libsel4/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml | ${DIRECTORIES}
+	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/sel4_invocation.h
+	$(Q)${INVOCATION_ID_GEN_PATH} --sel4_arch --xml $< \
 		--dest $@
 
 

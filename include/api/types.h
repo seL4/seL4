@@ -23,6 +23,7 @@
 
 /* cap_rights_t defined in api/types.bf */
 typedef word_t prio_t;
+typedef word_t cptr_t;
 typedef uint64_t time_t;
 typedef uint64_t ticks_t;
 
@@ -105,9 +106,15 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define noWrite cap_rights_new(true, true, false)
 
 #ifdef DEBUG
+#ifdef CONFIG_COLOUR_PRINTING
 #define ANSI_RESET "\033[0m"
 #define ANSI_GREEN ANSI_RESET "\033[32m"
 #define ANSI_DARK  ANSI_RESET "\033[30;1m"
+#else
+#define ANSI_RESET ""
+#define ANSI_GREEN ANSI_RESET ""
+#define ANSI_DARK  ANSI_RESET ""
+#endif
 /*
  * Print to serial a message helping userspace programmers to determine why the
  * kernel is not performing their requested operation.

@@ -37,12 +37,12 @@ ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)
 
 exception_t
 decodeIA32PortInvocation(
-    word_t label,
+    word_t invLabel,
     word_t length,
     cptr_t cptr,
     cte_t* slot,
     cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
@@ -61,7 +61,7 @@ decodeIA32PortInvocation(
     /* Get the port the user is trying to write to. */
     port = getSyscallArg(0, buffer) & 0xffff;
 
-    switch (label) {
+    switch (invLabel) {
     case IA32IOPortIn8: { /* inport 8 bits */
 
         /* Check we are allowed to perform the operation. */
