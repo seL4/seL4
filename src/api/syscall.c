@@ -35,6 +35,7 @@ handleInterruptEntry(void)
 {
     irq_t irq;
 
+    ksCurThread->tcbSchedContext = ksCurSchedContext;
     irq = getActiveIRQ();
 #ifdef DEBUG
     ksKernelEntry.path = Debug_Interrupt;
