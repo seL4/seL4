@@ -193,7 +193,7 @@ static inline void
 seL4_Signal(seL4_CPtr dest)
 {
     register seL4_Word destptr asm("r0") = (seL4_Word)dest;
-    register seL4_Word info asm("r1") = seL4_MessageInfo_new(0, 0, 0, 1).words[0];
+    register seL4_Word info asm("r1") = seL4_MessageInfo_new(0, 0, 0, 0).words[0];
 
     /* Perform the system call. */
     register seL4_Word scno asm("r7") = seL4_SysSend;
