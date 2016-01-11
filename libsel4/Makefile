@@ -18,7 +18,7 @@ CHANGED_PATH := ${SOURCE_DIR}/tools/changed.sh
 # Targets
 PRIORITY_TARGETS := include/interfaces/sel4_client.h include/sel4/types_gen.h include/sel4/syscall.h \
 					include/sel4/invocation.h arch_include/${ARCH}/sel4/arch/invocation.h \
-					include/sel4/shared_types_gen.h
+					include/sel4/shared_types_gen.h sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/invocation.h
 TARGETS          := libsel4.a
 
 # Source files required to build the target
