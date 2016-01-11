@@ -190,7 +190,7 @@ menu "seL4 System Parameters"
     config ROOT_CNODE_SIZE_BITS
         range 4 27
         int "Root CNode Size (2^n slots)"
-        default 16
+        default 12
         help
             The acceptable range is 4-27, based on the kernel-supplied caps.
             The root CNode needs at least enough space to contain up to
