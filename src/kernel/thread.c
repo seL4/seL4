@@ -107,22 +107,25 @@ suspend(tcb_t *target)
 void
 restart(tcb_t *target)
 {
-    if (isBlocked(target) && target->tcbSchedContext != NULL &&
-            target->tcbSchedContext->scBudget > 0llu) {
-
-        if (ready(target->tcbSchedContext)) {
-            recharge(target->tcbSchedContext);
-        }
-
+    if (isBlocked(target)) {
         cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
 
-        if (target->tcbSchedContext->scRemaining < getKernelWcetTicks()) {
-            postpone(target->tcbSchedContext);
-        } else {
-            tcbSchedEnqueue(target);
-            switchIfRequiredTo(target);
+        if (likely(target->tcbSchedContext) && target->tcbSchedContext->scBudget > 0) {
+            /* recharge sched context */
+            if (ready(target->tcbSchedContext)) {
+                recharge(target->tcbSchedContext);
+            }
+
+            if (target->tcbSchedContext->scRemaining < getKernelWcetTicks()) {
+                /* not enough budget */
+                postpone(target->tcbSchedContext);
+            } else {
+                /* ready to go */
+                tcbSchedEnqueue(target);
+                switchIfRequiredTo(target);
+            }
         }
     }
 }
