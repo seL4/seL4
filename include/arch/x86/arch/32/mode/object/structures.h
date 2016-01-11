@@ -13,7 +13,7 @@
 
 /* Object sizes*/
 #define EP_SIZE_BITS  4
-#define NTFN_SIZE_BITS 4
+#define NTFN_SIZE_BITS 5
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
 /* update this when you modify the tcb struct */

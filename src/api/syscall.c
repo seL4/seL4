@@ -337,7 +337,7 @@ handleReply(void)
          * "handleReply: caller must not be the current thread" */
         assert(caller != ksCurThread);
         doReplyTransfer(ksCurThread, caller, callerSlot,
-                        SC_PTR(cap_reply_cap_get_schedcontext(callerCap)));
+                        SC_PTR(cap_reply_cap_get_capSchedContext(callerCap)));
         return;
     }
 

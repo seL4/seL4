@@ -1,0 +1,21 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{schedcontext_bindnotification}
+{SchedContext - BindNotification}
+{Bind a notification to a scheduling context. If a passive thread is waiting on this notification when a signal arrives, that thread will run on using the scheduling context of the notification.}
+{static inline int seL4\_SchedContext\_BindNotification}
+{
+\param{seL4\_SchedContext}{\_service}{\schedcontextcapdesc}
+\param{seL4\_CPtr}{tcb}{\tcbcapdesc}
+}
+{\errorenumdesc}
+{see \autoref{sec:sched}}

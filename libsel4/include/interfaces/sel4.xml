@@ -177,5 +177,9 @@
             <param dir="in" name="tcb" type="seL4_CPtr" />
         </method>
         <method id ="SchedContextUnbindTCB" name="UnbindTCB" />
+        <method id="SchedContextBindNotification" name="BindNotification">
+            <param dir="in" name="notification" type="seL4_CPtr" />
+        </method>
+        <method id="SchedContextUnbindNotification" name="UnbindNotification" />
     </interface>
 </api>

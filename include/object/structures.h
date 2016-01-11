@@ -240,26 +240,29 @@ typedef struct tcb tcb_t;
 
 struct sched_context {
     /* budget for this tcb -- remaining is refilled from this value */
-    ticks_t budget;
+    ticks_t scBudget;
 
     /* period for this tcb -- controls rate at which budget is replenished */
-    ticks_t period;
+    ticks_t scPeriod;
 
     /* current budget for this tcb (timeslice) -- will be refilled from budget */
-    ticks_t remaining;
+    ticks_t scRemaining;
 
     /* timestamp when this scheduling context is next due for a budget recharge */
-    ticks_t next;
+    ticks_t scNext;
 
     /* tcb that is currently running on this scheduling context */
-    tcb_t *tcb;
+    tcb_t *scTcb;
 
     /* if this scheduling context was donated over IPC, this field stores a pointer
      * to thread that holds the reply cap, if a reply cap was generated.
      * This allows the scheduling context
      * to can get back to the original caller even if a different thread replies on
      * behalf of the caller or the reply cap is deleted */
-    tcb_t *reply;
+    tcb_t *scReply;
+
+    /* notification this scheduling context is optionally bound to */
+    notification_t *scNotification;
 };
 
 /* Ensure object sizes are sane */

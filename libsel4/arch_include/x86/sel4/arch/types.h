@@ -19,7 +19,7 @@
 #define seL4_SlotBits         4
 #define seL4_TCBBits         10
 #define seL4_EndpointBits     4
-#define seL4_NotificationBits 4
+#define seL4_NotificationBits 5
 #define seL4_PageTableBits   12
 #define seL4_PageDirBits     12
 #define seL4_IOPageTableBits 12

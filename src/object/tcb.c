@@ -81,7 +81,7 @@ void
 tcbSchedEnqueue(tcb_t *tcb)
 {
     assert(isSchedulable(tcb));
-    assert(tcb->tcbSchedContext->remaining >= getKernelWcetTicks());
+    assert(tcb->tcbSchedContext->scRemaining >= getKernelWcetTicks());
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
@@ -113,7 +113,7 @@ void
 tcbSchedAppend(tcb_t *tcb)
 {
     assert(isSchedulable(tcb));
-    assert(tcb->tcbSchedContext->remaining >= getKernelWcetTicks());
+    assert(tcb->tcbSchedContext->scRemaining >= getKernelWcetTicks());
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
@@ -204,7 +204,7 @@ tcbReleaseEnqueue(tcb_t *tcb)
     assert(thread_state_get_inReleaseQueue(tcb->tcbState) == false);
 
     if (ksReleaseHead == NULL ||
-            tcb->tcbSchedContext->next < ksReleaseHead->tcbSchedContext->next) {
+            tcb->tcbSchedContext->scNext < ksReleaseHead->tcbSchedContext->scNext) {
         /* insert at head */
         tcb->tcbSchedNext = ksReleaseHead;
         tcb->tcbSchedPrev = NULL;
@@ -217,7 +217,7 @@ tcbReleaseEnqueue(tcb_t *tcb)
         /* find a place in the list */
         tcb_t *node = ksReleaseHead;
         tcb_t *prev = NULL;
-        while (node != NULL && tcb->tcbSchedContext->next >= node->tcbSchedContext->next) {
+        while (node != NULL && tcb->tcbSchedContext->scNext >= node->tcbSchedContext->scNext) {
             prev = node;
             node = node->tcbSchedNext;
         }
@@ -443,7 +443,7 @@ setupCallerCap(tcb_t *sender, tcb_t *receiver, sched_context_t *donated)
     cteInsert(cap_reply_cap_new(false, TCB_REF(sender), SC_REF(donated)),
               replySlot, callerSlot);
     if (donated != NULL) {
-        donated->reply = sender;
+        donated->scReply = sender;
     }
 }
 
@@ -1138,9 +1138,9 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
 
     if (updateFlags & thread_control_update_sc) {
         if (sched_context != NULL) {
-            bindSchedContext(sched_context, target);
+            schedContext_bindTCB(sched_context, target);
         } else {
-            unbindSchedContext(target->tcbSchedContext);
+            schedContext_unbindTCB(target->tcbSchedContext);
         }
     }
 
