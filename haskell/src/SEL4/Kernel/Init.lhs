@@ -298,7 +298,7 @@ Create idle thread and set up current thread + scheduler state.
 
 >     (flip mapM) (take maxNumFreememRegions freemem)
 >         (\reg -> do
->             (\f -> foldM f reg [4 .. (finiteBitSize (undefined::Word)) - 2]) 
+>             (\f -> foldME f reg [4 .. (finiteBitSize (undefined::Word)) - 2]) 
 >                 (\reg bits -> do
 >                     reg' <- (if not (isAligned (regStartPAddr reg) (bits + 1)) 
 >                                 && (regEndPAddr reg) - (regStartPAddr reg) >= bit bits 
@@ -398,4 +398,7 @@ Various functions in this module use "rangesBy" to split a sorted list into cont
 > distinct [] = True
 > distinct (x:xs) = (notElem x xs && distinct xs)
 
+Following foldME is for l4v haskell translator
+
+> foldME = foldM
 

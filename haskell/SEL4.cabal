@@ -96,7 +96,8 @@ Library
                            
 
     hs-source-dirs:         src
-    ghc-prof-options:       -auto-all -fprof-auto
+    --ghc-prof-options:       -auto-all -fprof-auto
+    ghc-prof-options:       -auto-all -prof -fprof-auto
     ghc-options:            -Wall -Werror -O2 -fno-warn-unused-do-bind
                             -fno-warn-missing-signatures -fno-warn-orphans
                             -fno-spec-constr -fno-warn-name-shadowing

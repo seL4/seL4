@@ -85,11 +85,11 @@ clean_D_PoU(void)
             int w;
 
             for (w = 0; w < assoc; w++) {
-                int s;
+                int v;
 
-                for (s = 0; s < nsets; s++) {
+                for (v = 0; v < nsets; v++) {
                     cleanByWSL((w << (32 - assoc_bits)) |
-                               (s << lbits) | (l << 1));
+                               (v << lbits) | (l << 1));
                 }
             }
         }
@@ -113,11 +113,11 @@ cleanInvalidate_D_PoC(void)
             int w;
 
             for (w = 0; w < assoc; w++) {
-                int s;
+                int v;
 
-                for (s = 0; s < nsets; s++) {
+                for (v = 0; v < nsets; v++) {
                     cleanInvalidateByWSL((w << (32 - assoc_bits)) |
-                                         (s << lbits) | (l << 1));
+                                         (v << lbits) | (l << 1));
                 }
             }
         }

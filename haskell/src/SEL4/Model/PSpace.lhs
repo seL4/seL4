@@ -222,9 +222,10 @@ Update the state with the new "PSpace" map.
 
 \subsubsection{Deleting Objects}
 
-> deleteRange :: Data.Map.Map Word a -> Word -> Word -> Data.Map.Map Word a
-> deleteRange m pstart pend = 
+> deleteRange :: Data.Map.Map Word a -> Word -> Int -> Data.Map.Map Word a
+> deleteRange m pstart bits = 
 >         let (_,lr) = Data.Map.split (pstart-1) m
+>             pend = pstart + 2^bits
 >             (mid,_) = Data.Map.split pend lr in
 >         foldl' (flip Data.Map.delete) m (Data.Map.keys mid)
 
@@ -239,7 +240,7 @@ No type checks are performed when deleting objects; "deleteObjects" simply delet
 >         doMachineOp $ freeMemory (PPtr (fromPPtr ptr)) bits
 >         ps <- gets ksPSpace
 >         let inRange = (\x -> x .&. ((- mask bits) - 1) == fromPPtr ptr)
->         let map' = deleteRange (psMap ps) (fromPPtr ptr) (fromPPtr ptr + 2^bits)
+>         let map' = deleteRange (psMap ps) (fromPPtr ptr) bits
 >         let ps' = ps { psMap = map' }
 >         modify (\ks -> ks { ksPSpace = ps'})
 

@@ -274,8 +274,10 @@ cpu_iface_init(void)
     gic_cpuiface->pri_msk_c = 0x000000f0;
     gic_cpuiface->pb_c = 0x00000003;
 
-    while (((i = gic_cpuiface->int_ack) & IRQ_MASK) != IRQ_NONE) {
+    i = gic_cpuiface->int_ack;
+    while ((i & IRQ_MASK) != IRQ_NONE) {
         gic_cpuiface->eoi = i;
+        i = gic_cpuiface->int_ack;
     }
     gic_cpuiface->icontrol = 1;
 }
