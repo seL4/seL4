@@ -8,20 +8,14 @@
   @TAG(GD_GPL)
 -->
 
-The seL4 Repository
-===================
+The seL4 Repository (with realtime extensions)
+=============================================
 
-This repository contains the source code of seL4 microkernel.
+This repository contains the source code of seL4 microkernel, with currently in development real-time extensions.
 
-For details about the seL4 microkernel, including details about its formal
-correctness proof, please see the [`sel4.systems`][1] website and associated
-[FAQ][2].
+There are no verification guarantees on this branch, although it is scheduled to be verifified in the future.
 
-DOIs for citing recent releases of this repository:
-  * [![DOI][4]](http://dx.doi.org/10.5281/zenodo.11247)
-
-We welcome contributions to seL4. Please see the website for information
-on [how to contribute][3].
+Currently the only platforms supported on this branch are x86 (processors with TSC-deadline mode), imx6 and odroid-xu. Other platforms do not compile.
 
 This repository is usually not used in isolation, but as part of the build
 system in a larger project.
