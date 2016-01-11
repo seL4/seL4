@@ -161,7 +161,7 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     tcb->tcbSchedContext = sc;
     sc->scTcb = tcb;
 
-    if (isRunnable(tcb)) {
+    if (isRunnable(tcb) && sc->scBudget > 0) {
         if (ready(sc)) {
             recharge(sc);
         }
