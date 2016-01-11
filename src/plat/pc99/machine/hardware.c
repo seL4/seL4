@@ -131,10 +131,10 @@ clz64(uint64_t n)
     uint32_t lz = 0;
 
     if (upper_n != 0) {
-        lz += CLZL(upper_n);
+        lz += clzl(upper_n);
     }
 
-    return lz + CLZL((uint32_t) n);
+    return lz + clzl((uint32_t) n);
 }
 
 static CONST uint64_t
@@ -151,7 +151,7 @@ div64(uint64_t numerator, uint32_t denominator)
     assert(denominator > 0);
 
     /* align denominator to numerator */
-    c = 32u + CLZL(denominator) - clz64(numerator);
+    c = 32u + clzl(denominator) - clz64(numerator);
     long_denom = long_denom << c;
 
     /* perform binary long division */
