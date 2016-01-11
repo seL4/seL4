@@ -11,6 +11,7 @@
 #ifndef __PLAT_IO_H
 #define __PLAT_IO_H
 
+#include <arch/linker.h>
 #include <types.h>
 
 void out8(uint16_t port, uint8_t value);
@@ -21,13 +22,13 @@ uint16_t in16(uint16_t port);
 uint32_t in32(uint16_t port);
 
 /* these versions are linked to physical addresses */
-static inline void SECTION(".phys.text")
+static inline void PHYS_CODE
 out8_phys(uint16_t port, uint8_t value)
 {
     asm volatile("outb %[value], %[port]" :: [port] "d"(port), [value] "a"(value));
 }
 
-static inline uint8_t SECTION(".phys.text")
+static inline uint8_t PHYS_CODE
 in8_phys(uint16_t port)
 {
     uint8_t value;
