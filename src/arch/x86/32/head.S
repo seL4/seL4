@@ -78,7 +78,7 @@ BEGIN_FUNC(_start)
     movl %ebx, %esi /* multiboot_info_ptr */
 
     /* Load kernel boot stack pointer */
-    leal _boot_stack_top, %esp
+    leal boot_stack_top, %esp
 
     /* Reset EFLAGS register (also disables interrupts etc.) */
     pushl $0
@@ -104,13 +104,13 @@ END_FUNC(_start)
 
 /* ===== booting up another CPU ===== */
 
-BEGIN_FUNC(_boot_cpu_start)
+BEGIN_FUNC(boot_cpu_start)
 
 .code16
     /* Set DS equal to CS and load GDTR register with GDT pointer */
     movw %cs, %ax
     movw %ax, %ds
-    lgdt _boot_gdt_ptr - _boot_cpu_start
+    lgdt _boot_gdt_ptr - boot_cpu_start
 
     /* Enable Protected Mode */
     movl %cr0, %eax
@@ -155,7 +155,7 @@ BEGIN_FUNC(_boot_cpu_start)
     /* This will start the roottask as soon as boot_node() returns.   */
     pushl $restore_user_context
     jmp   boot_node
-END_FUNC(_boot_cpu_start)
+END_FUNC(boot_cpu_start)
 
 _boot_gdt_ptr:
     .word   (3 * 8) - 1 /* Limit: 3 segments * 8 bytes - 1 byte */
@@ -167,5 +167,5 @@ _boot_gdt:
     .quad 0x00cf9b000000ffff /* 4GB kernel code segment */
     .quad 0x00cf93000000ffff /* 4GB kernel data segment */
 
-.global _boot_cpu_end
-_boot_cpu_end:
+.global boot_cpu_end
+boot_cpu_end:

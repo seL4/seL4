@@ -32,10 +32,10 @@ SECTIONS
     {
         *(.mbh)
         *(.phys.text)
-        _boot_stack_bottom = .;
+        boot_stack_bottom = .;
         . = . + 2K;
         . = ALIGN(4K);
-        _boot_stack_top = .;
+        boot_stack_top = .;
         *(.phys)
         *(.phys.*)
     }
