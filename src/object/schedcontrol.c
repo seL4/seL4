@@ -21,16 +21,94 @@
 
 #include <object/schedcontrol.h>
 
+static inline bool_t
+updateActivePeriod(sched_context_t *sc, ticks_t period)
+{
+    bool_t release = false;
+    /* update the active period (i.e when the thread is due to be released next) */
+    /* if the thread is in the release queue we will need to reenqueue it at the end
+     * of the update */
+    release = thread_state_get_inReleaseQueue(sc->scTcb->tcbState);
+    tcbReleaseRemove(sc->scTcb);
+
+    if (period > sc->scPeriod) {
+        sc->scNext += (period - sc->scPeriod);
+    } else {
+        sc->scNext -= (sc->scPeriod - period);
+    }
+
+    return release;
+}
+
+static inline bool_t
+updateActiveBudget(sched_context_t *sc, ticks_t budget)
+{
+    bool_t release = false;
+
+    /* update the active budget, this impacts running threads who have budget only */
+    if (budget > sc->scBudget) {
+        sc->scRemaining += (budget - sc->scBudget);
+    } else {
+        time_t diff = sc->scBudget - budget;
+        if (diff > sc->scRemaining || sc->scRemaining - diff < getKernelWcetTicks()) {
+            /* the update resulted in not enough budget, add thread to release queue at
+             * the end of the update */
+            release = isSchedulable(sc->scTcb);
+            sc->scRemaining = 0llu;
+        } else {
+            sc->scRemaining -= diff;
+        }
+    }
+
+    return release;
+}
+
 exception_t
 invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t period)
 {
-    budget = usToTicks(budget);
-    period = usToTicks(period);
+    /* this boolean tells us if we need to consider
+     * releasing the thread bound to the scheduling
+     * context after updating all of the fields */
+    bool_t release = false;
 
-    target->scBudget = budget;
-    target->scPeriod = period;
+    ticks_t new_budget = usToTicks(budget);
+    ticks_t new_period = usToTicks(period);
 
-    recharge(target);
+    /* if the scheduling context has a tcb, we need to consider updating
+     * the currently active parameters of the scheduling context */
+    if (target->scTcb) {
+        /* if the previous budget was 0, we need to consider running the thread */
+        if (target->scBudget == 0) {
+            release = isSchedulable(target->scTcb);
+        } else {
+            if (target->scPeriod != new_period) {
+                release = updateActivePeriod(target, new_period);
+            }
+            if (target->scBudget != new_budget) {
+                release |= updateActiveBudget(target, new_budget);
+            }
+        }
+    }
+
+    /* finally alter reload parameters */
+    target->scBudget = new_budget;
+    target->scPeriod = new_period;
+
+    /* we need to check if the thread is ready to be updated, otherwise postpone */
+    if (release) {
+        assert(isRunnable(target->scTcb));
+        if (ready(target)) {
+            recharge(target);
+            tcbSchedEnqueue(target->scTcb);
+        } else {
+            tcbSchedDequeue(target->scTcb);
+            postpone(target);
+        }
+    }
+
+    if (target->scTcb == ksCurThread) {
+        rescheduleRequired();
+    }
 
     return EXCEPTION_NONE;
 }

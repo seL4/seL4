@@ -12,6 +12,9 @@
 {schedcontrol_configure}
 {SchedControl - Configure}
 {Set the parameters of a scheduling context by invoking the scheduling control capability.
+If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. 
+This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread.
+Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time.
 This call will return seL4\_Invalid\_Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).}
 {static inline int seL4\_SchedControl\_Configure }
 {

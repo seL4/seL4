@@ -543,6 +543,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
         sched_context_t *sc;
         memzero(regionBase, 1UL << SC_SIZE_BITS);
         sc = SC_PTR(regionBase);
+        sc->scNext = ksCurrentTime;
         return cap_sched_context_cap_new(SC_REF(sc));
     }
     case seL4_TCBObject: {
