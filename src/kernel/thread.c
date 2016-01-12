@@ -67,31 +67,20 @@ BOOT_CODE void
 configureIdleThread(tcb_t *tcb)
 {
     Arch_configureIdleThread(tcb);
-    setThreadState(tcb, ThreadState_IdleThreadState);
+    setThreadState(tcb, ThreadState_Running);
+    tcb->tcbPriority = seL4_MinPrio;
 }
 
 void
 activateThread(void)
 {
-    switch (thread_state_get_tsType(ksCurThread->tcbState)) {
-    case ThreadState_Running:
-        break;
-
-    case ThreadState_Restart: {
+    assert(isRunnable(ksCurThread));
+    if (unlikely(thread_state_get_tsType(ksCurThread->tcbState) == ThreadState_Restart)) {
         word_t pc;
 
         pc = getRestartPC(ksCurThread);
         setNextPC(ksCurThread, pc);
         setThreadState(ksCurThread, ThreadState_Running);
-        break;
-    }
-
-    case ThreadState_IdleThreadState:
-        Arch_activateIdleThread(ksCurThread);
-        break;
-
-    default:
-        fail("Current thread is blocked");
     }
 }
 
@@ -359,39 +348,31 @@ chooseThread(void)
     word_t prio;
     tcb_t *thread;
 
-    if (likely(ksReadyQueuesL1Bitmap)) {
-        prio = highestPrio();
-        thread = ksReadyQueues[prio].head;
-        assert(thread);
-        assert(isRunnable(thread));
-        assert(isSchedulable(thread));
-        assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
-        switchToThread(thread);
-    } else {
-        switchToIdleThread();
-    }
+    prio = highestPrio();
+    thread = ksReadyQueues[prio].head;
+
+    assert(thread);
+    assert(isRunnable(thread));
+    assert(isSchedulable(thread));
+    assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
+
+    switchToThread(thread);
 }
 
 void
 switchToThread(tcb_t *thread)
 {
     /* now switch */
-    if (likely(thread != ksCurThread)) {
+    if (unlikely(thread == ksIdleThread)) {
+        Arch_switchToIdleThread();
+    } else if (likely(thread != ksCurThread)) {
         Arch_switchToThread(thread);
     }
+
     tcbSchedDequeue(thread);
     assert(!thread_state_get_inReleaseQueue(thread->tcbState));
     assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
     ksCurThread = thread;
-}
-
-void
-switchToIdleThread(void)
-{
-    /* make sure the calculation in setNextInterrupt doesn't overflow for the idle thread */
-    ksIdleThread->tcbSchedContext->scRemaining = UINT64_MAX - ksCurrentTime - 1;
-    Arch_switchToIdleThread();
-    ksCurThread = ksIdleThread;
 }
 
 void
@@ -569,9 +550,6 @@ checkBudget(void)
 {
     /* does this thread have enough time to continue? */
     if (unlikely(currentThreadExpired())) {
-        /* since we never bill the idle thread this shouldn't ever happen */
-        assert(ksCurThread != ksIdleThread);
-
         /* we enter this function on 2 different types of path:
          * kernel entry (for whatever reason) and when handling
          * a timer interrupt. For the

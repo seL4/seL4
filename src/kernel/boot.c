@@ -354,7 +354,7 @@ create_idle_thread(void)
     memzero((void *)pptr, 1 << TCB_BLOCK_SIZE_BITS);
     ksIdleThread = TCB_PTR(pptr + TCB_OFFSET);
     configureIdleThread(ksIdleThread);
-    return create_sched_context(ksIdleThread, UINT64_MAX);
+    return create_sched_context(ksIdleThread, CONFIG_BOOT_THREAD_TIME_SLICE * US_PER_MS);
 }
 
 BOOT_CODE bool_t

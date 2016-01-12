@@ -55,8 +55,3 @@ Arch_switchToIdleThread(void)
     /* Don't need to do anything */
 }
 
-void CONST
-Arch_activateIdleThread(tcb_t* tcb)
-{
-    /* Don't need to do anything */
-}

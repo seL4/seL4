@@ -16,6 +16,5 @@
 void Arch_switchToThread(tcb_t *tcb);
 void Arch_switchToIdleThread(void);
 void Arch_configureIdleThread(tcb_t *tcb);
-void CONST Arch_activateIdleThread(tcb_t *tcb);
 
 #endif
