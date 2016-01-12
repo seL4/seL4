@@ -295,14 +295,18 @@ parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
     printf("Parsing GRUB physical memory map\n");
 
     while ((word_t)mmap < (word_t)(mmap_addr + mmap_length)) {
-        word_t mem_start = mmap->base_addr;
-        word_t mem_length = mmap->length;
+        uint64_t mem_start = mmap->base_addr;
+        uint64_t mem_length = mmap->length;
         uint32_t type = mmap->type;
-        printf("\tPhysical Memory Region from %lx size %lx type %d\n", mem_start, mem_length, type);
-        if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR) {
-            add_mem_p_regs((p_region_t) {
-                mem_start, mem_start + mem_length
-            });
+        if (mem_start != (uint64_t)(word_t)mem_start) {
+            printf("\tPhysical memory region not addressable\n");
+        } else {
+            printf("\tPhysical Memory Region from %lx size %lx type %d\n", (long)mem_start, (long)mem_length, type);
+            if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR) {
+                add_mem_p_regs((p_region_t) {
+                    mem_start, mem_start + mem_length
+                });
+            }
         }
         mmap++;
     }
