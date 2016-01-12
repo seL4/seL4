@@ -131,11 +131,11 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
     }
     v_reg.end = ROUND_UP(v_reg.end, PAGE_BITS);
 
-    printf("size=0x%lx v_entry=0x%lx v_start=0x%lx v_end=0x%lx ",
+    printf("size=0x%lx v_entry=%p v_start=%p v_end=%p ",
            v_reg.end - v_reg.start,
-           elf_file->e_entry,
-           v_reg.start,
-           v_reg.end
+           (void*)elf_file->e_entry,
+           (void*)v_reg.start,
+           (void*)v_reg.end
           );
 
     if (!IS_ALIGNED(v_reg.start, PAGE_BITS)) {
