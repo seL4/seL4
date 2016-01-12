@@ -104,7 +104,8 @@ create_device_frames(
 }
 
 BOOT_CODE static void
-init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs) {
+init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs)
+{
     word_t i;
     /* we are guaranteed that we started loading the user image after the kernel
      * so we only include addresses above ui_info.p_reg.end */
@@ -121,7 +122,9 @@ init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs) {
         if (end < floor) {
             end = floor;
         }
-        insert_region(paddr_to_pptr_reg((p_region_t){start, end}));
+        insert_region(paddr_to_pptr_reg((p_region_t) {
+            start, end
+        }));
     }
 }
 

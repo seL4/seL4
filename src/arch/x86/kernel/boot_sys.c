@@ -264,7 +264,8 @@ start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
 }
 
 static BOOT_CODE void
-add_mem_p_regs(p_region_t reg) {
+add_mem_p_regs(p_region_t reg)
+{
     if (reg.end > PADDR_TOP) {
         reg.end = PADDR_TOP;
     }
@@ -299,7 +300,9 @@ parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
         uint32_t type = mmap->type;
         printf("\tPhysical Memory Region from %lx size %lx type %d\n", mem_start, mem_length, type);
         if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR) {
-            add_mem_p_regs((p_region_t){mem_start, mem_start + mem_length});
+            add_mem_p_regs((p_region_t) {
+                mem_start, mem_start + mem_length
+            });
         }
         mmap++;
     }
