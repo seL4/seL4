@@ -142,17 +142,13 @@ details and sends this to the endpoint. This
 thread can then take the appropriate action. Fault IPC messages are
 described in \autoref{sec:faults}.
 
-In order to enable exception handlers, a capability to the exception-handler
-endpoint must exist in the CSpace of the thread that generates the exception.
 The exception-handler
 endpoint can be set with the \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or
 \apifunc{seL4\_TCB\_Configure}{tcb_configure} method.
 With these methods, a capability address for the exception handler can be associated with a thread.
-This address is then used to lookup the handler endpoint when an exception is generated.
-Note, however, that these methods make no attempt to check whether an endpoint capability exists at the specified
-address in the CSpace of the thread. The capability is only looked up
-when an exception actually happens and if the lookup fails then no
-exception message is delivered and the thread is suspended indefinitely.
+This address is then used to lookup the handler endpoint, and the capability to the endpoint is installed into the threads' kernel CNode.
+For threads without an exception handler, a null capability can be used.
+Before raising an exception the capability is validated - the kernel does not perform another lookup, but checks that the capability is an endpoint with the correct rights.
 
 The exception endpoint must have send and grant rights. Replying to the
 exception message restarts the thread. For certain exception types, the contents of

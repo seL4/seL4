@@ -30,20 +30,11 @@ handleFault(tcb_t *tptr)
 exception_t
 sendFaultIPC(tcb_t *tptr)
 {
-    cptr_t handlerCPtr;
     cap_t  handlerCap;
-    lookupCap_ret_t lu_ret;
     lookup_fault_t original_lookup_fault;
 
     original_lookup_fault = current_lookup_fault;
-
-    handlerCPtr = tptr->tcbFaultHandler;
-    lu_ret = lookupCap(tptr, handlerCPtr);
-    if (lu_ret.status != EXCEPTION_NONE) {
-        current_fault = fault_cap_fault_new(handlerCPtr, false);
-        return EXCEPTION_FAULT;
-    }
-    handlerCap = lu_ret.cap;
+    handlerCap = TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap;
 
     if (cap_get_capType(handlerCap) == cap_endpoint_cap &&
             cap_endpoint_cap_get_capCanSend(handlerCap) &&
@@ -59,7 +50,7 @@ sendFaultIPC(tcb_t *tptr)
 
         return EXCEPTION_NONE;
     } else {
-        current_fault = fault_cap_fault_new(handlerCPtr, false);
+        current_fault = fault_null_fault_new();
         current_lookup_fault = lookup_fault_missing_capability_new(0);
 
         return EXCEPTION_FAULT;

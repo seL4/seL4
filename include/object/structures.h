@@ -161,6 +161,8 @@ enum tcb_cnode_index {
     /* IPC buffer cap slot */
     tcbBuffer = 4,
 
+    tcbFaultHandler = 5,
+
     tcbCNodeEntries
 };
 typedef word_t tcb_cnode_index_t;
@@ -188,7 +190,7 @@ vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size 60 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 typedef struct sched_context sched_context_t;
 
 struct tcb {
@@ -217,9 +219,6 @@ struct tcb {
 
     /* sched context object for this tcb, 4 bytes */
     sched_context_t *tcbSchedContext;
-
-    /* Capability pointer to thread fault handler, 4 bytes */
-    cptr_t tcbFaultHandler;
 
     /* userland virtual address of thread IPC buffer, 4 bytes */
     word_t tcbIPCBuffer;
