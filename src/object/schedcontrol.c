@@ -64,7 +64,7 @@ updateActiveBudget(sched_context_t *sc, ticks_t budget)
 }
 
 exception_t
-invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t period)
+invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t period, seL4_Word data)
 {
     /* this boolean tells us if we need to consider
      * releasing the thread bound to the scheduling
@@ -110,6 +110,8 @@ invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t peri
         rescheduleRequired();
     }
 
+    target->scData = data;
+
     return EXCEPTION_NONE;
 }
 
@@ -135,20 +137,36 @@ exception_t
 decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buffer)
 {
     parseTime_ret_t ret;
+    seL4_Word data;
+    seL4_Word buffer_index;
     time_t budget, period;
     cap_t targetCap;
     sched_context_t *target;
 
-    if (unlikely(length < 2 || extra_caps.excaprefs[0] == NULL)) {
+    if (extra_caps.excaprefs[0] == NULL) {
         userError("SchedControl_Configure: truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    ret = arch_parseTimeArg(0, buffer);
+    buffer_index = 0;
+    ret = arch_parseTimeArg(buffer_index, buffer);
     budget = ret.arg;
-    ret = arch_parseTimeArg(ret.words, buffer);
+    /* todo this could just be sizeof (time_t) / sizeof(word_t) */
+    buffer_index += ret.words;
+
+    ret = arch_parseTimeArg(buffer_index, buffer);
     period = ret.arg;
+    buffer_index += ret.words;
+
+    data = getSyscallArg(buffer_index, buffer);
+    buffer_index += 1;
+
+    if (length < buffer_index) {
+        userError("SchedControl_Configure: truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
 
     if (unlikely(!validTemporalParam(budget))) {
         userError("Budget invalid");
@@ -182,7 +200,7 @@ decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buf
 
     target = SC_PTR(cap_sched_context_cap_get_capPtr(targetCap));
     setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeSchedControl_Configure(target, budget, period);
+    return invokeSchedControl_Configure(target, budget, period, data);
 }
 
 exception_t

@@ -143,11 +143,40 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *re
     assert(thread_state_get_tsType(receiver->tcbState) ==
            ThreadState_BlockedOnReply);
 
-    assert(reply_sc == NULL || reply_sc->scRemaining > getKernelWcetTicks());
-
     if (likely(reply_sc != NULL && receiver->tcbSchedContext == NULL)) {
+        /* return the scheduling context to the thread we borrowed it from */
         donateSchedContext(receiver, reply_sc);
         reply_sc->scReply = NULL;
+
+        if (unlikely(sender->tcbSchedContext != NULL)) {
+            /* we are replying on behalf of someone else, which means the scheduling context
+             * may not have enough budget as it is not currently active
+             * - first check if it is ready for a recharge */
+            if (ready(reply_sc)) {
+                recharge(reply_sc);
+            }
+
+            /* now check if the context has enough budget - if it does, we proceed with the reply
+             * as normal */
+            if (reply_sc->scRemaining < getKernelWcetTicks()) {
+                /* thread still has not enough budget to run */
+                cap_t tfep = getTemporalFaultHandler(receiver);
+                if (validTemporalFaultHandler(tfep)) {
+                    /* the context does not have enough budget and the thread we are
+                     * switching to has a temporal fault handler, raise a temporal
+                     * fault and abort the reply */
+                    current_fault = fault_temporal_new(reply_sc->scData);
+                    sendTemporalFaultIPC(receiver, tfep);
+                    cteDeleteOne(slot);
+                } else {
+                    /* the context doesn't have enough budget, but no temporal fault handler,
+                     * just post pone it and continue to process the reply. The thread will
+                     * pick it up once the scheduling context has its budget replenished.
+                     */
+                    postpone(reply_sc);
+                }
+            }
+        }
     }
 
     if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
@@ -156,7 +185,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *re
         cteDeleteOne(slot);
         setThreadState(receiver, ThreadState_Running);
         attemptSwitchTo(receiver);
-    } else {
+    } else if (fault_get_faultType(current_fault) != fault_temporal) {
         bool_t restart;
 
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
@@ -454,7 +483,8 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
     targetPrio = target->tcbPriority;
     action = ksSchedulerAction;
 
-    if (unlikely(target->tcbSchedContext != NULL)) {
+    if (unlikely(target->tcbSchedContext != NULL) &&
+            !thread_state_get_inReleaseQueue(target->tcbState)) {
         if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
                 && action == SchedulerAction_ResumeCurrentThread) {
             ksSchedulerAction = target;
@@ -469,6 +499,8 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
                    ksSchedulerAction == SchedulerAction_ResumeCurrentThread) {
             rescheduleRequired();
         }
+    } else {
+        rescheduleRequired();
     }
 }
 
@@ -550,6 +582,7 @@ checkBudget(void)
 {
     /* does this thread have enough time to continue? */
     if (unlikely(currentThreadExpired())) {
+        cap_t tfep = getTemporalFaultHandler(ksCurThread);
         /* we enter this function on 2 different types of path:
          * kernel entry (for whatever reason) and when handling
          * a timer interrupt. For the
@@ -558,12 +591,18 @@ checkBudget(void)
          * doing something so they should be running
          */
         assert(isRunnable(ksCurThread));
+        if (validTemporalFaultHandler(tfep)) {
+            /* threads with temporal fault handlers should never run out of budget! */
+            current_fault = fault_temporal_new(ksCurSchedContext->scData);
+            ksCurSchedContext->scRemaining = 0llu;
+            sendTemporalFaultIPC(ksCurThread, tfep);
+        } else {
+            /* threads without fault handlers don't care if they ran out of budget */
+            endTimeslice(ksCurThread->tcbSchedContext);
+            rescheduleRequired();
+        }
 
         ksConsumed = 0u;
-        endTimeslice(ksCurThread->tcbSchedContext);
-
-        /* consumed time has been billed */
-        rescheduleRequired();
         return false;
     } else {
         /* thread is good to go to do whatever it is up to */

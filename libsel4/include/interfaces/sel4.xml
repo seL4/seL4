@@ -43,6 +43,7 @@
 		</method>
 		<method id="TCBConfigure" name="Configure">
 			<param dir="in" name="fault_ep" type="seL4_CPtr"/>
+			<param dir="in" name="temporal_fault_ep" type="seL4_CPtr"/>
             <param dir="in" name="priority" type="seL4_Prio_t"/>
             <param dir="in" name="sched_context" type="seL4_CPtr"/>
 			<param dir="in" name="cspace_root" type="seL4_CNode"/>
@@ -64,6 +65,7 @@
 		</method>
 		<method id="TCBSetSpace" name="SetSpace">
 			<param dir="in" name="fault_ep" type="seL4_CPtr"/>
+			<param dir="in" name="temporal_fault_ep" type="seL4_CPtr"/>
 			<param dir="in" name="cspace_root" type="seL4_CNode"/>
 			<param dir="in" name="cspace_root_data" type="seL4_CapData_t"/>
 			<param dir="in" name="vspace_root" type="seL4_CNode"/>
@@ -169,6 +171,7 @@
             <param dir="in" name="target" type="seL4_SchedContext" />
             <param dir="in" name="budget" type="seL4_Time" />
             <param dir="in" name="period" type="seL4_Time" />
+            <param dir="in" name="data" type="seL4_Word" />
         </method>
     </interface>
     <interface name="seL4_SchedContext">

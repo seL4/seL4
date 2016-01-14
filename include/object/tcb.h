@@ -78,7 +78,9 @@ typedef word_t thread_control_flag_t;
 
 exception_t invokeTCB_Suspend(tcb_t *thread);
 exception_t invokeTCB_Resume(tcb_t *thread);
-exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t* slot, cap_t fepCap, cte_t *fepSlot,
+exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
+                                    cap_t fepCap, cte_t *fepSlot,
+                                    cap_t tfepCap, cte_t *tfepSlot,
                                     seL4_Prio_t priority, cap_t cRoot_newCap,
                                     cte_t *cRoot_srcSlot, cap_t vRoot_newCap,
                                     cte_t *vRoot_srcSlot, word_t bufferAddr,

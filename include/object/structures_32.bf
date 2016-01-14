@@ -273,6 +273,12 @@ block user_exception {
     field faultType 3
 }
 
+block temporal {
+    field data 32
+    padding 29
+    field faultType 3
+}
+
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingIPCDiminishCaps, blockingObject,

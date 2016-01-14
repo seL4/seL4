@@ -134,6 +134,7 @@ tagged_union fault faultType {
     tag vm_fault 2
     tag unknown_syscall 3
     tag user_exception 4
+    tag temporal 5
 }
 
 ---- ARM-specific object types

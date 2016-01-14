@@ -730,8 +730,8 @@ exception_t
 decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
                    extra_caps_t rootCaps, word_t *buffer)
 {
-    cte_t *bufferSlot, *cRootSlot, *vRootSlot, *scSlot, *fepSlot;
-    cap_t bufferCap, cRootCap, vRootCap, scCap, fepCap;
+    cte_t *bufferSlot, *cRootSlot, *vRootSlot, *scSlot, *fepSlot, *tfepSlot;
+    cap_t bufferCap, cRootCap, vRootCap, scCap, fepCap, tfepCap;
     sched_context_t *sched_context;
     deriveCap_ret_t dc_ret;
     word_t cRootData, vRootData, bufferAddr;
@@ -742,7 +742,8 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
             || rootCaps.excaprefs[1] == NULL
             || rootCaps.excaprefs[2] == NULL
             || rootCaps.excaprefs[3] == NULL
-            || rootCaps.excaprefs[4] == NULL) {
+            || rootCaps.excaprefs[4] == NULL
+            || rootCaps.excaprefs[5] == NULL) {
         userError("TCB Configure: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -755,14 +756,16 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
 
     fepSlot    = rootCaps.excaprefs[0];
     fepCap     = rootCaps.excaprefs[0]->cap;
-    scSlot     = rootCaps.excaprefs[1];
-    scCap      = rootCaps.excaprefs[1]->cap;
-    cRootSlot  = rootCaps.excaprefs[2];
-    cRootCap   = rootCaps.excaprefs[2]->cap;
-    vRootSlot  = rootCaps.excaprefs[3];
-    vRootCap   = rootCaps.excaprefs[3]->cap;
-    bufferSlot = rootCaps.excaprefs[4];
-    bufferCap  = rootCaps.excaprefs[4]->cap;
+    tfepSlot   = rootCaps.excaprefs[1];
+    tfepCap    = rootCaps.excaprefs[1]->cap;
+    scSlot     = rootCaps.excaprefs[2];
+    scCap      = rootCaps.excaprefs[2]->cap;
+    cRootSlot  = rootCaps.excaprefs[3];
+    cRootCap   = rootCaps.excaprefs[3]->cap;
+    vRootSlot  = rootCaps.excaprefs[4];
+    vRootCap   = rootCaps.excaprefs[4]->cap;
+    bufferSlot = rootCaps.excaprefs[5];
+    bufferCap  = rootCaps.excaprefs[5]->cap;
 
     status = checkPrio(seL4_Prio_get_prio(prio));
     if (status != EXCEPTION_NONE) {
@@ -865,10 +868,26 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    dc_ret = deriveCap(tfepSlot, tfepCap);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        userError("TCB Configure: temporal fault ep invalid");
+        return dc_ret.status;
+    }
+    tfepCap = dc_ret.cap;
+
+    if (!validFaultEndpoint(tfepCap)) {
+        userError("TCB configure: temporal fault endpoint cap must be either null cap or endpoint cap");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 2;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
-               fepCap, fepSlot, prio,
+               fepCap, fepSlot,
+               tfepCap, tfepSlot,
+               prio,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                bufferAddr, bufferCap,
@@ -898,7 +917,7 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
-               tcb, NULL, cap_null_cap_new(),
+               tcb, NULL, cap_null_cap_new(), 0, cap_null_cap_new(),
                0, seL4_Prio_new(newPrio, tcb->tcbMaxPriority),
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
@@ -930,6 +949,7 @@ decodeSetMaxPriority(cap_t cap, word_t length, word_t *buffer)
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
                tcb, NULL, cap_null_cap_new(),
+               0, cap_null_cap_new(),
                0, seL4_Prio_new(tcb->tcbPriority, newMaxPrio),
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
@@ -975,7 +995,8 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
-               cap_null_cap_new(), 0,
+               cap_null_cap_new(),
+               0, cap_null_cap_new(), 0,
                NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
@@ -988,13 +1009,14 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
                extra_caps_t excaps, word_t *buffer)
 {
     word_t cRootData, vRootData;
-    cte_t *cRootSlot, *vRootSlot, *fepSlot;
-    cap_t cRootCap, vRootCap, fepCap;
+    cte_t *cRootSlot, *vRootSlot, *fepSlot, *tfepSlot;
+    cap_t cRootCap, vRootCap, fepCap, tfepCap;
     deriveCap_ret_t dc_ret;
 
     if (length < 2 || excaps.excaprefs[0] == NULL
             || excaps.excaprefs[1] == NULL
-            || excaps.excaprefs[2] == NULL) {
+            || excaps.excaprefs[2] == NULL
+            || excaps.excaprefs[3] == NULL) {
         userError("TCB SetSpace: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1005,10 +1027,12 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
 
     fepSlot    = excaps.excaprefs[0];
     fepCap     = excaps.excaprefs[0]->cap;
-    cRootSlot  = excaps.excaprefs[1];
-    cRootCap   = excaps.excaprefs[1]->cap;
-    vRootSlot  = excaps.excaprefs[2];
-    vRootCap   = excaps.excaprefs[2]->cap;
+    tfepSlot   = excaps.excaprefs[1];
+    tfepCap    = excaps.excaprefs[1]->cap;
+    cRootSlot  = excaps.excaprefs[2];
+    cRootCap   = excaps.excaprefs[2]->cap;
+    vRootSlot  = excaps.excaprefs[3];
+    vRootCap   = excaps.excaprefs[3]->cap;
 
     if (slotCapLongRunningDelete(
                 TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbCTable)) ||
@@ -1065,10 +1089,26 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
         return EXCEPTION_NONE;
     }
 
+    dc_ret = deriveCap(tfepSlot, tfepCap);
+    if (dc_ret.status != EXCEPTION_NONE) {
+        return dc_ret.status;
+    }
+
+    tfepCap = dc_ret.cap;;
+
+    if (!validFaultEndpoint(tfepCap)) {
+        userError("TCB SetSpace: fault endpoint cap must be either null cap or endpoint cap");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 2;
+        return EXCEPTION_NONE;
+    }
+
+
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                fepCap, fepSlot,
+               tfepCap, tfepSlot,
                NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
@@ -1160,6 +1200,7 @@ invokeTCB_Resume(tcb_t *thread)
 exception_t
 invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
                         cap_t fepCap, cte_t *fepSlot,
+                        cap_t tfepCap, cte_t *tfepSlot,
                         seL4_Prio_t priority,
                         cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
                         cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
@@ -1172,10 +1213,18 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
     cap_t tCap = cap_thread_cap_new((word_t)target);
 
     if (updateFlags & thread_control_update_space) {
+        /* fault endpoint */
         cte_t *destSlot = TCB_PTR_CTE_PTR(target, tcbFaultHandler);
         cteDeleteOne(destSlot);
         if (cap_get_capType(fepCap) == cap_endpoint_cap) {
             cteInsert(fepCap, fepSlot, destSlot);
+        }
+
+        /* temporal fault endpoint */
+        destSlot = TCB_PTR_CTE_PTR(target, tcbTemporalFaultHandler);
+        cteDeleteOne(destSlot);
+        if (cap_get_capType(tfepCap) == cap_endpoint_cap) {
+            cteInsert(tfepCap, tfepSlot, destSlot);
         }
     }
 

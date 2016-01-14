@@ -27,14 +27,12 @@ handleFault(tcb_t *tptr)
     }
 }
 
-exception_t
-sendFaultIPC(tcb_t *tptr)
+static inline exception_t
+sendFaultIPCToHandler(tcb_t *tptr, bool_t canDonate, cap_t handlerCap)
 {
-    cap_t  handlerCap;
     lookup_fault_t original_lookup_fault;
 
     original_lookup_fault = current_lookup_fault;
-    handlerCap = TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap;
 
     if (cap_get_capType(handlerCap) == cap_endpoint_cap &&
             cap_endpoint_cap_get_capCanSend(handlerCap) &&
@@ -43,7 +41,7 @@ sendFaultIPC(tcb_t *tptr)
         if (fault_get_faultType(current_fault) == fault_cap_fault) {
             tptr->tcbLookupFailure = original_lookup_fault;
         }
-        sendIPC(true, false, true,
+        sendIPC(true, false, canDonate,
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
                 true, tptr,
                 EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
@@ -55,6 +53,18 @@ sendFaultIPC(tcb_t *tptr)
 
         return EXCEPTION_FAULT;
     }
+}
+
+exception_t
+sendTemporalFaultIPC(tcb_t *tptr, cap_t tfep)
+{
+    return sendFaultIPCToHandler(tptr, false, tfep);
+}
+
+exception_t
+sendFaultIPC(tcb_t *tptr)
+{
+    return sendFaultIPCToHandler(tptr, true, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap);
 }
 
 #ifdef DEBUG

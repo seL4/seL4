@@ -36,6 +36,9 @@ bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
     case fault_vm_fault:
         return true;
 
+    case fault_temporal:
+        return true;
+
     case fault_unknown_syscall: {
         word_t i;
         register_t   r;

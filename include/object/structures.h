@@ -163,6 +163,8 @@ enum tcb_cnode_index {
 
     tcbFaultHandler = 5,
 
+    tcbTemporalFaultHandler = 6,
+
     tcbCNodeEntries
 };
 typedef word_t tcb_cnode_index_t;
@@ -237,6 +239,7 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
+/* sched context - 48 bytes */
 struct sched_context {
     /* budget for this tcb -- remaining is refilled from this value */
     ticks_t scBudget;
@@ -262,6 +265,9 @@ struct sched_context {
 
     /* notification this scheduling context is optionally bound to */
     notification_t *scNotification;
+
+    /* data word that is sent with temporal faults that occur on this scheduling context */
+    seL4_Word scData;
 };
 
 /* Ensure object sizes are sane */

@@ -83,6 +83,8 @@ Threads can be bound to scheduling contexts using \apifunc{seL4\_TCB\_Configure}
 \apifunc{seL4\_SchedContext\_BindTCB}{schedcontext_bindtcb}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure}{tcb_configure} allows more thread fields to be set with only one kernel entry. 
 When a thread is bound to a scheduling context, if it is in a runnable state and the scheduling context is active, it will be added to the scheduler.
 
+Threads can optionally generate exceptions when they attempt to run without available budget, see \autoref{sec:exceptions}.
+
 \subsection{Passive Threads}
 \label{sec:passive}
 
@@ -135,20 +137,23 @@ Consequently, access to CPU is a function of thread max-priorities, scheduling c
 The kernel will enforce that threads do not exceeed the budget in their scheduling context for any given period, and that the highest priority thread will always run, however it is up to the system designer to make sure the entire system is schedulable.
 
 \subsection{Exceptions}
+\label{exceptions}
 
-Each thread has an associated exception-handler endpoint. If the thread
+Each thread has two associated exception-handler endpoints, a \emph{standard} exception handler and a \emph{temporal} exception handler.
+If the thread
 causes an exception, the kernel creates an IPC message with the relevant
-details and sends this to the endpoint. This
+details and sends the appropriate endpoint. This
 thread can then take the appropriate action. Fault IPC messages are
 described in \autoref{sec:faults}.
 
-The exception-handler
-endpoint can be set with the \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or
-\apifunc{seL4\_TCB\_Configure}{tcb_configure} method.
+Exception-handler
+endpoints can be set with the \apifunc{seL4\_TCB\_SetSpace}{tcb_setspace} or
+\apifunc{seL4\_TCB\_Configure}{tcb_configure} methods.
 With these methods, a capability address for the exception handler can be associated with a thread.
 This address is then used to lookup the handler endpoint, and the capability to the endpoint is installed into the threads' kernel CNode.
-For threads without an exception handler, a null capability can be used.
-Before raising an exception the capability is validated - the kernel does not perform another lookup, but checks that the capability is an endpoint with the correct rights.
+For threads without an exception handler, a null capability can be used, however the consequences of are different per exception handler type.
+
+Before raising an exception the handler capability is validated - the kernel does not perform another lookup, but checks that the capability is an endpoint with the correct rights.
 
 The exception endpoint must have send and grant rights. Replying to the
 exception message restarts the thread. For certain exception types, the contents of
@@ -156,7 +161,27 @@ the reply message may be used to set the values in the registers of the
 thread being restarted.
 See \autoref{sec:faults} for details.
 
+\subsubsection{Standard Exceptions}
 
+The standard exception handler is used when a fault is triggered by a thread which cannot be recovered from without action by another thread.
+For example, if a thread raises a fault due to an unmapped virtual memory page, the thread cannot make any more progress until the page is mapped.
+If a thread experiences a fault that would trigger the standard exception handler while it is set to a null capability, the kernel will pause the thread and it will not run again. 
+This is because without action by another thread, standard exceptions cannot be recovered from.
+Consequently threads without standard exception handlers should be trusted not to fault at all.
+
+Standard exception handlers can be passive, in which case they will run on the scheduling context of the faulting thread.
+
+\subsubsection{Temporal Exceptions}
+\label{sec:temporal-exceptions}
+
+Temporal faults are raised when a thread attempts to run but has no available budget, and if that thread has a valid temporal exception handler capability.
+The handling of temporal faults is not compulsory: if a thread does not have a temporal fault handler, a fault will not be raised and the thread will continue running when it's budget is replenished.
+This allows temporally sensitive threads to handle budget overruns while other threads may ignore them.
+
+Temporal faults are registered per thread, which means that while clients may not have a temporal fault handler, servers may, allowing single-threaded, time-sensitive, passive servers to use a temporal exception handler to recover from malicious or untrusted clients whose budget expires while the server is completing the request.
+Temporal faults handlers can use \apifunc{seL4\_CNode\_SaveTCBCaller}{tcb_cnodesavecaller} to save the servers reply capability and reply with an error to the client, then resetting the server to handle the next client request.
+
+If a reply message is sent to a nested server and a scheduling context without available budget returned, another temporal fault will be generated if the nested server also has a temporal fault handler.
 
 \subsection{Message Layout of the Read-/Write-Registers Methods}
 \label{sec:read_write_registers}
@@ -211,8 +236,7 @@ The registers of a thread can be read and written with the
 A thread's actions may result in a fault. Faults are delivered to the
 thread's exception handler so that it can take the appropriate action.
 The fault type is specified in the message label and is one of:
-seL4\_CapFault, seL4\_VMFault, seL4\_UnknownSyscall, seL4\_UserException
-or seL4\_Interrupt.
+seL4\_CapFault, seL4\_VMFault, seL4\_UnknownSyscall, seL4\_UserException, seL4\_Interrupt or seL4\_TemporalFault.
 
 \subsection{Capability Faults}
 
@@ -383,6 +407,20 @@ Program counter to restart execution at. & \ipcbloc{IPCBuffer[0]} \\
 Address that caused the fault. & \ipcbloc{IPCBuffer[1]} \\
 Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{IPCBuffer[2]}  \\
 Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{IPCBuffer[3]} \\
+\bottomrule
+\end{tabularx}\\ \\
+
+\subsection{Temporal Fault}
+\label{sec:temporal-fault}
+
+Temporal faults are raised when a thread consumes all of its budget and has a temporal fault handler that is not a null capability.
+They allow a temporal exception handler to take some action to restore the thread.
+
+\noindent\begin{tabularx}{\textwidth}{XX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer location} \\
+\midrule
+Data word from the scheduling context object that the thread was running on when the fault occured. & \ipcbloc{IPCBuffer[0]} \\
 \bottomrule
 \end{tabularx}\\ \\
 

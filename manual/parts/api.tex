@@ -77,9 +77,9 @@
 \newcommand{\schedcontextcapdesc}{Capability to the scheduling context which is being operated on.}
 \newcommand{\budgetdesc}{Timeslice in microseconds, when the budget expires the thread will be preempted.}
 \newcommand{\perioddesc}{Period in microseconds, the budget is replenished every time the period exipires.}
+\newcommand{\datadesc}{A word of data to identify the owner of the scheduling context that a thread faulted on to a temporal fault handler.}
 
 \newcommand{\irqhandlercapdesc}{The IRQ handler capability.}
-
 \newcommand{\invokedcapdesc}{The capability to be invoked.}
 \newcommand{\messageinfodesc}{The messageinfo structure for the IPC.}
 \newcommand{\senderdesc}{The address to write sender information to. The sender information is the badge of the endpoint capability that was invoked by the sender, or the notification word of the notification object that was signalled. This parameter is ignored if \texttt{NULL}.}
@@ -97,6 +97,7 @@
 \newcommand{\threadbufferdesc}{Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary.}
 \newcommand{\threadbufferpagedesc}{Capability to a page containing the thread's IPC buffer.}
 \newcommand{\excepthanddesc}{CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the caller's cspace.}
+\newcommand{\excepthanddesc}{CPTR to the endpoint which receives IPCs when this thread triggers a temporal fault. This capability is in the caller's cspace.}
 
 \newcommand{\asidassignpooldesc}{The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.}
 \newcommand{\asidassignpddesc}{The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.}
