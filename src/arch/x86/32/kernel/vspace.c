@@ -539,9 +539,9 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
     vm_page_size_t frame_size;
 
     if (use_large) {
-        frame_size = IA32_LargePage;
+        frame_size = X86_LargePage;
     } else {
-        frame_size = IA32_SmallPage;
+        frame_size = X86_SmallPage;
     }
 
     return
@@ -576,13 +576,13 @@ pde_t CONST makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_righ
 {
     return pde_pde_large_new(
                paddr,                                          /* page_base_address    */
-               vm_attributes_get_ia32PATBit(vm_attr),          /* pat                  */
+               vm_attributes_get_x86PATBit(vm_attr),           /* pat                  */
                0,                                              /* avl                  */
                0,                                              /* global               */
                0,                                              /* dirty                */
                0,                                              /* accessed             */
-               vm_attributes_get_ia32PCDBit(vm_attr),          /* cache_disabled       */
-               vm_attributes_get_ia32PWTBit(vm_attr),          /* write_through        */
+               vm_attributes_get_x86PCDBit(vm_attr),           /* cache_disabled       */
+               vm_attributes_get_x86PWTBit(vm_attr),           /* write_through        */
                SuperUserFromVMRights(vm_rights),               /* super_user           */
                WritableFromVMRights(vm_rights),                /* read_write           */
                1                                               /* present              */
@@ -595,8 +595,8 @@ pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
                paddr,                                      /* pt_base_address  */
                0,                                          /* avl              */
                0,                                          /* accessed         */
-               vm_attributes_get_ia32PCDBit(vm_attr),      /* cache_disabled   */
-               vm_attributes_get_ia32PWTBit(vm_attr),      /* write_through    */
+               vm_attributes_get_x86PCDBit(vm_attr),       /* cache_disabled   */
+               vm_attributes_get_x86PWTBit(vm_attr),       /* write_through    */
                1,                                          /* super_user       */
                1,                                          /* read_write       */
                1                                           /* present          */
@@ -640,11 +640,11 @@ pte_t CONST makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_r
                paddr,                                          /* page_base_address    */
                0,                                              /* avl                  */
                0,                                              /* global               */
-               vm_attributes_get_ia32PATBit(vm_attr),          /* pat                  */
+               vm_attributes_get_x86PATBit(vm_attr),           /* pat                  */
                0,                                              /* dirty                */
                0,                                              /* accessed             */
-               vm_attributes_get_ia32PCDBit(vm_attr),          /* cache_disabled       */
-               vm_attributes_get_ia32PWTBit(vm_attr),          /* write_through        */
+               vm_attributes_get_x86PCDBit(vm_attr),           /* cache_disabled       */
+               vm_attributes_get_x86PWTBit(vm_attr),           /* write_through        */
                SuperUserFromVMRights(vm_rights),               /* super_user           */
                WritableFromVMRights(vm_rights),                /* read_write           */
                1                                               /* present              */

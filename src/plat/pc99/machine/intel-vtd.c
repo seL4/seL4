@@ -135,7 +135,7 @@ void invalidate_context_cache(void)
     uint32_t  ccmd_reg_upper;
     drhu_id_t i;
 
-    for (i = 0; i < ia32KSnumDrhu; i++) {
+    for (i = 0; i < x86KSnumDrhu; i++) {
         /* Wait till ICC bit is clear */
         while ((vtd_read32(i, CCMD_REG + 4) >> ICC) & 1);
 
@@ -170,7 +170,7 @@ void invalidate_iotlb(void)
     uint32_t  ivo_offset;
     drhu_id_t i;
 
-    for (i = 0; i < ia32KSnumDrhu; i++) {
+    for (i = 0; i < x86KSnumDrhu; i++) {
         ivo_offset = get_ivo(i);
 
         /* Wait till IVT bit is clear */
@@ -253,7 +253,7 @@ void vtd_handle_fault(void)
 {
     drhu_id_t i;
 
-    for (i = 0; i < ia32KSnumDrhu; i++) {
+    for (i = 0; i < x86KSnumDrhu; i++) {
         vtd_process_faults(i);
     }
 }
@@ -261,8 +261,8 @@ void vtd_handle_fault(void)
 BOOT_CODE static void
 vtd_create_root_table(void)
 {
-    ia32KSvtdRootTable = (void*)alloc_region(VTD_RT_SIZE_BITS);
-    memzero((void*)ia32KSvtdRootTable, 1 << VTD_RT_SIZE_BITS);
+    x86KSvtdRootTable = (void*)alloc_region(VTD_RT_SIZE_BITS);
+    memzero((void*)x86KSvtdRootTable, 1 << VTD_RT_SIZE_BITS);
 }
 
 /* This function is a simplistic duplication of some of the logic
@@ -286,19 +286,19 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
 
         vtd_cte_ptr_new(
             vtd_context_slot,
-            ia32KSFirstValidIODomain, /* Domain ID                              */
+            x86KSFirstValidIODomain,  /* Domain ID                              */
             true,                     /* RMRR Mapping                           */
-            ia32KSnumIOPTLevels - 2,  /* Address Width                          */
+            x86KSnumIOPTLevels - 2,   /* Address Width                          */
             pptr_to_paddr(iopt),      /* Address Space Root                     */
             0,                        /* Translation Type                       */
             true);                    /* Present                                */
-        ia32KSFirstValidIODomain++;
+        x86KSFirstValidIODomain++;
         flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
     } else {
         iopt = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
     }
     /* now recursively find and map page tables */
-    for (i = ia32KSnumIOPTLevels - 1; i >= 0; i--) {
+    for (i = x86KSnumIOPTLevels - 1; i >= 0; i--) {
         uint32_t iopt_index;
         /* If we are still looking up bits beyond the 32bit of physical
          * that we support then we select entry 0 in the current PT */
@@ -347,7 +347,7 @@ vtd_create_context_table(
     memzero(vtd_context_table, 1 << VTD_CT_SIZE_BITS);
     flushCacheRange(vtd_context_table, VTD_CT_SIZE_BITS);
 
-    ia32KSvtdRootTable[bus] =
+    x86KSvtdRootTable[bus] =
         vtd_rte_new(
             pptr_to_paddr(vtd_context_table), /* Context Table Pointer */
             true                              /* Present               */
@@ -370,9 +370,9 @@ vtd_enable(cpu_id_t cpu_id)
 {
     drhu_id_t i;
 
-    for (i = 0; i < ia32KSnumDrhu; i++) {
+    for (i = 0; i < x86KSnumDrhu; i++) {
         /* Set the Root Table Register */
-        vtd_write32(i, RTADDR_REG, pptr_to_paddr((void*)ia32KSvtdRootTable));
+        vtd_write32(i, RTADDR_REG, pptr_to_paddr((void*)x86KSvtdRootTable));
         vtd_write32(i, RTADDR_REG + 4, 0);
 
         /* Set SRTP bit in GCMD_REG */
@@ -390,7 +390,7 @@ vtd_enable(cpu_id_t cpu_id)
     /* Globally invalidate IOTLB of all IOMMUs */
     invalidate_iotlb();
 
-    for (i = 0; i < ia32KSnumDrhu; i++) {
+    for (i = 0; i < x86KSnumDrhu; i++) {
         uint32_t data, addr;
 
         data = int_iommu;
@@ -439,14 +439,14 @@ vtd_init(
     /* Start the number of domains at 16 bits */
     uint32_t  num_domain_id_bits = 16;
 
-    ia32KSnumDrhu = num_drhu;
-    ia32KSFirstValidIODomain = 0;
+    x86KSnumDrhu = num_drhu;
+    x86KSFirstValidIODomain = 0;
 
-    if (ia32KSnumDrhu == 0) {
+    if (x86KSnumDrhu == 0) {
         return true;
     }
 
-    for (i = 0; i < ia32KSnumDrhu; i++) {
+    for (i = 0; i < x86KSnumDrhu; i++) {
         uint32_t bits_supported = 4 + 2 * (vtd_read32(i, CAP_REG) & 7);
         aw_bitmask &= vtd_read32(i, CAP_REG) >> SAGAW;
         printf("IOMMU 0x%x: %d-bit domain IDs supported\n", i, bits_supported);
@@ -455,7 +455,7 @@ vtd_init(
         }
     }
 
-    ia32KSnumIODomainIDBits = num_domain_id_bits;
+    x86KSnumIODomainIDBits = num_domain_id_bits;
 
     if (aw_bitmask & SAGAW_6_LEVEL) {
         max_num_iopt_levels = 6;
@@ -473,21 +473,21 @@ vtd_init(
     }
 
     if (aw_bitmask & SAGAW_3_LEVEL) {
-        ia32KSnumIOPTLevels = 3;
+        x86KSnumIOPTLevels = 3;
     } else if (aw_bitmask & SAGAW_4_LEVEL) {
-        ia32KSnumIOPTLevels = 4;
+        x86KSnumIOPTLevels = 4;
     } else if (aw_bitmask & SAGAW_5_LEVEL) {
-        ia32KSnumIOPTLevels = 5;
+        x86KSnumIOPTLevels = 5;
     } else if (aw_bitmask & SAGAW_6_LEVEL) {
-        ia32KSnumIOPTLevels = 6;
+        x86KSnumIOPTLevels = 6;
     } else if (aw_bitmask & SAGAW_2_LEVEL) {
-        ia32KSnumIOPTLevels = 2;
+        x86KSnumIOPTLevels = 2;
     } else {
         printf("IOMMU: mismatch of supported number of PT levels between IOMMUs\n");
         return false;
     }
 
-    printf("IOMMU: Using %d page-table levels (max. supported: %d)\n", ia32KSnumIOPTLevels, max_num_iopt_levels);
+    printf("IOMMU: Using %d page-table levels (max. supported: %d)\n", x86KSnumIOPTLevels, max_num_iopt_levels);
 
     vtd_create_root_table();
 
@@ -499,7 +499,7 @@ vtd_init(
         );
     }
 
-    flushCacheRange(ia32KSvtdRootTable, VTD_RT_SIZE_BITS);
+    flushCacheRange(x86KSvtdRootTable, VTD_RT_SIZE_BITS);
 
     if (!vtd_enable(cpu_id)) {
         return false;

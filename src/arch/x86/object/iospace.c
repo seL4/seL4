@@ -23,7 +23,7 @@
 BOOT_CODE cap_t
 master_iospace_cap(void)
 {
-    if (ia32KSnumDrhu == 0) {
+    if (x86KSnumDrhu == 0) {
         return cap_null_cap_new();
     }
 
@@ -61,7 +61,7 @@ static vtd_cte_t* lookup_vtd_context_slot(cap_t cap)
     }
 
     vtd_root_index = get_pci_bus(pci_request_id);
-    vtd_root_slot = ia32KSvtdRootTable + vtd_root_index;
+    vtd_root_slot = x86KSvtdRootTable + vtd_root_index;
 
     vtd_context = (vtd_cte_t*)paddr_to_pptr(vtd_rte_ptr_get_ctp(vtd_root_slot));
     vtd_context_index = (get_pci_dev(pci_request_id) << 3) | get_pci_fun(pci_request_id);
@@ -88,7 +88,7 @@ static lookupIOPTSlot_ret_t lookupIOPTSlot_helper(vtd_pte_t* iopt, word_t transl
     if (!vtd_pte_ptr_get_write(vtd_pte_slot) || levels == 0) {
         /* Slot is in this page table level */
         ret.ioptSlot = vtd_pte_slot;
-        ret.level    = ia32KSnumIOPTLevels - levels;
+        ret.level    = x86KSnumIOPTLevels - levels;
         ret.status   = EXCEPTION_NONE;
         return ret;
     } else {
@@ -107,12 +107,12 @@ static inline lookupIOPTSlot_ret_t lookupIOPTSlot(vtd_pte_t* iopt, word_t io_add
         ret.status      = EXCEPTION_LOOKUP_FAULT;
         return ret;
     } else {
-        return lookupIOPTSlot_helper(iopt, io_address >> PAGE_BITS, ia32KSnumIOPTLevels - 1);
+        return lookupIOPTSlot_helper(iopt, io_address >> PAGE_BITS, x86KSnumIOPTLevels - 1);
     }
 }
 
 exception_t
-decodeIA32IOPTInvocation(
+decodeX86IOPTInvocation(
     word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,
@@ -180,7 +180,7 @@ decodeIA32IOPTInvocation(
             vtd_context_slot,
             domain_id,               /* Domain ID */
             false,                   /* RMRR */
-            ia32KSnumIOPTLevels - 2, /* Address Width (x = levels - 2)       */
+            x86KSnumIOPTLevels - 2,  /* Address Width (x = levels - 2)       */
             paddr,                   /* Address Space Root                   */
             0,                       /* Translation Type                     */
             true                     /* Present                              */
@@ -225,7 +225,7 @@ decodeIA32IOPTInvocation(
 }
 
 exception_t
-decodeIA32IOMapInvocation(
+decodeX86IOMapInvocation(
     word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,
@@ -246,7 +246,7 @@ decodeIA32IOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cap_frame_cap_get_capFSize(cap) != IA32_SmallPage) {
+    if (cap_frame_cap_get_capFSize(cap) != X86_SmallPage) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
@@ -291,7 +291,7 @@ decodeIA32IOMapInvocation(
         vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
         lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
 
-        if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != ia32KSnumIOPTLevels) {
+        if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != x86KSnumIOPTLevels) {
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
             return EXCEPTION_SYSCALL_ERROR;
@@ -419,7 +419,7 @@ void unmapIOPage(cap_t cap)
     vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
 
     lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
-    if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != ia32KSnumIOPTLevels) {
+    if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != x86KSnumIOPTLevels) {
         return;
     }
 
@@ -435,7 +435,7 @@ void unmapIOPage(cap_t cap)
 }
 
 exception_t
-decodeIA32IOUnMapInvocation(
+decodeX86IOUnMapInvocation(
     word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,
@@ -452,7 +452,7 @@ decodeIA32IOUnMapInvocation(
     return EXCEPTION_NONE;
 }
 
-exception_t decodeIA32IOSpaceInvocation(word_t invLabel, cap_t cap)
+exception_t decodeX86IOSpaceInvocation(word_t invLabel, cap_t cap)
 {
     userError("IOSpace capability has no invocations");
     current_syscall_error.type = seL4_IllegalOperation;

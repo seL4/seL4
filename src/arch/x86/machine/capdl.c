@@ -134,7 +134,7 @@ static void sendPD(unsigned long address)
                                                                !pde_pde_large_get_present(pde) || !pde_pde_large_get_super_user(pde))) {
             exists = 0;
         }
-        if (exists != 0 && i < PPTR_BASE >> pageBitsForSize(IA32_LargePage)) {
+        if (exists != 0 && i < PPTR_BASE >> pageBitsForSize(X86_LargePage)) {
             sendWord(i);
             sendWord(pde.words[0]);
         }
@@ -177,7 +177,7 @@ static void sendIOPT(unsigned long address, unsigned int level)
             sendWord(i);
             sendWord(vtd_pte.words[0]);
             sendWord(vtd_pte.words[1]);
-            if (level == ia32KSnumIOPTLevels) {
+            if (level == x86KSnumIOPTLevels) {
                 sendWord(1);
             } else {
                 sendWord(0);
@@ -195,7 +195,7 @@ static void sendIOSpace(uint32_t pci_request_id)
     vtd_cte_t* vtd_context_slot;
 
     vtd_root_index = get_pci_bus(pci_request_id);
-    vtd_root_slot = ia32KSvtdRootTable + vtd_root_index;
+    vtd_root_slot = x86KSvtdRootTable + vtd_root_index;
 
     vtd_context = (vtd_cte_t*)paddr_to_pptr(vtd_rte_ptr_get_ctp(vtd_root_slot));
     vtd_context_index = (get_pci_dev(pci_request_id) << 3) | get_pci_fun(pci_request_id);

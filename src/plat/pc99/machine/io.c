@@ -33,7 +33,7 @@ void serial_init(uint16_t port)
 
 void console_putchar(char c)
 {
-    uint16_t port = ia32KSconsolePort;
+    uint16_t port = x86KSconsolePort;
 
     lock_acquire(&lock_debug);
 

@@ -57,7 +57,7 @@ exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent
     cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
                                          MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
 
-    memzero(frame, 1 << pageBitsForSize(IA32_SmallPage));
+    memzero(frame, 1 << pageBitsForSize(X86_SmallPage));
     cteInsert(
         cap_asid_pool_cap_new(
             asid_base,          /* capASIDBase  */
@@ -468,7 +468,7 @@ init_vm_state(void)
 BOOT_CODE bool_t
 init_pat_msr(void)
 {
-    ia32_pat_msr_t pat_msr;
+    x86_pat_msr_t pat_msr;
     /* First verify PAT is supported by the machine.
      *      See section 11.12.1 of Volume 3 of the Intel manual */
     if ( (x86_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
@@ -479,12 +479,12 @@ init_pat_msr(void)
     pat_msr.words[1] = x86_rdmsr_high(IA32_PAT_MSR);
     /* Set up the PAT MSR to the Intel defaults, just in case
      * they have been changed but a bootloader somewhere along the way */
-    ia32_pat_msr_ptr_set_pa0(&pat_msr, IA32_PAT_MT_WRITE_BACK);
-    ia32_pat_msr_ptr_set_pa1(&pat_msr, IA32_PAT_MT_WRITE_THROUGH);
-    ia32_pat_msr_ptr_set_pa2(&pat_msr, IA32_PAT_MT_UNCACHED);
-    ia32_pat_msr_ptr_set_pa3(&pat_msr, IA32_PAT_MT_UNCACHEABLE);
+    x86_pat_msr_ptr_set_pa0(&pat_msr, IA32_PAT_MT_WRITE_BACK);
+    x86_pat_msr_ptr_set_pa1(&pat_msr, IA32_PAT_MT_WRITE_THROUGH);
+    x86_pat_msr_ptr_set_pa2(&pat_msr, IA32_PAT_MT_UNCACHED);
+    x86_pat_msr_ptr_set_pa3(&pat_msr, IA32_PAT_MT_UNCACHEABLE);
     /* Add the WriteCombining cache type to the PAT */
-    ia32_pat_msr_ptr_set_pa4(&pat_msr, IA32_PAT_MT_WRITE_COMBINING);
+    x86_pat_msr_ptr_set_pa4(&pat_msr, IA32_PAT_MT_WRITE_COMBINING);
     x86_wrmsr(IA32_PAT_MSR, ((uint64_t)pat_msr.words[1]) << 32 | pat_msr.words[0]);
     return true;
 }
@@ -676,7 +676,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
     }
 
     switch (page_size) {
-    case IA32_SmallPage:
+    case X86_SmallPage:
         lu_ret = lookupPTSlot(find_ret.vspace_root, vptr);
         if (lu_ret.status != EXCEPTION_NONE) {
             return;
@@ -689,7 +689,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         *lu_ret.ptSlot = makeUserPTEInvalid();
         break;
 
-    case IA32_LargePage:
+    case X86_LargePage:
         pd_ret = lookupPDSlot(find_ret.vspace_root, vptr);
         if (pd_ret.status != EXCEPTION_NONE) {
             return;
@@ -782,7 +782,7 @@ exception_t decodeX86FrameInvocation(
         capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            userError("IA32Frame: Frame already mapped.");
+            userError("X86Frame: Frame already mapped.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
 
@@ -790,7 +790,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         if (!isValidNativeRoot(vspaceCap)) {
-            userError("IA32Frame: Attempting to map frame into invalid page directory cap.");
+            userError("X86Frame: Attempting to map frame into invalid page directory cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -821,7 +821,7 @@ exception_t decodeX86FrameInvocation(
         vtop = vaddr + BIT(pageBitsForSize(frameSize));
 
         if (vtop > PPTR_USER_TOP) {
-            userError("IA32Frame: Mapping address too high.");
+            userError("X86Frame: Mapping address too high.");
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
 
@@ -843,7 +843,7 @@ exception_t decodeX86FrameInvocation(
 
         switch (frameSize) {
             /* PTE mappings */
-        case IA32_SmallPage: {
+        case X86_SmallPage: {
             pte_t              pte;
             lookupPTSlot_ret_t lu_ret;
 
@@ -867,7 +867,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         /* PDE mappings */
-        case IA32_LargePage: {
+        case X86_LargePage: {
             pde_t* pdeSlot;
             lookupPDSlot_ret_t lu_ret;
 
@@ -931,14 +931,14 @@ exception_t decodeX86FrameInvocation(
         asid_t          asid;
 
         if (isIOSpaceFrame(cap)) {
-            userError("IA32FrameRemap: Attempting to remap frame mapped into an IOSpace");
+            userError("X86FrameRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         if (length < 2 || excaps.excaprefs[0] == NULL) {
-            userError("IA32FrameRemap: Truncated message");
+            userError("X86FrameRemap: Truncated message");
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -949,7 +949,7 @@ exception_t decodeX86FrameInvocation(
         vspaceCap = excaps.excaprefs[0]->cap;
 
         if (!isValidNativeRoot(vspaceCap)) {
-            userError("IA32FrameRemap: Attempting to map frame into invalid page directory.");
+            userError("X86FrameRemap: Attempting to map frame into invalid page directory.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -959,7 +959,7 @@ exception_t decodeX86FrameInvocation(
         asid = cap_get_capMappedASID(vspaceCap);
 
         if (cap_frame_cap_get_capFMappedASID(cap) == asidInvalid) {
-            userError("IA32PageRemap: Frame must already have been mapped.");
+            userError("X86PageRemap: Frame must already have been mapped.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
 
@@ -994,7 +994,7 @@ exception_t decodeX86FrameInvocation(
 
         switch (frameSize) {
             /* PTE mappings */
-        case IA32_SmallPage: {
+        case X86_SmallPage: {
             pte_t              pte;
             lookupPTSlot_ret_t lu_ret;
 
@@ -1013,7 +1013,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         /* PDE mappings */
-        case IA32_LargePage: {
+        case X86_LargePage: {
             pde_t* pdeSlot;
             lookupPDSlot_ret_t lu_ret;
 
@@ -1055,7 +1055,7 @@ exception_t decodeX86FrameInvocation(
     case X86PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
             if (isIOSpaceFrame(cap)) {
-                return decodeIA32IOUnMapInvocation(invLabel, length, cte, cap, excaps);
+                return decodeX86IOUnMapInvocation(invLabel, length, cte, cap, excaps);
             }
             unmapPage(
                 cap_frame_cap_get_capFSize(cap),
@@ -1072,7 +1072,7 @@ exception_t decodeX86FrameInvocation(
     }
 
     case X86PageMapIO: { /* MapIO */
-        return decodeIA32IOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeX86IOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
     }
 
     case X86PageGetAddress: {
@@ -1111,7 +1111,7 @@ decodeX86PageTableInvocation(
     if (invLabel == X86PageTableUnmap) {
         if (! isFinalCapability(cte)) {
             current_syscall_error.type = seL4_RevokeFirst;
-            userError("IA32PageTable: Cannot unmap if more than one cap exists.");
+            userError("X86PageTable: Cannot unmap if more than one cap exists.");
             return EXCEPTION_SYSCALL_ERROR;
         }
         setThreadState(ksCurThread, ThreadState_Restart);
@@ -1131,19 +1131,19 @@ decodeX86PageTableInvocation(
     }
 
     if (invLabel != X86PageTableMap ) {
-        userError("IA32PageTable: Illegal operation.");
+        userError("X86PageTable: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (length < 2 || excaps.excaprefs[0] == NULL) {
-        userError("IA32PageTable: Truncated message.");
+        userError("X86PageTable: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (cap_page_table_cap_get_capPTIsMapped(cap)) {
-        userError("IA32PageTable: Page table is already mapped to a page directory.");
+        userError("X86PageTable: Page table is already mapped to a page directory.");
         current_syscall_error.type =
             seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
@@ -1166,7 +1166,7 @@ decodeX86PageTableInvocation(
     asid = cap_get_capMappedASID(vspaceCap);
 
     if (vaddr >= PPTR_USER_TOP) {
-        userError("IA32PageTable: Mapping address too high.");
+        userError("X86PageTable: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
 
@@ -1337,7 +1337,7 @@ exception_t decodeX86MMUInvocation(
 
         if (!isVTableRoot(vspaceCap) ||
                 cap_get_capMappedASID(vspaceCap) != asidInvalid) {
-            userError("IA32ASIDPool: Invalid vspace root.");
+            userError("X86ASIDPool: Invalid vspace root.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 

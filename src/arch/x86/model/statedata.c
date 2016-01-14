@@ -35,7 +35,7 @@ asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
  * Current thread whose state is installed in the FPU, or NULL if
  * the FPU is currently invalid.
  */
-tcb_t *ia32KSfpuOwner VISIBLE;
+tcb_t *x86KSfpuOwner VISIBLE;
 
 /* ==== read-only kernel state (only written during bootstrapping) ==== */
 
@@ -46,20 +46,20 @@ uint32_t x86KScacheLineSizeBits;
 idt_entry_t x86KSidt[IDT_ENTRIES];
 
 /* A valid initial FPU state, copied to every new thread. */
-user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
+user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 
 /* Number of IOMMUs (DMA Remapping Hardware Units) */
-uint32_t ia32KSnumDrhu;
+uint32_t x86KSnumDrhu;
 
 /* Intel VT-d Root Entry Table */
-vtd_rte_t* ia32KSvtdRootTable;
-uint32_t ia32KSnumIOPTLevels;
-uint32_t ia32KSnumIODomainIDBits;
-uint32_t ia32KSFirstValidIODomain;
+vtd_rte_t* x86KSvtdRootTable;
+uint32_t x86KSnumIOPTLevels;
+uint32_t x86KSnumIODomainIDBits;
+uint32_t x86KSFirstValidIODomain;
 
 #if defined DEBUG || defined RELEASE_PRINTF
-uint16_t ia32KSconsolePort;
-uint16_t ia32KSdebugPort;
+uint16_t x86KSconsolePort;
+uint16_t x86KSdebugPort;
 #endif
 
 /* State data tracking what IRQ source is related to each

@@ -101,10 +101,10 @@ static inline bool_t hasDefaultSelectors(tcb_t *thread)
 static inline void NORETURN
 fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
-    if (unlikely(cur_thread == ia32KSfpuOwner)) {
+    if (unlikely(cur_thread == x86KSfpuOwner)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
-    } else if (unlikely(ia32KSfpuOwner)) {
+    } else if (unlikely(x86KSfpuOwner)) {
         /* Someone is using the FPU and it might be enabled */
         disableFpu();
     } else {

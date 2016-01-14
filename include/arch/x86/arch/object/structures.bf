@@ -13,7 +13,7 @@
 
 base 32
 
-block ia32_pat_msr {
+block x86_pat_msr {
     padding     5
     field pa7   3
     padding     5

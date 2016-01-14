@@ -341,7 +341,7 @@ decodeIA32PageDirectoryInvocation(
     if (invLabel == X86PageDirectoryUnmap) {
         if (!isFinalCapability(cte)) {
             current_syscall_error.type = seL4_RevokeFirst;
-            userError("IA32PageDirectory: Cannot unmap if more than one cap exists.");
+            userError("X86PageDirectory: Cannot unmap if more than one cap exists.");
             return EXCEPTION_SYSCALL_ERROR;
         }
         setThreadState(ksCurThread, ThreadState_Restart);
@@ -361,19 +361,19 @@ decodeIA32PageDirectoryInvocation(
     }
 
     if (invLabel != X86PageDirectoryMap) {
-        userError("IA32PageDirectory: Illegal operation.");
+        userError("X86PageDirectory: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (length < 2 || excaps.excaprefs[0] == NULL) {
-        userError("IA32PageDirectory: Truncated message.");
+        userError("X86PageDirectory: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
-        userError("IA32PageDirectory: Page directory is already mapped to a PDPT.");
+        userError("X86PageDirectory: Page directory is already mapped to a PDPT.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
@@ -393,7 +393,7 @@ decodeIA32PageDirectoryInvocation(
     asid = cap_get_capMappedASID(vspaceCap);
 
     if (vaddr >= PPTR_USER_TOP) {
-        userError("IA32PageDirectory: Mapping address too high.");
+        userError("X86PageDirectory: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
@@ -427,8 +427,8 @@ decodeIA32PageDirectoryInvocation(
     pdpte = pdpte_new(
                 paddr,                                      /* pd_base_address  */
                 0,                                          /* avl              */
-                vm_attributes_get_ia32PCDBit(attr),      /* cache_disabled   */
-                vm_attributes_get_ia32PWTBit(attr),      /* write_through    */
+                vm_attributes_get_x86PCDBit(attr),          /* cache_disabled   */
+                vm_attributes_get_x86PWTBit(attr),          /* write_through    */
                 1                                           /* present          */
             );
 

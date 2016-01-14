@@ -27,20 +27,20 @@ extern interrupt_t x86KScurInterrupt;
 extern tss_t x86KStss;
 extern gdt_entry_t x86KSgdt[];
 extern asid_pool_t* x86KSASIDTable[];
-extern tcb_t *ia32KSfpuOwner;
+extern tcb_t *x86KSfpuOwner;
 extern uint32_t x86KScacheLineSizeBits;
 extern idt_entry_t x86KSidt[];
-extern user_fpu_state_t ia32KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
+extern user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 
-extern uint32_t ia32KSnumDrhu;
-extern vtd_rte_t* ia32KSvtdRootTable;
-extern uint32_t ia32KSnumIOPTLevels;
-extern uint32_t ia32KSnumIODomainIDBits;
-extern uint32_t ia32KSFirstValidIODomain;
+extern uint32_t x86KSnumDrhu;
+extern vtd_rte_t* x86KSvtdRootTable;
+extern uint32_t x86KSnumIOPTLevels;
+extern uint32_t x86KSnumIODomainIDBits;
+extern uint32_t x86KSFirstValidIODomain;
 
 #if defined DEBUG || defined RELEASE_PRINTF
-extern uint16_t ia32KSconsolePort;
-extern uint16_t ia32KSdebugPort;
+extern uint16_t x86KSconsolePort;
+extern uint16_t x86KSdebugPort;
 #endif
 
 extern x86_irq_state_t x86KSIRQState[];

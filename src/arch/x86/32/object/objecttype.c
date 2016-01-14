@@ -117,9 +117,9 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize)
 {
     switch (t) {
     case seL4_X86_4K:
-        memzero(regionBase, 1 << pageBitsForSize(IA32_SmallPage));
+        memzero(regionBase, 1 << pageBitsForSize(X86_SmallPage));
         return cap_frame_cap_new(
-                   IA32_SmallPage,         /* capFSize             */
+                   X86_SmallPage,          /* capFSize             */
                    0,                      /* capFIsIOSpace        */
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
                    0,                      /* capFMappedAddress    */
@@ -129,9 +129,9 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize)
                );
 
     case seL4_X86_LargePageObject:
-        memzero(regionBase, 1 << pageBitsForSize(IA32_LargePage));
+        memzero(regionBase, 1 << pageBitsForSize(X86_LargePage));
         return cap_frame_cap_new(
-                   IA32_LargePage,         /* capFSize             */
+                   X86_LargePage,          /* capFSize             */
                    0,                      /* capFIsIOSpace        */
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
                    0,                      /* capFMappedAddress    */
