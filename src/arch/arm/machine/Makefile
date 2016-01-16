@@ -10,9 +10,7 @@
 
 DIRECTORIES += src/arch/arm/machine
 
-ARCH_C_SOURCES += machine/hardware.c \
-                  machine/registerset.c \
-                  machine/cache.c \
+ARCH_C_SOURCES += machine/cache.c \
                   machine/errata.c
 
 ifeq ($(CPU), cortex-a9)
