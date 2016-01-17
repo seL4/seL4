@@ -14,7 +14,7 @@
 #include <arch/object/interrupt.h>
 
 exception_t
-Arch_decodeIRQControlInvocation(word_t label, word_t length,
+Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                 cte_t *srcSlot, extra_caps_t excaps,
                                 word_t *buffer)
 {
