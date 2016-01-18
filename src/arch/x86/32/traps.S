@@ -11,7 +11,7 @@
 #include <machine/assembler.h>
 
 # On kernel entry, ESP points to the end of the thread's registers array.
-# Hardware pushes onto the stack SS, ESP, EFLAGS, CS, NextEIP and Error,
+# Hardware pushes onto the stack SS, ESP, EFLAGS, CS, NextIP and Error,
 # leaving the stack pointer pointing to TLS_BASE. The kernel pushes the rest.
 
 #define INT_HANDLER_WITH_ERR_CODE(number)    \
@@ -19,7 +19,7 @@
 .type int_##number, %function;               \
 int_##number:                                \
     subl  $4, %esp; /* skip TLS_BASE */      \
-    pushl 8(%esp); /* FaultEIP := NextEIP */ \
+    pushl 8(%esp); /* FaultIP := NextIP */   \
     pushl %gs;                               \
     pushl %fs;                               \
     pushl %es;                               \
@@ -41,7 +41,7 @@ int_##number:                                \
 int_##number:                                \
     pushl $0x0; /* push Error = 0 */         \
     subl  $4, %esp; /* skip TLS_BASE */      \
-    pushl 8(%esp); /* FaultEIP := NextEIP */ \
+    pushl 8(%esp); /* FaultIP := NextIP */   \
     pushl %gs;                               \
     pushl %fs;                               \
     pushl %es;                               \
@@ -347,10 +347,11 @@ handle_interrupt:
     jnz     kernel_exception
 
     # switch to kernel stack
-    leal    _kernel_stack_top, %esp
+    leal    kernel_stack_alloc + 4096, %esp
 
-    # Place the syscall number in the second argument slot
-    movl    %eax, %edx
+    # Place the arguments on the stack
+    pushl   %eax
+    pushl   %ecx
 
     # gtfo to C land, we will not return
     call    c_handle_interrupt
@@ -407,10 +408,10 @@ BEGIN_FUNC(handle_syscall)
     pushfl                  # save EFLAGS
     orl     $0x200, (%esp)  # set interrupt bit in saved EFLAGS
     subl    $4, %esp        # skip CS
-    pushl   %edx            # NextEIP := EDX
+    pushl   %edx            # NextIP := EDX
     pushl   $-1             # save Error (-1 means we entered via syscall)
     subl    $4, %esp        # skip TLS_BASE
-    pushl   %edx            # save FaultEIP (passed in EDX)
+    pushl   %edx            # save FaultIP (passed in EDX)
     pushl   %gs             # save GS
     pushl   %fs             # save FS
     pushl   %es             # save ES
@@ -418,7 +419,7 @@ BEGIN_FUNC(handle_syscall)
     pushl   %ebp            # save EBP (message register)
     pushl   %edi            # save EDI (message register)
     pushl   %esi            # save ESI (msgInfo register)
-    pushl   %edx            # save EDX (contains FaultEIP)
+    pushl   %edx            # save EDX (contains FaultIP)
     pushl   %ecx            # save ECX (contains ESP)
     pushl   %ebx            # save EBX (cap/badge register)
     pushl   %eax            # save EAX (syscall number)
@@ -428,7 +429,7 @@ BEGIN_FUNC(handle_syscall)
     SET_SEL(es, 8  * 4, 0x23)
 
     # switch to kernel stack
-    leal    _kernel_stack_top, %esp
+    leal    kernel_stack_alloc + 4096, %esp
 
     # Push all the arguments for c_handle_syscall
     pushl   %esi # msgInfo

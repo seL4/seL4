@@ -15,6 +15,16 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
+static inline int vtd_get_root_index(dev_id_t dev)
+{
+    return (dev >> 8) & 0xff;
+}
+
+static inline int vtd_get_context_index(dev_id_t dev)
+{
+    return dev & 0xff;
+}
+
 struct lookupIOPTSlot_ret {
     exception_t status;
     vtd_pte_t*  ioptSlot;
@@ -23,10 +33,10 @@ struct lookupIOPTSlot_ret {
 typedef struct lookupIOPTSlot_ret lookupIOPTSlot_ret_t;
 
 cap_t master_iospace_cap(void);
-exception_t decodeIA32IOPTInvocation(word_t label, uint32_t length, cte_t* slot, cap_t cap, extra_caps_t extraCaps, word_t*  buffer);
-exception_t decodeIA32IOMapInvocation(word_t label, uint32_t length, cte_t* slot, cap_t cap, extra_caps_t extraCaps, word_t* buffer);
-exception_t decodeIA32IOUnMapInvocation(word_t label, uint32_t length, cte_t* slot, cap_t cap, extra_caps_t extraCaps);
-exception_t decodeIA32IOSpaceInvocation(word_t label, cap_t cap);
+exception_t decodeIA32IOPTInvocation(word_t invLabel, uint32_t length, cte_t* slot, cap_t cap, extra_caps_t excaps, word_t*  buffer);
+exception_t decodeIA32IOMapInvocation(word_t invLabel, uint32_t length, cte_t* slot, cap_t cap, extra_caps_t excaps, word_t* buffer);
+exception_t decodeIA32IOUnMapInvocation(word_t invLabel, uint32_t length, cte_t* slot, cap_t cap, extra_caps_t excaps);
+exception_t decodeIA32IOSpaceInvocation(word_t invLabel, cap_t cap);
 void unmapIOPage(cap_t cap);
 void deleteIOPageTable(cap_t cap);
 

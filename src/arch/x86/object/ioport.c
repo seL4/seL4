@@ -37,12 +37,12 @@ ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)
 
 exception_t
 decodeIA32PortInvocation(
-    word_t label,
-    unsigned int length,
+    word_t invLabel,
+    word_t length,
     cptr_t cptr,
     cte_t* slot,
     cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
@@ -58,10 +58,19 @@ decodeIA32PortInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    if (invLabel == IA32IOPortOut8 || invLabel == IA32IOPortOut16 || invLabel == IA32IOPortOut32) {
+        /* Ensure the incoming message is long enough for the write. */
+        if (length < 2) {
+            userError("IOPort Out32: Truncated message.");
+            current_syscall_error.type = seL4_TruncatedMessage;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+    }
+
     /* Get the port the user is trying to write to. */
     port = getSyscallArg(0, buffer) & 0xffff;
 
-    switch (label) {
+    switch (invLabel) {
     case IA32IOPortIn8: { /* inport 8 bits */
 
         /* Check we are allowed to perform the operation. */
@@ -114,7 +123,7 @@ decodeIA32PortInvocation(
         }
 
         /* Perform the write. */
-        data = (getSyscallArg(0, buffer) >> 16) & 0xff;
+        data = (getSyscallArg(1, buffer)) & 0xff;
         out8(port, data);
         len = 0;
         break;
@@ -130,7 +139,7 @@ decodeIA32PortInvocation(
         }
 
         /* Perform the write. */
-        data = (getSyscallArg(0, buffer) >> 16) & 0xffff;
+        data = (getSyscallArg(1, buffer)) & 0xffff;
         out16(port, data);
         len = 0;
         break;
@@ -139,13 +148,6 @@ decodeIA32PortInvocation(
     case IA32IOPortOut32: { /* outport 32 bits */
         uint32_t data;
 
-        /* Ensure the incoming message is long enough for the write. */
-        if (length < 2) {
-            userError("IOPort Out32: Truncated message.");
-            current_syscall_error.type = seL4_TruncatedMessage;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
         /* Check we are allowed to perform the operation. */
         ret = ensurePortOperationAllowed(cap, port, 4);
         if (ret != EXCEPTION_NONE) {
@@ -153,7 +155,7 @@ decodeIA32PortInvocation(
         }
 
         /* Perform the write. */
-        data = getSyscallArg(1, buffer);
+        data = getSyscallArg(1, buffer) & 0xffffffff;
         out32(port, data);
         len = 0;
         break;
@@ -183,7 +185,7 @@ decodeIA32PortInvocation(
         }
     }
     setRegister(ksCurThread, msgInfoRegister,
-                wordFromMessageInfo(message_info_new(0, 0, 0, len)));
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, len)));
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;

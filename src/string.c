@@ -13,16 +13,16 @@
 
 #ifdef DEBUG
 
-unsigned int strnlen(const char *s, unsigned int maxlen)
+word_t strnlen(const char *s, word_t maxlen)
 {
-    unsigned int len;
+    word_t len;
     for (len = 0; len < maxlen && s[len]; len++);
     return len;
 }
 
-unsigned int strlcpy(char *dest, const char *src, unsigned int size)
+word_t strlcpy(char *dest, const char *src, word_t size)
 {
-    unsigned int len;
+    word_t len;
     for (len = 0; len + 1 < size && src[len]; len++) {
         dest[len] = src[len];
     }
@@ -30,9 +30,9 @@ unsigned int strlcpy(char *dest, const char *src, unsigned int size)
     return len;
 }
 
-unsigned int strlcat(char *dest, const char *src, unsigned int size)
+word_t strlcat(char *dest, const char *src, word_t size)
 {
-    unsigned int len;
+    word_t len;
     /* get to the end of dest */
     for (len = 0; len < size && dest[len]; len++);
     /* check that dest was at least 'size' length to prevent inserting

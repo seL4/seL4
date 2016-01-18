@@ -39,14 +39,14 @@ enum pde_pte_tag {
     ME_PDE,
     ME_PTE
 };
-typedef uint32_t pde_pte_tag_t;
+typedef word_t pde_pte_tag_t;
 
 struct createMappingEntries_ret {
     exception_t status;
     pde_pte_tag_t tag;
     void *pde_pte_ptr;
     unsigned int offset;
-    unsigned int size;
+    word_t size;
 };
 typedef struct createMappingEntries_ret createMappingEntries_ret_t;
 
@@ -87,8 +87,8 @@ void flushPage(vm_page_size_t page_size, pde_t* pd, asid_t asid, word_t vptr);
 void flushTable(pde_t* pd, asid_t asid, word_t vptr, pte_t* pt);
 void flushSpace(asid_t asid);
 void invalidateTLBByASID(asid_t asid);
-exception_t decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
-                                   cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
+                                   cte_t *cte, cap_t cap, extra_caps_t excaps,
                                    word_t *buffer);
 exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
                                           pde_t pde, pde_t *pdSlot);

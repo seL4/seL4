@@ -23,4 +23,5 @@ seL4_ReplyWaitWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *send
     return seL4_ReplyRecvWithMRs(src, msgInfo, sender, mr0, mr1);
 }
 #endif /* CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS */
-#endif /* __ARCH_DEPRECATED_H__ */
+
+#endif /* __SEL4_ARCH_DEPRECATED_H__ */

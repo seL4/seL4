@@ -126,7 +126,7 @@ static cte_t *getMDBParent(cte_t *slot)
 
 static void sendPD(unsigned int address)
 {
-    unsigned int i, exists;
+    word_t i, exists;
     pde_t *start = (pde_t *)address;
     for (i = 0; i < PD_READ_SIZE; i++) {
         pde_t pde = start[i];
@@ -150,7 +150,7 @@ static void sendPD(unsigned int address)
 
 static void sendPT(unsigned int address)
 {
-    unsigned int i, exists;
+    word_t i, exists;
     pte_t *start = (pte_t *)address;
     for (i = 0; i < PT_READ_SIZE; i++) {
         pte_t pte = start[i];
@@ -178,7 +178,7 @@ static void sendPT(unsigned int address)
 
 static void sendASIDPool(unsigned int address)
 {
-    unsigned int i;
+    word_t i;
     pde_t **start = (pde_t **)address;
     for (i = 0; i < ASID_POOL_READ_SIZE; i++) {
         pde_t *pde = start[i];
@@ -191,7 +191,7 @@ static void sendASIDPool(unsigned int address)
 
 static void sendRunqueues(void)
 {
-    unsigned int i;
+    word_t i;
     sendWord((unsigned int)ksCurThread);
     for (i = 0; i < NUM_READY_QUEUES; i++) {
         tcb_t *current = ksReadyQueues[i].head;
@@ -221,7 +221,7 @@ static void sendEPQueue(unsigned int epptr)
 
 static void sendCNode(unsigned int address, unsigned int sizebits)
 {
-    unsigned int i;
+    word_t i;
     cte_t *start = (cte_t *)address;
     for (i = 0; i < (1 << sizebits); i++) {
         cap_t cap = start[i].cap;

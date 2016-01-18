@@ -38,8 +38,8 @@ static void emptySlot(cte_t *slot, irq_t irq);
 static exception_t reduceZombie(cte_t* slot, bool_t exposed);
 
 exception_t
-decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
-                      extra_caps_t extraCaps, word_t *buffer)
+decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
+                      extra_caps_t excaps, word_t *buffer)
 {
     lookupSlot_ret_t lu_ret;
     cte_t *destSlot;
@@ -49,7 +49,7 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
     /* Haskell error: "decodeCNodeInvocation: invalid cap" */
     assert(cap_get_capType(cap) == cap_cnode_cap);
 
-    if (label < CNodeRevoke || label > CNodeSaveCaller) {
+    if (invLabel < CNodeRevoke || invLabel > CNodeSaveCaller) {
         userError("CNodeCap: Illegal Operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -70,7 +70,7 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
     }
     destSlot = lu_ret.slot;
 
-    if (label >= CNodeCopy && label <= CNodeMutate) {
+    if (invLabel >= CNodeCopy && invLabel <= CNodeMutate) {
         cte_t *srcSlot;
         word_t srcIndex, srcDepth, capData;
         bool_t isMove;
@@ -79,7 +79,7 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
         deriveCap_ret_t dc_ret;
         cap_t srcCap;
 
-        if (length < 4 || extraCaps.excaprefs[0] == NULL) {
+        if (length < 4 || excaps.excaprefs[0] == NULL) {
             userError("CNode Copy/Mint/Move/Mutate: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
@@ -87,7 +87,7 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
         srcIndex = getSyscallArg(2, buffer);
         srcDepth = getSyscallArg(3, buffer);
 
-        srcRoot = extraCaps.excaprefs[0]->cap;
+        srcRoot = excaps.excaprefs[0]->cap;
 
         status = ensureEmptySlot(destSlot);
         if (status != EXCEPTION_NONE) {
@@ -111,7 +111,7 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        switch (label) {
+        switch (invLabel) {
         case CNodeCopy:
 
             if (length < 5) {
@@ -191,17 +191,17 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
         }
     }
 
-    if (label == CNodeRevoke) {
+    if (invLabel == CNodeRevoke) {
         setThreadState(ksCurThread, ThreadState_Restart);
         return invokeCNodeRevoke(destSlot);
     }
 
-    if (label == CNodeDelete) {
+    if (invLabel == CNodeDelete) {
         setThreadState(ksCurThread, ThreadState_Restart);
         return invokeCNodeDelete(destSlot);
     }
 
-    if (label == CNodeSaveCaller) {
+    if (invLabel == CNodeSaveCaller) {
         status = ensureEmptySlot(destSlot);
         if (status != EXCEPTION_NONE) {
             userError("CNode SaveCaller: Destination slot not empty.");
@@ -212,7 +212,7 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
         return invokeCNodeSaveCaller(destSlot);
     }
 
-    if (label == CNodeRecycle) {
+    if (invLabel == CNodeRecycle) {
         if (!hasRecycleRights(destSlot->cap)) {
             userError("CNode Recycle: Target cap invalid.");
             current_syscall_error.type = seL4_IllegalOperation;
@@ -222,14 +222,14 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
         return invokeCNodeRecycle(destSlot);
     }
 
-    if (label == CNodeRotate) {
+    if (invLabel == CNodeRotate) {
         word_t pivotNewData, pivotIndex, pivotDepth;
         word_t srcNewData, srcIndex, srcDepth;
         cte_t *pivotSlot, *srcSlot;
         cap_t pivotRoot, srcRoot, newSrcCap, newPivotCap;
 
-        if (length < 8 || extraCaps.excaprefs[0] == NULL
-                || extraCaps.excaprefs[1] == NULL) {
+        if (length < 8 || excaps.excaprefs[0] == NULL
+                || excaps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -240,8 +240,8 @@ decodeCNodeInvocation(word_t label, unsigned int length, cap_t cap,
         srcIndex     = getSyscallArg(6, buffer);
         srcDepth     = getSyscallArg(7, buffer);
 
-        pivotRoot = extraCaps.excaprefs[0]->cap;
-        srcRoot   = extraCaps.excaprefs[1]->cap;
+        pivotRoot = excaps.excaprefs[0]->cap;
+        srcRoot   = excaps.excaprefs[1]->cap;
 
         lu_ret = lookupSourceSlot(srcRoot, srcIndex, srcDepth);
         if (lu_ret.status != EXCEPTION_NONE) {
@@ -464,7 +464,7 @@ void
 cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 {
     mdb_node_t mdb;
-    uint32_t prev_ptr, next_ptr;
+    word_t prev_ptr, next_ptr;
 
     /* Haskell error: "cteMove to non-empty destination" */
     assert(cap_get_capType(destSlot->cap) == cap_null_cap);
@@ -510,7 +510,7 @@ void
 cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
 {
     mdb_node_t mdb1, mdb2;
-    uint32_t next_ptr, prev_ptr;
+    word_t next_ptr, prev_ptr;
 
     slot1->cap = cap2;
     slot2->cap = cap1;
@@ -756,7 +756,7 @@ reduceZombie(cte_t* slot, bool_t immediate)
 void
 cteDeleteOne(cte_t* slot)
 {
-    uint32_t cap_type = cap_get_capType(slot->cap);
+    word_t cap_type = cap_get_capType(slot->cap);
     if (cap_type != cap_null_cap) {
         bool_t final;
         finaliseCap_ret_t fc_ret UNUSED;

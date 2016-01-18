@@ -16,18 +16,9 @@
 
 #define PPTR_APIC PPTR_KDEV
 
-/* Whether the IOAPIC exists or not will determine where we start mapping
- * the IOMMUs. It is fine to define the DRHU_START even if CONFIG_IOMMU is not
- * set as it will just pollute the preprocessor namespace */
-#ifdef CONFIG_IRQ_IOAPIC
 #define PPTR_IOAPIC_START (PPTR_APIC + BIT(PAGE_BITS))
 #define PPTR_DRHU_START (PPTR_IOAPIC_START + BIT(PAGE_BITS) * CONFIG_MAX_NUM_IOAPIC)
-#else  /* CONFIG_IOAPIC */
-#define PPTR_DRHU_START (PPTR_APIC + BIT(PAGE_BITS))
-#endif /* CONFIG_IOAPIC */
 
-#ifdef CONFIG_IOMMU
 #define MAX_NUM_DRHU    ((-PPTR_DRHU_START) >> PAGE_BITS)
-#endif
 
 #endif

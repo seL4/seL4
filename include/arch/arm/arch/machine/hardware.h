@@ -100,7 +100,7 @@ enum vm_fault_type {
     ARMDataAbort = 0,
     ARMPrefetchAbort = 1
 };
-typedef uint32_t vm_fault_type_t;
+typedef word_t vm_fault_type_t;
 
 enum vm_page_size {
     ARMSmallPage,
@@ -108,7 +108,7 @@ enum vm_page_size {
     ARMSection,
     ARMSuperSection,
 };
-typedef uint32_t vm_page_size_t;
+typedef word_t vm_page_size_t;
 
 
 enum frameSizeConstants {
@@ -123,7 +123,7 @@ enum frameSizeConstants {
 #endif
 };
 
-static inline unsigned int CONST
+static inline word_t CONST
 pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {

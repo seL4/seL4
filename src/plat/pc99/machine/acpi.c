@@ -154,6 +154,7 @@ compile_assert(acpi_madt_iso_packed,
 /* workaround because string literals are not supported by C parser */
 const char acpi_str_rsd[]  = {'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ', 0};
 const char acpi_str_apic[] = {'A', 'P', 'I', 'C', 0};
+const char acpi_str_dmar[] = {'D', 'M', 'A', 'R', 0};
 
 BOOT_CODE static uint8_t
 acpi_calc_checksum(char* start, uint32_t length)
@@ -192,7 +193,7 @@ acpi_table_init(void* entry, enum acpi_type table_type)
     unsigned int pages_for_header = 1;
 
     /* if we need to map another page to read header */
-    uint32_t offset_in_page = (uint32_t)entry & MASK(LARGE_PAGE_BITS);
+    unsigned long offset_in_page = (unsigned long)entry & MASK(LARGE_PAGE_BITS);
     if (MASK(LARGE_PAGE_BITS) - offset_in_page < sizeof(acpi_rsdp_t)) {
         pages_for_header++;
     }
@@ -234,14 +235,14 @@ acpi_init(void)
         printf("BIOS: No ACPI support detected\n");
         return NULL;
     }
-    printf("ACPI: RSDP paddr=0x%x\n", (unsigned int)acpi_rsdp);
+    printf("ACPI: RSDP paddr=%p\n", acpi_rsdp);
     acpi_rsdp = acpi_table_init(acpi_rsdp, ACPI_RSDP);
-    printf("ACPI: RSDP vaddr=0x%x\n", (unsigned int)acpi_rsdp);
+    printf("ACPI: RSDP vaddr=%p\n", acpi_rsdp);
 
-    acpi_rsdt = (acpi_rsdt_t*)acpi_rsdp->rsdt_address;
-    printf("ACPI: RSDT paddr=0x%x\n", (unsigned int)acpi_rsdt);
+    acpi_rsdt = (acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address;
+    printf("ACPI: RSDT paddr=%p\n", acpi_rsdt);
     acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
-    printf("ACPI: RSDT vaddr=0x%x\n", (unsigned int)acpi_rsdt_mapped);
+    printf("ACPI: RSDT vaddr=%p\n", acpi_rsdt_mapped);
 
     assert(acpi_rsdt_mapped->header.length > 0);
     if (acpi_calc_checksum((char*)acpi_rsdt_mapped, acpi_rsdt_mapped->header.length) != 0) {
@@ -275,16 +276,17 @@ acpi_madt_scan(
     *num_ioapic = 0;
 
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
-    entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
+    /* Divide by uint32_t explicitly as this is the size as mandated by the ACPI standard */
+    entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(uint32_t);
     for (count = 0; count < entries; count++) {
-        acpi_madt = (acpi_madt_t*)acpi_rsdt_mapped->entry[count];
+        acpi_madt = (acpi_madt_t*)(word_t)acpi_rsdt_mapped->entry[count];
         acpi_madt_mapped = (acpi_madt_t*)acpi_table_init(acpi_madt, ACPI_RSDT);
 
         if (strncmp(acpi_str_apic, acpi_madt_mapped->header.signature, 4) == 0) {
-            printf("ACPI: MADT paddr=0x%x\n", (unsigned int)acpi_madt);
-            printf("ACPI: MADT vaddr=0x%x\n", (unsigned int)acpi_madt_mapped);
-            printf("ACPI: MADT apic_addr=0x%lx\n", acpi_madt_mapped->apic_addr);
-            printf("ACPI: MADT flags=0x%lx\n", acpi_madt_mapped->flags);
+            printf("ACPI: MADT paddr=%p\n", acpi_madt);
+            printf("ACPI: MADT vaddr=%p\n", acpi_madt_mapped);
+            printf("ACPI: MADT apic_addr=0x%x\n", acpi_madt_mapped->apic_addr);
+            printf("ACPI: MADT flags=0x%x\n", acpi_madt_mapped->flags);
 
             acpi_madt_header = (acpi_madt_header_t*)(acpi_madt_mapped + 1);
 
@@ -305,7 +307,7 @@ acpi_madt_scan(
                 }
                 case MADT_IOAPIC:
                     printf(
-                        "ACPI: MADT_IOAPIC ioapic_id=%d ioapic_addr=0x%lx gsib=%ld\n",
+                        "ACPI: MADT_IOAPIC ioapic_id=%d ioapic_addr=0x%x gsib=%d\n",
                         ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_id,
                         ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_addr,
                         ((acpi_madt_ioapic_t*)acpi_madt_header)->gsib
@@ -318,7 +320,7 @@ acpi_madt_scan(
                     }
                     break;
                 case MADT_ISO:
-                    printf("ACIP: MADT_ISO bus=%d source=%d gsi=%ld flags=0x%x\n",
+                    printf("ACIP: MADT_ISO bus=%d source=%d gsi=%d flags=0x%x\n",
                            ((acpi_madt_iso_t*)acpi_madt_header)->bus,
                            ((acpi_madt_iso_t*)acpi_madt_header)->source,
                            ((acpi_madt_iso_t*)acpi_madt_header)->gsi,
@@ -332,25 +334,9 @@ acpi_madt_scan(
         }
     }
 
-    printf("ACPI: %ld CPU(s) detected\n", num_cpu);
+    printf("ACPI: %d CPU(s) detected\n", num_cpu);
 
     return num_cpu;
-}
-
-#ifdef CONFIG_IOMMU
-
-BOOT_CODE static bool_t
-acpi_dev_in_list(dev_id_t* dev_list, uint32_t list_len, dev_id_t dev)
-{
-    unsigned int i = 0;
-
-    while (i < list_len) {
-        if (dev_list[i] == dev) {
-            return true;
-        }
-        i++;
-    }
-    return false;
 }
 
 BOOT_CODE void
@@ -359,15 +345,14 @@ acpi_dmar_scan(
     paddr_t*     drhu_list,
     uint32_t*    num_drhu,
     uint32_t     max_drhu_list_len,
-    dev_id_t*    passthrough_dev_list,
-    uint32_t*    num_passthrough_dev,
-    uint32_t     max_passthrough_dev_list_len
+    acpi_rmrr_list_t *rmrr_list
 )
 {
-    unsigned int i;
+    word_t i;
     unsigned int entries;
     uint32_t count;
     uint32_t reg_basel, reg_baseh;
+    int rmrr_count;
     dev_id_t dev_id;
 
     acpi_dmar_t*          acpi_dmar;
@@ -381,17 +366,17 @@ acpi_dmar_scan(
     acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
 
     *num_drhu = 0;
-    *num_passthrough_dev = 0;
+    rmrr_count = 0;
 
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
     entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
     for (count = 0; count < entries; count++) {
-        acpi_dmar = (acpi_dmar_t*)acpi_rsdt_mapped->entry[count];
+        acpi_dmar = (acpi_dmar_t*)(word_t)acpi_rsdt_mapped->entry[count];
         acpi_dmar_mapped = (acpi_dmar_t*)acpi_table_init(acpi_dmar, ACPI_RSDT);
 
-        if (strncmp("DMAR", acpi_dmar_mapped->header.signature, 4) == 0) {
-            printf("ACPI: DMAR paddr=0x%x\n", (unsigned int)acpi_dmar);
-            printf("ACPI: DMAR vaddr=0x%x\n", (unsigned int)acpi_dmar_mapped);
+        if (strncmp(acpi_str_dmar, acpi_dmar_mapped->header.signature, 4) == 0) {
+            printf("ACPI: DMAR paddr=%p\n", acpi_dmar);
+            printf("ACPI: DMAR vaddr=%p\n", acpi_dmar_mapped);
             printf("ACPI: IOMMU host address width: %d\n", acpi_dmar_mapped->host_addr_width + 1);
             acpi_dmar_header = (acpi_dmar_header_t*)(acpi_dmar_mapped + 1);
 
@@ -428,12 +413,6 @@ acpi_dmar_scan(
                         return ;
                     }
 
-                    /* Provide the region to user level */
-                    insert_dev_p_reg((p_region_t) {
-                        .start = acpi_dmar_rmrr->reg_base[0], .end = acpi_dmar_rmrr->reg_limit[0] + 2
-                    });
-                    printf("ACPI: RMRR providing region 0x%lx-0x%lx\n", acpi_dmar_rmrr->reg_base[0], acpi_dmar_rmrr->reg_limit[0]);
-
                     for (i = 0; i <= (acpi_dmar_header->length - sizeof(acpi_dmar_rmrr_t)) / sizeof(acpi_dmar_devscope_t); i++) {
                         acpi_dmar_devscope = &acpi_dmar_rmrr->devscope_0 + i;
 
@@ -458,22 +437,21 @@ acpi_dmar_scan(
                                 acpi_dmar_devscope->path_0.fun
                             );
 
-                        if (!acpi_dev_in_list(passthrough_dev_list, *num_passthrough_dev, dev_id)) {
-                            /* FIXME - bugzilla bug 171 */
-                            printf("ACPI: registering device for IOMMU passthrough: bus=0x%x dev=0x%x fun=0x%x\n",
-                                   acpi_dmar_devscope->start_bus,
-                                   acpi_dmar_devscope->path_0.dev,
-                                   acpi_dmar_devscope->path_0.fun
-                                  );
-                            if (*num_passthrough_dev == max_passthrough_dev_list_len) {
-                                printf("ACPI: too many passthrough devices, disabling IOMMU support\n");
-                                /* try to increase MAX_NUM_PASSTHROUGH_DEV in config.h */
-                                *num_drhu = 0; /* report zero IOMMUs */
-                                return;
-                            }
-                            passthrough_dev_list[*num_passthrough_dev] = dev_id;
-                            (*num_passthrough_dev)++;
+                        if (rmrr_count == CONFIG_MAX_RMRR_ENTRIES) {
+                            printf("ACPI: Too many RMRR entries, disabling IOMMU support\n");
+                            *num_drhu = 0;
+                            return;
                         }
+                        printf("\tACPI: registering RMRR entry for region for device: bus=0x%x dev=0x%x fun=0x%x\n",
+                               acpi_dmar_devscope->start_bus,
+                               acpi_dmar_devscope->path_0.dev,
+                               acpi_dmar_devscope->path_0.fun
+                              );
+
+                        rmrr_list->entries[rmrr_count].device = dev_id;
+                        rmrr_list->entries[rmrr_count].base = acpi_dmar_rmrr->reg_base[0];
+                        rmrr_list->entries[rmrr_count].limit = acpi_dmar_rmrr->reg_limit[0];
+                        rmrr_count++;
                     }
                     break;
 
@@ -488,7 +466,6 @@ acpi_dmar_scan(
             }
         }
     }
-    printf("ACPI: %ld IOMMUs detected\n", *num_drhu);
+    rmrr_list->num = rmrr_count;
+    printf("ACPI: %d IOMMUs detected\n", *num_drhu);
 }
-
-#endif /* IOMMU */

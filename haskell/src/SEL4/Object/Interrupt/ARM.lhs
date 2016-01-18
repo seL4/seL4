@@ -18,15 +18,15 @@ This module defines the machine-specific interrupt handling routines for the ARM
 > import SEL4.Model
 > import SEL4.Object.Structures
 > import SEL4.API.Failures
-> import SEL4.API.Invocation.ARM
+> import SEL4.API.Invocation.ARM as ArchInv
 
 \end{impdetails}
 
-> decodeInterruptControl :: [Word] -> [Capability] ->
->     KernelF SyscallError InterruptControl
-> decodeInterruptControl _ _ = throw IllegalOperation
+> decodeIRQControlInvocation :: Word -> [Word] -> PPtr CTE -> [Capability] ->
+>     KernelF SyscallError ArchInv.IRQControlInvocation
+> decodeIRQControlInvocation _ _ _ _ = throw IllegalOperation
 
-> invokeInterruptControl :: InterruptControl -> KernelP ()
-> invokeInterruptControl _ = fail "invokeInterruptControl: not defined"
+> invokeIRQControl :: ArchInv.IRQControlInvocation -> KernelP ()
+> invokeIRQControl _ = fail "invokeInterruptControl: not defined"
 
 

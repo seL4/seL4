@@ -23,9 +23,9 @@
 #define GET_FREE_REF(base,freeIndex) ((word_t)(((word_t)(base)) + FREE_INDEX_TO_OFFSET(freeIndex)))
 #define GET_FREE_INDEX(base,free) (((word_t)(free) - (word_t)(base))>>MIN_SIZE_BITS)
 
-exception_t decodeUntypedInvocation(word_t label, unsigned int length,
+exception_t decodeUntypedInvocation(word_t invLabel, word_t length,
                                     cte_t *slot, cap_t cap,
-                                    extra_caps_t extraCaps, bool_t call,
+                                    extra_caps_t excaps, bool_t call,
                                     word_t *buffer);
 exception_t invokeUntyped_Retype(cte_t *srcSlot, void* base_ign,
                                  void* freeRegionBase, object_t newType,

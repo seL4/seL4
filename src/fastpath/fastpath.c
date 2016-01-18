@@ -12,25 +12,25 @@
 
 void
 #ifdef ARCH_X86
-FASTCALL NORETURN
+NORETURN
 #endif
 fastpath_call(word_t cptr, word_t msgInfo)
 {
-    message_info_t info;
+    seL4_MessageInfo_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
-    unsigned int length;
+    word_t length;
     tcb_t *dest;
     word_t badge;
     cte_t *replySlot, *callerSlot;
     cap_t newVTable;
     pde_t *cap_pd;
     pde_t stored_hw_asid;
-    uint32_t fault_type;
+    word_t fault_type;
 
     /* Get message info, length, and fault type. */
     info = messageInfoFromWord_raw(msgInfo);
-    length = message_info_get_msgLength(info);
+    length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -110,8 +110,8 @@ fastpath_call(word_t cptr, word_t msgInfo)
      */
 
 #ifdef ARCH_X86
-    /* Need to update NextEIP in the calling thread */
-    setRegister(ksCurThread, NextEIP, getRegister(ksCurThread, NextEIP) + 2);
+    /* Need to update NextIP in the calling thread */
+    setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
 #endif
 
     /* Dequeue the destination. */
@@ -147,26 +147,23 @@ fastpath_call(word_t cptr, word_t msgInfo)
                                    ThreadState_Running);
     switchToThread_fp(dest, cap_pd, stored_hw_asid);
 
-    msgInfo = wordFromMessageInfo(message_info_set_msgCapsUnwrapped(info, 0));
+    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo, ksCurThread);
 }
 
 void
-#ifdef ARCH_IA32
-FASTCALL
-#endif
 fastpath_reply_recv(word_t cptr, word_t msgInfo)
 {
-    message_info_t info;
+    seL4_MessageInfo_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
-    unsigned int length;
+    word_t length;
     cte_t *callerSlot;
     cap_t callerCap;
     tcb_t *caller;
     word_t badge;
     tcb_t *endpointTail;
-    uint32_t fault_type;
+    word_t fault_type;
 
     cap_t newVTable;
     pde_t *cap_pd;
@@ -174,7 +171,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* Get message info and length */
     info = messageInfoFromWord_raw(msgInfo);
-    length = message_info_get_msgLength(info);
+    length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -269,8 +266,8 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
      */
 
 #ifdef ARCH_X86
-    /* Need to update NextEIP in the calling thread */
-    setRegister(ksCurThread, NextEIP, getRegister(ksCurThread, NextEIP) + 2);
+    /* Need to update NextIP in the calling thread */
+    setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
 #endif
 
     /* Set thread state to BlockedOnReceive */
@@ -319,6 +316,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
                                    ThreadState_Running);
     switchToThread_fp(caller, cap_pd, stored_hw_asid);
 
-    msgInfo = wordFromMessageInfo(message_info_set_msgCapsUnwrapped(info, 0));
+    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo, ksCurThread);
 }

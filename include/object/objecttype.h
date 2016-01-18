@@ -42,9 +42,9 @@ cap_t CONST maskCapRights(cap_rights_t cap_rights, cap_t cap);
 cap_t createObject(object_t t, void *regionBase, word_t);
 void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
                       void *regionBase, word_t userSize);
-exception_t decodeInvocation(word_t label, unsigned int length,
+exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
-                             extra_caps_t extraCaps, bool_t block, bool_t call,
+                             extra_caps_t excaps, bool_t block, bool_t call,
                              word_t *buffer);
 exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                                        bool_t canGrant, bool_t block,

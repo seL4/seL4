@@ -11,7 +11,6 @@
 DIRECTORIES += src/arch/$(ARCH)/machine
 
 ARCH_C_SOURCES += machine/hardware.c \
-                  machine/registerset.c \
                   machine/fpu.c
 
 ifdef DEBUG

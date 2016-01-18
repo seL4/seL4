@@ -197,7 +197,7 @@ menu "seL4 System Parameters"
     config ROOT_CNODE_SIZE_BITS
         range 4 27
         int "Root CNode Size (2^n slots)"
-        default 16
+        default 12
         help
             The acceptable range is 4-27, based on the kernel-supplied caps.
             The root CNode needs at least enough space to contain up to
@@ -241,16 +241,13 @@ menu "seL4 System Parameters"
         int "Max number of bootinfo untyped caps"
         default 167
 
-    config MAX_NUM_NODES
-        int "Max number of cpu nodes"
-        range 1 256
-        depends on ARCH_X86
-        default 1
-
-    config MAX_NUM_PASSTHROUGH_DEVICES
-        int "Max number of passthrough devices"
+    config MAX_RMRR_ENTRIES
+        int "Max number of RMRR entries to support finding in ACPI"
         depends on IOMMU
-        default 20
+        default 32
+        help
+            Sets the maximum number of Reserved Memory Region Reporting
+            structures we support recording from the ACPI tables
 
     config FASTPATH
         bool "Enable fastpath"
@@ -323,6 +320,17 @@ menu "Build Options"
             This can result in unnecessary output from the kernel during
             debug builds. If you are CERTAIN these messages are benign
             then use this config to turn them off
+
+    config COLOUR_PRINTING
+        bool "Print error messages in colour"
+        depends on DEBUG_BUILD
+        default y
+        help
+            In debug mode, seL4 prints diagnostic messages to its serial output
+            describing, e.g., the cause of system call errors. This setting
+            determines whether ANSI escape codes are applied to colour code
+            these error messages. You may wish to disable this setting if your
+            serial output is redirected to a file or pipe.
 
     choice
         prompt "Compiler optimisation flag"

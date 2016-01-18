@@ -10,8 +10,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_IRQ_IOAPIC
-
 #include <arch/linker.h>
 #include <plat/machine/io.h>
 #include <plat/machine/hardware.h>
@@ -49,14 +47,14 @@ static uint32_t num_ioapics = 0;
 static bool_t done_set_mode[IOAPIC_IRQ_LINES * CONFIG_MAX_NUM_IOAPIC] = { 0 };
 #endif
 
-static void ioapic_write(uint32_t ioapic, uint32_t reg, uint32_t value)
+static void ioapic_write(uint32_t ioapic, word_t reg, uint32_t value)
 {
-    *(volatile uint32_t*)((uint32_t)(PPTR_IOAPIC_START + ioapic * BIT(PAGE_BITS)) + reg) = value;
+    *(volatile uint32_t*)((word_t)(PPTR_IOAPIC_START + ioapic * BIT(PAGE_BITS)) + reg) = value;
 }
 
-static uint32_t ioapic_read(uint32_t ioapic, uint32_t reg)
+static uint32_t ioapic_read(uint32_t ioapic, word_t reg)
 {
-    return *(volatile uint32_t*)((uint32_t)(PPTR_IOAPIC_START + ioapic * BIT(PAGE_BITS)) + reg);
+    return *(volatile uint32_t*)((word_t)(PPTR_IOAPIC_START + ioapic * BIT(PAGE_BITS)) + reg);
 }
 
 static bool_t in_list(uint32_t size, cpu_id_t *list, cpu_id_t target)
@@ -70,7 +68,7 @@ static bool_t in_list(uint32_t size, cpu_id_t *list, cpu_id_t target)
     return false;
 }
 
-static void single_ioapic_init(uint32_t ioapic, cpu_id_t ioapic_id, cpu_id_t delivery_cpu)
+static void single_ioapic_init(word_t ioapic, cpu_id_t ioapic_id, cpu_id_t delivery_cpu)
 {
     uint32_t id_reg;
     uint32_t i;
@@ -102,7 +100,7 @@ static void single_ioapic_init(uint32_t ioapic, cpu_id_t ioapic_id, cpu_id_t del
 
 /* To guarantee we will be able to find enough free apic ids there needs to be less than
  * 2^4 cpus + ioapics in the system */
-compile_assert(ioapic_id_will_not_overflow, CONFIG_MAX_NUM_NODES + CONFIG_MAX_NUM_IOAPIC < 16);
+compile_assert(ioapic_id_will_not_overflow, 1 + CONFIG_MAX_NUM_IOAPIC < 16)
 
 void ioapic_init(uint32_t num_nodes, cpu_id_t *cpu_list, uint32_t num_ioapic)
 {
@@ -139,7 +137,7 @@ void ioapic_mask_irq(bool_t mask, irq_t irq)
         ioredtbl_state[irq] &= ~IOREDTBL_LOW_INTERRUPT_MASK;
 #if defined DEBUG || defined RELEASE_PRINTF
         if (!done_set_mode[irq]) {
-            printf("Unmasking IOAPIC source %ld on ioapic %ld without ever setting its mode!\n", index, ioapic);
+            printf("Unmasking IOAPIC source %d on ioapic %d without ever setting its mode!\n", index, ioapic);
             /* Set the flag so we don't repeatedly warn */
             done_set_mode[irq] = 1;
         }
@@ -173,5 +171,3 @@ void ioapic_set_mode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
     ioapic_write(ioapic, IOAPIC_REGSEL, IOREDTBL_LOW(index));
     ioapic_write(ioapic, IOAPIC_WINDOW, ioredtbl_state[irq]);
 }
-
-#endif /* CONFIG_IOAPIC */

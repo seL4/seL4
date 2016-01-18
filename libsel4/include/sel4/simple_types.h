@@ -13,6 +13,7 @@
 
 /* Get the architectural types seL4_{u}int{N} */
 #include <sel4/arch/simple_types.h>
+#include <sel4/sel4_arch/simple_types.h>
 
 /* Define boolean type and true/false */
 #define seL4_True 1

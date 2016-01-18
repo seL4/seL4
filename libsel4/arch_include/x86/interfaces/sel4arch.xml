@@ -9,107 +9,100 @@
      @TAG(NICTA_BSD)
   -->
 <api>
-    <struct name="seL4_UserContext">
-		<member name="eip"/>
-		<member name="esp"/>
-		<member name="eflags"/>
-		<member name="eax"/>
-		<member name="ebx"/>
-		<member name="ecx"/>
-		<member name="edx"/>
-		<member name="esi"/>
-		<member name="edi"/>
-		<member name="ebp"/>
-		<member name="tls_base"/>
-		<member name="fs"/>
-		<member name="gs"/>
-    </struct>
-	<interface name="seL4_IA32_PageDirectory">
-	    <method id="IA32PageDirectoryMap" name="Map">
-	        <param dir="in" name="pdpt" type="seL4_IA32_PageDirectory"/>
-	        <param dir="in" name="vaddr" type="seL4_Word"/>
-	        <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
-	    </method>
-	    <method id="IA32PageDirectoryUnmap" name="Unmap">
-	    </method>
-	</interface>
-	<interface name="seL4_IA32_PageTable">
-		<method id="IA32PageTableMap" name="Map">
-			<param dir="in" name="pd" type="seL4_IA32_PageDirectory"/>
-			<param dir="in" name="vaddr" type="seL4_Word"/>
-			<param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
-		</method>
+    <interface name="seL4_IA32_PageDirectory">
+        <method id="IA32PageDirectoryMap" name="Map">
+            <param dir="in" name="vroot" type="seL4_CPtr"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
+        <method id="IA32PageDirectoryUnmap" name="Unmap">
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_PageTable">
+        <method id="IA32PageTableMap" name="Map">
+            <param dir="in" name="vroot" type="seL4_CPtr"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
         <method id="IA32PageTableUnmap" name="Unmap">
         </method>
-	</interface>
-	<interface name="seL4_IA32_IOPageTable">
-		<method id="IA32IOPageTableMap" name="Map">
-			<param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
-			<param dir="in" name="ioaddr" type="seL4_Word"/>
-		</method>
-	</interface>
-	<interface name="seL4_IA32_Page">
-		<method id="IA32PageMap" name="Map">
-			<param dir="in" name="pd" type="seL4_IA32_PageDirectory"/>
-			<param dir="in" name="vaddr" type="seL4_Word"/>
-			<param dir="in" name="rights" type="seL4_CapRights"/>
-			<param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
-		</method>
-		<method id="IA32PageRemap" name="Remap">
-			<param dir="in" name="pd" type="seL4_IA32_PageDirectory"/>
-			<param dir="in" name="rights" type="seL4_CapRights"/>
-			<param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
-		</method>
-		<method id="IA32PageUnmap" name="Unmap"/>
-		<method id="IA32PageMapIO" name="MapIO">
-			<param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
-			<param dir="in" name="rights" type="seL4_CapRights"/>
-			<param dir="in" name="ioaddr" type="seL4_Word"/>
-		</method>
-		<method id="IA32PageGetAddress" name="GetAddress">
-			<param dir="out" name="paddr" type="seL4_Word"/>
-		</method>
-	</interface>
-	<interface name="seL4_IA32_ASIDControl">
-		<method id="IA32ASIDControlMakePool" name="MakePool">
-			<param dir="in" name="untyped" type="seL4_Untyped"/>
-			<param dir="in" name="root" type="seL4_CNode"/>
-			<param dir="in" name="index" type="seL4_Word"/>
-			<param dir="in" name="depth" type="seL4_Uint8"/>
-		</method>
-	</interface>
-	<interface name="seL4_IA32_ASIDPool">
-		<method id="IA32ASIDPoolAssign" name="Assign">
-			<param dir="in" name="vroot" type="seL4_IA32_PageDirectory"/>
-		</method>
-	</interface>
-	<interface name="seL4_IA32_IOPort">
-		<method id="IA32IOPortIn8" name="In8">
-			<param dir="out" name="result" type="seL4_Uint8"/>
-			<param dir="in" name="port" type="seL4_Uint16"/>
-		</method>
-		<method id="IA32IOPortIn16" name="In16">
-			<param dir="out" name="result" type="seL4_Uint16"/>
-			<param dir="in" name="port" type="seL4_Uint16"/>
-		</method>
-		<method id="IA32IOPortIn32" name="In32">
-			<param dir="out" name="result" type="seL4_Uint32"/>
-			<param dir="in" name="port" type="seL4_Uint16"/>
-		</method>
-		<method id="IA32IOPortOut8" name="Out8">
-			<param dir="in" name="port" type="seL4_Uint16"/>
-			<param dir="in" name="data" type="seL4_Uint8"/>
-		</method>
-		<method id="IA32IOPortOut16" name="Out16">
-			<param dir="in" name="port" type="seL4_Uint16"/>
-			<param dir="in" name="data" type="seL4_Uint16"/>
-		</method>
-		<method id="IA32IOPortOut32" name="Out32">
-			<param dir="in" name="port" type="seL4_Uint16"/>
-			<param dir="in" name="data" type="seL4_Uint32"/>
-		</method>
     </interface>
-	<interface name="seL4_IA32_IOSpace">
-	    <method id="IA32IOSpaceRemovePassthrough" name="RemovePassthrough"/>
-	</interface>
+
+    <interface name="seL4_IA32_IOPageTable">
+        <method id="IA32IOPageTableMap" name="Map">
+            <param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
+            <param dir="in" name="ioaddr" type="seL4_Word"/>
+        </method>
+        <method id="IA32IOPageTableUnmap" name="Unmap">
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_Page">
+        <method id="IA32PageMap" name="Map">
+            <param dir="in" name="vroot" type="seL4_CPtr"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
+        <method id="IA32PageRemap" name="Remap">
+            <param dir="in" name="vroot" type="seL4_CPtr"/>
+            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="attr" type="seL4_IA32_VMAttributes"/>
+        </method>
+        <method id="IA32PageUnmap" name="Unmap"/>
+        <method id="IA32PageMapIO" name="MapIO">
+            <param dir="in" name="iospace" type="seL4_IA32_IOSpace"/>
+            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="ioaddr" type="seL4_Word"/>
+        </method>
+        <method id="IA32PageGetAddress" name="GetAddress">
+            <param dir="out" name="paddr" type="seL4_Word"/>
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_ASIDControl">
+        <method id="IA32ASIDControlMakePool" name="MakePool">
+            <param dir="in" name="untyped" type="seL4_Untyped"/>
+            <param dir="in" name="root" type="seL4_CNode"/>
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Uint8"/>
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_ASIDPool">
+        <method id="IA32ASIDPoolAssign" name="Assign">
+            <param dir="in" name="vroot" type="seL4_CPtr"/>
+        </method>
+    </interface>
+
+    <interface name="seL4_IA32_IOPort">
+        <method id="IA32IOPortIn8" name="In8">
+            <param dir="out" name="result" type="seL4_Uint8"/>
+            <param dir="in" name="port" type="seL4_Uint16"/>
+        </method>
+        <method id="IA32IOPortIn16" name="In16">
+            <param dir="out" name="result" type="seL4_Uint16"/>
+            <param dir="in" name="port" type="seL4_Uint16"/>
+        </method>
+        <method id="IA32IOPortIn32" name="In32">
+            <param dir="out" name="result" type="seL4_Uint32"/>
+            <param dir="in" name="port" type="seL4_Uint16"/>
+        </method>
+        <method id="IA32IOPortOut8" name="Out8">
+            <param dir="in" name="port" type="seL4_Word"/>
+            <param dir="in" name="data" type="seL4_Word"/>
+        </method>
+        <method id="IA32IOPortOut16" name="Out16">
+            <param dir="in" name="port" type="seL4_Word"/>
+            <param dir="in" name="data" type="seL4_Word"/>
+        </method>
+        <method id="IA32IOPortOut32" name="Out32">
+            <param dir="in" name="port" type="seL4_Word"/>
+            <param dir="in" name="data" type="seL4_Word"/>
+        </method>
+    </interface>
+    <interface name="seL4_IA32_IOSpace">
+        <method id="IA32IOSpaceRemovePassthrough" name="RemovePassthrough"/>
+    </interface>
 </api>

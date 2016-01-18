@@ -51,11 +51,11 @@ xmod(unsigned long x, unsigned int denom)
     }
 }
 
-unsigned int
-print_unsigned_long(unsigned long x, unsigned int ui_base)
+word_t
+print_unsigned_long(unsigned long x, word_t ui_base)
 {
-    char out[11];
-    unsigned int i, j;
+    char out[sizeof(unsigned long) * 2 + 3];
+    word_t i, j;
     unsigned int d;
 
     /*
@@ -88,13 +88,17 @@ print_unsigned_long(unsigned long x, unsigned int ui_base)
     return i;
 }
 
+/* The print_unsigned_long_long function assumes that an unsinged int
+   is half the size of an unsigned long long */
+compile_assert(print_unsigned_long_long_sizes, sizeof(unsigned int) * 2 == sizeof(unsigned long long))
 
 static unsigned int
 print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
 {
-    unsigned long upper, lower;
+    unsigned int upper, lower;
     unsigned int n = 0;
     unsigned int mask = 0xF0000000u;
+    unsigned int shifts = 0;
 
     /* only implemented for hex, decimal is harder without 64 bit division */
     if (ui_base != 16) {
@@ -102,21 +106,23 @@ print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
     }
 
     /* we can't do 64 bit division so break it up into two hex numbers */
-    upper = (unsigned long) (x >> 32llu);
-    lower = (unsigned long) x;
+    upper = (unsigned int) (x >> 32llu);
+    lower = (unsigned int) x & 0xffffffff;
 
     /* print first 32 bits if they exist */
     if (upper > 0) {
         n += print_unsigned_long(upper, ui_base);
-
         /* print leading 0s */
         while (!(mask & lower)) {
             kernel_putchar('0');
             n++;
             mask = mask >> 4;
+            shifts++;
+            if (shifts == 8) {
+                break;
+            }
         }
     }
-
     /* print last 32 bits */
     n += print_unsigned_long(lower, ui_base);
 
@@ -154,18 +160,18 @@ vprintf(const char *format, va_list ap)
                     x = -x;
                 }
 
-                n += print_unsigned_long((unsigned long)x, 10);
+                n += print_unsigned_long(x, 10);
                 format++;
                 break;
             }
 
             case 'u':
-                n += print_unsigned_long(va_arg(ap, unsigned long), 10);
+                n += print_unsigned_long(va_arg(ap, unsigned int), 10);
                 format++;
                 break;
 
             case 'x':
-                n += print_unsigned_long(va_arg(ap, unsigned long), 16);
+                n += print_unsigned_long(va_arg(ap, unsigned int), 16);
                 format++;
                 break;
 
@@ -247,7 +253,7 @@ vprintf(const char *format, va_list ap)
     return n;
 }
 
-unsigned int puts(const char *s)
+word_t puts(const char *s)
 {
     for (; *s; s++) {
         kernel_putchar(*s);
@@ -256,11 +262,11 @@ unsigned int puts(const char *s)
     return 0;
 }
 
-unsigned int
+word_t
 kprintf(const char *format, ...)
 {
     va_list args;
-    unsigned int i;
+    word_t i;
 
     va_start(args, format);
     i = vprintf(format, args);

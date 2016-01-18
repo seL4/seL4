@@ -78,23 +78,13 @@ BEGIN_FUNC(_start)
     movl %ebx, %esi /* multiboot_info_ptr */
 
     /* Load kernel boot stack pointer */
-    leal _boot_stack_top, %esp
+    leal boot_stack_top, %esp
 
     /* Reset EFLAGS register (also disables interrupts etc.) */
     pushl $0
     popf
 
-    /* Load APIC address into EAX */
-    movl $IA32_APIC_BASE_MSR, %ecx
-    rdmsr
-    andl $0xfffff000, %eax
-    
-    /* Measure APIC/bus frequency */
-    pushl %eax
-    call apic_measure_freq
-
     /* Already push parameters for calling boot_sys later */
-    pushl %eax /* 3rd parameter: apic_khz */
     pushl %esi /* 2nd parameter: multiboot_info_ptr */
     pushl %edi /* 1st parameter: multiboot_magic    */
 
@@ -103,8 +93,8 @@ BEGIN_FUNC(_start)
     call enable_paging
 
     /* Adjust ESP/EBP to their virtual address */
-    addl $BASE_OFFSET, %esp
-    addl $BASE_OFFSET, %ebp
+    addl $KERNEL_BASE, %esp
+    addl $KERNEL_BASE, %ebp
 
     /* Call boot_sys() (takes 3 parameters) and set restore_user_context() as  */
     /* return EIP. This will start the roottask as soon as boot_sys() returns. */
@@ -114,13 +104,13 @@ END_FUNC(_start)
 
 /* ===== booting up another CPU ===== */
 
-BEGIN_FUNC(_boot_cpu_start)
+BEGIN_FUNC(boot_cpu_start)
 
 .code16
     /* Set DS equal to CS and load GDTR register with GDT pointer */
     movw %cs, %ax
     movw %ax, %ds
-    lgdt _boot_gdt_ptr - _boot_cpu_start
+    lgdt _boot_gdt_ptr - boot_cpu_start
 
     /* Enable Protected Mode */
     movl %cr0, %eax
@@ -158,14 +148,14 @@ BEGIN_FUNC(_boot_cpu_start)
     call enable_paging
 
     /* Adjust ESP/EBP to their virtual address */
-    addl $BASE_OFFSET, %esp
-    addl $BASE_OFFSET, %ebp
+    addl $KERNEL_BASE, %esp
+    addl $KERNEL_BASE, %ebp
 
     /* Call boot_node() and set restore_user_context() as return EIP. */
     /* This will start the roottask as soon as boot_node() returns.   */
     pushl $restore_user_context
     jmp   boot_node
-END_FUNC(_boot_cpu_start)
+END_FUNC(boot_cpu_start)
 
 _boot_gdt_ptr:
     .word   (3 * 8) - 1 /* Limit: 3 segments * 8 bytes - 1 byte */
@@ -177,5 +167,5 @@ _boot_gdt:
     .quad 0x00cf9b000000ffff /* 4GB kernel code segment */
     .quad 0x00cf93000000ffff /* 4GB kernel data segment */
 
-.global _boot_cpu_end
-_boot_cpu_end:
+.global boot_cpu_end
+boot_cpu_end:

@@ -11,14 +11,17 @@
 #ifndef __ARCH_TYPES_H
 #define __ARCH_TYPES_H
 
+#include <assert.h>
 #include <stdint.h>
 
-typedef uint32_t word_t;
-typedef uint32_t vptr_t;
-typedef uint32_t paddr_t;
-typedef uint32_t pptr_t;
+compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
 
-typedef uint32_t node_id_t;
+typedef unsigned long word_t;
+typedef word_t vptr_t;
+typedef word_t paddr_t;
+typedef word_t pptr_t;
+typedef word_t cptr_t;
+typedef word_t node_id_t;
 
 typedef uint8_t  hw_asid_t;
 
@@ -26,5 +29,10 @@ enum hwASIDConstants {
     hwASIDMax = 255,
     hwASIDBits = 8
 };
+
+/* for libsel4 headers that the kernel shares */
+typedef word_t seL4_Word;
+typedef cptr_t seL4_CPtr;
+typedef uint32_t seL4_Uint32;
 
 #endif

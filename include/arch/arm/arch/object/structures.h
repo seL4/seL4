@@ -47,7 +47,7 @@ enum vm_rights {
     VMReadOnly = 2,
     VMReadWrite = 3
 };
-typedef uint32_t vm_rights_t;
+typedef word_t vm_rights_t;
 
 #ifdef ARM_HYP
 #define PGDE_SIZE_BITS 3
@@ -84,7 +84,7 @@ enum pde_type {
     PDECoarse  = 1,
     PDEMapping = 2
 };
-typedef uint32_t pde_type_t;
+typedef word_t pde_type_t;
 
 #define PTE_PTR(r) ((pte_t *)r)
 #define PTE_REF(p) ((unsigned int)p)
@@ -302,7 +302,7 @@ generic_frame_cap_get_capFMappedAddress(cap_t cap)
     }
 }
 
-static inline unsigned int CONST
+static inline word_t CONST
 cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
@@ -381,7 +381,7 @@ cap_get_archCapPtr(cap_t cap)
  */
 enum { pte_pte_invalid = 2 };
 
-static inline uint32_t CONST
+static inline word_t CONST
 pte_get_pteType(pte_t pte)
 {
     if (pte_get_pteSize(pte) == pte_pte_small) {
@@ -393,7 +393,7 @@ pte_get_pteType(pte_t pte)
     }
 }
 
-static inline uint32_t PURE
+static inline word_t PURE
 pte_ptr_get_pteType(pte_t *pte_ptr)
 {
     if (pte_ptr_get_pteSize(pte_ptr) == pte_pte_small) {

@@ -44,26 +44,44 @@ enum invocation_label {
 };
 
 {{if libsel4}}
+#include <sel4/sel4_arch/invocation.h>
 #include <sel4/arch/invocation.h>
 {{endif}}
 
 #endif /* __{{header_title}}_INVOCATION_H */
 """
 
+SEL4_ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
+#ifndef __{{header_title}}_SEL4_ARCH_INVOCATION_H
+#define __{{header_title}}_SEL4_ARCH_INVOCATION_H
+
+{{if not libsel4}}
+#include <api/invocation.h>
+{{endif}}
+
+enum sel4_arch_invocation_label {
+    {{for loop, label in looper(invocations)}}
+    {{label}} = nInvocationLabels + {{loop.index}},
+    {{endfor}}
+    nSeL4ArchInvocationLabels = nInvocationLabels + {{num_invocations}}
+};
+
+#endif /* __{{header_title}}_SEL4_ARCH_INVOCATION_H */
+"""
 
 ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 #ifndef __{{header_title}}_ARCH_INVOCATION_H
 #define __{{header_title}}_ARCH_INVOCATION_H
 
 {{if not libsel4}}
-#include <api/invocation.h>
+#include <arch/api/sel4_invocation.h>
 {{endif}}
 
 enum arch_invocation_label {
     {{for loop, label in looper(invocations)}}
-    {{label}} = nInvocationLabels + {{loop.index}},
+    {{label}} = nSeL4ArchInvocationLabels + {{loop.index}},
     {{endfor}}
-    nArchInvocationLabels
+    nArchInvocationLabels = nSeL4ArchInvocationLabels + {{num_invocations}}
 };
 
 #endif /* __{{header_title}}_ARCH_INVOCATION_H */
@@ -78,8 +96,11 @@ def parse_args():
             help='Name of file to create', required=True)
     parser.add_argument('--libsel4', action='store_true', 
         help='Is this being generated for libsel4?')
-    parser.add_argument('--arch', action='store_true', 
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--arch', action='store_true',
             help='Is this being generated for the arch layer?')
+    group.add_argument('--sel4_arch', action='store_true',
+            help='Is this being generated for the seL4 arch layer?')
 
     return parser.parse_args()
 
@@ -104,11 +125,13 @@ def generate(args, invocations):
 
     if args.arch:
         template = tempita.Template(ARCH_INVOCATION_TEMPLATE)
+    elif args.sel4_arch:
+        template = tempita.Template(SEL4_ARCH_INVOCATION_TEMPLATE)
     else: 
         template = tempita.Template(INVOCATION_TEMPLATE)
 
     args.dest.write(template.substitute(header_title=header_title, 
-        libsel4=args.libsel4,invocations=invocations))
+        libsel4=args.libsel4,invocations=invocations,num_invocations=len(invocations)))
 
     args.dest.close()
 

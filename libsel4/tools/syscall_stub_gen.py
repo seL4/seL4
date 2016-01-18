@@ -51,14 +51,17 @@ import xml.dom.minidom
 import optparse
 
 # Number of bits in a standard word
-WORD_SIZE_BITS = 32
+WORD_SIZE_BITS_ARCH = {
+    "arm": 32,
+    "ia32": 32,
+}
 
 # Maximum number of words that will be in a message.
 MAX_MESSAGE_LENGTH = 32
 
 MESSAGE_REGISTERS_FOR_ARCH = {
     "arm": 4,
-    "x86": 2,
+    "ia32": 2,
 }
 
 # Headers to include
@@ -194,14 +197,17 @@ class Parameter(object):
 #
 # Return the size (in bits) of a particular type.
 #
-types = [
+def InitTypes():
+    global types
+    global arch_types
+    types = [
         # Simple Types
         Type("int", WORD_SIZE_BITS),
 
         Type("seL4_Uint8", 8),
         Type("seL4_Uint16", 16),
         Type("seL4_Uint32", 32),
-        Type("seL4_Uint64", 64, double_word=True),
+        Type("seL4_Uint64", 64, double_word=(WORD_SIZE_BITS == 32)),
         Type("seL4_Word", WORD_SIZE_BITS),
         Type("seL4_Bool", 1, native_size_bits=8),
         Type("seL4_CapRights", WORD_SIZE_BITS),
@@ -217,34 +223,34 @@ types = [
         CapType("seL4_TCB"),
         CapType("seL4_Untyped"),
         CapType("seL4_DomainSet"),
-        ]
+    ]
 
-#
-# Arch-specific types.
-#
-arch_types = {
-    "arm" : [
-        Type("seL4_ARM_VMAttributes", WORD_SIZE_BITS),
-        CapType("seL4_ARM_Page"),
-        CapType("seL4_ARM_PageTable"),
-        CapType("seL4_ARM_PageDirectory"),
-        CapType("seL4_ARM_ASIDControl"),
-        CapType("seL4_ARM_ASIDPool"),
+    #
+    # Arch-specific types.
+    #
+    arch_types = {
+        "arm" : [
+            Type("seL4_ARM_VMAttributes", WORD_SIZE_BITS),
+            CapType("seL4_ARM_Page"),
+            CapType("seL4_ARM_PageTable"),
+            CapType("seL4_ARM_PageDirectory"),
+            CapType("seL4_ARM_ASIDControl"),
+            CapType("seL4_ARM_ASIDPool"),
         CapType("seL4_ARM_VCPU"),
-        StructType("seL4_UserContext", WORD_SIZE_BITS * 17),
+            StructType("seL4_UserContext", WORD_SIZE_BITS * 17),
         ],
 
-    "x86" : [
-        Type("seL4_IA32_VMAttributes", WORD_SIZE_BITS),
-        CapType("seL4_IA32_ASIDControl"),
-        CapType("seL4_IA32_ASIDPool"),
-        CapType("seL4_IA32_IOSpace"),
-        CapType("seL4_IA32_IOPort"),
-        CapType("seL4_IA32_Page"),
-        CapType("seL4_IA32_PageDirectory"),
-        CapType("seL4_IA32_PageTable"),
-        CapType("seL4_IA32_IOPageTable"),
-        StructType("seL4_UserContext", WORD_SIZE_BITS * 13),
+        "ia32" : [
+            Type("seL4_IA32_VMAttributes", WORD_SIZE_BITS),
+            CapType("seL4_IA32_ASIDControl"),
+            CapType("seL4_IA32_ASIDPool"),
+            CapType("seL4_IA32_IOSpace"),
+            CapType("seL4_IA32_IOPort"),
+            CapType("seL4_IA32_Page"),
+            CapType("seL4_IA32_PageDirectory"),
+            CapType("seL4_IA32_PageTable"),
+            CapType("seL4_IA32_IOPageTable"),
+            StructType("seL4_UserContext", WORD_SIZE_BITS * 13),
         ]
     }
 
@@ -489,7 +495,7 @@ def generate_stub(arch, interface_name, method_name, method_id, input_params, ou
     #   seL4_Untyped_Retype(...)
     #   {
     #
-    result.append("static inline %s" % return_type)
+    result.append("LIBSEL4_INLINE %s" % return_type)
     result.append("%s_%s(%s)" % (interface_name, method_name,
         generate_param_list(input_params, output_params)))
     result.append("{")
@@ -664,9 +670,13 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
     result = []
 
     # Ensure architecture looks sane.
-    if not arch in arch_types.keys():
+    if not arch in WORD_SIZE_BITS_ARCH.keys():
         raise Exception("Invalid architecture. Expected %s.",
                 " or ".join(arch_types.keys()))
+
+    global WORD_SIZE_BITS
+    WORD_SIZE_BITS = WORD_SIZE_BITS_ARCH[arch]
+    InitTypes()
 
     # Parse XML
     methods = []

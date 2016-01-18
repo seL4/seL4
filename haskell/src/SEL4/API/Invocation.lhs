@@ -124,7 +124,7 @@ The following data type defines the parameters expected for invocations of Untyp
 The following data type defines the set of possible invocations for interrupt controller capabilities.
 
 > data IRQControlInvocation
->         = InterruptControl { interruptControlArch :: Arch.InterruptControl }
+>         = ArchIRQControl { archIRQControl :: Arch.IRQControlInvocation }
 >         | IssueIRQHandler {
 >             issueHandlerIRQ :: IRQ,
 >             issueHandlerSlot, issueHandlerControllerSlot :: PPtr CTE }
@@ -177,7 +177,6 @@ This datatype is defined globally over architectures as well as object types.
 >         | CNodeRotate
 >         | CNodeSaveCaller
 >         | IRQIssueIRQHandler
->         | IRQInterruptControl
 >         | IRQAckIRQ
 >         | IRQSetIRQHandler
 >         | IRQClearIRQHandler

@@ -23,11 +23,11 @@
 #include <model/statedata.h>
 
 exception_t
-decodeIRQControlInvocation(word_t label, unsigned int length,
-                           cte_t *srcSlot, extra_caps_t extraCaps,
+decodeIRQControlInvocation(word_t invLabel, word_t length,
+                           cte_t *srcSlot, extra_caps_t excaps,
                            word_t *buffer)
 {
-    if (label == IRQIssueIRQHandler) {
+    if (invLabel == IRQIssueIRQHandler) {
         word_t index, depth, irq_w;
         irq_t irq;
         cte_t *destSlot;
@@ -35,7 +35,7 @@ decodeIRQControlInvocation(word_t label, unsigned int length,
         lookupSlot_ret_t lu_ret;
         exception_t status;
 
-        if (length < 3 || extraCaps.excaprefs[0] == NULL) {
+        if (length < 3 || excaps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -44,7 +44,7 @@ decodeIRQControlInvocation(word_t label, unsigned int length,
         index = getSyscallArg(1, buffer);
         depth = getSyscallArg(2, buffer);
 
-        cnodeCap = extraCaps.excaprefs[0]->cap;
+        cnodeCap = excaps.excaprefs[0]->cap;
 
         if (irq_w > maxIRQ) {
             current_syscall_error.type = seL4_RangeError;
@@ -71,12 +71,8 @@ decodeIRQControlInvocation(word_t label, unsigned int length,
 
         setThreadState(ksCurThread, ThreadState_Restart);
         return invokeIRQControl(irq, destSlot, srcSlot);
-    } else if (label == IRQInterruptControl) {
-        return Arch_decodeInterruptControl(length, extraCaps);
     } else {
-        userError("IRQControl: Illegal operation.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
+        return Arch_decodeIRQControlInvocation(invLabel, length, srcSlot, excaps, buffer);
     }
 }
 
@@ -90,10 +86,10 @@ invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot)
 }
 
 exception_t
-decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
-                           extra_caps_t extraCaps, word_t *buffer)
+decodeIRQHandlerInvocation(word_t invLabel, word_t length, irq_t irq,
+                           extra_caps_t excaps, word_t *buffer)
 {
-    switch (label) {
+    switch (invLabel) {
     case IRQAckIRQ:
         setThreadState(ksCurThread, ThreadState_Restart);
         invokeIRQHandler_AckIRQ(irq);
@@ -103,12 +99,12 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         cap_t ntfnCap;
         cte_t *slot;
 
-        if (extraCaps.excaprefs[0] == NULL) {
+        if (excaps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        ntfnCap = extraCaps.excaprefs[0]->cap;
-        slot = extraCaps.excaprefs[0];
+        ntfnCap = excaps.excaprefs[0]->cap;
+        slot = excaps.excaprefs[0];
 
         if (cap_get_capType(ntfnCap) != cap_notification_cap ||
                 !cap_notification_cap_get_capNtfnCanSend(ntfnCap)) {
@@ -135,7 +131,7 @@ decodeIRQHandlerInvocation(word_t label, unsigned int length, irq_t irq,
         bool_t trig, pol;
 
         if (length < 2) {
-            userError("IRQSetMode: Not enough arguments: %d", length);
+            userError("IRQSetMode: Not enough arguments: %ld", length);
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }

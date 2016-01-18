@@ -60,17 +60,17 @@ struct resolve_ret {
 };
 typedef struct resolve_ret resolve_ret_t;
 
-void doFlush(int label, vptr_t start, vptr_t end, paddr_t pstart);
+void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart);
 static pte_t *lookupPTSlot_nofail(pte_t *pt, vptr_t vptr);
 static resolve_ret_t resolveVAddr(pde_t *pd, vptr_t vaddr);
-static exception_t performPDFlush(int label, pde_t *pd, asid_t asid,
+static exception_t performPDFlush(int invLabel, pde_t *pd, asid_t asid,
                                   vptr_t start, vptr_t end, paddr_t pstart);
-static exception_t performPageFlush(int label, pde_t *pd, asid_t asid,
+static exception_t performPageFlush(int invLabel, pde_t *pd, asid_t asid,
                                     vptr_t start, vptr_t end, paddr_t pstart);
 static exception_t performPageGetAddress(void *vbase_ptr);
-static exception_t decodeARMPageDirectoryInvocation(word_t label,
-                                                    unsigned int length, cptr_t cptr, cte_t *cte, cap_t cap,
-                                                    extra_caps_t extraCaps, word_t *buffer);
+static exception_t decodeARMPageDirectoryInvocation(word_t invLabel,
+                                                    word_t length, cptr_t cptr, cte_t *cte, cap_t cap,
+                                                    extra_caps_t excaps, word_t *buffer);
 static pde_t PURE loadHWASID(asid_t asid);
 
 #ifndef ARM_HYP
@@ -206,7 +206,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 BOOT_CODE void
 map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attributes_t attributes)
 {
-    uint32_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
+    word_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
 
     assert(vaddr >= PPTR_TOP); /* vaddr lies in the region the global PT covers */
 #ifndef ARM_HYP
@@ -244,7 +244,7 @@ BOOT_CODE void
 map_kernel_window(void)
 {
     paddr_t  phys;
-    uint32_t idx;
+    word_t idx;
     pde_t    pde;
 
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
@@ -253,7 +253,7 @@ map_kernel_window(void)
     idx = kernelBase >> pageBitsForSize(ARMSection);
 
     while (idx < BIT(PD_BITS) - SECTIONS_PER_SUPER_SECTION) {
-        uint32_t idx2;
+        word_t idx2;
 
         pde = pde_pde_section_new(
                   phys,
@@ -562,7 +562,7 @@ void
 copyGlobalMappings(pde_t *newPD)
 {
 #ifndef ARM_HYP
-    unsigned int i;
+    word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
     for (i = kernelBase >> ARMSectionBits; i < BIT(PD_BITS); i++) {
@@ -882,7 +882,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     case ARMLargePage: {
         lookupPTSlot_ret_t lu_ret;
-        unsigned int i;
+        word_t i;
 
         lu_ret = lookupPTSlot(find_ret.pd, vptr);
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
@@ -944,7 +944,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     case ARMSuperSection: {
         pde_t *pd;
-        unsigned int i;
+        word_t i;
 
         pd = lookupPDSlot(find_ret.pd, vptr);
 
@@ -1457,8 +1457,8 @@ checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t
-decodeARMPageTableInvocation(word_t label, unsigned int length,
-                             cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+decodeARMPageTableInvocation(word_t invLabel, word_t length,
+                             cte_t *cte, cap_t cap, extra_caps_t excaps,
                              word_t *buffer)
 {
     word_t vaddr, pdIndex;
@@ -1471,7 +1471,7 @@ decodeARMPageTableInvocation(word_t label, unsigned int length,
     asid_t asid;
     paddr_t paddr;
 
-    if (label == ARMPageTableUnmap) {
+    if (invLabel == ARMPageTableUnmap) {
         if (unlikely(! isFinalCapability(cte))) {
             current_syscall_error.type = seL4_RevokeFirst;
             return EXCEPTION_SYSCALL_ERROR;
@@ -1480,12 +1480,12 @@ decodeARMPageTableInvocation(word_t label, unsigned int length,
         return performPageTableInvocationUnmap (cap, cte);
     }
 
-    if (unlikely(label != ARMPageTableMap)) {
+    if (unlikely(invLabel != ARMPageTableMap)) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1502,7 +1502,7 @@ decodeARMPageTableInvocation(word_t label, unsigned int length,
 #ifndef ARM_HYP
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
 #endif
-    pdCap = extraCaps.excaprefs[0]->cap;
+    pdCap = excaps.excaprefs[0]->cap;
 
     if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
                  !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
@@ -1592,7 +1592,7 @@ createSafeMappingEntries_PTE
 
     create_mappings_pte_return_t ret;
     lookupPTSlot_ret_t lu_ret;
-    unsigned int i;
+    word_t i;
 
     switch (frameSize) {
 
@@ -1695,7 +1695,7 @@ createSafeMappingEntries_PDE
 
     create_mappings_pde_return_t ret;
     pde_tag_t currentPDEType;
-    unsigned int i;
+    word_t i;
 
     switch (frameSize) {
 
@@ -1769,11 +1769,11 @@ createSafeMappingEntries_PDE
 }
 
 static exception_t
-decodeARMFrameInvocation(word_t label, unsigned int length,
-                         cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+decodeARMFrameInvocation(word_t invLabel, word_t length,
+                         cte_t *cte, cap_t cap, extra_caps_t excaps,
                          word_t *buffer)
 {
-    switch (label) {
+    switch (invLabel) {
     case ARMPageMap: {
         word_t vaddr, vtop, w_rightsMask;
         paddr_t capFBasePtr;
@@ -1784,7 +1784,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
         vm_page_size_t frameSize;
         vm_attributes_t attr;
 
-        if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(length < 3 || excaps.excaprefs[0] == NULL)) {
             current_syscall_error.type =
                 seL4_TruncatedMessage;
 
@@ -1794,7 +1794,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
         vaddr = getSyscallArg(0, buffer);
         w_rightsMask = getSyscallArg(1, buffer);
         attr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        pdCap = extraCaps.excaprefs[0]->cap;
+        pdCap = excaps.excaprefs[0]->cap;
 
         frameSize = generic_frame_cap_get_capFSize(cap);
         capVMRights = generic_frame_cap_get_capFVMRights(cap);
@@ -1906,7 +1906,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
         vm_page_size_t frameSize;
         vm_attributes_t attr;
 
-        if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
             current_syscall_error.type =
                 seL4_TruncatedMessage;
 
@@ -1915,7 +1915,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
 
         w_rightsMask = getSyscallArg(0, buffer);
         attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-        pdCap = extraCaps.excaprefs[0]->cap;
+        pdCap = excaps.excaprefs[0]->cap;
 
         if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
                      !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
@@ -2080,7 +2080,7 @@ decodeARMFrameInvocation(word_t label, unsigned int length,
         end += vaddr;
 
         setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageFlush(label, pd.pd, asid, start, end - 1, pstart);
+        return performPageFlush(invLabel, pd.pd, asid, start, end - 1, pstart);
     }
 
     case ARMPageGetAddress: {
@@ -2170,11 +2170,11 @@ pageBase(vptr_t vaddr, vm_page_size_t size)
 }
 
 static exception_t
-decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
+decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
                                  cptr_t cptr, cte_t *cte, cap_t cap,
-                                 extra_caps_t extraCaps, word_t *buffer)
+                                 extra_caps_t excaps, word_t *buffer)
 {
-    switch (label) {
+    switch (invLabel) {
     case ARMPDClean_Data:
     case ARMPDInvalidate_Data:
     case ARMPDCleanInvalidate_Data:
@@ -2267,7 +2267,7 @@ decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
 
 
         setThreadState(ksCurThread, ThreadState_Restart);
-        return performPDFlush(label, pd, asid, start, end - 1, pstart);
+        return performPDFlush(invLabel, pd, asid, start, end - 1, pstart);
     }
 
     default:
@@ -2278,26 +2278,26 @@ decodeARMPageDirectoryInvocation(word_t label, unsigned int length,
 }
 
 exception_t
-decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
-                       cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
+                       cte_t *cte, cap_t cap, extra_caps_t excaps,
                        word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
-        return decodeARMPageDirectoryInvocation(label, length, cptr, cte,
-                                                cap, extraCaps, buffer);
+        return decodeARMPageDirectoryInvocation(invLabel, length, cptr, cte,
+                                                cap, excaps, buffer);
 
     case cap_page_table_cap:
-        return decodeARMPageTableInvocation (label, length, cte,
-                                             cap, extraCaps, buffer);
+        return decodeARMPageTableInvocation (invLabel, length, cte,
+                                             cap, excaps, buffer);
 
     case cap_small_frame_cap:
     case cap_frame_cap:
-        return decodeARMFrameInvocation (label, length, cte,
-                                         cap, extraCaps, buffer);
+        return decodeARMFrameInvocation (invLabel, length, cte,
+                                         cap, excaps, buffer);
 
     case cap_asid_control_cap: {
-        unsigned int i;
+        word_t i;
         asid_t asid_base;
         word_t index, depth;
         cap_t untyped, root;
@@ -2306,14 +2306,14 @@ decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
         void *frame;
         exception_t status;
 
-        if (unlikely(label != ARMASIDControlMakePool)) {
+        if (unlikely(invLabel != ARMASIDControlMakePool)) {
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL
-                     || extraCaps.excaprefs[1] == NULL)) {
+        if (unlikely(length < 2 || excaps.excaprefs[0] == NULL
+                     || excaps.excaprefs[1] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2321,9 +2321,9 @@ decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
 
         index = getSyscallArg(0, buffer);
         depth = getSyscallArg(1, buffer);
-        parentSlot = extraCaps.excaprefs[0];
+        parentSlot = excaps.excaprefs[0];
         untyped = parentSlot->cap;
-        root = extraCaps.excaprefs[1]->cap;
+        root = excaps.excaprefs[1]->cap;
 
         /* Find first free pool */
         for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
@@ -2372,22 +2372,22 @@ decodeARMMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
         cap_t pdCap;
         cte_t *pdCapSlot;
         asid_pool_t *pool;
-        unsigned int i;
+        word_t i;
         asid_t asid;
 
-        if (unlikely(label != ARMASIDPoolAssign)) {
+        if (unlikely(invLabel != ARMASIDPoolAssign)) {
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+        if (unlikely(excaps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pdCapSlot = extraCaps.excaprefs[0];
+        pdCapSlot = excaps.excaprefs[0];
         pdCap = pdCapSlot->cap;
 
         if (unlikely(
@@ -2475,7 +2475,7 @@ performPageGetAddress(void *vbase_ptr)
     /* return it in the first message register */
     setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
     setRegister(ksCurThread, msgInfoRegister,
-                wordFromMessageInfo(message_info_new(0, 0, 0, 1)));
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
 
     return EXCEPTION_NONE;
 }
@@ -2496,7 +2496,7 @@ exception_t
 performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
                             pte_range_t pte_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2525,7 +2525,7 @@ exception_t
 performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
                             pde_range_t pde_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     ctSlot->cap = cap;
@@ -2553,7 +2553,7 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
 exception_t
 performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries
@@ -2582,7 +2582,7 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 exception_t
 performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 {
-    unsigned int i, j UNUSED;
+    word_t i, j UNUSED;
     bool_t tlbflush_required;
 
     /* we only need to check the first entries because of how createSafeMappingEntries
@@ -2658,7 +2658,7 @@ performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
 }
 
 void
-doFlush(int label, vptr_t start, vptr_t end, paddr_t pstart)
+doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 {
     /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
             \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
@@ -2670,7 +2670,7 @@ doFlush(int label, vptr_t start, vptr_t end, paddr_t pstart)
     end = (vptr_t)paddr_to_pptr(pstart) + (end - start);
     start = (vptr_t)paddr_to_pptr(pstart);
 #endif
-    switch (label) {
+    switch (invLabel) {
     case ARMPDClean_Data:
     case ARMPageClean_Data:
         cleanCacheRange_RAM(start, end, pstart);
@@ -2704,7 +2704,7 @@ doFlush(int label, vptr_t start, vptr_t end, paddr_t pstart)
 }
 
 static exception_t
-performPageFlush(int label, pde_t *pd, asid_t asid, vptr_t start,
+performPageFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
                  vptr_t end, paddr_t pstart)
 {
     bool_t root_switched;
@@ -2713,7 +2713,7 @@ performPageFlush(int label, pde_t *pd, asid_t asid, vptr_t start,
     if (start < end) {
         root_switched = setVMRootForFlush(pd, asid);
 
-        doFlush(label, start, end, pstart);
+        doFlush(invLabel, start, end, pstart);
 
         if (root_switched) {
             setVMRoot(ksCurThread);
@@ -2724,7 +2724,7 @@ performPageFlush(int label, pde_t *pd, asid_t asid, vptr_t start,
 }
 
 static exception_t
-performPDFlush(int label, pde_t *pd, asid_t asid, vptr_t start,
+performPDFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
                vptr_t end, paddr_t pstart)
 {
     bool_t root_switched;
@@ -2733,7 +2733,7 @@ performPDFlush(int label, pde_t *pd, asid_t asid, vptr_t start,
     if (start < end) {
         root_switched = setVMRootForFlush(pd, asid);
 
-        doFlush(label, start, end, pstart);
+        doFlush(invLabel, start, end, pstart);
 
         if (root_switched) {
             setVMRoot(ksCurThread);

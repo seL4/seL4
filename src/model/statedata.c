@@ -8,6 +8,8 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
+#include <api/debug.h>
 #include <types.h>
 #include <plat/machine.h>
 #include <model/statedata.h>
@@ -46,5 +48,8 @@ dom_t ksCurDomain;
 word_t ksDomainTime;
 
 /* An index into ksDomSchedule for active domain and length. */
-uint32_t ksDomScheduleIdx;
+word_t ksDomScheduleIdx;
 
+#ifdef DEBUG
+debug_entry_t ksKernelEntry;
+#endif /* DEBUG */

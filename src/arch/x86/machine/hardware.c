@@ -21,19 +21,21 @@
 BOOT_CODE void
 init_sysenter_msrs(void)
 {
-    ia32_wrmsr(IA32_SYSENTER_CS_MSR,  0, (uint32_t)SEL_CS_0);
-    ia32_wrmsr(IA32_SYSENTER_EIP_MSR, 0, (uint32_t)&handle_syscall);
-    ia32_wrmsr(IA32_SYSENTER_ESP_MSR, 0, (uint32_t)&ia32KStss.words[1]);
+    x86_wrmsr(IA32_SYSENTER_CS_MSR,  (uint64_t)(word_t)SEL_CS_0);
+    x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
+    /* manually add 4 bytes to x86KStss so that it is valid for both
+     * 32-bit and 64-bit */
+    x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&x86KStss.words[0] + 4));
 }
 
 word_t PURE getRestartPC(tcb_t *thread)
 {
-    return getRegister(thread, FaultEIP);
+    return getRegister(thread, FaultIP);
 }
 
 void setNextPC(tcb_t *thread, word_t v)
 {
-    setRegister(thread, NextEIP, v);
+    setRegister(thread, NextIP, v);
 }
 
 /* Returns the size of CPU's cacheline */
@@ -68,19 +70,19 @@ getCacheLineSizeBits(void)
 
 void flushCacheRange(void* vaddr, uint32_t size_bits)
 {
-    uint32_t v;
+    word_t v;
 
     assert(size_bits < WORD_BITS);
-    assert(IS_ALIGNED((uint32_t)vaddr, size_bits));
+    assert(IS_ALIGNED((word_t)vaddr, size_bits));
 
-    ia32_mfence();
+    x86_mfence();
 
-    for (v = ROUND_DOWN((uint32_t)vaddr, ia32KScacheLineSizeBits);
-            v < (uint32_t)vaddr + BIT(size_bits);
-            v += BIT(ia32KScacheLineSizeBits)) {
+    for (v = ROUND_DOWN((word_t)vaddr, x86KScacheLineSizeBits);
+            v < (word_t)vaddr + BIT(size_bits);
+            v += BIT(x86KScacheLineSizeBits)) {
         flushCacheLine((void*)v);
     }
-    ia32_mfence();
+    x86_mfence();
 }
 
 /* Disables as many prefetchers as possible */
@@ -89,31 +91,31 @@ disablePrefetchers()
 {
     uint32_t version_info;
     uint32_t low, high;
-    int i;
+    word_t i;
 
     uint32_t valid_models[] = { BROADWELL_MODEL_ID, HASWELL_MODEL_ID, IVY_BRIDGE_MODEL_ID,
                                 SANDY_BRIDGE_1_MODEL_ID, SANDY_BRIDGE_2_MODEL_ID, WESTMERE_1_MODEL_ID, WESTMERE_2_MODEL_ID,
                                 WESTMERE_3_MODEL_ID, NEHALEM_1_MODEL_ID, NEHALEM_2_MODEL_ID, NEHALEM_3_MODEL_ID
                               };
 
-    version_info = ia32_cpuid_eax(0x1, 0x0);
+    version_info = x86_cpuid_eax(0x1, 0x0);
 
-    for (i = 0; i < ARRAY_SIZE(valid_models); ++i) {
+    for (i = 0; i < ARRAY_SIZE(valid_models); i++) {
         if (MODEL_ID(version_info) == valid_models[i]) {
-            low = ia32_rdmsr_low(IA32_PREFETCHER_MSR);
-            high = ia32_rdmsr_high(IA32_PREFETCHER_MSR);
+            low = x86_rdmsr_low(IA32_PREFETCHER_MSR);
+            high = x86_rdmsr_high(IA32_PREFETCHER_MSR);
 
             low |= IA32_PREFETCHER_MSR_L2;
             low |= IA32_PREFETCHER_MSR_L2_ADJACENT;
             low |= IA32_PREFETCHER_MSR_DCU;
             low |= IA32_PREFETCHER_MSR_DCU_IP;
 
-            ia32_wrmsr(IA32_PREFETCHER_MSR, high, low);
+            x86_wrmsr(IA32_PREFETCHER_MSR, ((uint64_t)high) << 32 | low);
 
             return true;
         }
     }
 
-    printf("Disabling prefetchers not implemented for CPU model: %lx\n", MODEL_ID(version_info));
+    printf("Disabling prefetchers not implemented for CPU model: %x\n", MODEL_ID(version_info));
     return false;
 }

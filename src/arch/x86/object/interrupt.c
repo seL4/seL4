@@ -13,7 +13,9 @@
 #include <arch/object/interrupt.h>
 #include <arch/linker.h>
 
-exception_t Arch_decodeInterruptControl(unsigned int length, extra_caps_t extraCaps)
+exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
+                                            cte_t *srcSlot, extra_caps_t excaps,
+                                            word_t *buffer)
 {
     current_syscall_error.type = seL4_IllegalOperation;
     return EXCEPTION_SYSCALL_ERROR;

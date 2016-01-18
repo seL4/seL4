@@ -11,6 +11,7 @@
 #ifndef __ARCH_MACHINE_H
 #define __ARCH_MACHINE_H
 
+#include <mode/machine.h>
 #include <arch/types.h>
 #include <arch/object/structures.h>
 #include <arch/machine/hardware.h>
@@ -18,8 +19,6 @@
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/statedata.h>
 
-#define wordRadix 5
-#define wordBits (1 << wordRadix)
 
 #define IA32_APIC_BASE_MSR      0x01B
 #define IA32_SYSENTER_CS_MSR    0x174
@@ -52,25 +51,6 @@
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
 
-/* Address space control */
-static inline paddr_t getCurrentPD(void)
-{
-    return ia32KSCurrentPD;
-}
-
-static inline void setCurrentPD(paddr_t addr)
-{
-    ia32KSCurrentPD = addr;
-    write_cr3(addr);
-}
-
-/* TLB control */
-static inline void invalidateTLB(void)
-{
-    /* rewrite the current page directory */
-    write_cr3(ia32KSCurrentPD);
-}
-
 static inline void invalidateTLBentry(vptr_t vptr)
 {
     asm volatile("invlpg (%[vptr])" :: [vptr] "r"(vptr));
@@ -83,76 +63,36 @@ static inline void invalidatePageStructureCache(void)
     invalidateTLBentry(0);
 }
 
-/* Flushes entire CPU Cache */
-static inline void ia32_wbinvd(void)
+static uint64_t x86_rdmsr(const uint32_t reg)
 {
-    asm volatile("wbinvd" ::: "memory");
-}
-
-/* GDT installation */
-void ia32_install_gdt(gdt_idt_ptr_t* gdt_idt_ptr);
-
-/* IDT installation */
-void ia32_install_idt(gdt_idt_ptr_t* gdt_idt_ptr);
-
-/* LDT installation */
-void ia32_install_ldt(uint32_t ldt_sel);
-
-/* TSS installation */
-void ia32_install_tss(uint32_t tss_sel);
-
-/* Get page fault address from CR2 register */
-static inline uint32_t getFaultAddr(void)
-{
-    return read_cr2();
-}
-
-/* Get current stack pointer */
-static inline void* get_current_esp(void)
-{
-    uint32_t stack;
-    void *result;
-    asm volatile("movl %[stack_address], %[result]" : [result] "=r"(result) : [stack_address] "r"(&stack));
-    return result;
-}
-
-/* Cleaning memory before user-level access */
-static inline void clearMemory(void* ptr, unsigned int bits)
-{
-    memzero(ptr, BIT(bits));
-    /* no cleaning of caches necessary on IA-32 */
-}
-
-/* Initialises MSRs required to setup sysenter and sysexit */
-void init_sysenter_msrs(void);
-
-static uint64_t ia32_rdmsr(const uint32_t reg)
-{
+    uint32_t low, high;
     uint64_t value;
-    asm volatile("rdmsr" : "=A"(value) : "c"(reg));
+    asm volatile("rdmsr" : "=a"(low), "=d"(high) : "c"(reg));
+    value = ((uint64_t)high << 32) | (uint64_t)low;
     return value;
 }
 
 /* Read model specific register */
-static inline uint32_t ia32_rdmsr_low(const uint32_t reg)
+static inline uint32_t x86_rdmsr_low(const uint32_t reg)
 {
-    return (uint32_t)ia32_rdmsr(reg);
+    return (uint32_t)x86_rdmsr(reg);
 }
 
-static inline uint32_t ia32_rdmsr_high(const uint32_t reg)
+static inline uint32_t x86_rdmsr_high(const uint32_t reg)
 {
-    return (uint32_t)(ia32_rdmsr(reg) >> 32ull);
+    return (uint32_t)(x86_rdmsr(reg) >> 32ull);
 }
 
 /* Write model specific register */
-static inline void ia32_wrmsr(const uint32_t reg, const uint32_t val_high, const uint32_t val_low)
+static inline void x86_wrmsr(const uint32_t reg, const uint64_t val)
 {
-    uint64_t val = ((uint64_t)val_high << 32ull) | (uint64_t)val_low;
-    asm volatile("wrmsr" :: "A"(val), "c"(reg));
+    uint32_t low = (uint32_t)val;
+    uint32_t high = (uint32_t)(val >> 32);
+    asm volatile("wrmsr" :: "a"(low), "d"(high), "c"(reg));
 }
 
 /* Read different parts of CPUID */
-static inline uint32_t ia32_cpuid_edx(uint32_t eax, uint32_t ecx)
+static inline uint32_t x86_cpuid_edx(uint32_t eax, uint32_t ecx)
 {
     uint32_t edx, ebx;
     asm volatile("cpuid"
@@ -165,7 +105,7 @@ static inline uint32_t ia32_cpuid_edx(uint32_t eax, uint32_t ecx)
     return edx;
 }
 
-static inline uint32_t ia32_cpuid_eax(uint32_t eax, uint32_t ecx)
+static inline uint32_t x86_cpuid_eax(uint32_t eax, uint32_t ecx)
 {
     uint32_t edx, ebx;
     asm volatile("cpuid"
@@ -178,10 +118,26 @@ static inline uint32_t ia32_cpuid_eax(uint32_t eax, uint32_t ecx)
     return eax;
 }
 
+/* Cleaning memory before user-level access */
+static inline void clearMemory(void* ptr, unsigned int bits)
+{
+    memzero(ptr, BIT(bits));
+    /* no cleaning of caches necessary on IA-32 */
+}
+
+/* Initialises MSRs required to setup sysenter and sysexit */
+void init_sysenter_msrs(void);
+
 /* Read/write memory fence */
-static inline void ia32_mfence(void)
+static inline void x86_mfence(void)
 {
     asm volatile("mfence" ::: "memory");
+}
+
+/* Get page fault address from CR2 register */
+static inline unsigned long getFaultAddr(void)
+{
+    return read_cr2();
 }
 
 /* sysenter entry point */

@@ -109,8 +109,8 @@ There are five ARM-specific object types; however, only four of them may be invo
 
 The ARM platform presently does not require any additional interrupt control calls.
 
-> data InterruptControl
-> instance Show InterruptControl
+> data IRQControlInvocation
+> instance Show IRQControlInvocation
 >     where show _ = "Uninhabited type: InterruptControl"
 
 \subsection{Additional Register Subsets}

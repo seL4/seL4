@@ -14,6 +14,6 @@
 #include <arch/linker.h>
 
 /* global spinlocks */
-lock_t lock_debug DATA_GLOB;
+lock_t lock_debug;
 
 #endif /* DEBUG */

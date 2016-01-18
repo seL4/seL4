@@ -569,7 +569,7 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 {
     word_t objectSize;
     void *nextFreeArea;
-    unsigned int i;
+    word_t i;
     word_t totalObjectSize UNUSED;
 
     /* ghost check that we're visiting less bytes than the max object size */
@@ -593,14 +593,14 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 }
 
 exception_t
-decodeInvocation(word_t label, unsigned int length,
+decodeInvocation(word_t invLabel, word_t length,
                  cptr_t capIndex, cte_t *slot, cap_t cap,
-                 extra_caps_t extraCaps, bool_t block, bool_t call,
+                 extra_caps_t excaps, bool_t block, bool_t call,
                  word_t *buffer)
 {
     if (isArchCap(cap)) {
-        return Arch_decodeInvocation(label, length, capIndex,
-                                     slot, cap, extraCaps, buffer);
+        return Arch_decodeInvocation(invLabel, length, capIndex,
+                                     slot, cap, excaps, buffer);
     }
 
     switch (cap_get_capType(cap)) {
@@ -660,26 +660,26 @@ decodeInvocation(word_t label, unsigned int length,
                    TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot);
 
     case cap_thread_cap:
-        return decodeTCBInvocation(label, length, cap,
-                                   slot, extraCaps, call, buffer);
+        return decodeTCBInvocation(invLabel, length, cap,
+                                   slot, excaps, call, buffer);
 
     case cap_domain_cap:
-        return decodeDomainInvocation(label, length, extraCaps, buffer);
+        return decodeDomainInvocation(invLabel, length, excaps, buffer);
 
     case cap_cnode_cap:
-        return decodeCNodeInvocation(label, length, cap, extraCaps, buffer);
+        return decodeCNodeInvocation(invLabel, length, cap, excaps, buffer);
 
     case cap_untyped_cap:
-        return decodeUntypedInvocation(label, length, slot, cap, extraCaps,
+        return decodeUntypedInvocation(invLabel, length, slot, cap, excaps,
                                        call, buffer);
 
     case cap_irq_control_cap:
-        return decodeIRQControlInvocation(label, length, slot,
-                                          extraCaps, buffer);
+        return decodeIRQControlInvocation(invLabel, length, slot,
+                                          excaps, buffer);
 
     case cap_irq_handler_cap:
-        return decodeIRQHandlerInvocation(label, length,
-                                          cap_irq_handler_cap_get_capIRQ(cap), extraCaps, buffer);
+        return decodeIRQHandlerInvocation(invLabel, length,
+                                          cap_irq_handler_cap_get_capIRQ(cap), excaps, buffer);
 
     default:
         fail("Invalid cap type");

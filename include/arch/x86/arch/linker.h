@@ -23,12 +23,6 @@
 #define BOOT_CODE SECTION(".boot.text")
 
 /* node-local data that is only used during kernel bootstrapping */
-#define BOOT_DATA SECTION(".boot.node")
-
-/* global data (shared by all nodes) but only used during kernel bootstrapping */
-#define BOOT_DATA_GLOB SECTION(".boot.glob")
-
-/* global data (shared by all nodes) */
-#define DATA_GLOB SECTION(".glob")
+#define BOOT_DATA SECTION(".boot.data")
 
 #endif

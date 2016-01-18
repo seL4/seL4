@@ -44,16 +44,23 @@ uint32_t acpi_madt_scan(
     paddr_t*     ioapic_addrs
 );
 
-#ifdef CONFIG_IOMMU
+typedef struct acpi_rmrr_entry {
+    dev_id_t device;
+    uint32_t base;
+    uint32_t limit;
+} acpi_rmrr_entry_t;
+
+typedef struct acpi_rmrr_list {
+    acpi_rmrr_entry_t entries[CONFIG_MAX_RMRR_ENTRIES];
+    int num;
+} acpi_rmrr_list_t;
+
 void acpi_dmar_scan(
     acpi_rsdt_t* acpi_rsdt,
     paddr_t*     drhu_list,
     uint32_t*    num_drhu,
     uint32_t     max_dhru_list_len,
-    dev_id_t*    passthrough_dev_list,
-    uint32_t*    num_passthrough_dev,
-    uint32_t     max_passthrough_dev_list_len
+    acpi_rmrr_list_t *rmrr_list
 );
-#endif
 
 #endif

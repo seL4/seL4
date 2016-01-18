@@ -77,7 +77,7 @@ pde_pde_large_ptr_new_phys(pde_t *pde_ptr, uint32_t page_base_address,
 PHYS_CODE VISIBLE void
 init_boot_pd(void)
 {
-    unsigned int i;
+    word_t i;
 
     /* first map in all the pds into the pdpt */
     for (i = 0; i < BIT(PDPT_BITS); i++) {
@@ -93,10 +93,10 @@ init_boot_pd(void)
     }
 
     /* identity mapping from 0 up to PPTR_BASE (virtual address) */
-    for (i = 0; (i << IA32_2M_bits) < PPTR_BASE; i++) {
+    for (i = 0; (i << X86_2M_bits) < PPTR_BASE; i++) {
         pde_pde_large_ptr_new_phys(
             _boot_pds + i,
-            i << IA32_2M_bits, /* physical address */
+            i << X86_2M_bits, /* physical address */
             0, /* pat            */
             0, /* avl            */
             1, /* global         */
@@ -111,10 +111,10 @@ init_boot_pd(void)
     }
 
     /* mapping of PPTR_BASE (virtual address) to PADDR_BASE up to end of virtual address space */
-    for (i = 0; (i << IA32_2M_bits) < -PPTR_BASE; i++) {
+    for (i = 0; (i << X86_2M_bits) < -PPTR_BASE; i++) {
         pde_pde_large_ptr_new_phys(
-            _boot_pds + i + (PPTR_BASE >> IA32_2M_bits),
-            (i << IA32_2M_bits) + PADDR_BASE, /* physical address */
+            _boot_pds + i + (PPTR_BASE >> X86_2M_bits),
+            (i << X86_2M_bits) + PADDR_BASE, /* physical address */
             0, /* pat            */
             0, /* avl            */
             1, /* global         */
@@ -139,14 +139,14 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
     vptr_t vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
 
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
-    pdpt += (vptr >> IA32_1G_bits);
+    pdpt += (vptr >> X86_1G_bits);
     assert(pdpte_ptr_get_present(pdpt));
     pd = paddr_to_pptr(pdpte_ptr_get_pd_base_address(pdpt));
-    pd += ( (vptr & MASK(IA32_1G_bits)) >> IA32_2M_bits);
+    pd += ( (vptr & MASK(X86_1G_bits)) >> X86_2M_bits);
     assert(pde_pde_small_ptr_get_present(pd));
     pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
     pte_ptr_new(
-        pt + ((vptr & MASK(IA32_2M_bits)) >> IA32_4K_bits),
+        pt + ((vptr & MASK(X86_2M_bits)) >> X86_4K_bits),
         pptr_to_paddr(frame),
         0, /* avl */
         0, /* global */
@@ -171,11 +171,11 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
-    pdpt += (vptr >> IA32_1G_bits);
+    pdpt += (vptr >> X86_1G_bits);
     assert(pdpte_ptr_get_present(pdpt));
     pd = paddr_to_pptr(pdpte_ptr_get_pd_base_address(pdpt));
     pde_pde_small_ptr_new(
-        pd + (vptr >> IA32_2M_bits),
+        pd + (vptr >> X86_2M_bits),
         pptr_to_paddr(pt),
         0, /* avl*/
         0, /* accessed */
@@ -197,7 +197,7 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 
     assert(cap_page_directory_cap_get_capPDIsMapped(pd_cap));
     pdpte_ptr_new(
-        pdpt + (vptr >> IA32_1G_bits),
+        pdpt + (vptr >> X86_1G_bits),
         pptr_to_paddr(pd),
         0, /* avl */
         0, /* cache_disabled */
@@ -209,13 +209,13 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-void copyGlobalMappings(void* new_vspace)
+void copyGlobalMappings(vspace_root_t* new_vspace)
 {
-    unsigned int i;
+    word_t i;
     pdpte_t *pdpt = (pdpte_t*)new_vspace;
 
-    for (i = PPTR_BASE >> IA32_1G_bits; i < BIT(PDPT_BITS); i++) {
-        pdpt[i] = ia32KSkernelPDPT[i];
+    for (i = PPTR_BASE >> X86_1G_bits; i < BIT(PDPT_BITS); i++) {
+        pdpt[i] = ia32KSGlobalPDPT[i];
     }
 }
 
@@ -233,12 +233,7 @@ bool_t CONST isValidNativeRoot(cap_t cap)
     return true;
 }
 
-bool_t CONST isValidVTableRoot(cap_t cap)
-{
-    return isValidNativeRoot(cap);
-}
-
-void *getValidNativeRoot(cap_t vspace_cap)
+vspace_root_t *getValidNativeRoot(cap_t vspace_cap)
 {
     if (isValidNativeRoot(vspace_cap)) {
         return PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vspace_cap));
@@ -246,13 +241,13 @@ void *getValidNativeRoot(cap_t vspace_cap)
     return NULL;
 }
 
-static inline pdpte_t *lookupPDPTSlot(void *vspace, vptr_t vptr)
+static inline pdpte_t *lookupPDPTSlot(vspace_root_t *vspace, vptr_t vptr)
 {
     pdpte_t *pdpt = PDPT_PTR(vspace);
-    return pdpt + (vptr >> IA32_1G_bits);
+    return pdpt + (vptr >> X86_1G_bits);
 }
 
-lookupPDSlot_ret_t lookupPDSlot(void *vspace, vptr_t vptr)
+lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
 {
     pdpte_t *pdptSlot;
     lookupPDSlot_ret_t ret;
@@ -300,6 +295,11 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
     }
 
     pdptSlot = lookupPDPTSlot(find_ret.vspace_root, vaddr);
+    /* check if the PDPT has the PD */
+    if (! (pdpte_ptr_get_present(pdptSlot) &&
+            (pdpte_ptr_get_pd_base_address(pdptSlot) == pptr_to_paddr(pd)))) {
+        return;
+    }
 
     *pdptSlot = pdpte_new(
                     0,  /* pd_base_address  */
@@ -310,7 +310,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
                 );
     /* check if page directory belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
+    if (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
         /* according to the intel manual if we modify a pdpt we must
          * reload cr3 */
         write_cr3(read_cr3());
@@ -320,11 +320,11 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 
 exception_t
 decodeIA32PageDirectoryInvocation(
-    word_t label,
-    unsigned int length,
+    word_t invLabel,
+    word_t length,
     cte_t* cte,
     cap_t cap,
-    extra_caps_t extraCaps,
+    extra_caps_t excaps,
     word_t* buffer
 )
 {
@@ -332,13 +332,13 @@ decodeIA32PageDirectoryInvocation(
     vm_attributes_t attr;
     pdpte_t*        pdptSlot;
     cap_t           vspaceCap;
-    void*           vspace;
+    vspace_root_t*  vspace;
     pdpte_t         pdpte;
     paddr_t         paddr;
     asid_t          asid;
     cap_t           threadRoot;
 
-    if (label == IA32PageDirectoryUnmap) {
+    if (invLabel == IA32PageDirectoryUnmap) {
         if (!isFinalCapability(cte)) {
             current_syscall_error.type = seL4_RevokeFirst;
             userError("IA32PageDirectory: Cannot unmap if more than one cap exists.");
@@ -360,13 +360,13 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (label != IA32PageDirectoryMap) {
+    if (invLabel != IA32PageDirectoryMap) {
         userError("IA32PageDirectory: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < 2 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 2 || excaps.excaprefs[0] == NULL) {
         userError("IA32PageDirectory: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -379,9 +379,9 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vaddr = getSyscallArg(0, buffer) & (~MASK(IA32_1G_bits));
+    vaddr = getSyscallArg(0, buffer) & (~MASK(X86_1G_bits));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    vspaceCap = extraCaps.excaprefs[0]->cap;
+    vspaceCap = excaps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(vspaceCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -389,7 +389,7 @@ decodeIA32PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vspace = (void*)pptr_of_cap(vspaceCap);
+    vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
     asid = cap_get_capMappedASID(vspaceCap);
 
     if (vaddr >= PPTR_USER_TOP) {
@@ -442,7 +442,7 @@ decodeIA32PageDirectoryInvocation(
     /* according to the intel manual if we modify a pdpt we must
      * reload cr3 */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == (void*)pptr_of_cap(vspaceCap)) {
+    if (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == (vspace_root_t*)pptr_of_cap(vspaceCap)) {
         write_cr3(read_cr3());
     }
 

@@ -54,7 +54,7 @@ tcbSchedEnqueue(tcb_t *tcb)
         tcb_queue_t queue;
         dom_t dom;
         prio_t prio;
-        unsigned int idx;
+        word_t idx;
 
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
@@ -85,7 +85,7 @@ tcbSchedAppend(tcb_t *tcb)
         tcb_queue_t queue;
         dom_t dom;
         prio_t prio;
-        unsigned int idx;
+        word_t idx;
 
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
@@ -116,7 +116,7 @@ tcbSchedDequeue(tcb_t *tcb)
         tcb_queue_t queue;
         dom_t dom;
         prio_t prio;
-        unsigned int idx;
+        word_t idx;
 
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
@@ -180,14 +180,14 @@ tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
 }
 
 cptr_t PURE
-getExtraCPtr(word_t *bufferPtr, unsigned int i)
+getExtraCPtr(word_t *bufferPtr, word_t i)
 {
     return (cptr_t)bufferPtr[seL4_MsgMaxLength + 2 + i];
 }
 
 void
 setExtraBadge(word_t *bufferPtr, word_t badge,
-              unsigned int i)
+              word_t i)
 {
     bufferPtr[seL4_MsgMaxLength + 2 + i] = badge;
 }
@@ -226,18 +226,18 @@ deleteCallerCap(tcb_t *receiver)
 extra_caps_t current_extra_caps;
 
 exception_t
-lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info)
+lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info)
 {
     lookupSlot_raw_ret_t lu_ret;
     cptr_t cptr;
-    unsigned int i, length;
+    word_t i, length;
 
     if (!bufferPtr) {
         current_extra_caps.excaprefs[0] = NULL;
         return EXCEPTION_NONE;
     }
 
-    length = message_info_get_msgExtraCaps(info);
+    length = seL4_MessageInfo_get_extraCaps(info);
 
     for (i = 0; i < length; i++) {
         cptr = getExtraCPtr(bufferPtr, i);
@@ -258,11 +258,11 @@ lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, message_info_t info)
 }
 
 /* Copy IPC MRs from one thread to another */
-unsigned int
+word_t
 copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
-        word_t *recvBuf, unsigned int n)
+        word_t *recvBuf, word_t n)
 {
-    unsigned int i;
+    word_t i;
 
     /* Copy inline words */
     for (i = 0; i < n && i < n_msgRegisters; i++) {
@@ -287,11 +287,11 @@ copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
  * functions directly.  This is a significant deviation from the Haskell
  * spec. */
 exception_t
-decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
-                    cte_t* slot, extra_caps_t extraCaps, bool_t call,
+decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
+                    cte_t* slot, extra_caps_t excaps, bool_t call,
                     word_t *buffer)
 {
-    switch (label) {
+    switch (invLabel) {
     case TCBReadRegisters:
         /* Second level of decoding */
         return decodeReadRegisters(cap, length, call, buffer);
@@ -300,7 +300,7 @@ decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
         return decodeWriteRegisters(cap, length, buffer);
 
     case TCBCopyRegisters:
-        return decodeCopyRegisters(cap, length, extraCaps, buffer);
+        return decodeCopyRegisters(cap, length, excaps, buffer);
 
     case TCBSuspend:
         /* Jump straight to the invoke */
@@ -314,19 +314,19 @@ decodeTCBInvocation(word_t label, unsigned int length, cap_t cap,
                    TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
 
     case TCBConfigure:
-        return decodeTCBConfigure(cap, length, slot, extraCaps, buffer);
+        return decodeTCBConfigure(cap, length, slot, excaps, buffer);
 
     case TCBSetPriority:
         return decodeSetPriority(cap, length, buffer);
 
     case TCBSetIPCBuffer:
-        return decodeSetIPCBuffer(cap, length, slot, extraCaps, buffer);
+        return decodeSetIPCBuffer(cap, length, slot, excaps, buffer);
 
     case TCBSetSpace:
-        return decodeSetSpace(cap, length, slot, extraCaps, buffer);
+        return decodeSetSpace(cap, length, slot, excaps, buffer);
 
     case TCBBindNotification:
-        return decodeBindNotification(cap, extraCaps);
+        return decodeBindNotification(cap, excaps);
 
     case TCBUnbindNotification:
         return decodeUnbindNotification(cap);
@@ -347,15 +347,15 @@ enum CopyRegistersFlags {
 };
 
 exception_t
-decodeCopyRegisters(cap_t cap, unsigned int length,
-                    extra_caps_t extraCaps, word_t *buffer)
+decodeCopyRegisters(cap_t cap, word_t length,
+                    extra_caps_t excaps, word_t *buffer)
 {
     word_t transferArch;
     tcb_t *srcTCB;
     cap_t source_cap;
     word_t flags;
 
-    if (length < 1 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 1 || excaps.excaprefs[0] == NULL) {
         userError("TCB CopyRegisters: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -365,7 +365,7 @@ decodeCopyRegisters(cap_t cap, unsigned int length,
 
     transferArch = Arch_decodeTransfer(flags >> 8);
 
-    source_cap = extraCaps.excaprefs[0]->cap;
+    source_cap = excaps.excaprefs[0]->cap;
 
     if (cap_get_capType(source_cap) == cap_thread_cap) {
         srcTCB = TCB_PTR(cap_thread_cap_get_capTCBPtr(source_cap));
@@ -392,7 +392,7 @@ enum ReadRegistersFlags {
 };
 
 exception_t
-decodeReadRegisters(cap_t cap, unsigned int length, bool_t call,
+decodeReadRegisters(cap_t cap, word_t length, bool_t call,
                     word_t *buffer)
 {
     word_t transferArch, flags, n;
@@ -438,7 +438,7 @@ enum WriteRegistersFlags {
 };
 
 exception_t
-decodeWriteRegisters(cap_t cap, unsigned int length, word_t *buffer)
+decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 {
     word_t flags, w;
     word_t transferArch;
@@ -479,14 +479,14 @@ decodeWriteRegisters(cap_t cap, unsigned int length, word_t *buffer)
  * specialisations of TCBConfigure. */
 
 exception_t
-decodeTCBConfigure(cap_t cap, unsigned int length, cte_t* slot,
+decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
                    extra_caps_t rootCaps, word_t *buffer)
 {
     cte_t *bufferSlot, *cRootSlot, *vRootSlot;
     cap_t bufferCap, cRootCap, vRootCap;
     deriveCap_ret_t dc_ret;
     cptr_t faultEP;
-    unsigned int prio;
+    word_t prio;
     word_t cRootData, vRootData, bufferAddr;
 
     if (length < 5 || rootCaps.excaprefs[0] == NULL
@@ -587,7 +587,7 @@ decodeTCBConfigure(cap_t cap, unsigned int length, cte_t* slot,
 }
 
 exception_t
-decodeSetPriority(cap_t cap, unsigned int length, word_t *buffer)
+decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
 {
     prio_t newPrio;
 
@@ -620,22 +620,22 @@ decodeSetPriority(cap_t cap, unsigned int length, word_t *buffer)
 }
 
 exception_t
-decodeSetIPCBuffer(cap_t cap, unsigned int length, cte_t* slot,
-                   extra_caps_t extraCaps, word_t *buffer)
+decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
+                   extra_caps_t excaps, word_t *buffer)
 {
     cptr_t cptr_bufferPtr;
     cap_t bufferCap;
     cte_t *bufferSlot;
 
-    if (length < 1 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 1 || excaps.excaprefs[0] == NULL) {
         userError("TCB SetIPCBuffer: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     cptr_bufferPtr  = getSyscallArg(0, buffer);
-    bufferSlot = extraCaps.excaprefs[0];
-    bufferCap  = extraCaps.excaprefs[0]->cap;
+    bufferSlot = excaps.excaprefs[0];
+    bufferCap  = excaps.excaprefs[0]->cap;
 
     if (cptr_bufferPtr == 0) {
         bufferSlot = NULL;
@@ -666,8 +666,8 @@ decodeSetIPCBuffer(cap_t cap, unsigned int length, cte_t* slot,
 }
 
 exception_t
-decodeSetSpace(cap_t cap, unsigned int length, cte_t* slot,
-               extra_caps_t extraCaps, word_t *buffer)
+decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
+               extra_caps_t excaps, word_t *buffer)
 {
     cptr_t faultEP;
     word_t cRootData, vRootData;
@@ -675,8 +675,8 @@ decodeSetSpace(cap_t cap, unsigned int length, cte_t* slot,
     cap_t cRootCap, vRootCap;
     deriveCap_ret_t dc_ret;
 
-    if (length < 3 || extraCaps.excaprefs[0] == NULL
-            || extraCaps.excaprefs[1] == NULL) {
+    if (length < 3 || excaps.excaprefs[0] == NULL
+            || excaps.excaprefs[1] == NULL) {
         userError("TCB SetSpace: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -686,10 +686,10 @@ decodeSetSpace(cap_t cap, unsigned int length, cte_t* slot,
     cRootData = getSyscallArg(1, buffer);
     vRootData = getSyscallArg(2, buffer);
 
-    cRootSlot  = extraCaps.excaprefs[0];
-    cRootCap   = extraCaps.excaprefs[0]->cap;
-    vRootSlot  = extraCaps.excaprefs[1];
-    vRootCap   = extraCaps.excaprefs[1]->cap;
+    cRootSlot  = excaps.excaprefs[0];
+    cRootCap   = excaps.excaprefs[0]->cap;
+    vRootSlot  = excaps.excaprefs[1];
+    vRootCap   = excaps.excaprefs[1]->cap;
 
     if (slotCapLongRunningDelete(
                 TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbCTable)) ||
@@ -743,12 +743,12 @@ decodeSetSpace(cap_t cap, unsigned int length, cte_t* slot,
 }
 
 exception_t
-decodeDomainInvocation(word_t label, unsigned int length, extra_caps_t extraCaps, word_t *buffer)
+decodeDomainInvocation(word_t invLabel, word_t length, extra_caps_t excaps, word_t *buffer)
 {
     word_t domain;
     cap_t tcap;
 
-    if (unlikely(label != DomainSetSet)) {
+    if (unlikely(invLabel != DomainSetSet)) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -768,13 +768,13 @@ decodeDomainInvocation(word_t label, unsigned int length, extra_caps_t extraCaps
         }
     }
 
-    if (unlikely(extraCaps.excaprefs[0] == NULL)) {
+    if (unlikely(excaps.excaprefs[0] == NULL)) {
         userError("Domain Configure: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    tcap = extraCaps.excaprefs[0]->cap;
+    tcap = excaps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(tcap) != cap_thread_cap)) {
         userError("Domain Configure: thread cap required.");
         current_syscall_error.type = seL4_InvalidArgument;
@@ -788,13 +788,13 @@ decodeDomainInvocation(word_t label, unsigned int length, extra_caps_t extraCaps
 }
 
 exception_t
-decodeBindNotification(cap_t cap, extra_caps_t extraCaps)
+decodeBindNotification(cap_t cap, extra_caps_t excaps)
 {
     notification_t *ntfnPtr;
     tcb_t *tcb;
     cap_t ntfn_cap;
 
-    if (extraCaps.excaprefs[0] == NULL) {
+    if (excaps.excaprefs[0] == NULL) {
         userError("TCB BindNotification: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -808,7 +808,7 @@ decodeBindNotification(cap_t cap, extra_caps_t extraCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    ntfn_cap = extraCaps.excaprefs[0]->cap;
+    ntfn_cap = excaps.excaprefs[0]->cap;
 
     if (cap_get_capType(ntfn_cap) == cap_notification_cap) {
         ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(ntfn_cap));
@@ -950,7 +950,7 @@ invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
     }
 
     if (transferFrame) {
-        unsigned int i;
+        word_t i;
         word_t v;
         word_t pc;
 
@@ -964,7 +964,7 @@ invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
     }
 
     if (transferInteger) {
-        unsigned int i;
+        word_t i;
         word_t v;
 
         for (i = 0; i < n_gpRegisters; i++) {
@@ -984,9 +984,9 @@ invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
  */
 exception_t
 invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
-                        unsigned int n, word_t arch, bool_t call)
+                        word_t n, word_t arch, bool_t call)
 {
-    unsigned int i, j;
+    word_t i, j;
     exception_t e;
     tcb_t *thread;
 
@@ -1036,7 +1036,7 @@ invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
         }
 
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                        message_info_new(0, 0, 0, i + j)));
+                        seL4_MessageInfo_new(0, 0, 0, i + j)));
     }
     setThreadState(thread, ThreadState_Running);
 
@@ -1045,9 +1045,9 @@ invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
 
 exception_t
 invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
-                         unsigned int n, word_t arch, word_t *buffer)
+                         word_t n, word_t arch, word_t *buffer)
 {
-    unsigned int i;
+    word_t i;
     word_t pc;
     exception_t e;
 

@@ -65,7 +65,7 @@ setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer, lookup_fault_t 
     }
 }
 
-unsigned int setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
+word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 {
     assert(n_msgRegisters == 2);
 
@@ -94,7 +94,7 @@ unsigned int setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuff
         return 4;
 
     case fault_unknown_syscall: {
-        unsigned int i;
+        word_t i;
 
         for (i = 0; i < n_msgRegisters; i++) {
             setRegister(receiver, msgRegisters[i],
@@ -115,7 +115,7 @@ unsigned int setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuff
     }
 
     case fault_user_exception: {
-        unsigned int i;
+        word_t i;
 
         for (i = 0; i < n_msgRegisters; i++) {
             setRegister(receiver, msgRegisters[i],
@@ -141,7 +141,7 @@ unsigned int setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuff
     }
 }
 
-unsigned int setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
+word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
 {
     assert(n_msgRegisters >= 2);
 

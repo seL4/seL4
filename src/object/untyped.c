@@ -23,14 +23,14 @@
 #include <util.h>
 
 static word_t
-alignUp(word_t baseValue, unsigned int alignment)
+alignUp(word_t baseValue, word_t alignment)
 {
     return (baseValue + (BIT(alignment) - 1)) & ~MASK(alignment);
 }
 
 exception_t
-decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
-                        cap_t cap, extra_caps_t extraCaps,
+decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
+                        cap_t cap, extra_caps_t excaps,
                         bool_t call, word_t *buffer)
 {
     word_t newType, userObjSize, nodeIndex;
@@ -40,20 +40,20 @@ decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
     cap_t nodeCap;
     lookupSlot_ret_t lu_ret;
     word_t nodeSize;
-    unsigned int i;
+    word_t i;
     slot_range_t slots;
     word_t freeRef, alignedFreeRef, objectSize, untypedFreeBytes;
     word_t freeIndex;
 
     /* Ensure operation is valid. */
-    if (label != UntypedRetype) {
+    if (invLabel != UntypedRetype) {
         userError("Untyped cap: Illegal operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     /* Ensure message length valid. */
-    if (length < 6 || extraCaps.excaprefs[0] == NULL) {
+    if (length < 6 || excaps.excaprefs[0] == NULL) {
         userError("Untyped invocation: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -67,7 +67,7 @@ decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
     nodeOffset  = getSyscallArg(4, buffer);
     nodeWindow  = getSyscallArg(5, buffer);
 
-    rootSlot = extraCaps.excaprefs[0];
+    rootSlot = excaps.excaprefs[0];
 
     /* Is the requested object type valid? */
     if (newType >= seL4_ObjectTypeCount) {
@@ -104,9 +104,9 @@ decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
 
     /* Lookup the destination CNode (where our caps will be placed in). */
     if (nodeDepth == 0) {
-        nodeCap = extraCaps.excaprefs[0]->cap;
+        nodeCap = excaps.excaprefs[0]->cap;
     } else {
-        cap_t rootCap = extraCaps.excaprefs[0]->cap;
+        cap_t rootCap = excaps.excaprefs[0]->cap;
         lu_ret = lookupTargetSlot(rootCap, nodeIndex, nodeDepth);
         if (lu_ret.status != EXCEPTION_NONE) {
             userError("Untyped Retype: Invalid destination address.");
@@ -196,10 +196,10 @@ decodeUntypedInvocation(word_t label, unsigned int length, cte_t *slot,
 
     if (objectSize >= wordBits || (untypedFreeBytes >> objectSize) < nodeWindow) {
         userError("Untyped Retype: Insufficient memory "
-                  "(%u * %u bytes needed, %u bytes available).",
-                  (unsigned int)nodeWindow,
+                  "(%lu * %u bytes needed, %lu bytes available).",
+                  (word_t)nodeWindow,
                   (objectSize >= wordBits ? -1 : (1 << objectSize)),
-                  (unsigned int)(untypedFreeBytes));
+                  (word_t)(untypedFreeBytes));
         current_syscall_error.type = seL4_NotEnoughMemory;
         current_syscall_error.memoryLeft = untypedFreeBytes;
         return EXCEPTION_SYSCALL_ERROR;

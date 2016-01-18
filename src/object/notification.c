@@ -75,7 +75,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
         ntfn_queue = ntfn_ptr_get_queue(ntfnPtr);
         dest = ntfn_queue.head;
 
-        /* Haskell error "WaitingNtfn N must have non-empty queue" */
+        /* Haskell error "WaitingNtfn Notification must have non-empty queue" */
         assert(dest);
 
         /* Dequeue TCB */
@@ -171,7 +171,7 @@ cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
 {
     tcb_queue_t ntfn_queue;
 
-    /* Haskell error "asyncIPCCancel: notification object must be in a waiting" state */
+    /* Haskell error "cancelSignal: notification object must be in a waiting" state */
     assert(notification_ptr_get_state(ntfnPtr) == NtfnState_Waiting);
 
     /* Dequeue TCB */

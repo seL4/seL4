@@ -35,10 +35,16 @@ handleInterruptEntry(void)
     irq_t irq;
 
     irq = getActiveIRQ();
+#ifdef DEBUG
+    ksKernelEntry.path = Debug_Interrupt;
+    ksKernelEntry.irq = irq;
+#endif /* DEBUG */
     if (irq != irqInvalid) {
         handleInterrupt(irq);
     } else {
+#ifdef CONFIG_IRQ_REPORTING
         printf("Spurious interrupt\n");
+#endif
         handleSpuriousIRQ();
     }
 
@@ -52,23 +58,26 @@ exception_t
 handleUnknownSyscall(word_t w)
 {
 #ifdef DEBUG
+    ksKernelEntry.path = Debug_UnknownSyscall;
+    ksKernelEntry.word = w;
+
     if (w == SysDebugPutChar) {
         kernel_putchar(getRegister(ksCurThread, capRegister));
         return EXCEPTION_NONE;
     }
     if (w == SysDebugHalt) {
-        printf("Debug halt syscall from user thread 0x%x\n", (unsigned int)ksCurThread);
+        printf("Debug halt syscall from user thread %p\n", ksCurThread);
         halt();
     }
     if (w == SysDebugSnapshot) {
-        printf("Debug snapshot syscall from user thread 0x%x\n", (unsigned int)ksCurThread);
+        printf("Debug snapshot syscall from user thread %p\n", ksCurThread);
         capDL();
         return EXCEPTION_NONE;
     }
     if (w == SysDebugCapIdentify) {
         word_t cptr = getRegister(ksCurThread, capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
-        uint32_t cap_type = cap_get_capType(lu_ret.cap);
+        word_t cap_type = cap_get_capType(lu_ret.cap);
         setRegister(ksCurThread, capRegister, cap_type);
         return EXCEPTION_NONE;
     }
@@ -79,7 +88,7 @@ handleUnknownSyscall(word_t w)
         word_t cptr = getRegister(ksCurThread, capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
         /* ensure we got a TCB cap */
-        uint32_t cap_type = cap_get_capType(lu_ret.cap);
+        word_t cap_type = cap_get_capType(lu_ret.cap);
         if (cap_type != cap_thread_cap) {
             userError("SysDebugNameThread: cap is not a TCB, halting");
             halt();
@@ -112,7 +121,7 @@ handleUnknownSyscall(word_t w)
         ksLogIndex = 0;
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkDumpLog) {
-        int i;
+        word_t i;
         word_t *buffer = lookupIPCBuffer(true, ksCurThread);
         word_t start = getRegister(ksCurThread, capRegister);
         word_t size = getRegister(ksCurThread, msgInfoRegister);
@@ -174,6 +183,12 @@ handleUnknownSyscall(word_t w)
 exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
+#ifdef DEBUG
+    ksKernelEntry.path = Debug_UserLevelFault;
+    ksKernelEntry.number = w_a;
+    ksKernelEntry.code = w_b;
+#endif /* DEBUG */
+
     current_fault = fault_user_exception_new(w_a, w_b);
     handleFault(ksCurThread);
 
@@ -187,6 +202,10 @@ exception_t
 handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     exception_t status;
+#ifdef DEBUG
+    ksKernelEntry.path = Debug_VMFault;
+    ksKernelEntry.fault_type = vm_faultType;
+#endif /* DEBUG */
 
     status = handleVMFault(ksCurThread, vm_faultType);
     if (status != EXCEPTION_NONE) {
@@ -203,7 +222,7 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 static exception_t
 handleInvocation(bool_t isCall, bool_t isBlocking)
 {
-    message_info_t info;
+    seL4_MessageInfo_t info;
     cptr_t cptr;
     lookupCapAndSlot_ret_t lu_ret;
     word_t *buffer;
@@ -219,8 +238,13 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     /* faulting section */
     lu_ret = lookupCapAndSlot(thread, cptr);
 
+#ifdef DEBUG
+    ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
+    ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
+#endif /* DEBUG */
+
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-        userError("Invocation of invalid cap #%d.", (int)cptr);
+        userError("Invocation of invalid cap #%lu.", cptr);
         current_fault = fault_cap_fault_new(cptr, false);
 
         if (isBlocking) {
@@ -243,11 +267,11 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     }
 
     /* Syscall error/Preemptible section */
-    length = message_info_get_msgLength(info);
+    length = seL4_MessageInfo_get_length(info);
     if (unlikely(length > n_msgRegisters && !buffer)) {
         length = n_msgRegisters;
     }
-    status = decodeInvocation(message_info_get_msgLabel(info), length,
+    status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
                               current_extra_caps, isBlocking, isCall,
                               buffer);
@@ -374,6 +398,11 @@ handleSyscall(syscall_t syscall)
 {
     exception_t ret;
     irq_t irq;
+
+#ifdef DEBUG
+    ksKernelEntry.path = Debug_Syscall;
+    ksKernelEntry.syscall_no = syscall;
+#endif /* DEBUG */
 
     switch (syscall) {
     case SysSend:
