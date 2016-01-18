@@ -13,7 +13,7 @@
 #include <arch/object/interrupt.h>
 #include <arch/linker.h>
 
-exception_t Arch_decodeIRQControlInvocation(word_t label, word_t length,
+exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                             cte_t *srcSlot, extra_caps_t excaps,
                                             word_t *buffer)
 {
