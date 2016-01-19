@@ -236,7 +236,7 @@ def InitTypes():
             CapType("seL4_ARM_PageDirectory"),
             CapType("seL4_ARM_ASIDControl"),
             CapType("seL4_ARM_ASIDPool"),
-        CapType("seL4_ARM_VCPU"),
+            CapType("seL4_ARM_VCPU"),
             StructType("seL4_UserContext", WORD_SIZE_BITS * 17),
         ],
 
@@ -668,6 +668,9 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
     Generate a header file containing system call stubs for seL4.
     """
     result = []
+
+    if arch == "arm_hyp":
+        arch = "arm"
 
     # Ensure architecture looks sane.
     if not arch in WORD_SIZE_BITS_ARCH.keys():

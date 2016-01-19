@@ -514,7 +514,7 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 {
 #ifdef ARM_HYP
     if (cap_get_capType(cap) == cap_vcpu_cap) {
-        return decodeARMVCPUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
 
     }
 #endif /* ARM_HYP */

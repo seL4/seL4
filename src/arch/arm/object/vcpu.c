@@ -338,7 +338,7 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
     case 0:
         break;
     default:
-        userError("VCPUWriteReg: Invalid field 0x%lx.", field);
+        userError("VCPUWriteReg: Invalid field 0x%lx.", (long)field);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
@@ -353,7 +353,7 @@ invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field)
     thread = ksCurThread;
     setRegister(thread, msgRegisters[0], readVCPUReg(vcpu, field));
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                    message_info_new(0, 0, 0, 1)));
+                    seL4_MessageInfo_new(0, 0, 0, 1)));
     setThreadState(thread, ThreadState_Running);
     return EXCEPTION_NONE;
 }
@@ -374,7 +374,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
     case 0:
         break;
     default:
-        userError("VCPUReadReg: Invalid field 0x%lx.", field);
+        userError("VCPUReadReg: Invalid field 0x%lx.", (long)field);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
