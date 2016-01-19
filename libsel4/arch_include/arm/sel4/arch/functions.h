@@ -12,10 +12,7 @@
 #define __LIBSEL4_ARCH_FUNCTIONS_H
 
 #include <sel4/types.h>
-
-enum {
-    seL4_GlobalsFrame = 0xffffc000,
-};
+#include <sel4/sel4_arch/functions.h>
 
 static inline seL4_IPCBuffer*
 seL4_GetIPCBuffer(void)
