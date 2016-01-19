@@ -21,6 +21,6 @@ block seL4_MessageInfo {
 
 block seL4_Prio {
     field prio     8
-    field max_prio 8
+    field mcp      8
     padding        16
 }

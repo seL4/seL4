@@ -120,20 +120,20 @@ This feature allows for event-driven periodic threads which are triggered by eve
 \label{sec:sched}
 
 seL4 uses a preemptive, tickless, scheduler with 256 priority levels (0 --- 255).
-Thread priority (structure \texttt{seL4\_Prio\_t}) consists of two values, priority and max-priority.
+Thread priority (structure \texttt{seL4\_Prio\_t}) consists of two values, priority and maximum controlled priority.
 Threads are only added to the scheduler if they are in a runnable state and have an active scheduling context.
 
 \subsection{Priorities}
 
 Scheduling contexts provide access to and an upper bound on exection CPU time, however when a thread executes is determined by thread priority.
 
-All threads have a max-priority and priority.
+All threads have a maximum controlled priority (MCP) and a priority, the latter being the effective priority of the thread.
 When a thread creates or modifies another thread, it can only set the
-other thread's priority and max-priority to be less than or equal to its own max-priority. Thread priority and max-priority can be
+other thread's priority and MCP to be less than or equal to its own MCP. Thread priority and MCP can be
 set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
-\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMaxPriority}{tcb_setmaxpriority} methods.
+\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMCPriority}{tcb_setmcpriority} methods.
 
-Consequently, access to CPU is a function of thread max-priorities, scheduling contexts and the \obj{SchedControl} capability.
+Consequently, access to CPU is a function of thread MCPs, scheduling contexts and the \obj{SchedControl} capability.
 The kernel will enforce that threads do not exceeed the budget in their scheduling context for any given period, and that the highest priority thread will always run, however it is up to the system designer to make sure the entire system is schedulable.
 
 \subsection{Exceptions}

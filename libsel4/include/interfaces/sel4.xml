@@ -56,7 +56,7 @@
 		<method id="TCBSetPriority" name="SetPriority">
 			<param dir="in" name="priority" type="seL4_Uint8"/>
         </method>
-        <method id="TCBSetMaxPriority" name="SetMaxPriority">
+        <method id="TCBSetMCPriority" name="SetMCPriority">
             <param dir="in" name="max_priority" type="seL4_Uint8"/>
         </method>
 		<method id="TCBSetIPCBuffer" name="SetIPCBuffer">

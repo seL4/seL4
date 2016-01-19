@@ -9,13 +9,13 @@
 %
 
 \apidoc
-{tcb_setmaxpriority}
-{TCB - Set Max Priority}
-{Change a thread's maximum priority}
-{static inline int seL4\_TCB\_SetMaxPriority }
+{tcb_setmcpriority}
+{TCB - Set Maximum Controlled Priority}
+{Change a thread's maximum controlled priority}
+{static inline int seL4\_TCB\_SetMCPriority }
 {
 \param{seL4\_TCB}{\_service}{\tcbcapdesc}
-\param{uint8\_t}{max\_prio}{\threadmaxpriodesc}
+\param{uint8\_t}{mcp}{\threadmaxpriodesc}
 }
 {\errorenumdesc}
 {See \autoref{sec:sched}}

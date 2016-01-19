@@ -58,7 +58,7 @@ exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeTCBConfigure(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t rootCaps, word_t *buffer);
 exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
-exception_t decodeSetMaxPriority(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,

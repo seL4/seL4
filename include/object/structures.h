@@ -216,8 +216,8 @@ struct tcb {
     /* Priority, 1 byte (packed to 4) */
     prio_t tcbPriority;
 
-    /* max priority, 1 byte (packed to 4) */
-    prio_t tcbMaxPriority;
+    /* maximum controlled priority, 1 byte (packed to 4) */
+    prio_t tcbMCP;
 
     /* sched context object for this tcb, 4 bytes */
     sched_context_t *tcbSchedContext;

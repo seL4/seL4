@@ -433,7 +433,7 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
     tcbSchedDequeue(tptr);
 
     tptr->tcbPriority = seL4_Prio_get_prio(new_prio);
-    tptr->tcbMaxPriority = seL4_Prio_get_max_prio(new_prio);
+    tptr->tcbMCP = seL4_Prio_get_mcp(new_prio);
 
     switch (thread_state_ptr_get_tsType(&tptr->tcbState)) {
     case ThreadState_BlockedOnReceive:
