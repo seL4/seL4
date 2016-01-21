@@ -145,7 +145,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *re
 
     if (likely(reply_sc != NULL && receiver->tcbSchedContext == NULL)) {
         /* return the scheduling context to the thread we borrowed it from */
-        donateSchedContext(receiver, reply_sc);
+        schedContext_donate(receiver, reply_sc);
         reply_sc->scReply = NULL;
 
         if (unlikely(sender->tcbSchedContext != NULL)) {
@@ -456,21 +456,6 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
         /* nothing to do - thread is inactive, idle or blocked on reply */
         break;
     }
-}
-
-void
-donateSchedContext(tcb_t *to, sched_context_t *sc)
-{
-    assert(to != NULL);
-    assert(sc != NULL);
-
-    if (sc->scTcb) {
-        /* thread must not be in the scheduling queue */
-        assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
-        sc->scTcb->tcbSchedContext = NULL;
-    }
-    sc->scTcb = to;
-    to->tcbSchedContext = sc;
 }
 
 static void

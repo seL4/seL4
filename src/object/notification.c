@@ -271,7 +271,7 @@ maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
         sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
         if (sc != NULL && sc->scTcb == NULL) {
             assert(sc->scTcb == NULL);
-            donateSchedContext(tcb, sc);
+            schedContext_donate(tcb, sc);
         }
     }
 }

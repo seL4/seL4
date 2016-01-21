@@ -90,7 +90,7 @@ sendIPC(bool_t blocking, bool_t do_call, bool_t canDonate, word_t badge,
         doIPCTransfer(thread, epptr, badge, canGrant, dest, diminish);
 
         if (canDonate && dest->tcbSchedContext == NULL) {
-            donateSchedContext(dest, ksCurSchedContext);
+            schedContext_donate(dest, ksCurSchedContext);
             donated = ksCurSchedContext;
         }
 
@@ -199,7 +199,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate)
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
             if (thread->tcbSchedContext == NULL && canDonate) {
-                donateSchedContext(thread, ksCurSchedContext);
+                schedContext_donate(thread, ksCurSchedContext);
                 donated = ksCurSchedContext;
             }
 

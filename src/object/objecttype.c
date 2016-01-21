@@ -136,7 +136,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
         sc = SC_PTR(cap_reply_cap_get_capSchedContext(cap));
         if (sc != NULL && sc->scReply != NULL) {
-            donateSchedContext(sc->scReply, sc);
+            schedContext_donate(sc->scReply, sc);
             sc->scReply = NULL;
         }
 

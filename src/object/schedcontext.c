@@ -156,12 +156,9 @@ decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
 }
 
 void
-schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
+schedContext_resume(sched_context_t *sc)
 {
-    tcb->tcbSchedContext = sc;
-    sc->scTcb = tcb;
-
-    if (isRunnable(tcb) && sc->scBudget > 0) {
+    if (isRunnable(sc->scTcb) && sc->scBudget > 0) {
         if (ready(sc)) {
             recharge(sc);
         }
@@ -169,9 +166,17 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
         if (sc->scRemaining < getKernelWcetTicks()) {
             postpone(sc);
         } else {
-            switchIfRequiredTo(tcb);
+            switchIfRequiredTo(sc->scTcb);
         }
     }
+}
+
+void
+schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
+{
+    tcb->tcbSchedContext = sc;
+    sc->scTcb = tcb;
+    schedContext_resume(sc);
 }
 
 void
@@ -208,5 +213,20 @@ schedContext_unbindNtfn(sched_context_t *sc)
         notification_ptr_set_ntfnSchedContext(sc->scNotification, SC_REF(0));
         sc->scNotification = NULL;
     }
+}
+
+void
+schedContext_donate(tcb_t *to, sched_context_t *sc)
+{
+    assert(to != NULL);
+    assert(sc != NULL);
+
+    if (sc->scTcb) {
+        /* thread must not be in the scheduling queue */
+        assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
+        sc->scTcb->tcbSchedContext = NULL;
+    }
+    sc->scTcb = to;
+    to->tcbSchedContext = sc;
 }
 

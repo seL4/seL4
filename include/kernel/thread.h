@@ -72,7 +72,6 @@ void chooseThread(void);
 void switchToThread(tcb_t *thread) VISIBLE;
 void switchToIdleThread(void);
 void switchSchedContext(void) VISIBLE;
-void donateSchedContext(tcb_t *target, sched_context_t *sc);
 void setPriority(tcb_t *tptr, seL4_Prio_t prio);
 void scheduleTCB(tcb_t *tptr);
 void attemptSwitchTo(tcb_t *tptr);
