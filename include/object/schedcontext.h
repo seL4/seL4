@@ -28,6 +28,7 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb);
 void schedContext_unbindTCB(sched_context_t *sc);
 void schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn);
 void schedContext_unbindNtfn(sched_context_t *sc);
+void schedContext_goHome(sched_context_t *sc);
 void schedContext_donate(tcb_t *to, sched_context_t *sc);
 void schedContext_resume(sched_context_t *sc);
 

@@ -192,7 +192,7 @@ vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* TCB: size 60 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 typedef struct sched_context sched_context_t;
 
 struct tcb {
@@ -219,8 +219,11 @@ struct tcb {
     /* maximum controlled priority, 1 byte (packed to 4) */
     prio_t tcbMCP;
 
-    /* sched context object for this tcb, 4 bytes */
+    /* sched context object that this tcb is running on, 4 bytes */
     sched_context_t *tcbSchedContext;
+
+    /* sched context object that this tcb is bound to, 4 bytes */
+    sched_context_t *tcbHomeSchedContext;
 
     /* userland virtual address of thread IPC buffer, 4 bytes */
     word_t tcbIPCBuffer;
@@ -239,7 +242,7 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
-/* sched context - 48 bytes */
+/* sched context - 52 bytes */
 struct sched_context {
     /* budget for this tcb -- remaining is refilled from this value */
     ticks_t scBudget;
@@ -262,6 +265,9 @@ struct sched_context {
      * to can get back to the original caller even if a different thread replies on
      * behalf of the caller or the reply cap is deleted */
     tcb_t *scReply;
+
+    /* thread that this scheduling context is bound to, but not neccesserily running on */
+    tcb_t *scHome;
 
     /* notification this scheduling context is optionally bound to */
     notification_t *scNotification;

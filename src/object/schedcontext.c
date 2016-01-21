@@ -176,6 +176,8 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 {
     tcb->tcbSchedContext = sc;
     sc->scTcb = tcb;
+    tcb->tcbHomeSchedContext = sc;
+    sc->scHome = tcb;
     schedContext_resume(sc);
 }
 
@@ -186,16 +188,24 @@ schedContext_unbindTCB(sched_context_t *sc)
      * it will get to run again when it receives a scheduling
      * context.
      */
-    if (sc && sc->scTcb) {
-        tcbSchedDequeue(sc->scTcb);
-        tcbReleaseRemove(sc->scTcb);
+    if (sc) {
+        if (sc->scTcb) {
+            tcbSchedDequeue(sc->scTcb);
+            tcbReleaseRemove(sc->scTcb);
 
-        if (sc->scTcb == ksCurThread) {
-            rescheduleRequired();
+            if (sc->scTcb == ksCurThread) {
+                rescheduleRequired();
+            }
+
+            sc->scTcb->tcbSchedContext = NULL;
+            sc->scTcb = NULL;
         }
 
-        sc->scTcb->tcbSchedContext = NULL;
-        sc->scTcb = NULL;
+        if (sc->scHome) {
+            sc->scHome->tcbHomeSchedContext = NULL;
+            sc->scHome = NULL;
+        }
+
     }
 }
 
@@ -212,6 +222,18 @@ schedContext_unbindNtfn(sched_context_t *sc)
     if (sc && sc->scNotification) {
         notification_ptr_set_ntfnSchedContext(sc->scNotification, SC_REF(0));
         sc->scNotification = NULL;
+    }
+}
+
+void
+schedContext_goHome(sched_context_t *sc)
+{
+    sc->scTcb->tcbSchedContext = NULL;
+
+    sc->scTcb = sc->scHome;
+    if (sc->scTcb) {
+        sc->scTcb->tcbSchedContext = sc;
+        schedContext_resume(sc);
     }
 }
 

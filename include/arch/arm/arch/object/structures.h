@@ -30,7 +30,7 @@ typedef struct arch_tcb {
 } arch_tcb_t;
 
 /* Ensure TCB size is sane. */
-#define EXPECTED_TCB_SIZE 136
+#define EXPECTED_TCB_SIZE 140
 
 enum vm_rights {
     VMNoAccess = 0,

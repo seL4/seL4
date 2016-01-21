@@ -178,6 +178,13 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
+
+            if (tcb->tcbSchedContext != NULL &&
+                    tcb->tcbSchedContext->scHome != NULL &&
+                    tcb->tcbSchedContext != tcb->tcbHomeSchedContext) {
+                schedContext_goHome(tcb->tcbSchedContext);
+            }
+
             schedContext_unbindTCB(tcb->tcbSchedContext);
             suspend(tcb);
 
