@@ -94,7 +94,7 @@ def parse_args():
             help='Name of xml file with invocation definitions', required=True)
     parser.add_argument('--dest', type=argparse.FileType('w'),
             help='Name of file to create', required=True)
-    parser.add_argument('--libsel4', action='store_true', 
+    parser.add_argument('--libsel4', action='store_true',
         help='Is this being generated for libsel4?')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--arch', action='store_true',
@@ -127,10 +127,10 @@ def generate(args, invocations):
         template = tempita.Template(ARCH_INVOCATION_TEMPLATE)
     elif args.sel4_arch:
         template = tempita.Template(SEL4_ARCH_INVOCATION_TEMPLATE)
-    else: 
+    else:
         template = tempita.Template(INVOCATION_TEMPLATE)
 
-    args.dest.write(template.substitute(header_title=header_title, 
+    args.dest.write(template.substitute(header_title=header_title,
         libsel4=args.libsel4,invocations=invocations,num_invocations=len(invocations)))
 
     args.dest.close()
@@ -141,5 +141,5 @@ if __name__ == "__main__":
     invocations = parse_xml(args.xml)
     args.xml.close()
 
-    generate(args, invocations) 
+    generate(args, invocations)
 
