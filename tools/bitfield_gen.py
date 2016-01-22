@@ -15,6 +15,7 @@
 ## including Isabelle/HOL specifications and correctness proofs.
 ##
 
+from __future__ import print_function
 import sys
 import os.path
 import optparse
@@ -99,9 +100,10 @@ def t_comment(t):
 t_ignore = ' \t'
 
 def t_error(t):
-    print >>sys.stderr, "%s: Unexpected character '%s'" % (sys.argv[0], t.value[0])
+    print("%s: Unexpected character '%s'" % (sys.argv[0], t.value[0]),
+            file=sys.stderr)
     if DEBUG:
-        print >>sys.stderr, 'Token: %s' % str(t)
+        print('Token: %s' % str(t), file=sys.stderr)
     sys.exit(1)
 
 def p_start(t):
@@ -202,7 +204,7 @@ def p_masks(t):
     t[0] = t[1] + [(t[3],t[4])]
 
 def p_error(t):
-    print >>sys.stderr, "Syntax error at token '%s'" % t.value
+    print("Syntax error at token '%s'" % t.value, file=sys.stderr)
     sys.exit(1)
 
 ### Templates
@@ -1165,8 +1167,8 @@ def emit_named(name, params, string):
     # params.names
 
      if(name in params.names):
-        print >>params.output, string
-        print >>params.output
+        print(string, file=params.output)
+        print(file=params.output)
 
 # This calculates substs for each proof, which is probably inefficient.  Meh
 def emit_named_ptr_proof(fn_name, params, name, type_map, toptps, prf_prefix, substs):
@@ -1279,30 +1281,31 @@ class TaggedUnion:
         output = params.output
 
         # Add fixed simp rule for struct
-        print >>output, "lemmas %(name)s_C_words_C_fl_simp[simp] = "\
+        print("lemmas %(name)s_C_words_C_fl_simp[simp] = "\
                         "%(name)s_C_words_C_fl[simplified]" % \
-                        {"name": self.name}
-        print >>output
+                        {"name": self.name}, file=output)
+        print(file=output)
 
         # Generate struct field pointer proofs
         substs = {"name": self.name,
                   "words": self.multiple}
 
-        print >>output, make_proof('words_NULL_proof',
-                                   substs, params.sorry)
-        print >>output
+        print(make_proof('words_NULL_proof',
+                                   substs, params.sorry), file=output)
+        print(file=output)
 
-        print >>output, make_proof('words_aligned_proof',
-                                   substs, params.sorry)
-        print >>output
+        print(make_proof('words_aligned_proof',
+                                   substs, params.sorry), file=output)
+        print(file=output)
 
-        print >>output, make_proof('words_ptr_safe_proof',
-                                   substs, params.sorry)
-        print >>output
+        print(make_proof('words_ptr_safe_proof',
+                                   substs, params.sorry), file=output)
+        print(file=output)
 
         # Generate struct lemmas
-        print >>output, struct_lemmas_template % {"name": self.name}
-        print >>output
+        print(struct_lemmas_template % {"name": self.name},
+        file=output)
+        print(file=output)
 
         # Generate get_tag specs
         substs = {"name": self.name,
@@ -1525,8 +1528,9 @@ class TaggedUnion:
                 constructor_exprs.append("%s %s_CL" % \
                     (gen_name(name, True), gen_name(name)))
 
-        print >>output, "datatype %s_CL =\n    %s\n" % \
-                        (self.name, '\n  | '.join(constructor_exprs))
+        print("datatype %s_CL =\n    %s\n" % \
+                        (self.name, '\n  | '.join(constructor_exprs)),
+                        file=output)
 
         # Generate get_tag definition
         subs = {"name":      self.name,
@@ -1545,8 +1549,8 @@ class TaggedUnion:
                        for template, width in zip(templates, self.widths)])
             + union_get_tag_def_footer_template % subs)
 
-        print >>output, fs
-        print >>output
+        print(fs, file=output)
+        print(file=output)
 
         # Generate get_tag_eq_x lemma
         templates = ([union_get_tag_eq_x_def_entry_template]
@@ -1563,8 +1567,8 @@ class TaggedUnion:
                        for template, width in zip(templates, self.widths)])
             + union_get_tag_eq_x_def_footer_template % subs)
 
-        print >>output, fs
-        print >>output
+        print(fs, file=output)
+        print(file=output)
 
         # Generate mask helper lemmas
 
@@ -1584,8 +1588,8 @@ class TaggedUnion:
                                for pw in part_widths])
                     + union_tag_mask_helpers_footer_template)
 
-                print >>output, fs
-                print >>output
+                print(fs, file=output)
+                print(file=output)
 
         # Generate lift definition
         collapse_proofs = ""
@@ -1639,12 +1643,13 @@ class TaggedUnion:
                            params.sorry)
             collapse_proofs += "\n\n"
 
-        print >>output, union_lift_def_template % \
+        print(union_lift_def_template % \
                         {"name": self.name, \
-                         "tag_cases": '\n     else '.join(tag_cases)}
-        print >>output
+                         "tag_cases": '\n     else '.join(tag_cases)},
+                        file=output)
+        print(file=output)
 
-        print >>output, collapse_proofs
+        print(collapse_proofs, file=output)
 
         block_lift_lemmas = "lemmas %s_lifts = \n" % self.name
         # Generate lifted access/update definitions, and abstract lifters
@@ -1657,41 +1662,43 @@ class TaggedUnion:
                       "generator": gen_name(name, True)}
 
             for t in [union_access_def_template, union_update_def_template]:
-                print >>output, t % substs
-                print >>output
+                print(t % substs, file=output)
+                print(file=output)
 
-            print >>output, block_lift_def_template % substs
-            print >>output
+            print(block_lift_def_template % substs, file=output)
+            print(file=output)
 
-            print >>output, block_lift_lemma_template % substs
-            print >>output
+            print(block_lift_lemma_template % substs, file=output)
+            print(file=output)
 
             block_lift_lemmas += "\t%(union)s_%(block)s_lift\n" % substs
 
-        print >>output, block_lift_lemmas
-        print >>output
+        print(block_lift_lemmas, file=output)
+        print(file=output)
 
     def generate(self, params):
         output = params.output
 
         # Generate typedef
-        print >>output, typedef_template % \
+        print(typedef_template % \
                         {"type": TYPES[options.environment][self.base], \
                          "name": self.name, \
-                         "multiple": self.multiple}
-        print >>output
+                         "multiple": self.multiple}, file=output)
+        print(file=output)
 
         # Generate tag enum
-        print >>output, "enum %s_tag {" % self.name
+        print("enum %s_tag {" % self.name, file=output)
         if len(self.tags) > 0:
             for name, value, ref in self.tags[:-1]:
-                print >>output, "    %s_%s = %d," % (self.name, name, value)
+                print("    %s_%s = %d," % (self.name, name, value),
+                file=output)
             name, value, ref = self.tags[-1];
-            print >>output, "    %s_%s = %d" % (self.name, name, value)
-        print >>output, "};"
-        print >>output, "typedef enum %s_tag %s_tag_t;" % \
-                        (self.name, self.name)
-        print >>output
+            print("    %s_%s = %d" % (self.name, name, value),
+            file=output)
+        print("};", file=output)
+        print("typedef enum %s_tag %s_tag_t;" % \
+                        (self.name, self.name), file=output)
+        print(file=output)
 
         subs = {\
             'union': self.name, \
@@ -2097,10 +2104,10 @@ class TaggedUnion:
             pre_mask = classes[w]
 
         if params.showclasses:
-            print >> sys.stderr, "-----%s.%s" % (self.name, self.tagname)
+            print("-----%s.%s" % (self.name, self.tagname), file=sys.stderr)
             for w in widths:
-                print >> sys.stderr, "{:2d} = {:s}".format(
-                                        w, self.represent_class(w))
+                print("{:2d} = {:s}".format( w, self.represent_class(w)),
+                        file=sys.stderr)
 
         self.widths = widths
 
@@ -2183,7 +2190,7 @@ class Block:
         word_updates = ""
 
         if not empty:
-            print >>output, out
+            print(out, file=output)
 
         # Generate lift definition
         if not in_union:
@@ -2216,10 +2223,11 @@ class Block:
 
                 field_inits.append(initialiser)
 
-            print >>output, lift_def_template % \
+            print(lift_def_template % \
                             {"name": self.name, \
-                             "fields": ',\n       '.join(field_inits)}
-            print >>output
+                             "fields": ',\n       '.join(field_inits)},
+                            file=output)
+            print(file=output)
 
         return empty
 
@@ -2229,30 +2237,31 @@ class Block:
         if self.tagged: return
 
         # Add fixed simp rule for struct
-        print >>output, "lemmas %(name)s_C_words_C_fl_simp[simp] = "\
+        print("lemmas %(name)s_C_words_C_fl_simp[simp] = "\
                         "%(name)s_C_words_C_fl[simplified]" % \
-                        {"name": self.name}
-        print >>output
+                        {"name": self.name}, file=output)
+        print(file=output)
 
         # Generate struct field pointer proofs
         substs = {"name": self.name,
                   "words": self.multiple}
 
-        print >>output, make_proof('words_NULL_proof',
-                                   substs, params.sorry)
-        print >>output
+        print(make_proof('words_NULL_proof',
+                                   substs, params.sorry), file=output)
+        print(file=output)
 
-        print >>output, make_proof('words_aligned_proof',
-                                   substs, params.sorry)
-        print >>output
+        print(make_proof('words_aligned_proof',
+                                   substs, params.sorry), file=output)
+        print(file=output)
 
-        print >>output, make_proof('words_ptr_safe_proof',
-                                   substs, params.sorry)
-        print >>output
+        print(make_proof('words_ptr_safe_proof',
+                                   substs, params.sorry), file=output)
+        print(file=output)
 
         # Generate struct lemmas
-        print >>output, struct_lemmas_template % {"name": self.name}
-        print >>output
+        print(struct_lemmas_template % {"name": self.name},
+        file=output)
+        print(file=output)
 
         # Generate struct_new specs
         arg_list = ["\<acute>" + field for
@@ -2367,11 +2376,11 @@ class Block:
         if self.tagged: return
 
         # Type definition
-        print >>output, typedef_template % \
+        print(typedef_template % \
                         {"type": TYPES[options.environment][self.base], \
                          "name": self.name, \
-                         "multiple": self.multiple}
-        print >>output
+                         "multiple": self.multiple}, file=output)
+        print(file=output)
 
         # Generator
         arg_list = ["%s %s" % (TYPES[options.environment][self.base], field) for \
@@ -2694,27 +2703,29 @@ if __name__ == '__main__':
     if options.hol_defs:
         # Fetch kernel
         if options.multifile_base is None:
-            print >>out_file, "theory %s_defs imports \"%s/KernelState_C\" begin" % (
+            print("theory %s_defs imports \"%s/KernelState_C\" begin" % (
                     module_name, os.path.relpath(options.cspec_dir,
-                        os.path.dirname(out_file.filename)))
-            print >>out_file
+                        os.path.dirname(out_file.filename))), file=out_file)
+            print(file=out_file)
 
-            print >>out_file, defs_global_lemmas
-            print >>out_file
+            print(defs_global_lemmas, file=out_file)
+            print(file=out_file)
 
             for e in blocks.values() + unions.values():
                 e.generate_hol_defs(options)
 
-            print >>out_file, "end"
+            print("end", file=out_file)
         else:
-            print >>out_file, "theory %s_defs imports" % module_name
-            print >>out_file, "\"%s/KernelState_C\"" % (
+            print("theory %s_defs imports" % module_name,
+            file=out_file)
+            print("\"%s/KernelState_C\"" % (
                     os.path.relpath(options.cspec_dir,
-                        os.path.dirname(out_file.filename)))
+                        os.path.dirname(out_file.filename))), file=out_file)
             for e in blocks.values() + unions.values():
-                print >>out_file, "  %s_%s_defs" % (module_name, e.name)
-            print >>out_file, "begin"
-            print >>out_file, "end"
+                print("  %s_%s_defs" % (module_name, e.name),
+                file=out_file)
+            print("begin", file=out_file)
+            print("end", file=out_file)
 
             for e in blocks.values() + unions.values():
                 base_filename = \
@@ -2724,15 +2735,16 @@ if __name__ == '__main__':
                 out_file = open_output(options.multifile_base + "_" +
                                 e.name + "_defs" + ".thy")
 
-                print >>out_file, "theory %s imports \"%s/KernelState_C\" begin" % (
+                print("theory %s imports \"%s/KernelState_C\" begin" % (
                         submodule_name, os.path.relpath(options.cspec_dir,
-                            os.path.dirname(out_file.filename)))
-                print >>out_file
+                            os.path.dirname(out_file.filename))),
+                        file=out_file)
+                print(file=out_file)
 
                 options.output = out_file
                 e.generate_hol_defs(options)
 
-                print >>out_file, "end"
+                print("end", file=out_file)
     elif options.hol_proofs:
         def is_bit_type(tp):
             return (umm.is_base(tp) & (umm.base_name(tp) in map(lambda e: e.name + '_C', blocks.values() + unions.values())))
@@ -2753,39 +2765,42 @@ if __name__ == '__main__':
                 type_map[tp] = (toptp, path)
 
         if options.multifile_base is None:
-            print >>out_file, \
+            print(\
                 "theory %s_proofs imports %s_defs \"%s/KernelState_C\" begin" % (
                     module_name, module_name,
                         os.path.relpath(options.cspec_dir,
-                            os.path.dirname(out_file.filename)))
-            print >>out_file
+                            os.path.dirname(out_file.filename))),
+                        file=out_file)
+            print(file=out_file)
 
             for toptp in options.toplevel_types:
-                print >>out_file, \
+                print(\
                     ('abbreviation\n\t"cslift_all_but_%s s t \<equiv> ' % toptp +
                      ('\n\t\t\<and> '.join([('(cslift s :: %s typ_heap) = cslift t' % x)
                                        for x in options.toplevel_types if x != toptp]))
-                     + '"')
-            print >>out_file
+                     + '"'), file=out_file)
+            print(file=out_file)
 
-            print >>out_file, global_lemmas
-            print >>out_file
+            print(global_lemmas, file=out_file)
+            print(file=out_file)
 
             for e in blocks.values() + unions.values():
                 e.generate_hol_proofs(options, type_map)
 
-            print >>out_file, "end"
+            print("end", file=out_file)
         else:
             # top types are broken here.
-            print >>out_file, "theory %s_proofs imports" % module_name
-            print >>out_file, "  \"%s/KernelState_C\"" % (
+            print("theory %s_proofs imports" % module_name, file=out_file)
+            print("  \"%s/KernelState_C\"" % (
                 os.path.relpath(options.cspec_dir,
-                    os.path.dirname(out_file.filename)))
+                    os.path.dirname(out_file.filename))),
+                file=out_file)
 
             for e in blocks.values() + unions.values():
-                print >>out_file, "  %s_%s_proofs" % (module_name, e.name)
-            print >>out_file, "begin"
-            print >>out_file, "end"
+                print("  %s_%s_proofs" % (module_name, e.name),
+                file=out_file)
+            print("begin", file=out_file)
+            print("end", file=out_file)
 
             for e in blocks.values() + unions.values():
                 base_filename = \
@@ -2795,30 +2810,31 @@ if __name__ == '__main__':
                 out_file = open_output(options.multifile_base + "_" +
                                 e.name + "_proofs" + ".thy")
 
-                print >>out_file, ("theory %s imports "
+                print(("theory %s imports "
                         + "%s_%s_defs \"%s/KernelState_C\" begin") % (
                             submodule_name, base_filename, e.name,
                                 os.path.relpath(options.cspec_dir,
-                                    os.path.dirname(out_file.filename)))
-                print >>out_file
+                                    os.path.dirname(out_file.filename))),
+                                file=out_file)
+                print(file=out_file)
 
-                print >>out_file, global_lemmas
-                print >>out_file
+                print(global_lemmas, file=out_file)
+                print(file=out_file)
 
                 options.output = out_file
                 e.generate_hol_proofs(options, type_map)
 
-                print >>out_file, "end"
+                print("end", file=out_file)
     elif options.autocorres_defs:
         bf_autocorres.generate_defs(symtab, out_file)
     elif options.autocorres_proofs:
         bf_autocorres.generate_proofs(symtab, out_file)
     else:
         guard = re.sub(r'[^a-zA-Z0-9_]', '_', out_file.filename.upper())
-        print >>out_file, "#ifndef %(guard)s\n#define %(guard)s\n" % \
-            {'guard':guard}
-        print >>out_file, '\n'.join(map(lambda x: '#include <%s>' % x,
-            INCLUDES[options.environment]))
+        print("#ifndef %(guard)s\n#define %(guard)s\n" % \
+            {'guard':guard}, file=out_file)
+        print('\n'.join(map(lambda x: '#include <%s>' % x,
+            INCLUDES[options.environment])), file=out_file)
         for e in blocks.values() + unions.values():
             e.generate(options)
-        print >>out_file, "#endif"
+        print("#endif", file=out_file)
