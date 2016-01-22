@@ -12,6 +12,7 @@
 # seL4 Invocation ID Generator
 # ============================
 
+from __future__ import print_function
 import argparse
 import sys
 # install tempita using sudo apt-get install python-tempita or similar for your distro
@@ -108,7 +109,7 @@ def parse_xml(xml_file):
     try:
         doc = xml.dom.minidom.parse(xml_file)
     except:
-        print >> sys.stderr, "Error: invalid xml file"
+        print("Error: invalid xml file", file=sys.stderr)
         sys.exit(-1)
 
     invocation_labels = []
