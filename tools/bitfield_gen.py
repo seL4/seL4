@@ -221,7 +221,7 @@ generator_template = \
     %(block)s_t %(block)s;
 
 %(word_inits)s
-    
+
 %(field_inits)s
 
     return %(block)s;
@@ -286,7 +286,7 @@ union_generator_template = \
     %(union)s_t %(union)s;
 
 %(word_inits)s
-    
+
 %(field_inits)s
 
     return %(union)s;
@@ -451,7 +451,7 @@ where
     '''Some (%(generator)s rec) \<Rightarrow> rec"'''
 
 block_lift_lemma_template = \
-'''lemma %(union)s_%(block)s_lift: 
+'''lemma %(union)s_%(block)s_lift:
   "(%(union)s_get_tag c = scast %(union)s_%(block)s) = ''' \
  '''(%(union)s_lift c = Some (%(generator)s (%(union)s_%(block)s_lift c)))"
   unfolding %(union)s_lift_def %(union)s_%(block)s_lift_def
@@ -513,7 +513,7 @@ where
     (let tag = %(name)s_get_tag %(name)s in
      %(tag_cases)s
      else None)"'''
-                 
+
 union_access_def_template = \
 '''definition
   %(union)s_%(block)s_access :: "(%(union)s_%(block)s_CL \<Rightarrow> 'a)
@@ -600,12 +600,12 @@ def ptr_set_template(name, ptrname):
                               '''{t. (\<exists>%(name)s.
                               %(name)s_lift %(name)s =
                               %(name)s_lift (%(access_path)s) \<lparr> %(name)s_CL.%(field)s_CL ''' \
-                              ''':= \<^bsup>s\<^esup>v AND %(mask)s \<rparr> \<and> 
+                              ''':= \<^bsup>s\<^esup>v AND %(mask)s \<rparr> \<and>
                               cslift t = (cslift s)(''' + ptrname + ''' \<mapsto> %(update_path)s)) \<and>
                               %(cslift_other)s \<and>
                               hrs_htd (t_hrs_' (globals t)) = hrs_htd (t_hrs_' (globals s))
                               }''')
-                              
+
 def ptr_new_template(ptrname):
     return ptr_basic_template('new', ptrname, '', ', %(args)s',
                               '''{t. (\<exists>%(name)s. %(name)s_lift %(name)s = \<lparr>
@@ -616,12 +616,12 @@ def ptr_new_template(ptrname):
                               }''')
 
 def ptr_get_tag_template(ptrname):
-    return ptr_basic_template('get_%(tagname)s', ptrname, '\<acute>%(ret_name)s :== ', '', 
+    return ptr_basic_template('get_%(tagname)s', ptrname, '\<acute>%(ret_name)s :== ', '',
                               '''\<lbrace>\<acute>%(ret_name)s = %(name)s_get_tag (%(access_path)s)\<rbrace>''')
 
 
 def ptr_empty_union_new_template(ptrname):
-    return ptr_union_basic_template('new', ptrname, '', '', '', 
+    return ptr_union_basic_template('new', ptrname, '', '', '',
                                     '''{t. (\<exists>%(name)s. ''' \
                                     '''%(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
                                     cslift t = (cslift s)(''' + ptrname + ''' \<mapsto> %(update_path)s)) \<and>
@@ -630,7 +630,7 @@ def ptr_empty_union_new_template(ptrname):
                                     }''')
 
 def ptr_union_new_template(ptrname):
-    return ptr_union_basic_template('new', ptrname, '', ', %(args)s', '', 
+    return ptr_union_basic_template('new', ptrname, '', ', %(args)s', '',
                                     '''{t. (\<exists>%(name)s. ''' \
                                     '''%(name)s_%(block)s_lift %(name)s = \<lparr>
                                     %(field_eqs)s \<rparr> \<and>
@@ -815,7 +815,7 @@ done'''],
 ''' unfolding ptrval_def
  apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp simp add: packed_heap_update_collapse_hrs typ_heap_simps guard_simps)
- 
+
  apply(rule exI, rule conjI[rotated], rule refl)
  apply(clarsimp simp:h_t_valid_clift_Some_iff
                      %(name)s_lift_def
@@ -1188,9 +1188,9 @@ def emit_named_ptr_proof(fn_name, params, name, type_map, toptps, prf_prefix, su
             # the split here gives us the field name (less any qualifiers) as the typ_heap
             # stuff doesn't use the qualifier
             substs['path'] = ', '.join(map(lambda x: "''%s''" % x.split('.')[-1], path))
-                    
+
             # The self.name here is the variable name (so not _C)
-            path.reverse()                    
+            path.reverse()
             substs['update_path'] = '(' + reduce(lambda x, y: y + '_update (' + x + ')',
                                            ['\\<lambda>_. ' + name] + path) + '(the (ptrval s))' + ')'
             emit_named(fn_name, params, make_proof(prf_prefix + '_path', substs, params.sorry))
@@ -1330,8 +1330,8 @@ class TaggedUnion:
                    make_proof('get_tag_equals_spec', substs, params.sorry))
 
         # Only generate ptr lemmas for those types reachable from top level types
-        emit_named_ptr_proof("%s_ptr_get_%s" % (self.name, self.tagname), params, self.name, 
-                             type_map, params.toplevel_types, 
+        emit_named_ptr_proof("%s_ptr_get_%s" % (self.name, self.tagname), params, self.name,
+                             type_map, params.toplevel_types,
                              'ptr_get_tag_spec', substs)
 
         for name, value, ref in self.tags:
@@ -1368,8 +1368,8 @@ class TaggedUnion:
                                 "block": ref.name},
                                params.sorry))
 
-                emit_named_ptr_proof("%s_%s_ptr_new" % (self.name, ref.name), params, self.name, 
-                                     type_map, params.toplevel_types, 
+                emit_named_ptr_proof("%s_%s_ptr_new" % (self.name, ref.name), params, self.name,
+                                     type_map, params.toplevel_types,
                                      'ptr_empty_union_new_spec',
                                      {"name": self.name, \
                                       "block": ref.name})
@@ -1399,14 +1399,14 @@ class TaggedUnion:
                                 "field_eqs": field_eqs},
                                params.sorry))
 
-                emit_named_ptr_proof("%s_%s_ptr_new" % (self.name, ref.name), params, self.name, 
-                                     type_map, params.toplevel_types, 
+                emit_named_ptr_proof("%s_%s_ptr_new" % (self.name, ref.name), params, self.name,
+                                     type_map, params.toplevel_types,
                                      'ptr_union_new_spec',
                                      {"name": self.name, \
                                       "block": ref.name, \
                                       "args": ', '.join(arg_list), \
                                       "field_eqs": field_eqs})
-                
+
             _, size, _ = ref.field_map[self.tagname]
             if any([w for w in self.widths if w < size]):
                 tag_mask_helpers = ("%s_%s_tag_mask_helpers"
@@ -1466,11 +1466,11 @@ class TaggedUnion:
                                    {"fun_name": "%s_%s_set_%s" % \
                                         (self.name, ref.name, field), \
                                     "args": ', '.join([
-                                    "\<acute>ret__struct_%s_C" % self.name, 
+                                    "\<acute>ret__struct_%s_C" % self.name,
                                     "\<acute>%s" % self.name,
                                     "\<acute>v"] )},
                                    params.sorry))
-                    
+
                     emit_named("%s_%s_ptr_set_%s" % (self.name, ref.name, field),
                                params,
                                make_proof('ptr_set_modifies_proof',
@@ -1480,20 +1480,20 @@ class TaggedUnion:
                                     "\<acute>%s_ptr" % self.name,
                                     "\<acute>v"] )},
                                    params.sorry))
-                
+
                 # Set spec
                 emit_named("%s_%s_set_%s" % (self.name, ref.name, field),
                            params,
                            make_proof('union_set_spec', substs, params.sorry))
 
                 # Pointer get spec
-                emit_named_ptr_proof("%s_%s_ptr_get_%s" % (self.name, ref.name, field), 
-                                     params, self.name, type_map, params.toplevel_types, 
+                emit_named_ptr_proof("%s_%s_ptr_get_%s" % (self.name, ref.name, field),
+                                     params, self.name, type_map, params.toplevel_types,
                                      'ptr_union_get_spec', substs)
-                
+
                 # Pointer set spec
                 emit_named_ptr_proof("%s_%s_ptr_set_%s" % (self.name, ref.name, field),
-                                     params, self.name, type_map, params.toplevel_types, 
+                                     params, self.name, type_map, params.toplevel_types,
                                      'ptr_union_set_spec', substs)
 
     def generate_hol_defs(self, params):
@@ -1667,7 +1667,7 @@ class TaggedUnion:
             print >>output
 
             block_lift_lemmas += "\t%(union)s_%(block)s_lift\n" % substs
-        
+
         print >>output, block_lift_lemmas
         print >>output
 
@@ -1692,7 +1692,7 @@ class TaggedUnion:
         print >>output, "typedef enum %s_tag %s_tag_t;" % \
                         (self.name, self.name)
         print >>output
-        
+
         subs = {\
             'union': self.name, \
             'type':  TYPES[options.environment][self.union_base], \
@@ -1747,7 +1747,7 @@ class TaggedUnion:
             + ptr_tag_reader_footer_template % subs)
 
         emit_named("%s_ptr_get_%s" % (self.name, self.tagname), params, fs)
-        
+
         for name, value, ref in self.tags:
             # Generate generators
             arg_list = ["%s %s" % (TYPES[options.environment][self.base], field) for \
@@ -1868,7 +1868,7 @@ class TaggedUnion:
                     shift = offset % self.base
                     high_bits = 0
                 mask = ((1 << size) - 1) << (offset % self.base)
-                
+
                 subs = {\
                     "block": ref.name, \
                     "field": field, \
@@ -1918,7 +1918,7 @@ class TaggedUnion:
             names += ref.make_names(self)
 
         return names
-            
+
     def represent_value(self, value, width):
         max_width = max(self.classes.keys())
 
@@ -2286,8 +2286,8 @@ class Block:
                         "field_eqs": field_eqs},
                        params.sorry))
 
-        emit_named_ptr_proof("%s_ptr_new" % self.name, params, self.name, 
-                             type_map, params.toplevel_types, 
+        emit_named_ptr_proof("%s_ptr_new" % self.name, params, self.name,
+                             type_map, params.toplevel_types,
                              'ptr_new_spec',
                              {"name": self.name, \
                               "args": ', '.join(arg_list), \
@@ -2311,7 +2311,7 @@ class Block:
                            make_proof('const_modifies_proof',
                                {"fun_name": "%s_get_%s" % (self.name, field), \
                                 "args": ', '.join([
-                                "\<acute>ret__unsigned_long", 
+                                "\<acute>ret__unsigned_long",
                                 "\<acute>%s" % self.name] )},
                                params.sorry))
 
@@ -2320,7 +2320,7 @@ class Block:
                            make_proof('const_modifies_proof',
                                {"fun_name": "%s_ptr_get_%s" % (self.name, field), \
                                 "args": ', '.join([
-                                "\<acute>ret__unsigned_long", 
+                                "\<acute>ret__unsigned_long",
                                 "\<acute>%s_ptr" % self.name] )},
                                params.sorry))
 
@@ -2335,11 +2335,11 @@ class Block:
                            make_proof('const_modifies_proof',
                                {"fun_name": "%s_set_%s" % (self.name, field), \
                                 "args": ', '.join([
-                                "\<acute>ret__struct_%s_C" % self.name, 
+                                "\<acute>ret__struct_%s_C" % self.name,
                                 "\<acute>%s" % self.name,
                                 "\<acute>v"] )},
                                params.sorry))
-                
+
                 emit_named("%s_ptr_set_%s" % (self.name, field), params,
                            make_proof('ptr_set_modifies_proof',
                                {"fun_name": "%s_ptr_set_%s" % (self.name, field), \
@@ -2348,15 +2348,15 @@ class Block:
                                 "\<acute>v"] )},
                                params.sorry))
 
-                
+
             # Set spec
             emit_named("%s_set_%s" % (self.name, field), params,
                         make_proof('set_spec', substs, params.sorry))
-            
-            emit_named_ptr_proof("%s_ptr_get_%s" % (self.name, field), params, self.name, 
-                                 type_map, params.toplevel_types, 
+
+            emit_named_ptr_proof("%s_ptr_get_%s" % (self.name, field), params, self.name,
+                                 type_map, params.toplevel_types,
                                  'ptr_get_spec', substs)
-            emit_named_ptr_proof("%s_ptr_set_%s" % (self.name, field), params, self.name, 
+            emit_named_ptr_proof("%s_ptr_set_%s" % (self.name, field), params, self.name,
                                  type_map, params.toplevel_types,
                                  'ptr_set_spec', substs)
 
@@ -2475,7 +2475,7 @@ class Block:
                 shift = offset % self.base
                 high_bits = 0
             mask = ((1 << size) - 1) << (offset % self.base)
-            
+
             subs = {\
                 "block": self.name, \
                 "field": field, \
@@ -2586,7 +2586,7 @@ if __name__ == '__main__':
     parser.add_option('--toplevel', action='append',
                       dest="toplevel_types", default = [])
     parser.add_option('--umm_types', action='store',
-                      dest="umm_types_file", default = None)        
+                      dest="umm_types_file", default = None)
     parser.add_option('--multifile_base', action='store', default=None)
     parser.add_option('--cspec-dir', action='store', default=None,
             help="Location of the 'cspec' directory containing 'KernelState_C'.")
@@ -2736,7 +2736,7 @@ if __name__ == '__main__':
     elif options.hol_proofs:
         def is_bit_type(tp):
             return (umm.is_base(tp) & (umm.base_name(tp) in map(lambda e: e.name + '_C', blocks.values() + unions.values())))
-        
+
         tps = umm.build_types(options.umm_types_file)
         type_map = {}
 
@@ -2746,12 +2746,12 @@ if __name__ == '__main__':
 
             for path, tp in paths:
                 tp = umm.base_name(tp)
-                
+
                 if type_map.has_key(tp):
                     raise ValueError("Type %s has multiple parents" % tp)
 
                 type_map[tp] = (toptp, path)
-        
+
         if options.multifile_base is None:
             print >>out_file, \
                 "theory %s_proofs imports %s_defs \"%s/KernelState_C\" begin" % (
@@ -2762,12 +2762,12 @@ if __name__ == '__main__':
 
             for toptp in options.toplevel_types:
                 print >>out_file, \
-                    ('abbreviation\n\t"cslift_all_but_%s s t \<equiv> ' % toptp + 
+                    ('abbreviation\n\t"cslift_all_but_%s s t \<equiv> ' % toptp +
                      ('\n\t\t\<and> '.join([('(cslift s :: %s typ_heap) = cslift t' % x)
                                        for x in options.toplevel_types if x != toptp]))
                      + '"')
             print >>out_file
-                
+
             print >>out_file, global_lemmas
             print >>out_file
 
@@ -2786,7 +2786,7 @@ if __name__ == '__main__':
                 print >>out_file, "  %s_%s_proofs" % (module_name, e.name)
             print >>out_file, "begin"
             print >>out_file, "end"
-            
+
             for e in blocks.values() + unions.values():
                 base_filename = \
                     os.path.basename(options.multifile_base).split('.')[0]
