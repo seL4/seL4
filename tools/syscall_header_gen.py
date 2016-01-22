@@ -12,6 +12,7 @@
 # seL4 System Call ID Generator
 # ==============================
 
+from __future__ import print_function
 import argparse
 import re
 import sys
@@ -112,7 +113,7 @@ def parse_args():
     result = parser.parse_args()
 
     if result.kernel_header is None and result.libsel4_header is None:
-        print "Error: must provide either kernel_header or libsel4_header"
+        print("Error: must provide either kernel_header or libsel4_header")
         parser.print_help()
         exit(-1)
 
@@ -139,21 +140,24 @@ def parse_xml(xml_file):
     try:
         doc = xml.dom.minidom.parse(xml_file)
     except:
-        print >>sys.stderr, "Error: invalid xml file."
+        print("Error: invalid xml file.", file=sys.stderr)
         sys.exit(-1)
 
     api = doc.getElementsByTagName("api")
     if len(api) != 1:
-        print >>sys.stderr, "Error: malformed xml. Only one api element allowed"
+        print("Error: malformed xml. Only one api element allowed",
+                file=sys.stderr)
         sys.exit(-1)
-    
+
     configs = api[0].getElementsByTagName("config")
     if len(configs) != 1:
-        print >>sys.stderr, "Error: api element only supports 1 config element"
+        print("Error: api element only supports 1 config element",
+                file=sys.stderr)
         sys.exit(-1)
 
     if len(configs[0].getAttribute("name")) != 0:
-        print >>sys.stderr, "Error: api element config only supports an empty name"
+        print("Error: api element config only supports an empty name",
+                file=sys.stderr)
         sys.exit(-1)
 
     # debug elements are optional
