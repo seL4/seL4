@@ -10,6 +10,7 @@
 # @TAG(NICTA_BSD)
 #
 
+from __future__ import print_function
 import sys
 
 ## We assume length tp > 0
@@ -111,13 +112,13 @@ def build_types(file):
 def print_graph(filename, out_file):
     mp = build_types(filename)
 
-    print >>out_file, 'digraph types {'
+    print('digraph types {', file=out_file)
     for k, flds in mp.iteritems():
         for fld, tp in flds:
             #if is_base(tp):
-            print >> out_file, '\t "%s" -> "%s" [label="%s"]' % \
-                               (k, base_name(tp), fld)
-    print >>out_file, '}'
+            print('\t "%s" -> "%s" [label="%s"]' % (k, base_name(tp), fld),
+                   file=out_file)
+    print('}', file=out_file)
 
 ## Toplevel
 
