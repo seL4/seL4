@@ -19,8 +19,8 @@
 /* Pointer to the head of the scheduler queue for each priority */
 tcb_queue_t ksReadyQueues[NUM_READY_QUEUES];
 word_t ksReadyQueuesL1Bitmap;
-word_t ksReadyQueuesL2Bitmap[(CONFIG_NUM_PRIORITIES / wordBits) + 1];
-compile_assert(ksReadyQueuesL1BitmapBigEnough, (CONFIG_NUM_PRIORITIES / wordBits) <= wordBits)
+word_t ksReadyQueuesL2Bitmap[(NUM_READY_QUEUES / wordBits) + 1];
+compile_assert(ksReadyQueuesL1BitmapBigEnough, (NUM_READY_QUEUES / wordBits) <= wordBits)
 
 /* Current thread TCB pointer */
 tcb_t *ksCurThread;
@@ -52,6 +52,10 @@ ticks_t ksCurrentTime;
 bool_t ksReprogram;
 /* head of the queue of threads waiting for their budget to be replenished */
 tcb_t *ksReleaseHead;
+/* current criticality level of the kernel */
+crit_t ksCriticality;
+/* list of active threads at each criticality */
+tcb_queue_t ksCritQueues[CONFIG_NUM_CRITICALITIES];
 
 #ifdef DEBUG
 debug_entry_t ksKernelEntry;

@@ -248,6 +248,13 @@ menu "seL4 System Parameters"
         help
             The number of priority levels per domain
 
+    config NUM_CRITICALITIES
+        int "Number of criticality levels"
+        default 4
+        range 1 256
+        help
+            The number of criticality levels
+
     config MAX_NUM_TRACE_POINTS
         int "Maximum number of tracepoints"
         default 0

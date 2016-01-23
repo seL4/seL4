@@ -59,7 +59,14 @@
         <method id="TCBSetMCPriority" name="SetMCPriority">
             <param dir="in" name="max_priority" type="seL4_Uint8"/>
         </method>
-		<method id="TCBSetIPCBuffer" name="SetIPCBuffer">
+        <method id="TCBSetCriticality" name="SetCriticality">
+			<param dir="in" name="criticality" type="seL4_Uint8"/>
+        </method>
+        <method id="TCBSetMCCriticality" name="SetMCCriticality">
+            <param dir="in" name="mcc" type="seL4_Uint8"/>
+        </method>
+	
+        <method id="TCBSetIPCBuffer" name="SetIPCBuffer">
 			<param dir="in" name="buffer" type="seL4_Word"/>
 			<param dir="in" name="bufferFrame" type="seL4_CPtr"/>
 		</method>
@@ -172,6 +179,9 @@
             <param dir="in" name="budget" type="seL4_Time" />
             <param dir="in" name="period" type="seL4_Time" />
             <param dir="in" name="data" type="seL4_Word" />
+        </method>
+        <method id="SchedControlSetCriticality" name="SetCriticality">
+            <param dir="in" name="criticality" type="seL4_Uint32" />
         </method>
     </interface>
     <interface name="seL4_SchedContext">

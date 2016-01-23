@@ -18,7 +18,9 @@
 exception_t decodeSchedControlInvocation(word_t label, word_t length, extra_caps_t extra_caps,
                                          word_t *buffer);
 exception_t decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buffer);
+exception_t decodeSchedControl_SetCriticality(word_t length, word_t *buffer);
+
 exception_t invokeSchedControl_Configure(sched_context_t *sched_context, time_t budget, time_t period,
                                          seL4_Word data);
-
+exception_t invokeSchedControl_SetCriticality(crit_t criticality);
 #endif

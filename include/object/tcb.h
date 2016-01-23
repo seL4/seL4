@@ -38,6 +38,9 @@ void tcbReleaseRemove(tcb_t *tcb);
 void tcbReleaseEnqueue(tcb_t *tcb);
 tcb_t *tcbReleaseDequeue(void);
 
+void tcbCritEnqueue(tcb_t *tcb);
+void tcbCritDequeue(tcb_t *tcb);
+
 tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPReorder(tcb_t *tcb, tcb_queue_t queue, prio_t oldPrio);
@@ -59,6 +62,10 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t rootCaps, word_t *buffer);
 exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeSetCriticality(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeSetMCCriticality(cap_t cap, word_t length, word_t *buffer);
+
+
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,

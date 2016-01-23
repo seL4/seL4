@@ -204,11 +204,60 @@ decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buf
 }
 
 exception_t
+invokeSchedControl_SetCriticality(crit_t criticality)
+{
+    crit_t prev = ksCriticality;
+
+    ksCriticality = criticality;
+
+    rescheduleRequired();
+
+    for (crit_t i = criticality; i <= seL4_MaxCrit; i++) {
+        if (i > 0) {
+            tcb_t *curr = ksCritQueues[i].head;
+            while (curr != NULL) {
+                adjustPriorityByCriticality(curr, criticality > prev);
+                curr = curr->tcbCritNext;
+            }
+        }
+    }
+
+    return EXCEPTION_NONE;
+}
+
+exception_t
+decodeSchedControl_SetCriticality(word_t length, word_t *buffer)
+{
+    crit_t criticality;
+
+    if (length < 1) {
+        userError("SchedControl_Configure: truncated message");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    criticality = getSyscallArg(0, buffer);
+    if (criticality > seL4_MaxCrit) {
+        userError("SchedControl_Configure: criticality %lu higher than max configured criticality %u\n",
+                  criticality, seL4_MaxCrit);
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = seL4_MinCrit;
+        current_syscall_error.rangeErrorMax = seL4_MaxCrit;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeSchedControl_SetCriticality(criticality);
+}
+
+exception_t
 decodeSchedControlInvocation(word_t label, word_t length, extra_caps_t extraCaps, word_t *buffer)
 {
     switch (label) {
     case SchedControlConfigure:
         return decodeSchedControl_Configure(length, extraCaps, buffer);
+    case SchedControlSetCriticality:
+        return decodeSchedControl_SetCriticality(length, buffer);
     default:
         userError("SchedControl invocation: Illegal operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;

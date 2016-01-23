@@ -419,6 +419,8 @@ create_initial_thread(
     }
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
+    tcb->tcbCrit = seL4_MaxCrit;
+    tcb->tcbMCC = seL4_MaxCrit;
     setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
     ksSchedulerAction = tcb;
@@ -426,6 +428,9 @@ create_initial_thread(
     ksReleaseHead = NULL;
     ksCurThread = ksIdleThread;
     ksCurSchedContext = tcb->tcbSchedContext;
+    ksCriticality = seL4_MinCrit;
+    tcbCritEnqueue(tcb);
+    tcbCritEnqueue(ksIdleThread);
 
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));

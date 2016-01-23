@@ -244,8 +244,6 @@ schedContext_donate(tcb_t *to, sched_context_t *sc)
     assert(sc != NULL);
 
     if (sc->scTcb) {
-        /* thread must not be in the scheduling queue */
-        assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
         sc->scTcb->tcbSchedContext = NULL;
     }
     sc->scTcb = to;

@@ -22,6 +22,12 @@
 #include <machine/registerset.h>
 #include <arch/linker.h>
 
+/* We set bits 8 -- 15 to the current criticality, which is guaranteed to be higher than
+ * any lower criticality tcbs. First clear any bits previously adjusted by criticality,
+ * then  boost priority by new criticality
+ */
+#define SHIFT_PRIO_BY_CRIT(p) ((p  & 0xFF) | (ksCriticality << 8u))
+
 static seL4_MessageInfo_t
 transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
@@ -69,6 +75,7 @@ configureIdleThread(tcb_t *tcb)
     Arch_configureIdleThread(tcb);
     setThreadState(tcb, ThreadState_Running);
     tcb->tcbPriority = seL4_MinPrio;
+    tcb->tcbCrit     = seL4_MaxCrit;
 }
 
 void
@@ -91,6 +98,7 @@ suspend(tcb_t *target)
     setThreadState(target, ThreadState_Inactive);
     tcbSchedDequeue(target);
     tcbReleaseRemove(target);
+    tcbCritDequeue(target);
 }
 
 void
@@ -100,6 +108,7 @@ restart(tcb_t *target)
         cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
+        tcbCritEnqueue(target);
 
         if (likely(target->tcbSchedContext) && target->tcbSchedContext->scBudget > 0) {
             /* recharge sched context */
@@ -156,8 +165,6 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *re
                 recharge(reply_sc);
             }
 
-            /* now check if the context has enough budget - if it does, we proceed with the reply
-             * as normal */
             if (reply_sc->scRemaining < getKernelWcetTicks()) {
                 /* thread still has not enough budget to run */
                 cap_t tfep = getTemporalFaultHandler(receiver);
@@ -380,6 +387,10 @@ chooseThread(void)
     prio = highestPrio();
     thread = ksReadyQueues[prio].head;
 
+    if (unlikely(thread->tcbCrit < ksCriticality)) {
+        thread = ksIdleThread;
+    }
+
     assert(thread);
     assert(isRunnable(thread));
     assert(isSchedulable(thread));
@@ -425,15 +436,18 @@ switchSchedContext(void)
 }
 
 void
-setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
+setActivePriority(tcb_t *tptr, prio_t prio)
 {
     prio_t old_prio = tptr->tcbPriority;
 
+    if (old_prio == prio) {
+        return;
+    }
+
     /* lazy dequeue */
     tcbSchedDequeue(tptr);
-
-    tptr->tcbPriority = seL4_Prio_get_prio(new_prio);
-    tptr->tcbMCP = seL4_Prio_get_mcp(new_prio);
+    /* update prio */
+    tptr->tcbPriority = prio;
 
     switch (thread_state_ptr_get_tsType(&tptr->tcbState)) {
     case ThreadState_BlockedOnReceive:
@@ -446,8 +460,10 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
     case ThreadState_Running:
     case ThreadState_Restart:
         if (!thread_state_get_tcbInReleaseQueue(tptr->tcbState)) {
-            tcbSchedEnqueue(tptr);
-            if (tptr == ksCurThread) {
+            if (tptr->tcbSchedContext) {
+                tcbSchedEnqueue(tptr);
+            }
+            if (tptr == ksCurThread || prio > ksCurThread->tcbPriority) {
                 rescheduleRequired();
             }
         }
@@ -455,6 +471,30 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
     default:
         /* nothing to do - thread is inactive, idle or blocked on reply */
         break;
+    }
+}
+
+void
+setPriorityFields(tcb_t *tptr, seL4_Prio_t new_prio)
+{
+    prio_t activePrio;
+
+    /* lazy dequeue */
+    tcbCritDequeue(tptr);
+
+    tptr->tcbMCP = seL4_Prio_get_mcp(new_prio);
+    tptr->tcbCrit = seL4_Prio_get_crit(new_prio);
+    tptr->tcbMCC = seL4_Prio_get_mcc(new_prio);
+
+    activePrio = seL4_Prio_get_prio(new_prio);
+    if (tptr->tcbCrit >= ksCriticality) {
+        activePrio = SHIFT_PRIO_BY_CRIT(activePrio);
+    }
+
+    setActivePriority(tptr, activePrio);
+
+    if (thread_state_get_tsType(tptr->tcbState) != ThreadState_Inactive) {
+        tcbCritEnqueue(tptr);
     }
 }
 
@@ -612,6 +652,7 @@ endTimeslice(sched_context_t *sc)
         /* schedule thread to wake up when budget is due to be recharged */
         postpone(sc);
     }
+    rescheduleRequired();
 }
 
 void
@@ -639,7 +680,33 @@ awaken(void)
         awakened = tcbReleaseDequeue();
         recharge(awakened->tcbSchedContext);
         tcbSchedAppend(awakened);
-        rescheduleRequired();
+        switchIfRequiredTo(awakened);
     }
 }
+
+void
+adjustPriorityByCriticality(tcb_t *tcb, bool_t up)
+{
+    /* this function should only be called on threads that are currently eligible to run */
+    assert(tcb->tcbCrit >= ksCriticality);
+    assert(tcb->tcbCrit > 0);
+
+    if (up &&
+            isSchedulable(tcb) &&
+            tcb->tcbSchedContext->scHome != tcb &&
+            tcb->tcbSchedContext->scHome->tcbCrit < ksCriticality) {
+
+        /* if we are adjusting the criticality up, we need to
+         * raise a temporal exception if a server is working
+         * on a request for a low criticality thread */
+        cap_t tfep = getTemporalFaultHandler(tcb);
+        if (validTemporalFaultHandler(tfep)) {
+            current_fault = fault_temporal_new(tcb->tcbSchedContext->scData);
+            sendTemporalFaultIPC(tcb, tfep);
+        }
+    }
+
+    setActivePriority(tcb, SHIFT_PRIO_BY_CRIT(tcb->tcbPriority));
+}
+
 

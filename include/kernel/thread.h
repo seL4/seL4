@@ -72,7 +72,8 @@ void chooseThread(void);
 void switchToThread(tcb_t *thread) VISIBLE;
 void switchToIdleThread(void);
 void switchSchedContext(void) VISIBLE;
-void setPriority(tcb_t *tptr, seL4_Prio_t prio);
+void setPriorityFields(tcb_t *tptr, seL4_Prio_t prio);
+void setActivePriority(tcb_t *tptr, prio_t prio);
 void scheduleTCB(tcb_t *tptr);
 void attemptSwitchTo(tcb_t *tptr);
 void switchIfRequiredTo(tcb_t *tptr);
@@ -84,4 +85,5 @@ void rescheduleRequired(void);
 void recharge(sched_context_t *sc);
 void awaken(void);
 void postpone(sched_context_t *sc);
+void adjustPriorityByCriticality(tcb_t *tcb, bool_t up);
 #endif

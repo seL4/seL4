@@ -24,7 +24,7 @@
 #include <util.h>
 #include <string.h>
 
-#define NULL_PRIO (seL4_Prio_new(seL4_MinPrio, seL4_MinPrio))
+#define NULL_PRIO (seL4_Prio_new(seL4_MinPrio, seL4_MinPrio, seL4_MinCrit, seL4_MinCrit))
 
 static inline bool_t
 validFaultEndpoint(cap_t cap)
@@ -58,6 +58,34 @@ checkPrio(prio_t prio)
     if (prio > ksCurThread->tcbMCP) {
         userError("TCB Configure: Requested priority %lu too high (max %lu).",
                   (unsigned long) prio, (unsigned long) ksCurThread->tcbMCP);
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+checkMCC(crit_t mcc)
+{
+    /* can't create a thread with mcc greater than our own */
+    if (mcc > ksCurThread->tcbMCC) {
+        userError("TCB Configure: Requested  maximum controlled criticality %lu too high (max %lu).",
+                  (unsigned long) mcc, (unsigned long) ksCurThread->tcbMCC);
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+checkCrit(crit_t crit)
+{
+    /* can't create a thread with crit greater than our own mcc */
+    if (crit > ksCurThread->tcbMCC) {
+        userError("TCB Configure: Requested criticality %lu too high (max %lu).",
+                  (unsigned long) crit, (unsigned long) ksCurThread->tcbMCC);
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -265,11 +293,59 @@ tcbReleaseDequeue(void)
         detached_head->tcbSchedNext = NULL;
     }
 
-    thread_state_ptr_set_inReleaseQueue(&detached_head->tcbState, false);
+    thread_state_ptr_set_tcbInReleaseQueue(&detached_head->tcbState, false);
     ksReprogram = true;
 
     return detached_head;
 }
+
+/* Add TCB to the head of a criticality queue */
+void
+tcbCritEnqueue(tcb_t *tcb)
+{
+    if (!thread_state_get_tcbCritQueued(tcb->tcbState)) {
+        tcb_queue_t queue = ksCritQueues[tcb->tcbCrit];
+
+        if (!queue.end) { /* Empty list */
+            queue.end = tcb;
+        } else {
+            queue.head->tcbCritPrev = tcb;
+        }
+        tcb->tcbCritPrev = NULL;
+        tcb->tcbCritNext = queue.head;
+        queue.head = tcb;
+
+        ksCritQueues[tcb->tcbCrit] = queue;
+
+        thread_state_ptr_set_tcbCritQueued(&tcb->tcbState, true);
+    }
+}
+
+/* Remove TCB from a criticality queue */
+void
+tcbCritDequeue(tcb_t *tcb)
+{
+    if (thread_state_get_tcbCritQueued(tcb->tcbState)) {
+        tcb_queue_t queue = ksCritQueues[tcb->tcbCrit];
+
+        if (tcb->tcbCritPrev) {
+            tcb->tcbCritPrev->tcbCritNext = tcb->tcbCritNext;
+        } else {
+            queue.head = tcb->tcbCritNext;
+        }
+
+        if (tcb->tcbCritNext) {
+            tcb->tcbCritNext->tcbCritPrev = tcb->tcbCritPrev;
+        } else {
+            queue.end = tcb->tcbCritPrev;
+        }
+
+        ksCritQueues[tcb->tcbCrit] = queue;
+
+        thread_state_ptr_set_tcbCritQueued(&tcb->tcbState, false);
+    }
+}
+
 
 /* Add TCB to the ordered endpoint queue */
 tcb_queue_t
@@ -566,6 +642,12 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBSetMCPriority:
         return decodeSetMCPriority(cap, length, buffer);
+
+    case TCBSetCriticality:
+        return decodeSetCriticality(cap, length, buffer);
+
+    case TCBSetMCCriticality:
+        return decodeSetMCCriticality(cap, length, buffer);
 
     case TCBSetIPCBuffer:
         return decodeSetIPCBuffer(cap, length, slot, excaps, buffer);
@@ -918,7 +1000,7 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
                tcb, NULL, cap_null_cap_new(), 0, cap_null_cap_new(),
-               0, seL4_Prio_new(newPrio, tcb->tcbMCP),
+               0, seL4_Prio_new(newPrio, tcb->tcbMCP, tcb->tcbCrit, tcb->tcbMCC),
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
@@ -950,7 +1032,70 @@ decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
     return invokeTCB_ThreadControl(
                tcb, NULL, cap_null_cap_new(),
                0, cap_null_cap_new(),
-               0, seL4_Prio_new(tcb->tcbPriority, newMcp),
+               0, seL4_Prio_new(tcb->tcbPriority, newMcp, tcb->tcbCrit, tcb->tcbMCC),
+               cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
+               0, cap_null_cap_new(), NULL,
+               NULL, thread_control_update_priority);
+}
+
+exception_t
+decodeSetCriticality(cap_t cap, word_t length, word_t *buffer)
+{
+    crit_t criticality;
+    exception_t status;
+    tcb_t *tcb;
+
+    if (length < 1) {
+        userError("TCB SetCriticality: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    criticality = (crit_t) getSyscallArg(0, buffer);
+
+    status = checkCrit(criticality);
+    if (status != EXCEPTION_NONE) {
+        return status;
+    }
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeTCB_ThreadControl(
+               tcb, NULL, cap_null_cap_new(), 0, cap_null_cap_new(),
+               0, seL4_Prio_new(tcb->tcbPriority, tcb->tcbMCP, criticality, tcb->tcbMCC),
+               cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
+               0, cap_null_cap_new(), NULL,
+               NULL, thread_control_update_priority);
+}
+
+exception_t
+decodeSetMCCriticality(cap_t cap, word_t length, word_t *buffer)
+{
+    prio_t mcc;
+    exception_t status;
+    tcb_t *tcb;
+
+    if (length < 1) {
+        userError("TCB SetCriticality: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    mcc = (prio_t) getSyscallArg(0, buffer);
+
+    status = checkMCC(mcc);
+    if (status != EXCEPTION_NONE) {
+        return status;
+    }
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeTCB_ThreadControl(
+               tcb, NULL, cap_null_cap_new(),
+               0, cap_null_cap_new(),
+               0, seL4_Prio_new(tcb->tcbPriority, tcb->tcbMCP, tcb->tcbCrit, mcc),
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
@@ -1229,7 +1374,7 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
     }
 
     if (updateFlags & thread_control_update_priority) {
-        setPriority(target, priority);
+        setPriorityFields(target, priority);
     }
 
     if (updateFlags & thread_control_update_sc) {

@@ -282,7 +282,7 @@ block temporal {
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingIPCDiminishCaps, blockingObject,
-                   tcbInReleaseQueue, tsType) {
+                   tcbInReleaseQueue, tcbCritQueued, tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
     field blockingIPCIsCall 1
@@ -293,6 +293,7 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
     -- tsType and blockingIPCDiminishCaps without changing tcbQueued
     -- or inReleaseQueue 
     padding 29
+    field tcbCritQueued 1
     field tcbInReleaseQueue 1
     field tcbQueued 1
 

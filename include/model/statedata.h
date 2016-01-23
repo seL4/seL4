@@ -16,9 +16,11 @@
 #include <object/tcb.h>
 #include <arch/model/statedata.h>
 
+#define NUM_READY_QUEUES (CONFIG_NUM_PRIORITIES*CONFIG_NUM_CRITICALITIES)
+
 extern tcb_queue_t ksReadyQueues[] VISIBLE;
 extern word_t ksReadyQueuesL1Bitmap VISIBLE;
-extern word_t ksReadyQueuesL2Bitmap[(CONFIG_NUM_PRIORITIES / wordBits) + 1] VISIBLE;
+extern word_t ksReadyQueuesL2Bitmap[(NUM_READY_QUEUES / wordBits) + 1] VISIBLE;
 extern tcb_t *ksCurThread VISIBLE;
 extern sched_context_t *ksCurSchedContext VISIBLE;
 extern tcb_t *ksIdleThread VISIBLE;
@@ -30,10 +32,11 @@ extern time_t ksConsumed VISIBLE;
 extern time_t ksCurrentTime VISIBLE;
 extern bool_t ksReprogram VISIBLE;
 extern tcb_t *ksReleaseHead VISIBLE;
+extern crit_t ksCriticality VISIBLE;
+extern tcb_queue_t ksCritQueues[] VISIBLE;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)
 
-#define NUM_READY_QUEUES (CONFIG_NUM_PRIORITIES)
 
 #endif
