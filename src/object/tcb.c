@@ -54,7 +54,7 @@ checkMCP(prio_t mcp)
 static exception_t
 checkPrio(prio_t prio)
 {
-    /* can't create a thread with prio greater than our own */
+    /* can't create a thread with prio greater than our own mcp */
     if (prio > ksCurThread->tcbMCP) {
         userError("TCB Configure: Requested priority %lu too high (max %lu).",
                   (unsigned long) prio, (unsigned long) ksCurThread->tcbMCP);
