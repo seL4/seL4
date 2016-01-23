@@ -60,7 +60,7 @@ static inline bool_t PURE
 isSchedulable(const tcb_t *thread)
 {
     return isRunnable(thread) && thread->tcbSchedContext != NULL &&
-           !thread_state_get_inReleaseQueue(thread->tcbState);
+           !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
 
 BOOT_CODE void
@@ -399,7 +399,7 @@ switchToThread(tcb_t *thread)
     }
 
     tcbSchedDequeue(thread);
-    assert(!thread_state_get_inReleaseQueue(thread->tcbState));
+    assert(!thread_state_get_tcbInReleaseQueue(thread->tcbState));
     assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
     ksCurThread = thread;
 }
@@ -445,7 +445,7 @@ setPriority(tcb_t *tptr, seL4_Prio_t new_prio)
         break;
     case ThreadState_Running:
     case ThreadState_Restart:
-        if (!thread_state_get_inReleaseQueue(tptr->tcbState)) {
+        if (!thread_state_get_tcbInReleaseQueue(tptr->tcbState)) {
             tcbSchedEnqueue(tptr);
             if (tptr == ksCurThread) {
                 rescheduleRequired();
@@ -468,8 +468,8 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
     targetPrio = target->tcbPriority;
     action = ksSchedulerAction;
 
-    if (unlikely(target->tcbSchedContext != NULL) &&
-            !thread_state_get_inReleaseQueue(target->tcbState)) {
+    if (likely(target->tcbSchedContext != NULL) &&
+            !thread_state_get_tcbInReleaseQueue(target->tcbState)) {
         if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
                 && action == SchedulerAction_ResumeCurrentThread) {
             ksSchedulerAction = target;

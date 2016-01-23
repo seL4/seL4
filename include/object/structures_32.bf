@@ -282,7 +282,7 @@ block temporal {
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingIPCDiminishCaps, blockingObject,
-                   inReleaseQueue, tsType) {
+                   tcbInReleaseQueue, tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
     field blockingIPCIsCall 1
@@ -292,8 +292,8 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
     -- this is fastpath-specific. it is useful to be able to write
     -- tsType and blockingIPCDiminishCaps without changing tcbQueued
     -- or inReleaseQueue 
-    padding 30
-    field inReleaseQueue 1
+    padding 29
+    field tcbInReleaseQueue 1
     field tcbQueued 1
 
     field_high blockingObject 28

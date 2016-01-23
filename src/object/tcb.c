@@ -189,7 +189,7 @@ tcbSchedDequeue(tcb_t *tcb)
 void
 tcbReleaseRemove(tcb_t *tcb)
 {
-    if (likely(thread_state_get_inReleaseQueue(tcb->tcbState))) {
+    if (likely(thread_state_get_tcbInReleaseQueue(tcb->tcbState))) {
         if (tcb->tcbSchedPrev) {
             tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
             tcb->tcbSchedPrev = NULL;
@@ -204,7 +204,7 @@ tcbReleaseRemove(tcb_t *tcb)
             tcb->tcbSchedNext = NULL;
         }
 
-        thread_state_ptr_set_inReleaseQueue(&tcb->tcbState, false);
+        thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, false);
     }
 }
 
@@ -212,7 +212,7 @@ tcbReleaseRemove(tcb_t *tcb)
 void
 tcbReleaseEnqueue(tcb_t *tcb)
 {
-    assert(thread_state_get_inReleaseQueue(tcb->tcbState) == false);
+    assert(thread_state_get_tcbInReleaseQueue(tcb->tcbState) == false);
 
     if (ksReleaseHead == NULL ||
             tcb->tcbSchedContext->scNext < ksReleaseHead->tcbSchedContext->scNext) {
@@ -245,7 +245,7 @@ tcbReleaseEnqueue(tcb_t *tcb)
         }
     }
 
-    thread_state_ptr_set_inReleaseQueue(&tcb->tcbState, true);
+    thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, true);
 }
 
 /* remove the head of the release queue */

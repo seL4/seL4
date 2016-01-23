@@ -28,7 +28,7 @@ updateActivePeriod(sched_context_t *sc, ticks_t period)
     /* update the active period (i.e when the thread is due to be released next) */
     /* if the thread is in the release queue we will need to reenqueue it at the end
      * of the update */
-    release = thread_state_get_inReleaseQueue(sc->scTcb->tcbState);
+    release = thread_state_get_tcbInReleaseQueue(sc->scTcb->tcbState);
     tcbReleaseRemove(sc->scTcb);
 
     if (period > sc->scPeriod) {
