@@ -113,7 +113,8 @@ def parse_args():
     result = parser.parse_args()
 
     if result.kernel_header is None and result.libsel4_header is None:
-        print("Error: must provide either kernel_header or libsel4_header")
+        print("Error: must provide either kernel_header or libsel4_header",
+                file=sys.stderr)
         parser.print_help()
         exit(-1)
 
