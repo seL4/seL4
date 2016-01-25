@@ -15,7 +15,7 @@
 ## including Isabelle/HOL specifications and correctness proofs.
 ##
 
-from __future__ import print_function
+from __future__ import print_function, division
 import sys
 import os.path
 import optparse
@@ -1259,7 +1259,7 @@ class TaggedUnion:
 
     def set_base(self, base, base_bits, base_sign_extend, suffix):
         self.base = base
-        self.multiple = self.union_size / base
+        self.multiple = self.union_size // base
         self.constant_suffix = suffix
         self.base_bits = base_bits
         self.base_sign_extend = base_sign_extend
@@ -1269,13 +1269,13 @@ class TaggedUnion:
             tag_offset = self.tag_offset[w]
 
             if tag_index is None:
-                tag_index = tag_offset / base
+                tag_index = tag_offset // base
 
-            if (tag_offset / base) != tag_index:
+            if (tag_offset // base) != tag_index:
                 raise ValueError(
                     "The tag field of tagged union %s"
                     " is in a different word (%s) to the others (%s)."
-                    % (self.name, hex(tag_offset / base), hex(tag_index)))
+                    % (self.name, hex(tag_offset // base), hex(tag_index)))
 
     def generate_hol_proofs(self, params, type_map):
         output = params.output
@@ -1544,7 +1544,7 @@ class TaggedUnion:
                          dict(subs,
                               tag_size=width,
                               classmask=self.word_classmask(width),
-                              tag_index=self.tag_offset[width] / self.base,
+                              tag_index=self.tag_offset[width] // self.base,
                               tag_shift=self.tag_offset[width] % self.base)
                        for template, width in zip(templates, self.widths)])
             + union_get_tag_def_footer_template % subs)
@@ -1562,7 +1562,7 @@ class TaggedUnion:
                          dict(subs,
                               tag_size=width,
                               classmask=self.word_classmask(width),
-                              tag_index=self.tag_offset[width] / self.base,
+                              tag_index=self.tag_offset[width] // self.base,
                               tag_shift=self.tag_offset[width] % self.base)
                        for template, width in zip(templates, self.widths)])
             + union_get_tag_eq_x_def_footer_template % subs)
@@ -1602,7 +1602,7 @@ class TaggedUnion:
 
                 if field == self.tagname: continue
 
-                index = offset / self.base
+                index = offset // self.base
 
                 if high:
                     shift_op = "<<"
@@ -1715,7 +1715,7 @@ class TaggedUnion:
                          dict(subs,
                               mask=2 ** width - 1,
                               classmask=self.word_classmask(width),
-                              index=self.tag_offset[width] / self.base,
+                              index=self.tag_offset[width] // self.base,
                               shift=self.tag_offset[width] % self.base)
                        for template, width in zip(templates, self.widths)])
             + tag_reader_footer_template % subs)
@@ -1732,7 +1732,7 @@ class TaggedUnion:
                          dict(subs,
                               mask=2 ** width - 1,
                               classmask=self.word_classmask(width),
-                              index=self.tag_offset[width] / self.base,
+                              index=self.tag_offset[width] // self.base,
                               shift=self.tag_offset[width] % self.base)
                        for template, width in zip(templates, self.widths)])
             + tag_eq_reader_footer_template % subs)
@@ -1748,7 +1748,7 @@ class TaggedUnion:
                          dict(subs,
                               mask=2 ** width - 1,
                               classmask=self.word_classmask(width),
-                              index=self.tag_offset[width] / self.base,
+                              index=self.tag_offset[width] // self.base,
                               shift=self.tag_offset[width] % self.base)
                        for template, width in zip(templates, self.widths)])
             + ptr_tag_reader_footer_template % subs)
@@ -1785,7 +1785,7 @@ class TaggedUnion:
                 else:
                     f_value = field
 
-                index = offset / self.base
+                index = offset // self.base
                 if high:
                     shift_op = ">>"
                     shift = self.base_bits - size - (offset % self.base)
@@ -1856,7 +1856,7 @@ class TaggedUnion:
                 # Don't duplicate tag accessors
                 if field == self.tagname: continue
 
-                index = offset / self.base
+                index = offset // self.base
                 if high:
                     write_shift = ">>"
                     read_shift = "<<"
@@ -1886,7 +1886,7 @@ class TaggedUnion:
                     "r_shift_op": read_shift, \
                     "w_shift_op": write_shift, \
                     "mask": mask, \
-                    "tagindex": tagnameoffset / self.base, \
+                    "tagindex": tagnameoffset // self.base, \
                     "tagshift": tagnameoffset % self.base, \
                     "tagmask": tagmask, \
                     "union": self.name, \
@@ -2158,9 +2158,9 @@ class Block:
         if self.size % base != 0:
             raise ValueError("Size of block %s not a multiple of base" \
                              % self.name)
-        self.multiple = self.size / base
+        self.multiple = self.size // base
         for name, offset, size, high in self.fields:
-            if offset / base != (offset+size-1) / base:
+            if offset // base != (offset+size-1) // base:
                 raise ValueError("Field %s of block %s " \
                                  "crosses a word boundary" \
                                  % (name, self.name))
@@ -2199,7 +2199,7 @@ class Block:
             for name in self.visible_order:
                 offset, size, high = self.field_map[name]
 
-                index = offset / self.base
+                index = offset // self.base
 
                 if high:
                     shift_op = "<<"
@@ -2402,7 +2402,7 @@ class Block:
         field_inits = []
         ptr_field_inits = []
         for field, offset, size, high in self.fields:
-            index = offset / self.base
+            index = offset // self.base
             if high:
                 shift_op = ">>"
                 shift = self.base_bits - size - (offset % self.base)
@@ -2465,7 +2465,7 @@ class Block:
 
         # Accessors
         for field, offset, size, high in self.fields:
-            index = offset / self.base
+            index = offset // self.base
             if high:
                 write_shift = ">>"
                 read_shift = "<<"
