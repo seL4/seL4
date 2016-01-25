@@ -2581,7 +2581,7 @@ if __name__ == '__main__':
     parser = optparse.OptionParser()
     parser.add_option('--c_defs', action='store_true', default=False)
     parser.add_option('--environment', action='store', default='sel4',
-                      choices=INCLUDES.keys())
+                      choices=list(INCLUDES.keys()))
     parser.add_option('--hol_defs', action='store_true', default=False)
     parser.add_option('--hol_proofs', action='store_true', default=False)
     parser.add_option('--autocorres_defs', action='store_true', default=False,
