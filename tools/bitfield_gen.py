@@ -22,6 +22,8 @@ import optparse
 import re
 import itertools
 
+from six.moves import range
+
 import lex
 import yacc
 
@@ -1771,10 +1773,10 @@ class TaggedUnion:
                                  arg_list)
 
             word_inits = ["    %s.words[%d] = 0;" % (self.name, i) \
-                          for i in xrange(self.multiple)]
+                          for i in range(self.multiple)]
 
             ptr_word_inits = ["    %s_ptr->words[%d] = 0;" % (self.name, i) \
-                              for i in xrange(self.multiple)]
+                              for i in range(self.multiple)]
 
             field_inits = []
             ptr_field_inits = []
@@ -2395,10 +2397,10 @@ class Block:
                              arg_list)
 
         word_inits = ["    %s.words[%d] = 0;" % (self.name, i) \
-                      for i in xrange(self.multiple)]
+                      for i in range(self.multiple)]
 
         ptr_word_inits = ["    %s_ptr->words[%d] = 0;" % (self.name, i) \
-                          for i in xrange(self.multiple)]
+                          for i in range(self.multiple)]
 
         field_inits = []
         ptr_field_inits = []
