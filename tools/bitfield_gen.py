@@ -20,6 +20,7 @@ import sys
 import os.path
 import optparse
 import re
+import itertools
 
 import lex
 import yacc
@@ -2678,7 +2679,7 @@ if __name__ == '__main__':
 
     # Prune list of names to generate
     name_list = []
-    for e in blocks.values() + unions.values():
+    for e in itertools.chain(blocks.values(), unions.values()):
         name_list += e.make_names()
 
     # Sort the list of names by decreasing length.  This should have the
@@ -2835,6 +2836,6 @@ if __name__ == '__main__':
             {'guard':guard}, file=out_file)
         print('\n'.join(map(lambda x: '#include <%s>' % x,
             INCLUDES[options.environment])), file=out_file)
-        for e in blocks.values() + unions.values():
+        for e in itertools.chain(blocks.values(), unions.values()):
             e.generate(options)
         print("#endif", file=out_file)
