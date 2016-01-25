@@ -1174,7 +1174,7 @@ def emit_named(name, params, string):
 def emit_named_ptr_proof(fn_name, params, name, type_map, toptps, prf_prefix, substs):
     name_C = name + '_C'
 
-    if type_map.has_key(name_C):
+    if name_C in type_map:
         toptp, path = type_map[name_C]
 
         substs['cslift_other'] = ' \<and> '.join(
@@ -2139,7 +2139,7 @@ class Block:
             missed_fields = set(self.field_map.keys())
 
             for _name in visible_order:
-                if not self.field_map.has_key(_name):
+                if _name not in self.field_map:
                     raise ValueError("Nonexistent field '%s' in visible_order"
                                      % _name)
                 missed_fields.remove(_name)
@@ -2759,7 +2759,7 @@ if __name__ == '__main__':
             for path, tp in paths:
                 tp = umm.base_name(tp)
 
-                if type_map.has_key(tp):
+                if tp in type_map:
                     raise ValueError("Type %s has multiple parents" % tp)
 
                 type_map[tp] = (toptp, path)
