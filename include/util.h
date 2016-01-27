@@ -36,6 +36,7 @@
 #define FORCE_INLINE __attribute__((always_inline))
 #define SECTION(sec) __attribute__((__section__(sec)))
 #define UNUSED       __attribute__((unused))
+#define USED         __attribute__((used))
 #define FASTCALL     __attribute__((fastcall))
 
 #define OFFSETOF(type, member) \
