@@ -36,6 +36,10 @@ gicDistributor = (gicDistributorBase, PPtr 0xfff05000)
 gicInterfaceBase = gicControllerBase + 0x100
 mptBase = gicControllerBase + 0x600
 
+
+kernelBase :: VPtr
+kernelBase = VPtr 0xe0000000
+
 physBase = 0x10000000
 physMappingOffset = 0xe0000000 - physBase
 

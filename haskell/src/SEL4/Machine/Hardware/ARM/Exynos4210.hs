@@ -32,6 +32,9 @@ gicInterfaceBase = PAddr 0x10480000
 gicDistributorBase = PAddr 0x10490000
 mctBase = PAddr 0x10050000
 
+kernelBase :: VPtr
+kernelBase = VPtr 0xe0000000
+
 physBase = 0x40000000
 physMappingOffset = 0xe0000000 - physBase
 

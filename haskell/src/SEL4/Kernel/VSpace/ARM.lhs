@@ -46,9 +46,6 @@ The ARM-specific invocations are imported with the "ArchInv" prefix. This is nec
 
 All virtual addresses above "kernelBase" cannot be mapped by user-level tasks. With the exception of one page, at "globalsBase", they cannot be read; the globals page is mapped read-only.
 
-> kernelBase :: VPtr
-> kernelBase = VPtr 0xf0000000
-
 > globalsBase :: VPtr
 > globalsBase = VPtr 0xffffc000
 

@@ -27,6 +27,9 @@ instance Bounded IRQ where
     minBound = IRQ 0
     maxBound = IRQ 31
 
+kernelBase :: VPtr
+kernelBase = VPtr 0xf0000000
+
 physBase = 0x80000000
 physMappingOffset = 0xf0000000 - physBase
 

@@ -531,3 +531,7 @@ ARM page directories and page tables occupy four frames and one quarter of a fra
 
 > physBase :: PAddr
 > physBase = toPAddr Platform.physBase
+
+> kernelBase :: VPtr
+> kernelBase = Platform.kernelBase 
+
