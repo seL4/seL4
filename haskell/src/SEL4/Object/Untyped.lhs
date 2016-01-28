@@ -20,6 +20,7 @@ This module defines the behavior of untyped objects.
 > import SEL4.API.Types
 > import SEL4.API.Failures
 > import SEL4.API.Invocation
+> import SEL4.API.InvocationLabels
 > import SEL4.Machine
 > import SEL4.Model
 > import SEL4.Object.Structures

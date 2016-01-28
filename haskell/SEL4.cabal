@@ -11,7 +11,7 @@
 name:                   SEL4-ARM
 version:                1.4-pre
 cabal-version:          >= 1.20
-build-type:             Simple
+build-type:             Custom
 license:                GPL
 author:                 Philip Derrin et. al., NICTA
 synopsis:               Executable specification for the seL4 Kernel
@@ -41,6 +41,7 @@ Library
                             SEL4.API.Types
                             SEL4.API.Types.Universal
                             SEL4.API.Invocation
+                            SEL4.API.InvocationLabels
                             SEL4.Kernel
                             SEL4.Kernel.BootInfo
                             SEL4.Kernel.VSpace
@@ -72,8 +73,12 @@ Library
                             Data.Helpers
 
                             SEL4.Machine.Hardware.ARM.QEmu
+--                             SEL4.Machine.Hardware.ARM.KZM
+--                             SEL4.Machine.Hardware.ARM.Exynos4210
+--                             SEL4.Machine.Hardware.ARM.Sabre
 
                             SEL4.API.Types.ARM
+                            SEL4.API.InvocationLabels.ARM
                             SEL4.API.Invocation.ARM
                             SEL4.Kernel.VSpace.ARM
                             SEL4.Kernel.Thread.ARM
@@ -96,10 +101,7 @@ Library
                             -fno-warn-unused-binds
 
     cpp-options:
-                            -DTARGET=ARM
-                            -DTARGET_ARM
-                            -DPLATFORM=QEmu
-                            -DPLATFORM_QEmu
-                            
+                            -- set via Setup.hs hook
+
     Default-Language: Haskell98
 

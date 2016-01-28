@@ -58,7 +58,7 @@ This module defines architecture-specific virtual memory management procedures. 
 >   doMachineOp $ initL2Cache
 
 > initCPU :: Kernel ()
-> initCPU = Arch.activateGlobalPD
+> initCPU = Arch.activateGlobalVSpace
 
 
 > createIPCBufferFrame :: Capability -> VPtr -> KernelInit Capability

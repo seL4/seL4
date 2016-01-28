@@ -22,7 +22,7 @@ This module defines the handling of the ARM hardware-defined page tables.
 > import SEL4.Object.Structures
 > import SEL4.Model.StateData.ARM
 > import SEL4.Object.Instances()
-> import SEL4.API.Invocation
+> import SEL4.API.InvocationLabels
 > import SEL4.Kernel.BootInfo
 > import {-# SOURCE #-} SEL4.Object.CNode
 > import {-# SOURCE #-} SEL4.Object.TCB
@@ -40,6 +40,7 @@ This module defines the handling of the ARM hardware-defined page tables.
 The ARM-specific invocations are imported with the "ArchInv" prefix. This is necessary to avoid namespace conflicts with the generic invocations.
 
 > import SEL4.API.Invocation.ARM as ArchInv
+> import SEL4.API.InvocationLabels.ARM as ArchInv
 
 \subsection{Constants}
 
@@ -153,8 +154,8 @@ Any IO devices used directly by the kernel --- generally including the interrupt
 >     mapKernelFrame addr vptr VMKernelOnly $ VMAttributes False False True
 
 
-> activateGlobalPD :: Kernel ()
-> activateGlobalPD = do
+> activateGlobalVSpace :: Kernel ()
+> activateGlobalVSpace = do
 >     globalPD <- gets $ armKSGlobalPD . ksArchState
 >     doMachineOp $ do
 >         setCurrentPD $ addrFromPPtr globalPD
@@ -1030,14 +1031,14 @@ round-robin.
 
 > labelToFlushType :: Word -> FlushType
 > labelToFlushType label = case invocationType label of
->       ARMPDClean_Data -> Clean
->       ARMPageClean_Data -> Clean
->       ARMPDInvalidate_Data -> Invalidate
->       ARMPageInvalidate_Data -> Invalidate
->       ARMPDCleanInvalidate_Data -> CleanInvalidate
->       ARMPageCleanInvalidate_Data -> CleanInvalidate
->       ARMPDUnify_Instruction -> Unify
->       ARMPageUnify_Instruction -> Unify
+>       ArchInvocationLabel ARMPDClean_Data -> Clean
+>       ArchInvocationLabel ARMPageClean_Data -> Clean
+>       ArchInvocationLabel ARMPDInvalidate_Data -> Invalidate
+>       ArchInvocationLabel ARMPageInvalidate_Data -> Invalidate
+>       ArchInvocationLabel ARMPDCleanInvalidate_Data -> CleanInvalidate
+>       ArchInvocationLabel ARMPageCleanInvalidate_Data -> CleanInvalidate
+>       ArchInvocationLabel ARMPDUnify_Instruction -> Unify
+>       ArchInvocationLabel ARMPageUnify_Instruction -> Unify
 >       _ -> error "Should never be called without a flush invocation"
 
 > pageBase :: VPtr -> VMPageSize -> VPtr
@@ -1061,7 +1062,6 @@ round-robin.
 >         _ -> return Nothing
 >     
 
-
 > decodeARMMMUInvocation :: Word -> [Word] -> CPtr -> PPtr CTE ->
 >         ArchCapability -> [(Capability, PPtr CTE)] ->
 >         KernelF SyscallError ArchInv.Invocation
@@ -1071,7 +1071,7 @@ There are five ARM-specific capability types. They correspond to the two levels 
 Capabilities for page directories --- the top level of the hardware-defined page table --- have only a single invocation, which allows the user to clean and/or invalidate caches.
 
 > decodeARMMMUInvocation label args _ _ cap@(PageDirectoryCap {}) _ =
->     case (isPDFlush (invocationType label), args) of
+>     case (isPDFlushLabel (invocationType label), args) of
 >         (True, start:end:_) -> do
 >             when (end <= start) $ 
 >                 throw $ InvalidArgument 1
@@ -1115,7 +1115,7 @@ Note that these capabilities cannot be copied until they have been mapped, so an
 
 > decodeARMMMUInvocation label args _ cte cap@(PageTableCap {}) extraCaps =
 >     case (invocationType label, args, extraCaps) of
->         (ARMPageTableMap, vaddr:attr:_, (pdCap,_):_) -> do
+>         (ArchInvocationLabel ARMPageTableMap, vaddr:attr:_, (pdCap,_):_) -> do
 >             when (isJust $ capPTMappedAddress cap) $
 >                 throw $ InvalidCapability 0
 >             (pd,asid) <- case pdCap of
@@ -1143,8 +1143,8 @@ Note that these capabilities cannot be copied until they have been mapped, so an
 >                 ptMapCTSlot = cte,
 >                 ptMapPDE = pde,
 >                 ptMapPDSlot = pdSlot }
->         (ARMPageTableMap, _, _) -> throw TruncatedMessage
->         (ARMPageTableUnmap, _, _) -> do
+>         (ArchInvocationLabel ARMPageTableMap, _, _) -> throw TruncatedMessage
+>         (ArchInvocationLabel ARMPageTableUnmap, _, _) -> do
 >             cteVal <- withoutFailure $ getCTE cte
 >             final <- withoutFailure $ isFinalCapability cteVal
 >             unless final $ throw RevokeFirst
@@ -1157,7 +1157,7 @@ Virtual page capabilities may each represent a single mapping into a page table.
 
 > decodeARMMMUInvocation label args _ cte cap@(PageCap {}) extraCaps =
 >     case (invocationType label, args, extraCaps) of
->         (ARMPageMap, vaddr:rightsMask:attr:_, (pdCap,_):_) -> do
+>         (ArchInvocationLabel ARMPageMap, vaddr:rightsMask:attr:_, (pdCap,_):_) -> do
 >             when (isJust $ capVPMappedAddress cap) $
 >                 throw $ InvalidCapability 0
 >             (pd,asid) <- case pdCap of
@@ -1184,8 +1184,8 @@ Virtual page capabilities may each represent a single mapping into a page table.
 >                     cap { capVPMappedAddress = Just (asid, VPtr vaddr) },
 >                 pageMapCTSlot = cte,
 >                 pageMapEntries = entries }
->         (ARMPageMap, _, _) -> throw TruncatedMessage
->         (ARMPageRemap, rightsMask:attr:_, (pdCap, _):_) -> do
+>         (ArchInvocationLabel ARMPageMap, _, _) -> throw TruncatedMessage
+>         (ArchInvocationLabel ARMPageRemap, rightsMask:attr:_, (pdCap, _):_) -> do
 >             (pd,asid) <- case pdCap of
 >                 ArchObjectCap (PageDirectoryCap {
 >                         capPDMappedASID = Just asid,
@@ -1206,15 +1206,15 @@ Virtual page capabilities may each represent a single mapping into a page table.
 >             return $ InvokePage $ PageRemap {
 >                 pageRemapASID = asidCheck,
 >                 pageRemapEntries = entries }
->         (ARMPageRemap, _, _) -> throw TruncatedMessage
->         (ARMPageUnmap, _, _) -> return $ InvokePage $ PageUnmap {
+>         (ArchInvocationLabel ARMPageRemap, _, _) -> throw TruncatedMessage
+>         (ArchInvocationLabel ARMPageUnmap, _, _) -> return $ InvokePage $ PageUnmap {
 >                 pageUnmapCap = cap,
 >                 pageUnmapCapSlot = cte }
->         (ARMPageClean_Data, _, _) -> decodeARMPageFlush label args cap
->         (ARMPageInvalidate_Data, _, _) -> decodeARMPageFlush label args cap
->         (ARMPageCleanInvalidate_Data, _, _) -> decodeARMPageFlush label args cap
->         (ARMPageUnify_Instruction, _, _) -> decodeARMPageFlush label args cap
->         (ARMPageGetAddress, _, _) -> return $ InvokePage $ PageGetAddr (capVPBasePtr cap)
+>         (ArchInvocationLabel ARMPageClean_Data, _, _) -> decodeARMPageFlush label args cap
+>         (ArchInvocationLabel ARMPageInvalidate_Data, _, _) -> decodeARMPageFlush label args cap
+>         (ArchInvocationLabel ARMPageCleanInvalidate_Data, _, _) -> decodeARMPageFlush label args cap
+>         (ArchInvocationLabel ARMPageUnify_Instruction, _, _) -> decodeARMPageFlush label args cap
+>         (ArchInvocationLabel ARMPageGetAddress, _, _) -> return $ InvokePage $ PageGetAddr (capVPBasePtr cap)
 >         _ -> throw IllegalOperation
 
 
@@ -1222,7 +1222,7 @@ The ASID control capability refers to the top level of a global two-level table 
 
 > decodeARMMMUInvocation label args _ _ ASIDControlCap extraCaps =
 >     case (invocationType label, args, extraCaps) of
->         (ARMASIDControlMakePool, index:depth:_,
+>         (ArchInvocationLabel ARMASIDControlMakePool, index:depth:_,
 >                 (untyped,parentSlot):(root,_):_) -> do
 >             asidTable <- withoutFailure $ gets (armKSASIDTable . ksArchState)
 >             let free = filter (\(x,y) -> x <= (1 `shiftL` asidHighBits) - 1 && isNothing y) $ assocs asidTable
@@ -1242,14 +1242,14 @@ The ASID control capability refers to the top level of a global two-level table 
 >                 makePoolSlot = destSlot,
 >                 makePoolParent = parentSlot,
 >                 makePoolBase = base }
->         (ARMASIDControlMakePool, _, _) -> throw TruncatedMessage
+>         (ArchInvocationLabel ARMASIDControlMakePool, _, _) -> throw TruncatedMessage
 >         _ -> throw IllegalOperation
 
 ASID pool capabilities are used to allocate unique address space identifiers for virtual address spaces. They support the "Assign" method, which allocates an ASID for a given page directory capability. The directory must not already have an ASID. Page directories cannot be used until they have been allocated an ASID using this method.
 
 > decodeARMMMUInvocation label _ _ _ cap@(ASIDPoolCap {}) extraCaps =
 >     case (invocationType label, extraCaps) of
->         (ARMASIDPoolAssign, (pdCap,pdCapSlot):_) ->
+>         (ArchInvocationLabel ARMASIDPoolAssign, (pdCap,pdCapSlot):_) ->
 >             case pdCap of
 >                 ArchObjectCap (PageDirectoryCap { capPDMappedASID = Nothing })
 >                   -> do
@@ -1269,7 +1269,7 @@ ASID pool capabilities are used to allocate unique address space identifiers for
 >                         assignASIDPool = capASIDPool cap,
 >                         assignASIDCTSlot = pdCapSlot }
 >                 _ -> throw $ InvalidCapability 1
->         (ARMASIDPoolAssign, _) -> throw TruncatedMessage
+>         (ArchInvocationLabel ARMASIDPoolAssign, _) -> throw TruncatedMessage
 >         _ -> throw IllegalOperation
 
 > decodeARMPageFlush :: Word -> [Word] -> ArchCapability ->
