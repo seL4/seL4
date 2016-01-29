@@ -8,7 +8,7 @@
 % @TAG(GD_GPL)
 %
 
-This module defines the machine-specific invocations for the ARM.
+This module defines the machine-independent invocation labels.
 
 \begin{impdetails}
 
