@@ -13,20 +13,6 @@
 
 #include <sel4/simple_types.h>
 
-#define seL4_WordBits           32
-#define seL4_PageBits           12
-#define seL4_SlotBits           4
-#define seL4_TCBBits            9
-#define seL4_EndpointBits       4
-#define seL4_NotificationBits   4
-#define seL4_PageTableBits      10
-#define seL4_PageDirBits        14
-#define seL4_ASIDPoolBits       12
-
-#define seL4_LargePageBits      16
-#define seL4_SectionBits        20
-#define seL4_SuperSectionBits   24
-
 typedef seL4_Uint32 seL4_Word;
 typedef seL4_Word seL4_CPtr;
 

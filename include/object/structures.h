@@ -14,6 +14,7 @@
 #include <api/types.h>
 #include <stdint.h>
 #include <arch/object/structures_gen.h>
+#include <arch/api/constants.h>
 
 enum irq_state {
     IRQInactive  = 0,
@@ -56,9 +57,9 @@ typedef word_t notification_state_t;
 #define CNODE_PTR(r) (CTE_PTR(r))
 #define CNODE_REF(p) (CTE_REF(p)>>CNODE_MIN_BITS)
 
+#define TCB_SIZE_BITS (TCB_CNODE_RADIX + seL4_SlotBits)
 #define TCB_CNODE_RADIX     4
-#define TCB_SIZE_BITS       (TCB_CNODE_RADIX + CTE_SIZE_BITS)
-#define TCB_OFFSET          (1 << TCB_SIZE_BITS)
+#define TCB_OFFSET          (1 << (TCB_SIZE_BITS))
 
 /* Generate a tcb_t or cte_t pointer from a tcb block reference */
 #define TCB_PTR(r)       ((tcb_t *)(r))
@@ -67,9 +68,8 @@ typedef word_t notification_state_t;
 
 /* Generate a cte_t pointer from a tcb_t pointer */
 #define TCB_PTR_CTE_PTR(p,i) \
-    (((cte_t *)((word_t)(p)&~MASK(TCB_BLOCK_SIZE_BITS)))+(i))
+    (((cte_t *)((word_t)(p)&~MASK(seL4_TCBBits)))+(i))
 
-#define WORD_BITS   (8 * sizeof(word_t))
 #define WORD_PTR(r) ((word_t *)(r))
 #define WORD_REF(p) ((word_t)(p))
 
@@ -238,12 +238,12 @@ struct tcb {
 typedef struct tcb tcb_t;
 
 /* Ensure object sizes are sane */
-compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << CTE_SIZE_BITS))
+compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << seL4_SlotBits))
 compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
 compile_assert(tcb_size_sane,
-               (1 << TCB_SIZE_BITS) + sizeof(tcb_t) <= (1 << TCB_BLOCK_SIZE_BITS))
-compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << EP_SIZE_BITS))
-compile_assert(notification_size_sane, sizeof(notification_t) <= (1 << NTFN_SIZE_BITS))
+               (1 << (TCB_SIZE_BITS)) + sizeof(tcb_t) <= (1 << seL4_TCBBits))
+compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << seL4_EndpointBits))
+compile_assert(notification_size_sane, sizeof(notification_t) <= (1 << seL4_NotificationBits))
 
 
 /* helper functions */
@@ -267,23 +267,23 @@ cap_get_capSizeBits(cap_t cap)
         return cap_untyped_cap_get_capBlockSize(cap);
 
     case cap_endpoint_cap:
-        return EP_SIZE_BITS;
+        return seL4_EndpointBits;
 
     case cap_notification_cap:
-        return NTFN_SIZE_BITS;
+        return seL4_NotificationBits;
 
     case cap_cnode_cap:
-        return cap_cnode_cap_get_capCNodeRadix(cap) + CTE_SIZE_BITS;
+        return cap_cnode_cap_get_capCNodeRadix(cap) + seL4_SlotBits;
 
     case cap_thread_cap:
-        return TCB_BLOCK_SIZE_BITS;
+        return seL4_TCBBits;
 
     case cap_zombie_cap: {
         word_t type = cap_zombie_cap_get_capZombieType(cap);
         if (type == ZombieType_ZombieTCB) {
-            return TCB_BLOCK_SIZE_BITS;
+            return seL4_TCBBits;
         }
-        return ZombieType_ZombieCNode(type) + CTE_SIZE_BITS;
+        return ZombieType_ZombieCNode(type) + seL4_SlotBits;
     }
 
     case cap_null_cap:
