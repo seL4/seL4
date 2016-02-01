@@ -52,7 +52,7 @@ import optparse
 
 # Number of bits in a standard word
 WORD_SIZE_BITS_ARCH = {
-    "arm": 32,
+    "aarch32": 32,
     "ia32": 32,
 }
 
@@ -60,7 +60,7 @@ WORD_SIZE_BITS_ARCH = {
 MAX_MESSAGE_LENGTH = 32
 
 MESSAGE_REGISTERS_FOR_ARCH = {
-    "arm": 4,
+    "aarch32": 4,
     "ia32": 2,
 }
 
@@ -229,7 +229,7 @@ def InitTypes():
     # Arch-specific types.
     #
     arch_types = {
-        "arm" : [
+        "aarch32" : [
             Type("seL4_ARM_VMAttributes", WORD_SIZE_BITS),
             CapType("seL4_ARM_Page"),
             CapType("seL4_ARM_PageTable"),
@@ -670,7 +670,7 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
     result = []
 
     if arch == "arm_hyp":
-        arch = "arm"
+        arch = "aarch32"
 
     # Ensure architecture looks sane.
     if not arch in WORD_SIZE_BITS_ARCH.keys():

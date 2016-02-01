@@ -102,7 +102,4 @@
             <param dir="in" name="data" type="seL4_Word"/>
         </method>
     </interface>
-    <interface name="seL4_IA32_IOSpace">
-        <method id="IA32IOSpaceRemovePassthrough" name="RemovePassthrough"/>
-    </interface>
 </api>

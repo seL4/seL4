@@ -25,6 +25,8 @@ This module makes use of the GHC extension allowing data types with no construct
 > import SEL4.Machine
 > import SEL4.Machine.Hardware.ARM hiding (PAddr)
 > import SEL4.Object.Structures
+> import SEL4.API.InvocationLabels
+> import SEL4.API.InvocationLabels.ARM
 
 \end{impdetails}
 
@@ -62,7 +64,6 @@ There are five ARM-specific object types; however, only four of them may be invo
 >         pdFlushASID :: ASID }
 >     deriving Show
 
-> -- FIXME: should we consolidate start, end into a tuple
 > data PageInvocation
 >     = PageGetAddr {
 >         pageGetBasePtr :: PPtr Word }
@@ -109,9 +110,8 @@ There are five ARM-specific object types; however, only four of them may be invo
 
 The ARM platform presently does not require any additional interrupt control calls.
 
-> data IRQControlInvocation
-> instance Show IRQControlInvocation
->     where show _ = "Uninhabited type: InterruptControl"
+> data IRQControlInvocation = ARMNoArchIRQControl
+>     deriving Show
 
 \subsection{Additional Register Subsets}
 
@@ -120,4 +120,19 @@ The ARM platform currently does not define any additional register sets for the 
 > data CopyRegisterSets = ARMNoExtraRegisters
 >     deriving Show
 
+> isPDFlushLabel :: InvocationLabel -> Bool
+> isPDFlushLabel x = case x of
+>       ArchInvocationLabel ARMPDClean_Data -> True
+>       ArchInvocationLabel ARMPDInvalidate_Data -> True
+>       ArchInvocationLabel ARMPDCleanInvalidate_Data -> True
+>       ArchInvocationLabel ARMPDUnify_Instruction -> True
+>       _ -> False
+
+> isPageFlushLabel :: InvocationLabel -> Bool
+> isPageFlushLabel x = case x of
+>       ArchInvocationLabel ARMPageClean_Data -> True
+>       ArchInvocationLabel ARMPageInvalidate_Data -> True
+>       ArchInvocationLabel ARMPageCleanInvalidate_Data -> True
+>       ArchInvocationLabel ARMPageUnify_Instruction -> True
+>       _ -> False
 

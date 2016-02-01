@@ -446,7 +446,8 @@ In most cases, the current thread has just sent a message to the woken thread, s
 > attemptSwitchTo :: PPtr TCB -> Kernel ()
 > attemptSwitchTo target = possibleSwitchTo target True
 
-The exception is when waking a thread that has just completed a "Send" system call. In this case, we switch only if the woken thread has a strictly higher priority; that is, when the priorities require the switch. This is done on the assumption that the recipient of a one-way message transfer is more likely to need to take action afterwards than the sender is. % FIXME: is this a sensible behaviour?
+The exception is when waking a thread that has just completed a "Send" system call. In this case, we switch only if the woken thread has a strictly higher priority; that is, when the priorities require the switch. This is done on the assumption that the recipient of a one-way message transfer is more likely to need to take action afterwards than the sender is. 
+% FIXME: is this a sensible behaviour?
 
 > switchIfRequiredTo :: PPtr TCB -> Kernel ()
 > switchIfRequiredTo target = possibleSwitchTo target False
@@ -495,7 +496,7 @@ When setting the scheduler state, we check for blocking of the current thread; i
 
 The following two functions place a thread at the beginning or end of its priority's ready queue, unless it is already queued.
 
-FIXME DOCUMENT TWEAK AND MOVE
+%TODO: document
 
 > prioToL1Index :: Priority -> Int
 > prioToL1Index prio = fromIntegral $ prio `shiftR` wordRadix

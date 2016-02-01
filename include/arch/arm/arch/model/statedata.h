@@ -11,18 +11,8 @@
 #ifndef __ARCH_MODEL_STATEDATA_H
 #define __ARCH_MODEL_STATEDATA_H
 
-#include <types.h>
-#include <arch/types.h>
-#include <util.h>
-#include <object/structures.h>
-
-extern word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)] VISIBLE;
-extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
-extern asid_t armKSHWASIDTable[BIT(hwASIDBits)] VISIBLE;
-extern hw_asid_t armKSNextASID VISIBLE;
+#include <mode/model/statedata.h>
 #ifndef ARM_HYP
-extern pde_t armKSGlobalPD[BIT(PD_BITS)] VISIBLE;
-extern pte_t armKSGlobalPT[BIT(PT_BITS)] VISIBLE;
 #else
 extern pdeS1_t armHSGlobalPGD[BIT(PGD_BITS)] VISIBLE;
 extern pdeS1_t armHSGlobalPD[BIT(PT_BITS)]   VISIBLE;

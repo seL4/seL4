@@ -26,7 +26,8 @@ block frame_cap {
     field       capFMappedASIDLow   10
     field_high  capFMappedAddress   20
 
-    field       capFMappedASIDHigh  6
+    padding                         4
+    field       capFMappedASIDHigh  2
     field       capFVMRights        2
     field_high  capFBasePtr         20
     field       capType             4
@@ -34,9 +35,9 @@ block frame_cap {
 
 -- Second-level page table
 block page_table_cap {
-    padding                         4
+    padding                         8
     field       capPTIsMapped       1
-    field       capPTMappedASID     16
+    field       capPTMappedASID     12
     field_high  capPTMappedAddress  11
 
     padding                         8
@@ -46,9 +47,9 @@ block page_table_cap {
 
 -- First-level page table (page directory)
 block page_directory_cap {
-    padding                         13
+    padding                         17
     field       capPDIsMapped       1
-    field       capPDMappedASID     16
+    field       capPDMappedASID     12
     field_high  capPDMappedAddress  2
 
     padding                         8
@@ -57,9 +58,9 @@ block page_directory_cap {
 }
 
 block pdpt_cap {
-    padding                         15
+    padding                         19
     field       capPDPTIsMapped     1
-    field       capPDPTMappedASID   16
+    field       capPDPTMappedASID   12
 
     padding                         1
     field_high  capPDPTBasePtr      27
@@ -75,8 +76,8 @@ block asid_control_cap {
 
 -- Cap to a pool of 2^10 ASIDs
 block asid_pool_cap {
-    padding                     16
-    field       capASIDBase     16
+    padding                     20
+    field       capASIDBase     12
 
     padding                     8
     field_high  capASIDPool     20

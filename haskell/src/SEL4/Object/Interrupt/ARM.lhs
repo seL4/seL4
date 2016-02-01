@@ -9,6 +9,7 @@
 %
 
 This module defines the machine-specific interrupt handling routines for the ARM.
+Apparently ARM does not have any.
 
 > module SEL4.Object.Interrupt.ARM where
 
@@ -26,7 +27,6 @@ This module defines the machine-specific interrupt handling routines for the ARM
 >     KernelF SyscallError ArchInv.IRQControlInvocation
 > decodeIRQControlInvocation _ _ _ _ = throw IllegalOperation
 
-> invokeIRQControl :: ArchInv.IRQControlInvocation -> KernelP ()
-> invokeIRQControl _ = fail "invokeInterruptControl: not defined"
-
+> performIRQControl :: ArchInv.IRQControlInvocation -> KernelP ()
+> performIRQControl _ = fail "performIRQControl: not defined"
 

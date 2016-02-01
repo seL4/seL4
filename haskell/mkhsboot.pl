@@ -23,7 +23,7 @@ $input =~ /module\s+([A-Z][a-zA-Z0-9.]*)/m or die "no module";
 $modname = $1;
 
 # find the lists of hs-boot imports and exports
-$input =~ /{-# BOOT-IMPORTS:((\s+#?[A-Z][a-zA-Z0-9.]+(\(.*?\))?)*) #-}/
+$input =~ /{-# BOOT-IMPORTS:((\s+#?[A-Z][a-zA-Z0-9.]+(\(.*?\))?(%[a-zA-Z]+)?)*) #-}/
     or die "no imports";
 $imports = $1;
 
@@ -34,6 +34,7 @@ $exports = $1;
 # transform the import list to import statements
 $imports =~ s/\s+/\n${prefix}import /g;
 $imports =~ s/#/{-# SOURCE #-} /g;
+$imports =~ s/%/ as /g;
 
 # create the export list
 $explist = $exports;

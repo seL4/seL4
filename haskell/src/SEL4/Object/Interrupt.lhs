@@ -20,10 +20,14 @@ We use the C preprocessor to select a target architecture.
 
 > module SEL4.Object.Interrupt (
 >     decodeIRQControlInvocation, decodeIRQHandlerInvocation,
->     invokeIRQControl, invokeIRQHandler,
+>     performIRQControl, invokeIRQHandler,
 >     deletingIRQHandler, deletedIRQHandler,
->     initInterruptController, handleInterrupt
+>     initInterruptController, handleInterrupt,
+>     setIRQState
 >   ) where
+
+> {-# BOOT-IMPORTS: SEL4.Machine SEL4.Model SEL4.Object.Structures #-}     
+> {-# BOOT-EXPORTS: setIRQState #-}
 
 The architecture-specific definitions are imported qualified with the "Arch" prefix.
 
@@ -35,6 +39,7 @@ The architecture-specific definitions are imported qualified with the "Arch" pre
 > import SEL4.Model
 > import SEL4.API.Failures
 > import SEL4.API.Invocation
+> import SEL4.API.InvocationLabels
 > import SEL4.API.Types
 > import SEL4.Object.Structures
 > import SEL4.Object.Notification
@@ -58,30 +63,29 @@ There is a single, global interrupt controller object; a capability to it is pro
 > decodeIRQControlInvocation :: Word -> [Word] -> PPtr CTE -> [Capability] ->
 >         KernelF SyscallError IRQControlInvocation
 > decodeIRQControlInvocation label args srcSlot extraCaps =
->     case (invocationType label,args,extraCaps) of
->         (IRQIssueIRQHandler,irqW:index:depth:_,cnode:_) -> do
->             rangeCheck irqW
->                 (fromEnum minIRQ) (fromEnum maxIRQ)
+>     case (invocationType label, args, extraCaps) of
+>         (IRQIssueIRQHandler, irqW:index:depth:_, cnode:_) -> do
+>             rangeCheck irqW (fromEnum minIRQ) (fromEnum maxIRQ)
 >             let irq = toEnum (fromIntegral irqW) :: IRQ
->             
+>
 >             irqActive <- withoutFailure $ isIRQActive irq
 >             when irqActive $ throw RevokeFirst
->             
+>
 >             destSlot <- lookupTargetSlot cnode
 >                 (CPtr index) (fromIntegral depth)
 >             ensureEmptySlot destSlot
->             
+>
 >             return $ IssueIRQHandler irq destSlot srcSlot
 >         (IRQIssueIRQHandler,_,_) -> throw TruncatedMessage
 >         _ -> liftM ArchIRQControl $ Arch.decodeIRQControlInvocation label args srcSlot extraCaps
 
-> invokeIRQControl :: IRQControlInvocation -> KernelP ()
-> invokeIRQControl (IssueIRQHandler irq handlerSlot controlSlot) =
+> performIRQControl :: IRQControlInvocation -> KernelP ()
+> performIRQControl (IssueIRQHandler irq handlerSlot controlSlot) =
 >   withoutPreemption $ do
 >     setIRQState (IRQSignal) irq
 >     cteInsert (IRQHandlerCap irq) controlSlot handlerSlot
-> invokeIRQControl (ArchIRQControl invok) =
->     Arch.invokeIRQControl invok
+> performIRQControl (ArchIRQControl invok) =
+>     Arch.performIRQControl invok
 
 \subsubsection{IRQ Handler Capabilities}
 \label{sec:object.interrupt.invoke.handler}
@@ -117,7 +121,7 @@ An IRQ handler capability allows a thread possessing it to set an endpoint which
 > invokeIRQHandler (ClearIRQHandler irq) = do
 >     irqSlot <- getIRQSlot irq
 >     cteDeleteOne irqSlot
-> invokeIRQHandler (SetMode irq trig pol) = 
+> invokeIRQHandler (SetMode irq trig pol) =
 >     doMachineOp $ setInterruptMode irq trig pol
 
 \subsection{Kernel Functions}

@@ -11,62 +11,6 @@
 #ifndef __LIBSEL4_ARCH_EXCEPTION_IPC
 #define __LIBSEL4_ARCH_EXCEPTION_IPC
 
-/**
- * NOT A STANDALONE INCLUDE
- */
-
-#define SEL4_EXCEPT_IPC_LABEL      3
-#define SEL4_USER_EXCEPTION_LABEL  4
-#define SEL4_USER_EXCEPTION_LENGTH 5
-#ifdef ARM_HYP
-#define SEL4_VGIC_MAINTENANCE_LENGTH 1
-#define SEL4_VGIC_MAINTENANCE_LABEL  5
-#define SEL4_VCPU_FAULT_LENGTH       1
-#define SEL4_VCPU_FAULT_LABEL        6
-#endif
-/*
- * Exception format for an Unknown system call exception.
- */
-typedef enum {
-    EXCEPT_IPC_SYS_MR_R0,
-    EXCEPT_IPC_SYS_MR_R1,
-    EXCEPT_IPC_SYS_MR_R2,
-    EXCEPT_IPC_SYS_MR_R3,
-    EXCEPT_IPC_SYS_MR_R4,
-    EXCEPT_IPC_SYS_MR_R5,
-    EXCEPT_IPC_SYS_MR_R6,
-    EXCEPT_IPC_SYS_MR_R7,
-    EXCEPT_IPC_SYS_MR_PC,
-    EXCEPT_IPC_SYS_MR_SP,
-    EXCEPT_IPC_SYS_MR_LR,
-    EXCEPT_IPC_SYS_MR_CPSR,
-    EXCEPT_IPC_SYS_MR_SYSCALL,
-    SEL4_EXCEPT_IPC_LENGTH
-} seL4_ExceptIPCRegister;
-
-static inline seL4_Word seL4_isExceptIPC_Tag(seL4_MessageInfo_t tag)
-{
-    return seL4_MessageInfo_get_label(tag) == SEL4_EXCEPT_IPC_LABEL;
-}
-
-static inline seL4_Word seL4_ExceptIPC_Get(seL4_Word mr)
-{
-    return seL4_GetMR(mr);
-}
-
-static inline void seL4_ExceptIPC_Set(seL4_Word index, seL4_Word val)
-{
-    seL4_SetMR(index, val);
-}
-
-static inline seL4_Word seL4_IsArchSyscallFrom(seL4_MessageInfo_t tag)
-{
-    return seL4_MessageInfo_get_length(tag) == SEL4_EXCEPT_IPC_LENGTH;
-}
-
-static inline seL4_Word seL4_IsArchExceptionFrom(seL4_MessageInfo_t tag)
-{
-    return seL4_MessageInfo_get_length(tag) == SEL4_USER_EXCEPTION_LENGTH;
-}
+#include <sel4/sel4_arch/exIPC.h>
 
 #endif

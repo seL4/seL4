@@ -15,6 +15,12 @@ INVOCATION_ID_GEN_PATH := ${SOURCE_DIR}/tools/invocation_header_gen.py
 XMLLINT_PATH := ${SOURCE_DIR}/tools/xmllint.sh
 CHANGED_PATH := ${SOURCE_DIR}/tools/changed.sh
 
+ifeq (${KERNEL_32}, y)
+TYPE_SUFFIX:=32
+else
+$(error Cannot determine TYPE_SUFFIX)
+endif
+
 # Targets
 PRIORITY_TARGETS := include/interfaces/sel4_client.h include/sel4/types_gen.h include/sel4/syscall.h \
 					include/sel4/invocation.h arch_include/${ARCH}/sel4/arch/invocation.h \
@@ -77,20 +83,25 @@ include/sel4/syscall.h: ${SOURCE_DIR}/include/api/syscall.xsd \
 	--xml ${SOURCE_DIR}/include/api/syscall.xml \
 	--libsel4_header $@
 
+include/sel4/%.pbf: ${SOURCE_DIR}/include/sel4/%.bf $(srctree)/include/generated/autoconf.h
+	@echo " [PBF_GEN] $@"
+	@mkdir -p $(dir $@)
+	$(Q)${CPP} ${CPPFLAGS} -P $< > $@
+
 # Bitfield generator
 include/sel4/types_gen.h: \
-		${SOURCE_DIR}/include/sel4/types.bf \
+		include/sel4/types_${TYPE_SUFFIX}.pbf \
 		${BF_GEN_PATH}
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
-	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 "${SOURCE_DIR}/include/sel4/types.bf" include/sel4/types_gen.h
+	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 $< include/sel4/types_gen.h
 
 include/sel4/shared_types_gen.h: \
-		${SOURCE_DIR}/include/sel4/shared_types.bf \
+		include/sel4/shared_types_${TYPE_SUFFIX}.pbf \
 		${BF_GEN_PATH}
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
-	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 "${SOURCE_DIR}/include/sel4/shared_types.bf" include/sel4/shared_types_gen.h
+	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 $< include/sel4/shared_types_gen.h
 
 # Stub generator
 include/interfaces/sel4_client.h: \

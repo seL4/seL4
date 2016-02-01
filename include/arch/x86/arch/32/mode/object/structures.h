@@ -78,7 +78,7 @@ compile_assert(gdt_idt_ptr_packed,
 #define WORD_SIZE_BITS 2
 
 enum asidSizeConstants {
-    asidHighBits = 6,
+    asidHighBits = 2,
     asidLowBits = 10
 };
 

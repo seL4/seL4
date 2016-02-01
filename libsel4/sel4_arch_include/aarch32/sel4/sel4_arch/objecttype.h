@@ -8,7 +8,11 @@
  * @TAG(NICTA_BSD)
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_TYPES_H
-#define __LIBSEL4_SEL4_ARCH_TYPES_H
+#ifndef __SEL4_ARCH_OBJECT_TYPE_H
+#define __SEL4_ARCH_OBJECT_TYPE_H
+
+typedef enum _mode_object {
+    seL4_ModeObjectTypeCount = seL4_NonArchObjectTypeCount,
+} seL4_ModeObjectType;
 
 #endif

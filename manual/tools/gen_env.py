@@ -17,7 +17,7 @@ output = []
 
 # Check arguments.
 if len(sys.argv) != 2:
-    print "Usage: gen_env.py <output file>"
+    print("Usage: gen_env.py <output file>")
     sys.exit(1)
 output_filename = sys.argv[1]
 

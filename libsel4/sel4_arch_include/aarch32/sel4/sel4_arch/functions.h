@@ -8,7 +8,11 @@
  * @TAG(NICTA_BSD)
  */
 
-#ifndef __SEL4_ARCH_OBJECT_TYPE_H
-#define __SEL4_ARCH_OBJECT_TYPE_H
+#ifndef __LIBSEL4_SEL4_ARCH_FUNCTIONS_H
+#define __LIBSEL4_SEL4_ARCH_FUNCTIONS_H
+
+enum {
+    seL4_GlobalsFrame = 0xffffc000,
+};
 
 #endif

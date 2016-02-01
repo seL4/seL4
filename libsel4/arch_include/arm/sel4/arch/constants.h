@@ -11,11 +11,14 @@
 #ifndef __LIBSEL4_ARCH_CONSTANTS_H
 #define __LIBSEL4_ARCH_CONSTANTS_H
 
+#include <sel4/sel4_arch/constants.h>
+
+#include <sel4/sel4_arch/objecttype.h>
 #include <sel4/arch/objecttype.h>
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 /* size of kernel log buffer in bytes */
-#define seL4_LogBufferSize (1<<20)
+#define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
 #endif

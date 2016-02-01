@@ -15,7 +15,7 @@
 ### Build parameters
 ############################################################
 
-SEL4_ARCH_LIST:=arm ia32
+SEL4_ARCH_LIST:=aarch32 ia32
 ARCH_LIST:=arm x86
 CPU_LIST:=arm1136jf-s ixp420 cortex-a8 cortex-a9 cortex-a15
 PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 apq8064 zynq7000 allwinnerA20
@@ -48,7 +48,7 @@ $(if $(filter ${CPU},${CPU_LIST}),, \
 
 $(if $(filter ${ARMV},${ARMV_LIST}),, \
 	$(error ARMV ${ARMV} invalid or undefined, should be one of [${ARMV_LIST}]))
-SEL4_ARCH:=arm
+SEL4_ARCH:=aarch32
 endif
 
 $(if $(filter ${SEL4_ARCH},${SEL4_ARCH_LIST}),, \
@@ -294,14 +294,16 @@ CFLAGS += -mtune=${CPU} -marm -march=${ARMV}
 ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
 DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 DEFINES += -DARCH_ARM
+ifeq (${SEL4_ARCH}, aarch32)
+DEFINES += -D__KERNEL_32__ -DAARCH32
 ifeq (${CPU},cortex-a8)
-DEFINES += -DARM_CORTEX_A8 -D__KERNEL_32__
+DEFINES += -DARM_CORTEX_A8
 endif
 ifeq (${CPU},cortex-a9)
-DEFINES += -DARM_CORTEX_A9 -D__KERNEL_32__
+DEFINES += -DARM_CORTEX_A9
 endif
 ifeq (${CPU},cortex-a15)
-DEFINES += -DARM_CORTEX_A15 -D__KERNEL_32__
+DEFINES += -DARM_CORTEX_A15
 endif
 ifeq ($(PLAT),imx6)
 DEFINES += -DIMX6
@@ -336,6 +338,7 @@ endif
 ifeq ($(PLAT),allwinnerA20)
 DEFINES += -DALLWINNERA20
 endif
+endif # SEL4_ARCH=aarch32
 endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32 -mno-mmx -mno-sse
@@ -351,6 +354,11 @@ STATICHEADERS += $(srctree)/include/generated/autoconf.h
 endif # NK_CFLAGS
 
 ifeq (${ARCH}, x86)
+INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/32"
+INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/32"
+endif
+
+ifeq ($(SEL4_ARCH), aarch32)
 INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/32"
 INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/32"
 endif

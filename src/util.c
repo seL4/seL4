@@ -66,7 +66,7 @@ memset(void *s, unsigned long c, unsigned long n)
     return s;
 }
 
-void*
+void* USED
 memcpy(void* ptr_dst, const void* ptr_src, unsigned long n)
 {
     uint8_t *p;
