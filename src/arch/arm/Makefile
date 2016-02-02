@@ -17,4 +17,6 @@ include ${SOURCE_ROOT}/src/arch/arm/model/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/machine/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/armv/$(ARMV)/Makefile
 
-ARCH_ASM_SOURCES += traps.S halt.S idle.S head.S
+ifeq ($(__ARM_32__),y)
+include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/Makefile
+endif

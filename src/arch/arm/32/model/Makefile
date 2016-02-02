@@ -8,6 +8,4 @@
 # @TAG(GD_GPL)
 #
 
-DIRECTORIES += src/arch/arm/object
-
-ARCH_C_SOURCES += object/interrupt.c object/tcb.c
+ARCH_C_SOURCES += 32/model/statedata.c
