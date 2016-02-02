@@ -32,7 +32,7 @@
                              | CPSR_EXTRA_FLAGS   )
 
 #define CPSR_IDLETHREAD      ( PMASK_FIRQ         \
-                             | PMODE_SUPERVISOR   \
+                             | PMODE_SYSTEM       \
                              | CPSR_EXTRA_FLAGS   )
 
 #ifdef __ASSEMBLER__
