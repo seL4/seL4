@@ -179,6 +179,16 @@ deletedIRQHandler(irq_t irq)
 void
 handleInterrupt(irq_t irq)
 {
+    if (irq > maxIRQ) {
+        /* mask, ack and pretend it didn't happen. We assume that because
+         * the interrupt controller for the platform returned this IRQ that
+         * it is safe to use in mask and ack operations, even though it is
+         * above the claimed maxIRQ. i.e. we're assuming maxIRQ is wrong */
+        printf("Received IRQ %d, which is above the platforms maxIRQ of %d\n", irq, maxIRQ);
+        maskInterrupt(true, irq);
+        ackInterrupt(irq);
+        return;
+    }
     switch (intStateIRQTable[irq]) {
     case IRQSignal: {
         cap_t cap;
