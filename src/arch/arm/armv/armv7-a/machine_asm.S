@@ -59,6 +59,9 @@ BEGIN_FUNC(lockTLBEntry)
     add r3, r3, #1
     mov r2, #0
     orr r2, r2, r3, lsl #28
+#elif defined(ARM_CORTEX_A7)
+    /* CORTEX A7 does not support TLB lockdown */
+    bx  lr
 #else
 #   error Undefined CPU for TLB lockdown
 #endif

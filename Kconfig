@@ -63,6 +63,13 @@ menu "seL4 System"
             help
                 Support for ARM1136JF-S
 
+        config ARM_CORTEX_A7
+            bool "Cortex A7"
+            depends on ARCH_ARM
+            select ARCH_ARM_V7A
+            help
+                Support for Cortex A7 processor
+
         config ARM_CORTEX_A8 
             bool "Cortex A8"
             depends on ARCH_ARM
@@ -98,6 +105,12 @@ menu "seL4 System"
        help
           Common flag for SabreLight and Wandboard Quad
 
+
+    config PLAT_IMX7
+        bool
+        default n
+            help
+                Common flag for iMX7 SoC
 
     choice
         prompt "Platform Type"
@@ -177,6 +190,14 @@ menu "seL4 System"
             select PLAT_IMX6
             help
                 Support for iMX6 platform (Wandboard Quad).
+
+        config PLAT_IMX7_SABRE
+            bool "iMX7 (Sabre)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A7
+            select PLAT_IMX7
+            help
+                Support for iMX7 Sabre Dual.
 
         config PLAT_ZYNQ7000
             bool "Zynq-7000 (Xilinx ZC706)"
