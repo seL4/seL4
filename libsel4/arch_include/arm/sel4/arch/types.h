@@ -13,11 +13,6 @@
 
 #include <sel4/simple_types.h>
 #include <sel4/sel4_arch/types.h>
-#ifdef ARM_HYP
-#define seL4_PageTableBits 12
-#else  /* ARM_HYP */
-#endif /* ARM_HYP */
-#define seL4_ARM_VCPUBits 12
 
 typedef seL4_CPtr seL4_ARM_Page;
 typedef seL4_CPtr seL4_ARM_PageTable;

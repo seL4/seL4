@@ -19,9 +19,14 @@
 #define seL4_TCBBits            9
 #define seL4_EndpointBits       4
 #define seL4_NotificationBits   4
+#ifdef ARM_HYP
+#define seL4_PageTableBits      12
+#else
 #define seL4_PageTableBits      10
+#endif
 #define seL4_PageDirBits        14
 #define seL4_ASIDPoolBits       12
+#define seL4_ARM_VCPUBits       12
 
 #define seL4_LargePageBits      16
 #define seL4_SectionBits        20
