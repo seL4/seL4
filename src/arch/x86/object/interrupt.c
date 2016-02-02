@@ -84,8 +84,8 @@ maskInterrupt(bool_t disable, irq_t irq)
             ioapic_mask(disable, ioapic, pin);
             state =  x86_irq_state_irq_ioapic_set_masked(state, disable);
             Arch_updateIRQState(irq, state);
-            }
-            break;
+        }
+        break;
         case x86_irq_state_irq_msi:
             /* currently MSI interrupts can not be disabled */
             break;
