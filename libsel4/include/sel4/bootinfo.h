@@ -44,14 +44,14 @@ typedef struct {
 
 typedef struct {
     seL4_Word       basePaddr;     /* base physical address of device region */
-    seL4_Word       frameSizeBits; /* size (2^n bytes) of a device-region frame */
+    seL4_Uint32     frameSizeBits; /* size (2^n bytes) of a device-region frame */
     seL4_SlotRegion frames;        /* device-region frame caps */
 } seL4_DeviceRegion;
 
 typedef struct {
     seL4_Word         nodeID;          /* ID [0..numNodes-1] of the seL4 node (0 if uniprocessor) */
-    seL4_Word         numNodes;        /* number of seL4 nodes (1 if uniprocessor) */
-    seL4_Word         numIOPTLevels;   /* number of IOMMU PT levels (0 if no IOMMU support) */
+    seL4_Uint32       numNodes;        /* number of seL4 nodes (1 if uniprocessor) */
+    seL4_Uint32       numIOPTLevels;   /* number of IOMMU PT levels (0 if no IOMMU support) */
     seL4_IPCBuffer*   ipcBuffer;       /* pointer to initial thread's IPC buffer */
     seL4_SlotRegion   empty;           /* empty slots (null caps) */
     seL4_SlotRegion   sharedFrames;    /* shared-frame caps (shared between seL4 nodes) */
@@ -61,7 +61,7 @@ typedef struct {
     seL4_Word         untypedPaddrList   [CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* physical address of each untyped cap */
     seL4_Uint8        untypedSizeBitsList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* size (2^n) bytes of each untyped cap */
     seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
-    seL4_Word         numDeviceRegions;        /* number of device regions */
+    seL4_Uint32       numDeviceRegions;        /* number of device regions */
     seL4_DeviceRegion deviceRegions[CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS]; /* device regions */
     seL4_Uint32       initThreadDomain; /* Initial thread's domain ID */
 } seL4_BootInfo;
