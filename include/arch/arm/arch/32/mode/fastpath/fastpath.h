@@ -50,12 +50,6 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
 }
 
 static inline void
-thread_state_ptr_set_blockingIPCDiminish_np(thread_state_t *ts_ptr, word_t dim)
-{
-    ts_ptr->words[2] = dim;
-}
-
-static inline void
 mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
