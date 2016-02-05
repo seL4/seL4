@@ -1,7 +1,7 @@
 /*
  * Automatically generated C config: don't edit
  * Project Configuration
- * Mon Nov  9 14:40:47 2015
+ * Thu Feb  4 14:59:25 2016
  */
 #define AUTOCONF_INCLUDED
 #define CONFIG_LIB_SEL4_SIMPLE 1
@@ -66,6 +66,7 @@
 #define CONFIG_HAVE_LIB_CPIO 1
 #define CONFIG_HAVE_LIB_SEL4_VKA 1
 #define CONFIG_HAVE_LIB_SEL4_PLAT_SUPPORT 1
+#define CONFIG_FSGSBASE_GDT 1
 #define CONFIG_USER_EXTRA_CFLAGS "-D_XOPEN_SOURCE=700"
 #define CONFIG_HAVE_LIB_SEL4_SIMPLE 1
 #define CONFIG_HAVE_LIB_ELF 1
