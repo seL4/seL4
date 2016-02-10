@@ -116,61 +116,61 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     cur_thread->tcbArch.tcbContext.registers[EFLAGS] &= ~0x200;
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile(
-                "movl %%ecx, %%esp\n"
-                "popl %%edi \n"
-                "popl %%ebp \n"
+            "movl %%ecx, %%esp\n"
+            "popl %%edi \n"
+            "popl %%ebp \n"
 #if defined(CONFIG_FSGSBASE_GDT)
-                "addl $8, %%esp \n"
-                "popl %%fs \n"
-                "popl %%gs \n"
-                "addl $20, %%esp \n"
+            "addl $8, %%esp \n"
+            "popl %%fs \n"
+            "popl %%gs \n"
+            "addl $20, %%esp \n"
 #elif defined(CONFIG_FSGSBASE_MSR)
-                "addl $36, %%esp \n"
+            "addl $36, %%esp \n"
 #else
 #error "Invalid method to set IPCBUF/TLS"
 #endif
-                "popfl \n"
-                "orl $0x200, 44(%%ecx) \n"
-                "movl 36(%%ecx), %%edx \n"
-                "pop %%ecx \n"
-                "sti \n"
-                "sysexit \n"
-                     :
-                     : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
-                     "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
-                     "b" (badge),
-                     "S" (msgInfo)
-                     : "memory"
-                    );
+            "popfl \n"
+            "orl $0x200, 44(%%ecx) \n"
+            "movl 36(%%ecx), %%edx \n"
+            "pop %%ecx \n"
+            "sti \n"
+            "sysexit \n"
+            :
+            : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
+            "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
+            "b" (badge),
+            "S" (msgInfo)
+            : "memory"
+        );
     } else {
         asm volatile(
-                "movl %%ecx, %%esp \n"
-                "popl %%edi \n"
-                "popl %%ebp \n"
-                "popl %%ds \n"
-                "popl %%es \n"
+            "movl %%ecx, %%esp \n"
+            "popl %%edi \n"
+            "popl %%ebp \n"
+            "popl %%ds \n"
+            "popl %%es \n"
 #if defined(CONFIG_FSGSBASE_GDT)
-                "popl %%fs \n"
-                "popl %%gs \n"
-                "addl $20, %%esp \n"
+            "popl %%fs \n"
+            "popl %%gs \n"
+            "addl $20, %%esp \n"
 #elif defined(CONFIG_FSGSBASE_MSR)
-                "addl $28, %%esp \n"
+            "addl $28, %%esp \n"
 #else
 #error "Invalid method to set IPCBUF/TLS"
 #endif
-                "popfl \n"
-                "orl $0x200, 44(%%ecx) \n"
-                "movl 36(%%ecx), %%edx \n"
-                "pop %%ecx \n"
-                "sti \n"
-                "sysexit \n"
-                     :
-                     : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
-                     "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
-                     "b" (badge),
-                     "S" (msgInfo)
-                     : "memory"
-                    );
+            "popfl \n"
+            "orl $0x200, 44(%%ecx) \n"
+            "movl 36(%%ecx), %%edx \n"
+            "pop %%ecx \n"
+            "sti \n"
+            "sysexit \n"
+            :
+            : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
+            "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
+            "b" (badge),
+            "S" (msgInfo)
+            : "memory"
+        );
     }
     /* This function is marked NORETURN, but gcc is not aware that the previous assembly
        block will return to user level. This loop prevents gcc complaining, and also helps
