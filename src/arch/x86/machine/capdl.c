@@ -15,7 +15,6 @@
 #include <machine/capdl.h>
 #include <arch/machine/capdl.h>
 #include <machine/io.h>
-#include <plat/machine/pci.h>
 
 #ifdef CONFIG_DEBUG_BUILD
 

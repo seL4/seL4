@@ -18,7 +18,7 @@
 #include <arch/machine/fpu.h>
 #include <arch/object/objecttype.h>
 #include <arch/object/ioport.h>
-#include <plat/machine/pci.h>
+#include <plat/machine/devices.h>
 
 #include <arch/object/iospace.h>
 #include <plat/machine/intel-vtd.h>
@@ -227,7 +227,9 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
 
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
-        clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        if (!cap_frame_cap_get_capFIsDevice(cap)) {
+            clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        }
         Arch_finaliseCap(cap, is_final);
         return resetMemMapping(cap);
 
@@ -418,9 +420,9 @@ Arch_getObjectSize(word_t t)
 }
 
 cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize)
+Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
-    return Mode_createObject(t, regionBase, userSize);
+    return Mode_createObject(t, regionBase, userSize, deviceMemory);
 }
 
 exception_t

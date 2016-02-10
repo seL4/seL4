@@ -20,6 +20,23 @@
 #include <arch/object/vcpu.h>
 #endif
 
+bool_t
+Arch_isFrameType(word_t type)
+{
+    switch (type) {
+    case seL4_ARM_SmallPageObject:
+        return true;
+    case seL4_ARM_LargePageObject:
+        return true;
+    case seL4_ARM_SectionObject:
+        return true;
+    case seL4_ARM_SuperSectionObject:
+        return true;
+    default:
+        return false;
+    }
+}
+
 deriveCap_ret_t
 Arch_deriveCap(cte_t *slot, cap_t cap)
 {
@@ -271,7 +288,9 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
             \<or> 2 ^ unat \<acute>sz___int <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
             \<and> \<acute>sz___int < 32, id)" */
 
-        clearMemory((void *)cap_get_capPtr(cap), sz);
+        if (!generic_frame_cap_get_capFIsDevice(cap)) {
+            clearMemory((void *)cap_get_capPtr(cap), sz);
+        }
         Arch_finaliseCap(cap, is_final);
         return resetMemMapping(cap);
 
@@ -502,23 +521,24 @@ Arch_getObjectSize(word_t t)
 }
 
 cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize)
+Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
-        memzero(regionBase, 1 << ARMSmallPageBits);
-        /** AUXUPD: "(True, ptr_retyps 1
-                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-        /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
-                                            (ptr_val \<acute>regionBase)
-                                            (unat ARMSmallPageBits))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << ARMSmallPageBits) - 1,
-                            addrFromPPtr(regionBase));
-
+        if (!deviceMemory) {
+            memzero(regionBase, 1 << ARMSmallPageBits);
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                (ptr_val \<acute>regionBase)
+                                                (unat ARMSmallPageBits))" */
+            cleanCacheRange_PoU((word_t)regionBase,
+                                (word_t)regionBase + (1 << ARMSmallPageBits) - 1,
+                                addrFromPPtr(regionBase));
+        }
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
-                   0,
+                   0, deviceMemory,
 #ifdef CONFIG_ARM_SMMU
                    0,
 #endif
@@ -526,51 +546,54 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
                    (word_t)regionBase);
 
     case seL4_ARM_LargePageObject:
-        memzero(regionBase, 1 << ARMLargePageBits);
-        /** AUXUPD: "(True, ptr_retyps 16
-                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-        /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
-                                            (ptr_val \<acute>regionBase)
-                                            (unat ARMLargePageBits))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << ARMLargePageBits) - 1,
-                            addrFromPPtr(regionBase));
-
+        if (!deviceMemory) {
+            memzero(regionBase, 1 << ARMLargePageBits);
+            /** AUXUPD: "(True, ptr_retyps 16
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                (ptr_val \<acute>regionBase)
+                                                (unat ARMLargePageBits))" */
+            cleanCacheRange_PoU((word_t)regionBase,
+                                (word_t)regionBase + (1 << ARMLargePageBits) - 1,
+                                addrFromPPtr(regionBase));
+        }
         return cap_frame_cap_new(
                    ARMLargePage, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, ASID_HIGH(asidInvalid),
+                   0, deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_SectionObject:
-        memzero(regionBase, 1 << ARMSectionBits);
-        /** AUXUPD: "(True, ptr_retyps 256
-                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-        /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
-                                            (ptr_val \<acute>regionBase)
-                                            (unat ARMSectionBits))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << ARMSectionBits) - 1,
-                            addrFromPPtr(regionBase));
-
+        if (!deviceMemory) {
+            memzero(regionBase, 1 << ARMSectionBits);
+            /** AUXUPD: "(True, ptr_retyps 256
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
+                                                (ptr_val \<acute>regionBase)
+                                                (unat ARMSectionBits))" */
+            cleanCacheRange_PoU((word_t)regionBase,
+                                (word_t)regionBase + (1 << ARMSectionBits) - 1,
+                                addrFromPPtr(regionBase));
+        }
         return cap_frame_cap_new(
                    ARMSection, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, ASID_HIGH(asidInvalid),
+                   0, deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_SuperSectionObject:
-        memzero(regionBase, 1 << ARMSuperSectionBits);
-        /** AUXUPD: "(True, ptr_retyps 4096
-                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-        /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
-                                            (ptr_val \<acute>regionBase)
-                                            (unat ARMSuperSectionBits))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << ARMSuperSectionBits) - 1,
-                            addrFromPPtr(regionBase));
-
+        if (!deviceMemory) {
+            memzero(regionBase, 1 << ARMSuperSectionBits);
+            /** AUXUPD: "(True, ptr_retyps 4096
+                    (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
+                                                (ptr_val \<acute>regionBase)
+                                                (unat ARMSuperSectionBits))" */
+            cleanCacheRange_PoU((word_t)regionBase,
+                                (word_t)regionBase + (1 << ARMSuperSectionBits) - 1,
+                                addrFromPPtr(regionBase));
+        }
         return cap_frame_cap_new(
                    ARMSuperSection, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, ASID_HIGH(asidInvalid),
+                   0, deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_PageTableObject:

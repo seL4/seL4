@@ -294,7 +294,7 @@ menu "seL4 System Parameters"
             The acceptable range is 4-27, based on the kernel-supplied caps.
             The root CNode needs at least enough space to contain up to
             BI_CAP_DYN_START. Note that in practice your root CNode will need
-            to be several bits larger than 4 to fit device frame caps and
+            to be several bits larger than 4 to fit untyped caps and
             cannot be 27 bits as it won't fit in memory.
 
     config TIMER_TICK_MS
@@ -324,10 +324,6 @@ menu "seL4 System Parameters"
             Maximum number of work units (delete/revoke iterations) until
             the kernel checks for pending interrupts (and preempts the
             currently running syscall if interrupts are pending).
-
-    config MAX_NUM_BOOTINFO_DEVICE_REGIONS
-        int "Max number of bootinfo device regions"
-        default 199
 
     config MAX_NUM_BOOTINFO_UNTYPED_CAPS
         int "Max number of bootinfo untyped caps"

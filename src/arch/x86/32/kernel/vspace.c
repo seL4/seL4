@@ -556,9 +556,10 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
     return
         cap_frame_cap_new(
             frame_size,                    /* capFSize           */
-            0,                             /* capFIsIOSpace      */
+            false,                         /* capFIsIOSpace      */
             ASID_LOW(asid),                /* capFMappedASIDLow  */
             vptr,                          /* capFMappedAddress  */
+            false,                         /* capFIsDevice       */
             ASID_HIGH(asid),               /* capFMappedASIDHigh */
             wordFromVMRights(VMReadWrite), /* capFVMRights       */
             pptr                           /* capFBasePtr        */

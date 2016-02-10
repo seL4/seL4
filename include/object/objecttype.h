@@ -39,9 +39,9 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b);
 bool_t CONST sameObjectAs(cap_t cap_a, cap_t cap_b);
 cap_t CONST updateCapData(bool_t preserve, word_t newData, cap_t cap);
 cap_t CONST maskCapRights(cap_rights_t cap_rights, cap_t cap);
-cap_t createObject(object_t t, void *regionBase, word_t);
+cap_t createObject(object_t t, void *regionBase, word_t, bool_t deviceMemory);
 void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
-                      void *regionBase, word_t userSize);
+                      void *regionBase, word_t userSize, bool_t deviceMemory);
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
                              extra_caps_t excaps, bool_t block, bool_t call,

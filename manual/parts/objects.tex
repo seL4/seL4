@@ -320,6 +320,26 @@ receives full authority over the resulting object. It can then delegate
 all or part of the authority it possesses over this object to one or
 more of its clients.
 
+Untyped memory objects represent two different types of memory:
+general purpose memory, or device memory.
+\emph{General purpose} memory can be untyped into any other object
+type and used for any operation on untyped memory provided by the kernel.
+\emph{Device memory} covers memory regions reserved for devices
+as determined by the hardware platform, and usage of these objects
+is restricted by the kernel in the following ways:
+
+\begin{itemize}
+\item Device untyped objects can only be retyped into frames or other
+untyped objects; developers cannot, for example, create an endpoint from device memory.
+\item Device untyped frames cannot be set as thread IPC buffers, or used
+in the creation of an ASID pool
+\end{itemize}
+
+The type attribute (whether it represents \emph{general purpose} or
+\emph{device} memory) of a child untyped object is inherited from its
+parent untyped object. That is, any child of a device untyped will
+also be a device untyped. Developers cannot change the type attribute of an untyped.
+
 \subsection{Reusing Memory}
 \label{s:memRevoke}
 

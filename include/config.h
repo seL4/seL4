@@ -52,12 +52,6 @@
 #define CONFIG_FLUSH_WORK_UNIT 64
 #endif
 
-/* maximum number of device regions in bootinfo */
-/* WARNING: must match value in libsel4! */
-#ifndef CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS
-#define CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS 199
-#endif
-
 /* maximum number of untyped caps in bootinfo */
 /* WARNING: must match value in libsel4! */
 /* CONSTRAINT: (16 * CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS) + (5 * CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) <= 4036 */

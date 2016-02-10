@@ -18,8 +18,11 @@ block null_cap {
     field capType 4
 }
 
+-- The combination of freeIndex and blockSize must match up with the
+-- definitions of MIN_SIZE_BITS and MAX_SIZE_BITS
 block untyped_cap {
-    field capFreeIndex 27
+    field capFreeIndex 26
+    field capIsDevice  1
     field capBlockSize 5
 
     field_high capPtr 28

@@ -26,7 +26,8 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap);
 bool_t CONST Arch_hasRecycleRights(cap_t cap);
 bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b);
 bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b);
-cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize);
+bool_t CONST Arch_isFrameType(word_t type);
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory);
 exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t excaps, word_t* buffer);
 void Arch_prepareThreadDelete(tcb_t *thread);
 word_t Arch_getObjectSize(word_t t);
@@ -39,7 +40,7 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final);
 cap_t Mode_recycleCap(bool_t is_final, cap_t cap);
 cap_t CONST Mode_resetMemMapping(cap_t cap);
 bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b);
-cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize);
+cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory);
 exception_t Mode_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t excaps, word_t* buffer);
 word_t Mode_getObjectSize(word_t t);
 #endif
