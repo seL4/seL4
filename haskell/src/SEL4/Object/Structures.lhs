@@ -333,8 +333,7 @@ A user thread may be in the following states:
 \item blocked on a synchronous IPC send or receive (which require the presence of additional data about the operation);
 
 >     = BlockedOnReceive {
->         blockingObject :: PPtr Endpoint,
->         blockingIPCDiminishCaps :: Bool }
+>         blockingObject :: PPtr Endpoint }
 
 \item blocked waiting for a reply to a previously sent message;
 
@@ -439,7 +438,7 @@ Convenience functions dealing with properties of the machine word:
 >         _ -> error "Unknown word size"
 
 > isReceive :: ThreadState -> Bool
-> isReceive (BlockedOnReceive _ _) = True
+> isReceive (BlockedOnReceive _) = True
 > isReceive _ = False
 
 > isSend :: ThreadState -> Bool

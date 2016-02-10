@@ -84,9 +84,8 @@ If the endpoint is receiving, then a thread is removed from its queue, and an IP
 >                 recvState <- getThreadState dest
 >                 assert (isReceive recvState)
 >                        "TCB in receive endpoint queue must be blocked on send"
->                 let diminish = blockingIPCDiminishCaps recvState
 >                 doIPCTransfer thread (Just epptr) badge canGrant
->                     dest diminish
+>                     dest
 
 The receiving thread has now completed its blocking operation and can run. If the receiving thread has higher priority than the current thread, the scheduler is instructed to switch to it immediately.
 
@@ -96,7 +95,7 @@ The receiving thread has now completed its blocking operation and can run. If th
 If the sender is performing a call or has faulted, set up the reply capability.
 
 >                 fault <- threadGet tcbFault thread
->                 case (call, fault, canGrant && not diminish) of
+>                 case (call, fault, canGrant) of
 >                     (False, Nothing, _) -> return ()
 >                     (_, _, True) -> setupCallerCap thread dest
 >                     _ -> setThreadState Inactive thread
@@ -117,7 +116,6 @@ The IPC receive operation is essentially the same as the send operation, but wit
 > receiveIPC thread cap@(EndpointCap {}) isBlocking = do
 >         let epptr = capEPPtr cap
 >         ep <- getEndpoint epptr
->         let diminish = not $ capEPCanSend cap
 >         -- check if anything is waiting on bound ntfn
 >         ntfnPtr <- getBoundNotification thread
 >         ntfn <- maybe (return $ NTFN IdleNtfn Nothing) (getNotification) ntfnPtr
@@ -127,15 +125,13 @@ The IPC receive operation is essentially the same as the send operation, but wit
 >             IdleEP -> case isBlocking of 
 >               True -> do
 >                   setThreadState (BlockedOnReceive {
->                       blockingObject = epptr,
->                       blockingIPCDiminishCaps = diminish }) thread
+>                       blockingObject = epptr }) thread
 >                   setEndpoint epptr $ RecvEP [thread]
 >               False -> doNBRecvFailedTransfer thread
 >             RecvEP queue -> case isBlocking of
 >               True -> do
 >                   setThreadState (BlockedOnReceive {
->                       blockingObject = epptr,
->                       blockingIPCDiminishCaps = diminish }) thread
+>                       blockingObject = epptr }) thread
 >                   setEndpoint epptr $ RecvEP $ queue ++ [thread]
 >               False -> doNBRecvFailedTransfer thread 
 >             SendEP (sender:queue) -> do
@@ -148,10 +144,10 @@ The IPC receive operation is essentially the same as the send operation, but wit
 >                 let badge = blockingIPCBadge senderState
 >                 let canGrant = blockingIPCCanGrant senderState
 >                 doIPCTransfer sender (Just epptr) badge canGrant
->                     thread diminish
+>                     thread
 >                 let call = blockingIPCIsCall senderState
 >                 fault <- threadGet tcbFault sender
->                 case (call, fault, canGrant && not diminish) of
+>                 case (call, fault, canGrant) of
 >                     (False, Nothing, _) -> do
 >                         setThreadState Running sender
 >                         switchIfRequiredTo sender
