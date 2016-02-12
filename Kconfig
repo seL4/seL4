@@ -325,7 +325,7 @@ menu "Build Options"
     endchoice
 
     config IRQ_REPORTING
-        bool "Report suprious or undelivered IRQs"
+        bool "Report spurious or undelivered IRQs"
         depends on DEBUG_BUILD
         default y
         help
