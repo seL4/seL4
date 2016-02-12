@@ -7,13 +7,13 @@ import Data.Bits
 
 #include "mptimer.h"
 
--- helpers
 import Control.Monad.Reader
 import Control.Monad.State
 import SEL4.Machine.Hardware.ARM.Callbacks
 import SEL4.Machine.RegisterSet
 
-data MPTimerData = MPTimerState { env :: Ptr CallbackData , 
+data MPTimerData = MPTimerState {
+    env :: Ptr CallbackData, 
     mptBase :: PAddr }
 
 type MPTimerMonad = StateT MPTimerData IO

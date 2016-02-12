@@ -9,7 +9,6 @@ import Data.Word(Word32)
 
 #include "gic.h"
 
--- helpers
 import Control.Monad.Reader
 import Control.Monad.State
 import SEL4.Machine.Hardware.ARM.Callbacks
@@ -19,7 +18,8 @@ irqSetAll = 0xffffffff
 specialIRQStart = 1020 :: IRQ
 irqNone = 1023 :: IRQ
 
-data GicData = GicState { env :: Ptr CallbackData , 
+data GicData = GicState {
+    env :: Ptr CallbackData, 
     gicDistBase :: PAddr, 
     gicIFBase :: PAddr}
 

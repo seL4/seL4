@@ -66,7 +66,7 @@ The idle thread executes a short loop that drains the CPU's write buffer and the
 
 \subsection{Creating the vspace for the initial thread}
 
-Function mapKernelWindow will create a virtialll address space for the initial thread
+Function mapKernelWindow will create a virtual address space for the initial thread
 
 > mapKernelWindow :: Kernel ()
 > mapKernelWindow = do
@@ -597,7 +597,7 @@ This version of findPDForASID will fail rather than raise an exception if the AS
 >             Just (_, pd') -> pd == pd'
 >     return pd
 
-These checks are too expensive to run in haskell. The first funcion checks that the pointer is to a page directory, which would require testing that each entry of the table is present. The second checks that the page directory appears in armKSASIDMap only on the ASIDs specified, which would require walking all possible ASIDs to test. In the formalisation of this specification, these functions are given alternative definitions that make the appropriate checks.
+These checks are too expensive to run in haskell. The first function checks that the pointer is to a page directory, which would require testing that each entry of the table is present. The second checks that the page directory appears in armKSASIDMap only on the ASIDs specified, which would require walking all possible ASIDs to test. In the formalisation of this specification, these functions are given alternative definitions that make the appropriate checks.
 
 > checkPDAt :: PPtr PDE -> Kernel ()
 > checkPDAt _ = return ()
@@ -644,7 +644,7 @@ Similarly, "lookupPDSlot" locates a slot in the top-level page directory. Howeve
 
 \subsubsection{Handling Faults}
 
-If the kernel receives a VM fault from the CPU, it must determine the address and cause of the fault and then throw it to the user-level fault handler. The C datastructure to sture the cause of the fault has only 12 bits space, hence the mask. Only the lower bits are significant anyway.
+If the kernel receives a VM fault from the CPU, it must determine the address and cause of the fault and then throw it to the user-level fault handler. The C datastructure to store the cause of the fault has only 12 bits space, hence the mask. Only the lower bits are significant anyway.
 
 > handleVMFault :: PPtr TCB -> VMFaultType -> KernelF Fault ()
 > handleVMFault _ ARMDataAbort = do

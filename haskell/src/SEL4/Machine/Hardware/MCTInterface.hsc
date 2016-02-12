@@ -7,14 +7,14 @@ import Data.Bits
 
 #include "mct.h"
 
--- helpers
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Trans.Maybe
 import SEL4.Machine.Hardware.ARM.Callbacks
 import SEL4.Machine.RegisterSet
 
-data MCTData = MCTState { env :: Ptr CallbackData , 
+data MCTData = MCTState {
+    env :: Ptr CallbackData, 
     mctBase :: PAddr }
 
 type MCTMonad = StateT MCTData IO

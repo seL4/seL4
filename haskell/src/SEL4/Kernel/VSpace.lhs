@@ -107,7 +107,7 @@ This module defines architecture-specific virtual memory management procedures. 
 > lookupIPCBuffer :: Bool -> PPtr TCB -> Kernel (Maybe (PPtr Word))
 > lookupIPCBuffer = Arch.lookupIPCBuffer
 
-\item determining the virtual address of user proc in kernel init
+\item determining the virtual address of user process in kernel init
 
 > vptrFromPPtr :: PPtr a -> KernelInit VPtr
 > vptrFromPPtr = Arch.vptrFromPPtr
