@@ -26,6 +26,7 @@ static inline void cleanInvalidateByWSL(word_t wsl)
     asm volatile("mcr p15, 0, %0, c7, c14, 2" : : "r"(wsl));
 }
 
+/** DONT_TRANSLATE */
 static inline word_t readCLID(void)
 {
     word_t CLID;
@@ -46,6 +47,7 @@ enum arm_cache_type {
     ARMCacheU =    4,
 };
 
+/** DONT_TRANSLATE */
 static inline word_t readCacheSize(int level, bool_t instruction)
 {
     word_t size, csselr_old;
@@ -68,6 +70,7 @@ static inline word_t readCacheSize(int level, bool_t instruction)
 /* Number of sets, field is nsets - 1. */
 #define NSETS(s)    ((((s) >> 13) & MASK(15)) + 1)
 
+/** DONT_TRANSLATE */
 void
 clean_D_PoU(void)
 {
@@ -96,6 +99,7 @@ clean_D_PoU(void)
     }
 }
 
+/** DONT_TRANSLATE */
 void
 cleanInvalidate_D_PoC(void)
 {
