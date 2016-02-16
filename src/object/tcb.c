@@ -48,6 +48,14 @@ checkMCP(prio_t mcp)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    if (mcp > seL4_MaxPrio) {
+        userError("TCB Configure: MCP above configured max (max %u)", seL4_MaxPrio);
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = seL4_MinPrio;
+        current_syscall_error.rangeErrorMax = seL4_MaxPrio;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     return EXCEPTION_NONE;
 }
 
@@ -73,6 +81,14 @@ checkMCC(crit_t mcc)
         userError("TCB Configure: Requested  maximum controlled criticality %lu too high (max %lu).",
                   (unsigned long) mcc, (unsigned long) ksCurThread->tcbMCC);
         current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (mcc > seL4_MaxCrit) {
+        userError("TCB Configure: MCC above configured max (max %u)", seL4_MaxCrit);
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = seL4_MinCrit;
+        current_syscall_error.rangeErrorMax = seL4_MaxCrit;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
