@@ -220,7 +220,6 @@ tcbReleaseRemove(tcb_t *tcb)
     if (likely(thread_state_get_tcbInReleaseQueue(tcb->tcbState))) {
         if (tcb->tcbSchedPrev) {
             tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
-            tcb->tcbSchedPrev = NULL;
         } else {
             ksReleaseHead = tcb->tcbSchedNext;
             /* the head has changed, we might need to set an new timeout */
@@ -229,9 +228,10 @@ tcbReleaseRemove(tcb_t *tcb)
 
         if (tcb->tcbSchedNext) {
             tcb->tcbSchedNext->tcbSchedPrev = tcb->tcbSchedPrev;
-            tcb->tcbSchedNext = NULL;
         }
 
+        tcb->tcbSchedNext = NULL;
+        tcb->tcbSchedPrev = NULL;
         thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, false);
     }
 }
@@ -287,6 +287,10 @@ tcbReleaseDequeue(void)
 
     detached_head = ksReleaseHead;
     ksReleaseHead = ksReleaseHead->tcbSchedNext;
+
+    if (ksReleaseHead) {
+        ksReleaseHead->tcbSchedPrev = NULL;
+    }
 
     if (detached_head->tcbSchedNext) {
         detached_head->tcbSchedNext->tcbSchedPrev = NULL;
