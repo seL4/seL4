@@ -86,9 +86,11 @@
 \newcommand{\resumetargetdesc}{The invocation should also resume the destination thread.}
 \newcommand{\suspendsourcedesc}{The invocation should also suspend the source thread.}
 \newcommand{\archflagsdesc}{Architecture dependent flags. These have no meaning on \ifxeightsix{either IA-32 or}\fi{} ARM.}
-
+\newcommand{\criticalitydesc}{The system criticality level. Threads with criticalities below the system criticality level will not be chosen by the scheduler.}
 \newcommand{\threadpriodesc}{The thread's new priority.}
-\newcommand{\threadmaxpriodesc}{The threads new maximum priority.}
+\newcommand{\threadmaxpriodesc}{The thread's new maximum controlled priority.}
+\newcommand{\threadcriticalitydesc}{The thread's new criticality.}
+\newcommand{\threadmccdesc}{The thread's new maximum controlled criticality.}
 \newcommand{\threadcombinedpriodesc}{A \texttt{seL4\_Prio\_t} structure as described in \autoref{sec:sched}.}
 \newcommand{\threadcspacerootdesc}{The new CSpace root.}
 \newcommand{\threadcspacedatadesc}{Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect.}
@@ -97,7 +99,7 @@
 \newcommand{\threadbufferdesc}{Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary.}
 \newcommand{\threadbufferpagedesc}{Capability to a page containing the thread's IPC buffer.}
 \newcommand{\excepthanddesc}{CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the caller's cspace.}
-\newcommand{\excepthanddesc}{CPTR to the endpoint which receives IPCs when this thread triggers a temporal fault. This capability is in the caller's cspace.}
+\newcommand{\temporalexcepthanddesc}{CPTR to the endpoint which receives IPCs when this thread triggers a temporal fault. This capability is in the caller's cspace.}
 
 \newcommand{\asidassignpooldesc}{The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.}
 \newcommand{\asidassignpddesc}{The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.}
@@ -284,12 +286,15 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{tcb_resume}
 \inputapidoc{tcb_setipcbuffer}
 \inputapidoc{tcb_setpriority}
-\inputapidoc{tcb_setmaxpriority}
+\inputapidoc{tcb_setmcpriority}
+\inputapidoc{tcb_setcriticality}
+\inputapidoc{tcb_setmcc}
 \inputapidoc{tcb_setspace}
 \inputapidoc{tcb_suspend}
 \inputapidoc{tcb_writeregisters}
 \inputapidoc{untyped_retype}
 \inputapidoc{schedcontrol_configure}
+\inputapidoc{schedcontrol_setcriticality}
 \inputapidoc{schedcontext_yield}
 \inputapidoc{schedcontext_bindtcb}
 \inputapidoc{schedcontext_unbindtcb}

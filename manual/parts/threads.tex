@@ -100,7 +100,7 @@ Threads without scheduling contexts are referred to as \emph{passive} threads, a
 Like other objects, scheduling contexts are created from untyped memory using \apifunc{seL4\_UntypedRetype}{untyped_retype}.
 On creation, scheduling contexts are empty, representing 0\% of CPU execution time.
 To populate a scheduling context with parameters, one must invoke the \obj{SchedControl} capability, which provides access to CPU time management and is provided to the initial task at run time.
-Scheduling context parameters can then be set and updated using \apifunc{seL4\_SchedControl\_Configure}, which allows the budget and period to be specified.
+Scheduling context parameters can then be set and updated using \apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, which allows the budget and period to be specified.
 
 The kernel does not conduct any schedulability tests, as task admission is left to user-level policy and can be conducted online or offine, statically or dynamically or not at all. 
 
@@ -119,9 +119,20 @@ This feature allows for event-driven periodic threads which are triggered by eve
 \subsection{Scheduling algorithm}
 \label{sec:sched}
 
-seL4 uses a preemptive, tickless, scheduler with 256 priority levels (0 --- 255).
-Thread priority (structure \texttt{seL4\_Prio\_t}) consists of two values, priority and maximum controlled priority.
-Threads are only added to the scheduler if they are in a runnable state and have an active scheduling context.
+seL4 uses a preemptive, tickless, scheduler with 256 priority levels (0 --- 255) and 0 --- 4 criticality levels.
+Thread scheduling in seL4 is controlled via two distinct values: priorities and criticalities, which facilitate mixed-criticality scheduling.
+The kernel maintains a criticality level and only threads of criticality higher or equal to the current kernel criticality level are eligible for scheduling.
+Additionally, threads are only eligible for scheduling if they have an active scheduling context.
+Of threads eligible for scheduling, the highest priority thread in a runnable state is chosen.
+
+Thread priority (structure \texttt{seL4\_Prio\_t}) consists of four values as follows:
+
+\begin{description}
+    \item[Priority] the priority a thread will be scheduled with.
+    \item[Maximum controlled priority (MCP)] the highest priority a thread can set itself or another thread to.
+    \item[Criticality] the criticality of a thread.
+    \item[Maximum controlled criticality] the highest criticality a thread can set itself or another thread to. 
+\end{description}
 
 \subsection{Priorities}
 
@@ -136,8 +147,19 @@ set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
 Consequently, access to CPU is a function of thread MCPs, scheduling contexts and the \obj{SchedControl} capability.
 The kernel will enforce that threads do not exceeed the budget in their scheduling context for any given period, and that the highest priority thread will always run, however it is up to the system designer to make sure the entire system is schedulable.
 
+\subsection{Criticalities}
+\label{sec:criticality}
+
+Thread criticality provides the mechanism for implementing mixed-criticality scheduling in an efficient way on seL4.
+Criticality allows the system to change operating mode, with the understanding that the highest priority thread is not neccessarily the most important thread. 
+Should a high criticalty thread need more time, low criticality threads can be removed from the scheduler by changing the kernel criticality level with \apifunc{seL4\_SchedControl\_SetCriticality}{schedcontrol_setcriticality}, which is $O(n)$ in the number of threads with criticality greater than or equal to the criticality being set. 
+Criticality can be restored with the same function. 
+
+Thread criticality can be set with \apifunc{seL4\_TCB\_SetCriticality}{tcb_setcriticality}, and like thread priorities, criticality assignment is controlled by the maximum control criticality, set with \apifunc{seL4\_TCB\_SetMCCriticality}{tcb_setmcc}. 
+Both fields can be set with \apifunc{seL4\_TCB\_Configure}{tcb_configure}.
+
 \subsection{Exceptions}
-\label{exceptions}
+\label{sec:exceptions}
 
 Each thread has two associated exception-handler endpoints, a \emph{standard} exception handler and a \emph{temporal} exception handler.
 If the thread
@@ -179,9 +201,11 @@ The handling of temporal faults is not compulsory: if a thread does not have a t
 This allows temporally sensitive threads to handle budget overruns while other threads may ignore them.
 
 Temporal faults are registered per thread, which means that while clients may not have a temporal fault handler, servers may, allowing single-threaded, time-sensitive, passive servers to use a temporal exception handler to recover from malicious or untrusted clients whose budget expires while the server is completing the request.
-Temporal faults handlers can use \apifunc{seL4\_CNode\_SaveTCBCaller}{tcb_cnodesavecaller} to save the servers reply capability and reply with an error to the client, then resetting the server to handle the next client request.
+Temporal faults handlers can use \apifunc{seL4\_CNode\_SaveTCBCaller}{cnode_savetcbcaller} to save the servers reply capability and reply with an error to the client, then resetting the server to handle the next client request.
 
 If a reply message is sent to a nested server and a scheduling context without available budget returned, another temporal fault will be generated if the nested server also has a temporal fault handler.
+
+Additionally, if the system criticality is changed while a thread with higher criticality than the system criticality is running on a scheduling context that is bound to a thread with criticality lower than the system criticality, a temporal exception will be raised. 
 
 \subsection{Message Layout of the Read-/Write-Registers Methods}
 \label{sec:read_write_registers}
