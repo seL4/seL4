@@ -136,6 +136,14 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
         sc = SC_PTR(cap_reply_cap_get_capSchedContext(cap));
         if (sc != NULL && sc->scReply != NULL) {
+            if (sc->scTcb) {
+                tcbReleaseRemove(sc->scTcb);
+                tcbSchedDequeue(sc->scTcb);
+                if (sc->scTcb == ksCurThread) {
+                    rescheduleRequired();
+                }
+            }
+
             schedContext_donate(sc->scReply, sc);
             sc->scReply = NULL;
         }
@@ -179,14 +187,15 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
 
+            suspend(tcb);
+
             if (tcb->tcbSchedContext != NULL &&
                     tcb->tcbSchedContext->scHome != NULL &&
                     tcb->tcbSchedContext != tcb->tcbHomeSchedContext) {
                 schedContext_goHome(tcb->tcbSchedContext);
+            } else {
+                schedContext_unbindTCB(tcb->tcbSchedContext);
             }
-
-            schedContext_unbindTCB(tcb->tcbSchedContext);
-            suspend(tcb);
 
             Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =

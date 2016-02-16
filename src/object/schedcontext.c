@@ -228,7 +228,10 @@ schedContext_unbindNtfn(sched_context_t *sc)
 void
 schedContext_goHome(sched_context_t *sc)
 {
-    sc->scTcb->tcbSchedContext = NULL;
+
+    if (sc->scTcb) {
+        sc->scTcb->tcbSchedContext = NULL;
+    }
 
     sc->scTcb = sc->scHome;
     if (sc->scTcb) {

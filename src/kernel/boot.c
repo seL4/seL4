@@ -338,6 +338,7 @@ create_sched_context(tcb_t *tcb, ticks_t timeslice)
     sc->scPeriod = sc->scBudget;
     sc->scRemaining = sc->scBudget;
     sc->scNext = ksCurrentTime + sc->scPeriod;
+    sc->scHome = tcb;
 
     return true;
 }
