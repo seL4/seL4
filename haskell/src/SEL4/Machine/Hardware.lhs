@@ -215,3 +215,5 @@ The constant "nullPointer" is a physical pointer guaranteed to be invalid.
 
 > physBase :: PAddr
 > physBase = Arch.physBase
+
+
