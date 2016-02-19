@@ -146,43 +146,55 @@ doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
 }
 
 void
-doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *reply_sc)
+doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
 {
 
     assert(thread_state_get_tsType(receiver->tcbState) ==
            ThreadState_BlockedOnReply);
 
-    if (likely(reply_sc != NULL && receiver->tcbSchedContext == NULL)) {
-        /* return the scheduling context to the thread we borrowed it from */
-        schedContext_donate(receiver, reply_sc);
-        reply_sc->scReply = NULL;
+    /* if the call stack is set then the receiver donated a scheduling context
+     * over the reply cap, work out if we can return it */
+    if (likely(receiver->tcbCallStackNext && receiver->tcbSchedContext == NULL)) {
+        if (unlikely(receiver->tcbCallStackNext != sender)) {
+            /* we are replying on behalf of someone else */
+            if (receiver->tcbCallStackNext->tcbSchedContext) {
+                /* return the donated scheduling context back, but don't pop the
+                 * call stack as we don't know what it looks like - instead the
+                 * appropriate thread will be removed when the reply cap is cleaned up*/
+                schedContext_donate(receiver, receiver->tcbCallStackNext->tcbSchedContext);
 
-        if (unlikely(sender->tcbSchedContext != NULL)) {
-            /* we are replying on behalf of someone else, which means the scheduling context
-             * may not have enough budget as it is not currently active
-             * - first check if it is ready for a recharge */
-            if (ready(reply_sc)) {
-                recharge(reply_sc);
-            }
-
-            if (reply_sc->scRemaining < getKernelWcetTicks()) {
-                /* thread still has not enough budget to run */
-                cap_t tfep = getTemporalFaultHandler(receiver);
-                if (validTemporalFaultHandler(tfep)) {
-                    /* the context does not have enough budget and the thread we are
-                     * switching to has a temporal fault handler, raise a temporal
-                     * fault and abort the reply */
-                    current_fault = fault_temporal_new(reply_sc->scData);
-                    sendTemporalFaultIPC(receiver, tfep);
-                    cteDeleteOne(slot);
-                } else {
-                    /* the context doesn't have enough budget, but no temporal fault handler,
-                     * just post pone it and continue to process the reply. The thread will
-                     * pick it up once the scheduling context has its budget replenished.
-                     */
-                    postpone(reply_sc);
+                /* since the callee wasn't running, the scheduling context may not be active */
+                if (ready(receiver->tcbSchedContext)) {
+                    recharge(receiver->tcbSchedContext);
                 }
+
+                if (receiver->tcbSchedContext->scRemaining < getKernelWcetTicks()) {
+                    /* thread still has not enough budget to run */
+                    cap_t tfep = getTemporalFaultHandler(receiver);
+                    if (validTemporalFaultHandler(tfep)) {
+                        /* the context does not have enough budget and the thread we are
+                         * switching to has a temporal fault handler, raise a temporal
+                         * fault and abort the reply */
+                        cteDeleteOne(slot);
+                        current_fault = fault_temporal_new(receiver->tcbSchedContext->scData);
+                        sendTemporalFaultIPC(receiver, tfep);
+                    } else {
+                        /* the context doesn't have enough budget, but no temporal fault handler,
+                         * just post pone it and continue to process the reply. The thread will
+                         * pick it up once the scheduling context has its budget replenished.
+                         */
+                        postpone(receiver->tcbSchedContext);
+                    }
+                }
+            } else if (sender->tcbSchedContext->scHome != sender) {
+                /* otherwise someone else is replying, if the sender doesn't hold it's own scheduling context,
+                 * send it back to the receiver */
+                schedContext_donate(receiver, sender->tcbSchedContext);
             }
+        } else {
+            /* this is a reply from the callee, send the scheduling context back */
+            schedContext_donate(receiver, sender->tcbSchedContext);
+            tcbCallStackPop(sender);
         }
     }
 

@@ -78,7 +78,6 @@ cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyMaster,
 {
     cap_ptr->words[0] = TCB_REF(capTCBPtr) | (capReplyMaster << 4) |
                         cap_reply_cap ;
-    cap_ptr->words[1] = SC_REF(ksCurSchedContext);
 }
 
 static inline void

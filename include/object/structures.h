@@ -192,7 +192,7 @@ vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* TCB: size 76 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size 84 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 typedef struct sched_context sched_context_t;
 
 struct tcb {
@@ -237,6 +237,9 @@ struct tcb {
     /* Previous and next pointers for endpoint and notification queues, 8 bytes */
     struct tcb* tcbCritNext;
     struct tcb* tcbCritPrev;
+    /* previous and next pointers for IPC call stack, 8 bytes */
+    struct tcb *tcbCallStackPrev;
+    struct tcb *tcbCallStackNext;
 
     /* criticality level of this tcb */
     crit_t tcbCrit;
@@ -251,7 +254,7 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
-/* sched context - 52 bytes */
+/* sched context - 48 bytes */
 struct sched_context {
     /* budget for this tcb -- remaining is refilled from this value */
     ticks_t scBudget;
@@ -265,15 +268,10 @@ struct sched_context {
     /* timestamp when this scheduling context is next due for a budget recharge */
     ticks_t scNext;
 
-    /* tcb that is currently running on this scheduling context */
+    /* tcb that is currently running on this scheduling context --
+     * if this == scHome, the scheduling context is at the tcb it is bound to. Otherwise,
+     * if scTcb is not NULL, the scheduling context was donated over IPC to scTcb */
     tcb_t *scTcb;
-
-    /* if this scheduling context was donated over IPC, this field stores a pointer
-     * to thread that holds the reply cap, if a reply cap was generated.
-     * This allows the scheduling context
-     * to can get back to the original caller even if a different thread replies on
-     * behalf of the caller or the reply cap is deleted */
-    tcb_t *scReply;
 
     /* thread that this scheduling context is bound to, but not neccesserily running on */
     tcb_t *scHome;

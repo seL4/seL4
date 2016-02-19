@@ -132,20 +132,12 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         return fc_ret;
 
     case cap_reply_cap: {
-        sched_context_t *sc;
+        tcb_t *tcb;
 
-        sc = SC_PTR(cap_reply_cap_get_capSchedContext(cap));
-        if (sc != NULL && sc->scReply != NULL) {
-            if (sc->scTcb) {
-                tcbReleaseRemove(sc->scTcb);
-                tcbSchedDequeue(sc->scTcb);
-                if (sc->scTcb == ksCurThread) {
-                    rescheduleRequired();
-                }
-            }
+        tcb = TCB_PTR(cap_reply_cap_get_capTCBPtr(cap));
 
-            schedContext_donate(sc->scReply, sc);
-            sc->scReply = NULL;
+        if (tcb->tcbCallStackNext) {
+            tcbCallStackRemove(tcb->tcbCallStackNext);
         }
 
         fc_ret.remainder = cap_null_cap_new();
@@ -189,13 +181,11 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
             suspend(tcb);
 
-            if (tcb->tcbSchedContext != NULL &&
-                    tcb->tcbSchedContext->scHome != NULL &&
-                    tcb->tcbSchedContext != tcb->tcbHomeSchedContext) {
-                schedContext_goHome(tcb->tcbSchedContext);
-            } else {
-                schedContext_unbindTCB(tcb->tcbSchedContext);
+            if (tcb->tcbSchedContext) {
+                schedContext_removeTCB(tcb->tcbSchedContext, tcb);
             }
+            /* ipc call stack will be cleared up when reply cap deleted
+             * in suspend */
 
             Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =
@@ -214,7 +204,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             sched_context_t *sc;
 
             sc = SC_PTR(cap_sched_context_cap_get_capPtr(cap));
-            schedContext_unbindTCB(sc);
+            schedContext_unbindAllTCBs(sc);
             schedContext_unbindNtfn(sc);
 
             fc_ret.remainder = cap_null_cap_new();
@@ -712,8 +702,7 @@ decodeInvocation(word_t invLabel, word_t length,
 
         setThreadState(ksCurThread, ThreadState_Restart);
         return performInvocation_Reply(
-                   TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot,
-                   SC_PTR(cap_reply_cap_get_capSchedContext(cap)));
+                   TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot);
 
     case cap_thread_cap:
         return decodeTCBInvocation(invLabel, length, cap,
@@ -764,8 +753,8 @@ performInvocation_Notification(notification_t *ntfn, word_t badge)
 }
 
 exception_t
-performInvocation_Reply(tcb_t *thread, cte_t *slot, sched_context_t *sc)
+performInvocation_Reply(tcb_t *thread, cte_t *slot)
 {
-    doReplyTransfer(ksCurThread, thread, slot, sc);
+    doReplyTransfer(ksCurThread, thread, slot);
     return EXCEPTION_NONE;
 }

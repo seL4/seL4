@@ -128,14 +128,14 @@ fastpath_call(word_t cptr, word_t msgInfo)
     thread_state_ptr_set_tsType_np(&ksCurThread->tcbState,
                                    ThreadState_BlockedOnReply);
 
+    /* update IPC call stack */
+    tcbCallStackPush(dest, ksCurThread);
+
     /* Get sender reply slot */
     replySlot = TCB_PTR_CTE_PTR(ksCurThread, tcbReply);
 
     /* Get dest caller slot */
     callerSlot = TCB_PTR_CTE_PTR(dest, tcbCaller);
-
-    /* insert back pointer into sched context */
-    ksCurSchedContext->scReply = dest;
 
     /* Insert reply cap */
     cap_reply_cap_ptr_new_np(&callerSlot->cap, 0, TCB_REF(ksCurThread));
@@ -293,11 +293,14 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         ep_ptr_set_queue(ep_ptr, tcbEPAppend(ksCurThread, ep_ptr_get_queue(ep_ptr)));
     }
 
+    /* update IPC call stack */
+    tcbCallStackPop(ksCurThread);
+
     /* Delete the reply cap. */
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
         &CTE_PTR(mdb_node_get_mdbPrev(callerSlot->cteMDBNode))->cteMDBNode,
         0, 1, 1);
-    ksCurSchedContext->scReply = NULL;
+
     callerSlot->cap = cap_null_cap_new();
     callerSlot->cteMDBNode = nullMDBNode;
 

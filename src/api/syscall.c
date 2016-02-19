@@ -339,8 +339,7 @@ handleReply(void)
         /* Haskell error:
          * "handleReply: caller must not be the current thread" */
         assert(caller != ksCurThread);
-        doReplyTransfer(ksCurThread, caller, callerSlot,
-                        SC_PTR(cap_reply_cap_get_capSchedContext(callerCap)));
+        doReplyTransfer(ksCurThread, caller, callerSlot);
         return;
     }
 

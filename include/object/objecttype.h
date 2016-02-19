@@ -51,7 +51,7 @@ exception_t performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                                        bool_t call, bool_t canDonate);
 exception_t performInvocation_Notification(notification_t *ntfn,
                                            word_t badge);
-exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot, sched_context_t *sc);
+exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot);
 word_t getObjectSize(word_t t, word_t userObjSize);
 
 #endif

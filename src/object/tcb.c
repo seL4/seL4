@@ -131,6 +131,38 @@ removeFromBitmap(word_t prio)
     }
 }
 
+/* remove a TCB from the call stack */
+void
+tcbCallStackRemove(tcb_t* target)
+{
+    /* update head */
+    if (target->tcbSchedContext != NULL && target->tcbCallStackPrev != NULL) {
+        assert(target->tcbCallStackNext == NULL);
+        /* return the scheduling context along the call chain */
+        schedContext_donate(target->tcbCallStackPrev, target->tcbSchedContext);
+
+        /* target no longer has an sc, remove from scheduler */
+        if (target == ksCurThread) {
+            rescheduleRequired();
+        } else {
+            tcbSchedDequeue(target);
+            tcbReleaseRemove(target);
+        }
+    }
+
+    /* update next */
+    if (target->tcbCallStackNext) {
+        target->tcbCallStackNext->tcbCallStackPrev = target->tcbCallStackPrev;
+    }
+    target->tcbCallStackNext = NULL;
+
+    /* update prev */
+    if (target->tcbCallStackPrev) {
+        target->tcbCallStackPrev->tcbCallStackNext = target->tcbCallStackNext;
+    }
+    target->tcbCallStackPrev = NULL;
+}
+
 /* Add TCB to the head of a scheduler queue */
 void
 tcbSchedEnqueue(tcb_t *tcb)
@@ -547,19 +579,17 @@ setupCallerCap(tcb_t *sender, tcb_t *receiver, sched_context_t *donated)
     callerCap = callerSlot->cap;
     /* Haskell error: "Caller cap must not already exist" */
     assert(cap_get_capType(callerCap) == cap_null_cap);
-    cteInsert(cap_reply_cap_new(false, TCB_REF(sender), SC_REF(donated)),
+    cteInsert(cap_reply_cap_new(false, TCB_REF(sender)),
               replySlot, callerSlot);
-    if (donated != NULL) {
-        donated->scReply = sender;
+    if (donated) {
+        tcbCallStackPush(receiver, sender);
     }
 }
 
 void
 deleteCallerCap(tcb_t *receiver)
 {
-    cte_t *callerSlot;
-
-    callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
+    cte_t *callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
     cteDeleteOne(callerSlot);
 }
@@ -1400,8 +1430,8 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
     if (updateFlags & thread_control_update_sc) {
         if (sched_context != NULL) {
             schedContext_bindTCB(sched_context, target);
-        } else {
-            schedContext_unbindTCB(target->tcbSchedContext);
+        } else if (target->tcbHomeSchedContext != NULL) {
+            schedContext_removeTCB(target->tcbHomeSchedContext, target);
         }
     }
 

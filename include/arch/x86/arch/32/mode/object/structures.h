@@ -17,7 +17,7 @@
 #define CTE_SIZE_BITS 4
 #define TCB_BLOCK_SIZE_BITS 10
 /* update this when you modify the tcb struct */
-#define EXPECTED_TCB_SIZE 678
+#define EXPECTED_TCB_SIZE 686
 
 #define GDT_NULL    0
 #define GDT_CS_0    1

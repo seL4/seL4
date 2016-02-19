@@ -11,11 +11,10 @@
 \apidoc
 {schedcontext_unbindtcb}
 {SchedContext - UnbindTCB}
-{Unbind a thread from a scheduling context. If the thread being unbound is the thread that is bound to this scheduling context, this will render the thread passive, see \autoref{sec:passive}. However if the thread being unbound received the scheduling context via scheduling context donation over IPC, the scheduling context will be returned to the thread that it was originally bound to.}
+{Unbind any objects (threads or notification objects) from a scheduling context. This will render the bound thread passive, see \autoref{sec:passive}.}
 {static inline void seL4\_SchedContext\_UnbindTCB}
 {
 \param{seL4\_SchedContext}{\_service}{\schedcontextcapdesc}
-\param{seL4\_TCB}{\_tcb}{\tcbcapdesc}
 }
 {\errorenumdesc}
 {see \autoref{sec:passive}}

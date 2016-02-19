@@ -30,6 +30,30 @@ struct tcb_queue {
 };
 typedef struct tcb_queue tcb_queue_t;
 
+static inline void
+tcbCallStackPush(tcb_t *tcb, tcb_t *stack)
+{
+    assert(tcb != NULL);
+    assert(stack != NULL);
+    assert(stack->tcbCallStackNext == NULL);
+
+    stack->tcbCallStackNext = tcb;
+    tcb->tcbCallStackPrev = stack;
+}
+
+static inline void
+tcbCallStackPop(tcb_t *head)
+{
+    assert(stack->tcbCallStackNext == NULL);
+    assert(head != NULL);
+
+    if (likely(head->tcbCallStackPrev)) {
+        head->tcbCallStackPrev->tcbCallStackNext = NULL;
+    }
+    head->tcbCallStackPrev = NULL;
+}
+
+void tcbCallStackRemove(tcb_t* target);
 void tcbSchedEnqueue(tcb_t *tcb);
 void tcbSchedAppend(tcb_t *tcb);
 void tcbSchedDequeue(tcb_t *tcb);

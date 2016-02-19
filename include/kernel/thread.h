@@ -60,7 +60,7 @@ void restart(tcb_t *target);
 void doIPCTransfer(tcb_t *sender, endpoint_t *endpoint,
                    word_t badge, bool_t grant, tcb_t *receiver,
                    bool_t diminish);
-void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, sched_context_t *sc);
+void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot);
 void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                       word_t badge, bool_t canGrant, tcb_t *receiver,
                       word_t *receiveBuffer, bool_t diminish);

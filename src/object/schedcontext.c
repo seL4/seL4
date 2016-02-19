@@ -33,10 +33,36 @@ invokeSchedContext_Yield(sched_context_t *sc)
 }
 
 exception_t
-invokeSchedContext_UnbindTCB(sched_context_t *sc)
+invokeSchedContext_UnbindTCB(sched_context_t *sc, tcb_t *tcb)
 {
-    schedContext_unbindTCB(sc);
+    schedContext_removeTCB(sc, tcb);
     return EXCEPTION_NONE;
+}
+
+exception_t
+decodeSchedContext_UnbindTCB(sched_context_t *sc, extra_caps_t rootCaps)
+{
+    cap_t cap;
+    tcb_t *tcb;
+
+    if (rootCaps.excaprefs[0] == NULL) {
+        userError("SchedContext UnbindTCB: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    cap = rootCaps.excaprefs[0]->cap;
+
+    if (cap_get_capType(cap) != cap_thread_cap) {
+        userError("SchedContext BindTCB: TCB cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeSchedContext_UnbindTCB(sc, tcb);
 }
 
 exception_t
@@ -67,7 +93,7 @@ decodeSchedContext_BindTCB(sched_context_t *sc, extra_caps_t rootCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (sc->scTcb != NULL) {
+    if (sc->scTcb != NULL || sc->scNotification != NULL) {
         userError("SchedContext_BindTCB: scheduling context already bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -113,7 +139,7 @@ decodeSchedContext_BindNtfn(sched_context_t *sc, extra_caps_t rootCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(sc->scNotification != NULL)) {
+    if (unlikely(sc->scNotification != NULL || sc->scTcb != NULL)) {
         userError("SchedContext_BindNotification: scheduling context already bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -124,6 +150,14 @@ decodeSchedContext_BindNtfn(sched_context_t *sc, extra_caps_t rootCaps)
     return invokeSchedContext_BindNtfn(sc, ntfn);
 }
 
+exception_t
+invokeSchedContext_Unbind(sched_context_t *sc)
+{
+    schedContext_unbindAllTCBs(sc);
+    schedContext_unbindNtfn(sc);
+
+    return EXCEPTION_NONE;
+}
 
 exception_t
 decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
@@ -141,13 +175,16 @@ decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
     case SchedContextUnbindTCB:
         /* no decode stage */
         setThreadState(ksCurThread, ThreadState_Restart);
-        return invokeSchedContext_UnbindTCB(sc);
+        return decodeSchedContext_UnbindTCB(sc, extraCaps);
     case SchedContextBindNotification:
         return decodeSchedContext_BindNtfn(sc, extraCaps);
     case SchedContextUnbindNotification:
         /* no decode stage */
         setThreadState(ksCurThread, ThreadState_Restart);
         return invokeSchedContext_UnbindNtfn(sc);
+    case SchedContextUnbind:
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return invokeSchedContext_Unbind(sc);
     default:
         userError("SchedContext invocation: Illegal operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
@@ -181,31 +218,51 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     schedContext_resume(sc);
 }
 
-void
-schedContext_unbindTCB(sched_context_t *sc)
+static void
+pause(sched_context_t *sc)
 {
-    /* pause the tcb without effecting it's state -
-     * it will get to run again when it receives a scheduling
-     * context.
-     */
-    if (sc) {
-        if (sc->scTcb) {
-            tcbSchedDequeue(sc->scTcb);
-            tcbReleaseRemove(sc->scTcb);
+    tcbSchedDequeue(sc->scTcb);
+    tcbReleaseRemove(sc->scTcb);
+    sc->scTcb->tcbSchedContext = NULL;
 
-            if (sc->scTcb == ksCurThread) {
-                rescheduleRequired();
-            }
+    if (sc->scTcb == ksCurThread) {
+        rescheduleRequired();
+    }
 
-            sc->scTcb->tcbSchedContext = NULL;
-            sc->scTcb = NULL;
-        }
+    sc->scTcb->tcbSchedContext = NULL;
+    sc->scTcb = NULL;
+}
 
-        if (sc->scHome) {
-            sc->scHome->tcbHomeSchedContext = NULL;
-            sc->scHome = NULL;
-        }
 
+void
+schedContext_removeTCB(sched_context_t *sc, tcb_t *tcb)
+{
+    assert(tcb != NULL);
+
+    if (sc->scTcb == tcb) {
+        pause(sc);
+    }
+
+    if (sc->scHome == tcb) {
+        sc->scHome = NULL;
+        tcb->tcbHomeSchedContext = NULL;
+    } else if (sc->scHome) {
+        /* it's not home, send it home */
+        schedContext_donate(sc->scHome, sc);
+        schedContext_resume(sc);
+    }
+}
+
+void
+schedContext_unbindAllTCBs(sched_context_t *sc)
+{
+    if (sc->scTcb) {
+        pause(sc);
+    }
+
+    if (sc->scHome) {
+        sc->scHome->tcbHomeSchedContext = NULL;
+        sc->scHome = NULL;
     }
 }
 
@@ -222,21 +279,6 @@ schedContext_unbindNtfn(sched_context_t *sc)
     if (sc && sc->scNotification) {
         notification_ptr_set_ntfnSchedContext(sc->scNotification, SC_REF(0));
         sc->scNotification = NULL;
-    }
-}
-
-void
-schedContext_goHome(sched_context_t *sc)
-{
-
-    if (sc->scTcb) {
-        sc->scTcb->tcbSchedContext = NULL;
-    }
-
-    sc->scTcb = sc->scHome;
-    if (sc->scTcb) {
-        sc->scTcb->tcbSchedContext = sc;
-        schedContext_resume(sc);
     }
 }
 
