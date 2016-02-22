@@ -29,7 +29,7 @@ init_tss(tss_t* tss)
 {
     tss_ptr_new(
         tss,
-        MASK(16),       /* io_map_base  */
+        sizeof(*tss),   /* io_map_base  */
         0,              /* trap         */
         SEL_NULL,       /* sel_ldt      */
         SEL_NULL,       /* gs           */
@@ -57,6 +57,7 @@ init_tss(tss_t* tss)
         0,              /* esp0         */
         0               /* prev_task    */
     );
+    memset(&x86KStss.io_map[0], 0xff, sizeof(x86KStss.io_map));
 }
 /* initialise Global Descriptor Table (GDT) */
 
@@ -134,7 +135,7 @@ init_gdt(gdt_entry_t* gdt, tss_t* tss)
 
     /* Task State Segment (TSS) descriptor */
     gdt[GDT_TSS] = gdt_entry_gdt_tss_new(
-                       tss_addr >> 24,            /* base_high 8 bits     */
+                       tss_addr >> 24,              /* base_high 8 bits     */
                        0,                           /* granularity          */
                        0,                           /* avl                  */
                        0,                           /* limit_high 4 bits    */
@@ -144,7 +145,7 @@ init_gdt(gdt_entry_t* gdt, tss_t* tss)
                        1,                           /* always_true          */
                        (tss_addr >> 16) & 0xff,     /* base_mid 8 bits      */
                        (tss_addr & 0xffff),         /* base_low 16 bits     */
-                       sizeof(tss_t) - 1            /* limit_low 16 bits    */
+                       sizeof(tss_io_t) - 1         /* limit_low 16 bits    */
                    );
 
     /* pre-init the userland data segment used for TLS */
@@ -391,6 +392,11 @@ init_dtrs(void)
 
     /* load TSS selector into Task Register (TR) */
     ia32_install_tss(SEL_TSS);
+
+    if (config_set(CONFIG_FSGSBASE_MSR)) {
+        ia32_load_fs(SEL_TLS);
+        ia32_load_gs(SEL_IPCBUF);
+    }
 }
 
 static BOOT_CODE cap_t
@@ -441,11 +447,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         cap_t pd_cap;
         pptr_t pd_pptr;
         /* just create single PD obj and cap */
-        pd_pptr = alloc_region(PD_SIZE_BITS);
+        pd_pptr = alloc_region(seL4_PageDirBits);
         if (!pd_pptr) {
             return cap_null_cap_new();
         }
-        memzero(PDE_PTR(pd_pptr), 1 << PD_SIZE_BITS);
+        memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
         copyGlobalMappings((vspace_root_t*)pd_pptr);
         pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
         if (!provide_cap(root_cnode_cap, pd_cap)) {
@@ -458,11 +464,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         pptr_t pdpt_pptr;
         unsigned int i;
         /* create a PDPT obj and cap */
-        pdpt_pptr = alloc_region(PDPT_SIZE_BITS);
+        pdpt_pptr = alloc_region(seL4_PDPTBits);
         if (!pdpt_pptr) {
             return cap_null_cap_new();
         }
-        memzero(PDPTE_PTR(pdpt_pptr), 1 << PDPT_SIZE_BITS);
+        memzero(PDPTE_PTR(pdpt_pptr), 1 << seL4_PDPTBits);
         pdpt_cap = cap_pdpt_cap_new(
                        true,       /* capPDPTISMapped */
                        IT_ASID,    /* capPDPTMappedASID */
@@ -486,11 +492,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
                 return cap_null_cap_new();
             }
 
-            pptr = alloc_region(PD_SIZE_BITS);
+            pptr = alloc_region(seL4_PageDirBits);
             if (!pptr) {
                 return cap_null_cap_new();
             }
-            memzero(PDE_PTR(pptr), 1 << PD_SIZE_BITS);
+            memzero(PDE_PTR(pptr), 1 << seL4_PageDirBits);
             if (!provide_cap(root_cnode_cap,
                              create_it_page_directory_cap(pdpt_cap, pptr, vptr, IT_ASID))
                ) {
@@ -503,21 +509,16 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         vspace_cap = pdpt_cap;
     }
 
-    slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->ui_pd_caps = (slot_region_t) {
-        slot_pos_before, slot_pos_after
-    };
     /* create all PT objs and caps necessary to cover userland image */
-    slot_pos_before = ndks_boot.slot_pos_cur;
 
     for (vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
             vptr < it_v_reg.end;
             vptr += BIT(PT_BITS + PAGE_BITS)) {
-        pptr = alloc_region(PT_SIZE_BITS);
+        pptr = alloc_region(seL4_PageTableBits);
         if (!pptr) {
             return cap_null_cap_new();
         }
-        memzero(PTE_PTR(pptr), 1 << PT_SIZE_BITS);
+        memzero(PTE_PTR(pptr), 1 << seL4_PageTableBits);
         if (!provide_cap(root_cnode_cap,
                          create_it_page_table_cap(vspace_cap, pptr, vptr, IT_ASID))
            ) {
@@ -526,7 +527,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->ui_pt_caps = (slot_region_t) {
+    ndks_boot.bi_frame->ui_paging_caps = (slot_region_t) {
         slot_pos_before, slot_pos_after
     };
 
@@ -539,9 +540,9 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
     vm_page_size_t frame_size;
 
     if (use_large) {
-        frame_size = IA32_LargePage;
+        frame_size = X86_LargePage;
     } else {
-        frame_size = IA32_SmallPage;
+        frame_size = X86_SmallPage;
     }
 
     return
@@ -576,13 +577,13 @@ pde_t CONST makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_righ
 {
     return pde_pde_large_new(
                paddr,                                          /* page_base_address    */
-               vm_attributes_get_ia32PATBit(vm_attr),          /* pat                  */
+               vm_attributes_get_x86PATBit(vm_attr),           /* pat                  */
                0,                                              /* avl                  */
                0,                                              /* global               */
                0,                                              /* dirty                */
                0,                                              /* accessed             */
-               vm_attributes_get_ia32PCDBit(vm_attr),          /* cache_disabled       */
-               vm_attributes_get_ia32PWTBit(vm_attr),          /* write_through        */
+               vm_attributes_get_x86PCDBit(vm_attr),           /* cache_disabled       */
+               vm_attributes_get_x86PWTBit(vm_attr),           /* write_through        */
                SuperUserFromVMRights(vm_rights),               /* super_user           */
                WritableFromVMRights(vm_rights),                /* read_write           */
                1                                               /* present              */
@@ -595,8 +596,8 @@ pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
                paddr,                                      /* pt_base_address  */
                0,                                          /* avl              */
                0,                                          /* accessed         */
-               vm_attributes_get_ia32PCDBit(vm_attr),      /* cache_disabled   */
-               vm_attributes_get_ia32PWTBit(vm_attr),      /* write_through    */
+               vm_attributes_get_x86PCDBit(vm_attr),       /* cache_disabled   */
+               vm_attributes_get_x86PWTBit(vm_attr),       /* write_through    */
                1,                                          /* super_user       */
                1,                                          /* read_write       */
                1                                           /* present          */
@@ -640,11 +641,11 @@ pte_t CONST makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_r
                paddr,                                          /* page_base_address    */
                0,                                              /* avl                  */
                0,                                              /* global               */
-               vm_attributes_get_ia32PATBit(vm_attr),          /* pat                  */
+               vm_attributes_get_x86PATBit(vm_attr),           /* pat                  */
                0,                                              /* dirty                */
                0,                                              /* accessed             */
-               vm_attributes_get_ia32PCDBit(vm_attr),          /* cache_disabled       */
-               vm_attributes_get_ia32PWTBit(vm_attr),          /* write_through        */
+               vm_attributes_get_x86PCDBit(vm_attr),           /* cache_disabled       */
+               vm_attributes_get_x86PWTBit(vm_attr),           /* write_through        */
                SuperUserFromVMRights(vm_rights),               /* super_user           */
                WritableFromVMRights(vm_rights),                /* read_write           */
                1                                               /* present              */
@@ -747,7 +748,7 @@ void modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr,
 
 }
 
-exception_t modeMapRemapPage(word_t invLabel, vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+exception_t decodeX86ModeMapRemapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
 {
     fail("Invalid Page type");
 }

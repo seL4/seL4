@@ -142,8 +142,8 @@ seL4Bootstrap breakFlag errorFlag errorString
              undefined
 
     where
-        f uf kf bf = runVoid (initKernel (fromIntegral start)
-                                         uf (fromIntegral vpOffset) kf bf) st 
+        f uf kf bf = runVoid (initKernel (fromIntegral start) (fromIntegral vpOffset)
+                                         uf kf bf) st 
 ---- seL4Shutdown ----
 -- Destroy an seL4 instance.
 foreign export ccall seL4Shutdown :: Ptr CInt -> Ptr StatePtr -> IO ()

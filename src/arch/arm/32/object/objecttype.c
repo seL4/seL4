@@ -228,7 +228,7 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
 
         memzero(pdPtr, (kernelBase >> ARMSectionBits) << PDE_SIZE_BITS);
         cleanCacheRange_PoU((word_t)pdPtr,
-                            ((word_t)pdPtr) + (1 << PD_SIZE_BITS) - 1,
+                            ((word_t)pdPtr) + (1 << seL4_PageDirBits) - 1,
                             addrFromPPtr(pdPtr));
 
         if (cap_page_directory_cap_get_capPDIsMapped(cap)) {

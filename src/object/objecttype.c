@@ -37,13 +37,13 @@ word_t getObjectSize(word_t t, word_t userObjSize)
     } else {
         switch (t) {
         case seL4_TCBObject:
-            return TCB_BLOCK_SIZE_BITS;
+            return seL4_TCBBits;
         case seL4_EndpointObject:
-            return EP_SIZE_BITS;
+            return seL4_EndpointBits;
         case seL4_NotificationObject:
-            return NTFN_SIZE_BITS;
+            return seL4_NotificationBits;
         case seL4_CapTableObject:
-            return CTE_SIZE_BITS + userObjSize;
+            return seL4_SlotBits + userObjSize;
         case seL4_UntypedObject:
             return userObjSize;
         default:
@@ -507,7 +507,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
     switch ((api_object_t)t) {
     case seL4_TCBObject: {
         tcb_t *tcb;
-        memzero(regionBase, 1UL << TCB_BLOCK_SIZE_BITS);
+        memzero(regionBase, 1UL << seL4_TCBBits);
         tcb = TCB_PTR((word_t)regionBase + TCB_OFFSET);
         /** AUXUPD: "(True, ptr_retyps 1
           (Ptr ((ptr_val \<acute>tcb) - 0x100) :: (cte_C[5]) ptr)
@@ -529,21 +529,21 @@ createObject(object_t t, void *regionBase, word_t userSize)
     }
 
     case seL4_EndpointObject:
-        memzero(regionBase, 1UL << EP_SIZE_BITS);
+        memzero(regionBase, 1UL << seL4_EndpointBits);
         /** AUXUPD: "(True, ptr_retyp
           (Ptr (ptr_val \<acute>regionBase) :: endpoint_C ptr))" */
         return cap_endpoint_cap_new(0, true, true, true,
                                     EP_REF(regionBase));
 
     case seL4_NotificationObject:
-        memzero(regionBase, 1UL << NTFN_SIZE_BITS);
+        memzero(regionBase, 1UL << seL4_NotificationBits);
         /** AUXUPD: "(True, ptr_retyp
               (Ptr (ptr_val \<acute>regionBase) :: notification_C ptr))" */
         return cap_notification_cap_new(0, true, true,
                                         NTFN_REF(regionBase));
 
     case seL4_CapTableObject:
-        memzero(regionBase, 1UL << (CTE_SIZE_BITS + userSize));
+        memzero(regionBase, 1UL << (seL4_SlotBits + userSize));
         /** AUXUPD: "(True, ptr_arr_retyps (2 ^ (unat \<acute>userSize))
           (Ptr (ptr_val \<acute>regionBase) :: cte_C ptr))" */
         /** GHOSTUPD: "(True, gs_new_cnodes (unat \<acute>userSize)

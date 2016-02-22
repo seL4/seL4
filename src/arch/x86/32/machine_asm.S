@@ -42,6 +42,19 @@ BEGIN_FUNC(ia32_install_tss)
     ret
 END_FUNC(ia32_install_tss)
 
+
+BEGIN_FUNC(ia32_load_fs)
+    movl 4(%esp), %eax
+    movw %ax, %fs
+    ret
+END_FUNC(ia32_load_fs)
+
+BEGIN_FUNC(ia32_load_gs)
+    movl 4(%esp), %eax
+    movw %ax, %gs
+    ret
+END_FUNC(ia32_load_gs)
+
 BEGIN_FUNC(getCacheLineSize)
     pushl %ebx
     movl  $1,    %eax

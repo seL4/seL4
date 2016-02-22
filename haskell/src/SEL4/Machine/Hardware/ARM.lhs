@@ -22,7 +22,6 @@ This module defines the low-level ARM hardware interface.
 
 > import SEL4.Machine.RegisterSet
 
-> import Foreign.Ptr
 > import Control.Monad.Reader
 > import Data.Bits
 > import Data.Word(Word8)
@@ -33,15 +32,16 @@ This module defines the low-level ARM hardware interface.
 The ARM-specific register set definitions are qualified with the "ARM" prefix, and the platform-specific hardware access functions are qualified with the "Platform" prefix. The latter module is outside the scope of the reference manual; for the executable model, it is specific to the external simulator used for user-level code.
 
 > import qualified SEL4.Machine.RegisterSet.ARM as ARM
+> import qualified SEL4.Machine.Hardware.ARM.Callbacks as Platform 
 > import qualified SEL4.Machine.Hardware.ARM.PLATFORM as Platform
 
 \subsection{Data Types}
 
 The machine monad contains a platform-specific opaque pointer, used by the external simulator interface.
 
-> type MachineMonad = ReaderT MachineData IO
+> type MachineData = Platform.MachineData
 
-> type MachineData = Ptr Platform.CallbackData
+> type MachineMonad = ReaderT MachineData IO
 
 > type IRQ = Platform.IRQ
 
@@ -146,6 +146,12 @@ The following functions define the ARM-specific interface between the kernel and
 > configureTimer = do
 >     cbptr <- ask
 >     liftIO $ Platform.configureTimer cbptr
+
+> initIRQController :: MachineMonad ()
+> initIRQController = do
+>     cbptr <- ask
+>     liftIO $ Platform.initIRQController cbptr
+
 
 > resetTimer :: MachineMonad ()
 > resetTimer = do
@@ -521,4 +527,11 @@ ARM page directories and page tables occupy four frames and one quarter of a fra
 > cacheLineBits = Platform.cacheLineBits
 > cacheLine = Platform.cacheLine
 
+\subsection{Constants}
+
+> physBase :: PAddr
+> physBase = toPAddr Platform.physBase
+
+> kernelBase :: VPtr
+> kernelBase = Platform.kernelBase 
 

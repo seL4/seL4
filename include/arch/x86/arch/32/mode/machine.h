@@ -63,4 +63,26 @@ static inline void* get_current_esp(void)
     return result;
 }
 
+
+#if defined(CONFIG_FSGSBASE_GDT) || !defined(CONFIG_FSGSBASE_MSR)
+
+static inline void x86_write_fs_base(word_t base)
+{
+    gdt_entry_gdt_data_ptr_set_base_low(x86KSgdt + GDT_TLS, base);
+    gdt_entry_gdt_data_ptr_set_base_mid(x86KSgdt + GDT_TLS,  (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_high(x86KSgdt + GDT_TLS, (base >> 24) & 0xFF);
+}
+
+static inline void x86_write_gs_base(word_t base)
+{
+    gdt_entry_gdt_data_ptr_set_base_low(x86KSgdt + GDT_IPCBUF, base);
+    gdt_entry_gdt_data_ptr_set_base_mid(x86KSgdt + GDT_IPCBUF,  (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_high(x86KSgdt + GDT_IPCBUF, (base >> 24) & 0xFF);
+}
+
+#endif
+
+void ia32_load_fs(word_t selector);
+void ia32_load_gs(word_t selector);
+
 #endif

@@ -19,6 +19,8 @@
 #include <sel4/types_gen.h>
 #include <sel4/syscall.h>
 #include <sel4/objecttype.h>
+#include <sel4/sel4_arch/objecttype.h>
+#include <sel4/arch/objecttype.h>
 #include <sel4/errors.h>
 #include <sel4/constants.h>
 #include <sel4/shared_types.h>

@@ -200,7 +200,8 @@ Setting the thread's priority is only allowed if the new priority is lower than 
 >         throw IllegalOperation
 >     return $! ThreadControl {
 >         tcThread = capTCBPtr cap,
->         tcThreadCapSlot = error "tcThreadCapSlot unused",
+>--       tcThreadCapSlot = error "tcThreadCapSlot unused", In theory tcThreadCapSlot should never been evaluated by lazy evaluation. However, it was evaluated when running sel4 haskell kernel. So it is wired. Thus I change this to 0. I hope this can be changed back once we find out why this is evaluated. (by Xin)
+>         tcThreadCapSlot = 0,
 >         tcNewFaultEP = Nothing,
 >         tcNewPriority = Just $ fromIntegral newPrio,
 >         tcNewCRoot = Nothing,

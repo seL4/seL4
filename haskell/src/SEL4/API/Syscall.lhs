@@ -34,6 +34,7 @@ modules.
 > import SEL4.Machine
 > import Data.Bits
 
+
 \end{impdetails}
 
 \subsection{Types}
@@ -57,12 +58,12 @@ value which specifies the system call that was made. This value is of
 the enumerated type "Syscall":
 
 > data Syscall
->         = SysSend
+>         = SysCall
+>         | SysReplyRecv
+>         | SysSend
 >         | SysNBSend
->         | SysCall
 >         | SysRecv
 >         | SysReply
->         | SysReplyRecv
 >         | SysYield
 >         | SysNBRecv
 >         deriving (Show, Enum, Bounded, Eq)

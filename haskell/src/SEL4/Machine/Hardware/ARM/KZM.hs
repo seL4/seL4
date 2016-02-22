@@ -10,15 +10,15 @@
 
 {-# LANGUAGE EmptyDataDecls, ForeignFunctionInterface, GeneralizedNewtypeDeriving #-}
 
-module SEL4.Machine.Hardware.ARM.QEmu where
+module SEL4.Machine.Hardware.ARM.KZM where
 
 import SEL4.Machine.RegisterSet
 import Foreign.Ptr
 import Data.Bits
 import Data.Word(Word8)
 import Data.Ix
+import SEL4.Machine.Hardware.ARM.Callbacks
 
-data CallbackData
 
 newtype IRQ = IRQ Word8
     deriving (Enum, Ord, Ix, Eq, Show)
@@ -27,10 +27,11 @@ instance Bounded IRQ where
     minBound = IRQ 0
     maxBound = IRQ 31
 
-newtype PAddr = PAddr { fromPAddr :: Word }
-    deriving (Integral, Real, Show, Eq, Num, Bits, FiniteBits, Ord, Enum, Bounded)
+kernelBase :: VPtr
+kernelBase = VPtr 0xf0000000
 
-physMappingOffset = 0xf0000000
+physBase = 0x80000000
+physMappingOffset = 0xf0000000 - physBase
 
 ptrFromPAddr :: PAddr -> PPtr a
 ptrFromPAddr (PAddr addr) = PPtr $ addr + physMappingOffset
@@ -42,7 +43,7 @@ pageColourBits :: Int
 pageColourBits = 0 -- qemu has no cache
 
 getMemoryRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
-getMemoryRegions _ = return [(0, 0x8 `shiftL` 24)]
+getMemoryRegions _ = return [(0x80000000, 0x80000000 + (0x8 `shiftL` 24))]
 
 getDeviceRegions :: Ptr CallbackData -> IO [(PAddr, PAddr)]
 getDeviceRegions _ = return devices
@@ -76,7 +77,7 @@ ackInterrupt :: Ptr CallbackData -> IRQ -> IO ()
 ackInterrupt _ _ = return ()
 
 foreign import ccall unsafe "qemu_run_devices"
-    runDevicesCallback :: IO ()
+    runDevicesCallback :: Ptr CallbackData -> IO ()
 
 interruptCallback :: Ptr CallbackData -> IO (Maybe IRQ)
 interruptCallback env = do
@@ -90,7 +91,7 @@ interruptCallback env = do
 
 getActiveIRQ :: Ptr CallbackData -> IO (Maybe IRQ)
 getActiveIRQ env = do
-    runDevicesCallback
+    runDevicesCallback env
     interruptCallback env
 
 -- 1kHz tick; qemu's SP804s always run at 1MHz 
@@ -113,23 +114,11 @@ configureTimer env = do
     storeWordCallback env timerAddr timerCtrl2
     return timerIRQ
 
+initIRQController :: Ptr CallbackData -> IO ()
+initIRQController env = runDevicesCallback env
+
 resetTimer :: Ptr CallbackData -> IO ()
 resetTimer env = storeWordCallback env (timerAddr+0x4) 1 
-
-foreign import ccall unsafe "qemu_load_word_phys"
-    loadWordCallback :: Ptr CallbackData -> PAddr -> IO Word
-
-foreign import ccall unsafe "qemu_store_word_phys"
-    storeWordCallback :: Ptr CallbackData -> PAddr -> Word -> IO ()
-
-foreign import ccall unsafe "qemu_tlb_flush"
-    invalidateTLBCallback :: Ptr CallbackData -> IO ()
-
-foreign import ccall unsafe "qemu_tlb_flush_asid"
-    invalidateTLB_ASIDCallback :: Ptr CallbackData -> Word8 -> IO ()
-
-foreign import ccall unsafe "qemu_tlb_flush_vptr"
-    invalidateTLB_VAASIDCallback :: Ptr CallbackData -> Word -> IO ()
 
 isbCallback :: Ptr CallbackData -> IO ()
 isbCallback _ = return ()
@@ -187,19 +176,3 @@ cacheLine = 32
 
 cacheLineBits :: Int
 cacheLineBits = 5
-
-foreign import ccall unsafe "qemu_set_asid"
-    setHardwareASID :: Ptr CallbackData -> Word8 -> IO ()
-
-foreign import ccall unsafe "qemu_set_root"
-    writeTTBR0 :: Ptr CallbackData -> PAddr -> IO ()
-
-foreign import ccall unsafe "qemu_arm_get_ifsr"
-    getIFSR :: Ptr CallbackData -> IO Word
-
-foreign import ccall unsafe "qemu_arm_get_dfsr"
-    getDFSR :: Ptr CallbackData -> IO Word
-
-foreign import ccall unsafe "qemu_arm_get_far"
-    getFAR :: Ptr CallbackData -> IO VPtr
-

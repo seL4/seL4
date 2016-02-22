@@ -14,7 +14,7 @@
 #include <plat/machine/debug_helpers.h>
 #include <plat/machine/io.h>
 
-#define DEBUG_PORT ia32KSdebugPort
+#define DEBUG_PORT x86KSdebugPort
 
 unsigned char getDebugChar(void)
 {

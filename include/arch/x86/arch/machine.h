@@ -24,6 +24,8 @@
 #define IA32_SYSENTER_CS_MSR    0x174
 #define IA32_SYSENTER_ESP_MSR   0x175
 #define IA32_SYSENTER_EIP_MSR   0x176
+#define IA32_FS_BASE_MSR        0xC0000100
+#define IA32_GS_BASE_MSR        0xC0000101
 
 #define BROADWELL_MODEL_ID      0xD4
 #define HASWELL_MODEL_ID        0xC3
@@ -117,6 +119,30 @@ static inline uint32_t x86_cpuid_eax(uint32_t eax, uint32_t ecx)
                  : "memory");
     return eax;
 }
+
+#ifdef CONFIG_FSGSBASE_MSR
+
+static inline void x86_write_fs_base(word_t base)
+{
+    x86_wrmsr(IA32_FS_BASE_MSR, base);
+}
+
+static inline void x86_write_gs_base(word_t base)
+{
+    x86_wrmsr(IA32_GS_BASE_MSR, base);
+}
+
+static inline word_t x86_read_fs_base(void)
+{
+    return x86_rdmsr(IA32_FS_BASE_MSR);
+}
+
+static inline word_t x86_read_gs_base(void)
+{
+    return x86_rdmsr(IA32_GS_BASE_MSR);
+}
+
+#endif
 
 /* Cleaning memory before user-level access */
 static inline void clearMemory(void* ptr, unsigned int bits)

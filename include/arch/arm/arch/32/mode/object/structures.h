@@ -19,11 +19,6 @@
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
 
-/* Object sizes */
-#define EP_SIZE_BITS  4
-#define NTFN_SIZE_BITS 4
-#define CTE_SIZE_BITS 4
-#define TCB_BLOCK_SIZE_BITS (TCB_SIZE_BITS+1)
 typedef struct arch_tcb {
     /* saved user-level context of thread (72 bytes) */
     user_context_t tcbContext;
@@ -74,7 +69,7 @@ typedef word_t vm_rights_t;
 
 #define PDE_PTR_PTR(r) ((pde_t **)r)
 
-#define PD_SIZE_BITS (PD_BITS+PDE_SIZE_BITS)
+compile_assert(pd_size_bits_sane, (PD_BITS + PDE_SIZE_BITS) == seL4_PageDirBits)
 #define PD_PTR(r) ((pde_t *)(r))
 #define PD_REF(p) ((unsigned int)p)
 
@@ -89,7 +84,7 @@ typedef word_t pde_type_t;
 #define PTE_PTR(r) ((pte_t *)r)
 #define PTE_REF(p) ((unsigned int)p)
 
-#define PT_SIZE_BITS (PT_BITS+PTE_SIZE_BITS)
+compile_assert(pt_size_bits_sane, PT_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r) ((pte_t *)r)
 #define PT_REF(p) ((unsigned int)p)
 
@@ -133,7 +128,7 @@ typedef struct asid_pool asid_pool_t;
 #define HW_ASID_SIZE_BITS 1
 
 #define ASID_POOL_BITS asidLowBits
-#define ASID_POOL_SIZE_BITS (ASID_POOL_BITS+WORD_SIZE_BITS)
+compile_assert(asid_pool_size_sane, ASID_POOL_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
 #define ASID_BITS (asidHighBits+asidLowBits)
 
 #define nASIDPools BIT(asidHighBits)
@@ -315,13 +310,13 @@ cap_get_archCapSizeBits(cap_t cap)
         return pageBitsForSize(generic_frame_cap_get_capFSize(cap));
 
     case cap_page_table_cap:
-        return PT_SIZE_BITS;
+        return seL4_PageTableBits;
 
     case cap_page_directory_cap:
-        return PD_SIZE_BITS;
+        return seL4_PageDirBits;
 
     case cap_asid_pool_cap:
-        return ASID_POOL_SIZE_BITS;
+        return seL4_ASIDPoolBits;
 
     case cap_asid_control_cap:
         return 0;

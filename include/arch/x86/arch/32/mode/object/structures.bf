@@ -186,9 +186,9 @@ tagged_union fault faultType {
 
 block vm_attributes {
     padding 29
-    field ia32PATBit 1
-    field ia32PCDBit 1
-    field ia32PWTBit 1
+    field x86PATBit 1
+    field x86PCDBit 1
+    field x86PWTBit 1
 }
 
 ---- IA32 specific object types

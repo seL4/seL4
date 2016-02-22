@@ -56,6 +56,11 @@ WORD_SIZE_BITS_ARCH = {
     "ia32": 32,
 }
 
+WORD_CONST_SUFFIX_BITS = {
+    32: "ul",
+    64: "ull",
+}
+
 # Maximum number of words that will be in a message.
 MAX_MESSAGE_LENGTH = 32
 
@@ -241,15 +246,15 @@ def InitTypes():
         ],
 
         "ia32" : [
-            Type("seL4_IA32_VMAttributes", WORD_SIZE_BITS),
-            CapType("seL4_IA32_ASIDControl"),
-            CapType("seL4_IA32_ASIDPool"),
-            CapType("seL4_IA32_IOSpace"),
-            CapType("seL4_IA32_IOPort"),
-            CapType("seL4_IA32_Page"),
-            CapType("seL4_IA32_PageDirectory"),
-            CapType("seL4_IA32_PageTable"),
-            CapType("seL4_IA32_IOPageTable"),
+            Type("seL4_X86_VMAttributes", WORD_SIZE_BITS),
+            CapType("seL4_X86_IOPort"),
+            CapType("seL4_X86_ASIDControl"),
+            CapType("seL4_X86_ASIDPool"),
+            CapType("seL4_X86_IOSpace"),
+            CapType("seL4_X86_Page"),
+            CapType("seL4_X86_PageDirectory"),
+            CapType("seL4_X86_PageTable"),
+            CapType("seL4_X86_IOPageTable"),
             StructType("seL4_UserContext", WORD_SIZE_BITS * 13),
         ]
     }
@@ -350,7 +355,7 @@ def generate_marshal_expressions(params, num_mrs, structs):
         # Part of a word?
         if num_bits < WORD_SIZE_BITS:
             expr = param.type.c_expression(param.name);
-            expr = "(%s & %#x)" % (expr, (1 << num_bits) - 1)
+            expr = "(%s & %#x%s)" % (expr, (1 << num_bits) - 1, WORD_CONST_SUFFIX)
             if target_offset:
                 expr = "(%s << %d)" % (expr, target_offset)
             word_array[target_word].append(expr)
@@ -678,7 +683,9 @@ def generate_stub_file(arch, input_files, output_file, use_only_ipc_buffer):
                 " or ".join(arch_types.keys()))
 
     global WORD_SIZE_BITS
+    global WORD_CONST_SUFFIX
     WORD_SIZE_BITS = WORD_SIZE_BITS_ARCH[arch]
+    WORD_CONST_SUFFIX = WORD_CONST_SUFFIX_BITS[WORD_SIZE_BITS]
     InitTypes()
 
     # Parse XML

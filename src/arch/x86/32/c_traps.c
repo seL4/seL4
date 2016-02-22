@@ -21,11 +21,11 @@ void NORETURN VISIBLE restore_user_context(void);
 void NORETURN VISIBLE restore_user_context(void)
 {
     /* set the tss.esp0 */
-    tss_ptr_set_esp0(&x86KStss, ((uint32_t)ksCurThread) + (n_contextRegisters * sizeof(word_t)));
-    if (unlikely(ksCurThread == ia32KSfpuOwner)) {
+    tss_ptr_set_esp0(&x86KStss.tss, ((uint32_t)ksCurThread) + (n_contextRegisters * sizeof(word_t)));
+    if (unlikely(ksCurThread == x86KSfpuOwner)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
-    } else if (unlikely(ia32KSfpuOwner)) {
+    } else if (unlikely(x86KSfpuOwner)) {
         /* Someone is using the FPU and it might be enabled */
         disableFpu();
     } else {
@@ -64,11 +64,18 @@ void NORETURN VISIBLE restore_user_context(void)
             "jmp 2f\n"
             "1: addl $4, %%esp\n"
             "2:\n"
+#if defined(CONFIG_FSGSBASE_GDT)
             //have to reload other selectors
             "popl %%fs\n"
             "popl %%gs\n"
             // skip FaultIP, tls_base and error (these are fake registers)
             "addl $12, %%esp\n"
+#elif defined(CONFIG_FSGSBASE_MSR)
+            /* FS and GS are not touched if MSRs are used */
+            "addl $20, %%esp\n"
+#else
+#error "Invalid method to set IPCBUF/TLS"
+#endif
             // restore NextIP
             "popl %%edx\n"
             // skip cs
@@ -99,10 +106,17 @@ void NORETURN VISIBLE restore_user_context(void)
             "popl %%ebp\n"
             "popl %%ds\n"
             "popl %%es\n"
+#if defined(CONFIG_FSGSBASE_GDT)
             "popl %%fs\n"
             "popl %%gs\n"
             // skip FaultIP, tls_base, error
             "addl $12, %%esp\n"
+#elif defined(CONFIG_FSGSBASE_MSR)
+            /* skip fs,gs, faultip tls_base, error */
+            "addl $20, %%esp\n"
+#else
+#error "Invalid method to set IPCBUF/TLS"
+#endif
             "iret\n"
             :
             : "r"(&ksCurThread->tcbArch.tcbContext.registers[EAX])

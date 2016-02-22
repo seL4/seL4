@@ -83,16 +83,16 @@ create_device_frames(
         /* use large frames if possible, otherwise use 4K frames */
         if (IS_ALIGNED(dev_reg.start, LARGE_PAGE_BITS) &&
                 IS_ALIGNED(dev_reg.end,   LARGE_PAGE_BITS)) {
-            frame_size = IA32_LargePage;
+            frame_size = X86_LargePage;
         } else {
-            frame_size = IA32_SmallPage;
+            frame_size = X86_SmallPage;
         }
 
         slot_pos_before = ndks_boot.slot_pos_cur;
 
         /* create/provide frame caps covering the region */
         for (f = dev_reg.start; f < dev_reg.end; f += BIT(pageBitsForSize(frame_size))) {
-            frame_cap = create_unmapped_it_frame_cap(f, frame_size == IA32_LargePage);
+            frame_cap = create_unmapped_it_frame_cap(f, frame_size == X86_LargePage);
             if (!provide_cap(root_cnode_cap, frame_cap)) {
                 return false;
             }
@@ -163,7 +163,7 @@ init_sys_state(
     create_frames_of_region_ret_t create_frames_ret;
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
     vm_attributes_t buffer_attr = {{ 0 }};
-    uint32_t paddr;
+    word_t paddr;
     pde_t pde;
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 
@@ -195,24 +195,10 @@ init_sys_state(
     /* allocate and create the log buffer */
     buffer_attr.words[0] = IA32_PAT_MT_WRITE_THROUGH;
 
-    paddr = pptr_to_paddr((void *) alloc_region(pageBitsForSize(IA32_LargePage)));
+    paddr = pptr_to_paddr((void *) alloc_region(pageBitsForSize(X86_LargePage)));
 
     /* allocate a large frame for logging */
-    pde = pde_pde_large_new(
-              paddr,                                   /* page_base_address    */
-              vm_attributes_get_ia32PATBit(buffer_attr),      /* pat                  */
-              0,                                       /* avl_cte_depth        */
-              1,                                       /* global               */
-              0,                                       /* dirty                */
-              0,                                       /* accessed             */
-              vm_attributes_get_ia32PCDBit(buffer_attr),      /* cache_disabled       */
-              vm_attributes_get_ia32PWTBit(buffer_attr),      /* write_through        */
-              0,                                       /* super_user           */
-              1,                                       /* read_write           */
-              1                                        /* present              */
-          );
-
-    /* TODO this shouldn't be hardcoded */
+    pde = x86_make_pde_mapping(paddr, buffer_attr);
     ia32KSGlobalPD[IA32_KSLOG_IDX] = pde;
 
 
@@ -305,8 +291,8 @@ init_sys_state(
      * the first thread is created.
      */
     resetFpu();
-    saveFpuState(&ia32KSnullFpuState);
-    ia32KSfpuOwner = NULL;
+    saveFpuState(&x86KSnullFpuState);
+    x86KSfpuOwner = NULL;
 
     /* create the idle thread */
     if (!create_idle_thread()) {
@@ -332,7 +318,7 @@ init_sys_state(
         }
 
         /* write number of IOMMU PT levels into bootinfo */
-        ndks_boot.bi_frame->num_iopt_levels = ia32KSnumIOPTLevels;
+        ndks_boot.bi_frame->num_iopt_levels = x86KSnumIOPTLevels;
 
         /* write IOSpace master cap */
         write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IO_SPACE), master_iospace_cap());

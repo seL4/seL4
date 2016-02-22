@@ -30,15 +30,11 @@ switchToThread_fp(tcb_t *thread, pde_t *pd, pde_t stored_hw_asid)
      * for layout of gdt_data */
     /* update the GDT_TLS entry with the thread's TLS_BASE address */
     base = getRegister(thread, TLS_BASE);
-    gdt_entry_gdt_data_ptr_set_base_low(x86KSgdt + GDT_TLS, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(x86KSgdt + GDT_TLS,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(x86KSgdt + GDT_TLS, (base >> 24) & 0xFF);
+    x86_write_fs_base(base);
 
     /* update the GDT_IPCBUF entry with the thread's IPC buffer address */
     base = thread->tcbIPCBuffer;
-    gdt_entry_gdt_data_ptr_set_base_low(x86KSgdt + GDT_IPCBUF, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(x86KSgdt + GDT_IPCBUF,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(x86KSgdt + GDT_IPCBUF, (base >> 24) & 0xFF);
+    x86_write_gs_base(base);
 
     ksCurThread = thread;
 }
@@ -105,10 +101,10 @@ static inline bool_t hasDefaultSelectors(tcb_t *thread)
 static inline void NORETURN
 fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
-    if (unlikely(cur_thread == ia32KSfpuOwner)) {
+    if (unlikely(cur_thread == x86KSfpuOwner)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
-    } else if (unlikely(ia32KSfpuOwner)) {
+    } else if (unlikely(x86KSfpuOwner)) {
         /* Someone is using the FPU and it might be enabled */
         disableFpu();
     } else {
@@ -116,55 +112,65 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
          * is currently disabled */
     }
 
-    tss_ptr_set_esp0(&x86KStss, ((uint32_t)ksCurThread) + 0x4c);
+    tss_ptr_set_esp0(&x86KStss.tss, ((uint32_t)ksCurThread) + 0x4c);
     cur_thread->tcbArch.tcbContext.registers[EFLAGS] &= ~0x200;
     if (likely(hasDefaultSelectors(cur_thread))) {
-        asm volatile("\
-                movl %%ecx, %%esp \n\
-                popl %%edi \n\
-                popl %%ebp \n\
-                addl $8, %%esp \n\
-                popl %%fs \n\
-                popl %%gs \n\
-                addl $20, %%esp \n\
-                popfl \n\
-                orl $0x200, 44(%%ecx) \n\
-                movl 36(%%ecx), %%edx \n\
-                pop %%ecx \n\
-                sti \n\
-                sysexit \n\
-            "
-                     :
-                     : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
-                     "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
-                     "b" (badge),
-                     "S" (msgInfo)
-                     : "memory"
-                    );
+        asm volatile(
+            "movl %%ecx, %%esp\n"
+            "popl %%edi \n"
+            "popl %%ebp \n"
+#if defined(CONFIG_FSGSBASE_GDT)
+            "addl $8, %%esp \n"
+            "popl %%fs \n"
+            "popl %%gs \n"
+            "addl $20, %%esp \n"
+#elif defined(CONFIG_FSGSBASE_MSR)
+            "addl $36, %%esp \n"
+#else
+#error "Invalid method to set IPCBUF/TLS"
+#endif
+            "popfl \n"
+            "orl $0x200, 44(%%ecx) \n"
+            "movl 36(%%ecx), %%edx \n"
+            "pop %%ecx \n"
+            "sti \n"
+            "sysexit \n"
+            :
+            : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
+            "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
+            "b" (badge),
+            "S" (msgInfo)
+            : "memory"
+        );
     } else {
-        asm volatile("\
-                movl %%ecx, %%esp \n\
-                popl %%edi \n\
-                popl %%ebp \n\
-                popl %%ds \n\
-                popl %%es \n\
-                popl %%fs \n\
-                popl %%gs \n\
-                addl $20, %%esp \n\
-                popfl \n\
-                orl $0x200, 44(%%ecx) \n\
-                movl 36(%%ecx), %%edx \n\
-                pop %%ecx \n\
-                sti \n\
-                sysexit \n\
-            "
-                     :
-                     : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
-                     "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
-                     "b" (badge),
-                     "S" (msgInfo)
-                     : "memory"
-                    );
+        asm volatile(
+            "movl %%ecx, %%esp \n"
+            "popl %%edi \n"
+            "popl %%ebp \n"
+            "popl %%ds \n"
+            "popl %%es \n"
+#if defined(CONFIG_FSGSBASE_GDT)
+            "popl %%fs \n"
+            "popl %%gs \n"
+            "addl $20, %%esp \n"
+#elif defined(CONFIG_FSGSBASE_MSR)
+            "addl $28, %%esp \n"
+#else
+#error "Invalid method to set IPCBUF/TLS"
+#endif
+            "popfl \n"
+            "orl $0x200, 44(%%ecx) \n"
+            "movl 36(%%ecx), %%edx \n"
+            "pop %%ecx \n"
+            "sti \n"
+            "sysexit \n"
+            :
+            : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
+            "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
+            "b" (badge),
+            "S" (msgInfo)
+            : "memory"
+        );
     }
     /* This function is marked NORETURN, but gcc is not aware that the previous assembly
        block will return to user level. This loop prevents gcc complaining, and also helps

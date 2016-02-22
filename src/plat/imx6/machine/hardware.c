@@ -21,13 +21,26 @@
 /* Available physical memory regions on platform (RAM) */
 /* NOTE: Regions are not allowed to be adjacent! */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
-    /* 1 GiB */
+#if defined(CONFIG_PLAT_SABRE)
+    /* Sabre has 1 GiB */
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
     /* 1MB stolen for logging */
     { /* .start = */ 0x10000000, /* .end = */ 0x2fd00000 }
 #else
     { /* .start = */ 0x10000000, /* .end = */ 0x50000000 }
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#elif defined(CONFIG_PLAT_WANDQ)
+    /* Wandboard Quad: 2 GiB */
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#warning "NOTE: logging is currently untested on WandBoard"
+    /* 1MB stolen for logging */
+    { /* .start = */ 0x10000000, /* .end = */ 0x6fd00000 }
+#else
+    { /* .start = */ 0x10000000, /* .end = */ 0x90000000 }
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#else
+#error "unknown imx6 platform selected!"
+#endif
 };
 
 BOOT_CODE int

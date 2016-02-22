@@ -11,11 +11,6 @@
 #ifndef __MODE_OBJECT_STRUCTURES_H
 #define __MODE_OBJECT_STRUCTURES_H
 
-/* Object sizes*/
-#define EP_SIZE_BITS  4
-#define NTFN_SIZE_BITS 4
-#define CTE_SIZE_BITS 4
-#define TCB_BLOCK_SIZE_BITS 10
 /* update this when you modify the tcb struct */
 #define EXPECTED_TCB_SIZE 660
 
@@ -53,7 +48,7 @@ typedef pde_t vspace_root_t;
 #define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
 #define PDPTE_REF(p)   ((word_t)(p))
 
-#define PDPT_SIZE_BITS (PDPT_BITS + PDPTE_SIZE_BITS)
+compile_assert(pdpt_size_bits_sane, PDPT_BITS + PDPTE_SIZE_BITS == seL4_PDPTBits)
 #define PDPT_PTR(r)    ((pdpte_t*)(r))
 #define PDPT_PREF(p)   ((word_t)(p))
 
@@ -61,14 +56,14 @@ typedef pde_t vspace_root_t;
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
 #define PDE_REF(p)     ((word_t)(p))
 
-#define PD_SIZE_BITS (PD_BITS + PDE_SIZE_BITS)
+compile_assert(pd_size_sane, PD_BITS + PDE_SIZE_BITS == seL4_PageDirBits)
 #define PD_PTR(r)    ((pde_t *)(r))
 #define PD_REF(p)    ((word_t)(p))
 
 #define PTE_PTR(r)    ((pte_t *)(r))
 #define PTE_REF(p)    ((word_t)(p))
 
-#define PT_SIZE_BITS (PT_BITS + PTE_SIZE_BITS)
+compile_assert(pt_size_sane, PT_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r)    ((pte_t *)(r))
 #define PT_REF(p)    ((word_t)(p))
 
@@ -89,7 +84,7 @@ struct asid_pool {
 typedef struct asid_pool asid_pool_t;
 
 #define ASID_POOL_BITS      asidLowBits
-#define ASID_POOL_SIZE_BITS (ASID_POOL_BITS + WORD_SIZE_BITS)
+compile_assert(asid_pool_bits_sane, ASID_POOL_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
 #define ASID_POOL_PTR(r)    ((asid_pool_t*)r)
 #define ASID_POOL_REF(p)    ((word_t)p)
 #define ASID_BITS           (asidHighBits + asidLowBits)
@@ -155,13 +150,13 @@ cap_get_archCapSizeBits(cap_t cap)
         return pageBitsForSize(cap_frame_cap_get_capFSize(cap));
 
     case cap_page_table_cap:
-        return PT_SIZE_BITS;
+        return seL4_PageTableBits;
 
     case cap_page_directory_cap:
-        return PD_SIZE_BITS;
+        return seL4_PageDirBits;
 
     case cap_pdpt_cap:
-        return PDPT_SIZE_BITS;
+        return seL4_PDPTBits;
 
     case cap_io_port_cap:
         return 0;
@@ -174,7 +169,7 @@ cap_get_archCapSizeBits(cap_t cap)
         return 0;
 
     case cap_asid_pool_cap:
-        return ASID_POOL_SIZE_BITS;
+        return seL4_ASIDPoolBits;
 
     default:
         fail("Invalid arch cap type");
@@ -255,6 +250,24 @@ x86_make_empty_pte(void)
                0,      /* super_user           */
                0,      /* read_write           */
                0       /* present              */
+           );
+}
+
+static inline pde_t
+x86_make_pde_mapping(word_t paddr, vm_attributes_t attr)
+{
+    return pde_pde_large_new(
+               paddr,                                   /* page_base_address    */
+               vm_attributes_get_x86PATBit(attr),       /* pat                  */
+               0,                                       /* avl_cte_depth        */
+               1,                                       /* global               */
+               0,                                       /* dirty                */
+               0,                                       /* accessed             */
+               vm_attributes_get_x86PCDBit(attr),       /* cache_disabled       */
+               vm_attributes_get_x86PWTBit(attr),       /* write_through        */
+               0,                                       /* super_user           */
+               1,                                       /* read_write           */
+               1                                        /* present              */
            );
 }
 

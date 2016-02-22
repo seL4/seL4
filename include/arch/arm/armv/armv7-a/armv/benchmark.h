@@ -13,7 +13,7 @@
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
-#if defined(CONFIG_PLAT_IMX6) || defined(CONFIG_PLAT_EXYNOS5410)
+#if defined(CONFIG_PLAT_SABRE) || defined(CONFIG_PLAT_EXYNOS5410)
 #define KS_LOG_PADDR 0xffe00000
 #else
 //TODO test/implement this for other platforms

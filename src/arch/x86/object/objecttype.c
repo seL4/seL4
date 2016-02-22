@@ -101,9 +101,9 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
         uint16_t PCIDevice = io_space_capdata_get_PCIDevice(w);
         uint16_t domainID = io_space_capdata_get_domainID(w);
         if (!preserve && cap_io_space_cap_get_capPCIDevice(cap) == 0 &&
-                domainID >= ia32KSFirstValidIODomain &&
+                domainID >= x86KSFirstValidIODomain &&
                 domainID != 0                        &&
-                domainID <= MASK(ia32KSnumIODomainIDBits)) {
+                domainID <= MASK(x86KSnumIODomainIDBits)) {
             return cap_io_space_cap_new(domainID, PCIDevice);
         } else {
             return cap_null_cap_new();
@@ -269,7 +269,7 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
         ptr = ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
         if (x86KSASIDTable[base >> asidLowBits] == ptr) {
             deleteASIDPool(base, ptr);
-            memzero(ptr, BIT(ASID_POOL_SIZE_BITS));
+            memzero(ptr, BIT(seL4_ASIDPoolBits));
             x86KSASIDTable[base >> asidLowBits] = ptr;
         }
         return cap;
@@ -395,17 +395,17 @@ word_t
 Arch_getObjectSize(word_t t)
 {
     switch (t) {
-    case seL4_IA32_4K:
-        return pageBitsForSize(IA32_SmallPage);
-    case seL4_IA32_LargePage:
-        return pageBitsForSize(IA32_LargePage);
-    case seL4_IA32_PageTableObject:
-        return PT_SIZE_BITS;
-    case seL4_IA32_PageDirectoryObject:
-        return PD_SIZE_BITS;
+    case seL4_X86_4K:
+        return pageBitsForSize(X86_SmallPage);
+    case seL4_X86_LargePageObject:
+        return pageBitsForSize(X86_LargePage);
+    case seL4_X86_PageTableObject:
+        return seL4_PageTableBits;
+    case seL4_X86_PageDirectoryObject:
+        return seL4_PageDirBits;
     case seL4_IA32_PDPTObject:
-        return PDPT_SIZE_BITS;
-    case seL4_IA32_IOPageTableObject:
+        return seL4_PDPTBits;
+    case seL4_X86_IOPageTableObject:
         return VTD_PT_SIZE_BITS;
     default:
         return Mode_getObjectSize(t);
@@ -436,9 +436,9 @@ Arch_decodeInvocation(
     case cap_io_port_cap:
         return decodeIA32PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_space_cap:
-        return decodeIA32IOSpaceInvocation(invLabel, cap);
+        return decodeX86IOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
-        return decodeIA32IOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+        return decodeX86IOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
     default:
         return Mode_decodeInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     }

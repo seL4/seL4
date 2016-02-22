@@ -29,6 +29,7 @@ This module contains the data structure and operations for the physical memory m
 
 > import qualified Data.Map
 > import Data.Bits
+> import Data.List
 > import SEL4.Machine.RegisterSet
 > import SEL4.Machine.Hardware
 
@@ -221,6 +222,13 @@ Update the state with the new "PSpace" map.
 
 \subsubsection{Deleting Objects}
 
+> deleteRange :: Data.Map.Map Word a -> Word -> Int -> Data.Map.Map Word a
+> deleteRange m pstart bits = 
+>         let (_,lr) = Data.Map.split (pstart-1) m
+>             pend = pstart + 2^bits
+>             (mid,_) = Data.Map.split pend lr in
+>         foldl' (flip Data.Map.delete) m (Data.Map.keys mid)
+
 No type checks are performed when deleting objects; "deleteObjects" simply deletes every object in the given region. If an object partially overlaps with the given region but is not completely inside it, this function's behaviour is undefined.
 
 > deleteObjects :: PPtr a -> Int -> Kernel ()
@@ -232,9 +240,7 @@ No type checks are performed when deleting objects; "deleteObjects" simply delet
 >         doMachineOp $ freeMemory (PPtr (fromPPtr ptr)) bits
 >         ps <- gets ksPSpace
 >         let inRange = (\x -> x .&. ((- mask bits) - 1) == fromPPtr ptr)
->         let map' = Data.Map.filterWithKey
->                         (\x _ -> not (inRange x))
->                         (psMap ps)
+>         let map' = deleteRange (psMap ps) (fromPPtr ptr) bits
 >         let ps' = ps { psMap = map' }
 >         modify (\ks -> ks { ksPSpace = ps'})
 
@@ -256,7 +262,7 @@ In "deleteObjects" above, we assert "deletionIsSafe"; that is, that there are no
 We also assert that the ghost CNodes are all either completely deleted or unchanged; no CNode should be partially in the range and partially deleted. Again, this assertion requires logical quantifiers, and is inserted in translation.
 
 > cNodePartialOverlap :: (Word -> Maybe Int) -> (Word -> Bool) -> Bool
-> cNodePartialOverlap _ _ = True
+> cNodePartialOverlap _ _ = False
 
 After deletion, we assert ksASIDMapSafe which states that there are page directories at the addresses in the asid map. Again, the real assertion is only inserted in the translation to the theorem prover. 
 

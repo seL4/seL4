@@ -29,10 +29,10 @@ hw_asid_t armKSNextASID;
 
 #ifndef ARM_HYP
 /* The global, privileged, physically-mapped PD */
-pde_t armKSGlobalPD[BIT(PD_BITS)] ALIGN_BSS(BIT(PD_SIZE_BITS));
+pde_t armKSGlobalPD[BIT(PD_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));
 
 /* The global, privileged, page table. */
-pte_t armKSGlobalPT[BIT(PT_BITS)] ALIGN_BSS(BIT(PT_SIZE_BITS));
+pte_t armKSGlobalPT[BIT(PT_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
 #else
 /* The global, hypervisor, level 1 page table */
 pdeS1_t  armHSGlobalPGD[BIT(PGD_BITS)] ALIGN_BSS(BIT(PGD_SIZE_BITS));

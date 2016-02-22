@@ -11,8 +11,6 @@
 #ifndef __LIBSEL4_SEL4_ARCH_FUNCTIONS_H
 #define __LIBSEL4_SEL4_ARCH_FUNCTIONS_H
 
-enum {
-    seL4_GlobalsFrame = 0xffffc000,
-};
+#include <sel4/constants.h>
 
 #endif

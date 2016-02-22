@@ -130,7 +130,7 @@ write_slot(slot_ptr_t slot_ptr, cap_t cap)
  * cover all of memory.
  */
 compile_assert(root_cnode_size_valid,
-               CONFIG_ROOT_CNODE_SIZE_BITS < 32 - CTE_SIZE_BITS &&
+               CONFIG_ROOT_CNODE_SIZE_BITS < 32 - seL4_SlotBits &&
                (1U << CONFIG_ROOT_CNODE_SIZE_BITS) >= BI_CAP_DYN_START)
 
 BOOT_CODE cap_t
@@ -143,12 +143,12 @@ create_root_cnode(void)
     ndks_boot.slot_pos_max = BIT(CONFIG_ROOT_CNODE_SIZE_BITS);
 
     /* create an empty root CNode */
-    pptr = alloc_region(CONFIG_ROOT_CNODE_SIZE_BITS + CTE_SIZE_BITS);
+    pptr = alloc_region(CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits);
     if (!pptr) {
         printf("Kernel init failing: could not create root cnode\n");
         return cap_null_cap_new();
     }
-    memzero(CTE_PTR(pptr), 1U << (CONFIG_ROOT_CNODE_SIZE_BITS + CTE_SIZE_BITS));
+    memzero(CTE_PTR(pptr), 1U << (CONFIG_ROOT_CNODE_SIZE_BITS + seL4_SlotBits));
     cap =
         cap_cnode_cap_new(
             CONFIG_ROOT_CNODE_SIZE_BITS,      /* radix      */
@@ -163,7 +163,7 @@ create_root_cnode(void)
     return cap;
 }
 
-compile_assert(irq_cnode_size, BIT(PAGE_BITS - CTE_SIZE_BITS) > maxIRQ)
+compile_assert(irq_cnode_size, BIT(PAGE_BITS - seL4_SlotBits) > maxIRQ)
 
 BOOT_CODE bool_t
 create_irq_cnode(void)
@@ -325,12 +325,12 @@ create_it_asid_pool(cap_t root_cnode_cap)
     cap_t  ap_cap;
 
     /* create ASID pool */
-    ap_pptr = alloc_region(ASID_POOL_SIZE_BITS);
+    ap_pptr = alloc_region(seL4_ASIDPoolBits);
     if (!ap_pptr) {
         printf("Kernel init failed: failed to create initial thread asid pool\n");
         return cap_null_cap_new();
     }
-    memzero(ASID_POOL_PTR(ap_pptr), 1 << ASID_POOL_SIZE_BITS);
+    memzero(ASID_POOL_PTR(ap_pptr), 1 << seL4_ASIDPoolBits);
     ap_cap = cap_asid_pool_cap_new(IT_ASID >> asidLowBits, ap_pptr);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_ASID_POOL), ap_cap);
 
@@ -347,12 +347,12 @@ BOOT_CODE bool_t
 create_idle_thread(void)
 {
     pptr_t pptr;
-    pptr = alloc_region(TCB_BLOCK_SIZE_BITS);
+    pptr = alloc_region(seL4_TCBBits);
     if (!pptr) {
         printf("Kernel init failed: Unable to allocate tcb for idle thread\n");
         return false;
     }
-    memzero((void *)pptr, 1 << TCB_BLOCK_SIZE_BITS);
+    memzero((void *)pptr, 1 << seL4_TCBBits);
     ksIdleThread = TCB_PTR(pptr + TCB_OFFSET);
     configureIdleThread(ksIdleThread);
     return true;
@@ -374,12 +374,12 @@ create_initial_thread(
     deriveCap_ret_t dc_ret;
 
     /* allocate TCB */
-    pptr = alloc_region(TCB_BLOCK_SIZE_BITS);
+    pptr = alloc_region(seL4_TCBBits);
     if (!pptr) {
         printf("Kernel init failed: Unable to allocate tcb for initial thread\n");
         return false;
     }
-    memzero((void*)pptr, 1 << TCB_BLOCK_SIZE_BITS);
+    memzero((void*)pptr, 1 << seL4_TCBBits);
     tcb = TCB_PTR(pptr + TCB_OFFSET);
     tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
     Arch_initContext(&tcb->tcbArch.tcbContext);
@@ -473,7 +473,7 @@ create_untypeds_for_region(
 
     while (!is_reg_empty(reg)) {
         /* Determine the maximum size of the region */
-        size_bits = WORD_BITS - 1 - clzl(reg.end - reg.start);
+        size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
 
         /* Determine the alignment of the region */
         align_bits = boot_ctzl(reg.start);
@@ -483,7 +483,7 @@ create_untypeds_for_region(
             size_bits = align_bits;
         }
 
-        assert(size_bits >= WORD_BITS / 8);
+        assert(size_bits >= seL4_WordBits / 8);
         if (!provide_untyped_cap(root_cnode_cap, reg.start, size_bits, first_untyped_slot)) {
             return false;
         }
