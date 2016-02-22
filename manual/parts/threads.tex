@@ -80,7 +80,7 @@ When $b = p$, $b$ simply acts as a timeslice for a thread, as the budget is alwa
 The system call \apifunc{seL4\_SchedContext\_Yield}{schedcontext_yield} can be used to sacrifice any remaining budget and block until the budget is replenished.
 
 Threads can be bound to scheduling contexts using \apifunc{seL4\_TCB\_Configure}{tcb_configure} or 
-\apifunc{seL4\_SchedContext\_BindTCB}{schedcontext_bindtcb}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure}{tcb_configure} allows more thread fields to be set with only one kernel entry. 
+\apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure}{tcb_configure} allows more thread fields to be set with only one kernel entry. 
 When a thread is bound to a scheduling context, if it is in a runnable state and the scheduling context is active, it will be added to the scheduler.
 
 Threads can optionally generate exceptions when they attempt to run without available budget, see \autoref{sec:exceptions}.
@@ -88,7 +88,7 @@ Threads can optionally generate exceptions when they attempt to run without avai
 \subsection{Passive Threads}
 \label{sec:passive}
 
-Threads can be unbound from a scheduling context with \apifunc{seL4\_SchedContext\_UnbindTCB}{schedcontext_unbindtcb}. 
+Threads can be unbound from a scheduling context with \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}. 
 This is distinct from suspending a thread, in that threads that are blocked waiting in an endpoint or notification queue will remain 
 in the queue and can still recieve messages and signals. 
 However, the unbound thread will not be schedulable again until it receives a scheduling context.
@@ -106,7 +106,7 @@ The kernel does not conduct any schedulability tests, as task admission is left 
 
 \subsection{Scheduling Context Donation and Borrowing}
 
-In addition to explictly binding and removing scheduling contexts through \apifunc{seL4\_SchedContext\_BindTCB}{schedcontext_bindtcb} and \apifunc{seL4\_SchedContext\_UnbindTCB}{schedcontext_unbindtcb}, scheduling contexts can move between threads over IPC.
+In addition to explictly binding and removing scheduling contexts through \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}, scheduling contexts can move between threads over IPC.
 Scheduling contexts are donated implicitly when the system calls \apifunc{seL4\_Call}{sel4_call} and \apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} are used to communicate with a passive thread.
 When \apifunc{seL4\_Call}{sel4_call} is used, the generated reply cap ensures that the callee is merely borrowing the scheduling context: when the reply cap is consumed by a reply message being sent the scheduling context will be returned to the caller.
 If the reply cap is revoked, and the callee holds the scheduling context, the scheduling context will be returned to the caller. 
@@ -118,7 +118,7 @@ However, a call chain will remain between A and C, such that if C's reply cap is
 
 \apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} only offers scheduling context donation: there is no guarantee that the scheduling context will return.
 
-Scheduling contexts can also be bound to notification objects using \apifunc{seL4\_SchedContext\_BindNotification}{schedcontext_bindnotification} and unbound using \apifunc{seL4\_SchedContext\_UnbindNotification}{schedcontext_unbindnotification}.
+Scheduling contexts can also be bound to notification objects using \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and unbound using \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.
 If a signal is delivered to a notification object with a passive thread blocked waiting on it, the passive thread will recieve the scheduling context from the notification object.
 The scheduling context is returned when the thread blocks on the notification object. 
 This feature allows for event-driven periodic threads which are triggered by events rather than the kernel time, and also allows for passive servers to use notification binding (See \autoref{sec:notification-binding}).

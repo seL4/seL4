@@ -1,0 +1,26 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{schedcontext_unbindobject}
+{SchedContext - UnbindObject}
+{Unbind an object from a scheduling context. The object can be either a thread or a notification.
+
+If the thread being unbound is the thread that is bound to this scheduling context, this will render the thread passive, see \autoref{sec:passive}. However if the thread being unbound received the scheduling context via scheduling context donation over IPC, the scheduling context will be returned to the thread that it was originally bound to.
+
+If the object is a notification and it is bound to the scheduling context, unbind it. 
+}
+{static inline void seL4\_SchedContext\_UnbindObject}
+{
+\param{seL4\_SchedContext}{\_service}{\schedcontextcapdesc}
+\param{seL4\_CPtr}{cap}{Capability to a notification that is bound to the scheduling context or capability to a tcb that is bound to this scheduling context or has received it through scheduling context donation.}
+}
+{\errorenumdesc}
+{see \autoref{sec:passive}}

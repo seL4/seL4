@@ -186,16 +186,12 @@
     </interface>
     <interface name="seL4_SchedContext">
         <method id="SchedContextYield" name="Yield"/>
-        <method id="SchedContextBindTCB" name="BindTCB">
-            <param dir="in" name="tcb" type="seL4_CPtr" />
+        <method id="SchedContextBind" name="Bind">
+            <param dir="in" name="cap" type="seL4_CPtr" />
         </method>
-        <method id ="SchedContextUnbindTCB" name="UnbindTCB">
-            <param dir="in" name="tcb" type="seL4_CPtr" />
+        <method id ="SchedContextUnbindObject" name="UnbindObject">
+            <param dir="in" name="cap" type="seL4_CPtr" />
         </method>
-        <method id="SchedContextBindNotification" name="BindNotification">
-            <param dir="in" name="notification" type="seL4_CPtr" />
-        </method>
-        <method id="SchedContextUnbindNotification" name="UnbindNotification" />
         <method id="SchedContextUnbind" name="Unbind"/>
     </interface>
 </api>

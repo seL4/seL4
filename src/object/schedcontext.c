@@ -33,17 +33,22 @@ invokeSchedContext_Yield(sched_context_t *sc)
 }
 
 exception_t
-invokeSchedContext_UnbindTCB(sched_context_t *sc, tcb_t *tcb)
+invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t cap)
 {
-    schedContext_removeTCB(sc, tcb);
+    if (likely(cap_get_capType(cap) == cap_thread_cap)) {
+        schedContext_removeTCB(sc, TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
+    } else {
+        assert (cap_get_capType(cap) == cap_notification_cap);
+        schedContext_unbindNtfn(sc);
+    }
+
     return EXCEPTION_NONE;
 }
 
 exception_t
-decodeSchedContext_UnbindTCB(sched_context_t *sc, extra_caps_t rootCaps)
+decodeSchedContext_UnbindObject(sched_context_t *sc, extra_caps_t rootCaps)
 {
     cap_t cap;
-    tcb_t *tcb;
 
     if (rootCaps.excaprefs[0] == NULL) {
         userError("SchedContext UnbindTCB: Truncated message.");
@@ -53,30 +58,51 @@ decodeSchedContext_UnbindTCB(sched_context_t *sc, extra_caps_t rootCaps)
 
     cap = rootCaps.excaprefs[0]->cap;
 
-    if (cap_get_capType(cap) != cap_thread_cap) {
-        userError("SchedContext BindTCB: TCB cap invalid.");
+    if (cap_get_capType(cap) != cap_thread_cap && cap_get_capType(cap) != cap_notification_cap) {
+        userError("SchedContext BindTCB: cap invalid.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    if (cap_get_capType(cap) == cap_notification_cap &&
+            sc->scNotification != NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap))) {
+        userError("SchedContext UnbindObject: object not bound");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (cap_get_capType(cap) == cap_thread_cap &&
+            sc->scHome != TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)) &&
+            sc->scTcb != TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) {
+        userError("SchedContext UnbindObject: object not bound");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeSchedContext_UnbindTCB(sc, tcb);
+    return invokeSchedContext_UnbindObject(sc, cap);
 }
 
 exception_t
-invokeSchedContext_BindTCB(sched_context_t *sc, tcb_t *tcb)
+invokeSchedContext_Bind(sched_context_t *sc, cap_t cap)
 {
-    schedContext_bindTCB(sc, tcb);
+    if (likely(cap_get_capType(cap) == cap_thread_cap)) {
+        schedContext_bindTCB(sc, TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
+    } else {
+        assert(cap_get_capType(cap) == cap_notification_cap);
+        schedContext_bindNtfn(sc, NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)));
+    }
+
     return EXCEPTION_NONE;
 }
 
 exception_t
-decodeSchedContext_BindTCB(sched_context_t *sc, extra_caps_t rootCaps)
+decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t rootCaps)
 {
     cap_t cap;
-    tcb_t *tcb;
 
     if (rootCaps.excaprefs[0] == NULL) {
         userError("SchedContext BindTCB: Truncated message.");
@@ -86,8 +112,8 @@ decodeSchedContext_BindTCB(sched_context_t *sc, extra_caps_t rootCaps)
 
     cap = rootCaps.excaprefs[0]->cap;
 
-    if (cap_get_capType(cap) != cap_thread_cap) {
-        userError("SchedContext BindTCB: TCB cap invalid.");
+    if (cap_get_capType(cap) != cap_thread_cap && cap_get_capType(cap) != cap_notification_cap) {
+        userError("SchedContext BindTCB: cap invalid.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
@@ -99,55 +125,8 @@ decodeSchedContext_BindTCB(sched_context_t *sc, extra_caps_t rootCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
     setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeSchedContext_BindTCB(sc, tcb);
-}
-
-exception_t
-invokeSchedContext_UnbindNtfn(sched_context_t *sc)
-{
-    schedContext_unbindNtfn(sc);
-    return EXCEPTION_NONE;
-}
-
-exception_t
-invokeSchedContext_BindNtfn(sched_context_t *sc, notification_t *ntfn)
-{
-    schedContext_bindNtfn(sc, ntfn);
-    return EXCEPTION_NONE;
-}
-
-exception_t
-decodeSchedContext_BindNtfn(sched_context_t *sc, extra_caps_t rootCaps)
-{
-    cap_t cap;
-    notification_t *ntfn;
-
-    if (unlikely(rootCaps.excaprefs[0] == NULL)) {
-        userError("SchedContext BindNotification: Truncated message.");
-        current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    cap = rootCaps.excaprefs[0]->cap;
-
-    if (unlikely(cap_get_capType(cap) != cap_notification_cap)) {
-        userError("SchedContext BindNotification: Notification cap invalid.");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(sc->scNotification != NULL || sc->scTcb != NULL)) {
-        userError("SchedContext_BindNotification: scheduling context already bound.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    ntfn = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
-    setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeSchedContext_BindNtfn(sc, ntfn);
+    return invokeSchedContext_Bind(sc, cap);
 }
 
 exception_t
@@ -170,18 +149,10 @@ decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
         /* no decode stage */
         setThreadState(ksCurThread, ThreadState_Restart);
         return invokeSchedContext_Yield(sc);
-    case SchedContextBindTCB:
-        return decodeSchedContext_BindTCB(sc, extraCaps);
-    case SchedContextUnbindTCB:
-        /* no decode stage */
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return decodeSchedContext_UnbindTCB(sc, extraCaps);
-    case SchedContextBindNotification:
-        return decodeSchedContext_BindNtfn(sc, extraCaps);
-    case SchedContextUnbindNotification:
-        /* no decode stage */
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return invokeSchedContext_UnbindNtfn(sc);
+    case SchedContextBind:
+        return decodeSchedContext_Bind(sc, extraCaps);
+    case SchedContextUnbindObject:
+        return decodeSchedContext_UnbindObject(sc, extraCaps);
     case SchedContextUnbind:
         setThreadState(ksCurThread, ThreadState_Restart);
         return invokeSchedContext_Unbind(sc);
