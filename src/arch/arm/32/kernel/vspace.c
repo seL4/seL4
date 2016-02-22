@@ -380,7 +380,7 @@ map_kernel_window(void)
     armHSGlobalPD[idx] = pde;
 
     /* now start initialising the page table */
-    memzero(armHSGlobalPT, 1 << PT_SIZE_BITS);
+    memzero(armHSGlobalPT, 1 << seL4_PageTableBits);
     for (idx = 0; idx < 256; idx++) {
         pteS1_t pte;
         pte = pteS1_pteS1_small_new(
@@ -413,7 +413,7 @@ map_kernel_window(void)
     /* map globals frame */
     map_kernel_frame(
         addrFromPPtr(armKSGlobalsFrame),
-        PPTR_GLOBALS_PAGE,
+        seL4_GlobalsFrame,
         VMReadOnly,
         vm_attributes_new(
             false, /* armExecuteNever */
@@ -431,8 +431,8 @@ map_kernel_window(void)
                 HAPFromVMRights(VMReadOnly),
                 MEMATTR_CACHEABLE  /* Cacheable */
             );
-    memzero(armUSGlobalPT, 1 << PT_SIZE_BITS);
-    idx = (PPTR_GLOBALS_PAGE >> PAGE_BITS) & (MASK(PT_BITS));
+    memzero(armUSGlobalPT, 1 << seL4_PageTableBits);
+    idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_BITS));
     armUSGlobalPT[idx] = pteS2;
 
     /* map stack frame */
@@ -1222,20 +1222,6 @@ invalidateASID(asid_t asid)
     pd[PD_ASID_SLOT] = pde_pde_invalid_new(0, false);
 }
 
-#ifndef ARM_HYP
-static pte_t pte_pte_invalid_new(void)
-{
-    /* Invalid as every PTE must have bit 0 set (large PTE) or bit 1 set (small
-     * PTE). 0 == 'translation fault' in ARM parlance.
-     */
-    return (pte_t) {
-        {
-            0
-        }
-    };
-}
-#endif
-
 static pde_t PURE
 loadHWASID(asid_t asid)
 {
@@ -1340,7 +1326,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     pd = pageTableMapped (asid, vaddr, pt);
 
     if (likely(pd != NULL)) {
-        pdIndex = vaddr >> 20;
+        pdIndex = vaddr >> (PT_BITS + PAGE_BITS);
         pdSlot = pd + pdIndex;
 
         *pdSlot = pde_pde_invalid_new(0, 0);
@@ -1445,6 +1431,20 @@ deleteASID(asid_t asid, pde_t* pd)
         setVMRoot(ksCurThread);
     }
 }
+
+#ifndef ARM_HYP
+static pte_t pte_pte_invalid_new(void)
+{
+    /* Invalid as every PTE must have bit 0 set (large PTE) or bit 1 set (small
+     * PTE). 0 == 'translation fault' in ARM parlance.
+     */
+    return (pte_t) {
+        {
+            0
+        }
+    };
+}
+#endif
 
 void
 unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
@@ -2070,338 +2070,6 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 }
 
 static exception_t
-decodeARMFrameInvocation(word_t invLabel, word_t length,
-                         cte_t *cte, cap_t cap, extra_caps_t excaps,
-                         word_t *buffer)
-{
-    switch (invLabel) {
-    case ARMPageMap: {
-        word_t vaddr, vtop, w_rightsMask;
-        paddr_t capFBasePtr;
-        cap_t pdCap;
-        pde_t *pd;
-        asid_t asid;
-        vm_rights_t capVMRights, vmRights;
-        vm_page_size_t frameSize;
-        vm_attributes_t attr;
-
-        if (unlikely(length < 3 || excaps.excaprefs[0] == NULL)) {
-            current_syscall_error.type =
-                seL4_TruncatedMessage;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        vaddr = getSyscallArg(0, buffer);
-        w_rightsMask = getSyscallArg(1, buffer);
-        attr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        pdCap = excaps.excaprefs[0]->cap;
-
-        frameSize = generic_frame_cap_get_capFSize(cap);
-        capVMRights = generic_frame_cap_get_capFVMRights(cap);
-
-        if (unlikely(generic_frame_cap_get_capFIsMapped(cap))) {
-            current_syscall_error.type =
-                seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
-                     !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
-            current_syscall_error.type =
-                seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-        pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(
-                         pdCap));
-        asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
-
-        {
-            findPDForASID_ret_t find_ret;
-
-            find_ret = findPDForASID(asid);
-            if (unlikely(find_ret.status != EXCEPTION_NONE)) {
-                userError("ARMPageMap: No PD for ASID");
-                current_syscall_error.type =
-                    seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource =
-                    false;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            if (unlikely(find_ret.pd != pd)) {
-                current_syscall_error.type =
-                    seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 1;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-        }
-
-        vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
-
-        if (unlikely(vtop >= kernelBase)) {
-            current_syscall_error.type =
-                seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        vmRights =
-            maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-
-        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
-            current_syscall_error.type =
-                seL4_AlignmentError;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        capFBasePtr = addrFromPPtr((void *)
-                                   generic_frame_cap_get_capFBasePtr(cap));
-
-        cap = generic_frame_cap_set_capFMappedAddress(cap, asid,
-                                                      vaddr);
-        if (frameSize == ARMSmallPage || frameSize == ARMLargePage) {
-            create_mappings_pte_return_t map_ret;
-            map_ret = createSafeMappingEntries_PTE(capFBasePtr, vaddr,
-                                                   frameSize, vmRights,
-                                                   attr, pd);
-            if (unlikely(map_ret.status != EXCEPTION_NONE)) {
-                return map_ret.status;
-            }
-
-            setThreadState(ksCurThread, ThreadState_Restart);
-            return performPageInvocationMapPTE(asid, cap, cte,
-                                               map_ret.pte,
-                                               map_ret.pte_entries);
-        } else {
-            create_mappings_pde_return_t map_ret;
-            map_ret = createSafeMappingEntries_PDE(capFBasePtr, vaddr,
-                                                   frameSize, vmRights,
-                                                   attr, pd);
-            if (unlikely(map_ret.status != EXCEPTION_NONE)) {
-                return map_ret.status;
-            }
-
-            setThreadState(ksCurThread, ThreadState_Restart);
-            return performPageInvocationMapPDE(asid, cap, cte,
-                                               map_ret.pde,
-                                               map_ret.pde_entries);
-        }
-    }
-
-    case ARMPageRemap: {
-        word_t vaddr, w_rightsMask;
-        paddr_t capFBasePtr;
-        cap_t pdCap;
-        pde_t *pd;
-        asid_t mappedASID;
-        vm_rights_t capVMRights, vmRights;
-        vm_page_size_t frameSize;
-        vm_attributes_t attr;
-
-        if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
-            current_syscall_error.type =
-                seL4_TruncatedMessage;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        w_rightsMask = getSyscallArg(0, buffer);
-        attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-        pdCap = excaps.excaprefs[0]->cap;
-
-        if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
-                     !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
-            current_syscall_error.type =
-                seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(!generic_frame_cap_get_capFIsMapped(cap))) {
-            current_syscall_error.type =
-                seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCap));
-        vaddr = generic_frame_cap_get_capFMappedAddress(cap);
-
-        {
-            findPDForASID_ret_t find_ret;
-
-            mappedASID = generic_frame_cap_get_capFMappedASID(cap);
-
-            find_ret = findPDForASID(mappedASID);
-            if (unlikely(find_ret.status != EXCEPTION_NONE)) {
-                userError("ARMPageRemap: No PD for ASID");
-                current_syscall_error.type =
-                    seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            if (unlikely(find_ret.pd != pd ||
-                         cap_page_directory_cap_get_capPDMappedASID(pdCap) !=
-                         mappedASID)) {
-                current_syscall_error.type =
-                    seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 1;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-        }
-
-        frameSize = generic_frame_cap_get_capFSize(cap);
-        capVMRights = generic_frame_cap_get_capFVMRights(cap);
-        vmRights =
-            maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-
-        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
-            current_syscall_error.type =
-                seL4_AlignmentError;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        capFBasePtr = addrFromPPtr((void *)
-                                   generic_frame_cap_get_capFBasePtr(cap));
-
-        if (frameSize == ARMSmallPage || frameSize == ARMLargePage) {
-            create_mappings_pte_return_t map_ret;
-            map_ret = createSafeMappingEntries_PTE(capFBasePtr, vaddr,
-                                                   frameSize, vmRights,
-                                                   attr, pd);
-            if (map_ret.status != EXCEPTION_NONE) {
-                return map_ret.status;
-            }
-
-            setThreadState(ksCurThread, ThreadState_Restart);
-            return performPageInvocationRemapPTE(mappedASID, map_ret.pte,
-                                                 map_ret.pte_entries);
-        } else {
-            create_mappings_pde_return_t map_ret;
-            map_ret = createSafeMappingEntries_PDE(capFBasePtr, vaddr,
-                                                   frameSize, vmRights,
-                                                   attr, pd);
-            if (map_ret.status != EXCEPTION_NONE) {
-                return map_ret.status;
-            }
-
-            setThreadState(ksCurThread, ThreadState_Restart);
-            return performPageInvocationRemapPDE(mappedASID, map_ret.pde,
-                                                 map_ret.pde_entries);
-        }
-    }
-
-    case ARMPageUnmap: {
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageInvocationUnmap(cap, cte);
-    }
-
-    case ARMPageClean_Data:
-    case ARMPageInvalidate_Data:
-    case ARMPageCleanInvalidate_Data:
-    case ARMPageUnify_Instruction: {
-        asid_t asid;
-        vptr_t vaddr;
-        findPDForASID_ret_t pd;
-        vptr_t start, end;
-        paddr_t pstart;
-        word_t page_size;
-        word_t page_base;
-
-        if (length < 2) {
-            userError("Page Flush: Truncated message.");
-            current_syscall_error.type = seL4_TruncatedMessage;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        asid = generic_frame_cap_get_capFMappedASID(cap);
-#ifdef ARM_HYP
-        /* Must use kernel vaddr in hyp mode. */
-        vaddr = generic_frame_cap_get_capFBasePtr(cap);
-#else
-        vaddr = generic_frame_cap_get_capFMappedAddress(cap);
-#endif
-
-        if (unlikely(!generic_frame_cap_get_capFIsMapped(cap))) {
-            userError("Page Flush: Frame is not mapped.");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        pd = findPDForASID(asid);
-        if (unlikely(pd.status != EXCEPTION_NONE)) {
-            userError("Page Flush: No PD for ASID");
-            current_syscall_error.type =
-                seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource = false;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        start = getSyscallArg(0, buffer);
-        end =   getSyscallArg(1, buffer);
-
-        /* check that the range is sane */
-        if (end <= start) {
-            userError("PageFlush: Invalid range");
-            current_syscall_error.type = seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-
-        /* start and end are currently relative inside this page */
-        page_size = 1 << pageBitsForSize(generic_frame_cap_get_capFSize(cap));
-        page_base = addrFromPPtr((void*)generic_frame_cap_get_capFBasePtr(cap));
-
-        if (start >= page_size || end > page_size) {
-            userError("Page Flush: Requested range not inside page");
-            current_syscall_error.type = seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        /* turn start and end into absolute addresses */
-        pstart = page_base + start;
-        start += vaddr;
-        end += vaddr;
-
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageFlush(invLabel, pd.pd, asid, start, end - 1, pstart);
-    }
-
-    case ARMPageGetAddress: {
-
-
-        /* Check that there are enough message registers */
-        assert(n_msgRegisters >= 1);
-
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageGetAddress((void*)generic_frame_cap_get_capFBasePtr(cap));
-    }
-
-    default:
-        current_syscall_error.type = seL4_IllegalOperation;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-}
-
-static exception_t
 performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 {
     word_t i, j UNUSED;
@@ -2710,7 +2378,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
         }
     }
 
-    pdIndex = vaddr >> 20;
+    pdIndex = vaddr >> (PAGE_BITS + PT_BITS);
     pdSlot = &pd[pdIndex];
     if (unlikely(pde_ptr_get_pdeType(pdSlot) != pde_pde_invalid)) {
         current_syscall_error.type = seL4_DeleteFirst;

@@ -20,7 +20,7 @@ ARCH_ASM_SOURCES += 32/halt.S \
                     32/idle.S
 
 ifdef ARM_HYP
-ARCH_ASM_SOURCES += hyp_traps.S
+ARCH_ASM_SOURCES += 32/hyp_traps.S
 else
-ARCH_ASM_SOURCES == traps.S
+ARCH_ASM_SOURCES += 32/traps.S
 endif

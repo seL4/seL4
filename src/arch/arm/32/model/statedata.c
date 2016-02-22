@@ -37,11 +37,11 @@ pte_t armKSGlobalPT[BIT(PT_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
 /* The global, hypervisor, level 1 page table */
 pdeS1_t  armHSGlobalPGD[BIT(PGD_BITS)] ALIGN_BSS(BIT(PGD_SIZE_BITS));
 /* The global, hypervisor, level 2 page table */
-pdeS1_t  armHSGlobalPD[BIT(PT_BITS)]   ALIGN_BSS(BIT(PT_SIZE_BITS));
+pdeS1_t  armHSGlobalPD[BIT(PT_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* The global, hypervisor, level 3 page table */
-pteS1_t  armHSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(PT_SIZE_BITS));
+pteS1_t  armHSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* User space global mappings */
-pte_t  armUSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(PT_SIZE_BITS));
+pte_t  armUSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* Current CPU */
 vcpu_t *ksCurCPU;
 #endif /* ARM_HYP */
