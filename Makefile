@@ -296,6 +296,7 @@ DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 DEFINES += -DARCH_ARM
 ifeq (${SEL4_ARCH}, aarch32)
 DEFINES += -D__KERNEL_32__ -DAARCH32
+export __ARM_32__ = y
 ifeq (${CPU},cortex-a8)
 DEFINES += -DARM_CORTEX_A8
 endif

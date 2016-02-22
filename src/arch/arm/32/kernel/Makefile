@@ -8,10 +8,5 @@
 # @TAG(GD_GPL)
 #
 
-DIRECTORIES += src/arch/arm/object
-
-ARCH_C_SOURCES += object/interrupt.c object/tcb.c
-
-ifneq (ARM_HYP,)
-ARCH_C_SOURCES += object/vcpu.c
-endif
+ARCH_C_SOURCES += 32/kernel/thread.c \
+                  32/kernel/vspace.c

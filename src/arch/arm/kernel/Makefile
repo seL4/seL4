@@ -10,7 +10,5 @@
 
 DIRECTORIES += src/arch/arm/kernel
 
-C_SOURCES += src/arch/arm/kernel/thread.c \
-             src/arch/arm/kernel/boot.c   \
-             src/arch/arm/kernel/vspace.c
+C_SOURCES += src/arch/arm/kernel/boot.c
 
