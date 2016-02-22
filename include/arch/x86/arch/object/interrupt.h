@@ -14,9 +14,13 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
+#include <plat/machine.h>
 
 exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                             cte_t *srcSlot, extra_caps_t excaps,
                                             word_t *buffer);
+void Arch_irqStateInit(void);
+void Arch_updateIRQState(word_t irq, x86_irq_state_t state);
+exception_t Arch_checkIRQ(word_t irq);
 
 #endif

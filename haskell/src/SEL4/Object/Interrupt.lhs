@@ -65,7 +65,7 @@ There is a single, global interrupt controller object; a capability to it is pro
 > decodeIRQControlInvocation label args srcSlot extraCaps =
 >     case (invocationType label, args, extraCaps) of
 >         (IRQIssueIRQHandler, irqW:index:depth:_, cnode:_) -> do
->             rangeCheck irqW (fromEnum minIRQ) (fromEnum maxIRQ)
+>             Arch.checkIRQ irqW
 >             let irq = toEnum (fromIntegral irqW) :: IRQ
 >
 >             irqActive <- withoutFailure $ isIRQActive irq
@@ -92,9 +92,9 @@ There is a single, global interrupt controller object; a capability to it is pro
 
 An IRQ handler capability allows a thread possessing it to set an endpoint which will be notified of incoming interrupts, and to acknowledge received interrupts.
 
-> decodeIRQHandlerInvocation :: Word -> [Word] -> IRQ -> [(Capability, PPtr CTE)] ->
+> decodeIRQHandlerInvocation :: Word -> IRQ -> [(Capability, PPtr CTE)] ->
 >         KernelF SyscallError IRQHandlerInvocation
-> decodeIRQHandlerInvocation label args irq extraCaps =
+> decodeIRQHandlerInvocation label irq extraCaps =
 >     case (invocationType label,extraCaps) of
 >         (IRQAckIRQ,_) -> return $ AckIRQ irq
 >         (IRQSetIRQHandler,(cap,slot):_) -> case cap of
@@ -103,9 +103,6 @@ An IRQ handler capability allows a thread possessing it to set an endpoint which
 >                 _ -> throw $ InvalidCapability 0
 >         (IRQSetIRQHandler,_) -> throw TruncatedMessage
 >         (IRQClearIRQHandler,_) -> return $ ClearIRQHandler irq
->         (IRQSetMode,_) -> case args of
->                 trig:pol:_ -> return $ SetMode irq (toBool trig) (toBool pol)
->                 _ -> throw TruncatedMessage
 >         _ -> throw IllegalOperation
 
 > toBool :: Word -> Bool
@@ -121,8 +118,6 @@ An IRQ handler capability allows a thread possessing it to set an endpoint which
 > invokeIRQHandler (ClearIRQHandler irq) = do
 >     irqSlot <- getIRQSlot irq
 >     cteDeleteOne irqSlot
-> invokeIRQHandler (SetMode irq trig pol) =
->     doMachineOp $ setInterruptMode irq trig pol
 
 \subsection{Kernel Functions}
 

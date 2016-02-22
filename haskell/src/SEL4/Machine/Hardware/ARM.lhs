@@ -142,10 +142,6 @@ The following functions define the ARM-specific interface between the kernel and
 >     cbptr <- ask
 >     liftIO $ Platform.maskInterrupt cbptr maskI irq
 
-> -- IOAPIC only does stuff on IA32
-> setInterruptMode :: IRQ -> Bool -> Bool -> MachineMonad ()
-> setInterruptMode _ _ _ = return ()
-
 > configureTimer :: MachineMonad IRQ
 > configureTimer = do
 >     cbptr <- ask

@@ -73,8 +73,6 @@ void maskInterrupt(bool_t enable, irq_t irq);
 /** MODIFIES: */
 irq_t getActiveIRQ(void);
 /** MODIFIES: [*] */
-static inline void setInterruptMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow) { }
-/** MODIFIES: [*] */
 void resetTimer(void);
 /** MODIFIES: [*] */
 void initTimer(void);
