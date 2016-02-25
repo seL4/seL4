@@ -56,7 +56,7 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { WDOG2_PADDR,              WDOG2_PADDR             +   0x10000 },
     { WDOG3_PADDR,              WDOG3_PADDR             +   0x10000 },
     { IOMUXC_LPSR_PADDR,        IOMUXC_LPSR_PADDR       +   0x10000 },
-    { GPT0_PADDR,               GPT0_PADDR              +   0x10000 },     
+    { GPT0_PADDR,               GPT0_PADDR              +   0x10000 },
     { GPT1_PADDR,               GPT1_PADDR              +   0x10000 },
     { GPT2_PADDR,               GPT2_PADDR              +   0x10000 },
     { GPT3_PADDR,               GPT3_PADDR              +   0x10000 },
@@ -197,7 +197,7 @@ read_cntfrq(void)
 }
 
 /* default 8 MHz */
-#define GPT_DEFAULT_FREQ        0x7a1200  
+#define GPT_DEFAULT_FREQ        0x7a1200
 #define GPT_DEFAULT_FREQ_MHZ    8ull
 static uint32_t gpt_cntp_tval = 0;
 
@@ -212,7 +212,7 @@ initTimer(void)
         printf("Default timer has a different frequency %x\n", freq);
     }
 
-    tval = (uint64_t)CONFIG_TIMER_TICK_MS * (freq / 1000); 
+    tval = (uint64_t)CONFIG_TIMER_TICK_MS * (freq / 1000);
     if (tval > 0xffffffff) {
         printf("timer interval value out of range \n");
         halt();
