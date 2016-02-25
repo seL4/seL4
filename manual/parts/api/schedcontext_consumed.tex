@@ -9,12 +9,14 @@
 %
 
 \apidoc
-{schedcontext_unbind}
-{SchedContext - Unbind}
-{Unbind any objects (threads or notification objects) from a scheduling context. This will render the bound thread passive, see \autoref{sec:passive}.}
-{static inline void seL4\_SchedContext\_Unbind}
+{schedcontext_consumed}
+{SchedContext - Consumed}
+{
+Return the amount of time the scheduling context has consumed.
+}
+{static inline void seL4\_SchedContext\_Consumed}
 {
 \param{seL4\_SchedContext}{\_service}{\schedcontextcapdesc}
 }
-{\errorenumdesc}
-{see \autoref{sec:passive}}
+{A \texttt{seL4\_SchedContext\_Consumed\_t} containing \consumeddesc}
+{see \autoref{sec:sched}}

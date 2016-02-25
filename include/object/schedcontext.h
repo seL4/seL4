@@ -23,6 +23,9 @@ exception_t invokeSchedContext_Unbind(sched_context_t *sc);
 exception_t decodeSchedContext_Unbind(sched_context_t *sc);
 exception_t decodeSchedContext_UnbindObject(sched_context_t *sc, extra_caps_t rootCaps);
 exception_t invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t cap);
+exception_t decodeSchedContext_YieldTo(sched_context_t *sc);
+exception_t invokeSchedContext_YieldTo(sched_context_t *sc);
+exception_t invokeSchedContext_Consumed(sched_context_t *sc);
 
 /* bind a tcb to a scheduling context, this will set the scheduling context's
  * home to the tcb */
@@ -36,5 +39,7 @@ void schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn);
 void schedContext_unbindNtfn(sched_context_t *sc);
 void schedContext_donate(tcb_t *to, sched_context_t *sc);
 void schedContext_resume(sched_context_t *sc);
+time_t schedContext_updateConsumed(sched_context_t *sc);
+void schedContext_completeYieldTo(tcb_t *yielder);
 
 #endif

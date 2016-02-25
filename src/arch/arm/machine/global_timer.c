@@ -14,6 +14,9 @@
 
 #include <util.h>
 
+#define CLK_MAGIC 2207854675llu
+#define CLK_SHIFT 40llu
+
 static volatile struct globalTimerMap {
     uint32_t countLower;
     uint32_t countUpper;
@@ -37,7 +40,7 @@ enum control {
 PURE time_t
 getMaxTimerUs(void)
 {
-    return UINT64_MAX / CLK_MHZ;
+    return UINT64_MAX / CLK_MAGIC;
 }
 
 CONST time_t
@@ -58,6 +61,14 @@ usToTicks(time_t us)
     assert(us <= getMaxTimerUs());
     assert(us >= getKernelWcetUs());
     return us * CLK_MHZ;
+}
+
+PURE time_t
+ticksToUs(ticks_t ticks)
+{
+    /* see tools/reciprocal.py for calculation of this value */
+    compile_assert(magic_will_work, CLK_MHZ == 498lu);
+    return (ticks * CLK_MAGIC) >> CLK_SHIFT;
 }
 
 void

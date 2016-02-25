@@ -136,6 +136,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
         tcb = TCB_PTR(cap_reply_cap_get_capTCBPtr(cap));
 
+        //printf("Tcb %p, next %p\n", tcb, tcb->tcbCallStackNext);
         if (tcb->tcbCallStackNext) {
             tcbCallStackRemove(tcb->tcbCallStackNext);
         }
@@ -182,6 +183,9 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             suspend(tcb);
 
             if (tcb->tcbSchedContext) {
+                if (tcb->tcbSchedContext->scYieldFrom) {
+                    schedContext_completeYieldTo(tcb->tcbSchedContext->scYieldFrom);
+                }
                 schedContext_removeTCB(tcb->tcbSchedContext, tcb);
             }
             /* ipc call stack will be cleared up when reply cap deleted
@@ -204,6 +208,11 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             sched_context_t *sc;
 
             sc = SC_PTR(cap_sched_context_cap_get_capPtr(cap));
+
+            if (sc->scYieldFrom) {
+                schedContext_completeYieldTo(sc->scYieldFrom);
+            }
+
             schedContext_unbindAllTCBs(sc);
             schedContext_unbindNtfn(sc);
 
@@ -265,8 +274,7 @@ recycleCap(bool_t is_final, cap_t cap)
             ts = thread_state_get_tsType(tcb->tcbState);
             /* Haskell error:
              * "Zombie cap should point at inactive thread" */
-            assert(ts == ThreadState_Inactive ||
-                   ts != ThreadState_IdleThreadState);
+            assert(ts == ThreadState_Inactive);
             /* Haskell error:
              * "Zombie cap should not point at queued thread" */
             assert(!thread_state_get_tcbQueued(tcb->tcbState));

@@ -186,6 +186,12 @@
     </interface>
     <interface name="seL4_SchedContext">
         <method id="SchedContextYield" name="Yield"/>
+        <method id="SchedContextYieldTo" name="YieldTo">
+            <param dir="out" name="consumed" type="seL4_Time" />
+        </method>
+        <method id="SchedContextConsumed" name="Consumed">
+            <param dir="out" name="consumed" type="seL4_Time" />
+        </method>
         <method id="SchedContextBind" name="Bind">
             <param dir="in" name="cap" type="seL4_CPtr" />
         </method>

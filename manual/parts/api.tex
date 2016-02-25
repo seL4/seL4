@@ -108,7 +108,7 @@
 \newcommand{\messageinforetdesc}{A \texttt{seL4\_MessageInfo\_t} structure as described in \autoref{sec:messageinfo}.}
 \newcommand{\noret}{This method does not return anything.}
 \newcommand{\errorenumdesc}{A return value of \texttt{0} indicates success. A non-zero value indicates that an error occurred. See \autoref{sec:errors} for a description of the message register and tag contents upon error.}
-
+\newcommand{\consumeddesc}{\texttt{consumed}, which is the amount of time that threads have been executing using this scheduling context since \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} or \apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed} was called, and \texttt{error}, an error code, see \autoref{sec:errors}.}
 
 \section{Error Codes}
 \label{sec:errors}
@@ -296,6 +296,8 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{schedcontrol_configure}
 \inputapidoc{schedcontrol_setcriticality}
 \inputapidoc{schedcontext_yield}
+\inputapidoc{schedcontext_yieldto}
+\inputapidoc{schedcontext_consumed}
 \inputapidoc{schedcontext_bind}
 \inputapidoc{schedcontext_unbindobject}
 \inputapidoc{schedcontext_unbind}

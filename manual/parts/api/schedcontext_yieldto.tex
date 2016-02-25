@@ -1,0 +1,25 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{schedcontext_yieldto}
+{SchedContext - YieldTo}
+{
+If a thread is currently runnable and running on this scheduling context and the scheduling context has available budget, place it at the head of the scheduling queue.
+If the caller is at an equal priority to the thread this will result in the thread being scheduled.
+If the caller is at a higher priority the thread will not run until the threads priority is the highest priority in the system. 
+The caller must have a maximum control priority greater than or equal to the threads priority.
+}
+{static inline void seL4\_SchedContext\_YieldTo}
+{
+\param{seL4\_SchedContext}{\_service}{\schedcontextcapdesc}
+}
+{A \texttt{seL4\_SchedContext\_YieldTo\_t} containing \consumeddesc}
+{see \autoref{sec:sched}}

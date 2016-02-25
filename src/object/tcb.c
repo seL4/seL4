@@ -135,6 +135,7 @@ removeFromBitmap(word_t prio)
 void
 tcbCallStackRemove(tcb_t* target)
 {
+    //printf("Remove %p, sc %p, prev %p\n", target, target->tcbSchedContext, target->tcbCallStackPrev);
     /* update head */
     if (target->tcbSchedContext != NULL && target->tcbCallStackPrev != NULL) {
         assert(target->tcbCallStackNext == NULL);

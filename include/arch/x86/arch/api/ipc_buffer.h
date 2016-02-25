@@ -23,6 +23,13 @@ arch_parseTimeArg(word_t i, word_t *buffer)
     };
 }
 
+static inline word_t
+arch_setTimeArg(word_t i, word_t *buffer, time_t arg)
+{
+    setRegister(ksCurThread, msgRegisters[i], (uint32_t) arg);
+    setRegister(ksCurThread, msgRegisters[i + 1], (uint32_t) (arg << 32llu));
 
+    return 2u;
+}
 #endif /* __ARCH_IPC_BUFFER_H */
 

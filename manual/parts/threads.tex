@@ -143,6 +143,8 @@ Thread priority (structure \texttt{seL4\_Prio\_t}) consists of four values as fo
     \item[Maximum controlled criticality] the highest criticality a thread can set itself or another thread to. 
 \end{description}
 
+Threads of sufficient maximum contrlled priority and with possession of the appropriate scheduling context capability can manipulate the scheduler and implement user-level schedulers using \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} and \apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed}.
+
 \subsection{Priorities}
 
 Scheduling contexts provide access to and an upper bound on exection CPU time, however when a thread executes is determined by thread priority.

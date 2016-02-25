@@ -62,7 +62,9 @@
 #define LTWSTAT_TCOMP        (1U << 1)
 #define LTWSTAT_TCNT         (1U << 0)
 
-
+/* constants for reciprocal division */
+#define CLK_MAGIC 2863311531
+#define CLK_SHIFT 36
 
 struct mct_global_map {
     uint32_t reserved0[64];
@@ -158,7 +160,7 @@ ackDeadlineIRQ(void)
 PURE time_t
 getMaxTimerUs(void)
 {
-    return UINT64_MAX / TIMER_MHZ;
+    return UINT64_MAX / CLK_MAGIC;
 }
 
 CONST time_t
@@ -180,6 +182,15 @@ usToTicks(time_t us)
     assert(us >= getKernelWcetUs());
     return us * TIMER_MHZ;
 }
+
+PURE time_t
+ticksToUs(ticks_t ticks)
+{
+    /* see tools/reciprocal.py for calculation of CLK_MAGIC and CLK_SHIFT */
+    compile_assert(magic_will_work, CLK_MHZ == 24llu);
+    return (ticks * CLK_MAGIC) >> CLK_SHIFT;
+}
+
 
 /**
    DONT_TRANSLATE

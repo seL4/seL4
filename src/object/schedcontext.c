@@ -9,6 +9,7 @@
  */
 
 #include <types.h>
+#include <arch/api/ipc_buffer.h>
 #include <object/structures.h>
 #include <kernel/thread.h>
 #include <model/statedata.h>
@@ -22,6 +23,7 @@ invokeSchedContext_Yield(sched_context_t *sc)
     if (likely(sc->scTcb && isSchedulable(sc->scTcb))) {
         endTimeslice(sc);
         if (likely(sc->scTcb == ksCurThread)) {
+            sc->scConsumed += ksConsumed;
             ksConsumed = 0llu;
             rescheduleRequired();
         }
@@ -139,6 +141,78 @@ invokeSchedContext_Unbind(sched_context_t *sc)
 }
 
 exception_t
+invokeSchedContext_Consumed(sched_context_t *sc)
+{
+    schedContext_updateConsumed(sc);
+    return EXCEPTION_NONE;
+}
+
+exception_t
+invokeSchedContext_YieldTo(sched_context_t *sc)
+{
+    bool_t returnNow = true;
+    time_t consumed;
+
+    if (likely(isRunnable(sc->scTcb))) {
+        if (unlikely(sc->scTcb->tcbPriority < ksCurThread->tcbPriority)) {
+            tcbSchedDequeue(sc->scTcb);
+            tcbSchedEnqueue(sc->scTcb);
+            returnNow = true;
+        } else {
+            ksCurThread->tcbYieldTo = sc;
+            sc->scYieldFrom = ksCurThread;
+            attemptSwitchTo(sc->scTcb);
+            setThreadState(ksCurThread, ThreadState_YieldTo);
+            /* we are scheduling the thread associated with sc,
+             * so we don't need to write to the ipc buffer
+             * until the caller is scheduled again */
+            returnNow = false;
+        }
+    }
+
+    consumed = schedContext_updateConsumed(sc);
+
+    if (unlikely(returnNow)) {
+        /* put consumed value into ipc buffer, the caller will
+         * be scheduled again now */
+        word_t msgLength = arch_setTimeArg(0, consumed);
+        setRegister(ksCurThread, msgInfoRegister,
+                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, msgLength)));
+    }
+
+    return EXCEPTION_NONE;
+}
+
+exception_t
+decodeSchedContext_YieldTo(sched_context_t *sc)
+{
+    /* not self */
+    if (sc->scTcb == ksCurThread) {
+        userError("SchedContext_YieldTo: cannot seL4_SchedContext_YieldTo on self");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    /* has a tcb */
+    if (sc->scTcb == NULL) {
+        userError("SchedContext_YieldTo: cannot yield to a scheduling context that has no tcb");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    /* insufficient prio */
+    if (sc->scTcb->tcbPriority > ksCurThread->tcbMCP) {
+        userError("SchedContext_YieldTo: unsufficient mcp (%lu) to yield to a thread with prio (%lu)",
+                  ksCurThread->tcbMCP, sc->scTcb->tcbPriority);
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeSchedContext_YieldTo(sc);
+}
+
+exception_t
 decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
 {
 
@@ -149,6 +223,12 @@ decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
         /* no decode stage */
         setThreadState(ksCurThread, ThreadState_Restart);
         return invokeSchedContext_Yield(sc);
+    case SchedContextYieldTo:
+        return decodeSchedContext_YieldTo(sc);
+    case SchedContextConsumed:
+        /* no decode stage */
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return invokeSchedContext_Consumed(sc);
     case SchedContextBind:
         return decodeSchedContext_Bind(sc, extraCaps);
     case SchedContextUnbindObject:
@@ -264,5 +344,30 @@ schedContext_donate(tcb_t *to, sched_context_t *sc)
     }
     sc->scTcb = to;
     to->tcbSchedContext = sc;
+}
+
+time_t
+schedContext_updateConsumed(sched_context_t *sc)
+{
+    ticks_t consumedTicks = sc->scConsumed;
+    sc->scConsumed = 0llu;
+    return ticksToUs(consumedTicks);
+}
+
+void
+schedContext_completeYieldTo(tcb_t *yielder)
+{
+    word_t msgLength;
+    time_t consumed;
+
+    consumed = schedContext_updateConsumed(yielder->tcbYieldTo);
+    yielder->tcbYieldTo->scYieldFrom = NULL;
+    yielder->tcbYieldTo = NULL;
+
+    msgLength = arch_setTimeArg(0, consumed);
+    setRegister(yielder, msgInfoRegister,
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, msgLength)));
+    setThreadState(yielder, ThreadState_Running);
+    /* todo increment pc? */
 }
 

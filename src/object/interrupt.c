@@ -233,6 +233,7 @@ handleInterrupt(irq_t irq)
             endTimeslice(ksCurThread->tcbSchedContext);
             rescheduleRequired();
         }
+        ksCurSchedContext->scConsumed += ksConsumed;
         ksConsumed = 0llu;
         break;
     }

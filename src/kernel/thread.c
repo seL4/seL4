@@ -36,30 +36,13 @@ transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
 static inline bool_t PURE
 isBlocked(const tcb_t *thread)
 {
-    switch (thread_state_get_tsType(thread->tcbState)) {
-    case ThreadState_Inactive:
-    case ThreadState_BlockedOnReceive:
-    case ThreadState_BlockedOnSend:
-    case ThreadState_BlockedOnNotification:
-    case ThreadState_BlockedOnReply:
-        return true;
-
-    default:
-        return false;
-    }
+    return thread_state_get_tsType(thread->tcbState) < ThreadState_Running;
 }
 
 static inline bool_t PURE
 isRunnable(const tcb_t *thread)
 {
-    switch (thread_state_get_tsType(thread->tcbState)) {
-    case ThreadState_Running:
-    case ThreadState_Restart:
-        return true;
-
-    default:
-        return false;
-    }
+    return thread_state_get_tsType(thread->tcbState) >= ThreadState_Running;
 }
 
 static inline bool_t PURE
@@ -81,8 +64,14 @@ configureIdleThread(tcb_t *tcb)
 void
 activateThread(void)
 {
+    uint32_t state;
+
     assert(isRunnable(ksCurThread));
-    if (unlikely(thread_state_get_tsType(ksCurThread->tcbState) == ThreadState_Restart)) {
+
+    state = thread_state_get_tsType(ksCurThread->tcbState);
+    if (unlikely(state == ThreadState_YieldTo)) {
+        schedContext_completeYieldTo(ksCurThread);
+    } else if (unlikely(state == ThreadState_Restart)) {
         word_t pc;
 
         pc = getRestartPC(ksCurThread);
@@ -99,6 +88,12 @@ suspend(tcb_t *target)
     tcbSchedDequeue(target);
     tcbReleaseRemove(target);
     tcbCritDequeue(target);
+
+    /* like IPC, yieldTo is cancelled by suspension */
+    if (target->tcbYieldTo) {
+        target->tcbYieldTo->scYieldFrom = NULL;
+        target->tcbYieldTo = NULL;
+    }
 }
 
 void
@@ -437,6 +432,7 @@ switchSchedContext(void)
         /* we are changing scheduling contexts */
         ksReprogram = true;
         ksCurSchedContext->scRemaining -= ksConsumed;
+        ksCurSchedContext->scConsumed += ksConsumed;
         ksConsumed = 0llu;
         ksCurrentTime += 1llu;
     } else {
@@ -639,6 +635,7 @@ checkBudget(void)
             rescheduleRequired();
         }
 
+        ksCurSchedContext->scConsumed += ksConsumed;
         ksConsumed = 0u;
         return false;
     } else {

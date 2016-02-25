@@ -132,14 +132,16 @@ typedef struct cte cte_t;
 
 /* Thread state */
 enum _thread_state {
+    /* blocked thread states */
     ThreadState_Inactive = 0,
-    ThreadState_Running,
-    ThreadState_Restart,
     ThreadState_BlockedOnReceive,
     ThreadState_BlockedOnSend,
     ThreadState_BlockedOnReply,
     ThreadState_BlockedOnNotification,
-    ThreadState_IdleThreadState
+    /* runnable thread states */
+    ThreadState_Running,
+    ThreadState_Restart,
+    ThreadState_YieldTo,
 };
 typedef word_t _thread_state_t;
 
@@ -192,7 +194,7 @@ vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* TCB: size 84 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size 88 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 typedef struct sched_context sched_context_t;
 
 struct tcb {
@@ -241,6 +243,9 @@ struct tcb {
     struct tcb *tcbCallStackPrev;
     struct tcb *tcbCallStackNext;
 
+    /* sched context that this thread yielded to */
+    sched_context_t *tcbYieldTo;
+
     /* criticality level of this tcb */
     crit_t tcbCrit;
 
@@ -254,7 +259,7 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
-/* sched context - 48 bytes */
+/* sched context - 56 bytes */
 struct sched_context {
     /* budget for this tcb -- remaining is refilled from this value */
     ticks_t scBudget;
@@ -281,6 +286,14 @@ struct sched_context {
 
     /* data word that is sent with temporal faults that occur on this scheduling context */
     seL4_Word scData;
+
+    /* amount of ticks this sc has been scheduled for since seL4_SchedContext_YieldTo
+     * or seL4_SchedContext_Consumed was last called */
+    ticks_t scConsumed;
+
+    /* thread that yeilded to this scheduling context */
+    tcb_t *scYieldFrom;
+
 };
 
 /* Ensure object sizes are sane */
