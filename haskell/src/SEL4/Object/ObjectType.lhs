@@ -499,7 +499,7 @@ This function just dispatches invocations to the type-specific invocation functi
 >     return $! []
 > 
 > performInvocation _ _ (InvokeIRQControl invok) = do
->     invokeIRQControl invok
+>     performIRQControl invok
 >     return $! []
 > 
 > performInvocation _ _ (InvokeIRQHandler invok) = do

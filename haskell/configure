@@ -1,0 +1,3 @@
+#/bin/sh
+
+echo "empty configure file used ..."

@@ -168,7 +168,6 @@ Set up the kernel's VM environment.
 \end{impdetails}
 
 \begin{impdetails}
-FIXME: is the following still necessary in haskell?
 
 >         initCPU
 >         initPlatform
@@ -266,8 +265,7 @@ Insert thread into rootCNodeCap
 >          insertInitCap slot cap
 >       return ()
 
-create idle thread and set the Current Thread to Idle Thread
-FIXME: Seems we need to setCurThread and setSchedulerAction here, otherwise errors raised.
+Create idle thread and set up current thread + scheduler state.
 
 > createIdleThread :: KernelInit ()
 > createIdleThread = do
