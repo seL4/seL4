@@ -32,3 +32,4 @@ Apparently ARM does not have any.
 
 > checkIRQ :: Word -> KernelF SyscallError ()
 > checkIRQ irq = rangeCheck irq (fromEnum minIRQ) (fromEnum maxIRQ)
+

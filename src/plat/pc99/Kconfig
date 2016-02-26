@@ -57,3 +57,24 @@ config PAE_PAGING
     help
         PAE paging uses 4K/2M pages and has three levels of paging. If this
         is not used the old 32-bit paging with 4K/4M pages will be used
+
+choice
+    prompt "Setting FS/GS Base Addresses"
+    depends on ARCH_X86
+    default FSGSBASE_GDT
+    help
+        There are two ways to to set FS/GS base addresses:
+        IA32_FS/GS_GDT and IA32_FS/GS_BASE_MSR.
+
+    config FSGSBASE_GDT
+        bool "IA32_FS/GS_GDT"
+        depends on ARCH_IA32
+        help
+            Use GDT entries.
+
+    config FSGSBASE_MSR
+        bool "IA32_FS/GS_BASE MSRs"
+        depends on ARCH_X86
+        help
+            Use MSRs to change base addresses.
+endchoice

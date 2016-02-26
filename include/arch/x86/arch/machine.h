@@ -25,6 +25,7 @@
 #define IA32_SYSENTER_ESP_MSR   0x175
 #define IA32_SYSENTER_EIP_MSR   0x176
 #define IA32_TSC_DEADLINE_MSR   0x6e0
+#define IA32_GS_BASE_MSR        0xC0000101
 
 #define BROADWELL_MODEL_ID      0xD4
 #define HASWELL_MODEL_ID        0xC3
@@ -144,6 +145,30 @@ static inline uint64_t x86_rdtsc(void)
 
     return ((uint64_t) hi) << 32llu | (uint64_t) lo;
 }
+
+#ifdef CONFIG_FSGSBASE_MSR
+
+static inline void x86_write_fs_base(word_t base)
+{
+    x86_wrmsr(IA32_FS_BASE_MSR, base);
+}
+
+static inline void x86_write_gs_base(word_t base)
+{
+    x86_wrmsr(IA32_GS_BASE_MSR, base);
+}
+
+static inline word_t x86_read_fs_base(void)
+{
+    return x86_rdmsr(IA32_FS_BASE_MSR);
+}
+
+static inline word_t x86_read_gs_base(void)
+{
+    return x86_rdmsr(IA32_GS_BASE_MSR);
+}
+
+#endif
 
 /* Cleaning memory before user-level access */
 static inline void clearMemory(void* ptr, unsigned int bits)

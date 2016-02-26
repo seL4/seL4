@@ -25,15 +25,13 @@ Arch_switchToThread(tcb_t* tcb)
 
     /* update the GDT_TLS entry with the thread's TLS_BASE address */
     base = getRegister(tcb, TLS_BASE);
-    gdt_entry_gdt_data_ptr_set_base_low(x86KSgdt + GDT_TLS, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(x86KSgdt + GDT_TLS,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(x86KSgdt + GDT_TLS, (base >> 24) & 0xFF);
+    x86_write_fs_base(base);
+
 
     /* update the GDT_IPCBUF entry with the thread's IPC buffer address */
     base = tcb->tcbIPCBuffer;
-    gdt_entry_gdt_data_ptr_set_base_low(x86KSgdt + GDT_IPCBUF, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(x86KSgdt + GDT_IPCBUF,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(x86KSgdt + GDT_IPCBUF, (base >> 24) & 0xFF);
+    x86_write_gs_base(base);
+
 }
 
 BOOT_CODE void
