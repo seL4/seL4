@@ -86,14 +86,14 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
-    /* Only hit the fastpath if we will stay on the same scheduling context */
-    if (unlikely(dest->tcbSchedContext != NULL)) {
+    /* Ensure that the endpoint has has grant rights so that we can
+     * create the reply cap */
+    if (unlikely(!cap_endpoint_cap_get_capCanGrant(ep_cap))) {
         slowpath(SysCall);
     }
-
-    /* Ensure that the endpoint has standard non-diminishing rights. */
-    if (unlikely(!cap_endpoint_cap_get_capCanGrant(ep_cap) ||
-                 thread_state_ptr_get_blockingIPCDiminishCaps(&dest->tcbState))) {
+   
+    /* Only hit the fastpath if we will stay on the same scheduling context */
+    if (unlikely(dest->tcbSchedContext != NULL)) {
         slowpath(SysCall);
     }
 
@@ -275,8 +275,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* Set thread state to BlockedOnReceive */
     thread_state_ptr_mset_blockingObject_tsType(
         &ksCurThread->tcbState, (word_t)ep_ptr, ThreadState_BlockedOnReceive);
-    thread_state_ptr_set_blockingIPCDiminish_np(
-        &ksCurThread->tcbState, ! cap_endpoint_cap_get_capCanSend(ep_cap));
 
     /* Place the thread in the endpoint queue */
     endpointTail = TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr));

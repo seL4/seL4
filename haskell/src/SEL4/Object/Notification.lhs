@@ -38,7 +38,7 @@ This module specifies the behavior of notification objects.
 > -- helper function
 > receiveBlocked :: ThreadState -> Bool
 > receiveBlocked st = case st of
->     BlockedOnReceive _ _ -> True
+>     BlockedOnReceive _ -> True
 >     _ -> False
 
 This function performs an signal operation, given a capability to a notification object, and a single machine word of message data (the badge). This operation will never block the signalling thread.

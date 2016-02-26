@@ -148,8 +148,8 @@ If either of the buffers is missing, then the message will be truncated to inclu
 
 > doIPCTransfer ::
 >         PPtr TCB -> Maybe (PPtr Endpoint) -> Word -> Bool ->
->         PPtr TCB -> Bool -> Kernel ()
-> doIPCTransfer sender endpoint badge grant receiver diminish = do
+>         PPtr TCB -> Kernel ()
+> doIPCTransfer sender endpoint badge grant receiver = do
 >         receiveBuffer <- lookupIPCBuffer True receiver
 >         fault <- threadGet tcbFault sender
 
@@ -161,14 +161,14 @@ For normal IPC messages, the message registers are transferred.
 >                 sendBuffer <- lookupIPCBuffer False sender
 >                 doNormalTransfer
 >                     sender sendBuffer endpoint badge grant
->                     receiver receiveBuffer diminish
+>                     receiver receiveBuffer
 
 If the sent message is a fault IPC, the stored fault is transferred.
 
 >             Just _ -> do
 >                 doFaultTransfer badge sender receiver receiveBuffer
 
-Replies sent by the "Reply" and "ReplyRecv" system calls can either be normal IPC replies, or fault replies. In the former case, the transfer is the same as for an IPC send, but there is never a fault, capability grants are always allowed, the badge is always 0, and capabilities are never received with diminished rights.
+Replies sent by the "Reply" and "ReplyRecv" system calls can either be normal IPC replies, or fault replies. In the former case, the transfer is the same as for an IPC send, but there is never a fault, capability grants are always allowed, the badge is always 0, and capabilities are never received with diminished rights (diminished rights are now removed).
 
 > doReplyTransfer :: PPtr TCB -> PPtr TCB -> PPtr CTE -> Kernel ()
 > doReplyTransfer sender receiver slot = do
@@ -185,7 +185,7 @@ Replies sent by the "Reply" and "ReplyRecv" system calls can either be normal IP
 >     fault <- threadGet tcbFault receiver
 >     case fault of
 >         Nothing -> do
->             doIPCTransfer sender Nothing 0 True receiver False
+>             doIPCTransfer sender Nothing 0 True receiver
 >             cteDeleteOne slot
 >             setThreadState Running receiver
 >             attemptSwitchTo receiver
@@ -208,9 +208,9 @@ Ordinary IPC simply transfers all message registers. It requires pointers to the
 
 > doNormalTransfer ::
 >     PPtr TCB -> Maybe (PPtr Word) -> Maybe (PPtr Endpoint) -> Word -> Bool ->
->     PPtr TCB -> Maybe (PPtr Word) -> Bool -> Kernel ()
+>     PPtr TCB -> Maybe (PPtr Word) -> Kernel ()
 > doNormalTransfer sender sendBuffer endpoint badge canGrant
->         receiver receiveBuffer diminish = do
+>         receiver receiveBuffer = do
 >         tag <- getMessageInfo sender
 >         caps <- if canGrant
 >             then lookupExtraCaps sender sendBuffer tag
@@ -218,7 +218,7 @@ Ordinary IPC simply transfers all message registers. It requires pointers to the
 >             else return []
 >         msgTransferred <- copyMRs sender sendBuffer receiver receiveBuffer $
 >                                   msgLength tag
->         tag' <- transferCaps tag caps endpoint receiver receiveBuffer diminish
+>         tag' <- transferCaps tag caps endpoint receiver receiveBuffer
 >         let tag'' = tag' { msgLength = msgTransferred }
 >         setMessageInfo receiver tag''
 >         asUser receiver $ setRegister badgeRegister badge
@@ -251,23 +251,23 @@ The recipient's argument registers are filled in with various information about 
 This function is called when an IPC message includes a capability to transfer. It attempts to perform the transfer, and returns an adjusted messageInfo containing the number of caps transferred and the bitmask of which caps were unwrapped.
 
 > transferCaps :: MessageInfo -> [(Capability, PPtr CTE)] -> 
->         Maybe (PPtr Endpoint) -> PPtr TCB -> Maybe (PPtr Word) -> Bool -> 
+>         Maybe (PPtr Endpoint) -> PPtr TCB -> Maybe (PPtr Word) -> 
 >         Kernel MessageInfo
-> transferCaps info caps endpoint receiver receiveBuffer diminish = do
+> transferCaps info caps endpoint receiver receiveBuffer = do
 >     destSlots <- getReceiveSlots receiver receiveBuffer
 >     let info' = info { msgExtraCaps = 0, msgCapsUnwrapped = 0 }
 >     case receiveBuffer of 
 >         Nothing -> return info'
 >         Just rcvBuffer -> do
->             transferCapsToSlots endpoint diminish rcvBuffer 0
+>             transferCapsToSlots endpoint rcvBuffer 0
 >                 caps destSlots info'
 
-> transferCapsToSlots :: Maybe (PPtr Endpoint) -> Bool -> PPtr Word -> Int ->
+> transferCapsToSlots :: Maybe (PPtr Endpoint) -> PPtr Word -> Int ->
 >        [(Capability, PPtr CTE)] -> [PPtr CTE] -> MessageInfo ->
 >        Kernel MessageInfo
-> transferCapsToSlots _ _ _ n [] _ mi =
+> transferCapsToSlots _ _ n [] _ mi =
 >     return $ mi { msgExtraCaps = fromIntegral n }
-> transferCapsToSlots ep diminish rcvBuffer n (arg:caps) slots mi =
+> transferCapsToSlots ep rcvBuffer n (arg:caps) slots mi =
 >     constOnFailure (mi { msgExtraCaps = fromIntegral n }) $ do
 >         case (cap, ep, slots) of
 >             (EndpointCap { capEPPtr = p1 }, Just p2, _) | p1 == p2 -> do
@@ -275,16 +275,13 @@ This function is called when an IPC message includes a capability to transfer. I
 >                     setExtraBadge rcvBuffer (capEPBadge cap) n
 >                 withoutFailure $ transferAgain slots miCapUnfolded
 >             (_, _, destSlot:slots') -> do
->                 cap' <- unifyFailure $ deriveCap srcSlot $ if diminish
->                         then allRights { capAllowWrite = False }
->                             `maskCapRights` cap
->                         else cap
+>                 cap' <- unifyFailure $ deriveCap srcSlot $ cap
 >                 when (isNullCap cap') $ throw undefined
 >                 withoutFailure $ cteInsert cap' srcSlot destSlot
 >                 withoutFailure $ transferAgain slots' mi
 >             _ -> return $ mi { msgExtraCaps = fromIntegral n }
 >     where
->        transferAgain = transferCapsToSlots ep diminish rcvBuffer (n + 1) caps
+>        transferAgain = transferCapsToSlots ep rcvBuffer (n + 1) caps
 >        miCapUnfolded = mi { msgCapsUnwrapped = msgCapsUnwrapped mi .|. bit n}
 >        (cap, srcSlot) = arg
 

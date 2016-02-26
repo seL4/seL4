@@ -17,8 +17,8 @@
 
 SEL4_ARCH_LIST:=aarch32 ia32
 ARCH_LIST:=arm x86
-CPU_LIST:=arm1136jf-s ixp420 cortex-a8 cortex-a9 cortex-a15
-PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 apq8064 zynq7000 allwinnerA20
+CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15
+PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20
 ARMV_LIST:=armv6 armv7-a
 
 ifndef SOURCE_ROOT
@@ -284,6 +284,9 @@ DEFINES += -DARCH_ARM
 ifeq (${SEL4_ARCH}, aarch32)
 DEFINES += -D__KERNEL_32__ -DAARCH32
 export __ARM_32__ = y
+ifeq (${CPU},cortex-a7)
+DEFINES += -DARM_CORTEX_A7
+endif
 ifeq (${CPU},cortex-a8)
 DEFINES += -DARM_CORTEX_A8
 endif
@@ -295,6 +298,9 @@ DEFINES += -DARM_CORTEX_A15
 endif
 ifeq ($(PLAT),imx6)
 DEFINES += -DIMX6
+endif
+ifeq ($(PLAT),imx7)
+DEFINES += -DIMX7
 endif
 ifeq ($(PLAT),imx31)
 DEFINES += -DIMX31

@@ -892,7 +892,7 @@ exception_t decodeX86FrameInvocation(
         cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);
 
         switch (frameSize) {
-            /* PTE mappings */
+        /* PTE mappings */
         case X86_SmallPage: {
             pte_t              pte;
             lookupPTSlot_ret_t lu_ret;
@@ -1034,7 +1034,7 @@ exception_t decodeX86FrameInvocation(
         vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
 
         switch (frameSize) {
-            /* PTE mappings */
+        /* PTE mappings */
         case X86_SmallPage: {
             pte_t              pte;
             lookupPTSlot_ret_t lu_ret;

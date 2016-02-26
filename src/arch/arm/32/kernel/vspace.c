@@ -1382,7 +1382,7 @@ createSafeMappingEntries_PDE
 
     switch (frameSize) {
 
-        /* PDE mappings */
+    /* PDE mappings */
     case ARMSection:
         ret.pde_entries.base = lookupPDSlot(pd, vaddr);
         ret.pde_entries.length = 1;
