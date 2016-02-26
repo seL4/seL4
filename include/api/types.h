@@ -22,7 +22,6 @@
 
 /* cap_rights_t defined in api/types.bf */
 typedef word_t prio_t;
-typedef word_t cptr_t;
 typedef uint64_t time_t;
 typedef uint64_t ticks_t;
 typedef word_t crit_t;

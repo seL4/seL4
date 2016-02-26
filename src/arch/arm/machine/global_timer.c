@@ -14,6 +14,8 @@
 
 #include <util.h>
 
+/* see tools/reciprocal.py for calculation of this value */
+compile_assert(magic_will_work, CLK_MHZ == 498lu)
 #define CLK_MAGIC 2207854675llu
 #define CLK_SHIFT 40llu
 
@@ -66,8 +68,6 @@ usToTicks(time_t us)
 PURE time_t
 ticksToUs(ticks_t ticks)
 {
-    /* see tools/reciprocal.py for calculation of this value */
-    compile_assert(magic_will_work, CLK_MHZ == 498lu);
     return (ticks * CLK_MAGIC) >> CLK_SHIFT;
 }
 

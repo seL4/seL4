@@ -59,10 +59,6 @@ setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer, lookup_fault_t 
         receiveIPCBuffer[offset + 4] =
             lookup_fault_guard_mismatch_get_bitsFound(luf);
         return offset + 4;
-
-    case fault_temporal:
-        return setMR(receiver, receiveIPCBuffer, 0, fault_temporal_get_data(sender->tcbFault));
-
     default:
         fail("Invalid lookup failure");
     }
@@ -138,6 +134,10 @@ word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
             return n_msgRegisters;
         }
     }
+
+    case fault_temporal:
+        receiveIPCBuffer[1] = fault_temporal_get_data(sender->tcbFault);
+        return 1u;
 
     default:
         fail("Invalid fault");

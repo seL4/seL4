@@ -91,7 +91,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     if (unlikely(!cap_endpoint_cap_get_capCanGrant(ep_cap))) {
         slowpath(SysCall);
     }
-   
+
     /* Only hit the fastpath if we will stay on the same scheduling context */
     if (unlikely(dest->tcbSchedContext != NULL)) {
         slowpath(SysCall);

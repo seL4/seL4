@@ -196,6 +196,12 @@ usToTicks(time_t us)
     return us * x86KStscMhz;
 }
 
+PURE time_t
+ticksToUs(ticks_t ticks)
+{
+    return div64(ticks, x86KStscMhz);
+}
+
 void
 ackDeadlineIRQ(void)
 {

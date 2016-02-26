@@ -536,17 +536,6 @@ seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_
     return info;
 }
 
-
-static inline void
-seL4_Yield(void)
-{
-    register seL4_Word scno asm("r7") = seL4_SysYield;
-    asm volatile ("swi %[swi_num]"
-                  : /* no outputs */
-                  : [swi_num] "i" __SWINUM(seL4_SysYield), "r"(scno)
-                  : "memory");
-}
-
 #ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
 static inline seL4_MessageInfo_t
 seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender,

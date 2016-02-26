@@ -12,7 +12,7 @@
 #define __MODE_OBJECT_STRUCTURES_H
 
 /* update this when you modify the tcb struct */
-#define EXPECTED_TCB_SIZE 690
+#define EXPECTED_TCB_SIZE 688
 
 #define GDT_NULL    0
 #define GDT_CS_0    1
