@@ -269,7 +269,7 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
         ptr = ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
         if (x86KSASIDTable[base >> asidLowBits] == ptr) {
             deleteASIDPool(base, ptr);
-            memzero(ptr, BIT(ASID_POOL_SIZE_BITS));
+            memzero(ptr, BIT(seL4_ASIDPoolBits));
             x86KSASIDTable[base >> asidLowBits] = ptr;
         }
         return cap;
@@ -400,11 +400,11 @@ Arch_getObjectSize(word_t t)
     case seL4_IA32_LargePage:
         return pageBitsForSize(IA32_LargePage);
     case seL4_IA32_PageTableObject:
-        return PT_SIZE_BITS;
+        return seL4_PageTableBits;
     case seL4_IA32_PageDirectoryObject:
-        return PD_SIZE_BITS;
+        return seL4_PageDirBits;
     case seL4_IA32_PDPTObject:
-        return PDPT_SIZE_BITS;
+        return seL4_PDPTBits;
     case seL4_IA32_IOPageTableObject:
         return VTD_PT_SIZE_BITS;
     default:

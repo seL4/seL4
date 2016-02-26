@@ -220,7 +220,7 @@ map_kernel_window(void)
         );
 
     /* now start initialising the page table */
-    memzero(armKSGlobalPT, 1 << PT_SIZE_BITS);
+    memzero(armKSGlobalPT, 1 << seL4_PageTableBits);
 
     /* map vector table */
     map_kernel_frame(
@@ -237,7 +237,7 @@ map_kernel_window(void)
     /* map globals frame */
     map_kernel_frame(
         addrFromPPtr(armKSGlobalsFrame),
-        PPTR_GLOBALS_PAGE,
+        seL4_GlobalsFrame,
         VMReadOnly,
         vm_attributes_new(
             true,  /* armExecuteNever */
@@ -363,13 +363,13 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     pptr_t pd_pptr;
 
     /* create PD obj and cap */
-    pd_pptr = alloc_region(PD_SIZE_BITS);
+    pd_pptr = alloc_region(seL4_PageDirBits);
     if (!pd_pptr) {
         return cap_null_cap_new();
     }
-    memzero(PDE_PTR(pd_pptr), 1 << PD_SIZE_BITS);
+    memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
     copyGlobalMappings(PDE_PTR(pd_pptr));
-    cleanCacheRange_PoU(pd_pptr, pd_pptr + (1 << PD_SIZE_BITS) - 1,
+    cleanCacheRange_PoU(pd_pptr, pd_pptr + (1 << seL4_PageDirBits) - 1,
                         addrFromPPtr((void *)pd_pptr));
     pd_cap =
         cap_page_directory_cap_new(
@@ -385,11 +385,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     for (pt_vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
             pt_vptr < it_v_reg.end;
             pt_vptr += BIT(PT_BITS + PAGE_BITS)) {
-        pt_pptr = alloc_region(PT_SIZE_BITS);
+        pt_pptr = alloc_region(seL4_PageTableBits);
         if (!pt_pptr) {
             return cap_null_cap_new();
         }
-        memzero(PTE_PTR(pt_pptr), 1 << PT_SIZE_BITS);
+        memzero(PTE_PTR(pt_pptr), 1 << seL4_PageTableBits);
         if (!provide_cap(root_cnode_cap,
                          create_it_page_table_cap(pd_cap, pt_pptr, pt_vptr, IT_ASID))
            ) {
@@ -2347,7 +2347,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         if (unlikely(cap_get_capType(untyped) != cap_untyped_cap ||
                      cap_untyped_cap_get_capBlockSize(untyped) !=
-                     ASID_POOL_SIZE_BITS)) {
+                     seL4_ASIDPoolBits)) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 

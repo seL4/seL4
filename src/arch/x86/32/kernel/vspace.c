@@ -446,11 +446,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         cap_t pd_cap;
         pptr_t pd_pptr;
         /* just create single PD obj and cap */
-        pd_pptr = alloc_region(PD_SIZE_BITS);
+        pd_pptr = alloc_region(seL4_PageDirBits);
         if (!pd_pptr) {
             return cap_null_cap_new();
         }
-        memzero(PDE_PTR(pd_pptr), 1 << PD_SIZE_BITS);
+        memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
         copyGlobalMappings((vspace_root_t*)pd_pptr);
         pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
         if (!provide_cap(root_cnode_cap, pd_cap)) {
@@ -463,11 +463,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         pptr_t pdpt_pptr;
         unsigned int i;
         /* create a PDPT obj and cap */
-        pdpt_pptr = alloc_region(PDPT_SIZE_BITS);
+        pdpt_pptr = alloc_region(seL4_PDPTBits);
         if (!pdpt_pptr) {
             return cap_null_cap_new();
         }
-        memzero(PDPTE_PTR(pdpt_pptr), 1 << PDPT_SIZE_BITS);
+        memzero(PDPTE_PTR(pdpt_pptr), 1 << seL4_PDPTBits);
         pdpt_cap = cap_pdpt_cap_new(
                        true,       /* capPDPTISMapped */
                        IT_ASID,    /* capPDPTMappedASID */
@@ -491,11 +491,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
                 return cap_null_cap_new();
             }
 
-            pptr = alloc_region(PD_SIZE_BITS);
+            pptr = alloc_region(seL4_PageDirBits);
             if (!pptr) {
                 return cap_null_cap_new();
             }
-            memzero(PDE_PTR(pptr), 1 << PD_SIZE_BITS);
+            memzero(PDE_PTR(pptr), 1 << seL4_PageDirBits);
             if (!provide_cap(root_cnode_cap,
                              create_it_page_directory_cap(pdpt_cap, pptr, vptr, IT_ASID))
                ) {
@@ -513,11 +513,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     for (vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
             vptr < it_v_reg.end;
             vptr += BIT(PT_BITS + PAGE_BITS)) {
-        pptr = alloc_region(PT_SIZE_BITS);
+        pptr = alloc_region(seL4_PageTableBits);
         if (!pptr) {
             return cap_null_cap_new();
         }
-        memzero(PTE_PTR(pptr), 1 << PT_SIZE_BITS);
+        memzero(PTE_PTR(pptr), 1 << seL4_PageTableBits);
         if (!provide_cap(root_cnode_cap,
                          create_it_page_table_cap(vspace_cap, pptr, vptr, IT_ASID))
            ) {

@@ -11,4 +11,22 @@
 #ifndef __LIBSEL4_SEL4_ARCH_CONSTANTS_H
 #define __LIBSEL4_SEL4_ARCH_CONSTANTS_H
 
+enum {
+    seL4_GlobalsFrame = 0xffffc000,
+};
+
+/* object sizes - 2^n */
+#define seL4_PageBits 12
+#define seL4_SlotBits 4
+#define seL4_TCBBits 9
+#define seL4_EndpointBits 4
+#define seL4_NotificationBits 5
+#define seL4_PageTableBits 10
+#define seL4_PageDirBits 14
+#define seL4_ASIDPoolBits 12
+#define seL4_SchedContextBits 6
+
+/* word size */
+#define seL4_WordBits (sizeof(seL4_Word) * 8)
+
 #endif

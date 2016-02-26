@@ -72,7 +72,7 @@ void flushCacheRange(void* vaddr, uint32_t size_bits)
 {
     word_t v;
 
-    assert(size_bits < WORD_BITS);
+    assert(size_bits < seL4_WordBits);
     assert(IS_ALIGNED((word_t)vaddr, size_bits));
 
     x86_mfence();
