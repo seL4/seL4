@@ -503,12 +503,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         vspace_cap = pdpt_cap;
     }
 
-    slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->ui_pd_caps = (slot_region_t) {
-        slot_pos_before, slot_pos_after
-    };
     /* create all PT objs and caps necessary to cover userland image */
-    slot_pos_before = ndks_boot.slot_pos_cur;
 
     for (vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
             vptr < it_v_reg.end;
@@ -526,7 +521,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->ui_pt_caps = (slot_region_t) {
+    ndks_boot.bi_frame->ui_paging_caps = (slot_region_t) {
         slot_pos_before, slot_pos_after
     };
 

@@ -62,8 +62,7 @@ typedef struct bi {
     slot_region_t null_caps;       /* null caps (empty slots) */
     slot_region_t sh_frame_caps;   /* shared-frame caps */
     slot_region_t ui_frame_caps;   /* userland-image frame caps */
-    slot_region_t ui_pd_caps;      /* userland-image PD caps */
-    slot_region_t ui_pt_caps;      /* userland-image PT caps */
+    slot_region_t ui_paging_caps;  /* userland-image paging structure caps */
     slot_region_t ut_obj_caps;     /* untyped-object caps (UT caps) */
     paddr_t       ut_obj_paddr_list    [CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* physical address of each UT cap */
     uint8_t       ut_obj_size_bits_list[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* size (2^n) bytes of each UT cap */

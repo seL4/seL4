@@ -57,8 +57,7 @@ typedef struct {
     seL4_SlotRegion   empty;           /* empty slots (null caps) */
     seL4_SlotRegion   sharedFrames;    /* shared-frame caps (shared between seL4 nodes) */
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */
-    seL4_SlotRegion   userImagePDs;    /* userland-image PD caps */
-    seL4_SlotRegion   userImagePTs;    /* userland-image PT caps */
+    seL4_SlotRegion   userImagePaging; /* userland-image paging structure caps */
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
     seL4_Word         untypedPaddrList   [CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* physical address of each untyped cap */
     seL4_Uint8        untypedSizeBitsList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* size (2^n) bytes of each untyped cap */
