@@ -12,6 +12,7 @@
 #define __ARCH_API_TYPES_H
 
 #include <api/objecttype.h>
+#include <mode/api/objecttype.h>
 #include <arch/api/objecttype.h>
 
 #define pageType SmallPageObject

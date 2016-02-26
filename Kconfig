@@ -25,7 +25,7 @@ config ARCH_ARM_V7A
 # the target platform.
 config WORD_SIZE
     int
-    default 32 if ARCH_IA32 || ARCH_ARM
+    default 32 if ARCH_IA32 || ARCH_AARCH32
 
 menu "seL4 System"
 
@@ -45,6 +45,10 @@ menu "seL4 System"
     config ARCH_IA32
         bool
         default y if ARCH_X86
+
+    config ARCH_AARCH32
+        bool
+        default y if ARCH_ARM
 
     choice
         prompt "ARM CPU selection"
