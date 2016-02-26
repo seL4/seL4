@@ -3,6 +3,7 @@ Functions related to generating AutoCorres-based definitions and proofs from
 the bitfield generator.
 '''
 
+from __future__ import print_function
 import sys
 
 def is_tagged_union(item):
@@ -179,13 +180,13 @@ def generate_defs(symtab, output=sys.stdout):
             # For tagged unions, we need to generate definitions for each
             # subtype but they also need to be aware of their container.
             for block in v.tags:
-                print >>output, generate_def(block[2], v.name)
-                print >>output, '\n'
+                print(generate_def(block[2], v.name), file=output)
+                print('\n', file=output)
         else:
             if v.tagged:
                 continue
-            print >>output, generate_def(v)
-            print >>output, '\n'
+            print(generate_def(v), file=output)
+            print('\n', file=output)
 
 def generate_proof_helpers(item):
     '''Generate minor lemmas that will be needed in the course of other
@@ -410,17 +411,17 @@ def generate_proof(item, group=None):
 def generate_proofs(symtab, output=sys.stdout):
     for v in symtab.values():
         if is_tagged_union(v):
-            print >>output, generate_proof_helpers(v)
-            print >>output, '\n'
+            print(generate_proof_helpers(v), file=output)
+            print('\n', file=output)
             # For tagged unions, we need to generate proofs for each
             # subtype but they also need to be aware of their container.
             for block in v.tags:
-                print >>output, generate_proof(block[2], v.name)
-                print >>output, '\n'
+                print(generate_proof(block[2], v.name), file=output)
+                print('\n', file=output)
         else:
             if v.tagged:
                 continue
-            print >>output, generate_proof_helpers(v)
-            print >>output, '\n'
-            print >>output, generate_proof(v)
-            print >>output, '\n'
+            print(generate_proof_helpers(v), file=output)
+            print('\n', file=output)
+            print(generate_proof(v), file=output)
+            print('\n', file=output)

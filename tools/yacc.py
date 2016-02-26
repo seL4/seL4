@@ -11,15 +11,15 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
 # met:
-# 
+#
 # * Redistributions of source code must retain the above copyright notice,
-#   this list of conditions and the following disclaimer.  
-# * Redistributions in binary form must reproduce the above copyright notice, 
+#   this list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright notice,
 #   this list of conditions and the following disclaimer in the documentation
-#   and/or other materials provided with the distribution.  
+#   and/or other materials provided with the distribution.
 # * Neither the name of the David Beazley or Dabeaz LLC may be used to
 #   endorse or promote products derived from this software without
-#  specific prior written permission. 
+#  specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -105,13 +105,13 @@ except AttributeError:
 
 # Python 2.x/3.0 compatibility.
 def load_ply_lex():
-    if sys.version_info[0] < 3:
+    try:
         import lex
-    else:
+    except:
         import ply.lex as lex
     return lex
 
-# This object is a stand-in for a logging object created by the 
+# This object is a stand-in for a logging object created by the
 # logging module.   PLY will use this by default to create things
 # such as the parser.out file.  If a user wants more detailed
 # information, they can create their own logging object and pass
@@ -138,7 +138,7 @@ class NullLogger(object):
         return self
     def __call__(self,*args,**kwargs):
         return self
-        
+
 # Exception raised for yacc-related errors
 class YaccError(Exception):   pass
 
@@ -266,7 +266,7 @@ class LRParser:
             return self.parseopt(input,lexer,debug,tracking,tokenfunc)
         else:
             return self.parseopt_notrack(input,lexer,debug,tracking,tokenfunc)
-        
+
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # parsedebug().
@@ -289,7 +289,7 @@ class LRParser:
         goto    = self.goto              # Local reference to goto table (to avoid lookup on self.)
         prod    = self.productions       # Local reference to production list (to avoid lookup on self.)
         pslice  = YaccProduction(None)   # Production object passed to grammar rules
-        errorcount = 0                   # Used during error recovery 
+        errorcount = 0                   # Used during error recovery
 
         # --! DEBUG
         debug.info("PLY: PARSE DEBUG START")
@@ -364,7 +364,7 @@ class LRParser:
                     # shift a symbol on the stack
                     statestack.append(t)
                     state = t
-                    
+
                     # --! DEBUG
                     debug.debug("Action : Shift and goto state %s", t)
                     # --! DEBUG
@@ -392,7 +392,7 @@ class LRParser:
                         debug.info("Action : Reduce rule [%s] with %s and goto state %d", p.str, "["+",".join([format_stack_entry(_v.value) for _v in symstack[-plen:]])+"]",-t)
                     else:
                         debug.info("Action : Reduce rule [%s] with %s and goto state %d", p.str, [],-t)
-                        
+
                     # --! DEBUG
 
                     if plen:
@@ -411,12 +411,12 @@ class LRParser:
                         # --! TRACKING
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        # The code enclosed in this section is duplicated 
+                        # The code enclosed in this section is duplicated
                         # below as a performance optimization.  Make sure
                         # changes get made in both locations.
 
                         pslice.slice = targ
-                        
+
                         try:
                             # Call the grammar rule with our special slice object
                             del symstack[-plen:]
@@ -440,7 +440,7 @@ class LRParser:
                             self.errorok = 0
                         continue
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+
                     else:
 
                         # --! TRACKING
@@ -452,7 +452,7 @@ class LRParser:
                         targ = [ sym ]
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        # The code enclosed in this section is duplicated 
+                        # The code enclosed in this section is duplicated
                         # above as a performance optimization.  Make sure
                         # changes get made in both locations.
 
@@ -604,13 +604,13 @@ class LRParser:
         goto    = self.goto              # Local reference to goto table (to avoid lookup on self.)
         prod    = self.productions       # Local reference to production list (to avoid lookup on self.)
         pslice  = YaccProduction(None)   # Production object passed to grammar rules
-        errorcount = 0                   # Used during error recovery 
+        errorcount = 0                   # Used during error recovery
 
         # If no lexer was given, we will try to use the lex module
         if not lexer:
             lex = load_ply_lex()
             lexer = lex.lexer
-        
+
         # Set up the lexer and parser objects on pslice
         pslice.lexer = lexer
         pslice.parser = self
@@ -700,12 +700,12 @@ class LRParser:
                         # --! TRACKING
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        # The code enclosed in this section is duplicated 
+                        # The code enclosed in this section is duplicated
                         # below as a performance optimization.  Make sure
                         # changes get made in both locations.
 
                         pslice.slice = targ
-                        
+
                         try:
                             # Call the grammar rule with our special slice object
                             del symstack[-plen:]
@@ -726,7 +726,7 @@ class LRParser:
                             self.errorok = 0
                         continue
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+
                     else:
 
                         # --! TRACKING
@@ -738,7 +738,7 @@ class LRParser:
                         targ = [ sym ]
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        # The code enclosed in this section is duplicated 
+                        # The code enclosed in this section is duplicated
                         # above as a performance optimization.  Make sure
                         # changes get made in both locations.
 
@@ -864,7 +864,7 @@ class LRParser:
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # parseopt_notrack().
     #
-    # Optimized version of parseopt() with line number tracking removed. 
+    # Optimized version of parseopt() with line number tracking removed.
     # DO NOT EDIT THIS CODE DIRECTLY. Copy the optimized version and remove
     # code in the #--! TRACKING sections
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -876,13 +876,13 @@ class LRParser:
         goto    = self.goto              # Local reference to goto table (to avoid lookup on self.)
         prod    = self.productions       # Local reference to production list (to avoid lookup on self.)
         pslice  = YaccProduction(None)   # Production object passed to grammar rules
-        errorcount = 0                   # Used during error recovery 
+        errorcount = 0                   # Used during error recovery
 
         # If no lexer was given, we will try to use the lex module
         if not lexer:
             lex = load_ply_lex()
             lexer = lex.lexer
-        
+
         # Set up the lexer and parser objects on pslice
         pslice.lexer = lexer
         pslice.parser = self
@@ -961,12 +961,12 @@ class LRParser:
                         targ[0] = sym
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        # The code enclosed in this section is duplicated 
+                        # The code enclosed in this section is duplicated
                         # below as a performance optimization.  Make sure
                         # changes get made in both locations.
 
                         pslice.slice = targ
-                        
+
                         try:
                             # Call the grammar rule with our special slice object
                             del symstack[-plen:]
@@ -987,13 +987,13 @@ class LRParser:
                             self.errorok = 0
                         continue
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
+
                     else:
 
                         targ = [ sym ]
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        # The code enclosed in this section is duplicated 
+                        # The code enclosed in this section is duplicated
                         # above as a performance optimization.  Make sure
                         # changes get made in both locations.
 
@@ -1120,7 +1120,7 @@ class LRParser:
 #                          === Grammar Representation ===
 #
 # The following functions, classes, and variables are used to represent and
-# manipulate the rules that make up a grammar. 
+# manipulate the rules that make up a grammar.
 # -----------------------------------------------------------------------------
 
 import re
@@ -1134,7 +1134,7 @@ _is_identifier = re.compile(r'^[a-zA-Z0-9_-]+$')
 # This class stores the raw information about a single production or grammar rule.
 # A grammar rule refers to a specification such as this:
 #
-#       expr : expr PLUS term 
+#       expr : expr PLUS term
 #
 # Here are the basic attributes defined on all productions
 #
@@ -1165,11 +1165,11 @@ class Production(object):
         self.prec     = precedence
 
         # Internal settings used during table construction
-        
+
         self.len  = len(self.prod)   # Length of the production
 
         # Create a list of unique production symbols used in the production
-        self.usyms = [ ]             
+        self.usyms = [ ]
         for s in self.prod:
             if s not in self.usyms:
                 self.usyms.append(s)
@@ -1198,7 +1198,7 @@ class Production(object):
 
     def __getitem__(self,index):
         return self.prod[index]
-            
+
     # Return the nth lr_item from the production (or None if at the end)
     def lr_item(self,n):
         if n > len(self.prod): return None
@@ -1215,7 +1215,7 @@ class Production(object):
             p.lr_before = None
 
         return p
-    
+
     # Bind the production function name to a callable
     def bind(self,pdict):
         if self.func:
@@ -1249,9 +1249,9 @@ class MiniProduction(object):
 # class LRItem
 #
 # This class represents a specific stage of parsing a production rule.  For
-# example: 
+# example:
 #
-#       expr : expr . PLUS term 
+#       expr : expr . PLUS term
 #
 # In the above, the "." represents the current location of the parse.  Here
 # basic attributes:
@@ -1372,7 +1372,7 @@ class Grammar(object):
         if assoc not in ['left','right','nonassoc']:
             raise GrammarError("Associativity must be one of 'left','right', or 'nonassoc'")
         self.Precedence[term] = (assoc,level)
- 
+
     # -----------------------------------------------------------------------------
     # add_production()
     #
@@ -1399,7 +1399,7 @@ class Grammar(object):
         if not _is_identifier.match(prodname):
             raise GrammarError("%s:%d: Illegal rule name '%s'" % (file,line,prodname))
 
-        # Look for literal tokens 
+        # Look for literal tokens
         for n,s in enumerate(syms):
             if s[0] in "'\"":
                  try:
@@ -1414,7 +1414,7 @@ class Grammar(object):
                      pass
             if not _is_identifier.match(s) and s != '%prec':
                 raise GrammarError("%s:%d: Illegal name '%s' in rule '%s'" % (file,line,s, prodname))
-        
+
         # Determine the precedence level
         if '%prec' in syms:
             if syms[-1] == '%prec':
@@ -1431,8 +1431,8 @@ class Grammar(object):
         else:
             # If no %prec, precedence is determined by the rightmost terminal symbol
             precname = rightmost_terminal(syms,self.Terminals)
-            prodprec = self.Precedence.get(precname,('right',0)) 
-            
+            prodprec = self.Precedence.get(precname,('right',0))
+
         # See if the rule is already in the rulemap
         map = "%s -> %s" % (prodname,syms)
         if map in self.Prodmap:
@@ -1469,7 +1469,7 @@ class Grammar(object):
     # -----------------------------------------------------------------------------
     # set_start()
     #
-    # Sets the starting symbol and creates the augmented grammar.  Production 
+    # Sets the starting symbol and creates the augmented grammar.  Production
     # rule 0 is S' -> start where start is the start symbol.
     # -----------------------------------------------------------------------------
 
@@ -1490,7 +1490,7 @@ class Grammar(object):
     # -----------------------------------------------------------------------------
 
     def find_unreachable(self):
-        
+
         # Mark all symbols that are reachable from a symbol s
         def mark_reachable_from(s):
             if reachable[s]:
@@ -1509,7 +1509,7 @@ class Grammar(object):
 
         return [s for s in list(self.Nonterminals)
                         if not reachable[s]]
-    
+
     # -----------------------------------------------------------------------------
     # infinite_cycles()
     #
@@ -1581,7 +1581,7 @@ class Grammar(object):
     #
     # Find all symbols that were used the grammar, but not defined as tokens or
     # grammar rules.  Returns a list of tuples (sym, prod) where sym in the symbol
-    # and prod is the production where the symbol was used. 
+    # and prod is the production where the symbol was used.
     # -----------------------------------------------------------------------------
     def undefined_symbols(self):
         result = []
@@ -1628,7 +1628,7 @@ class Grammar(object):
     # Returns a list of tuples (term,precedence) corresponding to precedence
     # rules that were never used by the grammar.  term is the name of the terminal
     # on which precedence was applied and precedence is a string such as 'left' or
-    # 'right' corresponding to the type of precedence. 
+    # 'right' corresponding to the type of precedence.
     # -----------------------------------------------------------------------------
 
     def unused_precedence(self):
@@ -1636,7 +1636,7 @@ class Grammar(object):
         for termname in self.Precedence:
             if not (termname in self.Terminals or termname in self.UsedPrecedence):
                 unused.append((termname,self.Precedence[termname][0]))
-                
+
         return unused
 
     # -------------------------------------------------------------------------
@@ -1708,7 +1708,7 @@ class Grammar(object):
                             some_change = 1
             if not some_change:
                 break
-        
+
         return self.First
 
     # ---------------------------------------------------------------------
@@ -1807,7 +1807,7 @@ class Grammar(object):
 # -----------------------------------------------------------------------------
 #                            == Class LRTable ==
 #
-# This basic class represents a basic table of LR parsing information.  
+# This basic class represents a basic table of LR parsing information.
 # Methods for generating the tables are not defined here.  They are defined
 # in the derived class LRGeneratedTable.
 # -----------------------------------------------------------------------------
@@ -1873,11 +1873,11 @@ class LRTable(object):
     def bind_callables(self,pdict):
         for p in self.lr_productions:
             p.bind(pdict)
-    
+
 # -----------------------------------------------------------------------------
 #                           === LR Generator ===
 #
-# The following classes and functions are used to generate LR parsing tables on 
+# The following classes and functions are used to generate LR parsing tables on
 # a grammar.
 # -----------------------------------------------------------------------------
 
@@ -2370,7 +2370,7 @@ class LRGeneratedTable(LRTable):
         log    = self.log             # Logger for output
 
         actionp = { }                 # Action production array (temporary)
-        
+
         log.info("Parsing method: %s", self.lr_method)
 
         # Step 1: Construct C = { I0, I1, ... IN}, collection of LR(0) items
@@ -2709,7 +2709,7 @@ def get_caller_module_dict(levels):
         e,b,t = sys.exc_info()
         f = t.tb_frame
         while levels > 0:
-            f = f.f_back                   
+            f = f.f_back
             levels -= 1
         ldict = f.f_globals.copy()
         if f.f_globals != f.f_locals:
@@ -2784,7 +2784,7 @@ class ParserReflect(object):
         self.get_tokens()
         self.get_precedence()
         self.get_pfunctions()
-        
+
     # Validate all of the information
     def validate_all(self):
         self.validate_start()
@@ -2900,7 +2900,7 @@ class ParserReflect(object):
             self.log.error("tokens must be a list or tuple")
             self.error = 1
             return
-        
+
         if not tokens:
             self.log.error("tokens is empty")
             self.error = 1
@@ -2980,8 +2980,8 @@ class ParserReflect(object):
         if len(self.pfuncs) == 0:
             self.log.error("no rules of the form p_rulename are defined")
             self.error = 1
-            return 
-        
+            return
+
         for line, file, name, doc in self.pfuncs:
             func = self.pdict[name]
             if isinstance(func, types.MethodType):
@@ -3036,7 +3036,7 @@ class ParserReflect(object):
 # Build a parser
 # -----------------------------------------------------------------------------
 
-def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, start=None, 
+def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, start=None,
          check_recursion=1, optimize=0, write_tables=1, debugfile=debug_file,outputdir='',
          debuglog=None, errorlog = None, picklefile=None):
 
@@ -3103,7 +3103,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
     # Validate the parser information
     if pinfo.validate_all():
         raise YaccError("Unable to build parser")
-    
+
     if not pinfo.error_func:
         errorlog.warning("no p_error() function is defined")
 
@@ -3188,7 +3188,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
         terms.sort()
         for term in terms:
             debuglog.info("%-20s : %s", term, " ".join([str(s) for s in grammar.Terminals[term]]))
-        
+
         debuglog.info("")
         debuglog.info("Nonterminals, with rules where they appear")
         debuglog.info("")
@@ -3207,7 +3207,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
         for inf in infinite:
             errorlog.error("Infinite recursion detected for symbol '%s'", inf)
             errors = 1
-        
+
     unused_prec = grammar.unused_precedence()
     for term, assoc in unused_prec:
         errorlog.error("Precedence rule '%s' defined for unknown symbol '%s'", assoc, term)
@@ -3215,11 +3215,11 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
 
     if errors:
         raise YaccError("Unable to build parser")
-    
+
     # Run the LRGeneratedTable on the grammar
     if debug:
         errorlog.debug("Generating %s tables", method)
-            
+
     lr = LRGeneratedTable(grammar,method,debuglog)
 
     if debug:
@@ -3245,7 +3245,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
 
         for state, tok, resolution in lr.sr_conflicts:
             debuglog.warning("shift/reduce conflict for %s in state %d resolved as %s",  tok, state, resolution)
-        
+
         already_reported = {}
         for state, rule, rejected in lr.rr_conflicts:
             if (state,id(rule),id(rejected)) in already_reported:
@@ -3255,7 +3255,7 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
             errorlog.warning("reduce/reduce conflict in state %d resolved using rule (%s)", state, rule)
             errorlog.warning("rejected rule (%s) in state %d", rejected, state)
             already_reported[state,id(rule),id(rejected)] = 1
-        
+
         warned_never = []
         for state, rule, rejected in lr.rr_conflicts:
             if not rejected.reduced and (rejected not in warned_never):
