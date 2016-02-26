@@ -46,11 +46,9 @@ decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         cnodeCap = excaps.excaprefs[0]->cap;
 
-        if (irq_w > maxIRQ) {
-            current_syscall_error.type = seL4_RangeError;
-            current_syscall_error.rangeErrorMin = 0;
-            current_syscall_error.rangeErrorMax = maxIRQ;
-            return EXCEPTION_SYSCALL_ERROR;
+        status = Arch_checkIRQ(irq);
+        if (status != EXCEPTION_NONE) {
+            return status;
         }
 
         if (isIRQActive(irq)) {
@@ -86,8 +84,8 @@ invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot)
 }
 
 exception_t
-decodeIRQHandlerInvocation(word_t invLabel, word_t length, irq_t irq,
-                           extra_caps_t excaps, word_t *buffer)
+decodeIRQHandlerInvocation(word_t invLabel, irq_t irq,
+                           extra_caps_t excaps)
 {
     switch (invLabel) {
     case IRQAckIRQ:
@@ -127,21 +125,6 @@ decodeIRQHandlerInvocation(word_t invLabel, word_t length, irq_t irq,
         setThreadState(ksCurThread, ThreadState_Restart);
         invokeIRQHandler_ClearIRQHandler(irq);
         return EXCEPTION_NONE;
-    case IRQSetMode: {
-        bool_t trig, pol;
-
-        if (length < 2) {
-            userError("IRQSetMode: Not enough arguments: %ld", length);
-            current_syscall_error.type = seL4_TruncatedMessage;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-        trig = getSyscallArg(0, buffer);
-        pol = getSyscallArg(1, buffer);
-
-        setThreadState(ksCurThread, ThreadState_Restart);
-        invokeIRQHandler_SetMode(irq, !!trig, !!pol);
-        return EXCEPTION_NONE;
-    }
 
     default:
         userError("IRQHandler: Illegal operation.");
@@ -154,11 +137,6 @@ void
 invokeIRQHandler_AckIRQ(irq_t irq)
 {
     maskInterrupt(false, irq);
-}
-
-void invokeIRQHandler_SetMode(irq_t irq, bool_t levelTrigger, bool_t polarityLow)
-{
-    setInterruptMode(irq, levelTrigger, polarityLow);
 }
 
 void

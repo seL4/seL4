@@ -58,7 +58,6 @@ The following type enumerates all the kinds of invocations that clients can requ
 >         | IRQAckIRQ
 >         | IRQSetIRQHandler
 >         | IRQClearIRQHandler
->         | IRQSetMode
 >         | DomainSetSet
 >         | ArchInvocationLabel ArchLabels.ArchInvocationLabel
 >         deriving (Show, Eq)
@@ -95,10 +94,9 @@ The following type enumerates all the kinds of invocations that clients can requ
 >          IRQAckIRQ -> 23
 >          IRQSetIRQHandler -> 24
 >          IRQClearIRQHandler -> 25
->          IRQSetMode -> 26
 >          DomainSetSet -> apiMax
 >          ArchInvocationLabel a -> apiMax + 1 + fromEnum a
->          where apiMax = 27
+>          where apiMax = 26
 >     toEnum n
 >         | n == 0 = InvalidInvocation
 >         | n == 1 = UntypedRetype
@@ -126,11 +124,10 @@ The following type enumerates all the kinds of invocations that clients can requ
 >         | n == 23 = IRQAckIRQ
 >         | n == 24 = IRQSetIRQHandler
 >         | n == 25 = IRQClearIRQHandler
->         | n == 26 = IRQSetMode
->         | n == 27 = DomainSetSet
+>         | n == 26 = DomainSetSet
 >         | n > apiMax = ArchInvocationLabel $ toEnum (n - 1 - apiMax)
 >         | otherwise = error "toEnum out of range for InvocationLabel"
->         where apiMax = 27
+>         where apiMax = 26
 
 Decode the invocation type requested by a particular message label.
 

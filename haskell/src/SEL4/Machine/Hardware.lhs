@@ -161,10 +161,6 @@ This function is used by the kernel to acknowledge an interrupt, after it has be
 > ackInterrupt :: IRQ -> MachineMonad ()
 > ackInterrupt (IRQ irq) = Arch.ackInterrupt irq
 
-This function is used to implement IOAPIC functionality in the kernel.
-
-> setInterruptMode :: IRQ -> Bool -> Bool -> MachineMonad ()
-> setInterruptMode (IRQ irq) levelTrigger polarityLow = Arch.setInterruptMode irq levelTrigger polarityLow
 
 
 \subsubsection{Timers}

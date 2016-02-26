@@ -44,4 +44,6 @@ extern uint16_t ia32KSconsolePort;
 extern uint16_t ia32KSdebugPort;
 #endif
 
+extern x86_irq_state_t x86KSIRQState[];
+
 #endif
