@@ -11,4 +11,3 @@
 DIRECTORIES += api
 
 BF_SOURCES += api/types.bf
-BF_SOURCES += api/shared_types.bf

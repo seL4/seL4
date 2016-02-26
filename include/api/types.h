@@ -14,7 +14,6 @@
 #include <config.h>
 #include <stdint.h>
 #include <util.h>
-#include <api/shared_types_gen.h>
 #include <api/types_gen.h>
 #include <arch/api/types.h>
 #include <arch/types.h>
