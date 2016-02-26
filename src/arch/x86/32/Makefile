@@ -10,6 +10,7 @@
 
 DIRECTORIES += src/arch/$(ARCH)/32
 
+include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/object/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/kernel/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/model/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/machine/Makefile
