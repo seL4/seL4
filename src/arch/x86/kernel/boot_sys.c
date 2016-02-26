@@ -48,6 +48,7 @@ extern char _start[1];
 /* constants */
 
 #define BOOT_NODE_PADDR 0x80000
+#define HIGHMEM_PADDR 0x100000
 
 /* type definitions (directly corresponding to abstract specification) */
 
@@ -63,6 +64,7 @@ typedef struct boot_state {
     paddr_t      drhu_list[MAX_NUM_DRHU]; /* list of physical addresses of the IOMMUs */
     acpi_rmrr_list_t rmrr_list;
     cpu_id_t     cpus[16];
+    mem_p_regs_t mem_p_regs;  /* physical memory regions */
 } boot_state_t;
 
 BOOT_DATA
@@ -94,6 +96,21 @@ in_boot_phase()
 
 #endif
 
+/* check the module occupies in a contiguous physical memory region */
+BOOT_CODE static bool_t
+module_paddr_region_valid(paddr_t pa_start, paddr_t pa_end)
+{
+    int i = 0;
+    for (i = 0; i < boot_state.mem_p_regs.count; i++) {
+        paddr_t start = boot_state.mem_p_regs.list[i].start;
+        paddr_t end = boot_state.mem_p_regs.list[i].end;
+        if (pa_start >= start && pa_end < end) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /* functions not modeled in abstract specification */
 
 BOOT_CODE static paddr_t
@@ -115,11 +132,11 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
     }
     v_reg.end = ROUND_UP(v_reg.end, PAGE_BITS);
 
-    printf("size=0x%lx v_entry=%x v_start=0x%lx v_end=0x%lx ",
+    printf("size=0x%lx v_entry=%p v_start=%p v_end=%p ",
            v_reg.end - v_reg.start,
-           elf_file->e_entry,
-           v_reg.start,
-           v_reg.end
+           (void*)elf_file->e_entry,
+           (void*)v_reg.start,
+           (void*)v_reg.end
           );
 
     if (!IS_ALIGNED(v_reg.start, PAGE_BITS)) {
@@ -148,7 +165,9 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
            boot_state.ui_info.p_reg.end
           );
 
-    if (load_paddr > boot_state.avail_p_reg.end) {
+    if (!module_paddr_region_valid(
+                boot_state.ui_info.p_reg.start,
+                boot_state.ui_info.p_reg.end)) {
         printf("End of loaded userland image lies outside of usable physical memory\n");
         return 0;
     }
@@ -195,7 +214,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
             )) {
         return false;
     }
-    write_cr3(pptr_to_paddr(X86_GLOBAL_VSPACE_ROOT));
+    write_cr3(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT));
     /* Sync up the compilers view of the world here to force the PD to actually
      * be set *right now* instead of delayed */
     asm volatile("" ::: "memory");
@@ -207,7 +226,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
     /* initialise NDKS and kernel heap */
     if (!init_sys_state(
                 cpu_id,
-                boot_state.avail_p_reg,
+                boot_state.mem_p_regs,
                 &boot_state.dev_p_regs,
                 boot_state.ui_info,
                 boot_mem_reuse_p_reg,
@@ -243,6 +262,55 @@ start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
     /* starting the other CPU */
     apic_send_init_ipi(cpu_id);
     apic_send_startup_ipi(cpu_id, boot_fun_paddr);
+}
+
+static BOOT_CODE void
+add_mem_p_regs(p_region_t reg)
+{
+    if (reg.end > PADDR_TOP) {
+        reg.end = PADDR_TOP;
+    }
+    if (reg.start > PADDR_TOP) {
+        reg.start = PADDR_TOP;
+    }
+    if (reg.start == reg.end) {
+        return;
+    }
+    if (boot_state.mem_p_regs.count == MAX_NUM_FREEMEM_REG) {
+        printf("Dropping memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG\n", reg.start, reg.end);
+        return;
+    }
+    printf("Adding physical memory region 0x%lx-0x%lx\n", reg.start, reg.end);
+    boot_state.mem_p_regs.list[boot_state.mem_p_regs.count] = reg;
+    boot_state.mem_p_regs.count++;
+}
+
+/*
+ * the code relies that the GRUB provides correct information
+ * about the actual physical memory regions.
+ */
+static BOOT_CODE void
+parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
+{
+    multiboot_mmap_t *mmap = (multiboot_mmap_t *)((word_t)mmap_addr);
+    printf("Parsing GRUB physical memory map\n");
+
+    while ((word_t)mmap < (word_t)(mmap_addr + mmap_length)) {
+        uint64_t mem_start = mmap->base_addr;
+        uint64_t mem_length = mmap->length;
+        uint32_t type = mmap->type;
+        if (mem_start != (uint64_t)(word_t)mem_start) {
+            printf("\tPhysical memory region not addressable\n");
+        } else {
+            printf("\tPhysical Memory Region from %lx size %lx type %d\n", (long)mem_start, (long)mem_length, type);
+            if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR) {
+                add_mem_p_regs((p_region_t) {
+                    mem_start, mem_start + mem_length
+                });
+            }
+        }
+        mmap++;
+    }
 }
 
 static BOOT_CODE bool_t
@@ -281,23 +349,19 @@ try_boot_sys(
     /* copy CPU bootup code to lower memory */
     memcpy((void*)BOOT_NODE_PADDR, boot_cpu_start, boot_cpu_end - boot_cpu_start);
 
-    /* calculate available physical memory (above 1M) */
-    boot_state.avail_p_reg.start = 0x100000;
-    boot_state.avail_p_reg.end = ROUND_DOWN(boot_state.avail_p_reg.start + (mbi->mem_upper << 10), PAGE_BITS);
-
-    /* check maximum seL4 can use */
-    if (boot_state.avail_p_reg.end > PADDR_TOP) {
-        boot_state.avail_p_reg.end = PADDR_TOP;
+    boot_state.mem_p_regs.count = 0;
+    if (mbi->flags & MULTIBOOT_INFO_MMAP_FLAG) {
+        parse_mem_map(mbi->mmap_length, mbi->mmap_addr);
+    } else {
+        /* calculate memory the old way */
+        p_region_t avail;
+        avail.start = HIGHMEM_PADDR;
+        avail.end = ROUND_DOWN(avail.start + (mbi->mem_upper << 10), PAGE_BITS);
+        add_mem_p_regs(avail);
     }
 
-    printf("Physical memory usable by seL4: start=0x%lx end=0x%lx size=0x%lx\n",
-           boot_state.avail_p_reg.start,
-           boot_state.avail_p_reg.end,
-           boot_state.avail_p_reg.end - boot_state.avail_p_reg.start
-          );
-
     boot_state.ki_p_reg.start = PADDR_LOAD;
-    boot_state.ki_p_reg.end = pptr_to_paddr(ki_end);
+    boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
 
     printf("Kernel loaded to: start=0x%lx end=0x%lx size=0x%lx entry=0x%lx\n",
            boot_state.ki_p_reg.start,
@@ -414,14 +478,6 @@ try_boot_sys(
     boot_state.ui_info.pv_offset   -= mods_end_paddr - ui_p_regs.start;
 
     /* ==== following code corresponds to abstract specification after "select" ==== */
-
-    /* exclude kernel image from available memory */
-    assert(boot_state.avail_p_reg.start == boot_state.ki_p_reg.start);
-    boot_state.avail_p_reg.start = boot_state.ki_p_reg.end;
-
-    /* exclude userland images from available memory */
-    assert(boot_state.avail_p_reg.start == ui_p_regs.start);
-    boot_state.avail_p_reg.start = ui_p_regs.end;
 
     discover_devices();
 

@@ -155,7 +155,7 @@ seL4_Signal(seL4_CPtr dest)
         :
         : "a" (seL4_SysSend),
         "b" (dest),
-        "S" (seL4_MessageInfo_new(0, 0, 0, 1).words[0])
+        "S" (seL4_MessageInfo_new(0, 0, 0, 0).words[0])
         : "%ecx", "%edx"
     );
 }

@@ -13,7 +13,11 @@
 
 #include <bootinfo.h>
 
+#ifdef ARCH_X86
+#define MAX_NUM_FREEMEM_REG 16
+#else
 #define MAX_NUM_FREEMEM_REG 2
+#endif
 
 /*
  * Resolve naming differences between the abstract specifications

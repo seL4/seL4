@@ -11,13 +11,13 @@
 <api>	
     <interface name="seL4_Untyped">
        	<method id="UntypedRetype" name="Retype">
-            <param dir="in" name="type" type="int"/>
-			<param dir="in" name="size_bits" type="int"/>
+            <param dir="in" name="type" type="seL4_Word"/>
+			<param dir="in" name="size_bits" type="seL4_Word"/>
 			<param dir="in" name="root" type="seL4_CNode"/>
-			<param dir="in" name="node_index" type="int"/>
-			<param dir="in" name="node_depth" type="int"/>
-			<param dir="in" name="node_offset" type="int"/>
-			<param dir="in" name="num_objects" type="int"/>
+			<param dir="in" name="node_index" type="seL4_Word"/>
+			<param dir="in" name="node_depth" type="seL4_Word"/>
+			<param dir="in" name="node_offset" type="seL4_Word"/>
+			<param dir="in" name="num_objects" type="seL4_Word"/>
 		</method>
 	</interface>
     <interface name="seL4_TCB">

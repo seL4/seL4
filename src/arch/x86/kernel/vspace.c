@@ -70,7 +70,7 @@ exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent
     return EXCEPTION_NONE;
 }
 
-void deleteASID(asid_t asid, void* vspace)
+void deleteASID(asid_t asid, vspace_root_t *vspace)
 {
     asid_pool_t* poolPtr;
 
@@ -114,7 +114,7 @@ bool_t CONST isValidVTableRoot(cap_t cap)
 }
 
 
-bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr_t* ioapic_paddrs, uint32_t num_drhu, paddr_t* drhu_list)
+BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr_t* ioapic_paddrs, uint32_t num_drhu, paddr_t* drhu_list)
 {
     word_t idx = (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS;
     paddr_t phys;
@@ -498,7 +498,7 @@ findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 {
     findVSpaceForASID_ret_t ret;
     asid_pool_t*        poolPtr;
-    void*               vspace_root;
+    vspace_root_t *     vspace_root;
 
     poolPtr = x86KSASIDTable[asid >> asidLowBits];
     if (!poolPtr) {
@@ -575,7 +575,7 @@ uint32_t CONST SuperUserFromVMRights(vm_rights_t vm_rights)
     }
 }
 
-lookupPTSlot_ret_t lookupPTSlot(void *vspace, vptr_t vptr)
+lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
 {
     lookupPTSlot_ret_t ret;
     lookupPDSlot_ret_t pdSlot;
@@ -640,7 +640,7 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_ma
     return VMKernelOnly;
 }
 
-void flushTable(void *vspace, word_t vptr, pte_t* pt)
+void flushTable(vspace_root_t *vspace, word_t vptr, pte_t* pt)
 {
     word_t i;
     cap_t        threadRoot;
@@ -649,7 +649,7 @@ void flushTable(void *vspace, word_t vptr, pte_t* pt)
 
     /* check if page table belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == vspace) {
+    if (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == vspace) {
         /* find valid mappings */
         for (i = 0; i < BIT(PT_BITS); i++) {
             if (pte_get_present(pt[i])) {
@@ -671,12 +671,6 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE) {
         return;
-    }
-
-    /* check if page belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (void*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
-        invalidateTLBentry(vptr);
     }
 
     switch (page_size) {
@@ -712,8 +706,11 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         fail("Invalid page type");
     }
 
-    /* TLB entry should be invalidated with the unmapped virtual address */
-    invalidateTLBentry(vptr);
+    /* check if page belongs to current address space */
+    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    if (isValidNativeRoot(threadRoot) && (vspace_root_t *)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
+        invalidateTLBentry(vptr);
+    }
 }
 void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 {
@@ -753,7 +750,7 @@ exception_t decodeX86FrameInvocation(
         word_t          w_rightsMask;
         paddr_t         paddr;
         cap_t           vspaceCap;
-        void*           vspace;
+        vspace_root_t*  vspace;
         vm_rights_t     capVMRights;
         vm_rights_t     vmRights;
         vm_attributes_t vmAttr;
@@ -767,7 +764,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         frameSize = cap_frame_cap_get_capFSize(cap);
-        vaddr = getSyscallArg(0, buffer) & (~MASK(pageBitsForSize(frameSize)));
+        vaddr = getSyscallArg(0, buffer);
         w_rightsMask = getSyscallArg(1, buffer);
         vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
         vspaceCap = excaps.excaprefs[0]->cap;
@@ -789,7 +786,7 @@ exception_t decodeX86FrameInvocation(
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-        vspace = (void*)pptr_of_cap(vspaceCap);
+        vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
         asid = cap_get_capMappedASID(vspaceCap);
 
         {
@@ -894,7 +891,7 @@ exception_t decodeX86FrameInvocation(
         word_t          w_rightsMask;
         paddr_t         paddr;
         cap_t           vspaceCap;
-        void*           vspace;
+        vspace_root_t*  vspace;
         vm_rights_t     capVMRights;
         vm_rights_t     vmRights;
         vm_attributes_t vmAttr;
@@ -926,7 +923,7 @@ exception_t decodeX86FrameInvocation(
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-        vspace = (void*)pptr_of_cap(vspaceCap);
+        vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
         asid = cap_get_capMappedASID(vspaceCap);
 
         if (cap_frame_cap_get_capFMappedASID(cap) == asidInvalid) {
@@ -1069,7 +1066,7 @@ decodeX86PageTableInvocation(
     vm_attributes_t attr;
     lookupPDSlot_ret_t pdSlot;
     cap_t           vspaceCap;
-    void*           vspace;
+    vspace_root_t*  vspace;
     pde_t           pde;
     paddr_t         paddr;
     asid_t          asid;
@@ -1128,7 +1125,7 @@ decodeX86PageTableInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vspace = (void*)pptr_of_cap(vspaceCap);
+    vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
     asid = cap_get_capMappedASID(vspaceCap);
 
     if (vaddr >= PPTR_USER_TOP) {

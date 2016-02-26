@@ -446,7 +446,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
             return cap_null_cap_new();
         }
         memzero(PDE_PTR(pd_pptr), 1 << PD_SIZE_BITS);
-        copyGlobalMappings(PDE_PTR(pd_pptr));
+        copyGlobalMappings((vspace_root_t*)pd_pptr);
         pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
         if (!provide_cap(root_cnode_cap, pd_cap)) {
             return cap_null_cap_new();
@@ -498,7 +498,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
             }
         }
         /* now that PDs exist we can copy the global mappings */
-        copyGlobalMappings(PDPTE_PTR(pdpt_pptr));
+        copyGlobalMappings((vspace_root_t*)pdpt_pptr);
         write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE), pdpt_cap);
         vspace_cap = pdpt_cap;
     }
@@ -677,7 +677,7 @@ bool_t CONST isIOSpaceFrame(cap_t cap)
 void setVMRoot(tcb_t* tcb)
 {
     cap_t               threadRoot;
-    void *vspace_root;
+    vspace_root_t *vspace_root;
     asid_t              asid;
     findVSpaceForASID_ret_t find_ret;
 
