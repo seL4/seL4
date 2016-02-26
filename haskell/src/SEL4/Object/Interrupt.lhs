@@ -65,9 +65,8 @@ There is a single, global interrupt controller object; a capability to it is pro
 > decodeIRQControlInvocation label args srcSlot extraCaps =
 >     case (invocationType label, args, extraCaps) of
 >         (IRQIssueIRQHandler, irqW:index:depth:_, cnode:_) -> do
->             Arch.checkIRQ irqW
->             let irq = toEnum (fromIntegral irqW) :: IRQ
->
+>             Arch.checkIRQ (irqW .&. mask 16)
+>             let irq = toEnum (fromIntegral (irqW .&. mask 16)) :: IRQ
 >             irqActive <- withoutFailure $ isIRQActive irq
 >             when irqActive $ throw RevokeFirst
 >

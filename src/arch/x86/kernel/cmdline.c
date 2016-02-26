@@ -145,7 +145,7 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
     printf("Boot config: disable_iommu = %s\n", cmdline_opt->disable_iommu ? "true" : "false");
 
 #ifdef DEBUG
-    ia32KSconsolePort = cmdline_opt->console_port;
-    ia32KSdebugPort = cmdline_opt->debug_port;
+    x86KSconsolePort = cmdline_opt->console_port;
+    x86KSdebugPort = cmdline_opt->debug_port;
 #endif
 }

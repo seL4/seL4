@@ -23,8 +23,8 @@ enum vm_fault_type {
 typedef word_t vm_fault_type_t;
 
 enum vm_page_size {
-    IA32_SmallPage,
-    IA32_LargePage
+    X86_SmallPage,
+    X86_LargePage
 };
 typedef word_t vm_page_size_t;
 
@@ -32,13 +32,14 @@ enum frameSizeConstants {
     X86_4K_bits = 12,
     X86_2M_bits = 21,
     X86_4M_bits = 22,
-    X86_1G_bits = 30
+    X64_1G_bits = 30
 };
 
 #define PAGE_BITS X86_4K_bits
 
 #ifdef CONFIG_PAE_PAGING
 #define LARGE_PAGE_BITS X86_2M_bits
+#define X86_1G_bits     X64_1G_bits
 #else
 #define LARGE_PAGE_BITS X86_4M_bits
 #endif
@@ -49,10 +50,10 @@ static inline word_t CONST
 pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
-    case IA32_SmallPage:
+    case X86_SmallPage:
         return PAGE_BITS;
 
-    case IA32_LargePage:
+    case X86_LargePage:
         return LARGE_PAGE_BITS;
 
     default:
@@ -69,10 +70,10 @@ static inline word_t CONST
 pageBitsForSize_phys(vm_page_size_t pagesize)
 {
     switch (pagesize) {
-    case IA32_SmallPage:
+    case X86_SmallPage:
         return PAGE_BITS;
 
-    case IA32_LargePage:
+    case X86_LargePage:
         return LARGE_PAGE_BITS;
 
     default:
@@ -85,9 +86,9 @@ uint32_t CONST getCacheLineSize(void);
 uint32_t CONST getCacheLineSizeBits(void);
 
 /* Flushes a specific memory range from the CPU cache */
-static inline void flushCacheLine(void* vaddr)
+static inline void flushCacheLine(volatile void* vaddr)
 {
-    asm volatile("clflush %[vaddr]" :: [vaddr] "m"(vaddr));
+    asm volatile ("clflush %[vaddr]" : [vaddr] "+m"(*((volatile char *)vaddr)));
 }
 
 void flushCacheRange(void* vaddr, uint32_t size_bits);

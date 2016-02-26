@@ -92,6 +92,13 @@ menu "seL4 System"
        help
           Common flag for Exynos 54210 and 5422
 
+    config PLAT_IMX6
+       bool
+       default n
+       help
+          Common flag for SabreLight and Wandboard Quad
+
+
     choice
         prompt "Platform Type"
         help
@@ -155,12 +162,21 @@ menu "seL4 System"
             help
                 Support for Qualcomm Snapdragon S4 APQ8064 platforms (Inforce IFC6410).
 
-        config PLAT_IMX6
+        config PLAT_SABRE
             bool "iMX6 (Sabre Lite)"
             depends on ARCH_ARM
             depends on ARM_CORTEX_A9
+            select PLAT_IMX6
             help
                 Support for iMX6 platform (Sabre Lite).
+
+        config PLAT_WANDQ
+            bool "iMX6 (Wandboard Quad)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A9
+            select PLAT_IMX6
+            help
+                Support for iMX6 platform (Wandboard Quad).
 
         config PLAT_ZYNQ7000
             bool "Zynq-7000 (Xilinx ZC706)"
@@ -296,7 +312,7 @@ menu "Build Options"
     endchoice
 
     config IRQ_REPORTING
-        bool "Report suprious or undelivered IRQs"
+        bool "Report spurious or undelivered IRQs"
         depends on DEBUG_BUILD
         default y
         help

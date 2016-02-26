@@ -25,7 +25,6 @@ This module contains functions that create a new kernel state and set up the add
 > import SEL4.API.Failures
 > import SEL4.Model
 > import SEL4.Object
-> import SEL4.Object.Structures
 > import SEL4.Machine
 > import SEL4.Kernel.Thread
 > import SEL4.Kernel.VSpace
@@ -129,22 +128,20 @@ The KernelInit monad can fail - however, we do not care what type of failure occ
 
 The kernel is bootstrapped by calling "initKernel". The arguments are the address of the initial thread's entry point, a list of frames to be mapped in the initial thread's address space, the offset to be subtracted from the initial frame addresses to obtain the corresponding virtual addresses, a list of frames reserved by the kernel, and a list of frames that are used by the kernel's bootstrapping code.
 
-> initKernel :: VPtr -> [PAddr] -> VPtr -> [PAddr] -> [PAddr] -> Kernel ()
-> initKernel entry initFrames initOffset kernelFrames bootFrames = do
+> initKernel :: VPtr -> VPtr -> [PAddr] -> [PAddr] -> [PAddr] -> Kernel ()
+> initKernel entry initOffset initFrames kernelFrames bootFrames = do
 
 Define some useful constants.
 
 >         let uiRegion = coverOf $ map (\x -> Region (ptrFromPAddr x, (ptrFromPAddr x) + bit (pageBits))) initFrames
->         let kernelRegion = coverOf $ map (\x -> Region (ptrFromPAddr x, (ptrFromPAddr x) + bit (pageBits))) kernelFrames
 >         let kePPtr = fst $ fromRegion $ uiRegion
 >         let kfEndPAddr = addrFromPPtr kePPtr 
 >         (startPPtr,endPPtr) <- return $ fromRegion uiRegion 
->         let vptrStart = (VPtr (fromPAddr $ addrFromPPtr $ startPPtr )) + initOffset
->         let vptrEnd = (VPtr (fromPAddr $ addrFromPPtr $ endPPtr )) + initOffset
 
 Determine the available memory regions.
 
 >         allMemory <- doMachineOp getMemoryRegions
+
 
 \begin{impdetails}
 Configure the physical address space model. This is an implementation detail specific to the Haskell model, and is not relevant on real hardware.
@@ -176,7 +173,10 @@ Set up the kernel's VM environment.
 
 Move into the "KernelInit" monad. Arguments in nopInitData are not correct, BIFrameInfo will get initialized later.
 
->         runInit $ do
+>         runInit initOffset $ do
+>                 vptrStart <- vptrFromPPtr startPPtr
+>                 vptrEnd <- vptrFromPPtr endPPtr
+
 >                 initFreemem kfEndPAddr uiRegion
 >                 rootCNCap <- makeRootCNode
 >                 initInterruptController rootCNCap biCapIRQControl
@@ -184,7 +184,7 @@ Move into the "KernelInit" monad. Arguments in nopInitData are not correct, BIFr
 >                 ipcBufferCap <- createIPCBufferFrame rootCNCap ipcBufferVPtr 
 >                 let biFrameVPtr = vptrEnd + (1 `shiftL` pageBits)
 >                 createBIFrame rootCNCap biFrameVPtr 0 1
->                 createFramesOfRegion rootCNCap uiRegion True initOffset
+>                 createFramesOfRegion rootCNCap uiRegion True 
 >                 itPDCap <- createITPDPTs rootCNCap vptrStart biFrameVPtr 
 >                 writeITPDPTs rootCNCap itPDCap
 
@@ -223,17 +223,18 @@ We should clean cache, but we did not have a good interface so far.
 >   max <- noInitFailure $ gets $ initSlotPosMax
 >   noInitFailure $ modify (\s -> s { initBootInfo = (initBootInfo s) {bifNullCaps = [cur .. max - 1]}})
 
-> runInit :: KernelInit () -> Kernel ()
-> runInit oper = do
+> runInit :: VPtr -> KernelInit () -> Kernel ()
+> runInit vptr oper = do
 >     let initData = InitData {
 >                       initFreeMemory = [],
 >                       initSlotPosCur = 0,
 >                       initSlotPosMax = bit (pageBits), -- The CNode Size is pageBits + (objSize cte)
 >                       initBootInfo = nopBIFrameData,
+>                       initVPtrOffset = vptr,
 >                       initBootInfoFrame = 0 }
 >     (flip runStateT) initData $ do
 >         result <- runErrorT oper
->         either (\_ -> fail $ "initFailure") return result
+>         either (\_ -> fail $ "initKernel Fail") return result
 >     return ()
 
 createInitalThread, setup caps in initial thread, set idleThread to be the currentThread and switch to the initialThread.
@@ -244,7 +245,7 @@ createInitalThread, setup caps in initial thread, set idleThread to be the curre
 >       tcb' <- allocRegion tcbBits 
 >       let tcbPPtr = ptrFromPAddr tcb'
 >       doKernelOp $ do
->          placeNewObject tcbPPtr (makeObject::TCB) 0
+>          placeNewObject tcbPPtr initTCB 0
 >          srcSlot <- locateSlotCap rootCNCap biCapITCNode
 >          destSlot <- getThreadCSpaceRoot tcbPPtr 
 >          cteInsert rootCNCap srcSlot destSlot
@@ -285,6 +286,7 @@ Create idle thread and set up current thread + scheduler state.
 >     let regEnd = (snd . fromRegion)
 >     let regEndPAddr = (addrFromPPtr . regEnd)
 >     slotBefore <- noInitFailure $ gets initSlotPosCur
+
 >     mapM_ (\i -> provideUntypedCap rootCNodeCap i (fromIntegral pageBits) slotBefore) 
 >              [regStartPAddr bootMemReuseReg, (regStartPAddr bootMemReuseReg + bit pageBits) .. (regEndPAddr bootMemReuseReg - 1)]
 >     currSlot <- noInitFailure $ gets initSlotPosCur
@@ -293,9 +295,10 @@ Create idle thread and set up current thread + scheduler state.
 >              provideUntypedCap rootCNodeCap paddr (fromIntegral pageBits) slotBefore)
 >           [(currSlot - slotBefore) .. (fromIntegral minNum4kUntypedObj - 1)]
 >     freemem <- noInitFailure $ gets initFreeMemory
+
 >     (flip mapM) (take maxNumFreememRegions freemem)
 >         (\reg -> do
->             (\f -> mapM (f reg) [4 .. wordBits - 2])
+>             (\f -> foldME f reg [4 .. (finiteBitSize (undefined::Word)) - 2]) 
 >                 (\reg bits -> do
 >                     reg' <- (if not (isAligned (regStartPAddr reg) (bits + 1)) 
 >                                 && (regEndPAddr reg) - (regStartPAddr reg) >= bit bits 
@@ -346,7 +349,7 @@ Specific allocRegion for convenience, since most allocations are frame-sized.
 > provideCap rootCNodeCap cap = do
 >     currSlot <- noInitFailure $ gets initSlotPosCur
 >     maxSlot <- noInitFailure $ gets initSlotPosMax
->     when (currSlot >= maxSlot) $ throwError InitFailure
+>     when (currSlot >= maxSlot) $ throwError $ IFailure
 >     slot <- doKernelOp $ locateSlotCap rootCNodeCap currSlot
 >     doKernelOp $ insertInitCap slot cap
 >     noInitFailure $ modify (\st -> st { initSlotPosCur = currSlot + 1 })  
@@ -395,4 +398,7 @@ Various functions in this module use "rangesBy" to split a sorted list into cont
 > distinct [] = True
 > distinct (x:xs) = (notElem x xs && distinct xs)
 
+Following foldME is for l4v haskell translator
+
+> foldME = foldM
 

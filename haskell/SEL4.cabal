@@ -25,13 +25,13 @@ Library
     exposed-modules:        SEL4
                             SEL4.Machine.Target
 
-    build-depends:          mtl==2.1.3.1, base, array, containers
+    build-depends:          mtl==2.1.3.1, base, array, containers,transformers
     if flag(FFI)
     -- be fixed.
         build-depends:      unix
         exposed-modules:    Simulation.FFIBindings
         include-dirs:       include
-        install-includes:   sel4model.h
+        install-includes:   sel4model.h gic.h
                             dist/build/Simulation/FFIBindings_stub.h
 
     other-modules:          SEL4.API
@@ -72,10 +72,13 @@ Library
                             Data.BinaryTree
                             Data.Helpers
 
-                            SEL4.Machine.Hardware.ARM.QEmu
---                             SEL4.Machine.Hardware.ARM.KZM
---                             SEL4.Machine.Hardware.ARM.Exynos4210
---                             SEL4.Machine.Hardware.ARM.Sabre
+                            SEL4.Machine.Hardware.ARM.KZM
+                            SEL4.Machine.Hardware.ARM.Exynos4210
+                            SEL4.Machine.Hardware.ARM.Sabre
+                            SEL4.Machine.Hardware.ARM.Callbacks
+                            SEL4.Machine.Hardware.GICInterface
+                            SEL4.Machine.Hardware.MCTInterface
+                            SEL4.Machine.Hardware.MPTimerInterface
 
                             SEL4.API.Types.ARM
                             SEL4.API.InvocationLabels.ARM
@@ -93,7 +96,7 @@ Library
                            
 
     hs-source-dirs:         src
-    ghc-prof-options:       -auto-all -fprof-auto
+    ghc-prof-options:       -auto-all -prof -fprof-auto
     ghc-options:            -Wall -Werror -O2 -fno-warn-unused-do-bind
                             -fno-warn-missing-signatures -fno-warn-orphans
                             -fno-spec-constr -fno-warn-name-shadowing

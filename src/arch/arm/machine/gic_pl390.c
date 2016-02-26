@@ -12,7 +12,7 @@
 
 
 /* Setters/getters helpers */
-#define IRQ_REG(IRQ) ((IRQ) / 32)
+#define IRQ_REG(IRQ) ((IRQ) >> 5)
 #define IRQ_BIT(IRQ) BIT((IRQ) % 32)
 #define IRQ_MASK MASK(10)
 #define IS_IRQ_VALID(X) (((X)&IRQ_MASK) < SPECIAL_IRQ_START)
@@ -130,7 +130,7 @@ volatile struct gic_cpu_iface_map *gic_cpuiface =
 static inline int
 is_irq_pending(irq_t irq)
 {
-    int word = irq / 32;
+    int word = irq >> 5;
     int bit = irq & 0x1f;
     return !!(gic_dist->pending_set[word] & BIT(bit));
 }
@@ -138,7 +138,7 @@ is_irq_pending(irq_t irq)
 static inline int
 is_irq_active(irq_t irq)
 {
-    int word = irq / 32;
+    int word = irq >> 5;
     int bit = irq & 0x1f;
     return !!(gic_dist->active[word] & BIT(bit));
 }
@@ -146,7 +146,7 @@ is_irq_active(irq_t irq)
 static inline int
 is_irq_enabled(irq_t irq)
 {
-    int word = irq / 32;
+    int word = irq >> 5;
     int bit = irq & 0x1f;
     return !!(gic_dist->enable_set[word] & BIT(bit));
 }
@@ -154,7 +154,7 @@ is_irq_enabled(irq_t irq)
 static inline int
 is_irq_edge_triggered(irq_t irq)
 {
-    int word = irq / 16;
+    int word = irq >> 4;
     int bit = ((irq & 0xf) * 2);
     return !!(gic_dist->config[word] & BIT(bit + 1));
 }
@@ -162,7 +162,7 @@ is_irq_edge_triggered(irq_t irq)
 static inline int
 is_irq_1_N(irq_t irq)
 {
-    int word = irq / 16;
+    int word = irq >> 4;
     int bit = ((irq & 0xf) * 2);
     return !!(gic_dist->config[word] & BIT(bit + 0));
 }
@@ -173,36 +173,40 @@ is_irq_N_N(irq_t irq)
     return !(is_irq_1_N(irq));
 }
 
+/** DONT_TRANSLATE */
 static inline void
 dist_pending_clr(irq_t irq)
 {
-    int word = irq / 32;
+    int word = irq >> 5;
     int bit = irq & 0x1f;
     /* Using |= here is detrimental to your health */
     gic_dist->pending_clr[word] = BIT(bit);
 }
 
+/** DONT_TRANSLATE */
 static inline void
 dist_pending_set(irq_t irq)
 {
-    int word = irq / 32;
+    int word = irq >> 5;
     int bit = irq & 0x1f;
     gic_dist->pending_set[word] = BIT(bit);
 }
 
+/** DONT_TRANSLATE */
 static inline void
 dist_enable_clr(irq_t irq)
 {
-    int word = irq / 32;
+    int word = irq >> 5;
     int bit = irq & 0x1f;
     /* Using |= here is detrimental to your health */
     gic_dist->enable_clr[word] = BIT(bit);
 }
 
+/** DONT_TRANSLATE */
 static inline void
 dist_enable_set(irq_t irq)
 {
-    int word = irq / 32;
+    int word = irq >> 5;
     int bit = irq & 0x1f;
     gic_dist->enable_set[word] = BIT(bit);
 }
@@ -221,14 +225,14 @@ dist_init(void)
 
     for (i = 0; i < nirqs; i += 32) {
         /* disable */
-        gic_dist->enable_clr[i / 32] = IRQ_SET_ALL;
+        gic_dist->enable_clr[i >> 5] = IRQ_SET_ALL;
         /* clear pending */
-        gic_dist->pending_clr[i / 32] = IRQ_SET_ALL;
+        gic_dist->pending_clr[i >> 5] = IRQ_SET_ALL;
     }
 
     /* reset interrupts priority */
     for (i = 32; i < nirqs; i += 4) {
-        gic_dist->priority[i / 4] = 0x0;
+        gic_dist->priority[i >> 2] = 0x0;
     }
 
     /*
@@ -236,16 +240,16 @@ dist_init(void)
      * (Should really query which processor we're running on and use that)
      */
     for (i = 0; i < nirqs; i += 4) {
-        gic_dist->targets[i / 4] = TARGET_CPU0_ALLINT;
+        gic_dist->targets[i >> 2] = TARGET_CPU0_ALLINT;
     }
 
     /* level-triggered, 1-N */
     for (i = 64; i < nirqs; i += 32) {
-        gic_dist->config[i / 32] = 0x55555555;
+        gic_dist->config[i >> 5] = 0x55555555;
     }
     /* configure to group 0 for security */
     for (i = 0; i < nirqs; i += 32) {
-        gic_dist->security[i / 32] = 0;
+        gic_dist->security[i >> 5] = 0;
     }
     /* enable the int controller */
     gic_dist->enable = 1;
@@ -267,15 +271,17 @@ cpu_iface_init(void)
 
     /* clear any software generated interrupts */
     for (i = 0; i < 16; i += 4) {
-        gic_dist->sgi_pending_clr[i / 4] = IRQ_SET_ALL;
+        gic_dist->sgi_pending_clr[i >> 2] = IRQ_SET_ALL;
     }
 
     gic_cpuiface->icontrol = 0;
     gic_cpuiface->pri_msk_c = 0x000000f0;
     gic_cpuiface->pb_c = 0x00000003;
 
-    while (((i = gic_cpuiface->int_ack) & IRQ_MASK) != IRQ_NONE) {
+    i = gic_cpuiface->int_ack;
+    while ((i & IRQ_MASK) != IRQ_NONE) {
         gic_cpuiface->eoi = i;
+        i = gic_cpuiface->int_ack;
     }
     gic_cpuiface->icontrol = 1;
 }

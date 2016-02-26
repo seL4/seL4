@@ -87,6 +87,7 @@ Warning: rootCNodeSizeBits should be rootCNodeSize + objBits (undefined::CTE)
 >         bifNullCaps = [],
 >         bifSharedFrameCaps = [], -- ARM no multikernel
 >         bifUIFrameCaps = [], -- Initialized in createFramesOfRegion
+>         bifUIPDCaps = [], -- Initialized in createITPDPTs
 >         bifUIPTCaps = [], -- Initialized in createITPDPTs
 >         bifUntypedObjCaps = [],
 >         bifUntypedObjPAddrs = [],
@@ -168,6 +169,7 @@ It will write boot info back into the memory.
 >            serializeRange $ bifNullCaps frameData
 >            serializeRange $ bifSharedFrameCaps frameData
 >            serializeRange $ bifUIFrameCaps frameData
+>            serializeRange $ bifUIPDCaps frameData
 >            serializeRange $ bifUIPTCaps frameData
 >            serializeRange $ bifUntypedObjCaps frameData
 

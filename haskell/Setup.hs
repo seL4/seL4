@@ -37,8 +37,7 @@ printKnownTargets = do
 targets =
     [ ("arm-exynos",     ("ARM", "Exynos4210"))
     , ("arm-kzm", ("ARM", "KZM"))
-    , ("arm-sabre", ("ARM", "SABRE"))
-    , ("arm-qemu", ("ARM", "QEmu"))
+    , ("arm-sabre", ("ARM", "Sabre"))
     , ("x64-pc99", ("X64", "PC99"))
     ]
 

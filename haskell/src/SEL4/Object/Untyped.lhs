@@ -189,5 +189,5 @@ Create the new objects and insert caps to these objects into the destination slo
 This function performs the check that CNodes do not overlap with the retyping region. Its actual definition is provided in the Isabelle translation.
 
 > cNodeOverlap :: (Word -> Maybe Int) -> (Word -> Bool) -> Bool
-> cNodeOverlap _ _ = True
+> cNodeOverlap _ _ = False
 

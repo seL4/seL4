@@ -248,15 +248,15 @@ def InitTypes():
         ],
 
         "ia32" : [
-            Type("seL4_IA32_VMAttributes", WORD_SIZE_BITS),
-            CapType("seL4_IA32_ASIDControl"),
-            CapType("seL4_IA32_ASIDPool"),
-            CapType("seL4_IA32_IOSpace"),
-            CapType("seL4_IA32_IOPort"),
-            CapType("seL4_IA32_Page"),
-            CapType("seL4_IA32_PageDirectory"),
-            CapType("seL4_IA32_PageTable"),
-            CapType("seL4_IA32_IOPageTable"),
+            Type("seL4_X86_VMAttributes", WORD_SIZE_BITS),
+            CapType("seL4_X86_IOPort"),
+            CapType("seL4_X86_ASIDControl"),
+            CapType("seL4_X86_ASIDPool"),
+            CapType("seL4_X86_IOSpace"),
+            CapType("seL4_X86_Page"),
+            CapType("seL4_X86_PageDirectory"),
+            CapType("seL4_X86_PageTable"),
+            CapType("seL4_X86_IOPageTable"),
             StructType("seL4_UserContext", WORD_SIZE_BITS * 13),
         ]
     }

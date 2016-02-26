@@ -226,6 +226,7 @@ address space regions.
 >         bifNullCaps :: [Word],
 >         bifSharedFrameCaps :: [Word],
 >         bifUIFrameCaps :: [Word],
+>         bifUIPDCaps :: [Word],
 >         bifUIPTCaps :: [Word],
 >         bifUntypedObjCaps :: [Word],
 >         bifUntypedObjPAddrs :: [PAddr],
@@ -240,6 +241,7 @@ address space regions.
 >     initSlotPosCur :: Word, --Word?
 >     initSlotPosMax :: Word, -- Filled in makeRootCNode ?
 >     initBootInfo :: BIFrameData,
+>     initVPtrOffset :: VPtr,
 >     initBootInfoFrame :: PAddr } --PAddr?
 >     deriving (Show, Eq)
 

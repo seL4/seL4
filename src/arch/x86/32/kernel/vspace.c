@@ -29,7 +29,7 @@ init_tss(tss_t* tss)
 {
     tss_ptr_new(
         tss,
-        MASK(16),       /* io_map_base  */
+        sizeof(*tss),   /* io_map_base  */
         0,              /* trap         */
         SEL_NULL,       /* sel_ldt      */
         SEL_NULL,       /* gs           */
@@ -57,6 +57,7 @@ init_tss(tss_t* tss)
         0,              /* esp0         */
         0               /* prev_task    */
     );
+    memset(&x86KStss.io_map[0], 0xff, sizeof(x86KStss.io_map));
 }
 /* initialise Global Descriptor Table (GDT) */
 
@@ -134,7 +135,7 @@ init_gdt(gdt_entry_t* gdt, tss_t* tss)
 
     /* Task State Segment (TSS) descriptor */
     gdt[GDT_TSS] = gdt_entry_gdt_tss_new(
-                       tss_addr >> 24,            /* base_high 8 bits     */
+                       tss_addr >> 24,              /* base_high 8 bits     */
                        0,                           /* granularity          */
                        0,                           /* avl                  */
                        0,                           /* limit_high 4 bits    */
@@ -144,7 +145,7 @@ init_gdt(gdt_entry_t* gdt, tss_t* tss)
                        1,                           /* always_true          */
                        (tss_addr >> 16) & 0xff,     /* base_mid 8 bits      */
                        (tss_addr & 0xffff),         /* base_low 16 bits     */
-                       sizeof(tss_t) - 1            /* limit_low 16 bits    */
+                       sizeof(tss_io_t) - 1         /* limit_low 16 bits    */
                    );
 
     /* pre-init the userland data segment used for TLS */
@@ -539,9 +540,9 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
     vm_page_size_t frame_size;
 
     if (use_large) {
-        frame_size = IA32_LargePage;
+        frame_size = X86_LargePage;
     } else {
-        frame_size = IA32_SmallPage;
+        frame_size = X86_SmallPage;
     }
 
     return
@@ -576,13 +577,13 @@ pde_t CONST makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_righ
 {
     return pde_pde_large_new(
                paddr,                                          /* page_base_address    */
-               vm_attributes_get_ia32PATBit(vm_attr),          /* pat                  */
+               vm_attributes_get_x86PATBit(vm_attr),           /* pat                  */
                0,                                              /* avl                  */
                0,                                              /* global               */
                0,                                              /* dirty                */
                0,                                              /* accessed             */
-               vm_attributes_get_ia32PCDBit(vm_attr),          /* cache_disabled       */
-               vm_attributes_get_ia32PWTBit(vm_attr),          /* write_through        */
+               vm_attributes_get_x86PCDBit(vm_attr),           /* cache_disabled       */
+               vm_attributes_get_x86PWTBit(vm_attr),           /* write_through        */
                SuperUserFromVMRights(vm_rights),               /* super_user           */
                WritableFromVMRights(vm_rights),                /* read_write           */
                1                                               /* present              */
@@ -595,8 +596,8 @@ pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
                paddr,                                      /* pt_base_address  */
                0,                                          /* avl              */
                0,                                          /* accessed         */
-               vm_attributes_get_ia32PCDBit(vm_attr),      /* cache_disabled   */
-               vm_attributes_get_ia32PWTBit(vm_attr),      /* write_through    */
+               vm_attributes_get_x86PCDBit(vm_attr),       /* cache_disabled   */
+               vm_attributes_get_x86PWTBit(vm_attr),       /* write_through    */
                1,                                          /* super_user       */
                1,                                          /* read_write       */
                1                                           /* present          */
@@ -640,11 +641,11 @@ pte_t CONST makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_r
                paddr,                                          /* page_base_address    */
                0,                                              /* avl                  */
                0,                                              /* global               */
-               vm_attributes_get_ia32PATBit(vm_attr),          /* pat                  */
+               vm_attributes_get_x86PATBit(vm_attr),           /* pat                  */
                0,                                              /* dirty                */
                0,                                              /* accessed             */
-               vm_attributes_get_ia32PCDBit(vm_attr),          /* cache_disabled       */
-               vm_attributes_get_ia32PWTBit(vm_attr),          /* write_through        */
+               vm_attributes_get_x86PCDBit(vm_attr),           /* cache_disabled       */
+               vm_attributes_get_x86PWTBit(vm_attr),           /* write_through        */
                SuperUserFromVMRights(vm_rights),               /* super_user           */
                WritableFromVMRights(vm_rights),                /* read_write           */
                1                                               /* present              */
@@ -747,7 +748,7 @@ void modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr,
 
 }
 
-exception_t modeMapRemapPage(word_t invLabel, vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+exception_t decodeX86ModeMapRemapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
 {
     fail("Invalid Page type");
 }

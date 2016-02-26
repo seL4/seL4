@@ -161,6 +161,10 @@ This function is used by the kernel to acknowledge an interrupt, after it has be
 > ackInterrupt :: IRQ -> MachineMonad ()
 > ackInterrupt (IRQ irq) = Arch.ackInterrupt irq
 
+This function is used to init interrupt chip
+
+> initIRQController :: MachineMonad ()
+> initIRQController = Arch.initIRQController
 
 
 \subsubsection{Timers}
@@ -207,5 +211,9 @@ The constant "nullPointer" is a physical pointer guaranteed to be invalid.
 
 > nullPointer :: PPtr a
 > nullPointer = PPtr 0
+
+
+> physBase :: PAddr
+> physBase = Arch.physBase
 
 
