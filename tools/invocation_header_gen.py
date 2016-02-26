@@ -63,7 +63,7 @@ enum sel4_arch_invocation_label {
     {{for loop, label in looper(invocations)}}
     {{label}} = nInvocationLabels + {{loop.index}},
     {{endfor}}
-    nSeL4ArchInvocationLabels
+    nSeL4ArchInvocationLabels = nInvocationLabels + {{num_invocations}}
 };
 
 #endif /* __{{header_title}}_SEL4_ARCH_INVOCATION_H */
@@ -81,7 +81,7 @@ enum arch_invocation_label {
     {{for loop, label in looper(invocations)}}
     {{label}} = nSeL4ArchInvocationLabels + {{loop.index}},
     {{endfor}}
-    nArchInvocationLabels
+    nArchInvocationLabels = nSeL4ArchInvocationLabels + {{num_invocations}}
 };
 
 #endif /* __{{header_title}}_ARCH_INVOCATION_H */
@@ -131,7 +131,7 @@ def generate(args, invocations):
         template = tempita.Template(INVOCATION_TEMPLATE)
 
     args.dest.write(template.substitute(header_title=header_title, 
-        libsel4=args.libsel4,invocations=invocations))
+        libsel4=args.libsel4,invocations=invocations,num_invocations=len(invocations)))
 
     args.dest.close()
 

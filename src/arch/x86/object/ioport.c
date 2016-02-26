@@ -58,6 +58,15 @@ decodeIA32PortInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    if (invLabel == IA32IOPortOut8 || invLabel == IA32IOPortOut16 || invLabel == IA32IOPortOut32) {
+        /* Ensure the incoming message is long enough for the write. */
+        if (length < 2) {
+            userError("IOPort Out32: Truncated message.");
+            current_syscall_error.type = seL4_TruncatedMessage;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+    }
+
     /* Get the port the user is trying to write to. */
     port = getSyscallArg(0, buffer) & 0xffff;
 
@@ -114,7 +123,7 @@ decodeIA32PortInvocation(
         }
 
         /* Perform the write. */
-        data = (getSyscallArg(0, buffer) >> 16) & 0xff;
+        data = (getSyscallArg(1, buffer)) & 0xff;
         out8(port, data);
         len = 0;
         break;
@@ -130,7 +139,7 @@ decodeIA32PortInvocation(
         }
 
         /* Perform the write. */
-        data = (getSyscallArg(0, buffer) >> 16) & 0xffff;
+        data = (getSyscallArg(1, buffer)) & 0xffff;
         out16(port, data);
         len = 0;
         break;
@@ -139,13 +148,6 @@ decodeIA32PortInvocation(
     case IA32IOPortOut32: { /* outport 32 bits */
         uint32_t data;
 
-        /* Ensure the incoming message is long enough for the write. */
-        if (length < 2) {
-            userError("IOPort Out32: Truncated message.");
-            current_syscall_error.type = seL4_TruncatedMessage;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
         /* Check we are allowed to perform the operation. */
         ret = ensurePortOperationAllowed(cap, port, 4);
         if (ret != EXCEPTION_NONE) {
@@ -153,7 +155,7 @@ decodeIA32PortInvocation(
         }
 
         /* Perform the write. */
-        data = getSyscallArg(1, buffer);
+        data = getSyscallArg(1, buffer) & 0xffffffff;
         out32(port, data);
         len = 0;
         break;
