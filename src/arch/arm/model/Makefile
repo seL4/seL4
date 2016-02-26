@@ -9,5 +9,3 @@
 #
 
 DIRECTORIES += src/arch/arm/model
-
-ARCH_C_SOURCES += model/statedata.c
