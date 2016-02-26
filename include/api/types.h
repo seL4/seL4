@@ -27,13 +27,6 @@ typedef uint64_t time_t;
 typedef uint64_t ticks_t;
 typedef word_t crit_t;
 
-typedef struct {
-    /* number of words parsing this argument took */
-    word_t words;
-    /* the argument value */
-    time_t arg;
-} parseTime_ret_t;
-
 struct cap_transfer {
     cptr_t ctReceiveRoot;
     cptr_t ctReceiveIndex;

@@ -175,9 +175,9 @@ invokeSchedContext_YieldTo(sched_context_t *sc)
     if (unlikely(returnNow)) {
         /* put consumed value into ipc buffer, the caller will
          * be scheduled again now */
-        word_t msgLength = arch_setTimeArg(0, consumed);
+        arch_setTimeArg(0, consumed);
         setRegister(ksCurThread, msgInfoRegister,
-                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, msgLength)));
+                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, TIME_ARG_SIZE)));
     }
 
     return EXCEPTION_NONE;
@@ -357,17 +357,15 @@ schedContext_updateConsumed(sched_context_t *sc)
 void
 schedContext_completeYieldTo(tcb_t *yielder)
 {
-    word_t msgLength;
     time_t consumed;
 
     consumed = schedContext_updateConsumed(yielder->tcbYieldTo);
     yielder->tcbYieldTo->scYieldFrom = NULL;
     yielder->tcbYieldTo = NULL;
 
-    msgLength = arch_setTimeArg(0, consumed);
+    arch_setTimeArg(0, consumed);
     setRegister(yielder, msgInfoRegister,
-                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, msgLength)));
+                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, TIME_ARG_SIZE)));
     setThreadState(yielder, ThreadState_Running);
-    /* todo increment pc? */
 }
 

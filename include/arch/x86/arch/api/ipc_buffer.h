@@ -14,22 +14,18 @@
 #include <types.h>
 #include <api/syscall.h>
 
-static inline parseTime_ret_t
+static inline time_t
 arch_parseTimeArg(word_t i, word_t *buffer)
 {
-    return (parseTime_ret_t) {
-        .words = 2,
-         .arg = (((time_t) getSyscallArg(i + 1, buffer)) << 32llu) + getSyscallArg(i + 0, buffer),
-    };
+    return  (((time_t) getSyscallArg(i + 1, buffer)) << 32llu) + getSyscallArg(i + 0, buffer);
 }
 
-static inline word_t
-arch_setTimeArg(word_t i, word_t *buffer, time_t arg)
+static inline void
+arch_setTimeArg(word_t i, time_t arg)
 {
     setRegister(ksCurThread, msgRegisters[i], (uint32_t) arg);
     setRegister(ksCurThread, msgRegisters[i + 1], (uint32_t) (arg << 32llu));
-
-    return 2u;
 }
+
 #endif /* __ARCH_IPC_BUFFER_H */
 

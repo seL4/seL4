@@ -44,7 +44,7 @@ tcbCallStackPush(tcb_t *tcb, tcb_t *stack)
 static inline void
 tcbCallStackPop(tcb_t *head)
 {
-    assert(stack->tcbCallStackNext == NULL);
+    assert(head->tcbCallStackNext == NULL);
     assert(head != NULL);
 
     if (likely(head->tcbCallStackPrev)) {

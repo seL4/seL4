@@ -175,14 +175,14 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
                         sendTemporalFaultIPC(receiver, tfep);
                     } else {
                         /* the context doesn't have enough budget, but no temporal fault handler,
-                         * just post pone it and continue to process the reply. The thread will
+                         * just postpone it and continue to process the reply. The thread will
                          * pick it up once the scheduling context has its budget replenished.
                          */
                         postpone(receiver->tcbSchedContext);
                     }
                 }
             } else if (sender->tcbSchedContext->scHome != sender) {
-                /* otherwise someone else is replying, if the sender doesn't hold it's own scheduling context,
+                /* otherwise someone else is replying, if the sender doesn't hold its own scheduling context,
                  * send it back to the receiver */
                 schedContext_donate(receiver, sender->tcbSchedContext);
             }

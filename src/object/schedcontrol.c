@@ -136,7 +136,6 @@ validTemporalParam(time_t param)
 exception_t
 decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buffer)
 {
-    parseTime_ret_t ret;
     seL4_Word data;
     seL4_Word buffer_index;
     time_t budget, period;
@@ -150,14 +149,10 @@ decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buf
     }
 
     buffer_index = 0;
-    ret = arch_parseTimeArg(buffer_index, buffer);
-    budget = ret.arg;
-    /* todo this could just be sizeof (time_t) / sizeof(word_t) */
-    buffer_index += ret.words;
-
-    ret = arch_parseTimeArg(buffer_index, buffer);
-    period = ret.arg;
-    buffer_index += ret.words;
+    budget = arch_parseTimeArg(buffer_index, buffer);
+    buffer_index += TIME_ARG_SIZE;
+    period = arch_parseTimeArg(buffer_index, buffer);
+    buffer_index += TIME_ARG_SIZE;
 
     data = getSyscallArg(buffer_index, buffer);
     buffer_index += 1;

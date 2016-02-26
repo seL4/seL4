@@ -113,17 +113,17 @@ If the reply cap is revoked, and the callee holds the scheduling context, the sc
 However, if in a deep call chain and a reply cap in the middle of the call chain is revoked, such that the callee does not possess the scheduling context, the thread will be removed from the call chain and the scheduling context will remain where it is. 
 
 Consider an example where thread A calls thread B which calls thread C. 
-If C holds the scheduling context, B's reply cap to A is revoked, the scheduling context will remain with C. 
+If while C holds the scheduling context, B's reply cap to A is revoked, then the scheduling context will remain with C. 
 However, a call chain will remain between A and C, such that if C's reply cap is revoked, or invoked, the scheduling context will return to A.
 
 \apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} only offers scheduling context donation: there is no guarantee that the scheduling context will return.
 
 Scheduling contexts can also be bound to notification objects using \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and unbound using \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.
-If a signal is delivered to a notification object with a passive thread blocked waiting on it, the passive thread will recieve the scheduling context from the notification object.
+If a signal is delivered to a notification object with a passive thread blocked waiting on it, the passive thread will receive the scheduling context that is bound to the notification object.
 The scheduling context is returned when the thread blocks on the notification object. 
 This feature allows for event-driven periodic threads which are triggered by events rather than the kernel time, and also allows for passive servers to use notification binding (See \autoref{sec:notification-binding}).
 
-Scheduling contexts can be unbound from all objects (tcbs that are bound, or have received the scheduling context through donation, and notificaiton objects) using \apifunc{seL4\_SchedContext\_Unbind}{schedcontext_unbind}.
+Scheduling contexts can be unbound from all objects (notification objects and TCBs that are bound or have received a scheduling context through donation) using \apifunc{seL4\_SchedContext\_Unbind}{schedcontext_unbind}.
 
 \subsection{Scheduling algorithm}
 \label{sec:sched}
