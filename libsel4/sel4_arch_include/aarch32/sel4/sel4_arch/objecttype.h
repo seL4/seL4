@@ -12,9 +12,7 @@
 #define __SEL4_ARCH_OBJECT_TYPE_H
 
 typedef enum _mode_object {
-    seL4_ARM_SectionObject = seL4_NonArchObjectTypeCount,
-    seL4_ARM_SuperSectionObject,
-    seL4_ModeObjectTypeCount
+    seL4_ModeObjectTypeCount = seL4_NonArchObjectTypeCount,
 } seL4_ModeObjectType;
 
 #endif
