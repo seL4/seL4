@@ -62,7 +62,8 @@
 #define LTWSTAT_TCOMP        (1U << 1)
 #define LTWSTAT_TCNT         (1U << 0)
 
-/* constants for reciprocal division */
+/* see tools/reciprocal.py for calculation of CLK_MAGIC and CLK_SHIFT */
+compile_assert(magic_will_work, TIMER_MHZ == 24llu);
 #define CLK_MAGIC 2863311531
 #define CLK_SHIFT 36
 
@@ -186,8 +187,7 @@ usToTicks(time_t us)
 PURE time_t
 ticksToUs(ticks_t ticks)
 {
-    /* see tools/reciprocal.py for calculation of CLK_MAGIC and CLK_SHIFT */
-    compile_assert(magic_will_work, CLK_MHZ == 24llu);
+    /* simulate 64bit division using multiplication by reciprocal */
     return (ticks * CLK_MAGIC) >> CLK_SHIFT;
 }
 
