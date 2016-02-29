@@ -471,8 +471,10 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
     if (cap_get_capType(cap_a) == cap_small_frame_cap) {
         if (cap_get_capType(cap_b) == cap_small_frame_cap) {
-            return (cap_small_frame_cap_get_capFBasePtr(cap_a) ==
-                    cap_small_frame_cap_get_capFBasePtr(cap_b));
+            return ((cap_small_frame_cap_get_capFBasePtr(cap_a) ==
+                    cap_small_frame_cap_get_capFBasePtr(cap_b)) && 
+                    (cap_small_frame_cap_get_capFIsDevice(cap_a) ==
+                    cap_small_frame_cap_get_capFIsDevice(cap_b)));
         } else if (cap_get_capType(cap_b) == cap_frame_cap) {
             return false;
         }
@@ -482,7 +484,9 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
             return ((cap_frame_cap_get_capFBasePtr(cap_a) ==
                      cap_frame_cap_get_capFBasePtr(cap_b)) &&
                     (cap_frame_cap_get_capFSize(cap_a) ==
-                     cap_frame_cap_get_capFSize(cap_b)));
+                     cap_frame_cap_get_capFSize(cap_b)) &&
+                    (cap_frame_cap_get_capFIsDevice(cap_a) ==
+                     cap_frame_cap_get_capFIsDevice(cap_b)));
         } else if (cap_get_capType(cap_b) == cap_small_frame_cap) {
             return false;
         }
