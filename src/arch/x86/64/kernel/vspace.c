@@ -1469,12 +1469,6 @@ static exception_t updatePDPTE(asid_t asid, pdpte_t pdpte, pdpte_t *pdptSlot, vs
     return EXCEPTION_NONE;
 }
 
-static exception_t performX64ModeRemap(asid_t asid, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
-{
-    return updatePDPTE(asid, pdpte, pdptSlot, vspace);
-}
-
-
 static exception_t performX64ModeMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
@@ -1513,14 +1507,13 @@ static create_mapping_pdpte_return_t createSafeMappingEntries_PDPTE(paddr_t base
         return ret;
     }
 
-
     ret.pdpte = makeUserPDPTEHugePage(base, attr, vmRights);
     ret.status = EXCEPTION_NONE;
     return ret;
 }
 
-exception_t decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, cap_t cap,
-                                      vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+exception_t decodeX86ModeMapPage(word_t label, vm_page_size_t page_size, cte_t *cte, cap_t cap,
+                                 vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
 {
     if (config_set(CONFIG_HUGE_PAGE) && page_size == X64_HugePage) {
         create_mapping_pdpte_return_t map_ret;
@@ -1533,18 +1526,12 @@ exception_t decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, ct
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 
         switch (label) {
-        case X86PageMap: {
+        case X86PageMap:
             return performX64ModeMap(cap, cte, map_ret.pdpte, map_ret.pdptSlot, vroot);
-        }
 
-        case X86PageRemap: {
-            return performX64ModeRemap(cap_frame_cap_get_capFMappedASID(cap), map_ret.pdpte, map_ret.pdptSlot, vroot);
-        }
-
-        default: {
+        default:
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
-        }
         }
     }
     fail("Invalid Page type");

@@ -71,7 +71,6 @@ exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
 exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot);
 exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
                                         pte_t pte, pte_t *base);
-exception_t performPageInvocationRemapPTE(pte_t pte, pte_t *base);
 exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot);
 void setVMRoot(tcb_t *tcb);
 

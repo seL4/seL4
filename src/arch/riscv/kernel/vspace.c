@@ -803,14 +803,6 @@ static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
         vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
         vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
-        /* check the frame isn't already mapped */
-        if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) != asidInvalid) {
-            userError("RISCVPageMap: frame already mapped");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
                      !cap_page_table_cap_get_capPTIsMapped(lvl1ptCap))) {
             userError("RISCVPageMap: Bad PageTable cap.");
@@ -858,11 +850,34 @@ static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        /* check this vaddr isn't already mapped */
-        if (unlikely(pte_ptr_get_valid(lu_ret.ptSlot))) {
-            userError("Virtual address already mapped");
-            current_syscall_error.type = seL4_DeleteFirst;
-            return EXCEPTION_SYSCALL_ERROR;
+
+        if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) != asidInvalid) {
+            /* this frame is already mapped */
+            word_t mapped_vaddr = cap_frame_cap_get_capFMappedAddress(cap);
+            if (cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) != asid) {
+                userError("RISCVPageMap: ASID lookup failed");
+                current_syscall_error.type = seL4_InvalidCapability;
+                current_syscall_error.invalidCapNumber = 1;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            if (unlikely(mapped_vaddr != vaddr)) {
+                userError("RISCVPageMap: attempting to map frame into multiple addresses");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            if (unlikely(isPTEPageTable(lu_ret.ptSlot))) {
+                userError("RISCVPageMap: no mapping to remap.");
+                current_syscall_error.type = seL4_InvalidCapability;
+                current_syscall_error.invalidCapNumber = 0;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+        } else {
+            /* check this vaddr isn't already mapped */
+            if (unlikely(pte_ptr_get_valid(lu_ret.ptSlot))) {
+                userError("Virtual address already mapped");
+                current_syscall_error.type = seL4_DeleteFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
         }
 
         vm_rights_t vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
@@ -876,83 +891,6 @@ static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
         return performPageInvocationMapPTE(cap, cte, pte, lu_ret.ptSlot);
     }
 
-    case RISCVPageRemap: {
-        if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
-            userError("RISCVPageRemap: Truncated message.");
-            current_syscall_error.type = seL4_TruncatedMessage;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        word_t w_rightsMask = getSyscallArg(0, buffer);
-        vm_attributes_t attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-        cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
-        vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
-        vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
-
-        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
-                     !cap_page_table_cap_get_capPTIsMapped(lvl1ptCap))) {
-            userError("RISCVPageRemap: Bad PageTable cap.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) == asidInvalid) {
-            userError("RISCVPageRemap: frame is not mapped");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        asid_t mappedASID = cap_frame_cap_get_capFMappedASID(cap);
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(mappedASID);
-        if (unlikely(find_ret.status != EXCEPTION_NONE)) {
-            userError("RISCVPageRemap: No PageTable for ASID");
-            current_syscall_error.type = seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource = false;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
-        if (unlikely(find_ret.vspace_root != lvl1pt ||
-                     cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) != mappedASID)) {
-            userError("RISCVPageRemap: ASID lookup failed");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        word_t vaddr = cap_frame_cap_get_capFMappedAddress(cap);
-        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
-            current_syscall_error.type = seL4_AlignmentError;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        /* Check if this page is already mapped */
-        lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr);
-
-        if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(frameSize))) {
-            userError("RISCVPageRemap: No PageTable for this page %p", (void *)vaddr);
-            current_lookup_fault = lookup_fault_missing_capability_new(lu_ret.ptBitsLeft);
-            current_syscall_error.type = seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource = false;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(isPTEPageTable(lu_ret.ptSlot))) {
-            userError("RISCVPageRemap: no mapping to remap.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        vm_rights_t vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-        paddr_t frame_paddr = addrFromPPtr((void *) cap_frame_cap_get_capFBasePtr(cap));
-        bool_t executable = !vm_attributes_get_riscvExecuteNever(attr);
-        pte_t pte = makeUserPTE(frame_paddr, executable, vmRights);
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageInvocationRemapPTE(pte, lu_ret.ptSlot);
-    }
     case RISCVPageUnmap: {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationUnmap(cap, cte);
@@ -1177,11 +1115,6 @@ exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
                                         pte_t pte, pte_t *base)
 {
     ctSlot->cap = cap;
-    return updatePTE(pte, base);
-}
-
-exception_t performPageInvocationRemapPTE(pte_t pte, pte_t *base)
-{
     return updatePTE(pte, base);
 }
 

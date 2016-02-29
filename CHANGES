@@ -55,6 +55,9 @@ Upcoming release: BREAKING
       below where the kernel image is mapped.
 * aarch64: Moved TPIDRRO_EL0 (EL0 Read-Only Thread ID register) to TCB register context from VCPU registers. This means
   changes to this register from user level have to go via seL4_TCB_Write Registers instead of seL4_ARM_VCPU_WriteRegs.
+* Merge ARCH_Page_Remap functionality into ARCH_Page_Map. Remap was used for updating the mapping attributes of a page
+  without changing its virtual address. Now ARCH_Page_Map can be performed on an existing mapping to achieve the same
+  result. The ARCH_Page_Remap invocation has been removed from all configurations.
 
 ## Upgrade Notes
 ---

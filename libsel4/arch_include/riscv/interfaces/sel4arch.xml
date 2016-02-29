@@ -89,7 +89,7 @@
             <description>
                 Takes a VSpace, or top-level <texttt text="Page Table"/>,
                 capability as an argument and installs a reference
-                to the given <texttt text="Page"/> in the page table slot corresponding to the given address.
+                to the given <texttt text="Page"/> in the page table slot corresponding to the given address. If a page is already mapped at the same virtual address, update the mapping attributes.
                 If the required paging structures are not present
                 this operation will fail, returning a seL4_FailedLookup error.
             </description>
@@ -109,27 +109,6 @@
                 VM Attributes for the mapping. <docref>Possible values for this type are given
                 in <autoref label="ch:vspace"/>.</docref>
             </description>
-            </param>
-        </method>
-        <method id="RISCVPageRemap" name="Remap">
-            <brief>
-                Remap a page.
-            </brief>
-            <description>
-                Changes the permissions of an existing mapping.
-            </description>
-            <param dir="in" name="vspace" type="seL4_RISCV_PageTable">
-                <description>VSpace to remap the page into.</description>
-            </param>
-            <param dir="in" name="rights" type="seL4_CapRights_t">
-                <description>
-                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>.</docref>
-                </description>
-            </param>
-            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes">
-                <description>
-                    VM Attributes for the mapping. <docref>Possible values for this type are given in <autoref label="ch:vspace"/>.</docref>
-                </description>
             </param>
         </method>
         <method id="RISCVPageUnmap" name="Unmap">

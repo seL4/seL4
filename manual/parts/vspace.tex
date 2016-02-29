@@ -167,7 +167,7 @@ sufficient permissions to authorise the given mapping, then
 the mapping permissions are silently downgraded. Specific mapping permissions are dependant on the
 architecture and are documented in the \autoref{sec:api_reference} for each function.
 
-At minimum, each architecture defines \texttt{Map}, \texttt{Unmap},\texttt{Remap} and
+At minimum, each architecture defines \texttt{Map}, \texttt{Unmap} and
 \texttt{GetAddress} methods for pages.
 Methods for page objects for each architecture can be found in the \autoref{sec:api_reference}, and
 are indexed per architecture in the table below.
@@ -287,7 +287,7 @@ A parameter of type \texttt{seL4\_ARM\_VMAttributes} or
 \texttt{seL4\_x86\_VMAttributes} is used to specify the cache behaviour of the
 page being mapped; possible values for ARM that can be bitwise OR'd together are
 shown in \autoref{tbl:vmattr_arm} \ifxeightsix and an enumeration of valid values
-for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi.
+for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi. Mapping attributtes can be updated on existing mappings using the Map invocation with the same virtual address.
 
 \begin{table}[htb]
   \begin{center}

@@ -1967,68 +1967,6 @@ static exception_t performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ct
     return EXCEPTION_NONE;
 }
 
-static exception_t performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
-{
-    word_t i, j UNUSED;
-    bool_t tlbflush_required;
-
-    /* we only need to check the first entries because of how createSafeMappingEntries
-     * works to preserve the consistency of tables */
-    tlbflush_required = pteCheckIfMapped(pte_entries.base);
-
-    j = pte_entries.length;
-    /** GHOSTUPD: "(\<acute>j <= 16, id)" */
-
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    word_t base_address = pte_pte_small_get_address(pte);
-#endif
-    for (i = 0; i < pte_entries.length; i++) {
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        pte = pte_pte_small_set_address(pte, base_address + i * BIT(pageBitsForSize(ARMSmallPage)));
-#endif
-        pte_entries.base[i] = pte;
-    }
-    cleanCacheRange_PoU((word_t)pte_entries.base,
-                        LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
-                        addrFromPPtr(pte_entries.base));
-    if (unlikely(tlbflush_required)) {
-        invalidateTLBByASID(asid);
-    }
-
-    return EXCEPTION_NONE;
-}
-
-static exception_t performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
-{
-    word_t i, j UNUSED;
-    bool_t tlbflush_required;
-
-    /* we only need to check the first entries because of how createSafeMappingEntries
-     * works to preserve the consistency of tables */
-    tlbflush_required = pdeCheckIfMapped(pde_entries.base);
-
-    j = pde_entries.length;
-    /** GHOSTUPD: "(\<acute>j <= 16, id)" */
-
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    word_t base_address = pde_pde_section_get_address(pde);
-#endif
-    for (i = 0; i < pde_entries.length; i++) {
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        pde = pde_pde_section_set_address(pde, base_address + i * BIT(pageBitsForSize(ARMSection)));
-#endif
-        pde_entries.base[i] = pde;
-    }
-    cleanCacheRange_PoU((word_t)pde_entries.base,
-                        LAST_BYTE_PDE(pde_entries.base, pde_entries.length),
-                        addrFromPPtr(pde_entries.base));
-    if (unlikely(tlbflush_required)) {
-        invalidateTLBByASID(asid);
-    }
-
-    return EXCEPTION_NONE;
-}
-
 static exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     if (generic_frame_cap_get_capFIsMapped(cap)) {
@@ -2374,15 +2312,6 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         frameSize = generic_frame_cap_get_capFSize(cap);
         capVMRights = generic_frame_cap_get_capFVMRights(cap);
 
-        if (unlikely(generic_frame_cap_get_capFIsMapped(cap))) {
-            userError("ARMPageMap: Cap already has mapping.");
-            current_syscall_error.type =
-                seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
         if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
                      !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
             userError("ARMPageMap: Bad PageDirectory cap.");
@@ -2395,6 +2324,34 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
         pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(
                          pdCap));
         asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
+
+        if (generic_frame_cap_get_capFIsMapped(cap)) {
+            if (generic_frame_cap_get_capFMappedASID(cap) != asid) {
+                current_syscall_error.type = seL4_InvalidCapability;
+                current_syscall_error.invalidCapNumber = 1;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            if (generic_frame_cap_get_capFMappedAddress(cap) != vaddr) {
+                userError("ARMPageMap: Attempting to map frame into multiple addresses");
+                current_syscall_error.type = seL4_InvalidArgument;
+                current_syscall_error.invalidArgumentNumber = 0;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+        } else {
+            vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
+
+            if (unlikely(vtop >= kernelBase)) {
+                userError("ARMPageMap: Cannot map frame over kernel window. vaddr: 0x%08lx, kernelBase: 0x%08x", vaddr, kernelBase);
+                current_syscall_error.type =
+                    seL4_InvalidArgument;
+                current_syscall_error.invalidArgumentNumber = 0;
+
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+        }
 
         {
             findPDForASID_ret_t find_ret;
@@ -2418,17 +2375,6 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
 
                 return EXCEPTION_SYSCALL_ERROR;
             }
-        }
-
-        vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
-
-        if (unlikely(vtop >= kernelBase)) {
-            userError("ARMPageMap: Cannot map frame over kernel window. vaddr: 0x%08lx, kernelBase: 0x%08x", vaddr, kernelBase);
-            current_syscall_error.type =
-                seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
         }
 
         vmRights =
@@ -2483,141 +2429,6 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
             return performPageInvocationMapPDE(asid, cap, cte,
                                                map_ret.pde,
                                                map_ret.pde_entries);
-        }
-    }
-
-    case ARMPageRemap: {
-        word_t vaddr, w_rightsMask;
-        paddr_t capFBasePtr;
-        cap_t pdCap;
-        pde_t *pd;
-        asid_t mappedASID;
-        vm_rights_t capVMRights, vmRights;
-        vm_page_size_t frameSize;
-        vm_attributes_t attr;
-
-#ifdef CONFIG_ARM_SMMU
-        if (isIOSpaceFrameCap(cap)) {
-            userError("ARMPageRemap: Attempting to remap frame mapped into an IOSpace");
-            current_syscall_error.type = seL4_IllegalOperation;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-#endif
-
-        if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
-            userError("ARMPageRemap: Truncated message.");
-            current_syscall_error.type =
-                seL4_TruncatedMessage;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        w_rightsMask = getSyscallArg(0, buffer);
-        attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-        pdCap = excaps.excaprefs[0]->cap;
-
-        if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
-                     !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
-            userError("ARMPageRemap: Invalid pd cap.");
-            current_syscall_error.type =
-                seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(!generic_frame_cap_get_capFIsMapped(cap))) {
-            userError("ARMPageRemap: Cap is not mapped");
-            current_syscall_error.type =
-                seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCap));
-        vaddr = generic_frame_cap_get_capFMappedAddress(cap);
-
-        {
-            findPDForASID_ret_t find_ret;
-
-            mappedASID = generic_frame_cap_get_capFMappedASID(cap);
-
-            find_ret = findPDForASID(mappedASID);
-            if (unlikely(find_ret.status != EXCEPTION_NONE)) {
-                userError("ARMPageRemap: No PD for ASID");
-                current_syscall_error.type =
-                    seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            if (unlikely(find_ret.pd != pd ||
-                         cap_page_directory_cap_get_capPDMappedASID(pdCap) !=
-                         mappedASID)) {
-                userError("ARMPageRemap: Failed ASID lookup.");
-                current_syscall_error.type =
-                    seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 1;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-        }
-
-        frameSize = generic_frame_cap_get_capFSize(cap);
-        capVMRights = generic_frame_cap_get_capFVMRights(cap);
-        vmRights =
-            maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-
-        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
-            userError("ARMPageRemap: Virtual address has incorrect alignment.");
-            current_syscall_error.type =
-                seL4_AlignmentError;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        capFBasePtr = addrFromPPtr((void *)
-                                   generic_frame_cap_get_capFBasePtr(cap));
-
-        if (frameSize == ARMSmallPage || frameSize == ARMLargePage) {
-            create_mappings_pte_return_t map_ret;
-            map_ret = createSafeMappingEntries_PTE(capFBasePtr, vaddr,
-                                                   frameSize, vmRights,
-                                                   attr, pd);
-            if (map_ret.status != EXCEPTION_NONE) {
-#ifdef CONFIG_PRINTING
-                if (current_syscall_error.type == seL4_FailedLookup) {
-                    userError("ARMPageRemap: Page directory entry did not contain a page table.");
-                } else if (current_syscall_error.type == seL4_DeleteFirst) {
-                    userError("ARMPageRemap: Page table entry was not free.");
-                }
-#endif
-                return map_ret.status;
-            }
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performPageInvocationRemapPTE(mappedASID, map_ret.pte,
-                                                 map_ret.pte_entries);
-        } else {
-            create_mappings_pde_return_t map_ret;
-            map_ret = createSafeMappingEntries_PDE(capFBasePtr, vaddr,
-                                                   frameSize, vmRights,
-                                                   attr, pd);
-            if (map_ret.status != EXCEPTION_NONE) {
-#ifdef CONFIG_PRINTING
-                if (current_syscall_error.type == seL4_DeleteFirst) {
-                    userError("ARMPageRemap: Page directory entry was not free.");
-                }
-#endif
-                return map_ret.status;
-            }
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performPageInvocationRemapPDE(mappedASID, map_ret.pde,
-                                                 map_ret.pde_entries);
         }
     }
 

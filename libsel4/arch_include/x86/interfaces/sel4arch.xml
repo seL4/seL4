@@ -125,39 +125,19 @@
     <interface name="seL4_X86_Page" manual_name="Page" cap_description="Capability to the page being operated on.">
         <method id="X86PageMap" name="Map" manual_label='page_map'>
             <brief>
-                Map a page into an address space.
+                Map a page into an address space or update the mapping attributes.
             </brief>
             <description>
-                Takes a <texttt text="Page Directory"/> capability, which refers to the VSpace, as an
+                Takes a VSpace capability, as an
                 argument and installs a reference
                 to the given <texttt text="Page"/> in the lowest-level unmapped paging structure
-                corresponding to the given address. If the required paging structures are not present
+                corresponding to the given address, or updates the mapping attributes if the page is already mapped at this address. If the required paging structures are not present
                 this operation will fail, returning a seL4_FailedLookup error.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
                 description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="vaddr" type="seL4_Word"
                 description='Virtual address to map the page into.'/>
-            <param dir="in" name="rights" type="seL4_CapRights_t">
-                <description>
-                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/></docref>
-                </description>
-            </param>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
-                <description>
-                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
-                </description>
-            </param>
-        </method>
-        <method id="X86PageRemap" name="Remap" manual_label='page_remap'>
-            <brief>
-                Remap a page.
-            </brief>
-            <description>
-                 Changes the permissions of an existing mapping.
-            </description>
-            <param dir="in" name="vspace" type="seL4_CPtr"
-                description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
                     Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/></docref>

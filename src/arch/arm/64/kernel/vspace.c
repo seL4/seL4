@@ -2019,7 +2019,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
         paddr_t base;
         cap_t vspaceRootCap;
         vspace_root_t *vspaceRoot;
-        asid_t asid;
+        asid_t asid, frame_asid;
         vm_rights_t vmRights;
         vm_page_size_t frameSize;
         vm_attributes_t attributes;
@@ -2027,12 +2027,6 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
 
         if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
             current_syscall_error.type = seL4_TruncatedMessage;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(cap_frame_cap_get_capFMappedASID(cap) != 0)) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
@@ -2071,10 +2065,28 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(vaddr + BIT(pageBitsForSize(frameSize)) - 1 > USER_TOP)) {
-            current_syscall_error.type = seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
+        /* In the case of remap, the cap should have a valid asid */
+        frame_asid = cap_frame_cap_ptr_get_capFMappedASID(&cap);
+
+        if (frame_asid != asidInvalid) {
+            if (frame_asid != asid) {
+                userError("ARMPageMap: Attempting to remap a frame that does not belong to the passed address space");
+                current_syscall_error.type = seL4_InvalidCapability;
+                current_syscall_error.invalidArgumentNumber = 0;
+                return EXCEPTION_SYSCALL_ERROR;
+
+            } else if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
+                userError("ARMPageMap: Attempting to map frame into multiple addresses");
+                current_syscall_error.type = seL4_InvalidArgument;
+                current_syscall_error.invalidArgumentNumber = 2;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+        } else {
+            if (unlikely(vaddr + BIT(pageBitsForSize(frameSize)) - 1 > USER_TOP)) {
+                current_syscall_error.type = seL4_InvalidArgument;
+                current_syscall_error.invalidArgumentNumber = 0;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
         }
 
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
@@ -2091,11 +2103,6 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            if (pte_ptr_get_present(lu_ret.ptSlot)) {
-                current_syscall_error.type = seL4_DeleteFirst;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performSmallPageInvocationMap(asid, cap, cte,
                                                  makeUser3rdLevel(base, vmRights, attributes), lu_ret.ptSlot);
@@ -2106,12 +2113,6 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
                 current_syscall_error.type = seL4_FailedLookup;
                 current_syscall_error.failedLookupWasSource = false;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            if (pde_pde_small_ptr_get_present(lu_ret.pdSlot) ||
-                pde_pde_large_ptr_get_present(lu_ret.pdSlot)) {
-                current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
@@ -2127,89 +2128,6 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
                 current_syscall_error.failedLookupWasSource = false;
                 return EXCEPTION_SYSCALL_ERROR;
             }
-
-            if (pude_pude_pd_ptr_get_present(lu_ret.pudSlot) ||
-                pude_pude_1g_ptr_get_present(lu_ret.pudSlot)) {
-                current_syscall_error.type = seL4_DeleteFirst;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performHugePageInvocationMap(asid, cap, cte,
-                                                makeUser1stLevel(base, vmRights, attributes), lu_ret.pudSlot);
-        }
-    }
-
-    case ARMPageRemap: {
-        vptr_t vaddr;
-        paddr_t base;
-        cap_t vspaceRootCap;
-        vspace_root_t *vspaceRoot;
-        asid_t asid;
-        vm_rights_t vmRights;
-        vm_page_size_t frameSize;
-        vm_attributes_t attributes;
-        findVSpaceForASID_ret_t find_ret;
-
-        if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
-            current_syscall_error.type = seL4_TruncatedMessage;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        attributes = vmAttributesFromWord(getSyscallArg(1, buffer));
-        vspaceRootCap = extraCaps.excaprefs[0]->cap;
-
-        frameSize = cap_frame_cap_get_capFSize(cap);
-        vmRights = maskVMRights(cap_frame_cap_get_capFVMRights(cap),
-                                rightsFromWord(getSyscallArg(0, buffer)));
-
-        if (unlikely(!isValidNativeRoot(vspaceRootCap))) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        vspaceRoot = cap_vtable_root_get_basePtr(vspaceRootCap);
-        asid = cap_vtable_root_get_mappedASID(vspaceRootCap);
-
-        find_ret = findVSpaceForASID(asid);
-        if (unlikely(find_ret.status != EXCEPTION_NONE)) {
-            current_syscall_error.type = seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource = false;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(find_ret.vspace_root != vspaceRoot)) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(cap_frame_cap_get_capFMappedASID(cap) != asid)) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        base = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
-        vaddr = cap_frame_cap_get_capFMappedAddress(cap);
-
-        if (frameSize == ARMSmallPage) {
-            lookupPTSlot_ret_t lu_ret = lookupPTSlot(vspaceRoot, vaddr);
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performSmallPageInvocationMap(asid, cap, cte,
-                                                 makeUser3rdLevel(base, vmRights, attributes), lu_ret.ptSlot);
-
-        } else if (frameSize == ARMLargePage) {
-            lookupPDSlot_ret_t lu_ret = lookupPDSlot(vspaceRoot, vaddr);
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performLargePageInvocationMap(asid, cap, cte,
-                                                 makeUser2ndLevel(base, vmRights, attributes), lu_ret.pdSlot);
-
-        } else {
-            lookupPUDSlot_ret_t lu_ret = lookupPUDSlot(vspaceRoot, vaddr);
 
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performHugePageInvocationMap(asid, cap, cte,
