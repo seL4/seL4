@@ -198,6 +198,7 @@ vmAttributesFromWord(word_t w)
 typedef struct sched_context sched_context_t;
 
 struct tcb {
+    /* TOUCHED ON THE FASTPATH */
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
 
@@ -212,17 +213,25 @@ struct tcb {
     /* Current fault, 8 bytes */
     fault_t tcbFault;
 
-    /* Current lookup failure, 8 bytes */
-    lookup_fault_t tcbLookupFailure;
-
     /* Priority, 1 byte (packed to 4) */
     prio_t tcbPriority;
 
-    /* maximum controlled priority, 1 byte (packed to 4) */
-    prio_t tcbMCP;
-
     /* sched context object that this tcb is running on, 4 bytes */
     sched_context_t *tcbSchedContext;
+
+    /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
+    struct tcb* tcbEPNext;
+
+    /* previous and next pointers for IPC call stack, 8 bytes */
+    struct tcb *tcbCallStackPrev;
+    struct tcb *tcbCallStackNext;
+
+    /* NOT TOUCHED ON THE FASTPATH */
+    /* Current lookup failure, 8 bytes */
+    lookup_fault_t tcbLookupFailure;
+
+    /* maximum controlled priority, 1 byte (packed to 4) */
+    prio_t tcbMCP;
 
     /* sched context object that this tcb is bound to, 4 bytes */
     sched_context_t *tcbHomeSchedContext;
@@ -233,15 +242,10 @@ struct tcb {
     /* Previous and next pointers for scheduler queues , 8 bytes */
     struct tcb* tcbSchedNext;
     struct tcb* tcbSchedPrev;
-    /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
-    struct tcb* tcbEPNext;
     struct tcb* tcbEPPrev;
     /* Previous and next pointers for endpoint and notification queues, 8 bytes */
     struct tcb* tcbCritNext;
     struct tcb* tcbCritPrev;
-    /* previous and next pointers for IPC call stack, 8 bytes */
-    struct tcb *tcbCallStackPrev;
-    struct tcb *tcbCallStackNext;
 
     /* sched context that this thread yielded to */
     sched_context_t *tcbYieldTo;
