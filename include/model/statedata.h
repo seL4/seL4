@@ -17,10 +17,11 @@
 #include <arch/model/statedata.h>
 
 #define NUM_READY_QUEUES (CONFIG_NUM_PRIORITIES*CONFIG_NUM_CRITICALITIES)
+#define L2_BITMAP_SIZE ((NUM_READY_QUEUES / wordBits) + 1)
 
 extern tcb_queue_t ksReadyQueues[] VISIBLE;
 extern word_t ksReadyQueuesL1Bitmap VISIBLE;
-extern word_t ksReadyQueuesL2Bitmap[(NUM_READY_QUEUES / wordBits) + 1] VISIBLE;
+extern word_t ksReadyQueuesL2Bitmap[L2_BITMAP_SIZE] VISIBLE;
 extern tcb_t *ksCurThread VISIBLE;
 extern sched_context_t *ksCurSchedContext VISIBLE;
 extern tcb_t *ksIdleThread VISIBLE;

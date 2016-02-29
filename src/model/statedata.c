@@ -19,8 +19,8 @@
 /* Pointer to the head of the scheduler queue for each priority */
 tcb_queue_t ksReadyQueues[NUM_READY_QUEUES];
 word_t ksReadyQueuesL1Bitmap;
-word_t ksReadyQueuesL2Bitmap[(NUM_READY_QUEUES / wordBits) + 1];
-compile_assert(ksReadyQueuesL1BitmapBigEnough, (NUM_READY_QUEUES / wordBits) <= wordBits)
+word_t ksReadyQueuesL2Bitmap[L2_BITMAP_SIZE];
+compile_assert(ksReadyQueuesL1BitmapBigEnough, (L2_BITMAP_SIZE - 1) <= wordBits)
 
 /* Current thread TCB pointer */
 tcb_t *ksCurThread;

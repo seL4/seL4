@@ -29,12 +29,30 @@ l1index_to_prio(word_t l1index)
     return (l1index << wordRadix);
 }
 
+static inline CONST word_t
+invert_l1index(word_t l1index)
+{
+    word_t inverted = (L2_BITMAP_SIZE - 1 - l1index);
+    assert(inverted < L2_BITMAP_SIZE);
+    return inverted;
+}
+
 static inline PURE word_t
 highestPrio(void)
 {
-    word_t l1index = (wordBits - 1) - clzl(ksReadyQueuesL1Bitmap);
-    word_t l2index = (wordBits - 1) - clzl(ksReadyQueuesL2Bitmap[l1index]);
-    return l1index_to_prio(l1index) | l2index;
+    word_t l1index;
+    word_t l2index;
+    word_t l1index_inverted;
+
+    /* it's undefined to call clzl on 0 */
+    assert(ksReadyQueuesL1Bitmap != 0);
+
+    l1index = wordBits - 1 - clzl(ksReadyQueuesL1Bitmap);
+    l1index_inverted = invert_l1index(l1index);
+    assert(ksReadyQueuesL2Bitmap[l1index_inverted] != 0);
+    l2index = wordBits - 1 - clzl(ksReadyQueuesL2Bitmap[l1index_inverted]);
+
+    return (l1index_to_prio(l1index) | l2index);
 }
 
 /* return true if the threads scheduling context's

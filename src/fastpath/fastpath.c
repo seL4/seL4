@@ -81,8 +81,12 @@ fastpath_call(word_t cptr, word_t msgInfo)
     stored_hw_asid = cap_pd[PD_ASID_SLOT];
 #endif
 
-    /* Ensure the destination has a higher/equal priority to us. */
-    if (unlikely(dest->tcbPriority < ksCurThread->tcbPriority)) {
+    /* ensure only the idle thread or lower prio threads are present in the scheduler --
+     * if the destination is higher prio, skip the next check and don't go to the slowpath,
+     * otherwise peek into the scheduler and check if there are any higher prio threads than dest,
+     * if not, we can safely continue on the fastpath. */
+    if (unlikely(dest->tcbPriority < ksCurThread->tcbPriority &&
+                 (ksReadyQueuesL1Bitmap != 0 && highestPrio() > dest->tcbPriority))) {
         slowpath(SysCall);
     }
 
@@ -246,7 +250,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
-    if (unlikely(caller->tcbPriority < ksCurThread->tcbPriority)) {
+    if (unlikely(ksReadyQueuesL1Bitmap != 0 && highestPrio() > caller->tcbPriority)) {
         slowpath(SysReplyRecv);
     }
 

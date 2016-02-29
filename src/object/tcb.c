@@ -113,20 +113,29 @@ static inline void
 addToBitmap(word_t prio)
 {
     word_t l1index;
+    word_t l1index_inverted;
 
     l1index = prio_to_l1index(prio);
+    l1index_inverted = invert_l1index(l1index);
+
     ksReadyQueuesL1Bitmap |= BIT(l1index);
-    ksReadyQueuesL2Bitmap[l1index] |= BIT(prio & MASK(wordRadix));
+    /* we invert the l1 index when accessing the 2nd level of the bitmap in
+       order to increase the likelihood that the l2 index word for high prio
+       will share a cache line with the l1 index word - this makes sure the
+       fastpath is optimised for higher prio threads */
+    ksReadyQueuesL2Bitmap[l1index_inverted] |= BIT(prio & MASK(wordRadix));
 }
 
 static inline void
 removeFromBitmap(word_t prio)
 {
     word_t l1index;
+    word_t l1index_inverted;
 
     l1index = prio_to_l1index(prio);
-    ksReadyQueuesL2Bitmap[l1index] &= ~BIT(prio & MASK(wordRadix));
-    if (unlikely(!ksReadyQueuesL2Bitmap[l1index])) {
+    l1index_inverted = invert_l1index(l1index);
+    ksReadyQueuesL2Bitmap[l1index_inverted] &= ~BIT(prio & MASK(wordRadix));
+    if (unlikely(!ksReadyQueuesL2Bitmap[l1index_inverted])) {
         ksReadyQueuesL1Bitmap &= ~BIT(l1index);
     }
 }
