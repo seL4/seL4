@@ -1,0 +1,26 @@
+%
+% Copyright 2016, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{arm_page_invalidatedata}
+{ARM Page - Invalidate Data}
+{Invalidates the cache range within the given page. The start and end are relative to the page being serviced 
+and should be aligned to a cache line boundary where possible. 
+An additional clean is performed on the outer cache lines if the start and end are 
+not aligned, to clean out the bytes between the requested and the cache line boundary.}
+{static inline int seL4\_ARM\_Page\_Invalidate\_Data}
+{
+\param{seL4\_ARM\_Page}{\_service}{The page whose contents will be flushed.}
+\param{seL4\_Word}{start\_offset}{The offset, relative to the start of the page inclusive.}
+\param{seL4\_Word}{end\_offset}{The offset, relative to the start of the page exclusive.}
+}
+{\errorenumdesc}
+{See \autoref{ch:vspace}}
+
