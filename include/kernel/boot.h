@@ -32,9 +32,9 @@ typedef cte_t* slot_ptr_t;
 
 typedef struct ndks_boot {
     region_t   freemem[MAX_NUM_FREEMEM_REG];
-    bi_t*      bi_frame;
-    slot_pos_t slot_pos_cur;
-    slot_pos_t slot_pos_max;
+    seL4_BootInfo*      bi_frame;
+    seL4_SlotPos slot_pos_cur;
+    seL4_SlotPos slot_pos_max;
 } ndks_boot_t;
 
 extern ndks_boot_t ndks_boot;
@@ -67,7 +67,7 @@ pptr_t allocate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr
 void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, pptr_t pptr, vptr_t vptr);
 
 typedef struct create_frames_of_region_ret {
-    slot_region_t region;
+    seL4_SlotRegion region;
     bool_t success;
 } create_frames_of_region_ret_t;
 

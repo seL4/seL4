@@ -133,9 +133,8 @@ init_irqs(cap_t root_cnode_cap)
     setIRQState(IRQTimer, KERNEL_TIMER_IRQ);
 
     /* provide the IRQ control cap */
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IRQ_CTRL), cap_irq_control_cap_new());
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
-
 
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 
@@ -262,7 +261,7 @@ try_init_kernel(
     if (!create_frames_ret.success) {
         return false;
     }
-    ndks_boot.bi_frame->ui_frame_caps = create_frames_ret.region;
+    ndks_boot.bi_frame->userImageFrames = create_frames_ret.region;
 
     /* create/initialise the initial thread's ASID pool */
     it_ap_cap = create_it_asid_pool(root_cnode_cap);
@@ -310,7 +309,7 @@ try_init_kernel(
     }
 
     /* no shared-frame caps (ARM has no multikernel support) */
-    ndks_boot.bi_frame->sh_frame_caps = S_REG_EMPTY;
+    ndks_boot.bi_frame->sharedFrames = S_REG_EMPTY;
 
     /* finalise the bootinfo frame */
     bi_finalise();

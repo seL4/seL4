@@ -59,7 +59,7 @@ init_irqs(cap_t root_cnode_cap)
     }
     Arch_irqStateInit();
     /* provide the IRQ control cap */
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IRQ_CTRL), cap_irq_control_cap_new());
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
 
 BOOT_CODE static bool_t
@@ -68,11 +68,11 @@ create_device_frames(
     dev_p_regs_t* dev_p_regs
 )
 {
-    slot_pos_t     slot_pos_before;
-    slot_pos_t     slot_pos_after;
+    seL4_SlotPos     slot_pos_before;
+    seL4_SlotPos     slot_pos_after;
     vm_page_size_t frame_size;
     region_t       dev_reg;
-    bi_dev_reg_t   bi_dev_reg;
+    seL4_DeviceRegion   bi_dev_reg;
     cap_t          frame_cap;
     uint32_t       i;
     pptr_t         f;
@@ -101,15 +101,15 @@ create_device_frames(
         slot_pos_after = ndks_boot.slot_pos_cur;
 
         /* add device-region entry to bootinfo */
-        bi_dev_reg.base_paddr = pptr_to_paddr((void*)dev_reg.start);
-        bi_dev_reg.frame_size_bits = pageBitsForSize(frame_size);
-        bi_dev_reg.frame_caps = (slot_region_t) {
+        bi_dev_reg.basePaddr = pptr_to_paddr((void*)dev_reg.start);
+        bi_dev_reg.frameSizeBits = pageBitsForSize(frame_size);
+        bi_dev_reg.frames = (seL4_SlotRegion) {
             slot_pos_before, slot_pos_after
         };
-        ndks_boot.bi_frame->dev_reg_list[i] = bi_dev_reg;
+        ndks_boot.bi_frame->deviceRegions[i] = bi_dev_reg;
     }
 
-    ndks_boot.bi_frame->num_dev_regs = dev_p_regs->count;
+    ndks_boot.bi_frame->numDeviceRegions = dev_p_regs->count;
     return true;
 }
 
@@ -219,7 +219,7 @@ init_sys_state(
 
     /* create the IO port cap */
     write_slot(
-        SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IO_PORT),
+        SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOPort),
         cap_io_port_cap_new(
             0,                /* first port */
             NUM_IO_PORTS - 1 /* last port  */
@@ -276,7 +276,7 @@ init_sys_state(
     if (!create_frames_ret.success) {
         return false;
     }
-    ndks_boot.bi_frame->ui_frame_caps = create_frames_ret.region;
+    ndks_boot.bi_frame->userImageFrames = create_frames_ret.region;
 
     /* create the initial thread's ASID pool */
     it_ap_cap = create_it_asid_pool(root_cnode_cap);
@@ -318,12 +318,12 @@ init_sys_state(
         }
 
         /* write number of IOMMU PT levels into bootinfo */
-        ndks_boot.bi_frame->num_iopt_levels = x86KSnumIOPTLevels;
+        ndks_boot.bi_frame->numIOPTLevels = x86KSnumIOPTLevels;
 
         /* write IOSpace master cap */
-        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IO_SPACE), master_iospace_cap());
+        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOSpace), master_iospace_cap());
     } else {
-        ndks_boot.bi_frame->num_iopt_levels = -1;
+        ndks_boot.bi_frame->numIOPTLevels = -1;
     }
 
     /* convert the remaining free memory into UT objects and provide the caps */

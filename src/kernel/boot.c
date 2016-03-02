@@ -131,7 +131,7 @@ write_slot(slot_ptr_t slot_ptr, cap_t cap)
  */
 compile_assert(root_cnode_size_valid,
                CONFIG_ROOT_CNODE_SIZE_BITS < 32 - seL4_SlotBits &&
-               (1U << CONFIG_ROOT_CNODE_SIZE_BITS) >= BI_CAP_DYN_START)
+               (1U << CONFIG_ROOT_CNODE_SIZE_BITS) >= seL4_NumInitialCaps)
 
 BOOT_CODE cap_t
 create_root_cnode(void)
@@ -158,7 +158,7 @@ create_root_cnode(void)
         );
 
     /* write the root CNode cap into the root CNode */
-    write_slot(SLOT_PTR(pptr, BI_CAP_IT_CNODE), cap);
+    write_slot(SLOT_PTR(pptr, seL4_CapInitThreadCNode), cap);
 
     return cap;
 }
@@ -200,7 +200,7 @@ create_domain_cap(cap_t root_cnode_cap)
     }
 
     cap = cap_domain_cap_new();
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_DOM), cap);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapDomain), cap);
 }
 
 
@@ -220,7 +220,7 @@ create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
 
     /* create a cap of it and write it into the root CNode */
     cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, IT_ASID, false, false);
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_IPCBUF), cap);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadIPCBuffer), cap);
 
     return cap;
 }
@@ -237,7 +237,7 @@ create_bi_frame_cap(
 
     /* create a cap of it and write it into the root CNode */
     cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, IT_ASID, false, false);
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_BI_FRAME), cap);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapBootInfoFrame), cap);
 }
 
 BOOT_CODE pptr_t
@@ -259,14 +259,14 @@ allocate_bi_frame(
 
     /* initialise bootinfo-related global state */
     ndks_boot.bi_frame = BI_PTR(pptr);
-    ndks_boot.slot_pos_cur = BI_CAP_DYN_START;
+    ndks_boot.slot_pos_cur = seL4_NumInitialCaps;
 
-    BI_PTR(pptr)->node_id = node_id;
-    BI_PTR(pptr)->num_nodes = num_nodes;
-    BI_PTR(pptr)->num_iopt_levels = 0;
-    BI_PTR(pptr)->ipcbuf_vptr = ipcbuf_vptr;
-    BI_PTR(pptr)->it_cnode_size_bits = CONFIG_ROOT_CNODE_SIZE_BITS;
-    BI_PTR(pptr)->it_domain = ksDomSchedule[ksDomScheduleIdx].domain;
+    BI_PTR(pptr)->nodeID = node_id;
+    BI_PTR(pptr)->numNodes = num_nodes;
+    BI_PTR(pptr)->numIOPTLevels = 0;
+    BI_PTR(pptr)->ipcBuffer = (seL4_IPCBuffer *) ipcbuf_vptr;
+    BI_PTR(pptr)->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
+    BI_PTR(pptr)->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
 
     return pptr;
 }
@@ -294,8 +294,8 @@ create_frames_of_region(
 {
     pptr_t     f;
     cap_t      frame_cap;
-    slot_pos_t slot_pos_before;
-    slot_pos_t slot_pos_after;
+    seL4_SlotPos slot_pos_before;
+    seL4_SlotPos slot_pos_after;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
 
@@ -314,7 +314,7 @@ create_frames_of_region(
     slot_pos_after = ndks_boot.slot_pos_cur;
 
     return (create_frames_of_region_ret_t) {
-        (slot_region_t) { slot_pos_before, slot_pos_after }, true
+        (seL4_SlotRegion) { slot_pos_before, slot_pos_after }, true
     };
 }
 
@@ -332,11 +332,11 @@ create_it_asid_pool(cap_t root_cnode_cap)
     }
     memzero(ASID_POOL_PTR(ap_pptr), 1 << seL4_ASIDPoolBits);
     ap_cap = cap_asid_pool_cap_new(IT_ASID >> asidLowBits, ap_pptr);
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_ASID_POOL), ap_cap);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadASIDPool), ap_cap);
 
     /* create ASID control cap */
     write_slot(
-        SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_ASID_CTRL),
+        SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapASIDControl),
         cap_asid_control_cap_new()
     );
 
@@ -385,7 +385,7 @@ create_initial_thread(
     Arch_initContext(&tcb->tcbArch.tcbContext);
 
     /* derive a copy of the IPC buffer cap for inserting */
-    dc_ret = deriveCap(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_IPCBUF), ipcbuf_cap);
+    dc_ret = deriveCap(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadIPCBuffer), ipcbuf_cap);
     if (dc_ret.status != EXCEPTION_NONE) {
         printf("Failed to derive copy of IPC Buffer\n");
         return false;
@@ -394,17 +394,17 @@ create_initial_thread(
     /* initialise TCB (corresponds directly to abstract specification) */
     cteInsert(
         root_cnode_cap,
-        SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_CNODE),
+        SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadCNode),
         SLOT_PTR(pptr, tcbCTable)
     );
     cteInsert(
         it_pd_cap,
-        SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE),
+        SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace),
         SLOT_PTR(pptr, tcbVTable)
     );
     cteInsert(
         dc_ret.cap,
-        SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_IPCBUF),
+        SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadIPCBuffer),
         SLOT_PTR(pptr, tcbBuffer)
     );
     tcb->tcbIPCBuffer = ipcbuf_vptr;
@@ -423,7 +423,7 @@ create_initial_thread(
 
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_TCB), cap);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadTCB), cap);
 
 #ifdef DEBUG
     setThreadName(tcb, "rootserver");
@@ -437,14 +437,14 @@ provide_untyped_cap(
     cap_t      root_cnode_cap,
     pptr_t     pptr,
     word_t     size_bits,
-    slot_pos_t first_untyped_slot
+    seL4_SlotPos first_untyped_slot
 )
 {
     bool_t ret;
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
-        ndks_boot.bi_frame->ut_obj_paddr_list[i] = pptr_to_paddr((void*)pptr);
-        ndks_boot.bi_frame->ut_obj_size_bits_list[i] = size_bits;
+        ndks_boot.bi_frame->untypedPaddrList[i] = pptr_to_paddr((void*)pptr);
+        ndks_boot.bi_frame->untypedSizeBitsList[i] = size_bits;
         ret = provide_cap(root_cnode_cap, cap_untyped_cap_new(0, size_bits, pptr));
     } else {
         printf("Kernel init: Too many untyped regions for boot info\n");
@@ -465,7 +465,7 @@ BOOT_CODE static bool_t
 create_untypeds_for_region(
     cap_t      root_cnode_cap,
     region_t   reg,
-    slot_pos_t first_untyped_slot
+    seL4_SlotPos first_untyped_slot
 )
 {
     word_t align_bits;
@@ -495,8 +495,8 @@ create_untypeds_for_region(
 BOOT_CODE bool_t
 create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
-    slot_pos_t slot_pos_before;
-    slot_pos_t slot_pos_after;
+    seL4_SlotPos slot_pos_before;
+    seL4_SlotPos slot_pos_after;
     word_t     i;
     region_t   reg;
 
@@ -517,7 +517,7 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->ut_obj_caps = (slot_region_t) {
+    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
         slot_pos_before, slot_pos_after
     };
     return true;
@@ -526,9 +526,9 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 BOOT_CODE void
 bi_finalise(void)
 {
-    slot_pos_t slot_pos_start = ndks_boot.slot_pos_cur;
-    slot_pos_t slot_pos_end = ndks_boot.slot_pos_max;
-    ndks_boot.bi_frame->null_caps = (slot_region_t) {
+    seL4_SlotPos slot_pos_start = ndks_boot.slot_pos_cur;
+    seL4_SlotPos slot_pos_end = ndks_boot.slot_pos_max;
+    ndks_boot.bi_frame->empty = (seL4_SlotRegion) {
         slot_pos_start, slot_pos_end
     };
 }
