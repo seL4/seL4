@@ -27,9 +27,14 @@
 #define CONFIG_BOOT_THREAD_TIME_SLICE 10
 #endif
 
-/* number of priorities per domain */
+/* number of priorities */
 #ifndef CONFIG_NUM_PRIORITIES
 #define CONFIG_NUM_PRIORITIES 256
+#endif
+
+/* number of criticalities to use */
+#ifndef CONFIG_NUM_CRITICALITIES
+#define CONFIG_NUM_CRITICALITIES 4
 #endif
 
 /* maximum number of caps that can be created in one retype invocation */
