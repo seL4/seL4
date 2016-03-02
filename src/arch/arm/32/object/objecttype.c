@@ -465,7 +465,6 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
     return false;
 }
 
-
 bool_t CONST
 Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
@@ -473,8 +472,8 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
         if (cap_get_capType(cap_b) == cap_small_frame_cap) {
             return ((cap_small_frame_cap_get_capFBasePtr(cap_a) ==
                     cap_small_frame_cap_get_capFBasePtr(cap_b)) && 
-                    (cap_small_frame_cap_get_capFIsDevice(cap_a) ==
-                    cap_small_frame_cap_get_capFIsDevice(cap_b)));
+                    ((cap_small_frame_cap_get_capFIsDevice(cap_a) == 0) ==
+                    (cap_small_frame_cap_get_capFIsDevice(cap_b) == 0)));
         } else if (cap_get_capType(cap_b) == cap_frame_cap) {
             return false;
         }
@@ -485,8 +484,8 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
                      cap_frame_cap_get_capFBasePtr(cap_b)) &&
                     (cap_frame_cap_get_capFSize(cap_a) ==
                      cap_frame_cap_get_capFSize(cap_b)) &&
-                    (cap_frame_cap_get_capFIsDevice(cap_a) ==
-                     cap_frame_cap_get_capFIsDevice(cap_b)));
+                    ((cap_frame_cap_get_capFIsDevice(cap_a) == 0) ==
+                     (cap_frame_cap_get_capFIsDevice(cap_b)== 0)));
         } else if (cap_get_capType(cap_b) == cap_small_frame_cap) {
             return false;
         }
