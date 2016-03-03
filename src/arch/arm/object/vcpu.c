@@ -51,30 +51,6 @@
                    | HCR_TAC | HCR_SWIO)
 #define HCR_VCPU   (HCR_COMMON)
 
-
-/* 1471 */
-#define SCTLR      "p15, 0, %0, c1, c0, 0"
-#define ACTLR      "p15, 0, %0, c1, c0, 1"
-#define HSCTLR     "p15, 4, %0, c1, c0, 0"
-#define HCR        "p15, 4, %0, c1, c1, 0"
-
-/* VA->IPA */
-#define ATS1CPR    "p15, 0, %0, c7, c8, 0"
-#define ATS1CPW    "p15, 0, %0, c7, c8, 1"
-#define ATS1CUR    "p15, 0, %0, c7, c8, 2"
-#define ATS1CUW    "p15, 0, %0, c7, c8, 3"
-/* VA->PA */
-#define ATS12NSOPR "p15, 0, %0, c7, c8, 4"
-#define ATS12NSOPW "p15, 0, %0, c7, c8, 5"
-#define ATS12NSOUR "p15, 0, %0, c7, c8, 6"
-#define ATS12NSOUW "p15, 0, %0, c7, c8, 7"
-/* VA(hyp)-> PA */
-#define ATS1HR     "p15, 4, %0, c7, c8, 0"
-#define ATS1HW     "p15, 4, %0, c7, c8, 1"
-
-#define PAR32      "p15, 0, %0, c7, c4, 0"
-#define PAR64      "p15, 0, %Q, %R, c7"
-
 #define SCTLR_DEFAULT 0xc5187c
 #define ACTLR_DEFAULT 0x40
 
