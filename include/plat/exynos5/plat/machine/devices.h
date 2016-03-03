@@ -17,10 +17,10 @@
 #define L2CC_PPTR                   0xfff03000
 #define GIC_DISTRIBUTOR_PPTR        0xfff04000
 #define GIC_CONTROLLER_PPTR         0xfff05000
-#if defined(ARM_HYP)
+
+/* HYP mode kernel devices */
 #define GIC_VCPUCTRL_PPTR           0xfff06000
 #define GIC_PL400_VCPUCTRL_PPTR     GIC_VCPUCTRL_PPTR
-#endif
 
 #define L2CC_L2C310_PPTR            L2CC_PPTR
 #define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR

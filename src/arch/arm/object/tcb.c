@@ -82,14 +82,14 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                                      sender->tcbLookupFailure, 3);
 
     case fault_vm_fault: {
-#ifdef ARM_HYP
-        word_t ipa, va;
-        va = getRestartPC(sender);
-        ipa = (addressTranslateS1CPR(va) & ~MASK(PAGE_BITS)) | (va & MASK(PAGE_BITS));
-        setMR(receiver, receiveIPCBuffer, 0, ipa);
-#else
-        setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
-#endif
+        if (config_set(ARM_HYP)) {
+            word_t ipa, va;
+            va = getRestartPC(sender);
+            ipa = (addressTranslateS1CPR(va) & ~MASK(PAGE_BITS)) | (va & MASK(PAGE_BITS));
+            setMR(receiver, receiveIPCBuffer, 0, ipa);
+        } else {
+            setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
+        }
         setMR(receiver, receiveIPCBuffer, 1,
               fault_vm_fault_get_address(sender->tcbFault));
         setMR(receiver, receiveIPCBuffer, 2,
