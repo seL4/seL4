@@ -133,12 +133,42 @@ static inline word_t PURE getHPFAR(void)
     return HPFAR;
 }
 
+/** MODIFIES: */
+static inline word_t getSCTLR(void)
+{
+    word_t SCTLR;
+    asm volatile ("mrc p15, 0, %0, c1, c0, 0" : "=r"(SCTLR));
+    return SCTLR;
+}
+
+/** MODIFIES: */
+static inline void setSCTLR(word_t sctlr)
+{
+    asm volatile ("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
+}
+
+/** MODIFIES */
+static inline word_t getACTLR(void)
+{
+    word_t ACTLR;
+    asm volatile ("mrc p15, 0, %0, c1, c0, 1" : "=r"(ACTLR));
+    return ACTLR;
+}
+
+/** MODIFIES: */
+static inline void setACTLR(word_t actlr)
+{
+    asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
+}
+
 #else
 
 /* used in other files without guards */
-static inline void setCurrentPDPL2(paddr_t addr) { return; }
-static inline void invalidateHypTLB(void) { return; }
-static inline void writeContextIDPL2(word_t id) { return; }
+static inline void setCurrentPDPL2(paddr_t pa) {}
+static inline void invalidateHypTLB(void) {}
+static inline void writeContextIDPL2(word_t pd) {}
+static inline void writeContextIDAndPD(word_t id, word_t pd) {}
+static inline paddr_t addressTranslateS1CPR(vptr_t vaddr) { return vaddr; }
 
 #endif /* !ARM_HYP */
 #endif /* __ARCH_MACHINE_PL2_32_H */

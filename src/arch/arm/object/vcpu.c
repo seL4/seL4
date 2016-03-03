@@ -145,8 +145,8 @@ vcpu_save(vcpu_t *cpu)
         int i;
         dsb();
         /* Store VCPU state */
-        MRC(SCTLR, cpu->cpx.sctlr);
-        MRC(ACTLR, cpu->cpx.actlr);
+        cpu->cpx.sctlr = getSCTLR();
+        cpu->cpx.actlr = getACTLR();
 
         /* Store GIC VCPU control state */
         cpu->vgic.hcr = gic_vcpu_ctrl->hcr;
@@ -164,7 +164,8 @@ vcpu_save(vcpu_t *cpu)
 }
 
 
-static uint32_t readVCPUReg(vcpu_t *vcpu, uint32_t field)
+static uint32_t
+readVCPUReg(vcpu_t *vcpu, uint32_t field)
 {
     switch (field) {
     case 0:
@@ -174,7 +175,8 @@ static uint32_t readVCPUReg(vcpu_t *vcpu, uint32_t field)
     return 0;
 }
 
-static void writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
+static void
+writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 {
     switch (field) {
     case 0:
@@ -183,11 +185,9 @@ static void writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 }
 
 
-
 void
 vcpu_restore(vcpu_t *cpu)
 {
-    uint32_t hcr;
     dsb();
     if (cpu != NULL) {
         int i;
@@ -203,27 +203,22 @@ vcpu_restore(vcpu_t *cpu)
         }
 
         /* Restore VCPU state */
-        MCR(SCTLR, cpu->cpx.sctlr);
-        MCR(ACTLR, cpu->cpx.actlr);
+        setSCTLR(cpu->cpx.sctlr);
+        setACTLR(cpu->cpx.actlr);
 
-        hcr = HCR_VCPU;
-        MCR(HCR, hcr);
+        setHCR(HCR_VCPU);
         isb();
 
         /* Turn on the VGIC */
         gic_vcpu_ctrl->hcr = cpu->vgic.hcr;
     } else {
-        uint32_t v;
         /* Turn off the VGIC */
         gic_vcpu_ctrl->hcr = 0;
         isb();
 
         /* Stage 1 MMU off */
-        v = SCTLR_DEFAULT;
-        MCR(SCTLR, v);
-
-        hcr = HCR_NATIVE;
-        MCR(HCR, hcr);
+        setSCTLR(SCTLR_DEFAULT);
+        setHCR(HCR_NATIVE);
         isb();
     }
 }

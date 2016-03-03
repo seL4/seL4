@@ -123,22 +123,24 @@ static inline word_t CONST
 sanitiseRegister(register_t reg, word_t v)
 {
     if (reg == CPSR) {
-#ifdef ARM_HYP
-        switch (v & 0x1f) {
-        case PMODE_USER:
-        case PMODE_FIQ:
-        case PMODE_IRQ:
-        case PMODE_SUPERVISOR:
-        case PMODE_ABORT:
-        case PMODE_UNDEFINED:
-        case PMODE_SYSTEM:
-            return v;
-        case PMODE_HYPERVISOR:
-        default:
-            /* For backwards compatibility, Invalid modes revert to USER mode */
-            break;
+
+        if (config_set(ARM_HYP)) {
+            switch (v & 0x1f) {
+            case PMODE_USER:
+            case PMODE_FIQ:
+            case PMODE_IRQ:
+            case PMODE_SUPERVISOR:
+            case PMODE_ABORT:
+            case PMODE_UNDEFINED:
+            case PMODE_SYSTEM:
+                return v;
+            case PMODE_HYPERVISOR:
+            default:
+                /* For backwards compatibility, Invalid modes revert to USER mode */
+                break;
+            }
         }
-#endif
+
         return (v & 0xf8000000) | CPSR_USER;
     } else {
         return v;

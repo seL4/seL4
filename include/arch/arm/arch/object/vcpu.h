@@ -73,6 +73,8 @@ exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb);
 
 /* used in boot.c with a guard, use a marco to avoid exposing vcpu_t */
 #define vcpu_restore(x) 
+#define vcpu_switch(x)
+static inline void VGICMaintenance(void) {}
 
 #endif /* end of !ARM_HYP */
 
