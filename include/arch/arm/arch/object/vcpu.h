@@ -69,5 +69,11 @@ exception_t invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field);
 exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, int index, int group, int priority, int irq);
 exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb);
 
-#endif /* ARM_HYP */
+#else /* end of ARM_HYP */
+
+/* used in boot.c with a guard, use a marco to avoid exposing vcpu_t */
+#define vcpu_restore(x) 
+
+#endif /* end of !ARM_HYP */
+
 #endif /* __ARCH_OBJECT_VCPU_H */
