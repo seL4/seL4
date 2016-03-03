@@ -65,9 +65,6 @@ p_region_t get_avail_p_reg(word_t i);
 int get_num_dev_p_regs(void);
 p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
-#ifdef ARM_HYP
-void map_hypervisor_devices(void);
-#endif /* ARM_HYP */
 
 bool_t CONST isReservedIRQ(irq_t irq);
 void handleReservedIRQ(irq_t irq);
