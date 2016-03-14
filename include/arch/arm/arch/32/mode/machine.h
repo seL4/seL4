@@ -68,7 +68,7 @@ void setNextPC(tcb_t *thread, word_t v);
 static inline word_t getProcessorID(void)
 {
     word_t processor_id;
-    MRC("p15, 0, %0, c0, c0, 0", processor_id);
+    asm volatile ("mrc p15, 0, %0, c0, c0, 0" : "=r"(processor_id));
     return processor_id;
 }
 
@@ -76,28 +76,28 @@ static inline word_t getProcessorID(void)
 static inline word_t readSystemControlRegister(void)
 {
     word_t scr;
-    MRC("p15, 0, %0, c1, c0, 0", scr);
+    asm volatile ("mrc p15, 0, %0, c1, c0, 0" : "=r"(scr));
     return scr;
 }
 
 /** DONT_TRANSLATE */
 static inline void writeSystemControlRegister(word_t scr)
 {
-    MCR("p15, 0, %0, c1, c0, 0", scr);
+    asm volatile ("mcr p15, 0, %0, c1, c0, 0" :: "r"(scr));
 }
 
 /** DONT_TRANSLATE */
 static inline word_t readAuxiliaryControlRegister(void)
 {
     word_t acr;
-    MRC("p15, 0, %0, c1, c0, 1", acr);
+    asm volatile ("mrc p15, 0, %0, c1, c0, 1" : "=r"(acr));
     return acr;
 }
 
 /** DONT_TRANSLATE */
 static inline void writeAuxiliaryControlRegister(word_t acr)
 {
-    MCR("p15, 0, %0, c1, c0, 1", acr);
+    asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(acr));
 }
 
 /** MODIFIES: [*] */
