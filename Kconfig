@@ -218,6 +218,14 @@ menu "seL4 System"
             depends on ARM_CORTEX_A15
             help
                 Support for ALLWINNERA20 platform (CUBIETRUCK).
+
+        config PLAT_TK1
+            bool "Jetson (Tegra K1)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A15
+            help
+                Support for Tegra K1 platform
+
     endchoice
 
 source "$KERNEL_PATH/src/arch/arm/Kconfig"
