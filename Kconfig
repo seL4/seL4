@@ -70,6 +70,13 @@ config ARM_HYPERVISOR_SUPPORT
             help
                 Support for ARM1136JF-S
 
+        config ARM_CORTEX_A7
+            bool "Cortex A7"
+            depends on ARCH_ARM
+            select ARCH_ARM_V7A
+            help
+                Support for Cortex A7 processor
+
         config ARM_CORTEX_A8 
             bool "Cortex A8"
             depends on ARCH_ARM
@@ -105,6 +112,12 @@ config ARM_HYPERVISOR_SUPPORT
        help
           Common flag for SabreLight and Wandboard Quad
 
+
+    config PLAT_IMX7
+        bool
+        default n
+            help
+                Common flag for iMX7 SoC
 
     choice
         prompt "Platform Type"
@@ -185,6 +198,14 @@ config ARM_HYPERVISOR_SUPPORT
             help
                 Support for iMX6 platform (Wandboard Quad).
 
+        config PLAT_IMX7_SABRE
+            bool "iMX7 (Sabre)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A7
+            select PLAT_IMX7
+            help
+                Support for iMX7 Sabre Dual.
+
         config PLAT_ZYNQ7000
             bool "Zynq-7000 (Xilinx ZC706)"
             depends on ARCH_ARM
@@ -204,6 +225,14 @@ config ARM_HYPERVISOR_SUPPORT
             depends on ARM_CORTEX_A15
             help
                 Support for ALLWINNERA20 platform (CUBIETRUCK).
+
+        config PLAT_TK1
+            bool "Jetson (Tegra K1)"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A15
+            help
+                Support for Tegra K1 platform
+
     endchoice
 
 source "$KERNEL_PATH/src/arch/arm/Kconfig"

@@ -565,8 +565,8 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     cap_t      pd_cap;
     vptr_t     pt_vptr;
     pptr_t     pt_pptr;
-    slot_pos_t slot_pos_before;
-    slot_pos_t slot_pos_after;
+    seL4_SlotPos slot_pos_before;
+    seL4_SlotPos slot_pos_after;
     pptr_t pd_pptr;
 
     /* create PD obj and cap */
@@ -585,7 +585,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
             pd_pptr  /* capPDBasePtr    */
         );
     slot_pos_before = ndks_boot.slot_pos_cur;
-    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE), pd_cap);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
 
     /* create all PT objs and caps necessary to cover userland image */
 
@@ -605,7 +605,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->ui_paging_caps = (slot_region_t) {
+    ndks_boot.bi_frame->userImagePaging = (seL4_SlotRegion) {
         slot_pos_before, slot_pos_after
     };
 
@@ -615,22 +615,22 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 BOOT_CODE bool_t
 create_device_frames(cap_t root_cnode_cap)
 {
-    slot_pos_t     slot_pos_before;
-    slot_pos_t     slot_pos_after;
+    seL4_SlotPos     slot_pos_before;
+    seL4_SlotPos     slot_pos_after;
     vm_page_size_t frame_size;
     region_t       dev_reg;
-    bi_dev_reg_t   bi_dev_reg;
+    seL4_DeviceRegion   bi_dev_reg;
     cap_t          frame_cap;
     word_t         i;
     pptr_t         f;
 
-    ndks_boot.bi_frame->num_dev_regs = get_num_dev_p_regs();
-    if (ndks_boot.bi_frame->num_dev_regs > CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS) {
+    ndks_boot.bi_frame->numDeviceRegions = get_num_dev_p_regs();
+    if (ndks_boot.bi_frame->numDeviceRegions > CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS) {
         printf("Kernel init: Too many device regions for boot info\n");
-        ndks_boot.bi_frame->num_dev_regs = CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS;
+        ndks_boot.bi_frame->numDeviceRegions = CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS;
     }
 
-    for (i = 0; i < ndks_boot.bi_frame->num_dev_regs; i++) {
+    for (i = 0; i < ndks_boot.bi_frame->numDeviceRegions; i++) {
         /* write the frame caps of this device region into the root CNode and update the bootinfo */
         dev_reg = paddr_to_pptr_reg(get_dev_p_reg(i));
         /* use 1M frames if possible, otherwise use 4K frames */
@@ -654,12 +654,12 @@ create_device_frames(cap_t root_cnode_cap)
         slot_pos_after = ndks_boot.slot_pos_cur;
 
         /* add device-region entry to bootinfo */
-        bi_dev_reg.base_paddr = pptr_to_paddr((void*)dev_reg.start);
-        bi_dev_reg.frame_size_bits = pageBitsForSize(frame_size);
-        bi_dev_reg.frame_caps = (slot_region_t) {
+        bi_dev_reg.basePaddr = pptr_to_paddr((void*)dev_reg.start);
+        bi_dev_reg.frameSizeBits = pageBitsForSize(frame_size);
+        bi_dev_reg.frames = (seL4_SlotRegion) {
             slot_pos_before, slot_pos_after
         };
-        ndks_boot.bi_frame->dev_reg_list[i] = bi_dev_reg;
+        ndks_boot.bi_frame->deviceRegions[i] = bi_dev_reg;
     }
 
     return true;
