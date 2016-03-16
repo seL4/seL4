@@ -332,18 +332,24 @@ ackInterrupt(irq_t irq)
     dsb();
 }
 
-#define TIMER_INTERVAL_MS (CONFIG_TIMER_TICK_MS)
 
-#define TIOCP_CFG_SOFTRESET BIT(1)
-#define TCLR_AUTORELOAD     BIT(1)
-#define TCLR_COMPAREENABLE  BIT(6)
-#define TCLR_STARTTIMER     BIT(0)
-#define TIER_MATCHENABLE    BIT(0)
-#define TIER_OVERFLOWENABLE BIT(1)
-#define TISR_OVF_FLAG       BIT(1)
+#define TISR_OVERFLOW BIT(1u)
+#define TISR_MATCH    BIT(0u)
+#define TIER_OVERFLOW BIT(1u)
+#define TIER_MATCH    BIT(0u)
 
-#define TICKS_PER_SECOND 32768
-#define TIMER_INTERVAL_TICKS ((int)(1UL * TIMER_INTERVAL_MS * TICKS_PER_SECOND / 1000))
+#define TIOCP_CFG_SOFTRESET BIT(1u)
+#define TCLR_AUTORELOAD     BIT(1u)
+#define TCLR_COMPAREENABLE  BIT(6u)
+#define TCLR_STARTTIMER     BIT(0u)
+
+/* this is configured and detected by uboot */
+#define CLK_MHZ 13
+/* constants for division by reciprocal multiplication, for calculation
+ * see tools/reciprocal.py */
+#define CLK_MAGIC 1321528399llu
+#define CLK_SHIFT 34u
+compile_assert(magic_will_work, CLK_MHZ == 13u)
 
 static volatile struct TIMER_map {
     uint32_t tidr;   /* GPTIMER_TIDR 0x00 */
@@ -369,15 +375,7 @@ static volatile struct TIMER_map {
     uint32_t towr;   /* GPTIMER_TOWR 0x58 */
 } *timer = (volatile void*)GPTIMER9_PPTR;
 
-/**
-   DONT_TRANSLATE
- */
-void
-resetTimer(void)
-{
-    timer->tisr = TISR_OVF_FLAG;
-    ackInterrupt(GPT9_IRQ);
-}
+static uint32_t high_bits = 0u;
 
 /**
    DONT_TRANSLATE
@@ -386,23 +384,88 @@ BOOT_CODE void
 initTimer(void)
 {
     /* Configure gptimer9 as kernel timer */
+
+    /* disable */
+    timer->tclr = 0;
+
+    /* perform a soft reset */
     timer->cfg = TIOCP_CFG_SOFTRESET;
 
+    /* wait for reset */
     while (!timer->tistat);
 
     maskInterrupt(/*disable*/ true, GPT9_IRQ);
 
     /* Set the reload value */
-    timer->tldr = 0xFFFFFFFFUL - TIMER_INTERVAL_TICKS;
+    timer->tldr = 0u;
 
-    /* Enables interrupt on overflow */
-    timer->tier = TIER_OVERFLOWENABLE;
+    /* Enables interrupt on overflow and match */
+    timer->tier |= (TIER_OVERFLOW | TIER_MATCH);
 
     /* Clear the read register */
-    timer->tcrr = 0xFFFFFFFFUL - TIMER_INTERVAL_TICKS;
+    timer->tcrr = 0u;
 
-    /* Set autoreload and start the timer */
-    timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;
+    /* start the timer */
+    timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER | TCLR_COMPAREENABLE;
+}
+
+void
+setDeadline(ticks_t deadline)
+{
+    assert(deadline > ksCurrentTime);
+    timer->tmar = (uint32_t) deadline;
+}
+
+ticks_t
+getCurrentTime(void)
+{
+    bool_t overflow = !!(timer->tisr & TISR_OVERFLOW);
+    return (((uint64_t) high_bits + overflow) << 32llu) + timer->tcrr;
+}
+
+void
+ackDeadlineIRQ(void)
+{
+    /* check if this is an overflow irq */
+    if (timer->tisr & TISR_OVERFLOW) {
+        high_bits++;
+    }
+
+    /* ack everything */
+    timer->tisr = TISR_OVERFLOW | TISR_MATCH;
+    assert((timer->tisr & TISR_OVERFLOW) == 0);
+    ackInterrupt(GPT9_IRQ);
+}
+
+time_t
+getMaxTimerUs(void)
+{
+    return UINT64_MAX / CLK_MAGIC;
+}
+
+ticks_t
+getTimerPrecision(void)
+{
+    return 2 * CLK_MHZ;
+}
+
+time_t
+getKernelWcetUs(void)
+{
+    return 10u;
+}
+
+ticks_t
+usToTicks(time_t us)
+{
+    return (us * CLK_MHZ);
+}
+
+time_t
+ticksToUs(ticks_t ticks)
+{
+    /* emulate ticks / CLK_MHZ with multiplication by reciprocal */
+    return (ticks * CLK_MAGIC) >> CLK_SHIFT;
 }
 
 /**
