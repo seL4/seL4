@@ -184,7 +184,7 @@ handleInterrupt(irq_t irq)
          * the interrupt controller for the platform returned this IRQ that
          * it is safe to use in mask and ack operations, even though it is
          * above the claimed maxIRQ. i.e. we're assuming maxIRQ is wrong */
-        printf("Received IRQ %d, which is above the platforms maxIRQ of %d\n", irq, maxIRQ);
+        printf("Received IRQ %d, which is above the platforms maxIRQ of %d\n", (int)irq, (int)maxIRQ);
         maskInterrupt(true, irq);
         ackInterrupt(irq);
         return;
