@@ -163,13 +163,14 @@ This function is called during bootstrap to set up the initial state of the inte
 
 This function is called when the kernel receives an interrupt event.
 
+In the case of an interrupt above maxIRQ, we mask, ack and pretend it didn't
+happen.  We assume that mask and ack operations for this IRQ are safe in
+hardware, since the hardware returned it. The situation can arise when maxIRQ
+is set to an incorrect value.
+
 > handleInterrupt :: IRQ -> Kernel ()
 > handleInterrupt irq = do
 >     if (irq > maxIRQ) then doMachineOp $ (do
-        mask, ack and pretend it didn't happen. We assume that because
-        the interrupt controller for the platform returned this IRQ that
-        it is safe to use in mask and ack operations, even though it is
-        above the claimed maxIRQ. i.e. we're assuming maxIRQ is wrong
 >          maskInterrupt True irq
 >          ackInterrupt irq)
 >      else do
