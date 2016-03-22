@@ -110,14 +110,12 @@ enum IRQConstants {
     HSUSB_DMA_NINT  = 93,
     MMC3_IRQ        = 94,
     RESERVED_IRQ18  = 95,
-
-    //GPTIMER11_IRQ = 47,
     maxIRQ = 95
 } platform_interrupt_t;
 
 
 
-#define KERNEL_TIMER_IRQ    GPT11_IRQ
+#define KERNEL_TIMER_IRQ    GPT9_IRQ
 
 enum irqNumbers {
     irqInvalid = 255

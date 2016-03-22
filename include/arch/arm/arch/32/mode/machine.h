@@ -300,6 +300,10 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 #elif defined(PLAT_EXYNOS5)
     /* Flush to coherency for table walks... Why? */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
+#elif defined(PLAT_IMX7)
+    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
+#elif defined(CONFIG_PLAT_TK1)
+    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #else
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
 #endif

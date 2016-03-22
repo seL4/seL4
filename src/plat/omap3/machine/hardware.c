@@ -70,7 +70,7 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { I2C2_PADDR                    , I2C2_PADDR                     + ( 2 << PAGE_BITS) },
     { MCBSP1_PADDR                  , MCBSP1_PADDR                   + ( 2 << PAGE_BITS) },
     { GPTIMER10_PADDR               , GPTIMER10_PADDR                + ( 2 << PAGE_BITS) },
-//  { GPTIMER11_PADDR               , GPTIMER11_PADDR                + ( 2 << PAGE_BITS) },
+    { GPTIMER11_PADDR               , GPTIMER11_PADDR                + ( 2 << PAGE_BITS) },
     { MAILBOX_PADDR                 , MAILBOX_PADDR                  + ( 2 << PAGE_BITS) },
     { MCBSP5_PADDR                  , MCBSP5_PADDR                   + ( 2 << PAGE_BITS) },
     { MCSPI1_PADDR                  , MCSPI1_PADDR                   + ( 2 << PAGE_BITS) },
@@ -118,7 +118,7 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { GPTIMER6_PADDR                , GPTIMER6_PADDR                 + ( 2 << PAGE_BITS) },
     { GPTIMER7_PADDR                , GPTIMER7_PADDR                 + ( 2 << PAGE_BITS) },
     { GPTIMER8_PADDR                , GPTIMER8_PADDR                 + ( 2 << PAGE_BITS) },
-    { GPTIMER9_PADDR                , GPTIMER9_PADDR                 + ( 2 << PAGE_BITS) },
+//  { GPTIMER9_PADDR                , GPTIMER9_PADDR                 + ( 2 << PAGE_BITS) },
     { UART4_PADDR                   , UART4_PADDR                    + ( 2 << PAGE_BITS) },
     { GPIO2_PADDR                   , GPIO2_PADDR                    + ( 2 << PAGE_BITS) },
     { GPIO3_PADDR                   , GPIO3_PADDR                    + ( 2 << PAGE_BITS) },
@@ -172,10 +172,10 @@ BOOT_CODE p_region_t get_dev_p_reg(word_t i)
 BOOT_CODE void
 map_kernel_devices(void)
 {
-    /* map kernel device: GP Timer 11 */
+    /* map kernel device: GP Timer 9 */
     map_kernel_frame(
-        GPTIMER11_PADDR,
-        GPTIMER11_PPTR,
+        GPTIMER9_PADDR,
+        GPTIMER9_PPTR,
         VMKernelOnly,
         vm_attributes_new(
             true,  /* armExecuteNever */
@@ -342,7 +342,7 @@ ackInterrupt(irq_t irq)
 #define TIER_OVERFLOWENABLE BIT(1)
 #define TISR_OVF_FLAG       BIT(1)
 
-#define TICKS_PER_SECOND 32768
+#define TICKS_PER_SECOND 13000000llu
 #define TIMER_INTERVAL_TICKS ((int)(1UL * TIMER_INTERVAL_MS * TICKS_PER_SECOND / 1000))
 
 static volatile struct TIMER_map {
@@ -367,7 +367,7 @@ static volatile struct TIMER_map {
     uint32_t tcvr;   /* GPTIMER_TCVR 0x50 */
     uint32_t tocr;   /* GPTIMER_TOCR 0x54 */
     uint32_t towr;   /* GPTIMER_TOWR 0x58 */
-} *timer = (volatile void*)GPTIMER11_PPTR;
+} *timer = (volatile void*)GPTIMER9_PPTR;
 
 /**
    DONT_TRANSLATE
@@ -376,21 +376,21 @@ void
 resetTimer(void)
 {
     timer->tisr = TISR_OVF_FLAG;
-    ackInterrupt(GPT11_IRQ);
+    ackInterrupt(GPT9_IRQ);
 }
 
-/* Configure gptimer11 as kernel preemption timer */
 /**
    DONT_TRANSLATE
  */
 BOOT_CODE void
 initTimer(void)
 {
+    /* Configure gptimer9 as kernel timer */
     timer->cfg = TIOCP_CFG_SOFTRESET;
 
     while (!timer->tistat);
 
-    maskInterrupt(/*disable*/ true, GPT11_IRQ);
+    maskInterrupt(/*disable*/ true, GPT9_IRQ);
 
     /* Set the reload value */
     timer->tldr = 0xFFFFFFFFUL - TIMER_INTERVAL_TICKS;

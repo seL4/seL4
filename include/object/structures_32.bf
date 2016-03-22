@@ -161,7 +161,6 @@ block mdb_node {
 -- * Restart
 -- * Inactive
 -- * BlockedOnReceive
---   - DiminishCaps
 --   - Endpoint
 -- * BlockedOnSend
 --   - Endpoint
@@ -262,16 +261,15 @@ block user_exception {
 
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
-                   tcbQueued, blockingIPCDiminishCaps, blockingObject,
+                   tcbQueued, blockingObject,
                    tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
     field blockingIPCIsCall 1
-    padding 1
-    field blockingIPCDiminishCaps 1
+    padding 2
 
     -- this is fastpath-specific. it is useful to be able to write
-    -- tsType and blockingIPCDiminishCaps without changing tcbQueued
+    -- tsType and without changing tcbQueued
     padding 31
     field tcbQueued 1
 

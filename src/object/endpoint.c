@@ -71,7 +71,6 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
     case EPState_Recv: {
         tcb_queue_t queue;
         tcb_t *dest;
-        bool_t diminish;
 
         /* Get the head of the endpoint queue. */
         queue = ep_ptr_get_queue(epptr);
@@ -89,16 +88,14 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         }
 
         /* Do the transfer */
-        diminish =
-            thread_state_get_blockingIPCDiminishCaps(dest->tcbState);
-        doIPCTransfer(thread, epptr, badge, canGrant, dest, diminish);
+        doIPCTransfer(thread, epptr, badge, canGrant, dest);
 
         setThreadState(dest, ThreadState_Running);
         attemptSwitchTo(dest);
 
         if (do_call ||
                 fault_ptr_get_faultType(&thread->tcbFault) != fault_null_fault) {
-            if (canGrant && !diminish) {
+            if (canGrant) {
                 setupCallerCap(thread, dest);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
@@ -114,14 +111,12 @@ void
 receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 {
     endpoint_t *epptr;
-    bool_t diminish;
     notification_t *ntfnPtr;
 
     /* Haskell error "receiveIPC: invalid cap" */
     assert(cap_get_capType(cap) == cap_endpoint_cap);
 
     epptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(cap));
-    diminish = !cap_endpoint_cap_get_capCanSend(cap);
 
     /* Check for anything waiting in the notification */
     ntfnPtr = thread->tcbBoundNotification;
@@ -139,8 +134,6 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                                             ThreadState_BlockedOnReceive);
                 thread_state_ptr_set_blockingObject(
                     &thread->tcbState, EP_REF(epptr));
-                thread_state_ptr_set_blockingIPCDiminishCaps(
-                    &thread->tcbState, diminish);
 
                 scheduleTCB(thread);
 
@@ -184,13 +177,13 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
             /* Do the transfer */
             doIPCTransfer(sender, epptr, badge,
-                          canGrant, thread, diminish);
+                          canGrant, thread);
 
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
             if (do_call ||
                     fault_get_faultType(sender->tcbFault) != fault_null_fault) {
-                if (canGrant && !diminish) {
+                if (canGrant) {
                     setupCallerCap(sender, thread);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);

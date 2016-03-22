@@ -25,7 +25,7 @@
 static seL4_MessageInfo_t
 transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
-             word_t *receiveBuffer, bool_t diminish);
+             word_t *receiveBuffer);
 
 static inline bool_t PURE
 isBlocked(const tcb_t *thread)
@@ -110,7 +110,7 @@ restart(tcb_t *target)
 
 void
 doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
-              bool_t grant, tcb_t *receiver, bool_t diminish)
+              bool_t grant, tcb_t *receiver)
 {
     void *receiveBuffer, *sendBuffer;
 
@@ -119,7 +119,7 @@ doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
     if (likely(!fault_get_faultType(sender->tcbFault) != fault_null_fault)) {
         sendBuffer = lookupIPCBuffer(false, sender);
         doNormalTransfer(sender, sendBuffer, endpoint, badge, grant,
-                         receiver, receiveBuffer, diminish);
+                         receiver, receiveBuffer);
     } else {
         doFaultTransfer(badge, sender, receiver, receiveBuffer);
     }
@@ -132,7 +132,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
            ThreadState_BlockedOnReply);
 
     if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
-        doIPCTransfer(sender, NULL, 0, true, receiver, false);
+        doIPCTransfer(sender, NULL, 0, true, receiver);
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
         setThreadState(receiver, ThreadState_Running);
@@ -156,7 +156,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
 void
 doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                  word_t badge, bool_t canGrant, tcb_t *receiver,
-                 word_t *receiveBuffer, bool_t diminish)
+                 word_t *receiveBuffer)
 {
     word_t msgTransferred;
     seL4_MessageInfo_t tag;
@@ -179,7 +179,7 @@ doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
     msgTransferred = copyMRs(sender, sendBuffer, receiver, receiveBuffer,
                              seL4_MessageInfo_get_length(tag));
 
-    tag = transferCaps(tag, caps, endpoint, receiver, receiveBuffer, diminish);
+    tag = transferCaps(tag, caps, endpoint, receiver, receiveBuffer);
 
     tag = seL4_MessageInfo_set_length(tag, msgTransferred);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(tag));
@@ -204,7 +204,7 @@ doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
 static seL4_MessageInfo_t
 transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              endpoint_t *endpoint, tcb_t *receiver,
-             word_t *receiveBuffer, bool_t diminish)
+             word_t *receiveBuffer)
 {
     word_t i;
     cte_t* destSlot;
@@ -239,11 +239,7 @@ transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
                 break;
             }
 
-            if (diminish) {
-                dc_ret = deriveCap(slot, maskCapRights(noWrite, cap));
-            } else {
-                dc_ret = deriveCap(slot, cap);
-            }
+            dc_ret = deriveCap(slot, cap);
 
             if (dc_ret.status != EXCEPTION_NONE) {
                 break;

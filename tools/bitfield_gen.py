@@ -546,25 +546,6 @@ lemmas %(name)s_ptr_guards[simp] =
   %(name)s_ptr_words_aligned
   %(name)s_ptr_words_ptr_safe'''
 
-global_lemmas = \
-'''lemmas guard_simps =
-  word_sle_def word_sless_def scast_id
-
-lemmas mask_shift_simps =
-  ucast_def shift_over_ao_dists word_bw_assocs
-  word_size multi_shift_simps mask_def
-  word_ao_dist NOT_eq scast_id
-  word_and_max_word max_word_def
-
-lemmas sep_heap_simps =
-  sep_app_def hrs_mem_update_def
-  hrs_htd_def split_def
-
-lemma tag_eq_to_tag_masked_eq:
-  "tag == v ==> tag && m = v && m"
-  by simp
-'''
-
 defs_global_lemmas = '''
 lemma word_sub_mask:
   "\<lbrakk> w && m1 = v1; m1 && m2 = m2; v1 && m2 = v2 \<rbrakk>
@@ -819,7 +800,9 @@ done'''],
     ptr_set_template('set_%(field)s', direct_ptr_name),
 ''' unfolding ptrval_def
  apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp simp add: packed_heap_update_collapse_hrs typ_heap_simps guard_simps)
+ apply(clarsimp simp:guard_simps)
+ apply(prove_bf_clift_invariance?)
+ apply(clarsimp simp add: packed_heap_update_collapse_hrs typ_heap_simps)?
 
  apply(rule exI, rule conjI[rotated], rule refl)
  apply(clarsimp simp:h_t_valid_clift_Some_iff
@@ -845,8 +828,7 @@ done'''],
  apply(simp add:h_t_valid_c_guard guard_simps)
 
  (* Discharge heap-invariance conjuncts *)
- apply(rule conjI[rotated])
-  apply(simp add:heap_update_field_hrs h_t_valid_c_guard typ_heap_simps)
+ apply(prove_bf_clift_invariance?)
 
  (* Lift field updates to bitfield struct updates *)
  apply(simp add:heap_update_field_hrs h_t_valid_c_guard typ_heap_simps)
@@ -990,6 +972,7 @@ done'''],
  apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
  apply(clarsimp simp: h_t_valid_clift_Some_iff)
  apply(frule clift_subtype, simp+)
+ apply(prove_bf_clift_invariance?)
  apply(clarsimp simp: typ_heap_simps c_guard_clift)
 
  apply(simp add: guard_simps mask_shift_simps
@@ -1017,6 +1000,7 @@ done
  apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
  apply(drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
  apply(frule clift_subtype, simp, simp)
+ apply(prove_bf_clift_invariance?)
  apply(clarsimp simp: typ_heap_simps c_guard_clift)
 
  apply(simp add: guard_simps mask_shift_simps
@@ -1113,6 +1097,7 @@ done
   apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
   apply(drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
   apply(frule clift_subtype, simp, simp)
+  apply(prove_bf_clift_invariance?)
   apply(clarsimp simp: typ_heap_simps c_guard_clift)
   apply(simp add: guard_simps mask_shift_simps)
   apply(simp add:%(name)s_%(block)s_lift_def)
@@ -1134,6 +1119,7 @@ done
  apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
  apply(drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
  apply(frule clift_subtype, simp, simp)
+ apply(prove_bf_clift_invariance?)
  apply(clarsimp simp: typ_heap_simps c_guard_clift)
 
  apply(simp add: guard_simps mask_shift_simps
@@ -2784,9 +2770,6 @@ if __name__ == '__main__':
                      + '"'), file=out_file)
             print(file=out_file)
 
-            print(global_lemmas, file=out_file)
-            print(file=out_file)
-
             for e in blocks.values() + unions.values():
                 e.generate_hol_proofs(options, type_map)
 
@@ -2819,9 +2802,6 @@ if __name__ == '__main__':
                                 os.path.relpath(options.cspec_dir,
                                     os.path.dirname(out_file.filename))),
                                 file=out_file)
-                print(file=out_file)
-
-                print(global_lemmas, file=out_file)
                 print(file=out_file)
 
                 options.output = out_file

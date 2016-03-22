@@ -163,24 +163,33 @@ This function is called during bootstrap to set up the initial state of the inte
 
 This function is called when the kernel receives an interrupt event.
 
+In the case of an interrupt above maxIRQ, we mask, ack and pretend it didn't
+happen.  We assume that mask and ack operations for this IRQ are safe in
+hardware, since the hardware returned it. The situation can arise when maxIRQ
+is set to an incorrect value.
+
 > handleInterrupt :: IRQ -> Kernel ()
 > handleInterrupt irq = do
->     st <- getIRQState irq
->     case st of
->         IRQSignal -> do
->             slot <- getIRQSlot irq
->             cap <- getSlotCap slot
->             case cap of
->                 NotificationCap { capNtfnCanSend = True } ->
->                     sendSignal (capNtfnPtr cap) (capNtfnBadge cap)
->                 _ -> doMachineOp $ debugPrint $
->                     "Undelivered interrupt: " ++ show irq
->             doMachineOp $ maskInterrupt True irq
->         IRQTimer -> do
->             timerTick
->             doMachineOp resetTimer
->         IRQInactive -> fail $ "Received disabled IRQ " ++ show irq
->     doMachineOp $ ackInterrupt irq
+>     if (irq > maxIRQ) then doMachineOp $ (do
+>          maskInterrupt True irq
+>          ackInterrupt irq)
+>      else do
+>       st <- getIRQState irq
+>       case st of
+>           IRQSignal -> do
+>               slot <- getIRQSlot irq
+>               cap <- getSlotCap slot
+>               case cap of
+>                   NotificationCap { capNtfnCanSend = True } ->
+>                       sendSignal (capNtfnPtr cap) (capNtfnBadge cap)
+>                   _ -> doMachineOp $ debugPrint $
+>                       "Undelivered interrupt: " ++ show irq
+>               doMachineOp $ maskInterrupt True irq
+>           IRQTimer -> do
+>               timerTick
+>               doMachineOp resetTimer
+>           IRQInactive -> fail $ "Received disabled IRQ " ++ show irq
+>       doMachineOp $ ackInterrupt irq
 
 \subsection{Accessing the Global State}
 

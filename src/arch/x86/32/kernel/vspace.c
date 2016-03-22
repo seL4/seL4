@@ -439,8 +439,8 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     cap_t      vspace_cap;
     vptr_t     vptr;
     pptr_t     pptr;
-    slot_pos_t slot_pos_before;
-    slot_pos_t slot_pos_after;
+    seL4_SlotPos slot_pos_before;
+    seL4_SlotPos slot_pos_after;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
     if (PDPT_BITS == 0) {
@@ -457,7 +457,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         if (!provide_cap(root_cnode_cap, pd_cap)) {
             return cap_null_cap_new();
         }
-        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE), pd_cap);
+        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
         vspace_cap = pd_cap;
     } else {
         cap_t pdpt_cap;
@@ -505,7 +505,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         }
         /* now that PDs exist we can copy the global mappings */
         copyGlobalMappings((vspace_root_t*)pdpt_pptr);
-        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), BI_CAP_IT_VSPACE), pdpt_cap);
+        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pdpt_cap);
         vspace_cap = pdpt_cap;
     }
 
@@ -527,7 +527,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     }
 
     slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->ui_paging_caps = (slot_region_t) {
+    ndks_boot.bi_frame->userImagePaging = (seL4_SlotRegion) {
         slot_pos_before, slot_pos_after
     };
 
