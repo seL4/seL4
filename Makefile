@@ -18,7 +18,7 @@
 SEL4_ARCH_LIST:=aarch32 ia32
 ARCH_LIST:=arm x86
 CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15
-PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20
+PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1
 ARMV_LIST:=armv6 armv7-a
 
 ifndef SOURCE_ROOT
@@ -335,7 +335,7 @@ endif
 endif # SEL4_ARCH=aarch32
 endif # ARCH=arm
 ifeq (${ARCH}, x86)
-CFLAGS += -m32 -mno-mmx -mno-sse
+CFLAGS += -m32
 ASFLAGS += -Wa,--32
 DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32 -D__KERNEL_32__
 LDFLAGS += -Wl,-m,elf_i386 
@@ -400,6 +400,13 @@ endif # CONFIG_OPTIMISATION_Os
 # Attempt to enable -fwhole-program if it was requested. Considered harmful
 ifeq (${CONFIG_WHOLE_PROGRAM_OPTIMISATIONS_KERNEL}, y)
     CFLAGS += -fwhole-program
+endif
+
+# Set kernel build specific flags for the different x86 variants
+# These are set here and not by the common build system as they
+# only apply to building the kernel, and nothing else
+ifeq (${ARCH}, x86)
+CFLAGS += -mno-mmx -mno-sse -mno-sse2 -mno-3dnow
 endif
 
 # Allow overriding of the CFLAGS. Use with caution.

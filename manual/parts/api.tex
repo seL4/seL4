@@ -109,6 +109,7 @@
 \newcommand{\noret}{This method does not return anything.}
 \newcommand{\errorenumdesc}{A return value of \texttt{0} indicates success. A non-zero value indicates that an error occurred. See \autoref{sec:errors} for a description of the message register and tag contents upon error.}
 \newcommand{\consumeddesc}{\texttt{consumed}, which is the amount of time that threads have been executing using this scheduling context since \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} or \apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed} was called, and \texttt{error}, an error code, see \autoref{sec:errors}.}
+\newcommand{\pagegetaddresstdesc}{struct that contains \texttt{seL4\_Word paddr}, which holds the physical address of the page, and \texttt{int error}. See \autoref{sec:errors} for a description of the message register and tag contents upon error.}
 
 \section{Error Codes}
 \label{sec:errors}
@@ -330,7 +331,10 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \label{sec:kobj_api_arm}
 \inputapidoc{arm_asidcontrol_makepool}
 \inputapidoc{arm_asidpool_assign}
-\inputapidoc{arm_page_flushcaches}
+\inputapidoc{arm_page_cleandata}
+\inputapidoc{arm_page_invalidatedata}
+\inputapidoc{arm_page_cleaninvalidatedata}
+\inputapidoc{arm_page_unifyinstruction}
 \inputapidoc{arm_page_map}
 \inputapidoc{arm_page_remap}
 \inputapidoc{arm_page_unmap}

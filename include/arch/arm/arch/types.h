@@ -22,6 +22,7 @@ typedef word_t paddr_t;
 typedef word_t pptr_t;
 typedef word_t cptr_t;
 typedef word_t node_id_t;
+typedef word_t dom_t;
 
 typedef uint8_t  hw_asid_t;
 
@@ -34,5 +35,9 @@ enum hwASIDConstants {
 typedef word_t seL4_Word;
 typedef cptr_t seL4_CPtr;
 typedef uint32_t seL4_Uint32;
+typedef uint8_t seL4_Uint8;
+typedef node_id_t seL4_NodeId;
+typedef dom_t seL4_Domain;
+typedef paddr_t seL4_PAddr;
 
 #endif
