@@ -525,13 +525,19 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
-        if (!deviceMemory) {
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+        } else {
             memzero(regionBase, 1 << ARMSmallPageBits);
             /** AUXUPD: "(True, ptr_retyps 1
                      (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
-                                                (ptr_val \<acute>regionBase)
-                                                (unat ARMSmallPageBits))" */
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
             cleanCacheRange_PoU((word_t)regionBase,
                                 (word_t)regionBase + (1 << ARMSmallPageBits) - 1,
                                 addrFromPPtr(regionBase));
@@ -546,13 +552,19 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    (word_t)regionBase);
 
     case seL4_ARM_LargePageObject:
-        if (!deviceMemory) {
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 16
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+        } else {
             memzero(regionBase, 1 << ARMLargePageBits);
             /** AUXUPD: "(True, ptr_retyps 16
                      (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
-                                                (ptr_val \<acute>regionBase)
-                                                (unat ARMLargePageBits))" */
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
             cleanCacheRange_PoU((word_t)regionBase,
                                 (word_t)regionBase + (1 << ARMLargePageBits) - 1,
                                 addrFromPPtr(regionBase));
@@ -563,13 +575,19 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    (word_t)regionBase);
 
     case seL4_ARM_SectionObject:
-        if (!deviceMemory) {
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 256
+                 (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
+                                            (ptr_val \<acute>regionBase)
+                                            (unat ARMSectionBits))" */
+        } else {
             memzero(regionBase, 1 << ARMSectionBits);
             /** AUXUPD: "(True, ptr_retyps 256
-                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
-                                                (ptr_val \<acute>regionBase)
-                                                (unat ARMSectionBits))" */
+                                            (ptr_val \<acute>regionBase)
+                                            (unat ARMSectionBits))" */
             cleanCacheRange_PoU((word_t)regionBase,
                                 (word_t)regionBase + (1 << ARMSectionBits) - 1,
                                 addrFromPPtr(regionBase));
@@ -580,7 +598,13 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    (word_t)regionBase);
 
     case seL4_ARM_SuperSectionObject:
-        if (!deviceMemory) {
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 4096
+                    (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
+                                                (ptr_val \<acute>regionBase)
+                                                (unat ARMSuperSectionBits))" */
+        } else {
             memzero(regionBase, 1 << ARMSuperSectionBits);
             /** AUXUPD: "(True, ptr_retyps 4096
                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */

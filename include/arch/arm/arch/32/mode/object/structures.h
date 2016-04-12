@@ -105,6 +105,12 @@ struct user_data {
 
 typedef struct user_data user_data_t;
 
+struct user_data_device {
+    word_t words[BIT(ARMSmallPageBits) / sizeof(word_t)];
+};
+
+typedef struct user_data user_data_device_t;
+
 enum asidSizeConstants {
 #ifdef CONFIG_ARM_SMMU
     asidHighBits = 6,
