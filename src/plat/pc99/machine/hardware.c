@@ -118,7 +118,10 @@ div64(uint64_t numerator, uint32_t denominator)
     quotient = 0llu;
     long_denom = (uint64_t) denominator;
 
-    assert(denominator < numerator);
+    if (unlikely(denominator > numerator)) {
+        return 0;
+    }
+
     assert(denominator > 0);
 
     /* align denominator to numerator */
