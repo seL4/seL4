@@ -424,6 +424,12 @@ try_boot_sys(
     }
 
     printf("Detected %d boot module(s):\n", mbi->mod_count);
+
+    if (mbi->mod_count < 1) {
+        printf("Expect at least one boot module (containing a userland image)\n");
+        return false;
+    }
+
     mods_end_paddr = 0;
 
     for (i = 0; i < mbi->mod_count; i++) {
@@ -445,11 +451,6 @@ try_boot_sys(
     }
     mods_end_paddr = ROUND_UP(mods_end_paddr, PAGE_BITS);
     assert(mods_end_paddr > boot_state.ki_p_reg.end);
-
-    if (mbi->mod_count < 1) {
-        printf("Expect at least one boot module (containing a userland image)\n");
-        return false;
-    }
 
     printf("ELF-loading userland images from boot modules:\n");
     load_paddr = mods_end_paddr;
