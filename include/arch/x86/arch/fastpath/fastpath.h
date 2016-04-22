@@ -28,4 +28,7 @@ VISIBLE NORETURN;
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
 VISIBLE NORETURN;
 
+void fastpath_signal(word_t cptr)
+VISIBLE NORETURN;
+
 #endif

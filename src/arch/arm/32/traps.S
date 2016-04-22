@@ -109,6 +109,9 @@ BEGIN_FUNC(arm_swi_syscall)
      */
     bhi fastpath_call
     beq fastpath_reply_recv
+
+    cmp r7, #SYSCALL_SEND
+    beq fastpath_signal
 #endif
 
     /* Load system call number for handleSyscall and handleUnknownSyscall() */

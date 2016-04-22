@@ -26,5 +26,8 @@ VISIBLE NORETURN SECTION(".vectors.fastpath_call");
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
 VISIBLE NORETURN SECTION(".vectors.fastpath_reply_recv");
 
+void fastpath_signal(word_t cptr)
+VISIBLE NORETURN SECTION(".vectors.fastpath_signal");
+
 #endif /* __ARCH_FASTPATH_H */
 

@@ -69,6 +69,8 @@ void __attribute__((externally_visible)) c_handle_syscall(syscall_t syscall, wor
         fastpath_call(cptr, msgInfo);
     } else if (syscall == SysReplyRecv) {
         fastpath_reply_recv(cptr, msgInfo);
+    } else if (syscall == SysSend) {
+        fastpath_signal(cptr);
     }
 #endif
 
