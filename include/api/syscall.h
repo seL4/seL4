@@ -17,9 +17,10 @@
 #include <kernel/vspace.h>
 #include <arch/api/syscall.h>
 #include <api/debug.h>
+#include <plat/machine.h>
 
 exception_t handleSyscall(syscall_t syscall) VISIBLE;
-exception_t handleInterruptEntry(void) VISIBLE;
+exception_t handleInterruptEntry(irq_t irq) VISIBLE;
 exception_t handleUnknownSyscall(word_t w) VISIBLE;
 exception_t handleUserLevelFault(word_t w_a, word_t w_b) VISIBLE;
 exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType) VISIBLE;

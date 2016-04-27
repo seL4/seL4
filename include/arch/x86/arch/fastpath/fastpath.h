@@ -31,4 +31,7 @@ VISIBLE NORETURN;
 void fastpath_signal(word_t cptr)
 VISIBLE NORETURN;
 
+void fastpath_irq(void)
+VISIBLE;
+
 #endif

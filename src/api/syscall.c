@@ -30,24 +30,16 @@
  * for each event causing a kernel entry */
 
 exception_t
-handleInterruptEntry(void)
+handleInterruptEntry(irq_t irq)
 {
-    irq_t irq;
-
-    irq = getActiveIRQ();
 #ifdef DEBUG
     ksKernelEntry.path = Debug_Interrupt;
     ksKernelEntry.irq = irq;
 #endif /* DEBUG */
-    if (irq != irqInvalid) {
-        handleInterrupt(irq);
-    } else {
-#ifdef CONFIG_IRQ_REPORTING
-        printf("Spurious interrupt\n");
-#endif
-        handleSpuriousIRQ();
-    }
 
+    assert(irq != irqInvalid);
+
+    handleInterrupt(irq);
     schedule();
     activateThread();
 

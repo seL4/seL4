@@ -152,6 +152,16 @@ BEGIN_FUNC(slowpath)
     RET_TO_USER r7
 END_FUNC(slowpath)
 
+BEGIN_FUNC(slowpath_irq) 
+    /* called from the fastpath, r0 contains the irq number, 
+     * all other registers are trashed 
+     */
+    ldr r7, =ksCurThread
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+    blx handleInterruptEntry
+    RET_TO_USER r7
+END_FUNC(slowpath_irq)
+
 BEGIN_FUNC(fastpath_restore)
     /* Duplicate of above except r2 contains ksCurThread,
        r0 and r1 should be preserved */
@@ -268,8 +278,8 @@ BEGIN_FUNC(arm_irq_exception)
 
     ldr r7, =ksCurThread
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
-    blx handleInterruptEntry
-
+    blx fastpath_irq
+    ldr r7, =ksCurThread
     RET_TO_USER r7
 END_FUNC(arm_irq_exception)
 
