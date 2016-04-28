@@ -133,7 +133,7 @@ class Type(object):
         assert word_num == 0
         return "%s" % var_name
 
-    def double_word_expression(self, var_name, word_num):
+    def double_word_expression(self, var_name, word_num, word_size):
 
         assert word_num == 0 or word_num == 1
 
@@ -141,7 +141,7 @@ class Type(object):
             return "({0}) {1}".format(TYPES[self.size_bits], var_name)
         elif word_num == 1:
             return "({0}) ({1} >> {2})".format(TYPES[self.size_bits], var_name,
-                                               self.size_bits)
+                                               word_size)
 
 
 class PointerType(Type):
@@ -339,8 +339,8 @@ def generate_marshal_expressions(params, num_mrs, structs, wordsize):
 
         # double word type
         if param.type.double_word:
-            word_array[target_word].append(param.type.double_word_expression(param.name, 0))
-            word_array[target_word + 1].append(param.type.double_word_expression(param.name, 1))
+            word_array[target_word].append(param.type.double_word_expression(param.name, 0, wordsize))
+            word_array[target_word + 1].append(param.type.double_word_expression(param.name, 1, wordsize))
             return
 
         # Single full word?
