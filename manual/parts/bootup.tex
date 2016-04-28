@@ -99,7 +99,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{seL4\_SlotRegion}     & \texttt{empty}                   & empty slots (null caps) \\
       \texttt{seL4\_SlotRegion}     & \texttt{sharedFrames}            & see \autoref{ch:bootup:multikernel} \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImageFrames}         & frames containing the userland image \\
-      \texttt{seL4\_SlotRegion}     & \texttt{userImagePTs}            & page tables covering the userland image \\
+      \texttt{seL4\_SlotRegion}     & \texttt{userImagePaging}         & userland-image paging structure caps \\
       \texttt{seL4\_SlotRegion}     & \texttt{untyped}                 & untyped-memory capabilities \\
       \texttt{seL4\_Word[]}         & \texttt{untypedPaddrList}        & array of untyped-memory physical addresses \\
       \texttt{uint8\_t[]}           & \texttt{untypedSizeBitsList}     & array of untyped-memory sizes ($2^n$ bytes) \\
@@ -112,13 +112,19 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
   \end{center}
 \end{table}
 
-The capabilities in \texttt{userImageFrames} and \texttt{userImagePTs} are
-ordered, i.e.\ the first capability references the first frame of the
-userland image etc. Userland always knows to which virtual addresses its own
+The capabilities in \texttt{userImageFrames} are
+ordered such that the first capability references the first frame of the
+userland image and so on.
+The capabilities in \texttt{userImagePaging} are ordered in descending order
+of paging structure size. Within a given paging structure size, capabilities are
+ordered by the virtual address at which the corresponding objects are mapped
+into the initial thread's address space.
+
+Userland always knows to which virtual addresses its own
 code and data is mapped (e.g.\ in GCC, with the standard linker script, the
 symbols \texttt{\_\_executable\_start} and \texttt{\_end} are available).
 Userland can therefore
-infer the virtual address behind each userland frame and page-table cap.
+infer the virtual address behind each userland frame and paging structure cap.
 
 Untyped memory is given in no particular order. The array entry
 \texttt{untypedSizeBitsList[i]} stores the untyped-memory size ($2^n$ bytes) of
