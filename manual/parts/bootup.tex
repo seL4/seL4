@@ -64,7 +64,8 @@ The first 12 slots contain specific capabilities as listed in
 
 \section{\label{ch:bootup:bootinfo}BootInfo Frame}
 
-CNode slots with CPTR 0xb and above are filled dynamically during
+CNode slots with CPTR \texttt{seL4\_NumInitialCaps} (defined in the seL4
+userland library) and above are filled dynamically during
 bootstrapping. Their exact contents depend on the userland image size,
 platform configuration (devices) etc. In order to tell the initial thread
 which capabilities are stored where in its CNode, the kernel provides
