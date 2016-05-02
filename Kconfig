@@ -20,6 +20,10 @@ config ARCH_ARM_V7A
     bool
     default n
 
+config KERNEL_MASTER
+    bool
+    default y
+
 # Native word size of the current platform. This is primarily intended for use
 # in code generators that need to know, at generation-time, the word size of
 # the target platform.
