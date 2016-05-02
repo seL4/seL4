@@ -47,7 +47,19 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Check it's an endpoint */
     if (unlikely(!cap_capType_equals(ep_cap, cap_endpoint_cap) ||
                  !cap_endpoint_cap_get_capCanSend(ep_cap))) {
-        slowpath(SysCall);
+        if (likely(cap_capType_equals(ep_cap, cap_irq_handler_cap) &&
+                   seL4_MessageInfo_get_label(info) == IRQAckIRQ)) {
+            maskInterrupt(false, cap_irq_handler_cap_get_capIRQ(ep_cap));
+#ifdef ARCH_X86
+            /* Need to update NextIP in the calling thread */
+            setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
+#endif
+            fastpath_restore(getRegister(ksCurThread, badgeRegister),
+                             0,
+                             ksCurThread);
+        } else {
+            slowpath(SysCall);
+        }
     }
 
     /* Get the endpoint address */
