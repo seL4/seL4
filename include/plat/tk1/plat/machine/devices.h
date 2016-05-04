@@ -26,6 +26,10 @@
 #define GIC_DISTRIBUTOR_PADDR       GICD_PADDR
 #define GIC_CONTROLLER0_PADDR       GICI_PADDR
 
+/* HYP mode kernel devices */
+#define GIC_VCPUCTRL_PPTR           0xfff06000
+#define GIC_PL400_VCPUCTRL_PPTR     GIC_VCPUCTRL_PPTR
+#define GIC_VCPUCTRL_PADDR          (VGICI_REQ_PADDR)
 /*
  * many of the device regions are not 4K page aligned, so some regions may contain more than
  * one devices. it is the user's responsibilty to figure out how to use these regions

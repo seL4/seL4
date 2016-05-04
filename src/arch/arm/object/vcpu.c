@@ -84,6 +84,12 @@
 #define VGIC_IRQ_ACTIVE      (0x2U << 28)
 #define VGIC_IRQ_MASK        (0x3U << 28)
 
+#define VIRQ_GROUP_MASK     (1)
+#define VIRQ_GROUP_SHIFT    (30)
+#define VIRQ_PRIORITY_MASK  (0x1f)
+#define VIRQ_PRIORITY_SHIFT (23)
+#define VIRQ_IRQ_MASK       (0x3ff)
+
 struct gich_vcpu_ctrl_map {
     uint32_t hcr;    /* 0x000 RW 0x00000000 Hypervisor Control Register */
     uint32_t vtr;    /* 0x004 RO IMPLEMENTATION DEFINED VGIC Type Register */
@@ -354,10 +360,18 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
     return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field);
 }
 
+static uint32_t makeVIRQ(int group, int priority, int irq)
+{
+    uint32_t virq = ((group & VIRQ_GROUP_MASK) << VIRQ_GROUP_SHIFT);
+    virq |= ((priority & VIRQ_PRIORITY_MASK) << VIRQ_PRIORITY_SHIFT);
+    virq |= (irq & VIRQ_IRQ_MASK);
+    return virq;
+}
+
 exception_t
 invokeVCPUInjectIRQ(vcpu_t* vcpu, int index, int group, int priority, int irq)
 {
-    vcpu->vgic.lr[index] = (group << 30) | (priority << 23) | (irq << 0);
+    vcpu->vgic.lr[index] = makeVIRQ(group, priority, irq);
     vcpu->vgic.lr[index] |= VGIC_IRQ_PENDING | VGIC_LR_EOIIRQEN;
 
     setThreadState(ksCurThread, ThreadState_Restart);
