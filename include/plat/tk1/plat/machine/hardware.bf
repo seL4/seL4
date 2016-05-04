@@ -52,4 +52,3 @@ block iopte {
     padding                 7
     field_high  address     22
 }
-
