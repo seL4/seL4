@@ -235,6 +235,13 @@ config ARM_HYPERVISOR_SUPPORT
 
     endchoice
 
+    config ARM_SMMU
+        bool "Enable SystemMMU for Tegra K1 SoC"
+        depends on PLAT_TK1
+        help
+            Support for TK1 SoC-specific SystemMMU
+
+
 source "$KERNEL_PATH/src/arch/arm/Kconfig"
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"
 

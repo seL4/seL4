@@ -98,6 +98,45 @@ block vcpu_cap {
 }
 #endif
 
+
+-- IO space caps
+-- each module has an engine that can be enabled
+-- the clients use the same module can be separately enabled
+block io_space_cap {
+    field   capModuleID       16
+    field   capClientID       16
+
+    padding                   24
+    field   capType           8
+}
+
+block io_space_capdata {
+    padding                 32
+
+    field   moduleID        16
+    field   clientID        16
+}
+
+block io_page_directory_cap (capType, capIOPDIsMapped, capIOPDASID, capIOPDBasePtr) {
+    field_high  capIOPDBasePtr      20
+    padding                         12
+
+    padding                         16
+    field       capIOPDASID         7       -- TK1 has 7-bit ASID
+    field       capIOPDIsMapped     1
+    field       capType             8
+}
+
+block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr) {
+    field_high  capIOPTBasePtr      20
+    padding                         12
+
+    padding                         16
+    field       capIOPTASID         7
+    field       capIOPTIsMapped     1
+    field       capType             8
+}
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     mask 4 0xe
@@ -132,8 +171,13 @@ tagged_union cap capType {
 
     -- 8-bit tag arch caps
 #ifdef ARM_HYP
-    tag vcpu_cap                               0x0f
+    tag vcpu_cap            0x0f
 #endif /* ARM_HYP */
+
+    -- we use the same names as for x86 IOMMU caps
+    tag io_space_cap            0x1f
+    tag io_page_directory_cap   0x2f
+    tag io_page_table_cap       0x3f
 }
 
 ---- Arch-independent object types
