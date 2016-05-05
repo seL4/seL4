@@ -120,11 +120,21 @@ of paging structure size. Within a given paging structure size, capabilities are
 ordered by the virtual address at which the corresponding objects are mapped
 into the initial thread's address space.
 
-Userland always knows to which virtual addresses its own
+It is up to userland to infer the virtual address of frames referenced by
+the capabilities in \texttt{userImageFrames} and the virtual address and
+types of paging structures
+referenced by the capabilities in \texttt{userImagePaging}.
+Userland typically has a way of finding out to which virtual addresses its
 code and data is mapped (e.g.\ in GCC, with the standard linker script, the
 symbols \texttt{\_\_executable\_start} and \texttt{\_end} are available).
-Userland can therefore
-infer the virtual address behind each userland frame and paging structure cap.
+Additionally, the initial thread can assume that its address space is virtually
+contiguous, and is made up of the smallest frames available on the architecture.
+It's also assumed that the initial thread knows which paging structures are
+available on the architecture it's running on.
+This, along with knowledge of how capabilities in \texttt{userImageFrames} and
+\texttt{userImagePaging} are ordered, is sufficient information for userland to infer
+the virtual address of each
+frame capability, and the virtual address and type of each paging structure capability.
 
 Untyped memory is given in no particular order. The array entry
 \texttt{untypedSizeBitsList[i]} stores the untyped-memory size ($2^n$ bytes) of
