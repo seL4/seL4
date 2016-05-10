@@ -7,6 +7,7 @@
  *
  * @TAG(GD_GPL)
  */
+
 #include <types.h>
 #include <machine/io.h>
 #include <kernel/vspace.h>
@@ -21,7 +22,8 @@
 /* NOTE: Regions are not allowed to be adjacent! */
 
 const p_region_t BOOT_RODATA avail_p_regs[] = {
-    { .start = 0x80000000, .end = 0xf0000000 }
+//    { .start = 0x80000000, .end = 0xf0000000 }
+      { .start = 0x80000000, .end = 0xb0000000 }
 };
 
 BOOT_CODE int get_num_avail_p_regs(void)
@@ -38,8 +40,13 @@ BOOT_CODE p_region_t get_avail_p_reg(word_t i)
 #define PAGE_SIZE       (1 << PAGE_BITS)
 #define SECTION_SIZE    (1 << SECTION_BITS)
 
+#define VM_PA_START     0xb0000000
+#define VM_PA_SIZE      0x10000000
+
 const p_region_t BOOT_RODATA dev_p_regs[] = {
 
+    { VM_PA_START,          VM_PA_START + VM_PA_SIZE },
+    { VGICI_VM_PADDR,       VGICI_VM_PADDR + PAGE_SIZE },
     { GRAPH_HOST_PADDR,     GRAPH_HOST_PADDR + (SECTION_SIZE * 16) }, /* 16 MB                        */
     { GPU_PADDR,            GPU_PADDR + (SECTION_SIZE * 144) },       /* 144 MB                       */
     { UP_TAG_PADDR,         UP_TAG_PADDR + PAGE_SIZE },               /* 4 KB                         */
@@ -125,6 +132,11 @@ isReservedIRQ(irq_t irq)
 void
 handleReservedIRQ(irq_t irq)
 {
+    if ((config_set(ARM_HYP)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+        VGICMaintenance();
+        return;
+    }
+
     printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
@@ -152,6 +164,19 @@ map_kernel_devices(void)
             false  /* armPageCacheable */
         )
     );
+
+    if (config_set(ARM_HYP)) {
+        map_kernel_frame(
+                GIC_VCPUCTRL_PADDR,
+                GIC_VCPUCTRL_PPTR,
+                VMKernelOnly,
+                vm_attributes_new(
+                    false,
+                    false,
+                    false
+                )
+        );
+    }
 
 #if defined DEBUG || defined RELEASE_PRINTF
     /* map kernel device: UART */
@@ -191,8 +216,21 @@ read_cntfrq(void)
     return val;
 }
 
+
+static void
+write_cnthp_ctl(uint32_t v)
+{
+    asm volatile ("mcr p15, 4, %0, c14, c2, 1" ::"r"(v));
+}
+
+static void
+write_cnthp_tval(uint32_t v)
+{
+    asm volatile  ("mcr p15, 4, %0, c14, c2, 0" :: "r"(v));
+}
+
 #define GPT_DEFAULT_HZ		12000000
-static uint32_t gpt_cntp_tval = 0;
+static uint32_t gpt_cnt_tval = 0;
 
 /**
    DONT_TRANSLATE
@@ -200,7 +238,11 @@ static uint32_t gpt_cntp_tval = 0;
 void
 resetTimer(void)
 {
-    write_cntp_tval(gpt_cntp_tval);
+    if (config_set(ARM_HYP)) {
+        write_cnthp_tval(gpt_cnt_tval);
+    } else {
+        write_cntp_tval(gpt_cnt_tval);
+    }
 }
 
 /**
@@ -211,6 +253,7 @@ resetTimer(void)
 BOOT_CODE void
 initTimer(void)
 {
+
     uint32_t freq = read_cntfrq();
     uint64_t tval = 0;
     if (freq != GPT_DEFAULT_HZ) {
@@ -221,11 +264,16 @@ initTimer(void)
         printf("timer interval value out of range \n");
         halt();
     }
-    gpt_cntp_tval = (uint32_t)tval;
 
-    /* write the value */
-    write_cntp_tval(gpt_cntp_tval);
+    gpt_cnt_tval = (uint32_t)tval;
 
-    /* enable the timer */
-    write_cntp_ctl(0x1);
+    if (config_set(ARM_HYP)) {
+        write_cnthp_tval(gpt_cnt_tval);
+        write_cnthp_ctl(0x1);
+    } else {
+        /* write the value */
+        write_cntp_tval(gpt_cnt_tval);
+        /* enable the timer */
+        write_cntp_ctl(0x1);
+    }
 }

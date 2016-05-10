@@ -51,30 +51,6 @@
                    | HCR_TAC | HCR_SWIO)
 #define HCR_VCPU   (HCR_COMMON)
 
-
-/* 1471 */
-#define SCTLR      "p15, 0, %0, c1, c0, 0"
-#define ACTLR      "p15, 0, %0, c1, c0, 1"
-#define HSCTLR     "p15, 4, %0, c1, c0, 0"
-#define HCR        "p15, 4, %0, c1, c1, 0"
-
-/* VA->IPA */
-#define ATS1CPR    "p15, 0, %0, c7, c8, 0"
-#define ATS1CPW    "p15, 0, %0, c7, c8, 1"
-#define ATS1CUR    "p15, 0, %0, c7, c8, 2"
-#define ATS1CUW    "p15, 0, %0, c7, c8, 3"
-/* VA->PA */
-#define ATS12NSOPR "p15, 0, %0, c7, c8, 4"
-#define ATS12NSOPW "p15, 0, %0, c7, c8, 5"
-#define ATS12NSOUR "p15, 0, %0, c7, c8, 6"
-#define ATS12NSOUW "p15, 0, %0, c7, c8, 7"
-/* VA(hyp)-> PA */
-#define ATS1HR     "p15, 4, %0, c7, c8, 0"
-#define ATS1HW     "p15, 4, %0, c7, c8, 1"
-
-#define PAR32      "p15, 0, %0, c7, c4, 0"
-#define PAR64      "p15, 0, %Q, %R, c7"
-
 #define SCTLR_DEFAULT 0xc5187c
 #define ACTLR_DEFAULT 0x40
 
@@ -107,6 +83,12 @@
 #define VGIC_IRQ_PENDING     (0x1U << 28)
 #define VGIC_IRQ_ACTIVE      (0x2U << 28)
 #define VGIC_IRQ_MASK        (0x3U << 28)
+
+#define VIRQ_GROUP_MASK     (1)
+#define VIRQ_GROUP_SHIFT    (30)
+#define VIRQ_PRIORITY_MASK  (0x1f)
+#define VIRQ_PRIORITY_SHIFT (23)
+#define VIRQ_IRQ_MASK       (0x3ff)
 
 struct gich_vcpu_ctrl_map {
     uint32_t hcr;    /* 0x000 RW 0x00000000 Hypervisor Control Register */
@@ -145,8 +127,8 @@ vcpu_save(vcpu_t *cpu)
         int i;
         dsb();
         /* Store VCPU state */
-        MRC(SCTLR, cpu->cpx.sctlr);
-        MRC(ACTLR, cpu->cpx.actlr);
+        cpu->cpx.sctlr = getSCTLR();
+        cpu->cpx.actlr = getACTLR();
 
         /* Store GIC VCPU control state */
         cpu->vgic.hcr = gic_vcpu_ctrl->hcr;
@@ -164,7 +146,8 @@ vcpu_save(vcpu_t *cpu)
 }
 
 
-static uint32_t readVCPUReg(vcpu_t *vcpu, uint32_t field)
+static uint32_t
+readVCPUReg(vcpu_t *vcpu, uint32_t field)
 {
     switch (field) {
     case 0:
@@ -174,7 +157,8 @@ static uint32_t readVCPUReg(vcpu_t *vcpu, uint32_t field)
     return 0;
 }
 
-static void writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
+static void
+writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 {
     switch (field) {
     case 0:
@@ -183,11 +167,9 @@ static void writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 }
 
 
-
 void
 vcpu_restore(vcpu_t *cpu)
 {
-    uint32_t hcr;
     dsb();
     if (cpu != NULL) {
         int i;
@@ -203,27 +185,22 @@ vcpu_restore(vcpu_t *cpu)
         }
 
         /* Restore VCPU state */
-        MCR(SCTLR, cpu->cpx.sctlr);
-        MCR(ACTLR, cpu->cpx.actlr);
+        setSCTLR(cpu->cpx.sctlr);
+        setACTLR(cpu->cpx.actlr);
 
-        hcr = HCR_VCPU;
-        MCR(HCR, hcr);
+        setHCR(HCR_VCPU);
         isb();
 
         /* Turn on the VGIC */
         gic_vcpu_ctrl->hcr = cpu->vgic.hcr;
     } else {
-        uint32_t v;
         /* Turn off the VGIC */
         gic_vcpu_ctrl->hcr = 0;
         isb();
 
         /* Stage 1 MMU off */
-        v = SCTLR_DEFAULT;
-        MCR(SCTLR, v);
-
-        hcr = HCR_NATIVE;
-        MCR(HCR, hcr);
+        setSCTLR(SCTLR_DEFAULT);
+        setHCR(HCR_NATIVE);
         isb();
     }
 }
@@ -383,10 +360,18 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
     return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field);
 }
 
+static uint32_t makeVIRQ(int group, int priority, int irq)
+{
+    uint32_t virq = ((group & VIRQ_GROUP_MASK) << VIRQ_GROUP_SHIFT);
+    virq |= ((priority & VIRQ_PRIORITY_MASK) << VIRQ_PRIORITY_SHIFT);
+    virq |= (irq & VIRQ_IRQ_MASK);
+    return virq;
+}
+
 exception_t
 invokeVCPUInjectIRQ(vcpu_t* vcpu, int index, int group, int priority, int irq)
 {
-    vcpu->vgic.lr[index] = (group << 30) | (priority << 23) | (irq << 0);
+    vcpu->vgic.lr[index] = makeVIRQ(group, priority, irq);
     vcpu->vgic.lr[index] |= VGIC_IRQ_PENDING | VGIC_LR_EOIIRQEN;
 
     setThreadState(ksCurThread, ThreadState_Restart);

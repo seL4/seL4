@@ -299,12 +299,10 @@ isReservedIRQ(irq_t irq)
 void
 handleReservedIRQ(irq_t irq)
 {
-#ifdef ARM_HYP
-    if (irq == INTERRUPT_VGIC_MAINTENANCE) {
+    if ((config_set(ARM_HYP)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
         VGICMaintenance();
         return;
     }
-#endif
     printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
@@ -345,18 +343,19 @@ map_kernel_devices(void)
             false  /* armPageCacheable */
         )
     );
-#if defined(ARM_HYP)
-    map_kernel_frame(
-        GIC_VCPUCTRL_PADDR,
-        GIC_VCPUCTRL_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            false, /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-#endif
+
+    if (config_set(ARM_HYP)) {
+        map_kernel_frame(
+            GIC_VCPUCTRL_PADDR,
+            GIC_VCPUCTRL_PPTR,
+            VMKernelOnly,
+            vm_attributes_new(
+                false, /* armExecuteNever */
+                false, /* armParityEnabled */
+                false  /* armPageCacheable */
+            )
+        );
+    }
 
 #if defined DEBUG || defined RELEASE_PRINTF
     /* map kernel device: UART */

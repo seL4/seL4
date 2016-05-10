@@ -1140,11 +1140,11 @@ setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
             !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
-#ifndef ARM_HYP
-        setCurrentPD(addrFromPPtr(armKSGlobalPD));
-#else
-        setCurrentPD(addrFromPPtr(0));
-#endif
+        if (config_set(ARM_HYP)) {
+            setCurrentPD(addrFromPPtr(0));
+        } else {
+            setCurrentPD(addrFromPPtr(armKSGlobalPD));
+        }
         return;
     }
 
@@ -1152,18 +1152,18 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_directory_cap_get_capPDMappedASID(threadRoot);
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.pd != pd)) {
-#ifndef ARM_HYP
-        setCurrentPD(addrFromPPtr(armKSGlobalPD));
-#else
-        setCurrentPD(addrFromPPtr(0));
-#endif
+        if (config_set(ARM_HYP)) {
+            setCurrentPD(addrFromPPtr(0));
+        } else {
+            setCurrentPD(addrFromPPtr(armKSGlobalPD));
+        }
         return;
     }
 
     armv_contextSwitch(pd, asid);
-#ifdef ARM_HYP
-    vcpu_switch(tcb->tcbArch.vcpu);
-#endif
+    if (config_set(ARM_HYP)) {
+        vcpu_switch(tcb->tcbArch.vcpu);
+    }
 }
 
 static bool_t
@@ -1894,12 +1894,12 @@ doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
     /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
             \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
         \<and> \<acute>start <= \<acute>end, id)" */
-#ifdef ARM_HYP
-    /* The hypervisor does not share an AS with userspace so we must flush
-     * by kernel MVA instead. ARMv7 caches are PIPT so it makes no difference */
-    end = (vptr_t)paddr_to_pptr(pstart) + (end - start);
-    start = (vptr_t)paddr_to_pptr(pstart);
-#endif
+    if (config_set(ARM_HYP)) {
+        /* The hypervisor does not share an AS with userspace so we must flush
+         * by kernel MVA instead. ARMv7 caches are PIPT so it makes no difference */
+        end = (vptr_t)paddr_to_pptr(pstart) + (end - start);
+        start = (vptr_t)paddr_to_pptr(pstart);
+    }
     switch (invLabel) {
     case ARMPDClean_Data:
     case ARMPageClean_Data:
@@ -2055,9 +2055,9 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
-#ifdef ARM_HYP
-        pte.words[0] += BIT(pageBitsForSize(ARMLargePage));
-#endif
+        if (config_set(ARM_HYP)) {
+            pte.words[0] += BIT(pageBitsForSize(ARMLargePage));
+        }
     }
     cleanCacheRange_PoU((word_t)pte_entries.base,
                         LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
@@ -2084,9 +2084,9 @@ performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.base[i] = pde;
-#ifdef ARM_HYP
-        pde.words[0] += BIT(pageBitsForSize(ARMSection));
-#endif
+        if (config_set(ARM_HYP)) {
+            pde.words[0] += BIT(pageBitsForSize(ARMSection));
+        }
     }
     cleanCacheRange_PoU((word_t)pde_entries.base,
                         LAST_BYTE_PDE(pde_entries.base, pde_entries.length),

@@ -78,7 +78,8 @@
 .code 32
 .section .boot.text, "ax"
 BEGIN_FUNC(_start)
-    /* Supervisor mode, interrupts disabled */
+
+    /* Supervisor/hypervisor mode, interrupts disabled */
     ldr r5, =CPSR_KERNEL
     msr cpsr_fc, r5
 
@@ -142,7 +143,7 @@ BEGIN_FUNC(_start)
     pop {r0-r12}
     /* SP_usr */
     pop {lr}
-    msr sp_usr, r0
+    msr sp_usr, lr
     /* pop the user lr */
     pop {lr}
     /* return from exception */

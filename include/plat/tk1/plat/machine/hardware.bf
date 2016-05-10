@@ -10,3 +10,45 @@
 
 base 32
 
+-- Tegra K1 System MMU page table structures
+-- Note: the structures are not the ones defined in
+-- the ARM system mmu specification, but SoC-specific
+-- to the TK1 platform. This is because SoC vendors
+-- tend to design their own SMMUs.
+-- see 16.4.4.1 of the TK1 manual for details
+
+
+-- IO PD entries
+tagged_union iopde page_size {
+    tag iopde_4m        0
+    tag iopde_pt        1
+}
+
+block iopde_pt {
+    field       read        1
+    field       write       1
+    field       secure      1
+    field       page_size   1
+    padding                 6
+    field_high  address     22
+}
+
+block iopde_4m {
+    field       read        1
+    field       write       1
+    field       secure      1
+    field       page_size   1
+    padding                 6
+    field_high  address     12
+    padding                 10
+}
+
+
+-- IO PT entries
+block iopte {
+    field       read        1
+    field       write       1
+    field       secure      1
+    padding                 7
+    field_high  address     22
+}

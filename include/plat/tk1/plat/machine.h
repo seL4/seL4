@@ -211,13 +211,19 @@ enum IRQConstants {
     maxIRQ                          = 192
 } platform_interrupt_t;
 
-#define INTERRUPT_S_PGPT        INTERRUPT_PPI_13
-#define INTERRUPT_NS_PGPT       INTERRUPT_PPI_14
-#define INTERRUPT_VGPT          INTERRUPT_PPI_11
-#define INTERRUPT_HGPT          INTERRUPT_PPI_10
+#define INTERRUPT_VGIC_MAINTENANCE      INTERRUPT_PPI_9
+#define INTERRUPT_S_PGPT                INTERRUPT_PPI_13
+#define INTERRUPT_NS_PGPT               INTERRUPT_PPI_14
+#define INTERRUPT_VGPT                  INTERRUPT_PPI_11
+#define INTERRUPT_HGPT                  INTERRUPT_PPI_10
 
 /* the kernel runs in secure supervisor mode by default */
+
+#ifdef ARM_HYP
+#define KERNEL_TIMER_IRQ        INTERRUPT_HGPT
+#else
 #define KERNEL_TIMER_IRQ        INTERRUPT_S_PGPT
+#endif
 
 enum irqNumbers {
     irqInvalid = 255
