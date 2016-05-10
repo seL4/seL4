@@ -26,12 +26,16 @@ static inline void writeContextIDPL2(word_t id)
 }
 
 /** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void writeContextIDAndPD(word_t id, word_t pd)
 {
     asm volatile("mcrr p15, 6, %0, %1, c2"  : : "r"(pd), "r"(id << (48-32)));
     isb();
 }
 
+
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void setCurrentPDPL2(paddr_t addr)
 {
     word_t pd, vmid;
@@ -42,6 +46,7 @@ static inline void setCurrentPDPL2(paddr_t addr)
 }
 
 /** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void setCurrentHypPD(paddr_t addr)
 {
     word_t zero = 0;
@@ -51,6 +56,7 @@ static inline void setCurrentHypPD(paddr_t addr)
 }
 
 /** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void setVTCR(word_t r)
 {
     dsb();
@@ -59,6 +65,7 @@ static inline void setVTCR(word_t r)
 }
 
 /** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void setHCR(word_t r)
 {
     dsb();
@@ -67,13 +74,16 @@ static inline void setHCR(word_t r)
 }
 
 /** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void setHMAIR(word_t hmair0, word_t hmair1)
 {
     asm volatile("mcr p15, 4, %0, c10, c2, 0" : : "r"(hmair0));
     asm volatile("mcr p15, 4, %0, c10, c2, 1" : : "r"(hmair1));
     isb();
 }
+
 /** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void setMAIR(word_t hmair0, word_t hmair1)
 {
     asm volatile("mcr p15, 0, %0, c10, c2, 0" : : "r"(hmair0));
@@ -82,6 +92,7 @@ static inline void setMAIR(word_t hmair0, word_t hmair1)
 }
 
 /** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void invalidateHypTLB(void)
 {
     dsb();
@@ -90,7 +101,8 @@ static inline void invalidateHypTLB(void)
     isb();
 }
 
-/** MODIFIES: */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline paddr_t PURE addressTranslateS1CPR(vptr_t vaddr)
 {
     uint64_t ipa;
@@ -101,7 +113,8 @@ static inline paddr_t PURE addressTranslateS1CPR(vptr_t vaddr)
     return ipa;
 }
 
-/** MODIFIES: */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline word_t PURE getHSR(void)
 {
     word_t HSR;
@@ -109,7 +122,8 @@ static inline word_t PURE getHSR(void)
     return HSR;
 }
 
-/** MODIFIES: */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline word_t PURE getHDFAR(void)
 {
     word_t HDFAR;
@@ -117,7 +131,8 @@ static inline word_t PURE getHDFAR(void)
     return HDFAR;
 }
 
-/** MODIFIES: */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline word_t PURE getHIFAR(void)
 {
     word_t HIFAR;
@@ -125,7 +140,8 @@ static inline word_t PURE getHIFAR(void)
     return HIFAR;
 }
 
-/** MODIFIES: */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline word_t PURE getHPFAR(void)
 {
     word_t HPFAR;
@@ -133,7 +149,8 @@ static inline word_t PURE getHPFAR(void)
     return HPFAR;
 }
 
-/** MODIFIES: */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline word_t getSCTLR(void)
 {
     word_t SCTLR;
@@ -141,13 +158,15 @@ static inline word_t getSCTLR(void)
     return SCTLR;
 }
 
-/** MODIFIES: */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void setSCTLR(word_t sctlr)
 {
     asm volatile ("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
 }
 
-/** MODIFIES */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline word_t getACTLR(void)
 {
     word_t ACTLR;
@@ -155,7 +174,8 @@ static inline word_t getACTLR(void)
     return ACTLR;
 }
 
-/** MODIFIES: */
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
 static inline void setACTLR(word_t actlr)
 {
     asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));

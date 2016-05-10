@@ -19,6 +19,8 @@
 #define UARTD_PPTR                  0xfff01300
 #define GIC_DISTRIBUTOR_PPTR        0xfff03000
 #define GIC_CONTROLLER_PPTR         0xfff04000
+/* HYP mode kernel devices */
+#define GIC_VCPUCTRL_PPTR           0xfff06000
 
 #define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR
 #define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR
@@ -26,8 +28,6 @@
 #define GIC_DISTRIBUTOR_PADDR       GICD_PADDR
 #define GIC_CONTROLLER0_PADDR       GICI_PADDR
 
-/* HYP mode kernel devices */
-#define GIC_VCPUCTRL_PPTR           0xfff06000
 #define GIC_PL400_VCPUCTRL_PPTR     GIC_VCPUCTRL_PPTR
 #define GIC_VCPUCTRL_PADDR          (VGICI_REQ_PADDR)
 /*
