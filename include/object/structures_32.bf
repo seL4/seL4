@@ -278,6 +278,11 @@ block temporal {
     field faultType 3
 }
 
+block no_fault_handler {
+    padding 61
+    field faultType 3
+}
+
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingObject,

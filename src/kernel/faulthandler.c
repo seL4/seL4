@@ -48,7 +48,7 @@ sendFaultIPCToHandler(tcb_t *tptr, bool_t canDonate, cap_t handlerCap)
 
         return EXCEPTION_NONE;
     } else {
-        current_fault = fault_null_fault_new();
+        current_fault = fault_no_fault_handler_new();
         current_lookup_fault = lookup_fault_missing_capability_new(0);
 
         return EXCEPTION_FAULT;
@@ -94,6 +94,9 @@ print_fault(fault_t f)
         printf("user exception 0x%x code 0x%x",
                (unsigned int)fault_user_exception_get_number(f),
                (unsigned int)fault_user_exception_get_code(f));
+        break;
+    case fault_no_fault_handler:
+        printf("no fault handler");
         break;
     default:
         printf("unknown fault");

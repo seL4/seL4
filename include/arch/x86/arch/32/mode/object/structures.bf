@@ -182,6 +182,7 @@ tagged_union fault faultType {
     tag unknown_syscall 3
     tag user_exception 4
     tag temporal 5
+    tag no_fault_handler 6
 }
 
 -- VM attributes
