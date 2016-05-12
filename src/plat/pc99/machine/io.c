@@ -8,12 +8,13 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <arch/kernel/boot_sys.h>
 #include <arch/kernel/lock.h>
 #include <arch/model/statedata.h>
 #include <plat/machine/io.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 
 void serial_init(uint16_t port)
 {

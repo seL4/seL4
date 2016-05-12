@@ -14,7 +14,7 @@
 #include <config.h>
 
 typedef struct cmdline_opt {
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
     uint16_t console_port;
     uint16_t debug_port;
 #endif

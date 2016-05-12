@@ -8,12 +8,13 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 
 #define UTHR 0x00 /* UART Transmit Holding Register */
 #define ULSR 0x14 /* UART Line Status Register */

@@ -8,12 +8,13 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 
 #define URXD  0x00 /* UART Receiver Register */
 #define UTXD  0x40 /* UART Transmitter Register */
@@ -59,4 +60,4 @@ unsigned char getDebugChar(void)
     return *UART_REG(URXD);
 }
 
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */

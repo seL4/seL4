@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <machine/io.h>
 #include <kernel/vspace.h>
@@ -275,7 +276,7 @@ map_kernel_devices(void)
         )
     );
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
     /* map kernel device: UART */
     map_kernel_frame(
         UART1_PADDR,
@@ -287,6 +288,6 @@ map_kernel_devices(void)
             false  /* armPageCacheable */
         )
     );
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */
 }
 

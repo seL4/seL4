@@ -57,7 +57,7 @@ uint32_t x86KSnumIOPTLevels;
 uint32_t x86KSnumIODomainIDBits;
 uint32_t x86KSFirstValidIODomain;
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 uint16_t x86KSconsolePort;
 uint16_t x86KSdebugPort;
 #endif

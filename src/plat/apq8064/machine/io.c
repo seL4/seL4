@@ -8,12 +8,13 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 #define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #define USR                   0x08
@@ -50,4 +51,4 @@ getDebugChar(void)
 }
 
 
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */

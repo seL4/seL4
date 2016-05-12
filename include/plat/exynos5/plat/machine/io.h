@@ -11,16 +11,17 @@
 #ifndef __PLAT_IO_H
 #define __PLAT_IO_H
 
+#include <config.h>
 #include <types.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 void exynos_uart_putchar(char c);
 void putDebugChar(unsigned char c);
 unsigned char getDebugChar(void);
 
 #define kernel_putchar(c) exynos_uart_putchar(c)
-#else /* !DEBUG */
+#else /* !CONFIG_PRINTING */
 #define kernel_putchar(c) ((void)(0))
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */
 
 #endif /* !__PLAT_IO_H */
