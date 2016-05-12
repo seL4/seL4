@@ -226,18 +226,16 @@ deleteCallerCap(tcb_t *receiver)
 extra_caps_t current_extra_caps;
 
 exception_t
-lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info)
+lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, word_t length)
 {
     lookupSlot_raw_ret_t lu_ret;
     cptr_t cptr;
-    word_t i, length;
+    word_t i;
 
     if (!bufferPtr) {
         current_extra_caps.excaprefs[0] = NULL;
         return EXCEPTION_NONE;
     }
-
-    length = seL4_MessageInfo_get_extraCaps(info);
 
     for (i = 0; i < length; i++) {
         cptr = getExtraCPtr(bufferPtr, i);

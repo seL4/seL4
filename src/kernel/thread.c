@@ -160,13 +160,15 @@ doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
 {
     word_t msgTransferred;
     seL4_MessageInfo_t tag;
+    word_t length;
     exception_t status;
     extra_caps_t caps;
 
     tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));
+    length = seL4_MessageInfo_get_extraCaps(tag);
 
-    if (canGrant) {
-        status = lookupExtraCaps(sender, sendBuffer, tag);
+    if (unlikely(length > 0 && canGrant)) {
+        status = lookupExtraCaps(sender, sendBuffer, length);
         caps = current_extra_caps;
         if (unlikely(status != EXCEPTION_NONE)) {
             caps.excaprefs[0] = NULL;
@@ -179,7 +181,9 @@ doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
     msgTransferred = copyMRs(sender, sendBuffer, receiver, receiveBuffer,
                              seL4_MessageInfo_get_length(tag));
 
-    tag = transferCaps(tag, caps, endpoint, receiver, receiveBuffer);
+    if (unlikely(length > 0)) {
+        tag = transferCaps(tag, caps, endpoint, receiver, receiveBuffer);
+    }
 
     tag = seL4_MessageInfo_set_length(tag, msgTransferred);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(tag));
