@@ -27,7 +27,7 @@ tagged_union iopde page_size {
 block iopde_pt {
     field       read        1
     field       write       1
-    field       secure      1
+    field       nonsecure   1
     field       page_size   1
     padding                 6
     field_high  address     22
@@ -36,7 +36,7 @@ block iopde_pt {
 block iopde_4m {
     field       read        1
     field       write       1
-    field       secure      1
+    field       nonsecure   1
     field       page_size   1
     padding                 6
     field_high  address     12
@@ -48,7 +48,7 @@ block iopde_4m {
 block iopte {
     field       read        1
     field       write       1
-    field       secure      1
+    field       nonsecure   1
     padding                 7
     field_high  address     22
 }

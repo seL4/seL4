@@ -140,6 +140,18 @@ plat_smmu_iopt_index(word_t io_address)
     return ret;
 }
 
+inline static uint32_t
+plat_smmu_get_asid_by_module_id(uint32_t mid)
+{
+    if (mid < SMMU_FIRST_ASID || mid > SMMU_LAST_ASID) {
+        return asidInvalid;
+    }
+
+    /* we have one-to-one mapping from module id to ASID */
+    return mid;
+
+}
+
 int plat_smmu_init(void);
 void plat_smmu_tlb_flush_all(void);
 void plat_smmu_ptc_flush_all(void);
