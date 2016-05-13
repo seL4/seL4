@@ -21,6 +21,8 @@
 #define GIC_CONTROLLER_PPTR         0xfff04000
 /* HYP mode kernel devices */
 #define GIC_VCPUCTRL_PPTR           0xfff06000
+/* SMMU registers */
+#define SMMU_PPTR                   0Xfff07000
 
 #define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR
 #define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR

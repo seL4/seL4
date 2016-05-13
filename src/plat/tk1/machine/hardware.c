@@ -23,7 +23,8 @@
 
 const p_region_t BOOT_RODATA avail_p_regs[] = {
 //    { .start = 0x80000000, .end = 0xf0000000 }
-      { .start = 0x80000000, .end = 0xb0000000 }
+      //{ .start = 0x80000000, .end = 0xb0000000 }
+    { .start = 0x80000000, .end = 0xa7f00000 }
 };
 
 BOOT_CODE int get_num_avail_p_regs(void)
@@ -81,7 +82,9 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { TSENSOR_PADDR,        TSENSOR_PADDR + PAGE_SIZE },              /* 4 KB                         */
     { CEC_PADDR,            CEC_PADDR + PAGE_SIZE },                  /* 4 KB                         */
     { ATOMICS_PADDR,        ATOMICS_PADDR + (PAGE_SIZE * 2) },        /* 8 KB                         */
+#ifndef CONFIG_ARM_SMMU
     { MC_PADDR,             MC_PADDR + PAGE_SIZE },                   /* 4 KB                         */
+#endif
     { EMC_PADDR,            EMC_PADDR + PAGE_SIZE },                  /* 4 KB                         */
     { SATA_PADDR,           SATA_PADDR + (PAGE_SIZE * 16) },          /* 64 KB                        */
     { HDA_PADDR,            HDA_PADDR + (PAGE_SIZE * 16) },           /* 64 KB                        */
@@ -169,6 +172,19 @@ map_kernel_devices(void)
         map_kernel_frame(
                 GIC_VCPUCTRL_PADDR,
                 GIC_VCPUCTRL_PPTR,
+                VMKernelOnly,
+                vm_attributes_new(
+                    false,
+                    false,
+                    false
+                )
+        );
+    }
+
+    if (config_set(CONFIG_ARM_SMMU)) {
+        map_kernel_frame(
+                MC_PADDR,
+                SMMU_PPTR,
                 VMKernelOnly,
                 vm_attributes_new(
                     false,

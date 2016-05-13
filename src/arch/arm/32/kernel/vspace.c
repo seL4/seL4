@@ -513,6 +513,9 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
                 ASID_LOW(asid),                /* capFMappedASIDLow  */
                 wordFromVMRights(VMReadWrite), /* capFVMRights       */
                 vptr,                          /* capFMappedAddress  */
+#ifdef CONFIG_ARM_SMMU
+                0,                             /* IOSpace            */
+#endif
                 ASID_HIGH(asid),               /* capFMappedASIDHigh */
                 pptr                           /* capFBasePtr        */
             );

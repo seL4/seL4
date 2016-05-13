@@ -8,6 +8,7 @@
 -- @TAG(GD_GPL)
 --
 
+#include <config.h>
 -- Default base size: uint32_t
 base 32
 
@@ -25,7 +26,12 @@ block small_frame_cap {
     field capFVMRights       2
     field_high capFMappedAddress 20
 
+#ifdef CONFIG_ARM_SMMU
+    field capFIsIOSpace      1
+    field capFMappedASIDHigh 7
+#else
     field capFMappedASIDHigh 8
+#endif
     field_high capFBasePtr  20
     field capType            4
 }
@@ -127,14 +133,15 @@ block io_page_directory_cap (capType, capIOPDIsMapped, capIOPDASID, capIOPDBaseP
     field       capType             8
 }
 
-block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr) {
-    field_high  capIOPTBasePtr      20
-    padding                         12
+block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, capIOPTMappedAddress) {
+    field_high  capIOPTBasePtr          20
+    padding                             12
 
-    padding                         16
-    field       capIOPTASID         7
-    field       capIOPTIsMapped     1
-    field       capType             8
+    field_high  capIOPTMappedAddress    10
+    padding                             6
+    field       capIOPTASID             7
+    field       capIOPTIsMapped         1
+    field       capType                 8
 }
 
 -- NB: odd numbers are arch caps (see isArchCap())

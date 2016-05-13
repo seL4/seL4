@@ -10,7 +10,7 @@
 
 DIRECTORIES += src/arch/arm/object
 
-ARCH_C_SOURCES += object/interrupt.c object/tcb.c
+ARCH_C_SOURCES += object/interrupt.c object/tcb.c object/iospace.c
 
 ifneq (ARM_HYP,)
 ARCH_C_SOURCES += object/vcpu.c

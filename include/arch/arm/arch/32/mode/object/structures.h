@@ -112,7 +112,11 @@ struct user_data {
 typedef struct user_data user_data_t;
 
 enum asidSizeConstants {
+#ifdef CONFIG_ARM_SMMU
+    asidHighBits = 7,
+#else
     asidHighBits = 8,
+#endif
     asidLowBits = 10
 };
 

@@ -417,7 +417,11 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
-                   0, ASID_HIGH(asidInvalid),
+                   0,
+#ifdef CONFIG_ARM_SMMU
+                   0,
+#endif
+                   ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_LargePageObject:

@@ -57,6 +57,7 @@ typedef struct {
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */
     seL4_SlotRegion   userImagePaging; /* userland-image paging structure caps */
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
+    seL4_SlotRegion   ioSpaceCaps;     /* IOSpace caps for ARM SMMU */
     seL4_PAddr        untypedPaddrList   [CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* physical address of each untyped cap */
     seL4_Uint8        untypedSizeBitsList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* size (2^n) bytes of each untyped cap */
     seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */

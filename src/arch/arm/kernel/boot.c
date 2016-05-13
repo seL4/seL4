@@ -18,6 +18,7 @@
 #include <arch/kernel/vspace.h>
 #include <arch/benchmark.h>
 #include <arch/user_access.h>
+#include <arch/object/iospace.h>
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
@@ -234,6 +235,9 @@ try_init_kernel(
         return false;
     }
 
+    if (config_set(CONFIG_ARM_SMMU)) {
+        create_iospace_caps(root_cnode_cap);
+    }
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
     it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
