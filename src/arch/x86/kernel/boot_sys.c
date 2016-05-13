@@ -71,7 +71,7 @@ boot_state_t boot_state;
 
 /* There are a lot of assumptions on this being page aligned and
  * precisely 4K in size. DO NOT MODIFY */
-ALIGN(BIT(PAGE_BITS))
+ALIGN(BIT(PAGE_BITS)) VISIBLE
 char kernel_stack_alloc[4096];
 
 /* global variables (not covered by abstract specification) */
