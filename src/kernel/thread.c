@@ -389,7 +389,7 @@ setPriority(tcb_t *tptr, prio_t prio)
 }
 
 static void
-possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
+possibleSwitchTo(tcb_t* target, bool_t curThreadWillBlock)
 {
     dom_t curDom, targetDom;
     prio_t curPrio, targetPrio;
@@ -403,9 +403,21 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
     if (targetDom != curDom) {
         SCHED_ENQUEUE(target);
     } else {
-        if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
-                && action == SchedulerAction_ResumeCurrentThread
-                SMP_COND_STATEMENT( && target->tcbAffinity == getCurrentCPUIndex())) {
+        /* curThreadWillBlock effectively means "synchronous IPC" with effort to
+         * switch to the target; for async we attempt to stay with sender.
+         * To avoid the scheduler in the synchronous case (assuming curPrio
+         * is highest in domain), target must have highest prio of all
+         * schedulable threads in this domain.
+         * In the async case, target need only be higher than curPrio;
+         * else we enqueue the sender which the scheduler will then pick
+         * Note: skipping scheduler is also possible in async else case.
+         */
+        if ((targetPrio > curPrio ||
+                (curThreadWillBlock &&
+                    (targetPrio == curPrio ||
+                     NODE_STATE(ksReadyQueuesL1Bitmap)[curDom] == 0 ||
+                     targetPrio >= getHighestPrio(curDom))))
+                && action == SchedulerAction_ResumeCurrentThread) {
             NODE_STATE(ksSchedulerAction) = target;
         } else {
             SCHED_ENQUEUE(target);
