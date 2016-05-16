@@ -687,22 +687,17 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     switch (t) {
     case seL4_X86_VCPUObject: {
         vcpu_t *vcpu;
-        memzero(regionBase, 1 << seL4_X86_VCPUBits);
         vcpu = VCPU_PTR((word_t)regionBase);
         vcpu_init(vcpu);
         return cap_vcpu_cap_new(VCPU_REF(vcpu));
     }
     case seL4_X86_EPTPML4Object:
-        memzero(regionBase, 1 << seL4_X86_EPTPDPTBits);
-
         return cap_ept_pml4_cap_new(
                    0,                  /* capPML4IsMapped      */
                    VPID_INVALID,       /* capPML4MappedASID    */
                    (word_t)regionBase  /* capPML4BasePtr       */
                );
     case seL4_X86_EPTPDPTObject:
-        memzero(regionBase, 1 << seL4_X86_EPTPDPTBits);
-
         return cap_ept_pdpt_cap_new(
                    0,                  /* capPDPTMappedAddress */
                    0,                  /* capPDPTIsMapped      */
@@ -710,8 +705,6 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    (word_t)regionBase   /* capPDPTBasePtr      */
                );
     case seL4_X86_EPTPDObject:
-        memzero(regionBase, 1 << seL4_X86_EPTPDBits);
-
         return cap_ept_pd_cap_new(
                    0,                  /* capPDMappedAddress   */
                    0,                  /* capPDIsMapped        */
@@ -719,8 +712,6 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    (word_t)regionBase  /* capPDBasePtr         */
                );
     case seL4_X86_EPTPTObject:
-        memzero(regionBase, 1 << seL4_X86_EPTPTBits);
-
         return cap_ept_pt_cap_new(
                    0,                  /* capPTMappedAddress   */
                    0,                  /* capPTIsMapped        */

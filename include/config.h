@@ -42,6 +42,11 @@
 #define CONFIG_RETYPE_FAN_OUT_LIMIT 256
 #endif
 
+/* chunk size for memory clears during retype, in bits. */
+#ifndef CONFIG_RESET_CHUNK_BITS
+#define CONFIG_RESET_CHUNK_BITS 8
+#endif
+
 /* maximum number of iterations until we preempt a delete/revoke invocation */
 #ifndef CONFIG_MAX_NUM_WORK_UNITS_PER_PREEMPTION
 #define CONFIG_MAX_NUM_WORK_UNITS_PER_PREEMPTION 100

@@ -45,6 +45,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     word_t freeRef, alignedFreeRef, objectSize, untypedFreeBytes;
     word_t freeIndex;
     bool_t deviceMemory;
+    bool_t reset;
 
     /* Ensure operation is valid. */
     if (invLabel != UntypedRetype) {
@@ -182,8 +183,10 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     status = ensureNoChildren(slot);
     if (status != EXCEPTION_NONE) {
         freeIndex = cap_untyped_cap_get_capFreeIndex(cap);
+        reset = false;
     } else {
         freeIndex = 0;
+        reset = true;
     }
     freeRef = GET_FREE_REF(cap_untyped_cap_get_capPtr(cap), freeIndex);
 
@@ -225,48 +228,79 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
 
     /* Perform the retype. */
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeUntyped_Retype(
-               slot, WORD_PTR(cap_untyped_cap_get_capPtr(cap)),
-               (void*)alignedFreeRef, newType, userObjSize, slots, call,
-               deviceMemory);
+    return invokeUntyped_Retype(slot, reset,
+                                (void*)alignedFreeRef, newType, userObjSize,
+                                slots, deviceMemory);
+}
+
+static exception_t
+resetUntypedCap(cte_t *srcSlot)
+{
+    cap_t prev_cap = srcSlot->cap;
+    word_t block_size = cap_untyped_cap_get_capBlockSize(prev_cap);
+    void *regionBase = WORD_PTR(cap_untyped_cap_get_capPtr(prev_cap));
+    int chunk = CONFIG_RESET_CHUNK_BITS;
+    word_t offset = FREE_INDEX_TO_OFFSET(cap_untyped_cap_get_capFreeIndex(prev_cap));
+    exception_t status;
+    bool_t deviceMemory = cap_untyped_cap_get_capIsDevice(prev_cap);
+
+    if (offset == 0) {
+        return EXCEPTION_NONE;
+    }
+
+    /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute>regionBase)
+        (unat \<acute>block_size))" */
+    /** GHOSTUPD: "(True, gs_clear_region (ptr_val \<acute>regionBase)
+        (unat \<acute>block_size))" */
+
+    if (deviceMemory || block_size < chunk) {
+        if (! deviceMemory) {
+            clearMemory(regionBase, block_size);
+        }
+        srcSlot->cap = cap_untyped_cap_set_capFreeIndex(prev_cap, 0);
+    } else {
+        for (offset = ROUND_DOWN(offset - 1, chunk);
+                offset != - BIT (chunk); offset -= BIT (chunk)) {
+            clearMemory(GET_OFFSET_FREE_PTR(regionBase, offset), chunk);
+            srcSlot->cap = cap_untyped_cap_set_capFreeIndex(prev_cap, OFFSET_TO_FREE_INDEX(offset));
+            status = preemptionPoint();
+            if (status != EXCEPTION_NONE) {
+                return status;
+            }
+        }
+    }
+    return EXCEPTION_NONE;
 }
 
 exception_t
-invokeUntyped_Retype(cte_t *srcSlot, void* regionBase,
-                     void* freeRegionBase,
+invokeUntyped_Retype(cte_t *srcSlot,
+                     bool_t reset, void* retypeBase,
                      object_t newType, word_t userSize,
-                     slot_range_t destSlots, bool_t call, bool_t deviceMemory)
+                     slot_range_t destSlots, bool_t deviceMemory)
 {
-    word_t size_ign UNUSED;
     word_t freeRef;
     word_t totalObjectSize;
+    void *regionBase = WORD_PTR(cap_untyped_cap_get_capPtr(srcSlot->cap));
+    exception_t status;
 
-    /*
-     * If this is the first object we are creating in this untyped region, we
-     * need to detype the old memory. At the concrete C level, this doesn't
-     * have any effect, but updating this shadow state is important for the
-     * verification process.
-     */
-    size_ign = cap_untyped_cap_ptr_get_capBlockSize(&(srcSlot->cap));
-    /** AUXUPD: "(True,
-        if (\<acute>freeRegionBase = \<acute>regionBase) then
-          (typ_region_bytes (ptr_val \<acute>regionBase) (unat \<acute>size_ign))
-        else
-          id)" */
-    /** GHOSTUPD: "(True,
-        if (\<acute>freeRegionBase = \<acute>regionBase) then
-          (gs_clear_region (ptr_val \<acute>regionBase) (unat \<acute>size_ign))
-        else
-          id)" */
+    freeRef = GET_FREE_REF(regionBase, cap_untyped_cap_get_capFreeIndex(srcSlot->cap));
+
+    if (reset) {
+        status = resetUntypedCap(srcSlot);
+        if (status != EXCEPTION_NONE) {
+            return status;
+        }
+    }
 
     /* Update the amount of free space left in this untyped cap. */
     totalObjectSize = destSlots.length << getObjectSize(newType, userSize);
-    freeRef = (word_t)freeRegionBase + totalObjectSize;
-    cap_untyped_cap_ptr_set_capFreeIndex(&(srcSlot->cap),
-                                         GET_FREE_INDEX(regionBase, freeRef));
+    freeRef = (word_t)retypeBase + totalObjectSize;
+    srcSlot->cap = cap_untyped_cap_set_capFreeIndex(srcSlot->cap,
+                                                    GET_FREE_INDEX(regionBase, freeRef));
 
     /* Create new objects and caps. */
-    createNewObjects(newType, srcSlot, destSlots, freeRegionBase, userSize, deviceMemory);
+    createNewObjects(newType, srcSlot, destSlots, retypeBase, userSize,
+                     deviceMemory);
 
     return EXCEPTION_NONE;
 }

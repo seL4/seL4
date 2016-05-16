@@ -211,9 +211,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     switch (t) {
 
     case seL4_X86_4K:
-        if (!deviceMemory) {
-            memzero(regionBase, BIT(pageBitsForSize(X86_SmallPage)));
-        }
         return cap_frame_cap_new(
                    asidInvalid,        /* capFMappedASID           */
                    (word_t)regionBase, /* capFBasePtr              */
@@ -225,9 +222,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_LargePageObject:
-        if (!deviceMemory) {
-            memzero(regionBase, BIT(pageBitsForSize(X86_LargePage)));
-        }
         return cap_frame_cap_new(
                    asidInvalid,        /* capFMappedASID           */
                    (word_t)regionBase, /* capFBasePtr              */
@@ -239,9 +233,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X64_HugePageObject:
-        if (!deviceMemory) {
-            memzero(regionBase, BIT(pageBitsForSize(X64_HugePage)));
-        }
         return cap_frame_cap_new(
                    asidInvalid,        /* capFMappedASID           */
                    (word_t)regionBase, /* capFBasePtr              */
@@ -253,7 +244,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PageTableObject:
-        memzero(regionBase, BIT(seL4_PageTableBits));
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */
                    (word_t)regionBase,     /* capPTBasePtr       */
@@ -262,7 +252,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PageDirectoryObject:
-        memzero(regionBase, BIT(seL4_PageDirBits));
         return cap_page_directory_cap_new(
                    asidInvalid,                /* capPDMappedASID      */
                    (word_t)regionBase,         /* capPDBasePtr         */
@@ -271,7 +260,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PDPTObject:
-        memzero(regionBase, BIT(seL4_PDPTBits));
         return cap_pdpt_cap_new(
                    asidInvalid,                /* capPDPTMappedASID    */
                    (word_t)regionBase,         /* capPDPTBasePtr       */
@@ -280,7 +268,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X64_PML4Object:
-        memzero(regionBase, BIT(seL4_PML4Bits));
         copyGlobalMappings(PML4_PTR(regionBase));
         return cap_pml4_cap_new(
                    asidInvalid,                /* capPML4MappedASID   */
@@ -289,7 +276,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_IOPageTableObject:
-        memzero(regionBase, BIT(seL4_IOPageTableBits));
         return cap_io_page_table_cap_new(
                    0,
                    0,

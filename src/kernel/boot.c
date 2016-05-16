@@ -452,12 +452,15 @@ provide_untyped_cap(
 )
 {
     bool_t ret;
+    cap_t ut_cap;
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
             pptr_to_paddr((void*)pptr), 0, 0, size_bits, device_memory
         };
-        ret = provide_cap(root_cnode_cap, cap_untyped_cap_new(0, device_memory, size_bits, pptr));
+        ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
+                                     device_memory, size_bits, pptr);
+        ret = provide_cap(root_cnode_cap, ut_cap);
     } else {
         printf("Kernel init: Too many untyped regions for boot info\n");
         ret = true;

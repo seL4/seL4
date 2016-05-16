@@ -169,9 +169,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 {
     switch (t) {
     case seL4_X86_4K:
-        if (!deviceMemory) {
-            memzero(regionBase, 1 << pageBitsForSize(X86_SmallPage));
-        }
         return cap_frame_cap_new(
                    X86_SmallPage,          /* capFSize             */
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
@@ -184,9 +181,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_LargePageObject:
-        if (!deviceMemory) {
-            memzero(regionBase, 1 << pageBitsForSize(X86_LargePage));
-        }
         return cap_frame_cap_new(
                    X86_LargePage,          /* capFSize             */
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
@@ -199,7 +193,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PageTableObject:
-        memzero(regionBase, 1 << seL4_PageTableBits);
         return cap_page_table_cap_new(
                    0,                  /* capPTIsMapped        */
                    asidInvalid,        /* capPTMappedASID      */
@@ -208,7 +201,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PageDirectoryObject:
-        memzero(regionBase, 1 << seL4_PageDirBits);
 #ifndef CONFIG_PAE_PAGING
         copyGlobalMappings(regionBase);
 #endif
@@ -221,7 +213,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 
 #ifdef CONFIG_PAE_PAGING
     case seL4_IA32_PDPTObject:
-        memzero(regionBase, 1 << seL4_PDPTBits);
         copyGlobalMappings(regionBase);
 
         return cap_pdpt_cap_new(
@@ -232,7 +223,6 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 #endif
 
     case seL4_X86_IOPageTableObject:
-        memzero(regionBase, 1 << seL4_IOPageTableBits);
         return cap_io_page_table_cap_new(
                    0,  /* capIOPTIsMapped      */
                    0,  /* capIOPTLevel         */

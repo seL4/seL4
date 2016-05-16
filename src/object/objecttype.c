@@ -509,7 +509,6 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
     switch ((api_object_t)t) {
     case seL4_TCBObject: {
         tcb_t *tcb;
-        memzero(regionBase, 1UL << seL4_TCBBits);
         tcb = TCB_PTR((word_t)regionBase + TCB_OFFSET);
         /** AUXUPD: "(True, ptr_retyps 1
           (Ptr ((ptr_val \<acute>tcb) - 0x100) :: (cte_C[5]) ptr)
@@ -534,21 +533,18 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
     }
 
     case seL4_EndpointObject:
-        memzero(regionBase, 1UL << seL4_EndpointBits);
         /** AUXUPD: "(True, ptr_retyp
           (Ptr (ptr_val \<acute>regionBase) :: endpoint_C ptr))" */
         return cap_endpoint_cap_new(0, true, true, true,
                                     EP_REF(regionBase));
 
     case seL4_NotificationObject:
-        memzero(regionBase, 1UL << seL4_NotificationBits);
         /** AUXUPD: "(True, ptr_retyp
               (Ptr (ptr_val \<acute>regionBase) :: notification_C ptr))" */
         return cap_notification_cap_new(0, true, true,
                                         NTFN_REF(regionBase));
 
     case seL4_CapTableObject:
-        memzero(regionBase, 1UL << (seL4_SlotBits + userSize));
         /** AUXUPD: "(True, ptr_arr_retyps (2 ^ (unat \<acute>userSize))
           (Ptr (ptr_val \<acute>regionBase) :: cte_C ptr))" */
         /** GHOSTUPD: "(True, gs_new_cnodes (unat \<acute>userSize)
