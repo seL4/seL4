@@ -101,13 +101,13 @@ menu "seL4 System"
        bool
        default n
        help
-          Common flag for Exynos 54210 and 5422
+          Common flag for Exynos 5410 and 5422
 
     config PLAT_IMX6
        bool
        default n
        help
-          Common flag for SabreLight and Wandboard Quad
+          Common flag for Sabre Lite and Wandboard Quad
 
 
     config PLAT_IMX7
