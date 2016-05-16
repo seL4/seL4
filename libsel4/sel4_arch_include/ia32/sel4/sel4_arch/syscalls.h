@@ -448,15 +448,12 @@ seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
 }
 
 static inline seL4_MessageInfo_t
-seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word* sender)
+seL4_SignalRecv(seL4_CPtr dest, seL4_CPtr src, seL4_Word* sender)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
-    seL4_Word mr0 = seL4_GetMR(0);
-    seL4_Word mr1 = seL4_GetMR(1);
-
-    /* the third syscall argument is placed in the kernel reserved word of the ipc buffer */
-    seL4_GetIPCBuffer()->reserved = src;
+    seL4_Word mr0;
+    seL4_Word mr1;
 
     asm volatile (
         "pushl %%ebp       \n"
@@ -472,11 +469,9 @@ seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_
         "=S" (info.words[0]),
         "=D" (mr0),
         "=c" (mr1)
-        : "a" (seL4_SysNBSendRecv),
+        : "a" (seL4_SysSignalRecv),
         "b" (dest),
-        "S" (msgInfo.words[0]),
-        "D" (mr0),
-        "c" (mr1)
+        "S" (src)
         : "%edx", "memory"
     );
 
@@ -491,23 +486,13 @@ seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_
 }
 
 static inline seL4_MessageInfo_t
-seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
+seL4_SignalRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_Word *sender,
                        seL4_Word *mr0, seL4_Word *mr1)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
-    seL4_Word msg0 = 0;
-    seL4_Word msg1 = 0;
-
-    /* the third syscall argument is placed in the kernel reserved word of the ipc buffer */
-    seL4_GetIPCBuffer()->reserved = src;
-
-    if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
-        msg0 = *mr0;
-    }
-    if (mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 1) {
-        msg1 = *mr1;
-    }
+    seL4_Word msg0;
+    seL4_Word msg1;
 
     asm volatile (
         "pushl %%ebp       \n"
@@ -523,11 +508,9 @@ seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_MessageInfo_t msgInfo
         "=S" (info.words[0]),
         "=D" (msg0),
         "=c" (msg1)
-        : "a" (seL4_SysNBSendRecv),
+        : "a" (seL4_SysSignalRecv),
         "b" (dest),
-        "S" (msgInfo.words[0]),
-        "D" (msg0),
-        "c" (msg1)
+        "S" (src)
         : "%edx", "memory"
     );
 

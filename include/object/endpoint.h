@@ -34,7 +34,7 @@ ep_ptr_set_queue(endpoint_t *epptr, tcb_queue_t queue)
 
 void sendIPC(bool_t blocking, bool_t do_call, bool_t canDonate, word_t badge,
              bool_t canGrant, tcb_t *thread, endpoint_t *epptr);
-void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate);
+void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking);
 void cancelIPC(tcb_t *tptr);
 void cancelAllIPC(endpoint_t *epptr);
 void cancelBadgedSends(endpoint_t *epptr, word_t badge);

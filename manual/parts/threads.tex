@@ -107,7 +107,7 @@ The kernel does not conduct any schedulability tests, as task admission is left 
 \subsection{Scheduling Context Donation and Borrowing}
 
 In addition to explictly binding and removing scheduling contexts through \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}, scheduling contexts can move between threads over IPC.
-Scheduling contexts are donated implicitly when the system calls \apifunc{seL4\_Call}{sel4_call} and \apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} are used to communicate with a passive thread.
+Scheduling contexts are donated implicitly when the system calls \apifunc{seL4\_Call}{sel4_call} and \apifunc{seL4\_SignalRecv}{sel4_signalrecv} are used to communicate with a passive thread.
 When \apifunc{seL4\_Call}{sel4_call} is used, the generated reply cap ensures that the callee is merely borrowing the scheduling context: when the reply cap is consumed by a reply message being sent the scheduling context will be returned to the caller.
 If the reply cap is revoked, and the callee holds the scheduling context, the scheduling context will be returned to the caller. 
 However, if in a deep call chain and a reply cap in the middle of the call chain is revoked, such that the callee does not possess the scheduling context, the thread will be removed from the call chain and the scheduling context will remain where it is. 
@@ -116,7 +116,7 @@ Consider an example where thread A calls thread B which calls thread C.
 If while C holds the scheduling context, B's reply cap to A is revoked, then the scheduling context will remain with C. 
 However, a call chain will remain between A and C, such that if C's reply cap is revoked, or invoked, the scheduling context will return to A.
 
-\apifunc{seL4\_NBSendRecv}{sel4_nbsendrecv} only offers scheduling context donation: there is no guarantee that the scheduling context will return.
+\apifunc{seL4\_SignalRecv}{sel4_signalrecv} only offers scheduling context donation: there is no guarantee that the scheduling context will return.
 
 Scheduling contexts can also be bound to notification objects using \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and unbound using \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.
 If a signal is delivered to a notification object with a passive thread blocked waiting on it, the passive thread will receive the scheduling context that is bound to the notification object.

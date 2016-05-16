@@ -355,7 +355,7 @@ handleReply(void)
 }
 
 static void
-handleRecv(bool_t isBlocking, bool_t canDonate, word_t epCPtr)
+handleRecv(bool_t isBlocking, word_t epCPtr)
 {
     lookupCap_ret_t lu_ret;
 
@@ -377,7 +377,7 @@ handleRecv(bool_t isBlocking, bool_t canDonate, word_t epCPtr)
         }
 
         deleteCallerCap(ksCurThread);
-        receiveIPC(ksCurThread, lu_ret.cap, isBlocking, canDonate);
+        receiveIPC(ksCurThread, lu_ret.cap, isBlocking);
         break;
 
     case cap_notification_cap: {
@@ -402,25 +402,6 @@ handleRecv(bool_t isBlocking, bool_t canDonate, word_t epCPtr)
         handleFault(ksCurThread);
         break;
     }
-}
-
-static exception_t
-handleNBSendRecv(void)
-{
-    exception_t ret = handleInvocation(false, false, true);
-    if (likely(ret == EXCEPTION_NONE)) {
-        seL4_IPCBuffer *buffer = (seL4_IPCBuffer *) lookupIPCBuffer(true, ksCurThread);
-        if (unlikely(buffer == NULL)) {
-            current_lookup_fault = lookup_fault_missing_capability_new(0);
-            current_fault = fault_cap_fault_new(0, true);
-            handleFault(ksCurThread);
-        } else {
-            word_t epCPtr = buffer->reserved;
-            handleRecv(true, false, epCPtr);
-        }
-    }
-
-    return ret;
 }
 
 exception_t
@@ -452,7 +433,7 @@ handleSyscall(syscall_t syscall)
 
         case SysRecv: {
             word_t epCPtr = getRegister(ksCurThread, capRegister);
-            handleRecv(true, false, epCPtr);
+            handleRecv(true, epCPtr);
             break;
         }
 
@@ -463,19 +444,28 @@ handleSyscall(syscall_t syscall)
         case SysReplyRecv: {
             word_t epCPtr = getRegister(ksCurThread, capRegister);
             handleReply();
-            handleRecv(true, false, epCPtr);
+            handleRecv(true, epCPtr);
             break;
         }
 
         case SysNBRecv: {
             word_t epCPtr = getRegister(ksCurThread, capRegister);
-            handleRecv(false, false, epCPtr);
+            handleRecv(false, epCPtr);
             break;
         }
 
-        case SysNBSendRecv:
-            ret = handleNBSendRecv();
+        case SysSignalRecv: {
+            word_t epCPtr = getRegister(ksCurThread, msgInfoRegister);
+            /* Signal sends no message - reset msgInfo register that the
+             * src endpoint cptr is passed in to 0 to avoid handleInvocation
+             * treating src as the message info. */
+            setRegister(ksCurThread, msgInfoRegister, 0);
+            handleInvocation(false, false, true);
+            handleRecv(true, epCPtr);
+            setRegister(ksCurThread, msgInfoRegister, epCPtr);
             break;
+        }
+
         default:
             fail("Invalid syscall");
         }

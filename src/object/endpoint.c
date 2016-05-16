@@ -109,7 +109,7 @@ sendIPC(bool_t blocking, bool_t do_call, bool_t canDonate, word_t badge,
 }
 
 void
-receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate)
+receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 {
     endpoint_t *epptr;
     notification_t *ntfnPtr;
@@ -191,7 +191,12 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, bool_t canDonate)
 
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
-            if (thread->tcbSchedContext == NULL && canDonate) {
+            /* Note that thread == ksCurThread,
+             * so if at this point the thread doesn't have a scheduling context,
+             * it must have given it away in either a reply or signal before
+             * calling handleRecv. We cannot get here from a plain recv, as
+             * without a scheduling context, we could not be running to call it */
+            if (thread->tcbSchedContext == NULL) {
                 schedContext_donate(thread, ksCurSchedContext);
                 donated = ksCurSchedContext;
             }
