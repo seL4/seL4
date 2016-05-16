@@ -136,7 +136,7 @@ word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
     }
 
     case fault_temporal:
-        receiveIPCBuffer[1] = fault_temporal_get_data(sender->tcbFault);
+        setRegister(receiver, msgRegisters[0], fault_temporal_get_data(sender->tcbFault));
         return 1u;
 
     default:
