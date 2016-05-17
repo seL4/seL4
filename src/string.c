@@ -8,10 +8,11 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <assert.h>
 #include <string.h>
 
-#ifdef DEBUG
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 
 word_t strnlen(const char *s, word_t maxlen)
 {

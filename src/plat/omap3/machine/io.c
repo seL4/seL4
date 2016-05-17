@@ -14,14 +14,14 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef CONFIG_PRINTING
-
 #define UTHR 0x00 /* UART Transmit Holding Register */
 #define ULSR 0x14 /* UART Line Status Register */
 #define ULSR_THRE 0x20 /* Transmit Holding Register Empty */
 
 #define UART_REG(x) ((volatile uint32_t *)(UART3_PPTR + (x)))
 
+
+#ifdef CONFIG_PRINTING
 
 void
 omap3_uart_putchar(char c)
@@ -34,6 +34,10 @@ omap3_uart_putchar(char c)
         omap3_uart_putchar('\r');
     }
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 void putDebugChar(unsigned char c)
 {

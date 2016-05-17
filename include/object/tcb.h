@@ -19,7 +19,7 @@
 #include <arch/object/tcb.h>
 #include <object/cnode.h>
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 /* Maximum length of the tcb name, including null terminator */
 #define TCB_NAME_LENGTH (BIT(seL4_TCBBits) - BIT(seL4_TCBBits) - sizeof(tcb_t))
 #endif
@@ -132,7 +132,7 @@ cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i);
 void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 
 exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info);
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 void setThreadName(tcb_t *thread, const char *name);
 #endif
 

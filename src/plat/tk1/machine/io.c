@@ -14,13 +14,13 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef CONFIG_PRINTING
-
 #define UTHR        0x0
 #define ULSR        0x14
 #define ULSR_THRE   (1 << 5)
 
 #define UART_REG(x) ((volatile uint32_t *)(UARTD_PPTR + (x)))
+
+#ifdef CONFIG_PRINTING
 
 void
 tk1_uart_putchar(char c)
@@ -33,6 +33,10 @@ tk1_uart_putchar(char c)
         tk1_uart_putchar('\r');
     }
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 void putDebugChar(unsigned char c)
 {

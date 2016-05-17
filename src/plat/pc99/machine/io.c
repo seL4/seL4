@@ -14,7 +14,7 @@
 #include <arch/model/statedata.h>
 #include <plat/machine/io.h>
 
-#ifdef CONFIG_PRINTING
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 
 void serial_init(uint16_t port)
 {
@@ -31,6 +31,10 @@ void serial_init(uint16_t port)
     in8(port + 5); /* clear line status port */
     in8(port + 6); /* clear modem status port */
 }
+
+#endif
+
+#ifdef CONFIG_PRINTING
 
 void console_putchar(char c)
 {

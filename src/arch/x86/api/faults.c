@@ -140,7 +140,7 @@ void handleKernelException(
     printf("CR4:     0x%lx\n", cr4);
     printf("\nStack Dump:\n");
     for (i = 0; i < 20; i++) {
-        word_t stack = sp + i * sizeof(word_t);
+        word_t UNUSED stack = sp + i * sizeof(word_t);
         printf("*0x%lx == 0x%lx\n", stack, *(word_t*)stack);
     }
     printf("\nHalting...\n");
