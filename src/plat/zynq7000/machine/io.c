@@ -14,8 +14,6 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef CONFIG_PRINTING
-
 #define UART_CONTROL                 0x00
 #define UART_MODE                    0x04
 #define UART_INTRPT_EN               0x08
@@ -39,6 +37,8 @@
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
+#ifdef CONFIG_PRINTING
+
 void
 zynq_uart_putchar(char c)
 {
@@ -48,11 +48,19 @@ zynq_uart_putchar(char c)
     }
 }
 
+#endif
+
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+
 void putDebugChar(unsigned char c)
 {
     while (!(*UART_REG(UART_CHANNEL_STS) & UART_CHANNEL_STS_TXEMPTY));
     *UART_REG(UART_TX_RX_FIFO) = c;
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 unsigned char getDebugChar(void)
 {
@@ -60,4 +68,4 @@ unsigned char getDebugChar(void)
     return *UART_REG(UART_TX_RX_FIFO);
 }
 
-#endif /* CONFIG_PRINTING */
+#endif /* CONFIG_DEBUG_BUILD */

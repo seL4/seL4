@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <machine/assembler.h>
 
 .code 32
@@ -17,7 +18,7 @@ BEGIN_FUNC(halt)
     /* Disable interrupts */
     cpsid iaf
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
     /* print a message */
     ldr r0, =halt_message
     blx puts
@@ -28,7 +29,7 @@ BEGIN_FUNC(halt)
     b 1b
 END_FUNC(halt)
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 .section .rodata
 halt_message:
 .asciz "halting..."

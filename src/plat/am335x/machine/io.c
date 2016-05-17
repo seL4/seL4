@@ -14,14 +14,13 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef CONFIG_PRINTING
-
 #define UTHR 0x00 /* UART Transmit Holding Register */
 #define ULSR 0x14 /* UART Line Status Register */
 #define ULSR_THRE BIT(5) /* Transmit Holding Register Empty */
 
 #define UART_REG(x) ((volatile uint32_t *)(UART0_PPTR + (x)))
 
+#ifdef CONFIG_PRINTING
 
 void
 am335x_uart_putchar(char c)
@@ -32,11 +31,19 @@ am335x_uart_putchar(char c)
     }
 }
 
+#endif
+
+#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
+
 void putDebugChar(unsigned char c)
 {
     while ((*UART_REG(ULSR) & ULSR_THRE) == 0);
     *UART_REG(UTHR) = c;
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 unsigned char getDebugChar(void)
 {

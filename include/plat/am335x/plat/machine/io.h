@@ -16,12 +16,18 @@
 
 #ifdef CONFIG_PRINTING
 void am335x_uart_putchar(char c);
-void putDebugChar(unsigned char c);
-unsigned char getDebugChar(void);
 
 #define kernel_putchar(c) am335x_uart_putchar(c)
 #else /* !CONFIG_PRINTING */
 #define kernel_putchar(c) ((void)(0))
+#endif
+
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+void putDebugChar(unsigned char c);
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
+unsigned char getDebugChar(void);
 #endif
 
 #endif
