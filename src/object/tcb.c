@@ -148,14 +148,17 @@ tcbCallStackRemove(tcb_t* target)
     if (target->tcbSchedContext != NULL && target->tcbCallStackPrev != NULL) {
         assert(target->tcbCallStackNext == NULL);
         /* return the scheduling context along the call chain */
-        schedContext_donate(target->tcbCallStackPrev, target->tcbSchedContext);
 
-        /* target no longer has an sc, remove from scheduler */
-        if (target == ksCurThread) {
-            rescheduleRequired();
-        } else {
-            tcbSchedDequeue(target);
-            tcbReleaseRemove(target);
+        if (unlikely(target->tcbSchedContext->scHome != target)) {
+            schedContext_donate(target->tcbCallStackPrev, target->tcbSchedContext);
+
+            /* target no longer has an sc, remove from scheduler */
+            if (target == ksCurThread) {
+                rescheduleRequired();
+            } else {
+                tcbSchedDequeue(target);
+                tcbReleaseRemove(target);
+            }
         }
     }
 
