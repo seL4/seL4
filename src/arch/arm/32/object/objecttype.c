@@ -74,6 +74,20 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         return ret;
 #endif
 
+    case cap_io_space_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+
+    case cap_io_page_table_cap:
+        if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        } else {
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+        }
+        return ret;
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -140,6 +154,10 @@ Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_small_frame_cap:
         if (cap_small_frame_cap_get_capFMappedASID(cap)) {
+            if (isIOSpaceFrame(cap)) {
+                unmapIOPage(cap);
+                break;
+            }
             unmapPage(ARMSmallPage,
                       cap_small_frame_cap_get_capFMappedASID(cap),
                       cap_small_frame_cap_get_capFMappedAddress(cap),
@@ -163,6 +181,18 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
 #endif
+
+    case cap_io_space_cap:
+        break;
+
+    case cap_io_page_table_cap:
+        if (final && cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
+            deleteIOPageTable(cap);
+        }
+        break;
+
+    default:
+        break;
     }
 
     return cap_null_cap_new();
@@ -270,6 +300,15 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
 #endif
 
+    case cap_io_space_cap:
+        Arch_finaliseCap(cap, is_final);
+        return cap;
+
+    case cap_io_page_table_cap:
+        clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        Arch_finaliseCap(cap, is_final);
+        return cap;
+
     default:
         fail("Arch_recycleCap: invalid cap type");
     }
@@ -344,6 +383,19 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         break;
 #endif
 
+    case cap_io_space_cap:
+        if (cap_get_capType(cap_b) == cap_io_space_cap) {
+            return cap_io_space_cap_get_capModuleID(cap_a) ==
+                   cap_io_space_cap_get_capModuleID(cap_b);
+        }
+        break;
+
+    case cap_io_page_table_cap:
+        if (cap_get_capType(cap_b) == cap_io_page_table_cap) {
+            return cap_io_page_table_cap_get_capIOPTBasePtr(cap_a) ==
+                   cap_io_page_table_cap_get_capIOPTBasePtr(cap_b);
+        }
+        break;
     }
 
     return false;
@@ -390,6 +442,8 @@ Arch_getObjectSize(word_t t)
         return PTE_SIZE_BITS + PT_BITS;
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_BITS;
+    case seL4_ARM_IOPageTableObject:
+        return ARM_IOPTE_SIZE_BITS + ARM_IOPT_BITS;
 #ifdef ARM_HYP
     case seL4_ARM_VCPUObject:
         return VCPU_SIZE_BITS;
@@ -516,13 +570,18 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
                       cte_t *slot, cap_t cap, extra_caps_t excaps,
                       word_t *buffer)
 {
+    switch (cap_get_capType(cap)) {
+        case cap_io_space_cap:
+            return decodeARMIOSpaceInvocation(invLabel, cap);
+        case cap_io_page_table_cap:
+            return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
 #ifdef ARM_HYP
-    if (cap_get_capType(cap) == cap_vcpu_cap) {
-        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
-
+        case cap_vcpu_cap:
+            return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+#endif /* end of ARM_HYP */
+        default:
+            return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     }
-#endif /* ARM_HYP */
-    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
 }
 
 void

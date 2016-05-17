@@ -21,10 +21,17 @@ typedef enum _object {
 #ifdef ARM_HYP
     seL4_ARM_VCPUObject,
 #endif
+#ifdef CONFIG_ARM_SMMU
+    seL4_ARM_IOPageTableObject,
+#endif
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 
 typedef seL4_Word object_t;
+
+#ifndef CONFIG_ARM_SMMU
+#define seL4_ARM_IOPageTableObject 0xffff
+#endif
 
 #endif /* __ARCH_OBJECTTYPE_H */
 

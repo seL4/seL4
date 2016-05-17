@@ -63,6 +63,10 @@ typedef word_t vm_rights_t;
 #define PT_BITS 8
 #endif /* ARM_HYP */
 
+/* NOTE: the macros are defined based on Tegra K1 SMMU page table sizes */
+#define ARM_IOPTE_SIZE_BITS 2
+#define ARM_IOPT_BITS       10
+
 
 #define PDE_PTR(r) ((pde_t *)(r))
 #define PDE_REF(p) ((unsigned int)p)
@@ -365,6 +369,9 @@ cap_get_archCapPtr(cap_t cap)
     case cap_vcpu_cap:
         return VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
 #endif
+
+    case cap_io_page_table_cap:
+        return (void *)(cap_io_page_table_cap_get_capIOPTBasePtr(cap));
 
     default:
         /* Unreachable, but GCC can't figure that out */
