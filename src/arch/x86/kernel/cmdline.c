@@ -81,8 +81,7 @@ static int parse_bool(const char *cmdline, const char *opt)
     }
 }
 
-#if defined DEBUG || defined RELEASE_PRINTF
-static void parse_uint16_array(char* str, uint16_t* array, int array_size)
+static void UNUSED parse_uint16_array(char* str, uint16_t* array, int array_size)
 {
     char* last;
     int   i = 0;
@@ -105,14 +104,12 @@ static void parse_uint16_array(char* str, uint16_t* array, int array_size)
         i++;
     }
 }
-#endif
 
 void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
 {
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
     /* initialise to default */
     cmdline_opt->console_port = 0x3f8;
-    cmdline_opt->debug_port = 0x3f8;
 
     if (parse_opt(cmdline, "console_port", cmdline_val, MAX_CMDLINE_VAL_LEN) != -1) {
         parse_uint16_array(cmdline_val, &cmdline_opt->console_port, 1);
@@ -129,7 +126,10 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
     if (cmdline_opt->console_port) {
         printf("Boot config: console_port = 0x%x\n", cmdline_opt->console_port);
     }
+#endif
 
+#ifdef CONFIG_DEBUG_BUILD
+    cmdline_opt->debug_port = 0x3f8;
     if (parse_opt(cmdline, "debug_port", cmdline_val, MAX_CMDLINE_VAL_LEN) != -1) {
         parse_uint16_array(cmdline_val, &cmdline_opt->debug_port, 1);
     }
@@ -144,8 +144,10 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
     cmdline_opt->disable_iommu = parse_bool(cmdline, cmdline_str_disable_iommu);
     printf("Boot config: disable_iommu = %s\n", cmdline_opt->disable_iommu ? "true" : "false");
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
     x86KSconsolePort = cmdline_opt->console_port;
+#endif
+#ifdef CONFIG_DEBUG_BUILD
     x86KSdebugPort = cmdline_opt->debug_port;
 #endif
 }

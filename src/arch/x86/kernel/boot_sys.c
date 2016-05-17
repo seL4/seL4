@@ -40,7 +40,7 @@ extern char boot_stack_top[1];
 extern char ki_boot_end[1];
 extern char ki_end[1];
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 /* kernel entry point */
 extern char _start[1];
 #endif
@@ -72,7 +72,7 @@ boot_state_t boot_state;
 
 /* There are a lot of assumptions on this being page aligned and
  * precisely 4K in size. DO NOT MODIFY */
-ALIGN(BIT(PAGE_BITS))
+ALIGN(BIT(PAGE_BITS)) VISIBLE
 char kernel_stack_alloc[4096];
 
 /* global variables (not covered by abstract specification) */
@@ -80,7 +80,7 @@ char kernel_stack_alloc[4096];
 BOOT_DATA
 cmdline_opt_t cmdline_opt;
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 
 /* Determine whether we are in bootstrapping phase or runtime phase.
  * Is currently only needed to determine console port in debug mode.
@@ -425,6 +425,12 @@ try_boot_sys(
     }
 
     printf("Detected %d boot module(s):\n", mbi->mod_count);
+
+    if (mbi->mod_count < 1) {
+        printf("Expect at least one boot module (containing a userland image)\n");
+        return false;
+    }
+
     mods_end_paddr = 0;
 
     for (i = 0; i < mbi->mod_count; i++) {
@@ -446,11 +452,6 @@ try_boot_sys(
     }
     mods_end_paddr = ROUND_UP(mods_end_paddr, PAGE_BITS);
     assert(mods_end_paddr > boot_state.ki_p_reg.end);
-
-    if (mbi->mod_count < 1) {
-        printf("Expect at least one boot module (containing a userland image)\n");
-        return false;
-    }
 
     printf("ELF-loading userland images from boot modules:\n");
     load_paddr = mods_end_paddr;

@@ -8,10 +8,12 @@
  * @TAG(GD_GPL)
  */
 
-#include <stdarg.h>
+#include <config.h>
 #include <machine/io.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
+
+#include <stdarg.h>
 
 static unsigned int
 print_string(const char *s)
@@ -274,4 +276,4 @@ kprintf(const char *format, ...)
     return i;
 }
 
-#endif /* defined DEBUG || RELEASE_PRINTF */
+#endif /* CONFIG_PRINTING */

@@ -8,7 +8,8 @@
  * @TAG(GD_GPL)
  */
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#include <config.h>
+#ifdef CONFIG_DEBUG_BUILD
 
 #include <arch/model/statedata.h>
 #include <plat/machine/debug_helpers.h>

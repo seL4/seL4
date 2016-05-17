@@ -8,7 +8,9 @@
  * @TAG(GD_GPL)
  */
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#include <config.h>
+
+#ifdef CONFIG_PRINTING
 
 #include <arch/kernel/lock.h>
 #include <arch/linker.h>
@@ -16,4 +18,4 @@
 /* global spinlocks */
 lock_t lock_debug;
 
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */

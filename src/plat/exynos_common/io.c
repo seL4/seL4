@@ -8,12 +8,13 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 
 #define ULCON       0x0000 /* line control */
 #define UCON        0x0004 /* control */
@@ -66,4 +67,4 @@ getDebugChar(void)
 }
 
 
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */

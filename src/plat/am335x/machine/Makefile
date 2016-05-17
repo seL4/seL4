@@ -11,11 +11,5 @@
 DIRECTORIES += src/plat/am335x/machine
 
 PLAT_C_SOURCES += machine/hardware.c \
-                  machine/l2cache.c
-
-ifdef DEBUG
-    PLAT_C_SOURCES += machine/io.c
-endif
-ifdef RELEASE_PRINTF
-    PLAT_C_SOURCES += machine/io.c
-endif
+                  machine/l2cache.c \
+                  machine/io.c

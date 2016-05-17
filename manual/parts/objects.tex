@@ -74,8 +74,8 @@ capability system, where capabilities are managed by the kernel.
 Capability spaces are implemented as a directed graph of kernel-managed
 \emph{capability nodes} (\obj{CNode}s).  A \obj{CNode} is a table of
 slots, where each slot may contain further \obj{CNode} capabilities. An
-address in a capability space is then the concatenation of the indices
-of the \obj{CNode} capabilities forming the path to the destination
+address of a capability in a capability space is the concatenation of the indices
+of slots within \obj{CNodes} forming the path to the destination
 slot; we discuss \obj{CNode} objects in detail in \autoref{ch:cspace}.
 
 Capabilities can be copied and moved within capability spaces, and

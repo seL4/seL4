@@ -15,12 +15,5 @@ ARCH_C_SOURCES += kernel/vspace.c \
                   kernel/boot_sys.c \
                   kernel/boot.c \
                   kernel/cmdline.c \
-                  kernel/elf.c
-
-ifdef DEBUG
-ARCH_C_SOURCES += kernel/lock.c
-endif
-
-ifdef RELEASE_PRINTF
-ARCH_C_SOURCES += kernel/lock.c
-endif
+                  kernel/elf.c \
+                  kernel/lock.c
