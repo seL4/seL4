@@ -113,13 +113,13 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
   child of the specified capability. It has no effect on the
   capability itself, except in very specific circumstances outlined
   in Section~\ref{s:cspace-revoke}.
-\item[\apifunc{seL4\_CNode\_SaveCaller}{cnode_savecaller}] moves a
+\item[\apifunc{seL4\_CNode\_SwapCaller}{cnode_swapcaller}] swaps a
   kernel-generated reply capability of the current thread from the
-  special \obj{TCB} slot it was created in, into the designated CSpace
-  slot.
-\item[\apifunc{seL4\_CNode\_SaveTCBCaller}{cnode_savetcbcaller}] moves a
+  special \obj{TCB} slot it was created in, with the designated CSpace
+  slot. 
+\item[\apifunc{seL4\_CNode\_SwapTCBCaller}{cnode_swaptcbcaller}] swaps a
   kernel-generated reply capability of a target thread from the
-  special \obj{TCB} slot it was created in, into the designated CSpace
+  special \obj{TCB} slot it was created in, with the designated CSpace
   slot.
 \item[\apifunc{seL4\_CNode\_Recycle}{cnode_recycle}] is similar to
   \apifunc{seL4\_CNode\_Revoke}{cnode_revoke}, except that it also

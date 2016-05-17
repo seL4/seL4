@@ -9,17 +9,17 @@
 %
 
 \apidoc
-{cnode_savecaller}
-{CNode  -  Save Caller}
-{Save the reply capability from the last time the thread was called in the given CSpace so that it can be invoked later}
-{static inline int seL4\_CNode\_SaveCaller}
+{cnode_swapcaller}
+{CNode  -  Swap Caller}
+{Save the reply capability from the last time the thread was called in the given CSpace so that it can be invoked or swapped back later. If the provided CPTR points to a reply cap, save this into the threads reply slot. This can be used to restore a previously saved reply capability.}
+{static inline int seL4\_CNode\_SwapCaller}
 {
 \param{seL4\_CNode}{\_service}{
     CPTR to the CNode at the root of the CSpace where the capability is to be
-    saved. Must be at a depth of 32.
+    swapped. Must be at a depth of 32. Must either be an empty CPTR or reply capability.
 }
 \param{seL4\_Word}{index}{
-    CPTR to the slot in which to save the capability. Resolved from the root of
+    CPTR to the slot in which to swap the capability. Resolved from the root of
     the \_service parameter.
 }
 \param{uint8\_t}{depth}{

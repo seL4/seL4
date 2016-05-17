@@ -143,11 +143,11 @@
 			<param dir="in" name="src_index" type="seL4_Word"/>
 			<param dir="in" name="src_depth" type="seL4_Uint8"/>
 		</method>
-		<method id="CNodeSaveCaller" name="SaveCaller">
+		<method id="CNodeSwapCaller" name="SwapCaller">
 			<param dir="in" name="index" type="seL4_Word"/>
 			<param dir="in" name="depth" type="seL4_Uint8"/>
 		</method>
-        <method id="CNodeSaveTCBCaller" name="SaveTCBCaller">
+        <method id="CNodeSwapTCBCaller" name="SwapTCBCaller">
             <param dir="in" name="index" type="seL4_Word"/>
             <param dir="in" name="depth" type="seL4_Uint8"/>
             <param dir="in" name="tcb" type="seL4_CPtr" />

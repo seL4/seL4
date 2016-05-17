@@ -49,7 +49,7 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
     /* Haskell error: "decodeCNodeInvocation: invalid cap" */
     assert(cap_get_capType(cap) == cap_cnode_cap);
 
-    if (invLabel < CNodeRevoke || invLabel > CNodeSaveTCBCaller) {
+    if (invLabel < CNodeRevoke || invLabel > CNodeSwapTCBCaller) {
         userError("CNodeCap: Illegal Operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -201,29 +201,29 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         return invokeCNodeDelete(destSlot);
     }
 
-    if (invLabel == CNodeSaveCaller) {
-        return decodeCNodeSaveCaller(destSlot, ksCurThread);
+    if (invLabel == CNodeSwapCaller) {
+        return decodeCNodeSwapCaller(destSlot, ksCurThread);
     }
 
-    if (invLabel == CNodeSaveTCBCaller) {
+    if (invLabel == CNodeSwapTCBCaller) {
         tcb_t *tcb;
         cap_t tcbCap;
 
         if (excaps.excaprefs[0] == NULL) {
-            userError("CNode SaveTCBCaller: Trucated message.");
+            userError("CNode SwapTCBCaller: Trucated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         tcbCap = excaps.excaprefs[0]->cap;
         if (cap_get_capType(tcbCap) != cap_thread_cap) {
-            userError("CNode_SaveTCBCaller: target cap is not a thread cap.");
+            userError("CNode_SwapTCBCaller: target cap is not a thread cap.");
             current_syscall_error.type = seL4_InvalidArgument;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(tcbCap));
-        return decodeCNodeSaveCaller(destSlot, tcb);
+        return decodeCNodeSwapCaller(destSlot, tcb);
     }
 
     if (invLabel == CNodeRecycle) {
@@ -368,22 +368,20 @@ invokeCNodeRotate(cap_t cap1, cap_t cap2, cte_t *slot1,
 }
 
 exception_t
-decodeCNodeSaveCaller(cte_t *destSlot, tcb_t *target)
+decodeCNodeSwapCaller(cte_t *destSlot, tcb_t *target)
 {
-    exception_t status;
-
-    status = ensureEmptySlot(destSlot);
-    if (status != EXCEPTION_NONE) {
-        userError("CNode SaveCaller: Destination slot not empty.");
-        return status;
+    if (unlikely(cap_get_capType(destSlot->cap) != cap_null_cap &&
+                 cap_get_capType(destSlot->cap) != cap_reply_cap)) {
+        current_syscall_error.type = seL4_DeleteFirst;
+        return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeCNodeSaveCaller(destSlot, target);
+    return invokeCNodeSwapCaller(destSlot, target);
 }
 
 exception_t
-invokeCNodeSaveCaller(cte_t *destSlot, tcb_t *target)
+invokeCNodeSwapCaller(cte_t *destSlot, tcb_t *target)
 {
     cap_t cap;
     cte_t *srcSlot;
@@ -391,22 +389,7 @@ invokeCNodeSaveCaller(cte_t *destSlot, tcb_t *target)
     srcSlot = TCB_PTR_CTE_PTR(target, tcbCaller);
     cap = srcSlot->cap;
 
-    switch (cap_get_capType(cap)) {
-    case cap_null_cap:
-        userError("CNode SaveCaller: Reply cap not present.");
-        break;
-
-    case cap_reply_cap:
-        if (!cap_reply_cap_get_capReplyMaster(cap)) {
-            cteMove(cap, srcSlot, destSlot);
-        }
-        break;
-
-    default:
-        fail("caller capability must be null or reply");
-        break;
-    }
-
+    cteSwap(cap, srcSlot, destSlot->cap, destSlot);
     return EXCEPTION_NONE;
 }
 
