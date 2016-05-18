@@ -360,7 +360,7 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
                               1, /* read_write     */
                               1  /* present        */
                              );
-        invalidateTLBentry(virt_pg_start + pg_offset);
+        invalidateTranslationSingle(virt_pg_start + pg_offset);
     }
 
     // assign replacement virtual addresses page
