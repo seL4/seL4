@@ -77,6 +77,7 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
     case cap_io_space_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
+        return ret;
 
     case cap_io_page_table_cap:
         if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
