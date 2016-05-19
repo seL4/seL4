@@ -23,6 +23,7 @@ exception_t decodeARMIOUnMapInvocation(word_t invLabel, uint32_t length, cte_t* 
 exception_t decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap);
 void unmapIOPage(cap_t cap);
 void deleteIOPageTable(cap_t cap);
+void clearIOPageDirectory(cap_t cap);
 
 #endif
 

@@ -184,6 +184,9 @@ Arch_finaliseCap(cap_t cap, bool_t final)
 #endif
 
     case cap_io_space_cap:
+        if (final) {
+            clearIOPageDirectory(cap);
+        }
         break;
 
     case cap_io_page_table_cap:
@@ -213,6 +216,8 @@ resetMemMapping(cap_t cap)
     case cap_page_directory_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_page_directory_cap_set_capPDIsMapped(cap, 0);
+    case cap_io_page_table_cap:
+        return cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
     }
 
     return cap;
@@ -302,13 +307,13 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
 #endif
 
     case cap_io_space_cap:
-        Arch_finaliseCap(cap, is_final);
+        Arch_finaliseCap(cap, true);
         return cap;
 
     case cap_io_page_table_cap:
-        clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        clearMemoryRAM((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
         Arch_finaliseCap(cap, is_final);
-        return cap;
+        return resetMemMapping(cap);
 
     default:
         fail("Arch_recycleCap: invalid cap type");
@@ -556,6 +561,12 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
         return cap_vcpu_cap_new(VCPU_REF(regionBase));
 #endif
 
+    case seL4_ARM_IOPageTableObject:
+        memzero(regionBase, 1 << seL4_IOPageTableBits);
+        cleanCacheRange_RAM((word_t)regionBase,
+                            (word_t)regionBase + (1 << seL4_IOPageTableBits) - 1,
+                            addrFromPPtr(regionBase));
+        return cap_io_page_table_cap_new(0, asidInvalid, (word_t)regionBase, 0);
     default:
         /*
          * This is a conflation of the haskell error: "Arch.createNewCaps
