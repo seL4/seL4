@@ -83,12 +83,18 @@ create_iospace_caps(cap_t root_cnode_cap)
         return (seL4_SlotRegion) S_REG_EMPTY;
     }
 
-    for (i = 0; i < num_smmu; i++) {
+    /* the 0 is reserved as an invalidASID,
+     * assuming each module is assigned an unique ASID
+     * and the ASIDs are contiguous
+     * */
+    for (i = 1; i <= num_smmu; i++) {
         io_space_cap = cap_io_space_cap_new(i, i);  
         if (!provide_cap(root_cnode_cap, io_space_cap)) {
             return (seL4_SlotRegion) S_REG_EMPTY;
         }
     }
+    end = ndks_boot.slot_pos_cur;
+    printf("Region [%x to %x) for SMMU caps\n", (unsigned int)start, (unsigned int)end);
     return (seL4_SlotRegion) {start, end};
 }
 

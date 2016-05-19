@@ -8,18 +8,6 @@
 
 static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR); 
 
-
-void printkk(void);
-void
-printkk(void)
-{
-    volatile uint32_t *reg = (volatile uint32_t *)(0x70006300);
-    int i = 'a';
-    for (; i < 'z'; i++) {
-        *reg = i;
-    }
-}
-
 #define SMMU_CONFIG_OFFSET  0x10
 
 static void
