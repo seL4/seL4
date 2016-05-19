@@ -28,29 +28,40 @@ __smmu_disable(void)
 static inline void
 smmu_disable(void)
 {
-    /* we need physical address here */
-    uint32_t addr = (uint32_t)&__smmu_disable;
-    addr -= 0x60000000;
-    asm (".arch_extension sec\n");
-    asm volatile ("mov r0, %0\n\t"
-          "dsb\nisb\n"
-          "smc #0\n"
-          ::"r"(addr));
+    if (config_set(ARM_HYP)) {
+        /* in hyp mode, we need call the hook in monitor mode */
+        /* we need physical address here */
+        uint32_t addr = (uint32_t)&__smmu_disable;
+        addr -= 0x60000000;
+        asm (".arch_extension sec\n");
+        asm volatile ("mov r0, %0\n\t"
+              "dsb\nisb\n"
+              "smc #0\n"
+              ::"r"(addr));
                 
+    } else {
+        /* in secure mode, can enable it directly */
+        smmu_regs->smmu_config = 0;
+    }
+
     return;
 }
 
 static inline void
 smmu_enable(void)
 {
-    uint32_t addr = (uint32_t)&__smmu_enable;
-    addr -= 0x60000000;
-    asm (".arch_extension sec\n");
-    asm volatile ("mov r0, %0\n\t"
-          "dsb\nisb\n"
-          "smc #0\n"
-          ::"r"(addr));
-    
+    if (config_set(ARM_HYP)) {
+        uint32_t addr = (uint32_t)&__smmu_enable;
+        addr -= 0x60000000;
+        asm (".arch_extension sec\n");
+        asm volatile ("mov r0, %0\n\t"
+              "dsb\nisb\n"
+              "smc #0\n"
+              ::"r"(addr));
+    } else {
+        smmu_regs->smmu_config = 1;
+    }
+
     return;
 }
 
