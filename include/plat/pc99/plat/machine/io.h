@@ -22,9 +22,14 @@ uint8_t in8(uint16_t port);
 uint16_t in16(uint16_t port);
 uint32_t in32(uint16_t port);
 
-#ifdef CONFIG_PRINTING
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 
 void serial_init(uint16_t port);
+
+#endif
+
+#ifdef CONFIG_PRINTING
+
 void console_putchar(char c);
 
 #define kernel_putchar(c) console_putchar(c)

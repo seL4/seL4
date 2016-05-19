@@ -81,6 +81,9 @@ handleUnknownSyscall(word_t w)
         setRegister(ksCurThread, capRegister, cap_type);
         return EXCEPTION_NONE;
     }
+#endif /* DEBUG */
+
+#ifdef CONFIG_PRINTING
     if (w == SysDebugNameThread) {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
          * then assume the system is completely misconfigured and halt */
@@ -107,7 +110,7 @@ handleUnknownSyscall(word_t w)
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return EXCEPTION_NONE;
     }
-#endif
+#endif /* CONFIG_PRINTING */
 
 #ifdef DANGEROUS_CODE_INJECTION
     if (w == SysDebugRun) {

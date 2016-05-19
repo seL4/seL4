@@ -66,7 +66,7 @@ sendFaultIPC(tcb_t *tptr)
     }
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 static void
 print_fault(fault_t f)
 {
@@ -105,7 +105,7 @@ print_fault(fault_t f)
 void
 handleDoubleFault(tcb_t *tptr, fault_t ex1)
 {
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
     fault_t ex2 = current_fault;
     printf("Caught ");
     print_fault(ex2);

@@ -16,12 +16,18 @@
 
 #ifdef CONFIG_PRINTING
 void exynos_uart_putchar(char c);
-void putDebugChar(unsigned char c);
-unsigned char getDebugChar(void);
 
 #define kernel_putchar(c) exynos_uart_putchar(c)
 #else /* !CONFIG_PRINTING */
 #define kernel_putchar(c) ((void)(0))
 #endif /* CONFIG_PRINTING */
+
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+void putDebugChar(unsigned char c);
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
+unsigned char getDebugChar(void);
+#endif
 
 #endif /* !__PLAT_IO_H */

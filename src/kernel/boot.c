@@ -425,7 +425,7 @@ create_initial_thread(
     cap = cap_thread_cap_new(TCB_REF(tcb));
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadTCB), cap);
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
     setThreadName(tcb, "rootserver");
 #endif
 

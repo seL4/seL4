@@ -14,7 +14,6 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef CONFIG_PRINTING
 #define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #define USR                   0x08
@@ -24,6 +23,7 @@
 #define USR_TXRDY             (1U << 2)
 #define USR_TXEMP             (1U << 3)
 
+#ifdef CONFIG_PRINTING
 
 void
 apq8064_uart_putchar(char c)
@@ -33,6 +33,10 @@ apq8064_uart_putchar(char c)
         putDebugChar('\r');
     }
 }
+
+#endif
+
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 
 void
 putDebugChar(unsigned char c)
@@ -44,6 +48,10 @@ putDebugChar(unsigned char c)
     *UART_REG(UTF) = c & 0xff;
 }
 
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
+
 unsigned char
 getDebugChar(void)
 {
@@ -51,4 +59,4 @@ getDebugChar(void)
 }
 
 
-#endif /* CONFIG_PRINTING */
+#endif /* CONFIG_DEBUG_BUILD */
