@@ -99,6 +99,8 @@ invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t peri
         assert(isRunnable(target->scTcb));
         if (ready(target)) {
             recharge(target);
+        }
+        if (target->scRemaining >= getKernelWcetTicks()) {
             tcbSchedEnqueue(target->scTcb);
         } else {
             tcbSchedDequeue(target->scTcb);
