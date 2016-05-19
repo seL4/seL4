@@ -30,6 +30,8 @@
             <syscall name="DebugHalt"     />
             <syscall name="DebugCapIdentify"   />
             <syscall name="DebugSnapshot" />
+        </config>
+        <config condition="defined CONFIG_PRINTING">
             <syscall name="DebugNameThread"/>
         </config>
         <config condition="defined DANGEROUS_CODE_INJECTION">

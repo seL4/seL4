@@ -602,7 +602,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_PRINTING
 char *strcpy(char *, const char *);
 static inline void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name)

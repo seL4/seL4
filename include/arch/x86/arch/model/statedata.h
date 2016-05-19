@@ -49,6 +49,8 @@ extern uint32_t x86KSFirstValidIODomain;
 
 #ifdef CONFIG_PRINTING
 extern uint16_t x86KSconsolePort;
+#endif
+#ifdef CONFIG_DEBUG_BUILD
 extern uint16_t x86KSdebugPort;
 #endif
 

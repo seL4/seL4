@@ -11,6 +11,7 @@
 #ifndef __OBJECT_STRUCTURES_H
 #define __OBJECT_STRUCTURES_H
 
+#include <config.h>
 #include <api/types.h>
 #include <stdint.h>
 #include <arch/object/structures_gen.h>
@@ -256,7 +257,7 @@ struct tcb {
     /* maximum controlled criticality of this tcb */
     crit_t tcbMCC;
 
-#ifdef DEBUG
+#if defined(CONFIG_PRINTING)
     /* Use any remaining space for a thread name */
     char tcbName[];
 #endif

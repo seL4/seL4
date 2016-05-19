@@ -571,7 +571,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
 
         Arch_initContext(&tcb->tcbArch.tcbContext);
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
         strlcpy(tcb->tcbName, "child of: '", TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, ksCurThread->tcbName, TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, "'", TCB_NAME_LENGTH);

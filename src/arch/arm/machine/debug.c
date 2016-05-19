@@ -26,7 +26,7 @@ void
 debug_init(void)
 {
     uint32_t didr;
-    int version, variant, revision;
+    int UNUSED version, UNUSED variant, UNUSED revision;
     word_t i;
 
     didr = getDIDR();

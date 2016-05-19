@@ -14,8 +14,6 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#ifdef CONFIG_PRINTING
-
 #define ULCON       0x0000 /* line control */
 #define UCON        0x0004 /* control */
 #define UFCON       0x0008 /* fifo control */
@@ -39,6 +37,7 @@
 #define TXBUF_EMPTY     BIT(1)
 #define RXBUF_READY     BIT(0)
 
+#ifdef CONFIG_PRINTING
 
 void
 exynos_uart_putchar(char c)
@@ -49,12 +48,20 @@ exynos_uart_putchar(char c)
     }
 }
 
+#endif
+
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+
 void
 putDebugChar(unsigned char c)
 {
     while ( (*UART_REG(UTRSTAT) & TXBUF_EMPTY) == 0 );
     *UART_REG(UTXH) = (c & 0xff);
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 unsigned char
 getDebugChar(void)
@@ -67,4 +74,4 @@ getDebugChar(void)
 }
 
 
-#endif /* CONFIG_PRINTING */
+#endif /* CONFIG_DEBUG_BUILD */
