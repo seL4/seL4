@@ -140,6 +140,11 @@ handleReservedIRQ(irq_t irq)
         return;
     }
 
+    if (config_set(CONFIG_ARM_SMMU) && (irq == INTERRUPT_SMMU)) {
+        plat_smmu_handle_interrupt();
+        return;
+    }
+
     printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
