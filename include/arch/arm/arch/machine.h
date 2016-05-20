@@ -45,6 +45,13 @@ static inline void clearMemory(word_t* ptr, word_t bits)
     cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
                         addrFromPPtr(ptr));
 }
+
+static inline void clearMemoryRAM(word_t* ptr, word_t bits)
+{
+    memzero(ptr, BIT(bits));
+    cleanCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
+                        addrFromPPtr(ptr));
+}
 #endif /* __ASSEMBLER__ */
 
 #endif /* __ARCH_MACHINE_H */

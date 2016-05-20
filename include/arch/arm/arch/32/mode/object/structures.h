@@ -64,6 +64,8 @@ typedef word_t vm_rights_t;
 #endif /* ARM_HYP */
 
 /* NOTE: the macros are defined based on Tegra K1 SMMU page table sizes */
+#define ARM_IOPDE_SIZE_BITS 2
+#define ARM_IOPD_BITS       10
 #define ARM_IOPTE_SIZE_BITS 2
 #define ARM_IOPT_BITS       10
 
@@ -333,6 +335,8 @@ cap_get_archCapSizeBits(cap_t cap)
     case cap_vcpu_cap:
         return VCPU_SIZE_BITS;
 #endif
+    case cap_io_page_table_cap:
+        return seL4_IOPageTableBits;
 
     default:
         /* Unreachable, but GCC can't figure that out */

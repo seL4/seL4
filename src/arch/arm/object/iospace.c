@@ -31,6 +31,31 @@ typedef struct lookupIOPTSlot_ret {
     iopte_t     *ioptSlot;
 } lookupIOPTSlot_ret_t;
 
+
+#define IOPDE_VALID_MASK    0xe0000000
+#define IOPTE_EMPTY_MASK    0xe0000000
+
+static bool_t
+isIOPDEValid(iopde_t *iopde)
+{
+    assert(iopde != 0);
+    if ((iopde->words[0] & IOPDE_VALID_MASK) == 0) {
+        return false;
+    }
+    return true;
+}
+
+static bool_t
+isIOPTEEmpty(iopte_t *iopte)
+{
+    assert(iopte != 0);
+    if ((iopte->words[0] & IOPTE_EMPTY_MASK) == 0) {
+        return true;
+    }
+    return false;
+}
+
+
 static lookupIOPDSlot_ret_t
 lookupIOPDSlot(iopde_t *iopd, word_t io_address)
 {
@@ -50,6 +75,13 @@ lookupIOPTSlot(iopde_t *iopd, word_t io_address)
 
     lookupIOPDSlot_ret_t pd_ret = lookupIOPDSlot(iopd, io_address);
     if (pd_ret.status != EXCEPTION_NONE) {
+        pt_ret.status = EXCEPTION_LOOKUP_FAULT;
+        pt_ret.ioptSlot = 0;
+        return pt_ret;
+    }
+
+    if (!isIOPDEValid(pd_ret.iopdSlot) ||
+        iopde_ptr_get_page_size(pd_ret.iopdSlot) != iopde_iopde_pt) {
         pt_ret.status = EXCEPTION_LOOKUP_FAULT;
         pt_ret.ioptSlot = 0;
         return pt_ret;
@@ -114,7 +146,7 @@ decodeARMIOPTInvocation(
     word_t     paddr;
     uint16_t   module_id;
     uint32_t   asid;
-    iopde_t     *pd;
+    iopde_t    *pd;
     lookupIOPDSlot_ret_t    lu_ret;
 
     if (invLabel == ARMIOPageTableUnmap) {
@@ -177,6 +209,11 @@ decodeARMIOPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    if (isIOPDEValid(lu_ret.iopdSlot)) {
+        current_syscall_error.type = seL4_DeleteFirst;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     iopde_iopde_pt_ptr_new(
             lu_ret.iopdSlot,
             1,      /* read */
@@ -227,13 +264,13 @@ decodeARMIOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cap_frame_cap_get_capFSize(cap) != ARMSmallPage) {
+    if (generic_frame_cap_get_capFSize(cap) != ARMSmallPage) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
+    if (cap_small_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
@@ -241,7 +278,7 @@ decodeARMIOMapInvocation(
 
     io_space    = excaps.excaprefs[0]->cap;
     io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
-    paddr       = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
+    paddr       = pptr_to_paddr((void*)cap_small_frame_cap_get_capFBasePtr(cap));
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -272,7 +309,11 @@ decodeARMIOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    frame_cap_rights = cap_frame_cap_get_capFVMRights(cap);
+    if (!isIOPTEEmpty(lu_ret.ioptSlot)) {
+        current_syscall_error.type = seL4_DeleteFirst;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    frame_cap_rights = cap_small_frame_cap_get_capFVMRights(cap);
     dma_cap_rights_mask = rightsFromWord(getSyscallArg(0, buffer));
 
     if ((frame_cap_rights == VMReadOnly) && cap_rights_get_capAllowRead(dma_cap_rights_mask)) {
@@ -346,6 +387,7 @@ decodeARMIOMapInvocation(
     return EXCEPTION_NONE;
 }
 
+
 void deleteIOPageTable(cap_t io_pt_cap)
 {
 
@@ -368,7 +410,9 @@ void deleteIOPageTable(cap_t io_pt_cap)
             return;
         }
          
-        if (iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap)) {
+        if (isIOPDEValid(lu_ret.iopdSlot) &&
+            iopde_ptr_get_page_size(lu_ret.iopdSlot) == iopde_iopde_pt &&
+            iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap)))) {
             return;
         }
 
@@ -378,7 +422,7 @@ void deleteIOPageTable(cap_t io_pt_cap)
                 addrFromPPtr(lu_ret.iopdSlot));
 
         
-        /* TODO flush by address and asid */
+        /* nice to have: flush by address and asid */
         plat_smmu_tlb_flush_all();
         plat_smmu_ptc_flush_all();
     }
@@ -391,8 +435,8 @@ void unmapIOPage(cap_t cap)
     word_t  io_address;
     uint32_t asid;
 
-    io_address = cap_frame_cap_get_capFMappedAddress(cap);
-    asid = cap_frame_cap_get_capFMappedASID(cap);
+    io_address = cap_small_frame_cap_get_capFMappedAddress(cap);
+    asid = cap_small_frame_cap_get_capFMappedASID(cap);
     pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
 
     if (pd == 0) {
@@ -404,7 +448,7 @@ void unmapIOPage(cap_t cap)
     if (lu_ret.status != EXCEPTION_NONE) {
         return;
     }
-    if (iopte_ptr_get_address(lu_ret.ioptSlot) != cap_frame_cap_get_capFBasePtr(cap)) {
+    if (iopte_ptr_get_address(lu_ret.ioptSlot) != pptr_to_paddr((void *)cap_small_frame_cap_get_capFBasePtr(cap))) {
         return;
     }
 
@@ -412,6 +456,24 @@ void unmapIOPage(cap_t cap)
     cleanCacheRange_RAM((word_t)lu_ret.ioptSlot, 
             ((word_t)lu_ret.ioptSlot) + sizeof(iopte_t),
             addrFromPPtr(lu_ret.ioptSlot));
+
+    plat_smmu_tlb_flush_all();
+    plat_smmu_ptc_flush_all();
+    return;
+}
+
+void clearIOPageDirectory(cap_t cap)
+{
+    iopde_t  *pd;
+    uint32_t asid = cap_io_space_cap_get_capModuleID(cap);
+    word_t   size = BIT((ARM_IOPDE_SIZE_BITS + ARM_IOPD_BITS));
+    pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
+
+    if (pd == 0) {
+        return;
+    }
+    memset((void *)pd, 0, size);
+    cleanCacheRange_RAM((word_t)pd, (word_t)pd + size, addrFromPPtr(pd));
 
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();

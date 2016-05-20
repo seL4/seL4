@@ -29,6 +29,7 @@ enum {
 #define seL4_PageDirBits 14
 #define seL4_ASIDPoolBits 12
 #define seL4_ARM_VCPUBits       12
+#define seL4_IOPageTableBits    12
 /* word size */
 #define seL4_WordBits (sizeof(seL4_Word) * 8)
 
