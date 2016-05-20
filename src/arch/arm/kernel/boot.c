@@ -135,6 +135,9 @@ init_irqs(cap_t root_cnode_cap)
     if (config_set(ARM_HYP)) {
         setIRQState(IRQReserved, INTERRUPT_VGIC_MAINTENANCE);
     }
+    if (config_set(CONFIG_ARM_SMMU)) {
+        setIRQState(IRQReserved, INTERRUPT_SMMU);
+    }
 
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
