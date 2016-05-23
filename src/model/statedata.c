@@ -50,6 +50,9 @@ word_t ksDomainTime;
 /* An index into ksDomSchedule for active domain and length. */
 word_t ksDomScheduleIdx;
 
+/* Only used by lockTLBEntry */
+word_t tlbLockCount = 0;
+
 #ifdef DEBUG
 debug_entry_t ksKernelEntry;
 #endif /* DEBUG */
