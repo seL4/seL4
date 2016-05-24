@@ -1376,6 +1376,10 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
                 sameObjectAs(tCap, slot->cap)) {
             cteInsert(bufferCap, bufferSrcSlot, bufferSlot);
         }
+
+        if (target == NODE_STATE(ksCurThread)) {
+            rescheduleRequired();
+        }
     }
 
     return EXCEPTION_NONE;
