@@ -133,4 +133,9 @@ pde_t CONST makeUserPDELargePageInvalid(void);
 pde_t CONST makeUserPDEPageTableInvalid(void);
 
 bool_t  CONST isIOSpaceFrame(cap_t cap);
+
+#ifdef CONFIG_PRINTING
+void Arch_userStackTrace(tcb_t *tptr);
+#endif
+
 #endif
