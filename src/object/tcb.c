@@ -1431,6 +1431,12 @@ invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
     }
 #endif
 
+    if (dest == NODE_STATE(ksCurThread)) {
+        /* If we modified the current thread we may need to reschedule
+         * due to changing registers are only reloaded in Arch_switchToThread */
+        rescheduleRequired();
+    }
+
     return Arch_performTransfer(transferArch, tcb_src, dest);
 }
 
@@ -1548,6 +1554,12 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
 
     if (resumeTarget) {
         restart(dest);
+    }
+
+    if (dest == NODE_STATE(ksCurThread)) {
+        /* If we modified the current thread we may need to reschedule
+         * due to changing registers are only reloaded in Arch_switchToThread */
+        rescheduleRequired();
     }
 
     return EXCEPTION_NONE;
