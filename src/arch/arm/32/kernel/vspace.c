@@ -27,6 +27,10 @@
 #include <plat/machine/hardware.h>
 #include <armv/context_switch.h>
 
+#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
+#include <benchmark_track.h>
+#endif
+
 /* ARM uses multiple identical mappings in a page table / page directory to construct
  * large mappings. In both cases it happens to be 16 entries, which can be calculated by
  * looking at the size difference of the mappings, and is done this way to remove magic
@@ -152,13 +156,13 @@ map_kernel_window(void)
         phys += BIT(pageBitsForSize(ARMSuperSection));
         idx += SECTIONS_PER_SUPER_SECTION;
     }
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* steal the last MB for logging */
     while (idx < BIT(PD_BITS) - 2) {
 #else
     /* mapping of the next 15M using 1M frames */
     while (idx < BIT(PD_BITS) - 1) {
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BNECHMARKS */
         pde = pde_pde_section_new(
                   phys,
                   0, /* Section */
@@ -178,7 +182,7 @@ map_kernel_window(void)
         idx++;
     }
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* allocate a 1M buffer for logging */
     pde = pde_pde_section_new(
               phys,
@@ -195,7 +199,7 @@ map_kernel_window(void)
               0  /* Write-through to minimise perf hit */
           );
     armKSGlobalPD[idx] = pde;
-    ksLog = (ks_log_entry_t *) ptrFromPAddr(phys);
+    ksLog = (void *) ptrFromPAddr(phys);
 
     /* we remove the address PADDR_TOP - 1MB from the
      * available physical memory for the sabre.
@@ -203,10 +207,10 @@ map_kernel_window(void)
      * if you are using a different platform this may need
      * adjusting or you may need to do something completely different
      * to get a 1mb, write through buffer*/
-    assert(ksLog == ((ks_log_entry_t *) KS_LOG_PADDR));
+    assert(ksLog == ((void *) KS_LOG_PADDR));
     phys += BIT(pageBitsForSize(ARMSection));
     idx++;
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);

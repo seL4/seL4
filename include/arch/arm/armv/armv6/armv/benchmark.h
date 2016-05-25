@@ -11,7 +11,8 @@
 #ifndef ARMV_BENCHMARK_H
 #define ARMV_BENCHMARK_H
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#if CONFIG_ENABLE_BENCHMARKS
+
 static inline uint32_t
 timestamp(void)
 {
@@ -19,7 +20,7 @@ timestamp(void)
 #error "Not implemented"
 }
 
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
 
 

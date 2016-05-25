@@ -37,6 +37,11 @@
         <config condition="defined DANGEROUS_CODE_INJECTION">
             <syscall name="DebugRun"/>
         </config>
+        <config condition="CONFIG_BENCHMARK_TRACK_SYSCALLS">
+            <syscall name="BenchmarkTrackSyscallReset"  />
+            <syscall name="BenchmarkTrackSyscallDump"  />
+            <syscall name="BenchmarkTrackSyscallSize"  />
+        </config>
         <config condition="CONFIG_MAX_NUM_TRACE_POINTS > 0">
             <syscall name="BenchmarkResetLog" />
             <syscall name="BenchmarkDumpLog"  />
