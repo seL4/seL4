@@ -91,6 +91,11 @@ maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask)
             return VMReadWrite;
         }
     }
+    if (vm_rights == VMReadWrite &&
+            !cap_rights_get_capAllowRead(cap_rights_mask) &&
+             cap_rights_get_capAllowWrite(cap_rights_mask)) {
+        userError("Attempted to make unsupported write only mapping");
+    }
     return VMKernelOnly;
 }
 
