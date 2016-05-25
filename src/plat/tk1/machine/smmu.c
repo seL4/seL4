@@ -25,7 +25,6 @@ __smmu_disable(void)
     *config = 0;
 }
 
-
 static inline void
 smmu_disable(void)
 {
@@ -33,7 +32,7 @@ smmu_disable(void)
         /* in hyp mode, we need call the hook in monitor mode */
         /* we need physical address here */
         uint32_t addr = (uint32_t)&__smmu_disable;
-        addr -= 0x60000000;
+        addr -= physMappingOffset;
         asm (".arch_extension sec\n");
         asm volatile ("mov r0, %0\n\t"
                       "dsb\nisb\n"
@@ -53,7 +52,7 @@ smmu_enable(void)
 {
     if (config_set(ARM_HYP)) {
         uint32_t addr = (uint32_t)&__smmu_enable;
-        addr -= 0x60000000;
+        addr -= physMappingOffset;
         asm (".arch_extension sec\n");
         asm volatile ("mov r0, %0\n\t"
                       "dsb\nisb\n"
