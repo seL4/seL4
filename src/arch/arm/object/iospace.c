@@ -388,7 +388,8 @@ decodeARMIOMapInvocation(
 }
 
 
-void deleteIOPageTable(cap_t io_pt_cap)
+void
+deleteIOPageTable(cap_t io_pt_cap)
 {
 
     uint32_t asid;
@@ -428,7 +429,8 @@ void deleteIOPageTable(cap_t io_pt_cap)
     }
 }
 
-void unmapIOPage(cap_t cap)
+void
+unmapIOPage(cap_t cap)
 {
     lookupIOPTSlot_ret_t lu_ret;
     iopde_t *pd;
@@ -500,7 +502,8 @@ decodeARMIOUnMapInvocation(
     return EXCEPTION_NONE;
 }
 
-exception_t decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
+exception_t
+decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
 {
     userError("IOSpace capability has no invocations");
     current_syscall_error.type = seL4_IllegalOperation;

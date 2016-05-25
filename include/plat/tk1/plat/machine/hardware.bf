@@ -33,13 +33,17 @@ block iopde_pt {
     field_high  address     22
 }
 
+-- adding a 2-bit padding before address is because
+-- we do not support addressing more than 4 GiB memory
+
 block iopde_4m {
     field       read        1
     field       write       1
     field       nonsecure   1
     field       page_size   1
     padding                 6
-    field_high  address     12
+    padding                 2
+    field_high  address     10
     padding                 10
 }
 
@@ -50,5 +54,6 @@ block iopte {
     field       write       1
     field       nonsecure   1
     padding                 7
-    field_high  address     22
+    padding                 2
+    field_high  address     20
 }

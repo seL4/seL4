@@ -1,4 +1,5 @@
 #include <types.h>
+#include <config.h>
 #include <plat/machine/smmu.h>
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
@@ -133,6 +134,29 @@ plat_smmu_tlb_flush_all(void)
 #define MC_SECURITY_BIT             8
 #define MC_DECERR_EMEM_BIT          6
 
+
+
+/* using 4 MiB mapping for the Linxu guest VM */
+#define IOPDE_4M_INDEX_SHIFT        22
+static void
+plat_smmu_vm_mapping(word_t iopd, word_t gpa, word_t pa, word_t size)
+{
+    iopde_t *iopde = (iopde_t *)iopd;
+    while (size > 0) {
+        word_t index = gpa >> IOPDE_4M_INDEX_SHIFT;
+        iopde_iopde_4m_ptr_new(
+                iopde + index,
+                1,
+                1,
+                1,
+                pa
+                );
+        gpa += BIT(IOPDE_4M_INDEX_SHIFT);
+        pa += BIT(IOPDE_4M_INDEX_SHIFT);
+        size -= BIT(IOPDE_4M_INDEX_SHIFT);
+    }
+}
+
 BOOT_CODE int
 plat_smmu_init(void)
 {
@@ -140,16 +164,24 @@ plat_smmu_init(void)
     int i = 0;
 
     smmu_disable();
-    printf("smmu disabled\n");
 
     for (i = 0; i < ARM_PLAT_NUM_SMMU; i++) {
        iopde_t *pd = (iopde_t *)alloc_region(SMMU_PD_BITS);           
+
        if (pd == 0) {
            printf("Failed to allocate SMMU IOPageDirectory for ASID %d\n", asid);
            return 0;
        }
+
        memset(pd, 0, BIT(SMMU_PD_BITS));
+       if (config_set(CONFIG_ARM_SMMU_VM_DEFAULT_MAPPING)) {
+           plat_smmu_vm_mapping((word_t)pd, VM_GUEST_PA_START, VM_HOST_PA_START, VM_HOST_PA_SIZE);
+       }
+       cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_BITS)),
+                           addrFromPPtr(pd));
+
        smmu_regs->smmu_ptb_asid = asid;
+
        /* make it read/write/nonsecure but all translation entries are invalid */
        smmu_regs->smmu_ptb_data = make_ptb_data(pptr_to_paddr(pd), true, true, true);
        asid++;
@@ -167,7 +199,7 @@ plat_smmu_init(void)
     smmu_regs->smmu_msenc_asid = SMMU_MSENC_ASID | MODULE_ASID_ENABLE;
     smmu_regs->smmu_nv_asid = SMMU_NV_ASID | MODULE_ASID_ENABLE;
     smmu_regs->smmu_nv2_asid = SMMU_NV2_ASID | MODULE_ASID_ENABLE;
-    //smmu_regs->smmu_ppcs_asid = SMMU_PPCS_ASID | MODULE_ASID_ENABLE;
+    smmu_regs->smmu_ppcs_asid = SMMU_PPCS_ASID | MODULE_ASID_ENABLE;
     smmu_regs->smmu_sata_asid = SMMU_SATA_ASID | MODULE_ASID_ENABLE;
     smmu_regs->smmu_vde_asid = SMMU_VDE_ASID | MODULE_ASID_ENABLE;
     smmu_regs->smmu_vi_asid = SMMU_VI_ASID | MODULE_ASID_ENABLE;
@@ -190,7 +222,7 @@ plat_smmu_init(void)
     /* flush TLB              */
     plat_smmu_tlb_flush_all();
     smmu_enable();
-    printf("smmu enabled\n");
+
     /* also need to unmask interrupts */
     smmu_regs->intmask = BIT(MC_APB_ASID_UPDATE_BIT) | BIT(MC_SMMU_PAGE_BIT) |
                          BIT(MC_DECERR_MTS_BIT) | BIT(MC_SECERR_SEC_BIT) |
@@ -238,8 +270,6 @@ plat_smmu_handle_interrupt(void)
 {
     uint32_t status = smmu_regs->intstatus;
     uint32_t clear_status = 0;
-    printf("status %x addr %x %x\n", status, smmu_regs->err_status, smmu_regs->err_adr);
-
 
     if (status & BIT(MC_DECERR_MTS_BIT)) {
         clear_status |= BIT(MC_DECERR_MTS_BIT);
@@ -265,6 +295,7 @@ plat_smmu_handle_interrupt(void)
 
     /* we only care about SMMU translation failures */
     if (status & BIT(MC_SMMU_PAGE_BIT)) {
+#ifdef DEBUG
         uint32_t err_status = smmu_regs->err_status;
         uint32_t err_adr = smmu_regs->err_adr;
         int      id = err_status & MC_ERR_ID_MASK;
@@ -277,7 +308,7 @@ plat_smmu_handle_interrupt(void)
         printf("SMMU Address translation error:\n");
         printf("ID: %d address: 0x%x type: %d direction: 0x%x\n", id, err_adr, type, rw);
         printf("IOPT permission: read 0x%x write 0x%x nonsecure 0x%x\n", read, write, nonsecure);
-
+#endif
         clear_status |= BIT(MC_SMMU_PAGE_BIT);
     }
 

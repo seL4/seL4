@@ -43,6 +43,14 @@
 #define VGICI_REQ_PADDR             (ARM_PERIPHBASE + 0x4000)   /* hyp view for requesting CPU  */
 #define VGICI_ALL_PADDR             (ARM_PERIPHBASE + 0x5000)   /* hyp view for all CPUs        */
 #define VGICI_VM_PADDR              (ARM_PERIPHBASE + 0x6000)   /* hyp view for VM view         */
+#define PCIE_0_CFG_PADDR            (0x01000000)                /* PCIE lane 0 config register  */
+#define PCIE_1_CFG_PADDR            (0x01001000)                /* PCIE lane 1 config register  */
+#define PCIE_PCA0_1_PADDR           (0x01002000)                /* PCA 0  and 1                 */
+#define PCIE_PADS_AFI_PADDR         (0x01003000)                /* Pads and AFI                 */
+#define PCIE_A1_PADDR               (0x01000000)                /* 16 MB                        */
+#define PCIE_A2_PADDR               (0x02000000)                /* 224 MB                       */
+#define PCIE_A3_PADDR               (0x10000000)                /* 763 MB                     */
+#define R8169_NIC_PADDR             (0x13000000)                /* r8169 NIC 1 MB               */
 #define GRAPH_HOST_PADDR            (0x54000000)                /* 16 MB                        */
 #define GPU_PADDR                   (0x57000000)                /* 144 MB                       */
 #define UP_TAG_PADDR                (0x60000000)                /* 4 KB                         */
@@ -83,7 +91,8 @@
 #define HDA_PADDR                   (0x70030000)                /* 64 KB                        */
 #define MIOBFM_PADDR                (0x70200000)                /* 64 KB                        */
 #define AUDIO_PADDR                 (0x70300000)                /* 64 KB                        */
-#define XUSB_HOST_PADDR             (0x70090000)                /* 40 KB                        */
+#define XUSB_HOST_PADDR             (0x70090000)                /* 36 KB                        */
+#define XUSB_PADCTL_PADDR           (0x7009f000)                /* 4  KB                        */
 #define XUSB_DEV_PADDR              (0x700d0000)                /* 40 KB                        */
 #define DDS_PADDR                   (0x700a0000)                /* 8KB 4608 bytes               */
 #define SDMMC_1_PADDR               (0x700b0000)                /* 4KB 512 bytes                */
@@ -105,5 +114,10 @@
 #define USB2_PADDR                  (0x7d004000)                /* 8 KB region, 6 KB            */
 #define USB3_PADDR                  (0x7d008000)                /* 8 KB region, 6 KB            */
 #define UARTA_PADDR                 (0x70006000)
+
+/* physical memory regions allocated for virtual machines */
+#define VM_HOST_PA_START    0xb0000000
+#define VM_GUEST_PA_START   0x80000000
+#define VM_HOST_PA_SIZE     0x40000000
 
 #endif

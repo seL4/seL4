@@ -241,6 +241,15 @@ config ARM_HYPERVISOR_SUPPORT
         help
             Support for TK1 SoC-specific SystemMMU
 
+    config ARM_SMMU_VM_DEFAULT_MAPPING
+        bool "Enable SystemMMU default mapping for guest VM"
+        depends on PLAT_TK1 && ARM_SMMU
+        help
+            Enable the default translation for guest VM: all
+            physical memory reserved for a VM is allowed to
+            be accessed with read/write/nonsecure permissions.
+
+
 
 source "$KERNEL_PATH/src/arch/arm/Kconfig"
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"

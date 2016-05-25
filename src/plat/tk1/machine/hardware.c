@@ -21,9 +21,8 @@
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 
+/* 1 MiB starting from 0xa7f00000 is reserved by the elfloader for monitor mode hooks */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
-//    { .start = 0x80000000, .end = 0xf0000000 }
-      //{ .start = 0x80000000, .end = 0xb0000000 }
     { .start = 0x80000000, .end = 0xa7f00000 }
 };
 
@@ -41,13 +40,17 @@ BOOT_CODE p_region_t get_avail_p_reg(word_t i)
 #define PAGE_SIZE       (1 << PAGE_BITS)
 #define SECTION_SIZE    (1 << SECTION_BITS)
 
-#define VM_PA_START     0xb0000000
-#define VM_PA_SIZE      0x10000000
 
 const p_region_t BOOT_RODATA dev_p_regs[] = {
 
-    { VM_PA_START,          VM_PA_START + VM_PA_SIZE },
+    { VM_HOST_PA_START,     VM_HOST_PA_START + VM_HOST_PA_SIZE },
     { VGICI_VM_PADDR,       VGICI_VM_PADDR + PAGE_SIZE },
+    { PCIE_0_CFG_PADDR,     PCIE_0_CFG_PADDR + PAGE_SIZE },
+    { PCIE_1_CFG_PADDR,     PCIE_1_CFG_PADDR + PAGE_SIZE },
+    { PCIE_PCA0_1_PADDR,    PCIE_PCA0_1_PADDR + PAGE_SIZE },
+    { PCIE_PADS_AFI_PADDR,  PCIE_PADS_AFI_PADDR + PAGE_SIZE },
+    { PCIE_A2_PADDR,        PCIE_A2_PADDR + SECTION_SIZE },
+    { R8169_NIC_PADDR,      R8169_NIC_PADDR + SECTION_SIZE},
     { GRAPH_HOST_PADDR,     GRAPH_HOST_PADDR + (SECTION_SIZE * 16) }, /* 16 MB                        */
     { GPU_PADDR,            GPU_PADDR + (SECTION_SIZE * 144) },       /* 144 MB                       */
     { UP_TAG_PADDR,         UP_TAG_PADDR + PAGE_SIZE },               /* 4 KB                         */
@@ -90,7 +93,8 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { HDA_PADDR,            HDA_PADDR + (PAGE_SIZE * 16) },           /* 64 KB                        */
     { MIOBFM_PADDR,         MIOBFM_PADDR + (PAGE_SIZE * 16) },        /* 64 KB                        */
     { AUDIO_PADDR,          AUDIO_PADDR + (PAGE_SIZE * 16) },         /* 64 KB                        */
-    { XUSB_HOST_PADDR,      XUSB_HOST_PADDR + (PAGE_SIZE * 10) },     /* 40 KB                        */
+    { XUSB_HOST_PADDR,      XUSB_HOST_PADDR + (PAGE_SIZE * 9) },      /* 36 KB                        */
+    { XUSB_PADCTL_PADDR,    XUSB_PADCTL_PADDR + PAGE_SIZE },          /* 4  KB                        */
     { XUSB_DEV_PADDR,       XUSB_DEV_PADDR + (PAGE_SIZE * 10) },      /* 40 KB                        */
     { DDS_PADDR,            DDS_PADDR + (PAGE_SIZE * 2) },            /* 8KB 4608 bytes               */
     { SDMMC_1_PADDR,        SDMMC_1_PADDR + PAGE_SIZE },              /* 4KB 512 bytes                */
