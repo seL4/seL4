@@ -253,8 +253,8 @@ readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
 
     pdSlot = lookupPDSlot(vspace, vaddr);
     if (pdSlot.status == EXCEPTION_NONE &&
-        ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
-            pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
+             pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
 
         paddr = pde_pde_large_ptr_get_page_base_address(pdSlot.pdSlot);
         offset = vaddr & MASK(seL4_LargePageBits);
