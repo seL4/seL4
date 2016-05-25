@@ -515,6 +515,7 @@ fastpath_irq(void)
         /* no thread to switch to, update notification, bail and return to preempted thread */
         ntfn_set_active(ntfn_ptr, badge | notification_ptr_get_ntfnMsgIdentifier(ntfn_ptr));
         mask_ack_bail(irq);
+        return;
     }
 
     assert(dest);
@@ -564,6 +565,7 @@ fastpath_irq(void)
         } else {
             ntfn_set_active(ntfn_ptr, badge);
             mask_ack_bail(irq);
+            return;
         }
         break;
     case NtfnState_Waiting:
