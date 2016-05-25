@@ -43,17 +43,10 @@
 #define HCR_SWIO     BIT( 1)     /* set/way invalidate override    */
 #define HCR_VM       BIT( 0)     /* Virtualization MMU enable      */
 
-#ifdef CONFIG_ARM_SMMU
-/* Trap WFI/WFE/SMC and override CPSR.AIF */
-#define HCR_COMMON ( HCR_TWE | HCR_TWI | HCR_AMO | HCR_IMO \
-                   | HCR_FMO | HCR_DC  | HCR_VM)
-#else
-
 /* Trap WFI/WFE/SMC and override CPSR.AIF */
 #define HCR_COMMON ( HCR_TSC | HCR_TWE | HCR_TWI | HCR_AMO | HCR_IMO \
                    | HCR_FMO | HCR_DC  | HCR_VM)
 
-#endif
 /* Allow native tasks to run at PL1, but restrict access */
 #define HCR_NATIVE ( HCR_COMMON | HCR_TGE | HCR_TVM | HCR_TTLB | HCR_TCACHE \
                    | HCR_TAC | HCR_SWIO)
