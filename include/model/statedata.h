@@ -30,7 +30,7 @@ extern const word_t ksDomScheduleLength;
 extern word_t ksDomScheduleIdx;
 extern dom_t ksCurDomain;
 extern word_t ksDomainTime;
-extern word_t tlbLockCount;
+extern word_t tlbLockCount VISIBLE;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)
