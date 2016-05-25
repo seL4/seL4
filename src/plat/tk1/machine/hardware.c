@@ -179,27 +179,27 @@ map_kernel_devices(void)
 
     if (config_set(ARM_HYP)) {
         map_kernel_frame(
-                GIC_VCPUCTRL_PADDR,
-                GIC_VCPUCTRL_PPTR,
-                VMKernelOnly,
-                vm_attributes_new(
-                    false,
-                    false,
-                    false
-                )
+            GIC_VCPUCTRL_PADDR,
+            GIC_VCPUCTRL_PPTR,
+            VMKernelOnly,
+            vm_attributes_new(
+                false,
+                false,
+                false
+            )
         );
     }
 
     if (config_set(CONFIG_ARM_SMMU)) {
         map_kernel_frame(
-                MC_PADDR,
-                SMMU_PPTR,
-                VMKernelOnly,
-                vm_attributes_new(
-                    false,
-                    false,
-                    false
-                )
+            MC_PADDR,
+            SMMU_PPTR,
+            VMKernelOnly,
+            vm_attributes_new(
+                false,
+                false,
+                false
+            )
         );
     }
 

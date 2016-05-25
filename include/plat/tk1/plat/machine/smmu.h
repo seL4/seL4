@@ -30,11 +30,11 @@ typedef struct {
     uint32_t    smmu_ptb_asid;              /* 0x1c     */
     uint32_t    smmu_ptb_data;              /* 0x20     */
     uint32_t    rev0;                       /* 0x24     */
-    uint32_t    rev1;                       /* 0x28     */ 
+    uint32_t    rev1;                       /* 0x28     */
     uint32_t    rev2;                       /* 0x2c     */
     uint32_t    smmu_tlb_flush;             /* 0x30     */
     uint32_t    smmu_ptc_flush;             /* 0x34     */
-    uint32_t    rev3[124];                    
+    uint32_t    rev3[124];
     uint32_t    smmu_translation_enable_0;  /* 0x228    */
     uint32_t    smmu_translation_enable_1;  /* 0x22c    */
     uint32_t    smmu_translation_enable_2;  /* 0x230    */
@@ -52,7 +52,7 @@ typedef struct {
     uint32_t    rev7;                       /* 0x260    */
     uint32_t    smmu_msenc_asid;            /* 0x264    */
     uint32_t    smmu_nv_asid;               /* 0x268    */
-    uint32_t    smmu_nv2_asid;              /* 0x26c    */ 
+    uint32_t    smmu_nv2_asid;              /* 0x26c    */
     uint32_t    smmu_ppcs_asid;             /* 0x270    */
     uint32_t    smmu_sata_asid;             /* 0x274    */
     uint32_t    smmu_vde_asid;              /* 0x27c    */
@@ -65,9 +65,9 @@ typedef struct {
     uint32_t    smmu_ppcs1_asid;            /* 0x298    */
     uint32_t    rev9[217];
     uint32_t    smmu_tlb_set_sel_mask;      /* 0x600    */
-    uint32_t    rev10[237];  
+    uint32_t    rev10[237];
     uint32_t    smmu_ptc_flush_1;           /* 0x9b8    */
-    uint32_t    rev11[51]; 
+    uint32_t    rev11[51];
     uint32_t    smmu_dc1_asid;              /* 0xa88    */
     uint32_t    rev12;                      /* 0xa8c    */
     uint32_t    rev13;                      /* 0xa90    */
@@ -116,7 +116,7 @@ typedef struct {
 #define SMMU_PPCS2_ASID     28
 #define SMMU_LAST_ASID      28
 
-#define ARM_PLAT_NUM_SMMU   28 
+#define ARM_PLAT_NUM_SMMU   28
 
 #define SMMU_PD_BITS        12
 #define SMMU_PT_BITS        12
@@ -126,7 +126,7 @@ typedef struct {
 #define SMMU_IOPT_INDEX_MASK    0x3ff000
 #define SMMU_IOPT_INDEX_SHIFT   12
 
-inline static uint32_t 
+inline static uint32_t
 plat_smmu_iopd_index(word_t io_address)
 {
     uint32_t ret = (io_address & SMMU_IOPD_INDEX_MASK) >> SMMU_IOPD_INDEX_SHIFT;

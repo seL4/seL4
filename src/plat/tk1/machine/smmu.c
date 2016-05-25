@@ -7,22 +7,22 @@
 #include <object/structures.h>
 
 
-static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR); 
+static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR);
 
 #define SMMU_CONFIG_OFFSET  0x10
 
 static void
 __smmu_enable(void)
 {
-    volatile uint32_t *config = (volatile uint32_t *)(MC_PADDR + SMMU_CONFIG_OFFSET);     
-    *config = 1; 
+    volatile uint32_t *config = (volatile uint32_t *)(MC_PADDR + SMMU_CONFIG_OFFSET);
+    *config = 1;
 }
 
 static void
 __smmu_disable(void)
 {
-    volatile uint32_t *config = (volatile uint32_t *)(MC_PADDR + SMMU_CONFIG_OFFSET);     
-    *config = 0; 
+    volatile uint32_t *config = (volatile uint32_t *)(MC_PADDR + SMMU_CONFIG_OFFSET);
+    *config = 0;
 }
 
 
@@ -36,10 +36,10 @@ smmu_disable(void)
         addr -= 0x60000000;
         asm (".arch_extension sec\n");
         asm volatile ("mov r0, %0\n\t"
-              "dsb\nisb\n"
-              "smc #0\n"
-              ::"r"(addr));
-                
+                      "dsb\nisb\n"
+                      "smc #0\n"
+                      ::"r"(addr));
+
     } else {
         /* in secure mode, can enable it directly */
         smmu_regs->smmu_config = 0;
@@ -56,9 +56,9 @@ smmu_enable(void)
         addr -= 0x60000000;
         asm (".arch_extension sec\n");
         asm volatile ("mov r0, %0\n\t"
-              "dsb\nisb\n"
-              "smc #0\n"
-              ::"r"(addr));
+                      "dsb\nisb\n"
+                      "smc #0\n"
+                      ::"r"(addr));
     } else {
         smmu_regs->smmu_config = 1;
     }
@@ -88,7 +88,7 @@ make_ptb_data(uint32_t pd_base, bool_t read, bool_t write, bool_t nonsecure)
         ret |= PTB_DATA_WRITE;
     }
     if (nonsecure) {
-        ret |= PTB_DATA_NONSECURE; 
+        ret |= PTB_DATA_NONSECURE;
     }
 
     return ret;
@@ -98,7 +98,7 @@ static uint32_t
 ptb_data_get_pd_base(uint32_t data)
 {
     uint32_t ret = data;
-    ret &= PTB_DATA_BASE_PD_MASK; 
+    ret &= PTB_DATA_BASE_PD_MASK;
     ret <<= PTB_DATA_BASE_SHIFT;
     return ret;
 }
@@ -145,12 +145,12 @@ plat_smmu_vm_mapping(word_t iopd, word_t gpa, word_t pa, word_t size)
     while (size > 0) {
         word_t index = gpa >> IOPDE_4M_INDEX_SHIFT;
         iopde_iopde_4m_ptr_new(
-                iopde + index,
-                1,
-                1,
-                1,
-                pa
-                );
+            iopde + index,
+            1,
+            1,
+            1,
+            pa
+        );
         gpa += BIT(IOPDE_4M_INDEX_SHIFT);
         pa += BIT(IOPDE_4M_INDEX_SHIFT);
         size -= BIT(IOPDE_4M_INDEX_SHIFT);
@@ -166,28 +166,28 @@ plat_smmu_init(void)
     smmu_disable();
 
     for (i = 0; i < ARM_PLAT_NUM_SMMU; i++) {
-       iopde_t *pd = (iopde_t *)alloc_region(SMMU_PD_BITS);           
+        iopde_t *pd = (iopde_t *)alloc_region(SMMU_PD_BITS);
 
-       if (pd == 0) {
-           printf("Failed to allocate SMMU IOPageDirectory for ASID %d\n", asid);
-           return 0;
-       }
+        if (pd == 0) {
+            printf("Failed to allocate SMMU IOPageDirectory for ASID %d\n", asid);
+            return 0;
+        }
 
-       memset(pd, 0, BIT(SMMU_PD_BITS));
-       if (config_set(CONFIG_ARM_SMMU_VM_DEFAULT_MAPPING)) {
-           plat_smmu_vm_mapping((word_t)pd, VM_GUEST_PA_START, VM_HOST_PA_START, VM_HOST_PA_SIZE);
-       }
-       cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_BITS)),
-                           addrFromPPtr(pd));
+        memset(pd, 0, BIT(SMMU_PD_BITS));
+        if (config_set(CONFIG_ARM_SMMU_VM_DEFAULT_MAPPING)) {
+            plat_smmu_vm_mapping((word_t)pd, VM_GUEST_PA_START, VM_HOST_PA_START, VM_HOST_PA_SIZE);
+        }
+        cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_BITS)),
+                            addrFromPPtr(pd));
 
-       smmu_regs->smmu_ptb_asid = asid;
+        smmu_regs->smmu_ptb_asid = asid;
 
-       /* make it read/write/nonsecure but all translation entries are invalid */
-       smmu_regs->smmu_ptb_data = make_ptb_data(pptr_to_paddr(pd), true, true, true);
-       asid++;
+        /* make it read/write/nonsecure but all translation entries are invalid */
+        smmu_regs->smmu_ptb_data = make_ptb_data(pptr_to_paddr(pd), true, true, true);
+        asid++;
     }
-    printf("Total %d IOASID set up\n", (asid - 1)); 
-    
+    printf("Total %d IOASID set up\n", (asid - 1));
+
     /* now assign IOASID to each module */
     smmu_regs->smmu_afi_asid = SMMU_AFI_ASID | MODULE_ASID_ENABLE;
     smmu_regs->smmu_avpc_asid = SMMU_AVPC_ASID | MODULE_ASID_ENABLE;
@@ -236,7 +236,7 @@ iopde_t *
 plat_smmu_lookup_iopd_by_asid(uint32_t asid)
 {
     iopde_t *pd = 0;
-    uint32_t data = 0;  
+    uint32_t data = 0;
     if (asid < SMMU_FIRST_ASID || asid > SMMU_LAST_ASID) {
         return 0;
     }

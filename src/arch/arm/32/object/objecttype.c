@@ -583,16 +583,16 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
                       word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
-        case cap_io_space_cap:
-            return decodeARMIOSpaceInvocation(invLabel, cap);
-        case cap_io_page_table_cap:
-            return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+    case cap_io_space_cap:
+        return decodeARMIOSpaceInvocation(invLabel, cap);
+    case cap_io_page_table_cap:
+        return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
 #ifdef ARM_HYP
-        case cap_vcpu_cap:
-            return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+    case cap_vcpu_cap:
+        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
 #endif /* end of ARM_HYP */
-        default:
-            return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+    default:
+        return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     }
 }
 
