@@ -109,6 +109,9 @@ BEGIN_FUNC(arm_swi_syscall)
      */
     bhi fastpath_call
     beq fastpath_reply_recv
+
+    cmp r7, #SYSCALL_SEND
+    beq fastpath_signal
 #endif
 
     /* Load system call number for handleSyscall and handleUnknownSyscall() */
@@ -148,6 +151,16 @@ BEGIN_FUNC(slowpath)
     blx handleSyscall
     RET_TO_USER r7
 END_FUNC(slowpath)
+
+BEGIN_FUNC(slowpath_irq) 
+    /* called from the fastpath, r0 contains the irq number, 
+     * all other registers are trashed 
+     */
+    ldr r7, =ksCurThread
+    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+    blx handleInterruptEntry
+    RET_TO_USER r7
+END_FUNC(slowpath_irq)
 
 BEGIN_FUNC(fastpath_restore)
     /* Duplicate of above except r2 contains ksCurThread,
@@ -265,8 +278,8 @@ BEGIN_FUNC(arm_irq_exception)
 
     ldr r7, =ksCurThread
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
-    blx handleInterruptEntry
-
+    blx fastpath_irq
+    ldr r7, =ksCurThread
     RET_TO_USER r7
 END_FUNC(arm_irq_exception)
 

@@ -31,25 +31,17 @@
  * for each event causing a kernel entry */
 
 exception_t
-handleInterruptEntry(void)
+handleInterruptEntry(irq_t irq)
 {
-    irq_t irq;
-
     ksCurThread->tcbSchedContext = ksCurSchedContext;
-    irq = getActiveIRQ();
 #ifdef DEBUG
     ksKernelEntry.path = Debug_Interrupt;
     ksKernelEntry.irq = irq;
 #endif /* DEBUG */
-    if (irq != irqInvalid) {
-        handleInterrupt(irq);
-    } else {
-#ifdef CONFIG_IRQ_REPORTING
-        printf("Spurious interrupt\n");
-#endif
-        handleSpuriousIRQ();
-    }
 
+    assert(irq != irqInvalid);
+
+    handleInterrupt(irq);
     schedule();
     activateThread();
 
@@ -252,7 +244,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate)
     lookupCapAndSlot_ret_t lu_ret;
     word_t *buffer;
     exception_t status;
-    word_t length;
+    word_t length, extra_caps_length;
     tcb_t *thread;
 
     thread = ksCurThread;
@@ -279,20 +271,26 @@ handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate)
         return EXCEPTION_NONE;
     }
 
-    buffer = lookupIPCBuffer(false, thread);
+    buffer = NULL;
+    length = seL4_MessageInfo_get_length(info);
+    extra_caps_length = seL4_MessageInfo_get_extraCaps(info);
+    /* avoid looking up the IPC buffer if we don't have to */
+    if (unlikely(length > n_msgRegisters || extra_caps_length > 0)) {
+        buffer = lookupIPCBuffer(false, thread);
+        if (unlikely(extra_caps_length > 0)) {
+            status = lookupExtraCaps(thread, buffer, extra_caps_length);
 
-    status = lookupExtraCaps(thread, buffer, info);
-
-    if (unlikely(status != EXCEPTION_NONE)) {
-        userError("Lookup of extra caps failed.");
-        if (isBlocking) {
-            handleFault(thread);
+            if (unlikely(status != EXCEPTION_NONE)) {
+                userError("Lookup of extra caps failed.");
+                if (isBlocking) {
+                    handleFault(thread);
+                }
+                return EXCEPTION_NONE;
+            }
         }
-        return EXCEPTION_NONE;
     }
 
     /* Syscall error/Preemptible section */
-    length = seL4_MessageInfo_get_length(info);
     if (unlikely(length > n_msgRegisters && !buffer)) {
         length = n_msgRegisters;
     }

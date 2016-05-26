@@ -143,7 +143,8 @@ block notification {
     padding 4
 
     field_high ntfnBoundTCB 28
-    padding 4
+    field bound 1
+    padding 3
 
     field ntfnMsgIdentifier 32
 
@@ -151,8 +152,7 @@ block notification {
     padding 4
 
     field_high ntfnQueue_tail 28
-    padding 1
-    field bound 1
+    padding 2
     field state 2
 }
 

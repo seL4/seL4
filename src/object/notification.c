@@ -38,13 +38,6 @@ ntfn_ptr_set_queue(notification_t *ntfnPtr, tcb_queue_t ntfn_queue)
     notification_ptr_set_ntfnQueue_tail(ntfnPtr, (word_t)ntfn_queue.end);
 }
 
-static inline void
-ntfn_set_active(notification_t *ntfnPtr, word_t badge)
-{
-    notification_ptr_set_state(ntfnPtr, NtfnState_Active);
-    notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
-}
-
 void
 reorderNtfnQueue(tcb_t *thread, prio_t old_prio)
 {

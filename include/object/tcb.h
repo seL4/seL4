@@ -131,7 +131,7 @@ exception_t invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr);
 cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i);
 void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 
-exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info);
+exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, word_t length);
 #ifdef CONFIG_PRINTING
 void setThreadName(tcb_t *thread, const char *name);
 #endif

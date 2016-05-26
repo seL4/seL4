@@ -13,8 +13,12 @@
 
 #include <arch/linker.h>
 #include <mode/fastpath/fastpath.h>
+#include <plat/machine.h>
 
 void slowpath(syscall_t syscall)
+VISIBLE NORETURN;
+
+void slowpath_irq(irq_t irq)
 VISIBLE NORETURN;
 
 void fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
@@ -25,6 +29,13 @@ VISIBLE NORETURN SECTION(".vectors.fastpath_call");
 
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
 VISIBLE NORETURN SECTION(".vectors.fastpath_reply_recv");
+
+void fastpath_signal(word_t cptr)
+VISIBLE NORETURN SECTION(".vectors.fastpath_signal");
+
+void fastpath_irq(void)
+VISIBLE SECTION(".vectors.fastpath_irq");
+
 
 #endif /* __ARCH_FASTPATH_H */
 

@@ -14,6 +14,13 @@
 #include <types.h>
 #include <object/structures.h>
 
+static inline void
+ntfn_set_active(notification_t *ntfnPtr, word_t badge)
+{
+    notification_ptr_set_state(ntfnPtr, NtfnState_Active);
+    notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
+}
+
 void sendSignal(notification_t *ntfnPtr, word_t badge);
 void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking);
 void cancelAllSignals(notification_t *ntfnPtr);
