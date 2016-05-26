@@ -157,33 +157,9 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
                  * call stack as we don't know what it looks like - instead the
                  * appropriate thread will be removed when the reply cap is cleaned up*/
                 schedContext_donate(receiver, receiver->tcbCallStackNext->tcbSchedContext);
-
-                /* since the callee wasn't running, the scheduling context may not be active */
-                if (ready(receiver->tcbSchedContext)) {
-                    recharge(receiver->tcbSchedContext);
-                }
-
-                if (receiver->tcbSchedContext->scRemaining < getKernelWcetTicks()) {
-                    /* thread still has not enough budget to run */
-                    cap_t tfep = getTemporalFaultHandler(receiver);
-                    if (validTemporalFaultHandler(tfep)) {
-                        /* the context does not have enough budget and the thread we are
-                         * switching to has a temporal fault handler, raise a temporal
-                         * fault and abort the reply */
-                        cteDeleteOne(slot);
-                        current_fault = fault_temporal_new(receiver->tcbSchedContext->scData);
-                        sendTemporalFaultIPC(receiver, tfep);
-                    } else {
-                        /* the context doesn't have enough budget, but no temporal fault handler,
-                         * just postpone it and continue to process the reply. The thread will
-                         * pick it up once the scheduling context has its budget replenished.
-                         */
-                        postpone(receiver->tcbSchedContext);
-                    }
-                }
             } else if (sender->tcbSchedContext->scHome != sender) {
-                /* otherwise someone else is replying, if the sender doesn't hold its own scheduling context,
-                 * send it back to the receiver */
+                /* otherwise someone else is replying, if the sender doesn't hold its own
+                 * scheduling context, send it back to the receiver */
                 schedContext_donate(receiver, sender->tcbSchedContext);
             }
         } else {
@@ -193,13 +169,40 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         }
     }
 
+    /* since the callee wasn't running, the scheduling context may not be active */
+    if (ready(receiver->tcbSchedContext)) {
+        recharge(receiver->tcbSchedContext);
+    }
+
+    if (receiver->tcbSchedContext &&
+            receiver->tcbSchedContext->scRemaining <= getKernelWcetTicks()) {
+        /* thread still has not enough budget to run */
+        cap_t tfep = getTemporalFaultHandler(receiver);
+        if (validTemporalFaultHandler(tfep) &&
+                fault_get_faultType(receiver->tcbFault) != fault_temporal) {
+            /* the context does not have enough budget and the thread we are
+             * switching to has a temporal fault handler, raise a temporal
+             * fault and abort the reply */
+            cteDeleteOne(slot);
+            current_fault = fault_temporal_new(receiver->tcbSchedContext->scData);
+            sendTemporalFaultIPC(receiver, tfep);
+            return;
+        } else {
+            /* the context doesn't have enough budget, but no temporal fault handler,
+            * just postpone it and continue to process the reply. The thread will
+            * pick it up once the scheduling context has its budget replenished.
+            */
+            postpone(receiver->tcbSchedContext);
+        }
+    }
+
     if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
         doIPCTransfer(sender, NULL, 0, true, receiver);
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
         setThreadState(receiver, ThreadState_Running);
         attemptSwitchTo(receiver);
-    } else if (fault_get_faultType(current_fault) != fault_temporal) {
+    } else {
         bool_t restart;
 
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
