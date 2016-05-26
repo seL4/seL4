@@ -152,7 +152,7 @@ invokeSchedContext_YieldTo(sched_context_t *sc)
     bool_t returnNow = true;
     time_t consumed;
 
-    if (likely(isRunnable(sc->scTcb))) {
+    if (likely(isSchedulable(sc->scTcb))) {
         if (unlikely(sc->scTcb->tcbPriority < ksCurThread->tcbPriority)) {
             tcbSchedDequeue(sc->scTcb);
             tcbSchedEnqueue(sc->scTcb);
