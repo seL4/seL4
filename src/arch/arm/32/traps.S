@@ -279,7 +279,6 @@ BEGIN_FUNC(arm_irq_exception)
     ldr r7, =ksCurThread
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
     blx fastpath_irq
-    ldr r7, =ksCurThread
     RET_TO_USER r7
 END_FUNC(arm_irq_exception)
 

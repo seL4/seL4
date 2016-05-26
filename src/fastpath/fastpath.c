@@ -384,6 +384,12 @@ fastpath_signal(word_t cptr)
     if (unlikely(dest && dest->tcbPriority > ksCurThread->tcbPriority)) {
         slowpath(SysSend);
     }
+
+    if (unlikely(dest && (dest->tcbSchedContext == NULL ||
+                          dest->tcbSchedContext->scRemaining < getKernelWcetTicks()))) {
+        slowpath(SysSend);
+    }
+
     /* --- POINT OF NO RETURN -- */
 
 #ifdef ARCH_X86
@@ -509,20 +515,24 @@ fastpath_irq(void)
     ntfn_state = notification_ptr_get_state(ntfn_ptr);
     badge = cap_notification_cap_get_capNtfnBadge(ntfn_cap);
 
-    if (ntfn_state == NtfnState_Waiting) {
+    dest = (tcb_t *) notification_ptr_get_ntfnBoundTCB(ntfn_ptr);
+    if (dest == NULL && ntfn_state == NtfnState_Waiting) {
         /* get the destination thread */
         dest = TCB_PTR(notification_ptr_get_ntfnQueue_head(ntfn_ptr));
-    } else if (notification_ptr_get_bound(ntfn_ptr)) {
-        /* get the bound tcb */
-        dest = (tcb_t *) notification_ptr_get_ntfnBoundTCB(ntfn_ptr);
-    } else {
+    }
+
+    if (dest == NULL) {
         /* no thread to switch to, update notification, bail and return to preempted thread */
         ntfn_set_active(ntfn_ptr, badge | notification_ptr_get_ntfnMsgIdentifier(ntfn_ptr));
         mask_ack_bail(irq);
         return;
     }
 
-    assert(dest);
+    /* check dest has a scheduling context */
+    if (dest->tcbSchedContext == NULL ||
+            dest->tcbSchedContext->scRemaining < getKernelWcetTicks()) {
+        slowpath_irq(irq);
+    }
 
     /* if we got this far, then we have a destination to switch to */
     newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
@@ -547,6 +557,14 @@ fastpath_irq(void)
         slowpath_irq(irq);
     }
 #endif
+
+    /* we need to manipulate the scheduler in a complicated fashion, bail to slowpath */
+    updateTimestamp();
+
+    if (unlikely(currentThreadExpired())) {
+        ksCurrentTime += ksConsumed;
+        slowpath_irq(irq);
+    }
 
     /* --- POINT OF NO RETURN -- */
 
@@ -586,18 +604,38 @@ fastpath_irq(void)
     }
 
     if (dest->tcbPriority > ksCurThread->tcbPriority) {
+        ticks_t next;
+        ticks_t prev;
+
+        next = dest->tcbSchedContext->scRemaining + ksCurrentTime;
+        prev = ksCurThread->tcbSchedContext->scNext;
+        if (ksReleaseHead) {
+            prev = MIN(ksReleaseHead->tcbSchedContext->scNext, prev);
+        }
+
         /* switch to dest */
         /* Dest thread is set Running, but not queued. */
         thread_state_ptr_set_tsType_np(&dest->tcbState,
                                        ThreadState_Running);
         /* enqueue previously running thread */
-        if (thread_state_get_tsType(ksCurThread->tcbState) == ThreadState_Running) {
+        if (likely(isSchedulable(ksCurThread))) {
             tcbSchedEnqueue(ksCurThread);
         }
+        ksCurThread->tcbSchedContext->scRemaining -= ksConsumed;
+        assert(ksCurThread->tcbSchedContext->scRemaining > getKernelWcetTicks());
         switchToThread_fp(dest, cap_pd, stored_hw_asid);
 
+        /* set next irq if we really have to */
+        if (next < prev) {
+            setDeadline(next - getTimerPrecision());
+        }
+
+        ksCurSchedContext = ksCurThread->tcbSchedContext;
+        ksCurThread->tcbSchedContext = NULL;
+        ksCurSchedContext->scTcb = NULL;
     } else {
         /* add dest to scheduler */
+        ksCurrentTime += ksConsumed;
         tcbSchedEnqueue(dest);
     }
 

@@ -39,19 +39,6 @@ isBlocked(const tcb_t *thread)
     return thread_state_get_tsType(thread->tcbState) < ThreadState_Running;
 }
 
-static inline bool_t PURE
-isRunnable(const tcb_t *thread)
-{
-    return thread_state_get_tsType(thread->tcbState) >= ThreadState_Running;
-}
-
-static inline bool_t PURE
-isSchedulable(const tcb_t *thread)
-{
-    return isRunnable(thread) && thread->tcbSchedContext != NULL &&
-           !thread_state_get_tcbInReleaseQueue(thread->tcbState);
-}
-
 BOOT_CODE void
 configureIdleThread(tcb_t *tcb)
 {
