@@ -23,8 +23,7 @@ invokeSchedContext_Yield(sched_context_t *sc)
     if (likely(sc->scTcb && isSchedulable(sc->scTcb))) {
         endTimeslice(sc);
         if (likely(sc->scTcb == ksCurThread)) {
-            sc->scConsumed += ksConsumed;
-            ksConsumed = 0llu;
+            commitTime(sc);
             rescheduleRequired();
         }
     } else {

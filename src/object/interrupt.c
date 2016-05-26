@@ -192,6 +192,7 @@ handleInterrupt(irq_t irq)
     switch (intStateIRQTable[irq]) {
     case IRQSignal: {
         cap_t cap;
+        bool_t expired;
 
         updateTimestamp();
         cap = intStateIRQNode[irq].cap;
@@ -211,14 +212,14 @@ handleInterrupt(irq_t irq)
          * otherwise we would be dealing with a timer interrupt not a signal
          * interrupt
          */
-        if (likely(!currentThreadExpired())) {
-            ksCurThread->tcbSchedContext->scRemaining -= ksConsumed;
-        } else {
+        expired = currentThreadExpired();
+        commitTime(ksCurThread->tcbSchedContext);
+
+        if (expired) {
             endTimeslice(ksCurThread->tcbSchedContext);
             rescheduleRequired();
         }
-        ksCurSchedContext->scConsumed += ksConsumed;
-        ksConsumed = 0llu;
+
         break;
     }
 

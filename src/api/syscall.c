@@ -475,6 +475,7 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret == EXCEPTION_PREEMPTED)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
+                commitTime(ksCurSchedContext);
                 handleInterrupt(irq);
             }
         }

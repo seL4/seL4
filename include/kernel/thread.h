@@ -84,6 +84,27 @@ isSchedulable(const tcb_t *thread)
            !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
 
+static inline void
+commitTime(sched_context_t *sc)
+{
+    if (unlikely(ksCurSchedContext->scRemaining < ksConsumed)) {
+        ksCurSchedContext->scRemaining = 0llu;
+    } else {
+        ksCurSchedContext->scRemaining -= ksConsumed;
+    }
+
+    ksCurSchedContext->scConsumed += ksConsumed;
+    ksConsumed = 0llu;
+    ksCurrentTime += 1llu;
+}
+
+static inline void
+rollbackTime(void)
+{
+    ksCurrentTime -= ksConsumed;
+    ksConsumed = 0llu;
+}
+
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void) VISIBLE;
 void suspend(tcb_t *target);

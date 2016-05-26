@@ -562,7 +562,7 @@ fastpath_irq(void)
     updateTimestamp();
 
     if (unlikely(currentThreadExpired())) {
-        ksCurrentTime += ksConsumed;
+        rollbackTime();
         slowpath_irq(irq);
     }
 
@@ -621,8 +621,8 @@ fastpath_irq(void)
         if (likely(isSchedulable(ksCurThread))) {
             tcbSchedEnqueue(ksCurThread);
         }
-        ksCurThread->tcbSchedContext->scRemaining -= ksConsumed;
-        assert(ksCurThread->tcbSchedContext->scRemaining > getKernelWcetTicks());
+
+        commitTime(ksCurThread->tcbSchedContext);
         switchToThread_fp(dest, cap_pd, stored_hw_asid);
 
         /* set next irq if we really have to */
@@ -635,7 +635,7 @@ fastpath_irq(void)
         ksCurSchedContext->scTcb = NULL;
     } else {
         /* add dest to scheduler */
-        ksCurrentTime += ksConsumed;
+        rollbackTime();
         tcbSchedEnqueue(dest);
     }
 

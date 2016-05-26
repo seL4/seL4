@@ -421,14 +421,10 @@ switchSchedContext(void)
     if (unlikely(ksCurSchedContext != ksCurThread->tcbSchedContext)) {
         /* we are changing scheduling contexts */
         ksReprogram = true;
-        ksCurSchedContext->scRemaining -= ksConsumed;
-        ksCurSchedContext->scConsumed += ksConsumed;
-        ksConsumed = 0llu;
-        ksCurrentTime += 1llu;
+        commitTime(ksCurSchedContext);
     } else {
         /* go back in time and skip reprogramming the timer */
-        ksCurrentTime -= ksConsumed;
-        ksConsumed = 0llu;
+        rollbackTime();
     }
     ksCurSchedContext = ksCurThread->tcbSchedContext;
 }
@@ -614,10 +610,10 @@ checkBudget(void)
          * doing something so they should be running
          */
         assert(isRunnable(ksCurThread));
+        commitTime(ksCurSchedContext);
         if (validTemporalFaultHandler(tfep)) {
             /* threads with temporal fault handlers should never run out of budget! */
             current_fault = fault_temporal_new(ksCurSchedContext->scData);
-            ksCurSchedContext->scRemaining = 0llu;
             sendTemporalFaultIPC(ksCurThread, tfep);
         } else {
             /* threads without fault handlers don't care if they ran out of budget */
@@ -625,8 +621,6 @@ checkBudget(void)
             rescheduleRequired();
         }
 
-        ksCurSchedContext->scConsumed += ksConsumed;
-        ksConsumed = 0u;
         return false;
     } else {
         /* thread is good to go to do whatever it is up to */
