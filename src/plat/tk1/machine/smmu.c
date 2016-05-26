@@ -12,14 +12,14 @@ static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR)
 #define SMMU_CONFIG_OFFSET  0x10
 
 static void
-__smmu_enable(void)
+do_smmu_enable(void)
 {
     volatile uint32_t *config = (volatile uint32_t *)(MC_PADDR + SMMU_CONFIG_OFFSET);
     *config = 1;
 }
 
 static void
-__smmu_disable(void)
+do_smmu_disable(void)
 {
     volatile uint32_t *config = (volatile uint32_t *)(MC_PADDR + SMMU_CONFIG_OFFSET);
     *config = 0;
@@ -31,14 +31,12 @@ smmu_disable(void)
     if (config_set(ARM_HYP)) {
         /* in hyp mode, we need call the hook in monitor mode */
         /* we need physical address here */
-        uint32_t addr = (uint32_t)&__smmu_disable;
-        addr -= physMappingOffset;
+        paddr_t addr = addrFromPPtr(&do_smmu_disable);
         asm (".arch_extension sec\n");
         asm volatile ("mov r0, %0\n\t"
                       "dsb\nisb\n"
                       "smc #0\n"
                       ::"r"(addr));
-
     } else {
         /* in secure mode, can enable it directly */
         smmu_regs->smmu_config = 0;
@@ -51,8 +49,7 @@ static inline void
 smmu_enable(void)
 {
     if (config_set(ARM_HYP)) {
-        uint32_t addr = (uint32_t)&__smmu_enable;
-        addr -= physMappingOffset;
+        paddr_t addr = addrFromPPtr(&do_smmu_enable);
         asm (".arch_extension sec\n");
         asm volatile ("mov r0, %0\n\t"
                       "dsb\nisb\n"
@@ -112,7 +109,7 @@ plat_smmu_ptc_flush_all(void)
     smmu_regs->smmu_ptc_flush = cmd;
 }
 
-#define TLB_ASID_MATCH      (1ul << 31)
+#define TLB_ASID_MATCH      BIT(31)
 #define TLB_FLUSH_ALL       (0)
 #define TLB_FLUSH_SECTION   (2)
 #define TLB_FLUSH_GROUP     (3)
@@ -124,18 +121,25 @@ plat_smmu_tlb_flush_all(void)
     smmu_regs->smmu_tlb_flush = cmd;
 }
 
-#define MC_DECERR_MTS_BIT           16
-#define MC_SECERR_SEC_BIT           13
-#define MC_DECERR_VPR_BIT           12
-#define MC_APB_ASID_UPDATE_BIT      11
-#define MC_SMMU_PAGE_BIT            10
-#define MC_ARBITRATION_EMEM_BIT     9
-#define MC_SECURITY_BIT             8
-#define MC_DECERR_EMEM_BIT          6
+#define MC_DECERR_MTS_BIT           16u
+#define MC_SECERR_SEC_BIT           13u
+#define MC_DECERR_VPR_BIT           12u
+#define MC_APB_ASID_UPDATE_BIT      11u
+#define MC_SMMU_PAGE_BIT            10u
+#define MC_ARBITRATION_EMEM_BIT     9u
+#define MC_SECURITY_BIT             8u
+#define MC_DECERR_EMEM_BIT          6u
 
 
 
-/* using 4 MiB mapping for the Linxu guest VM */
+/* Using 4 MiB mapping for the Linxu guest VM.
+ * This is a temporary solution for enabling guest VM
+ * devices that need DMA while still providing some
+ * protections. Once the device untyped feature is done,
+ * this code should be replaced with proper user-mode
+ * VM initialisation code.
+ */
+
 #define IOPDE_4M_INDEX_SHIFT        22
 static void
 plat_smmu_vm_mapping(word_t iopd, word_t gpa, word_t pa, word_t size)
@@ -159,7 +163,7 @@ plat_smmu_vm_mapping(word_t iopd, word_t gpa, word_t pa, word_t size)
 BOOT_CODE int
 plat_smmu_init(void)
 {
-    int asid = 1;
+    uint32_t asid = 1;
     int i = 0;
 
     smmu_disable();
@@ -297,7 +301,7 @@ plat_smmu_handle_interrupt(void)
 #ifdef DEBUG
         uint32_t err_status = smmu_regs->err_status;
         uint32_t err_adr = smmu_regs->err_adr;
-        int      id = err_status & MC_ERR_ID_MASK;
+        uint32_t id = err_status & MC_ERR_ID_MASK;
         uint32_t rw = (err_status & MC_ERR_RW_MASK);
         uint32_t read = (err_status & MC_ERR_INVALID_SMMU_PAGE_READ_MASK);
         uint32_t write = (err_status & MC_ERR_INVALID_SMMU_PAGE_WRITE_MASK);

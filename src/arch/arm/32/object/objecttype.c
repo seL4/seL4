@@ -84,6 +84,7 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
             ret.cap = cap;
             ret.status = EXCEPTION_NONE;
         } else {
+            userError("Deriving a IOPT cap without an assigned IOASID");
             current_syscall_error.type = seL4_IllegalOperation;
             ret.cap = cap_null_cap_new();
             ret.status = EXCEPTION_SYSCALL_ERROR;
@@ -311,7 +312,7 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
 
     case cap_io_page_table_cap:
-        clearMemoryRAM((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        clearMemoryRAM(cap_get_capPtr(cap), cap_get_capSizeBits(cap));
         Arch_finaliseCap(cap, is_final);
         return resetMemMapping(cap);
 

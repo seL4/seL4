@@ -132,6 +132,28 @@ create_iospace_caps(cap_t root_cnode_cap)
     };
 }
 
+static exception_t
+performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
+                            iopde_t iopde, uint32_t asid, paddr_t io_address)
+{
+
+
+    *iopdSlot = iopde;
+    cleanCacheRange_RAM((word_t)iopdSlot,
+                        ((word_t)iopdSlot) + sizeof(iopde_t),
+                        addrFromPPtr(iopdSlot));
+
+    plat_smmu_tlb_flush_all();
+    plat_smmu_ptc_flush_all();
+
+    cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 1);
+    cap = cap_io_page_table_cap_set_capIOPTASID(cap, asid);
+    cap = cap_io_page_table_cap_set_capIOPTMappedAddress(cap, io_address);
+
+    slot->cap = cap;
+    return EXCEPTION_NONE;
+}
+
 
 exception_t
 decodeARMIOPTInvocation(
@@ -149,6 +171,7 @@ decodeARMIOPTInvocation(
     uint16_t   module_id;
     uint32_t   asid;
     iopde_t    *pd;
+    iopde_t    iopde;
     lookupIOPDSlot_ret_t    lu_ret;
 
     if (invLabel == ARMIOPageTableUnmap) {
@@ -160,11 +183,13 @@ decodeARMIOPTInvocation(
     }
 
     if (excaps.excaprefs[0] == NULL || length < 1) {
+        userError("IOPTInvocation: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (invLabel != ARMIOPageTableMap ) {
+        userError("IOPTInvocation: Invalid operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -173,22 +198,25 @@ decodeARMIOPTInvocation(
     io_address   = getSyscallArg(0, buffer) & ~MASK(PAGE_BITS);
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
+        userError("IOPTMap: Cap already mapped.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
+        userError("IOPTMap: Invalid IOSpace cap.");
         current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 0;
+        current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     module_id = cap_io_space_cap_get_capModuleID(io_space);
     asid = plat_smmu_get_asid_by_module_id(module_id);
     if (asid == asidInvalid) {
+        userError("IOPTMap: Invalid IOASID.");
         current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 0;
+        current_syscall_error.invalidCapNumber = 1;
 
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -197,8 +225,9 @@ decodeARMIOPTInvocation(
     pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
 
     if (pd == 0) {
+        userError("IOPTMap: IOPD not found.");
         current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 0;
+        current_syscall_error.invalidCapNumber = 1;
 
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -206,38 +235,47 @@ decodeARMIOPTInvocation(
     lu_ret = lookupIOPDSlot(pd, io_address);
     if (lu_ret.status != EXCEPTION_NONE) {
         current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 0;
+        current_syscall_error.invalidCapNumber = 1;
 
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (isIOPDEValid(lu_ret.iopdSlot)) {
+        userError("IOPTMap: Delet first.");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    iopde_iopde_pt_ptr_new(
-        lu_ret.iopdSlot,
-        1,      /* read */
-        1,      /* write */
-        1,      /* nonsecure */
-        paddr   /* address */
-    );
+    iopde = iopde_iopde_pt_new(
+            1,      /* read         */
+            1,      /* write        */
+            1,      /* nonsecure    */
+            paddr
+            );
 
-    cleanCacheRange_RAM((word_t)lu_ret.iopdSlot,
-                        ((word_t)lu_ret.iopdSlot) + sizeof(iopde_t),
-                        addrFromPPtr(lu_ret.iopdSlot));
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return performARMIOPTInvocationMap(cap, slot, lu_ret.iopdSlot, iopde, asid, io_address);
+}
+
+static exception_t
+performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
+                          iopte_t iopte, uint32_t asid, paddr_t io_address)
+{
+    *ioptSlot = iopte;
+    cleanCacheRange_RAM((word_t)ioptSlot,
+                        ((word_t)ioptSlot) + sizeof(iopte_t),
+                        addrFromPPtr(ioptSlot));
 
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();
 
-    cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 1);
-    cap = cap_io_page_table_cap_set_capIOPTASID(cap, asid);
-    cap = cap_io_page_table_cap_set_capIOPTMappedAddress(cap, io_address);
-
+#ifdef CONFIG_ARM_SMMU
+    cap = cap_small_frame_cap_set_capFIsIOSpace(cap, 1);
+#endif
+    cap = cap_small_frame_cap_set_capFMappedASID(cap, asid);
+    cap = cap_small_frame_cap_set_capFMappedAddress(cap, io_address);
     slot->cap = cap;
 
-    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -257,22 +295,26 @@ decodeARMIOMapInvocation(
     uint32_t   module_id;
     uint32_t   asid;
     iopde_t    *pd;
+    iopte_t    iopte;
     vm_rights_t     frame_cap_rights;
     cap_rights_t    dma_cap_rights_mask;
     lookupIOPTSlot_ret_t lu_ret;
 
     if (excaps.excaprefs[0] == NULL || length < 2) {
+        userError("IOMap: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (generic_frame_cap_get_capFSize(cap) != ARMSmallPage) {
+        userError("IOMap: Invalid cap type.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (cap_small_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
+        userError("IOMap: Frame all ready mapped.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
@@ -283,8 +325,9 @@ decodeARMIOMapInvocation(
     paddr       = pptr_to_paddr((void*)cap_small_frame_cap_get_capFBasePtr(cap));
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
+        userError("IOMap: Invalid IOSpace cap.");
         current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 0;
+        current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -292,26 +335,30 @@ decodeARMIOMapInvocation(
     asid = plat_smmu_get_asid_by_module_id(module_id);
 
     if (asid == asidInvalid) {
+        userError("IOMap: Invalid IOSpace ASID.");
         current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 0;
+        current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
     if (pd == 0) {
+        userError("IOMap: Invalid IOSpace cap.");
         current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 0;
+        current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     lu_ret = lookupIOPTSlot(pd, io_address);
     if (lu_ret.status != EXCEPTION_NONE) {
+        userError("IOMap: Lookup failed.");
         current_syscall_error.type = seL4_FailedLookup;
         current_syscall_error.failedLookupWasSource = false;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (!isIOPTEEmpty(lu_ret.ioptSlot)) {
+        userError("IOMap: Delete first.");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -320,45 +367,42 @@ decodeARMIOMapInvocation(
 
     if ((frame_cap_rights == VMReadOnly) && cap_rights_get_capAllowRead(dma_cap_rights_mask)) {
         /* read only */
-        iopte_ptr_new(
-            lu_ret.ioptSlot,
-            1,
-            0,
-            1,
-            paddr
-        );
-    } else if (frame_cap_rights == VMReadWrite) {
-        if (cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
-                !cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
-            /* read only */
-            iopte_ptr_new(
-                lu_ret.ioptSlot,
+        iopte = iopte_new(
                 1,      /* read         */
                 0,      /* write        */
                 1,      /* nonsecure    */
                 paddr
-            );
+                );
+    } else if (frame_cap_rights == VMReadWrite) {
+        if (cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
+                !cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
+            /* read only */
+            iopte = iopte_new(
+                    1,      /* read         */
+                    0,      /* write        */
+                    1,      /* nonsecure    */
+                    paddr
+                    );
         } else if (!cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
                    cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* write only */
-            iopte_ptr_new(
-                lu_ret.ioptSlot,
-                0,
-                1,
-                1,
-                paddr
-            );
+            iopte = iopte_new(
+                    0,      /* read         */
+                    1,      /* write        */
+                    1,      /* nonsecure    */
+                    paddr
+                    );
         } else if (cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
                    cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* read write */
-            iopte_ptr_new(
-                lu_ret.ioptSlot,
-                1,
-                1,
-                1,
-                paddr
-            );
+            iopte = iopte_new(
+                    1,      /* read         */
+                    1,      /* write        */
+                    1,      /* nonsecure    */
+                    paddr
+                    );
         } else {
+            userError("IOMap: Invalid argument.");
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
@@ -366,27 +410,14 @@ decodeARMIOMapInvocation(
 
     } else {
         /* VMKernelOnly */
+        userError("IOMap: Invalid argument.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    cleanCacheRange_RAM((word_t)lu_ret.ioptSlot,
-                        ((word_t)lu_ret.ioptSlot) + sizeof(iopte_t),
-                        addrFromPPtr(lu_ret.ioptSlot));
-
-    plat_smmu_tlb_flush_all();
-    plat_smmu_ptc_flush_all();
-
-#ifdef CONFIG_ARM_SMMU
-    cap = cap_small_frame_cap_set_capFIsIOSpace(cap, 1);
-#endif
-    cap = cap_small_frame_cap_set_capFMappedASID(cap, asid);
-    cap = cap_small_frame_cap_set_capFMappedAddress(cap, io_address);
-    slot->cap = cap;
-
     setThreadState(ksCurThread, ThreadState_Restart);
-    return EXCEPTION_NONE;
+    return performARMIOMapInvocation(cap, slot, lu_ret.ioptSlot, iopte, asid, io_address);
 }
 
 

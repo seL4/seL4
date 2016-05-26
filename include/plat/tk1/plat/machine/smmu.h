@@ -29,12 +29,12 @@ typedef struct {
     uint32_t    smmu_ptc_config;            /* 0x18     */
     uint32_t    smmu_ptb_asid;              /* 0x1c     */
     uint32_t    smmu_ptb_data;              /* 0x20     */
-    uint32_t    rev0;                       /* 0x24     */
-    uint32_t    rev1;                       /* 0x28     */
-    uint32_t    rev2;                       /* 0x2c     */
+    uint32_t    reserved0;                  /* 0x24     */
+    uint32_t    reserved1;                  /* 0x28     */
+    uint32_t    reserved2;                  /* 0x2c     */
     uint32_t    smmu_tlb_flush;             /* 0x30     */
     uint32_t    smmu_ptc_flush;             /* 0x34     */
-    uint32_t    rev3[124];
+    uint32_t    reserved3[124];
     uint32_t    smmu_translation_enable_0;  /* 0x228    */
     uint32_t    smmu_translation_enable_1;  /* 0x22c    */
     uint32_t    smmu_translation_enable_2;  /* 0x230    */
@@ -43,13 +43,13 @@ typedef struct {
     uint32_t    smmu_avpc_asid;             /* 0x23c    */
     uint32_t    smmu_dc_asid;               /* 0x240    */
     uint32_t    smmu_dcb_asid;              /* 0x244    */
-    uint32_t    rev4;                       /* 0x248    */
-    uint32_t    rev5;                       /* 0x24c    */
+    uint32_t    reserved4;                  /* 0x248    */
+    uint32_t    reserved5;                  /* 0x24c    */
     uint32_t    smmu_hc_asid;               /* 0x250    */
     uint32_t    smmu_hda_asid;              /* 0x254    */
     uint32_t    smmu_isp2_asid;             /* 0x258    */
-    uint32_t    rev6;                       /* 0x25c    */
-    uint32_t    rev7;                       /* 0x260    */
+    uint32_t    reserved6;                  /* 0x25c    */
+    uint32_t    reserved7;                  /* 0x260    */
     uint32_t    smmu_msenc_asid;            /* 0x264    */
     uint32_t    smmu_nv_asid;               /* 0x268    */
     uint32_t    smmu_nv2_asid;              /* 0x26c    */
@@ -60,17 +60,17 @@ typedef struct {
     uint32_t    smmu_vic_asid;              /* 0x284    */
     uint32_t    smmu_xusb_host_asid;        /* 0x288    */
     uint32_t    smmu_xusb_dev_asid;         /* 0x28c    */
-    uint32_t    rev8;                       /* 0x290    */
+    uint32_t    reserved8;                  /* 0x290    */
     uint32_t    smmu_tsec_asid;             /* 0x294    */
     uint32_t    smmu_ppcs1_asid;            /* 0x298    */
-    uint32_t    rev9[217];
+    uint32_t    reserved9[217];
     uint32_t    smmu_tlb_set_sel_mask;      /* 0x600    */
-    uint32_t    rev10[237];
+    uint32_t    reserved10[237];
     uint32_t    smmu_ptc_flush_1;           /* 0x9b8    */
-    uint32_t    rev11[51];
+    uint32_t    reserved11[51];
     uint32_t    smmu_dc1_asid;              /* 0xa88    */
-    uint32_t    rev12;                      /* 0xa8c    */
-    uint32_t    rev13;                      /* 0xa90    */
+    uint32_t    reserved12;                 /* 0xa8c    */
+    uint32_t    reserved13;                 /* 0xa90    */
     uint32_t    smmu_sdmmc1a_asid;          /* 0xa94    */
     uint32_t    smmu_sdmmc2a_asid;          /* 0xa98    */
     uint32_t    smmu_sdmmc3a_asid;          /* 0xa9c    */
@@ -152,9 +152,15 @@ plat_smmu_get_asid_by_module_id(uint32_t mid)
 
 }
 
+/** MODIFIES: [*] */
 int plat_smmu_init(void);
+
+/** MODIFIES: [*] */
 void plat_smmu_tlb_flush_all(void);
+
+/** MODIFIES: [*] */
 void plat_smmu_ptc_flush_all(void);
+
 iopde_t *plat_smmu_lookup_iopd_by_asid(uint32_t asid);
 void plat_smmu_handle_interrupt(void);
 
