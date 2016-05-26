@@ -17,6 +17,11 @@
         </method>
         <method id="X86PageDirectoryUnmap" name="Unmap">
         </method>
+        <method id="X86PageDirectoryGetStatusBits" name="GetStatusBits">
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="out" name="accessed" type="seL4_Word"/>
+            <param dir="out" name="dirty" type="seL4_Word"/>
+        </method>
     </interface>
 
     <interface name="seL4_X86_PageTable">
