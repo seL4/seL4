@@ -245,17 +245,17 @@ exception_t decodeIA32VCPUInvocation(
 )
 {
     switch (label) {
-    case IA32VCPUSetTCB:
+    case X86VCPUSetTCB:
         return decodeSetTCB(cap, length, buffer, extraCaps);
-    case IA32VCPUReadVMCS:
+    case X86VCPUReadVMCS:
         return decodeReadVMCS(cap, length, buffer);
-    case IA32VCPUWriteVMCS:
+    case X86VCPUWriteVMCS:
         return decodeWriteVMCS(cap, length, buffer);
-    case IA32VCPUSetIOPort:
+    case X86VCPUSetIOPort:
         return decodeSetIOPort(cap, length, buffer, extraCaps);
-    case IA32VCPUSetIOPortMask:
+    case X86VCPUSetIOPortMask:
         return decodeSetIOPortMask(cap, length, buffer);
-    case IA32VCPUWriteRegisters:
+    case X86VCPUWriteRegisters:
         return decodeVCPUWriteRegisters(cap, length, buffer);
     default:
         userError("VCPU: Illegal operation.");

@@ -1237,7 +1237,7 @@ decodeIA32PageTableInvocation(
     pde_t *         pd;
     paddr_t         paddr;
 
-    if (label == IA32PageTableUnmap) {
+    if (label == X86PageTableUnmap) {
         setThreadState(ksCurThread, ThreadState_Restart);
 
         pd = PDE_PTR(cap_page_table_cap_get_capPTMappedObject(cap));
@@ -1253,7 +1253,7 @@ decodeIA32PageTableInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (label != IA32PageTableMap ) {
+    if (label != X86PageTableMap ) {
         userError("IA32PageTable: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1457,7 +1457,7 @@ decodeIA32FrameInvocation(
 )
 {
     switch (label) {
-    case IA32PageMap: { /* Map */
+    case X86PageMap: { /* Map */
         word_t          vaddr;
         word_t          w_rightsMask;
         cap_t           vspaceCap;
@@ -1516,7 +1516,7 @@ decodeIA32FrameInvocation(
         return EXCEPTION_NONE;
     }
 
-    case IA32PageUnmap: { /* Unmap */
+    case X86PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedObject(cap)) {
             switch (cap_frame_cap_get_capFMappedType(cap)) {
             case IA32_MAPPING_PD:
@@ -1541,11 +1541,11 @@ decodeIA32FrameInvocation(
         return EXCEPTION_NONE;
     }
 
-    case IA32PageMapIO: { /* MapIO */
+    case X86PageMapIO: { /* MapIO */
         return decodeIA32IOMapInvocation(label, length, cte, cap, extraCaps, buffer);
     }
 
-    case IA32PageGetAddress: {
+    case X86PageGetAddress: {
         /* Return it in the first message register. */
         assert(n_msgRegisters >= 1);
 
@@ -1889,7 +1889,7 @@ decodeIA32EPTPageDirectoryInvocation(
     paddr_t         paddr;
 
 
-    if (label == IA32EPTPageDirectoryUnmap) {
+    if (label == X86EPTPageDirectoryUnmap) {
         setThreadState(ksCurThread, ThreadState_Restart);
 
         pdpt = EPT_PDPT_PTR(cap_ept_page_directory_cap_get_capPDMappedObject(cap));
@@ -1905,7 +1905,7 @@ decodeIA32EPTPageDirectoryInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (label != IA32EPTPageDirectoryMap) {
+    if (label != X86EPTPageDirectoryMap) {
         userError("IA32EPTPageDirectory Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1997,7 +1997,7 @@ decodeIA32EPTPageTableInvocation(
     paddr_t         paddr;
     lookupEPTPDSlot_ret_t lu_ret;
 
-    if (label == IA32EPTPageTableUnmap) {
+    if (label == X86EPTPageTableUnmap) {
         setThreadState(ksCurThread, ThreadState_Restart);
 
         pd = EPT_PD_PTR(cap_ept_page_table_cap_get_capPTMappedObject(cap));
@@ -2016,7 +2016,7 @@ decodeIA32EPTPageTableInvocation(
         return EXCEPTION_NONE;
     }
 
-    if (label != IA32EPTPageTableMap) {
+    if (label != X86EPTPageTableMap) {
         userError("IA32EPTPageTable Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;

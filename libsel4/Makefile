@@ -29,6 +29,7 @@ CFILES := \
 HDRFILES := \
 	$(wildcard $(SOURCE_DIR)/include/*) \
 	$(wildcard $(SOURCE_DIR)/arch_include/$(ARCH)/*) \
+	$(wildcard $(SOURCE_DIR)/sel4_arch_include/$(SEL4_ARCH)/*) \
 	$(BUILD_DIR)/include/sel4 \
 	$(BUILD_DIR)/include/interfaces  #TODO proper prefix instruction
 

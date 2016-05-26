@@ -229,7 +229,7 @@ decodeIA32IOPTInvocation(
     vtd_pte_t* vtd_pte;
     lookupVTDContextSlot_ret_t lookup_ret;
 
-    if (label == IA32IOPageTableUnmap) {
+    if (label == X86IOPageTableUnmap) {
         unmapIOPTCap(cap);
 
         cap = cap_io_page_table_cap_set_capIOPTMappedObject(cap, 0);
@@ -244,7 +244,7 @@ decodeIA32IOPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (label != IA32IOPageTableMap ) {
+    if (label != X86IOPageTableMap ) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }

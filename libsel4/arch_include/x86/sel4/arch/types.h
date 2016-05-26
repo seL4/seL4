@@ -23,13 +23,13 @@
 #define seL4_PageTableBits   12
 #define seL4_PageDirBits     12
 #define seL4_IOPageTableBits 12
-#define seL4_IA32_VCPUBits 14
-#define seL4_IA32_EPTPageDirectoryPointerTableBits 13
-#define seL4_IA32_EPTPageDirectoryBits 12
-#define seL4_IA32_EPTPageTableBits 12
+#define seL4_X86_VCPUBits 14
+#define seL4_X86_EPTPageDirectoryPointerTableBits 13
+#define seL4_X86_EPTPageDirectoryBits 12
+#define seL4_X86_EPTPageTableBits 12
 
-#ifdef CONFIG_PAE_PAGING
 #define seL4_PDPTBits         5
+#ifdef CONFIG_PAE_PAGING
 #define seL4_LargePageBits    21
 #else
 #define seL4_LargePageBits    22
@@ -44,16 +44,16 @@
 typedef seL4_Uint32 seL4_Word;
 typedef seL4_Word seL4_CPtr;
 
-typedef seL4_CPtr seL4_IA32_IOSpace;
-typedef seL4_CPtr seL4_IA32_IOPort;
-typedef seL4_CPtr seL4_IA32_Page;
-typedef seL4_CPtr seL4_IA32_PageDirectory;
-typedef seL4_CPtr seL4_IA32_PageTable;
-typedef seL4_CPtr seL4_IA32_IOPageTable;
-typedef seL4_CPtr seL4_IA32_VCPU;
-typedef seL4_CPtr seL4_IA32_EPTPageDirectoryPointerTable;
-typedef seL4_CPtr seL4_IA32_EPTPageDirectory;
-typedef seL4_CPtr seL4_IA32_EPTPageTable;
+typedef seL4_CPtr seL4_X86_IOSpace;
+typedef seL4_CPtr seL4_X86_IOPort;
+typedef seL4_CPtr seL4_X86_Page;
+typedef seL4_CPtr seL4_X86_PageDirectory;
+typedef seL4_CPtr seL4_X86_PageTable;
+typedef seL4_CPtr seL4_X86_IOPageTable;
+typedef seL4_CPtr seL4_X86_VCPU;
+typedef seL4_CPtr seL4_X86_EPTPageDirectoryPointerTable;
+typedef seL4_CPtr seL4_X86_EPTPageDirectory;
+typedef seL4_CPtr seL4_X86_EPTPageTable;
 typedef seL4_CPtr seL4_IA32_IPI;
 
 /* User context as used by seL4_TCB_ReadRegisters / seL4_TCB_WriteRegisters */
@@ -70,13 +70,13 @@ typedef struct seL4_VCPUContext_ {
 } seL4_VCPUContext;
 
 typedef enum {
-    seL4_IA32_Default_VMAttributes = 0,
-    seL4_IA32_WriteBack = 0,
-    seL4_IA32_WriteThrough = 1,
-    seL4_IA32_CacheDisabled = 2,
-    seL4_IA32_Uncacheable = 3,
-    seL4_IA32_WriteCombining = 4,
-    SEL4_FORCE_LONG_ENUM(seL4_IA32_VMAttributes),
-} seL4_IA32_VMAttributes;
+    seL4_X86_Default_VMAttributes = 0,
+    seL4_X86_WriteBack = 0,
+    seL4_X86_WriteThrough = 1,
+    seL4_X86_CacheDisabled = 2,
+    seL4_X86_Uncacheable = 3,
+    seL4_X86_WriteCombining = 4,
+    SEL4_FORCE_LONG_ENUM(seL4_X86_VMAttributes),
+} seL4_X86_VMAttributes;
 
 #endif

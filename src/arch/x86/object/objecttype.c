@@ -552,26 +552,26 @@ word_t
 Arch_getObjectSize(word_t t)
 {
     switch (t) {
-    case seL4_IA32_4K:
+    case seL4_X86_4K:
         return pageBitsForSize(IA32_SmallPage);
-    case seL4_IA32_LargePage:
+    case seL4_X86_LargePageObject:
         return pageBitsForSize(IA32_LargePage);
-    case seL4_IA32_PageTableObject:
+    case seL4_X86_PageTableObject:
         return PTE_SIZE_BITS + PT_BITS;
-    case seL4_IA32_PageDirectoryObject:
+    case seL4_X86_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_BITS;
-    case seL4_IA32_PDPTObject:
+    case seL4_X86_PDPTObject:
         return PDPTE_SIZE_BITS + PDPT_BITS;
-    case seL4_IA32_IOPageTableObject:
+    case seL4_X86_IOPageTableObject:
         return VTD_PT_SIZE_BITS;
 #ifdef CONFIG_VTX
-    case seL4_IA32_VCPUObject:
+    case seL4_X86_VCPUObject:
         return VTX_VCPU_BITS;
-    case seL4_IA32_EPTPageDirectoryPointerTableObject:
+    case seL4_X86_EPTPageDirectoryPointerTableObject:
         return EPT_PDPTE_SIZE_BITS + EPT_PDPT_BITS + 1;
-    case seL4_IA32_EPTPageDirectoryObject:
+    case seL4_X86_EPTPageDirectoryObject:
         return EPT_PDE_SIZE_BITS + EPT_PD_BITS;
-    case seL4_IA32_EPTPageTableObject:
+    case seL4_X86_EPTPageTableObject:
         return EPT_PTE_SIZE_BITS + EPT_PT_BITS;
 #endif
     default:
@@ -584,9 +584,9 @@ bool_t
 Arch_isFrameType(word_t t)
 {
     switch (t) {
-    case seL4_IA32_4K:
+    case seL4_X86_4K:
         return true;
-    case seL4_IA32_LargePage:
+    case seL4_X86_LargePageObject:
         return true;
     default:
         return false;
@@ -597,7 +597,7 @@ cap_t
 Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t deviceMemory)
 {
     switch (t) {
-    case seL4_IA32_4K:
+    case seL4_X86_4K:
         if (!deviceMemory) {
             memzero(regionBase, 1 << pageBitsForSize(IA32_SmallPage));
         }
@@ -610,7 +610,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
                    (word_t)regionBase      /* capFBasePtr          */
                );
 
-    case seL4_IA32_LargePage:
+    case seL4_X86_LargePageObject:
         if (!deviceMemory) {
             memzero(regionBase, 1 << pageBitsForSize(IA32_LargePage));
         }
@@ -623,7 +623,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
                    (word_t)regionBase      /* capFBasePtr          */
                );
 
-    case seL4_IA32_PageTableObject:
+    case seL4_X86_PageTableObject:
         memzero(regionBase, 1 << PT_SIZE_BITS);
         return cap_page_table_cap_new(
                    0,                  /* capPTMappedObject    */
@@ -631,7 +631,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
                    (word_t)regionBase  /* capPTBasePtr         */
                );
 
-    case seL4_IA32_PageDirectoryObject:
+    case seL4_X86_PageDirectoryObject:
         memzero(regionBase, 1 << PD_SIZE_BITS);
 #ifndef CONFIG_PAE_PAGING
         copyGlobalMappings(regionBase);
@@ -652,7 +652,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
                );
 #endif
 
-    case seL4_IA32_IOPageTableObject:
+    case seL4_X86_IOPageTableObject:
         memzero(regionBase, 1 << VTD_PT_SIZE_BITS);
         return cap_io_page_table_cap_new(
                    0,  /* CapIOPTMappedLevel   */
@@ -661,7 +661,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
                    (word_t)regionBase  /* capIOPTBasePtr */
                );
 #ifdef CONFIG_VTX
-    case seL4_IA32_VCPUObject: {
+    case seL4_X86_VCPUObject: {
         vcpu_t *vcpu;
         if (!vtx_enabled) {
             fail("vtx not enabled");
@@ -671,7 +671,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
         vcpu_init(vcpu);
         return cap_vcpu_cap_new(VCPU_REF(vcpu));
     }
-    case seL4_IA32_EPTPageDirectoryPointerTableObject: {
+    case seL4_X86_EPTPageDirectoryPointerTableObject: {
         ept_pml4e_t *pml4;
         memzero(regionBase, 1 << (EPT_PDPTE_SIZE_BITS + EPT_PDPT_BITS + 1));
         pml4 = (ept_pml4e_t*)((word_t)regionBase);
@@ -679,7 +679,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
         return cap_ept_page_directory_pointer_table_cap_new(
                    (word_t)regionBase + EPT_PDPT_OFFSET /* capPTBasePtr   */);
     }
-    case seL4_IA32_EPTPageDirectoryObject:
+    case seL4_X86_EPTPageDirectoryObject:
         memzero(regionBase, 1 << (EPT_PDE_SIZE_BITS + EPT_PD_BITS));
 
         return cap_ept_page_directory_cap_new(
@@ -687,7 +687,7 @@ Arch_createObject(object_t t, void *regionBase, unsigned int userSize, bool_t de
                    0,                  /* capPDMappedIndex     */
                    (word_t)regionBase  /* capPTBasePtr         */
                );
-    case seL4_IA32_EPTPageTableObject:
+    case seL4_X86_EPTPageTableObject:
         memzero(regionBase, 1 << (EPT_PTE_SIZE_BITS + EPT_PT_BITS));
 
         return cap_ept_page_table_cap_new(
