@@ -265,6 +265,7 @@ DEFINES += ${CONFIG_DEFS:%=-D%}
 
 ifdef DEBUG
 DEFINES += -DDEBUG
+DEFINES += -DCONFIG_DEBUG_BUILD
 CFLAGS  += -ggdb -g3
 endif
 
@@ -581,7 +582,7 @@ autoconf.h: include/plat/${PLAT}/autoconf.h
 	@echo " [STRIP] $@"
 	$(Q)${STRIP} -o $@ $<
 
-%.o: %.s | ${DIRECTORIES}
+%.o: %.S | ${DIRECTORIES}
 	@echo " [AS] $@"
 	$(Q)${CC} ${ASFLAGS} -c $< -o $@
 
@@ -653,10 +654,6 @@ ${PROOFTHEORIES}: %_proofs.thy: %.pbf ${BF_GEN_PATH} ${STATICSOURCES} \
 # Preprocessed source files
 ###########################
 
-%.s: %.S ${GENHEADERS} ${STATICHEADERS} | ${DIRECTORIES}
-	@echo " [CPP] $@"
-	$(Q)${CPP} ${CPPFLAGS} -CC -E -o $@ $<
-
 %.c_pp: %.c ${GENHEADERS} ${STATICHEADERS} | ${DIRECTORIES}
 	@echo " [CPP] $@"
 ifdef NO_PRESERVE_TIMESTAMP
@@ -681,7 +678,7 @@ CLEANTARGETS = kernel.elf kernel.elf.strip ${GENHEADERS} ${OBJECTS} autoconf.h \
   parser.out parsetab.py \
   kernel_final.s kernel_final.c kernel_all.c kernel_all.c_pp \
   ${PPFILES} ${THEORIES} c-parser.log c-parser-all.log \
-  arch api plat ${ASM_SOURCES:.S=.s}
+  arch api plat
 
 clean:
 	@echo " [CLEAN]"
