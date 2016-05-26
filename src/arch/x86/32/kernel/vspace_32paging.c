@@ -224,8 +224,8 @@ static exception_t
 performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_ret_t pdSlot)
 {
     if (pdSlot.status == EXCEPTION_NONE &&
-        ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
-            pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
+             pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
 
         setRegister(ksCurThread, msgRegisters[0], pde_pde_large_ptr_get_accessed(pdSlot.pdSlot));
         setRegister(ksCurThread, msgRegisters[1], pde_pde_large_ptr_get_dirty(pdSlot.pdSlot));
@@ -283,10 +283,10 @@ decodeIA32PageDirectoryInvocation(
 
         /* need either a valid PD mapping or PT mapping */
         if ((pdSlot.status != EXCEPTION_NONE ||
-            ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_large) ||
-                !pde_pde_large_ptr_get_present(pdSlot.pdSlot))) &&
-            (ptSlot.status != EXCEPTION_NONE ||
-            (!pte_ptr_get_present(ptSlot.ptSlot)))) {
+                ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_large) ||
+                 !pde_pde_large_ptr_get_present(pdSlot.pdSlot))) &&
+                (ptSlot.status != EXCEPTION_NONE ||
+                 (!pte_ptr_get_present(ptSlot.ptSlot)))) {
             userError("X86PageDirectoryGetStatusBits: No mapping found");
 
             current_syscall_error.type = seL4_InvalidArgument;
