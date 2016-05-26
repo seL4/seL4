@@ -11,7 +11,9 @@
 #ifndef __STRING_H
 #define __STRING_H
 
-#ifdef DEBUG
+#include <config.h>
+
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 
 #include <stdint.h>
 

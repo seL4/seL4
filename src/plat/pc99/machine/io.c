@@ -8,12 +8,13 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <arch/kernel/boot_sys.h>
 #include <arch/kernel/lock.h>
 #include <arch/model/statedata.h>
 #include <plat/machine/io.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 
 void serial_init(uint16_t port)
 {
@@ -30,6 +31,10 @@ void serial_init(uint16_t port)
     in8(port + 5); /* clear line status port */
     in8(port + 6); /* clear modem status port */
 }
+
+#endif
+
+#ifdef CONFIG_PRINTING
 
 void console_putchar(char c)
 {

@@ -20,6 +20,10 @@ config ARCH_ARM_V7A
     bool
     default n
 
+config KERNEL_MASTER
+    bool
+    default y
+
 # Native word size of the current platform. This is primarily intended for use
 # in code generators that need to know, at generation-time, the word size of
 # the target platform.
@@ -97,13 +101,13 @@ menu "seL4 System"
        bool
        default n
        help
-          Common flag for Exynos 54210 and 5422
+          Common flag for Exynos 5410 and 5422
 
     config PLAT_IMX6
        bool
        default n
        help
-          Common flag for SabreLight and Wandboard Quad
+          Common flag for Sabre Lite and Wandboard Quad
 
 
     config PLAT_IMX7
@@ -332,30 +336,31 @@ endmenu
 
 menu "Build Options"
    
-    choice 
-        prompt "Build type - Debug or Release?"
-        default DEBUG_BUILD
+    config VERIFICATION_BUILD
+        bool "Disable verification unfriendly features"
+        default n
+        help
+            When enabled this configuration option prevents the usage of any other options that
+            would compromise the verification story of the kernel. Enabling this option does NOT
+            imply you are using a verified kernel.
 
-        config DEBUG_BUILD
-            bool "Build the kernel with debug support"
-            help
-                Enable the debug facilities in the kernel
+    config DEBUG_BUILD
+        bool "Enable debug facilities"
+        depends on !VERIFICATION_BUILD
+        default y
+        help
+            Enable debug facilities (symbols and assertions) in the kernel
 
-        config RELEASE_PRINTF
-            bool "Release build with release_printf"
-            help 
-                Enable 'release_printf' to allow printing in an otherwise 
-                release build.
-
-        config RELEASE_BUILD
-            bool "Release build"
-            help
-                A release kernel with no debugging symbols, print support or asserts.
-    endchoice
+    config PRINTING
+        bool "Enable kernel printing"
+        depends on !VERIFICATION_BUILD
+        default y if DEBUG_BUILD
+        help
+            Allow the kernel to print out messages to the serial console during bootup and execution.
 
     config IRQ_REPORTING
         bool "Report spurious or undelivered IRQs"
-        depends on DEBUG_BUILD
+        depends on PRINTING
         default y
         help
             seL4 does not properly check for and handle spurious interrupts
@@ -365,7 +370,7 @@ menu "Build Options"
 
     config COLOUR_PRINTING
         bool "Print error messages in colour"
-        depends on DEBUG_BUILD
+        depends on PRINTING
         default y
         help
             In debug mode, seL4 prints diagnostic messages to its serial output
@@ -373,6 +378,15 @@ menu "Build Options"
             determines whether ANSI escape codes are applied to colour code
             these error messages. You may wish to disable this setting if your
             serial output is redirected to a file or pipe.
+
+    config USER_STACK_TRACE_LENGTH
+        int "Stack trace length"
+        depends on PRINTING
+        default 16
+        help
+            On a double fault the kernel can try and print out the users stack
+            to aid debugging. This option determines how many words of stack
+            should be printed
 
     choice
         prompt "Compiler optimisation flag"
@@ -409,6 +423,7 @@ menu "Build Options"
 
     config DANGEROUS_CODE_INJECTION
 	    bool "Build kernel with support for executing arbitrary code in protected mode"
+	    depends on !VERIFICATION_BUILD
         default n
         help
             Adds a system call that allows users to specify code to be run in kernel
@@ -416,7 +431,7 @@ menu "Build Options"
 
     config DANGEROUS_CODE_INJECTION_ON_UNDEF_INSTR
         bool "Make undefined instructions execute code in protected mode"
-        depends on ARCH_ARM_V6
+        depends on ARCH_ARM_V6 && !VERIFICATION_BUILD
         default n
         help
             Replaces the undefined instruction handler with a call to a function

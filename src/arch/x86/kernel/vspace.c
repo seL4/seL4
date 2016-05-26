@@ -642,7 +642,7 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_ma
     return VMKernelOnly;
 }
 
-void flushTable(vspace_root_t *vspace, word_t vptr, pte_t* pt)
+void flushTable(vspace_root_t *vspace, word_t vptr, pte_t* pt, asid_t asid)
 {
     word_t i;
     cap_t        threadRoot;
@@ -651,11 +651,11 @@ void flushTable(vspace_root_t *vspace, word_t vptr, pte_t* pt)
 
     /* check if page table belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == vspace) {
-        /* find valid mappings */
-        for (i = 0; i < BIT(PT_BITS); i++) {
-            if (pte_get_present(pt[i])) {
-                invalidateTLBentry(vptr + (i << PAGE_BITS));
+    /* find valid mappings */
+    for (i = 0; i < BIT(PT_BITS); i++) {
+        if (pte_get_present(pt[i])) {
+            if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == vspace)) {
+                invalidateTranslationSingleASID(vptr + (i << PAGE_BITS), asid);
             }
         }
     }
@@ -711,10 +711,11 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     /* check if page belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
-    if (isValidNativeRoot(threadRoot) && (vspace_root_t *)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
-        invalidateTLBentry(vptr);
+    if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == find_ret.vspace_root)) {
+        invalidateTranslationSingleASID(vptr, asid);
     }
 }
+
 void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 {
     findVSpaceForASID_ret_t find_ret;
@@ -737,44 +738,44 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
         return;
     }
 
-    flushTable(find_ret.vspace_root, vaddr, pt);
+    flushTable(find_ret.vspace_root, vaddr, pt, asid);
 
     *lu_ret.pdSlot = makeUserPDEPageTableInvalid();
 
-    invalidatePageStructureCache();
+    invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid);
 }
 
 static exception_t
-performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pte)
+performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pte, vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
-    invalidatePageStructureCache();
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap));
     return EXCEPTION_NONE;
 }
 
 static exception_t
-performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pde)
+performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pde, vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
-    invalidatePageStructureCache();
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap));
     return EXCEPTION_NONE;
 }
 
 static exception_t
-performX86PageInvocationRemapPTE(pte_t *ptSlot, pte_t pte)
+performX86PageInvocationRemapPTE(pte_t *ptSlot, pte_t pte, asid_t asid, vspace_root_t *vspace)
 {
     *ptSlot = pte;
-    invalidatePageStructureCache();
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid);
     return EXCEPTION_NONE;
 }
 
 static exception_t
-performX86PageInvocationRemapPDE(pde_t *pdSlot, pde_t pde)
+performX86PageInvocationRemapPDE(pde_t *pdSlot, pde_t pde, asid_t asid, vspace_root_t *vspace)
 {
     *pdSlot = pde;
-    invalidatePageStructureCache();
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid);
     return EXCEPTION_NONE;
 }
 
@@ -912,7 +913,7 @@ exception_t decodeX86FrameInvocation(
 
             pte = makeUserPTE(paddr, vmAttr, vmRights);
             setThreadState(ksCurThread, ThreadState_Restart);
-            return performX86PageInvocationMapPTE(cap, cte, lu_ret.ptSlot, pte);
+            return performX86PageInvocationMapPTE(cap, cte, lu_ret.ptSlot, pte, vspace);
         }
 
         /* PDE mappings */
@@ -948,7 +949,7 @@ exception_t decodeX86FrameInvocation(
 
             pde = makeUserPDELargePage(paddr, vmAttr, vmRights);
             setThreadState(ksCurThread, ThreadState_Restart);
-            return performX86PageInvocationMapPDE(cap, cte, lu_ret.pdSlot, pde);
+            return performX86PageInvocationMapPDE(cap, cte, lu_ret.pdSlot, pde, vspace);
         }
 
         default: {
@@ -1050,7 +1051,7 @@ exception_t decodeX86FrameInvocation(
             pte = makeUserPTE(paddr, vmAttr, vmRights);
 
             setThreadState(ksCurThread, ThreadState_Restart);
-            return performX86PageInvocationRemapPTE(lu_ret.ptSlot, pte);
+            return performX86PageInvocationRemapPTE(lu_ret.ptSlot, pte, asid, vspace);
 
         }
 
@@ -1079,7 +1080,7 @@ exception_t decodeX86FrameInvocation(
             pde = makeUserPDELargePage(paddr, vmAttr, vmRights);
 
             setThreadState(ksCurThread, ThreadState_Restart);
-            return performX86PageInvocationRemapPDE(pdeSlot, pde);
+            return performX86PageInvocationRemapPDE(pdeSlot, pde, asid, vspace);
         }
 
         default: {
@@ -1141,11 +1142,11 @@ performX86PageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
 }
 
 static exception_t
-performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdSlot)
+performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdSlot, vspace_root_t *root)
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
-    invalidatePageStructureCache();
+    invalidatePageStructureCacheASID(pptr_to_paddr(root), cap_page_table_cap_get_capPTMappedASID(cap));
     return EXCEPTION_NONE;
 }
 
@@ -1262,7 +1263,7 @@ decodeX86PageTableInvocation(
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
 
     setThreadState(ksCurThread, ThreadState_Restart);
-    return performX86PageTableInvocationMap(cap, cte, pde, pdSlot.pdSlot);
+    return performX86PageTableInvocationMap(cap, cte, pde, pdSlot.pdSlot, vspace);
 }
 
 exception_t decodeX86MMUInvocation(

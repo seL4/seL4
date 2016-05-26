@@ -100,7 +100,7 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define allRights cap_rights_new(true, true, true)
 #define noWrite cap_rights_new(true, true, false)
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 #ifdef CONFIG_COLOUR_PRINTING
 #define ANSI_RESET "\033[0m"
 #define ANSI_GREEN ANSI_RESET "\033[32m"
@@ -123,7 +123,7 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
         printf(__VA_ARGS__);                                                 \
         printf(">>" ANSI_RESET "\n");                                        \
     } while (0)
-#else /* !DEBUG */
+#else /* !CONFIG_PRINTING */
 #define userError(...)
 #endif
 

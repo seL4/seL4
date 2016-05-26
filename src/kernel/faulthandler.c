@@ -66,7 +66,7 @@ sendFaultIPC(tcb_t *tptr)
     }
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 static void
 print_fault(fault_t f)
 {
@@ -105,7 +105,7 @@ print_fault(fault_t f)
 void
 handleDoubleFault(tcb_t *tptr, fault_t ex1)
 {
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
     fault_t ex2 = current_fault;
     printf("Caught ");
     print_fault(ex2);
@@ -113,6 +113,8 @@ handleDoubleFault(tcb_t *tptr, fault_t ex1)
     print_fault(ex1);
     printf("\nin thread %p \"%s\" ", tptr, tptr->tcbName);
     printf("at address %p\n", (void*)getRestartPC(tptr));
+    printf("With stack:\n");
+    Arch_userStackTrace(tptr);
 #endif
 
     setThreadState(tptr, ThreadState_Inactive);

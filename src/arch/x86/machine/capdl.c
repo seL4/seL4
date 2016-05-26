@@ -52,6 +52,8 @@ static int getDecodedChar(unsigned char *result)
         default:
             if (c >= 20 && c < 40) {
                 *result = c - 20;
+            } else {
+                return 1;
             }
         }
         return 0;

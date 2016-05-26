@@ -2453,7 +2453,7 @@ void kernelDataAbort(word_t pc) VISIBLE;
 void
 kernelPrefetchAbort(word_t pc)
 {
-    word_t ifsr = getIFSR();
+    word_t UNUSED ifsr = getIFSR();
 
     printf("\n\nKERNEL PREFETCH ABORT!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
@@ -2465,8 +2465,8 @@ kernelPrefetchAbort(word_t pc)
 void
 kernelDataAbort(word_t pc)
 {
-    word_t dfsr = getDFSR();
-    word_t far = getFAR();
+    word_t UNUSED dfsr = getDFSR();
+    word_t UNUSED far = getFAR();
 
     printf("\n\nKERNEL DATA ABORT!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
@@ -2475,3 +2475,86 @@ kernelDataAbort(word_t pc)
     halt();
 }
 #endif
+
+#ifdef CONFIG_PRINTING
+typedef struct readWordFromVSpace_ret {
+    exception_t status;
+    word_t value;
+} readWordFromVSpace_ret_t;
+
+static readWordFromVSpace_ret_t
+readWordFromVSpace(pde_t *pd, word_t vaddr)
+{
+    readWordFromVSpace_ret_t ret;
+    lookupPTSlot_ret_t ptSlot;
+    pde_t *pdSlot;
+    paddr_t paddr;
+    word_t offset;
+    pptr_t kernel_vaddr;
+    word_t *value;
+
+    pdSlot = lookupPDSlot(pd, vaddr);
+    if (pde_ptr_get_pdeType(pdSlot) == pde_pde_section) {
+        paddr = pde_pde_section_ptr_get_address(pdSlot);
+        offset = vaddr & MASK(ARMSectionBits);
+    } else {
+        ptSlot = lookupPTSlot(pd, vaddr);
+        if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_small) {
+            paddr = pte_pte_small_ptr_get_address(ptSlot.ptSlot);
+            offset = vaddr & MASK(ARMSmallPageBits);
+        } else if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_large) {
+            paddr = pte_pte_large_ptr_get_address(ptSlot.ptSlot);
+            offset = vaddr & MASK(ARMLargePageBits);
+        } else {
+            ret.status = EXCEPTION_LOOKUP_FAULT;
+            return ret;
+        }
+    }
+
+
+    kernel_vaddr = (word_t)paddr_to_pptr(paddr);
+    value = (word_t*)(kernel_vaddr + offset);
+    ret.status = EXCEPTION_NONE;
+    ret.value = *value;
+    return ret;
+}
+
+void
+Arch_userStackTrace(tcb_t *tptr)
+{
+    cap_t threadRoot;
+    pde_t *pd;
+    word_t sp;
+    int i;
+
+    threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
+
+    /* lookup the PD */
+    if (cap_get_capType(threadRoot) != cap_page_directory_cap) {
+        printf("Invalid vspace\n");
+        return;
+    }
+
+    pd = (pde_t*)pptr_of_cap(threadRoot);
+
+    sp = getRegister(tptr, SP);
+    /* check for alignment so we don't have to worry about accessing
+     * words that might be on two different pages */
+    if (!IS_ALIGNED(sp, WORD_SIZE_BITS)) {
+        printf("SP not aligned\n");
+        return;
+    }
+
+    for (i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+        word_t address = sp + (i * sizeof(word_t));
+        readWordFromVSpace_ret_t result;
+        result = readWordFromVSpace(pd, address);
+        if (result.status == EXCEPTION_NONE) {
+            printf("0x%lx: 0x%lx\n", (long)address, (long)result.value);
+        } else {
+            printf("0x%lx: INVALID\n", (long)address);
+        }
+    }
+}
+#endif
+

@@ -17,6 +17,15 @@
 
 #define __SWINUM(x) ((x) & 0x00ffffff)
 
+#ifndef __OPTIMIZE__
+/* With no optimisations (-O0) GCC's register allocator clobbers the
+ * syscall arguments before you reach the 'swi' and you invoke the kernel
+ * incorrectly.
+ * See SELFOUR-187
+ */
+#warning you are compiling with -O0; syscalls will most likely not work
+#endif
+
 static inline void
 seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
@@ -557,7 +566,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_PRINTING
 
 char *strcpy(char *, const char *);
 static inline void

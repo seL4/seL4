@@ -203,7 +203,7 @@ init_sys_state(
 
 
     /* flush the tlb */
-    invalidatePageStructureCache();
+    invalidateTranslationAll();
 
     /* if we crash here, the log isn't working */
 #ifdef CONFIG_DEBUG_BUILD

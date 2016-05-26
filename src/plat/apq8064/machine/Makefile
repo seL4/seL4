@@ -13,10 +13,4 @@ DIRECTORIES += src/plat/${PLAT}/machine
 PLAT_C_SOURCES += machine/hardware.c \
                   machine/timer.c \
                   machine/l2cache.c \
-
-ifdef DEBUG
-    PLAT_C_SOURCES += machine/io.c
-endif
-ifdef RELEASE_PRINTF
-    PLAT_C_SOURCES += machine/io.c
-endif
+                  machine/io.c

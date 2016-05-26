@@ -8,12 +8,11 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
 #include <plat/machine/devices.h>
-
-#if defined DEBUG || defined RELEASE_PRINTF
 
 #define UTHR 0x00 /* UART Transmit Holding Register */
 #define ULSR 0x14 /* UART Line Status Register */
@@ -21,6 +20,7 @@
 
 #define UART_REG(x) ((volatile uint32_t *)(UART0_PPTR + (x)))
 
+#ifdef CONFIG_PRINTING
 
 void
 am335x_uart_putchar(char c)
@@ -31,11 +31,19 @@ am335x_uart_putchar(char c)
     }
 }
 
+#endif
+
+#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
+
 void putDebugChar(unsigned char c)
 {
     while ((*UART_REG(ULSR) & ULSR_THRE) == 0);
     *UART_REG(UTHR) = c;
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 unsigned char getDebugChar(void)
 {

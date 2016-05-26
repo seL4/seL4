@@ -11,7 +11,9 @@
 #ifndef __ARCH_KERNEL_LOCK_H
 #define __ARCH_KERNEL_LOCK_H
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#include <config.h>
+
+#ifdef CONFIG_PRINTING
 
 #include <types.h>
 
@@ -41,6 +43,6 @@ static inline void lock_release(lock_t* lock)
 {
     *lock = 0;
 }
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */
 
 #endif

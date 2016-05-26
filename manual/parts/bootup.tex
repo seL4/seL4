@@ -62,7 +62,8 @@ The first 12 slots contain specific capabilities as listed in
 
 \section{\label{ch:bootup:bootinfo}BootInfo Frame}
 
-CNode slots with CPTR 0xb and above are filled dynamically during
+CNode slots with CPTR \texttt{seL4\_NumInitialCaps} (defined in the seL4
+userland library) and above are filled dynamically during
 bootstrapping. Their exact contents depend on the userland image size,
 platform configuration (devices) etc. In order to tell the initial thread
 which capabilities are stored where in its CNode, the kernel provides
@@ -98,7 +99,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{seL4\_SlotRegion}     & \texttt{empty}                   & empty slots (null caps) \\
       \texttt{seL4\_SlotRegion}     & \texttt{sharedFrames}            & see \autoref{ch:bootup:multikernel} \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImageFrames}         & frames containing the userland image \\
-      \texttt{seL4\_SlotRegion}     & \texttt{userImagePTs}            & page tables covering the userland image \\
+      \texttt{seL4\_SlotRegion}     & \texttt{userImagePaging}         & userland-image paging structure caps \\
       \texttt{seL4\_SlotRegion}     & \texttt{untyped}                 & untyped-memory capabilities \\
       \texttt{seL4\_Word[]}         & \texttt{untypedPaddrList}        & array of untyped-memory physical addresses \\
       \texttt{uint8\_t[]}           & \texttt{untypedSizeBitsList}     & array of untyped-memory sizes ($2^n$ bytes) \\
@@ -111,13 +112,29 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
   \end{center}
 \end{table}
 
-The capabilities in \texttt{userImageFrames} and \texttt{userImagePTs} are
-ordered, i.e.\ the first capability references the first frame of the
-userland image etc. Userland always knows to which virtual addresses its own
+The capabilities in \texttt{userImageFrames} are
+ordered such that the first capability references the first frame of the
+userland image and so on.
+The capabilities in \texttt{userImagePaging} are ordered in descending order
+of paging structure size. Within a given paging structure size, capabilities are
+ordered by the virtual address at which the corresponding objects are mapped
+into the initial thread's address space.
+
+It is up to userland to infer the virtual address of frames referenced by
+the capabilities in \texttt{userImageFrames} and the virtual address and
+types of paging structures
+referenced by the capabilities in \texttt{userImagePaging}.
+Userland typically has a way of finding out to which virtual addresses its
 code and data is mapped (e.g.\ in GCC, with the standard linker script, the
 symbols \texttt{\_\_executable\_start} and \texttt{\_end} are available).
-Userland can therefore
-infer the virtual address behind each userland frame and page-table cap.
+Additionally, the initial thread can assume that its address space is virtually
+contiguous, and is made up of the smallest frames available on the architecture.
+It's also assumed that the initial thread knows which paging structures are
+available on the architecture it's running on.
+This, along with knowledge of how capabilities in \texttt{userImageFrames} and
+\texttt{userImagePaging} are ordered, is sufficient information for userland to infer
+the virtual address of each
+frame capability, and the virtual address and type of each paging structure capability.
 
 Untyped memory is given in no particular order. The array entry
 \texttt{untypedSizeBitsList[i]} stores the untyped-memory size ($2^n$ bytes) of

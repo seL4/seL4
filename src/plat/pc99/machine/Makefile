@@ -16,12 +16,7 @@ PLAT_C_SOURCES += machine/acpi.c \
                   machine/pic.c \
                   machine/ioapic.c \
                   machine/pit.c \
-                  machine/io.c
-ifdef DEBUG
-PLAT_C_SOURCES += machine/debug_helpers.c
-endif
-ifdef RELEASE_PRINTF
-    PLAT_C_SOURCES += machine/io.c
-endif
-
-PLAT_C_SOURCES += machine/intel-vtd.c 
+                  machine/io.c \
+                  machine/debug_helpers.c \
+                  machine/io.c \
+                  machine/intel-vtd.c

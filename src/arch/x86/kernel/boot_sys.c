@@ -40,7 +40,7 @@ extern char boot_stack_top[1];
 extern char ki_boot_end[1];
 extern char ki_end[1];
 
-#ifdef DEBUG
+#ifdef CONFIG_PRINTING
 /* kernel entry point */
 extern char _start[1];
 #endif
@@ -71,7 +71,7 @@ boot_state_t boot_state;
 
 /* There are a lot of assumptions on this being page aligned and
  * precisely 4K in size. DO NOT MODIFY */
-ALIGN(BIT(PAGE_BITS))
+ALIGN(BIT(PAGE_BITS)) VISIBLE
 char kernel_stack_alloc[4096];
 
 /* global variables (not covered by abstract specification) */
@@ -79,7 +79,7 @@ char kernel_stack_alloc[4096];
 BOOT_DATA
 cmdline_opt_t cmdline_opt;
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 
 /* Determine whether we are in bootstrapping phase or runtime phase.
  * Is currently only needed to determine console port in debug mode.

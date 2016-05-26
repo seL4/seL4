@@ -8,12 +8,13 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 
 #define URXD  0x00 /* UART Receiver Register */
 #define UTXD  0x40 /* UART Transmitter Register */
@@ -39,6 +40,10 @@ enum UARTControlBits {
     UART_SR1_RRDY = 9
 };
 
+#endif
+
+#ifdef CONFIG_PRINTING
+
 void
 imx31_uart_putchar(char c)
 {
@@ -49,6 +54,10 @@ imx31_uart_putchar(char c)
         imx31_uart_putchar('\r');
     }
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 void putDebugChar(unsigned char c)
 {
