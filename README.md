@@ -30,8 +30,6 @@ Repository Overview
 
   * `include` and `src`: C and ASM source code of seL4
   * `tools`: build tools
-  * `haskell`: Haskell model of the seL4 kernel,
-               kept in sync with the C version.
   * `libsel4`: C bindings for the seL4 ABI
   * `manual`: LaTeX sources of the seL4 reference manual
 

@@ -117,6 +117,8 @@ handleDoubleFault(tcb_t *tptr, fault_t ex1)
     print_fault(ex1);
     printf("\nin thread %p \"%s\" ", tptr, tptr->tcbName);
     printf("at address %p\n", (void*)getRestartPC(tptr));
+    printf("With stack:\n");
+    Arch_userStackTrace(tptr);
 #endif
 
     setThreadState(tptr, ThreadState_Inactive);

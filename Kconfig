@@ -366,6 +366,15 @@ menu "Build Options"
             these error messages. You may wish to disable this setting if your
             serial output is redirected to a file or pipe.
 
+    config USER_STACK_TRACE_LENGTH
+        int "Stack trace length"
+        depends on PRINTING
+        default 16
+        help
+            On a double fault the kernel can try and print out the users stack
+            to aid debugging. This option determines how many words of stack
+            should be printed
+
     choice
         prompt "Compiler optimisation flag"
         default OPTIMISATION_O2

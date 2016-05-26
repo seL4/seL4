@@ -35,6 +35,7 @@ extern bool_t ksReprogram VISIBLE;
 extern tcb_t *ksReleaseHead VISIBLE;
 extern crit_t ksCriticality VISIBLE;
 extern tcb_queue_t ksCritQueues[] VISIBLE;
+extern word_t tlbLockCount VISIBLE;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)

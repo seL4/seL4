@@ -57,6 +57,9 @@ crit_t ksCriticality;
 /* list of active threads at each criticality */
 tcb_queue_t ksCritQueues[CONFIG_NUM_CRITICALITIES];
 
+/* Only used by lockTLBEntry */
+word_t tlbLockCount = 0;
+
 #ifdef DEBUG
 debug_entry_t ksKernelEntry;
 #endif /* DEBUG */
