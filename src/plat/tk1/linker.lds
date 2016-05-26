@@ -39,6 +39,7 @@ SECTIONS
         *(.vectors.fastpath_call)
         *(.vectors.fastpath_reply_recv)
         *(.vectors.fastpath_signal)
+        *(.vectors.fastpath_irq)
         *(.vectors.text)
 
         /* Anything else that should be in the vectors page. */
