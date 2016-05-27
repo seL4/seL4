@@ -233,15 +233,9 @@ decodeARMIOPTInvocation(
     }
 
     lu_ret = lookupIOPDSlot(pd, io_address);
-    if (lu_ret.status != EXCEPTION_NONE) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
 
     if (isIOPDEValid(lu_ret.iopdSlot)) {
-        userError("IOPTMap: Delet first.");
+        userError("IOPTMap: Delete first.");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
