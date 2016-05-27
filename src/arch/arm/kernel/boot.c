@@ -241,7 +241,7 @@ try_init_kernel(
     if (config_set(CONFIG_ARM_SMMU)) {
         ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);
         if (ndks_boot.bi_frame->ioSpaceCaps.start == 0 &&
-            ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
+                ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
             return false;
         }
     }

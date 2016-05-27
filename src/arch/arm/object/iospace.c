@@ -247,10 +247,10 @@ decodeARMIOPTInvocation(
     }
 
     iopde = iopde_iopde_pt_new(
-            1,      /* read         */
-            1,      /* write        */
-            1,      /* nonsecure    */
-            paddr
+                1,      /* read         */
+                1,      /* write        */
+                1,      /* nonsecure    */
+                paddr
             );
 
     setThreadState(ksCurThread, ThreadState_Restart);
@@ -368,38 +368,38 @@ decodeARMIOMapInvocation(
     if ((frame_cap_rights == VMReadOnly) && cap_rights_get_capAllowRead(dma_cap_rights_mask)) {
         /* read only */
         iopte = iopte_new(
-                1,      /* read         */
-                0,      /* write        */
-                1,      /* nonsecure    */
-                paddr
+                    1,      /* read         */
+                    0,      /* write        */
+                    1,      /* nonsecure    */
+                    paddr
                 );
     } else if (frame_cap_rights == VMReadWrite) {
         if (cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
                 !cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* read only */
             iopte = iopte_new(
-                    1,      /* read         */
-                    0,      /* write        */
-                    1,      /* nonsecure    */
-                    paddr
+                        1,      /* read         */
+                        0,      /* write        */
+                        1,      /* nonsecure    */
+                        paddr
                     );
         } else if (!cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
                    cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* write only */
             iopte = iopte_new(
-                    0,      /* read         */
-                    1,      /* write        */
-                    1,      /* nonsecure    */
-                    paddr
+                        0,      /* read         */
+                        1,      /* write        */
+                        1,      /* nonsecure    */
+                        paddr
                     );
         } else if (cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
                    cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* read write */
             iopte = iopte_new(
-                    1,      /* read         */
-                    1,      /* write        */
-                    1,      /* nonsecure    */
-                    paddr
+                        1,      /* read         */
+                        1,      /* write        */
+                        1,      /* nonsecure    */
+                        paddr
                     );
         } else {
             userError("IOMap: Invalid argument.");
