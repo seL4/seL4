@@ -501,7 +501,7 @@ void clearIOPageDirectory(cap_t cap)
 {
     iopde_t  *pd;
     uint32_t asid = cap_io_space_cap_get_capModuleID(cap);
-    word_t   size = BIT((ARM_IOPDE_SIZE_BITS + ARM_IOPD_BITS));
+    word_t   size = BIT((SMMU_PD_BITS));
     pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
 
     if (pd == 0) {

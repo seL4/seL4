@@ -7,9 +7,56 @@
 #include <object/structures.h>
 
 
-static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR);
 
-#define SMMU_CONFIG_OFFSET  0x10
+#define SMMU_CONFIG_OFFSET          0x10
+
+#define PTB_DATA_BASE_SHIFT         12
+#define PTB_DATA_READ               BIT(31)
+#define PTB_DATA_WRITE              BIT(30)
+#define PTB_DATA_NONSECURE          BIT(29)
+#define PTB_DATA_BASE_PD_MASK       0x3fffff
+
+#define MODULE_ASID_ENABLE          BIT(31)
+
+#define PTC_FLUSH_ALL               0
+#define PTC_FLUSH_ADR               1
+
+#define TLB_ASID_MATCH              BIT(31)
+#define TLB_FLUSH_ALL               (0)
+#define TLB_FLUSH_SECTION           (2)
+#define TLB_FLUSH_GROUP             (3)
+
+#define MC_DECERR_MTS_BIT           16u
+#define MC_SECERR_SEC_BIT           13u
+#define MC_DECERR_VPR_BIT           12u
+#define MC_APB_ASID_UPDATE_BIT      11u
+#define MC_SMMU_PAGE_BIT            10u
+#define MC_ARBITRATION_EMEM_BIT     9u
+#define MC_SECURITY_BIT             8u
+#define MC_DECERR_EMEM_BIT          6u
+
+
+#define MC_ERR_ID_MASK              0x7f
+#define MC_ERR_ADR_MASK             0x7000
+#define MC_ERR_RW_MASK              0x10000
+#define MC_ERR_SEC_MASK             0x20000
+#define MC_ERR_SWAP_MASK            0x40000
+#define MC_ERR_ADR_HI_MASK          0x300000
+#define MC_ERR_INVALID_SMMU_PAGE_NONSECURE_MASK     0x2000000
+#define MC_ERR_INVALID_SMMU_PAGE_WRITE_MASK         0x4000000
+#define MC_ERR_INVALID_SMMU_PAGE_READ_MASK          0x8000000
+#define MC_ERR_TYPE_MASK                            0x70000000
+#define MC_ERR_TYPE_SHIFT                           28
+
+#define MC_ERR_TYPE_RSVD                0
+#define MC_ERR_TYPE_DECERR_EMEM         2
+#define MC_ERR_TYPE_SECURITY            3
+#define MC_ERR_TYPE_SECURITY_CARVEOUT   4
+#define MC_ERR_TYPE_INVALID_SMMU_PAGE   6
+
+#define IOPDE_4M_INDEX_SHIFT            22
+
+static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR);
 
 static void
 do_smmu_enable(void)
@@ -63,14 +110,6 @@ smmu_enable(void)
 }
 
 
-#define PTB_DATA_BASE_SHIFT     12
-#define PTB_DATA_READ           (1ul << 31)
-#define PTB_DATA_WRITE          (1ul << 30)
-#define PTB_DATA_NONSECURE      (1ul << 29)
-#define PTB_DATA_BASE_PD_MASK   0x3fffff
-
-#define MODULE_ASID_ENABLE      (1ul << 31)
-
 static uint32_t
 make_ptb_data(uint32_t pd_base, bool_t read, bool_t write, bool_t nonsecure)
 {
@@ -99,9 +138,6 @@ ptb_data_get_pd_base(uint32_t data)
     return ret;
 }
 
-#define PTC_FLUSH_ALL       0
-#define PTC_FLUSH_ADR       1
-
 void
 plat_smmu_ptc_flush_all(void)
 {
@@ -109,26 +145,12 @@ plat_smmu_ptc_flush_all(void)
     smmu_regs->smmu_ptc_flush = cmd;
 }
 
-#define TLB_ASID_MATCH      BIT(31)
-#define TLB_FLUSH_ALL       (0)
-#define TLB_FLUSH_SECTION   (2)
-#define TLB_FLUSH_GROUP     (3)
-
 void
 plat_smmu_tlb_flush_all(void)
 {
     uint32_t cmd = TLB_FLUSH_ALL;
     smmu_regs->smmu_tlb_flush = cmd;
 }
-
-#define MC_DECERR_MTS_BIT           16u
-#define MC_SECERR_SEC_BIT           13u
-#define MC_DECERR_VPR_BIT           12u
-#define MC_APB_ASID_UPDATE_BIT      11u
-#define MC_SMMU_PAGE_BIT            10u
-#define MC_ARBITRATION_EMEM_BIT     9u
-#define MC_SECURITY_BIT             8u
-#define MC_DECERR_EMEM_BIT          6u
 
 
 
@@ -140,7 +162,6 @@ plat_smmu_tlb_flush_all(void)
  * VM initialisation code.
  */
 
-#define IOPDE_4M_INDEX_SHIFT        22
 static void
 plat_smmu_vm_mapping(word_t iopd, word_t gpa, word_t pa, word_t size)
 {
@@ -250,24 +271,6 @@ plat_smmu_lookup_iopd_by_asid(uint32_t asid)
     return pd;
 }
 
-#define MC_ERR_ID_MASK      0x7f
-#define MC_ERR_ADR_MASK     0x7000
-#define MC_ERR_RW_MASK      0x10000
-#define MC_ERR_SEC_MASK     0x20000
-#define MC_ERR_SWAP_MASK    0x40000
-#define MC_ERR_ADR_HI_MASK  0x300000
-#define MC_ERR_INVALID_SMMU_PAGE_NONSECURE_MASK     0x2000000
-#define MC_ERR_INVALID_SMMU_PAGE_WRITE_MASK         0x4000000
-#define MC_ERR_INVALID_SMMU_PAGE_READ_MASK          0x8000000
-#define MC_ERR_TYPE_MASK                            0x70000000
-#define MC_ERR_TYPE_SHIFT                           28
-
-#define MC_ERR_TYPE_RSVD                0
-#define MC_ERR_TYPE_DECERR_EMEM         2
-#define MC_ERR_TYPE_SECURITY            3
-#define MC_ERR_TYPE_SECURITY_CARVEOUT   4
-#define MC_ERR_TYPE_INVALID_SMMU_PAGE   6
-
 void
 plat_smmu_handle_interrupt(void)
 {
@@ -298,20 +301,20 @@ plat_smmu_handle_interrupt(void)
 
     /* we only care about SMMU translation failures */
     if (status & BIT(MC_SMMU_PAGE_BIT)) {
-#ifdef DEBUG
-        uint32_t err_status = smmu_regs->err_status;
-        uint32_t err_adr = smmu_regs->err_adr;
-        uint32_t id = err_status & MC_ERR_ID_MASK;
-        uint32_t rw = (err_status & MC_ERR_RW_MASK);
-        uint32_t read = (err_status & MC_ERR_INVALID_SMMU_PAGE_READ_MASK);
-        uint32_t write = (err_status & MC_ERR_INVALID_SMMU_PAGE_WRITE_MASK);
-        uint32_t nonsecure = (err_status & MC_ERR_INVALID_SMMU_PAGE_NONSECURE_MASK);
-        uint32_t type = (err_status & MC_ERR_TYPE_MASK) >> MC_ERR_TYPE_SHIFT;
+        if (config_set(DEBUG)) {
+            uint32_t err_status = smmu_regs->err_status;
+            uint32_t UNUSED err_adr = smmu_regs->err_adr;
+            uint32_t UNUSED id = err_status & MC_ERR_ID_MASK;
+            uint32_t UNUSED rw = (err_status & MC_ERR_RW_MASK);
+            uint32_t UNUSED read = (err_status & MC_ERR_INVALID_SMMU_PAGE_READ_MASK);
+            uint32_t UNUSED write = (err_status & MC_ERR_INVALID_SMMU_PAGE_WRITE_MASK);
+            uint32_t UNUSED nonsecure = (err_status & MC_ERR_INVALID_SMMU_PAGE_NONSECURE_MASK);
+            uint32_t UNUSED type = (err_status & MC_ERR_TYPE_MASK) >> MC_ERR_TYPE_SHIFT;
 
-        printf("SMMU Address translation error:\n");
-        printf("ID: %d address: 0x%x type: %d direction: 0x%x\n", id, err_adr, type, rw);
-        printf("IOPT permission: read 0x%x write 0x%x nonsecure 0x%x\n", read, write, nonsecure);
-#endif
+            printf("SMMU Address translation error:\n");
+            printf("ID: %d address: 0x%x type: %d direction: 0x%x\n", id, err_adr, type, rw);
+            printf("IOPT permission: read 0x%x write 0x%x nonsecure 0x%x\n", read, write, nonsecure);
+        }
         clear_status |= BIT(MC_SMMU_PAGE_BIT);
     }
 

@@ -450,7 +450,7 @@ Arch_getObjectSize(word_t t)
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_BITS;
     case seL4_ARM_IOPageTableObject:
-        return ARM_IOPTE_SIZE_BITS + ARM_IOPT_BITS;
+        return seL4_IOPageTableBits;
 #ifdef ARM_HYP
     case seL4_ARM_VCPUObject:
         return VCPU_SIZE_BITS;

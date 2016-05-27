@@ -63,12 +63,6 @@ typedef word_t vm_rights_t;
 #define PT_BITS 8
 #endif /* ARM_HYP */
 
-/* NOTE: the macros are defined based on Tegra K1 SMMU page table sizes */
-#define ARM_IOPDE_SIZE_BITS 2
-#define ARM_IOPD_BITS       10
-#define ARM_IOPTE_SIZE_BITS 2
-#define ARM_IOPT_BITS       10
-
 
 #define PDE_PTR(r) ((pde_t *)(r))
 #define PDE_REF(p) ((unsigned int)p)
