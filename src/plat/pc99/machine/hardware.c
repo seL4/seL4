@@ -144,33 +144,50 @@ div64(uint64_t numerator, uint32_t denominator)
 BOOT_CODE VISIBLE uint32_t
 tsc_init(void)
 {
-    time_t old_ticks, new_ticks, diff;
-    uint32_t cycles_per_ms;
+    uint32_t version_info = x86_cpuid_eax(0x1, 0x0);
+    uint32_t tsc_mhz;
 
-    pit_init();
+    if (MODEL_ID(version_info) == HASWELL_MODEL_ID ||
+            MODEL_ID(version_info) == IVY_BRIDGE_MODEL_ID) {
+        uint64_t info;
+        uint32_t ratio;
 
-    /* wait for pit to wraparound */
-    pit_wait_wraparound();
+        /* read tsc freq from the platform info msr */
+        info = x86_rdmsr(MSR_PLATFORM_INFO);
+        ratio = (((uint32_t) info) & 0xFF00) >> 8u;
+        tsc_mhz = ratio * 100u; // this gives Mhz
+    } else {
+        /* use the pit to find out the tsc freq */
+        time_t old_ticks, new_ticks, diff;
+        uint32_t cycles_per_ms;
 
-    /* read tsc */
-    old_ticks = x86_rdtsc();
+        pit_init();
 
-    /* measure how many tsc cycles pass while PIT wrapsaround */
-    pit_wait_wraparound();
+        /* wait for pit to wraparound */
+        pit_wait_wraparound();
 
-    new_ticks = x86_rdtsc();
+        /* read tsc */
+        old_ticks = x86_rdtsc();
 
-    diff = new_ticks - old_ticks;
+        /* measure how many tsc cycles pass while PIT wrapsaround */
+        pit_wait_wraparound();
 
-    /* sanity checks */
-    assert((uint32_t) diff == diff);
-    assert(new_ticks > old_ticks);
+        new_ticks = x86_rdtsc();
 
-    /* bravo, khz */
-    cycles_per_ms = (uint32_t) diff / PIT_WRAPAROUND_MS;
+        diff = new_ticks - old_ticks;
 
-    /* finally, return mhz */
-    return cycles_per_ms / 1000u;
+        /* sanity checks */
+        assert((uint32_t) diff == diff);
+        assert(new_ticks > old_ticks);
+
+        /* bravo, khz */
+        cycles_per_ms = (uint32_t) diff / PIT_WRAPAROUND_MS;
+
+        /* finally, return mhz */
+        tsc_mhz = cycles_per_ms / 1000u;
+    }
+
+    return tsc_mhz;
 }
 
 PURE time_t

@@ -296,6 +296,8 @@ init_sys_state(
     saveFpuState(&x86KSnullFpuState);
     x86KSfpuOwner = NULL;
     x86KStscMhz = tsc_init();
+    ndks_boot.bi_frame->archInfo = x86KStscMhz;
+
     if (x86KStscMhz == 0) {
         return false;
     }

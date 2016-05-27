@@ -63,7 +63,7 @@ typedef struct {
     seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Word         numDeviceRegions;        /* number of device regions */
     seL4_DeviceRegion deviceRegions[CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS]; /* device regions */
-    seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
+    seL4_Word         archInfo; /* tsc freq on x86, unused on arm */
 } seL4_BootInfo;
 
 

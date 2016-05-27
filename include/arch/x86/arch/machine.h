@@ -29,6 +29,7 @@
 #define IA32_LSTAR_MSR          0xC0000082
 #define IA32_STAR_MSR           0xC0000081
 #define IA32_FMASK_MSR          0xC0000084
+#define IA32_PLATFORM_INFO_MSR  0xCE
 
 #define BROADWELL_MODEL_ID      0xD4
 #define HASWELL_MODEL_ID        0xC3
