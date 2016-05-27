@@ -18,6 +18,7 @@
 #include <arch/kernel/vspace.h>
 #include <arch/benchmark.h>
 #include <arch/user_access.h>
+#include <arch/object/iospace.h>
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
@@ -134,6 +135,9 @@ init_irqs(cap_t root_cnode_cap)
     if (config_set(ARM_HYP)) {
         setIRQState(IRQReserved, INTERRUPT_VGIC_MAINTENANCE);
     }
+    if (config_set(CONFIG_ARM_SMMU)) {
+        setIRQState(IRQReserved, INTERRUPT_SMMU);
+    }
 
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
@@ -232,6 +236,14 @@ try_init_kernel(
     bi_frame_pptr = allocate_bi_frame(0, 1, ipcbuf_vptr);
     if (!bi_frame_pptr) {
         return false;
+    }
+
+    if (config_set(CONFIG_ARM_SMMU)) {
+        ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);
+        if (ndks_boot.bi_frame->ioSpaceCaps.start == 0 &&
+                ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
+            return false;
+        }
     }
 
     /* Construct an initial address space with enough virtual addresses

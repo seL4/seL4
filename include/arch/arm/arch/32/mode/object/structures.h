@@ -112,7 +112,11 @@ struct user_data {
 typedef struct user_data user_data_t;
 
 enum asidSizeConstants {
+#ifdef CONFIG_ARM_SMMU
+    asidHighBits = 7,
+#else
     asidHighBits = 8,
+#endif
     asidLowBits = 10
 };
 
@@ -325,6 +329,8 @@ cap_get_archCapSizeBits(cap_t cap)
     case cap_vcpu_cap:
         return VCPU_SIZE_BITS;
 #endif
+    case cap_io_page_table_cap:
+        return seL4_IOPageTableBits;
 
     default:
         /* Unreachable, but GCC can't figure that out */
@@ -361,6 +367,9 @@ cap_get_archCapPtr(cap_t cap)
     case cap_vcpu_cap:
         return VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
 #endif
+
+    case cap_io_page_table_cap:
+        return (void *)(cap_io_page_table_cap_get_capIOPTBasePtr(cap));
 
     default:
         /* Unreachable, but GCC can't figure that out */

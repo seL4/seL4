@@ -216,6 +216,8 @@ enum IRQConstants {
 #define INTERRUPT_NS_PGPT               INTERRUPT_PPI_14
 #define INTERRUPT_VGPT                  INTERRUPT_PPI_11
 #define INTERRUPT_HGPT                  INTERRUPT_PPI_10
+#define INTERRUPT_SMMU                  INTERRUPT_MC
+
 
 /* the kernel runs in secure supervisor mode by default */
 

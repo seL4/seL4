@@ -242,6 +242,8 @@ def InitTypes():
             CapType("seL4_ARM_ASIDControl"),
             CapType("seL4_ARM_ASIDPool"),
             CapType("seL4_ARM_VCPU"),
+            CapType("seL4_ARM_IOSpace"),
+            CapType("seL4_ARM_IOPageTable"),
             StructType("seL4_UserContext", WORD_SIZE_BITS * 17),
         ],
 

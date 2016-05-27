@@ -26,6 +26,7 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <armv/context_switch.h>
+#include <arch/object/iospace.h>
 
 /* ARM uses multiple identical mappings in a page table / page directory to construct
  * large mappings. In both cases it happens to be 16 entries, which can be calculated by
@@ -513,6 +514,9 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
                 ASID_LOW(asid),                /* capFMappedASIDLow  */
                 wordFromVMRights(VMReadWrite), /* capFVMRights       */
                 vptr,                          /* capFMappedAddress  */
+#ifdef CONFIG_ARM_SMMU
+                0,                             /* IOSpace            */
+#endif
                 ASID_HIGH(asid),               /* capFMappedASIDHigh */
                 pptr                           /* capFBasePtr        */
             );
@@ -1126,6 +1130,16 @@ isValidVTableRoot(cap_t cap)
 {
     return cap_get_capType(cap) == cap_page_directory_cap &&
            cap_page_directory_cap_get_capPDIsMapped(cap);
+}
+
+bool_t CONST
+isIOSpaceFrame(cap_t cap)
+{
+#ifdef CONFIG_ARM_SMMU
+    return cap_get_capType(cap) == cap_small_frame_cap && cap_small_frame_cap_get_capFIsIOSpace(cap);
+#else
+    return false;
+#endif
 }
 
 void
@@ -2544,6 +2558,13 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_page_size_t frameSize;
         vm_attributes_t attr;
 
+        if (isIOSpaceFrame(cap)) {
+            userError("ARMFrameRemap: Attempting to remap frame mapped into an IOSpace");
+            current_syscall_error.type = seL4_IllegalOperation;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
         if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
             current_syscall_error.type =
                 seL4_TruncatedMessage;
@@ -2644,8 +2665,16 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
     }
 
     case ARMPageUnmap: {
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageInvocationUnmap(cap, cte);
+        if (isIOSpaceFrame(cap)) {
+            return decodeARMIOUnMapInvocation(invLabel, length, cte, cap, excaps);
+        } else {
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performPageInvocationUnmap(cap, cte);
+        }
+    }
+
+    case ARMPageMapIO: {
+        return decodeARMIOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
     }
 
     case ARMPageClean_Data:

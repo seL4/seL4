@@ -95,4 +95,6 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
                                    word_t *buffer);
 
 
+bool_t CONST isIOSpaceFrame(cap_t cap);
+
 #endif
