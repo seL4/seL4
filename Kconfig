@@ -243,7 +243,7 @@ config ARM_HYPERVISOR_SUPPORT
 
     config ARM_SMMU_VM_DEFAULT_MAPPING
         bool "Enable SystemMMU default mapping for guest VM"
-        depends on PLAT_TK1 && ARM_SMMU
+        depends on PLAT_TK1 && ARM_SMMU && ARM_HYPERVISOR_SUPPORT
         help
             Enable the default translation for guest VM: all
             physical memory reserved for a VM is allowed to
