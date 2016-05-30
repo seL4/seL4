@@ -12,7 +12,12 @@
 #define __LIBSEL4_SEL4_ARCH_MAPPING
 
 #define SEL4_MAPPING_LOOKUP_LEVEL 2
+
+#ifdef ARM_HYP
+#define SEL4_MAPPING_LOOKUP_NO_PT 21
+#else
 #define SEL4_MAPPING_LOOKUP_NO_PT 20
+#endif
 
 static inline seL4_Word seL4_MappingFailedLookupLevel()
 {
