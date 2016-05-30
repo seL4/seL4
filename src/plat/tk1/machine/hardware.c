@@ -17,6 +17,7 @@
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/smmu.h>
 
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */

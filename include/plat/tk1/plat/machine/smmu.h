@@ -13,6 +13,8 @@
 
 #include <types.h>
 
+#ifdef CONFIG_ARM_SMMU
+
 #define IOASID_SIZE_BITS    7
 
 
@@ -163,5 +165,16 @@ void plat_smmu_ptc_flush_all(void);
 
 iopde_t *plat_smmu_lookup_iopd_by_asid(uint32_t asid);
 void plat_smmu_handle_interrupt(void);
+
+#else
+
+/* dummy functions */
+static inline void
+plat_smmu_handle_interrupt(void)
+{
+    return;
+}
+
+#endif
 
 #endif

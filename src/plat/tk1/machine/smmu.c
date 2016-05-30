@@ -1,11 +1,13 @@
 #include <types.h>
 #include <config.h>
+
+#ifdef CONFIG_ARM_SMMU
+
 #include <plat/machine/smmu.h>
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <object/structures.h>
-
 
 
 #define SMMU_CONFIG_OFFSET          0x10
@@ -321,4 +323,4 @@ plat_smmu_handle_interrupt(void)
     /* write 1 to clear the interrupt */
     smmu_regs->intstatus = clear_status;
 }
-
+#endif
