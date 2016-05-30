@@ -12,15 +12,15 @@
 #include <benchmark_track.h>
 #include <model/statedata.h>
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 
-void benchmark_track_syscall_exit(void)
+void benchmark_track_exit(void)
 {
     timestamp_t duration = 0;
     timestamp_t ksExit = timestamp();
 
     /* If Log buffer is filled, do nothing */
-    if (likely(ksIndex < MAX_SYSCALL_INVOCATIONS_ENTRIES)) {
+    if (likely(ksIndex < MAX_TRACKED_KERNEL_ENTRIES)) {
         duration = ksExit - ksEnter;
         ksLog[ksIndex].entry = ksKernelEntry;
         ksLog[ksIndex].start_time = ksEnter;
@@ -29,14 +29,12 @@ void benchmark_track_syscall_exit(void)
     }
 }
 
-void benchmark_track_syscall_dump(
-    word_t* buffer,
+void benchmark_track_dump(
+    benchmark_track_kernel_entry_t* buffer,
     word_t start_index,
     word_t num_entries
 )
 {
-    benchmark_track_syscall_invocation_t *send_buffer;
-
     if (!buffer) {
         userError("Invalid IPC buffer pointer = %p\n", buffer);
         return;
@@ -53,11 +51,9 @@ void benchmark_track_syscall_dump(
         return;
     }
 
-    send_buffer = (benchmark_track_syscall_invocation_t *) buffer;
-
     for (int i = start_index; i < (start_index + num_entries); i++) {
-        send_buffer[i - start_index] = ksLog[i];
+        buffer[i - start_index] = ksLog[i];
     }
 }
 
-#endif /* CONFIG_BENCHMARK_TRACK_SYSCALLS */
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */

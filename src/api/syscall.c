@@ -36,10 +36,15 @@ handleInterruptEntry(void)
     irq_t irq;
 
     irq = getActiveIRQ();
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_SYSCALLS)
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.path = Entry_Interrupt;
     ksKernelEntry.word = irq;
 #endif /* DEBUG */
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_start();
+#endif
+
     if (irq != irqInvalid) {
         handleInterrupt(irq);
     } else {
@@ -49,6 +54,9 @@ handleInterruptEntry(void)
         handleSpuriousIRQ();
     }
 
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
+#endif
     schedule();
     activateThread();
 
@@ -120,16 +128,16 @@ handleUnknownSyscall(word_t w)
     }
 #endif
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
-    if (w == SysBenchmarkTrackSyscallReset) {
-        benchmark_track_syscalls_reset();
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    if (w == SysBenchmarkTrackKernelEntriesReset) {
+        benchmark_track_reset();
         return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkTrackSyscallSize) {
-        /* Return the number of tracked invocations all system calls */
-        word_t num_invocations = benchmark_track_syscall_invocations_num();
+    } else if (w == SysBenchmarkTrackKernelEntriesSize) {
+        /* Return the number of tracked kernel entries */
+        word_t num_invocations = benchmark_track_entries_num();
         setRegister(ksCurThread, capRegister, num_invocations);
         return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkTrackSyscallDump) {
+    } else if (w == SysBenchmarkTrackKernelEntriesDump) {
         word_t *buffer = lookupIPCBuffer(true, ksCurThread);
         word_t start_index = getRegister(ksCurThread, capRegister);
         word_t num_entries = getRegister(ksCurThread, msgInfoRegister);
@@ -138,7 +146,9 @@ handleUnknownSyscall(word_t w)
         num_entries = (num_entries > MAX_IPC_LOG_ENTRIES) ? MAX_IPC_LOG_ENTRIES :
                       num_entries;
 
-        benchmark_track_syscall_dump(&buffer[1], start_index, num_entries);
+        benchmark_track_dump((benchmark_track_kernel_entry_t *) &buffer[1],
+                start_index, num_entries);
+
         setRegister(ksCurThread, capRegister, num_entries);
 
         return EXCEPTION_NONE;
@@ -211,13 +221,21 @@ handleUnknownSyscall(word_t w)
 exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_SYSCALLS)
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.path = Entry_UserLevelFault;
     ksKernelEntry.word = w_a;
 #endif /* DEBUG */
 
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_start();
+#endif
+
     current_fault = fault_user_exception_new(w_a, w_b);
     handleFault(ksCurThread);
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
+#endif
 
     schedule();
     activateThread();
@@ -229,15 +247,23 @@ exception_t
 handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     exception_t status;
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_SYSCALLS)
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.path = Entry_VMFault;
     ksKernelEntry.word = vm_faultType;
 #endif /* DEBUG */
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_start();
+#endif
 
     status = handleVMFault(ksCurThread, vm_faultType);
     if (status != EXCEPTION_NONE) {
         handleFault(ksCurThread);
     }
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
+#endif
 
     schedule();
     activateThread();
@@ -265,7 +291,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     /* faulting section */
     lu_ret = lookupCapAndSlot(thread, cptr);
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_SYSCALLS)
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
     ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
     ksKernelEntry.is_fastpath = false;
@@ -335,7 +361,7 @@ handleReply(void)
     callerSlot = TCB_PTR_CTE_PTR(ksCurThread, tcbCaller);
     callerCap = callerSlot->cap;
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_SYSCALLS)
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.cap_type = cap_get_capType(callerCap);
 #endif
 
@@ -375,7 +401,7 @@ handleRecv(bool_t isBlocking)
 
     lu_ret = lookupCap(ksCurThread, epCPtr);
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_SYSCALLS)
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
 #endif
 
@@ -437,13 +463,13 @@ handleSyscall(syscall_t syscall)
     exception_t ret;
     irq_t irq;
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_SYSCALLS)
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.path = Entry_Syscall;
     ksKernelEntry.syscall_no = syscall;
 #endif /* DEBUG */
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
-    benchmark_track_syscall_start();
-#endif /* CONFIG_BENCHMARK_TRACK_SYSCALLS */
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_start();
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 
     switch (syscall) {
     case SysSend:
@@ -504,8 +530,8 @@ handleSyscall(syscall_t syscall)
     schedule();
     activateThread();
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
-    benchmark_track_syscall_exit();
-#endif /* CONFIG_BENCHMARK_TRACK_SYSCALLS */
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
     return EXCEPTION_NONE;
 }

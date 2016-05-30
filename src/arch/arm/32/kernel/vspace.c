@@ -27,7 +27,7 @@
 #include <plat/machine/hardware.h>
 #include <armv/context_switch.h>
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark_track.h>
 #endif
 

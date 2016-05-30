@@ -54,12 +54,12 @@ word_t ksDomScheduleIdx;
 /* Only used by lockTLBEntry */
 word_t tlbLockCount = 0;
 
-#if (defined DEBUG || defined CONFIG_BENCHMARK_TRACK_SYSCALLS)
+#if (defined DEBUG || defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 kernel_entry_t ksKernelEntry;
 #endif /* DEBUG */
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
-benchmark_track_syscall_invocation_t *ksLog;
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+benchmark_track_kernel_entry_t *ksLog;
 timestamp_t ksEnter;
 word_t ksIndex;
-#endif /* CONFIG_BENCHMARK_TRACK_SYSCALLS */
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 

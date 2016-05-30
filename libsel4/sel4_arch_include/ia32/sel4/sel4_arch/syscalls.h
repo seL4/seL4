@@ -578,9 +578,9 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 }
 #endif
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 static inline seL4_Uint32
-seL4_BenchmarkTrackSyscallDump(seL4_Word start_index, seL4_Word num_entries)
+seL4_BenchmarkTrackKernelEntriesDump(seL4_Word start_index, seL4_Word num_entries)
 {
     asm volatile (
         "pushl %%ebp        \n"
@@ -590,7 +590,7 @@ seL4_BenchmarkTrackSyscallDump(seL4_Word start_index, seL4_Word num_entries)
         "sysenter           \n"
         "popl %%ebp         \n"
         : "=b" (start_index)
-        : "a" (seL4_SysBenchmarkTrackSyscallDump),
+        : "a" (seL4_SysBenchmarkTrackKernelEntriesDump),
         "b" (start_index),
         "S" (num_entries)
         : "%ecx", "%edx", "%edi", "memory"
@@ -600,7 +600,7 @@ seL4_BenchmarkTrackSyscallDump(seL4_Word start_index, seL4_Word num_entries)
 }
 
 static inline seL4_Uint32
-seL4_BenchmarkTrackSyscallSize(void)
+seL4_BenchmarkTrackKernelEntriesSize(void)
 {
     seL4_Uint32 ret = 0;
     asm volatile (
@@ -611,7 +611,7 @@ seL4_BenchmarkTrackSyscallSize(void)
         "sysenter           \n"
         "popl %%ebp         \n"
         : "=b" (ret)
-        : "a" (seL4_SysBenchmarkTrackSyscallSize)
+        : "a" (seL4_SysBenchmarkTrackKernelEntriesSize)
         : "%ecx", "%edx", "%edi", "memory"
     );
 
@@ -619,7 +619,7 @@ seL4_BenchmarkTrackSyscallSize(void)
 }
 
 static inline void
-seL4_BenchmarkTrackSyscallReset(void)
+seL4_BenchmarkTrackKernelEntriesReset(void)
 {
     asm volatile (
         "pushl %%ebp        \n"
@@ -629,11 +629,11 @@ seL4_BenchmarkTrackSyscallReset(void)
         "sysenter           \n"
         "popl %%ebp         \n"
         :
-        : "a" (seL4_SysBenchmarkTrackSyscallReset)
+        : "a" (seL4_SysBenchmarkTrackKernelEntriesReset)
         : "%ecx", "%edx", "%edi", "memory"
     );
 }
-#endif /* CONFIG_BENCHMARK_TRACK_SYSCALLS */
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 static inline void

@@ -332,16 +332,17 @@ menu "seL4 System Parameters"
             NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory.
             This is not fully implemented for x86.
 
-    config BENCHMARK_TRACK_SYSCALLS
-        bool "Keep track of system calls invocations"
+    config BENCHMARK_TRACK_KERNEL_ENTRIES
+        bool "Keep track of kernel entries"
         depends on ENABLE_BENCHMARKS
         default n
         help
-            Log system calls information including timing, number of invocations and arguments.
+            Log kernel entries information including timing, number of invocations and arguments for
+            system calls, interrupts, user faults and VM faults.
 
     config MAX_NUM_TRACE_POINTS
         int "Maximum number of tracepoints"
-        depends on ENABLE_BENCHMARKS && !BENCHMARK_TRACK_SYSCALLS
+        depends on ENABLE_BENCHMARKS && !BENCHMARK_TRACK_KERNEL_ENTRIES
         default 0
         help
             Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data,

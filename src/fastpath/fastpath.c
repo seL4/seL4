@@ -10,7 +10,7 @@
 
 #include <fastpath/fastpath.h>
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark_track.h>
 #endif
 
@@ -37,13 +37,13 @@ fastpath_call(word_t cptr, word_t msgInfo)
     length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_Syscall;
     ksKernelEntry.syscall_no = SysCall;
     ksKernelEntry.cap_type = cap_endpoint_cap;
     ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
     ksKernelEntry.is_fastpath = true;
-    benchmark_track_syscall_start();
+    benchmark_track_start();
 #endif
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -158,8 +158,8 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&dest->tcbState,
                                    ThreadState_Running);
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
-    benchmark_track_syscall_exit();
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
 #endif
 
     switchToThread_fp(dest, cap_pd, stored_hw_asid);
@@ -191,13 +191,13 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_Syscall;
     ksKernelEntry.syscall_no = SysReplyRecv;
     ksKernelEntry.cap_type = cap_endpoint_cap;
     ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
     ksKernelEntry.is_fastpath = true;
-    benchmark_track_syscall_start();
+    benchmark_track_start();
 #endif
 
     /* Check there's no extra caps, the length is ok and there's no
@@ -342,8 +342,8 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
-    benchmark_track_syscall_exit();
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
 #endif
 
     fastpath_restore(badge, msgInfo, ksCurThread);

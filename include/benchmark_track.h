@@ -16,7 +16,7 @@
 #include <arch/api/constants.h>
 #include <machine/io.h>
 
-#if (defined CONFIG_BENCHMARK_TRACK_SYSCALLS || defined DEBUG)
+#if (defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || defined DEBUG)
 
 /* we can fill the entire IPC buffer except for word 0, which
  * the kernel overwrites with the message tag */
@@ -40,7 +40,6 @@ typedef enum {
 typedef struct PACKED kernel_entry {
     word_t path: 3;
     union {
-        /* TODO track interrupts */
         struct {
             word_t word: 29;
         };
@@ -55,86 +54,86 @@ typedef struct PACKED kernel_entry {
 } kernel_entry_t;
 
 extern kernel_entry_t ksKernelEntry;
-#endif /* CONFIG_BENCHMARK_TRACK_SYSCALLS || DEBUG */
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || DEBUG */
 
-#ifdef CONFIG_BENCHMARK_TRACK_SYSCALLS
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 
 typedef struct benchmark_syscall_log_entry {
     timestamp_t  start_time;
     uint32_t  duration;
     kernel_entry_t entry;
-} benchmark_track_syscall_invocation_t;
+} benchmark_track_kernel_entry_t;
 
 extern timestamp_t ksEnter;
-extern benchmark_track_syscall_invocation_t *ksLog;
+extern benchmark_track_kernel_entry_t *ksLog;
 extern word_t ksIndex;
 
 /**
- *  Calculate the maximum number of invocation entries that can be tracked,
+ *  Calculate the maximum number of kernel entries that can be tracked,
  *  limited by the log buffer size. This is also the number of ksLog entries.
  *
  */
-#define MAX_SYSCALL_INVOCATIONS_ENTRIES (seL4_LogBufferSize / \
-             sizeof(benchmark_track_syscall_invocation_t))
+#define MAX_TRACKED_KERNEL_ENTRIES (seL4_LogBufferSize / \
+             sizeof(benchmark_track_kernel_entry_t))
 
 /**
- * The number of invocation entries that can fit into an IPC buffer.
+ * The number of kernel entries that can fit into an IPC buffer.
  */
-#define MAX_IPC_LOG_ENTRIES (MAX_IPC_BUFFER_STORAGE / sizeof(benchmark_track_syscall_invocation_t))
+#define MAX_IPC_LOG_ENTRIES (MAX_IPC_BUFFER_STORAGE / sizeof(benchmark_track_kernel_entry_t))
 
 /**
- * @brief Fill in logging info for a syscall invocation
+ * @brief Fill in logging info for kernel entries
  *
  */
-void benchmark_track_syscall_exit(void);
+void benchmark_track_exit(void);
 
 /**
- * @brief Dump entries to user's IPC buffer
+ * @brief Dump entries to user's buffer.
  *
- * @param buffer the user IPC buffer
- * @param start_index start index of the invocations array
+ * @param buffer user buffer
+ * @param start_index start index of the kernel entries array
  * @param num_entries number of entries to dump starting from start_index
  *
  */
-void benchmark_track_syscall_dump(
-    word_t* buffer,
+void benchmark_track_dump(
+    benchmark_track_kernel_entry_t* buffer,
     word_t start_index,
     word_t num_entries
 );
 
 /**
- * @brief Start logging this syscall invocation
+ * @brief Start logging kernel entries
  *
  */
 static inline void
-benchmark_track_syscall_start(void)
+benchmark_track_start(void)
 {
     ksEnter = timestamp();
 }
 
 /**
- * @brief Return the number of invocations for a tracked system call
+ * @brief Return the number of tracked kernel entries
  *
  * @retval number of tracked system call invocations.
  */
 static inline word_t
-benchmark_track_syscall_invocations_num(void)
+benchmark_track_entries_num(void)
 {
     return (word_t) ksIndex;
 }
 
 /**
- * @brief Reset the counter for all tracked system calls
+ * @brief Reset kernel entries counter
  *
  * reset starts tracking as well.
  */
 static inline void
-benchmark_track_syscalls_reset(void)
+benchmark_track_reset(void)
 {
     /* Reset tracking */
     ksIndex = 0;
 }
 
-#endif /* CONFIG_BENCHMARK_TRACK_SYSCALLS */
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 
 #endif /* BENCHMARK_TRACK_H */
