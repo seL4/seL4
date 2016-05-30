@@ -62,23 +62,19 @@ decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
 static inline void
 unmapIOPage(cap_t cap)
 {
-    return;
 }
 
 static inline void
 deleteIOPageTable(cap_t cap)
 {
-    return;
 }
 
 static inline void
 clearIOPageDirectory(cap_t cap)
 {
-    return;
 }
 
-
-#endif
+#endif /* end of !CONFIG_ARM_SMMU */
 
 #endif
 

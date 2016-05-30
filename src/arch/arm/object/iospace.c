@@ -265,9 +265,7 @@ performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();
 
-#ifdef CONFIG_ARM_SMMU
     cap = cap_small_frame_cap_set_capFIsIOSpace(cap, 1);
-#endif
     cap = cap_small_frame_cap_set_capFMappedASID(cap, asid);
     cap = cap_small_frame_cap_set_capFMappedAddress(cap, io_address);
     slot->cap = cap;
@@ -522,9 +520,7 @@ decodeARMIOUnMapInvocation(
 {
     unmapIOPage(slot->cap);
     slot->cap = cap_small_frame_cap_set_capFMappedAddress(slot->cap, 0);
-#ifdef CONFIG_ARM_SMMU
     slot->cap = cap_small_frame_cap_set_capFIsIOSpace(slot->cap, 0);
-#endif
     slot->cap = cap_small_frame_cap_set_capFMappedASID(slot->cap, asidInvalid);
 
     setThreadState(ksCurThread, ThreadState_Restart);
@@ -538,4 +534,4 @@ decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
     current_syscall_error.type = seL4_IllegalOperation;
     return EXCEPTION_SYSCALL_ERROR;
 }
-#endif
+#endif /* end of CONFIG_ARM_SMMU */
