@@ -17,7 +17,7 @@ If the thread being unbound is the thread that is bound to this scheduling conte
 
 If the object is a notification and it is bound to the scheduling context, unbind it. 
 }
-{static inline void seL4\_SchedContext\_UnbindObject}
+{static inline int seL4\_SchedContext\_UnbindObject}
 {
 \param{seL4\_SchedContext}{\_service}{\schedcontextcapdesc}
 \param{seL4\_CPtr}{cap}{Capability to a notification that is bound to the scheduling context or capability to a tcb that is bound to this scheduling context or has received it through scheduling context donation.}
