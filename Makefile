@@ -252,6 +252,7 @@ DEFINES += ${CONFIG_DEFS:%=-D%}
 
 ifdef DEBUG
 DEFINES += -DDEBUG
+DEFINES += -DCONFIG_DEBUG_BUILD
 CFLAGS  += -ggdb -g3
 endif
 
@@ -568,9 +569,9 @@ autoconf.h: include/plat/${PLAT}/autoconf.h
 	@echo " [STRIP] $@"
 	$(Q)${STRIP} -o $@ $<
 
-%.o: %.s | ${DIRECTORIES}
+%.o: %.s_pp | ${DIRECTORIES}
 	@echo " [AS] $@"
-	$(Q)${CC} ${ASFLAGS} -c $< -o $@
+	$(Q)${CC} ${ASFLAGS} -x assembler -c $< -o $@
 
 ###################
 # Header generation
@@ -640,7 +641,7 @@ ${PROOFTHEORIES}: %_proofs.thy: %.pbf ${BF_GEN_PATH} ${STATICSOURCES} \
 # Preprocessed source files
 ###########################
 
-%.s: %.S ${GENHEADERS} ${STATICHEADERS} | ${DIRECTORIES}
+%.s_pp: %.S ${GENHEADERS} ${STATICHEADERS} | ${DIRECTORIES}
 	@echo " [CPP] $@"
 	$(Q)${CPP} ${CPPFLAGS} -CC -E -o $@ $<
 
@@ -668,7 +669,7 @@ CLEANTARGETS = kernel.elf kernel.elf.strip ${GENHEADERS} ${OBJECTS} autoconf.h \
   parser.out parsetab.py \
   kernel_final.s kernel_final.c kernel_all.c kernel_all.c_pp \
   ${PPFILES} ${THEORIES} c-parser.log c-parser-all.log \
-  arch api plat ${ASM_SOURCES:.S=.s}
+  arch api plat ${ASM_SOURCES:.S=.s_pp}
 
 clean:
 	@echo " [CLEAN]"
