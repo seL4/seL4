@@ -16,7 +16,7 @@
     If the object is a thread and the thread is in a runnable state and the scheduling context has available budget, this will start the thread running.
     
     If the object is a notification, when passive threads wait on the notification object and a signal arrives, the passive thread will receive the scheduling context and possess it until it waits on the notification object again.}
-{static inline void seL4\_SchedContext\_Bind}
+{static inline int seL4\_SchedContext\_Bind}
 {
 \param{seL4\_SchedContext}{\_service}{\schedcontextcapdesc}
 \param{seL4\_CPtr}{cap}{Capability to a TCB or a notification object}
