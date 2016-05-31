@@ -72,7 +72,7 @@
 \fi
 
 \newcommand{\tcbcapdesc}{Capability to the TCB which is being operated on.}
-\newcommand{\threadschedcontextcapdesc}{Capability to the scheduling context that the TCB should run on.}
+\newcommand{\threadschedcontextcapdesc}{Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail. }
 \newcommand{\schedcontrolcapdesc}{The SchedControl capability.}
 \newcommand{\schedcontextcapdesc}{Capability to the scheduling context which is being operated on.}
 \newcommand{\budgetdesc}{Timeslice in microseconds, when the budget expires the thread will be preempted.}
