@@ -879,6 +879,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     word_t cRootData, vRootData, bufferAddr;
     seL4_Prio_t prio;
     exception_t status;
+    tcb_t *tcb;
 
     if (length < 4 || rootCaps.excaprefs[0] == NULL
             || rootCaps.excaprefs[1] == NULL
@@ -982,9 +983,24 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     }
     scCap = dc_ret.cap;
 
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
     switch (cap_get_capType(scCap)) {
     case cap_sched_context_cap:
         sched_context = SC_PTR(cap_sched_context_cap_get_capPtr(scCap));
+        /* check tcb does not already have a scheduling context,
+         * but pass if it's just the same scheduling context */
+        if (tcb->tcbSchedContext != NULL && tcb->tcbSchedContext != sched_context) {
+            userError("TCB Configure: tcb already has a sched context");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        /* check the scheduling context isn't already bound */
+        if ((sched_context->scTcb != NULL && sched_context->scTcb != tcb) ||
+                sched_context->scNotification != NULL) {
+            userError("TCB Configure: sched context already bound");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         break;
     case cap_null_cap:
         sched_context = NULL;
@@ -1026,7 +1042,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
-               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
+               tcb, slot,
                fepCap, fepSlot,
                tfepCap, tfepSlot,
                prio,
