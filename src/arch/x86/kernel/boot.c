@@ -282,13 +282,6 @@ init_sys_state(
     }
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
-    /*
-     * Initialise the NULL FPU state. This is different from merely zero'ing it
-     * out (i.e., the NULL FPU state is non-zero), and must be performed before
-     * the first thread is created.
-     */
-    resetFpu();
-    saveFpuState(&x86KSnullFpuState);
     x86KSfpuOwner = NULL;
 
     /* create the idle thread */
@@ -364,7 +357,9 @@ init_cpu(
     }
 
     /* initialise floating-point unit */
-    Arch_initFpu();
+    if (!Arch_initFpu()) {
+        return false;
+    }
 
     /* initialise local APIC */
     if (!apic_init(mask_legacy_irqs)) {
