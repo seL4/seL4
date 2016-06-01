@@ -186,11 +186,6 @@ init_sys_state(
 
     init_freemem(ui_info.p_reg, mem_p_regs);
 
-    /* initialise virtual-memory-related data structures (not in abstract spec) */
-    if (!init_vm_state()) {
-        return false;
-    }
-
 #ifdef CONFIG_ENABLE_BENCHMARKS
     /* allocate and create the log buffer */
     buffer_attr.words[0] = IA32_PAT_MT_WRITE_THROUGH;
@@ -352,6 +347,11 @@ init_cpu(
     bool_t   mask_legacy_irqs
 )
 {
+   /* initialise virtual-memory-related data structures */
+    if (!init_vm_state()) {
+        return false;
+    }
+
     /* initialise CPU's descriptor table registers (GDTR, IDTR, LDTR, TR) */
     init_dtrs();
 
