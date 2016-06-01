@@ -39,6 +39,9 @@
 
 #elif defined(ARM_CORTEX_A15)
 #define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
+
+#elif defined(ARM_CORTEX_A57)
+#define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
 #endif
 
 #ifndef L1_CACHE_LINE_SIZE_BITS
@@ -66,6 +69,8 @@
 #define CONTROL_XP  23 /* Subpage AP bits disable */
 #define CONTROL_VE  24 /* Vectored interrupt enable */
 #define CONTROL_EE  25 /* Exception E bit */
+#define CONTROL_TRE 28 /* TEX remap enable */
+#define CONTROL_AP  29 /* Access Flag Enable */
 
 /* Processor mode encodings (for CPS etc.) */
 #define PMODE_USER       0x10
