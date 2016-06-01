@@ -74,7 +74,7 @@ handleReservedIRQ(irq_t irq)
 BOOT_CODE void
 map_kernel_devices(void)
 {
-	/* map kernel device: GIC */
+    /* map kernel device: GIC */
     map_kernel_frame(
         GIC_CONTROLLER0_PADDR,
         GIC_CONTROLLER_PPTR,
