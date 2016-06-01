@@ -212,7 +212,7 @@ The handling of temporal faults is not compulsory: if a thread does not have a t
 This allows temporally sensitive threads to handle budget overruns while other threads may ignore them.
 
 Temporal faults are registered per thread, which means that while clients may not have a temporal fault handler, servers may, allowing single-threaded, time-sensitive, passive servers to use a temporal exception handler to recover from malicious or untrusted clients whose budget expires while the server is completing the request.
-Temporal faults handlers can use \apifunc{seL4\_CNode\_SaveTCBCaller}{cnode_savetcbcaller} to save the servers reply capability and reply with an error to the client, then resetting the server to handle the next client request.
+Temporal faults handlers can use \apifunc{seL4\_CNode\_SwapTCBCaller}{cnode_swaptcbcaller} to save the servers reply capability and reply with an error to the client, then resetting the server to handle the next client request.
 
 If a reply message is sent to a nested server and a scheduling context without available budget returned, another temporal fault will be generated if the nested server also has a temporal fault handler.
 
