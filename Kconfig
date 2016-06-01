@@ -20,6 +20,10 @@ config ARCH_ARM_V7A
     bool
     default n
 
+config ARCH_ARM_V8A
+    bool
+    default n
+
 config KERNEL_MASTER
     bool
     default y
@@ -94,6 +98,13 @@ menu "seL4 System"
             select ARCH_ARM_V7A
             help
                 Support for Cortex A15 processor
+
+        config ARM_CORTEX_A57
+            bool "Cortex A57"
+            depends on ARCH_ARM
+            select ARCH_ARM_V8A
+            help
+                Support for Cortex A57 processor
 
     endchoice
 
@@ -229,6 +240,13 @@ menu "seL4 System"
             depends on ARM_CORTEX_A15
             help
                 Support for Tegra K1 platform
+
+        config PLAT_HIKEY
+            bool "HiKey"
+            depends on ARCH_ARM
+            depends on ARM_CORTEX_A57
+            help
+                Support for HiKey platform.
 
     endchoice
 

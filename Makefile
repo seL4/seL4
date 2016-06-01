@@ -17,9 +17,9 @@
 
 SEL4_ARCH_LIST:=aarch32 ia32
 ARCH_LIST:=arm x86
-CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15
-PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1
-ARMV_LIST:=armv6 armv7-a
+CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15 cortex-a57
+PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1 hikey
+ARMV_LIST:=armv6 armv7-a armv8-a
 
 ifndef SOURCE_ROOT
     # Assume we're in the source directory if not specified.
@@ -343,6 +343,12 @@ ifeq ($(PLAT),allwinnerA20)
 DEFINES += -DALLWINNERA20
 endif
 endif # SEL4_ARCH=aarch32
+ifeq (${CPU},cortex-a57)
+DEFINES += -DARM_CORTEX_A57
+endif
+ifeq ($(PLAT),hikey)
+DEFINES += -DHIKEY
+endif
 endif # ARCH=arm
 ifeq (${ARCH}, x86)
 CFLAGS += -m32
