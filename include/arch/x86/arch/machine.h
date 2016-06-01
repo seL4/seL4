@@ -112,6 +112,32 @@ static inline uint32_t x86_cpuid_eax(uint32_t eax, uint32_t ecx)
     return eax;
 }
 
+static inline uint32_t x86_cpuid_ecx(uint32_t eax, uint32_t ecx)
+{
+    uint32_t edx, ebx;
+    asm volatile("cpuid"
+                 : "=a" (eax),
+                 "=b" (ebx),
+                 "=c" (ecx),
+                 "=d" (edx)
+                 : "a" (eax), "c" (ecx)
+                 : "memory");
+    return ecx;
+}
+
+static inline uint32_t x86_cpuid_ebx(uint32_t eax, uint32_t ecx)
+{
+    uint32_t edx, ebx;
+    asm volatile("cpuid"
+                 : "=a" (eax),
+                 "=b" (ebx),
+                 "=c" (ecx),
+                 "=d" (edx)
+                 : "a" (eax), "c" (ecx)
+                 : "memory");
+    return ebx;
+}
+
 #ifdef CONFIG_FSGSBASE_MSR
 
 static inline void x86_write_fs_base(word_t base)
