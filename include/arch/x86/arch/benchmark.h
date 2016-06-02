@@ -11,7 +11,7 @@
 #ifndef ARCH_BENCHMARK_H
 #define ARCH_BENCHMARK_H
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 
 typedef uint64_t timestamp_t;
 
@@ -40,5 +40,5 @@ timestamp(void)
     return ((uint64_t) high) << 32llu | (uint64_t) low;
 }
 
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 #endif /* ARCH_BENCHMARK_H */

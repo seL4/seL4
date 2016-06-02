@@ -28,4 +28,9 @@ enum {
 /* word size */
 #define seL4_WordBits (sizeof(seL4_Word) * 8)
 
+#ifdef CONFIG_ENABLE_BENCHMARKS
+/* size of kernel log buffer in bytes */
+#define seL4_LogBufferSize (LIBSEL4_BIT(20))
+#endif /* CONFIG_ENABLE_BENCHMARKS */
+
 #endif

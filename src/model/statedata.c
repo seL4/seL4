@@ -15,6 +15,7 @@
 #include <model/statedata.h>
 #include <object/structures.h>
 #include <object/tcb.h>
+#include <benchmark_track.h>
 
 /* Pointer to the head of the scheduler queue for each priority */
 tcb_queue_t ksReadyQueues[NUM_READY_QUEUES];
@@ -53,6 +54,6 @@ word_t ksDomScheduleIdx;
 /* Only used by lockTLBEntry */
 word_t tlbLockCount = 0;
 
-#ifdef DEBUG
-debug_entry_t ksKernelEntry;
+#if (defined DEBUG || defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
+kernel_entry_t ksKernelEntry;
 #endif /* DEBUG */

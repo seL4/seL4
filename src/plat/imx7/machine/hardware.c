@@ -23,13 +23,13 @@
 /* NOTE: Regions are not allowed to be adjacent! */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
     /* 1 GiB */
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 #warning "NOTE: logging is currently untested on iMX7 Sabre"
     /* 1MB stolen for logging */
     { /* .start = */ 0x80000000, /* .end = */ 0x9fd00000 }
 #else
     { /* .start = */ 0x80000000, /* .end = */ 0xc0000000 }
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 };
 
 BOOT_CODE int
