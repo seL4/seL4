@@ -113,4 +113,4 @@ include/interfaces/sel4_client.h: \
 	@${CHANGED_PATH} $@ \
         python ${SOURCE_DIR}/tools/syscall_stub_gen.py \
         --buffer \
-        -a $(SEL4_ARCH) -o $@ $^
+        -a $(SEL4_ARCH) -c ${srctree}/.config -o $@ $^

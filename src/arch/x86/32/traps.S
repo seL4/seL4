@@ -432,9 +432,9 @@ BEGIN_FUNC(handle_syscall)
     leal    kernel_stack_alloc + 4096, %esp
 
     # Push all the arguments for c_handle_syscall
+    pushl   %eax # syscall number
     pushl   %esi # msgInfo
     pushl   %ebx # cptr
-    pushl   %eax # syscall number
 
     # gtfo to C land, we will not return
     call    c_handle_syscall

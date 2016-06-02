@@ -196,9 +196,9 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
 
     if (objectSize >= wordBits || (untypedFreeBytes >> objectSize) < nodeWindow) {
         userError("Untyped Retype: Insufficient memory "
-                  "(%lu * %u bytes needed, %lu bytes available).",
+                  "(%lu * %lu bytes needed, %lu bytes available).",
                   (word_t)nodeWindow,
-                  (objectSize >= wordBits ? -1 : (1 << objectSize)),
+                  (objectSize >= wordBits ? -1 : (1ul << objectSize)),
                   (word_t)(untypedFreeBytes));
         current_syscall_error.type = seL4_NotEnoughMemory;
         current_syscall_error.memoryLeft = untypedFreeBytes;

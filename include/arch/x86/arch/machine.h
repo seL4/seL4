@@ -26,6 +26,9 @@
 #define IA32_SYSENTER_EIP_MSR   0x176
 #define IA32_FS_BASE_MSR        0xC0000100
 #define IA32_GS_BASE_MSR        0xC0000101
+#define IA32_LSTAR_MSR          0xC0000082
+#define IA32_STAR_MSR           0xC0000081
+#define IA32_FMASK_MSR          0xC0000084
 
 #define BROADWELL_MODEL_ID      0xD4
 #define HASWELL_MODEL_ID        0xC3
@@ -52,18 +55,6 @@
 
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
-
-static inline void invalidateTLBentry(vptr_t vptr)
-{
-    asm volatile("invlpg (%[vptr])" :: [vptr] "r"(vptr));
-}
-
-/* Invalidates page structures cache */
-static inline void invalidatePageStructureCache(void)
-{
-    /* invalidate an arbitrary line to invalidate the page structure cache */
-    invalidateTLBentry(0);
-}
 
 static uint64_t x86_rdmsr(const uint32_t reg)
 {

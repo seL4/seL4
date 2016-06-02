@@ -49,7 +49,7 @@ managers of untyped memory to destroy the objects in that memory so it
 can be retyped.
 
 seL4 requires the programmer to manage all in-kernel data structures,
-including C\-Spaces, from userspace. This means that the userspace
+including CSpaces, from userspace. This means that the userspace
 programmer is responsible for constructing CSpaces as well as
 addressing capabilities within them.  This chapter first discusses
 capability and CSpace management, before discussing how capabilities
@@ -310,13 +310,18 @@ a capability address must be efficient. Therefore, CSpaces are
 implemented as \emph{guarded page tables}.
 % FIXME: need a references to justify the above decision
 
-As explained earlier, a CSpace is simply a hierarchy of \obj{CNode}
-objects, and each \obj{CNode} is simply a table of slots that each
-contain either a capability or a reference to another \obj{CNode}. The
-kernel stores a capability to the root \obj{CNode} of each thread's
+As explained earlier, a CSpace is a directed graph of \obj{CNode}
+objects, and each \obj{CNode} is a table of slots, where each slot can
+either be empty, or contain a capability, which may refer to another \obj{CNode}.
+Recall from \autoref{s:sel4_internals} that the number of slots in a \obj{CNode}
+must be a power of two. A \obj{CNode} is said to have a \emph{radix}, which is
+the power to which two is raised in its size. That is, if a \obj{CNode} has
+$2^k$ slots, its radix would be $k$.
+The kernel stores a capability to the root \obj{CNode} of each thread's
 CSpace in the thread's TCB. Conceptually, a \obj{CNode} capability
 stores not only a reference to the \obj{CNode} to which it refers, but
-also carries two values, its \emph{guard} and \emph{radix}.
+also carries a \emph{guard} value, explained in
+\autoref{sec:cap_address_lookup}.
 
 \subsection{Capability Address Lookup}
 \label{sec:cap_address_lookup}

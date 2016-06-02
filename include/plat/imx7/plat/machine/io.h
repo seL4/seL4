@@ -11,16 +11,23 @@
 #ifndef __PLAT_IO_H
 #define __PLAT_IO_H
 
+#include <config.h>
 #include <types.h>
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
 void imx7_uart_putchar(char c);
-void putDebugChar(unsigned char c);
-unsigned char getDebugChar(void);
 
 #define kernel_putchar(c) imx7_uart_putchar(c)
-#else /* !DEBUG */
+#else /* !CONFIG_PRINTING */
 #define kernel_putchar(c) ((void)(0))
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */
+
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+void putDebugChar(unsigned char c);
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
+unsigned char getDebugChar(void);
+#endif
 
 #endif /* !__PLAT_IO_H */

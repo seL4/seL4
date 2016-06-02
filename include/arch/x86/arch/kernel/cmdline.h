@@ -14,8 +14,10 @@
 #include <config.h>
 
 typedef struct cmdline_opt {
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
     uint16_t console_port;
+#endif
+#ifdef CONFIG_DEBUG_BUILD
     uint16_t debug_port;
 #endif
     bool_t   disable_iommu;

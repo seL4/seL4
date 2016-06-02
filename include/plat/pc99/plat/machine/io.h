@@ -11,6 +11,7 @@
 #ifndef __PLAT_IO_H
 #define __PLAT_IO_H
 
+#include <config.h>
 #include <arch/linker.h>
 #include <types.h>
 
@@ -21,14 +22,19 @@ uint8_t in8(uint16_t port);
 uint16_t in16(uint16_t port);
 uint32_t in32(uint16_t port);
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 
 void serial_init(uint16_t port);
+
+#endif
+
+#ifdef CONFIG_PRINTING
+
 void console_putchar(char c);
 
 #define kernel_putchar(c) console_putchar(c)
 
-#else /* !DEBUG */
+#else /* !CONFIG_PRINTING */
 
 #define kernel_putchar(c) ((void)(0))
 

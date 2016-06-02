@@ -10,9 +10,4 @@
 
 DIRECTORIES += src/machine
 
-ifdef DEBUG
-    C_SOURCES += src/machine/io.c
-endif
-ifdef RELEASE_PRINTF
-	C_SOURCES += src/machine/io.c 
-endif
+C_SOURCES += src/machine/io.c

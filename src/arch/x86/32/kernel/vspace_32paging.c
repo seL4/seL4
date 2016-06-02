@@ -220,6 +220,26 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
     deleteASID(asid, pd);
 }
 
+static exception_t
+performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_ret_t pdSlot)
+{
+    if (pdSlot.status == EXCEPTION_NONE &&
+            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
+             pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+
+        setRegister(ksCurThread, msgRegisters[0], pde_pde_large_ptr_get_accessed(pdSlot.pdSlot));
+        setRegister(ksCurThread, msgRegisters[1], pde_pde_large_ptr_get_dirty(pdSlot.pdSlot));
+        return EXCEPTION_NONE;
+    }
+
+    assert(ptSlot.status == EXCEPTION_NONE && pte_ptr_get_present(ptSlot.ptSlot));
+
+    setRegister(ksCurThread, msgRegisters[0], pte_ptr_get_accessed(ptSlot.ptSlot));
+    setRegister(ksCurThread, msgRegisters[1], pte_ptr_get_dirty(ptSlot.ptSlot));
+
+    return EXCEPTION_NONE;
+}
+
 exception_t
 decodeIA32PageDirectoryInvocation(
     word_t invLabel,
@@ -230,8 +250,143 @@ decodeIA32PageDirectoryInvocation(
     word_t* buffer
 )
 {
-    current_syscall_error.type = seL4_IllegalOperation;
-    return EXCEPTION_SYSCALL_ERROR;
+
+    switch (invLabel) {
+    case X86PageDirectoryGetStatusBits: {
+        word_t vaddr;
+        vspace_root_t *vspace;
+        lookupPTSlot_ret_t ptSlot;
+        lookupPDSlot_ret_t pdSlot;
+
+        if (length < 1) {
+            userError("X86PageDirectoryGetStatusBits: Truncated message");
+            current_syscall_error.type = seL4_TruncatedMessage;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        vaddr = getSyscallArg(0, buffer);
+
+        if (vaddr >= PPTR_USER_TOP) {
+            userError("X86PageDirectoryGetStatusBits: address inside kernel window");
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 0;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        vspace = (vspace_root_t*)pptr_of_cap(cap);
+
+        /* perform both lookups */
+        pdSlot = lookupPDSlot(vspace, vaddr);
+        ptSlot = lookupPTSlot(vspace, vaddr);
+
+        /* need either a valid PD mapping or PT mapping */
+        if ((pdSlot.status != EXCEPTION_NONE ||
+                ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_large) ||
+                 !pde_pde_large_ptr_get_present(pdSlot.pdSlot))) &&
+                (ptSlot.status != EXCEPTION_NONE ||
+                 (!pte_ptr_get_present(ptSlot.ptSlot)))) {
+            userError("X86PageDirectoryGetStatusBits: No mapping found");
+
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 1;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        setThreadState(ksCurThread, ThreadState_Restart);
+        return performIA32PageDirectoryGetStatusBits(ptSlot, pdSlot);
+    }
+
+    default:
+        userError("decodeIA32PageDirectoryInvocation: illegal operation");
+        current_syscall_error.type = seL4_IllegalOperation;
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
 }
+
+#ifdef CONFIG_PRINTING
+typedef struct readWordFromVSpace_ret {
+    exception_t status;
+    word_t value;
+} readWordFromVSpace_ret_t;
+
+static readWordFromVSpace_ret_t
+readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
+{
+    readWordFromVSpace_ret_t ret;
+    lookupPTSlot_ret_t ptSlot;
+    lookupPDSlot_ret_t pdSlot;
+    paddr_t paddr;
+    word_t offset;
+    pptr_t kernel_vaddr;
+    word_t *value;
+
+    pdSlot = lookupPDSlot(vspace, vaddr);
+    if (pdSlot.status == EXCEPTION_NONE &&
+            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
+             pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+
+        paddr = pde_pde_large_ptr_get_page_base_address(pdSlot.pdSlot);
+        offset = vaddr & MASK(seL4_LargePageBits);
+    } else {
+        ptSlot = lookupPTSlot(vspace, vaddr);
+        if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_present(ptSlot.ptSlot)) {
+            paddr = pte_ptr_get_page_base_address(ptSlot.ptSlot);
+            offset = vaddr & MASK(seL4_PageBits);
+        } else {
+            ret.status = EXCEPTION_LOOKUP_FAULT;
+            return ret;
+        }
+    }
+
+
+    kernel_vaddr = (word_t)paddr_to_pptr(paddr);
+    value = (word_t*)(kernel_vaddr + offset);
+    ret.status = EXCEPTION_NONE;
+    ret.value = *value;
+    return ret;
+}
+
+void
+Arch_userStackTrace(tcb_t *tptr)
+{
+    cap_t threadRoot;
+    vspace_root_t *vspace_root;
+    word_t sp;
+    int i;
+
+    threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
+
+    /* lookup the PD */
+    if (cap_get_capType(threadRoot) != cap_page_directory_cap) {
+        printf("Invalid vspace\n");
+        return;
+    }
+
+    vspace_root = (vspace_root_t*)pptr_of_cap(threadRoot);
+
+    sp = getRegister(tptr, ESP);
+    /* check for alignment so we don't have to worry about accessing
+     * words that might be on two different pages */
+    if (!IS_ALIGNED(sp, WORD_SIZE_BITS)) {
+        printf("ESP not aligned\n");
+        return;
+    }
+
+    for (i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+        word_t address = sp + (i * sizeof(word_t));
+        readWordFromVSpace_ret_t result;
+        result = readWordFromVSpace(vspace_root, address);
+        if (result.status == EXCEPTION_NONE) {
+            printf("0x%lx: 0x%lx\n", (long)address, (long)result.value);
+        } else {
+            printf("0x%lx: INVALID\n", (long)address);
+        }
+    }
+}
+#endif
 
 #endif

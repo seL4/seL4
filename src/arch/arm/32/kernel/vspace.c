@@ -28,6 +28,10 @@
 #include <armv/context_switch.h>
 #include <arch/object/iospace.h>
 
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+#include <benchmark_track.h>
+#endif
+
 /* ARM uses multiple identical mappings in a page table / page directory to construct
  * large mappings. In both cases it happens to be 16 entries, which can be calculated by
  * looking at the size difference of the mappings, and is done this way to remove magic
@@ -224,13 +228,13 @@ map_kernel_window(void)
         phys += BIT(pageBitsForSize(ARMSuperSection));
         idx += SECTIONS_PER_SUPER_SECTION;
     }
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* steal the last MB for logging */
     while (idx < BIT(PD_BITS) - 2) {
 #else
     /* mapping of the next 15M using 1M frames */
     while (idx < BIT(PD_BITS) - 1) {
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BNECHMARKS */
         pde = pde_pde_section_new(
                   phys,
                   0, /* Section */
@@ -250,7 +254,7 @@ map_kernel_window(void)
         idx++;
     }
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* allocate a 1M buffer for logging */
     pde = pde_pde_section_new(
               phys,
@@ -267,7 +271,7 @@ map_kernel_window(void)
               0  /* Write-through to minimise perf hit */
           );
     armKSGlobalPD[idx] = pde;
-    ksLog = (ks_log_entry_t *) ptrFromPAddr(phys);
+    ksLog = (void *) ptrFromPAddr(phys);
 
     /* we remove the address PADDR_TOP - 1MB from the
      * available physical memory for the sabre.
@@ -275,10 +279,10 @@ map_kernel_window(void)
      * if you are using a different platform this may need
      * adjusting or you may need to do something completely different
      * to get a 1mb, write through buffer*/
-    assert(ksLog == ((ks_log_entry_t *) KS_LOG_PADDR));
+    assert(ksLog == ((void *) KS_LOG_PADDR));
     phys += BIT(pageBitsForSize(ARMSection));
     idx++;
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);
@@ -2977,7 +2981,7 @@ kernelUndefinedInstruction(word_t pc)
 void
 kernelPrefetchAbort(word_t pc)
 {
-    word_t ifsr = getIFSR();
+    word_t UNUSED ifsr = getIFSR();
 
     printf("\n\nKERNEL PREFETCH ABORT!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
@@ -2989,8 +2993,8 @@ kernelPrefetchAbort(word_t pc)
 void
 kernelDataAbort(word_t pc)
 {
-    word_t dfsr = getDFSR();
-    word_t far = getFAR();
+    word_t UNUSED dfsr = getDFSR();
+    word_t UNUSED far = getFAR();
 
     printf("\n\nKERNEL DATA ABORT!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
@@ -3001,3 +3005,86 @@ kernelDataAbort(word_t pc)
 #endif /* ARM_HYP */
 
 #endif
+
+#ifdef CONFIG_PRINTING
+typedef struct readWordFromVSpace_ret {
+    exception_t status;
+    word_t value;
+} readWordFromVSpace_ret_t;
+
+static readWordFromVSpace_ret_t
+readWordFromVSpace(pde_t *pd, word_t vaddr)
+{
+    readWordFromVSpace_ret_t ret;
+    lookupPTSlot_ret_t ptSlot;
+    pde_t *pdSlot;
+    paddr_t paddr;
+    word_t offset;
+    pptr_t kernel_vaddr;
+    word_t *value;
+
+    pdSlot = lookupPDSlot(pd, vaddr);
+    if (pde_ptr_get_pdeType(pdSlot) == pde_pde_section) {
+        paddr = pde_pde_section_ptr_get_address(pdSlot);
+        offset = vaddr & MASK(ARMSectionBits);
+    } else {
+        ptSlot = lookupPTSlot(pd, vaddr);
+        if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_small) {
+            paddr = pte_pte_small_ptr_get_address(ptSlot.ptSlot);
+            offset = vaddr & MASK(ARMSmallPageBits);
+        } else if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_large) {
+            paddr = pte_pte_large_ptr_get_address(ptSlot.ptSlot);
+            offset = vaddr & MASK(ARMLargePageBits);
+        } else {
+            ret.status = EXCEPTION_LOOKUP_FAULT;
+            return ret;
+        }
+    }
+
+
+    kernel_vaddr = (word_t)paddr_to_pptr(paddr);
+    value = (word_t*)(kernel_vaddr + offset);
+    ret.status = EXCEPTION_NONE;
+    ret.value = *value;
+    return ret;
+}
+
+void
+Arch_userStackTrace(tcb_t *tptr)
+{
+    cap_t threadRoot;
+    pde_t *pd;
+    word_t sp;
+    int i;
+
+    threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
+
+    /* lookup the PD */
+    if (cap_get_capType(threadRoot) != cap_page_directory_cap) {
+        printf("Invalid vspace\n");
+        return;
+    }
+
+    pd = (pde_t*)pptr_of_cap(threadRoot);
+
+    sp = getRegister(tptr, SP);
+    /* check for alignment so we don't have to worry about accessing
+     * words that might be on two different pages */
+    if (!IS_ALIGNED(sp, WORD_SIZE_BITS)) {
+        printf("SP not aligned\n");
+        return;
+    }
+
+    for (i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+        word_t address = sp + (i * sizeof(word_t));
+        readWordFromVSpace_ret_t result;
+        result = readWordFromVSpace(pd, address);
+        if (result.status == EXCEPTION_NONE) {
+            printf("0x%lx: 0x%lx\n", (long)address, (long)result.value);
+        } else {
+            printf("0x%lx: INVALID\n", (long)address);
+        }
+    }
+}
+#endif
+

@@ -8,12 +8,11 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
 #include <plat/machine/devices.h>
-
-#if defined DEBUG || defined RELEASE_PRINTF
 
 #define URXD  0x00 /* UART Receiver Register */
 #define UTXD  0x40 /* UART Transmitter Register */
@@ -38,6 +37,8 @@
 #define UART_SR2_TXFIFO_EMPTY 14
 #define UART_SR2_RXFIFO_RDR    0
 
+#ifdef CONFIG_PRINTING
+
 void
 imx7_uart_putchar(char c)
 {
@@ -47,11 +48,19 @@ imx7_uart_putchar(char c)
     }
 }
 
+#endif
+
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+
 void putDebugChar(unsigned char c)
 {
     while (!(*UART_REG(USR2) & BIT(UART_SR2_TXFIFO_EMPTY)));
     *UART_REG(UTXD) = c;
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 unsigned char getDebugChar(void)
 {
@@ -59,4 +68,4 @@ unsigned char getDebugChar(void)
     return *UART_REG(URXD);
 }
 
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG_BUILD */

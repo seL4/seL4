@@ -30,12 +30,14 @@
             <syscall name="DebugHalt"     />
             <syscall name="DebugCapIdentify"   />
             <syscall name="DebugSnapshot" />
+        </config>
+        <config condition="defined CONFIG_PRINTING">
             <syscall name="DebugNameThread"/>
         </config>
         <config condition="defined DANGEROUS_CODE_INJECTION">
             <syscall name="DebugRun"/>
         </config>
-        <config condition="CONFIG_MAX_NUM_TRACE_POINTS > 0">
+        <config condition="defined CONFIG_ENABLE_BENCHMARKS">
             <syscall name="BenchmarkResetLog" />
             <syscall name="BenchmarkDumpLog"  />
             <syscall name="BenchmarkLogSize"  />

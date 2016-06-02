@@ -17,6 +17,15 @@
 
 #define __SWINUM(x) ((x) & 0x00ffffff)
 
+#ifndef __OPTIMIZE__
+/* With no optimisations (-O0) GCC's register allocator clobbers the
+ * syscall arguments before you reach the 'swi' and you invoke the kernel
+ * incorrectly.
+ * See SELFOUR-187
+ */
+#warning you are compiling with -O0; syscalls will most likely not work
+#endif
+
 static inline void
 seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
@@ -557,7 +566,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_PRINTING
 
 char *strcpy(char *, const char *);
 static inline void
@@ -589,7 +598,7 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg)
 }
 #endif
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 /* set the log index back to 0 */
 static inline void
 seL4_BenchmarkResetLog(void)
@@ -613,7 +622,8 @@ seL4_BenchmarkDumpLog(seL4_Word start, seL4_Word size)
     register seL4_Word scno asm("r7") = seL4_SysBenchmarkDumpLog;
     asm volatile ("swi %[swi_num]"
                   : "+r" (arg1)
-                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkDumpLog), "r" (arg1), "r" (arg2), "r"(scno));
+                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkDumpLog), "r" (arg1), "r" (arg2), "r"(scno)
+                  : "memory");
 
     return (seL4_Uint32) arg1;
 
@@ -645,7 +655,7 @@ seL4_BenchmarkFinalizeLog(void)
                  );
 }
 
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #undef __SWINUM
 

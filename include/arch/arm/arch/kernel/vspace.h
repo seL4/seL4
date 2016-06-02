@@ -94,6 +94,9 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
                                    cte_t *cte, cap_t cap, extra_caps_t excaps,
                                    word_t *buffer);
 
+#ifdef CONFIG_PRINTING
+void Arch_userStackTrace(tcb_t *tptr);
+#endif
 
 bool_t CONST isIOSpaceFrame(cap_t cap);
 

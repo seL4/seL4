@@ -537,7 +537,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_PRINTING
 char *strcpy(char *, const char *);
 static inline void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
@@ -578,7 +578,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 }
 #endif
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 static inline void
 seL4_BenchmarkResetLog(void)
 {
@@ -651,5 +651,5 @@ seL4_BenchmarkFinalizeLog(void)
     );
 }
 
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 #endif

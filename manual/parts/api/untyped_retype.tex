@@ -52,10 +52,8 @@ by the object size multiplied by \texttt{num\_objects}) is greater than the
 remaining unallocated memory of the untyped memory region, an error will result.
 Otherwise object allocation will proceed.
 
-Allocation is performed by choosing the region of memory closest to
-the start of the untyped memory object that is both unallocated, and aligned to the size of
-the type of object(s) being created. This may leave unallocated gaps between objects in 
-the parent untyped object, which are considered as allocated.
+To understand how memory from the untyped will be allocated when creating
+objects see \autoref{s:memRevoke}.
 
 The retype method places capabilities to the objects produced at consecutive
 locations in a CNode. The CNode is specified by the \texttt{root}, 

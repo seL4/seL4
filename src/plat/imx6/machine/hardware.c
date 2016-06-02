@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <machine/io.h>
 #include <kernel/vspace.h>
@@ -23,21 +24,21 @@
 const p_region_t BOOT_RODATA avail_p_regs[] = {
 #if defined(CONFIG_PLAT_SABRE)
     /* Sabre has 1 GiB */
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* 1MB stolen for logging */
     { /* .start = */ 0x10000000, /* .end = */ 0x2fd00000 }
 #else
     { /* .start = */ 0x10000000, /* .end = */ 0x50000000 }
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 #elif defined(CONFIG_PLAT_WANDQ)
     /* Wandboard Quad: 2 GiB */
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 #warning "NOTE: logging is currently untested on WandBoard"
     /* 1MB stolen for logging */
     { /* .start = */ 0x10000000, /* .end = */ 0x6fd00000 }
 #else
     { /* .start = */ 0x10000000, /* .end = */ 0x90000000 }
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 #else
 #error "unknown imx6 platform selected!"
 #endif
@@ -249,7 +250,7 @@ map_kernel_devices(void)
     );
 
 
-#if defined DEBUG || defined RELEASE_PRINTF
+#ifdef CONFIG_PRINTING
     /* map kernel device: UART */
     map_kernel_frame(
         UART_PADDR,
@@ -261,6 +262,6 @@ map_kernel_devices(void)
             false  /* armPageCacheable */
         )
     );
-#endif /* DEBUG */
+#endif /* CONFIG_PRINTING */
 }
 

@@ -8,12 +8,11 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
 #include <plat/machine/devices.h>
-
-#if defined DEBUG || defined RELEASE_PRINTF
 
 #define UTHR 0x00 /* UART Transmit Holding Register */
 #define ULSR 0x14 /* UART Line Status Register */
@@ -21,6 +20,8 @@
 
 #define UART_REG(x) ((volatile uint32_t *)(UART3_PPTR + (x)))
 
+
+#ifdef CONFIG_PRINTING
 
 void
 omap3_uart_putchar(char c)
@@ -33,6 +34,10 @@ omap3_uart_putchar(char c)
         omap3_uart_putchar('\r');
     }
 }
+
+#endif
+
+#ifdef CONFIG_DEBUG_BUILD
 
 void putDebugChar(unsigned char c)
 {

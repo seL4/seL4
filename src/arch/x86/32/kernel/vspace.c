@@ -16,6 +16,7 @@
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/boot.h>
 #include <arch/api/invocation.h>
+#include <benchmark_track.h>
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.
@@ -235,12 +236,12 @@ map_kernel_window(
     phys = PADDR_BASE;
     idx = PPTR_BASE >> LARGE_PAGE_BITS;
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* steal the last large for logging */
     while (idx < BIT(PD_BITS + PDPT_BITS) - 2) {
 #else
     while (idx < BIT(PD_BITS + PDPT_BITS) - 1) {
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BNECHMARKS */
         pde = pde_pde_large_new(
                   phys,   /* page_base_address    */
                   0,      /* pat                  */
@@ -262,15 +263,15 @@ map_kernel_window(
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* mark the address of the log. We will map it
         * in later with the correct attributes, but we need
         * to wait until we can call alloc_region. */
-    ksLog = (ks_log_entry_t *) paddr_to_pptr(phys);
+    ksLog = (void *) paddr_to_pptr(phys);
     phys += BIT(LARGE_PAGE_BITS);
     assert(idx == IA32_KSLOG_IDX);
     idx++;
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* map page table of last 4M of virtual address space to page directory */
     pde = pde_pde_small_new(
@@ -360,7 +361,7 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
                               1, /* read_write     */
                               1  /* present        */
                              );
-        invalidateTLBentry(virt_pg_start + pg_offset);
+        invalidateTranslationSingle(virt_pg_start + pg_offset);
     }
 
     // assign replacement virtual addresses page

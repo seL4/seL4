@@ -161,11 +161,11 @@ init_sys_state(
     cap_t         ipcbuf_cap;
     pptr_t        bi_frame_pptr;
     create_frames_of_region_ret_t create_frames_ret;
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     vm_attributes_t buffer_attr = {{ 0 }};
     word_t paddr;
     pde_t pde;
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
@@ -191,7 +191,7 @@ init_sys_state(
         return false;
     }
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* allocate and create the log buffer */
     buffer_attr.words[0] = IA32_PAT_MT_WRITE_THROUGH;
 
@@ -203,16 +203,18 @@ init_sys_state(
 
 
     /* flush the tlb */
-    invalidatePageStructureCache();
+    invalidateTranslationAll();
 
     /* if we crash here, the log isn't working */
 #ifdef CONFIG_DEBUG_BUILD
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
     printf("Testing log\n");
     ksLog[0].data = 0xdeadbeef;
     printf("Wrote to ksLog %x\n", ksLog[0].data);
     assert(ksLog[0].data == 0xdeadbeef);
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS */
 #endif /* CONFIG_DEBUG_BUILD */
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
