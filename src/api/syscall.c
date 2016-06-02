@@ -10,6 +10,7 @@
 
 #include <types.h>
 #include <benchmark.h>
+#include <benchmark_track.h>
 #include <api/syscall.h>
 #include <api/failures.h>
 #include <api/faults.h>
@@ -21,7 +22,6 @@
 #include <object/interrupt.h>
 #include <model/statedata.h>
 #include <string.h>
-#include <benchmark_track.h>
 
 #ifdef DEBUG
 #include <arch/machine/capdl.h>
@@ -128,38 +128,11 @@ handleUnknownSyscall(word_t w)
     }
 #endif
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    if (w == SysBenchmarkTrackKernelEntriesReset) {
-        benchmark_track_reset();
-        return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkTrackKernelEntriesSize) {
-        /* Return the number of tracked kernel entries */
-        word_t num_invocations = benchmark_track_entries_num();
-        setRegister(ksCurThread, capRegister, num_invocations);
-        return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkTrackKernelEntriesDump) {
-        word_t *buffer = lookupIPCBuffer(true, ksCurThread);
-        word_t start_index = getRegister(ksCurThread, capRegister);
-        word_t num_entries = getRegister(ksCurThread, msgInfoRegister);
-
-        /* Round down the number of the requested system call to fit in IPC size */
-        num_entries = (num_entries > MAX_IPC_LOG_ENTRIES) ? MAX_IPC_LOG_ENTRIES :
-                      num_entries;
-
-        benchmark_track_dump((benchmark_track_kernel_entry_t *) &buffer[1],
-                start_index, num_entries);
-
-        setRegister(ksCurThread, capRegister, num_entries);
-
-        return EXCEPTION_NONE;
-    }
-#endif
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     if (w == SysBenchmarkResetLog) {
         ksLogIndex = 0;
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkDumpLog) {
-        word_t i;
         word_t *buffer = lookupIPCBuffer(true, ksCurThread);
         word_t start = getRegister(ksCurThread, capRegister);
         word_t size = getRegister(ksCurThread, msgInfoRegister);
@@ -188,7 +161,13 @@ handleUnknownSyscall(word_t w)
             size = logSize - start;
         }
 
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+        benchmark_track_dump((benchmark_track_kernel_entry_t *) &buffer[1],
+                start, size);
+#else /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
         /* write to ipc buffer */
+        word_t i;
+
         for (i = 0; i < size; i++) {
             int base_index = i * 2 + 1;
             ks_log_entry_t *log = &ksLog[i + start];
@@ -196,6 +175,7 @@ handleUnknownSyscall(word_t w)
             buffer[base_index + 1] = log->data;
         }
 
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
         /* Return the amount written */
         setRegister(ksCurThread, capRegister, size);
         return EXCEPTION_NONE;
@@ -207,7 +187,7 @@ handleUnknownSyscall(word_t w)
         ksLogIndexFinalized = ksLogIndex;
         return EXCEPTION_NONE;
     }
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     current_fault = fault_unknown_syscall_new(w);
     handleFault(ksCurThread);

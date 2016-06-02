@@ -578,64 +578,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 }
 #endif
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-static inline seL4_Uint32
-seL4_BenchmarkTrackKernelEntriesDump(seL4_Word start_index, seL4_Word num_entries)
-{
-    asm volatile (
-        "pushl %%ebp        \n"
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        "popl %%ebp         \n"
-        : "=b" (start_index)
-        : "a" (seL4_SysBenchmarkTrackKernelEntriesDump),
-        "b" (start_index),
-        "S" (num_entries)
-        : "%ecx", "%edx", "%edi", "memory"
-    );
-
-    return start_index;
-}
-
-static inline seL4_Uint32
-seL4_BenchmarkTrackKernelEntriesSize(void)
-{
-    seL4_Uint32 ret = 0;
-    asm volatile (
-        "pushl %%ebp        \n"
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        "popl %%ebp         \n"
-        : "=b" (ret)
-        : "a" (seL4_SysBenchmarkTrackKernelEntriesSize)
-        : "%ecx", "%edx", "%edi", "memory"
-    );
-
-    return ret;
-}
-
-static inline void
-seL4_BenchmarkTrackKernelEntriesReset(void)
-{
-    asm volatile (
-        "pushl %%ebp        \n"
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        "popl %%ebp         \n"
-        :
-        : "a" (seL4_SysBenchmarkTrackKernelEntriesReset)
-        : "%ecx", "%edx", "%edi", "memory"
-    );
-}
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
-
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 static inline void
 seL4_BenchmarkResetLog(void)
 {
@@ -708,5 +651,5 @@ seL4_BenchmarkFinalizeLog(void)
     );
 }
 
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 #endif

@@ -11,7 +11,7 @@
 #ifndef ARMV_BENCHMARK_H
 #define ARMV_BENCHMARK_H
 
-#if CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_ENABLE_BENCHMARKS
 
 static inline uint32_t
 timestamp(void)

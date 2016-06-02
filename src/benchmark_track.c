@@ -14,18 +14,23 @@
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 
+benchmark_track_kernel_entry_t *ksLog;
+timestamp_t ksEnter;
+word_t ksLogIndex;
+uint32_t ksLogIndexFinalized;
+
 void benchmark_track_exit(void)
 {
     timestamp_t duration = 0;
     timestamp_t ksExit = timestamp();
 
     /* If Log buffer is filled, do nothing */
-    if (likely(ksIndex < MAX_TRACKED_KERNEL_ENTRIES)) {
+    if (likely(ksLogIndex < MAX_LOG_SIZE)) {
         duration = ksExit - ksEnter;
-        ksLog[ksIndex].entry = ksKernelEntry;
-        ksLog[ksIndex].start_time = ksEnter;
-        ksLog[ksIndex].duration = duration;
-        ksIndex++;
+        ksLog[ksLogIndex].entry = ksKernelEntry;
+        ksLog[ksLogIndex].start_time = ksEnter;
+        ksLog[ksLogIndex].duration = duration;
+        ksLogIndex++;
     }
 }
 
@@ -40,12 +45,12 @@ void benchmark_track_dump(
         return;
     }
 
-    if (start_index >= ksIndex) {
+    if (start_index > ksLogIndex) {
         userError("Invalid start index = %lu\n", start_index);
         return;
     }
 
-    if ((start_index + num_entries) > ksIndex - 1) {
+    if ((start_index + num_entries) > ksLogIndex) {
         userError("Requested entries exceed the range of tracked syscall invocations [%lu:%lu] \
                 \n", start_index, num_entries);
         return;

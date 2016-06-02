@@ -589,47 +589,7 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg)
 }
 #endif
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-static inline seL4_Uint32
-seL4_BenchmarkTrackKernelEntriesDump(seL4_Word start_index, seL4_Word num_entries)
-{
-
-    register seL4_Word arg1 asm("r0") = (seL4_Word) start_index;
-    register seL4_Word arg2 asm("r1") = (seL4_Word) num_entries;
-    register seL4_Word scno asm("r7") = seL4_SysBenchmarkTrackKernelEntriesDump;
-
-    asm volatile ("swi %[swi_num]"
-                  : "+r" (arg1)
-                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkTrackKernelEntriesDump), \
-                  "r" (arg1), "r" (arg2), "r"(scno)
-                  :"memory");
-
-    return (seL4_Uint32) arg1;
-}
-
-static inline seL4_Uint32
-seL4_BenchmarkTrackKernelEntriesSize(void)
-{
-    register seL4_Word arg1 asm("r0") = 0; /* required for retval */
-    register seL4_Word scno asm("r7") = seL4_SysBenchmarkTrackKernelEntriesSize;
-    asm volatile ("swi %[swi_num]"
-                  : "+r" (arg1)
-                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkTrackKernelEntriesSize), "r" (arg1), "r"(scno));
-
-    return (seL4_Uint32) arg1;
-}
-
-static inline void
-seL4_BenchmarkTrackKernelEntriesReset(void)
-{
-    register seL4_Word scno asm("r7") = seL4_SysBenchmarkTrackKernelEntriesReset;
-    asm volatile ("swi %[swi_num]"
-                  : /* no outputs */
-                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkTrackKernelEntriesReset), "r"(scno));
-}
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
-
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 /* set the log index back to 0 */
 static inline void
 seL4_BenchmarkResetLog(void)
@@ -686,7 +646,7 @@ seL4_BenchmarkFinalizeLog(void)
                  );
 }
 
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #undef __SWINUM
 
