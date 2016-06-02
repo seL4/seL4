@@ -320,7 +320,7 @@ acpi_madt_scan(
                     }
                     break;
                 case MADT_ISO:
-                    printf("ACIP: MADT_ISO bus=%d source=%d gsi=%d flags=0x%x\n",
+                    printf("ACPI: MADT_ISO bus=%d source=%d gsi=%d flags=0x%x\n",
                            ((acpi_madt_iso_t*)acpi_madt_header)->bus,
                            ((acpi_madt_iso_t*)acpi_madt_header)->source,
                            ((acpi_madt_iso_t*)acpi_madt_header)->gsi,
