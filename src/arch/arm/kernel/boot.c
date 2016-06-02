@@ -319,9 +319,9 @@ try_init_kernel(
      * everything to PoC */
     cleanInvalidateL1Caches();
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     armv_init_ccnt();
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* Export selected CPU features for access by PL0 */
     armv_init_user_access();

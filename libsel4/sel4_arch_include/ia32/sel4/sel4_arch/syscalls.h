@@ -578,7 +578,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 }
 #endif
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 static inline void
 seL4_BenchmarkResetLog(void)
 {
@@ -651,5 +651,5 @@ seL4_BenchmarkFinalizeLog(void)
     );
 }
 
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 #endif
