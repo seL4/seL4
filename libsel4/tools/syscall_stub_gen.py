@@ -51,12 +51,14 @@ WORD_SIZE_BITS_ARCH = {
     "ia32": 32,
     "aarch64": 64,
     "ia64": 64,
-    "x86_64": 64
+    "x86_64": 64,
+    "arm_hyp": 32,
 }
 
 MESSAGE_REGISTERS_FOR_ARCH = {
     "aarch32": 4,
     "ia32": 2,
+    "arm_hyp": 4,
 }
 
 WORD_CONST_SUFFIX_BITS = {
@@ -239,11 +241,20 @@ def init_arch_types(wordsize):
             CapType("seL4_ARM_PageDirectory", wordsize),
             CapType("seL4_ARM_ASIDControl", wordsize),
             CapType("seL4_ARM_ASIDPool", wordsize),
+            StructType("seL4_UserContext", wordsize * 17, wordsize),
+        ],
+
+        "arm_hyp" : [
+            Type("seL4_ARM_VMAttributes", wordsize, wordsize),
+            CapType("seL4_ARM_Page", wordsize),
+            CapType("seL4_ARM_PageTable", wordsize),
+            CapType("seL4_ARM_PageDirectory", wordsize),
+            CapType("seL4_ARM_ASIDControl", wordsize),
+            CapType("seL4_ARM_ASIDPool", wordsize),
             CapType("seL4_ARM_VCPU", wordsize),
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 17, wordsize),
-
         ],
 
         "ia32" : [
@@ -680,9 +691,6 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
     Generate a header file containing system call stubs for seL4.
     """
     result = []
-
-    if arch == "arm_hyp":
-        arch = "aarch32"
 
     # Ensure architecture looks sane.
     if arch not in WORD_SIZE_BITS_ARCH.keys():

@@ -3029,12 +3029,22 @@ readWordFromVSpace(pde_t *pd, word_t vaddr)
         offset = vaddr & MASK(ARMSectionBits);
     } else {
         ptSlot = lookupPTSlot(pd, vaddr);
+#ifdef ARM_HYP
+        if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_small) {
+            paddr = pte_pte_small_ptr_get_address(ptSlot.ptSlot);
+            if (pte_pte_small_ptr_get_contiguous_hint(ptSlot.ptSlot)) {
+                offset = vaddr & MASK(ARMLargePageBits);
+            } else {
+                offset = vaddr & MASK(ARMSmallPageBits);
+            }
+#else
         if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_small) {
             paddr = pte_pte_small_ptr_get_address(ptSlot.ptSlot);
             offset = vaddr & MASK(ARMSmallPageBits);
         } else if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_large) {
             paddr = pte_pte_large_ptr_get_address(ptSlot.ptSlot);
             offset = vaddr & MASK(ARMLargePageBits);
+#endif
         } else {
             ret.status = EXCEPTION_LOOKUP_FAULT;
             return ret;
