@@ -16,7 +16,7 @@
 #include <types.h>
 
 /* Initialise the FPU. */
-void Arch_initFpu(void);
+bool_t Arch_initFpu(void);
 
 /* Initialise the FPU state of the given user context. */
 void Arch_initFpuContext(user_context_t *context);
@@ -27,20 +27,50 @@ void Arch_fpuThreadDelete(tcb_t *thread);
 /* Handle an FPU exception. */
 exception_t handleUnimplementedDevice(void);
 
+static inline uint32_t xsave_features_high(void)
+{
+    uint64_t features = config_default(CONFIG_XSAVE_FEATURE_SET, 1);
+    return (uint32_t)(features >> 32);
+}
+
+static inline uint32_t xsave_features_low(void)
+{
+    uint64_t features = config_default(CONFIG_XSAVE_FEATURE_SET, 1);
+    return (uint32_t)(features & 0xffffffff);
+}
+
 /* Store state in the FPU registers into memory. */
 static inline void saveFpuState(user_fpu_state_t *dest)
 {
-    asm volatile("fxsave %[dest]" : [dest] "=m"(*dest));
+    if (config_set(CONFIG_FXSAVE)) {
+        asm volatile("fxsave %[dest]" : [dest] "=m"(*dest));
+    } else if (config_set(CONFIG_XSAVE_XSAVEOPT)) {
+        asm volatile("xsaveopt %[dest]" : [dest] "=m"(*dest) : "d"(xsave_features_high()), "a"(xsave_features_low()));
+    } else if (config_set(CONFIG_XSAVE_XSAVE)) {
+        asm volatile("xsave %[dest]" : [dest] "=m"(*dest) : "d"(xsave_features_high()), "a"(xsave_features_low()));
+    } else if (config_set(CONFIG_XSAVE_XSAVEC)) {
+        asm volatile("xsavec %[dest]" : [dest] "=m"(*dest) : "d"(xsave_features_high()), "a"(xsave_features_low()));
+    } else if (config_set(CONFIG_XSAVE_XSAVES)) {
+        asm volatile("xsaves %[dest]" : [dest] "=m"(*dest) : "d"(xsave_features_high()), "a"(xsave_features_low()));
+    }
 }
 
 /* Load FPU state from memory into the FPU registers. */
 static inline void loadFpuState(user_fpu_state_t *src)
 {
-    asm volatile("fxrstor %[src]" :: [src] "m"(*src));
+    if (config_set(CONFIG_FXSAVE)) {
+        asm volatile("fxrstor %[src]" :: [src] "m"(*src));
+    } else if (config_set(CONFIG_XSAVE)) {
+        if (config_set(CONFIG_XSAVE_XSAVES)) {
+            asm volatile("xrstors %[src]" :: [src] "m"(*src), "d"(xsave_features_high()), "a"(xsave_features_low()));
+        } else {
+            asm volatile("xrstor %[src]" :: [src] "m"(*src), "d"(xsave_features_high()), "a"(xsave_features_low()));
+        }
+    }
 }
 
 /* Reset the FPU registers into their initial blank state. */
-static inline void resetFpu(void)
+static inline void finit(void)
 {
     asm volatile("finit" :: "m"(control_reg_order));
 }

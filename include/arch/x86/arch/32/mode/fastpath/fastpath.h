@@ -105,7 +105,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
          * is currently disabled */
     }
 
-    tss_ptr_set_esp0(&x86KStss.tss, ((uint32_t)ksCurThread) + 0x4c);
+    tss_ptr_set_esp0(&x86KStss.tss, ((uint32_t)&ksCurThread->tcbArch.tcbContext.registers) + (sizeof(word_t)*n_contextRegisters));
     cur_thread->tcbArch.tcbContext.registers[EFLAGS] &= ~0x200;
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile(

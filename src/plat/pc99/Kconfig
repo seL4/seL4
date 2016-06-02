@@ -59,6 +59,91 @@ config PAE_PAGING
         is not used the old 32-bit paging with 4K/4M pages will be used
 
 choice
+    prompt "FPU state implementation"
+    depends on ARCH_X86
+    default FXSAVE
+    help
+        Choose the method that FPU state is stored in. This directly
+        affects the method used to save and rrestore it
+    config FXSAVE
+        bool "FXSAVE"
+        help
+            This chooses the legacy 512-byte region used by the
+            fxsave and fxrstor functions
+    config XSAVE
+        bool "XSAVE"
+        help
+            This chooses the variable xsave region, and enables the
+            ability to use any of the xsave variants to save and
+            restore. The actual size of the region is dependent on
+            the features enabled.
+endchoice
+
+choice
+    prompt "XSAVE variant"
+    depends on XSAVE
+    default XSAVE_XSAVEOPT
+    help
+        The XSAVE area supports multiple instructions to save
+        and restore to it. These instructions are dependent upon
+        specific CPU support. See Chapter 13 of Volume 1 of the
+        Intel Architectures SOftware Developers Manual for
+        discussion on the init and modified optimizations
+
+    config XSAVE_XSAVE
+        bool "XSAVE"
+        help
+            Original XSAVE instruction. This is the only XSAVE
+            instruction that is guaranteed to exist if XSAVE
+            is present
+    config XSAVE_XSAVEC
+        bool "XSAVEC"
+        help
+            Save state with compaction. This compaction has
+            to do with minimizing the total size of XSAVE buffer,
+            if using non contiguous features, XSAVEC will attempt
+            to use the init optimization when saving
+    config XSAVE_XSAVEOPT
+        bool "XSAVEOPT"
+        help
+            Save state taking advantage of both the init
+            optimization and modified optimization
+    config XSAVE_XSAVES
+        bool "XSAVES"
+        help
+            Save state taking advantage of the modified
+            optimization. This instruction is only
+            available in OS code, and is the preferred
+            save method if it exists
+endchoice
+
+config XSAVE_FEATURE_SET
+    int "XSAVE feature set"
+    depends on XSAVE
+    default 3
+    help
+        XSAVE can save and restore the state for various
+        features through the use of the feature mask. This
+        config option represents the feature mask that we
+        want to support. The CPU must support all bits
+        in this feature mask. Current known bits are
+        0 - FPU
+        1 - SSE
+        2 - AVX
+        FPU and SSE is guaranteed to exist if XSAVE exists
+
+config XSAVE_SIZE
+    int "XSAVE region size"
+    default 576 if XSAVE
+    default 512 if !XSAVE
+    help
+        The size of the XSAVE region. This is dependent
+        upon the features in XSAVE_FEATURE_SET that have
+        been requested. Default is 576 for the FPU and
+        SSE state, unless XSAVE is not in use then it
+        should be 512 for the legacy FXSAVE region
+
+choice
     prompt "Setting FS/GS Base Addresses"
     depends on ARCH_X86
     default FSGSBASE_GDT
