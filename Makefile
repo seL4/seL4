@@ -266,6 +266,8 @@ DEFINES += ${CONFIG_DEFS:%=-D%}
 ifdef DEBUG
 DEFINES += -DDEBUG
 DEFINES += -DCONFIG_DEBUG_BUILD
+DEFINES += -DCONFIG_PRINTING
+DEFINES += -DCONFIG_USER_STACK_TRACE_LENGTH=1
 CFLAGS  += -ggdb -g3
 endif
 
@@ -382,7 +384,7 @@ endif
 WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 	missing-declarations undef pointer-arith no-nonnull declaration-after-statement
 
-CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
+CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding -fms-extensions \
 	${WARNINGS:%=-W%} ${INCLUDES}
 LDFLAGS += -nostdlib -nostdinc
 LDFLAGS += -Wl,--build-id=none
