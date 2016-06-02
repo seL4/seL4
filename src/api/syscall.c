@@ -163,7 +163,7 @@ handleUnknownSyscall(word_t w)
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
         benchmark_track_dump((benchmark_track_kernel_entry_t *) &buffer[1],
-                start, size);
+                             start, size);
 #else /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
         /* write to ipc buffer */
         word_t i;
