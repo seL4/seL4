@@ -122,12 +122,12 @@ validTemporalParam(time_t param)
 {
 
     if (param > getMaxTimerUs()) {
-        userError("SchedControl_Configure: param too large, max for this platform %llx.", getMaxTimerUs());
+        userError("SchedControl_Configure: param too large, max for this platform 0x%llx.", getMaxTimerUs());
         return false;
     }
 
     if (param < getKernelWcetUs()) {
-        userError("SchedControl_Configure: param too small, min for this platform %llx (got %llx).",
+        userError("SchedControl_Configure: param too small, min for this platform 0x%llx (got 0x%llx).",
                   getKernelWcetUs(), param);
         return false;
     }
