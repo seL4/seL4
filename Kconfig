@@ -70,7 +70,7 @@ config ARM_HYPERVISOR_SUPPORT
         depends on ARCH_ARM
         help
             Select the ARM CPU version
-
+        
         config ARM1136JF_S
             bool "ARM1136JF-S"
             depends on ARCH_ARM
@@ -481,7 +481,7 @@ menu "Build Options"
 
     config DANGEROUS_CODE_INJECTION
 	    bool "Build kernel with support for executing arbitrary code in protected mode"
-        depends on !ARM_HYPERVISOR_SUPPORT && !VERIFICATION_BUILD
+           depends on !ARM_HYPERVISOR_SUPPORT && !VERIFICATION_BUILD
         default n
         help
             Adds a system call that allows users to specify code to be run in kernel

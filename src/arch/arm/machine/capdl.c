@@ -10,6 +10,7 @@
 
 #ifdef DEBUG
 
+#include <config.h>
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <model/statedata.h>
@@ -134,7 +135,7 @@ static void sendPD(unsigned int address)
         if (pde_get_pdeType(pde) == pde_pde_coarse && pde_pde_coarse_get_address(pde) != 0) {
             exists = 1;
         } else if (pde_get_pdeType(pde) == pde_pde_section && (pde_pde_section_get_address(pde) != 0 ||
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                                                                pde_pde_section_get_HAP(pde))) {
 #else
                                                                pde_pde_section_get_AP(pde))) {
@@ -155,7 +156,7 @@ static void sendPT(unsigned int address)
     for (i = 0; i < PT_READ_SIZE; i++) {
         pte_t pte = start[i];
         exists = 0;
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (pte_get_pteType(pte) == pte_pte_small && (pte_pte_small_get_address(pte) != 0 ||
                                                       pte_pte_small_get_HAP(pte))) {
             exists = 1;

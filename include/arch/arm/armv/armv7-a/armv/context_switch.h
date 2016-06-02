@@ -10,6 +10,7 @@
 #ifndef __ARMV_CONTEXT_SWITCH_H__
 #define __ARMV_CONTEXT_SWITCH_H__
 
+#include <config.h>
 #include <arch/object/structures.h>
 #include <arch/api/types.h>
 
@@ -24,7 +25,7 @@ static inline void setHardwareASID(hw_asid_t hw_asid)
 
 static inline void armv_contextSwitch_HWASID(pde_t *cap_pd, hw_asid_t hw_asid)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         writeContextIDAndPD(hw_asid, addrFromPPtr(cap_pd));
     } else {
         /*

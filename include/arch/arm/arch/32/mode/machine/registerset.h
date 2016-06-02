@@ -39,15 +39,15 @@
 
 /* Offsets within the user context, these need to match the order in
  * register_t below */
+#define PT_SP               (13  * 4)
 #define PT_LR_svc           (15 * 4)
 #define PT_ELR_hyp          (15 * 4)
 #define PT_FaultInstruction (17 * 4)
 #define PT_R8               (8  * 4)
 
-#define PT_SP               (13  * 4)
-
 #else /* !__ASSEMBLER__ (C definitions) */
 
+#include <config.h>
 #include <stdint.h>
 #include <util.h>
 #include <arch/types.h>
@@ -123,8 +123,7 @@ static inline word_t CONST
 sanitiseRegister(register_t reg, word_t v)
 {
     if (reg == CPSR) {
-
-        if (config_set(ARM_HYP)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             switch (v & 0x1f) {
             case PMODE_USER:
             case PMODE_FIQ:

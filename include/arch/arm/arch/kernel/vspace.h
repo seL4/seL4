@@ -11,6 +11,7 @@
 #ifndef __ARCH_KERNEL_VSPACE_H
 #define __ARCH_KERNEL_VSPACE_H
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
@@ -65,7 +66,7 @@ struct lookupPTSlot_ret {
 };
 typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 hw_asid_t getHWASID(asid_t asid);
 #endif
 void copyGlobalMappings(pde_t *newPD);

@@ -11,6 +11,7 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
+#include <config.h>
 #include <arch/machine/gic_pl390.h>
 
 #define N_INTERRUPTS     160
@@ -197,7 +198,7 @@ enum IRQConstants {
     maxIRQ = 232
 } platform_interrupt_t;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define KERNEL_TIMER_IRQ INTERRUPT_CNTHPIRQ
 #else
 #define KERNEL_TIMER_IRQ INTERRUPT_CNTVIRQ

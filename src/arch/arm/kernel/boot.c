@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <assert.h>
 #include <kernel/boot.h>
 #include <machine/io.h>
@@ -132,7 +133,7 @@ init_irqs(cap_t root_cnode_cap)
         setIRQState(IRQInactive, i);
     }
     setIRQState(IRQTimer, KERNEL_TIMER_IRQ);
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     setIRQState(IRQReserved, INTERRUPT_VGIC_MAINTENANCE);
 #endif
 #ifdef CONFIG_ARM_SMMU
@@ -148,7 +149,7 @@ BOOT_CODE static void
 init_cpu(void)
 {
     activate_global_pd();
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_restore(NULL);
     }
 }
@@ -243,6 +244,8 @@ try_init_kernel(
                 ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
             return false;
         }
+    } else {
+        ndks_boot.bi_frame->ioSpaceCaps = S_REG_EMPTY;
     }
 
     /* Construct an initial address space with enough virtual addresses
@@ -336,7 +339,7 @@ try_init_kernel(
      * everything to PoC */
     cleanInvalidateL1Caches();
     invalidateTLB();
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateHypTLB();
     }
 

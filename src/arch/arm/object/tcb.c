@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <machine/registerset.h>
@@ -82,7 +83,7 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                                      sender->tcbLookupFailure, 3);
 
     case fault_vm_fault: {
-        if (config_set(ARM_HYP)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             word_t ipa, va;
             va = getRestartPC(sender);
             ipa = (addressTranslateS1CPR(va) & ~MASK(PAGE_BITS)) | (va & MASK(PAGE_BITS));
@@ -135,7 +136,7 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                      fault_user_exception_get_code(sender->tcbFault));
     }
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case fault_vgic_maintenance:
         if (fault_vgic_maintenance_get_idxValid(sender->tcbFault)) {
             return setMR(receiver, receiveIPCBuffer, 0,

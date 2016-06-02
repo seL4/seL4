@@ -68,7 +68,7 @@ void setNextPC(tcb_t *thread, word_t v);
 static inline word_t getProcessorID(void)
 {
     word_t processor_id;
-    asm volatile ("mrc p15, 0, %0, c0, c0, 0" : "=r"(processor_id));
+    MRC("p15, 0, %0, c0, c0, 0", processor_id);
     return processor_id;
 }
 
@@ -76,28 +76,28 @@ static inline word_t getProcessorID(void)
 static inline word_t readSystemControlRegister(void)
 {
     word_t scr;
-    asm volatile ("mrc p15, 0, %0, c1, c0, 0" : "=r"(scr));
+    MRC("p15, 0, %0, c1, c0, 0", scr);
     return scr;
 }
 
 /** DONT_TRANSLATE */
 static inline void writeSystemControlRegister(word_t scr)
 {
-    asm volatile ("mcr p15, 0, %0, c1, c0, 0" :: "r"(scr));
+    MCR("p15, 0, %0, c1, c0, 0", scr);
 }
 
 /** DONT_TRANSLATE */
 static inline word_t readAuxiliaryControlRegister(void)
 {
     word_t acr;
-    asm volatile ("mrc p15, 0, %0, c1, c0, 1" : "=r"(acr));
+    MRC("p15, 0, %0, c1, c0, 1", acr);
     return acr;
 }
 
 /** DONT_TRANSLATE */
 static inline void writeAuxiliaryControlRegister(word_t acr)
 {
-    asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(acr));
+    MCR("p15, 0, %0, c1, c0, 1", acr);
 }
 
 /** MODIFIES: [*] */
@@ -138,7 +138,6 @@ static inline void writeTTBR0(paddr_t addr)
     asm volatile("mcr p15, 0, %0, c2, c0, 0" : :
                  "r"((addr & 0xffffe000) | 0x18));
 }
-
 static inline void setCurrentPD(paddr_t addr)
 {
     /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
@@ -165,7 +164,6 @@ static inline void invalidateTLB(void)
     dsb();
     isb();
 }
-
 /** MODIFIES: [*] */
 /** DONT_TRANSLATE */
 static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
@@ -179,7 +177,6 @@ static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
         isb();
     }
 }
-
 /** MODIFIES: [*] */
 /** DONT_TRANSLATE */
 static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
@@ -193,7 +190,6 @@ static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
         isb();
     }
 }
-
 /** MODIFIES: [*] */
 void lockTLBEntry(vptr_t vaddr);
 

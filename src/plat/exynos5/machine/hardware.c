@@ -300,7 +300,7 @@ isReservedIRQ(irq_t irq)
 void
 handleReservedIRQ(irq_t irq)
 {
-    if ((config_set(ARM_HYP)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
         VGICMaintenance();
         return;
     }
@@ -345,7 +345,7 @@ map_kernel_devices(void)
         )
     );
 
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         map_kernel_frame(
             GIC_VCPUCTRL_PADDR,
             GIC_VCPUCTRL_PPTR,

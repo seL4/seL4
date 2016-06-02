@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <arch/machine/gic_pl390.h>
 
 
@@ -240,7 +241,7 @@ dist_init(void)
 
     /* reset interrupts priority */
     for (i = 32; i < nirqs; i += 4) {
-        if (config_set(ARM_HYP)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             gic_dist->priority[i >> 2] = 0x80808080;
         } else {
             gic_dist->priority[i >> 2] = 0;
@@ -262,7 +263,7 @@ dist_init(void)
 
     /* group 0 for secure; group 1 for non-secure */
     for (i = 0; i < nirqs; i += 32) {
-        if (config_set(ARM_HYP)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             gic_dist->security[i >> 5] = 0xffffffff;
         } else {
             gic_dist->security[i >> 5] = 0;
@@ -285,7 +286,7 @@ cpu_iface_init(void)
     gic_dist->pending_clr[0] = IRQ_SET_ALL;
 
     /* put everything in group 0; group 1 if in hyp mode */
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         gic_dist->security[0] = 0xffffffff;
         gic_dist->priority[0] = 0x80808080;
     } else {

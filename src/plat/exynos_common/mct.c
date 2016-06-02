@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include "stdint.h"
 #include <arch/machine.h>
 #include <plat/machine.h>
@@ -133,7 +134,7 @@ volatile struct mct_map* mct = (volatile struct mct_map*)EXYNOS_MCT_PPTR;
 
 #ifdef ARM_CORTEX_A15
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* Use Hypervisor Physical timer */
 #define CNT_TVAL CNTHP_TVAL
 #define CNT_CTL  CNTHP_CTL

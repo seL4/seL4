@@ -1,3 +1,13 @@
+/*
+ * Copyright 2016, General Dynamics C4 Systems
+ *
+ * This software may be distributed and modified according to the terms of
+ * the GNU General Public License version 2. Note that NO WARRANTY is provided.
+ * See "LICENSE_GPLv2.txt" for details.
+ *
+ * @TAG(GD_GPL)
+ */
+
 #include <types.h>
 #include <config.h>
 
@@ -77,7 +87,7 @@ do_smmu_disable(void)
 static inline void
 smmu_disable(void)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* in hyp mode, we need call the hook in monitor mode */
         /* we need physical address here */
         paddr_t addr = addrFromPPtr(&do_smmu_disable);
@@ -97,7 +107,7 @@ smmu_disable(void)
 static inline void
 smmu_enable(void)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         paddr_t addr = addrFromPPtr(&do_smmu_enable);
         asm (".arch_extension sec\n");
         asm volatile ("mov r0, %0\n\t"
@@ -303,7 +313,7 @@ plat_smmu_handle_interrupt(void)
 
     /* we only care about SMMU translation failures */
     if (status & BIT(MC_SMMU_PAGE_BIT)) {
-        if (config_set(DEBUG)) {
+        if (config_set(CONFIG_PRINTING)) {
             uint32_t err_status = smmu_regs->err_status;
             uint32_t UNUSED err_adr = smmu_regs->err_adr;
             uint32_t UNUSED id = err_status & MC_ERR_ID_MASK;

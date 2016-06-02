@@ -86,7 +86,7 @@ BEGIN_FUNC(_start)
     msr cpsr_fc, r5
 
     /* Initialise CP15 control register */
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     mrc p15, 4, r4, c1, c0, 0
 #else
     mrc p15, 0, r4, c1, c0, 0
@@ -95,7 +95,7 @@ BEGIN_FUNC(_start)
     ldr r6, =CR_BITS_CLEAR
     orr r4, r4, r5
     bic r4, r4, r6
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     mcr p15, 4, r4, c1, c0, 0
 
     /* Initialise vector base */
@@ -121,7 +121,7 @@ BEGIN_FUNC(_start)
     pop {r0-r3}
 
     /* Hyp kernel always run in Hyp mode. */
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     /* Initialise ABORT stack pointer */
     cps #PMODE_ABORT
     ldr sp, =_breakpoint_stack_top
@@ -134,7 +134,7 @@ BEGIN_FUNC(_start)
     /* Restore the initial thread */
     ldr r7, =ksCurThread
     ldr sp, [r7]
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     /* ELR */
     ldr r0, [sp, #60]
     msr elr_hyp, r0

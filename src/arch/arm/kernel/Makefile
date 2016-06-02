@@ -11,4 +11,3 @@
 DIRECTORIES += src/arch/arm/kernel
 
 C_SOURCES += src/arch/arm/kernel/boot.c
-

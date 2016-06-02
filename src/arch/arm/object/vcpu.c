@@ -8,7 +8,9 @@
  * @TAG(GD_GPL)
  */
 
-#ifdef ARM_HYP
+#include <config.h>
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <arch/object/vcpu.h>
 #include <plat/machine/devices.h>

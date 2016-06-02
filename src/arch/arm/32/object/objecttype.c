@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <kernel/vspace.h>
@@ -15,7 +16,7 @@
 #include <arch/machine.h>
 #include <arch/model/statedata.h>
 #include <arch/object/objecttype.h>
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #include <arch/object/vcpu.h>
 #endif
 
@@ -67,7 +68,7 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -176,7 +177,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         if (final) {
             vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
@@ -300,7 +301,7 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
     }
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
         vcpu_init(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
@@ -381,7 +382,7 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         if (cap_get_capType(cap_b) == cap_vcpu_cap) {
             return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
@@ -451,10 +452,10 @@ Arch_getObjectSize(word_t t)
         return PDE_SIZE_BITS + PD_BITS;
     case seL4_ARM_IOPageTableObject:
         return seL4_IOPageTableBits;
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
         return VCPU_SIZE_BITS;
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
         fail("Invalid object type");
         return 0;
@@ -555,7 +556,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
         return cap_page_directory_cap_new(false, asidInvalid,
                                           (word_t)regionBase);
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
         memzero(regionBase, 1 << VCPU_SIZE_BITS);
         vcpu_init(VCPU_PTR(regionBase));
@@ -588,10 +589,10 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
         return decodeARMIOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
         return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
-#endif /* end of ARM_HYP */
+#endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
         return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     }
@@ -600,12 +601,12 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 void
 Arch_prepareThreadDelete(tcb_t *thread)
 {
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.vcpu) {
         dissociateVcpuTcb(thread, thread->tcbArch.vcpu);
     }
-#else  /* ARM_HYP */
+#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     /* No action required on ARM. */
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 

@@ -42,7 +42,6 @@ BOOT_CODE p_region_t get_avail_p_reg(word_t i)
 #define PAGE_SIZE       (1 << PAGE_BITS)
 #define SECTION_SIZE    (1 << SECTION_BITS)
 
-
 const p_region_t BOOT_RODATA dev_p_regs[] = {
 
     { VM_HOST_PA_START,     VM_HOST_PA_START + VM_HOST_PA_SIZE },
@@ -141,7 +140,7 @@ isReservedIRQ(irq_t irq)
 void
 handleReservedIRQ(irq_t irq)
 {
-    if ((config_set(ARM_HYP)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
         VGICMaintenance();
         return;
     }
@@ -179,7 +178,7 @@ map_kernel_devices(void)
         )
     );
 
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         map_kernel_frame(
             GIC_VCPUCTRL_PADDR,
             GIC_VCPUCTRL_PPTR,
@@ -265,7 +264,7 @@ static uint32_t gpt_cnt_tval = 0;
 void
 resetTimer(void)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         write_cnthp_tval(gpt_cnt_tval);
     } else {
         write_cntp_tval(gpt_cnt_tval);
@@ -280,7 +279,6 @@ resetTimer(void)
 BOOT_CODE void
 initTimer(void)
 {
-
     uint32_t freq = read_cntfrq();
     uint64_t tval = 0;
     if (freq != GPT_DEFAULT_HZ) {
@@ -294,7 +292,7 @@ initTimer(void)
 
     gpt_cnt_tval = (uint32_t)tval;
 
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         write_cnthp_tval(gpt_cnt_tval);
         write_cnthp_ctl(0x1);
     } else {

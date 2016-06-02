@@ -11,9 +11,10 @@
 #ifndef __ARCH_MACHINE_PL2_32_H
 #define __ARCH_MACHINE_PL2_32_H
 
+#include <config.h>
 #include <arch/object/vcpu.h>
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 /** MODIFIES: [*] */
 /** DONT_TRANSLATE */
@@ -193,5 +194,5 @@ static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
     return vaddr;
 }
 
-#endif /* !ARM_HYP */
+#endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 #endif /* __ARCH_MACHINE_PL2_32_H */

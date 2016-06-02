@@ -54,7 +54,7 @@ block page_table_cap {
     padding                   1
     field capPTIsMapped       1
     field capPTMappedASID    18
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     field_high capPTMappedAddress 12
 #else
     padding                   1
@@ -95,7 +95,7 @@ block asid_pool_cap {
     field capType          4
 }
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block vcpu_cap {
     padding               32
 
@@ -177,9 +177,9 @@ tagged_union cap capType {
     tag domain_cap          0x3e
 
     -- 8-bit tag arch caps
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     tag vcpu_cap            0x0f
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
     -- we use the same names as for x86 IOMMU caps
     tag io_space_cap            0x1f
@@ -191,7 +191,7 @@ tagged_union cap capType {
 
 block vm_fault {
     field address 32
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     field FSR 26
     padding 2
     field instructionFault 1
@@ -203,7 +203,7 @@ block vm_fault {
     field faultType 3
 }
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block vgic_maintenance {
     field idx        6
     field idxValid   1
@@ -225,7 +225,7 @@ tagged_union fault faultType {
     tag vm_fault 2
     tag unknown_syscall 3
     tag user_exception 4
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     tag vgic_maintenance 5
     tag vcpu_fault       6
 #endif
@@ -240,7 +240,7 @@ block stored_hw_asid {
     field pdeType 2
 }
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 -- Short descriptors
 
 -- Page directory entries
@@ -322,7 +322,11 @@ tagged_union pte pteSize {
     tag pte_small 1
 }
 
-#else /* !ARM_HYP */
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+-- These #defines allow for writing the bitfields here such
+-- that they match the names in the ARM hardware, yet can
+-- be used transparently by the existing C code that was
+-- written for the short descriptors
 #define pdeS2         pde
 #define pdeS2Type     pdeType
 #define pdeS2_section pde_section
@@ -472,7 +476,7 @@ tagged_union pteS1 pteS1Type {
     tag pteS1_small    3
 }
 
-#endif /* !ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 -- VM attributes
 

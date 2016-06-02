@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <benchmark.h>
 #include <api/failures.h>
@@ -44,7 +45,7 @@
 #define LAST_BYTE_PTE(PTE,LENGTH) ((word_t)&(PTE)[(LENGTH)-1] + (BIT(PTE_SIZE_BITS)-1))
 #define LAST_BYTE_PDE(PDE,LENGTH) ((word_t)&(PDE)[(LENGTH)-1] + (BIT(PDE_SIZE_BITS)-1))
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* Stage 2 */
 #define MEMATTR_CACHEABLE    0xf /* Inner and Outer write-back */
 #define MEMATTR_NONCACHEABLE 0x0 /* Strongly ordered or device memory */
@@ -52,7 +53,7 @@
 /* STage 1 hyp */
 #define ATTRINDX_CACHEABLE    0xff /* Inner and Outer RW write-back non-transient */
 #define ATTRINDX_NONCACHEABLE 0x0  /* strongly ordered or device memory */
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 
 /* This is the ARM kernel stack. It is accessed from a remapped address. */
@@ -65,7 +66,7 @@ struct resolve_ret {
 };
 typedef struct resolve_ret resolve_ret_t;
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 static bool_t PURE pteCheckIfMapped(pte_t *pte);
 static bool_t PURE pdeCheckIfMapped(pde_t *pde);
 
@@ -162,7 +163,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
     word_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
 
     assert(vaddr >= PPTR_TOP); /* vaddr lies in the region the global PT covers */
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     armKSGlobalPT[idx] =
         pte_pte_small_new(
             paddr,
@@ -192,7 +193,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
 #endif
 }
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 BOOT_CODE void
 map_kernel_window(void)
 {
@@ -472,7 +473,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
     pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pd));
     targetSlot = pt + ((vptr & MASK(pageBitsForSize(ARMSection)))
                        >> pageBitsForSize(ARMSmallPage));
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     *targetSlot = pte_pte_small_new(
                       addrFromPPtr(frame),
                       1, /* not global */
@@ -536,7 +537,7 @@ map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     *targetSlot = pde_pde_coarse_new(
                       addrFromPPtr(pt), /* address */
                       true,             /* P       */
@@ -687,7 +688,7 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, 
     return cap;
 }
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 BOOT_CODE void
 activate_global_pd(void)
@@ -735,7 +736,7 @@ activate_global_pd(void)
     setVTCR(r);
 }
 
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 BOOT_CODE void
 write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
@@ -885,7 +886,7 @@ resolveVAddr(pde_t *pd, vptr_t vaddr)
     switch (pde_ptr_get_pdeType(pde)) {
     case pde_pde_section:
         ret.frameBase = pde_pde_section_ptr_get_address(pde);
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (pde_pde_section_ptr_get_size(pde)) {
             ret.frameSize = ARMSuperSection;
         } else {
@@ -903,7 +904,7 @@ resolveVAddr(pde_t *pd, vptr_t vaddr)
     case pde_pde_coarse: {
         pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
         pte_t *pte = lookupPTSlot_nofail(pt, vaddr);
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         switch (pte_ptr_get_pteType(pte)) {
         case pte_pte_large:
             ret.frameBase = pte_pte_large_ptr_get_address(pte);
@@ -941,7 +942,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
             bool_t cacheable, bool_t nonexecutable, vm_rights_t vm_rights)
 {
     pte_t pte;
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     word_t ap;
 
     ap = APFromVMRights(vm_rights);
@@ -1054,7 +1055,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
     default:
         fail("Invalid PTE frame type");
     }
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
     return pte;
 }
@@ -1064,7 +1065,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
             bool_t cacheable, bool_t nonexecutable, word_t domain,
             vm_rights_t vm_rights)
 {
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     word_t ap, size2;
 
     ap = APFromVMRights(vm_rights);
@@ -1088,7 +1089,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
         fail("Invalid PDE frame type");
     }
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (cacheable) {
         return pde_pde_section_new(paddr, size2,
                                    1, /* not global */
@@ -1126,7 +1127,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
                    hap,
                    MEMATTR_NONCACHEABLE /* Not cacheable */);
     }
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 
 bool_t CONST
@@ -1158,7 +1159,7 @@ setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
             !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
-        if (config_set(ARM_HYP)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             setCurrentPD(addrFromPPtr(0));
         } else {
             setCurrentPD(addrFromPPtr(armKSGlobalPD));
@@ -1170,7 +1171,7 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_directory_cap_get_capPDMappedASID(threadRoot);
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.pd != pd)) {
-        if (config_set(ARM_HYP)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             setCurrentPD(addrFromPPtr(0));
         } else {
             setCurrentPD(addrFromPPtr(armKSGlobalPD));
@@ -1179,7 +1180,7 @@ setVMRoot(tcb_t *tcb)
     }
 
     armv_contextSwitch(pd, asid);
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(tcb->tcbArch.vcpu);
     }
 }
@@ -1356,7 +1357,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 void
 copyGlobalMappings(pde_t *newPD)
 {
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
@@ -1381,7 +1382,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     case ARMDataAbort: {
         word_t addr, fault;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         addr = getHDFAR();
         addr = (addressTranslateS1CPR(addr) & ~MASK(PAGE_BITS)) | (addr & MASK(PAGE_BITS));
         /* MSBs tell us that this was a DataAbort */
@@ -1399,7 +1400,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
         pc = getRestartPC(thread);
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         pc = (addressTranslateS1CPR(pc) & ~MASK(PAGE_BITS)) | (pc & MASK(PAGE_BITS));
         /* MSBs tell us that this was a PrefetchAbort */
         fault = getHSR() & 0x3ffffff;
@@ -1450,7 +1451,7 @@ deleteASID(asid_t asid, pde_t* pd)
     }
 }
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 static pte_t pte_pte_invalid_new(void)
 {
     /* Invalid as every PTE must have bit 0 set (large PTE) or bit 1 set (small
@@ -1487,7 +1488,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (unlikely(pte_ptr_get_pteType(lu_ret.ptSlot) != pte_pte_small)) {
             return;
         }
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pte_pte_small_ptr_get_contiguous_hint(lu_ret.ptSlot) != 0)) {
             return;
         }
@@ -1510,7 +1511,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
             return;
         }
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pte_ptr_get_pteType(lu_ret.ptSlot) != pte_pte_large)) {
             return;
         }
@@ -1547,7 +1548,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (unlikely(pde_ptr_get_pdeType(pd) != pde_pde_section)) {
             return;
         }
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pde_pde_section_ptr_get_size(pd) != 0)) {
 #else
         if (unlikely(pde_pde_section_ptr_get_contiguous_hint(pd) != 0)) {
@@ -1573,7 +1574,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (unlikely(pde_ptr_get_pdeType(pd) != pde_pde_section)) {
             return;
         }
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pde_pde_section_ptr_get_size(pd) != 1)) {
 #else
         if (unlikely(pde_pde_section_ptr_get_contiguous_hint(pd) != 1)) {
@@ -1741,7 +1742,7 @@ createSafeMappingEntries_PTE
         }
 
         ret.pte_entries.base = lu_ret.ptSlot;
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pte_ptr_get_pteType(ret.pte_entries.base) ==
                      pte_pte_large)) {
 #else
@@ -1783,7 +1784,7 @@ createSafeMappingEntries_PTE
         ret.pte_entries.base = lu_ret.ptSlot;
 
         for (i = 0; i < PAGES_PER_LARGE_PAGE; i++) {
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
             if (unlikely(pte_get_pteType(ret.pte_entries.base[i]) ==
                          pte_pte_small)) {
 #else
@@ -1835,7 +1836,7 @@ createSafeMappingEntries_PDE
             pde_ptr_get_pdeType(ret.pde_entries.base);
         if (unlikely(currentPDEType != pde_pde_invalid &&
                      (currentPDEType != pde_pde_section ||
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
                       pde_pde_section_ptr_get_size(ret.pde_entries.base) != 0))) {
 #else
                       pde_pde_section_ptr_get_contiguous_hint(ret.pde_entries.base) != 0))) {
@@ -1866,7 +1867,7 @@ createSafeMappingEntries_PDE
                 pde_get_pdeType(ret.pde_entries.base[i]);
             if (unlikely(currentPDEType != pde_pde_invalid &&
                          (currentPDEType != pde_pde_section ||
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
                           pde_pde_section_get_size(ret.pde_entries.base[i]) != 1))) {
 #else
                           pde_pde_section_get_contiguous_hint(ret.pde_entries.base[i]) != 1))) {
@@ -1912,7 +1913,7 @@ doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
     /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
             \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
         \<and> \<acute>start <= \<acute>end, id)" */
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         /* The hypervisor does not share an AS with userspace so we must flush
          * by kernel MVA instead. ARMv7 caches are PIPT so it makes no difference */
         end = (vptr_t)paddr_to_pptr(pstart) + (end - start);
@@ -2073,7 +2074,7 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
-        if (config_set(ARM_HYP)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             pte.words[0] += BIT(pageBitsForSize(ARMLargePage));
         }
     }
@@ -2102,7 +2103,7 @@ performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.base[i] = pde;
-        if (config_set(ARM_HYP)) {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             pde.words[0] += BIT(pageBitsForSize(ARMSection));
         }
     }
@@ -2316,7 +2317,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
 {
     word_t vaddr, pdIndex;
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     vm_attributes_t attr;
 #endif
     cap_t pdCap;
@@ -2353,7 +2354,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
     }
 
     vaddr = getSyscallArg(0, buffer);
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
 #endif
     pdCap = excaps.excaprefs[0]->cap;
@@ -2406,7 +2407,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
 
     paddr = addrFromPPtr(
                 PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     pde = pde_pde_coarse_new(
               paddr,
               vm_attributes_get_armParityEnabled(attr),
@@ -2700,7 +2701,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
 
         asid = generic_frame_cap_get_capFMappedASID(cap);
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         /* Must use kernel vaddr in hyp mode. */
         vaddr = generic_frame_cap_get_capFBasePtr(cap);
 #else
@@ -2935,7 +2936,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 void kernelPrefetchAbort(word_t pc) VISIBLE;
 void kernelDataAbort(word_t pc) VISIBLE;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 void kernelUndefinedInstruction(word_t pc) VISIBLE;
 
@@ -2976,7 +2977,7 @@ kernelUndefinedInstruction(word_t pc)
     halt();
 }
 
-#else /* ARM_HYP */
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 void
 kernelPrefetchAbort(word_t pc)
@@ -3002,7 +3003,7 @@ kernelDataAbort(word_t pc)
 
     halt();
 }
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #endif
 
@@ -3029,7 +3030,7 @@ readWordFromVSpace(pde_t *pd, word_t vaddr)
         offset = vaddr & MASK(ARMSectionBits);
     } else {
         ptSlot = lookupPTSlot(pd, vaddr);
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_small) {
             paddr = pte_pte_small_ptr_get_address(ptSlot.ptSlot);
             if (pte_pte_small_ptr_get_contiguous_hint(ptSlot.ptSlot)) {

@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <util.h>
 #include <api/types.h>
 #include <arch/types.h>
@@ -27,7 +28,7 @@ asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
 asid_t armKSHWASIDTable[BIT(hwASIDBits)];
 hw_asid_t armKSNextASID;
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* The global, privileged, physically-mapped PD */
 pde_t armKSGlobalPD[BIT(PD_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));
 
@@ -44,4 +45,4 @@ pteS1_t  armHSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 pte_t  armUSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* Current CPU */
 vcpu_t *ksCurCPU;
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */

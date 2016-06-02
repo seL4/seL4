@@ -14,4 +14,3 @@ ARCH_ASM_SOURCES += armv/${ARMV}/machine_asm.S
 ARCH_C_SOURCES += armv/${ARMV}/benchmark.c
 ARCH_C_SOURCES += armv/${ARMV}/user_access.c
 ARCH_C_SOURCES += armv/${ARMV}/cache.c
-

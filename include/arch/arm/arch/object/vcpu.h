@@ -11,7 +11,9 @@
 #ifndef __ARCH_OBJECT_VCPU_H
 #define __ARCH_OBJECT_VCPU_H
 
-#ifdef ARM_HYP
+#include <config.h>
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <api/failures.h>
 struct cpXRegs {
@@ -69,13 +71,13 @@ exception_t invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field);
 exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, int index, int group, int priority, int irq);
 exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb);
 
-#else /* end of ARM_HYP */
+#else /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 /* used in boot.c with a guard, use a marco to avoid exposing vcpu_t */
 #define vcpu_restore(x)
 #define vcpu_switch(x)
 static inline void VGICMaintenance(void) {}
 
-#endif /* end of !ARM_HYP */
+#endif /* end of !CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #endif /* __ARCH_OBJECT_VCPU_H */

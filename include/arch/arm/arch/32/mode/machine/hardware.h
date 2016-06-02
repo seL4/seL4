@@ -11,6 +11,8 @@
 #ifndef __ARCH_MACHINE_HARDWARE_32_H
 #define __ARCH_MACHINE_HARDWARE_32_H
 
+#include <config.h>
+
 #define PAGE_BITS 12
 
 #define PPTR_VECTOR_TABLE 0xffff0000
@@ -87,7 +89,7 @@
 #define PMASK_FIRQ        (1 << 6)
 
 /* Kernel operating mode */
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define PMODE_KERNEL     PMODE_HYPERVISOR
 #define PMODE_IDLE       PMODE_HYPERVISOR
 #else
@@ -113,20 +115,19 @@ enum vm_page_size {
     ARMSmallPage,
     ARMLargePage,
     ARMSection,
-    ARMSuperSection,
+    ARMSuperSection
 };
 typedef word_t vm_page_size_t;
-
 
 enum frameSizeConstants {
     ARMSmallPageBits    = 12,
     ARMLargePageBits    = 16,
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     ARMSectionBits      = 20,
-    ARMSuperSectionBits = 24,
+    ARMSuperSectionBits = 24
 #else
     ARMSectionBits      = 21,
-    ARMSuperSectionBits = 25,
+    ARMSuperSectionBits = 25
 #endif
 };
 

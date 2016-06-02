@@ -11,6 +11,7 @@
 #ifndef __ARCH_OBJECT_STRUCTURES_32_H
 #define __ARCH_OBJECT_STRUCTURES_32_H
 
+#include <config.h>
 #include <assert.h>
 #include <util.h>
 #include <api/types.h>
@@ -22,7 +23,7 @@
 typedef struct arch_tcb {
     /* saved user-level context of thread (72 bytes) */
     user_context_t tcbContext;
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     /* Pointer to associated VCPU. NULL if not associated.
      * tcb->vcpu->tcb == tcb. */
     struct vcpu* vcpu;
@@ -30,7 +31,7 @@ typedef struct arch_tcb {
 } arch_tcb_t;
 
 /* Ensure TCB size is sane. */
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define EXPECTED_TCB_SIZE 144
 #else
 #define EXPECTED_TCB_SIZE 140
@@ -44,7 +45,7 @@ enum vm_rights {
 };
 typedef word_t vm_rights_t;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define PGDE_SIZE_BITS 3
 #define PDE_SIZE_BITS  3
 #define PTE_SIZE_BITS  3
@@ -56,12 +57,12 @@ typedef word_t vm_rights_t;
 #define VCPU_PTR(r)       ((struct vcpu *)(r))
 #define VCPU_REF(p)       ((unsigned int)(p))
 
-#else /* ARM_HYP */
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 #define PDE_SIZE_BITS  2
 #define PTE_SIZE_BITS  2
 #define PD_BITS 12
 #define PT_BITS 8
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 
 #define PDE_PTR(r) ((pde_t *)(r))
@@ -325,7 +326,7 @@ cap_get_archCapSizeBits(cap_t cap)
     case cap_asid_control_cap:
         return 0;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return VCPU_SIZE_BITS;
 #endif
@@ -363,7 +364,7 @@ cap_get_archCapPtr(cap_t cap)
     case cap_asid_control_cap:
         return NULL;
 
-#ifdef ARM_HYP
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
 #endif
@@ -377,7 +378,7 @@ cap_get_archCapPtr(cap_t cap)
     }
 }
 
-#ifndef ARM_HYP
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* We need to supply different type getters for the bitfield generated PTE type
  * because there is an implicit third type that PTEs can be. If the type bit is
  * set but the reserved bit is not set, the type of the PTE is invalid, not a
@@ -408,6 +409,6 @@ pte_ptr_get_pteType(pte_t *pte_ptr)
         return pte_pte_invalid;
     }
 }
-#endif /* ARM_HYP */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #endif /* __ARCH_OBJECT_STRUCTURES_32_H */
