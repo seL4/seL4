@@ -360,7 +360,7 @@ menu "seL4 System Parameters"
 
     config MAX_NUM_TRACE_POINTS
         int "Maximum number of tracepoints"
-        depends on ENABLE_BENCHMARKS && !BENCHMARK_TRACK_KERNEL_ENTRIES
+        depends on !BENCHMARK_TRACK_KERNEL_ENTRIES
         default 0
         help
             Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data,
