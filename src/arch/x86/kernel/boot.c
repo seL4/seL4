@@ -340,7 +340,7 @@ init_cpu(
     bool_t   mask_legacy_irqs
 )
 {
-   /* initialise virtual-memory-related data structures */
+    /* initialise virtual-memory-related data structures */
     if (!init_vm_state()) {
         return false;
     }

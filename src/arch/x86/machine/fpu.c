@@ -133,12 +133,12 @@ Arch_initFpu(void)
                 printf("XSAVEOPT requested, but not supported\n");
                 return false;
             }
-        } else if(config_set(CONFIG_XSAVE_XSAVEC)) {
+        } else if (config_set(CONFIG_XSAVE_XSAVEC)) {
             if (!(xsave_instruction & BIT(1))) {
                 printf("XSAVEC requested, but not supported\n");
                 return false;
             }
-        } else if(config_set(CONFIG_XSAVE_XSAVES)) {
+        } else if (config_set(CONFIG_XSAVE_XSAVES)) {
             if (!(xsave_instruction & BIT(3))) {
                 printf("XSAVES requested, but not supported\n");
                 return false;
