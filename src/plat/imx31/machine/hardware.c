@@ -175,13 +175,6 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-/* Determine if the given IRQ should be reserved by the kernel. */
-bool_t CONST
-isReservedIRQ(irq_t irq)
-{
-    return false;
-}
-
 /* Handle a platform-reserved IRQ. */
 void
 handleReservedIRQ(irq_t irq)

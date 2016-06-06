@@ -291,30 +291,6 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-/* Determine if the given IRQ should be reserved by the kernel. */
-bool_t
-isReservedIRQ(interrupt_t irq)
-{
-    return irq == RESERVED_IRQ01 ||
-           irq == RESERVED_IRQ02 ||
-           irq == RESERVED_IRQ03 ||
-           irq == RESERVED_IRQ04 ||
-           irq == RESERVED_IRQ05 ||
-           irq == RESERVED_IRQ06 ||
-           irq == RESERVED_IRQ07 ||
-           irq == RESERVED_IRQ08 ||
-           irq == RESERVED_IRQ09 ||
-           irq == RESERVED_IRQ10 ||
-           irq == RESERVED_IRQ11 ||
-           irq == RESERVED_IRQ12 ||
-           irq == RESERVED_IRQ13 ||
-           irq == RESERVED_IRQ14 ||
-           irq == RESERVED_IRQ15 ||
-           irq == RESERVED_IRQ16 ||
-           irq == RESERVED_IRQ17 ||
-           irq == RESERVED_IRQ18;
-}
-
 /* Handle a platform-reserved IRQ. */
 void handleReservedIRQ(irq_t irq)
 {

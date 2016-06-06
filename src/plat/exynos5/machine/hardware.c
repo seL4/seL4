@@ -270,14 +270,6 @@ get_dev_p_reg(word_t i)
     return dev_p_regs[i];
 }
 
-
-/* Determine if the given IRQ should be reserved by the kernel. */
-bool_t CONST
-isReservedIRQ(irq_t irq)
-{
-    return irq == INTERRUPT_WDT;
-}
-
 /* Handle a platform-reserved IRQ. */
 void
 handleReservedIRQ(irq_t irq)
