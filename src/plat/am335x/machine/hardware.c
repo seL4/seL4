@@ -222,7 +222,6 @@ maskInterrupt(bool_t disable, interrupt_t irq)
 /* Handle a platform-reserved IRQ. */
 void handleReservedIRQ(irq_t irq)
 {
-    printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
 void

@@ -274,7 +274,6 @@ get_dev_p_reg(word_t i)
 void
 handleReservedIRQ(irq_t irq)
 {
-    printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
 
