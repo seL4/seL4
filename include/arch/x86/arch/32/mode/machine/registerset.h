@@ -74,6 +74,4 @@ extern const register_t gpRegisters[];
 extern const register_t exceptionMessage[];
 extern const register_t syscallMessage[];
 
-#define FPU_PADDING word_t padding;
-
 #endif

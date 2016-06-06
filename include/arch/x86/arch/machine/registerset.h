@@ -11,36 +11,26 @@
 #ifndef __ARCH_MACHINE_REGISTERSET_H
 #define __ARCH_MACHINE_REGISTERSET_H
 
+#include <config.h>
 #include <arch/types.h>
 #include <util.h>
 #include <assert.h>
 
 #include <mode/machine/registerset.h>
 
-/* Number of bytes required to store FPU state. */
-#define FPU_STATE_SIZE 512
-
 /* Minimum hardware-enforced alignment needed for FPU state. */
-#define MIN_FPU_ALIGNMENT 16
+#define MIN_FPU_ALIGNMENT 64
 
 /* X86 FPU context. */
 struct user_fpu_state {
-    uint8_t state[FPU_STATE_SIZE];
+    uint8_t state[CONFIG_XSAVE_SIZE];
 };
 typedef struct user_fpu_state user_fpu_state_t;
 
 /* X86 user-code context */
 struct user_context {
-    word_t registers[n_contextRegisters];
-
-    /*
-     * Padding to 16-byte boundary, required by the FPU state saving
-     * and restoring commands.
-     */
-    FPU_PADDING
-
-    /* 512 bytes. */
     user_fpu_state_t fpuState;
+    word_t registers[n_contextRegisters];
 };
 typedef struct user_context user_context_t;
 
