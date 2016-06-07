@@ -88,18 +88,21 @@ invokeSchedControl_Configure(sched_context_t *target, time_t budget, time_t peri
                 release |= updateActiveBudget(target, new_budget);
             }
         }
+    } else {
+        target->scNext = ksCurrentTime;
     }
 
     /* finally alter reload parameters */
     target->scBudget = new_budget;
     target->scPeriod = new_period;
 
+    if (ready(target)) {
+        recharge(target);
+    }
+
     /* we need to check if the thread is ready to be updated, otherwise postpone */
     if (release) {
         assert(isRunnable(target->scTcb));
-        if (ready(target)) {
-            recharge(target);
-        }
         if (target->scRemaining >= getKernelWcetTicks()) {
             tcbSchedEnqueue(target->scTcb);
         } else {
