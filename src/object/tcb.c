@@ -989,13 +989,13 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
         sched_context = SC_PTR(cap_sched_context_cap_get_capPtr(scCap));
         /* check tcb does not already have a scheduling context,
          * but pass if it's just the same scheduling context */
-        if (tcb->tcbSchedContext != NULL && tcb->tcbSchedContext != sched_context) {
+        if (tcb->tcbHomeSchedContext != NULL && tcb->tcbHomeSchedContext != sched_context) {
             userError("TCB Configure: tcb already has a sched context");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
         /* check the scheduling context isn't already bound */
-        if ((sched_context->scTcb != NULL && sched_context->scTcb != tcb) ||
+        if ((sched_context->scHome != NULL && sched_context->scHome != tcb) ||
                 sched_context->scNotification != NULL) {
             userError("TCB Configure: sched context already bound");
             current_syscall_error.type = seL4_IllegalOperation;
@@ -1454,9 +1454,9 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
     }
 
     if (updateFlags & thread_control_update_sc) {
-        if (sched_context != NULL) {
+        if (sched_context != NULL && sched_context != target->tcbHomeSchedContext) {
             schedContext_bindTCB(sched_context, target);
-        } else if (target->tcbHomeSchedContext != NULL) {
+        } else if (sched_context == NULL && target->tcbHomeSchedContext != NULL) {
             schedContext_removeTCB(target->tcbHomeSchedContext, target);
         }
     }

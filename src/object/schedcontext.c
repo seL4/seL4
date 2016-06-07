@@ -122,7 +122,7 @@ decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t rootCaps)
     switch (cap_get_capType(cap)) {
     case cap_thread_cap: {
         tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-        if (tcb->tcbSchedContext != NULL) {
+        if (tcb->tcbHomeSchedContext != NULL) {
             userError("SchedContext_Bind: tcb already bound");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
@@ -280,6 +280,15 @@ schedContext_resume(sched_context_t *sc)
 void
 schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 {
+    assert(tcb->tcbHomeSchedContext == NULL);
+
+    if (tcb->tcbSchedContext && tcb->tcbSchedContext->scHome) {
+        /* this tcb is running on borrowed time, resume it */
+        sched_context_t *go_home = tcb->tcbSchedContext;
+        schedContext_donate(go_home->scTcb, go_home);
+        schedContext_resume(go_home);
+    }
+
     tcb->tcbSchedContext = sc;
     sc->scTcb = tcb;
     tcb->tcbHomeSchedContext = sc;
