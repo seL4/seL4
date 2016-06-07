@@ -32,12 +32,12 @@
 
 #include <types.h>
 #include <arch/object/structures.h>
+#include <machine/timer.h>
 #include <plat/machine.h>
 #include <plat/machine/hardware_gen.h>
 
 #include <arch/machine/gic_pl390.h>
 #include <arch/machine/l2c_310.h>
-#include <arch/machine/priv_timer.h>
 
 static inline void * CONST
 ptrFromPAddr(paddr_t paddr)

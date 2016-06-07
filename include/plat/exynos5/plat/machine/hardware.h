@@ -32,6 +32,7 @@
 
 #include <types.h>
 #include <arch/object/structures.h>
+#include <machine/timer.h>
 #include <plat/machine.h>
 #include <plat/machine/hardware_gen.h>
 
@@ -75,11 +76,6 @@ p_region_t get_dev_p_reg(word_t i);
 void map_kernel_devices(void);
 
 void handleReservedIRQ(irq_t irq);
-
-/** MODIFIES: [*] */
-void resetTimer(void);
-/** MODIFIES: [*] */
-void initTimer(void);
 
 /** MODIFIES: [*] */
 void initL2Cache(void);

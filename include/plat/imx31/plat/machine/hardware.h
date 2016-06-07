@@ -23,6 +23,7 @@
 
 #include <types.h>
 #include <arch/object/structures.h>
+#include <machine/timer.h>
 #include <plat/machine.h>
 #include <plat/machine/hardware_gen.h>
 #include <plat/machine/devices.h>
@@ -71,10 +72,6 @@ bool_t isIRQPending(void);
 void maskInterrupt(bool_t enable, irq_t irq);
 /** MODIFIES: */
 irq_t getActiveIRQ(void);
-/** MODIFIES: [*] */
-void resetTimer(void);
-/** MODIFIES: [*] */
-void initTimer(void);
 /* L2 cache control */
 /** MODIFIES: [*] */
 void initL2Cache(void);

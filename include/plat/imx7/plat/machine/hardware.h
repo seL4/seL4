@@ -32,6 +32,7 @@
 
 #include <types.h>
 #include <arch/object/structures.h>
+#include <machine/timer.h>
 #include <plat/machine.h>
 #include <plat/machine/hardware_gen.h>
 
@@ -84,11 +85,6 @@ static inline void
 plat_invalidateL2Range(paddr_t start, paddr_t end) {}
 
 void initL2Cache(void);
-
-
-void initTimer(void);
-void resetTimer(void);
-
 
 #endif /* !__ASSEMBLER__ */
 
