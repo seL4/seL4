@@ -32,7 +32,7 @@ void clearIOPageDirectory(cap_t cap);
 static inline seL4_SlotRegion
 create_iospace_caps(cap_t root_cnode_cap)
 {
-    return (seL4_SlotRegion) S_REG_EMPTY;
+    return S_REG_EMPTY;
 }
 
 static inline exception_t
