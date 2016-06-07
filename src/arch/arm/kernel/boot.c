@@ -21,7 +21,7 @@
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
-
+#include <machine/timer.h>
 
 /* pointer to the end of boot code/data in kernel image */
 /* need a fake array to get the pointer from the linker script */

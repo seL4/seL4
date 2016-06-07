@@ -14,5 +14,20 @@
 #include <types.h>
 #include <arch/machine/hardware.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine.h>
 
+void handleReservedIRQ(irq_t irq);
+void handleSpuriousIRQ(void);
+
+/** MODIFIES: [*] */
+void ackInterrupt(irq_t irq);
+
+/** MODIFIES: [*] */
+irq_t getActiveIRQ(void);
+
+/** MODIFIES: [*] */
+bool_t isIRQPending(void);
+
+/** MODIFIES: [*] */
+void maskInterrupt(bool_t enable, irq_t irq);
 #endif

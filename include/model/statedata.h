@@ -15,6 +15,7 @@
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <arch/model/statedata.h>
+#include <arch/machine.h>
 
 extern tcb_queue_t ksReadyQueues[] VISIBLE;
 extern word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS] VISIBLE;
