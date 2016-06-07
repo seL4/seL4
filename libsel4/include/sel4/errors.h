@@ -23,6 +23,12 @@ typedef enum {
     seL4_DeleteFirst,
     seL4_RevokeFirst,
     seL4_NotEnoughMemory,
+
+    /* This should always be the last item in the list
+     * so it gives a count of the number of errors in the
+     * enum.
+     */
+    seL4_NumErrors
 } seL4_Error;
 
 #endif
