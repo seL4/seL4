@@ -20,6 +20,8 @@
 
 #ifdef CONFIG_PRINTING
 
+extern kernel_entry_t ksKernelEntry;
+
 static inline void
 debug_printKernelEntryReason(void)
 {
