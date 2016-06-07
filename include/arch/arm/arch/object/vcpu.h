@@ -74,8 +74,8 @@ exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb);
 #else /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 /* used in boot.c with a guard, use a marco to avoid exposing vcpu_t */
-#define vcpu_restore(x)
-#define vcpu_switch(x)
+#define vcpu_restore(x) do {} while(0)
+#define vcpu_switch(x) do {} while(0)
 static inline void VGICMaintenance(void) {}
 
 #endif /* end of !CONFIG_ARM_HYPERVISOR_SUPPORT */
