@@ -301,13 +301,13 @@ pause(sched_context_t *sc)
 {
     tcbSchedDequeue(sc->scTcb);
     tcbReleaseRemove(sc->scTcb);
+
     sc->scTcb->tcbSchedContext = NULL;
 
     if (sc->scTcb == ksCurThread) {
         rescheduleRequired();
     }
 
-    sc->scTcb->tcbSchedContext = NULL;
     sc->scTcb = NULL;
 }
 
