@@ -75,6 +75,7 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         return ret;
 #endif
 
+#ifdef CONFIG_ARM_SMMU
     case cap_io_space_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -91,6 +92,7 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
             ret.status = EXCEPTION_SYSCALL_ERROR;
         }
         return ret;
+#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -185,6 +187,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         break;
 #endif
 
+#ifdef CONFIG_ARM_SMMU
     case cap_io_space_cap:
         if (final) {
             clearIOPageDirectory(cap);
@@ -196,6 +199,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
             deleteIOPageTable(cap);
         }
         break;
+#endif
 
     default:
         break;
@@ -218,8 +222,10 @@ resetMemMapping(cap_t cap)
     case cap_page_directory_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_page_directory_cap_set_capPDIsMapped(cap, 0);
+#ifdef CONFIG_ARM_SMMU
     case cap_io_page_table_cap:
         return cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
+#endif
     }
 
     return cap;
@@ -308,6 +314,7 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
 #endif
 
+#ifdef CONFIG_ARM_SMMU
     case cap_io_space_cap:
         Arch_finaliseCap(cap, true);
         return cap;
@@ -316,6 +323,7 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
         clearMemoryRAM(cap_get_capPtr(cap), cap_get_capSizeBits(cap));
         Arch_finaliseCap(cap, is_final);
         return resetMemMapping(cap);
+#endif
 
     default:
         fail("Arch_recycleCap: invalid cap type");
@@ -391,6 +399,7 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         break;
 #endif
 
+#ifdef CONFIG_ARM_SMMU
     case cap_io_space_cap:
         if (cap_get_capType(cap_b) == cap_io_space_cap) {
             return cap_io_space_cap_get_capModuleID(cap_a) ==
@@ -403,6 +412,7 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             return cap_io_page_table_cap_get_capIOPTBasePtr(cap_a) ==
                    cap_io_page_table_cap_get_capIOPTBasePtr(cap_b);
         }
+#endif
         break;
     }
 
@@ -563,12 +573,14 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
         return cap_vcpu_cap_new(VCPU_REF(regionBase));
 #endif
 
+#ifdef CONFIG_ARM_SMMU
     case seL4_ARM_IOPageTableObject:
         memzero(regionBase, 1 << seL4_IOPageTableBits);
         cleanCacheRange_RAM((word_t)regionBase,
                             (word_t)regionBase + (1 << seL4_IOPageTableBits) - 1,
                             addrFromPPtr(regionBase));
         return cap_io_page_table_cap_new(0, asidInvalid, (word_t)regionBase, 0);
+#endif
     default:
         /*
          * This is a conflation of the haskell error: "Arch.createNewCaps
@@ -585,10 +597,12 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
                       word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
+#ifdef CONFIG_ARM_SMMU
     case cap_io_space_cap:
         return decodeARMIOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
         return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
         return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);

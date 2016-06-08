@@ -104,7 +104,7 @@ block vcpu_cap {
 }
 #endif
 
-
+#ifdef CONFIG_ARM_SMMU
 -- IO space caps
 -- each module has an engine that can be enabled
 -- the clients use the same module can be separately enabled
@@ -143,6 +143,7 @@ block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, 
     field       capIOPTIsMapped         1
     field       capType                 8
 }
+#endif
 
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
@@ -182,9 +183,11 @@ tagged_union cap capType {
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
     -- we use the same names as for x86 IOMMU caps
+#ifdef CONFIG_ARM_SMMU
     tag io_space_cap            0x1f
     tag io_page_directory_cap   0x2f
     tag io_page_table_cap       0x3f
+#endif
 }
 
 ---- Arch-independent object types
