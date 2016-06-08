@@ -11,11 +11,32 @@
 #ifndef __ARCH_MACHINE_H
 #define __ARCH_MACHINE_H
 
+#include <machine.h>
 #include <mode/machine.h>
+#include <plat/machine/hardware.h>
 #include <arch/types.h>
 #include <util.h>
 
 #ifndef __ASSEMBLER__
+
+int get_num_avail_p_regs(void);
+p_region_t get_avail_p_reg(word_t i);
+int get_num_dev_p_regs(void);
+p_region_t get_dev_p_reg(word_t i);
+void map_kernel_devices(void);
+
+/** MODIFIES: [*] */
+void initL2Cache(void);
+
+void initIRQController(void);
+
+/** MODIFIES: [*] */
+static inline void plat_cleanL2Range(paddr_t start, paddr_t end);
+/** MODIFIES: [*] */
+static inline void plat_invalidateL2Range(paddr_t start, paddr_t end);
+/** MODIFIES: [*] */
+static inline void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
+
 /** MODIFIES: [*] */
 void cleanInvalidateCacheRange_RAM(word_t start, word_t end, paddr_t pstart);
 /** MODIFIES: [*] */

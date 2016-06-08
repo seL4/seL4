@@ -158,13 +158,14 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&dest->tcbState,
                                    ThreadState_Running);
+    switchToThread_fp(dest, cap_pd, stored_hw_asid);
+
+    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
+
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
 
-    switchToThread_fp(dest, cap_pd, stored_hw_asid);
-
-    msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
     fastpath_restore(badge, msgInfo, ksCurThread);
 }
 

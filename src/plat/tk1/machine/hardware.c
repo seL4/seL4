@@ -129,13 +129,6 @@ BOOT_CODE p_region_t get_dev_p_reg(word_t i)
 }
 
 
-/* Determine if the given IRQ should be reserved by the kernel. */
-bool_t CONST
-isReservedIRQ(irq_t irq)
-{
-    return irq == KERNEL_TIMER_IRQ;
-}
-
 /* Handle a platform-reserved IRQ. */
 void
 handleReservedIRQ(irq_t irq)
@@ -150,7 +143,6 @@ handleReservedIRQ(irq_t irq)
         return;
     }
 
-    printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
 BOOT_CODE void
@@ -302,3 +294,9 @@ initTimer(void)
         write_cntp_ctl(0x1);
     }
 }
+
+void plat_cleanL2Range(paddr_t start, paddr_t end) {}
+void plat_invalidateL2Range(paddr_t start, paddr_t end) {}
+void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end) {}
+
+

@@ -42,7 +42,6 @@ void handleReservedIRQ(irq_t irq)
         vtd_handle_fault();
         return;
     }
-    printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
 /* Get the IRQ number currently working on. */

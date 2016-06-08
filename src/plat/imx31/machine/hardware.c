@@ -18,6 +18,7 @@
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/hardware_gen.h>
 
 #define L2_LINE_SIZE_BITS 5
 #define L2_LINE_SIZE BIT(L2_LINE_SIZE_BITS)
@@ -175,18 +176,10 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-/* Determine if the given IRQ should be reserved by the kernel. */
-bool_t CONST
-isReservedIRQ(irq_t irq)
-{
-    return false;
-}
-
 /* Handle a platform-reserved IRQ. */
 void
 handleReservedIRQ(irq_t irq)
 {
-    printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
 void

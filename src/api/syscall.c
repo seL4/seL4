@@ -54,11 +54,12 @@ handleInterruptEntry(void)
         handleSpuriousIRQ();
     }
 
+    schedule();
+    activateThread();
+
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
-    schedule();
-    activateThread();
 
     return EXCEPTION_NONE;
 }
@@ -213,12 +214,12 @@ handleUserLevelFault(word_t w_a, word_t w_b)
     current_fault = fault_user_exception_new(w_a, w_b);
     handleFault(ksCurThread);
 
+    schedule();
+    activateThread();
+
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
-
-    schedule();
-    activateThread();
 
     return EXCEPTION_NONE;
 }
@@ -241,12 +242,12 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
         handleFault(ksCurThread);
     }
 
+    schedule();
+    activateThread();
+
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
-
-    schedule();
-    activateThread();
 
     return EXCEPTION_NONE;
 }

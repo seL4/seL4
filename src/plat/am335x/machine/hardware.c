@@ -219,17 +219,9 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-/* Determine if the given IRQ should be reserved by the kernel. */
-bool_t
-isReservedIRQ(interrupt_t irq)
-{
-    return irq == KERNEL_TIMER_IRQ;
-}
-
 /* Handle a platform-reserved IRQ. */
 void handleReservedIRQ(irq_t irq)
 {
-    printf("Received reserved IRQ: %d\n", (int)irq);
 }
 
 void
@@ -392,4 +384,9 @@ handleSpuriousIRQ(void)
     intc->intcps_control = INTCPS_CONTROL_NEWIRQAGR;
     dsb();
 }
+
+void plat_cleanL2Range(paddr_t start, paddr_t end) {}
+void plat_invalidateL2Range(paddr_t start, paddr_t end) {}
+void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end) {}
+
 

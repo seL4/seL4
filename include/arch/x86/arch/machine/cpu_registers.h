@@ -26,4 +26,14 @@ static unsigned long control_reg_order;
 
 #include <mode/machine/cpu_registers.h>
 
+static inline void xsetbv(uint32_t reg, uint64_t value)
+{
+    asm volatile("xsetbv" :: "d"((uint32_t)(value >> 32)), "a"((uint32_t)(value & 0xffffffff)), "c"(reg), "m"(control_reg_order));
+}
+
+static inline void write_xcr0(uint64_t value)
+{
+    xsetbv(0, value);
+}
+
 #endif
