@@ -21,7 +21,7 @@
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
-
+#include <machine/timer.h>
 
 /* pointer to the end of boot code/data in kernel image */
 /* need a fake array to get the pointer from the linker script */
@@ -320,9 +320,9 @@ try_init_kernel(
      * everything to PoC */
     cleanInvalidateL1Caches();
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     armv_init_ccnt();
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* Export selected CPU features for access by PL0 */
     armv_init_user_access();

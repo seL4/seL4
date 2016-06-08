@@ -162,11 +162,11 @@ init_sys_state(
     cap_t         ipcbuf_cap;
     pptr_t        bi_frame_pptr;
     create_frames_of_region_ret_t create_frames_ret;
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     vm_attributes_t buffer_attr = {{ 0 }};
     word_t paddr;
     pde_t pde;
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
@@ -187,12 +187,7 @@ init_sys_state(
 
     init_freemem(ui_info.p_reg, mem_p_regs);
 
-    /* initialise virtual-memory-related data structures (not in abstract spec) */
-    if (!init_vm_state()) {
-        return false;
-    }
-
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
     /* allocate and create the log buffer */
     buffer_attr.words[0] = IA32_PAT_MT_WRITE_THROUGH;
 
@@ -208,12 +203,14 @@ init_sys_state(
 
     /* if we crash here, the log isn't working */
 #ifdef CONFIG_DEBUG_BUILD
+#if CONFIG_MAX_NUM_TRACE_POINTS > 0
     printf("Testing log\n");
     ksLog[0].data = 0xdeadbeef;
     printf("Wrote to ksLog %x\n", ksLog[0].data);
     assert(ksLog[0].data == 0xdeadbeef);
+#endif /* CONFIG_MAX_NUM_TRACE_POINTS */
 #endif /* CONFIG_DEBUG_BUILD */
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
@@ -287,13 +284,6 @@ init_sys_state(
     }
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
-    /*
-     * Initialise the NULL FPU state. This is different from merely zero'ing it
-     * out (i.e., the NULL FPU state is non-zero), and must be performed before
-     * the first thread is created.
-     */
-    resetFpu();
-    saveFpuState(&x86KSnullFpuState);
     x86KSfpuOwner = NULL;
     x86KStscMhz = tsc_init();
     ndks_boot.bi_frame->archInfo = x86KStscMhz;
@@ -358,6 +348,11 @@ init_cpu(
     bool_t   mask_legacy_irqs
 )
 {
+    /* initialise virtual-memory-related data structures */
+    if (!init_vm_state()) {
+        return false;
+    }
+
     /* initialise CPU's descriptor table registers (GDTR, IDTR, LDTR, TR) */
     init_dtrs();
 
@@ -370,7 +365,9 @@ init_cpu(
     }
 
     /* initialise floating-point unit */
-    Arch_initFpu();
+    if (!Arch_initFpu()) {
+        return false;
+    }
 
     /* initialise local APIC */
     if (!apic_init(mask_legacy_irqs)) {

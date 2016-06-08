@@ -30,6 +30,7 @@
 #define IA32_STAR_MSR           0xC0000081
 #define IA32_FMASK_MSR          0xC0000084
 #define IA32_PLATFORM_INFO_MSR  0xCE
+#define IA32_XSS_MSR            0xD0A
 
 #define BROADWELL_MODEL_ID      0xD4
 #define HASWELL_MODEL_ID        0xC3
@@ -136,6 +137,19 @@ static inline uint64_t x86_rdtsc(void)
     );
 
     return ((uint64_t) hi) << 32llu | (uint64_t) lo;
+}
+
+static inline uint32_t x86_cpuid_ebx(uint32_t eax, uint32_t ecx)
+{
+    uint32_t edx, ebx;
+    asm volatile("cpuid"
+                 : "=a" (eax),
+                 "=b" (ebx),
+                 "=c" (ecx),
+                 "=d" (edx)
+                 : "a" (eax), "c" (ecx)
+                 : "memory");
+    return ebx;
 }
 
 #ifdef CONFIG_FSGSBASE_MSR

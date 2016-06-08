@@ -15,6 +15,7 @@
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <arch/model/statedata.h>
+#include <arch/machine.h>
 
 #define NUM_READY_QUEUES (CONFIG_NUM_PRIORITIES*CONFIG_NUM_CRITICALITIES)
 #define L2_BITMAP_SIZE ((NUM_READY_QUEUES / wordBits) + 1)

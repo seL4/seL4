@@ -11,8 +11,10 @@
 #ifndef __MODE_OBJECT_STRUCTURES_H
 #define __MODE_OBJECT_STRUCTURES_H
 
+#include <config.h>
+
 /* update this when you modify the tcb struct */
-#define EXPECTED_TCB_SIZE 688
+#define EXPECTED_TCB_SIZE (168 + CONFIG_XSAVE_SIZE)
 
 #define GDT_NULL    0
 #define GDT_CS_0    1

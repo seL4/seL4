@@ -68,7 +68,9 @@
                         BIT(CONTROL_R) | \
                         BIT(CONTROL_VE) | \
                         BIT(CONTROL_RR) | \
-                        BIT(CONTROL_EE))
+                        BIT(CONTROL_EE) | \
+                        BIT(CONTROL_TRE) | \
+                        BIT(CONTROL_AP))
 
 /*
  * Entry point of the kernel ELF image.

@@ -223,6 +223,11 @@ try_boot_sys_node(cpu_id_t cpu_id)
     boot_mem_reuse_p_reg.start = PADDR_LOAD;
     boot_mem_reuse_p_reg.end = (paddr_t)ki_boot_end - KERNEL_BASE_OFFSET;
 
+    /* initialise the CPU */
+    if (!init_cpu(config_set(CONFIG_IRQ_IOAPIC) ? 1 : 0)) {
+        return false;
+    }
+
     /* initialise NDKS and kernel heap */
     if (!init_sys_state(
                 cpu_id,
@@ -238,10 +243,6 @@ try_boot_sys_node(cpu_id_t cpu_id)
         return false;
     }
 
-    /* initialise the CPU */
-    if (!init_cpu(config_set(CONFIG_IRQ_IOAPIC) ? 1 : 0)) {
-        return false;
-    }
     return true;
 }
 

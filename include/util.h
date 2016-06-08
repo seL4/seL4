@@ -62,6 +62,13 @@
 #define _is_set__(comma) _is_set___(comma 1, 0)
 #define _is_set___(_, v, ...) v
 
+/* Evalulate the value of a configuration setting, return a default
+ * if it isn't defined */
+#define config_default(macro, default) _config_default(macro, default)
+#define _config_default(value, default) _config_default_(_macrotest_##value, value, default)
+#define _config_default_(comma, value, default) _config_default__(comma value, default)
+#define _config_default__(_, v, ...) v
+
 /** MODIFIES:
     FNSPEC
         halt_spec: "\<Gamma> \<turnstile> {} Call halt_'proc {}"

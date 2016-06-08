@@ -21,22 +21,4 @@
 typedef uint16_t interrupt_t;
 typedef uint16_t irq_t;
 
-
-
-/** MODIFIES: [*] */
-interrupt_t getActiveIRQ(void);
-/** MODIFIES: [*] */
-interrupt_t getPendingIRQ(void);
-/** MODIFIES: [*] */
-bool_t isIRQPending(void);
-/** MODIFIES: [*] */
-void maskInterrupt(bool_t disable, interrupt_t irq);
-/** MODIFIES: [*] */
-void ackInterrupt(irq_t irq);
-
-/** MODIFIES: [*] */
-void initIRQController(void);
-
-void handleSpuriousIRQ(void);
-
 #endif /* !__ARCH_MACHINE_GICPL390_H */

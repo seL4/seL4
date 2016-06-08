@@ -670,7 +670,7 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg)
 }
 #endif
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
+#ifdef CONFIG_ENABLE_BENCHMARKS
 /* set the log index back to 0 */
 static inline void
 seL4_BenchmarkResetLog(void)
@@ -694,7 +694,8 @@ seL4_BenchmarkDumpLog(seL4_Word start, seL4_Word size)
     register seL4_Word scno asm("r7") = seL4_SysBenchmarkDumpLog;
     asm volatile ("swi %[swi_num]"
                   : "+r" (arg1)
-                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkDumpLog), "r" (arg1), "r" (arg2), "r"(scno));
+                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkDumpLog), "r" (arg1), "r" (arg2), "r"(scno)
+                  : "memory");
 
     return (seL4_Uint32) arg1;
 
@@ -726,7 +727,7 @@ seL4_BenchmarkFinalizeLog(void)
                  );
 }
 
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #undef __SWINUM
 
