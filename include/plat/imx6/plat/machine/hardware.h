@@ -26,5 +26,6 @@
 
 #define PPTR_TOP          0xfff00000
 #define PADDR_TOP         (PPTR_TOP - BASE_OFFSET)
+#define CLK_MHZ 498llu
 
 #endif /* !__PLAT_MACHINE_HARDWARE_H */
