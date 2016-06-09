@@ -213,6 +213,9 @@ struct tcb {
     /* Domain, 1 byte (packed to 4) */
     dom_t tcbDomain;
 
+    /*  maximum controlled priorioty, 1 byte (packed to 4) */
+    prio_t tcbMCP;
+
     /* Priority, 1 byte (packed to 4) */
     prio_t tcbPriority;
 

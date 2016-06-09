@@ -58,10 +58,12 @@ deleted.
 \label{sec:sched}
 
 seL4 uses a preemptive round-robin scheduler with 256 priority levels.
-When a thread creates or modifies another thread, it can only set the
-other thread's priority to be lower than or equal to its own. Thread priority can be
+All threads have a maximum controlled priority (MCP) and a priority, the latter being the effective
+priority of the thread.
+When a thread creates or modifies a thread (including itself), it can only set the
+other thread's priority and MCP to be less than or equal to its own MCP. Thread priority and MCP can be
 set with \apifunc{seL4\_TCB\_Configure}{tcb_configure} and
-\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority} methods.
+\apifunc{seL4\_TCB\_SetPriority}{tcb_setpriority}, \apifunc{seL4\_TCB\_SetMCPriority}{tcb_setmcpriority} methods.
 
 \subsection{Exceptions}
 

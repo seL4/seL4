@@ -84,6 +84,7 @@
 \newcommand{\archflagsdesc}{Architecture dependent flags. These have no meaning on \ifxeightsix{either IA-32 or}\fi{} ARM.}
 
 \newcommand{\threadpriodesc}{The thread's new priority.}
+\newcommand{\threadmaxpriodesc}{The thread's new maximum controlled priority.}
 \newcommand{\threadcspacerootdesc}{The new CSpace root.}
 \newcommand{\threadcspacedatadesc}{Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect.}
 \newcommand{\threadvspacerootdesc}{The new VSpace root.}
@@ -270,6 +271,7 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{tcb_resume}
 \inputapidoc{tcb_setipcbuffer}
 \inputapidoc{tcb_setpriority}
+\inputapidoc{tcb_setmcpriority}
 \inputapidoc{tcb_setspace}
 \inputapidoc{tcb_suspend}
 \inputapidoc{tcb_writeregisters}

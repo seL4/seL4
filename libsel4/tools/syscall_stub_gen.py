@@ -219,6 +219,7 @@ def init_data_types(wordsize):
 
         # seL4 Structures
         BitFieldType("seL4_CapData_t", wordsize, wordsize),
+        BitFieldType("seL4_PrioProps_t", wordsize, wordsize),
 
         # Object types
         CapType("seL4_CPtr", wordsize),

@@ -413,6 +413,7 @@ create_initial_thread(
 
     /* initialise TCB */
     tcb->tcbPriority = seL4_MaxPrio;
+    tcb->tcbMCP = seL4_MaxPrio;
     setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
     ksSchedulerAction = tcb;

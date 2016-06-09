@@ -70,6 +70,7 @@ exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeTCBConfigure(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t rootCaps, word_t *buffer);
 exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
@@ -83,7 +84,8 @@ enum thread_control_flag {
     thread_control_update_priority = 0x1,
     thread_control_update_ipc_buffer = 0x2,
     thread_control_update_space = 0x4,
-    thread_control_update_all = 0x7,
+    thread_control_update_mcp = 0x8,
+    thread_control_update_all = 0xF,
 };
 
 typedef word_t thread_control_flag_t;
@@ -91,7 +93,7 @@ typedef word_t thread_control_flag_t;
 exception_t invokeTCB_Suspend(tcb_t *thread);
 exception_t invokeTCB_Resume(tcb_t *thread);
 exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t* slot, cptr_t faultep,
-                                    prio_t priority, cap_t cRoot_newCap,
+                                    prio_t mcp, prio_t priority, cap_t cRoot_newCap,
                                     cte_t *cRoot_srcSlot, cap_t vRoot_newCap,
                                     cte_t *vRoot_srcSlot, word_t bufferAddr,
                                     cap_t bufferCap, cte_t *bufferSrcSlot,

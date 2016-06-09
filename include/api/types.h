@@ -98,6 +98,15 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
     return mi.words[0];
 }
 
+static inline seL4_PrioProps_t CONST
+prioPropsFromWord(word_t w)
+{
+    seL4_PrioProps_t pp;
+    pp.words[0] = w;
+
+    return pp;
+}
+
 #define allRights cap_rights_new(true, true, true)
 #define noWrite cap_rights_new(true, true, false)
 

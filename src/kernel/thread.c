@@ -361,6 +361,12 @@ setDomain(tcb_t *tptr, dom_t dom)
 }
 
 void
+setMCPriority(tcb_t *tptr, prio_t mcp)
+{
+    tptr->tcbMCP = mcp;
+}
+
+void
 setPriority(tcb_t *tptr, prio_t prio)
 {
     tcbSchedDequeue(tptr);
