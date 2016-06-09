@@ -596,6 +596,10 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
                       cte_t *slot, cap_t cap, extra_caps_t excaps,
                       word_t *buffer)
 {
+    /* The C parser cannot handle a switch statement with only a default
+     * case. So we need to do some gymnastics to remove the switch if
+     * there are no other cases */
+#if defined(CONFIG_ARM_SMMU) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
     switch (cap_get_capType(cap)) {
 #ifdef CONFIG_ARM_SMMU
     case cap_io_space_cap:
@@ -608,6 +612,9 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
         return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
+#else
+    {
+#endif
         return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     }
 }
