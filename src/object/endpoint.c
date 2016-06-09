@@ -191,14 +191,14 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
-            /* Note that thread == ksCurThread,
-             * so if at this point the thread doesn't have a scheduling context,
+            /*
+             * if at this point the thread doesn't have a scheduling context,
              * it must have given it away in either a reply or signal before
              * calling handleRecv. We cannot get here from a plain recv, as
              * without a scheduling context, we could not be running to call it */
-            if (thread->tcbSchedContext == NULL) {
-                schedContext_donate(thread, ksCurSchedContext);
-                donated = ksCurSchedContext;
+            if (thread->tcbSchedContext == NULL && sender->tcbSchedContext != NULL) {
+                donated = sender->tcbSchedContext;
+                schedContext_donate(thread, sender->tcbSchedContext);
             }
 
             if (do_call ||
