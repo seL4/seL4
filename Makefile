@@ -178,6 +178,10 @@ ifeq (${CC},)
 CC = ${TOOLPREFIX}gcc
 endif
 
+ifeq (${PYTHON},)
+PYTHON = python
+endif
+
 # Allow manually appending CPP flags.
 ifneq (${CONFIG_KERNEL_EXTRA_CPPFLAGS},)
 ifneq (${CONFIG_KERNEL_EXTRA_CPPFLAGS},"")
@@ -189,11 +193,11 @@ CPP = ${TOOLPREFIX}cpp
 AS = ${TOOLPREFIX}as
 LD = ${TOOLPREFIX}ld
 STRIP = ${TOOLPREFIX}strip
-BF_GEN = bitfield_gen.py
+BF_GEN_PATH = ${SOURCE_ROOT}/tools/bitfield_gen.py
 CHANGED = ${SOURCE_ROOT}/tools/changed.sh
 CPP_GEN = ${SOURCE_ROOT}/tools/cpp_gen.sh
-SYSCALL_ID_GEN = syscall_header_gen.py
-INVOCATION_ID_GEN = invocation_header_gen.py
+SYSCALL_ID_GEN_PATH = ${SOURCE_ROOT}/tools/syscall_header_gen.py
+INVOCATION_ID_GEN_PATH = ${SOURCE_ROOT}/tools/invocation_header_gen.py
 XMLLINT = xmllint.sh
 
 ########################################
@@ -211,11 +215,8 @@ $(info LD            = ${LD})
 $(info LD_PATH       = ${LD_PATH})
 $(info PARSER        = ${PARSER})
 $(info PARSER_PATH   = ${PARSER_PATH})
-$(info BF_GEN        = ${BF_GEN})
 $(info BF_GEN_PATH   = ${BF_GEN_PATH})
-$(info SYSCALL_ID_GEN = ${SYSCALL_ID_GEN})
 $(info SYSCALL_ID_GEN_PATH = ${SYSCALL_ID_GEN_PATH})
-$(info INVOCATION_ID_GEN = ${INVOCATION_ID_GEN})
 $(info INVOCATION_ID_GEN_PATH = ${INVOCATION_ID_GEN_PATH})
 $(info XMLLINT_PATH  = ${XMLLINT_PATH})
 $(info XMLLINT       = ${XMLLINT})
@@ -238,14 +239,8 @@ $(if ${LD_PATH},,$(error ${LD} not in PATH or not executable))
 STRIP_PATH = $(shell PATH=${PATH} sh -c "which ${STRIP}")
 $(if ${STRIP_PATH},,$(error ${STRIP} not in PATH or not executable))
 
-BF_GEN_PATH = $(shell PATH=${PATH} sh -c "which ${BF_GEN}")
-$(if ${BF_GEN_PATH},,$(error ${BF_GEN} not in PATH or not executable))
-
-SYSCALL_ID_GEN_PATH = $(shell PATH=${PATH} sh -c "which ${SYSCALL_ID_GEN}")
-$(if ${SYSCALL_ID_GEN_PATH},,$(error ${SYSCALL_ID_GEN} not in PATH or not executable))
-
-INVOCATION_ID_GEN_PATH = $(shell PATH=${PATH} sh -c "which ${INVOCATION_ID_GEN}")
-$(if ${INVOCATION_ID_GEN_PATH},,$(error ${INVOCATION_ID_GEN} not in PATH or not executable))
+PYTHON_PATH = $(shell PATH=${PATH} sh -c "which ${PYTHON}")
+$(if ${PYTHON_PATH},,$(error ${PYTHON} not in PATH or not executable))
 
 XMLLINT_PATH = $(shell PATH=${PATH} sh -c "which ${XMLLINT}")
 $(if ${XMLLINT_PATH},,$(error ${XMLLINT} not in PATH or not executable))
@@ -636,7 +631,7 @@ TOPTYPES = $(foreach tp,${TOPLEVELTYPES}, \
 
 %_gen.h: %.pbf ${STATICSOURCES} ${STATICHEADERS} | ${DIRECTORIES}
 	@echo " [BF_GEN] $@"
-	$(Q)${BF_GEN_PATH} $< $@ ${PRUNES}
+	$(Q)${PYTHON} ${BF_GEN_PATH} $< $@ ${PRUNES}
 
 ifdef SKIP_MODIFIES
   SM_ARG=--skip_modifies
@@ -647,13 +642,13 @@ endif
 ${DEFTHEORIES}: %_defs.thy: %.pbf ${BF_GEN_PATH} ${STATICSOURCES} \
                 ${STATICHEADERS} ${SOURCE_ROOT}/Makefile | ${DIRECTORIES}
 	@echo " [BF_DEFS] $@"
-	$(Q)${BF_GEN_PATH} --cspec-dir ${CSPEC_DIR} --hol_defs $< $@ ${PRUNES} ${SM_ARG}
+	$(Q)${PYTHON} ${BF_GEN_PATH} --cspec-dir ${CSPEC_DIR} --hol_defs $< $@ ${PRUNES} ${SM_ARG}
 
 ${PROOFTHEORIES}: %_proofs.thy: %.pbf ${BF_GEN_PATH} ${STATICSOURCES} \
                   ${STATICHEADERS} ${SOURCE_ROOT}/Makefile ${UMM_TYPES} | ${DIRECTORIES}
 	@echo " [BF_PROOFS] $@"
 	@$(if ${UMM_TYPES}, , echo "UMM_TYPES unset" ; false)
-	$(Q)${BF_GEN_PATH} --cspec-dir ${CSPEC_DIR} --hol_proofs ${SORRY_ARG} $< $@ ${TOPTYPES} \
+	$(Q)${PYTHON} ${BF_GEN_PATH} --cspec-dir ${CSPEC_DIR} --hol_proofs ${SORRY_ARG} $< $@ ${TOPTYPES} \
 	           --umm_types ${UMM_TYPES} ${PRUNES} ${SM_ARG}
 
 ###########################
