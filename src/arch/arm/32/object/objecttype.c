@@ -159,10 +159,12 @@ Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_small_frame_cap:
         if (cap_small_frame_cap_get_capFMappedASID(cap)) {
+#ifdef CONFIG_ARM_SMMU
             if (isIOSpaceFrame(cap)) {
                 unmapIOPage(cap);
                 break;
             }
+#endif
             unmapPage(ARMSmallPage,
                       cap_small_frame_cap_get_capFMappedASID(cap),
                       cap_small_frame_cap_get_capFMappedAddress(cap),
