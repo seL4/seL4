@@ -20,17 +20,17 @@
 /** DONT_TRANSLATE */
 static inline void writeContextIDPL2(word_t id)
 {
-    word_t pd, vmid;
-    asm volatile("mrrc p15, 4, %0, %1, c2" : "=r"(pd), "=r"(vmid));
-    asm volatile("mcrr p15, 4, %0, %1, c2" : : "r"(pd), "r"(id << (48-32)));
+    word_t pd_val, vmid;
+    asm volatile("mrrc p15, 4, %0, %1, c2" : "=r"(pd_val), "=r"(vmid));
+    asm volatile("mcrr p15, 4, %0, %1, c2" : : "r"(pd_val), "r"(id << (48-32)));
     isb();
 }
 
 /** MODIFIES: [*] */
 /** DONT_TRANSLATE */
-static inline void writeContextIDAndPD(word_t id, word_t pd)
+static inline void writeContextIDAndPD(word_t id, word_t pd_val)
 {
-    asm volatile("mcrr p15, 6, %0, %1, c2"  : : "r"(pd), "r"(id << (48-32)));
+    asm volatile("mcrr p15, 6, %0, %1, c2"  : : "r"(pd_val), "r"(id << (48-32)));
     isb();
 }
 
@@ -39,8 +39,8 @@ static inline void writeContextIDAndPD(word_t id, word_t pd)
 /** DONT_TRANSLATE */
 static inline void setCurrentPDPL2(paddr_t addr)
 {
-    word_t pd, vmid;
-    asm volatile("mrrc p15, 6, %0, %1, c2" : "=r"(pd), "=r"(vmid));
+    word_t pd_val, vmid;
+    asm volatile("mrrc p15, 6, %0, %1, c2" : "=r"(pd_val), "=r"(vmid));
     dsb();
     asm volatile("mcrr p15, 6, %0, %1, c2" : : "r"(addr), "r"(vmid));
     isb();
@@ -187,8 +187,8 @@ static inline void setACTLR(word_t actlr)
 /* used in other files without guards */
 static inline void setCurrentPDPL2(paddr_t pa) {}
 static inline void invalidateHypTLB(void) {}
-static inline void writeContextIDPL2(word_t pd) {}
-static inline void writeContextIDAndPD(word_t id, word_t pd) {}
+static inline void writeContextIDPL2(word_t pd_val) {}
+static inline void writeContextIDAndPD(word_t id, word_t pd_val) {}
 static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
 {
     return vaddr;
