@@ -2564,12 +2564,14 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_page_size_t frameSize;
         vm_attributes_t attr;
 
+#ifdef CONFIG_ARM_SMMU
         if (isIOSpaceFrame(cap)) {
             userError("ARMFrameRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
+#endif
 
         if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
             current_syscall_error.type =
@@ -2671,9 +2673,12 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
     }
 
     case ARMPageUnmap: {
+#ifdef CONFIG_ARM_SMMU
         if (isIOSpaceFrame(cap)) {
             return decodeARMIOUnMapInvocation(invLabel, length, cte, cap, excaps);
-        } else {
+        } else
+#endif
+        {
             setThreadState(ksCurThread, ThreadState_Restart);
             return performPageInvocationUnmap(cap, cte);
         }
