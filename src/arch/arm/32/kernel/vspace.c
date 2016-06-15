@@ -2684,9 +2684,11 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
     }
 
+#ifdef CONFIG_ARM_SMMU
     case ARMPageMapIO: {
         return decodeARMIOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
     }
+#endif
 
     case ARMPageClean_Data:
     case ARMPageInvalidate_Data:
