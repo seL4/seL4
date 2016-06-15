@@ -13,7 +13,7 @@
 #include <util.h>
 
 /*
- * memzero need sa custom type that allows us to use a word
+ * memzero needs a custom type that allows us to use a word
  * that has the aliasing properties of a char.
  */
 typedef unsigned long __attribute__((__may_alias__)) ulong_alias;
