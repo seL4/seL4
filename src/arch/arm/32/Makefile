@@ -17,10 +17,6 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/machine/Makefile
 
 ARCH_ASM_SOURCES += 32/halt.S \
                     32/head.S \
-                    32/idle.S
-
-ifdef ARM_HYP
-ARCH_ASM_SOURCES += 32/hyp_traps.S
-else
-ARCH_ASM_SOURCES += 32/traps.S
-endif
+                    32/idle.S \
+                    32/traps.S \
+                    32/hyp_traps.S

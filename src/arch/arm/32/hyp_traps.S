@@ -9,6 +9,9 @@
  */
 
 #include <config.h>
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
 #include <machine/assembler.h>
 
 /*** Hypervisor coprocessor registers ***/
@@ -388,3 +391,4 @@ BEGIN_FUNC(arm_hyp_fiq_exception)
     blx halt
 END_FUNC(arm_hyp_fiq_exception)
 
+#endif /* CONFIG_ARM_HYP */
