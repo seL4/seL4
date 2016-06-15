@@ -103,10 +103,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         restore_user_context();
     }
     c_exit_hook();
-    if (unlikely(cur_thread == x86KSfpuOwner)) {
+    if (unlikely(nativeThreadUsingFPU(cur_thread)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
-    } else if (unlikely(x86KSfpuOwner)) {
+    } else if (unlikely(x86KSActiveFPUState)) {
         /* Someone is using the FPU and it might be enabled */
         disableFpu();
     } else {

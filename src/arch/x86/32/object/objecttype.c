@@ -18,6 +18,7 @@
 #include <arch/machine/fpu.h>
 #include <arch/object/objecttype.h>
 #include <arch/object/ioport.h>
+#include <arch/kernel/ept.h>
 
 #include <arch/object/iospace.h>
 #include <plat/machine/intel-vtd.h>
@@ -71,6 +72,16 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
     case cap_frame_cap:
         if (final && cap_frame_cap_get_capFMappedASID(cap)) {
             switch (cap_frame_cap_get_capFMapType(cap)) {
+#ifdef CONFIG_VTX
+            case X86_MappingEPT:
+                unmapEPTPage(
+                    cap_frame_cap_get_capFSize(cap),
+                    cap_frame_cap_get_capFMappedASID(cap),
+                    cap_frame_cap_get_capFMappedAddress(cap),
+                    (void *)cap_frame_cap_get_capFBasePtr(cap)
+                );
+                break;
+#endif
             case X86_MappingVSpace:
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
@@ -231,12 +242,7 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     default:
-        /*
-         * This is a conflation of the haskell error: "Arch.createNewCaps
-         * got an API type" and the case where an invalid object type is
-         * passed (which is impossible in haskell).
-         */
-        fail("Arch_createObject got an API type or invalid object type");
+        fail("Mode_createObject got an API type or invalid object type");
     }
 }
 

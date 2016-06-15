@@ -17,4 +17,5 @@ ARCH_C_SOURCES += kernel/vspace.c \
                   kernel/boot.c \
                   kernel/cmdline.c \
                   kernel/lock.c \
-                  kernel/ipi.c
+                  kernel/ipi.c \
+                  kernel/ept.c

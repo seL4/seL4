@@ -91,7 +91,8 @@ block io_port_cap {
     field   capIOPortFirstPort 16
     field   capIOPortLastPort  16
 
-    padding                    24
+    field   capIOPortVPID      16
+    padding                    8
     field   capType            8
 }
 
@@ -124,6 +125,60 @@ block io_page_table_cap {
     padding                     4
     field_high  capIOPTBasePtr  20
     field       capType         8
+}
+
+block vcpu_cap {
+    padding                 32
+
+    field_high capVCPUPtr   24
+    field capType           8
+}
+
+-- Fourth-level EPT page table
+block ept_pt_cap {
+    field_high  capPTMappedAddress  11
+    padding                         4
+    field       capPTIsMapped       1
+    field       capPTMappedASID     16
+
+    field_high  capPTBasePtr        20
+    padding                         4
+    field       capType             8
+}
+
+-- third-level EPT page table (page directory)
+block ept_pd_cap {
+    field_high  capPDMappedAddress  3
+    padding                         12
+    field       capPDIsMapped       1
+    field       capPDMappedASID     16
+
+    field_high  capPDBasePtr        20
+    padding                         4
+    field       capType             8
+}
+
+-- Second-level EPT page table (page directory pointer table)
+block ept_pdpt_cap {
+    field_high  capPDPTMappedAddress 1
+    padding                         14
+    field       capPDPTIsMapped     1
+    field       capPDPTMappedASID   16
+
+    field_high  capPDPTBasePtr      20
+    padding                         4
+    field       capType             8
+}
+
+-- First-level EPT pml4
+block ept_pml4_cap {
+    padding                         15
+    field       capPML4IsMapped     1
+    field       capPML4MappedASID   16
+
+    field_high  capPML4BasePtr      20
+    padding                         4
+    field       capType             8
 }
 
 -- NB: odd numbers are arch caps (see isArchCap())
@@ -162,6 +217,11 @@ tagged_union cap capType {
     -- 8-bit tag arch caps
     tag io_page_table_cap   0x0f
     tag io_port_cap         0x1f
+    tag vcpu_cap            0x2f
+    tag ept_pt_cap          0x3f
+    tag ept_pd_cap          0x4f
+    tag ept_pdpt_cap        0x5f
+    tag ept_pml4_cap        0x6f
 }
 
 ---- Arch-independent object types
@@ -419,4 +479,101 @@ block pte {
     field       super_user          1
     field       read_write          1
     field       present             1
+}
+
+block ept_pml4e {
+    padding                         32
+    field_high   pdpt_base_address  20
+    padding                         9
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+block ept_pdpte {
+    padding                         32
+    field_high   pd_base_address    20
+    field        avl_cte_depth      3
+    padding                         6
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+block ept_pde_2m {
+    padding                         32
+    field_high   page_base_address  12
+    padding                         8
+    field        avl_cte_depth      2
+    padding                         2
+    field        page_size          1
+    field        ignore_pat         1
+    field        type               3
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+block ept_pde_4k {
+    padding                         32
+    field_high   pt_base_address    20
+    field        avl_cte_depth      3
+    padding                         1
+    field        page_size          1
+    padding                         4
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+tagged_union ept_pde page_size {
+    tag ept_pde_4k 0
+    tag ept_pde_2m 1
+}
+
+block ept_pte {
+    padding                         32
+    field_high   page_base_address  20
+    field        avl_cte_depth      2
+    padding                         3
+    field        ignore_pat         1
+    field        type               3
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+block vmx_eptp {
+    field_high paddr                20
+    padding                         5
+    field flags                     1
+    field depth_minus_1             3
+    field memory_type               3
+}
+
+block asid_map_none {
+    padding                         30
+    field type                      2
+}
+
+block asid_map_vspace {
+    field_high vspace_root          20
+    padding                         10
+    field type                      2
+}
+
+#ifdef CONFIG_VTX
+block asid_map_ept {
+    field_high ept_root             20
+    padding                         10
+    field type                      2
+}
+#endif
+
+tagged_union asid_map type {
+    tag asid_map_none 0
+    tag asid_map_vspace 1
+#ifdef CONFIG_VTX
+    tag asid_map_ept 2
+#endif
 }

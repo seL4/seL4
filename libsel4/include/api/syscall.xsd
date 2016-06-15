@@ -26,15 +26,8 @@
 
     <xsd:complexType name="ApiType">
         <xsd:sequence>
-            <xsd:element name="config" minOccurs="1" maxOccurs="1" type="ApiConfigType" />
+            <xsd:element name="config" minOccurs="1" maxOccurs="unbounded" type="ConfigType" />
         </xsd:sequence>
-    </xsd:complexType>
-
-    <xsd:complexType name="ApiConfigType">
-        <xsd:sequence>
-            <xsd:element name="syscall" minOccurs="1" maxOccurs="unbounded" type="SyscallType"/>
-        </xsd:sequence>
-        <xsd:attribute name="name" type="xsd:string" fixed="" />
     </xsd:complexType>
 
     <xsd:complexType name="DebugType">

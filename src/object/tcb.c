@@ -648,6 +648,12 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
         return decodeSetAffinity(cap, length, buffer);
 #endif
 
+    /* There is no notion of arch specific TCB invocations so this needs to go here */
+#ifdef CONFIG_VTX
+    case TCBSetEPTRoot:
+        return decodeSetEPTRoot(cap, excaps);
+#endif
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case TCBConfigureSingleStepping:
         return decodeConfigureSingleStepping(cap, buffer);

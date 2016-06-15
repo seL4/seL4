@@ -501,6 +501,26 @@ seL4_Yield(void)
     asm volatile("" :::"%esi", "%edi", "memory");
 }
 
+#ifdef CONFIG_VTX
+static inline seL4_Word
+seL4_VMEnter(seL4_CPtr vcpu, seL4_Word *sender)
+{
+    seL4_Word fault;
+    seL4_Word badge;
+    seL4_Word mr0 = seL4_GetMR(0);
+    seL4_Word mr1 = seL4_GetMR(1);
+
+    x86_sys_send_recv(seL4_SysVMEnter, vcpu, &badge, 0, &fault, &mr0, &mr1);
+
+    seL4_SetMR(0, mr0);
+    seL4_SetMR(1, mr1);
+    if (!fault && sender) {
+        *sender = badge;
+    }
+    return fault;
+}
+#endif
+
 #if defined(CONFIG_DEBUG_BUILD)
 static inline void
 seL4_DebugPutChar(char c)

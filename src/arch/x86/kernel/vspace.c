@@ -16,14 +16,6 @@
 #include <arch/kernel/vspace.h>
 #include <arch/api/invocation.h>
 
-
-static inline bool_t
-checkVPAlignment(vm_page_size_t sz, word_t w)
-{
-    return IS_ALIGNED(w, pageBitsForSize(sz));
-}
-
-
 static exception_t
 performPageGetAddress(void *vbase_ptr)
 {
@@ -79,9 +71,13 @@ void deleteASID(asid_t asid, vspace_root_t *vspace)
 
     poolPtr = x86KSASIDTable[asid >> asidLowBits];
     hwASIDInvalidate(asid);
-    if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
-        poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(NODE_STATE(ksCurThread));
+    if (poolPtr != NULL) {
+        asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
+        if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&
+                (vspace_root_t*)asid_map_asid_map_vspace_get_vspace_root(asid_map) == vspace) {
+            poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
+            setVMRoot(NODE_STATE(ksCurThread));
+        }
     }
 }
 
@@ -517,18 +513,30 @@ BOOT_CODE void
 write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
 {
     asid_pool_t* ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
-    ap->array[IT_ASID] = PDE_PTR(pptr_of_cap(it_vspace_cap));
+    ap->array[IT_ASID] = asid_map_asid_map_vspace_new(pptr_of_cap(it_vspace_cap));
     x86KSASIDTable[IT_ASID >> asidLowBits] = ap;
+}
+
+asid_map_t
+findMapForASID(asid_t asid)
+{
+    asid_pool_t*        poolPtr;
+
+    poolPtr = x86KSASIDTable[asid >> asidLowBits];
+    if (!poolPtr) {
+        return asid_map_asid_map_none_new();
+    }
+
+    return poolPtr->array[asid & MASK(asidLowBits)];
 }
 
 findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 {
     findVSpaceForASID_ret_t ret;
-    asid_pool_t*        poolPtr;
-    vspace_root_t *     vspace_root;
+    asid_map_t asid_map;
 
-    poolPtr = x86KSASIDTable[asid >> asidLowBits];
-    if (!poolPtr) {
+    asid_map = findMapForASID(asid);
+    if (asid_map_get_type(asid_map) != asid_map_asid_map_vspace) {
         current_lookup_fault = lookup_fault_invalid_root_new();
 
         ret.vspace_root = NULL;
@@ -536,16 +544,7 @@ findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
         return ret;
     }
 
-    vspace_root = poolPtr->array[asid & MASK(asidLowBits)];
-    if (!vspace_root) {
-        current_lookup_fault = lookup_fault_invalid_root_new();
-
-        ret.vspace_root = NULL;
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    }
-
-    ret.vspace_root = vspace_root;
+    ret.vspace_root = (vspace_root_t*)asid_map_asid_map_vspace_get_vspace_root(asid_map);
     ret.status = EXCEPTION_NONE;
     return ret;
 }
@@ -1133,6 +1132,11 @@ exception_t decodeX86FrameInvocation(
             case X86_MappingIOSpace:
                 setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
                 return performX86IOUnMapInvocation(cap, cte);
+#ifdef CONFIG_VTX
+            case X86_MappingEPT:
+                setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+                return performX86EPTPageInvocationUnmap(cap, cte);
+#endif
             case X86_MappingNone:
                 fail("Mapped frame cap was not mapped");
                 break;
@@ -1145,6 +1149,11 @@ exception_t decodeX86FrameInvocation(
     case X86PageMapIO: { /* MapIO */
         return decodeX86IOMapInvocation(length, cte, cap, excaps, buffer);
     }
+
+#ifdef CONFIG_VTX
+    case X86PageMapEPT:
+        return decodeX86EPTPageMap(invLabel, length, cte, cap, excaps, buffer);
+#endif
 
     case X86PageGetAddress: {
         /* Return it in the first message register. */
@@ -1418,8 +1427,8 @@ exception_t decodeX86MMUInvocation(
         vspaceCapSlot = excaps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
-        if (!isVTableRoot(vspaceCap) ||
-                cap_get_capMappedASID(vspaceCap) != asidInvalid) {
+        if (!(isVTableRoot(vspaceCap) || VTX_TERNARY(cap_get_capType(vspaceCap) == cap_ept_pml4_cap, 0))
+                || cap_get_capMappedASID(vspaceCap) != asidInvalid) {
             userError("X86ASIDPool: Invalid vspace root.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -1443,7 +1452,7 @@ exception_t decodeX86MMUInvocation(
 
         /* Find first free ASID */
         asid = cap_asid_pool_cap_get_capASIDBase(cap);
-        for (i = 0; i < BIT(asidLowBits) && (asid + i == 0 || pool->array[i]); i++);
+        for (i = 0; i < BIT(asidLowBits) && (asid + i == 0 || asid_map_get_type(pool->array[i]) != asid_map_asid_map_none); i++);
 
         if (i == BIT(asidLowBits)) {
             current_syscall_error.type = seL4_DeleteFirst;

@@ -146,3 +146,66 @@ block cpuid_001h_ebx {
     padding                 24
     field brand             8
 }
+
+block vmx_basic_msr {
+    padding                 8
+    field true_msrs         1
+    field in_out_exit_info  1
+    field memory_type       4
+    field monitor_smm_int   1
+    field physical_address_limit 1
+    padding                 3
+    field vmxon_size        13
+    padding                 1
+    field vmcs_revision     31
+}
+
+block feature_control_msr {
+    padding                 16
+    field senter            1
+    field senter_functions  7
+    padding                 5
+    field vmx_outside_smx   1
+    field vmx_in_smx        1
+    field lock              1
+}
+
+block vmx_ept_vpid_cap_msr {
+    padding                         20
+    field invvpid_single_context_ng 1
+    field invvpid_all_context       1
+    field invvpid_single_context    1
+    field invvpid_single_address    1
+    padding                         7
+    field invvpid                   1
+    padding                         5
+    field invept_all_context        1
+    field invept_single_context     1
+    padding                         3
+    field ept_flags                 1
+    field invept                    1
+    padding                         2
+    field ept_1g                    1
+    field ept_2m                    1
+    padding                         1
+    field ept_wb                    1
+    padding                         5
+    field ept_uc                    1
+    padding                         1
+    field ept_depth_4               1
+    padding                         5
+    field ept_exec_only             1
+}
+
+-- This is the layout of the data exit qualification register
+-- when the exit reason (as read from the data exit reason)
+-- register is 'control register'
+block vmx_data_exit_qualification_control_regster {
+    field data          16
+    padding             4
+    field reg           4
+    padding             1
+    field msw_type      1
+    field access_type   2
+    field cr            4
+}

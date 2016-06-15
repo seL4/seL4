@@ -28,9 +28,8 @@ UP_STATE_DEFINE(tss_io_t, x86KStss VISIBLE);
 /* Global Descriptor Table (GDT) */
 UP_STATE_DEFINE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
 
-/* Current thread whose state is installed in the FPU, or NULL if
- * the FPU is currently invalid. */
-UP_STATE_DEFINE(tcb_t *, x86KSfpuOwner VISIBLE);
+/* Currently active FPU state, or NULL if there is no active FPU state */
+UP_STATE_DEFINE(user_fpu_state_t *, x86KSActiveFPUState);
 
 /* The top level ASID table */
 asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
@@ -57,6 +56,10 @@ vtd_rte_t* x86KSvtdRootTable;
 uint32_t x86KSnumIOPTLevels;
 uint32_t x86KSnumIODomainIDBits;
 uint32_t x86KSFirstValidIODomain;
+
+#ifdef CONFIG_VTX
+vcpu_t *x86KSCurrentVCPU;
+#endif
 
 #ifdef CONFIG_PRINTING
 uint16_t x86KSconsolePort;

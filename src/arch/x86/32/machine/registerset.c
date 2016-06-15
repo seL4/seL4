@@ -34,6 +34,12 @@ const register_t syscallMessage[] = {
     EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextIP, ESP, FLAGS
 };
 
+#ifdef CONFIG_VTX
+const register_t crExitRegs[] = {
+    EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
+};
+#endif
+
 void Mode_initContext(user_context_t* context)
 {
     context->registers[EAX] = 0;

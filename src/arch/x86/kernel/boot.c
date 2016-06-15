@@ -286,7 +286,8 @@ init_sys_state(
         SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOPort),
         cap_io_port_cap_new(
             0,                /* first port */
-            NUM_IO_PORTS - 1 /* last port  */
+            NUM_IO_PORTS - 1, /* last port  */
+            VPID_INVALID
         )
     );
 
@@ -349,7 +350,7 @@ init_sys_state(
     }
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
-    ARCH_NODE_STATE(x86KSfpuOwner) = NULL;
+    ARCH_NODE_STATE(x86KSActiveFPUState) = NULL;
 
     /* create the idle thread */
     if (!create_idle_thread()) {
@@ -456,6 +457,13 @@ init_cpu(
 
 #ifdef CONFIG_DEBUG_DISABLE_PREFETCHERS
     if (!disablePrefetchers()) {
+        return false;
+    }
+#endif
+
+#ifdef CONFIG_VTX
+    /* initialise Intel VT-x extensions */
+    if (!vtx_init()) {
         return false;
     }
 #endif

@@ -15,9 +15,74 @@
 #include <arch/machine/debug.h>
 #include <benchmark/benchmark_track.h>
 #include <mode/stack.h>
+#include <arch/object/vcpu.h>
+#include <arch/kernel/traps.h>
 
 #include <api/syscall.h>
 #include <util.h>
+
+#ifdef CONFIG_VTX
+static void NORETURN vmlaunch_failed(void)
+{
+    handleVmEntryFail();
+    restore_user_context();
+}
+
+static void NORETURN restore_vmx(void)
+{
+    restoreVMCS();
+    if (ksCurThread->tcbArch.vcpu->launched) {
+        /* attempt to do a vmresume */
+        asm volatile(
+            // Set our stack pointer to the top of the tcb so we can efficiently pop
+            "movl %0, %%esp\n"
+            "popl %%eax\n"
+            "popl %%ebx\n"
+            "popl %%ecx\n"
+            "popl %%edx\n"
+            "popl %%esi\n"
+            "popl %%edi\n"
+            "popl %%ebp\n"
+            // Now do the vmresume
+            "vmresume\n"
+            // if we get here we failed
+            "leal kernel_stack_alloc, %%esp\n"
+            "call %1\n"
+            :
+            : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX]),
+              "m"(vmlaunch_failed)
+            // Clobber memory so the compiler is forced to complete all stores
+            // before running this assembler
+            : "memory"
+        );
+    } else {
+        /* attempt to do a vmlaunch */
+        asm volatile(
+            // Set our stack pointer to the top of the tcb so we can efficiently pop
+            "movl %0, %%esp\n"
+            "popl %%eax\n"
+            "popl %%ebx\n"
+            "popl %%ecx\n"
+            "popl %%edx\n"
+            "popl %%esi\n"
+            "popl %%edi\n"
+            "popl %%ebp\n"
+            // Now do the vmresume
+            "vmlaunch\n"
+            // if we get here we failed
+            "leal kernel_stack_alloc, %%esp\n"
+            "call %1\n"
+            :
+            : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX]),
+              "m"(vmlaunch_failed)
+            // Clobber memory so the compiler is forced to complete all stores
+            // before running this assembler
+            : "memory"
+        );
+    }
+    UNREACHABLE();
+}
+#endif
 
 void NORETURN VISIBLE restore_user_context(void);
 void NORETURN VISIBLE restore_user_context(void)
@@ -25,10 +90,15 @@ void NORETURN VISIBLE restore_user_context(void)
     c_exit_hook();
 
     setKernelEntryStackPointer(NODE_STATE(ksCurThread));
-    if (unlikely(NODE_STATE(ksCurThread) == ARCH_NODE_STATE(x86KSfpuOwner))) {
+#ifdef CONFIG_VTX
+    if (thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_RunningVM) {
+        restore_vmx();
+    }
+#endif
+    if (unlikely(nativeThreadUsingFPU(NODE_STATE(ksCurThread)))) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
-    } else if (unlikely(ARCH_NODE_STATE(x86KSfpuOwner))) {
+    } else if (unlikely(ARCH_NODE_STATE(x86KSActiveFPUState))) {
         /* Someone is using the FPU and it might be enabled */
         disableFpu();
     } else {

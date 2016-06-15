@@ -32,19 +32,19 @@ Arch_initFpuContext(user_context_t *context)
 /*
  * Switch the owner of the FPU to the given thread.
  */
-static void
-switchFpuOwner(tcb_t *new_owner)
+void
+switchFpuOwner(user_fpu_state_t *new_owner)
 {
     enableFpu();
-    if (ARCH_NODE_STATE(x86KSfpuOwner)) {
-        saveFpuState(&ARCH_NODE_STATE(x86KSfpuOwner)->tcbArch.tcbContext.fpuState);
+    if (ARCH_NODE_STATE(x86KSActiveFPUState)) {
+        saveFpuState(ARCH_NODE_STATE(x86KSActiveFPUState));
     }
     if (new_owner) {
-        loadFpuState(&new_owner->tcbArch.tcbContext.fpuState);
+        loadFpuState(new_owner);
     } else {
         disableFpu();
     }
-    ARCH_NODE_STATE(x86KSfpuOwner) = new_owner;
+    ARCH_NODE_STATE(x86KSActiveFPUState) = new_owner;
 }
 
 /*
@@ -63,10 +63,10 @@ handleUnimplementedDevice(void)
      * This should only be able to occur on CPUs without an FPU at all, which
      * we presumably are happy to assume will not be running seL4.
      */
-    assert(NODE_STATE(ksCurThread) != ARCH_NODE_STATE(x86KSfpuOwner));
+    assert(!nativeThreadUsingFPU(NODE_STATE(ksCurThread)));
 
     /* Otherwise, lazily switch over the FPU. */
-    switchFpuOwner(NODE_STATE(ksCurThread));
+    switchFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.fpuState);
 
     return EXCEPTION_NONE;
 }
@@ -79,9 +79,9 @@ Arch_fpuThreadDelete(tcb_t *thread)
 {
     /*
      * If the thread being deleted currently owns the FPU, switch away from it
-     * so that 'x86KSfpuOwner' doesn't point to invalid memory.
+     * so that 'x86KSActiveFPUState' doesn't point to invalid memory.
      */
-    if (ARCH_NODE_STATE(x86KSfpuOwner) == thread) {
+    if (threadUsingFPU(thread)) {
         switchFpuOwner(NULL);
     }
 }

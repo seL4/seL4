@@ -29,6 +29,22 @@
 #define IA32_STAR_MSR           0xC0000081
 #define IA32_FMASK_MSR          0xC0000084
 #define IA32_XSS_MSR            0xD0A
+#define IA32_FEATURE_CONTROL_MSR 0x3A
+#define IA32_VMX_BASIC_MSR      0x480
+#define IA32_VMX_PINBASED_CTLS_MSR 0x481
+#define IA32_VMX_PROCBASED_CTLS_MSR 0x482
+#define IA32_VMX_PROCBASED_CTLS2_MSR 0x48B
+#define IA32_VMX_EXIT_CTLS_MSR  0x483
+#define IA32_VMX_ENTRY_CTLS_MSR 0x484
+#define IA32_VMX_TRUE_PINBASED_CTLS_MSR 0x48D
+#define IA32_VMX_TRUE_PROCBASED_CTLS_MSR 0x48E
+#define IA32_VMX_TRUE_EXIT_CTLS_MSR 0x48F
+#define IA32_VMX_TRUE_ENTRY_CTLS_MSR 0x490
+#define IA32_VMX_CR0_FIXED0_MSR 0x486
+#define IA32_VMX_CR0_FIXED1_MSR 0x487
+#define IA32_VMX_CR4_FIXED0_MSR 0x488
+#define IA32_VMX_CR4_FIXED1_MSR 0x489
+#define IA32_VMX_EPT_VPID_CAP_MSR 0x48C
 
 #define IA32_PREFETCHER_COMPATIBLE_FAMILIES_ID (0x06)
 
@@ -93,11 +109,15 @@ static inline uint32_t x86_rdmsr_high(const uint32_t reg)
 }
 
 /* Write model specific register */
+static inline void x86_wrmsr_parts(const uint32_t reg, const uint32_t high, const uint32_t low) {
+    asm volatile("wrmsr" :: "a"(low), "d"(high), "c"(reg));
+}
+
 static inline void x86_wrmsr(const uint32_t reg, const uint64_t val)
 {
     uint32_t low = (uint32_t)val;
     uint32_t high = (uint32_t)(val >> 32);
-    asm volatile("wrmsr" :: "a"(low), "d"(high), "c"(reg));
+    x86_wrmsr_parts(reg, high, low);
 }
 
 /* Read different parts of CPUID */
@@ -507,5 +527,9 @@ void int_fc(void);
 void int_fd(void);
 void int_fe(void);
 void int_ff(void);
+
+#ifdef CONFIG_VTX
+void handle_vmexit(void);
+#endif
 
 #endif

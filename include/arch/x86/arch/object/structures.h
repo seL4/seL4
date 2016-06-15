@@ -21,8 +21,19 @@
 #include <arch/machine/registerset.h>
 #include <arch/api/constants.h>
 
+enum tcb_arch_cnode_index {
+    /* VSpace root for running any associated VCPU in */
+    tcbArchEPTRoot = tcbCNodeEntries,
+    tcbArchCNodeEntries
+};
+
 typedef struct arch_tcb {
     user_context_t tcbContext;
+#ifdef CONFIG_VTX
+    /* Pointer to associated VCPU. NULL if not associated.
+     * tcb->vcpu->tcb == tcb. */
+    struct vcpu *vcpu;
+#endif
 } arch_tcb_t;
 
 struct user_data {
@@ -54,6 +65,63 @@ typedef struct user_data user_data_t;
 #define VTD_PT_INDEX_BITS       9
 
 compile_assert(vtd_pt_size_sane, VTD_PT_INDEX_BITS + VTD_PTE_SIZE_BITS == seL4_IOPageTableBits)
+
+#define EPT_PML4E_SIZE_BITS 3
+#define EPT_PML4_INDEX_BITS 9
+#define EPT_PDPTE_SIZE_BITS 3
+#define EPT_PDPT_INDEX_BITS 9
+#define EPT_PDE_SIZE_BITS   3
+#define EPT_PD_INDEX_BITS   9
+#define EPT_PTE_SIZE_BITS   3
+#define EPT_PT_INDEX_BITS   9
+
+#define EPT_PT_INDEX_OFFSET (seL4_PageBits)
+#define EPT_PD_INDEX_OFFSET (EPT_PT_INDEX_OFFSET + EPT_PT_INDEX_BITS)
+#define EPT_PDPT_INDEX_OFFSET (EPT_PD_INDEX_OFFSET + EPT_PD_INDEX_BITS)
+#define EPT_PML4_INDEX_OFFSET (EPT_PDPT_INDEX_OFFSET + EPT_PDPT_INDEX_BITS)
+
+#define GET_EPT_PML4_INDEX(x) ( (((uint64_t)(x)) >> (EPT_PML4_INDEX_OFFSET)) & MASK(EPT_PML4_INDEX_BITS))
+#define GET_EPT_PDPT_INDEX(x) ( ((x) >> (EPT_PDPT_INDEX_OFFSET)) & MASK(EPT_PDPT_INDEX_BITS))
+#define GET_EPT_PD_INDEX(x) ( ((x) >> (EPT_PD_INDEX_OFFSET)) & MASK(EPT_PD_INDEX_BITS))
+#define GET_EPT_PT_INDEX(x) ( ((x) >> (EPT_PT_INDEX_OFFSET)) & MASK(EPT_PT_INDEX_BITS))
+
+#define EPT_PML4E_PTR(r)     ((ept_pml4e_t *)(r))
+#define EPT_PML4E_PTR_PTR(r) ((ept_pml4e_t **)(r))
+#define EPT_PML4E_REF(p)     ((word_t)(p))
+
+#define EPT_PML4_SIZE_BITS (EPT_PML4_INDEX_BITS+EPT_PML4E_SIZE_BITS)
+#define EPT_PML4_PTR(r)    ((ept_pml4e_t *)(r))
+#define EPT_PML4_REF(p)    ((word_t)(p))
+compile_assert(ept_pml4_size_sane, EPT_PML4_INDEX_BITS + EPT_PML4E_SIZE_BITS == seL4_X86_EPTPML4Bits)
+
+#define EPT_PDPTE_PTR(r)     ((ept_pdpte_t *)(r))
+#define EPT_PDPTE_PTR_PTR(r) ((ept_pdpte_t **)(r))
+#define EPT_PDPTE_REF(p)     ((word_t)(p))
+
+#define EPT_PDPT_SIZE_BITS (EPT_PDPT_INDEX_BITS+EPT_PDPTE_SIZE_BITS)
+#define EPT_PDPT_PTR(r)    ((ept_pdpte_t *)(r))
+#define EPT_PDPT_REF(p)    ((word_t)(p))
+compile_assert(ept_pdpt_size_sane, EPT_PDPT_INDEX_BITS + EPT_PDPTE_SIZE_BITS == seL4_X86_EPTPDPTBits)
+
+#define EPT_PDE_PTR(r)     ((ept_pde_t *)(r))
+#define EPT_PDE_PTR_PTR(r) ((ept_pde_t **)(r))
+#define EPT_PDE_REF(p)     ((word_t)(p))
+
+#define EPT_PD_SIZE_BITS (EPT_PD_INDEX_BITS+EPT_PDE_SIZE_BITS)
+#define EPT_PD_PTR(r)    ((ept_pde_t *)(r))
+#define EPT_PD_REF(p)    ((word_t)(p))
+compile_assert(ept_pd_size_sane, EPT_PD_INDEX_BITS + EPT_PDE_SIZE_BITS == seL4_X86_EPTPDBits)
+
+#define EPT_PTE_PTR(r)    ((ept_pte_t *)(r))
+#define EPT_PTE_REF(p)    ((word_t)(p))
+
+#define EPT_PT_SIZE_BITS (EPT_PT_INDEX_BITS+EPT_PTE_SIZE_BITS)
+#define EPT_PT_PTR(r)    ((ept_pte_t *)(r))
+#define EPT_PT_REF(p)    ((word_t)(p))
+compile_assert(ept_pt_size_sane, EPT_PT_INDEX_BITS + EPT_PTE_SIZE_BITS == seL4_X86_EPTPTBits)
+
+#define VCPU_PTR(r)       ((vcpu_t *)(r))
+#define VCPU_REF(p)       ((word_t)(p))
 
 /* helper structure for filling descriptor registers */
 typedef struct gdt_idt_ptr {
@@ -103,6 +171,20 @@ cap_get_archCapSizeBits(cap_t cap)
     case cap_asid_pool_cap:
         return seL4_ASIDPoolBits;
 
+#ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        return seL4_X86_VCPUBits;
+
+    case cap_ept_pml4_cap:
+        return seL4_X86_EPTPML4Bits;
+    case cap_ept_pdpt_cap:
+        return seL4_X86_EPTPDPTBits;
+    case cap_ept_pd_cap:
+        return seL4_X86_EPTPDBits;
+    case cap_ept_pt_cap:
+        return seL4_X86_EPTPTBits;
+#endif
+
     default:
         return cap_get_modeCapSizeBits(cap);
     }
@@ -142,6 +224,18 @@ cap_get_archCapIsPhysical(cap_t cap)
         return false;
 
     case cap_asid_pool_cap:
+        return true;
+
+    case cap_ept_pt_cap:
+        return true;
+
+    case cap_ept_pd_cap:
+        return true;
+
+    case cap_ept_pdpt_cap:
+        return true;
+
+    case cap_ept_pml4_cap:
         return true;
 
     default:
@@ -184,6 +278,18 @@ cap_get_archCapPtr(cap_t cap)
 
     case cap_asid_pool_cap:
         return ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
+
+    case cap_ept_pt_cap:
+        return EPT_PT_PTR(cap_ept_pt_cap_get_capPTBasePtr(cap));
+
+    case cap_ept_pd_cap:
+        return EPT_PD_PTR(cap_ept_pd_cap_get_capPDBasePtr(cap));
+
+    case cap_ept_pdpt_cap:
+        return EPT_PDPT_PTR(cap_ept_pdpt_cap_get_capPDPTBasePtr(cap));
+
+    case cap_ept_pml4_cap:
+        return EPT_PML4_PTR(cap_ept_pml4_cap_get_capPML4BasePtr(cap));
 
     default:
         return cap_get_modeCapPtr(cap);

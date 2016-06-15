@@ -11,9 +11,11 @@
 #ifndef __ARCH_KERNEL_FPU_H
 #define __ARCH_KERNEL_FPU_H
 
+#include <config.h>
+#include <types.h>
+#include <arch/object/vcpu.h>
 #include <arch/machine.h>
 #include <api/failures.h>
-#include <types.h>
 
 /* Initialise the FPU. */
 bool_t Arch_initFpu(void);
@@ -26,6 +28,8 @@ void Arch_fpuThreadDelete(tcb_t *thread);
 
 /* Handle an FPU exception. */
 exception_t handleUnimplementedDevice(void);
+
+void switchFpuOwner(user_fpu_state_t *new_owner);
 
 static inline uint32_t xsave_features_high(void)
 {
@@ -90,6 +94,29 @@ static inline void enableFpu(void)
 static inline void disableFpu(void)
 {
     write_cr0(read_cr0() | CR0_TASK_SWITCH);
+}
+
+/* Returns whether or not the passed thread is using the current
+ * active fpu state */
+static inline bool_t nativeThreadUsingFPU(tcb_t *thread)
+{
+    return &thread->tcbArch.tcbContext.fpuState == x86KSActiveFPUState;
+}
+
+#ifdef CONFIG_VTX
+static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
+{
+    return thread->tcbArch.vcpu && &thread->tcbArch.vcpu->fpuState == x86KSActiveFPUState;
+}
+#endif
+
+static inline bool_t threadUsingFPU(tcb_t *thread)
+{
+#ifdef CONFIG_VTX
+    return nativeThreadUsingFPU(thread) || vcpuThreadUsingFPU(thread);
+#else
+    return nativeThreadUsingFPU(thread);
+#endif
 }
 
 #endif

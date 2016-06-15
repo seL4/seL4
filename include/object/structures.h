@@ -145,6 +145,9 @@ enum _thread_state {
     ThreadState_BlockedOnSend,
     ThreadState_BlockedOnReply,
     ThreadState_BlockedOnNotification,
+#ifdef CONFIG_VTX
+    ThreadState_RunningVM,
+#endif
     ThreadState_IdleThreadState
 };
 typedef word_t _thread_state_t;

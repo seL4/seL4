@@ -273,6 +273,12 @@ def init_arch_types(wordsize):
             CapType("seL4_X86_PageDirectory", wordsize),
             CapType("seL4_X86_PageTable", wordsize),
             CapType("seL4_X86_IOPageTable", wordsize),
+            CapType("seL4_X86_VCPU", wordsize),
+            CapType("seL4_X86_EPTPML4", wordsize),
+            CapType("seL4_X86_EPTPDPT", wordsize),
+            CapType("seL4_X86_EPTPD", wordsize),
+            CapType("seL4_X86_EPTPT", wordsize),
+            StructType("seL4_VCPUContext", wordsize * 7 ,wordsize),
             StructType("seL4_UserContext", wordsize * 13, wordsize),
         ],
 

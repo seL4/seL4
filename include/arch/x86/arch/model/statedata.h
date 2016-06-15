@@ -17,8 +17,9 @@
 #include <object/structures.h>
 #include <arch/types.h>
 #include <plat/machine/devices.h>
-#include <plat/machine.h>
+#include <arch/object/vcpu.h>
 #include <arch/object/iospace.h>
+#include <plat/machine.h>
 
 #include <mode/model/statedata.h>
 
@@ -39,8 +40,8 @@ NODE_STATE_DECLARE(tss_io_t, x86KStss);
 NODE_STATE_DECLARE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
 /* Interrupt Descriptor Table (IDT) */
 NODE_STATE_DECLARE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
-/* Current thread whose state is installed in the FPU, or NULL if the FPU is currently invalid */
-NODE_STATE_DECLARE(tcb_t *, x86KSfpuOwner);
+/* Current state installed in the FPU, or NULL if the FPU is currently invalid */
+NODE_STATE_DECLARE(user_fpu_state_t *, x86KSActiveFPUState);
 
 NODE_STATE_TYPE_DECLARE(modeNodeState, mode);
 NODE_STATE_END(archNodeState);
@@ -54,6 +55,10 @@ extern vtd_rte_t* x86KSvtdRootTable;
 extern uint32_t x86KSnumIOPTLevels;
 extern uint32_t x86KSnumIODomainIDBits;
 extern uint32_t x86KSFirstValidIODomain;
+
+#ifdef CONFIG_VTX
+extern vcpu_t *x86KSCurrentVCPU;
+#endif
 
 #ifdef CONFIG_PRINTING
 extern uint16_t x86KSconsolePort;

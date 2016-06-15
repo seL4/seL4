@@ -82,6 +82,8 @@ void idle_thread(void);
 
 bool_t isVTableRoot(cap_t cap);
 
+asid_map_t findMapForASID(asid_t asid);
+
 lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr);
 lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr);
 void copyGlobalMappings(vspace_root_t *new_vspace);
@@ -136,5 +138,11 @@ pde_t CONST makeUserPDEPageTableInvalid(void);
 #ifdef CONFIG_PRINTING
 void Arch_userStackTrace(tcb_t *tptr);
 #endif
+
+static inline bool_t
+checkVPAlignment(vm_page_size_t sz, word_t w)
+{
+    return IS_ALIGNED(w, pageBitsForSize(sz));
+}
 
 #endif

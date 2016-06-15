@@ -15,6 +15,13 @@ config IOMMU
         help
             IOMMU support for VT-d enabled chipset
 
+config VTX
+    bool "VTX support"
+        depends on PLAT_PC99
+        default n
+        help
+            VTX support
+
 choice
     prompt "IRQ Controller"
     depends on PLAT_PC99
@@ -32,6 +39,17 @@ choice
         help
             Use one or more IOAPIC controllers
 endchoice
+
+config MAX_VPIDS
+    prompt "Max VPIDs to support"
+    depends on VTX
+    range 1 65535
+    int
+    default 1024
+    help
+        The kernel maintains a mapping of 16-bit VPIDs to VCPUs. This option
+        should be sized as small as possible to save memory, but be at least
+        the number of VCPUs that will be run for optimum performance
 
 config MAX_NUM_IOAPIC
     prompt "Max supported IOAPICs"

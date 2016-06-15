@@ -23,10 +23,10 @@ extern word_t irq_stack[6];
 void VISIBLE NORETURN restore_user_context(void)
 {
     c_exit_hook();
-    if (unlikely(ksCurThread == x86KSfpuOwner)) {
+    if (unlikely(nativeThreadUsingFPU(NODE_STATE(ksCurThread))) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
-    } else if (unlikely(x86KSfpuOwner)) {
+    } else if (unlikely(ARCH_NODE_ASTATE(x86KSActiveFPUState))) {
         /* Someone is using the FPU and it might be enabled */
         disableFpu();
     } else {

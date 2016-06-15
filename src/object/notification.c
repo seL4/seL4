@@ -60,6 +60,13 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
                 switchIfRequiredTo(tcb);
+#ifdef CONFIG_VTX
+            } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
+                setThreadState(tcb, ThreadState_Running);
+                setRegister(tcb, badgeRegister, badge);
+                Arch_leaveVMAsyncTransfer(tcb);
+                attemptSwitchTo(tcb);
+#endif
             } else {
                 ntfn_set_active(ntfnPtr, badge);
             }

@@ -14,13 +14,15 @@
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
 #include <machine/debug.h>
+#include <arch/object/vcpu.h>
 #include <api/syscall.h>
+#include <arch/api/vmenter.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
 
 /** DONT_TRANSLATE */
-void VISIBLE
+void VISIBLE NORETURN
 c_handle_interrupt(int irq, int syscall)
 {
     c_entry_hook();
@@ -78,6 +80,7 @@ c_handle_interrupt(int irq, int syscall)
         handleUnknownSyscall(sys_num);
     }
     restore_user_context();
+    UNREACHABLE();
 }
 
 /** DONT_TRANSLATE */
@@ -92,6 +95,22 @@ slowpath(syscall_t syscall)
         /* set FaultIP */
         setRegister(NODE_STATE(ksCurThread), FaultIP, getRegister(NODE_STATE(ksCurThread), NextIP) - 2);
     }
+#ifdef CONFIG_VTX
+    if (syscall == SysVMEnter) {
+        vcpu_update_state_sysvmenter(ksCurThread->tcbArch.vcpu);
+        if (ksCurThread->tcbBoundNotification && notification_ptr_get_state(ksCurThread->tcbBoundNotification) == NtfnState_Active) {
+            completeSignal(ksCurThread->tcbBoundNotification, ksCurThread);
+            setRegister(ksCurThread, msgInfoRegister, SEL4_VMENTER_RESULT_NOTIF);
+            /* Any guest state that we should return is in the same
+             * register position as sent to us, so we can just return
+             * and let the user pick up the values they put in */
+            restore_user_context();
+        } else {
+            setThreadState(ksCurThread, ThreadState_RunningVM);
+            restore_user_context();
+        }
+    }
+#endif
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
 #ifdef TRACK_KERNEL_ENTIRES
@@ -111,7 +130,7 @@ slowpath(syscall_t syscall)
 }
 
 /** DONT_TRANSLATE */
-void VISIBLE
+void VISIBLE NORETURN
 c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
     c_entry_hook();
@@ -130,6 +149,15 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
         UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */
-
     slowpath(syscall);
+    UNREACHABLE();
 }
+
+#ifdef CONFIG_VTX
+void VISIBLE NORETURN c_handle_vmexit(void)
+{
+    handleVmexit();
+    restore_user_context();
+    UNREACHABLE();
+}
+#endif

@@ -36,6 +36,12 @@
 
 #define seL4_HugePageBits    30 /* 1GB */
 
+#define seL4_X86_VCPUBits    14
+#define seL4_X86_EPTPML4Bits 12
+#define seL4_X86_EPTPDPTBits 12
+#define seL4_X86_EPTPDBits   12
+#define seL4_X86_EPTPTBits   12
+
 #ifdef CONFIG_PAE_PAGING
 #define seL4_PDPTBits        5
 #define seL4_LargePageBits   21 /* 2MB */

@@ -21,6 +21,7 @@
 #include <plat/machine/devices.h>
 
 #include <arch/object/iospace.h>
+#include <arch/object/vcpu.h>
 #include <plat/machine/intel-vtd.h>
 
 deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
@@ -88,6 +89,59 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
         }
         return ret;
 
+#ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+    case cap_ept_pml4_cap:
+        if (cap_ept_pml4_cap_get_capPML4IsMapped(cap)) {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        } else {
+            userError("Deriving a EPT PML4 cap without an assigned ASID.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+        }
+        return ret;
+    case cap_ept_pdpt_cap:
+        if (cap_ept_pdpt_cap_get_capPDPTIsMapped(cap)) {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        } else {
+            userError("Deriving an unmapped EPT PDPT cap.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+        }
+        return ret;
+
+    case cap_ept_pd_cap:
+        if (cap_ept_pd_cap_get_capPDIsMapped(cap)) {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        } else {
+            userError("Deriving an unmapped EPT PD cap.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+        }
+        return ret;
+
+    case cap_ept_pt_cap:
+        if (cap_ept_pt_cap_get_capPTIsMapped(cap)) {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        } else {
+            userError("Deriving an unmapped EPT PT cap.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+        }
+        return ret;
+#endif
+
     default:
         return Mode_deriveCap(slot, cap);
     }
@@ -125,7 +179,7 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
         /* Allow the update if the new cap has range no larger than the old
          * cap. */
         if ((firstPort >= capFirstPort) && (lastPort <= capLastPort)) {
-            return cap_io_port_cap_new(firstPort, lastPort);
+            return cap_io_port_cap_new(firstPort, lastPort, VPID_INVALID);
         } else {
             return cap_null_cap_new();
         }
@@ -182,7 +236,13 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
     case cap_asid_control_cap:
+        break;
     case cap_io_port_cap:
+#ifdef CONFIG_VTX
+        clearVPIDIOPortMappings(cap_io_port_cap_get_capIOPortVPID(cap),
+                                cap_io_port_cap_get_capIOPortFirstPort(cap),
+                                cap_io_port_cap_get_capIOPortLastPort(cap));
+#endif
         break;
     case cap_io_space_cap:
         if (final) {
@@ -195,6 +255,47 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
             deleteIOPageTable(cap);
         }
         break;
+
+#ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        if (final) {
+            vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        }
+        break;
+    case cap_ept_pml4_cap:
+        if (final && cap_ept_pml4_cap_get_capPML4IsMapped(cap)) {
+            deleteEPTASID(cap_ept_pml4_cap_get_capPML4MappedASID(cap),
+                (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(cap));
+        }
+        break;
+
+    case cap_ept_pdpt_cap:
+        if (final && cap_ept_pdpt_cap_get_capPDPTIsMapped(cap)) {
+            unmapEPTPDPT(
+                cap_ept_pdpt_cap_get_capPDPTMappedASID(cap),
+                cap_ept_pdpt_cap_get_capPDPTMappedAddress(cap),
+                (ept_pdpte_t*)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap));
+        }
+        break;
+
+    case cap_ept_pd_cap:
+        if (final && cap_ept_pd_cap_get_capPDIsMapped(cap)) {
+            unmapEPTPageDirectory(
+                cap_ept_pd_cap_get_capPDMappedASID(cap),
+                cap_ept_pd_cap_get_capPDMappedAddress(cap),
+                (ept_pde_t*)cap_ept_pd_cap_get_capPDBasePtr(cap));
+        }
+        break;
+
+    case cap_ept_pt_cap:
+        if (final && cap_ept_pt_cap_get_capPTIsMapped(cap)) {
+            unmapEPTPageTable(
+                cap_ept_pt_cap_get_capPTMappedASID(cap),
+                cap_ept_pt_cap_get_capPTMappedAddress(cap),
+                (ept_pte_t*)cap_ept_pt_cap_get_capPTBasePtr(cap));
+        }
+        break;
+#endif
 
     default:
         return Mode_finaliseCap(cap, final);
@@ -221,6 +322,14 @@ resetMemMapping(cap_t cap)
         return cap_pdpt_cap_set_capPDPTIsMapped(cap, 0);
     case cap_io_page_table_cap:
         return cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
+    case cap_ept_pml4_cap:
+        return cap_ept_pml4_cap_set_capPML4IsMapped(cap, 0);
+    case cap_ept_pdpt_cap:
+        return cap_ept_pdpt_cap_set_capPDPTIsMapped(cap, 0);
+    case cap_ept_pd_cap:
+        return cap_ept_pd_cap_set_capPDIsMapped(cap, 0);
+    case cap_ept_pt_cap:
+        return cap_ept_pt_cap_set_capPTIsMapped(cap, 0);
     }
 
     return Mode_resetMemMapping(cap);
@@ -293,6 +402,101 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
         clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
         Arch_finaliseCap(cap, true);
         return resetMemMapping(cap);
+
+#ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        vcpu_init(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        return cap;
+
+    case cap_ept_pml4_cap: {
+        ept_pml4e_t *pml4 = (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(cap);
+        clearMemory(pml4, seL4_X86_EPTPML4Bits);
+
+        if (cap_ept_pml4_cap_get_capPML4IsMapped(cap)) {
+            findEPTForASID_ret_t find_ret;
+            asid_t asid = cap_ept_pml4_cap_get_capPML4MappedASID(cap);
+
+            find_ret = findEPTForASID(asid);
+            if (find_ret.status == EXCEPTION_NONE && find_ret.ept == pml4) {
+                invept(pml4);
+            }
+        }
+
+        Arch_finaliseCap(cap, is_final);
+        if (is_final) {
+            return resetMemMapping(cap);
+        }
+
+        return cap;
+    }
+    case cap_ept_pdpt_cap: {
+        ept_pdpte_t *pdpt = (ept_pdpte_t*)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap);
+        clearMemory(pdpt, seL4_X86_EPTPDPTBits);
+
+        if (cap_ept_pdpt_cap_get_capPDPTIsMapped(cap)) {
+            EPTPDPTMapped_ret_t ret;
+            asid_t asid = cap_ept_pdpt_cap_get_capPDPTMappedASID(cap);
+            vptr_t vptr = cap_ept_pdpt_cap_get_capPDPTMappedAddress(cap);
+
+            ret = EPTPDPTMapped(asid, vptr, pdpt);
+            if (ret.status == EXCEPTION_NONE) {
+                invept(ret.pml4);
+            }
+        }
+
+        Arch_finaliseCap(cap, is_final);
+        if (is_final) {
+            return resetMemMapping(cap);
+        }
+
+        return cap;
+    }
+    case cap_ept_pd_cap: {
+        ept_pde_t *pd = (ept_pde_t*)cap_ept_pd_cap_get_capPDBasePtr(cap);
+        clearMemory(pd, seL4_X86_EPTPDBits);
+
+        if (cap_ept_pd_cap_get_capPDIsMapped(cap)) {
+            EPTPageDirectoryMapped_ret_t ret;
+            asid_t asid = cap_ept_pd_cap_get_capPDMappedASID(cap);
+            vptr_t vptr = cap_ept_pd_cap_get_capPDMappedAddress(cap);
+
+            ret = EPTPageDirectoryMapped(asid, vptr, pd);
+            if (ret.status == EXCEPTION_NONE) {
+                invept(ret.pml4);
+            }
+        }
+
+        Arch_finaliseCap(cap, is_final);
+        if (is_final) {
+            return resetMemMapping(cap);
+        }
+
+        return cap;
+    }
+    case cap_ept_pt_cap: {
+        ept_pte_t *pt = (ept_pte_t*)cap_ept_pt_cap_get_capPTBasePtr(cap);
+        clearMemory(pt, seL4_X86_EPTPTBits);
+
+        if (cap_ept_pt_cap_get_capPTIsMapped(cap)) {
+            EPTPageTableMapped_ret_t ret;
+            asid_t asid = cap_ept_pt_cap_get_capPTMappedASID(cap);
+            vptr_t vptr = cap_ept_pt_cap_get_capPTMappedAddress(cap);
+
+            ret = EPTPageTableMapped(asid, vptr, pt);
+            if (ret.status == EXCEPTION_NONE) {
+                invept(ret.pml4);
+            }
+        }
+
+        Arch_finaliseCap(cap, is_final);
+        if (is_final) {
+            return resetMemMapping(cap);
+        }
+
+        return cap;
+    }
+#endif
 
     default:
         return Mode_recycleCap(is_final, cap);
@@ -385,6 +589,43 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_io_page_table_cap_get_capIOPTBasePtr(cap_b);
         }
         break;
+#ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        if (cap_get_capType(cap_b) == cap_vcpu_cap) {
+            return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
+                   cap_vcpu_cap_get_capVCPUPtr(cap_b);
+        }
+        break;
+
+    case cap_ept_pml4_cap:
+        if (cap_get_capType(cap_b) == cap_ept_pml4_cap) {
+            return cap_ept_pml4_cap_get_capPML4BasePtr(cap_a) ==
+                   cap_ept_pml4_cap_get_capPML4BasePtr(cap_b);
+        }
+        break;
+
+    case cap_ept_pdpt_cap:
+        if (cap_get_capType(cap_b) == cap_ept_pdpt_cap) {
+            return cap_ept_pdpt_cap_get_capPDPTBasePtr(cap_a) ==
+                   cap_ept_pdpt_cap_get_capPDPTBasePtr(cap_b);
+        }
+        break;
+
+    case cap_ept_pd_cap:
+        if (cap_get_capType(cap_b) == cap_ept_pd_cap) {
+            return cap_ept_pd_cap_get_capPDBasePtr(cap_a) ==
+                   cap_ept_pd_cap_get_capPDBasePtr(cap_b);
+        }
+        break;
+
+    case cap_ept_pt_cap:
+        if (cap_get_capType(cap_b) == cap_ept_pt_cap) {
+            return cap_ept_pt_cap_get_capPTBasePtr(cap_a) ==
+                   cap_ept_pt_cap_get_capPTBasePtr(cap_b);
+        }
+        break;
+
+#endif
 
     }
 
@@ -420,6 +661,18 @@ Arch_getObjectSize(word_t t)
         return seL4_PDPTBits;
     case seL4_X86_IOPageTableObject:
         return seL4_IOPageTableBits;
+#ifdef CONFIG_VTX
+    case seL4_X86_VCPUObject:
+        return seL4_X86_VCPUBits;
+    case seL4_X86_EPTPML4Object:
+        return seL4_X86_EPTPML4Bits;
+    case seL4_X86_EPTPDPTObject:
+        return seL4_X86_EPTPDPTBits;
+    case seL4_X86_EPTPDObject:
+        return seL4_X86_EPTPDBits;
+    case seL4_X86_EPTPTObject:
+        return seL4_X86_EPTPTBits;
+#endif
     default:
         return Mode_getObjectSize(t);
     }
@@ -428,7 +681,56 @@ Arch_getObjectSize(word_t t)
 cap_t
 Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
-    return Mode_createObject(t, regionBase, userSize, deviceMemory);
+#ifdef CONFIG_VTX
+    switch (t) {
+    case seL4_X86_VCPUObject: {
+        vcpu_t *vcpu;
+        memzero(regionBase, 1 << seL4_X86_VCPUBits);
+        vcpu = VCPU_PTR((word_t)regionBase);
+        vcpu_init(vcpu);
+        return cap_vcpu_cap_new(VCPU_REF(vcpu));
+    }
+    case seL4_X86_EPTPML4Object:
+        memzero(regionBase, 1 << seL4_X86_EPTPDPTBits);
+
+        return cap_ept_pml4_cap_new(
+                    0,                  /* capPML4IsMapped      */
+                    VPID_INVALID,       /* capPML4MappedASID    */
+                    (word_t)regionBase  /* capPML4BasePtr       */
+               );
+    case seL4_X86_EPTPDPTObject:
+        memzero(regionBase, 1 << seL4_X86_EPTPDPTBits);
+
+        return cap_ept_pdpt_cap_new(
+                    0,                  /* capPDPTMappedAddress */
+                    0,                  /* capPDPTIsMapped      */
+                    VPID_INVALID,       /* capPDPTMappedASID    */
+                    (word_t)regionBase   /* capPDPTBasePtr      */
+               );
+    case seL4_X86_EPTPDObject:
+        memzero(regionBase, 1 << seL4_X86_EPTPDBits);
+
+        return cap_ept_pd_cap_new(
+                    0,                  /* capPDMappedAddress   */
+                    0,                  /* capPDIsMapped        */
+                    VPID_INVALID,       /* capPDMappedASID      */
+                    (word_t)regionBase  /* capPDBasePtr         */
+               );
+    case seL4_X86_EPTPTObject:
+        memzero(regionBase, 1 << seL4_X86_EPTPTBits);
+
+        return cap_ept_pt_cap_new(
+                    0,                  /* capPTMappedAddress   */
+                    0,                  /* capPTIsMapped        */
+                    VPID_INVALID,       /* capPTMappedASID      */
+                    (word_t)regionBase  /* capPTBasePtr         */
+               );
+    default:
+#endif
+        return Mode_createObject(t, regionBase, userSize, deviceMemory);
+#ifdef CONFIG_VTX
+    }
+#endif
 }
 
 exception_t
@@ -452,6 +754,15 @@ Arch_decodeInvocation(
         return decodeX86IOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
         return decodeX86IOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+#ifdef CONFIG_VTX
+    case cap_vcpu_cap:
+        return decodeX86VCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+    case cap_ept_pml4_cap:
+    case cap_ept_pdpt_cap:
+    case cap_ept_pd_cap:
+    case cap_ept_pt_cap:
+        return decodeX86EPTInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+#endif
     default:
         return Mode_decodeInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     }
