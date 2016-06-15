@@ -298,18 +298,19 @@ bool_t CONST
 sameRegionAs(cap_t cap_a, cap_t cap_b)
 {
     switch (cap_get_capType(cap_a)) {
-    case cap_untyped_cap: {
-        word_t aBase, bBase, aTop, bTop;
+    case cap_untyped_cap:
+        if (cap_get_capIsPhysical(cap_b)) {
+            word_t aBase, bBase, aTop, bTop;
 
-        aBase = (word_t)WORD_PTR(cap_untyped_cap_get_capPtr(cap_a));
-        bBase = (word_t)cap_get_capPtr(cap_b);
+            aBase = (word_t)WORD_PTR(cap_untyped_cap_get_capPtr(cap_a));
+            bBase = (word_t)cap_get_capPtr(cap_b);
 
-        aTop = aBase + MASK(cap_untyped_cap_get_capBlockSize(cap_a));
-        bTop = bBase + MASK(cap_get_capSizeBits(cap_b));
+            aTop = aBase + MASK(cap_untyped_cap_get_capBlockSize(cap_a));
+            bTop = bBase + MASK(cap_get_capSizeBits(cap_b));
 
-        return ((bBase != 0) && (aBase <= bBase) &&
-                (bTop <= aTop) && (bBase <= bTop));
-    }
+            return (aBase <= bBase) && (bTop <= aTop) && (bBase <= bTop);
+        }
+        break;
 
     case cap_endpoint_cap:
         if (cap_get_capType(cap_b) == cap_endpoint_cap) {
