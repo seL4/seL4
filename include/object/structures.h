@@ -308,6 +308,52 @@ cap_get_capSizeBits(cap_t cap)
 
 }
 
+/* Returns whether or not this capability has memory associated
+ * with it or not. Refering to this as 'being physical' is to
+ * match up with the haskell and abstract specifications */
+static inline bool_t CONST
+cap_get_capIsPhysical(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+    case cap_untyped_cap:
+        return true;
+
+    case cap_endpoint_cap:
+        return true;
+
+    case cap_notification_cap:
+        return true;
+
+    case cap_cnode_cap:
+        return true;
+
+    case cap_thread_cap:
+        return true;
+
+    case cap_zombie_cap:
+        return true;
+
+    case cap_domain_cap:
+        return false;
+
+    case cap_reply_cap:
+        return false;
+
+    case cap_irq_control_cap:
+        return false;
+
+    case cap_irq_handler_cap:
+        return false;
+
+    default:
+        return cap_get_archCapIsPhysical(cap);
+    }
+}
+
 static inline void * CONST
 cap_get_capPtr(cap_t cap)
 {

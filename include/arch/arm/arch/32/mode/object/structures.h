@@ -341,6 +341,39 @@ cap_get_archCapSizeBits(cap_t cap)
     }
 }
 
+static inline bool_t CONST
+cap_get_archCapIsPhysical(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+
+    case cap_small_frame_cap:
+        return true;
+
+    case cap_frame_cap:
+        return true;
+
+    case cap_page_table_cap:
+        return true;
+
+    case cap_page_directory_cap:
+        return true;
+
+    case cap_asid_pool_cap:
+        return true;
+
+    case cap_asid_control_cap:
+        return false;
+
+    default:
+        /* Unreachable, but GCC can't figure that out */
+        return false;
+    }
+}
+
 static inline void * CONST
 cap_get_archCapPtr(cap_t cap)
 {

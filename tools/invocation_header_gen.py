@@ -70,6 +70,9 @@ SEL4_ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 enum sel4_arch_invocation_label {
     {{for label, condition in invocations}}
     {{if condition}}
+    {{if first}}
+#error "First sel4_arch invocation label cannot be conditional"
+    {{endif}}
 #if {{condition}}
     {{endif}}
     {{if first}}
@@ -82,7 +85,7 @@ enum sel4_arch_invocation_label {
 #endif
     {{endif}}
     {{endfor}}
-    nSeL4ArchInvocationLabels = nInvocationLabels + {{num_invocations}}
+    nSeL4ArchInvocationLabels
 };
 
 #endif /* __{{header_title}}_SEL4_ARCH_INVOCATION_H */
@@ -100,6 +103,9 @@ ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 enum arch_invocation_label {
     {{for label, condition in invocations}}
     {{if condition}}
+    {{if first}}
+#error "First arch invocation label cannot be conditional"
+    {{endif}}
 #if {{condition}}
     {{endif}}
     {{if first}}
@@ -112,7 +118,7 @@ enum arch_invocation_label {
 #endif
     {{endif}}
     {{endfor}}
-    nArchInvocationLabels = nSeL4ArchInvocationLabels + {{num_invocations}}
+    nArchInvocationLabels
 };
 
 #endif /* __{{header_title}}_ARCH_INVOCATION_H */

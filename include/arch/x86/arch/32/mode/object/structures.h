@@ -166,12 +166,53 @@ cap_get_archCapSizeBits(cap_t cap)
         return 0;
 
     case cap_io_page_table_cap:
-        return VTD_PT_SIZE_BITS;
+        return seL4_IOPageTableBits;
     case cap_asid_control_cap:
         return 0;
 
     case cap_asid_pool_cap:
         return seL4_ASIDPoolBits;
+
+    default:
+        fail("Invalid arch cap type");
+    }
+}
+
+static inline bool_t CONST
+cap_get_archCapIsPhysical(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+
+    case cap_frame_cap:
+        return true;
+
+    case cap_page_table_cap:
+        return true;
+
+    case cap_page_directory_cap:
+        return true;
+
+    case cap_pdpt_cap:
+        return true;
+
+    case cap_io_port_cap:
+        return false;
+
+    case cap_io_space_cap:
+        return false;
+
+    case cap_io_page_table_cap:
+        return true;
+
+    case cap_asid_control_cap:
+        return false;
+
+    case cap_asid_pool_cap:
+        return true;
 
     default:
         fail("Invalid arch cap type");

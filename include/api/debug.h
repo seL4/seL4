@@ -18,9 +18,9 @@
 #include <arch/api/syscall.h>
 #include <model/statedata.h>
 
-#ifdef CONFIG_PRINTING
-
 extern kernel_entry_t ksKernelEntry;
+
+#ifdef CONFIG_PRINTING
 
 static inline void
 debug_printKernelEntryReason(void)

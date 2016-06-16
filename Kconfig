@@ -362,34 +362,6 @@ menu "seL4 System Parameters"
         help
             The number of priority levels per domain
 
-    config ENABLE_BENCHMARKS
-        bool "Enable benchmarks"
-        depends on !VERIFICATION_BUILD
-        default n
-        help
-            Enable benchamrks including logging and tracing info.
-            Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it
-            at user level.
-            NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory.
-            This is not fully implemented for x86.
-
-    config BENCHMARK_TRACK_KERNEL_ENTRIES
-        bool "Keep track of kernel entries"
-        depends on ENABLE_BENCHMARKS
-        default n
-        help
-            Log kernel entries information including timing, number of invocations and arguments for
-            system calls, interrupts, user faults and VM faults.
-
-    config MAX_NUM_TRACE_POINTS
-        int "Maximum number of tracepoints"
-        depends on !BENCHMARK_TRACK_KERNEL_ENTRIES
-        default 0
-        help
-            Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data,
-            where k is an integer between 0 and this value - 1.
-            The maximum number of different trace point identifiers which can be used.
-
 endmenu
 
 menu "Build Options"
@@ -537,6 +509,50 @@ menu "Build Options"
             On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 
             adjacent cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher.
             Currently unimplemented on other platforms.
+
+    config ENABLE_BENCHMARKS
+        bool
+        default n
+
+    choice
+        prompt "Enable benchmarks"
+        depends on !VERIFICATION_BUILD
+        default NO_BENCHMARKS
+        help
+            Enable benchamrks including logging and tracing info.
+            Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it
+            at user level.
+            NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory.
+            This is not fully implemented for x86.
+
+
+        config NO_BENCHMARKS
+             bool "No benchmarking features enabled"
+
+        config BENCHMARK_TRACK_KERNEL_ENTRIES
+            bool "Keep track of kernel entries"
+            select ENABLE_BENCHMARKS
+            help
+                Log kernel entries information including timing, number of invocations and arguments for
+                system calls, interrupts, user faults and VM faults.
+
+        config BENCHMARK_TRACEPOINTS
+            bool "Use trace points"
+            select ENABLE_BENCHMARKS
+            help
+                 Enable manually inserted tracepoints that the kernel will track time consumed between.
+
+            endchoice
+
+     config MAX_NUM_TRACE_POINTS
+            int "Maximum number of tracepoints"
+            depends on BENCHMARK_TRACEPOINTS
+            default 1
+            help
+                Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data,
+                where k is an integer between 0 and this value - 1.
+                The maximum number of different trace point identifiers which can be used.
+
 
 endmenu
 
