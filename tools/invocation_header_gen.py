@@ -85,7 +85,7 @@ enum sel4_arch_invocation_label {
 #endif
     {{endif}}
     {{endfor}}
-    nSeL4ArchInvocationLabels = nInvocationLabels + {{num_invocations}}
+    nSeL4ArchInvocationLabels
 };
 
 #endif /* __{{header_title}}_SEL4_ARCH_INVOCATION_H */
@@ -118,7 +118,7 @@ enum arch_invocation_label {
 #endif
     {{endif}}
     {{endfor}}
-    nArchInvocationLabels = nSeL4ArchInvocationLabels + {{num_invocations}}
+    nArchInvocationLabels
 };
 
 #endif /* __{{header_title}}_ARCH_INVOCATION_H */
