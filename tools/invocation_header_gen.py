@@ -70,6 +70,9 @@ SEL4_ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 enum sel4_arch_invocation_label {
     {{for label, condition in invocations}}
     {{if condition}}
+    {{if first}}
+#error "First sel4_arch invocation label cannot be conditional"
+    {{endif}}
 #if {{condition}}
     {{endif}}
     {{if first}}
@@ -100,6 +103,9 @@ ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 enum arch_invocation_label {
     {{for label, condition in invocations}}
     {{if condition}}
+    {{if first}}
+#error "First arch invocation label cannot be conditional"
+    {{endif}}
 #if {{condition}}
     {{endif}}
     {{if first}}
