@@ -167,13 +167,15 @@ handleUnknownSyscall(word_t w)
                              start, size);
 #else /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
         /* write to ipc buffer */
-        word_t i;
+        {
+            word_t i;
 
-        for (i = 0; i < size; i++) {
-            int base_index = i * 2 + 1;
-            ks_log_entry_t *log = &ksLog[i + start];
-            buffer[base_index] = log->key;
-            buffer[base_index + 1] = log->data;
+            for (i = 0; i < size; i++) {
+                int base_index = i * 2 + 1;
+                ks_log_entry_t *log = &ksLog[i + start];
+                buffer[base_index] = log->key;
+                buffer[base_index + 1] = log->data;
+            }
         }
 
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
