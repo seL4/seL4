@@ -166,7 +166,7 @@ cap_get_archCapSizeBits(cap_t cap)
         return 0;
 
     case cap_io_page_table_cap:
-        return VTD_PT_SIZE_BITS;
+        return seL4_IOPageTableBits;
     case cap_asid_control_cap:
         return 0;
 

@@ -406,7 +406,7 @@ Arch_getObjectSize(word_t t)
     case seL4_IA32_PDPTObject:
         return seL4_PDPTBits;
     case seL4_X86_IOPageTableObject:
-        return VTD_PT_SIZE_BITS;
+        return seL4_IOPageTableBits;
     default:
         return Mode_getObjectSize(t);
     }

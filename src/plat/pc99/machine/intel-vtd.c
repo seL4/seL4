@@ -277,12 +277,12 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
     /* first check for the first page table */
     vtd_cte_t *vtd_context_slot = vtd_context_table + context_index;
     if (!vtd_cte_ptr_get_present(vtd_context_slot)) {
-        iopt = (vtd_pte_t*)alloc_region(VTD_PT_SIZE_BITS);
+        iopt = (vtd_pte_t*)alloc_region(seL4_IOPageTableBits);
         if (!iopt) {
             fail("Failed to allocate IO page table");
         }
-        memzero(iopt, 1 << VTD_PT_SIZE_BITS);
-        flushCacheRange(iopt, VTD_PT_SIZE_BITS);
+        memzero(iopt, 1 << seL4_IOPageTableBits);
+        flushCacheRange(iopt, seL4_IOPageTableBits);
 
         vtd_cte_ptr_new(
             vtd_context_slot,
@@ -314,12 +314,12 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
             flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
         } else {
             if (!vtd_pte_ptr_get_write(vtd_pte_slot)) {
-                iopt = (vtd_pte_t*)alloc_region(VTD_PT_SIZE_BITS);
+                iopt = (vtd_pte_t*)alloc_region(seL4_IOPageTableBits);
                 if (!iopt) {
                     fail("Failed to allocate IO page table");
                 }
-                memzero(iopt, BIT(VTD_PT_SIZE_BITS));
-                flushCacheRange(iopt, VTD_PT_SIZE_BITS);
+                memzero(iopt, BIT(seL4_IOPageTableBits));
+                flushCacheRange(iopt, seL4_IOPageTableBits);
 
                 vtd_pte_ptr_new(vtd_pte_slot, pptr_to_paddr(iopt), 1, 1);
                 flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
