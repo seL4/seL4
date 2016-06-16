@@ -414,8 +414,8 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             return cap_io_page_table_cap_get_capIOPTBasePtr(cap_a) ==
                    cap_io_page_table_cap_get_capIOPTBasePtr(cap_b);
         }
-#endif
         break;
+#endif
     }
 
     return false;
@@ -462,8 +462,10 @@ Arch_getObjectSize(word_t t)
         return PTE_SIZE_BITS + PT_BITS;
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_BITS;
+#ifdef CONFIG_ARM_SMMU
     case seL4_ARM_IOPageTableObject:
         return seL4_IOPageTableBits;
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
         return VCPU_SIZE_BITS;

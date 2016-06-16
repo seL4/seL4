@@ -11,6 +11,8 @@
 #ifndef __ARCH_MACHINE_REGISTERSET_32_H
 #define __ARCH_MACHINE_REGISTERSET_32_H
 
+#include <config.h>
+
 /*
  * We cannot allow async aborts in the verified kernel, but
  * they are useful in identifying invalid memory access bugs
@@ -85,7 +87,9 @@ enum _register {
     /* End of GP registers, the following are additional kernel-saved state. */
 
     LR_svc = 15,
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     ELR_hyp = 15,
+#endif
     CPSR = 16,
 
     FaultInstruction = 17,
