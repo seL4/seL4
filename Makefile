@@ -596,23 +596,23 @@ autoconf.h: include/plat/${PLAT}/autoconf.h
 # Header generation
 ###################
 
-arch/api/invocation.h: ${SOURCE_ROOT}/libsel4/arch_include/${ARCH}/interfaces/sel4arch.xml | ${DIRECTORIES}
+arch/api/invocation.h: ${SOURCE_ROOT}/libsel4/arch_include/${ARCH}/interfaces/sel4arch.xml ${INVOCATION_ID_GEN_PATH} | ${DIRECTORIES}
 	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/invocation.h
 	$(Q)${INVOCATION_ID_GEN_PATH} --arch --xml $< \
 		--dest $@
 
-arch/api/sel4_invocation.h: ${SOURCE_ROOT}/libsel4/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml | ${DIRECTORIES}
+arch/api/sel4_invocation.h: ${SOURCE_ROOT}/libsel4/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml ${INVOCATION_ID_GEN_PATH} | ${DIRECTORIES}
 	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/sel4_invocation.h
 	$(Q)${INVOCATION_ID_GEN_PATH} --sel4_arch --xml $< \
 		--dest $@
 
 
-api/invocation.h: ${SOURCE_ROOT}/libsel4/include/interfaces/sel4.xml | ${DIRECTORIES}
+api/invocation.h: ${SOURCE_ROOT}/libsel4/include/interfaces/sel4.xml ${INVOCATION_ID_GEN_PATH} | ${DIRECTORIES}
 	$(Q)rm -f ${SOURCE_ROOT}/include/api/invocation.h
 	$(Q)${INVOCATION_ID_GEN_PATH} --xml $< \
 		--dest $@
 
-arch/api/syscall.h: ${SOURCE_ROOT}/include/api/syscall.xsd ${SOURCE_ROOT}/include/api/syscall.xml | ${DIRECTORIES}
+arch/api/syscall.h: ${SOURCE_ROOT}/include/api/syscall.xsd ${SOURCE_ROOT}/include/api/syscall.xml | ${DIRECTORIES} ${SYSCALL_ID_GEN_PATH}
 	$(Q)${XMLLINT_PATH} --noout --schema $^
 	$(Q)rm -f ${SOURCE_ROOT}/include/arch/${ARCH}/arch/api/syscall.h
 	$(Q)${SYSCALL_ID_GEN_PATH} --xml $(word 2, $^) \
@@ -634,7 +634,7 @@ TOPTYPES = $(foreach tp,${TOPLEVELTYPES}, \
 	@echo " [PBF_GEN] $@"
 	$(Q)${CPP} ${CPPFLAGS} -P $< > $@
 
-%_gen.h: %.pbf ${STATICSOURCES} ${STATICHEADERS} | ${DIRECTORIES}
+%_gen.h: %.pbf ${STATICSOURCES} ${STATICHEADERS} ${BF_GEN_PATH} | ${DIRECTORIES}
 	@echo " [BF_GEN] $@"
 	$(Q)${BF_GEN_PATH} $< $@ ${PRUNES}
 
