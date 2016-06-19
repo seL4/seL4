@@ -21,6 +21,7 @@ import os.path
 import optparse
 import re
 import itertools
+import tempfile
 
 from six.moves import range
 
@@ -2546,15 +2547,31 @@ class Block:
 
         return names
 
-def open_output(filename):
-    """Open an output file for writing, recording its filename."""
-    class OutputFile(object):
-        def __init__(self, filename, file):
-            self.filename = os.path.abspath(filename)
-            self.file = file
-        def write(self, *args, **kwargs):
-            self.file.write(*args, **kwargs)
-    return OutputFile(filename, open(filename, "w"))
+temp_output_files = []
+class OutputFile(object):
+    def __init__(self, filename, mode='w', atomic=True):
+        """Open an output file for writing, recording its filename.
+           If atomic is True, use a temporary file for writing.
+           Call finish_output to finalise all temporary files."""
+        self.filename = os.path.abspath(filename)
+        if atomic:
+            dirname, basename = os.path.split(self.filename)
+            self.file = tempfile.NamedTemporaryFile(
+                mode=mode, dir=dirname, prefix=basename + '.', delete=False)
+            if DEBUG:
+                print('Temp file: %r -> %r' % (self.file.name, self.filename), file=sys.stderr)
+            global temp_output_files
+            temp_output_files.append(self)
+        else:
+            self.file = open(filename, mode)
+    def write(self, *args, **kwargs):
+        self.file.write(*args, **kwargs)
+
+def finish_output():
+    global temp_output_files
+    for f in temp_output_files:
+        os.rename(f.file.name, f.filename)
+    temp_output_files = []
 
 ## Toplevel
 if __name__ == '__main__':
@@ -2596,7 +2613,7 @@ if __name__ == '__main__':
         in_file = open(in_filename)
 
         if len(args) > 1:
-            out_file = open_output(args[1])
+            out_file = OutputFile(args[1])
 
     #
     # If generating Isabelle scripts, ensure we have enough information for
@@ -2715,7 +2732,7 @@ if __name__ == '__main__':
                     os.path.basename(options.multifile_base).split('.')[0]
                 submodule_name = base_filename + "_" + \
                                  e.name + "_defs"
-                out_file = open_output(options.multifile_base + "_" +
+                out_file = OutputFile(options.multifile_base + "_" +
                                 e.name + "_defs" + ".thy")
 
                 print("theory %s imports \"%s/KernelState_C\" begin" % (
@@ -2787,7 +2804,7 @@ if __name__ == '__main__':
                     os.path.basename(options.multifile_base).split('.')[0]
                 submodule_name = base_filename + "_" + \
                                  e.name + "_proofs"
-                out_file = open_output(options.multifile_base + "_" +
+                out_file = OutputFile(options.multifile_base + "_" +
                                 e.name + "_proofs" + ".thy")
 
                 print(("theory %s imports "
@@ -2811,3 +2828,5 @@ if __name__ == '__main__':
         for e in itertools.chain(blocks.values(), unions.values()):
             e.generate(options)
         print("#endif", file=out_file)
+
+    finish_output()
