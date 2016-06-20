@@ -380,7 +380,7 @@ DEFINES += -DCONFIG_ARM1136JF_S
 endif
 
 WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
-	missing-declarations undef pointer-arith no-nonnull declaration-after-statement
+	missing-declarations undef pointer-arith no-nonnull
 
 CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
 	${WARNINGS:%=-W%} ${INCLUDES}
