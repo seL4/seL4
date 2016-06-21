@@ -617,15 +617,14 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
 #else
-    {
+{
 #endif
-        return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
-    }
+    return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+}
 }
 
 void
-Arch_prepareThreadDelete(tcb_t *thread)
-{
+Arch_prepareThreadDelete(tcb_t * thread) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.vcpu) {
         dissociateVcpuTcb(thread, thread->tcbArch.vcpu);
