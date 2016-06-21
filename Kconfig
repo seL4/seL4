@@ -58,6 +58,7 @@ menu "seL4 System"
         bool
         default y if ARCH_ARM
 
+    # CPU values.
 
     config ARM1136JF_S
         bool
