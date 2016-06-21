@@ -240,7 +240,6 @@ typedef struct tcb tcb_t;
 
 /* Ensure object sizes are sane */
 compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << seL4_SlotBits))
-compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
 compile_assert(tcb_size_sane,
                (1 << (TCB_SIZE_BITS)) + sizeof(tcb_t) <= (1 << seL4_TCBBits))
 compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << seL4_EndpointBits))
