@@ -666,6 +666,7 @@ def parse_xml_file(input_file, valid_types):
         for method in interface.getElementsByTagName("method"):
             method_name = method.getAttribute("name")
             method_id = method.getAttribute("id")
+            method_config = method.getAttribute("config")
 
             #
             # Get parameters.
@@ -685,7 +686,7 @@ def parse_xml_file(input_file, valid_types):
                     input_params.append(Parameter(param_name, param_type))
                 else:
                     output_params.append(Parameter(param_name, param_type))
-            methods.append((interface_name, method_name, method_id, input_params, output_params))
+            methods.append((interface_name, method_name, method_id, input_params, output_params, method_config))
 
     return (methods, structs)
 
@@ -752,7 +753,7 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
     result.append("/*")
     result.append(" * Return types for generated methods.")
     result.append(" */")
-    for (interface_name, method_name, _, _, output_params) in methods:
+    for (interface_name, method_name, _, _, output_params, _) in methods:
         results_structure = generate_result_struct(interface_name, method_name, output_params)
         if results_structure:
             result.append(results_structure)
@@ -763,9 +764,13 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
     result.append("/*")
     result.append(" * Generated stubs.")
     result.append(" */")
-    for (interface_name, method_name, method_id, inputs, outputs) in methods:
+    for (interface_name, method_name, method_id, inputs, outputs, config) in methods:
+        if config != "":
+            result.append("#ifdef %s" % config)
         result.append(generate_stub(arch, wordsize, interface_name, method_name,
                                     method_id, inputs, outputs, structs, use_only_ipc_buffer))
+        if config != "":
+            result.append("#endif")
 
     # Print footer.
     result.append("#endif /* __LIBSEL4_SEL4_CLIENT_H */")
