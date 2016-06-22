@@ -30,10 +30,6 @@ typedef struct arch_tcb {
 #endif
 } arch_tcb_t;
 
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define EXPECTED_TCB_SIZE 144
-#else
-#endif
 enum vm_rights {
     VMNoAccess = 0,
     VMKernelOnly = 1,
