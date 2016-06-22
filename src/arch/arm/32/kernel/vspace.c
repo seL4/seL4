@@ -735,10 +735,10 @@ activate_global_pd(void)
     /* starting level */
     r |= (0x0 << 6);     /* Start at second level */
     /* Sharability of tables */
-    r |= (1 << 8);       /* Inner write-back, write-allocate */
-    r |= (1 << 10);      /* Outer write-back, write-allocate */
+    r |= BIT(8);       /* Inner write-back, write-allocate */
+    r |= BIT(10);      /* Outer write-back, write-allocate */
     /* Long descriptor format (not that we have a choice) */
-    r |= (1 << 31);
+    r |= BIT(31);
     setVTCR(r);
 }
 
