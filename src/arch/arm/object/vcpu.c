@@ -53,6 +53,9 @@
                    | HCR_TAC | HCR_SWIO)
 #define HCR_VCPU   (HCR_COMMON)
 
+/* Amongst other things we set the caches to enabled by default. This
+ * may cause problems when booting guests that expect caches to be
+ * disabled */
 #define SCTLR_DEFAULT 0xc5187c
 #define ACTLR_DEFAULT 0x40
 
