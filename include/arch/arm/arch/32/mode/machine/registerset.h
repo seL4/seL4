@@ -37,8 +37,6 @@
                              | PMODE_SYSTEM       \
                              | CPSR_EXTRA_FLAGS   )
 
-#ifdef __ASSEMBLER__
-
 /* Offsets within the user context, these need to match the order in
  * register_t below */
 #define PT_SP               (13  * 4)
@@ -47,7 +45,7 @@
 #define PT_FaultInstruction (17 * 4)
 #define PT_R8               (8  * 4)
 
-#else /* !__ASSEMBLER__ (C definitions) */
+#ifndef __ASSEMBLER__ /* C only definitions */
 
 #include <config.h>
 #include <stdint.h>
@@ -95,6 +93,14 @@ enum _register {
     FaultInstruction = 17,
     n_contextRegisters = 18,
 };
+
+compile_assert(sp_offset_correct, SP * sizeof(word_t) == PT_SP)
+compile_assert(lr_svc_offset_correct, LR_svc * sizeof(word_t) == PT_LR_svc)
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+compile_assert(elr_hyp_offset_correct, ELR_hyp * sizeof(word_t) == PT_ELR_hyp)
+#endif
+compile_assert(faultinstruction_offset_correct, FaultInstruction * sizeof(word_t) == PT_FaultInstruction)
+compile_assert(r8_offset_correct, R8 * sizeof(word_t) == PT_R8)
 
 typedef word_t register_t;
 
@@ -150,6 +156,6 @@ sanitiseRegister(register_t reg, word_t v)
     }
 }
 
-#endif /* __ASSEMBLER__ */
+#endif /* !__ASSEMBLER__ */
 
 #endif /* !__ARCH_MACHINE_REGISTERSET_32_H */
