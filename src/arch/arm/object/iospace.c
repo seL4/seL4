@@ -41,20 +41,14 @@ static bool_t
 isIOPDEValid(iopde_t *iopde)
 {
     assert(iopde != 0);
-    if ((iopde->words[0] & IOPDE_VALID_MASK) == 0) {
-        return false;
-    }
-    return true;
+    return (iopde->words[0] & IOPDE_VALID_MASK) != 0;
 }
 
 static bool_t
 isIOPTEEmpty(iopte_t *iopte)
 {
     assert(iopte != 0);
-    if ((iopte->words[0] & IOPTE_EMPTY_MASK) == 0) {
-        return true;
-    }
-    return false;
+    return (iopte->words[0] & IOPTE_EMPTY_MASK) == 0;
 }
 
 
