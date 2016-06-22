@@ -14,8 +14,8 @@
 #include <config.h>
 
 #include <mode/model/statedata.h>
-#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
-#else
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 extern pdeS1_t armHSGlobalPGD[BIT(PGD_BITS)] VISIBLE;
 extern pdeS1_t armHSGlobalPD[BIT(PT_BITS)]   VISIBLE;
 extern pteS1_t armHSGlobalPT[BIT(PT_BITS)]   VISIBLE;
