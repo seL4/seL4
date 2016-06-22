@@ -11,6 +11,10 @@
 #ifndef __LIBSEL4_SEL4_ARCH_CONSTANTS_H
 #define __LIBSEL4_SEL4_ARCH_CONSTANTS_H
 
+#ifdef HAVE_AUTOCONF
+#include <autoconf.h>
+#endif
+
 enum {
     seL4_GlobalsFrame = 0xffffc000,
 };
@@ -21,10 +25,15 @@ enum {
 #define seL4_TCBBits 9
 #define seL4_EndpointBits 4
 #define seL4_NotificationBits 4
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define seL4_PageTableBits      12
+#else
 #define seL4_PageTableBits 10
+#endif
 #define seL4_PageDirBits 14
 #define seL4_ASIDPoolBits 12
-
+#define seL4_ARM_VCPUBits       12
+#define seL4_IOPageTableBits    12
 /* word size */
 #define seL4_WordBits (sizeof(seL4_Word) * 8)
 

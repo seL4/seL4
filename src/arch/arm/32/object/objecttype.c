@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <kernel/vspace.h>
@@ -15,6 +16,9 @@
 #include <arch/machine.h>
 #include <arch/model/statedata.h>
 #include <arch/object/objecttype.h>
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#include <arch/object/vcpu.h>
+#endif
 
 deriveCap_ret_t
 Arch_deriveCap(cte_t *slot, cap_t cap)
@@ -64,6 +68,31 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_space_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+
+    case cap_io_page_table_cap:
+        if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        } else {
+            userError("Deriving a IOPT cap without an assigned IOASID");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+        }
+        return ret;
+#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -130,6 +159,12 @@ Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_small_frame_cap:
         if (cap_small_frame_cap_get_capFMappedASID(cap)) {
+#ifdef CONFIG_ARM_SMMU
+            if (isIOSpaceFrame(cap)) {
+                unmapIOPage(cap);
+                break;
+            }
+#endif
             unmapPage(ARMSmallPage,
                       cap_small_frame_cap_get_capFMappedASID(cap),
                       cap_small_frame_cap_get_capFMappedAddress(cap),
@@ -144,6 +179,31 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                       cap_frame_cap_get_capFMappedAddress(cap),
                       (void *)cap_frame_cap_get_capFBasePtr(cap));
         }
+        break;
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        if (final) {
+            vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        }
+        break;
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_space_cap:
+        if (final) {
+            clearIOPageDirectory(cap);
+        }
+        break;
+
+    case cap_io_page_table_cap:
+        if (final && cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
+            deleteIOPageTable(cap);
+        }
+        break;
+#endif
+
+    default:
         break;
     }
 
@@ -164,6 +224,10 @@ resetMemMapping(cap_t cap)
     case cap_page_directory_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_page_directory_cap_set_capPDIsMapped(cap, 0);
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_page_table_cap:
+        return cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
+#endif
     }
 
     return cap;
@@ -244,6 +308,25 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
         }
         return cap;
     }
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        vcpu_init(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        return cap;
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_space_cap:
+        Arch_finaliseCap(cap, true);
+        return cap;
+
+    case cap_io_page_table_cap:
+        clearMemoryRAM(cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        Arch_finaliseCap(cap, is_final);
+        return resetMemMapping(cap);
+#endif
+
     default:
         fail("Arch_recycleCap: invalid cap type");
     }
@@ -308,6 +391,31 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_asid_pool_cap_get_capASIDPool(cap_b);
         }
         break;
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        if (cap_get_capType(cap_b) == cap_vcpu_cap) {
+            return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
+                   cap_vcpu_cap_get_capVCPUPtr(cap_b);
+        }
+        break;
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_space_cap:
+        if (cap_get_capType(cap_b) == cap_io_space_cap) {
+            return cap_io_space_cap_get_capModuleID(cap_a) ==
+                   cap_io_space_cap_get_capModuleID(cap_b);
+        }
+        break;
+
+    case cap_io_page_table_cap:
+        if (cap_get_capType(cap_b) == cap_io_page_table_cap) {
+            return cap_io_page_table_cap_get_capIOPTBasePtr(cap_a) ==
+                   cap_io_page_table_cap_get_capIOPTBasePtr(cap_b);
+        }
+        break;
+#endif
     }
 
     return false;
@@ -354,6 +462,14 @@ Arch_getObjectSize(word_t t)
         return PTE_SIZE_BITS + PT_BITS;
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_BITS;
+#ifdef CONFIG_ARM_SMMU
+    case seL4_ARM_IOPageTableObject:
+        return seL4_IOPageTableBits;
+#endif
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case seL4_ARM_VCPUObject:
+        return VCPU_SIZE_BITS;
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
         fail("Invalid object type");
         return 0;
@@ -377,7 +493,11 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
-                   0, ASID_HIGH(asidInvalid),
+                   0,
+#ifdef CONFIG_ARM_SMMU
+                   0,
+#endif
+                   ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_LargePageObject:
@@ -450,7 +570,21 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
 
         return cap_page_directory_cap_new(false, asidInvalid,
                                           (word_t)regionBase);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case seL4_ARM_VCPUObject:
+        memzero(regionBase, 1 << VCPU_SIZE_BITS);
+        vcpu_init(VCPU_PTR(regionBase));
+        return cap_vcpu_cap_new(VCPU_REF(regionBase));
+#endif
 
+#ifdef CONFIG_ARM_SMMU
+    case seL4_ARM_IOPageTableObject:
+        memzero(regionBase, 1 << seL4_IOPageTableBits);
+        cleanCacheRange_RAM((word_t)regionBase,
+                            (word_t)regionBase + (1 << seL4_IOPageTableBits) - 1,
+                            addrFromPPtr(regionBase));
+        return cap_io_page_table_cap_new(0, asidInvalid, (word_t)regionBase, 0);
+#endif
     default:
         /*
          * This is a conflation of the haskell error: "Arch.createNewCaps
@@ -466,12 +600,37 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
                       cte_t *slot, cap_t cap, extra_caps_t excaps,
                       word_t *buffer)
 {
+    /* The C parser cannot handle a switch statement with only a default
+     * case. So we need to do some gymnastics to remove the switch if
+     * there are no other cases */
+#if defined(CONFIG_ARM_SMMU) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+    switch (cap_get_capType(cap)) {
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_space_cap:
+        return decodeARMIOSpaceInvocation(invLabel, cap);
+    case cap_io_page_table_cap:
+        return decodeARMIOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+#endif
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+#endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
+    default:
+#else
+{
+#endif
     return decodeARMMMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+}
 }
 
 void
-Arch_prepareThreadDelete(tcb_t *thread)
-{
+Arch_prepareThreadDelete(tcb_t * thread) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    if (thread->tcbArch.vcpu) {
+        dissociateVcpuTcb(thread, thread->tcbArch.vcpu);
+    }
+#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     /* No action required on ARM. */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 

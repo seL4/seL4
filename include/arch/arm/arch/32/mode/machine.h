@@ -23,6 +23,7 @@
 #include <armv/machine.h>
 
 #include <machine/io.h>
+#include <mode/machine_pl2.h>
 
 #define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
 #define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
@@ -56,7 +57,6 @@
 #define PMUSERENR  " p15, 0,  %0,  c9, c14, 0" /* 32-bit RW PMU PL0 enable */
 #define ID_DFR0    " p15, 0,  %0,  c0,  c1, 2" /* 32-bit RO Debug feature register */
 #define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
-
 
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
@@ -119,8 +119,12 @@ static inline void flushBTAC(void)
 /** DONT_TRANSLATE */
 static inline void writeContextID(word_t id)
 {
-    asm volatile("mcr p15, 0, %0, c13, c0, 1" : : "r"(id));
-    isb();
+    if (config_set(ARM_HYP)) {
+        writeContextIDPL2(id);
+    } else {
+        asm volatile("mcr p15, 0, %0, c13, c0, 1" : : "r"(id));
+        isb();
+    }
 }
 
 /* Address space control */
@@ -140,10 +144,14 @@ static inline void setCurrentPD(paddr_t addr)
      * outer write-back cacheable, no allocate on write, inner non-cacheable.
      */
     /* Before changing the PD ensure all memory stores have completed */
-    dsb();
-    writeTTBR0(addr);
-    /* Ensure the PD switch completes before we do anything else */
-    isb();
+    if (config_set(ARM_HYP)) {
+        setCurrentPDPL2(addr);
+    } else {
+        dsb();
+        writeTTBR0(addr);
+        /* Ensure the PD switch completes before we do anything else */
+        isb();
+    }
 }
 
 /* TLB control */
@@ -160,19 +168,27 @@ static inline void invalidateTLB(void)
 /** DONT_TRANSLATE */
 static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
 {
-    dsb();
-    asm volatile("mcr p15, 0, %0, c8, c7, 2" : : "r"(hw_asid));
-    dsb();
-    isb();
+    if (config_set(ARM_HYP)) {
+        invalidateTLB();
+    } else {
+        dsb();
+        asm volatile("mcr p15, 0, %0, c8, c7, 2" : : "r"(hw_asid));
+        dsb();
+        isb();
+    }
 }
 /** MODIFIES: [*] */
 /** DONT_TRANSLATE */
 static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
 {
-    dsb();
-    asm volatile("mcr p15, 0, %0, c8, c7, 1" : : "r"(mva_plus_asid));
-    dsb();
-    isb();
+    if (config_set(ARM_HYP)) {
+        invalidateTLB();
+    } else {
+        dsb();
+        asm volatile("mcr p15, 0, %0, c8, c7, 1" : : "r"(mva_plus_asid));
+        dsb();
+        isb();
+    }
 }
 /** MODIFIES: [*] */
 void lockTLBEntry(vptr_t vaddr);
