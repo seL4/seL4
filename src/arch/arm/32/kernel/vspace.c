@@ -182,7 +182,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
             1, /* Write-back caching */
             0  /* executable */
         );
-#else
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     armHSGlobalPT[idx] =
         pteS1_pteS1_small_new(
             0, /* Executeable */
@@ -196,7 +196,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
             0, /* non secure */
             vm_attributes_get_armPageCacheable(attributes)
         );
-#endif
+#endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -344,7 +344,7 @@ map_kernel_window(void)
     map_kernel_devices();
 }
 
-#else
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 BOOT_CODE void
 map_kernel_window(void)
@@ -462,7 +462,7 @@ map_kernel_window(void)
     map_kernel_devices();
 }
 
-#endif
+#endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 static BOOT_CODE void
 map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
