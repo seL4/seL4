@@ -13,15 +13,26 @@
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+extern uint64_t ccnt_overflow;
+static inline void benchmark_arch_utilisation_reset(void)
+{
+    ccnt_overflow = 0;
+}
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+
 static inline uint32_t
 timestamp(void)
 {
-    /* todo return cycle counter read */
-#error "Not implemented"
+    int ccnt;
+
+    asm volatile (
+        "mrc p15, 0, %0, c15, c12, 1\n"
+        : "=r" (ccnt)
+    );
+
+    return ccnt;
 }
 
 #endif /* CONFIG_ENABLE_BENCHMARKS */
-
-
-
 #endif /* ARMV_BENCHMARK_H */
