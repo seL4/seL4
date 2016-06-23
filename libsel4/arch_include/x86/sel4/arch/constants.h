@@ -14,6 +14,7 @@
 #include <autoconf.h>
 
 #include <sel4/sel4_arch/constants.h>
+#include <sel4/plat/api/constants.h>
 
 #ifndef __ASM__
 #include <sel4/sel4_arch/objecttype.h>

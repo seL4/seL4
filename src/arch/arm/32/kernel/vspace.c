@@ -17,6 +17,7 @@
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <machine/io.h>
+#include <machine/debug.h>
 #include <model/statedata.h>
 #include <object/cnode.h>
 #include <object/untyped.h>
@@ -1334,6 +1335,20 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         addr = getFAR();
         fault = getDFSR();
 #endif
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+        /* Debug exceptions come in on the Prefetch and Data abort vectors.
+         * We have to test the fault-status bits in the IFSR/DFSR to determine
+         * if it's a debug exception when one occurs.
+         *
+         * If it is a debug exception, return early and don't fallthrough to the
+         * normal VM Fault handling path.
+         */
+        if (isDebugFault(fault)) {
+            current_fault = handleUserLevelDebugException(0);
+            return EXCEPTION_FAULT;
+        }
+#endif
         current_fault = fault_vm_fault_new(addr, fault, false);
         return EXCEPTION_FAULT;
     }
@@ -1349,6 +1364,22 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         fault = getHSR() & 0x3ffffff;
 #else
         fault = getIFSR();
+#endif
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+        if (isDebugFault(fault)) {
+            current_fault = handleUserLevelDebugException(pc);
+
+            if (fault_debug_exception_get_exceptionReason(current_fault) == seL4_SingleStep
+                    && !singleStepFaultCounterReady(&thread->tcbArch)) {
+                /* Don't send a fault message to the thread yet if we were asked
+                 * to step through N instructions and the counter isn't depleted
+                 * yet.
+                 */
+                return EXCEPTION_NONE;
+            }
+            return EXCEPTION_FAULT;
+        }
 #endif
         current_fault = fault_vm_fault_new(pc, fault, true);
         return EXCEPTION_FAULT;

@@ -97,7 +97,15 @@ See \autoref{sec:faults} for details.
 \label{sec:read_write_registers}
 
 The registers of a thread can be read and written with the
-\apifunc{seL4\_TCB\_ReadRegisters}{tcb_readregisters} and \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} methods. The register contents are transferred via the IPC buffer. The IPC buffer locations that registers are copied to/from are given below.
+\apifunc{seL4\_TCB\_ReadRegisters}{tcb_readregisters} and \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} methods.
+For some registers, the kernel will silently mask certain bits or ranges of bits off, and force them to contain certain
+values to ensure that they cannot be maliciously set to values that would compromise the running system, or to respect
+values that the architecture specifications have mandated to be certain values. On X86, these bits currently are:
+\begin{itemize}
+\item \texttt{EFLAGS}: Bits 1, 3 and 5, TF, Bits 12-31, and IF.
+\end{itemize}
+
+The register contents are transferred via the IPC buffer. The IPC buffer locations that registers are copied to/from are given below.
 
 \ifxeightsix
 \subsubsection{IA-32}
@@ -146,8 +154,8 @@ The registers of a thread can be read and written with the
 A thread's actions may result in a fault. Faults are delivered to the
 thread's exception handler so that it can take the appropriate action.
 The fault type is specified in the message label and is one of:
-seL4\_CapFault, seL4\_VMFault, seL4\_UnknownSyscall, seL4\_UserException
-or seL4\_Interrupt.
+seL4\_CapFault, seL4\_VMFault, seL4\_UnknownSyscall, seL4\_UserException,
+seL4\_DebugException or seL4\_Interrupt.
 
 \subsection{Capability Faults}
 
@@ -300,6 +308,117 @@ Exception code & --- & \ipcbloc{IPCBuffer[4]} \\
 IA-32 architecture.}
 \end{table}
 \fi
+
+\subsection{Debug Exception: Breakpoints and Watchpoints}
+\label{sec:debug_exceptions}
+
+Debug exceptions are used to deliver trace and debug related events to threads.
+Breakpoints, watchpoints, trace-events and instruction-performance sampling
+events are examples. These events are supported for userspace threads when the kernel
+is configured to include them (when CONFIG\_HARDWARE\_DEBUG\_API is set). Information
+on the available hardware debugging resources is presented in the form of the following constants:
+
+\begin{description}
+\item[seL4\_NumHWBreakpoints]: Defines the total number of hardware break
+registers available, of all types available on the hardware platform. On the ARM
+Cortex A7 for example, there are 6 exclusive instruction breakpoint registers,
+and 4 exclusive data watchpoint registers, for a total of 10 monitor registers.
+On this platform therefore, \texttt{seL4\_NumHWBreakpoints} is defined as 10.
+The instruction breakpoint registers will always be assigned the lower API-IDs,
+and the data watchpoints will always be assigned following them.
+
+Additionally, \texttt{seL4\_NumExclusiveBreakpoints}, \texttt{seL4\_NumExclusiveWatchpoints}
+and \texttt{seL4\_NumDualFunctionMonitors}
+are defined for each target platform to reflect the number of available
+hardware breakpoints/watchpoints of a certain type.
+
+\item[seL4\_NumExclusiveBreakpoints]: Defines the number of hardware registers
+capable of generating a fault \textbf{only} on instruction execution. Currently this will be
+set only on ARM platforms. The API-ID of the first exclusive breakpoint is given
+in \texttt{seL4\_FirstBreakpoint}. If there are no instruction-break exclusive
+registers, \texttt{seL4\_NumExclusiveBreakpoints} will be set to \texttt{0} and
+\texttt{seL4\_FirstBreakpoint} will be set to -1.
+
+\item[seL4\_NumExclusiveWatchpoints]: Defines the number of hardware registers
+capable of generating a fault \textbf{only} on data access. Currently this will be set only
+on ARM platforms. The API-ID of the first exclusive watchpoint is given
+in \texttt{seL4\_FirstWatchpoint}. If there are no data-break exclusive
+registers, \texttt{seL4\_NumExclusiveWatchpoints} will be set to \texttt{0} and
+\texttt{seL4\_FirstWatchpoint} will be set to -1.
+
+\item[seL4\_NumDualFunctionMonitors]: Defines the number of hardware registers
+capable of generating a fault on either type of access -- i.e, the register
+supports both instruction and data breaks. Currently this will be set only on
+x86 platforms. The API-ID of the first dual-function monitor is given
+in \texttt{seL4\_FirstDualFunctionMonitor}. If there are no dual-function break
+registers, \texttt{seL4\_NumDualFunctionMonitors} will be set to \texttt{0} and
+\texttt{seL4\_FirstDualFunctionMonitor} will be set to -1.
+
+\end{description}
+
+\begin{table}[h]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Value sent} & \textbf{IPC buffer location} \\
+\midrule
+\reg{Breakpoint instruction address} & \ipcbloc{IPCBuffer[0]} \\
+\reg{Exception reason} & \ipcbloc{IPCBuffer[1]} \\
+\reg{Watchpoint data access address} & \ipcbloc{IPCBuffer[2]} \\
+\reg{Register API-ID} & \ipcbloc{IPCBuffer[3]} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:debug_exception_result}Debug fault message layout. The
+register API-ID is not returned in the fault message from the kernel on
+single-step faults.}
+\end{table}
+
+\subsection{Debug Exception: Single-stepping}
+\label{sec:single_stepping_debug_exception}
+
+The kernel provides support for the use of hardware single-stepping of userspace
+threads when configured to do so (when CONFIG\_HARDWARE\_DEBUG\_API is set). To
+this end it exposes the invocation, \texttt{seL4\_TCB\_ConfigureSingleStepping}.
+
+The caller is expected to select an API-ID that corresponds to
+an instruction breakpoint, to use when setting up the single-stepping
+functionality (i.e, API-ID from 0 to \texttt{seL4\_NumExclusiveBreakpoints} - 1).
+However, not all hardware platforms require an actual hardware breakpoint
+register to provide single-stepping functionality. If the caller's hardware platform requires the
+use of a hardware breakpoint register, it will use the breakpoint register given to it in \texttt{bp\_num},
+and return \texttt{true} in \texttt{bp\_was\_consumed}. If the underlying platform does not need a hardware
+breakpoint to provide single-stepping, seL4 will return \texttt{false} in \texttt{bp\_was\_consumed} and
+leave \texttt{bp\_num} unchanged.
+
+If \texttt{bp\_was\_consumed} is \texttt{true}, the caller should not
+attempt to re-configure \texttt{bp\_num} for Breakpoint or Watchpoint usage until
+the caller has disabled single-stepping and released that register, via a subsequent
+call to \texttt{seL4\_TCB\_ConfigureSingleStepping}, or a fault-reply with
+\texttt{n\_instr} being 0. Setting \texttt{num\_instructions} to \texttt{0}
+\textbf{disables single stepping}.
+
+On architectures that require an actual hardware registers to be configured for
+single-stepping functionality, seL4 will restrict the number of registers that
+can be configured as single-steppers, to one at any given time. The register that
+is currently configured (if any) for single-stepping will be the implicit
+\texttt{bp\_num} argument in a single-step debug fault reply.
+
+The kernel's single-stepping, also supports skipping a certain number of
+instructions before delivering the single-step fault message. \texttt{Num\_instructions}
+should be set to \texttt{1} when single-stepping, or any non-zero integer value to skip that many
+instructions before resuming single-stepping. This skip-count can also be set in
+the fault-reply to a single-step debug fault.
+
+\begin{table}[h]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
+\midrule
+\reg{Breakpoint instruction address} & \texttt{num\_instructions} to skip & \ipcbloc{IPCBuffer[0]} \\
+\reg{Exception reason} & --- & \ipcbloc{IPCBuffer[1]} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:single_step_exception_result}Single-step fault message layout.}
+\end{table}
 
 \subsection{VM Fault}
 \label{sec:vm-fault}

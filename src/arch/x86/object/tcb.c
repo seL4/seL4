@@ -136,6 +136,30 @@ word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
         }
     }
 
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    case fault_debug_exception: {
+        unsigned int ret;
+        word_t reason = fault_debug_exception_get_exceptionReason(sender->tcbFault);
+
+        setMR(receiver, receiveIPCBuffer,
+              seL4_DebugException_FaultIP, getRestartPC(sender));
+        ret = setMR(receiver, receiveIPCBuffer,
+                    seL4_DebugException_ExceptionReason, reason);
+
+        if (reason != seL4_SingleStep && reason != seL4_SoftwareBreakRequest) {
+            ret = setMR(receiver, receiveIPCBuffer,
+                        seL4_DebugException_TriggerAddress,
+                        fault_debug_exception_get_breakpointAddress(sender->tcbFault));
+
+            /* Breakpoint messages also set a "breakpoint number" register. */
+            ret = setMR(receiver, receiveIPCBuffer,
+                        seL4_DebugException_BreakpointNumber,
+                        fault_debug_exception_get_breakpointNumber(sender->tcbFault));
+        }
+        return ret;
+    }
+#endif
+
     default:
         fail("Invalid fault");
     }

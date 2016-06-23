@@ -22,6 +22,7 @@
 #define UART3_PPTR                     0xfff01000
 #define INTC_PPTR                      0xfff02000
 #define GPTIMER9_PPTR                  0xfff03000
+#define ARM_DEBUG_MMAPPING_PPTR        0xfff04000
 
 /* Boot space */
 /* 0x00000000 - 0x40000000 */

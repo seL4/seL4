@@ -19,9 +19,10 @@
 
 /* These devices are used by the seL4 kernel. */
 #define UART0_PPTR                  0xfff01000
-#define TIMER0_PPTR 	            0xfff02000
+#define TIMER0_PPTR                 0xfff02000
 #define GIC_DISTRIBUTOR_PPTR        0xfff03000
 #define GIC_CONTROLLER_PPTR         0xfff04000
+#define ARM_DEBUG_MMAPPING_PPTR     0xfff05000
 
 #define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR
 #define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR
@@ -31,13 +32,13 @@
 
 
 
-#define UART0_PADDR 				0x01C28000
+#define UART0_PADDR                 0x01C28000
 
 /* CCU, Interrupt, Timer, OWA */
 /* Timer = PPTR + 0xC00 */
-#define TIMER0_PADDR 				0x01C20000
+#define TIMER0_PADDR                0x01C20000
 
-#define GIC_PADDR 					0x01C80000
+#define GIC_PADDR                   0x01C80000
 
 /* TODO: Add other devices PADDRs */
 

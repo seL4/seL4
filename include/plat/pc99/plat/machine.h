@@ -19,21 +19,23 @@
 #define IRQ_INT_OFFSET 0x20
 
 typedef enum _interrupt_t {
-    int_invalid        = -1,
-    int_unimpl_dev     = 7,
-    int_page_fault     = 14,
-    int_irq_min        = IRQ_INT_OFFSET, /* First IRQ. */
-    int_irq_isa_min    = IRQ_INT_OFFSET, /* Beginning of PIC IRQs */
-    int_irq_isa_max    = IRQ_INT_OFFSET + PIC_IRQ_LINES - 1, /* End of PIC IRQs */
-    int_irq_user_min   = IRQ_INT_OFFSET + PIC_IRQ_LINES, /* First user available vector */
-    int_irq_user_max   = 157,
-    int_iommu          = 158,
-    int_timer          = 159,
-    int_irq_max        = 159, /* int_timer is the max irq */
-    int_trap_min       = 160,
-    int_trap_max       = 254,
-    int_spurious       = 255,
-    int_max            = 255
+    int_invalid                 = -1,
+    int_debug                   = 1,
+    int_software_break_request  = 3,
+    int_unimpl_dev              = 7,
+    int_page_fault              = 14,
+    int_irq_min                 = IRQ_INT_OFFSET, /* First IRQ. */
+    int_irq_isa_min             = IRQ_INT_OFFSET, /* Beginning of PIC IRQs */
+    int_irq_isa_max             = IRQ_INT_OFFSET + PIC_IRQ_LINES - 1, /* End of PIC IRQs */
+    int_irq_user_min            = IRQ_INT_OFFSET + PIC_IRQ_LINES, /* First user available vector */
+    int_irq_user_max            = 157,
+    int_iommu                   = 158,
+    int_timer                   = 159,
+    int_irq_max                 = 159, /* int_timer is the max irq */
+    int_trap_min                = 160,
+    int_trap_max                = 254,
+    int_spurious                = 255,
+    int_max                     = 255
 } interrupt_t;
 
 typedef enum _irq_t {

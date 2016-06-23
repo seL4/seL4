@@ -12,6 +12,7 @@
 #define __LIBSEL4_ARCH_CONSTANTS_H
 
 #include <sel4/sel4_arch/constants.h>
+#include <sel4/plat/api/constants.h>
 
 #include <sel4/sel4_arch/objecttype.h>
 #include <sel4/arch/objecttype.h>

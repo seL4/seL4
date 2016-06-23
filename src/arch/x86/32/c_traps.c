@@ -12,6 +12,7 @@
 #include <model/statedata.h>
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
+#include <arch/machine/debug.h>
 #include <benchmark_track.h>
 
 #include <api/syscall.h>
@@ -22,11 +23,7 @@ void NORETURN VISIBLE restore_user_context(void)
 {
     c_exit_hook();
 
-    /* save kernel stack pointer for next exception */
-    SMP_COND_STATEMENT(ksCurThread->tcbArch.tcbContext.kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + 0xffc);
-
-    /* set the tss.esp0 */
-    tss_ptr_set_esp0(&ARCH_NODE_STATE(x86KStss).tss, ((uint32_t)&ksCurThread->tcbArch.tcbContext.registers) + (n_contextRegisters * sizeof(word_t)));
+    setKernelEntryStackPointer(ksCurThread);
     if (unlikely(ksCurThread == ARCH_NODE_STATE(x86KSfpuOwner))) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
@@ -37,6 +34,10 @@ void NORETURN VISIBLE restore_user_context(void)
         /* No-one (including us) is using the FPU, so we assume it
          * is currently disabled */
     }
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    restore_user_debug_context(ksCurThread);
+#endif
+
     /* see if we entered via syscall */
     if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1)) {
         asm volatile(

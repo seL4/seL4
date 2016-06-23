@@ -15,14 +15,19 @@
 
 /* kernel devices */
 
-#define EPIT_PADDR 0x53f94000
-#define EPIT_PPTR  0xfff00000
+#define EPIT_PADDR                  0x53f94000
+#define EPIT_PPTR                   0xfff00000
 
-#define AVIC_PADDR 0x68000000
-#define AVIC_PPTR  0xfff01000
+#define AVIC_PADDR                  0x68000000
+#define AVIC_PPTR                   0xfff01000
 
-#define L2CC_PADDR 0x30000000
-#define L2CC_PPTR  0xfff02000
+#define L2CC_PADDR                  0x30000000
+#define L2CC_PPTR                   0xfff02000
+
+#define UART_PADDR                  0x43f90000
+#define UART_PPTR                   0xfff03000
+
+#define ARM_DEBUG_MMAPPING_PPTR     0xfff04000
 
 struct imx31_l2cc_id {
     uint32_t id;           /* 000 */
@@ -65,8 +70,5 @@ struct imx31_l2cc_lockdown {
 };
 #define imx32_l2cc_lockdown_regs \
     ((volatile struct imx31_l2cc_lockdown *)(L2CC_PPTR + 0x900))
-
-#define UART_PADDR 0x43f90000
-#define UART_PPTR  0xfff03000
 
 #endif

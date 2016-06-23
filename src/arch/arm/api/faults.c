@@ -82,6 +82,49 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
     }
     return (label == 0);
 
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    case fault_debug_exception: {
+        word_t n_instrs;
+
+        if (fault_debug_exception_get_exceptionReason(fault) != seL4_SingleStep) {
+            /* Only single-step replies are required to set message registers.
+             */
+            return (label == 0);
+        }
+
+        if (length < DEBUG_REPLY_N_EXPECTED_REGISTERS) {
+            /* If the user didn't set all the expected registers, assume
+             * the number of instructions to step is 1.
+             */
+            n_instrs = 1;
+        } else {
+            /* If the reply had all expected registers set, proceed as normal */
+            n_instrs = getRegister(sender, msgRegisters[0]);
+        }
+
+        /* When replying to a single-step fault, default the bp_num to the
+         * one that was configured and cached in the TCB context.
+         *
+         * configureSingleStepping() will know this because we pass "true" to
+         * is_reply.
+         */
+        syscall_error_t res;
+
+        res = Arch_decodeConfigureSingleStepping(&receiver->tcbArch, 0, n_instrs, true);
+        if (res.type != seL4_NoError) {
+            return false;
+        };
+
+        configureSingleStepping(&receiver->tcbArch, 0, n_instrs, true);
+
+        /* Replying will always resume the thread: the only variant behaviour
+         * is whether or not the thread will be resumed with stepping still
+         * enabled.
+         */
+        return (label == 0);
+    }
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
     default:
         fail("Invalid fault");
     }

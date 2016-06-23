@@ -54,4 +54,10 @@ enum {
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
+#ifdef CONFIG_HARDWARE_DEBUG_API
+#define seL4_FirstBreakpoint (0)
+#define seL4_FirstDualFunctionMonitor (-1)
+#define seL4_NumDualFunctionMonitors (0)
+#endif
+
 #endif

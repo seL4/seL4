@@ -11,7 +11,41 @@
 #ifndef __API_CONSTANTS_H
 #define __API_CONSTANTS_H
 
+#ifdef HAVE_AUTOCONF
+#include <autoconf.h>
+#endif
+
 #define LIBSEL4_BIT(n) (1ul<<(n))
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+/* API arg values for breakpoint API, "type" arguments. */
+typedef enum {
+    seL4_DataBreakpoint = 0,
+    seL4_InstructionBreakpoint,
+    seL4_SingleStep,
+    seL4_SoftwareBreakRequest,
+    SEL4_FORCE_LONG_ENUM(seL4_BreakpointType)
+} seL4_BreakpointType;
+
+/* API arg values for breakpoint API, "access" arguments. */
+typedef enum {
+    seL4_BreakOnRead = 0,
+    seL4_BreakOnWrite,
+    seL4_BreakOnReadWrite,
+    seL4_MaxBreakpointAccess,
+    SEL4_FORCE_LONG_ENUM(seL4_BreakpointAccess)
+} seL4_BreakpointAccess;
+
+/* Format of a debug-exception message. */
+enum {
+    seL4_DebugException_FaultIP,
+    seL4_DebugException_ExceptionReason,
+    seL4_DebugException_TriggerAddress,
+    seL4_DebugException_BreakpointNumber,
+    seL4_DebugException_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_DebugException_Msg)
+} seL4_DebugException_Msg;
+#endif
 
 enum priorityConstants {
     seL4_InvalidPrio = -1,

@@ -190,7 +190,7 @@ init_idt_entry(idt_entry_t* idt, interrupt_t interrupt, void(*handler)(void))
     uint32_t handler_addr = (uint32_t)handler;
     uint32_t dpl = 3;
 
-    if (interrupt < int_trap_min) {
+    if (interrupt < int_trap_min && interrupt != int_software_break_request) {
         dpl = 0;
     }
 

@@ -14,6 +14,7 @@
 #include <arch/linker.h>
 #include <mode/fastpath/fastpath.h>
 #include <benchmark_track.h>
+#include <mode/machine/debug.h>
 
 void slowpath(syscall_t syscall) NORETURN;
 
@@ -22,6 +23,10 @@ static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t
 {
 
     c_exit_hook();
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    restore_user_debug_context(ksCurThread);
+#endif
 
     register word_t badge_reg asm("r0") = badge;
     register word_t msgInfo_reg asm("r1") = msgInfo;

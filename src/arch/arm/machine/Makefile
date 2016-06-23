@@ -12,7 +12,8 @@ DIRECTORIES += src/arch/arm/machine
 
 ARCH_C_SOURCES += machine/cache.c \
                   machine/errata.c \
-                  machine/io.c
+                  machine/io.c \
+                  machine/debug.c
 
 ifeq ($(CPU), cortex-a9)
     ARCH_C_SOURCES += machine/gic_pl390.c
@@ -33,5 +34,5 @@ ifeq ($(CPU), $(filter $(CPU), cortex-a15 cortex-a7 cortex-a57))
 endif
 
 ifdef DEBUG
-    ARCH_C_SOURCES += machine/debug.c machine/capdl.c
+    ARCH_C_SOURCES += machine/capdl.c
 endif

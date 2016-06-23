@@ -401,6 +401,15 @@ menu "Build Options"
         help
             Allow the kernel to print out messages to the serial console during bootup and execution.
 
+    config HARDWARE_DEBUG_API
+        bool "Enable hardware breakpoint and single-stepping API"
+        depends on !VERIFICATION_BUILD
+        default n
+        help
+            Builds the kernel with support for a userspace debug API, which can
+            allows userspace processes to set breakpoints, watchpoints and to
+            single-step through thread execution.
+
     config IRQ_REPORTING
         bool "Report spurious or undelivered IRQs"
         depends on PRINTING

@@ -27,7 +27,7 @@
     \begin{minipage}{0.95\textwidth}
     \begin{tabularx}{\textwidth}{llX}
     \toprule
-    \textbf{Type} & \textbf{Name} & \textbf{Description} \\ 
+    \textbf{Type} & \textbf{Name} & \textbf{Description} \\
     \midrule
     #5
     \bottomrule
@@ -67,6 +67,32 @@
 \newcommand{\vmcaprightsdesc}{Rights for the mapping. Possible values for this type are given in \autoref{sec:cap_rights}.}
 \newcommand{\vmattribsdescarm}{VM Attributes for the mapping. Possible values for this type are given in \autoref{ch:vspace}.}
 
+\newcommand{\debugargbpnumshortdesc}{
+The API-ID of a target breakpoint. This ID will be a positive integer, with
+values ranging from \texttt{0} to \texttt{seL4\_NumHWBreakpoints - 1}.
+}
+
+\newcommand{\debugargvaddrshortdesc}{A virtual address which forms part of the
+match conditions for the triggering of the breakpoint.
+}
+
+\newcommand{\debugargtypeshortdesc}{One of: \texttt{seL4\_InstructionBreakpoint}, which specifies
+that the breakpoint should occur on instruction execution at the specified
+\texttt{vaddr} or \texttt{seL4\_DataBreakpoint}, which states that the breakpoint
+should occur on data access at the specified \texttt{vaddr}.
+}
+
+\newcommand{\debugargsizeshortdesc}{A positive integer indicating the
+trigger-span of the watchpoint. Must be zero when 'type' is \texttt{seL4\_InstructionBreakpoint}.
+}
+
+\newcommand{\debugargrwshortdesc}{One of \texttt{seL4\_BreakOnRead}, meaning the breakpoint will only be
+triggered on read-access; \texttt{seL4\_BreakOnWrite} meaning the
+breakpoint will only be triggered on write-access, and
+\texttt{seL4\_BreakOnReadWrite} meaning the breakpoint will be triggered on
+any access.
+}
+
 \ifxeightsix
 \newcommand{\vmattribsdescintel}{VM Attributes for the
   mapping. Possible values for this type are given in \autoref{ch:vspace}. }
@@ -101,6 +127,27 @@
 \newcommand{\noret}{This method does not return anything.}
 \newcommand{\errorenumdesc}{A return value of \texttt{0} indicates success. A non-zero value indicates that an error occurred. See \autoref{sec:errors} for a description of the message register and tag contents upon error.}
 \newcommand{\pagegetaddresstdesc}{struct that contains \texttt{seL4\_Word paddr}, which holds the physical address of the page, and \texttt{int error}. See \autoref{sec:errors} for a description of the message register and tag contents upon error.}
+\newcommand{\tcbgetbreakpointtdesc}{Struct that contains
+'\texttt{seL4\_Error error}', an seL4 API error value,
+'\texttt{seL4\_Word vaddr}', the virtual address at which the breakpoint will currently
+be triggered;
+'\texttt{seL4\_Word type}', the type of operation which will currently trigger the
+breakpoint, whether instruction execution, or data access;
+'\texttt{seL4\_Word size}', integer value for the span-size of the breakpoint.
+Usually a multiple of two (1, 2, 4, etc.);
+'\texttt{seL4\_Word rw}', the access direction that will currently trigger the breakpoint,
+whether read, write, or both and
+'\texttt{seL4\_Bool is\_enabled}', which indicates whether or not the breakpoint
+will currently be triggered if the match conditions are met.
+}
+\newcommand{\tcbconfiguresinglesteppingtdesc}{Struct that contains
+'\texttt{seL4\_Error error}', an seL4 API error value,
+'\texttt{seL4\_Bool bp\_was\_consumed}', a boolean which indicates whether or not the \texttt{bp\_num}
+breakpoint ID that was passed to the function, was consumed in the setup of the single-stepping
+functionality: if this is \texttt{true}, the caller should not attempt to re-use \texttt{bp\_num}
+until it has disabled the single-stepping functionality via a subsequent call to
+seL4\_TCB\_ConfigureSingleStepping with an \texttt{nun\_instructions} argument of 0.
+}
 
 \newcommand{\domcapdesc}{Capability allowing domain configuration.}
 \newcommand{\domargdesc}{The thread's new domain.}
@@ -275,6 +322,10 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{tcb_setspace}
 \inputapidoc{tcb_suspend}
 \inputapidoc{tcb_writeregisters}
+\inputapidoc{tcb_setbreakpoint}
+\inputapidoc{tcb_getbreakpoint}
+\inputapidoc{tcb_unsetbreakpoint}
+\inputapidoc{tcb_configuresinglestepping}
 \inputapidoc{untyped_retype}
 
 \ifxeightsix

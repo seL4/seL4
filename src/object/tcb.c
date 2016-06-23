@@ -12,6 +12,7 @@
 #include <api/failures.h>
 #include <api/invocation.h>
 #include <api/syscall.h>
+#include <api/shared_types.h>
 #include <machine/io.h>
 #include <object/structures.h>
 #include <object/objecttype.h>
@@ -23,6 +24,7 @@
 #include <model/statedata.h>
 #include <util.h>
 #include <string.h>
+#include <stdint.h>
 
 #define NULL_PRIO 0
 
@@ -305,6 +307,250 @@ copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
     return i;
 }
 
+#ifdef CONFIG_HARDWARE_DEBUG_API
+static exception_t
+invokeConfigureSingleStepping(word_t *buffer, arch_tcb_t *context,
+                              uint16_t bp_num, word_t n_instrs)
+{
+    bool_t bp_was_consumed;
+
+    bp_was_consumed = configureSingleStepping(context, bp_num, n_instrs, false);
+    if (n_instrs == 0) {
+        unsetBreakpointUsedFlag(context, bp_num);
+        setMR(ksCurThread, buffer, 0, false);
+    } else {
+        setBreakpointUsedFlag(context, bp_num);
+        setMR(ksCurThread, buffer, 0, bp_was_consumed);
+    }
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+decodeConfigureSingleStepping(cap_t cap, word_t *buffer)
+{
+    uint16_t bp_num;
+    word_t n_instrs;
+    tcb_t *tcb;
+    arch_tcb_t *context;
+    syscall_error_t syserr;
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    context = &tcb->tcbArch;
+
+    bp_num = getSyscallArg(0, buffer);
+    n_instrs = getSyscallArg(1, buffer);
+
+    syserr = Arch_decodeConfigureSingleStepping(context, bp_num, n_instrs, false);
+    if (syserr.type != seL4_NoError) {
+        current_syscall_error = syserr;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeConfigureSingleStepping(buffer, context, bp_num, n_instrs);
+}
+
+static exception_t
+invokeSetBreakpoint(arch_tcb_t *context, uint16_t bp_num,
+                    word_t vaddr, word_t type, word_t size, word_t rw)
+{
+    setBreakpoint(context, bp_num, vaddr, type, size, rw);
+    /* Signal restore_user_context() to pop the breakpoint context on return. */
+    setBreakpointUsedFlag(context, bp_num);
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+decodeSetBreakpoint(cap_t cap, word_t *buffer)
+{
+    uint16_t bp_num;
+    word_t vaddr, type, size, rw;
+    tcb_t *tcb;
+    arch_tcb_t *context;
+    syscall_error_t error;
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    bp_num = getSyscallArg(0, buffer);
+    vaddr = getSyscallArg(1, buffer);
+    type = getSyscallArg(2, buffer);
+    size = getSyscallArg(3, buffer);
+    rw = getSyscallArg(4, buffer);
+
+    /* We disallow the user to set breakpoint addresses that are in the kernel
+     * vaddr range.
+     */
+    if (vaddr >= (word_t)kernelBase) {
+        userError("Debug: Invalid address %lx: bp addresses must be userspace "
+                  "addresses.",
+                  vaddr);
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (type != seL4_InstructionBreakpoint && type != seL4_DataBreakpoint) {
+        userError("Debug: Unknown breakpoint type %lx.", type);
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 2;
+        return EXCEPTION_SYSCALL_ERROR;
+    } else if (type == seL4_InstructionBreakpoint) {
+        if (size != 0) {
+            userError("Debug: Instruction bps must have size of 0.");
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 3;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (rw != seL4_BreakOnRead) {
+            userError("Debug: Instruction bps must be break-on-read.");
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 4;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (bp_num >= seL4_FirstWatchpoint
+                && seL4_FirstBreakpoint != seL4_FirstWatchpoint) {
+            userError("Debug: Can't specify a watchpoint ID with type seL4_InstructionBreakpoint.");
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 2;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+    } else if (type == seL4_DataBreakpoint) {
+        if (size == 0) {
+            userError("Debug: Data bps cannot have size of 0.");
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 3;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (bp_num < seL4_FirstWatchpoint) {
+            userError("Debug: Data watchpoints cannot specify non-data watchpoint ID.");
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 2;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+    } else if (type == seL4_SoftwareBreakRequest) {
+        userError("Debug: Use a software breakpoint instruction to trigger a "
+                  "software breakpoint.");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 2;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (rw != seL4_BreakOnRead && rw != seL4_BreakOnWrite
+            && rw != seL4_BreakOnReadWrite) {
+        userError("Debug: Unknown access-type %lu.", rw);
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 3;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    if (size != 0 && size != 1 && size != 2 && size != 4 && size != 8) {
+        userError("Debug: Invalid size %lu.", size);
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 3;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    if (size > 0 && vaddr & (size - 1)) {
+        /* Just Don't allow unaligned watchpoints. They are undefined
+         * both ARM and x86.
+         *
+         * X86: Intel manuals, vol3, 17.2.5:
+         *  "Two-byte ranges must be aligned on word boundaries; 4-byte
+         *   ranges must be aligned on doubleword boundaries"
+         *  "Unaligned data or I/O breakpoint addresses do not yield valid
+         *   results"
+         *
+         * ARM: ARMv7 manual, C11.11.44:
+         *  "A DBGWVR is programmed with a word-aligned address."
+         */
+        userError("Debug: Unaligned data watchpoint address %lx (size %lx) "
+                  "rejected.\n",
+                  vaddr, size);
+
+        current_syscall_error.type = seL4_AlignmentError;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    context = &tcb->tcbArch;
+
+    error = Arch_decodeSetBreakpoint(context, bp_num, vaddr, type, size, rw);
+    if (error.type != seL4_NoError) {
+        current_syscall_error = error;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeSetBreakpoint(context, bp_num,
+                               vaddr, type, size, rw);
+}
+
+static exception_t
+invokeGetBreakpoint(word_t *buffer, arch_tcb_t *context, uint16_t bp_num)
+{
+    getBreakpoint_t res;
+
+    res = getBreakpoint(context, bp_num);
+    setMR(ksCurThread, buffer, 0, res.vaddr);
+    setMR(ksCurThread, buffer, 1, res.type);
+    setMR(ksCurThread, buffer, 2, res.size);
+    setMR(ksCurThread, buffer, 3, res.rw);
+    setMR(ksCurThread, buffer, 4, res.is_enabled);
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+decodeGetBreakpoint(cap_t cap, word_t *buffer)
+{
+    tcb_t *tcb;
+    uint16_t bp_num;
+    arch_tcb_t *context;
+    syscall_error_t error;
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    bp_num = getSyscallArg(0, buffer);
+
+    context = &tcb->tcbArch;
+
+    error = Arch_decodeGetBreakpoint(context, bp_num);
+    if (error.type != seL4_NoError) {
+        current_syscall_error = error;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeGetBreakpoint(buffer, context, bp_num);
+}
+
+static exception_t
+invokeUnsetBreakpoint(arch_tcb_t *context, uint16_t bp_num)
+{
+    /* Maintain the bitfield of in-use breakpoints. */
+    unsetBreakpoint(context, bp_num);
+    unsetBreakpointUsedFlag(context, bp_num);
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+decodeUnsetBreakpoint(cap_t cap, word_t *buffer)
+{
+    tcb_t *tcb;
+    uint16_t bp_num;
+    arch_tcb_t *context;
+    syscall_error_t error;
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    bp_num = getSyscallArg(0, buffer);
+
+    context = &tcb->tcbArch;
+
+    error = Arch_decodeUnsetBreakpoint(context, bp_num);
+    if (error.type != seL4_NoError) {
+        current_syscall_error = error;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(ksCurThread, ThreadState_Restart);
+    return invokeUnsetBreakpoint(context, bp_num);
+}
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
 /* The following functions sit in the syscall error monad, but include the
  * exception cases for the preemptible bottom end, as they call the invoke
  * functions directly.  This is a significant deviation from the Haskell
@@ -356,6 +602,20 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBUnbindNotification:
         return decodeUnbindNotification(cap);
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    case TCBConfigureSingleStepping:
+        return decodeConfigureSingleStepping(cap, buffer);
+
+    case TCBSetBreakpoint:
+        return decodeSetBreakpoint(cap, buffer);
+
+    case TCBGetBreakpoint:
+        return decodeGetBreakpoint(cap, buffer);
+
+    case TCBUnsetBreakpoint:
+        return decodeUnsetBreakpoint(cap, buffer);
+#endif
 
     default:
         /* Haskell: "throw IllegalOperation" */

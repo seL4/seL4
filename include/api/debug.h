@@ -10,7 +10,7 @@
 
 #include <config.h>
 
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 #ifndef __API_DEBUG_H
 #define __API_DEBUG_H
 
@@ -38,6 +38,11 @@ debug_printKernelEntryReason(void)
     case Entry_UserLevelFault:
         printf("User level fault, number: %lu", (unsigned long) ksKernelEntry.word);
         break;
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    case Entry_DebugFault:
+        printf("Debug fault. Fault Vaddr: 0x%lx", (unsigned long) ksKernelEntry.word);
+        break;
+#endif
     case Entry_Syscall:
         printf("Syscall, number: %ld\n", (long) ksKernelEntry.syscall_no);
         if (ksKernelEntry.syscall_no == SysSend ||
@@ -49,7 +54,7 @@ debug_printKernelEntryReason(void)
         }
     }
 }
-#endif
+#endif /* CONFIG_PRINTING */
 #endif /* __API_DEBUG_H */
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG_BUILD */
 

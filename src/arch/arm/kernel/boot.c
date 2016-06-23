@@ -177,15 +177,29 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
     return true;
 
 }
-/* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 
-BOOT_CODE static void
+/** This and only this function initialises the CPU.
+ *
+ * It does NOT initialise any kernel state.
+ * @return For the verification build, this currently returns true always.
+ */
+BOOT_CODE static bool_t
 init_cpu(void)
 {
     activate_global_pd();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_boot_init();
     }
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    if (!Arch_initHardwareBreakpoints()) {
+        printf("Kernel built with CONFIG_HARDWARE_DEBUG_API, but this board doesn't "
+               "reliably support it.\n");
+        return false;
+    }
+#endif
+
+    return true;
 }
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
@@ -243,7 +257,9 @@ try_init_kernel(
     map_kernel_window();
 
     /* initialise the CPU */
-    init_cpu();
+    if (!init_cpu()) {
+        return false;
+    }
 
     /* debug output via serial port is only available from here */
     printf("Bootstrapping kernel\n");

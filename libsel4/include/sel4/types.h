@@ -11,6 +11,9 @@
 #ifndef __LIBSEL4_TYPES_H
 #define __LIBSEL4_TYPES_H
 
+#ifdef HAVE_AUTOCONF
+#include <autoconf.h>
+#endif
 #include <sel4/simple_types.h>
 #include <sel4/macros.h>
 #include <sel4/arch/types.h>
@@ -31,6 +34,9 @@ typedef enum {
     seL4_VMFault,
     seL4_UnknownSyscall,
     seL4_UserException,
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    seL4_DebugException,
+#endif
     SEL4_FORCE_LONG_ENUM(seL4_FaultType),
 } seL4_FaultType;
 

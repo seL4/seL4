@@ -18,7 +18,7 @@
  * they are useful in identifying invalid memory access bugs
  * so we enable them in debug mode.
  */
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 #define CPSR_EXTRA_FLAGS 0
 #else
 #define CPSR_EXTRA_FLAGS PMASK_ASYNC_ABORT
@@ -49,8 +49,10 @@
 
 #include <config.h>
 #include <stdint.h>
+#include <assert.h>
 #include <util.h>
 #include <arch/types.h>
+#include <plat/api/constants.h>
 
 /* These are the indices of the registers in the
  * saved thread context.  The values are determined
@@ -118,15 +120,52 @@ extern const register_t gpRegisters[] VISIBLE;
 extern const register_t exceptionMessage[] VISIBLE;
 extern const register_t syscallMessage[] VISIBLE;
 
-/* ARM user-code context: size = 72 bytes */
+#ifdef CONFIG_HARDWARE_DEBUG_API
+typedef struct debug_register_pair {
+    word_t cr, vr;
+} debug_register_pair_t;
+
+typedef struct user_breakpoint_state {
+    /* We don't use context comparisons. */
+    debug_register_pair_t breakpoint[seL4_NumExclusiveBreakpoints],
+                          watchpoint[seL4_NumExclusiveWatchpoints];
+    uint32_t used_breakpoints_bf;
+    word_t n_instructions;
+    bool_t single_step_enabled;
+    uint16_t single_step_hw_bp_num;
+} user_breakpoint_state_t;
+
+void Arch_initBreakpointContext(user_breakpoint_state_t *context);
+#endif
+
+/* ARM user-code context: size = 72 bytes
+ * Or with hardware debug support built in:
+ *      72 + sizeof(word_t) * (NUM_BPS + NUM_WPS) * 2
+ *
+ * The "word_t registers" member of this struct must come first, because in
+ * head.S, we assume that an "ldr %0, =ksCurThread" will point to the beginning
+ * of the current thread's registers. The assert below should help.
+ */
 struct user_context {
     word_t registers[n_contextRegisters];
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    user_breakpoint_state_t breakpointState;
+#endif
 };
 typedef struct user_context user_context_t;
+
+#ifdef CONFIG_DEBUG_BUILD
+compile_assert(registers_are_first_member_of_user_context,
+               __builtin_offsetof(user_context_t, registers) == 0)
+#endif
+
 
 static inline void Arch_initContext(user_context_t* context)
 {
     context->registers[CPSR] = CPSR_USER;
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    Arch_initBreakpointContext(&context->breakpointState);
+#endif
 }
 
 static inline word_t CONST

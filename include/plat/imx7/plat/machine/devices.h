@@ -19,6 +19,8 @@
 #define ARM_MP_PPTR1                0xfff03000
 #define ARM_MP_PPTR2                0xfff04000
 #define ARM_MP_PPTR3                0xfff05000
+#define ARM_DEBUG_MMAPPING_PPTR     0xfff06000
+
 
 #define ARM_MP_PRIV_TIMER_PPTR      (ARM_MP_PPTR1 + 0x600 )
 #define ARM_MP_GLOBAL_TIMER_PPTR    (ARM_MP_PPTR1 + 0x200 )

@@ -24,6 +24,9 @@ static inline void FORCE_INLINE NORETURN restore_user_context(void)
     word_t cur_thread_reg = (word_t) ksCurThread;
 
     c_exit_hook();
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    restore_user_debug_context(ksCurThread);
+#endif
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         asm volatile(

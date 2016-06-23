@@ -13,6 +13,7 @@
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
+#include <machine/debug.h>
 #include <api/syscall.h>
 
 #include <benchmark_track.h>
@@ -38,6 +39,15 @@ c_handle_interrupt(int irq, int syscall)
         ksKernelEntry.word = type;
 #endif
         handleVMFaultEvent(type);
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    } else if (irq == int_debug || irq == int_software_break_request) {
+        /* Debug exception */
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_DebugFault;
+        ksKernelEntry.word = ksCurThread->tcbArch.tcbContext.registers[FaultIP];
+#endif
+        handleUserLevelDebugException(irq);
+#endif /* CONFIG_HARDWARE_DEBUG_API */
     } else if (irq < int_irq_min) {
 #ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_UserLevelFault;

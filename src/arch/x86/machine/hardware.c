@@ -23,9 +23,11 @@ init_sysenter_msrs(void)
 {
     x86_wrmsr(IA32_SYSENTER_CS_MSR,  (uint64_t)(word_t)SEL_CS_0);
     x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
+#ifndef CONFIG_HARDWARE_DEBUG_API
     /* manually add 4 bytes to x86KStss so that it is valid for both
      * 32-bit and 64-bit */
     x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&ARCH_NODE_STATE(x86KStss).tss.words[0] + 4));
+#endif
 }
 
 word_t PURE getRestartPC(tcb_t *thread)

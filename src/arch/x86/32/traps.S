@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <machine/assembler.h>
 
 # On kernel entry, ESP points to the end of the thread's registers array.
@@ -367,7 +368,61 @@ handle_interrupt:
 # Handle a kernel exception
 
 BEGIN_FUNC(kernel_exception)
-#ifdef DEBUG
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    /* Before giving up and panicking, we need to test for the extra case that
+     * this might be a kernel exception that is the result of EFLAGS.TF being
+     * set when SYSENTER was called.
+     *
+     * Since EFLAGS.TF is not disabled by SYSENTER, single-stepping continues
+     * into the kernel, and so causes a debug-exception in kernel code, since
+     * the CPU is trying to single-step the kernel code.
+     *
+     * So we test for EFLAGS.TF, and if it's set, we unset it, and let the
+     * exception continue. The debug exception handler will notice that it was
+     * kernel exception, and handle it appropriately -- that really just means
+     * setting EFLAGS.TF before SYSEXIT so that single-stepping resumes in the
+     * userspace thread.
+     */
+    movl    64(%esp), %eax
+    movl    $(1<<8), %ebx
+    testl   %ebx, %eax
+    je      .not_eflags_tf
+
+    /* Else it was EFLAGS.TF that caused the kernel exception on SYSENTER.
+     * So, unset the EFLAGS.TF on the stack and this causes the syscall that we
+     * will return to, to be able to execute properly.
+     *
+     * It will then be the debug exception handler's responsibility to re-set
+     * EFLAGS.TF for the userspace thread before it returns.
+     *
+     * So at this point we want to just unset EFLAGS.TF and IRET immediately.
+     */
+    andl    $~(1<<8), %eax
+    movl    %eax, 64(%esp)
+
+    /* Begin popping registers to IRET now. We don't need to consider any
+     * unexpected side effects because we are just immediately returning after
+     * entering.
+     */
+    popl    %eax
+    popl    %ebx
+    popl    %ecx
+    popl    %edx
+    popl    %esi
+    popl    %esi
+    popl    %ebp
+    popl    %ds
+    popl    %es
+    popl    %fs
+    popl    %gs
+    /* Skip FaultIP, TLS_BASE and error-code. */
+    addl    $12, %esp
+    iretl
+
+.not_eflags_tf:
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
+#ifdef CONFIG_DEBUG_BUILD
     # prepare debug info
     movl    52(%esp), %eax # EAX contains Error Code
     movl    56(%esp), %ebx # EBX contains EIP of the exception generating instruction
@@ -390,7 +445,7 @@ BEGIN_FUNC(kernel_exception)
     pushl   %eax
     pushl   %ecx
     call    handleKernelException
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
     jmp     halt
 END_FUNC(kernel_exception)
 
@@ -409,7 +464,9 @@ END_FUNC(kernel_exception)
 #   ESP : points to tss.esp0 which points to the end of the thread's registers array
 
 BEGIN_FUNC(handle_syscall)
+#ifndef CONFIG_HARDWARE_DEBUG_API
     movl    (%esp), %esp    # ESP := tss.esp0
+#endif
 
     subl    $4, %esp        # skip SS
     pushl   %ecx            # save ESP (passed in ECX)

@@ -1,22 +1,28 @@
 /*
- * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2016, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
  *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(GD_GPL)
+ * @TAG(D61_GPL)
  */
+#pragma once
 
-#ifndef __ARCH_MACHINE_DEBUG_32_H
-#define __ARCH_MACHINE_DEBUG_32_H
+#include <config.h>
+#if defined(CONFIG_DEBUG_BUILD) || defined (CONFIG_HARDWARE_DEBUG_API)
 
-#ifdef DEBUG
+#define DBGDSCR_int "p14,0,%0,c0,c1,0"
+#define DBGDSCR_ext "p14, 0, %0, c0, c2, 2"
 
-#define MAX_BREAKPOINTS 16
+#define DBGWFAR "p14,0,%0,c0,c6,0"
+#define DFAR "p15,0,%0,c6,c0,0"
 
 #ifndef __ASSEMBLER__
 #include <stdint.h>
+#include <mode/machine.h>
 #include <arch/machine/registerset.h>
 
 void debug_init(void) VISIBLE;
@@ -71,6 +77,21 @@ getDIDR(void)
 
     return x;
 }
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+
+#define DEBUG_REPLY_N_REQUIRED_REGISTERS        (1)
+
+/* Get Watchpoint Fault Address register value (for async watchpoints). */
+static inline word_t
+getWFAR(void)
+{
+    word_t ret;
+
+    MRC(DBGWFAR, ret);
+    return ret;
+}
+#endif
 #endif /* !__ASSEMBLER__ */
 
 /* Debug Status and Control Register */
@@ -81,30 +102,13 @@ getDIDR(void)
 
 #define DEBUG_ENTRY_DBGTAP_HALT       0
 #define DEBUG_ENTRY_BREAKPOINT        1
-#define DEBUG_ENTRY_WATCHPOINT        2
+#define DEBUG_ENTRY_ASYNC_WATCHPOINT  2
 #define DEBUG_ENTRY_EXPLICIT_BKPT     3
 #define DEBUG_ENTRY_EDBGRQ            4
 #define DEBUG_ENTRY_VECTOR_CATCH      5
 #define DEBUG_ENTRY_DATA_ABORT        6
 #define DEBUG_ENTRY_INSTRUCTION_ABORT 7
-
-#ifndef __ASSEMBLER__
-static inline uint32_t
-getDSCR(void)
-{
-    uint32_t x;
-
-    asm volatile("mrc p14, 0, %0, c0, c1, 0" : "=r"(x));
-
-    return x;
-}
-
-static inline void
-setDSCR(uint32_t x)
-{
-    asm volatile("mcr p14, 0, %0, c0, c1, 0" : : "r"(x));
-}
-#endif /* !__ASSEMBLER__ */
+#define DEBUG_ENTRY_SYNC_WATCHPOINT   (0xA)
 
 /* Vector Catch Register */
 #define VCR_FIQ      7
@@ -132,64 +136,6 @@ setVCR(uint32_t x)
     asm volatile("mcr p14, 0, %0, c0, c7, 0" : : "r"(x));
 }
 
-/* Breakpoint Value Registers */
-static inline uint32_t
-getBVR(int n)
-{
-    uint32_t x = 0;
-
-    switch (n) {
-    case 0:
-        asm volatile("mrc p14, 0, %0, c0, c0, 4" : "=r"(x));
-        break;
-    case 1:
-        asm volatile("mrc p14, 0, %0, c0, c1, 4" : "=r"(x));
-        break;
-    case 2:
-        asm volatile("mrc p14, 0, %0, c0, c2, 4" : "=r"(x));
-        break;
-    case 3:
-        asm volatile("mrc p14, 0, %0, c0, c3, 4" : "=r"(x));
-        break;
-    case 4:
-        asm volatile("mrc p14, 0, %0, c0, c4, 4" : "=r"(x));
-        break;
-    case 5:
-        asm volatile("mrc p14, 0, %0, c0, c5, 4" : "=r"(x));
-        break;
-    default:
-        break;
-    }
-
-    return x;
-}
-
-static inline void
-setBVR(int n, uint32_t x)
-{
-    switch (n) {
-    case 0:
-        asm volatile("mcr p14, 0, %0, c0, c0, 4" : : "r"(x));
-        break;
-    case 1:
-        asm volatile("mcr p14, 0, %0, c0, c1, 4" : : "r"(x));
-        break;
-    case 2:
-        asm volatile("mcr p14, 0, %0, c0, c2, 4" : : "r"(x));
-        break;
-    case 3:
-        asm volatile("mcr p14, 0, %0, c0, c3, 4" : : "r"(x));
-        break;
-    case 4:
-        asm volatile("mcr p14, 0, %0, c0, c4, 4" : : "r"(x));
-        break;
-    case 5:
-        asm volatile("mcr p14, 0, %0, c0, c5, 4" : : "r"(x));
-        break;
-    default:
-        break;
-    }
-}
 #endif /* !__ASSEMBLER__ */
 
 /* Breakpoint Control Registers */
@@ -200,66 +146,56 @@ setBVR(int n, uint32_t x)
 #define BCR_SUPERVISOR          1
 #define BCR_ENABLE              0
 
+#define FSR_SHORTDESC_STATUS_DEBUG_EVENT       (0x2)
+#define FSR_LONGDESC_STATUS_DEBUG_EVENT        (0x22)
+#define FSR_LPAE_SHIFT                         (9)
+#define FSR_STATUS_BIT4_SHIFT                  (10)
+
 #ifndef __ASSEMBLER__
-static inline uint32_t
-getBCR(int n)
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+/** Determines whether or not a Prefetch Abort or Data Abort was really a debug
+ * exception.
+ *
+ * Examines the FSR bits, looking for the "Debug event" value, and also examines
+ * DBGDSCR looking for the "Async watchpoint abort" value, since async
+ * watchpoints behave differently.
+ */
+bool_t isDebugFault(word_t hsr_or_fsr);
+
+/** Determines and carries out what needs to be done for a debug exception.
+ *
+ * This could be handling a single-stepping exception, or a breakpoint or
+ * watchpoint.
+ */
+fault_t handleUserLevelDebugException(word_t fault_vaddr);
+
+/** These next two functions are part of some state flags.
+ *
+ * A bitfield of all currently enabled breakpoints for a thread is kept in that
+ * thread's TCB. These two functions here set and unset the bits in that
+ * bitfield.
+ */
+static inline void
+setBreakpointUsedFlag(arch_tcb_t *uds, uint16_t bp_num)
 {
-    uint32_t x = 0;
-
-    switch (n) {
-    case 0:
-        asm volatile("mrc p14, 0, %0, c0, c0, 5" : "=r"(x));
-        break;
-    case 1:
-        asm volatile("mrc p14, 0, %0, c0, c1, 5" : "=r"(x));
-        break;
-    case 2:
-        asm volatile("mrc p14, 0, %0, c0, c2, 5" : "=r"(x));
-        break;
-    case 3:
-        asm volatile("mrc p14, 0, %0, c0, c3, 5" : "=r"(x));
-        break;
-    case 4:
-        asm volatile("mrc p14, 0, %0, c0, c4, 5" : "=r"(x));
-        break;
-    case 5:
-        asm volatile("mrc p14, 0, %0, c0, c5, 5" : "=r"(x));
-        break;
-    default:
-        break;
+    if (uds != NULL) {
+        uds->tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
     }
-
-    return x;
 }
 
 static inline void
-setBCR(int n, uint32_t x)
+unsetBreakpointUsedFlag(arch_tcb_t *uds, uint16_t bp_num)
 {
-    switch (n) {
-    case 0:
-        asm volatile("mcr p14, 0, %0, c0, c0, 5" : : "r"(x));
-        break;
-    case 1:
-        asm volatile("mcr p14, 0, %0, c0, c1, 5" : : "r"(x));
-        break;
-    case 2:
-        asm volatile("mcr p14, 0, %0, c0, c2, 5" : : "r"(x));
-        break;
-    case 3:
-        asm volatile("mcr p14, 0, %0, c0, c3, 5" : : "r"(x));
-        break;
-    case 4:
-        asm volatile("mcr p14, 0, %0, c0, c4, 5" : : "r"(x));
-        break;
-    case 5:
-        asm volatile("mcr p14, 0, %0, c0, c5, 5" : : "r"(x));
-        break;
-    default:
-        break;
+    if (uds != NULL) {
+        uds->tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
     }
 }
+
+void restore_user_debug_context(tcb_t *target_thread);
+
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
 #endif /* !__ASSEMBLER__ */
 
-#endif /* DEBUG */
-
-#endif /* !__ARCH_MACHINE_DEBUG_32_H */
+#endif /* defined(CONFIG_DEBUG_BUILD) || defined (CONFIG_HARDWARE_DEBUG_API) */

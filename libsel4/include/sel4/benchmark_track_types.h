@@ -15,7 +15,7 @@
 #include <autoconf.h>
 #endif
 
-#if (defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || defined DEBUG)
+#if (defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || defined CONFIG_DEBUG_BUILD)
 
 /* the following code can be used at any point in the kernel
  * to determine detail about the kernel entry point */
@@ -23,6 +23,7 @@ typedef enum {
     Entry_Interrupt,
     Entry_UnknownSyscall,
     Entry_UserLevelFault,
+    Entry_DebugFault,
     Entry_VMFault,
     Entry_Syscall,
     Entry_UnimplementedDevice,
@@ -60,6 +61,6 @@ typedef struct benchmark_syscall_log_entry {
     kernel_entry_t entry;
 } benchmark_track_kernel_entry_t;
 
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES || CONFIG_DEBUG_BUILD */
 
 #endif /* BENCHMARK_TRACK_TYPES_H */
