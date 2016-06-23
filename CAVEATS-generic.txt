@@ -12,7 +12,7 @@ This file lists known caveats in the seL4 API and implementation.
 
 * Implementation Correctness
 
-Only the ARMv6 version on the imx31 platform of seL4 has a correctness proof.
+Only the ARMv7 version on the imx6 platform of seL4 has a correctness proof.
 This proof covers the functional behaviour of the C code of the kernel. It
 does not cover machine code, compiler, linker, boot code, cache and TLB
 management. Compiler and linker can be removed from this list by additionally
