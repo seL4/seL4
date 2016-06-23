@@ -70,7 +70,7 @@ The tuple $(b, p)$ forms an upper bound on the thread's execution --
 the kernel will not permit a thread to run for more than $b$ out of every $p$ microseconds.
 However, $\frac{b}{p}$ does not represent a lower bound on execution, as a thread must have the highest or equal highest priority of all runnable threads to be guaranteed to be scheduled at all.
 
-A scheduling context that has budget available is reffered to as \emph{active}.
+A scheduling context that has budget available is referred to as \emph{active}.
 Whenever a thread is executing it consumes the budget from its current scheduling context.
 Once the budget is exhausted the thread is preempted and will not be schedulable again until the period has passed, at which 
 point the budget will be replenished.
@@ -102,11 +102,11 @@ On creation, scheduling contexts are empty, representing 0\% of CPU execution ti
 To populate a scheduling context with parameters, one must invoke the \obj{SchedControl} capability, which provides access to CPU time management and is provided to the initial task at run time.
 Scheduling context parameters can then be set and updated using \apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, which allows the budget and period to be specified.
 
-The kernel does not conduct any schedulability tests, as task admission is left to user-level policy and can be conducted online or offine, statically or dynamically or not at all. 
+The kernel does not conduct any schedulability tests, as task admission is left to user-level policy and can be conducted online or offline, statically or dynamically or not at all. 
 
 \subsection{Scheduling Context Donation and Borrowing}
 
-In addition to explictly binding and removing scheduling contexts through \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}, scheduling contexts can move between threads over IPC.
+In addition to explicitly binding and removing scheduling contexts through \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}, scheduling contexts can move between threads over IPC.
 Scheduling contexts are donated implicitly when the system calls \apifunc{seL4\_Call}{sel4_call} and \apifunc{seL4\_SignalRecv}{sel4_signalrecv} are used to communicate with a passive thread.
 When \apifunc{seL4\_Call}{sel4_call} is used, the generated reply cap ensures that the callee is merely borrowing the scheduling context: when the reply cap is consumed by a reply message being sent the scheduling context will be returned to the caller.
 If the reply cap is revoked, and the callee holds the scheduling context, the scheduling context will be returned to the caller. 
