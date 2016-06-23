@@ -78,6 +78,7 @@ When a thread's budget is exhausted, the next runnable thread at that priority w
 When $b = p$, $b$ simply acts as a timeslice for a thread, as the budget is always replenished immediately after it expires, however the thread will be preempted.
 
 The system call \apifunc{seL4\_SchedContext\_Yield}{schedcontext_yield} can be used to sacrifice any remaining budget and block until the budget is replenished.
+This allows for periodic tasks to be implemented by setting their scheduling context's period and having them call \apifunc{seL4\_SchedContext\_Yield}{schedcontext_yield} when their job is complete.
 
 Threads can be bound to scheduling contexts using \apifunc{seL4\_TCB\_Configure}{tcb_configure} or 
 \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure}{tcb_configure} allows more thread fields to be set with only one kernel entry. 
@@ -121,7 +122,7 @@ However, a call chain will remain between A and C, such that if C's reply cap is
 Scheduling contexts can also be bound to notification objects using \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and unbound using \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.
 If a signal is delivered to a notification object with a passive thread blocked waiting on it, the passive thread will receive the scheduling context that is bound to the notification object.
 The scheduling context is returned when the thread blocks on the notification object. 
-This feature allows for event-driven periodic threads which are triggered by events rather than the kernel time, and also allows for passive servers to use notification binding (See \autoref{sec:notification-binding}).
+This feature allows for passive servers to use notification binding (See \autoref{sec:notification-binding}).
 
 Scheduling contexts can be unbound from all objects (notification objects and TCBs that are bound or have received a scheduling context through donation) using \apifunc{seL4\_SchedContext\_Unbind}{schedcontext_unbind}.
 
