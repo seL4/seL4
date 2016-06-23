@@ -68,7 +68,8 @@ build using `make`, follow these instructions:
     arm  | imx6   | armv7-a | cortex-a9
     ia32 | pc99   |         |
 
- * For a debug build, append `DEBUG=y`.
+ * For a debug build, append `DEBUG=y` and to see serial output additionally
+   append `CONFIG_KERNEL_EXTRA_CPPFLAGS="-DCONFIG_PRINTING=y -DCONFIG_USER_STACK_TRACE_LENGTH=16"`.
 
 See the seL4 website for more [comprehensive build instructions][5].
 
