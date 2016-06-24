@@ -12,7 +12,7 @@ ENTRY(_start)
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 KERNEL_BASE   = 0xe0000000;
-PHYS_BASE     = 0x40000000;
+PHYS_BASE     = 0x60000000;
 KERNEL_OFFSET = KERNEL_BASE - PHYS_BASE;
 
 SECTIONS

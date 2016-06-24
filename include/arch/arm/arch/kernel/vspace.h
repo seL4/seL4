@@ -11,6 +11,7 @@
 #ifndef __ARCH_KERNEL_VSPACE_H
 #define __ARCH_KERNEL_VSPACE_H
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
@@ -30,10 +31,13 @@ void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap);
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
 /* PD slot reserved for storing the PD's allocated hardware ASID */
-#define PD_ASID_SLOT 0xff0
+#define PD_ASID_SLOT (0xff000000 >> (PT_BITS + PAGE_BITS))
 
 void idle_thread(void);
 #define idleThreadStart (&idle_thread)
+
+/* need a fake array to get the pointer from the linker script */
+extern char arm_vector_table[1];
 
 enum pde_pte_tag {
     ME_PDE,
@@ -62,6 +66,9 @@ struct lookupPTSlot_ret {
 };
 typedef struct lookupPTSlot_ret lookupPTSlot_ret_t;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+hw_asid_t getHWASID(asid_t asid);
+#endif
 void copyGlobalMappings(pde_t *newPD);
 word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 findPDForASID_ret_t findPDForASID(asid_t asid) VISIBLE;
@@ -91,5 +98,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 #ifdef CONFIG_PRINTING
 void Arch_userStackTrace(tcb_t *tptr);
 #endif
+
+bool_t CONST isIOSpaceFrame(cap_t cap);
 
 #endif

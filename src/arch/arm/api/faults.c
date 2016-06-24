@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <object.h>
 #include <kernel/vspace.h>
@@ -37,6 +38,12 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
 
     case fault_temporal:
         return true;
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case fault_vgic_maintenance:
+        return true;
+    case fault_vcpu_fault:
+        return true;
+#endif
 
     case fault_unknown_syscall: {
         word_t i;

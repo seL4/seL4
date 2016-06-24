@@ -134,6 +134,7 @@ config XSAVE_FEATURE_SET
 
 config XSAVE_SIZE
     int "XSAVE region size"
+    depends on ARCH_X86
     default 576 if XSAVE
     default 512 if !XSAVE
     help

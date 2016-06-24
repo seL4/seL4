@@ -923,14 +923,13 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     if (bufferAddr == 0) {
         bufferSlot = NULL;
     } else {
-        exception_t e;
-
         dc_ret = deriveCap(bufferSlot, bufferCap);
         if (dc_ret.status != EXCEPTION_NONE) {
             return dc_ret.status;
         }
         bufferCap = dc_ret.cap;
-        e = checkValidIPCBuffer(bufferAddr, bufferCap);
+
+        exception_t e = checkValidIPCBuffer(bufferAddr, bufferCap);
         if (e != EXCEPTION_NONE) {
             return e;
         }

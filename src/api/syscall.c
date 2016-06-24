@@ -48,12 +48,12 @@ handleInterruptEntry(irq_t irq)
     assert(irq != irqInvalid);
     handleInterrupt(irq);
 
+    schedule();
+    activateThread();
+
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
-
-    schedule();
-    activateThread();
 
     return EXCEPTION_NONE;
 }
@@ -161,13 +161,15 @@ handleUnknownSyscall(word_t w)
                              start, size);
 #else /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
         /* write to ipc buffer */
-        word_t i;
+        {
+            word_t i;
 
-        for (i = 0; i < size; i++) {
-            int base_index = i * 2 + 1;
-            ks_log_entry_t *log = &ksLog[i + start];
-            buffer[base_index] = log->key;
-            buffer[base_index + 1] = log->data;
+            for (i = 0; i < size; i++) {
+                int base_index = i * 2 + 1;
+                ks_log_entry_t *log = &ksLog[i + start];
+                buffer[base_index] = log->key;
+                buffer[base_index + 1] = log->data;
+            }
         }
 
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
@@ -221,12 +223,12 @@ handleUserLevelFault(word_t w_a, word_t w_b)
         setThreadState(ksCurThread, ThreadState_Restart);
     }
 
+    schedule();
+    activateThread();
+
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
-
-    schedule();
-    activateThread();
 
     return EXCEPTION_NONE;
 }
@@ -254,12 +256,12 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
         setThreadState(ksCurThread, ThreadState_Restart);
     }
 
+    schedule();
+    activateThread();
+
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
-
-    schedule();
-    activateThread();
 
     return EXCEPTION_NONE;
 }

@@ -303,7 +303,6 @@ struct sched_context {
 
 /* Ensure object sizes are sane */
 compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << seL4_SlotBits))
-compile_assert(tcb_size_expected, sizeof(tcb_t) == EXPECTED_TCB_SIZE)
 compile_assert(tcb_size_sane,
                (1 << (TCB_SIZE_BITS)) + sizeof(tcb_t) <= (1 << seL4_TCBBits))
 compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << seL4_EndpointBits))
@@ -372,6 +371,55 @@ cap_get_capSizeBits(cap_t cap)
         return cap_get_archCapSizeBits(cap);
     }
 
+}
+
+/* Returns whether or not this capability has memory associated
+ * with it or not. Refering to this as 'being physical' is to
+ * match up with the haskell and abstract specifications */
+static inline bool_t CONST
+cap_get_capIsPhysical(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+    case cap_untyped_cap:
+        return true;
+
+    case cap_endpoint_cap:
+        return true;
+
+    case cap_notification_cap:
+        return true;
+
+    case cap_cnode_cap:
+        return true;
+
+    case cap_thread_cap:
+        return true;
+
+    case cap_zombie_cap:
+        return true;
+
+    case cap_reply_cap:
+        return false;
+
+    case cap_irq_control_cap:
+        return false;
+
+    case cap_irq_handler_cap:
+        return false;
+
+    case cap_sched_context_cap:
+        return true;
+
+    case cap_sched_control_cap:
+        return false;
+
+    default:
+        return cap_get_archCapIsPhysical(cap);
+    }
 }
 
 static inline void * CONST

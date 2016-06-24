@@ -22,6 +22,7 @@
 <!ELEMENT method (param*)>
 <!ATTLIST method name CDATA #REQUIRED>
 <!ATTLIST method id CDATA #REQUIRED>
+<!ATTLIST method config CDATA #IMPLIED>
 
 <!ELEMENT param EMPTY>
 <!ATTLIST param type CDATA #REQUIRED>

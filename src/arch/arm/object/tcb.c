@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <machine/registerset.h>
@@ -81,14 +82,22 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
         return setMRs_lookup_failure(receiver, receiveIPCBuffer,
                                      sender->tcbLookupFailure, 3);
 
-    case fault_vm_fault:
-        setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
+    case fault_vm_fault: {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            word_t ipa, va;
+            va = getRestartPC(sender);
+            ipa = (addressTranslateS1CPR(va) & ~MASK(PAGE_BITS)) | (va & MASK(PAGE_BITS));
+            setMR(receiver, receiveIPCBuffer, 0, ipa);
+        } else {
+            setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
+        }
         setMR(receiver, receiveIPCBuffer, 1,
               fault_vm_fault_get_address(sender->tcbFault));
         setMR(receiver, receiveIPCBuffer, 2,
               fault_vm_fault_get_instructionFault(sender->tcbFault));
         return setMR(receiver, receiveIPCBuffer, 3,
                      fault_vm_fault_get_FSR(sender->tcbFault));
+    }
 
     case fault_unknown_syscall: {
         word_t i;
@@ -129,6 +138,19 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 
     case fault_temporal:
         return setMR(receiver, receiveIPCBuffer, 0, fault_temporal_get_data(sender->tcbFault));
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case fault_vgic_maintenance:
+        if (fault_vgic_maintenance_get_idxValid(sender->tcbFault)) {
+            return setMR(receiver, receiveIPCBuffer, 0,
+                         fault_vgic_maintenance_get_idx(sender->tcbFault));
+        } else {
+            return setMR(receiver, receiveIPCBuffer, 0, -1);
+        }
+    case fault_vcpu_fault:
+        return setMR(receiver, receiveIPCBuffer, 0, fault_vcpu_fault_get_hsr(sender->tcbFault));
+#endif
+
     default:
         fail("Invalid fault");
     }

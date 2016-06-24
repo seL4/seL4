@@ -38,8 +38,14 @@ INVOCATION_TEMPLATE = COMMON_HEADER + """
 
 enum invocation_label {
     InvalidInvocation,
-    {{for label in invocations}}
+    {{for label, condition in invocations}}
+    {{if condition}}
+#if {{condition}}
+    {{endif}}
     {{label}},
+    {{if condition}}
+#endif
+    {{endif}}
     {{endfor}}
     nInvocationLabels
 };
@@ -60,11 +66,26 @@ SEL4_ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 #include <api/invocation.h>
 {{endif}}
 
+{{py:first = 1}}
 enum sel4_arch_invocation_label {
-    {{for loop, label in looper(invocations)}}
-    {{label}} = nInvocationLabels + {{loop.index}},
+    {{for label, condition in invocations}}
+    {{if condition}}
+    {{if first}}
+#error "First sel4_arch invocation label cannot be conditional"
+    {{endif}}
+#if {{condition}}
+    {{endif}}
+    {{if first}}
+    {{py:first = 0}}
+    {{label}} = nInvocationLabels,
+    {{else}}
+    {{label}},
+    {{endif}}
+    {{if condition}}
+#endif
+    {{endif}}
     {{endfor}}
-    nSeL4ArchInvocationLabels = nInvocationLabels + {{num_invocations}}
+    nSeL4ArchInvocationLabels
 };
 
 #endif /* __{{header_title}}_SEL4_ARCH_INVOCATION_H */
@@ -78,11 +99,26 @@ ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
 #include <arch/api/sel4_invocation.h>
 {{endif}}
 
+{{py:first = 1}}
 enum arch_invocation_label {
-    {{for loop, label in looper(invocations)}}
-    {{label}} = nSeL4ArchInvocationLabels + {{loop.index}},
+    {{for label, condition in invocations}}
+    {{if condition}}
+    {{if first}}
+#error "First arch invocation label cannot be conditional"
+    {{endif}}
+#if {{condition}}
+    {{endif}}
+    {{if first}}
+    {{label}} = nSeL4ArchInvocationLabels,
+    {{py:first = 0}}
+    {{else}}
+    {{label}},
+    {{endif}}
+    {{if condition}}
+#endif
+    {{endif}}
     {{endfor}}
-    nArchInvocationLabels = nSeL4ArchInvocationLabels + {{num_invocations}}
+    nArchInvocationLabels
 };
 
 #endif /* __{{header_title}}_ARCH_INVOCATION_H */
@@ -114,7 +150,7 @@ def parse_xml(xml_file):
 
     invocation_labels = []
     for method in doc.getElementsByTagName("method"):
-        invocation_labels.append(str(method.getAttribute("id")))
+        invocation_labels.append((str(method.getAttribute("id")), str(method.getAttribute("config"))))
 
     return invocation_labels
 

@@ -24,7 +24,7 @@
 /* NOTE: Regions are not allowed to be adjacent! */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
     /* 2 GiB */
-    { /* .start = */ 0x40000000, /* .end = */ 0xC0000000 }
+    { /* .start = */ 0x60000000, /* .end = */ 0xC0000000 }
 };
 
 BOOT_CODE int
@@ -40,6 +40,9 @@ get_avail_p_reg(word_t i)
 }
 
 const p_region_t BOOT_RODATA dev_p_regs[] = {
+    { /* ,start */ 0x40000000            , /* .end */ 0x60000000                                },
+    { /* ,start */ SECURE_FIRMWARE       , /* .end */ SECURE_FIRMWARE        + (16 << PAGE_BITS) },
+    { /* .start */ AUDSS_PADDR           , /* .end */ AUDSS_PADDR            + (1 << PAGE_BITS) },
     { /* .start */ AUDIO_GPIO_PADDR      , /* .end */ AUDIO_GPIO_PADDR       + (1 << PAGE_BITS) },
     { /* .start */ CHIP_ID_PADDR         , /* .end */ CHIP_ID_PADDR          + (1 << PAGE_BITS) },
     { /* .start */ CMU_CPU_PADDR         , /* .end */ CMU_CPU_PADDR          + (1 << PAGE_BITS) },
@@ -51,9 +54,14 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ CMU_R0X_PADDR         , /* .end */ CMU_R0X_PADDR          + (1 << PAGE_BITS) },
     { /* .start */ CMU_R1X_PADDR         , /* .end */ CMU_R1X_PADDR          + (1 << PAGE_BITS) },
     { /* .start */ CMU_CDREX_PADDR       , /* .end */ CMU_CDREX_PADDR        + (1 << PAGE_BITS) },
-    { /* .start */ ALIVE_PADDR           , /* .end */ ALIVE_PADDR            + (1 << PAGE_BITS) },
+    { /* .start */ CMU_MEM_PADDR         , /* .end */ CMU_MEM_PADDR          + (1 << PAGE_BITS) },
+    { /* .start */ ALIVE_PADDR           , /* .end */ ALIVE_PADDR            + (5 << PAGE_BITS) },
     { /* .start */ SYSREG_PADDR          , /* .end */ SYSREG_PADDR           + (1 << PAGE_BITS) },
-    { /* .start */ TMU_PADDR             , /* .end */ TMU_PADDR              + (1 << PAGE_BITS) },
+    { /* .start */ TMU0_PADDR            , /* .end */ TMU0_PADDR             + (1 << PAGE_BITS) },
+    { /* .start */ TMU1_PADDR            , /* .end */ TMU1_PADDR             + (1 << PAGE_BITS) },
+    { /* .start */ TMU2_PADDR            , /* .end */ TMU2_PADDR             + (1 << PAGE_BITS) },
+    { /* .start */ TMU3_PADDR            , /* .end */ TMU3_PADDR             + (1 << PAGE_BITS) },
+    { /* .start */ TMU_GPU_PADDR         , /* .end */ TMU_GPU_PADDR          + (1 << PAGE_BITS) },
     { /* .start */ MONOTONIC_CNT_PADDR   , /* .end */ MONOTONIC_CNT_PADDR    + (1 << PAGE_BITS) },
     { /* .start */ HDMI_CEC_PADDR        , /* .end */ HDMI_CEC_PADDR         + (1 << PAGE_BITS) },
 //  { /* .start */ MCT_PADDR             , /* .end */ MCT_PADDR              + (1 << PAGE_BITS) },
@@ -62,6 +70,7 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ INT_COMB_CPU_PADDR    , /* .end */ INT_COMB_CPU_PADDR     + (1 << PAGE_BITS) },
     { /* .start */ INT_COMB_IOP_PADDR    , /* .end */ INT_COMB_IOP_PADDR     + (1 << PAGE_BITS) },
 //  { /* .start */ GIC_PADDR             , /* .end */ GIC_PADDR              + (8 << PAGE_BITS) },
+    { /* .start */ GIC_VCPU_PADDR        , /* .end */ GIC_VCPU_PADDR         + (1 << PAGE_BITS) },
     { /* .start */ GIC_IOPC_PADDR        , /* .end */ GIC_IOPC_PADDR         + (1 << PAGE_BITS) },
     { /* .start */ GIC_IOPD_PADDR        , /* .end */ GIC_IOPD_PADDR         + (1 << PAGE_BITS) },
     { /* .start */ MPCORE_PRIV_REG_PADDR , /* .end */ MPCORE_PRIV_REG_PADDR  + (1 << PAGE_BITS) },
@@ -110,12 +119,14 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ AS_A_JPEG_PADDR       , /* .end */ AS_A_JPEG_PADDR        + (1 << PAGE_BITS) },
     { /* .start */ JPEG_PADDR            , /* .end */ JPEG_PADDR             + (1 << PAGE_BITS) },
     { /* .start */ SYSMMU_JPEG_PADDR     , /* .end */ SYSMMU_JPEG_PADDR      + (1 << PAGE_BITS) },
-    { /* .start */ USB3_DEV_LINK_PADDR   , /* .end */ USB3_DEV_LINK_PADDR    + (1 << PAGE_BITS) },
+    { /* .start */ USB3_DEV_LINK_PADDR   , /* .end */ USB3_DEV_LINK_PADDR    + (256 << PAGE_BITS) },
     { /* .start */ USB3_DEV_CTRL_PADDR   , /* .end */ USB3_DEV_CTRL_PADDR    + (1 << PAGE_BITS) },
     { /* .start */ USB2_HOST_EHCI_PADDR  , /* .end */ USB2_HOST_EHCI_PADDR   + (1 << PAGE_BITS) },
     { /* .start */ USB2_HOST_OHCI_PADDR  , /* .end */ USB2_HOST_OHCI_PADDR   + (1 << PAGE_BITS) },
     { /* .start */ USB2_HOST_CTRL_PADDR  , /* .end */ USB2_HOST_CTRL_PADDR   + (1 << PAGE_BITS) },
     { /* .start */ USB2_DEV_LINK_PADDR   , /* .end */ USB2_DEV_LINK_PADDR    + (1 << PAGE_BITS) },
+    { /* .start */ USB_PADDR             , /* .end */ USB_PADDR              + (16 << PAGE_BITS) },
+    { /* .start */ USB3_PHY1_PADDR       , /* .end */ USB3_PHY1_PADDR        + (1 << PAGE_BITS) },
     { /* .start */ MIPI_HSI_PADDR        , /* .end */ MIPI_HSI_PADDR         + (1 << PAGE_BITS) },
     { /* .start */ SATA_PHY_CTRL_PADDR   , /* .end */ SATA_PHY_CTRL_PADDR    + (1 << PAGE_BITS) },
     { /* .start */ MCUCTL_IOP_PADDR      , /* .end */ MCUCTL_IOP_PADDR       + (1 << PAGE_BITS) },
@@ -245,13 +256,14 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ HDMI_5_PADDR          , /* .end */ HDMI_5_PADDR           + (1 << PAGE_BITS) },
     { /* .start */ HDMI_6_PADDR          , /* .end */ HDMI_6_PADDR           + (1 << PAGE_BITS) },
     { /* .start */ DP1_1_PADDR           , /* .end */ DP1_1_PADDR            + (1 << PAGE_BITS) },
+    { /* .start */ HDMI_0_PHY_PADDR      , /* .end */ HDMI_0_PHY_PADDR       + (1 << PAGE_BITS) },
     { /* .start */ SYSMMU_DISP1_PADDR    , /* .end */ SYSMMU_DISP1_PADDR     + (1 << PAGE_BITS) },
     { /* .start */ SYSMMU_TV_PADDR       , /* .end */ SYSMMU_TV_PADDR        + (1 << PAGE_BITS) },
     { /* .start */ AS_A_TV_PADDR         , /* .end */ AS_A_TV_PADDR          + (1 << PAGE_BITS) },
-    { /* .start */ AES0EF0_PADDR         , /* .end */ AES0EF0_PADDR          + (1 << PAGE_BITS) },
+    { /* .start */ AES0EF0_PADDR         , /* .end */ AES0EF0_PADDR          + (512 << PAGE_BITS) },
     { /* .start */ EFCON0_SFR_PADDR      , /* .end */ EFCON0_SFR_PADDR       + (1 << PAGE_BITS) },
     { /* .start */ AES0_SFR_PADDR        , /* .end */ AES0_SFR_PADDR         + (1 << PAGE_BITS) },
-    { /* .start */ AES1EF1_PADDR         , /* .end */ AES1EF1_PADDR          + (1 << PAGE_BITS) },
+    { /* .start */ AES1EF1_PADDR         , /* .end */ AES1EF1_PADDR          + (512 << PAGE_BITS) },
     { /* .start */ EFCON1_SFR_PADDR      , /* .end */ EFCON1_SFR_PADDR       + (1 << PAGE_BITS) },
     { /* .start */ NS_NDMA_PADDR         , /* .end */ NS_NDMA_PADDR          + (1 << PAGE_BITS) },
     { /* .start */ S_NDMA_PADDR          , /* .end */ S_NDMA_PADDR           + (1 << PAGE_BITS) },
@@ -274,6 +286,10 @@ get_dev_p_reg(word_t i)
 void
 handleReservedIRQ(irq_t irq)
 {
+    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+        VGICMaintenance();
+        return;
+    }
 }
 
 
@@ -313,6 +329,19 @@ map_kernel_devices(void)
             false  /* armPageCacheable */
         )
     );
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        map_kernel_frame(
+            GIC_VCPUCTRL_PADDR,
+            GIC_VCPUCTRL_PPTR,
+            VMKernelOnly,
+            vm_attributes_new(
+                false, /* armExecuteNever */
+                false, /* armParityEnabled */
+                false  /* armPageCacheable */
+            )
+        );
+    }
 
 #ifdef CONFIG_PRINTING
     /* map kernel device: UART */

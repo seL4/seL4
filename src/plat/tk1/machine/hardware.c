@@ -18,12 +18,14 @@
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/smmu.h>
 
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 
+/* 1 MiB starting from 0xa7f00000 is reserved by the elfloader for monitor mode hooks */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
-    { .start = 0x80000000, .end = 0xf0000000 }
+    { .start = 0x80000000, .end = 0xa7f00000 }
 };
 
 BOOT_CODE int get_num_avail_p_regs(void)
@@ -42,6 +44,14 @@ BOOT_CODE p_region_t get_avail_p_reg(word_t i)
 
 const p_region_t BOOT_RODATA dev_p_regs[] = {
 
+    { VM_HOST_PA_START,     VM_HOST_PA_START + VM_HOST_PA_SIZE },
+    { VGICI_VM_PADDR,       VGICI_VM_PADDR + PAGE_SIZE },
+    { PCIE_0_CFG_PADDR,     PCIE_0_CFG_PADDR + PAGE_SIZE },
+    { PCIE_1_CFG_PADDR,     PCIE_1_CFG_PADDR + PAGE_SIZE },
+    { PCIE_PCA0_1_PADDR,    PCIE_PCA0_1_PADDR + PAGE_SIZE },
+    { PCIE_PADS_AFI_PADDR,  PCIE_PADS_AFI_PADDR + PAGE_SIZE },
+    { PCIE_A2_PADDR,        PCIE_A2_PADDR + SECTION_SIZE },
+    { R8169_NIC_PADDR,      R8169_NIC_PADDR + SECTION_SIZE},
     { GRAPH_HOST_PADDR,     GRAPH_HOST_PADDR + (SECTION_SIZE * 16) }, /* 16 MB                        */
     { GPU_PADDR,            GPU_PADDR + (SECTION_SIZE * 144) },       /* 144 MB                       */
     { UP_TAG_PADDR,         UP_TAG_PADDR + PAGE_SIZE },               /* 4 KB                         */
@@ -76,13 +86,16 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { TSENSOR_PADDR,        TSENSOR_PADDR + PAGE_SIZE },              /* 4 KB                         */
     { CEC_PADDR,            CEC_PADDR + PAGE_SIZE },                  /* 4 KB                         */
     { ATOMICS_PADDR,        ATOMICS_PADDR + (PAGE_SIZE * 2) },        /* 8 KB                         */
+#ifndef CONFIG_ARM_SMMU
     { MC_PADDR,             MC_PADDR + PAGE_SIZE },                   /* 4 KB                         */
+#endif
     { EMC_PADDR,            EMC_PADDR + PAGE_SIZE },                  /* 4 KB                         */
     { SATA_PADDR,           SATA_PADDR + (PAGE_SIZE * 16) },          /* 64 KB                        */
     { HDA_PADDR,            HDA_PADDR + (PAGE_SIZE * 16) },           /* 64 KB                        */
     { MIOBFM_PADDR,         MIOBFM_PADDR + (PAGE_SIZE * 16) },        /* 64 KB                        */
     { AUDIO_PADDR,          AUDIO_PADDR + (PAGE_SIZE * 16) },         /* 64 KB                        */
-    { XUSB_HOST_PADDR,      XUSB_HOST_PADDR + (PAGE_SIZE * 10) },     /* 40 KB                        */
+    { XUSB_HOST_PADDR,      XUSB_HOST_PADDR + (PAGE_SIZE * 9) },      /* 36 KB                        */
+    { XUSB_PADCTL_PADDR,    XUSB_PADCTL_PADDR + PAGE_SIZE },          /* 4  KB                        */
     { XUSB_DEV_PADDR,       XUSB_DEV_PADDR + (PAGE_SIZE * 10) },      /* 40 KB                        */
     { DDS_PADDR,            DDS_PADDR + (PAGE_SIZE * 2) },            /* 8KB 4608 bytes               */
     { SDMMC_1_PADDR,        SDMMC_1_PADDR + PAGE_SIZE },              /* 4KB 512 bytes                */
@@ -120,6 +133,16 @@ BOOT_CODE p_region_t get_dev_p_reg(word_t i)
 void
 handleReservedIRQ(irq_t irq)
 {
+    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+        VGICMaintenance();
+        return;
+    }
+
+    if (config_set(CONFIG_ARM_SMMU) && (irq == INTERRUPT_SMMU)) {
+        plat_smmu_handle_interrupt();
+        return;
+    }
+
 }
 
 BOOT_CODE void
@@ -146,6 +169,32 @@ map_kernel_devices(void)
             false  /* armPageCacheable */
         )
     );
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        map_kernel_frame(
+            GIC_VCPUCTRL_PADDR,
+            GIC_VCPUCTRL_PPTR,
+            VMKernelOnly,
+            vm_attributes_new(
+                false,
+                false,
+                false
+            )
+        );
+    }
+
+    if (config_set(CONFIG_ARM_SMMU)) {
+        map_kernel_frame(
+            MC_PADDR,
+            SMMU_PPTR,
+            VMKernelOnly,
+            vm_attributes_new(
+                false,
+                false,
+                false
+            )
+        );
+    }
 
 #ifdef CONFIG_PRINTING
     /* map kernel device: UART */
@@ -185,8 +234,21 @@ read_cntfrq(void)
     return val;
 }
 
+
+static void
+write_cnthp_ctl(uint32_t v)
+{
+    asm volatile ("mcr p15, 4, %0, c14, c2, 1" ::"r"(v));
+}
+
+static void
+write_cnthp_tval(uint32_t v)
+{
+    asm volatile  ("mcr p15, 4, %0, c14, c2, 0" :: "r"(v));
+}
+
 #define GPT_DEFAULT_HZ		12000000
-static uint32_t gpt_cntp_tval = 0;
+static uint32_t gpt_cnt_tval = 0;
 
 /**
    DONT_TRANSLATE
@@ -194,7 +256,11 @@ static uint32_t gpt_cntp_tval = 0;
 void
 resetTimer(void)
 {
-    write_cntp_tval(gpt_cntp_tval);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        write_cnthp_tval(gpt_cnt_tval);
+    } else {
+        write_cntp_tval(gpt_cnt_tval);
+    }
 }
 
 /**
@@ -215,13 +281,18 @@ initTimer(void)
         printf("timer interval value out of range \n");
         halt();
     }
-    gpt_cntp_tval = (uint32_t)tval;
 
-    /* write the value */
-    write_cntp_tval(gpt_cntp_tval);
+    gpt_cnt_tval = (uint32_t)tval;
 
-    /* enable the timer */
-    write_cntp_ctl(0x1);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        write_cnthp_tval(gpt_cnt_tval);
+        write_cnthp_ctl(0x1);
+    } else {
+        /* write the value */
+        write_cntp_tval(gpt_cnt_tval);
+        /* enable the timer */
+        write_cntp_ctl(0x1);
+    }
 }
 
 void plat_cleanL2Range(paddr_t start, paddr_t end) {}

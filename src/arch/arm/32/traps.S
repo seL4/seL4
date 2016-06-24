@@ -9,6 +9,9 @@
  */
 
 #include <config.h>
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+
 #include <machine/assembler.h>
 
 .code 32
@@ -289,3 +292,5 @@ END_FUNC(arm_reset_exception)
 BEGIN_FUNC(arm_fiq_exception)
     blx halt
 END_FUNC(arm_fiq_exception)
+
+#endif /* !CONFIG_ARM_HYP */

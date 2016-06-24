@@ -8,6 +8,7 @@
 -- @TAG(GD_GPL)
 --
 
+#include <config.h>
 -- Default base size: uint32_t
 base 32
 
@@ -25,7 +26,12 @@ block small_frame_cap {
     field capFVMRights       2
     field_high capFMappedAddress 20
 
+#ifdef CONFIG_ARM_SMMU
+    field capFIsIOSpace      1
+    field capFMappedASIDHigh 7
+#else
     field capFMappedASIDHigh 8
+#endif
     field_high capFBasePtr  20
     field capType            4
 }
@@ -48,7 +54,12 @@ block page_table_cap {
     padding                   1
     field capPTIsMapped       1
     field capPTMappedASID    18
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     field_high capPTMappedAddress 12
+#else
+    padding                   1
+    field_high capPTMappedAddress 11
+#endif
 
     field_high capPTBasePtr  22
     padding                   6
@@ -84,6 +95,56 @@ block asid_pool_cap {
     field capType          4
 }
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+block vcpu_cap {
+    padding               32
+
+    field_high capVCPUPtr 24
+    field capType         8
+}
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+-- IO space caps
+-- each module has an engine that can be enabled
+-- the clients use the same module can be separately enabled
+block io_space_cap {
+    field   capModuleID       16
+    field   capClientID       16
+
+    padding                   24
+    field   capType           8
+}
+
+block io_space_capdata {
+    padding                 32
+
+    field   moduleID        16
+    field   clientID        16
+}
+
+block io_page_directory_cap (capType, capIOPDIsMapped, capIOPDASID, capIOPDBasePtr) {
+    field_high  capIOPDBasePtr      20
+    padding                         12
+
+    padding                         16
+    field       capIOPDASID         7       -- TK1 has 7-bit ASID
+    field       capIOPDIsMapped     1
+    field       capType             8
+}
+
+block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, capIOPTMappedAddress) {
+    field_high  capIOPTBasePtr          20
+    padding                             12
+
+    field_high  capIOPTMappedAddress    10
+    padding                             6
+    field       capIOPTASID             7
+    field       capIOPTIsMapped         1
+    field       capType                 8
+}
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     mask 4 0xe
@@ -97,7 +158,7 @@ tagged_union cap capType {
     tag reply_cap            8
     tag cnode_cap           10
     tag thread_cap          12
-    -- Do not extend even 4-bit caps types beyond 12, as we use 
+    -- Do not extend even 4-bit caps types beyond 12, as we use
     -- 14 (0xe) to determine which caps are 8-bit.
 
     -- 4-bit tag arch caps
@@ -107,7 +168,7 @@ tagged_union cap capType {
     tag page_table_cap       7
     tag page_directory_cap   9
     tag asid_control_cap    11
-    -- Do not extend odd 4-bit caps types beyond 13, as we use 
+    -- Do not extend odd 4-bit caps types beyond 13, as we use
     -- 15 (0xf) to determine which caps are 8-bit.
 
     -- 8-bit tag caps
@@ -116,17 +177,51 @@ tagged_union cap capType {
     tag zombie_cap          0x2e
     tag sched_context_cap   0x3e
     tag sched_control_cap   0x4e
+
+    -- 8-bit tag arch caps
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    tag vcpu_cap            0x0f
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+    -- we use the same names as for x86 IOMMU caps
+#ifdef CONFIG_ARM_SMMU
+    tag io_space_cap            0x1f
+    tag io_page_directory_cap   0x2f
+    tag io_page_table_cap       0x3f
+#endif
 }
 
 ---- Arch-independent object types
 
 block vm_fault {
     field address 32
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    field FSR 26
+    padding 2
+    field instructionFault 1
+#else
     field FSR 14
     field instructionFault 1
     padding 14
+#endif
     field faultType 3
 }
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+block vgic_maintenance {
+    field idx        6
+    field idxValid   1
+    padding         25
+    padding         29
+    field faultType  3
+}
+
+block vcpu_fault {
+    field hsr       32
+    padding         29
+    field faultType  3
+}
+#endif
 
 tagged_union fault faultType {
     tag null_fault 0
@@ -136,6 +231,10 @@ tagged_union fault faultType {
     tag user_exception 4
     tag temporal 5
     tag no_fault_handler 6
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    tag vgic_maintenance 7
+    tag vcpu_fault       8
+#endif
 }
 
 ---- ARM-specific object types
@@ -146,6 +245,9 @@ block stored_hw_asid {
     padding 21
     field pdeType 2
 }
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+-- Short descriptors
 
 -- Page directory entries
 block pde_invalid {
@@ -225,6 +327,162 @@ tagged_union pte pteSize {
     tag pte_large 0
     tag pte_small 1
 }
+
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+-- These #defines allow for writing the bitfields here such
+-- that they match the names in the ARM hardware, yet can
+-- be used transparently by the existing C code that was
+-- written for the short descriptors
+#define pdeS2         pde
+#define pdeS2Type     pdeType
+#define pdeS2_section pde_section
+#define pdeS2_coarse  pde_coarse
+#define pdeS2_invalid pde_invalid
+
+#define pteS2         pte
+#define pteS2Type     pteType
+#define pteS2_small   pte_small
+#define pteS2_invalid pte_invalid
+
+-- Stage 2 Long descriptors
+-- Page directory entries
+
+block pdeS2_invalid {
+    padding 32
+    field stored_hw_asid 8
+    field stored_asid_valid 1
+    padding 21
+    field pdeS2Type 2
+}
+
+block pdeS2_section {
+    padding 9
+    field XN 1
+    padding 1
+    field contiguous_hint 1
+    padding 12
+    padding 8
+    field_high address 20
+    padding 1
+    field AF 1
+    field SH 2
+    field HAP 2
+    field MemAttr 4
+    field pdeS2Type 2
+}
+
+block pdeS2_coarse {
+    padding 24
+    padding 8
+    field_high address 20
+    padding 10
+    field pdeS2Type 2
+}
+
+tagged_union pdeS2 pdeS2Type {
+    tag pdeS2_invalid  0
+    tag pdeS2_section  1
+    tag pdeS2_coarse   3
+}
+
+-- Page table entries
+block pteS2_invalid {
+    padding 62
+    field pteS2Type 2
+}
+
+block pteS2_small {
+    padding 9
+    field XN 1
+    padding 1
+    field contiguous_hint 1
+    padding 12
+    padding 8
+    field_high address 20
+    padding 1
+    field AF 1
+    field SH 2
+    field HAP 2
+    field MemAttr 4
+    field pteS2Type 2
+}
+
+tagged_union pteS2 pteS2Type {
+    tag pteS2_invalid  0
+    tag pteS2_small    3
+}
+
+-- Stage 1
+-- Page directory entries
+block pdeS1_invalid {
+    padding 62
+    field pdeS1Type 2
+}
+
+block pdeS1_section {
+    padding 9
+    field XN 1
+    field PXN 1
+    field contiguous_hint 1
+    padding 12
+    padding 8
+    field_high address 20
+    field nG 1
+    field AF 1
+    field SH 2
+    field AP 2
+    field NS 1
+    field AttrIndx 3
+    field pdeS1Type 2
+}
+
+block pdeS1_coarse {
+    field NSTable 1
+    field APTable 2
+    field XNTable 1
+    field PXNTable 1
+    padding 19
+    padding 8
+    field_high address 20
+    padding 10
+    field pdeS1Type 2
+}
+
+tagged_union pdeS1 pdeS1Type {
+    tag pdeS1_invalid  0
+    tag pdeS1_section  1
+    tag pdeS1_coarse   3
+}
+
+-- Page table entries
+block pteS1_invalid {
+    padding 62
+    field pteS1Type 2
+}
+
+block pteS1_small {
+    padding 9
+    field XN 1
+    field PXN 1
+    field contiguous_hint 1
+    padding 12
+    padding 8
+    field_high address 20
+    field nG 1
+    field AF 1
+    field SH 2
+    field AP 2
+    field NS 1
+    field AttrIndx 3
+    field pteS1Type 2
+}
+
+tagged_union pteS1 pteS1Type {
+    tag pteS1_invalid  0
+    tag pteS1_small    3
+}
+
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 -- VM attributes
 

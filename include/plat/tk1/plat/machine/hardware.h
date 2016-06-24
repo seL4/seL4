@@ -11,6 +11,8 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
+#include <plat/machine/hardware_gen.h>
+
 #define physBase          0x80000000
 #define kernelBase        0xe0000000
 #define physMappingOffset (kernelBase - physBase)

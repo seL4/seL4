@@ -58,55 +58,31 @@ menu "seL4 System"
         bool
         default y if ARCH_ARM
 
-    choice
-        prompt "ARM CPU selection"
-        depends on ARCH_ARM
-        help
-            Select the ARM CPU version
+    # CPU values.
 
-        config ARM1136JF_S
-            bool "ARM1136JF-S"
-            depends on ARCH_ARM
-            select ARCH_ARM_V6
-            help
-                Support for ARM1136JF-S
+    config ARM1136JF_S
+        bool
+        default n
 
-        config ARM_CORTEX_A7
-            bool "Cortex A7"
-            depends on ARCH_ARM
-            select ARCH_ARM_V7A
-            help
-                Support for Cortex A7 processor
+    config ARM_CORTEX_A7
+        bool
+        default n
 
-        config ARM_CORTEX_A8
-            bool "Cortex A8"
-            depends on ARCH_ARM
-            select ARCH_ARM_V7A
-            help
-                Support for Cortex A8 processor
+    config ARM_CORTEX_A8
+        bool
+        default n
 
-        config ARM_CORTEX_A9
-            bool "Cortex A9"
-            depends on ARCH_ARM
-            select ARCH_ARM_V7A
-            help
-                Support for Cortex A9 processor
+    config ARM_CORTEX_A9
+        bool
+        default n
 
-        config ARM_CORTEX_A15
-            bool "Cortex A15"
-            depends on ARCH_ARM
-            select ARCH_ARM_V7A
-            help
-                Support for Cortex A15 processor
+    config ARM_CORTEX_A15
+        bool
+        default n
 
-        config ARM_CORTEX_A57
-            bool "Cortex A57"
-            depends on ARCH_ARM
-            select ARCH_ARM_V8A
-            help
-                Support for Cortex A57 processor
-
-    endchoice
+    config ARM_CORTEX_A57
+        bool
+        default n
 
     config PLAT_EXYNOS54XX
        bool
@@ -133,91 +109,103 @@ menu "seL4 System"
             Select the platform for the architecture
 
         config PLAT_KZM
-            bool "KZM iMX.31-based platform"
+            bool "KZM iMX.31 (ARMv6, ARM1136JF-S)"
             depends on ARCH_ARM
-            depends on ARM1136JF_S
+            select ARM1136JF_S
+            select ARCH_ARM_V6
             help
                 Support for the KZM platform
 
         config PLAT_OMAP3
-            bool "OMAP3 (BeagleBoard)"
+            bool "OMAP3 (BeagleBoard, ARMv7a, Cortex A8)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A8
+            select ARM_CORTEX_A8
+            select ARCH_ARM_V7A
             help
                 Support for platforms based on OMAP3 SoCs.
 
         config PLAT_AM335X
-            bool "AM335X (BeagleBone)"
+            bool "AM335X (BeagleBone, ARMv7a, Cortex A8)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A8
+            select ARM_CORTEX_A8
+            select ARCH_ARM_V7A
             help
                 Support for AM335x platform (BeagleBone).
 
         config PLAT_EXYNOS4
-            bool "EXYNOS4 (ODROID-X)"
+            bool "EXYNOS4 (ODROID-X, ARMv7a, Cortex A9)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A9
+            select ARM_CORTEX_A9
+            select ARCH_ARM_V7A
             help
                 Support for EXYNOS4 platform (ODROID-X).
 
         config PLAT_EXYNOS5410
-            bool "EXYNOS5410 (ODROID-XU)"
+            bool "EXYNOS5410 (ODROID-XU, ARMv7a, Cortex A15)"
 	    select PLAT_EXYNOS54XX
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A15
+            select ARM_CORTEX_A15
+            select ARCH_ARM_V7A
             help
                 Support for EXYNOS5410 platform (ODROID-XU).
 
         config PLAT_EXYNOS5422
-            bool "EXYNOS5422 (ODROID-XU3)"
+            bool "EXYNOS5422 (ODROID-XU3, ARMv7a, Cortex A15)"
 	    select PLAT_EXYNOS54XX
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A15
+            select ARM_CORTEX_A15
+            select ARCH_ARM_V7A
             help
                 Support for EXYNOS5422 platform (ODROID-XU3).
 
         config PLAT_EXYNOS5250
-            bool "EXYNOS5250 (ARNDALE)"
+            bool "EXYNOS5250 (ARNDALE, ARMv7a, Cortex A15)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A15
+            select ARM_CORTEX_A15
+            select ARCH_ARM_V7A
             help
                 Support for EXYNOS5250 platform (ARNDALE).
 
         config PLAT_APQ8064
-            bool "Qualcomm Snapdrogon S4 APQ8064 (Inforce IFC6410)"
+            bool "Qualcomm Snapdrogon S4 APQ8064 (Inforce IFC6410, ARMv7a, Cortex A15)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A15
+            select ARM_CORTEX_A15
+            select ARCH_ARM_V7A
             help
                 Support for Qualcomm Snapdragon S4 APQ8064 platforms (Inforce IFC6410).
 
         config PLAT_SABRE
-            bool "iMX6 (Sabre Lite)"
+            bool "iMX6 (Sabre Lite, ARMv7a, Cortex A9)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A9
+            select ARM_CORTEX_A9
+            select ARCH_ARM_V7A
             select PLAT_IMX6
             help
                 Support for iMX6 platform (Sabre Lite).
 
         config PLAT_WANDQ
-            bool "iMX6 (Wandboard Quad)"
+            bool "iMX6 (Wandboard Quad, ARMv7a, Cortex A9)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A9
+            select ARM_CORTEX_A9
+            select ARCH_ARM_V7A
             select PLAT_IMX6
             help
                 Support for iMX6 platform (Wandboard Quad).
 
         config PLAT_IMX7_SABRE
-            bool "iMX7 (Sabre)"
+            bool "iMX7 (Sabre, ARMv7a, Cortex A7)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A7
+            select ARM_CORTEX_A7
+            select ARCH_ARM_V7A
             select PLAT_IMX7
             help
                 Support for iMX7 Sabre Dual.
 
         config PLAT_ZYNQ7000
-            bool "Zynq-7000 (Xilinx ZC706)"
+            bool "Zynq-7000 (Xilinx ZC706, ARMv7a, Cortex A9)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A9
+            select ARM_CORTEX_A9
+            select ARCH_ARM_V7A
             help
                 Support for Xilinx Zynq-7000 platforms.
 
@@ -228,27 +216,55 @@ menu "seL4 System"
                 Support for PC99 based platform
 
         config PLAT_ALLWINNERA20
-            bool "ALLWINNERA20 (CUBIETRUCK)"
+            bool "ALLWINNERA20 (CUBIETRUCK, ARMv7a, Cortex A15)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A15
+            select ARM_CORTEX_A15
+            select ARCH_ARM_V7A
             help
                 Support for ALLWINNERA20 platform (CUBIETRUCK).
 
         config PLAT_TK1
-            bool "Jetson (Tegra K1)"
+            bool "Jetson (Tegra K1, ARMv7a, Cortex A15)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A15
+            select ARM_CORTEX_A15
+            select ARCH_ARM_V7A
             help
                 Support for Tegra K1 platform
 
         config PLAT_HIKEY
-            bool "HiKey"
+            bool "HiKey (ARMv8a, Cortex A57)"
             depends on ARCH_ARM
-            depends on ARM_CORTEX_A57
+            select ARM_CORTEX_A57
+            select ARCH_ARM_V8A
             help
                 Support for HiKey platform.
 
     endchoice
+
+    config ARM_HYPERVISOR_SUPPORT
+        bool "Build as Hypervisor"
+        depends on ARM_CORTEX_A15
+        default n
+        help
+            Utilise ARM virtualisation extensions to build the kernel as a hypervisor
+
+    config ARM_SMMU
+        bool "Enable SystemMMU for Tegra K1 SoC"
+        depends on PLAT_TK1
+        default n
+        help
+            Support for TK1 SoC-specific SystemMMU
+
+    config ARM_SMMU_VM_DEFAULT_MAPPING
+        bool "Enable SystemMMU default mapping for guest VM"
+        depends on PLAT_TK1 && ARM_SMMU && ARM_HYPERVISOR_SUPPORT
+        default y
+        help
+            Enable the default translation for guest VM: all
+            physical memory reserved for a VM is allowed to
+            be accessed with read/write/nonsecure permissions.
+
+
 
 source "$KERNEL_PATH/src/arch/arm/Kconfig"
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"
@@ -325,34 +341,6 @@ menu "seL4 System Parameters"
         range 1 256
         help
             The number of criticality levels
-
-    config ENABLE_BENCHMARKS
-        bool "Enable benchmarks"
-        depends on !VERIFICATION_BUILD
-        default n
-        help
-            Enable benchamrks including logging and tracing info.
-            Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it
-            at user level.
-            NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory.
-            This is not fully implemented for x86.
-
-    config BENCHMARK_TRACK_KERNEL_ENTRIES
-        bool "Keep track of kernel entries"
-        depends on ENABLE_BENCHMARKS
-        default n
-        help
-            Log kernel entries information including timing, number of invocations and arguments for
-            system calls, interrupts, user faults and VM faults.
-
-    config MAX_NUM_TRACE_POINTS
-        int "Maximum number of tracepoints"
-        depends on !BENCHMARK_TRACK_KERNEL_ENTRIES
-        default 0
-        help
-            Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data,
-            where k is an integer between 0 and this value - 1.
-            The maximum number of different trace point identifiers which can be used.
 
 endmenu
 
@@ -445,7 +433,7 @@ menu "Build Options"
 
     config DANGEROUS_CODE_INJECTION
 	    bool "Build kernel with support for executing arbitrary code in protected mode"
-	    depends on !VERIFICATION_BUILD
+           depends on !ARM_HYPERVISOR_SUPPORT && !VERIFICATION_BUILD
         default n
         help
             Adds a system call that allows users to specify code to be run in kernel
@@ -501,6 +489,50 @@ menu "Build Options"
             On ia32 platforms, this option disables the L2 hardware prefetcher, the L2
             adjacent cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher.
             Currently unimplemented on other platforms.
+
+    config ENABLE_BENCHMARKS
+        bool
+        default n
+
+    choice
+        prompt "Enable benchmarks"
+        depends on !VERIFICATION_BUILD
+        default NO_BENCHMARKS
+        help
+            Enable benchamrks including logging and tracing info.
+            Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it
+            at user level.
+            NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory.
+            This is not fully implemented for x86.
+
+
+        config NO_BENCHMARKS
+             bool "No benchmarking features enabled"
+
+        config BENCHMARK_TRACK_KERNEL_ENTRIES
+            bool "Keep track of kernel entries"
+            select ENABLE_BENCHMARKS
+            help
+                Log kernel entries information including timing, number of invocations and arguments for
+                system calls, interrupts, user faults and VM faults.
+
+        config BENCHMARK_TRACEPOINTS
+            bool "Use trace points"
+            select ENABLE_BENCHMARKS
+            help
+                 Enable manually inserted tracepoints that the kernel will track time consumed between.
+
+            endchoice
+
+     config MAX_NUM_TRACE_POINTS
+            int "Maximum number of tracepoints"
+            depends on BENCHMARK_TRACEPOINTS
+            default 1
+            help
+                Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data,
+                where k is an integer between 0 and this value - 1.
+                The maximum number of different trace point identifiers which can be used.
+
 
 endmenu
 

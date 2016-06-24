@@ -174,7 +174,7 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize)
 #endif
 
     case seL4_X86_IOPageTableObject:
-        memzero(regionBase, 1 << VTD_PT_SIZE_BITS);
+        memzero(regionBase, 1 << seL4_IOPageTableBits);
         return cap_io_page_table_cap_new(
                    0,  /* capIOPTIsMapped      */
                    0,  /* capIOPTLevel         */
