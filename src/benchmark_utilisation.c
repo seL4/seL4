@@ -13,7 +13,7 @@
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 
-bool benchmark_log_utilisation_enabled;
+bool_t benchmark_log_utilisation_enabled;
 timestamp_t ksEnter;
 timestamp_t benchmark_start_time;
 timestamp_t benchmark_end_time;
