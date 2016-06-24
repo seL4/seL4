@@ -226,6 +226,7 @@ enum IRQConstants {
 #define KERNEL_TIMER_IRQ        INTERRUPT_HGPT
 #else
 #define KERNEL_TIMER_IRQ        INTERRUPT_S_PGPT
+#define KERNEL_PMU_IRQ          INTERRUPT_CPU0_PMU
 #endif
 
 enum irqNumbers {

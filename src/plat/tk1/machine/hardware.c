@@ -19,6 +19,7 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <plat/machine/smmu.h>
+#include <arch/benchmark_overflowHandler.h>
 
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
@@ -133,6 +134,12 @@ BOOT_CODE p_region_t get_dev_p_reg(word_t i)
 void
 handleReservedIRQ(irq_t irq)
 {
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    if (irq == KERNEL_PMU_IRQ) {
+        handleOverflowIRQ();
+    }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+
     if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
         VGICMaintenance();
         return;

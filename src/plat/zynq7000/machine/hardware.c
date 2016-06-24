@@ -18,6 +18,7 @@
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <arch/benchmark_overflowHandler.h>
 
 /* Available physical memory regions on platform (RAM) */
 /* NOTE: Regions are not allowed to be adjacent! */
@@ -118,6 +119,11 @@ get_dev_p_reg(word_t i)
 void
 handleReservedIRQ(irq_t irq)
 {
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    if (irq == KERNEL_PMU_IRQ) {
+        handleOverflowIRQ();
+    }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 }
 
 
