@@ -15,7 +15,6 @@
 #include <arch/benchmark.h>
 #include <benchmark_utilisation_types.h>
 #include <arch/api/constants.h>
-#include <stdbool.h>
 #include <model/statedata.h>
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
@@ -23,7 +22,7 @@
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-extern bool benchmark_log_utilisation_enabled;
+extern bool_t benchmark_log_utilisation_enabled;
 extern timestamp_t ksEnter;
 extern timestamp_t benchmark_start_time;
 extern timestamp_t benchmark_end_time;

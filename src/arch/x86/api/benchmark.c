@@ -13,7 +13,6 @@
 #include <benchmark.h>
 #include <arch/benchmark.h>
 #include <arch/machine/hardware.h>
-#include <stdbool.h>
 
 timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
 bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
