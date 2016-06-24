@@ -11,7 +11,7 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
-#define physBase          0x40000000
+#define physBase          0x60000000
 #define kernelBase        0xe0000000
 #define physMappingOffset (kernelBase - physBase)
 #define BASE_OFFSET       physMappingOffset

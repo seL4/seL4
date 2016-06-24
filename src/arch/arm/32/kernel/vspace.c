@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <types.h>
 #include <benchmark.h>
 #include <api/failures.h>
@@ -26,6 +27,8 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <armv/context_switch.h>
+#include <arch/object/iospace.h>
+#include <arch/object/vcpu.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark_track.h>
@@ -43,8 +46,16 @@
 #define LAST_BYTE_PTE(PTE,LENGTH) ((word_t)&(PTE)[(LENGTH)-1] + (BIT(PTE_SIZE_BITS)-1))
 #define LAST_BYTE_PDE(PDE,LENGTH) ((word_t)&(PDE)[(LENGTH)-1] + (BIT(PDE_SIZE_BITS)-1))
 
-/* need a fake array to get the pointer from the linker script */
-extern char arm_vector_table[1];
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* Stage 2 */
+#define MEMATTR_CACHEABLE    0xf /* Inner and Outer write-back */
+#define MEMATTR_NONCACHEABLE 0x0 /* Strongly ordered or device memory */
+
+/* STage 1 hyp */
+#define ATTRINDX_CACHEABLE    0xff /* Inner and Outer RW write-back non-transient */
+#define ATTRINDX_NONCACHEABLE 0x0  /* strongly ordered or device memory */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
 
 /* This is the ARM kernel stack. It is accessed from a remapped address. */
 char arm_kernel_stack[4096] ALIGN_BSS(4096) VISIBLE;
@@ -55,6 +66,10 @@ struct resolve_ret {
     bool_t valid;
 };
 typedef struct resolve_ret resolve_ret_t;
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+static bool_t PURE pteCheckIfMapped(pte_t *pte);
+static bool_t PURE pdeCheckIfMapped(pde_t *pde);
 
 static word_t CONST
 APFromVMRights(vm_rights_t vm_rights)
@@ -77,6 +92,49 @@ APFromVMRights(vm_rights_t vm_rights)
     }
 }
 
+#else
+/* AP encoding slightly different. AP only used for kernel mappings which are fixed after boot time */
+BOOT_CODE
+static word_t CONST
+APFromVMRights(vm_rights_t vm_rights)
+{
+    switch (vm_rights) {
+    case VMKernelOnly:
+        return 0;
+    case VMReadWrite:
+        return 1;
+    case VMNoAccess:
+        /* RO at PL1 only */
+        return 2;
+    case VMReadOnly:
+        return 3;
+    default:
+        fail("Invalid VM rights");
+    }
+}
+
+static word_t CONST
+HAPFromVMRights(vm_rights_t vm_rights)
+{
+    switch (vm_rights) {
+    case VMKernelOnly:
+    case VMNoAccess:
+        return 0;
+    case VMReadOnly:
+        return 1;
+        /*
+        case VMWriteOnly:
+            return 2;
+        */
+    case VMReadWrite:
+        return 3;
+    default:
+        fail("Invalid VM rights");
+    }
+}
+
+#endif
+
 vm_rights_t CONST
 maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask)
 {
@@ -95,6 +153,11 @@ maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask)
             return VMReadWrite;
         }
     }
+    if (vm_rights == VMReadWrite &&
+            !cap_rights_get_capAllowRead(cap_rights_mask) &&
+            cap_rights_get_capAllowWrite(cap_rights_mask)) {
+        userError("Attempted to make unsupported write only mapping");
+    }
     return VMKernelOnly;
 }
 
@@ -106,7 +169,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
     word_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
 
     assert(vaddr >= PPTR_TOP); /* vaddr lies in the region the global PT covers */
-
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     armKSGlobalPT[idx] =
         pte_pte_small_new(
             paddr,
@@ -119,8 +182,24 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
             1, /* Write-back caching */
             0  /* executable */
         );
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+    armHSGlobalPT[idx] =
+        pteS1_pteS1_small_new(
+            0, /* Executeable */
+            0, /* Executeable at PL1 */
+            0, /* Not contiguous */
+            paddr,
+            0, /* global */
+            1, /* AF -- always set */
+            0, /* Not shared */
+            APFromVMRights(vm_rights),
+            0, /* non secure */
+            vm_attributes_get_armPageCacheable(attributes)
+        );
+#endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 BOOT_CODE void
 map_kernel_window(void)
 {
@@ -265,6 +344,126 @@ map_kernel_window(void)
     map_kernel_devices();
 }
 
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+BOOT_CODE void
+map_kernel_window(void)
+{
+    paddr_t    phys;
+    uint32_t   idx;
+    pdeS1_t pde;
+    pte_t pteS2;
+
+    /* Initialise PGD */
+    for (idx = 0; idx < 3; idx++) {
+        pde = pdeS1_pdeS1_invalid_new();
+        armHSGlobalPGD[idx] = pde;
+    }
+    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromPPtr(armHSGlobalPD));
+    armHSGlobalPGD[3] = pde;
+
+    /* Initialise PMD */
+    /* Invalidate up until kernelBase */
+    for (idx = 0; idx < (kernelBase - 0xC0000000) >> (PT_BITS + PAGE_BITS); idx++) {
+        pde = pdeS1_pdeS1_invalid_new();
+        armHSGlobalPD[idx] = pde;
+    }
+    /* mapping of kernelBase (virtual address) to kernel's physBase  */
+    /* up to end of virtual address space minus 2M using 2M frames */
+    phys = physBase;
+    for (; idx < BIT(PT_BITS) - 1; idx++) {
+        pde = pdeS1_pdeS1_section_new(
+                  0, /* Executable */
+                  0, /* Executable in PL1 */
+                  0, /* Not contiguous */
+                  phys, /* Address */
+                  0, /* global */
+                  1, /* AF -- always set to 1 */
+                  0, /* Not Shareable */
+                  0, /* AP: WR at PL1 only */
+                  0, /* Not secure */
+                  1  /* outer write-back Cacheable */
+              );
+        armHSGlobalPD[idx] = pde;
+        phys += BIT(PT_BITS + PAGE_BITS);
+    }
+    /* map page table covering last 2M of virtual address space */
+    pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromPPtr(armHSGlobalPT));
+    armHSGlobalPD[idx] = pde;
+
+    /* now start initialising the page table */
+    memzero(armHSGlobalPT, 1 << seL4_PageTableBits);
+    for (idx = 0; idx < 256; idx++) {
+        pteS1_t pte;
+        pte = pteS1_pteS1_small_new(
+                  0, /* Executable */
+                  0, /* Executable in PL1 */
+                  0, /* Not contiguous */
+                  phys, /* Address */
+                  0, /* global */
+                  1, /* AF -- always set to 1 */
+                  0, /* Not Shareable */
+                  0, /* AP: WR at PL1 only */
+                  0, /* Not secure */
+                  1  /* outer write-back Cacheable */
+              );
+        armHSGlobalPT[idx] = pte;
+        phys += BIT(PAGE_BITS);
+    }
+    /* map vector table */
+    map_kernel_frame(
+        addrFromPPtr(arm_vector_table),
+        PPTR_VECTOR_TABLE,
+        VMKernelOnly,
+        vm_attributes_new(
+            false, /* armExecuteNever */
+            true,  /* armParityEnabled */
+            true   /* armPageCacheable */
+        )
+    );
+
+    /* map globals frame */
+    map_kernel_frame(
+        addrFromPPtr(armKSGlobalsFrame),
+        seL4_GlobalsFrame,
+        VMReadOnly,
+        vm_attributes_new(
+            false, /* armExecuteNever */
+            true,  /* armParityEnabled */
+            true   /* armPageCacheable */
+        )
+    );
+    /* map globals into user global PT */
+    pteS2 = pte_pte_small_new(
+                1, /* Not Executeable */
+                0, /* Not contiguous */
+                addrFromPPtr(armKSGlobalsFrame),
+                1, /* AF -- always set */
+                0, /* Not shared */
+                HAPFromVMRights(VMReadOnly),
+                MEMATTR_CACHEABLE  /* Cacheable */
+            );
+    memzero(armUSGlobalPT, 1 << seL4_PageTableBits);
+    idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_BITS));
+    armUSGlobalPT[idx] = pteS2;
+
+    /* map stack frame */
+    map_kernel_frame(
+        addrFromPPtr(arm_kernel_stack),
+        PPTR_KERNEL_STACK,
+        VMKernelOnly,
+        vm_attributes_new(
+            false, /* armExecuteNever */
+            true,  /* armParityEnabled */
+            true   /* armPageCacheable */
+        )
+    );
+
+    map_kernel_devices();
+}
+
+#endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
+
 static BOOT_CODE void
 map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 {
@@ -280,6 +479,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
     pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pd));
     targetSlot = pt + ((vptr & MASK(pageBitsForSize(ARMSection)))
                        >> pageBitsForSize(ARMSmallPage));
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     *targetSlot = pte_pte_small_new(
                       addrFromPPtr(frame),
                       1, /* not global */
@@ -291,6 +491,17 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
                       1, /* write-back caching */
                       !executable
                   );
+#else
+    *targetSlot = pte_pte_small_new(
+                      0, /* Executeable */
+                      0, /* Not contiguous */
+                      addrFromPPtr(frame),
+                      1, /* AF -- always set */
+                      0, /* Not shared */
+                      HAPFromVMRights(VMReadWrite),
+                      MEMATTR_CACHEABLE  /* Cacheable */
+                  );
+#endif
 }
 
 /* Create a frame cap for the initial thread. */
@@ -314,6 +525,9 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
                 ASID_LOW(asid),                /* capFMappedASIDLow  */
                 wordFromVMRights(VMReadWrite), /* capFVMRights       */
                 vptr,                          /* capFMappedAddress  */
+#ifdef CONFIG_ARM_SMMU
+                0,                             /* IOSpace            */
+#endif
                 ASID_HIGH(asid),               /* capFMappedASIDHigh */
                 pptr                           /* capFBasePtr        */
             );
@@ -329,11 +543,15 @@ map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     *targetSlot = pde_pde_coarse_new(
                       addrFromPPtr(pt), /* address */
                       true,             /* P       */
                       0                 /* Domain  */
                   );
+#else
+    *targetSlot = pde_pde_coarse_new(addrFromPPtr(pt));
+#endif
 }
 
 /* Create a page table for the initial thread */
@@ -476,6 +694,8 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, 
     return cap;
 }
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+
 BOOT_CODE void
 activate_global_pd(void)
 {
@@ -488,6 +708,41 @@ activate_global_pd(void)
     lockTLBEntry(kernelBase);
     lockTLBEntry(PPTR_VECTOR_TABLE);
 }
+
+#else
+
+BOOT_CODE void
+activate_global_pd(void)
+{
+    uint32_t r;
+    /* Ensure that there's nothing stale in newly-mapped regions, and
+       that everything we've written (particularly the kernel page tables)
+       is committed. */
+    cleanInvalidateL1Caches();
+    /* Setup the memory attributes: We use 2 indicies (cachable/non-cachable) */
+    setHMAIR((ATTRINDX_NONCACHEABLE << 0) | (ATTRINDX_CACHEABLE << 8), 0);
+    setCurrentHypPD(addrFromPPtr(armHSGlobalPGD));
+    invalidateHypTLB();
+#if 0 /* Can't lock entries on A15 */
+    lockTLBEntry(kernelBase);
+    lockTLBEntry(PPTR_VECTOR_TABLE);
+#endif
+    /* TODO find a better place to init the VMMU */
+    r = 0;
+    /* Translation range */
+    r |= (0x0 << 0);     /* 2^(32 -(0)) input range. */
+    r |= (r & 0x8) << 1; /* Sign bit */
+    /* starting level */
+    r |= (0x0 << 6);     /* Start at second level */
+    /* Sharability of tables */
+    r |= BIT(8);       /* Inner write-back, write-allocate */
+    r |= BIT(10);      /* Outer write-back, write-allocate */
+    /* Long descriptor format (not that we have a choice) */
+    r |= BIT(31);
+    setVTCR(r);
+}
+
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 BOOT_CODE void
 write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
@@ -583,7 +838,7 @@ lookupPDSlot(pde_t *pd, vptr_t vptr)
 {
     unsigned int pdIndex;
 
-    pdIndex = vptr >> 20;
+    pdIndex = vptr >> (PAGE_BITS + PT_BITS);
     return pd + pdIndex;
 }
 
@@ -596,7 +851,7 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
     pdSlot = lookupPDSlot(pd, vptr);
 
     if (unlikely(pde_ptr_get_pdeType(pdSlot) != pde_pde_coarse)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(20);
+        current_lookup_fault = lookup_fault_missing_capability_new(PT_BITS + PAGE_BITS);
 
         ret.ptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
@@ -606,7 +861,7 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
         unsigned int ptIndex;
 
         pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pdSlot));
-        ptIndex = (vptr >> 12) & 0xff;
+        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
         ptSlot = pt + ptIndex;
 
         ret.ptSlot = ptSlot;
@@ -620,7 +875,7 @@ lookupPTSlot_nofail(pte_t *pt, vptr_t vptr)
 {
     unsigned int ptIndex;
 
-    ptIndex = (vptr >> 12) & MASK(8);
+    ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
     return pt + ptIndex;
 }
 
@@ -637,17 +892,25 @@ resolveVAddr(pde_t *pd, vptr_t vaddr)
     switch (pde_ptr_get_pdeType(pde)) {
     case pde_pde_section:
         ret.frameBase = pde_pde_section_ptr_get_address(pde);
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (pde_pde_section_ptr_get_size(pde)) {
             ret.frameSize = ARMSuperSection;
         } else {
             ret.frameSize = ARMSection;
         }
+#else
+        if (pde_pde_section_ptr_get_contiguous_hint(pde)) {
+            ret.frameSize = ARMSuperSection;
+        } else {
+            ret.frameSize = ARMSection;
+        }
+#endif
         return ret;
 
     case pde_pde_coarse: {
         pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
         pte_t *pte = lookupPTSlot_nofail(pt, vaddr);
-
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         switch (pte_ptr_get_pteType(pte)) {
         case pte_pte_large:
             ret.frameBase = pte_pte_large_ptr_get_address(pte);
@@ -659,6 +922,19 @@ resolveVAddr(pde_t *pd, vptr_t vaddr)
             ret.frameSize = ARMSmallPage;
             return ret;
         }
+#else
+        if (pte_pte_small_ptr_get_contiguous_hint(pte)) {
+            ret.frameBase = pte_pte_small_ptr_get_address(pte);
+            /* Entries are represented as 16 contiguous small frames. We need to mask to get the large frame base */
+            ret.frameBase &= ~MASK(pageBitsForSize(ARMLargePage));
+            ret.frameSize = ARMLargePage;
+            return ret;
+        } else {
+            ret.frameBase = pte_pte_small_ptr_get_address(pte);
+            ret.frameSize = ARMSmallPage;
+            return ret;
+        }
+#endif
         break;
     }
     }
@@ -672,6 +948,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
             bool_t cacheable, bool_t nonexecutable, vm_rights_t vm_rights)
 {
     pte_t pte;
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     word_t ap;
 
     ap = APFromVMRights(vm_rights);
@@ -729,6 +1006,63 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
         fail("Invalid PTE frame type");
     }
 
+#else
+
+    word_t hap;
+
+    hap = HAPFromVMRights(vm_rights);
+
+    switch (page_size) {
+    case ARMSmallPage: {
+        if (cacheable) {
+            pte = pte_pte_small_new(
+                      0,      /* Executable */
+                      0,      /* Not contiguous */
+                      paddr,
+                      1,      /* AF - Always set */
+                      0,      /* not shared */
+                      hap,    /* HAP - access */
+                      MEMATTR_CACHEABLE /* Cacheable */);
+        } else {
+            pte = pte_pte_small_new(
+                      0,      /* Executable */
+                      0,      /* Not contiguous */
+                      paddr,
+                      1,      /* AF - Always set */
+                      0,      /* not shared */
+                      hap,    /* HAP - access */
+                      MEMATTR_NONCACHEABLE /* Not cacheable */);
+        }
+        break;
+    }
+
+    case ARMLargePage: {
+        if (cacheable) {
+            pte = pte_pte_small_new(
+                      0,   /* Executable */
+                      1,   /* 16 contiguous */
+                      paddr,
+                      1,   /* AF - Always set */
+                      0,   /* not shared */
+                      hap, /* HAP - access */
+                      MEMATTR_CACHEABLE  /* Cacheable */);
+        } else {
+            pte = pte_pte_small_new(
+                      0,   /* Executable */
+                      1,   /* 16 contiguous */
+                      paddr,
+                      1,   /* AF - Always set */
+                      0,   /* not shared */
+                      hap, /* HAP - access */
+                      MEMATTR_NONCACHEABLE /* Not cacheable */);
+        }
+        break;
+    }
+    default:
+        fail("Invalid PTE frame type");
+    }
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
     return pte;
 }
 
@@ -737,9 +1071,16 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
             bool_t cacheable, bool_t nonexecutable, word_t domain,
             vm_rights_t vm_rights)
 {
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     word_t ap, size2;
 
     ap = APFromVMRights(vm_rights);
+#else
+    word_t hap, size2;
+
+    (void)domain;
+    hap = HAPFromVMRights(vm_rights);
+#endif
 
     switch (page_size) {
     case ARMSection:
@@ -754,6 +1095,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
         fail("Invalid PDE frame type");
     }
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (cacheable) {
         return pde_pde_section_new(paddr, size2,
                                    1, /* not global */
@@ -771,6 +1113,27 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
                                    ap, parity, domain, nonexecutable,
                                    0, 0);
     }
+#else
+    if (cacheable) {
+        return pde_pde_section_new(
+                   0, /* Executable */
+                   size2, /* contiguous */
+                   paddr,
+                   1, /* AF - Always set */
+                   0, /* not shared */
+                   hap,
+                   MEMATTR_CACHEABLE /* Cacheable */);
+    } else {
+        return pde_pde_section_new(
+                   0, /* Executable */
+                   size2, /* contiguous */
+                   paddr,
+                   1, /* AF - Always set */
+                   0, /* not shared */
+                   hap,
+                   MEMATTR_NONCACHEABLE /* Not cacheable */);
+    }
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 
 bool_t CONST
@@ -778,6 +1141,16 @@ isValidVTableRoot(cap_t cap)
 {
     return cap_get_capType(cap) == cap_page_directory_cap &&
            cap_page_directory_cap_get_capPDIsMapped(cap);
+}
+
+bool_t CONST
+isIOSpaceFrame(cap_t cap)
+{
+#ifdef CONFIG_ARM_SMMU
+    return cap_get_capType(cap) == cap_small_frame_cap && cap_small_frame_cap_get_capFIsIOSpace(cap);
+#else
+    return false;
+#endif
 }
 
 void
@@ -792,7 +1165,11 @@ setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
             !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
-        setCurrentPD(addrFromPPtr(armKSGlobalPD));
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            setCurrentPD(addrFromPPtr(0));
+        } else {
+            setCurrentPD(addrFromPPtr(armKSGlobalPD));
+        }
         return;
     }
 
@@ -800,11 +1177,18 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_directory_cap_get_capPDMappedASID(threadRoot);
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.pd != pd)) {
-        setCurrentPD(addrFromPPtr(armKSGlobalPD));
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            setCurrentPD(addrFromPPtr(0));
+        } else {
+            setCurrentPD(addrFromPPtr(armKSGlobalPD));
+        }
         return;
     }
 
     armv_contextSwitch(pd, asid);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(tcb->tcbArch.vcpu);
+    }
 }
 
 static bool_t
@@ -837,7 +1221,7 @@ pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
         return NULL;
     }
 
-    pdIndex = vaddr >> 20;
+    pdIndex = vaddr >> (PAGE_BITS + PT_BITS);
     pde = find_ret.pd[pdIndex];
 
     if (likely(pde_get_pdeType(pde) == pde_pde_coarse
@@ -967,7 +1351,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     pd = pageTableMapped (asid, vaddr, pt);
 
     if (likely(pd != NULL)) {
-        pdIndex = vaddr >> 20;
+        pdIndex = vaddr >> (PT_BITS + PAGE_BITS);
         pdSlot = pd + pdIndex;
 
         *pdSlot = pde_pde_invalid_new(0, 0);
@@ -979,6 +1363,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 void
 copyGlobalMappings(pde_t *newPD)
 {
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
@@ -987,6 +1372,13 @@ copyGlobalMappings(pde_t *newPD)
             newPD[i] = global_pd[i];
         }
     }
+#else
+    /* Kernel and user MMUs are completely independent, however,
+     * we still need to share the globals page. */
+    pde_t pde;
+    pde = pde_pde_coarse_new(addrFromPPtr(armUSGlobalPT));
+    newPD[BIT(PD_BITS) - 1] = pde;
+#endif
 }
 
 exception_t
@@ -996,8 +1388,15 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     case ARMDataAbort: {
         word_t addr, fault;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        addr = getHDFAR();
+        addr = (addressTranslateS1CPR(addr) & ~MASK(PAGE_BITS)) | (addr & MASK(PAGE_BITS));
+        /* MSBs tell us that this was a DataAbort */
+        fault = getHSR() & 0x3ffffff;
+#else
         addr = getFAR();
         fault = getDFSR();
+#endif
         current_fault = fault_vm_fault_new(addr, fault, false);
         return EXCEPTION_FAULT;
     }
@@ -1006,8 +1405,14 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         word_t pc, fault;
 
         pc = getRestartPC(thread);
-        fault = getIFSR();
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pc = (addressTranslateS1CPR(pc) & ~MASK(PAGE_BITS)) | (pc & MASK(PAGE_BITS));
+        /* MSBs tell us that this was a PrefetchAbort */
+        fault = getHSR() & 0x3ffffff;
+#else
+        fault = getIFSR();
+#endif
         current_fault = fault_vm_fault_new(pc, fault, true);
         return EXCEPTION_FAULT;
     }
@@ -1052,6 +1457,7 @@ deleteASID(asid_t asid, pde_t* pd)
     }
 }
 
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 static pte_t pte_pte_invalid_new(void)
 {
     /* Invalid as every PTE must have bit 0 set (large PTE) or bit 1 set (small
@@ -1063,6 +1469,7 @@ static pte_t pte_pte_invalid_new(void)
         }
     };
 }
+#endif
 
 void
 unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
@@ -1087,6 +1494,11 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (unlikely(pte_ptr_get_pteType(lu_ret.ptSlot) != pte_pte_small)) {
             return;
         }
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        if (unlikely(pte_pte_small_ptr_get_contiguous_hint(lu_ret.ptSlot) != 0)) {
+            return;
+        }
+#endif
         if (unlikely(pte_pte_small_ptr_get_address(lu_ret.ptSlot) != addr)) {
             return;
         }
@@ -1105,13 +1517,24 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
             return;
         }
-
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pte_ptr_get_pteType(lu_ret.ptSlot) != pte_pte_large)) {
             return;
         }
         if (unlikely(pte_pte_large_ptr_get_address(lu_ret.ptSlot) != addr)) {
             return;
         }
+#else
+        if (unlikely(pte_ptr_get_pteType(lu_ret.ptSlot) != pte_pte_small)) {
+            return;
+        }
+        if (unlikely(pte_pte_small_ptr_get_contiguous_hint(lu_ret.ptSlot) != 1)) {
+            return;
+        }
+        if (unlikely(pte_pte_small_ptr_get_address(lu_ret.ptSlot) != addr)) {
+            return;
+        }
+#endif
 
         for (i = 0; i < PAGES_PER_LARGE_PAGE; i++) {
             lu_ret.ptSlot[i] = pte_pte_invalid_new();
@@ -1131,7 +1554,11 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (unlikely(pde_ptr_get_pdeType(pd) != pde_pde_section)) {
             return;
         }
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pde_pde_section_ptr_get_size(pd) != 0)) {
+#else
+        if (unlikely(pde_pde_section_ptr_get_contiguous_hint(pd) != 0)) {
+#endif
             return;
         }
         if (unlikely(pde_pde_section_ptr_get_address(pd) != addr)) {
@@ -1153,7 +1580,11 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (unlikely(pde_ptr_get_pdeType(pd) != pde_pde_section)) {
             return;
         }
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pde_pde_section_ptr_get_size(pd) != 1)) {
+#else
+        if (unlikely(pde_pde_section_ptr_get_contiguous_hint(pd) != 1)) {
+#endif
             return;
         }
         if (unlikely(pde_pde_section_ptr_get_address(pd) != addr)) {
@@ -1317,9 +1748,13 @@ createSafeMappingEntries_PTE
         }
 
         ret.pte_entries.base = lu_ret.ptSlot;
-
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         if (unlikely(pte_ptr_get_pteType(ret.pte_entries.base) ==
                      pte_pte_large)) {
+#else
+        if (unlikely(pte_ptr_get_pteType(ret.pte_entries.base) == pte_pte_small
+                     && pte_pte_small_ptr_get_contiguous_hint(ret.pte_entries.base))) {
+#endif
             current_syscall_error.type =
                 seL4_DeleteFirst;
 
@@ -1355,8 +1790,13 @@ createSafeMappingEntries_PTE
         ret.pte_entries.base = lu_ret.ptSlot;
 
         for (i = 0; i < PAGES_PER_LARGE_PAGE; i++) {
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
             if (unlikely(pte_get_pteType(ret.pte_entries.base[i]) ==
                          pte_pte_small)) {
+#else
+            if (unlikely(pte_ptr_get_pteType(lu_ret.ptSlot) == pte_pte_small
+                         && !pte_pte_small_get_contiguous_hint(ret.pte_entries.base[i]))) {
+#endif
                 current_syscall_error.type =
                     seL4_DeleteFirst;
 
@@ -1402,7 +1842,11 @@ createSafeMappingEntries_PDE
             pde_ptr_get_pdeType(ret.pde_entries.base);
         if (unlikely(currentPDEType != pde_pde_invalid &&
                      (currentPDEType != pde_pde_section ||
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
                       pde_pde_section_ptr_get_size(ret.pde_entries.base) != 0))) {
+#else
+                      pde_pde_section_ptr_get_contiguous_hint(ret.pde_entries.base) != 0))) {
+#endif
             current_syscall_error.type =
                 seL4_DeleteFirst;
             ret.status = EXCEPTION_SYSCALL_ERROR;
@@ -1429,7 +1873,11 @@ createSafeMappingEntries_PDE
                 pde_get_pdeType(ret.pde_entries.base[i]);
             if (unlikely(currentPDEType != pde_pde_invalid &&
                          (currentPDEType != pde_pde_section ||
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
                           pde_pde_section_get_size(ret.pde_entries.base[i]) != 1))) {
+#else
+                          pde_pde_section_get_contiguous_hint(ret.pde_entries.base[i]) != 1))) {
+#endif
                 current_syscall_error.type =
                     seL4_DeleteFirst;
                 ret.status = EXCEPTION_SYSCALL_ERROR;
@@ -1471,7 +1919,12 @@ doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
     /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
             \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
         \<and> \<acute>start <= \<acute>end, id)" */
-
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        /* The hypervisor does not share an AS with userspace so we must flush
+         * by kernel MVA instead. ARMv7 caches are PIPT so it makes no difference */
+        end = (vptr_t)paddr_to_pptr(pstart) + (end - start);
+        start = (vptr_t)paddr_to_pptr(pstart);
+    }
     switch (invLabel) {
     case ARMPDClean_Data:
     case ARMPageClean_Data:
@@ -1627,6 +2080,9 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            pte.words[0] += BIT(pageBitsForSize(ARMLargePage));
+        }
     }
     cleanCacheRange_PoU((word_t)pte_entries.base,
                         LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
@@ -1653,6 +2109,9 @@ performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 
     for (i = 0; i < pde_entries.length; i++) {
         pde_entries.base[i] = pde;
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            pde.words[0] += BIT(pageBitsForSize(ARMSection));
+        }
     }
     cleanCacheRange_PoU((word_t)pde_entries.base,
                         LAST_BYTE_PDE(pde_entries.base, pde_entries.length),
@@ -1863,7 +2322,10 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
                              word_t *buffer)
 {
     word_t vaddr, pdIndex;
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     vm_attributes_t attr;
+#endif
     cap_t pdCap;
     pde_t *pd, *pdSlot;
     pde_t pde;
@@ -1898,7 +2360,9 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
     }
 
     vaddr = getSyscallArg(0, buffer);
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
+#endif
     pdCap = excaps.excaprefs[0]->cap;
 
     if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
@@ -1939,7 +2403,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
         }
     }
 
-    pdIndex = vaddr >> 20;
+    pdIndex = vaddr >> (PAGE_BITS + PT_BITS);
     pdSlot = &pd[pdIndex];
     if (unlikely(pde_ptr_get_pdeType(pdSlot) != pde_pde_invalid)) {
         current_syscall_error.type = seL4_DeleteFirst;
@@ -1949,11 +2413,15 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
 
     paddr = addrFromPPtr(
                 PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     pde = pde_pde_coarse_new(
               paddr,
               vm_attributes_get_armParityEnabled(attr),
               0 /* Domain */
           );
+#else
+    pde = pde_pde_coarse_new(paddr);
+#endif
 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
@@ -2101,6 +2569,15 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_page_size_t frameSize;
         vm_attributes_t attr;
 
+#ifdef CONFIG_ARM_SMMU
+        if (isIOSpaceFrame(cap)) {
+            userError("ARMFrameRemap: Attempting to remap frame mapped into an IOSpace");
+            current_syscall_error.type = seL4_IllegalOperation;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
+
         if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
             current_syscall_error.type =
                 seL4_TruncatedMessage;
@@ -2201,9 +2678,22 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
     }
 
     case ARMPageUnmap: {
-        setThreadState(ksCurThread, ThreadState_Restart);
-        return performPageInvocationUnmap(cap, cte);
+#ifdef CONFIG_ARM_SMMU
+        if (isIOSpaceFrame(cap)) {
+            return decodeARMIOUnMapInvocation(invLabel, length, cte, cap, excaps);
+        } else
+#endif
+        {
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performPageInvocationUnmap(cap, cte);
+        }
     }
+
+#ifdef CONFIG_ARM_SMMU
+    case ARMPageMapIO: {
+        return decodeARMIOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
+    }
+#endif
 
     case ARMPageClean_Data:
     case ARMPageInvalidate_Data:
@@ -2224,7 +2714,12 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
 
         asid = generic_frame_cap_get_capFMappedASID(cap);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /* Must use kernel vaddr in hyp mode. */
+        vaddr = generic_frame_cap_get_capFBasePtr(cap);
+#else
         vaddr = generic_frame_cap_get_capFMappedAddress(cap);
+#endif
 
         if (unlikely(!generic_frame_cap_get_capFIsMapped(cap))) {
             userError("Page Flush: Frame is not mapped.");
@@ -2454,6 +2949,49 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 void kernelPrefetchAbort(word_t pc) VISIBLE;
 void kernelDataAbort(word_t pc) VISIBLE;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+void kernelUndefinedInstruction(word_t pc) VISIBLE;
+
+void
+kernelPrefetchAbort(word_t pc)
+{
+    word_t sr = getHSR();
+
+    printf("\n\nKERNEL PREFETCH ABORT!\n");
+    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
+    printf("HSR: 0x%x\n", (unsigned int)sr);
+
+    halt();
+}
+
+void
+kernelDataAbort(word_t pc)
+{
+    word_t far = getHDFAR();
+    word_t sr = getHSR();
+
+    printf("\n\nKERNEL DATA ABORT!\n");
+    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
+    printf("HDFAR: 0x%x HSR: 0x%x\n", (unsigned int)far, (unsigned int)sr);
+
+    halt();
+}
+
+void
+kernelUndefinedInstruction(word_t pc)
+{
+    word_t sr = getHSR();
+
+    printf("\n\nKERNEL UNDEFINED INSTRUCTION!\n");
+    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
+    printf("HSR: 0x%x\n", (unsigned int)sr);
+
+    halt();
+}
+
+#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
 void
 kernelPrefetchAbort(word_t pc)
 {
@@ -2478,6 +3016,8 @@ kernelDataAbort(word_t pc)
 
     halt();
 }
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
 #endif
 
 #ifdef CONFIG_PRINTING
@@ -2503,12 +3043,22 @@ readWordFromVSpace(pde_t *pd, word_t vaddr)
         offset = vaddr & MASK(ARMSectionBits);
     } else {
         ptSlot = lookupPTSlot(pd, vaddr);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_small) {
+            paddr = pte_pte_small_ptr_get_address(ptSlot.ptSlot);
+            if (pte_pte_small_ptr_get_contiguous_hint(ptSlot.ptSlot)) {
+                offset = vaddr & MASK(ARMLargePageBits);
+            } else {
+                offset = vaddr & MASK(ARMSmallPageBits);
+            }
+#else
         if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_small) {
             paddr = pte_pte_small_ptr_get_address(ptSlot.ptSlot);
             offset = vaddr & MASK(ARMSmallPageBits);
         } else if (ptSlot.status == EXCEPTION_NONE && pte_ptr_get_pteType(ptSlot.ptSlot) == pte_pte_large) {
             paddr = pte_pte_large_ptr_get_address(ptSlot.ptSlot);
             offset = vaddr & MASK(ARMLargePageBits);
+#endif
         } else {
             ret.status = EXCEPTION_LOOKUP_FAULT;
             return ret;

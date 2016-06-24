@@ -11,6 +11,7 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
+#include <config.h>
 #include <arch/machine/gic_pl390.h>
 
 #define N_INTERRUPTS     160
@@ -41,7 +42,7 @@ enum IRQConstants {
 //  INTERRUPT_RESERVED          =  22,
 //  INTERRUPT_RESERVED          =  23,
 //  INTERRUPT_RESERVED          =  24,
-    INTERRUPT_VIRT_MAINTENANCE  =  25,
+    INTERRUPT_VGIC_MAINTENANCE  =  25,
     INTERRUPT_CNTHPIRQ          =  26,
     INTERRUPT_CNTVIRQ           =  27,
 //  INTERRUPT_RESERVED          =  28,
@@ -81,7 +82,12 @@ enum IRQConstants {
     INTERRUPT_INTG30            =  62,
     INTERRUPT_INTG31            =  63,
     INTERRUPT_EINT16_31         =  64,
+#if defined(PLAT_EXYNOS5250)
     INTERRUPT_MDMA0_CORE        =  65,
+#elif defined(PLAT_EXYNOS5410)
+    INTERRUPT_TMU_CPU0          =  65,
+#else
+#endif
     INTERRUPT_PDMA0             =  66,
     INTERRUPT_PDMA1             =  67,
     INTERRUPT_TIMER0            =  68,
@@ -176,10 +182,27 @@ enum IRQConstants {
     INTERRUPT_CAM_A             = 157,
     INTERRUPT_CAM_B             = 158,
     INTERRUPT_RP_TIMER          = 159,
-    maxIRQ = 159
+
+    INTERRUPT_TMU_CPU1          = 183,
+    INTERRUPT_TMU_CPU2          = 184,
+    INTERRUPT_TMU_CPU3          = 185,
+
+    INTERRUPT_TMU_GPU           = 215,
+
+    INTERRUPT_216               = 216,
+    INTERRUPT_217               = 217,
+    INTERRUPT_218               = 218,
+    INTERRUPT_219               = 219,
+    INTERRUPT_220               = 220,
+    INTERRUPT_232               = 232,
+    maxIRQ = 232
 } platform_interrupt_t;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define KERNEL_TIMER_IRQ INTERRUPT_CNTHPIRQ
+#else
 #define KERNEL_TIMER_IRQ INTERRUPT_CNTVIRQ
+#endif
 
 enum irqNumbers {
     irqInvalid = (irq_t) - 1

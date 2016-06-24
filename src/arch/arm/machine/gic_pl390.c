@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <arch/machine/gic_pl390.h>
 
 
@@ -143,6 +144,14 @@ is_irq_active(irq_t irq)
     return !!(gic_dist->active[word] & BIT(bit));
 }
 
+static inline void
+set_irq_active(irq_t irq)
+{
+    int word = irq >> 5;
+    int bit = irq & 0x1f;
+    gic_dist->active[word] = BIT(bit);
+}
+
 static inline int
 is_irq_enabled(irq_t irq)
 {
@@ -232,7 +241,11 @@ dist_init(void)
 
     /* reset interrupts priority */
     for (i = 32; i < nirqs; i += 4) {
-        gic_dist->priority[i >> 2] = 0x0;
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            gic_dist->priority[i >> 2] = 0x80808080;
+        } else {
+            gic_dist->priority[i >> 2] = 0;
+        }
     }
 
     /*
@@ -247,9 +260,14 @@ dist_init(void)
     for (i = 64; i < nirqs; i += 32) {
         gic_dist->config[i >> 5] = 0x55555555;
     }
-    /* configure to group 0 for security */
+
+    /* group 0 for secure; group 1 for non-secure */
     for (i = 0; i < nirqs; i += 32) {
-        gic_dist->security[i >> 5] = 0;
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            gic_dist->security[i >> 5] = 0xffffffff;
+        } else {
+            gic_dist->security[i >> 5] = 0;
+        }
     }
     /* enable the int controller */
     gic_dist->enable = 1;
@@ -266,8 +284,15 @@ cpu_iface_init(void)
     /* For non-Exynos4, the registers are banked per CPU, need to clear them */
     gic_dist->enable_clr[0] = IRQ_SET_ALL;
     gic_dist->pending_clr[0] = IRQ_SET_ALL;
-    gic_dist->priority[0] = 0x0;
-    /* put everything in group 0 */
+
+    /* put everything in group 0; group 1 if in hyp mode */
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        gic_dist->security[0] = 0xffffffff;
+        gic_dist->priority[0] = 0x80808080;
+    } else {
+        gic_dist->security[0] = 0;
+        gic_dist->priority[0] = 0x0;
+    }
 
     /* clear any software generated interrupts */
     for (i = 0; i < 16; i += 4) {
@@ -275,6 +300,12 @@ cpu_iface_init(void)
     }
 
     gic_cpuiface->icontrol = 0;
+    /* the write to priority mask is ignored if the kernel is
+     * in non-secure mode and the priority mask is already configured
+     * by secure mode software. the elfloader should config the
+     * interrupt routing properly to ensure that the hyp-mode kernel
+     * can get interrupts
+     */
     gic_cpuiface->pri_msk_c = 0x000000f0;
     gic_cpuiface->pb_c = 0x00000003;
 

@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include "stdint.h"
 #include <arch/machine.h>
 #include <plat/machine.h>
@@ -128,6 +129,24 @@ volatile struct mct_map* mct = (volatile struct mct_map*)EXYNOS_MCT_PPTR;
 #endif
 
 #ifdef ARM_CORTEX_A15
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* Use Hypervisor Physical timer */
+#define CNT_TVAL CNTHP_TVAL
+#define CNT_CTL  CNTHP_CTL
+#define CNT_CVAL CNTHP_CVAL
+#elif 1
+/* Use virtual timer */
+#define CNT_TVAL CNTV_TVAL
+#define CNT_CTL  CNTV_CTL
+#define CNT_CVAL CNTV_CVAL
+#else
+/* Use Physical timer */
+#define CNT_TVAL CNTP_TVAL
+#define CNT_CTL  CNTP_CTL
+#define CNT_CVAL CNTP_CVAL
+#endif
+
 /* Use generic timer. This is ties to the MCT */
 
 /**
@@ -208,7 +227,7 @@ initTimer(void)
     mct->global.wstat = GWSTAT_TCON;
 
     /* Setup compare register to trigger in about 10000 years from now */
-    MCRR(CNTV_CVAL, 0xffffffffffffffff);
+    MCRR(CNT_CVAL, 0xffffffffffffffff);
 
     /* enable the timer */
     MCR(CNTV_CTL, (1u << 0));

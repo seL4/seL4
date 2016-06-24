@@ -46,4 +46,23 @@
 			<param dir="in" name="end" type="seL4_Word"/>
 		</method>
     </interface>
+    <interface name="seL4_ARM_VCPU">
+        <method id="ARMVCPUSetTCB" name="SetTCB" config="CONFIG_ARM_HYPERVISOR_SUPPORT">
+            <param dir="in" name="tcb" type="seL4_TCB" />
+        </method>
+        <method id="ARMVCPUInjectIRQ" name="InjectIRQ" config="CONFIG_ARM_HYPERVISOR_SUPPORT">
+            <param dir="in" name="virq" type="seL4_Uint16"/>
+            <param dir="in" name="priority" type="seL4_Uint8"/>
+            <param dir="in" name="group" type="seL4_Uint8"/>
+            <param dir="in" name="index" type="seL4_Uint8"/>
+        </method>
+        <method id="ARMVCPUReadReg" name="ReadRegs" config="CONFIG_ARM_HYPERVISOR_SUPPORT">
+            <param dir="in" name="field" type="seL4_Uint32"/>
+            <param dir="out" name="value" type="seL4_Uint32"/>
+        </method>
+        <method id="ARMVCPUWriteReg" name="WriteRegs" config="CONFIG_ARM_HYPERVISOR_SUPPORT">
+            <param dir="in" name="field" type="seL4_Uint32"/>
+            <param dir="in" name="value" type="seL4_Uint32"/>
+        </method>
+    </interface>
 </api>

@@ -11,6 +11,7 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
+#include <config.h>
 #include <arch/machine/gic_pl390.h>
 
 #define N_INTERRUPTS 192
@@ -211,13 +212,21 @@ enum IRQConstants {
     maxIRQ                          = 192
 } platform_interrupt_t;
 
-#define INTERRUPT_S_PGPT        INTERRUPT_PPI_13
-#define INTERRUPT_NS_PGPT       INTERRUPT_PPI_14
-#define INTERRUPT_VGPT          INTERRUPT_PPI_11
-#define INTERRUPT_HGPT          INTERRUPT_PPI_10
+#define INTERRUPT_VGIC_MAINTENANCE      INTERRUPT_PPI_9
+#define INTERRUPT_S_PGPT                INTERRUPT_PPI_13
+#define INTERRUPT_NS_PGPT               INTERRUPT_PPI_14
+#define INTERRUPT_VGPT                  INTERRUPT_PPI_11
+#define INTERRUPT_HGPT                  INTERRUPT_PPI_10
+#define INTERRUPT_SMMU                  INTERRUPT_MC
+
 
 /* the kernel runs in secure supervisor mode by default */
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define KERNEL_TIMER_IRQ        INTERRUPT_HGPT
+#else
 #define KERNEL_TIMER_IRQ        INTERRUPT_S_PGPT
+#endif
 
 enum irqNumbers {
     irqInvalid = 255

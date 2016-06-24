@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <assert.h>
 #include <kernel/boot.h>
 #include <machine/io.h>
@@ -18,6 +19,7 @@
 #include <arch/kernel/vspace.h>
 #include <arch/benchmark.h>
 #include <arch/user_access.h>
+#include <arch/object/iospace.h>
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
@@ -131,7 +133,12 @@ init_irqs(cap_t root_cnode_cap)
         setIRQState(IRQInactive, i);
     }
     setIRQState(IRQTimer, KERNEL_TIMER_IRQ);
-
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    setIRQState(IRQReserved, INTERRUPT_VGIC_MAINTENANCE);
+#endif
+#ifdef CONFIG_ARM_SMMU
+    setIRQState(IRQReserved, INTERRUPT_SMMU);
+#endif
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
@@ -142,6 +149,9 @@ BOOT_CODE static void
 init_cpu(void)
 {
     activate_global_pd();
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_restore(NULL);
+    }
 }
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
@@ -227,6 +237,16 @@ try_init_kernel(
     bi_frame_pptr = allocate_bi_frame(0, 1, ipcbuf_vptr);
     if (!bi_frame_pptr) {
         return false;
+    }
+
+    if (config_set(CONFIG_ARM_SMMU)) {
+        ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);
+        if (ndks_boot.bi_frame->ioSpaceCaps.start == 0 &&
+                ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
+            return false;
+        }
+    } else {
+        ndks_boot.bi_frame->ioSpaceCaps = S_REG_EMPTY;
     }
 
     /* Construct an initial address space with enough virtual addresses
@@ -319,6 +339,10 @@ try_init_kernel(
      * strictly neccessary, but performance is not critical here so clean and invalidate
      * everything to PoC */
     cleanInvalidateL1Caches();
+    invalidateTLB();
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        invalidateHypTLB();
+    }
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
     armv_init_ccnt();

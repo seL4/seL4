@@ -19,5 +19,9 @@ typedef seL4_CPtr seL4_ARM_PageTable;
 typedef seL4_CPtr seL4_ARM_PageDirectory;
 typedef seL4_CPtr seL4_ARM_ASIDControl;
 typedef seL4_CPtr seL4_ARM_ASIDPool;
+typedef seL4_CPtr seL4_ARM_VCPU;
+typedef seL4_CPtr seL4_ARM_IOSpace;
+typedef seL4_CPtr seL4_ARM_IOPageTable;
+
 
 #endif /* __ARCH_SEL4TYPES_H__ */
