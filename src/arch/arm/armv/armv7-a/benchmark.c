@@ -14,10 +14,24 @@
 
 #include <arch/benchmark.h>
 
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+uint64_t ccnt_num_overflows;
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+
 void
 armv_init_ccnt(void)
 {
     uint32_t val, pmcr;
+
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    /* Enable generating interrupts on overflows */
+    val = BIT(31);
+    asm volatile (
+        "mcr p15, 0, %0, c9, c14, 1\n"
+        :
+        : "r" (val)
+    );
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
     /* enable them */
     val = 1;
@@ -36,7 +50,7 @@ armv_init_ccnt(void)
     );
 
     /* turn the cycle counter on */
-    val = (1U << 31);
+    val = BIT(31);
     asm volatile (
         "mcr p15, 0, %0, c9, c12, 1\n"
         : /* no outputs */

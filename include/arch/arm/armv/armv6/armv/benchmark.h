@@ -14,10 +14,10 @@
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-extern uint64_t ccnt_overflow;
+extern uint64_t ccnt_num_overflows;
 static inline void benchmark_arch_utilisation_reset(void)
 {
-    ccnt_overflow = 0;
+    ccnt_num_overflows = 0;
 }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 

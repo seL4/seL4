@@ -655,6 +655,18 @@ seL4_BenchmarkFinalizeLog(void)
                  );
 }
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+static inline void
+seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)
+{
+    register seL4_Word arg1 asm("r0") = tcp_cptr;
+    register seL4_Word scno asm("r7") = seL4_SysBenchmarkGetThreadUtilisation;
+    asm volatile ("swi %[swi_num]"
+                  : /* no outputs */
+                  : [swi_num] "i" __SWINUM(seL4_SysBenchmarkGetThreadUtilisation), "r" (arg1), "r"(scno)
+                  : "memory");
+}
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #undef __SWINUM

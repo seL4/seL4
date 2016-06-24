@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <arch/object/structures_gen.h>
 #include <arch/api/constants.h>
+#include <benchmark.h>
 
 enum irq_state {
     IRQInactive  = 0,
@@ -230,6 +231,10 @@ struct tcb {
     /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
     struct tcb* tcbEPNext;
     struct tcb* tcbEPPrev;
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_util_t benchmark;
+#endif
 
 #if defined(CONFIG_PRINTING)
     /* Use any remaining space for a thread name */

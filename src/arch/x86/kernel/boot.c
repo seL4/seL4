@@ -161,11 +161,11 @@ init_sys_state(
     cap_t         ipcbuf_cap;
     pptr_t        bi_frame_pptr;
     create_frames_of_region_ret_t create_frames_ret;
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
     vm_attributes_t buffer_attr = {{ 0 }};
     word_t paddr;
     pde_t pde;
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
@@ -186,7 +186,7 @@ init_sys_state(
 
     init_freemem(ui_info.p_reg, mem_p_regs);
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
     /* allocate and create the log buffer */
     buffer_attr.words[0] = IA32_PAT_MT_WRITE_THROUGH;
 
@@ -209,7 +209,7 @@ init_sys_state(
     assert(ksLog[0].data == 0xdeadbeef);
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS */
 #endif /* CONFIG_DEBUG_BUILD */
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();

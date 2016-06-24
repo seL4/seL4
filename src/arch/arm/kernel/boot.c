@@ -139,6 +139,15 @@ init_irqs(cap_t root_cnode_cap)
 #ifdef CONFIG_ARM_SMMU
     setIRQState(IRQReserved, INTERRUPT_SMMU);
 #endif
+
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+#ifdef KERNEL_PMU_IRQ
+    setIRQState(IRQReserved, KERNEL_PMU_IRQ);
+#else
+#error "This platform doesn't support tracking CPU utilisation feature"
+#endif /* KERNEL_TIMER_IRQ */
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }

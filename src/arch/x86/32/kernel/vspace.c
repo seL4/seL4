@@ -236,12 +236,12 @@ map_kernel_window(
     phys = PADDR_BASE;
     idx = PPTR_BASE >> LARGE_PAGE_BITS;
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
     /* steal the last large for logging */
     while (idx < BIT(PD_BITS + PDPT_BITS) - 2) {
 #else
     while (idx < BIT(PD_BITS + PDPT_BITS) - 1) {
-#endif /* CONFIG_ENABLE_BNECHMARKS */
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
         pde = pde_pde_large_new(
                   phys,   /* page_base_address    */
                   0,      /* pat                  */
@@ -263,7 +263,7 @@ map_kernel_window(
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
     /* mark the address of the log. We will map it
         * in later with the correct attributes, but we need
         * to wait until we can call alloc_region. */
@@ -271,7 +271,7 @@ map_kernel_window(
     phys += BIT(LARGE_PAGE_BITS);
     assert(idx == IA32_KSLOG_IDX);
     idx++;
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
     /* map page table of last 4M of virtual address space to page directory */
     pde = pde_pde_small_new(

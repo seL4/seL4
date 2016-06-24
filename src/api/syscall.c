@@ -10,7 +10,9 @@
 
 #include <types.h>
 #include <benchmark.h>
+#include <arch/benchmark.h>
 #include <benchmark_track.h>
+#include <benchmark_utilisation.h>
 #include <api/syscall.h>
 #include <api/failures.h>
 #include <api/faults.h>
@@ -44,6 +46,10 @@ handleInterruptEntry(void)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_start();
 #endif
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_kentry_stamp();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     if (irq != irqInvalid) {
         handleInterrupt(irq);
@@ -93,6 +99,10 @@ handleUnknownSyscall(word_t w)
     }
 #endif /* DEBUG */
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_kentry_stamp();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+
 #ifdef CONFIG_PRINTING
     if (w == SysDebugNameThread) {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
@@ -131,9 +141,18 @@ handleUnknownSyscall(word_t w)
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
     if (w == SysBenchmarkResetLog) {
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
         ksLogIndex = 0;
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+        benchmark_log_utilisation_enabled = true;
+        ksCurThread->benchmark.schedule_start_time = ksEnter;
+        benchmark_start_time = ksEnter;
+        benchmark_arch_utilisation_reset();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkDumpLog) {
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
         word_t *buffer = lookupIPCBuffer(true, ksCurThread);
         word_t start = getRegister(ksCurThread, capRegister);
         word_t size = getRegister(ksCurThread, msgInfoRegister);
@@ -185,11 +204,25 @@ handleUnknownSyscall(word_t w)
     } else if (w == SysBenchmarkLogSize) {
         /* Return the amount of log items we tried to log (may exceed max size) */
         setRegister(ksCurThread, capRegister, ksLogIndexFinalized);
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
         ksLogIndexFinalized = ksLogIndex;
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+        benchmark_utilisation_finalise();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         return EXCEPTION_NONE;
     }
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    else if (w == SysBenchmarkGetThreadUtilisation) {
+        benchmark_track_utilisation_dump();
+        return EXCEPTION_NONE;
+    }
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
     current_fault = fault_unknown_syscall_new(w);
@@ -212,6 +245,10 @@ handleUserLevelFault(word_t w_a, word_t w_b)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_start();
 #endif
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_kentry_stamp();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     current_fault = fault_user_exception_new(w_a, w_b);
     handleFault(ksCurThread);
@@ -238,6 +275,10 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_start();
 #endif
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_kentry_stamp();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     status = handleVMFault(ksCurThread, vm_faultType);
     if (status != EXCEPTION_NONE) {
@@ -453,6 +494,10 @@ handleSyscall(syscall_t syscall)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_start();
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_kentry_stamp();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     switch (syscall) {
     case SysSend:

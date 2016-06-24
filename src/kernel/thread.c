@@ -329,6 +329,9 @@ chooseThread(void)
 void
 switchToThread(tcb_t *thread)
 {
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_switch(ksCurThread, thread);
+#endif
     Arch_switchToThread(thread);
     tcbSchedDequeue(thread);
     ksCurThread = thread;
@@ -337,6 +340,9 @@ switchToThread(tcb_t *thread)
 void
 switchToIdleThread(void)
 {
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_switch(ksCurThread, ksIdleThread);
+#endif
     Arch_switchToIdleThread();
     ksCurThread = ksIdleThread;
 }

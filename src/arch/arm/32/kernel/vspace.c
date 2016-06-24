@@ -235,13 +235,13 @@ map_kernel_window(void)
         phys += BIT(pageBitsForSize(ARMSuperSection));
         idx += SECTIONS_PER_SUPER_SECTION;
     }
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
     /* steal the last MB for logging */
     while (idx < BIT(PD_BITS) - 2) {
 #else
     /* mapping of the next 15M using 1M frames */
     while (idx < BIT(PD_BITS) - 1) {
-#endif /* CONFIG_ENABLE_BNECHMARKS */
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
         pde = pde_pde_section_new(
                   phys,
                   0, /* Section */
@@ -261,7 +261,7 @@ map_kernel_window(void)
         idx++;
     }
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
     /* allocate a 1M buffer for logging */
     pde = pde_pde_section_new(
               phys,
@@ -289,7 +289,7 @@ map_kernel_window(void)
     assert(ksLog == ((void *) KS_LOG_PADDR));
     phys += BIT(pageBitsForSize(ARMSection));
     idx++;
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
     /* crosscheck whether we have mapped correctly so far */
     assert(phys == PADDR_TOP);

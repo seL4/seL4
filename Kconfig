@@ -507,6 +507,16 @@ menu "Build Options"
         bool
         default n
 
+    config ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+        bool
+        depends on BENCHMARK_TRACK_UTILISATION && ARCH_ARM
+        default y
+
+    config BENCHMARK_USE_KERNEL_LOG_BUFFER
+        bool
+        depends on BENCHMARK_TRACK_KERNEL_ENTRIES || BENCHMARK_TRACEPOINTS
+        default y
+
     choice
         prompt "Enable benchmarks"
         depends on !VERIFICATION_BUILD
@@ -535,7 +545,13 @@ menu "Build Options"
             help
                  Enable manually inserted tracepoints that the kernel will track time consumed between.
 
-            endchoice
+        config BENCHMARK_TRACK_UTILISATION
+            bool "Track threads and kernel utilisation time"
+            select ENABLE_BENCHMARKS
+            help
+                Enable the kernel to track each thread's utilisation time.
+
+     endchoice
 
      config MAX_NUM_TRACE_POINTS
             int "Maximum number of tracepoints"
