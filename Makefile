@@ -384,6 +384,7 @@ WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 
 CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
 	${WARNINGS:%=-W%} ${INCLUDES}
+CPPFLAGS += -nostdinc
 LDFLAGS += -nostdlib -nostdinc
 LDFLAGS += -Wl,--build-id=none
 ASFLAGS += ${INCLUDES}
