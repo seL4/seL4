@@ -79,7 +79,7 @@ memcpy(void* ptr_dst, const void* ptr_src, unsigned long n)
     return ptr_dst;
 }
 
-int
+int PURE
 strncmp(const char* s1, const char* s2, int n)
 {
     word_t i;
