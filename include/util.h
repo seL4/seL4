@@ -29,7 +29,7 @@
 #define ALIGN(n)     __attribute__((__aligned__(n)))
 #define FASTCALL     __attribute__((fastcall))
 #ifdef __clang__
-#define VISIBLE      __attribute__((visibility("default")))
+#define VISIBLE      /* nothing */
 #else
 #define VISIBLE      __attribute__((externally_visible))
 #endif
