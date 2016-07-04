@@ -371,6 +371,7 @@ WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 
 CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
 	${WARNINGS:%=-W%} ${INCLUDES}
+CPPFLAGS += -nostdinc
 LDFLAGS += -nostdlib -nostdinc
 LDFLAGS += -Wl,--build-id=none
 ASFLAGS += ${INCLUDES}
@@ -675,7 +676,7 @@ CLEANTARGETS = kernel.elf kernel.elf.strip ${GENHEADERS} ${OBJECTS} autoconf.h \
   parser.out parsetab.py \
   kernel_final.s kernel_final.c kernel_all.c kernel_all.c_pp \
   ${PPFILES} ${THEORIES} c-parser.log c-parser-all.log \
-  arch api plat ${ASM_SOURCES:.S=.s_pp}
+  arch api plat ${ASM_SOURCES:.S=.s_pp} linker.lds_pp
 
 clean:
 	@echo " [CLEAN]"

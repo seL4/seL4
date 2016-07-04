@@ -11,6 +11,7 @@
 #ifndef ARCH_BENCHMARK_H
 #define ARCH_BENCHMARK_H
 
+#include <config.h>
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
 #include <armv/benchmark.h>

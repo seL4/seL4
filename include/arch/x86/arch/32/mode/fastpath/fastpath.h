@@ -36,6 +36,10 @@ switchToThread_fp(tcb_t *thread, pde_t *pd, pde_t stored_hw_asid)
     base = thread->tcbIPCBuffer;
     x86_write_gs_base(base);
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_switch(ksCurThread, thread);
+#endif
+
     ksCurThread = thread;
 }
 

@@ -19,5 +19,6 @@ C_SOURCES += src/inlines.c \
              src/assert.c \
              src/util.c \
              src/string.c \
-             src/benchmark_track.c
+             src/benchmark_track.c \
+             src/benchmark_utilisation.c
 

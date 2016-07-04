@@ -15,7 +15,7 @@
 #include <arch/benchmark.h>
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-uint64_t ccnt_overflow;
+uint64_t ccnt_num_overflows;
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
 void

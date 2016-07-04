@@ -18,27 +18,29 @@
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <stdint.h>
+#include <arch/benchmark_overflowHandler.h>
 
 /* Available physical memory regions on platform (RAM) */
 /* NOTE: Regions are not allowed to be adjacent! */
 const p_region_t BOOT_RODATA avail_p_regs[] = {
 #if defined(CONFIG_PLAT_SABRE)
     /* Sabre has 1 GiB */
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
     /* 1MB stolen for logging */
     { /* .start = */ 0x10000000, /* .end = */ 0x2fd00000 }
 #else
     { /* .start = */ 0x10000000, /* .end = */ 0x50000000 }
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #elif defined(CONFIG_PLAT_WANDQ)
     /* Wandboard Quad: 2 GiB */
-#ifdef CONFIG_ENABLE_BENCHMARKS
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
 #warning "NOTE: logging is currently untested on WandBoard"
     /* 1MB stolen for logging */
     { /* .start = */ 0x10000000, /* .end = */ 0x6fd00000 }
 #else
     { /* .start = */ 0x10000000, /* .end = */ 0x90000000 }
-#endif /* CONFIG_ENABLE_BENCHMARKS */
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #else
 #error "unknown imx6 platform selected!"
 #endif
@@ -198,6 +200,11 @@ get_dev_p_reg(word_t i)
 void
 handleReservedIRQ(irq_t irq)
 {
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    if (irq == KERNEL_PMU_IRQ) {
+        handleOverflowIRQ();
+    }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 }
 
 

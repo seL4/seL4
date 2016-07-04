@@ -113,6 +113,7 @@ enum IRQConstants {
 } platform_interrupt_t;
 
 #define KERNEL_TIMER_IRQ INTERRUPT_PRIV_TIMER
+#define KERNEL_PMU_IRQ INTERRUPT_PMU0
 
 enum irqNumbers {
     irqInvalid = (irq_t) - 1

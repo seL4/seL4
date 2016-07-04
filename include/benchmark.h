@@ -15,6 +15,13 @@
 #include <machine/io.h>
 #include <arch/api/constants.h>
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+typedef struct {
+    timestamp_t schedule_start_time;
+    uint64_t    utilisation;
+} benchmark_util_t;
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 #define TRACE_POINT_START(x) trace_point_start(x)
 #define TRACE_POINT_STOP(x)   trace_point_stop(x)

@@ -409,13 +409,17 @@ switchToThread(tcb_t *thread)
     tcbSchedDequeue(thread);
     assert(!thread_state_get_tcbInReleaseQueue(thread->tcbState));
     assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_switch(ksCurThread, thread);
+#endif
+
     ksCurThread = thread;
 }
 
 void
 switchSchedContext(void)
 {
-
     assert(ksCurSchedContext->scRemaining >= ksConsumed);
 
     if (unlikely(ksCurSchedContext != ksCurThread->tcbSchedContext)) {

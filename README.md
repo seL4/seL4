@@ -39,7 +39,7 @@ Build Instructions
 
 tl;dr:
 
-    TOOLPREFIX=arm-none-eabi- ARCH=arm PLAT=imx31 ARMV=armv6 CPU=arm1136jf-s \
+    TOOLPREFIX=arm-none-eabi- ARCH=arm PLAT=imx6 ARMV=armv7-a CPU=cortex-a9 \
  	make
 
 The kernel source requires a cross-compiler for the target architecture. To
@@ -59,9 +59,11 @@ build using `make`, follow these instructions:
     arm  | imx31  | armv6   | arm1136jf-s
     arm  | omap3  | armv7-a | cortex-a8
     arm  | am335x | armv7-a | cortex-a8
+    arm  | imx6   | armv7-a | cortex-a9
     ia32 | pc99   |         |
 
- * For a debug build, append `DEBUG=y`.
+ * For a debug build, append `DEBUG=y` and to see serial output additionally
+   append `CONFIG_KERNEL_EXTRA_CPPFLAGS="-DCONFIG_PRINTING=y -DCONFIG_USER_STACK_TRACE_LENGTH=16"`.
 
 See the seL4 website for more [comprehensive build instructions][5].
 

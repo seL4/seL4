@@ -214,7 +214,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
             )) {
         return false;
     }
-    write_cr3(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT));
+    setCurrentPD(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT));
     /* Sync up the compilers view of the world here to force the PD to actually
      * be set *right now* instead of delayed */
     asm volatile("" ::: "memory");

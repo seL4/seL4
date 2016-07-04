@@ -14,6 +14,7 @@
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark_track.h>
 #endif
+#include <benchmark_utilisation.h>
 
 void
 #ifdef ARCH_X86
@@ -46,6 +47,10 @@ fastpath_call(word_t cptr, word_t msgInfo)
     ksKernelEntry.is_fastpath = true;
     benchmark_track_start();
 #endif
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_kentry_stamp();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     /* Check there's no extra caps, the length is ok and there's no
      * saved fault. */
@@ -220,6 +225,10 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     ksKernelEntry.is_fastpath = true;
     benchmark_track_start();
 #endif
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_kentry_stamp();
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     /* Check there's no extra caps, the length is ok and there's no
      * saved fault. */

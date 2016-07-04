@@ -142,7 +142,8 @@ enum IRQConstants {
     INTERRUPT_SRC           = 123,
     INTERRUPT_CPU_L2        = 124,
     INTERRUPT_CPU_PARITY    = 125,
-    INTERRUPT_CPU_PU        = 126,
+    /* Performance Monitor Unit (PMU) overflow interrupt */
+    INTERRUPT_CPU_PMU_OV    = 126,
     INTERRUPT_CPU_CTI       = 127,
     INTERRUPT_SRC_WDOG      = 128,
 //  INTERRUPT_RESERVED      = 129,
@@ -180,6 +181,7 @@ enum IRQConstants {
 } platform_interrupt_t;
 
 #define KERNEL_TIMER_IRQ INTERRUPT_GLOBAL_TIMER
+#define KERNEL_PMU_IRQ   INTERRUPT_CPU_PMU_OV
 
 enum irqNumbers {
     irqInvalid = (irq_t) - 1

@@ -716,5 +716,23 @@ seL4_BenchmarkFinalizeLog(void)
     );
 }
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+static inline void
+seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)
+{
+    asm volatile (
+        "pushl %%ebp        \n"
+        "movl %%esp, %%ecx  \n"
+        "leal 1f, %%edx     \n"
+        "1:                 \n"
+        "sysenter           \n"
+        "popl %%ebp         \n"
+        :
+        : "a" (seL4_SysBenchmarkGetThreadUtilisation),
+        "b"(tcp_cptr)
+        : "%ecx", "%edx", "%edi", "memory"
+    );
+}
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 #endif

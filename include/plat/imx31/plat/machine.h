@@ -25,6 +25,8 @@ enum irqNumbers {
     irqInvalid = 255
 };
 
+#define KERNEL_PMU_IRQ   INTERRUPT_PMU
+
 typedef word_t interrupt_t;
 typedef word_t irq_t;
 

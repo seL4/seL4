@@ -19,6 +19,7 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <plat/machine/hardware_gen.h>
+#include <arch/benchmark_overflowHandler.h>
 
 #define L2_LINE_SIZE_BITS 5
 #define L2_LINE_SIZE BIT(L2_LINE_SIZE_BITS)
@@ -180,6 +181,11 @@ maskInterrupt(bool_t disable, interrupt_t irq)
 void
 handleReservedIRQ(irq_t irq)
 {
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    if (irq == KERNEL_PMU_IRQ) {
+        handleOverflowIRQ();
+    }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 }
 
 void

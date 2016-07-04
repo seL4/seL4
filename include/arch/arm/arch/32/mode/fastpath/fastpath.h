@@ -47,6 +47,10 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
     }
     armv_contextSwitch_HWASID(cap_pd, hw_asid);
 
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    benchmark_utilisation_switch(ksCurThread, thread);
+#endif
+
     *armKSGlobalsFrame = thread->tcbIPCBuffer;
     ksCurThread = thread;
     clearExMonitor_fp();

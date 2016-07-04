@@ -11,6 +11,7 @@
 #ifndef ARCH_BENCHMARK_H
 #define ARCH_BENCHMARK_H
 
+#include <config.h>
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
 typedef uint64_t timestamp_t;
@@ -38,6 +39,10 @@ timestamp(void)
     );
 
     return ((uint64_t) high) << 32llu | (uint64_t) low;
+}
+
+static inline void benchmark_arch_utilisation_reset(void)
+{
 }
 
 #endif /* CONFIG_ENABLE_BENCHMARKS */
