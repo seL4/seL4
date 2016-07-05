@@ -107,9 +107,16 @@ static void UNUSED parse_uint16_array(char* str, uint16_t* array, int array_size
 
 void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
 {
+#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
+    /* use BIOS data area to read serial configuration */
+    const unsigned short * bda_port = (unsigned short *)0x400;
+    const unsigned short * bda_equi = (unsigned short *)0x410;
+    int const bda_ports_count       = (*bda_equi >> 9) & 0x7;
+#endif
+
 #ifdef CONFIG_PRINTING
-    /* initialise to default */
-    cmdline_opt->console_port = 0x3f8;
+    /* initialise to default or use BDA if available */
+    cmdline_opt->console_port = bda_ports_count && *bda_port ? *bda_port : 0x3f8;
 
     if (parse_opt(cmdline, "console_port", cmdline_val, MAX_CMDLINE_VAL_LEN) != -1) {
         parse_uint16_array(cmdline_val, &cmdline_opt->console_port, 1);
@@ -129,7 +136,8 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-    cmdline_opt->debug_port = 0x3f8;
+    /* initialise to default or use BDA if available */
+    cmdline_opt->debug_port = bda_ports_count && *bda_port ? *bda_port : 0x3f8;
     if (parse_opt(cmdline, "debug_port", cmdline_val, MAX_CMDLINE_VAL_LEN) != -1) {
         parse_uint16_array(cmdline_val, &cmdline_opt->debug_port, 1);
     }
