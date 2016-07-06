@@ -20,8 +20,10 @@ void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 #ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);
+        UNREACHABLE();
     } else if (syscall == SysReplyRecv) {
         fastpath_reply_recv(cptr, msgInfo);
+        UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */
 
