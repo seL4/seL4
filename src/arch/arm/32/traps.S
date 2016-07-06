@@ -93,29 +93,11 @@ BEGIN_FUNC(arm_swi_syscall)
     /* Store FaultInstruction */
     str lr, [sp, #(PT_FaultInstruction - PT_LR_svc)]
 
-#ifdef FASTPATH
-    cmp r7, #SYSCALL_REPLY_RECV
-#endif
-
     /* Stack all user registers */
     stmdb sp, {r0-lr}^
 
     /* Load the kernel's real stack pointer */
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
-
-#ifdef FASTPATH
-    /*
-     * Call is -1 == 0xffffffff.
-     * We compared against -2 = 0xfffffffe above.
-     * Performing an unsigned higher than, there is only one unsigned number
-     * greater than -2.
-     */
-    bhi fastpath_call
-    beq fastpath_reply_recv
-#endif
-
-    /* Load system call number for handleSyscall and handleUnknownSyscall() */
-    mov r0, r7
 
     /*
      * RET_TO_USER needs ksCurThread. We can issue the load here where we have
@@ -124,12 +106,11 @@ BEGIN_FUNC(arm_swi_syscall)
      */
     ldr r8, =ksCurThread
 
-    /* Check that syscall number is in range */
-    add r2, r0, #(-SYSCALL_MIN)
-    cmp r2, #(SYSCALL_MAX - SYSCALL_MIN + 1)
-    bhs arm_swi_undefined_syscall
-
-    blx handleSyscall
+    /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
+     * unmodified (cptr and msgIngo respectively.
+     */
+    mov r2, r7
+    blx c_handle_syscall
 
     /* Return to user. */
     RET_TO_USER r8
@@ -151,17 +132,6 @@ BEGIN_FUNC(slowpath)
     blx handleSyscall
     RET_TO_USER r7
 END_FUNC(slowpath)
-
-BEGIN_FUNC(fastpath_restore)
-    /* Duplicate of above except r2 contains ksCurThread,
-       r0 and r1 should be preserved */
-    mov sp, r2
-    add sp, sp, #PT_LR_svc
-
-    ldmdb sp, {r2-lr}^
-
-    rfeia sp
-END_FUNC(fastpath_restore)
 
 BEGIN_FUNC(arm_prefetch_abort_exception)
     /* Full save/restore, documented in arm_swi_syscall */

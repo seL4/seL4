@@ -16,6 +16,7 @@
 #include <arch/linker.h>
 #include <api/types.h>
 #include <api/syscall.h>
+#include <armv/context_switch.h>
 
 /* When building the fastpath the assembler in traps.S makes these
  * assumptions. Because compile_asserts are hard to do in assembler,
