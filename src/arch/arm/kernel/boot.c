@@ -209,6 +209,11 @@ try_init_kernel(
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
 
+    if (it_v_reg.end > kernelBase) {
+        printf("Userland image virtual end address too high\n");
+        return false;
+    }
+
     /* setup virtual memory for the kernel */
     map_kernel_window();
 
