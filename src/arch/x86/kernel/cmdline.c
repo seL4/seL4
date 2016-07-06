@@ -108,7 +108,9 @@ static void UNUSED parse_uint16_array(char* str, uint16_t* array, int array_size
 void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
 {
 #if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
-    /* use BIOS data area to read serial configuration */
+    /* use BIOS data area to read serial configuration. The BDA is not
+     * fully standardized and parts are absolete. See http://wiki.osdev.org/Memory_Map_(x86)#BIOS_Data_Area_.28BDA.29
+     * for an explanation */
     const unsigned short * bda_port = (unsigned short *)0x400;
     const unsigned short * bda_equi = (unsigned short *)0x410;
     int const bda_ports_count       = (*bda_equi >> 9) & 0x7;
