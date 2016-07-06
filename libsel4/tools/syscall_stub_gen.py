@@ -830,7 +830,7 @@ def main():
             print "Invalid word size in configuration file."
             sys.exit(2)
     else:
-        wordsize = args.wsize
+        wordsize = int(args.wsize)
 
     if wordsize is -1:
         print "Invalid word size."
