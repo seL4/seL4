@@ -289,7 +289,7 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     if (tcb->tcbSchedContext && tcb->tcbSchedContext->scHome) {
         /* this tcb is running on borrowed time, resume it */
         sched_context_t *go_home = tcb->tcbSchedContext;
-        schedContext_donate(go_home->scTcb, go_home);
+        schedContext_donate(go_home->scHome, go_home);
         schedContext_resume(go_home);
     }
 
