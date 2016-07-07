@@ -37,60 +37,19 @@ bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
         return true;
 
     case fault_temporal:
-        return true;
+        copyMessageToRegisters(sender, receiver, temporalMessage, MIN(length, n_temporalMessage));
+        return (label == 0);
 
-    case fault_unknown_syscall: {
-        word_t i;
-        register_t   r;
-        word_t       v;
-        word_t*      sendBuf;
-
-        sendBuf = lookupIPCBuffer(false, sender);
-
-        /* Assumes n_syscallMessage > n_msgRegisters */
-        for (i = 0; i < length && i < n_msgRegisters; i++) {
-            r = syscallMessage[i];
-            v = getRegister(sender, msgRegisters[i]);
-            setRegister(receiver, r, sanitiseRegister(r, v));
-        }
-
-        if (sendBuf) {
-            for (; i < length && i < n_syscallMessage; i++) {
-                r = syscallMessage[i];
-                v = sendBuf[i + 1];
-                setRegister(receiver, r, sanitiseRegister(r, v));
-            }
-        }
+    case fault_unknown_syscall:
+        copyMessageToRegisters(sender, receiver, syscallMessage, MIN(length, n_syscallMessage));
         /* HACK: Copy NextIP to FaultIP because FaultIP will be copied */
         /* back to NextIP later on (and we don't wanna lose NextIP)     */
         setRegister(receiver, FaultIP, getRegister(receiver, NextIP));
-    }
-    return (label == 0);
+        return (label == 0);
 
-    case fault_user_exception: {
-        word_t i;
-        register_t   r;
-        word_t       v;
-        word_t*      sendBuf;
-
-        sendBuf = lookupIPCBuffer(false, sender);
-
-        /* Assumes n_exceptionMessage > n_msgRegisters */
-        for (i = 0; i < length && i < n_msgRegisters; i++) {
-            r = exceptionMessage[i];
-            v = getRegister(sender, msgRegisters[i]);
-            setRegister(receiver, r, sanitiseRegister(r, v));
-        }
-
-        if (sendBuf) {
-            for (; i < length && i < n_exceptionMessage; i++) {
-                r = exceptionMessage[i];
-                v = sendBuf[i + 1];
-                setRegister(receiver, r, sanitiseRegister(r, v));
-            }
-        }
-    }
-    return (label == 0);
+    case fault_user_exception:
+        copyMessageToRegisters(sender, receiver, exceptionMessage, MIN(length, n_exceptionMessage));
+        return (label == 0);
 
     default:
         fail("Invalid fault");

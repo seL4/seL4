@@ -12,6 +12,8 @@
 #define __LIBSEL4_TFIPC
 
 #include <sel4/types.h>
+#include <sel4/sel4_arch/tfIPC.h>
+
 /**
  * This is what temporal fault ipc looks like
  * Not a standalone include! include messages.h

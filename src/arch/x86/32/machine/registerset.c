@@ -32,6 +32,10 @@ const register_t syscallMessage[] = {
     EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextIP, ESP, EFLAGS
 };
 
+const register_t temporalMessage[] = {
+    FaultIP, ESP, EFLAGS, EAX, EBX, ECX, EDX, ESI, EDI, EBP, TLS_BASE, FS, GS
+};
+
 void Arch_initContext(user_context_t* context)
 {
     context->registers[EAX] = 0;

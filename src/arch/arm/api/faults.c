@@ -37,7 +37,8 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
         return true;
 
     case fault_temporal:
-        return true;
+        copyMessageToRegisters(sender, receiver, temporalMessage, MIN(length, n_temporalMessage));
+        return (label == 0);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case fault_vgic_maintenance:
         return true;
@@ -45,44 +46,13 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
         return true;
 #endif
 
-    case fault_unknown_syscall: {
-        word_t i;
-        register_t r;
-        word_t v;
-        word_t *sendBuf;
+    case fault_unknown_syscall:
+        copyMessageToRegisters(sender, receiver, syscallMessage, MIN(length, n_syscallMessage));
+        return (label == 0);
 
-        sendBuf = lookupIPCBuffer(false, sender);
-
-        /* Assumes n_syscallMessage > n_msgRegisters */
-        for (i = 0; i < length && i < n_msgRegisters; i++) {
-            r = syscallMessage[i];
-            v = getRegister(sender, msgRegisters[i]);
-            setRegister(receiver, r, sanitiseRegister(r, v));
-        }
-
-        if (sendBuf) {
-            for (; i < length && i < n_syscallMessage; i++) {
-                r = syscallMessage[i];
-                v = sendBuf[i + 1];
-                setRegister(receiver, r, sanitiseRegister(r, v));
-            }
-        }
-    }
-    return (label == 0);
-
-    case fault_user_exception: {
-        word_t i;
-        register_t r;
-        word_t v;
-
-        /* Assumes n_exceptionMessage <= n_msgRegisters */
-        for (i = 0; i < length && i < n_exceptionMessage; i++) {
-            r = exceptionMessage[i];
-            v = getRegister(sender, msgRegisters[i]);
-            setRegister(receiver, r, sanitiseRegister(r, v));
-        }
-    }
-    return (label == 0);
+    case fault_user_exception:
+        copyMessageToRegisters(sender, receiver, exceptionMessage, MIN(length, n_exceptionMessage));
+        return (label == 0);
 
     default:
         fail("Invalid fault");
