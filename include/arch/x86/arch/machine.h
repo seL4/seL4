@@ -31,9 +31,24 @@
 #define IA32_FMASK_MSR          0xC0000084
 #define IA32_XSS_MSR            0xD0A
 
-#define BROADWELL_MODEL_ID      0xD4
-#define HASWELL_MODEL_ID        0xC3
-#define IVY_BRIDGE_MODEL_ID     0xA9
+#define IA32_PREFETCHER_COMPATIBLE_FAMILIES_ID (0x06)
+
+/* These values taken from:
+ *  * Intel manuals, Vol3, table 35-1.
+ *  * https://software.intel.com/en-us/articles/intel-architecture-and-processor-identification-with-cpuid-model-and-family-numbers
+ */
+#define BROADWELL_1_MODEL_ID    0x4D
+#define BROADWELL_2_MODEL_ID    0x56
+#define BROADWELL_3_MODEL_ID    0x4F
+#define BROADWELL_4_MODEL_ID    0x47
+#define BROADWELL_5_MODEL_ID    0x3D
+#define HASWELL_1_MODEL_ID      0x3C
+#define HASWELL_2_MODEL_ID      0x3F
+#define HASWELL_3_MODEL_ID      0x45
+#define HASWELL_4_MODEL_ID      0x46
+#define IVY_BRIDGE_1_MODEL_ID   0x9A
+#define IVY_BRIDGE_2_MODEL_ID   0x3E
+#define IVY_BRIDGE_3_MODEL_ID   0x3A
 #define SANDY_BRIDGE_1_MODEL_ID 0x2A /* Sandy Bridge */
 #define SANDY_BRIDGE_2_MODEL_ID 0x2D /* Sandy Bridge-E, Sandy Bridge-EN and Sandy Bridge-EP */
 #define WESTMERE_1_MODEL_ID     0x25 /* Arrandale and Clarksdale */
@@ -43,7 +58,8 @@
 #define NEHALEM_2_MODEL_ID      0x1A /* Bloomfield and Nehalem-EP */
 #define NEHALEM_3_MODEL_ID      0x2E /* Nehalem-EX */
 
-#define MODEL_ID(x) ( ((x & 0xf0000) >> 16) + (x & 0xf0) )
+#define X86_CPUID_VENDOR_STRING_MAXLENGTH   (12)
+#define X86_CPU_MODEL_STRING_MAXLENGTH      (47)
 
 /* This article discloses prefetcher control on Intel processors; Nehalem, Westmere, Sandy Bridge,
    Ivy Bridge, Haswell, and Broadwell. It is currently undocumented in the regular intel manuals.
@@ -137,6 +153,40 @@ static inline uint32_t x86_cpuid_ebx(uint32_t eax, uint32_t ecx)
                  : "memory");
     return ebx;
 }
+
+enum x86_vendor {
+    X86_VENDOR_INTEL = 0,
+    X86_VENDOR_AMD,
+    X86_VENDOR_OTHER
+};
+
+typedef struct _x86_cpu_identity {
+    uint8_t family, model, stepping, extended_family, extended_model;
+    uint8_t brand;
+} x86_cpu_identity_t;
+
+typedef struct _cpu_identity {
+    enum x86_vendor vendor;
+    char vendor_string[X86_CPUID_VENDOR_STRING_MAXLENGTH + 1];
+
+    /* Adjusted and normalized family, model and stepping values as recommended
+     * by Intel. The name "display" was chosen because that's the nomenclature
+     * Intel uses.
+     */
+    x86_cpu_identity_t display;
+} cpu_identity_t;
+
+/* This, and all its adjoint routines will be called at init time; see boot.c */
+BOOT_CODE bool_t x86_cpuid_initialize(void);
+
+/** To be used by code that wants to know the family/model/stepping/brand of
+ * a CPU.
+ */
+x86_cpu_identity_t *x86_cpuid_get_model_info(void);
+
+/** To be used by code that wants to get the CPU vendor name.
+ */
+cpu_identity_t *x86_cpuid_get_identity(void);
 
 #ifdef CONFIG_FSGSBASE_MSR
 

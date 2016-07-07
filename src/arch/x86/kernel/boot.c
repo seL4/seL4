@@ -340,6 +340,21 @@ init_cpu(
     bool_t   mask_legacy_irqs
 )
 {
+    /* Initialize CPUID stuff asap, so that other subsystems can do feature
+     * detection properly.
+     */
+    if (!x86_cpuid_initialize()) {
+        /* If it returned false because of the vendor, print a message
+         * and allow it to continue -- let the user experiment with seL4 on
+         * x86 clones if s/he really wants to.
+         */
+        printf("Warning: Your x86 CPU has an unsupported vendor, '%s'.\n"
+               "\tYour setup may not be able to competently run seL4 as "
+               "intended.\n"
+               "\tCurrently supported x86 vendors are AMD and Intel.\n",
+               x86_cpuid_get_identity()->vendor_string);
+    }
+
     /* initialise virtual-memory-related data structures */
     if (!init_vm_state()) {
         return false;
