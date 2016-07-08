@@ -2680,7 +2680,8 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
     case ARMPageUnmap: {
 #ifdef CONFIG_ARM_SMMU
         if (isIOSpaceFrameCap(cap)) {
-            return decodeARMIOUnmapInvocation(invLabel, length, cte, cap, excaps);
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performPageInvocationUnmapIO(cap, cte);
         } else
 #endif
         {

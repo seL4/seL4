@@ -471,12 +471,9 @@ void clearIOPageDirectory(cap_t cap)
 }
 
 exception_t
-decodeARMIOUnmapInvocation(
-    word_t       invLabel,
-    uint32_t     length,
-    cte_t*       slot,
+performPageInvocationUnmapIO(
     cap_t        cap,
-    extra_caps_t excaps
+    cte_t*       slot
 )
 {
     unmapIOPage(slot->cap);
@@ -484,7 +481,6 @@ decodeARMIOUnmapInvocation(
     slot->cap = cap_small_frame_cap_set_capFIsIOSpace(slot->cap, 0);
     slot->cap = cap_small_frame_cap_set_capFMappedASID(slot->cap, asidInvalid);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
