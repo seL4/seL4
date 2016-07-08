@@ -99,6 +99,6 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 void Arch_userStackTrace(tcb_t *tptr);
 #endif
 
-bool_t CONST isIOSpaceFrame(cap_t cap);
+bool_t CONST isIOSpaceFrameCap(cap_t cap);
 
 #endif

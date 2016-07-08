@@ -671,7 +671,7 @@ pte_t CONST makeUserPTEInvalid(void)
            );
 }
 
-bool_t CONST isIOSpaceFrame(cap_t cap)
+bool_t CONST isIOSpaceFrameCap(cap_t cap)
 {
     return cap_frame_cap_get_capFIsIOSpace(cap);
 }

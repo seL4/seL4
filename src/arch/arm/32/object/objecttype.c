@@ -160,7 +160,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_small_frame_cap:
         if (cap_small_frame_cap_get_capFMappedASID(cap)) {
 #ifdef CONFIG_ARM_SMMU
-            if (isIOSpaceFrame(cap)) {
+            if (isIOSpaceFrameCap(cap)) {
                 unmapIOPage(cap);
                 break;
             }

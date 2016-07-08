@@ -972,7 +972,7 @@ exception_t decodeX86FrameInvocation(
         vm_page_size_t  frameSize;
         asid_t          asid;
 
-        if (isIOSpaceFrame(cap)) {
+        if (isIOSpaceFrameCap(cap)) {
             userError("X86FrameRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
@@ -1093,7 +1093,7 @@ exception_t decodeX86FrameInvocation(
 
     case X86PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            if (isIOSpaceFrame(cap)) {
+            if (isIOSpaceFrameCap(cap)) {
                 return decodeX86IOUnMapInvocation(invLabel, length, cte, cap, excaps);
             } else {
                 setThreadState(ksCurThread, ThreadState_Restart);

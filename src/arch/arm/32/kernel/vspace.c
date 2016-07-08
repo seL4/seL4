@@ -1144,7 +1144,7 @@ isValidVTableRoot(cap_t cap)
 }
 
 bool_t CONST
-isIOSpaceFrame(cap_t cap)
+isIOSpaceFrameCap(cap_t cap)
 {
 #ifdef CONFIG_ARM_SMMU
     return cap_get_capType(cap) == cap_small_frame_cap && cap_small_frame_cap_get_capFIsIOSpace(cap);
@@ -2570,7 +2570,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_attributes_t attr;
 
 #ifdef CONFIG_ARM_SMMU
-        if (isIOSpaceFrame(cap)) {
+        if (isIOSpaceFrameCap(cap)) {
             userError("ARMFrameRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
@@ -2679,7 +2679,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
 
     case ARMPageUnmap: {
 #ifdef CONFIG_ARM_SMMU
-        if (isIOSpaceFrame(cap)) {
+        if (isIOSpaceFrameCap(cap)) {
             return decodeARMIOUnMapInvocation(invLabel, length, cte, cap, excaps);
         } else
 #endif
