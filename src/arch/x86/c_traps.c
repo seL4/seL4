@@ -13,13 +13,11 @@
 #include <arch/kernel/lock.h>
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
+#include <arch/kernel/traps.h>
 
 #include <api/syscall.h>
 
-void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_context(void);
-
-void __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall);
-void __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall)
+void VISIBLE c_handle_interrupt(int irq, int syscall)
 {
     if (irq == int_unimpl_dev) {
         handleUnimplementedDevice();
@@ -46,7 +44,7 @@ void __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall
     restore_user_context();
 }
 
-void __attribute__((noreturn))
+void NORETURN
 slowpath(syscall_t syscall)
 {
     x86KScurInterrupt = -1;
@@ -61,16 +59,17 @@ slowpath(syscall_t syscall)
     restore_user_context();
 }
 
-void __attribute__((externally_visible)) c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall);
-void __attribute__((externally_visible)) c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
-#ifdef FASTPATH
+#ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);
+        UNREACHABLE();
     } else if (syscall == SysReplyRecv) {
         fastpath_reply_recv(cptr, msgInfo);
+        UNREACHABLE();
     }
-#endif
+#endif /* CONFIG_FASTPATH */
 
     slowpath(syscall);
 }

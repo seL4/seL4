@@ -8,8 +8,8 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __KERNEL_TRAPS_H
-#define __KERNEL_TRAPS_H
+#ifndef __KERNEL_ARM_TRAPS_H
+#define __KERNEL_ARM_TRAPS_H
 
 #include <config.h>
 #include <util.h>
@@ -17,4 +17,4 @@
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 VISIBLE SECTION(".vectors.text");
 
-#endif /* __KERNEL_TRAPS_H */
+#endif /* __KERNEL_ARM_TRAPS_H */
