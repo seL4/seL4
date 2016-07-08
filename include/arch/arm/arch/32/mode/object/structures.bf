@@ -123,16 +123,6 @@ block io_space_capdata {
     field   clientID        16
 }
 
-block io_page_directory_cap (capType, capIOPDIsMapped, capIOPDASID, capIOPDBasePtr) {
-    field_high  capIOPDBasePtr      20
-    padding                         12
-
-    padding                         16
-    field       capIOPDASID         7       -- TK1 has 7-bit ASID
-    field       capIOPDIsMapped     1
-    field       capType             8
-}
-
 block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, capIOPTMappedAddress) {
     field_high  capIOPTBasePtr          20
     padding                             12
@@ -185,8 +175,7 @@ tagged_union cap capType {
     -- we use the same names as for x86 IOMMU caps
 #ifdef CONFIG_ARM_SMMU
     tag io_space_cap            0x1f
-    tag io_page_directory_cap   0x2f
-    tag io_page_table_cap       0x3f
+    tag io_page_table_cap       0x2f
 #endif
 }
 
