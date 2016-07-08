@@ -1094,7 +1094,7 @@ exception_t decodeX86FrameInvocation(
     case X86PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
             if (isIOSpaceFrameCap(cap)) {
-                return decodeX86IOUnMapInvocation(invLabel, length, cte, cap, excaps);
+                return decodeX86IOUnmapInvocation(invLabel, length, cte, cap, excaps);
             } else {
                 setThreadState(ksCurThread, ThreadState_Restart);
                 return performX86PageInvocationUnmap(cap, cte);

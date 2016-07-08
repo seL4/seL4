@@ -435,7 +435,7 @@ void unmapIOPage(cap_t cap)
 }
 
 exception_t
-decodeX86IOUnMapInvocation(
+decodeX86IOUnmapInvocation(
     word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,

@@ -471,7 +471,7 @@ void clearIOPageDirectory(cap_t cap)
 }
 
 exception_t
-decodeARMIOUnMapInvocation(
+decodeARMIOUnmapInvocation(
     word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,
