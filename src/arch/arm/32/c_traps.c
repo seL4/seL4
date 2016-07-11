@@ -15,6 +15,7 @@
 
 #include <api/syscall.h>
 
+/** DONT_TRANSLATE */
 void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
 #ifdef CONFIG_FASTPATH

@@ -17,6 +17,7 @@
 void slowpath(syscall_t syscall)
 VISIBLE NORETURN;
 
+/** DONT_TRANSLATE */
 static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     register word_t badge_reg asm("r0") = badge;
