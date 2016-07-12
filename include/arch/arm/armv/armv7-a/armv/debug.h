@@ -16,6 +16,7 @@
 #include <config.h>
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
+#include <mode/machine/debug.h>
 #include <mode/machine.h> /* MRC/MCR */
 
 #define DBGVCR_RESERVED_BITS_MASK      \

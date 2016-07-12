@@ -30,16 +30,16 @@
 
 typedef enum {
     seL4_NoFault = 0,
-    seL4_CapFault,
-    seL4_VMFault,
-    seL4_UnknownSyscall,
-    seL4_UserException,
+    seL4_CapFault = 1,
+    seL4_UnknownSyscall = 2,
+    seL4_UserException = 3,
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    seL4_DebugException,
+    seL4_DebugException = 4,
 #endif
+    seL4_VMFault = 5,
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     seL4_VGICMaintenance = 6,
-    seL4_VCPUFault,
+    seL4_VCPUFault = 7,
 #endif
     SEL4_FORCE_LONG_ENUM(seL4_FaultType),
 } seL4_FaultType;

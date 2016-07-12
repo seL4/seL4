@@ -16,10 +16,10 @@
  */
 
 /* Unknown syscall exception message. */
-#define SEL4_EXCEPT_IPC_LABEL      3
+#define SEL4_EXCEPT_IPC_LABEL      seL4_UnknownSyscall
 
 /* User exception (such as divide by zero) message. */
-#define SEL4_USER_EXCEPTION_LABEL  4
+#define SEL4_USER_EXCEPTION_LABEL  seL4_UserException
 #define SEL4_USER_EXCEPTION_LENGTH 5
 
 typedef enum {

@@ -107,7 +107,7 @@ block io_space_cap {
     field       capPCIDevice    16
 
     padding                     28
-    field       capType         4 
+    field       capType         4
 }
 
 block io_space_capdata {
@@ -194,7 +194,7 @@ tagged_union cap capType {
     tag reply_cap           8
     tag cnode_cap           10
     tag thread_cap          12
-    -- Do not extend even 4-bit caps types beyond 12, as we use 
+    -- Do not extend even 4-bit caps types beyond 12, as we use
     -- 14 (0xe) to determine which caps are 8-bit.
 
     -- 4-bit tag arch caps
@@ -205,9 +205,9 @@ tagged_union cap capType {
     tag asid_control_cap    9
     tag asid_pool_cap       11
     tag io_space_cap        13
-    -- Do not extend odd 4-bit caps types beyond 13, as we use 
+    -- Do not extend odd 4-bit caps types beyond 13, as we use
     -- 15 (0xf) to determine which caps are 8-bit.
-    
+
     -- 8-bit tag caps
     tag irq_control_cap     0x0e
     tag irq_handler_cap     0x1e
@@ -224,7 +224,7 @@ tagged_union cap capType {
     tag ept_pml4_cap        0x6f
 }
 
----- Arch-independent object types
+---- IA32 specific fault types
 
 block vm_fault {
     field     address           32
@@ -236,14 +236,17 @@ block vm_fault {
 }
 
 tagged_union fault faultType {
+    -- generic faults
     tag null_fault 0
     tag cap_fault 1
-    tag vm_fault 2
-    tag unknown_syscall 3
-    tag user_exception 4
+    tag unknown_syscall 2
+    tag user_exception 3
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    tag debug_exception 5
+    tag debug_exception 4
 #endif
+
+    -- arch specific faults
+    tag vm_fault 5
 }
 
 -- VM attributes

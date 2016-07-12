@@ -31,7 +31,7 @@ const register_t exceptionMessage[] = {
 };
 
 const register_t syscallMessage[] = {
-    EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextIP, ESP, FLAGS
+    EAX, EBX, ECX, EDX, ESI, EDI, EBP, FaultIP, ESP, EFLAGS
 };
 
 #ifdef CONFIG_VTX

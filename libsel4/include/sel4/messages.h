@@ -11,6 +11,7 @@
 #ifndef __LIBSEL4_MESSAGES_H
 #define __LIBSEL4_MESSAGES_H
 
+#include <sel4/types.h>
 #include <sel4/arch/pfIPC.h>   /* format of pagefault ipc */
 #include <sel4/arch/exIPC.h>   /* format of exception ipc */
 #include <sel4/arch/mapping.h> /* format and meaning of errors for mapping invocations */

@@ -11,3 +11,4 @@
 DIRECTORIES += src/api
 
 C_SOURCES += src/api/syscall.c
+C_SOURCES += src/api/faults.c

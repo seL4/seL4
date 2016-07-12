@@ -17,6 +17,7 @@
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
 #define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#define MIN(a,b) (((a)<(b))?(a):(b))
 
 #ifndef __ASSEMBLER__
 
