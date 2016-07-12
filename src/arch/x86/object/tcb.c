@@ -141,53 +141,6 @@ word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
     }
 }
 
-word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
-{
-    assert(n_msgRegisters >= 2);
-
-    switch (current_syscall_error.type) {
-    case seL4_InvalidArgument:
-        setRegister(thread, msgRegisters[0],
-                    current_syscall_error.invalidArgumentNumber);
-        return 1;
-
-    case seL4_InvalidCapability:
-        setRegister(thread, msgRegisters[0],
-                    current_syscall_error.invalidCapNumber);
-        return 1;
-
-    case seL4_IllegalOperation:
-        return 0;
-
-    case seL4_RangeError:
-        setRegister(thread, msgRegisters[0],
-                    current_syscall_error.rangeErrorMin);
-        setRegister(thread, msgRegisters[1],
-                    current_syscall_error.rangeErrorMax);
-        return 2;
-
-    case seL4_AlignmentError:
-        return 0;
-
-    case seL4_FailedLookup:
-        setRegister(thread, msgRegisters[0],
-                    current_syscall_error.failedLookupWasSource ? 1 : 0);
-        return setMRs_lookup_failure(thread, receiveIPCBuffer,
-                                     current_lookup_fault, 1);
-
-    case seL4_TruncatedMessage:
-    case seL4_DeleteFirst:
-    case seL4_RevokeFirst:
-        return 0;
-    case seL4_NotEnoughMemory:
-        setRegister(thread, msgRegisters[0],
-                    current_syscall_error.memoryLeft);
-        return 0;
-    default:
-        fail("Invalid syscall error");
-    }
-}
-
 word_t CONST Arch_decodeTransfer(word_t flags)
 {
     return 0;
