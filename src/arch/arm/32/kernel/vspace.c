@@ -23,7 +23,6 @@
 #include <arch/api/invocation.h>
 #include <arch/kernel/vspace.h>
 #include <arch/linker.h>
-#include <arch/object/tcb.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <armv/context_switch.h>

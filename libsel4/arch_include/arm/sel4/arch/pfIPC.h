@@ -15,7 +15,7 @@
  * This is what pagefault ipc looks like
  * Not a standalone include! include messages.h
  */
-#define SEL4_PFIPC_LABEL              2
+#define SEL4_PFIPC_LABEL              seL4_VMFault
 #define SEL4_PFIPC_LENGTH             4
 
 #define SEL4_PFIPC_FAULT_IP           0

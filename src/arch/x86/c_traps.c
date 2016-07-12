@@ -52,6 +52,7 @@ slowpath(syscall_t syscall)
     ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
+        ksCurThread->tcbArch.tcbContext.registers[FaultIP] = ksCurThread->tcbArch.tcbContext.registers[NextIP];
         handleUnknownSyscall(syscall);
     } else {
         handleSyscall(syscall);

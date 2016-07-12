@@ -28,9 +28,9 @@
 typedef enum {
     seL4_NoFault = 0,
     seL4_CapFault,
-    seL4_VMFault,
     seL4_UnknownSyscall,
     seL4_UserException,
+    seL4_VMFault,
     SEL4_FORCE_LONG_ENUM(seL4_FaultType),
 } seL4_FaultType;
 

@@ -29,7 +29,7 @@ const register_t exceptionMessage[] = {
 };
 
 const register_t syscallMessage[] = {
-    EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextIP, ESP, EFLAGS
+    EAX, EBX, ECX, EDX, ESI, EDI, EBP, FaultIP, ESP, EFLAGS
 };
 
 void Arch_initContext(user_context_t* context)

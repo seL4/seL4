@@ -15,7 +15,6 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-#include <arch/object/tcb.h>
 #include <machine/registerset.h>
 #include <object/cnode.h>
 
@@ -111,7 +110,9 @@ void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 
 exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info);
 word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer);
-
+word_t CONST Arch_decodeTransfer(word_t flags);
+exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src,
+                                       tcb_t *tcb_dest);
 #ifdef CONFIG_DEBUG_BUILD
 void setThreadName(tcb_t *thread, const char *name);
 #endif /* CONFIG_DEBUG_BUILD */

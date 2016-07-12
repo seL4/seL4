@@ -163,7 +163,7 @@ tagged_union cap capType {
     tag io_port_cap         0x1f
 }
 
----- Arch-independent object types
+---- IA32 specific fault types
 
 block vm_fault {
     field     address           32
@@ -175,11 +175,14 @@ block vm_fault {
 }
 
 tagged_union fault faultType {
+    -- generic faults
     tag null_fault 0
     tag cap_fault 1
-    tag vm_fault 2
-    tag unknown_syscall 3
-    tag user_exception 4
+    tag unknown_syscall 2
+    tag user_exception 3
+
+    -- arch specific faults
+    tag vm_fault 4
 }
 
 -- VM attributes

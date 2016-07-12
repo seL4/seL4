@@ -179,7 +179,7 @@ tagged_union cap capType {
 #endif
 }
 
----- Arch-independent object types
+---- Arm specific fault types
 
 block vm_fault {
     field address 32
@@ -212,14 +212,17 @@ block vcpu_fault {
 #endif
 
 tagged_union fault faultType {
+    -- generic faults
     tag null_fault 0
     tag cap_fault 1
-    tag vm_fault 2
-    tag unknown_syscall 3
-    tag user_exception 4
+    tag unknown_syscall 2
+    tag user_exception 3
+
+    -- arch specific faults
+    tag vm_fault 4
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     tag vgic_maintenance 5
-    tag vcpu_fault       6
+    tag vcpu_fault 6
 #endif
 }
 
