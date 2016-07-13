@@ -17,23 +17,6 @@
 #include <arch/object/tcb.h>
 
 static inline unsigned int
-setMR(tcb_t *receiver, word_t* receiveIPCBuffer,
-      unsigned int offset, word_t reg)
-{
-    if (offset >= n_msgRegisters) {
-        if (receiveIPCBuffer) {
-            receiveIPCBuffer[offset + 1] = reg;
-            return offset + 1;
-        } else {
-            return n_msgRegisters;
-        }
-    } else {
-        setRegister(receiver, msgRegisters[offset], reg);
-        return offset + 1;
-    }
-}
-
-static inline unsigned int
 setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
                       lookup_fault_t luf, unsigned int offset)
 {
@@ -150,48 +133,6 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 
     default:
         fail("Invalid fault");
-    }
-}
-
-word_t
-setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
-{
-    switch (current_syscall_error.type) {
-    case seL4_InvalidArgument:
-        return setMR(thread, receiveIPCBuffer, 0,
-                     current_syscall_error.invalidArgumentNumber);
-
-    case seL4_InvalidCapability:
-        return setMR(thread, receiveIPCBuffer, 0,
-                     current_syscall_error.invalidCapNumber);
-
-    case seL4_IllegalOperation:
-        return 0;
-
-    case seL4_RangeError:
-        setMR(thread, receiveIPCBuffer, 0,
-              current_syscall_error.rangeErrorMin);
-        return setMR(thread, receiveIPCBuffer, 1,
-                     current_syscall_error.rangeErrorMax);
-
-    case seL4_AlignmentError:
-        return 0;
-
-    case seL4_FailedLookup:
-        setMR(thread, receiveIPCBuffer, 0,
-              current_syscall_error.failedLookupWasSource ? 1 : 0);
-        return setMRs_lookup_failure(thread, receiveIPCBuffer,
-                                     current_lookup_fault, 1);
-
-    case seL4_TruncatedMessage:
-    case seL4_DeleteFirst:
-    case seL4_RevokeFirst:
-        return 0;
-    case seL4_NotEnoughMemory:
-        return setMR(thread, receiveIPCBuffer, 0,
-                     current_syscall_error.memoryLeft);
-    default:
-        fail("Invalid syscall error");
     }
 }
 
