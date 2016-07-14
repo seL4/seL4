@@ -115,7 +115,6 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     }
 
     tss_ptr_set_esp0(&x86KStss.tss, ((uint32_t)&ksCurThread->tcbArch.tcbContext.registers) + (sizeof(word_t)*n_contextRegisters));
-    cur_thread->tcbArch.tcbContext.registers[EFLAGS] &= ~0x200;
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile(
             "movl %%ecx, %%esp\n"
@@ -125,17 +124,16 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "addl $8, %%esp \n"
             "popl %%fs \n"
             "popl %%gs \n"
-            "addl $20, %%esp \n"
+            "addl $12, %%esp \n"
 #elif defined(CONFIG_FSGSBASE_MSR)
-            "addl $36, %%esp \n"
+            "addl $28, %%esp \n"
 #else
 #error "Invalid method to set IPCBUF/TLS"
 #endif
+            "popl %%edx \n"
+            "movl 8(%%esp), %%ecx \n"
+            "addl $4, %%esp \n"
             "popfl \n"
-            "orl $0x200, 44(%%ecx) \n"
-            "movl 36(%%ecx), %%edx \n"
-            "pop %%ecx \n"
-            "sti \n"
             "sysexit \n"
             :
             : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
@@ -154,17 +152,16 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #if defined(CONFIG_FSGSBASE_GDT)
             "popl %%fs \n"
             "popl %%gs \n"
-            "addl $20, %%esp \n"
+            "addl $12, %%esp \n"
 #elif defined(CONFIG_FSGSBASE_MSR)
-            "addl $28, %%esp \n"
+            "addl $20, %%esp \n"
 #else
 #error "Invalid method to set IPCBUF/TLS"
 #endif
+            "popl %%edx \n"
+            "movl 8(%%esp), %%ecx \n"
+            "addl $4, %%esp \n"
             "popfl \n"
-            "orl $0x200, 44(%%ecx) \n"
-            "movl 36(%%ecx), %%edx \n"
-            "pop %%ecx \n"
-            "sti \n"
             "sysexit \n"
             :
             : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
@@ -178,7 +175,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
        block will return to user level. This loop prevents gcc complaining, and also helps
        it optimize register usage in this function (since gcc knows it can clobber everything
        as it will not be returning or calling anything else */
-    while (1);
+    __builtin_unreachable();
 }
 
 #endif

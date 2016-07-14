@@ -39,7 +39,6 @@ void NORETURN VISIBLE restore_user_context(void)
     }
     /* see if we entered via syscall */
     if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1)) {
-        ksCurThread->tcbArch.tcbContext.registers[EFLAGS] &= ~0x200;
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movl %0, %%esp\n"
@@ -85,15 +84,11 @@ void NORETURN VISIBLE restore_user_context(void)
             "popl %%edx\n"
             // skip cs
             "addl $4,  %%esp\n"
+            "movl 4(%%esp), %%ecx\n"
             "popfl\n"
-            // reset interrupt bit
-            "orl $0x200, -4(%%esp)\n"
-            // restore esp
-            "pop %%ecx\n"
-            "sti\n"
             "sysexit\n"
             :
-            : "r"(&ksCurThread->tcbArch.tcbContext.registers[EAX])
+            : "r"(ksCurThread->tcbArch.tcbContext.registers)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -124,7 +119,7 @@ void NORETURN VISIBLE restore_user_context(void)
 #endif
             "iret\n"
             :
-            : "r"(&ksCurThread->tcbArch.tcbContext.registers[EAX])
+            : "r"(ksCurThread->tcbArch.tcbContext.registers)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
