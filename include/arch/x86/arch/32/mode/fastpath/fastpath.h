@@ -171,11 +171,8 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             : "memory"
         );
     }
-    /* This function is marked NORETURN, but gcc is not aware that the previous assembly
-       block will return to user level. This loop prevents gcc complaining, and also helps
-       it optimize register usage in this function (since gcc knows it can clobber everything
-       as it will not be returning or calling anything else */
-    __builtin_unreachable();
+
+    UNREACHABLE();
 }
 
 #endif
