@@ -12,6 +12,7 @@
 #include <api/failures.h>
 #include <machine/registerset.h>
 #include <object/structures.h>
+#include <arch/object/tcb.h>
 #include <arch/machine.h>
 
 word_t CONST Arch_decodeTransfer(word_t flags)

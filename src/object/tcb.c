@@ -270,7 +270,7 @@ lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info)
 
         lu_ret = lookupSlot(thread, cptr);
         if (lu_ret.status != EXCEPTION_NONE) {
-            current_fault = fault_cap_fault_new(cptr, false);
+            current_fault = seL4_Fault_CapFault_new(cptr, false);
             return lu_ret.status;
         }
 

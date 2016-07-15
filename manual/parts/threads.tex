@@ -23,7 +23,7 @@ or kernel object invocation that do not fit in the architecture-defined message
 registers. While it is not compulsory that a thread has an IPC buffer,
 it will not be able to perform most kernel invocations, as they require
 cap transfer.
-Each thread belongs to exactly one security domain (see 
+Each thread belongs to exactly one security domain (see
 \autoref{sec:domains}).
 %FIXME: there is much more information held in the TCB!
 
@@ -48,7 +48,7 @@ by calling \apifunc{seL4\_TCB\_SetAffinity}{tcb_setaffinity}.
 
 The \apifunc{seL4\_TCB\_Suspend}{tcb_suspend} method deactivates a thread.
 Suspended threads can later be resumed.
-Their suspended state can be retrieved with the 
+Their suspended state can be retrieved with the
 \apifunc{seL4\_TCB\_ReadRegisters}{tcb_readregisters} and
 \apifunc{seL4\_TCB\_CopyRegisters}{tcb_copyregisters} methods.
 They can also be reconfigured and
@@ -113,7 +113,7 @@ The register contents are transferred via the IPC buffer. The IPC buffer locatio
 \ifxeightsix
 \subsubsection{IA-32}
 
-\begin{tabularx}{\textwidth}{p{0.5\textwidth}X}
+\begin{tabularx}{\textwidth}{p{0.4\textwidth}X}
 \toprule
 \textbf{Register} & \textbf{IPC Buffer location} \\
 \midrule
@@ -136,7 +136,7 @@ The register contents are transferred via the IPC buffer. The IPC buffer locatio
 
 \subsubsection{ARM}
 
-\begin{tabularx}{\textwidth}{p{0.5\textwidth}X}
+\begin{tabularx}{\textwidth}{p{0.4\textwidth}X}
 \toprule
 \textbf{Register} & \textbf{IPC Buffer location} \\
 \midrule
@@ -157,8 +157,8 @@ The register contents are transferred via the IPC buffer. The IPC buffer locatio
 A thread's actions may result in a fault. Faults are delivered to the
 thread's exception handler so that it can take the appropriate action.
 The fault type is specified in the message label and is one of:
-seL4\_CapFault, seL4\_VMFault, seL4\_UnknownSyscall, seL4\_UserException,
-seL4\_DebugException or seL4\_Interrupt.
+seL4\_Fault\_CapFault, seL4\_Fault\_VMFault, seL4\_Fault\_UnknownSyscall, seL4\_Fault\_UserException, seL4\_Fault\_DebugException,
+or seL4\_Fault\_NullFault (indicating no fault occured and this is a normal IPC message).
 
 \subsection{Capability Faults}
 
@@ -180,14 +180,14 @@ IPC message are given in \autoref{tbl:ipc_contents}.\\
 \begin{table}[htb]
 \noindent\begin{tabularx}{\textwidth}{XX}
 \toprule
-\textbf{Meaning} & \textbf{IPC buffer Location} \\
+    \textbf{Meaning} & \textbf{ IPC buffer location} \\
 \midrule
-Address at which to restart execution & \ipcbloc{IPCBuffer[0]} \\
-Capability address & \ipcbloc{IPCBuffer[1]}\\
+    Address at which to restart execution & \ipcbloc{seL4\_CapFault\_IP} \\
+    Capability address & \ipcbloc{seL4\_CapFault\_Addr} \\
 In receive phase (1 if the fault happened during a receive system call, 0
-otherwise) & \ipcbloc{IPCBuffer[2]}\\
+    otherwise) & \ipcbloc{seL4\_CapFault\_InRecvPhase} \\
 Lookup failure description. As described in \autoref{sec:lookup_fail_desc} &
-\ipcbloc{IPCBuffer[3..]}\\
+    \ipcbloc{seL4\_CapFault\_LookupFailureType} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:ipc_contents}Contents of an IPC message.}
@@ -215,16 +215,16 @@ tag.
 \subsubsection{ARM}
 
 \begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
+\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
 \toprule
 \textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
 \midrule
-\reg{R0-R7} & (same) & \ipcbloc{IPCBuffer[0-7]} \\
-\reg{FaultInstruction} & (same) & \ipcbloc{IPCBuffer[8]} \\
-\reg{SP} & (same) & \ipcbloc{IPCBuffer[9]} \\
-\reg{LR} & (same) & \ipcbloc{IPCBuffer[10]} \\
-\reg{CPSR} & (same) & \ipcbloc{IPCBuffer[11]} \\
-Syscall number & --- & \ipcbloc{IPCBuffer[12]} \\
+\reg{R0-R7} & (same) & \ipcbloc{seL4\_UnknownSyscall\_R[0-7]} \\
+\reg{FaultInstruction} & (same) & \ipcbloc{seL4\_UnknownSyscall\_FaultIP} \\
+\reg{SP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_SP} \\
+\reg{LR} & (same) & \ipcbloc{seL4\_UnknownSyscall\_LR} \\
+\reg{CPSR} & (same) & \ipcbloc{seL4\_UknownSyscall\_CPSR} \\
+Syscall number & --- & \ipcbloc{seL4\_UnknownSyscall\_Syscall} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:unknown_syscall_result_arm}Unknown system call outcome on
@@ -236,21 +236,21 @@ the ARM architecture.}
 % FIXME: This table now reflows onto the following page with the paragraph after
 % inserted here :(
 \begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
+\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
 \toprule
-\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
+\textbf{Value sent} & \textbf{Reply register} & \textbf{IPC buffer location} \\
 \midrule
-\reg{EAX} & (same) & \ipcbloc{IPCBuffer[0]} \\
-\reg{EBX} & (same) & \ipcbloc{IPCBuffer[1]} \\
-\reg{ECX} & (same) & \ipcbloc{IPCBuffer[2]} \\
-\reg{EDX} & (same) & \ipcbloc{IPCBuffer[3]} \\
-\reg{ESI} & (same) & \ipcbloc{IPCBuffer[4]} \\
-\reg{EDI} & (same) & \ipcbloc{IPCBuffer[5]} \\
-\reg{EBP} & (same) & \ipcbloc{IPCBuffer[6]} \\
-\reg{EIP} & (same) & \ipcbloc{IPCBuffer[7]} \\
-\reg{ESP} & (same) & \ipcbloc{IPCBuffer[8]} \\
-\reg{EFLAGS} & (same) & \ipcbloc{IPCBuffer[9]} \\
-Syscall number & --- & \ipcbloc{IPCBuffer[10]} \\
+\reg{EAX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EAX} \\
+\reg{EBX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EBX} \\
+\reg{ECX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_ECX} \\
+\reg{EDX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EDX} \\
+\reg{ESI} & (same) & \ipcbloc{seL4\_UnknownSyscall\_ESI} \\
+\reg{EDI} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EDI} \\
+\reg{EBP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EBP} \\
+\reg{EIP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_FaultIP} \\
+\reg{ESP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_SP} \\
+\reg{EFLAGS} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EFLAGS} \\
+Syscall number & --- & \ipcbloc{seL4\_UnknownSyscall\_Syscall} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:unknown_syscall_result_ia32}Unknown system call outcome on
@@ -277,15 +277,15 @@ tag.
 \subsubsection{ARM}
 
 \begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
+\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
 \toprule
 \textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
 \midrule
-\reg{FaultInstruction} & (same) & \ipcbloc{IPCBuffer[0]} \\
-\reg{SP} & (same) & \ipcbloc{IPCBuffer[1]} \\
-\reg{CPSR} & (same) & \ipcbloc{IPCBuffer[2]} \\
-Exception number & --- & \ipcbloc{IPCBuffer[3]} \\
-Exception code & --- & \ipcbloc{IPCBuffer[4]} \\
+\reg{FaultInstruction} & (same) & \ipcbloc{seL4\_UserException\_FaultIP} \\
+\reg{SP} & (same) & \ipcbloc{seL4\_UserException\_SP} \\
+\reg{CPSR} & (same) & \ipcbloc{seL4\_UserException\_CPSR} \\
+Exception number & --- & \ipcbloc{seL4\_UserException\_Number} \\
+Exception code & --- & \ipcbloc{seL4\_UserException\_Code} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:user_exception_result_arm}User exception outcome on the ARM
@@ -296,15 +296,15 @@ architecture.}
 \subsubsection{IA-32}
 
 \begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
+\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
 \toprule
 \textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
 \midrule
-\reg{EIP} & (same) & \ipcbloc{IPCBuffer[0]} \\
-\reg{ESP} & (same) & \ipcbloc{IPCBuffer[1]} \\
-\reg{EFLAGS} & (same) & \ipcbloc{IPCBuffer[2]} \\
-Exception number & --- & \ipcbloc{IPCBuffer[3]} \\
-Exception code & --- & \ipcbloc{IPCBuffer[4]} \\
+\reg{EIP} & (same) & \ipcbloc{seL4\_UserException\_FaultIP} \\
+\reg{ESP} & (same) & \ipcbloc{seL4\_UserException\_SP} \\
+\reg{EFLAGS} & (same) & \ipcbloc{seL4\_UserException\_EFLAGS} \\
+Exception number & --- & \ipcbloc{seL4\_UserException\_Number} \\
+Exception code & --- & \ipcbloc{seL4\_UserException\_Code} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:user_exception_result_ia32}User exception outcome on the
@@ -429,36 +429,58 @@ the fault-reply to a single-step debug fault.
 The thread caused a page fault. Replying to the fault IPC will restart
 the thread. The contents of the IPC message are given below.\\
 
-% FIXME This table appears to be unified to make it architecture-independent,
-% but all the other tables are broken down into ARM and IA-32, so this one
-% should be as well for consistency.
-\noindent\begin{tabularx}{\textwidth}{XX}
+\subsubsection{ARM}
+
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
 \toprule
 \textbf{Meaning} & \textbf{IPC buffer location} \\
 \midrule
-Program counter to restart execution at. & \ipcbloc{IPCBuffer[0]} \\
-Address that caused the fault. & \ipcbloc{IPCBuffer[1]} \\
-Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{IPCBuffer[2]}  \\
-Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{IPCBuffer[3]} \\
+    Program counter to restart execution at. & \ipcbloc{seL4\_VMFault\_IP} \\
+Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
+    Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{seL4\_VMFault\_PrefetchFault}  \\
+Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
 \bottomrule
-\end{tabularx}\\ \\
+\end{tabularx}
+\caption{\label{tbl:vm_fault_result_arm} VM Fault outcome on the ARM
+architecture.}
+\end{table}
+
+\ifxeightsix
+\subsubsection{IA-32}
+
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer location} \\
+\midrule
+    Program counter to restart execution at. & \ipcbloc{seL4\_VMFault\_IP} \\
+Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
+    Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{seL4\_VMFault\_PrefetchFault}  \\
+Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:vm_fault_result_ia32} VM fault outcome on the
+IA-32 architecture.}
+\end{table}
+\fi
 
 \section{Domains}
 \label{sec:domains}
 
-Domains are used to isolate independent subsystems, so as to limit 
+Domains are used to isolate independent subsystems, so as to limit
 information flow between them.
-The kernel switches between domains according to a fixed, time-triggered 
+The kernel switches between domains according to a fixed, time-triggered
 schedule.
-The fixed schedule is compiled into the kernel via the constant 
+The fixed schedule is compiled into the kernel via the constant
 \texttt{CONFIG\_NUM\_DOMAINS} and the global variable \texttt{ksDomSchedule}.
 
-A thread belongs to exactly one domain, and will only run when that domain 
+A thread belongs to exactly one domain, and will only run when that domain
 is active.
-The \apifunc{seL4\_DomainSet\_Set}{domainset_set} method changes the domain 
+The \apifunc{seL4\_DomainSet\_Set}{domainset_set} method changes the domain
 of a thread.
 The caller must possess a \obj{Domain} cap and the thread's \obj{TCB} cap.
-The initial thread starts with a \obj{Domain} cap (see 
+The initial thread starts with a \obj{Domain} cap (see
 \autoref{sec:messageinfo}).
 
 

@@ -237,32 +237,32 @@ tagged_union lookup_fault lufType {
 }
 
 -- Fault: size = 8 bytes
-block null_fault {
+block NullFault {
     padding 61
-    field faultType 3
+    field seL4_FaultType 3
 }
 
-block cap_fault {
+block CapFault {
     field address 32
     field inReceivePhase 1
     padding 28
-    field faultType 3
+    field seL4_FaultType 3
 }
 
-block unknown_syscall {
+block UnknownSyscall {
     field syscallNumber 32
     padding 29
-    field faultType 3
+    field seL4_FaultType 3
 }
 
-block user_exception {
+block UserException {
     field number 32
     field code 29
-    field faultType 3
+    field seL4_FaultType 3
 }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-block debug_exception {
+block DebugException {
     field breakpointAddress 32
 
     padding 21
@@ -272,7 +272,7 @@ block debug_exception {
     -- So we just use 4 bits to cater for both.
     field breakpointNumber 4
     field exceptionReason 4
-    field faultType 3
+    field seL4_FaultType 3
 }
 #endif
 

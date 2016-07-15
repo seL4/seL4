@@ -32,7 +32,8 @@ endif
 # Targets
 PRIORITY_TARGETS := include/interfaces/sel4_client.h include/sel4/types_gen.h include/sel4/syscall.h \
 					include/sel4/invocation.h arch_include/${ARCH}/sel4/arch/invocation.h \
-					include/sel4/shared_types_gen.h sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/invocation.h
+					include/sel4/shared_types_gen.h sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/invocation.h \
+					sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/types_gen.h
 TARGETS          := libsel4.a
 
 # Source files required to build the target
@@ -47,7 +48,9 @@ HDRFILES := \
 	$(wildcard $(SOURCE_DIR)/sel4_arch_include/$(SEL4_ARCH)/*) \
 	$(wildcard $(SOURCE_DIR)/sel4_plat_include/$(PLAT)/*) \
 	$(BUILD_DIR)/include/sel4 \
-	$(BUILD_DIR)/include/interfaces  #TODO proper prefix instruction
+	$(BUILD_DIR)/include/interfaces \
+    $(BUILD_DIR)/sel4_arch_include/$(SEL4_ARCH)/*
+#TODO proper prefix instruction
 
 .DEFAULT_GOAL := default
 
@@ -70,13 +73,13 @@ include/sel4/invocation.h: ${SOURCE_DIR}/include/interfaces/sel4.xml
 	@${CHANGED_PATH} $@ ${PYTHON} ${INVOCATION_ID_GEN_PATH} \
 		--xml $< --libsel4 --dest $@
 
-sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/invocation.h: ${SOURCE_DIR}/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml 
+sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/invocation.h: ${SOURCE_DIR}/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} ${SOURCE_DIR}/$@ ${PYTHON} ${INVOCATION_ID_GEN_PATH} \
 		--xml $< --libsel4 --sel4_arch --dest ${SOURCE_DIR}/$@
 
-arch_include/${ARCH}/sel4/arch/invocation.h: ${SOURCE_DIR}/arch_include/${ARCH}/interfaces/sel4arch.xml 
+arch_include/${ARCH}/sel4/arch/invocation.h: ${SOURCE_DIR}/arch_include/${ARCH}/interfaces/sel4arch.xml
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} ${SOURCE_DIR}/$@ ${PYTHON} ${INVOCATION_ID_GEN_PATH} \
@@ -84,7 +87,7 @@ arch_include/${ARCH}/sel4/arch/invocation.h: ${SOURCE_DIR}/arch_include/${ARCH}/
 
 # Header generator
 include/sel4/syscall.h: ${SOURCE_DIR}/include/api/syscall.xsd \
-						${SOURCE_DIR}/include/api/syscall.xml 
+						${SOURCE_DIR}/include/api/syscall.xml
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
 	@${XMLLINT_PATH} --noout --schema $^
@@ -93,6 +96,11 @@ include/sel4/syscall.h: ${SOURCE_DIR}/include/api/syscall.xsd \
 	--libsel4_header $@
 
 include/sel4/%.pbf: ${SOURCE_DIR}/include/sel4/%.bf $(srctree)/include/generated/autoconf.h
+	@echo " [PBF_GEN] $@"
+	@mkdir -p $(dir $@)
+	$(Q)${CPP} ${CPPFLAGS} -P $< > $@
+
+include/sel4/sel4_arch/%.pbf: ${SOURCE_DIR}/sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/types.bf $(srctree)/include/generated/autoconf.h
 	@echo " [PBF_GEN] $@"
 	@mkdir -p $(dir $@)
 	$(Q)${CPP} ${CPPFLAGS} -P $< > $@
@@ -111,6 +119,13 @@ include/sel4/shared_types_gen.h: \
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} $@ ${PYTHON} ${BF_GEN_PATH} --environment libsel4 $< include/sel4/shared_types_gen.h
+
+sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/types_gen.h: \
+		include/sel4/sel4_arch/types.pbf \
+		${BF_GEN_PATH}
+	@echo " [GEN] $@"
+	@mkdir -p $(dir $@)
+	@${CHANGED_PATH} $@ python ${BF_GEN_PATH} --environment libsel4 $< sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/types_gen.h
 
 # Stub generator
 include/interfaces/sel4_client.h: \

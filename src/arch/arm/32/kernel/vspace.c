@@ -1354,7 +1354,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
             return EXCEPTION_FAULT;
         }
 #endif
-        current_fault = fault_vm_fault_new(addr, fault, false);
+        current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
     }
 
@@ -1375,7 +1375,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         if (isDebugFault(fault)) {
             current_fault = handleUserLevelDebugException(pc);
 
-            if (fault_debug_exception_get_exceptionReason(current_fault) == seL4_SingleStep
+            if (seL4_Fault_DebugException_get_exceptionReason(current_fault) == seL4_SingleStep
                     && !singleStepFaultCounterReady(&thread->tcbArch)) {
                 /* Don't send a fault message to the thread yet if we were asked
                  * to step through N instructions and the counter isn't depleted
@@ -1386,7 +1386,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
             return EXCEPTION_FAULT;
         }
 #endif
-        current_fault = fault_vm_fault_new(pc, fault, true);
+        current_fault = seL4_Fault_VMFault_new(pc, fault, true);
         return EXCEPTION_FAULT;
     }
 

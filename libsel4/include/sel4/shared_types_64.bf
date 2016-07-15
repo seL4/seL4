@@ -28,3 +28,12 @@ block seL4_PrioProps {
     field mcp  8
     field prio 8
 }
+
+block cap_rights {
+    padding 32
+
+    padding 29
+    field capAllowGrant 1
+    field capAllowRead 1
+    field capAllowWrite 1
+}

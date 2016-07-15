@@ -18,7 +18,7 @@
 #include <sel4/macros.h>
 #include <sel4/arch/types.h>
 #include <sel4/sel4_arch/types.h>
-#include <sel4/shared_types_gen.h>
+#include <sel4/sel4_arch/types_gen.h>
 #include <sel4/types_gen.h>
 #include <sel4/syscall.h>
 #include <sel4/objecttype.h>
@@ -26,32 +26,8 @@
 #include <sel4/arch/objecttype.h>
 #include <sel4/errors.h>
 #include <sel4/constants.h>
+#include <sel4/shared_types_gen.h>
 #include <sel4/shared_types.h>
-
-typedef enum {
-    seL4_NoFault = 0,
-    seL4_CapFault = 1,
-    seL4_UnknownSyscall = 2,
-    seL4_UserException = 3,
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    seL4_DebugException = 4,
-#endif
-    seL4_VMFault = 5,
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    seL4_VGICMaintenance = 6,
-    seL4_VCPUFault = 7,
-#endif
-    SEL4_FORCE_LONG_ENUM(seL4_FaultType),
-} seL4_FaultType;
-
-typedef enum {
-    seL4_NoFailure = 0,
-    seL4_InvalidRoot,
-    seL4_MissingCapability,
-    seL4_DepthMismatch,
-    seL4_GuardMismatch,
-    SEL4_FORCE_LONG_ENUM(seL4_LookupFailureType),
-} seL4_LookupFailureType;
 
 typedef enum {
     seL4_CanWrite = 0x01,

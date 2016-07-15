@@ -13,7 +13,6 @@
 
 #include <api/objecttype.h>
 #include <config.h>
-#include <arch/api/shared_types_gen.h>
 #include <mode/api/objecttype.h>
 #include <arch/api/objecttype.h>
 

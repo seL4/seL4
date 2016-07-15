@@ -226,27 +226,13 @@ tagged_union cap capType {
 
 ---- IA32 specific fault types
 
-block vm_fault {
+block VMFault {
     field     address           32
     field     FSR               5
     padding                     7
     field     instructionFault  1
     padding                     16
-    field     faultType         3
-}
-
-tagged_union fault faultType {
-    -- generic faults
-    tag null_fault 0
-    tag cap_fault 1
-    tag unknown_syscall 2
-    tag user_exception 3
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    tag debug_exception 4
-#endif
-
-    -- arch specific faults
-    tag vm_fault 5
+    field     seL4_FaultType    3
 }
 
 -- VM attributes
@@ -580,3 +566,5 @@ tagged_union asid_map type {
     tag asid_map_ept 2
 #endif
 }
+
+#include <mode/api/shared_types.bf>

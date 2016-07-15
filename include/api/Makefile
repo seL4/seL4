@@ -9,5 +9,3 @@
 #
 
 DIRECTORIES += api
-
-BF_SOURCES += api/types.bf

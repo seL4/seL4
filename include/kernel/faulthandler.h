@@ -15,6 +15,6 @@
 
 void handleFault(tcb_t *tptr);
 exception_t sendFaultIPC(tcb_t *tptr);
-void handleDoubleFault(tcb_t *tptr, fault_t ex1);
+void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1);
 
 #endif

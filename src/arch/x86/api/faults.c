@@ -1,11 +1,13 @@
 /*
- * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2016, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
  *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(GD_GPL)
+ * @TAG(D61_GPL)
  */
 
 #include <types.h>
@@ -17,7 +19,7 @@
 bool_t Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
 {
     switch (faultType) {
-    case fault_vm_fault:
+    case seL4_Fault_VMFault:
         return true;
 
     default:
@@ -29,14 +31,14 @@ word_t
 Arch_setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer, word_t faultType)
 {
     switch (faultType) {
-    case fault_vm_fault: {
-        setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
-        setMR(receiver, receiveIPCBuffer, 1,
-              fault_vm_fault_get_address(sender->tcbFault));
-        setMR(receiver, receiveIPCBuffer, 2,
-              fault_vm_fault_get_instructionFault(sender->tcbFault));
-        return setMR(receiver, receiveIPCBuffer, 3,
-                     fault_vm_fault_get_FSR(sender->tcbFault));
+    case seL4_Fault_VMFault: {
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, getRestartPC(sender));
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_Addr,
+              seL4_Fault_VMFault_get_address(sender->tcbFault));
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_PrefetchFault,
+              seL4_Fault_VMFault_get_instructionFault(sender->tcbFault));
+        return setMR(receiver, receiveIPCBuffer, seL4_VMFault_FSR,
+                     seL4_Fault_VMFault_get_FSR(sender->tcbFault));
     }
     default:
         fail("Invalid fault");

@@ -1083,7 +1083,7 @@ isDebugFault(word_t hsr_or_fsr)
  * @param fault_vaddr The instruction vaddr which triggered the exception, as
  *                    extracted by the kernel.
  */
-fault_t
+seL4_Fault_t
 handleUserLevelDebugException(word_t fault_vaddr)
 {
 #ifdef TRACK_KERNEL_ENTRIES
@@ -1093,7 +1093,7 @@ handleUserLevelDebugException(word_t fault_vaddr)
 
     word_t method_of_entry = getMethodOfEntry();
     int i, active_bp;
-    fault_t ret;
+    seL4_Fault_t ret;
     word_t bp_reason, bp_vaddr;
 
     switch (method_of_entry) {
@@ -1161,7 +1161,7 @@ handleUserLevelDebugException(word_t fault_vaddr)
         /* Convert the hardware BP num back into an API-ID */
         active_bp = getBpNumFromType(active_bp, bp_reason);
     }
-    ret = fault_debug_exception_new(bp_vaddr, active_bp, bp_reason);
+    ret = seL4_Fault_DebugException_new(bp_vaddr, active_bp, bp_reason);
     return ret;
 }
 

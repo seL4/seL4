@@ -9,6 +9,7 @@
  */
 
 #include <config.h>
+#include <arch/api/constants.h>
 #include <arch/machine/registerset.h>
 #include <arch/machine/fpu.h>
 #include <arch/object/structures.h>
@@ -27,11 +28,22 @@ const register_t gpRegisters[] = {
 };
 
 const register_t exceptionMessage[] = {
-    FaultIP, ESP, FLAGS
+    [seL4_UserException_FaultIP] = FaultIP,
+    [seL4_UserException_SP] = ESP,
+    [seL4_UserException_FLAGS] = FLAGS
 };
 
 const register_t syscallMessage[] = {
-    EAX, EBX, ECX, EDX, ESI, EDI, EBP, FaultIP, ESP, EFLAGS
+    [seL4_UnknownSyscall_EAX] = EAX,
+    [seL4_UnknownSyscall_EBX] = EBX,
+    [seL4_UnknownSyscall_ECX] = ECX,
+    [seL4_UnknownSyscall_EDX] = EDX,
+    [seL4_UnknownSyscall_ESI] = ESI,
+    [seL4_UnknownSyscall_EDI] = EDI,
+    [seL4_UnknownSyscall_EBP] = EBP,
+    [seL4_UnknownSyscall_FaultIP] = FaultIP,
+    [seL4_UnknownSyscall_SP] = ESP,
+    [seL4_UnknownSyscall_FLAGS] = FLAGS
 };
 
 #ifdef CONFIG_VTX

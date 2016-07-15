@@ -119,7 +119,6 @@ slowpath(syscall_t syscall)
         ksKernelEntry.path = Entry_UnknownSyscall;
         /* ksKernelEntry.word word is already set to syscall */
 #endif /* TRACK_KERNEL_ENTRIES */
-        ksCurThread->tcbArch.tcbContext.registers[FaultIP] = ksCurThread->tcbArch.tcbContext.registers[NextIP];
         handleUnknownSyscall(syscall);
     } else {
 #ifdef TRACK_KERNEL_ENTIRES
