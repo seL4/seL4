@@ -181,7 +181,7 @@ tagged_union cap capType {
 
 ---- Arm specific fault types
 
-block vm_fault {
+block VMFault {
     field address 32
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     field FSR 26
@@ -192,39 +192,24 @@ block vm_fault {
     field instructionFault 1
     padding 14
 #endif
-    field faultType 3
+    field seL4_FaultType 3
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-block vgic_maintenance {
+block VGICMaintenance {
     field idx        6
     field idxValid   1
     padding         25
     padding         29
-    field faultType  3
+    field seL4_FaultType  3
 }
 
-block vcpu_fault {
+block VCPUFault {
     field hsr       32
     padding         29
-    field faultType  3
+    field seL4_FaultType  3
 }
 #endif
-
-tagged_union fault faultType {
-    -- generic faults
-    tag null_fault 0
-    tag cap_fault 1
-    tag unknown_syscall 2
-    tag user_exception 3
-
-    -- arch specific faults
-    tag vm_fault 4
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    tag vgic_maintenance 5
-    tag vcpu_fault 6
-#endif
-}
 
 ---- ARM-specific object types
 
@@ -481,3 +466,5 @@ block vm_attributes {
     field armParityEnabled 1
     field armPageCacheable 1
 }
+
+#include <mode/api/shared_types.bf>

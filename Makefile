@@ -282,6 +282,8 @@ endif
 
 # Only set CFLAGS if we're building standalone.
 # common/Makefile.Flags sets NK_CFLAGS  in Kbuild environments.
+#
+# This entire block is not executed if building a stand alone kernel!
 ifndef NK_CFLAGS
 STATICHEADERS += autoconf.h
 DEFINES += -DHAVE_AUTOCONF
@@ -297,6 +299,7 @@ DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 DEFINES += -DARCH_ARM
 ifeq (${SEL4_ARCH}, aarch32)
 DEFINES += -D__KERNEL_32__ -DAARCH32
+TYPE_SUFFIX:=32
 export __ARM_32__ = y
 ifeq (${CPU},cortex-a7)
 DEFINES += -DARM_CORTEX_A7
@@ -358,7 +361,8 @@ ifeq (${ARCH}, x86)
 CFLAGS += -m32
 ASFLAGS += -Wa,--32
 DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32 -D__KERNEL_32__
-LDFLAGS += -Wl,-m,elf_i386 
+LDFLAGS += -Wl,-m,elf_i386
+TYPE_SUFFIX:=32
 export __X86_32__ = y
 endif # ARCH=x86
 else # NK_CFLAGS

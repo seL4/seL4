@@ -9,4 +9,3 @@
 #
 
 include ${SOURCE_ROOT}/include/arch/$(ARCH)/arch/object/Makefile
-include ${SOURCE_ROOT}/include/arch/$(ARCH)/arch/api/Makefile

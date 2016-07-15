@@ -205,7 +205,7 @@ struct tcb {
     notification_t *tcbBoundNotification;
 
     /* Current fault, 8 bytes */
-    fault_t tcbFault;
+    seL4_Fault_t tcbFault;
 
     /* Current lookup failure, 8 bytes */
     lookup_fault_t tcbLookupFailure;

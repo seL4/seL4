@@ -476,7 +476,7 @@ depend on this.
 A CSpace CPTR root (within which a capability was to be looked up)
 is invalid. For example, the capability is not a \obj{CNode} cap.\\  \\
 
-\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\begin{tabularx}{\textwidth}{XX}
   \toprule
   Data & Meaning \\
   \midrule
@@ -489,12 +489,12 @@ is invalid. For example, the capability is not a \obj{CNode} cap.\\  \\
 A capability required for an invocation is not present or does not
 have sufficient rights. \\ \\
 
-\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\begin{tabularx}{\textwidth}{XX}
   \toprule
   Data & Meaning \\
   \midrule
   \ipcbloc{Offset + 0} & \enummem{seL4\_MissingCapability} \\
-  \ipcbloc{Offset + 1} & Bits left \\
+    \ipcbloc{Offset + seL4\_CapFault\_BitsLeft} & Bits left \\
   \bottomrule
 \end{tabularx}
 
@@ -504,13 +504,13 @@ When resolving a capability, a CNode was traversed that resolved more
 bits than was left to decode in the CPTR or a non-CNode capability was
 encountered while there were still bits remaining to be looked up. \\ \\
 
-\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\begin{tabularx}{\textwidth}{XX}
   \toprule
   Data & Meaning \\
   \midrule
   \ipcbloc{Offset + 0} & \enummem{seL4\_DepthMismatch} \\
-  \ipcbloc{Offset + 1} & Bits of CPTR remaining to decode \\
-  \ipcbloc{Offset + 2} & Bits that the current CNode being traversed resolved \\
+  \ipcbloc{Offset + seL4\_CapFault\_BitsLeft} & Bits of CPTR remaining to decode \\
+  \ipcbloc{Offset + seL4\_CapFault\_DepthMismatch\_BitsFound} & Bits that the current CNode being traversed resolved \\
   \bottomrule
 \end{tabularx}
 
@@ -520,14 +520,14 @@ When resolving a capability, a CNode was traversed with a guard size
 larger than the number of bits remaining or the CNode's guard did not
 match the next bits of the CPTR being resolved. \\ \\
 
-\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\begin{tabularx}{\textwidth}{XX}
   \toprule
   Data & Meaning \\
   \midrule
   \ipcbloc{Offset + 0} & \enummem{seL4\_GuardMismatch} \\
-  \ipcbloc{Offset + 1} & Bits of CPTR remaining to decode \\
-  \ipcbloc{Offset + 2} & The CNode's guard \\
-  \ipcbloc{Offset + 3} & The CNode's guard size \\
+    \ipcbloc{Offset + seL4\_CapFault\_BitsLeft} & Bits of CPTR remaining to decode \\
+  \ipcbloc{Offset + seL4\_CapFault\_GuardMismatch\_GuardFound} & The CNode's guard \\
+  \ipcbloc{Offset + seL4\_CapFault\_GuardMismatch\_BitsFound} & The CNode's guard size \\
   \bottomrule
 \end{tabularx}
 

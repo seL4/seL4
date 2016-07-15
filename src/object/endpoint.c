@@ -94,7 +94,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         attemptSwitchTo(dest);
 
         if (do_call ||
-                fault_ptr_get_faultType(&thread->tcbFault) != fault_null_fault) {
+                seL4_Fault_ptr_get_seL4_FaultType(&thread->tcbFault) != seL4_Fault_NullFault) {
             if (canGrant) {
                 setupCallerCap(thread, dest);
             } else {
@@ -182,7 +182,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
             if (do_call ||
-                    fault_get_faultType(sender->tcbFault) != fault_null_fault) {
+                    seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
                 if (canGrant) {
                     setupCallerCap(sender, thread);
                 } else {
@@ -258,7 +258,7 @@ cancelIPC(tcb_t *tptr)
     case ThreadState_BlockedOnReply: {
         cte_t *slot, *callerCap;
 
-        fault_null_fault_ptr_new(&tptr->tcbFault);
+        seL4_Fault_NullFault_ptr_new(&tptr->tcbFault);
 
         /* Get the reply cap slot */
         slot = TCB_PTR_CTE_PTR(tptr, tcbReply);

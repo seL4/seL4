@@ -14,6 +14,15 @@
 #include <api/syscall.h>
 #include <kernel/thread.h>
 
+/* consistency with libsel4 */
+compile_assert(InvalidRoot, lookup_fault_invalid_root + 1 == seL4_InvalidRoot);
+compile_assert(MissingCapability, lookup_fault_missing_capability + 1 == seL4_MissingCapability);
+compile_assert(DepthMismatch, lookup_fault_depth_mismatch + 1 == seL4_DepthMismatch);
+compile_assert(GuardMismatch, lookup_fault_guard_mismatch + 1 == seL4_GuardMismatch);
+compile_assert(seL4_UnknownSyscall_Syscall, (word_t) n_syscallMessage == seL4_UnknownSyscall_Syscall);
+compile_assert(seL4_UserException_Number, (word_t) n_exceptionMessage == seL4_UserException_Number);
+compile_assert(seL4_UserException_Code, (word_t) n_exceptionMessage + 1 == seL4_UserException_Code);
+
 static inline unsigned int
 setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
                       lookup_fault_t luf, unsigned int offset)
@@ -22,6 +31,16 @@ setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
     word_t i;
 
     i = setMR(receiver, receiveIPCBuffer, offset, lufType + 1);
+
+    /* check constants match libsel4 */
+    if (offset == seL4_CapFault_LookupFailureType) {
+        assert(offset + 1 == seL4_CapFault_BitsLeft);
+        assert(offset + 2 == seL4_CapFault_DepthMismatch_BitsFound);
+        assert(offset + 2 == seL4_CapFault_GuardMismatch_GuardFound);
+        assert(offset + 3 == seL4_CapFault_GuardMismatch_BitsFound);
+    } else {
+        assert(offset == 1);
+    }
 
     switch (lufType) {
     case lookup_fault_invalid_root:
@@ -96,61 +115,61 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
     seL4_MessageInfo_t tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));
     word_t label = seL4_MessageInfo_get_label(tag);
     word_t length = seL4_MessageInfo_get_length(tag);
-    fault_t fault = receiver->tcbFault;
+    seL4_Fault_t fault = receiver->tcbFault;
 
-    switch (fault_get_faultType(fault)) {
-    case fault_cap_fault:
+    switch (seL4_Fault_get_seL4_FaultType(fault)) {
+    case seL4_Fault_CapFault:
         return true;
 
-    case fault_unknown_syscall:
+    case seL4_Fault_UnknownSyscall:
         copyMRsFaultReply(sender, receiver, syscallMessage, MIN(length, n_syscallMessage));
         return (label == 0);
 
-    case fault_user_exception:
+    case seL4_Fault_UserException:
         copyMRsFaultReply(sender, receiver, exceptionMessage, MIN(length, n_exceptionMessage));
         return (label == 0);
 
     default:
-        return Arch_handleFaultReply(receiver, sender, fault_get_faultType(fault));
+        return Arch_handleFaultReply(receiver, sender, seL4_Fault_get_seL4_FaultType(fault));
     }
 }
 
 word_t
 setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 {
-    switch (fault_get_faultType(sender->tcbFault)) {
-    case fault_cap_fault:
+    switch (seL4_Fault_get_seL4_FaultType(sender->tcbFault)) {
+    case seL4_Fault_CapFault:
         setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
         setMR(receiver, receiveIPCBuffer, 1u,
-              fault_cap_fault_get_address(sender->tcbFault));
+              seL4_Fault_CapFault_get_address(sender->tcbFault));
         setMR(receiver, receiveIPCBuffer, 2u,
-              fault_cap_fault_get_inReceivePhase(sender->tcbFault));
+              seL4_Fault_CapFault_get_inReceivePhase(sender->tcbFault));
         return setMRs_lookup_failure(receiver, receiveIPCBuffer,
                                      sender->tcbLookupFailure, 3u);
 
-    case fault_unknown_syscall: {
+    case seL4_Fault_UnknownSyscall: {
         copyMRsFault(sender, receiver, syscallMessage, n_syscallMessage,
                      receiveIPCBuffer);
 
         if (receiveIPCBuffer) {
             return setMR(receiver, receiveIPCBuffer, n_syscallMessage,
-                         fault_unknown_syscall_get_syscallNumber(sender->tcbFault));
+                         seL4_Fault_UnknownSyscall_get_syscallNumber(sender->tcbFault));
         } else {
             return n_msgRegisters;
         }
     }
 
-    case fault_user_exception: {
+    case seL4_Fault_UserException: {
         copyMRsFault(sender, receiver, exceptionMessage,
                      n_exceptionMessage, receiveIPCBuffer);
         setMR(receiver, receiveIPCBuffer, n_exceptionMessage,
-              fault_user_exception_get_number(sender->tcbFault));
+              seL4_Fault_UserException_get_number(sender->tcbFault));
         return setMR(receiver, receiveIPCBuffer, n_exceptionMessage + 1u,
-                     fault_user_exception_get_code(sender->tcbFault));
+                     seL4_Fault_UserException_get_code(sender->tcbFault));
     }
 
     default:
         return Arch_setMRs_fault(sender, receiver, receiveIPCBuffer,
-                                 fault_get_faultType(sender->tcbFault));
+                                 seL4_Fault_get_seL4_FaultType(sender->tcbFault));
     }
 }

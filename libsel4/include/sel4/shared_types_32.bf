@@ -18,3 +18,11 @@ block seL4_MessageInfo {
     field extraCaps 2
     field length 7
 }
+
+-- Cap rights
+block cap_rights {
+    padding 29
+    field capAllowGrant 1
+    field capAllowRead 1
+    field capAllowWrite 1
+}

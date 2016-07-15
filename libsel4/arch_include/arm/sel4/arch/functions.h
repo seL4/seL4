@@ -20,18 +20,6 @@ seL4_GetIPCBuffer(void)
     return *(seL4_IPCBuffer**)seL4_GlobalsFrame;
 }
 
-static inline seL4_MessageInfo_t
-seL4_GetTag(void)
-{
-    return seL4_GetIPCBuffer()->tag;
-}
-
-static inline void
-seL4_SetTag(seL4_MessageInfo_t tag)
-{
-    seL4_GetIPCBuffer()->tag = tag;
-}
-
 static inline seL4_Word
 seL4_GetMR(int i)
 {

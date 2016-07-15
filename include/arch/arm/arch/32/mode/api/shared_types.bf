@@ -1,1 +1,1 @@
-../../../../../../../libsel4/include/sel4/shared_types_32.bf
+../../../../../../../libsel4/sel4_arch_include/aarch32/sel4/sel4_arch/shared_types_32.bf

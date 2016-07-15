@@ -12,16 +12,7 @@
 #define __LIBSEL4_ARCH_DEPRECATED_H
 
 #include <autoconf.h>
-#include <sel4/types.h>
-#include <sel4/arch/syscalls.h>
-
-#ifdef CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS
-static inline seL4_MessageInfo_t __attribute__((deprecated("Use seL4_ReplyRecvWithMRs")))
-seL4_ReplyWaitWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
-                      seL4_Word *mr0, seL4_Word *mr1)
-{
-    return seL4_ReplyRecvWithMRs(src, msgInfo, sender, mr0, mr1);
-}
-#endif /* CONFIG_LIB_SEL4_HAVE_REGISTER_STUBS */
+#include <sel4/macros.h>
+#include <sel4/sel4_arch/deprecated.h>
 
 #endif /* __SEL4_ARCH_DEPRECATED_H__ */

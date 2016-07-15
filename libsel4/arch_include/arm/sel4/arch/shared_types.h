@@ -8,9 +8,12 @@
  * @TAG(NICTA_BSD)
  */
 
-#ifndef __LIBSEL4_ARCH_EXCEPTION_IPC
-#define __LIBSEL4_ARCH_EXCEPTION_IPC
+#ifndef __LIBSEL4_ARCH_CONSTANTS_H
+#define __LIBSEL4_ARCH_CONSTANTS_H
 
-#include <sel4/sel4_arch/exIPC.h>
+#include <sel4/sel4_arch/constants.h>
+
+#include <sel4/sel4_arch/objecttype.h>
+#include <sel4/arch/objecttype.h>
 
 #endif

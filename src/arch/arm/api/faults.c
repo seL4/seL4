@@ -19,7 +19,7 @@ bool_t
 Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
 {
     switch (faultType) {
-    case fault_vm_fault:
+    case seL4_Fault_VMFault:
         return true;
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -37,33 +37,33 @@ word_t
 Arch_setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer, word_t faultType)
 {
     switch (faultType) {
-    case fault_vm_fault: {
+    case seL4_Fault_VMFault: {
         if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
             word_t ipa, va;
             va = getRestartPC(sender);
             ipa = (addressTranslateS1CPR(va) & ~MASK(PAGE_BITS)) | (va & MASK(PAGE_BITS));
-            setMR(receiver, receiveIPCBuffer, 0, ipa);
+            setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, ipa);
         } else {
-            setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
+            setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, getRestartPC(sender));
         }
-        setMR(receiver, receiveIPCBuffer, 1,
-              fault_vm_fault_get_address(sender->tcbFault));
-        setMR(receiver, receiveIPCBuffer, 2,
-              fault_vm_fault_get_instructionFault(sender->tcbFault));
-        return setMR(receiver, receiveIPCBuffer, 3,
-                     fault_vm_fault_get_FSR(sender->tcbFault));
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_Addr,
+              seL4_Fault_VMFault_get_address(sender->tcbFault));
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_PrefetchFault,
+              seL4_Fault_VMFault_get_instructionFault(sender->tcbFault));
+        return setMR(receiver, receiveIPCBuffer, seL4_VMFault_FSR,
+                     seL4_Fault_VMFault_get_FSR(sender->tcbFault));
     }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case fault_vgic_maintenance:
         if (fault_vgic_maintenance_get_idxValid(sender->tcbFault)) {
-            return setMR(receiver, receiveIPCBuffer, 0,
+            return setMR(receiver, receiveIPCBuffer, seL4_VGICMaintenance_IDX,
                          fault_vgic_maintenance_get_idx(sender->tcbFault));
         } else {
-            return setMR(receiver, receiveIPCBuffer, 0, -1);
+            return setMR(receiver, receiveIPCBuffer, seL4_VGICMaintenance_IDX, -1);
         }
     case fault_vcpu_fault:
-        return setMR(receiver, receiveIPCBuffer, 0, fault_vcpu_fault_get_hsr(sender->tcbFault));
+        return setMR(receiver, receiveIPCBuffer, seL4_VCPUFault_HSR, fault_vcpu_fault_get_hsr(sender->tcbFault));
 #endif
 
     default:

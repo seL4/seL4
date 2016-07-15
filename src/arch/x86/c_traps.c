@@ -49,12 +49,13 @@ slowpath(syscall_t syscall)
 {
     x86KScurInterrupt = -1;
     /* increment NextIP to skip sysenter */
-    ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
         ksCurThread->tcbArch.tcbContext.registers[FaultIP] = ksCurThread->tcbArch.tcbContext.registers[NextIP];
+        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
         handleUnknownSyscall(syscall);
     } else {
+        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
         handleSyscall(syscall);
     }
     restore_user_context();

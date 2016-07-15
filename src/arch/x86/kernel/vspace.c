@@ -536,11 +536,11 @@ exception_t handleVMFault(tcb_t* thread, vm_fault_type_t vm_faultType)
 
     switch (vm_faultType) {
     case X86DataFault:
-        current_fault = fault_vm_fault_new(addr, fault, false);
+        current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
 
     case X86InstructionFault:
-        current_fault = fault_vm_fault_new(addr, fault, true);
+        current_fault = seL4_Fault_VMFault_new(addr, fault, true);
         return EXCEPTION_FAULT;
 
     default:

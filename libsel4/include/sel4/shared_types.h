@@ -23,4 +23,16 @@ typedef struct seL4_IPCBuffer_ {
     seL4_Word receiveDepth;
 } seL4_IPCBuffer __attribute__ ((__aligned__ (sizeof(struct seL4_IPCBuffer_))));
 
+enum {
+    seL4_CapFault_IP,
+    seL4_CapFault_Addr,
+    seL4_CapFault_InRecvPhase,
+    seL4_CapFault_LookupFailureType,
+    seL4_CapFault_BitsLeft,
+    seL4_CapFault_DepthMismatch_BitsFound,
+    seL4_CapFault_GuardMismatch_GuardFound = seL4_CapFault_DepthMismatch_BitsFound,
+    seL4_CapFault_GuardMismatch_BitsFound,
+    SEL4_FORCE_LONG_ENUM(seL4_CapFault_Msg),
+} seL4_CapFault_Msg;
+
 #endif

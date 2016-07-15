@@ -1396,7 +1396,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         addr = getFAR();
         fault = getDFSR();
 #endif
-        current_fault = fault_vm_fault_new(addr, fault, false);
+        current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
     }
 
@@ -1412,7 +1412,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 #else
         fault = getIFSR();
 #endif
-        current_fault = fault_vm_fault_new(pc, fault, true);
+        current_fault = seL4_Fault_VMFault_new(pc, fault, true);
         return EXCEPTION_FAULT;
     }
 
