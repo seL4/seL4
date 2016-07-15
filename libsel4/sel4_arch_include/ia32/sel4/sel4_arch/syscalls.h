@@ -463,7 +463,7 @@ seL4_Yield(void)
     );
 }
 
-#if defined(SEL4_DEBUG_KERNEL)
+#if defined(CONFIG_DEBUG_BUILD)
 static inline void
 seL4_DebugPutChar(char c)
 {
@@ -482,7 +482,7 @@ seL4_DebugPutChar(char c)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_DEBUG_BUILD
 static inline void
 seL4_DebugHalt(void)
 {
@@ -500,7 +500,7 @@ seL4_DebugHalt(void)
 }
 #endif
 
-#if defined(SEL4_DEBUG_KERNEL)
+#if defined(CONFIG_DEBUG_BUILD)
 static inline void
 seL4_DebugSnapshot(void)
 {
@@ -518,7 +518,7 @@ seL4_DebugSnapshot(void)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_DEBUG_BUILD
 static inline seL4_Uint32
 seL4_DebugCapIdentify(seL4_CPtr cap)
 {
@@ -535,9 +535,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
     );
     return (seL4_Uint32)cap;
 }
-#endif
 
-#ifdef CONFIG_PRINTING
 char *strcpy(char *, const char *);
 static inline void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name)

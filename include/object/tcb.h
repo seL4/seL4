@@ -19,7 +19,7 @@
 #include <machine/registerset.h>
 #include <object/cnode.h>
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
 /* Maximum length of the tcb name, including null terminator */
 #define TCB_NAME_LENGTH (BIT(seL4_TCBBits) - BIT(seL4_TCBBits) - sizeof(tcb_t))
 #endif
@@ -112,8 +112,8 @@ void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info);
 word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer);
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
 void setThreadName(tcb_t *thread, const char *name);
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 
 #endif

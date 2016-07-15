@@ -103,7 +103,7 @@ handleUnknownSyscall(word_t w)
     benchmark_utilisation_kentry_stamp();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugNameThread) {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
          * then assume the system is completely misconfigured and halt */
@@ -130,7 +130,7 @@ handleUnknownSyscall(word_t w)
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return EXCEPTION_NONE;
     }
-#endif /* CONFIG_PRINTING */
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef DANGEROUS_CODE_INJECTION
     if (w == SysDebugRun) {

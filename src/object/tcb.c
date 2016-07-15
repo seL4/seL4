@@ -1095,7 +1095,7 @@ invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr)
     return EXCEPTION_NONE;
 }
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
 void
 setThreadName(tcb_t *tcb, const char *name)
 {

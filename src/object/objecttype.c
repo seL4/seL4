@@ -520,11 +520,11 @@ createObject(object_t t, void *regionBase, word_t userSize)
         tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
         tcb->tcbDomain = ksCurDomain;
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
         strlcpy(tcb->tcbName, "child of: '", TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, ksCurThread->tcbName, TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, "'", TCB_NAME_LENGTH);
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 
         return cap_thread_cap_new(TCB_REF(tcb));
     }

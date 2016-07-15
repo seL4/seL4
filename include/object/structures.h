@@ -236,10 +236,10 @@ struct tcb {
     benchmark_util_t benchmark;
 #endif
 
-#if defined(CONFIG_PRINTING)
+#ifdef CONFIG_DEBUG_BUILD
     /* Use any remaining space for a thread name */
     char tcbName[];
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 };
 typedef struct tcb tcb_t;
 

@@ -110,6 +110,16 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define ANSI_GREEN ANSI_RESET ""
 #define ANSI_DARK  ANSI_RESET ""
 #endif
+
+/*
+ * thread name is only available if the kernel is built in debug mode.
+ */
+#ifdef CONFIG_DEBUG_BUILD
+#define THREAD_NAME ksCurThread->tcbName
+#else
+#define THREAD_NAME ""
+#endif
+
 /*
  * Print to serial a message helping userspace programmers to determine why the
  * kernel is not performing their requested operation.
@@ -118,7 +128,8 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
     do {                                                                     \
         printf(ANSI_DARK "<<" ANSI_GREEN "seL4" ANSI_DARK                    \
                 " [%s/%d T%p \"%s\" @%lx]: ",                                \
-                __func__, __LINE__, ksCurThread, ksCurThread->tcbName,       \
+                __func__, __LINE__, ksCurThread,                             \
+                THREAD_NAME,                                                 \
                 (word_t)getRestartPC(ksCurThread));                          \
         printf(__VA_ARGS__);                                                 \
         printf(">>" ANSI_RESET "\n");                                        \
