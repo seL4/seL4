@@ -567,4 +567,4 @@ tagged_union asid_map type {
 #endif
 }
 
-#include <mode/api/shared_types.bf>
+#include <mode/api/arch_shared_types.bf>

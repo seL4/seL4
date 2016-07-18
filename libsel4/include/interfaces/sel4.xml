@@ -123,7 +123,7 @@
 			<param dir="in" name="src_root" type="seL4_CNode"/>
 			<param dir="in" name="src_index" type="seL4_Word"/>
 			<param dir="in" name="src_depth" type="seL4_Uint8"/>
-			<param dir="in" name="rights" type="seL4_CapRights"/>
+			<param dir="in" name="rights" type="seL4_CapRights_t"/>
 		</method>
 		<method id="CNodeMint" name="Mint">
 			<param dir="in" name="dest_index" type="seL4_Word"/>
@@ -131,7 +131,7 @@
 			<param dir="in" name="src_root" type="seL4_CNode"/>
 			<param dir="in" name="src_index" type="seL4_Word"/>
 			<param dir="in" name="src_depth" type="seL4_Uint8"/>
-			<param dir="in" name="rights" type="seL4_CapRights"/>
+			<param dir="in" name="rights" type="seL4_CapRights_t"/>
 			<param dir="in" name="badge" type="seL4_CapData_t"/>
 		</method>
 		<method id="CNodeMove" name="Move">

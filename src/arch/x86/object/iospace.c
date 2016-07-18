@@ -323,7 +323,7 @@ decodeX86IOMapInvocation(
     paddr_t    paddr;
     lookupIOPTSlot_ret_t lu_ret;
     vm_rights_t frame_cap_rights;
-    cap_rights_t dma_cap_rights_mask;
+    seL4_CapRights_t dma_cap_rights_mask;
 
     if (excaps.excaprefs[0] == NULL || length < 2) {
         userError("X86PageMapIO: Truncated message.");
@@ -390,8 +390,8 @@ decodeX86IOMapInvocation(
     dma_cap_rights_mask = rightsFromWord(getSyscallArg(0, buffer));
     frame_cap_rights    = cap_frame_cap_get_capFVMRights(cap);
 
-    bool_t write = cap_rights_get_capAllowWrite(dma_cap_rights_mask) && (frame_cap_rights == VMReadWrite);
-    bool_t read = cap_rights_get_capAllowRead(dma_cap_rights_mask) && (frame_cap_rights != VMKernelOnly);
+    bool_t write = seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask) && (frame_cap_rights == VMReadWrite);
+    bool_t read = seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) && (frame_cap_rights != VMKernelOnly);
     if (write || read) {
         iopte = vtd_pte_new(paddr, !!write, !!read);
     } else {

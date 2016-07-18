@@ -25,7 +25,8 @@ block seL4_PrioProps {
     field prio 8
 }
 
-block cap_rights {
+-- Cap rights
+block seL4_CapRights {
     padding 29
     field capAllowGrant 1
     field capAllowRead 1

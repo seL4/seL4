@@ -29,7 +29,7 @@ block seL4_PrioProps {
     field prio 8
 }
 
-block cap_rights {
+block seL4_CapRights {
     padding 32
 
     padding 29

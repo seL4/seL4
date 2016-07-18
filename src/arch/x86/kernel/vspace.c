@@ -658,13 +658,13 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
     return EXCEPTION_NONE;
 }
 
-vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask)
+vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
-    if (vm_rights == VMReadOnly && cap_rights_get_capAllowRead(cap_rights_mask)) {
+    if (vm_rights == VMReadOnly && seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
     }
-    if (vm_rights == VMReadWrite && cap_rights_get_capAllowRead(cap_rights_mask)) {
-        if (!cap_rights_get_capAllowWrite(cap_rights_mask)) {
+    if (vm_rights == VMReadWrite && seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+        if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
         } else {
             return VMReadWrite;

@@ -492,4 +492,4 @@ block cr3 {
 }
 
 
-#include <mode/api/shared_types.bf>
+#include <mode/api/arch_shared_types.bf>

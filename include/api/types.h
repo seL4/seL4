@@ -21,7 +21,7 @@
 #include <api/constants.h>
 #include <api/shared_types.h>
 
-/* cap_rights_t defined in api/types.bf */
+/* seL4_CapRights_t defined in mode/api/shared_types.bf */
 
 typedef word_t prio_t;
 
@@ -41,19 +41,19 @@ enum ctLimits {
     capTransferDataSize = 3
 };
 
-static inline cap_rights_t CONST
+static inline seL4_CapRights_t CONST
 rightsFromWord(word_t w)
 {
-    cap_rights_t cap_rights;
+    seL4_CapRights_t seL4_CapRights;
 
-    cap_rights.words[0] = w;
-    return cap_rights;
+    seL4_CapRights.words[0] = w;
+    return seL4_CapRights;
 }
 
 static inline word_t CONST
-wordFromRights(cap_rights_t cap_rights)
+wordFromRights(seL4_CapRights_t seL4_CapRights)
 {
-    return cap_rights.words[0] & MASK(3);
+    return seL4_CapRights.words[0] & MASK(3);
 }
 
 static inline cap_transfer_t PURE
@@ -106,9 +106,6 @@ prioPropsFromWord(word_t w)
 
     return pp;
 }
-
-#define allRights cap_rights_new(true, true, true)
-#define noWrite cap_rights_new(true, true, false)
 
 #ifdef CONFIG_PRINTING
 #ifdef CONFIG_COLOUR_PRINTING
