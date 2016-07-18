@@ -99,39 +99,18 @@ BEGIN_FUNC(arm_swi_syscall)
     /* Load the kernel's real stack pointer */
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
-    /*
-     * RET_TO_USER needs ksCurThread. We can issue the load here where we have
-     * some spare cycles, and the ARM ABI will preserve it across function
-     * calls.
-     */
-    ldr r8, =ksCurThread
-
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
      * unmodified (cptr and msgIngo respectively.
      */
     mov r2, r7
-    blx c_handle_syscall
+    b c_handle_syscall
 
-    /* Return to user. */
-    RET_TO_USER r8
 END_FUNC(arm_swi_syscall)
 
 BEGIN_FUNC(arm_swi_undefined_syscall)
     blx handleUnknownSyscall
     RET_TO_USER r8
 END_FUNC(arm_swi_undefined_syscall)
-
-BEGIN_FUNC(slowpath)
-    /*
-     * We enter here only via the fastpath.
-     * r0 contains the system call number, and all other registers are
-     * trashed.
-     */
-    ldr r7, =ksCurThread
-    ldr sp, =(PPTR_KERNEL_STACK_TOP)
-    blx handleSyscall
-    RET_TO_USER r7
-END_FUNC(slowpath)
 
 BEGIN_FUNC(arm_prefetch_abort_exception)
     /* Full save/restore, documented in arm_swi_syscall */
