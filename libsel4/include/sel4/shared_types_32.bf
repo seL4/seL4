@@ -20,7 +20,7 @@ block seL4_MessageInfo {
 }
 
 -- Cap rights
-block cap_rights {
+block seL4_CapRights {
     padding 29
     field capAllowGrant 1
     field capAllowRead 1

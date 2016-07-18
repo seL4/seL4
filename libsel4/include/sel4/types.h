@@ -26,14 +26,6 @@
 #include <sel4/shared_types_gen.h>
 #include <sel4/shared_types.h>
 
-typedef enum {
-    seL4_CanWrite = 0x01,
-    seL4_CanRead = 0x02,
-    seL4_CanGrant = 0x04,
-    seL4_AllRights = 0x07, /* seL4_CanWrite | seL4_CanRead | seL4_CanGrant */
-    SEL4_FORCE_LONG_ENUM(seL4_CapRights),
-} seL4_CapRights;
-
 #define seL4_UntypedRetypeMaxObjects 256
 #define seL4_GuardSizeBits 5
 #define seL4_GuardBits 18

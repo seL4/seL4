@@ -33,6 +33,8 @@
 #define SEL4_VCPU_FAULT_LABEL SEL4_DEPRECATE_MACRO(seL4_Fault_VCPUFault)
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
+typedef seL4_CapRights_t seL4_CapRights SEL4_DEPRECATED("use seL4_CapRights_t");
+
 typedef union {
     struct {
         seL4_Word fault_ip;
