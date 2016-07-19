@@ -122,10 +122,10 @@ HAPFromVMRights(vm_rights_t vm_rights)
         return 0;
     case VMReadOnly:
         return 1;
-        /*
-        case VMWriteOnly:
-            return 2;
-        */
+    /*
+    case VMWriteOnly:
+        return 2;
+    */
     case VMReadWrite:
         return 3;
     default:
@@ -1826,7 +1826,7 @@ createSafeMappingEntries_PDE
 
     switch (frameSize) {
 
-        /* PDE mappings */
+    /* PDE mappings */
     case ARMSection:
         ret.pde_entries.base = lookupPDSlot(pd, vaddr);
         ret.pde_entries.length = 1;
