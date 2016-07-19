@@ -18,16 +18,43 @@
 static inline void FORCE_INLINE NORETURN restore_user_context(void)
 {
     word_t cur_thread_reg = (word_t) ksCurThread;
-    asm volatile("mov sp, %[cur_thread] \n\
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        asm volatile(
+            /* Set stack pointer to point at the r0 of the user context. */
+            "mov sp, %[cur_thread_reg] \n"
+            /* Pop user registers */
+            "pop {r0-r12}              \n"
+            /* Retore the user stack pointer */
+            "pop {lr}                  \n"
+            "msr sp_usr, lr            \n"
+            /* prepare the eception return lr */
+            "ldr lr, [sp, #4]          \n"
+            "msr elr_hyp, lr           \n"
+            /* prepare the user status register */
+            "ldr lr, [sp, #8]          \n"
+            "msr spsr_hyp, lr          \n"
+            /* Finally, pop our LR */
+            "pop {lr}                  \n"
+            /* Return to user */
+            "eret"
+            : /* no output */
+            : [cur_thread_reg] "r" (cur_thread_reg)
+            : "memory"
+        );
+    } else {
+        asm volatile("mov sp, %[cur_thread] \n\
                   ldmdb sp, {r0-lr}^ \n\
                   rfeia sp"
-                 : /* no output */
-                 : [cur_thread] "r" (cur_thread_reg + LR_svc * sizeof(word_t))
-                 : "memory");
+                     : /* no output */
+                     : [cur_thread] "r" (cur_thread_reg + LR_svc * sizeof(word_t))
+                     :
+                    );
+    }
     UNREACHABLE();
 }
 
-void NORETURN VISIBLE slowpath(syscall_t syscall)
+void NORETURN slowpath(syscall_t syscall)
 {
     handleSyscall(syscall);
 
