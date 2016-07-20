@@ -8,7 +8,7 @@
 -- @TAG(NICTA_BSD)
 --
 
--- this file contains types shared between libsel4 and the kernel 
+-- this file contains types shared between libsel4 and the kernel
 
 base 32
 
@@ -24,4 +24,11 @@ block seL4_Prio {
     field mcp      8
     field crit     8
     field mcc      8
+}
+
+block seL4_CapRights {
+    padding 29
+    field capAllowGrant 1
+    field capAllowRead 1
+    field capAllowWrite 1
 }

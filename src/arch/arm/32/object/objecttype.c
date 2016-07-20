@@ -50,8 +50,8 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         }
         return ret;
 
-        /* This is a deviation from haskell, which has only
-         * one frame cap type on ARM */
+    /* This is a deviation from haskell, which has only
+     * one frame cap type on ARM */
     case cap_small_frame_cap:
         ret.cap = cap_small_frame_cap_set_capFMappedASID(cap, asidInvalid);
         ret.status = EXCEPTION_NONE;
@@ -107,7 +107,7 @@ Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 }
 
 cap_t CONST
-Arch_maskCapRights(cap_rights_t cap_rights_mask, cap_t cap)
+Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
 {
     if (cap_get_capType(cap) == cap_small_frame_cap) {
         vm_rights_t vm_rights;
@@ -160,7 +160,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_small_frame_cap:
         if (cap_small_frame_cap_get_capFMappedASID(cap)) {
 #ifdef CONFIG_ARM_SMMU
-            if (isIOSpaceFrame(cap)) {
+            if (isIOSpaceFrameCap(cap)) {
                 unmapIOPage(cap);
                 break;
             }

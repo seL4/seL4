@@ -209,24 +209,11 @@ decodeARMIOPTInvocation(
 
     module_id = cap_io_space_cap_get_capModuleID(io_space);
     asid = plat_smmu_get_asid_by_module_id(module_id);
-    if (asid == asidInvalid) {
-        userError("IOPTMap: Invalid IOASID.");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
+    assert(asid != asidInvalid);
 
     paddr = pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(cap));
-    pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
 
-    if (pd == 0) {
-        userError("IOPTMap: IOPD not found.");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
+    pd = plat_smmu_lookup_iopd_by_asid(asid);
 
     lu_ret = lookupIOPDSlot(pd, io_address);
 
@@ -285,7 +272,7 @@ decodeARMIOMapInvocation(
     iopde_t    *pd;
     iopte_t    iopte;
     vm_rights_t     frame_cap_rights;
-    cap_rights_t    dma_cap_rights_mask;
+    seL4_CapRights_t    dma_cap_rights_mask;
     lookupIOPTSlot_ret_t lu_ret;
 
     if (excaps.excaprefs[0] == NULL || length < 2) {
@@ -321,21 +308,9 @@ decodeARMIOMapInvocation(
 
     module_id = cap_io_space_cap_get_capModuleID(io_space);
     asid = plat_smmu_get_asid_by_module_id(module_id);
+    assert(asid != asidInvalid);
 
-    if (asid == asidInvalid) {
-        userError("IOMap: Invalid IOSpace ASID.");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
-    if (pd == 0) {
-        userError("IOMap: Invalid IOSpace cap.");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
+    pd = plat_smmu_lookup_iopd_by_asid(asid);
 
     lu_ret = lookupIOPTSlot(pd, io_address);
     if (lu_ret.status != EXCEPTION_NONE) {
@@ -420,12 +395,9 @@ deleteIOPageTable(cap_t io_pt_cap)
     if (cap_io_page_table_cap_get_capIOPTIsMapped(io_pt_cap)) {
         io_pt_cap = cap_io_page_table_cap_set_capIOPTIsMapped(io_pt_cap, 0);
         asid = cap_io_page_table_cap_get_capIOPTASID(io_pt_cap);
-        pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
+        assert(asid != asidInvalid);
+        pd = plat_smmu_lookup_iopd_by_asid(asid);
         io_address = cap_io_page_table_cap_get_capIOPTMappedAddress(io_pt_cap);
-
-        if (pd == 0) {
-            return;
-        }
 
         lu_ret = lookupIOPDSlot(pd, io_address);
         if (lu_ret.status != EXCEPTION_NONE) {
@@ -460,11 +432,8 @@ unmapIOPage(cap_t cap)
 
     io_address = cap_small_frame_cap_get_capFMappedAddress(cap);
     asid = cap_small_frame_cap_get_capFMappedASID(cap);
-    pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
-
-    if (pd == 0) {
-        return;
-    }
+    assert(asid != asidInvalid);
+    pd = plat_smmu_lookup_iopd_by_asid(asid);
 
     lu_ret = lookupIOPTSlot(pd, io_address);
 
@@ -490,11 +459,9 @@ void clearIOPageDirectory(cap_t cap)
     iopde_t  *pd;
     uint32_t asid = cap_io_space_cap_get_capModuleID(cap);
     word_t   size = BIT((SMMU_PD_BITS));
-    pd = (iopde_t *)plat_smmu_lookup_iopd_by_asid(asid);
+    assert(asid != asidInvalid);
+    pd = plat_smmu_lookup_iopd_by_asid(asid);
 
-    if (pd == 0) {
-        return;
-    }
     memset((void *)pd, 0, size);
     cleanCacheRange_RAM((word_t)pd, (word_t)pd + size, addrFromPPtr(pd));
 
@@ -504,12 +471,9 @@ void clearIOPageDirectory(cap_t cap)
 }
 
 exception_t
-decodeARMIOUnMapInvocation(
-    word_t       invLabel,
-    uint32_t     length,
-    cte_t*       slot,
+performPageInvocationUnmapIO(
     cap_t        cap,
-    extra_caps_t excaps
+    cte_t*       slot
 )
 {
     unmapIOPage(slot->cap);
@@ -517,7 +481,6 @@ decodeARMIOUnMapInvocation(
     slot->cap = cap_small_frame_cap_set_capFIsIOSpace(slot->cap, 0);
     slot->cap = cap_small_frame_cap_set_capFMappedASID(slot->cap, asidInvalid);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 

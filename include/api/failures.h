@@ -41,7 +41,7 @@ struct syscall_error {
 typedef struct syscall_error syscall_error_t;
 
 extern lookup_fault_t current_lookup_fault;
-extern fault_t current_fault;
+extern seL4_Fault_t current_fault;
 extern syscall_error_t current_syscall_error;
 
 #endif

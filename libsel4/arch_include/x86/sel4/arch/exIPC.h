@@ -7,10 +7,4 @@
  *
  * @TAG(NICTA_BSD)
  */
-
-#ifndef __LIBSEL4_ARCH_EXCEPTION_IPC
-#define __LIBSEL4_ARCH_EXCEPTION_IPC
-
-#include <sel4/sel4_arch/exIPC.h>
-
-#endif
+#include <sel4/deprecated.h>

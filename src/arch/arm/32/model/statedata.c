@@ -44,5 +44,5 @@ pteS1_t  armHSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* User space global mappings */
 pte_t  armUSGlobalPT[BIT(PT_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* Current CPU */
-vcpu_t *ksCurCPU;
+vcpu_t *armHSCurVCPU;
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */

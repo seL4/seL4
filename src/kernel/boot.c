@@ -439,7 +439,7 @@ create_initial_thread(
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadSC),
                cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext)));
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
     setThreadName(tcb, "rootserver");
 #endif
 

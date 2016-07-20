@@ -14,20 +14,6 @@
 #include <sel4/types.h>
 #include <sel4/sel4_arch/functions.h>
 
-static inline seL4_MessageInfo_t
-seL4_GetTag(void)
-{
-    seL4_MessageInfo_t tag;
-    SEL4_GET_IPCBUF(tag, tag.words[0]);
-    return tag;
-}
-
-static inline void
-seL4_SetTag(seL4_MessageInfo_t tag)
-{
-    SEL4_SET_IPCBUF(tag, tag.words[0]);
-}
-
 static inline seL4_Word
 seL4_GetMR(int i)
 {

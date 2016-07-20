@@ -591,7 +591,7 @@ seL4_SignalRecvWithMRs(seL4_CPtr dest, seL4_CPtr src, seL4_Word *sender,
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_DEBUG_BUILD
 static inline void
 seL4_DebugPutChar(char c)
 {
@@ -601,9 +601,7 @@ seL4_DebugPutChar(char c)
                   : /* no outputs */
                   : [swi_num] "i" __SEL4_SWINUM(seL4_SysDebugPutChar), "r" (arg1), "r"(scno));
 }
-#endif
 
-#ifdef SEL4_DEBUG_KERNEL
 static inline void
 seL4_DebugHalt(void)
 {
@@ -612,9 +610,7 @@ seL4_DebugHalt(void)
                   : /* no outputs */
                   : [swi_num] "i" __SEL4_SWINUM(seL4_SysDebugHalt), "r"(scno));
 }
-#endif
 
-#ifdef SEL4_DEBUG_KERNEL
 static inline void
 seL4_DebugSnapshot(void)
 {
@@ -623,9 +619,7 @@ seL4_DebugSnapshot(void)
                   : /* no outputs */
                   : [swi_num] "i" __SEL4_SWINUM(seL4_SysDebugSnapshot), "r"(scno));
 }
-#endif
 
-#ifdef SEL4_DEBUG_KERNEL
 static inline seL4_Uint32
 seL4_DebugCapIdentify(seL4_CPtr cap)
 {
@@ -636,9 +630,6 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
                   : [swi_num] "i" __SEL4_SWINUM(seL4_SysDebugCapIdentify), "r"(scno));
     return (seL4_Uint32)arg1;
 }
-#endif
-
-#ifdef CONFIG_PRINTING
 
 char *strcpy(char *, const char *);
 static inline void

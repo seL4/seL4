@@ -625,7 +625,7 @@ lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, word_t length)
 
         lu_ret = lookupSlot(thread, cptr);
         if (lu_ret.status != EXCEPTION_NONE) {
-            current_fault = fault_cap_fault_new(cptr, false);
+            current_fault = seL4_Fault_CapFault_new(cptr, false);
             return lu_ret.status;
         }
 
@@ -1667,10 +1667,53 @@ invokeTCB_NotificationControl(tcb_t *tcb, notification_t *ntfnPtr)
     return EXCEPTION_NONE;
 }
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
 void
 setThreadName(tcb_t *tcb, const char *name)
 {
     strlcpy(tcb->tcbName, name, TCB_NAME_LENGTH);
 }
 #endif
+
+word_t
+setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
+{
+    switch (current_syscall_error.type) {
+    case seL4_InvalidArgument:
+        return setMR(thread, receiveIPCBuffer, 0,
+                     current_syscall_error.invalidArgumentNumber);
+
+    case seL4_InvalidCapability:
+        return setMR(thread, receiveIPCBuffer, 0,
+                     current_syscall_error.invalidCapNumber);
+
+    case seL4_IllegalOperation:
+        return 0;
+
+    case seL4_RangeError:
+        setMR(thread, receiveIPCBuffer, 0,
+              current_syscall_error.rangeErrorMin);
+        return setMR(thread, receiveIPCBuffer, 1,
+                     current_syscall_error.rangeErrorMax);
+
+    case seL4_AlignmentError:
+        return 0;
+
+    case seL4_FailedLookup:
+        setMR(thread, receiveIPCBuffer, 0,
+              current_syscall_error.failedLookupWasSource ? 1 : 0);
+        return setMRs_lookup_failure(thread, receiveIPCBuffer,
+                                     current_lookup_fault, 1);
+
+    case seL4_TruncatedMessage:
+    case seL4_DeleteFirst:
+    case seL4_RevokeFirst:
+        return 0;
+    case seL4_NotEnoughMemory:
+        return setMR(thread, receiveIPCBuffer, 0,
+                     current_syscall_error.memoryLeft);
+    default:
+        fail("Invalid syscall error");
+    }
+}
+

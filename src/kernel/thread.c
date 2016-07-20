@@ -118,7 +118,7 @@ doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
 
     receiveBuffer = lookupIPCBuffer(true, receiver);
 
-    if (likely(!fault_get_faultType(sender->tcbFault) != fault_null_fault)) {
+    if (likely(!seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault)) {
         sendBuffer = lookupIPCBuffer(false, sender);
         doNormalTransfer(sender, sendBuffer, endpoint, badge, grant,
                          receiver, receiveBuffer);
@@ -166,7 +166,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         /* thread still has not enough budget to run */
         cap_t tfep = getTemporalFaultHandler(receiver);
         if (validTemporalFaultHandler(tfep) &&
-                fault_get_faultType(receiver->tcbFault) != fault_temporal) {
+                fault_get_faultType(receiver->tcbFault) != seL4_Fault_Temporal) {
             /* the context does not have enough budget and the thread we are
              * switching to has a temporal fault handler, raise a temporal
              * fault and abort the reply */
@@ -183,7 +183,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         }
     }
 
-    if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
+    if (likely(seL4_Fault_get_seL4_FaultType(receiver->tcbFault) == seL4_Fault_NullFault)) {
         doIPCTransfer(sender, NULL, 0, true, receiver);
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
@@ -195,7 +195,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
         restart = handleFaultReply(receiver, sender);
-        fault_null_fault_ptr_new(&receiver->tcbFault);
+        seL4_Fault_NullFault_ptr_new(&receiver->tcbFault);
         if (restart) {
             setThreadState(receiver, ThreadState_Restart);
             attemptSwitchTo(receiver);
@@ -251,7 +251,7 @@ doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
 
     sent = setMRs_fault(sender, receiver, receiverIPCBuffer);
     msgInfo = seL4_MessageInfo_new(
-                  fault_get_faultType(sender->tcbFault), 0, 0, sent);
+                  seL4_Fault_get_seL4_FaultType(sender->tcbFault), 0, 0, sent);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(msgInfo));
     setRegister(receiver, badgeRegister, badge);
 }

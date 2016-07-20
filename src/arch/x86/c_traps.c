@@ -13,14 +13,15 @@
 #include <arch/kernel/lock.h>
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
+#include <arch/kernel/traps.h>
 
 #include <api/syscall.h>
 
-void __attribute__((noreturn)) __attribute__((externally_visible)) slowpath_irq(irq_t irq);
-void __attribute__((noreturn)) __attribute__((externally_visible)) restore_user_context(void);
+void NORETURN VISIBLE slowpath_irq(irq_t irq);
+void NORETURN VISIBLE restore_user_context(void);
 
-void __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall);
-void __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall)
+void VISIBLE c_handle_interrupt(int irq, int syscall);
+void VISIBLE c_handle_interrupt(int irq, int syscall)
 {
     if (irq == int_unimpl_dev) {
         handleUnimplementedDevice();
@@ -47,40 +48,44 @@ void __attribute__((externally_visible)) c_handle_interrupt(int irq, int syscall
     restore_user_context();
 }
 
-void __attribute__((noreturn))
+void NORETURN
 slowpath_irq(irq_t irq)
 {
     handleInterruptEntry(irq);
     restore_user_context();
 }
 
-void __attribute__((noreturn))
+void NORETURN
 slowpath(syscall_t syscall)
 {
     x86KScurInterrupt = -1;
     /* increment NextIP to skip sysenter */
-    ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
+        ksCurThread->tcbArch.tcbContext.registers[FaultIP] = ksCurThread->tcbArch.tcbContext.registers[NextIP];
+        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
         handleUnknownSyscall(syscall);
     } else {
+        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
         handleSyscall(syscall);
     }
     restore_user_context();
 }
 
-void __attribute__((externally_visible)) c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall);
-void __attribute__((externally_visible)) c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
-#ifdef FASTPATH
+#ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);
+        UNREACHABLE();
     } else if (syscall == SysReplyRecv) {
         fastpath_reply_recv(cptr, msgInfo);
+        UNREACHABLE();
     } else if (syscall == SysSend) {
         fastpath_signal(cptr);
+        UNREACHABLE();
     }
-#endif
+#endif /* CONFIG_FASTPATH */
 
     slowpath(syscall);
 }

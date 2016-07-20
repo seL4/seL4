@@ -97,7 +97,7 @@ handleUnknownSyscall(word_t w)
     benchmark_utilisation_kentry_stamp();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugNameThread) {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
          * then assume the system is completely misconfigured and halt */
@@ -124,7 +124,7 @@ handleUnknownSyscall(word_t w)
         setThreadName(TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap)), name);
         return EXCEPTION_NONE;
     }
-#endif /* CONFIG_PRINTING */
+#endif /* CONFIG_DEBUG_BUILD */
 
 #ifdef DANGEROUS_CODE_INJECTION
     if (w == SysDebugRun) {
@@ -223,7 +223,7 @@ handleUnknownSyscall(word_t w)
      * so don't record the kernel entry time until now */
     updateTimestamp();
     if (likely(checkBudget())) {
-        current_fault = fault_unknown_syscall_new(w);
+        current_fault = seL4_Fault_UnknownSyscall_new(w);
         handleFault(ksCurThread);
     } else {
         /* try again when the thread has budget */
@@ -254,7 +254,7 @@ handleUserLevelFault(word_t w_a, word_t w_b)
 
     updateTimestamp();
     if (likely(checkBudget())) {
-        current_fault = fault_user_exception_new(w_a, w_b);
+        current_fault = seL4_Fault_UserException_new(w_a, w_b);
         handleFault(ksCurThread);
     } else {
         /* try again when the thread has budget */
@@ -337,7 +337,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate)
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Invocation of invalid cap #%lu.", cptr);
-        current_fault = fault_cap_fault_new(cptr, false);
+        current_fault = seL4_Fault_CapFault_new(cptr, false);
 
         if (isBlocking) {
             handleFault(thread);
@@ -448,7 +448,7 @@ handleRecv(bool_t isBlocking, word_t epCPtr)
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         /* current_lookup_fault has been set by lookupCap */
-        current_fault = fault_cap_fault_new(epCPtr, true);
+        current_fault = seL4_Fault_CapFault_new(epCPtr, true);
         handleFault(ksCurThread);
         return;
     }
@@ -457,7 +457,7 @@ handleRecv(bool_t isBlocking, word_t epCPtr)
     case cap_endpoint_cap:
         if (unlikely(!cap_endpoint_cap_get_capCanReceive(lu_ret.cap))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
-            current_fault = fault_cap_fault_new(epCPtr, true);
+            current_fault = seL4_Fault_CapFault_new(epCPtr, true);
             handleFault(ksCurThread);
             break;
         }
@@ -474,7 +474,7 @@ handleRecv(bool_t isBlocking, word_t epCPtr)
         if (unlikely(!cap_notification_cap_get_capNtfnCanReceive(lu_ret.cap)
                      || (boundTCB && boundTCB != ksCurThread))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
-            current_fault = fault_cap_fault_new(epCPtr, true);
+            current_fault = seL4_Fault_CapFault_new(epCPtr, true);
             handleFault(ksCurThread);
             break;
         }
@@ -484,7 +484,7 @@ handleRecv(bool_t isBlocking, word_t epCPtr)
     }
     default:
         current_lookup_fault = lookup_fault_missing_capability_new(0);
-        current_fault = fault_cap_fault_new(epCPtr, true);
+        current_fault = seL4_Fault_CapFault_new(epCPtr, true);
         handleFault(ksCurThread);
         break;
     }

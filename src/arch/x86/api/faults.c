@@ -9,47 +9,35 @@
  */
 
 #include <types.h>
-#include <object.h>
 #include <machine/io.h>
-#include <kernel/vspace.h>
 #include <api/faults.h>
 #include <api/syscall.h>
 #include <util.h>
 
-bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
+bool_t Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
 {
-    seL4_MessageInfo_t tag;
-    word_t         label;
-    fault_t        fault;
-    unsigned int   length;
-
-    /* These lookups are moved inward from doReplyTransfer */
-    tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));
-    label = seL4_MessageInfo_get_label(tag);
-    length = seL4_MessageInfo_get_length(tag);
-    fault = receiver->tcbFault;
-
-    switch (fault_get_faultType(fault)) {
-    case fault_cap_fault:
+    switch (faultType) {
+    case seL4_Fault_VMFault:
         return true;
 
-    case fault_vm_fault:
-        return true;
+    default:
+        fail("Invalid fault");
+    }
+}
 
-    case fault_temporal:
-        copyMessageToRegisters(sender, receiver, temporalMessage, MIN(length, n_temporalMessage));
-        return (label == 0);
-
-    case fault_unknown_syscall:
-        copyMessageToRegisters(sender, receiver, syscallMessage, MIN(length, n_syscallMessage));
-        /* HACK: Copy NextIP to FaultIP because FaultIP will be copied */
-        /* back to NextIP later on (and we don't wanna lose NextIP)     */
-        setRegister(receiver, FaultIP, getRegister(receiver, NextIP));
-        return (label == 0);
-
-    case fault_user_exception:
-        copyMessageToRegisters(sender, receiver, exceptionMessage, MIN(length, n_exceptionMessage));
-        return (label == 0);
+word_t
+Arch_setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer, word_t faultType)
+{
+    switch (faultType) {
+    case seL4_Fault_VMFault: {
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, getRestartPC(sender));
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_Addr,
+              seL4_Fault_VMFault_get_address(sender->tcbFault));
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_PrefetchFault,
+              seL4_Fault_VMFault_get_instructionFault(sender->tcbFault));
+        return setMR(receiver, receiveIPCBuffer, seL4_VMFault_FSR,
+                     seL4_Fault_VMFault_get_FSR(sender->tcbFault));
+    }
 
     default:
         fail("Invalid fault");

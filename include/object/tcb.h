@@ -16,10 +16,10 @@
 #include <object/structures.h>
 #include <object/schedcontext.h>
 
-#include <arch/object/tcb.h>
+#include <machine/registerset.h>
 #include <object/cnode.h>
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
 /* Maximum length of the tcb name, including null terminator */
 #define TCB_NAME_LENGTH (BIT(seL4_TCBBits) - BIT(seL4_TCBBits) - sizeof(tcb_t))
 #endif
@@ -54,6 +54,24 @@ tcbCallStackPop(tcb_t *head)
 }
 
 void tcbCallStackRemove(tcb_t* target);
+
+static inline unsigned int
+setMR(tcb_t *receiver, word_t* receiveIPCBuffer,
+      unsigned int offset, word_t reg)
+{
+    if (offset >= n_msgRegisters) {
+        if (receiveIPCBuffer) {
+            receiveIPCBuffer[offset + 1] = reg;
+            return offset + 1;
+        } else {
+            return n_msgRegisters;
+        }
+    } else {
+        setRegister(receiver, msgRegisters[offset], reg);
+        return offset + 1;
+    }
+}
+
 void tcbSchedEnqueue(tcb_t *tcb);
 void tcbSchedAppend(tcb_t *tcb);
 void tcbSchedDequeue(tcb_t *tcb);
@@ -132,8 +150,12 @@ cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i);
 void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 
 exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, word_t length);
-#ifdef CONFIG_PRINTING
+word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer);
+word_t CONST Arch_decodeTransfer(word_t flags);
+exception_t Arch_performTransfer(word_t arch, tcb_t *tcb_src,
+                                       tcb_t *tcb_dest);
+#ifdef CONFIG_DEBUG_BUILD
 void setThreadName(tcb_t *thread, const char *name);
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 
 #endif

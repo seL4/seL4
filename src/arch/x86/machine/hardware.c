@@ -89,19 +89,33 @@ void flushCacheRange(void* vaddr, uint32_t size_bits)
 BOOT_CODE bool_t
 disablePrefetchers()
 {
-    uint32_t version_info;
+    x86_cpu_identity_t *model_info;
     uint32_t low, high;
     word_t i;
 
-    uint32_t valid_models[] = { BROADWELL_MODEL_ID, HASWELL_MODEL_ID, IVY_BRIDGE_MODEL_ID,
+    uint32_t valid_models[] = { BROADWELL_1_MODEL_ID, BROADWELL_2_MODEL_ID,
+                                BROADWELL_3_MODEL_ID, BROADWELL_4_MODEL_ID,
+                                BROADWELL_5_MODEL_ID,
+                                HASWELL_1_MODEL_ID,  HASWELL_2_MODEL_ID,
+                                HASWELL_3_MODEL_ID, HASWELL_4_MODEL_ID,
+                                IVY_BRIDGE_1_MODEL_ID,  IVY_BRIDGE_2_MODEL_ID,
+                                IVY_BRIDGE_3_MODEL_ID,
                                 SANDY_BRIDGE_1_MODEL_ID, SANDY_BRIDGE_2_MODEL_ID, WESTMERE_1_MODEL_ID, WESTMERE_2_MODEL_ID,
                                 WESTMERE_3_MODEL_ID, NEHALEM_1_MODEL_ID, NEHALEM_2_MODEL_ID, NEHALEM_3_MODEL_ID
                               };
 
-    version_info = x86_cpuid_eax(0x1, 0x0);
+    model_info = x86_cpuid_get_model_info();
 
     for (i = 0; i < ARRAY_SIZE(valid_models); i++) {
-        if (MODEL_ID(version_info) == valid_models[i]) {
+        /* The model ID is only useful when hashed together with the family ID.
+         * They are both meant to be combined to form a unique identifier.
+         *
+         * As far as I can tell though, we might be able to actually just
+         * disable prefetching on anything that matches family_ID==0x6, and
+         * there is no need to also look at the model_ID.
+         */
+        if (model_info->family == IA32_PREFETCHER_COMPATIBLE_FAMILIES_ID
+                && model_info->model == valid_models[i]) {
             low = x86_rdmsr_low(IA32_PREFETCHER_MSR);
             high = x86_rdmsr_high(IA32_PREFETCHER_MSR);
 
@@ -116,6 +130,7 @@ disablePrefetchers()
         }
     }
 
-    printf("Disabling prefetchers not implemented for CPU model: %x\n", MODEL_ID(version_info));
+    printf("Disabling prefetchers not implemented for CPU fam %x model %x\n",
+           model_info->family, model_info->model);
     return false;
 }

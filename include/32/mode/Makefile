@@ -8,5 +8,6 @@
 # @TAG(GD_GPL)
 #
 
-BF_SOURCES += arch/api/shared_types.bf
-
+DIRECTORIES += 32/mode/api
+BF_SOURCES += 32/mode/api/shared_types.bf
+INCLUDE_DIRS += 32

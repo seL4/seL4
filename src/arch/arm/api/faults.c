@@ -16,43 +16,55 @@
 #include <api/syscall.h>
 
 bool_t
-handleFaultReply(tcb_t *receiver, tcb_t *sender)
+Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
 {
-    seL4_MessageInfo_t tag;
-    word_t label;
-    fault_t fault;
-    word_t length;
-
-    /* These lookups are moved inward from doReplyTransfer */
-    tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));
-    label = seL4_MessageInfo_get_label(tag);
-    length = seL4_MessageInfo_get_length(tag);
-    fault = receiver->tcbFault;
-
-    switch (fault_get_faultType(fault)) {
-    case fault_cap_fault:
+    switch (faultType) {
+    case seL4_Fault_VMFault:
         return true;
 
-    case fault_vm_fault:
-        return true;
-
-    case fault_temporal:
-        copyMessageToRegisters(sender, receiver, temporalMessage, MIN(length, n_temporalMessage));
-        return (label == 0);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case fault_vgic_maintenance:
         return true;
     case fault_vcpu_fault:
         return true;
 #endif
+    default:
+        fail("Invalid fault");
+    }
+}
 
-    case fault_unknown_syscall:
-        copyMessageToRegisters(sender, receiver, syscallMessage, MIN(length, n_syscallMessage));
-        return (label == 0);
+word_t
+Arch_setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer, word_t faultType)
+{
+    switch (faultType) {
+    case seL4_Fault_VMFault: {
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            word_t ipa, va;
+            va = getRestartPC(sender);
+            ipa = (addressTranslateS1CPR(va) & ~MASK(PAGE_BITS)) | (va & MASK(PAGE_BITS));
+            setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, ipa);
+        } else {
+            setMR(receiver, receiveIPCBuffer, seL4_VMFault_IP, getRestartPC(sender));
+        }
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_Addr,
+              seL4_Fault_VMFault_get_address(sender->tcbFault));
+        setMR(receiver, receiveIPCBuffer, seL4_VMFault_PrefetchFault,
+              seL4_Fault_VMFault_get_instructionFault(sender->tcbFault));
+        return setMR(receiver, receiveIPCBuffer, seL4_VMFault_FSR,
+                     seL4_Fault_VMFault_get_FSR(sender->tcbFault));
+    }
 
-    case fault_user_exception:
-        copyMessageToRegisters(sender, receiver, exceptionMessage, MIN(length, n_exceptionMessage));
-        return (label == 0);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case fault_vgic_maintenance:
+        if (fault_vgic_maintenance_get_idxValid(sender->tcbFault)) {
+            return setMR(receiver, receiveIPCBuffer, seL4_VGICMaintenance_IDX,
+                         fault_vgic_maintenance_get_idx(sender->tcbFault));
+        } else {
+            return setMR(receiver, receiveIPCBuffer, seL4_VGICMaintenance_IDX, -1);
+        }
+    case fault_vcpu_fault:
+        return setMR(receiver, receiveIPCBuffer, seL4_VCPUFault_HSR, fault_vcpu_fault_get_hsr(sender->tcbFault));
+#endif
 
     default:
         fail("Invalid fault");

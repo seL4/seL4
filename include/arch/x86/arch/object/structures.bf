@@ -128,3 +128,21 @@ tagged_union x86_irq_state irqType {
     tag irq_msi         2
     tag irq_reserved    3
 }
+
+-- CPUID bitfields. Same on 32 and 64 bit.
+
+block cpuid_001h_eax {
+    padding                 4
+    field extended_family   8
+    field extended_model    4
+    padding                 2
+    field type              2
+    field family            4
+    field model             4
+    field stepping          4
+}
+
+block cpuid_001h_ebx {
+    padding                 24
+    field brand             8
+}
