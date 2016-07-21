@@ -173,7 +173,7 @@ Both fields can be set with \apifunc{seL4\_TCB\_Configure}{tcb_configure}.
 \subsection{Exceptions}
 \label{sec:exceptions}
 
-Each thread has two associated exception-handler endpoints, a \emph{standard} exception handler and a \emph{temporal} exception handler.
+Each thread has two associated exception-handler endpoints, a \emph{standard} exception handler and a \emph{timeout} exception handler.
 If the thread
 causes an exception, the kernel creates an IPC message with the relevant
 details and sends the appropriate endpoint. This
@@ -205,19 +205,19 @@ Consequently threads without standard exception handlers should be trusted not t
 
 Standard exception handlers can be passive, in which case they will run on the scheduling context of the faulting thread.
 
-\subsubsection{Temporal Exceptions}
-\label{sec:temporal-exceptions}
+\subsubsection{Timeout Exceptions}
+\label{sec:timeout-exceptions}
 
-Temporal faults are raised when a thread attempts to run but has no available budget, and if that thread has a valid temporal exception handler capability.
-The handling of temporal faults is not compulsory: if a thread does not have a temporal fault handler, a fault will not be raised and the thread will continue running when it's budget is replenished.
+Timeout faults are raised when a thread attempts to run but has no available budget, and if that thread has a valid timeout exception handler capability.
+The handling of timeout faults is not compulsory: if a thread does not have a timeout fault handler, a fault will not be raised and the thread will continue running when it's budget is replenished.
 This allows temporally sensitive threads to handle budget overruns while other threads may ignore them.
 
-Temporal faults are registered per thread, which means that while clients may not have a temporal fault handler, servers may, allowing single-threaded, time-sensitive, passive servers to use a temporal exception handler to recover from malicious or untrusted clients whose budget expires while the server is completing the request.
-Temporal faults handlers can use \apifunc{seL4\_CNode\_SwapTCBCaller}{cnode_swaptcbcaller} to save the servers reply capability and reply with an error to the client, then resetting the server to handle the next client request.
+Timeout faults are registered per thread, which means that while clients may not have a timeout fault handler, servers may, allowing single-threaded, time-sensitive, passive servers to use a timeout exception handler to recover from malicious or untrusted clients whose budget expires while the server is completing the request.
+Timeout faults handlers can use \apifunc{seL4\_CNode\_SwapTCBCaller}{cnode_swaptcbcaller} to save the servers reply capability and reply with an error to the client, then resetting the server to handle the next client request.
 
-If a reply message is sent to a nested server and a scheduling context without available budget returned, another temporal fault will be generated if the nested server also has a temporal fault handler.
+If a reply message is sent to a nested server and a scheduling context without available budget returned, another timeout fault will be generated if the nested server also has a timeout fault handler.
 
-Additionally, if the system criticality is changed while a thread with higher criticality than the system criticality is running on a scheduling context that is bound to a thread with criticality lower than the system criticality, a temporal exception will be raised.
+Additionally, if the system criticality is changed while a thread with higher criticality than the system criticality is running on a scheduling context that is bound to a thread with criticality lower than the system criticality, a timeout exception will be raised.
 
 \subsection{Message Layout of the Read-/Write-Registers Methods}
 \label{sec:read_write_registers}
@@ -273,7 +273,7 @@ A thread's actions may result in a fault. Faults are delivered to the
 thread's exception handler so that it can take the appropriate action.
 The fault type is specified in the message label and is one of:
 seL4\_Fault\_CapFault, seL4\_Fault\_VMFault, seL4\_Fault\_UnknownSyscall, seL4\_Fault\_UserException,
-seL4\_Fault\_TemporalFault or seL4\_Fault\_NullFault (indicating no fault occured and this is a normal
+seL4\_Fault\_TimeoutFault or seL4\_Fault\_NullFault (indicating no fault occured and this is a normal
 IPC message).
 
 \subsection{Capability Faults}
@@ -470,20 +470,25 @@ IA-32 architecture.}
 \end{table}
 \fi
 
-\subsection{Temporal Fault}
-\label{sec:temporal-fault}
+\subsection{Timeout Fault}
+\label{sec:timeout-fault}
 
-TODO update
+Timeout faults are raised when a thread consumes all of its budget and has a timeout fault handler that is not a null capability.
+They allow a timeout exception handler to take some action to restore the thread, and deliver a message containting the schedluing context data word, as well as the amount of time consumed since the last timeout fault occured on this scheduling context, or since \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} or \apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed} was last called.
+Timeout exception handlers can reply to a temporal fault with the registers set in the same format as in outlined in \autoref{sec:read_write_registers}.
 
-Temporal faults are raised when a thread consumes all of its budget and has a temporal fault handler that is not a null capability.
-They allow a temporal exception handler to take some action to restore the thread.
-
+\begin{table}[htb]
 \noindent\begin{tabularx}{\textwidth}{XX}
 \toprule
 \textbf{Meaning} & \textbf{IPC buffer location} \\
 \midrule
-Data word from the scheduling context object that the thread was running on when the fault occured. & \ipcbloc{IPCBuffer[0]} \\
+Data word from the scheduling context object that the thread was running on when the fault occured. &
+    \ipcbloc{seL4\_TimeoutFault\_Data} \\
+Upper 32-bits of microseconds consumed since last reset & \ipcbloc{seL4\_TimeoutFault\_Consumed} \\
+    Lower 32-bits of microseconds consumed since last reset & \ipcbloc{seL4\_TimeoutFault\_Consumed\_LowBits} \\
 \bottomrule
 \end{tabularx}\\ \\
-
+\caption{\label{tbl:tf_message_32} Timeout
+    fault outcome on 32-bit architectures.}
+\end{table}
 
