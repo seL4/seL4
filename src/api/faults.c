@@ -129,6 +129,10 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
         copyMRsFaultReply(sender, receiver, exceptionMessage, MIN(length, n_exceptionMessage));
         return (label == 0);
 
+    case seL4_Fault_Temporal:
+        copyMRsFaultReply(sender, receiver, temporalMessage, MIN(length, n_temporalMessage));
+        return (label == 0);
+
     default:
         return Arch_handleFaultReply(receiver, sender, seL4_Fault_get_seL4_FaultType(fault));
     }
@@ -168,6 +172,9 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                      seL4_Fault_UserException_get_code(sender->tcbFault));
     }
 
+    case seL4_Fault_Temporal:
+        return setMR(receiver, receiveIPCBuffer, seL4_TemporalFault_Data,
+                     seL4_Fault_Temporal_get_data(sender->tcbFault));
     default:
         return Arch_setMRs_fault(sender, receiver, receiveIPCBuffer,
                                  seL4_Fault_get_seL4_FaultType(sender->tcbFault));
