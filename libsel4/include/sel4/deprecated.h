@@ -77,22 +77,22 @@ seL4_PF_Addr(void)
     return seL4_GetMR(seL4_VMFault_Addr);
 }
 
-static inline SEL4_DEPRECATED("use seL4_isVMFault_Tag") seL4_Word
+static inline SEL4_DEPRECATED("use seL4_isVMFault_tag") seL4_Word
 seL4_isPageFault_MSG(void)
 {
-    return seL4_isVMFault_Tag(seL4_GetIPCBuffer()->tag);
+    return seL4_isVMFault_tag(seL4_GetIPCBuffer()->tag);
 }
 
-static inline SEL4_DEPRECATED("use seL4_isVMFault_Tag") seL4_Word
+static inline SEL4_DEPRECATED("use seL4_isVMFault_tag") seL4_Word
 seL4_isPageFault_Tag(seL4_MessageInfo_t tag)
 {
-    return seL4_isVMFault_Tag(tag);
+    return seL4_isVMFault_tag(tag);
 }
 
-static inline SEL4_DEPRECATED("use seL4_isUnknownSyscall_Tag") seL4_Word
+static inline SEL4_DEPRECATED("use seL4_isUnknownSyscall_tag") seL4_Word
 seL4_isExceptIPC_Tag(seL4_MessageInfo_t tag)
 {
-    return seL4_isUnknownSyscall_Tag(tag);
+    return seL4_isUnknownSyscall_tag(tag);
 }
 
 static inline SEL4_DEPRECATED("use seL4_GetMR") seL4_Word
