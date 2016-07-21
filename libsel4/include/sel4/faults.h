@@ -29,7 +29,9 @@ seL4_getFault(seL4_MessageInfo_t tag)
                                        seL4_GetMR(seL4_CapFault_GuardMismatch_BitsFound));
 
     case seL4_Fault_Temporal:
-        return seL4_Fault_Temporal_new(seL4_GetMR(seL4_TemporalFault_Data));
+        return seL4_Fault_Temporal_new(seL4_GetMR(seL4_TemporalFault_Data),
+                                       seL4_GetMR(seL4_TemporalFault_Consumed),
+                                       seL4_GetMR(seL4_TemporalFault_Consumed_LowBits));
     default:
         return seL4_getArchFault(tag);
     }

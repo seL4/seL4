@@ -368,6 +368,8 @@ INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/32"
 INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/32"
 endif
 
+INCLUDES += "-I${SOURCE_ROOT}/include/${TYPE_SUFFIX}"
+
 ifeq (${CPU}, arm1136jf-s)
 DEFINES += -DARM1136_WORKAROUND
 # Add definition for verified platform to support standalone kernel builds

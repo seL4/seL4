@@ -9,7 +9,7 @@
  */
 
 #include <types.h>
-#include <arch/api/ipc_buffer.h>
+#include <mode/api/ipc_buffer.h>
 #include <object/structures.h>
 #include <kernel/thread.h>
 #include <model/statedata.h>
@@ -197,7 +197,9 @@ invokeSchedContext_YieldTo(sched_context_t *sc)
     if (unlikely(returnNow)) {
         /* put consumed value into ipc buffer, the caller will
          * be scheduled again now */
-        arch_setTimeArg(0, consumed);
+        assert(TIME_ARG_SIZE <= n_msgRegisters);
+        /* if the above assert fails we need to pass in the IPC buffer below */
+        mode_setTimeArg(0, consumed, NULL, ksCurThread);
         setRegister(ksCurThread, msgInfoRegister,
                     wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, TIME_ARG_SIZE)));
     }
@@ -394,7 +396,8 @@ schedContext_completeYieldTo(tcb_t *yielder)
     yielder->tcbYieldTo->scYieldFrom = NULL;
     yielder->tcbYieldTo = NULL;
 
-    arch_setTimeArg(0, consumed);
+    assert(TIME_ARG_SIZE <= n_msgRegisters);
+    mode_setTimeArg(0, consumed, NULL, ksCurThread);
     setRegister(yielder, msgInfoRegister,
                 wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, TIME_ARG_SIZE)));
     setThreadState(yielder, ThreadState_Running);

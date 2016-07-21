@@ -35,12 +35,6 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_CapFault_Msg),
 } seL4_CapFault_Msg;
 
-enum {
-    seL4_TemporalFault_Data,
-    seL4_TemporalFault_Length,
-    SEL4_FORCE_LONG_ENUM(seL4_TemporalFault_Msg)
-} seL4_TemporalFault_Msg;
-
 #define seL4_AllRights seL4_CapRights_new(true, true, true)
 #define seL4_CanRead   seL4_CapRights_new(false, true, false)
 #define seL4_CanWrite  seL4_CapRights_new(false, false, true)
