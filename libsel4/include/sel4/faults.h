@@ -28,10 +28,10 @@ seL4_getFault(seL4_MessageInfo_t tag)
                                        seL4_GetMR(seL4_CapFault_GuardMismatch_GuardFound),
                                        seL4_GetMR(seL4_CapFault_GuardMismatch_BitsFound));
 
-    case seL4_Fault_Temporal:
-        return seL4_Fault_Temporal_new(seL4_GetMR(seL4_TemporalFault_Data),
-                                       seL4_GetMR(seL4_TemporalFault_Consumed),
-                                       seL4_GetMR(seL4_TemporalFault_Consumed_LowBits));
+    case seL4_Fault_Timeout:
+        return seL4_Fault_Timeout_new(seL4_GetMR(seL4_TimeoutFault_Data),
+                                       seL4_GetMR(seL4_TimeoutFault_Consumed),
+                                       seL4_GetMR(seL4_TimeoutFault_Consumed_LowBits));
     default:
         return seL4_getArchFault(tag);
     }
@@ -68,13 +68,13 @@ seL4_isCapFault_tag(seL4_MessageInfo_t tag)
 }
 
 static inline seL4_Bool
-seL4_isTemporalFault_tag(seL4_MessageInfo_t tag)
+seL4_isTimeoutFault_tag(seL4_MessageInfo_t tag)
 {
-    return seL4_MessageInfo_get_label(tag) == seL4_Fault_Temporal;
+    return seL4_MessageInfo_get_label(tag) == seL4_Fault_Timeout;
 }
 
 static inline seL4_MessageInfo_t
-seL4_TemporalFaultReply_new(seL4_Bool resume, seL4_UserContext regs, seL4_Word length)
+seL4_TimeoutFaultReply_new(seL4_Bool resume, seL4_UserContext regs, seL4_Word length)
 {
     seL4_MessageInfo_t info = seL4_MessageInfo_new(!resume, 0, 0, length);
 

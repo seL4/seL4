@@ -44,20 +44,20 @@ const register_t syscallMessage[] = {
     [seL4_UnknownSyscall_EFLAGS] = EFLAGS
 };
 
-const register_t temporalMessage[] = {
-    [seL4_TemporalFaultReply_FaultIP] = FaultIP,
-    [seL4_TemporalFaultReply_SP] = ESP,
-    [seL4_TemporalFaultReply_EFLAGS] = EFLAGS,
-    [seL4_TemporalFaultReply_EAX] = EAX,
-    [seL4_TemporalFaultReply_EBX] = EBX,
-    [seL4_TemporalFaultReply_ECX] = ECX,
-    [seL4_TemporalFaultReply_EDX] = EDX,
-    [seL4_TemporalFaultReply_ESI] = ESI,
-    [seL4_TemporalFaultReply_EDI] = EDI,
-    [seL4_TemporalFaultReply_EBP] = EBP,
-    [seL4_TemporalFaultReply_TLS_BASE] = TLS_BASE,
-    [seL4_TemporalFaultReply_FS] = FS,
-    [seL4_TemporalFaultReply_GS] = GS
+const register_t timeoutMessage[] = {
+    [seL4_TimeoutFaultReply_FaultIP] = FaultIP,
+    [seL4_TimeoutFaultReply_SP] = ESP,
+    [seL4_TimeoutFaultReply_EFLAGS] = EFLAGS,
+    [seL4_TimeoutFaultReply_EAX] = EAX,
+    [seL4_TimeoutFaultReply_EBX] = EBX,
+    [seL4_TimeoutFaultReply_ECX] = ECX,
+    [seL4_TimeoutFaultReply_EDX] = EDX,
+    [seL4_TimeoutFaultReply_ESI] = ESI,
+    [seL4_TimeoutFaultReply_EDI] = EDI,
+    [seL4_TimeoutFaultReply_EBP] = EBP,
+    [seL4_TimeoutFaultReply_TLS_BASE] = TLS_BASE,
+    [seL4_TimeoutFaultReply_FS] = FS,
+    [seL4_TimeoutFaultReply_GS] = GS
 };
 
 void Arch_initContext(user_context_t* context)

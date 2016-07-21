@@ -167,7 +167,7 @@ enum tcb_cnode_index {
 
     tcbFaultHandler = 5,
 
-    tcbTemporalFaultHandler = 6,
+    tcbTimeoutFaultHandler = 6,
 
     tcbCNodeEntries
 };
@@ -294,7 +294,7 @@ struct sched_context {
     /* notification this scheduling context is optionally bound to */
     notification_t *scNotification;
 
-    /* data word that is sent with temporal faults that occur on this scheduling context */
+    /* data word that is sent with timeout faults that occur on this scheduling context */
     seL4_Word scData;
 
     /* amount of ticks this sc has been scheduled for since seL4_SchedContext_YieldTo

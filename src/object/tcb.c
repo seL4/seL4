@@ -1027,13 +1027,13 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
 
     dc_ret = deriveCap(tfepSlot, tfepCap);
     if (dc_ret.status != EXCEPTION_NONE) {
-        userError("TCB Configure: temporal fault ep invalid");
+        userError("TCB Configure: timeout fault ep invalid");
         return dc_ret.status;
     }
     tfepCap = dc_ret.cap;
 
     if (!validFaultEndpoint(tfepCap)) {
-        userError("TCB configure: temporal fault endpoint cap must be either null cap or endpoint cap");
+        userError("TCB configure: timeout fault endpoint cap must be either null cap or endpoint cap");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 2;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1440,8 +1440,8 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
             cteInsert(fepCap, fepSlot, destSlot);
         }
 
-        /* temporal fault endpoint */
-        destSlot = TCB_PTR_CTE_PTR(target, tcbTemporalFaultHandler);
+        /* timeout fault endpoint */
+        destSlot = TCB_PTR_CTE_PTR(target, tcbTimeoutFaultHandler);
         cteDeleteOne(destSlot);
         if (cap_get_capType(tfepCap) == cap_endpoint_cap) {
             cteInsert(tfepCap, tfepSlot, destSlot);

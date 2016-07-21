@@ -130,8 +130,8 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
         copyMRsFaultReply(sender, receiver, exceptionMessage, MIN(length, n_exceptionMessage));
         return (label == 0);
 
-    case seL4_Fault_Temporal:
-        copyMRsFaultReply(sender, receiver, temporalMessage, MIN(length, n_temporalMessage));
+    case seL4_Fault_Timeout:
+        copyMRsFaultReply(sender, receiver, timeoutMessage, MIN(length, n_timeoutMessage));
         return (label == 0);
 
     default:
@@ -173,12 +173,12 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                      seL4_Fault_UserException_get_code(sender->tcbFault));
     }
 
-    case seL4_Fault_Temporal: {
-        word_t len = setMR(receiver, receiveIPCBuffer, seL4_TemporalFault_Data,
-                           seL4_Fault_Temporal_get_data(sender->tcbFault));
+    case seL4_Fault_Timeout: {
+        word_t len = setMR(receiver, receiveIPCBuffer, seL4_TimeoutFault_Data,
+                           seL4_Fault_Timeout_get_data(sender->tcbFault));
         if (sender->tcbSchedContext != NULL) {
             time_t consumed = schedContext_updateConsumed(sender->tcbSchedContext);
-            return mode_setTimeArg(seL4_TemporalFault_Consumed, consumed,
+            return mode_setTimeArg(seL4_TimeoutFault_Consumed, consumed,
                                    receiveIPCBuffer, receiver);
         } else {
             return len;

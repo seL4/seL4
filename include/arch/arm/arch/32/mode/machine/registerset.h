@@ -110,7 +110,7 @@ enum messageSizes {
     n_gpRegisters = 7,
     n_exceptionMessage = 3,
     n_syscallMessage = 12,
-    n_temporalMessage = 17,
+    n_timeoutMessage = 17,
 };
 
 extern const register_t msgRegisters[] VISIBLE;
@@ -118,7 +118,7 @@ extern const register_t frameRegisters[] VISIBLE;
 extern const register_t gpRegisters[] VISIBLE;
 extern const register_t exceptionMessage[] VISIBLE;
 extern const register_t syscallMessage[] VISIBLE;
-extern const register_t temporalMessage[] VISIBLE;
+extern const register_t timeoutMessage[] VISIBLE;
 
 /* ARM user-code context: size = 72 bytes */
 struct user_context {

@@ -59,7 +59,7 @@ block UserException {
    field seL4_FaultType 3
 }
 
-block Temporal {
+block Timeout {
    padding 256
    field data 32
    field consumed_high 32

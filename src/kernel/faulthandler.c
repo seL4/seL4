@@ -56,7 +56,7 @@ sendFaultIPCToHandler(tcb_t *tptr, bool_t canDonate, cap_t handlerCap)
 }
 
 exception_t
-sendTemporalFaultIPC(tcb_t *tptr, cap_t tfep)
+sendTimeoutFaultIPC(tcb_t *tptr, cap_t tfep)
 {
     return sendFaultIPCToHandler(tptr, false, tfep);
 }
@@ -98,8 +98,8 @@ print_fault(seL4_Fault_t f)
     case seL4_Fault_NoFaultHandler:
         printf("no fault handler");
         break;
-    case seL4_Fault_Temporal:
-        fail("Temporal faults should not be generated if there is no temporal fault handler");
+    case seL4_Fault_Timeout:
+        fail("Timeout faults should not be generated if there is no timeout fault handler");
     default:
         printf("unknown fault");
         break;

@@ -14,20 +14,20 @@
 #include <object.h>
 
 static inline cap_t
-getTemporalFaultHandler(tcb_t *tcb)
+getTimeoutFaultHandler(tcb_t *tcb)
 {
-    return TCB_PTR_CTE_PTR(tcb, tcbTemporalFaultHandler)->cap;
+    return TCB_PTR_CTE_PTR(tcb, tcbTimeoutFaultHandler)->cap;
 }
 
 static inline bool_t
-validTemporalFaultHandler(cap_t cap)
+validTimeoutFaultHandler(cap_t cap)
 {
     return cap_get_capType(cap) == cap_endpoint_cap;
 }
 
 void handleFault(tcb_t *tptr);
 exception_t sendFaultIPC(tcb_t *tptr);
-exception_t sendTemporalFaultIPC(tcb_t *tptr, cap_t tfep);
+exception_t sendTimeoutFaultIPC(tcb_t *tptr, cap_t tfep);
 void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1);
 
 #endif

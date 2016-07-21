@@ -89,31 +89,31 @@ enum {
 } seL4_UserException_Msg;
 
 enum {
-    seL4_TemporalFault_Data,
-    seL4_TemporalFault_Consumed,
+    seL4_TimeoutFault_Data,
+    seL4_TimeoutFault_Consumed,
     /* consumed is 64 bits */
-    seL4_TemporalFault_Consumed_LowBits,
-    seL4_TemporalFault_Length,
-    SEL4_FORCE_LONG_ENUM(seL4_TemporalFault_Msg),
-} seL4_TemporalFault_Msg;
+    seL4_TimeoutFault_Consumed_LowBits,
+    seL4_TimeoutFault_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TimeoutFault_Msg),
+} seL4_TimeoutFault_Msg;
 
 enum {
-    seL4_TemporalFaultReply_FaultIP,
-    seL4_TemporalFaultReply_SP,
-    seL4_TemporalFaultReply_EFLAGS,
-    seL4_TemporalFaultReply_EAX,
-    seL4_TemporalFaultReply_EBX,
-    seL4_TemporalFaultReply_ECX,
-    seL4_TemporalFaultReply_EDX,
-    seL4_TemporalFaultReply_ESI,
-    seL4_TemporalFaultReply_EDI,
-    seL4_TemporalFaultReply_EBP,
-    seL4_TemporalFaultReply_TLS_BASE,
-    seL4_TemporalFaultReply_FS,
-    seL4_TemporalFaultReply_GS,
-    seL4_TemporalFaultReply_Length,
-    SEL4_FORCE_LONG_ENUM(seL4_TemporalFaultReply_Msg)
-} seL4_TemporalFaultReply_Msg;
+    seL4_TimeoutFaultReply_FaultIP,
+    seL4_TimeoutFaultReply_SP,
+    seL4_TimeoutFaultReply_EFLAGS,
+    seL4_TimeoutFaultReply_EAX,
+    seL4_TimeoutFaultReply_EBX,
+    seL4_TimeoutFaultReply_ECX,
+    seL4_TimeoutFaultReply_EDX,
+    seL4_TimeoutFaultReply_ESI,
+    seL4_TimeoutFaultReply_EDI,
+    seL4_TimeoutFaultReply_EBP,
+    seL4_TimeoutFaultReply_TLS_BASE,
+    seL4_TimeoutFaultReply_FS,
+    seL4_TimeoutFaultReply_GS,
+    seL4_TimeoutFaultReply_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TimeoutFaultReply_Msg)
+} seL4_TimeoutFaultReply_Msg;
 
 #endif /* __ASSEMBLER__ */
 #endif

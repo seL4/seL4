@@ -410,7 +410,7 @@ create_initial_thread(
     setRegister(tcb, capRegister, bi_frame_vptr);
     setNextPC(tcb, ui_v_entry);
 
-    /* initialise temporal globals */
+    /* initialise timeout globals */
     ksConsumed = 0u;
     ksCurrentTime = getCurrentTime();
 

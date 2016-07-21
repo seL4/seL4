@@ -164,18 +164,18 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
     if (receiver->tcbSchedContext &&
             receiver->tcbSchedContext->scRemaining <= getKernelWcetTicks()) {
         /* thread still has not enough budget to run */
-        cap_t tfep = getTemporalFaultHandler(receiver);
-        if (validTemporalFaultHandler(tfep) &&
-                seL4_Fault_get_seL4_FaultType(receiver->tcbFault) != seL4_Fault_Temporal) {
+        cap_t tfep = getTimeoutFaultHandler(receiver);
+        if (validTimeoutFaultHandler(tfep) &&
+                seL4_Fault_get_seL4_FaultType(receiver->tcbFault) != seL4_Fault_Timeout) {
             /* the context does not have enough budget and the thread we are
-             * switching to has a temporal fault handler, raise a temporal
+             * switching to has a timeout fault handler, raise a timeout
              * fault and abort the reply */
             cteDeleteOne(slot);
-            current_fault = seL4_Fault_Temporal_new(receiver->tcbSchedContext->scData);
-            sendTemporalFaultIPC(receiver, tfep);
+            current_fault = seL4_Fault_Timeout_new(receiver->tcbSchedContext->scData);
+            sendTimeoutFaultIPC(receiver, tfep);
             return;
         } else {
-            /* the context doesn't have enough budget, but no temporal fault handler,
+            /* the context doesn't have enough budget, but no timeout fault handler,
             * just postpone it and continue to process the reply. The thread will
             * pick it up once the scheduling context has its budget replenished.
             */
@@ -605,7 +605,7 @@ checkBudget(void)
 {
     /* does this thread have enough time to continue? */
     if (unlikely(currentThreadExpired())) {
-        cap_t tfep = getTemporalFaultHandler(ksCurThread);
+        cap_t tfep = getTimeoutFaultHandler(ksCurThread);
         /* we enter this function on 2 different types of path:
          * kernel entry (for whatever reason) and when handling
          * a timer interrupt. For the
@@ -615,10 +615,10 @@ checkBudget(void)
          */
         assert(isRunnable(ksCurThread));
         commitTime(ksCurSchedContext);
-        if (validTemporalFaultHandler(tfep)) {
-            /* threads with temporal fault handlers should never run out of budget! */
-            current_fault = seL4_Fault_Temporal_new(ksCurSchedContext->scData);
-            sendTemporalFaultIPC(ksCurThread, tfep);
+        if (validTimeoutFaultHandler(tfep)) {
+            /* threads with timeout fault handlers should never run out of budget! */
+            current_fault = seL4_Fault_Timeout_new(ksCurSchedContext->scData);
+            sendTimeoutFaultIPC(ksCurThread, tfep);
         } else {
             /* threads without fault handlers don't care if they ran out of budget */
             endTimeslice(ksCurThread->tcbSchedContext);
@@ -694,12 +694,12 @@ adjustPriorityByCriticality(tcb_t *tcb, bool_t up)
             tcb->tcbSchedContext->scHome->tcbCrit < ksCriticality) {
 
         /* if we are adjusting the criticality up, we need to
-         * raise a temporal exception if a server is working
+         * raise a timeout exception if a server is working
          * on a request for a low criticality thread */
-        cap_t tfep = getTemporalFaultHandler(tcb);
-        if (validTemporalFaultHandler(tfep)) {
-            current_fault = seL4_Fault_Temporal_new(tcb->tcbSchedContext->scData);
-            sendTemporalFaultIPC(tcb, tfep);
+        cap_t tfep = getTimeoutFaultHandler(tcb);
+        if (validTimeoutFaultHandler(tfep)) {
+            current_fault = seL4_Fault_Timeout_new(tcb->tcbSchedContext->scData);
+            sendTimeoutFaultIPC(tcb, tfep);
         }
     }
 

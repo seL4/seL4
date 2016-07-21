@@ -272,7 +272,7 @@ block UserException {
     field seL4_FaultType 3
 }
 
-block Temporal {
+block Timeout {
     field data 32
     padding 29
     field seL4_FaultType 3

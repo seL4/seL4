@@ -66,7 +66,7 @@ enum messageSizes {
     n_gpRegisters = 3,
     n_exceptionMessage = 3,
     n_syscallMessage = 10,
-    n_temporalMessage = 13,
+    n_timeoutMessage = 13,
 };
 
 extern const register_t msgRegisters[];
@@ -74,6 +74,6 @@ extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
 extern const register_t exceptionMessage[];
 extern const register_t syscallMessage[];
-extern const register_t temporalMessage[];
+extern const register_t timeoutMessage[];
 
 #endif

@@ -16,7 +16,7 @@ tagged_union seL4_Fault seL4_FaultType {
     tag CapFault 1
     tag UnknownSyscall 2
     tag UserException 3
-    tag Temporal 4
+    tag Timeout 4
     tag NoFaultHandler 5
 
     -- arch specific faults
