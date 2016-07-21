@@ -195,10 +195,10 @@ invokeSchedContext_YieldTo(sched_context_t *sc)
     consumed = schedContext_updateConsumed(sc);
 
     if (unlikely(returnNow)) {
-        /* put consumed value into ipc buffer, the caller will
-         * be scheduled again now */
-        assert(TIME_ARG_SIZE <= n_msgRegisters);
-        /* if the above assert fails we need to pass in the IPC buffer below */
+        /* put consumed value into reply message as we are returning immediately to the caller */
+        compile_assert(consumed_fits_in_mrs, TIME_ARG_SIZE  <= n_msgRegisters);
+        /* if the above assert fails, the IPC buffer needs to be looked up and passed
+         * to mode_setTimeArg as the message doesn't fit in registers */
         mode_setTimeArg(0, consumed, NULL, ksCurThread);
         setRegister(ksCurThread, msgInfoRegister,
                     wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, TIME_ARG_SIZE)));
@@ -396,7 +396,9 @@ schedContext_completeYieldTo(tcb_t *yielder)
     yielder->tcbYieldTo->scYieldFrom = NULL;
     yielder->tcbYieldTo = NULL;
 
-    assert(TIME_ARG_SIZE <= n_msgRegisters);
+    compile_assert(consumed_fits_in_mrs2, TIME_ARG_SIZE  <= n_msgRegisters);
+    /* if the above assert fails, the IPC buffer needs to be looked up and passed
+     * to mode_setTimeArg as the message doesn't fit in registers */
     mode_setTimeArg(0, consumed, NULL, ksCurThread);
     setRegister(yielder, msgInfoRegister,
                 wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, TIME_ARG_SIZE)));

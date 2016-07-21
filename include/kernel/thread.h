@@ -62,7 +62,8 @@ highestPrio(void)
 static inline bool_t
 ready(sched_context_t *sc)
 {
-    return (ksCurrentTime + getKernelWcetTicks()) >= sc->scNext;
+    return sc->scBudget == sc->scPeriod ||
+           (ksCurrentTime + getKernelWcetTicks()) >= sc->scNext;
 }
 
 static inline bool_t
