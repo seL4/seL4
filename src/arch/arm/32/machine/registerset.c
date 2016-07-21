@@ -45,5 +45,21 @@ const register_t syscallMessage[] = {
 };
 
 const register_t temporalMessage[] = {
-    FaultInstruction, SP, CPSR, R0, R1, R8, R9, R10, R11, R12, R2, R3, R4, R5, R6, R7, R14
+    [seL4_TemporalFaultReply_FaultIP] = FaultInstruction,
+    [seL4_TemporalFaultReply_SP] = SP,
+    [seL4_TemporalFaultReply_CPSR] = CPSR,
+    [seL4_TemporalFaultReply_R0]  = R0,
+    [seL4_TemporalFaultReply_R1]  = R1,
+    [seL4_TemporalFaultReply_R8]  = R8,
+    [seL4_TemporalFaultReply_R9]  = R9,
+    [seL4_TemporalFaultReply_R10] = R10,
+    [seL4_TemporalFaultReply_R11] = R11,
+    [seL4_TemporalFaultReply_R12] = R12,
+    [seL4_TemporalFaultReply_R2]  = R2,
+    [seL4_TemporalFaultReply_R3]  = R3,
+    [seL4_TemporalFaultReply_R4]  = R4,
+    [seL4_TemporalFaultReply_R5]  = R5,
+    [seL4_TemporalFaultReply_R6]  = R6,
+    [seL4_TemporalFaultReply_R7]  = R7,
+    [seL4_TemporalFaultReply_R14] = R14
 };

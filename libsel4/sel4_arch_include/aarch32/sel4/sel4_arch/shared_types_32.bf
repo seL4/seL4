@@ -16,12 +16,15 @@ tagged_union seL4_Fault seL4_FaultType {
     tag CapFault 1
     tag UnknownSyscall 2
     tag UserException 3
+    tag Temporal 4
+    tag NoFaultHandler 5
 
     -- arch specific faults
-    tag VMFault 4
+    tag VMFault 6
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    tag VGICMaintenance 5
-    tag VCPUFault 6
+    tag VGICMaintenance 7
+    -- 4 bits are required seL4_FaultType from here on
+    tag VCPUFault 8
 #endif
 }

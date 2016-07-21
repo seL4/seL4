@@ -95,9 +95,11 @@ print_fault(seL4_Fault_t f)
                (unsigned int)seL4_Fault_UserException_get_number(f),
                (unsigned int)seL4_Fault_UserException_get_code(f));
         break;
-    case fault_no_fault_handler:
+    case seL4_Fault_NoFaultHandler:
         printf("no fault handler");
         break;
+    case seL4_Fault_Temporal:
+        fail("Temporal faults should not be generated if there is no temporal fault handler");
     default:
         printf("unknown fault");
         break;

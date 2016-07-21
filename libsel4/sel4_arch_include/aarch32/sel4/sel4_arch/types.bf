@@ -61,6 +61,19 @@ block UserException {
    field seL4_FaultType 3
 }
 
+block Temporal {
+   padding 384
+   field data 32
+   padding 29
+   field seL4_FaultType 3
+}
+
+block NoFaultHandler {
+    padding 416
+    padding 29
+    field seL4_FaultType 3
+}
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block VGICMaintenance {
     padding 384
@@ -72,8 +85,8 @@ block VGICMaintenance {
 block VCPUFault {
     padding 384
     field HSR 32
-    padding 29
-    field seL4_FaultType 3
+    padding 28
+    field seL4_FaultType 4
 }
 #endif
 

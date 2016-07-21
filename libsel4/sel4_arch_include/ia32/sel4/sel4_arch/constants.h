@@ -88,5 +88,23 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_UserException_Msg)
 } seL4_UserException_Msg;
 
+enum {
+    seL4_TemporalFaultReply_FaultIP,
+    seL4_TemporalFaultReply_SP,
+    seL4_TemporalFaultReply_EFLAGS,
+    seL4_TemporalFaultReply_EAX,
+    seL4_TemporalFaultReply_EBX,
+    seL4_TemporalFaultReply_ECX,
+    seL4_TemporalFaultReply_EDX,
+    seL4_TemporalFaultReply_ESI,
+    seL4_TemporalFaultReply_EDI,
+    seL4_TemporalFaultReply_EBP,
+    seL4_TemporalFaultReply_TLS_BASE,
+    seL4_TemporalFaultReply_FS,
+    seL4_TemporalFaultReply_GS,
+    seL4_TemporalFaultReply_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TemporalFaultReply_Msg)
+} seL4_TemporalFaultReply_Msg;
+
 #endif /* __ASSEMBLER__ */
 #endif

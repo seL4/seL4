@@ -61,6 +61,28 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
+enum {
+    seL4_TemporalFaultReply_FaultIP,
+    seL4_TemporalFaultReply_SP,
+    seL4_TemporalFaultReply_CPSR,
+    seL4_TemporalFaultReply_R0,
+    seL4_TemporalFaultReply_R1,
+    seL4_TemporalFaultReply_R8,
+    seL4_TemporalFaultReply_R9,
+    seL4_TemporalFaultReply_R10,
+    seL4_TemporalFaultReply_R11,
+    seL4_TemporalFaultReply_R12,
+    seL4_TemporalFaultReply_R2,
+    seL4_TemporalFaultReply_R3,
+    seL4_TemporalFaultReply_R4,
+    seL4_TemporalFaultReply_R5,
+    seL4_TemporalFaultReply_R6,
+    seL4_TemporalFaultReply_R7,
+    seL4_TemporalFaultReply_R14,
+    seL4_TemporalFaultReply_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TemporalFaultReply_Msg)
+} seL4_TemporalFaultReply_Msg;
+
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 enum {
     seL4_VGICMaintenance_IDX,

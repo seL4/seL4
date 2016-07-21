@@ -391,10 +391,10 @@ fastpath_signal(word_t cptr)
     notification_state_t ntfn_state;
 
     /* get message info and fault type */
-    fault_type = fault_get_faultType(ksCurThread->tcbFault);
+    fault_type = seL4_Fault_get_seL4_FaultType(ksCurThread->tcbFault);
 
     /* check there's no saved fault */
-    if (unlikely(fault_type != fault_null_fault)) {
+    if (unlikely(fault_type != seL4_Fault_NullFault)) {
         slowpath(SysSend);
     }
 

@@ -166,12 +166,12 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         /* thread still has not enough budget to run */
         cap_t tfep = getTemporalFaultHandler(receiver);
         if (validTemporalFaultHandler(tfep) &&
-                fault_get_faultType(receiver->tcbFault) != seL4_Fault_Temporal) {
+                seL4_Fault_get_seL4_FaultType(receiver->tcbFault) != seL4_Fault_Temporal) {
             /* the context does not have enough budget and the thread we are
              * switching to has a temporal fault handler, raise a temporal
              * fault and abort the reply */
             cteDeleteOne(slot);
-            current_fault = fault_temporal_new(receiver->tcbSchedContext->scData);
+            current_fault = seL4_Fault_Temporal_new(receiver->tcbSchedContext->scData);
             sendTemporalFaultIPC(receiver, tfep);
             return;
         } else {
@@ -617,7 +617,7 @@ checkBudget(void)
         commitTime(ksCurSchedContext);
         if (validTemporalFaultHandler(tfep)) {
             /* threads with temporal fault handlers should never run out of budget! */
-            current_fault = fault_temporal_new(ksCurSchedContext->scData);
+            current_fault = seL4_Fault_Temporal_new(ksCurSchedContext->scData);
             sendTemporalFaultIPC(ksCurThread, tfep);
         } else {
             /* threads without fault handlers don't care if they ran out of budget */
@@ -698,7 +698,7 @@ adjustPriorityByCriticality(tcb_t *tcb, bool_t up)
          * on a request for a low criticality thread */
         cap_t tfep = getTemporalFaultHandler(tcb);
         if (validTemporalFaultHandler(tfep)) {
-            current_fault = fault_temporal_new(tcb->tcbSchedContext->scData);
+            current_fault = seL4_Fault_Temporal_new(tcb->tcbSchedContext->scData);
             sendTemporalFaultIPC(tcb, tfep);
         }
     }

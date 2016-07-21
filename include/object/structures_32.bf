@@ -272,15 +272,15 @@ block UserException {
     field seL4_FaultType 3
 }
 
-block temporal {
+block Temporal {
     field data 32
     padding 29
-    field faultType 3
+    field seL4_FaultType 3
 }
 
-block no_fault_handler {
+block NoFaultHandler {
     padding 61
-    field faultType 3
+    field seL4_FaultType 3
 }
 
 -- Thread state: size = 12 bytes

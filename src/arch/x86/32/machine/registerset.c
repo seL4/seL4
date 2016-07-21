@@ -45,7 +45,19 @@ const register_t syscallMessage[] = {
 };
 
 const register_t temporalMessage[] = {
-    FaultIP, ESP, EFLAGS, EAX, EBX, ECX, EDX, ESI, EDI, EBP, TLS_BASE, FS, GS
+    [seL4_TemporalFaultReply_FaultIP] = FaultIP,
+    [seL4_TemporalFaultReply_SP] = ESP,
+    [seL4_TemporalFaultReply_EFLAGS] = EFLAGS,
+    [seL4_TemporalFaultReply_EAX] = EAX,
+    [seL4_TemporalFaultReply_EBX] = EBX,
+    [seL4_TemporalFaultReply_ECX] = ECX,
+    [seL4_TemporalFaultReply_EDX] = EDX,
+    [seL4_TemporalFaultReply_ESI] = ESI,
+    [seL4_TemporalFaultReply_EDI] = EDI,
+    [seL4_TemporalFaultReply_EBP] = EBP,
+    [seL4_TemporalFaultReply_TLS_BASE] = TLS_BASE,
+    [seL4_TemporalFaultReply_FS] = FS,
+    [seL4_TemporalFaultReply_GS] = GS
 };
 
 void Arch_initContext(user_context_t* context)

@@ -59,5 +59,18 @@ block UserException {
    field seL4_FaultType 3
 }
 
+block Temporal {
+   padding 320
+   field data 32
+   padding 29
+   field seL4_FaultType 3
+}
+
+block NoFaultHandler {
+    padding 352
+    padding 29
+    field seL4_FaultType 3
+}
+
 #include "shared_types_32.bf"
 
