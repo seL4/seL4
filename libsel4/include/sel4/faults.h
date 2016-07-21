@@ -28,6 +28,8 @@ seL4_getFault(seL4_MessageInfo_t tag)
                                        seL4_GetMR(seL4_CapFault_GuardMismatch_GuardFound),
                                        seL4_GetMR(seL4_CapFault_GuardMismatch_BitsFound));
 
+    case seL4_Fault_Temporal:
+        return seL4_Fault_Temporal_new(seL4_GetMR(seL4_TemporalFault_Data));
     default:
         return seL4_getArchFault(tag);
     }
@@ -61,6 +63,12 @@ static inline seL4_Bool
 seL4_isCapFault_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_CapFault;
+}
+
+static inline seL4_Bool
+seL4_isTemporalFault_tag(seL4_MessageInfo_t tag)
+{
+    return seL4_MessageInfo_get_label(tag) == seL4_Fault_Temporal;
 }
 
 static inline seL4_MessageInfo_t
