@@ -15,6 +15,7 @@
 #include <api/syscall.h>
 #include <arch/linker.h>
 
+/** DONT_TRANSLATE */
 static inline void FORCE_INLINE NORETURN restore_user_context(void)
 {
     word_t cur_thread_reg = (word_t) ksCurThread;
@@ -48,12 +49,12 @@ static inline void FORCE_INLINE NORETURN restore_user_context(void)
                   rfeia sp"
                      : /* no output */
                      : [cur_thread] "r" (cur_thread_reg + LR_svc * sizeof(word_t))
-                     :
                     );
     }
     UNREACHABLE();
 }
 
+/** DONT_TRANSLATE */
 void NORETURN slowpath(syscall_t syscall)
 {
     handleSyscall(syscall);
