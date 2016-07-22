@@ -153,7 +153,7 @@ exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, word_t length);
 word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer);
 word_t CONST Arch_decodeTransfer(word_t flags);
 exception_t Arch_performTransfer(word_t arch, tcb_t *tcb_src,
-                                       tcb_t *tcb_dest);
+                                 tcb_t *tcb_dest);
 #ifdef CONFIG_DEBUG_BUILD
 void setThreadName(tcb_t *thread, const char *name);
 #endif /* CONFIG_DEBUG_BUILD */
