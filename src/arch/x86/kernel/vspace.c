@@ -536,11 +536,11 @@ exception_t handleVMFault(tcb_t* thread, vm_fault_type_t vm_faultType)
 
     switch (vm_faultType) {
     case X86DataFault:
-        current_fault = fault_vm_fault_new(addr, fault, false);
+        current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
 
     case X86InstructionFault:
-        current_fault = fault_vm_fault_new(addr, fault, true);
+        current_fault = seL4_Fault_VMFault_new(addr, fault, true);
         return EXCEPTION_FAULT;
 
     default:
@@ -627,13 +627,13 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
     return EXCEPTION_NONE;
 }
 
-vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask)
+vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
-    if (vm_rights == VMReadOnly && cap_rights_get_capAllowRead(cap_rights_mask)) {
+    if (vm_rights == VMReadOnly && seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
     }
-    if (vm_rights == VMReadWrite && cap_rights_get_capAllowRead(cap_rights_mask)) {
-        if (!cap_rights_get_capAllowWrite(cap_rights_mask)) {
+    if (vm_rights == VMReadWrite && seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+        if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
         } else {
             return VMReadWrite;
@@ -972,7 +972,7 @@ exception_t decodeX86FrameInvocation(
         vm_page_size_t  frameSize;
         asid_t          asid;
 
-        if (isIOSpaceFrame(cap)) {
+        if (isIOSpaceFrameCap(cap)) {
             userError("X86FrameRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
@@ -1093,8 +1093,8 @@ exception_t decodeX86FrameInvocation(
 
     case X86PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            if (isIOSpaceFrame(cap)) {
-                return decodeX86IOUnMapInvocation(invLabel, length, cte, cap, excaps);
+            if (isIOSpaceFrameCap(cap)) {
+                return decodeX86IOUnmapInvocation(invLabel, length, cte, cap, excaps);
             } else {
                 setThreadState(ksCurThread, ThreadState_Restart);
                 return performX86PageInvocationUnmap(cap, cte);

@@ -361,6 +361,16 @@ cap_get_archCapIsPhysical(cap_t cap)
     case cap_asid_control_cap:
         return false;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        return true;
+#endif
+
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_page_table_cap:
+        return true;
+#endif
+
     default:
         /* Unreachable, but GCC can't figure that out */
         return false;

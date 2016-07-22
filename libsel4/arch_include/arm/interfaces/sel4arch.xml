@@ -30,18 +30,18 @@
 		<method id="ARMPageMap" name="Map">
 			<param dir="in" name="pd" type="seL4_ARM_PageDirectory"/>
 			<param dir="in" name="vaddr" type="seL4_Word"/>
-			<param dir="in" name="rights" type="seL4_CapRights"/>
+			<param dir="in" name="rights" type="seL4_CapRights_t"/>
 			<param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
 		</method>
 		<method id="ARMPageRemap" name="Remap">
 			<param dir="in" name="pd" type="seL4_ARM_PageDirectory"/>
-			<param dir="in" name="rights" type="seL4_CapRights"/>
+			<param dir="in" name="rights" type="seL4_CapRights_t"/>
 			<param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
 		</method>
 		<method id="ARMPageUnmap" name="Unmap"/>
         <method id="ARMPageMapIO" name="MapIO" config="CONFIG_ARM_SMMU">
             <param dir="in" name="iospace" type="seL4_ARM_IOSpace"/>
-            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
         </method>
 		<method id="ARMPageClean_Data" name="Clean_Data">

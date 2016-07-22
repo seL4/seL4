@@ -216,11 +216,11 @@ def init_data_types(wordsize):
         Type("seL4_Time",   64, wordsize, double_word=(wordsize == 32)),
         Type("seL4_Word", wordsize, wordsize),
         Type("seL4_Bool", 1, wordsize, native_size_bits=8),
-        Type("seL4_CapRights", wordsize, wordsize),
 
         # seL4 Structures
         BitFieldType("seL4_Prio_t", wordsize, wordsize),
         BitFieldType("seL4_CapData_t", wordsize, wordsize),
+        BitFieldType("seL4_CapRights_t", wordsize, wordsize),
 
         # Object types
         CapType("seL4_CPtr", wordsize),
@@ -833,7 +833,7 @@ def main():
             print "Invalid word size in configuration file."
             sys.exit(2)
     else:
-        wordsize = args.wsize
+        wordsize = int(args.wsize)
 
     if wordsize is -1:
         print "Invalid word size."

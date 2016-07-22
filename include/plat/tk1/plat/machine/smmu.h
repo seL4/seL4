@@ -11,13 +11,14 @@
 #ifndef __PLAT_SMMU_H
 #define __PLAT_SMMU_H
 
-#include <types.h>
+#include <config.h>
 
 #ifdef CONFIG_ARM_SMMU
 
+#include <types.h>
+#include <plat/machine/hardware_gen.h>
+
 #define IOASID_SIZE_BITS    7
-
-
 
 /* The SystemMMU control registers are part of memory controller */
 

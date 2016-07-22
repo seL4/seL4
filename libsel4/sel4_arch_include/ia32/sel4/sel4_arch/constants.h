@@ -51,4 +51,60 @@
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
+#ifndef __ASSEMBLER__
+/* format of a vm fault message */
+enum {
+    seL4_VMFault_IP,
+    seL4_VMFault_Addr,
+    seL4_VMFault_PrefetchFault,
+    seL4_VMFault_FSR,
+    seL4_VMFault_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
+} seL4_VMFault_Msg;
+
+enum {
+    seL4_UnknownSyscall_EAX,
+    seL4_UnknownSyscall_EBX,
+    seL4_UnknownSyscall_ECX,
+    seL4_UnknownSyscall_EDX,
+    seL4_UnknownSyscall_ESI,
+    seL4_UnknownSyscall_EDI,
+    seL4_UnknownSyscall_EBP,
+    seL4_UnknownSyscall_FaultIP,
+    seL4_UnknownSyscall_SP,
+    seL4_UnknownSyscall_EFLAGS,
+    seL4_UnknownSyscall_Syscall,
+    seL4_UnknownSyscall_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_UnknownSyscall_Msg),
+} seL4_UnknownSyscall_Msg;
+
+enum {
+    seL4_UserException_FaultIP,
+    seL4_UserException_SP,
+    seL4_UserException_EFLAGS,
+    seL4_UserException_Number,
+    seL4_UserException_Code,
+    seL4_UserException_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_UserException_Msg)
+} seL4_UserException_Msg;
+
+enum {
+    seL4_TemporalFaultReply_FaultIP,
+    seL4_TemporalFaultReply_SP,
+    seL4_TemporalFaultReply_EFLAGS,
+    seL4_TemporalFaultReply_EAX,
+    seL4_TemporalFaultReply_EBX,
+    seL4_TemporalFaultReply_ECX,
+    seL4_TemporalFaultReply_EDX,
+    seL4_TemporalFaultReply_ESI,
+    seL4_TemporalFaultReply_EDI,
+    seL4_TemporalFaultReply_EBP,
+    seL4_TemporalFaultReply_TLS_BASE,
+    seL4_TemporalFaultReply_FS,
+    seL4_TemporalFaultReply_GS,
+    seL4_TemporalFaultReply_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TemporalFaultReply_Msg)
+} seL4_TemporalFaultReply_Msg;
+
+#endif /* __ASSEMBLER__ */
 #endif

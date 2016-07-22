@@ -213,7 +213,7 @@ struct tcb {
     notification_t *tcbBoundNotification;
 
     /* Current fault, 8 bytes */
-    fault_t tcbFault;
+    seL4_Fault_t tcbFault;
 
     /* Priority, 1 byte (packed to 4) */
     prio_t tcbPriority;
@@ -262,10 +262,10 @@ struct tcb {
     benchmark_util_t benchmark;
 #endif
 
-#if defined(CONFIG_PRINTING)
+#ifdef CONFIG_DEBUG_BUILD
     /* Use any remaining space for a thread name */
     char tcbName[];
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 };
 typedef struct tcb tcb_t;
 

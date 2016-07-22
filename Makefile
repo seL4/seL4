@@ -252,7 +252,6 @@ DEFINES += ${CONFIG_DEFS:%=-D%}
 
 ifdef DEBUG
 DEFINES += -DDEBUG
-DEFINES += -DCONFIG_DEBUG_BUILD
 CFLAGS  += -ggdb -g3
 endif
 
@@ -270,9 +269,16 @@ endif
 
 # Only set CFLAGS if we're building standalone.
 # common/Makefile.Flags sets NK_CFLAGS  in Kbuild environments.
+#
+# This entire block is not executed if building a stand alone kernel!
 ifndef NK_CFLAGS
 STATICHEADERS += autoconf.h
 DEFINES += -DHAVE_AUTOCONF
+ifdef DEBUG
+DEFINES += -DCONFIG_DEBUG_BUILD
+DEFINE  += -DCONFIG_PRINTING
+DEFINES += -DCONFIG_USER_STACK_TRACE_LENGTH=1
+endif
 ifeq (${ARCH}, arm)
 CFLAGS += -mtune=${CPU} -marm -march=${ARMV}
 ASFLAGS += -Wa,-mcpu=${CPU} -Wa,-march=${ARMV}
@@ -280,6 +286,7 @@ DEFINES += -D$(shell echo ${ARMV}|tr [:lower:] [:upper:]|tr - _)
 DEFINES += -DARCH_ARM
 ifeq (${SEL4_ARCH}, aarch32)
 DEFINES += -D__KERNEL_32__ -DAARCH32
+TYPE_SUFFIX:=32
 export __ARM_32__ = y
 ifeq (${CPU},cortex-a7)
 DEFINES += -DARM_CORTEX_A7
@@ -341,7 +348,8 @@ ifeq (${ARCH}, x86)
 CFLAGS += -m32
 ASFLAGS += -Wa,--32
 DEFINES += -DARCH_IA32 -DARCH_X86 -DX86_32 -D__KERNEL_32__
-LDFLAGS += -Wl,-m,elf_i386 
+LDFLAGS += -Wl,-m,elf_i386
+TYPE_SUFFIX:=32
 export __X86_32__ = y
 endif # ARCH=x86
 else # NK_CFLAGS

@@ -9,3 +9,4 @@
 #
 
 include ${SOURCE_ROOT}/include/api/Makefile
+include ${SOURCE_ROOT}/include/${TYPE_SUFFIX}/mode/Makefile

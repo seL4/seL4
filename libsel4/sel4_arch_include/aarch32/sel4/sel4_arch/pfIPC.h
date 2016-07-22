@@ -7,8 +7,4 @@
  *
  * @TAG(NICTA_BSD)
  */
-
-#ifndef __LIBSEL4_SEL4_ARCH_PAGEFAULT_IPC
-#define __LIBSEL4_SEL4_ARCH_PAGEFAULT_IPC
-
-#endif
+#include <sel4/deprecated.h>

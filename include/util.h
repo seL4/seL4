@@ -39,6 +39,8 @@
 #define UNUSED       __attribute__((unused))
 #define USED         __attribute__((used))
 #define FASTCALL     __attribute__((fastcall))
+#define UNREACHABLE()  __builtin_unreachable()
+#define MAY_ALIAS    __attribute__((may_alias))
 
 #define OFFSETOF(type, member) \
     __builtin_offsetof(type, member)

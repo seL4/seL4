@@ -12,6 +12,7 @@
 #define __LIBSEL4_SEL4_ARCH_TYPES_H
 
 #include <sel4/simple_types.h>
+#include <sel4/sel4_arch/types_gen.h>
 
 typedef seL4_Uint32 seL4_Word;
 typedef seL4_Word seL4_CPtr;

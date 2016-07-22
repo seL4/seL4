@@ -143,50 +143,52 @@ div64(uint64_t numerator, uint32_t denominator)
 BOOT_CODE VISIBLE uint32_t
 tsc_init(void)
 {
-    uint32_t version_info = x86_cpuid_eax(0x1, 0x0);
-    uint32_t tsc_mhz;
+    x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
+    uint32_t valid_models[] = { HASWELL_1_MODEL_ID, HASWELL_2_MODEL_ID,
+                                HASWELL_3_MODEL_ID, HASWELL_4_MODEL_ID,
+                                IVY_BRIDGE_1_MODEL_ID,
+                                IVY_BRIDGE_2_MODEL_ID,
+                                IVY_BRIDGE_3_MODEL_ID
+                              };
 
-    if (MODEL_ID(version_info) == HASWELL_MODEL_ID ||
-            MODEL_ID(version_info) == IVY_BRIDGE_MODEL_ID) {
-        uint64_t info;
-        uint32_t ratio;
+    /* try to read the frequency from the platform info MSR */
+    if (model_info->family == IA32_PREFETCHER_COMPATIBLE_FAMILIES_ID) {
+        for (int i = 0; i < ARRAY_SIZE(valid_models); i++) {
+            if (model_info->model == valid_models[i]) {
 
-        /* read tsc freq from the platform info msr */
-        info = x86_rdmsr(IA32_PLATFORM_INFO_MSR);
-        ratio = (((uint32_t) info) & 0xFF00) >> 8u;
-        tsc_mhz = ratio * 100u; // this gives Mhz
-    } else {
-        /* use the pit to find out the tsc freq */
-        time_t old_ticks, new_ticks, diff;
-        uint32_t cycles_per_ms;
-
-        pit_init();
-
-        /* wait for pit to wraparound */
-        pit_wait_wraparound();
-
-        /* read tsc */
-        old_ticks = x86_rdtsc();
-
-        /* measure how many tsc cycles pass while PIT wrapsaround */
-        pit_wait_wraparound();
-
-        new_ticks = x86_rdtsc();
-
-        diff = new_ticks - old_ticks;
-
-        /* sanity checks */
-        assert((uint32_t) diff == diff);
-        assert(new_ticks > old_ticks);
-
-        /* bravo, khz */
-        cycles_per_ms = (uint32_t) diff / PIT_WRAPAROUND_MS;
-
-        /* finally, return mhz */
-        tsc_mhz = cycles_per_ms / 1000u;
+                /* read tsc freq from the platform info msr */
+                uint64_t info = x86_rdmsr(IA32_PLATFORM_INFO_MSR);
+                uint32_t ratio = (((uint32_t) info) & 0xFF00) >> 8u;
+                return (ratio * 100u); // this gives Mhz
+            }
+        }
     }
 
-    return tsc_mhz;
+    /* otherwise use the pit to find out the tsc freq */
+    pit_init();
+
+    /* wait for pit to wraparound */
+    pit_wait_wraparound();
+
+    /* read tsc */
+    time_t old_ticks = x86_rdtsc();
+
+    /* measure how many tsc cycles pass while PIT wrapsaround */
+    pit_wait_wraparound();
+
+    time_t new_ticks = x86_rdtsc();
+
+    time_t diff = new_ticks - old_ticks;
+
+    /* sanity checks */
+    assert((uint32_t) diff == diff);
+    assert(new_ticks > old_ticks);
+
+    /* bravo, khz */
+    uint32_t cycles_per_ms = (uint32_t) diff / PIT_WRAPAROUND_MS;
+
+    /* finally, return mhz */
+    return cycles_per_ms / 1000u;
 }
 
 PURE time_t

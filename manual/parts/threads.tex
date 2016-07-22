@@ -14,7 +14,7 @@
 \label{sec:threads}
 
 seL4 provides threads to represent an execution context, while scheduling contexts are used to manage
-processor time. 
+processor time.
 A thread is represented in seL4 by its thread control block
 object (\obj{TCB}) and a scheduling context by a scheduling context object.
 Threads cannot run unless they are bound to, or receive a scheduling context.
@@ -50,7 +50,7 @@ or by seperately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method.
 
 The \apifunc{seL4\_TCB\_Suspend}{tcb_suspend} method deactivates a thread.
 Suspended threads can later be resumed.
-Their suspended state can be retrieved with the 
+Their suspended state can be retrieved with the
 \apifunc{seL4\_TCB\_ReadRegisters}{tcb_readregisters} and
 \apifunc{seL4\_TCB\_CopyRegisters}{tcb_copyregisters} methods.
 They can also be reconfigured and
@@ -64,15 +64,15 @@ When threads are suspended, any active IPCs or signals are cancelled.
 \label{sec:scheduling_contexts}
 
 Access to CPU execution time is controlled through scheduling context objects.
-Scheduling contexts consist of a tuple of 
+Scheduling contexts consist of a tuple of
 \textit{budget (b)} and \textit{period (p)}, both in microseconds, set by \apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure} (see \autoref{sec:sc_creation}).
-The tuple $(b, p)$ forms an upper bound on the thread's execution -- 
+The tuple $(b, p)$ forms an upper bound on the thread's execution --
 the kernel will not permit a thread to run for more than $b$ out of every $p$ microseconds.
 However, $\frac{b}{p}$ does not represent a lower bound on execution, as a thread must have the highest or equal highest priority of all runnable threads to be guaranteed to be scheduled at all.
 
 A scheduling context that has budget available is referred to as \emph{active}.
 Whenever a thread is executing it consumes the budget from its current scheduling context.
-Once the budget is exhausted the thread is preempted and will not be schedulable again until the period has passed, at which 
+Once the budget is exhausted the thread is preempted and will not be schedulable again until the period has passed, at which
 point the budget will be replenished.
 When a thread's budget is exhausted, the next runnable thread at that priority with an active scheduling context will be chosen by the scheduler.
 When $b = p$, $b$ simply acts as a timeslice for a thread, as the budget is always replenished immediately after it expires, however the thread will be preempted.
@@ -80,8 +80,8 @@ When $b = p$, $b$ simply acts as a timeslice for a thread, as the budget is alwa
 The system call \apifunc{seL4\_SchedContext\_Yield}{schedcontext_yield} can be used to sacrifice any remaining budget and block until the budget is replenished.
 This allows for periodic tasks to be implemented by setting their scheduling context's period and having them call \apifunc{seL4\_SchedContext\_Yield}{schedcontext_yield} when their job is complete.
 
-Threads can be bound to scheduling contexts using \apifunc{seL4\_TCB\_Configure}{tcb_configure} or 
-\apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure}{tcb_configure} allows more thread fields to be set with only one kernel entry. 
+Threads can be bound to scheduling contexts using \apifunc{seL4\_TCB\_Configure}{tcb_configure} or
+\apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind}, both invocations have the same effect although \apifunc{seL4\_TCB\_Configure}{tcb_configure} allows more thread fields to be set with only one kernel entry.
 When a thread is bound to a scheduling context, if it is in a runnable state and the scheduling context is active, it will be added to the scheduler.
 
 Threads can optionally generate exceptions when they attempt to run without available budget, see \autoref{sec:exceptions}.
@@ -89,11 +89,11 @@ Threads can optionally generate exceptions when they attempt to run without avai
 \subsection{Passive Threads}
 \label{sec:passive}
 
-Threads can be unbound from a scheduling context with \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}. 
-This is distinct from suspending a thread, in that threads that are blocked waiting in an endpoint or notification queue will remain 
-in the queue and can still recieve messages and signals. 
+Threads can be unbound from a scheduling context with \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.
+This is distinct from suspending a thread, in that threads that are blocked waiting in an endpoint or notification queue will remain
+in the queue and can still recieve messages and signals.
 However, the unbound thread will not be schedulable again until it receives a scheduling context.
-Threads without scheduling contexts are referred to as \emph{passive} threads, as they cannot execute without the action of another thread. 
+Threads without scheduling contexts are referred to as \emph{passive} threads, as they cannot execute without the action of another thread.
 
 \subsection{Scheduling Context Creation}
 \label{sec:sc_creation}
@@ -103,25 +103,25 @@ On creation, scheduling contexts are empty, representing 0\% of CPU execution ti
 To populate a scheduling context with parameters, one must invoke the \obj{SchedControl} capability, which provides access to CPU time management and is provided to the initial task at run time.
 Scheduling context parameters can then be set and updated using \apifunc{seL4\_SchedControl\_Configure}{schedcontrol_configure}, which allows the budget and period to be specified.
 
-The kernel does not conduct any schedulability tests, as task admission is left to user-level policy and can be conducted online or offline, statically or dynamically or not at all. 
+The kernel does not conduct any schedulability tests, as task admission is left to user-level policy and can be conducted online or offline, statically or dynamically or not at all.
 
 \subsection{Scheduling Context Donation and Borrowing}
 
 In addition to explicitly binding and removing scheduling contexts through \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}, scheduling contexts can move between threads over IPC.
 Scheduling contexts are donated implicitly when the system calls \apifunc{seL4\_Call}{sel4_call} and \apifunc{seL4\_SignalRecv}{sel4_signalrecv} are used to communicate with a passive thread.
 When \apifunc{seL4\_Call}{sel4_call} is used, the generated reply cap ensures that the callee is merely borrowing the scheduling context: when the reply cap is consumed by a reply message being sent the scheduling context will be returned to the caller.
-If the reply cap is revoked, and the callee holds the scheduling context, the scheduling context will be returned to the caller. 
-However, if in a deep call chain and a reply cap in the middle of the call chain is revoked, such that the callee does not possess the scheduling context, the thread will be removed from the call chain and the scheduling context will remain where it is. 
+If the reply cap is revoked, and the callee holds the scheduling context, the scheduling context will be returned to the caller.
+However, if in a deep call chain and a reply cap in the middle of the call chain is revoked, such that the callee does not possess the scheduling context, the thread will be removed from the call chain and the scheduling context will remain where it is.
 
-Consider an example where thread A calls thread B which calls thread C. 
-If while C holds the scheduling context, B's reply cap to A is revoked, then the scheduling context will remain with C. 
+Consider an example where thread A calls thread B which calls thread C.
+If while C holds the scheduling context, B's reply cap to A is revoked, then the scheduling context will remain with C.
 However, a call chain will remain between A and C, such that if C's reply cap is revoked, or invoked, the scheduling context will return to A.
 
 \apifunc{seL4\_SignalRecv}{sel4_signalrecv} only offers scheduling context donation: there is no guarantee that the scheduling context will return.
 
 Scheduling contexts can also be bound to notification objects using \apifunc{seL4\_SchedContext\_Bind}{schedcontext_bind} and unbound using \apifunc{seL4\_SchedContext\_UnbindObject}{schedcontext_unbindobject}.
 If a signal is delivered to a notification object with a passive thread blocked waiting on it, the passive thread will receive the scheduling context that is bound to the notification object.
-The scheduling context is returned when the thread blocks on the notification object. 
+The scheduling context is returned when the thread blocks on the notification object.
 This feature allows for passive servers to use notification binding (See \autoref{sec:notification-binding}).
 
 Scheduling contexts can be unbound from all objects (notification objects and TCBs that are bound or have received a scheduling context through donation) using \apifunc{seL4\_SchedContext\_Unbind}{schedcontext_unbind}.
@@ -141,7 +141,7 @@ Thread priority (structure \texttt{seL4\_Prio\_t}) consists of four values as fo
     \item[Priority] the priority a thread will be scheduled with.
     \item[Maximum controlled priority (MCP)] the highest priority a thread can set itself or another thread to.
     \item[Criticality] the criticality of a thread.
-    \item[Maximum controlled criticality] the highest criticality a thread can set itself or another thread to. 
+    \item[Maximum controlled criticality] the highest criticality a thread can set itself or another thread to.
 \end{description}
 
 Threads of sufficient maximum contrlled priority and with possession of the appropriate scheduling context capability can manipulate the scheduler and implement user-level schedulers using \apifunc{seL4\_SchedContext\_YieldTo}{schedcontext_yieldto} and \apifunc{seL4\_SchedContext\_Consumed}{schedcontext_consumed}.
@@ -163,11 +163,11 @@ The kernel will enforce that threads do not exceeed the budget in their scheduli
 \label{sec:criticality}
 
 Thread criticality provides the mechanism for implementing mixed-criticality scheduling in an efficient way on seL4.
-Criticality allows the system to change operating mode, with the understanding that the highest priority thread is not neccessarily the most important thread. 
-Should a high criticalty thread need more time, low criticality threads can be removed from the scheduler by changing the kernel criticality level with \apifunc{seL4\_SchedControl\_SetCriticality}{schedcontrol_setcriticality}, which is $O(n)$ in the number of threads with criticality greater than or equal to the criticality being set. 
-Criticality can be restored with the same function. 
+Criticality allows the system to change operating mode, with the understanding that the highest priority thread is not neccessarily the most important thread.
+Should a high criticalty thread need more time, low criticality threads can be removed from the scheduler by changing the kernel criticality level with \apifunc{seL4\_SchedControl\_SetCriticality}{schedcontrol_setcriticality}, which is $O(n)$ in the number of threads with criticality greater than or equal to the criticality being set.
+Criticality can be restored with the same function.
 
-Thread criticality can be set with \apifunc{seL4\_TCB\_SetCriticality}{tcb_setcriticality}, and like thread priorities, criticality assignment is controlled by the maximum control criticality, set with \apifunc{seL4\_TCB\_SetMCCriticality}{tcb_setmcc}. 
+Thread criticality can be set with \apifunc{seL4\_TCB\_SetCriticality}{tcb_setcriticality}, and like thread priorities, criticality assignment is controlled by the maximum control criticality, set with \apifunc{seL4\_TCB\_SetMCCriticality}{tcb_setmcc}.
 Both fields can be set with \apifunc{seL4\_TCB\_Configure}{tcb_configure}.
 
 \subsection{Exceptions}
@@ -199,7 +199,7 @@ See \autoref{sec:faults} for details.
 
 The standard exception handler is used when a fault is triggered by a thread which cannot be recovered from without action by another thread.
 For example, if a thread raises a fault due to an unmapped virtual memory page, the thread cannot make any more progress until the page is mapped.
-If a thread experiences a fault that would trigger the standard exception handler while it is set to a null capability, the kernel will pause the thread and it will not run again. 
+If a thread experiences a fault that would trigger the standard exception handler while it is set to a null capability, the kernel will pause the thread and it will not run again.
 This is because without action by another thread, standard exceptions cannot be recovered from.
 Consequently threads without standard exception handlers should be trusted not to fault at all.
 
@@ -217,7 +217,7 @@ Temporal faults handlers can use \apifunc{seL4\_CNode\_SwapTCBCaller}{cnode_swap
 
 If a reply message is sent to a nested server and a scheduling context without available budget returned, another temporal fault will be generated if the nested server also has a temporal fault handler.
 
-Additionally, if the system criticality is changed while a thread with higher criticality than the system criticality is running on a scheduling context that is bound to a thread with criticality lower than the system criticality, a temporal exception will be raised. 
+Additionally, if the system criticality is changed while a thread with higher criticality than the system criticality is running on a scheduling context that is bound to a thread with criticality lower than the system criticality, a temporal exception will be raised.
 
 \subsection{Message Layout of the Read-/Write-Registers Methods}
 \label{sec:read_write_registers}
@@ -228,7 +228,7 @@ The registers of a thread can be read and written with the
 \ifxeightsix
 \subsubsection{IA-32}
 
-\begin{tabularx}{\textwidth}{p{0.5\textwidth}X}
+\begin{tabularx}{\textwidth}{p{0.4\textwidth}X}
 \toprule
 \textbf{Register} & \textbf{IPC Buffer location} \\
 \midrule
@@ -251,7 +251,7 @@ The registers of a thread can be read and written with the
 
 \subsubsection{ARM}
 
-\begin{tabularx}{\textwidth}{p{0.5\textwidth}X}
+\begin{tabularx}{\textwidth}{p{0.4\textwidth}X}
 \toprule
 \textbf{Register} & \textbf{IPC Buffer location} \\
 \midrule
@@ -272,7 +272,9 @@ The registers of a thread can be read and written with the
 A thread's actions may result in a fault. Faults are delivered to the
 thread's exception handler so that it can take the appropriate action.
 The fault type is specified in the message label and is one of:
-seL4\_CapFault, seL4\_VMFault, seL4\_UnknownSyscall, seL4\_UserException, seL4\_Interrupt or seL4\_TemporalFault.
+seL4\_Fault\_CapFault, seL4\_Fault\_VMFault, seL4\_Fault\_UnknownSyscall, seL4\_Fault\_UserException,
+seL4\_Fault\_TemporalFault or seL4\_Fault\_NullFault (indicating no fault occured and this is a normal
+IPC message).
 
 \subsection{Capability Faults}
 
@@ -294,14 +296,14 @@ IPC message are given in \autoref{tbl:ipc_contents}.\\
 \begin{table}[htb]
 \noindent\begin{tabularx}{\textwidth}{XX}
 \toprule
-\textbf{Meaning} & \textbf{IPC buffer Location} \\
+    \textbf{Meaning} & \textbf{ IPC buffer location} \\
 \midrule
-Address at which to restart execution & \ipcbloc{IPCBuffer[0]} \\
-Capability address & \ipcbloc{IPCBuffer[1]}\\
+    Address at which to restart execution & \ipcbloc{seL4\_CapFault\_IP} \\
+    Capability address & \ipcbloc{seL4\_CapFault\_Addr} \\
 In receive phase (1 if the fault happened during a receive system call, 0
-otherwise) & \ipcbloc{IPCBuffer[2]}\\
+    otherwise) & \ipcbloc{seL4\_CapFault\_InRecvPhase} \\
 Lookup failure description. As described in \autoref{sec:lookup_fail_desc} &
-\ipcbloc{IPCBuffer[3..]}\\
+    \ipcbloc{seL4\_CapFault\_LookupFailureType} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:ipc_contents}Contents of an IPC message.}
@@ -329,16 +331,16 @@ tag.
 \subsubsection{ARM}
 
 \begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
+\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
 \toprule
 \textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
 \midrule
-\reg{R0-R7} & (same) & \ipcbloc{IPCBuffer[0-7]} \\
-\reg{FaultInstruction} & (same) & \ipcbloc{IPCBuffer[8]} \\
-\reg{SP} & (same) & \ipcbloc{IPCBuffer[9]} \\
-\reg{LR} & (same) & \ipcbloc{IPCBuffer[10]} \\
-\reg{CPSR} & (same) & \ipcbloc{IPCBuffer[11]} \\
-Syscall number & --- & \ipcbloc{IPCBuffer[12]} \\
+\reg{R0-R7} & (same) & \ipcbloc{seL4\_UnknownSyscall\_R[0-7]} \\
+\reg{FaultInstruction} & (same) & \ipcbloc{seL4\_UnknownSyscall\_FaultIP} \\
+\reg{SP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_SP} \\
+\reg{LR} & (same) & \ipcbloc{seL4\_UnknownSyscall\_LR} \\
+\reg{CPSR} & (same) & \ipcbloc{seL4\_UknownSyscall\_CPSR} \\
+Syscall number & --- & \ipcbloc{seL4\_UnknownSyscall\_Syscall} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:unknown_syscall_result_arm}Unknown system call outcome on
@@ -350,21 +352,21 @@ the ARM architecture.}
 % FIXME: This table now reflows onto the following page with the paragraph after
 % inserted here :(
 \begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
+\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
 \toprule
-\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
+\textbf{Value sent} & \textbf{Reply register} & \textbf{IPC buffer location} \\
 \midrule
-\reg{EAX} & (same) & \ipcbloc{IPCBuffer[0]} \\
-\reg{EBX} & (same) & \ipcbloc{IPCBuffer[1]} \\
-\reg{ECX} & (same) & \ipcbloc{IPCBuffer[2]} \\
-\reg{EDX} & (same) & \ipcbloc{IPCBuffer[3]} \\
-\reg{ESI} & (same) & \ipcbloc{IPCBuffer[4]} \\
-\reg{EDI} & (same) & \ipcbloc{IPCBuffer[5]} \\
-\reg{EBP} & (same) & \ipcbloc{IPCBuffer[6]} \\
-\reg{EIP} & (same) & \ipcbloc{IPCBuffer[7]} \\
-\reg{ESP} & (same) & \ipcbloc{IPCBuffer[8]} \\
-\reg{EFLAGS} & (same) & \ipcbloc{IPCBuffer[9]} \\
-Syscall number & --- & \ipcbloc{IPCBuffer[10]} \\
+\reg{EAX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EAX} \\
+\reg{EBX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EBX} \\
+\reg{ECX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_ECX} \\
+\reg{EDX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EDX} \\
+\reg{ESI} & (same) & \ipcbloc{seL4\_UnknownSyscall\_ESI} \\
+\reg{EDI} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EDI} \\
+\reg{EBP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EBP} \\
+\reg{EIP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_FaultIP} \\
+\reg{ESP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_SP} \\
+\reg{EFLAGS} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EFLAGS} \\
+Syscall number & --- & \ipcbloc{seL4\_UnknownSyscall\_Syscall} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:unknown_syscall_result_ia32}Unknown system call outcome on
@@ -391,15 +393,15 @@ tag.
 \subsubsection{ARM}
 
 \begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
+\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
 \toprule
 \textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
 \midrule
-\reg{FaultInstruction} & (same) & \ipcbloc{IPCBuffer[0]} \\
-\reg{SP} & (same) & \ipcbloc{IPCBuffer[1]} \\
-\reg{CPSR} & (same) & \ipcbloc{IPCBuffer[2]} \\
-Exception number & --- & \ipcbloc{IPCBuffer[3]} \\
-Exception code & --- & \ipcbloc{IPCBuffer[4]} \\
+\reg{FaultInstruction} & (same) & \ipcbloc{seL4\_UserException\_FaultIP} \\
+\reg{SP} & (same) & \ipcbloc{seL4\_UserException\_SP} \\
+\reg{CPSR} & (same) & \ipcbloc{seL4\_UserException\_CPSR} \\
+Exception number & --- & \ipcbloc{seL4\_UserException\_Number} \\
+Exception code & --- & \ipcbloc{seL4\_UserException\_Code} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:user_exception_result_arm}User exception outcome on the ARM
@@ -410,15 +412,15 @@ architecture.}
 \subsubsection{IA-32}
 
 \begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
+\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
 \toprule
 \textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
 \midrule
-\reg{EIP} & (same) & \ipcbloc{IPCBuffer[0]} \\
-\reg{ESP} & (same) & \ipcbloc{IPCBuffer[1]} \\
-\reg{EFLAGS} & (same) & \ipcbloc{IPCBuffer[2]} \\
-Exception number & --- & \ipcbloc{IPCBuffer[3]} \\
-Exception code & --- & \ipcbloc{IPCBuffer[4]} \\
+\reg{EIP} & (same) & \ipcbloc{seL4\_UserException\_FaultIP} \\
+\reg{ESP} & (same) & \ipcbloc{seL4\_UserException\_SP} \\
+\reg{EFLAGS} & (same) & \ipcbloc{seL4\_UserException\_EFLAGS} \\
+Exception number & --- & \ipcbloc{seL4\_UserException\_Number} \\
+Exception code & --- & \ipcbloc{seL4\_UserException\_Code} \\
 \bottomrule
 \end{tabularx}
 \caption{\label{tbl:user_exception_result_ia32}User exception outcome on the
@@ -432,22 +434,46 @@ IA-32 architecture.}
 The thread caused a page fault. Replying to the fault IPC will restart
 the thread. The contents of the IPC message are given below.\\
 
-% FIXME This table appears to be unified to make it architecture-independent,
-% but all the other tables are broken down into ARM and IA-32, so this one
-% should be as well for consistency.
-\noindent\begin{tabularx}{\textwidth}{XX}
+\subsubsection{ARM}
+
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
 \toprule
 \textbf{Meaning} & \textbf{IPC buffer location} \\
 \midrule
-Program counter to restart execution at. & \ipcbloc{IPCBuffer[0]} \\
-Address that caused the fault. & \ipcbloc{IPCBuffer[1]} \\
-Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{IPCBuffer[2]}  \\
-Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{IPCBuffer[3]} \\
+    Program counter to restart execution at. & \ipcbloc{seL4\_VMFault\_IP} \\
+Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
+    Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{seL4\_VMFault\_PrefetchFault}  \\
+Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
 \bottomrule
-\end{tabularx}\\ \\
+\end{tabularx}
+\caption{\label{tbl:vm_fault_result_arm} VM Fault outcome on the ARM
+architecture.}
+\end{table}
+
+\ifxeightsix
+\subsubsection{IA-32}
+
+\begin{table}[htb]
+\begin{tabularx}{\textwidth}{XXX}
+\toprule
+\textbf{Meaning} & \textbf{IPC buffer location} \\
+\midrule
+    Program counter to restart execution at. & \ipcbloc{seL4\_VMFault\_IP} \\
+Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
+    Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{seL4\_VMFault\_PrefetchFault}  \\
+Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
+\bottomrule
+\end{tabularx}
+\caption{\label{tbl:vm_fault_result_ia32} VM fault outcome on the
+IA-32 architecture.}
+\end{table}
+\fi
 
 \subsection{Temporal Fault}
 \label{sec:temporal-fault}
+
+TODO update
 
 Temporal faults are raised when a thread consumes all of its budget and has a temporal fault handler that is not a null capability.
 They allow a temporal exception handler to take some action to restore the thread.

@@ -118,7 +118,7 @@ doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
 
     receiveBuffer = lookupIPCBuffer(true, receiver);
 
-    if (likely(!fault_get_faultType(sender->tcbFault) != fault_null_fault)) {
+    if (likely(!seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault)) {
         sendBuffer = lookupIPCBuffer(false, sender);
         doNormalTransfer(sender, sendBuffer, endpoint, badge, grant,
                          receiver, receiveBuffer);
@@ -166,12 +166,12 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         /* thread still has not enough budget to run */
         cap_t tfep = getTemporalFaultHandler(receiver);
         if (validTemporalFaultHandler(tfep) &&
-                fault_get_faultType(receiver->tcbFault) != fault_temporal) {
+                seL4_Fault_get_seL4_FaultType(receiver->tcbFault) != seL4_Fault_Temporal) {
             /* the context does not have enough budget and the thread we are
              * switching to has a temporal fault handler, raise a temporal
              * fault and abort the reply */
             cteDeleteOne(slot);
-            current_fault = fault_temporal_new(receiver->tcbSchedContext->scData);
+            current_fault = seL4_Fault_Temporal_new(receiver->tcbSchedContext->scData);
             sendTemporalFaultIPC(receiver, tfep);
             return;
         } else {
@@ -183,7 +183,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         }
     }
 
-    if (likely(fault_get_faultType(receiver->tcbFault) == fault_null_fault)) {
+    if (likely(seL4_Fault_get_seL4_FaultType(receiver->tcbFault) == seL4_Fault_NullFault)) {
         doIPCTransfer(sender, NULL, 0, true, receiver);
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
@@ -195,7 +195,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
         restart = handleFaultReply(receiver, sender);
-        fault_null_fault_ptr_new(&receiver->tcbFault);
+        seL4_Fault_NullFault_ptr_new(&receiver->tcbFault);
         if (restart) {
             setThreadState(receiver, ThreadState_Restart);
             attemptSwitchTo(receiver);
@@ -251,7 +251,7 @@ doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
 
     sent = setMRs_fault(sender, receiver, receiverIPCBuffer);
     msgInfo = seL4_MessageInfo_new(
-                  fault_get_faultType(sender->tcbFault), 0, 0, sent);
+                  seL4_Fault_get_seL4_FaultType(sender->tcbFault), 0, 0, sent);
     setRegister(receiver, msgInfoRegister, wordFromMessageInfo(msgInfo));
     setRegister(receiver, badgeRegister, badge);
 }
@@ -617,7 +617,7 @@ checkBudget(void)
         commitTime(ksCurSchedContext);
         if (validTemporalFaultHandler(tfep)) {
             /* threads with temporal fault handlers should never run out of budget! */
-            current_fault = fault_temporal_new(ksCurSchedContext->scData);
+            current_fault = seL4_Fault_Temporal_new(ksCurSchedContext->scData);
             sendTemporalFaultIPC(ksCurThread, tfep);
         } else {
             /* threads without fault handlers don't care if they ran out of budget */
@@ -698,7 +698,7 @@ adjustPriorityByCriticality(tcb_t *tcb, bool_t up)
          * on a request for a low criticality thread */
         cap_t tfep = getTemporalFaultHandler(tcb);
         if (validTemporalFaultHandler(tfep)) {
-            current_fault = fault_temporal_new(tcb->tcbSchedContext->scData);
+            current_fault = seL4_Fault_Temporal_new(tcb->tcbSchedContext->scData);
             sendTemporalFaultIPC(tcb, tfep);
         }
     }

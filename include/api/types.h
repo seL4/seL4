@@ -14,13 +14,15 @@
 #include <config.h>
 #include <stdint.h>
 #include <util.h>
-#include <api/types_gen.h>
+#include <mode/api/shared_types_gen.h>
 #include <arch/api/types.h>
 #include <arch/types.h>
+#include <api/macros.h>
 #include <api/constants.h>
 #include <api/shared_types.h>
 
-/* cap_rights_t defined in api/types.bf */
+/* seL4_CapRights_t defined in mode/api/shared_types.bf */
+
 typedef word_t prio_t;
 typedef uint64_t time_t;
 typedef uint64_t ticks_t;
@@ -37,19 +39,19 @@ enum ctLimits {
     capTransferDataSize = 3
 };
 
-static inline cap_rights_t CONST
+static inline seL4_CapRights_t CONST
 rightsFromWord(word_t w)
 {
-    cap_rights_t cap_rights;
+    seL4_CapRights_t seL4_CapRights;
 
-    cap_rights.words[0] = w;
-    return cap_rights;
+    seL4_CapRights.words[0] = w;
+    return seL4_CapRights;
 }
 
 static inline word_t CONST
-wordFromRights(cap_rights_t cap_rights)
+wordFromRights(seL4_CapRights_t seL4_CapRights)
 {
-    return cap_rights.words[0] & MASK(3);
+    return seL4_CapRights.words[0] & MASK(3);
 }
 
 static inline cap_transfer_t PURE
@@ -94,9 +96,6 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
     return mi.words[0];
 }
 
-#define allRights cap_rights_new(true, true, true)
-#define noWrite cap_rights_new(true, true, false)
-
 #ifdef CONFIG_PRINTING
 #ifdef CONFIG_COLOUR_PRINTING
 #define ANSI_RESET "\033[0m"
@@ -107,6 +106,16 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define ANSI_GREEN ANSI_RESET ""
 #define ANSI_DARK  ANSI_RESET ""
 #endif
+
+/*
+ * thread name is only available if the kernel is built in debug mode.
+ */
+#ifdef CONFIG_DEBUG_BUILD
+#define THREAD_NAME ksCurThread->tcbName
+#else
+#define THREAD_NAME ""
+#endif
+
 /*
  * Print to serial a message helping userspace programmers to determine why the
  * kernel is not performing their requested operation.
@@ -115,7 +124,8 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
     do {                                                                     \
         printf(ANSI_DARK "<<" ANSI_GREEN "seL4" ANSI_DARK                    \
                 " [%s/%d T%p \"%s\" @%lx]: ",                                \
-                __func__, __LINE__, ksCurThread, ksCurThread->tcbName,       \
+                __func__, __LINE__, ksCurThread,                             \
+                THREAD_NAME,                                                 \
                 (word_t)getRestartPC(ksCurThread));                          \
         printf(__VA_ARGS__);                                                 \
         printf(">>" ANSI_RESET "\n");                                        \

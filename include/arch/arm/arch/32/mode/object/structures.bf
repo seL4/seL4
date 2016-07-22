@@ -123,16 +123,6 @@ block io_space_capdata {
     field   clientID        16
 }
 
-block io_page_directory_cap (capType, capIOPDIsMapped, capIOPDASID, capIOPDBasePtr) {
-    field_high  capIOPDBasePtr      20
-    padding                         12
-
-    padding                         16
-    field       capIOPDASID         7       -- TK1 has 7-bit ASID
-    field       capIOPDIsMapped     1
-    field       capType             8
-}
-
 block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, capIOPTMappedAddress) {
     field_high  capIOPTBasePtr          20
     padding                             12
@@ -186,14 +176,13 @@ tagged_union cap capType {
     -- we use the same names as for x86 IOMMU caps
 #ifdef CONFIG_ARM_SMMU
     tag io_space_cap            0x1f
-    tag io_page_directory_cap   0x2f
-    tag io_page_table_cap       0x3f
+    tag io_page_table_cap       0x2f
 #endif
 }
 
----- Arch-independent object types
+---- Arm specific fault types
 
-block vm_fault {
+block VMFault {
     field address 32
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     field FSR 26
@@ -204,38 +193,24 @@ block vm_fault {
     field instructionFault 1
     padding 14
 #endif
-    field faultType 3
+    field seL4_FaultType 3
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-block vgic_maintenance {
+block VGICMaintenance {
     field idx        6
     field idxValid   1
     padding         25
     padding         29
-    field faultType  3
+    field seL4_FaultType  3
 }
 
-block vcpu_fault {
+block VCPUFault {
     field hsr       32
     padding         29
-    field faultType  3
+    field seL4_FaultType  4
 }
 #endif
-
-tagged_union fault faultType {
-    tag null_fault 0
-    tag cap_fault 1
-    tag vm_fault 2
-    tag unknown_syscall 3
-    tag user_exception 4
-    tag temporal 5
-    tag no_fault_handler 6
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    tag vgic_maintenance 7
-    tag vcpu_fault       8
-#endif
-}
 
 ---- ARM-specific object types
 
@@ -492,3 +467,5 @@ block vm_attributes {
     field armParityEnabled 1
     field armPageCacheable 1
 }
+
+#include <mode/api/shared_types.bf>

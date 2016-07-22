@@ -70,6 +70,8 @@
 
 static volatile tk1_mc_regs_t *smmu_regs = (volatile tk1_mc_regs_t *)(SMMU_PPTR);
 
+static iopde_t *smmu_ioasid_to_pd[ARM_PLAT_NUM_SMMU];
+
 static void
 do_smmu_enable(void)
 {
@@ -141,15 +143,6 @@ make_ptb_data(uint32_t pd_base, bool_t read, bool_t write, bool_t nonsecure)
     return ret;
 }
 
-static uint32_t
-ptb_data_get_pd_base(uint32_t data)
-{
-    uint32_t ret = data;
-    ret &= PTB_DATA_BASE_PD_MASK;
-    ret <<= PTB_DATA_BASE_SHIFT;
-    return ret;
-}
-
 void
 plat_smmu_ptc_flush_all(void)
 {
@@ -196,18 +189,20 @@ plat_smmu_vm_mapping(word_t iopd, word_t gpa, word_t pa, word_t size)
 BOOT_CODE int
 plat_smmu_init(void)
 {
-    uint32_t asid = 1;
-    int i = 0;
+    uint32_t asid;
 
     smmu_disable();
 
-    for (i = 0; i < ARM_PLAT_NUM_SMMU; i++) {
+    for (asid = SMMU_FIRST_ASID; asid <= SMMU_LAST_ASID; asid++) {
         iopde_t *pd = (iopde_t *)alloc_region(SMMU_PD_BITS);
 
         if (pd == 0) {
             printf("Failed to allocate SMMU IOPageDirectory for ASID %d\n", asid);
             return 0;
         }
+
+        /* put the PD in the lookup table */
+        smmu_ioasid_to_pd[asid - SMMU_FIRST_ASID] = pd;
 
         memset(pd, 0, BIT(SMMU_PD_BITS));
         if (config_set(CONFIG_ARM_SMMU_VM_DEFAULT_MAPPING)) {
@@ -220,7 +215,6 @@ plat_smmu_init(void)
 
         /* make it read/write/nonsecure but all translation entries are invalid */
         smmu_regs->smmu_ptb_data = make_ptb_data(pptr_to_paddr(pd), true, true, true);
-        asid++;
     }
     printf("Total %d IOASID set up\n", (asid - 1));
 
@@ -267,20 +261,13 @@ plat_smmu_init(void)
     return ARM_PLAT_NUM_SMMU;
 }
 
-
 iopde_t *
 plat_smmu_lookup_iopd_by_asid(uint32_t asid)
 {
-    iopde_t *pd = 0;
-    uint32_t data = 0;
-    if (asid < SMMU_FIRST_ASID || asid > SMMU_LAST_ASID) {
-        return 0;
-    }
-
-    smmu_regs->smmu_ptb_asid = asid;
-    data = smmu_regs->smmu_ptb_data;
-    pd = (iopde_t *)(paddr_to_pptr(ptb_data_get_pd_base(data)));
-    return pd;
+    /* There should be no way to generate bad ASID values through the kernel
+     * so this is an assertion and not a check */
+    assert(asid >= SMMU_FIRST_ASID && asid <= SMMU_LAST_ASID);
+    return smmu_ioasid_to_pd[asid - SMMU_FIRST_ASID];
 }
 
 void

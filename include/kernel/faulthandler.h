@@ -28,6 +28,6 @@ validTemporalFaultHandler(cap_t cap)
 void handleFault(tcb_t *tptr);
 exception_t sendFaultIPC(tcb_t *tptr);
 exception_t sendTemporalFaultIPC(tcb_t *tptr, cap_t tfep);
-void handleDoubleFault(tcb_t *tptr, fault_t ex1);
+void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1);
 
 #endif

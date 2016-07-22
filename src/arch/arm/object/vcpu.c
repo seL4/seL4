@@ -258,10 +258,10 @@ vcpu_init(vcpu_t *vcpu)
 void
 vcpu_switch(vcpu_t *new)
 {
-    if (ksCurCPU != new) {
-        vcpu_save(ksCurCPU);
+    if (armHSCurVCPU != new) {
+        vcpu_save(armHSCurVCPU);
         vcpu_restore(new);
-        ksCurCPU = new;
+        armHSCurVCPU = new;
     }
 }
 

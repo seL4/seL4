@@ -286,7 +286,7 @@ decodeX86IOMapInvocation(
     } else {
         lookupIOPTSlot_ret_t lu_ret;
         vm_rights_t          frame_cap_rights;
-        cap_rights_t         dma_cap_rights_mask;
+        seL4_CapRights_t         dma_cap_rights_mask;
 
         vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
         lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
@@ -300,7 +300,7 @@ decodeX86IOMapInvocation(
         dma_cap_rights_mask = rightsFromWord(getSyscallArg(0, buffer));
         frame_cap_rights    = cap_frame_cap_get_capFVMRights(cap);
 
-        if ((frame_cap_rights == VMReadOnly) && cap_rights_get_capAllowRead(dma_cap_rights_mask)) {
+        if ((frame_cap_rights == VMReadOnly) && seL4_CapRights_get_capAllowRead(dma_cap_rights_mask)) {
             /* Read Only */
             vtd_pte_ptr_new(
                 lu_ret.ioptSlot,
@@ -309,7 +309,7 @@ decodeX86IOMapInvocation(
                 1       /* Write permission */
             );
         } else if (frame_cap_rights == VMReadWrite) {
-            if (cap_rights_get_capAllowRead(dma_cap_rights_mask) && !cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
+            if (seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) && !seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
                 /* Read Only */
                 vtd_pte_ptr_new(
                     lu_ret.ioptSlot,
@@ -317,7 +317,7 @@ decodeX86IOMapInvocation(
                     0,      /* Read permission  */
                     1       /* Write permission */
                 );
-            } else if (!cap_rights_get_capAllowRead(dma_cap_rights_mask) && cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
+            } else if (!seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) && seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
                 /* Write Only */
                 vtd_pte_ptr_new(
                     lu_ret.ioptSlot,
@@ -326,7 +326,7 @@ decodeX86IOMapInvocation(
                     0       /* Write permission */
                 );
 
-            } else if (cap_rights_get_capAllowRead(dma_cap_rights_mask) && cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
+            } else if (seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) && seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
                 /* Read Write */
                 vtd_pte_ptr_new(
                     lu_ret.ioptSlot,
@@ -435,7 +435,7 @@ void unmapIOPage(cap_t cap)
 }
 
 exception_t
-decodeX86IOUnMapInvocation(
+decodeX86IOUnmapInvocation(
     word_t       invLabel,
     uint32_t     length,
     cte_t*       slot,

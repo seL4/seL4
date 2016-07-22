@@ -490,7 +490,7 @@ updateCapData(bool_t preserve, word_t newData, cap_t cap)
 }
 
 cap_t CONST
-maskCapRights(cap_rights_t cap_rights, cap_t cap)
+maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
 {
     if (isArchCap(cap)) {
         return Arch_maskCapRights(cap_rights, cap);
@@ -514,13 +514,13 @@ maskCapRights(cap_rights_t cap_rights, cap_t cap)
 
         new_cap = cap_endpoint_cap_set_capCanSend(
                       cap, cap_endpoint_cap_get_capCanSend(cap) &
-                      cap_rights_get_capAllowWrite(cap_rights));
+                      seL4_CapRights_get_capAllowWrite(cap_rights));
         new_cap = cap_endpoint_cap_set_capCanReceive(
                       new_cap, cap_endpoint_cap_get_capCanReceive(cap) &
-                      cap_rights_get_capAllowRead(cap_rights));
+                      seL4_CapRights_get_capAllowRead(cap_rights));
         new_cap = cap_endpoint_cap_set_capCanGrant(
                       new_cap, cap_endpoint_cap_get_capCanGrant(cap) &
-                      cap_rights_get_capAllowGrant(cap_rights));
+                      seL4_CapRights_get_capAllowGrant(cap_rights));
 
         return new_cap;
     }
@@ -530,10 +530,10 @@ maskCapRights(cap_rights_t cap_rights, cap_t cap)
 
         new_cap = cap_notification_cap_set_capNtfnCanSend(
                       cap, cap_notification_cap_get_capNtfnCanSend(cap) &
-                      cap_rights_get_capAllowWrite(cap_rights));
+                      seL4_CapRights_get_capAllowWrite(cap_rights));
         new_cap = cap_notification_cap_set_capNtfnCanReceive(new_cap,
                                                              cap_notification_cap_get_capNtfnCanReceive(cap) &
-                                                             cap_rights_get_capAllowRead(cap_rights));
+                                                             seL4_CapRights_get_capAllowRead(cap_rights));
 
         return new_cap;
     }
@@ -572,11 +572,11 @@ createObject(object_t t, void *regionBase, word_t userSize)
 
         Arch_initContext(&tcb->tcbArch.tcbContext);
 
-#ifdef CONFIG_PRINTING
+#ifdef CONFIG_DEBUG_BUILD
         strlcpy(tcb->tcbName, "child of: '", TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, ksCurThread->tcbName, TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, "'", TCB_NAME_LENGTH);
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
 
         return cap_thread_cap_new(TCB_REF(tcb));
     }

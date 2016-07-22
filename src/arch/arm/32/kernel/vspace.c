@@ -23,7 +23,6 @@
 #include <arch/api/invocation.h>
 #include <arch/kernel/vspace.h>
 #include <arch/linker.h>
-#include <arch/object/tcb.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <armv/context_switch.h>
@@ -136,26 +135,26 @@ HAPFromVMRights(vm_rights_t vm_rights)
 #endif
 
 vm_rights_t CONST
-maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask)
+maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
     if (vm_rights == VMNoAccess) {
         return VMNoAccess;
     }
     if (vm_rights == VMReadOnly &&
-            cap_rights_get_capAllowRead(cap_rights_mask)) {
+            seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
     }
     if (vm_rights == VMReadWrite &&
-            cap_rights_get_capAllowRead(cap_rights_mask)) {
-        if (!cap_rights_get_capAllowWrite(cap_rights_mask)) {
+            seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+        if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
         } else {
             return VMReadWrite;
         }
     }
     if (vm_rights == VMReadWrite &&
-            !cap_rights_get_capAllowRead(cap_rights_mask) &&
-            cap_rights_get_capAllowWrite(cap_rights_mask)) {
+            !seL4_CapRights_get_capAllowRead(cap_rights_mask) &&
+            seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
         userError("Attempted to make unsupported write only mapping");
     }
     return VMKernelOnly;
@@ -1144,7 +1143,7 @@ isValidVTableRoot(cap_t cap)
 }
 
 bool_t CONST
-isIOSpaceFrame(cap_t cap)
+isIOSpaceFrameCap(cap_t cap)
 {
 #ifdef CONFIG_ARM_SMMU
     return cap_get_capType(cap) == cap_small_frame_cap && cap_small_frame_cap_get_capFIsIOSpace(cap);
@@ -1397,7 +1396,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         addr = getFAR();
         fault = getDFSR();
 #endif
-        current_fault = fault_vm_fault_new(addr, fault, false);
+        current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
     }
 
@@ -1413,7 +1412,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 #else
         fault = getIFSR();
 #endif
-        current_fault = fault_vm_fault_new(pc, fault, true);
+        current_fault = seL4_Fault_VMFault_new(pc, fault, true);
         return EXCEPTION_FAULT;
     }
 
@@ -2570,7 +2569,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_attributes_t attr;
 
 #ifdef CONFIG_ARM_SMMU
-        if (isIOSpaceFrame(cap)) {
+        if (isIOSpaceFrameCap(cap)) {
             userError("ARMFrameRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
@@ -2679,8 +2678,9 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
 
     case ARMPageUnmap: {
 #ifdef CONFIG_ARM_SMMU
-        if (isIOSpaceFrame(cap)) {
-            return decodeARMIOUnMapInvocation(invLabel, length, cte, cap, excaps);
+        if (isIOSpaceFrameCap(cap)) {
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performPageInvocationUnmapIO(cap, cte);
         } else
 #endif
         {

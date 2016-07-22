@@ -104,7 +104,7 @@ void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
 bool_t CONST isValidNativeRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
-vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, cap_rights_t cap_rights_mask);
+vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask);
 void flushTable(vspace_root_t *vspace, word_t vptr, pte_t *pt, asid_t asid);
 
 exception_t decodeX86MMUInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *cte,
@@ -132,7 +132,7 @@ pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr);
 pde_t CONST makeUserPDELargePageInvalid(void);
 pde_t CONST makeUserPDEPageTableInvalid(void);
 
-bool_t  CONST isIOSpaceFrame(cap_t cap);
+bool_t  CONST isIOSpaceFrameCap(cap_t cap);
 
 #ifdef CONFIG_PRINTING
 void Arch_userStackTrace(tcb_t *tptr);
