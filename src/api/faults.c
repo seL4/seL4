@@ -98,7 +98,7 @@ copyMRsFault(tcb_t *sender, tcb_t *receiver, const register_t message[],
              word_t length, word_t *receiveIPCBuffer)
 {
     word_t i;
-    for (i = 0; i < n_msgRegisters; i++) {
+    for (i = 0; i < MIN(length, n_msgRegisters); i++) {
         setRegister(receiver, msgRegisters[i], getRegister(sender, message[i]));
     }
 
