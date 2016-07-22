@@ -155,13 +155,8 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
     case seL4_Fault_UnknownSyscall: {
         copyMRsFault(sender, receiver, syscallMessage, n_syscallMessage,
                      receiveIPCBuffer);
-
-        if (receiveIPCBuffer) {
-            return setMR(receiver, receiveIPCBuffer, n_syscallMessage,
-                         seL4_Fault_UnknownSyscall_get_syscallNumber(sender->tcbFault));
-        } else {
-            return n_msgRegisters;
-        }
+        return setMR(receiver, receiveIPCBuffer, n_syscallMessage,
+                     seL4_Fault_UnknownSyscall_get_syscallNumber(sender->tcbFault));
     }
 
     case seL4_Fault_UserException: {
