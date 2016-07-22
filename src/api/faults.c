@@ -144,13 +144,13 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 {
     switch (seL4_Fault_get_seL4_FaultType(sender->tcbFault)) {
     case seL4_Fault_CapFault:
-        setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
-        setMR(receiver, receiveIPCBuffer, 1u,
+        setMR(receiver, receiveIPCBuffer, seL4_CapFault_IP, getRestartPC(sender));
+        setMR(receiver, receiveIPCBuffer, seL4_CapFault_Addr,
               seL4_Fault_CapFault_get_address(sender->tcbFault));
-        setMR(receiver, receiveIPCBuffer, 2u,
+        setMR(receiver, receiveIPCBuffer, seL4_CapFault_InRecvPhase,
               seL4_Fault_CapFault_get_inReceivePhase(sender->tcbFault));
         return setMRs_lookup_failure(receiver, receiveIPCBuffer,
-                                     sender->tcbLookupFailure, 3u);
+                                     sender->tcbLookupFailure, seL4_CapFault_LookupFailureType);
 
     case seL4_Fault_UnknownSyscall: {
         copyMRsFault(sender, receiver, syscallMessage, n_syscallMessage,
