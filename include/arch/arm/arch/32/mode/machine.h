@@ -119,7 +119,7 @@ static inline void flushBTAC(void)
 /** DONT_TRANSLATE */
 static inline void writeContextID(word_t id)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         writeContextIDPL2(id);
     } else {
         asm volatile("mcr p15, 0, %0, c13, c0, 1" : : "r"(id));
@@ -144,7 +144,7 @@ static inline void setCurrentPD(paddr_t addr)
      * outer write-back cacheable, no allocate on write, inner non-cacheable.
      */
     /* Before changing the PD ensure all memory stores have completed */
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         setCurrentPDPL2(addr);
     } else {
         dsb();
@@ -168,7 +168,7 @@ static inline void invalidateTLB(void)
 /** DONT_TRANSLATE */
 static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateTLB();
     } else {
         dsb();
@@ -181,7 +181,7 @@ static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
 /** DONT_TRANSLATE */
 static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateTLB();
     } else {
         dsb();
