@@ -130,7 +130,7 @@ create_iospace_caps(cap_t root_cnode_cap)
 
 static exception_t
 performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
-                            iopde_t iopde, uint32_t asid, paddr_t io_address)
+                            iopde_t iopde)
 {
 
 
@@ -141,10 +141,6 @@ performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
 
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();
-
-    cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 1);
-    cap = cap_io_page_table_cap_set_capIOPTASID(cap, asid);
-    cap = cap_io_page_table_cap_set_capIOPTMappedAddress(cap, io_address);
 
     slot->cap = cap;
     return EXCEPTION_NONE;
@@ -230,13 +226,17 @@ decodeARMIOPTInvocation(
                 paddr
             );
 
+    cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 1);
+    cap = cap_io_page_table_cap_set_capIOPTASID(cap, asid);
+    cap = cap_io_page_table_cap_set_capIOPTMappedAddress(cap, io_address);
+
     setThreadState(ksCurThread, ThreadState_Restart);
-    return performARMIOPTInvocationMap(cap, slot, lu_ret.iopdSlot, iopde, asid, io_address);
+    return performARMIOPTInvocationMap(cap, slot, lu_ret.iopdSlot, iopde);
 }
 
 static exception_t
 performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
-                          iopte_t iopte, uint32_t asid, paddr_t io_address)
+                          iopte_t iopte)
 {
     *ioptSlot = iopte;
     cleanCacheRange_RAM((word_t)ioptSlot,
@@ -246,9 +246,6 @@ performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
     plat_smmu_tlb_flush_all();
     plat_smmu_ptc_flush_all();
 
-    cap = cap_small_frame_cap_set_capFIsIOSpace(cap, 1);
-    cap = cap_small_frame_cap_set_capFMappedASID(cap, asid);
-    cap = cap_small_frame_cap_set_capFMappedAddress(cap, io_address);
     slot->cap = cap;
 
     return EXCEPTION_NONE;
@@ -379,8 +376,12 @@ decodeARMIOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    cap = cap_small_frame_cap_set_capFIsIOSpace(cap, 1);
+    cap = cap_small_frame_cap_set_capFMappedASID(cap, asid);
+    cap = cap_small_frame_cap_set_capFMappedAddress(cap, io_address);
+
     setThreadState(ksCurThread, ThreadState_Restart);
-    return performARMIOMapInvocation(cap, slot, lu_ret.ioptSlot, iopte, asid, io_address);
+    return performARMIOMapInvocation(cap, slot, lu_ret.ioptSlot, iopte);
 }
 
 
