@@ -267,25 +267,25 @@ void
 vcpu_finalise(vcpu_t *vcpu)
 {
     if (vcpu->tcb) {
-        dissociateVcpuTcb(vcpu->tcb, vcpu);
+        dissociateVcpuTcb(vcpu, vcpu->tcb);
     }
 }
 
 void
-associateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
+associateVcpuTcb(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.vcpu) {
-        dissociateVcpuTcb(tcb, tcb->tcbArch.vcpu);
+        dissociateVcpuTcb(tcb->tcbArch.vcpu, tcb);
     }
     if (vcpu->tcb) {
-        dissociateVcpuTcb(vcpu->tcb, vcpu);
+        dissociateVcpuTcb(vcpu, vcpu->tcb);
     }
     vcpu->tcb = tcb;
     tcb->tcbArch.vcpu = vcpu;
 }
 
 void
-dissociateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
+dissociateVcpuTcb(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.vcpu != vcpu || vcpu->tcb != tcb) {
         fail("TCB and VCPU not associated.");
@@ -496,7 +496,7 @@ decodeVCPUSetTCB(cap_t cap, unsigned int length, word_t* buffer, extra_caps_t ex
 exception_t
 invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
-    associateVcpuTcb(tcb, vcpu);
+    associateVcpuTcb(vcpu, tcb);
 
     return EXCEPTION_NONE;
 }
