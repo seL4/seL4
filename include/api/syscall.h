@@ -19,8 +19,6 @@
 #include <api/debug.h>
 #include <plat/machine.h>
 
-#define TIME_ARG_SIZE (sizeof(time_t) / sizeof(word_t))
-
 exception_t handleSyscall(syscall_t syscall) VISIBLE;
 exception_t handleInterruptEntry(irq_t irq) VISIBLE;
 exception_t handleUnknownSyscall(word_t w) VISIBLE;

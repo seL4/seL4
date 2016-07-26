@@ -9,7 +9,7 @@
  */
 
 #include <types.h>
-#include <arch/api/ipc_buffer.h>
+#include <mode/api/ipc_buffer.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
 #include <machine/registerset.h>
@@ -155,9 +155,9 @@ decodeSchedControl_Configure(word_t length, extra_caps_t extra_caps, word_t *buf
     }
 
     buffer_index = 0;
-    budget = arch_parseTimeArg(buffer_index, buffer);
+    budget = mode_parseTimeArg(buffer_index, buffer);
     buffer_index += TIME_ARG_SIZE;
-    period = arch_parseTimeArg(buffer_index, buffer);
+    period = mode_parseTimeArg(buffer_index, buffer);
     buffer_index += TIME_ARG_SIZE;
 
     data = getSyscallArg(buffer_index, buffer);

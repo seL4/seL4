@@ -62,6 +62,15 @@ enum {
 } seL4_VMFault_Msg;
 
 enum {
+    seL4_TemporalFault_Data,
+    seL4_TemporalFault_Consumed,
+    /* consumed is 64 bits */
+    seL4_TemporalFault_Consumed_LowBits,
+    seL4_TemporalFault_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TemporalFault_Msg),
+} seL4_TemporalFault_Msg;
+
+enum {
     seL4_TemporalFaultReply_FaultIP,
     seL4_TemporalFaultReply_SP,
     seL4_TemporalFaultReply_CPSR,

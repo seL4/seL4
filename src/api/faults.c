@@ -13,6 +13,7 @@
 #include <api/faults.h>
 #include <api/syscall.h>
 #include <kernel/thread.h>
+#include <mode/api/ipc_buffer.h>
 
 /* consistency with libsel4 */
 compile_assert(InvalidRoot, lookup_fault_invalid_root + 1 == seL4_InvalidRoot);
@@ -172,9 +173,17 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                      seL4_Fault_UserException_get_code(sender->tcbFault));
     }
 
-    case seL4_Fault_Temporal:
-        return setMR(receiver, receiveIPCBuffer, seL4_TemporalFault_Data,
-                     seL4_Fault_Temporal_get_data(sender->tcbFault));
+    case seL4_Fault_Temporal: {
+        word_t len = setMR(receiver, receiveIPCBuffer, seL4_TemporalFault_Data,
+              seL4_Fault_Temporal_get_data(sender->tcbFault));
+        if (sender->tcbSchedContext != NULL) {
+            time_t consumed = schedContext_updateConsumed(sender->tcbSchedContext);
+            return mode_setTimeArg(seL4_TemporalFault_Consumed, consumed,
+                                   receiveIPCBuffer, receiver);
+        } else {
+            return len;
+        }
+    }
     default:
         return Arch_setMRs_fault(sender, receiver, receiveIPCBuffer,
                                  seL4_Fault_get_seL4_FaultType(sender->tcbFault));
