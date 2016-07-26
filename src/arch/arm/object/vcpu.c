@@ -476,21 +476,13 @@ exception_t
 decodeVCPUSetTCB(cap_t cap, unsigned int length, word_t* buffer, extra_caps_t extraCaps)
 {
     cap_t tcbCap;
-    cte_t *tcbSlot;
-    deriveCap_ret_t dc_ret;
     if ( extraCaps.excaprefs[0] == NULL) {
         userError("VCPU SetTCB: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    tcbSlot = extraCaps.excaprefs[0];
     tcbCap  = extraCaps.excaprefs[0]->cap;
 
-    dc_ret = deriveCap(tcbSlot, tcbCap);
-    if (dc_ret.status != EXCEPTION_NONE) {
-        return dc_ret.status;
-    }
-    tcbCap = dc_ret.cap;
     if (cap_get_capType(tcbCap) != cap_thread_cap) {
         userError("TCB cap is not a TCB cap.");
         current_syscall_error.type = seL4_IllegalOperation;
