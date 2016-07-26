@@ -143,6 +143,7 @@ performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
     plat_smmu_ptc_flush_all();
 
     slot->cap = cap;
+    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -230,7 +231,6 @@ decodeARMIOPTInvocation(
     cap = cap_io_page_table_cap_set_capIOPTASID(cap, asid);
     cap = cap_io_page_table_cap_set_capIOPTMappedAddress(cap, io_address);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
     return performARMIOPTInvocationMap(cap, slot, lu_ret.iopdSlot, iopde);
 }
 
@@ -248,6 +248,7 @@ performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
 
     slot->cap = cap;
 
+    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -380,7 +381,6 @@ decodeARMIOMapInvocation(
     cap = cap_small_frame_cap_set_capFMappedASID(cap, asid);
     cap = cap_small_frame_cap_set_capFMappedAddress(cap, io_address);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
     return performARMIOMapInvocation(cap, slot, lu_ret.ioptSlot, iopte);
 }
 

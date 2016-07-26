@@ -489,7 +489,6 @@ decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
     return invokeVCPUSetTCB(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), TCB_PTR(cap_thread_cap_get_capTCBPtr(tcbCap)));
 }
 
@@ -498,6 +497,7 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     associateVcpuTcb(vcpu, tcb);
 
+    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
