@@ -175,7 +175,7 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 
     case seL4_Fault_Temporal: {
         word_t len = setMR(receiver, receiveIPCBuffer, seL4_TemporalFault_Data,
-              seL4_Fault_Temporal_get_data(sender->tcbFault));
+                           seL4_Fault_Temporal_get_data(sender->tcbFault));
         if (sender->tcbSchedContext != NULL) {
             time_t consumed = schedContext_updateConsumed(sender->tcbSchedContext);
             return mode_setTimeArg(seL4_TemporalFault_Consumed, consumed,
