@@ -241,8 +241,6 @@ VGICMaintenance(void)
     }
 
     handleFault(ksCurThread);
-    schedule();
-    activateThread();
 }
 
 void
