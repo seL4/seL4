@@ -555,6 +555,11 @@ kernel_all.c: sources_list_updated ${C_SOURCES_WITH_PARSE} ${DOMAIN_CONFIG_FILE}
 
 kernel.o: kernel_final.s
 	@echo " [AS] $@"
+	# Clear any .arch directive from the .s file in case we are assembling
+	# for a different architecture. This happens when the compiler supports
+	# a subset architecture compared to the assembler. For example where the
+	# compiler only supports armv7-a, where the assembler supports armv7ve
+	$(Q)sed -i 's/^[ \t]*\.arch .*$$//' $<
 	$(Q)${CC} ${ASFLAGS} -o $@ -c $<
 
 kernel_final.s: kernel_final.c
