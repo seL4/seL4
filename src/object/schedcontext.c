@@ -196,7 +196,7 @@ invokeSchedContext_YieldTo(sched_context_t *sc)
 
     if (unlikely(returnNow)) {
         /* put consumed value into reply message as we are returning immediately to the caller */
-        compile_assert(consumed_fits_in_mrs, TIME_ARG_SIZE  <= n_msgRegisters);
+        UNUSED compile_assert(consumed_fits_in_mrs, TIME_ARG_SIZE <= n_msgRegisters)
         /* if the above assert fails, the IPC buffer needs to be looked up and passed
          * to mode_setTimeArg as the message doesn't fit in registers */
         mode_setTimeArg(0, consumed, NULL, ksCurThread);
@@ -396,7 +396,7 @@ schedContext_completeYieldTo(tcb_t *yielder)
     yielder->tcbYieldTo->scYieldFrom = NULL;
     yielder->tcbYieldTo = NULL;
 
-    compile_assert(consumed_fits_in_mrs2, TIME_ARG_SIZE  <= n_msgRegisters);
+    UNUSED compile_assert(consumed_fits_in_mrs2, TIME_ARG_SIZE  <= n_msgRegisters)
     /* if the above assert fails, the IPC buffer needs to be looked up and passed
      * to mode_setTimeArg as the message doesn't fit in registers */
     mode_setTimeArg(0, consumed, NULL, ksCurThread);
