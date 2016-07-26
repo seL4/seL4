@@ -132,4 +132,7 @@ enum {
 #define seL4_LogBufferSize (LIBSEL4_BIT(20))
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
+/* number of message registers passed in cpu registers */
+#define seL4_FastMessageRegisters 4
+
 #endif

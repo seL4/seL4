@@ -115,5 +115,8 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_TimeoutFaultReply_Msg)
 } seL4_TimeoutFaultReply_Msg;
 
+/* number of message registers passed in cpu registers */
+#define seL4_FastMessageRegisters 2
+
 #endif /* __ASSEMBLER__ */
 #endif
