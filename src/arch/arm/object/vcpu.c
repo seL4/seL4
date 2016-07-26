@@ -458,7 +458,7 @@ exception_t decodeARMVCPUInvocation(
 {
     switch (label) {
     case ARMVCPUSetTCB:
-        return decodeVCPUSetTCB(cap, length, buffer, extraCaps);
+        return decodeVCPUSetTCB(cap, extraCaps);
     case ARMVCPUReadReg:
         return decodeVCPUReadReg(cap, length, buffer);
     case ARMVCPUWriteReg:
@@ -473,7 +473,7 @@ exception_t decodeARMVCPUInvocation(
 }
 
 exception_t
-decodeVCPUSetTCB(cap_t cap, unsigned int length, word_t* buffer, extra_caps_t extraCaps)
+decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
 {
     cap_t tcbCap;
     if ( extraCaps.excaprefs[0] == NULL) {

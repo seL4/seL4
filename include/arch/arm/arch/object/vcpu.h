@@ -64,7 +64,7 @@ void vcpu_switch(vcpu_t *cpu);
 exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer);
 exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer);
 exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer);
-exception_t decodeVCPUSetTCB(cap_t cap, unsigned int length, word_t* buffer, extra_caps_t extraCaps);
+exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps);
 
 exception_t invokeVCPUWriteReg(vcpu_t *vcpu, uint32_t field, uint32_t value);
 exception_t invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field);
