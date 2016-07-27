@@ -267,25 +267,25 @@ void
 vcpu_finalise(vcpu_t *vcpu)
 {
     if (vcpu->tcb) {
-        dissociateVcpuTcb(vcpu, vcpu->tcb);
+        dissociateVCPUTCB(vcpu, vcpu->tcb);
     }
 }
 
 void
-associateVcpuTcb(vcpu_t *vcpu, tcb_t *tcb)
+associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.vcpu) {
-        dissociateVcpuTcb(tcb->tcbArch.vcpu, tcb);
+        dissociateVCPUTCB(tcb->tcbArch.vcpu, tcb);
     }
     if (vcpu->tcb) {
-        dissociateVcpuTcb(vcpu, vcpu->tcb);
+        dissociateVCPUTCB(vcpu, vcpu->tcb);
     }
     vcpu->tcb = tcb;
     tcb->tcbArch.vcpu = vcpu;
 }
 
 void
-dissociateVcpuTcb(vcpu_t *vcpu, tcb_t *tcb)
+dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.vcpu != vcpu || vcpu->tcb != tcb) {
         fail("TCB and VCPU not associated.");
@@ -495,7 +495,7 @@ decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
 exception_t
 invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
-    associateVcpuTcb(vcpu, tcb);
+    associateVCPUTCB(vcpu, tcb);
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;

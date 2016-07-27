@@ -627,7 +627,7 @@ void
 Arch_prepareThreadDelete(tcb_t * thread) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.vcpu) {
-        dissociateVcpuTcb(thread->tcbArch.vcpu, thread);
+        dissociateVCPUTCB(thread->tcbArch.vcpu, thread);
     }
 #else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     /* No action required on ARM. */

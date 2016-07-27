@@ -44,9 +44,9 @@ void vcpu_init(vcpu_t *vcpu);
 
 void vcpu_finalise(vcpu_t *vcpu);
 
-void associateVcpuTcb(vcpu_t *vcpu, tcb_t *tcb);
+void associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb);
 
-void dissociateVcpuTcb(vcpu_t *vcpu, tcb_t *tcb);
+void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb);
 
 exception_t decodeARMVCPUInvocation(
     word_t label,
