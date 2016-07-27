@@ -1346,6 +1346,14 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
             return e;
         }
         target->tcbIPCBuffer = bufferAddr;
+#ifdef CONFIG_ARCH_ARM
+#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
+#elif defined(CONFIG_IPC_BUF_TPIDRURW)
+        setRegister(target, TPIDRURW, bufferAddr);
+#else
+#error "Unknown IPC buffer strategy"
+#endif
+#endif
         if (bufferSrcSlot && sameObjectAs(bufferCap, bufferSrcSlot->cap) &&
                 sameObjectAs(tCap, slot->cap)) {
             cteInsert(bufferCap, bufferSrcSlot, bufferSlot);

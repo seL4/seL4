@@ -415,6 +415,14 @@ create_initial_thread(
         SLOT_PTR(pptr, tcbBuffer)
     );
     tcb->tcbIPCBuffer = ipcbuf_vptr;
+#ifdef CONFIG_ARCH_ARM
+#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
+#elif defined(CONFIG_IPC_BUF_TPIDRURW)
+        setRegister(tcb, TPIDRURW, ipcbuf_vptr);
+#else
+#error "Unknown IPC buffer strategy"
+#endif
+#endif
     setRegister(tcb, capRegister, bi_frame_vptr);
     setNextPC(tcb, ui_v_entry);
 

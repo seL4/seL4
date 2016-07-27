@@ -16,9 +16,11 @@
 #endif
 
 #ifndef __ASSEMBLER__
+#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
 enum {
     seL4_GlobalsFrame = 0xffffc000,
 };
+#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 #endif
 
 #define seL4_DataFault 0

@@ -28,6 +28,10 @@ static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t
     restore_user_debug_context(ksCurThread);
 #endif
 
+#ifdef CONFIG_IPC_BUF_TPIDRURW
+    writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
+#endif
+
     register word_t badge_reg asm("r0") = badge;
     register word_t msgInfo_reg asm("r1") = msgInfo;
     register word_t cur_thread_reg asm("r2") = (word_t)cur_thread;

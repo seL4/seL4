@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <object.h>
 #include <machine.h>
 #include <arch/model/statedata.h>
@@ -19,7 +20,12 @@ void
 Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
+#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
     *armKSGlobalsFrame = tcb->tcbIPCBuffer;
+#elif defined(CONFIG_IPC_BUF_TPIDRURW)
+#else
+#error "Unknown IPC buffer strategy"
+#endif
     clearExMonitor();
 }
 
@@ -33,7 +39,9 @@ Arch_configureIdleThread(tcb_t *tcb)
 void
 Arch_switchToIdleThread(void)
 {
+#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
     *armKSGlobalsFrame = 0;
+#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 }
 
 void

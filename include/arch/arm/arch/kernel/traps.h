@@ -17,15 +17,18 @@
 static inline void arch_c_entry_hook(void)
 {
 #ifdef CONFIG_ARCH_ARM_MPCORE
-    setRegister(ksCurThread, TPIDRURW, readTPIDRURW());
+    /* If using the TPIDRURW register for the IPC buffer then
+     * there's no pointer in saving whatever the user put into
+     * it since we will overwrite it anyway next time we
+     * load the thread */
+    if (!config_set(CONFIG_IPC_BUF_TPIDRURW)) {
+        setRegister(ksCurThread, TPIDRURW, readTPIDRURW());
+    }
 #endif
 }
 
 static inline void arch_c_exit_hook(void)
 {
-#ifdef CONFIG_ARCH_ARM_MPCORE
-    writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
-#endif
 }
 
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)

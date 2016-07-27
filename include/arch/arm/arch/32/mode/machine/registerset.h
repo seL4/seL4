@@ -42,6 +42,7 @@
 #define PT_SP               (13  * 4)
 #define PT_LR_svc           (15 * 4)
 #define PT_ELR_hyp          (15 * 4)
+#define PT_TPIDRURW         (18 * 4)
 #define PT_FaultInstruction (17 * 4)
 #define PT_R8               (8  * 4)
 

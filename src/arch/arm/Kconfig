@@ -66,3 +66,27 @@ config ARCH_ARM_MPCORE
         registers and features available. Some of these
         the kernel just needs to be aware of, and others
         enable additional kernel features.
+
+choice
+    prompt "IPC Buffer location"
+    default IPC_BUF_TPIDRURW
+    help
+        Controls how the location of the IPC buffer is
+        provided to the user
+
+    config IPC_BUF_GLOBALS_FRAME
+        bool "Globals frame"
+        depends on ARCH_ARM
+        help
+            Put the address of the IPC buffer in a dedicated
+            frame that is read only at user level. This works
+            on all ARM platforms
+    config IPC_BUF_TPIDRURW
+        bool "ThreadID register"
+        depends on ARCH_ARM && ARCH_ARM_MPCORE
+        help
+            Put the address of the IPC buffer in the user
+            readable/writeable ThreadID register. When enabled
+            this has the result of the kernel overwriting
+            any value the user writes to this register.
+endchoice

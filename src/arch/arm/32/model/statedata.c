@@ -17,9 +17,11 @@
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 
+#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
 /* The global frame, mapped in all address spaces */
 word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)]
 ALIGN_BSS(BIT(ARMSmallPageBits));
+#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 
 /* The top level asid mapping table */
 asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
@@ -46,8 +48,10 @@ pdeS1_t  armHSGlobalPGD[BIT(PGD_INDEX_BITS)] ALIGN_BSS(BIT(PGD_SIZE_BITS));
 pdeS1_t  armHSGlobalPD[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* The global, hypervisor, level 3 page table */
 pteS1_t  armHSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
+#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
 /* User space global mappings */
 pte_t  armUSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
+#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 /* Current VCPU */
 vcpu_t *armHSCurVCPU;
 /* Whether the current loaded VCPU is enabled in the hardware or not */

@@ -15,4 +15,15 @@
 
 #include <mode/model/statedata.h>
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+extern pdeS1_t armHSGlobalPGD[BIT(PGD_INDEX_BITS)] VISIBLE;
+extern pdeS1_t armHSGlobalPD[BIT(PT_INDEX_BITS)]   VISIBLE;
+extern pteS1_t armHSGlobalPT[BIT(PT_INDEX_BITS)]   VISIBLE;
+#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+/* Stage 2 translations have a slightly different encoding to Stage 1
+ * So we need to build a User global PT for global mappings */
+extern pte_t   armUSGlobalPT[BIT(PT_INDEX_BITS)]   VISIBLE;
+#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
 #endif /* __ARCH_MODEL_STATEDATA_H */
