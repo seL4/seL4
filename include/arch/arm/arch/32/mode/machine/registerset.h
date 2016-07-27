@@ -93,7 +93,14 @@ enum _register {
     CPSR = 16,
 
     FaultInstruction = 17,
+#ifdef CONFIG_ARCH_ARM_MPCORE
+    /* user readable/writable thread ID register.
+     * name comes from the ARM manual */
+    TPIDRURW = 18,
+    n_contextRegisters = 19,
+#else
     n_contextRegisters = 18,
+#endif
 };
 
 compile_assert(sp_offset_correct, SP * sizeof(word_t) == PT_SP)

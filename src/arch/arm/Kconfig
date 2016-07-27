@@ -56,3 +56,13 @@ config EXPORT_VCNT_USER
         WARNING: selecting this option opens a timing
         channel
 
+config ARCH_ARM_MPCORE
+    bool "ARM platform supports MPCore"
+    default n
+    depends on ARCH_ARM
+    select IPC_BUF_TPIDRURW
+    help
+        On MPCore supported platforms there are additional
+        registers and features available. Some of these
+        the kernel just needs to be aware of, and others
+        enable additional kernel features.

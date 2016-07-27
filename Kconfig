@@ -147,6 +147,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A9
             select ARCH_ARM_V7A
+            select ARCH_ARM_MPCORE
             help
                 Support for EXYNOS4 platform (ODROID-X).
 
@@ -156,6 +157,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
+            select ARCH_ARM_MPCORE
             help
                 Support for EXYNOS5410 platform (ODROID-XU).
 
@@ -165,6 +167,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
+            select ARCH_ARM_MPCORE
             help
                 Support for EXYNOS5422 platform (ODROID-XU3).
 
@@ -173,6 +176,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
+            select ARCH_ARM_MPCORE
             help
                 Support for EXYNOS5250 platform (ARNDALE).
 
@@ -181,6 +185,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
+            select ARCH_ARM_MPCORE
             help
                 Support for Qualcomm Snapdragon S4 APQ8064 platforms (Inforce IFC6410).
 
@@ -190,6 +195,7 @@ menu "seL4 System"
             select ARM_CORTEX_A9
             select ARCH_ARM_V7A
             select PLAT_IMX6
+            select ARCH_ARM_MPCORE
             help
                 Support for iMX6 platform (Sabre Lite).
 
@@ -199,6 +205,7 @@ menu "seL4 System"
             select ARM_CORTEX_A9
             select ARCH_ARM_V7A
             select PLAT_IMX6
+            select ARCH_ARM_MPCORE
             help
                 Support for iMX6 platform (Wandboard Quad).
 
@@ -208,6 +215,7 @@ menu "seL4 System"
             select ARM_CORTEX_A7
             select ARCH_ARM_V7A
             select PLAT_IMX7
+            select ARCH_ARM_MPCORE
             help
                 Support for iMX7 Sabre Dual.
 
@@ -216,6 +224,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A9
             select ARCH_ARM_V7A
+            select ARCH_ARM_MPCORE
             help
                 Support for Xilinx Zynq-7000 platforms.
 
@@ -230,6 +239,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
+            select ARCH_ARM_MPCORE
             help
                 Support for ALLWINNERA20 platform (CUBIETRUCK).
 
@@ -238,6 +248,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
+            select ARCH_ARM_MPCORE
             help
                 Support for Tegra K1 platform
 
@@ -246,6 +257,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A57
             select ARCH_ARM_V8A
+            select ARCH_ARM_MPCORE
             help
                 Support for HiKey platform.
 

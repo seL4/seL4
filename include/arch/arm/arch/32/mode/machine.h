@@ -152,6 +152,21 @@ static inline void writeTTBR0(paddr_t addr)
     asm volatile("mcr p15, 0, %0, c2, c0, 0" : :
                  "r"((addr & 0xffffe000) | 0x18));
 }
+
+/** DONT_TRANSLATE */
+static inline void writeTPIDRURW(word_t reg)
+{
+    asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
+}
+
+/** DONT_TRANSLATE */
+static inline word_t readTPIDRURW(void)
+{
+    word_t reg;
+    asm volatile("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
+    return reg;
+}
+
 static inline void setCurrentPD(paddr_t addr)
 {
     /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:

@@ -16,10 +16,16 @@
 
 static inline void arch_c_entry_hook(void)
 {
+#ifdef CONFIG_ARCH_ARM_MPCORE
+    setRegister(ksCurThread, TPIDRURW, readTPIDRURW());
+#endif
 }
 
 static inline void arch_c_exit_hook(void)
 {
+#ifdef CONFIG_ARCH_ARM_MPCORE
+    writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
+#endif
 }
 
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
