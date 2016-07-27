@@ -212,7 +212,8 @@ set_gic_vcpu_ctrl_lr(int num, uint32_t lr)
 }
 
 BOOT_CODE void
-vcpu_boot_init(void) {
+vcpu_boot_init(void)
+{
     gic_vcpu_num_list_regs = VGIC_VTR_NLISTREGS(get_gic_vcpu_ctrl_vtr());
     if (gic_vcpu_num_list_regs > GIC_VCPU_MAX_NUM_LR) {
         printf("Warning: VGIC is reporting more list registers than we support. Truncating\n");
