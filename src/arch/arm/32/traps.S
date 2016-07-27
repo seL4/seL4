@@ -107,11 +107,6 @@ BEGIN_FUNC(arm_swi_syscall)
 
 END_FUNC(arm_swi_syscall)
 
-BEGIN_FUNC(arm_swi_undefined_syscall)
-    blx handleUnknownSyscall
-    RET_TO_USER r8
-END_FUNC(arm_swi_undefined_syscall)
-
 BEGIN_FUNC(arm_prefetch_abort_exception)
     /* Full save/restore, documented in arm_swi_syscall */
     srsia #PMODE_SUPERVISOR

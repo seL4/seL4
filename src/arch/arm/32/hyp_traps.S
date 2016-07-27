@@ -250,11 +250,6 @@ BEGIN_FUNC(arm_syscall)
     b c_handle_syscall
 END_FUNC(arm_syscall)
 
-BEGIN_FUNC(arm_hyp_undefined_syscall)
-    blx handleUnknownSyscall
-    RET_TO_USER r8
-END_FUNC(arm_hyp_undefined_syscall)
-
 /*********************************
  *** Traps taken from HYP mode ***
  *********************************/
