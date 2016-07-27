@@ -388,5 +388,6 @@ init_kernel(
 
     schedule();
     activateThread();
+    c_exit_hook();
 }
 

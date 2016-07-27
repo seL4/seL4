@@ -20,6 +20,11 @@
 
 void VISIBLE c_handle_interrupt(int irq, int syscall)
 {
+    /* for annoying reasons we cannot currently consider this the C entry
+     * point as we would like to call various functions that are considered
+     * as entry points from the point of view of the arm code. Therefore
+     * we are *not* calling c_entry_hook here */
+
     if (irq == int_unimpl_dev) {
         handleUnimplementedDevice();
     } else if (irq == int_page_fault) {
@@ -40,6 +45,9 @@ void VISIBLE c_handle_interrupt(int irq, int syscall)
         ksCurThread->tcbArch.tcbContext.registers[FaultIP] -= 2;
         /* trap number is MSBs of the syscall number and the LSBS of EAX */
         sys_num = (irq << 24) | (syscall & 0x00ffffff);
+        /* in this case we are calling a function that is *not*
+         * an entry point */
+        c_entry_hook();
         handleUnknownSyscall(sys_num);
     }
     restore_user_context();
@@ -63,6 +71,8 @@ slowpath(syscall_t syscall)
 
 void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+    c_entry_hook();
+
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);
 #endif /* DEBUG */

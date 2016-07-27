@@ -25,6 +25,7 @@
 #include <object/interrupt.h>
 #include <model/statedata.h>
 #include <string.h>
+#include <arch/kernel/traps.h>
 
 #ifdef DEBUG
 #include <arch/machine/capdl.h>
@@ -37,6 +38,8 @@ exception_t
 handleInterruptEntry(void)
 {
     irq_t irq;
+
+    c_entry_hook();
 
     irq = getActiveIRQ();
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
@@ -67,6 +70,8 @@ handleInterruptEntry(void)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
+
+    c_exit_hook();
 
     return EXCEPTION_NONE;
 }
@@ -197,6 +202,7 @@ handleUnknownSyscall(word_t w)
 exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
+    c_entry_hook();
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.path = Entry_UserLevelFault;
     ksKernelEntry.word = w_a;
@@ -227,6 +233,7 @@ exception_t
 handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     exception_t status;
+    c_entry_hook();
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.path = Entry_VMFault;
     ksKernelEntry.word = vm_faultType;
@@ -251,6 +258,8 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif
+
+    c_exit_hook();
 
     return EXCEPTION_NONE;
 }

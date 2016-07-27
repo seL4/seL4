@@ -14,6 +14,18 @@
 #include <config.h>
 #include <util.h>
 
+/* This C function should be the first thing called from C after entry from
+ * assembly. It provides a single place to do any entry work that is not
+ * done in assembly for various reasons */
+}
+
+/* This C function should be the last thing called from C before exiting
+ * the kernel (be it to assembly or returning to user space). It provides
+ * a place to provide any additional instrumentation or functionality
+ * in C before leaving the kernel */
+static inline void c_exit_hook(void) {
+}
+
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 VISIBLE;
 

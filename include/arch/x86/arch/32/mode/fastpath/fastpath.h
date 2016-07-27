@@ -103,6 +103,8 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     benchmark_track_exit();
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 
+    c_exit_hook();
+
     if (unlikely(cur_thread == x86KSfpuOwner)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();

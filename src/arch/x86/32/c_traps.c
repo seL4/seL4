@@ -20,6 +20,8 @@
 void NORETURN VISIBLE restore_user_context(void);
 void NORETURN VISIBLE restore_user_context(void)
 {
+    c_exit_hook();
+
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */

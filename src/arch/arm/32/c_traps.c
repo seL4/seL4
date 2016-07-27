@@ -27,6 +27,8 @@ static inline void FORCE_INLINE NORETURN restore_user_context(void)
     benchmark_track_exit();
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 
+    c_exit_hook();
+
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         asm volatile(
             /* Set stack pointer to point at the r0 of the user context. */
@@ -73,6 +75,7 @@ void NORETURN slowpath(syscall_t syscall)
 /** DONT_TRANSLATE */
 void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+    c_entry_hook();
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);
 #endif /* DEBUG */
