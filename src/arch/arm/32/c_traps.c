@@ -23,10 +23,6 @@ static inline void FORCE_INLINE NORETURN restore_user_context(void)
 {
     word_t cur_thread_reg = (word_t) ksCurThread;
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
-
     c_exit_hook();
 
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
@@ -79,10 +75,6 @@ void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);
 #endif /* DEBUG */
-
-#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
-    ksEnter = timestamp();
-#endif
 
 #ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {

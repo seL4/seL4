@@ -47,14 +47,6 @@ handleInterruptEntry(void)
     ksKernelEntry.word = irq;
 #endif /* DEBUG */
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_start();
-#endif
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
     if (irq != irqInvalid) {
         handleInterrupt(irq);
     } else {
@@ -66,10 +58,6 @@ handleInterruptEntry(void)
 
     schedule();
     activateThread();
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif
 
     c_exit_hook();
 
@@ -208,14 +196,6 @@ handleUserLevelFault(word_t w_a, word_t w_b)
     ksKernelEntry.word = w_a;
 #endif /* DEBUG */
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_start();
-#endif
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
     current_fault = fault_user_exception_new(w_a, w_b);
     handleFault(ksCurThread);
 
@@ -239,14 +219,6 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
     ksKernelEntry.word = vm_faultType;
 #endif /* DEBUG */
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_start();
-#endif
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
     status = handleVMFault(ksCurThread, vm_faultType);
     if (status != EXCEPTION_NONE) {
         handleFault(ksCurThread);
@@ -254,10 +226,6 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 
     schedule();
     activateThread();
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif
 
     c_exit_hook();
 

@@ -20,9 +20,6 @@ void slowpath(syscall_t syscall) NORETURN;
 /** DONT_TRANSLATE */
 static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 
     c_exit_hook();
 

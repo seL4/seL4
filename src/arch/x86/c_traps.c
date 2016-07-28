@@ -77,10 +77,6 @@ void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);
 #endif /* DEBUG */
 
-#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
-    ksEnter = timestamp();
-#endif
-
 #ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);
