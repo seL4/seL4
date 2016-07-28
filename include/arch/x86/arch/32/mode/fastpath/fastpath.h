@@ -15,6 +15,7 @@
 #include <arch/linker.h>
 #include <api/types.h>
 #include <api/syscall.h>
+#include <benchmark_track.h>
 
 static inline void
 switchToThread_fp(tcb_t *thread, pde_t *pd, pde_t stored_hw_asid)
@@ -98,6 +99,10 @@ static inline bool_t hasDefaultSelectors(tcb_t *thread)
 static inline void NORETURN
 fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+
     if (unlikely(cur_thread == x86KSfpuOwner)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
