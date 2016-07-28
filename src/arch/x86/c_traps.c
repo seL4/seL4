@@ -14,8 +14,10 @@
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
-
 #include <api/syscall.h>
+
+#include <benchmark_track.h>
+#include <benchmark_utilisation.h>
 
 void VISIBLE c_handle_interrupt(int irq, int syscall)
 {
@@ -56,11 +58,20 @@ slowpath(syscall_t syscall)
     } else {
         handleSyscall(syscall);
     }
+
     restore_user_context();
 }
 
 void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
+    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
+#endif /* DEBUG */
+
+#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
+    ksEnter = timestamp();
+#endif
+
 #ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);

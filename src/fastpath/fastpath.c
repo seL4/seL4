@@ -38,19 +38,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
     length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    ksKernelEntry.path = Entry_Syscall;
-    ksKernelEntry.syscall_no = SysCall;
-    ksKernelEntry.cap_type = cap_endpoint_cap;
-    ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
-    ksKernelEntry.is_fastpath = true;
-    benchmark_track_start();
-#endif
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
     /* Check there's no extra caps, the length is ok and there's no
      * saved fault. */
     if (unlikely(fastpath_mi_check(msgInfo) ||
@@ -127,6 +114,10 @@ fastpath_call(word_t cptr, word_t msgInfo)
      * At this stage, we have committed to performing the IPC.
      */
 
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    ksKernelEntry.is_fastpath = true;
+#endif
+
 #ifdef ARCH_X86
     /* Need to update NextIP in the calling thread */
     setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
@@ -167,10 +158,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif
-
     fastpath_restore(badge, msgInfo, ksCurThread);
 }
 
@@ -196,19 +183,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     info = messageInfoFromWord_raw(msgInfo);
     length = seL4_MessageInfo_get_length(info);
     fault_type = fault_get_faultType(ksCurThread->tcbFault);
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    ksKernelEntry.path = Entry_Syscall;
-    ksKernelEntry.syscall_no = SysReplyRecv;
-    ksKernelEntry.cap_type = cap_endpoint_cap;
-    ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
-    ksKernelEntry.is_fastpath = true;
-    benchmark_track_start();
-#endif
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     /* Check there's no extra caps, the length is ok and there's no
      * saved fault. */
@@ -301,6 +275,10 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
      * At this stage, we have committed to performing the IPC.
      */
 
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    ksKernelEntry.is_fastpath = true;
+#endif
+
 #ifdef ARCH_X86
     /* Need to update NextIP in the calling thread */
     setRegister(ksCurThread, NextIP, getRegister(ksCurThread, NextIP) + 2);
@@ -351,10 +329,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     switchToThread_fp(caller, cap_pd, stored_hw_asid);
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif
 
     fastpath_restore(badge, msgInfo, ksCurThread);
 }

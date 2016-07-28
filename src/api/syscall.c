@@ -99,10 +99,6 @@ handleUnknownSyscall(word_t w)
     }
 #endif /* DEBUG */
 
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
 #ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugNameThread) {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
@@ -316,8 +312,6 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     lu_ret = lookupCapAndSlot(thread, cptr);
 
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
-    ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
     ksKernelEntry.is_fastpath = false;
 #endif
 
@@ -385,10 +379,6 @@ handleReply(void)
     callerSlot = TCB_PTR_CTE_PTR(ksCurThread, tcbCaller);
     callerCap = callerSlot->cap;
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.cap_type = cap_get_capType(callerCap);
-#endif
-
     switch (cap_get_capType(callerCap)) {
     case cap_reply_cap: {
         tcb_t *caller;
@@ -424,10 +414,6 @@ handleRecv(bool_t isBlocking)
     epCPtr = getRegister(ksCurThread, capRegister);
 
     lu_ret = lookupCap(ksCurThread, epCPtr);
-
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
-#endif
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         /* current_lookup_fault has been set by lookupCap */
@@ -486,18 +472,6 @@ handleSyscall(syscall_t syscall)
 {
     exception_t ret;
     irq_t irq;
-
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.path = Entry_Syscall;
-    ksKernelEntry.syscall_no = syscall;
-#endif /* DEBUG */
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_start();
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     switch (syscall) {
     case SysSend:
@@ -558,8 +532,5 @@ handleSyscall(syscall_t syscall)
     schedule();
     activateThread();
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
     return EXCEPTION_NONE;
 }
