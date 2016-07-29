@@ -15,15 +15,9 @@
 #include <util.h>
 
 static inline void arch_c_entry_hook(void) {
-#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
-    ksEnter = timestamp();
-#endif
 }
 
 static inline void arch_c_exit_hook(void) {
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
 }
 
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
