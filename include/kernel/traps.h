@@ -19,6 +19,7 @@
  * assembly. It provides a single place to do any entry work that is not
  * done in assembly for various reasons */
 static inline void c_entry_hook(void) {
+    arch_c_entry_hook();
 }
 
 /* This C function should be the last thing called from C before exiting
@@ -26,6 +27,7 @@ static inline void c_entry_hook(void) {
  * a place to provide any additional instrumentation or functionality
  * in C before leaving the kernel */
 static inline void c_exit_hook(void) {
+    arch_c_exit_hook();
 }
 
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
