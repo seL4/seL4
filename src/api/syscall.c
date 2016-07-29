@@ -25,7 +25,7 @@
 #include <object/interrupt.h>
 #include <model/statedata.h>
 #include <string.h>
-#include <arch/kernel/traps.h>
+#include <kernel/traps.h>
 
 #ifdef DEBUG
 #include <arch/machine/capdl.h>
