@@ -18,7 +18,7 @@
 
 #define SEL4_GET_IPCBUF_SCALE(field, i, res) \
     do {\
-        asm volatile ("movl %%gs:%c2(,%1,%c3), %0"\
+        asm volatile ("movl %%fs:%c2(,%1,%c3), %0"\
                       : [result] "=r" (res) /* outputs */\
                       : [scale] "r" (i), /* inputs */\
                         [offset] "i" (SEL4_OFFSETOF(seL4_IPCBuffer, field)),\
@@ -29,7 +29,7 @@
 
 #define SEL4_SET_IPCBUF_SCALE(field, i, val) \
     do {\
-        asm volatile ("movl %0, %%gs:%c2(,%1,%c3)"\
+        asm volatile ("movl %0, %%fs:%c2(,%1,%c3)"\
                       : /* no outputs */\
                       : [value] "r" (val), /* inputs */\
                         [scale] "r" (i),\
@@ -40,7 +40,7 @@
 
 #define SEL4_GET_IPCBUF(field, res) \
     do {\
-        asm volatile ("movl %%gs:%c1, %0"\
+        asm volatile ("movl %%fs:%c1, %0"\
                       : [result] "=r" (res) /* inputs */\
                       : [offset] "i" (SEL4_OFFSETOF(seL4_IPCBuffer, field)) /* outputs */\
                        /* no clobber */);\
@@ -49,7 +49,7 @@
 
 #define SEL4_SET_IPCBUF(field, val) \
     do {\
-        asm volatile ("movl %0, %%gs:%c1"\
+        asm volatile ("movl %0, %%fs:%c1"\
                       : /* no outputs */\
                       : [value] "r" (val), /* inputs */\
                         [offset] "i" (SEL4_OFFSETOF(seL4_IPCBuffer, field))\
