@@ -577,9 +577,10 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 #endif
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
-static inline void
+static inline seL4_Error
 seL4_BenchmarkResetLog(void)
 {
+    seL4_Error ret = seL4_NoError;
     asm volatile (
         "pushl %%ebp        \n"
         "movl %%esp, %%ecx  \n"
@@ -587,10 +588,12 @@ seL4_BenchmarkResetLog(void)
         "1:                 \n"
         "sysenter           \n"
         "popl %%ebp         \n"
-        :
+        : "=b" (ret)
         : "a" (seL4_SysBenchmarkResetLog)
         : "%ecx", "%edx", "%edi", "memory"
     );
+
+    return ret;
 }
 
 static inline seL4_Uint32
@@ -647,6 +650,24 @@ seL4_BenchmarkFinalizeLog(void)
         : "a" (seL4_SysBenchmarkFinalizeLog)
         : "%ecx", "%edx", "%edi", "memory"
     );
+}
+
+static inline seL4_Error
+seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
+{
+    asm volatile (
+        "pushl %%ebp        \n"
+        "movl %%esp, %%ecx  \n"
+        "leal 1f, %%edx     \n"
+        "1:                 \n"
+        "sysenter           \n"
+        "popl %%ebp         \n"
+        : "=b"(frame_cptr)
+        : "a" (seL4_SysBenchmarkSetLogBuffer), "b"(frame_cptr)
+        : "%ecx", "%edx", "%edi", "memory"
+    );
+
+    return (seL4_Error) frame_cptr;
 }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION

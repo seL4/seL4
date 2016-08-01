@@ -14,7 +14,6 @@
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 
-benchmark_track_kernel_entry_t *ksLog;
 timestamp_t ksEnter;
 word_t ksLogIndex;
 uint32_t ksLogIndexFinalized;
@@ -23,14 +22,17 @@ void benchmark_track_exit(void)
 {
     timestamp_t duration = 0;
     timestamp_t ksExit = timestamp();
+    benchmark_track_kernel_entry_t *ksLog = (benchmark_track_kernel_entry_t *) KS_LOG_PPTR;
 
-    /* If Log buffer is filled, do nothing */
-    if (likely(ksLogIndex < MAX_LOG_SIZE)) {
-        duration = ksExit - ksEnter;
-        ksLog[ksLogIndex].entry = ksKernelEntry;
-        ksLog[ksLogIndex].start_time = ksEnter;
-        ksLog[ksLogIndex].duration = duration;
-        ksLogIndex++;
+    if (likely(ksUserLogBuffer != 0)) {
+        /* If Log buffer is filled, do nothing */
+        if (likely(ksLogIndex < MAX_LOG_SIZE)) {
+            duration = ksExit - ksEnter;
+            ksLog[ksLogIndex].entry = ksKernelEntry;
+            ksLog[ksLogIndex].start_time = ksEnter;
+            ksLog[ksLogIndex].duration = duration;
+            ksLogIndex++;
+        }
     }
 }
 
@@ -40,6 +42,8 @@ void benchmark_track_dump(
     word_t num_entries
 )
 {
+    benchmark_track_kernel_entry_t *ksLog = (benchmark_track_kernel_entry_t *) KS_LOG_PPTR;
+
     if (!buffer) {
         userError("Invalid IPC buffer pointer = %p\n", buffer);
         return;

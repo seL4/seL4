@@ -42,6 +42,7 @@
             <syscall name="BenchmarkDumpLog"  />
             <syscall name="BenchmarkLogSize"  />
             <syscall name="BenchmarkFinalizeLog"  />
+            <syscall name="BenchmarkSetLogBuffer"  />
         </config>
         <config condition="defined CONFIG_BENCHMARK_TRACK_UTILISATION">
             <syscall name="BenchmarkGetThreadUtilisation"  />

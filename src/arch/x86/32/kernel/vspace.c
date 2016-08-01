@@ -262,10 +262,19 @@ map_kernel_window(
     assert(phys == PADDR_TOP);
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-    /* mark the address of the log. We will map it
-        * in later with the correct attributes, but we need
-        * to wait until we can call alloc_region. */
-    ksLog = (void *) paddr_to_pptr(phys);
+    /* Map global page table for the log buffer */
+    pde = pde_pde_small_new(
+              pptr_to_paddr(ia32KSGlobalLogPT), /* pt_base_address  */
+              0,                 /* avl              */
+              0,                 /* accessed         */
+              0,                 /* cache_disabled   */
+              0,                 /* write_through    */
+              0,                 /* super_user       */
+              1,                 /* read_write       */
+              1                  /* present          */
+          );
+
+    ia32KSGlobalPD[idx] = pde;
     phys += BIT(LARGE_PAGE_BITS);
     assert(idx == (KS_LOG_PPTR >> LARGE_PAGE_BITS));
     idx++;
@@ -751,3 +760,66 @@ exception_t decodeX86ModeMapRemapPage(word_t invLabel, vm_page_size_t page_size,
 {
     fail("Invalid Page type");
 }
+
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
+{
+    lookupCapAndSlot_ret_t lu_ret;
+    vm_page_size_t frameSize;
+    pptr_t frame_pptr;
+
+    /* faulting section */
+    lu_ret = lookupCapAndSlot(ksCurThread, frame_cptr);
+
+    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+        userError("Invalid cap #%lu.", frame_cptr);
+        current_fault = fault_cap_fault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (cap_get_capType(lu_ret.cap) != cap_frame_cap) {
+        userError("Invalid cap. Log buffer should be of a frame cap");
+        current_fault = fault_cap_fault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    frameSize = cap_frame_cap_get_capFSize(lu_ret.cap);
+
+    if (frameSize != X86_LargePage) {
+        userError("Invalid size for log Buffer. The kernel expects at least 1M log buffer");
+        current_fault = fault_cap_fault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    frame_pptr = cap_frame_cap_get_capFBasePtr(lu_ret.cap);
+
+    ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
+
+    /* fill global log page table with mappings */
+    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+        paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
+
+        pte_t pte = pte_new(
+                        physical_address,   /* page_base_address    */
+                        0,                  /* avl                  */
+                        1,                  /* global               */
+                        VMKernelOnly,       /* pat                  */
+                        0,                  /* dirty                */
+                        0,                  /* accessed             */
+                        0,                  /* cache_disabled       */
+                        1,                  /* write_through        */
+                        1,                  /* super_user           */
+                        1,                  /* read_write           */
+                        1                   /* present              */
+                    );
+
+        ia32KSGlobalLogPT[idx] = pte;
+        invalidateTLBentry(KS_LOG_PPTR + (idx << seL4_PageBits));
+    }
+
+    return EXCEPTION_NONE;
+}
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */

@@ -14,6 +14,7 @@
 #include <arch/benchmark.h>
 #include <machine/io.h>
 #include <arch/api/constants.h>
+#include <arch/machine/hardware.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 typedef struct {
@@ -38,7 +39,6 @@ extern bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
 extern timestamp_t ksExit;
 extern uint32_t ksLogIndex;
 extern uint32_t ksLogIndexFinalized;
-extern ks_log_entry_t *ksLog;
 
 /* we can fill the entire IPC buffer except for word 0, which
  * the kernel overwrites with the message tag */
@@ -54,6 +54,7 @@ trace_point_start(word_t id)
 static inline void
 trace_point_stop(word_t id)
 {
+    ks_log_entry_t *ksLog = (ks_log_entry_t *) KS_LOG_PPTR;
     ksExit = timestamp();
 
     if (likely(ksStarted[id])) {
