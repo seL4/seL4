@@ -36,9 +36,6 @@ volatile struct priv_timer * const priv_timer
 #define PRESCALE ((CLK_MHZ*1000 * TIMER_INTERVAL_MS) >> TIMER_COUNT_BITS)
 #define TMR_LOAD ((CLK_MHZ*1000 * TIMER_INTERVAL_MS) / (PRESCALE + 1))
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initTimer(void)
 {
@@ -55,9 +52,6 @@ initTimer(void)
     priv_timer->ctrl |= TMR_CTRL_ENABLE;
 }
 
-/**
-   DONT_TRANSLATE
- */
 void
 resetTimer(void)
 {

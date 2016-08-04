@@ -14,18 +14,12 @@
 #include <arch/machine/timer.h>
 #include <arch/linker.h>
 
-/**
-   DONT_TRANSLATE
- */
 void
 resetTimer(void)
 {
     resetGenericTimer();
 }
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initTimer(void)
 {

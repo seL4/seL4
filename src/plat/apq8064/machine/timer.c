@@ -57,9 +57,6 @@ timer_t* dgt_tmr = (timer_t*)DGT_TIMER_PPTR;
 
 
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initTimer(void)
 {
@@ -72,9 +69,6 @@ initTimer(void)
     dgt_tmr->en = DGTTMR_EN_CLR_ON_MTCH_EN | DGTTMR_EN_EN;
 }
 
-/**
-   DONT_TRANSLATE
- */
 void
 resetTimer(void)
 {

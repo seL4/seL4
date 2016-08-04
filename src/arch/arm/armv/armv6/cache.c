@@ -10,7 +10,7 @@
 
 #include <arch/machine/hardware.h>
 
-/** DONT_TRANSLATE */
+
 void
 clean_D_PoU(void)
 {
@@ -18,7 +18,7 @@ clean_D_PoU(void)
     asm volatile("mcr p15, 0, %0, c7, c10, 0" : : "r"(0));
 }
 
-/** DONT_TRANSLATE */
+
 void
 cleanInvalidate_D_PoC(void)
 {

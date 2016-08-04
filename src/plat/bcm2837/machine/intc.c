@@ -11,9 +11,6 @@
 #include <util.h>
 #include <stdint.h>
 #include <plat/machine.h>
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initIRQController(void)
 {

@@ -63,7 +63,7 @@ void setNextPC(tcb_t *thread, word_t v);
 /* Architecture specific machine operations */
 
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline word_t getProcessorID(void)
 {
     word_t processor_id;
@@ -71,7 +71,7 @@ static inline word_t getProcessorID(void)
     return processor_id;
 }
 
-/** DONT_TRANSLATE */
+
 static inline word_t readSystemControlRegister(void)
 {
     word_t scr;
@@ -79,13 +79,13 @@ static inline word_t readSystemControlRegister(void)
     return scr;
 }
 
-/** DONT_TRANSLATE */
+
 static inline void writeSystemControlRegister(word_t scr)
 {
     MCR("p15, 0, %0, c1, c0, 0", scr);
 }
 
-/** DONT_TRANSLATE */
+
 static inline word_t readAuxiliaryControlRegister(void)
 {
     word_t acr;
@@ -93,7 +93,7 @@ static inline word_t readAuxiliaryControlRegister(void)
     return acr;
 }
 
-/** DONT_TRANSLATE */
+
 static inline void writeAuxiliaryControlRegister(word_t acr)
 {
     MCR("p15, 0, %0, c1, c0, 1", acr);
@@ -108,14 +108,14 @@ static inline void clearExMonitor(void)
 }
 
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline void flushBTAC(void)
 {
     asm volatile("mcr p15, 0, %0, c7, c5, 6" : : "r"(0));
 }
 
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline void writeContextID(word_t id)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
@@ -128,7 +128,7 @@ static inline void writeContextID(word_t id)
 
 /* Address space control */
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline void writeTTBR0(paddr_t addr)
 {
     /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
@@ -138,13 +138,11 @@ static inline void writeTTBR0(paddr_t addr)
                  "r"((addr & 0xffffe000) | 0x18));
 }
 
-/** DONT_TRANSLATE */
 static inline void writeTPIDRURW(word_t reg)
 {
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
 }
 
-/** DONT_TRANSLATE */
 static inline word_t readTPIDRURW(void)
 {
     word_t reg;
@@ -170,7 +168,7 @@ static inline void setCurrentPD(paddr_t addr)
 
 /* TLB control */
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline void invalidateTLB(void)
 {
     dsb();
@@ -179,7 +177,7 @@ static inline void invalidateTLB(void)
     isb();
 }
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
@@ -192,7 +190,7 @@ static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
     }
 }
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
@@ -208,7 +206,7 @@ static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
 void lockTLBEntry(vptr_t vaddr);
 
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
 #ifdef ARM_CORTEX_A8
@@ -251,7 +249,7 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 }
 /* D-Cache invalidate to PoC (v6/v7 common) */
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 {
 #ifdef ARM_CORTEX_A8
@@ -264,7 +262,7 @@ static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
     dmb();
 }
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 /* I-Cache invalidate to PoU (L2 cache) (v6/v7 common) */
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 {
@@ -277,7 +275,7 @@ static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
     isb();
 }
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 /* I-Cache invalidate all to PoU (L2 cache) (v6/v7 common) */
 static inline void invalidate_I_PoU(void)
 {
@@ -289,7 +287,7 @@ static inline void invalidate_I_PoU(void)
     isb();
 }
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 /* D-Cache clean & invalidate to PoC (v6/v7 common) */
 static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
 {
@@ -305,7 +303,7 @@ static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
     dsb();
 }
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
+
 /* Invalidate branch predictors by VA (v6/v7 common) */
 static inline void branchFlush(vptr_t vaddr, paddr_t paddr)
 {
@@ -314,7 +312,7 @@ static inline void branchFlush(vptr_t vaddr, paddr_t paddr)
 
 /* Fault status */
 /** MODIFIES: */
-/** DONT_TRANSLATE */
+
 static inline word_t PURE getIFSR(void)
 {
     word_t IFSR;
@@ -322,7 +320,7 @@ static inline word_t PURE getIFSR(void)
     return IFSR;
 }
 /** MODIFIES: */
-/** DONT_TRANSLATE */
+
 static inline word_t PURE getDFSR(void)
 {
     word_t DFSR;
@@ -330,7 +328,7 @@ static inline word_t PURE getDFSR(void)
     return DFSR;
 }
 /** MODIFIES: */
-/** DONT_TRANSLATE */
+
 static inline word_t PURE getFAR(void)
 {
     word_t FAR;
@@ -339,7 +337,6 @@ static inline word_t PURE getFAR(void)
 }
 
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
 static inline word_t getACTLR(void)
 {
     word_t ACTLR;
@@ -348,7 +345,6 @@ static inline word_t getACTLR(void)
 }
 
 /** MODIFIES: [*] */
-/** DONT_TRANSLATE */
 static inline void setACTLR(word_t actlr)
 {
     asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));

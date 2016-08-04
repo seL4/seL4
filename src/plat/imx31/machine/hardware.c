@@ -53,9 +53,6 @@ enum IPGConstants {
 
 interrupt_t active_irq = irqInvalid;
 
-/**
-   DONT_TRANSLATE
- */
 void
 resetTimer(void)
 {
@@ -64,9 +61,6 @@ resetTimer(void)
 }
 
 /* Configure EPIT1 as kernel preemption timer */
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initTimer(void)
 {
@@ -174,9 +168,6 @@ void plat_cleanInvalidateCache(void)
     invalidateL2();
 }
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initL2Cache(void)
 {
@@ -192,9 +183,6 @@ initL2Cache(void)
 #endif
 }
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initIRQController(void)
 {

@@ -21,7 +21,6 @@
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
 
-/** DONT_TRANSLATE */
 void VISIBLE NORETURN
 c_handle_interrupt(int irq, int syscall)
 {
@@ -86,7 +85,6 @@ c_handle_interrupt(int irq, int syscall)
     UNREACHABLE();
 }
 
-/** DONT_TRANSLATE */
 void NORETURN
 slowpath(syscall_t syscall)
 {
@@ -131,7 +129,6 @@ slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-/** DONT_TRANSLATE */
 void VISIBLE NORETURN
 c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {

@@ -12,7 +12,6 @@
 
 #include <config.h>
 
-/** DONT_TRANSLATE */
 void idle_thread(void)
 {
     while (1) {
@@ -20,7 +19,6 @@ void idle_thread(void)
     }
 }
 
-/** DONT_TRANSLATE */
 void VISIBLE halt(void)
 {
     /* halt is actually, idle thread without the interrupts */

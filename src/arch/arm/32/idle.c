@@ -11,7 +11,6 @@
 #include <config.h>
 #include <mode/machine.h>
 
-/** DONT_TRANSLATE */
 void idle_thread(void)
 {
     while (1) {

@@ -476,9 +476,7 @@ provide_untyped_cap(
     return ret;
 }
 
-/**
-  DONT_TRANSLATE
-*/
+/** DONT_TRANSLATE */
 BOOT_CODE static word_t boot_ctzl (word_t x)
 {
     return CTZL (x);

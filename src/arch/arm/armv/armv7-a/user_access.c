@@ -24,7 +24,7 @@
 #define ID_PFR1_GENERIC_TIMER BIT(16)
 
 
-/** DONT_TRANSLATE */
+
 static void
 check_export_pmu(void)
 {
@@ -36,7 +36,7 @@ check_export_pmu(void)
 #endif
 }
 
-/** DONT_TRANSLATE */
+
 static void
 check_export_arch_timer(void)
 {
@@ -51,7 +51,7 @@ check_export_arch_timer(void)
     MCR(CNTKCTL, v);
 }
 
-/** DONT_TRANSLATE */
+
 void
 armv_init_user_access(void)
 {

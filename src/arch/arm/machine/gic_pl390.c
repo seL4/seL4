@@ -43,9 +43,6 @@ set_irq_active(irq_t irq)
 }
 uint32_t active_irq = IRQ_NONE;
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE static void
 dist_init(void)
 {
@@ -94,9 +91,6 @@ dist_init(void)
     gic_dist->enable = 1;
 }
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE static void
 cpu_iface_init(void)
 {
@@ -138,9 +132,6 @@ cpu_iface_init(void)
     gic_cpuiface->icontrol = 1;
 }
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initIRQController(void)
 {

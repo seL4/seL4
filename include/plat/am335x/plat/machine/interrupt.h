@@ -64,9 +64,6 @@ volatile struct INTC_map {
 } *intc = (volatile void*)INTC_PPTR;
 
 
-/**
-   DONT_TRANSLATE
- */
 static inline interrupt_t
 getActiveIRQ(void)
 {
@@ -90,9 +87,6 @@ isIRQPending(void)
 }
 
 /* Enable or disable irq according to the 'disable' flag. */
-/**
-   DONT_TRANSLATE
-*/
 static inline void
 maskInterrupt(bool_t disable, interrupt_t irq)
 {

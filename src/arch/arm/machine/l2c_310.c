@@ -231,9 +231,6 @@ volatile struct l2cc_map * const l2cc
 
 
 #ifdef TI_MSHIELD
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE static void
 mshield_smc(uint32_t callid, uint32_t arg1, uint32_t arg2)
 {
@@ -248,9 +245,6 @@ mshield_smc(uint32_t callid, uint32_t arg1, uint32_t arg2)
 }
 #endif /* TI_MSHIELD */
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initL2Cache(void)
 {
