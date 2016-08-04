@@ -80,21 +80,6 @@
 #define VGIC_VTR_NPRIOBITS(vtr)         ((((vtr) >> 29) & 0x07) + 1)
 #define VGIC_VTR_NPREBITS(vtr)          ((((vtr) >> 26) & 0x07) + 1)
 
-#define VGIC_LR_PRIORITY(lr) (((lr) >> 23) & 0x1f)
-#define VGIC_LR_GROUP(lr)    (((lr) >> 30) & 0x1)
-#define VGIC_LR_VIRQ(lr)     (((lr) >>  0) & 0x2ff)
-#define VGIC_LR_EOIIRQEN     (0x1U << 19)
-#define VGIC_IRQ_INVALID     (0x0U << 28)
-#define VGIC_IRQ_PENDING     (0x1U << 28)
-#define VGIC_IRQ_ACTIVE      (0x2U << 28)
-#define VGIC_IRQ_MASK        (0x3U << 28)
-
-#define VIRQ_GROUP_MASK     (1)
-#define VIRQ_GROUP_SHIFT    (30)
-#define VIRQ_PRIORITY_MASK  (0x1f)
-#define VIRQ_PRIORITY_SHIFT (23)
-#define VIRQ_IRQ_MASK       (0x3ff)
-
 struct gich_vcpu_ctrl_map {
     uint32_t hcr;    /* 0x000 RW 0x00000000 Hypervisor Control Register */
     uint32_t vtr;    /* 0x004 RO IMPLEMENTATION DEFINED VGIC Type Register */
@@ -198,17 +183,19 @@ get_gic_vcpu_ctrl_misr(void)
 }
 
 /** DONT_TRANSLATE */
-static inline uint32_t
+static inline virq_t
 get_gic_vcpu_ctrl_lr(int num)
 {
-    return gic_vcpu_ctrl->lr[num];
+    virq_t virq;
+    virq.words[0] = gic_vcpu_ctrl->lr[num];
+    return virq;
 }
 
 /** DONT_TRANSLATE */
 static inline void
-set_gic_vcpu_ctrl_lr(int num, uint32_t lr)
+set_gic_vcpu_ctrl_lr(int num, virq_t lr)
 {
-    gic_vcpu_ctrl->lr[num] = lr;
+    gic_vcpu_ctrl->lr[num] = lr.words[0];
 }
 
 BOOT_CODE void
@@ -332,7 +319,19 @@ VGICMaintenance(void)
             /* the hardware should never give us an invalid index, but we don't
              * want to trust it that far */
             if (irq_idx < gic_vcpu_num_list_regs) {
-                set_gic_vcpu_ctrl_lr(irq_idx, get_gic_vcpu_ctrl_lr(irq_idx) & ~VGIC_LR_EOIIRQEN);
+                virq_t virq = get_gic_vcpu_ctrl_lr(irq_idx);
+                switch (virq_get_virqType(virq)) {
+                case virq_virq_active:
+                    virq = virq_virq_active_set_virqEOIIRQEN(virq, 0);
+                    break;
+                case virq_virq_pending:
+                    virq = virq_virq_pending_set_virqEOIIRQEN(virq, 0);
+                    break;
+                case virq_virq_invalid:
+                    virq = virq_virq_invalid_set_virqEOIIRQEN(virq, 0);
+                    break;
+                }
+                set_gic_vcpu_ctrl_lr(irq_idx, virq);
             }
         }
 
@@ -464,19 +463,10 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
     return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field);
 }
 
-static uint32_t makeVIRQ(int group, int priority, int irq)
-{
-    uint32_t virq = ((group & VIRQ_GROUP_MASK) << VIRQ_GROUP_SHIFT);
-    virq |= ((priority & VIRQ_PRIORITY_MASK) << VIRQ_PRIORITY_SHIFT);
-    virq |= (irq & VIRQ_IRQ_MASK);
-    return virq;
-}
-
 exception_t
-invokeVCPUInjectIRQ(vcpu_t* vcpu, int index, int group, int priority, int irq)
+invokeVCPUInjectIRQ(vcpu_t* vcpu, int index, virq_t virq)
 {
-    vcpu->vgic.lr[index] = makeVIRQ(group, priority, irq);
-    vcpu->vgic.lr[index] |= VGIC_IRQ_PENDING | VGIC_LR_EOIIRQEN;
+    vcpu->vgic.lr[index] = virq;
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
@@ -538,13 +528,14 @@ decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
     /* LR index is in use */
-    if ((vcpu->vgic.lr[index] & VGIC_IRQ_MASK) == VGIC_IRQ_ACTIVE) {
+    if (virq_get_virqType(vcpu->vgic.lr[index]) == virq_virq_active) {
         userError("VGIC List register in use.");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
+    virq_t virq = virq_virq_pending_new(group, priority, 1, vid);
 
-    return invokeVCPUInjectIRQ(vcpu, index, group, priority, vid);
+    return invokeVCPUInjectIRQ(vcpu, index, virq);
 }
 
 exception_t decodeARMVCPUInvocation(
