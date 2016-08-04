@@ -100,7 +100,7 @@ BEGIN_FUNC(arm_swi_syscall)
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
-     * unmodified (cptr and msgIngo respectively.
+     * unmodified (cptr and msgInfo respectively).
      */
     mov r2, r7
     b c_handle_syscall
