@@ -11,12 +11,15 @@
 /* A9 MPCORE private timer */
 
 /* 32 bit down counter */
-volatile struct priv_timer {
+struct priv_timer {
     uint32_t load;
     uint32_t count;
     uint32_t ctrl;
     uint32_t ints;
-} *priv_timer = (volatile struct priv_timer*)ARM_MP_PRIV_TIMER_PPTR;
+};
+
+volatile struct priv_timer * const priv_timer
+    = (volatile struct priv_timer*)ARM_MP_PRIV_TIMER_PPTR;
 
 #define TMR_CTRL_ENABLE      BIT(0)
 #define TMR_CTRL_AUTORELOAD  BIT(1)
