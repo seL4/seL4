@@ -58,8 +58,4 @@ enum IRQConstants {
 
 #define KERNEL_TIMER_IRQ INTERRUPT_KPSS_DBGT
 
-enum irqNumbers {
-    irqInvalid = (irq_t) - 1
-};
-
 #endif /* !__PLAT_MACHINE_H */
