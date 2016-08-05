@@ -29,5 +29,6 @@ irq_t getActiveIRQ(void);
 bool_t isIRQPending(void);
 
 /** MODIFIES: [*] */
-void maskInterrupt(bool_t enable, irq_t irq);
+void maskInterrupt(bool_t disable, irq_t irq);
+
 #endif
