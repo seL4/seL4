@@ -19,54 +19,6 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
-/* pointer to end of kernel image */
-/* need a fake array to get the pointer from the linker script */
-extern char ki_end[1];
-
-/* Available physical memory regions on platform (RAM minus kernel image). */
-/* NOTE: Regions are not allowed to be adjacent! */
-
-const p_region_t BOOT_RODATA avail_p_regs[] = {
-    /* 128 MiB of memory minus kernel image at its beginning */
-    { /* .start = */ (pptr_t)ki_end - BASE_OFFSET, /* .end = */ 0x88000000 }
-};
-
-BOOT_CODE int get_num_avail_p_regs(void)
-{
-    return sizeof(avail_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE p_region_t get_avail_p_reg(word_t i)
-{
-    return avail_p_regs[i];
-}
-
-const p_region_t BOOT_RODATA dev_p_regs[] = {
-    /* SoC devices: */
-    { /* .start = */ UART0_PADDR,    /* .end = */ UART0_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ DMTIMER2_PADDR, /* .end = */ DMTIMER2_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ DMTIMER3_PADDR, /* .end = */ DMTIMER3_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ DMTIMER4_PADDR, /* .end = */ DMTIMER4_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ DMTIMER5_PADDR, /* .end = */ DMTIMER5_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ DMTIMER6_PADDR, /* .end = */ DMTIMER6_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ DMTIMER7_PADDR, /* .end = */ DMTIMER7_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ WDT1_PADDR,     /* .end = */ WDT1_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ CMPER_PADDR,    /* .end = */ CMPER_PADDR + (1 << PAGE_BITS) },
-    /* Board devices. */
-    /* TODO: This should ultimately be replaced with a more general solution. */
-};
-
-BOOT_CODE int get_num_dev_p_regs(void)
-{
-    return sizeof(dev_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE p_region_t get_dev_p_reg(word_t i)
-{
-    return dev_p_regs[i];
-}
-
-
 BOOT_CODE void
 map_kernel_devices(void)
 {

@@ -19,44 +19,6 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
-/* Available physical memory regions on platform (RAM minus kernel image). */
-/* NOTE: Regions are not allowed to be adjacent! */
-
-const p_region_t BOOT_RODATA avail_p_regs[] = {
-    /* 1408 MB */
-    { .start = 0x48000000, .end = 0xA0000000 }
-};
-
-BOOT_CODE int get_num_avail_p_regs(void)
-{
-    return sizeof(avail_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE p_region_t get_avail_p_reg(word_t i)
-{
-    return avail_p_regs[i];
-}
-
-const p_region_t BOOT_RODATA dev_p_regs[] = {
-    /* sorted by increasing memory address */
-    /* region caps must be a power of 2. */
-
-    /* TODO: Add more devices. */
-    { SPI0_PADDR                    , SPI0_PADDR                        + ( 2 << PAGE_BITS) },
-    { SPI1_PADDR                    , SPI1_PADDR                        + ( 2 << PAGE_BITS) },
-
-};
-
-BOOT_CODE int get_num_dev_p_regs(void)
-{
-    return sizeof(dev_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE p_region_t get_dev_p_reg(word_t i)
-{
-    return dev_p_regs[i];
-}
-
 /* Handle a platform-reserved IRQ. */
 void
 handleReservedIRQ(irq_t irq)

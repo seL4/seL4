@@ -19,43 +19,6 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
-/* Available physical memory regions on platform (RAM minus kernel image). */
-/* NOTE: Regions are not allowed to be adjacent! */
-
-const p_region_t BOOT_RODATA avail_p_regs[] = {
-    { .start = 0x20000000, .end = 0x28000000 }
-};
-
-BOOT_CODE int get_num_avail_p_regs(void)
-{
-    return sizeof(avail_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE p_region_t get_avail_p_reg(word_t i)
-{
-    return avail_p_regs[i];
-}
-
-const p_region_t BOOT_RODATA dev_p_regs[] = {
-    { /* .start = */ UART0_PADDR,    /* .end = */ UART0_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ UART1_PADDR,    /* .end = */ UART1_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ UART2_PADDR,    /* .end = */ UART2_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ UART3_PADDR,    /* .end = */ UART3_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ UART4_PADDR,    /* .end = */ UART4_PADDR + (1 << PAGE_BITS) },
-    { /* .start = */ GIC_PADDR,      /* .end = */ GIC_PADDR + ((1 << PAGE_BITS) * 8) },
-    { /* .start = */ DMTIMER0_PADDR, /* .end = */ DMTIMER0_PADDR + (1 << PAGE_BITS) },
-};
-
-BOOT_CODE int get_num_dev_p_regs(void)
-{
-    return sizeof(dev_p_regs) / sizeof(p_region_t);
-}
-
-BOOT_CODE p_region_t get_dev_p_reg(word_t i)
-{
-    return dev_p_regs[i];
-}
-
 /* Handle a platform-reserved IRQ. */
 void
 handleReservedIRQ(irq_t irq)
