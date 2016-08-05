@@ -11,8 +11,6 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
-#include <arch/machine/gic_pl390.h>
-
 #define N_INTERRUPTS     160
 
 enum IRQConstants {
@@ -180,8 +178,6 @@ enum IRQConstants {
 
 #define KERNEL_TIMER_IRQ INTERRUPT_MCTG1
 
-enum irqNumbers {
-    irqInvalid = (irq_t) - 1
-};
+#include <arch/machine/gic_pl390.h>
 
 #endif /* !__PLAT_MACHINE_H */

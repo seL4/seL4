@@ -182,10 +182,6 @@ enum IRQConstants {
 #define KERNEL_TIMER_IRQ INTERRUPT_PRIV_TIMER
 #define KERNEL_PMU_IRQ   INTERRUPT_CPU_PMU_OV
 
-enum irqNumbers {
-    irqInvalid = (uint16_t) - 1
-};
-
 #include <arch/machine/gic_pl390.h>
 
 #endif /* !__PLAT_MACHINE_H */

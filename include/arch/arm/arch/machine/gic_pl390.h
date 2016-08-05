@@ -20,6 +20,10 @@
 typedef uint16_t interrupt_t;
 typedef uint16_t irq_t;
 
+enum irqNumbers {
+    irqInvalid = (irq_t) - 1
+};
+
 /* Special IRQ's */
 #define SPECIAL_IRQ_START 1020u
 #define IRQ_NONE          1023u

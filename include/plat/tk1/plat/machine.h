@@ -12,7 +12,6 @@
 #define __PLAT_MACHINE_H
 
 #include <config.h>
-#include <arch/machine/gic_pl390.h>
 
 #define N_INTERRUPTS 192
 
@@ -229,8 +228,6 @@ enum IRQConstants {
 #define KERNEL_PMU_IRQ          INTERRUPT_CPU0_PMU
 #endif
 
-enum irqNumbers {
-    irqInvalid = 255
-};
+#include <arch/machine/gic_pl390.h>
 
 #endif  /* ! __PLAT_MACHINE_H */
