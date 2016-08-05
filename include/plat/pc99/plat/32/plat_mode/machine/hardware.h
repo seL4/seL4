@@ -27,7 +27,6 @@
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #define PPTR_KDEV   0xffff0000
 #define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
-#define physMappingOffset BASE_OFFSET
 
 #define PADDR_TOP   (PPTR_TOP - BASE_OFFSET)
 /* The kernel base offset is a way to translate the kernel image segment

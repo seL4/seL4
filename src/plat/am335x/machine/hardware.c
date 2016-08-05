@@ -28,7 +28,7 @@ extern char ki_end[1];
 
 const p_region_t BOOT_RODATA avail_p_regs[] = {
     /* 128 MiB of memory minus kernel image at its beginning */
-    { /* .start = */ (pptr_t)ki_end - physMappingOffset, /* .end = */ 0x88000000 }
+    { /* .start = */ (pptr_t)ki_end - BASE_OFFSET, /* .end = */ 0x88000000 }
 };
 
 BOOT_CODE int get_num_avail_p_regs(void)

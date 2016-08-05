@@ -13,18 +13,5 @@
 
 #define physBase          0x40000000
 #define kernelBase        0xe0000000
-#define physMappingOffset (kernelBase - physBase)
-#define BASE_OFFSET       physMappingOffset
-
-/*
- * 0xff000000 asid id slot (arm/arch/kernel/vspace.h)
- * 0xfff00000 devices      (plat/machine/devices.h)
- * 0xffff0000 vectors      (arch/machine/hardware.h)
- * 0xffffc000 global page  (arch/machine/hardware.h)
- * 0xfffff000 kernel stack (arch/machine/hardware.h)
- */
-
-#define PPTR_TOP          0xfff00000
-#define PADDR_TOP         (PPTR_TOP - BASE_OFFSET)
 
 #endif /* !__PLAT_MACHINE_HARDWARE_H */

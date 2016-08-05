@@ -13,9 +13,5 @@
 
 #define physBase          0x48000000
 #define kernelBase        0xA0000000
-#define physMappingOffset (kernelBase - physBase)
-#define BASE_OFFSET       physMappingOffset
-#define PPTR_TOP          0xfff00000
-#define PADDR_TOP         (PPTR_TOP - BASE_OFFSET)
 
 #endif

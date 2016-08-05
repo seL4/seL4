@@ -25,6 +25,17 @@
 #include <machine/io.h>
 #include <mode/machine_pl2.h>
 
+/*
+ * 0xffe00000 asid id slot (arm/arch/kernel/vspace.h)
+ * 0xfff00000 devices      (plat/machine/devices.h)
+ * 0xffff0000 vectors      (arch/machine/hardware.h)
+ * 0xffffc000 global page  (arch/machine/hardware.h)
+ * 0xfffff000 kernel stack (arch/machine/hardware.h)
+ */
+#define BASE_OFFSET (kernelBase - physBase)
+#define PPTR_TOP 0xfff00000
+#define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
+
 #define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
 #define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
 #define MCR(cpreg, v)                               \
