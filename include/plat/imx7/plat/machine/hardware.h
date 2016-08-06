@@ -18,6 +18,36 @@
 #define physBase          0x80000000
 #define kernelBase        0xe0000000
 
+static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
+    {
+        /*  GIC distributor and private timers */
+        ARM_MP_PADDR,
+        ARM_MP_PPTR1,
+        true  /* armExecuteNever */
+    },
+    {
+        /*  GIC controller */
+        ARM_MP_PADDR + BIT(PAGE_BITS),
+        ARM_MP_PPTR2,
+        true  /* armExecuteNever */
+    },
+    {
+        /*  GIC controller */
+        ARM_MP_PADDR + BIT(PAGE_BITS) * 2,
+        ARM_MP_PPTR3,
+        true  /* armExecuteNever */
+
+#ifdef CONFIG_PRINTING
+    },
+    {
+        /*  UART */
+        UART_PADDR,
+        UART_PPTR,
+        true  /* armExecuteNever */
+#endif
+    }
+};
+
 /* Available physical memory regions on platform (RAM) */
 /* NOTE: Regions are not allowed to be adjacent! */
 static const p_region_t BOOT_RODATA avail_p_regs[] = {

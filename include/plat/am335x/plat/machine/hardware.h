@@ -18,6 +18,41 @@
 #define physBase          0x80000000
 #define kernelBase        0xf0000000
 
+static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
+    {
+        /*  DM Timer 0 */
+        DMTIMER0_PADDR,
+        DMTIMER0_PPTR,
+        true  /* armExecuteNever */
+    },
+    /*  INTC */
+    {
+        INTC_PADDR,
+        INTC_PPTR,
+        true  /* armExecuteNever */
+    },
+    {
+        /*  WDT1 */
+        WDT1_PADDR,
+        WDT1_PPTR,
+        true  /* armExecuteNever */
+    }
+    {
+        /*  CMPER */
+        CMPER_PADDR,
+        CMPER_PPTR,
+        true  /* armExecuteNever */
+#ifdef CONFIG_PRINTING
+    },
+    {
+        /*  UART */
+        UART0_PADDR,
+        UART0_PPTR,
+        true  /* armExecuteNever */
+#endif
+    }
+};
+
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 

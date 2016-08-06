@@ -32,58 +32,5 @@ handleReservedIRQ(irq_t irq)
 }
 
 
-BOOT_CODE void
-map_kernel_devices(void)
-{
-    /* map kernel device: GIC controller and private timers */
-    map_kernel_frame(
-        MPCORE_PRIV_PADDR,
-        ARM_MP_PPTR1,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
 
-    /* map kernel device: GIC distributor */
-    map_kernel_frame(
-        MPCORE_PRIV_PADDR + BIT(PAGE_BITS),
-        ARM_MP_PPTR2,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-    /* map kernel device: L2CC */
-    map_kernel_frame(
-        L2CC_PL310_PADDR,
-        L2CC_PL310_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-
-#ifdef CONFIG_PRINTING
-    /* map kernel device: UART */
-    map_kernel_frame(
-        UART_PADDR,
-        UART_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-#endif /* CONFIG_PRINTING */
-}
 

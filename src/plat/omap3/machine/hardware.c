@@ -19,47 +19,7 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
-BOOT_CODE void
-map_kernel_devices(void)
-{
-    /* map kernel device: GP Timer 9 */
-    map_kernel_frame(
-        GPTIMER9_PADDR,
-        GPTIMER9_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
 
-    /* map kernel device: INTC */
-    map_kernel_frame(
-        INTC_PADDR,
-        INTC_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-#ifdef CONFIG_PRINTING
-    /* map kernel device: UART */
-    map_kernel_frame(
-        UART3_PADDR,
-        UART3_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-#endif
-}
 
 #define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
 #define INTCPS_SYSSTATUS_RESETDONE BIT(0)

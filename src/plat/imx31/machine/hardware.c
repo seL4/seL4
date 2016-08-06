@@ -123,61 +123,6 @@ enum IPGConstants {
 #error TIMER_RELOAD_VAL out of range
 #endif
 
-
-BOOT_CODE void
-map_kernel_devices(void)
-{
-    /* map kernel device: EPIT */
-    map_kernel_frame(
-        EPIT_PADDR,
-        EPIT_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-    /* map kernel device: AVIC */
-    map_kernel_frame(
-        AVIC_PADDR,
-        AVIC_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-    /* map kernel device: L2CC */
-    map_kernel_frame(
-        L2CC_PADDR,
-        L2CC_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-#ifdef CONFIG_PRINTING
-    /* map kernel device: UART */
-    map_kernel_frame(
-        UART_PADDR,
-        UART_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-#endif
-}
-
 /**
    DONT_TRANSLATE
  */

@@ -18,6 +18,29 @@
 #define physBase          0x80000000
 #define kernelBase        0xf0000000
 
+static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
+    {
+        /*  GP Timer 9 */
+        GPTIMER9_PADDR,
+        GPTIMER9_PPTR,
+        true  /* armExecuteNever */
+    },
+    {
+        /*  INTC */
+        INTC_PADDR,
+        INTC_PPTR,
+        true  /* armExecuteNever */
+#ifdef CONFIG_PRINTING
+    },
+    {
+        /*  UART */
+        UART3_PADDR,
+        UART3_PPTR,
+        true  /* armExecuteNever */
+    }
+#endif
+};
+
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 static const p_region_t BOOT_RODATA avail_p_regs[] = {

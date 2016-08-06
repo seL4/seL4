@@ -18,6 +18,36 @@
 #define physBase          0x10000000
 #define kernelBase        0xe0000000
 
+static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
+    {
+        /*  GIC controller and private timers */
+        ARM_MP_PADDR,
+        ARM_MP_PPTR1,
+        true  /* armExecuteNever */
+    },
+    {
+        /*  GIC distributor */
+        ARM_MP_PADDR + BIT(PAGE_BITS),
+        ARM_MP_PPTR2,
+        true  /* armExecuteNever */
+    },
+    {
+        /*  L2CC */
+        L2CC_PL310_PADDR,
+        L2CC_PL310_PPTR,
+        true  /* armExecuteNever */
+
+#ifdef CONFIG_PRINTING
+    },
+    {
+        /*  UART */
+        UART_PADDR,
+        UART_PPTR,
+        true  /* armExecuteNever */
+#endif
+    }
+};
+
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
 #if defined(CONFIG_PLAT_SABRE)
     /* Sabre has 1 GiB */

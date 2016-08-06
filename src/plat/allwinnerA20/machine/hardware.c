@@ -25,58 +25,6 @@ handleReservedIRQ(irq_t irq)
 {
 }
 
-BOOT_CODE void
-map_kernel_devices(void)
-{
-    /* map kernel device: GP Timer 11 */
-    map_kernel_frame(
-        TIMER0_PADDR,
-        TIMER0_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-    /* map kernel device: GIC */
-    map_kernel_frame(
-        GIC_CONTROLLER0_PADDR,
-        GIC_CONTROLLER_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-    map_kernel_frame(
-        GIC_DISTRIBUTOR_PADDR,
-        GIC_DISTRIBUTOR_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-#ifdef CONFIG_PRINTING
-    /* map kernel device: UART */
-    map_kernel_frame(
-        UART0_PADDR,
-        UART0_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-#endif
-}
-
 #define TIMER_INTERVAL_US  (CONFIG_TIMER_TICK_MS * 1000)
 #define TIMER_MHZ          24ULL
 #define TIMER_TICKS        (TIMER_MHZ * TIMER_INTERVAL_US)

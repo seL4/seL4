@@ -18,6 +18,28 @@
 #define physBase          0x20000000
 #define kernelBase        0xe0000000
 
+static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
+    {
+        /*  GIC */
+        GIC_CONTROLLER0_PADDR,
+        GIC_CONTROLLER_PPTR,
+        true  /* armExecuteNever */
+    },
+    {
+        GIC_DISTRIBUTOR_PADDR,
+        GIC_DISTRIBUTOR_PPTR,
+        true  /* armExecuteNever */
+#ifdef CONFIG_PRINTING
+    },
+    {
+        /*  UART */
+        UART0_PADDR,
+        UART0_PPTR,
+        true  /* armExecuteNever */
+#endif
+    }
+};
+
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 

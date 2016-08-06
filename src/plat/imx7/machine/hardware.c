@@ -25,62 +25,6 @@ handleReservedIRQ(irq_t irq)
 }
 
 
-BOOT_CODE void
-map_kernel_devices(void)
-{
-    /* map kernel device: GIC distributor and private timers */
-    map_kernel_frame(
-        ARM_MP_PADDR,
-        ARM_MP_PPTR1,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-    /* map kernel device: GIC controller */
-    map_kernel_frame(
-        ARM_MP_PADDR + BIT(PAGE_BITS),
-        ARM_MP_PPTR2,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-    /* map kernel device: GIC controller */
-    map_kernel_frame(
-        ARM_MP_PADDR + BIT(PAGE_BITS) * 2,
-        ARM_MP_PPTR3,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-
-#ifdef CONFIG_PRINTING
-    /* map kernel device: UART */
-    map_kernel_frame(
-        UART_PADDR,
-        UART_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-#endif /* CONFIG_PRINTING */
-}
-
-
-
 /* co-processor code to read and write GPT */
 
 static void

@@ -25,45 +25,7 @@ handleReservedIRQ(irq_t irq)
 {
 }
 
-BOOT_CODE void
-map_kernel_devices(void)
-{
-    /* map kernel device: GIC */
-    map_kernel_frame(
-        GIC_CONTROLLER0_PADDR,
-        GIC_CONTROLLER_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-    map_kernel_frame(
-        GIC_DISTRIBUTOR_PADDR,
-        GIC_DISTRIBUTOR_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
 
-#ifdef CONFIG_PRINTING
-    /* map kernel device: UART */
-    map_kernel_frame(
-        UART0_PADDR,
-        UART0_PPTR,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            false, /* armParityEnabled */
-            false  /* armPageCacheable */
-        )
-    );
-#endif
-}
 
 #define TIMER_CLOCK_HZ		1200000
 #define TIMER_RELOAD_VAL	(TIMER_CLOCK_HZ * CONFIG_TIMER_TICK_MS / 1000)

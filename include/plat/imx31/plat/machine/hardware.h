@@ -17,6 +17,35 @@
 #define physBase          0x80000000
 #define kernelBase        0xf0000000
 
+static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
+    {
+        /*  EPIT */
+        EPIT_PADDR,
+        EPIT_PPTR,
+        true  /* armExecuteNever */
+    },
+    {
+        /*  AVIC */
+        AVIC_PADDR,
+        AVIC_PPTR,
+        true  /* armExecuteNever */
+    },
+    {
+        /*  L2CC */
+        L2CC_PADDR,
+        L2CC_PPTR,
+        true  /* armExecuteNever */
+
+#ifdef CONFIG_PRINTING
+    },
+    {
+        /*  UART */
+        UART_PADDR,
+        UART_PPTR,
+        true  /* armExecuteNever */
+#endif
+    }
+};
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 
