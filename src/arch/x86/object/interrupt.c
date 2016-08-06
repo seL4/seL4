@@ -14,6 +14,7 @@
 #include <arch/api/invocation.h>
 #include <arch/linker.h>
 #include <plat/machine/pci.h>
+#include <plat/machine/hardware.h>
 
 void
 Arch_irqStateInit(void)
@@ -50,55 +51,6 @@ Arch_checkIRQ(word_t irq)
         current_syscall_error.rangeErrorMax = irq_isa_max;
     }
     return EXCEPTION_SYSCALL_ERROR;
-}
-
-static void inline
-updateIRQState(word_t irq, x86_irq_state_t state)
-{
-    assert(irq >= 0 && irq <= maxIRQ);
-    x86KSIRQState[irq] = state;
-}
-
-void
-Arch_updateIRQState(word_t irq, x86_irq_state_t state)
-{
-    updateIRQState(irq, state);
-}
-
-void
-maskInterrupt(bool_t disable, irq_t irq)
-{
-    if (irq >= irq_isa_min && irq <= irq_isa_max) {
-        if (config_set(CONFIG_IRQ_PIC)) {
-            pic_mask_irq(disable, irq);
-        } else {
-            /* We shouldn't receive interrupts on the PIC range
-             * if not using the PIC, but soldier on anyway */
-        }
-    } else if (irq >= irq_user_min && irq <= irq_user_max) {
-        x86_irq_state_t state = x86KSIRQState[irq];
-        switch (x86_irq_state_get_irqType(state)) {
-        case x86_irq_state_irq_ioapic: {
-            uint32_t ioapic = x86_irq_state_irq_ioapic_get_id(state);
-            uint32_t pin = x86_irq_state_irq_ioapic_get_pin(state);
-            ioapic_mask(disable, ioapic, pin);
-            state =  x86_irq_state_irq_ioapic_set_masked(state, disable);
-            Arch_updateIRQState(irq, state);
-        }
-        break;
-        case x86_irq_state_irq_msi:
-            /* currently MSI interrupts can not be disabled */
-            break;
-        case x86_irq_state_irq_free:
-            /* A spurious interrupt, and the resulting mask here,
-             * could be from a user ripping out a vector before
-             * the interrupt reached the kernel. Silently ignore */
-            break;
-        }
-    } else {
-        /* masking some other kind of interrupt source, this probably
-         * shouldn't happen, but soldier on */
-    }
 }
 
 static exception_t

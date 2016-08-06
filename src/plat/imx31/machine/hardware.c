@@ -27,78 +27,6 @@
 #define L2_LINE_START(a) ROUND_DOWN(a, L2_LINE_SIZE_BITS)
 #define L2_LINE_INDEX(a) (L2_LINE_START(a)>>L2_LINE_SIZE_BITS)
 
-/* Memory map for AVIC (Advanced Vectored Interrupt Controller). */
-volatile struct avic_map {
-    uint32_t intctl;
-    uint32_t nimask;
-    uint32_t intennum;
-    uint32_t intdisnum;
-    uint32_t intenableh;
-    uint32_t intenablel;
-    uint32_t inttypeh;
-    uint32_t inttypel;
-    uint32_t nipriority[8];
-    uint32_t nivecsr;
-    uint32_t fivecsr;
-    uint32_t intsrch;
-    uint32_t intsrcl;
-    uint32_t intfrch;
-    uint32_t intfrcl;
-    uint32_t nipndh;
-    uint32_t nipndl;
-    uint32_t fipndh;
-    uint32_t fipndl;
-    uint32_t vector[64];
-} *avic = (volatile void *)AVIC_PPTR;
-
-/* Get the active IRQ number from the AVIC.  Returns 0xff if
- * there isn't one. Note this is also known as irqInvalid */
-/**
-   DONT_TRANSLATE
- */
-interrupt_t
-getActiveIRQ(void)
-{
-    return (avic->nivecsr >> 16) & 0xff;
-}
-
-/* Check for pending IRQ */
-bool_t isIRQPending(void)
-{
-    return getActiveIRQ() != irqInvalid;
-}
-
-/* Enable or disable irq according to the 'disable' flag. */
-/**
-   DONT_TRANSLATE
-*/
-void
-maskInterrupt(bool_t disable, interrupt_t irq)
-{
-    if (disable) {
-        avic->intdisnum = irq;
-    } else {
-        avic->intennum = irq;
-    }
-}
-
-/* Handle a platform-reserved IRQ. */
-void
-handleReservedIRQ(irq_t irq)
-{
-#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-    if (irq == KERNEL_PMU_IRQ) {
-        handleOverflowIRQ();
-    }
-#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
-}
-
-void
-ackInterrupt(irq_t irq)
-{
-    /* empty on this platform */
-}
-
 /* Memory map for EPIT (Enhanced Periodic Interrupt Timer). */
 volatile struct epit_map {
     uint32_t epitcr;
@@ -253,12 +181,6 @@ initL2Cache(void)
  */
 BOOT_CODE void
 initIRQController(void)
-{
-    /* Do nothing */
-}
-
-void
-handleSpuriousIRQ(void)
 {
     /* Do nothing */
 }

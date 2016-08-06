@@ -19,14 +19,6 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
-/* Handle a platform-reserved IRQ. */
-void
-handleReservedIRQ(irq_t irq)
-{
-}
-
-
-
 #define TIMER_CLOCK_HZ		1200000
 #define TIMER_RELOAD_VAL	(TIMER_CLOCK_HZ * CONFIG_TIMER_TICK_MS / 1000)
 

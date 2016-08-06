@@ -57,4 +57,10 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start = */ DMTIMER0_PADDR, /* .end = */ DMTIMER0_PADDR + (1 << PAGE_BITS) },
 };
 
+/* Handle a platform-reserved IRQ. */
+static inline void
+handleReservedIRQ(irq_t irq)
+{
+}
+
 #endif

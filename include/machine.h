@@ -15,6 +15,7 @@
 #include <machine/registerset.h>
 
 #include <mode/machine.h>
+#include <plat/machine/hardware.h>
 
 static inline void* CONST
 ptrFromPAddr(paddr_t paddr)

@@ -21,6 +21,7 @@
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <model/statedata.h>
+#include <machine/timer.h>
 
 exception_t
 decodeIRQControlInvocation(word_t invLabel, word_t length,

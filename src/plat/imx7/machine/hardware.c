@@ -18,12 +18,6 @@
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
-/* Handle a platform-reserved IRQ. */
-void
-handleReservedIRQ(irq_t irq)
-{
-}
-
 
 /* co-processor code to read and write GPT */
 

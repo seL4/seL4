@@ -11,6 +11,4 @@
 DIRECTORIES += src/plat/${PLAT}/machine
 DIRECTORIES += src/plat/exynos_common
 
-PLAT_C_SOURCES += machine/hardware.c
-
 PLAT_C_SOURCES += ../exynos_common/mct.c ../exynos_common/io.c

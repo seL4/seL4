@@ -8,4 +8,4 @@
 # @TAG(GD_GPL)
 #
 
-PLAT_C_SOURCES += machine/hardware.c machine/io.c
+PLAT_C_SOURCES += machine/io.c

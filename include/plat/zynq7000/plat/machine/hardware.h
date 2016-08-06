@@ -11,9 +11,11 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
+#include <config.h>
 #include <basic_types.h>
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
+#include <arch/benchmark_overflowHandler.h>
 
 #define physBase          0x00000000
 #define kernelBase        0xe0000000
@@ -116,5 +118,16 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start = */ PL_M_AXI_GP0_PADDR, /* .end = */ PL_M_AXI_GP0_PADDR             + 0x40000000U},
     { /* .start = */ PL_M_AXI_GP1_PADDR, /* .end = */ PL_M_AXI_GP1_PADDR             + 0x40000000U},
 };
+
+/* Handle a platform-reserved IRQ. */
+static inline void
+handleReservedIRQ(irq_t irq)
+{
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    if (irq == KERNEL_PMU_IRQ) {
+        handleOverflowIRQ();
+    }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+}
 
 #endif /* !__PLAT_MACHINE_HARDWARE_H */

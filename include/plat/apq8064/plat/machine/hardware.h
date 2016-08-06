@@ -297,4 +297,10 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ SATA_PADDR                , /* .end */ SATA_PADDR                + (1 << PAGE_BITS) }
 };
 
+/* Handle a platform-reserved IRQ. */
+static inline void
+handleReservedIRQ(irq_t irq)
+{
+}
+
 #endif /* !__PLAT_MACHINE_HARDWARE_H */

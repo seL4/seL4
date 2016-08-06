@@ -108,4 +108,10 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { FEC1_PADDR,               FEC1_PADDR              +   0x10000 },
 };
 
+/* Handle a platform-reserved IRQ. */
+static inline void
+handleReservedIRQ(irq_t irq)
+{
+}
+
 #endif /* !__PLAT_MACHINE_HARDWARE_H */

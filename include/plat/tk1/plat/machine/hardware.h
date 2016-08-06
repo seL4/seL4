@@ -11,11 +11,14 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
+#include <config.h>
 #include <util.h>
 #include <basic_types.h>
 #include <arch/linker.h>
+#include <arch/object/vcpu.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware_gen.h>
+#include <plat/machine/smmu.h>
 #include <mode/machine/hardware.h>
 #include <mode/api/constants.h>
 
@@ -141,5 +144,26 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { USB2_PADDR,           USB2_PADDR + (BIT(seL4_PageBits) * 2) },           /* 8 KB region, 6 KB            */
     { USB3_PADDR,           USB3_PADDR + (BIT(seL4_PageBits) * 2) },           /* 8 KB region, 6 KB            */
 };
+
+/* Handle a platform-reserved IRQ. */
+static inline void
+handleReservedIRQ(irq_t irq)
+{
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    if (irq == KERNEL_PMU_IRQ) {
+        handleOverflowIRQ();
+    }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+
+    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+        VGICMaintenance();
+        return;
+    }
+
+    if (config_set(CONFIG_ARM_SMMU) && (irq == INTERRUPT_SMMU)) {
+        plat_smmu_handle_interrupt();
+        return;
+    }
+}
 
 #endif

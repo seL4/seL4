@@ -13,7 +13,9 @@
 
 #include <basic_types.h>
 #include <arch/linker.h>
+#include <armv/machine.h>
 #include <plat/machine/devices.h>
+#include <plat/machine/interrupt.h>
 
 #define physBase          0x80000000
 #define kernelBase        0xf0000000

@@ -11,13 +11,9 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
-#include <config.h>
-#include <types.h>
-#include <machine/timer.h>
-#include <machine/hardware.h>
+#include <plat/machine/interrupt.h>
 #include <plat/machine.h>
 #include <plat/machine/hardware_gen.h>
-
 #include <plat_mode/machine/hardware.h>
 
 void platAddDevices(void);

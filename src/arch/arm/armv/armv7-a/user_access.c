@@ -8,7 +8,7 @@
  * @TAG(GD_GPL)
  */
 
-#include <machine/hardware.h>
+#include <plat/machine/hardware.h>
 #include <arch/user_access.h>
 
 #define PMUSERENR_ENABLE BIT(0)

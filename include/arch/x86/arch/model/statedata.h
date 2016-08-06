@@ -17,9 +17,8 @@
 #include <object/structures.h>
 #include <arch/types.h>
 #include <plat/machine/devices.h>
-
+#include <plat/machine.h>
 #include <arch/object/iospace.h>
-#include <plat/machine/hardware.h>
 
 #include <mode/model/statedata.h>
 

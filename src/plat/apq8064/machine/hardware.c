@@ -20,12 +20,6 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
-/* Handle a platform-reserved IRQ. */
-void
-handleReservedIRQ(irq_t irq)
-{
-}
-
 void plat_cleanL2Range(paddr_t start, paddr_t end) {}
 void plat_invalidateL2Range(paddr_t start, paddr_t end) {}
 void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end) {}

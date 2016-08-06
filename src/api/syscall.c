@@ -21,7 +21,7 @@
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
 #include <machine/io.h>
-#include <machine/hardware.h>
+#include <plat/machine/hardware.h>
 #include <object/interrupt.h>
 #include <model/statedata.h>
 #include <string.h>

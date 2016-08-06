@@ -11,8 +11,10 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
+#include <config.h>
 #include <basic_types.h>
 #include <arch/linker.h>
+#include <arch/object/vcpu.h>
 #include <plat/machine/devices.h>
 
 #define physBase          0x60000000
@@ -287,5 +289,16 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ S_NDMA_PADDR          , /* .end */ S_NDMA_PADDR           + (1 << PAGE_BITS) },
     { /* .start */ AES1_SFR_PADDR        , /* .end */ AES1_SFR_PADDR         + (1 << PAGE_BITS) },
 };
+
+/* Handle a platform-reserved IRQ. */
+static inline void
+handleReservedIRQ(irq_t irq)
+{
+    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) &&
+            (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+        VGICMaintenance();
+        return;
+    }
+}
 
 #endif /* !__PLAT_MACHINE_HARDWARE_H */

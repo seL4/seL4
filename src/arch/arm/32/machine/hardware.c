@@ -11,6 +11,7 @@
 #include <types.h>
 #include <machine/registerset.h>
 #include <arch/machine.h>
+#include <plat/machine/hardware.h>
 
 word_t PURE
 getRestartPC(tcb_t *thread)

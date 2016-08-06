@@ -14,6 +14,7 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
+#include <plat/machine/hardware_gen.h>
 
 static inline int vtd_get_root_index(dev_id_t dev)
 {
