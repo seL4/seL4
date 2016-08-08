@@ -36,7 +36,7 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         WDT1_PADDR,
         WDT1_PPTR,
         true  /* armExecuteNever */
-    }
+    },
     {
         /*  CMPER */
         CMPER_PADDR,

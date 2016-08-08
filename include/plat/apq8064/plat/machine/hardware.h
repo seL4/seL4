@@ -18,7 +18,7 @@
 #define physBase          0x80000000
 #define kernelBase        0xe0000000
 
-static const BOOT_RODATA kernel_devices[] = {
+static const BOOT_RODATA kernel_frame_t kernel_devices[] = {
     {
         /*  timer used as PIT */
         TIMER_PADDR,
@@ -44,7 +44,7 @@ static const BOOT_RODATA kernel_devices[] = {
         true  /* armExecuteNever */
 #endif /* CONFIG_PRINTING */
     }
-}
+};
 
 /* Available physical memory regions on platform (RAM) */
 /* NOTE: Regions are not allowed to be adjacent! */
