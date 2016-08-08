@@ -37,8 +37,8 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         UART3_PADDR,
         UART3_PPTR,
         true  /* armExecuteNever */
-    }
 #endif
+    }
 };
 
 /* Available physical memory regions on platform (RAM minus kernel image). */
