@@ -91,10 +91,12 @@ isIRQPending(void)
 static inline void
 maskInterrupt(bool_t disable, interrupt_t irq)
 {
-    if (disable) {
-        intc->intcps_n[irq / 32].intcps_mir_set = 1 << (irq & 31);
-    } else {
-        intc->intcps_n[irq / 32].intcps_mir_clear = 1 << (irq & 31);
+    if (likely(irq < maxIRQ)) {
+        if (disable) {
+            intc->intcps_n[irq / 32].intcps_mir_set = 1 << (irq & 31);
+        } else {
+            intc->intcps_n[irq / 32].intcps_mir_clear = 1 << (irq & 31);
+        }
     }
 }
 
