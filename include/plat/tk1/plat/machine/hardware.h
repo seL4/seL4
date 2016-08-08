@@ -55,8 +55,8 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         UARTA_PADDR,
         UARTA_PPTR,
         true
-    }
 #endif /* CONFIG_PRINTING */
+    }
 };
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
