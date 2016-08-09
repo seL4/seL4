@@ -74,10 +74,10 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { PCIE_1_CFG_PADDR,     PCIE_1_CFG_PADDR + BIT(seL4_PageBits) },
     { PCIE_PCA0_1_PADDR,    PCIE_PCA0_1_PADDR + BIT(seL4_PageBits) },
     { PCIE_PADS_AFI_PADDR,  PCIE_PADS_AFI_PADDR + BIT(seL4_PageBits) },
-    { PCIE_A2_PADDR,        PCIE_A2_PADDR + BIT(ARMSectionBits) },
-    { R8169_NIC_PADDR,      R8169_NIC_PADDR + BIT(ARMSectionBits)},
-    { GRAPH_HOST_PADDR,     GRAPH_HOST_PADDR + (BIT(ARMSectionBits) * 16) }, /* 16 MB                        */
-    { GPU_PADDR,            GPU_PADDR + (BIT(ARMSectionBits) * 144) },       /* 144 MB                       */
+    { PCIE_A2_PADDR,        PCIE_A2_PADDR + BIT(20) },
+    { R8169_NIC_PADDR,      R8169_NIC_PADDR + BIT(20)},
+    { GRAPH_HOST_PADDR,     GRAPH_HOST_PADDR + (BIT(20) * 16) },               /* 16 MB                        */
+    { GPU_PADDR,            GPU_PADDR + (BIT(20) * 144) },                     /* 144 MB                       */
     { UP_TAG_PADDR,         UP_TAG_PADDR + BIT(seL4_PageBits) },               /* 4 KB                         */
     { RSEM_PADDR,           RSEM_PADDR + BIT(seL4_PageBits) },                 /* 4 KB                         */
     { ASEM_PADDR,           ASEM_PADDR + BIT(seL4_PageBits) },                 /* 4 KB                         */
@@ -134,7 +134,7 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { MIPI_CAL_PADDR,       MIPI_CAL_PADDR + BIT(seL4_PageBits) },             /* 4 KB 265 Bytes               */
     { DVFS_PADDR,           DVFS_PADDR + BIT(seL4_PageBits) },                 /* 4 KB 1 KB                    */
     { CLUSTER_CLK_PADDR,    CLUSTER_CLK_PADDR + (BIT(seL4_PageBits) * 64) },   /* 256 KB                       */
-    { CSITE_PADDR,          CSITE_PADDR + (BIT(ARMSectionBits) * 2) },       /* 2 MB                         */
+    { CSITE_PADDR,          CSITE_PADDR + (BIT(20) * 2) },                     /* 2 MB                         */
     { PPCS_PADDR,           PPCS_PADDR + (BIT(seL4_PageBits) * 16) },          /* 64 KB                        */
     { TZRAM_PADDR,          TZRAM_PADDR + (BIT(seL4_PageBits) * 16) },         /* 64 KB                        */
     { USB_PADDR,            USB_PADDR + (BIT(seL4_PageBits) * 2) },            /* 8 KB region, 6 KB            */
