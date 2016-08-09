@@ -135,6 +135,8 @@ resetTimer(void)
     }
 }
 
+compile_assert(mct_reload_32_bit, TIMER_RELOAD <= 0xffffffff);
+
 /**
    DONT_TRANSLATE
  */
@@ -145,7 +147,6 @@ initTimer(void)
     mct->global.wstat = mct->global.wstat;
     mct->global.cnt_wstat = mct->global.cnt_wstat;
 
-    compile_assert(mct_reload_32_bit, TIMER_RELOAD <= 0xffffffff);
     if (config_set(CONFIG_ARM_CORTEX_A15)) {
         /* use the arm generic timer, backed by the mct */
         /* enable the timer */
