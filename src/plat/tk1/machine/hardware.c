@@ -7,12 +7,12 @@
  *
  * @TAG(GD_GPL)
  */
-
 #include <config.h>
 #include <types.h>
 #include <machine/io.h>
 #include <kernel/vspace.h>
 #include <arch/machine.h>
+#include <arch/machine/timer.h>
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
 #include <arch/linker.h>
@@ -21,86 +21,23 @@
 #include <plat/machine/smmu.h>
 #include <arch/benchmark_overflowHandler.h>
 
-/* co-processor code to read and write GPT */
-static void
-write_cntp_ctl(uint32_t v)
-{
-    asm volatile ("mcr p15, 0, %0, c14, c2, 1" ::"r"(v));
-}
-
-static void
-write_cntp_tval(uint32_t v)
-{
-    asm volatile  ("mcr p15, 0, %0, c14, c2, 0" :: "r"(v));
-}
-
-static uint32_t
-read_cntfrq(void)
-{
-    uint32_t val;
-    asm volatile ("mrc  p15, 0, %0, c14, c0, 0" : "=r"(val));
-    return val;
-}
-
-
-static void
-write_cnthp_ctl(uint32_t v)
-{
-    asm volatile ("mcr p15, 4, %0, c14, c2, 1" ::"r"(v));
-}
-
-static void
-write_cnthp_tval(uint32_t v)
-{
-    asm volatile  ("mcr p15, 4, %0, c14, c2, 0" :: "r"(v));
-}
-
-#define GPT_DEFAULT_HZ		12000000
-static uint32_t gpt_cnt_tval = 0;
-
 /**
    DONT_TRANSLATE
  */
 void
 resetTimer(void)
 {
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        write_cnthp_tval(gpt_cnt_tval);
-    } else {
-        write_cntp_tval(gpt_cnt_tval);
-    }
+    resetGenericTimer();
 }
 
 /**
    DONT_TRANSLATE
  */
-
-/* we use the physical count-down timer of the GPT as the kernel preemption timer */
 BOOT_CODE void
 initTimer(void)
 {
-    uint32_t freq = read_cntfrq();
-    uint64_t tval = 0;
-    if (freq != GPT_DEFAULT_HZ) {
-        printf("Default timer has a different frequency %x\n", freq);
-    }
-    tval = (uint64_t)CONFIG_TIMER_TICK_MS * (freq / 1000);
-    if (tval > 0xffffffff) {
-        printf("timer interval value out of range \n");
-        halt();
-    }
-
-    gpt_cnt_tval = (uint32_t)tval;
-
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        write_cnthp_tval(gpt_cnt_tval);
-        write_cnthp_ctl(0x1);
-    } else {
-        /* write the value */
-        write_cntp_tval(gpt_cnt_tval);
-        /* enable the timer */
-        write_cntp_ctl(0x1);
-    }
+    /* we use the physical count-down timer of the GPT as the kernel preemption timer */
+    initGenericTimer();
 }
 
 void plat_cleanL2Range(paddr_t start, paddr_t end) {}

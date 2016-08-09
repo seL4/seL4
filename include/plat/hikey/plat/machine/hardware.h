@@ -11,9 +11,12 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
+#include <config.h>
 #include <basic_types.h>
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
+
+#define TIMER_CLOCK_HZ		1200000llu
 
 #define physBase          0x20000000
 #define kernelBase        0xe0000000

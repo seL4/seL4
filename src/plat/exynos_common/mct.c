@@ -11,6 +11,7 @@
 #include <config.h>
 #include "stdint.h"
 #include <arch/machine.h>
+#include <arch/machine/timer.h>
 #include <plat/machine.h>
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
@@ -21,13 +22,6 @@
  * Samsung has a habit of ripping out ARM IP and
  * replacing it with their own.
  */
-
-#define TIMER_INTERVAL_US  (CONFIG_TIMER_TICK_MS * 1000)
-#define TIMER_MHZ          24ULL
-#define TIMER_TICKS        (TIMER_MHZ * TIMER_INTERVAL_US)
-#if TIMER_TICKS > 0xffffffff
-#error MCT timer compare value out of range
-#endif
 
 #define GCNTWSTAT_CNTH       (1U << 1)
 #define GCNTWSTAT_CNTL       (1U << 0)
@@ -126,32 +120,7 @@ struct mct_map {
     struct mct_local_map local[4];
 };
 
-#ifdef EXYNOS_MCT_PPTR
-volatile struct mct_map* mct = (volatile struct mct_map*)EXYNOS_MCT_PPTR;
-#else
-#error Exynos MCT virtual address not defined
-#endif
-
-#ifdef ARM_CORTEX_A15
-
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-/* Use Hypervisor Physical timer */
-#define CNT_TVAL CNTHP_TVAL
-#define CNT_CTL  CNTHP_CTL
-#define CNT_CVAL CNTHP_CVAL
-#elif 1
-/* Use virtual timer */
-#define CNT_TVAL CNTV_TVAL
-#define CNT_CTL  CNTV_CTL
-#define CNT_CVAL CNTV_CVAL
-#else
-/* Use Physical timer */
-#define CNT_TVAL CNTP_TVAL
-#define CNT_CTL  CNTP_CTL
-#define CNT_CVAL CNTP_CVAL
-#endif
-
-/* Use generic timer. This is ties to the MCT */
+static volatile struct mct_map* mct = (volatile struct mct_map*) EXYNOS_MCT_PPTR;
 
 /**
    DONT_TRANSLATE
@@ -159,8 +128,11 @@ volatile struct mct_map* mct = (volatile struct mct_map*)EXYNOS_MCT_PPTR;
 void
 resetTimer(void)
 {
-    MCR(CNT_TVAL, TIMER_TICKS);
-    MCR(CNT_CTL, (1 << 0));
+    if (config_set(CONFIG_ARM_CORTEX_A15)) {
+        resetGenericTimer();
+    } else {
+        mct->global.int_stat = GINT_COMP0_IRQ;
+    }
 }
 
 /**
@@ -173,61 +145,34 @@ initTimer(void)
     mct->global.wstat = mct->global.wstat;
     mct->global.cnt_wstat = mct->global.cnt_wstat;
 
-    /* enable the timer */
-    mct->global.tcon = GTCON_EN;
-    while (mct->global.wstat != GWSTAT_TCON);
-    mct->global.wstat = GWSTAT_TCON;
+    compile_assert(mct_reload_32_bit, TIMER_RELOAD <= 0xffffffff);
+    if (config_set(CONFIG_ARM_CORTEX_A15)) {
+        /* use the arm generic timer, backed by the mct */
+        /* enable the timer */
+        mct->global.tcon = GTCON_EN;
+        while (mct->global.wstat != GWSTAT_TCON);
+        mct->global.wstat = GWSTAT_TCON;
 
-    /* Setup compare register to trigger in about 10000 years from now */
-    MCRR(CNT_CVAL, 0xffffffffffffffff);
+        initGenericTimer();
+    } else {
+        /* Use the MCT directly */
+        /* Configure the comparator */
+        mct->global.comp0_add_inc = TIMER_RELOAD;
 
-    /* Reset the count down timer */
-    resetTimer();
+        uint64_t  comparator_value = ((((uint64_t) mct->global.cnth) << 32llu)
+                                      | mct->global.cntl) + TIMER_RELOAD;
+        mct->global.comp0h = (uint32_t) (comparator_value >> 32u);
+        mct->global.comp0l = (uint32_t) comparator_value;
+        /* Enable interrupts */
+        mct->global.int_en = GINT_COMP0_IRQ;
+
+        /* Wait for update */
+        while (mct->global.wstat != (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC));
+        mct->global.wstat = (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC);
+
+        /* enable interrupts */
+        mct->global.tcon = GTCON_EN | GTCON_COMP0_EN | GTCON_COMP0_AUTOINC;
+        while (mct->global.wstat != GWSTAT_TCON);
+        mct->global.wstat = GWSTAT_TCON;
+    }
 }
-
-#else /* ARM_CORTEX_A15 */
-/* Use the MCT directly */
-
-/**
-   DONT_TRANSLATE
- */
-void
-resetTimer(void)
-{
-    mct->global.int_stat = GINT_COMP0_IRQ;
-}
-
-/**
-   DONT_TRANSLATE
- */
-BOOT_CODE void
-initTimer(void)
-{
-    uint64_t comparator_value;
-
-    /* Clear write status */
-    mct->global.wstat = mct->global.wstat;
-    mct->global.cnt_wstat = mct->global.cnt_wstat;
-
-    /* Configure the comparator */
-    mct->global.comp0_add_inc = TIMER_TICKS;
-
-    comparator_value = ((((uint64_t) mct->global.cnth) << 32) | mct->global.cntl) + TIMER_TICKS;
-    mct->global.comp0h = (uint32_t)(comparator_value >> 32);
-    mct->global.comp0l = (uint32_t)comparator_value;
-    /* Enable interrupts */
-    mct->global.int_en = GINT_COMP0_IRQ;
-
-    /* Wait for update */
-    while (mct->global.wstat != (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC));
-    mct->global.wstat = (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC);
-
-    /* enable interrupts */
-    mct->global.tcon = GTCON_EN | GTCON_COMP0_EN | GTCON_COMP0_AUTOINC;
-    while (mct->global.wstat != GWSTAT_TCON);
-    mct->global.wstat = GWSTAT_TCON;
-}
-
-
-#endif /* ARM_CORTEX_A15 */
-

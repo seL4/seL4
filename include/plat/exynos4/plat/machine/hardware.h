@@ -15,6 +15,8 @@
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
 
+#define TIMER_CLOCK_HZ     24000000llu
+
 #define physBase          0x40000000
 #define kernelBase        0xe0000000
 
