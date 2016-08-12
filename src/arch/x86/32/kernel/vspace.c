@@ -236,12 +236,10 @@ map_kernel_window(
     phys = PADDR_BASE;
     idx = PPTR_BASE >> LARGE_PAGE_BITS;
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-    /* steal the last large for logging */
-    while (idx < BIT(PD_BITS + PDPT_BITS) - 2) {
-#else
-    while (idx < BIT(PD_BITS + PDPT_BITS) - 1) {
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+    /* PPTR_TOP differs whether CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+     * is enabled or not.
+     */
+    while (idx < (PPTR_TOP >> LARGE_PAGE_BITS)) {
         pde = pde_pde_large_new(
                   phys,   /* page_base_address    */
                   0,      /* pat                  */
@@ -269,7 +267,7 @@ map_kernel_window(
         * to wait until we can call alloc_region. */
     ksLog = (void *) paddr_to_pptr(phys);
     phys += BIT(LARGE_PAGE_BITS);
-    assert(idx == IA32_KSLOG_IDX);
+    assert(idx == (KS_LOG_PPTR >> LARGE_PAGE_BITS));
     idx++;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 

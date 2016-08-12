@@ -53,23 +53,10 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
 #if defined(CONFIG_PLAT_SABRE)
     /* Sabre has 1 GiB */
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-    /* 1MB stolen for logging */
-    { /* .start = */ 0x10000000, /* .end = */ 0x2fd00000 }
-#else
     { /* .start = */ 0x10000000, /* .end = */ 0x50000000 }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #elif defined(CONFIG_PLAT_WANDQ)
     /* Wandboard Quad: 2 GiB */
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-#warning "NOTE: logging is currently untested on WandBoard"
-    /* 1MB stolen for logging */
-    { /* .start = */ 0x10000000, /* .end = */ 0x6fd00000 }
-#else
     { /* .start = */ 0x10000000, /* .end = */ 0x90000000 }
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-#else
-#error "unknown imx6 platform selected!"
 #endif
 };
 

@@ -235,13 +235,8 @@ map_kernel_window(void)
         phys += BIT(pageBitsForSize(ARMSuperSection));
         idx += SECTIONS_PER_SUPER_SECTION;
     }
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-    /* steal the last MB for logging */
-    while (idx < BIT(PD_BITS) - 2) {
-#else
-    /* mapping of the next 15M using 1M frames */
-    while (idx < BIT(PD_BITS) - 1) {
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+
+    while (idx < (PPTR_TOP >> pageBitsForSize(ARMSection))) {
         pde = pde_pde_section_new(
                   phys,
                   0, /* Section */
