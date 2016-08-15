@@ -8,8 +8,7 @@
  * @TAG(NICTA_BSD)
  */
 
-#ifndef __LIBSEL4_CAP_RIGHTS_H
-#define __LIBSEL4_CAP_RIGHTS_H
+#pragma once
 
 /* Wrapper around the cap rights interface exposing the rt cap rights interface.
  * This is a stop gap until cap rights becomes a shared type, and should be
@@ -106,5 +105,3 @@ seL4_CapRights_set_capAllowWrite(seL4_CapRights_t cap_rights, seL4_Uint32 value)
         return cap_rights & ~seL4_CanWrite;
     }
 }
-
-#endif
