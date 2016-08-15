@@ -48,6 +48,8 @@ typedef enum {
     seL4_CanRead = 0x02,
     seL4_CanGrant = 0x04,
     seL4_AllRights = 0x07, /* seL4_CanWrite | seL4_CanRead | seL4_CanGrant */
+    seL4_NoWrite = 0x06, /* seL4_CanRead | seL4_CanGrant */
+    seL4_ReadWrite = 0x03, /* seL4_CanWrite | seL4_CanRead */
     SEL4_FORCE_LONG_ENUM(seL4_CapRights),
 } seL4_CapRights;
 

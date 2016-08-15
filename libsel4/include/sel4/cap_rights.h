@@ -10,16 +10,11 @@
 
 #pragma once
 
-/* Wrapper around the cap rights interface exposing the rt cap rights interface.
- * This is a stop gap until cap rights becomes a shared type, and should be
- * removed at that point.
+/* Future interface to cap rights that wraps existing interface.
+ * This wrapper can be removed when the future interface is adopted.
  */
 
 #include <sel4/types.h>
-
-/* Additional sets of cap rights not defined by libsel4 */
-#define seL4_NoWrite   seL4_CapRights_new(true, true, false)
-#define seL4_ReadWrite seL4_CapRights_new(false, true, true)
 
 typedef seL4_CapRights seL4_CapRights_t;
 
