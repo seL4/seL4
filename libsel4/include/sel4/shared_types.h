@@ -40,5 +40,6 @@ enum {
 #define seL4_CanWrite  seL4_CapRights_new(false, false, true)
 #define seL4_CanGrant  seL4_CapRights_new(true, false, false)
 #define seL4_NoWrite   seL4_CapRights_new(true, true, false)
+#define seL4_ReadWrite seL4_CapRights_new(false, true, true)
 
 #endif
