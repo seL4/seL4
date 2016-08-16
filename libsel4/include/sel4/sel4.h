@@ -23,4 +23,6 @@
 
 #include <sel4/deprecated.h>
 
+#include <sel4/cap_rights.h>
+
 #endif // __LIBSEL4_SEL4_H
