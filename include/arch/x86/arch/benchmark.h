@@ -16,8 +16,6 @@
 
 typedef uint64_t timestamp_t;
 
-#define IA32_KSLOG_IDX (BIT(PD_BITS + PDPT_BITS) - 2)
-
 static inline uint64_t
 timestamp(void)
 {

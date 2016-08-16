@@ -60,6 +60,27 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
                 unmapIOPage(cap);
                 break;
             }
+
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+            /* If the last cap to the user-level log buffer frame is being revoked,
+             * reset the ksLog so that the kernel doesn't log anymore
+             */
+            if (unlikely(cap_frame_cap_get_capFSize(cap) == X86_LargePage)) {
+                if (pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) == ksUserLogBuffer) {
+                    ksUserLogBuffer = 0;
+
+                    /* Invalidate log page table entries */
+                    clearMemory(ia32KSGlobalLogPT, BIT(seL4_PageTableBits));
+
+                    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+                        invalidateTLBentry(KS_LOG_PPTR + (idx << seL4_PageBits));
+                    }
+
+                    userError("Log buffer frame is invalidated, kernel can't benchmark anymore\n");
+                }
+            }
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+
             unmapPage(
                 cap_frame_cap_get_capFSize(cap),
                 cap_frame_cap_get_capFMappedASID(cap),

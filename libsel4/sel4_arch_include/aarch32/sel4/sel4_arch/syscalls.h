@@ -591,14 +591,17 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg)
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 /* set the log index back to 0 */
-static inline void
+static inline seL4_Error
 seL4_BenchmarkResetLog(void)
 {
+    register seL4_Word retval asm("r0") = 0; /* required for retval */
     register seL4_Word scno asm("r7") = seL4_SysBenchmarkResetLog;
     asm volatile ("swi %[swi_num]"
-                  : /* no outputs */
+                  : "+r" (retval)
                   : [swi_num] "i" __SEL4_SWINUM(seL4_SysBenchmarkResetLog), "r"(scno)
                  );
+
+    return (seL4_Error) retval;
 }
 
 /* read size words from the log starting from start into the ipc buffer.
@@ -646,6 +649,18 @@ seL4_BenchmarkFinalizeLog(void)
                  );
 }
 
+static inline seL4_Error
+seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
+{
+    register seL4_Word arg1 asm("r0") = frame_cptr;
+    register seL4_Word scno asm("r7") = seL4_SysBenchmarkSetLogBuffer;
+    asm volatile ("swi %[swi_num]"
+                  : "+r" (arg1)
+                  : [swi_num] "i" __SEL4_SWINUM(seL4_SysBenchmarkSetLogBuffer),  "r"(scno)
+                 );
+
+    return (seL4_Error) arg1;
+}
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void
 seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)

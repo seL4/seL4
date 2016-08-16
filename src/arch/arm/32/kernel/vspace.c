@@ -235,13 +235,8 @@ map_kernel_window(void)
         phys += BIT(pageBitsForSize(ARMSuperSection));
         idx += SECTIONS_PER_SUPER_SECTION;
     }
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-    /* steal the last MB for logging */
-    while (idx < BIT(PD_BITS) - 2) {
-#else
-    /* mapping of the next 15M using 1M frames */
-    while (idx < BIT(PD_BITS) - 1) {
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+
+    while (idx < (PPTR_TOP >> pageBitsForSize(ARMSection))) {
         pde = pde_pde_section_new(
                   phys,
                   0, /* Section */
@@ -261,38 +256,23 @@ map_kernel_window(void)
         idx++;
     }
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-    /* allocate a 1M buffer for logging */
-    pde = pde_pde_section_new(
-              phys,
-              0, /* Section */
-              0, /* global */
-              0, /* Not Shared */
-              0, /* APX = 0, privileged full access */
-              0, /* TEX = 0 */
-              1, /* VMKernelOnly */
-              1, /* Parity Enabled */
-              0, /* Domain 0 */
-              0, /* XN not set */
-              1, /* Cacheable */
-              0  /* Write-through to minimise perf hit */
-          );
-    armKSGlobalPD[idx] = pde;
-    ksLog = (void *) ptrFromPAddr(phys);
+    /* crosscheck whether we have mapped correctly so far */
+    assert(phys == PADDR_TOP);
 
-    /* we remove the address PADDR_TOP - 1MB from the
-     * available physical memory for the sabre.
-     *
-     * if you are using a different platform this may need
-     * adjusting or you may need to do something completely different
-     * to get a 1mb, write through buffer*/
-    assert(ksLog == ((void *) KS_LOG_PADDR));
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+    /* map log buffer page table. PTEs to be filled by user later by calling seL4_BenchmarkSetLogBuffer() */
+    armKSGlobalPD[idx] =
+        pde_pde_coarse_new(
+            addrFromPPtr(armKSGlobalLogPT), /* address */
+            true,                           /* P       */
+            0                               /* Domain  */
+        );
+
+    memzero(armKSGlobalLogPT, BIT(seL4_PageTableBits));
+
     phys += BIT(pageBitsForSize(ARMSection));
     idx++;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-
-    /* crosscheck whether we have mapped correctly so far */
-    assert(phys == PADDR_TOP);
 
     /* map page table covering last 1M of virtual address space to page directory */
     armKSGlobalPD[idx] =
@@ -2945,6 +2925,71 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         fail("Invalid ARM arch cap type");
     }
 }
+
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
+{
+    lookupCapAndSlot_ret_t lu_ret;
+    vm_page_size_t frameSize;
+    pptr_t  frame_pptr;
+
+    /* faulting section */
+    lu_ret = lookupCapAndSlot(ksCurThread, frame_cptr);
+
+    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+        userError("Invalid cap #%lu.", frame_cptr);
+        current_fault = fault_cap_fault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (cap_get_capType(lu_ret.cap) != cap_frame_cap) {
+        userError("Invalid cap. Log buffer should be of a frame cap");
+        current_fault = fault_cap_fault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    frameSize = generic_frame_cap_get_capFSize(lu_ret.cap);
+
+    if (frameSize != ARMSection) {
+        userError("Invalid frame size. The kernel expects 1M log buffer");
+        current_fault = fault_cap_fault_new(frame_cptr, false);
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    frame_pptr = generic_frame_cap_get_capFBasePtr(lu_ret.cap);
+
+    ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
+
+    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+        paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
+
+        armKSGlobalLogPT[idx] =
+            pte_pte_small_new(
+                physical_address,
+                0, /* global */
+                0, /* Not shared */
+                0, /* APX = 0, privileged full access */
+                0, /* TEX = 0 */
+                1, /* VMKernelOnly */
+                1, /* Cacheable */
+                0, /* Write-through to minimise perf hit */
+                0  /* executable */
+            );
+
+
+        cleanCacheRange_PoU((pptr_t) &armKSGlobalLogPT[idx],
+                            (pptr_t) &armKSGlobalLogPT[idx + 1],
+                            addrFromPPtr((void *)&armKSGlobalLogPT[idx]));
+
+        invalidateTLB_VAASID(pptr_to_paddr((void *) physical_address));
+    }
+
+    return EXCEPTION_NONE;
+}
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
 #ifdef DEBUG
 void kernelPrefetchAbort(word_t pc) VISIBLE;

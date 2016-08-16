@@ -40,7 +40,6 @@
 #define MAX_IPC_BUFFER_STORAGE (MAX_IPC_BUFFER_STORAGE_SIZE / sizeof(benchmark_track_kernel_entry_t))
 
 extern timestamp_t ksEnter;
-extern benchmark_track_kernel_entry_t *ksLog;
 extern word_t ksLogIndex;
 extern uint32_t ksLogIndexFinalized;
 extern kernel_entry_t ksKernelEntry;

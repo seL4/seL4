@@ -11,6 +11,7 @@
 #ifndef __ARCH_MODEL_STATEDATA_32_H
 #define __ARCH_MODEL_STATEDATA_32_H
 
+#include <config.h>
 #include <object/structures.h>
 #include <arch/types.h>
 
@@ -18,5 +19,9 @@ extern pdpte_t ia32KSGlobalPDPT[BIT(PDPT_BITS)];
 extern pde_t ia32KSGlobalPD[BIT(PD_BITS + PDPT_BITS)];
 extern pte_t ia32KSGlobalPT[BIT(PT_BITS)];
 extern paddr_t ia32KSCurrentPD;
+
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+extern pte_t ia32KSGlobalLogPT[BIT(PT_BITS)];
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
 #endif

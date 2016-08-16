@@ -139,6 +139,13 @@ handleUnknownSyscall(word_t w)
 #ifdef CONFIG_ENABLE_BENCHMARKS
     if (w == SysBenchmarkResetLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+        if (ksUserLogBuffer == 0) {
+            userError("A user-level buffer has to be set before resetting benchmark.\
+                    Use seL4_BenchmarkSetLogBuffer\n");
+            setRegister(ksCurThread, capRegister, seL4_IllegalOperation);
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
         ksLogIndex = 0;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
@@ -147,6 +154,7 @@ handleUnknownSyscall(word_t w)
         benchmark_start_time = ksEnter;
         benchmark_arch_utilisation_reset();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+        setRegister(ksCurThread, capRegister, seL4_NoError);
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkDumpLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
@@ -185,6 +193,7 @@ handleUnknownSyscall(word_t w)
         /* write to ipc buffer */
         {
             word_t i;
+            ks_log_entry_t *ksLog = (ks_log_entry_t *) KS_LOG_PPTR;
 
             for (i = 0; i < size; i++) {
                 int base_index = i * 2 + 1;
@@ -211,6 +220,18 @@ handleUnknownSyscall(word_t w)
         benchmark_utilisation_finalise();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         return EXCEPTION_NONE;
+    } else if (w == SysBenchmarkSetLogBuffer) {
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+        word_t cptr_userFrame = getRegister(ksCurThread, capRegister);
+
+        if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
+            setRegister(ksCurThread, capRegister, seL4_IllegalOperation);
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        setRegister(ksCurThread, capRegister, seL4_NoError);
+        return EXCEPTION_NONE;
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
     }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION

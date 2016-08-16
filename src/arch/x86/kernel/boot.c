@@ -161,11 +161,6 @@ init_sys_state(
     cap_t         ipcbuf_cap;
     pptr_t        bi_frame_pptr;
     create_frames_of_region_ret_t create_frames_ret;
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-    vm_attributes_t buffer_attr = {{ 0 }};
-    word_t paddr;
-    pde_t pde;
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
@@ -185,31 +180,6 @@ init_sys_state(
     it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
 
     init_freemem(ui_info.p_reg, mem_p_regs);
-
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-    /* allocate and create the log buffer */
-    buffer_attr.words[0] = IA32_PAT_MT_WRITE_THROUGH;
-
-    paddr = pptr_to_paddr((void *) alloc_region(pageBitsForSize(X86_LargePage)));
-
-    /* allocate a large frame for logging */
-    pde = x86_make_pde_mapping(paddr, buffer_attr);
-    ia32KSGlobalPD[IA32_KSLOG_IDX] = pde;
-
-
-    /* flush the tlb */
-    invalidateTranslationAll();
-
-    /* if we crash here, the log isn't working */
-#ifdef CONFIG_DEBUG_BUILD
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
-    printf("Testing log\n");
-    ksLog[0].data = 0xdeadbeef;
-    printf("Wrote to ksLog %x\n", ksLog[0].data);
-    assert(ksLog[0].data == 0xdeadbeef);
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS */
-#endif /* CONFIG_DEBUG_BUILD */
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();

@@ -15,6 +15,7 @@
 #define wordBits (1 << wordRadix)
 
 #ifndef __ASSEMBLER__
+#include <config.h>
 #include <stdint.h>
 #include <arch/types.h>
 #include <arch/object/structures.h>
@@ -33,7 +34,12 @@
  * 0xfffff000 kernel stack (arch/machine/hardware.h)
  */
 #define BASE_OFFSET (kernelBase - physBase)
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#define PPTR_TOP 0xffe00000
+#define KS_LOG_PPTR PPTR_TOP
+#else
 #define PPTR_TOP 0xfff00000
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
 
 #define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
