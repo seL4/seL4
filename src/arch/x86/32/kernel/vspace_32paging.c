@@ -70,10 +70,10 @@ init_boot_pd(void)
     word_t i;
 
     /* identity mapping from 0 up to PPTR_BASE (virtual address) */
-    for (i = 0; i < (PPTR_BASE >> X86_4M_bits); i++) {
+    for (i = 0; i < (PPTR_BASE >> seL4_LargePageBits); i++) {
         pde_pde_large_ptr_new_phys(
             _boot_pd + i,
-            i << X86_4M_bits, /* physical address */
+            i << seL4_LargePageBits, /* physical address */
             0, /* pat            */
             0, /* avl            */
             1, /* global         */
@@ -88,10 +88,10 @@ init_boot_pd(void)
     }
 
     /* mapping of PPTR_BASE (virtual address) to PADDR_BASE up to end of virtual address space */
-    for (i = 0; i < ((-PPTR_BASE) >> X86_4M_bits); i++) {
+    for (i = 0; i < ((-PPTR_BASE) >> seL4_LargePageBits); i++) {
         pde_pde_large_ptr_new_phys(
-            _boot_pd + i + (PPTR_BASE >> X86_4M_bits),
-            (i << X86_4M_bits) + PADDR_BASE, /* physical address */
+            _boot_pd + i + (PPTR_BASE >> seL4_LargePageBits),
+            (i << seL4_LargePageBits) + PADDR_BASE, /* physical address */
             0, /* pat            */
             0, /* avl            */
             1, /* global         */
@@ -115,7 +115,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
     pde_pde_small_ptr_new(
-        pd + (vptr >> X86_4M_bits),
+        pd + (vptr >> seL4_LargePageBits),
         pptr_to_paddr(pt), /* pt_base_address */
         0,                 /* avl             */
         0,                 /* accessed        */
@@ -144,10 +144,10 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
     vptr_t vptr  = cap_frame_cap_get_capFMappedAddress(frame_cap);
 
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
-    pd += (vptr >> X86_4M_bits);
+    pd += (vptr >> seL4_LargePageBits);
     pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
     pte_ptr_new(
-        pt + ((vptr & MASK(X86_4M_bits)) >> X86_4K_bits),
+        pt + ((vptr & MASK(seL4_LargePageBits)) >> seL4_PageBits),
         pptr_to_paddr(frame), /* page_base_address */
         0,                    /* avl               */
         0,                    /* global            */
@@ -201,7 +201,7 @@ void copyGlobalMappings(vspace_root_t* new_vspace)
     word_t i;
     pde_t *newPD = (pde_t*)new_vspace;
 
-    for (i = PPTR_BASE >> X86_4M_bits; i < BIT(PD_BITS); i++) {
+    for (i = PPTR_BASE >> seL4_LargePageBits; i < BIT(PD_BITS); i++) {
         newPD[i] = ia32KSGlobalPD[i];
     }
 }

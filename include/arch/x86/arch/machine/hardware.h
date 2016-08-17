@@ -15,11 +15,11 @@
 #include <config.h>
 #include <arch/types.h>
 #include <arch/linker.h>
+#include <mode/api/constants.h>
 
-enum vm_fault_type {
-    X86DataFault = 0,
-    X86InstructionFault = 1
-};
+#define PAGE_BITS seL4_PageBits
+#define LARGE_PAGE_BITS seL4_LargePageBits
+
 typedef word_t vm_fault_type_t;
 
 enum vm_page_size {
@@ -28,22 +28,6 @@ enum vm_page_size {
 };
 typedef word_t vm_page_size_t;
 
-enum frameSizeConstants {
-    X86_4K_bits = 12,
-    X86_2M_bits = 21,
-    X86_4M_bits = 22,
-    X64_1G_bits = 30
-};
-
-#define PAGE_BITS X86_4K_bits
-
-#ifdef CONFIG_PAE_PAGING
-#define LARGE_PAGE_BITS X86_2M_bits
-#define X86_1G_bits     X64_1G_bits
-#else
-#define LARGE_PAGE_BITS X86_4M_bits
-#endif
-
 /* Any changes to this function need to be replicated in pageBitsForSize_phys.
  */
 static inline word_t CONST
@@ -51,10 +35,10 @@ pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case X86_SmallPage:
-        return PAGE_BITS;
+        return seL4_PageBits;
 
     case X86_LargePage:
-        return LARGE_PAGE_BITS;
+        return seL4_LargePageBits;
 
     default:
         fail("Invalid page size");
@@ -71,10 +55,10 @@ pageBitsForSize_phys(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case X86_SmallPage:
-        return PAGE_BITS;
+        return seL4_PageBits;
 
     case X86_LargePage:
-        return LARGE_PAGE_BITS;
+        return seL4_LargePageBits;
 
     default:
         fail("Invalid page size");

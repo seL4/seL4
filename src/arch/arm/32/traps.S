@@ -36,9 +36,7 @@ END_FUNC(arm_vector_table)
 #include <arch/machine/hardware.h>
 
 #include <arch/machine/registerset.h>
-
-#define VM_EVENT_DATA_ABORT 0
-#define VM_EVENT_PREFETCH_ABORT 1
+#include <mode/api/constants.h>
 
 /* Helper to return to userland. */
 .macro RET_TO_USER, cur_thread_reg
@@ -130,7 +128,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
     ldr r7, =ksCurThread
-    mov r0, #VM_EVENT_PREFETCH_ABORT
+    mov r0, #seL4_InstructionFault
     blx handleVMFaultEvent
 
     RET_TO_USER r7
@@ -177,7 +175,7 @@ BEGIN_FUNC(arm_data_abort_exception)
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
     ldr r7, =ksCurThread
-    mov r0, #VM_EVENT_DATA_ABORT
+    mov r0, #seL4_DataFault
     blx handleVMFaultEvent
 
     RET_TO_USER r7

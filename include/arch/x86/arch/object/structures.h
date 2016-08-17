@@ -19,13 +19,14 @@
 #include <arch/object/structures_gen.h>
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
+#include <arch/api/constants.h>
 
 typedef struct arch_tcb {
     user_context_t tcbContext;
 } arch_tcb_t;
 
 struct user_data {
-    word_t words[BIT(PAGE_BITS) / sizeof(word_t)];
+    word_t words[BIT(seL4_PageBits) / sizeof(word_t)];
 };
 
 typedef struct user_data user_data_t;

@@ -13,6 +13,7 @@
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <machine/assembler.h>
+#include <mode/api/constants.h>
 
 /*** Hypervisor coprocessor registers ***/
 #define   HVBAR(reg)    p15, 4, reg, c12, c0, 0
@@ -82,9 +83,6 @@ END_FUNC(arm_vector_table)
 #include <arch/machine/hardware.h>
 
 #include <arch/machine/registerset.h>
-
-#define VM_EVENT_DATA_ABORT 0
-#define VM_EVENT_PREFETCH_ABORT 1
 
 #define HSREC_SHIFT          26
 #define HSREC_MASK           (0x3f << HSREC_SHIFT)
@@ -206,7 +204,7 @@ BEGIN_FUNC(arm_prefetch_abort)
 
     /* Call out to the user */
     ldr r7, =ksCurThread
-    mov r0, #VM_EVENT_PREFETCH_ABORT
+    mov r0, #seL4_InstructionFault
     blx handleVMFaultEvent
 
     /* Exception return */
@@ -224,7 +222,7 @@ BEGIN_FUNC(arm_data_abort)
 
     /* Call out to the user */
     ldr r7, =ksCurThread
-    mov r0, #VM_EVENT_DATA_ABORT
+    mov r0, #seL4_DataFault
     blx handleVMFaultEvent
 
     /* Exception return */

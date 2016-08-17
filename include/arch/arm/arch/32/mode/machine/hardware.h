@@ -12,8 +12,9 @@
 #define __ARCH_MACHINE_HARDWARE_32_H
 
 #include <config.h>
+#include <mode/api/constants.h>
 
-#define PAGE_BITS 12
+#define PAGE_BITS seL4_PageBits
 
 #define PPTR_VECTOR_TABLE 0xffff0000
 
@@ -97,17 +98,13 @@
 #define PMODE_IDLE       PMODE_SYSTEM
 #endif
 
-/* VM event types, this should match the encoding of vm_fault_type below */
-#define VM_EVENT_DATA_ABORT 0
-#define VM_EVENT_PREFETCH_ABORT 1
-
 #ifndef __ASSEMBLER__
 
 #include <arch/types.h>
 
 enum vm_fault_type {
-    ARMDataAbort = 0,
-    ARMPrefetchAbort = 1
+    ARMDataAbort = seL4_DataFault,
+    ARMPrefetchAbort = seL4_InstructionFault
 };
 typedef word_t vm_fault_type_t;
 
@@ -120,15 +117,10 @@ enum vm_page_size {
 typedef word_t vm_page_size_t;
 
 enum frameSizeConstants {
-    ARMSmallPageBits    = 12,
-    ARMLargePageBits    = 16,
-#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
-    ARMSectionBits      = 20,
-    ARMSuperSectionBits = 24
-#else
-    ARMSectionBits      = 21,
-    ARMSuperSectionBits = 25
-#endif
+    ARMSmallPageBits    = seL4_PageBits,
+    ARMLargePageBits    = seL4_LargePageBits,
+    ARMSectionBits      = seL4_SectionBits,
+    ARMSuperSectionBits = seL4_SuperSectionBits
 };
 
 static inline word_t CONST
