@@ -14,13 +14,11 @@
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
-
 #include <api/syscall.h>
 
-void NORETURN VISIBLE slowpath_irq(irq_t irq);
-void NORETURN VISIBLE restore_user_context(void);
+#include <benchmark_track.h>
+#include <benchmark_utilisation.h>
 
-void VISIBLE c_handle_interrupt(int irq, int syscall);
 void VISIBLE c_handle_interrupt(int irq, int syscall)
 {
     if (irq == int_unimpl_dev) {
@@ -69,11 +67,20 @@ slowpath(syscall_t syscall)
         ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
         handleSyscall(syscall);
     }
+
     restore_user_context();
 }
 
 void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
+    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
+#endif /* DEBUG */
+
+#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
+    ksEnter = timestamp();
+#endif
+
 #ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);

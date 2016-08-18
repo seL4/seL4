@@ -12,7 +12,6 @@
 #define __PLAT_MACHINE_DEVICES_H
 
 #include <config.h>
-#include <plat/machine/hardware.h>
 
 #define PPTR_APIC PPTR_KDEV
 

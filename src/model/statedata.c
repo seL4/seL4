@@ -64,3 +64,7 @@ word_t tlbLockCount = 0;
 #if (defined DEBUG || defined CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 kernel_entry_t ksKernelEntry;
 #endif /* DEBUG */
+
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+paddr_t ksUserLogBuffer;
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */

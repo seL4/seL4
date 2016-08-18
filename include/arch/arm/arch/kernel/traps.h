@@ -17,4 +17,7 @@
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 VISIBLE SECTION(".vectors.text");
 
+void slowpath_irq(irq_t irq)
+VISIBLE NORETURN SECTION(".vectors.text");
+
 #endif /* __KERNEL_ARM_TRAPS_H */

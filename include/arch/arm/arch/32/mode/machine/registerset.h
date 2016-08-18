@@ -34,7 +34,7 @@
                              | CPSR_EXTRA_FLAGS   )
 
 #define CPSR_IDLETHREAD      ( PMASK_FIRQ         \
-                             | PMODE_SYSTEM       \
+                             | PMODE_IDLE         \
                              | CPSR_EXTRA_FLAGS   )
 
 /* Offsets within the user context, these need to match the order in

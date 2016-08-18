@@ -69,4 +69,124 @@ typedef uint32_t vm_rights_t;
 
 #include <mode/object/structures.h>
 
+static inline word_t CONST
+cap_get_archCapSizeBits(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+    case cap_frame_cap:
+        return pageBitsForSize(cap_frame_cap_get_capFSize(cap));
+
+    case cap_page_table_cap:
+        return seL4_PageTableBits;
+
+    case cap_page_directory_cap:
+        return seL4_PageDirBits;
+
+    case cap_pdpt_cap:
+        return seL4_PDPTBits;
+
+    case cap_io_port_cap:
+        return 0;
+    case cap_io_space_cap:
+        return 0;
+
+    case cap_io_page_table_cap:
+        return seL4_IOPageTableBits;
+    case cap_asid_control_cap:
+        return 0;
+
+    case cap_asid_pool_cap:
+        return seL4_ASIDPoolBits;
+
+    default:
+        return cap_get_modeCapSizeBits(cap);
+    }
+}
+
+static inline bool_t CONST
+cap_get_archCapIsPhysical(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+
+    case cap_frame_cap:
+        return true;
+
+    case cap_page_table_cap:
+        return true;
+
+    case cap_page_directory_cap:
+        return true;
+
+    case cap_pdpt_cap:
+        return true;
+
+    case cap_io_port_cap:
+        return false;
+
+    case cap_io_space_cap:
+        return false;
+
+    case cap_io_page_table_cap:
+        return true;
+
+    case cap_asid_control_cap:
+        return false;
+
+    case cap_asid_pool_cap:
+        return true;
+
+    default:
+        return cap_get_modeCapIsPhysical(cap);
+    }
+}
+
+static inline void * CONST
+cap_get_archCapPtr(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+
+    switch (ctag) {
+
+    case cap_frame_cap:
+        return (void *)(cap_frame_cap_get_capFBasePtr(cap));
+
+    case cap_page_table_cap:
+        return PD_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+
+    case cap_page_directory_cap:
+        return PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
+
+    case cap_pdpt_cap:
+        return PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
+
+    case cap_io_port_cap:
+        return NULL;
+
+    case cap_io_space_cap:
+        return NULL;
+
+    case cap_io_page_table_cap:
+        return (void *)(cap_io_page_table_cap_get_capIOPTBasePtr(cap));
+
+    case cap_asid_control_cap:
+        return NULL;
+
+    case cap_asid_pool_cap:
+        return ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
+
+    default:
+        return cap_get_modeCapPtr(cap);
+    }
+}
+
 #endif

@@ -12,7 +12,6 @@
 #define __ARCH_MACHINE_H
 
 #include <machine.h>
-#include <mode/machine.h>
 #include <plat/machine/hardware.h>
 #include <arch/types.h>
 #include <util.h>

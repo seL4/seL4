@@ -13,15 +13,6 @@
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-#if defined(CONFIG_PLAT_SABRE) || defined(CONFIG_PLAT_EXYNOS5410)
-#define KS_LOG_PADDR 0xffe00000
-#else
-//TODO test/implement this for other platforms
-#error "Log address unclear and untested!"
-#endif
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 extern uint64_t ccnt_num_overflows;
 static inline void benchmark_arch_utilisation_reset(void)

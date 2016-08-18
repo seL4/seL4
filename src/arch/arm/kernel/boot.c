@@ -159,7 +159,7 @@ init_cpu(void)
 {
     activate_global_pd();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        vcpu_restore(NULL);
+        vcpu_boot_init();
     }
 }
 

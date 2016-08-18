@@ -15,6 +15,7 @@
 #define wordBits (1 << wordRadix)
 
 #ifndef __ASSEMBLER__
+#include <config.h>
 #include <stdint.h>
 #include <arch/types.h>
 #include <arch/object/structures.h>
@@ -24,6 +25,22 @@
 
 #include <machine/io.h>
 #include <mode/machine_pl2.h>
+
+/*
+ * 0xffe00000 asid id slot (arm/arch/kernel/vspace.h)
+ * 0xfff00000 devices      (plat/machine/devices.h)
+ * 0xffff0000 vectors      (arch/machine/hardware.h)
+ * 0xffffc000 global page  (arch/machine/hardware.h)
+ * 0xfffff000 kernel stack (arch/machine/hardware.h)
+ */
+#define BASE_OFFSET (kernelBase - physBase)
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+#define PPTR_TOP 0xffe00000
+#define KS_LOG_PPTR PPTR_TOP
+#else
+#define PPTR_TOP 0xfff00000
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
 
 #define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
 #define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
@@ -119,7 +136,7 @@ static inline void flushBTAC(void)
 /** DONT_TRANSLATE */
 static inline void writeContextID(word_t id)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         writeContextIDPL2(id);
     } else {
         asm volatile("mcr p15, 0, %0, c13, c0, 1" : : "r"(id));
@@ -144,7 +161,7 @@ static inline void setCurrentPD(paddr_t addr)
      * outer write-back cacheable, no allocate on write, inner non-cacheable.
      */
     /* Before changing the PD ensure all memory stores have completed */
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         setCurrentPDPL2(addr);
     } else {
         dsb();
@@ -168,7 +185,7 @@ static inline void invalidateTLB(void)
 /** DONT_TRANSLATE */
 static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateTLB();
     } else {
         dsb();
@@ -181,7 +198,7 @@ static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
 /** DONT_TRANSLATE */
 static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
 {
-    if (config_set(ARM_HYP)) {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateTLB();
     } else {
         dsb();

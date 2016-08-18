@@ -237,88 +237,18 @@ BEGIN_FUNC(arm_syscall)
     sub lr, lr, #4
     str lr, [sp, #(PT_FaultInstruction - PT_SP)]
 
-#ifdef FASTPATH
-    cmp r7, #SYSCALL_REPLY_RECV
-#endif
-
     /* Stack all user registers */
     push {r0-r12}
 
     /* Load the kernel's real stack pointer */
     mov sp, #(PPTR_KERNEL_STACK_TOP)
 
-#ifdef FASTPATH
-    /*
-     * Call is -1 == 0xffffffff.
-     * We compared against -2 = 0xfffffffe above.
-     * Performing an unsigned higher than, there is only one unsigned number
-     * greater than -2.
+    /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
+     * unmodified (cptr and msgIngo respectively).
      */
-    bhi fastpath_call
-    beq fastpath_reply_recv
-#endif
-
-    /* Load system call number for handleSyscall and handleUnknownSyscall() */
-    mov r0, r7
-
-    /*
-     * RET_TO_USER needs ksCurThread. We can issue the load here where we have
-     * some spare cycles, and the ARM ABI will preserve it across function
-     * calls.
-     */
-    ldr r8, =ksCurThread
-
-    /* Check that syscall number is in range */
-    sub r2, r0, #SYSCALL_MIN
-    cmp r2, #(SYSCALL_MAX - SYSCALL_MIN + 1)
-    bhs arm_hyp_undefined_syscall
-    blx handleSyscall
-
-    /* Return to user. */
-    RET_TO_USER r8
+    mov r2, r7
+    b c_handle_syscall
 END_FUNC(arm_syscall)
-
-BEGIN_FUNC(arm_hyp_undefined_syscall)
-    blx handleUnknownSyscall
-    RET_TO_USER r8
-END_FUNC(arm_hyp_undefined_syscall)
-
-#ifdef FASTPATH
-BEGIN_FUNC(slowpath)
-    /*
-     * We enter here only via the fastpath.
-     * r0 contains the system call number, and all other registers are
-     * trashed.
-     */
-    ldr r7, =ksCurThread
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
-    blx handleSyscall
-    RET_TO_USER r7
-END_FUNC(slowpath)
-
-BEGIN_FUNC(fastpath_restore)
-    /* Duplicate of above except r2 contains ksCurThread,
-       r0 and r1 should be preserved */
-    mov sp, r2
-
-    /* Pop user registers, preserving r0 and r1 */
-    add sp, sp, #8
-    pop {r2-r12}
-    /* Retore the user stack pointer */
-    pop {lr}
-    msr sp_usr, lr
-    /* prepare the exception return lr */
-    ldr lr, [sp, #4]
-    msr elr_hyp, lr
-    /* prepare the user status register */
-    ldr lr, [sp, #8]
-    msr spsr_hyp, lr
-    /* Finally, pop our LR */
-    pop {lr}
-    /* Return to user */
-    eret
-END_FUNC(fastpath_restore)
-#endif /* FASTPATH */
 
 /*********************************
  *** Traps taken from HYP mode ***

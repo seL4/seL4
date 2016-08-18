@@ -18,7 +18,6 @@ bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
 timestamp_t ksExit;
 uint32_t ksLogIndex = 0;
 uint32_t ksLogIndexFinalized = 0;
-ks_log_entry_t *ksLog;
 
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
 

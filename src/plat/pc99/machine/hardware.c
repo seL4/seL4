@@ -41,58 +41,6 @@ void platAddDevices(void)
     });
 }
 
-/* ============================== interrupts/IRQs ============================== */
-
-/* Handle a platform-reserved IRQ. */
-void handleReservedIRQ(irq_t irq)
-{
-    if (config_set(CONFIG_IOMMU) && irq == irq_iommu) {
-        vtd_handle_fault();
-        return;
-    }
-}
-
-/* Get the IRQ number currently working on. */
-irq_t getActiveIRQ(void)
-{
-    if (x86KScurInterrupt == int_invalid) {
-        return irqInvalid;
-    } else {
-        return x86KScurInterrupt - IRQ_INT_OFFSET;
-    }
-}
-
-/* Checks for pending IRQ */
-bool_t isIRQPending(void)
-{
-    if (apic_is_interrupt_pending()) {
-        return true;
-    }
-#ifdef CONFIG_IRQ_PIC
-    if (pic_is_irq_pending()) {
-        return true;
-    }
-#endif
-    return false;
-}
-
-void ackInterrupt(irq_t irq)
-{
-#ifdef CONFIG_IRQ_PIC
-    if (irq <= irq_isa_max) {
-        pic_ack_active_irq();
-    } else
-#endif
-    {
-        apic_ack_active_interrupt();
-    }
-}
-
-void handleSpuriousIRQ(void)
-{
-    /* Do nothing */
-}
-
 /* ============================== timer ============================== */
 static CONST uint32_t
 clz64(uint64_t n)

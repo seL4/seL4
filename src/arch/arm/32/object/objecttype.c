@@ -165,6 +165,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                 break;
             }
 #endif
+
             unmapPage(ARMSmallPage,
                       cap_small_frame_cap_get_capFMappedASID(cap),
                       cap_small_frame_cap_get_capFMappedAddress(cap),
@@ -174,6 +175,30 @@ Arch_finaliseCap(cap_t cap, bool_t final)
 
     case cap_frame_cap:
         if (cap_frame_cap_get_capFMappedASID(cap)) {
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+            /* If the last cap to the user-level log buffer frame is being revoked,
+             * reset the ksLog so that the kernel doesn't log anymore
+             */
+            if (unlikely(cap_frame_cap_get_capFSize(cap) == ARMSection)) {
+                if (pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) == ksUserLogBuffer) {
+                    ksUserLogBuffer = 0;
+
+                    /* Invalidate log page table entries */
+                    clearMemory((void *) armKSGlobalLogPT, BIT(seL4_PageTableBits));
+
+                    cleanCacheRange_PoU((pptr_t) &armKSGlobalLogPT[0],
+                                        (pptr_t) &armKSGlobalLogPT[0] + BIT(seL4_PageTableBits),
+                                        addrFromPPtr((void *)&armKSGlobalLogPT[0]));
+
+                    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+                        invalidateTLB_VAASID(KS_LOG_PPTR + (idx << seL4_PageBits));
+                    }
+
+                    userError("Log buffer frame is invalidated, kernel can't benchmark anymore");
+                }
+            }
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+
             unmapPage(cap_frame_cap_get_capFSize(cap),
                       cap_frame_cap_get_capFMappedASID(cap),
                       cap_frame_cap_get_capFMappedAddress(cap),
@@ -627,7 +652,7 @@ void
 Arch_prepareThreadDelete(tcb_t * thread) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (thread->tcbArch.vcpu) {
-        dissociateVcpuTcb(thread, thread->tcbArch.vcpu);
+        dissociateVCPUTCB(thread->tcbArch.vcpu, thread);
     }
 #else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     /* No action required on ARM. */

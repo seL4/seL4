@@ -23,4 +23,6 @@ VISIBLE NORETURN;
 void c_handle_interrupt(int irq, int syscall)
 VISIBLE;
 
+void slowpath_irq(irq_t irq)
+VISIBLE NORETURN;
 #endif /* __KERNEL_X86_TRAPS_H */

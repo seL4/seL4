@@ -13,13 +13,17 @@
 #include <arch/kernel/lock.h>
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
-
+#include <benchmark_track.h>
+#include <arch/kernel/traps.h>
 #include <api/syscall.h>
 #include <util.h>
 
-void NORETURN VISIBLE restore_user_context(void);
 void NORETURN VISIBLE restore_user_context(void)
 {
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+
     /* set the tss.esp0 */
     tss_ptr_set_esp0(&x86KStss.tss, ((uint32_t)&ksCurThread->tcbArch.tcbContext.registers) + (n_contextRegisters * sizeof(word_t)));
     if (unlikely(ksCurThread == x86KSfpuOwner)) {

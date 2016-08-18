@@ -22,6 +22,7 @@
 #include <kernel/vspace.h>
 #include <machine/io.h>
 #include <machine/timer.h>
+#include <plat/machine/hardware.h>
 #include <object/interrupt.h>
 #include <model/statedata.h>
 #include <string.h>
@@ -93,10 +94,6 @@ handleUnknownSyscall(word_t w)
     }
 #endif /* DEBUG */
 
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
 #ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugNameThread) {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
@@ -136,6 +133,13 @@ handleUnknownSyscall(word_t w)
 #ifdef CONFIG_ENABLE_BENCHMARKS
     if (w == SysBenchmarkResetLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+        if (ksUserLogBuffer == 0) {
+            userError("A user-level buffer has to be set before resetting benchmark.\
+                    Use seL4_BenchmarkSetLogBuffer\n");
+            setRegister(ksCurThread, capRegister, seL4_IllegalOperation);
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
         ksLogIndex = 0;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
@@ -144,6 +148,7 @@ handleUnknownSyscall(word_t w)
         benchmark_start_time = ksEnter;
         benchmark_arch_utilisation_reset();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+        setRegister(ksCurThread, capRegister, seL4_NoError);
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkDumpLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
@@ -182,6 +187,7 @@ handleUnknownSyscall(word_t w)
         /* write to ipc buffer */
         {
             word_t i;
+            ks_log_entry_t *ksLog = (ks_log_entry_t *) KS_LOG_PPTR;
 
             for (i = 0; i < size; i++) {
                 int base_index = i * 2 + 1;
@@ -208,6 +214,18 @@ handleUnknownSyscall(word_t w)
         benchmark_utilisation_finalise();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         return EXCEPTION_NONE;
+    } else if (w == SysBenchmarkSetLogBuffer) {
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+        word_t cptr_userFrame = getRegister(ksCurThread, capRegister);
+
+        if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
+            setRegister(ksCurThread, capRegister, seL4_IllegalOperation);
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        setRegister(ksCurThread, capRegister, seL4_NoError);
+        return EXCEPTION_NONE;
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
     }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
@@ -330,8 +348,6 @@ handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate)
     lu_ret = lookupCapAndSlot(thread, cptr);
 
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
-    ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
     ksKernelEntry.is_fastpath = false;
 #endif
 
@@ -405,10 +421,6 @@ handleReply(void)
     callerSlot = TCB_PTR_CTE_PTR(ksCurThread, tcbCaller);
     callerCap = callerSlot->cap;
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.cap_type = cap_get_capType(callerCap);
-#endif
-
     switch (cap_get_capType(callerCap)) {
     case cap_reply_cap: {
         tcb_t *caller;
@@ -441,10 +453,6 @@ handleRecv(bool_t isBlocking, word_t epCPtr)
     lookupCap_ret_t lu_ret;
 
     lu_ret = lookupCap(ksCurThread, epCPtr);
-
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
-#endif
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         /* current_lookup_fault has been set by lookupCap */
@@ -496,16 +504,6 @@ handleSyscall(syscall_t syscall)
     exception_t ret;
     irq_t irq;
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.path = Entry_Syscall;
-    ksKernelEntry.syscall_no = syscall;
-#endif /* DEBUG */
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_start();
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
     ret = EXCEPTION_NONE;
     updateTimestamp();
     if (checkBudget()) {
@@ -577,8 +575,5 @@ handleSyscall(syscall_t syscall)
     schedule();
     activateThread();
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
     return EXCEPTION_NONE;
 }

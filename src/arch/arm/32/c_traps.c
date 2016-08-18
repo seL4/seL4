@@ -12,12 +12,75 @@
 #include <model/statedata.h>
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
-
 #include <api/syscall.h>
+#include <arch/linker.h>
+
+#include <benchmark_track.h>
+#include <benchmark_utilisation.h>
+
+/** DONT_TRANSLATE */
+static inline void FORCE_INLINE NORETURN restore_user_context(void)
+{
+    word_t cur_thread_reg = (word_t) ksCurThread;
+
+#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
+    benchmark_track_exit();
+#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        asm volatile(
+            /* Set stack pointer to point at the r0 of the user context. */
+            "mov sp, %[cur_thread_reg] \n"
+            /* Pop user registers */
+            "pop {r0-r12}              \n"
+            /* Retore the user stack pointer */
+            "pop {lr}                  \n"
+            "msr sp_usr, lr            \n"
+            /* prepare the eception return lr */
+            "ldr lr, [sp, #4]          \n"
+            "msr elr_hyp, lr           \n"
+            /* prepare the user status register */
+            "ldr lr, [sp, #8]          \n"
+            "msr spsr_hyp, lr          \n"
+            /* Finally, pop our LR */
+            "pop {lr}                  \n"
+            /* Return to user */
+            "eret"
+            : /* no output */
+            : [cur_thread_reg] "r" (cur_thread_reg)
+            : "memory"
+        );
+    } else {
+        asm volatile("mov sp, %[cur_thread] \n\
+                  ldmdb sp, {r0-lr}^ \n\
+                  rfeia sp"
+                     : /* no output */
+                     : [cur_thread] "r" (cur_thread_reg + LR_svc * sizeof(word_t))
+                    );
+    }
+    UNREACHABLE();
+}
+
+/** DONT_TRANSLATE */
+void NORETURN slowpath(syscall_t syscall)
+{
+    handleSyscall(syscall);
+
+    restore_user_context();
+    UNREACHABLE();
+}
 
 /** DONT_TRANSLATE */
 void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
+    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
+#endif /* DEBUG */
+
+#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
+    ksEnter = timestamp();
+#endif
+
 #ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {
         fastpath_call(cptr, msgInfo);
@@ -25,12 +88,25 @@ void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
     } else if (syscall == SysReplyRecv) {
         fastpath_reply_recv(cptr, msgInfo);
         UNREACHABLE();
+    } else if (syscall == SysSend) {
+        fastpath_signal(cptr);
+        UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */
 
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
         handleUnknownSyscall(syscall);
+        restore_user_context();
+        UNREACHABLE();
     } else {
         slowpath(syscall);
+        UNREACHABLE();
     }
+}
+
+void NORETURN
+slowpath_irq(irq_t irq)
+{
+    handleInterruptEntry(irq);
+    restore_user_context();
 }

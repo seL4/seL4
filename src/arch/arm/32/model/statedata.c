@@ -34,6 +34,11 @@ pde_t armKSGlobalPD[BIT(PD_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));
 
 /* The global, privileged, page table. */
 pte_t armKSGlobalPT[BIT(PT_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
+
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+pte_t armKSGlobalLogPT[BIT(PT_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+
 #else
 /* The global, hypervisor, level 1 page table */
 pdeS1_t  armHSGlobalPGD[BIT(PGD_BITS)] ALIGN_BSS(BIT(PGD_SIZE_BITS));

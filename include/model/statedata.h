@@ -38,6 +38,10 @@ extern crit_t ksCriticality VISIBLE;
 extern tcb_queue_t ksCritQueues[] VISIBLE;
 extern word_t tlbLockCount VISIBLE;
 
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+extern paddr_t ksUserLogBuffer;
+#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)
 

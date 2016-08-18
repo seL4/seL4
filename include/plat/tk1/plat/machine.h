@@ -12,7 +12,6 @@
 #define __PLAT_MACHINE_H
 
 #include <config.h>
-#include <arch/machine/gic_pl390.h>
 
 #define N_INTERRUPTS 192
 
@@ -225,12 +224,10 @@ enum IRQConstants {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define KERNEL_TIMER_IRQ        INTERRUPT_HGPT
 #else
-#define KERNEL_TIMER_IRQ        INTERRUPT_S_PGPT
+#define KERNEL_TIMER_IRQ        INTERRUPT_VGPT
 #define KERNEL_PMU_IRQ          INTERRUPT_CPU0_PMU
 #endif
 
-enum irqNumbers {
-    irqInvalid = 255
-};
+#include <arch/machine/gic_pl390.h>
 
 #endif  /* ! __PLAT_MACHINE_H */

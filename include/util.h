@@ -30,7 +30,7 @@
 #define ALIGN(n)     __attribute__((__aligned__(n)))
 #define FASTCALL     __attribute__((fastcall))
 #ifdef __clang__
-#define VISIBLE      __attribute__((visibility("default")))
+#define VISIBLE      /* nothing */
 #else
 #define VISIBLE      __attribute__((externally_visible))
 #endif
@@ -79,7 +79,7 @@ void halt(void) NORETURN;
 void memzero(void *s, unsigned long n);
 void *memset(void *s, unsigned long c, unsigned long n);
 void *memcpy(void* ptr_dst, const void* ptr_src, unsigned long n);
-int strncmp(const char *s1, const char *s2, int n);
+int PURE strncmp(const char *s1, const char *s2, int n);
 long CONST char_to_long(char c);
 long PURE str_to_long(const char* str);
 

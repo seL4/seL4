@@ -14,6 +14,7 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
+#include <plat/machine.h>
 
 exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                             cte_t *srcSlot, extra_caps_t excaps,

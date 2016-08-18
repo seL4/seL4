@@ -13,6 +13,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <basic_types.h>
 
 compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
 
@@ -39,5 +40,11 @@ typedef uint8_t seL4_Uint8;
 typedef node_id_t seL4_NodeId;
 typedef dom_t seL4_Domain;
 typedef paddr_t seL4_PAddr;
+
+typedef struct kernel_frame {
+    paddr_t paddr;
+    pptr_t pptr;
+    int armExecuteNever;
+} kernel_frame_t;
 
 #endif
