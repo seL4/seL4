@@ -14,13 +14,18 @@
 #include <util.h>
 #include <arch/linker.h>
 #include <model/statedata.h>
+#include <arch/machine/timer.h>
 
-/* convert to khz first to avoid overflow */
-#define TIMER_CLOCK_KHZ (TIMER_CLOCK_HZ  / HZ_IN_KHZ)
-#define TIMER_CLOCK_MHZ (TIMER_CLOCK_HZ /  HZ_IN_MHZ)
-
-/* all platforms define their timer functions here */
-#include <plat/machine/timer.h>
+/* get the expected wcet of the kernel for this platform */
+static inline PURE time_t getKernelWcetTicks(void);
+/* Read the current time from the timer. */
+static inline ticks_t getCurrentTime(void);
+/* set the next deadline irq - deadline is absolute */
+static inline void setDeadline(ticks_t deadline);
+/* ack previous deadline irq */
+static inline void ackDeadlineIRQ(void);
+/* initialise the timer */
+BOOT_CODE void initTimer(void);
 
 static PURE inline ticks_t
 getKernelWcetTicks(void)
