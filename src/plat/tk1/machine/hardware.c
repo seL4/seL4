@@ -13,25 +13,6 @@
 #include <arch/machine/timer.h>
 #include <arch/linker.h>
 
-/**
-   DONT_TRANSLATE
- */
-void
-resetTimer(void)
-{
-    resetGenericTimer();
-}
-
-/**
-   DONT_TRANSLATE
- */
-BOOT_CODE void
-initTimer(void)
-{
-    /* we use the physical count-down timer of the GPT as the kernel preemption timer */
-    initGenericTimer();
-}
-
 void plat_cleanL2Range(paddr_t start, paddr_t end) {}
 void plat_invalidateL2Range(paddr_t start, paddr_t end) {}
 void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end) {}

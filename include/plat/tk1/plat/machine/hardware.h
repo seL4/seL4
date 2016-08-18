@@ -22,8 +22,6 @@
 #include <mode/machine/hardware.h>
 #include <mode/api/constants.h>
 
-#define TIMER_CLOCK_HZ		12000000llu
-
 #define physBase          0x80000000
 #define kernelBase        0xe0000000
 

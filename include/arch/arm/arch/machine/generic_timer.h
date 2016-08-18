@@ -43,13 +43,13 @@ setDeadline(ticks_t deadline)
 {
     assert(deadline >= ksCurrentTime);
     MCRR(CNTV_CVAL, deadline);
-    assert(deadline >= getGenericTimerCurrentTime());
+    assert(deadline >= getCurrentTime());
 }
 
 static inline void
 ackDeadlineIRQ(void)
 {
-    setGenericTimerDeadline(UINT64_MAX);
+    setDeadline(UINT64_MAX);
 }
 
 /**
@@ -69,6 +69,7 @@ initGenericTimer(void)
         }
     }
 
-    setGenericTimerDeadline(UINT64_MAX);
+    setDeadline(UINT64_MAX);
+    /* enable the timer */
     MCR(CNT_CTL, BIT(0));
 }
