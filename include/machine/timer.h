@@ -11,24 +11,16 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 
-#define US_PER_MS 1000llu
+#include <util.h>
+#include <arch/linker.h>
+#include <model/statedata.h>
 
-/* max amount of time this timer can represent */
-PURE time_t getMaxTimerUs(void);
-/* amount of time to set interrupts early by to make sure we deal with them on time */
-PURE ticks_t getTimerPrecision(void);
-CONST time_t getKernelWcetUs(void);
-PURE ticks_t usToTicks(time_t us);
-PURE time_t ticksToUs(ticks_t ticks);
+/* convert to khz first to avoid overflow */
+#define TIMER_CLOCK_KHZ (TIMER_CLOCK_HZ  / HZ_IN_KHZ)
+#define TIMER_CLOCK_MHZ (TIMER_CLOCK_HZ /  HZ_IN_MHZ)
 
-/** MODIFIES: [*] */
-void initTimer(void);
-/** MODIFIES: [*] */
-void setDeadline(ticks_t deadline);
-/** MODIFIES: [*] */
-ticks_t getCurrentTime(void);
-/** MODIFIES: [*] */
-void ackDeadlineIRQ(void);
+/* all platforms define their timer functions here */
+#include <plat/machine/timer.h>
 
 static PURE inline ticks_t
 getKernelWcetTicks(void)
@@ -37,4 +29,3 @@ getKernelWcetTicks(void)
 }
 
 #endif
-

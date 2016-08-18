@@ -11,6 +11,12 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+/* time constants */
+#define US_PER_MS  1000llu
+#define  HZ_IN_KHZ 1000llu
+#define KHZ_IN_MHZ 1000llu
+#define  HZ_IN_MHZ 1000000llu
+
 #define BIT(n) (1ul << (n))
 #define MASK(n) (BIT(n)-1ul)
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
