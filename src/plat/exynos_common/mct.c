@@ -64,11 +64,6 @@
 #define LTWSTAT_TCOMP        (1U << 1)
 #define LTWSTAT_TCNT         (1U << 0)
 
-/* see tools/reciprocal.py for calculation of CLK_MAGIC and CLK_SHIFT */
-compile_assert(magic_will_work, TIMER_MHZ == 24llu);
-#define CLK_MAGIC 2863311531
-#define CLK_SHIFT 36
-
 struct mct_global_map {
     uint32_t reserved0[64];
     uint32_t cntl;           /* 0x100 Low word of count */
@@ -128,67 +123,6 @@ static volatile struct mct_map* mct = (volatile struct mct_map*) EXYNOS_MCT_PPTR
 /**
    DONT_TRANSLATE
  */
-void
-setDeadline(ticks_t deadline)
-{
-    assert(deadline >= ksCurrentTime);
-    MCRR(CNTV_CVAL, deadline);
-    assert(deadline >= getCurrentTime());
-}
-
-ticks_t
-getCurrentTime(void)
-{
-    ticks_t time;
-    MRRC(CNTVCT, time);
-    return time;
-}
-
-/**
-   DONT_TRANSLATE
- */
-void
-ackDeadlineIRQ(void)
-{
-    setDeadline(UINT64_MAX);
-}
-
-PURE time_t
-getMaxTimerUs(void)
-{
-    return UINT64_MAX / CLK_MAGIC;
-}
-
-CONST time_t
-getKernelWcetUs(void)
-{
-    return 10u;
-}
-
-PURE ticks_t
-getTimerPrecision(void)
-{
-    return TIMER_MHZ;
-}
-
-PURE ticks_t
-usToTicks(time_t us)
-{
-    assert(us <= getMaxTimerUs());
-    assert(us >= getKernelWcetUs());
-    return us * TIMER_MHZ;
-}
-
-PURE time_t
-ticksToUs(ticks_t ticks)
-{
-    /* simulate 64bit division using multiplication by reciprocal */
-    return (ticks * CLK_MAGIC) >> CLK_SHIFT;
-}
-
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initTimer(void)
 {
@@ -204,28 +138,8 @@ initTimer(void)
         mct->global.wstat = GWSTAT_TCON;
 
         initGenericTimer();
-        /* TODO remove once SELFOUR-365 is implemented
-        * allow user mode to read the timer (CNTPCT) */
-        MCR(CNTKCTL, 1u);
     } else {
-        /* Use the MCT directly */
-        /* Configure the comparator */
-        mct->global.comp0_add_inc = TIMER_RELOAD;
-
-        uint64_t  comparator_value = ((((uint64_t) mct->global.cnth) << 32llu)
-                                      | mct->global.cntl) + TIMER_RELOAD;
-        mct->global.comp0h = (uint32_t) (comparator_value >> 32u);
-        mct->global.comp0l = (uint32_t) comparator_value;
-        /* Enable interrupts */
-        mct->global.int_en = GINT_COMP0_IRQ;
-
-        /* Wait for update */
-        while (mct->global.wstat != (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC));
-        mct->global.wstat = (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC);
-
-        /* enable interrupts */
-        mct->global.tcon = GTCON_EN | GTCON_COMP0_EN | GTCON_COMP0_AUTOINC;
-        while (mct->global.wstat != GWSTAT_TCON);
-        mct->global.wstat = GWSTAT_TCON;
+        /* not implemented */
+        fail("exynos4 not yet supported on RT kernel");
     }
 }
