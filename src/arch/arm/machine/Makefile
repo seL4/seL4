@@ -16,14 +16,6 @@ ARCH_C_SOURCES += machine/cache.c \
 ifeq ($(CPU), cortex-a9)
     ARCH_C_SOURCES += machine/gic_pl390.c
     ARCH_C_SOURCES += machine/l2c_310.c
-
-ifeq ($(PLAT), exynos4)
-    # if exynos4412 has MPCORE peripherals, then
-    # samsung has NOT documented their location
-else
-    ARCH_C_SOURCES += machine/global_timer.c
-endif
-
 endif
 
 ifeq ($(CPU), $(filter $(CPU), cortex-a15 cortex-a7 cortex-a57))

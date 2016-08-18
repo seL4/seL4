@@ -186,8 +186,6 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
 //  { /* .start = */ BOOT_ROM_PADDR         , /* .end = */ BOOT_ROM_PADDR          + ( 24 << 12)}
 };
 
-#define CLK_MHZ 498llu
-
 static inline void
 handleReservedIRQ(irq_t irq)
 {
