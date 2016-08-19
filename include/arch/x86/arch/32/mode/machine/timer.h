@@ -23,7 +23,6 @@ clz64(uint64_t n)
 {
     uint32_t upper_n = (uint32_t) (n >> 32llu);
     uint32_t lower_n = (uint32_t) n;
-    uint32_t lz = 0;
 
     if (upper_n == 0) {
         assert(lower_n > 0);
