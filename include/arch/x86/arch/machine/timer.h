@@ -27,17 +27,17 @@ getKernelWcetUs(void)
 }
 
 static inline PURE ticks_t
-getTimerPrecision(void)
-{
-    return return usToTicks(1u);
-}
-
-static inline PURE ticks_t
 usToTicks(time_t us)
 {
     assert(x86KStscMhz > 0);
     assert(us >= getKernelWcetUs() && us <= getMaxTimerUs());
     return us * x86KStscMhz;
+}
+
+static inline PURE ticks_t
+getTimerPrecision(void)
+{
+    return return usToTicks(1u);
 }
 
 static inline void
