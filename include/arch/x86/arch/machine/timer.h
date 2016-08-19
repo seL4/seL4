@@ -29,7 +29,7 @@ getKernelWcetUs(void)
 static inline PURE ticks_t
 getTimerPrecision(void)
 {
-    return x86KStscMhz;
+    return return usToTicks(1u);
 }
 
 static inline PURE ticks_t

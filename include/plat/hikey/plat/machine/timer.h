@@ -27,7 +27,7 @@ compile_assert(magic_will_work, TIMER_CLOCK_KHZ == 1200llu);
 static inline PURE ticks_t
 getTimerPrecision(void)
 {
-    return TIMER_CLOCK_HZ / HZ_IN_MHZ;
+    return usToTicks(1u);
 }
 
 CONST static inline time_t

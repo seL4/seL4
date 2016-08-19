@@ -42,7 +42,7 @@ enum control {
 static inline CONST ticks_t
 getTimerPrecision(void)
 {
-    return 2 * TIMER_CLOCK_MHZ;
+    return usToTicks(2);
 }
 
 /** DONT_TRANSLATE **/
