@@ -69,7 +69,8 @@ getCurrentTime(void)
 }
 
 static inline CONST time_t
-getKernelWcetUs(void) {
+getKernelWcetUs(void)
+{
     return 10u;
 }
 
@@ -88,6 +89,7 @@ ackDeadlineIRQ(void)
 }
 
 static inline PURE ticks_t
-getTimerPrecision(void) {
+getTimerPrecision(void)
+{
     return usToTicks(2u);
 }

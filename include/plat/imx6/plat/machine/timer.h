@@ -23,7 +23,8 @@
 #include <arch/machine/timer.h>
 
 static inline CONST time_t
-getKernelWcetUs(void) {
+getKernelWcetUs(void)
+{
     return 10u;
 }
 

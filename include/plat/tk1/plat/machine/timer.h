@@ -25,12 +25,14 @@
 compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 12llu);
 
 static inline PURE ticks_t
-getTimerPrecision(void) {
+getTimerPrecision(void)
+{
     return TIMER_CLOCK_HZ / HZ_IN_MHZ;
 }
 
 CONST static inline time_t
-getKernelWcetUs(void) {
+getKernelWcetUs(void)
+{
     return 10u;
 }
 

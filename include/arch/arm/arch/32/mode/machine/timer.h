@@ -38,7 +38,8 @@ usToTicks(time_t us)
 }
 
 static inline CONST time_t
-ticksToUs(ticks_t ticks) {
+ticksToUs(ticks_t ticks)
+{
     /* simulate 64bit division using multiplication by reciprocal */
     if (USE_KHZ) {
         return (ticks * KHZ_IN_MHZ) * CLK_MAGIC >> CLK_SHIFT;
