@@ -20,10 +20,6 @@
 #include <model/statedata.h>
 #include <api/debug.h>
 
-/* we can fill the entire IPC buffer except for word 0, which
- * the kernel overwrites with the message tag */
-#define MAX_IPC_BUFFER_STORAGE_SIZE (sizeof(seL4_IPCBuffer) - sizeof(seL4_Word))
-
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 /**
@@ -33,11 +29,6 @@
  */
 #define MAX_LOG_SIZE (seL4_LogBufferSize / \
              sizeof(benchmark_track_kernel_entry_t))
-
-/**
- * The number of kernel entries that can fit into an IPC buffer.
- */
-#define MAX_IPC_BUFFER_STORAGE (MAX_IPC_BUFFER_STORAGE_SIZE / sizeof(benchmark_track_kernel_entry_t))
 
 extern timestamp_t ksEnter;
 extern word_t ksLogIndex;
@@ -49,20 +40,6 @@ extern kernel_entry_t ksKernelEntry;
  *
  */
 void benchmark_track_exit(void);
-
-/**
- * @brief Dump entries to user's buffer.
- *
- * @param buffer user buffer
- * @param start_index start index of the kernel entries array
- * @param num_entries number of entries to dump starting from start_index
- *
- */
-void benchmark_track_dump(
-    benchmark_track_kernel_entry_t* buffer,
-    word_t start_index,
-    word_t num_entries
-);
 
 /**
  * @brief Start logging kernel entries

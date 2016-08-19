@@ -604,41 +604,6 @@ seL4_BenchmarkResetLog(void)
     return (seL4_Error) retval;
 }
 
-/* read size words from the log starting from start into the ipc buffer.
- * @return the amount sucessfully read. Will cap at ipc buffer size and at size of
- * recorded log */
-static inline seL4_Uint32
-seL4_BenchmarkDumpLog(seL4_Word start, seL4_Word size)
-{
-
-    register seL4_Word arg1 asm("r0") = (seL4_Word) start;
-    register seL4_Word arg2 asm("r1") = (seL4_Word) size;
-    register seL4_Word scno asm("r7") = seL4_SysBenchmarkDumpLog;
-    asm volatile ("swi %[swi_num]"
-                  : "+r" (arg1)
-                  : [swi_num] "i" __SEL4_SWINUM(seL4_SysBenchmarkDumpLog), "r" (arg1), "r" (arg2), "r"(scno)
-                  : "memory");
-
-    return (seL4_Uint32) arg1;
-
-}
-
-/* Return the amount of things we tried to log. This could be greater than
- * the size of the log itself */
-static inline seL4_Uint32
-seL4_BenchmarkLogSize(void)
-{
-
-    register seL4_Word arg1 asm("r0") = 0; /* required for retval */
-    register seL4_Word scno asm("r7") = seL4_SysBenchmarkLogSize;
-    asm volatile ("swi %[swi_num]"
-                  : "+r" (arg1)
-                  : [swi_num] "i" __SEL4_SWINUM(seL4_SysBenchmarkLogSize), "r"(scno));
-
-    return (seL4_Uint32) arg1;
-
-}
-
 static inline void
 seL4_BenchmarkFinalizeLog(void)
 {

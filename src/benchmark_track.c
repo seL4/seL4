@@ -35,34 +35,4 @@ void benchmark_track_exit(void)
         }
     }
 }
-
-void benchmark_track_dump(
-    benchmark_track_kernel_entry_t* buffer,
-    word_t start_index,
-    word_t num_entries
-)
-{
-    benchmark_track_kernel_entry_t *ksLog = (benchmark_track_kernel_entry_t *) KS_LOG_PPTR;
-
-    if (!buffer) {
-        userError("Invalid IPC buffer pointer = %p\n", buffer);
-        return;
-    }
-
-    if (start_index > ksLogIndex) {
-        userError("Invalid start index = %lu\n", start_index);
-        return;
-    }
-
-    if ((start_index + num_entries) > ksLogIndex) {
-        userError("Requested entries exceed the range of tracked syscall invocations [%lu:%lu] \
-                \n", start_index, num_entries);
-        return;
-    }
-
-    for (int i = start_index; i < (start_index + num_entries); i++) {
-        buffer[i - start_index] = ksLog[i];
-    }
-}
-
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */

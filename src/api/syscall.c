@@ -156,62 +156,6 @@ handleUnknownSyscall(word_t w)
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         setRegister(ksCurThread, capRegister, seL4_NoError);
         return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkDumpLog) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-        word_t *buffer = lookupIPCBuffer(true, ksCurThread);
-        word_t start = getRegister(ksCurThread, capRegister);
-        word_t size = getRegister(ksCurThread, msgInfoRegister);
-        word_t logSize = ksLogIndexFinalized > MAX_LOG_SIZE ? MAX_LOG_SIZE : ksLogIndexFinalized;
-
-        if (buffer == NULL) {
-            userError("Cannot dump benchmarking log to a thread without an ipc buffer\n");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (start > logSize) {
-            userError("Start > logsize\n");
-            current_syscall_error.type = seL4_InvalidArgument;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        /* Assume we have access to an ipc buffer 1024 words big.
-         * Do no write to the first 4 bytes as these are overwritten */
-        if (size > MAX_IPC_BUFFER_STORAGE) {
-            size = MAX_IPC_BUFFER_STORAGE;
-        }
-
-        /* trim to size */
-        if ((start + size) > logSize) {
-            size = logSize - start;
-        }
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-        benchmark_track_dump((benchmark_track_kernel_entry_t *) &buffer[1],
-                             start, size);
-#else /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
-        /* write to ipc buffer */
-        {
-            word_t i;
-            ks_log_entry_t *ksLog = (ks_log_entry_t *) KS_LOG_PPTR;
-
-            for (i = 0; i < size; i++) {
-                int base_index = i * 2 + 1;
-                ks_log_entry_t *log = &ksLog[i + start];
-                buffer[base_index] = log->key;
-                buffer[base_index + 1] = log->data;
-            }
-        }
-
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
-        /* Return the amount written */
-        setRegister(ksCurThread, capRegister, size);
-        return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkLogSize) {
-        /* Return the amount of log items we tried to log (may exceed max size) */
-        setRegister(ksCurThread, capRegister, ksLogIndexFinalized);
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-        return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
         ksLogIndexFinalized = ksLogIndex;

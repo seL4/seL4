@@ -596,46 +596,6 @@ seL4_BenchmarkResetLog(void)
     return ret;
 }
 
-static inline seL4_Uint32
-seL4_BenchmarkDumpLog(seL4_Word start, seL4_Word size)
-{
-    asm volatile (
-        "pushl %%ebp        \n"
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        "popl %%ebp         \n"
-        : "=b" (start)
-        : "a" (seL4_SysBenchmarkDumpLog),
-        "b" (start),
-        "S" (size)
-        : "%ecx", "%edx", "%edi", "memory"
-    );
-
-    return (seL4_Uint32) start;
-}
-
-
-static inline seL4_Uint32
-seL4_BenchmarkLogSize(void)
-{
-    seL4_Uint32 ret = 0;
-    asm volatile (
-        "pushl %%ebp        \n"
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        "popl %%ebp         \n"
-        : "=b" (ret)
-        : "a" (seL4_SysBenchmarkLogSize)
-        : "%ecx", "%edx", "%edi", "memory"
-    );
-
-    return ret;
-}
-
 static inline void
 seL4_BenchmarkFinalizeLog(void)
 {
