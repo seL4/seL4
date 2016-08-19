@@ -19,7 +19,7 @@
 #define CNT_TVAL CNTHP_TVAL
 #define CNT_CTL  CNTHP_CTL
 #define CNT_CVAL CNTHP_CVAL
-#define CNTCT    CNTPCT //TODO is this correct??
+#define CNT_CT   CNTPCT
 #else
 /* Use virtual timer */
 #define CNT_TVAL CNTV_TVAL
