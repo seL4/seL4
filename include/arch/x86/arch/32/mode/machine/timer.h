@@ -22,13 +22,15 @@ static inline CONST uint32_t
 clz64(uint64_t n)
 {
     uint32_t upper_n = (uint32_t) (n >> 32llu);
+    uint32_t lower_n = (uint32_t) n;
     uint32_t lz = 0;
 
     if (upper_n != 0) {
-        lz += clzl(upper_n);
+        assert(lower_n > 0);
+        return 32u + clzl(lower_n);
     }
 
-    return lz + clzl((uint32_t) n);
+    return clzl(upper_n);
 }
 
 static inline CONST uint64_t
@@ -45,6 +47,7 @@ div64(uint64_t numerator, uint32_t denominator)
         return 0;
     }
 
+    assert(numerator > 0);
     assert(denominator > 0);
 
     /* align denominator to numerator */
