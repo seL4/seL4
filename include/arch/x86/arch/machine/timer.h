@@ -55,6 +55,5 @@ static inline void
 setDeadline(ticks_t deadline)
 {
     assert(deadline > ksCurrentTime);
-    //TODO are MSRs different on X86_64? Or shold this be prefixed with X86?
     x86_wrmsr(IA32_TSC_DEADLINE_MSR, deadline);
 }
