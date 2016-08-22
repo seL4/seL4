@@ -37,7 +37,7 @@ usToTicks(time_t us)
 static inline PURE ticks_t
 getTimerPrecision(void)
 {
-    return return usToTicks(1u);
+    return usToTicks(1u);
 }
 
 static inline void

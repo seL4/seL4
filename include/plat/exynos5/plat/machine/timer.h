@@ -27,7 +27,7 @@ compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 24llu);
 static inline PURE ticks_t
 getTimerPrecision(void)
 {
-    return usToTick(1u);
+    return usToTicks(1u);
 }
 
 CONST static inline time_t
