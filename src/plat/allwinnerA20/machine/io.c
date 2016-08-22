@@ -20,34 +20,20 @@
 
 #define UART_REG(x) ((volatile uint32_t *)(UART0_PPTR + (x)))
 
-#ifdef CONFIG_PRINTING
-
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void
-allwinnerA20_uart_putchar(char c)
+putDebugChar(unsigned char c)
 {
     while ((*UART_REG(ULSR) & ULSR_THRE) == 0);
 
     *UART_REG(UTHR) = c;
-
-    if (c == '\n') {
-        allwinnerA20_uart_putchar('\r');
-    }
 }
-
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-
-void putDebugChar(unsigned char c)
-{
-    while ((*UART_REG(ULSR) & ULSR_THRE) == 0);
-
-    *UART_REG(UTHR) = c;
-}
-
-unsigned char getDebugChar(void)
+unsigned char
+getDebugChar(void)
 {
     return 0;
 }
-
 #endif

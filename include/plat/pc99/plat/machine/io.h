@@ -7,9 +7,7 @@
  *
  * @TAG(GD_GPL)
  */
-
-#ifndef __PLAT_IO_H
-#define __PLAT_IO_H
+#pragma once
 
 #include <config.h>
 #include <arch/linker.h>
@@ -23,21 +21,5 @@ uint16_t in16(uint16_t port);
 uint32_t in32(uint16_t port);
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
 void serial_init(uint16_t port);
-
-#endif
-
-#ifdef CONFIG_PRINTING
-
-void console_putchar(char c);
-
-#define kernel_putchar(c) console_putchar(c)
-
-#else /* !CONFIG_PRINTING */
-
-#define kernel_putchar(c) ((void)(0))
-
-#endif
-
 #endif
