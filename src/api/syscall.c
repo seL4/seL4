@@ -39,13 +39,7 @@ handleInterruptEntry(void)
 {
     irq_t irq;
 
-    c_entry_hook();
-
     irq = getActiveIRQ();
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.path = Entry_Interrupt;
-    ksKernelEntry.word = irq;
-#endif /* DEBUG */
 
     if (irq != irqInvalid) {
         handleInterrupt(irq);
@@ -59,8 +53,6 @@ handleInterruptEntry(void)
     schedule();
     activateThread();
 
-    c_exit_hook();
-
     return EXCEPTION_NONE;
 }
 
@@ -68,9 +60,6 @@ exception_t
 handleUnknownSyscall(word_t w)
 {
 #ifdef CONFIG_DEBUG_BUILD
-    ksKernelEntry.path = Entry_UnknownSyscall;
-    ksKernelEntry.word = w;
-
     if (w == SysDebugPutChar) {
         kernel_putchar(getRegister(ksCurThread, capRegister));
         return EXCEPTION_NONE;
@@ -190,21 +179,11 @@ handleUnknownSyscall(word_t w)
 exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
-    c_entry_hook();
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.path = Entry_UserLevelFault;
-    ksKernelEntry.word = w_a;
-#endif /* DEBUG */
-
     current_fault = fault_user_exception_new(w_a, w_b);
     handleFault(ksCurThread);
 
     schedule();
     activateThread();
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif
 
     return EXCEPTION_NONE;
 }
@@ -213,11 +192,6 @@ exception_t
 handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     exception_t status;
-    c_entry_hook();
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.path = Entry_VMFault;
-    ksKernelEntry.word = vm_faultType;
-#endif /* DEBUG */
 
     status = handleVMFault(ksCurThread, vm_faultType);
     if (status != EXCEPTION_NONE) {
@@ -226,8 +200,6 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 
     schedule();
     activateThread();
-
-    c_exit_hook();
 
     return EXCEPTION_NONE;
 }
@@ -251,10 +223,6 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
 
     /* faulting section */
     lu_ret = lookupCapAndSlot(thread, cptr);
-
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.is_fastpath = false;
-#endif
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Invocation of invalid cap #%lu.", cptr);

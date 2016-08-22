@@ -57,7 +57,6 @@ switchFpuOwner(tcb_t *new_owner)
 VISIBLE exception_t
 handleUnimplementedDevice(void)
 {
-    c_entry_hook();
     /*
      * If we have already given the FPU to the user, we should not reach here.
      *

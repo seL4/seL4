@@ -21,6 +21,7 @@
 #include <api/debug.h>
 
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
+#define TRACK_KERNEL_ENTRIES 1
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 /**
  *  Calculate the maximum number of kernel entries that can be tracked,

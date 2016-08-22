@@ -18,7 +18,8 @@
 /* This C function should be the first thing called from C after entry from
  * assembly. It provides a single place to do any entry work that is not
  * done in assembly for various reasons */
-static inline void c_entry_hook(void) {
+static inline void c_entry_hook(void)
+{
     arch_c_entry_hook();
 #if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
     ksEnter = timestamp();
@@ -29,14 +30,12 @@ static inline void c_entry_hook(void) {
  * the kernel (be it to assembly or returning to user space). It provides
  * a place to provide any additional instrumentation or functionality
  * in C before leaving the kernel */
-static inline void c_exit_hook(void) {
+static inline void c_exit_hook(void)
+{
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     benchmark_track_exit();
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
     arch_c_exit_hook();
 }
-
-void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
-VISIBLE SECTION(".vectors.text");
 
 #endif /* __KERNEL_TRAPS_H */

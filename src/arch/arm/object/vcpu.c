@@ -596,12 +596,10 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 void
 handleVCPUFault(word_t hsr)
 {
-    c_entry_hook();
     current_fault = fault_vcpu_fault_new(hsr);
     handleFault(ksCurThread);
     schedule();
     activateThread();
-    c_exit_hook();
 }
 
 #endif

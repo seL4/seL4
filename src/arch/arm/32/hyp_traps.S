@@ -95,30 +95,6 @@ END_FUNC(arm_vector_table)
 #define HSREC_DATA_ABORT     0x24
 #define HSRIL32              (1 << 25)
 
-/* Helper to return to userland. */
-.macro RET_TO_USER, cur_thread_reg
-    /* cur_thread_reg should contain the address of ksCurThread. */
-    /* Set stack pointer to point at the r0 of the user context. */
-    ldr sp, [\cur_thread_reg]
-    /* Pop user registers */
-    pop {r0-r12}
-    /* Retore the user stack pointer */
-    pop {lr}
-    msr sp_usr, lr
-
-    /* prepare the eception return lr */
-    ldr lr, [sp, #4]
-    msr elr_hyp, lr
-    /* prepare the user status register */
-    ldr lr, [sp, #8]
-    msr spsr_hyp, lr
-
-    /* Finally, pop our LR */
-    pop {lr}
-    /* Return to user */
-    eret
-.endm
-
 .macro EX_ENTRY
     /* Create some scratch space */
     push {lr}
@@ -131,6 +107,16 @@ END_FUNC(arm_vector_table)
     /* Store SP_usr */
     mrs lr, sp_usr
     push {lr}
+.endm
+
+/* Prepare to enter the kernel */
+.macro PUSH_STACK
+    /* store FaultInstruction */
+    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
+    /* Stack all user registers */
+    push {r0-r12}
+    /* Load the kernel's real stack pointer */
+    mov sp, #(PPTR_KERNEL_STACK_TOP)
 .endm
 
 /********************************
@@ -155,95 +141,36 @@ BEGIN_FUNC(arm_hyp_trap)
     beq arm_undefined_inst
 
     /** Everything else is assumed to be a VCPU trap **/
-
-    /* Store FaultInstruction */
     mrs lr, elr_hyp
-    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
-    /* Stack all user registers */
-    push {r0-r12}
-    /* Load the kernel's real stack pointer */
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
-
-    /* Call out to the user */
-    ldr r7, =ksCurThread
+    PUSH_STACK
     mrc HSR(r0)
-    blx handleVCPUFault
-
-    /* Exception return */
-    RET_TO_USER r7
+    b c_handle_vcpu_fault
 END_FUNC(arm_hyp_trap)
 
 
 BEGIN_FUNC(arm_undefined_inst)
-    /* Store FaultInstruction */
     mrs lr, elr_hyp
-    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
-    /* Stack all user registers */
-    push {r0-r12}
-    /* Load the kernel's real stack pointer */
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
-
-    /* Call out to the user */
-    ldr r7, =ksCurThread
-    mov r0, #0
-    mov r1, #0
-    blx handleUserLevelFault
-
-    /* Exception return */
-    RET_TO_USER r7
+    PUSH_STACK
+    b c_handle_undefined_instruction
 END_FUNC(arm_undefined_inst)
 
 BEGIN_FUNC(arm_prefetch_abort)
-    /* Store FaultInstruction */
     mrs lr, elr_hyp
-    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
-    /* Stack all user registers */
-    push {r0-r12}
-    /* Load the kernel's real stack pointer */
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
-
-    /* Call out to the user */
-    ldr r7, =ksCurThread
-    mov r0, #seL4_InstructionFault
-    blx handleVMFaultEvent
-
-    /* Exception return */
-    RET_TO_USER r7
+    PUSH_STACK
+    b c_handle_instruction_fault
 END_FUNC(arm_prefetch_abort)
 
 BEGIN_FUNC(arm_data_abort)
-    /* Store FaultInstruction */
     mrs lr, elr_hyp
-    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
-    /* Stack all user registers */
-    push {r0-r12}
-    /* Load the kernel's real stack pointer */
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
-
-    /* Call out to the user */
-    ldr r7, =ksCurThread
-    mov r0, #seL4_DataFault
-    blx handleVMFaultEvent
-
-    /* Exception return */
-    RET_TO_USER r7
+    PUSH_STACK
+    b c_handle_data_fault
 END_FUNC(arm_data_abort)
 
 BEGIN_FUNC(arm_syscall)
-    /* Store FaultInstruction */
     mrs lr, elr_hyp
     sub lr, lr, #4
-    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
-
-    /* Stack all user registers */
-    push {r0-r12}
-
-    /* Load the kernel's real stack pointer */
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
-
-    /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
-     * unmodified (cptr and msgIngo respectively).
-     */
+    PUSH_STACK
+    /* r0: cptr, r1: msgInfo, r2: syscallNo */
     mov r2, r7
     b c_handle_syscall
 END_FUNC(arm_syscall)
@@ -295,20 +222,9 @@ END_FUNC(arm_hyp_syscall)
 
 BEGIN_FUNC(arm_hyp_irq_exception)
     EX_ENTRY
-
-    /* Store FaultInstruction */
     mrs lr, elr_hyp
-    str lr, [sp, #(PT_FaultInstruction - PT_SP)]
-    /* Stack all user registers */
-    push {r0-r12}
-
-    /* Handle the exception */
-    ldr r7, =ksCurThread
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
-    blx handleInterruptEntry
-
-    /* Return to the user */
-    RET_TO_USER r7
+    PUSH_STACK
+    b c_handle_interrupt
 END_FUNC(arm_hyp_irq_exception)
 
 BEGIN_FUNC(arm_hyp_reset_exception)
