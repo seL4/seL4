@@ -30,7 +30,6 @@ static inline PURE ticks_t
 usToTicks(time_t us)
 {
     assert(x86KStscMhz > 0);
-    assert(us >= getKernelWcetUs() && us <= getMaxTimerUs());
     return us * x86KStscMhz;
 }
 
