@@ -15,6 +15,15 @@
 
 #include <stdarg.h>
 
+void
+putchar(char c)
+{
+    putDebugChar(c);
+    if (c == '\n') {
+        putDebugChar(c);
+    }
+}
+
 static unsigned int
 print_string(const char *s)
 {

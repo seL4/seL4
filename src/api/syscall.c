@@ -74,7 +74,7 @@ handleInterruptEntry(void)
 exception_t
 handleUnknownSyscall(word_t w)
 {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
     ksKernelEntry.path = Entry_UnknownSyscall;
     ksKernelEntry.word = w;
 
@@ -98,9 +98,7 @@ handleUnknownSyscall(word_t w)
         setRegister(ksCurThread, capRegister, cap_type);
         return EXCEPTION_NONE;
     }
-#endif /* DEBUG */
 
-#ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugNameThread) {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
          * then assume the system is completely misconfigured and halt */

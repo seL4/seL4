@@ -23,21 +23,7 @@
 #define USR_TXRDY             (1U << 2)
 #define USR_TXEMP             (1U << 3)
 
-#ifdef CONFIG_PRINTING
-
-void
-apq8064_uart_putchar(char c)
-{
-    putDebugChar(c);
-    if (c == '\n') {
-        putDebugChar('\r');
-    }
-}
-
-#endif
-
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
 void
 putDebugChar(unsigned char c)
 {
@@ -47,16 +33,12 @@ putDebugChar(unsigned char c)
     /* Write the character into the FIFO */
     *UART_REG(UTF) = c & 0xff;
 }
-
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-
 unsigned char
 getDebugChar(void)
 {
     return -1;
 }
-
-
 #endif /* CONFIG_DEBUG_BUILD */

@@ -14,8 +14,6 @@
 #include <machine/io.h>
 #include <plat/machine/devices.h>
 
-#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
 #define URXD  0x00 /* UART Receiver Register */
 #define UTXD  0x40 /* UART Transmitter Register */
 #define UCR1  0x80 /* UART Control Register 1 */
@@ -40,37 +38,22 @@ enum UARTControlBits {
     UART_SR1_RRDY = 9
 };
 
-#endif
-
-#ifdef CONFIG_PRINTING
-
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void
-imx31_uart_putchar(char c)
+putDebugChar(unsigned char c)
 {
     while (!(*UART_REG(USR1) & BIT(UART_SR1_TRDY)));
 
     *UART_REG(UTXD) = c;
-    if (c == '\n') {
-        imx31_uart_putchar('\r');
-    }
 }
-
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-
-void putDebugChar(unsigned char c)
-{
-    while (!(*UART_REG(USR1) & BIT(UART_SR1_TRDY)));
-
-    *UART_REG(UTXD) = c;
-}
-
-unsigned char getDebugChar(void)
+unsigned char
+getDebugChar(void)
 {
     while (!(*UART_REG(USR1) & BIT(UART_SR1_RRDY)));
 
     return *UART_REG(URXD);
 }
-
 #endif

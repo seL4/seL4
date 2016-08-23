@@ -8,7 +8,6 @@
  * @TAG(GD_GPL)
  */
 
-#ifdef DEBUG
 
 #include <config.h>
 #include <object/structures.h>
@@ -16,8 +15,10 @@
 #include <model/statedata.h>
 #include <machine/capdl.h>
 #include <arch/machine/capdl.h>
-#include <plat/machine/debug_helpers.h>
+#include <machine/io.h>
 #include <plat/machine/hardware.h>
+
+#ifdef CONFIG_DEBUG_BUILD
 
 #define ARCH 0xe0
 

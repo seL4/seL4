@@ -11,7 +11,7 @@
 #include <config.h>
 
 #include <arch/linker.h>
-#include <plat/machine/io.h>
+#include <machine/io.h>
 #include <plat/machine/hardware.h>
 #include <plat/machine/ioapic.h>
 

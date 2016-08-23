@@ -20,34 +20,19 @@
 
 #define UART_REG(x) ((volatile uint32_t *)(UART0_PPTR + (x)))
 
-#ifdef CONFIG_PRINTING
-
-void
-am335x_uart_putchar(char c)
-{
-    putDebugChar(c);
-    if (c == '\n') {
-        putDebugChar('\r');
-    }
-}
-
-#endif
-
 #if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
-
-void putDebugChar(unsigned char c)
+void
+putDebugChar(unsigned char c)
 {
     while ((*UART_REG(ULSR) & ULSR_THRE) == 0);
     *UART_REG(UTHR) = c;
 }
-
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-
-unsigned char getDebugChar(void)
+unsigned char
+getDebugChar(void)
 {
     return 0;
 }
-
 #endif
