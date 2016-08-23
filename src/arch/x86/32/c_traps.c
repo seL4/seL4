@@ -10,7 +10,6 @@
 
 #include <config.h>
 #include <model/statedata.h>
-#include <arch/kernel/lock.h>
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
 #include <benchmark_track.h>

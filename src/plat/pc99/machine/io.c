@@ -10,7 +10,6 @@
 
 #include <config.h>
 #include <arch/kernel/boot_sys.h>
-#include <arch/kernel/lock.h>
 #include <arch/model/statedata.h>
 #include <machine/io.h>
 #include <plat/machine/io.h>
