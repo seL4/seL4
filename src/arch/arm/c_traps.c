@@ -76,8 +76,17 @@ c_handle_interrupt(void)
     ksKernelEntry.word = getActiveIRQ();
 #endif
 
-    handleInterruptEntry();
+    fastpath_irq();
+    UNREACHABLE();
+}
+
+/** DONT_TRANSLATE */
+void NORETURN
+slowpath_irq(irq_t irq)
+{
+    handleInterruptEntry(irq);
     restore_user_context();
+    UNREACHABLE();
 }
 
 /** DONT_TRANSLATE */
@@ -109,6 +118,9 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
         UNREACHABLE();
     } else if (syscall == SysReplyRecv) {
         fastpath_reply_recv(cptr, msgInfo);
+        UNREACHABLE();
+    } else if (syscall == SysSend) {
+        fastpath_signal(cptr);
         UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */

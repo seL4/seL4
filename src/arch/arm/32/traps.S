@@ -180,7 +180,7 @@ BEGIN_FUNC(arm_irq_exception)
     str r8, [sp]
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
-    b fastpath_irq
+    b c_handle_interrupt
 END_FUNC(arm_irq_exception)
 
 BEGIN_FUNC(arm_reset_exception)

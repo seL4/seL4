@@ -456,19 +456,11 @@ fastpath_signal(word_t cptr)
 }
 
 static inline void
-bail(void)
-{
-#ifdef ARCH_X86
-    restore_user_context();
-#endif
-}
-
-static inline void
 mask_ack_bail(irq_t irq)
 {
     maskInterrupt(true, irq);
     ackInterrupt(irq);
-    bail();
+    restore_user_context();
 }
 
 void
@@ -492,7 +484,7 @@ fastpath_irq(void)
             printf("Spurious interrupt\n");
         }
         handleSpuriousIRQ();
-        bail();
+        restore_user_context();
         return;
     }
 
