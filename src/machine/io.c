@@ -20,7 +20,7 @@ putchar(char c)
 {
     putConsoleChar(c);
     if (c == '\n') {
-        putConsoleChar(c);
+        putConsoleChar('\r');
     }
 }
 
