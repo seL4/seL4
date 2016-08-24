@@ -36,23 +36,7 @@ END_FUNC(arm_vector_table)
 #include <arch/machine/hardware.h>
 
 #include <arch/machine/registerset.h>
-
-#define VM_EVENT_DATA_ABORT 0
-#define VM_EVENT_PREFETCH_ABORT 1
-
-/* Helper to return to userland. */
-.macro RET_TO_USER, cur_thread_reg
-    /* cur_thread_reg should contain the address of ksCurThread. */
-    /* Set stack pointer to point at the LR_svc of the user context. */
-    ldr sp, [\cur_thread_reg]
-    add sp, sp, #PT_LR_svc
-
-    /* Unstack user registers */
-    ldmdb sp, {r0-lr}^
-
-    /* Jump to user NextPC and restore user CPSR */
-    rfeia sp
-.endm
+#include <mode/api/constants.h>
 
 BEGIN_FUNC(arm_undefined_inst_exception)
     /* Full save/restore, documented in arm_swi_syscall */
@@ -68,15 +52,7 @@ BEGIN_FUNC(arm_undefined_inst_exception)
     sub r8, r8, #4
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
-
-    ldr r7, =ksCurThread
-
-    /* There's only one user-level fault on ARM, and the code is (0,0) */
-    mov r0, #0
-    mov r1, #0
-    blx handleUserLevelFault
-
-    RET_TO_USER r7
+    b c_handle_undefined_instruction
 #endif
 END_FUNC(arm_undefined_inst_exception)
 
@@ -100,7 +76,7 @@ BEGIN_FUNC(arm_swi_syscall)
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
-     * unmodified (cptr and msgInfo respectively).
+     * unmodified (cptr and msgInfo) respectively.
      */
     mov r2, r7
     b c_handle_syscall
@@ -129,11 +105,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
-    ldr r7, =ksCurThread
-    mov r0, #VM_EVENT_PREFETCH_ABORT
-    blx handleVMFaultEvent
-
-    RET_TO_USER r7
+    b c_handle_instruction_fault
 
 kernel_prefetch_fault:
 #ifdef DEBUG
@@ -177,10 +149,8 @@ BEGIN_FUNC(arm_data_abort_exception)
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
 
     ldr r7, =ksCurThread
-    mov r0, #VM_EVENT_DATA_ABORT
-    blx handleVMFaultEvent
+    b c_handle_data_fault
 
-    RET_TO_USER r7
 
 kernel_data_fault:
 #ifdef DEBUG
@@ -209,11 +179,8 @@ BEGIN_FUNC(arm_irq_exception)
     sub r8, r8, #4
     str r8, [sp]
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
-
-    ldr r7, =ksCurThread
     ldr sp, =(PPTR_KERNEL_STACK_TOP)
-    blx fastpath_irq
-    RET_TO_USER r7
+    b fastpath_irq
 END_FUNC(arm_irq_exception)
 
 BEGIN_FUNC(arm_reset_exception)

@@ -9,16 +9,15 @@
  */
 
 #include <config.h>
-
-#ifdef DEBUG
-
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <model/statedata.h>
 #include <machine/capdl.h>
 #include <arch/machine/capdl.h>
-#include <plat/machine/debug_helpers.h>
+#include <machine/io.h>
 #include <plat/machine/pci.h>
+
+#ifdef CONFIG_DEBUG_BUILD
 
 #define ARCH 0xe1
 

@@ -10,13 +10,13 @@
 
 #include <config.h>
 #include <arch/kernel/boot_sys.h>
-#include <arch/kernel/lock.h>
 #include <arch/model/statedata.h>
+#include <machine/io.h>
 #include <plat/machine/io.h>
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
-void serial_init(uint16_t port)
+void
+serial_init(uint16_t port)
 {
     while (!(in8(port + 5) & 0x60)); /* wait until not busy */
 
@@ -31,27 +31,29 @@ void serial_init(uint16_t port)
     in8(port + 5); /* clear line status port */
     in8(port + 6); /* clear modem status port */
 }
-
-#endif
+#endif /* CONFIG_PRINTING || CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_PRINTING
-
-void console_putchar(char c)
+void
+putConsoleChar(unsigned char a)
 {
-    uint16_t port = x86KSconsolePort;
+    while (x86KSconsolePort && !(in8(x86KSconsolePort + 5) & 0x60));
+    out8(x86KSconsolePort, a);
+}
+#endif /* CONFIG_PRINTING */
 
-    lock_acquire(&lock_debug);
-
-    if (port > 0) {
-        while (!(in8(port + 5) & 0x60));
-        out8(port, c);
-        if (c == '\n') {
-            while (!(in8(port + 5) & 0x60));
-            out8(port, '\r');
-        }
-    }
-
-    lock_release(&lock_debug);
+#ifdef CONFIG_DEBUG_BUILD
+void
+putDebugChar(unsigned char a)
+{
+    while (x86KSdebugPort && (in8(x86KSdebugPort + 5) & 0x20) == 0);
+    out8(x86KSdebugPort, a);
 }
 
-#endif
+unsigned char
+getDebugChar(void)
+{
+    while ((in8(x86KSdebugPort + 5) & 1) == 0);
+    return in8(x86KSdebugPort);
+}
+#endif /* CONFIG_DEBUG_BUILD */

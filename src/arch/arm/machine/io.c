@@ -1,21 +1,19 @@
 /*
- * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2016, Data61 CSIRO
  *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(GD_GPL)
+ * @TAG(D61_GPL)
  */
-
 #include <config.h>
+#include <machine/io.h>
 
-#ifdef CONFIG_PRINTING
-
-#include <arch/kernel/lock.h>
-#include <arch/linker.h>
-
-/* global spinlocks */
-lock_t lock_debug;
-
-#endif /* CONFIG_PRINTING */
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+void
+putConsoleChar(unsigned char c)
+{
+    putDebugChar(c);
+}
+#endif

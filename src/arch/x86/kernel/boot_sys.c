@@ -511,5 +511,7 @@ boot_sys(
 
     schedule();
     activateThread();
+
+    c_exit_hook();
 }
 

@@ -10,7 +10,6 @@
 
 #include <config.h>
 #include <model/statedata.h>
-#include <arch/kernel/lock.h>
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
@@ -19,17 +18,38 @@
 #include <benchmark_track.h>
 #include <benchmark_utilisation.h>
 
-void VISIBLE c_handle_interrupt(int irq, int syscall)
+/** DONT_TRANSLATE */
+void VISIBLE
+c_handle_interrupt(int irq, int syscall)
 {
+    c_entry_hook();
+
     if (irq == int_unimpl_dev) {
         handleUnimplementedDevice();
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_UnimplementedDevice;
+        ksKernelEntry.word = irq;
+#endif
     } else if (irq == int_page_fault) {
         /* Error code is in Error. Pull out bit 5, which is whether it was instruction or data */
-        handleVMFaultEvent((ksCurThread->tcbArch.tcbContext.registers[Error] >> 4) & 1);
+        vm_fault_type_t type = (ksCurThread->tcbArch.tcbContext.registers[Error] >> 4u) & 1u;
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_VMFault;
+        ksKernelEntry.word = type;
+#endif
+        handleVMFaultEvent(type);
     } else if (irq < int_irq_min) {
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_UserLevelFault;
+        ksKernelEntry.word = irq;
+#endif
         handleUserLevelFault(irq, ksCurThread->tcbArch.tcbContext.registers[Error]);
     } else if (likely(irq < int_trap_min)) {
         x86KScurInterrupt = irq;
+#ifdef TRACK_KERNEL_ENTRIES
+        ksKernelEntry.path = Entry_Interrupt;
+        ksKernelEntry.word = irq;
+#endif
         fastpath_irq();
     } else if (irq == int_spurious) {
         /* fall through to restore_user_context and do nothing */
@@ -41,11 +61,16 @@ void VISIBLE c_handle_interrupt(int irq, int syscall)
         ksCurThread->tcbArch.tcbContext.registers[FaultIP] -= 2;
         /* trap number is MSBs of the syscall number and the LSBS of EAX */
         sys_num = (irq << 24) | (syscall & 0x00ffffff);
+#ifdef TRACK_KERNEL_ENTIRES
+        ksKernelEntry.path = Entry_UnknownSyscall;
+        ksKernelEntry.word = sys_num;
+#endif
         handleUnknownSyscall(sys_num);
     }
     restore_user_context();
 }
 
+/** DONT_TRANSLATE */
 void NORETURN
 slowpath_irq(irq_t irq)
 {
@@ -57,29 +82,39 @@ void NORETURN
 slowpath(syscall_t syscall)
 {
     x86KScurInterrupt = -1;
-    /* increment NextIP to skip sysenter */
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
         ksCurThread->tcbArch.tcbContext.registers[FaultIP] = ksCurThread->tcbArch.tcbContext.registers[NextIP];
+        /* increment NextIP to skip sysenter */
         ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
+#ifdef TRACK_KERNEL_ENTIRES
+        ksKernelEntry.path = Entry_UnknownSyscall;
+        /* ksKernelEntry.word word is already set to syscall */
+#endif /* TRACK_KERNEL_ENTRIES */
         handleUnknownSyscall(syscall);
     } else {
+#ifdef TRACK_KERNEL_ENTIRES
+        ksEntry.is_fastpath = 0;
+#endif /* TRACK KERNEL ENTRIES */
+        /* increment NextIP to skip sysenter */
         ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
         handleSyscall(syscall);
     }
 
     restore_user_context();
+    UNREACHABLE();
 }
 
-void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+/** DONT_TRANSLATE */
+void VISIBLE
+c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
-#endif /* DEBUG */
+    c_entry_hook();
 
-#if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
-    ksEnter = timestamp();
-#endif
+#ifdef TRACK_KERNEL_ENTRIES
+    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
+    ksKernelEntry.is_fastpath = 1;
+#endif /* TRACK_KERNEL_ENTRIES */
 
 #ifdef CONFIG_FASTPATH
     if (syscall == SysCall) {

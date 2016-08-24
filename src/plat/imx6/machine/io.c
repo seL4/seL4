@@ -33,39 +33,23 @@
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
-
 #define UART_SR2_TXFIFO_EMPTY 14
 #define UART_SR2_RXFIFO_RDR    0
 
-#ifdef CONFIG_PRINTING
-
-void
-imx6_uart_putchar(char c)
-{
-    putDebugChar(c);
-    if (c == '\n') {
-        putDebugChar('\r');
-    }
-}
-
-#endif
-
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
-void putDebugChar(unsigned char c)
+void
+putDebugChar(unsigned char c)
 {
     while (!(*UART_REG(USR2) & BIT(UART_SR2_TXFIFO_EMPTY)));
     *UART_REG(UTXD) = c;
 }
-
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-
-unsigned char getDebugChar(void)
+unsigned char
+getDebugChar(void)
 {
     while (!(*UART_REG(USR2) & BIT(UART_SR2_RXFIFO_RDR)));
     return *UART_REG(URXD);
 }
-
 #endif /* CONFIG_DEBUG_BUILD */

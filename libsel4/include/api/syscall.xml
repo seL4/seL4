@@ -39,8 +39,6 @@
         </config>
         <config condition="defined CONFIG_ENABLE_BENCHMARKS">
             <syscall name="BenchmarkResetLog" />
-            <syscall name="BenchmarkDumpLog"  />
-            <syscall name="BenchmarkLogSize"  />
             <syscall name="BenchmarkFinalizeLog"  />
             <syscall name="BenchmarkSetLogBuffer"  />
         </config>

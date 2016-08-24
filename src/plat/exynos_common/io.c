@@ -37,32 +37,16 @@
 #define TXBUF_EMPTY     BIT(1)
 #define RXBUF_READY     BIT(0)
 
-#ifdef CONFIG_PRINTING
-
-void
-exynos_uart_putchar(char c)
-{
-    putDebugChar(c);
-    if (c == '\n') {
-        putDebugChar('\r');
-    }
-}
-
-#endif
-
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
 void
 putDebugChar(unsigned char c)
 {
     while ( (*UART_REG(UTRSTAT) & TXBUF_EMPTY) == 0 );
     *UART_REG(UTXH) = (c & 0xff);
 }
-
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-
 unsigned char
 getDebugChar(void)
 {
@@ -72,6 +56,4 @@ getDebugChar(void)
         return -1;
     }
 }
-
-
 #endif /* CONFIG_DEBUG_BUILD */

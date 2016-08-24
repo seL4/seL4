@@ -24,7 +24,9 @@ typedef enum {
     Entry_UnknownSyscall,
     Entry_UserLevelFault,
     Entry_VMFault,
-    Entry_Syscall
+    Entry_Syscall,
+    Entry_UnimplementedDevice,
+    Entry_VCPUFault
 } entry_type_t;
 
 /**

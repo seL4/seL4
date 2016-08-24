@@ -26,6 +26,7 @@
 #include <object/interrupt.h>
 #include <model/statedata.h>
 #include <string.h>
+#include <kernel/traps.h>
 
 #ifdef DEBUG
 #include <arch/machine/capdl.h>
@@ -37,20 +38,6 @@
 exception_t
 handleInterruptEntry(irq_t irq)
 {
-
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.path = Entry_Interrupt;
-    ksKernelEntry.word = irq;
-#endif /* DEBUG */
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_start();
-#endif
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
     ksCurThread->tcbSchedContext = ksCurSchedContext;
     assert(irq != irqInvalid);
     handleInterrupt(irq);
@@ -58,20 +45,13 @@ handleInterruptEntry(irq_t irq)
     schedule();
     activateThread();
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif
-
     return EXCEPTION_NONE;
 }
 
 exception_t
 handleUnknownSyscall(word_t w)
 {
-#ifdef DEBUG
-    ksKernelEntry.path = Entry_UnknownSyscall;
-    ksKernelEntry.word = w;
-
+#ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugPutChar) {
         kernel_putchar(getRegister(ksCurThread, capRegister));
         return EXCEPTION_NONE;
@@ -92,9 +72,7 @@ handleUnknownSyscall(word_t w)
         setRegister(ksCurThread, capRegister, cap_type);
         return EXCEPTION_NONE;
     }
-#endif /* DEBUG */
 
-#ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugNameThread) {
         /* This is a syscall meant to aid debugging, so if anything goes wrong
          * then assume the system is completely misconfigured and halt */
@@ -150,62 +128,6 @@ handleUnknownSyscall(word_t w)
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
         setRegister(ksCurThread, capRegister, seL4_NoError);
         return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkDumpLog) {
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-        word_t *buffer = lookupIPCBuffer(true, ksCurThread);
-        word_t start = getRegister(ksCurThread, capRegister);
-        word_t size = getRegister(ksCurThread, msgInfoRegister);
-        word_t logSize = ksLogIndexFinalized > MAX_LOG_SIZE ? MAX_LOG_SIZE : ksLogIndexFinalized;
-
-        if (buffer == NULL) {
-            userError("Cannot dump benchmarking log to a thread without an ipc buffer\n");
-            current_syscall_error.type = seL4_IllegalOperation;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (start > logSize) {
-            userError("Start > logsize\n");
-            current_syscall_error.type = seL4_InvalidArgument;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        /* Assume we have access to an ipc buffer 1024 words big.
-         * Do no write to the first 4 bytes as these are overwritten */
-        if (size > MAX_IPC_BUFFER_STORAGE) {
-            size = MAX_IPC_BUFFER_STORAGE;
-        }
-
-        /* trim to size */
-        if ((start + size) > logSize) {
-            size = logSize - start;
-        }
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-        benchmark_track_dump((benchmark_track_kernel_entry_t *) &buffer[1],
-                             start, size);
-#else /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
-        /* write to ipc buffer */
-        {
-            word_t i;
-            ks_log_entry_t *ksLog = (ks_log_entry_t *) KS_LOG_PPTR;
-
-            for (i = 0; i < size; i++) {
-                int base_index = i * 2 + 1;
-                ks_log_entry_t *log = &ksLog[i + start];
-                buffer[base_index] = log->key;
-                buffer[base_index + 1] = log->data;
-            }
-        }
-
-#endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
-        /* Return the amount written */
-        setRegister(ksCurThread, capRegister, size);
-        return EXCEPTION_NONE;
-    } else if (w == SysBenchmarkLogSize) {
-        /* Return the amount of log items we tried to log (may exceed max size) */
-        setRegister(ksCurThread, capRegister, ksLogIndexFinalized);
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-        return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
         ksLogIndexFinalized = ksLogIndex;
@@ -257,19 +179,6 @@ handleUnknownSyscall(word_t w)
 exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.path = Entry_UserLevelFault;
-    ksKernelEntry.word = w_a;
-#endif /* DEBUG */
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_start();
-#endif
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
     updateTimestamp();
     if (likely(checkBudget())) {
         current_fault = seL4_Fault_UserException_new(w_a, w_b);
@@ -282,10 +191,6 @@ handleUserLevelFault(word_t w_a, word_t w_b)
     schedule();
     activateThread();
 
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif
-
     return EXCEPTION_NONE;
 }
 
@@ -293,18 +198,6 @@ exception_t
 handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     exception_t status;
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.path = Entry_VMFault;
-    ksKernelEntry.word = vm_faultType;
-#endif /* DEBUG */
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_start();
-#endif
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_kentry_stamp();
-#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
     updateTimestamp();
     if (likely(checkBudget())) {
@@ -319,10 +212,6 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 
     schedule();
     activateThread();
-
-#ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-    benchmark_track_exit();
-#endif
 
     return EXCEPTION_NONE;
 }
@@ -346,10 +235,6 @@ handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate)
 
     /* faulting section */
     lu_ret = lookupCapAndSlot(thread, cptr);
-
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
-    ksKernelEntry.is_fastpath = false;
-#endif
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Invocation of invalid cap #%lu.", cptr);

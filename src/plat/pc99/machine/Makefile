@@ -17,6 +17,4 @@ PLAT_C_SOURCES += machine/acpi.c \
                   machine/ioapic.c \
                   machine/pit.c \
                   machine/io.c \
-                  machine/debug_helpers.c \
-                  machine/io.c \
                   machine/intel-vtd.c

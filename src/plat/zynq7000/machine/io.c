@@ -34,38 +34,22 @@
 #define UART_INTRPT_MASK_TXEMPTY     (1U << 3)
 #define UART_CHANNEL_STS_TXEMPTY     (1U << 3)
 
-
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
-#ifdef CONFIG_PRINTING
-
-void
-zynq_uart_putchar(char c)
-{
-    putDebugChar(c);
-    if (c == '\n') {
-        putDebugChar('\r');
-    }
-}
-
-#endif
-
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
-void putDebugChar(unsigned char c)
+void
+putDebugChar(unsigned char c)
 {
     while (!(*UART_REG(UART_CHANNEL_STS) & UART_CHANNEL_STS_TXEMPTY));
     *UART_REG(UART_TX_RX_FIFO) = c;
 }
-
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-
-unsigned char getDebugChar(void)
+unsigned char
+getDebugChar(void)
 {
     while (!(*UART_REG(UART_CHANNEL_STS) & BIT(UART_CHANNEL_STS_TXEMPTY)));
     return *UART_REG(UART_TX_RX_FIFO);
 }
-
 #endif /* CONFIG_DEBUG_BUILD */

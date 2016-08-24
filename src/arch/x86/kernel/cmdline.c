@@ -14,6 +14,7 @@
 #include <arch/kernel/cmdline.h>
 #include <arch/kernel/boot_sys.h>
 #include <arch/linker.h>
+#include <plat/machine/io.h>
 
 /* 'cmdline_val' is declared globally because of a C-subset restriction.
  * It is only used in cmdline_parse(), which therefore is non-reentrant.
@@ -127,6 +128,7 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
     /* initialise console ports to enable debug output */
     if (cmdline_opt->console_port) {
         serial_init(cmdline_opt->console_port);
+        x86KSconsolePort = cmdline_opt->console_port;
     }
 
     /* only start printing here after having parsed/set/initialised the console_port */
@@ -147,17 +149,11 @@ void cmdline_parse(const char *cmdline, cmdline_opt_t* cmdline_opt)
     /* initialise debug ports */
     if (cmdline_opt->debug_port) {
         serial_init(cmdline_opt->debug_port);
+        x86KSdebugPort = cmdline_opt->debug_port;
         printf("Boot config: debug_port = 0x%x\n", cmdline_opt->debug_port);
     }
 #endif
 
     cmdline_opt->disable_iommu = parse_bool(cmdline, cmdline_str_disable_iommu);
     printf("Boot config: disable_iommu = %s\n", cmdline_opt->disable_iommu ? "true" : "false");
-
-#ifdef CONFIG_PRINTING
-    x86KSconsolePort = cmdline_opt->console_port;
-#endif
-#ifdef CONFIG_DEBUG_BUILD
-    x86KSdebugPort = cmdline_opt->debug_port;
-#endif
 }

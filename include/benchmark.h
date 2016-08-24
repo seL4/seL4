@@ -40,10 +40,6 @@ extern timestamp_t ksExit;
 extern uint32_t ksLogIndex;
 extern uint32_t ksLogIndexFinalized;
 
-/* we can fill the entire IPC buffer except for word 0, which
- * the kernel overwrites with the message tag */
-#define MAX_IPC_BUFFER_STORAGE (1024 - 1)
-
 static inline void
 trace_point_start(word_t id)
 {

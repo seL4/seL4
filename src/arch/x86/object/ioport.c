@@ -14,6 +14,7 @@
 #include <machine/io.h>
 #include <arch/object/ioport.h>
 #include <arch/api/invocation.h>
+#include <plat/machine/io.h>
 
 static exception_t
 ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)

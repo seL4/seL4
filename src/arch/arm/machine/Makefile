@@ -11,7 +11,8 @@
 DIRECTORIES += src/arch/arm/machine
 
 ARCH_C_SOURCES += machine/cache.c \
-                  machine/errata.c
+                  machine/errata.c \
+                  machine/io.c
 
 ifeq ($(CPU), cortex-a9)
     ARCH_C_SOURCES += machine/gic_pl390.c
