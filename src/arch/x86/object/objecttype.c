@@ -355,7 +355,12 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_io_port_cap:
         if (cap_get_capType(cap_b) == cap_io_port_cap) {
-            return true;
+            word_t botA, botB, topA, topB;
+            botA = cap_io_port_cap_get_capIOPortFirstPort(cap_a);
+            botB = cap_io_port_cap_get_capIOPortFirstPort(cap_b);
+            topA = cap_io_port_cap_get_capIOPortLastPort(cap_a);
+            topB = cap_io_port_cap_get_capIOPortLastPort(cap_b);
+            return ((botA <= botB) && (topA >= topB));
         }
         break;
 
