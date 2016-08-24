@@ -18,9 +18,9 @@
 void
 putchar(char c)
 {
-    putDebugChar(c);
+    putConsoleChar(c);
     if (c == '\n') {
-        putDebugChar(c);
+        putConsoleChar(c);
     }
 }
 
