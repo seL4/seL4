@@ -19,7 +19,6 @@
 enum {
     seL4_GlobalsFrame = 0xffffc000,
 };
-#endif
 
 #define seL4_DataFault 0
 #define seL4_InstructionFault 1
@@ -111,6 +110,7 @@ enum {
 } seL4_VCPUFault_Msg;
 
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+#endif /* __ASSEMBLER__ */
 
 /* object sizes - 2^n */
 #define seL4_PageBits 12
