@@ -67,13 +67,6 @@ typedef seL4_CPtr seL4_DomainSet;
 
 #define seL4_NilData seL4_CapData_Badge_new(0)
 
-#if CONFIG_MAX_NUM_TRACE_POINTS > 0
-typedef struct {
-    seL4_Word key;
-    seL4_Word data;
-} seL4_LogEntry;
-#endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
-
 #include <sel4/arch/constants.h>
 
 #endif
