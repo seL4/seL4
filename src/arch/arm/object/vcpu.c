@@ -596,8 +596,15 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 void
 handleVCPUFault(word_t hsr)
 {
-    current_fault = fault_vcpu_fault_new(hsr);
-    handleFault(ksCurThread);
+    updateTimestamp();
+
+    if (likely(checkBudget())) {
+        current_fault = fault_vcpu_fault_new(hsr);
+        handleFault(ksCurThread);
+    } else {
+        setThreadState(ksCurThread, ThreadState_Restart);
+    }
+
     schedule();
     activateThread();
 }
