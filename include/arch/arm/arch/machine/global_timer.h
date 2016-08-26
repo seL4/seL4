@@ -38,14 +38,14 @@ enum control {
     RESERVED_2 = 16
 };
 
-/** DONT_TRANSLATE **/
+/** DONT_TRANSLATE */
 static inline CONST ticks_t
 getTimerPrecision(void)
 {
     return usToTicks(2);
 }
 
-/** DONT_TRANSLATE **/
+/** DONT_TRANSLATE */
 static inline ticks_t
 getCurrentTime(void)
 {
@@ -64,7 +64,7 @@ getCurrentTime(void)
     return (((ticks_t) upper2 << 32llu) + (ticks_t) lower);
 }
 
-/** DONT_TRANSLATE **/
+/** DONT_TRANSLATE */
 static inline void
 setDeadline(ticks_t deadline)
 {
@@ -81,7 +81,7 @@ setDeadline(ticks_t deadline)
     assert(getCurrentTime() < deadline || globalTimer->isr == 1u);
 }
 
-/** DONT_TRANSLATE **/
+/** DONT_TRANSLATE */
 static inline void
 ackDeadlineIRQ(void)
 {
@@ -89,7 +89,7 @@ ackDeadlineIRQ(void)
     globalTimer->isr = 1;
 }
 
-/** DONT_TRANSLATE **/
+/** DONT_TRANSLATE */
 static inline BOOT_CODE void
 initTimer(void)
 {
