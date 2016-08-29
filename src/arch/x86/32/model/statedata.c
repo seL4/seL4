@@ -12,8 +12,8 @@
 #include <arch/model/statedata.h>
 
 /* The privileged kernel mapping PD & PT */
-pdpte_t ia32KSGlobalPDPT[BIT(PDPT_BITS)] ALIGN(BIT(seL4_PDPTBits));
-pde_t ia32KSGlobalPD[BIT(PD_BITS + PDPT_BITS)] ALIGN(BIT(seL4_PageDirBits));
+pdpte_t ia32KSGlobalPDPT[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(seL4_PDPTBits));
+pde_t ia32KSGlobalPD[BIT(PD_BITS + PDPT_INDEX_BITS)] ALIGN(BIT(seL4_PageDirBits));
 pte_t ia32KSGlobalPT[BIT(PT_BITS)] ALIGN(BIT(seL4_PageTableBits));
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER

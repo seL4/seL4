@@ -15,8 +15,8 @@
 #include <object/structures.h>
 #include <arch/types.h>
 
-extern pdpte_t ia32KSGlobalPDPT[BIT(PDPT_BITS)];
-extern pde_t ia32KSGlobalPD[BIT(PD_BITS + PDPT_BITS)];
+extern pdpte_t ia32KSGlobalPDPT[BIT(PDPT_INDEX_BITS)];
+extern pde_t ia32KSGlobalPD[BIT(PD_BITS + PDPT_INDEX_BITS)];
 extern pte_t ia32KSGlobalPT[BIT(PT_BITS)];
 extern paddr_t ia32KSCurrentPD;
 

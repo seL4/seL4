@@ -25,7 +25,7 @@
 
 #ifdef CONFIG_PAE_PAGING
 #define PDPTE_SIZE_BITS 3
-#define PDPT_BITS    2
+#define PDPT_INDEX_BITS    2
 #define PDE_SIZE_BITS  3
 #define PD_BITS      9
 #define PTE_SIZE_BITS 3
@@ -34,7 +34,7 @@
 typedef pdpte_t vspace_root_t;
 #else
 #define PDPTE_SIZE_BITS 0
-#define PDPT_BITS 0
+#define PDPT_INDEX_BITS 0
 #define PDE_SIZE_BITS  2
 #define PD_BITS      10
 #define PTE_SIZE_BITS 2
@@ -47,7 +47,7 @@ typedef pde_t vspace_root_t;
 #define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
 #define PDPTE_REF(p)   ((word_t)(p))
 
-compile_assert(pdpt_size_bits_sane, PDPT_BITS + PDPTE_SIZE_BITS == seL4_PDPTBits)
+compile_assert(pdpt_size_bits_sane, PDPT_INDEX_BITS + PDPTE_SIZE_BITS == seL4_PDPTBits)
 #define PDPT_PTR(r)    ((pdpte_t*)(r))
 #define PDPT_PREF(p)   ((word_t)(p))
 

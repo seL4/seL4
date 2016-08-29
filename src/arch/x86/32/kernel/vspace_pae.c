@@ -20,9 +20,9 @@
 /* The boot pd is referenced by code that runs before paging, so
  * place it in PHYS_DATA. In PAE mode the top level is actually
  * a PDPTE, but we call it _boot_pd for compatibility */
-pdpte_t _boot_pd[BIT(PDPT_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE  PHYS_DATA;
+pdpte_t _boot_pd[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE  PHYS_DATA;
 /* Allocate enough page directories to fill every slot in the PDPT */
-pde_t _boot_pds[BIT(PD_BITS + PDPT_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
+pde_t _boot_pds[BIT(PD_BITS + PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
 
 BOOT_CODE
 pde_t *get_boot_pd()
@@ -80,7 +80,7 @@ init_boot_pd(void)
     word_t i;
 
     /* first map in all the pds into the pdpt */
-    for (i = 0; i < BIT(PDPT_BITS); i++) {
+    for (i = 0; i < BIT(PDPT_INDEX_BITS); i++) {
         uint32_t pd_base = (uint32_t)&_boot_pds[i * BIT(PD_BITS)];
         pdpte_ptr_new_phys(
             _boot_pd + i,
@@ -214,7 +214,7 @@ void copyGlobalMappings(vspace_root_t* new_vspace)
     word_t i;
     pdpte_t *pdpt = (pdpte_t*)new_vspace;
 
-    for (i = PPTR_BASE >> seL4_HugePageBits; i < BIT(PDPT_BITS); i++) {
+    for (i = PPTR_BASE >> seL4_HugePageBits; i < BIT(PDPT_INDEX_BITS); i++) {
         pdpt[i] = ia32KSGlobalPDPT[i];
     }
 }

@@ -219,7 +219,7 @@ map_kernel_window(
     unsigned int UNUSED i;
 
     if (config_set(CONFIG_PAE_PAGING)) {
-        for (idx = 0; idx < BIT(PDPT_BITS); idx++) {
+        for (idx = 0; idx < BIT(PDPT_INDEX_BITS); idx++) {
             pdpte_ptr_new(&ia32KSGlobalPDPT[idx],
                           pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_BITS)]),
                           0, /* avl*/
@@ -451,7 +451,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     seL4_SlotPos slot_pos_after;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
-    if (PDPT_BITS == 0) {
+    if (PDPT_INDEX_BITS == 0) {
         cap_t pd_cap;
         pptr_t pd_pptr;
         /* just create single PD obj and cap */
@@ -484,10 +484,10 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
                    );
         /* create all PD objs and caps necessary to cover userland image. For simplicity
          * to ensure we also cover the kernel window we create all PDs */
-        for (i = 0; i < BIT(PDPT_BITS); i++) {
+        for (i = 0; i < BIT(PDPT_INDEX_BITS); i++) {
             /* The compiler is under the mistaken belief here that this shift could be
              * undefined. However, in the case that it would be undefined this code path
-             * is not reachable because PDPT_BITS == 0 (see if statement at the top of
+             * is not reachable because PDPT_INDEX_BITS == 0 (see if statement at the top of
              * this function), so to work around it we must both put in a redundant
              * if statement AND place the shift in a variable. While the variable
              * will get compiled away it prevents the compiler from evaluating
