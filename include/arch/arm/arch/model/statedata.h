@@ -16,7 +16,7 @@
 #include <mode/model/statedata.h>
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-extern pdeS1_t armHSGlobalPGD[BIT(PGD_BITS)] VISIBLE;
+extern pdeS1_t armHSGlobalPGD[BIT(PGD_INDEX_BITS)] VISIBLE;
 extern pdeS1_t armHSGlobalPD[BIT(PT_INDEX_BITS)]   VISIBLE;
 extern pteS1_t armHSGlobalPT[BIT(PT_INDEX_BITS)]   VISIBLE;
 /* Stage 2 translations have a slightly different encoding to Stage 1

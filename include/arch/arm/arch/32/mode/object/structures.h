@@ -42,7 +42,7 @@ typedef word_t vm_rights_t;
 #define PGDE_SIZE_BITS 3
 #define PDE_SIZE_BITS  3
 #define PTE_SIZE_BITS  3
-#define PGD_BITS 2
+#define PGD_INDEX_BITS 2
 #define PD_INDEX_BITS 11
 #define PT_INDEX_BITS 9
 #define VCPU_SIZE_BITS 12
@@ -84,7 +84,7 @@ compile_assert(pt_size_bits_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTabl
 
 
 /* LPAE */
-#define PGD_SIZE_BITS (PGD_BITS+PGDE_SIZE_BITS)
+#define PGD_SIZE_BITS (PGD_INDEX_BITS+PGDE_SIZE_BITS)
 #define LPAE_PGDE_PTR(r) ((lpae_pde_t *)(r))
 #define LPAE_PGDE_REF(p) ((unsigned int)p)
 #define LPAE_PGDE_PTR_PTR(r) ((lpae_pde_t **)r)

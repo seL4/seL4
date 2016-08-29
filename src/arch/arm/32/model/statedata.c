@@ -41,7 +41,7 @@ pte_t armKSGlobalLogPT[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
 
 #else
 /* The global, hypervisor, level 1 page table */
-pdeS1_t  armHSGlobalPGD[BIT(PGD_BITS)] ALIGN_BSS(BIT(PGD_SIZE_BITS));
+pdeS1_t  armHSGlobalPGD[BIT(PGD_INDEX_BITS)] ALIGN_BSS(BIT(PGD_SIZE_BITS));
 /* The global, hypervisor, level 2 page table */
 pdeS1_t  armHSGlobalPD[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* The global, hypervisor, level 3 page table */
