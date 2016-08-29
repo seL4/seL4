@@ -125,8 +125,8 @@ typedef struct asid_pool asid_pool_t;
 
 #define HW_ASID_SIZE_BITS 1
 
-#define ASID_POOL_BITS asidLowBits
-compile_assert(asid_pool_size_sane, ASID_POOL_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
+#define ASID_POOL_INDEX_BITS asidLowBits
+compile_assert(asid_pool_size_sane, ASID_POOL_INDEX_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
 #define ASID_BITS (asidHighBits+asidLowBits)
 
 #define nASIDPools BIT(asidHighBits)
