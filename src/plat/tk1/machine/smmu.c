@@ -194,7 +194,7 @@ plat_smmu_init(void)
     smmu_disable();
 
     for (asid = SMMU_FIRST_ASID; asid <= SMMU_LAST_ASID; asid++) {
-        iopde_t *pd = (iopde_t *)alloc_region(SMMU_PD_BITS);
+        iopde_t *pd = (iopde_t *)alloc_region(SMMU_PD_INDEX_BITS);
 
         if (pd == 0) {
             printf("Failed to allocate SMMU IOPageDirectory for ASID %d\n", asid);
@@ -204,11 +204,11 @@ plat_smmu_init(void)
         /* put the PD in the lookup table */
         smmu_ioasid_to_pd[asid - SMMU_FIRST_ASID] = pd;
 
-        memset(pd, 0, BIT(SMMU_PD_BITS));
+        memset(pd, 0, BIT(SMMU_PD_INDEX_BITS));
         if (config_set(CONFIG_ARM_SMMU_VM_DEFAULT_MAPPING)) {
             plat_smmu_vm_mapping((word_t)pd, VM_GUEST_PA_START, VM_HOST_PA_START, VM_HOST_PA_SIZE);
         }
-        cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_BITS)),
+        cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_INDEX_BITS)),
                             addrFromPPtr(pd));
 
         smmu_regs->smmu_ptb_asid = asid;
