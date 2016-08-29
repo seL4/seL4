@@ -190,7 +190,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                                         (pptr_t) &armKSGlobalLogPT[0] + BIT(seL4_PageTableBits),
                                         addrFromPPtr((void *)&armKSGlobalLogPT[0]));
 
-                    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+                    for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
                         invalidateTLB_VAASID(KS_LOG_PPTR + (idx << seL4_PageBits));
                     }
 
@@ -484,7 +484,7 @@ Arch_getObjectSize(word_t t)
     case seL4_ARM_SuperSectionObject:
         return ARMSuperSectionBits;
     case seL4_ARM_PageTableObject:
-        return PTE_SIZE_BITS + PT_BITS;
+        return PTE_SIZE_BITS + PT_INDEX_BITS;
     case seL4_ARM_PageDirectoryObject:
         return PDE_SIZE_BITS + PD_BITS;
 #ifdef CONFIG_ARM_SMMU
@@ -574,11 +574,11 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
                    (word_t)regionBase);
 
     case seL4_ARM_PageTableObject:
-        memzero(regionBase, 1 << (PTE_SIZE_BITS + PT_BITS));
+        memzero(regionBase, 1 << (PTE_SIZE_BITS + PT_INDEX_BITS));
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[256]) ptr))" */
         cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << (PT_BITS + PTE_SIZE_BITS)) - 1,
+                            (word_t)regionBase + (1 << (PT_INDEX_BITS + PTE_SIZE_BITS)) - 1,
                             addrFromPPtr(regionBase));
 
         return cap_page_table_cap_new(false, asidInvalid, 0,

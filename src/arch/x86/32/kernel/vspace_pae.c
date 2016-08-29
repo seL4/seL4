@@ -255,7 +255,7 @@ lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
     pdptSlot = lookupPDPTSlot(vspace, vptr);
 
     if (!pdpte_ptr_get_present(pdptSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_BITS + PD_BITS);
+        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_INDEX_BITS + PD_BITS);
         ret.pdSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
@@ -265,7 +265,7 @@ lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
         unsigned int pdIndex;
 
         pd = paddr_to_pptr(pdpte_ptr_get_pd_base_address(pdptSlot));
-        pdIndex = (vptr >> (PAGE_BITS + PT_BITS)) & MASK(PD_BITS);
+        pdIndex = (vptr >> (PAGE_BITS + PT_INDEX_BITS)) & MASK(PD_BITS);
         pdSlot = pd + pdIndex;
 
         ret.pdSlot = pdSlot;

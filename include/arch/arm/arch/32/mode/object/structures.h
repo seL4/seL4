@@ -44,7 +44,7 @@ typedef word_t vm_rights_t;
 #define PTE_SIZE_BITS  3
 #define PGD_BITS 2
 #define PD_BITS 11
-#define PT_BITS 9
+#define PT_INDEX_BITS 9
 #define VCPU_SIZE_BITS 12
 /* Generate a vcpu_t pointer from a vcpu block reference */
 #define VCPU_PTR(r)       ((struct vcpu *)(r))
@@ -54,7 +54,7 @@ typedef word_t vm_rights_t;
 #define PDE_SIZE_BITS  2
 #define PTE_SIZE_BITS  2
 #define PD_BITS 12
-#define PT_BITS 8
+#define PT_INDEX_BITS 8
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 
@@ -78,7 +78,7 @@ typedef word_t pde_type_t;
 #define PTE_PTR(r) ((pte_t *)r)
 #define PTE_REF(p) ((unsigned int)p)
 
-compile_assert(pt_size_bits_sane, PT_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
+compile_assert(pt_size_bits_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r) ((pte_t *)r)
 #define PT_REF(p) ((unsigned int)p)
 

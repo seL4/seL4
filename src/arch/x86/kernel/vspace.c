@@ -139,7 +139,7 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
         assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
         pt[idx] = pte;
         idx++;
-        if (idx == BIT(PT_BITS)) {
+        if (idx == BIT(PT_INDEX_BITS)) {
             return false;
         }
     }
@@ -159,20 +159,20 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
         assert(idx == ((PPTR_DRHU_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
         pt[idx] = pte;
         idx++;
-        if (idx == BIT(PT_BITS)) {
+        if (idx == BIT(PT_INDEX_BITS)) {
             return false;
         }
     }
 
     /* mark unused kernel-device pages as 'not present' */
-    while (idx < BIT(PT_BITS)) {
+    while (idx < BIT(PT_INDEX_BITS)) {
         pte = x86_make_empty_pte();
         pt[idx] = pte;
         idx++;
     }
 
     /* Check we haven't added too many kernel-device mappings.*/
-    assert(idx == BIT(PT_BITS));
+    assert(idx == BIT(PT_INDEX_BITS));
     return true;
 }
 
@@ -591,7 +591,7 @@ lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
     }
     if ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_small) ||
             !pde_pde_small_ptr_get_present(pdSlot.pdSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_BITS);
+        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_INDEX_BITS);
         ret.ptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
@@ -601,7 +601,7 @@ lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
         word_t ptIndex;
 
         pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot.pdSlot));
-        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
+        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS);
         ptSlot = pt + ptIndex;
 
         ret.ptSlot = ptSlot;
@@ -647,12 +647,12 @@ void flushTable(vspace_root_t *vspace, word_t vptr, pte_t* pt, asid_t asid)
     word_t i;
     cap_t        threadRoot;
 
-    assert(IS_ALIGNED(vptr, PT_BITS + PAGE_BITS));
+    assert(IS_ALIGNED(vptr, PT_INDEX_BITS + PAGE_BITS));
 
     /* check if page table belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
     /* find valid mappings */
-    for (i = 0; i < BIT(PT_BITS); i++) {
+    for (i = 0; i < BIT(PT_INDEX_BITS); i++) {
         if (pte_get_present(pt[i])) {
             if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == vspace)) {
                 invalidateTranslationSingleASID(vptr + (i << PAGE_BITS), asid);
@@ -1199,7 +1199,7 @@ decodeX86PageTableInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vaddr = getSyscallArg(0, buffer) & (~MASK(PT_BITS + PAGE_BITS));
+    vaddr = getSyscallArg(0, buffer) & (~MASK(PT_INDEX_BITS + PAGE_BITS));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
     vspaceCap = excaps.excaprefs[0]->cap;
 

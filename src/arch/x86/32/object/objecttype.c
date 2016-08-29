@@ -72,7 +72,7 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
                     /* Invalidate log page table entries */
                     clearMemory(ia32KSGlobalLogPT, BIT(seL4_PageTableBits));
 
-                    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+                    for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
                         invalidateTLBentry(KS_LOG_PPTR + (idx << seL4_PageBits));
                     }
 

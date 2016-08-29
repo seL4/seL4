@@ -344,14 +344,14 @@ map_kernel_window(void)
 
     /* Initialise PMD */
     /* Invalidate up until kernelBase */
-    for (idx = 0; idx < (kernelBase - 0xC0000000) >> (PT_BITS + PAGE_BITS); idx++) {
+    for (idx = 0; idx < (kernelBase - 0xC0000000) >> (PT_INDEX_BITS + PAGE_BITS); idx++) {
         pde = pdeS1_pdeS1_invalid_new();
         armHSGlobalPD[idx] = pde;
     }
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
     /* up to end of virtual address space minus 2M using 2M frames */
     phys = physBase;
-    for (; idx < BIT(PT_BITS) - 1; idx++) {
+    for (; idx < BIT(PT_INDEX_BITS) - 1; idx++) {
         pde = pdeS1_pdeS1_section_new(
                   0, /* Executable */
                   0, /* Executable in PL1 */
@@ -365,7 +365,7 @@ map_kernel_window(void)
                   1  /* outer write-back Cacheable */
               );
         armHSGlobalPD[idx] = pde;
-        phys += BIT(PT_BITS + PAGE_BITS);
+        phys += BIT(PT_INDEX_BITS + PAGE_BITS);
     }
     /* map page table covering last 2M of virtual address space */
     pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromPPtr(armHSGlobalPT));
@@ -424,7 +424,7 @@ map_kernel_window(void)
                 MEMATTR_CACHEABLE  /* Cacheable */
             );
     memzero(armUSGlobalPT, 1 << seL4_PageTableBits);
-    idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_BITS));
+    idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_INDEX_BITS));
     armUSGlobalPT[idx] = pteS2;
 
     /* map stack frame */
@@ -584,9 +584,9 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 
     /* create all PT objs and caps necessary to cover userland image */
 
-    for (pt_vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
+    for (pt_vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
             pt_vptr < it_v_reg.end;
-            pt_vptr += BIT(PT_BITS + PAGE_BITS)) {
+            pt_vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
         pt_pptr = alloc_region(seL4_PageTableBits);
         if (!pt_pptr) {
             return cap_null_cap_new();
@@ -818,7 +818,7 @@ lookupPDSlot(pde_t *pd, vptr_t vptr)
 {
     unsigned int pdIndex;
 
-    pdIndex = vptr >> (PAGE_BITS + PT_BITS);
+    pdIndex = vptr >> (PAGE_BITS + PT_INDEX_BITS);
     return pd + pdIndex;
 }
 
@@ -831,7 +831,7 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
     pdSlot = lookupPDSlot(pd, vptr);
 
     if (unlikely(pde_ptr_get_pdeType(pdSlot) != pde_pde_coarse)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(PT_BITS + PAGE_BITS);
+        current_lookup_fault = lookup_fault_missing_capability_new(PT_INDEX_BITS + PAGE_BITS);
 
         ret.ptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
@@ -841,7 +841,7 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
         unsigned int ptIndex;
 
         pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pdSlot));
-        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
+        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS);
         ptSlot = pt + ptIndex;
 
         ret.ptSlot = ptSlot;
@@ -855,7 +855,7 @@ lookupPTSlot_nofail(pte_t *pt, vptr_t vptr)
 {
     unsigned int ptIndex;
 
-    ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
+    ptIndex = (vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS);
     return pt + ptIndex;
 }
 
@@ -1201,7 +1201,7 @@ pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
         return NULL;
     }
 
-    pdIndex = vaddr >> (PAGE_BITS + PT_BITS);
+    pdIndex = vaddr >> (PAGE_BITS + PT_INDEX_BITS);
     pde = find_ret.pd[pdIndex];
 
     if (likely(pde_get_pdeType(pde) == pde_pde_coarse
@@ -1331,7 +1331,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     pd = pageTableMapped (asid, vaddr, pt);
 
     if (likely(pd != NULL)) {
-        pdIndex = vaddr >> (PT_BITS + PAGE_BITS);
+        pdIndex = vaddr >> (PT_INDEX_BITS + PAGE_BITS);
         pdSlot = pd + pdIndex;
 
         *pdSlot = pde_pde_invalid_new(0, 0);
@@ -1620,7 +1620,7 @@ flushTable(pde_t* pd, asid_t asid, word_t vptr, pte_t* pt)
     pde_t stored_hw_asid;
     bool_t root_switched;
 
-    assert((vptr & MASK(PT_BITS + ARMSmallPageBits)) == 0);
+    assert((vptr & MASK(PT_INDEX_BITS + ARMSmallPageBits)) == 0);
 
     /* Switch to the address space to allow a cache clean by VA */
     root_switched = setVMRootForFlush(pd, asid);
@@ -2383,7 +2383,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
         }
     }
 
-    pdIndex = vaddr >> (PAGE_BITS + PT_BITS);
+    pdIndex = vaddr >> (PAGE_BITS + PT_INDEX_BITS);
     pdSlot = &pd[pdIndex];
     if (unlikely(pde_ptr_get_pdeType(pdSlot) != pde_pde_invalid)) {
         current_syscall_error.type = seL4_DeleteFirst;
@@ -2963,7 +2963,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
 
-    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+    for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
         paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
 
         armKSGlobalLogPT[idx] =

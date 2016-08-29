@@ -171,7 +171,7 @@ lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
     pde_t *pd = PDE_PTR(vspace);
     unsigned int pdIndex;
 
-    pdIndex = vptr >> (PAGE_BITS + PT_BITS);
+    pdIndex = vptr >> (PAGE_BITS + PT_INDEX_BITS);
     pdSlot.status = EXCEPTION_NONE;
     pdSlot.pdSlot = pd + pdIndex;
     return pdSlot;

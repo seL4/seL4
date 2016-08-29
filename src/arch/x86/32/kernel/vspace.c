@@ -493,7 +493,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
              * will get compiled away it prevents the compiler from evaluating
              * the 1 << 32 as a constant when it shouldn't
              * tl;dr gcc evaluates constants even if code is unreachable */
-            int shift = (PD_BITS + PT_BITS + PAGE_BITS);
+            int shift = (PD_BITS + PT_INDEX_BITS + PAGE_BITS);
             if (shift != 32) {
                 vptr = i << shift;
             } else {
@@ -519,9 +519,9 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 
     /* create all PT objs and caps necessary to cover userland image */
 
-    for (vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
+    for (vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
             vptr < it_v_reg.end;
-            vptr += BIT(PT_BITS + PAGE_BITS)) {
+            vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
         pptr = alloc_region(seL4_PageTableBits);
         if (!pptr) {
             return cap_null_cap_new();
@@ -799,7 +799,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
     ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
 
     /* fill global log page table with mappings */
-    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+    for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
         paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
 
         pte_t pte = pte_new(
