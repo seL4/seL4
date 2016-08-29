@@ -21,7 +21,7 @@ extern word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)] VISIBLE;
 extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;
 extern asid_t armKSHWASIDTable[BIT(hwASIDBits)] VISIBLE;
 extern hw_asid_t armKSNextASID VISIBLE;
-extern pde_t armKSGlobalPD[BIT(PD_BITS)] VISIBLE;
+extern pde_t armKSGlobalPD[BIT(PD_INDEX_BITS)] VISIBLE;
 extern pte_t armKSGlobalPT[BIT(PT_INDEX_BITS)] VISIBLE;
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER

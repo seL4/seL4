@@ -22,7 +22,7 @@
 
 #define ARCH 0xe0
 
-#define PD_READ_SIZE         BIT(PD_BITS)
+#define PD_READ_SIZE         BIT(PD_INDEX_BITS)
 #define PT_READ_SIZE         BIT(PT_INDEX_BITS)
 #define ASID_POOL_READ_SIZE  BIT(ASID_POOL_INDEX_BITS)
 

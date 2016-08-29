@@ -22,7 +22,7 @@
  * a PDPTE, but we call it _boot_pd for compatibility */
 pdpte_t _boot_pd[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE  PHYS_DATA;
 /* Allocate enough page directories to fill every slot in the PDPT */
-pde_t _boot_pds[BIT(PD_BITS + PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
+pde_t _boot_pds[BIT(PD_INDEX_BITS + PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
 
 BOOT_CODE
 pde_t *get_boot_pd()
@@ -81,7 +81,7 @@ init_boot_pd(void)
 
     /* first map in all the pds into the pdpt */
     for (i = 0; i < BIT(PDPT_INDEX_BITS); i++) {
-        uint32_t pd_base = (uint32_t)&_boot_pds[i * BIT(PD_BITS)];
+        uint32_t pd_base = (uint32_t)&_boot_pds[i * BIT(PD_INDEX_BITS)];
         pdpte_ptr_new_phys(
             _boot_pd + i,
             pd_base,    /* pd_base_address */
@@ -255,7 +255,7 @@ lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
     pdptSlot = lookupPDPTSlot(vspace, vptr);
 
     if (!pdpte_ptr_get_present(pdptSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_INDEX_BITS + PD_BITS);
+        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_INDEX_BITS + PD_INDEX_BITS);
         ret.pdSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
@@ -265,7 +265,7 @@ lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
         unsigned int pdIndex;
 
         pd = paddr_to_pptr(pdpte_ptr_get_pd_base_address(pdptSlot));
-        pdIndex = (vptr >> (PAGE_BITS + PT_INDEX_BITS)) & MASK(PD_BITS);
+        pdIndex = (vptr >> (PAGE_BITS + PT_INDEX_BITS)) & MASK(PD_INDEX_BITS);
         pdSlot = pd + pdIndex;
 
         ret.pdSlot = pdSlot;

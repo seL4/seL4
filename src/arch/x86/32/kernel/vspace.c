@@ -221,7 +221,7 @@ map_kernel_window(
     if (config_set(CONFIG_PAE_PAGING)) {
         for (idx = 0; idx < BIT(PDPT_INDEX_BITS); idx++) {
             pdpte_ptr_new(&ia32KSGlobalPDPT[idx],
-                          pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_BITS)]),
+                          pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_INDEX_BITS)]),
                           0, /* avl*/
                           0, /* cache_disabled */
                           0, /* write_through */
@@ -493,7 +493,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
              * will get compiled away it prevents the compiler from evaluating
              * the 1 << 32 as a constant when it shouldn't
              * tl;dr gcc evaluates constants even if code is unreachable */
-            int shift = (PD_BITS + PT_INDEX_BITS + PAGE_BITS);
+            int shift = (PD_INDEX_BITS + PT_INDEX_BITS + PAGE_BITS);
             if (shift != 32) {
                 vptr = i << shift;
             } else {

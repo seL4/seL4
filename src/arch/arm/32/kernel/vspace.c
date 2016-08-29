@@ -212,7 +212,7 @@ map_kernel_window(void)
     phys = physBase;
     idx = kernelBase >> pageBitsForSize(ARMSection);
 
-    while (idx < BIT(PD_BITS) - SECTIONS_PER_SUPER_SECTION) {
+    while (idx < BIT(PD_INDEX_BITS) - SECTIONS_PER_SUPER_SECTION) {
         word_t idx2;
 
         pde = pde_pde_section_new(
@@ -1347,7 +1347,7 @@ copyGlobalMappings(pde_t *newPD)
     word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
-    for (i = kernelBase >> ARMSectionBits; i < BIT(PD_BITS); i++) {
+    for (i = kernelBase >> ARMSectionBits; i < BIT(PD_INDEX_BITS); i++) {
         if (i != PD_ASID_SLOT) {
             newPD[i] = global_pd[i];
         }
@@ -1357,7 +1357,7 @@ copyGlobalMappings(pde_t *newPD)
      * we still need to share the globals page. */
     pde_t pde;
     pde = pde_pde_coarse_new(addrFromPPtr(armUSGlobalPT));
-    newPD[BIT(PD_BITS) - 1] = pde;
+    newPD[BIT(PD_INDEX_BITS) - 1] = pde;
 #endif
 }
 

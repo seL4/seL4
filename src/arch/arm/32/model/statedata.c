@@ -30,7 +30,7 @@ hw_asid_t armKSNextASID;
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 /* The global, privileged, physically-mapped PD */
-pde_t armKSGlobalPD[BIT(PD_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));
+pde_t armKSGlobalPD[BIT(PD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));
 
 /* The global, privileged, page table. */
 pte_t armKSGlobalPT[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));

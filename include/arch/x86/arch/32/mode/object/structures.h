@@ -27,7 +27,7 @@
 #define PDPTE_SIZE_BITS 3
 #define PDPT_INDEX_BITS    2
 #define PDE_SIZE_BITS  3
-#define PD_BITS      9
+#define PD_INDEX_BITS      9
 #define PTE_SIZE_BITS 3
 #define PT_INDEX_BITS      9
 #define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPDPT
@@ -36,7 +36,7 @@ typedef pdpte_t vspace_root_t;
 #define PDPTE_SIZE_BITS 0
 #define PDPT_INDEX_BITS 0
 #define PDE_SIZE_BITS  2
-#define PD_BITS      10
+#define PD_INDEX_BITS      10
 #define PTE_SIZE_BITS 2
 #define PT_INDEX_BITS      10
 #define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPD
@@ -55,7 +55,7 @@ compile_assert(pdpt_size_bits_sane, PDPT_INDEX_BITS + PDPTE_SIZE_BITS == seL4_PD
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
 #define PDE_REF(p)     ((word_t)(p))
 
-compile_assert(pd_size_sane, PD_BITS + PDE_SIZE_BITS == seL4_PageDirBits)
+compile_assert(pd_size_sane, PD_INDEX_BITS + PDE_SIZE_BITS == seL4_PageDirBits)
 #define PD_PTR(r)    ((pde_t *)(r))
 #define PD_REF(p)    ((word_t)(p))
 
