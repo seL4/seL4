@@ -77,10 +77,10 @@ static lookupIOPTSlot_ret_t lookupIOPTSlot_helper(vtd_pte_t* iopt, word_t transl
     vtd_pte_t*           vtd_pte_slot;
     vtd_pte_t*           vtd_next_level_iopt;
 
-    if (VTD_PT_BITS * levels >= 32) {
+    if (VTD_PT_INDEX_BITS * levels >= 32) {
         iopt_index = 0;
     } else {
-        iopt_index = (translation >> (VTD_PT_BITS * levels)) & MASK(VTD_PT_BITS);
+        iopt_index = (translation >> (VTD_PT_INDEX_BITS * levels)) & MASK(VTD_PT_INDEX_BITS);
     }
 
     vtd_pte_slot = iopt + iopt_index;
