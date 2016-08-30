@@ -12,6 +12,12 @@
 #define __ARCH_ARMV7A_MACHINE_H
 
 /** MODIFIES: [*] */
+static inline void wfi(void)
+{
+    asm volatile("wfi" ::: "memory");
+}
+
+/** MODIFIES: [*] */
 static inline void dsb(void)
 {
     asm volatile("dsb" ::: "memory");
