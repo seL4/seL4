@@ -14,7 +14,7 @@
 /** DONT_TRANSLATE */
 void idle_thread(void)
 {
-    while(1) {
+    while (1) {
         wfi();
     }
 }

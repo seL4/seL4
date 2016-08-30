@@ -15,10 +15,10 @@
 /** DONT_TRANSLATE */
 static inline void wfi(void)
 {
-    /* 
-     * The wait-for-interrupt doesn't work on the KZM board, although, 
-     * according to the arm infocenter, it should. With the KZM currently 
-     * being the only supported ARMv6 platform, it is unclear at this 
+    /*
+     * The wait-for-interrupt doesn't work on the KZM board, although,
+     * according to the arm infocenter, it should. With the KZM currently
+     * being the only supported ARMv6 platform, it is unclear at this
      * time wether it works for other SoCs (e.g. BCM2835), so we explicitly
      * disable only the KZM here.
      *
