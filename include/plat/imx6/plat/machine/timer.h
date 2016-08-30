@@ -31,4 +31,4 @@ getKernelWcetUs(void)
 /* we use the cortex-a9 global timer on this platform */
 #include <arch/machine/global_timer.h>
 
-compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 498llu);
+compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 498llu)
