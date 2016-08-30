@@ -750,7 +750,7 @@ seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)
         "popl %%ebp         \n"
         :
         : "a" (seL4_SysBenchmarkGetThreadUtilisation),
-          SEL4_REGS_IN_VAR(tcb_cptr)
+        SEL4_REGS_IN_VAR(tcb_cptr)
         : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
     );
 }
