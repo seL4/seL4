@@ -547,7 +547,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
         }
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
-                   0, deviceMemory,
+                   0, !!deviceMemory,
 #ifdef CONFIG_ARM_SMMU
                    0,
 #endif
@@ -574,7 +574,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
         }
         return cap_frame_cap_new(
                    ARMLargePage, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, deviceMemory, ASID_HIGH(asidInvalid),
+                   0, !!deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_SectionObject:
@@ -597,7 +597,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
         }
         return cap_frame_cap_new(
                    ARMSection, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, deviceMemory, ASID_HIGH(asidInvalid),
+                   0, !!deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_SuperSectionObject:
@@ -620,7 +620,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
         }
         return cap_frame_cap_new(
                    ARMSuperSection, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, deviceMemory, ASID_HIGH(asidInvalid),
+                   0, !!deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_PageTableObject:

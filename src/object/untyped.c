@@ -79,11 +79,11 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     }
 
     /* Is the requested object size valid? */
-    if (userObjSize >= (wordBits - 1)) {
+    if (userObjSize >= (wordBits - 2)) {
         userError("Untyped Retype: Invalid object size.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = wordBits - 2;
+        current_syscall_error.rangeErrorMax = wordBits - 3;
         return EXCEPTION_SYSCALL_ERROR;
     }
 

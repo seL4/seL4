@@ -557,7 +557,7 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
          * No objects need to be created; instead, just insert caps into
          * the destination slots.
          */
-        return cap_untyped_cap_new(0, deviceMemory, userSize, WORD_REF(regionBase));
+        return cap_untyped_cap_new(0, !!deviceMemory, userSize, WORD_REF(regionBase));
 
     default:
         fail("Invalid object type");
