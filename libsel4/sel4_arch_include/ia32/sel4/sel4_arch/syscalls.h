@@ -658,7 +658,6 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
         "pushl %%ebp       \n"
         SEL4_REGS_SAVE
         "movl %%esp, %%ecx \n"
-        "movl %%edx, %%ebx \n"
         SEL4_REGS_MOV
         "leal 1f, %%edx    \n"
         "1:                \n"
@@ -668,7 +667,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
         : SEL4_REGS_OUT_IN(userfn)
         : "a" (seL4_SysDebugRun),
         "S" (userarg)
-        : SEL4_REGS_CLOBBER_EBX "%ecx", "edx", "%edi", "memory"
+        : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
     );
 }
 #endif
