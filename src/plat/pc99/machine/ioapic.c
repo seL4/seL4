@@ -53,27 +53,10 @@ static uint32_t ioapic_read(uint32_t ioapic, word_t reg)
     return *(volatile uint32_t*)((word_t)(PPTR_IOAPIC_START + ioapic * BIT(PAGE_BITS)) + reg);
 }
 
-static bool_t in_list(uint32_t size, cpu_id_t *list, cpu_id_t target)
+static void single_ioapic_init(word_t ioapic, cpu_id_t delivery_cpu)
 {
     uint32_t i;
-    for (i = 0; i < size; i++) {
-        if (list[i] == target) {
-            return true;
-        }
-    }
-    return false;
-}
 
-static void single_ioapic_init(word_t ioapic, cpu_id_t ioapic_id, cpu_id_t delivery_cpu)
-{
-    uint32_t id_reg;
-    uint32_t i;
-    /* Write the ID to the ioapic */
-    ioapic_write(ioapic, IOAPIC_REGSEL, IOAPIC_REG_IOAPICID);
-    id_reg = ioapic_read(ioapic, IOAPIC_WINDOW);
-    /* perform mask to preserve the reserved bits */
-    id_reg &= ~(MASK(IOAPICID_ID_BITS) << IOAPICID_ID_OFFSET);
-    id_reg |= ioapic_id << IOAPICID_ID_OFFSET;
     /* Mask all the IRQs. In doing so we happen to set
      * the vector to 0, which we can assert against in
      * mask_interrupt to ensure a vector is assigned
@@ -91,31 +74,16 @@ static void single_ioapic_init(word_t ioapic, cpu_id_t ioapic_id, cpu_id_t deliv
     }
 }
 
-/* To guarantee we will be able to find enough free apic ids there needs to be less than
- * 2^4 cpus + ioapics in the system */
-compile_assert(ioapic_id_will_not_overflow, 1 + CONFIG_MAX_NUM_IOAPIC < 16)
-
 static  cpu_id_t ioapic_target_cpu = 0;
 void ioapic_init(uint32_t num_nodes, cpu_id_t *cpu_list, uint32_t num_ioapic)
 {
     uint32_t ioapic;
-    cpu_id_t ioapic_id = 0;
     num_ioapics = num_ioapic;
     ioapic_target_cpu = cpu_list[0];
 
     for (ioapic = 0; ioapic < num_ioapic; ioapic++) {
-        /* Determine the next free apic ID */
-        while (in_list(num_nodes, cpu_list, ioapic_id)) {
-            ioapic_id++;
-        }
-        /* ioapic id field is 4 bits. this assert passing should be
-         * guaranteed by the compile assert above this function, hence
-         * this does not need to be a run time check */
-        assert(ioapic_id < BIT(4));
         /* Init this ioapic */
-        single_ioapic_init(ioapic, ioapic_id, cpu_list[0]);
-        /* Increment the id */
-        ioapic_id++;
+        single_ioapic_init(ioapic, cpu_list[0]);
     }
 }
 
