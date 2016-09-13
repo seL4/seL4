@@ -17,6 +17,12 @@
 #include <object/tcb.h>
 #include <benchmark_track.h>
 
+/* Collective cpu states, including both pre core architecture dependant and independent data */
+SMP_STATE_DEFINE(smpStatedata_t, ksSMP[CONFIG_MAX_NUM_NODES] ALIGN(CONFIG_CACHE_LN_SZ));
+
+/* Global count of how many cpus there are */
+word_t ksNumCPUs;
+
 /* Pointer to the head of the scheduler queue for each priority */
 tcb_queue_t ksReadyQueues[NUM_READY_QUEUES];
 word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS];

@@ -37,10 +37,10 @@ handleReservedIRQ(irq_t irq)
 static inline irq_t
 getActiveIRQ(void)
 {
-    if (x86KScurInterrupt == int_invalid) {
+    if (ARCH_NODE_STATE(x86KScurInterrupt) == int_invalid) {
         return irqInvalid;
     }
-    return x86KScurInterrupt - IRQ_INT_OFFSET;
+    return ARCH_NODE_STATE(x86KScurInterrupt) - IRQ_INT_OFFSET;
 }
 
 /* Checks for pending IRQ */

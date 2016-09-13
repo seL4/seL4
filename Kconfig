@@ -355,6 +355,18 @@ menu "seL4 System Parameters"
         help
             The number of priority levels per domain
 
+    config MAX_NUM_NODES
+        int "Max number of CPU nodes"
+        range 1 256
+        default 1
+        help
+            The number of CPU cores to boot
+
+    config CACHE_LN_SZ
+        int "Cache line size"
+        default 64
+        help
+            Define cache line size for the current architecture
 endmenu
 
 menu "Build Options"
