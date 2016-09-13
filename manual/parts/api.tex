@@ -12,6 +12,7 @@
 \newcommand{\param}[3]{\texttt{#1}&\texttt{#2}&#3\\ }
 
 \newcommand{\inputapidoc}[1] {\input{parts/api/#1.tex}}
+\newcommand{\inputgeneratedapidoc}[1] {\input{generated/#1.tex}}
 
 \newcommand{\apidoc}[7]
 {
@@ -240,17 +241,7 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \vfill
 
 \section{System Calls}
-\inputapidoc{sel4_send}
-\inputapidoc{sel4_recv}
-\inputapidoc{sel4_call}
-\inputapidoc{sel4_reply}
-\inputapidoc{sel4_nbsend}
-\inputapidoc{sel4_replyrecv}
-\inputapidoc{sel4_nbrecv}
-\inputapidoc{sel4_yield}
-\inputapidoc{sel4_signal}
-\inputapidoc{sel4_wait}
-\inputapidoc{sel4_poll}
+\inputgeneratedapidoc{general_syscalls}
 \clearpage
 
 \section{Architecture-Independent Object Methods}
