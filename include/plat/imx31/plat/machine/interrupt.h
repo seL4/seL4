@@ -40,6 +40,13 @@ volatile struct avic_map {
     uint32_t vector[64];
 } *avic = (volatile void *)AVIC_PPTR;
 
+/* Reading the IRQ number from the nivecsr register also
+ * acks the interrupt. To allow the active irq to be read
+ * multiple times per interrupt received, we store the
+ * current active IRQ in a global variable.
+ */
+extern interrupt_t active_irq;
+
 /* Get the active IRQ number from the AVIC.  Returns 0xff if
  * there isn't one. Note this is also known as irqInvalid */
 /**
@@ -48,7 +55,18 @@ volatile struct avic_map {
 static inline interrupt_t
 getActiveIRQ(void)
 {
-    return (avic->nivecsr >> 16) & 0xff;
+    if (active_irq == irqInvalid) {
+        /* Read the IRQ number from the IRQ controller.
+         * This has the side-effect of acking the interrupt.
+         * Reading from this register after acking the
+         * interrupt will yield an invalid IRQ number, so
+         * we save the IRQ number in a global variable to
+         * allow multiple successive calls to this function.
+         */
+        active_irq = (avic->nivecsr >> 16) & 0xff;
+    }
+
+    return active_irq;
 }
 
 /* Check for pending IRQ */
@@ -86,7 +104,12 @@ handleReservedIRQ(irq_t irq)
 static inline void
 ackInterrupt(irq_t irq)
 {
-    /* empty on this platform */
+    /* The interrupt was acked when the IRQ number was read from
+     * the IRQ controller in getActiveIRQ. Here we reset the
+     * global active IRQ number so the next call to getActiveIRQ
+     * will read the IRQ number from the IRQ controller.
+     */
+    active_irq = irqInvalid;
 }
 
 static inline void
