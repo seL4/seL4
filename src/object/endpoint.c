@@ -258,7 +258,7 @@ cancelIPC(tcb_t *tptr)
     case ThreadState_BlockedOnReply: {
         cte_t *slot, *callerCap;
 
-        fault_null_fault_ptr_new(&tptr->tcbFault);
+        tptr->tcbFault = fault_null_fault_new();
 
         /* Get the reply cap slot */
         slot = TCB_PTR_CTE_PTR(tptr, tcbReply);

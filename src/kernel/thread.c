@@ -149,7 +149,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
         restart = handleFaultReply(receiver, sender);
-        fault_null_fault_ptr_new(&receiver->tcbFault);
+        receiver->tcbFault = fault_null_fault_new();
         if (restart) {
             setThreadState(receiver, ThreadState_Restart);
             attemptSwitchTo(receiver);

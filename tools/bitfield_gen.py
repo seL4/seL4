@@ -35,6 +35,7 @@ DEBUG = False
 
 # parametrisation for the win
 return_name = 'ret__unsigned'
+loc_name = 'kernel_all_substitute'
 
 # Headers to include depending on which environment we are generating code for.
 INCLUDES = {
@@ -78,9 +79,6 @@ t_RPAREN = r'\)'
 t_COMMA  = r','
 
 reserved_map = dict((r.lower(), r) for r in reserved)
-
-## FIXME this is config stuff just appearing in the file
-loc_name = 'kernel_all_substitute'
 
 def t_IDENTIFIER(t):
     r'[A-Za-z_]\w+|[A-Za-z]'
@@ -582,22 +580,24 @@ def ptr_get_template(ptrname):
 
 def ptr_set_template(name, ptrname):
     return ptr_basic_template(name, ptrname, '', ', \<acute>v',
-                              '''{t. (\<exists>%(name)s.
+                              '''{t. \<exists>%(name)s.
                               %(name)s_lift %(name)s =
                               %(name)s_lift (%(access_path)s) \<lparr> %(name)s_CL.%(field)s_CL ''' \
                               ''':= \<^bsup>s\<^esup>v AND %(mask)s \<rparr> \<and>
-                              cslift t = (cslift s)(''' + ptrname + ''' \<mapsto> %(update_path)s)) \<and>
-                              %(cslift_other)s \<and>
-                              hrs_htd (t_hrs_' (globals t)) = hrs_htd (t_hrs_' (globals s))
+                              t_hrs_' (globals t) = hrs_mem_update (heap_update
+                                      (''' + ptrname + ''')
+                                      %(update_path)s)
+                                  (t_hrs_' (globals s))
                               }''')
 
 def ptr_new_template(ptrname):
     return ptr_basic_template('new', ptrname, '', ', %(args)s',
-                              '''{t. (\<exists>%(name)s. %(name)s_lift %(name)s = \<lparr>
+                              '''{t. \<exists>%(name)s. %(name)s_lift %(name)s = \<lparr>
                               %(field_eqs)s \<rparr> \<and>
-                              cslift t = (cslift s)(''' + ptrname + ''' \<mapsto> %(update_path)s)) \<and>
-                              %(cslift_other)s \<and>
-                              hrs_htd (t_hrs_' (globals t)) = hrs_htd (t_hrs_' (globals s))
+                              t_hrs_' (globals t) = hrs_mem_update (heap_update
+                                      (''' + ptrname + ''')
+                                      %(update_path)s)
+                                  (t_hrs_' (globals s))
                               }''')
 
 def ptr_get_tag_template(ptrname):
@@ -607,22 +607,24 @@ def ptr_get_tag_template(ptrname):
 
 def ptr_empty_union_new_template(ptrname):
     return ptr_union_basic_template('new', ptrname, '', '', '',
-                                    '''{t. (\<exists>%(name)s. ''' \
+                                    '''{t. \<exists>%(name)s. ''' \
                                     '''%(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
-                                    cslift t = (cslift s)(''' + ptrname + ''' \<mapsto> %(update_path)s)) \<and>
-                                    %(cslift_other)s \<and>
-                                    hrs_htd (t_hrs_' (globals t)) = hrs_htd (t_hrs_' (globals s))
+                                    t_hrs_' (globals t) = hrs_mem_update (heap_update
+                                            (''' + ptrname + ''')
+                                            %(update_path)s)
+                                        (t_hrs_' (globals s))
                                     }''')
 
 def ptr_union_new_template(ptrname):
     return ptr_union_basic_template('new', ptrname, '', ', %(args)s', '',
-                                    '''{t. (\<exists>%(name)s. ''' \
+                                    '''{t. \<exists>%(name)s. ''' \
                                     '''%(name)s_%(block)s_lift %(name)s = \<lparr>
                                     %(field_eqs)s \<rparr> \<and>
                                     %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
-                                    cslift t = (cslift s)(''' + ptrname + ''' \<mapsto> %(update_path)s)) \<and>
-                                    %(cslift_other)s \<and>
-                                    hrs_htd (t_hrs_' (globals t)) = hrs_htd (t_hrs_' (globals s))
+                                    t_hrs_' (globals t) = hrs_mem_update (heap_update
+                                            (''' + ptrname + ''')
+                                            %(update_path)s)
+                                        (t_hrs_' (globals s))
                                     }''')
 
 def ptr_union_get_template(ptrname):
@@ -636,15 +638,16 @@ def ptr_union_get_template(ptrname):
 def ptr_union_set_template(ptrname):
     return ptr_union_basic_template('set_%(field)s', ptrname, '', ', \<acute>v',
                                     '\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
-                                    '''{t. (\<exists>%(name)s. ''' \
+                                    '''{t. \<exists>%(name)s. ''' \
                                     '''%(name)s_%(block)s_lift %(name)s =
                                     %(name)s_%(block)s_lift %(access_path)s ''' \
                                     '''\<lparr> %(name)s_%(block)s_CL.%(field)s_CL ''' \
                                     ''':= \<^bsup>s\<^esup>v AND %(mask)s \<rparr> \<and>
                                     %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
-                                    cslift t = (cslift s)(''' + ptrname + ''' \<mapsto> %(update_path)s)) \<and>
-                                    %(cslift_other)s \<and>
-                                    hrs_htd (t_hrs_' (globals t)) = hrs_htd (t_hrs_' (globals s))
+                                    t_hrs_' (globals t) = hrs_mem_update (heap_update
+                                            (''' + ptrname + ''')
+                                            %(update_path)s)
+                                        (t_hrs_' (globals s))
                                     }''')
 
 proof_templates = {
@@ -800,7 +803,6 @@ done'''],
 ''' unfolding ptrval_def
  apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp simp:guard_simps)
- apply(prove_bf_clift_invariance?)
  apply(clarsimp simp add: packed_heap_update_collapse_hrs typ_heap_simps)?
 
  apply(rule exI, rule conjI[rotated], rule refl)
@@ -826,9 +828,6 @@ done'''],
  (* Discharge guards, including c_guard for pointers *)
  apply(simp add:h_t_valid_c_guard guard_simps)
 
- (* Discharge heap-invariance conjuncts *)
- apply(prove_bf_clift_invariance?)
-
  (* Lift field updates to bitfield struct updates *)
  apply(simp add:heap_update_field_hrs h_t_valid_c_guard typ_heap_simps)
 
@@ -847,9 +846,6 @@ done'''],
  (* Rewrite bitfield struct updates as enclosing struct updates *)
  apply(frule h_t_valid_c_guard)
  apply(simp add:parent_update_child)
-
- (* Rewrite the LHS of the equality to a function update *)
- apply(simp add:clift_heap_update)
 
  (* Equate the updated values *)
  apply(rule exI, rule conjI[rotated], simp add:h_val_clift')
@@ -971,8 +967,8 @@ done'''],
  apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
  apply(clarsimp simp: h_t_valid_clift_Some_iff)
  apply(frule clift_subtype, simp+)
- apply(prove_bf_clift_invariance?)
- apply(clarsimp simp: typ_heap_simps c_guard_clift)
+ apply(clarsimp simp: typ_heap_simps c_guard_clift
+                      packed_heap_update_collapse_hrs)
 
  apply(simp add: guard_simps mask_shift_simps
                  %(name)s_tag_defs[THEN tag_eq_to_tag_masked_eq])
@@ -999,8 +995,8 @@ done
  apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
  apply(drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
  apply(frule clift_subtype, simp, simp)
- apply(prove_bf_clift_invariance?)
- apply(clarsimp simp: typ_heap_simps c_guard_clift)
+ apply(clarsimp simp: typ_heap_simps c_guard_clift
+                      packed_heap_update_collapse_hrs)
 
  apply(simp add: guard_simps mask_shift_simps
                  %(name)s_tag_defs[THEN tag_eq_to_tag_masked_eq])
@@ -1096,7 +1092,6 @@ done
   apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
   apply(drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
   apply(frule clift_subtype, simp, simp)
-  apply(prove_bf_clift_invariance?)
   apply(clarsimp simp: typ_heap_simps c_guard_clift)
   apply(simp add: guard_simps mask_shift_simps)
   apply(simp add:%(name)s_%(block)s_lift_def)
@@ -1118,8 +1113,8 @@ done
  apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
  apply(drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
  apply(frule clift_subtype, simp, simp)
- apply(prove_bf_clift_invariance?)
- apply(clarsimp simp: typ_heap_simps c_guard_clift)
+ apply(clarsimp simp: typ_heap_simps c_guard_clift
+                      packed_heap_update_collapse_hrs)
 
  apply(simp add: guard_simps mask_shift_simps
                  %(name)s_tag_defs[THEN tag_eq_to_tag_masked_eq])
@@ -1164,9 +1159,6 @@ def emit_named_ptr_proof(fn_name, params, name, type_map, toptps, prf_prefix, su
 
     if name_C in type_map:
         toptp, path = type_map[name_C]
-
-        substs['cslift_other'] = ' \<and> '.join(
-            [("(cslift t :: %s typ_heap) = (cslift s)" % x) for x in toptps if x != toptp])
 
         substs['access_path'] = '(' + reduce(lambda x, y: y + ' (' + x + ')', ['the (ptrval s)'] + path) + ')'
 
@@ -2773,12 +2765,6 @@ if __name__ == '__main__':
                         file=out_file)
             print(file=out_file)
 
-            for toptp in options.toplevel_types:
-                print(\
-                    ('abbreviation\n\t"cslift_all_but_%s s t \<equiv> ' % toptp +
-                     ('\n\t\t\<and> '.join([('(cslift s :: %s typ_heap) = cslift t' % x)
-                                       for x in options.toplevel_types if x != toptp]))
-                     + '"'), file=out_file)
             print(file=out_file)
 
             for e in blocks.values() + unions.values():
