@@ -32,28 +32,15 @@ checkPrio(prio_t prio)
     prio_t mcp;
 
     mcp = ksCurThread->tcbMCP;
-    /* can't create a thread with prio greater than our own mcp */
+
+    /* system invariant: existing MCPs are bounded */
+    assert(mcp <= seL4_MaxPrio);
+
+    /* can't assign a priority greater than our own mcp */
     if (prio > mcp) {
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = seL4_MinPrio;
         current_syscall_error.rangeErrorMax = mcp;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    return EXCEPTION_NONE;
-}
-
-static exception_t
-checkMCP(prio_t mcp)
-{
-    if (checkPrio(mcp) != EXCEPTION_NONE) {
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (mcp > seL4_MaxPrio) {
-        current_syscall_error.type = seL4_RangeError;
-        current_syscall_error.rangeErrorMin = seL4_MinPrio;
-        current_syscall_error.rangeErrorMax = seL4_MaxPrio;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -514,7 +501,7 @@ decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
                                     w, transferArch, buffer);
 }
 
-/* SetPriority, SetIPCParams and SetSpace are all
+/* SetPriority, SetMCPriority, SetIPCParams and SetSpace are all
  * specialisations of TCBConfigure. */
 
 exception_t
@@ -561,12 +548,10 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
         return status;
     }
 
-    status = checkMCP(mcp);
+    status = checkPrio(mcp);
     if (status != EXCEPTION_NONE) {
-        userError("Requested maximum controlled priority %lu too high (max %lu),",
-                  (unsigned long) mcp,
-                  (unsigned long) prio >= seL4_MaxPrio ? seL4_MaxPrio :
-                  ksCurThread->tcbMCP);
+        userError("TCB Configure: Requested maximum controlled priority %lu too high (max %lu),",
+                  (unsigned long) mcp, (unsigned long) ksCurThread->tcbMCP);
         return status;
     }
 
@@ -650,14 +635,11 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
 
     newPrio = getSyscallArg(0, buffer);
 
-    /* assuming here seL4_MaxPrio is of form 2^n - 1 */
-    newPrio = newPrio & MASK(8);
     status = checkPrio(newPrio);
     if (status != EXCEPTION_NONE) {
         userError("TCB SetPriority: Requested priority %lu too high (max %lu).",
-                  (unsigned long) newPrio, (unsigned long ) ksCurThread->tcbMCP);
+                  (unsigned long) newPrio, (unsigned long) ksCurThread->tcbMCP);
         return status;
-
     }
 
     setThreadState(ksCurThread, ThreadState_Restart);
@@ -682,10 +664,12 @@ decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    newMcp = (prio_t) getSyscallArg(0, buffer);
+    newMcp = getSyscallArg(0, buffer);
 
-    status = checkMCP(newMcp);
+    status = checkPrio(newMcp);
     if (status != EXCEPTION_NONE) {
+        userError("TCB SetMCPriority: Requested maximum controlled priority %lu too high (max %lu).",
+                  (unsigned long) newMcp, (unsigned long) ksCurThread->tcbMCP);
         return status;
     }
 
