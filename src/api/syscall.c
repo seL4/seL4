@@ -130,6 +130,7 @@ handleUnknownSyscall(word_t w)
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_log_utilisation_enabled = true;
+        ksIdleThread->benchmark.utilisation = 0;
         ksCurThread->benchmark.schedule_start_time = ksEnter;
         benchmark_start_time = ksEnter;
         benchmark_arch_utilisation_reset();
@@ -161,6 +162,9 @@ handleUnknownSyscall(word_t w)
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     else if (w == SysBenchmarkGetThreadUtilisation) {
         benchmark_track_utilisation_dump();
+        return EXCEPTION_NONE;
+    } else if (w == SysBenchmarkResetThreadUtilisation) {
+        benchmark_track_reset_utilisation();
         return EXCEPTION_NONE;
     }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */

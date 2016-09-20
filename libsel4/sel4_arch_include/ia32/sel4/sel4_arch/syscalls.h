@@ -686,7 +686,7 @@ seL4_BenchmarkResetLog(void)
         "sysenter           \n"
         SEL4_REGS_RESTORE_EDX
         "popl %%ebp         \n"
-        : SEL4_REGS_OUT_VAR(ret)
+        : "=d" (ret)
         : "a" (seL4_SysBenchmarkResetLog)
         : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
     );
@@ -717,13 +717,10 @@ seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
 {
     asm volatile (
         "pushl %%ebp        \n"
-        SEL4_REGS_SAVE
         "movl %%esp, %%ecx  \n"
-        SEL4_REGS_MOVE
         "leal 1f, %%edx     \n"
         "1:                 \n"
         "sysenter           \n"
-        SEL4_REGS_RESTORE_EDX
         "popl %%ebp         \n"
         : SEL4_REGS_OUT_IN(frame_cptr)
         : "a" (seL4_SysBenchmarkSetLogBuffer)
@@ -735,21 +732,35 @@ seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void
-seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)
+seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
 {
     asm volatile (
         "pushl %%ebp        \n"
-        SEL4_REGS_SAVE
         "movl %%esp, %%ecx  \n"
-        SEL4_REGS_MOVE
         "leal 1f, %%edx     \n"
         "1:                 \n"
         "sysenter           \n"
-        SEL4_REGS_RESTORE
         "popl %%ebp         \n"
         :
         : "a" (seL4_SysBenchmarkGetThreadUtilisation),
-        SEL4_REGS_IN_VAR(tcb_cptr)
+        "d" (tcb_cptr)
+        : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
+    );
+}
+
+static inline void
+seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
+{
+    asm volatile (
+        "pushl %%ebp        \n"
+        "movl %%esp, %%ecx  \n"
+        "leal 1f, %%edx     \n"
+        "1:                 \n"
+        "sysenter           \n"
+        "popl %%ebp         \n"
+        :
+        : "a" (seL4_SysBenchmarkResetThreadUtilisation),
+        "d" (tcb_cptr)
         : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
     );
 }
