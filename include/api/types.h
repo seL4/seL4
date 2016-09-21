@@ -17,6 +17,7 @@
 #include <api/types_gen.h>
 #include <arch/api/types.h>
 #include <arch/types.h>
+#include <api/macros.h>
 #include <api/constants.h>
 #include <api/shared_types.h>
 
