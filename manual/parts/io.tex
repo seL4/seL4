@@ -51,15 +51,30 @@ a single \obj{IRQHandler} capability for each interrupt available in the
 system. Typically, the initial thread of a system will determine which
 IRQs are required by other components in the system, produce an
 \obj{IRQHandler} capability for each interrupt, and then delegate the
-resulting capabilities as appropriate. \obj{IRQControl} has one method:
-
-\begin{description}
-    \item[\apifunc{seL4\_IRQControl\_Get}{irq_controlget}] creates an
-    \obj{IRQHandler} capability for the specified interrupt source.
-\end{description}
+resulting capabilities as appropriate. Methods on \obj{IRQControl} can
+be used for creating \obj{IRQHandler} capabilities for interrupt sources.
 
 \ifxeightsix
 \section{IA-32-Specific I/O}
+
+\subsection{Interrupts}
+\label{sec:ia32_interrupts}
+
+In addition to managing \obj{IRQHandler} capabilities, IA-32 platforms require
+the delivery location in the CPU vectors to be configured. Regardless of where
+an interrupt comes from (IOAPIC, MSI, etc) it must be assigned a unique vector
+for delivery, ranging from VECTOR\_MIN to VECTOR\_MAX. The rights to allocate
+a vector are effectively given through the \obj{IRQControl} capability and can
+be considered as the kernel outsourcing the allocation of this namespace to
+user level.
+
+\begin{description}
+    \item[\apifunc{seL4\_IRQControl\_GetIOAPIC}{ia32_irq_handler_getioapic}] creates
+    an \obj{IRQHandler} capability for an IOAPIC interrupt
+
+    \item[\apifunc{seL4\_IRQControl\_GetMSI}{ia32_irq_handler_getmsi}] creates
+    an \obj{IRQHandler} capability for an MSI interrupt
+\end{description}
 
 \subsection{I/O Ports}
 \label{sec:ioports}

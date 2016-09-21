@@ -1,0 +1,31 @@
+%
+% Copyright 2016, Data61
+% Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+% ABN 41 687 119 230.
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(D61_GPL)
+%
+
+\apidoc
+{ia32_irq_control_getmsi}
+{IRQ Control - GetMSI}
+{Create an IRQ handler capability for an interrupt from an MSI}
+{static inline int seL4\_IRQControl\_GetMSI }
+{
+\param{seL4\_IRQControl}{\_service}{An IRQControl capability. This gives you the authority to make this call.}
+\param{int}{irq}{The IRQ that you want this capability to handle.}
+\param{seL4\_CNode}{root}{\destcspacedesc}
+\param{seL4\_Word}{index}{\destindexdesc}
+\param{uint8\_t}{depth}{\destdepthdesc}
+\param{seL4\_Word}{pci\_bus}{PCI bus ID of the device that will generate the interrupt}
+\param{seL4\_Word}{pci\_dev}{PCI device ID of the device that will generate the interrupt}
+\param{seL4\_Word}{pci\_func}{PCI function ID of the device that will generate the interrupt}
+\param{seL4\_Word}{handle}{Value of the handle programmed into the data portion of the MSI}
+\param{seL4\_Word}{vector}{CPU vector to deliver the interrupt to}
+}
+{\errorenumdesc}
+{See \autoref{sec:interrupts}, \autoref{sec:ia32_interrupts}}
