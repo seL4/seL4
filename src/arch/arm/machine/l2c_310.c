@@ -345,6 +345,12 @@ initL2Cache(void)
     l2cc->control.control |= CTRL_CTRL_EN;
 #endif /* TI_MSHIELD */
 
+#if defined(CONFIG_ARM_CORTEX_A9) && defined(CONFIG_ENABLE_A9_PREFETCHER)
+    /* Set bit 1 in the ACTLR, which on the cortex-a9 is the l2 prefetch enable
+     * bit. See section 4.3.10 of the Cortex-A9 Technical Reference Manual */
+    setACTLR(getACTLR() | BIT(1));
+#endif
+
 #endif /* !CONFIG_DEBUG_DISABLE_L2_CACHE */
 }
 
