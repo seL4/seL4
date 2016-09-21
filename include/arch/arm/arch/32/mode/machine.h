@@ -341,6 +341,22 @@ static inline word_t PURE getFAR(void)
     return FAR;
 }
 
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline word_t getACTLR(void)
+{
+    word_t ACTLR;
+    asm volatile ("mrc p15, 0, %0, c1, c0, 1" : "=r"(ACTLR));
+    return ACTLR;
+}
+
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline void setACTLR(word_t actlr)
+{
+    asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
+}
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* __ARCH_MACHINE_32_H */
