@@ -47,8 +47,8 @@ start_boot_aps(void)
     while (smp_aps_index < boot_state.num_cpus) {
         word_t current_ap_index = smp_aps_index;
 
-        printf("Starting node #%lu with APIC ID %lu \n",
-               current_ap_index, boot_state.cpus[current_ap_index]);
+        printf("Starting node #%lu with APIC ID %lu \n", 
+            current_ap_index, boot_state.cpus[current_ap_index]);
 
         /* update cpu mapping for APs, store APIC ID of the next booting AP
          * as APIC ID are not continoius e.g. 0,2,1,3 for 4 cores with hyperthreading
@@ -57,7 +57,7 @@ start_boot_aps(void)
         start_cpu(boot_state.cpus[current_ap_index], BOOT_NODE_PADDR);
 
         /* wait for current AP to boot up */
-        while (smp_aps_index == current_ap_index);
+        while(smp_aps_index == current_ap_index);
     }
 }
 
@@ -92,8 +92,8 @@ try_boot_node(void)
     return true;
 }
 
-/* This is the entry function for APs. However, it is not a BOOT_CODE as
- * there is a race between exiting this function and root task running on
+/* This is the entry function for APs. However, it is not a BOOT_CODE as 
+ * there is a race between exiting this function and root task running on 
  * node #0 to possibly reallocate this memory */
 VISIBLE void
 boot_node(void)

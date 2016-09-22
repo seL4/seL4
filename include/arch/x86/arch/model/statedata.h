@@ -31,18 +31,18 @@ typedef struct {
 } PACKED tss_io_t;
 
 NODE_STATE_BEGIN(archNodeState)
-/* Interrupt currently being handled, not preserved across kernel entries */
-NODE_STATE_DECLARE(interrupt_t, x86KScurInterrupt);
-/* Task State Segment (TSS), contains currently running TCB in ESP0 */
-NODE_STATE_DECLARE(tss_io_t, x86KStss);
-/* Global Descriptor Table (GDT) */
-NODE_STATE_DECLARE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
-/* Interrupt Descriptor Table (IDT) */
-NODE_STATE_DECLARE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
-/* Current thread whose state is installed in the FPU, or NULL if the FPU is currently invalid */
-NODE_STATE_DECLARE(tcb_t *, x86KSfpuOwner);
-
-NODE_STATE_TYPE_DECLARE(modeNodeState, mode);
+    /* Interrupt currently being handled, not preserved across kernel entries */
+    NODE_STATE_DECLARE(interrupt_t, x86KScurInterrupt);
+    /* Task State Segment (TSS), contains currently running TCB in ESP0 */
+    NODE_STATE_DECLARE(tss_io_t, x86KStss);
+    /* Global Descriptor Table (GDT) */
+    NODE_STATE_DECLARE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
+    /* Interrupt Descriptor Table (IDT) */
+    NODE_STATE_DECLARE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
+    /* Current thread whose state is installed in the FPU, or NULL if the FPU is currently invalid */
+    NODE_STATE_DECLARE(tcb_t *, x86KSfpuOwner);
+    
+    NODE_STATE_TYPE_DECLARE(modeNodeState, mode);
 NODE_STATE_END(archNodeState);
 
 extern asid_pool_t* x86KSASIDTable[];

@@ -17,7 +17,7 @@
 #include <arch/model/statedata.h>
 
 NODE_STATE_BEGIN(nodeState)
-NODE_STATE_TYPE_DECLARE(archNodeState, arch);
+    NODE_STATE_TYPE_DECLARE(archNodeState, arch);
 NODE_STATE_END(nodeState);
 
 #include <arch/model/smp.h>
