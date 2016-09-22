@@ -21,7 +21,7 @@
 
 #ifdef CONFIG_DEBUG_BUILD
 /* Maximum length of the tcb name, including null terminator */
-#define TCB_NAME_LENGTH (BIT(seL4_TCBBits) - BIT(seL4_TCBBits) - sizeof(tcb_t))
+#define TCB_NAME_LENGTH (BIT(seL4_TCBBits) - TCB_OFFSET - sizeof(tcb_t))
 #endif
 
 struct tcb_queue {
