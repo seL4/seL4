@@ -9,7 +9,10 @@
  */
 
 #include <config.h>
-#include <arch/model/statedata.h>
+#include <mode/model/statedata.h>
+
+/* Current active page directory. This is really just a shadow of CR3 */
+UP_STATE_DEFINE(paddr_t, ia32KSCurrentPD VISIBLE);
 
 /* The privileged kernel mapping PD & PT */
 pdpte_t ia32KSGlobalPDPT[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(seL4_PDPTBits));
@@ -19,6 +22,3 @@ pte_t ia32KSGlobalPT[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
 pte_t ia32KSGlobalLogPT[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-
-/* Current active page directory. This is really just a shadow of CR3 */
-paddr_t ia32KSCurrentPD VISIBLE;

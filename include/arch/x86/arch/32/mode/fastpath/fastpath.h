@@ -101,10 +101,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     c_exit_hook();
 
-    if (unlikely(cur_thread == x86KSfpuOwner)) {
+    if (unlikely(cur_thread == ARCH_NODE_STATE(x86KSfpuOwner))) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
-    } else if (unlikely(x86KSfpuOwner)) {
+    } else if (unlikely(ARCH_NODE_STATE(x86KSfpuOwner))) {
         /* Someone is using the FPU and it might be enabled */
         disableFpu();
     } else {
@@ -112,7 +112,11 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
          * is currently disabled */
     }
 
-    tss_ptr_set_esp0(&x86KStss.tss, ((uint32_t)&ksCurThread->tcbArch.tcbContext.registers) + (sizeof(word_t)*n_contextRegisters));
+    /* save kernel stack pointer for next exception */
+    SMP_COND_STATEMENT(ksCurThread->tcbArch.tcbContext.kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + 0xffc);
+
+    /* set the tss.esp0 */
+    tss_ptr_set_esp0(&ARCH_NODE_STATE(x86KStss).tss, ((uint32_t)&ksCurThread->tcbArch.tcbContext.registers) + (sizeof(word_t)*n_contextRegisters));
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile(
             "movl %%ecx, %%esp\n"

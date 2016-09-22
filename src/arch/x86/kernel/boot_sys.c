@@ -16,6 +16,7 @@
 #include <arch/kernel/cmdline.h>
 #include <arch/kernel/boot.h>
 #include <arch/kernel/boot_sys.h>
+#include <arch/kernel/smp_sys.h>
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/elf.h>
 #include <arch/linker.h>
@@ -47,7 +48,6 @@ extern char _start[1];
 
 /* constants */
 
-#define BOOT_NODE_PADDR 0x80000
 #define HIGHMEM_PADDR 0x100000
 
 /* type definitions (directly corresponding to abstract specification) */
@@ -62,17 +62,20 @@ typedef struct boot_state {
     uint32_t     num_drhu; /* number of IOMMUs */
     paddr_t      drhu_list[MAX_NUM_DRHU]; /* list of physical addresses of the IOMMUs */
     acpi_rmrr_list_t rmrr_list;
-    cpu_id_t     cpus[16];
+    uint32_t     num_cpus;    /* number of detected cpus */
+    cpu_id_t     cpus[CONFIG_MAX_NUM_NODES];
     mem_p_regs_t mem_p_regs;  /* physical memory regions */
 } boot_state_t;
 
 BOOT_DATA
 boot_state_t boot_state;
 
-/* There are a lot of assumptions on this being page aligned and
- * precisely 4K in size. DO NOT MODIFY */
+#if !(CONFIG_MAX_NUM_NODES > 1)
+/* This is the stack used in uniprocessor mode. There are a lot of assumptions 
+ * on this being page aligned and precisely 4K in size. DO NOT MODIFY */
 ALIGN(BIT(PAGE_BITS)) VISIBLE
 char kernel_stack_alloc[4096];
+#endif
 
 /* global variables (not covered by abstract specification) */
 
@@ -245,25 +248,6 @@ try_boot_sys_node(cpu_id_t cpu_id)
     return true;
 }
 
-/* This is the entry function for SMP nodes. Currently unused
- * as we do not support running other nodes */
-BOOT_CODE VISIBLE void
-boot_node(void)
-{
-    fail("SMP not supported");
-}
-
-BOOT_CODE static void
-start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
-{
-    /* memory fence needed before starting the other CPU */
-    x86_mfence();
-
-    /* starting the other CPU */
-    apic_send_init_ipi(cpu_id);
-    apic_send_startup_ipi(cpu_id, boot_fun_paddr);
-}
-
 static BOOT_CODE void
 add_mem_p_regs(p_region_t reg)
 {
@@ -327,7 +311,6 @@ try_boot_sys(
     word_t i;
     p_region_t ui_p_regs;
     multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->mod_list;
-    uint32_t num_cpus;
 
     if (multiboot_magic != MULTIBOOT_MAGIC) {
         printf("Boot loader not multiboot compliant\n");
@@ -340,14 +323,12 @@ try_boot_sys(
         return false;
     }
 
-    assert(boot_cpu_end - boot_cpu_start < 0x400);
-    if ((mbi->mem_lower << 10) < BOOT_NODE_PADDR + 0x400) {
-        printf("Need at least 513K of available lower physical memory\n");
+#if CONFIG_MAX_NUM_NODES > 1
+    /* copy boot code for APs to lower memory to run in real mode */
+    if(!copy_boot_code_aps(mbi->mem_lower)) {
         return false;
     }
-
-    /* copy CPU bootup code to lower memory */
-    memcpy((void*)BOOT_NODE_PADDR, boot_cpu_start, boot_cpu_end - boot_cpu_start);
+#endif
 
     boot_state.mem_p_regs.count = 0;
     if (mbi->flags & MULTIBOOT_INFO_MMAP_FLAG) {
@@ -401,13 +382,12 @@ try_boot_sys(
     }
 
     /* query available CPUs from ACPI */
-    num_cpus = acpi_madt_scan(acpi_rsdt, boot_state.cpus, sizeof(boot_state.cpus) / sizeof(boot_state.cpus[0]), &boot_state.num_ioapic, boot_state.ioapic_paddr);
-    if (num_cpus == 0) {
+    boot_state.num_cpus = acpi_madt_scan(acpi_rsdt, boot_state.cpus, &boot_state.num_ioapic, boot_state.ioapic_paddr);
+    if (boot_state.num_cpus == 0) {
         printf("No CPUs detected\n");
         return false;
-    } else {
-        printf("Detected %d CPUs. Only just 1\n", num_cpus);
     }
+
     if (config_set(CONFIG_IRQ_IOAPIC)) {
         if (boot_state.num_ioapic == 0) {
             printf("No IOAPICs detected\n");
@@ -482,7 +462,7 @@ try_boot_sys(
 
     discover_devices();
 
-    printf("Starting node #0\n");
+    printf("Starting node #0 with APIC ID %lu\n", boot_state.cpus[0]);
     if (!try_boot_sys_node(boot_state.cpus[0])) {
         return false;
     }
@@ -491,8 +471,11 @@ try_boot_sys(
         ioapic_init(1, boot_state.cpus, boot_state.num_ioapic);
     }
 
-    /* No other CPUs to start up right now */
-    (void)start_cpu;
+    SMP_COND_STATEMENT(start_boot_aps());
+
+    ksNumCPUs = boot_state.num_cpus;
+    printf("Booting all finished, dropped to user space\n");
+
     return true;
 }
 

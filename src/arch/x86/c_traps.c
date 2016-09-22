@@ -45,7 +45,7 @@ c_handle_interrupt(int irq, int syscall)
 #endif
         handleUserLevelFault(irq, ksCurThread->tcbArch.tcbContext.registers[Error]);
     } else if (likely(irq < int_trap_min)) {
-        x86KScurInterrupt = irq;
+        ARCH_NODE_STATE(x86KScurInterrupt) = irq;
 #ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_Interrupt;
         ksKernelEntry.word = irq;
@@ -74,7 +74,7 @@ c_handle_interrupt(int irq, int syscall)
 void NORETURN
 slowpath(syscall_t syscall)
 {
-    x86KScurInterrupt = -1;
+    ARCH_NODE_STATE(x86KScurInterrupt) = -1;
     /* increment NextIP to skip sysenter */
     ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
     /* check for undefined syscall */
