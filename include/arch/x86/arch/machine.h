@@ -509,27 +509,4 @@ void int_fd(void);
 void int_fe(void);
 void int_ff(void);
 
-#if CONFIG_MAX_NUM_NODES > 1
-extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(seL4_PageBits)];
-
-static inline cpu_id_t cpuIndexToID(word_t index) {
-    return cpu_mapping.index_to_cpu_id[index];
-}
-
-static inline PURE cpu_id_t getCurrentCPUIndex(void) {
-    cpu_id_t cpu_id;
-    uint32_t esp = (uint32_t)get_current_esp();
-
-    esp -= (uint32_t)kernel_stack_alloc;
-    cpu_id = esp >> 12;
-    return cpu_id;
-}
-
-static inline PURE word_t getCurrentCPUID(void) {
-    return cpu_mapping.index_to_cpu_id[getCurrentCPUIndex()];
-}
-#else
-extern char kernel_stack_alloc[4096];
-#endif /* CONFIG_MAX_NUM_NODES */
-
 #endif

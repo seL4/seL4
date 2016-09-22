@@ -257,6 +257,7 @@ BOOT_CODE uint32_t
 acpi_madt_scan(
     acpi_rsdt_t* acpi_rsdt,
     cpu_id_t*    cpu_list,
+    uint32_t     max_list_len,
     uint32_t*    num_ioapic,
     paddr_t*     ioapic_paddrs
 )
@@ -297,12 +298,10 @@ acpi_madt_scan(
                     uint32_t flags  = ((acpi_madt_apic_t*)acpi_madt_header)->flags;
                     if (flags == 1) {
                         printf("ACPI: MADT_APIC apic_id=0x%x\n", cpu_id);
-                        if (num_cpu == CONFIG_MAX_NUM_NODES) {
-                            printf("ACPI: Not recording this APIC, only support %d\n", CONFIG_MAX_NUM_NODES);
-                        } else {
+                        if (num_cpu < max_list_len) {
                             cpu_list[num_cpu] = cpu_id;
-                            num_cpu++;
                         }
+                        num_cpu++;
                     }
                     break;
                 }

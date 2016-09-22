@@ -58,7 +58,7 @@ init_tss(tss_t* tss)
         0,              /* esp0         */
         0               /* prev_task    */
     );
-    memset(&ARCH_NODE_STATE(x86KStss).io_map[0], 0xff, sizeof(ARCH_NODE_STATE(x86KStss).io_map));
+    memset(&x86KStss.io_map[0], 0xff, sizeof(x86KStss.io_map));
 }
 /* initialise Global Descriptor Table (GDT) */
 
@@ -387,12 +387,12 @@ init_dtrs(void)
 {
     /* setup the GDT pointer and limit and load into GDTR */
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
-    gdt_idt_ptr.base = (uint32_t)ARCH_NODE_STATE(x86KSgdt);
+    gdt_idt_ptr.base = (uint32_t)x86KSgdt;
     ia32_install_gdt(&gdt_idt_ptr);
 
     /* setup the IDT pointer and limit and load into IDTR */
     gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1)) - 1;
-    gdt_idt_ptr.base = (uint32_t)ARCH_NODE_STATE(x86KSidt);
+    gdt_idt_ptr.base = (uint32_t)x86KSidt;
     ia32_install_idt(&gdt_idt_ptr);
 
     /* load NULL LDT selector into LDTR */

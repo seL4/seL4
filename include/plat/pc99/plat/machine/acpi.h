@@ -39,6 +39,7 @@ acpi_rsdt_t* acpi_init(void);
 uint32_t acpi_madt_scan(
     acpi_rsdt_t* acpi_rsdt,
     cpu_id_t*    cpu_list,
+    uint32_t     max_list_len,
     uint32_t*    num_ioapic,
     paddr_t*     ioapic_addrs
 );

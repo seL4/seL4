@@ -18,33 +18,32 @@
 /* ==== read/write kernel state not preserved across kernel entries ==== */
 
 /* Interrupt currently being handled */
-UP_STATE_DEFINE(interrupt_t, x86KScurInterrupt VISIBLE);
+interrupt_t x86KScurInterrupt VISIBLE;
 
 /* ==== proper read/write kernel state ==== */
 
 /* Task State Segment (TSS), contains currently running TCB in ESP0 */
-UP_STATE_DEFINE(tss_io_t, x86KStss VISIBLE);
+tss_io_t x86KStss VISIBLE;
 
 /* Global Descriptor Table (GDT) */
-UP_STATE_DEFINE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
-
-/* Current thread whose state is installed in the FPU, or NULL if
- * the FPU is currently invalid. */
-UP_STATE_DEFINE(tcb_t *, x86KSfpuOwner VISIBLE);
+gdt_entry_t x86KSgdt[GDT_ENTRIES];
 
 /* The top level ASID table */
 asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
 
+/*
+ * Current thread whose state is installed in the FPU, or NULL if
+ * the FPU is currently invalid.
+ */
+tcb_t *x86KSfpuOwner VISIBLE;
+
 /* ==== read-only kernel state (only written during bootstrapping) ==== */
-
-/* Defines a translation of cpu ids from an index of our actual CPUs */
-SMP_STATE_DEFINE(cpu_id_mapping_t, cpu_mapping);
-
-/* Interrupt Descriptor Table (IDT) */
-UP_STATE_DEFINE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
 
 /* CPU Cache Line Size */
 uint32_t x86KScacheLineSizeBits;
+
+/* Interrupt Descriptor Table (IDT) */
+idt_entry_t x86KSidt[IDT_ENTRIES];
 
 /* A valid initial FPU state, copied to every new thread. */
 user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);

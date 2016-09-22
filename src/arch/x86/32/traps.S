@@ -57,14 +57,6 @@ int_##number:                                \
     jmp   handle_interrupt;                  \
     .size int_##number, .-int_##number;
 
-#if CONFIG_MAX_NUM_NODES > 1
-#define SET_KERNEL_STACK                    \
-    movl    0x4C(%esp), %esp
-#else
-#define SET_KERNEL_STACK                    \
-    leal kernel_stack_alloc + 0xffc, %esp
-#endif
-
 .section .text
 
 INT_HANDLER_WITHOUT_ERR_CODE(00)
@@ -355,7 +347,7 @@ handle_interrupt:
     jnz     kernel_exception
 
     # switch to kernel stack
-    SET_KERNEL_STACK
+    leal    kernel_stack_alloc + 4096, %esp
 
     # Place the arguments on the stack
     pushl   %eax
@@ -437,7 +429,7 @@ BEGIN_FUNC(handle_syscall)
     SET_SEL(es, 8  * 4, 0x23)
 
     # switch to kernel stack
-    SET_KERNEL_STACK
+    leal    kernel_stack_alloc + 4096, %esp
 
     # Push all the arguments for c_handle_syscall
     pushl   %eax # syscall number

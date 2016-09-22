@@ -15,15 +15,8 @@
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <arch/model/statedata.h>
+#include <arch/machine.h>
 
-NODE_STATE_BEGIN(nodeState)
-    NODE_STATE_TYPE_DECLARE(archNodeState, arch);
-NODE_STATE_END(nodeState);
-
-#include <arch/model/smp.h>
-#include <mode/machine.h>
-
-extern word_t ksNumCPUs VISIBLE;
 extern tcb_queue_t ksReadyQueues[] VISIBLE;
 extern word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS] VISIBLE;
 extern word_t ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1] VISIBLE;

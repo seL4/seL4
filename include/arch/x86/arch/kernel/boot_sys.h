@@ -13,6 +13,7 @@
 
 #include <arch/kernel/multiboot.h>
 
+void boot_node(void);
 bool_t in_boot_phase(void);
 
 void boot_sys(
