@@ -71,7 +71,7 @@ BOOT_DATA
 boot_state_t boot_state;
 
 #if !(CONFIG_MAX_NUM_NODES > 1)
-/* This is the stack used in uniprocessor mode. There are a lot of assumptions 
+/* This is the stack used in uniprocessor mode. There are a lot of assumptions
  * on this being page aligned and precisely 4K in size. DO NOT MODIFY */
 ALIGN(BIT(PAGE_BITS)) VISIBLE
 char kernel_stack_alloc[4096];
@@ -325,7 +325,7 @@ try_boot_sys(
 
 #if CONFIG_MAX_NUM_NODES > 1
     /* copy boot code for APs to lower memory to run in real mode */
-    if(!copy_boot_code_aps(mbi->mem_lower)) {
+    if (!copy_boot_code_aps(mbi->mem_lower)) {
         return false;
     }
 #endif

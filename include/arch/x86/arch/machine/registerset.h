@@ -49,7 +49,7 @@ compile_assert(fpu_state_alignment_valid,
 #if CONFIG_MAX_NUM_NODES > 1
 /* Ensure kernelSP is the first member following the registers. */
 compile_assert(kernelSP_alignment_valid,
-               OFFSETOF(user_context_t, kernelSP) - 
+               OFFSETOF(user_context_t, kernelSP) -
                OFFSETOF(user_context_t, registers) == 0x4C)
 #endif
 

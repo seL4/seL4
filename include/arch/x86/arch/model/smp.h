@@ -17,7 +17,7 @@
 #include <model/statedata.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
-typedef struct smpStatedata{
+typedef struct smpStatedata {
     nodeState_t CPU;
     char padding[CONFIG_CACHE_LN_SZ - (sizeof(nodeState_t) % CONFIG_CACHE_LN_SZ)];
 } smpStatedata_t;
