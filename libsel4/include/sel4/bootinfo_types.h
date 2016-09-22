@@ -43,6 +43,8 @@ typedef struct {
 
 typedef struct {
     seL4_Word  paddr;   /* physical address of untyped cap  */
+    seL4_Uint8 padding1;
+    seL4_Uint8 padding2;
     seL4_Uint8 sizeBits;/* size (2^n) bytes of each untyped */
     seL4_Uint8 isDevice;/* whether the untyped is a device  */
 } seL4_UntypedDesc;
