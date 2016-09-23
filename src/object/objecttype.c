@@ -497,11 +497,11 @@ maskCapRights(cap_rights_t cap_rights, cap_t cap)
 }
 
 cap_t
-createObject(object_t t, void *regionBase, word_t userSize)
+createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     /* Handle architecture-specific objects. */
     if (t >= (object_t) seL4_NonArchObjectTypeCount) {
-        return Arch_createObject(t, regionBase, userSize);
+        return Arch_createObject(t, regionBase, userSize, deviceMemory);
     }
 
     /* Create objects. */
@@ -557,7 +557,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
          * No objects need to be created; instead, just insert caps into
          * the destination slots.
          */
-        return cap_untyped_cap_new(0, userSize, WORD_REF(regionBase));
+        return cap_untyped_cap_new(0, !!deviceMemory, userSize, WORD_REF(regionBase));
 
     default:
         fail("Invalid object type");
@@ -566,7 +566,7 @@ createObject(object_t t, void *regionBase, word_t userSize)
 
 void
 createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
-                 void *regionBase, word_t userSize)
+                 void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     word_t objectSize;
     void *nextFreeArea;
@@ -584,7 +584,7 @@ createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
     for (i = 0; i < slots.length; i++) {
         /* Create the object. */
         /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute> nextFreeArea + ((\<acute> i) << unat (\<acute> objectSize))) (unat (\<acute> objectSize)))" */
-        cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i << objectSize)), userSize);
+        cap_t cap = createObject(t, (void *)((word_t)nextFreeArea + (i << objectSize)), userSize, deviceMemory);
 
         /* Insert the cap into the user's cspace. */
         insertNewCap(parent, &slots.cnode[slots.offset + i], cap);

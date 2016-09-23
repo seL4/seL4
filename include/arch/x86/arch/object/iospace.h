@@ -16,9 +16,18 @@
 #include <object/structures.h>
 #include <plat/machine/hardware_gen.h>
 
+#define get_pci_bus(x) (((x)>>8u) & 0xffu)
+#define get_pci_dev(x) (((x)>>3u) & 0x1fu)
+#define get_pci_fun(x) ((x) & 0x7u)
+#define get_dev_id(bus, dev, fun) (((bus) << 8u) | ((dev) << 3u) | (fun))
+
+#define PCI_BUS_MAX     255
+#define PCI_DEV_MAX     31
+#define PCI_FUNC_MAX    7
+
 static inline int vtd_get_root_index(dev_id_t dev)
 {
-    return (dev >> 8) & 0xff;
+    return get_pci_bus(dev);
 }
 
 static inline int vtd_get_context_index(dev_id_t dev)

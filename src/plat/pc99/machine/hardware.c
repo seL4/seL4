@@ -19,18 +19,19 @@
 
 #include <plat/machine/intel-vtd.h>
 
-/* Device discovery. For the pc99 platform we assume a pci bus and the presence of the
- * standard bios regions */
-void platAddDevices(void)
+BOOT_CODE bool_t platAddDevices(void)
 {
-    /* discover PCI devices and their regions */
-    /* pci_scan() calls insert_dev_p_reg() for each device region */
-    pci_scan();
-    /* Add the text mode (EGA) frame buffer. 1 frame is enough for the
-     * standard 80x25 text mode. This whole thing is a bit of a hack */
-    insert_dev_p_reg( (p_region_t) {
-        BIOS_PADDR_VIDEO_RAM_TEXT_MODE_START, BIOS_PADDR_VIDEO_RAM_TEXT_MODE_START + 0x1000
-    } );
+    /* remove the MSI region as poking at this is undefined and may allow for
+     * the user to generate arbitrary MSI interrupts. Only need to consider
+     * this if it would actually be in the user device region */
+    if (PADDR_USER_DEVICE_TOP > 0xFFFFFFF8) {
+        if (!add_allocated_p_region( (p_region_t) {
+        (word_t)0xFFFFFFF8, (word_t)0xFFFFFFF8 + 8
+        })) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /* ============================== timer ============================== */

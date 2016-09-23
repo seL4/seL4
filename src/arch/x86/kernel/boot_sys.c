@@ -21,7 +21,6 @@
 #include <arch/linker.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/devices.h>
-#include <plat/machine/pci.h>
 #include <plat/machine/pic.h>
 #include <plat/machine/ioapic.h>
 
@@ -56,7 +55,6 @@ typedef struct boot_state {
     p_region_t   avail_p_reg; /* region of available physical memory on platform */
     p_region_t   ki_p_reg;    /* region where the kernel image is in */
     ui_info_t    ui_info;     /* info about userland images */
-    dev_p_regs_t dev_p_regs;  /* device memory regions */
     uint32_t     num_ioapic;  /* number of IOAPICs detected */
     paddr_t      ioapic_paddr[CONFIG_MAX_NUM_IOAPIC];
     uint32_t     num_drhu; /* number of IOMMUs */
@@ -181,25 +179,6 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
     return load_paddr;
 }
 
-BOOT_CODE void
-insert_dev_p_reg(p_region_t reg)
-{
-    if (boot_state.dev_p_regs.count < CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS) {
-        boot_state.dev_p_regs.list[boot_state.dev_p_regs.count] = reg;
-        boot_state.dev_p_regs.count++;
-        printf("\n");
-    } else {
-        printf(" -> IGNORED! (too many)\n");
-    }
-}
-
-BOOT_CODE static void
-discover_devices(void)
-{
-    /* We do not add any ia32 specific devices. Just add any platform ones */
-    platAddDevices();
-}
-
 static BOOT_CODE bool_t
 try_boot_sys_node(cpu_id_t cpu_id)
 {
@@ -231,7 +210,6 @@ try_boot_sys_node(cpu_id_t cpu_id)
     if (!init_sys_state(
                 cpu_id,
                 boot_state.mem_p_regs,
-                &boot_state.dev_p_regs,
                 boot_state.ui_info,
                 boot_mem_reuse_p_reg,
                 /* parameters below not modeled in abstract specification */
@@ -264,7 +242,7 @@ start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
     apic_send_startup_ipi(cpu_id, boot_fun_paddr);
 }
 
-static BOOT_CODE void
+static BOOT_CODE bool_t
 add_mem_p_regs(p_region_t reg)
 {
     if (reg.end > PADDR_TOP) {
@@ -274,22 +252,25 @@ add_mem_p_regs(p_region_t reg)
         reg.start = PADDR_TOP;
     }
     if (reg.start == reg.end) {
-        return;
+        /* Return true here as it's not an error for there to exist memory outside the kernel window,
+         * we're just going to ignore it and leave it to be given out as device memory */
+        return true;
     }
     if (boot_state.mem_p_regs.count == MAX_NUM_FREEMEM_REG) {
         printf("Dropping memory region 0x%lx-0x%lx, try increasing MAX_NUM_FREEMEM_REG\n", reg.start, reg.end);
-        return;
+        return false;
     }
     printf("Adding physical memory region 0x%lx-0x%lx\n", reg.start, reg.end);
     boot_state.mem_p_regs.list[boot_state.mem_p_regs.count] = reg;
     boot_state.mem_p_regs.count++;
+    return add_allocated_p_region(reg);
 }
 
 /*
  * the code relies that the GRUB provides correct information
  * about the actual physical memory regions.
  */
-static BOOT_CODE void
+static BOOT_CODE bool_t
 parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
 {
     multiboot_mmap_t *mmap = (multiboot_mmap_t *)((word_t)mmap_addr);
@@ -304,13 +285,16 @@ parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
         } else {
             printf("\tPhysical Memory Region from %lx size %lx type %d\n", (long)mem_start, (long)mem_length, type);
             if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR) {
-                add_mem_p_regs((p_region_t) {
-                    mem_start, mem_start + mem_length
-                });
+                if (!add_mem_p_regs((p_region_t) {
+                mem_start, mem_start + mem_length
+            })) {
+                    return false;
+                }
             }
         }
         mmap++;
     }
+    return true;
 }
 
 static BOOT_CODE bool_t
@@ -349,15 +333,25 @@ try_boot_sys(
     /* copy CPU bootup code to lower memory */
     memcpy((void*)BOOT_NODE_PADDR, boot_cpu_start, boot_cpu_end - boot_cpu_start);
 
+    /* initialize the memory. We track two kinds of memory regions. Physical memory
+     * that we will use for the kernel, and physical memory regions that we must
+     * not give to the user. Memory regions that must not be given to the user
+     * include all the physical memory in the kernel window, but also includes any
+     * important or kernel devices. */
     boot_state.mem_p_regs.count = 0;
+    init_allocated_p_regions();
     if (mbi->flags & MULTIBOOT_INFO_MMAP_FLAG) {
-        parse_mem_map(mbi->mmap_length, mbi->mmap_addr);
+        if (!parse_mem_map(mbi->mmap_length, mbi->mmap_addr)) {
+            return false;
+        }
     } else {
         /* calculate memory the old way */
         p_region_t avail;
         avail.start = HIGHMEM_PADDR;
         avail.end = ROUND_DOWN(avail.start + (mbi->mem_upper << 10), PAGE_BITS);
-        add_mem_p_regs(avail);
+        if (!add_mem_p_regs(avail)) {
+            return false;
+        }
     }
 
     boot_state.ki_p_reg.start = PADDR_LOAD;
@@ -377,9 +371,6 @@ try_boot_sys(
          * do this *before* we initialize the apic */
         pic_disable();
     }
-
-    /* Prepare for accepting device regions from here on */
-    boot_state.dev_p_regs.count = 0;
 
     /* get ACPI root table */
     acpi_rsdt = acpi_init();
@@ -480,7 +471,9 @@ try_boot_sys(
 
     /* ==== following code corresponds to abstract specification after "select" ==== */
 
-    discover_devices();
+    if (!platAddDevices()) {
+        return false;
+    }
 
     printf("Starting node #0\n");
     if (!try_boot_sys_node(boot_state.cpus[0])) {

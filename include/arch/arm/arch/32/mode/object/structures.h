@@ -105,11 +105,17 @@ struct user_data {
 
 typedef struct user_data user_data_t;
 
+struct user_data_device {
+    word_t words[BIT(ARMSmallPageBits) / sizeof(word_t)];
+};
+
+typedef struct user_data user_data_device_t;
+
 enum asidSizeConstants {
 #ifdef CONFIG_ARM_SMMU
-    asidHighBits = 7,
+    asidHighBits = 6,
 #else
-    asidHighBits = 8,
+    asidHighBits = 7,
 #endif
     asidLowBits = 10
 };
@@ -292,6 +298,22 @@ generic_frame_cap_get_capFMappedAddress(cap_t cap)
         return cap_small_frame_cap_get_capFMappedAddress(cap);
     } else {
         return cap_frame_cap_get_capFMappedAddress(cap);
+    }
+}
+
+static inline word_t CONST
+generic_frame_cap_get_capFIsDevice(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+    assert(ctag == cap_small_frame_cap ||
+           ctag == cap_frame_cap);
+
+    if (ctag == cap_small_frame_cap) {
+        return cap_small_frame_cap_get_capFIsDevice(cap);
+    } else {
+        return cap_frame_cap_get_capFIsDevice(cap);
     }
 }
 

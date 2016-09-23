@@ -435,6 +435,7 @@ create_initial_thread(
 BOOT_CODE static bool_t
 provide_untyped_cap(
     cap_t      root_cnode_cap,
+    bool_t     device_memory,
     pptr_t     pptr,
     word_t     size_bits,
     seL4_SlotPos first_untyped_slot
@@ -443,9 +444,10 @@ provide_untyped_cap(
     bool_t ret;
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
-        ndks_boot.bi_frame->untypedPaddrList[i] = pptr_to_paddr((void*)pptr);
-        ndks_boot.bi_frame->untypedSizeBitsList[i] = size_bits;
-        ret = provide_cap(root_cnode_cap, cap_untyped_cap_new(0, size_bits, pptr));
+        ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
+            pptr_to_paddr((void*)pptr), 0, 0, size_bits, device_memory
+        };
+        ret = provide_cap(root_cnode_cap, cap_untyped_cap_new(0, device_memory, size_bits, pptr));
     } else {
         printf("Kernel init: Too many untyped regions for boot info\n");
         ret = true;
@@ -461,9 +463,10 @@ BOOT_CODE static word_t boot_ctzl (word_t x)
     return CTZL (x);
 }
 
-BOOT_CODE static bool_t
+BOOT_CODE bool_t
 create_untypeds_for_region(
     cap_t      root_cnode_cap,
+    bool_t     device_memory,
     region_t   reg,
     seL4_SlotPos first_untyped_slot
 )
@@ -477,15 +480,18 @@ create_untypeds_for_region(
 
         /* Determine the alignment of the region */
         align_bits = boot_ctzl(reg.start);
-
         /* Reduce size bits to align if needed */
         if (align_bits < size_bits) {
             size_bits = align_bits;
         }
+        if (size_bits > MAX_SIZE_BITS) {
+            size_bits = MAX_SIZE_BITS;
+        }
 
-        assert(size_bits >= seL4_WordBits / 8);
-        if (!provide_untyped_cap(root_cnode_cap, reg.start, size_bits, first_untyped_slot)) {
-            return false;
+        if (size_bits >= MIN_SIZE_BITS) {
+            if (!provide_untyped_cap(root_cnode_cap, device_memory, reg.start, size_bits, first_untyped_slot)) {
+                return false;
+            }
         }
         reg.start += BIT(size_bits);
     }
@@ -493,17 +499,13 @@ create_untypeds_for_region(
 }
 
 BOOT_CODE bool_t
-create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
+create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg, seL4_SlotPos first_untyped_slot)
 {
-    seL4_SlotPos slot_pos_before;
-    seL4_SlotPos slot_pos_after;
     word_t     i;
     region_t   reg;
 
-    slot_pos_before = ndks_boot.slot_pos_cur;
-
     /* if boot_mem_reuse_reg is not empty, we can create UT objs from boot code/data frames */
-    if (!create_untypeds_for_region(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before)) {
+    if (!create_untypeds_for_region(root_cnode_cap, false, boot_mem_reuse_reg, first_untyped_slot)) {
         return false;
     }
 
@@ -511,15 +513,11 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
     for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
         reg = ndks_boot.freemem[i];
         ndks_boot.freemem[i] = REG_EMPTY;
-        if (!create_untypeds_for_region(root_cnode_cap, reg, slot_pos_before)) {
+        if (!create_untypeds_for_region(root_cnode_cap, false, reg, first_untyped_slot)) {
             return false;
         }
     }
 
-    slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
-        slot_pos_before, slot_pos_after
-    };
     return true;
 }
 

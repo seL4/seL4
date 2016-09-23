@@ -16,7 +16,6 @@
 #include <plat/machine.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/devices.h>
-#include <plat/machine/pci.h>
 
 enum acpi_type {
     ACPI_RSDP,

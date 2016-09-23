@@ -18,7 +18,6 @@
 #include <arch/model/statedata.h>
 #include <arch/linker.h>
 #include <plat/machine/intel-vtd.h>
-#include <plat/machine/pci.h>
 
 BOOT_CODE cap_t
 master_iospace_cap(void)

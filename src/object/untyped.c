@@ -44,6 +44,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     slot_range_t slots;
     word_t freeRef, alignedFreeRef, objectSize, untypedFreeBytes;
     word_t freeIndex;
+    bool_t deviceMemory;
 
     /* Ensure operation is valid. */
     if (invLabel != UntypedRetype) {
@@ -78,11 +79,11 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     }
 
     /* Is the requested object size valid? */
-    if (userObjSize >= (wordBits - 1)) {
+    if (userObjSize >= (wordBits - 2)) {
         userError("Untyped Retype: Invalid object size.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = wordBits - 2;
+        current_syscall_error.rangeErrorMax = wordBits - 3;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -205,6 +206,15 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    deviceMemory = cap_untyped_cap_get_capIsDevice(cap);
+    if ((deviceMemory && !Arch_isFrameType(newType))
+            && newType != seL4_UntypedObject) {
+        userError("Untyped Retype: Creating kernel objects with device untyped");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     /* Align up the free region so that it is aligned to the target object's
      * size. */
     alignedFreeRef = alignUp(freeRef, objectSize);
@@ -213,14 +223,15 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeUntyped_Retype(
                slot, WORD_PTR(cap_untyped_cap_get_capPtr(cap)),
-               (void*)alignedFreeRef, newType, userObjSize, slots, call);
+               (void*)alignedFreeRef, newType, userObjSize, slots, call,
+               deviceMemory);
 }
 
 exception_t
 invokeUntyped_Retype(cte_t *srcSlot, void* regionBase,
                      void* freeRegionBase,
                      object_t newType, word_t userSize,
-                     slot_range_t destSlots, bool_t call)
+                     slot_range_t destSlots, bool_t call, bool_t deviceMemory)
 {
     word_t size_ign UNUSED;
     word_t freeRef;
@@ -251,7 +262,7 @@ invokeUntyped_Retype(cte_t *srcSlot, void* regionBase,
                                          GET_FREE_INDEX(regionBase, freeRef));
 
     /* Create new objects and caps. */
-    createNewObjects(newType, srcSlot, destSlots, freeRegionBase, userSize);
+    createNewObjects(newType, srcSlot, destSlots, freeRegionBase, userSize, deviceMemory);
 
     return EXCEPTION_NONE;
 }

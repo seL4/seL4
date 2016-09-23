@@ -128,6 +128,11 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     if (!phys) {
         return false;
     }
+    if (!add_allocated_p_region((p_region_t) {
+    phys, phys + 0x1000
+})) {
+        return false;
+    }
     pte = x86_make_device_pte(phys);
 
     assert(idx == (PPTR_APIC & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
@@ -135,6 +140,11 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     idx++;
     for (i = 0; i < num_ioapic; i++) {
         phys = ioapic_paddrs[i];
+        if (!add_allocated_p_region((p_region_t) {
+        phys, phys + 0x1000
+    })) {
+            return false;
+        }
         pte = x86_make_device_pte(phys);
         assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
         pt[idx] = pte;
@@ -154,6 +164,11 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     /* map kernel devices: IOMMUs */
     for (i = 0; i < num_drhu; i++) {
         phys = (paddr_t)drhu_list[i];
+        if (!add_allocated_p_region((p_region_t) {
+        phys, phys + 0x1000
+    })) {
+            return false;
+        }
         pte = x86_make_device_pte(phys);
 
         assert(idx == ((PPTR_DRHU_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
@@ -614,6 +629,11 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
 {
     if (cap_get_capType(cap) != cap_frame_cap) {
         userError("IPC Buffer is an invalid cap.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    if (unlikely(cap_frame_cap_get_capFIsDevice(cap))) {
+        userError("Specifying a device frame as an IPC buffer is not permitted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1329,7 +1349,8 @@ exception_t decodeX86MMUInvocation(
 
 
         if (cap_get_capType(untyped) != cap_untyped_cap ||
-                cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits) {
+                cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
+                cap_untyped_cap_get_capIsDevice(untyped)) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 

@@ -13,7 +13,6 @@
 #include <arch/object/interrupt.h>
 #include <arch/api/invocation.h>
 #include <arch/linker.h>
-#include <plat/machine/pci.h>
 #include <plat/machine/hardware.h>
 
 void

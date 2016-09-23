@@ -26,7 +26,8 @@ block frame_cap {
     field       capFMappedASIDLow   10
     field_high  capFMappedAddress   20
 
-    padding                         4
+    padding                         3
+    field       capFIsDevice        1
     field       capFMappedASIDHigh  2
     field       capFVMRights        2
     field_high  capFBasePtr         20
