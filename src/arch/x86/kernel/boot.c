@@ -183,7 +183,7 @@ create_untypeds(
             paddr_to_pptr_reg((p_region_t) {
             start, allocated_p_regions.regs[i].start
             }),
-                                            slot_pos_before)) {
+            slot_pos_before)) {
                 return false;
             }
         }
@@ -195,7 +195,7 @@ create_untypeds(
         paddr_to_pptr_reg((p_region_t) {
         start, PADDR_USER_DEVICE_TOP
     }),
-                                    slot_pos_before)) {
+    slot_pos_before)) {
             return false;
         }
     }

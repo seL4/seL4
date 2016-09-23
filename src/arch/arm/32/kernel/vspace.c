@@ -727,7 +727,7 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
                  cap_get_capType(bufferCap) != cap_frame_cap)) {
         return NULL;
     }
-    if (unlikely (generic_frame_cap_get_capFIsDevice(bufferCap))){
+    if (unlikely (generic_frame_cap_get_capFIsDevice(bufferCap))) {
         return NULL;
     }
 
