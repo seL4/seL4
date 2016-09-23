@@ -22,6 +22,7 @@
 
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 #define TRACK_KERNEL_ENTRIES 1
+extern kernel_entry_t ksKernelEntry;
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 /**
  *  Calculate the maximum number of kernel entries that can be tracked,
@@ -34,7 +35,6 @@
 extern timestamp_t ksEnter;
 extern word_t ksLogIndex;
 extern uint32_t ksLogIndexFinalized;
-extern kernel_entry_t ksKernelEntry;
 
 /**
  * @brief Fill in logging info for kernel entries
