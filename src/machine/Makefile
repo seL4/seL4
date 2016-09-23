@@ -11,3 +11,4 @@
 DIRECTORIES += src/machine
 
 C_SOURCES += src/machine/io.c
+C_SOURCES += src/machine/registerset.c

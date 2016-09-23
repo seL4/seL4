@@ -27,25 +27,6 @@ const register_t gpRegisters[] = {
     TLS_BASE, FS, GS
 };
 
-const register_t exceptionMessage[] = {
-    [seL4_UserException_FaultIP] = FaultIP,
-    [seL4_UserException_SP] = ESP,
-    [seL4_UserException_FLAGS] = FLAGS
-};
-
-const register_t syscallMessage[] = {
-    [seL4_UnknownSyscall_EAX] = EAX,
-    [seL4_UnknownSyscall_EBX] = EBX,
-    [seL4_UnknownSyscall_ECX] = ECX,
-    [seL4_UnknownSyscall_EDX] = EDX,
-    [seL4_UnknownSyscall_ESI] = ESI,
-    [seL4_UnknownSyscall_EDI] = EDI,
-    [seL4_UnknownSyscall_EBP] = EBP,
-    [seL4_UnknownSyscall_FaultIP] = FaultIP,
-    [seL4_UnknownSyscall_SP] = ESP,
-    [seL4_UnknownSyscall_FLAGS] = FLAGS
-};
-
 #ifdef CONFIG_VTX
 const register_t crExitRegs[] = {
     EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI

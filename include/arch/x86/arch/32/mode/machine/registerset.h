@@ -69,11 +69,30 @@ enum messageSizes {
     n_syscallMessage = 10
 };
 
+#define SYSCALL_MESSAGE \
+{    \
+    [seL4_UnknownSyscall_EAX] = EAX,\
+    [seL4_UnknownSyscall_EBX] = EBX,\
+    [seL4_UnknownSyscall_ECX] = ECX,\
+    [seL4_UnknownSyscall_EDX] = EDX,\
+    [seL4_UnknownSyscall_ESI] = ESI,\
+    [seL4_UnknownSyscall_EDI] = EDI,\
+    [seL4_UnknownSyscall_EBP] = EBP,\
+    [seL4_UnknownSyscall_FaultIP] = FaultIP,\
+    [seL4_UnknownSyscall_SP] = ESP,\
+    [seL4_UnknownSyscall_FLAGS] = FLAGS\
+}
+
+#define EXCEPTION_MESSAGE \
+{    \
+    [seL4_UserException_FaultIP] = FaultIP,\
+    [seL4_UserException_SP] = ESP,\
+    [seL4_UserException_FLAGS] = FLAGS\
+}
+
 extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
-extern const register_t exceptionMessage[];
-extern const register_t syscallMessage[];
 #ifdef CONFIG_VTX
 extern const register_t crExitRegs[];
 #endif

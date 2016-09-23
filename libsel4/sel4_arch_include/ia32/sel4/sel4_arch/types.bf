@@ -73,7 +73,7 @@ block UserException {
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 block DebugException {
-    padding 288
+    padding 224
     field FaultIP 32
     field ExceptionReason 32
     field TriggerAddress 32
