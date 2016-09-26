@@ -85,6 +85,7 @@ handleUnknownSyscall(word_t w)
         /* This is a syscall meant to aid debugging, so if anything goes wrong
          * then assume the system is completely misconfigured and halt */
         const char *name;
+        word_t len;
         word_t cptr = getRegister(ksCurThread, capRegister);
         lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
         /* ensure we got a TCB cap */
@@ -100,7 +101,8 @@ handleUnknownSyscall(word_t w)
             halt();
         }
         /* ensure the name isn't too long */
-        if (name[strnlen(name, seL4_MsgMaxLength * sizeof(word_t))] != '\0') {
+        len = strnlen(name, seL4_MsgMaxLength * sizeof(word_t));
+        if (len == seL4_MsgMaxLength * sizeof(word_t)) {
             userError("SysDebugNameThread: Name too long, halting");
             halt();
         }
