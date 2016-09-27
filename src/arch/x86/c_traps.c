@@ -75,8 +75,13 @@ void NORETURN
 slowpath(syscall_t syscall)
 {
     ARCH_NODE_STATE(x86KScurInterrupt) = -1;
-    /* increment NextIP to skip sysenter */
-    ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
+    if (config_set(CONFIG_SYSENTER)) {
+        /* increment NextIP to skip sysenter */
+        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
+    } else {
+        /* set FaultIP */
+        setRegister(ksCurThread, FaultIP, getRegister(ksCurThread, NextIP) - 2);
+    }
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
 #ifdef TRACK_KERNEL_ENTIRES

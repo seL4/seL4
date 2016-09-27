@@ -421,8 +421,14 @@ init_cpu(
     /* initialise CPU's descriptor table registers (GDTR, IDTR, LDTR, TR) */
     init_dtrs();
 
-    /* initialise MSRs (needs an initialised TSS) */
-    init_sysenter_msrs();
+    if (config_set(CONFIG_SYSENTER)) {
+        /* initialise MSRs (needs an initialised TSS) */
+        init_sysenter_msrs();
+    } else if (config_set(CONFIG_SYSCALL)) {
+        init_syscall_msrs();
+    } else {
+        return false;
+    }
 
     /* setup additional PAT MSR */
     if (!init_pat_msr()) {

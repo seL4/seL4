@@ -146,4 +146,9 @@ static inline void x86_write_gs_base(word_t base)
 void ia32_load_fs(word_t selector);
 void ia32_load_gs(word_t selector);
 
+static inline void init_syscall_msrs(void)
+{
+    fail("syscall not supported on ia32");
+}
+
 #endif
