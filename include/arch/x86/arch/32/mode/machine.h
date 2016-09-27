@@ -65,6 +65,13 @@ static inline void setCurrentPD(paddr_t addr)
     write_cr3(addr);
 }
 
+static inline void setCurrentVSpaceRoot(paddr_t addr, word_t pcid)
+{
+    /* pcid is not supported on ia32 and so we should always be passed zero */
+    assert(pcid == 0);
+    setCurrentPD(addr);
+}
+
 static inline void invalidateTLBEntry(vptr_t vptr)
 {
     asm volatile("invlpg (%[vptr])" :: [vptr] "r"(vptr));
