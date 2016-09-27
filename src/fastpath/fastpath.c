@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <fastpath/fastpath.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
@@ -29,7 +30,11 @@ fastpath_call(word_t cptr, word_t msgInfo)
     word_t badge;
     cte_t *replySlot, *callerSlot;
     cap_t newVTable;
-    pde_t *cap_pd;
+#ifdef CONFIG_ARCH_X86
+    vspace_root_t *cap_vroot;
+#else
+    pde_t *cap_vroot;
+#endif
     pde_t stored_hw_asid;
     word_t fault_type;
 
@@ -70,10 +75,14 @@ fastpath_call(word_t cptr, word_t msgInfo)
     newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
 
     /* Get vspace root. */
-#if defined(ARCH_ARM) || !defined(CONFIG_PAE_PAGING)
-    cap_pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+#if defined(ARCH_ARM) || (!defined(CONFIG_PAE_PAGING) && defined(CONFIG_ARCH_IA32))
+    cap_vroot = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+#elif defined(CONFIG_ARCH_X86_64)
+    cap_vroot = PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(newVTable));
+#elif defined(CONFIG_PAE_PAGING)
+    cap_vroot = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
 #else
-    cap_pd = PDE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
+#error "Invalid vspace root"
 #endif
 
     /* Ensure that the destination has a valid VTable. */
@@ -83,7 +92,12 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef ARCH_ARM
     /* Get HW ASID */
-    stored_hw_asid = cap_pd[PD_ASID_SLOT];
+    stored_hw_asid = cap_vroot[PD_ASID_SLOT];
+#endif
+
+#ifdef CONFIG_ARCH_X86_64
+    /* borrow the stored_hw_asid for PCID */
+    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
 #endif
 
     /* Ensure the destination has a higher/equal priority to us. */
@@ -120,7 +134,9 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef ARCH_X86
     /* Need to update NextIP in the calling thread */
-    setRegister(NODE_STATE(ksCurThread), NextIP, getRegister(NODE_STATE(ksCurThread), NextIP) + 2);
+    if (config_set(CONFIG_SYSENTER)) {
+        setRegister(NODE_STATE(ksCurThread), NextIP, getRegister(NODE_STATE(ksCurThread), NextIP) + 2);
+    }
 #endif
 
     /* Dequeue the destination. */
@@ -154,7 +170,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&dest->tcbState,
                                    ThreadState_Running);
-    switchToThread_fp(dest, cap_pd, stored_hw_asid);
+    switchToThread_fp(dest, cap_vroot, stored_hw_asid);
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 
@@ -176,7 +192,11 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     word_t fault_type;
 
     cap_t newVTable;
-    pde_t *cap_pd;
+#ifdef CONFIG_ARCH_X86
+    vspace_root_t *cap_vroot;
+#else
+    pde_t *cap_vroot;
+#endif
     pde_t stored_hw_asid;
 
     /* Get message info and length */
@@ -236,10 +256,14 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     newVTable = TCB_PTR_CTE_PTR(caller, tcbVTable)->cap;
 
     /* Get vspace root. */
-#if defined(ARCH_ARM) || !defined(CONFIG_PAE_PAGING)
-    cap_pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+#if defined(ARCH_ARM) || (!defined(CONFIG_PAE_PAGING) && defined(CONFIG_ARCH_IA32))
+    cap_vroot = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+#elif defined(CONFIG_ARCH_X86_64)
+    cap_vroot = PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(newVTable));
+#elif defined(CONFIG_PAE_PAGING)
+    cap_vroot = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
 #else
-    cap_pd = PDE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
+#error "Invalid vspace root"
 #endif
 
     /* Ensure that the destination has a valid MMU. */
@@ -249,7 +273,10 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef ARCH_ARM
     /* Get HWASID. */
-    stored_hw_asid = cap_pd[PD_ASID_SLOT];
+    stored_hw_asid = cap_vroot[PD_ASID_SLOT];
+#endif
+#ifdef CONFIG_ARCH_X86_64
+    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
@@ -281,7 +308,9 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef ARCH_X86
     /* Need to update NextIP in the calling thread */
-    setRegister(NODE_STATE(ksCurThread), NextIP, getRegister(NODE_STATE(ksCurThread), NextIP) + 2);
+    if (config_set(CONFIG_SYSENTER)) {
+        setRegister(NODE_STATE(ksCurThread), NextIP, getRegister(NODE_STATE(ksCurThread), NextIP) + 2);
+    }
 #endif
 
     /* Set thread state to BlockedOnReceive */
@@ -326,7 +355,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&caller->tcbState,
                                    ThreadState_Running);
-    switchToThread_fp(caller, cap_pd, stored_hw_asid);
+    switchToThread_fp(caller, cap_vroot, stored_hw_asid);
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 

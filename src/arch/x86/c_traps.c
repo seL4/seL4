@@ -122,10 +122,10 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 #endif /* TRACK_KERNEL_ENTRIES */
 
 #ifdef CONFIG_FASTPATH
-    if (syscall == SysCall) {
+    if (syscall == (syscall_t)SysCall) {
         fastpath_call(cptr, msgInfo);
         UNREACHABLE();
-    } else if (syscall == SysReplyRecv) {
+    } else if (syscall == (syscall_t)SysReplyRecv) {
         fastpath_reply_recv(cptr, msgInfo);
         UNREACHABLE();
     }
