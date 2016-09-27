@@ -38,3 +38,7 @@
 #define seL4_LargePageBits      21
 #define seL4_HugePageBits       30
 #define seL4_ASIDPoolBits       12
+
+/* Untyped size limits */
+#define seL4_MinUntypedBits 4
+#define seL4_MaxUntypedBits 47

@@ -485,11 +485,11 @@ create_untypeds_for_region(
         if (align_bits < size_bits) {
             size_bits = align_bits;
         }
-        if (size_bits > MAX_SIZE_BITS) {
-            size_bits = MAX_SIZE_BITS;
+        if (size_bits > seL4_MaxUntypedBits) {
+            size_bits = seL4_MaxUntypedBits;
         }
 
-        if (size_bits >= MIN_SIZE_BITS) {
+        if (size_bits >= seL4_MinUntypedBits) {
             if (!provide_untyped_cap(root_cnode_cap, device_memory, reg.start, size_bits, first_untyped_slot)) {
                 return false;
             }

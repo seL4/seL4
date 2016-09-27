@@ -11,25 +11,24 @@
 #ifndef __OBJECT_UNTYPED_H
 #define __OBJECT_UNTYPED_H
 
+#include <config.h>
 #include <types.h>
 #include <api/failures.h>
 #include <api/types.h>
 #include <object/structures.h>
 #include <object/cnode.h>
 
-/* It is assumed that every untyped is within MIN_SIZE_BITS and MAX_SIZE_BITS
- * (inclusive). This means that every untyped stored as MIN_SIZE_BITS
+/* It is assumed that every untyped is within seL4_MinUntypedBits and seL4_MaxUntypedBits
+ * (inclusive). This means that every untyped stored as seL4_MinUntypedBits
  * subtracted from its size before it is stored in capBlockSize, and
- * capFreeIndex counts in chunks of size 2^MIN_SIZE_BITS. The MAX_SIZE_BITS
+ * capFreeIndex counts in chunks of size 2^seL4_MinUntypedBits. The seL4_MaxUntypedBits
  * is the minimal untyped that can be stored when considering both how
  * many bits of capBlockSize there are, and the largest offset that can
  * be stored in capFreeIndex */
-#define MIN_SIZE_BITS 4
-#define MAX_SIZE_BITS 30
-#define MAX_FREE_INDEX(sizeBits) (BIT((sizeBits) - MIN_SIZE_BITS))
-#define FREE_INDEX_TO_OFFSET(freeIndex) ((freeIndex)<<MIN_SIZE_BITS)
+#define MAX_FREE_INDEX(sizeBits) (BIT((sizeBits) - seL4_MinUntypedBits))
+#define FREE_INDEX_TO_OFFSET(freeIndex) ((freeIndex)<<seL4_MinUntypedBits)
 #define GET_FREE_REF(base,freeIndex) ((word_t)(((word_t)(base)) + FREE_INDEX_TO_OFFSET(freeIndex)))
-#define GET_FREE_INDEX(base,free) (((word_t)(free) - (word_t)(base))>>MIN_SIZE_BITS)
+#define GET_FREE_INDEX(base,free) (((word_t)(free) - (word_t)(base))>>seL4_MinUntypedBits)
 
 exception_t decodeUntypedInvocation(word_t invLabel, word_t length,
                                     cte_t *slot, cap_t cap,
