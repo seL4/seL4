@@ -117,25 +117,42 @@ module_paddr_region_valid(paddr_t pa_start, paddr_t pa_end)
 BOOT_CODE static paddr_t
 load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
 {
-    Elf32_Header_t* elf_file = (Elf32_Header_t*)(word_t)boot_module->start;
     v_region_t v_reg;
+    word_t entry;
+    if (config_set(CONFIG_ARCH_IA32)) {
+        Elf32_Header_t* elf_file = (Elf32_Header_t*)(word_t)boot_module->start;
 
-    if (!elf32_checkFile(elf_file)) {
-        printf("Boot module does not contain a valid ELF32 image\n");
+        if (!elf32_checkFile(elf_file)) {
+            printf("Boot module does not contain a valid ELF32 image\n");
+            return 0;
+        }
+
+        v_reg = elf32_getMemoryBounds(elf_file);
+        entry = elf_file->e_entry;
+    } else if (config_set(CONFIG_ARCH_X86_64)) {
+        Elf64_Header_t* elf_file = (Elf64_Header_t*)(word_t)boot_module->start;
+
+        if (!elf64_checkFile(elf_file)) {
+            printf("Boot module does not contain a valid ELF64 image\n");
+            return 0;
+        }
+
+        v_reg = elf64_getMemoryBounds(elf_file);
+        entry = elf_file->e_entry;
+    } else {
+        printf("No architecture selected");
         return 0;
     }
 
-    v_reg = elf32_getMemoryBounds(elf_file);
-
     if (v_reg.end == 0) {
-        printf("ELF32 image in boot module does not contain any segments\n");
+        printf("ELF image in boot module does not contain any segments\n");
         return 0;
     }
     v_reg.end = ROUND_UP(v_reg.end, PAGE_BITS);
 
     printf("size=0x%lx v_entry=%p v_start=%p v_end=%p ",
            v_reg.end - v_reg.start,
-           (void*)elf_file->e_entry,
+           (void*)entry,
            (void*)v_reg.start,
            (void*)v_reg.end
           );
@@ -149,7 +166,7 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
         printf("Userland image virtual end address too high\n");
         return 0;
     }
-    if ((elf_file->e_entry < v_reg.start) || (elf_file->e_entry >= v_reg.end)) {
+    if ((entry < v_reg.start) || (entry >= v_reg.end)) {
         printf("Userland image entry point does not lie within userland image\n");
         return 0;
     }
@@ -159,7 +176,7 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
     boot_state.ui_info.p_reg.start = load_paddr;
     load_paddr += v_reg.end - v_reg.start;
     boot_state.ui_info.p_reg.end = load_paddr;
-    boot_state.ui_info.v_entry = elf_file->e_entry;
+    boot_state.ui_info.v_entry = entry;
 
     printf("p_start=0x%lx p_end=0x%lx\n",
            boot_state.ui_info.p_reg.start,
@@ -178,7 +195,13 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
         (void*)boot_state.ui_info.p_reg.start,
         boot_state.ui_info.p_reg.end - boot_state.ui_info.p_reg.start
     );
-    elf32_load(elf_file, boot_state.ui_info.pv_offset);
+    if (config_set(CONFIG_ARCH_IA32)) {
+        Elf32_Header_t* elf_file = (Elf32_Header_t*)(word_t)boot_module->start;
+        elf32_load(elf_file, boot_state.ui_info.pv_offset);
+    } else if (config_set(CONFIG_ARCH_X86_64)) {
+        Elf64_Header_t* elf_file = (Elf64_Header_t*)(word_t)boot_module->start;
+        elf64_load(elf_file, boot_state.ui_info.pv_offset);
+    }
 
     return load_paddr;
 }
