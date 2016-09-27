@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<!--
+     Copyright 2016, Data61
+     Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+     ABN 41 687 119 230.
+
+     This software may be distributed and modified according to the terms of
+     the BSD 2-Clause license. Note that NO WARRANTY is provided.
+     See "LICENSE_BSD2.txt" for details.
+
+     @TAG(D61_BSD)
+  -->
+<api>
+    <struct name="seL4_UserContext">
+        <member name="rip"/>
+        <member name="rsp"/>
+        <member name="rflags"/>
+        <member name="rax"/>
+        <member name="rbx"/>
+        <member name="rcx"/>
+        <member name="rdx"/>
+        <member name="rsi"/>
+        <member name="rdi"/>
+        <member name="rbp"/>
+        <member name="r8"/>
+        <member name="r9"/>
+        <member name="r10"/>
+        <member name="r11"/>
+        <member name="r12"/>
+        <member name="r13"/>
+        <member name="r14"/>
+        <member name="r15"/>
+        <member name="tls_base"/>
+    </struct>
+
+    <interface name="seL4_X86_PDPT">
+        <method id="X86PDPTMap" name="Map">
+            <param dir="in" name="pml4" type="seL4_X64_PML4"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
+        </method>
+        <method id="X86PDPTUnmap" name="Unmap">
+        </method>
+    </interface>
+</api>

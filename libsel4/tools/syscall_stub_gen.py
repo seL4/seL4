@@ -207,7 +207,8 @@ class Parameter(object):
 def init_data_types(wordsize):
     types = [
         # Simple Types
-        Type("int", wordsize, wordsize),
+        Type("int", 32, wordsize),
+        Type("long", wordsize, wordsize),
 
         Type("seL4_Uint8", 8, wordsize),
         Type("seL4_Uint16", 16, wordsize),
@@ -272,6 +273,21 @@ def init_arch_types(wordsize):
             CapType("seL4_X86_PageTable", wordsize),
             CapType("seL4_X86_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 13, wordsize),
+        ],
+
+        "x86_64" : [
+            Type("seL4_X86_VMAttributes", wordsize, wordsize),
+            CapType("seL4_X86_IOPort", wordsize),
+            CapType("seL4_X86_ASIDControl", wordsize),
+            CapType("seL4_X86_ASIDPool", wordsize),
+            CapType("seL4_X86_IOSpace", wordsize),
+            CapType("seL4_X86_Page", wordsize),
+            CapType("seL4_X64_PML4", wordsize),
+            CapType("seL4_X86_PDPT", wordsize),
+            CapType("seL4_X86_PageDirectory", wordsize),
+            CapType("seL4_X86_PageTable", wordsize),
+            CapType("seL4_X86_IOPageTable", wordsize),
+            StructType("seL4_UserContext", wordsize * 19, wordsize),
         ]
     }
 
@@ -509,7 +525,7 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
         return_type = "%s_%s_t" % (interface_name, method_name)
         returning_struct = True
     else:
-        return_type = "int"
+        return_type = "long"
 
     #
     # Print function header.
