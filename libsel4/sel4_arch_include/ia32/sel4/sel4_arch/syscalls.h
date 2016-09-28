@@ -15,210 +15,324 @@
 #include <sel4/arch/functions.h>
 #include <sel4/types.h>
 
+/*
+ * A general description of the x86_sys_ functions and what they do can be found in
+ * the ARM aarch32 syscalls.h file (substituting ARM for x86)
+ *
+ * Further there are two version of every function, one that supports Position
+ * Independent Code, and one that does not. The PIC variant works to preserve
+ * EBX, which is used by the compiler, and has to do additional work to save/restore
+ * and juggle the contents of EBX as the kernel ABI uses EBX
+ */
+
 #if defined(__pic__)
 
-#define SEL4_REGS_SAVE    "pushl %%ebx       \n"
-#define SEL4_REGS_MOV     "movl %%edx, %%ebx \n"
-#define SEL4_REGS_RESTORE "popl %%ebx        \n"
-#define SEL4_REGS_RESTORE_EDX  \
-        "movl %%ebx, %%edx \n" \
+static inline void
+x86_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info, seL4_Word mr1, seL4_Word mr2)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        "pushl %%ebx       \n"
+        "movl %%ecx, %%ebp \n"
+        "movl %%esp, %%ecx \n"
+        "movl %%edx, %%ebx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
         "popl %%ebx        \n"
+        "popl %%ebp        \n"
+        : "+d" (dest)
+        : "a" (sys),
+          "S" (info),
+          "D" (mr1),
+          "c" (mr2)
+    );
+}
 
-#define SEL4_REGS_OUT     "+d" (dest)
-#define SEL4_REGS_OUT_IN(VAR) "+d" (VAR)
-#define SEL4_REGS_IN
-#define SEL4_REGS_OUT_VAR(VAR) \
-        "=d" (VAR),
-#define SEL4_REGS_IN_VAR(VAR) \
-        "d" (VAR)
+static inline void
+x86_sys_reply(seL4_Word sys, seL4_Word info, seL4_Word mr1, seL4_Word mr2)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        "pushl %%ebx       \n"
+        "movl %%ecx, %%ebp \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "popl %%ebx        \n"
+        "popl %%ebp        \n"
+        :
+        : "a" (sys),
+          "S" (info),
+          "D" (mr1),
+          "c" (mr2)
+        : "%edx"
+    );
+}
 
-#define SEL4_REGS_CLOBBER_EBX
-#define SEL4_REGS_CLOBBER_EDX
-#define SEL4_REGS_CLOBBER_COMMA_EDX
+static inline void
+x86_sys_send_null(seL4_Word sys, seL4_Word src, seL4_Word info)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        "pushl %%ebx       \n"
+        "movl %%esp, %%ecx \n"
+        "movl %%edx, %%ebx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "popl %%ebx        \n"
+        "popl %%ebp        \n"
+        : "+d" (src)
+        : "a" (sys),
+          "S" (info)
+        : "%ecx"
+    );
+}
+
+static inline void
+x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_info, seL4_Word *out_mr1, seL4_Word *out_mr2)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        "pushl %%ebx       \n"
+        "movl %%esp, %%ecx \n"
+        "movl %%edx, %%ebx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "movl %%ebx, %%edx \n"
+        "popl %%ebx        \n"
+        "movl %%ebp, %%ecx \n"
+        "popl %%ebp        \n"
+        :
+          "=d" (*out_badge),
+          "=S" (*out_info),
+          "=D" (*out_mr1),
+          "=c" (*out_mr2)
+        : "a" (sys),
+          "d" (src)
+        : "memory"
+    );
+}
+
+static inline void
+x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word info, seL4_Word *out_info, seL4_Word *in_out_mr1, seL4_Word *in_out_mr2)
+{
+    asm volatile(
+        "pushl %%ebp       \n"
+        "pushl %%ebx       \n"
+        "movl %%ecx, %%ebp \n"
+        "movl %%esp, %%ecx \n"
+        "movl %%edx, %%ebx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "movl %%ebx, %%edx \n"
+        "popl %%ebx        \n"
+        "movl %%ebp, %%ecx \n"
+        "popl %%ebp        \n"
+        :
+          "=S" (*out_info),
+          "=D" (*in_out_mr1),
+          "=c" (*in_out_mr2),
+          "=d" (*out_badge)
+        : "a" (sys),
+          "S" (info),
+          "D" (*in_out_mr1),
+          "c" (*in_out_mr2),
+          "d" (dest)
+        : "memory"
+    );
+}
+
+static inline void
+x86_sys_null(seL4_Word sys)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        "pushl %%ebx       \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "popl %%ebx        \n"
+        "popl %%ebp        \n"
+        :
+        : "a" (sys)
+        : "%ecx", "%edx"
+    );
+}
 
 #else
 
-#define SEL4_REGS_SAVE
-#define SEL4_REGS_MOV
-#define SEL4_REGS_RESTORE
-#define SEL4_REGS_RESTORE_EDX
+static inline void
+x86_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info, seL4_Word mr1, seL4_Word mr2)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        "movl %%ecx, %%ebp \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "popl %%ebp        \n"
+        :
+        : "a" (sys),
+          "b" (dest),
+          "S" (info),
+          "D" (mr1),
+          "c" (mr2)
+        : "%edx"
+    );
+}
 
-#define SEL4_REGS_OUT
-#define SEL4_REGS_OUT_IN(VAR) "+b" (VAR)
-#define SEL4_REGS_IN "b" (dest),
-#define SEL4_REGS_OUT_VAR(VAR) \
-        "=b" (VAR),
-#define SEL4_REGS_IN_VAR(VAR) \
-        "b" (VAR)
+static inline void
+x86_sys_reply(seL4_Word sys, seL4_Word info, seL4_Word mr1, seL4_Word mr2)
+{
+    asm volatile(
+        "pushl %%ebp       \n"
+        "movl %%ecx, %%ebp \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "popl %%ebp        \n"
+        :
+        : "a" (sys),
+          "S" (info),
+          "D" (mr1),
+          "c" (mr2)
+        : "%ebx", "%edx"
+    );
+}
 
-#define SEL4_REGS_CLOBBER_EBX "%ebx",
-#define SEL4_REGS_CLOBBER_EDX "%edx"
-#define SEL4_REGS_CLOBBER_COMMA_EDX , "%edx"
+static inline void
+x86_sys_send_null(seL4_Word sys, seL4_Word dest, seL4_Word info)
+{
+    asm volatile ( \
+        "pushl %%ebp       \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "popl %%ebp        \n"
+        :
+        : "a" (sys),
+          "b" (dest),
+          "S" (info)
+        : "%ecx", "edx"
+    );
+}
 
-#endif /* #if defined(__pic__) */
+static inline void
+x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_info, seL4_Word *out_mr1, seL4_Word *out_mr2)
+{
+    asm volatile ( \
+        "pushl %%ebp       \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "movl %%ebp, %%ecx \n"
+        "popl %%ebp        \n"
+        : "=b" (*out_badge),
+          "=S" (*out_info),
+          "=D" (*out_mr1),
+          "=c" (*out_mr2)
+        : "a" (sys),
+          "b" (src)
+        : "%edx", "memory"
+    );
+}
+
+static inline void
+x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word info, seL4_Word *out_info, seL4_Word *in_out_mr1, seL4_Word *in_out_mr2)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        "movl %%ecx, %%ebp \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "movl %%ebp, %%ecx \n"
+        "popl %%ebp        \n"
+        : "=S" (*out_info),
+          "=D" (*in_out_mr1),
+          "=c" (*in_out_mr2),
+          "=b" (*out_badge)
+        : "a" (sys),
+          "S" (info),
+          "D" (*in_out_mr1),
+          "c" (*in_out_mr2),
+          "b" (dest)
+        : "%edx", "memory"
+    );
+}
+
+static inline void
+x86_sys_null(seL4_Word sys)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        "popl %%ebp        \n"
+        :
+        : "a" (sys)
+        : "%ebx", "%ecx", "%edx"
+    );
+}
+
+#endif /* defined(__pic__) */
 
 static inline void
 seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT
-        : "a" (seL4_SysSend),
-        SEL4_REGS_IN
-        "S" (msgInfo.words[0]),
-        "D" (seL4_GetMR(0)),
-        "c" (seL4_GetMR(1))
-        : SEL4_REGS_CLOBBER_EDX
-    );
+    x86_sys_send(seL4_SysSend, dest, msgInfo.words[0], seL4_GetMR(0), seL4_GetMR(1));
 }
 
 static inline void
 seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                  seL4_Word *mr0, seL4_Word *mr1)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT
-        : "a" (seL4_SysSend),
-        SEL4_REGS_IN
-        "S" (msgInfo.words[0]),
-        "D" (mr0 != seL4_Null ? *mr0 : 0),
-        "c" (mr1 != seL4_Null ? *mr1 : 0)
-        : SEL4_REGS_CLOBBER_EDX
-    );
+    x86_sys_send(seL4_SysSend, dest, msgInfo.words[0], mr0 != seL4_Null ? *mr0 : 0, mr1 != seL4_Null ? *mr1 : 0);
 }
 
 static inline void
 seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT
-        : "a" (seL4_SysNBSend),
-        SEL4_REGS_IN
-        "S" (msgInfo.words[0]),
-        "D" (seL4_GetMR(0)),
-        "c" (seL4_GetMR(1))
-        : SEL4_REGS_CLOBBER_EDX
-    );
+    x86_sys_send(seL4_SysNBSend, dest, msgInfo.words[0], seL4_GetMR(0), seL4_GetMR(1));
 }
 
 static inline void
 seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                    seL4_Word *mr0, seL4_Word *mr1)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT
-        : "a" (seL4_SysNBSend),
-        SEL4_REGS_IN
-        "S" (msgInfo.words[0]),
-        "D" (mr0 != seL4_Null ? *mr0 : 0),
-        "c" (mr1 != seL4_Null ? *mr1 : 0)
-        : SEL4_REGS_CLOBBER_EDX
-    );
+    x86_sys_send(seL4_SysNBSend, dest, msgInfo.words[0], mr0 != seL4_Null ? *mr0 : 0, mr1 != seL4_Null ? *mr1 : 0);
 }
 
 static inline void
 seL4_Reply(seL4_MessageInfo_t msgInfo)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        :
-        : "a" (seL4_SysReply),
-        "S" (msgInfo.words[0]),
-        "D" (seL4_GetMR(0)),
-        "c" (seL4_GetMR(1))
-        : SEL4_REGS_CLOBBER_EBX "%edx"
-    );
+    x86_sys_reply(seL4_SysReply, msgInfo.words[0], seL4_GetMR(0), seL4_GetMR(1));
 }
 
 static inline void
 seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
                   seL4_Word *mr0, seL4_Word *mr1)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        :
-        : "a" (seL4_SysReply),
-        "S" (msgInfo.words[0]),
-        "D" (mr0 != seL4_Null ? *mr0 : 0),
-        "c" (mr1 != seL4_Null ? *mr1 : 0)
-        : SEL4_REGS_CLOBBER_EBX "%edx"
-    );
+    x86_sys_reply(seL4_SysReply, msgInfo.words[0], mr0 != seL4_Null ? *mr0 : 0, mr1 != seL4_Null ? *mr1 : 0);
 }
 
 static inline void
 seL4_Signal(seL4_CPtr dest)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT
-        : "a" (seL4_SysSend),
-        SEL4_REGS_IN
-        "S" (seL4_MessageInfo_new(0, 0, 0, 0).words[0])
-        : "%ecx" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_send_null(seL4_SysSend, dest, seL4_MessageInfo_new(0, 0, 0, 0).words[0]);
 }
 
 static inline seL4_MessageInfo_t
@@ -229,26 +343,7 @@ seL4_Recv(seL4_CPtr src, seL4_Word* sender)
     seL4_Word mr0;
     seL4_Word mr1;
 
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE_EDX
-        "movl %%ebp, %%ecx \n"
-        "popl %%ebp        \n"
-        :
-        SEL4_REGS_OUT_VAR(badge)
-        "=S" (info.words[0]),
-        "=D" (mr0),
-        "=c" (mr1)
-        : "a" (seL4_SysRecv),
-        SEL4_REGS_IN_VAR(src)
-        : "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_recv(seL4_SysRecv, src, &badge, &info.words[0], &mr0, &mr1);
 
     seL4_SetMR(0, mr0);
     seL4_SetMR(1, mr1);
@@ -269,26 +364,7 @@ seL4_RecvWithMRs(seL4_CPtr src, seL4_Word* sender,
     seL4_Word msg0 = 0;
     seL4_Word msg1 = 0;
 
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE_EDX
-        "movl %%ebp, %%ecx \n"
-        "popl %%ebp        \n"
-        :
-        SEL4_REGS_OUT_VAR(badge)
-        "=S" (info.words[0]),
-        "=D" (msg0),
-        "=c" (msg1)
-        : "a" (seL4_SysRecv),
-        SEL4_REGS_IN_VAR(src)
-        : "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_recv(seL4_SysRecv, src, &badge, &info.words[0], &msg0, &msg1);
 
     if (mr0 != seL4_Null) {
         *mr0 = msg0;
@@ -312,26 +388,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word* sender)
     seL4_Word mr0;
     seL4_Word mr1;
 
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE_EDX
-        "movl %%ebp, %%ecx \n"
-        "popl %%ebp        \n"
-        :
-        SEL4_REGS_OUT_VAR(badge)
-        "=S" (info.words[0]),
-        "=D" (mr0),
-        "=c" (mr1)
-        : "a" (seL4_SysNBRecv),
-        SEL4_REGS_IN_VAR(src)
-        : "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_recv(seL4_SysNBRecv, src, &badge, &info.words[0], &mr0, &mr1);
 
     seL4_SetMR(0, mr0);
     seL4_SetMR(1, mr1);
@@ -350,29 +407,7 @@ seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
     seL4_Word mr0 = seL4_GetMR(0);
     seL4_Word mr1 = seL4_GetMR(1);
 
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE_EDX
-        "movl %%ebp, %%ecx \n"
-        "popl %%ebp        \n"
-        :
-        "=S" (info.words[0]),
-        "=D" (mr0),
-        "=c" (mr1),
-        SEL4_REGS_OUT_IN(dest)
-        : "a" (seL4_SysCall),
-        "S" (msgInfo.words[0]),
-        "D" (mr0),
-        "c" (mr1)
-        : "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_send_recv(seL4_SysCall, dest, &dest, msgInfo.words[0], &info.words[0], &mr0, &mr1);
 
     seL4_SetMR(0, mr0);
     seL4_SetMR(1, mr1);
@@ -395,29 +430,7 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
         msg1 = *mr1;
     }
 
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE_EDX
-        "movl %%ebp, %%ecx \n"
-        "popl %%ebp        \n"
-        :
-        "=S" (info.words[0]),
-        "=D" (msg0),
-        "=c" (msg1),
-        SEL4_REGS_OUT_IN(dest)
-        : "a" (seL4_SysCall),
-        "S" (msgInfo.words[0]),
-        "D" (msg0),
-        "c" (msg1)
-        : "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_send_recv(seL4_SysCall, dest, &dest, msgInfo.words[0], &info.words[0], &msg0, &msg1);
 
     if (mr0 != seL4_Null) {
         *mr0 = msg0;
@@ -437,30 +450,7 @@ seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
     seL4_Word mr0 = seL4_GetMR(0);
     seL4_Word mr1 = seL4_GetMR(1);
 
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE_EDX
-        "movl %%ebp, %%ecx \n"
-        "popl %%ebp        \n"
-        :
-        SEL4_REGS_OUT_VAR(badge)
-        "=S" (info.words[0]),
-        "=D" (mr0),
-        "=c" (mr1)
-        : "a" (seL4_SysReplyRecv),
-        SEL4_REGS_IN_VAR(dest),
-        "S" (msgInfo.words[0]),
-        "D" (mr0),
-        "c" (mr1)
-        : "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_send_recv(seL4_SysReplyRecv, dest, &badge, msgInfo.words[0], &info.words[0], &mr0, &mr1);
 
     seL4_SetMR(0, mr0);
     seL4_SetMR(1, mr1);
@@ -488,30 +478,7 @@ seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
         msg1 = *mr1;
     }
 
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%ecx, %%ebp \n"
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE_EDX
-        "movl %%ebp, %%ecx \n"
-        "popl %%ebp        \n"
-        :
-        SEL4_REGS_OUT_VAR(badge)
-        "=S" (info.words[0]),
-        "=D" (msg0),
-        "=c" (msg1)
-        : "a" (seL4_SysReplyRecv),
-        SEL4_REGS_IN_VAR(dest),
-        "S" (msgInfo.words[0]),
-        "D" (msg0),
-        "c" (msg1)
-        : "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_send_recv(seL4_SysReplyRecv, dest, &badge, msgInfo.words[0], &info.words[0], &msg0, &msg1);
 
     if (mr0 != seL4_Null) {
         *mr0 = msg0;
@@ -530,39 +497,20 @@ seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
 static inline void
 seL4_Yield(void)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        :
-        : "a" (seL4_SysYield)
-        : SEL4_REGS_CLOBBER_EBX "%ecx", "%edx", "%esi", "%edi", "memory"
-    );
+    x86_sys_null(seL4_SysYield);
+    asm volatile("" :::"%esi", "%edi", "memory");
 }
 
 #if defined(CONFIG_DEBUG_BUILD)
 static inline void
 seL4_DebugPutChar(char c)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT_IN(c)
-        : "a" (seL4_SysDebugPutChar)
-        : "%ecx", "%esi", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+
+    x86_sys_send_recv(seL4_SysDebugPutChar, c, &unused0, 0, &unused1, &unused2, &unused3);
 }
 #endif
 
@@ -570,19 +518,8 @@ seL4_DebugPutChar(char c)
 static inline void
 seL4_DebugHalt(void)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        :
-        : "a" (seL4_SysDebugHalt)
-        : SEL4_REGS_CLOBBER_EBX "%ecx", "%edx", "%esi", "%edi", "memory"
-    );
+    x86_sys_null(seL4_SysDebugHalt);
+    asm volatile("" :::"%esi", "%edi", "memory");
 }
 #endif
 
@@ -590,19 +527,8 @@ seL4_DebugHalt(void)
 static inline void
 seL4_DebugSnapshot(void)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        :
-        : "a" (seL4_SysDebugSnapshot)
-        : SEL4_REGS_CLOBBER_EBX "%ecx", "%edx", "%esi", "%edi", "memory"
-    );
+    x86_sys_null(seL4_SysDebugSnapshot);
+    asm volatile("" :::"%esi", "%edi", "memory");
 }
 #endif
 
@@ -610,20 +536,11 @@ seL4_DebugSnapshot(void)
 static inline seL4_Uint32
 seL4_DebugCapIdentify(seL4_CPtr cap)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE_EDX
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT_IN(cap)
-        : "a"(seL4_SysDebugCapIdentify)
-        : "%ecx", "%esi", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+
+    x86_sys_send_recv(seL4_SysDebugCapIdentify, cap, &cap, 0, &unused0, &unused1, &unused2);
     return (seL4_Uint32)cap;
 }
 
@@ -633,20 +550,12 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 {
     strcpy((char*)seL4_GetIPCBuffer()->msg, name);
 
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT_IN(tcb)
-        : "a"(seL4_SysDebugNameThread)
-        : "%ecx", "%esi", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+
+    x86_sys_send_recv(seL4_SysDebugNameThread, tcb, &unused0, 0, &unused1, &unused2, &unused3);
 }
 #endif
 
@@ -654,21 +563,8 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 static inline void
 seL4_DebugRun(void (*userfn) (void *), void* userarg)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        SEL4_REGS_MOV
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        : SEL4_REGS_OUT_IN(userfn)
-        : "a" (seL4_SysDebugRun),
-        "S" (userarg)
-        : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_send_null(seL4_SysDebugRun, (seL4_Word)userfn, (seL4_Word)userarg);
+    asm volatile("" ::: "%edi", "memory");
 }
 #endif
 
@@ -676,56 +572,32 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 static inline seL4_Error
 seL4_BenchmarkResetLog(void)
 {
-    seL4_Error ret = seL4_NoError;
-    asm volatile (
-        "pushl %%ebp        \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        SEL4_REGS_RESTORE_EDX
-        "popl %%ebp         \n"
-        : "=d" (ret)
-        : "a" (seL4_SysBenchmarkResetLog)
-        : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
 
-    return ret;
+    seL4_Word ret;
+
+    x86_sys_send_recv(seL4_SysBenchmarkResetLog, 0, &ret, 0, &unused0, &unused1, &unused2);
+
+    return (seL4_Error)ret;
 }
 
 static inline void
 seL4_BenchmarkFinalizeLog(void)
 {
-    asm volatile (
-        "pushl %%ebp        \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp         \n"
-        :
-        : "a" (seL4_SysBenchmarkFinalizeLog)
-        : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    x86_sys_null(seL4_SysBenchmarkFinalizeLog);
+    asm volatile("" :::"%esi", "%edi", "memory");
 }
 
 static inline seL4_Error
 seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
 {
-    asm volatile (
-        "pushl %%ebp        \n"
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        "popl %%ebp         \n"
-        : SEL4_REGS_OUT_IN(frame_cptr)
-        : "a" (seL4_SysBenchmarkSetLogBuffer)
-        : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+
+    x86_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2);
 
     return (seL4_Error) frame_cptr;
 }
@@ -734,71 +606,33 @@ seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
 static inline void
 seL4_BenchmarkNullSyscall(void)
 {
-    asm volatile (
-        "pushl %%ebp       \n"
-        SEL4_REGS_SAVE
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        SEL4_REGS_RESTORE
-        "popl %%ebp        \n"
-        :
-        : "a" (seL4_SysBenchmarkNullSyscall)
-        : SEL4_REGS_CLOBBER_EBX "%ecx", "%edx", "%esi", "%edi", "memory"
-    );
+    x86_sys_null(seL4_SysBenchmarkNullSyscall);
+    asm volatile("" :::"%esi", "%edi", "memory");
 }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void
 seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
 {
-    asm volatile (
-        "pushl %%ebp        \n"
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        "popl %%ebp         \n"
-        :
-        : "a" (seL4_SysBenchmarkGetThreadUtilisation),
-        "d" (tcb_cptr)
-        : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+
+    x86_sys_send_recv(seL4_SysBenchmarkGetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3);
 }
 
 static inline void
 seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
 {
-    asm volatile (
-        "pushl %%ebp        \n"
-        "movl %%esp, %%ecx  \n"
-        "leal 1f, %%edx     \n"
-        "1:                 \n"
-        "sysenter           \n"
-        "popl %%ebp         \n"
-        :
-        : "a" (seL4_SysBenchmarkResetThreadUtilisation),
-        "d" (tcb_cptr)
-        : "%ecx", "%edi", "memory" SEL4_REGS_CLOBBER_COMMA_EDX
-    );
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+
+    x86_sys_send_recv(seL4_SysBenchmarkResetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3);
 }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
-
-#undef SEL4_REGS_SAVE
-#undef SEL4_REGS_MOV
-#undef SEL4_REGS_RESTORE
-#undef SEL4_REGS_RESTORE_EDX
-
-#undef SEL4_REGS_OUT
-#undef SEL4_REGS_OUT_IN
-#undef SEL4_REGS_IN
-#undef SEL4_REGS_OUT_VAR
-#undef SEL4_REGS_IN_VAR
-
-#undef SEL4_REGS_CLOBBER_EBX
-#undef SEL4_REGS_CLOBBER_EDX
-#undef SEL4_REGS_CLOBBER_COMMA_EDX
 
 #endif
