@@ -540,6 +540,12 @@ menu "Build Options"
         config NO_BENCHMARKS
              bool "No benchmarking features enabled"
 
+        config BENCHMARK_GENERIC
+            bool "Enable generic benchmarks"
+            select ENABLE_BENCHMARKS
+            help
+                Enable global benchmarks config variable with no specific features
+
         config BENCHMARK_TRACK_KERNEL_ENTRIES
             bool "Keep track of kernel entries"
             select ENABLE_BENCHMARKS
