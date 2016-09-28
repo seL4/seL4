@@ -171,6 +171,9 @@ handleUnknownSyscall(word_t w)
     }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 
+    else if (w == SysBenchmarkNullSyscall) {
+        return EXCEPTION_NONE;
+    }
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
     current_fault = fault_unknown_syscall_new(w);

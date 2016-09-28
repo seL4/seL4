@@ -41,6 +41,7 @@
             <syscall name="BenchmarkResetLog" />
             <syscall name="BenchmarkFinalizeLog"  />
             <syscall name="BenchmarkSetLogBuffer"  />
+            <syscall name="BenchmarkNullSyscall"  />
         </config>
         <config condition="defined CONFIG_BENCHMARK_TRACK_UTILISATION">
             <syscall name="BenchmarkGetThreadUtilisation"  />

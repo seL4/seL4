@@ -626,6 +626,17 @@ seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
 
     return (seL4_Error) arg1;
 }
+
+static inline void
+seL4_BenchmarkNullSyscall(void)
+{
+    register seL4_Word scno asm("r7") = seL4_SysBenchmarkNullSyscall;
+    asm volatile ("swi %[swi_num]"
+                  : /* no outputs */
+                  : [swi_num] "i" __SEL4_SWINUM(seL4_SysBenchmarkNullSyscall), "r"(scno)
+                  : "memory");
+}
+
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void
 seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)

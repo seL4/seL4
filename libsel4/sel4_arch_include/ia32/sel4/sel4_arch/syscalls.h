@@ -730,6 +730,25 @@ seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
     return (seL4_Error) frame_cptr;
 }
 
+
+static inline void
+seL4_BenchmarkNullSyscall(void)
+{
+    asm volatile (
+        "pushl %%ebp       \n"
+        SEL4_REGS_SAVE
+        "movl %%esp, %%ecx \n"
+        "leal 1f, %%edx    \n"
+        "1:                \n"
+        "sysenter          \n"
+        SEL4_REGS_RESTORE
+        "popl %%ebp        \n"
+        :
+        : "a" (seL4_SysBenchmarkNullSyscall)
+        : SEL4_REGS_CLOBBER_EBX "%ecx", "%edx", "%esi", "%edi", "memory"
+    );
+}
+
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void
 seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
