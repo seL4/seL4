@@ -16,6 +16,7 @@
 #include <arch/types.h>
 #include <util.h>
 #include <object/structures.h>
+#include <model/smp.h>
 
 extern word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)] VISIBLE;
 extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;

@@ -470,13 +470,22 @@ init_idt(idt_entry_t* idt)
 BOOT_CODE bool_t
 init_vm_state(void)
 {
+    word_t cacheLineSize;
     x86KScacheLineSizeBits = getCacheLineSizeBits();
     if (!x86KScacheLineSizeBits) {
         return false;
     }
-    init_tss(&x86KStss.tss);
-    init_gdt(x86KSgdt, &x86KStss.tss);
-    init_idt(x86KSidt);
+
+    cacheLineSize = BIT(x86KScacheLineSizeBits);
+    if (cacheLineSize != CONFIG_CACHE_LN_SZ) {
+        printf("Configured cache line size is %d but detected size is %lu\n",
+               CONFIG_CACHE_LN_SZ, cacheLineSize);
+        SMP_COND_STATEMENT(return false);
+    }
+
+    init_tss(&ARCH_NODE_STATE(x86KStss).tss);
+    init_gdt(ARCH_NODE_STATE(x86KSgdt), &ARCH_NODE_STATE(x86KStss).tss);
+    init_idt(ARCH_NODE_STATE(x86KSidt));
     return true;
 }
 

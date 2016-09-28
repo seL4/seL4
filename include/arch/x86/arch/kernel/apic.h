@@ -16,6 +16,7 @@
 
 paddr_t apic_get_base_paddr(void);
 bool_t apic_init(bool_t mask_legacy_irqs);
+cpu_id_t apic_get_id(void);
 
 bool_t apic_is_interrupt_pending(void);
 void apic_ack_active_interrupt(void);
