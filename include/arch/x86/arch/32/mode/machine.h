@@ -65,7 +65,7 @@ static inline void setCurrentPD(paddr_t addr)
     write_cr3(addr);
 }
 
-static inline void invalidateTLBentry(vptr_t vptr)
+static inline void invalidateTLBEntry(vptr_t vptr)
 {
     asm volatile("invlpg (%[vptr])" :: [vptr] "r"(vptr));
 }
@@ -74,7 +74,7 @@ static inline void invalidateTLBentry(vptr_t vptr)
 static inline void invalidatePageStructureCache(void)
 {
     /* invalidate an arbitrary line to invalidate the page structure cache */
-    invalidateTLBentry(0);
+    invalidateTLBEntry(0);
 }
 
 static inline void invalidatePageStructureCacheASID(paddr_t root, asid_t asid)
@@ -92,13 +92,13 @@ static inline void invalidateTLB(void)
 static inline void invalidateTranslationSingle(vptr_t vptr)
 {
     /* Just invalidate a single entry in the TLB */
-    invalidateTLBentry(vptr);
+    invalidateTLBEntry(vptr);
 }
 
 static inline void invalidateTranslationSingleASID(vptr_t vptr, asid_t asid)
 {
     /* no asid support in 32-bit, just invalidate TLB */
-    invalidateTLBentry(vptr);
+    invalidateTLBEntry(vptr);
 }
 
 static inline void invalidateTranslationAll(void)
