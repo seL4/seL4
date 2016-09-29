@@ -132,7 +132,6 @@ pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr);
 pde_t CONST makeUserPDELargePageInvalid(void);
 pde_t CONST makeUserPDEPageTableInvalid(void);
 
-bool_t  CONST isIOSpaceFrameCap(cap_t cap);
 
 #ifdef CONFIG_PRINTING
 void Arch_userStackTrace(tcb_t *tptr);

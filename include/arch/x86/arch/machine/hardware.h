@@ -28,6 +28,13 @@ enum vm_page_size {
 };
 typedef word_t vm_page_size_t;
 
+enum vm_page_map_type {
+    X86_MappingNone = 0,
+    X86_MappingVSpace,
+    X86_MappingIOSpace
+};
+typedef word_t vm_page_map_type_t;
+
 /* Any changes to this function need to be replicated in pageBitsForSize_phys.
  */
 static inline word_t CONST
