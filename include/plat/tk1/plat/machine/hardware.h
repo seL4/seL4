@@ -102,7 +102,8 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { BSEA_PADDR,           BSEA_PADDR + BIT(seL4_PageBits) },                 /* 4 KB                         */
     { IPATCH_PADDR,         IPATCH_PADDR + BIT(seL4_PageBits) },               /* 4 KB offset 0xc00, 1 KB      */
     { VDE_FRAMEID_PADDR,    VDE_FRAMEID_PADDR + (BIT(seL4_PageBits) * 4) },    /* 16 KB, multiple              */
-    { MISC_PINMUX_PADDR,    MISC_PINMUX_PADDR + (BIT(seL4_PageBits) * 4) },    /* 16 KB                        */
+    { MISC_AUX_PADDR,       MISC_AUX_PADDR + (BIT(seL4_PageBits) * 3) },       /* 12 KB                        */
+    { MISC_PINMUX_PADDR,    MISC_PINMUX_PADDR + BIT(seL4_PageBits) },          /* 4 KB                         */
     { UARTA_SYNC_PADDR,     UARTA_SYNC_PADDR + (BIT(seL4_PageBits) * 3 ) },    /* 12 KB, multiple              */
     { SYNC_NOR_PADDR,       SYNC_NOR_PADDR + BIT(seL4_PageBits) },             /* 4 KB                         */
     { PWM_PADDR,            PWM_PADDR + BIT(seL4_PageBits) },                  /* 4 KB, 256 bytes              */
