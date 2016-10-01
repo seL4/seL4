@@ -14,6 +14,7 @@
 #include <arch/machine.h>
 #include <arch/kernel/boot_sys.h>
 #include <arch/kernel/smp_sys.h>
+#include <arch/kernel/lock.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
@@ -107,7 +108,11 @@ boot_node(void)
 
     smp_aps_index++;
 
-    /* halting for now... */
+    /* grab BKL before leaving the kernel */
+    NODE_LOCK;
+
+    /* relese BKL and halt for now... */
+    NODE_UNLOCK;
     asm volatile("hlt");
 }
 

@@ -14,12 +14,15 @@
 #include <config.h>
 #include <util.h>
 #include <arch/kernel/traps.h>
+#include <arch/kernel/lock.h>
 
 /* This C function should be the first thing called from C after entry from
  * assembly. It provides a single place to do any entry work that is not
  * done in assembly for various reasons */
 static inline void c_entry_hook(void)
 {
+    NODE_LOCK;
+
     arch_c_entry_hook();
 #if defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES) || defined(CONFIG_BENCHMARK_TRACK_UTILISATION)
     ksEnter = timestamp();
@@ -36,6 +39,8 @@ static inline void c_exit_hook(void)
     benchmark_track_exit();
 #endif /* CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES */
     arch_c_exit_hook();
+
+    NODE_UNLOCK;
 }
 
 #endif /* __KERNEL_TRAPS_H */

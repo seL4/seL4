@@ -18,9 +18,14 @@
 #include <arch/machine.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
+
+/* Use this to avoid false sharing between cores for per-core data structures */
+#define PAD_TO_NEXT_CACHE_LN(used) char padding[CONFIG_CACHE_LN_SZ - ((used) % CONFIG_CACHE_LN_SZ)]
+
 typedef struct smpStatedata {
     nodeState_t CPU;
-    char padding[CONFIG_CACHE_LN_SZ - (sizeof(nodeState_t) % CONFIG_CACHE_LN_SZ)];
+
+    PAD_TO_NEXT_CACHE_LN(sizeof(nodeState_t));
 } smpStatedata_t;
 
 typedef struct cpu_id_mapping {

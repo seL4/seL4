@@ -19,6 +19,7 @@
 #include <arch/kernel/smp_sys.h>
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/elf.h>
+#include <arch/kernel/lock.h>
 #include <arch/linker.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/devices.h>
@@ -464,7 +465,12 @@ try_boot_sys(
         ioapic_init(1, boot_state.cpus, boot_state.num_ioapic);
     }
 
+    /* initialize BKL before booting up APs */
+    SMP_COND_STATEMENT(clh_lock_init());
     SMP_COND_STATEMENT(start_boot_aps());
+
+    /* grab BKL before leaving the kernel */
+    NODE_LOCK;
 
     ksNumCPUs = boot_state.num_cpus;
     printf("Booting all finished, dropped to user space\n");
