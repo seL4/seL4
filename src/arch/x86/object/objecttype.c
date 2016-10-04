@@ -185,6 +185,9 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_io_port_cap:
         break;
     case cap_io_space_cap:
+        if (final) {
+            unmapVTDContextEntry(cap);
+        }
         break;
 
     case cap_io_page_table_cap:
@@ -205,6 +208,7 @@ resetMemMapping(cap_t cap)
 {
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
+        cap = cap_frame_cap_set_capFMapType(cap, X86_MappingNone);
         return cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
     case cap_page_table_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
@@ -215,6 +219,8 @@ resetMemMapping(cap_t cap)
     case cap_pdpt_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_pdpt_cap_set_capPDPTIsMapped(cap, 0);
+    case cap_io_page_table_cap:
+        return cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
     }
 
     return Mode_resetMemMapping(cap);
@@ -280,13 +286,13 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
 
     case cap_io_space_cap:
-        Arch_finaliseCap(cap, is_final);
+        Arch_finaliseCap(cap, true);
         return cap;
 
     case cap_io_page_table_cap:
         clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
-        Arch_finaliseCap(cap, is_final);
-        return cap;
+        Arch_finaliseCap(cap, true);
+        return resetMemMapping(cap);
 
     default:
         return Mode_recycleCap(is_final, cap);

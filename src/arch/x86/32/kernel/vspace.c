@@ -543,7 +543,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 }
 
 static BOOT_CODE cap_t
-create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
+create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, vm_page_map_type_t map_type)
 {
     vm_page_size_t frame_size;
 
@@ -556,9 +556,9 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
     return
         cap_frame_cap_new(
             frame_size,                    /* capFSize           */
-            false,                         /* capFIsIOSpace      */
             ASID_LOW(asid),                /* capFMappedASIDLow  */
             vptr,                          /* capFMappedAddress  */
+            map_type,                      /* capFMapType        */
             false,                         /* capFIsDevice       */
             ASID_HIGH(asid),               /* capFMappedASIDHigh */
             wordFromVMRights(VMReadWrite), /* capFVMRights       */
@@ -569,13 +569,13 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
 BOOT_CODE cap_t
 create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 {
-    return create_it_frame_cap(pptr, 0, asidInvalid, use_large);
+    return create_it_frame_cap(pptr, 0, asidInvalid, use_large, X86_MappingNone);
 }
 
 BOOT_CODE cap_t
 create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
 {
-    cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large);
+    cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large, X86_MappingVSpace);
     map_it_frame_cap(vspace_cap, cap);
     return cap;
 }
@@ -677,11 +677,6 @@ pte_t CONST makeUserPTEInvalid(void)
                0,                   /* read_write           */
                0                    /* present              */
            );
-}
-
-bool_t CONST isIOSpaceFrameCap(cap_t cap)
-{
-    return cap_frame_cap_get_capFIsIOSpace(cap);
 }
 
 void setVMRoot(tcb_t* tcb)
