@@ -158,7 +158,7 @@ void invalidate_context_cache(void)
         vtd_write64(i, CCMD_REG, ccmd);
 
         /* Wait for the invalidation to complete */
-       while ((vtd_read64(i, CCMD_REG) >> ICC) & 1);
+        while ((vtd_read64(i, CCMD_REG) >> ICC) & 1);
     }
 }
 

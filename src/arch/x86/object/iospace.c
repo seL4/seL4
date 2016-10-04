@@ -120,7 +120,7 @@ lookupIOPTSlot(vtd_pte_t* iopt, word_t io_address)
         return ret;
     } else {
         return lookupIOPTSlot_resolve_levels(iopt, io_address >> PAGE_BITS,
-                x86KSnumIOPTLevels - 1, x86KSnumIOPTLevels - 1);
+                                             x86KSnumIOPTLevels - 1, x86KSnumIOPTLevels - 1);
     }
 }
 
@@ -130,14 +130,14 @@ unmapVTDContextEntry(cap_t cap)
     vtd_cte_t *cte = lookup_vtd_context_slot(cap);
     assert(cte != 0);
     vtd_cte_ptr_new(
-            cte,
-            0,
-            false,
-            0,
-            0,
-            0,
-            false
-            );
+        cte,
+        0,
+        false,
+        0,
+        0,
+        0,
+        false
+    );
 
     flushCacheRange(cte, VTD_CTE_SIZE_BITS);
     invalidate_iotlb();
@@ -244,13 +244,13 @@ decodeX86IOPTInvocation(
 
         /* 1st Level Page Table */
         vtd_cte_t vtd_cte = vtd_cte_new(
-                domain_id,                  /* domain ID                   */
-                false,                      /* RMRR                        */
-                x86KSnumIOPTLevels - 2,     /* addr width (x = levels - 2) */
-                paddr,                      /* address space root          */
-                0,                          /* translation type            */
-                true                        /* present                     */
-                );
+                                domain_id,                  /* domain ID                   */
+                                false,                      /* RMRR                        */
+                                x86KSnumIOPTLevels - 2,     /* addr width (x = levels - 2) */
+                                paddr,                      /* address space root          */
+                                0,                          /* translation type            */
+                                true                        /* present                     */
+                            );
 
         cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 1);
         cap = cap_io_page_table_cap_set_capIOPTLevel(cap, 0);
@@ -279,9 +279,9 @@ decodeX86IOPTInvocation(
         }
 
         iopte = vtd_pte_new(
-                paddr,      /* physical addr            */
-                1,          /* write permission flag    */
-                1           /* read  permission flag    */
+                    paddr,      /* physical addr            */
+                    1,          /* write permission flag    */
+                    1           /* read  permission flag    */
                 );
 
         cap = cap_io_page_table_cap_set_capIOPTIsMapped(cap, 1);
