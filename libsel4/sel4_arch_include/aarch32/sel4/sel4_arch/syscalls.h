@@ -526,7 +526,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 static inline void
 seL4_DebugRun(void (* userfn) (void *), void* userarg)
 {
-    arm_sys_send_nnull(seL4_SysDebugRun, (seL4_Word)userfn, (seL4_Word)userarg, 0, 0);
+    arm_sys_send_null(seL4_SysDebugRun, (seL4_Word)userfn, (seL4_Word)userarg);
     asm volatile("" ::: "memory");
 }
 #endif
