@@ -43,9 +43,9 @@ x86_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info, seL4_Word mr1, seL4_
         "popl %%ebp        \n"
         : "+d" (dest)
         : "a" (sys),
-          "S" (info),
-          "D" (mr1),
-          "c" (mr2)
+        "S" (info),
+        "D" (mr1),
+        "c" (mr2)
     );
 }
 
@@ -64,9 +64,9 @@ x86_sys_reply(seL4_Word sys, seL4_Word info, seL4_Word mr1, seL4_Word mr2)
         "popl %%ebp        \n"
         :
         : "a" (sys),
-          "S" (info),
-          "D" (mr1),
-          "c" (mr2)
+        "S" (info),
+        "D" (mr1),
+        "c" (mr2)
         : "%edx"
     );
 }
@@ -86,7 +86,7 @@ x86_sys_send_null(seL4_Word sys, seL4_Word src, seL4_Word info)
         "popl %%ebp        \n"
         : "+d" (src)
         : "a" (sys),
-          "S" (info)
+        "S" (info)
         : "%ecx"
     );
 }
@@ -107,12 +107,12 @@ x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_
         "movl %%ebp, %%ecx \n"
         "popl %%ebp        \n"
         :
-          "=d" (*out_badge),
-          "=S" (*out_info),
-          "=D" (*out_mr1),
-          "=c" (*out_mr2)
+        "=d" (*out_badge),
+        "=S" (*out_info),
+        "=D" (*out_mr1),
+        "=c" (*out_mr2)
         : "a" (sys),
-          "d" (src)
+        "d" (src)
         : "memory"
     );
 }
@@ -134,15 +134,15 @@ x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word
         "movl %%ebp, %%ecx \n"
         "popl %%ebp        \n"
         :
-          "=S" (*out_info),
-          "=D" (*in_out_mr1),
-          "=c" (*in_out_mr2),
-          "=d" (*out_badge)
+        "=S" (*out_info),
+        "=D" (*in_out_mr1),
+        "=c" (*in_out_mr2),
+        "=d" (*out_badge)
         : "a" (sys),
-          "S" (info),
-          "D" (*in_out_mr1),
-          "c" (*in_out_mr2),
-          "d" (dest)
+        "S" (info),
+        "D" (*in_out_mr1),
+        "c" (*in_out_mr2),
+        "d" (dest)
         : "memory"
     );
 }
@@ -180,10 +180,10 @@ x86_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info, seL4_Word mr1, seL4_
         "popl %%ebp        \n"
         :
         : "a" (sys),
-          "b" (dest),
-          "S" (info),
-          "D" (mr1),
-          "c" (mr2)
+        "b" (dest),
+        "S" (info),
+        "D" (mr1),
+        "c" (mr2)
         : "%edx"
     );
 }
@@ -201,9 +201,9 @@ x86_sys_reply(seL4_Word sys, seL4_Word info, seL4_Word mr1, seL4_Word mr2)
         "popl %%ebp        \n"
         :
         : "a" (sys),
-          "S" (info),
-          "D" (mr1),
-          "c" (mr2)
+        "S" (info),
+        "D" (mr1),
+        "c" (mr2)
         : "%ebx", "%edx"
     );
 }
@@ -212,39 +212,39 @@ static inline void
 x86_sys_send_null(seL4_Word sys, seL4_Word dest, seL4_Word info)
 {
     asm volatile ( \
-        "pushl %%ebp       \n"
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        "popl %%ebp        \n"
-        :
-        : "a" (sys),
-          "b" (dest),
-          "S" (info)
-        : "%ecx", "edx"
-    );
+                   "pushl %%ebp       \n"
+                   "movl %%esp, %%ecx \n"
+                   "leal 1f, %%edx    \n"
+                   "1:                \n"
+                   "sysenter          \n"
+                   "popl %%ebp        \n"
+                   :
+                   : "a" (sys),
+                   "b" (dest),
+                   "S" (info)
+                   : "%ecx", "edx"
+                 );
 }
 
 static inline void
 x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_info, seL4_Word *out_mr1, seL4_Word *out_mr2)
 {
     asm volatile ( \
-        "pushl %%ebp       \n"
-        "movl %%esp, %%ecx \n"
-        "leal 1f, %%edx    \n"
-        "1:                \n"
-        "sysenter          \n"
-        "movl %%ebp, %%ecx \n"
-        "popl %%ebp        \n"
-        : "=b" (*out_badge),
-          "=S" (*out_info),
-          "=D" (*out_mr1),
-          "=c" (*out_mr2)
-        : "a" (sys),
-          "b" (src)
-        : "%edx", "memory"
-    );
+                   "pushl %%ebp       \n"
+                   "movl %%esp, %%ecx \n"
+                   "leal 1f, %%edx    \n"
+                   "1:                \n"
+                   "sysenter          \n"
+                   "movl %%ebp, %%ecx \n"
+                   "popl %%ebp        \n"
+                   : "=b" (*out_badge),
+                   "=S" (*out_info),
+                   "=D" (*out_mr1),
+                   "=c" (*out_mr2)
+                   : "a" (sys),
+                   "b" (src)
+                   : "%edx", "memory"
+                 );
 }
 
 static inline void
@@ -260,14 +260,14 @@ x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word
         "movl %%ebp, %%ecx \n"
         "popl %%ebp        \n"
         : "=S" (*out_info),
-          "=D" (*in_out_mr1),
-          "=c" (*in_out_mr2),
-          "=b" (*out_badge)
+        "=D" (*in_out_mr1),
+        "=c" (*in_out_mr2),
+        "=b" (*out_badge)
         : "a" (sys),
-          "S" (info),
-          "D" (*in_out_mr1),
-          "c" (*in_out_mr2),
-          "b" (dest)
+        "S" (info),
+        "D" (*in_out_mr1),
+        "c" (*in_out_mr2),
+        "b" (dest)
         : "%edx", "memory"
     );
 }

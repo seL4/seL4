@@ -64,7 +64,7 @@ arm_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info_arg, seL4_Word mr0, s
     asm volatile (
         "swi $0"
         : "+r" (destptr), "+r" (msg0), "+r" (msg1), "+r" (msg2),
-          "+r" (msg3), "+r" (info)
+        "+r" (msg3), "+r" (info)
         : "r"(scno)
     );
 }
@@ -84,7 +84,7 @@ static inline void arm_sys_reply(seL4_Word sys, seL4_Word info_arg, seL4_Word mr
     asm volatile (
         "swi $0"
         : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
-          "+r" (info)
+        "+r" (info)
         : "r"(scno)
     );
 }
@@ -121,7 +121,7 @@ arm_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_
     asm volatile (
         "swi $0"
         : "=r" (msg0), "=r" (msg1), "=r" (msg2), "=r" (msg3),
-          "=r" (info), "+r" (src_and_badge)
+        "=r" (info), "+r" (src_and_badge)
         : "r"(scno)
         : "memory"
     );
@@ -150,7 +150,7 @@ arm_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word
     asm volatile (
         "swi $0"
         : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
-          "+r" (info), "+r" (destptr)
+        "+r" (info), "+r" (destptr)
         : "r"(scno)
         : "memory"
     );
@@ -184,11 +184,11 @@ seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
     arm_sys_send(seL4_SysSend, dest, msgInfo.words[0],
-        mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr0 : 0,
-        mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr1 : 0,
-        mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr2 : 0,
-        mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr3 : 0
-    );
+                 mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr0 : 0,
+                 mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr1 : 0,
+                 mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr2 : 0,
+                 mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr3 : 0
+                );
 }
 
 static inline void
@@ -202,11 +202,11 @@ seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                    seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
     arm_sys_send(seL4_SysNBSend, dest, msgInfo.words[0],
-        mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr0 : 0,
-        mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr1 : 0,
-        mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr2 : 0,
-        mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr3 : 0
-    );
+                 mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr0 : 0,
+                 mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr1 : 0,
+                 mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr2 : 0,
+                 mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr3 : 0
+                );
 }
 
 static inline void
@@ -220,11 +220,11 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
                   seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
     arm_sys_reply(seL4_SysReply, msgInfo.words[0],
-        mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr0 : 0,
-        mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr1 : 0,
-        mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr2 : 0,
-        mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr3 : 0
-    );
+                  mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr0 : 0,
+                  mr1 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr1 : 0,
+                  mr2 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr2 : 0,
+                  mr3 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0 ? *mr3 : 0
+                 );
 }
 
 static inline void
