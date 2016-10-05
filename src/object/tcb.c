@@ -799,7 +799,7 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                faultEP,
-               NULL_PRIO, NULL_PRIO, 
+               NULL_PRIO, NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                0, cap_null_cap_new(), NULL, thread_control_update_space);
