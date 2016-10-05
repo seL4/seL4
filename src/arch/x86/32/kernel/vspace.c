@@ -813,7 +813,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                     );
 
         ia32KSGlobalLogPT[idx] = pte;
-        invalidateTLBentry(KS_LOG_PPTR + (idx << seL4_PageBits));
+        invalidateTLBEntry(KS_LOG_PPTR + (idx << seL4_PageBits));
     }
 
     return EXCEPTION_NONE;
