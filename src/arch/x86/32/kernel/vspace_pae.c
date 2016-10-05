@@ -468,4 +468,12 @@ decodeIA32PageDirectoryInvocation(
     return performIA32PageDirectoryInvocationMap(cap, cte, pdpte, pdptSlot, threadRoot, vspaceCap);
 }
 
+#if CONFIG_PRINTING
+/* FIXME implement */
+void
+Arch_userStackTrace(tcb_t *tptr)
+{
+}
+#endif
+
 #endif
