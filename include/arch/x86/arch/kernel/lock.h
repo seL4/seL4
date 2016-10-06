@@ -37,7 +37,7 @@ typedef struct clh_qnode {
 typedef struct clh_qnode_p {
     volatile clh_qnode_t *node;
     volatile clh_qnode_t *next;
-    
+
     PAD_TO_NEXT_CACHE_LN(sizeof(clh_qnode_t *) + sizeof(clh_qnode_t *));
 } clh_qnode_p_t;
 
