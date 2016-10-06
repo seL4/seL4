@@ -51,6 +51,22 @@ config PAE_PAGING
         is not used the old 32-bit paging with 4K/4M pages will be used
 
 choice
+    prompt "Kernel syscall style"
+    depends on ARCH_X86
+    default SYSENTER if ARCH_IA32
+    help
+        The kernel only ever supports one method of performing syscalls
+        at a time. This config should be set to the most efficient one
+        that is support by the hardware the system will run on
+
+    config SYSENTER
+        bool "sysenter+sysexit"
+    config SYSCALL
+        depends on !ARCH_IA32
+        bool "syscall+sysret"
+endchoice
+
+choice
     prompt "FPU state implementation"
     depends on ARCH_X86
     default FXSAVE

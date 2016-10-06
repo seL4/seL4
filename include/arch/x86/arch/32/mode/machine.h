@@ -65,6 +65,13 @@ static inline void setCurrentPD(paddr_t addr)
     write_cr3(addr);
 }
 
+static inline void setCurrentVSpaceRoot(paddr_t addr, word_t pcid)
+{
+    /* pcid is not supported on ia32 and so we should always be passed zero */
+    assert(pcid == 0);
+    setCurrentPD(addr);
+}
+
 static inline void invalidateTLBEntry(vptr_t vptr)
 {
     asm volatile("invlpg (%[vptr])" :: [vptr] "r"(vptr));
@@ -145,5 +152,10 @@ static inline void x86_write_gs_base(word_t base)
 
 void ia32_load_fs(word_t selector);
 void ia32_load_gs(word_t selector);
+
+static inline void init_syscall_msrs(void)
+{
+    fail("syscall not supported on ia32");
+}
 
 #endif

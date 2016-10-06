@@ -24,7 +24,8 @@ typedef word_t vm_fault_type_t;
 
 enum vm_page_size {
     X86_SmallPage,
-    X86_LargePage
+    X86_LargePage,
+    X64_HugePage
 };
 typedef word_t vm_page_size_t;
 
@@ -47,6 +48,9 @@ pageBitsForSize(vm_page_size_t pagesize)
     case X86_LargePage:
         return seL4_LargePageBits;
 
+    case X64_HugePage:
+        return seL4_HugePageBits;
+
     default:
         fail("Invalid page size");
     }
@@ -66,6 +70,9 @@ pageBitsForSize_phys(vm_page_size_t pagesize)
 
     case X86_LargePage:
         return seL4_LargePageBits;
+
+    case X64_HugePage:
+        return seL4_HugePageBits;
 
     default:
         fail("Invalid page size");
