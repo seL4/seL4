@@ -67,6 +67,13 @@ void Arch_initContext(user_context_t* context)
 
 word_t sanitiseRegister(register_t reg, word_t v)
 {
+    if (reg == FaultIP || reg == NextIP) {
+        /* ensure instruction address is canonical */
+        if (reg > 0x00007fffffffffff && reg < 0xffff800000000000) {
+            /* no way to guess what the user wanted so give them zero */
+            reg = 0;
+        }
+    }
     if (reg == RFLAGS) {
         v |=  BIT(1);   /* reserved bit that must be set to 1 */
         v &= ~BIT(3);   /* reserved bit that must be set to 0 */
