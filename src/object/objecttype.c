@@ -522,7 +522,7 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 
 #ifdef CONFIG_DEBUG_BUILD
         strlcpy(tcb->tcbName, "child of: '", TCB_NAME_LENGTH);
-        strlcat(tcb->tcbName, ksCurThread->tcbName, TCB_NAME_LENGTH);
+        strlcat(tcb->tcbName, NODE_STATE(ksCurThread)->tcbName, TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, "'", TCB_NAME_LENGTH);
 #endif /* CONFIG_DEBUG_BUILD */
 
@@ -626,7 +626,7 @@ decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performInvocation_Endpoint(
                    EP_PTR(cap_endpoint_cap_get_capEPPtr(cap)),
                    cap_endpoint_cap_get_capEPBadge(cap),
@@ -641,7 +641,7 @@ decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performInvocation_Notification(
                    NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)),
                    cap_notification_cap_get_capNtfnBadge(cap));
@@ -656,7 +656,7 @@ decodeInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performInvocation_Reply(
                    TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot);
 
@@ -692,7 +692,7 @@ performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                            bool_t canGrant, bool_t block,
                            bool_t call)
 {
-    sendIPC(block, call, badge, canGrant, ksCurThread, ep);
+    sendIPC(block, call, badge, canGrant, NODE_STATE(ksCurThread), ep);
 
     return EXCEPTION_NONE;
 }
@@ -708,6 +708,6 @@ performInvocation_Notification(notification_t *ntfn, word_t badge)
 exception_t
 performInvocation_Reply(tcb_t *thread, cte_t *slot)
 {
-    doReplyTransfer(ksCurThread, thread, slot);
+    doReplyTransfer(NODE_STATE(ksCurThread), thread, slot);
     return EXCEPTION_NONE;
 }

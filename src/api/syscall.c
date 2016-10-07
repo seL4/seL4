@@ -61,23 +61,23 @@ handleUnknownSyscall(word_t w)
 {
 #ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugPutChar) {
-        kernel_putchar(getRegister(ksCurThread, capRegister));
+        kernel_putchar(getRegister(NODE_STATE(ksCurThread), capRegister));
         return EXCEPTION_NONE;
     }
     if (w == SysDebugHalt) {
-        printf("Debug halt syscall from user thread %p\n", ksCurThread);
+        printf("Debug halt syscall from user thread %p\n", NODE_STATE(ksCurThread));
         halt();
     }
     if (w == SysDebugSnapshot) {
-        printf("Debug snapshot syscall from user thread %p\n", ksCurThread);
+        printf("Debug snapshot syscall from user thread %p\n", NODE_STATE(ksCurThread));
         capDL();
         return EXCEPTION_NONE;
     }
     if (w == SysDebugCapIdentify) {
-        word_t cptr = getRegister(ksCurThread, capRegister);
-        lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
+        word_t cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
+        lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
         word_t cap_type = cap_get_capType(lu_ret.cap);
-        setRegister(ksCurThread, capRegister, cap_type);
+        setRegister(NODE_STATE(ksCurThread), capRegister, cap_type);
         return EXCEPTION_NONE;
     }
 
@@ -86,8 +86,8 @@ handleUnknownSyscall(word_t w)
          * then assume the system is completely misconfigured and halt */
         const char *name;
         word_t len;
-        word_t cptr = getRegister(ksCurThread, capRegister);
-        lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
+        word_t cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
+        lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
         /* ensure we got a TCB cap */
         word_t cap_type = cap_get_capType(lu_ret.cap);
         if (cap_type != cap_thread_cap) {
@@ -95,7 +95,7 @@ handleUnknownSyscall(word_t w)
             halt();
         }
         /* Add 1 to the IPC buffer to skip the message info word */
-        name = (const char*)(lookupIPCBuffer(true, ksCurThread) + 1);
+        name = (const char*)(lookupIPCBuffer(true, NODE_STATE(ksCurThread)) + 1);
         if (!name) {
             userError("SysDebugNameThread: Failed to lookup IPC buffer, halting");
             halt();
@@ -113,7 +113,7 @@ handleUnknownSyscall(word_t w)
 
 #ifdef DANGEROUS_CODE_INJECTION
     if (w == SysDebugRun) {
-        ((void (*) (void *))getRegister(ksCurThread, capRegister))((void*)getRegister(ksCurThread, msgInfoRegister));
+        ((void (*) (void *))getRegister(NODE_STATE(ksCurThread), capRegister))((void*)getRegister(NODE_STATE(ksCurThread), msgInfoRegister));
         return EXCEPTION_NONE;
     }
 #endif
@@ -124,7 +124,7 @@ handleUnknownSyscall(word_t w)
         if (ksUserLogBuffer == 0) {
             userError("A user-level buffer has to be set before resetting benchmark.\
                     Use seL4_BenchmarkSetLogBuffer\n");
-            setRegister(ksCurThread, capRegister, seL4_IllegalOperation);
+            setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
             return EXCEPTION_SYSCALL_ERROR;
         }
 
@@ -132,12 +132,12 @@ handleUnknownSyscall(word_t w)
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_log_utilisation_enabled = true;
-        ksIdleThread->benchmark.utilisation = 0;
-        ksCurThread->benchmark.schedule_start_time = ksEnter;
+        NODE_STATE(ksIdleThread)->benchmark.utilisation = 0;
+        NODE_STATE(ksCurThread)->benchmark.schedule_start_time = ksEnter;
         benchmark_start_time = ksEnter;
         benchmark_arch_utilisation_reset();
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-        setRegister(ksCurThread, capRegister, seL4_NoError);
+        setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkFinalizeLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
@@ -149,14 +149,14 @@ handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     } else if (w == SysBenchmarkSetLogBuffer) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-        word_t cptr_userFrame = getRegister(ksCurThread, capRegister);
+        word_t cptr_userFrame = getRegister(NODE_STATE(ksCurThread), capRegister);
 
         if (benchmark_arch_map_logBuffer(cptr_userFrame) != EXCEPTION_NONE) {
-            setRegister(ksCurThread, capRegister, seL4_IllegalOperation);
+            setRegister(NODE_STATE(ksCurThread), capRegister, seL4_IllegalOperation);
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setRegister(ksCurThread, capRegister, seL4_NoError);
+        setRegister(NODE_STATE(ksCurThread), capRegister, seL4_NoError);
         return EXCEPTION_NONE;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
     }
@@ -177,7 +177,7 @@ handleUnknownSyscall(word_t w)
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
     current_fault = fault_unknown_syscall_new(w);
-    handleFault(ksCurThread);
+    handleFault(NODE_STATE(ksCurThread));
 
     schedule();
     activateThread();
@@ -189,7 +189,7 @@ exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
     current_fault = fault_user_exception_new(w_a, w_b);
-    handleFault(ksCurThread);
+    handleFault(NODE_STATE(ksCurThread));
 
     schedule();
     activateThread();
@@ -202,9 +202,9 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     exception_t status;
 
-    status = handleVMFault(ksCurThread, vm_faultType);
+    status = handleVMFault(NODE_STATE(ksCurThread), vm_faultType);
     if (status != EXCEPTION_NONE) {
-        handleFault(ksCurThread);
+        handleFault(NODE_STATE(ksCurThread));
     }
 
     schedule();
@@ -225,7 +225,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     word_t length;
     tcb_t *thread;
 
-    thread = ksCurThread;
+    thread = NODE_STATE(ksCurThread);
 
     info = messageInfoFromWord(getRegister(thread, msgInfoRegister));
     cptr = getRegister(thread, capRegister);
@@ -294,7 +294,7 @@ handleReply(void)
     cte_t *callerSlot;
     cap_t callerCap;
 
-    callerSlot = TCB_PTR_CTE_PTR(ksCurThread, tcbCaller);
+    callerSlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCaller);
     callerCap = callerSlot->cap;
 
     switch (cap_get_capType(callerCap)) {
@@ -307,8 +307,8 @@ handleReply(void)
         caller = TCB_PTR(cap_reply_cap_get_capTCBPtr(callerCap));
         /* Haskell error:
          * "handleReply: caller must not be the current thread" */
-        assert(caller != ksCurThread);
-        doReplyTransfer(ksCurThread, caller, callerSlot);
+        assert(caller != NODE_STATE(ksCurThread));
+        doReplyTransfer(NODE_STATE(ksCurThread), caller, callerSlot);
         return;
     }
 
@@ -329,14 +329,14 @@ handleRecv(bool_t isBlocking)
     word_t epCPtr;
     lookupCap_ret_t lu_ret;
 
-    epCPtr = getRegister(ksCurThread, capRegister);
+    epCPtr = getRegister(NODE_STATE(ksCurThread), capRegister);
 
-    lu_ret = lookupCap(ksCurThread, epCPtr);
+    lu_ret = lookupCap(NODE_STATE(ksCurThread), epCPtr);
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         /* current_lookup_fault has been set by lookupCap */
         current_fault = fault_cap_fault_new(epCPtr, true);
-        handleFault(ksCurThread);
+        handleFault(NODE_STATE(ksCurThread));
         return;
     }
 
@@ -345,12 +345,12 @@ handleRecv(bool_t isBlocking)
         if (unlikely(!cap_endpoint_cap_get_capCanReceive(lu_ret.cap))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
             current_fault = fault_cap_fault_new(epCPtr, true);
-            handleFault(ksCurThread);
+            handleFault(NODE_STATE(ksCurThread));
             break;
         }
 
-        deleteCallerCap(ksCurThread);
-        receiveIPC(ksCurThread, lu_ret.cap, isBlocking);
+        deleteCallerCap(NODE_STATE(ksCurThread));
+        receiveIPC(NODE_STATE(ksCurThread), lu_ret.cap, isBlocking);
         break;
 
     case cap_notification_cap: {
@@ -359,20 +359,20 @@ handleRecv(bool_t isBlocking)
         ntfnPtr = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(lu_ret.cap));
         boundTCB = (tcb_t*)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
         if (unlikely(!cap_notification_cap_get_capNtfnCanReceive(lu_ret.cap)
-                     || (boundTCB && boundTCB != ksCurThread))) {
+                     || (boundTCB && boundTCB != NODE_STATE(ksCurThread)))) {
             current_lookup_fault = lookup_fault_missing_capability_new(0);
             current_fault = fault_cap_fault_new(epCPtr, true);
-            handleFault(ksCurThread);
+            handleFault(NODE_STATE(ksCurThread));
             break;
         }
 
-        receiveSignal(ksCurThread, lu_ret.cap, isBlocking);
+        receiveSignal(NODE_STATE(ksCurThread), lu_ret.cap, isBlocking);
         break;
     }
     default:
         current_lookup_fault = lookup_fault_missing_capability_new(0);
         current_fault = fault_cap_fault_new(epCPtr, true);
-        handleFault(ksCurThread);
+        handleFault(NODE_STATE(ksCurThread));
         break;
     }
 }
@@ -380,8 +380,8 @@ handleRecv(bool_t isBlocking)
 static void
 handleYield(void)
 {
-    tcbSchedDequeue(ksCurThread);
-    tcbSchedAppend(ksCurThread);
+    tcbSchedDequeue(NODE_STATE(ksCurThread));
+    tcbSchedAppend(NODE_STATE(ksCurThread));
     rescheduleRequired();
 }
 

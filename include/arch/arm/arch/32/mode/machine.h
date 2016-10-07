@@ -11,10 +11,6 @@
 #ifndef __ARCH_MACHINE_32_H
 #define __ARCH_MACHINE_32_H
 
-#define wordRadix 5
-#define wordBits (1 << wordRadix)
-
-#ifndef __ASSEMBLER__
 #include <config.h>
 #include <stdint.h>
 #include <arch/types.h>
@@ -22,6 +18,7 @@
 #include <arch/machine/hardware.h>
 #include <plat/machine/hardware.h>
 #include <armv/machine.h>
+#include <arch/model/smp.h>
 
 #include <machine/io.h>
 #include <mode/machine_pl2.h>
@@ -356,7 +353,5 @@ static inline void setACTLR(word_t actlr)
 {
     asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
 }
-
-#endif /* __ASSEMBLER__ */
 
 #endif /* __ARCH_MACHINE_32_H */

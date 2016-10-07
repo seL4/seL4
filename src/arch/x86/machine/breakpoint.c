@@ -619,11 +619,11 @@ handleUserLevelDebugException(int int_vector)
     benchmark_track_start();
 #endif
 
-    context = &ksCurThread->tcbArch;
+    context = &NODE_STATE(ksCurThread)->tcbArch;
 
     /* Software break request (INT3) is detected by the vector number */
     if (int_vector == int_software_break_request) {
-        current_fault = fault_debug_exception_new(getRestartPC(ksCurThread),
+        current_fault = fault_debug_exception_new(getRestartPC(NODE_STATE(ksCurThread)),
                                                   0, seL4_SoftwareBreakRequest);
     } else {
         /* Hardware breakpoint trigger is detected using DR6 */
@@ -651,7 +651,7 @@ handleUserLevelDebugException(int int_vector)
         }
     }
 
-    handleFault(ksCurThread);
+    handleFault(NODE_STATE(ksCurThread));
 
     schedule();
     activateThread();

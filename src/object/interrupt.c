@@ -68,7 +68,7 @@ decodeIRQControlInvocation(word_t invLabel, word_t length,
             return status;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeIRQControl(irq, destSlot, srcSlot);
     } else {
         return Arch_decodeIRQControlInvocation(invLabel, length, srcSlot, excaps, buffer);
@@ -90,7 +90,7 @@ decodeIRQHandlerInvocation(word_t invLabel, irq_t irq,
 {
     switch (invLabel) {
     case IRQAckIRQ:
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         invokeIRQHandler_AckIRQ(irq);
         return EXCEPTION_NONE;
 
@@ -117,13 +117,13 @@ decodeIRQHandlerInvocation(word_t invLabel, irq_t irq,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         invokeIRQHandler_SetIRQHandler(irq, ntfnCap, slot);
         return EXCEPTION_NONE;
     }
 
     case IRQClearIRQHandler:
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         invokeIRQHandler_ClearIRQHandler(irq);
         return EXCEPTION_NONE;
 

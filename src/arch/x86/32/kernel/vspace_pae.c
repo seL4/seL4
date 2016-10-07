@@ -309,7 +309,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
                     0   /* present          */
                 );
     /* check if page directory belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
     if (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == find_ret.vspace_root) {
         /* according to the intel manual if we modify a pdpt we must
          * reload cr3 */
@@ -381,7 +381,7 @@ decodeIA32PageDirectoryInvocation(
             userError("X86PageDirectory: Cannot unmap if more than one cap exists.");
             return EXCEPTION_SYSCALL_ERROR;
         }
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 
         return performIA32PageDirectoryInvocationUnmap(cap, cte);
     }
@@ -462,9 +462,9 @@ decodeIA32PageDirectoryInvocation(
     cap = cap_page_directory_cap_set_capPDMappedASID(cap, asid);
     cap = cap_page_directory_cap_set_capPDMappedAddress(cap, vaddr);
 
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performIA32PageDirectoryInvocationMap(cap, cte, pdpte, pdptSlot, threadRoot, vspaceCap);
 }
 

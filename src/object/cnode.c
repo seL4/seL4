@@ -183,7 +183,7 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         if (isMove) {
             return invokeCNodeMove(newCap, srcSlot, destSlot);
         } else {
@@ -192,12 +192,12 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
     }
 
     if (invLabel == CNodeRevoke) {
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeCNodeRevoke(destSlot);
     }
 
     if (invLabel == CNodeDelete) {
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeCNodeDelete(destSlot);
     }
 
@@ -208,7 +208,7 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
             return status;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeCNodeSaveCaller(destSlot);
     }
 
@@ -218,7 +218,7 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeCNodeRecycle(destSlot);
     }
 
@@ -297,7 +297,7 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeCNodeRotate(newSrcCap, newPivotCap,
                                  srcSlot, pivotSlot, destSlot);
     }
@@ -359,7 +359,7 @@ invokeCNodeSaveCaller(cte_t *destSlot)
     cap_t cap;
     cte_t *srcSlot;
 
-    srcSlot = TCB_PTR_CTE_PTR(ksCurThread, tcbCaller);
+    srcSlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCaller);
     cap = srcSlot->cap;
 
     switch (cap_get_capType(cap)) {

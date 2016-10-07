@@ -220,7 +220,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     alignedFreeRef = alignUp(freeRef, objectSize);
 
     /* Perform the retype. */
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeUntyped_Retype(
                slot, WORD_PTR(cap_untyped_cap_get_capPtr(cap)),
                (void*)alignedFreeRef, newType, userObjSize, slots, call,

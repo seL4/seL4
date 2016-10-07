@@ -17,6 +17,7 @@
 #include <api/types.h>
 #include <api/syscall.h>
 #include <benchmark_track.h>
+#include <arch/stack.h>
 
 static inline void
 switchToThread_fp(tcb_t *thread, pde_t *pd, pde_t stored_hw_asid)
@@ -39,10 +40,10 @@ switchToThread_fp(tcb_t *thread, pde_t *pd, pde_t stored_hw_asid)
     x86_write_gs_base(base);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_switch(ksCurThread, thread);
+    benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
 
-    ksCurThread = thread;
+    NODE_STATE(ksCurThread) = thread;
 }
 
 static inline void
@@ -114,10 +115,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    restore_user_debug_context(ksCurThread);
+    restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
-    setKernelEntryStackPointer(ksCurThread);
+    setKernelEntryStackPointer(NODE_STATE(ksCurThread));
 
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile(

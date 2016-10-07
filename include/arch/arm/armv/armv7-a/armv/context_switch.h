@@ -13,6 +13,7 @@
 #include <config.h>
 #include <arch/object/structures.h>
 #include <arch/api/types.h>
+#include <mode/model/statedata.h>
 
 /** MODIFIES: [*] */
 static inline void setHardwareASID(hw_asid_t hw_asid)

@@ -14,6 +14,7 @@
 #include <arch/fastpath/fastpath.h>
 #include <arch/machine/debug.h>
 #include <benchmark_track.h>
+#include <arch/stack.h>
 
 #include <api/syscall.h>
 #include <util.h>
@@ -23,8 +24,8 @@ void NORETURN VISIBLE restore_user_context(void)
 {
     c_exit_hook();
 
-    setKernelEntryStackPointer(ksCurThread);
-    if (unlikely(ksCurThread == ARCH_NODE_STATE(x86KSfpuOwner))) {
+    setKernelEntryStackPointer(NODE_STATE(ksCurThread));
+    if (unlikely(NODE_STATE(ksCurThread) == ARCH_NODE_STATE(x86KSfpuOwner))) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
     } else if (unlikely(ARCH_NODE_STATE(x86KSfpuOwner))) {
@@ -35,11 +36,11 @@ void NORETURN VISIBLE restore_user_context(void)
          * is currently disabled */
     }
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    restore_user_debug_context(ksCurThread);
+    restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
     /* see if we entered via syscall */
-    if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1)) {
+    if (likely(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1)) {
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movl %0, %%esp\n"
@@ -89,7 +90,7 @@ void NORETURN VISIBLE restore_user_context(void)
             "popfl\n"
             "sysexit\n"
             :
-            : "r"(ksCurThread->tcbArch.tcbContext.registers)
+            : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -120,7 +121,7 @@ void NORETURN VISIBLE restore_user_context(void)
 #endif
             "iret\n"
             :
-            : "r"(ksCurThread->tcbArch.tcbContext.registers)
+            : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
