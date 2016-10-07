@@ -119,30 +119,15 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
 {
     v_region_t v_reg;
     word_t entry;
-    if (config_set(CONFIG_ARCH_IA32)) {
-        Elf32_Header_t* elf_file = (Elf32_Header_t*)(word_t)boot_module->start;
+    Elf_Header_t* elf_file = (Elf_Header_t*)(word_t)boot_module->start;
 
-        if (!elf32_checkFile(elf_file)) {
-            printf("Boot module does not contain a valid ELF32 image\n");
-            return 0;
-        }
-
-        v_reg = elf32_getMemoryBounds(elf_file);
-        entry = elf_file->e_entry;
-    } else if (config_set(CONFIG_ARCH_X86_64)) {
-        Elf64_Header_t* elf_file = (Elf64_Header_t*)(word_t)boot_module->start;
-
-        if (!elf64_checkFile(elf_file)) {
-            printf("Boot module does not contain a valid ELF64 image\n");
-            return 0;
-        }
-
-        v_reg = elf64_getMemoryBounds(elf_file);
-        entry = elf_file->e_entry;
-    } else {
-        printf("No architecture selected");
+    if (!elf_checkFile(elf_file)) {
+        printf("Boot module does not contain a valid ELF image\n");
         return 0;
     }
+
+    v_reg = elf_getMemoryBounds(elf_file);
+    entry = elf_file->e_entry;
 
     if (v_reg.end == 0) {
         printf("ELF image in boot module does not contain any segments\n");
@@ -195,13 +180,7 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
         (void*)boot_state.ui_info.p_reg.start,
         boot_state.ui_info.p_reg.end - boot_state.ui_info.p_reg.start
     );
-    if (config_set(CONFIG_ARCH_IA32)) {
-        Elf32_Header_t* elf_file = (Elf32_Header_t*)(word_t)boot_module->start;
-        elf32_load(elf_file, boot_state.ui_info.pv_offset);
-    } else if (config_set(CONFIG_ARCH_X86_64)) {
-        Elf64_Header_t* elf_file = (Elf64_Header_t*)(word_t)boot_module->start;
-        elf64_load(elf_file, boot_state.ui_info.pv_offset);
-    }
+    elf_load(elf_file, boot_state.ui_info.pv_offset);
 
     return load_paddr;
 }

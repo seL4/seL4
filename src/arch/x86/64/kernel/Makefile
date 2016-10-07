@@ -11,4 +11,5 @@
 #
 
 ARCH_C_SOURCES += 64/kernel/thread.c \
-                  64/kernel/vspace.c
+                  64/kernel/vspace.c \
+                  64/kernel/elf.c
