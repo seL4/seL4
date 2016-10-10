@@ -71,9 +71,9 @@ getBreakpoint_t getBreakpoint(arch_tcb_t *uds, uint16_t bp_num);
 void unsetBreakpoint(arch_tcb_t *uds, uint16_t bp_num);
 
 bool_t configureSingleStepping(arch_tcb_t *uc,
-                             uint16_t bp_num,
-                             word_t n_instr,
-                             bool_t is_reply);
+                               uint16_t bp_num,
+                               word_t n_instr,
+                               bool_t is_reply);
 
 static inline bool_t
 singleStepFaultCounterReady(arch_tcb_t *uc)
