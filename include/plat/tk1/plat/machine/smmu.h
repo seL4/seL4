@@ -121,8 +121,8 @@ typedef struct {
 
 #define ARM_PLAT_NUM_SMMU   28
 
-#define SMMU_PD_BITS        12
-#define SMMU_PT_BITS        12
+#define SMMU_PD_INDEX_BITS        12
+#define SMMU_PT_INDEX_BITS        12
 
 #define SMMU_IOPD_INDEX_MASK    0xffc00000
 #define SMMU_IOPD_INDEX_SHIFT   20

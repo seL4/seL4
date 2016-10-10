@@ -152,6 +152,31 @@ init_irqs(cap_t root_cnode_cap)
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
 
+BOOT_CODE static bool_t
+create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
+{
+    seL4_SlotPos   slot_pos_before;
+    seL4_SlotPos   slot_pos_after;
+    region_t       dev_reg;
+    word_t         i;
+
+    slot_pos_before = ndks_boot.slot_pos_cur;
+    create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
+    for (i = 0; i < get_num_dev_p_regs(); i++) {
+        dev_reg = paddr_to_pptr_reg(get_dev_p_reg(i));
+        if (!create_untypeds_for_region(root_cnode_cap, true,
+                                        dev_reg, slot_pos_before)) {
+            return false;
+        }
+    }
+
+    slot_pos_after = ndks_boot.slot_pos_cur;
+    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
+        slot_pos_before, slot_pos_after
+    };
+    return true;
+
+}
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 
 BOOT_CODE static void
@@ -328,18 +353,13 @@ try_init_kernel(
         return false;
     }
 
-    /* convert the remaining free memory into UT objects and provide the caps */
+    /* create all of the untypeds. Both devices and kernel window memory */
     if (!create_untypeds(
                 root_cnode_cap,
     (region_t) {
     kernelBase, (pptr_t)ki_boot_end
     } /* reusable boot code/data */
             )) {
-        return false;
-    }
-
-    /* create device frames */
-    if (!create_device_frames(root_cnode_cap)) {
         return false;
     }
 

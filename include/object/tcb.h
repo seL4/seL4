@@ -21,7 +21,7 @@
 
 #ifdef CONFIG_DEBUG_BUILD
 /* Maximum length of the tcb name, including null terminator */
-#define TCB_NAME_LENGTH (BIT(seL4_TCBBits) - BIT(seL4_TCBBits) - sizeof(tcb_t))
+#define TCB_NAME_LENGTH (BIT(seL4_TCBBits) - TCB_OFFSET - sizeof(tcb_t))
 #endif
 
 struct tcb_queue {
@@ -106,8 +106,6 @@ exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeSetCriticality(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeSetMCCriticality(cap_t cap, word_t length, word_t *buffer);
-
-
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
@@ -120,7 +118,10 @@ enum thread_control_flag {
     thread_control_update_ipc_buffer = 0x2,
     thread_control_update_space = 0x4,
     thread_control_update_sc = 0x8,
-    thread_control_update_all = 0xF,
+    thread_control_update_mcp = 0x10,
+    thread_control_update_criticality = 0x20,
+    thread_control_update_mcc = 0x40,
+    thread_control_update_all = 0x7F,
 };
 
 typedef word_t thread_control_flag_t;
@@ -130,7 +131,9 @@ exception_t invokeTCB_Resume(tcb_t *thread);
 exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
                                     cap_t fepCap, cte_t *fepSlot,
                                     cap_t tfepCap, cte_t *tfepSlot,
-                                    seL4_Prio_t priority, cap_t cRoot_newCap,
+                                    prio_t mcp, prio_t prio,
+                                    prio_t mcc, prio_t criticality,
+                                    cap_t cRoot_newCap,
                                     cte_t *cRoot_srcSlot, cap_t vRoot_newCap,
                                     cte_t *vRoot_srcSlot, word_t bufferAddr,
                                     cap_t bufferCap, cte_t *bufferSrcSlot,

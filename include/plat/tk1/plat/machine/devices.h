@@ -72,7 +72,8 @@
 #define BSEA_PADDR                  (0x60011000)                /* 4 KB                         */
 #define IPATCH_PADDR                (0x6001d000)                /* 4 KB offset 0xc00, 1 KB      */
 #define VDE_FRAMEID_PADDR           (0x60030000)                /* 16 KB, multiple              */
-#define MISC_PINMUX_PADDR           (0x70000000)                /* 16 KB                        */
+#define MISC_AUX_PADDR              (0x70000000)                /* 12 KB: USB AUX, SATA AUX, etc*/
+#define MISC_PINMUX_PADDR           (0x70003000)                /* 4 KB                         */
 #define UARTA_SYNC_PADDR            (0x70006000)                /* 12 KB, multiple              */
 #define SYNC_NOR_PADDR              (0x70009000)                /* 4 KB                         */
 #define PWM_PADDR                   (0x7000a000)                /* 4 KB, 256 bytes              */

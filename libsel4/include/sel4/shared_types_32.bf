@@ -19,11 +19,11 @@ block seL4_MessageInfo {
     field length 7
 }
 
-block seL4_Prio {
-    field prio     8
+block seL4_PrioProps {
     field mcp      8
-    field crit     8
+    field prio 8
     field mcc      8
+    field crit     8
 }
 
 block seL4_CapRights {

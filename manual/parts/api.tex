@@ -12,6 +12,7 @@
 \newcommand{\param}[3]{\texttt{#1}&\texttt{#2}&#3\\ }
 
 \newcommand{\inputapidoc}[1] {\input{parts/api/#1.tex}}
+\newcommand{\inputgeneratedapidoc}[1] {\input{generated/#1.tex}}
 
 \newcommand{\apidoc}[7]
 {
@@ -26,7 +27,7 @@
     \begin{minipage}{0.95\textwidth}
     \begin{tabularx}{\textwidth}{llX}
     \toprule
-    \textbf{Type} & \textbf{Name} & \textbf{Description} \\ 
+    \textbf{Type} & \textbf{Name} & \textbf{Description} \\
     \midrule
     #5
     \bottomrule
@@ -49,7 +50,7 @@
 \newcommand{\srcindexdesc}{CPTR to the source slot. Resolved from the root of the source CSpace.}
 \newcommand{\srcdepthdesc}{Number of bits of src\_index to resolve to find the source slot.}
 \newcommand{\rightsdesc}{The rights inherited by the new capability. Possible values for this type are given in \autoref{sec:cap_rights}.}
-\newcommand{\badgedesc}{Badge to be applied to the new capability.}
+\newcommand{\badgedesc}{Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored}
 
 \newcommand{\cspacedesc}{CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32.}
 \newcommand{\indexdesc}{CPTR to the capability. Resolved from the root of the \_service parameter.}
@@ -248,17 +249,7 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \vfill
 
 \section{System Calls}
-\inputapidoc{sel4_send}
-\inputapidoc{sel4_recv}
-\inputapidoc{sel4_call}
-\inputapidoc{sel4_reply}
-\inputapidoc{sel4_nbsend}
-\inputapidoc{sel4_replyrecv}
-\inputapidoc{sel4_nbrecv}
-\inputapidoc{sel4_signal}
-\inputapidoc{sel4_wait}
-\inputapidoc{sel4_poll}
-\inputapidoc{sel4_signalrecv}
+\inputgeneratedapidoc{general_syscalls}
 \clearpage
 
 \section{Architecture-Independent Object Methods}
@@ -324,6 +315,8 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{ia32_pagetable_map}
 \inputapidoc{ia32_pagetable_unmap}
 \inputapidoc{ia32_pagedirectory_getstatusbits}
+\inputapidoc{ia32_irq_control_getioapic}
+\inputapidoc{ia32_irq_control_getmsi}
 \fi
 
 \clearpage

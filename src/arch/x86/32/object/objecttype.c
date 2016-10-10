@@ -18,18 +18,32 @@
 #include <arch/machine/fpu.h>
 #include <arch/object/objecttype.h>
 #include <arch/object/ioport.h>
-#include <plat/machine/pci.h>
 
 #include <arch/object/iospace.h>
 #include <plat/machine/intel-vtd.h>
 
-deriveCap_ret_t Mode_deriveCap(cte_t* slot, cap_t cap)
+
+bool_t
+Arch_isFrameType(word_t type)
+{
+    switch (type) {
+    case seL4_X86_4K:
+        return true;
+    case seL4_X86_LargePageObject:
+        return true;
+    default:
+        return false;
+    }
+}
+
+deriveCap_ret_t
+Mode_deriveCap(cte_t* slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
-        cap = cap_frame_cap_set_capFIsIOSpace(cap, 0);
+        cap = cap_frame_cap_set_capFMapType(cap, X86_MappingNone);
         ret.cap = cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
         ret.status = EXCEPTION_NONE;
         return ret;
@@ -55,38 +69,44 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
         break;
 
     case cap_frame_cap:
-        if (cap_frame_cap_get_capFMappedASID(cap)) {
-            if (cap_frame_cap_get_capFIsIOSpace(cap)) {
-                unmapIOPage(cap);
-                break;
-            }
+        if (final && cap_frame_cap_get_capFMappedASID(cap)) {
+            switch (cap_frame_cap_get_capFMapType(cap)) {
+            case X86_MappingVSpace:
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-            /* If the last cap to the user-level log buffer frame is being revoked,
-             * reset the ksLog so that the kernel doesn't log anymore
-             */
-            if (unlikely(cap_frame_cap_get_capFSize(cap) == X86_LargePage)) {
-                if (pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) == ksUserLogBuffer) {
-                    ksUserLogBuffer = 0;
+                /* If the last cap to the user-level log buffer frame is being revoked,
+                 * reset the ksLog so that the kernel doesn't log anymore
+                 */
+                if (unlikely(cap_frame_cap_get_capFSize(cap) == X86_LargePage)) {
+                    if (pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) == ksUserLogBuffer) {
+                        ksUserLogBuffer = 0;
 
-                    /* Invalidate log page table entries */
-                    clearMemory(ia32KSGlobalLogPT, BIT(seL4_PageTableBits));
+                        /* Invalidate log page table entries */
+                        clearMemory(ia32KSGlobalLogPT, BIT(seL4_PageTableBits));
 
-                    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
-                        invalidateTLBentry(KS_LOG_PPTR + (idx << seL4_PageBits));
+                        for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
+                            invalidateTLBEntry(KS_LOG_PPTR + (idx << seL4_PageBits));
+                        }
+
+                        userError("Log buffer frame is invalidated, kernel can't benchmark anymore\n");
                     }
-
-                    userError("Log buffer frame is invalidated, kernel can't benchmark anymore\n");
                 }
-            }
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
-            unmapPage(
-                cap_frame_cap_get_capFSize(cap),
-                cap_frame_cap_get_capFMappedASID(cap),
-                cap_frame_cap_get_capFMappedAddress(cap),
-                (void *)cap_frame_cap_get_capFBasePtr(cap)
-            );
+                unmapPage(
+                    cap_frame_cap_get_capFSize(cap),
+                    cap_frame_cap_get_capFMappedASID(cap),
+                    cap_frame_cap_get_capFMappedAddress(cap),
+                    (void *)cap_frame_cap_get_capFBasePtr(cap)
+                );
+                break;
+            case X86_MappingIOSpace:
+                unmapIOPage(cap);
+                break;
+            default:
+                fail("No mapping type for mapped cap");
+                break;
+            }
         }
         break;
 
@@ -134,28 +154,34 @@ Mode_getObjectSize(word_t t)
 }
 
 cap_t
-Mode_createObject(object_t t, void *regionBase, word_t userSize)
+Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_X86_4K:
-        memzero(regionBase, 1 << pageBitsForSize(X86_SmallPage));
+        if (!deviceMemory) {
+            memzero(regionBase, 1 << pageBitsForSize(X86_SmallPage));
+        }
         return cap_frame_cap_new(
                    X86_SmallPage,          /* capFSize             */
-                   0,                      /* capFIsIOSpace        */
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
-                   0,                      /* capFMappedAddress    */
+                   false,                  /* capFMappedAddress    */
+                   X86_MappingNone,        /* capFMapType          */
+                   deviceMemory,           /* capFIsDevice         */
                    ASID_HIGH(asidInvalid), /* capFMappedASIDHigh   */
                    VMReadWrite,            /* capFVMRights         */
                    (word_t)regionBase      /* capFBasePtr          */
                );
 
     case seL4_X86_LargePageObject:
-        memzero(regionBase, 1 << pageBitsForSize(X86_LargePage));
+        if (!deviceMemory) {
+            memzero(regionBase, 1 << pageBitsForSize(X86_LargePage));
+        }
         return cap_frame_cap_new(
                    X86_LargePage,          /* capFSize             */
-                   0,                      /* capFIsIOSpace        */
                    ASID_LOW(asidInvalid),  /* capFMappedASIDLow    */
-                   0,                      /* capFMappedAddress    */
+                   false,                  /* capFMappedAddress    */
+                   X86_MappingNone,        /* capFMapType          */
+                   deviceMemory,           /* capFIsDevice         */
                    ASID_HIGH(asidInvalid), /* capFMappedASIDHigh   */
                    VMReadWrite,            /* capFVMRights         */
                    (word_t)regionBase      /* capFBasePtr          */
@@ -176,10 +202,10 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize)
         copyGlobalMappings(regionBase);
 #endif
         return cap_page_directory_cap_new(
-                   0,                  /* capPDIsMapped    */
-                   asidInvalid,        /* capPDMappedASID  */
+                   0,                  /* capPDIsMapped      */
+                   asidInvalid,        /* capPDMappedASID    */
                    0,                  /* capPDMappedAddress */
-                   (word_t)regionBase  /* capPDBasePtr     */
+                   (word_t)regionBase  /* capPDBasePtr       */
                );
 
 #ifdef CONFIG_PAE_PAGING

@@ -51,9 +51,9 @@ typedef struct user_data user_data_t;
 
 #define VTD_PTE_SIZE_BITS 3
 #define VTD_PTE_PTR(r)    ((vtd_pte_t*)(r))
-#define VTD_PT_BITS       9
+#define VTD_PT_INDEX_BITS       9
 
-compile_assert(vtd_pt_size_sane, VTD_PT_BITS + VTD_PTE_SIZE_BITS == seL4_IOPageTableBits)
+compile_assert(vtd_pt_size_sane, VTD_PT_INDEX_BITS + VTD_PTE_SIZE_BITS == seL4_IOPageTableBits)
 
 /* helper structure for filling descriptor registers */
 typedef struct gdt_idt_ptr {

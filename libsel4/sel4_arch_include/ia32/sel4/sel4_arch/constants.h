@@ -33,10 +33,11 @@
 #define seL4_ASIDPoolBits    12
 #define seL4_SchedContextBits 6
 
+#define seL4_HugePageBits    30 /* 1GB */
+
 #ifdef CONFIG_PAE_PAGING
 #define seL4_PDPTBits        5
 #define seL4_LargePageBits   21 /* 2MB */
-#define seL4_HugePageBits    30 /* 1GB */
 #else
 #define seL4_PDPTBits         0
 #define seL4_LargePageBits    22 /* 4MB */

@@ -215,6 +215,9 @@ struct tcb {
     /* Current fault, 8 bytes */
     seL4_Fault_t tcbFault;
 
+    /*  maximum controlled priorioty, 1 byte (packed to 4) */
+    prio_t tcbMCP;
+
     /* Priority, 1 byte (packed to 4) */
     prio_t tcbPriority;
 
@@ -231,9 +234,6 @@ struct tcb {
     /* NOT TOUCHED ON THE FASTPATH */
     /* Current lookup failure, 8 bytes */
     lookup_fault_t tcbLookupFailure;
-
-    /* maximum controlled priority, 1 byte (packed to 4) */
-    prio_t tcbMCP;
 
     /* sched context object that this tcb is bound to, 4 bytes */
     sched_context_t *tcbHomeSchedContext;

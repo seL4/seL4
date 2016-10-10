@@ -16,6 +16,6 @@
 #include <plat/machine/hardware_gen.h>
 #include <plat_mode/machine/hardware.h>
 
-void platAddDevices(void);
+bool_t platAddDevices(void);
 
 #endif

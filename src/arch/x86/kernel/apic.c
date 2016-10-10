@@ -188,6 +188,11 @@ void apic_ack_active_interrupt(void)
     apic_write_reg(APIC_EOI, 0);
 }
 
+cpu_id_t apic_get_id(void)
+{
+    return apic_read_reg(APIC_ID) >> 24;
+}
+
 BOOT_CODE void
 apic_send_init_ipi(cpu_id_t cpu_id)
 {

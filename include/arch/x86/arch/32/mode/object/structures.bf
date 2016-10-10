@@ -21,12 +21,14 @@ base 32
 ---- IA32-specific cap types
 
 block frame_cap {
+    padding                         1
     field       capFSize            1
-    field       capFIsIOSpace       1
     field       capFMappedASIDLow   10
     field_high  capFMappedAddress   20
 
-    padding                         4
+    padding                         1
+    field       capFMapType         2
+    field       capFIsDevice        1
     field       capFMappedASIDHigh  2
     field       capFVMRights        2
     field_high  capFBasePtr         20
@@ -114,9 +116,8 @@ block io_space_capdata {
 
 -- IO Page Table Cap
 block io_page_table_cap {
-    padding                             2
     field       capIOPTIsMapped         1
-    field       capIOPTLevel            2
+    field       capIOPTLevel            4
     field_high  capIOPTMappedAddress    11
     field       capIOPTIOASID           16
 

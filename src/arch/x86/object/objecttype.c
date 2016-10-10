@@ -18,7 +18,7 @@
 #include <arch/machine/fpu.h>
 #include <arch/object/objecttype.h>
 #include <arch/object/ioport.h>
-#include <plat/machine/pci.h>
+#include <plat/machine/devices.h>
 
 #include <arch/object/iospace.h>
 #include <plat/machine/intel-vtd.h>
@@ -185,6 +185,9 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_io_port_cap:
         break;
     case cap_io_space_cap:
+        if (final) {
+            unmapVTDContextEntry(cap);
+        }
         break;
 
     case cap_io_page_table_cap:
@@ -205,6 +208,7 @@ resetMemMapping(cap_t cap)
 {
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
+        cap = cap_frame_cap_set_capFMapType(cap, X86_MappingNone);
         return cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
     case cap_page_table_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
@@ -215,6 +219,8 @@ resetMemMapping(cap_t cap)
     case cap_pdpt_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_pdpt_cap_set_capPDPTIsMapped(cap, 0);
+    case cap_io_page_table_cap:
+        return cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
     }
 
     return Mode_resetMemMapping(cap);
@@ -227,7 +233,9 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
 
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
-        clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        if (!cap_frame_cap_get_capFIsDevice(cap)) {
+            clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
+        }
         Arch_finaliseCap(cap, is_final);
         return resetMemMapping(cap);
 
@@ -278,13 +286,13 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
 
     case cap_io_space_cap:
-        Arch_finaliseCap(cap, is_final);
+        Arch_finaliseCap(cap, true);
         return cap;
 
     case cap_io_page_table_cap:
         clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
-        Arch_finaliseCap(cap, is_final);
-        return cap;
+        Arch_finaliseCap(cap, true);
+        return resetMemMapping(cap);
 
     default:
         return Mode_recycleCap(is_final, cap);
@@ -355,7 +363,12 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_io_port_cap:
         if (cap_get_capType(cap_b) == cap_io_port_cap) {
-            return true;
+            word_t botA, botB, topA, topB;
+            botA = cap_io_port_cap_get_capIOPortFirstPort(cap_a);
+            botB = cap_io_port_cap_get_capIOPortFirstPort(cap_b);
+            topA = cap_io_port_cap_get_capIOPortLastPort(cap_a);
+            topB = cap_io_port_cap_get_capIOPortLastPort(cap_b);
+            return ((botA <= botB) && (topA >= topB));
         }
         break;
 
@@ -413,9 +426,9 @@ Arch_getObjectSize(word_t t)
 }
 
 cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize)
+Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
-    return Mode_createObject(t, regionBase, userSize);
+    return Mode_createObject(t, regionBase, userSize, deviceMemory);
 }
 
 exception_t
@@ -434,7 +447,7 @@ Arch_decodeInvocation(
     case cap_asid_pool_cap:
         return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_port_cap:
-        return decodeIA32PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+        return decodeX86PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_space_cap:
         return decodeX86IOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:

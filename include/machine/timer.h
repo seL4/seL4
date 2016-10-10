@@ -13,7 +13,6 @@
 
 #include <util.h>
 #include <arch/linker.h>
-#include <model/statedata.h>
 #include <arch/machine/timer.h>
 
 /* get the expected wcet of the kernel for this platform */

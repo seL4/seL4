@@ -30,13 +30,23 @@ typedef struct {
     word_t  io_map[TSS_IO_MAP_SIZE];
 } PACKED tss_io_t;
 
-extern tss_io_t x86KStss;
-extern interrupt_t x86KScurInterrupt;
-extern gdt_entry_t x86KSgdt[];
+NODE_STATE_BEGIN(archNodeState)
+/* Interrupt currently being handled, not preserved across kernel entries */
+NODE_STATE_DECLARE(interrupt_t, x86KScurInterrupt);
+/* Task State Segment (TSS), contains currently running TCB in ESP0 */
+NODE_STATE_DECLARE(tss_io_t, x86KStss);
+/* Global Descriptor Table (GDT) */
+NODE_STATE_DECLARE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
+/* Interrupt Descriptor Table (IDT) */
+NODE_STATE_DECLARE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
+/* Current thread whose state is installed in the FPU, or NULL if the FPU is currently invalid */
+NODE_STATE_DECLARE(tcb_t *, x86KSfpuOwner);
+
+NODE_STATE_TYPE_DECLARE(modeNodeState, mode);
+NODE_STATE_END(archNodeState);
+
 extern asid_pool_t* x86KSASIDTable[];
-extern tcb_t *x86KSfpuOwner;
 extern uint32_t x86KScacheLineSizeBits;
-extern idt_entry_t x86KSidt[];
 extern user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 extern uint32_t x86KStscMhz;
 

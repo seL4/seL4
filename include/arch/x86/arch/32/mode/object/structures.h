@@ -25,20 +25,20 @@
 
 #ifdef CONFIG_PAE_PAGING
 #define PDPTE_SIZE_BITS 3
-#define PDPT_BITS    2
+#define PDPT_INDEX_BITS    2
 #define PDE_SIZE_BITS  3
-#define PD_BITS      9
+#define PD_INDEX_BITS      9
 #define PTE_SIZE_BITS 3
-#define PT_BITS      9
+#define PT_INDEX_BITS      9
 #define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPDPT
 typedef pdpte_t vspace_root_t;
 #else
 #define PDPTE_SIZE_BITS 0
-#define PDPT_BITS 0
+#define PDPT_INDEX_BITS 0
 #define PDE_SIZE_BITS  2
-#define PD_BITS      10
+#define PD_INDEX_BITS      10
 #define PTE_SIZE_BITS 2
-#define PT_BITS      10
+#define PT_INDEX_BITS      10
 #define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPD
 typedef pde_t vspace_root_t;
 #endif
@@ -47,7 +47,7 @@ typedef pde_t vspace_root_t;
 #define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
 #define PDPTE_REF(p)   ((word_t)(p))
 
-compile_assert(pdpt_size_bits_sane, PDPT_BITS + PDPTE_SIZE_BITS == seL4_PDPTBits)
+compile_assert(pdpt_size_bits_sane, PDPT_INDEX_BITS + PDPTE_SIZE_BITS == seL4_PDPTBits)
 #define PDPT_PTR(r)    ((pdpte_t*)(r))
 #define PDPT_PREF(p)   ((word_t)(p))
 
@@ -55,14 +55,14 @@ compile_assert(pdpt_size_bits_sane, PDPT_BITS + PDPTE_SIZE_BITS == seL4_PDPTBits
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
 #define PDE_REF(p)     ((word_t)(p))
 
-compile_assert(pd_size_sane, PD_BITS + PDE_SIZE_BITS == seL4_PageDirBits)
+compile_assert(pd_size_sane, PD_INDEX_BITS + PDE_SIZE_BITS == seL4_PageDirBits)
 #define PD_PTR(r)    ((pde_t *)(r))
 #define PD_REF(p)    ((word_t)(p))
 
 #define PTE_PTR(r)    ((pte_t *)(r))
 #define PTE_REF(p)    ((word_t)(p))
 
-compile_assert(pt_size_sane, PT_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
+compile_assert(pt_size_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r)    ((pte_t *)(r))
 #define PT_REF(p)    ((word_t)(p))
 
@@ -82,8 +82,8 @@ struct asid_pool {
 
 typedef struct asid_pool asid_pool_t;
 
-#define ASID_POOL_BITS      asidLowBits
-compile_assert(asid_pool_bits_sane, ASID_POOL_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
+#define ASID_POOL_INDEX_BITS      asidLowBits
+compile_assert(asid_pool_bits_sane, ASID_POOL_INDEX_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
 #define ASID_POOL_PTR(r)    ((asid_pool_t*)r)
 #define ASID_POOL_REF(p)    ((word_t)p)
 #define ASID_BITS           (asidHighBits + asidLowBits)

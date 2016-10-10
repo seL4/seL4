@@ -15,16 +15,15 @@
 #include <machine/capdl.h>
 #include <arch/machine/capdl.h>
 #include <machine/io.h>
-#include <plat/machine/pci.h>
 
 #ifdef CONFIG_DEBUG_BUILD
 
 #define ARCH 0xe1
 
-#define PD_READ_SIZE         BIT(PD_BITS)
-#define PT_READ_SIZE         BIT(PT_BITS)
-#define ASID_POOL_READ_SIZE  BIT(ASID_POOL_BITS)
-#define IO_PT_READ_SIZE      BIT(VTD_PT_BITS)
+#define PD_READ_SIZE         BIT(PD_INDEX_BITS)
+#define PT_READ_SIZE         BIT(PT_INDEX_BITS)
+#define ASID_POOL_READ_SIZE  BIT(ASID_POOL_INDEX_BITS)
+#define IO_PT_READ_SIZE      BIT(VTD_PT_INDEX_BITS)
 
 static int getDecodedChar(unsigned char *result)
 {

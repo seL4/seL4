@@ -21,9 +21,6 @@
 #define MULTIBOOT_HEADER_MAGIC 0x1BADB002
 #define MULTIBOOT_HEADER_FLAGS 3
 
-#define IA32_APIC_BASE_MSR 0x01B
-#define APIC_ID_OFFSET 0x020
-
 .section .mbh
     /* MultiBoot header */
     .align  4
@@ -84,7 +81,7 @@ BEGIN_FUNC(_start)
     pushl $0
     popf
 
-    /* Already push parameters for calling boot_sys later */
+    /* Push parameters to preserve for calling boot_sys later */
     pushl %esi /* 2nd parameter: multiboot_info_ptr */
     pushl %edi /* 1st parameter: multiboot_magic    */
 
@@ -92,18 +89,23 @@ BEGIN_FUNC(_start)
     call init_boot_pd
     call enable_paging
 
-    /* Adjust ESP/EBP to their virtual address */
-    addl $KERNEL_BASE, %esp
-    addl $KERNEL_BASE, %ebp
+    popl %edi
+    popl %esi
 
-    /* Call boot_sys() (takes 3 parameters) and set restore_user_context() as  */
+    /* Stop using shared boot stack and get a real stack and move to the top of the stack */
+    leal kernel_stack_alloc + 0xffc, %esp
+
+    pushl %esi /* 2nd parameter: multiboot_info_ptr */
+    pushl %edi /* 1st parameter: multiboot_magic    */
+
+    /* Call boot_sys() (takes 2 parameters) and set restore_user_context() as  */
     /* return EIP. This will start the roottask as soon as boot_sys() returns. */
     pushl $restore_user_context
     jmp   boot_sys
 END_FUNC(_start)
 
 /* ===== booting up another CPU ===== */
-
+#if CONFIG_MAX_NUM_NODES > 1
 BEGIN_FUNC(boot_cpu_start)
 
 .code16
@@ -127,18 +129,8 @@ BEGIN_FUNC(boot_cpu_start)
     movw %ax,   %es
     movw %ax,   %ss
 
-    /* Load APIC address into EAX */
-    movl $IA32_APIC_BASE_MSR, %ecx
-    rdmsr
-    andl $0xfffff000, %eax
-    
-    /* Save APIC_ID (cpu_t) into ESP */
-    movl APIC_ID_OFFSET(%eax), %esp
-    shrl $24, %esp
-
-    /* Get physical top address of 2K stack for this CPU */
-    incl %esp
-    shll $11, %esp
+    /* Use temporary kernel boot stack pointer */
+    leal boot_stack_top, %esp
 
     /* Reset EFLAGS register (also disables interrupts etc.) */
     pushl $0
@@ -147,15 +139,21 @@ BEGIN_FUNC(boot_cpu_start)
     /* Enable paging */
     call enable_paging
 
-    /* Adjust ESP/EBP to their virtual address */
-    addl $KERNEL_BASE, %esp
-    addl $KERNEL_BASE, %ebp
+    /* Get index of this cpu, BSP always gets index of zero */
+    movl smp_aps_index, %ecx
+
+    /* Stop using shared boot stack and get a real stack and move to the top of the stack */
+    leal kernel_stack_alloc, %esp
+    shll $12, %ecx
+    addl %ecx, %esp
+    addl $0xffc, %esp
 
     /* Call boot_node() and set restore_user_context() as return EIP. */
     /* This will start the roottask as soon as boot_node() returns.   */
     pushl $restore_user_context
     jmp   boot_node
 END_FUNC(boot_cpu_start)
+#endif /* CONFIG_MAX_NUM_NODES */
 
 _boot_gdt_ptr:
     .word   (3 * 8) - 1 /* Limit: 3 segments * 8 bytes - 1 byte */

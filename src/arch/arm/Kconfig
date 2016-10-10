@@ -13,6 +13,20 @@ config HAVE_ARCH_TIMER
     default y
     depends on ARM_CORTEX_A15
 
+config ENABLE_A9_PREFETCHER
+    bool "Enable Cortex-A9 prefetcher"
+    default n
+    depends on ARM_CORTEX_A9
+    help
+        Cortex-A9 has an L1 and L2 prefetcher. By default
+        they are disabled. This config options allows
+        them to be turned on. Enabling the prefetchers
+        requires that the kernel be in secure mode. ARM
+        documents indicate that as of r4p1 version of
+        Cortex-A9 the bits used to enable the prefetchers
+        no longer exist, it is not clear if this is just
+        a document error or not.
+
 config EXPORT_PMU_USER
     bool "PL0 access to PMU"
     default n

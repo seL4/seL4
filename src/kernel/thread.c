@@ -473,23 +473,42 @@ setActivePriority(tcb_t *tptr, prio_t prio)
 }
 
 void
-setPriorityFields(tcb_t *tptr, seL4_Prio_t new_prio)
+setMCCriticality(tcb_t *tptr, prio_t mcc)
 {
-    prio_t activePrio;
+    tptr->tcbMCC = mcc;
+}
 
-    /* lazy dequeue */
-    tcbCritDequeue(tptr);
+void
+setMCPriority(tcb_t *tptr, prio_t mcp)
+{
+    tptr->tcbMCP = mcp;
+}
 
-    tptr->tcbMCP = seL4_Prio_get_mcp(new_prio);
-    tptr->tcbCrit = seL4_Prio_get_crit(new_prio);
-    tptr->tcbMCC = seL4_Prio_get_mcc(new_prio);
-
-    activePrio = seL4_Prio_get_prio(new_prio);
+void
+setPriority(tcb_t *tptr, prio_t new_prio)
+{
+    prio_t activePrio = new_prio;
     if (tptr->tcbCrit >= ksCriticality) {
-        activePrio = SHIFT_PRIO_BY_CRIT(activePrio);
+        activePrio = SHIFT_PRIO_BY_CRIT(new_prio);
     }
 
     setActivePriority(tptr, activePrio);
+}
+
+void
+setCriticality(tcb_t *tptr, prio_t crit)
+{
+    /* lazy dequeue */
+    tcbCritDequeue(tptr);
+
+    tptr->tcbCrit = crit;
+
+    if (crit >= ksCriticality) {
+        prio_t activePrio = SHIFT_PRIO_BY_CRIT(tptr->tcbPriority);
+        if (activePrio != tptr->tcbPriority) {
+            setActivePriority(tptr, activePrio);
+        }
+    }
 
     if (thread_state_get_tsType(tptr->tcbState) != ThreadState_Inactive) {
         tcbCritEnqueue(tptr);
@@ -705,5 +724,3 @@ adjustPriorityByCriticality(tcb_t *tcb, bool_t up)
 
     setActivePriority(tcb, SHIFT_PRIO_BY_CRIT(tcb->tcbPriority));
 }
-
-

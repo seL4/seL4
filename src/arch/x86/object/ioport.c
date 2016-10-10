@@ -37,7 +37,7 @@ ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)
 }
 
 exception_t
-decodeIA32PortInvocation(
+decodeX86PortInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,

@@ -105,6 +105,15 @@ BEGIN_FUNC(_start)
     mcr p15, 0, r4, c1, c0, 0
 #endif
 
+#if defined(CONFIG_ARM_CORTEX_A9) && defined(CONFIG_ENABLE_A9_PREFETCHER)
+    /* Set bit 2 in the ACTLR, which on the cortex-a9 is the l1 prefetch enable
+     * bit. See section 4.3.10 of the Cortex-A9 Technical Reference Manual */
+    mrc p15, 0, r4, c1, c0, 1
+    ldr r5, =BIT(2)
+    orr r4, r4, r5
+    mcr p15, 0, r4, c1, c0, 1
+#endif
+
     /*
      * Load kernel stack pointer. Note that in the traps pages, we
      * can load the remapped version of the stack page from the

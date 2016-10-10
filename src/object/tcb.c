@@ -24,7 +24,7 @@
 #include <util.h>
 #include <string.h>
 
-#define NULL_PRIO (seL4_Prio_new(seL4_MinPrio, seL4_MinPrio, seL4_MinCrit, seL4_MinCrit))
+#define NULL_PRIO 0
 
 static inline bool_t
 validFaultEndpoint(cap_t cap)
@@ -38,57 +38,20 @@ validFaultEndpoint(cap_t cap)
 }
 
 static exception_t
-checkMCP(prio_t mcp)
-{
-    /* can't create a thread with mcp greater than our own */
-    if (mcp > ksCurThread->tcbMCP) {
-        userError("TCB Configure: Requested  maximum controlled priority %lu too high (max %lu).",
-                  (unsigned long) mcp, (unsigned long) ksCurThread->tcbMCP);
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (mcp > seL4_MaxPrio) {
-        userError("TCB Configure: MCP above configured max (max %u)", seL4_MaxPrio);
-        current_syscall_error.type = seL4_RangeError;
-        current_syscall_error.rangeErrorMin = seL4_MinPrio;
-        current_syscall_error.rangeErrorMax = seL4_MaxPrio;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    return EXCEPTION_NONE;
-}
-
-static exception_t
 checkPrio(prio_t prio)
 {
-    /* can't create a thread with prio greater than our own mcp */
-    if (prio > ksCurThread->tcbMCP) {
-        userError("TCB Configure: Requested priority %lu too high (max %lu).",
-                  (unsigned long) prio, (unsigned long) ksCurThread->tcbMCP);
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
+    prio_t mcp;
 
-    return EXCEPTION_NONE;
-}
+    mcp = ksCurThread->tcbMCP;
 
-static exception_t
-checkMCC(crit_t mcc)
-{
-    /* can't create a thread with mcc greater than our own */
-    if (mcc > ksCurThread->tcbMCC) {
-        userError("TCB Configure: Requested  maximum controlled criticality %lu too high (max %lu).",
-                  (unsigned long) mcc, (unsigned long) ksCurThread->tcbMCC);
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
+    /* system invariant: existing MCPs are bounded */
+    assert(mcp <= seL4_MaxPrio);
 
-    if (mcc > seL4_MaxCrit) {
-        userError("TCB Configure: MCC above configured max (max %u)", seL4_MaxCrit);
+    /* can't assign a priority greater than our own mcp */
+    if (prio > mcp) {
         current_syscall_error.type = seL4_RangeError;
-        current_syscall_error.rangeErrorMin = seL4_MinCrit;
-        current_syscall_error.rangeErrorMax = seL4_MaxCrit;
+        current_syscall_error.rangeErrorMin = seL4_MinPrio;
+        current_syscall_error.rangeErrorMax = mcp;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -98,11 +61,16 @@ checkMCC(crit_t mcc)
 static exception_t
 checkCrit(crit_t crit)
 {
+    prio_t mcc = ksCurThread->tcbMCC;
+
+    /* system invariant: existing MCCs are bounded */
+    assert(mcc <= seL4_MaxCrit);
+
     /* can't create a thread with crit greater than our own mcc */
-    if (crit > ksCurThread->tcbMCC) {
-        userError("TCB Configure: Requested criticality %lu too high (max %lu).",
-                  (unsigned long) crit, (unsigned long) ksCurThread->tcbMCC);
-        current_syscall_error.type = seL4_IllegalOperation;
+    if (crit > mcc) {
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = seL4_MinCrit;
+        current_syscall_error.rangeErrorMax = mcc;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -865,7 +833,7 @@ decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
                                     w, transferArch, buffer);
 }
 
-/* SetPriority, SetIPCParams and SetSpace are all
+/* SetPriority, SetMCPriority, SetIPCParams and SetSpace are all
  * specialisations of TCBConfigure. */
 
 exception_t
@@ -877,9 +845,10 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     sched_context_t *sched_context;
     deriveCap_ret_t dc_ret;
     word_t cRootData, vRootData, bufferAddr;
-    seL4_Prio_t prio;
-    exception_t status;
     tcb_t *tcb;
+    seL4_PrioProps_t props;
+    prio_t prio, mcp, crit, mcc;
+    exception_t status;
 
     if (length < 4 || rootCaps.excaprefs[0] == NULL
             || rootCaps.excaprefs[1] == NULL
@@ -892,7 +861,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    prio.words[0] = getSyscallArg(0, buffer);
+    props         = prioPropsFromWord(getSyscallArg(0, buffer));
     cRootData     = getSyscallArg(1, buffer);
     vRootData     = getSyscallArg(2, buffer);
     bufferAddr    = getSyscallArg(3, buffer);
@@ -910,13 +879,36 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     bufferSlot = rootCaps.excaprefs[5];
     bufferCap  = rootCaps.excaprefs[5]->cap;
 
-    status = checkPrio(seL4_Prio_get_prio(prio));
+    prio = seL4_PrioProps_get_prio(props);
+    mcp  = seL4_PrioProps_get_mcp(props);
+    crit = seL4_PrioProps_get_crit(props);
+    mcc  = seL4_PrioProps_get_mcc(props);
+
+    status = checkPrio(prio);
     if (status != EXCEPTION_NONE) {
+        userError("TCB Configure: Requested priority %lu too high (max %lu).",
+                  (unsigned long) prio, (unsigned long) ksCurThread->tcbMCP);
         return status;
     }
 
-    status = checkMCP(seL4_Prio_get_mcp(prio));
+    status = checkPrio(mcp);
     if (status != EXCEPTION_NONE) {
+        userError("TCB Configure: Requested maximum controlled priority %lu too high (max %lu),",
+                  (unsigned long) mcp, (unsigned long) ksCurThread->tcbMCP);
+        return status;
+    }
+
+    status = checkCrit(crit);
+    if (status != EXCEPTION_NONE) {
+        userError("TCB Configure: Requested criticality %lu too high (max %lu).",
+                  (unsigned long) crit, (unsigned long) ksCurThread->tcbMCC);
+        return status;
+    }
+
+    status = checkCrit(mcc);
+    if (status != EXCEPTION_NONE) {
+        userError("TCB Configure: Requested maximum controlled criticality %lu too high (max %lu),",
+                  (unsigned long) mcc, (unsigned long) ksCurThread->tcbMCC);
         return status;
     }
 
@@ -1044,7 +1036,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
                tcb, slot,
                fepCap, fepSlot,
                tfepCap, tfepSlot,
-               prio,
+               mcp, prio, mcc, crit,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                bufferAddr, bufferCap,
@@ -1068,6 +1060,8 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
 
     status = checkPrio(newPrio);
     if (status != EXCEPTION_NONE) {
+        userError("TCB SetPriority: Requested priority %lu too high (max %lu).",
+                  (unsigned long) newPrio, (unsigned long) ksCurThread->tcbMCP);
         return status;
     }
 
@@ -1075,7 +1069,7 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
                tcb, NULL, cap_null_cap_new(), 0, cap_null_cap_new(),
-               0, seL4_Prio_new(newPrio, tcb->tcbMCP, tcb->tcbCrit, tcb->tcbMCC),
+               0, newPrio, NULL_PRIO, NULL_PRIO, NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
@@ -1090,15 +1084,17 @@ decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
     tcb_t *tcb;
 
     if (length < 1) {
-        userError("TCB SetPriority: Truncated message.");
+        userError("TCB SetMCPriority: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     newMcp = (prio_t) getSyscallArg(0, buffer);
 
-    status = checkMCP(newMcp);
+    status = checkPrio(newMcp);
     if (status != EXCEPTION_NONE) {
+        userError("TCB SetMCPriority: Requested maximum controlled priority %lu too high (max %lu).",
+                  (unsigned long) newMcp, (unsigned long) ksCurThread->tcbMCP);
         return status;
     }
 
@@ -1107,11 +1103,11 @@ decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
     return invokeTCB_ThreadControl(
                tcb, NULL, cap_null_cap_new(),
                0, cap_null_cap_new(),
-               0, seL4_Prio_new(tcb->tcbPriority, newMcp, tcb->tcbCrit, tcb->tcbMCC),
+               0, NULL_PRIO, newMcp, NULL_PRIO, NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
-               NULL, thread_control_update_priority);
+               NULL, thread_control_update_mcp);
 }
 
 exception_t
@@ -1131,6 +1127,8 @@ decodeSetCriticality(cap_t cap, word_t length, word_t *buffer)
 
     status = checkCrit(criticality);
     if (status != EXCEPTION_NONE) {
+        userError("TCB SetPriority: Requested priority %lu too high (max %lu).",
+                  (unsigned long) criticality, (unsigned long) ksCurThread->tcbMCC);
         return status;
     }
 
@@ -1138,11 +1136,11 @@ decodeSetCriticality(cap_t cap, word_t length, word_t *buffer)
     setThreadState(ksCurThread, ThreadState_Restart);
     return invokeTCB_ThreadControl(
                tcb, NULL, cap_null_cap_new(), 0, cap_null_cap_new(),
-               0, seL4_Prio_new(tcb->tcbPriority, tcb->tcbMCP, criticality, tcb->tcbMCC),
+               0, NULL_PRIO, NULL_PRIO, criticality, NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
-               NULL, thread_control_update_priority);
+               NULL, thread_control_update_criticality);
 }
 
 exception_t
@@ -1160,8 +1158,10 @@ decodeSetMCCriticality(cap_t cap, word_t length, word_t *buffer)
 
     mcc = (prio_t) getSyscallArg(0, buffer);
 
-    status = checkMCC(mcc);
+    status = checkCrit(mcc);
     if (status != EXCEPTION_NONE) {
+        userError("TCB SetMCCriticality: Requested maximum controlled criticality %lu too high (max %lu).",
+                  (unsigned long) mcc, (unsigned long) ksCurThread->tcbMCP);
         return status;
     }
 
@@ -1170,11 +1170,11 @@ decodeSetMCCriticality(cap_t cap, word_t length, word_t *buffer)
     return invokeTCB_ThreadControl(
                tcb, NULL, cap_null_cap_new(),
                0, cap_null_cap_new(),
-               0, seL4_Prio_new(tcb->tcbPriority, tcb->tcbMCP, tcb->tcbCrit, mcc),
+               0, NULL_PRIO, NULL_PRIO, NULL_PRIO, mcc,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
-               NULL, thread_control_update_priority);
+               NULL, thread_control_update_mcc);
 }
 
 exception_t
@@ -1217,7 +1217,7 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                cap_null_cap_new(),
                0, cap_null_cap_new(), 0,
-               NULL_PRIO,
+               NULL_PRIO, NULL_PRIO, NULL_PRIO, NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                cptr_bufferPtr, bufferCap,
@@ -1329,7 +1329,7 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                fepCap, fepSlot,
                tfepCap, tfepSlot,
-               NULL_PRIO,
+               NULL_PRIO, NULL_PRIO, NULL_PRIO, NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                0, cap_null_cap_new(), NULL, NULL, thread_control_update_space);
@@ -1421,7 +1421,7 @@ exception_t
 invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
                         cap_t fepCap, cte_t *fepSlot,
                         cap_t tfepCap, cte_t *tfepSlot,
-                        seL4_Prio_t priority,
+                        prio_t prio, prio_t mcp, prio_t criticality, prio_t mcc,
                         cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
                         cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
                         word_t bufferAddr, cap_t bufferCap,
@@ -1448,8 +1448,20 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
         }
     }
 
+    if (updateFlags & thread_control_update_mcp) {
+        setMCPriority(target, mcp);
+    }
+
     if (updateFlags & thread_control_update_priority) {
-        setPriorityFields(target, priority);
+        setPriority(target, prio);
+    }
+
+    if (updateFlags & thread_control_update_mcc) {
+        setMCCriticality(target, mcc);
+    }
+
+    if (updateFlags & thread_control_update_criticality) {
+        setCriticality(target, criticality);
     }
 
     if (updateFlags & thread_control_update_sc) {

@@ -15,6 +15,7 @@
 #include <machine/io.h>
 #include <arch/api/constants.h>
 #include <arch/machine/hardware.h>
+#include <benchmark_tracepoints_types.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 typedef struct {
@@ -27,18 +28,14 @@ typedef struct {
 #define TRACE_POINT_START(x) trace_point_start(x)
 #define TRACE_POINT_STOP(x)   trace_point_stop(x)
 
-typedef struct ks_log_entry {
-    uint32_t key;
-    uint32_t data;
-} ks_log_entry_t;
-
-#define MAX_LOG_SIZE (seL4_LogBufferSize / sizeof(ks_log_entry_t))
+#define MAX_LOG_SIZE (seL4_LogBufferSize / sizeof(benchmark_tracepoint_log_entry_t))
 
 extern timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
 extern bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
 extern timestamp_t ksExit;
 extern uint32_t ksLogIndex;
 extern uint32_t ksLogIndexFinalized;
+extern paddr_t ksUserLogBuffer;
 
 static inline void
 trace_point_start(word_t id)
@@ -50,23 +47,24 @@ trace_point_start(word_t id)
 static inline void
 trace_point_stop(word_t id)
 {
-    ks_log_entry_t *ksLog = (ks_log_entry_t *) KS_LOG_PPTR;
+    benchmark_tracepoint_log_entry_t *ksLog = (benchmark_tracepoint_log_entry_t *) KS_LOG_PPTR;
     ksExit = timestamp();
 
-    if (likely(ksStarted[id])) {
-        ksStarted[id] = false;
-        if (likely(ksLogIndex < MAX_LOG_SIZE)) {
-            ksLog[ksLogIndex] = (ks_log_entry_t) {
-                id, ksExit - ksEntries[id]
-            };
+    if (likely(ksUserLogBuffer != 0)) {
+        if (likely(ksStarted[id])) {
+            ksStarted[id] = false;
+            if (likely(ksLogIndex < MAX_LOG_SIZE)) {
+                ksLog[ksLogIndex] = (benchmark_tracepoint_log_entry_t) {
+                    id, ksExit - ksEntries[id]
+                };
+            }
+            /* increment the log index even if we have exceeded the log size
+             * this is so we can tell if we need a bigger log */
+            ksLogIndex++;
         }
-        /* increment the log index even if we have exceeded the log size
-         * this is so we can tell if we need a bigger log */
-        ksLogIndex++;
+        /* If this fails integer overflow has occured. */
+        assert(ksLogIndex > 0);
     }
-
-    /* If this fails integer overflow has occured. */
-    assert(ksLogIndex > 0);
 }
 
 #else

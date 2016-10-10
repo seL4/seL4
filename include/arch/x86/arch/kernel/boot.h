@@ -14,11 +14,7 @@
 #include <config.h>
 #include <types.h>
 #include <plat/machine/acpi.h>
-
-typedef struct dev_p_regs {
-    word_t count;
-    p_region_t list[CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS];
-} dev_p_regs_t;
+#include <kernel/boot.h>
 
 typedef struct mem_p_regs {
     word_t count;
@@ -37,7 +33,6 @@ cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t 
 bool_t init_sys_state(
     cpu_id_t      cpu_id,
     mem_p_regs_t  mem_p_regs,
-    dev_p_regs_t* dev_p_regs,
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */
@@ -49,5 +44,8 @@ bool_t init_sys_state(
 bool_t init_cpu(
     bool_t   mask_legacy_irqs
 );
+
+bool_t add_allocated_p_region(p_region_t reg);
+void init_allocated_p_regions(void);
 
 #endif

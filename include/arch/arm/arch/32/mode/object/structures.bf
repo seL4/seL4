@@ -22,15 +22,16 @@ base 32
 -- 4k frame (these have a separate cap type as there is no room to
 -- store their size)
 block small_frame_cap {
-    field capFMappedASIDLow 10
+    field capFMappedASIDLow  10
     field capFVMRights       2
     field_high capFMappedAddress 20
 
+    field capFIsDevice       1
 #ifdef CONFIG_ARM_SMMU
     field capFIsIOSpace      1
-    field capFMappedASIDHigh 7
+    field capFMappedASIDHigh 6
 #else
-    field capFMappedASIDHigh 8
+    field capFMappedASIDHigh 7
 #endif
     field_high capFBasePtr  20
     field capType            4
@@ -39,21 +40,22 @@ block small_frame_cap {
 -- 64k, 1M, 16M frames
 block frame_cap {
     field capFSize           2
-    field capFMappedASIDLow 10
+    field capFMappedASIDLow  10
     field capFVMRights       2
     field_high capFMappedAddress 18
 
     padding                  2
-    field capFMappedASIDHigh 8
+    field capFIsDevice       1
+    field capFMappedASIDHigh 7
     field_high capFBasePtr  18
     field capType            4
 }
 
 -- Second-level page table
 block page_table_cap {
-    padding                   1
+    padding                   2
     field capPTIsMapped       1
-    field capPTMappedASID    18
+    field capPTMappedASID    17
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     field_high capPTMappedAddress 12
 #else
@@ -69,8 +71,8 @@ block page_table_cap {
 -- First-level page table (page directory)
 block page_directory_cap(capPDMappedASID, capPDIsMapped,
                          capPDBasePtr, capType) {
-    padding                 14
-    field capPDMappedASID   18
+    padding                 15
+    field capPDMappedASID   17
 
     field_high capPDBasePtr 18
     padding                  9
@@ -88,8 +90,8 @@ block asid_control_cap {
 
 -- Cap to a pool of 2^10 asids
 block asid_pool_cap {
-    padding                14
-    field capASIDBase      18
+    padding                15
+    field capASIDBase      17
 
     field_high capASIDPool 28
     field capType          4

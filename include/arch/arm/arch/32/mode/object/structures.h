@@ -42,9 +42,9 @@ typedef word_t vm_rights_t;
 #define PGDE_SIZE_BITS 3
 #define PDE_SIZE_BITS  3
 #define PTE_SIZE_BITS  3
-#define PGD_BITS 2
-#define PD_BITS 11
-#define PT_BITS 9
+#define PGD_INDEX_BITS 2
+#define PD_INDEX_BITS 11
+#define PT_INDEX_BITS 9
 #define VCPU_SIZE_BITS 12
 /* Generate a vcpu_t pointer from a vcpu block reference */
 #define VCPU_PTR(r)       ((struct vcpu *)(r))
@@ -53,8 +53,8 @@ typedef word_t vm_rights_t;
 #else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 #define PDE_SIZE_BITS  2
 #define PTE_SIZE_BITS  2
-#define PD_BITS 12
-#define PT_BITS 8
+#define PD_INDEX_BITS 12
+#define PT_INDEX_BITS 8
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 
@@ -63,7 +63,7 @@ typedef word_t vm_rights_t;
 
 #define PDE_PTR_PTR(r) ((pde_t **)r)
 
-compile_assert(pd_size_bits_sane, (PD_BITS + PDE_SIZE_BITS) == seL4_PageDirBits)
+compile_assert(pd_size_bits_sane, (PD_INDEX_BITS + PDE_SIZE_BITS) == seL4_PageDirBits)
 #define PD_PTR(r) ((pde_t *)(r))
 #define PD_REF(p) ((unsigned int)p)
 
@@ -78,13 +78,13 @@ typedef word_t pde_type_t;
 #define PTE_PTR(r) ((pte_t *)r)
 #define PTE_REF(p) ((unsigned int)p)
 
-compile_assert(pt_size_bits_sane, PT_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
+compile_assert(pt_size_bits_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r) ((pte_t *)r)
 #define PT_REF(p) ((unsigned int)p)
 
 
 /* LPAE */
-#define PGD_SIZE_BITS (PGD_BITS+PGDE_SIZE_BITS)
+#define PGD_SIZE_BITS (PGD_INDEX_BITS+PGDE_SIZE_BITS)
 #define LPAE_PGDE_PTR(r) ((lpae_pde_t *)(r))
 #define LPAE_PGDE_REF(p) ((unsigned int)p)
 #define LPAE_PGDE_PTR_PTR(r) ((lpae_pde_t **)r)
@@ -105,11 +105,17 @@ struct user_data {
 
 typedef struct user_data user_data_t;
 
+struct user_data_device {
+    word_t words[BIT(ARMSmallPageBits) / sizeof(word_t)];
+};
+
+typedef struct user_data user_data_device_t;
+
 enum asidSizeConstants {
 #ifdef CONFIG_ARM_SMMU
-    asidHighBits = 7,
+    asidHighBits = 6,
 #else
-    asidHighBits = 8,
+    asidHighBits = 7,
 #endif
     asidLowBits = 10
 };
@@ -125,8 +131,8 @@ typedef struct asid_pool asid_pool_t;
 
 #define HW_ASID_SIZE_BITS 1
 
-#define ASID_POOL_BITS asidLowBits
-compile_assert(asid_pool_size_sane, ASID_POOL_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
+#define ASID_POOL_INDEX_BITS asidLowBits
+compile_assert(asid_pool_size_sane, ASID_POOL_INDEX_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
 #define ASID_BITS (asidHighBits+asidLowBits)
 
 #define nASIDPools BIT(asidHighBits)
@@ -292,6 +298,22 @@ generic_frame_cap_get_capFMappedAddress(cap_t cap)
         return cap_small_frame_cap_get_capFMappedAddress(cap);
     } else {
         return cap_frame_cap_get_capFMappedAddress(cap);
+    }
+}
+
+static inline word_t CONST
+generic_frame_cap_get_capFIsDevice(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+    assert(ctag == cap_small_frame_cap ||
+           ctag == cap_frame_cap);
+
+    if (ctag == cap_small_frame_cap) {
+        return cap_small_frame_cap_get_capFIsDevice(cap);
+    } else {
+        return cap_frame_cap_get_capFIsDevice(cap);
     }
 }
 

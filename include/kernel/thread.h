@@ -16,6 +16,7 @@
 #include <object/structures.h>
 #include <arch/machine.h>
 #include <machine/timer.h>
+#include <mode/machine.h>
 
 static inline CONST word_t
 prio_to_l1index(word_t prio)
@@ -124,8 +125,11 @@ void chooseThread(void);
 void switchToThread(tcb_t *thread) VISIBLE;
 void switchToIdleThread(void);
 void switchSchedContext(void) VISIBLE;
-void setPriorityFields(tcb_t *tptr, seL4_Prio_t prio);
 void setActivePriority(tcb_t *tptr, prio_t prio);
+void setPriority(tcb_t *tptr, prio_t prio);
+void setMCPriority(tcb_t *tptr, prio_t mcp);
+void setCriticality(tcb_t *tptr, prio_t crit);
+void setMCCriticality(tcb_t *tptr, prio_t mcc);
 void scheduleTCB(tcb_t *tptr);
 void attemptSwitchTo(tcb_t *tptr);
 void switchIfRequiredTo(tcb_t *tptr);

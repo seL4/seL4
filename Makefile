@@ -17,8 +17,8 @@
 
 SEL4_ARCH_LIST:=aarch32 ia32
 ARCH_LIST:=arm x86
-CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15 cortex-a57
-PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1 hikey
+CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15 cortex-a53 cortex-a57
+PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1 hikey bcm2837
 ARMV_LIST:=armv6 armv7-a armv8-a
 
 ifndef SOURCE_ROOT
@@ -624,7 +624,7 @@ PRUNES = $(foreach file,${STATICSOURCES} ${STATICHEADERS}, \
            --prune ${file} )
 
 TOPLEVELTYPES=cte_C tcb_C endpoint_C notification_C asid_pool_C pte_C \
-              pde_C user_data_C
+              pde_C user_data_C user_data_device_C
 TOPTYPES = $(foreach tp,${TOPLEVELTYPES}, \
            --toplevel ${tp} )
 

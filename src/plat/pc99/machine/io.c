@@ -37,7 +37,7 @@ serial_init(uint16_t port)
 void
 putConsoleChar(unsigned char a)
 {
-    while (x86KSconsolePort && !(in8(x86KSconsolePort + 5) & 0x60));
+    while (x86KSconsolePort && !(in8(x86KSconsolePort + 5) & 0x20));
     out8(x86KSconsolePort, a);
 }
 #endif /* CONFIG_PRINTING */

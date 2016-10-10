@@ -80,6 +80,10 @@ menu "seL4 System"
         bool
         default n
 
+    config ARM_CORTEX_A53
+        bool
+        default n
+
     config ARM_CORTEX_A57
         bool
         default n
@@ -239,6 +243,14 @@ menu "seL4 System"
             help
                 Support for HiKey platform.
 
+        config PLAT_BCM2837
+            bool "Raspberry Pi 3 (BCM2837, ARMv7a, Cortex A53)"
+            depends on ARCH_ARM
+            select ARM_CORTEX_A53
+            select ARCH_ARM_V7A
+            help
+                Support for Raspberry PI 3 platform.
+
     endchoice
 
     config ARM_HYPERVISOR_SUPPORT
@@ -282,7 +294,7 @@ menu "seL4 System Parameters"
             The acceptable range is 4-27, based on the kernel-supplied caps.
             The root CNode needs at least enough space to contain up to
             BI_CAP_DYN_START. Note that in practice your root CNode will need
-            to be several bits larger than 4 to fit device frame caps and
+            to be several bits larger than 4 to fit untyped caps and
             cannot be 27 bits as it won't fit in memory.
 
     config BOOT_THREAD_TIME_SLICE
@@ -305,10 +317,6 @@ menu "seL4 System Parameters"
             Maximum number of work units (delete/revoke iterations) until
             the kernel checks for pending interrupts (and preempts the
             currently running syscall if interrupts are pending).
-
-    config MAX_NUM_BOOTINFO_DEVICE_REGIONS
-        int "Max number of bootinfo device regions"
-        default 199
 
     config MAX_NUM_BOOTINFO_UNTYPED_CAPS
         int "Max number of bootinfo untyped caps"
@@ -342,6 +350,18 @@ menu "seL4 System Parameters"
         help
             The number of criticality levels
 
+    config MAX_NUM_NODES
+        int "Max number of CPU nodes"
+        range 1 256
+        default 1
+        help
+            The number of CPU cores to boot
+
+    config CACHE_LN_SZ
+        int "Cache line size"
+        default 64
+        help
+            Define cache line size for the current architecture
 endmenu
 
 menu "Build Options"
@@ -518,6 +538,12 @@ menu "Build Options"
 
         config NO_BENCHMARKS
              bool "No benchmarking features enabled"
+
+        config BENCHMARK_GENERIC
+            bool "Enable generic benchmarks"
+            select ENABLE_BENCHMARKS
+            help
+                Enable global benchmarks config variable with no specific features
 
         config BENCHMARK_TRACK_KERNEL_ENTRIES
             bool "Keep track of kernel entries"

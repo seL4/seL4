@@ -15,11 +15,19 @@
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <arch/model/statedata.h>
+
+NODE_STATE_BEGIN(nodeState)
+NODE_STATE_TYPE_DECLARE(archNodeState, arch);
+NODE_STATE_END(nodeState);
+
 #include <arch/machine.h>
+#include <arch/model/smp.h>
+#include <mode/api/constants.h>
 
 #define NUM_READY_QUEUES (CONFIG_NUM_PRIORITIES*CONFIG_NUM_CRITICALITIES)
-#define L2_BITMAP_SIZE ((NUM_READY_QUEUES / wordBits) + 1)
+#define L2_BITMAP_SIZE ((NUM_READY_QUEUES / seL4_WordBits) + 1)
 
+extern word_t ksNumCPUs VISIBLE;
 extern tcb_queue_t ksReadyQueues[] VISIBLE;
 extern word_t ksReadyQueuesL1Bitmap VISIBLE;
 extern word_t ksReadyQueuesL2Bitmap[L2_BITMAP_SIZE] VISIBLE;

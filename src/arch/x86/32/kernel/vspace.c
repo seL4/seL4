@@ -58,7 +58,7 @@ init_tss(tss_t* tss)
         0,              /* esp0         */
         0               /* prev_task    */
     );
-    memset(&x86KStss.io_map[0], 0xff, sizeof(x86KStss.io_map));
+    memset(&ARCH_NODE_STATE(x86KStss).io_map[0], 0xff, sizeof(ARCH_NODE_STATE(x86KStss).io_map));
 }
 /* initialise Global Descriptor Table (GDT) */
 
@@ -219,9 +219,9 @@ map_kernel_window(
     unsigned int UNUSED i;
 
     if (config_set(CONFIG_PAE_PAGING)) {
-        for (idx = 0; idx < BIT(PDPT_BITS); idx++) {
+        for (idx = 0; idx < BIT(PDPT_INDEX_BITS); idx++) {
             pdpte_ptr_new(&ia32KSGlobalPDPT[idx],
-                          pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_BITS)]),
+                          pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_INDEX_BITS)]),
                           0, /* avl*/
                           0, /* cache_disabled */
                           0, /* write_through */
@@ -387,12 +387,12 @@ init_dtrs(void)
 {
     /* setup the GDT pointer and limit and load into GDTR */
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
-    gdt_idt_ptr.base = (uint32_t)x86KSgdt;
+    gdt_idt_ptr.base = (uint32_t)ARCH_NODE_STATE(x86KSgdt);
     ia32_install_gdt(&gdt_idt_ptr);
 
     /* setup the IDT pointer and limit and load into IDTR */
     gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1)) - 1;
-    gdt_idt_ptr.base = (uint32_t)x86KSidt;
+    gdt_idt_ptr.base = (uint32_t)ARCH_NODE_STATE(x86KSidt);
     ia32_install_idt(&gdt_idt_ptr);
 
     /* load NULL LDT selector into LDTR */
@@ -451,7 +451,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     seL4_SlotPos slot_pos_after;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
-    if (PDPT_BITS == 0) {
+    if (PDPT_INDEX_BITS == 0) {
         cap_t pd_cap;
         pptr_t pd_pptr;
         /* just create single PD obj and cap */
@@ -484,16 +484,16 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
                    );
         /* create all PD objs and caps necessary to cover userland image. For simplicity
          * to ensure we also cover the kernel window we create all PDs */
-        for (i = 0; i < BIT(PDPT_BITS); i++) {
+        for (i = 0; i < BIT(PDPT_INDEX_BITS); i++) {
             /* The compiler is under the mistaken belief here that this shift could be
              * undefined. However, in the case that it would be undefined this code path
-             * is not reachable because PDPT_BITS == 0 (see if statement at the top of
+             * is not reachable because PDPT_INDEX_BITS == 0 (see if statement at the top of
              * this function), so to work around it we must both put in a redundant
              * if statement AND place the shift in a variable. While the variable
              * will get compiled away it prevents the compiler from evaluating
              * the 1 << 32 as a constant when it shouldn't
              * tl;dr gcc evaluates constants even if code is unreachable */
-            int shift = (PD_BITS + PT_BITS + PAGE_BITS);
+            int shift = (PD_INDEX_BITS + PT_INDEX_BITS + PAGE_BITS);
             if (shift != 32) {
                 vptr = i << shift;
             } else {
@@ -519,9 +519,9 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 
     /* create all PT objs and caps necessary to cover userland image */
 
-    for (vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
+    for (vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
             vptr < it_v_reg.end;
-            vptr += BIT(PT_BITS + PAGE_BITS)) {
+            vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
         pptr = alloc_region(seL4_PageTableBits);
         if (!pptr) {
             return cap_null_cap_new();
@@ -543,7 +543,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 }
 
 static BOOT_CODE cap_t
-create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
+create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, vm_page_map_type_t map_type)
 {
     vm_page_size_t frame_size;
 
@@ -556,9 +556,10 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
     return
         cap_frame_cap_new(
             frame_size,                    /* capFSize           */
-            0,                             /* capFIsIOSpace      */
             ASID_LOW(asid),                /* capFMappedASIDLow  */
             vptr,                          /* capFMappedAddress  */
+            map_type,                      /* capFMapType        */
+            false,                         /* capFIsDevice       */
             ASID_HIGH(asid),               /* capFMappedASIDHigh */
             wordFromVMRights(VMReadWrite), /* capFVMRights       */
             pptr                           /* capFBasePtr        */
@@ -568,13 +569,13 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
 BOOT_CODE cap_t
 create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 {
-    return create_it_frame_cap(pptr, 0, asidInvalid, use_large);
+    return create_it_frame_cap(pptr, 0, asidInvalid, use_large, X86_MappingNone);
 }
 
 BOOT_CODE cap_t
 create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
 {
-    cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large);
+    cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large, X86_MappingVSpace);
     map_it_frame_cap(vspace_cap, cap);
     return cap;
 }
@@ -676,11 +677,6 @@ pte_t CONST makeUserPTEInvalid(void)
                0,                   /* read_write           */
                0                    /* present              */
            );
-}
-
-bool_t CONST isIOSpaceFrameCap(cap_t cap)
-{
-    return cap_frame_cap_get_capFIsIOSpace(cap);
 }
 
 void setVMRoot(tcb_t* tcb)
@@ -799,7 +795,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
     ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
 
     /* fill global log page table with mappings */
-    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+    for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
         paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
 
         pte_t pte = pte_new(
@@ -817,7 +813,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                     );
 
         ia32KSGlobalLogPT[idx] = pte;
-        invalidateTLBentry(KS_LOG_PPTR + (idx << seL4_PageBits));
+        invalidateTLBEntry(KS_LOG_PPTR + (idx << seL4_PageBits));
     }
 
     return EXCEPTION_NONE;

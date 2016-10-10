@@ -23,14 +23,14 @@
 #ifndef GIC_PL390_DISTRIBUTOR_PPTR
 #error GIC_PL390_DISTRIBUTOR_PPTR must be defined for virtual memory access to the gic distributer
 #else  /* GIC_DISTRIBUTOR_PPTR */
-volatile struct gic_dist_map *gic_dist =
+volatile struct gic_dist_map * const gic_dist =
     (volatile struct gic_dist_map*)(GIC_PL390_DISTRIBUTOR_PPTR);
 #endif /* GIC_DISTRIBUTOR_PPTR */
 
 #ifndef GIC_PL390_CONTROLLER_PPTR
 #error GIC_PL390_CONTROLLER_PPTR must be defined for virtual memory access to the gic cpu interface
 #else  /* GIC_CONTROLLER_PPTR */
-volatile struct gic_cpu_iface_map *gic_cpuiface =
+volatile struct gic_cpu_iface_map * const gic_cpuiface =
     (volatile struct gic_cpu_iface_map*)(GIC_PL390_CONTROLLER_PPTR);
 #endif /* GIC_CONTROLLER_PPTR */
 

@@ -28,7 +28,7 @@
 
 /* The boot pd is referenced by code that runs before paging, so
  * place it in PHYS_DATA */
-pde_t _boot_pd[BIT(PD_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
+pde_t _boot_pd[BIT(PD_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
 
 BOOT_CODE
 pde_t *get_boot_pd()
@@ -171,7 +171,7 @@ lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *vspace, vptr_t vptr)
     pde_t *pd = PDE_PTR(vspace);
     unsigned int pdIndex;
 
-    pdIndex = vptr >> (PAGE_BITS + PT_BITS);
+    pdIndex = vptr >> (PAGE_BITS + PT_INDEX_BITS);
     pdSlot.status = EXCEPTION_NONE;
     pdSlot.pdSlot = pd + pdIndex;
     return pdSlot;
@@ -201,7 +201,7 @@ void copyGlobalMappings(vspace_root_t* new_vspace)
     word_t i;
     pde_t *newPD = (pde_t*)new_vspace;
 
-    for (i = PPTR_BASE >> seL4_LargePageBits; i < BIT(PD_BITS); i++) {
+    for (i = PPTR_BASE >> seL4_LargePageBits; i < BIT(PD_INDEX_BITS); i++) {
         newPD[i] = ia32KSGlobalPD[i];
     }
 }

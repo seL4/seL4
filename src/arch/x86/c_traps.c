@@ -45,7 +45,7 @@ c_handle_interrupt(int irq, int syscall)
 #endif
         handleUserLevelFault(irq, ksCurThread->tcbArch.tcbContext.registers[Error]);
     } else if (likely(irq < int_trap_min)) {
-        x86KScurInterrupt = irq;
+        ARCH_NODE_STATE(x86KScurInterrupt) = irq;
 #ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_Interrupt;
         ksKernelEntry.word = irq;
@@ -81,12 +81,18 @@ slowpath_irq(irq_t irq)
 void NORETURN
 slowpath(syscall_t syscall)
 {
-    x86KScurInterrupt = -1;
+    ARCH_NODE_STATE(x86KScurInterrupt) = -1;
+    if (config_set(CONFIG_SYSENTER)) {
+        /* increment NextIP to skip sysenter */
+        ksCurThread->tcbArch.tcbContext.registers[FaultIP] = ksCurThread->tcbArch.tcbContext.registers[NextIP];
+        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
+    } else {
+        /* set FaultIP */
+        setRegister(ksCurThread, FaultIP, getRegister(ksCurThread, NextIP) - 2);
+    }
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
-        ksCurThread->tcbArch.tcbContext.registers[FaultIP] = ksCurThread->tcbArch.tcbContext.registers[NextIP];
         /* increment NextIP to skip sysenter */
-        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
 #ifdef TRACK_KERNEL_ENTIRES
         ksKernelEntry.path = Entry_UnknownSyscall;
         /* ksKernelEntry.word word is already set to syscall */
@@ -97,7 +103,6 @@ slowpath(syscall_t syscall)
         ksEntry.is_fastpath = 0;
 #endif /* TRACK KERNEL ENTRIES */
         /* increment NextIP to skip sysenter */
-        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
         handleSyscall(syscall);
     }
 
@@ -124,8 +129,8 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
         fastpath_reply_recv(cptr, msgInfo);
         UNREACHABLE();
     } else if (syscall == SysSend) {
-        fastpath_signal(cptr);
-        UNREACHABLE();
+       fastpath_signal(cptr);
+       UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */
 

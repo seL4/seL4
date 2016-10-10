@@ -20,6 +20,23 @@
 #include <arch/object/vcpu.h>
 #endif
 
+bool_t
+Arch_isFrameType(word_t type)
+{
+    switch (type) {
+    case seL4_ARM_SmallPageObject:
+        return true;
+    case seL4_ARM_LargePageObject:
+        return true;
+    case seL4_ARM_SectionObject:
+        return true;
+    case seL4_ARM_SuperSectionObject:
+        return true;
+    default:
+        return false;
+    }
+}
+
 deriveCap_ret_t
 Arch_deriveCap(cte_t *slot, cap_t cap)
 {
@@ -190,7 +207,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                                         (pptr_t) &armKSGlobalLogPT[0] + BIT(seL4_PageTableBits),
                                         addrFromPPtr((void *)&armKSGlobalLogPT[0]));
 
-                    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+                    for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
                         invalidateTLB_VAASID(KS_LOG_PPTR + (idx << seL4_PageBits));
                     }
 
@@ -271,7 +288,9 @@ Arch_recycleCap(bool_t is_final, cap_t cap)
             \<or> 2 ^ unat \<acute>sz___int <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
             \<and> \<acute>sz___int < 32, id)" */
 
-        clearMemory((void *)cap_get_capPtr(cap), sz);
+        if (!generic_frame_cap_get_capFIsDevice(cap)) {
+            clearMemory((void *)cap_get_capPtr(cap), sz);
+        }
         Arch_finaliseCap(cap, is_final);
         return resetMemMapping(cap);
 
@@ -446,14 +465,15 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
     return false;
 }
 
-
 bool_t CONST
 Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
     if (cap_get_capType(cap_a) == cap_small_frame_cap) {
         if (cap_get_capType(cap_b) == cap_small_frame_cap) {
-            return (cap_small_frame_cap_get_capFBasePtr(cap_a) ==
-                    cap_small_frame_cap_get_capFBasePtr(cap_b));
+            return ((cap_small_frame_cap_get_capFBasePtr(cap_a) ==
+                     cap_small_frame_cap_get_capFBasePtr(cap_b)) &&
+                    ((cap_small_frame_cap_get_capFIsDevice(cap_a) == 0) ==
+                     (cap_small_frame_cap_get_capFIsDevice(cap_b) == 0)));
         } else if (cap_get_capType(cap_b) == cap_frame_cap) {
             return false;
         }
@@ -463,7 +483,9 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
             return ((cap_frame_cap_get_capFBasePtr(cap_a) ==
                      cap_frame_cap_get_capFBasePtr(cap_b)) &&
                     (cap_frame_cap_get_capFSize(cap_a) ==
-                     cap_frame_cap_get_capFSize(cap_b)));
+                     cap_frame_cap_get_capFSize(cap_b)) &&
+                    ((cap_frame_cap_get_capFIsDevice(cap_a) == 0) ==
+                     (cap_frame_cap_get_capFIsDevice(cap_b) == 0)));
         } else if (cap_get_capType(cap_b) == cap_small_frame_cap) {
             return false;
         }
@@ -484,9 +506,9 @@ Arch_getObjectSize(word_t t)
     case seL4_ARM_SuperSectionObject:
         return ARMSuperSectionBits;
     case seL4_ARM_PageTableObject:
-        return PTE_SIZE_BITS + PT_BITS;
+        return PTE_SIZE_BITS + PT_INDEX_BITS;
     case seL4_ARM_PageDirectoryObject:
-        return PDE_SIZE_BITS + PD_BITS;
+        return PDE_SIZE_BITS + PD_INDEX_BITS;
 #ifdef CONFIG_ARM_SMMU
     case seL4_ARM_IOPageTableObject:
         return seL4_IOPageTableBits;
@@ -502,23 +524,30 @@ Arch_getObjectSize(word_t t)
 }
 
 cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize)
+Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
-        memzero(regionBase, 1 << ARMSmallPageBits);
-        /** AUXUPD: "(True, ptr_retyps 1
-                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-        /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
-                                            (ptr_val \<acute>regionBase)
-                                            (unat ARMSmallPageBits))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << ARMSmallPageBits) - 1,
-                            addrFromPPtr(regionBase));
-
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+        } else {
+            memzero(regionBase, 1 << ARMSmallPageBits);
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMSmallPageBits))" */
+            cleanCacheRange_PoU((word_t)regionBase,
+                                (word_t)regionBase + (1 << ARMSmallPageBits) - 1,
+                                addrFromPPtr(regionBase));
+        }
         return cap_small_frame_cap_new(
                    ASID_LOW(asidInvalid), VMReadWrite,
-                   0,
+                   0, !!deviceMemory,
 #ifdef CONFIG_ARM_SMMU
                    0,
 #endif
@@ -526,71 +555,92 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize)
                    (word_t)regionBase);
 
     case seL4_ARM_LargePageObject:
-        memzero(regionBase, 1 << ARMLargePageBits);
-        /** AUXUPD: "(True, ptr_retyps 16
-                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-        /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
-                                            (ptr_val \<acute>regionBase)
-                                            (unat ARMLargePageBits))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << ARMLargePageBits) - 1,
-                            addrFromPPtr(regionBase));
-
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 16
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+        } else {
+            memzero(regionBase, 1 << ARMLargePageBits);
+            /** AUXUPD: "(True, ptr_retyps 16
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMLargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat ARMLargePageBits))" */
+            cleanCacheRange_PoU((word_t)regionBase,
+                                (word_t)regionBase + (1 << ARMLargePageBits) - 1,
+                                addrFromPPtr(regionBase));
+        }
         return cap_frame_cap_new(
                    ARMLargePage, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, ASID_HIGH(asidInvalid),
+                   0, !!deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_SectionObject:
-        memzero(regionBase, 1 << ARMSectionBits);
-        /** AUXUPD: "(True, ptr_retyps 256
-                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-        /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 256
+                 (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
                                             (ptr_val \<acute>regionBase)
                                             (unat ARMSectionBits))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << ARMSectionBits) - 1,
-                            addrFromPPtr(regionBase));
-
+        } else {
+            memzero(regionBase, 1 << ARMSectionBits);
+            /** AUXUPD: "(True, ptr_retyps 256
+                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
+                                            (ptr_val \<acute>regionBase)
+                                            (unat ARMSectionBits))" */
+            cleanCacheRange_PoU((word_t)regionBase,
+                                (word_t)regionBase + (1 << ARMSectionBits) - 1,
+                                addrFromPPtr(regionBase));
+        }
         return cap_frame_cap_new(
                    ARMSection, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, ASID_HIGH(asidInvalid),
+                   0, !!deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_SuperSectionObject:
-        memzero(regionBase, 1 << ARMSuperSectionBits);
-        /** AUXUPD: "(True, ptr_retyps 4096
-                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
-        /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
-                                            (ptr_val \<acute>regionBase)
-                                            (unat ARMSuperSectionBits))" */
-        cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << ARMSuperSectionBits) - 1,
-                            addrFromPPtr(regionBase));
-
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 4096
+                    (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
+                                                (ptr_val \<acute>regionBase)
+                                                (unat ARMSuperSectionBits))" */
+        } else {
+            memzero(regionBase, 1 << ARMSuperSectionBits);
+            /** AUXUPD: "(True, ptr_retyps 4096
+                    (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
+                                                (ptr_val \<acute>regionBase)
+                                                (unat ARMSuperSectionBits))" */
+            cleanCacheRange_PoU((word_t)regionBase,
+                                (word_t)regionBase + (1 << ARMSuperSectionBits) - 1,
+                                addrFromPPtr(regionBase));
+        }
         return cap_frame_cap_new(
                    ARMSuperSection, ASID_LOW(asidInvalid), VMReadWrite,
-                   0, ASID_HIGH(asidInvalid),
+                   0, !!deviceMemory, ASID_HIGH(asidInvalid),
                    (word_t)regionBase);
 
     case seL4_ARM_PageTableObject:
-        memzero(regionBase, 1 << (PTE_SIZE_BITS + PT_BITS));
+        memzero(regionBase, 1 << (PTE_SIZE_BITS + PT_INDEX_BITS));
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[256]) ptr))" */
         cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << (PT_BITS + PTE_SIZE_BITS)) - 1,
+                            (word_t)regionBase + (1 << (PT_INDEX_BITS + PTE_SIZE_BITS)) - 1,
                             addrFromPPtr(regionBase));
 
         return cap_page_table_cap_new(false, asidInvalid, 0,
                                       (word_t)regionBase);
 
     case seL4_ARM_PageDirectoryObject:
-        memzero(regionBase, 1 << (PDE_SIZE_BITS + PD_BITS));
+        memzero(regionBase, 1 << (PDE_SIZE_BITS + PD_INDEX_BITS));
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pde_C[4096]) ptr))" */
         copyGlobalMappings((pde_t *)regionBase);
         cleanCacheRange_PoU((word_t)regionBase,
-                            (word_t)regionBase + (1 << (PD_BITS + PDE_SIZE_BITS)) - 1,
+                            (word_t)regionBase + (1 << (PD_INDEX_BITS + PDE_SIZE_BITS)) - 1,
                             addrFromPPtr(regionBase));
 
         return cap_page_directory_cap_new(false, asidInvalid,

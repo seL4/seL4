@@ -225,7 +225,8 @@ struct l2cc_map {
 #ifndef L2CC_L2C310_PPTR
 #error L2CC_L2C310_PPTR must be defined for virtual memory access to the L2 cache controller
 #else  /* L2CC_PPTR */
-volatile struct l2cc_map *l2cc = (volatile struct l2cc_map*)L2CC_L2C310_PPTR;
+volatile struct l2cc_map * const l2cc
+    = (volatile struct l2cc_map*)L2CC_L2C310_PPTR;
 #endif /* !L2CC_PPTR */
 
 
@@ -343,6 +344,12 @@ initL2Cache(void)
     /* Direct register access */
     l2cc->control.control |= CTRL_CTRL_EN;
 #endif /* TI_MSHIELD */
+
+#if defined(CONFIG_ARM_CORTEX_A9) && defined(CONFIG_ENABLE_A9_PREFETCHER)
+    /* Set bit 1 in the ACTLR, which on the cortex-a9 is the l2 prefetch enable
+     * bit. See section 4.3.10 of the Cortex-A9 Technical Reference Manual */
+    setACTLR(getACTLR() | BIT(1));
+#endif
 
 #endif /* !CONFIG_DEBUG_DISABLE_L2_CACHE */
 }

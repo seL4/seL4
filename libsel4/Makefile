@@ -10,7 +10,7 @@
 
 # Tools
 BF_GEN_PATH := ${SOURCE_DIR}/tools/bitfield_gen.py
-SYCALL_ID_GEN_PATH := ${SOURCE_DIR}/tools/syscall_header_gen.py
+SYSCALL_ID_GEN_PATH := ${SOURCE_DIR}/tools/syscall_header_gen.py
 INVOCATION_ID_GEN_PATH := ${SOURCE_DIR}/tools/invocation_header_gen.py
 XMLLINT_PATH := ${SOURCE_DIR}/tools/xmllint.sh
 CHANGED_PATH := ${SOURCE_DIR}/tools/changed.sh
@@ -86,7 +86,7 @@ include/sel4/syscall.h: ${SOURCE_DIR}/include/api/syscall.xsd \
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
 	@${XMLLINT_PATH} --noout --schema $^
-	@${CHANGED_PATH} $@ ${PYTHON} ${SYCALL_ID_GEN_PATH} \
+	@${CHANGED_PATH} $@ ${PYTHON} ${SYSCALL_ID_GEN_PATH} \
 	--xml ${SOURCE_DIR}/include/api/syscall.xml \
 	--libsel4_header $@
 

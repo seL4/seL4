@@ -244,6 +244,8 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #elif defined(CONFIG_PLAT_TK1)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
+#elif defined(ARM_CORTEX_A53)
+    asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #else
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
 #endif
@@ -337,6 +339,22 @@ static inline word_t PURE getFAR(void)
     word_t FAR;
     asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r"(FAR));
     return FAR;
+}
+
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline word_t getACTLR(void)
+{
+    word_t ACTLR;
+    asm volatile ("mrc p15, 0, %0, c1, c0, 1" : "=r"(ACTLR));
+    return ACTLR;
+}
+
+/** MODIFIES: [*] */
+/** DONT_TRANSLATE */
+static inline void setACTLR(word_t actlr)
+{
+    asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
 }
 
 #endif /* __ASSEMBLER__ */

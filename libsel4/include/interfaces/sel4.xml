@@ -8,7 +8,7 @@
 
      @TAG(NICTA_BSD)
   -->
-<api>	
+<api>
     <interface name="seL4_Untyped">
        	<method id="UntypedRetype" name="Retype">
             <param dir="in" name="type" type="seL4_Word"/>
@@ -44,7 +44,7 @@
 		<method id="TCBConfigure" name="Configure">
 			<param dir="in" name="fault_ep" type="seL4_CPtr"/>
 			<param dir="in" name="timeout_fault_ep" type="seL4_CPtr"/>
-            <param dir="in" name="priority" type="seL4_Prio_t"/>
+			<param dir="in" name="priority" type="seL4_PrioProps_t"/>
             <param dir="in" name="sched_context" type="seL4_CPtr"/>
 			<param dir="in" name="cspace_root" type="seL4_CNode"/>
 			<param dir="in" name="cspace_root_data" type="seL4_CapData_t"/>
@@ -56,16 +56,15 @@
 		<method id="TCBSetPriority" name="SetPriority">
 			<param dir="in" name="priority" type="seL4_Uint8"/>
         </method>
-        <method id="TCBSetMCPriority" name="SetMCPriority">
-            <param dir="in" name="max_priority" type="seL4_Uint8"/>
-        </method>
+		<method id="TCBSetMCPriority" name="SetMCPriority">
+			<param dir="in" name="mcc" type="seL4_Uint8"/>
+		</method>
         <method id="TCBSetCriticality" name="SetCriticality">
 			<param dir="in" name="criticality" type="seL4_Uint8"/>
         </method>
         <method id="TCBSetMCCriticality" name="SetMCCriticality">
             <param dir="in" name="mcc" type="seL4_Uint8"/>
         </method>
-
         <method id="TCBSetIPCBuffer" name="SetIPCBuffer">
 			<param dir="in" name="buffer" type="seL4_Word"/>
 			<param dir="in" name="bufferFrame" type="seL4_CPtr"/>

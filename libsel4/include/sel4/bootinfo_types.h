@@ -43,10 +43,12 @@ typedef struct {
 } seL4_SlotRegion;
 
 typedef struct {
-    seL4_Word       basePaddr;     /* base physical address of device region */
-    seL4_Word       frameSizeBits; /* size (2^n bytes) of a device-region frame */
-    seL4_SlotRegion frames;        /* device-region frame caps */
-} seL4_DeviceRegion;
+    seL4_Word  paddr;   /* physical address of untyped cap  */
+    seL4_Uint8 padding1;
+    seL4_Uint8 padding2;
+    seL4_Uint8 sizeBits;/* size (2^n) bytes of each untyped */
+    seL4_Uint8 isDevice;/* whether the untyped is a device  */
+} seL4_UntypedDesc;
 
 typedef struct {
     seL4_NodeId       nodeID;          /* ID [0..numNodes-1] of the seL4 node (0 if uniprocessor) */
@@ -58,12 +60,9 @@ typedef struct {
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */
     seL4_SlotRegion   userImagePaging; /* userland-image paging structure caps */
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
+    seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
     seL4_SlotRegion   ioSpaceCaps;     /* IOSpace caps for ARM SMMU */
-    seL4_PAddr        untypedPaddrList   [CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* physical address of each untyped cap */
-    seL4_Uint8        untypedSizeBitsList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* size (2^n) bytes of each untyped cap */
     seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
-    seL4_Word         numDeviceRegions;        /* number of device regions */
-    seL4_DeviceRegion deviceRegions[CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS]; /* device regions */
     seL4_Word         archInfo; /* tsc freq on x86, unused on arm */
 } seL4_BootInfo;
 

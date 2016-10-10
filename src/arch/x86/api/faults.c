@@ -58,8 +58,6 @@ void handleKernelException(
     word_t cr4
 );
 
-extern char kernel_stack_alloc[];
-
 VISIBLE
 void handleKernelException(
     word_t vector,

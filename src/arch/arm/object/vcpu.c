@@ -241,9 +241,9 @@ readVCPUReg(vcpu_t *vcpu, uint32_t field)
     switch (field) {
     case 0:
         return vcpu->cpx.sctlr;
+    default:
+        fail("Unknown VCPU field");
     }
-    /* Keep the compiler happy */
-    return 0;
 }
 
 static void
@@ -252,6 +252,9 @@ writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
     switch (field) {
     case 0:
         vcpu->cpx.sctlr = value;
+        break;
+    default:
+        fail("Unknown VCPU field");
     }
 }
 

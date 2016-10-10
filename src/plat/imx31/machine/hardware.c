@@ -51,6 +51,8 @@ enum IPGConstants {
 #error TIMER_RELOAD_VAL out of range
 #endif
 
+interrupt_t active_irq = irqInvalid;
+
 /**
    DONT_TRANSLATE
  */

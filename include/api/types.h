@@ -96,6 +96,15 @@ wordFromMessageInfo(seL4_MessageInfo_t mi)
     return mi.words[0];
 }
 
+static inline seL4_PrioProps_t CONST
+prioPropsFromWord(word_t w)
+{
+    seL4_PrioProps_t pp;
+    pp.words[0] = w;
+
+    return pp;
+}
+
 #ifdef CONFIG_PRINTING
 #ifdef CONFIG_COLOUR_PRINTING
 #define ANSI_RESET "\033[0m"

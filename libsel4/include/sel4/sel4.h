@@ -14,6 +14,7 @@
 #include <sel4/types.h>
 #include <sel4/macros.h>
 
+#include <sel4/syscalls.h>
 #include <sel4/arch/syscalls.h>
 #include <sel4/sel4_arch/syscalls.h>
 

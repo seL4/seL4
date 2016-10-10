@@ -31,7 +31,7 @@ void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap);
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
 /* PD slot reserved for storing the PD's allocated hardware ASID */
-#define PD_ASID_SLOT (0xff000000 >> (PT_BITS + PAGE_BITS))
+#define PD_ASID_SLOT (0xff000000 >> (PT_INDEX_BITS + PAGE_BITS))
 
 void idle_thread(void);
 #define idleThreadStart (&idle_thread)

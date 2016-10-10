@@ -128,6 +128,11 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     if (!phys) {
         return false;
     }
+    if (!add_allocated_p_region((p_region_t) {
+    phys, phys + 0x1000
+})) {
+        return false;
+    }
     pte = x86_make_device_pte(phys);
 
     assert(idx == (PPTR_APIC & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
@@ -135,11 +140,16 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     idx++;
     for (i = 0; i < num_ioapic; i++) {
         phys = ioapic_paddrs[i];
+        if (!add_allocated_p_region((p_region_t) {
+        phys, phys + 0x1000
+    })) {
+            return false;
+        }
         pte = x86_make_device_pte(phys);
         assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
         pt[idx] = pte;
         idx++;
-        if (idx == BIT(PT_BITS)) {
+        if (idx == BIT(PT_INDEX_BITS)) {
             return false;
         }
     }
@@ -154,25 +164,30 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     /* map kernel devices: IOMMUs */
     for (i = 0; i < num_drhu; i++) {
         phys = (paddr_t)drhu_list[i];
+        if (!add_allocated_p_region((p_region_t) {
+        phys, phys + 0x1000
+    })) {
+            return false;
+        }
         pte = x86_make_device_pte(phys);
 
         assert(idx == ((PPTR_DRHU_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
         pt[idx] = pte;
         idx++;
-        if (idx == BIT(PT_BITS)) {
+        if (idx == BIT(PT_INDEX_BITS)) {
             return false;
         }
     }
 
     /* mark unused kernel-device pages as 'not present' */
-    while (idx < BIT(PT_BITS)) {
+    while (idx < BIT(PT_INDEX_BITS)) {
         pte = x86_make_empty_pte();
         pt[idx] = pte;
         idx++;
     }
 
     /* Check we haven't added too many kernel-device mappings.*/
-    assert(idx == BIT(PT_BITS));
+    assert(idx == BIT(PT_INDEX_BITS));
     return true;
 }
 
@@ -455,13 +470,22 @@ init_idt(idt_entry_t* idt)
 BOOT_CODE bool_t
 init_vm_state(void)
 {
+    word_t cacheLineSize;
     x86KScacheLineSizeBits = getCacheLineSizeBits();
     if (!x86KScacheLineSizeBits) {
         return false;
     }
-    init_tss(&x86KStss.tss);
-    init_gdt(x86KSgdt, &x86KStss.tss);
-    init_idt(x86KSidt);
+
+    cacheLineSize = BIT(x86KScacheLineSizeBits);
+    if (cacheLineSize != CONFIG_CACHE_LN_SZ) {
+        printf("Configured cache line size is %d but detected size is %lu\n",
+               CONFIG_CACHE_LN_SZ, cacheLineSize);
+        SMP_COND_STATEMENT(return false);
+    }
+
+    init_tss(&ARCH_NODE_STATE(x86KStss).tss);
+    init_gdt(ARCH_NODE_STATE(x86KSgdt), &ARCH_NODE_STATE(x86KStss).tss);
+    init_idt(ARCH_NODE_STATE(x86KSidt));
     return true;
 }
 
@@ -591,7 +615,7 @@ lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
     }
     if ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_small) ||
             !pde_pde_small_ptr_get_present(pdSlot.pdSlot)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_BITS);
+        current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_INDEX_BITS);
         ret.ptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
@@ -601,7 +625,7 @@ lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
         word_t ptIndex;
 
         pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot.pdSlot));
-        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
+        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS);
         ptSlot = pt + ptIndex;
 
         ret.ptSlot = ptSlot;
@@ -614,6 +638,11 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
 {
     if (cap_get_capType(cap) != cap_frame_cap) {
         userError("IPC Buffer is an invalid cap.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+    if (unlikely(cap_frame_cap_get_capFIsDevice(cap))) {
+        userError("Specifying a device frame as an IPC buffer is not permitted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -647,12 +676,12 @@ void flushTable(vspace_root_t *vspace, word_t vptr, pte_t* pt, asid_t asid)
     word_t i;
     cap_t        threadRoot;
 
-    assert(IS_ALIGNED(vptr, PT_BITS + PAGE_BITS));
+    assert(IS_ALIGNED(vptr, PT_INDEX_BITS + PAGE_BITS));
 
     /* check if page table belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
     /* find valid mappings */
-    for (i = 0; i < BIT(PT_BITS); i++) {
+    for (i = 0; i < BIT(PT_INDEX_BITS); i++) {
         if (pte_get_present(pt[i])) {
             if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == vspace)) {
                 invalidateTranslationSingleASID(vptr + (i << PAGE_BITS), asid);
@@ -791,6 +820,7 @@ performX86PageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 
     cap_frame_cap_ptr_set_capFMappedAddress(&ctSlot->cap, 0);
     cap_frame_cap_ptr_set_capFMappedASID(&ctSlot->cap, asidInvalid);
+    cap_frame_cap_ptr_set_capFMapType(&ctSlot->cap, X86_MappingNone);
 
     return EXCEPTION_NONE;
 }
@@ -839,6 +869,8 @@ exception_t decodeX86FrameInvocation(
 
             return EXCEPTION_SYSCALL_ERROR;
         }
+
+        assert(cap_frame_cap_get_capFMapType(cap) == X86_MappingNone);
 
         if (!isValidNativeRoot(vspaceCap)) {
             userError("X86Frame: Attempting to map frame into invalid page directory cap.");
@@ -891,6 +923,7 @@ exception_t decodeX86FrameInvocation(
 
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
         cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);
+        cap = cap_frame_cap_set_capFMapType(cap, X86_MappingVSpace);
 
         switch (frameSize) {
         /* PTE mappings */
@@ -972,8 +1005,8 @@ exception_t decodeX86FrameInvocation(
         vm_page_size_t  frameSize;
         asid_t          asid;
 
-        if (isIOSpaceFrameCap(cap)) {
-            userError("X86FrameRemap: Attempting to remap frame mapped into an IOSpace");
+        if (cap_frame_cap_get_capFMapType(cap) != X86_MappingVSpace) {
+            userError("X86FrameRemap: Attempting to remap frame with different mapping type");
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -1093,11 +1126,16 @@ exception_t decodeX86FrameInvocation(
 
     case X86PageUnmap: { /* Unmap */
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            if (isIOSpaceFrameCap(cap)) {
-                return decodeX86IOUnmapInvocation(invLabel, length, cte, cap, excaps);
-            } else {
+            switch (cap_frame_cap_get_capFMapType(cap)) {
+            case X86_MappingVSpace:
                 setThreadState(ksCurThread, ThreadState_Restart);
                 return performX86PageInvocationUnmap(cap, cte);
+            case X86_MappingIOSpace:
+                setThreadState(ksCurThread, ThreadState_Restart);
+                return performX86IOUnMapInvocation(cap, cte);
+            case X86_MappingNone:
+                fail("Mapped frame cap was not mapped");
+                break;
             }
         }
 
@@ -1105,7 +1143,7 @@ exception_t decodeX86FrameInvocation(
     }
 
     case X86PageMapIO: { /* MapIO */
-        return decodeX86IOMapInvocation(invLabel, length, cte, cap, excaps, buffer);
+        return decodeX86IOMapInvocation(length, cte, cap, excaps, buffer);
     }
 
     case X86PageGetAddress: {
@@ -1199,7 +1237,7 @@ decodeX86PageTableInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vaddr = getSyscallArg(0, buffer) & (~MASK(PT_BITS + PAGE_BITS));
+    vaddr = getSyscallArg(0, buffer) & (~MASK(PT_INDEX_BITS + PAGE_BITS));
     attr = vmAttributesFromWord(getSyscallArg(1, buffer));
     vspaceCap = excaps.excaprefs[0]->cap;
 
@@ -1329,7 +1367,8 @@ exception_t decodeX86MMUInvocation(
 
 
         if (cap_get_capType(untyped) != cap_untyped_cap ||
-                cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits) {
+                cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
+                cap_untyped_cap_get_capIsDevice(untyped)) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 

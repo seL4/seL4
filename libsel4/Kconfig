@@ -26,18 +26,6 @@ config LIB_SEL4_INLINE_INVOCATIONS
         for verification, so setting to 'n' will forcively prevent the function
         from being inlined
 
-config LIB_SEL4_HAVE_REGISTER_STUBS
-    bool "Support syscall stubs without IPC buffer"
-    depends on LIB_SEL4 && !USER_OPTIMISATION_O0 && ARCH_ARM
-    default y
-    help
-        Generate the 'WithMRs' variants of the syscall stubs. These stubs
-        avoid the use of the IPC buffer where possible and attempt to
-        place syscall arguments directly into and out of cpu registers.
-        GCC's register allocation is a hint only and cannot be relied upon,
-        as a result these stubs are known to be broken, and are disabled,
-        at -O0
-
 config HAVE_LIB_SEL4
     bool
 endmenu

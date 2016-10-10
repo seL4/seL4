@@ -8,14 +8,6 @@
 # @TAG(GD_GPL)
 #
 
-config PCI
-    bool "PCI support"
-        depends on PLAT_PC99
-        default y
-        help
-            PCI support, normal should be yes for current
-            x86 based PCs
-
 config IOMMU
     bool "IOMMU support"
         depends on PLAT_PC99
@@ -57,6 +49,22 @@ config PAE_PAGING
     help
         PAE paging uses 4K/2M pages and has three levels of paging. If this
         is not used the old 32-bit paging with 4K/4M pages will be used
+
+choice
+    prompt "Kernel syscall style"
+    depends on ARCH_X86
+    default SYSENTER if ARCH_IA32
+    help
+        The kernel only ever supports one method of performing syscalls
+        at a time. This config should be set to the most efficient one
+        that is support by the hardware the system will run on
+
+    config SYSENTER
+        bool "sysenter+sysexit"
+    config SYSCALL
+        depends on !ARCH_IA32
+        bool "syscall+sysret"
+endchoice
 
 choice
     prompt "FPU state implementation"

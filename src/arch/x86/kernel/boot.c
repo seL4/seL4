@@ -63,54 +63,148 @@ init_irqs(cap_t root_cnode_cap)
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
 
+/* The maximum number of reserved regions we have is 1 for each physical memory region (+ MAX_NUM_FREEMEM_REG)
+ * plus 1 for each kernel device. For kernel devices we have the ioapics (+ CONFIG_MAX_NUM_IOAPIC),
+ * iommus (+ MAX_NUM_DRHU), apic (+ 1) and the reserved MSI region (+ 1) */
+#define NUM_RESERVED_REGIONS    (MAX_NUM_FREEMEM_REG + CONFIG_MAX_NUM_IOAPIC + MAX_NUM_DRHU + 2)
+typedef struct allocated_p_region {
+    p_region_t  regs[NUM_RESERVED_REGIONS];
+    word_t      cur_pos;
+} allocated_p_region_t;
+
+BOOT_DATA static allocated_p_region_t allocated_p_regions;
+
+BOOT_CODE static void
+merge_regions(void)
+{
+    unsigned int i, j;
+    /* Walk through all the regions and see if any can get merged */
+    for (i = 1; i < allocated_p_regions.cur_pos;) {
+        if (allocated_p_regions.regs[i - 1].end == allocated_p_regions.regs[i].start) {
+            /* move this down */
+            allocated_p_regions.regs[i - 1].end = allocated_p_regions.regs[i].end;
+            /* fill the rest down */
+            for (j = i; j < allocated_p_regions.cur_pos - 1; j++) {
+                allocated_p_regions.regs[j] = allocated_p_regions.regs[j + 1];
+            }
+            allocated_p_regions.cur_pos--;
+            /* don't increment 'i' since we want to recheck that the
+             * region we just moved to this slot doesn't also need merging */
+        } else {
+            i++;
+        }
+    }
+}
+
+static UNUSED BOOT_CODE bool_t p_region_overlaps(p_region_t reg)
+{
+    unsigned int i;
+    for (i = 0; i < allocated_p_regions.cur_pos; i++) {
+        if (allocated_p_regions.regs[i].start < reg.end &&
+                allocated_p_regions.regs[i].end >= reg.start) {
+            return true;
+        }
+    }
+    return false;
+}
+
+BOOT_CODE bool_t
+add_allocated_p_region(p_region_t reg)
+{
+    unsigned int i, j;
+
+    assert(reg.start <= reg.end);
+    assert(!p_region_overlaps(reg));
+
+    /* Walk the existing regions and see if we can merge with an existing
+     * region, or insert in order */
+    for (i = 0; i < allocated_p_regions.cur_pos; i++) {
+        /* see if we can merge before or after this region */
+        if (allocated_p_regions.regs[i].end == reg.start) {
+            allocated_p_regions.regs[i].end = reg.end;
+            merge_regions();
+            return true;
+        }
+        if (allocated_p_regions.regs[i].start == reg.end) {
+            allocated_p_regions.regs[i].start = reg.start;
+            merge_regions();
+            return true;
+        }
+        /* see if this new one should be inserted before */
+        if (reg.end < allocated_p_regions.regs[i].start) {
+            /* ensure there's space to bump the regions up */
+            if (allocated_p_regions.cur_pos + 1 == NUM_RESERVED_REGIONS) {
+                printf("Ran out of reserved physical regions\n");
+                return false;
+            }
+            /* Copy the regions up to make a gap */
+            for (j = allocated_p_regions.cur_pos; j != i; j--) {
+                allocated_p_regions.regs[j] = allocated_p_regions.regs[j - 1];
+            }
+            /* Put this region in the gap */
+            allocated_p_regions.regs[i] = reg;
+            allocated_p_regions.cur_pos++;
+            return true;
+        }
+    }
+
+    /* nothing else matched, put this one at the end */
+    if (i + 1 == NUM_RESERVED_REGIONS) {
+        printf("Ran out of reserved physical regions\n");
+        return false;
+    }
+    allocated_p_regions.regs[i] = reg;
+    allocated_p_regions.cur_pos = i + 1;
+    return true;
+}
+
+BOOT_CODE void
+init_allocated_p_regions()
+{
+    allocated_p_regions.cur_pos = 0;
+}
+
 BOOT_CODE static bool_t
-create_device_frames(
-    cap_t         root_cnode_cap,
-    dev_p_regs_t* dev_p_regs
-)
+create_untypeds(
+    cap_t root_cnode_cap,
+    region_t boot_mem_reuse_reg)
 {
     seL4_SlotPos     slot_pos_before;
     seL4_SlotPos     slot_pos_after;
-    vm_page_size_t frame_size;
-    region_t       dev_reg;
-    seL4_DeviceRegion   bi_dev_reg;
-    cap_t          frame_cap;
-    uint32_t       i;
-    pptr_t         f;
+    word_t      i;
 
-    for (i = 0; i < dev_p_regs->count; i++) {
-        /* write the frame caps of this device region into the root CNode and update the bootinfo */
-        dev_reg = paddr_to_pptr_reg(dev_p_regs->list[i]);
-        /* use large frames if possible, otherwise use 4K frames */
-        if (IS_ALIGNED(dev_reg.start, LARGE_PAGE_BITS) &&
-                IS_ALIGNED(dev_reg.end,   LARGE_PAGE_BITS)) {
-            frame_size = X86_LargePage;
-        } else {
-            frame_size = X86_SmallPage;
-        }
+    paddr_t     start = 0;
 
-        slot_pos_before = ndks_boot.slot_pos_cur;
+    slot_pos_before = ndks_boot.slot_pos_cur;
+    create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
 
-        /* create/provide frame caps covering the region */
-        for (f = dev_reg.start; f < dev_reg.end; f += BIT(pageBitsForSize(frame_size))) {
-            frame_cap = create_unmapped_it_frame_cap(f, frame_size == X86_LargePage);
-            if (!provide_cap(root_cnode_cap, frame_cap)) {
+    for (i = 0; i < allocated_p_regions.cur_pos; i++) {
+        if (start != allocated_p_regions.regs[i].start) {
+            if (!create_untypeds_for_region(root_cnode_cap, true,
+            paddr_to_pptr_reg((p_region_t) {
+            start, allocated_p_regions.regs[i].start
+            }),
+            slot_pos_before)) {
                 return false;
             }
         }
-
-        slot_pos_after = ndks_boot.slot_pos_cur;
-
-        /* add device-region entry to bootinfo */
-        bi_dev_reg.basePaddr = pptr_to_paddr((void*)dev_reg.start);
-        bi_dev_reg.frameSizeBits = pageBitsForSize(frame_size);
-        bi_dev_reg.frames = (seL4_SlotRegion) {
-            slot_pos_before, slot_pos_after
-        };
-        ndks_boot.bi_frame->deviceRegions[i] = bi_dev_reg;
+        start = allocated_p_regions.regs[i].end;
     }
 
-    ndks_boot.bi_frame->numDeviceRegions = dev_p_regs->count;
+    if (start != PADDR_USER_DEVICE_TOP) {
+        if (!create_untypeds_for_region(root_cnode_cap, true,
+        paddr_to_pptr_reg((p_region_t) {
+        start, PADDR_USER_DEVICE_TOP
+    }),
+    slot_pos_before)) {
+            return false;
+        }
+    }
+
+    slot_pos_after = ndks_boot.slot_pos_cur;
+    ndks_boot.bi_frame->untyped = (seL4_SlotRegion) {
+        slot_pos_before, slot_pos_after
+    };
     return true;
 }
 
@@ -145,7 +239,6 @@ BOOT_CODE bool_t
 init_sys_state(
     cpu_id_t      cpu_id,
     mem_p_regs_t  mem_p_regs,
-    dev_p_regs_t* dev_p_regs,
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */
@@ -254,13 +347,13 @@ init_sys_state(
     }
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
-    x86KSfpuOwner = NULL;
     x86KStscMhz = tsc_init();
     ndks_boot.bi_frame->archInfo = x86KStscMhz;
 
     if (x86KStscMhz == 0) {
         return false;
     }
+    ARCH_NODE_STATE(x86KSfpuOwner) = NULL;
 
     /* create the idle thread */
     if (!create_idle_thread()) {
@@ -294,16 +387,11 @@ init_sys_state(
         ndks_boot.bi_frame->numIOPTLevels = -1;
     }
 
-    /* convert the remaining free memory into UT objects and provide the caps */
+    /* create all of the untypeds. Both devices and kernel window memory */
     if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {
         return false;
     }
     /* WARNING: alloc_region() must not be called anymore after here! */
-
-    /* create device frames */
-    if (!create_device_frames(root_cnode_cap, dev_p_regs)) {
-        return false;
-    }
 
     /* finalise the bootinfo frame */
     bi_finalise();
@@ -341,8 +429,14 @@ init_cpu(
     /* initialise CPU's descriptor table registers (GDTR, IDTR, LDTR, TR) */
     init_dtrs();
 
-    /* initialise MSRs (needs an initialised TSS) */
-    init_sysenter_msrs();
+    if (config_set(CONFIG_SYSENTER)) {
+        /* initialise MSRs (needs an initialised TSS) */
+        init_sysenter_msrs();
+    } else if (config_set(CONFIG_SYSCALL)) {
+        init_syscall_msrs();
+    } else {
+        return false;
+    }
 
     /* setup additional PAT MSR */
     if (!init_pat_msr()) {

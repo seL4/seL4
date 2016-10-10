@@ -16,7 +16,6 @@
 #include <plat/machine.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/devices.h>
-#include <plat/machine/pci.h>
 
 enum acpi_type {
     ACPI_RSDP,
@@ -257,7 +256,6 @@ BOOT_CODE uint32_t
 acpi_madt_scan(
     acpi_rsdt_t* acpi_rsdt,
     cpu_id_t*    cpu_list,
-    uint32_t     max_list_len,
     uint32_t*    num_ioapic,
     paddr_t*     ioapic_paddrs
 )
@@ -298,10 +296,12 @@ acpi_madt_scan(
                     uint32_t flags  = ((acpi_madt_apic_t*)acpi_madt_header)->flags;
                     if (flags == 1) {
                         printf("ACPI: MADT_APIC apic_id=0x%x\n", cpu_id);
-                        if (num_cpu < max_list_len) {
+                        if (num_cpu == CONFIG_MAX_NUM_NODES) {
+                            printf("ACPI: Not recording this APIC, only support %d\n", CONFIG_MAX_NUM_NODES);
+                        } else {
                             cpu_list[num_cpu] = cpu_id;
+                            num_cpu++;
                         }
-                        num_cpu++;
                     }
                     break;
                 }
@@ -369,7 +369,7 @@ acpi_dmar_scan(
     rmrr_count = 0;
 
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
-    entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(acpi_header_t*);
+    entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(uint32_t);
     for (count = 0; count < entries; count++) {
         acpi_dmar = (acpi_dmar_t*)(word_t)acpi_rsdt_mapped->entry[count];
         acpi_dmar_mapped = (acpi_dmar_t*)acpi_table_init(acpi_dmar, ACPI_RSDT);

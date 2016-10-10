@@ -211,7 +211,7 @@ map_kernel_window(void)
     phys = physBase;
     idx = kernelBase >> pageBitsForSize(ARMSection);
 
-    while (idx < BIT(PD_BITS) - SECTIONS_PER_SUPER_SECTION) {
+    while (idx < BIT(PD_INDEX_BITS) - SECTIONS_PER_SUPER_SECTION) {
         word_t idx2;
 
         pde = pde_pde_section_new(
@@ -343,14 +343,14 @@ map_kernel_window(void)
 
     /* Initialise PMD */
     /* Invalidate up until kernelBase */
-    for (idx = 0; idx < (kernelBase - 0xC0000000) >> (PT_BITS + PAGE_BITS); idx++) {
+    for (idx = 0; idx < (kernelBase - 0xC0000000) >> (PT_INDEX_BITS + PAGE_BITS); idx++) {
         pde = pdeS1_pdeS1_invalid_new();
         armHSGlobalPD[idx] = pde;
     }
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
     /* up to end of virtual address space minus 2M using 2M frames */
     phys = physBase;
-    for (; idx < BIT(PT_BITS) - 1; idx++) {
+    for (; idx < BIT(PT_INDEX_BITS) - 1; idx++) {
         pde = pdeS1_pdeS1_section_new(
                   0, /* Executable */
                   0, /* Executable in PL1 */
@@ -364,7 +364,7 @@ map_kernel_window(void)
                   1  /* outer write-back Cacheable */
               );
         armHSGlobalPD[idx] = pde;
-        phys += BIT(PT_BITS + PAGE_BITS);
+        phys += BIT(PT_INDEX_BITS + PAGE_BITS);
     }
     /* map page table covering last 2M of virtual address space */
     pde = pdeS1_pdeS1_coarse_new(0, 0, 0, 0, addrFromPPtr(armHSGlobalPT));
@@ -423,7 +423,7 @@ map_kernel_window(void)
                 MEMATTR_CACHEABLE  /* Cacheable */
             );
     memzero(armUSGlobalPT, 1 << seL4_PageTableBits);
-    idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_BITS));
+    idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_INDEX_BITS));
     armUSGlobalPT[idx] = pteS2;
 
     /* map stack frame */
@@ -495,6 +495,7 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
                 ASID_LOW(asid),                /* capFMappedASIDLow  */
                 wordFromVMRights(VMReadWrite), /* capFVMRights       */
                 vptr,                          /* capFMappedAddress  */
+                false,                         /* capFIsDevice       */
                 ASID_HIGH(asid),               /* capFMappedASIDHigh */
                 pptr                           /* capFBasePtr        */
             );
@@ -504,6 +505,7 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
                 ASID_LOW(asid),                /* capFMappedASIDLow  */
                 wordFromVMRights(VMReadWrite), /* capFVMRights       */
                 vptr,                          /* capFMappedAddress  */
+                false,                         /* capFIsDevice       */
 #ifdef CONFIG_ARM_SMMU
                 0,                             /* IOSpace            */
 #endif
@@ -583,9 +585,9 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 
     /* create all PT objs and caps necessary to cover userland image */
 
-    for (pt_vptr = ROUND_DOWN(it_v_reg.start, PT_BITS + PAGE_BITS);
+    for (pt_vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
             pt_vptr < it_v_reg.end;
-            pt_vptr += BIT(PT_BITS + PAGE_BITS)) {
+            pt_vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
         pt_pptr = alloc_region(seL4_PageTableBits);
         if (!pt_pptr) {
             return cap_null_cap_new();
@@ -604,59 +606,6 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     };
 
     return pd_cap;
-}
-
-BOOT_CODE bool_t
-create_device_frames(cap_t root_cnode_cap)
-{
-    seL4_SlotPos     slot_pos_before;
-    seL4_SlotPos     slot_pos_after;
-    vm_page_size_t frame_size;
-    region_t       dev_reg;
-    seL4_DeviceRegion   bi_dev_reg;
-    cap_t          frame_cap;
-    word_t         i;
-    pptr_t         f;
-
-    ndks_boot.bi_frame->numDeviceRegions = get_num_dev_p_regs();
-    if (ndks_boot.bi_frame->numDeviceRegions > CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS) {
-        printf("Kernel init: Too many device regions for boot info\n");
-        ndks_boot.bi_frame->numDeviceRegions = CONFIG_MAX_NUM_BOOTINFO_DEVICE_REGIONS;
-    }
-
-    for (i = 0; i < ndks_boot.bi_frame->numDeviceRegions; i++) {
-        /* write the frame caps of this device region into the root CNode and update the bootinfo */
-        dev_reg = paddr_to_pptr_reg(get_dev_p_reg(i));
-        /* use 1M frames if possible, otherwise use 4K frames */
-        if (IS_ALIGNED(dev_reg.start, pageBitsForSize(ARMSection)) &&
-                IS_ALIGNED(dev_reg.end,   pageBitsForSize(ARMSection))) {
-            frame_size = ARMSection;
-        } else {
-            frame_size = ARMSmallPage;
-        }
-
-        slot_pos_before = ndks_boot.slot_pos_cur;
-
-        /* create/provide frame caps covering the region */
-        for (f = dev_reg.start; f < dev_reg.end; f += BIT(pageBitsForSize(frame_size))) {
-            frame_cap = create_it_frame_cap(f, 0, asidInvalid, frame_size == ARMSection);
-            if (!provide_cap(root_cnode_cap, frame_cap)) {
-                return false;
-            }
-        }
-
-        slot_pos_after = ndks_boot.slot_pos_cur;
-
-        /* add device-region entry to bootinfo */
-        bi_dev_reg.basePaddr = pptr_to_paddr((void*)dev_reg.start);
-        bi_dev_reg.frameSizeBits = pageBitsForSize(frame_size);
-        bi_dev_reg.frames = (seL4_SlotRegion) {
-            slot_pos_before, slot_pos_after
-        };
-        ndks_boot.bi_frame->deviceRegions[i] = bi_dev_reg;
-    }
-
-    return true;
 }
 
 BOOT_CODE cap_t
@@ -777,6 +726,9 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
                  cap_get_capType(bufferCap) != cap_frame_cap)) {
         return NULL;
     }
+    if (unlikely (generic_frame_cap_get_capFIsDevice(bufferCap))) {
+        return NULL;
+    }
 
     vm_rights = generic_frame_cap_get_capFVMRights(bufferCap);
     if (likely(vm_rights == VMReadWrite ||
@@ -801,6 +753,11 @@ checkValidIPCBuffer(vptr_t vptr, cap_t cap)
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
+    if (unlikely(generic_frame_cap_get_capFIsDevice(cap))) {
+        userError("Specifying a device frame as an IPC buffer is not permitted.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
 
     if (unlikely(vptr & MASK(9))) {
         userError("Requested IPC Buffer location 0x%x is not aligned.",
@@ -817,7 +774,7 @@ lookupPDSlot(pde_t *pd, vptr_t vptr)
 {
     unsigned int pdIndex;
 
-    pdIndex = vptr >> (PAGE_BITS + PT_BITS);
+    pdIndex = vptr >> (PAGE_BITS + PT_INDEX_BITS);
     return pd + pdIndex;
 }
 
@@ -830,7 +787,7 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
     pdSlot = lookupPDSlot(pd, vptr);
 
     if (unlikely(pde_ptr_get_pdeType(pdSlot) != pde_pde_coarse)) {
-        current_lookup_fault = lookup_fault_missing_capability_new(PT_BITS + PAGE_BITS);
+        current_lookup_fault = lookup_fault_missing_capability_new(PT_INDEX_BITS + PAGE_BITS);
 
         ret.ptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
@@ -840,7 +797,7 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
         unsigned int ptIndex;
 
         pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pdSlot));
-        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
+        ptIndex = (vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS);
         ptSlot = pt + ptIndex;
 
         ret.ptSlot = ptSlot;
@@ -854,7 +811,7 @@ lookupPTSlot_nofail(pte_t *pt, vptr_t vptr)
 {
     unsigned int ptIndex;
 
-    ptIndex = (vptr >> PAGE_BITS) & MASK(PT_BITS);
+    ptIndex = (vptr >> PAGE_BITS) & MASK(PT_INDEX_BITS);
     return pt + ptIndex;
 }
 
@@ -1200,7 +1157,7 @@ pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
         return NULL;
     }
 
-    pdIndex = vaddr >> (PAGE_BITS + PT_BITS);
+    pdIndex = vaddr >> (PAGE_BITS + PT_INDEX_BITS);
     pde = find_ret.pd[pdIndex];
 
     if (likely(pde_get_pdeType(pde) == pde_pde_coarse
@@ -1330,7 +1287,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     pd = pageTableMapped (asid, vaddr, pt);
 
     if (likely(pd != NULL)) {
-        pdIndex = vaddr >> (PT_BITS + PAGE_BITS);
+        pdIndex = vaddr >> (PT_INDEX_BITS + PAGE_BITS);
         pdSlot = pd + pdIndex;
 
         *pdSlot = pde_pde_invalid_new(0, 0);
@@ -1346,7 +1303,7 @@ copyGlobalMappings(pde_t *newPD)
     word_t i;
     pde_t *global_pd = armKSGlobalPD;
 
-    for (i = kernelBase >> ARMSectionBits; i < BIT(PD_BITS); i++) {
+    for (i = kernelBase >> ARMSectionBits; i < BIT(PD_INDEX_BITS); i++) {
         if (i != PD_ASID_SLOT) {
             newPD[i] = global_pd[i];
         }
@@ -1356,7 +1313,7 @@ copyGlobalMappings(pde_t *newPD)
      * we still need to share the globals page. */
     pde_t pde;
     pde = pde_pde_coarse_new(addrFromPPtr(armUSGlobalPT));
-    newPD[BIT(PD_BITS) - 1] = pde;
+    newPD[BIT(PD_INDEX_BITS) - 1] = pde;
 #endif
 }
 
@@ -1619,7 +1576,7 @@ flushTable(pde_t* pd, asid_t asid, word_t vptr, pte_t* pt)
     pde_t stored_hw_asid;
     bool_t root_switched;
 
-    assert((vptr & MASK(PT_BITS + ARMSmallPageBits)) == 0);
+    assert((vptr & MASK(PT_INDEX_BITS + ARMSmallPageBits)) == 0);
 
     /* Switch to the address space to allow a cache clean by VA */
     root_switched = setVMRootForFlush(pd, asid);
@@ -2382,7 +2339,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
         }
     }
 
-    pdIndex = vaddr >> (PAGE_BITS + PT_BITS);
+    pdIndex = vaddr >> (PAGE_BITS + PT_INDEX_BITS);
     pdSlot = &pd[pdIndex];
     if (unlikely(pde_ptr_get_pdeType(pdSlot) != pde_pde_invalid)) {
         current_syscall_error.type = seL4_DeleteFirst;
@@ -2826,7 +2783,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         if (unlikely(cap_get_capType(untyped) != cap_untyped_cap ||
                      cap_untyped_cap_get_capBlockSize(untyped) !=
-                     seL4_ASIDPoolBits)) {
+                     seL4_ASIDPoolBits) || cap_untyped_cap_get_capIsDevice(untyped)) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -2962,7 +2919,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     ksUserLogBuffer = pptr_to_paddr((void *) frame_pptr);
 
-    for (int idx = 0; idx < BIT(PT_BITS); idx++) {
+    for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
         paddr_t physical_address = ksUserLogBuffer + (idx << seL4_PageBits);
 
         armKSGlobalLogPT[idx] =
