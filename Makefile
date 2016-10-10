@@ -158,7 +158,7 @@ default: all
 ### Tool setup
 ############################################################
 
-PATH := ${SOURCE_ROOT}/tools:${PATH}
+PATH := "${SOURCE_ROOT}/tools:${PATH}"
 export PATH
 
 PARSER = c-parser
