@@ -80,7 +80,7 @@ typedef struct invpcid_desc {
 
 static inline void invalidatePCID(word_t type, void *vaddr, asid_t asid)
 {
-    if (config_set(CONFIG_SUPPORT_INVPCID)) {
+    if (config_set(CONFIG_SUPPORT_PCID)) {
         invpcid_desc_t desc;
         desc.asid = asid & 0xfff;
         desc.addr = (uint64_t)vaddr;
@@ -127,7 +127,7 @@ static inline void invalidateTranslationAll(void)
 
 static inline void invalidatePageStructureCacheASID(paddr_t root, asid_t asid)
 {
-    if (config_set(CONFIG_SUPPORT_INVPCID)) {
+    if (config_set(CONFIG_SUPPORT_PCID)) {
         /* store our previous cr3 */
         cr3_t cr3 = getCurrentCR3();
         /* load new vspace root, invalidating translation for it */
