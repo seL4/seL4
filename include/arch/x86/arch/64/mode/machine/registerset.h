@@ -48,7 +48,7 @@ enum _register {
     R10                     = 10,   /* 0x50 */
     R8                      = 11,   /* 0x58 */
     R9                      = 12,   /* 0x60 */
-    RFLAGS                  = 13,   /* 0x68 */
+    FLAGS                  = 13,   /* 0x68 */
     // Put the NextIP, which is a virtual register, here as we
     // need to set this in the syscall path
     NextIP                  = 14,   /* 0x70 */

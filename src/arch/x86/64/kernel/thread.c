@@ -37,7 +37,7 @@ Arch_switchToThread(tcb_t* tcb)
 BOOT_CODE void
 Arch_configureIdleThread(tcb_t* tcb)
 {
-    setRegister(tcb, RFLAGS, BIT(9) | BIT(1));
+    setRegister(tcb, FLAGS, BIT(9) | BIT(1));
     setRegister(tcb, NextIP, (uint64_t)idleThreadStart);
     setRegister(tcb, CS, SEL_CS_0);
     setRegister(tcb, SS, SEL_DS_0);

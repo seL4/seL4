@@ -105,7 +105,11 @@ restore_user_debug_context(tcb_t *target_thread)
 
     /* If single-stepping was enabled, we need to re-set the TF flag as well. */
     if (uds->tcbContext.breakpointState.single_step_enabled == true) {
-        uds->tcbContext.registers[EFLAGS] |= BIT(X86_EFLAGS_TRAP_FLAG_SHIFT);
+#ifdef CONFIG_ARCH_IA32
+        uds->tcbContext.registers[FLAGS] |= BIT(X86_EFLAGS_TRAP_FLAG_SHIFT);
+#else
+        uds->tcbContext.registers[FLAGS] |= BIT(X86_EFLAGS_TRAP_FLAG_SHIFT);
+#endif
     }
 }
 

@@ -19,7 +19,7 @@ const register_t msgRegisters[] = {
 };
 
 const register_t frameRegisters[] = {
-    FaultIP, ESP, EFLAGS, EAX, EBX, ECX, EDX, ESI, EDI, EBP
+    FaultIP, ESP, FLAGS, EAX, EBX, ECX, EDX, ESI, EDI, EBP
 };
 
 const register_t gpRegisters[] = {
@@ -27,11 +27,11 @@ const register_t gpRegisters[] = {
 };
 
 const register_t exceptionMessage[] = {
-    FaultIP, ESP, EFLAGS
+    FaultIP, ESP, FLAGS
 };
 
 const register_t syscallMessage[] = {
-    EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextIP, ESP, EFLAGS
+    EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextIP, ESP, FLAGS
 };
 
 void Mode_initContext(user_context_t* context)
@@ -52,7 +52,7 @@ void Mode_initContext(user_context_t* context)
 
 word_t sanitiseRegister(register_t reg, word_t v)
 {
-    if (reg == EFLAGS) {
+    if (reg == FLAGS) {
         v |=  BIT(1);   /* reserved bit that must be set to 1 */
         v &= ~BIT(3);   /* reserved bit that must be set to 0 */
         v &= ~BIT(5);   /* reserved bit that must be set to 0 */

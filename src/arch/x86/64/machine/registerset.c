@@ -19,7 +19,7 @@ const register_t msgRegisters[] = {
 };
 
 const register_t frameRegisters[] = {
-    FaultIP, RSP, RFLAGS, RAX, RBX, RCX, RDX, RSI, RDI, RBP,
+    FaultIP, RSP, FLAGS, RAX, RBX, RCX, RDX, RSI, RDI, RBP,
     R8, R9, R10, R11, R12, R13, R14, R15
 };
 
@@ -28,12 +28,12 @@ const register_t gpRegisters[] = {
 };
 
 const register_t exceptionMessage[] = {
-    FaultIP, RSP, RFLAGS
+    FaultIP, RSP, FLAGS
 };
 
 const register_t syscallMessage[] = {
     RAX, RBX, RCX, RDX, RSI, RDI, RBP, R8, R9, R10, R11, R12,
-    R13, R14, R15, NextIP, RSP, RFLAGS
+    R13, R14, R15, NextIP, RSP, FLAGS
 };
 
 void Mode_initContext(user_context_t* context)
@@ -65,7 +65,7 @@ word_t sanitiseRegister(register_t reg, word_t v)
             reg = 0;
         }
     }
-    if (reg == RFLAGS) {
+    if (reg == FLAGS) {
         v |=  BIT(1);   /* reserved bit that must be set to 1 */
         v &= ~BIT(3);   /* reserved bit that must be set to 0 */
         v &= ~BIT(5);   /* reserved bit that must be set to 0 */

@@ -51,7 +51,7 @@ enum _register {
     /* 0x34 */  Error    = 13,
     /* 0x38 */  NextIP   = 14,
     /* 0x3C */  CS       = 15,
-    /* 0x40 */  EFLAGS   = 16,
+    /* 0x40 */  FLAGS   = 16,
     /* 0x44 */  ESP      = 17,
     /* 0x48 */  SS       = 18,
 

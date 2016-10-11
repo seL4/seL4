@@ -36,7 +36,7 @@ pml4e_t boot_pml4[BIT(PML4_INDEX_BITS)] __attribute__((aligned(BIT(seL4_PageBits
 pdpte_t boot_pdpt[BIT(PDPT_INDEX_BITS)] __attribute__((aligned(BIT(seL4_PageBits)))) PHYS_DATA;
 
 /* hardware interrupt handlers push up to 6 words onto the stack. THe order of the
- words is Error, RIP, CS, RFLAGS, RSP, SS */
+ words is Error, RIP, CS, FLAGS, RSP, SS */
 word_t irq_stack[6] __attribute__((aligned(16)));
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.

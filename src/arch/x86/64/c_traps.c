@@ -36,7 +36,7 @@ void VISIBLE NORETURN restore_user_context(void)
     /* see if we entered via syscall */
     if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1)) {
         if (config_set(CONFIG_SYSENTER)) {
-            ksCurThread->tcbArch.tcbContext.registers[RFLAGS] &= ~0x200;
+            ksCurThread->tcbArch.tcbContext.registers[FLAGS] &= ~0x200;
             asm volatile(
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
                 "movq %0, %%rsp\n"
@@ -118,7 +118,7 @@ void VISIBLE NORETURN restore_user_context(void)
         /* construct our return from interrupt frame */
         irq_stack[1] = getRegister(ksCurThread, NextIP);
         irq_stack[2] = getRegister(ksCurThread, CS);
-        irq_stack[3] = getRegister(ksCurThread, RFLAGS);
+        irq_stack[3] = getRegister(ksCurThread, FLAGS);
         irq_stack[4] = getRegister(ksCurThread, RSP);
         irq_stack[5] = getRegister(ksCurThread, SS);
         asm volatile(
@@ -159,7 +159,7 @@ void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall)
     setRegister(ksCurThread, Error, irq_stack[0]);
     setRegister(ksCurThread, NextIP, irq_stack[1]);
     setRegister(ksCurThread, FaultIP, irq_stack[1]);
-    setRegister(ksCurThread, RFLAGS, irq_stack[3]);
+    setRegister(ksCurThread, FLAGS, irq_stack[3]);
     setRegister(ksCurThread, RSP, irq_stack[4]);
     c_handle_interrupt(irq, syscall);
     UNREACHABLE();

@@ -528,7 +528,11 @@ testAndResetSingleStepException(arch_tcb_t *uc)
      * Intel manuals, vol3, section 17.3.1.1.
      */
     /* This will automatically be popped by restore_user_context() */
-    uc->tcbContext.registers[EFLAGS] |= X86_DEBUG_EFLAGS_RESUME_FLAG;
+#ifdef CONFIG_ARCH_IA32
+    uc->tcbContext.registers[FLAGS] |= X86_DEBUG_FLAGS_RESUME_FLAG;
+#else
+    uc->tcbContext.registers[FLAGS] |= X86_DEBUG_EFLAGS_RESUME_FLAG;
+#endif
     return ret;
 }
 
@@ -542,7 +546,11 @@ configureSingleStepping(arch_tcb_t *uc, uint16_t bp_num, word_t n_instr,
           * same as requesting that single-stepping be disabled.
           */
         uc->tcbContext.breakpointState.single_step_enabled = false;
-        uc->tcbContext.registers[EFLAGS] &= ~X86_DEBUG_EFLAGS_TRAP_FLAG;
+#ifdef CONFIG_ARCH_IA32
+        uc->tcbContext.registers[FLAGS] &= ~X86_DEBUG_FLAGS_TRAP_FLAG;
+#else
+        uc->tcbContext.registers[FLAGS] &= ~X86_DEBUG_EFLAGS_TRAP_FLAG;
+#endif
     } else {
         uc->tcbContext.breakpointState.single_step_enabled = true;
     }

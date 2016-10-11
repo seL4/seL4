@@ -105,7 +105,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
          * is currently disabled */
     }
     if (config_set(CONFIG_SYSENTER)) {
-        cur_thread->tcbArch.tcbContext.registers[RFLAGS] &= ~0x200;
+        cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~0x200;
 
         asm volatile (
                 "movq %%rcx, %%rsp\n"
