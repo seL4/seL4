@@ -36,7 +36,7 @@ const register_t syscallMessage[] = {
     R13, R14, R15, NextIP, RSP, RFLAGS
 };
 
-void Arch_initContext(user_context_t* context)
+void Mode_initContext(user_context_t* context)
 {
     context->registers[RAX] = 0;
     context->registers[RBX] = 0;
@@ -53,16 +53,7 @@ void Arch_initContext(user_context_t* context)
     context->registers[R13] = 0;
     context->registers[R14] = 0;
     context->registers[R15] = 0;
-    context->registers[TLS_BASE] = 0;
-    context->registers[Error] = 0;
-    context->registers[FaultIP] = 0;
-    context->registers[NextIP] = 0;            /* overwritten by setNextPC() later on */
-    context->registers[CS] = SEL_CS_3;
-    context->registers[RFLAGS] = BIT(9) | BIT(1); /* enable interrupts and set bit 1 which is always 1 */
-    context->registers[RSP] = 0;                /* userland has to set it after entry */
-    context->registers[SS] = SEL_DS_3;
-
-    Arch_initFpuContext(context);
+    context->registers[RSP] = 0;
 }
 
 word_t sanitiseRegister(register_t reg, word_t v)
