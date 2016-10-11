@@ -67,13 +67,13 @@ typedef struct user_fpu_state user_fpu_state_t;
 /* X86 user-code context */
 struct user_context {
     user_fpu_state_t fpuState;
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    user_breakpoint_state_t breakpointState;
-#endif
     word_t registers[n_contextRegisters];
 #if CONFIG_MAX_NUM_NODES > 1
     /* stored pointer to kernel stack used when kernel run in current TCB context. */
     word_t kernelSP;
+#endif
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    user_breakpoint_state_t breakpointState;
 #endif
 };
 typedef struct user_context user_context_t;
