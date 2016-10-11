@@ -353,8 +353,8 @@ create_idle_thread(void)
         return false;
     }
     memzero((void *)pptr, 1 << seL4_TCBBits);
-    ksIdleThread = TCB_PTR(pptr + TCB_OFFSET);
-    configureIdleThread(ksIdleThread);
+    NODE_STATE(ksIdleThread) = TCB_PTR(pptr + TCB_OFFSET);
+    configureIdleThread(NODE_STATE(ksIdleThread));
     return true;
 }
 
@@ -416,8 +416,8 @@ create_initial_thread(
     tcb->tcbMCP = seL4_MaxPrio;
     setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
-    ksSchedulerAction = tcb;
-    ksCurThread = ksIdleThread;
+    NODE_STATE(ksSchedulerAction) = tcb;
+    NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
     ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
     assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);

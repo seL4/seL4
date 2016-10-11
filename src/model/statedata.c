@@ -24,21 +24,21 @@ SMP_STATE_DEFINE(smpStatedata_t, ksSMP[CONFIG_MAX_NUM_NODES] ALIGN(CONFIG_CACHE_
 word_t ksNumCPUs;
 
 /* Pointer to the head of the scheduler queue for each priority */
-tcb_queue_t ksReadyQueues[NUM_READY_QUEUES];
-word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS];
-word_t ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1];
+UP_STATE_DEFINE(tcb_queue_t, ksReadyQueues[NUM_READY_QUEUES]);
+UP_STATE_DEFINE(word_t, ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS]);
+UP_STATE_DEFINE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1]);
 compile_assert(ksReadyQueuesL1BitmapBigEnough, (CONFIG_NUM_PRIORITIES / wordBits) <= wordBits)
 
 /* Current thread TCB pointer */
-tcb_t *ksCurThread;
+UP_STATE_DEFINE(tcb_t *, ksCurThread);
 
 /* Idle thread TCB pointer */
-tcb_t *ksIdleThread;
+UP_STATE_DEFINE(tcb_t *, ksIdleThread);
 
 /* Values of 0 and ~0 encode ResumeCurrentThread and ChooseNewThread
  * respectively; other values encode SwitchToThread and must be valid
  * tcb pointers */
-tcb_t *ksSchedulerAction;
+UP_STATE_DEFINE(tcb_t *, ksSchedulerAction);
 
 /* Units of work we have completed since the last time we checked for
  * pending interrupts */

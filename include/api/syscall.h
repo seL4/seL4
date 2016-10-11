@@ -28,7 +28,7 @@ static inline word_t PURE
 getSyscallArg(word_t i, word_t* ipc_buffer)
 {
     if (i < n_msgRegisters) {
-        return getRegister(ksCurThread, msgRegisters[i]);
+        return getRegister(NODE_STATE(ksCurThread), msgRegisters[i]);
     }
 
     assert(ipc_buffer != NULL);

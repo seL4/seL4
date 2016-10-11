@@ -12,10 +12,5 @@
 
 #pragma once
 
-#include <config.h>
-#include <arch/types.h>
-#include <model/statedata.h>
-
-#define ARCH_NODE_STATE(_state)   _state
-#define MODE_NODE_STATE(_state)   _state
-#define NODE_STATE(_state) _state
+#define wordRadix 5
+#define wordBits (1 << wordRadix)

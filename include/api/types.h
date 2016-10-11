@@ -125,7 +125,7 @@ prioPropsFromWord(word_t w)
  * thread name is only available if the kernel is built in debug mode.
  */
 #ifdef CONFIG_DEBUG_BUILD
-#define THREAD_NAME ksCurThread->tcbName
+#define THREAD_NAME NODE_STATE(ksCurThread)->tcbName
 #else
 #define THREAD_NAME ""
 #endif
@@ -138,9 +138,9 @@ prioPropsFromWord(word_t w)
     do {                                                                     \
         printf(ANSI_DARK "<<" ANSI_GREEN "seL4" ANSI_DARK                    \
                 " [%s/%d T%p \"%s\" @%lx]: ",                                \
-                __func__, __LINE__, ksCurThread,                             \
+                __func__, __LINE__, NODE_STATE(ksCurThread),                 \
                 THREAD_NAME,                                                 \
-                (word_t)getRestartPC(ksCurThread));                          \
+                (word_t)getRestartPC(NODE_STATE(ksCurThread)));              \
         printf(__VA_ARGS__);                                                 \
         printf(">>" ANSI_RESET "\n");                                        \
     } while (0)

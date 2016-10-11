@@ -33,7 +33,7 @@ c_handle_interrupt(int irq, int syscall)
 #endif
     } else if (irq == int_page_fault) {
         /* Error code is in Error. Pull out bit 5, which is whether it was instruction or data */
-        vm_fault_type_t type = (ksCurThread->tcbArch.tcbContext.registers[Error] >> 4u) & 1u;
+        vm_fault_type_t type = (NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] >> 4u) & 1u;
 #ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_VMFault;
         ksKernelEntry.word = type;
@@ -44,7 +44,7 @@ c_handle_interrupt(int irq, int syscall)
         /* Debug exception */
 #ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_DebugFault;
-        ksKernelEntry.word = ksCurThread->tcbArch.tcbContext.registers[FaultIP];
+        ksKernelEntry.word = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FaultIP];
 #endif
         handleUserLevelDebugException(irq);
 #endif /* CONFIG_HARDWARE_DEBUG_API */
@@ -53,7 +53,7 @@ c_handle_interrupt(int irq, int syscall)
         ksKernelEntry.path = Entry_UserLevelFault;
         ksKernelEntry.word = irq;
 #endif
-        handleUserLevelFault(irq, ksCurThread->tcbArch.tcbContext.registers[Error]);
+        handleUserLevelFault(irq, NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error]);
     } else if (likely(irq < int_trap_min)) {
         ARCH_NODE_STATE(x86KScurInterrupt) = irq;
 #ifdef TRACK_KERNEL_ENTRIES
@@ -68,7 +68,7 @@ c_handle_interrupt(int irq, int syscall)
         /* Adjust FaultIP to point to trapping INT
          * instruction by subtracting 2 */
         int sys_num;
-        ksCurThread->tcbArch.tcbContext.registers[FaultIP] -= 2;
+        NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FaultIP] -= 2;
         /* trap number is MSBs of the syscall number and the LSBS of EAX */
         sys_num = (irq << 24) | (syscall & 0x00ffffff);
 #ifdef TRACK_KERNEL_ENTIRES
@@ -87,10 +87,10 @@ slowpath(syscall_t syscall)
     ARCH_NODE_STATE(x86KScurInterrupt) = -1;
     if (config_set(CONFIG_SYSENTER)) {
         /* increment NextIP to skip sysenter */
-        ksCurThread->tcbArch.tcbContext.registers[NextIP] += 2;
+        NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[NextIP] += 2;
     } else {
         /* set FaultIP */
-        setRegister(ksCurThread, FaultIP, getRegister(ksCurThread, NextIP) - 2);
+        setRegister(NODE_STATE(ksCurThread), FaultIP, getRegister(NODE_STATE(ksCurThread), NextIP) - 2);
     }
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {

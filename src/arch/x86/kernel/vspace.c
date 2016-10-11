@@ -33,8 +33,8 @@ performPageGetAddress(void *vbase_ptr)
     capFBasePtr = pptr_to_paddr(vbase_ptr);
 
     /* return it in the first message register */
-    setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
-    setRegister(ksCurThread, msgInfoRegister,
+    setRegister(NODE_STATE(ksCurThread), msgRegisters[0], capFBasePtr);
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
                 wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
 
     return EXCEPTION_NONE;
@@ -48,7 +48,7 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
 
     if (x86KSASIDTable[asid_base >> asidLowBits] == pool) {
         x86KSASIDTable[asid_base >> asidLowBits] = NULL;
-        setVMRoot(ksCurThread);
+        setVMRoot(NODE_STATE(ksCurThread));
     }
 }
 
@@ -81,7 +81,7 @@ void deleteASID(asid_t asid, vspace_root_t *vspace)
     hwASIDInvalidate(asid);
     if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
         poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(ksCurThread);
+        setVMRoot(NODE_STATE(ksCurThread));
     }
 }
 
@@ -679,7 +679,7 @@ void flushTable(vspace_root_t *vspace, word_t vptr, pte_t* pt, asid_t asid)
     assert(IS_ALIGNED(vptr, PT_INDEX_BITS + PAGE_BITS));
 
     /* check if page table belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
     /* find valid mappings */
     for (i = 0; i < BIT(PT_INDEX_BITS); i++) {
         if (pte_get_present(pt[i])) {
@@ -739,7 +739,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
     }
 
     /* check if page belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
     if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == find_ret.vspace_root)) {
         invalidateTranslationSingleASID(vptr, asid);
     }
@@ -945,7 +945,7 @@ exception_t decodeX86FrameInvocation(
             }
 
             pte = makeUserPTE(paddr, vmAttr, vmRights);
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX86PageInvocationMapPTE(cap, cte, lu_ret.ptSlot, pte, vspace);
         }
 
@@ -981,7 +981,7 @@ exception_t decodeX86FrameInvocation(
             }
 
             pde = makeUserPDELargePage(paddr, vmAttr, vmRights);
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX86PageInvocationMapPDE(cap, cte, lu_ret.pdSlot, pde, vspace);
         }
 
@@ -1083,7 +1083,7 @@ exception_t decodeX86FrameInvocation(
 
             pte = makeUserPTE(paddr, vmAttr, vmRights);
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX86PageInvocationRemapPTE(lu_ret.ptSlot, pte, asid, vspace);
 
         }
@@ -1112,7 +1112,7 @@ exception_t decodeX86FrameInvocation(
 
             pde = makeUserPDELargePage(paddr, vmAttr, vmRights);
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX86PageInvocationRemapPDE(pdeSlot, pde, asid, vspace);
         }
 
@@ -1128,10 +1128,10 @@ exception_t decodeX86FrameInvocation(
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
             switch (cap_frame_cap_get_capFMapType(cap)) {
             case X86_MappingVSpace:
-                setThreadState(ksCurThread, ThreadState_Restart);
+                setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
                 return performX86PageInvocationUnmap(cap, cte);
             case X86_MappingIOSpace:
-                setThreadState(ksCurThread, ThreadState_Restart);
+                setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
                 return performX86IOUnMapInvocation(cap, cte);
             case X86_MappingNone:
                 fail("Mapped frame cap was not mapped");
@@ -1150,7 +1150,7 @@ exception_t decodeX86FrameInvocation(
         /* Return it in the first message register. */
         assert(n_msgRegisters >= 1);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
     }
 
@@ -1212,7 +1212,7 @@ decodeX86PageTableInvocation(
             userError("X86PageTable: Cannot unmap if more than one cap exists.");
             return EXCEPTION_SYSCALL_ERROR;
         }
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performX86PageTableInvocationUnmap(cap, cte);
     }
 
@@ -1300,7 +1300,7 @@ decodeX86PageTableInvocation(
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performX86PageTableInvocationMap(cap, cte, pde, pdSlot.pdSlot, vspace);
 }
 
@@ -1393,7 +1393,7 @@ exception_t decodeX86MMUInvocation(
             return status;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performASIDControlInvocation(frame, destSlot, parentSlot, asid_base);
     }
 
@@ -1453,7 +1453,7 @@ exception_t decodeX86MMUInvocation(
 
         asid += i;
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performASIDPoolInvocation(asid, pool, vspaceCapSlot);
     }
 

@@ -66,8 +66,8 @@ static inline void benchmark_utilisation_kentry_stamp(void)
  */
 static inline void benchmark_utilisation_finalise(void)
 {
-    /* Add the time between when ksCurThread, and benchmark finalise */
-    benchmark_utilisation_switch(ksCurThread, ksIdleThread);
+    /* Add the time between when NODE_STATE(ksCurThread), and benchmark finalise */
+    benchmark_utilisation_switch(NODE_STATE(ksCurThread), NODE_STATE(ksIdleThread));
 
     benchmark_end_time = ksEnter;
     benchmark_log_utilisation_enabled = false;

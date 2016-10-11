@@ -14,8 +14,8 @@
 
 #include <config.h>
 #include <arch/types.h>
+#include <arch/model/statedata.h>
 #include <model/statedata.h>
-#include <arch/machine.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
@@ -23,27 +23,26 @@
 #define PAD_TO_NEXT_CACHE_LN(used) char padding[CONFIG_CACHE_LN_SZ - ((used) % CONFIG_CACHE_LN_SZ)]
 
 typedef struct smpStatedata {
-    nodeState_t CPU;
-
-    PAD_TO_NEXT_CACHE_LN(sizeof(nodeState_t));
+    archNodeState_t cpu;
+    nodeState_t system;
+    PAD_TO_NEXT_CACHE_LN(sizeof(archNodeState_t) + sizeof(nodeState_t));
 } smpStatedata_t;
 
 typedef struct cpu_id_mapping {
-    /* translate actual cpu index to APIC id */
     cpu_id_t index_to_cpu_id[CONFIG_MAX_NUM_NODES];
 } cpu_id_mapping_t;
 
 extern smpStatedata_t ksSMP[CONFIG_MAX_NUM_NODES] VISIBLE;
 extern cpu_id_mapping_t cpu_mapping;
 
-#define NODE_STATE(_state)        ksSMP[getCurrentCPUIndex()].CPU._state
-#define ARCH_NODE_STATE(_state)   ksSMP[getCurrentCPUIndex()].CPU.arch._state
-#define MODE_NODE_STATE(_state)   ksSMP[getCurrentCPUIndex()].CPU.arch.mode._state
+#define ARCH_NODE_STATE(_state)   ksSMP[getCurrentCPUIndex()].cpu._state
+#define MODE_NODE_STATE(_state)   ksSMP[getCurrentCPUIndex()].cpu.mode._state
+#define NODE_STATE(_state) ksSMP[getCurrentCPUIndex()].system._state
 
 #else
 
-#define NODE_STATE(_state)        _state
 #define ARCH_NODE_STATE(_state)   _state
 #define MODE_NODE_STATE(_state)   _state
+#define NODE_STATE(_state) _state
 
 #endif /* CONFIG_MAX_NUM_NODES */

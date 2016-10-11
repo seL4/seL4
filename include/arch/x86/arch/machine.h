@@ -11,7 +11,6 @@
 #ifndef __ARCH_MACHINE_H
 #define __ARCH_MACHINE_H
 
-#include <mode/machine.h>
 #include <arch/types.h>
 #include <arch/object/structures.h>
 #include <arch/machine/hardware.h>
@@ -99,39 +98,6 @@ static inline void x86_wrmsr(const uint32_t reg, const uint64_t val)
     uint32_t low = (uint32_t)val;
     uint32_t high = (uint32_t)(val >> 32);
     asm volatile("wrmsr" :: "a"(low), "d"(high), "c"(reg));
-}
-
-/** Hardware stack switching on exception/IRQ entry.
- *
- * We need to tell the CPU where the TCB register context structure is so it
- * can push to it on entry.
- * @param target_thread The thread we're about to switch to.
- */
-tcb_t *ksCurThread;
-static inline void
-setKernelEntryStackPointer(tcb_t *target_thread)
-{
-    word_t register_context_top;
-    SMP_COND_STATEMENT(word_t kernel_stack_top);
-
-    /* Update both the TSS and the IA32_SYSENTER_ESP MSR, because both are used.
-     *
-     * The stack pointer is loaded from the TSS on IRQ and exception entry.
-     * The IA32_SYSENTER_ESP MSR is used on syscall entry when SYSENTER is used.
-     *
-     * For an SMP build, we also have to set the location of the kernel stack for the
-     * current CPU, because we use per-CPU stacks.
-     */
-    /* save kernel stack pointer for next exception */
-    SMP_COND_STATEMENT(kernel_stack_top = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + 0xffc);
-    SMP_COND_STATEMENT(ksCurThread->tcbArch.tcbContext.kernelSP = kernel_stack_top);
-
-    register_context_top = (word_t)&target_thread->tcbArch.tcbContext.registers[n_contextRegisters];
-    tss_ptr_set_esp0(&ARCH_NODE_STATE(x86KStss).tss, register_context_top);
-
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    x86_wrmsr(IA32_SYSENTER_ESP_MSR, register_context_top);
-#endif
 }
 
 /* Read different parts of CPUID */

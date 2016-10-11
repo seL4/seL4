@@ -33,7 +33,7 @@ checkPrio(prio_t prio)
 {
     prio_t mcp;
 
-    mcp = ksCurThread->tcbMCP;
+    mcp = NODE_STATE(ksCurThread)->tcbMCP;
 
     /* system invariant: existing MCPs are bounded */
     assert(mcp <= seL4_MaxPrio);
@@ -55,8 +55,8 @@ addToBitmap(word_t dom, word_t prio)
     word_t l1index;
 
     l1index = prio_to_l1index(prio);
-    ksReadyQueuesL1Bitmap[dom] |= BIT(l1index);
-    ksReadyQueuesL2Bitmap[dom][l1index] |= BIT(prio & MASK(wordRadix));
+    NODE_STATE(ksReadyQueuesL1Bitmap[dom]) |= BIT(l1index);
+    NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]) |= BIT(prio & MASK(wordRadix));
 }
 
 static inline void
@@ -65,9 +65,9 @@ removeFromBitmap(word_t dom, word_t prio)
     word_t l1index;
 
     l1index = prio_to_l1index(prio);
-    ksReadyQueuesL2Bitmap[dom][l1index] &= ~BIT(prio & MASK(wordRadix));
-    if (unlikely(!ksReadyQueuesL2Bitmap[dom][l1index])) {
-        ksReadyQueuesL1Bitmap[dom] &= ~BIT(l1index);
+    NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]) &= ~BIT(prio & MASK(wordRadix));
+    if (unlikely(!NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]))) {
+        NODE_STATE(ksReadyQueuesL1Bitmap[dom]) &= ~BIT(l1index);
     }
 }
 
@@ -84,7 +84,7 @@ tcbSchedEnqueue(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = ksReadyQueues[idx];
+        queue = NODE_STATE(ksReadyQueues[idx]);
 
         if (!queue.end) { /* Empty list */
             queue.end = tcb;
@@ -96,7 +96,7 @@ tcbSchedEnqueue(tcb_t *tcb)
         tcb->tcbSchedNext = queue.head;
         queue.head = tcb;
 
-        ksReadyQueues[idx] = queue;
+        NODE_STATE(ksReadyQueues[idx]) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -115,7 +115,7 @@ tcbSchedAppend(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = ksReadyQueues[idx];
+        queue = NODE_STATE(ksReadyQueues[idx]);
 
         if (!queue.head) { /* Empty list */
             queue.head = tcb;
@@ -127,7 +127,7 @@ tcbSchedAppend(tcb_t *tcb)
         tcb->tcbSchedNext = NULL;
         queue.end = tcb;
 
-        ksReadyQueues[idx] = queue;
+        NODE_STATE(ksReadyQueues[idx]) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -146,7 +146,7 @@ tcbSchedDequeue(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = ksReadyQueues[idx];
+        queue = NODE_STATE(ksReadyQueues[idx]);
 
         if (tcb->tcbSchedPrev) {
             tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
@@ -163,7 +163,7 @@ tcbSchedDequeue(tcb_t *tcb)
             queue.end = tcb->tcbSchedPrev;
         }
 
-        ksReadyQueues[idx] = queue;
+        NODE_STATE(ksReadyQueues[idx]) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, false);
     }
@@ -317,10 +317,10 @@ invokeConfigureSingleStepping(word_t *buffer, arch_tcb_t *context,
     bp_was_consumed = configureSingleStepping(context, bp_num, n_instrs, false);
     if (n_instrs == 0) {
         unsetBreakpointUsedFlag(context, bp_num);
-        setMR(ksCurThread, buffer, 0, false);
+        setMR(NODE_STATE(ksCurThread), buffer, 0, false);
     } else {
         setBreakpointUsedFlag(context, bp_num);
-        setMR(ksCurThread, buffer, 0, bp_was_consumed);
+        setMR(NODE_STATE(ksCurThread), buffer, 0, bp_was_consumed);
     }
     return EXCEPTION_NONE;
 }
@@ -346,7 +346,7 @@ decodeConfigureSingleStepping(cap_t cap, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeConfigureSingleStepping(buffer, context, bp_num, n_instrs);
 }
 
@@ -476,7 +476,7 @@ decodeSetBreakpoint(cap_t cap, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeSetBreakpoint(context, bp_num,
                                vaddr, type, size, rw);
 }
@@ -487,11 +487,11 @@ invokeGetBreakpoint(word_t *buffer, arch_tcb_t *context, uint16_t bp_num)
     getBreakpoint_t res;
 
     res = getBreakpoint(context, bp_num);
-    setMR(ksCurThread, buffer, 0, res.vaddr);
-    setMR(ksCurThread, buffer, 1, res.type);
-    setMR(ksCurThread, buffer, 2, res.size);
-    setMR(ksCurThread, buffer, 3, res.rw);
-    setMR(ksCurThread, buffer, 4, res.is_enabled);
+    setMR(NODE_STATE(ksCurThread), buffer, 0, res.vaddr);
+    setMR(NODE_STATE(ksCurThread), buffer, 1, res.type);
+    setMR(NODE_STATE(ksCurThread), buffer, 2, res.size);
+    setMR(NODE_STATE(ksCurThread), buffer, 3, res.rw);
+    setMR(NODE_STATE(ksCurThread), buffer, 4, res.is_enabled);
     return EXCEPTION_NONE;
 }
 
@@ -514,7 +514,7 @@ decodeGetBreakpoint(cap_t cap, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeGetBreakpoint(buffer, context, bp_num);
 }
 
@@ -546,7 +546,7 @@ decodeUnsetBreakpoint(cap_t cap, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeUnsetBreakpoint(context, bp_num);
 }
 #endif /* CONFIG_HARDWARE_DEBUG_API */
@@ -573,12 +573,12 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBSuspend:
         /* Jump straight to the invoke */
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeTCB_Suspend(
                    TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
 
     case TCBResume:
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeTCB_Resume(
                    TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
 
@@ -662,7 +662,7 @@ decodeCopyRegisters(cap_t cap, word_t length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_CopyRegisters(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), srcTCB,
                flags & BIT(CopyRegisters_suspendSource),
@@ -706,13 +706,13 @@ decodeReadRegisters(cap_t cap, word_t length, bool_t call,
     transferArch = Arch_decodeTransfer(flags >> 8);
 
     thread = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-    if (thread == ksCurThread) {
+    if (thread == NODE_STATE(ksCurThread)) {
         userError("TCB ReadRegisters: Attempted to read our own registers.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ReadRegisters(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)),
                flags & BIT(ReadRegisters_suspend),
@@ -749,13 +749,13 @@ decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
     transferArch = Arch_decodeTransfer(flags >> 8);
 
     thread = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-    if (thread == ksCurThread) {
+    if (thread == NODE_STATE(ksCurThread)) {
         userError("TCB WriteRegisters: Attempted to write our own registers.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_WriteRegisters(thread,
                                     flags & BIT(WriteRegisters_resume),
                                     w, transferArch, buffer);
@@ -804,14 +804,14 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     status = checkPrio(prio);
     if (status != EXCEPTION_NONE) {
         userError("TCB Configure: Requested priority %lu too high (max %lu).",
-                  (unsigned long) prio, (unsigned long) ksCurThread->tcbMCP);
+                  (unsigned long) prio, (unsigned long) NODE_STATE(ksCurThread)->tcbMCP);
         return status;
     }
 
     status = checkPrio(mcp);
     if (status != EXCEPTION_NONE) {
         userError("TCB Configure: Requested maximum controlled priority %lu too high (max %lu),",
-                  (unsigned long) mcp, (unsigned long) ksCurThread->tcbMCP);
+                  (unsigned long) mcp, (unsigned long) NODE_STATE(ksCurThread)->tcbMCP);
         return status;
     }
 
@@ -871,7 +871,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                faultEP, mcp, prio,
@@ -898,11 +898,11 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
     status = checkPrio(newPrio);
     if (status != EXCEPTION_NONE) {
         userError("TCB SetPriority: Requested priority %lu too high (max %lu).",
-                  (unsigned long) newPrio, (unsigned long) ksCurThread->tcbMCP);
+                  (unsigned long) newPrio, (unsigned long) NODE_STATE(ksCurThread)->tcbMCP);
         return status;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                0, NULL_PRIO, newPrio,
@@ -929,11 +929,11 @@ decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
     status = checkPrio(newMcp);
     if (status != EXCEPTION_NONE) {
         userError("TCB SetMCPriority: Requested maximum controlled priority %lu too high (max %lu).",
-                  (unsigned long) newMcp, (unsigned long) ksCurThread->tcbMCP);
+                  (unsigned long) newMcp, (unsigned long) NODE_STATE(ksCurThread)->tcbMCP);
         return status;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                0, newMcp, NULL_PRIO,
@@ -978,7 +978,7 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
         }
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                0, NULL_PRIO, NULL_PRIO,
@@ -1055,7 +1055,7 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                faultEP,
@@ -1105,7 +1105,7 @@ decodeDomainInvocation(word_t invLabel, word_t length, extra_caps_t excaps, word
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     setDomain(TCB_PTR(cap_thread_cap_get_capTCBPtr(tcap)), domain);
     return EXCEPTION_NONE;
 }
@@ -1155,7 +1155,7 @@ decodeBindNotification(cap_t cap, extra_caps_t excaps)
     }
 
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_NotificationControl(tcb, ntfnPtr);
 }
 
@@ -1172,7 +1172,7 @@ decodeUnbindNotification(cap_t cap)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_NotificationControl(tcb, NULL);
 }
 
@@ -1317,13 +1317,13 @@ invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
     exception_t e;
     tcb_t *thread;
 
-    thread = ksCurThread;
+    thread = NODE_STATE(ksCurThread);
 
     if (suspendSource) {
         suspend(tcb_src);
     }
 
-    e = Arch_performTransfer(arch, tcb_src, ksCurThread);
+    e = Arch_performTransfer(arch, tcb_src, NODE_STATE(ksCurThread));
     if (e != EXCEPTION_NONE) {
         return e;
     }
@@ -1378,7 +1378,7 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
     word_t pc;
     exception_t e;
 
-    e = Arch_performTransfer(arch, ksCurThread, dest);
+    e = Arch_performTransfer(arch, NODE_STATE(ksCurThread), dest);
     if (e != EXCEPTION_NONE) {
         return e;
     }

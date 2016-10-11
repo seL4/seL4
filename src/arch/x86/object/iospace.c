@@ -141,7 +141,7 @@ unmapVTDContextEntry(cap_t cap)
 
     flushCacheRange(cte, VTD_CTE_SIZE_BITS);
     invalidate_iotlb();
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return;
 }
 
@@ -195,7 +195,7 @@ decodeX86IOPTInvocation(
 
     if (invLabel == X86IOPageTableUnmap) {
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performX86IOPTInvocationUnmap(cap, slot);
     }
 
@@ -256,7 +256,7 @@ decodeX86IOPTInvocation(
         cap = cap_io_page_table_cap_set_capIOPTLevel(cap, 0);
         cap = cap_io_page_table_cap_set_capIOPTIOASID(cap, pci_request_id);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performX86IOPTInvocationMapContextRoot(cap, slot, vtd_cte, vtd_context_slot);
     } else {
         lookupIOPTSlot_ret_t lu_ret;
@@ -289,7 +289,7 @@ decodeX86IOPTInvocation(
         cap = cap_io_page_table_cap_set_capIOPTIOASID(cap, pci_request_id);
         cap = cap_io_page_table_cap_set_capIOPTMappedAddress(cap, io_address);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performX86IOPTInvocationMapPT(cap, slot, iopte, lu_ret.ioptSlot);
     }
 }
@@ -404,7 +404,7 @@ decodeX86IOMapInvocation(
     cap = cap_frame_cap_set_capFMappedASID(cap, pci_request_id);
     cap = cap_frame_cap_set_capFMappedAddress(cap, io_address);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performX86IOInvocationMap(cap, slot, iopte, lu_ret.ioptSlot);
 }
 

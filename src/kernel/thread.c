@@ -66,21 +66,21 @@ configureIdleThread(tcb_t *tcb)
 void
 activateThread(void)
 {
-    switch (thread_state_get_tsType(ksCurThread->tcbState)) {
+    switch (thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState)) {
     case ThreadState_Running:
         break;
 
     case ThreadState_Restart: {
         word_t pc;
 
-        pc = getRestartPC(ksCurThread);
-        setNextPC(ksCurThread, pc);
-        setThreadState(ksCurThread, ThreadState_Running);
+        pc = getRestartPC(NODE_STATE(ksCurThread));
+        setNextPC(NODE_STATE(ksCurThread), pc);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
         break;
     }
 
     case ThreadState_IdleThreadState:
-        Arch_activateIdleThread(ksCurThread);
+        Arch_activateIdleThread(NODE_STATE(ksCurThread));
         break;
 
     default:
@@ -280,23 +280,23 @@ schedule(void)
 {
     word_t action;
 
-    action = (word_t)ksSchedulerAction;
+    action = (word_t)NODE_STATE(ksSchedulerAction);
     if (action == (word_t)SchedulerAction_ChooseNewThread) {
-        if (isRunnable(ksCurThread)) {
-            tcbSchedEnqueue(ksCurThread);
+        if (isRunnable(NODE_STATE(ksCurThread))) {
+            tcbSchedEnqueue(NODE_STATE(ksCurThread));
         }
         if (ksDomainTime == 0) {
             nextDomain();
         }
         chooseThread();
-        ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
+        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     } else if (action != (word_t)SchedulerAction_ResumeCurrentThread) {
-        if (isRunnable(ksCurThread)) {
-            tcbSchedEnqueue(ksCurThread);
+        if (isRunnable(NODE_STATE(ksCurThread))) {
+            tcbSchedEnqueue(NODE_STATE(ksCurThread));
         }
         /* SwitchToThread */
-        switchToThread(ksSchedulerAction);
-        ksSchedulerAction = SchedulerAction_ResumeCurrentThread;
+        switchToThread(NODE_STATE(ksSchedulerAction));
+        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
 }
 
@@ -313,11 +313,11 @@ chooseThread(void)
         dom = 0;
     }
 
-    if (likely(ksReadyQueuesL1Bitmap[dom])) {
-        word_t l1index = (wordBits - 1) - clzl(ksReadyQueuesL1Bitmap[dom]);
-        word_t l2index = (wordBits - 1) - clzl(ksReadyQueuesL2Bitmap[dom][l1index]);
+    if (likely(NODE_STATE(ksReadyQueuesL1Bitmap[dom]))) {
+        word_t l1index = (wordBits - 1) - clzl(NODE_STATE(ksReadyQueuesL1Bitmap[dom]));
+        word_t l2index = (wordBits - 1) - clzl(NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]));
         prio = l1index_to_prio(l1index) | l2index;
-        thread = ksReadyQueues[ready_queues_index(dom, prio)].head;
+        thread = NODE_STATE(ksReadyQueues[ready_queues_index(dom, prio)]).head;
         assert(thread);
         assert(isRunnable(thread));
         switchToThread(thread);
@@ -330,21 +330,21 @@ void
 switchToThread(tcb_t *thread)
 {
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_switch(ksCurThread, thread);
+    benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
     Arch_switchToThread(thread);
     tcbSchedDequeue(thread);
-    ksCurThread = thread;
+    NODE_STATE(ksCurThread) = thread;
 }
 
 void
 switchToIdleThread(void)
 {
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_switch(ksCurThread, ksIdleThread);
+    benchmark_utilisation_switch(NODE_STATE(ksCurThread), NODE_STATE(ksIdleThread));
 #endif
     Arch_switchToIdleThread();
-    ksCurThread = ksIdleThread;
+    NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
 }
 
 void
@@ -355,7 +355,7 @@ setDomain(tcb_t *tptr, dom_t dom)
     if (isRunnable(tptr)) {
         tcbSchedEnqueue(tptr);
     }
-    if (tptr == ksCurThread) {
+    if (tptr == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
     }
 }
@@ -374,7 +374,7 @@ setPriority(tcb_t *tptr, prio_t prio)
     if (isRunnable(tptr)) {
         tcbSchedEnqueue(tptr);
     }
-    if (tptr == ksCurThread) {
+    if (tptr == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
     }
 }
@@ -387,16 +387,16 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
     tcb_t *action;
 
     curDom = ksCurDomain;
-    curPrio = ksCurThread->tcbPriority;
+    curPrio = NODE_STATE(ksCurThread)->tcbPriority;
     targetDom = target->tcbDomain;
     targetPrio = target->tcbPriority;
-    action = ksSchedulerAction;
+    action = NODE_STATE(ksSchedulerAction);
     if (targetDom != curDom) {
         tcbSchedEnqueue(target);
     } else {
         if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
                 && action == SchedulerAction_ResumeCurrentThread) {
-            ksSchedulerAction = target;
+            NODE_STATE(ksSchedulerAction) = target;
         } else {
             tcbSchedEnqueue(target);
         }
@@ -429,8 +429,8 @@ setThreadState(tcb_t *tptr, _thread_state_t ts)
 void
 scheduleTCB(tcb_t *tptr)
 {
-    if (tptr == ksCurThread &&
-            ksSchedulerAction == SchedulerAction_ResumeCurrentThread &&
+    if (tptr == NODE_STATE(ksCurThread) &&
+            NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread &&
             !isRunnable(tptr)) {
         rescheduleRequired();
     }
@@ -439,13 +439,13 @@ scheduleTCB(tcb_t *tptr)
 void
 timerTick(void)
 {
-    if (likely(thread_state_get_tsType(ksCurThread->tcbState) ==
+    if (likely(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
                ThreadState_Running)) {
-        if (ksCurThread->tcbTimeSlice > 1) {
-            ksCurThread->tcbTimeSlice--;
+        if (NODE_STATE(ksCurThread)->tcbTimeSlice > 1) {
+            NODE_STATE(ksCurThread)->tcbTimeSlice--;
         } else {
-            ksCurThread->tcbTimeSlice = CONFIG_TIME_SLICE;
-            tcbSchedAppend(ksCurThread);
+            NODE_STATE(ksCurThread)->tcbTimeSlice = CONFIG_TIME_SLICE;
+            tcbSchedAppend(NODE_STATE(ksCurThread));
             rescheduleRequired();
         }
     }
@@ -461,10 +461,10 @@ timerTick(void)
 void
 rescheduleRequired(void)
 {
-    if (ksSchedulerAction != SchedulerAction_ResumeCurrentThread
-            && ksSchedulerAction != SchedulerAction_ChooseNewThread) {
-        tcbSchedEnqueue(ksSchedulerAction);
+    if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread
+            && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread) {
+        tcbSchedEnqueue(NODE_STATE(ksSchedulerAction));
     }
-    ksSchedulerAction = SchedulerAction_ChooseNewThread;
+    NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
 }
 

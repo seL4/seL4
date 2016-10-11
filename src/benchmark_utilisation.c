@@ -20,13 +20,13 @@ timestamp_t benchmark_end_time;
 
 void benchmark_track_utilisation_dump(void)
 {
-    uint64_t *buffer = ((uint64_t *) & (((seL4_IPCBuffer *)lookupIPCBuffer(true, ksCurThread))->msg[0]));
+    uint64_t *buffer = ((uint64_t *) & (((seL4_IPCBuffer *)lookupIPCBuffer(true, NODE_STATE(ksCurThread)))->msg[0]));
     tcb_t *tcb = NULL;
-    word_t tcb_cptr = getRegister(ksCurThread, capRegister);
+    word_t tcb_cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
     lookupCap_ret_t lu_ret;
     word_t cap_type;
 
-    lu_ret = lookupCap(ksCurThread, tcb_cptr);
+    lu_ret = lookupCap(NODE_STATE(ksCurThread), tcb_cptr);
     /* ensure we got a TCB cap */
     cap_type = cap_get_capType(lu_ret.cap);
     if (cap_type != cap_thread_cap) {
@@ -36,7 +36,7 @@ void benchmark_track_utilisation_dump(void)
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap));
     buffer[BENCHMARK_TCB_UTILISATION] = tcb->benchmark.utilisation; /* Requested thread utilisation */
-    buffer[BENCHMARK_IDLE_UTILISATION] = ksIdleThread->benchmark.utilisation; /* Idle thread utilisation */
+    buffer[BENCHMARK_IDLE_UTILISATION] = NODE_STATE(ksIdleThread)->benchmark.utilisation; /* Idle thread utilisation */
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
     buffer[BENCHMARK_TOTAL_UTILISATION] =
@@ -50,11 +50,11 @@ void benchmark_track_utilisation_dump(void)
 void benchmark_track_reset_utilisation(void)
 {
     tcb_t *tcb = NULL;
-    word_t tcb_cptr = getRegister(ksCurThread, capRegister);
+    word_t tcb_cptr = getRegister(NODE_STATE(ksCurThread), capRegister);
     lookupCap_ret_t lu_ret;
     word_t cap_type;
 
-    lu_ret = lookupCap(ksCurThread, tcb_cptr);
+    lu_ret = lookupCap(NODE_STATE(ksCurThread), tcb_cptr);
     /* ensure we got a TCB cap */
     cap_type = cap_get_capType(lu_ret.cap);
     if (cap_type != cap_thread_cap) {

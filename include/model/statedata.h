@@ -1,36 +1,38 @@
 /*
- * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2016, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
  *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(GD_GPL)
+ * @TAG(D61_GPL)
  */
 
-#ifndef __MODEL_STATEDATA_H
-#define __MODEL_STATEDATA_H
+#pragma once
 
+#include <config.h>
 #include <types.h>
 #include <object/structures.h>
 #include <object/tcb.h>
-#include <arch/model/statedata.h>
+#include <mode/types.h>
+#include <model/smp.h>
+#include <arch/machine.h>
+
+#define NUM_READY_QUEUES (CONFIG_NUM_DOMAINS * CONFIG_NUM_PRIORITIES)
 
 NODE_STATE_BEGIN(nodeState)
-NODE_STATE_TYPE_DECLARE(archNodeState, arch);
+NODE_STATE_DECLARE(tcb_queue_t, ksReadyQueues[NUM_READY_QUEUES]);
+NODE_STATE_DECLARE(word_t, ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS]);
+NODE_STATE_DECLARE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1]);
+NODE_STATE_DECLARE(tcb_t, *ksCurThread);
+NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
+NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
 NODE_STATE_END(nodeState);
 
-#include <arch/machine.h>
-#include <arch/model/smp.h>
-#include <mode/machine.h>
-
 extern word_t ksNumCPUs VISIBLE;
-extern tcb_queue_t ksReadyQueues[] VISIBLE;
-extern word_t ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS] VISIBLE;
-extern word_t ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1] VISIBLE;
-extern tcb_t *ksCurThread VISIBLE;
-extern tcb_t *ksIdleThread VISIBLE;
-extern tcb_t *ksSchedulerAction VISIBLE;
+
 extern word_t ksWorkUnitsCompleted;
 extern irq_state_t intStateIRQTable[] VISIBLE;
 extern cte_t *intStateIRQNode VISIBLE;
@@ -47,7 +49,3 @@ extern paddr_t ksUserLogBuffer;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)
-
-#define NUM_READY_QUEUES (CONFIG_NUM_DOMAINS * CONFIG_NUM_PRIORITIES)
-
-#endif

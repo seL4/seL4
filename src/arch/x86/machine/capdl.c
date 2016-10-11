@@ -211,11 +211,11 @@ static void sendIOSpace(uint32_t pci_request_id)
 static void sendRunqueues(void)
 {
     word_t i;
-    sendWord((unsigned long)ksCurThread);
+    sendWord((unsigned long)NODE_STATE(ksCurThread));
     for (i = 0; i < NUM_READY_QUEUES; i++) {
-        tcb_t *current = ksReadyQueues[i].head;
+        tcb_t *current = NODE_STATE(ksReadyQueues[i]).head;
         if (current != 0) {
-            while (current != ksReadyQueues[i].end) {
+            while (current != NODE_STATE(ksReadyQueues[i]).end) {
                 sendWord((unsigned long)current);
                 current = current -> tcbSchedNext;
             }

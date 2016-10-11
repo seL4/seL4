@@ -765,7 +765,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
     pptr_t frame_pptr;
 
     /* faulting section */
-    lu_ret = lookupCapAndSlot(ksCurThread, frame_cptr);
+    lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), frame_cptr);
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Invalid cap #%lu.", frame_cptr);

@@ -136,7 +136,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
             return status;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeIssueIRQHandlerIOAPIC(irq, ioapic, pin, level, polarity, vector, destSlot, srcSlot);
     }
     break;
@@ -177,7 +177,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
 
         irqState = x86_irq_state_irq_msi_new(pci_bus, pci_dev, pci_func, handle);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return Arch_invokeIRQControl(irq, destSlot, srcSlot, irqState);
     }
     break;

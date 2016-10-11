@@ -19,6 +19,7 @@
 #include <kernel/cspace.h>
 #include <model/statedata.h>
 #include <api/debug.h>
+#include <mode/machine.h>
 
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 #define TRACK_KERNEL_ENTRIES 1
@@ -57,7 +58,7 @@ static inline void
 benchmark_debug_syscall_start(word_t cptr, word_t msgInfo, word_t syscall)
 {
     seL4_MessageInfo_t info = messageInfoFromWord_raw(msgInfo);
-    lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(ksCurThread, cptr);
+    lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
     ksKernelEntry.path = Entry_Syscall;
     ksKernelEntry.syscall_no = syscall;
     ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);

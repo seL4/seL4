@@ -63,10 +63,10 @@ handleUnimplementedDevice(void)
      * This should only be able to occur on CPUs without an FPU at all, which
      * we presumably are happy to assume will not be running seL4.
      */
-    assert(ksCurThread != ARCH_NODE_STATE(x86KSfpuOwner));
+    assert(NODE_STATE(ksCurThread) != ARCH_NODE_STATE(x86KSfpuOwner));
 
     /* Otherwise, lazily switch over the FPU. */
-    switchFpuOwner(ksCurThread);
+    switchFpuOwner(NODE_STATE(ksCurThread));
 
     return EXCEPTION_NONE;
 }

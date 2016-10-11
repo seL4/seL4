@@ -15,9 +15,6 @@
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/smp.h>
 
-#define wordRadix 5
-#define wordBits (1 << wordRadix)
-
 /* Get current stack pointer */
 static inline void* get_current_esp(void)
 {

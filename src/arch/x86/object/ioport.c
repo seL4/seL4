@@ -170,10 +170,10 @@ decodeX86PortInvocation(
 
     if (len > 0) {
         /* return the value read from the port */
-        setRegister(ksCurThread, badgeRegister, 0);
+        setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
         if (n_msgRegisters < 1) {
             word_t* ipcBuffer;
-            ipcBuffer = lookupIPCBuffer(true, ksCurThread);
+            ipcBuffer = lookupIPCBuffer(true, NODE_STATE(ksCurThread));
             if (ipcBuffer != NULL) {
                 ipcBuffer[1] = res;
                 len = 1;
@@ -181,13 +181,13 @@ decodeX86PortInvocation(
                 len = 0;
             }
         } else {
-            setRegister(ksCurThread, msgRegisters[0], res);
+            setRegister(NODE_STATE(ksCurThread), msgRegisters[0], res);
             len = 1;
         }
     }
-    setRegister(ksCurThread, msgInfoRegister,
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
                 wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, len)));
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
