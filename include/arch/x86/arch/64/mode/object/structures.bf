@@ -197,6 +197,9 @@ tagged_union fault faultType {
     tag vm_fault 2
     tag unknown_syscall 3
     tag user_exception 4
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    tag debug_exception 5
+#endif
 }
 
 -- VM attributes

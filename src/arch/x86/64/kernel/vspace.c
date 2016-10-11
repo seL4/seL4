@@ -290,7 +290,9 @@ init_syscall_msrs(void)
 {
     x86_wrmsr(IA32_LSTAR_MSR, (uint64_t)&handle_fastsyscall);
     // mask bit 9 in the kernel (which is the interrupt enable bit)
-    x86_wrmsr(IA32_FMASK_MSR, BIT(9));
+    // also mask bit 8, which is the Trap Flag, to prevent the kernel
+    // from single stepping
+    x86_wrmsr(IA32_FMASK_MSR, BIT(9) | BIT(8));
     x86_wrmsr(IA32_STAR_MSR, ((uint64_t)SEL_CS_0 << 32) | ((uint64_t)SEL_CS_3 << 48));
 }
 
@@ -413,7 +415,7 @@ init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
     uint64_t handler_addr = (uint64_t)handler;
     uint64_t dpl = 3;
 
-    if (interrupt < int_trap_min) {
+    if (interrupt < int_trap_min && interrupt != int_software_break_request) {
         dpl = 0;
     }
 

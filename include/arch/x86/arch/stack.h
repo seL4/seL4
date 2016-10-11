@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <config.h>
 #include <mode/machine.h>
 
 /** Hardware stack switching on exception/IRQ entry.
@@ -39,9 +40,12 @@ setKernelEntryStackPointer(tcb_t *target_thread)
     SMP_COND_STATEMENT(NODE_STATE(ksCurThread)->tcbArch.tcbContext.kernelSP = kernel_stack_top);
 
     register_context_top = (word_t)&target_thread->tcbArch.tcbContext.registers[n_contextRegisters];
-    tss_ptr_set_esp0(&ARCH_NODE_STATE(x86KStss).tss, register_context_top);
 
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    x86_wrmsr(IA32_SYSENTER_ESP_MSR, register_context_top);
+#ifdef CONFIG_ARCH_IA32
+    tss_ptr_set_esp0(&ARCH_NODE_STATE(x86KStss).tss, register_context_top);
 #endif
+
+    if (config_set(CONFIG_HARDWARE_DEBUG_API) && config_set(CONFIG_SYSENTER)) {
+        x86_wrmsr(IA32_SYSENTER_ESP_MSR, register_context_top);
+    }
 }

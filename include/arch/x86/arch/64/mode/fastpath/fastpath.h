@@ -104,6 +104,13 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         /* No-one (including us) is using the FPU, so we assume it
          * is currently disabled */
     }
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    restore_user_debug_context(ksCurThread);
+#endif
+
+    setKernelEntryStackPointer(ksCurThread);
+
     if (config_set(CONFIG_SYSENTER)) {
         cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~0x200;
 

@@ -71,6 +71,7 @@ word_t sanitiseRegister(register_t reg, word_t v)
         v &= ~BIT(5);   /* reserved bit that must be set to 0 */
         v |=  BIT(9);   /* interrupts must be enabled in userland */
         v &=  MASK(12); /* bits 12:31 have to be 0 */
+        v &= ~BIT(X86_EFLAGS_TRAP_FLAG_SHIFT);
     }
     return v;
 }

@@ -276,6 +276,21 @@ block user_exception {
     field faultType 3
 }
 
+#ifdef CONFIG_HARDWARE_DEBUG_API
+block debug_exception {
+    field breakpointAddress 64
+
+    padding 53
+    -- X86 has 4 breakpoints (DR0-3).
+    -- ARM has between 2 and 16 breakpoints
+    --   ( ARM Ref manual, C3.3).
+    -- So we just use 4 bits to cater for both.
+    field breakpointNumber 4
+    field exceptionReason 4
+    field faultType 3
+}
+#endif
+
 -- Thread state: size = 8 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingIPCDiminishCaps, tsType,
