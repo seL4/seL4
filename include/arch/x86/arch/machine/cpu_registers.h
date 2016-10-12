@@ -19,6 +19,12 @@
 #define CR4_OSXMMEXCPT      BIT(10) /* Enable SSE exceptions. */
 #define CR4_OSXSAVE         BIT(18) /* Enavle XSAVE feature set */
 
+#define FLAGS_TF            BIT(8)  /* Trap Flag */
+#define FLAGS_IF            BIT(9)  /* Interrupt enable Flag */
+#define FLAGS_HIGH          BIT(1)  /* Bits in the FLAGS register that must be high */
+#define FLAGS_LOW           (BIT(3) | BIT(5)) /* Bits in the FLAGS register that must be low */
+#define FLAGS_MASK          MASK(12)/* Only the first 12 bits of the FLAGS are used, rest should be zero */
+
 /* We use a dummy variable to synchronize reads and writes to the control registers.
  * this allows us to write inline asm blocks that do not have enforced memory
  * clobbers for ordering. */

@@ -19,8 +19,6 @@
 #include <arch/machine/registerset.h>
 #include <mode/machine/debug.h>
 
-#define X86_EFLAGS_TRAP_FLAG_SHIFT   (8u)
-
 /* Bit in DR7 that will enable each BP respectively. */
 #define X86_DEBUG_BP0_ENABLE_BIT  ((word_t)BIT(1))
 #define X86_DEBUG_BP1_ENABLE_BIT  ((word_t)BIT(3))
@@ -105,11 +103,7 @@ restore_user_debug_context(tcb_t *target_thread)
 
     /* If single-stepping was enabled, we need to re-set the TF flag as well. */
     if (uds->tcbContext.breakpointState.single_step_enabled == true) {
-#ifdef CONFIG_ARCH_IA32
-        uds->tcbContext.registers[FLAGS] |= BIT(X86_EFLAGS_TRAP_FLAG_SHIFT);
-#else
-        uds->tcbContext.registers[FLAGS] |= BIT(X86_EFLAGS_TRAP_FLAG_SHIFT);
-#endif
+        uds->tcbContext.registers[FLAGS] |= FLAGS_TF;
     }
 }
 

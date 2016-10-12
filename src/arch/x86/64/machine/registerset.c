@@ -66,12 +66,14 @@ word_t sanitiseRegister(register_t reg, word_t v)
         }
     }
     if (reg == FLAGS) {
-        v |=  BIT(1);   /* reserved bit that must be set to 1 */
-        v &= ~BIT(3);   /* reserved bit that must be set to 0 */
-        v &= ~BIT(5);   /* reserved bit that must be set to 0 */
-        v |=  BIT(9);   /* interrupts must be enabled in userland */
-        v &=  MASK(12); /* bits 12:31 have to be 0 */
-        v &= ~BIT(X86_EFLAGS_TRAP_FLAG_SHIFT);
+        /* Set architecturally defined high and low bits */
+        v |=  FLAGS_HIGH;
+        v &= ~FLAGS_LOW;
+        /* require user to have interrupts and no traps */
+        v |=  FLAGS_IF;
+        v &= ~FLAGS_TF;
+        /* remove any other bits that shouldn't be set */
+        v &=  FLAGS_MASK;
     }
     return v;
 }
