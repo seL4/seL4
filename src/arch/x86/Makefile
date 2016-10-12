@@ -22,7 +22,5 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/64/Makefile
 endif
 endif
 
-ARCH_C_SOURCES += c_traps.c
-
-ARCH_ASM_SOURCES += halt.S \
-                    idle.S
+ARCH_C_SOURCES += c_traps.c \
+                  idle.c
