@@ -29,7 +29,7 @@
 #define NODE_STATE_BEGIN(_name)
 #define NODE_STATE_END(_name)
 #define NODE_STATE_TYPE_DECLARE(_name, _state)
-/* UP states are declared as VISIBLE so that they are accessible in assembly */ 
+/* UP states are declared as VISIBLE so that they are accessible in assembly */
 #define NODE_STATE_DECLARE(_type, _state)       extern _type _state VISIBLE
 
 #define SMP_STATE_DEFINE(_name, _state)
