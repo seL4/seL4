@@ -37,6 +37,10 @@ typedef enum {
 #ifdef CONFIG_HARDWARE_DEBUG_API
     seL4_DebugException,
 #endif
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    seL4_VGICMaintenance = 6,
+    seL4_VCPUFault,
+#endif
     SEL4_FORCE_LONG_ENUM(seL4_FaultType),
 } seL4_FaultType;
 
