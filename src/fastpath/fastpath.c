@@ -31,9 +31,9 @@ fastpath_call(word_t cptr, word_t msgInfo)
     cte_t *replySlot, *callerSlot;
     cap_t newVTable;
 #ifdef CONFIG_ARCH_X86
-    vspace_root_t *cap_vroot;
+    vspace_root_t *cap_pd;
 #else
-    pde_t *cap_vroot;
+    pde_t *cap_pd;
 #endif
     pde_t stored_hw_asid;
     word_t fault_type;
@@ -76,11 +76,11 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
     /* Get vspace root. */
 #if defined(ARCH_ARM) || (!defined(CONFIG_PAE_PAGING) && defined(CONFIG_ARCH_IA32))
-    cap_vroot = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+    cap_pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
 #elif defined(CONFIG_ARCH_X86_64)
-    cap_vroot = PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(newVTable));
+    cap_pd = PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(newVTable));
 #elif defined(CONFIG_PAE_PAGING)
-    cap_vroot = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
+    cap_pd = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
 #else
 #error "Invalid vspace root"
 #endif
@@ -92,7 +92,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef ARCH_ARM
     /* Get HW ASID */
-    stored_hw_asid = cap_vroot[PD_ASID_SLOT];
+    stored_hw_asid = cap_pd[PD_ASID_SLOT];
 #endif
 
 #ifdef CONFIG_ARCH_X86_64
@@ -170,7 +170,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&dest->tcbState,
                                    ThreadState_Running);
-    switchToThread_fp(dest, cap_vroot, stored_hw_asid);
+    switchToThread_fp(dest, cap_pd, stored_hw_asid);
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 
@@ -193,9 +193,9 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     cap_t newVTable;
 #ifdef CONFIG_ARCH_X86
-    vspace_root_t *cap_vroot;
+    vspace_root_t *cap_pd;
 #else
-    pde_t *cap_vroot;
+    pde_t *cap_pd;
 #endif
     pde_t stored_hw_asid;
 
@@ -257,11 +257,11 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* Get vspace root. */
 #if defined(ARCH_ARM) || (!defined(CONFIG_PAE_PAGING) && defined(CONFIG_ARCH_IA32))
-    cap_vroot = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
+    cap_pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
 #elif defined(CONFIG_ARCH_X86_64)
-    cap_vroot = PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(newVTable));
+    cap_pd = PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(newVTable));
 #elif defined(CONFIG_PAE_PAGING)
-    cap_vroot = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
+    cap_pd = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
 #else
 #error "Invalid vspace root"
 #endif
@@ -273,7 +273,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef ARCH_ARM
     /* Get HWASID. */
-    stored_hw_asid = cap_vroot[PD_ASID_SLOT];
+    stored_hw_asid = cap_pd[PD_ASID_SLOT];
 #endif
 #ifdef CONFIG_ARCH_X86_64
     stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
@@ -355,7 +355,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&caller->tcbState,
                                    ThreadState_Running);
-    switchToThread_fp(caller, cap_vroot, stored_hw_asid);
+    switchToThread_fp(caller, cap_pd, stored_hw_asid);
 
     msgInfo = wordFromMessageInfo(seL4_MessageInfo_set_capsUnwrapped(info, 0));
 
