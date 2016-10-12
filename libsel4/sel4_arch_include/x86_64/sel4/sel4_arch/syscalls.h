@@ -33,9 +33,9 @@ seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                  seL4_Word *mr0, seL4_Word *mr1)
 {
     x64_sys_send(seL4_SysSend, dest, msgInfo.words[0],
-        (mr0 != seL4_Null) ? *mr0 : 0,
-        (mr1 != seL4_Null) ? *mr1 : 0
-    );
+                 (mr0 != seL4_Null) ? *mr0 : 0,
+                 (mr1 != seL4_Null) ? *mr1 : 0
+                );
 }
 
 static inline void
@@ -49,9 +49,9 @@ seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                    seL4_Word *mr0, seL4_Word *mr1)
 {
     x64_sys_send(seL4_SysNBSend, dest, msgInfo.words[0],
-        (mr0 != seL4_Null) ? *mr0 : 0,
-        (mr1 != seL4_Null) ? *mr1 : 0
-    );
+                 (mr0 != seL4_Null) ? *mr0 : 0,
+                 (mr1 != seL4_Null) ? *mr1 : 0
+                );
 }
 
 static inline void
@@ -65,9 +65,9 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
                   seL4_Word *mr0, seL4_Word *mr1)
 {
     x64_sys_reply(seL4_SysReply, msgInfo.words[0],
-        (mr0 != seL4_Null) ? *mr0 : 0,
-        (mr1 != seL4_Null) ? *mr1 : 0
-    );
+                  (mr0 != seL4_Null) ? *mr0 : 0,
+                  (mr1 != seL4_Null) ? *mr1 : 0
+                 );
 }
 
 static inline void

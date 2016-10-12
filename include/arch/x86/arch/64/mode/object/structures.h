@@ -193,52 +193,55 @@ cap_get_modeCapPtr(cap_t cap)
 }
 
 static inline pte_t
-x86_make_device_pte(paddr_t phys) {
+x86_make_device_pte(paddr_t phys)
+{
     return pte_new(
-                   0,      /* xd */
-                   phys,   /* page_base_address    */
-                   1,      /* global               */
-                   0,      /* pat                  */
-                   0,      /* dirty                */
-                   0,      /* accessed             */
-                   1,      /* cache_disabled       */
-                   1,      /* write_through        */
-                   0,      /* super_user           */
-                   1,      /* read_write           */
-                   1       /* present              */
-    );
+               0,      /* xd */
+               phys,   /* page_base_address    */
+               1,      /* global               */
+               0,      /* pat                  */
+               0,      /* dirty                */
+               0,      /* accessed             */
+               1,      /* cache_disabled       */
+               1,      /* write_through        */
+               0,      /* super_user           */
+               1,      /* read_write           */
+               1       /* present              */
+           );
 }
 
 static inline pte_t
-x86_make_empty_pte(void) {
+x86_make_empty_pte(void)
+{
     return pte_new(
-                   0,      /* xd */
-                   0,      /* page_base_address    */
-                   0,      /* global               */
-                   0,      /* pat                  */
-                   0,      /* dirty                */
-                   0,      /* accessed             */
-                   0,      /* cache_disabled       */
-                   0,      /* write_through        */
-                   0,      /* super_user           */
-                   0,      /* read_write           */
-                   0       /* present              */
-    );
+               0,      /* xd */
+               0,      /* page_base_address    */
+               0,      /* global               */
+               0,      /* pat                  */
+               0,      /* dirty                */
+               0,      /* accessed             */
+               0,      /* cache_disabled       */
+               0,      /* write_through        */
+               0,      /* super_user           */
+               0,      /* read_write           */
+               0       /* present              */
+           );
 }
 
 static inline pde_t
-x86_make_pde_mapping(word_t paddr, vm_attributes_t attr) {
+x86_make_pde_mapping(word_t paddr, vm_attributes_t attr)
+{
     return pde_pde_large_new(
-            0,
-            paddr,
-            vm_attributes_get_x86PATBit(attr),
-            1,
-            0,
-            0,
-            vm_attributes_get_x86PCDBit(attr),
-            vm_attributes_get_x86PWTBit(attr),
-            0,
-            1,
-            1
-            );
+               0,
+               paddr,
+               vm_attributes_get_x86PATBit(attr),
+               1,
+               0,
+               0,
+               vm_attributes_get_x86PCDBit(attr),
+               vm_attributes_get_x86PWTBit(attr),
+               0,
+               1,
+               1
+           );
 }

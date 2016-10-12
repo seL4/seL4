@@ -86,7 +86,7 @@ static inline void invalidatePCID(word_t type, void *vaddr, asid_t asid)
         desc.addr = (uint64_t)vaddr;
         asm volatile ("invpcid %1, %0" :: "r"(type), "m"(desc));
     } else {
-        switch(type) {
+        switch (type) {
         case INVPCID_TYPE_ADDR:
             asm volatile("invlpg (%[vptr])" :: [vptr] "r"(vaddr));
             break;
@@ -95,14 +95,13 @@ static inline void invalidatePCID(word_t type, void *vaddr, asid_t asid)
             /* reload CR3 to perform a full flush */
             setCurrentCR3(getCurrentCR3(), 0);
             break;
-        case INVPCID_TYPE_ALL_GLOBAL:
-            {
-                /* clear and reset the global bit to flush global mappings */
-                unsigned long cr4 = read_cr4();
-                write_cr4(cr4 & ~BIT(7));
-                write_cr4(cr4);
-            }
-            break;
+        case INVPCID_TYPE_ALL_GLOBAL: {
+            /* clear and reset the global bit to flush global mappings */
+            unsigned long cr4 = read_cr4();
+            write_cr4(cr4 & ~BIT(7));
+            write_cr4(cr4);
+        }
+        break;
         }
     }
 }

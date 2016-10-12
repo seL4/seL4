@@ -115,40 +115,40 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~0x200;
 
         asm volatile (
-                "movq %%rcx, %%rsp\n"
-                "popq %%rax\n"
-                "popq %%rbx\n"
-                "popq %%rbp\n"
-                "popq %%r12\n"
-                "popq %%r13\n"
-                "popq %%r14\n"
-                "popq %%r15\n"
-                // Skip RDX, we need to put NextIP into it
-                "addq $8, %%rsp\n"
-                "popq %%r10\n"
-                "popq %%r8\n"
-                "popq %%r9\n"
-                // restore RFLAGS
-                "popfq\n"
-                // reset interrupt bit
-                "orq $0x200, -8(%%rsp)\n"
-                // Restore NextIP
-                "popq %%rdx\n"
-                // skip Error
-                "addq $8, %%rsp\n"
-                // restore RSP
-                "popq %%rcx\n"
-                // Skip TLS_BASE FaultIP
-                "addq $16, %%rsp\n"
-                "popq %%r11\n"
-                "sti\n"
-                "rex.w sysexit\n"
-                :
-                : "c" (&cur_thread->tcbArch.tcbContext.registers[RAX]),
-                  "D" (badge),
-                  "S" (msgInfo)
-                : "memory"
-            );
+            "movq %%rcx, %%rsp\n"
+            "popq %%rax\n"
+            "popq %%rbx\n"
+            "popq %%rbp\n"
+            "popq %%r12\n"
+            "popq %%r13\n"
+            "popq %%r14\n"
+            "popq %%r15\n"
+            // Skip RDX, we need to put NextIP into it
+            "addq $8, %%rsp\n"
+            "popq %%r10\n"
+            "popq %%r8\n"
+            "popq %%r9\n"
+            // restore RFLAGS
+            "popfq\n"
+            // reset interrupt bit
+            "orq $0x200, -8(%%rsp)\n"
+            // Restore NextIP
+            "popq %%rdx\n"
+            // skip Error
+            "addq $8, %%rsp\n"
+            // restore RSP
+            "popq %%rcx\n"
+            // Skip TLS_BASE FaultIP
+            "addq $16, %%rsp\n"
+            "popq %%r11\n"
+            "sti\n"
+            "rex.w sysexit\n"
+            :
+            : "c" (&cur_thread->tcbArch.tcbContext.registers[RAX]),
+            "D" (badge),
+            "S" (msgInfo)
+            : "memory"
+        );
     } else {
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
@@ -175,8 +175,8 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "rex.w sysret\n"
             :
             : "r"(&ksCurThread->tcbArch.tcbContext.registers[RAX]),
-              "D" (badge),
-              "S" (msgInfo)
+            "D" (badge),
+            "S" (msgInfo)
             : "memory"
         );
     }

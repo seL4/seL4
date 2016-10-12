@@ -28,10 +28,10 @@ x64_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info, seL4_Word msg0, seL4
         "movq   %%rbx, %%rsp        \n"
         :
         : "d" (sys),
-          "D" (dest),
-          "S" (info),
-          "r" (mr0),
-          "r" (mr1)
+        "D" (dest),
+        "S" (info),
+        "r" (mr0),
+        "r" (mr1)
         : "%rcx", "%rbx", "r11"
     );
 }
@@ -48,9 +48,9 @@ x64_sys_reply(seL4_Word sys, seL4_Word info, seL4_Word msg0, seL4_Word msg1)
         "movq   %%rbx, %%rsp        \n"
         :
         : "d" (sys),
-          "S" (info),
-          "r" (mr0),
-          "r" (mr1)
+        "S" (info),
+        "r" (mr0),
+        "r" (mr1)
         : "%rbx", "%rcx", "%r11"
     );
 }
@@ -64,8 +64,8 @@ x64_sys_send_null(seL4_Word sys, seL4_Word dest, seL4_Word info)
         "movq   %%rbx, %%rsp        \n"
         :
         : "d" (sys),
-          "D" (dest),
-          "S" (info)
+        "D" (dest),
+        "S" (info)
         : "%rcx", "%rbx", "%r11"
     );
 }
@@ -81,11 +81,11 @@ x64_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_
         "syscall                \n"
         "movq   %%rbx, %%rsp    \n"
         : "=D" (*out_badge),
-          "=S" (*out_info),
-          "=r" (mr0),
-          "=r" (mr1)
+        "=S" (*out_info),
+        "=r" (mr0),
+        "=r" (mr1)
         : "d" (sys),
-          "D" (src)
+        "D" (src)
         : "%rcx", "%rbx", "r11", "memory"
     );
     *out_mr0 = mr0;
@@ -103,14 +103,14 @@ x64_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_dest, seL4_Word 
         "syscall                \n"
         "movq   %%rbx, %%rsp    \n"
         : "=S" (*out_info),
-          "=r" (mr0),
-          "=r" (mr1),
-          "=D" (*out_dest)
+        "=r" (mr0),
+        "=r" (mr1),
+        "=D" (*out_dest)
         : "d" (sys),
-          "D" (dest),
-          "S" (info),
-          "r" (mr0),
-          "r" (mr1)
+        "D" (dest),
+        "S" (info),
+        "r" (mr0),
+        "r" (mr1)
         : "%rcx", "%rbx", "r11", "memory"
     );
     *in_out_mr0 = mr0;

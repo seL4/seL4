@@ -29,14 +29,14 @@ bool_t
 Arch_isFrameType(word_t type)
 {
     switch (type) {
-        case seL4_X86_4K:
-            return true;
-        case seL4_X86_LargePageObject:
-            return true;
-        case seL4_X64_HugePageObject:
-            return true;
-        default:
-            return false;
+    case seL4_X86_4K:
+        return true;
+    case seL4_X86_LargePageObject:
+        return true;
+    case seL4_X64_HugePageObject:
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -79,7 +79,7 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
             deleteASID(
                 cap_pml4_cap_get_capPML4MappedASID(cap),
                 PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(cap))
-                );
+            );
         }
         break;
 
@@ -89,7 +89,7 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
                 cap_pdpt_cap_get_capPDPTMappedASID(cap),
                 cap_pdpt_cap_get_capPDPTMappedAddress(cap),
                 PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap))
-                );
+            );
         }
         break;
 
@@ -136,10 +136,10 @@ cap_t Mode_recycleCap(bool_t is_final, cap_t cap)
         clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
         if (cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
             unmapPDPT(
-                    cap_pdpt_cap_get_capPDPTMappedASID(cap),
-                    cap_pdpt_cap_get_capPDPTMappedAddress(cap),
-                    PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap))
-                    );
+                cap_pdpt_cap_get_capPDPTMappedASID(cap),
+                cap_pdpt_cap_get_capPDPTMappedAddress(cap),
+                PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap))
+            );
         }
         Mode_finaliseCap(cap, is_final);
         if (is_final) {
@@ -182,7 +182,7 @@ Mode_getObjectSize(word_t t)
     case seL4_X64_PML4Object:
         return seL4_PML4Bits;
 
-  case seL4_X64_HugePageObject:
+    case seL4_X64_HugePageObject:
         return pageBitsForSize(X64_HugePage);
 
     default:
@@ -201,42 +201,42 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
             memzero(regionBase, BIT(pageBitsForSize(X86_SmallPage)));
         }
         return cap_frame_cap_new(
-                asidInvalid,        /* capFMappedASID           */
-                (word_t)regionBase, /* capFBasePtr              */
-                X86_SmallPage,      /* capFSize                 */
-                X86_MappingNone,    /* capFMapType              */
-                0,                  /* capFMappedAddress        */
-                VMReadWrite,        /* capFVMRights             */
-                deviceMemory        /* capFIsDevice             */
-                );
+                   asidInvalid,        /* capFMappedASID           */
+                   (word_t)regionBase, /* capFBasePtr              */
+                   X86_SmallPage,      /* capFSize                 */
+                   X86_MappingNone,    /* capFMapType              */
+                   0,                  /* capFMappedAddress        */
+                   VMReadWrite,        /* capFVMRights             */
+                   deviceMemory        /* capFIsDevice             */
+               );
 
     case seL4_X86_LargePageObject:
         if (!deviceMemory) {
             memzero(regionBase, BIT(pageBitsForSize(X86_LargePage)));
         }
         return cap_frame_cap_new(
-                asidInvalid,        /* capFMappedASID           */
-                (word_t)regionBase, /* capFBasePtr              */
-                X86_LargePage,      /* capFSize                 */
-                X86_MappingNone,    /* capFMapType              */
-                0,                  /* capFMappedAddress        */
-                VMReadWrite,        /* capFVMRights             */
-                deviceMemory        /* capFIsDevice             */
-                );
+                   asidInvalid,        /* capFMappedASID           */
+                   (word_t)regionBase, /* capFBasePtr              */
+                   X86_LargePage,      /* capFSize                 */
+                   X86_MappingNone,    /* capFMapType              */
+                   0,                  /* capFMappedAddress        */
+                   VMReadWrite,        /* capFVMRights             */
+                   deviceMemory        /* capFIsDevice             */
+               );
 
     case seL4_X64_HugePageObject:
         if (!deviceMemory) {
             memzero(regionBase, BIT(pageBitsForSize(X64_HugePage)));
         }
         return cap_frame_cap_new(
-                asidInvalid,        /* capFMappedASID           */
-                (word_t)regionBase, /* capFBasePtr              */
-                X64_HugePage,       /* capFSize                 */
-                X86_MappingNone,    /* capFMapType              */
-                0,                  /* capFMappedAddress        */
-                VMReadWrite,        /* capFVMRights             */
-                deviceMemory        /* capFIsDevice             */
-                );
+                   asidInvalid,        /* capFMappedASID           */
+                   (word_t)regionBase, /* capFBasePtr              */
+                   X64_HugePage,       /* capFSize                 */
+                   X86_MappingNone,    /* capFMapType              */
+                   0,                  /* capFMappedAddress        */
+                   VMReadWrite,        /* capFVMRights             */
+                   deviceMemory        /* capFIsDevice             */
+               );
 
     case seL4_X86_PageTableObject:
         memzero(regionBase, BIT(seL4_PageTableBits));
@@ -250,38 +250,38 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     case seL4_X86_PageDirectoryObject:
         memzero(regionBase, BIT(seL4_PageDirBits));
         return cap_page_directory_cap_new(
-                asidInvalid,                /* capPDMappedASID      */
-                (word_t)regionBase,         /* capPDBasePtr         */
-                0,                          /* capPDIsMapped        */
-                0                           /* capPDMappedAddress   */
-            );
+                   asidInvalid,                /* capPDMappedASID      */
+                   (word_t)regionBase,         /* capPDBasePtr         */
+                   0,                          /* capPDIsMapped        */
+                   0                           /* capPDMappedAddress   */
+               );
 
     case seL4_X86_PDPTObject:
         memzero(regionBase, BIT(seL4_PDPTBits));
         return cap_pdpt_cap_new(
-                asidInvalid,                /* capPDPTMappedASID    */
-                (word_t)regionBase,         /* capPDPTBasePtr       */
-                0,                          /* capPDPTIsMapped      */
-                0                           /* capPDPTMappedAddress */
-            );
+                   asidInvalid,                /* capPDPTMappedASID    */
+                   (word_t)regionBase,         /* capPDPTBasePtr       */
+                   0,                          /* capPDPTIsMapped      */
+                   0                           /* capPDPTMappedAddress */
+               );
 
     case seL4_X64_PML4Object:
         memzero(regionBase, BIT(seL4_PML4Bits));
         copyGlobalMappings(PML4_PTR(regionBase));
         return cap_pml4_cap_new(
-                asidInvalid,                /* capPML4MappedASID   */
-                (word_t)regionBase,         /* capPML4BasePtr      */
-                0                           /* capPML4IsMapped     */
-                );
+                   asidInvalid,                /* capPML4MappedASID   */
+                   (word_t)regionBase,         /* capPML4BasePtr      */
+                   0                           /* capPML4IsMapped     */
+               );
 
     case seL4_X86_IOPageTableObject:
         memzero(regionBase, BIT(seL4_IOPageTableBits));
         return cap_io_page_table_cap_new(
-                0,
-                0,
-                0,
-                asidInvalid,
-                (word_t)regionBase
+                   0,
+                   0,
+                   0,
+                   asidInvalid,
+                   (word_t)regionBase
                );
 
     default:

@@ -50,7 +50,8 @@ map_kernel_window(
     paddr_t*   ioapic_paddrs,
     uint32_t   num_drhu,
     paddr_t*   drhu_list
-) {
+)
+{
 
     uint64_t paddr;
     uint64_t vaddr;
@@ -77,7 +78,7 @@ map_kernel_window(
                   0, /* super_user */
                   1, /* read_write */
                   1  /* present */
-                  );
+                 );
     /* put the 1GB kernel_base mapping into the PDPT */
     pdpte_pdpte_1g_ptr_new(&x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)],
                            0, /* xd */
@@ -91,27 +92,27 @@ map_kernel_window(
                            0, /* super_user */
                            1, /* read_write */
                            1  /* present */
-                           );
+                          );
     /* also map the physical memory into the big kernel window */
     paddr = 0;
     vaddr = PPTR_BASE;
     for (paddr = 0; paddr < PADDR_TOP;
-         paddr += BIT(seL4_HugePageBits)) {
+            paddr += BIT(seL4_HugePageBits)) {
 
         int pdpte_index = GET_PDPT_INDEX(vaddr);
         pdpte_pdpte_1g_ptr_new(&x64KSGlobalPDPT[pdpte_index],
-                0,          /* xd               */
-                paddr,      /* physical address */
-                0,          /* PAT              */
-                1,          /* global           */
-                0,          /* dirty            */
-                0,          /* accessed         */
-                0,          /* cache_disabled   */
-                0,          /* write_through    */
-                0,          /* super_user       */
-                1,          /* read_write       */
-                1           /* present          */
-                );
+                               0,          /* xd               */
+                               paddr,      /* physical address */
+                               0,          /* PAT              */
+                               1,          /* global           */
+                               0,          /* dirty            */
+                               0,          /* accessed         */
+                               0,          /* cache_disabled   */
+                               0,          /* write_through    */
+                               0,          /* super_user       */
+                               1,          /* read_write       */
+                               1           /* present          */
+                              );
 
         vaddr += BIT(seL4_HugePageBits);
     }
@@ -126,18 +127,18 @@ map_kernel_window(
                            0, /* super_user */
                            1, /* read_write */
                            1  /* present */
-                           );
+                          );
     /* put the PT into the PD */
     pde_pde_small_ptr_new(&x64KSGlobalPD[0],
-                      0, /* xd */
-                      kpptr_to_paddr(x64KSGlobalPT),
-                      0, /* accessed */
-                      0, /* cache_disabled */
-                      0, /* write_through */
-                      0, /* super_user */
-                      1, /* read_write */
-                      1  /* present */
-                      );
+                          0, /* xd */
+                          kpptr_to_paddr(x64KSGlobalPT),
+                          0, /* accessed */
+                          0, /* cache_disabled */
+                          0, /* write_through */
+                          0, /* super_user */
+                          1, /* read_write */
+                          1  /* present */
+                         );
 #else
 
     int pd_index = 0;
@@ -162,55 +163,55 @@ map_kernel_window(
                   0, /* super_user */
                   1, /* read_write */
                   1  /* present */
-                  );
+                 );
 
     for (pd_index = 0; pd_index < PADDR_TOP >> seL4_HugePageBits; pd_index++) {
         /* put the 1GB kernel_base mapping into the PDPT */
         pdpte_pdpte_pd_ptr_new(&x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_BASE) + pd_index],
-                           0, /* xd */
-                           kpptr_to_paddr(&x64KSGlobalPDs[pd_index][0]),
-                           0, /* accessed */
-                           0, /* cache disabled */
-                           0, /* write through */
-                           0, /* super user */
-                           1, /* read write */
-                           1 /* present */
-                           );
+                               0, /* xd */
+                               kpptr_to_paddr(&x64KSGlobalPDs[pd_index][0]),
+                               0, /* accessed */
+                               0, /* cache disabled */
+                               0, /* write through */
+                               0, /* super user */
+                               1, /* read write */
+                               1 /* present */
+                              );
     }
 
     pdpte_pdpte_pd_ptr_new(&x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)],
-                        0, /* xd */
-                        kpptr_to_paddr(&x64KSGlobalPDs[0][0]),
-                        0, /* accessed */
-                        0, /* cache disable */
-                        1, /* write through */
-                        0, /* super user */
-                        1, /* read write */
-                        1  /* present */
-                        );
+                           0, /* xd */
+                           kpptr_to_paddr(&x64KSGlobalPDs[0][0]),
+                           0, /* accessed */
+                           0, /* cache disable */
+                           1, /* write through */
+                           0, /* super user */
+                           1, /* read write */
+                           1  /* present */
+                          );
 
     paddr = 0;
     vaddr = PPTR_BASE;
 
     for (paddr = 0; paddr < PADDR_TOP;
-        paddr += 0x200000) {
+            paddr += 0x200000) {
 
         int pd_index = GET_PDPT_INDEX(vaddr) - GET_PDPT_INDEX(PPTR_BASE);
         int pde_index = GET_PD_INDEX(vaddr);
 
         pde_pde_large_ptr_new(&x64KSGlobalPDs[pd_index][pde_index],
-                0, /* xd */
-                paddr,
-                0, /* pat */
-                1, /* global */
-                0, /* dirty */
-                0, /* accessed */
-                0, /* cache disabled */
-                0, /* write through */
-                0, /* super user */
-                1, /* read write */
-                1  /* present */
-                );
+                              0, /* xd */
+                              paddr,
+                              0, /* pat */
+                              1, /* global */
+                              0, /* dirty */
+                              0, /* accessed */
+                              0, /* cache disabled */
+                              0, /* write through */
+                              0, /* super user */
+                              1, /* read write */
+                              1  /* present */
+                             );
         vaddr += 0x200000;
     }
 
@@ -224,19 +225,19 @@ map_kernel_window(
                            0, /* super_user */
                            1, /* read_write */
                            1  /* present */
-                           );
+                          );
 
     /* put the PT into the PD */
     pde_pde_small_ptr_new(&x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0],
-                      0, /* xd */
-                      kpptr_to_paddr(x64KSGlobalPT),
-                      0, /* accessed */
-                      0, /* cache_disabled */
-                      0, /* write_through */
-                      0, /* super_user */
-                      1, /* read_write */
-                      1  /* present */
-                      );
+                          0, /* xd */
+                          kpptr_to_paddr(x64KSGlobalPT),
+                          0, /* accessed */
+                          0, /* cache_disabled */
+                          0, /* write_through */
+                          0, /* super_user */
+                          1, /* read_write */
+                          1  /* present */
+                         );
 #endif
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
@@ -262,19 +263,19 @@ init_tss(tss_t *tss)
 {
     word_t base = (word_t)&irq_stack[6];
     tss_ptr_new(
-            tss,
-            sizeof(*tss),   /* io map base */
-            0, 0,       /* ist 7 */
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,
-            0, 0,       /* ist 1*/
-            0, 0,       /* rsp 2 */
-            0, 0,       /* rsp 1 */
-            0, 0        /* rsp 0 */
-            );
+        tss,
+        sizeof(*tss),   /* io map base */
+        0, 0,       /* ist 7 */
+        0, 0,
+        0, 0,
+        0, 0,
+        0, 0,
+        0, 0,
+        0, 0,       /* ist 1*/
+        0, 0,       /* rsp 2 */
+        0, 0,       /* rsp 1 */
+        0, 0        /* rsp 0 */
+    );
     /* set the IO map to all 1 to block user IN/OUT instructions */
     memset(&x86KStss.io_map[0], 0xff, sizeof(x86KStss.io_map));
 
@@ -306,104 +307,104 @@ init_gdt(gdt_entry_t *gdt, tss_t *tss)
     gdt[GDT_NULL] = gdt_entry_gdt_null_new();
 
     gdt[GDT_CS_0] = gdt_entry_gdt_code_new(
-            0,                  /* base high */
-            1,                  /* granularity */
-            0,                  /* operation size, must be 0 when 64-bit is set */
-            1,                  /* long mode */
-            0,                  /* avl */
-            0xf,                /* limit high */
-            1,                  /* present */
-            0,                  /* dpl */
-            1,                  /* always 1 for segment */
-            0,                  /* base middle */
-            0,                  /* base low */
-            0xffff              /* limit low */
-            );
+                        0,                  /* base high */
+                        1,                  /* granularity */
+                        0,                  /* operation size, must be 0 when 64-bit is set */
+                        1,                  /* long mode */
+                        0,                  /* avl */
+                        0xf,                /* limit high */
+                        1,                  /* present */
+                        0,                  /* dpl */
+                        1,                  /* always 1 for segment */
+                        0,                  /* base middle */
+                        0,                  /* base low */
+                        0xffff              /* limit low */
+                    );
 
     gdt[GDT_DS_0] = gdt_entry_gdt_data_new(
-            0,                  /* base high */
-            1,                  /* granularity */
-            1,                  /* operation size */
-            0,                  /* avl */
-            0xf,                /* seg limit high */
-            1,                  /* present */
-            0,                  /* dpl */
-            1,                  /* always 1 */
-            0,                  /* base mid */
-            0,                  /* base low */
-            0xffff              /* seg limit low */
-            );
+                        0,                  /* base high */
+                        1,                  /* granularity */
+                        1,                  /* operation size */
+                        0,                  /* avl */
+                        0xf,                /* seg limit high */
+                        1,                  /* present */
+                        0,                  /* dpl */
+                        1,                  /* always 1 */
+                        0,                  /* base mid */
+                        0,                  /* base low */
+                        0xffff              /* seg limit low */
+                    );
 
     gdt[GDT_CS_3] = gdt_entry_gdt_code_new(
-            0,                  /* base high */
-            1,                  /* granularity */
-            0,                  /* operation size, must be 0 when 64-bit is set */
-            1,                  /* long mode */
-            0,                  /* avl */
-            0xf,                /* limit high */
-            1,                  /* present */
-            3,                  /* dpl */
-            1,                  /* always 1 */
-            0,                  /* base middle */
-            0,                  /* base low */
-            0xffff              /* limit low */
-            );
+                        0,                  /* base high */
+                        1,                  /* granularity */
+                        0,                  /* operation size, must be 0 when 64-bit is set */
+                        1,                  /* long mode */
+                        0,                  /* avl */
+                        0xf,                /* limit high */
+                        1,                  /* present */
+                        3,                  /* dpl */
+                        1,                  /* always 1 */
+                        0,                  /* base middle */
+                        0,                  /* base low */
+                        0xffff              /* limit low */
+                    );
 
     gdt[GDT_DS_3] = gdt_entry_gdt_data_new(
-            0,
-            1,
-            1,
-            0,
-            0xf,
-            1,
-            3,
-            1,
-            0,
-            0,
-            0xffff
-            );
+                        0,
+                        1,
+                        1,
+                        0,
+                        0xf,
+                        1,
+                        3,
+                        1,
+                        0,
+                        0,
+                        0xffff
+                    );
 
     gdt[GDT_TLS] = gdt_entry_gdt_data_new(
-            0,
-            1,
-            1,
-            0,
-            0xf,
-            1,
-            3,
-            1,
-            0,
-            0,
-            0xffff
-            );
+                       0,
+                       1,
+                       1,
+                       0,
+                       0xf,
+                       1,
+                       3,
+                       1,
+                       0,
+                       0,
+                       0xffff
+                   );
 
     gdt[GDT_IPCBUF] = gdt_entry_gdt_data_new(
-            0,
-            1,
-            1,
-            0,
-            0xf,
-            1,
-            3,
-            1,
-            0,
-            0,
-            0xffff
-            );
+                          0,
+                          1,
+                          1,
+                          0,
+                          0xf,
+                          1,
+                          3,
+                          1,
+                          0,
+                          0,
+                          0xffff
+                      );
 
     gdt_tss = gdt_tss_new(
-            tss_base >> 32,                     /* base 63 - 32 */
-            (tss_base & 0xff000000UL) >> 24,    /* base 31 - 24 */
-            1,                                  /* granularity */
-            0,                                  /* avl */
-            0,                                  /* limit high */
-            1,                                  /* present */
-            0,                                  /* dpl */
-            9,                                  /* desc type */
-            (tss_base & 0xff0000UL) >> 16,      /* base 23-16 */
-            (tss_base & 0xffffUL),              /* base 15 - 0 */
-            sizeof(tss_io_t) - 1
-            );
+                  tss_base >> 32,                     /* base 63 - 32 */
+                  (tss_base & 0xff000000UL) >> 24,    /* base 31 - 24 */
+                  1,                                  /* granularity */
+                  0,                                  /* avl */
+                  0,                                  /* limit high */
+                  1,                                  /* present */
+                  0,                                  /* dpl */
+                  9,                                  /* desc type */
+                  (tss_base & 0xff0000UL) >> 16,      /* base 23-16 */
+                  (tss_base & 0xffffUL),              /* base 15 - 0 */
+                  sizeof(tss_io_t) - 1
+              );
 
     gdt[GDT_TSS].words[0] = gdt_tss.words[0];
     gdt[GDT_TSS + 1].words[0] = gdt_tss.words[1];
@@ -420,14 +421,14 @@ init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
     }
 
     idt[interrupt] = idt_entry_interrupt_gate_new(
-            handler_addr >> 32,                 /* offset 63 - 32 */
-            ((handler_addr >> 16) & 0xffff),
-            1,                                  /* present */
-            dpl,                                /* dpl */
-            0,                                  /* ist */
-            SEL_CS_0,                           /* segment selector */
-            (handler_addr & 0xffff)               /* offset 15 - 0 */
-            );
+                         handler_addr >> 32,                 /* offset 63 - 32 */
+                         ((handler_addr >> 16) & 0xffff),
+                         1,                                  /* present */
+                         dpl,                                /* dpl */
+                         0,                                  /* ist */
+                         SEL_CS_0,                           /* segment selector */
+                         (handler_addr & 0xffff)               /* offset 15 - 0 */
+                     );
 }
 
 void setVMRoot(tcb_t *tcb)
@@ -604,11 +605,11 @@ create_it_pdpt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_pdpt_cap_new(
-                asid,   /* capPDPTMappedASID    */
-                pptr,   /* capPDPTBasePtr       */
-                1,      /* capPDPTIsMapped      */
-                vptr    /* capPDPTMappedAddress */
-            );
+              asid,   /* capPDPTMappedASID    */
+              pptr,   /* capPDPTBasePtr       */
+              1,      /* capPDPTIsMapped      */
+              vptr    /* capPDPTMappedAddress */
+          );
     map_it_pdpt_cap(vspace_cap, cap);
     return cap;
 }
@@ -618,11 +619,11 @@ create_it_pd_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_directory_cap_new(
-                asid,   /* capPDMappedASID      */
-                pptr,   /* capPDBasePtr         */
-                1,      /* capPDIsMapped        */
-                vptr    /* capPDMappedAddress   */
-            );
+              asid,   /* capPDMappedASID      */
+              pptr,   /* capPDBasePtr         */
+              1,      /* capPDIsMapped        */
+              vptr    /* capPDMappedAddress   */
+          );
     map_it_pd_cap(vspace_cap, cap);
     return cap;
 }
@@ -632,11 +633,11 @@ create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_table_cap_new(
-                asid,   /* capPTMappedASID      */
-                pptr,   /* capPTBasePtr         */
-                1,      /* capPTIsMapped        */
-                vptr    /* capPTMappedAddress   */
-            );
+              asid,   /* capPTMappedASID      */
+              pptr,   /* capPTBasePtr         */
+              1,      /* capPTIsMapped        */
+              vptr    /* capPTMappedAddress   */
+          );
     map_it_pt_cap(vspace_cap, cap);
     return cap;
 }
@@ -659,10 +660,10 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     memzero(PML4_PTR(pptr), BIT(seL4_PML4Bits));
     copyGlobalMappings(PML4_PTR(pptr));
     vspace_cap = cap_pml4_cap_new(
-                    IT_ASID,        /* capPML4MappedASID */
-                    pptr,           /* capPML4BasePtr   */
-                    1               /* capPML4IsMapped   */
-                );
+                     IT_ASID,        /* capPML4MappedASID */
+                     pptr,           /* capPML4BasePtr   */
+                     1               /* capPML4IsMapped   */
+                 );
 
 
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), vspace_cap);
@@ -722,7 +723,8 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     return vspace_cap;
 }
 
-void copyGlobalMappings(vspace_root_t *new_vspace) {
+void copyGlobalMappings(vspace_root_t *new_vspace)
+{
     unsigned long i;
     pml4e_t *vspace = (pml4e_t *)new_vspace;
 
@@ -798,36 +800,36 @@ static pdpte_t CONST
 makeUserPDPTEHugePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
 {
     return pdpte_pdpte_1g_new(
-            0,          /* xd               */
-            paddr,      /* physical address */
-            0,          /* PAT              */
-            0,          /* global           */
-            0,          /* dirty            */
-            0,          /* accessed         */
-            vm_attributes_get_x86PCDBit(vm_attr),  /* cache disabled */
-            vm_attributes_get_x86PWTBit(vm_attr),  /* write through  */
-            SuperUserFromVMRights(vm_rights),       /* super user     */
-            WritableFromVMRights(vm_rights),        /* read write     */
-            1                                       /* present        */
-            );
+               0,          /* xd               */
+               paddr,      /* physical address */
+               0,          /* PAT              */
+               0,          /* global           */
+               0,          /* dirty            */
+               0,          /* accessed         */
+               vm_attributes_get_x86PCDBit(vm_attr),  /* cache disabled */
+               vm_attributes_get_x86PWTBit(vm_attr),  /* write through  */
+               SuperUserFromVMRights(vm_rights),       /* super user     */
+               WritableFromVMRights(vm_rights),        /* read write     */
+               1                                       /* present        */
+           );
 }
 
 static pdpte_t CONST
 makeUserPDPTEHugePageInvalid(void)
 {
     return pdpte_pdpte_1g_new(
-            0,          /* xd               */
-            0,          /* physical address */
-            0,          /* PAT              */
-            0,          /* global           */
-            0,          /* dirty            */
-            0,          /* accessed         */
-            0,          /* cache disabled */
-            0,          /* write through  */
-            0,          /* super user     */
-            0,          /* read write     */
-            0           /* present        */
-            );
+               0,          /* xd               */
+               0,          /* physical address */
+               0,          /* PAT              */
+               0,          /* global           */
+               0,          /* dirty            */
+               0,          /* accessed         */
+               0,          /* cache disabled */
+               0,          /* write through  */
+               0,          /* super user     */
+               0,          /* read write     */
+               0           /* present        */
+           );
 }
 
 pde_t CONST
@@ -853,15 +855,15 @@ makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
 {
 
     return  pde_pde_small_new(
-              0,                                  /* xd               */
-              paddr,                              /* pt_base_address  */
-              0,                                  /* accessed         */
-              vm_attributes_get_x86PCDBit(vm_attr), /* cache_disabled   */
-              vm_attributes_get_x86PWTBit(vm_attr), /* write_through    */
-              1,                                  /* super_user       */
-              1,                                  /* read_write       */
-              1                                   /* present          */
-          );
+                0,                                  /* xd               */
+                paddr,                              /* pt_base_address  */
+                0,                                  /* accessed         */
+                vm_attributes_get_x86PCDBit(vm_attr), /* cache_disabled   */
+                vm_attributes_get_x86PWTBit(vm_attr), /* write_through    */
+                1,                                  /* super_user       */
+                1,                                  /* read_write       */
+                1                                   /* present          */
+            );
 }
 
 pde_t CONST
@@ -886,15 +888,15 @@ pde_t CONST
 makeUserPDEPageTableInvalid(void)
 {
     return pde_pde_small_new(
-            0,      /* xd               */
-            0,      /* pt_base_addr     */
-            0,      /* accessed         */
-            0,      /* cache_disabled   */
-            0,      /* write_through    */
-            0,      /* super_user       */
-            0,      /* read_write       */
-            0       /* present          */
-            );
+               0,      /* xd               */
+               0,      /* pt_base_addr     */
+               0,      /* accessed         */
+               0,      /* cache_disabled   */
+               0,      /* write_through    */
+               0,      /* super_user       */
+               0,      /* read_write       */
+               0       /* present          */
+           );
 }
 
 pte_t CONST
@@ -989,7 +991,7 @@ lookupPDSlot(vspace_root_t *pml4, vptr_t vptr)
         return ret;
     }
     if ((pdpte_ptr_get_page_size(pdptSlot.pdptSlot) != pdpte_pdpte_pd) ||
-        !pdpte_pdpte_pd_ptr_get_present(pdptSlot.pdptSlot)) {
+            !pdpte_pdpte_pd_ptr_get_present(pdptSlot.pdptSlot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(PDPT_INDEX_OFFSET);
 
         ret.pdSlot = NULL;
@@ -1022,7 +1024,7 @@ flushPD(vspace_root_t *vspace, word_t vptr, pde_t *pd, asid_t asid)
 static void
 flushPDPT(vspace_root_t *vspace, word_t vptr, pdpte_t *pdpt, asid_t asid)
 {
-     /* similar here */
+    /* similar here */
     invalidatePCID(INVPCID_TYPE_SINGLE, (void*)0, asid);
     return;
 }
@@ -1051,23 +1053,23 @@ unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 
     /* check if the PDPT has the PD */
     if (! (pdpte_ptr_get_page_size(lu_ret.pdptSlot) == pdpte_pdpte_pd &&
-           pdpte_pdpte_pd_ptr_get_present(lu_ret.pdptSlot) &&
-           (pdpte_pdpte_pd_ptr_get_pd_base_address(lu_ret.pdptSlot) == pptr_to_paddr(pd)))) {
+            pdpte_pdpte_pd_ptr_get_present(lu_ret.pdptSlot) &&
+            (pdpte_pdpte_pd_ptr_get_pd_base_address(lu_ret.pdptSlot) == pptr_to_paddr(pd)))) {
         return;
     }
 
     flushPD(find_ret.vspace_root, vaddr, pd, asid);
 
     *lu_ret.pdptSlot = pdpte_pdpte_pd_new(
-            0,                      /* xd               */
-            0,                      /* paddr            */
-            0,                      /* accessed         */
-            0,                      /* cache disabled   */
-            0,                      /* write through    */
-            0,                      /* super user       */
-            0,                      /* read write       */
-            0                       /* present          */
-            );
+                           0,                      /* xd               */
+                           0,                      /* paddr            */
+                           0,                      /* accessed         */
+                           0,                      /* cache disabled   */
+                           0,                      /* write through    */
+                           0,                      /* super user       */
+                           0,                      /* read write       */
+                           0                       /* present          */
+                       );
 
     invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid);
 }
@@ -1080,10 +1082,10 @@ performX64PageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
     if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
         pde_t *pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
         unmapPageDirectory(
-                cap_page_directory_cap_get_capPDMappedASID(cap),
-                cap_page_directory_cap_get_capPDMappedAddress(cap),
-                pd
-                );
+            cap_page_directory_cap_get_capPDMappedASID(cap),
+            cap_page_directory_cap_get_capPDMappedAddress(cap),
+            pd
+        );
         clearMemory((void *)pd, cap_get_capSizeBits(cap));
     }
 
@@ -1183,9 +1185,9 @@ decodeX64PageDirectoryInvocation(
     }
 
     if ((pdpte_ptr_get_page_size(pdptSlot.pdptSlot) == pdpte_pdpte_pd &&
-        pdpte_pdpte_pd_ptr_get_present(pdptSlot.pdptSlot)) ||
-        (pdpte_ptr_get_page_size(pdptSlot.pdptSlot) == pdpte_pdpte_1g
-                       && pdpte_pdpte_1g_ptr_get_present(pdptSlot.pdptSlot))) {
+            pdpte_pdpte_pd_ptr_get_present(pdptSlot.pdptSlot)) ||
+            (pdpte_ptr_get_page_size(pdptSlot.pdptSlot) == pdpte_pdpte_1g
+             && pdpte_pdpte_1g_ptr_get_present(pdptSlot.pdptSlot))) {
         current_syscall_error.type = seL4_DeleteFirst;
 
         return EXCEPTION_SYSCALL_ERROR;
@@ -1193,14 +1195,14 @@ decodeX64PageDirectoryInvocation(
 
     paddr = pptr_to_paddr(PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap)));
     pdpte = pdpte_pdpte_pd_new(
-            0,                      /* xd       */
-            paddr,                  /* paddr    */
-            0,                      /* accessed */
-            vm_attributes_get_x86PCDBit(vm_attr),  /* cache disabled */
-            vm_attributes_get_x86PWTBit(vm_attr),  /* write through  */
-            1,                      /* super user */
-            1,                      /* read write */
-            1                       /* present    */
+                0,                      /* xd       */
+                paddr,                  /* paddr    */
+                0,                      /* accessed */
+                vm_attributes_get_x86PCDBit(vm_attr),  /* cache disabled */
+                vm_attributes_get_x86PWTBit(vm_attr),  /* write through  */
+                1,                      /* super user */
+                1,                      /* read write */
+                1                       /* present    */
             );
 
     cap = cap_page_directory_cap_set_capPDIsMapped(cap, 1);
@@ -1228,22 +1230,22 @@ static void unmapPDPT(asid_t asid, vptr_t vaddr, pdpte_t *pdpt)
 
     /* check if the PML4 has the PDPT */
     if (! (pml4e_ptr_get_present(lu_ret.pml4Slot) &&
-           pml4e_ptr_get_pdpt_base_address(lu_ret.pml4Slot) == pptr_to_paddr(pdpt))) {
+            pml4e_ptr_get_pdpt_base_address(lu_ret.pml4Slot) == pptr_to_paddr(pdpt))) {
         return;
     }
 
     flushPDPT(find_ret.vspace_root, vaddr, pdpt, asid);
 
     *lu_ret.pml4Slot = pml4e_new(
-            0,                  /* xd               */
-            0,                  /* pdpt_base_addr   */
-            0,                  /* accessed         */
-            0,                  /* cache_disabled   */
-            0,                  /* write through    */
-            0,                  /* super user       */
-            0,                  /* read_write       */
-            0                   /* present          */
-            );
+                           0,                  /* xd               */
+                           0,                  /* pdpt_base_addr   */
+                           0,                  /* accessed         */
+                           0,                  /* cache_disabled   */
+                           0,                  /* write through    */
+                           0,                  /* super user       */
+                           0,                  /* read_write       */
+                           0                   /* present          */
+                       );
 }
 
 static exception_t
@@ -1252,8 +1254,8 @@ performX64PDPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
     if (cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
         pdpte_t *pdpt = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
         unmapPDPT(cap_pdpt_cap_get_capPDPTMappedASID(cap),
-                cap_pdpt_cap_get_capPDPTMappedAddress(cap),
-                pdpt);
+                  cap_pdpt_cap_get_capPDPTMappedAddress(cap),
+                  pdpt);
         clearMemory((void *)pdpt, cap_get_capSizeBits(cap));
     }
 
@@ -1274,12 +1276,12 @@ performX64PDPTInvocationMap(cap_t cap, cte_t *ctSlot, pml4e_t pml4e, pml4e_t *pm
 
 static exception_t
 decodeX64PDPTInvocation(
-        word_t  label,
-        word_t length,
-        cte_t   *cte,
-        cap_t   cap,
-        extra_caps_t extraCaps,
-        word_t  *buffer)
+    word_t  label,
+    word_t length,
+    cte_t   *cte,
+    cap_t   cap,
+    extra_caps_t extraCaps,
+    word_t  *buffer)
 {
     word_t                  vaddr;
     vm_attributes_t         attr;
@@ -1360,14 +1362,14 @@ decodeX64PDPTInvocation(
 
     paddr = pptr_to_paddr(PDPTE_PTR((cap_pdpt_cap_get_capPDPTBasePtr(cap))));
     pml4e = pml4e_new(
-            0,
-            paddr,
-            0,
-            vm_attributes_get_x86PCDBit(attr),
-            vm_attributes_get_x86PWTBit(attr),
-            1,
-            1,
-            1
+                0,
+                paddr,
+                0,
+                vm_attributes_get_x86PCDBit(attr),
+                vm_attributes_get_x86PWTBit(attr),
+                1,
+                1,
+                1
             );
 
     cap = cap_pdpt_cap_set_capPDPTIsMapped(cap, 1);
@@ -1418,9 +1420,9 @@ void modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr,
 
 
         if (! (pdpte_ptr_get_page_size(pdpte) == pdpte_pdpte_1g
-               && pdpte_pdpte_1g_ptr_get_present(pdpte)
-               &&  (pdpte_pdpte_1g_ptr_get_page_base_address(pdpte)
-                    == pptr_to_paddr(pptr)))) {
+                && pdpte_pdpte_1g_ptr_get_present(pdpte)
+                &&  (pdpte_pdpte_1g_ptr_get_page_base_address(pdpte)
+                     == pptr_to_paddr(pptr)))) {
             return;
         }
 
@@ -1459,42 +1461,42 @@ decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, ca
         pdptSlot = lu_ret.pdptSlot;
         switch (label) {
 
-            case X86PageMap: {
-                /* check for existing page directory */
-                if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_pd)  &&
+        case X86PageMap: {
+            /* check for existing page directory */
+            if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_pd)  &&
                     (pdpte_pdpte_pd_ptr_get_present(pdptSlot))) {
-                    current_syscall_error.type = seL4_DeleteFirst;
-                    return EXCEPTION_SYSCALL_ERROR;
-                }
-                /* check for existing huge page */
-                if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_1g) &&
-                    (pdpte_pdpte_1g_ptr_get_present(pdptSlot))) {
-                    current_syscall_error.type = seL4_DeleteFirst;
-                    return EXCEPTION_SYSCALL_ERROR;
-                }
-
-                pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
-                setThreadState(ksCurThread, ThreadState_Restart);
-                return performX64ModeMapRemapPage(cap, cte, pdpte, pdptSlot, vroot);
-            }
-
-            case X86PageRemap: {
-                /* check for existing page directory */
-                if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_pd)  &&
-                    (pdpte_pdpte_pd_ptr_get_present(pdptSlot))) {
-                    current_syscall_error.type = seL4_DeleteFirst;
-                    return EXCEPTION_SYSCALL_ERROR;
-                }
-
-                pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
-                setThreadState(ksCurThread, ThreadState_Restart);
-                return performX64ModeMapRemapPage(cap, cte, pdpte, pdptSlot, vroot);
-            }
-
-            default: {
-                current_syscall_error.type = seL4_IllegalOperation;
+                current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
             }
+            /* check for existing huge page */
+            if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_1g) &&
+                    (pdpte_pdpte_1g_ptr_get_present(pdptSlot))) {
+                current_syscall_error.type = seL4_DeleteFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performX64ModeMapRemapPage(cap, cte, pdpte, pdptSlot, vroot);
+        }
+
+        case X86PageRemap: {
+            /* check for existing page directory */
+            if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_pd)  &&
+                    (pdpte_pdpte_pd_ptr_get_present(pdptSlot))) {
+                current_syscall_error.type = seL4_DeleteFirst;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+
+            pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
+            setThreadState(ksCurThread, ThreadState_Restart);
+            return performX64ModeMapRemapPage(cap, cte, pdpte, pdptSlot, vroot);
+        }
+
+        default: {
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         }
     }
     fail("Invalid Page type");
@@ -1529,7 +1531,7 @@ readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
         pdSlot = lookupPDSlot(vspace, vaddr);
         if (pdSlot.status == EXCEPTION_NONE &&
                 ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
-                pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+                 pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
 
             paddr = pde_pde_large_ptr_get_page_base_address(pdSlot.pdSlot);
             offset = vaddr & MASK(seL4_LargePageBits);

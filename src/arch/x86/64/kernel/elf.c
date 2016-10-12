@@ -17,12 +17,12 @@ BOOT_CODE bool_t
 elf_checkFile(Elf64_Header_t *elf)
 {
     return (
-        elf->e_ident[0] == '\177' &&
-        elf->e_ident[1] == 'E'    &&
-        elf->e_ident[2] == 'L'    &&
-        elf->e_ident[3] == 'F'    &&
-        elf->e_ident[4] == 2
-    );
+               elf->e_ident[0] == '\177' &&
+               elf->e_ident[1] == 'E'    &&
+               elf->e_ident[2] == 'L'    &&
+               elf->e_ident[3] == 'F'    &&
+               elf->e_ident[4] == 2
+           );
 }
 
 
@@ -42,8 +42,12 @@ elf_getMemoryBounds(Elf64_Header_t *elf)
         if (phdr[i].p_memsz > 0) {
             sect_start = phdr[i].p_vaddr;
             sect_end = sect_start + phdr[i].p_memsz;
-            if (sect_start < elf_reg.start) elf_reg.start = sect_start;
-            if (sect_end > elf_reg.end) elf_reg.end = sect_end;
+            if (sect_start < elf_reg.start) {
+                elf_reg.start = sect_start;
+            }
+            if (sect_end > elf_reg.end) {
+                elf_reg.end = sect_end;
+            }
         }
     }
 
