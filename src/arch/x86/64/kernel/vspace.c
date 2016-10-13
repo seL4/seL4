@@ -271,19 +271,14 @@ init_tss(tss_t *tss)
         0, 0,
         0, 0,
         0, 0,
-        0, 0,       /* ist 1*/
+        /* ist 1 is the stack frame we use for interrupts */
+        base >> 32, base & 0xffffffff,  /* ist 1 */
         0, 0,       /* rsp 2 */
         0, 0,       /* rsp 1 */
         0, 0        /* rsp 0 */
     );
     /* set the IO map to all 1 to block user IN/OUT instructions */
     memset(&x86KStss.io_map[0], 0xff, sizeof(x86KStss.io_map));
-
-    /* Set up a 'stack frame' for interrupts for the hardware to dump
-     * state to */
-    tss_ptr_set_rsp0_l(&x86KStss.tss, (uint32_t)base);
-    tss_ptr_set_rsp0_u(&x86KStss.tss, (uint32_t)(base >> 32));
-
 }
 
 BOOT_CODE void
@@ -425,7 +420,7 @@ init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
                          ((handler_addr >> 16) & 0xffff),
                          1,                                  /* present */
                          dpl,                                /* dpl */
-                         0,                                  /* ist */
+                         1,                                  /* ist */
                          SEL_CS_0,                           /* segment selector */
                          (handler_addr & 0xffff)               /* offset 15 - 0 */
                      );

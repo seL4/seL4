@@ -473,7 +473,7 @@ END_FUNC(handle_fastsyscall)
 #   RAX : syscall number
 #   RCX : user ESP
 #   RDX : user EIP (pointing to the sysenter instruction)
-#   RSP : points to tss.esp0 which points to the end of the thread's registers array
+#   RSP : NULL
 BEGIN_FUNC(handle_syscall)
     movq    (ksCurThread), %rsp
     # skip SS, CS, RCX
