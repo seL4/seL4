@@ -35,14 +35,16 @@ typedef struct cpu_id_mapping {
 extern smpStatedata_t ksSMP[CONFIG_MAX_NUM_NODES] VISIBLE;
 extern cpu_id_mapping_t cpu_mapping;
 
-#define ARCH_NODE_STATE(_state)   ksSMP[getCurrentCPUIndex()].cpu._state
-#define MODE_NODE_STATE(_state)   ksSMP[getCurrentCPUIndex()].cpu.mode._state
-#define NODE_STATE(_state) ksSMP[getCurrentCPUIndex()].system._state
+#define ARCH_NODE_STATE(_state)             ksSMP[getCurrentCPUIndex()].cpu._state
+#define MODE_NODE_STATE(_state)             ksSMP[getCurrentCPUIndex()].cpu.mode._state
+#define NODE_STATE_ON_CORE(_state, _core)   ksSMP[(_core)].system._state
 
 #else
 
-#define ARCH_NODE_STATE(_state)   _state
-#define MODE_NODE_STATE(_state)   _state
-#define NODE_STATE(_state) _state
+#define ARCH_NODE_STATE(_state)             _state
+#define MODE_NODE_STATE(_state)             _state
+#define NODE_STATE_ON_CORE(_state, _core)   _state
 
 #endif /* CONFIG_MAX_NUM_NODES */
+
+#define NODE_STATE(_state)                  NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())

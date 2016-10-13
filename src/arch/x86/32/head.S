@@ -149,7 +149,6 @@ BEGIN_FUNC(boot_cpu_start)
     addl $0xffc, %esp
 
     /* Call boot_node() and set restore_user_context() as return EIP. */
-    /* This will start the roottask as soon as boot_node() returns.   */
     pushl $restore_user_context
     jmp   boot_node
 END_FUNC(boot_cpu_start)
