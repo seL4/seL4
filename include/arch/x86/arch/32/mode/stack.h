@@ -41,11 +41,9 @@ setKernelEntryStackPointer(tcb_t *target_thread)
 
     register_context_top = (word_t)&target_thread->tcbArch.tcbContext.registers[n_contextRegisters];
 
-#ifdef CONFIG_ARCH_IA32
     tss_ptr_set_esp0(&ARCH_NODE_STATE(x86KStss).tss, register_context_top);
-#endif
 
-    if (config_set(CONFIG_HARDWARE_DEBUG_API) && config_set(CONFIG_SYSENTER)) {
+    if (config_set(CONFIG_HARDWARE_DEBUG_API)) {
         x86_wrmsr(IA32_SYSENTER_ESP_MSR, register_context_top);
     }
 }

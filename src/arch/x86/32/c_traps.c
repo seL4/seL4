@@ -14,7 +14,7 @@
 #include <arch/fastpath/fastpath.h>
 #include <arch/machine/debug.h>
 #include <benchmark_track.h>
-#include <arch/stack.h>
+#include <mode/stack.h>
 
 #include <api/syscall.h>
 #include <util.h>

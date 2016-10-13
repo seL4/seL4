@@ -14,7 +14,6 @@
 #include <model/statedata.h>
 #include <arch/machine/fpu.h>
 #include <kernel/traps.h>
-#include <arch/stack.h>
 #include <arch/machine/debug.h>
 
 #include <api/syscall.h>
@@ -38,7 +37,6 @@ void VISIBLE NORETURN restore_user_context(void)
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(ksCurThread);
 #endif
-    setKernelEntryStackPointer(ksCurThread);
 
     /* see if we entered via syscall */
     if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1)) {

@@ -111,8 +111,6 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     restore_user_debug_context(ksCurThread);
 #endif
 
-    setKernelEntryStackPointer(ksCurThread);
-
     if (config_set(CONFIG_SYSENTER)) {
         cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~0x200;
 

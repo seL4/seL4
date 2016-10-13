@@ -17,7 +17,7 @@
 #include <api/types.h>
 #include <api/syscall.h>
 #include <benchmark_track.h>
-#include <arch/stack.h>
+#include <mode/stack.h>
 
 static inline void
 switchToThread_fp(tcb_t *thread, pde_t *pd, pde_t stored_hw_asid)
