@@ -58,10 +58,8 @@ word_t sanitiseRegister(register_t reg, word_t v)
         v &= ~FLAGS_LOW;
         /* require user to have interrupts and no traps */
         v |=  FLAGS_IF;
-#ifdef CONFIG_HARDWARE_DEBUG_API
         /* Disallow setting Trap Flag: use the API instead */
         v &= ~FLAGS_TF;
-#endif
         /* remove any other bits that shouldn't be set */
         v &=  FLAGS_MASK;
     }
