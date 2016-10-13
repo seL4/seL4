@@ -38,8 +38,11 @@ void VISIBLE NORETURN restore_user_context(void)
     restore_user_debug_context(ksCurThread);
 #endif
 
-    /* see if we entered via syscall */
-    if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1)) {
+    // Check if we are returning from a syscall/sysenter or from an interrupt
+    // There is a special case where if we would be returning from a sysenter,
+    // but are current singlestepping, do a full return like an interrupt
+    if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1) &&
+            (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((ksCurThread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
         if (config_set(CONFIG_SYSENTER)) {
             ksCurThread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
             asm volatile(

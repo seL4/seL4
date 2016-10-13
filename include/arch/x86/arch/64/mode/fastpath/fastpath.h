@@ -94,8 +94,14 @@ fastpath_mi_check(word_t msgInfo)
 static inline void NORETURN
 fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
+    if (config_set(CONFIG_SYSENTER) && config_set(CONFIG_HARDWARE_DEBUG_API) && ((getRegister(ksCurThread, FLAGS) & FLAGS_TF) != 0)) {
+        /* If single stepping using sysenter we need to do a return using iret to avoid
+         * a race condition in restoring the flags (which enables stepping and interrupts) and
+         * calling sysexit. This case is handled in restore_user_context so we just go there
+         */
+        restore_user_context();
+    }
     c_exit_hook();
-
     if (unlikely(cur_thread == x86KSfpuOwner)) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();

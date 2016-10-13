@@ -410,6 +410,66 @@ BEGIN_FUNC(handle_interrupt)
 END_FUNC(handle_interrupt)
 
 BEGIN_FUNC(kernel_exception)
+#if defined(CONFIG_HARDWARE_DEBUG_API)
+    /* Before giving up and panicking, we need to test for the extra case that
+     * this might be a kernel exception that is the result of EFLAGS.TF being
+     * set when SYSENTER was called.
+     *
+     * Since EFLAGS.TF is not disabled by SYSENTER, single-stepping continues
+     * into the kernel, and so causes a debug-exception in kernel code, since
+     * the CPU is trying to single-step the kernel code.
+     *
+     * So we test for EFLAGS.TF, and if it's set, we unset it, and let the
+     * exception continue. The debug exception handler will notice that it was
+     * kernel exception, and handle it appropriately -- that really just means
+     * setting EFLAGS.TF before SYSEXIT so that single-stepping resumes in the
+     * userspace thread.
+     */
+    leaq    irq_stack, %rdx
+    movq    24(%rdx), %rax
+    movq    $(1<<8), %rbx
+    testq   %rbx, %rax
+    je      .not_eflags_tf
+
+    /* Else it was EFLAGS.TF that caused the kernel exception on SYSENTER.
+     * So, unset the EFLAGS.TF on the stack and this causes the syscall that we
+     * will return to, to be able to execute properly.
+     *
+     * It will then be the debug exception handler's responsibility to re-set
+     * EFLAGS.TF for the userspace thread before it returns.
+     *
+     * So at this point we want to just unset EFLAGS.TF and IRET immediately.
+     */
+    andq    $~(1<<8), %rax
+    movq    %rax, 24(%rdx)
+
+    /* Begin popping registers to IRET now. We don't need to consider any
+     * unexpected side effects because we are just immediately returning after
+     * entering.
+     */
+    popq %rdi
+    popq %rsi
+    popq %rax
+    popq %rbx
+    popq %rbp
+    popq %r12
+    popq %r13
+    popq %r14
+    popq %r15
+    popq %rdx
+    popq %r10
+    popq %r8
+    popq %r9
+    /* skip RFLAGS, Error NextIP RSP, TLS_BASE, FaultIP */
+    addq $48, %rsp
+    popq %r11
+    popq %rcx
+    leaq irq_stack + 8, %rsp
+    iretq
+
+.not_eflags_tf:
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
 #ifdef DEBUG
     movq    %rcx, %rdi
     leaq    irq_stack, %rsi
