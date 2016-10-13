@@ -82,7 +82,7 @@ void VISIBLE NORETURN restore_user_context(void)
                 "rex.w sysexit\n"
                 :
                 : "r"(&ksCurThread->tcbArch.tcbContext.registers[RDI]),
-                  [IF] "i" (FLAGS_IF)
+                [IF] "i" (FLAGS_IF)
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
                 : "memory"
