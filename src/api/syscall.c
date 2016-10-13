@@ -119,7 +119,10 @@ handleUnknownSyscall(word_t w)
 #endif
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
-    if (w == SysBenchmarkResetLog) {
+    if (w == SysBenchmarkFlushCaches) {
+        arch_clean_invalidate_caches();
+        return EXCEPTION_NONE;
+    } else if (w == SysBenchmarkResetLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
         if (ksUserLogBuffer == 0) {
             userError("A user-level buffer has to be set before resetting benchmark.\

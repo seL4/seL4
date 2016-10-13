@@ -576,6 +576,13 @@ seL4_BenchmarkNullSyscall(void)
     asm volatile("" ::: "memory");
 }
 
+static inline void
+seL4_BenchmarkFlushCaches(void)
+{
+    arm_sys_null(seL4_SysBenchmarkFlushCaches);
+    asm volatile("" ::: "memory");
+}
+
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 static inline void
 seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)
