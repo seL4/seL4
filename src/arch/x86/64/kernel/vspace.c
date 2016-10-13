@@ -293,7 +293,7 @@ init_syscall_msrs(void)
     // mask bit 9 in the kernel (which is the interrupt enable bit)
     // also mask bit 8, which is the Trap Flag, to prevent the kernel
     // from single stepping
-    x86_wrmsr(IA32_FMASK_MSR, BIT(9) | BIT(8));
+    x86_wrmsr(IA32_FMASK_MSR, FLAGS_TF | FLAGS_IF);
     x86_wrmsr(IA32_STAR_MSR, ((uint64_t)SEL_CS_0 << 32) | ((uint64_t)SEL_CS_3 << 48));
 }
 

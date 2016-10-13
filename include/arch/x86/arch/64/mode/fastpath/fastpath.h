@@ -112,7 +112,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #endif
 
     if (config_set(CONFIG_SYSENTER)) {
-        cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~0x200;
+        cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
 
         asm volatile (
             "movq %%rcx, %%rsp\n"
@@ -131,7 +131,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             // restore RFLAGS
             "popfq\n"
             // reset interrupt bit
-            "orq $0x200, -8(%%rsp)\n"
+            "orq %[IF], -8(%%rsp)\n"
             // Restore NextIP
             "popq %%rdx\n"
             // skip Error
@@ -146,7 +146,8 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             :
             : "c" (&cur_thread->tcbArch.tcbContext.registers[RAX]),
             "D" (badge),
-            "S" (msgInfo)
+            "S" (msgInfo),
+            [IF] "i" (FLAGS_IF)
             : "memory"
         );
     } else {

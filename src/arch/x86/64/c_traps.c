@@ -41,7 +41,7 @@ void VISIBLE NORETURN restore_user_context(void)
     /* see if we entered via syscall */
     if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1)) {
         if (config_set(CONFIG_SYSENTER)) {
-            ksCurThread->tcbArch.tcbContext.registers[FLAGS] &= ~0x200;
+            ksCurThread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
             asm volatile(
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
                 "movq %0, %%rsp\n"
@@ -62,7 +62,7 @@ void VISIBLE NORETURN restore_user_context(void)
                 //restore RFLAGS
                 "popfq\n"
                 // reset interrupt bit
-                "orq $0x200, -8(%%rsp)\n"
+                "orq %[IF], -8(%%rsp)\n"
                 // Restore NextIP
                 "popq %%rdx\n"
                 // Skip ERROR
@@ -81,7 +81,8 @@ void VISIBLE NORETURN restore_user_context(void)
                  * */
                 "rex.w sysexit\n"
                 :
-                : "r"(&ksCurThread->tcbArch.tcbContext.registers[RDI])
+                : "r"(&ksCurThread->tcbArch.tcbContext.registers[RDI]),
+                  [IF] "i" (FLAGS_IF)
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
                 : "memory"

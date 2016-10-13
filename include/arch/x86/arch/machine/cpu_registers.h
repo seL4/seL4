@@ -24,6 +24,7 @@
 #define FLAGS_HIGH          BIT(1)  /* Bits in the FLAGS register that must be high */
 #define FLAGS_LOW           (BIT(3) | BIT(5)) /* Bits in the FLAGS register that must be low */
 #define FLAGS_MASK          MASK(12)/* Only the first 12 bits of the FLAGS are used, rest should be zero */
+#define FLAGS_USER_DEFAULT  FLAGS_IF | FLAGS_HIGH
 
 /* We use a dummy variable to synchronize reads and writes to the control registers.
  * this allows us to write inline asm blocks that do not have enforced memory

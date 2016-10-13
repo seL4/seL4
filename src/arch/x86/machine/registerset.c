@@ -21,7 +21,7 @@ void Arch_initContext(user_context_t* context)
     context->registers[FaultIP] = 0;
     context->registers[NextIP] = 0;            /* overwritten by setNextPC() later on */
     context->registers[CS] = SEL_CS_3;
-    context->registers[FLAGS] = BIT(9) | BIT(1); /* enable interrupts and set bit 1 which is always 1 */
+    context->registers[FLAGS] = FLAGS_USER_DEFAULT;
     context->registers[SS] = SEL_DS_3;
 
     Arch_initFpuContext(context);
