@@ -87,6 +87,10 @@ void NORETURN VISIBLE restore_user_context(void)
             // skip cs
             "addl $4,  %%esp\n"
             "movl 4(%%esp), %%ecx\n"
+            // It is not properly documented but on ia32 (but NOT x86-64) if interrupts
+            // are enabled as a result of popf then they will not become enabled till
+            // after the next instruction (much like sti)
+            // see https://lkml.org/lkml/2004/7/15/6
             "popfl\n"
             "sysexit\n"
             :
