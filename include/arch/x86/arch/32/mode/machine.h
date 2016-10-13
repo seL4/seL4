@@ -120,6 +120,14 @@ static inline void ia32_wbinvd(void)
     asm volatile("wbinvd" ::: "memory");
 }
 
+#ifdef CONFIG_ENABLE_BENCHMARKS
+static inline void
+arch_clean_invalidate_caches(void)
+{
+    ia32_wbinvd();
+}
+#endif /* CONFIG_ENABLE_BENCHMARKS */
+
 /* GDT installation */
 void ia32_install_gdt(gdt_idt_ptr_t* gdt_idt_ptr);
 
