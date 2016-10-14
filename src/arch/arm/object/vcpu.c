@@ -372,9 +372,9 @@ vcpu_finalise(vcpu_t *vcpu)
     if (vcpu->tcb) {
         dissociateVCPUTCB(vcpu, vcpu->tcb);
     }
-    if (vcpu == active_vcpu_get_vcpu(armKSCurVCPU)) {
+    if (vcpu == armHSCurVCPU) {
         vcpu_restore(NULL);
-        armKSCurVCPU = active_vcpu_new(0, 0);
+        armHSCurVCPU = NULL;
     }
 }
 
