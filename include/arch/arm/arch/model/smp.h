@@ -16,6 +16,8 @@
 #include <arch/types.h>
 #include <model/statedata.h>
 
-#define ARCH_NODE_STATE(_state)   _state
-#define MODE_NODE_STATE(_state)   _state
-#define NODE_STATE(_state) _state
+#define ARCH_NODE_STATE(_state)             _state
+#define MODE_NODE_STATE(_state)             _state
+#define NODE_STATE_ON_CORE(_state, _core)   _state
+
+#define NODE_STATE(_state)                  _state

@@ -50,7 +50,8 @@ Arch_configureIdleThread(tcb_t* tcb)
 void
 Arch_switchToIdleThread(void)
 {
-    /* Don't need to do anything */
+    /* Force the idle thread to run on kernel page table */
+    setVMRoot(NODE_STATE(ksIdleThread));
 }
 
 void CONST

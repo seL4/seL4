@@ -347,14 +347,21 @@ BOOT_CODE bool_t
 create_idle_thread(void)
 {
     pptr_t pptr;
-    pptr = alloc_region(seL4_TCBBits);
-    if (!pptr) {
-        printf("Kernel init failed: Unable to allocate tcb for idle thread\n");
-        return false;
+
+#if CONFIG_MAX_NUM_NODES > 1
+    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+#endif
+        pptr = alloc_region(seL4_TCBBits);
+        if (!pptr) {
+            printf("Kernel init failed: Unable to allocate tcb for idle thread\n");
+            return false;
+        }
+        memzero((void *)pptr, 1 << seL4_TCBBits);
+        NODE_STATE_ON_CORE(ksIdleThread, i) = TCB_PTR(pptr + TCB_OFFSET);
+        configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, i));
+#if CONFIG_MAX_NUM_NODES > 1
     }
-    memzero((void *)pptr, 1 << seL4_TCBBits);
-    NODE_STATE(ksIdleThread) = TCB_PTR(pptr + TCB_OFFSET);
-    configureIdleThread(NODE_STATE(ksIdleThread));
+#endif
     return true;
 }
 

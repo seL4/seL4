@@ -111,9 +111,10 @@ boot_node(void)
     /* grab BKL before leaving the kernel */
     NODE_LOCK;
 
-    /* relese BKL and halt for now... */
-    NODE_UNLOCK;
-    asm volatile("hlt");
+    NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
+    NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
+    schedule();
+    activateThread();
 }
 
 #endif /* CONFIG_MAX_NUM_NODES */
