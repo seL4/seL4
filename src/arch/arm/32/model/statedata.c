@@ -48,6 +48,8 @@ pdeS1_t  armHSGlobalPD[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 pteS1_t  armHSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 /* User space global mappings */
 pte_t  armUSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
-/* Current CPU */
+/* Current VCPU */
 vcpu_t *armHSCurVCPU;
+/* Whether the current loaded VCPU is enabled in the hardware or not */
+bool_t armHSVCPUActive;
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */

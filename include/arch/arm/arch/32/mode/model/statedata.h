@@ -39,6 +39,7 @@ extern pteS1_t armHSGlobalPT[BIT(PT_INDEX_BITS)]   VISIBLE;
  * So we need to build a User global PT for global mappings */
 extern pte_t   armUSGlobalPT[BIT(PT_INDEX_BITS)]   VISIBLE;
 extern vcpu_t *armHSCurVCPU;
+extern bool_t armHSVCPUActive;
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #endif /* __ARCH_MODEL_STATEDATA_32_H */

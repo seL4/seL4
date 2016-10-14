@@ -198,6 +198,36 @@ set_gic_vcpu_ctrl_lr(int num, virq_t lr)
     gic_vcpu_ctrl->lr[num] = lr.words[0];
 }
 
+static void
+vcpu_enable(vcpu_t *vcpu)
+{
+    setSCTLR(vcpu->cpx.sctlr);
+    setHCR(HCR_VCPU);
+    isb();
+
+    /* Turn on the VGIC */
+    set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
+}
+
+static void
+vcpu_disable(vcpu_t *vcpu)
+{
+    dsb();
+    if (likely(vcpu)) {
+        vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
+        vcpu->cpx.sctlr = getSCTLR();
+        isb();
+    }
+    /* Turn off the VGIC */
+    set_gic_vcpu_ctrl_hcr(0);
+    isb();
+
+    /* Stage 1 MMU off */
+    setSCTLR(SCTLR_DEFAULT);
+    setHCR(HCR_NATIVE);
+    isb();
+}
+
 BOOT_CODE void
 vcpu_boot_init(void)
 {
@@ -206,32 +236,35 @@ vcpu_boot_init(void)
         printf("Warning: VGIC is reporting more list registers than we support. Truncating\n");
         gic_vcpu_num_list_regs = GIC_VCPU_MAX_NUM_LR;
     }
-    vcpu_restore(NULL);
+    vcpu_disable(NULL);
+    armHSCurVCPU = NULL;
+    armHSVCPUActive = false;
 }
 
 static void
-vcpu_save(vcpu_t *cpu)
+vcpu_save(vcpu_t *vcpu, bool_t active)
 {
-    if (cpu != NULL) {
-        int i;
-        dsb();
-        /* Store VCPU state */
-        cpu->cpx.sctlr = getSCTLR();
-        cpu->cpx.actlr = getACTLR();
+    int i;
 
-        /* Store GIC VCPU control state */
-        cpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
-        cpu->vgic.vmcr = get_gic_vcpu_ctrl_vmcr();
-        cpu->vgic.apr = get_gic_vcpu_ctrl_apr();
-        for (i = 0; i < gic_vcpu_num_list_regs; i++) {
-            cpu->vgic.lr[i] = get_gic_vcpu_ctrl_lr(i);
-        }
-
-        isb();
-    } else {
-        /* No state to store for native TCBs */
-        return;
+    assert(vcpu);
+    dsb();
+    /* If we aren't active then this state already got stored when
+     * we were disabled */
+    if (!active) {
+        vcpu->cpx.sctlr = getSCTLR();
+        vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
     }
+    /* Store VCPU state */
+    vcpu->cpx.actlr = getACTLR();
+
+    /* Store GIC VCPU control state */
+    vcpu->vgic.vmcr = get_gic_vcpu_ctrl_vmcr();
+    vcpu->vgic.apr = get_gic_vcpu_ctrl_apr();
+    for (i = 0; i < gic_vcpu_num_list_regs; i++) {
+        vcpu->vgic.lr[i] = get_gic_vcpu_ctrl_lr(i);
+    }
+
+    isb();
 }
 
 
@@ -258,43 +291,25 @@ writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
     }
 }
 
-
 void
-vcpu_restore(vcpu_t *cpu)
+vcpu_restore(vcpu_t *vcpu)
 {
-    dsb();
-    if (cpu != NULL) {
-        int i;
-        /* Turn off the VGIC */
-        set_gic_vcpu_ctrl_hcr(0);
-        isb();
+    assert(vcpu);
+    int i;
+    /* Turn off the VGIC */
+    set_gic_vcpu_ctrl_hcr(0);
+    isb();
 
-        /* Restore GIC VCPU control state */
-        set_gic_vcpu_ctrl_vmcr(cpu->vgic.vmcr);
-        set_gic_vcpu_ctrl_apr(cpu->vgic.apr);
-        for (i = 0; i < VGIC_VTR_NLISTREGS(gic_vcpu_ctrl->vtr); i++) {
-            set_gic_vcpu_ctrl_lr(i, cpu->vgic.lr[i]);
-        }
-
-        /* Restore VCPU state */
-        setSCTLR(cpu->cpx.sctlr);
-        setACTLR(cpu->cpx.actlr);
-
-        setHCR(HCR_VCPU);
-        isb();
-
-        /* Turn on the VGIC */
-        set_gic_vcpu_ctrl_hcr(cpu->vgic.hcr);
-    } else {
-        /* Turn off the VGIC */
-        set_gic_vcpu_ctrl_hcr(0);
-        isb();
-
-        /* Stage 1 MMU off */
-        setSCTLR(SCTLR_DEFAULT);
-        setHCR(HCR_NATIVE);
-        isb();
+    /* Restore GIC VCPU control state */
+    set_gic_vcpu_ctrl_vmcr(vcpu->vgic.vmcr);
+    set_gic_vcpu_ctrl_apr(vcpu->vgic.apr);
+    for (i = 0; i < VGIC_VTR_NLISTREGS(gic_vcpu_ctrl->vtr); i++) {
+        set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);
     }
+
+    /* Restore and enable VCPU state */
+    setACTLR(vcpu->cpx.actlr);
+    vcpu_enable(vcpu);
 }
 
 void
@@ -359,11 +374,39 @@ vcpu_init(vcpu_t *vcpu)
 void
 vcpu_switch(vcpu_t *new)
 {
-    if (armHSCurVCPU != new) {
-        vcpu_save(armHSCurVCPU);
-        vcpu_restore(new);
-        armHSCurVCPU = new;
+    if (likely(armHSCurVCPU != new)) {
+        if (unlikely(new != NULL)) {
+            if (unlikely(armHSCurVCPU != NULL)) {
+                vcpu_save(armHSCurVCPU, armHSVCPUActive);
+            }
+            vcpu_restore(new);
+            armHSCurVCPU = new;
+            armHSVCPUActive = true;
+        } else if (unlikely(armHSVCPUActive)) {
+            /* leave the current VCPU state loaded, but disable vgic and mmu */
+            vcpu_disable(armHSCurVCPU);
+            armHSVCPUActive = false;
+        }
+    } else if (likely(!armHSVCPUActive && new != NULL)) {
+        isb();
+        vcpu_enable(new);
+        armHSVCPUActive = true;
     }
+}
+
+static void
+vcpu_invalidate_active(void) {
+    if (armHSVCPUActive) {
+        vcpu_disable(NULL);
+        armHSVCPUActive = false;
+    }
+    armHSCurVCPU = NULL;
+}
+
+static void
+vcpu_clean_invalidate_active(void) {
+    vcpu_save(armHSCurVCPU, armHSVCPUActive);
+    vcpu_invalidate_active();
 }
 
 void
@@ -373,8 +416,7 @@ vcpu_finalise(vcpu_t *vcpu)
         dissociateVCPUTCB(vcpu, vcpu->tcb);
     }
     if (vcpu == armHSCurVCPU) {
-        vcpu_restore(NULL);
-        armHSCurVCPU = NULL;
+        vcpu_invalidate_active();
     }
 }
 
@@ -404,6 +446,9 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 exception_t
 invokeVCPUWriteReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 {
+    if (armHSCurVCPU == vcpu) {
+        vcpu_clean_invalidate_active();
+    }
     writeVCPUReg(vcpu, field, value);
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
@@ -438,6 +483,9 @@ invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field)
 {
     tcb_t *thread;
     thread = ksCurThread;
+    if (armHSCurVCPU == vcpu) {
+        vcpu_clean_invalidate_active();
+    }
     setRegister(thread, msgRegisters[0], readVCPUReg(vcpu, field));
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                     seL4_MessageInfo_new(0, 0, 0, 1)));
@@ -473,7 +521,11 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
 exception_t
 invokeVCPUInjectIRQ(vcpu_t* vcpu, int index, virq_t virq)
 {
-    vcpu->vgic.lr[index] = virq;
+    if (likely(armHSCurVCPU == vcpu)) {
+        set_gic_vcpu_ctrl_lr(index, virq);
+    } else {
+        vcpu->vgic.lr[index] = virq;
+    }
 
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
