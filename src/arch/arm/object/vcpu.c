@@ -303,7 +303,7 @@ vcpu_restore(vcpu_t *vcpu)
     /* Restore GIC VCPU control state */
     set_gic_vcpu_ctrl_vmcr(vcpu->vgic.vmcr);
     set_gic_vcpu_ctrl_apr(vcpu->vgic.apr);
-    for (i = 0; i < VGIC_VTR_NLISTREGS(gic_vcpu_ctrl->vtr); i++) {
+    for (i = 0; i < gic_vcpu_num_list_regs; i++) {
         set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);
     }
 
