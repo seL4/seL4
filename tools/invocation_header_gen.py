@@ -150,7 +150,7 @@ def parse_xml(xml_file):
 
     invocation_labels = []
     for method in doc.getElementsByTagName("method"):
-        invocation_labels.append((str(method.getAttribute("id")), str(method.getAttribute("config"))))
+        invocation_labels.append((str(method.getAttribute("id")), str(method.getAttribute("condition"))))
 
     return invocation_labels
 
