@@ -58,11 +58,11 @@ typedef struct {
     seL4_SlotRegion   sharedFrames;    /* shared-frame caps (shared between seL4 nodes) */
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */
     seL4_SlotRegion   userImagePaging; /* userland-image paging structure caps */
-    seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
-    seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
     seL4_SlotRegion   ioSpaceCaps;     /* IOSpace caps for ARM SMMU */
     seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
+    seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
+    seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
 } seL4_BootInfo;
 
 
