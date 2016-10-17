@@ -683,7 +683,7 @@ def parse_xml_file(input_file, valid_types):
         for method in interface.getElementsByTagName("method"):
             method_name = method.getAttribute("name")
             method_id = method.getAttribute("id")
-            method_config = method.getAttribute("config")
+            method_condition = method.getAttribute("condition")
 
             #
             # Get parameters.
@@ -703,7 +703,7 @@ def parse_xml_file(input_file, valid_types):
                     input_params.append(Parameter(param_name, param_type))
                 else:
                     output_params.append(Parameter(param_name, param_type))
-            methods.append((interface_name, method_name, method_id, input_params, output_params, method_config))
+            methods.append((interface_name, method_name, method_id, input_params, output_params, method_condition))
 
     return (methods, structs)
 
@@ -781,12 +781,12 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
     result.append("/*")
     result.append(" * Generated stubs.")
     result.append(" */")
-    for (interface_name, method_name, method_id, inputs, outputs, config) in methods:
-        if config != "":
-            result.append("#ifdef %s" % config)
+    for (interface_name, method_name, method_id, inputs, outputs, condition) in methods:
+        if condition != "":
+            result.append("#if %s" % condition)
         result.append(generate_stub(arch, wordsize, interface_name, method_name,
                                     method_id, inputs, outputs, structs, use_only_ipc_buffer))
-        if config != "":
+        if condition != "":
             result.append("#endif")
 
     # Print footer.
