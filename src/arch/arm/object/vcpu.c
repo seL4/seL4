@@ -395,7 +395,8 @@ vcpu_switch(vcpu_t *new)
 }
 
 static void
-vcpu_invalidate_active(void) {
+vcpu_invalidate_active(void)
+{
     if (armHSVCPUActive) {
         vcpu_disable(NULL);
         armHSVCPUActive = false;
@@ -404,7 +405,8 @@ vcpu_invalidate_active(void) {
 }
 
 static void
-vcpu_clean_invalidate_active(void) {
+vcpu_clean_invalidate_active(void)
+{
     vcpu_save(armHSCurVCPU, armHSVCPUActive);
     vcpu_invalidate_active();
 }
