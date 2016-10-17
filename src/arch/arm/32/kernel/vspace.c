@@ -1103,11 +1103,11 @@ setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
             !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            setCurrentPD(addrFromPPtr(0));
-        } else {
-            setCurrentPD(addrFromPPtr(armKSGlobalPD));
-        }
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        setCurrentPD(addrFromPPtr(0));
+#else
+        setCurrentPD(addrFromPPtr(armKSGlobalPD));
+#endif
         return;
     }
 
@@ -1115,11 +1115,11 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_directory_cap_get_capPDMappedASID(threadRoot);
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.pd != pd)) {
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            setCurrentPD(addrFromPPtr(0));
-        } else {
-            setCurrentPD(addrFromPPtr(armKSGlobalPD));
-        }
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        setCurrentPD(addrFromPPtr(0));
+#else
+        setCurrentPD(addrFromPPtr(armKSGlobalPD));
+#endif
         return;
     }
 
