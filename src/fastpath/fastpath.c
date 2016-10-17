@@ -62,6 +62,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
             fastpath_restore(getRegister(ksCurThread, badgeRegister),
                              0,
                              ksCurThread);
+            UNREACHABLE();
         } else {
             slowpath(SysCall);
         }
@@ -485,7 +486,7 @@ fastpath_irq(void)
         }
         handleSpuriousIRQ();
         restore_user_context();
-        return;
+        UNREACHABLE();
     }
 
     /* check the irq can index our state table */
@@ -495,12 +496,13 @@ fastpath_irq(void)
          * it is safe to use in mask and ack operations, even though it is
          * above the claimed maxIRQ. i.e. we're assuming maxIRQ is wrong */
         mask_ack_bail(irq);
-        return;
+        UNREACHABLE();
     }
 
     /* check that it's for a signal */
     if (unlikely(intStateIRQTable[irq] != IRQSignal)) {
         slowpath_irq(irq);
+        UNREACHABLE();
     }
 
     /* check that there is a valid cap we can send a signal to */
@@ -512,7 +514,7 @@ fastpath_irq(void)
         }
 
         mask_ack_bail(irq);
-        return;
+        UNREACHABLE();
     }
 
     /* get the address */
@@ -532,13 +534,14 @@ fastpath_irq(void)
         /* no thread to switch to, update notification, bail and return to preempted thread */
         ntfn_set_active(ntfn_ptr, badge | notification_ptr_get_ntfnMsgIdentifier(ntfn_ptr));
         mask_ack_bail(irq);
-        return;
+        UNREACHABLE();
     }
 
     /* check dest has a scheduling context */
     if (dest->tcbSchedContext == NULL ||
             dest->tcbSchedContext->scRemaining < getKernelWcetTicks()) {
         slowpath_irq(irq);
+        UNREACHABLE();
     }
 
     /* if we got this far, then we have a destination to switch to */
@@ -554,6 +557,7 @@ fastpath_irq(void)
     /* Ensure that the destination has a valid MMU. */
     if (unlikely(! isValidVTableRoot_fp (newVTable))) {
         slowpath_irq(irq);
+        UNREACHABLE();
     }
 
 #ifdef ARCH_ARM
@@ -562,6 +566,7 @@ fastpath_irq(void)
     /* Ensure the HWASID is valid. */
     if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
         slowpath_irq(irq);
+        UNREACHABLE();
     }
 #endif
 
@@ -571,6 +576,7 @@ fastpath_irq(void)
     if (unlikely(currentThreadExpired())) {
         rollbackTime();
         slowpath_irq(irq);
+        UNREACHABLE();
     }
 
     /* --- POINT OF NO RETURN -- */
@@ -594,7 +600,7 @@ fastpath_irq(void)
         } else {
             ntfn_set_active(ntfn_ptr, badge);
             mask_ack_bail(irq);
-            return;
+            UNREACHABLE();
         }
         break;
     case NtfnState_Waiting:
@@ -647,5 +653,6 @@ fastpath_irq(void)
     }
 
     mask_ack_bail(irq);
+    UNREACHABLE();
 }
 
