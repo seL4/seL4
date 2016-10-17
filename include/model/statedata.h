@@ -24,8 +24,8 @@ NODE_STATE_END(nodeState);
 #include <arch/model/smp.h>
 #include <mode/api/constants.h>
 
-#define NUM_READY_QUEUES (CONFIG_NUM_PRIORITIES*CONFIG_NUM_CRITICALITIES)
-#define L2_BITMAP_SIZE ((NUM_READY_QUEUES / seL4_WordBits) + 1)
+#define NUM_READY_QUEUES (CONFIG_NUM_PRIORITIES * CONFIG_NUM_CRITICALITIES)
+#define L2_BITMAP_SIZE ((NUM_READY_QUEUES + seL4_WordBits - 1) / seL4_WordBits)
 
 extern word_t ksNumCPUs VISIBLE;
 extern tcb_queue_t ksReadyQueues[] VISIBLE;

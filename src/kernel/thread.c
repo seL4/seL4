@@ -26,7 +26,7 @@
  * any lower criticality tcbs. First clear any bits previously adjusted by criticality,
  * then  boost priority by new criticality
  */
-#define SHIFT_PRIO_BY_CRIT(p) ((p  & 0xFF) | (ksCriticality << 8u))
+#define SHIFT_PRIO_BY_CRIT(p) ((p  & 0xFF) | (ksCriticality << CTZL(CONFIG_NUM_PRIORITIES)))
 
 static seL4_MessageInfo_t
 transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
