@@ -336,7 +336,7 @@ decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if(!Arch_isMigratable(tcb, affinity)) {
+    if (!Arch_isMigratable(tcb, affinity)) {
         userError("TCB SetAffinity: Can not migrate thread to target cpu.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
