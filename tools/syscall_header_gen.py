@@ -68,6 +68,18 @@ enum syscall {
 };
 typedef word_t syscall_t;
 
+/* System call names */
+#ifdef CONFIG_DEBUG_BUILD
+static char *syscall_names[] = {
+{{py:syscall_number = 1}}
+{{for condition, list in assembler}}
+    {{for syscall in list}}
+         [{{syscall_number}}] = "{{syscall}}",
+        {{py:syscall_number += 1}}
+    {{endfor}}
+{{endfor}}
+};
+#endif /* CONFIG_DEBUG_BUILD */
 #endif
 
 #endif /* __ARCH_API_SYSCALL_H */

@@ -44,7 +44,7 @@ debug_printKernelEntryReason(void)
         break;
 #endif
     case Entry_Syscall:
-        printf("Syscall, number: %ld\n", (long) ksKernelEntry.syscall_no);
+        printf("Syscall, number: %ld, %s\n", (long) ksKernelEntry.syscall_no, syscall_names[ksKernelEntry.syscall_no]);
         if (ksKernelEntry.syscall_no == SysSend ||
                 ksKernelEntry.syscall_no == SysNBSend ||
                 ksKernelEntry.syscall_no == SysCall) {
