@@ -26,8 +26,8 @@ mode_parseTimeArg(word_t i, word_t *buffer)
 static inline word_t
 mode_setTimeArg(word_t i, time_t arg, word_t *buffer, tcb_t *thread)
 {
-    setMR(thread, buffer, i, (uint32_t) (arg >> 32llu));
-    return setMR(thread, buffer, i + 1u, (uint32_t) (arg));
+    setMR(thread, buffer, i, (uint32_t) arg);
+    return setMR(thread, buffer, i + 1u, (uint32_t) (arg >> 32llu));
 }
 
 #endif /* __IPC_BUFFER_H */

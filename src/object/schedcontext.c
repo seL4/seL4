@@ -399,7 +399,7 @@ schedContext_completeYieldTo(tcb_t *yielder)
     UNUSED compile_assert(consumed_fits_in_mrs2, TIME_ARG_SIZE  <= n_msgRegisters)
     /* if the above assert fails, the IPC buffer needs to be looked up and passed
      * to mode_setTimeArg as the message doesn't fit in registers */
-    mode_setTimeArg(0, consumed, NULL, ksCurThread);
+    mode_setTimeArg(0, consumed, NULL, yielder);
     setRegister(yielder, msgInfoRegister,
                 wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, TIME_ARG_SIZE)));
     setThreadState(yielder, ThreadState_Running);
