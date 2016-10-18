@@ -48,6 +48,7 @@ updateActiveBudget(sched_context_t *sc, ticks_t budget)
     /* update the active budget, this impacts running threads who have budget only */
     if (budget > sc->scBudget) {
         sc->scRemaining += (budget - sc->scBudget);
+        release = isSchedulable(sc->scTcb);
     } else {
         time_t diff = sc->scBudget - budget;
         if (diff > sc->scRemaining || sc->scRemaining - diff < getKernelWcetTicks()) {
