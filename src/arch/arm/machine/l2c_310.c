@@ -304,7 +304,7 @@ initL2Cache(void)
 
     /* 2: Invalidate by way. */
     l2cc->maintenance.inv_way = 0xffff;
-    while ( l2cc->maintenance.inv_way & MAINTENANCE_PENDING );
+    while ( l2cc->maintenance.inv_way & 0xffff );
 
     /* 3: write to lockdown D & I reg9 if required  */
     if ( (l2cc->id.cache_type & PL310_LOCKDOWN_BY_MASK) == PL310_LOCKDOWN_BY_MASTER) {
@@ -366,7 +366,7 @@ void plat_cleanCache(void)
 #ifndef CONFIG_DEBUG_DISABLE_L2_CACHE
     /* Clean by way. */
     l2cc->maintenance.clean_way = 0xffff;
-    while ( l2cc->maintenance.clean_way & MAINTENANCE_PENDING );
+    while ( l2cc->maintenance.clean_way & 0xffff );
     L2_cacheSync();
 #endif /* !CONFIG_DEBUG_DISABLE_L2_CACHE */
 }
