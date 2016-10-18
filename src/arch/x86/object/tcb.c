@@ -174,3 +174,10 @@ exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_d
 {
     return EXCEPTION_NONE;
 }
+
+#if CONFIG_MAX_NUM_NODES > 1
+bool_t CONST Arch_isMigratable(tcb_t *thread, word_t affinity_dest)
+{
+    return true;
+}
+#endif /* CONFIG_MAX_NUM_NODES */

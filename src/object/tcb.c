@@ -308,6 +308,45 @@ copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
     return i;
 }
 
+#if CONFIG_MAX_NUM_NODES > 1
+static exception_t
+invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
+{
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
+{
+    tcb_t *tcb;
+    word_t affinity;
+
+    if (length < 1) {
+        userError("TCB SetAffinity: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+
+    affinity = getSyscallArg(0, buffer);
+    if (affinity >= ksNumCPUs) {
+        userError("TCB SetAffinity: Requested CPU does not exist.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if(!Arch_isMigratable(tcb, affinity)) {
+        userError("TCB SetAffinity: Can not migrate thread to target cpu.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeTCB_SetAffinity(tcb, affinity);
+}
+#endif /* CONFIG_MAX_NUM_NODES */
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
 static exception_t
 invokeConfigureSingleStepping(word_t *buffer, arch_tcb_t *context,
@@ -603,6 +642,11 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
 
     case TCBUnbindNotification:
         return decodeUnbindNotification(cap);
+
+#if CONFIG_MAX_NUM_NODES > 1
+    case TCBSetAffinity:
+        return decodeSetAffinity(cap, length, buffer);
+#endif
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case TCBConfigureSingleStepping:

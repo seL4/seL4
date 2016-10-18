@@ -228,6 +228,11 @@ struct tcb {
     /* userland virtual address of thread IPC buffer, 4 bytes */
     word_t tcbIPCBuffer;
 
+#if CONFIG_MAX_NUM_NODES > 1
+    /* cpu ID this thread is running on */
+    word_t tcbAffinity;
+#endif /* CONFIG_MAX_NUM_NODES */
+
     /* Previous and next pointers for scheduler queues , 8 bytes */
     struct tcb* tcbSchedNext;
     struct tcb* tcbSchedPrev;

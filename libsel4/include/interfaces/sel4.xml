@@ -73,31 +73,33 @@
 		<method id="TCBBindNotification" name="BindNotification">
 			<param dir="in" name="notification" type="seL4_CPtr"/>
 		</method>
-		<method id="TCBUnbindNotification" name="UnbindNotification">
-		</method>
-                <method id="TCBSetBreakpoint" name="SetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
-                    <param dir="in" name="bp_num" type="seL4_Uint16"/>
-                    <param dir="in" name="vaddr" type="seL4_Word"/>
-                    <param dir="in" name="type" type="seL4_Word"/>
-                    <param dir="in" name="size" type="seL4_Word"/>
-                    <param dir="in" name="rw" type="seL4_Word"/>
-                </method>
-                <method id="TCBGetBreakpoint" name="GetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
-                    <param dir="in" name="bp_num" type="seL4_Uint16"/>
-                    <param dir="out" name="vaddr" type="seL4_Word"/>
-                    <param dir="out" name="type" type="seL4_Word"/>
-                    <param dir="out" name="size" type="seL4_Word"/>
-                    <param dir="out" name="rw" type="seL4_Word"/>
-                    <param dir="out" name="is_enabled" type="seL4_Bool"/>
-                </method>
-                <method id="TCBUnsetBreakpoint" name="UnsetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
-                    <param dir="in" name="bp_num" type="seL4_Uint16"/>
-                </method>
-                <method id="TCBConfigureSingleStepping" name="ConfigureSingleStepping" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
-                    <param dir="in" name="bp_num" type="seL4_Uint16"/>
-                    <param dir="in" name="num_instructions" type="seL4_Word"/>
-                    <param dir="out" name="bp_was_consumed" type="seL4_Bool"/>
-                </method>
+		<method id="TCBUnbindNotification" name="UnbindNotification"/>
+        <method id="TCBSetAffinity" name="SetAffinity" condition="CONFIG_MAX_NUM_NODES > 1">
+            <param dir="in" name="affinity" type="seL4_Word"/>
+        </method>
+        <method id="TCBSetBreakpoint" name="SetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
+            <param dir="in" name="bp_num" type="seL4_Uint16"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="type" type="seL4_Word"/>
+            <param dir="in" name="size" type="seL4_Word"/>
+            <param dir="in" name="rw" type="seL4_Word"/>
+        </method>
+        <method id="TCBGetBreakpoint" name="GetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
+            <param dir="in" name="bp_num" type="seL4_Uint16"/>
+            <param dir="out" name="vaddr" type="seL4_Word"/>
+            <param dir="out" name="type" type="seL4_Word"/>
+            <param dir="out" name="size" type="seL4_Word"/>
+            <param dir="out" name="rw" type="seL4_Word"/>
+            <param dir="out" name="is_enabled" type="seL4_Bool"/>
+        </method>
+        <method id="TCBUnsetBreakpoint" name="UnsetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
+            <param dir="in" name="bp_num" type="seL4_Uint16"/>
+        </method>
+        <method id="TCBConfigureSingleStepping" name="ConfigureSingleStepping" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
+            <param dir="in" name="bp_num" type="seL4_Uint16"/>
+            <param dir="in" name="num_instructions" type="seL4_Word"/>
+            <param dir="out" name="bp_was_consumed" type="seL4_Bool"/>
+        </method>
 	</interface>
 	<interface name="seL4_CNode">
         <method id="CNodeRevoke" name="Revoke">

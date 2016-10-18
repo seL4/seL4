@@ -28,6 +28,7 @@ Each thread belongs to exactly one security domain (see
 %FIXME: there is much more information held in the TCB!
 
 \subsection{Thread Creation}
+\label{sec:thread_creation}
 
 Like other objects, \obj{TCB}s are created with the
 \apifunc{seL4\_Untyped\_Retype}{untyped_retype} method (see
@@ -38,7 +39,9 @@ or \apifunc{seL4\_TCB\_Configure}{tcb_configure} methods and then calling
 \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} with an initial stack pointer and instruction
 pointer. The thread can then be activated either by setting the
 \texttt{resume\_target} parameter in the \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} invocation to true
-or by seperately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method.
+or by seperately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method. In multicore machines, the thread
+would be running on the same CPU which originally created the \obj{TCB}. However, it could be migrated to other CPUs
+by calling \apifunc{seL4\_TCB\_SetAffinity}.
 
 \subsection{Thread Deactivation}
 \label{sec:thread_deactivation}

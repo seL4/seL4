@@ -118,6 +118,7 @@ any access.
 \newcommand{\threadbufferdesc}{Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary.}
 \newcommand{\threadbufferpagedesc}{Capability to a page containing the thread's IPC buffer.}
 \newcommand{\excepthanddesc}{CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured.}
+\newcommand{\threadcputarget}{The thread's new CPU to run.}
 
 \newcommand{\asidassignpooldesc}{The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.}
 \newcommand{\asidassignpddesc}{The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.}
@@ -321,6 +322,7 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputapidoc{tcb_setmcpriority}
 \inputapidoc{tcb_setspace}
 \inputapidoc{tcb_suspend}
+\inputapidoc{tcb_setaffinity}
 \inputapidoc{tcb_writeregisters}
 \inputapidoc{tcb_setbreakpoint}
 \inputapidoc{tcb_getbreakpoint}

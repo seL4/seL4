@@ -520,6 +520,9 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
         tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
         tcb->tcbDomain = ksCurDomain;
 
+        /* Initialize the new TCB to the current core */
+        SMP_COND_STATEMENT(tcb->tcbAffinity = getCurrentCPUIndex());
+
 #ifdef CONFIG_DEBUG_BUILD
         strlcpy(tcb->tcbName, "child of: '", TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, NODE_STATE(ksCurThread)->tcbName, TCB_NAME_LENGTH);

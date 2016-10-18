@@ -18,4 +18,8 @@ word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer);
 word_t CONST Arch_decodeTransfer(word_t flags);
 exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest);
 
+#if CONFIG_MAX_NUM_NODES > 1
+bool_t CONST Arch_isMigratable(tcb_t *thread, word_t affinity_dest);
+#endif /* CONFIG_MAX_NUM_NODES */
+
 #endif
