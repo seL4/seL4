@@ -601,11 +601,9 @@ handleVCPUFault(word_t hsr)
 {
     updateTimestamp();
 
-    if (likely(checkBudget())) {
+    if (likely(checkBudgetSyscall())) {
         current_fault = fault_vcpu_fault_new(hsr);
         handleFault(ksCurThread);
-    } else {
-        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();

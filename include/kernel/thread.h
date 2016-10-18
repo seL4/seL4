@@ -142,4 +142,16 @@ void recharge(sched_context_t *sc);
 void awaken(void);
 void postpone(sched_context_t *sc);
 void adjustPriorityByCriticality(tcb_t *tcb, bool_t up);
+
+static inline bool_t
+checkBudgetSyscall(void)
+{
+    bool_t result = checkBudget();
+    if (!result && isRunnable(ksCurThread)) {
+        /* try the syscall again when the thread has budget again */
+        setThreadState(ksCurThread, ThreadState_Restart);
+    }
+    return result;
+}
+
 #endif

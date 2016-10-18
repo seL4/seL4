@@ -171,12 +171,9 @@ handleUnknownSyscall(word_t w)
     /* we don't account for unknown syscalls that are for debugging or benchmarking,
      * so don't record the kernel entry time until now */
     updateTimestamp();
-    if (likely(checkBudget())) {
+    if (likely(checkBudgetSyscall())) {
         current_fault = seL4_Fault_UnknownSyscall_new(w);
         handleFault(ksCurThread);
-    } else {
-        /* try again when the thread has budget */
-        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();
@@ -189,12 +186,9 @@ exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
     updateTimestamp();
-    if (likely(checkBudget())) {
+    if (likely(checkBudgetSyscall())) {
         current_fault = seL4_Fault_UserException_new(w_a, w_b);
         handleFault(ksCurThread);
-    } else {
-        /* try again when the thread has budget */
-        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();
@@ -209,14 +203,11 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
     exception_t status;
 
     updateTimestamp();
-    if (likely(checkBudget())) {
+    if (likely(checkBudgetSyscall())) {
         status = handleVMFault(ksCurThread, vm_faultType);
         if (status != EXCEPTION_NONE) {
             handleFault(ksCurThread);
         }
-    } else {
-        /* try again when the thread has budget */
-        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();
@@ -400,7 +391,7 @@ handleSyscall(syscall_t syscall)
 
     ret = EXCEPTION_NONE;
     updateTimestamp();
-    if (checkBudget()) {
+    if (checkBudgetSyscall()) {
         switch (syscall) {
         case SysSend:
             ret = handleInvocation(false, true, false);
@@ -461,9 +452,6 @@ handleSyscall(syscall_t syscall)
                 handleInterrupt(irq);
             }
         }
-    } else {
-        /* try again when the thread has budget */
-        setThreadState(ksCurThread, ThreadState_Restart);
     }
 
     schedule();
