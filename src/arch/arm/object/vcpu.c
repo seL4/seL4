@@ -250,7 +250,7 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     dsb();
     /* If we aren't active then this state already got stored when
      * we were disabled */
-    if (!active) {
+    if (active) {
         vcpu->cpx.sctlr = getSCTLR();
         vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
     }
