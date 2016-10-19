@@ -11,7 +11,7 @@
 #ifndef __ARCH_MACHINE_HARDWARE_H
 #define __ARCH_MACHINE_HARDWARE_H
 
-#include <types.h>
+#include <basic_types.h>
 #include <config.h>
 #include <arch/types.h>
 #include <arch/linker.h>
