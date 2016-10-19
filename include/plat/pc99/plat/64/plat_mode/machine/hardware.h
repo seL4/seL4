@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __PLAT_MODE_MACHINE_HARDWARE_H_
+#define __PLAT_MODE_MACHINE_HARDWARE_H_
 
 #include <config.h>
 #include <types.h>
@@ -75,3 +76,5 @@ kpptr_to_paddr(void *pptr)
     assert((word_t)pptr >= KERNEL_BASE);
     return (paddr_t)pptr - KERNEL_BASE_OFFSET;
 }
+
+#endif /* __PLAT_MODE_MACHINE_HARDWARE_H_ */

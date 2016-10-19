@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_STACK_H_
+#define __ARCH_MODE_STACK_H_
 
 #include <config.h>
 #include <mode/machine.h>
@@ -47,3 +48,5 @@ setKernelEntryStackPointer(tcb_t *target_thread)
         x86_wrmsr(IA32_SYSENTER_ESP_MSR, register_context_top);
     }
 }
+
+#endif /* __ARCH_MODE_STACK_H_ */

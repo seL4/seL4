@@ -10,7 +10,8 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_TYPES_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_TYPES_H_
 
 #include <autoconf.h>
 #include <sel4/simple_types.h>
@@ -31,3 +32,5 @@ typedef struct seL4_UserContext_ {
               r8, r9, r10, r11, r12, r13, r14, r15;
     seL4_Word tls_base;
 } seL4_UserContext;
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_TYPES_H_ */

@@ -10,7 +10,8 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_EXIPC_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_EXIPC_H_
 
 /**
  * NOT A STANDALONE INCLUDE
@@ -115,3 +116,5 @@ static inline seL4_Word seL4_IsArchExceptionFrom(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_length(tag) == SEL4_USER_EXCEPTION_LENGTH;
 }
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_EXIPC_H_ */

@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_KERNEL_SMP_SYS_H_
+#define __ARCH_KERNEL_SMP_SYS_H_
 
 /* Lower memory address to copy APs boot code in real mode */
 #define BOOT_NODE_PADDR 0x80000
@@ -20,3 +21,5 @@ void boot_node(void);
 BOOT_CODE void start_boot_aps(void);
 BOOT_CODE bool_t copy_boot_code_aps(uint32_t mem_lower);
 #endif
+
+#endif /* __ARCH_KERNEL_SMP_SYS_H_ */

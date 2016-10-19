@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_OBJECT_STRUCTURES_H_
+#define __ARCH_MODE_OBJECT_STRUCTURES_H_
 
 /* x86-64 specific object types */
 /* sysexit with rex.w prefix (64-bit) user code = cs + 32, user data = cs + 40.
@@ -245,3 +246,5 @@ x86_make_pde_mapping(word_t paddr, vm_attributes_t attr)
                1
            );
 }
+
+#endif /* __ARCH_MODE_OBJECT_STRUCTURES_H_ */

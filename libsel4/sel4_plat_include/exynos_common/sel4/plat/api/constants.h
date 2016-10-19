@@ -9,5 +9,9 @@
  *
  * @TAG(D61_BSD)
  */
-#pragma once
+
+#ifndef __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_
+#define __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_
+
+#endif /* __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_ */
 

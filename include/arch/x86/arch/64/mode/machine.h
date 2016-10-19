@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_MACHINE_H_
+#define __ARCH_MODE_MACHINE_H_
 
 #include <config.h>
 #include <arch/model/statedata.h>
@@ -167,3 +168,5 @@ static inline word_t x86_read_gs_base(void)
 }
 
 #endif
+
+#endif /* __ARCH_MODE_MACHINE_H_ */

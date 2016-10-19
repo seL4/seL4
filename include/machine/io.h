@@ -7,7 +7,9 @@
  *
  * @TAG(GD_GPL)
  */
-#pragma once
+
+#ifndef __MACHINE_IO_H_
+#define __MACHINE_IO_H_
 
 #include <config.h>
 #include <util.h>
@@ -42,3 +44,5 @@ word_t print_unsigned_long(unsigned long x, word_t ui_base) VISIBLE;
 #define printf(args...) ((void)(0))
 #define puts(s) ((void)(0))
 #endif /* CONFIG_PRINTING */
+
+#endif /* __MACHINE_IO_H_ */

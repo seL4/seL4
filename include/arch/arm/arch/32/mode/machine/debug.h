@@ -9,7 +9,9 @@
  *
  * @TAG(D61_GPL)
  */
-#pragma once
+
+#ifndef __ARCH_MODE_MACHINE_DEBUG_H_
+#define __ARCH_MODE_MACHINE_DEBUG_H_
 
 #include <config.h>
 #if defined(CONFIG_DEBUG_BUILD) || defined (CONFIG_HARDWARE_DEBUG_API)
@@ -199,3 +201,4 @@ void restore_user_debug_context(tcb_t *target_thread);
 #endif /* !__ASSEMBLER__ */
 
 #endif /* defined(CONFIG_DEBUG_BUILD) || defined (CONFIG_HARDWARE_DEBUG_API) */
+#endif /* __ARCH_MODE_MACHINE_DEBUG_H_ */

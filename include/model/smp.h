@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __MODEL_SMP_H_
+#define __MODEL_SMP_H_
 
 #include <config.h>
 
@@ -38,3 +39,5 @@
 #define SMP_COND_STATEMENT(_st)
 
 #endif /* CONFIG_MAX_NUM_NODES */
+
+#endif /* __MODEL_SMP_H_ */

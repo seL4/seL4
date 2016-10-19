@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __MODEL_STATEDATA_H_
+#define __MODEL_STATEDATA_H_
 
 #include <config.h>
 #include <types.h>
@@ -49,3 +50,5 @@ extern paddr_t ksUserLogBuffer;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)
+
+#endif /* __MODEL_STATEDATA_H_ */

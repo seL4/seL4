@@ -7,7 +7,9 @@
  *
  * @TAG(GD_GPL)
  */
-#pragma once
+
+#ifndef __PLAT_MACHINE_IO_H_
+#define __PLAT_MACHINE_IO_H_
 
 #include <config.h>
 #include <arch/linker.h>
@@ -23,3 +25,5 @@ uint32_t in32(uint16_t port);
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void serial_init(uint16_t port);
 #endif
+
+#endif /* __PLAT_MACHINE_IO_H_ */

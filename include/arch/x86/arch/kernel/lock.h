@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_KERNEL_LOCK_H_
+#define __ARCH_KERNEL_LOCK_H_
 
 #include <config.h>
 #include <types.h>
@@ -108,3 +109,5 @@ clh_lock_test(void)
 #define LOCK_TEST do {} while (0)
 
 #endif
+
+#endif /* __ARCH_KERNEL_LOCK_H_ */

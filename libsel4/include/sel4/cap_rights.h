@@ -8,7 +8,8 @@
  * @TAG(NICTA_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_CAP_RIGHTS_H_
+#define __LIBSEL4_SEL4_CAP_RIGHTS_H_
 
 /* Future interface to cap rights that wraps existing interface.
  * This wrapper can be removed when the future interface is adopted.
@@ -100,3 +101,5 @@ seL4_CapRights_set_capAllowWrite(seL4_CapRights_t cap_rights, seL4_Uint32 value)
         return (seL4_CapRights_t)((unsigned)cap_rights & ~(unsigned)seL4_CanWrite);
     }
 }
+
+#endif /* __LIBSEL4_SEL4_CAP_RIGHTS_H_ */

@@ -9,7 +9,10 @@
  *
  * @TAG(D61_GPL)
  */
-#pragma once
+
+#ifndef __MACHINE_DEBUG_H_
+#define __MACHINE_DEBUG_H_
+
 #include <config.h>
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -92,3 +95,5 @@ singleStepFaultCounterReady(arch_tcb_t *uc)
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
+
+#endif /* __MACHINE_DEBUG_H_ */

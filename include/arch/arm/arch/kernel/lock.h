@@ -10,8 +10,11 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_KERNEL_LOCK_H_
+#define __ARCH_KERNEL_LOCK_H_
 
 #define NODE_LOCK do {} while (0)
 #define NODE_UNLOCK do {} while (0)
 #define LOCK_TEST do {} while (0)
+
+#endif /* __ARCH_KERNEL_LOCK_H_ */

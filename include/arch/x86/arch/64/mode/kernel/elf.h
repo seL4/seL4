@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_KERNEL_ELF_H_
+#define __ARCH_MODE_KERNEL_ELF_H_
 
 #include <types.h>
 
@@ -42,3 +43,5 @@ typedef struct Elf64_Phdr {
     uint64_t            p_memsz;
     uint64_t            p_align;
 } Elf64_Phdr_t, Elf_Phdr_t;
+
+#endif /* __ARCH_MODE_KERNEL_ELF_H_ */

@@ -10,7 +10,10 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_TYPES_H_
+#define __ARCH_MODE_TYPES_H_
 
 #define wordRadix 6
 #define wordBits (1 << wordRadix)
+
+#endif /* __ARCH_MODE_TYPES_H_ */

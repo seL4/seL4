@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_KERNEL_ELF_H_
+#define __ARCH_MODE_KERNEL_ELF_H_
 
 #include <types.h>
 
@@ -44,3 +45,5 @@ typedef struct Elf32_Phdr {
     uint32_t      p_flags;     /* Flags: logical "or" of PF_ constants below */
     uint32_t      p_align;     /* Reqd alignment of segment in memory */
 } Elf32_Phdr_t, Elf_Phdr_t;
+
+#endif /* __ARCH_MODE_KERNEL_ELF_H_ */

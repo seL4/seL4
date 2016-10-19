@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODEL_SMP_H_
+#define __ARCH_MODEL_SMP_H_
 
 #include <config.h>
 #include <arch/types.h>
@@ -48,3 +49,5 @@ extern cpu_id_mapping_t cpu_mapping;
 #endif /* CONFIG_MAX_NUM_NODES */
 
 #define NODE_STATE(_state)                  NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
+
+#endif /* __ARCH_MODEL_SMP_H_ */

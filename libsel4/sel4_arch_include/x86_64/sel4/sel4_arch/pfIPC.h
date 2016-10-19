@@ -10,4 +10,7 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_PFIPC_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_PFIPC_H_
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_PFIPC_H_ */

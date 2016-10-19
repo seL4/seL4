@@ -10,7 +10,8 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_MAPPING_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_MAPPING_H_
 
 #define SEL4_MAPPING_LOOKUP_LEVEL 2
 #define SEL4_MAPPING_LOOKUP_NO_PT 21
@@ -21,3 +22,5 @@ static inline seL4_Word seL4_MappingFailedLookupLevel()
 {
     return seL4_GetMR(SEL4_MAPPING_LOOKUP_LEVEL);
 }
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_MAPPING_H_ */

@@ -10,7 +10,8 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_
 
 #include <autoconf.h>
 
@@ -42,3 +43,5 @@
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4
 #define seL4_MaxUntypedBits 47
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_ */

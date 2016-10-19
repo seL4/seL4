@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_MACHINE_REGISTERSET_H_
+#define __ARCH_MODE_MACHINE_REGISTERSET_H_
 
 /* These are the indices of the registers in the
  * saved thread context. The values are determined
@@ -84,3 +85,5 @@ extern const register_t exceptionMessage[];
 extern const register_t syscallMessage[];
 
 #define FPU_PADDING word_t padding[1];
+
+#endif /* __ARCH_MODE_MACHINE_REGISTERSET_H_ */

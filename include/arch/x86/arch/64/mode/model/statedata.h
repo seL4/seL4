@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_MODEL_STATEDATA_H_
+#define __ARCH_MODE_MODEL_STATEDATA_H_
 
 #include <object/structures.h>
 #include <arch/types.h>
@@ -28,3 +29,5 @@ extern pte_t x64KSGlobalPT[BIT(PT_INDEX_BITS)];
 NODE_STATE_BEGIN(modeNodeState)
 NODE_STATE_DECLARE(cr3_t, x64KSCurrentCR3);
 NODE_STATE_END(modeNodeState)
+
+#endif /* __ARCH_MODE_MODEL_STATEDATA_H_ */

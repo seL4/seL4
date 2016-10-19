@@ -9,7 +9,9 @@
  *
  * @TAG(D61_GPL)
  */
-#pragma once
+
+#ifndef __ARCH_MODE_MACHINE_DEBUG_H_
+#define __ARCH_MODE_MACHINE_DEBUG_H_
 
 #include <assert.h>
 
@@ -135,3 +137,4 @@ loadBreakpointState(arch_tcb_t *source)
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
+#endif /* __ARCH_MODE_MACHINE_DEBUG_H_ */

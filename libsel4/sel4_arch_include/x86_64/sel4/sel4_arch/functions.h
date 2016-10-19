@@ -10,7 +10,8 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_FUNCTIONS_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_FUNCTIONS_H_
 
 #include <sel4/types.h>
 
@@ -54,3 +55,5 @@
                         [offset] "i" (SEL4_OFFSETOF(seL4_IPCBuffer, field))\
                       : "memory"); /* clobber */\
     } while(0)
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_FUNCTIONS_H_ */

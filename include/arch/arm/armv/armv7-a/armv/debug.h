@@ -9,7 +9,9 @@
  *
  * @TAG(D61_GPL)
  */
-#pragma once
+
+#ifndef __ARCH_ARMV_DEBUG_H_
+#define __ARCH_ARMV_DEBUG_H_
 
 #include <config.h>
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -175,3 +177,4 @@ Arch_breakpointIsMismatch(dbg_bcr_t in_val)
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
+#endif /* __ARCH_ARMV_DEBUG_H_ */

@@ -10,7 +10,8 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_SYSCALL_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_SYSCALL_H_
 
 #include <autoconf.h>
 #include <sel4/arch/functions.h>
@@ -129,3 +130,5 @@ x64_sys_null(seL4_Word sys)
         : "%rbx", "%rcx", "%rsi", "%rdi", "%r11"
     );
 }
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_SYSCALL_H_ */

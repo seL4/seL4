@@ -9,7 +9,9 @@
  *
  * @TAG(D61_GPL)
  */
-#pragma once
+
+#ifndef __ARCH_MACHINE_DEBUG_H_
+#define __ARCH_MACHINE_DEBUG_H_
 
 #include <config.h>
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -179,3 +181,5 @@ Arch_decodeUnsetBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
+
+#endif /* __ARCH_MACHINE_DEBUG_H_ */

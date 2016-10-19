@@ -10,7 +10,8 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_OBJECTTYPE_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_OBJECTTYPE_H_
 
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
@@ -31,3 +32,5 @@ typedef enum _mode_object {
 #ifndef CONFIG_HUGE_PAGE
 #define seL4_X64_HugePageObject 0xfffffffe
 #endif
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_OBJECTTYPE_H_ */

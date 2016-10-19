@@ -10,7 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_MODE_FASTPATH_FASTPATH_H_
+#define __ARCH_MODE_FASTPATH_FASTPATH_H_
 
 #include <util.h>
 #include <arch/linker.h>
@@ -189,3 +190,5 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     }
     UNREACHABLE();
 }
+
+#endif /* __ARCH_MODE_FASTPATH_FASTPATH_H_ */

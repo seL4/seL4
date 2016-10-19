@@ -10,7 +10,8 @@
  * @TAG(D61_BSD)
  */
 
-#pragma once
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
 
 #include <autoconf.h>
 
@@ -378,3 +379,5 @@ seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
 }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
+
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_ */
