@@ -70,7 +70,7 @@ typedef word_t syscall_t;
 
 /* System call names */
 #ifdef CONFIG_DEBUG_BUILD
-static char *syscall_names[] = {
+static char *syscall_names[] UNUSED = {
 {{py:syscall_number = 1}}
 {{for condition, list in assembler}}
     {{for syscall in list}}
