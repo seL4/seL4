@@ -20,7 +20,7 @@
 #include <mode/stack.h>
 
 static inline void
-switchToThread_fp(tcb_t *thread, pde_t *pd, pde_t stored_hw_asid)
+switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
 {
     word_t base;
     uint32_t new_pd = pptr_to_paddr(pd);
