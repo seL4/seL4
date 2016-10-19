@@ -14,13 +14,4 @@
 #include <config.h>
 #include <mode/machine/hardware.h>
 
-/* PPTR_TOP is shared between all ARM platforms. */
-
-#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
-#define PPTR_TOP 0xffe00000
-#define KS_LOG_PPTR PPTR_TOP
-#else
-#define PPTR_TOP 0xfff00000
-#endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
-
 #endif /* !__ARCH_MACHINE_HARDWARE_H */
