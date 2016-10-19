@@ -14,7 +14,6 @@
 
 #include <machine/io.h>
 #include <kernel/vspace.h>
-#include <arch/machine.h>
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
 #include <arch/linker.h>

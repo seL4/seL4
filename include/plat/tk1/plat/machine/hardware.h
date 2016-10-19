@@ -16,6 +16,7 @@
 #include <basic_types.h>
 #include <arch/linker.h>
 #include <arch/object/vcpu.h>
+#include <plat/machine.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware_gen.h>
 #include <plat/machine/smmu.h>

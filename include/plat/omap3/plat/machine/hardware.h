@@ -14,6 +14,7 @@
 #include <basic_types.h>
 #include <arch/linker.h>
 #include <armv/machine.h>
+#include <plat/machine.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/interrupt.h>
 

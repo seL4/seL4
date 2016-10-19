@@ -15,6 +15,7 @@
 #include <basic_types.h>
 #include <arch/linker.h>
 #include <arch/object/vcpu.h>
+#include <plat/machine.h>
 #include <plat/machine/devices.h>
 
 #define TIMER_CLOCK_HZ     24000000llu

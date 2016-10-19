@@ -14,7 +14,7 @@
 #include <types.h>
 #include <basic_types.h>
 #include <arch/linker.h>
-#include <arch/machine.h>
+#include <plat/machine.h>
 #include <plat/machine/devices.h>
 #include <machine/io.h>
 #include <plat/machine/hardware.h>

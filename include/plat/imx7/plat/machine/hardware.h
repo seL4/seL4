@@ -13,6 +13,7 @@
 
 #include <basic_types.h>
 #include <arch/linker.h>
+#include <plat/machine.h>
 #include <plat/machine/devices.h>
 
 #define physBase          0x80000000
