@@ -16,19 +16,7 @@
 #include <object/cnode.h>
 #include <object/structures.h>
 #include <plat/machine/hardware.h>
-
-struct deriveCap_ret {
-    exception_t status;
-    cap_t cap;
-};
-typedef struct deriveCap_ret deriveCap_ret_t;
-
-struct finaliseCap_ret {
-    cap_t remainder;
-    irq_t irq;
-};
-typedef struct finaliseCap_ret finaliseCap_ret_t;
-
+#include <object/cap.h>
 #include <arch/object/objecttype.h>
 
 deriveCap_ret_t deriveCap(cte_t *slot, cap_t cap);

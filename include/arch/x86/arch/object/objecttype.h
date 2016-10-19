@@ -14,7 +14,6 @@
 #include <types.h>
 #include <api/failures.h>
 #include <api/types.h>
-#include <object/objecttype.h>
 #include <object/structures.h>
 #include <object/cnode.h>
 
