@@ -29,11 +29,7 @@ endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
 static inline vspace_root_t *
 cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
 {
-#if defined(CONFIG_PAE_PAGING)
-    return PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vtable_cap));
-#else
     return PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vtable_cap));
-#endif
 }
 
 static inline void FORCE_INLINE
@@ -72,11 +68,7 @@ mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 static inline bool_t
 isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
-#if defined(CONFIG_PAE_PAGING)
-    return likely(cap_capType_equals(vspace_root_cap, cap_pdpt_cap) && cap_pdpt_cap_get_capPDPTIsMapped(vspace_root_cap));
-#else
-    return likely(cap_capType_equals(vspace_root_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(vspace_root_cap));
-#endif
+    return cap_capType_equals(vspace_root_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(vspace_root_cap);
 }
 
 static inline void

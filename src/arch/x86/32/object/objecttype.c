@@ -60,15 +60,6 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
 {
     switch (cap_get_capType(cap)) {
 
-    case cap_pdpt_cap:
-        if (final && cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
-            deleteASID(
-                cap_pdpt_cap_get_capPDPTMappedASID(cap),
-                (vspace_root_t*)PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap))
-            );
-        }
-        break;
-
     case cap_frame_cap:
         if (final && cap_frame_cap_get_capFMappedASID(cap)) {
             switch (cap_frame_cap_get_capFMapType(cap)) {
@@ -177,26 +168,13 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PageDirectoryObject:
-#ifndef CONFIG_PAE_PAGING
         copyGlobalMappings(regionBase);
-#endif
         return cap_page_directory_cap_new(
                    0,                  /* capPDIsMapped      */
                    asidInvalid,        /* capPDMappedASID    */
                    0,                  /* capPDMappedAddress */
                    (word_t)regionBase  /* capPDBasePtr       */
                );
-
-#ifdef CONFIG_PAE_PAGING
-    case seL4_IA32_PDPTObject:
-        copyGlobalMappings(regionBase);
-
-        return cap_pdpt_cap_new(
-                   0,                  /* capPDPTIsMapped */
-                   asidInvalid,        /* capPDPTMappedAsid*/
-                   (word_t)regionBase  /* capPDPTBasePtr */
-               );
-#endif
 
     case seL4_X86_IOPageTableObject:
         return cap_io_page_table_cap_new(
@@ -224,7 +202,6 @@ Mode_decodeInvocation(
 )
 {
     switch (cap_get_capType(cap)) {
-    case cap_pdpt_cap:
     case cap_page_directory_cap:
     case cap_page_table_cap:
     case cap_frame_cap:

@@ -168,9 +168,6 @@ cap_get_archCapSizeBits(cap_t cap)
     case cap_page_directory_cap:
         return seL4_PageDirBits;
 
-    case cap_pdpt_cap:
-        return seL4_PDPTBits;
-
     case cap_io_port_cap:
         return 0;
     case cap_io_space_cap:
@@ -219,9 +216,6 @@ cap_get_archCapIsPhysical(cap_t cap)
         return true;
 
     case cap_page_directory_cap:
-        return true;
-
-    case cap_pdpt_cap:
         return true;
 
     case cap_io_port_cap:
@@ -275,9 +269,6 @@ cap_get_archCapPtr(cap_t cap)
 
     case cap_page_directory_cap:
         return PT_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
-
-    case cap_pdpt_cap:
-        return PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
 
     case cap_io_port_cap:
         return NULL;

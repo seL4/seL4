@@ -9,7 +9,6 @@
 #
 
 ARCH_C_SOURCES += 32/kernel/vspace_32paging.c \
-                  32/kernel/vspace_pae.c \
                   32/kernel/thread.c \
                   32/kernel/vspace.c \
                   32/kernel/elf.c \
