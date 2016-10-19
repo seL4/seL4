@@ -10,7 +10,7 @@
 #include <config.h>
 #include <machine/io.h>
 
-#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
+#ifdef CONFIG_PRINTING
 void
 putConsoleChar(unsigned char c)
 {
