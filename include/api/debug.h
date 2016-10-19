@@ -18,8 +18,6 @@
 #include <arch/api/syscall.h>
 #include <model/statedata.h>
 
-extern kernel_entry_t ksKernelEntry;
-
 #ifdef CONFIG_PRINTING
 
 static inline void

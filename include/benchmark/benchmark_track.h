@@ -18,7 +18,6 @@
 #include <machine/io.h>
 #include <kernel/cspace.h>
 #include <model/statedata.h>
-#include <api/debug.h>
 #include <mode/machine.h>
 
 #if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
