@@ -16,7 +16,7 @@
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/boot.h>
 #include <arch/api/invocation.h>
-#include <benchmark_track.h>
+#include <benchmark/benchmark_track.h>
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.

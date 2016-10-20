@@ -9,7 +9,7 @@
  */
 
 #include <config.h>
-#include <benchmark_track.h>
+#include <benchmark/benchmark_track.h>
 #include <model/statedata.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES

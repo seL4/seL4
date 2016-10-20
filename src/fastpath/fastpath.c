@@ -12,9 +12,9 @@
 #include <fastpath/fastpath.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-#include <benchmark_track.h>
+#include <benchmark/benchmark_track.h>
 #endif
-#include <benchmark_utilisation.h>
+#include <benchmark/benchmark_utilisation.h>
 
 void
 #ifdef ARCH_X86

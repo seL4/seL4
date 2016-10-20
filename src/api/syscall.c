@@ -9,10 +9,10 @@
  */
 
 #include <types.h>
-#include <benchmark.h>
+#include <benchmark/benchmark.h>
 #include <arch/benchmark.h>
-#include <benchmark_track.h>
-#include <benchmark_utilisation.h>
+#include <benchmark/benchmark_track.h>
+#include <benchmark/benchmark_utilisation.h>
 #include <api/syscall.h>
 #include <api/failures.h>
 #include <api/faults.h>

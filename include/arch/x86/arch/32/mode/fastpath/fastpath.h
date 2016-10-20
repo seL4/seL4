@@ -16,7 +16,7 @@
 #include <arch/machine/debug.h>
 #include <api/types.h>
 #include <api/syscall.h>
-#include <benchmark_track.h>
+#include <benchmark/benchmark_track.h>
 #include <mode/stack.h>
 
 static inline void

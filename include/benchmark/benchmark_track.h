@@ -13,7 +13,7 @@
 
 #include <config.h>
 #include <arch/benchmark.h>
-#include <benchmark_track_types.h>
+#include <benchmark/benchmark_track_types.h>
 #include <arch/api/constants.h>
 #include <machine/io.h>
 #include <kernel/cspace.h>

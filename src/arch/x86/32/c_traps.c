@@ -13,7 +13,7 @@
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
 #include <arch/machine/debug.h>
-#include <benchmark_track.h>
+#include <benchmark/benchmark_track.h>
 #include <mode/stack.h>
 
 #include <api/syscall.h>

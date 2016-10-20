@@ -10,7 +10,7 @@
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
 
-#include <benchmark.h>
+#include <benchmark/benchmark.h>
 #include <arch/benchmark.h>
 
 timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];

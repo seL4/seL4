@@ -14,11 +14,9 @@ include ${SOURCE_ROOT}/src/kernel/Makefile
 include ${SOURCE_ROOT}/src/object/Makefile
 include ${SOURCE_ROOT}/src/model/Makefile
 include ${SOURCE_ROOT}/src/machine/Makefile
+include ${SOURCE_ROOT}/src/benchmark/Makefile
 
 C_SOURCES += src/inlines.c \
              src/assert.c \
              src/util.c \
-             src/string.c \
-             src/benchmark_track.c \
-             src/benchmark_utilisation.c
-
+             src/string.c

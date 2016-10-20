@@ -14,7 +14,7 @@
 #ifndef __API_DEBUG_H
 #define __API_DEBUG_H
 
-#include <benchmark_track.h>
+#include <benchmark/benchmark_track.h>
 #include <arch/api/syscall.h>
 #include <model/statedata.h>
 
