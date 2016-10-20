@@ -17,7 +17,6 @@
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
 #include <machine/io.h>
-#include <plat/machine/hardware.h>
 
 #define TIMER_CLOCK_HZ		19200000llu
 
