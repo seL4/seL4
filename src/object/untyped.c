@@ -78,7 +78,10 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    /* Is the requested object size valid? */
+    /* Check the requested obj size isn't too big as to cause
+     * shift by seL4_WordBits errors.
+     * Furthermore, device-untyped means that objects 
+     * < (seL4_WordBits - 2) are as large as possible */
     if (userObjSize >= (wordBits - 2)) {
         userError("Untyped Retype: Invalid object size.");
         current_syscall_error.type = seL4_RangeError;
