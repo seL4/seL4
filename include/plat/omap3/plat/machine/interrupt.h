@@ -18,7 +18,6 @@
 #include <plat/machine.h>
 #include <arch/linker.h>
 #include <plat/machine/devices.h>
-#include <plat/machine/hardware.h>
 
 #define INTCPS_SIR_IRQ_SPURIOUSIRQFLAG 0xFF0000
 
