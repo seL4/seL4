@@ -199,6 +199,7 @@ CPP_GEN = ${SOURCE_ROOT}/tools/cpp_gen.sh
 SYSCALL_ID_GEN_PATH = ${SOURCE_ROOT}/tools/syscall_header_gen.py
 INVOCATION_ID_GEN_PATH = ${SOURCE_ROOT}/tools/invocation_header_gen.py
 XMLLINT = xmllint.sh
+CIRCULAR_INCLUDES = ${SOURCE_ROOT}/tools/circular_includes.pl
 
 ########################################
 ## Check tools
@@ -584,6 +585,8 @@ kernel_final.s: kernel_final.c
 
 # Awkward rule to get around passing -x to CC and having a .c input file.
 kernel_final.c: kernel_all.c_pp
+	@echo " [Circular includes] $<"
+	$(Q)${CIRCULR_INCLUDES} < $<
 	@echo " [CP] $@"
 	$(Q)cp -a $< $@
 
