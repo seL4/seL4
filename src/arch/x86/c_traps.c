@@ -16,8 +16,8 @@
 #include <machine/debug.h>
 #include <api/syscall.h>
 
-#include <benchmark_track.h>
-#include <benchmark_utilisation.h>
+#include <benchmark/benchmark_track.h>
+#include <benchmark/benchmark_utilisation.h>
 
 /** DONT_TRANSLATE */
 void VISIBLE

@@ -9,7 +9,7 @@
  */
 
 #include <config.h>
-#include <benchmark_utilisation.h>
+#include <benchmark/benchmark_utilisation.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 

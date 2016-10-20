@@ -15,7 +15,7 @@
 #include <model/statedata.h>
 #include <object/structures.h>
 #include <object/tcb.h>
-#include <benchmark_track.h>
+#include <benchmark/benchmark_track.h>
 
 /* Collective cpu states, including both pre core architecture dependant and independent data */
 SMP_STATE_DEFINE(smpStatedata_t, ksSMP[CONFIG_MAX_NUM_NODES] ALIGN(CONFIG_CACHE_LN_SZ));

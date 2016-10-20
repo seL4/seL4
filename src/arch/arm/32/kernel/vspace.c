@@ -10,7 +10,7 @@
 
 #include <config.h>
 #include <types.h>
-#include <benchmark.h>
+#include <benchmark/benchmark.h>
 #include <api/failures.h>
 #include <api/syscall.h>
 #include <kernel/boot.h>
@@ -32,7 +32,7 @@
 #include <arch/object/vcpu.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
-#include <benchmark_track.h>
+#include <benchmark/benchmark_track.h>
 #endif
 
 /* ARM uses multiple identical mappings in a page table / page directory to construct

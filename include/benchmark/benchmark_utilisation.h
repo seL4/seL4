@@ -13,7 +13,7 @@
 
 #include <config.h>
 #include <arch/benchmark.h>
-#include <benchmark_utilisation_types.h>
+#include <benchmark/benchmark_utilisation_types.h>
 #include <arch/api/constants.h>
 #include <model/statedata.h>
 

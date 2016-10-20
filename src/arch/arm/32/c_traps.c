@@ -15,8 +15,8 @@
 #include <api/syscall.h>
 #include <arch/linker.h>
 
-#include <benchmark_track.h>
-#include <benchmark_utilisation.h>
+#include <benchmark/benchmark_track.h>
+#include <benchmark/benchmark_utilisation.h>
 
 /** DONT_TRANSLATE */
 static inline void FORCE_INLINE NORETURN restore_user_context(void)
