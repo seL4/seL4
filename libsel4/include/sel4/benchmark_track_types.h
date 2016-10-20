@@ -43,10 +43,10 @@ typedef struct PACKED kernel_entry {
         };
         /* Tracked kernel entry info filled from outside this file */
         struct {
-            seL4_Word syscall_no: 3;
+            seL4_Word syscall_no: 4;
             seL4_Word cap_type: 5;
             seL4_Word is_fastpath: 1;
-            seL4_Word invocation_tag: 20;
+            seL4_Word invocation_tag: 19;
         };
     };
 } kernel_entry_t;

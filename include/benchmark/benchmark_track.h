@@ -60,7 +60,7 @@ benchmark_debug_syscall_start(word_t cptr, word_t msgInfo, word_t syscall)
     seL4_MessageInfo_t info = messageInfoFromWord_raw(msgInfo);
     lookupCapAndSlot_ret_t lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), cptr);
     ksKernelEntry.path = Entry_Syscall;
-    ksKernelEntry.syscall_no = syscall;
+    ksKernelEntry.syscall_no = -syscall;
     ksKernelEntry.cap_type = cap_get_capType(lu_ret.cap);
     ksKernelEntry.invocation_tag = seL4_MessageInfo_get_label(info);
 }
