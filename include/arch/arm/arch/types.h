@@ -13,7 +13,6 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include <basic_types.h>
 
 compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
 
