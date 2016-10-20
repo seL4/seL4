@@ -314,7 +314,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 #endif
 
 #if CONFIG_ENABLE_BENCHMARKS
-static inline void
+static inline seL4_Error
 seL4_BenchmarkResetLog(void)
 {
     seL4_Word unused0 = 0;
