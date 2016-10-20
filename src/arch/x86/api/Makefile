@@ -10,4 +10,4 @@
 
 DIRECTORIES += src/arch/$(ARCH)/api
 
-ARCH_C_SOURCES += api/faults.c api/benchmark.c
+ARCH_C_SOURCES += api/faults.c

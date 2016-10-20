@@ -13,6 +13,7 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/object/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/kernel/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/model/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/machine/Makefile
+include ${SOURCE_ROOT}/src/arch/$(ARCH)/benchmark/Makefile
 
 ifeq ($(__X86_32__),y)
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/Makefile
