@@ -586,7 +586,7 @@ kernel_final.s: kernel_final.c
 # Awkward rule to get around passing -x to CC and having a .c input file.
 kernel_final.c: kernel_all.c_pp
 	@echo " [Circular includes] $<"
-	$(Q)${CIRCULR_INCLUDES} < $<
+	$(Q)${CIRCULAR_INCLUDES} < $<
 	@echo " [CP] $@"
 	$(Q)cp -a $< $@
 
