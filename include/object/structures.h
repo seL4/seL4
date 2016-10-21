@@ -22,7 +22,10 @@ enum irq_state {
     IRQInactive  = 0,
     IRQSignal    = 1,
     IRQTimer     = 2,
-    IRQReserved  = 3,
+#if CONFIG_MAX_NUM_NODES > 1
+    IRQIPI       = 3,
+#endif
+    IRQReserved
 };
 typedef word_t irq_state_t;
 

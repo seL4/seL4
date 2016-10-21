@@ -21,6 +21,7 @@ cpu_id_t apic_get_id(void);
 bool_t apic_is_interrupt_pending(void);
 void apic_ack_active_interrupt(void);
 
+void apic_send_ipi(irq_t vector, cpu_id_t cpu_id);
 void apic_send_init_ipi(cpu_id_t cpu_id);
 void apic_send_startup_ipi(cpu_id_t cpu_id, paddr_t startup_addr);
 

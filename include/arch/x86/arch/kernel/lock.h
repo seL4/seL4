@@ -18,6 +18,7 @@
 #include <util.h>
 #include <mode/machine.h>
 #include <arch/model/statedata.h>
+#include <arch/kernel/ipi.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
@@ -38,8 +39,12 @@ typedef struct clh_qnode {
 typedef struct clh_qnode_p {
     volatile clh_qnode_t *node;
     volatile clh_qnode_t *next;
+    /* This is the software IPI flag */
+    volatile word_t ipi;
 
-    PAD_TO_NEXT_CACHE_LN(sizeof(clh_qnode_t *) + sizeof(clh_qnode_t *));
+    PAD_TO_NEXT_CACHE_LN(sizeof(clh_qnode_t *) +
+                         sizeof(clh_qnode_t *) +
+                         sizeof(word_t));
 } clh_qnode_p_t;
 
 typedef struct clh_lock {
@@ -53,6 +58,12 @@ typedef struct clh_lock {
 extern clh_lock_t big_kernel_lock;
 BOOT_CODE void clh_lock_init(void);
 
+static inline bool_t FORCE_INLINE
+clh_is_ipi_pending(word_t cpu)
+{
+    return big_kernel_lock.node_owners[cpu].ipi == 1;
+}
+
 static inline void FORCE_INLINE
 clh_lock_acquire(word_t cpu)
 {
@@ -65,6 +76,11 @@ clh_lock_acquire(word_t cpu)
     big_kernel_lock.node_owners[cpu].next = prev;
 
     while (big_kernel_lock.node_owners[cpu].next->value != CLHState_Granted) {
+        if (clh_is_ipi_pending(cpu)) {
+            /* we only handle irq_remote_call_ipi here as other type of IPIs
+             * are async and could be delayed */
+            Arch_handleIPI(irq_remote_call_ipi);
+        }
         asm volatile("pause");
     }
 
@@ -84,10 +100,10 @@ clh_lock_release(word_t cpu)
         big_kernel_lock.node_owners[cpu].next;
 }
 
-static inline clh_qnode_state_t FORCE_INLINE
-clh_lock_test(void)
+static inline bool_t FORCE_INLINE
+clk_is_self_in_queue(void)
 {
-    return big_kernel_lock.head->value;
+    return big_kernel_lock.node_owners[getCurrentCPUIndex()].node->value == CLHState_Pending;
 }
 
 #define NODE_LOCK do {                          \
@@ -98,15 +114,10 @@ clh_lock_test(void)
     clh_lock_release(getCurrentCPUIndex());     \
     } while(0)
 
-#define LOCK_TEST do {                          \
-    clh_lock_test()                             \
-    } while(0)
-
 #else
 
 #define NODE_LOCK do {} while (0)
 #define NODE_UNLOCK do {} while (0)
-#define LOCK_TEST do {} while (0)
 
 #endif
 

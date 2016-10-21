@@ -277,3 +277,32 @@ apic_send_startup_ipi(cpu_id_t cpu_id, paddr_t startup_addr)
         ).words[0]
     );
 }
+
+void
+apic_send_ipi(irq_t vector, cpu_id_t cpu_id)
+{
+    apic_icr1_t icr1;
+    /* wait till we can send an IPI */
+    do {
+        icr1.words[0] = apic_read_reg(APIC_ICR1);
+    } while (icr1.words[0] & BIT(12));
+
+    apic_write_reg(
+        APIC_ICR2,
+        apic_icr2_new(
+            cpu_id /* dest */
+        ).words[0]
+    );
+    apic_write_reg(
+        APIC_ICR1,
+        apic_icr1_new(
+            0,     /* dest_shorthand  */
+            0,     /* trigger_mode    */
+            0,     /* level           */
+            0,     /* delivery_status */
+            0,     /* dest_mode       */
+            0,     /* delivery_mode   */
+            vector /* vector          */
+        ).words[0]
+    );
+}

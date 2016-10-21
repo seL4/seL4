@@ -22,6 +22,7 @@
 #include <kernel/thread.h>
 #include <model/statedata.h>
 #include <machine/timer.h>
+#include <arch/kernel/ipi.h>
 
 exception_t
 decodeIRQControlInvocation(word_t invLabel, word_t length,
@@ -213,6 +214,12 @@ handleInterrupt(irq_t irq)
         timerTick();
         resetTimer();
         break;
+
+#if CONFIG_MAX_NUM_NODES > 1
+    case IRQIPI:
+        Arch_handleIPI(irq);
+        break;
+#endif
 
     case IRQReserved:
 #ifdef CONFIG_IRQ_REPORTING

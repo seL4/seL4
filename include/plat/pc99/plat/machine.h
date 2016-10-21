@@ -31,22 +31,32 @@ typedef enum _interrupt_t {
     int_irq_user_max            = 157,
     int_iommu                   = 158,
     int_timer                   = 159,
+#if CONFIG_MAX_NUM_NODES > 1
+    int_remote_call_ipi         = 160,
+    int_reschedule_ipi          = 161,
+    int_irq_max                 = 161, /* int_reschedule_ipi is the max irq */
+#else
     int_irq_max                 = 159, /* int_timer is the max irq */
-    int_trap_min                = 160,
+#endif
+    int_trap_min,
     int_trap_max                = 254,
     int_spurious                = 255,
     int_max                     = 255
 } interrupt_t;
 
 typedef enum _irq_t {
-    irqInvalid   = -1,
-    irq_isa_min  = int_irq_isa_min  - IRQ_INT_OFFSET,
-    irq_isa_max  = int_irq_isa_max  - IRQ_INT_OFFSET,
-    irq_user_min = int_irq_user_min - IRQ_INT_OFFSET,
-    irq_user_max = int_irq_user_max - IRQ_INT_OFFSET,
-    irq_iommu    = int_iommu        - IRQ_INT_OFFSET,
-    irq_timer    = int_timer        - IRQ_INT_OFFSET,
-    maxIRQ       = int_irq_max      - IRQ_INT_OFFSET
+    irqInvalid                  = -1,
+    irq_isa_min                 = int_irq_isa_min     - IRQ_INT_OFFSET,
+    irq_isa_max                 = int_irq_isa_max     - IRQ_INT_OFFSET,
+    irq_user_min                = int_irq_user_min    - IRQ_INT_OFFSET,
+    irq_user_max                = int_irq_user_max    - IRQ_INT_OFFSET,
+    irq_iommu                   = int_iommu           - IRQ_INT_OFFSET,
+    irq_timer                   = int_timer           - IRQ_INT_OFFSET,
+#if CONFIG_MAX_NUM_NODES > 1
+    irq_remote_call_ipi         = int_remote_call_ipi - IRQ_INT_OFFSET,
+    irq_reschedule_ipi          = int_reschedule_ipi  - IRQ_INT_OFFSET,
+#endif
+    maxIRQ                      = int_irq_max         - IRQ_INT_OFFSET
 } irq_t;
 
 #define BIOS_PADDR_START 0x0e0000
