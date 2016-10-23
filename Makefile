@@ -199,7 +199,7 @@ CPP_GEN = ${SOURCE_ROOT}/tools/cpp_gen.sh
 SYSCALL_ID_GEN_PATH = ${SOURCE_ROOT}/tools/syscall_header_gen.py
 INVOCATION_ID_GEN_PATH = ${SOURCE_ROOT}/tools/invocation_header_gen.py
 XMLLINT = xmllint.sh
-CIRCULAR_INCLUDES = ${SOURCE_ROOT}/tools/circular_includes.pl
+CIRCULAR_INCLUDES = ${SOURCE_ROOT}/tools/circular_includes.py
 
 ########################################
 ## Check tools
