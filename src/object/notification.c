@@ -167,7 +167,7 @@ cancelAllSignals(notification_t *ntfnPtr)
         /* Set all waiting threads to Restart */
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
-            tcbSchedEnqueue(thread);
+            SCHED_ENQUEUE(thread);
         }
         rescheduleRequired();
     }

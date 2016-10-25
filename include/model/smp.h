@@ -25,6 +25,7 @@
 #define UP_STATE_DEFINE(_type, _state)
 
 #define SMP_COND_STATEMENT(_st)                 _st
+#define SMP_TERNARY(_smp, _up)                  _smp
 #else
 
 #define NODE_STATE_BEGIN(_name)
@@ -37,6 +38,7 @@
 #define UP_STATE_DEFINE(_type, _state)          _type _state
 
 #define SMP_COND_STATEMENT(_st)
+#define SMP_TERNARY(_smp, _up)                  _up
 
 #endif /* CONFIG_MAX_NUM_NODES */
 

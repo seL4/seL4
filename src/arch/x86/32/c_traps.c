@@ -89,6 +89,7 @@ void NORETURN VISIBLE restore_user_context(void)
 {
     c_exit_hook();
 
+    NODE_UNLOCK_IF(getActiveIRQ() != irq_remote_call_ipi);
     setKernelEntryStackPointer(NODE_STATE(ksCurThread));
 #ifdef CONFIG_VTX
     if (thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_RunningVM) {

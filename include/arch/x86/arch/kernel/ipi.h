@@ -21,7 +21,7 @@
 void Arch_handleIPI(irq_t irq);
 
 typedef enum {
-    IpiRemoteCall_Null
+    IpiRemoteCall_Stall,
 } IpiRemoteCall_t;
 
 /*
@@ -37,9 +37,9 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data, word_t mask);
 /* This is asynchronous call and could be called outside the lock.
  * Returns immediately.
  *
- * @param cpu core to request rescheduling
+ * @param mask cores to request rescheduling
  */
-void doReschedule(word_t cpu);
+void doMaskReschedule(word_t mask);
 
 /* Run a synchronous function on a core specified by cpu.
  *
@@ -53,4 +53,17 @@ doRemoteOp(IpiRemoteCall_t func, word_t data, word_t cpu)
     doRemoteMaskOp(func, data, BIT(cpu));
 }
 
+/* Request rescheduling on a core specified by cpu.
+ * Returns immediately.
+ *
+ * @param cpu core to reschedule
+ */
+static void inline FORCE_INLINE
+doReschedule(word_t cpu)
+{
+    if (cpu != getCurrentCPUIndex()) {
+        assert(cpu < CONFIG_MAX_NUM_NODES);
+        doMaskReschedule(BIT(cpu));
+    }
+}
 #endif
