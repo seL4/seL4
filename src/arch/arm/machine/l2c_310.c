@@ -260,7 +260,7 @@ initL2Cache(void)
     uint32_t data_ram;
     uint32_t prefetch;
 
-/* L2 cache must be disabled during initialisation */
+    /* L2 cache must be disabled during initialisation */
 #ifndef TI_MSHIELD
     l2cc->control.control &= ~CTRL_CTRL_EN;
 #endif
