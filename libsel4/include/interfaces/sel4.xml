@@ -113,10 +113,10 @@
 			<param dir="in" name="index" type="seL4_Word"/>
 			<param dir="in" name="depth" type="seL4_Uint8"/>
 		</method>
-		<method id="CNodeRecycle" name="Recycle">
-			<param dir="in" name="index" type="seL4_Word"/>
-			<param dir="in" name="depth" type="seL4_Uint8"/>
-		</method>
+        <method id="CNodeCancelBadgedSends" name="CancelBadgedSends">
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Uint8"/>
+        </method>
         <method id="CNodeCopy" name="Copy">
 			<param dir="in" name="dest_index" type="seL4_Word"/>
 			<param dir="in" name="dest_depth" type="seL4_Uint8"/>

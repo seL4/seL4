@@ -117,9 +117,9 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
   kernel-generated reply capability of the current thread from the
   special \obj{TCB} slot it was created in, into the designated CSpace
   slot.
-\item[\apifunc{seL4\_CNode\_Recycle}{cnode_recycle}] is similar to
-  \apifunc{seL4\_CNode\_Revoke}{cnode_revoke}, except that it also
-  resets some aspects of the object to its initial state.
+\item[\apifunc{seL4\_CNode\_CancelBadgedSends}{cnode_cancelbadgedsends}] cancels
+  any outstanding sends that use the same badge and object as the
+  specified capability.
 \end{description}
 
 \subsection{Capability Rights}
@@ -279,20 +279,8 @@ removed during the operation and the operation stops part way
 through. Both these scenarios can be and should be avoided at
 user-level by construction.
 
-The \apifunc{seL4\_CNode\_Recycle}{cnode_recycle} method can be used
-to partially reset an object without fully removing all capabilities
-to it. Invoking it will first revoke all child capabilities, but it
-will not remove siblings or parents. Only if, after revocation, the
-capability is the last typed capability to the object, the same
-destroy operation as in \apifunc{seL4\_CNode\_Delete}{cnode_delete}
-will be executed. Otherwise, not all aspects of the object will be
-reset: for badged endpoint capabilities, only IPC with this badge will
-be cancelled in the endpoint, for TCBs the capabilities will be reset,
-for CNodes, the guard on the capability will be reset.
-
-Note that for page tables and page directories, neither
-\apifunc{seL4\_CNode\_Revoke}{cnode_revoke} nor
-\apifunc{seL4\_CNode\_Recycle}{cnode_recycle} will revoke frame
+Note that for page tables and page directories
+\apifunc{seL4\_CNode\_Revoke}{cnode_revoke} will not revoke frame
 capabilities mapped into the address space.  They will only be
 unmapped from the space.
 

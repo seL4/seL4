@@ -128,30 +128,6 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
     return cap_null_cap_new();
 }
 
-cap_t CONST
-Mode_resetMemMapping(cap_t cap)
-{
-    return cap;
-}
-
-cap_t Mode_recycleCap(bool_t is_final, cap_t cap)
-{
-    switch (cap_get_capType(cap)) {
-
-    case cap_pdpt_cap:
-        clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
-        Mode_finaliseCap(cap, is_final);
-        if (is_final) {
-            return resetMemMapping(cap);
-        }
-        return cap;
-
-    default:
-        fail("Invalid arch cap type");
-    }
-}
-
-
 bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b)
 {
     return false;

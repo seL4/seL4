@@ -27,7 +27,7 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length,
                                   word_t *buffer);
 exception_t invokeCNodeRevoke(cte_t *destSlot);
 exception_t invokeCNodeDelete(cte_t *destSlot);
-exception_t invokeCNodeRecycle(cte_t *destSlot);
+exception_t invokeCNodeCancelBadgedSends(cap_t cap);
 exception_t invokeCNodeInsert(cap_t cap, cte_t *srcSlot, cte_t *destSlot);
 exception_t invokeCNodeMove(cap_t cap, cte_t *srcSlot, cte_t *destSlot);
 exception_t invokeCNodeRotate(cap_t cap1, cap_t cap2, cte_t *slot1,
@@ -40,7 +40,6 @@ void cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2);
 exception_t cteRevoke(cte_t *slot);
 exception_t cteDelete(cte_t *slot, bool_t exposed);
 void cteDeleteOne(cte_t* slot);
-exception_t cteRecycle(cte_t *slot);
 void insertNewCap(cte_t *parent, cte_t *slot, cap_t cap);
 void setupReplyMaster(tcb_t *thread);
 bool_t PURE isMDBParentOf(cte_t *cte_a, cte_t *cte_b);

@@ -1,0 +1,26 @@
+%
+% Copyright 2014, General Dynamics C4 Systems
+%
+% This software may be distributed and modified according to the terms of
+% the GNU General Public License version 2. Note that NO WARRANTY is provided.
+% See "LICENSE_GPLv2.txt" for details.
+%
+% @TAG(GD_GPL)
+%
+
+\apidoc
+{cnode_cancelbadgedsends}
+{CNode  -  CancelBadgedSends}
+{The cancel badged sends method is intend to allow for the reuse of badges by an
+authority. When used with a badged endpoint capability it
+will cancel any outstanding send operations for that endpoint and badge.
+This operation has no effect on un-badged or other objects.}
+{static inline int seL4\_CNode\_CancelSends}
+{
+\param{seL4\_CNode}{\_service}{\cspacedesc}
+\param{seL4\_Word}{index}{\indexdesc}
+\param{uint8\_t}{depth}{\depthdesc}
+}
+{\errorenumdesc}
+{See \autoref{sec:cnode-ops}.}
+

@@ -212,14 +212,18 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         return invokeCNodeSaveCaller(destSlot);
     }
 
-    if (invLabel == CNodeRecycle) {
-        if (!hasRecycleRights(destSlot->cap)) {
-            userError("CNode Recycle: Target cap invalid.");
+    if (invLabel == CNodeCancelBadgedSends) {
+        cap_t destCap;
+
+        destCap = destSlot->cap;
+
+        if (!hasCancelSendRights(destCap)) {
+            userError("CNode CancelBadgedSends: Target cap invalid.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return invokeCNodeRecycle(destSlot);
+        return invokeCNodeCancelBadgedSends(destCap);
     }
 
     if (invLabel == CNodeRotate) {
@@ -318,9 +322,15 @@ invokeCNodeDelete(cte_t *destSlot)
 }
 
 exception_t
-invokeCNodeRecycle(cte_t *destSlot)
+invokeCNodeCancelBadgedSends(cap_t cap)
 {
-    return cteRecycle(destSlot);
+    word_t badge = cap_endpoint_cap_get_capEPBadge(cap);
+    if (badge) {
+        endpoint_t* ep = (endpoint_t*)
+                         cap_endpoint_cap_get_capEPPtr(cap);
+        cancelBadgedSends(ep, badge);
+    }
+    return EXCEPTION_NONE;
 }
 
 exception_t
@@ -771,34 +781,6 @@ cteDeleteOne(cte_t* slot)
                fc_ret.irq == irqInvalid);
         emptySlot(slot, irqInvalid);
     }
-}
-
-exception_t
-cteRecycle(cte_t* slot)
-{
-    exception_t status;
-    finaliseSlot_ret_t fc_ret;
-
-    status = cteRevoke(slot);
-    if (status != EXCEPTION_NONE) {
-        return status;
-    }
-
-    fc_ret = finaliseSlot(slot, true);
-    if (fc_ret.status != EXCEPTION_NONE) {
-        return fc_ret.status;
-    }
-
-    if (cap_get_capType(slot->cap) != cap_null_cap) {
-        cap_t new_cap;
-        bool_t is_final;
-
-        is_final = isFinalCapability(slot);
-        new_cap = recycleCap(is_final, slot->cap);
-        slot->cap = new_cap;
-    }
-
-    return EXCEPTION_NONE;
 }
 
 void

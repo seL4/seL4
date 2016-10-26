@@ -200,98 +200,17 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     return fc_ret;
 }
 
-cap_t
-recycleCap(bool_t is_final, cap_t cap)
-{
-    if (isArchCap(cap)) {
-        return Arch_recycleCap(is_final, cap);
-    }
-
-    switch (cap_get_capType(cap)) {
-    case cap_null_cap:
-        fail("recycleCap: can't reconstruct Null");
-        break;
-    case cap_domain_cap:
-        return cap;
-    case cap_cnode_cap:
-        return cap;
-    case cap_thread_cap:
-        return cap;
-    case cap_zombie_cap: {
-        word_t type;
-
-        type = cap_zombie_cap_get_capZombieType(cap);
-        if (type == ZombieType_ZombieTCB) {
-            tcb_t *tcb;
-            _thread_state_t ts UNUSED;
-
-            tcb = TCB_PTR(cap_zombie_cap_get_capZombiePtr(cap)
-                          + TCB_OFFSET);
-            ts = thread_state_get_tsType(tcb->tcbState);
-            /* Haskell error:
-             * "Zombie cap should point at inactive thread" */
-            assert(ts == ThreadState_Inactive ||
-                   ts != ThreadState_IdleThreadState);
-            /* Haskell error:
-             * "Zombie cap should not point at queued thread" */
-            assert(!thread_state_get_tcbQueued(tcb->tcbState));
-            /* Haskell error:
-             * "Zombie cap should not point at bound thread" */
-            assert(tcb->tcbBoundNotification == NULL);
-
-            /* makeObject doesn't exist in C, objects are initialised by
-             * zeroing. The effect of recycle in Haskell is to reinitialise
-             * the TCB, with the exception of the TCB CTEs.  I achieve this
-             * here by zeroing the TCB part of the structure, while leaving
-             * the CNode alone. */
-            memzero(tcb, sizeof (tcb_t));
-            Arch_initContext(&tcb->tcbArch.tcbContext);
-            tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
-            tcb->tcbDomain = ksCurDomain;
-
-            return cap_thread_cap_new(TCB_REF(tcb));
-        } else {
-            return cap_cnode_cap_new(type, 0, 0,
-                                     cap_zombie_cap_get_capZombiePtr(cap));
-        }
-    }
-    case cap_endpoint_cap: {
-        word_t badge = cap_endpoint_cap_get_capEPBadge(cap);
-        if (badge) {
-            endpoint_t* ep = (endpoint_t*)
-                             cap_endpoint_cap_get_capEPPtr(cap);
-            cancelBadgedSends(ep, badge);
-        }
-        return cap;
-    }
-    default:
-        return cap;
-    }
-}
-
 bool_t CONST
-hasRecycleRights(cap_t cap)
+hasCancelSendRights(cap_t cap)
 {
     switch (cap_get_capType(cap)) {
-    case cap_null_cap:
-    case cap_domain_cap:
-        return false;
-
     case cap_endpoint_cap:
         return cap_endpoint_cap_get_capCanSend(cap) &&
                cap_endpoint_cap_get_capCanReceive(cap) &&
                cap_endpoint_cap_get_capCanGrant(cap);
 
-    case cap_notification_cap:
-        return cap_notification_cap_get_capNtfnCanSend(cap) &&
-               cap_notification_cap_get_capNtfnCanReceive(cap);
-
     default:
-        if (isArchCap(cap)) {
-            return Arch_hasRecycleRights(cap);
-        } else {
-            return true;
-        }
+        return false;
     }
 }
 

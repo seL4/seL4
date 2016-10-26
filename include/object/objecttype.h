@@ -21,8 +21,7 @@
 
 deriveCap_ret_t deriveCap(cte_t *slot, cap_t cap);
 finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed);
-cap_t recycleCap(bool_t is_final, cap_t cap);
-bool_t CONST hasRecycleRights(cap_t cap);
+bool_t CONST hasCancelSendRights(cap_t cap);
 bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b);
 bool_t CONST sameObjectAs(cap_t cap_a, cap_t cap_b);
 cap_t CONST updateCapData(bool_t preserve, word_t newData, cap_t cap);

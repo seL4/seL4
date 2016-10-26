@@ -304,24 +304,6 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
     return cap_null_cap_new();
 }
 
-cap_t CONST
-resetMemMapping(cap_t cap)
-{
-    switch (cap_get_capType(cap)) {
-    case cap_frame_cap:
-        cap = cap_frame_cap_set_capFMapType(cap, X86_MappingNone);
-        return cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
-    case cap_page_table_cap:
-        /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
-        return cap_page_table_cap_set_capPTIsMapped(cap, 0);
-    case cap_page_directory_cap:
-        /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
-        return cap_page_directory_cap_set_capPDIsMapped(cap, 0);
-    case cap_pdpt_cap:
-        /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
-        return cap_pdpt_cap_set_capPDPTIsMapped(cap, 0);
-    case cap_io_page_table_cap:
-        return cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
 #ifdef CONFIG_VTX
     case cap_ept_pml4_cap:
         return cap_ept_pml4_cap_set_capPML4IsMapped(cap, 0);
@@ -332,79 +314,6 @@ resetMemMapping(cap_t cap)
     case cap_ept_pt_cap:
         return cap_ept_pt_cap_set_capPTIsMapped(cap, 0);
 #endif
-    }
-
-    return Mode_resetMemMapping(cap);
-}
-
-cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
-{
-    asid_pool_t* ptr;
-    word_t base;
-
-    switch (cap_get_capType(cap)) {
-    case cap_frame_cap:
-        if (!cap_frame_cap_get_capFIsDevice(cap)) {
-            clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
-        }
-        Arch_finaliseCap(cap, is_final);
-        return resetMemMapping(cap);
-
-    case cap_page_table_cap:
-        clearMemory((void *)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
-        if (cap_page_table_cap_get_capPTIsMapped(cap)) {
-            unmapPageTable(
-                cap_page_table_cap_get_capPTMappedASID(cap),
-                cap_page_table_cap_get_capPTMappedAddress(cap),
-                PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap))
-            );
-        }
-        Arch_finaliseCap(cap, is_final);
-        if (is_final) {
-            return resetMemMapping(cap);
-        }
-        return cap;
-
-    case cap_page_directory_cap:
-        clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
-        if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
-            unmapPageDirectory(
-                cap_page_directory_cap_get_capPDMappedASID(cap),
-                cap_page_directory_cap_get_capPDMappedAddress(cap),
-                PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap))
-            );
-        }
-        Arch_finaliseCap(cap, is_final);
-        if (is_final) {
-            return resetMemMapping(cap);
-        }
-        return cap;
-
-    case cap_asid_control_cap:
-        return cap;
-
-    case cap_asid_pool_cap:
-        base = cap_asid_pool_cap_get_capASIDBase(cap);
-        ptr = ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
-        if (x86KSASIDTable[base >> asidLowBits] == ptr) {
-            deleteASIDPool(base, ptr);
-            memzero(ptr, BIT(seL4_ASIDPoolBits));
-            x86KSASIDTable[base >> asidLowBits] = ptr;
-        }
-        return cap;
-
-    case cap_io_port_cap:
-        return cap;
-
-    case cap_io_space_cap:
-        Arch_finaliseCap(cap, true);
-        return cap;
-
-    case cap_io_page_table_cap:
-        clearMemory((void*)cap_get_capPtr(cap), cap_get_capSizeBits(cap));
-        Arch_finaliseCap(cap, true);
-        return resetMemMapping(cap);
-
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:
         vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
@@ -499,25 +408,6 @@ cap_t Arch_recycleCap(bool_t is_final, cap_t cap)
         return cap;
     }
 #endif
-
-    default:
-        return Mode_recycleCap(is_final, cap);
-    }
-}
-
-
-bool_t CONST
-Arch_hasRecycleRights(cap_t cap)
-{
-    switch (cap_get_capType(cap)) {
-    case cap_frame_cap:
-        return cap_frame_cap_get_capFVMRights(cap) == VMReadWrite;
-
-    default:
-        return true;
-    }
-}
-
 
 bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 {
