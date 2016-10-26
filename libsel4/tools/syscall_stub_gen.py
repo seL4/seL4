@@ -58,6 +58,7 @@ WORD_SIZE_BITS_ARCH = {
 MESSAGE_REGISTERS_FOR_ARCH = {
     "aarch32": 4,
     "ia32": 2,
+    "x86_64": 2,
     "arm_hyp": 4,
 }
 
