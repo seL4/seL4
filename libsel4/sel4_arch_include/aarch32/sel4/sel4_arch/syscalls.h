@@ -340,10 +340,10 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
     seL4_MessageInfo_t info;
-    seL4_Word msg0;
-    seL4_Word msg1;
-    seL4_Word msg2;
-    seL4_Word msg3;
+    seL4_Word msg0 = 0;
+    seL4_Word msg1 = 0;
+    seL4_Word msg2 = 0;
+    seL4_Word msg3 = 0;
 
     /* Load beginning of the message into registers. */
     if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
