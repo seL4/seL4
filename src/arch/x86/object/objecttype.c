@@ -265,7 +265,7 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_ept_pml4_cap:
         if (final && cap_ept_pml4_cap_get_capPML4IsMapped(cap)) {
             deleteEPTASID(cap_ept_pml4_cap_get_capPML4MappedASID(cap),
-                (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(cap));
+                          (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(cap));
         }
         break;
 
@@ -694,36 +694,36 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
         memzero(regionBase, 1 << seL4_X86_EPTPDPTBits);
 
         return cap_ept_pml4_cap_new(
-                    0,                  /* capPML4IsMapped      */
-                    VPID_INVALID,       /* capPML4MappedASID    */
-                    (word_t)regionBase  /* capPML4BasePtr       */
+                   0,                  /* capPML4IsMapped      */
+                   VPID_INVALID,       /* capPML4MappedASID    */
+                   (word_t)regionBase  /* capPML4BasePtr       */
                );
     case seL4_X86_EPTPDPTObject:
         memzero(regionBase, 1 << seL4_X86_EPTPDPTBits);
 
         return cap_ept_pdpt_cap_new(
-                    0,                  /* capPDPTMappedAddress */
-                    0,                  /* capPDPTIsMapped      */
-                    VPID_INVALID,       /* capPDPTMappedASID    */
-                    (word_t)regionBase   /* capPDPTBasePtr      */
+                   0,                  /* capPDPTMappedAddress */
+                   0,                  /* capPDPTIsMapped      */
+                   VPID_INVALID,       /* capPDPTMappedASID    */
+                   (word_t)regionBase   /* capPDPTBasePtr      */
                );
     case seL4_X86_EPTPDObject:
         memzero(regionBase, 1 << seL4_X86_EPTPDBits);
 
         return cap_ept_pd_cap_new(
-                    0,                  /* capPDMappedAddress   */
-                    0,                  /* capPDIsMapped        */
-                    VPID_INVALID,       /* capPDMappedASID      */
-                    (word_t)regionBase  /* capPDBasePtr         */
+                   0,                  /* capPDMappedAddress   */
+                   0,                  /* capPDIsMapped        */
+                   VPID_INVALID,       /* capPDMappedASID      */
+                   (word_t)regionBase  /* capPDBasePtr         */
                );
     case seL4_X86_EPTPTObject:
         memzero(regionBase, 1 << seL4_X86_EPTPTBits);
 
         return cap_ept_pt_cap_new(
-                    0,                  /* capPTMappedAddress   */
-                    0,                  /* capPTIsMapped        */
-                    VPID_INVALID,       /* capPTMappedASID      */
-                    (word_t)regionBase  /* capPTBasePtr         */
+                   0,                  /* capPTMappedAddress   */
+                   0,                  /* capPTIsMapped        */
+                   VPID_INVALID,       /* capPTMappedASID      */
+                   (word_t)regionBase  /* capPTBasePtr         */
                );
     default:
 #endif

@@ -109,7 +109,8 @@ static inline uint32_t x86_rdmsr_high(const uint32_t reg)
 }
 
 /* Write model specific register */
-static inline void x86_wrmsr_parts(const uint32_t reg, const uint32_t high, const uint32_t low) {
+static inline void x86_wrmsr_parts(const uint32_t reg, const uint32_t high, const uint32_t low)
+{
     asm volatile("wrmsr" :: "a"(low), "d"(high), "c"(reg));
 }
 

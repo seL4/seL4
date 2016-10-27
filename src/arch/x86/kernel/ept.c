@@ -450,12 +450,12 @@ unmapEPTPageDirectory(asid_t asid, vptr_t vaddr, ept_pde_t *pd)
 
     if (lu_ret.status == EXCEPTION_NONE) {
         *lu_ret.pdptSlot = ept_pdpte_new(
-                      0,  /* pd_base_address  */
-                      0,  /* avl_cte_depth    */
-                      0,  /* execute          */
-                      0,  /* write            */
-                      0   /* read             */
-                  );
+                               0,  /* pd_base_address  */
+                               0,  /* avl_cte_depth    */
+                               0,  /* execute          */
+                               0,  /* write            */
+                               0   /* read             */
+                           );
         invept(lu_ret.pml4);
     }
 }
@@ -643,12 +643,12 @@ unmapEPTPageTable(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
 
     if (lu_ret.status == EXCEPTION_NONE) {
         *lu_ret.pdSlot = ept_pde_ept_pde_4k_new(
-                    0,  /* pt_base_address  */
-                    0,  /* avl_cte_depth    */
-                    0,  /* execute          */
-                    0,  /* write            */
-                    0   /* read             */
-                );
+                             0,  /* pt_base_address  */
+                             0,  /* avl_cte_depth    */
+                             0,  /* execute          */
+                             0,  /* write            */
+                             0   /* read             */
+                         );
         invept(lu_ret.pml4);
     }
 }
@@ -897,8 +897,8 @@ decodeX86EPTPageMap(
     cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);
     cap = cap_frame_cap_set_capFMapType(cap, X86_MappingEPT);
 
-    switch(frameSize) {
-        /* PTE mappings */
+    switch (frameSize) {
+    /* PTE mappings */
     case X86_SmallPage: {
         lookupEPTPTSlot_ret_t lu_ret;
         ept_pte_t pte;
@@ -918,13 +918,13 @@ decodeX86EPTPageMap(
         }
 
         pte = ept_pte_new(
-                      paddr,
-                      0,
-                      0,
-                      eptCacheFromVmAttr(vmAttr),
-                      1,
-                      WritableFromVMRights(vmRights),
-                      1);
+                  paddr,
+                  0,
+                  0,
+                  eptCacheFromVmAttr(vmAttr),
+                  1,
+                  WritableFromVMRights(vmRights),
+                  1);
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performEPTPageMapPTE(cap, cte, lu_ret.ptSlot, pte, pml4);
@@ -965,22 +965,22 @@ decodeX86EPTPageMap(
         }
 
         ept_pde_t pde1 = ept_pde_ept_pde_2m_new(
-                        paddr,
-                        0,
-                        0,
-                        eptCacheFromVmAttr(vmAttr),
-                        1,
-                        WritableFromVMRights(vmRights),
-                        1);
+                             paddr,
+                             0,
+                             0,
+                             eptCacheFromVmAttr(vmAttr),
+                             1,
+                             WritableFromVMRights(vmRights),
+                             1);
 
         ept_pde_t pde2 = ept_pde_ept_pde_2m_new(
-                        paddr + BIT(EPT_PD_INDEX_OFFSET),
-                        0,
-                        0,
-                        eptCacheFromVmAttr(vmAttr),
-                        1,
-                        WritableFromVMRights(vmRights),
-                        1);
+                             paddr + BIT(EPT_PD_INDEX_OFFSET),
+                             0,
+                             0,
+                             eptCacheFromVmAttr(vmAttr),
+                             1,
+                             WritableFromVMRights(vmRights),
+                             1);
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performEPTPageMapPDE(cap, cte, lu_ret.pdSlot, pde1, pde2, pml4);

@@ -50,7 +50,7 @@ static void NORETURN restore_vmx(void)
             "call %1\n"
             :
             : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX]),
-              "m"(vmlaunch_failed)
+            "m"(vmlaunch_failed)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -74,7 +74,7 @@ static void NORETURN restore_vmx(void)
             "call %1\n"
             :
             : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX]),
-              "m"(vmlaunch_failed)
+            "m"(vmlaunch_failed)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"

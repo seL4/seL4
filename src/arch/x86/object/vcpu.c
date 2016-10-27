@@ -103,7 +103,8 @@ vmwrite(word_t field, word_t value)
 }
 
 static inline bool_t
-vmxon(paddr_t vmxon_region) {
+vmxon(paddr_t vmxon_region)
+{
     uint8_t error;
     /* vmxon requires a 64bit memory address, so perform a
      * cast here to guarantee this on 32-bit platforms */
@@ -420,7 +421,7 @@ static void
 performSetIOPortMask(vcpu_t *vcpu, uint16_t low, uint16_t high, int mask)
 {
     while (low <= high) {
-        int low_word = low/ CONFIG_WORD_SIZE;
+        int low_word = low / CONFIG_WORD_SIZE;
         int low_index = low % CONFIG_WORD_SIZE;
         int high_word = high / CONFIG_WORD_SIZE;
         /* See if we can optimize a whole word of bits */
@@ -1074,42 +1075,19 @@ handleVmexit(void)
             /* We only care about some of the exit qualification cases, we handle them here
              * and will deliver any others through to fault handler */
             switch (vmx_data_exit_qualification_control_regster_get_access_type(qual)) {
-                case VMX_EXIT_QUAL_TYPE_MOV_CR: {
-                    /* check for cr0 */
-                    if (vmx_data_exit_qualification_control_regster_get_cr(qual) == 0) {
-                        register_t source = crExitRegs[vmx_data_exit_qualification_control_regster_get_reg(qual)];
-                        word_t value;
-                        if (source == ESP) {
-                            /* ESP is the only register that is is not part of the general purpose
-                             * registers that we have to save and restore ourselves, so we need to
-                             * get this one from the vmcs */
-                            value = vmread(VMX_GUEST_RSP);
-                        } else {
-                            value = ksCurThread->tcbArch.vcpu->gp_registers[source];
-                        }
-                        /* First unset the task switch bit in cr0 */
-                        ksCurThread->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
-                        /* now set it to the value we were given */
-                        ksCurThread->tcbArch.vcpu->cr0 |= value & CR0_TASK_SWITCH;
-                        /* check if there are any parts of the write remaining to forward. we only need
-                         * to consider bits that the hardware will not have handled without faulting, which
-                         * is writing any bit such that it is different to the shadow, but only considering
-                         * bits that the VCPU owner has declared that they want to own (via the cr0_shadow)
-                         */
-                        if (!((value ^ ksCurThread->tcbArch.vcpu->cr0_shadow) &
-                            ksCurThread->tcbArch.vcpu->cr0_mask)) {
-                            return EXCEPTION_NONE;
-                            }
+            case VMX_EXIT_QUAL_TYPE_MOV_CR: {
+                /* check for cr0 */
+                if (vmx_data_exit_qualification_control_regster_get_cr(qual) == 0) {
+                    register_t source = crExitRegs[vmx_data_exit_qualification_control_regster_get_reg(qual)];
+                    word_t value;
+                    if (source == ESP) {
+                        /* ESP is the only register that is is not part of the general purpose
+                         * registers that we have to save and restore ourselves, so we need to
+                         * get this one from the vmcs */
+                        value = vmread(VMX_GUEST_RSP);
+                    } else {
+                        value = ksCurThread->tcbArch.vcpu->gp_registers[source];
                     }
-                    break;
-                }
-                case VMX_EXIT_QUAL_TYPE_CLTS: {
-                    /* Easy case. Just remove the task switch bit out of cr0 */
-                    ksCurThread->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
-                    return EXCEPTION_NONE;
-                }
-                case VMX_EXIT_QUAL_TYPE_LMSW: {
-                    uint16_t value = vmx_data_exit_qualification_control_regster_get_data(qual);
                     /* First unset the task switch bit in cr0 */
                     ksCurThread->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
                     /* now set it to the value we were given */
@@ -1117,45 +1095,68 @@ handleVmexit(void)
                     /* check if there are any parts of the write remaining to forward. we only need
                      * to consider bits that the hardware will not have handled without faulting, which
                      * is writing any bit such that it is different to the shadow, but only considering
-                     * bits that the VCPU owner has declared that they want to own (via the cr0_shadow).
-                     * Additionally since LMSW only loads the bottom 4 bits of CR0 we only consider
-                     * the low 4 bits
+                     * bits that the VCPU owner has declared that they want to own (via the cr0_shadow)
                      */
                     if (!((value ^ ksCurThread->tcbArch.vcpu->cr0_shadow) &
-                        ksCurThread->tcbArch.vcpu->cr0_mask & MASK(4))) {
+                            ksCurThread->tcbArch.vcpu->cr0_mask)) {
                         return EXCEPTION_NONE;
-                        }
-                        break;
+                    }
                 }
+                break;
+            }
+            case VMX_EXIT_QUAL_TYPE_CLTS: {
+                /* Easy case. Just remove the task switch bit out of cr0 */
+                ksCurThread->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
+                return EXCEPTION_NONE;
+            }
+            case VMX_EXIT_QUAL_TYPE_LMSW: {
+                uint16_t value = vmx_data_exit_qualification_control_regster_get_data(qual);
+                /* First unset the task switch bit in cr0 */
+                ksCurThread->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
+                /* now set it to the value we were given */
+                ksCurThread->tcbArch.vcpu->cr0 |= value & CR0_TASK_SWITCH;
+                /* check if there are any parts of the write remaining to forward. we only need
+                 * to consider bits that the hardware will not have handled without faulting, which
+                 * is writing any bit such that it is different to the shadow, but only considering
+                 * bits that the VCPU owner has declared that they want to own (via the cr0_shadow).
+                 * Additionally since LMSW only loads the bottom 4 bits of CR0 we only consider
+                 * the low 4 bits
+                 */
+                if (!((value ^ ksCurThread->tcbArch.vcpu->cr0_shadow) &
+                        ksCurThread->tcbArch.vcpu->cr0_mask & MASK(4))) {
+                    return EXCEPTION_NONE;
+                }
+                break;
+            }
             }
         }
     }
     switch (reason) {
-        case EXCEPTION_OR_NMI:
-        case MOV_DR:
-        case TASK_SWITCH:
-        case CONTROL_REGISTER:
-        case IO:
-        case MWAIT:
-        case SIPI:
-        case INVLPG:
-        case INVEPT:
-        case INVVPID:
-        case VMCLEAR:
-        case VMPTRLD:
-        case VMPTRST:
-        case VMREAD:
-        case VMWRITE:
-        case VMXON:
-        case EPT_VIOLATION:
-        case GDTR_OR_IDTR:
-        case LDTR_OR_TR:
-        case TPR_BELOW_THRESHOLD:
-        case APIC_ACCESS:
-            qualification = vmread(VMX_DATA_EXIT_QUALIFICATION);
-            break;
-        default:
-            qualification = 0;
+    case EXCEPTION_OR_NMI:
+    case MOV_DR:
+    case TASK_SWITCH:
+    case CONTROL_REGISTER:
+    case IO:
+    case MWAIT:
+    case SIPI:
+    case INVLPG:
+    case INVEPT:
+    case INVVPID:
+    case VMCLEAR:
+    case VMPTRLD:
+    case VMPTRST:
+    case VMREAD:
+    case VMWRITE:
+    case VMXON:
+    case EPT_VIOLATION:
+    case GDTR_OR_IDTR:
+    case LDTR_OR_TR:
+    case TPR_BELOW_THRESHOLD:
+    case APIC_ACCESS:
+        qualification = vmread(VMX_DATA_EXIT_QUALIFICATION);
+        break;
+    default:
+        qualification = 0;
     }
 
     handleVmxFault(reason, qualification);
@@ -1204,11 +1205,11 @@ setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
     if (ept_root != vcpu->last_ept_root) {
         vcpu->last_ept_root = ept_root;
         vmx_eptp_t eptp = vmx_eptp_new(
-            ept_root,       /* paddr of ept */
-            0,              /* do not use accessed and dirty flags */
-            3,              /* depth (4) minus 1 of desired table walking */
-            6               /* write back memory type */
-        );
+                              ept_root,       /* paddr of ept */
+                              0,              /* do not use accessed and dirty flags */
+                              3,              /* depth (4) minus 1 of desired table walking */
+                              6               /* write back memory type */
+                          );
         vmwrite(VMX_CONTROL_EPT_POINTER, eptp.words[0]);
         assert(vcpu->vpid != VPID_INVALID);
         invvpid_context(vcpu->vpid);

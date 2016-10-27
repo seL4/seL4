@@ -24,11 +24,11 @@ void VISIBLE NORETURN restore_user_context(void)
 {
     c_exit_hook();
     if (unlikely(nativeThreadUsingFPU(NODE_STATE(ksCurThread))) {
-        /* We are using the FPU, make sure it is enabled */
-        enableFpu();
+    /* We are using the FPU, make sure it is enabled */
+    enableFpu();
     } else if (unlikely(ARCH_NODE_ASTATE(x86KSActiveFPUState))) {
-        /* Someone is using the FPU and it might be enabled */
-        disableFpu();
+    /* Someone is using the FPU and it might be enabled */
+    disableFpu();
     } else {
         /* No-one (including us) is using the FPU, so we assume it
          * is currently disabled */
@@ -43,7 +43,7 @@ void VISIBLE NORETURN restore_user_context(void)
     // but are current singlestepping, do a full return like an interrupt
     if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1) &&
             (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((ksCurThread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
-        if (config_set(CONFIG_SYSENTER)) {
+    if (config_set(CONFIG_SYSENTER)) {
             ksCurThread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
             asm volatile(
                 // Set our stack pointer to the top of the tcb so we can efficiently pop

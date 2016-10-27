@@ -104,11 +104,11 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     }
     c_exit_hook();
     if (unlikely(nativeThreadUsingFPU(cur_thread)) {
-        /* We are using the FPU, make sure it is enabled */
-        enableFpu();
+    /* We are using the FPU, make sure it is enabled */
+    enableFpu();
     } else if (unlikely(x86KSActiveFPUState)) {
-        /* Someone is using the FPU and it might be enabled */
-        disableFpu();
+    /* Someone is using the FPU and it might be enabled */
+    disableFpu();
     } else {
         /* No-one (including us) is using the FPU, so we assume it
          * is currently disabled */
@@ -119,7 +119,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #endif
 
     if (config_set(CONFIG_SYSENTER)) {
-        cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
+    cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
 
         asm volatile (
             "movq %%rcx, %%rsp\n"
