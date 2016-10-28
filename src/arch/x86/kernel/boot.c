@@ -370,6 +370,11 @@ BOOT_CODE bool_t init_sys_state(
     padding_header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
     *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = padding_header;
 
+#ifdef CONFIG_KERNEL_MCS
+    /* set up sched control for each core */
+    init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
+#endif
+
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
     it_vspace_cap = create_it_address_space(root_cnode_cap, it_v_reg);

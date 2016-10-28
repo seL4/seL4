@@ -23,8 +23,16 @@
 #endif
 
 /* number of timer ticks until a thread is preempted  */
+#ifndef CONFIG_KERNEL_MCS
 #ifndef CONFIG_TIME_SLICE
 #define CONFIG_TIME_SLICE 5
+#endif
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+#ifndef CONFIG_BOOT_THREAD_TIME_SLICE
+#define CONFIG_BOOT_THREAD_TIME_SLICE 5
+#endif
 #endif
 
 /* the number of scheduler domains */

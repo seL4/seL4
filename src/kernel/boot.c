@@ -85,6 +85,9 @@ BOOT_CODE static word_t calculate_rootserver_size(v_region_t v_reg, word_t extra
     size += BIT(seL4_ASIDPoolBits);
     size += extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0;
     size += BIT(seL4_VSpaceBits); // root vspace
+#ifdef CONFIG_KERNEL_MCS
+    size += BIT(seL4_SchedContextBits); // root sched context
+#endif
     /* for all archs, seL4_PageTable Bits is the size of all non top-level paging structures */
     return size + arch_get_n_paging(v_reg) * BIT(seL4_PageTableBits);
 }
@@ -139,6 +142,10 @@ BOOT_CODE void create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t 
     /* for most archs, TCBs are smaller than page tables */
 #if seL4_TCBBits < seL4_PageTableBits
     rootserver.tcb = alloc_rootserver_obj(seL4_TCBBits, 1);
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
+    rootserver.sc = alloc_rootserver_obj(seL4_SchedContextBits, 1);
 #endif
     /* we should have allocated all our memory */
     assert(rootserver_mem.start == rootserver_mem.end);
@@ -313,6 +320,40 @@ BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
     return ap_cap;
 }
 
+#ifdef CONFIG_KERNEL_MCS
+BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice)
+{
+    tcb->tcbSchedContext = sc_pptr;
+    tcb->tcbSchedContext->scBudget = timeslice;
+    tcb->tcbSchedContext->scRemaining = timeslice;
+    tcb->tcbSchedContext->scTcb = tcb;
+
+    return true;
+}
+
+BOOT_CODE bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes)
+{
+    bool_t ret = true;
+    seL4_SlotPos slot_pos_before = ndks_boot.slot_pos_cur;
+    /* create a sched control cap for each core */
+    for (int i = 0; i < num_nodes && ret; i++) {
+        ret = provide_cap(root_cnode_cap, cap_sched_control_cap_new(i));
+    }
+
+    if (!ret) {
+        return false;
+    }
+
+    /* update boot info with slot region for sched control caps */
+    ndks_boot.bi_frame->schedcontrol = (seL4_SlotRegion) {
+        .start = slot_pos_before,
+        .end = ndks_boot.slot_pos_cur
+    };
+
+    return true;
+}
+#endif
+
 BOOT_CODE bool_t create_idle_thread(void)
 {
     pptr_t pptr;
@@ -327,6 +368,16 @@ BOOT_CODE bool_t create_idle_thread(void)
         setThreadName(NODE_STATE_ON_CORE(ksIdleThread, i), "idle_thread");
 #endif
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbAffinity = i);
+#ifdef CONFIG_KERNEL_MCS
+        bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i),
+                                                SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
+                                                CONFIG_BOOT_THREAD_TIME_SLICE);
+        SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
+        if (!result) {
+            printf("Kernel init failed: Unable to allocate sc for idle thread\n");
+            return false;
+        }
+#endif
 #ifdef ENABLE_SMP_SUPPORT
     }
 #endif /* ENABLE_SMP_SUPPORT */
@@ -337,7 +388,10 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
                                        vptr_t ipcbuf_vptr, cap_t ipcbuf_cap)
 {
     tcb_t *tcb = TCB_PTR(rootserver.tcb + TCB_OFFSET);
+#ifndef CONFIG_KERNEL_MCS
     tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
+#endif
+
     Arch_initContext(&tcb->tcbArch.tcbContext);
 
     /* derive a copy of the IPC buffer cap for inserting */
@@ -369,6 +423,12 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     setNextPC(tcb, ui_v_entry);
 
     /* initialise TCB */
+#ifdef CONFIG_KERNEL_MCS
+    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), CONFIG_BOOT_THREAD_TIME_SLICE)) {
+        return NULL;
+    }
+#endif
+
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
     setupReplyMaster(tcb);
@@ -378,12 +438,18 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
     assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
 
+#ifndef CONFIG_KERNEL_MCS
     SMP_COND_STATEMENT(tcb->tcbAffinity = 0);
+#endif
 
     /* create initial thread's TCB cap */
     cap_t cap = cap_thread_cap_new(TCB_REF(tcb));
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadTCB), cap);
 
+#ifdef CONFIG_KERNEL_MCS
+    cap = cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext));
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadSC), cap);
+#endif
 #ifdef CONFIG_DEBUG_BUILD
     setThreadName(tcb, "rootserver");
 #endif

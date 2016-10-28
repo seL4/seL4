@@ -18,6 +18,9 @@
 #include <object/structures.h>
 #include <object/objecttype.h>
 #include <object/cnode.h>
+#ifdef CONFIG_KERNEL_MCS
+#include <object/schedcontext.h>
+#endif
 #include <object/tcb.h>
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
@@ -82,6 +85,10 @@ static inline void removeFromBitmap(word_t cpu, word_t dom, word_t prio)
 /* Add TCB to the head of a scheduler queue */
 void tcbSchedEnqueue(tcb_t *tcb)
 {
+#ifdef CONFIG_KERNEL_MCS
+    assert(isSchedulable(tcb));
+#endif
+
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
         dom_t dom;
@@ -112,6 +119,9 @@ void tcbSchedEnqueue(tcb_t *tcb)
 /* Add TCB to the end of a scheduler queue */
 void tcbSchedAppend(tcb_t *tcb)
 {
+#ifdef CONFIG_KERNEL_MCS
+    assert(isSchedulable(tcb));
+#endif
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
         dom_t dom;
@@ -369,6 +379,7 @@ void remoteTCBStall(tcb_t *tcb)
     }
 }
 
+#ifndef CONFIG_KERNEL_MCS
 static exception_t invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
 {
     /* remove the tcb from scheduler queue in case it is already in one
@@ -408,6 +419,7 @@ static exception_t decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_SetAffinity(tcb, affinity);
 }
+#endif
 #endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -720,10 +732,12 @@ exception_t decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
     case TCBUnbindNotification:
         return decodeUnbindNotification(cap);
 
+#ifndef CONFIG_KERNEL_MCS
 #ifdef ENABLE_SMP_SUPPORT
     case TCBSetAffinity:
         return decodeSetAffinity(cap, length, buffer);
 #endif /* ENABLE_SMP_SUPPORT */
+#endif
 
         /* There is no notion of arch specific TCB invocations so this needs to go here */
 #ifdef CONFIG_VTX
@@ -977,6 +991,16 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+    return invokeTCB_ThreadControl(
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
+               faultEP, NULL_PRIO, NULL_PRIO,
+               cRootCap, cRootSlot,
+               vRootCap, vRootSlot,
+               bufferAddr, bufferCap,
+               bufferSlot, NULL, thread_control_update_space |
+               thread_control_update_ipc_buffer);
+#else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                faultEP, NULL_PRIO, NULL_PRIO,
@@ -985,6 +1009,7 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
                bufferAddr, bufferCap,
                bufferSlot, thread_control_update_space |
                thread_control_update_ipc_buffer);
+#endif
 }
 
 exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer)
@@ -1014,6 +1039,15 @@ exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, wor
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+    return invokeTCB_ThreadControl(
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
+               0, NULL_PRIO, newPrio,
+               cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
+               0, cap_null_cap_new(),
+               NULL, NULL, thread_control_update_priority);
+#else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                0, NULL_PRIO, newPrio,
@@ -1021,6 +1055,7 @@ exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, wor
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(),
                NULL, thread_control_update_priority);
+#endif
 }
 
 exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer)
@@ -1050,6 +1085,15 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, w
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+    return invokeTCB_ThreadControl(
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
+               0, newMcp, NULL_PRIO,
+               cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
+               0, cap_null_cap_new(),
+               NULL, NULL, thread_control_update_mcp);
+#else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                0, newMcp, NULL_PRIO,
@@ -1057,11 +1101,16 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, w
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(),
                NULL, thread_control_update_mcp);
+#endif
 }
 
 exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer)
 {
-    if (length < 2 || excaps.excaprefs[0] == NULL) {
+    if (length < 2 || excaps.excaprefs[0] == NULL
+#ifdef CONFIG_KERNEL_MCS
+        || excaps.excaprefs[1] == NULL
+#endif
+       ) {
         userError("TCB SetSchedParams: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1070,6 +1119,9 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
     prio_t newMcp = getSyscallArg(0, buffer);
     prio_t newPrio = getSyscallArg(1, buffer);
     cap_t authCap = excaps.excaprefs[0]->cap;
+#ifdef CONFIG_KERNEL_MCS
+    cap_t scCap   = excaps.excaprefs[1]->cap;
+#endif
 
     if (cap_get_capType(authCap) != cap_thread_cap) {
         userError("TCB SetSchedParams: authority cap not a TCB.");
@@ -1093,7 +1145,44 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
         return status;
     }
 
+#ifdef CONFIG_KERNEL_MCS
+    tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    sched_context_t *sc = NULL;
+    switch (cap_get_capType(scCap)) {
+    case cap_sched_context_cap:
+        sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(scCap));
+        if (tcb->tcbSchedContext && tcb->tcbSchedContext != sc) {
+            userError("TCB SetSchedParams: tcb already has a scheduling context.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (sc->scTcb && sc->scTcb != tcb) {
+            userError("TCB SetSchedParams: sched contextext already bound.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        break;
+    case cap_null_cap:
+        break;
+    default:
+        userError("TCB Configure: sched context cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 2;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+#endif
+
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+    return invokeTCB_ThreadControl(
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
+               0, newMcp, newPrio,
+               cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
+               0, cap_null_cap_new(), NULL,
+               sc, thread_control_update_mcp |
+               thread_control_update_priority | thread_control_update_sc);
+#else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                0, newMcp, newPrio,
@@ -1102,6 +1191,7 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
                0, cap_null_cap_new(),
                NULL, thread_control_update_mcp |
                thread_control_update_priority);
+#endif
 }
 
 
@@ -1140,6 +1230,15 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot,
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+    return invokeTCB_ThreadControl(
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
+               0, NULL_PRIO, NULL_PRIO,
+               cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
+               cptr_bufferPtr, bufferCap,
+               bufferSlot, NULL, thread_control_update_ipc_buffer);
+#else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                0, NULL_PRIO, NULL_PRIO,
@@ -1147,6 +1246,8 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot,
                cap_null_cap_new(), NULL,
                cptr_bufferPtr, bufferCap,
                bufferSlot, thread_control_update_ipc_buffer);
+
+#endif
 }
 
 exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
@@ -1216,6 +1317,15 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+    return invokeTCB_ThreadControl(
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
+               faultEP,
+               NULL_PRIO, NULL_PRIO,
+               cRootCap, cRootSlot,
+               vRootCap, vRootSlot,
+               0, cap_null_cap_new(), NULL, NULL, thread_control_update_space);
+#else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                faultEP,
@@ -1223,6 +1333,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                0, cap_null_cap_new(), NULL, thread_control_update_space);
+#endif
 }
 
 exception_t decodeDomainInvocation(word_t invLabel, word_t length, extra_caps_t excaps, word_t *buffer)
@@ -1347,6 +1458,15 @@ exception_t invokeTCB_Resume(tcb_t *thread)
     return EXCEPTION_NONE;
 }
 
+#ifdef CONFIG_KERNEL_MCS
+exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
+                                    cptr_t faultep, prio_t mcp, prio_t priority,
+                                    cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
+                                    cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
+                                    word_t bufferAddr, cap_t bufferCap,
+                                    cte_t *bufferSrcSlot, sched_context_t *sc,
+                                    thread_control_flag_t updateFlags)
+#else
 exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
                                     cptr_t faultep, prio_t mcp, prio_t priority,
                                     cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
@@ -1354,6 +1474,7 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
                                     word_t bufferAddr, cap_t bufferCap,
                                     cte_t *bufferSrcSlot,
                                     thread_control_flag_t updateFlags)
+#endif
 {
     exception_t e;
     cap_t tCap = cap_thread_cap_new((word_t)target);
@@ -1369,6 +1490,16 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
     if (updateFlags & thread_control_update_priority) {
         setPriority(target, priority);
     }
+
+#ifdef CONFIG_KERNEL_MCS
+    if (updateFlags & thread_control_update_sc) {
+        if (sc != NULL && sc != target->tcbSchedContext) {
+            schedContext_bindTCB(sc, target);
+        } else if (sc == NULL && target->tcbSchedContext != NULL) {
+            schedContext_unbindTCB(target->tcbSchedContext, target);
+        }
+    }
+#endif
 
     if (updateFlags & thread_control_update_space) {
         cte_t *rootSlot;

@@ -44,3 +44,4 @@ add_sources(
         src/smp/lock.c
         src/smp/ipi.c
 )
+add_sources(DEP KernelIsMCS CFILES src/object/schedcontext.c src/object/schedcontrol.c)

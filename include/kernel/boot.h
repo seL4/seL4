@@ -72,6 +72,10 @@ void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
                        word_t extra_bi_size_bits);
 void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
 
+#ifdef CONFIG_KERNEL_MCS
+bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes);
+#endif
+
 typedef struct create_frames_of_region_ret {
     seL4_SlotRegion region;
     bool_t success;
@@ -115,6 +119,9 @@ typedef struct {
     pptr_t boot_info;
     pptr_t extra_bi;
     pptr_t tcb;
+#ifdef CONFIG_KERNEL_MCS
+    pptr_t sc;
+#endif
     region_t paging;
 } rootserver_mem_t;
 

@@ -206,11 +206,23 @@ config_string(
     UNQUOTE
 )
 
-config_string(KernelTimerTickMS TIMER_TICK_MS "Timer tick period in milliseconds" DEFAULT 2 UNQUOTE)
+config_string(
+    KernelTimerTickMS TIMER_TICK_MS "Timer tick period in milliseconds"
+    DEFAULT 2
+    UNQUOTE UNDEF_DISABLED
+)
 config_string(
     KernelTimeSlice TIME_SLICE "Number of timer ticks until a thread is preempted."
     DEFAULT 5
     UNQUOTE
+    DEPENDS "NOT KernelIsMCS" UNDEF_DISABLED
+)
+config_string(
+    KernelBootThreadTimeSlice BOOT_THREAD_TIME_SLICE
+    "Number of milliseconds until the boot thread is preempted."
+    DEFAULT 5
+    UNQUOTE
+    DEPENDS "KernelIsMCS" UNDEF_DISABLED
 )
 config_string(
     KernelRetypeFanOutLimit RETYPE_FAN_OUT_LIMIT

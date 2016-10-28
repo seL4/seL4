@@ -19,6 +19,8 @@
 #include <arch/api/syscall.h>
 #include <api/debug.h>
 
+#define TIME_ARG_SIZE (sizeof(ticks_t) / sizeof(word_t))
+
 exception_t handleSyscall(syscall_t syscall);
 exception_t handleInterruptEntry(void);
 exception_t handleUnknownSyscall(word_t w);

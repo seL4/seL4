@@ -125,6 +125,10 @@ tagged_union cap capType {
     tag irq_handler_cap             16
     tag zombie_cap                  18
     tag domain_cap                  20
+#ifdef CONFIG_KERNEL_MCS
+    tag sched_context_cap           22
+    tag sched_control_cap           24
+#endif
 
     -- 5-bit tag arch caps
     tag frame_cap                   1

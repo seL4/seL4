@@ -21,6 +21,10 @@
 #include <object/endpoint.h>
 #include <object/cnode.h>
 #include <object/interrupt.h>
+#ifdef CONFIG_KERNEL_MCS
+#include <object/schedcontext.h>
+#include <object/schedcontrol.h>
+#endif
 #include <object/tcb.h>
 #include <object/untyped.h>
 #include <model/statedata.h>
@@ -46,6 +50,10 @@ word_t getObjectSize(word_t t, word_t userObjSize)
             return seL4_SlotBits + userObjSize;
         case seL4_UntypedObject:
             return userObjSize;
+#ifdef CONFIG_KERNEL_MCS
+        case seL4_SchedContextObject:
+            return seL4_SchedContextBits;
+#endif
         default:
             fail("Invalid object type");
             return 0;
@@ -159,6 +167,11 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             SMP_COND_STATEMENT(remoteTCBStall(tcb);)
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
+#ifdef CONFIG_KERNEL_MCS
+            if (tcb->tcbSchedContext) {
+                schedContext_unbindTCB(tcb->tcbSchedContext, tcb);
+            }
+#endif
             suspend(tcb);
 #ifdef CONFIG_DEBUG_BUILD
             tcbDebugRemove(tcb);
@@ -175,6 +188,18 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         }
         break;
     }
+
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+        if (final) {
+            sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
+            schedContext_unbindAllTCBs(sc);
+            fc_ret.remainder = cap_null_cap_new();
+            fc_ret.cleanupInfo = cap_null_cap_new();
+            return fc_ret;
+        }
+        break;
+#endif
 
     case cap_zombie_cap:
         fc_ret.remainder = cap;
@@ -287,6 +312,19 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+        if (cap_get_capType(cap_b) == cap_sched_context_cap) {
+            return cap_sched_context_cap_get_capSCPtr(cap_a) ==
+                   cap_sched_context_cap_get_capSCPtr(cap_b);
+        }
+        break;
+    case cap_sched_control_cap:
+        if (cap_get_capType(cap_b) == cap_sched_control_cap) {
+            return true;
+        }
+        break;
+#endif
     default:
         if (isArchCap(cap_a) &&
             isArchCap(cap_b)) {
@@ -374,6 +412,10 @@ cap_t CONST maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
     case cap_irq_handler_cap:
     case cap_zombie_cap:
     case cap_thread_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+    case cap_sched_control_cap:
+#endif
         return cap;
 
     case cap_endpoint_cap: {
@@ -441,12 +483,14 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
         /* Setup non-zero parts of the TCB. */
 
         Arch_initContext(&tcb->tcbArch.tcbContext);
+#ifndef CONFIG_KERNEL_MCS
         tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
+#endif
         tcb->tcbDomain = ksCurDomain;
-
+#ifndef CONFIG_KERNEL_MCS
         /* Initialize the new TCB to the current core */
         SMP_COND_STATEMENT(tcb->tcbAffinity = getCurrentCPUIndex());
-
+#endif
 #ifdef CONFIG_DEBUG_BUILD
         strlcpy(tcb->tcbName, "child of: '", TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, NODE_STATE(ksCurThread)->tcbName, TCB_NAME_LENGTH);
@@ -483,6 +527,12 @@ cap_t createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceM
          * the destination slots.
          */
         return cap_untyped_cap_new(0, !!deviceMemory, userSize, WORD_REF(regionBase));
+
+#ifdef CONFIG_KERNEL_MCS
+    case seL4_SchedContextObject:
+        memzero(regionBase, 1UL << seL4_SchedContextBits);
+        return cap_sched_context_cap_new(SC_REF(regionBase));
+#endif
 
     default:
         fail("Invalid object type");
@@ -607,6 +657,13 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
         return decodeIRQHandlerInvocation(invLabel,
                                           cap_irq_handler_cap_get_capIRQ(cap), excaps);
 
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+        return decodeSchedControlInvocation(invLabel, cap, length, excaps, buffer);
+
+    case cap_sched_context_cap:
+        return decodeSchedContextInvocation(invLabel, cap, excaps);
+#endif
     default:
         fail("Invalid cap type");
     }

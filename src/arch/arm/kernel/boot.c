@@ -456,6 +456,10 @@ static BOOT_CODE bool_t try_init_kernel(
         ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
     }
 
+#ifdef CONFIG_KERNEL_MCS
+    init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
+#endif
+
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {

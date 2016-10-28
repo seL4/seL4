@@ -13,6 +13,10 @@
 #ifndef __LIBSEL4_BOOTINFO_TYPES_H
 #define __LIBSEL4_BOOTINFO_TYPES_H
 
+#ifdef HAVE_AUTOCONF
+#include <autoconf.h>
+#endif
+
 /* caps with fixed slot positions in the root CNode */
 
 enum {
@@ -28,7 +32,12 @@ enum {
     seL4_CapBootInfoFrame       =  9, /* bootinfo frame cap */
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */
     seL4_CapDomain              = 11, /* global domain controller cap */
+#ifdef CONFIG_KERNEL_MCS
+    seL4_CapInitThreadSC        = 12, /* initial thread's scheduling context cap */
+    seL4_NumInitialCaps         = 13
+#else /* CONFIG_KERNEL_MCS */
     seL4_NumInitialCaps         = 12
+#endif /* !CONFIG_KERNEL_MCS */
 };
 
 /* Legacy code will have assumptions on the vspace root being a Page Directory
@@ -65,6 +74,9 @@ typedef struct {
     seL4_SlotRegion   extraBIPages;    /* caps for any pages used to back the additional bootinfo information */
     seL4_Word         initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
+#ifdef CONFIG_KERNEL_MCS
+    seL4_SlotRegion   schedcontrol; /* Caps to sched_control for each node */
+#endif
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
     seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
     /* the untypedList should be the last entry in this struct, in order

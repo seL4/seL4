@@ -16,6 +16,9 @@
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
+#ifdef CONFIG_KERNEL_MCS
+#include <object/schedcontext.h>
+#endif
 #include <model/statedata.h>
 #include <arch/machine.h>
 #include <arch/kernel/thread.h>
@@ -41,6 +44,17 @@ static inline bool_t PURE isBlocked(const tcb_t *thread)
         return false;
     }
 }
+
+#ifdef CONFIG_KERNEL_MCS
+static inline bool_t PURE isSchedulable(const tcb_t *thread)
+{
+    return isRunnable(thread) &&
+           thread->tcbSchedContext != NULL;
+}
+#else
+#define isSchedulable isRunnable
+#endif
+
 
 BOOT_CODE void configureIdleThread(tcb_t *tcb)
 {
@@ -96,8 +110,14 @@ void restart(tcb_t *target)
         cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+        if (likely(target->tcbSchedContext != NULL)) {
+            schedContext_resume(target->tcbSchedContext);
+        }
+#else
         SCHED_ENQUEUE(target);
         possibleSwitchTo(target);
+#endif
     }
 }
 
@@ -274,7 +294,7 @@ void schedule(void)
 {
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
         bool_t was_runnable;
-        if (isRunnable(NODE_STATE(ksCurThread))) {
+        if (isSchedulable(NODE_STATE(ksCurThread))) {
             was_runnable = true;
             SCHED_ENQUEUE_CURRENT_TCB;
         } else {
@@ -285,6 +305,7 @@ void schedule(void)
             scheduleChooseNewThread();
         } else {
             tcb_t *candidate = NODE_STATE(ksSchedulerAction);
+            assert(isSchedulable(candidate));
             /* Avoid checking bitmap when ksCurThread is higher prio, to
              * match fast path.
              * Don't look at ksCurThread prio when it's idle, to respect
@@ -334,7 +355,7 @@ void chooseThread(void)
         prio = getHighestPrio(dom);
         thread = NODE_STATE(ksReadyQueues)[ready_queues_index(dom, prio)].head;
         assert(thread);
-        assert(isRunnable(thread));
+        assert(isSchedulable(thread));
         switchToThread(thread);
     } else {
         switchToIdleThread();
@@ -364,7 +385,7 @@ void setDomain(tcb_t *tptr, dom_t dom)
 {
     tcbSchedDequeue(tptr);
     tptr->tcbDomain = dom;
-    if (isRunnable(tptr)) {
+    if (isSchedulable(tptr)) {
         SCHED_ENQUEUE(tptr);
     }
     if (tptr == NODE_STATE(ksCurThread)) {
@@ -376,7 +397,17 @@ void setMCPriority(tcb_t *tptr, prio_t mcp)
 {
     tptr->tcbMCP = mcp;
 }
-
+#ifdef CONFIG_KERNEL_MCS
+void setPriority(tcb_t *tptr, prio_t prio)
+{
+    tcbSchedDequeue(tptr);
+    tptr->tcbPriority = prio;
+    if (isSchedulable(tptr)) {
+        SCHED_ENQUEUE(tptr);
+        rescheduleRequired();
+    }
+}
+#else
 void setPriority(tcb_t *tptr, prio_t prio)
 {
     tcbSchedDequeue(tptr);
@@ -386,6 +417,7 @@ void setPriority(tcb_t *tptr, prio_t prio)
         rescheduleRequired();
     }
 }
+#endif
 
 /* Note that this thread will possibly continue at the end of this kernel
  * entry. Do not queue it yet, since a queue+unqueue operation is wasteful
@@ -393,16 +425,23 @@ void setPriority(tcb_t *tptr, prio_t prio)
  * on which the scheduler will take action. */
 void possibleSwitchTo(tcb_t *target)
 {
-    if (ksCurDomain != target->tcbDomain
-        SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
-        SCHED_ENQUEUE(target);
-    } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
-        /* Too many threads want special treatment, use regular queues. */
-        rescheduleRequired();
-        SCHED_ENQUEUE(target);
-    } else {
-        NODE_STATE(ksSchedulerAction) = target;
+#ifdef CONFIG_KERNEL_MCS
+    if (target->tcbSchedContext != NULL) {
+#endif
+        if (ksCurDomain != target->tcbDomain
+            SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
+            SCHED_ENQUEUE(target);
+        } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
+            /* Too many threads want special treatment, use regular queues. */
+            rescheduleRequired();
+            SCHED_ENQUEUE(target);
+        } else {
+            NODE_STATE(ksSchedulerAction) = target;
+        }
+#ifdef CONFIG_KERNEL_MCS
     }
+#endif
+
 }
 
 void setThreadState(tcb_t *tptr, _thread_state_t ts)
@@ -415,10 +454,18 @@ void scheduleTCB(tcb_t *tptr)
 {
     if (tptr == NODE_STATE(ksCurThread) &&
         NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread &&
-        !isRunnable(tptr)) {
+        !isSchedulable(tptr)) {
         rescheduleRequired();
     }
 }
+
+#ifdef CONFIG_KERNEL_MCS
+static void recharge(sched_context_t *sc)
+{
+    sc->scRemaining = sc->scBudget;
+    assert(sc->scBudget > 0);
+}
+#endif
 
 void timerTick(void)
 {
@@ -429,6 +476,16 @@ void timerTick(void)
         ThreadState_RunningVM
 #endif
        ) {
+#ifdef CONFIG_KERNEL_MCS
+        assert(NODE_STATE(ksCurThread)->tcbSchedContext != NULL);
+        if (NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining > 1) {
+            NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining--;
+        } else {
+            recharge(NODE_STATE(ksCurThread)->tcbSchedContext);
+            SCHED_APPEND_CURRENT_TCB;
+            rescheduleRequired();
+        }
+#else
         if (NODE_STATE(ksCurThread)->tcbTimeSlice > 1) {
             NODE_STATE(ksCurThread)->tcbTimeSlice--;
         } else {
@@ -436,6 +493,7 @@ void timerTick(void)
             SCHED_APPEND_CURRENT_TCB;
             rescheduleRequired();
         }
+#endif
     }
 
     if (CONFIG_NUM_DOMAINS > 1) {
@@ -449,7 +507,11 @@ void timerTick(void)
 void rescheduleRequired(void)
 {
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread
-        && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread) {
+        && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread
+#ifdef CONFIG_KERNEL_MCS
+        && isSchedulable(NODE_STATE(ksSchedulerAction))
+#endif
+       ) {
         SCHED_ENQUEUE(NODE_STATE(ksSchedulerAction));
     }
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;

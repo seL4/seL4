@@ -89,6 +89,9 @@ typedef word_t notification_state_t;
 #define TCB_PTR_CTE_PTR(p,i) \
     (((cte_t *)((word_t)(p)&~MASK(seL4_TCBBits)))+(i))
 
+#define SC_REF(p) ((word_t) (p))
+#define SC_PTR(r) ((sched_context_t *) (r))
+
 #define WORD_PTR(r) ((word_t *)(r))
 #define WORD_REF(p) ((word_t)(p))
 
@@ -213,6 +216,9 @@ static inline vm_attributes_t CONST vmAttributesFromWord(word_t w)
     return attr;
 }
 
+#ifdef CONFIG_KERNEL_MCS
+typedef struct sched_context sched_context_t;
+#endif
 /* TCB: size >= 18 words + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
@@ -241,8 +247,14 @@ struct tcb {
     /* Priority, 1 byte (padded to 1 word) */
     prio_t tcbPriority;
 
+#ifdef CONFIG_KERNEL_MCS
+    /* scheduling context that this tcb is running on, if it is NULL the tcb cannot
+     * be in the scheduler queues, 1 word */
+    sched_context_t *tcbSchedContext;
+#else
     /* Timeslice remaining, 1 word */
     word_t tcbTimeSlice;
+#endif
 
     /* Capability pointer to thread fault handler, 1 word */
     cptr_t tcbFaultHandler;
@@ -278,6 +290,22 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
+#ifdef CONFIG_KERNEL_MCS
+struct sched_context {
+    /* budget for this sc -- remaining is refilled from this value */
+    ticks_t scBudget;
+
+    /* core this scheduling context provides time for - 0 if uniprocessor */
+    word_t scCore;
+
+    /* current budget for this tcb (timeslice) -- refilled from budget */
+    ticks_t scRemaining;
+
+    /* thread that this scheduling context is bound to */
+    tcb_t *scTcb;
+};
+#endif
+
 /* Ensure object sizes are sane */
 compile_assert(cte_size_sane, sizeof(cte_t) <= BIT(seL4_SlotBits))
 compile_assert(tcb_cte_size_sane, TCB_CNODE_SIZE_BITS <= TCB_SIZE_BITS)
@@ -290,6 +318,9 @@ compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_Notifi
 
 /* Check the IPC buffer is the right size */
 compile_assert(ipc_buf_size_sane, sizeof(seL4_IPCBuffer) == BIT(seL4_IPCBufferSizeBits))
+#ifdef CONFIG_KERNEL_MCS
+compile_assert(sc_size_sane, sizeof(sched_context_t) <= BIT(seL4_SchedContextBits))
+#endif
 
 /* helper functions */
 
@@ -340,10 +371,18 @@ static inline word_t CONST cap_get_capSizeBits(cap_t cap)
         return 0;
 
     case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
         return 0;
 
     case cap_irq_handler_cap:
         return 0;
+
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+        return seL4_SchedContextBits;
+#endif
 
     default:
         return cap_get_archCapSizeBits(cap);
@@ -374,6 +413,9 @@ static inline bool_t CONST cap_get_capIsPhysical(cap_t cap)
         return true;
 
     case cap_thread_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+#endif
         return true;
 
     case cap_zombie_cap:
@@ -386,6 +428,9 @@ static inline bool_t CONST cap_get_capIsPhysical(cap_t cap)
         return false;
 
     case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
         return false;
 
     case cap_irq_handler_cap:
@@ -428,10 +473,19 @@ static inline void *CONST cap_get_capPtr(cap_t cap)
         return NULL;
 
     case cap_irq_control_cap:
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_control_cap:
+#endif
         return NULL;
 
     case cap_irq_handler_cap:
         return NULL;
+
+#ifdef CONFIG_KERNEL_MCS
+    case cap_sched_context_cap:
+        return SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
+#endif
+
     default:
         return cap_get_archCapPtr(cap);
 
