@@ -189,8 +189,8 @@ cleanInvalidateL1Caches(void)
 void
 arch_clean_invalidate_caches(void)
 {
-     cleanCaches_PoU();
-     plat_cleanInvalidateCache();
-     cleanInvalidateL1Caches();
-     isb();
+    cleanCaches_PoU();
+    plat_cleanInvalidateCache();
+    cleanInvalidateL1Caches();
+    isb();
 }
