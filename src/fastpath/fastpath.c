@@ -127,7 +127,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef ENABLE_SMP_SUPPORT
     /* Ensure both threads have the same affinity */
-    if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != dest->tcbAffinity)) {
+    if (unlikely(NODE_STATE(ksCurThread)->tcbSchedContext->scCore != dest->tcbSchedContext->scCore)) {
         slowpath(SysCall);
     }
 #endif /* ENABLE_SMP_SUPPORT */
@@ -303,7 +303,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef ENABLE_SMP_SUPPORT
     /* Ensure both threads have the same affinity */
-    if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != caller->tcbAffinity)) {
+    if (unlikely(NODE_STATE(ksCurThread)->tcbSchedContext->scCore != caller->tcbSchedContext->scCore)) {
         slowpath(SysReplyRecv);
     }
 #endif /* ENABLE_SMP_SUPPORT */

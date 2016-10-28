@@ -68,6 +68,8 @@ pptr_t allocate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr
 
 void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, pptr_t pptr, vptr_t vptr);
 
+bool_t init_sched_control(cap_t root_cnode_cap, word_t num_nodes);
+
 typedef struct create_frames_of_region_ret {
     seL4_SlotRegion region;
     bool_t success;
