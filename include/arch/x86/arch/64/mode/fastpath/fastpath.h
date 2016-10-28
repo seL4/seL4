@@ -119,7 +119,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #endif
 
     if (config_set(CONFIG_SYSENTER)) {
-    cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
+        cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
 
         asm volatile (
             "movq %%rcx, %%rsp\n"

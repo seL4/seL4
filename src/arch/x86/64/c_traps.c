@@ -43,7 +43,7 @@ void VISIBLE NORETURN restore_user_context(void)
     // but are current singlestepping, do a full return like an interrupt
     if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1) &&
             (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((ksCurThread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
-    if (config_set(CONFIG_SYSENTER)) {
+        if (config_set(CONFIG_SYSENTER)) {
             ksCurThread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
             asm volatile(
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
