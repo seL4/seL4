@@ -73,7 +73,7 @@
         <method id="X86PageGetAddress" name="GetAddress">
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
-        <method id="X86PageMapEPT" name="MapEPT" config="CONFIG_VTX">
+        <method id="X86PageMapEPT" name="MapEPT" condition="defined(CONFIG_VTX)">
             <param dir="in" name="vroot" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
             <param dir="in" name="rights" type="seL4_CapRights"/>
@@ -146,53 +146,53 @@
         </method>
     </interface>
     <interface name="seL4_X86_VCPU">
-        <method id="X86VCPUSetTCB" name="SetTCB" config="CONFIG_VTX">
+        <method id="X86VCPUSetTCB" name="SetTCB" condition="defined(CONFIG_VTX)">
             <param dir="in" name="tcb" type="seL4_CNode" />
         </method>
-        <method id="X86VCPUReadVMCS" name="ReadVMCS" config="CONFIG_VTX">
+        <method id="X86VCPUReadVMCS" name="ReadVMCS" condition="defined(CONFIG_VTX)">
             <param dir="in" name="field" type="seL4_Word"/>
             <param dir="out" name="value" type="seL4_Word"/>
         </method>
-        <method id="X86VCPUWriteVMCS" name="WriteVMCS" config="CONFIG_VTX">
+        <method id="X86VCPUWriteVMCS" name="WriteVMCS" condition="defined(CONFIG_VTX)">
             <param dir="in" name="field" type="seL4_Word"/>
             <param dir="in" name="value" type="seL4_Word"/>
             <param dir="out" name="written" type="seL4_Word"/>
         </method>
-        <method id="X86VCPUEnableIOPort" name="EnableIOPort" config="CONFIG_VTX">
+        <method id="X86VCPUEnableIOPort" name="EnableIOPort" condition="defined(CONFIG_VTX)">
             <param dir="in" name="ioPort" type="seL4_CNode"/>
             <param dir="in" name="low" type="seL4_Word"/>
             <param dir="in" name="high" type="seL4_Word"/>
         </method>
-        <method id="X86VCPUDisableIOPort" name="DisableIOPort" config="CONFIG_VTX">
+        <method id="X86VCPUDisableIOPort" name="DisableIOPort" condition="defined(CONFIG_VTX)">
             <param dir="in" name="low" type="seL4_Word"/>
             <param dir="in" name="high" type="seL4_Word"/>
         </method>
-        <method id="X86VCPUWriteRegisters" name="WriteRegisters" config="CONFIG_VTX">
+        <method id="X86VCPUWriteRegisters" name="WriteRegisters" condition="defined(CONFIG_VTX)">
             <param dir="in" name="regs" type="seL4_VCPUContext"/>
         </method>
     </interface>
     <interface name="seL4_X86_EPTPDPT">
-        <method id="X86EPTPDPTMap" name="Map" config="CONFIG_VTX">
+        <method id="X86EPTPDPTMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
         </method>
-        <method id="X86EPTPDPTUnmap" name="Unmap" config="CONFIG_VTX"/>
+        <method id="X86EPTPDPTUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
     </interface>
     <interface name="seL4_X86_EPTPD">
-        <method id="X86EPTPDMap" name="Map" config="CONFIG_VTX">
+        <method id="X86EPTPDMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
         </method>
-        <method id="X86EPTPDUnmap" name="Unmap" config="CONFIG_VTX"/>
+        <method id="X86EPTPDUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
     </interface>
     <interface name="seL4_X86_EPTPT">
-        <method id="X86EPTPTMap" name="Map" config="CONFIG_VTX">
+        <method id="X86EPTPTMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
         </method>
-        <method id="X86EPTPTUnmap" name="Unmap" config="CONFIG_VTX"/>
+        <method id="X86EPTPTUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
     </interface>
 </api>
