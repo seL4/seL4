@@ -167,7 +167,7 @@
 
         <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams">
             <brief>
-                Change a thread's priority and maximum controlled priority.
+                Change a thread's priority, maximum controlled priority, and scheduling context.
             </brief>
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
@@ -178,6 +178,8 @@
                 description="The thread's new maximum controlled priority."/>
             <param dir="in" name="priority" type="seL4_Word"
                 description="The thread's new priority."/>
+            <param dir="in" name="sched_context" type="seL4_CPtr"
+                description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
         </method>
 
         <method id="TCBSetIPCBuffer" name="SetIPCBuffer" manual_name="Set IPC Buffer" manual_label="tcb_setipcbuffer">
@@ -576,6 +578,86 @@
             </description>
             <param dir="in" name="domain" type="seL4_Uint8" description="The thread's new domain."/>
             <param dir="in" name="thread" type="seL4_TCB" description="Capability to the TCB which is being operated on."/>
+        </method>
+    </interface>
+
+    <interface name="seL4_SchedControl">
+
+        <method id="SchedControlConfigure" name="Configure" manual_name="Configure" manual_label="schedcontrol_configure">
+            <brief>
+                Set the parameters of a scheduling context by invoking the scheduling control capability. If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread. Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time. This call will return seL4 Invalid Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).
+            </brief>
+            <description>
+                See <autoref sec="threads"/>
+            </description>
+            <return><errornumdesc/></return>
+            <param dir="in" name="schedcontext" type="seL4_SchedContext"
+                description="Capability to the scheduling context which is being operated on."/>
+            <param dir="in" name="budget" type="seL4_Time"
+                description="Timeslice in microseconds, when the budget expires the thread will be pre-empted."/>
+            <param dir="in" name="period" type="seL4_Time"
+                description="Period in microseconds, the budget is replenished every time the period expires."/>
+        </method>
+
+    </interface>
+
+    <interface name="seL4_SchedContext">
+
+        <method id="SchedContextBind" name="Bind"
+            manual_name="Bind" manual_label="schedcontext_bind">
+            <brief>
+                Bind an object to a scheduling context. The object can be a notification object or a
+                thread.
+
+                If the object is a thread and the thread is in a runnable state and the scheduling
+                context has available budget, this will start the thread running.
+
+                If the object is a notification, when passive threads wait on the notification object and
+                a signal arrives, the passive thread will receive the scheduling context and possess it
+                until it waits on the notification object again.
+
+                This operation will fail if the scheduling context is already bound to a thread or
+                notification object.
+            </brief>
+            <description>
+                See <autoref sec="threads"/>
+            </description>
+            <return><errornumdesc/></return>
+            <param dir="in" name="cap" type="seL4_CPtr"
+                description="Capability to a TCB or a notification object"/>
+        </method>
+
+        <method id="SchedContextUnbind" name="Unbind"
+            manual_name="Unbind" manual_label="schedcontext_unbind">
+            <brief>
+                Unbind any objects (threads or notification objects) from a scheduling context. This
+                will render the bound thread passive, see Section 6.1.5.
+            </brief>
+            <description>
+                See <autoref sec="threads"/>
+            </description>
+            <return><errornumdesc/></return>
+        </method>
+
+        <method id="SchedContextUnbindObject" name="UnbindObject"
+            manual_name="UnbindObject" manual_label="schedcontext_unbindobject">
+            <brief>
+                Unbind an object from a scheduling context. The object can be either a thread or a
+                notification.
+
+                If the thread being unbound is the thread that is bound to this scheduling context,
+                this will render the thread passive, see Section 6.1.5. However if the thread being
+                unbound received the scheduling context via scheduling context donation over IPC,
+                the scheduling context will be returned to the thread that it was originally bound to.
+
+                If the object is a notification and it is bound to the scheduling context, unbind it.
+            </brief>
+            <description>
+                See <autoref sec="threads"/>
+            </description>
+            <return><errornumdesc/></return>
+            <param dir="in" name="cap" type="seL4_CPtr"
+                description="Capability to a notification that is bound to the scheduling context or capability to a tcb that is bound to this scheduling context or has received it through scheduling context donation."/>
         </method>
 
     </interface>

@@ -16,6 +16,7 @@
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
 #include <kernel/vspace.h>
+#include <object/schedcontext.h>
 #include <model/statedata.h>
 #include <arch/machine.h>
 #include <arch/kernel/thread.h>
@@ -41,6 +42,13 @@ isBlocked(const tcb_t *thread)
     default:
         return false;
     }
+}
+
+static inline bool_t PURE
+isSchedulable(const tcb_t *thread)
+{
+    return isRunnable(thread) &&
+           thread->tcbSchedContext != NULL;
 }
 
 BOOT_CODE void
@@ -93,8 +101,9 @@ restart(tcb_t *target)
         cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
-        SCHED_ENQUEUE(target);
-        possibleSwitchTo(target);
+        if (likely(target->tcbSchedContext != NULL)) {
+            schedContext_resume(target->tcbSchedContext);
+        }
     }
 }
 
@@ -279,7 +288,7 @@ schedule(void)
 {
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
         bool_t was_runnable;
-        if (isRunnable(NODE_STATE(ksCurThread))) {
+        if (isSchedulable(NODE_STATE(ksCurThread))) {
             was_runnable = true;
             SCHED_ENQUEUE_CURRENT_TCB;
         } else {
@@ -290,6 +299,7 @@ schedule(void)
             scheduleChooseNewThread();
         } else {
             tcb_t *candidate = NODE_STATE(ksSchedulerAction);
+            assert(isSchedulable(candidate));
             /* Avoid checking bitmap when ksCurThread is higher prio, to
              * match fast path.
              * Don't look at ksCurThread prio when it's idle, to respect
@@ -340,7 +350,7 @@ chooseThread(void)
         prio = getHighestPrio(dom);
         thread = NODE_STATE(ksReadyQueues)[ready_queues_index(dom, prio)].head;
         assert(thread);
-        assert(isRunnable(thread));
+        assert(isSchedulable(thread));
         switchToThread(thread);
     } else {
         switchToIdleThread();
@@ -373,7 +383,7 @@ setDomain(tcb_t *tptr, dom_t dom)
 {
     tcbSchedDequeue(tptr);
     tptr->tcbDomain = dom;
-    if (isRunnable(tptr)) {
+    if (isSchedulable(tptr)) {
         SCHED_ENQUEUE(tptr);
     }
     if (tptr == NODE_STATE(ksCurThread)) {
@@ -392,7 +402,7 @@ setPriority(tcb_t *tptr, prio_t prio)
 {
     tcbSchedDequeue(tptr);
     tptr->tcbPriority = prio;
-    if (isRunnable(tptr)) {
+    if (isSchedulable(tptr)) {
         SCHED_ENQUEUE(tptr);
         rescheduleRequired();
     }
@@ -405,15 +415,17 @@ setPriority(tcb_t *tptr, prio_t prio)
 void
 possibleSwitchTo(tcb_t* target)
 {
-    if (ksCurDomain != target->tcbDomain
-            SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
-        SCHED_ENQUEUE(target);
-    } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
-        /* Too many threads want special treatment, use regular queues. */
-        rescheduleRequired();
-        SCHED_ENQUEUE(target);
-    } else {
-        NODE_STATE(ksSchedulerAction) = target;
+    if (target->tcbSchedContext != NULL) {
+        if (ksCurDomain != target->tcbDomain
+                SMP_COND_STATEMENT( || target->tcbSchedContext->scCore != getCurrentCPUIndex())) {
+            SCHED_ENQUEUE(target);
+        } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
+            /* Too many threads want special treatment, use regular queues. */
+            rescheduleRequired();
+            SCHED_ENQUEUE(target);
+        } else {
+            NODE_STATE(ksSchedulerAction) = target;
+        }
     }
 }
 
@@ -429,9 +441,16 @@ scheduleTCB(tcb_t *tptr)
 {
     if (tptr == NODE_STATE(ksCurThread) &&
             NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread &&
-            !isRunnable(tptr)) {
+            !isSchedulable(tptr)) {
         rescheduleRequired();
     }
+}
+
+static void
+recharge(sched_context_t *sc)
+{
+    sc->scRemaining = sc->scBudget;
+    assert(sc->scBudget > 0);
 }
 
 void
@@ -439,10 +458,11 @@ timerTick(void)
 {
     if (likely(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
                ThreadState_Running)) {
-        if (NODE_STATE(ksCurThread)->tcbTimeSlice > 1) {
-            NODE_STATE(ksCurThread)->tcbTimeSlice--;
+        assert(NODE_STATE(ksCurThread)->tcbSchedContext != NULL);
+        if (NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining > 1) {
+            NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining--;
         } else {
-            NODE_STATE(ksCurThread)->tcbTimeSlice = CONFIG_TIME_SLICE;
+            recharge(NODE_STATE(ksCurThread)->tcbSchedContext);
             SCHED_APPEND_CURRENT_TCB;
             rescheduleRequired();
         }
@@ -460,7 +480,8 @@ void
 rescheduleRequired(void)
 {
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread
-            && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread) {
+            && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread &&
+            isSchedulable(NODE_STATE(ksSchedulerAction))) {
         SCHED_ENQUEUE(NODE_STATE(ksSchedulerAction));
     }
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
