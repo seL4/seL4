@@ -40,4 +40,8 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_X86_VMAttributes),
 } seL4_X86_VMAttributes;
 
+typedef struct seL4_VCPUContext_ {
+    seL4_Word eax, ebx, ecx, edx, esi, edi, ebp;
+} seL4_VCPUContext;
+
 #endif

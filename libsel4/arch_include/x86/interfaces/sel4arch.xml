@@ -9,6 +9,15 @@
      @TAG(NICTA_BSD)
   -->
 <api>
+    <struct name="seL4_VCPUContext">
+        <member name="eax"/>
+        <member name="ebx"/>
+        <member name="ecx"/>
+        <member name="edx"/>
+        <member name="esi"/>
+        <member name="edi"/>
+        <member name="ebp"/>
+    </struct>
     <interface name="seL4_X86_PageDirectory">
         <method id="X86PageDirectoryMap" name="Map">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
