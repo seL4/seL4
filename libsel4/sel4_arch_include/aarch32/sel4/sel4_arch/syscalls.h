@@ -263,10 +263,10 @@ seL4_RecvWithMRs(seL4_CPtr src, seL4_Word* sender,
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
-    seL4_Word msg0;
-    seL4_Word msg1;
-    seL4_Word msg2;
-    seL4_Word msg3;
+    seL4_Word msg0 = 0;
+    seL4_Word msg1 = 0;
+    seL4_Word msg2 = 0;
+    seL4_Word msg3 = 0;
 
     arm_sys_recv(seL4_SysRecv, src, &badge, &info.words[0], &msg0, &msg1, &msg2, &msg3);
 
@@ -416,10 +416,10 @@ seL4_ReplyRecvWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *send
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
-    seL4_Word msg0;
-    seL4_Word msg1;
-    seL4_Word msg2;
-    seL4_Word msg3;
+    seL4_Word msg0 = 0;
+    seL4_Word msg1 = 0;
+    seL4_Word msg2 = 0;
+    seL4_Word msg3 = 0;
 
     if (mr0 != seL4_Null && seL4_MessageInfo_get_length(msgInfo) > 0) {
         msg0 = *mr0;
