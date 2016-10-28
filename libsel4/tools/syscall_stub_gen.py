@@ -570,11 +570,10 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
     #
     # Setup variables we will need.
     #
-    if returning_struct:
-        result.append("\t%s result;" % return_type)
+    result.append("\t%s result;" % return_type)
     result.append("\tseL4_MessageInfo_t tag = seL4_MessageInfo_new(%s, 0, %d, %d);"  % (method_id, len(cap_expressions), len(input_expressions)))
     result.append("\tseL4_MessageInfo_t output_tag;")
-    for i in range(min(num_mrs, max(input_param_words, output_param_words))):
+    for i in range(num_mrs):
         result.append("\tseL4_Word mr%d;" % i)
     result.append("")
 
@@ -597,24 +596,22 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
     #   seL4_SetMR(i, v);
     #   ...
     #
-    if len(input_expressions) > 0:
-        result.append("\t/* Marshal input parameters. */")
-        for i in range(len(input_expressions)):
-            if i < num_mrs:
+    if max(num_mrs, len(input_expressions)) > 0:
+        result.append("\t/* Marshal and initialise parameters. */")
+        # Initialise in-register parameters
+        for i in range(num_mrs):
+            if i < len(input_expressions):
                 result.append("\tmr%d = %s;" % (i, input_expressions[i]))
             else:
-                result.append("\tseL4_SetMR(%d, %s);" % (i, input_expressions[i]))
+                result.append("\tmr%d = 0;" % i)
+        # Initialise buffered parameters
+        for i in range(num_mrs, len(input_expressions)):
+            result.append("\tseL4_SetMR(%d, %s);" % (i, input_expressions[i]))
         result.append("")
 
     #
     # Generate the call.
     #
-    call_arguments = []
-    for i in range(num_mrs):
-        if i < max(input_param_words, output_param_words):
-            call_arguments.append("&mr%d" % i)
-        else:
-            call_arguments.append("seL4_Null")
     if use_only_ipc_buffer:
         result.append("\t/* Perform the call. */")
         result.append("\toutput_tag = seL4_Call(%s, tag);" % service_cap)
@@ -622,8 +619,24 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
         result.append("\t/* Perform the call, passing in-register arguments directly. */")
         result.append("\toutput_tag = seL4_CallWithMRs(%s, tag," % (service_cap))
         result.append("\t\t%s);" % ', '.join(
-            [call_arguments[i] for i in range(num_mrs)]))
+            ("&mr%d" % i) for i in range(num_mrs)))
+
+    #
+    # Prepare the result.
+    #
+    label = "result.error" if returning_struct else "result"
+    result.append("\t%s = seL4_MessageInfo_get_label(output_tag);" % label)
     result.append("")
+
+    if not use_only_ipc_buffer:
+        result.append("\t/* Unmarshal registers into IPC buffer on error. */")
+        result.append("\tif (%s != seL4_NoError) {" % label)
+        for i in range(num_mrs):
+            result.append("\t\tseL4_SetMR(%d, mr%d);" % (i, i))
+        if returning_struct:
+            result.append("\t\treturn result;")
+        result.append("\t}")
+        result.append("")
 
     #
     # Generate unmarshalling code.
@@ -652,18 +665,10 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
                     for word in words:
                         result.append("\tresult.%s = %s;" % (param.name, word % source_words))
 
-        result.append("")
-
-    # Return result
-    if returning_struct:
-        result.append("\tresult.error = seL4_MessageInfo_get_label(output_tag);")
-        result.append("\treturn result;")
-    else:
-        result.append("\treturn seL4_MessageInfo_get_label(output_tag);")
-
     #
     # }
     #
+    result.append("\treturn result;")
     result.append("}")
 
     return "\n".join(result) + "\n"
