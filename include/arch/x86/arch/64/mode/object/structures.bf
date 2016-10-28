@@ -112,7 +112,8 @@ block io_port_cap {
     field   capIOPortFirstPort 16
     field   capIOPortLastPort  16
 
-    padding                    24
+    padding                    8
+    field   capIOPortVPID      16
 }
 
 block io_port_capdata {
