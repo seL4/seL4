@@ -107,7 +107,7 @@ static void cleanL2(void)
     /* clean all ways */
     imx31_l2cc_flush_regs->clean_by_way = 0xff;
     /* Busy-wait for completion */
-    while(imx31_l2cc_flush_regs->clean_by_way);
+    while (imx31_l2cc_flush_regs->clean_by_way);
 }
 
 static void invalidateL2(void)
