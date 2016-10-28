@@ -100,13 +100,13 @@ static inline void disableFpu(void)
  * active fpu state */
 static inline bool_t nativeThreadUsingFPU(tcb_t *thread)
 {
-    return &thread->tcbArch.tcbContext.fpuState == x86KSActiveFPUState;
+    return &thread->tcbArch.tcbContext.fpuState == ARCH_NODE_STATE(x86KSActiveFPUState);
 }
 
 #ifdef CONFIG_VTX
 static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
 {
-    return thread->tcbArch.vcpu && &thread->tcbArch.vcpu->fpuState == x86KSActiveFPUState;
+    return thread->tcbArch.vcpu && &thread->tcbArch.vcpu->fpuState == ARCH_NODE_STATE(x86KSActiveFPUState);
 }
 #endif
 
