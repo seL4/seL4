@@ -77,7 +77,7 @@
         <method id="TCBSetAffinity" name="SetAffinity" condition="CONFIG_MAX_NUM_NODES > 1">
             <param dir="in" name="affinity" type="seL4_Word"/>
         </method>
-        <method id="TCBSetEPTRoot" name="SetEPTRoot" config="CONFIG_VTX">
+        <method id="TCBSetEPTRoot" name="SetEPTRoot" condition="defined(CONFIG_VTX)">
             <param dir="in" name="vcpu" type="seL4_CPtr"/>
         </method>
         <method id="TCBSetBreakpoint" name="SetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
