@@ -33,7 +33,7 @@ typedef struct arch_tcb {
     /* Pointer to associated VCPU. NULL if not associated.
      * tcb->vcpu->tcb == tcb. */
     struct vcpu *vcpu;
-#endif
+#endif /* CONFIG_VTX */
 } arch_tcb_t;
 
 struct user_data {
@@ -125,7 +125,7 @@ compile_assert(ept_pt_size_sane, EPT_PT_INDEX_BITS + EPT_PTE_SIZE_BITS == seL4_X
 #define VCPU_PTR(r)       ((vcpu_t *)(r))
 #define VCPU_REF(p)       ((word_t)(p))
 
-#endif
+#endif /* CONFIG_VTX */
 
 /* helper structure for filling descriptor registers */
 typedef struct gdt_idt_ptr {
@@ -187,7 +187,7 @@ cap_get_archCapSizeBits(cap_t cap)
         return seL4_X86_EPTPDBits;
     case cap_ept_pt_cap:
         return seL4_X86_EPTPTBits;
-#endif
+#endif /* CONFIG_VTX */
 
     default:
         return cap_get_modeCapSizeBits(cap);
@@ -242,7 +242,7 @@ cap_get_archCapIsPhysical(cap_t cap)
 
     case cap_ept_pml4_cap:
         return true;
-#endif
+#endif /* CONFIG_VTX */
 
     default:
         return cap_get_modeCapIsPhysical(cap);
@@ -297,11 +297,11 @@ cap_get_archCapPtr(cap_t cap)
 
     case cap_ept_pml4_cap:
         return EPT_PML4_PTR(cap_ept_pml4_cap_get_capPML4BasePtr(cap));
-#endif
+#endif /* CONFIG_VTX */
 
     default:
         return cap_get_modeCapPtr(cap);
     }
 }
 
-#endif
+#endif /* __ARCH_OBJECT_STRUCTURES_H */
