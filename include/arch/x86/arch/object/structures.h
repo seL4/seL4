@@ -66,6 +66,8 @@ typedef struct user_data user_data_t;
 
 compile_assert(vtd_pt_size_sane, VTD_PT_INDEX_BITS + VTD_PTE_SIZE_BITS == seL4_IOPageTableBits)
 
+#ifdef CONFIG_VTX
+
 #define EPT_PML4E_SIZE_BITS 3
 #define EPT_PML4_INDEX_BITS 9
 #define EPT_PDPTE_SIZE_BITS 3
@@ -122,6 +124,8 @@ compile_assert(ept_pt_size_sane, EPT_PT_INDEX_BITS + EPT_PTE_SIZE_BITS == seL4_X
 
 #define VCPU_PTR(r)       ((vcpu_t *)(r))
 #define VCPU_REF(p)       ((word_t)(p))
+
+#endif
 
 /* helper structure for filling descriptor registers */
 typedef struct gdt_idt_ptr {
@@ -226,6 +230,7 @@ cap_get_archCapIsPhysical(cap_t cap)
     case cap_asid_pool_cap:
         return true;
 
+#ifdef CONFIG_VTX
     case cap_ept_pt_cap:
         return true;
 
@@ -237,6 +242,7 @@ cap_get_archCapIsPhysical(cap_t cap)
 
     case cap_ept_pml4_cap:
         return true;
+#endif
 
     default:
         return cap_get_modeCapIsPhysical(cap);
@@ -279,6 +285,7 @@ cap_get_archCapPtr(cap_t cap)
     case cap_asid_pool_cap:
         return ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
 
+#ifdef CONFIG_VTX
     case cap_ept_pt_cap:
         return EPT_PT_PTR(cap_ept_pt_cap_get_capPTBasePtr(cap));
 
@@ -290,6 +297,7 @@ cap_get_archCapPtr(cap_t cap)
 
     case cap_ept_pml4_cap:
         return EPT_PML4_PTR(cap_ept_pml4_cap_get_capPML4BasePtr(cap));
+#endif
 
     default:
         return cap_get_modeCapPtr(cap);

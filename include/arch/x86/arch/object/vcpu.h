@@ -15,12 +15,6 @@
 
 #include <config.h>
 
-#ifdef CONFIG_VTX
-#define VTX_TERNARY(vtx, nonvtx) vtx
-#else
-#define VTX_TERNARY(vtx, nonvtx) nonvtx
-#endif
-
 #define VCPU_VMCS_SIZE 4096
 #define VCPU_IOBITMAP_SIZE 8192
 
@@ -241,6 +235,9 @@ enum exit_reasons {
 
 typedef uint16_t vpid_t;
 
+#ifdef CONFIG_VTX
+#define VTX_TERNARY(vtx, nonvtx) vtx
+
 struct vcpu {
     /* Storage for VMCS region. First field of vcpu_t so they share address.
      * Will use at most 4KiB of memory. Statically reserve 4KiB for convenience. */
@@ -326,5 +323,9 @@ void invept(ept_pml4e_t *ept_pml4);
 
 /* Removes any IO port mappings that have been cached for the given VPID */
 void clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last);
+
+#else /* CONFIG_VTX */
+#define VTX_TERNARY(vtx, nonvtx) nonvtx
+#endif /* CONFIG_VTX */
 
 #endif

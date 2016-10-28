@@ -322,6 +322,7 @@ resetMemMapping(cap_t cap)
         return cap_pdpt_cap_set_capPDPTIsMapped(cap, 0);
     case cap_io_page_table_cap:
         return cap_io_page_table_cap_set_capIOPTIsMapped(cap, 0);
+#ifdef CONFIG_VTX
     case cap_ept_pml4_cap:
         return cap_ept_pml4_cap_set_capPML4IsMapped(cap, 0);
     case cap_ept_pdpt_cap:
@@ -330,6 +331,7 @@ resetMemMapping(cap_t cap)
         return cap_ept_pd_cap_set_capPDIsMapped(cap, 0);
     case cap_ept_pt_cap:
         return cap_ept_pt_cap_set_capPTIsMapped(cap, 0);
+#endif
     }
 
     return Mode_resetMemMapping(cap);
