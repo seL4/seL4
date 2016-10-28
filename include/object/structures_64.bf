@@ -116,6 +116,21 @@ block domain_cap {
     padding 59
 }
 
+block sched_context_cap {
+    padding 64
+
+    field capType 5
+    padding       11
+    field_high capSCPtr 48
+}
+
+block sched_control_cap {
+    field core    64
+
+    field capType 5
+    padding       59
+}
+
 ---- Arch-independent object types
 
 -- Endpoint: size = 16 bytes

@@ -223,6 +223,7 @@ def init_data_types(wordsize):
         Type("seL4_Uint16", 16, wordsize),
         Type("seL4_Uint32", 32, wordsize),
         Type("seL4_Uint64", 64, wordsize, double_word=(wordsize == 32)),
+        Type("seL4_Time", 64, wordsize, double_word=(wordsize == 32)),
         Type("seL4_Word", wordsize, wordsize),
         Type("seL4_Bool", 1, wordsize, native_size_bits=8),
 
@@ -239,6 +240,8 @@ def init_data_types(wordsize):
         CapType("seL4_TCB", wordsize),
         CapType("seL4_Untyped", wordsize),
         CapType("seL4_DomainSet", wordsize),
+        CapType("seL4_SchedContext", wordsize),
+        CapType("seL4_SchedControl", wordsize),
     ]
 
     return types

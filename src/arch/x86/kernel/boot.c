@@ -348,6 +348,8 @@ init_sys_state(
     padding_header.id = SEL4_BOOTINFO_HEADER_PADDING;
     padding_header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
     memcpy((void*)(extra_bi_region.start + extra_bi_offset), &padding_header, sizeof(seL4_BootInfoHeader));
+    /* set up sched control for each core */
+    init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */

@@ -18,6 +18,7 @@
 #include <object/structures.h>
 #include <object/objecttype.h>
 #include <object/cnode.h>
+#include <object/schedcontext.h>
 #include <object/tcb.h>
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
@@ -77,6 +78,8 @@ removeFromBitmap(word_t cpu, word_t dom, word_t prio)
 void
 tcbSchedEnqueue(tcb_t *tcb)
 {
+    assert(isSchedulable(tcb));
+
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
         dom_t dom;
@@ -86,11 +89,11 @@ tcbSchedEnqueue(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore);
 
         if (!queue.end) { /* Empty list */
             queue.end = tcb;
-            addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
+            addToBitmap(SMP_TERNARY(tcb->tcbSchedContext->scCore, 0), dom, prio);
         } else {
             queue.head->tcbSchedPrev = tcb;
         }
@@ -98,7 +101,7 @@ tcbSchedEnqueue(tcb_t *tcb)
         tcb->tcbSchedNext = queue.head;
         queue.head = tcb;
 
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -108,6 +111,7 @@ tcbSchedEnqueue(tcb_t *tcb)
 void
 tcbSchedAppend(tcb_t *tcb)
 {
+    assert(isSchedulable(tcb));
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
         dom_t dom;
@@ -117,11 +121,11 @@ tcbSchedAppend(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore);
 
         if (!queue.head) { /* Empty list */
             queue.head = tcb;
-            addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
+            addToBitmap(SMP_TERNARY(tcb->tcbSchedContext->scCore, 0), dom, prio);
         } else {
             queue.end->tcbSchedNext = tcb;
         }
@@ -129,7 +133,7 @@ tcbSchedAppend(tcb_t *tcb)
         tcb->tcbSchedNext = NULL;
         queue.end = tcb;
 
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -148,14 +152,14 @@ tcbSchedDequeue(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore);
 
         if (tcb->tcbSchedPrev) {
             tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
         } else {
             queue.head = tcb->tcbSchedNext;
             if (likely(!tcb->tcbSchedNext)) {
-                removeFromBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
+                removeFromBitmap(SMP_TERNARY(tcb->tcbSchedContext->scCore, 0), dom, prio);
             }
         }
 
@@ -165,7 +169,7 @@ tcbSchedDequeue(tcb_t *tcb)
             queue.end = tcb->tcbSchedPrev;
         }
 
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, false);
     }
@@ -316,13 +320,13 @@ void
 remoteQueueUpdate(tcb_t *tcb)
 {
     /* only ipi if the target is for the current domain */
-    if (tcb->tcbAffinity != getCurrentCPUIndex() && tcb->tcbDomain == ksCurDomain) {
-        tcb_t *targetCurThread = NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity);
+    if (tcb->tcbSchedContext->scCore != getCurrentCPUIndex() && tcb->tcbDomain == ksCurDomain) {
+        tcb_t *targetCurThread = NODE_STATE_ON_CORE(ksCurThread, tcb->tcbSchedContext->scCore);
 
         /* reschedule if the target core is idle or we are waking a higher priority thread */
-        if (targetCurThread == NODE_STATE_ON_CORE(ksIdleThread, tcb->tcbAffinity)  ||
+        if (targetCurThread == NODE_STATE_ON_CORE(ksIdleThread, tcb->tcbSchedContext->scCore)  ||
                 tcb->tcbPriority > targetCurThread->tcbPriority) {
-            ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
+            ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbSchedContext->scCore);
         }
     }
 }
@@ -333,57 +337,11 @@ remoteQueueUpdate(tcb_t *tcb)
 void
 remoteTCBStall(tcb_t *tcb)
 {
-
-    if (tcb->tcbAffinity != getCurrentCPUIndex() &&
-            NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity) == tcb) {
-        doRemoteStall(tcb->tcbAffinity);
-        ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
+    if (tcb->tcbSchedContext->scCore != getCurrentCPUIndex() &&
+            NODE_STATE_ON_CORE(ksCurThread, tcb->tcbSchedContext->scCore) == tcb) {
+        doRemoteOp(IpiRemoteCall_Stall, 0, tcb->tcbSchedContext->scCore);
+        ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbSchedContext->scCore);
     }
-}
-
-static exception_t
-invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
-{
-    Arch_migrateTCB(thread);
-
-    /* remove the tcb from scheduler queue in case it is already in one
-     * and add it to new queue if required */
-    tcbSchedDequeue(thread);
-    thread->tcbAffinity = affinity;
-    if (isRunnable(thread)) {
-        SCHED_APPEND(thread);
-    }
-
-    /* reschedule current cpu if tcb moves itself */
-    if (thread == NODE_STATE(ksCurThread)) {
-        rescheduleRequired();
-    }
-    return EXCEPTION_NONE;
-}
-
-static exception_t
-decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
-{
-    tcb_t *tcb;
-    word_t affinity;
-
-    if (length < 1) {
-        userError("TCB SetAffinity: Truncated message.");
-        current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-
-    affinity = getSyscallArg(0, buffer);
-    if (affinity >= ksNumCPUs) {
-        userError("TCB SetAffinity: Requested CPU does not exist.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeTCB_SetAffinity(tcb, affinity);
 }
 #endif /* CONFIG_MAX_NUM_NODES */
 
@@ -675,11 +633,6 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
     case TCBUnbindNotification:
         return decodeUnbindNotification(cap);
 
-#if CONFIG_MAX_NUM_NODES > 1
-    case TCBSetAffinity:
-        return decodeSetAffinity(cap, length, buffer);
-#endif
-
         /* There is no notion of arch specific TCB invocations so this needs to go here */
 #ifdef CONFIG_VTX
     case TCBSetEPTRoot:
@@ -852,7 +805,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
                    extra_caps_t rootCaps, word_t *buffer)
 {
     cte_t *bufferSlot, *cRootSlot, *vRootSlot;
-    cap_t bufferCap, cRootCap, vRootCap;
+    cap_t bufferCap, cRootCap, vRootCap, scCap;
     deriveCap_ret_t dc_ret;
     cptr_t faultEP;
     seL4_PrioProps_t props;
@@ -862,7 +815,8 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
 
     if (length < 5 || rootCaps.excaprefs[0] == NULL
             || rootCaps.excaprefs[1] == NULL
-            || rootCaps.excaprefs[2] == NULL) {
+            || rootCaps.excaprefs[2] == NULL
+            || rootCaps.excaprefs[3] == NULL) {
         userError("TCB Configure: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -874,12 +828,13 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     vRootData     = getSyscallArg(3, buffer);
     bufferAddr    = getSyscallArg(4, buffer);
 
-    cRootSlot  = rootCaps.excaprefs[0];
-    cRootCap   = rootCaps.excaprefs[0]->cap;
-    vRootSlot  = rootCaps.excaprefs[1];
-    vRootCap   = rootCaps.excaprefs[1]->cap;
-    bufferSlot = rootCaps.excaprefs[2];
-    bufferCap  = rootCaps.excaprefs[2]->cap;
+    scCap      = rootCaps.excaprefs[0]->cap;
+    cRootSlot  = rootCaps.excaprefs[1];
+    cRootCap   = rootCaps.excaprefs[1]->cap;
+    vRootSlot  = rootCaps.excaprefs[2];
+    vRootCap   = rootCaps.excaprefs[2]->cap;
+    bufferSlot = rootCaps.excaprefs[3];
+    bufferCap  = rootCaps.excaprefs[3]->cap;
 
     prio = seL4_PrioProps_get_prio(props);
     mcp  = seL4_PrioProps_get_mcp(props);
@@ -954,14 +909,38 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+    sched_context_t *sc = NULL;
+    switch (cap_get_capType(scCap)) {
+        case cap_sched_context_cap:
+            sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(scCap));
+            if (tcb->tcbSchedContext && tcb->tcbSchedContext != sc) {
+                userError("TCB Configure: tcb already has a scheduling context.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            if (sc->scTcb && sc->scTcb != tcb) {
+                userError("TCB Configure: sched contextext already bound.");
+                current_syscall_error.type = seL4_IllegalOperation;
+                return EXCEPTION_SYSCALL_ERROR;
+            }
+            break;
+        case cap_null_cap:
+            break;
+        default:
+            userError("TCB Configure: sched context cap invalid.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 4;
+    }
+
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
-               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
+               tcb, slot,
                faultEP, mcp, prio,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                bufferAddr, bufferCap,
-               bufferSlot, thread_control_update_all);
+               bufferSlot, sc, thread_control_update_all);
 }
 
 exception_t
@@ -992,7 +971,7 @@ decodeSetPriority(cap_t cap, word_t length, word_t *buffer)
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(),
-               NULL, thread_control_update_priority);
+               NULL, NULL, thread_control_update_priority);
 }
 
 exception_t
@@ -1023,7 +1002,7 @@ decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer)
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(),
-               NULL, thread_control_update_mcp);
+               NULL, NULL, thread_control_update_mcp);
 }
 
 exception_t
@@ -1068,7 +1047,7 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                cptr_bufferPtr, bufferCap,
-               bufferSlot, thread_control_update_ipc_buffer);
+               bufferSlot, NULL, thread_control_update_ipc_buffer);
 }
 
 exception_t
@@ -1145,7 +1124,7 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
                NULL_PRIO, NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
-               0, cap_null_cap_new(), NULL, thread_control_update_space);
+               0, cap_null_cap_new(), NULL, NULL, thread_control_update_space);
 }
 
 exception_t
@@ -1282,6 +1261,7 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
                         cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
                         word_t bufferAddr, cap_t bufferCap,
                         cte_t *bufferSrcSlot,
+                        sched_context_t *sc,
                         thread_control_flag_t updateFlags)
 {
     exception_t e;
@@ -1297,6 +1277,14 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
 
     if (updateFlags & thread_control_update_priority) {
         setPriority(target, priority);
+    }
+
+    if (updateFlags & thread_control_update_sc) {
+        if (sc != NULL && sc != target->tcbSchedContext) {
+            schedContext_bindTCB(sc, target);
+        } else if (sc == NULL && target->tcbSchedContext != NULL) {
+            schedContext_unbindTCB(target->tcbSchedContext, target);
+        }
     }
 
     if (updateFlags & thread_control_update_space) {

@@ -34,12 +34,15 @@
 #define seL4_GuardBits 18
 #define seL4_BadgeBits 28
 
+typedef seL4_Uint64 seL4_Time;
 typedef seL4_CPtr seL4_CNode;
 typedef seL4_CPtr seL4_IRQHandler;
 typedef seL4_CPtr seL4_IRQControl;
 typedef seL4_CPtr seL4_TCB;
 typedef seL4_CPtr seL4_Untyped;
 typedef seL4_CPtr seL4_DomainSet;
+typedef seL4_CPtr seL4_SchedContext;
+typedef seL4_CPtr seL4_SchedControl;
 
 #define seL4_NilData seL4_CapData_Badge_new(0)
 

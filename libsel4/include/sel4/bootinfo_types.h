@@ -26,7 +26,8 @@ enum {
     seL4_CapBootInfoFrame       =  9, /* bootinfo frame cap */
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */
     seL4_CapDomain              = 11, /* global domain controller cap */
-    seL4_NumInitialCaps         = 12
+    seL4_CapInitThreadSC        = 12, /* initial thread's scheduling context cap */
+    seL4_NumInitialCaps         = 13
 };
 
 /* Legacy code will have assumptions on the vspace root being a Page Directory
@@ -64,6 +65,7 @@ typedef struct {
     seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
     seL4_Word         archInfo;        /* tsc freq on x86, unused on arm */
+    seL4_SlotRegion   schedcontrol; /* Caps to sched_control for each node */
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
     seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
     /* the untypedList should be the last entry in this struct, in order

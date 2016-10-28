@@ -318,11 +318,11 @@ menu "seL4 System Parameters"
             The number of milliseconds between timer ticks.
 
 
-    config TIME_SLICE
-        int "Time slice"
+    config BOOT_THREAD_TIME_SLICE
+        int "Boot thread time slice"
         default 5
         help
-            Number of timer ticks until a thread is preempted.
+            Number of milliseconds until the boot thread is preempted.
 
     config RETYPE_FAN_OUT_LIMIT
         int "Retype fan out limit"
