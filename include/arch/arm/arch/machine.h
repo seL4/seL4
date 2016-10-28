@@ -35,6 +35,8 @@ static inline void plat_cleanL2Range(paddr_t start, paddr_t end);
 static inline void plat_invalidateL2Range(paddr_t start, paddr_t end);
 /** MODIFIES: [*] */
 static inline void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
+/** MODIFIES: [*] */
+static inline void plat_cleanInvalidateCache(void);
 
 /** MODIFIES: [*] */
 void cleanInvalidateCacheRange_RAM(word_t start, word_t end, paddr_t pstart);

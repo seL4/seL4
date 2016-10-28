@@ -11,3 +11,7 @@
 void initL2Cache(void)
 {
 }
+
+void plat_cleanInvalidateCache(void)
+{
+}

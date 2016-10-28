@@ -102,6 +102,14 @@ initTimer(void)
     epit1->epitcr = epitcr_kludge.words[0];
 }
 
+static void cleanL2(void)
+{
+    /* clean all ways */
+    imx31_l2cc_flush_regs->clean_by_way = 0xff;
+    /* Busy-wait for completion */
+    while(imx31_l2cc_flush_regs->clean_by_way);
+}
+
 static void invalidateL2(void)
 {
     /* Invalidate all ways. */
@@ -158,6 +166,12 @@ void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
         imx31_l2cc_flush_regs->clinv_by_pa = line;
     }
     finaliseL2Op();
+}
+
+void plat_cleanInvalidateCache(void)
+{
+    cleanL2();
+    invalidateL2();
 }
 
 /**
