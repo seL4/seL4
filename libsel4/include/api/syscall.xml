@@ -38,6 +38,7 @@
             <syscall name="DebugRun"/>
         </config>
         <config condition="defined CONFIG_ENABLE_BENCHMARKS">
+            <syscall name="BenchmarkFlushCaches" />
             <syscall name="BenchmarkResetLog" />
             <syscall name="BenchmarkFinalizeLog"  />
             <syscall name="BenchmarkSetLogBuffer"  />

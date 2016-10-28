@@ -11,6 +11,7 @@
 #include <api/types.h>
 #include <arch/machine.h>
 #include <arch/machine/hardware.h>
+#include <arch/machine/l2c_310.h>
 
 #define LINE_START(a) ROUND_DOWN(a, L1_CACHE_LINE_SIZE_BITS)
 #define LINE_INDEX(a) (LINE_START(a)>>L1_CACHE_LINE_SIZE_BITS)
@@ -183,4 +184,13 @@ cleanInvalidateL1Caches(void)
     dsb();
     invalidate_I_PoU();
     dsb();
+}
+
+void
+arch_clean_invalidate_caches(void)
+{
+     cleanCaches_PoU();
+     plat_cleanInvalidateCache();
+     cleanInvalidateL1Caches();
+     isb();
 }

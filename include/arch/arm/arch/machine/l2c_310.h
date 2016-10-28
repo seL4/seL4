@@ -22,6 +22,8 @@
 void initL2Cache(void);
 
 /** MODIFIES: [*] */
+void plat_cleanInvalidateCache(void);
+/** MODIFIES: [*] */
 void plat_cleanCache(void);
 /** MODIFIES: [*] */
 void plat_cleanL2Range(paddr_t start, paddr_t end);

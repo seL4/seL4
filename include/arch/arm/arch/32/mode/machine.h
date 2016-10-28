@@ -354,4 +354,6 @@ static inline void setACTLR(word_t actlr)
     asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
 }
 
+void arch_clean_invalidate_caches(void);
+
 #endif /* __ARCH_MACHINE_32_H */
