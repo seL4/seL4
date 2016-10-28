@@ -774,7 +774,8 @@ performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlo
 {
     cap_pml4_cap_ptr_set_capPML4MappedASID(&vspaceCapSlot->cap, asid);
     cap_pml4_cap_ptr_set_capPML4IsMapped(&vspaceCapSlot->cap, 1);
-    poolPtr->array[asid & MASK(asidLowBits)] = PML4_PTR(cap_pml4_cap_get_capPML4BasePtr(vspaceCapSlot->cap));
+    poolPtr->array[asid & MASK(asidLowBits)]
+        = asid_map_asid_map_vspace_new(cap_pml4_cap_get_capPML4BasePtr(vspaceCapSlot->cap));
     return EXCEPTION_NONE;
 }
 

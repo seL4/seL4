@@ -107,7 +107,7 @@ enum asidSizeConstants {
 };
 
 struct asid_pool {
-    void* array[BIT(asidLowBits)];
+    asid_map_t array[BIT(asidLowBits)];
 };
 
 typedef struct asid_pool asid_pool_t;

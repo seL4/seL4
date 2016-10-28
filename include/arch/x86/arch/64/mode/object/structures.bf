@@ -363,6 +363,23 @@ block tss {
     padding                               32
 }
 
+
+block asid_map_none {
+    padding                         62
+    field type                      2
+}
+
+block asid_map_vspace {
+    field_high vspace_root          48
+    padding                         14
+    field type                      2
+}
+
+tagged_union asid_map type {
+    tag asid_map_none 0
+    tag asid_map_vspace 1
+}
+
 -- PML4, PDPE, PDs and PTs, assuming 51-bit physical address
 base 64(51,0)
 
