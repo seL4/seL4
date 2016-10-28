@@ -13,8 +13,6 @@
 
 #include <mode/object/structures.h>
 
-enum tcb_arch_cnode_index {
-    tcbArchCNodeEntries = tcbCNodeEntries
-};
+#define tcbArchCNodeEntries tcbCNodeEntries
 
 #endif
