@@ -121,5 +121,5 @@ include/interfaces/sel4_client.h: \
 	@mkdir -p $(dir $@)
 	@${CHANGED_PATH} $@ \
         ${PYTHON} ${SOURCE_DIR}/tools/syscall_stub_gen.py \
-        --buffer \
+        $(if ${CONFIG_LIB_SEL4_STUBS_USE_IPC_BUFFER_ONLY},--buffer,) \
         -a $(SEL4_ARCH) -c ${srctree}/.config -o $@ $^

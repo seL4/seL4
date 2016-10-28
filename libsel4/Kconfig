@@ -26,6 +26,16 @@ config LIB_SEL4_INLINE_INVOCATIONS
         for verification, so setting to 'n' will forcively prevent the function
         from being inlined
 
+config LIB_SEL4_STUBS_USE_IPC_BUFFER_ONLY
+    bool "use only IPC buffer for syscalls"
+    depends on LIB_SEL4
+    default n
+    help
+        When generating syscall wrappers, only use the IPC buffer for
+        marshalling and unmarshalling arguments. Without this option set,
+        arguments will be passed in registers where possible for better
+        performance.
+
 config HAVE_LIB_SEL4
     bool
 endmenu
