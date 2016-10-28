@@ -459,6 +459,8 @@ try_init_kernel(
         bi_frame_vptr
     );
 
+    init_sched_control(root_cnode_cap, 1);
+
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {

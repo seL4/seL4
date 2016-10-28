@@ -113,6 +113,8 @@ enum thread_control_flag {
     thread_control_update_ipc_buffer = 0x2,
     thread_control_update_space = 0x4,
     thread_control_update_mcp = 0x8,
+    thread_control_update_sc = 0x10,
+    thread_control_update_all = 0x1F,
 };
 
 typedef word_t thread_control_flag_t;
@@ -124,6 +126,7 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t* slot, cptr_t faultep,
                                     cte_t *cRoot_srcSlot, cap_t vRoot_newCap,
                                     cte_t *vRoot_srcSlot, word_t bufferAddr,
                                     cap_t bufferCap, cte_t *bufferSrcSlot,
+                                    sched_context_t *sched_context,
                                     thread_control_flag_t updateFlags);
 exception_t invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *src,
                                     bool_t suspendSource, bool_t resumeTarget,

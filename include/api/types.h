@@ -25,6 +25,7 @@
 /* seL4_CapRights_t defined in mode/api/shared_types.bf */
 
 typedef word_t prio_t;
+typedef uint64_t ticks_t;
 
 enum domainConstants {
     minDom = 0,
