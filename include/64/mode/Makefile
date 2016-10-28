@@ -13,3 +13,4 @@
 DIRECTORIES += 64/mode/api
 BF_SOURCES += 64/mode/api/shared_types.bf
 INCLUDE_DIRS += 64
+INCLUDE_DIRS += ${SOURCE_ROOT}/include/64
