@@ -293,7 +293,7 @@ cancelAllIPC(endpoint_t *epptr)
         /* Set all blocked threads to restart */
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState (thread, ThreadState_Restart);
-            tcbSchedEnqueue(thread);
+            SCHED_ENQUEUE(thread);
         }
 
         rescheduleRequired();
@@ -327,7 +327,7 @@ cancelBadgedSends(endpoint_t *epptr, word_t badge)
             next = thread->tcbEPNext;
             if (b == badge) {
                 setThreadState(thread, ThreadState_Restart);
-                tcbSchedEnqueue(thread);
+                SCHED_ENQUEUE(thread);
                 queue = tcbEPDequeue(thread, queue);
             }
         }

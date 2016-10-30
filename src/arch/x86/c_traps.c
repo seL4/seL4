@@ -25,6 +25,8 @@
 void VISIBLE NORETURN
 c_handle_interrupt(int irq, int syscall)
 {
+    NODE_LOCK_IF(irq != int_remote_call_ipi);
+
     c_entry_hook();
 
     if (irq == int_unimpl_dev) {
@@ -133,6 +135,8 @@ slowpath(syscall_t syscall)
 void VISIBLE NORETURN
 c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+    NODE_LOCK;
+
     c_entry_hook();
 
 #ifdef TRACK_KERNEL_ENTRIES

@@ -109,7 +109,7 @@ restart(tcb_t *target)
         cancelIPC(target);
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
-        tcbSchedEnqueue(target);
+        SCHED_ENQUEUE(target);
         switchIfRequiredTo(target);
     }
 }
@@ -289,7 +289,7 @@ schedule(void)
     action = (word_t)NODE_STATE(ksSchedulerAction);
     if (action == (word_t)SchedulerAction_ChooseNewThread) {
         if (isRunnable(NODE_STATE(ksCurThread))) {
-            tcbSchedEnqueue(NODE_STATE(ksCurThread));
+            SCHED_ENQUEUE_CURRENT_TCB;
         }
         if (ksDomainTime == 0) {
             nextDomain();
@@ -298,12 +298,17 @@ schedule(void)
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     } else if (action != (word_t)SchedulerAction_ResumeCurrentThread) {
         if (isRunnable(NODE_STATE(ksCurThread))) {
-            tcbSchedEnqueue(NODE_STATE(ksCurThread));
+            SCHED_ENQUEUE_CURRENT_TCB;
         }
         /* SwitchToThread */
         switchToThread(NODE_STATE(ksSchedulerAction));
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
+
+#if CONFIG_MAX_NUM_NODES > 1
+    doMaskReschedule(ARCH_NODE_STATE(ipiReschedulePending));
+    ARCH_NODE_STATE(ipiReschedulePending) = 0;
+#endif
 }
 
 void
@@ -359,7 +364,7 @@ setDomain(tcb_t *tptr, dom_t dom)
     tcbSchedDequeue(tptr);
     tptr->tcbDomain = dom;
     if (isRunnable(tptr)) {
-        tcbSchedEnqueue(tptr);
+        SCHED_ENQUEUE(tptr);
     }
     if (tptr == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
@@ -378,7 +383,7 @@ setPriority(tcb_t *tptr, prio_t prio)
     tcbSchedDequeue(tptr);
     tptr->tcbPriority = prio;
     if (isRunnable(tptr)) {
-        tcbSchedEnqueue(tptr);
+        SCHED_ENQUEUE(tptr);
     }
     if (tptr == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
@@ -398,13 +403,14 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
     targetPrio = target->tcbPriority;
     action = NODE_STATE(ksSchedulerAction);
     if (targetDom != curDom) {
-        tcbSchedEnqueue(target);
+        SCHED_ENQUEUE(target);
     } else {
         if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
-                && action == SchedulerAction_ResumeCurrentThread) {
+                && action == SchedulerAction_ResumeCurrentThread
+                SMP_COND_STATEMENT( && target->tcbAffinity == getCurrentCPUIndex())) {
             NODE_STATE(ksSchedulerAction) = target;
         } else {
-            tcbSchedEnqueue(target);
+            SCHED_ENQUEUE(target);
         }
         if (action != SchedulerAction_ResumeCurrentThread
                 && action != SchedulerAction_ChooseNewThread) {
@@ -451,7 +457,7 @@ timerTick(void)
             NODE_STATE(ksCurThread)->tcbTimeSlice--;
         } else {
             NODE_STATE(ksCurThread)->tcbTimeSlice = CONFIG_TIME_SLICE;
-            tcbSchedAppend(NODE_STATE(ksCurThread));
+            SCHED_APPEND_CURRENT_TCB;
             rescheduleRequired();
         }
     }
@@ -469,7 +475,7 @@ rescheduleRequired(void)
 {
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread
             && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread) {
-        tcbSchedEnqueue(NODE_STATE(ksSchedulerAction));
+        SCHED_ENQUEUE(NODE_STATE(ksSchedulerAction));
     }
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
 }

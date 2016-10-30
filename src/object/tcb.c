@@ -51,24 +51,24 @@ checkPrio(prio_t prio)
 }
 
 static inline void
-addToBitmap(word_t dom, word_t prio)
+addToBitmap(word_t cpu, word_t dom, word_t prio)
 {
     word_t l1index;
 
     l1index = prio_to_l1index(prio);
-    NODE_STATE(ksReadyQueuesL1Bitmap[dom]) |= BIT(l1index);
-    NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]) |= BIT(prio & MASK(wordRadix));
+    NODE_STATE_ON_CORE(ksReadyQueuesL1Bitmap[dom], cpu) |= BIT(l1index);
+    NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index], cpu) |= BIT(prio & MASK(wordRadix));
 }
 
 static inline void
-removeFromBitmap(word_t dom, word_t prio)
+removeFromBitmap(word_t cpu, word_t dom, word_t prio)
 {
     word_t l1index;
 
     l1index = prio_to_l1index(prio);
-    NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]) &= ~BIT(prio & MASK(wordRadix));
-    if (unlikely(!NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]))) {
-        NODE_STATE(ksReadyQueuesL1Bitmap[dom]) &= ~BIT(l1index);
+    NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index], cpu) &= ~BIT(prio & MASK(wordRadix));
+    if (unlikely(!NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index], cpu))) {
+        NODE_STATE_ON_CORE(ksReadyQueuesL1Bitmap[dom], cpu) &= ~BIT(l1index);
     }
 }
 
@@ -85,11 +85,11 @@ tcbSchedEnqueue(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE(ksReadyQueues[idx]);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
         if (!queue.end) { /* Empty list */
             queue.end = tcb;
-            addToBitmap(dom, prio);
+            addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
         } else {
             queue.head->tcbSchedPrev = tcb;
         }
@@ -97,7 +97,7 @@ tcbSchedEnqueue(tcb_t *tcb)
         tcb->tcbSchedNext = queue.head;
         queue.head = tcb;
 
-        NODE_STATE(ksReadyQueues[idx]) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -116,11 +116,11 @@ tcbSchedAppend(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE(ksReadyQueues[idx]);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
         if (!queue.head) { /* Empty list */
             queue.head = tcb;
-            addToBitmap(dom, prio);
+            addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
         } else {
             queue.end->tcbSchedNext = tcb;
         }
@@ -128,7 +128,7 @@ tcbSchedAppend(tcb_t *tcb)
         tcb->tcbSchedNext = NULL;
         queue.end = tcb;
 
-        NODE_STATE(ksReadyQueues[idx]) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -147,14 +147,14 @@ tcbSchedDequeue(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE(ksReadyQueues[idx]);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
         if (tcb->tcbSchedPrev) {
             tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
         } else {
             queue.head = tcb->tcbSchedNext;
             if (likely(!tcb->tcbSchedNext)) {
-                removeFromBitmap(dom, prio);
+                removeFromBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
             }
         }
 
@@ -164,7 +164,7 @@ tcbSchedDequeue(tcb_t *tcb)
             queue.end = tcb->tcbSchedPrev;
         }
 
-        NODE_STATE(ksReadyQueues[idx]) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, false);
     }
@@ -309,9 +309,53 @@ copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
 }
 
 #if CONFIG_MAX_NUM_NODES > 1
+/* This checks if the current updated to scheduler queue is changing the previous scheduling
+ * decision made by the scheduler. If its a case, an `irq_reschedule_ipi` is sent */
+void
+remoteQueueUpdate(tcb_t *tcb)
+{
+    /* only ipi if the target is for the current domain */
+    if (tcb->tcbAffinity != getCurrentCPUIndex() && tcb->tcbDomain == ksCurDomain) {
+        tcb_t *targetCurThread = NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity);
+
+        /* reschedule if the target core is idle or we are waking a higher priority thread */
+        if (targetCurThread == NODE_STATE_ON_CORE(ksIdleThread, tcb->tcbAffinity)  ||
+                tcb->tcbPriority > targetCurThread->tcbPriority) {
+            ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
+        }
+    }
+}
+
+/* This makes sure the the TCB is not being run on other core.
+ * It would request 'IpiRemoteCall_Stall' to switch the core from this TCB
+ * We also request the 'irq_reschedule_ipi' to restore the state of target core */
+void
+remoteTCBStall(cap_t cap)
+{
+    tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+
+    if (tcb->tcbAffinity != getCurrentCPUIndex() &&
+            NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity) == tcb) {
+        doRemoteOp(IpiRemoteCall_Stall, 0, tcb->tcbAffinity);
+        ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
+    }
+}
+
 static exception_t
 invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
 {
+    /* remove the tcb from scheduler queue in case it is already in one
+     * and add it to new queue if required */
+    tcbSchedDequeue(thread);
+    thread->tcbAffinity = affinity;
+    if (isRunnable(thread)) {
+        SCHED_APPEND(thread);
+    }
+
+    /* reschedule current cpu if tcb moves itself */
+    if (thread == NODE_STATE(ksCurThread)) {
+        rescheduleRequired();
+    }
     return EXCEPTION_NONE;
 }
 
@@ -600,6 +644,9 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
                     cte_t* slot, extra_caps_t excaps, bool_t call,
                     word_t *buffer)
 {
+    /* Stall the core if we are operating on a remote TCB that is currently running */
+    SMP_COND_STATEMENT(remoteTCBStall(cap);)
+
     switch (invLabel) {
     case TCBReadRegisters:
         /* Second level of decoding */

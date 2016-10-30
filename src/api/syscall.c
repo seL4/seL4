@@ -384,7 +384,7 @@ static void
 handleYield(void)
 {
     tcbSchedDequeue(NODE_STATE(ksCurThread));
-    tcbSchedAppend(NODE_STATE(ksCurThread));
+    SCHED_APPEND_CURRENT_TCB;
     rescheduleRequired();
 }
 

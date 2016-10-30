@@ -51,6 +51,28 @@ void tcbSchedEnqueue(tcb_t *tcb);
 void tcbSchedAppend(tcb_t *tcb);
 void tcbSchedDequeue(tcb_t *tcb);
 
+#if CONFIG_MAX_NUM_NODES > 1
+void remoteQueueUpdate(tcb_t *tcb);
+void remoteTCBStall(cap_t cap);
+
+#define SCHED_ENQUEUE(_t) do {      \
+    tcbSchedEnqueue(_t);            \
+    remoteQueueUpdate(_t);          \
+} while (0)
+
+#define SCHED_APPEND(_t) do {       \
+    tcbSchedAppend(_t);             \
+    remoteQueueUpdate(_t);          \
+} while (0)
+
+#else
+#define SCHED_ENQUEUE(_t)           tcbSchedEnqueue(_t)
+#define SCHED_APPEND(_t)            tcbSchedAppend(_t)
+#endif /* CONFIG_MAX_NUM_NODES */
+
+#define SCHED_ENQUEUE_CURRENT_TCB   tcbSchedEnqueue(NODE_STATE(ksCurThread))
+#define SCHED_APPEND_CURRENT_TCB    tcbSchedAppend(NODE_STATE(ksCurThread))
+
 tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
 

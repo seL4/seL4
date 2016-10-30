@@ -101,23 +101,37 @@ clh_lock_release(word_t cpu)
 }
 
 static inline bool_t FORCE_INLINE
-clk_is_self_in_queue(void)
+clh_is_self_in_queue(void)
 {
     return big_kernel_lock.node_owners[getCurrentCPUIndex()].node->value == CLHState_Pending;
 }
 
 #define NODE_LOCK do {                          \
     clh_lock_acquire(getCurrentCPUIndex());     \
-    } while(0)
+} while(0)
 
 #define NODE_UNLOCK do {                        \
     clh_lock_release(getCurrentCPUIndex());     \
-    } while(0)
+} while(0)
+
+#define NODE_LOCK_IF(_cond) do {                \
+    if((_cond)) {                               \
+        NODE_LOCK;                              \
+    }                                           \
+} while(0)
+
+#define NODE_UNLOCK_IF(_cond) do {              \
+    if((_cond)) {                               \
+        NODE_UNLOCK;                            \
+    }                                           \
+} while(0)
 
 #else
 
 #define NODE_LOCK do {} while (0)
 #define NODE_UNLOCK do {} while (0)
+#define NODE_LOCK_IF(_cond) do {} while (0)
+#define NODE_UNLOCK_IF(_cond) do {} while (0)
 
 #endif
 

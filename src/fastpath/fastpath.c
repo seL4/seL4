@@ -122,6 +122,13 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
+#if CONFIG_MAX_NUM_NODES > 1
+    /* Ensure both threads have the same affinity */
+    if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != dest->tcbAffinity)) {
+        slowpath(SysCall);
+    }
+#endif
+
     /*
      * --- POINT OF NO RETURN ---
      *
@@ -295,6 +302,13 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     if (unlikely(caller->tcbDomain != ksCurDomain && maxDom)) {
         slowpath(SysReplyRecv);
     }
+
+#if CONFIG_MAX_NUM_NODES > 1
+    /* Ensure both threads have the same affinity */
+    if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != caller->tcbAffinity)) {
+        slowpath(SysReplyRecv);
+    }
+#endif
 
     /*
      * --- POINT OF NO RETURN ---
