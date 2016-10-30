@@ -179,7 +179,7 @@ exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_d
 bool_t CONST Arch_isMigratable(tcb_t *thread, word_t affinity_dest)
 {
     /* check if this thread owns FPU state in original CPU */
-    if (ARCH_NODE_STATE_ON_CORE(x86KSActiveFPUState, thread->tcbAffinity) == 
+    if (ARCH_NODE_STATE_ON_CORE(x86KSActiveFPUState, thread->tcbAffinity) ==
             &thread->tcbArch.tcbContext.fpuState) {
         return false;
     }
