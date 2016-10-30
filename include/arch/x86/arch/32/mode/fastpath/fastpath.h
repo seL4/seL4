@@ -33,11 +33,11 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
      * for layout of gdt_data */
     /* update the GDT_TLS entry with the thread's TLS_BASE address */
     base = getRegister(thread, TLS_BASE);
-    x86_write_fs_base(base);
+    x86_write_gs_base(base);
 
     /* update the GDT_IPCBUF entry with the thread's IPC buffer address */
     base = thread->tcbIPCBuffer;
-    x86_write_gs_base(base);
+    x86_write_fs_base(base);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
@@ -181,4 +181,3 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 }
 
 #endif
-

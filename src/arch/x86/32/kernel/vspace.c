@@ -402,8 +402,8 @@ init_dtrs(void)
     ia32_install_tss(SEL_TSS);
 
     if (config_set(CONFIG_FSGSBASE_MSR)) {
-        ia32_load_fs(SEL_TLS);
-        ia32_load_gs(SEL_IPCBUF);
+        ia32_load_gs(SEL_TLS);
+        ia32_load_fs(SEL_IPCBUF);
     }
 }
 
