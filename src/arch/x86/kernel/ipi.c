@@ -132,6 +132,11 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1)
             switchLocalFpuOwner((user_fpu_state_t *)arg0);
             break;
 
+#ifdef CONFIG_VTX
+        case IpiRemoteCall_ClearCurrentVCPU:
+            clearCurrentVCPU();
+            break;
+#endif
         default:
             Mode_handleRemoteCall(call, arg0, arg1);
             break;

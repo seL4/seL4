@@ -59,12 +59,14 @@ int_##number:                                \
     .size int_##number, .-int_##number;
 
 #if CONFIG_MAX_NUM_NODES > 1
-#define SET_KERNEL_STACK                    \
-    movl    0x4C(%esp), %esp
+#define SET_KERNEL_STACK_FROM(x)            \
+    movl    (x)(%esp), %esp
 #else
-#define SET_KERNEL_STACK                    \
+#define SET_KERNEL_STACK_FROM(x)            \
     leal kernel_stack_alloc + 0xffc, %esp
 #endif
+
+#define SET_KERNEL_STACK SET_KERNEL_STACK_FROM(0x4c)
 
 .section .text
 
@@ -457,8 +459,7 @@ END_FUNC(kernel_exception)
     1:
 
 # Handle vmexit
-# Assume that esp points to the first thing in user_context_t that isn't saved
-# in the VMCS. We need to save general purpose registers here.
+# ESP points to the end of an array that just holds the general purpose registers
 #ifdef CONFIG_VTX
 BEGIN_FUNC(handle_vmexit)
     pushl   %ebp
@@ -469,12 +470,14 @@ BEGIN_FUNC(handle_vmexit)
     pushl   %ebx
     pushl   %eax
 
-    # set kernel data segments (ds and es) if necessary (set them to the user value though)
-    SET_SEL(ds, 7  * 4, 0x23)
-    SET_SEL(es, 8  * 4, 0x23)
+    # switch to the user data segments as the rest of our entry/exit code assumes that's
+    # what they will be
+    movl $0x23, %ecx
+    movl %ecx, %ds
+    movl %ecx, %es
 
     # switch to kernel stack
-    leal    kernel_stack_alloc + 4096, %esp
+    SET_KERNEL_STACK_FROM(7 * 4)
     # Handle the vmexit, we will not return
     call    c_handle_vmexit
 END_FUNC(handle_vmexit)

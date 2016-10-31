@@ -58,7 +58,7 @@ uint32_t x86KSnumIODomainIDBits;
 uint32_t x86KSFirstValidIODomain;
 
 #ifdef CONFIG_VTX
-vcpu_t *x86KSCurrentVCPU;
+UP_STATE_DEFINE(vcpu_t *, x86KSCurrentVCPU);
 #endif
 
 #ifdef CONFIG_PRINTING

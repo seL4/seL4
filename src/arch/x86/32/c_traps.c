@@ -24,6 +24,10 @@
 #ifdef CONFIG_VTX
 static void NORETURN vmlaunch_failed(void)
 {
+    NODE_LOCK;
+
+    c_entry_hook();
+
     handleVmEntryFail();
     restore_user_context();
 }
@@ -31,7 +35,10 @@ static void NORETURN vmlaunch_failed(void)
 static void NORETURN restore_vmx(void)
 {
     restoreVMCS();
-    if (ksCurThread->tcbArch.vcpu->launched) {
+#if CONFIG_MAX_NUM_NODES > 1
+    NODE_STATE(ksCurThread)->tcbArch.vcpu->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + 0xffc;
+#endif
+    if (NODE_STATE(ksCurThread)->tcbArch.vcpu->launched) {
         /* attempt to do a vmresume */
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
@@ -49,7 +56,7 @@ static void NORETURN restore_vmx(void)
             "leal kernel_stack_alloc, %%esp\n"
             "call %1\n"
             :
-            : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX]),
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[EAX]),
             "m"(vmlaunch_failed)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
@@ -73,7 +80,7 @@ static void NORETURN restore_vmx(void)
             "leal kernel_stack_alloc, %%esp\n"
             "call %1\n"
             :
-            : "r"(&ksCurThread->tcbArch.vcpu->gp_registers[EAX]),
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[EAX]),
             "m"(vmlaunch_failed)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
@@ -90,12 +97,12 @@ void NORETURN VISIBLE restore_user_context(void)
     c_exit_hook();
 
     NODE_UNLOCK_IF_HELD;
-    setKernelEntryStackPointer(NODE_STATE(ksCurThread));
 #ifdef CONFIG_VTX
     if (thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_RunningVM) {
         restore_vmx();
     }
 #endif
+    setKernelEntryStackPointer(NODE_STATE(ksCurThread));
     if (unlikely(nativeThreadUsingFPU(NODE_STATE(ksCurThread)))) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();

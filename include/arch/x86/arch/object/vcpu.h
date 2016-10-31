@@ -250,6 +250,9 @@ struct vcpu {
     /* General purpose registers that we have to save and restore as they
      * are not part of the vmcs */
     word_t gp_registers[n_generalRegisters];
+#if CONFIG_MAX_NUM_NODES > 1
+    word_t kernelSP;
+#endif
 
     /* TCB associated with this VCPU. */
     struct tcb *tcb;
@@ -284,6 +287,11 @@ struct vcpu {
 
     /* Last set host cr3 */
     word_t last_host_cr3;
+
+#if CONFIG_MAX_NUM_NODES  > 1
+    /* Core this VCPU was last loaded on, or is currently loaded on */
+    word_t last_cpu;
+#endif
 };
 typedef struct vcpu vcpu_t;
 
@@ -318,6 +326,7 @@ bool_t vtx_init(void);
 exception_t handleVmexit(void);
 exception_t handleVmEntryFail(void);
 void restoreVMCS(void);
+void clearCurrentVCPU(void);
 
 void invept(ept_pml4e_t *ept_pml4);
 

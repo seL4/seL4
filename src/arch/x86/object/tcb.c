@@ -163,7 +163,7 @@ static exception_t performSetEPTRoot(tcb_t *tcb, cap_t cap, cte_t *slot)
 
     cteInsert(cap, slot, rootSlot);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 

@@ -131,12 +131,22 @@ vmclear(void *vmcs_ptr)
     );
 }
 
+void
+clearCurrentVCPU(void)
+{
+    vcpu_t *vcpu = ARCH_NODE_STATE(x86KSCurrentVCPU);
+    if (vcpu) {
+        vmclear(vcpu);
+        vcpu->launched = false;
+        ARCH_NODE_STATE(x86KSCurrentVCPU) = NULL;
+    }
+}
+
 static void
 vmptrld(void *vmcs_ptr)
 {
     uint64_t physical_address;
     uint8_t error;
-    x86KSCurrentVCPU = vmcs_ptr;
     physical_address = pptr_to_paddr(vmcs_ptr);
     asm volatile (
         "vmptrld %1; setna %0"
@@ -148,6 +158,31 @@ vmptrld(void *vmcs_ptr)
      * capacity to propogate errors where vmptrld is used we will do our best
      * to detect bugs in debug builds by asserting */
     assert(!error);
+}
+
+static void
+switchVCPU(vcpu_t *vcpu) {
+#if CONFIG_MAX_NUM_NODES  > 1
+    if (vcpu->last_cpu != getCurrentCPUIndex() && ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
+        /* vcpu is currently loaded on another core, need to do vmclear on that core */
+        doRemoteClearCurrentVCPU(vcpu->last_cpu);
+    }
+#endif
+    if (ARCH_NODE_STATE(x86KSCurrentVCPU)) {
+        vmclear(ARCH_NODE_STATE(x86KSCurrentVCPU));
+    }
+    vmptrld(vcpu);
+#if CONFIG_MAX_NUM_NODES > 1
+    if (vcpu->last_cpu != getCurrentCPUIndex()) {
+        /* migrate host state */
+        vmwrite(VMX_HOST_TR_BASE, (word_t)&ARCH_NODE_STATE(x86KStss));
+        vmwrite(VMX_HOST_GDTR_BASE, (word_t)ARCH_NODE_STATE(x86KSgdt));
+        vmwrite(VMX_HOST_IDTR_BASE, (word_t)ARCH_NODE_STATE(x86KSidt));
+        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&ARCH_NODE_STATE(x86KStss).tss.words[0] + 4));
+    }
+    vcpu->last_cpu = getCurrentCPUIndex();
+#endif
+    ARCH_NODE_STATE(x86KSCurrentVCPU) = vcpu;
 }
 
 static void
@@ -309,14 +344,16 @@ vcpu_init(vcpu_t *vcpu)
 
     memcpy(vcpu->vmcs, &vmcs_revision, 4);
 
-    vmclear(vcpu);
-    vmptrld(vcpu);
+    switchVCPU(vcpu);
 
     vcpu->cr0 = cr0_high & cr0_low;
     vcpu->cr0_shadow = 0;
     vcpu->cr0_mask = 0;
     vcpu->exception_bitmap = 0;
     vcpu->vpid = VPID_INVALID;
+#if CONFIG_MAX_NUM_NODES > 1
+    vcpu->last_cpu = getCurrentCPUIndex();
+#endif
 
     vmwrite(VMX_HOST_PAT, x86_rdmsr(IA32_PAT_MSR));
     vmwrite(VMX_HOST_EFER, 0);
@@ -325,12 +362,14 @@ vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_HOST_CR4, read_cr4());
     vmwrite(VMX_HOST_FS_BASE, 0);
     vmwrite(VMX_HOST_GS_BASE, 0);
-    vmwrite(VMX_HOST_TR_BASE, (word_t)&x86KStss);
-    vmwrite(VMX_HOST_GDTR_BASE, (word_t)x86KSgdt);
-    vmwrite(VMX_HOST_IDTR_BASE, (word_t)x86KSidt);
+    vmwrite(VMX_HOST_TR_BASE, (word_t)&ARCH_NODE_STATE(x86KStss));
+    vmwrite(VMX_HOST_GDTR_BASE, (word_t)ARCH_NODE_STATE(x86KSgdt));
+    vmwrite(VMX_HOST_IDTR_BASE, (word_t)ARCH_NODE_STATE(x86KSidt));
     vmwrite(VMX_HOST_SYSENTER_CS, (word_t)SEL_CS_0);
     vmwrite(VMX_HOST_SYSENTER_EIP, (word_t)&handle_syscall);
-    vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&x86KStss.tss.words[0] + 4));
+    if (!config_set(CONFIG_HARDWARE_DEBUG_API)) {
+        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&ARCH_NODE_STATE(x86KStss).tss.words[0] + 4));
+    }
     /* Set host SP to point just beyond the first field to be stored on exit. */
     vmwrite(VMX_HOST_RSP, (word_t)&vcpu->gp_registers[n_generalRegisters]);
     vmwrite(VMX_HOST_RIP, (word_t)&handle_vmexit);
@@ -376,10 +415,16 @@ vcpu_finalise(vcpu_t *vcpu)
     if (vcpu->tcb) {
         dissociateVcpuTcb(vcpu->tcb, vcpu);
     }
-    if (x86KSCurrentVCPU == vcpu) {
-        x86KSCurrentVCPU = NULL;
+    if (ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
+#if CONFIG_MAX_NUM_NODES > 1
+        if (vcpu->last_cpu == getCurrentCPUIndex()) {
+            doRemoteClearCurrentVCPU(vcpu->last_cpu);
+        } else
+#endif
+        {
+            clearCurrentVCPU();
+        }
     }
-    vmclear(vcpu);
 }
 
 static void
@@ -402,7 +447,7 @@ invokeVCPUWriteRegisters(vcpu_t *vcpu, word_t *buffer)
     for (i = 0; i < n_generalRegisters; i++) {
         vcpu->gp_registers[i] = getSyscallArg(i, buffer);
     }
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -494,7 +539,7 @@ decodeEnableIOPort(cap_t cap, word_t length, word_t* buffer, extra_caps_t excaps
 
     vcpu = VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeEnableIOPort(vcpu, ioSlot, ioCap, low, high);
 }
 
@@ -502,7 +547,7 @@ static exception_t
 invokeDisableIOPort(vcpu_t *vcpu, uint16_t low, uint16_t high)
 {
     performSetIOPortMask(vcpu, low, high, 1);
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -530,9 +575,9 @@ static exception_t
 invokeWriteVMCS(vcpu_t *vcpu, word_t *buffer, word_t field, word_t value)
 {
     tcb_t *thread;
-    thread = ksCurThread;
-    if (x86KSCurrentVCPU != vcpu) {
-        vmptrld(vcpu);
+    thread = NODE_STATE(ksCurThread);
+    if (ARCH_NODE_STATE(x86KSCurrentVCPU) != vcpu) {
+        switchVCPU(vcpu);
     }
     switch (field) {
     case VMX_CONTROL_EXCEPTION_BITMAP:
@@ -550,7 +595,7 @@ invokeWriteVMCS(vcpu_t *vcpu, word_t *buffer, word_t field, word_t value)
     }
     setMR(thread, buffer, 0, value);
     vmwrite(field, value);
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -671,8 +716,8 @@ static word_t readVMCSField(vcpu_t *vcpu, word_t field)
     case VMX_CONTROL_CR0_READ_SHADOW:
         return vcpu->cr0_shadow;
     }
-    if (x86KSCurrentVCPU != vcpu) {
-        vmptrld(vcpu);
+    if (ARCH_NODE_STATE(x86KSCurrentVCPU) != vcpu) {
+        switchVCPU(vcpu);
     }
     return vmread(field);
 }
@@ -681,7 +726,7 @@ static exception_t
 invokeReadVMCS(vcpu_t *vcpu, word_t field, word_t *buffer)
 {
     tcb_t *thread;
-    thread = ksCurThread;
+    thread = NODE_STATE(ksCurThread);
 
     setMR(thread, buffer, 0, readVMCSField(vcpu, field));
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
@@ -795,7 +840,7 @@ invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     associateVcpuTcb(tcb, vcpu);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -823,10 +868,10 @@ void
 vcpu_update_state_sysvmenter(vcpu_t *vcpu)
 {
     word_t *buffer;
-    if (x86KSCurrentVCPU != vcpu) {
-        vmptrld(vcpu);
+    if (ARCH_NODE_STATE(x86KSCurrentVCPU) != vcpu) {
+        switchVCPU(vcpu);
     }
-    buffer = lookupIPCBuffer(false, ksCurThread);
+    buffer = lookupIPCBuffer(false, NODE_STATE(ksCurThread));
     if (!buffer) {
         userError("No IPC buffer.");
         return;
@@ -847,8 +892,8 @@ vcpu_sysvmenter_reply_to_user(tcb_t *tcb)
 
     assert(vcpu);
 
-    if (x86KSCurrentVCPU != vcpu) {
-        vmptrld(vcpu);
+    if (ARCH_NODE_STATE(x86KSCurrentVCPU) != vcpu) {
+        switchVCPU(vcpu);
     }
 
     setMR(tcb, buffer, SEL4_VMENTER_CALL_EIP_MR, vmread(VMX_GUEST_RIP));
@@ -973,22 +1018,22 @@ setMRs_vmexit(uint32_t reason, word_t qualification)
     word_t *buffer;
     int i;
 
-    buffer = lookupIPCBuffer(true, ksCurThread);
+    buffer = lookupIPCBuffer(true, NODE_STATE(ksCurThread));
 
-    setMR(ksCurThread, buffer, SEL4_VMENTER_CALL_EIP_MR, vmread(VMX_GUEST_RIP));
-    setMR(ksCurThread, buffer, SEL4_VMENTER_CALL_CONTROL_PPC_MR, vmread(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS));
-    setMR(ksCurThread, buffer, SEL4_VMENTER_CALL_CONTROL_ENTRY_MR, vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO));
-    setMR(ksCurThread, buffer, SEL4_VMENTER_FAULT_REASON_MR, reason);
-    setMR(ksCurThread, buffer, SEL4_VMENTER_FAULT_QUALIFICATION_MR, qualification);
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_EIP_MR, vmread(VMX_GUEST_RIP));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_CONTROL_PPC_MR, vmread(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_CONTROL_ENTRY_MR, vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_REASON_MR, reason);
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_QUALIFICATION_MR, qualification);
 
-    setMR(ksCurThread, buffer, SEL4_VMENTER_FAULT_INSTRUCTION_LEN_MR, vmread(VMX_DATA_EXIT_INSTRUCTION_LENGTH));
-    setMR(ksCurThread, buffer, SEL4_VMENTER_FAULT_GUEST_PHYSICAL_MR, vmread(VMX_DATA_GUEST_PHYSICAL));
-    setMR(ksCurThread, buffer, SEL4_VMENTER_FAULT_RFLAGS_MR, vmread(VMX_GUEST_RFLAGS));
-    setMR(ksCurThread, buffer, SEL4_VMENTER_FAULT_GUEST_INT_MR, vmread(VMX_GUEST_INTERRUPTABILITY));
-    setMR(ksCurThread, buffer, SEL4_VMENTER_FAULT_CR3_MR, vmread(VMX_GUEST_CR3));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_INSTRUCTION_LEN_MR, vmread(VMX_DATA_EXIT_INSTRUCTION_LENGTH));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_GUEST_PHYSICAL_MR, vmread(VMX_DATA_GUEST_PHYSICAL));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_RFLAGS_MR, vmread(VMX_GUEST_RFLAGS));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_GUEST_INT_MR, vmread(VMX_GUEST_INTERRUPTABILITY));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_CR3_MR, vmread(VMX_GUEST_CR3));
 
     for (i = 0; i < n_generalRegisters; i++) {
-        setMR(ksCurThread, buffer, SEL4_VMENTER_FAULT_EAX + i, ksCurThread->tcbArch.vcpu->gp_registers[i]);
+        setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_EAX + i, NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[i]);
     }
 }
 
@@ -996,12 +1041,12 @@ static void
 handleVmxFault(uint32_t reason, word_t qualification)
 {
     /* Indicate that we are returning the from VMEnter with a fault */
-    setRegister(ksCurThread, msgInfoRegister, SEL4_VMENTER_RESULT_FAULT);
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister, SEL4_VMENTER_RESULT_FAULT);
 
     setMRs_vmexit(reason, qualification);
 
     /* Set the thread back to running */
-    setThreadState(ksCurThread, ThreadState_Running);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
 
     /* No need to schedule because this wasn't an interrupt and
      * we run at the same priority */
@@ -1011,13 +1056,13 @@ handleVmxFault(uint32_t reason, word_t qualification)
 static inline void
 finishVmexitSaving(void)
 {
-    vcpu_t *vcpu = x86KSCurrentVCPU;
-    assert(vcpu == ksCurThread->tcbArch.vcpu);
+    vcpu_t *vcpu = ARCH_NODE_STATE(x86KSCurrentVCPU);
+    assert(vcpu == NODE_STATE(ksCurThread)->tcbArch.vcpu);
     vcpu->launched = true;
     /* Update our cache of what is in the vmcs. This is the only value
      * that we cache that can be modified by the guest during execution */
     vcpu->cached_cr0 = vmread(VMX_GUEST_CR0);
-    if (vcpuThreadUsingFPU(ksCurThread)) {
+    if (vcpuThreadUsingFPU(NODE_STATE(ksCurThread))) {
         /* If the vcpu owns the fpu then we did not modify the active cr0 to anything different
          * to what the VCPU owner requested, so we can update it with any modifications
          * the guest may have made */
@@ -1030,7 +1075,7 @@ finishVmexitSaving(void)
          * value from the vmcs (thus pulling in any modifications the guest made) but removing
          * the task switched flag that we set and then adding back in the task switched flag
          * that may be in the desired current cr0 */
-        vcpu->cr0 = (vcpu->cached_cr0 & ~CR0_TASK_SWITCH) | (ksCurThread->tcbArch.vcpu->cr0 & CR0_TASK_SWITCH);
+        vcpu->cr0 = (vcpu->cached_cr0 & ~CR0_TASK_SWITCH) | (NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 & CR0_TASK_SWITCH);
     }
 }
 
@@ -1046,25 +1091,29 @@ handleVmexit(void)
     reason = vmread(VMX_DATA_EXIT_REASON) & MASK(16);
     if (reason == EXTERNAL_INTERRUPT) {
         interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
-        x86KScurInterrupt = interrupt & 0xff;
+        ARCH_NODE_STATE(x86KScurInterrupt) = interrupt & 0xff;
+        NODE_LOCK_IF(interrupt != int_remote_call_ipi);
         handleInterruptEntry();
-        x86KScurInterrupt = int_invalid;
-
+        ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
         return EXCEPTION_NONE;
-    } else if (!vcpuThreadUsingFPU(ksCurThread)) {
+    }
+
+    NODE_LOCK;
+
+    if (!vcpuThreadUsingFPU(NODE_STATE(ksCurThread))) {
         /* since this vcpu does not currently own the fpu state, check if the kernel should
          * switch the fpu owner or not. We switch if the guest performed and unimplemented device
          * exception AND the owner of this vcpu has not requested that these exceptions be forwarded
          * to them (i.e. if they have not explicitly set the unimplemented device exception in the
          * exception_bitmap) */
-        if (reason == EXCEPTION_OR_NMI && !(ksCurThread->tcbArch.vcpu->exception_bitmap & BIT(int_unimpl_dev))) {
+        if (reason == EXCEPTION_OR_NMI && !(NODE_STATE(ksCurThread)->tcbArch.vcpu->exception_bitmap & BIT(int_unimpl_dev))) {
             interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
             /* The exception number is the bottom 8 bits of the interrupt info */
             if ((interrupt & 0xff) == int_unimpl_dev) {
-                switchLocalFpuOwner(&ksCurThread->tcbArch.vcpu->fpuState);
+                switchLocalFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.vcpu->fpuState);
                 return EXCEPTION_NONE;
             }
-        } else if (reason == CONTROL_REGISTER && !(ksCurThread->tcbArch.vcpu->cr0_mask & CR0_TASK_SWITCH)) {
+        } else if (reason == CONTROL_REGISTER && !(NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_mask & CR0_TASK_SWITCH)) {
             /* we get here if the guest is attempting to write to a control register that is set (by
              * a 1 bit in the cr0 mask) as being owned by the host. If we got here then the previous check
              * on cr0_mask meant that the VCPU owner did not claim ownership of the the task switch bit
@@ -1089,19 +1138,19 @@ handleVmexit(void)
                          * get this one from the vmcs */
                         value = vmread(VMX_GUEST_RSP);
                     } else {
-                        value = ksCurThread->tcbArch.vcpu->gp_registers[source];
+                        value = NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[source];
                     }
                     /* First unset the task switch bit in cr0 */
-                    ksCurThread->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
+                    NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
                     /* now set it to the value we were given */
-                    ksCurThread->tcbArch.vcpu->cr0 |= value & CR0_TASK_SWITCH;
+                    NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 |= value & CR0_TASK_SWITCH;
                     /* check if there are any parts of the write remaining to forward. we only need
                      * to consider bits that the hardware will not have handled without faulting, which
                      * is writing any bit such that it is different to the shadow, but only considering
                      * bits that the VCPU owner has declared that they want to own (via the cr0_shadow)
                      */
-                    if (!((value ^ ksCurThread->tcbArch.vcpu->cr0_shadow) &
-                            ksCurThread->tcbArch.vcpu->cr0_mask)) {
+                    if (!((value ^ NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_shadow) &
+                            NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_mask)) {
                         return EXCEPTION_NONE;
                     }
                 }
@@ -1109,15 +1158,15 @@ handleVmexit(void)
             }
             case VMX_EXIT_QUAL_TYPE_CLTS: {
                 /* Easy case. Just remove the task switch bit out of cr0 */
-                ksCurThread->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
+                NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
                 return EXCEPTION_NONE;
             }
             case VMX_EXIT_QUAL_TYPE_LMSW: {
                 uint16_t value = vmx_data_exit_qualification_control_regster_get_data(qual);
                 /* First unset the task switch bit in cr0 */
-                ksCurThread->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
+                NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
                 /* now set it to the value we were given */
-                ksCurThread->tcbArch.vcpu->cr0 |= value & CR0_TASK_SWITCH;
+                NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 |= value & CR0_TASK_SWITCH;
                 /* check if there are any parts of the write remaining to forward. we only need
                  * to consider bits that the hardware will not have handled without faulting, which
                  * is writing any bit such that it is different to the shadow, but only considering
@@ -1125,8 +1174,8 @@ handleVmexit(void)
                  * Additionally since LMSW only loads the bottom 4 bits of CR0 we only consider
                  * the low 4 bits
                  */
-                if (!((value ^ ksCurThread->tcbArch.vcpu->cr0_shadow) &
-                        ksCurThread->tcbArch.vcpu->cr0_mask & MASK(4))) {
+                if (!((value ^ NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_shadow) &
+                        NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_mask & MASK(4))) {
                     return EXCEPTION_NONE;
                 }
                 break;
@@ -1222,14 +1271,14 @@ setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
 static void
 handleLazyFpu(void)
 {
-    vcpu_t *vcpu = ksCurThread->tcbArch.vcpu;
+    vcpu_t *vcpu = NODE_STATE(ksCurThread)->tcbArch.vcpu;
     word_t cr0 = vcpu->cr0;
     word_t exception_bitmap = vcpu->exception_bitmap;
     word_t cr0_mask = vcpu->cr0_mask;
     word_t cr0_shadow = vcpu->cr0_shadow;
     /* if the vcpu actually owns the fpu then we do not need to change any bits
      * and so we will put into the vmcs precisely what the VCPU owner has requested */
-    if (!vcpuThreadUsingFPU(ksCurThread)) {
+    if (!vcpuThreadUsingFPU(NODE_STATE(ksCurThread))) {
         /* when the vcpu doesn't own the fpu we need to force the task switched flag
          * so that we can take an exception and perform lazy fpu switching */
         cr0 |= CR0_TASK_SWITCH;
@@ -1249,7 +1298,7 @@ handleLazyFpu(void)
          * we should use the value they have put in the cr0 read shadow. If they aren't
          * then the read shadow will contain garbage and we should instead set the
          * read shadow to the actual desired cr0 value */
-        if (!(ksCurThread->tcbArch.vcpu->cr0_mask & CR0_TASK_SWITCH)) {
+        if (!(vcpu->cr0_mask & CR0_TASK_SWITCH)) {
             cr0_shadow &= ~CR0_TASK_SWITCH;
             cr0_shadow |= vcpu->cr0 & CR0_TASK_SWITCH;
         }
@@ -1343,11 +1392,11 @@ storeVPID(vcpu_t *vcpu, vpid_t vpid)
 void
 restoreVMCS(void)
 {
-    vcpu_t *expected_vmcs = ksCurThread->tcbArch.vcpu;
+    vcpu_t *expected_vmcs = NODE_STATE(ksCurThread)->tcbArch.vcpu;
 
     /* Check that the right VMCS is active and current. */
-    if (x86KSCurrentVCPU != expected_vmcs) {
-        vmptrld(expected_vmcs);
+    if (ARCH_NODE_STATE(x86KSCurrentVCPU) != expected_vmcs) {
+        switchVCPU(expected_vmcs);
     }
 
     if (getCurrentPD() != expected_vmcs->last_host_cr3) {
@@ -1359,7 +1408,7 @@ restoreVMCS(void)
         storeVPID(expected_vmcs, vpid);
         vmwrite(VMX_CONTROL_VPID, vpid);
     }
-    setEPTRoot(TCB_PTR_CTE_PTR(ksCurThread, tcbArchEPTRoot)->cap, expected_vmcs);
+    setEPTRoot(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbArchEPTRoot)->cap, expected_vmcs);
     handleLazyFpu();
 }
 

@@ -99,16 +99,16 @@ slowpath(syscall_t syscall)
     }
 #ifdef CONFIG_VTX
     if (syscall == SysVMEnter) {
-        vcpu_update_state_sysvmenter(ksCurThread->tcbArch.vcpu);
-        if (ksCurThread->tcbBoundNotification && notification_ptr_get_state(ksCurThread->tcbBoundNotification) == NtfnState_Active) {
-            completeSignal(ksCurThread->tcbBoundNotification, ksCurThread);
-            setRegister(ksCurThread, msgInfoRegister, SEL4_VMENTER_RESULT_NOTIF);
+        vcpu_update_state_sysvmenter(NODE_STATE(ksCurThread)->tcbArch.vcpu);
+        if (NODE_STATE(ksCurThread)->tcbBoundNotification && notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active) {
+            completeSignal(NODE_STATE(ksCurThread)->tcbBoundNotification, NODE_STATE(ksCurThread));
+            setRegister(NODE_STATE(ksCurThread), msgInfoRegister, SEL4_VMENTER_RESULT_NOTIF);
             /* Any guest state that we should return is in the same
              * register position as sent to us, so we can just return
              * and let the user pick up the values they put in */
             restore_user_context();
         } else {
-            setThreadState(ksCurThread, ThreadState_RunningVM);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_RunningVM);
             restore_user_context();
         }
     }
