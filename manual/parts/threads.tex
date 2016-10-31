@@ -41,7 +41,7 @@ pointer. The thread can then be activated either by setting the
 \texttt{resume\_target} parameter in the \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} invocation to true
 or by seperately calling the \apifunc{seL4\_TCB\_Resume}{tcb_resume} method. In multicore machines, the thread
 would be running on the same CPU which originally created the \obj{TCB}. However, it could be migrated to other CPUs
-by calling \apifunc{seL4\_TCB\_SetAffinity}.
+by calling \apifunc{seL4\_TCB\_SetAffinity}{tcb_setaffinity}.
 
 \subsection{Thread Deactivation}
 \label{sec:thread_deactivation}
