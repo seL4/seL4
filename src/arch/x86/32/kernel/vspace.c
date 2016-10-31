@@ -17,6 +17,7 @@
 #include <arch/kernel/boot.h>
 #include <arch/api/invocation.h>
 #include <benchmark/benchmark_track.h>
+#include <mode/kernel/tlb_bitmap.h>
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.
@@ -279,6 +280,14 @@ map_kernel_window(
     assert(idx == (KS_LOG_PPTR >> LARGE_PAGE_BITS));
     idx++;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+
+#if CONFIG_MAX_NUM_NODES > 1
+    /* initialize the TLB bitmap */
+    tlb_bitmap_init(ia32KSGlobalPD);
+
+    phys += TLBBITMAP_PD_RESERVED;
+    idx += TLBBITMAP_PD_ENTRIES;
+#endif /* CONFIG_MAX_NUM_NODES */
 
     /* map page table of last 4M of virtual address space to page directory */
     pde = pde_pde_small_new(
@@ -711,6 +720,9 @@ void setVMRoot(tcb_t* tcb)
 
     /* only set PD if we change it, otherwise we flush the TLB needlessly */
     if (getCurrentPD() != pptr_to_paddr(vspace_root)) {
+        SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
+        SMP_COND_STATEMENT(tlb_bitmap_set(vspace_root, getCurrentCPUIndex());)
+
         setCurrentPD(pptr_to_paddr(vspace_root));
     }
 }

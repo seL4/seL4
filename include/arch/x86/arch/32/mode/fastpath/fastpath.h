@@ -18,6 +18,7 @@
 #include <api/syscall.h>
 #include <benchmark/benchmark_track.h>
 #include <mode/stack.h>
+#include <mode/kernel/tlb_bitmap.h>
 
 static inline void
 switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
@@ -26,6 +27,9 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
     uint32_t new_pd = pptr_to_paddr(pd);
 
     if (likely(getCurrentPD() != new_pd)) {
+        SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
+        SMP_COND_STATEMENT(tlb_bitmap_set(pd, getCurrentCPUIndex());)
+
         setCurrentPD(new_pd);
     }
 

@@ -80,7 +80,7 @@ copy_boot_code_aps(uint32_t mem_lower)
 static BOOT_CODE bool_t
 try_boot_node(void)
 {
-    setCurrentPD(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT));
+    setCurrentVSpaceRoot(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT), 0);
     /* Sync up the compilers view of the world here to force the PD to actually
      * be set *right now* instead of delayed */
     asm volatile("" ::: "memory");
