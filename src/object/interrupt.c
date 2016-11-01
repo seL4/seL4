@@ -22,7 +22,6 @@
 #include <kernel/thread.h>
 #include <model/statedata.h>
 #include <machine/timer.h>
-#include <plat/machine/timer.h>
 #include <smp/ipi.h>
 
 exception_t

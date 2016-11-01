@@ -90,5 +90,5 @@ extern uint16_t x86KSdebugPort;
 #endif
 
 extern x86_irq_state_t x86KSIRQState[];
-
+extern uint32_t x86KStscMhz;
 #endif
