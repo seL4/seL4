@@ -26,7 +26,13 @@ static volatile struct {
 
 static volatile word_t totalCoreBarrier; /* number of cores involved in IPI 'in progress' */
 static IpiRemoteCall_t remoteCall;       /* the remote call being requested */
-static word_t remoteCallData;            /* data to be passed to the remote call function */
+static word_t ipi_args[MAX_IPI_ARGS];    /* data to be passed to the remote call function */
+
+static inline word_t get_ipi_arg(word_t n)
+{
+    assert(n < MAX_IPI_ARGS);
+    return ipi_args[n];
+}
 
 static inline void ipi_wait(word_t cores)
 {
@@ -50,7 +56,7 @@ static inline void ipi_wait(word_t cores)
 
  * The core who triggered the store is responsible for triggering a reschedule,
  * or this call will idle forever */
-static void ipiStallCoreCallback(word_t unused)
+static void ipiStallCoreCallback(void)
 {
     if (clh_is_self_in_queue()) {
         /* The current thread is runnable as we would replace this thread with an idle thread.
@@ -100,7 +106,7 @@ static void handleRemoteCall(void)
     if (clh_is_ipi_pending(getCurrentCPUIndex())) {
         switch (remoteCall) {
         case IpiRemoteCall_Stall:
-            ipiStallCoreCallback(remoteCallData);
+            ipiStallCoreCallback();
             break;
         default:
             fail("Invalid remote call");
@@ -127,7 +133,7 @@ void Arch_handleIPI(irq_t irq)
 /* make sure all cpu IDs for number of core fit in bitwise word */
 compile_assert(invalid_number_of_supported_nodes, CONFIG_MAX_NUM_NODES <= wordBits);
 
-void doRemoteMaskOp(IpiRemoteCall_t func, word_t data, word_t mask)
+void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask)
 {
     word_t nr_target_cores = 0;
     uint16_t target_cores[CONFIG_MAX_NUM_NODES];
@@ -141,7 +147,8 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data, word_t mask)
 
         /* setup the data and choose the requested cpu to send IPI*/
         remoteCall = func;
-        remoteCallData = data;
+        ipi_args[0] = data1;
+        ipi_args[1] = data2;
         while (mask) {
             int index = wordBits - 1 - clzl(mask);
             target_cores[nr_target_cores] = index;

@@ -10,13 +10,15 @@
  * @TAG(D61_GPL)
  */
 
-#pragma once
+#ifndef __ARCH_KERNEL_IPI_H
+#define __ARCH_KERNEL_IPI_H
 
 #include <config.h>
 #include <types.h>
 #include <plat/machine.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
+#define MAX_IPI_ARGS    2   /* Maximum number of parameters to remote function */
 
 void Arch_handleIPI(irq_t irq);
 
@@ -29,10 +31,69 @@ typedef enum {
  * have all executed the function. Caller must hold the lock.
  *
  * @param func the function to run
- * @param data passed to the function
+ * @param data1 passed to the function as first parameter
+ * @param data2 passed to the function as second parameter
  * @param mask cores to run function on
  */
-void doRemoteMaskOp(IpiRemoteCall_t func, word_t data, word_t mask);
+void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask);
+
+/* Run a synchronous function on a core specified by cpu.
+ *
+ * @param func the function to run
+ * @param data1 passed to the function as first parameter
+ * @param data2 passed to the function as second parameter
+ * @param cpu core to run function on
+ */
+static void inline doRemoteOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t cpu)
+{
+    doRemoteMaskOp(func, data1, data2, BIT(cpu));
+}
+
+/* List of wrapper functions
+ *
+ * doRemote[Mask]Op0Arg: do remote operation without any argument
+ * doRemote[Mask]Op1Arg: do remote operation with one argument
+ * doRemote[Mask]Op2Arg: do remote operation with two arguments
+ * These should be used in favour of directly calling 'doRemote[Mask]Op'
+ * in case arguments change in future.
+ *
+ * @param func the function to run
+ * @param data passed to the function as parameters
+ * @param cpu[mask] cores to run function on
+ */
+static void inline doRemoteMaskOp0Arg(IpiRemoteCall_t func, word_t mask)
+{
+    doRemoteMaskOp(func, 0, 0, mask);
+}
+
+static void inline
+doRemoteMaskOp1Arg(IpiRemoteCall_t func, word_t data1, word_t mask)
+{
+    doRemoteMaskOp(func, data1, 0, mask);
+}
+
+static void inline
+doRemoteMaskOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask)
+{
+    doRemoteMaskOp(func, data1, data2, mask);
+}
+
+static void inline doRemoteOp0Arg(IpiRemoteCall_t func, word_t cpu)
+{
+    doRemoteOp(func, 0, 0, cpu);
+}
+
+static void inline
+doRemoteOp1Arg(IpiRemoteCall_t func, word_t data1, word_t cpu)
+{
+    doRemoteOp(func, data1, 0, cpu);
+}
+
+static void inline
+doRemoteOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t cpu)
+{
+    doRemoteOp(func, data1, data2, cpu);
+}
 
 /* This is asynchronous call and could be called outside the lock.
  * Returns immediately.
@@ -41,29 +102,23 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data, word_t mask);
  */
 void doMaskReschedule(word_t mask);
 
-/* Run a synchronous function on a core specified by cpu.
- *
- * @param func the function to run
- * @param data passed to the function
- * @param cpu core to run function on
- */
-static void inline FORCE_INLINE
-doRemoteOp(IpiRemoteCall_t func, word_t data, word_t cpu)
-{
-    doRemoteMaskOp(func, data, BIT(cpu));
-}
-
 /* Request rescheduling on a core specified by cpu.
  * Returns immediately.
  *
  * @param cpu core to reschedule
  */
-static void inline FORCE_INLINE
-doReschedule(word_t cpu)
+static void inline doReschedule(word_t cpu)
 {
     if (cpu != getCurrentCPUIndex()) {
         assert(cpu < CONFIG_MAX_NUM_NODES);
         doMaskReschedule(BIT(cpu));
     }
 }
-#endif
+
+static void inline doRemoteStall(word_t cpu)
+{
+    doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);
+}
+
+#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* __ARCH_KERNEL_IPI_H */

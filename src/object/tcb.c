@@ -336,7 +336,7 @@ remoteTCBStall(cap_t cap)
 
     if (tcb->tcbAffinity != getCurrentCPUIndex() &&
             NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity) == tcb) {
-        doRemoteOp(IpiRemoteCall_Stall, 0, tcb->tcbAffinity);
+        doRemoteStall(tcb->tcbAffinity);
         ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
     }
 }
