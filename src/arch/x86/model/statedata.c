@@ -73,3 +73,4 @@ uint16_t x86KSdebugPort;
 x86_irq_state_t x86KSIRQState[maxIRQ + 1];
 
 word_t x86KSAllocatedIOPorts[NUM_IO_PORTS / CONFIG_WORD_SIZE];
+uint32_t x86KStscMhz;
