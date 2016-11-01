@@ -87,6 +87,7 @@ void tcbSchedEnqueue(tcb_t *tcb)
 {
 #ifdef CONFIG_KERNEL_MCS
     assert(isSchedulable(tcb));
+    assert(tcb->tcbSchedContext->scRemaining > getKernelWcetTicks());
 #endif
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
@@ -121,6 +122,7 @@ void tcbSchedAppend(tcb_t *tcb)
 {
 #ifdef CONFIG_KERNEL_MCS
     assert(isSchedulable(tcb));
+    assert(tcb->tcbSchedContext->scRemaining > getKernelWcetTicks());
 #endif
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;

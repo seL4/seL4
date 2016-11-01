@@ -47,6 +47,16 @@ UP_STATE_DEFINE(user_fpu_state_t *, ksActiveFPUState);
 
 UP_STATE_DEFINE(word_t, ksFPURestoresSinceSwitch);
 #endif /* CONFIG_HAVE_FPU */
+#ifdef CONFIG_KERNEL_MCS
+/* the amount of time passed since the kernel time was last updated */
+UP_STATE_DEFINE(ticks_t, ksConsumed);
+/* whether we need to reprogram the timer before exiting the kernel */
+UP_STATE_DEFINE(bool_t, ksReprogram);
+/* the current kernel time (recorded on kernel entry) */
+UP_STATE_DEFINE(ticks_t, ksCurTime);
+/* current scheduling context pointer */
+UP_STATE_DEFINE(sched_context_t *, ksCurSC);
+#endif
 
 #ifdef CONFIG_DEBUG_BUILD
 UP_STATE_DEFINE(tcb_t *, ksDebugTCBs);
@@ -66,7 +76,11 @@ compile_assert(irqCNodeSize, sizeof(intStateIRQNode) >= ((INT_STATE_ARRAY_SIZE) 
 dom_t ksCurDomain;
 
 /* Domain timeslice remaining */
+#ifdef CONFIG_KERNEL_MCS
+ticks_t ksDomainTime;
+#else
 word_t ksDomainTime;
+#endif
 
 /* An index into ksDomSchedule for active domain and length. */
 word_t ksDomScheduleIdx;

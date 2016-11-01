@@ -371,7 +371,7 @@ BOOT_CODE bool_t create_idle_thread(void)
 #ifdef CONFIG_KERNEL_MCS
         bool_t result = configure_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i),
                                                 SC_PTR(&ksIdleThreadSC[SMP_TERNARY(i, 0)]),
-                                                CONFIG_BOOT_THREAD_TIME_SLICE);
+                                                usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
         if (!result) {
             printf("Kernel init failed: Unable to allocate sc for idle thread\n");
@@ -424,9 +424,12 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     /* initialise TCB */
 #ifdef CONFIG_KERNEL_MCS
-    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), CONFIG_BOOT_THREAD_TIME_SLICE)) {
+    if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS))) {
         return NULL;
     }
+
+    NODE_STATE(ksConsumed) = 0;
+    NODE_STATE(ksReprogram) = true;
 #endif
 
     tcb->tcbPriority = seL4_MaxPrio;
@@ -435,7 +438,11 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     setThreadState(tcb, ThreadState_Running);
 
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+#ifdef CONFIG_KERNEL_MCS
+    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
+#else
     ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
+#endif
     assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
 
 #ifndef CONFIG_KERNEL_MCS
@@ -473,6 +480,9 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 #endif
     NODE_STATE(ksSchedulerAction) = scheduler_action;
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread->tcbSchedContext);
+#endif
 }
 
 BOOT_CODE static bool_t provide_untyped_cap(

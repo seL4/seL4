@@ -15,6 +15,10 @@
 #include <util.h>
 #include <object/structures.h>
 #include <arch/machine.h>
+#ifdef CONFIG_KERNEL_MCS
+#include <machine/timer.h>
+#include <mode/machine.h>
+#endif
 
 static inline CONST word_t ready_queues_index(word_t dom, word_t prio)
 {
@@ -80,6 +84,47 @@ static inline bool_t isHighestPrio(word_t dom, prio_t prio)
            prio >= getHighestPrio(dom);
 }
 
+#ifdef CONFIG_KERNEL_MCS
+static inline bool_t isCurThreadExpired(void)
+{
+    return NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining <
+           (NODE_STATE(ksConsumed) + getKernelWcetTicks());
+}
+
+static inline bool_t isCurDomainExpired(void)
+{
+    return CONFIG_NUM_DOMAINS > 1 &&
+           NODE_STATE(ksDomainTime) < (NODE_STATE(ksConsumed) + getKernelWcetTicks());
+}
+
+static inline void commitTime(sched_context_t *sc)
+{
+    assert(sc->scCore == SMP_TERNARY(getCurrentCPUIndex(), 0));
+    if (unlikely(sc->scRemaining < NODE_STATE(ksConsumed))) {
+        /* avoid underflow */
+        sc->scRemaining = 0;
+    } else {
+        sc->scRemaining -= NODE_STATE(ksConsumed);
+    }
+
+    if (CONFIG_NUM_DOMAINS > 1) {
+        if (unlikely(ksDomainTime < NODE_STATE(ksConsumed))) {
+            ksDomainTime = 0;
+        } else {
+            ksDomainTime -= NODE_STATE(ksConsumed);
+        }
+    }
+
+    NODE_STATE(ksConsumed) = 0llu;
+}
+
+static inline void rollbackTime(void)
+{
+    NODE_STATE(ksCurTime) -= NODE_STATE(ksConsumed);
+    NODE_STATE(ksConsumed) = 0llu;
+}
+#endif
+
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void);
 void suspend(tcb_t *target);
@@ -103,7 +148,9 @@ void setMCPriority(tcb_t *tptr, prio_t mcp);
 void scheduleTCB(tcb_t *tptr);
 void possibleSwitchTo(tcb_t *tptr);
 void setThreadState(tcb_t *tptr, _thread_state_t ts);
+#ifndef CONFIG_KERNEL_MCS
 void timerTick(void);
+#endif
 void rescheduleRequired(void);
 
 /* declare that the thread has had its registers (in its user_context_t) modified and it
@@ -119,5 +166,59 @@ static inline void updateRestartPC(tcb_t *tcb)
 {
     setRegister(tcb, FaultIP, getRegister(tcb, NextIP));
 }
+
+#ifdef CONFIG_KERNEL_MCS
+/* Update the kernels timestamp and stores in ksCurTime.
+ * The difference between the previous kernel timestamp and the one just read
+ * is stored in ksConsumed.
+ *
+ * Should be called on every kernel entry
+ * where threads can be billed.
+ *
+ * @pre (NODE_STATE(ksConsumed) == 0
+ */
+static inline void updateTimestamp(void)
+{
+    time_t prev = NODE_STATE(ksCurTime);
+    NODE_STATE(ksCurTime) = getCurrentTime();
+    NODE_STATE(ksConsumed) = NODE_STATE(ksCurTime) - prev;
+}
+
+/* Check if the current thread/domain budget has expired.
+ * if it has, bill the thread, add it to the scheduler and
+ * set up a reschedule.
+ *
+ * @return true if the thread/domain has enough budget to
+ *              get through the current kernel operation.
+ */
+bool_t checkBudget(void);
+
+/* Everything checkBudget does, but also set the thread
+ * state to ThreadState_Restart. To be called from kernel entries
+ * where the operation should be restarted once the current thread
+ * has budget again.
+ */
+bool_t checkBudgetRestart(void);
+
+/* Set the next kernel tick, which is either the end of the current
+ * domains timeslice OR the end of the current threads timeslice.
+ */
+void setNextInterrupt(void);
+
+/* End the timeslice for the current thread.
+ * This will recharge the threads timeslice and place it at the
+ * end of the scheduling queue for its priority.
+ */
+void endTimeslice(void);
+
+static inline void checkReschedule(void)
+{
+    if (isCurThreadExpired()) {
+        endTimeslice();
+    } else if (isCurDomainExpired()) {
+        rescheduleRequired();
+    }
+}
+#endif
 
 #endif

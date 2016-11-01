@@ -10,6 +10,7 @@
  * @TAG(DATA61_GPL)
  */
 
+#include <machine/timer.h>
 #include <mode/api/ipc_buffer.h>
 #include <object/schedcontext.h>
 #include <object/schedcontrol.h>
@@ -46,7 +47,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    ticks_t budget = mode_parseTimeArg(0, buffer);
+    time_t budget_us = mode_parseTimeArg(0, buffer);
 
     cap_t targetCap = extraCaps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
@@ -56,10 +57,17 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    if (budget_us > getMaxUsToTicks() || budget_us < getKernelWcetUs()) {
+        userError("SchedControl_Configure: budget out of range.");
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = getKernelWcetUs();
+        current_syscall_error.rangeErrorMax = getMaxUsToTicks();
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeSchedControl_Configure(SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap)),
-                                        budget,
-                                        cap_sched_control_cap_get_core(cap));
+                                        usToTicks(budget_us), cap_sched_control_cap_get_core(cap));
 }
 
 exception_t decodeSchedControlInvocation(word_t label, cap_t cap, word_t length, extra_caps_t extraCaps,

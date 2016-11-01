@@ -742,21 +742,25 @@ exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 
 void handleVCPUFault(word_t hsr)
 {
+    MCS_DO_IF_BUDGET({
 #ifdef CONFIG_ARCH_AARCH64
-    if (armv_handleVCPUFault(hsr)) {
-        return;
-    }
+        if (armv_handleVCPUFault(hsr))
+        {
+            return;
+        }
 #endif
 #ifdef CONFIG_HAVE_FPU
-    if (hsr == HSR_FPU_FAULT || hsr == HSR_TASE_FAULT) {
-        assert(!isFpuEnable());
-        handleFPUFault();
-        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-        return;
-    }
+        if (hsr == HSR_FPU_FAULT || hsr == HSR_TASE_FAULT)
+        {
+            assert(!isFpuEnable());
+            handleFPUFault();
+            setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+            return;
+        }
 #endif
-    current_fault = seL4_Fault_VCPUFault_new(hsr);
-    handleFault(NODE_STATE(ksCurThread));
+        current_fault = seL4_Fault_VCPUFault_new(hsr);
+        handleFault(NODE_STATE(ksCurThread));
+    })
     schedule();
     activateThread();
 }

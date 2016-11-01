@@ -72,9 +72,11 @@
 #define CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS 166
 #endif
 
+#ifndef CONFIG_KERNEL_MCS
 /* length of a timer tick in ms  */
 #ifndef CONFIG_TIMER_TICK_MS
 #define CONFIG_TIMER_TICK_MS 2
+#endif
 #endif
 
 /* maximum number of different tracepoints which can be placed in the kernel */

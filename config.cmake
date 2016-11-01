@@ -209,7 +209,8 @@ config_string(
 config_string(
     KernelTimerTickMS TIMER_TICK_MS "Timer tick period in milliseconds"
     DEFAULT 2
-    UNQUOTE UNDEF_DISABLED
+    UNQUOTE
+    DEPENDS "NOT KernelIsMCS" UNDEF_DISABLED
 )
 config_string(
     KernelTimeSlice TIME_SLICE "Number of timer ticks until a thread is preempted."

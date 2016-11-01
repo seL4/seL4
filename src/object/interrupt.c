@@ -201,6 +201,9 @@ void handleInterrupt(irq_t irq)
     case IRQSignal: {
         cap_t cap;
 
+#ifdef CONFIG_KERNEL_MCS
+        updateTimestamp();
+#endif
         cap = intStateIRQNode[irq].cap;
 
         if (cap_get_capType(cap) == cap_notification_cap &&
@@ -215,16 +218,32 @@ void handleInterrupt(irq_t irq)
 #ifndef CONFIG_ARCH_RISCV
         maskInterrupt(true, irq);
 #endif
+#ifdef CONFIG_KERNEL_MCS
+        /* Bill the current thread. We know it has enough budget, as otherwise we would be
+         * dealing with a timer interrupt not a signal interrupt */
+        commitTime(ksCurSC);
+        checkReschedule();
+#endif
         break;
     }
 
     case IRQTimer:
+#ifdef CONFIG_KERNEL_MCS
+        updateTimestamp();
+        ackDeadlineIRQ();
+        commitTime(ksCurSC);
+        checkBudget();
+#else
         timerTick();
         resetTimer();
+#endif
         break;
 
 #ifdef ENABLE_SMP_SUPPORT
     case IRQIPI:
+#ifdef CONFIG_KERNEL_MCS
+        updateTimestamp();
+#endif
         handleIPI(irq, true);
         break;
 #endif /* ENABLE_SMP_SUPPORT */

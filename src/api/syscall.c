@@ -237,20 +237,22 @@ exception_t handleUnknownSyscall(word_t w)
     }
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
+    MCS_DO_IF_BUDGET({
 #ifdef CONFIG_SET_TLS_BASE_SELF
-    if (w == SysSetTLSBase) {
-        word_t tls_base = getRegister(NODE_STATE(ksCurThread), capRegister);
-        /*
-         * This updates the real register as opposed to the thread state
-         * value. For many architectures, the TLS variables only get
-         * updated on a thread switch.
-         */
-        return Arch_setTLSRegister(tls_base);
-    }
+        if (w == SysSetTLSBase)
+        {
+            word_t tls_base = getRegister(NODE_STATE(ksCurThread), capRegister);
+            /*
+             * This updates the real register as opposed to the thread state
+             * value. For many architectures, the TLS variables only get
+             * updated on a thread switch.
+             */
+            return Arch_setTLSRegister(tls_base);
+        }
 #endif
-
-    current_fault = seL4_Fault_UnknownSyscall_new(w);
-    handleFault(NODE_STATE(ksCurThread));
+        current_fault = seL4_Fault_UnknownSyscall_new(w);
+        handleFault(NODE_STATE(ksCurThread));
+    })
 
     schedule();
     activateThread();
@@ -260,9 +262,10 @@ exception_t handleUnknownSyscall(word_t w)
 
 exception_t handleUserLevelFault(word_t w_a, word_t w_b)
 {
-    current_fault = seL4_Fault_UserException_new(w_a, w_b);
-    handleFault(NODE_STATE(ksCurThread));
-
+    MCS_DO_IF_BUDGET({
+        current_fault = seL4_Fault_UserException_new(w_a, w_b);
+        handleFault(NODE_STATE(ksCurThread));
+    })
     schedule();
     activateThread();
 
@@ -271,12 +274,14 @@ exception_t handleUserLevelFault(word_t w_a, word_t w_b)
 
 exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
-    exception_t status;
+    MCS_DO_IF_BUDGET({
 
-    status = handleVMFault(NODE_STATE(ksCurThread), vm_faultType);
-    if (status != EXCEPTION_NONE) {
-        handleFault(NODE_STATE(ksCurThread));
-    }
+        exception_t status = handleVMFault(NODE_STATE(ksCurThread), vm_faultType);
+        if (status != EXCEPTION_NONE)
+        {
+            handleFault(NODE_STATE(ksCurThread));
+        }
+    })
 
     schedule();
     activateThread();
@@ -446,6 +451,17 @@ static void handleRecv(bool_t isBlocking)
     }
 }
 
+#ifdef CONFIG_KERNEL_MCS
+static inline void mcsIRQ(irq_t irq)
+{
+    commitTime(ksCurSC);
+    checkReschedule();
+}
+#else
+#define mcsIRQ(irq)
+#endif
+
+
 static void handleYield(void)
 {
     tcbSchedDequeue(NODE_STATE(ksCurThread));
@@ -457,65 +473,72 @@ exception_t handleSyscall(syscall_t syscall)
 {
     exception_t ret;
     irq_t irq;
-
-    switch (syscall) {
-    case SysSend:
-        ret = handleInvocation(false, true);
-        if (unlikely(ret != EXCEPTION_NONE)) {
-            irq = getActiveIRQ();
-            if (irq != irqInvalid) {
-                handleInterrupt(irq);
-                Arch_finaliseInterrupt();
+    MCS_DO_IF_BUDGET({
+        switch (syscall)
+        {
+        case SysSend:
+            ret = handleInvocation(false, true);
+            if (unlikely(ret != EXCEPTION_NONE)) {
+                irq = getActiveIRQ();
+                if (irq != irqInvalid) {
+                    mcsIRQ(irq);
+                    handleInterrupt(irq);
+                    Arch_finaliseInterrupt();
+                }
             }
-        }
-        break;
 
-    case SysNBSend:
-        ret = handleInvocation(false, false);
-        if (unlikely(ret != EXCEPTION_NONE)) {
-            irq = getActiveIRQ();
-            if (irq != irqInvalid) {
-                handleInterrupt(irq);
-                Arch_finaliseInterrupt();
+            break;
+
+        case SysNBSend:
+            ret = handleInvocation(false, false);
+            if (unlikely(ret != EXCEPTION_NONE)) {
+                irq = getActiveIRQ();
+                if (irq != irqInvalid) {
+                    mcsIRQ(irq);
+                    handleInterrupt(irq);
+                    Arch_finaliseInterrupt();
+                }
             }
-        }
-        break;
+            break;
 
-    case SysCall:
-        ret = handleInvocation(true, true);
-        if (unlikely(ret != EXCEPTION_NONE)) {
-            irq = getActiveIRQ();
-            if (irq != irqInvalid) {
-                handleInterrupt(irq);
-                Arch_finaliseInterrupt();
+        case SysCall:
+            ret = handleInvocation(true, true);
+            if (unlikely(ret != EXCEPTION_NONE)) {
+                irq = getActiveIRQ();
+                if (irq != irqInvalid) {
+                    mcsIRQ(irq);
+                    handleInterrupt(irq);
+                    Arch_finaliseInterrupt();
+                }
             }
+            break;
+
+        case SysRecv:
+            handleRecv(true);
+            break;
+
+        case SysReply:
+            handleReply();
+            break;
+
+        case SysReplyRecv:
+            handleReply();
+            handleRecv(true);
+            break;
+
+        case SysNBRecv:
+            handleRecv(false);
+            break;
+
+        case SysYield:
+            handleYield();
+            break;
+
+        default:
+            fail("Invalid syscall");
         }
-        break;
 
-    case SysRecv:
-        handleRecv(true);
-        break;
-
-    case SysReply:
-        handleReply();
-        break;
-
-    case SysReplyRecv:
-        handleReply();
-        handleRecv(true);
-        break;
-
-    case SysNBRecv:
-        handleRecv(false);
-        break;
-
-    case SysYield:
-        handleYield();
-        break;
-
-    default:
-        fail("Invalid syscall");
-    }
+    })
 
     schedule();
     activateThread();

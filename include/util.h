@@ -24,6 +24,10 @@
 
 /* time constants */
 #define MS_IN_S     1000llu
+#define US_IN_MS    1000llu
+#define HZ_IN_KHZ   1000llu
+#define KHZ_IN_MHZ  1000llu
+#define HZ_IN_MHZ   1000000llu
 
 #ifndef __ASSEMBLER__
 

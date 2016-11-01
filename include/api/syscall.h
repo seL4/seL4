@@ -21,6 +21,19 @@
 
 #define TIME_ARG_SIZE (sizeof(ticks_t) / sizeof(word_t))
 
+#ifdef CONFIG_KERNEL_MCS
+#define MCS_DO_IF_BUDGET(_block) \
+    updateTimestamp(); \
+    if (likely(checkBudgetRestart())) { \
+        _block \
+    }
+#else
+#define MCS_DO_IF_BUDGET(_block) \
+    { \
+        _block \
+    }
+#endif
+
 exception_t handleSyscall(syscall_t syscall);
 exception_t handleInterruptEntry(void);
 exception_t handleUnknownSyscall(word_t w);
