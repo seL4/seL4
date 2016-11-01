@@ -69,10 +69,3 @@ initTimer(void)
     dgt_tmr->en = DGTTMR_EN_CLR_ON_MTCH_EN | DGTTMR_EN_EN;
 }
 
-void
-resetTimer(void)
-{
-    /* Nothing to do */
-}
-
-

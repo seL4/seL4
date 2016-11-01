@@ -55,13 +55,6 @@ enum IPGConstants {
 
 interrupt_t active_irq = irqInvalid;
 
-void
-resetTimer(void)
-{
-    epit1->epitsr = 1;
-    /* Timer resets automatically */
-}
-
 /* Configure EPIT1 as kernel preemption timer */
 BOOT_CODE void
 initTimer(void)

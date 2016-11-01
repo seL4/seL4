@@ -59,13 +59,6 @@ volatile struct TIMER_map {
     uint32_t tcar2; // 58h TCAR2 Timer Capture Register
 } *timer = (volatile void*)DMTIMER0_PPTR;
 
-void
-resetTimer(void)
-{
-    timer->tisr = TISR_OVF_FLAG;
-    ackInterrupt(DMTIMER0_IRQ);
-}
-
 #define WDT_REG(base, off) ((volatile uint32_t *)((base) + (off)))
 #define WDT_REG_WWPS 0x34
 #define WDT_REG_WSPR 0x48
@@ -111,6 +104,9 @@ enableTimers(void)
 }
 
 /* Configure dmtimer0 as kernel preemption timer */
+/**
+   DONT_TRANSLATE
+ */
 BOOT_CODE void
 initTimer(void)
 {
@@ -143,6 +139,9 @@ initTimer(void)
     timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;
 }
 
+/**
+   DONT_TRANSLATE
+ */
 BOOT_CODE void
 initIRQController(void)
 {

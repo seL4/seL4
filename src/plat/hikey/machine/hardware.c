@@ -15,18 +15,6 @@
 #include <arch/linker.h>
 
 void
-resetTimer(void)
-{
-    resetGenericTimer();
-}
-
-BOOT_CODE void
-initTimer(void)
-{
-    initGenericTimer();
-}
-
-void
 initL2Cache(void)
 {
 

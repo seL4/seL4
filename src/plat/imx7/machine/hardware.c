@@ -72,14 +72,6 @@ initTimer(void)
     write_cntp_ctl(0x1);
 }
 
-/* need to reload the count-down value */
-void
-resetTimer(void)
-{
-    write_cntp_tval(gpt_cntp_tval);
-}
-
-
 /* Cortex-A7 uses an integrated L2 cache controller */
 
 void

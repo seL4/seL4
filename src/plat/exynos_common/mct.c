@@ -122,18 +122,6 @@ struct mct_map {
 
 static volatile struct mct_map* mct = (volatile struct mct_map*) EXYNOS_MCT_PPTR;
 
-void
-resetTimer(void)
-{
-    if (config_set(CONFIG_ARM_CORTEX_A15)) {
-        resetGenericTimer();
-    } else {
-        mct->global.int_stat = GINT_COMP0_IRQ;
-    }
-}
-
-compile_assert(mct_reload_32_bit, TIMER_RELOAD <= 0xffffffff);
-
 BOOT_CODE void
 initTimer(void)
 {
@@ -151,23 +139,6 @@ initTimer(void)
         initGenericTimer();
     } else {
         /* Use the MCT directly */
-        /* Configure the comparator */
-        mct->global.comp0_add_inc = TIMER_RELOAD;
-
-        uint64_t  comparator_value = ((((uint64_t) mct->global.cnth) << 32llu)
-                                      | mct->global.cntl) + TIMER_RELOAD;
-        mct->global.comp0h = (uint32_t) (comparator_value >> 32u);
-        mct->global.comp0l = (uint32_t) comparator_value;
-        /* Enable interrupts */
-        mct->global.int_en = GINT_COMP0_IRQ;
-
-        /* Wait for update */
-        while (mct->global.wstat != (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC));
-        mct->global.wstat = (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC);
-
-        /* enable interrupts */
-        mct->global.tcon = GTCON_EN | GTCON_COMP0_EN | GTCON_COMP0_AUTOINC;
-        while (mct->global.wstat != GWSTAT_TCON);
-        mct->global.wstat = GWSTAT_TCON;
+        fail("Platform not supported on RT kernel");
     }
 }

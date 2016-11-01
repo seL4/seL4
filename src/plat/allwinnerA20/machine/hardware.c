@@ -40,13 +40,10 @@ static volatile struct TIMER_map {
     uint32_t tmr0_cur_value_reg;    /* Timer 0 Current Value Register  0x18 */
 } *timer = (volatile void*)(TIMER0_PPTR + TIMER0_OFFSET);
 
-void
-resetTimer(void)
-{
-    timer->tmr_irq_sta_reg = TMR0_IRQ_PEND_FLAG;
-}
-
 /* Configure gptimer11 as kernel preemption timer */
+/**
+   DONT_TRANSLATE
+ */
 BOOT_CODE void
 initTimer(void)
 {
