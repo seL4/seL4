@@ -293,6 +293,18 @@ vprintf(const char *format, va_list ap)
         }
     }
 
+    /* This updateTimestamp() call here will enable us to do printf()
+     * calls in the realtime kernel without the printf() calls contributing
+     * silently to the elapsed time in the kernel.
+     *
+     * As long as your printfs occur *BEFORE* the kernel calls setDeadline(),
+     * they should be factored in correctly.
+     *
+     * The caveat is that the current thread gets billed for all of the printf()s.
+     */
+    if (NODE_STATE(ksCurThread)) {
+        updateTimestamp(true);
+    }
     return n;
 }
 

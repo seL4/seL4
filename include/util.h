@@ -16,7 +16,7 @@
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
 #define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define PASTE(a, b) a ## b
 #define _STRINGIFY(a) #a
@@ -24,6 +24,10 @@
 
 /* time constants */
 #define MS_IN_S     1000llu
+#define US_IN_MS    1000llu
+#define HZ_IN_KHZ   1000llu
+#define KHZ_IN_MHZ  1000llu
+#define HZ_IN_MHZ   1000000llu
 
 #ifndef __ASSEMBLER__
 
