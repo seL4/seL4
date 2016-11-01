@@ -429,7 +429,7 @@ create_idle_thread(void)
         NODE_STATE_ON_CORE(ksIdleThread, i) = TCB_PTR(pptr + TCB_OFFSET);
         configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, i));
         bool_t result = create_sched_context(NODE_STATE_ON_CORE(ksIdleThread, i),
-                                             CONFIG_BOOT_THREAD_TIME_SLICE);
+                                             usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS));
         SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbSchedContext->scCore = i;)
         if (!result) {
             printf("Kernel init failed: Unable to allocate sc for idle thread\n");
@@ -502,17 +502,19 @@ create_initial_thread(
     setNextPC(tcb, ui_v_entry);
 
     /* initialise TCB */
-    if (!create_sched_context(tcb, CONFIG_BOOT_THREAD_TIME_SLICE)) {
+    if (!create_sched_context(tcb, usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS))) {
         return false;
     }
+
+    NODE_STATE(ksConsumed) = 0;
+    NODE_STATE(ksReprogram) = true;
 
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
     setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
-
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
+    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
     assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
 
     /* create initial thread's TCB cap */
@@ -535,6 +537,7 @@ init_core_state(tcb_t *scheduler_action)
 #endif
     NODE_STATE(ksSchedulerAction) = scheduler_action;
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
+    NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread->tcbSchedContext);
 }
 
 BOOT_CODE static bool_t

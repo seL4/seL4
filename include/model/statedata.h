@@ -64,6 +64,10 @@ NODE_STATE_DECLARE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM
 NODE_STATE_DECLARE(tcb_t, *ksCurThread);
 NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
+NODE_STATE_DECLARE(time_t, ksConsumed);
+NODE_STATE_DECLARE(time_t, ksCurTime);
+NODE_STATE_DECLARE(bool_t, ksReprogram);
+NODE_STATE_DECLARE(sched_context_t, *ksCurSC);
 
 #ifdef CONFIG_HAVE_FPU
 /* Current state installed in the FPU, or NULL if the FPU is currently invalid */
@@ -82,7 +86,7 @@ extern const dschedule_t ksDomSchedule[];
 extern const word_t ksDomScheduleLength;
 extern word_t ksDomScheduleIdx;
 extern dom_t ksCurDomain;
-extern word_t ksDomainTime;
+extern ticks_t ksDomainTime;
 extern word_t tlbLockCount VISIBLE;
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER

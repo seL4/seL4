@@ -184,8 +184,11 @@ handleUnknownSyscall(word_t w)
     }
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
-    current_fault = seL4_Fault_UnknownSyscall_new(w);
-    handleFault(NODE_STATE(ksCurThread));
+    updateTimestamp(false);
+    if (likely(checkBudgetRestart())) {
+        current_fault = seL4_Fault_UnknownSyscall_new(w);
+        handleFault(NODE_STATE(ksCurThread));
+    }
 
     schedule();
     activateThread();
@@ -196,9 +199,11 @@ handleUnknownSyscall(word_t w)
 exception_t
 handleUserLevelFault(word_t w_a, word_t w_b)
 {
-    current_fault = seL4_Fault_UserException_new(w_a, w_b);
-    handleFault(NODE_STATE(ksCurThread));
-
+    updateTimestamp(false);
+    if (likely(checkBudgetRestart())) {
+        current_fault = seL4_Fault_UserException_new(w_a, w_b);
+        handleFault(NODE_STATE(ksCurThread));
+    }
     schedule();
     activateThread();
 
@@ -208,11 +213,12 @@ handleUserLevelFault(word_t w_a, word_t w_b)
 exception_t
 handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
-    exception_t status;
-
-    status = handleVMFault(NODE_STATE(ksCurThread), vm_faultType);
-    if (status != EXCEPTION_NONE) {
-        handleFault(NODE_STATE(ksCurThread));
+    updateTimestamp(false);
+    if (likely(checkBudgetRestart())) {
+        exception_t status = handleVMFault(NODE_STATE(ksCurThread), vm_faultType);
+        if (status != EXCEPTION_NONE) {
+            handleFault(NODE_STATE(ksCurThread));
+        }
     }
 
     schedule();
@@ -396,66 +402,57 @@ handleYield(void)
 exception_t
 handleSyscall(syscall_t syscall)
 {
-    exception_t ret;
-    irq_t irq;
+    exception_t ret = EXCEPTION_NONE;
+    updateTimestamp(false);
 
-    switch (syscall) {
-    case SysSend:
-        ret = handleInvocation(false, true);
+    if (likely(checkBudgetRestart())) {
+        switch (syscall) {
+        case SysSend:
+            ret = handleInvocation(false, true);
+           break;
+
+        case SysNBSend:
+            ret = handleInvocation(false, false);
+            break;
+
+        case SysCall:
+            ret = handleInvocation(true, true);
+            break;
+
+        case SysRecv:
+            handleRecv(true);
+            break;
+
+        case SysReply:
+            handleReply();
+            break;
+
+        case SysReplyRecv:
+            handleReply();
+            handleRecv(true);
+            break;
+
+        case SysNBRecv:
+            handleRecv(false);
+            break;
+
+        case SysYield:
+            handleYield();
+            break;
+
+        default:
+            fail("Invalid syscall");
+        }
+
         if (unlikely(ret != EXCEPTION_NONE)) {
-            irq = getActiveIRQ();
+            irq_t irq = getActiveIRQ();
             if (irq != irqInvalid) {
+                commitTime(ksCurSC);
+                checkReschedule();
                 handleInterrupt(irq);
                 Arch_finaliseInterrupt();
             }
         }
-        break;
-
-    case SysNBSend:
-        ret = handleInvocation(false, false);
-        if (unlikely(ret != EXCEPTION_NONE)) {
-            irq = getActiveIRQ();
-            if (irq != irqInvalid) {
-                handleInterrupt(irq);
-                Arch_finaliseInterrupt();
-            }
-        }
-        break;
-
-    case SysCall:
-        ret = handleInvocation(true, true);
-        if (unlikely(ret != EXCEPTION_NONE)) {
-            irq = getActiveIRQ();
-            if (irq != irqInvalid) {
-                handleInterrupt(irq);
-                Arch_finaliseInterrupt();
-            }
-        }
-        break;
-
-    case SysRecv:
-        handleRecv(true);
-        break;
-
-    case SysReply:
-        handleReply();
-        break;
-
-    case SysReplyRecv:
-        handleReply();
-        handleRecv(true);
-        break;
-
-    case SysNBRecv:
-        handleRecv(false);
-        break;
-
-    case SysYield:
-        handleYield();
-        break;
-
-    default:
-        fail("Invalid syscall");
     }
 
     schedule();

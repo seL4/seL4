@@ -1148,8 +1148,11 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 void
 handleVCPUFault(word_t hsr)
 {
-    current_fault = seL4_Fault_VCPUFault_new(hsr);
-    handleFault(ksCurThread);
+    updateTimestamp(false);
+    if (likely(checkBudgetRestart())) {
+        current_fault = seL4_Fault_VCPUFault_new(hsr);
+        handleFault(ksCurThread);
+    }
     schedule();
     activateThread();
 }

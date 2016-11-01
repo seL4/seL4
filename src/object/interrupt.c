@@ -201,6 +201,7 @@ handleInterrupt(irq_t irq)
     case IRQSignal: {
         cap_t cap;
 
+        updateTimestamp(false);
         cap = intStateIRQNode[irq].cap;
 
         if (cap_get_capType(cap) == cap_notification_cap &&
@@ -213,16 +214,23 @@ handleInterrupt(irq_t irq)
 #endif
         }
         maskInterrupt(true, irq);
+        /* Bill the current thread. We know it has enough budget, as otherwise we would be
+         * dealing with a timer interrupt not a signal interrupt */
+        commitTime(ksCurSC);
+        checkReschedule();
         break;
     }
 
     case IRQTimer:
-        timerTick();
-        resetTimer();
+        updateTimestamp(false);
+        ackDeadlineIRQ();
+        commitTime(ksCurSC);
+        checkBudget();
         break;
 
 #if CONFIG_MAX_NUM_NODES > 1
     case IRQIPI:
+        updateTimestamp(false);
         Arch_handleIPI(irq, true);
         break;
 #endif
