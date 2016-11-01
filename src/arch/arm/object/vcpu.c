@@ -621,13 +621,16 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 void
 handleVCPUFault(word_t hsr)
 {
+    updateTimestamp(false);
+    if (likely(checkBudgetRestart())) {
 #ifdef CONFIG_ARCH_AARCH64
-    if (armv_handleVCPUFault(hsr)) {
-        return;
-    }
+        if (armv_handleVCPUFault(hsr)) {
+            return;
+        }
 #endif
-    current_fault = seL4_Fault_VCPUFault_new(hsr);
-    handleFault(NODE_STATE(ksCurThread));
+        current_fault = seL4_Fault_VCPUFault_new(hsr);
+        handleFault(NODE_STATE(ksCurThread));
+    }
     schedule();
     activateThread();
 }
