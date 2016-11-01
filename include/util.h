@@ -145,6 +145,11 @@ CONST ctzl(unsigned long x)
 
 int __builtin_popcountl(unsigned long x);
 
+static inline long long CONST clzll(unsigned long long x)
+{
+    return __builtin_clzll(x);
+}
+
 /** DONT_TRANSLATE */
 static inline long
 CONST popcountl(unsigned long mask)

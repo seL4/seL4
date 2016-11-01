@@ -1,5 +1,5 @@
 /*
- * Copyright 2017, Data61
+ * Copyright 2019, Data61
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
@@ -9,13 +9,16 @@
  *
  * @TAG(DATA61_GPL)
  */
+#ifndef __MODE_UTIL_H
+#define __MODE_UTIL_H
 
-#ifndef __PLAT_MACHINE_TIMER_H
-#define __PLAT_MACHINE_TIMER_H
+#include <config.h>
+#include <types.h>
+#include <arch/model/statedata.h>
 
-static inline void resetTimer(void)
+static inline CONST uint64_t div64(uint64_t numerator, uint32_t denominator)
 {
-    /* nothing to do */
+    return numerator / denominator;
 }
 
-#endif /* !__PLAT_MACHINE_TIMER_H */
+#endif /* __MODE_UTIL_H */

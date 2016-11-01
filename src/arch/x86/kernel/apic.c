@@ -16,6 +16,10 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/pit.h>
 
+#define CPUID_TSC_DEADLINE_BIT 24u
+#define APIC_TIMER_MODE_ONE_SHOT 0
+#define APIC_TIMER_MODE_TSC_DEADLINE  2
+
 static BOOT_CODE uint32_t apic_measure_freq(void)
 {
     pit_init();
@@ -51,8 +55,23 @@ BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs)
         return false;
     }
 
-    apic_khz = apic_measure_freq();
+#ifdef CONFIG_KERNEL_MCS
+    /* find tsc KHz */
+    x86KStscMhz = tsc_init();
 
+    /* can we use tsc deadline mode? */
+    uint32_t cpuid = x86_cpuid_ecx(0x1, 0x0);
+    if (!(cpuid & BIT(CPUID_TSC_DEADLINE_BIT))) {
+        apic_khz = apic_measure_freq();
+        x86KSapicRatio = div64((uint64_t)x86KStscMhz * 1000llu, apic_khz);
+        printf("Apic Khz %lu, TSC Mhz %lu, ratio %lu\n", (long) x86KStscMhz, (long) apic_khz, (long) x86KSapicRatio);
+    } else {
+        // use tsc deadline mode
+        x86KSapicRatio = 0;
+    }
+#else
+    apic_khz = apic_measure_freq();
+#endif
     apic_version.words[0] = apic_read_reg(APIC_VERSION);
 
     /* check for correct version (both APIC and x2APIC): 0x1X */
@@ -60,6 +79,13 @@ BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs)
         printf("APIC: apic_version must be 0x1X\n");
         return false;
     }
+
+#ifdef CONFIG_KERNEL_MCS
+    if (x86KSapicRatio != 0) {
+        /* initialise APIC timer */
+        apic_write_reg(APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
+    }
+#endif
 
     /* check for correct number of LVT entries */
     num_lvt_entries = apic_version_get_max_lvt_entry(apic_version) + 1;
@@ -69,9 +95,11 @@ BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs)
         return false;
     }
 
+#ifndef CONFIG_KERNEL_MCS
     /* initialise APIC timer */
     apic_write_reg(APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
     apic_write_reg(APIC_TIMER_COUNT, apic_khz * CONFIG_TIMER_TICK_MS);
+#endif
 
     /* enable APIC using SVR register */
     apic_write_reg(
@@ -114,10 +142,16 @@ BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs)
     );
 
     /* initialise timer */
+#ifdef CONFIG_KERNEL_MCS
+    uint32_t timer_mode = x86KSapicRatio == 0 ? APIC_TIMER_MODE_TSC_DEADLINE :
+                          APIC_TIMER_MODE_ONE_SHOT;
+#else
+    uint32_t timer_mode = 1;
+#endif
     apic_write_reg(
         APIC_LVT_TIMER,
         apic_lvt_new(
-            1,        /* timer_mode      */
+            timer_mode,
             0,        /* masked          */
             0,        /* trigger_mode    */
             0,        /* remote_irr      */
