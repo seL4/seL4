@@ -16,23 +16,9 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/pit.h>
 
-static BOOT_CODE uint32_t
-apic_measure_freq(void)
-{
-    pit_init();
-    /* wait for 1st PIT wraparound */
-    pit_wait_wraparound();
-
-    /* start APIC timer countdown */
-    apic_write_reg(APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
-    apic_write_reg(APIC_TIMER_COUNT, 0xffffffff);
-
-    /* wait for 2nd PIT wraparound */
-    pit_wait_wraparound();
-
-    /* calculate APIC/bus cycles per ms = frequency in kHz */
-    return (0xffffffff - apic_read_reg(APIC_TIMER_CURRENT)) / PIT_WRAPAROUND_MS;
-}
+#define CPUID_TSC_DEADLINE_BIT 24u
+#define APIC_TIMER_MODE_ONE_SHOT 0
+#define APIC_TIMER_MODE_TSC_DEADLINE  2
 
 BOOT_CODE paddr_t
 apic_get_base_paddr(void)
@@ -48,14 +34,20 @@ apic_init(bool_t mask_legacy_irqs)
 {
     apic_version_t apic_version;
     uint32_t num_lvt_entries;
-    uint32_t apic_khz;
 
     if (!apic_enable()) {
         return false;
     }
 
-    apic_khz = apic_measure_freq();
-
+    /* can we use tsc deadline mode? */
+    uint32_t cpuid = x86_cpuid_ecx(0x1, 0x0);
+    if (cpuid & BIT(CPUID_TSC_DEADLINE_BIT)) {
+        /* use the tsc */
+        x86KStscMhz = tsc_init();
+    } else {
+        /* SELFOUR-372: this should fall back to the apic timer */
+        return false;
+    }
     apic_version.words[0] = apic_read_reg(APIC_VERSION);
 
     /* check for correct version (both APIC and x2APIC): 0x1X */
@@ -71,10 +63,6 @@ apic_init(bool_t mask_legacy_irqs)
         printf("APIC: number of LVT entries must be >= 3\n");
         return false;
     }
-
-    /* initialise APIC timer */
-    apic_write_reg(APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
-    apic_write_reg(APIC_TIMER_COUNT, apic_khz * CONFIG_TIMER_TICK_MS);
 
     /* enable APIC using SVR register */
     apic_write_reg(
@@ -120,7 +108,7 @@ apic_init(bool_t mask_legacy_irqs)
     apic_write_reg(
         APIC_LVT_TIMER,
         apic_lvt_new(
-            1,        /* timer_mode      */
+            APIC_TIMER_MODE_TSC_DEADLINE, /* timer_mode      */
             0,        /* masked          */
             0,        /* trigger_mode    */
             0,        /* remote_irr      */

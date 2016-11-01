@@ -36,11 +36,6 @@ BOOT_CODE bool_t platAddDevices(void)
 
 /* ============================== timer ============================== */
 
-void resetTimer(void)
-{
-    /* not necessary */
-}
-
 #define TSC_FREQ_RETRIES 10
 
 BOOT_CODE static inline uint32_t
