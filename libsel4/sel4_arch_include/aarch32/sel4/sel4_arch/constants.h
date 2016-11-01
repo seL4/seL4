@@ -51,7 +51,7 @@ enum {
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4
-#define seL4_MaxUntypedBits 30
+#define seL4_MaxUntypedBits 29
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 /* size of kernel log buffer in bytes */

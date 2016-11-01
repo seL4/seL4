@@ -78,11 +78,12 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    /* Check the requested obj size isn't too big as to cause
-     * shift by seL4_WordBits errors.
-     * Furthermore, device-untyped means that objects
-     * < (seL4_WordBits - 2) are as large as possible */
-    if (userObjSize >= (wordBits - 2)) {
+    /* Exclude impossibly large object sizes. This eliminates a
+       possible shift-overflow problem. It looks like this check
+       might be subsumed by the (objectSize >= word_bits) check below,
+       however further changes will require re-verification and are
+       considered low priority. */
+    if (userObjSize > seL4_MaxUntypedBits) {
         userError("Untyped Retype: Invalid object size.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
