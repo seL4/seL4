@@ -269,9 +269,22 @@ nextDomain(void)
     if (ksDomScheduleIdx >= ksDomScheduleLength) {
         ksDomScheduleIdx = 0;
     }
+    NODE_STATE(ksReprogram) = true;
     ksWorkUnitsCompleted = 0;
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
-    ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
+    ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
+}
+
+static void
+switchSchedContext(void)
+{
+    if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext)) {
+        NODE_STATE(ksReprogram) = true;
+        commitTime(ksCurSC);
+    } else {
+        rollbackTime();
+    }
+    NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
 }
 
 static void
@@ -331,6 +344,13 @@ schedule(void)
     doMaskReschedule(ARCH_NODE_STATE(ipiReschedulePending));
     ARCH_NODE_STATE(ipiReschedulePending) = 0;
 #endif /* ENABLE_SMP_SUPPORT */
+
+    switchSchedContext();
+
+    if (NODE_STATE(ksReprogram)) {
+        setNextInterrupt();
+        NODE_STATE(ksReprogram) = false;
+    }
 }
 
 void
@@ -351,6 +371,7 @@ chooseThread(void)
         thread = NODE_STATE(ksReadyQueues)[ready_queues_index(dom, prio)].head;
         assert(thread);
         assert(isSchedulable(thread));
+        assert(thread->tcbSchedContext->scRemaining > getKernelWcetTicks());
         switchToThread(thread);
     } else {
         switchToIdleThread();
@@ -360,6 +381,8 @@ chooseThread(void)
 void
 switchToThread(tcb_t *thread)
 {
+    assert(thread->tcbSchedContext != NULL);
+    assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
@@ -454,26 +477,53 @@ recharge(sched_context_t *sc)
 }
 
 void
-timerTick(void)
+setNextInterrupt(void)
 {
-    if (likely(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
-               ThreadState_Running)) {
-        assert(NODE_STATE(ksCurThread)->tcbSchedContext != NULL);
-        if (NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining > 1) {
-            NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining--;
-        } else {
-            recharge(NODE_STATE(ksCurThread)->tcbSchedContext);
-            SCHED_APPEND_CURRENT_TCB;
-            rescheduleRequired();
-        }
-    }
+    time_t next_thread = NODE_STATE(ksCurTime) + NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining;
 
     if (CONFIG_NUM_DOMAINS > 1) {
-        ksDomainTime--;
-        if (ksDomainTime == 0) {
-            rescheduleRequired();
-        }
+        time_t next_domain = ksCurTime + ksDomainTime;
+        setDeadline(MIN(next_thread, next_domain) - getTimerPrecision());
+    } else {
+        setDeadline(next_thread - getTimerPrecision());
     }
+}
+
+bool_t
+checkBudget(void) {
+    if (unlikely(isCurThreadExpired())) {
+        commitTime(ksCurSC);
+        endTimeslice();
+        return false;
+    } else if (unlikely(isCurDomainExpired())) {
+        commitTime(ksCurSC);
+        rescheduleRequired();
+        return false;
+    } else {
+        return true;
+    }
+}
+
+bool_t
+checkBudgetRestart(void)
+{
+    assert(isRunnable(NODE_STATE(ksCurThread)));
+    bool_t result = checkBudget();
+    if (!result) {
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    }
+    return result;
+}
+
+void
+endTimeslice(void)
+{
+    recharge(NODE_STATE(ksCurThread)->tcbSchedContext);
+    if (likely(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
+               ThreadState_Running)) {
+        SCHED_APPEND_CURRENT_TCB;
+    }
+    rescheduleRequired();
 }
 
 void
@@ -485,5 +535,5 @@ rescheduleRequired(void)
         SCHED_ENQUEUE(NODE_STATE(ksSchedulerAction));
     }
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
+    NODE_STATE(ksReprogram) = true;
 }
-
