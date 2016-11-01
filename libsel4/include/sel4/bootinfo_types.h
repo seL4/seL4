@@ -63,6 +63,7 @@ typedef struct {
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
     seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
+    seL4_Word         archInfo; /* tsc freq on x86, unused on arm */
 } seL4_BootInfo;
 
 

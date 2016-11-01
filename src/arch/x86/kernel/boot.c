@@ -20,6 +20,7 @@
 #include <arch/kernel/boot_sys.h>
 #include <arch/kernel/vspace.h>
 #include <arch/machine/fpu.h>
+#include <arch/machine/timer.h>
 #include <arch/object/ioport.h>
 #include <arch/linker.h>
 #include <util.h>
@@ -351,6 +352,8 @@ init_sys_state(
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
     ARCH_NODE_STATE(x86KSActiveFPUState) = NULL;
+
+    ndks_boot.bi_frame->archInfo = tsc_init();
 
     /* create the idle thread */
     if (!create_idle_thread()) {

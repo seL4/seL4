@@ -28,6 +28,7 @@
 #define IA32_LSTAR_MSR          0xC0000082
 #define IA32_STAR_MSR           0xC0000081
 #define IA32_FMASK_MSR          0xC0000084
+#define IA32_PLATFORM_INFO_MSR  0xCE
 #define IA32_XSS_MSR            0xD0A
 #define IA32_FEATURE_CONTROL_MSR 0x3A
 #define IA32_VMX_BASIC_MSR      0x480
@@ -172,6 +173,16 @@ static inline uint32_t x86_cpuid_ebx(uint32_t eax, uint32_t ecx)
                  : "a" (eax), "c" (ecx)
                  : "memory");
     return ebx;
+}
+
+static inline uint64_t x86_rdtsc(void)
+{
+    uint32_t hi, lo;
+    asm volatile("rdtsc"
+            : "=a" (lo),
+              "=d" (hi)
+            );
+    return ((uint64_t) hi) << 32llu | (uint64_t) lo;
 }
 
 enum x86_vendor {
