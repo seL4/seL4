@@ -93,5 +93,5 @@ extern uint16_t x86KSdebugPort;
 extern x86_irq_state_t x86KSIRQState[];
 
 extern word_t x86KSAllocatedIOPorts[NUM_IO_PORTS / CONFIG_WORD_SIZE];
-
+extern uint32_t x86KStscMhz;
 #endif

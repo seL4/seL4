@@ -139,6 +139,12 @@ CONST ctzl(unsigned long x)
 
 #define CTZL(x) __builtin_ctzl(x)
 
+static inline long long
+CONST clzll(unsigned long long x)
+{
+    return __builtin_clzll(x);
+}
+
 int __builtin_popcountl (unsigned long x);
 
 /** DONT_TRANSLATE */
