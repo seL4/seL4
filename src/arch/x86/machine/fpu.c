@@ -81,7 +81,9 @@ Arch_fpuThreadDelete(tcb_t *thread)
      * If the thread being deleted currently owns the FPU, switch away from it
      * so that 'x86KSActiveFPUState' doesn't point to invalid memory.
      */
-    if (threadUsingFPU(thread)) {
+    if (nativeThreadUsingFPU(thread)) {
+        /* TODO: for SMP switch FPU on thread->tcbAffinity, not neccessarily
+         * the local core */
         switchFpuOwner(NULL);
     }
 }
