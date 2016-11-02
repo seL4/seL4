@@ -73,8 +73,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 };
 
 static const p_region_t BOOT_RODATA dev_p_regs[] = {
-
-    { VM_HOST_PA_START,     VM_HOST_PA_START + VM_HOST_PA_SIZE },
+    { TK1_EXTRA_RAM_START,  TK1_EXTRA_RAM_START + TK1_EXTRA_RAM_SIZE },
     { VGICI_VM_PADDR,       VGICI_VM_PADDR + BIT(seL4_PageBits) },
     { PCIE_0_CFG_PADDR,     PCIE_0_CFG_PADDR + BIT(seL4_PageBits) },
     { PCIE_1_CFG_PADDR,     PCIE_1_CFG_PADDR + BIT(seL4_PageBits) },
