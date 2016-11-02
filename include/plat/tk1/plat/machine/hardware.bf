@@ -29,8 +29,8 @@ block iopde_pt {
     field       write       1
     field       nonsecure   1
     field       page_size   1
-    padding                 6
-    field_high  address     22
+    padding                 8
+    field_high  address     20
 }
 
 -- adding a 2-bit padding before address is because

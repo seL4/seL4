@@ -125,7 +125,7 @@ typedef struct {
 #define SMMU_PT_INDEX_BITS        12
 
 #define SMMU_IOPD_INDEX_MASK    0xffc00000
-#define SMMU_IOPD_INDEX_SHIFT   20
+#define SMMU_IOPD_INDEX_SHIFT   22
 #define SMMU_IOPT_INDEX_MASK    0x3ff000
 #define SMMU_IOPT_INDEX_SHIFT   12
 
