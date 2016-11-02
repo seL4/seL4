@@ -92,6 +92,8 @@ static void ipiStallCoreCallback(void)
     } else {
         SCHED_ENQUEUE_CURRENT_TCB;
         switchToIdleThread();
+
+        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
 }
 
@@ -137,11 +139,6 @@ static void handleRemoteCall(void)
             fail("Invalid remote call");
         }
 
-        /* we should not make any assumption about current TCB state if we are called from lock.
-         * otherwise, just resume current TCB */
-        if (!clh_is_self_in_queue()) {
-            NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
-        }
         big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
         ipi_wait(totalCoreBarrier);
     }
