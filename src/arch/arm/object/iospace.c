@@ -312,7 +312,6 @@ decodeARMIOMapInvocation(
 
     lu_ret = lookupIOPTSlot(pd, io_address);
     if (lu_ret.status != EXCEPTION_NONE) {
-        userError("IOMap: Lookup failed.");
         current_syscall_error.type = seL4_FailedLookup;
         current_syscall_error.failedLookupWasSource = false;
         return EXCEPTION_SYSCALL_ERROR;
