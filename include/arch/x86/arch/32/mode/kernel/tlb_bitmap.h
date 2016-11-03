@@ -57,7 +57,7 @@ tlb_bitmap_unset(pde_t *pd, word_t cpu)
 static inline word_t
 tlb_bitmap_get(pde_t *pd)
 {
-    word_t bitmap;
+    word_t bitmap = 0;
 
     for (int i = 0; i < TLBBITMAP_PD_ENTRIES; i++) {
         word_t entry = pd[TLBBITMAP_PD_INDEX].words[0];

@@ -18,6 +18,7 @@
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/boot.h>
 #include <arch/api/invocation.h>
+#include <mode/kernel/tlb.h>
 
 struct lookupPML4Slot_ret {
     exception_t status;
@@ -253,7 +254,7 @@ map_kernel_window(
     }
 
     /* In boot code, so fine to just trash everything here */
-    invalidateTranslationAll();
+    invalidateLocalTranslationAll();
     printf("Mapping kernel window is done\n");
     return true;
 }
@@ -1067,7 +1068,8 @@ unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
                            0                       /* present          */
                        );
 
-    invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid);
+    /* TODO: Update mask for SMP */
+    invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid, 0);
 }
 
 
@@ -1095,7 +1097,8 @@ performX64PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pd
 {
     ctSlot->cap = cap;
     *pdptSlot = pdpte;
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_page_directory_cap_get_capPDMappedASID(cap));
+    /* TODO: Update mask for SMP */
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_page_directory_cap_get_capPDMappedASID(cap), 0);
     return EXCEPTION_NONE;
 }
 
@@ -1265,7 +1268,8 @@ performX64PDPTInvocationMap(cap_t cap, cte_t *ctSlot, pml4e_t pml4e, pml4e_t *pm
 {
     ctSlot->cap = cap;
     *pml4Slot = pml4e;
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_pdpt_cap_get_capPDPTMappedASID(cap));
+    /* TODO: Update mask for SMP */
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_pdpt_cap_get_capPDPTMappedASID(cap), 0);
 
     return EXCEPTION_NONE;
 }
@@ -1434,7 +1438,8 @@ performX64ModeMapRemapPage(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdp
 {
     ctSlot->cap = cap;
     *pdptSlot = pdpte;
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap));
+    /* TODO: Update mask for SMP */
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap), 0);
     return EXCEPTION_NONE;
 }
 

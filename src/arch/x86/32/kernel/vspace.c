@@ -18,6 +18,7 @@
 #include <arch/api/invocation.h>
 #include <benchmark/benchmark_track.h>
 #include <mode/kernel/tlb_bitmap.h>
+#include <mode/kernel/tlb.h>
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.
@@ -345,7 +346,7 @@ map_kernel_window(
         return false;
     }
 
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
     return true;
 }
 
@@ -377,14 +378,14 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
                               1, /* read_write     */
                               1  /* present        */
                              );
-        invalidateTranslationSingle(virt_pg_start + pg_offset);
+        invalidateLocalTranslationSingle(virt_pg_start + pg_offset);
     }
 
     // assign replacement virtual addresses page
     offset_in_page = (unsigned int)(entry) & MASK(LARGE_PAGE_BITS);
     replacement_vaddr = (void*)(virt_pg_start + offset_in_page);
 
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 
     return replacement_vaddr;
 }
@@ -825,7 +826,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                     );
 
         ia32KSGlobalLogPT[idx] = pte;
-        invalidateTLBEntry(KS_LOG_PPTR + (idx << seL4_PageBits));
+        invalidateTLBEntry(KS_LOG_PPTR + (idx << seL4_PageBits), MASK(ksNumCPUs));
     }
 
     return EXCEPTION_NONE;

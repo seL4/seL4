@@ -15,6 +15,8 @@
 #include <model/statedata.h>
 #include <arch/kernel/vspace.h>
 #include <arch/api/invocation.h>
+#include <mode/kernel/tlb_bitmap.h>
+#include <mode/kernel/tlb.h>
 
 static exception_t
 performPageGetAddress(void *vbase_ptr)
@@ -683,7 +685,8 @@ void flushTable(vspace_root_t *vspace, word_t vptr, pte_t* pt, asid_t asid)
     for (i = 0; i < BIT(PT_INDEX_BITS); i++) {
         if (pte_get_present(pt[i])) {
             if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == vspace)) {
-                invalidateTranslationSingleASID(vptr + (i << PAGE_BITS), asid);
+                invalidateTranslationSingleASID(vptr + (i << PAGE_BITS), asid,
+                                                SMP_TERNARY(tlb_bitmap_get(vspace), 0));
             }
         }
     }
@@ -740,7 +743,8 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
     /* check if page belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
     if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t*)pptr_of_cap(threadRoot) == find_ret.vspace_root)) {
-        invalidateTranslationSingleASID(vptr, asid);
+        invalidateTranslationSingleASID(vptr, asid,
+                                        SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
     }
 }
 
@@ -770,7 +774,8 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 
     *lu_ret.pdSlot = makeUserPDEPageTableInvalid();
 
-    invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid);
+    invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid,
+                                     SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
 }
 
 static exception_t
@@ -778,7 +783,8 @@ performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pt
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap));
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap),
+                                     SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return EXCEPTION_NONE;
 }
 
@@ -787,7 +793,8 @@ performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pd
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap));
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap),
+                                     SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return EXCEPTION_NONE;
 }
 
@@ -795,7 +802,8 @@ static exception_t
 performX86PageInvocationRemapPTE(pte_t *ptSlot, pte_t pte, asid_t asid, vspace_root_t *vspace)
 {
     *ptSlot = pte;
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid);
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid,
+                                     SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return EXCEPTION_NONE;
 }
 
@@ -803,7 +811,8 @@ static exception_t
 performX86PageInvocationRemapPDE(pde_t *pdSlot, pde_t pde, asid_t asid, vspace_root_t *vspace)
 {
     *pdSlot = pde;
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid);
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid,
+                                     SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return EXCEPTION_NONE;
 }
 
@@ -1193,7 +1202,8 @@ performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdS
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
-    invalidatePageStructureCacheASID(pptr_to_paddr(root), cap_page_table_cap_get_capPTMappedASID(cap));
+    invalidatePageStructureCacheASID(pptr_to_paddr(root), cap_page_table_cap_get_capPTMappedASID(cap),
+                                     SMP_TERNARY(tlb_bitmap_get(root), 0));
     return EXCEPTION_NONE;
 }
 

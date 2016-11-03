@@ -107,7 +107,7 @@ static inline void invalidatePCID(word_t type, void *vaddr, asid_t asid)
     }
 }
 
-static inline void invalidateTranslationSingle(vptr_t vptr)
+static inline void invalidateLocalTranslationSingle(vptr_t vptr)
 {
     /* As this may be used to invalidate global mappings by the kernel,
      * and as its only used in boot code, we can just invalidate
@@ -115,17 +115,17 @@ static inline void invalidateTranslationSingle(vptr_t vptr)
     invalidatePCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
 }
 
-static inline void invalidateTranslationSingleASID(vptr_t vptr, asid_t asid)
+static inline void invalidateLocalTranslationSingleASID(vptr_t vptr, asid_t asid)
 {
     invalidatePCID(INVPCID_TYPE_ADDR, (void*)vptr, asid);
 }
 
-static inline void invalidateTranslationAll(void)
+static inline void invalidateLocalTranslationAll(void)
 {
     invalidatePCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
 }
 
-static inline void invalidatePageStructureCacheASID(paddr_t root, asid_t asid)
+static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t asid)
 {
     if (config_set(CONFIG_SUPPORT_PCID)) {
         /* store our previous cr3 */

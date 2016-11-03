@@ -108,31 +108,31 @@ static void handleRemoteCall(void)
             break;
 
         case IpiRemoteCall_InvalidateTLBEntry:
-            invalidateTLBEntry(get_ipi_arg(0));
+            invalidateLocalTLBEntry(get_ipi_arg(0));
             break;
 
         case IpiRemoteCall_InvalidatePageStructureCache:
-            invalidatePageStructureCache();
+            invalidateLocalPageStructureCache();
             break;
 
         case IpiRemoteCall_InvalidatePageStructureCacheASID:
-            invalidatePageStructureCacheASID(get_ipi_arg(0), get_ipi_arg(1));
+            invalidateLocalPageStructureCacheASID(get_ipi_arg(0), get_ipi_arg(1));
             break;
 
         case IpiRemoteCall_InvalidateTLB:
-            invalidateTLB();
+            invalidateLocalTLB();
             break;
 
         case IpiRemoteCall_InvalidateTranslationSingle:
-            invalidateTranslationSingle(get_ipi_arg(0));
+            invalidateLocalTranslationSingle(get_ipi_arg(0));
             break;
 
         case IpiRemoteCall_InvalidateTranslationSingleASID:
-            invalidateTranslationSingleASID(get_ipi_arg(0), get_ipi_arg(1));
+            invalidateLocalTranslationSingleASID(get_ipi_arg(0), get_ipi_arg(1));
             break;
 
         case IpiRemoteCall_InvalidateTranslationAll:
-            invalidateTranslationAll();
+            invalidateLocalTranslationAll();
             break;
 
         default:

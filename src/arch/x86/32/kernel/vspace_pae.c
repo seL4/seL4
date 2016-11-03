@@ -159,7 +159,7 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
         1, /* read_write */
         1  /* present */
     );
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 }
 
 BOOT_CODE void
@@ -185,7 +185,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
         1, /* read_write */
         1  /* present */
     );
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 }
 
 BOOT_CODE void
@@ -204,7 +204,7 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
         0, /* write_through */
         1  /* present */
     );
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
@@ -315,7 +315,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
          * reload cr3 */
         write_cr3(read_cr3());
     }
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 }
 
 static exception_t
@@ -350,7 +350,7 @@ performIA32PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, p
         write_cr3(read_cr3());
     }
 
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 
     return EXCEPTION_NONE;
 }

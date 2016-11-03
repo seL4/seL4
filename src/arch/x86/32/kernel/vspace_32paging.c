@@ -125,7 +125,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
         1,                 /* read_write      */
         1                  /* present         */
     );
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 }
 
 BOOT_CODE void
@@ -160,7 +160,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
         1,                    /* read_write        */
         1                     /* present           */
     );
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 }
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */

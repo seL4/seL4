@@ -69,46 +69,46 @@ static inline void setCurrentVSpaceRoot(paddr_t addr, word_t pcid)
     setCurrentPD(addr);
 }
 
-static inline void invalidateTLBEntry(vptr_t vptr)
+static inline void invalidateLocalTLBEntry(vptr_t vptr)
 {
     asm volatile("invlpg (%[vptr])" :: [vptr] "r"(vptr));
 }
 
 /* Invalidates page structures cache */
-static inline void invalidatePageStructureCache(void)
+static inline void invalidateLocalPageStructureCache(void)
 {
     /* invalidate an arbitrary line to invalidate the page structure cache */
-    invalidateTLBEntry(0);
+    invalidateLocalTLBEntry(0);
 }
 
-static inline void invalidatePageStructureCacheASID(paddr_t root, asid_t asid)
+static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t asid)
 {
     /* ignore asid */
-    invalidatePageStructureCache();
+    invalidateLocalPageStructureCache();
 }
 
-static inline void invalidateTLB(void)
+static inline void invalidateLocalTLB(void)
 {
     /* rewrite the current page directory */
     write_cr3(MODE_NODE_STATE(ia32KSCurrentPD));
 }
 
-static inline void invalidateTranslationSingle(vptr_t vptr)
+static inline void invalidateLocalTranslationSingle(vptr_t vptr)
 {
     /* Just invalidate a single entry in the TLB */
-    invalidateTLBEntry(vptr);
+    invalidateLocalTLBEntry(vptr);
 }
 
-static inline void invalidateTranslationSingleASID(vptr_t vptr, asid_t asid)
+static inline void invalidateLocalTranslationSingleASID(vptr_t vptr, asid_t asid)
 {
     /* no asid support in 32-bit, just invalidate TLB */
-    invalidateTLBEntry(vptr);
+    invalidateLocalTLBEntry(vptr);
 }
 
-static inline void invalidateTranslationAll(void)
+static inline void invalidateLocalTranslationAll(void)
 {
-    invalidateTLB();
-    invalidatePageStructureCache();
+    invalidateLocalTLB();
+    invalidateLocalPageStructureCache();
 }
 
 /* Flushes entire CPU Cache */
