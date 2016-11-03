@@ -188,7 +188,7 @@ decodeARMIOPTInvocation(
     }
 
     io_space     = excaps.excaprefs[0]->cap;
-    io_address   = getSyscallArg(0, buffer) & ~MASK(PAGE_BITS);
+    io_address   = getSyscallArg(0, buffer) & ~MASK(SMMU_IOPD_INDEX_SHIFT);
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
         userError("IOPTMap: Cap already mapped.");
@@ -312,7 +312,6 @@ decodeARMIOMapInvocation(
 
     lu_ret = lookupIOPTSlot(pd, io_address);
     if (lu_ret.status != EXCEPTION_NONE) {
-        userError("IOMap: Lookup failed.");
         current_syscall_error.type = seL4_FailedLookup;
         current_syscall_error.failedLookupWasSource = false;
         return EXCEPTION_SYSCALL_ERROR;

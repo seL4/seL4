@@ -157,35 +157,6 @@ plat_smmu_tlb_flush_all(void)
     smmu_regs->smmu_tlb_flush = cmd;
 }
 
-
-
-/* Using 4 MiB mapping for the Linxu guest VM.
- * This is a temporary solution for enabling guest VM
- * devices that need DMA while still providing some
- * protections. Once the device untyped feature is done,
- * this code should be replaced with proper user-mode
- * VM initialisation code.
- */
-
-static void
-plat_smmu_vm_mapping(word_t iopd, word_t gpa, word_t pa, word_t size)
-{
-    iopde_t *iopde = (iopde_t *)iopd;
-    while (size > 0) {
-        word_t index = gpa >> IOPDE_4M_INDEX_SHIFT;
-        iopde_iopde_4m_ptr_new(
-            iopde + index,
-            1,
-            1,
-            1,
-            pa
-        );
-        gpa += BIT(IOPDE_4M_INDEX_SHIFT);
-        pa += BIT(IOPDE_4M_INDEX_SHIFT);
-        size -= BIT(IOPDE_4M_INDEX_SHIFT);
-    }
-}
-
 BOOT_CODE int
 plat_smmu_init(void)
 {
@@ -205,9 +176,6 @@ plat_smmu_init(void)
         smmu_ioasid_to_pd[asid - SMMU_FIRST_ASID] = pd;
 
         memset(pd, 0, BIT(SMMU_PD_INDEX_BITS));
-        if (config_set(CONFIG_ARM_SMMU_VM_DEFAULT_MAPPING)) {
-            plat_smmu_vm_mapping((word_t)pd, VM_GUEST_PA_START, VM_HOST_PA_START, VM_HOST_PA_SIZE);
-        }
         cleanCacheRange_RAM((word_t)pd, ((word_t)pd + BIT(SMMU_PD_INDEX_BITS)),
                             addrFromPPtr(pd));
 

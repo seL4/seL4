@@ -118,9 +118,8 @@
 #define USB3_PADDR                  (0x7d008000)                /* 8 KB region, 6 KB            */
 #define UARTA_PADDR                 (0x70006000)
 
-/* physical memory regions allocated for virtual machines */
-#define VM_HOST_PA_START    0xb0000000
-#define VM_GUEST_PA_START   0x80000000
-#define VM_HOST_PA_SIZE     0x40000000
+/* Additional memory outside the kernel window that we export as a device */
+#define TK1_EXTRA_RAM_START    0xb0000000
+#define TK1_EXTRA_RAM_SIZE     0x40000000
 
 #endif
