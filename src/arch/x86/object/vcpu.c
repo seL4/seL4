@@ -1058,7 +1058,7 @@ handleVmexit(void)
             interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
             /* The exception number is the bottom 8 bits of the interrupt info */
             if ((interrupt & 0xff) == int_unimpl_dev) {
-                switchFpuOwner(&ksCurThread->tcbArch.vcpu->fpuState);
+                switchLocalFpuOwner(&ksCurThread->tcbArch.vcpu->fpuState);
                 return EXCEPTION_NONE;
             }
         } else if (reason == CONTROL_REGISTER && !(ksCurThread->tcbArch.vcpu->cr0_mask & CR0_TASK_SWITCH)) {

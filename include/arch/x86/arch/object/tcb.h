@@ -23,8 +23,4 @@ exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t extraCaps);
 void Arch_leaveVMAsyncTransfer(tcb_t *tcb);
 #endif
 
-#if CONFIG_MAX_NUM_NODES > 1
-bool_t CONST Arch_isMigratable(tcb_t *thread, word_t affinity_dest);
-#endif /* CONFIG_MAX_NUM_NODES */
-
 #endif

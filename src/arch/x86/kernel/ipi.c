@@ -135,6 +135,10 @@ static void handleRemoteCall(void)
             invalidateLocalTranslationAll();
             break;
 
+        case IpiRemoteCall_switchFpuOwner:
+            switchLocalFpuOwner((user_fpu_state_t *)get_ipi_arg(0));
+            break;
+
         default:
             fail("Invalid remote call");
         }

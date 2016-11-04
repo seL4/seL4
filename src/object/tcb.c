@@ -343,6 +343,11 @@ remoteTCBStall(tcb_t *tcb)
 static exception_t
 invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
 {
+    /* check if thread own its current core FPU */
+    if (nativeThreadUsingFPU(thread)) {
+        switchFpuOwner(NULL, thread->tcbAffinity);
+    }
+
     /* remove the tcb from scheduler queue in case it is already in one
      * and add it to new queue if required */
     tcbSchedDequeue(thread);
@@ -375,12 +380,6 @@ decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
     affinity = getSyscallArg(0, buffer);
     if (affinity >= ksNumCPUs) {
         userError("TCB SetAffinity: Requested CPU does not exist.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (!Arch_isMigratable(tcb, affinity)) {
-        userError("TCB SetAffinity: Can not migrate thread to target cpu.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }

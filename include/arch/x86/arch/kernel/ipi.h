@@ -31,7 +31,9 @@ typedef enum {
     IpiRemoteCall_InvalidateTLB,
     IpiRemoteCall_InvalidateTranslationSingle,
     IpiRemoteCall_InvalidateTranslationSingleASID,
-    IpiRemoteCall_InvalidateTranslationAll
+    IpiRemoteCall_InvalidateTranslationAll,
+
+    IpiRemoteCall_switchFpuOwner
 } IpiRemoteCall_t;
 
 /*
@@ -126,6 +128,11 @@ static void inline doReschedule(word_t cpu)
 static void inline doRemoteStall(word_t cpu)
 {
     doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);
+}
+
+static void inline doRemoteswitchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
+{
+    doRemoteOp1Arg(IpiRemoteCall_switchFpuOwner, (word_t)new_owner, cpu);
 }
 
 #endif /* CONFIG_MAX_NUM_NODES */

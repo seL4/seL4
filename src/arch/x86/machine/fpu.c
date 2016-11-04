@@ -30,10 +30,10 @@ Arch_initFpuContext(user_context_t *context)
 }
 
 /*
- * Switch the owner of the FPU to the given thread.
+ * Switch the owner of the FPU to the given thread on local core.
  */
 void
-switchFpuOwner(user_fpu_state_t *new_owner)
+switchLocalFpuOwner(user_fpu_state_t *new_owner)
 {
     enableFpu();
     if (ARCH_NODE_STATE(x86KSActiveFPUState)) {
@@ -45,6 +45,19 @@ switchFpuOwner(user_fpu_state_t *new_owner)
         disableFpu();
     }
     ARCH_NODE_STATE(x86KSActiveFPUState) = new_owner;
+}
+
+void
+switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
+{
+#if CONFIG_MAX_NUM_NODES > 1
+    if (cpu != getCurrentCPUIndex()) {
+        doRemoteswitchFpuOwner(new_owner, cpu);
+    } else
+#endif /* CONFIG_MAX_NUM_NODES */
+    {
+        switchLocalFpuOwner(new_owner);
+    }
 }
 
 /*
@@ -66,7 +79,7 @@ handleUnimplementedDevice(void)
     assert(!nativeThreadUsingFPU(NODE_STATE(ksCurThread)));
 
     /* Otherwise, lazily switch over the FPU. */
-    switchFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.fpuState);
+    switchLocalFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.fpuState);
 
     return EXCEPTION_NONE;
 }
@@ -82,9 +95,7 @@ Arch_fpuThreadDelete(tcb_t *thread)
      * so that 'x86KSActiveFPUState' doesn't point to invalid memory.
      */
     if (nativeThreadUsingFPU(thread)) {
-        /* TODO: for SMP switch FPU on thread->tcbAffinity, not neccessarily
-         * the local core */
-        switchFpuOwner(NULL);
+        switchFpuOwner(NULL, SMP_TERNARY(thread->tcbAffinity, 0));
     }
 }
 

@@ -29,7 +29,10 @@ void Arch_fpuThreadDelete(tcb_t *thread);
 /* Handle an FPU exception. */
 exception_t handleUnimplementedDevice(void);
 
-void switchFpuOwner(user_fpu_state_t *new_owner);
+void switchLocalFpuOwner(user_fpu_state_t *new_owner);
+
+/* Switch the current owner of the FPU state on the core specified by 'cpu'. */
+void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu);
 
 static inline uint32_t xsave_features_high(void)
 {
