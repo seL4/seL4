@@ -69,6 +69,7 @@ NODE_STATE_DECLARE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][L2_BITMAP_S
 NODE_STATE_DECLARE(tcb_t, *ksCurThread);
 NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
+NODE_STATE_DECLARE(tcb_t, *ksReleaseHead);
 NODE_STATE_DECLARE(time_t, ksConsumed);
 NODE_STATE_DECLARE(time_t, ksCurTime);
 NODE_STATE_DECLARE(bool_t, ksReprogram);

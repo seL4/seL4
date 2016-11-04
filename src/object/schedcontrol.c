@@ -13,21 +13,44 @@
 #include <mode/api/ipc_buffer.h>
 #include <object/schedcontext.h>
 #include <object/schedcontrol.h>
+#include <kernel/sporadic.h>
 
 static exception_t
-invokeSchedControl_Configure(sched_context_t *target, ticks_t budget, word_t core)
+invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budget,
+                             ticks_t period, word_t max_refills)
 {
-    target->scBudget = budget;
-    target->scCore = core;
-    recharge(target);
+    /* don't modify parameters of tcb while it is in a sorted queue */
+    if (target->scTcb) {
+        tcbReleaseRemove(target->scTcb);
+    }
 
-    if (target->scTcb != NULL) {
-        /* target may no longer have budget for this core */
-        if (!isSchedulable(target->scTcb)) {
-            tcbSchedDequeue(target->scTcb);
-        } else {
-            possibleSwitchTo(target->scTcb);
+    if (budget == period) {
+        /* this is a cool hack: for round robin, we set the
+         * period to 0, which means that the budget will always be ready to be refilled
+         * and the code doesn't need special casing
+         */
+        period = 0;
+    }
+
+    if (core == target->scCore && target->scRefillMax > 0 && target->scTcb && isRunnable(target->scTcb)) {
+        /* the scheduling context is active - it can be used, so
+         * we need to preserve the bandwidth */
+        refill_update(target, period, budget, max_refills);
+    } else {
+        /* the scheduling context isn't active - it's budget is not being used, so
+         * we can just populate the parameters from now */
+        refill_new(target, max_refills, budget, period);
+
+        if (core != target->scCore && target->scTcb) {
+            /* if the core changed and the SC has a tcb, the SC is getting
+             * budget - so migrate it */
+            target->scCore = core;
+            SMP_COND_STATEMENT(migrateTCB(target->scTcb));
         }
+    }
+
+    if (target->scTcb && isRunnable(target->scTcb) && target->scRefillMax > 0) {
+        schedContext_resume(target);
     }
 
     return EXCEPTION_NONE;
@@ -42,13 +65,15 @@ decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, w
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (length < TIME_ARG_SIZE) {
+    if (length < (TIME_ARG_SIZE * 2) + 1) {
         userError("SchedControl_configure: truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     time_t budget_us = mode_parseTimeArg(0, buffer);
+    time_t period_us = mode_parseTimeArg(TIME_ARG_SIZE, buffer);
+    word_t max_refills = MIN_REFILLS + getSyscallArg(TIME_ARG_SIZE * 2, buffer);
 
     cap_t targetCap = extraCaps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
@@ -58,17 +83,44 @@ decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, w
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (budget_us > getMaxTimerUs() || budget_us < getKernelWcetUs()) {
+    if (budget_us > getMaxTimerUs() || budget_us < MIN_BUDGET_US) {
         userError("SchedControl_Configure: budget out of range.");
         current_syscall_error.type = seL4_RangeError;
-        current_syscall_error.rangeErrorMin = getKernelWcetUs();
+        current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
         current_syscall_error.rangeErrorMax = getMaxTimerUs();
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (period_us > getMaxTimerUs() || period_us < MIN_BUDGET_US) {
+        userError("SchedControl_Configure: period out of range.");
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
+        current_syscall_error.rangeErrorMax = getMaxTimerUs();
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (budget_us > period_us) {
+        userError("SchedControl_Configure: budget must be <= period");
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = MIN_BUDGET_US;
+        current_syscall_error.rangeErrorMax = period_us;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (max_refills > MAX_REFILLS) {
+        userError("Max refills invalid");
+        current_syscall_error.type = seL4_RangeError;
+        current_syscall_error.rangeErrorMin = 0;
+        current_syscall_error.rangeErrorMax = MAX_REFILLS - MIN_REFILLS - 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeSchedControl_Configure(SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap)),
-                                        usToTicks(budget_us), cap_sched_control_cap_get_core(cap));
+                                        cap_sched_control_cap_get_core(cap),
+                                        usToTicks(budget_us),
+                                        usToTicks(period_us),
+                                        max_refills + MIN_REFILLS);
 }
 
 exception_t

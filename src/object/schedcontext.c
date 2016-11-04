@@ -119,14 +119,22 @@ decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
 void
 schedContext_resume(sched_context_t *sc)
 {
-    assert(sc->scTcb != NULL);
+    assert(!sc || sc->scTcb != NULL);
+    if (likely(sc) && isSchedulable(sc->scTcb)) {
+        assert(sc->scTcb != NULL);
+        /* this should NOT be called when migration is possible */
 #if CONFIG_MAX_NUM_NODES > 1
-    /* this should NOT be called when migration is possible */
-    assert(sc->scCore == getCurrentCPUIndex());
+        SMP_COND_STATEMENT(assert(sc->scCore == sc->scTcb->tcbAffinity));
+        SMP_COND_STATEMENT(assert(sc->scCore == getCurrentCPUIndex()));
 #endif
-    if (isRunnable(sc->scTcb) && sc->scBudget > 0) {
-        recharge(sc);
-        possibleSwitchTo(sc->scTcb);
+        refill_unblock_check(sc);
+
+        if (isRunnable(sc->scTcb) && sc->scRefillMax > 0) {
+            if (!(refill_ready(sc) && refill_sufficient(sc, 0))) {
+                assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
+                postpone(sc);
+            }
+        }
     }
 }
 
@@ -157,15 +165,19 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
     assert(sc->scTcb == tcb);
 
     tcbSchedDequeue(sc->scTcb);
+    tcbReleaseRemove(sc->scTcb);
 
     sc->scTcb->tcbSchedContext = NULL;
-    if (sc->scTcb == NODE_STATE(ksCurThread)) {
+    sc->scTcb = NULL;
+
+    SMP_COND_STATEMENT(remoteTCBStall(tcb);)
+
+    if (tcb == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
     } else {
         SMP_COND_STATEMENT(remoteTCBStall(tcb));
     }
 
-    sc->scTcb = NULL;
 }
 
 void
