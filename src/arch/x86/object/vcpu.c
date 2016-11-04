@@ -261,6 +261,7 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
         BIT(1) |    //Enable EPT
         BIT(5);     //Enable VPID
     uint32_t exit_control_mask =
+        BIT(2)  |   //Save debug controls
         BIT(12) |   //Load IA32_PERF_GLOBAL_CTRL
         BIT(15) |   //Acknowledge interrupt on exit
         BIT(19) |   //Load IA32_PAT
