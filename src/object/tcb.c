@@ -330,9 +330,8 @@ remoteQueueUpdate(tcb_t *tcb)
  * It would request 'IpiRemoteCall_Stall' to switch the core from this TCB
  * We also request the 'irq_reschedule_ipi' to restore the state of target core */
 void
-remoteTCBStall(cap_t cap)
+remoteTCBStall(tcb_t *tcb)
 {
-    tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
 
     if (tcb->tcbAffinity != getCurrentCPUIndex() &&
             NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity) == tcb) {
@@ -645,7 +644,7 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
                     word_t *buffer)
 {
     /* Stall the core if we are operating on a remote TCB that is currently running */
-    SMP_COND_STATEMENT(remoteTCBStall(cap);)
+    SMP_COND_STATEMENT(remoteTCBStall(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));)
 
     switch (invLabel) {
     case TCBReadRegisters:

@@ -53,7 +53,7 @@ void tcbSchedDequeue(tcb_t *tcb);
 
 #if CONFIG_MAX_NUM_NODES > 1
 void remoteQueueUpdate(tcb_t *tcb);
-void remoteTCBStall(cap_t cap);
+void remoteTCBStall(tcb_t *tcb);
 
 #define SCHED_ENQUEUE(_t) do {      \
     tcbSchedEnqueue(_t);            \
