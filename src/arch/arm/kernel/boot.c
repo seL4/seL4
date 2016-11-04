@@ -600,6 +600,10 @@ BOOT_CODE VISIBLE void init_kernel(
         fail("Kernel init failed for some reason :(");
     }
 
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+    NODE_STATE(ksConsumed) = 0;
+#endif
     schedule();
     activateThread();
 }

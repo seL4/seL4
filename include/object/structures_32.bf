@@ -296,6 +296,9 @@ block DebugException {
 block thread_state(blockingIPCBadge, blockingIPCCanGrant,
                    blockingIPCCanGrantReply, blockingIPCIsCall,
                    tcbQueued, blockingObject,
+#ifdef CONFIG_KERNEL_MCS
+                   tcbInReleaseQueue,
+#endif
                    tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
@@ -304,9 +307,16 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
     padding 1
 
     -- this is fastpath-specific. it is useful to be able to write
-    -- tsType and without changing tcbQueued
+    -- tsType and without changing tcbQueued or tcbInReleaseQueue
+#ifdef CONFIG_KERNEL_MCS
+    padding 30
+#else
     padding 31
+#endif
     field tcbQueued 1
+#ifdef CONFIG_KERNEL_MCS
+    field tcbInReleaseQueue 1
+#endif
 
     field_high blockingObject 28
     field tsType 4

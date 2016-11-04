@@ -324,10 +324,9 @@ BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 BOOT_CODE static bool_t configure_sched_context(tcb_t *tcb, sched_context_t *sc_pptr, ticks_t timeslice)
 {
     tcb->tcbSchedContext = sc_pptr;
-    tcb->tcbSchedContext->scBudget = timeslice;
-    tcb->tcbSchedContext->scRemaining = timeslice;
-    tcb->tcbSchedContext->scTcb = tcb;
+    refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
 
+    tcb->tcbSchedContext->scTcb = tcb;
     return true;
 }
 
@@ -430,6 +429,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
 
     NODE_STATE(ksConsumed) = 0;
     NODE_STATE(ksReprogram) = true;
+    NODE_STATE(ksReleaseHead) = NULL;
 #endif
 
     tcb->tcbPriority = seL4_MaxPrio;

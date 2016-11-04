@@ -87,7 +87,8 @@ void tcbSchedEnqueue(tcb_t *tcb)
 {
 #ifdef CONFIG_KERNEL_MCS
     assert(isSchedulable(tcb));
-    assert(tcb->tcbSchedContext->scRemaining > getKernelWcetTicks());
+    assert(refill_sufficient(tcb->tcbSchedContext, 0));
+    assert(refill_ready(tcb->tcbSchedContext));
 #endif
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
@@ -122,7 +123,8 @@ void tcbSchedAppend(tcb_t *tcb)
 {
 #ifdef CONFIG_KERNEL_MCS
     assert(isSchedulable(tcb));
-    assert(tcb->tcbSchedContext->scRemaining > getKernelWcetTicks());
+    assert(refill_sufficient(tcb->tcbSchedContext, 0));
+    assert(refill_ready(tcb->tcbSchedContext));
 #endif
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
@@ -252,6 +254,85 @@ tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
 
     return queue;
 }
+
+#ifdef CONFIG_KERNEL_MCS
+void tcbReleaseRemove(tcb_t *tcb)
+{
+    if (likely(thread_state_get_tcbInReleaseQueue(tcb->tcbState))) {
+        if (tcb->tcbSchedPrev) {
+            tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
+        } else {
+            NODE_STATE(ksReleaseHead) = tcb->tcbSchedNext;
+            /* the head has changed, we might need to set a new timeout */
+            NODE_STATE(ksReprogram) = true;
+        }
+
+        if (tcb->tcbSchedNext) {
+            tcb->tcbSchedNext->tcbSchedPrev = tcb->tcbSchedPrev;
+        }
+
+        tcb->tcbSchedNext = NULL;
+        tcb->tcbSchedPrev = NULL;
+        thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, false);
+    }
+}
+
+void tcbReleaseEnqueue(tcb_t *tcb)
+{
+    assert(thread_state_get_tcbInReleaseQueue(tcb->tcbState) == false);
+    assert(thread_state_get_tcbQueued(tcb->tcbState) == false);
+
+    tcb_t *before = NULL;
+    tcb_t *after = NODE_STATE(ksReleaseHead);
+
+    /* find our place in the ordered queue */
+    while (after != NULL &&
+           REFILL_HEAD(tcb->tcbSchedContext).rTime >= REFILL_HEAD(after->tcbSchedContext).rTime) {
+        before = after;
+        after = after->tcbSchedNext;
+    }
+
+    if (before == NULL) {
+        /* insert at head */
+        NODE_STATE(ksReleaseHead) = tcb;
+        NODE_STATE(ksReprogram) = true;
+    } else {
+        before->tcbSchedNext = tcb;
+    }
+
+    if (after != NULL) {
+        after->tcbSchedPrev = tcb;
+    }
+
+    tcb->tcbSchedNext = after;
+    tcb->tcbSchedPrev = before;
+
+    thread_state_ptr_set_tcbInReleaseQueue(&tcb->tcbState, true);
+}
+
+tcb_t *tcbReleaseDequeue(void)
+{
+    assert(NODE_STATE(ksReleaseHead) != NULL);
+    assert(NODE_STATE(ksReleaseHead)->tcbSchedPrev == NULL);
+
+    tcb_t *detached_head = NODE_STATE(ksReleaseHead);
+    NODE_STATE(ksReleaseHead) = NODE_STATE(ksReleaseHead)->tcbSchedNext;
+
+    if (NODE_STATE(ksReleaseHead)) {
+        NODE_STATE(ksReleaseHead)->tcbSchedPrev = NULL;
+    }
+
+    if (detached_head->tcbSchedNext) {
+        detached_head->tcbSchedNext->tcbSchedPrev = NULL;
+        detached_head->tcbSchedNext = NULL;
+    }
+
+    thread_state_ptr_set_tcbInReleaseQueue(&detached_head->tcbState, false);
+    NODE_STATE(ksReprogram) = true;
+
+    return detached_head;
+}
+#endif
 
 cptr_t PURE getExtraCPtr(word_t *bufferPtr, word_t i)
 {

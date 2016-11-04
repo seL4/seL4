@@ -219,10 +219,10 @@ void handleInterrupt(irq_t irq)
         maskInterrupt(true, irq);
 #endif
 #ifdef CONFIG_KERNEL_MCS
-        /* Bill the current thread. We know it has enough budget, as otherwise we would be
-         * dealing with a timer interrupt not a signal interrupt */
-        commitTime(ksCurSC);
-        checkReschedule();
+        /* Bill the current thread. */
+        if (unlikely(checkBudget())) {
+            commitTime();
+        }
 #endif
         break;
     }
@@ -231,8 +231,10 @@ void handleInterrupt(irq_t irq)
 #ifdef CONFIG_KERNEL_MCS
         updateTimestamp();
         ackDeadlineIRQ();
-        commitTime(ksCurSC);
-        checkBudget();
+        if (likely(checkBudget())) {
+            commitTime();
+        }
+        NODE_STATE(ksReprogram) = true;
 #else
         timerTick();
         resetTimer();
@@ -245,6 +247,11 @@ void handleInterrupt(irq_t irq)
         updateTimestamp();
 #endif
         handleIPI(irq, true);
+#ifdef CONFIG_KERNEL_MCS
+        if (unlikely(checkBudget())) {
+            commitTime();
+        }
+#endif
         break;
 #endif /* ENABLE_SMP_SUPPORT */
 

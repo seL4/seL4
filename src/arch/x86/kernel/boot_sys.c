@@ -728,6 +728,11 @@ BOOT_CODE VISIBLE void boot_sys(
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
     ARCH_NODE_STATE(x86KSPendingInterrupt) = int_invalid;
 
+#ifdef CONFIG_KERNEL_MCS
+    NODE_STATE(ksCurTime) = getCurrentTime();
+    NODE_STATE(ksConsumed) = 0;
+#endif
+
     schedule();
     activateThread();
 }

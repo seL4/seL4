@@ -16,6 +16,7 @@
 #include <object/structures.h>
 #include <arch/machine.h>
 #ifdef CONFIG_KERNEL_MCS
+#include <kernel/sporadic.h>
 #include <machine/timer.h>
 #include <mode/machine.h>
 #endif
@@ -85,28 +86,22 @@ static inline bool_t isHighestPrio(word_t dom, prio_t prio)
 }
 
 #ifdef CONFIG_KERNEL_MCS
-static inline bool_t isCurThreadExpired(void)
-{
-    return NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining <
-           (NODE_STATE(ksConsumed) + getKernelWcetTicks());
-}
-
 static inline bool_t isCurDomainExpired(void)
 {
     return CONFIG_NUM_DOMAINS > 1 &&
-           NODE_STATE(ksDomainTime) < (NODE_STATE(ksConsumed) + getKernelWcetTicks());
+           ksDomainTime < (NODE_STATE(ksConsumed) + getKernelWcetTicks());
 }
 
-static inline void commitTime(sched_context_t *sc)
+static inline void commitTime(void)
 {
-    assert(sc->scCore == SMP_TERNARY(getCurrentCPUIndex(), 0));
-    if (unlikely(sc->scRemaining < NODE_STATE(ksConsumed))) {
-        /* avoid underflow */
-        sc->scRemaining = 0;
-    } else {
-        sc->scRemaining -= NODE_STATE(ksConsumed);
-    }
 
+    if (likely(NODE_STATE(ksConsumed) > 0 && (NODE_STATE(ksCurThread) != NODE_STATE(ksIdleThread)))) {
+        assert(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)));
+        assert(refill_ready(NODE_STATE(ksCurSC)));
+        refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
+        assert(refill_ready(NODE_STATE(ksCurSC)));
+    }
     if (CONFIG_NUM_DOMAINS > 1) {
         if (unlikely(ksDomainTime < NODE_STATE(ksConsumed))) {
             ksDomainTime = 0;
@@ -168,6 +163,12 @@ static inline void updateRestartPC(tcb_t *tcb)
 }
 
 #ifdef CONFIG_KERNEL_MCS
+/* End the timeslice for the current thread.
+ * This will recharge the threads timeslice and place it at the
+ * end of the scheduling queue for its priority.
+ */
+void endTimeslice(void);
+
 /* Update the kernels timestamp and stores in ksCurTime.
  * The difference between the previous kernel timestamp and the one just read
  * is stored in ksConsumed.
@@ -191,34 +192,65 @@ static inline void updateTimestamp(void)
  * @return true if the thread/domain has enough budget to
  *              get through the current kernel operation.
  */
-bool_t checkBudget(void);
+static inline bool_t checkBudget(void)
+{
+    /* currently running thread must have available capacity */
+    assert(refill_ready(NODE_STATE(ksCurSC)));
+
+    if (unlikely(NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread))) {
+        return true;
+    }
+
+    ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+    if (unlikely(capacity < MIN_BUDGET)) {
+        if (capacity == 0) {
+            NODE_STATE(ksConsumed) = refill_budget_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        }
+        if (NODE_STATE(ksConsumed) > 0) {
+            refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        }
+        NODE_STATE(ksConsumed) = 0;
+        NODE_STATE(ksCurTime) += 1llu;
+        if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
+            endTimeslice();
+            rescheduleRequired();
+        }
+        return false;
+    } else if (unlikely(isCurDomainExpired())) {
+        commitTime();
+        rescheduleRequired();
+        return false;
+    }
+    return true;
+}
 
 /* Everything checkBudget does, but also set the thread
  * state to ThreadState_Restart. To be called from kernel entries
  * where the operation should be restarted once the current thread
  * has budget again.
  */
-bool_t checkBudgetRestart(void);
+
+static inline bool_t checkBudgetRestart(void)
+{
+    assert(isRunnable(NODE_STATE(ksCurThread)));
+    bool_t result = checkBudget();
+    if (!result) {
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    }
+    return result;
+}
+
 
 /* Set the next kernel tick, which is either the end of the current
  * domains timeslice OR the end of the current threads timeslice.
  */
 void setNextInterrupt(void);
 
-/* End the timeslice for the current thread.
- * This will recharge the threads timeslice and place it at the
- * end of the scheduling queue for its priority.
- */
-void endTimeslice(void);
-
-static inline void checkReschedule(void)
-{
-    if (isCurThreadExpired()) {
-        endTimeslice();
-    } else if (isCurDomainExpired()) {
-        rescheduleRequired();
-    }
-}
+/* Wake any periodic threads that are ready for budget recharge */
+void awaken(void);
+/* Place the thread bound to this scheduling context in the release queue
+ * of periodic threads waiting for budget recharge */
+void postpone(sched_context_t *sc);
 #endif
 
 #endif

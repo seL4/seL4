@@ -382,15 +382,25 @@ block DebugException {
 -- Thread state: size = 24 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant,
                    blockingIPCCanGrantReply, blockingIPCIsCall,
-                   tcbQueued, blockingObject,
-                   tsType) {
+                   tcbQueued,
+#ifdef CONFIG_KERNEL_MCS
+                   tcbInReleaseQueue,
+#endif
+                   blockingObject, tsType) {
     field blockingIPCBadge 64
 
+#ifdef CONFIG_KERNEL_MCS
+    padding 59
+#else
     padding 60
+#endif
     field blockingIPCCanGrant 1
     field blockingIPCCanGrantReply 1
     field blockingIPCIsCall 1
     field tcbQueued 1
+#ifdef CONFIG_KERNEL_MCS
+    field tcbInReleaseQueue 1
+#endif
 
 #if BF_CANONICAL_RANGE == 48
     padding 16

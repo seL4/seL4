@@ -611,6 +611,8 @@
                 description="Timeslice in microseconds, when the budget expires the thread will be pre-empted."/>
             <param dir="in" name="period" type="seL4_Time"
                 description="Period in microseconds, the budget is replenished every time the period expires."/>
+            <param dir="in" name="max_refills" type="seL4_Word"
+                description="extra max refills for sporadic real time tasks"/>
         </method>
 
     </interface>

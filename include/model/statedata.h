@@ -71,6 +71,7 @@ NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
 
 #ifdef CONFIG_KERNEL_MCS
+NODE_STATE_DECLARE(tcb_t, *ksReleaseHead);
 NODE_STATE_DECLARE(time_t, ksConsumed);
 NODE_STATE_DECLARE(time_t, ksCurTime);
 NODE_STATE_DECLARE(bool_t, ksReprogram);
