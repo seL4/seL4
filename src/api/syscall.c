@@ -394,9 +394,13 @@ handleRecv(bool_t isBlocking)
 static void
 handleYield(void)
 {
-    tcbSchedDequeue(NODE_STATE(ksCurThread));
-    SCHED_APPEND_CURRENT_TCB;
-    rescheduleRequired();
+    /* checkBudgetRestart should have failed if we got here */
+    assert(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)));
+    /* Yield the current remaining budget */
+    refill_budget_check(NODE_STATE(ksCurSC), REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount);
+    /* we just charged all of the time to the yielding thread */
+    NODE_STATE(ksConsumed) = 0;
+    endTimeslice();
 }
 
 exception_t
@@ -447,8 +451,9 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq_t irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                commitTime(ksCurSC);
-                checkReschedule();
+                if (checkBudget()) {
+                    commitTime();
+                }
                 handleInterrupt(irq);
                 Arch_finaliseInterrupt();
             }

@@ -214,24 +214,29 @@ handleInterrupt(irq_t irq)
 #endif
         }
         maskInterrupt(true, irq);
-        /* Bill the current thread. We know it has enough budget, as otherwise we would be
-         * dealing with a timer interrupt not a signal interrupt */
-        commitTime(ksCurSC);
-        checkReschedule();
+        /* Bill the current thread. */
+        if (unlikely(checkBudget())) {
+            commitTime();
+        }
         break;
     }
 
     case IRQTimer:
         updateTimestamp(false);
         ackDeadlineIRQ();
-        commitTime(ksCurSC);
-        checkBudget();
+        if (likely(checkBudget())) {
+            commitTime();
+        }
+        NODE_STATE(ksReprogram) = true;
         break;
 
 #if CONFIG_MAX_NUM_NODES > 1
     case IRQIPI:
         updateTimestamp(false);
         Arch_handleIPI(irq, true);
+        if (unlikely(checkBudget())) {
+            commitTime();
+        }
         break;
 #endif
 

@@ -48,7 +48,8 @@ static inline bool_t PURE
 isSchedulable(const tcb_t *thread)
 {
     return isRunnable(thread) &&
-           thread->tcbSchedContext != NULL;
+           thread->tcbSchedContext != NULL &&
+           !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
 
 BOOT_CODE void
@@ -92,6 +93,7 @@ suspend(tcb_t *target)
     cancelIPC(target);
     setThreadState(target, ThreadState_Inactive);
     tcbSchedDequeue(target);
+    tcbReleaseRemove(target);
 }
 
 void
@@ -280,10 +282,20 @@ switchSchedContext(void)
 {
     if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext)) {
         NODE_STATE(ksReprogram) = true;
-        commitTime(ksCurSC);
+        commitTime();
+        refill_unblock_check(NODE_STATE(ksCurThread->tcbSchedContext));
+
+        assert(refill_ready(NODE_STATE(ksCurThread->tcbSchedContext)));
+        assert(refill_sufficient(NODE_STATE(ksCurThread->tcbSchedContext), 0));
     } else {
         rollbackTime();
     }
+
+    /* if a thread doesn't have enough budget, it should not be in the scheduler */
+    if (!refill_ready(NODE_STATE(ksCurSC)) || !refill_sufficient(NODE_STATE(ksCurSC), 0)) {
+           assert(!thread_state_get_tcbQueued(NODE_STATE(ksCurSC)->scTcb->tcbState));
+    }
+
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
 }
 
@@ -291,6 +303,10 @@ void
 schedule(void)
 {
     word_t action;
+
+    if (NODE_STATE(ksReprogram)) {
+        awaken();
+    }
 
     action = (word_t)NODE_STATE(ksSchedulerAction);
     if (action == (word_t)SchedulerAction_ChooseNewThread) {
@@ -307,7 +323,8 @@ schedule(void)
             SCHED_ENQUEUE_CURRENT_TCB;
         }
         /* SwitchToThread */
-        assert(NODE_STATE(ksSchedulerAction)->tcbSchedContext->scRemaining > getKernelWcetTicks());
+        assert(refill_sufficient(NODE_STATE(ksSchedulerAction)->tcbSchedContext, 0));
+        assert(refill_ready(NODE_STATE(ksSchedulerAction)->tcbSchedContext));
         switchToThread(NODE_STATE(ksSchedulerAction));
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
@@ -345,7 +362,8 @@ chooseThread(void)
         thread = NODE_STATE(ksReadyQueues[ready_queues_index(dom, prio)]).head;
         assert(thread);
         assert(isSchedulable(thread));
-        assert(thread->tcbSchedContext->scRemaining > getKernelWcetTicks());
+        assert(refill_sufficient(thread->tcbSchedContext, 0));
+        assert(refill_ready(thread->tcbSchedContext));
         switchToThread(thread);
     } else {
         switchToIdleThread();
@@ -356,7 +374,10 @@ void
 switchToThread(tcb_t *thread)
 {
     assert(thread->tcbSchedContext != NULL);
-    assert(thread->tcbSchedContext->scRemaining >= getKernelWcetTicks());
+    assert(!thread_state_get_tcbInReleaseQueue(thread->tcbState));
+    assert(refill_sufficient(thread->tcbSchedContext, 0));
+    assert(refill_ready(thread->tcbSchedContext));
+
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
@@ -410,7 +431,7 @@ setPriority(tcb_t *tptr, prio_t prio)
 static void
 possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
 {
-    if (target->tcbSchedContext != NULL) {
+    if (target->tcbSchedContext != NULL && !thread_state_get_tcbInReleaseQueue(target->tcbState)) {
         dom_t curDom = ksCurDomain;
         prio_t curPrio = NODE_STATE(ksCurThread)->tcbPriority;
         dom_t targetDom = target->tcbDomain;
@@ -420,6 +441,9 @@ possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
         if (targetDom != curDom) {
             SCHED_ENQUEUE(target);
         } else {
+            assert(isRunnable(target));
+            assert(refill_sufficient(target->tcbSchedContext, 0));
+            assert(refill_ready(target->tcbSchedContext));
             if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
                     && action == SchedulerAction_ResumeCurrentThread &&
                     SMP_TERNARY(target->tcbSchedContext->scCore == getCurrentCPUIndex(), true)) {
@@ -464,39 +488,61 @@ scheduleTCB(tcb_t *tptr)
     }
 }
 
-static void
-recharge(sched_context_t *sc)
+void
+postpone(sched_context_t *sc)
 {
-    sc->scRemaining = sc->scBudget;
-    assert(sc->scBudget > 0);
+    tcbSchedDequeue(sc->scTcb);
+    tcbReleaseEnqueue(sc->scTcb);
+    NODE_STATE(ksReprogram) = true;
 }
 
 void
 setNextInterrupt(void)
 {
-    time_t next_thread = NODE_STATE(ksCurTime) + NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining;
+    time_t next_interrupt = NODE_STATE(ksCurTime) +
+                            REFILL_HEAD(NODE_STATE(ksCurThread)->tcbSchedContext).rAmount;
 
     if (CONFIG_NUM_DOMAINS > 1) {
-        time_t next_domain = ksCurTime + ksDomainTime;
-        setDeadline(MIN(next_thread, next_domain) - getTimerPrecision());
-    } else {
-        setDeadline(next_thread - getTimerPrecision());
+        next_interrupt = MIN(next_interrupt, NODE_STATE(ksCurTime) + ksDomainTime);
     }
+
+    if (NODE_STATE(ksReleaseHead) != NULL) {
+        next_interrupt = MIN(REFILL_HEAD(NODE_STATE(ksReleaseHead)->tcbSchedContext).rTime, next_interrupt);
+    }
+
+    setDeadline(next_interrupt - getTimerPrecision());
 }
 
 bool_t
 checkBudget(void) {
-    if (unlikely(isCurThreadExpired())) {
-        commitTime(ksCurSC);
-        endTimeslice();
-        return false;
-    } else if (unlikely(isCurDomainExpired())) {
-        commitTime(ksCurSC);
-        rescheduleRequired();
-        return false;
-    } else {
+    /* currently running thread must have available capacity */
+    assert(refill_ready(NODE_STATE(ksCurSC)));
+
+    if (unlikely(NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread))) {
         return true;
     }
+
+    ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+    if (unlikely(capacity < MIN_BUDGET)) {
+        if (capacity == 0) {
+            NODE_STATE(ksConsumed) = refill_budget_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        }
+        if (NODE_STATE(ksConsumed) > 0) {
+            refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        }
+        NODE_STATE(ksConsumed) = 0;
+        NODE_STATE(ksCurTime) += 1llu;
+        if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
+            endTimeslice();
+            rescheduleRequired();
+        }
+        return false;
+    } else if (unlikely(isCurDomainExpired())) {
+        commitTime();
+        rescheduleRequired();
+        return false;
+    }
+    return true;
 }
 
 bool_t
@@ -513,10 +559,15 @@ checkBudgetRestart(void)
 void
 endTimeslice(void)
 {
-    recharge(NODE_STATE(ksCurThread)->tcbSchedContext);
-    if (likely(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
-               ThreadState_Running)) {
+    assert(isRunnable(NODE_STATE(ksCurSC->scTcb)));
+    if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
+        /* apply round robin */
+        assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
+        assert(!thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState));
         SCHED_APPEND_CURRENT_TCB;
+    } else {
+        /* postpone until ready */
+        postpone(NODE_STATE(ksCurSC));
     }
     rescheduleRequired();
 }
@@ -527,6 +578,8 @@ rescheduleRequired(void)
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread
             && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread &&
             isSchedulable(NODE_STATE(ksSchedulerAction))) {
+        assert(refill_sufficient(NODE_STATE(ksSchedulerAction)->tcbSchedContext, 0));
+        assert(refill_ready(NODE_STATE(ksSchedulerAction)->tcbSchedContext));
         SCHED_ENQUEUE(NODE_STATE(ksSchedulerAction));
     }
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
@@ -536,12 +589,16 @@ rescheduleRequired(void)
 void
 awaken(void)
 {
-    while (NODE_STATE(ksReleaseHead) != NULL &&
-           isReady(NODE_STATE(ksReleaseHead)->tcbSchedContext)) {
-           tcb_t *awakened = tcbReleaseDequeue();
-           SMP_COND_STATEMENT(assert(awakened->tcbAffinity == getCurrentCPUIndex()));
-           recharge(awakened->tcbSchedContext);
-           tcbSchedAppend(awakened);
-           switchIfRequiredTo(awakened);
+    while (NODE_STATE(ksReleaseHead) != NULL && refill_ready(NODE_STATE(ksReleaseHead)->tcbSchedContext)) {
+        tcb_t *awakened = tcbReleaseDequeue();
+        SMP_COND_STATEMENT(assert(awakened->tcbAffinity == getCurrentCPUIndex()));
+        refill_unblock_check(awakened->tcbSchedContext);
+        if (unlikely(!refill_ready(awakened->tcbSchedContext))) {
+            tcbReleaseEnqueue(awakened);
+        } else {
+            assert(refill_sufficient(awakened->tcbSchedContext, 0));
+            tcbSchedAppend(awakened);
+            switchIfRequiredTo(awakened);
+        }
     }
 }

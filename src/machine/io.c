@@ -270,9 +270,9 @@ vprintf(const char *format, va_list ap)
      *
      * The caveat is that the current thread gets billed for all of the printf()s.
      */
-    if (NODE_STATE(ksCurThread)) {
-        updateTimestamp(true);
-    }
+//    if (NODE_STATE(ksCurThread)) {
+//        updateTimestamp(true);
+//    }
     return n;
 }
 

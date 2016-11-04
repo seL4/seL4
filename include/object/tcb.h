@@ -50,6 +50,10 @@ void tcbSchedEnqueue(tcb_t *tcb);
 void tcbSchedAppend(tcb_t *tcb);
 void tcbSchedDequeue(tcb_t *tcb);
 
+void tcbReleaseRemove(tcb_t *tcb);
+void tcbReleaseEnqueue(tcb_t *tcb);
+tcb_t *tcbReleaseDequeue(void);
+
 #if CONFIG_MAX_NUM_NODES > 1
 void remoteQueueUpdate(tcb_t *tcb);
 void remoteTCBStall(tcb_t *tcb);

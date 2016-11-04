@@ -15,6 +15,7 @@
 #include <util.h>
 #include <object/structures.h>
 #include <arch/machine.h>
+#include <kernel/sporadic.h>
 #include <machine/timer.h>
 #include <mode/machine.h>
 
@@ -58,30 +59,23 @@ isRunnable(const tcb_t *thread)
 }
 
 static inline bool_t
-isCurThreadExpired(void)
-{
-    return NODE_STATE(ksCurThread)->tcbSchedContext->scRemaining <
-           (NODE_STATE(ksConsumed) + getKernelWcetTicks());
-}
-
-static inline bool_t
 isCurDomainExpired(void)
 {
     return CONFIG_NUM_DOMAINS > 1 &&
-           NODE_STATE(ksDomainTime) < (NODE_STATE(ksConsumed) + getKernelWcetTicks());
+           ksDomainTime < (NODE_STATE(ksConsumed) + getKernelWcetTicks());
 }
 
 static inline void
-commitTime(sched_context_t *sc)
+commitTime(void)
 {
-    assert(sc->scCore == SMP_TERNARY(getCurrentCPUIndex(), 0));
-    if (unlikely(sc->scRemaining < NODE_STATE(ksConsumed))) {
-        /* avoid underflow */
-        sc->scRemaining = 0;
-    } else {
-        sc->scRemaining -= NODE_STATE(ksConsumed);
-    }
 
+    if (likely(NODE_STATE(ksConsumed) > 0 && (NODE_STATE(ksCurThread) != NODE_STATE(ksIdleThread)))) {
+        assert(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)));
+        assert(refill_ready(NODE_STATE(ksCurSC)));
+        refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
+        assert(refill_ready(NODE_STATE(ksCurSC)));
+    }
     if (CONFIG_NUM_DOMAINS > 1) {
         if (unlikely(ksDomainTime < NODE_STATE(ksConsumed))) {
             ksDomainTime = 0;
@@ -190,14 +184,10 @@ void setNextInterrupt(void);
  */
 void endTimeslice(void);
 
-static inline void
-checkReschedule(void)
-{
-    if (isCurThreadExpired()) {
-        endTimeslice();
-    } else if (isCurDomainExpired()) {
-        rescheduleRequired();
-    }
-}
+/* Wake any periodic threads that are ready for budget recharge */
+void awaken(void);
+/* Place the thread bound to this scheduling context in the release queue
+ * of periodic threads waiting for budget recharge */
+void postpone(sched_context_t *sc);
 
 #endif

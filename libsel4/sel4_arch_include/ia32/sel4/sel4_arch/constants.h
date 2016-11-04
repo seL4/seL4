@@ -48,7 +48,7 @@
 #define seL4_ASIDPoolBits    12
 #define seL4_ASIDPoolIndexBits 10
 #define seL4_WordSizeBits 2
-#define seL4_SchedContextBits 5
+#define seL4_SchedContextBits 8
 
 #define seL4_HugePageBits    30 /* 1GB */
 #define seL4_PDPTBits         0

@@ -382,10 +382,9 @@ create_sched_context(tcb_t *tcb, ticks_t timeslice)
 
     memzero((void *) sc_pptr, BIT(seL4_SchedContextBits));
     tcb->tcbSchedContext = SC_PTR(sc_pptr);
-    tcb->tcbSchedContext->scBudget = timeslice;
-    tcb->tcbSchedContext->scRemaining = timeslice;
-    tcb->tcbSchedContext->scTcb = tcb;
+    refill_new(tcb->tcbSchedContext, 2, timeslice, 0);
 
+    tcb->tcbSchedContext->scTcb = tcb;
     return true;
 }
 
@@ -508,6 +507,7 @@ create_initial_thread(
 
     NODE_STATE(ksConsumed) = 0;
     NODE_STATE(ksReprogram) = true;
+    NODE_STATE(ksReleaseHead) = NULL;
 
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
