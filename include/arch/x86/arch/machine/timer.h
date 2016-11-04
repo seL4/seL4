@@ -56,7 +56,7 @@ getCurrentTime(void)
 static inline void
 setDeadline(ticks_t deadline)
 {
-    assert(deadline > ksCurTime);
+    assert(deadline > NODE_STATE(ksCurTime));
     x86_wrmsr(IA32_TSC_DEADLINE_MSR, deadline);
 }
 
