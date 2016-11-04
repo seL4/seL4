@@ -102,6 +102,9 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             }
         }
 
+        /* blocked threads should have enough budget to get out of the kernel */
+        assert(dest->tcbSchedContext == NULL || refill_sufficient(dest->tcbSchedContext, 0));
+        assert(dest->tcbSchedContext == NULL || refill_ready(dest->tcbSchedContext));
         break;
     }
     }
@@ -191,6 +194,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             } else {
                 setThreadState(sender, ThreadState_Running);
                 possibleSwitchTo(sender);
+                assert(sender->tcbSchedContext == NULL || refill_sufficient(sender->tcbSchedContext, 0));
             }
 
             break;

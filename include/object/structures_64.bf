@@ -296,14 +296,15 @@ block DebugException {
 -- Thread state: size = 8 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingIPCDiminishCaps, tsType,
-                   blockingObject) {
+                   tcbInReleaseQueue, blockingObject) {
     field blockingIPCBadge 64
 
-    padding 60
+    padding 59
     field blockingIPCCanGrant 1
     field blockingIPCIsCall 1
     field blockingIPCDiminishCaps 1
     field tcbQueued 1
+    field tcbInReleaseQueue 1
 
     padding 16
     field_high blockingObject 44
