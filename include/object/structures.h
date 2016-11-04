@@ -275,18 +275,35 @@ struct tcb {
 };
 typedef struct tcb tcb_t;
 
+typedef struct refill {
+    /* Absolute timestamp from when this refill can be used */
+    ticks_t rTime;
+    /* Amount of ticks that can be used from this refill */
+    ticks_t rAmount;
+} refill_t;
+
+#define MIN_REFILLS 2u
+#define MAX_REFILLS 12u
+
 struct sched_context {
-    /* budget for this sc -- remaining is refilled from this value */
-    ticks_t scBudget;
+    /* period for this sc -- controls rate at which budget is replenished */
+    ticks_t scPeriod;
 
     /* core this scheduling context provides time for - 0 if uniprocessor */
     word_t scCore;
 
-    /* current budget for this tcb (timeslice) -- refilled from budget */
-    ticks_t scRemaining;
-
     /* thread that this scheduling context is bound to */
     tcb_t *scTcb;
+
+    /* Amount of refills this sc tracks */
+    word_t scRefillMax;
+    /* Index of the head of the refill circular buffer */
+    word_t scRefillHead;
+    /* Index of the tail of the refill circular buffer */
+    word_t scRefillTail;
+
+    /* circular buffer of budget refills, ordered by rAmount */
+    refill_t scRefills[MAX_REFILLS];
 };
 
 /* Ensure object sizes are sane */

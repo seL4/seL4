@@ -55,6 +55,9 @@ void tcbSchedDequeue(tcb_t *tcb);
 void tcbDebugAppend(tcb_t *tcb);
 void tcbDebugRemove(tcb_t *tcb);
 #endif
+void tcbReleaseRemove(tcb_t *tcb);
+void tcbReleaseEnqueue(tcb_t *tcb);
+tcb_t *tcbReleaseDequeue(void);
 
 #ifdef ENABLE_SMP_SUPPORT
 void remoteQueueUpdate(tcb_t *tcb);

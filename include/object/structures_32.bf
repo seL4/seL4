@@ -286,16 +286,17 @@ block DebugException {
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingObject,
-                   tsType) {
+                   tcbInReleaseQueue, tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
     field blockingIPCIsCall 1
     padding 2
 
     -- this is fastpath-specific. it is useful to be able to write
-    -- tsType and without changing tcbQueued
-    padding 31
+    -- tsType and without changing tcbQueued or tcbInReleaseQueue
+    padding 30
     field tcbQueued 1
+    field tcbInReleaseQueue 1
 
     field_high blockingObject 28
     field tsType 4
