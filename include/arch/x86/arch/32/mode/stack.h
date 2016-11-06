@@ -14,6 +14,7 @@
 #define __ARCH_MODE_STACK_H_
 
 #include <config.h>
+#include <mode/model/smp.h>
 #include <mode/machine.h>
 
 /** Hardware stack switching on exception/IRQ entry.

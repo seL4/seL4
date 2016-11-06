@@ -17,6 +17,7 @@
 #include <arch/types.h>
 #include <arch/model/statedata.h>
 #include <model/statedata.h>
+#include <mode/model/smp.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
@@ -39,6 +40,16 @@ extern cpu_id_mapping_t cpu_mapping;
 #define MODE_NODE_STATE_ON_CORE(_state, _core)  ksSMP[(_core)].cpu.mode._state
 #define ARCH_NODE_STATE_ON_CORE(_state, _core)  ksSMP[(_core)].cpu._state
 #define NODE_STATE_ON_CORE(_state, _core)       ksSMP[(_core)].system._state
+
+static inline cpu_id_t cpuIndexToID(word_t index)
+{
+    return cpu_mapping.index_to_cpu_id[index];
+}
+
+static inline PURE word_t getCurrentCPUID(void)
+{
+    return cpu_mapping.index_to_cpu_id[getCurrentCPUIndex()];
+}
 
 #else
 
