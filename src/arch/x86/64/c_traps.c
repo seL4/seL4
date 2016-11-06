@@ -35,16 +35,16 @@ void VISIBLE NORETURN restore_user_context(void)
     }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    restore_user_debug_context(ksCurThread);
+    restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
     // Check if we are returning from a syscall/sysenter or from an interrupt
     // There is a special case where if we would be returning from a sysenter,
     // but are current singlestepping, do a full return like an interrupt
-    if (likely(ksCurThread->tcbArch.tcbContext.registers[Error] == -1) &&
-            (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((ksCurThread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
+    if (likely(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1) &&
+            (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
         if (config_set(CONFIG_SYSENTER)) {
-            ksCurThread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
+            NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
             asm volatile(
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
                 "movq %0, %%rsp\n"
@@ -84,7 +84,7 @@ void VISIBLE NORETURN restore_user_context(void)
                  * */
                 "rex.w sysexit\n"
                 :
-                : "r"(&ksCurThread->tcbArch.tcbContext.registers[RDI]),
+                : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RDI]),
                 [IF] "i" (FLAGS_IF)
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
@@ -117,7 +117,7 @@ void VISIBLE NORETURN restore_user_context(void)
                 // enable interrupt disabled by sysenter
                 "rex.w sysret\n"
                 :
-                : "r"(&ksCurThread->tcbArch.tcbContext.registers[RDI])
+                : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RDI])
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
                 : "memory"
@@ -125,11 +125,11 @@ void VISIBLE NORETURN restore_user_context(void)
         }
     } else {
         /* construct our return from interrupt frame */
-        irq_stack[1] = getRegister(ksCurThread, NextIP);
-        irq_stack[2] = getRegister(ksCurThread, CS);
-        irq_stack[3] = getRegister(ksCurThread, FLAGS);
-        irq_stack[4] = getRegister(ksCurThread, RSP);
-        irq_stack[5] = getRegister(ksCurThread, SS);
+        irq_stack[1] = getRegister(NODE_STATE(ksCurThread), NextIP);
+        irq_stack[2] = getRegister(NODE_STATE(ksCurThread), CS);
+        irq_stack[3] = getRegister(NODE_STATE(ksCurThread), FLAGS);
+        irq_stack[4] = getRegister(NODE_STATE(ksCurThread), RSP);
+        irq_stack[5] = getRegister(NODE_STATE(ksCurThread), SS);
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movq %0, %%rsp\n"
@@ -153,7 +153,7 @@ void VISIBLE NORETURN restore_user_context(void)
             "leaq irq_stack + 8, %%rsp\n"
             "iretq\n"
             :
-            : "r"(&ksCurThread->tcbArch.tcbContext.registers[RDI])
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RDI])
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -165,11 +165,11 @@ void VISIBLE NORETURN restore_user_context(void)
 void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall);
 void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall)
 {
-    setRegister(ksCurThread, Error, irq_stack[0]);
-    setRegister(ksCurThread, NextIP, irq_stack[1]);
-    setRegister(ksCurThread, FaultIP, irq_stack[1]);
-    setRegister(ksCurThread, FLAGS, irq_stack[3]);
-    setRegister(ksCurThread, RSP, irq_stack[4]);
+    setRegister(NODE_STATE(ksCurThread), Error, irq_stack[0]);
+    setRegister(NODE_STATE(ksCurThread), NextIP, irq_stack[1]);
+    setRegister(NODE_STATE(ksCurThread), FaultIP, irq_stack[1]);
+    setRegister(NODE_STATE(ksCurThread), FLAGS, irq_stack[3]);
+    setRegister(NODE_STATE(ksCurThread), RSP, irq_stack[4]);
     c_handle_interrupt(irq, syscall);
     UNREACHABLE();
 }

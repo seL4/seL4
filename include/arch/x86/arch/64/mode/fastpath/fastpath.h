@@ -39,7 +39,7 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     base = thread->tcbIPCBuffer;
     x86_write_gs_base(base);
 
-    ksCurThread = thread;
+    NODE_STATE(ksCurThread) = thread;
 }
 
 static inline void
@@ -95,7 +95,7 @@ fastpath_mi_check(word_t msgInfo)
 static inline void NORETURN
 fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
-    if (config_set(CONFIG_SYSENTER) && config_set(CONFIG_HARDWARE_DEBUG_API) && ((getRegister(ksCurThread, FLAGS) & FLAGS_TF) != 0)) {
+    if (config_set(CONFIG_SYSENTER) && config_set(CONFIG_HARDWARE_DEBUG_API) && ((getRegister(NODE_STATE(ksCurThread), FLAGS) & FLAGS_TF) != 0)) {
         /* If single stepping using sysenter we need to do a return using iret to avoid
          * a race condition in restoring the flags (which enables stepping and interrupts) and
          * calling sysexit. This case is handled in restore_user_context so we just go there
@@ -106,7 +106,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     if (unlikely(nativeThreadUsingFPU(cur_thread))) {
         /* We are using the FPU, make sure it is enabled */
         enableFpu();
-    } else if (unlikely(x86KSActiveFPUState)) {
+    } else if (unlikely(ARCH_NODE_STATE(x86KSActiveFPUState))) {
         /* Someone is using the FPU and it might be enabled */
         disableFpu();
     } else {
@@ -115,7 +115,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    restore_user_debug_context(ksCurThread);
+    restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
     if (config_set(CONFIG_SYSENTER)) {
@@ -182,7 +182,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             // enable interrupt disabled by sysenter
             "rex.w sysret\n"
             :
-            : "r"(&ksCurThread->tcbArch.tcbContext.registers[RAX]),
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RAX]),
             "D" (badge),
             "S" (msgInfo)
             : "memory"

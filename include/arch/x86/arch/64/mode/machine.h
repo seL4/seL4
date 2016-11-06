@@ -21,7 +21,7 @@
 /* Address space control */
 static inline cr3_t getCurrentCR3(void)
 {
-    return x64KSCurrentCR3;
+    return MODE_NODE_STATE(x64KSCurrentCR3);
 }
 
 static inline paddr_t getCurrentVSpaceRoot(void)
@@ -31,7 +31,7 @@ static inline paddr_t getCurrentVSpaceRoot(void)
 
 static inline void setCurrentCR3(cr3_t cr3, word_t preserve_translation)
 {
-    x64KSCurrentCR3 = cr3;
+    MODE_NODE_STATE(x64KSCurrentCR3) = cr3;
     if (config_set(CONFIG_SUPPORT_PCID)) {
         write_cr3(cr3.words[0]  | (preserve_translation ? BIT(63) : 0));
     } else {

@@ -279,7 +279,7 @@ init_tss(tss_t *tss)
         0, 0        /* rsp 0 */
     );
     /* set the IO map to all 1 to block user IN/OUT instructions */
-    memset(&x86KStss.io_map[0], 0xff, sizeof(x86KStss.io_map));
+    memset(&ARCH_NODE_STATE(x86KStss).io_map[0], 0xff, sizeof(ARCH_NODE_STATE(x86KStss).io_map));
 }
 
 BOOT_CODE void
@@ -461,11 +461,11 @@ BOOT_CODE void
 init_dtrs(void)
 {
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
-    gdt_idt_ptr.base = (uint64_t)x86KSgdt;
+    gdt_idt_ptr.base = (uint64_t)ARCH_NODE_STATE(x86KSgdt);
     x64_install_gdt(&gdt_idt_ptr);
 
     gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1 )) - 1;
-    gdt_idt_ptr.base = (uint64_t)x86KSidt;
+    gdt_idt_ptr.base = (uint64_t)ARCH_NODE_STATE(x86KSidt);
     x64_install_idt(&gdt_idt_ptr);
 
     x64_install_ldt(SEL_NULL);
@@ -1128,7 +1128,7 @@ decodeX64PageDirectoryInvocation(
             userError("X86PageDirectory: Cannot unmap if more than one cap exist.");
             return EXCEPTION_SYSCALL_ERROR;
         }
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 
         return performX64PageDirectoryInvocationUnmap(cap, cte);
     }
@@ -1208,7 +1208,7 @@ decodeX64PageDirectoryInvocation(
     cap = cap_page_directory_cap_set_capPDMappedASID(cap, asid);
     cap = cap_page_directory_cap_set_capPDMappedAddress(cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performX64PageDirectoryInvocationMap(cap, cte, pdpte, pdptSlot.pdptSlot, vspace);
 }
 
@@ -1299,7 +1299,7 @@ decodeX64PDPTInvocation(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 
         return performX64PDPTInvocationUnmap(cap, cte);
     }
@@ -1376,7 +1376,7 @@ decodeX64PDPTInvocation(
     cap = cap_pdpt_cap_set_capPDPTMappedASID(cap, asid);
     cap = cap_pdpt_cap_set_capPDPTMappedAddress(cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performX64PDPTInvocationMap(cap, cte, pml4e, pml4Slot.pml4Slot, vspace);
 }
 
@@ -1477,7 +1477,7 @@ decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, ca
             }
 
             pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX64ModeMapRemapPage(cap, cte, pdpte, pdptSlot, vroot);
         }
 
@@ -1490,7 +1490,7 @@ decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, ca
             }
 
             pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX64ModeMapRemapPage(cap, cte, pdpte, pdptSlot, vroot);
         }
 
