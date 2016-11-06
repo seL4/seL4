@@ -81,22 +81,6 @@ char kernel_stack_alloc[4096];
 BOOT_DATA
 cmdline_opt_t cmdline_opt;
 
-#ifdef CONFIG_PRINTING
-
-/* Determine whether we are in bootstrapping phase or runtime phase.
- * Is currently only needed to determine console port in debug mode.
- */
-bool_t
-in_boot_phase()
-{
-    paddr_t esp = pptr_to_paddr(get_current_esp());
-
-    return (esp <= BOOT_NODE_PADDR ||
-            (esp <= (paddr_t)boot_stack_top && esp > (paddr_t)boot_stack_bottom));
-}
-
-#endif
-
 /* check the module occupies in a contiguous physical memory region */
 BOOT_CODE static bool_t
 module_paddr_region_valid(paddr_t pa_start, paddr_t pa_end)

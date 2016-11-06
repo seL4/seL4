@@ -13,8 +13,6 @@
 
 #include <arch/kernel/multiboot.h>
 
-bool_t in_boot_phase(void);
-
 void boot_sys(
     unsigned long multiboot_magic,
     multiboot_info_t* mbi
