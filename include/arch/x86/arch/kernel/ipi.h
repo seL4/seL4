@@ -24,16 +24,12 @@ void Arch_handleIPI(irq_t irq);
 
 typedef enum {
     IpiRemoteCall_Stall,
-
-    IpiRemoteCall_InvalidateTLBEntry,
-    IpiRemoteCall_InvalidatePageStructureCache,
     IpiRemoteCall_InvalidatePageStructureCacheASID,
-    IpiRemoteCall_InvalidateTLB,
     IpiRemoteCall_InvalidateTranslationSingle,
     IpiRemoteCall_InvalidateTranslationSingleASID,
     IpiRemoteCall_InvalidateTranslationAll,
-
-    IpiRemoteCall_switchFpuOwner
+    IpiRemoteCall_switchFpuOwner,
+    IpiNumArchRemoteCall
 } IpiRemoteCall_t;
 
 /*
@@ -134,6 +130,7 @@ static void inline doRemoteswitchFpuOwner(user_fpu_state_t *new_owner, word_t cp
 {
     doRemoteOp1Arg(IpiRemoteCall_switchFpuOwner, (word_t)new_owner, cpu);
 }
+
 
 #endif /* CONFIG_MAX_NUM_NODES */
 #endif /* __ARCH_KERNEL_IPI_H */

@@ -11,6 +11,7 @@
  */
 
 #include <config.h>
+#include <mode/kernel/ipi.h>
 #include <arch/kernel/ipi.h>
 #include <arch/kernel/lock.h>
 #include <model/smp.h>
@@ -25,7 +26,7 @@ static volatile struct {
 } ipiSyncBarrier = {0};                  /* IPI barrier for remote call synchronization */
 
 static volatile word_t totalCoreBarrier; /* number of cores involved in IPI 'in progress' */
-static IpiRemoteCall_t remoteCall;       /* the remote call being requested */
+static IpiModeRemoteCall_t remoteCall;   /* the remote call being requested */
 static word_t ipi_args[MAX_IPI_ARGS];    /* data to be passed to the remote call function */
 
 static inline word_t get_ipi_arg(word_t n)
@@ -77,7 +78,7 @@ static void ipiStallCoreCallback(void)
             if (clh_is_ipi_pending(getCurrentCPUIndex())) {
 
                 /* Multiple calls for similar reason could result in stack overflow */
-                assert(remoteCall != IpiRemoteCall_Stall);
+                assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
                 Arch_handleIPI(irq_remote_call_ipi);
             }
             asm volatile("pause");
@@ -97,38 +98,26 @@ static void ipiStallCoreCallback(void)
     }
 }
 
-static void handleRemoteCall(void)
+static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1)
 {
     /* we gets spurious irq_remote_call_ipi calls, e.g. when handling IPI
      * in lock while hardware IPI is pending. Guard against spurious IPIs! */
     if (clh_is_ipi_pending(getCurrentCPUIndex())) {
-        switch (remoteCall) {
+        switch ((IpiRemoteCall_t)call) {
         case IpiRemoteCall_Stall:
             ipiStallCoreCallback();
             break;
 
-        case IpiRemoteCall_InvalidateTLBEntry:
-            invalidateLocalTLBEntry(get_ipi_arg(0));
-            break;
-
-        case IpiRemoteCall_InvalidatePageStructureCache:
-            invalidateLocalPageStructureCache();
-            break;
-
         case IpiRemoteCall_InvalidatePageStructureCacheASID:
-            invalidateLocalPageStructureCacheASID(get_ipi_arg(0), get_ipi_arg(1));
-            break;
-
-        case IpiRemoteCall_InvalidateTLB:
-            invalidateLocalTLB();
+            invalidateLocalPageStructureCacheASID(arg0, arg1);
             break;
 
         case IpiRemoteCall_InvalidateTranslationSingle:
-            invalidateLocalTranslationSingle(get_ipi_arg(0));
+            invalidateLocalTranslationSingle(arg0);
             break;
 
         case IpiRemoteCall_InvalidateTranslationSingleASID:
-            invalidateLocalTranslationSingleASID(get_ipi_arg(0), get_ipi_arg(1));
+            invalidateLocalTranslationSingleASID(arg0, arg1);
             break;
 
         case IpiRemoteCall_InvalidateTranslationAll:
@@ -136,11 +125,12 @@ static void handleRemoteCall(void)
             break;
 
         case IpiRemoteCall_switchFpuOwner:
-            switchLocalFpuOwner((user_fpu_state_t *)get_ipi_arg(0));
+            switchLocalFpuOwner((user_fpu_state_t *)arg0);
             break;
 
         default:
-            fail("Invalid remote call");
+            Mode_handleRemoteCall(call, arg0, arg1);
+            break;
         }
 
         big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
@@ -156,7 +146,7 @@ static void handleReschedule(void)
 void Arch_handleIPI(irq_t irq)
 {
     if (irq == irq_remote_call_ipi) {
-        handleRemoteCall();
+        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1));
     } else if (irq == irq_reschedule_ipi) {
         handleReschedule();
     } else {
