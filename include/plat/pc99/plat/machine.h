@@ -28,15 +28,15 @@ typedef enum _interrupt_t {
     int_irq_isa_min             = IRQ_INT_OFFSET, /* Beginning of PIC IRQs */
     int_irq_isa_max             = IRQ_INT_OFFSET + PIC_IRQ_LINES - 1, /* End of PIC IRQs */
     int_irq_user_min            = IRQ_INT_OFFSET + PIC_IRQ_LINES, /* First user available vector */
-    int_irq_user_max            = 157,
-    int_iommu                   = 158,
-    int_timer                   = 159,
+    int_irq_user_max            = 155,
+    int_iommu                   = 156,
+    int_timer                   = 157,
 #if CONFIG_MAX_NUM_NODES > 1
-    int_remote_call_ipi         = 160,
-    int_reschedule_ipi          = 161,
-    int_irq_max                 = 161, /* int_reschedule_ipi is the max irq */
+    int_remote_call_ipi         = 158,
+    int_reschedule_ipi          = 159,
+    int_irq_max                 = 159, /* int_reschedule_ipi is the max irq */
 #else
-    int_irq_max                 = 159, /* int_timer is the max irq */
+    int_irq_max                 = 157, /* int_timer is the max irq */
 #endif
     int_trap_min,
     int_trap_max                = 254,
