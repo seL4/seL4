@@ -14,6 +14,17 @@
 #include <types.h>
 #include <object/structures.h>
 
+static inline tcb_queue_t PURE
+ep_ptr_get_queue(endpoint_t *epptr)
+{
+    tcb_queue_t queue;
+
+    queue.head = (tcb_t*)endpoint_ptr_get_epQueue_head(epptr);
+    queue.end = (tcb_t*)endpoint_ptr_get_epQueue_tail(epptr);
+
+    return queue;
+}
+
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
              bool_t canGrant, tcb_t *thread, endpoint_t *epptr);
 void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking);
@@ -22,5 +33,5 @@ void cancelAllIPC(endpoint_t *epptr);
 void cancelBadgedSends(endpoint_t *epptr, word_t badge);
 void replyFromKernel_error(tcb_t *thread);
 void replyFromKernel_success_empty(tcb_t *thread);
-
+void reorderEP(endpoint_t *epptr, tcb_t *thread);
 #endif
