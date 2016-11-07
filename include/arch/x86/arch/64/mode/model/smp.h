@@ -28,8 +28,8 @@ static inline PURE cpu_id_t getCurrentCPUIndex(void)
 {
     cpu_id_t index;
     asm volatile("movq %%gs:%c[offset], %[result]"
-        : [result] "=r" (index)
-        : [offset] "i" (OFFSETOF(nodeInfo_t, index)));
+                 : [result] "=r" (index)
+                 : [offset] "i" (OFFSETOF(nodeInfo_t, index)));
     return index;
 }
 
