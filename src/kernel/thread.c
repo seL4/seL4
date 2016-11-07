@@ -420,11 +420,26 @@ setPriority(tcb_t *tptr, prio_t prio)
 {
     tcbSchedDequeue(tptr);
     tptr->tcbPriority = prio;
-    if (isSchedulable(tptr)) {
-        SCHED_ENQUEUE(tptr);
-    }
-    if (tptr == NODE_STATE(ksCurThread)) {
-        rescheduleRequired();
+
+    switch (thread_state_get_tsType(tptr->tcbState)) {
+    case ThreadState_Running:
+    case ThreadState_Restart:
+        if (isSchedulable(tptr)) {
+            SCHED_ENQUEUE(tptr);
+            if (tptr == NODE_STATE(ksCurThread)) {
+                rescheduleRequired();
+            }
+        }
+        break;
+    case ThreadState_BlockedOnReceive:
+    case ThreadState_BlockedOnSend:
+        reorderEP(EP_PTR(thread_state_get_blockingObject(tptr->tcbState)), tptr);
+        break;
+    case ThreadState_BlockedOnNotification:
+        reorderNTFN(NTFN_PTR(thread_state_get_blockingObject(tptr->tcbState)), tptr);
+        break;
+    default:
+        break;
     }
 }
 

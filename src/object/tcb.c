@@ -179,18 +179,36 @@ tcbSchedDequeue(tcb_t *tcb)
     }
 }
 
-/* Add TCB to the end of an endpoint queue */
+/* Add TCB into the priority ordered endpoint queue */
 tcb_queue_t
 tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)
 {
-    if (!queue.head) { /* Empty list */
+    /* start at the back of the queue as FIFO is the common case */
+    tcb_t *before = queue.end;
+    tcb_t *after = NULL;
+
+    /* find a place to put the tcb */
+    while (before != NULL && tcb->tcbPriority > before->tcbPriority) {
+        after = before;
+        before = after->tcbEPPrev;
+    }
+
+    if (before == NULL) {
+        /* insert at head */
         queue.head = tcb;
     } else {
-        queue.end->tcbEPNext = tcb;
+        before->tcbEPNext = tcb;
     }
-    tcb->tcbEPPrev = queue.end;
-    tcb->tcbEPNext = NULL;
-    queue.end = tcb;
+
+    if (after == NULL) {
+        /* insert at tail */
+        queue.end = tcb;
+    } else {
+        after->tcbEPPrev = tcb;
+    }
+
+    tcb->tcbEPNext = after;
+    tcb->tcbEPPrev = before;
 
     return queue;
 }

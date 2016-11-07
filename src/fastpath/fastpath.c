@@ -327,14 +327,10 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(NODE_STATE(ksCurThread)),
                                              EPState_Recv);
     } else {
-        /* Append current thread onto the queue. */
-        endpointTail->tcbEPNext = NODE_STATE(ksCurThread);
-        NODE_STATE(ksCurThread)->tcbEPPrev = endpointTail;
-        NODE_STATE(ksCurThread)->tcbEPNext = NULL;
-
-        /* Update tail of queue. */
-        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(NODE_STATE(ksCurThread)),
-                                             EPState_Recv);
+        /* Update queue. */
+        tcb_queue_t queue = tcbEPAppend(NODE_STATE(ksCurThread), ep_ptr_get_queue(ep_ptr));
+        endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(queue.head));
+        endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(queue.end), EPState_Recv);
     }
 
     /* Delete the reply cap. */

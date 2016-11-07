@@ -22,5 +22,6 @@ void completeSignal(notification_t *ntfnPtr, tcb_t *tcb);
 void unbindMaybeNotification(notification_t *ntfnPtr);
 void unbindNotification(tcb_t *tcb);
 void bindNotification(tcb_t *tcb, notification_t *ntfnPtr);
+void reorderNTFN(notification_t *notification, tcb_t *thread);
 
 #endif

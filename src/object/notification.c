@@ -253,3 +253,11 @@ bindNotification(tcb_t *tcb, notification_t *ntfnPtr)
     tcb->tcbBoundNotification = ntfnPtr;
 }
 
+void
+reorderNTFN(notification_t *ntfnPtr, tcb_t *thread)
+{
+    tcb_queue_t queue = ntfn_ptr_get_queue(ntfnPtr);
+    queue = tcbEPDequeue(thread, queue);
+    queue = tcbEPAppend(thread, queue);
+    ntfn_ptr_set_queue(ntfnPtr, queue);
+}
