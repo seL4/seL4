@@ -394,8 +394,6 @@ setPriority(tcb_t *tptr, prio_t prio)
     tptr->tcbPriority = prio;
     if (isRunnable(tptr)) {
         SCHED_ENQUEUE(tptr);
-    }
-    if (tptr == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
     }
 }
