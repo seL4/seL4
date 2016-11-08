@@ -29,7 +29,7 @@
 /* Total number of usable bits in TLBbitmap */
 #define TLBBITMAP_PD_BITS               (TLBBITMAP_ENTRIES_PER_PD * TLBBITMAP_PD_ENTRIES)
 
-#define TLBBITMAP_PD_MAKE_INDEX(_cpu)   ((_cpu) / (wordBits - 1))
+#define TLBBITMAP_PD_MAKE_INDEX(_cpu)   (TLBBITMAP_PD_INDEX + ((_cpu) / (wordBits - 1)))
 #define TLBBITMAP_PD_MAKE_BIT(_cpu)     BIT(((_cpu) % (wordBits - 1)) + 1)
 
 static inline void
@@ -60,12 +60,11 @@ tlb_bitmap_get(pde_t *pd)
     word_t bitmap = 0;
 
     for (int i = 0; i < TLBBITMAP_PD_ENTRIES; i++) {
-        word_t entry = pd[TLBBITMAP_PD_INDEX].words[0];
+        word_t entry = pd[TLBBITMAP_PD_INDEX + i].words[0];
         // skip present bit
         entry >>= 1;
 
         int shift = i * TLBBITMAP_ENTRIES_PER_PD;
-        assert((entry & MASK(shift)) == entry);
         bitmap |= entry << shift;
     }
     return bitmap;
