@@ -13,7 +13,6 @@ INCLUDE_DIRS += ${SOURCE_ROOT}/include/arch/arm/armv/${ARMV}
 include ${SOURCE_ROOT}/src/arch/arm/api/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/object/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/kernel/Makefile
-include ${SOURCE_ROOT}/src/arch/arm/model/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/machine/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/benchmark/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/armv/$(ARMV)/Makefile
