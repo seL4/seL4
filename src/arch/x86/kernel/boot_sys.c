@@ -476,7 +476,7 @@ boot_sys(
         fail("boot_sys failed for some reason :(\n");
     }
 
-    ARCH_NODE_STATE(x86KScurInterrupt) = -1;
+    ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
 
     schedule();
     activateThread();

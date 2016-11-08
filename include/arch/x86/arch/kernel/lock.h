@@ -120,8 +120,8 @@ clh_is_self_in_queue(void)
     }                                           \
 } while(0)
 
-#define NODE_UNLOCK_IF(_cond) do {              \
-    if((_cond)) {                               \
+#define NODE_UNLOCK_IF_HELD do {                \
+    if(clh_is_self_in_queue()) {                \
         NODE_UNLOCK;                            \
     }                                           \
 } while(0)
@@ -131,7 +131,7 @@ clh_is_self_in_queue(void)
 #define NODE_LOCK do {} while (0)
 #define NODE_UNLOCK do {} while (0)
 #define NODE_LOCK_IF(_cond) do {} while (0)
-#define NODE_UNLOCK_IF(_cond) do {} while (0)
+#define NODE_UNLOCK_IF_HELD do {} while (0)
 
 #endif
 

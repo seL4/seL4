@@ -1047,7 +1047,10 @@ handleVmexit(void)
     if (reason == EXTERNAL_INTERRUPT) {
         interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
         x86KScurInterrupt = interrupt & 0xff;
-        return handleInterruptEntry();
+        handleInterruptEntry();
+        x86KScurInterrupt = int_invalid;
+
+        return EXCEPTION_NONE;
     } else if (!vcpuThreadUsingFPU(ksCurThread)) {
         /* since this vcpu does not currently own the fpu state, check if the kernel should
          * switch the fpu owner or not. We switch if the guest performed and unimplemented device

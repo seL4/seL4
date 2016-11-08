@@ -65,6 +65,7 @@ c_handle_interrupt(int irq, int syscall)
         ksKernelEntry.word = irq;
 #endif
         handleInterruptEntry();
+        ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
     } else if (irq == int_spurious) {
         /* fall through to restore_user_context and do nothing */
     } else {
@@ -89,7 +90,6 @@ c_handle_interrupt(int irq, int syscall)
 void NORETURN
 slowpath(syscall_t syscall)
 {
-    ARCH_NODE_STATE(x86KScurInterrupt) = -1;
     if (config_set(CONFIG_SYSENTER)) {
         /* increment NextIP to skip sysenter */
         NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[NextIP] += 2;

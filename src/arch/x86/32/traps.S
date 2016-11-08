@@ -468,8 +468,6 @@ BEGIN_FUNC(handle_vmexit)
     pushl   %ecx
     pushl   %ebx
     pushl   %eax
-    # indicate int_invalid as the interrupt currently being served
-    movl    $-1, x86KScurInterrupt;
 
     # set kernel data segments (ds and es) if necessary (set them to the user value though)
     SET_SEL(ds, 7  * 4, 0x23)
