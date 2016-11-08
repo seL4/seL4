@@ -73,6 +73,8 @@ enum IRQConstants {
     maxIRQ = MAX_IRQ
 } platform_interrupt_t;
 
+#define IRQ_CNODE_BITS 12
+
 #define KERNEL_TIMER_IRQ INTERRUPT_CORE_CNTVIRQ
 
 #define FIQCTRL_FIQ_ENABLE                   BIT(7)

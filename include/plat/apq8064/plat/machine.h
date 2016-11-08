@@ -49,12 +49,10 @@ enum IRQConstants {
     INTERRUPT_PPSS_SLPTMR1       = 244, /* ? */
     INTERRUPT_PPSS_WDOG          = 245,
 
-#if 0
     maxIRQ                      = 283
-#else /* SELFOUR-222 */
-    maxIRQ                      = 245
-#endif
 } platform_interrupt_t;
+
+#define IRQ_CNODE_BITS 13
 
 #define KERNEL_TIMER_IRQ INTERRUPT_KPSS_DBGT
 

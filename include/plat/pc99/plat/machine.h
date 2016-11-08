@@ -59,6 +59,8 @@ typedef enum _irq_t {
     maxIRQ                      = int_irq_max         - IRQ_INT_OFFSET
 } irq_t;
 
+#define IRQ_CNODE_BITS 13
+
 #define BIOS_PADDR_START 0x0e0000
 #define BIOS_PADDR_END   0x100000
 

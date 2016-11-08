@@ -163,19 +163,19 @@ create_root_cnode(void)
     return cap;
 }
 
-compile_assert(irq_cnode_size, BIT(PAGE_BITS - seL4_SlotBits) > maxIRQ)
+compile_assert(irq_cnode_size, BIT(IRQ_CNODE_BITS - seL4_SlotBits) > maxIRQ)
 
 BOOT_CODE bool_t
 create_irq_cnode(void)
 {
     pptr_t pptr;
     /* create an empty IRQ CNode */
-    pptr = alloc_region(PAGE_BITS);
+    pptr = alloc_region(IRQ_CNODE_BITS);
     if (!pptr) {
         printf("Kernel init failing: could not create irq cnode\n");
         return false;
     }
-    memzero((void*)pptr, 1 << PAGE_BITS);
+    memzero((void*)pptr, 1 << IRQ_CNODE_BITS);
     intStateIRQNode = (cte_t*)pptr;
     return true;
 }

@@ -80,6 +80,8 @@ enum IRQConstants {
     maxIRQ = 159
 } platform_interrupt_t;
 
+#define IRQ_CNODE_BITS 12
+
 #define KERNEL_TIMER_IRQ  INTERRUPT_PRIV_TIMER
 
 enum irqNumbers {
