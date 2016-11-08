@@ -169,7 +169,9 @@ associated with the \obj{Page Directory} passed in as an argument.
 \section{Mapping Attributes}
 A parameter of type \texttt{seL4\_ARM\_VMAttributes} or
 \texttt{seL4\_IA32\_VMAttributes} is used to specify the cache behaviour of the
-page being mapped; possible values for ARM are shown in \autoref{tbl:vmattr_arm} \ifxeightsix and values for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi.
+page being mapped; possible values for ARM that can be bitwise OR'd together are
+shown in \autoref{tbl:vmattr_arm} \ifxeightsix and an enumeration of valid values
+for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi.
 
 \begin{table}[htb]
   \begin{center}
@@ -195,6 +197,7 @@ page being mapped; possible values for ARM are shown in \autoref{tbl:vmattr_arm}
       \toprule
       Attribute & Meaning \\
       \midrule
+      \texttt{seL4\_IA32\_WriteBack} & Read and writes are cached \\
       \texttt{seL4\_IA32\_CacheDisabled} & Prevent data in this mapping
       from being cached \\
       \texttt{seL4\_IA32\_WriteThrough} & Enable write through cacheing for this mapping \\
