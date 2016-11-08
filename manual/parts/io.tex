@@ -131,12 +131,6 @@ remapped from the device's point of view. It acts as an MMU for the
 device, restricting the regions of system memory that it can access.
 More information can be obtained from Intel's IOMMU documentation \cite{extra:vtd}.
 
-seL4-based systems that wish to utilise DMA must have an IOMMU.
-This restriction results from the fact that seL4 provides no way to obtain the physical address of a \obj{Page} from its capability.
-Hence, applications are unable to accurately instruct devices,
-at which address they should directly address the physical memory.
-Instead, frames of memory must be mapped into the device's address space using seL4's IOMMU primitives.
-
 Two new objects are provided by the kernel to abstract the IOMMU:
 \begin{description}
 
