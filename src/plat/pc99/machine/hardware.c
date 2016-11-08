@@ -42,7 +42,8 @@ void resetTimer(void)
 }
 
 BOOT_CODE VISIBLE uint32_t
-tsc_init(void) {
+tsc_init(void)
+{
 
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
     uint32_t valid_models[] = { HASWELL_1_MODEL_ID, HASWELL_2_MODEL_ID,
