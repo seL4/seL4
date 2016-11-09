@@ -33,6 +33,8 @@ enum _register {
     msgInfoRegister = 4,
     /* 0x14 */  EDI             = 5,
     /* 0x18 */  EBP             = 6,
+    replyRegister               = 6,
+    n_generalRegisters          = 7,
 
     /* segment registers */
 

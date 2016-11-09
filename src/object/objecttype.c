@@ -50,6 +50,8 @@ word_t getObjectSize(word_t t, word_t userObjSize)
             return userObjSize;
         case seL4_SchedContextObject:
             return seL4_SchedContextBits;
+        case seL4_ReplyObject:
+            return seL4_ReplyBits;
         default:
             fail("Invalid object type");
             return 0;
@@ -84,11 +86,6 @@ deriveCap(cte_t *slot, cap_t cap)
         } else {
             ret.cap = cap;
         }
-        break;
-
-    case cap_reply_cap:
-        ret.status = EXCEPTION_NONE;
-        ret.cap = cap_null_cap_new();
         break;
 
     default:
@@ -130,6 +127,16 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         return fc_ret;
 
     case cap_reply_cap:
+        if (final) {
+            reply_t *reply = REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
+            if (reply && reply->replyCaller) {
+                reply_remove(reply);
+            }
+        }
+        fc_ret.remainder = cap_null_cap_new();
+        fc_ret.irq = irqInvalid;
+        return fc_ret;
+
     case cap_null_cap:
     case cap_domain_cap:
         fc_ret.remainder = cap_null_cap_new();
@@ -167,6 +174,9 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             if (tcb->tcbSchedContext) {
                 schedContext_unbindTCB(tcb->tcbSchedContext, tcb);
             }
+            if (tcb->tcbReply) {
+                reply_remove(tcb->tcbReply);
+            }
             suspend(tcb);
 #ifdef CONFIG_DEBUG_BUILD
             tcbDebugRemove(tcb);
@@ -188,6 +198,11 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         if (final) {
             sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
             schedContext_unbindAllTCBs(sc);
+            if (sc->scReply) {
+                assert(call_stack_get_isHead(sc->scReply->replyNext));
+                sc->scReply->replyNext = call_stack_new(0, false);
+                sc->scReply = NULL;
+            }
             fc_ret.remainder = cap_null_cap_new();
             fc_ret.cleanupInfo = cap_null_cap_new();
             return fc_ret;
@@ -281,8 +296,8 @@ sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_reply_cap:
         if (cap_get_capType(cap_b) == cap_reply_cap) {
-            return cap_reply_cap_get_capTCBPtr(cap_a) ==
-                   cap_reply_cap_get_capTCBPtr(cap_b);
+            return cap_reply_cap_get_capReplyPtr(cap_a) ==
+                   cap_reply_cap_get_capReplyPtr(cap_b);
         }
         break;
 
@@ -509,6 +524,10 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
         memzero(regionBase, 1UL << seL4_SchedContextBits);
         return cap_sched_context_cap_new(SC_REF(regionBase));
 
+    case seL4_ReplyObject:
+        memzero(regionBase, 1UL << seL4_ReplyBits);
+        return cap_reply_cap_new(REPLY_REF(regionBase));
+
     default:
         fail("Invalid object type");
     }
@@ -547,7 +566,7 @@ exception_t
 decodeInvocation(word_t invLabel, word_t length,
                  cptr_t capIndex, cte_t *slot, cap_t cap,
                  extra_caps_t excaps, bool_t block, bool_t call,
-                 word_t *buffer)
+                 bool_t canDonate, word_t *buffer)
 {
     if (isArchCap(cap)) {
         return Arch_decodeInvocation(invLabel, length, capIndex,
@@ -580,7 +599,7 @@ decodeInvocation(word_t invLabel, word_t length,
         return performInvocation_Endpoint(
                    EP_PTR(cap_endpoint_cap_get_capEPPtr(cap)),
                    cap_endpoint_cap_get_capEPBadge(cap),
-                   cap_endpoint_cap_get_capCanGrant(cap), block, call);
+                   cap_endpoint_cap_get_capCanGrant(cap), block, call, canDonate);
 
     case cap_notification_cap: {
         if (unlikely(!cap_notification_cap_get_capNtfnCanSend(cap))) {
@@ -598,17 +617,8 @@ decodeInvocation(word_t invLabel, word_t length,
     }
 
     case cap_reply_cap:
-        if (unlikely(cap_reply_cap_get_capReplyMaster(cap))) {
-            userError("Attempted to invoke an invalid reply cap #%lu.",
-                      capIndex);
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performInvocation_Reply(
-                   TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot);
+        return performInvocation_Reply(NODE_STATE(ksCurThread), REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap)));
 
     case cap_thread_cap:
         return decodeTCBInvocation(invLabel, length, cap,
@@ -645,9 +655,9 @@ decodeInvocation(word_t invLabel, word_t length,
 exception_t
 performInvocation_Endpoint(endpoint_t *ep, word_t badge,
                            bool_t canGrant, bool_t block,
-                           bool_t call)
+                           bool_t call, bool_t canDonate)
 {
-    sendIPC(block, call, badge, canGrant, NODE_STATE(ksCurThread), ep);
+    sendIPC(block, call, badge, canGrant, canDonate, NODE_STATE(ksCurThread), ep);
 
     return EXCEPTION_NONE;
 }
@@ -661,8 +671,8 @@ performInvocation_Notification(notification_t *ntfn, word_t badge)
 }
 
 exception_t
-performInvocation_Reply(tcb_t *thread, cte_t *slot)
+performInvocation_Reply(tcb_t *sender, reply_t *reply)
 {
-    doReplyTransfer(NODE_STATE(ksCurThread), thread, slot);
+    doReplyTransfer(sender, reply);
     return EXCEPTION_NONE;
 }

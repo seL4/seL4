@@ -10,6 +10,7 @@
 
 #include <config.h>
 #include <fastpath/fastpath.h>
+#include <object/reply.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark/benchmark_track.h>
@@ -28,7 +29,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
     word_t length;
     tcb_t *dest;
     word_t badge;
-    cte_t *replySlot, *callerSlot;
     cap_t newVTable;
     vspace_root_t *cap_pd;
     pde_t stored_hw_asid;
@@ -125,9 +125,19 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
+    if (unlikely(dest->tcbSchedContext != NULL)) {
+        slowpath(SysCall);
+    }
+
+    reply_t *reply = thread_state_get_replyObject_np(dest->tcbState);
+    if (unlikely(reply == NULL)) {
+        slowpath(SysCall);
+    }
+
 #ifdef ENABLE_SMP_SUPPORT
     /* Ensure both threads have the same affinity */
-    if (unlikely(NODE_STATE(ksCurThread)->tcbSchedContext->scCore != dest->tcbSchedContext->scCore)) {
+    if (unlikely(NODE_STATE(ksCurThread)->tcbSchedContext->scCore != dest->tcbAffinity)) {
+        /* migration required */
         slowpath(SysCall);
     }
 #endif /* ENABLE_SMP_SUPPORT */
@@ -137,6 +147,9 @@ fastpath_call(word_t cptr, word_t msgInfo)
      *
      * At this stage, we have committed to performing the IPC.
      */
+
+    /* consume reply state */
+    thread_state_ptr_set_replyObject_np(&dest->tcbState, 0);
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     ksKernelEntry.is_fastpath = true;
@@ -156,17 +169,21 @@ fastpath_call(word_t cptr, word_t msgInfo)
     thread_state_ptr_set_tsType_np(&NODE_STATE(ksCurThread)->tcbState,
                                    ThreadState_BlockedOnReply);
 
-    /* Get sender reply slot */
-    replySlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbReply);
+    reply->replyCaller = NODE_STATE(ksCurThread);
+    NODE_STATE(ksCurThread)->tcbReply = reply;
 
-    /* Get dest caller slot */
-    callerSlot = TCB_PTR_CTE_PTR(dest, tcbCaller);
+    sched_context_t *sc = NODE_STATE(ksCurThread)->tcbSchedContext;
+    sc->scTcb = dest;
+    dest->tcbSchedContext = sc;
+    NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
 
-    /* Insert reply cap */
-    cap_reply_cap_ptr_new_np(&callerSlot->cap, 0, TCB_REF(NODE_STATE(ksCurThread)));
-    mdb_node_ptr_set_mdbPrev_np(&callerSlot->cteMDBNode, CTE_REF(replySlot));
-    mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
-        &replySlot->cteMDBNode, CTE_REF(callerSlot), 1, 1);
+    reply_t *old_caller = sc->scReply;
+    reply->replyPrev = call_stack_new(REPLY_REF(sc->scReply), false);
+    if (unlikely(old_caller)) {
+        old_caller->replyNext = call_stack_new(REPLY_REF(reply), false);
+    }
+    reply->replyNext = call_stack_new(SC_REF(sc), true);
+    sc->scReply = reply;
 
     fastpath_copy_mrs (length, NODE_STATE(ksCurThread), dest);
 
@@ -181,14 +198,12 @@ fastpath_call(word_t cptr, word_t msgInfo)
 }
 
 void
-fastpath_reply_recv(word_t cptr, word_t msgInfo)
+fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
 {
     seL4_MessageInfo_t info;
     cap_t ep_cap;
     endpoint_t *ep_ptr;
     word_t length;
-    cte_t *callerSlot;
-    cap_t callerCap;
     tcb_t *caller;
     word_t badge;
     tcb_t *endpointTail;
@@ -221,6 +236,15 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
+
+    /* lookup the reply object */
+    cap_t reply_cap = lookup_fp(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCTable)->cap, reply);
+
+    /* check it's a reply object */
+    if (unlikely(!cap_capType_equals(reply_cap, cap_reply_cap))) {
+        slowpath(SysReplyRecv);
+    }
+
     /* Check there is nothing waiting on the notification */
     if (NODE_STATE(ksCurThread)->tcbBoundNotification &&
             notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active) {
@@ -235,15 +259,16 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
-    /* Only reply if the reply cap is valid. */
-    callerSlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCaller);
-    callerCap = callerSlot->cap;
-    if (unlikely(!fastpath_reply_cap_check(callerCap))) {
+    /* Get the reply address */
+    reply_t *reply_ptr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(reply_cap));
+    /* check that its valid and at the head of the call chain */
+    if (unlikely(reply_ptr->replyCaller == NULL ||
+                  reply_ptr->replyNext.words[0] == 0)) {
         slowpath(SysReplyRecv);
     }
 
     /* Determine who the caller is. */
-    caller = TCB_PTR(cap_reply_cap_get_capTCBPtr(callerCap));
+    caller = reply_ptr->replyCaller;
 
     /* ensure we are not single stepping the caller in ia32 */
 #if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARCH_IA32)
@@ -301,18 +326,28 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
+    if (unlikely(caller->tcbSchedContext != NULL)) {
+        slowpath(SysReplyRecv);
+    }
+
 #ifdef ENABLE_SMP_SUPPORT
     /* Ensure both threads have the same affinity */
-    if (unlikely(NODE_STATE(ksCurThread)->tcbSchedContext->scCore != caller->tcbSchedContext->scCore)) {
+    if (unlikely(NODE_STATE(ksCurThread)->tcbSchedContext->scCore != caller->tcbAffinity)) {
         slowpath(SysReplyRecv);
     }
 #endif /* ENABLE_SMP_SUPPORT */
+
+    /* not possible to set reply object and not be blocked */
+    assert(thread_state_get_replyObject(NODE_STATE(ksCurThread)->tcbState) == 0);
 
     /*
      * --- POINT OF NO RETURN ---
      *
      * At this stage, we have committed to performing the IPC.
      */
+
+    /* set the reply object */
+    thread_state_ptr_set_replyObject_np(&NODE_STATE(ksCurThread)->tcbState, REPLY_REF(reply_ptr));
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     ksKernelEntry.is_fastpath = true;
@@ -339,12 +374,25 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(queue.end), EPState_Recv);
     }
 
-    /* Delete the reply cap. */
-    mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
-        &CTE_PTR(mdb_node_get_mdbPrev(callerSlot->cteMDBNode))->cteMDBNode,
-        0, 1, 1);
-    callerSlot->cap = cap_null_cap_new();
-    callerSlot->cteMDBNode = nullMDBNode;
+    /* Clear the reply cap. */
+    caller->tcbReply = NULL;
+    reply_ptr->replyCaller = NULL;
+
+    word_t prev_ptr = reply_ptr->replyPrev.words[0];
+
+    sched_context_t *sc = NODE_STATE(ksCurThread)->tcbSchedContext;
+    NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
+    caller->tcbSchedContext = sc;
+    sc->scTcb = caller;
+
+    sc->scReply = REPLY_PTR(prev_ptr);
+    if (unlikely(REPLY_PTR(prev_ptr) != NULL)) {
+       sc->scReply->replyNext = reply_ptr->replyNext;
+    }
+
+    /* TODO neccessary? */
+    reply_ptr->replyPrev.words[0] = 0;
+    reply_ptr->replyNext.words[0] = 0;
 
     /* I know there's no fault, so straight to the transfer. */
 

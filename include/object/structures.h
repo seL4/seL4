@@ -86,6 +86,9 @@ typedef word_t notification_state_t;
 #define SC_REF(p) ((word_t) (p))
 #define SC_PTR(r) ((sched_context_t *) (r))
 
+#define REPLY_REF(p) ((word_t) (p))
+#define REPLY_PTR(r) ((reply_t *) (r))
+
 #define WORD_PTR(r) ((word_t *)(r))
 #define WORD_REF(p) ((word_t)(p))
 
@@ -172,14 +175,8 @@ enum tcb_cnode_index {
     /* VSpace root */
     tcbVTable = 1,
 
-    /* Reply cap slot */
-    tcbReply = 2,
-
-    /* TCB of most recent IPC sender */
-    tcbCaller = 3,
-
     /* IPC buffer cap slot */
-    tcbBuffer = 4,
+    tcbBuffer = 2,
 
     tcbCNodeEntries
 };
@@ -209,6 +206,7 @@ vmAttributesFromWord(word_t w)
 }
 
 typedef struct sched_context sched_context_t;
+typedef struct reply reply_t;
 
 /* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 struct tcb {
@@ -222,6 +220,16 @@ struct tcb {
      * any sync endpoint, it may receive a signal from a Notification object.
      * 4 bytes*/
     notification_t *tcbBoundNotification;
+
+    /* if tcb is in a call, pointer to the reply object, 4 bytes */
+    reply_t *tcbReply;
+
+    /* Previous and next pointers for scheduler queues , 8 bytes */
+    struct tcb* tcbSchedNext;
+    struct tcb* tcbSchedPrev;
+    /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
+    struct tcb* tcbEPNext;
+    struct tcb* tcbEPPrev;
 
     /* Current fault, 8 bytes */
     seL4_Fault_t tcbFault;
@@ -252,13 +260,6 @@ struct tcb {
     /* cpu ID this thread is running on */
     word_t tcbAffinity;
 #endif /* ENABLE_SMP_SUPPORT */
-
-    /* Previous and next pointers for scheduler queues , 8 bytes */
-    struct tcb* tcbSchedNext;
-    struct tcb* tcbSchedPrev;
-    /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
-    struct tcb* tcbEPNext;
-    struct tcb* tcbEPPrev;
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_util_t benchmark;
@@ -295,6 +296,10 @@ struct sched_context {
     /* thread that this scheduling context is bound to */
     tcb_t *scTcb;
 
+    /* if this is not NULL, it points to the last reply object that was generated
+     * when the scheduling context was passed over a Call */
+    reply_t *scReply;
+
     /* Amount of refills this sc tracks */
     word_t scRefillMax;
     /* Index of the head of the refill circular buffer */
@@ -304,6 +309,20 @@ struct sched_context {
 
     /* circular buffer of budget refills, ordered by rAmount */
     refill_t scRefills[MAX_REFILLS];
+};
+
+struct reply {
+    /* the caller that is blocked on this reply object */
+    tcb_t *replyCaller;
+
+    /* 0 if this is the start of the call chain, or points to the
+     * previous reply object in a call chain */
+    call_stack_t replyPrev;
+
+    /* Either a scheduling context if this reply object is the head of the call chain
+     * (the last caller before the server) or another reply object. 0 if no scheduling
+     * context was passed along the call chain */
+    call_stack_t replyNext;
 };
 
 /* Ensure object sizes are sane */
@@ -319,6 +338,7 @@ compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_Notifi
 /* Check the IPC buffer is the right size */
 compile_assert(ipc_buf_size_sane, sizeof(seL4_IPCBuffer) == BIT(seL4_IPCBufferSizeBits))
 compile_assert(sc_size_sane, sizeof(sched_context_t) <= BIT(seL4_SchedContextBits))
+compile_assert(reply_size_sane, sizeof(reply_t) <= BIT(seL4_ReplyBits))
 
 /* helper functions */
 
@@ -367,7 +387,7 @@ cap_get_capSizeBits(cap_t cap)
         return 0;
 
     case cap_reply_cap:
-        return 0;
+        return seL4_ReplyBits;
 
     case cap_irq_control_cap:
     case cap_sched_control_cap:
@@ -419,7 +439,7 @@ cap_get_capIsPhysical(cap_t cap)
         return false;
 
     case cap_reply_cap:
-        return false;
+        return true;
 
     case cap_irq_control_cap:
     case cap_sched_control_cap:
@@ -463,7 +483,7 @@ cap_get_capPtr(cap_t cap)
         return NULL;
 
     case cap_reply_cap:
-        return NULL;
+        return REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
 
     case cap_irq_control_cap:
     case cap_sched_control_cap:

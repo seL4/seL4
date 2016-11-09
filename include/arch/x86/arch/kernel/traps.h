@@ -22,7 +22,7 @@ static inline void arch_c_exit_hook(void)
 {
 }
 
-void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
 VISIBLE NORETURN;
 
 void restore_user_context(void)
