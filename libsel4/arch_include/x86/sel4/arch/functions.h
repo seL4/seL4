@@ -44,6 +44,20 @@ seL4_SetUserData(seL4_Word data)
     SEL4_SET_IPCBUF(userData, data);
 }
 
+static inline seL4_Word
+seL4_GetReserved(void)
+{
+    seL4_Word data;
+    SEL4_GET_IPCBUF(reserved, data);
+    return data;
+}
+
+static inline void
+seL4_SetReserved(seL4_Word data)
+{
+    SEL4_SET_IPCBUF(reserved, data);
+}
+
 LIBSEL4_INLINE_FUNC seL4_Word
 seL4_GetBadge(int i)
 {
