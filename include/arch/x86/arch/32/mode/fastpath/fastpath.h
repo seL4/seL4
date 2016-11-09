@@ -57,20 +57,6 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
     NODE_STATE(ksCurThread) = thread;
 }
 
-static inline void
-mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
-    mdb_node_t *node_ptr, word_t mdbNext,
-    word_t mdbRevocable, word_t mdbFirstBadged)
-{
-    node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
-}
-
-static inline void
-mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
-{
-    node_ptr->words[0] = mdbPrev;
-}
-
 static inline bool_t
 isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
@@ -89,14 +75,14 @@ fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 }
 
 /* This is an accelerated check that msgLength, which appears
-   in the bottom of the msgInfo word, is <= 2 and that msgExtraCaps
-   which appears above it is zero. We are assuming that n_msgRegisters == 2
+   in the bottom of the msgInfo word, is <= 1 and that msgExtraCaps
+   which appears above it is zero. We are assuming that n_msgRegisters == 1
    for this check to be useful.*/
-compile_assert (n_msgRegisters_eq_2, n_msgRegisters == 2)
+compile_assert (n_msgRegisters_eq_1, n_msgRegisters == 1)
 static inline int
 fastpath_mi_check(word_t msgInfo)
 {
-    return (msgInfo & MASK(seL4_MsgLengthBits + seL4_MsgExtraCapBits)) > 2;
+    return (msgInfo & MASK(seL4_MsgLengthBits + seL4_MsgExtraCapBits)) > 1;
 }
 
 static inline bool_t hasDefaultSelectors(tcb_t *thread)

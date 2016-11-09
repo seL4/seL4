@@ -79,3 +79,8 @@ word_t Mode_sanitiseRegister(register_t reg, word_t v)
     }
     return v;
 }
+
+word_t getNBSendRecvDest(void)
+{
+    return getRegister(NODE_STATE(ksCurThread), nbsendRecvDest);
+}

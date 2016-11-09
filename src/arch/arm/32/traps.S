@@ -84,10 +84,11 @@ BEGIN_FUNC(arm_swi_syscall)
     mrc p15, 0, sp, c13, c0, 4
 #endif /* CONFIG_ARCH_ARM_V6 */
 
-    /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
+    /* Load system call number and reply cptr as c_handle_syscall arguments. r0 and r1 are passed
      * unmodified (cptr and msgInfo) respectively.
      */
     mov r2, r7
+    mov r3, r6
     b c_handle_syscall
 
 END_FUNC(arm_swi_syscall)

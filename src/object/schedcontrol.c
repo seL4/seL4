@@ -51,6 +51,7 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
 
     if (target->scTcb && isRunnable(target->scTcb) && target->scRefillMax > 0) {
         schedContext_resume(target);
+        switchIfRequiredTo(target->scTcb);
     }
 
     return EXCEPTION_NONE;

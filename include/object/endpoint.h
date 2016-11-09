@@ -26,8 +26,8 @@ ep_ptr_get_queue(endpoint_t *epptr)
 }
 
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
-             bool_t canGrant, tcb_t *thread, endpoint_t *epptr);
-void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking);
+             bool_t canGrant, bool_t canDonate, tcb_t *thread, endpoint_t *epptr);
+void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, cap_t replyCPtr);
 void cancelIPC(tcb_t *tptr);
 void cancelAllIPC(endpoint_t *epptr);
 void cancelBadgedSends(endpoint_t *epptr, word_t badge);

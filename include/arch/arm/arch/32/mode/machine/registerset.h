@@ -73,8 +73,13 @@ enum _register {
     R4 = 4,
     R5 = 5,
     R6 = 6,
+    replyRegister = 6,
     R7 = 7,
+    syscallNoRegister = 7,
+
     R8 = 8,
+    nbsendRecvDest = 8,
+
     R9 = 9,
     R10 = 10,
     R11 = 11,

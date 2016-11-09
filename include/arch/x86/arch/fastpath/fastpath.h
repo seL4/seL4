@@ -13,19 +13,13 @@
 
 #include <mode/fastpath/fastpath.h>
 
-static inline int
-fastpath_reply_cap_check(cap_t cap)
-{
-    return cap_capType_equals(cap, cap_reply_cap);
-}
-
 void slowpath(syscall_t syscall)
 NORETURN;
 
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 NORETURN;
 
-void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
+void fastpath_reply_recv(word_t cptr, word_t r_msgInfo, word_t reply)
 NORETURN;
 
 #endif

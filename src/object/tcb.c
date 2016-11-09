@@ -222,40 +222,6 @@ void tcbDebugRemove(tcb_t *tcb)
 }
 #endif /* CONFIG_DEBUG_BUILD */
 
-/* Add TCB into the priority ordered endpoint queue */
-tcb_queue_t
-tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)
-{
-    /* start at the back of the queue as FIFO is the common case */
-    tcb_t *before = queue.end;
-    tcb_t *after = NULL;
-
-    /* find a place to put the tcb */
-    while (before != NULL && tcb->tcbPriority > before->tcbPriority) {
-        after = before;
-        before = after->tcbEPPrev;
-    }
-
-    if (before == NULL) {
-        /* insert at head */
-        queue.head = tcb;
-    } else {
-        before->tcbEPNext = tcb;
-    }
-
-    if (after == NULL) {
-        /* insert at tail */
-        queue.end = tcb;
-    } else {
-        after->tcbEPPrev = tcb;
-    }
-
-    tcb->tcbEPNext = after;
-    tcb->tcbEPPrev = before;
-
-    return queue;
-}
-
 /* Remove TCB from an endpoint queue */
 tcb_queue_t
 tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
@@ -366,37 +332,6 @@ setExtraBadge(word_t *bufferPtr, word_t badge,
               word_t i)
 {
     bufferPtr[seL4_MsgMaxLength + 2 + i] = badge;
-}
-
-void
-setupCallerCap(tcb_t *sender, tcb_t *receiver)
-{
-    cte_t *replySlot, *callerSlot;
-    cap_t masterCap UNUSED, callerCap UNUSED;
-
-    setThreadState(sender, ThreadState_BlockedOnReply);
-    replySlot = TCB_PTR_CTE_PTR(sender, tcbReply);
-    masterCap = replySlot->cap;
-    /* Haskell error: "Sender must have a valid master reply cap" */
-    assert(cap_get_capType(masterCap) == cap_reply_cap);
-    assert(cap_reply_cap_get_capReplyMaster(masterCap));
-    assert(TCB_PTR(cap_reply_cap_get_capTCBPtr(masterCap)) == sender);
-    callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
-    callerCap = callerSlot->cap;
-    /* Haskell error: "Caller cap must not already exist" */
-    assert(cap_get_capType(callerCap) == cap_null_cap);
-    cteInsert(cap_reply_cap_new(false, TCB_REF(sender)),
-              replySlot, callerSlot);
-}
-
-void
-deleteCallerCap(tcb_t *receiver)
-{
-    cte_t *callerSlot;
-
-    callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
-    /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
-    cteDeleteOne(callerSlot);
 }
 
 extra_caps_t current_extra_caps;

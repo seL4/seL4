@@ -51,6 +51,7 @@ seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  *               sender, or the notification word of the
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
+ * @param[in] reply The capability to the reply object to use on a call.
  *
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
@@ -58,7 +59,7 @@ seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_Recv(seL4_CPtr src, seL4_Word* sender);
+seL4_Recv(seL4_CPtr src, seL4_Word* sender, seL4_CPtr reply);
 
 /**
  * @xmlonly <manual name="Call" label="sel4_call"/> @endxmlonly
@@ -79,19 +80,6 @@ seL4_Recv(seL4_CPtr src, seL4_Word* sender);
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
 
-/**
- * @xmlonly <manual name="Reply" label="sel4_reply"/> @endxmlonly
- * @brief Perform a send to a one-off reply capability stored when
- *        the thread was last called
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_reply"/></docref>
- * @endxmlonly
- *
- * @param[in] msgInfo The messageinfo structure for the IPC.
- */
-LIBSEL4_INLINE_FUNC void
-seL4_Reply(seL4_MessageInfo_t msgInfo);
 
 /**
  * @xmlonly <manual name="Non-Blocking Send" label="sel4_nbsend"/> @endxmlonly
@@ -130,7 +118,7 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
+seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender, seL4_CPtr reply);
 
 /**
  * @xmlonly <manual name="NBRecv" label="sel4_nbrecv"/> @endxmlonly
@@ -155,7 +143,7 @@ seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_NBRecv(seL4_CPtr src, seL4_Word* sender);
+seL4_NBRecv(seL4_CPtr src, seL4_Word* sender, seL4_CPtr reply);
 
 /**
  * @xmlonly <manual name="Yield" label="sel4_yield"/> @endxmlonly
@@ -204,7 +192,7 @@ seL4_Signal(seL4_CPtr dest);
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
  */
-LIBSEL4_INLINE_FUNC void
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Wait(seL4_CPtr src, seL4_Word *sender);
 
 /**

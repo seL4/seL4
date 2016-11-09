@@ -45,6 +45,7 @@
 #define seL4_ASIDPoolIndexBits 10
 #define seL4_WordSizeBits 2
 #define seL4_SchedContextBits 8
+#define seL4_ReplyBits        4
 
 #define seL4_HugePageBits    30 /* 1GB */
 #define seL4_PDPTBits         0
@@ -109,7 +110,7 @@ enum {
 } seL4_UserException_Msg;
 
 #endif /* __ASSEMBLER__ */
-#define seL4_FastMessageRegisters 2
+#define seL4_FastMessageRegisters 1
 
 /* IPC buffer is 512 bytes, giving size bits of 9 */
 #define seL4_IPCBufferSizeBits 9
