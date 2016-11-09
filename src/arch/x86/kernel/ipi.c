@@ -60,7 +60,7 @@ static inline void ipi_wait(word_t cores)
 static void ipiStallCoreCallback(void)
 {
     if (clh_is_self_in_queue() &&
-       (NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1)) {
+            (NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1)) {
         /* The current thread is runnable as we would replace this thread with an idle thread.
          * The instruction should be re-executed if we are in kernel to handle syscalls */
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
@@ -91,7 +91,7 @@ static void ipiStallCoreCallback(void)
         activateThread();
         restore_user_context();
     } else {
-        /* We get here either without grabbing the lock from normal interrupt path or from 
+        /* We get here either without grabbing the lock from normal interrupt path or from
          * inside the lock while waiting to grab the lock for handling pending interrupt.
          * In latter case, we return to the 'clh_lock_acquire' to grab the lock and
          * handle the pending interrupt. Its valid as interrups are async events! */
