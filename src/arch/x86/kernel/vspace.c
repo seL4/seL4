@@ -17,6 +17,7 @@
 #include <arch/api/invocation.h>
 #include <mode/kernel/tlb_bitmap.h>
 #include <mode/kernel/tlb.h>
+#include <mode/kernel/vspace.h>
 
 static exception_t
 performPageGetAddress(void *vbase_ptr)
