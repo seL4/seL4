@@ -48,7 +48,12 @@
 /* Define the top of our static 'kernel window', which is the top 1GiB of memory */
 #define PADDR_HIGH_TOP (PPTR_KDEV - KERNEL_BASE)
 
-#define PPTR_USER_TOP KERNEL_BASE
+/* Below the main kernel window we have any slots for the TLB bitmap */
+#define TLBBITMAP_PML4_RESERVED (TLBBITMAP_ROOT_ENTRIES * BIT(PML4_INDEX_OFFSET))
+#define TLBBITMAP_PPTR (PPTR_BASE - TLBBITMAP_PML4_RESERVED)
+
+/* The start of the this TLB bitmap becomes the highest valid user address */
+#define PPTR_USER_TOP TLBBITMAP_PPTR
 #define KERNEL_BASE_OFFSET (KERNEL_BASE - PADDR_BASE)
 #define kernelBase KERNEL_BASE
 

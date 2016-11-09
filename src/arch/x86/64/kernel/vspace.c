@@ -19,6 +19,7 @@
 #include <arch/kernel/boot.h>
 #include <arch/api/invocation.h>
 #include <mode/kernel/tlb.h>
+#include <arch/kernel/tlb_bitmap.h>
 
 struct lookupPML4Slot_ret {
     exception_t status;
@@ -252,6 +253,11 @@ map_kernel_window(
     if (!map_kernel_window_devices(x64KSGlobalPT, num_ioapic, ioapic_paddrs, num_drhu, drhu_list)) {
         return false;
     }
+
+#if CONFIG_MAX_NUM_NODES > 1
+    /* initialize the TLB bitmap */
+    tlb_bitmap_init(x64KSGlobalPML4);
+#endif /* CONFIG_MAX_NUM_NODES */
 
     /* In boot code, so fine to just trash everything here */
     invalidateLocalTranslationAll();
@@ -724,7 +730,11 @@ void copyGlobalMappings(vspace_root_t *new_vspace)
     unsigned long i;
     pml4e_t *vspace = (pml4e_t *)new_vspace;
 
-    for (i = GET_PML4_INDEX(PPTR_BASE); i < BIT(PML4_INDEX_BITS); i++) {
+    /* Copy from the user top so that we copy the default entries of the
+     * tlb bitmap (if it exists). If it doesn't exist then this loop
+     * will be equivalent to copying from PPTR_BASE
+     */
+    for (i = GET_PML4_INDEX(PPTR_USER_TOP); i < BIT(PML4_INDEX_BITS); i++) {
         vspace[i] = x64KSGlobalPML4[i];
     }
 }
