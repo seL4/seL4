@@ -101,11 +101,9 @@ restart(tcb_t *target)
 {
     if (isBlocked(target)) {
         cancelIPC(target);
-        setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
-        if (likely(target->tcbSchedContext != NULL)) {
-            schedContext_resume(target->tcbSchedContext);
-        }
+        schedContext_resume(target->tcbSchedContext);
+        switchIfRequiredTo(target);
     }
 }
 
@@ -127,22 +125,26 @@ doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
 }
 
 void
-doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
+doReplyTransfer(tcb_t *sender, reply_t *reply)
 {
-    assert(thread_state_get_tsType(receiver->tcbState) ==
+    if (unlikely(reply->replyCaller == NULL)) {
+        return;
+    }
+
+    assert(thread_state_get_tsType(reply->replyCaller->tcbState) ==
            ThreadState_BlockedOnReply);
+
+    tcb_t *receiver = reply->replyCaller;
+    reply_remove(reply);
+    thread_state_ptr_set_replyObject(&receiver->tcbState, REPLY_REF(0));
 
     if (likely(seL4_Fault_get_seL4_FaultType(receiver->tcbFault) == seL4_Fault_NullFault)) {
         doIPCTransfer(sender, NULL, 0, true, receiver);
-        /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
-        cteDeleteOne(slot);
         setThreadState(receiver, ThreadState_Running);
         attemptSwitchTo(receiver);
     } else {
         bool_t restart;
 
-        /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
-        cteDeleteOne(slot);
         restart = handleFaultReply(receiver, sender);
         receiver->tcbFault = seL4_Fault_NullFault_new();
         if (restart) {
@@ -584,7 +586,6 @@ endTimeslice(void)
         /* postpone until ready */
         postpone(NODE_STATE(ksCurSC));
     }
-    rescheduleRequired();
 }
 
 void

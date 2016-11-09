@@ -61,7 +61,7 @@ enum seL4_MsgLimits {
 };
 
 enum {
-    seL4_MsgMaxLength = 116,
+    seL4_MsgMaxLength = 115,
 };
 #define seL4_MsgMaxExtraCaps (LIBSEL4_BIT(seL4_MsgExtraCapBits)-1)
 

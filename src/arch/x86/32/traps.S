@@ -516,7 +516,7 @@ BEGIN_FUNC(handle_syscall)
     pushl   %fs             # save FS
     pushl   %es             # save ES
     pushl   %ds             # save DS
-    pushl   %ebp            # save EBP (message register)
+    pushl   %ebp            # save EBP (reply register)
     pushl   %edi            # save EDI (message register)
     pushl   %esi            # save ESI (msgInfo register)
     pushl   %edx            # save EDX (contains FaultIP)
@@ -532,6 +532,7 @@ BEGIN_FUNC(handle_syscall)
     SET_KERNEL_STACK
 
     # Push all the arguments for c_handle_syscall
+    pushl   %ebp # reply
     pushl   %eax # syscall number
     pushl   %esi # msgInfo
     pushl   %ebx # cptr

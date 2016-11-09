@@ -104,7 +104,7 @@ slowpath(syscall_t syscall)
 }
 
 void VISIBLE
-c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
 {
     NODE_LOCK_SYS;
 
@@ -119,7 +119,7 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
         fastpath_call(cptr, msgInfo);
         UNREACHABLE();
     } else if (syscall == SysReplyRecv) {
-        fastpath_reply_recv(cptr, msgInfo);
+        fastpath_reply_recv(cptr, msgInfo, reply);
         UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */

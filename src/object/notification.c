@@ -59,7 +59,6 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 cancelIPC(tcb);
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
-                switchIfRequiredTo(tcb);
 #ifdef CONFIG_VTX
             } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
 #if CONFIG_MAX_NUM_NODES > 1
@@ -175,7 +174,7 @@ cancelAllSignals(notification_t *ntfnPtr)
         /* Set all waiting threads to Restart */
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
-            SCHED_ENQUEUE(thread);
+            switchIfRequiredTo(thread);
         }
         rescheduleRequired();
     }

@@ -16,16 +16,10 @@
 #include <sel4/sel4_arch/syscalls.h>
 #include <sel4/types.h>
 
-LIBSEL4_INLINE_FUNC void
-seL4_Wait(seL4_CPtr src, seL4_Word *sender)
-{
-    seL4_Recv(src, sender);
-}
-
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Poll(seL4_CPtr src, seL4_Word *sender)
 {
-    return seL4_NBRecv(src, sender);
+    return seL4_NBWait(src, sender);
 }
 
 #endif

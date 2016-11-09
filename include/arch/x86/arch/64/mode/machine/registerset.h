@@ -41,7 +41,9 @@ enum _register {
     RBX                     = 3,    /* 0x18 */
     RBP                     = 4,    /* 0x20 */
     R12                     = 5,    /* 0x28 */
+    replyRegister           = 5,
     R13                     = 6,    /* 0x30 */
+    nbsendRecvDest          = 6,
     R14                     = 7,    /* 0x38 */
     RDX                     = 8,    /* 0x40 */
     // Group the message registers so they can be efficiently copied

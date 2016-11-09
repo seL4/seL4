@@ -54,9 +54,19 @@ void schedContext_unbindAllTCBs(sched_context_t *sc);
 
 /*
  * Resume a scheduling context. This will check if a the tcb bound to the scheduling context
- * is runnable and add it to the scheduling queue if required
+ * is runnable, if so, it will then check if the budget is due to be recharged and do so.
+ * If the scheduling context has insufficient budget the bound tcb is placed in the release queue.
  *
  * @pre (sc != NULL)
  */
 void schedContext_resume(sched_context_t *sc);
+
+/*
+ * Donate sc to tcb.
+ *
+ * @pre (sc != NULL && tcb != NULL)
+ * @post (sc->scTcb == tcb && tcb->tcbSchedContext == sc)
+ */
+void schedContext_donate(sched_context_t *sc, tcb_t *to);
+
 #endif /* __OBJECT_SCHED_CONTEXT_H */

@@ -49,7 +49,7 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
     /* Haskell error: "decodeCNodeInvocation: invalid cap" */
     assert(cap_get_capType(cap) == cap_cnode_cap);
 
-    if (invLabel < CNodeRevoke || invLabel > CNodeSaveCaller) {
+    if (invLabel < CNodeRevoke || invLabel > CNodeRotate) {
         userError("CNodeCap: Illegal Operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -201,17 +201,6 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         return invokeCNodeDelete(destSlot);
     }
 
-    if (invLabel == CNodeSaveCaller) {
-        status = ensureEmptySlot(destSlot);
-        if (status != EXCEPTION_NONE) {
-            userError("CNode SaveCaller: Destination slot not empty.");
-            return status;
-        }
-
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return invokeCNodeSaveCaller(destSlot);
-    }
-
     if (invLabel == CNodeCancelBadgedSends) {
         cap_t destCap;
 
@@ -358,34 +347,6 @@ invokeCNodeRotate(cap_t cap1, cap_t cap2, cte_t *slot1,
     } else {
         cteMove(cap2, slot2, slot3);
         cteMove(cap1, slot1, slot2);
-    }
-
-    return EXCEPTION_NONE;
-}
-
-exception_t
-invokeCNodeSaveCaller(cte_t *destSlot)
-{
-    cap_t cap;
-    cte_t *srcSlot;
-
-    srcSlot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbCaller);
-    cap = srcSlot->cap;
-
-    switch (cap_get_capType(cap)) {
-    case cap_null_cap:
-        userError("CNode SaveCaller: Reply cap not present.");
-        break;
-
-    case cap_reply_cap:
-        if (!cap_reply_cap_get_capReplyMaster(cap)) {
-            cteMove(cap, srcSlot, destSlot);
-        }
-        break;
-
-    default:
-        fail("caller capability must be null or reply");
-        break;
     }
 
     return EXCEPTION_NONE;
@@ -795,22 +756,6 @@ insertNewCap(cte_t *parent, cte_t *slot, cap_t cap)
         mdb_node_ptr_set_mdbPrev(&next->cteMDBNode, CTE_REF(slot));
     }
     mdb_node_ptr_set_mdbNext(&parent->cteMDBNode, CTE_REF(slot));
-}
-
-void
-setupReplyMaster(tcb_t *thread)
-{
-    cte_t *slot;
-
-    slot = TCB_PTR_CTE_PTR(thread, tcbReply);
-    if (cap_get_capType(slot->cap) == cap_null_cap) {
-        /* Haskell asserts that no reply caps exist for this thread here. This
-         * cannot be translated. */
-        slot->cap = cap_reply_cap_new(true, TCB_REF(thread));
-        slot->cteMDBNode = nullMDBNode;
-        mdb_node_ptr_set_mdbRevocable(&slot->cteMDBNode, true);
-        mdb_node_ptr_set_mdbFirstBadged(&slot->cteMDBNode, true);
-    }
 }
 
 bool_t PURE

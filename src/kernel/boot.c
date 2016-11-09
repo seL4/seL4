@@ -511,7 +511,6 @@ create_initial_thread(
 
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
-    setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
     ksDomainTime = usToTicks(ksDomSchedule[ksDomScheduleIdx].length * US_IN_MS);
