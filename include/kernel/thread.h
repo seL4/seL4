@@ -126,7 +126,12 @@ void suspend(tcb_t *target);
 void restart(tcb_t *target);
 void doIPCTransfer(tcb_t *sender, endpoint_t *endpoint,
                    word_t badge, bool_t grant, tcb_t *receiver);
+#ifdef CONFIG_KERNEL_MCS
+void doReplyTransfer(tcb_t *sender, reply_t *reply, bool_t grant);
+#else
 void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant);
+void timerTick(void);
+#endif
 void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                       word_t badge, bool_t canGrant, tcb_t *receiver,
                       word_t *receiveBuffer);
@@ -143,9 +148,6 @@ void setMCPriority(tcb_t *tptr, prio_t mcp);
 void scheduleTCB(tcb_t *tptr);
 void possibleSwitchTo(tcb_t *tptr);
 void setThreadState(tcb_t *tptr, _thread_state_t ts);
-#ifndef CONFIG_KERNEL_MCS
-void timerTick(void);
-#endif
 void rescheduleRequired(void);
 
 /* declare that the thread has had its registers (in its user_context_t) modified and it

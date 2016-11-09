@@ -80,8 +80,15 @@ enum _register {
     R4 = 4,
     R5 = 5,
     R6 = 6,
+#ifdef CONFIG_KERNEL_MCS
+    replyRegister = 6,
+#endif
     R7 = 7,
     R8 = 8,
+#ifdef CONFIG_KERNEL_MCS
+    nbsendRecvDest = 8,
+#endif
+
     R9 = 9,
     R10 = 10,
     R11 = 11,

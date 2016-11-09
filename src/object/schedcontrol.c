@@ -51,6 +51,7 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
 
     if (target->scTcb && isRunnable(target->scTcb) && target->scRefillMax > 0) {
         schedContext_resume(target);
+        possibleSwitchTo(target->scTcb);
     }
 
     return EXCEPTION_NONE;

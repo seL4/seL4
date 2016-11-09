@@ -222,6 +222,7 @@ void tcbDebugRemove(tcb_t *tcb)
 }
 #endif /* CONFIG_DEBUG_BUILD */
 
+#ifndef CONFIG_KERNEL_MCS
 /* Add TCB to the end of an endpoint queue */
 tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)
 {
@@ -236,6 +237,7 @@ tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)
 
     return queue;
 }
+#endif
 
 /* Remove TCB from an endpoint queue */
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue)
@@ -345,6 +347,7 @@ void setExtraBadge(word_t *bufferPtr, word_t badge,
     bufferPtr[seL4_MsgMaxLength + 2 + i] = badge;
 }
 
+#ifndef CONFIG_KERNEL_MCS
 void setupCallerCap(tcb_t *sender, tcb_t *receiver, bool_t canGrant)
 {
     cte_t *replySlot, *callerSlot;
@@ -374,6 +377,7 @@ void deleteCallerCap(tcb_t *receiver)
     /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
     cteDeleteOne(callerSlot);
 }
+#endif
 
 extra_caps_t current_extra_caps;
 

@@ -94,10 +94,12 @@ static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
     }
 }
 
+#ifndef CONFIG_KERNEL_MCS
 static inline int fastpath_reply_cap_check(cap_t cap)
 {
     return cap_capType_equals(cap, cap_reply_cap);
 }
+#endif
 
 /** DONT_TRANSLATE */
 static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)

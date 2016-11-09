@@ -149,6 +149,8 @@ def parse_args():
                         help='Name of file to generate for kernel')
     parser.add_argument('--libsel4_header', type=argparse.FileType('w'),
                         help='Name of file to generate for libsel4')
+    parser.add_argument('--mcs', action='store_true',
+                        help='Generate MCS api')
 
     result = parser.parse_args()
 
@@ -177,7 +179,7 @@ def parse_syscall_list(element):
     return syscalls
 
 
-def parse_xml(xml_file):
+def parse_xml(xml_file, mcs):
     # first check if the file is valid xml
     try:
         doc = xml.dom.minidom.parse(xml_file)
@@ -185,7 +187,8 @@ def parse_xml(xml_file):
         print("Error: invalid xml file.", file=sys.stderr)
         sys.exit(-1)
 
-    api = doc.getElementsByTagName("api")
+    tag = "api-mcs" if mcs else "api-master"
+    api = doc.getElementsByTagName(tag)
     if len(api) != 1:
         print("Error: malformed xml. Only one api element allowed",
               file=sys.stderr)
@@ -238,7 +241,7 @@ def generate_libsel4_file(libsel4_header, syscalls):
 if __name__ == "__main__":
     args = parse_args()
 
-    (api, debug) = parse_xml(args.xml)
+    (api, debug) = parse_xml(args.xml, args.mcs)
     args.xml.close()
 
     if (args.kernel_header is not None):

@@ -69,6 +69,7 @@ static inline void thread_state_ptr_mset_blockingObject_tsType(thread_state_t *t
     ts_ptr->words[0] = ep_ref | tsType;
 }
 
+#ifndef CONFIG_KERNEL_MCS
 static inline void cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGrant,
                                             word_t capReplyMaster, word_t capTCBPtr)
 {
@@ -81,6 +82,7 @@ static inline void cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGr
                         (capReplyCanGrant << 5) | cap_reply_cap ;
 #endif
 }
+#endif
 
 static inline void endpoint_ptr_mset_epQueue_tail_state(endpoint_t *ep_ptr, word_t epQueue_tail,
                                                         word_t state)
@@ -92,6 +94,30 @@ static inline void endpoint_ptr_set_epQueue_head_np(endpoint_t *ep_ptr, word_t e
 {
     ep_ptr->words[1] = epQueue_head;
 }
+
+#ifdef CONFIG_KERNEL_MCS
+static inline void thread_state_ptr_set_replyObject_np(thread_state_t *ts_ptr, word_t reply)
+{
+    assert(!thread_state_ptr_get_tcbQueued(ts_ptr));
+    assert(!thread_state_ptr_get_tcbInReleaseQueue(ts_ptr));
+#if CONFIG_WORD_SIZE == 64
+    thread_state_ptr_set_replyObject(ts_ptr, REPLY_REF(reply));
+#else
+    ts_ptr->words[1] = REPLY_REF(reply);
+#endif
+}
+
+static inline reply_t *thread_state_get_replyObject_np(thread_state_t ts)
+{
+    assert(!thread_state_get_tcbQueued(ts));
+    assert(!thread_state_get_tcbInReleaseQueue(ts));
+#if CONFIG_WORD_SIZE == 64
+    return REPLY_PTR(thread_state_get_replyObject(ts));
+#else
+    return REPLY_PTR(ts.words[1]);
+#endif
+}
+#endif
 
 #include <arch/fastpath/fastpath.h>
 

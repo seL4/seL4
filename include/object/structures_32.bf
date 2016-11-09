@@ -51,6 +51,21 @@ block notification_cap {
     field capType 4
 }
 
+#ifdef CONFIG_KERNEL_MCS
+block reply_cap {
+    field capReplyPtr 32
+
+    padding 27
+    field capReplyCanGrant 1
+    field capType 4
+}
+
+block call_stack {
+    field_high callStackPtr 28
+    padding 3
+    field isHead 1
+}
+#else
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     padding 32
 
@@ -59,7 +74,7 @@ block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     field capReplyMaster 1
     field capType 4
 }
-
+#endif
 -- The user-visible format of the data word is defined by cnode_capdata, below.
 block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
                 capCNodePtr, capType) {
@@ -297,7 +312,7 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
                    blockingIPCCanGrantReply, blockingIPCIsCall,
                    tcbQueued, blockingObject,
 #ifdef CONFIG_KERNEL_MCS
-                   tcbInReleaseQueue,
+                   tcbInReleaseQueue, replyObject,
 #endif
                    tsType) {
     field blockingIPCBadge 28
@@ -309,7 +324,8 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
     -- this is fastpath-specific. it is useful to be able to write
     -- tsType and without changing tcbQueued or tcbInReleaseQueue
 #ifdef CONFIG_KERNEL_MCS
-    padding 30
+    field_high replyObject 28
+    padding 2
 #else
     padding 31
 #endif
@@ -321,4 +337,3 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
     field_high blockingObject 28
     field tsType 4
 }
-

@@ -85,9 +85,13 @@ BEGIN_FUNC(arm_swi_syscall)
 #endif /* CONFIG_ARCH_ARM_V6 */
 
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
-     * unmodified (cptr and msgInfo) respectively.
+     * unmodified (cptr and msgInfo) respectively.  On MCS configurations we also
+     * pass the reply cptr in r3.
      */
     mov r2, r7
+#ifdef CONFIG_KERNEL_MCS
+    mov r3, r6
+#endif
     b c_handle_syscall
 
 END_FUNC(arm_swi_syscall)

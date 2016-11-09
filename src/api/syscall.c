@@ -290,10 +290,13 @@ exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
 }
 
 
+#ifdef CONFIG_KERNEL_MCS
+static exception_t handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate, cptr_t cptr)
+#else
 static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
+#endif
 {
     seL4_MessageInfo_t info;
-    cptr_t cptr;
     lookupCapAndSlot_ret_t lu_ret;
     word_t *buffer;
     exception_t status;
@@ -303,7 +306,9 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     thread = NODE_STATE(ksCurThread);
 
     info = messageInfoFromWord(getRegister(thread, msgInfoRegister));
-    cptr = getRegister(thread, capRegister);
+#ifndef CONFIG_KERNEL_MCS
+    cptr_t cptr = getRegister(thread, capRegister);
+#endif
 
     /* faulting section */
     lu_ret = lookupCapAndSlot(thread, cptr);
@@ -336,10 +341,17 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     if (unlikely(length > n_msgRegisters && !buffer)) {
         length = n_msgRegisters;
     }
+#ifdef CONFIG_KERNEL_MCS
+    status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
+                              cptr, lu_ret.slot, lu_ret.cap,
+                              current_extra_caps, isBlocking, isCall,
+                              canDonate, buffer);
+#else
     status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
                               current_extra_caps, isBlocking, isCall,
                               buffer);
+#endif
 
     if (unlikely(status == EXCEPTION_PREEMPTED)) {
         return status;
@@ -363,6 +375,29 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     return EXCEPTION_NONE;
 }
 
+#ifdef CONFIG_KERNEL_MCS
+static inline lookupCap_ret_t lookupReply(void)
+{
+    word_t replyCPtr = getRegister(NODE_STATE(ksCurThread), replyRegister);
+    lookupCap_ret_t lu_ret = lookupCap(NODE_STATE(ksCurThread), replyCPtr);
+    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+        userError("Reply cap lookup failed");
+        current_fault = seL4_Fault_CapFault_new(replyCPtr, true);
+        handleFault(NODE_STATE(ksCurThread));
+        return lu_ret;
+    }
+
+    if (unlikely(cap_get_capType(lu_ret.cap) != cap_reply_cap)) {
+        userError("Cap in reply slot is not a reply");
+        current_fault = seL4_Fault_CapFault_new(replyCPtr, true);
+        handleFault(NODE_STATE(ksCurThread));
+        lu_ret.status = EXCEPTION_FAULT;
+        return lu_ret;
+    }
+
+    return lu_ret;
+}
+#else
 static void handleReply(void)
 {
     cte_t *callerSlot;
@@ -397,8 +432,13 @@ static void handleReply(void)
 
     fail("handleReply: invalid caller cap");
 }
+#endif
 
+#ifdef CONFIG_KERNEL_MCS
+static void handleRecv(bool_t isBlocking, bool_t canReply)
+#else
 static void handleRecv(bool_t isBlocking)
+#endif
 {
     word_t epCPtr;
     lookupCap_ret_t lu_ret;
@@ -423,8 +463,22 @@ static void handleRecv(bool_t isBlocking)
             break;
         }
 
+#ifdef CONFIG_KERNEL_MCS
+        cap_t ep_cap = lu_ret.cap;
+        cap_t reply_cap = cap_null_cap_new();
+        if (canReply) {
+            lu_ret = lookupReply();
+            if (lu_ret.status != EXCEPTION_NONE) {
+                return;
+            } else {
+                reply_cap = lu_ret.cap;
+            }
+        }
+        receiveIPC(NODE_STATE(ksCurThread), ep_cap, isBlocking, reply_cap);
+#else
         deleteCallerCap(NODE_STATE(ksCurThread));
         receiveIPC(NODE_STATE(ksCurThread), lu_ret.cap, isBlocking);
+#endif
         break;
 
     case cap_notification_cap: {
@@ -459,7 +513,9 @@ static inline void mcsIRQ(irq_t irq)
     }
 }
 #else
+#define handleRecv(isBlocking, canReply) handleRecv(isBlocking)
 #define mcsIRQ(irq)
+#define handleInvocation(isCall, isBlocking, canDonate, cptr) handleInvocation(isCall, isBlocking)
 #endif
 
 
@@ -473,6 +529,7 @@ static void handleYield(void)
     /* we just charged all of the time to the yielding thread */
     NODE_STATE(ksConsumed) = 0;
     endTimeslice();
+    rescheduleRequired();
 #else
     tcbSchedDequeue(NODE_STATE(ksCurThread));
     SCHED_APPEND_CURRENT_TCB;
@@ -488,7 +545,7 @@ exception_t handleSyscall(syscall_t syscall)
         switch (syscall)
         {
         case SysSend:
-            ret = handleInvocation(false, true);
+            ret = handleInvocation(false, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
                 if (irq != irqInvalid) {
@@ -501,7 +558,7 @@ exception_t handleSyscall(syscall_t syscall)
             break;
 
         case SysNBSend:
-            ret = handleInvocation(false, false);
+            ret = handleInvocation(false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
                 if (irq != irqInvalid) {
@@ -513,7 +570,7 @@ exception_t handleSyscall(syscall_t syscall)
             break;
 
         case SysCall:
-            ret = handleInvocation(true, true);
+            ret = handleInvocation(true, true, true, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
                 if (irq != irqInvalid) {
@@ -525,20 +582,67 @@ exception_t handleSyscall(syscall_t syscall)
             break;
 
         case SysRecv:
-            handleRecv(true);
+            handleRecv(true, true);
             break;
-
+#ifndef CONFIG_KERNEL_MCS
         case SysReply:
             handleReply();
             break;
 
         case SysReplyRecv:
             handleReply();
-            handleRecv(true);
+            handleRecv(true, true);
             break;
 
+#else /* CONFIG_KERNEL_MCS */
+        case SysWait:
+            handleRecv(true, false);
+            break;
+
+        case SysNBWait:
+            handleRecv(false, false);
+            break;
+        case SysReplyRecv: {
+            cptr_t reply = getRegister(NODE_STATE(ksCurThread), replyRegister);
+            ret = handleInvocation(false, false, true, reply);
+            /* reply cannot error and is not preemptible */
+            assert(ret == EXCEPTION_NONE);
+            handleRecv(true, true);
+            break;
+        }
+
+        case SysNBSendRecv: {
+            cptr_t dest = getNBSendRecvDest();
+            ret = handleInvocation(false, false, true, dest);
+            if (unlikely(ret != EXCEPTION_NONE)) {
+                irq = getActiveIRQ();
+                if (irq != irqInvalid) {
+                    mcsIRQ(irq);
+                    handleInterrupt(irq);
+                    Arch_finaliseInterrupt();
+                }
+                break;
+            }
+            handleRecv(true, true);
+            break;
+        }
+
+        case SysNBSendWait:
+            ret = handleInvocation(false, false, true, getRegister(NODE_STATE(ksCurThread), replyRegister));
+            if (unlikely(ret != EXCEPTION_NONE)) {
+                irq = getActiveIRQ();
+                if (irq != irqInvalid) {
+                    mcsIRQ(irq);
+                    handleInterrupt(irq);
+                    Arch_finaliseInterrupt();
+                }
+                break;
+            }
+            handleRecv(true, false);
+            break;
+#endif
         case SysNBRecv:
-            handleRecv(false);
+            handleRecv(false, true);
             break;
 
         case SysYield:

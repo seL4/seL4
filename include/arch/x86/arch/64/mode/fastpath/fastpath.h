@@ -74,6 +74,7 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, vspace_root_t *
     NODE_STATE(ksCurThread) = thread;
 }
 
+#ifndef CONFIG_KERNEL_MCS
 static inline void thread_state_ptr_set_blockingIPCDiminish_np(thread_state_t *ts_ptr, word_t dim)
 {
     ts_ptr->words[1] = (ts_ptr->words[1] & 1) | dim;
@@ -90,6 +91,7 @@ static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbP
 {
     node_ptr->words[0] = mdbPrev;
 }
+#endif
 
 static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
 {

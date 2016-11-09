@@ -517,7 +517,7 @@
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Depth to resolve src_index to."/>
         </method>
 
-        <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller">
+        <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller" condition="!defined(CONFIG_KERNEL_MCS)">
             <brief>
                 Save the reply capability from the last time the thread was called in the given CSpace so that it can be invoked later
             </brief>

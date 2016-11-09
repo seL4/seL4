@@ -22,7 +22,11 @@ NORETURN;
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 NORETURN SECTION(".vectors.fastpath_call");
 
+#ifdef CONFIG_KERNEL_MCS
+void fastpath_reply_recv(word_t cptr, word_t r_msgInfo, word_t reply)
+#else
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
+#endif
 NORETURN SECTION(".vectors.fastpath_reply_recv");
 
 #endif /* __ARCH_FASTPATH_H */

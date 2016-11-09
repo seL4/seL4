@@ -27,7 +27,11 @@ static inline void arch_c_exit_hook(void)
 
 void VISIBLE NORETURN restore_user_context(void);
 
+#ifdef CONFIG_KERNEL_MCS
+void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
+#else
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+#endif
 VISIBLE SECTION(".vectors.text");
 
 void c_handle_interrupt(void)

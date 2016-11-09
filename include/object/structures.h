@@ -92,6 +92,9 @@ typedef word_t notification_state_t;
 #define SC_REF(p) ((word_t) (p))
 #define SC_PTR(r) ((sched_context_t *) (r))
 
+#define REPLY_REF(p) ((word_t) (p))
+#define REPLY_PTR(r) ((reply_t *) (r))
+
 #define WORD_PTR(r) ((word_t *)(r))
 #define WORD_REF(p) ((word_t)(p))
 
@@ -173,6 +176,10 @@ enum tcb_cnode_index {
     /* VSpace root */
     tcbVTable = 1,
 
+#ifdef CONFIG_KERNEL_MCS
+    /* IPC buffer cap slot */
+    tcbBuffer = 2,
+#else
     /* Reply cap slot */
     tcbReply = 2,
 
@@ -181,7 +188,7 @@ enum tcb_cnode_index {
 
     /* IPC buffer cap slot */
     tcbBuffer = 4,
-
+#endif
     tcbCNodeEntries
 };
 typedef word_t tcb_cnode_index_t;
@@ -218,8 +225,10 @@ static inline vm_attributes_t CONST vmAttributesFromWord(word_t w)
 
 #ifdef CONFIG_KERNEL_MCS
 typedef struct sched_context sched_context_t;
+typedef struct reply reply_t;
 #endif
-/* TCB: size >= 18 words + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+
+/* TCB: size >= 19 words + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
@@ -274,6 +283,10 @@ struct tcb {
     struct tcb *tcbEPNext;
     struct tcb *tcbEPPrev;
 
+#ifdef CONFIG_KERNEL_MCS
+    /* if tcb is in a call, pointer to the reply object, 1 word */
+    reply_t *tcbReply;
+#endif
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     /* 16 bytes (12 bytes aarch32) */
     benchmark_util_t benchmark;
@@ -311,6 +324,10 @@ struct sched_context {
     /* thread that this scheduling context is bound to */
     tcb_t *scTcb;
 
+    /* if this is not NULL, it points to the last reply object that was generated
+     * when the scheduling context was passed over a Call */
+    reply_t *scReply;
+
     /* Amount of refills this sc tracks */
     word_t scRefillMax;
     /* Index of the head of the refill circular buffer */
@@ -320,6 +337,20 @@ struct sched_context {
 
     /* circular buffer of budget refills, ordered by rAmount */
     refill_t scRefills[MAX_REFILLS];
+};
+
+struct reply {
+    /* the caller that is blocked on this reply object */
+    tcb_t *replyCaller;
+
+    /* 0 if this is the start of the call chain, or points to the
+     * previous reply object in a call chain */
+    call_stack_t replyPrev;
+
+    /* Either a scheduling context if this reply object is the head of the call chain
+     * (the last caller before the server) or another reply object. 0 if no scheduling
+     * context was passed along the call chain */
+    call_stack_t replyNext;
 };
 #endif
 
@@ -337,6 +368,7 @@ compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_Notifi
 compile_assert(ipc_buf_size_sane, sizeof(seL4_IPCBuffer) == BIT(seL4_IPCBufferSizeBits))
 #ifdef CONFIG_KERNEL_MCS
 compile_assert(sc_size_sane, sizeof(sched_context_t) <= BIT(seL4_SchedContextBits))
+compile_assert(reply_size_sane, sizeof(reply_t) <= BIT(seL4_ReplyBits))
 #endif
 
 /* helper functions */
@@ -385,7 +417,11 @@ static inline word_t CONST cap_get_capSizeBits(cap_t cap)
         return 0;
 
     case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return seL4_ReplyBits;
+#else
         return 0;
+#endif
 
     case cap_irq_control_cap:
 #ifdef CONFIG_KERNEL_MCS
@@ -442,7 +478,11 @@ static inline bool_t CONST cap_get_capIsPhysical(cap_t cap)
         return false;
 
     case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return true;
+#else
         return false;
+#endif
 
     case cap_irq_control_cap:
 #ifdef CONFIG_KERNEL_MCS
@@ -487,7 +527,11 @@ static inline void *CONST cap_get_capPtr(cap_t cap)
         return NULL;
 
     case cap_reply_cap:
+#ifdef CONFIG_KERNEL_MCS
+        return REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
+#else
         return NULL;
+#endif
 
     case cap_irq_control_cap:
 #ifdef CONFIG_KERNEL_MCS

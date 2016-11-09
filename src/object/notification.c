@@ -176,7 +176,11 @@ void cancelAllSignals(notification_t *ntfnPtr)
         /* Set all waiting threads to Restart */
         for (; thread; thread = thread->tcbEPNext) {
             setThreadState(thread, ThreadState_Restart);
+#ifdef CONFIG_KERNEL_MCS
+            possibleSwitchTo(thread);
+#else
             SCHED_ENQUEUE(thread);
+#endif
         }
         rescheduleRequired();
     }

@@ -48,6 +48,8 @@
 #define LIBSEL4_INLINE_FUNC static inline
 #endif
 
+#define LIBSEL4_UNUSED __attribute__((unused))
+
 #define SEL4_DEPRECATED(x) __attribute__((deprecated(x)))
 #define SEL4_DEPRECATE_MACRO(x) _Pragma("deprecated") x
 

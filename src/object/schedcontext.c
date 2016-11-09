@@ -87,6 +87,10 @@ static exception_t decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t ext
 static exception_t invokeSchedContext_Unbind(sched_context_t *sc)
 {
     schedContext_unbindAllTCBs(sc);
+    if (sc->scReply) {
+        sc->scReply->replyNext = call_stack_new(0, false);
+        sc->scReply = NULL;
+    }
     return EXCEPTION_NONE;
 }
 
@@ -148,6 +152,9 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     }
 #endif
     schedContext_resume(sc);
+    if (isSchedulable(tcb)) {
+        possibleSwitchTo(tcb);
+    }
 }
 
 void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
@@ -175,4 +182,31 @@ void schedContext_unbindAllTCBs(sched_context_t *sc)
     if (sc->scTcb) {
         schedContext_unbindTCB(sc, sc->scTcb);
     }
+}
+
+void schedContext_donate(sched_context_t *sc, tcb_t *to)
+{
+    assert(sc != NULL);
+    assert(to != NULL);
+    assert(to->tcbSchedContext == NULL);
+
+    tcb_t *from = sc->scTcb;
+    if (from) {
+        from->tcbSchedContext = NULL;
+        if (from == NODE_STATE(ksCurThread) || from == NODE_STATE(ksSchedulerAction)) {
+            rescheduleRequired();
+        } else if (isRunnable(from)) {
+            SMP_COND_STATEMENT(remoteTCBStall(from));
+            tcbSchedDequeue(from);
+        }
+    }
+    sc->scTcb = to;
+    to->tcbSchedContext = sc;
+
+#if CONFIG_MAX_NUM_NODES > 1
+    if (to->tcbAffinity != sc->scCore) {
+        migrateTCB(to);
+        to->tcbAffinity = sc->scCore;
+    }
+#endif
 }

@@ -29,7 +29,11 @@ static inline void arch_c_exit_hook(void)
     x86_load_fsgs_base(tcb,  SMP_TERNARY(getCurrentCPUIndex(), 0));
 }
 
+#ifdef CONFIG_KERNEL_MCS
+void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
+#else
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+#endif
 VISIBLE NORETURN;
 
 void restore_user_context(void)

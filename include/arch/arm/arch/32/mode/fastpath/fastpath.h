@@ -63,6 +63,7 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pde_t *cap_pd, 
     clearExMonitor_fp();
 }
 
+#ifndef CONFIG_KERNEL_MCS
 static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
@@ -74,6 +75,7 @@ static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbP
 {
     node_ptr->words[0] = mdbPrev;
 }
+#endif
 
 static inline bool_t isValidVTableRoot_fp(cap_t pd_cap)
 {
@@ -107,10 +109,12 @@ static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
     }
 }
 
+#ifndef CONFIG_KERNEL_MCS
 static inline int fastpath_reply_cap_check(cap_t cap)
 {
     return (cap.words[0] & MASK(5)) == cap_reply_cap;
 }
+#endif
 
 /** DONT_TRANSLATE */
 static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)

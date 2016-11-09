@@ -51,11 +51,18 @@ exception_t sendFaultIPC(tcb_t *tptr)
         if (seL4_Fault_get_seL4_FaultType(current_fault) == seL4_Fault_CapFault) {
             tptr->tcbLookupFailure = original_lookup_fault;
         }
+#ifdef CONFIG_KERNEL_MCS
+        sendIPC(true, true,
+                cap_endpoint_cap_get_capEPBadge(handlerCap),
+                cap_endpoint_cap_get_capCanGrant(handlerCap),
+                true, true, tptr,
+                EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
+#else
         sendIPC(true, true,
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
                 cap_endpoint_cap_get_capCanGrant(handlerCap), true, tptr,
                 EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
-
+#endif
         return EXCEPTION_NONE;
     } else {
         current_fault = seL4_Fault_CapFault_new(handlerCPtr, false);

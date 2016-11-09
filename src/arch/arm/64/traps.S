@@ -203,6 +203,9 @@ lel_syscall:
 
     lsp_i   x19
     mov     x2, x7
+#ifdef CONFIG_KERNEL_MCS
+    mov     x3, x6
+#endif
     b       c_handle_syscall
 
 el0_enfp:

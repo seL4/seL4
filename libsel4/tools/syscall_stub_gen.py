@@ -66,6 +66,7 @@ MESSAGE_REGISTERS_FOR_ARCH = {
     "aarch32": 4,
     "aarch64": 4,
     "ia32": 2,
+    "ia32-mcs": 1,
     "x86_64": 4,
     "arm_hyp": 4,
     "riscv32": 4,
@@ -591,13 +592,16 @@ def generate_result_struct(interface_name, method_name, output_params):
     return "\n".join(result)
 
 
-def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_params, output_params, structs, use_only_ipc_buffer, comment):
+def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_params, output_params, structs, use_only_ipc_buffer, comment, mcs):
     result = []
 
     if use_only_ipc_buffer:
         num_mrs = 0
     else:
-        num_mrs = MESSAGE_REGISTERS_FOR_ARCH[arch]
+        if mcs and "%s-mcs" % arch in MESSAGE_REGISTERS_FOR_ARCH:
+            num_mrs = MESSAGE_REGISTERS_FOR_ARCH["%s-mcs" % arch]
+        else:
+            num_mrs = MESSAGE_REGISTERS_FOR_ARCH[arch]
 
     # Split out cap parameters and standard parameters
     standard_params = []
@@ -933,7 +937,7 @@ def parse_xml_file(input_file, valid_types):
     return (methods, structs, api)
 
 
-def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_buffer):
+def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_buffer, mcs):
     """
     Generate a header file containing system call stubs for seL4.
     """
@@ -1011,7 +1015,7 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
         if condition != "":
             result.append("#if %s" % condition)
         result.append(generate_stub(arch, wordsize, interface_name, method_name,
-                                    method_id, inputs, outputs, structs, use_only_ipc_buffer, comment))
+                                    method_id, inputs, outputs, structs, use_only_ipc_buffer, comment, mcs))
         if condition != "":
             result.append("#endif")
 
@@ -1040,6 +1044,8 @@ def process_args():
                         help="Use IPC buffer exclusively, i.e. do not pass syscall arguments by registers. (default: %(default)s)")
     parser.add_argument("-a", "--arch", dest="arch", required=True, choices=WORD_SIZE_BITS_ARCH,
                         help="Architecture to generate stubs for.")
+    parser.add_argument("--mcs", dest="mcs", action="store_true",
+                        help="Generate MCS api.")
 
     wsizegroup = parser.add_mutually_exclusive_group()
     wsizegroup.add_argument("-w", "--word-size", dest="wsize",
@@ -1082,7 +1088,7 @@ def main():
         sys.exit(2)
 
     # Generate the stubs.
-    generate_stub_file(args.arch, wordsize, args.files, args.output, args.buffer)
+    generate_stub_file(args.arch, wordsize, args.files, args.output, args.buffer, args.mcs)
 
 
 if __name__ == "__main__":

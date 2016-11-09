@@ -532,7 +532,7 @@ BEGIN_FUNC(handle_syscall)
     pushl   %edx            # NextIP := EDX
     pushl   $-1             # save Error (-1 means we entered via syscall)
     pushl   %edx            # save FaultIP (passed in EDX)
-    pushl   %ebp            # save EBP (message register)
+    pushl   %ebp            # save EBP (reply register)
     pushl   %edi            # save EDI (message register)
     pushl   %esi            # save ESI (msgInfo register)
     pushl   %edx            # save EDX (contains FaultIP)
@@ -548,6 +548,9 @@ BEGIN_FUNC(handle_syscall)
     SET_KERNEL_STACK
 
     # Push all the arguments for c_handle_syscall
+#ifdef CONFIG_KERNEL_MCS
+    pushl   %ebp # reply
+#endif
     pushl   %eax # syscall number
     pushl   %esi # msgInfo
     pushl   %ebx # cptr

@@ -80,6 +80,21 @@ block notification_cap {
 #endif
 }
 
+#ifdef CONFIG_KERNEL_MCS
+block reply_cap {
+    field capReplyPtr 64
+
+    field capType 5
+    field capReplyCanGrant 1
+    padding 58
+}
+
+block call_stack(callStackPtr, isHead) {
+    padding 15
+    field isHead 1
+    field_high callStackPtr 48
+}
+#else
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     field capTCBPtr 64
 
@@ -88,6 +103,7 @@ block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     field capReplyCanGrant 1
     field capReplyMaster 1
 }
+#endif
 
 -- The user-visible format of the data word is defined by cnode_capdata, below.
 block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
@@ -382,15 +398,18 @@ block DebugException {
 -- Thread state: size = 24 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant,
                    blockingIPCCanGrantReply, blockingIPCIsCall,
-                   tcbQueued,
 #ifdef CONFIG_KERNEL_MCS
-                   tcbInReleaseQueue,
+                   tcbQueued, tsType,
+                   tcbInReleaseQueue, blockingObject, replyObject) {
+#else
+                   tcbQueued, blockingObject,
+                   tsType) {
 #endif
-                   blockingObject, tsType) {
     field blockingIPCBadge 64
 
 #ifdef CONFIG_KERNEL_MCS
-    padding 59
+    padding 15
+    field_high replyObject 44
 #else
     padding 60
 #endif

@@ -46,5 +46,9 @@ add_sources(
 )
 add_sources(
     DEP KernelIsMCS
-    CFILES src/object/schedcontext.c src/object/schedcontrol.c src/kernel/sporadic.c
+    CFILES
+        src/object/reply.c
+        src/object/schedcontext.c
+        src/object/schedcontrol.c
+        src/kernel/sporadic.c
 )

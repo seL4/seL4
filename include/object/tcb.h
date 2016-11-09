@@ -82,11 +82,49 @@ void remoteTCBStall(tcb_t *tcb);
 #define SCHED_ENQUEUE_CURRENT_TCB   tcbSchedEnqueue(NODE_STATE(ksCurThread))
 #define SCHED_APPEND_CURRENT_TCB    tcbSchedAppend(NODE_STATE(ksCurThread))
 
+#ifdef CONFIG_KERNEL_MCS
+/* Add TCB into the priority ordered endpoint queue */
+static inline tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)
+{
+    /* start at the back of the queue as FIFO is the common case */
+    tcb_t *before = queue.end;
+    tcb_t *after = NULL;
+
+    /* find a place to put the tcb */
+    while (unlikely(before != NULL && tcb->tcbPriority > before->tcbPriority)) {
+        after = before;
+        before = after->tcbEPPrev;
+    }
+
+    if (unlikely(before == NULL)) {
+        /* insert at head */
+        queue.head = tcb;
+    } else {
+        before->tcbEPNext = tcb;
+    }
+
+    if (likely(after == NULL)) {
+        /* insert at tail */
+        queue.end = tcb;
+    } else {
+        after->tcbEPPrev = tcb;
+    }
+
+    tcb->tcbEPNext = after;
+    tcb->tcbEPPrev = before;
+
+    return queue;
+}
+
+tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
+
+#else
 tcb_queue_t tcbEPAppend(tcb_t *tcb, tcb_queue_t queue);
 tcb_queue_t tcbEPDequeue(tcb_t *tcb, tcb_queue_t queue);
 
 void setupCallerCap(tcb_t *sender, tcb_t *receiver, bool_t canGrant);
 void deleteCallerCap(tcb_t *receiver);
+#endif
 
 word_t copyMRs(tcb_t *sender, word_t *sendBuf, tcb_t *receiver,
                word_t *recvBuf, word_t n);

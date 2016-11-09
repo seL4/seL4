@@ -21,7 +21,8 @@
 
     <xsd:complexType name="SyscallListType">
         <xsd:sequence>
-            <xsd:element name="api" type="ApiType" />
+            <xsd:element name="api-master" type="ApiType" />
+            <xsd:element name="api-mcs" type="ApiType" />
             <xsd:element name="debug" type="DebugType" />
         </xsd:sequence>
     </xsd:complexType>

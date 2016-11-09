@@ -17,7 +17,10 @@
 #include <machine/debug.h>
 
 const register_t msgRegisters[] = {
-    EDI, EBP
+    EDI,
+#ifndef CONFIG_KERNEL_MCS
+    EBP
+#endif
 };
 compile_assert(
     consistent_message_registers,
@@ -56,3 +59,15 @@ word_t Mode_sanitiseRegister(register_t reg, word_t v)
 {
     return v;
 }
+
+#ifdef CONFIG_KERNEL_MCS
+word_t getNBSendRecvDest(void)
+{
+    seL4_IPCBuffer *buffer = (seL4_IPCBuffer *) lookupIPCBuffer(false, NODE_STATE(ksCurThread));
+    if (buffer != NULL) {
+        return buffer->userData;
+    } else {
+        return 0;
+    }
+}
+#endif

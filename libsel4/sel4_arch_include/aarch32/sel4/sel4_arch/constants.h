@@ -153,6 +153,9 @@ enum {
 #define seL4_EndpointBits 4
 #define seL4_NotificationBits 4
 #define seL4_SchedContextBits 8
+#ifdef CONFIG_KERNEL_MCS
+#define seL4_ReplyBits 4
+#endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define seL4_PageTableBits 12

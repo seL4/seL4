@@ -34,4 +34,8 @@ static inline word_t PURE getRegister(tcb_t *thread, register_t reg)
     return thread->tcbArch.tcbContext.registers[reg];
 }
 
+#ifdef CONFIG_KERNEL_MCS
+word_t getNBSendRecvDest(void);
+#endif
+
 #endif

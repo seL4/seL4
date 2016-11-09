@@ -311,6 +311,9 @@ list(APPEND gen_files_list "${header_dest}")
 
 set(syscall_xml_base "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/api")
 set(syscall_dest "gen_headers/arch/api/syscall.h")
+if(KernelIsMCS)
+    set(mcs --mcs)
+endif()
 add_custom_command(
     OUTPUT ${syscall_dest}
     COMMAND
@@ -322,7 +325,7 @@ add_custom_command(
     COMMAND
         ${PYTHON3} "${SYSCALL_ID_GEN_PATH}"
         --xml "${syscall_xml_base}/syscall.xml"
-        --kernel_header "${syscall_dest}"
+        --kernel_header "${syscall_dest}" ${mcs}
     DEPENDS
         "${XMLLINT_PATH}"
         "${SYSCALL_ID_GEN_PATH}"

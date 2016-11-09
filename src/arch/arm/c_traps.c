@@ -121,7 +121,11 @@ void NORETURN slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
+#ifdef CONFIG_KERNEL_MCS
+void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
+#else
 void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+#endif
 {
     NODE_LOCK_SYS;
 
@@ -136,7 +140,11 @@ void VISIBLE c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
         fastpath_call(cptr, msgInfo);
         UNREACHABLE();
     } else if (syscall == SysReplyRecv) {
+#ifdef CONFIG_KERNEL_MCS
+        fastpath_reply_recv(cptr, msgInfo, reply);
+#else
         fastpath_reply_recv(cptr, msgInfo);
+#endif
         UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */

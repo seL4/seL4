@@ -112,13 +112,14 @@ void restart(tcb_t *target)
 {
     if (isBlocked(target)) {
         cancelIPC(target);
-        setupReplyMaster(target);
-        setThreadState(target, ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
+        setThreadState(target, ThreadState_Restart);
         if (likely(target->tcbSchedContext != NULL)) {
             schedContext_resume(target->tcbSchedContext);
         }
 #else
+        setupReplyMaster(target);
+        setThreadState(target, ThreadState_Restart);
         SCHED_ENQUEUE(target);
         possibleSwitchTo(target);
 #endif
@@ -141,22 +142,43 @@ void doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
     }
 }
 
+#ifdef CONFIG_KERNEL_MCS
+void doReplyTransfer(tcb_t *sender, reply_t *reply, bool_t grant)
+#else
 void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
+#endif
 {
+#ifdef CONFIG_KERNEL_MCS
+    if (unlikely(reply->replyCaller == NULL)) {
+        return;
+    }
+
+    assert(thread_state_get_tsType(reply->replyCaller->tcbState) ==
+           ThreadState_BlockedOnReply);
+
+    tcb_t *receiver = reply->replyCaller;
+    reply_remove(reply);
+    thread_state_ptr_set_replyObject(&receiver->tcbState, REPLY_REF(0));
+#else
     assert(thread_state_get_tsType(receiver->tcbState) ==
            ThreadState_BlockedOnReply);
+#endif
 
     if (likely(seL4_Fault_get_seL4_FaultType(receiver->tcbFault) == seL4_Fault_NullFault)) {
         doIPCTransfer(sender, NULL, 0, grant, receiver);
+#ifndef CONFIG_KERNEL_MCS
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
+#endif
         setThreadState(receiver, ThreadState_Running);
         possibleSwitchTo(receiver);
     } else {
         bool_t restart;
 
+#ifndef CONFIG_KERNEL_MCS
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
+#endif
         restart = handleFaultReply(receiver, sender);
         receiver->tcbFault = seL4_Fault_NullFault_new();
         if (restart) {
@@ -568,7 +590,6 @@ void endTimeslice(void)
         /* postpone until ready */
         postpone(NODE_STATE(ksCurSC));
     }
-    rescheduleRequired();
 }
 #else
 

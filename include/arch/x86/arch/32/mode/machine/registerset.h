@@ -39,6 +39,10 @@ enum _register {
     msgInfoRegister = ESI,
     /* 0x18 */  EDI             = 6,
     /* 0x1C */  EBP             = 7,
+#ifdef CONFIG_KERNEL_MCS
+    replyRegister               = 7,
+    n_generalRegisters          = 7,
+#endif
 
     /* virtual registers (not actually present in hardware) */
 

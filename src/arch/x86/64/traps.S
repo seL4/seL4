@@ -620,6 +620,10 @@ BEGIN_FUNC(handle_fastsyscall)
 
     # RSI, RDI and RDX are already correct for calling c_handle_syscall
     # gtfo to C land, we will not return
+#ifdef CONFIG_KERNEL_MCS
+    # mov reply to correct register for calling c_handle_syscall
+    movq   %r12, %rcx
+#endif
     jmp    c_handle_syscall
 END_FUNC(handle_fastsyscall)
 
@@ -661,6 +665,10 @@ BEGIN_FUNC(handle_syscall)
     # RSI, RDI are already correct for calling c_handle_syscall
     movq %rax, %rdx
     # gtfo to C land, we will not return
+#ifdef CONFIG_KERNEL_MCS
+    # mov reply to correct register for calling c_handle_syscall
+    movq   %r12, %rcx
+#endif
     call    c_handle_syscall
 END_FUNC(handle_syscall)
 

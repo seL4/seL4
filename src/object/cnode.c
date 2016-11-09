@@ -37,6 +37,12 @@ static finaliseSlot_ret_t finaliseSlot(cte_t *slot, bool_t exposed);
 static void emptySlot(cte_t *slot, cap_t cleanupInfo);
 static exception_t reduceZombie(cte_t *slot, bool_t exposed);
 
+#ifdef CONFIG_KERNEL_MCS
+#define CNODE_LAST_INVOCATION CNodeRotate
+#else
+#define CNODE_LAST_INVOCATION CNodeSaveCaller
+#endif
+
 exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
                                   extra_caps_t excaps, word_t *buffer)
 {
@@ -48,7 +54,7 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
     /* Haskell error: "decodeCNodeInvocation: invalid cap" */
     assert(cap_get_capType(cap) == cap_cnode_cap);
 
-    if (invLabel < CNodeRevoke || invLabel > CNodeSaveCaller) {
+    if (invLabel < CNodeRevoke || invLabel > CNODE_LAST_INVOCATION) {
         userError("CNodeCap: Illegal Operation attempted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -200,6 +206,7 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         return invokeCNodeDelete(destSlot);
     }
 
+#ifndef CONFIG_KERNEL_MCS
     if (invLabel == CNodeSaveCaller) {
         status = ensureEmptySlot(destSlot);
         if (status != EXCEPTION_NONE) {
@@ -210,6 +217,7 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeCNodeSaveCaller(destSlot);
     }
+#endif
 
     if (invLabel == CNodeCancelBadgedSends) {
         cap_t destCap;
@@ -356,6 +364,7 @@ exception_t invokeCNodeRotate(cap_t cap1, cap_t cap2, cte_t *slot1,
     return EXCEPTION_NONE;
 }
 
+#ifndef CONFIG_KERNEL_MCS
 exception_t invokeCNodeSaveCaller(cte_t *destSlot)
 {
     cap_t cap;
@@ -382,6 +391,7 @@ exception_t invokeCNodeSaveCaller(cte_t *destSlot)
 
     return EXCEPTION_NONE;
 }
+#endif
 
 /*
  * If creating a child UntypedCap, don't allow new objects to be created in the
@@ -749,6 +759,7 @@ void insertNewCap(cte_t *parent, cte_t *slot, cap_t cap)
     mdb_node_ptr_set_mdbNext(&parent->cteMDBNode, CTE_REF(slot));
 }
 
+#ifndef CONFIG_KERNEL_MCS
 void setupReplyMaster(tcb_t *thread)
 {
     cte_t *slot;
@@ -763,6 +774,7 @@ void setupReplyMaster(tcb_t *thread)
         mdb_node_ptr_set_mdbFirstBadged(&slot->cteMDBNode, true);
     }
 }
+#endif
 
 bool_t PURE isMDBParentOf(cte_t *cte_a, cte_t *cte_b)
 {
