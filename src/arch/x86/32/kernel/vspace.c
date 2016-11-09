@@ -17,7 +17,7 @@
 #include <arch/kernel/boot.h>
 #include <arch/api/invocation.h>
 #include <benchmark/benchmark_track.h>
-#include <mode/kernel/tlb_bitmap.h>
+#include <arch/kernel/tlb_bitmap.h>
 #include <mode/kernel/tlb.h>
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
@@ -287,7 +287,7 @@ map_kernel_window(
     tlb_bitmap_init(ia32KSGlobalPD);
 
     phys += TLBBITMAP_PD_RESERVED;
-    idx += TLBBITMAP_PD_ENTRIES;
+    idx += TLBBITMAP_ROOT_ENTRIES;
 #endif /* CONFIG_MAX_NUM_NODES */
 
     /* map page table of last 4M of virtual address space to page directory */

@@ -18,7 +18,7 @@
 #include <api/syscall.h>
 #include <benchmark/benchmark_track.h>
 #include <mode/stack.h>
-#include <mode/kernel/tlb_bitmap.h>
+#include <arch/kernel/tlb_bitmap.h>
 
 static inline void
 switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)

@@ -43,6 +43,8 @@ typedef pdpte_t vspace_root_t;
 typedef pde_t vspace_root_t;
 #endif
 
+#define GET_VSPACE_ROOT_INDEX(x) ((x) >> (seL4_PageBits + PT_INDEX_BITS))
+
 #define PDPTE_PTR(r)   ((pdpte_t *)(r))
 #define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
 #define PDPTE_REF(p)   ((word_t)(p))

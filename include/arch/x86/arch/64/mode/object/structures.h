@@ -61,6 +61,7 @@ compile_assert(uint64_t_size_64,
 typedef pml4e_t vspace_root_t;
 
 #define GET_PML4_INDEX(x) ( ((x) >> (PML4_INDEX_OFFSET)) & MASK(PML4_INDEX_BITS))
+#define GET_VSPACE_ROOT_INDEX GET_PML4_INDEX
 #define GET_PDPT_INDEX(x) ( ((x) >> (PDPT_INDEX_OFFSET)) & MASK(PDPT_INDEX_BITS))
 #define GET_PD_INDEX(x)   ( ((x) >> (PD_INDEX_OFFSET)) & MASK(PD_INDEX_BITS))
 #define GET_PT_INDEX(x)   ( ((x) >> (PT_INDEX_OFFSET)) & MASK(PT_INDEX_BITS))

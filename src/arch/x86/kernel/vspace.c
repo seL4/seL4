@@ -15,7 +15,7 @@
 #include <model/statedata.h>
 #include <arch/kernel/vspace.h>
 #include <arch/api/invocation.h>
-#include <mode/kernel/tlb_bitmap.h>
+#include <arch/kernel/tlb_bitmap.h>
 #include <mode/kernel/tlb.h>
 #include <mode/kernel/vspace.h>
 
