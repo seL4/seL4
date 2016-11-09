@@ -23,3 +23,7 @@ const register_t gpRegisters[] = {
     R2, R3, R4, R5, R6, R7, R14
 };
 
+word_t getNBSendRecvDest(void)
+{
+    return getRegister(NODE_STATE(ksCurThread), nbsendRecvDest);
+}

@@ -133,7 +133,7 @@ void suspend(tcb_t *target);
 void restart(tcb_t *target);
 void doIPCTransfer(tcb_t *sender, endpoint_t *endpoint,
                    word_t badge, bool_t grant, tcb_t *receiver);
-void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot);
+void doReplyTransfer(tcb_t *sender, reply_t *reply);
 void doNormalTransfer(tcb_t *sender, word_t *sendBuffer, endpoint_t *endpoint,
                       word_t badge, bool_t canGrant, tcb_t *receiver,
                       word_t *receiveBuffer);

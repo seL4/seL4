@@ -51,12 +51,18 @@ block notification_cap {
     field_high capNtfnPtr 48
 }
 
-block reply_cap(capReplyMaster, capTCBPtr, capType) {
-    field capTCBPtr 64
+block reply_cap {
+    padding 64
 
     field capType 5
-    padding 58
-    field capReplyMaster 1
+    padding 11
+    field_high capReplyPtr 48
+}
+
+block call_stack(callStackPtr, isHead) {
+    padding 15
+    field isHead 1
+    field_high callStackPtr 48
 }
 
 -- The user-visible format of the data word is defined by cnode_capdata, below.
@@ -295,14 +301,14 @@ block DebugException {
 
 -- Thread state: size = 8 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
-                   tcbQueued, blockingIPCDiminishCaps, tsType,
-                   tcbInReleaseQueue, blockingObject) {
+                   tcbQueued, tsType,
+                   tcbInReleaseQueue, blockingObject, replyObject) {
     field blockingIPCBadge 64
 
-    padding 59
+    padding 16
+    field_high replyObject 44
     field blockingIPCCanGrant 1
     field blockingIPCIsCall 1
-    field blockingIPCDiminishCaps 1
     field tcbQueued 1
     field tcbInReleaseQueue 1
 

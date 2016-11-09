@@ -51,12 +51,17 @@ block notification_cap {
     field capType 4
 }
 
-block reply_cap(capReplyMaster, capTCBPtr, capType) {
+block reply_cap {
     padding 32
 
-    field_high capTCBPtr 27
-    field capReplyMaster 1
+    field_high capReplyPtr 28
     field capType 4
+}
+
+block call_stack {
+    field_high callStackPtr 28
+    padding 3
+    field isHead 1
 }
 
 -- The user-visible format of the data word is defined by cnode_capdata, below.
@@ -286,7 +291,7 @@ block DebugException {
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingObject,
-                   tcbInReleaseQueue, tsType) {
+                   tcbInReleaseQueue, replyObject, tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
     field blockingIPCIsCall 1
@@ -294,7 +299,8 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
 
     -- this is fastpath-specific. it is useful to be able to write
     -- tsType and without changing tcbQueued or tcbInReleaseQueue
-    padding 30
+    field_high replyObject 28
+    padding 2
     field tcbQueued 1
     field tcbInReleaseQueue 1
 

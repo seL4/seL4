@@ -145,7 +145,7 @@ slowpath(syscall_t syscall)
 }
 
 void VISIBLE NORETURN
-c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall, word_t reply)
 {
     /* need to run this first as the NODE_LOCK code might end up as a function call
      * with a return, and we need to make sure returns are not exploitable yet */
@@ -175,7 +175,7 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
         fastpath_call(cptr, msgInfo);
         UNREACHABLE();
     } else if (syscall == (syscall_t)SysReplyRecv) {
-        fastpath_reply_recv(cptr, msgInfo);
+        fastpath_reply_recv(cptr, msgInfo, reply);
         UNREACHABLE();
     }
 #endif /* CONFIG_FASTPATH */
