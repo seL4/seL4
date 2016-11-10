@@ -141,6 +141,11 @@ static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t as
     }
 }
 
+static inline void swapgs(void)
+{
+    asm volatile("swapgs");
+}
+
 #ifdef CONFIG_FSGSBASE_INST
 
 static inline void x86_write_fs_base(word_t base)

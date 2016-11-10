@@ -37,7 +37,15 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
 
     /* update the GDT_IPCBUF entry with the thread's IPC buffer address */
     base = thread->tcbIPCBuffer;
+#if CONFIG_MAX_NUM_NODES > 1
+    x86_wrmsr(IA32_KERNEL_GS_BASE_MSR, base);
+    asm volatile("movq %[value], %%gs:%c[offset]"
+            :
+            : [value] "r" (&thread->tcbArch.tcbContext.registers[Error + 1]),
+              [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+#else
     x86_write_gs_base(base);
+#endif
 
     NODE_STATE(ksCurThread) = thread;
 }
@@ -122,6 +130,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
 
         asm volatile (
+#if CONFIG_MAX_NUM_NODES > 1
+                // Switch to the user GS value
+            "swapgs\n"
+#endif
             "movq %%rcx, %%rsp\n"
             "popq %%rax\n"
             "popq %%rbx\n"
@@ -159,6 +171,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         );
     } else {
         asm volatile(
+#if CONFIG_MAX_NUM_NODES > 1
+                // Switch to the user GS value
+            "swapgs\n"
+#endif
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movq %0, %%rsp\n"
             "popq %%rax\n"

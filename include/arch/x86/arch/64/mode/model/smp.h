@@ -19,6 +19,18 @@
 
 typedef struct nodeInfo {
     void *stackTop;
+    void *irqStack;
+    /* This is the address (+8 bytes) of the 'Error' register of the user
+     * context of the current thread. This address is designed so that the
+     * 'syscall' trap code can do
+     * movq %gs:16, %rsp
+     * pushq $-1
+     * pushq %rcx (rcx holds NextIP)
+     * pushq %r11 (r11 holds RFLAGS)
+     * etc etc
+     * This value needs to be updated every time we switch to the user
+     */
+    word_t currentThreadUserContext;
     cpu_id_t index;
 } nodeInfo_t;
 
@@ -32,6 +44,9 @@ static inline PURE cpu_id_t getCurrentCPUIndex(void)
                  : [offset] "i" (OFFSETOF(nodeInfo_t, index)));
     return index;
 }
+
+BOOT_CODE void
+mode_init_tls(cpu_id_t cpu_index);
 
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 

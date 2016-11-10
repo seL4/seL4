@@ -55,13 +55,39 @@
  * of the data and stack segment selector and the descriptor registers are ignored
  */
 
-#define INT_HANDLER_WITH_ERR_CODE(number)           \
+#if CONFIG_MAX_NUM_NODES > 1
+/* If using multicore our gs base is set to point to a nodeInfo_t structure.
+ * Inside that is the 'currentThreadUserContext' that points to the first
+ * register we want to push in the case of the fastsyscall trap. See the
+ * comment in the nodeInfo struct for more details
+ */
+#define MAYBE_SWAPGS swapgs
+#define LOAD_USER_CONTEXT movq %gs:16, %rsp
+#define LOAD_USER_CONTEXT_OFFSET(x) LOAD_USER_CONTEXT; addq $((x) * 8), %rsp
+#define LOAD_KERNEL_STACK movq %gs:0, %rsp
+#define LOAD_IRQ_STACK(x) movq %gs:8, %x
+#else
+/* The location in the user context we want is in ksCurThread after the fpu
+ * state (CONFIG_XSAVE_SIZE) and then the end of the user context is after
+ * 23 words (23 == n_contextRegisters). By default (in the case of a fast
+ * syscall trap) we skip 7 registers (SS, CS, RCX, R11, FaultIP, TLS_BASE
+ * and RSP) and are ready to push Error.
+ */
+#define MAYBE_SWAPGS
+#define LOAD_USER_CONTEXT_OFFSET(x) movq (ksCurThread), %rsp; addq $(CONFIG_XSAVE_SIZE + 23*8 - 7*8 + (x)*8), %rsp
+#define LOAD_USER_CONTEXT LOAD_USER_CONTEXT_OFFSET(0)
+#define LOAD_KERNEL_STACK leaq    kernel_stack_alloc + 4096, %rsp
+#define LOAD_IRQ_STACK(x)  leaq    x64KSIRQStack, %x
+#endif
+
+#define INT_HANDLER_COMMON(number, error_code)       \
 .global int_##number;                               \
 .type   int_##number, %function;                    \
 int_##number:                                       \
-    movq    (ksCurThread), %rsp;                    \
-    /* skip SS, CS */                               \
-    addq    $(CONFIG_XSAVE_SIZE + 23*8 - 2*8), %rsp;                     \
+    error_code;                                     \
+    /* we need to not skip RSP, TLS_BASE, FaultIP, R11 and RCX for now */ \
+    MAYBE_SWAPGS;                                   \
+    LOAD_USER_CONTEXT_OFFSET(5);                    \
     push    %rcx;                                   \
     push    %r11;                                   \
     /* skip FaultIP TLS_BASE, RSP, NextIP, Error, RFLAGS */ \
@@ -83,34 +109,8 @@ int_##number:                                       \
     jmp     handle_interrupt;                       \
 .size   int_##number, . - int_##number;
 
-#define INT_HANDLER_WITHOUT_ERR_CODE(number)        \
-.global int_##number;                               \
-.type   int_##number, %function;                    \
-int_##number:                                       \
-    pushq   $0x0;                                   \
-    movq    (ksCurThread), %rsp;                    \
-    /* skip SS, CS */                               \
-    addq    $(CONFIG_XSAVE_SIZE + 23*8 - 2 * 8), %rsp;                     \
-    push    %rcx;                                   \
-    push    %r11;                                   \
-    /* skip FaultIP TLS_BASE, RSP, NextIP, Error, RFLAGS */ \
-    subq    $(6 * 8), %rsp;                         \
-    push    %r9;                                    \
-    push    %r8;                                    \
-    push    %r10;                                   \
-    push    %rdx;                                   \
-    push    %r15;                                   \
-    push    %r14;                                   \
-    push    %r13;                                   \
-    push    %r12;                                   \
-    push    %rbp;                                   \
-    push    %rbx;                                   \
-    push    %rax;                                   \
-    push    %rsi;                                   \
-    push    %rdi;                                   \
-    movq    $0x##number, %rcx;                      \
-    jmp     handle_interrupt;                       \
-.size   int_##number, . - int_##number;
+#define INT_HANDLER_WITH_ERR_CODE(number) INT_HANDLER_COMMON(number,)
+#define INT_HANDLER_WITHOUT_ERR_CODE(number) INT_HANDLER_COMMON(number, pushq $0x0)
 
 .section .text
 .code64
@@ -389,7 +389,7 @@ INT_HANDLER_WITHOUT_ERR_CODE(ff)
 
 BEGIN_FUNC(handle_interrupt)
     # determine if we have a kernel exception
-    leaq    irq_stack, %rdx
+    LOAD_IRQ_STACK(rdx)
     movq    16(%rdx), %rdx   # get CS (code segment selector) at time of interrupt
     andq    $3, %rdx         # extract CPL (current privilege level)
     setz    %dl              # DL is now 1 if kernel was interrupted, 0 in case of userland
@@ -399,7 +399,7 @@ BEGIN_FUNC(handle_interrupt)
     jnz     kernel_exception
 
     # switch to kernel stack
-    leaq    kernel_stack_alloc + 4096, %rsp
+    LOAD_KERNEL_STACK
 
     # Set the arguments for c_x64_handle_interrupt
     movq    %rcx, %rdi
@@ -425,7 +425,7 @@ BEGIN_FUNC(kernel_exception)
      * setting EFLAGS.TF before SYSEXIT so that single-stepping resumes in the
      * userspace thread.
      */
-    leaq    irq_stack, %rdx
+    LOAD_IRQ_STACK(rdx)
     movq    24(%rdx), %rax
     movq    $(1<<8), %rbx
     testq   %rbx, %rax
@@ -464,7 +464,9 @@ BEGIN_FUNC(kernel_exception)
     addq $48, %rsp
     popq %r11
     popq %rcx
-    leaq irq_stack + 8, %rsp
+    LOAD_IRQ_STACK(rsp)
+    addq $8, %rsp
+    MAYBE_SWAPGS
     iretq
 
 .not_eflags_tf:
@@ -472,13 +474,13 @@ BEGIN_FUNC(kernel_exception)
 
 #ifdef DEBUG
     movq    %rcx, %rdi
-    leaq    irq_stack, %rsi
+    LOAD_IRQ_STACK(rsi)
     movq    0(%rsi), %rsi    # error code
-    leaq    irq_stack, %rdx
+    LOAD_IRQ_STACK(rdx)
     movq    8(%rdx), %rdx    # RIP of the exception
-    leaq    irq_stack, %rcx
+    LOAD_IRQ_STACK(rcx)
     movq    32(%rcx), %rcx   # RSP of the exception
-    leaq    irq_stack, %r8
+    LOAD_IRQ_STACK(r8)
     movq    24(%r8), %r8     # RFLAGS
     # handleKernelException(vector, errorcode, RIP, RSP, RFLAGS, CR0, CR2, CR3, CR4)
     movq    %cr0, %r9
@@ -500,9 +502,8 @@ END_FUNC(kernel_exception)
 # the current RFLAGS (after saving) have been masked
 # with IA32_FMASK.
 BEGIN_FUNC(handle_fastsyscall)
-    movq    (ksCurThread), %rsp
-    # skip SS, CS, RCX, R11, FaultIP, TLS_BASE, RSP
-    addq    $(CONFIG_XSAVE_SIZE + 23*8 - 7*8), %rsp
+    MAYBE_SWAPGS
+    LOAD_USER_CONTEXT
     pushq   $-1             # set Error -1 to mean entry via syscall
     push    %rcx            # save NextIP
     push    %r11            # save RFLAGS
@@ -521,7 +522,7 @@ BEGIN_FUNC(handle_fastsyscall)
     push    %rdi            # save RDI (capRegister)
 
     # switch to kernel stack
-    leaq    kernel_stack_alloc + 4096, %rsp
+    LOAD_KERNEL_STACK
 
     # RSI, RDI and RDX are already correct for calling c_handle_syscall
     # gtfo to C land, we will not return
@@ -535,9 +536,9 @@ END_FUNC(handle_fastsyscall)
 #   RDX : user EIP (pointing to the sysenter instruction)
 #   RSP : NULL
 BEGIN_FUNC(handle_syscall)
-    movq    (ksCurThread), %rsp
-    # skip SS, CS, RCX
-    addq    $(CONFIG_XSAVE_SIZE + 23*8 - 3*8), %rsp
+    /* We need to save r11, rdx TLS_BASE and RSP */
+    MAYBE_SWAPGS
+    LOAD_USER_CONTEXT_OFFSET(4)
     push    %r11
     push    %rdx            # save FaultIP
     subq    $8, %rsp        # skip TLS_BASE
@@ -561,7 +562,7 @@ BEGIN_FUNC(handle_syscall)
     push    %rdi            # save RDI (capRegister)
 
     # switch to kernel stack
-    leaq    kernel_stack_alloc + 4096, %rsp
+    LOAD_KERNEL_STACK
 
     # RSI, RDI are already correct for calling c_handle_syscall
     movq %rax, %rdx

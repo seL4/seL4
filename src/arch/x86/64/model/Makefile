@@ -10,4 +10,5 @@
 # @TAG(D61_GPL)
 #
 
-ARCH_C_SOURCES += 64/model/statedata.c
+ARCH_C_SOURCES += 64/model/statedata.c \
+                  64/model/smp.c

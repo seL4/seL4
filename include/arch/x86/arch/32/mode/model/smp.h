@@ -40,6 +40,12 @@ getCurrentCPUIndex(void)
     return cpu_id;
 }
 
+static inline BOOT_CODE void
+mode_init_tls(cpu_id_t cpu_index)
+{
+    /* Nothing to be done on ia32 */
+}
+
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 
 #endif /* __MODE_MODEL_SMP_H_ */

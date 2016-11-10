@@ -37,10 +37,6 @@ typedef struct lookupPML4Slot_ret lookupPML4Slot_ret_t;
 pml4e_t boot_pml4[BIT(PML4_INDEX_BITS)] __attribute__((aligned(BIT(seL4_PageBits)))) PHYS_DATA;
 pdpte_t boot_pdpt[BIT(PDPT_INDEX_BITS)] __attribute__((aligned(BIT(seL4_PageBits)))) PHYS_DATA;
 
-/* hardware interrupt handlers push up to 6 words onto the stack. THe order of the
- words is Error, RIP, CS, FLAGS, RSP, SS */
-word_t irq_stack[6] __attribute__((aligned(16)));
-
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.
  */
@@ -268,7 +264,7 @@ map_kernel_window(
 BOOT_CODE void
 init_tss(tss_t *tss)
 {
-    word_t base = (word_t)&irq_stack[6];
+    word_t base = (word_t)&MODE_NODE_STATE(x64KSIRQStack)[IRQ_STACK_SIZE];
     tss_ptr_new(
         tss,
         sizeof(*tss),   /* io map base */
@@ -468,7 +464,14 @@ init_dtrs(void)
 {
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
     gdt_idt_ptr.base = (uint64_t)ARCH_NODE_STATE(x86KSgdt);
+
+    /* When we install the gdt it will clobber any value of gs that
+     * we have. Since we might be using it for TLS we can stash
+     * and unstash any gs value using swapgs
+     */
+    swapgs();
     x64_install_gdt(&gdt_idt_ptr);
+    swapgs();
 
     gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1 )) - 1;
     gdt_idt_ptr.base = (uint64_t)ARCH_NODE_STATE(x86KSidt);

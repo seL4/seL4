@@ -28,6 +28,10 @@ extern pte_t x64KSGlobalPT[BIT(PT_INDEX_BITS)];
 
 NODE_STATE_BEGIN(modeNodeState)
 NODE_STATE_DECLARE(cr3_t, x64KSCurrentCR3);
+/* hardware interrupt handlers push up to 6 words onto the stack. The order of the
+ words is Error, RIP, CS, FLAGS, RSP, SS */
+#define IRQ_STACK_SIZE 6
+NODE_STATE_DECLARE(word_t, x64KSIRQStack[IRQ_STACK_SIZE] ALIGN(16));
 NODE_STATE_END(modeNodeState);
 
 #endif /* __ARCH_MODE_MODEL_STATEDATA_H_ */

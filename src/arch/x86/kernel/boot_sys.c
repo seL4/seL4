@@ -299,6 +299,8 @@ try_boot_sys(
     if (!copy_boot_code_aps(mbi->mem_lower)) {
         return false;
     }
+    /* Initialize any kernel TLS */
+    mode_init_tls(0);
 #endif
 
     /* initialize the memory. We track two kinds of memory regions. Physical memory

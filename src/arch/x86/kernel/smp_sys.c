@@ -123,6 +123,8 @@ VISIBLE void
 boot_node(void)
 {
     bool_t result;
+
+    mode_init_tls(smp_aps_index);
     result = try_boot_node();
 
     if (!result) {

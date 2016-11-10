@@ -18,8 +18,6 @@
 
 #include <api/syscall.h>
 
-extern word_t irq_stack[6];
-
 void VISIBLE NORETURN restore_user_context(void)
 {
     c_exit_hook();
@@ -46,6 +44,10 @@ void VISIBLE NORETURN restore_user_context(void)
         if (config_set(CONFIG_SYSENTER)) {
             NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
             asm volatile(
+#if CONFIG_MAX_NUM_NODES > 1
+                // Switch to the user GS value
+                "swapgs\n"
+#endif
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
                 "movq %0, %%rsp\n"
                 "popq %%rdi\n"
@@ -92,6 +94,10 @@ void VISIBLE NORETURN restore_user_context(void)
             );
         } else {
             asm volatile(
+#if CONFIG_MAX_NUM_NODES > 1
+                // Switch to the user GS value
+                "swapgs\n"
+#endif
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
                 "movq %0, %%rsp\n"
                 "popq %%rdi\n"
@@ -125,11 +131,11 @@ void VISIBLE NORETURN restore_user_context(void)
         }
     } else {
         /* construct our return from interrupt frame */
-        irq_stack[1] = getRegister(NODE_STATE(ksCurThread), NextIP);
-        irq_stack[2] = getRegister(NODE_STATE(ksCurThread), CS);
-        irq_stack[3] = getRegister(NODE_STATE(ksCurThread), FLAGS);
-        irq_stack[4] = getRegister(NODE_STATE(ksCurThread), RSP);
-        irq_stack[5] = getRegister(NODE_STATE(ksCurThread), SS);
+        MODE_NODE_STATE(x64KSIRQStack)[1] = getRegister(NODE_STATE(ksCurThread), NextIP);
+        MODE_NODE_STATE(x64KSIRQStack)[2] = getRegister(NODE_STATE(ksCurThread), CS);
+        MODE_NODE_STATE(x64KSIRQStack)[3] = getRegister(NODE_STATE(ksCurThread), FLAGS);
+        MODE_NODE_STATE(x64KSIRQStack)[4] = getRegister(NODE_STATE(ksCurThread), RSP);
+        MODE_NODE_STATE(x64KSIRQStack)[5] = getRegister(NODE_STATE(ksCurThread), SS);
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movq %0, %%rsp\n"
@@ -150,7 +156,14 @@ void VISIBLE NORETURN restore_user_context(void)
             "addq $48, %%rsp\n"
             "popq %%r11\n"
             "popq %%rcx\n"
-            "leaq irq_stack + 8, %%rsp\n"
+#if CONFIG_MAX_NUM_NODES > 1
+            "movq %%gs:8, %%rsp\n"
+            "addq $8, %%rsp\n"
+            // Switch to the user GS value
+            "swapgs\n"
+#else
+            "leaq x64KSIRQStack + 8, %%rsp\n"
+#endif
             "iretq\n"
             :
             : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RDI])
@@ -165,11 +178,11 @@ void VISIBLE NORETURN restore_user_context(void)
 void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall);
 void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall)
 {
-    setRegister(NODE_STATE(ksCurThread), Error, irq_stack[0]);
-    setRegister(NODE_STATE(ksCurThread), NextIP, irq_stack[1]);
-    setRegister(NODE_STATE(ksCurThread), FaultIP, irq_stack[1]);
-    setRegister(NODE_STATE(ksCurThread), FLAGS, irq_stack[3]);
-    setRegister(NODE_STATE(ksCurThread), RSP, irq_stack[4]);
+    setRegister(NODE_STATE(ksCurThread), Error, MODE_NODE_STATE(x64KSIRQStack)[0]);
+    setRegister(NODE_STATE(ksCurThread), NextIP, MODE_NODE_STATE(x64KSIRQStack)[1]);
+    setRegister(NODE_STATE(ksCurThread), FaultIP, MODE_NODE_STATE(x64KSIRQStack)[1]);
+    setRegister(NODE_STATE(ksCurThread), FLAGS, MODE_NODE_STATE(x64KSIRQStack)[3]);
+    setRegister(NODE_STATE(ksCurThread), RSP, MODE_NODE_STATE(x64KSIRQStack)[4]);
     c_handle_interrupt(irq, syscall);
     UNREACHABLE();
 }
