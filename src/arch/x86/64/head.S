@@ -312,6 +312,24 @@ BEGIN_FUNC(enable_x64_mode)
     ret
 END_FUNC(enable_x64_mode)
 
+BEGIN_FUNC(common_init)
+    /* make sure paging (bit 31) is off */
+    movl %cr0, %eax
+    andl $0x7fffffff, %eax
+    movl %eax, %cr0
+
+#ifdef CONFIG_SYSCALL
+    call syscall_enable
+#endif
+
+    call fsgsbase_enable
+    /* Initialize boot PML4 and switch to long mode */
+    call setup_pml4
+    call enable_x64_mode
+    lgdt _gdt64_ptr
+    ret
+END_FUNC(common_init)
+
 BEGIN_FUNC(_start)
     /* Assume we are MultiBooted, e.g. by GRUB.
        See MultiBoot Specification: www.gnu.org/software/grub/manual/multiboot
@@ -333,20 +351,8 @@ BEGIN_FUNC(_start)
     pushl $0
     pushl %edi /* 1st parameter: multiboot_magic    */
 
-    /* make sure paging (bit 31) is off */
-    movl %cr0, %eax
-    andl $0x7fffffff, %eax
-    movl %eax, %cr0
+    call common_init
 
-#ifdef CONFIG_SYSCALL
-    call syscall_enable
-#endif
-
-    call fsgsbase_enable
-    /* Initialize boot PML4 and switch to long mode */
-    call setup_pml4
-    call enable_x64_mode
-    lgdt _gdt64_ptr
     /* reload CS with long bit to enable long mode */
     ljmp $8, $_start64
 END_FUNC(_start)
@@ -397,6 +403,10 @@ BEGIN_FUNC(_entry_64)
     /* Pop the multiboot parameters off */
     pop %rdi
     pop %rsi
+
+    /* Load our real kernel stack */
+    leaq kernel_stack_alloc + 0x1000, %rsp
+
     movabs $restore_user_context, %rax
     push %rax
     jmp boot_sys
@@ -404,11 +414,81 @@ END_FUNC(_entry_64)
 
 .section .phys.text
 
-.code16
+#if CONFIG_MAX_NUM_NODES > 1
+
 BEGIN_FUNC(boot_cpu_start)
+.code16
+    /* Set DS equal to CS and load GDTR register with GDT pointer */
+    movw %cs, %ax
+    movw %ax, %ds
+    lgdt _boot_gdt_ptr - boot_cpu_start
+
+    /* Enable Protected Mode */
+    movl %cr0, %eax
+    orl  $1,   %eax
+    movl %eax, %cr0
+
+    /* Reload CS with a far jump */
+    ljmpl $0x08, $1f
+
+.code32
 1:
+    /* Load DS/ES/SS with kernel data segment selector */
+    movw $0x10, %ax
+    movw %ax,   %ds
+    movw %ax,   %es
+    movw %ax,   %ss
+
+    /* Use temporary kernel boot stack pointer */
+    leal boot_stack_top, %esp
+
+    /* Reset EFLAGS register (also disables interrupts etc.) */
+    pushl $0
+    popf
+
+    call common_init
+
+    /* reload CS with long bit to enable long mode */
+    ljmp $8, $_start_ap64
     jmp 1b
 END_FUNC(boot_cpu_start)
 
+.code64
+BEGIN_FUNC(_start_ap64)
+    /* Leave phys code behind and jump to the high kernel virtual address */
+    movabs $_entry_ap64, %rax
+    jmp *%rax
+END_FUNC(_start_ap64)
+
+_boot_gdt_ptr:
+    .word   (3 * 8) - 1 /* Limit: 3 segments * 8 bytes - 1 byte */
+    .long   _boot_gdt   /* Address of boot GDT */
+
+/* GDT for getting us through 32-bit protected mode */
+    .align 16
+_boot_gdt:
+    .quad 0x0000000000000000 /* Null segment */
+    .quad 0x00cf9b000000ffff /* 4GB kernel code segment */
+    .quad 0x00cf93000000ffff /* 4GB kernel data segment */
+
 .global boot_cpu_end
 boot_cpu_end:
+
+.section .boot.text
+
+BEGIN_FUNC(_entry_ap64)
+    /* Get the index of this cpu */
+    movq smp_aps_index, %rcx
+
+    /* Switch to a real kernel stack */
+    leaq kernel_stack_alloc, %rsp
+    shlq $12, %rcx
+    addq %rcx, %rsp
+    addq $0x1000, %rsp
+
+    movabs $restore_user_context, %rax
+    push %rax
+    jmp boot_node
+END_FUNC(_entry_64)
+
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
