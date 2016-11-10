@@ -27,22 +27,22 @@ setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer, lookup_fault_t 
     switch (lufType) {
     case lookup_fault_invalid_root:
         return i;
-     case lookup_fault_missing_capability:
+    case lookup_fault_missing_capability:
         return setMR(receiver, receiveIPCBuffer, offset + 1,
                      lookup_fault_missing_capability_get_bitsLeft(luf));
-     case lookup_fault_depth_mismatch:
+    case lookup_fault_depth_mismatch:
         setMR(receiver, receiveIPCBuffer, offset + 1,
               lookup_fault_depth_mismatch_get_bitsLeft(luf));
         return setMR(receiver, receiveIPCBuffer, offset + 2,
                      lookup_fault_depth_mismatch_get_bitsFound(luf));
-     case lookup_fault_guard_mismatch:
+    case lookup_fault_guard_mismatch:
         setMR(receiver, receiveIPCBuffer, offset + 1,
               lookup_fault_guard_mismatch_get_bitsLeft(luf));
         setMR(receiver, receiveIPCBuffer, offset + 2,
               lookup_fault_guard_mismatch_get_guardFound(luf));
         return setMR(receiver, receiveIPCBuffer, offset + 3,
                      lookup_fault_guard_mismatch_get_bitsFound(luf));
-     default:
+    default:
         fail("Invalid lookup failure");
     }
 }
