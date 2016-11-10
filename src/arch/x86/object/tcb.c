@@ -20,78 +20,47 @@ static inline unsigned int
 setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer, lookup_fault_t luf, unsigned int offset)
 {
     word_t lufType = lookup_fault_get_lufType(luf);
+    word_t i;
 
-    assert(n_msgRegisters == 2);
-
-    if (offset < n_msgRegisters) {
-        setRegister(receiver, msgRegisters[offset], lufType + 1);
-    }
-
-    if (!receiveIPCBuffer) {
-        return n_msgRegisters;
-    }
-
-    if (offset >= n_msgRegisters) {
-        receiveIPCBuffer[offset + 1] = lufType + 1;
-    }
+    i = setMR(receiver, receiveIPCBuffer, offset, lufType + 1);
 
     switch (lufType) {
     case lookup_fault_invalid_root:
-        return offset + 1;
-
-    case lookup_fault_missing_capability:
-        receiveIPCBuffer[offset + 2] =
-            lookup_fault_missing_capability_get_bitsLeft(luf);
-        return offset + 2;
-
-    case lookup_fault_depth_mismatch:
-        receiveIPCBuffer[offset + 2] =
-            lookup_fault_depth_mismatch_get_bitsLeft(luf);
-        receiveIPCBuffer[offset + 3] =
-            lookup_fault_depth_mismatch_get_bitsFound(luf);
-        return offset + 3;
-
-    case lookup_fault_guard_mismatch:
-        receiveIPCBuffer[offset + 2] =
-            lookup_fault_guard_mismatch_get_bitsLeft(luf);
-        receiveIPCBuffer[offset + 3] =
-            lookup_fault_guard_mismatch_get_guardFound(luf);
-        receiveIPCBuffer[offset + 4] =
-            lookup_fault_guard_mismatch_get_bitsFound(luf);
-        return offset + 4;
-
-    default:
+        return i;
+     case lookup_fault_missing_capability:
+        return setMR(receiver, receiveIPCBuffer, offset + 1,
+                     lookup_fault_missing_capability_get_bitsLeft(luf));
+     case lookup_fault_depth_mismatch:
+        setMR(receiver, receiveIPCBuffer, offset + 1,
+              lookup_fault_depth_mismatch_get_bitsLeft(luf));
+        return setMR(receiver, receiveIPCBuffer, offset + 2,
+                     lookup_fault_depth_mismatch_get_bitsFound(luf));
+     case lookup_fault_guard_mismatch:
+        setMR(receiver, receiveIPCBuffer, offset + 1,
+              lookup_fault_guard_mismatch_get_bitsLeft(luf));
+        setMR(receiver, receiveIPCBuffer, offset + 2,
+              lookup_fault_guard_mismatch_get_guardFound(luf));
+        return setMR(receiver, receiveIPCBuffer, offset + 3,
+                     lookup_fault_guard_mismatch_get_bitsFound(luf));
+     default:
         fail("Invalid lookup failure");
     }
 }
 
 word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
 {
-    assert(n_msgRegisters == 2);
-
     switch (fault_get_faultType(sender->tcbFault)) {
     case fault_cap_fault:
-        setRegister(receiver, msgRegisters[0], getRestartPC(sender));
-        setRegister(receiver, msgRegisters[1],
-                    fault_cap_fault_get_address(sender->tcbFault));
-        if (!receiveIPCBuffer) {
-            return n_msgRegisters;
-        }
-        receiveIPCBuffer[2 + 1] =
-            fault_cap_fault_get_inReceivePhase(sender->tcbFault);
+        setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
+        setMR(receiver, receiveIPCBuffer, 1, fault_cap_fault_get_address(sender->tcbFault));
+        setMR(receiver, receiveIPCBuffer, 2, fault_cap_fault_get_inReceivePhase(sender->tcbFault));
         return setMRs_lookup_failure(receiver, receiveIPCBuffer, sender->tcbLookupFailure, 3);
 
     case fault_vm_fault:
-        setRegister(receiver, msgRegisters[0], getRestartPC(sender));
-        setRegister(receiver, msgRegisters[1],
-                    fault_vm_fault_get_address(sender->tcbFault));
-        if (!receiveIPCBuffer) {
-            return n_msgRegisters;
-        }
-        receiveIPCBuffer[2 + 1] =
-            fault_vm_fault_get_instructionFault(sender->tcbFault);
-        receiveIPCBuffer[3 + 1] = fault_vm_fault_get_FSR(sender->tcbFault);
-        return 4;
+        setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
+        setMR(receiver, receiveIPCBuffer, 1, fault_vm_fault_get_address(sender->tcbFault));
+        setMR(receiver, receiveIPCBuffer, 2, fault_vm_fault_get_instructionFault(sender->tcbFault));
+        return setMR(receiver, receiveIPCBuffer, 3, fault_vm_fault_get_FSR(sender->tcbFault));
 
     case fault_unknown_syscall: {
         word_t i;
