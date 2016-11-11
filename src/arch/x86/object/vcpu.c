@@ -161,7 +161,8 @@ vmptrld(void *vmcs_ptr)
 }
 
 static void
-switchVCPU(vcpu_t *vcpu) {
+switchVCPU(vcpu_t *vcpu)
+{
 #if CONFIG_MAX_NUM_NODES  > 1
     if (vcpu->last_cpu != getCurrentCPUIndex() && ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
         /* vcpu is currently loaded on another core, need to do vmclear on that core */
