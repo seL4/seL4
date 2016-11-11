@@ -442,6 +442,9 @@ try_boot_sys(
         return false;
     }
 
+    /* Total number of cores we intend to boot */
+    ksNumCPUs = boot_state.num_cpus;
+
     printf("Starting node #0 with APIC ID %lu\n", boot_state.cpus[0]);
     if (!try_boot_sys_node(boot_state.cpus[0])) {
         return false;
@@ -458,7 +461,6 @@ try_boot_sys(
     /* grab BKL before leaving the kernel */
     NODE_LOCK;
 
-    ksNumCPUs = boot_state.num_cpus;
     printf("Booting all finished, dropped to user space\n");
 
     return true;

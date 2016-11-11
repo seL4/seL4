@@ -304,7 +304,7 @@ init_sys_state(
     init_irqs(root_cnode_cap);
 
     /* create the bootinfo frame */
-    bi_frame_pptr = allocate_bi_frame(0, 1, ipcbuf_vptr);
+    bi_frame_pptr = allocate_bi_frame(0, ksNumCPUs, ipcbuf_vptr);
     if (!bi_frame_pptr) {
         return false;
     }
