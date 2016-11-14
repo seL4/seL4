@@ -103,7 +103,10 @@ tsc_init(void)
                 /* read tsc freq from the platform info msr */
                 uint64_t info = x86_rdmsr(IA32_PLATFORM_INFO_MSR);
                 uint32_t ratio = (((uint32_t) info) & 0xFF00) >> 8u;
-                return (ratio * 100u); // this gives Mhz
+                /* Ignore hardware that claims a tsc frequency of zero */
+                if (ratio != 0) {
+                    return (ratio * 100u); // this gives Mhz
+                }
             }
         }
     }
