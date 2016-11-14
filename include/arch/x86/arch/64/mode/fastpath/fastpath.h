@@ -110,6 +110,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
          */
         restore_user_context();
     }
+    NODE_UNLOCK;
     c_exit_hook();
     if (unlikely(nativeThreadUsingFPU(cur_thread))) {
         /* We are using the FPU, make sure it is enabled */

@@ -20,6 +20,7 @@
 
 void VISIBLE NORETURN restore_user_context(void)
 {
+    NODE_UNLOCK_IF_HELD;
     c_exit_hook();
     if (unlikely(nativeThreadUsingFPU(NODE_STATE(ksCurThread)))) {
         /* We are using the FPU, make sure it is enabled */
