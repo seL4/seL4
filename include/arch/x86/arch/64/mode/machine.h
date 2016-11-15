@@ -79,7 +79,7 @@ typedef struct invpcid_desc {
 #define INVPCID_TYPE_ALL_GLOBAL     2   /* also invalidate global */
 #define INVPCID_TYPE_ALL            3
 
-static inline void invalidatePCID(word_t type, void *vaddr, asid_t asid)
+static inline void invalidateLocalPCID(word_t type, void *vaddr, asid_t asid)
 {
     if (config_set(CONFIG_SUPPORT_PCID)) {
         invpcid_desc_t desc;
@@ -112,17 +112,17 @@ static inline void invalidateLocalTranslationSingle(vptr_t vptr)
     /* As this may be used to invalidate global mappings by the kernel,
      * and as its only used in boot code, we can just invalidate
      * absolutely everything form the tlb */
-    invalidatePCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
+    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
 }
 
 static inline void invalidateLocalTranslationSingleASID(vptr_t vptr, asid_t asid)
 {
-    invalidatePCID(INVPCID_TYPE_ADDR, (void*)vptr, asid);
+    invalidateLocalPCID(INVPCID_TYPE_ADDR, (void*)vptr, asid);
 }
 
 static inline void invalidateLocalTranslationAll(void)
 {
-    invalidatePCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
+    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
 }
 
 static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t asid)

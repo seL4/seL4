@@ -454,6 +454,7 @@ void setVMRoot(tcb_t *tcb)
     }
     cr3 = cr3_new(pptr_to_paddr(pml4), asid);
     if (getCurrentCR3().words[0] != cr3.words[0]) {
+        SMP_COND_STATEMENT(tlb_bitmap_set(pml4, getCurrentCPUIndex());)
         setCurrentCR3(cr3, 1);
     }
 }
@@ -1027,7 +1028,7 @@ flushPD(vspace_root_t *vspace, word_t vptr, pde_t *pd, asid_t asid)
      * one by one using invplg.
      * choose the easy way, invalidate the PCID
      */
-    invalidatePCID(INVPCID_TYPE_SINGLE, (void*)0, asid);
+    invalidateASID(vspace, asid, SMP_TERNARY(tlb_bitmap_get(vspace), 0));
 
 }
 
@@ -1035,14 +1036,14 @@ static void
 flushPDPT(vspace_root_t *vspace, word_t vptr, pdpte_t *pdpt, asid_t asid)
 {
     /* similar here */
-    invalidatePCID(INVPCID_TYPE_SINGLE, (void*)0, asid);
+    invalidateASID(vspace, asid, SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return;
 }
 
 void
 hwASIDInvalidate(asid_t asid, vspace_root_t *vspace)
 {
-    invalidatePCID(INVPCID_TYPE_SINGLE, 0, asid);
+    invalidateASID(vspace, asid, SMP_TERNARY(tlb_bitmap_get(vspace), 0));
 }
 
 void
@@ -1081,8 +1082,8 @@ unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
                            0                       /* present          */
                        );
 
-    /* TODO: Update mask for SMP */
-    invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid, 0);
+    invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid,
+                                     SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
 }
 
 
@@ -1110,8 +1111,8 @@ performX64PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pd
 {
     ctSlot->cap = cap;
     *pdptSlot = pdpte;
-    /* TODO: Update mask for SMP */
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_page_directory_cap_get_capPDMappedASID(cap), 0);
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_page_directory_cap_get_capPDMappedASID(cap),
+                                     SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return EXCEPTION_NONE;
 }
 
@@ -1281,8 +1282,8 @@ performX64PDPTInvocationMap(cap_t cap, cte_t *ctSlot, pml4e_t pml4e, pml4e_t *pm
 {
     ctSlot->cap = cap;
     *pml4Slot = pml4e;
-    /* TODO: Update mask for SMP */
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_pdpt_cap_get_capPDPTMappedASID(cap), 0);
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_pdpt_cap_get_capPDPTMappedASID(cap),
+                                     SMP_TERNARY(tlb_bitmap_get(vspace), 0));
 
     return EXCEPTION_NONE;
 }
@@ -1451,8 +1452,8 @@ performX64ModeMapRemapPage(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdp
 {
     ctSlot->cap = cap;
     *pdptSlot = pdpte;
-    /* TODO: Update mask for SMP */
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap), 0);
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap),
+                                     SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return EXCEPTION_NONE;
 }
 

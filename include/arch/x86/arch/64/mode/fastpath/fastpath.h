@@ -26,6 +26,7 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     /* the asid is the 12-bit PCID */
     asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xfff);
     if (likely(getCurrentCR3().words[0] != cr3_new(new_vroot, asid).words[0])) {
+        SMP_COND_STATEMENT(tlb_bitmap_set(vroot, getCurrentCPUIndex());)
         setCurrentVSpaceRoot(new_vroot, asid);
     }
 

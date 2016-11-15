@@ -21,13 +21,21 @@
 #if CONFIG_MAX_NUM_NODES > 1
 
 typedef enum {
-    IpiNumModeRemoteCall = IpiNumArchRemoteCall
+    IpiRemoteCall_InvalidatePCID = IpiNumArchRemoteCall,
+    IpiRemoteCall_InvalidateASID,
+    IpiNumModeRemoteCall
 } IpiModeRemoteCall_t;
 
-static inline void
-Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1)
+void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2);
+
+static inline void doRemoteInvalidatePCID(word_t type, void *vaddr, asid_t asid, word_t mask)
 {
-    fail("Invalid IPI");
+    doRemoteMaskOp3Arg(IpiRemoteCall_InvalidatePCID, type, (word_t)vaddr, asid, mask);
+}
+
+static inline void doRemoteInvalidateASID(vspace_root_t *vspace, asid_t asid, word_t mask)
+{
+    doRemoteMaskOp2Arg(IpiRemoteCall_InvalidateASID, (word_t)vspace, asid, mask);
 }
 
 #endif /* CONFIG_MAX_NUM_NODES */
