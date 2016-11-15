@@ -41,6 +41,48 @@ void resetTimer(void)
     /* not necessary */
 }
 
+#define TSC_FREQ_RETRIES 10
+
+BOOT_CODE static inline uint32_t
+measure_tsc_khz(void)
+{
+    /* The frequency is repeatedly measured until the number of TSC
+     * ticks in the pit wraparound interval (~50ms) fits in 32 bits.
+     * On bare metal, this should succeed immediately, since x86
+     * guarantees the number of TSC ticks in a second can be stored
+     * in 32 bits. When running in a simulator, it's possible for
+     * the emulation (or not) of the PIT and TSC to occasionally
+     * allow too many TSC ticks per PIT wraparound. This loop
+     * repeatedly measures the TSC ticks per PIT wraparound under
+     * the expectation that it will eventually yield a sensible
+     * result.
+     */
+    for (int i = 0; i < TSC_FREQ_RETRIES; i++) {
+
+        /* read tsc */
+        uint64_t old_ticks = x86_rdtsc();
+
+        /* measure how many tsc cycles pass while PIT wraps around */
+        pit_wait_wraparound();
+
+        uint64_t new_ticks = x86_rdtsc();
+
+        uint64_t diff = new_ticks - old_ticks;
+
+        if ((uint32_t)diff == diff && new_ticks > old_ticks) {
+            return (uint32_t)diff / PIT_WRAPAROUND_MS;
+        }
+
+        printf("warning: TSC frequency too high (%d retries remaining)\n",
+               TSC_FREQ_RETRIES - i - 1);
+    }
+
+    fail("TSC frequency too high");
+
+    /* should never get here */
+    return 0;
+}
+
 BOOT_CODE VISIBLE uint32_t
 tsc_init(void)
 {
@@ -72,23 +114,9 @@ tsc_init(void)
     /* wait for pit to wraparound */
     pit_wait_wraparound();
 
-    /* read tsc */
-    uint64_t old_ticks = x86_rdtsc();
-
-    /* measure how many tsc cycles pass while PIT wrapsaround */
-    pit_wait_wraparound();
-
-    uint64_t new_ticks = x86_rdtsc();
-
-    uint64_t diff = new_ticks - old_ticks;
-
-    /* sanity checks */
-    assert((uint32_t) diff == diff);
-    assert(new_ticks > old_ticks);
-
-    /* bravo, khz */
-    uint32_t cycles_per_ms = (uint32_t) diff / PIT_WRAPAROUND_MS;
+    /* count tsc ticks per ms */
+    uint32_t tsc_khz = measure_tsc_khz();
 
     /* finally, return mhz */
-    return cycles_per_ms / 1000u;
+    return tsc_khz / 1000u;
 }
