@@ -22,12 +22,10 @@
 
 #define NUM_READY_QUEUES (CONFIG_NUM_DOMAINS * CONFIG_NUM_PRIORITIES)
 
-#define L2_BITMAP_SIZE ((CONFIG_NUM_PRIORITIES + wordBits - 1) / wordBits)
-
 NODE_STATE_BEGIN(nodeState)
 NODE_STATE_DECLARE(tcb_queue_t, ksReadyQueues[NUM_READY_QUEUES]);
 NODE_STATE_DECLARE(word_t, ksReadyQueuesL1Bitmap[CONFIG_NUM_DOMAINS]);
-NODE_STATE_DECLARE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][L2_BITMAP_SIZE]);
+NODE_STATE_DECLARE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM_PRIORITIES / wordBits) + 1]);
 NODE_STATE_DECLARE(tcb_t, *ksCurThread);
 NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);

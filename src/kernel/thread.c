@@ -325,7 +325,9 @@ chooseThread(void)
     }
 
     if (likely(NODE_STATE(ksReadyQueuesL1Bitmap[dom]))) {
-        prio = getHighestPrio(dom);
+        word_t l1index = (wordBits - 1) - clzl(NODE_STATE(ksReadyQueuesL1Bitmap[dom]));
+        word_t l2index = (wordBits - 1) - clzl(NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]));
+        prio = l1index_to_prio(l1index) | l2index;
         thread = NODE_STATE(ksReadyQueues[ready_queues_index(dom, prio)]).head;
         assert(thread);
         assert(isRunnable(thread));
@@ -389,7 +391,7 @@ setPriority(tcb_t *tptr, prio_t prio)
 }
 
 static void
-possibleSwitchTo(tcb_t* target, bool_t curThreadWillBlock)
+possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
 {
     dom_t curDom, targetDom;
     prio_t curPrio, targetPrio;
@@ -403,21 +405,9 @@ possibleSwitchTo(tcb_t* target, bool_t curThreadWillBlock)
     if (targetDom != curDom) {
         SCHED_ENQUEUE(target);
     } else {
-        /* curThreadWillBlock effectively means "synchronous IPC" with effort to
-         * switch to the target; for async we attempt to stay with sender.
-         * To avoid the scheduler in the synchronous case (assuming curPrio
-         * is highest in domain), target must have highest prio of all
-         * schedulable threads in this domain.
-         * In the async case, target need only be higher than curPrio;
-         * else we enqueue the sender which the scheduler will then pick
-         * Note: skipping scheduler is also possible in async else case.
-         */
-        if ((targetPrio > curPrio ||
-                (curThreadWillBlock &&
-                 (targetPrio == curPrio ||
-                  NODE_STATE(ksReadyQueuesL1Bitmap)[curDom] == 0 ||
-                  targetPrio >= getHighestPrio(curDom))))
-                && action == SchedulerAction_ResumeCurrentThread) {
+        if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
+                && action == SchedulerAction_ResumeCurrentThread
+                SMP_COND_STATEMENT( && target->tcbAffinity == getCurrentCPUIndex())) {
             NODE_STATE(ksSchedulerAction) = target;
         } else {
             SCHED_ENQUEUE(target);
