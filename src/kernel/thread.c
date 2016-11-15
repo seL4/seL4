@@ -414,9 +414,9 @@ possibleSwitchTo(tcb_t* target, bool_t curThreadWillBlock)
          */
         if ((targetPrio > curPrio ||
                 (curThreadWillBlock &&
-                    (targetPrio == curPrio ||
-                     NODE_STATE(ksReadyQueuesL1Bitmap)[curDom] == 0 ||
-                     targetPrio >= getHighestPrio(curDom))))
+                 (targetPrio == curPrio ||
+                  NODE_STATE(ksReadyQueuesL1Bitmap)[curDom] == 0 ||
+                  targetPrio >= getHighestPrio(curDom))))
                 && action == SchedulerAction_ResumeCurrentThread) {
             NODE_STATE(ksSchedulerAction) = target;
         } else {
