@@ -37,7 +37,8 @@ block x86_pat_msr {
 block apic_base_msr {
     field_high  base_addr           20
     field       enabled             1
-    padding                         2
+    field       x2apic              1
+    padding                         1
     field       is_bsp              1
     padding                         8
 }
@@ -85,6 +86,22 @@ block apic_icr1 {
 block apic_icr2 {
     field       dest                8
     padding                         24
+}
+
+block x2apic_icr1 {
+    padding                         12
+    field       dest_shorthand      2
+    padding                         2
+    field       trigger_mode        1
+    field       level               1
+    padding                         2
+    field       dest_mode           1
+    field       delivery_mode       3
+    field       vector              8
+}
+
+block x2apic_icr2 {
+    field       dest                32
 }
 
 -- x86-specific IRQ state structure

@@ -11,18 +11,22 @@
 #ifndef __ARCH_KERNEL_APIC_H
 #define __ARCH_KERNEL_APIC_H
 
+#include <config.h>
 #include <types.h>
 #include <plat/machine.h>
+#include <arch/kernel/xapic.h>
+#include <arch/kernel/x2apic.h>
 
-paddr_t apic_get_base_paddr(void);
-bool_t apic_init(bool_t mask_legacy_irqs);
-cpu_id_t apic_get_id(void);
+BOOT_CODE bool_t apic_enable(void);
+BOOT_CODE void apic_send_init_ipi(cpu_id_t cpu_id);
+BOOT_CODE void apic_send_startup_ipi(cpu_id_t cpu_id, paddr_t startup_addr);
+BOOT_CODE paddr_t apic_get_base_paddr(void);
+BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs);
 
-bool_t apic_is_interrupt_pending(void);
+uint32_t apic_read_reg(apic_reg_t reg);
+void apic_write_reg(apic_reg_t reg, uint32_t val);
+void apic_write_icr(word_t high, word_t low);
 void apic_ack_active_interrupt(void);
-
+bool_t apic_is_interrupt_pending(void);
 void apic_send_ipi(irq_t vector, cpu_id_t cpu_id);
-void apic_send_init_ipi(cpu_id_t cpu_id);
-void apic_send_startup_ipi(cpu_id_t cpu_id, paddr_t startup_addr);
-
 #endif

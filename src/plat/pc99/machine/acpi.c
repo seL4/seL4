@@ -116,6 +116,7 @@ enum acpi_table_madt_struct_type {
     MADT_APIC   = 0,
     MADT_IOAPIC = 1,
     MADT_ISO    = 2,
+    MADT_x2APIC = 9
 };
 
 typedef struct acpi_madt_apic {
@@ -126,6 +127,16 @@ typedef struct acpi_madt_apic {
 } acpi_madt_apic_t;
 compile_assert(acpi_madt_apic_packed,
                sizeof(acpi_madt_apic_t) == sizeof(acpi_madt_header_t) + 6)
+
+typedef struct acpi_madt_x2apic {
+    acpi_madt_header_t  header;
+    uint16_t            reserved;
+    uint32_t            x2apic_id;
+    uint32_t            flags;
+    uint32_t            acpi_processor_uid;
+} acpi_madt_x2apic_t;
+compile_assert(acpi_madt_apic_packed,
+               sizeof(acpi_madt_x2apic_t) == sizeof(acpi_madt_header_t) + 14)
 
 typedef struct acpi_madt_ioapic {
     acpi_madt_header_t header;
@@ -290,12 +301,33 @@ acpi_madt_scan(
 
             while ((char*)acpi_madt_header < (char*)acpi_madt_mapped + acpi_madt_mapped->header.length) {
                 switch (acpi_madt_header->type) {
+                /* ACPI specifies the following rules when listing APIC IDs:
+                 *  - Boot processor is listed first
+                 *  - For multi-threaded processors, BIOS should list the first logical
+                 *    processor of each of the individual multi-threaded processors in MADT
+                 *    before listing any of the second logical processors.
+                 *  - APIC IDs < 0xFF should be listed in APIC subtable, APIC IDs >= 0xFF
+                 *    should be listed in X2APIC subtable */
                 case MADT_APIC: {
                     /* what Intel calls apic_id is what is called cpu_id in seL4! */
                     uint8_t  cpu_id = ((acpi_madt_apic_t*)acpi_madt_header)->apic_id;
                     uint32_t flags  = ((acpi_madt_apic_t*)acpi_madt_header)->flags;
                     if (flags == 1) {
                         printf("ACPI: MADT_APIC apic_id=0x%x\n", cpu_id);
+                        if (num_cpu == CONFIG_MAX_NUM_NODES) {
+                            printf("ACPI: Not recording this APIC, only support %d\n", CONFIG_MAX_NUM_NODES);
+                        } else {
+                            cpu_list[num_cpu] = cpu_id;
+                            num_cpu++;
+                        }
+                    }
+                    break;
+                }
+                case MADT_x2APIC: {
+                    uint32_t cpu_id = ((acpi_madt_x2apic_t*)acpi_madt_header)->x2apic_id;
+                    uint32_t flags  = ((acpi_madt_x2apic_t*)acpi_madt_header)->flags;
+                    if (flags == 1) {
+                        printf("ACPI: MADT_x2APIC apic_id=0x%x\n", cpu_id);
                         if (num_cpu == CONFIG_MAX_NUM_NODES) {
                             printf("ACPI: Not recording this APIC, only support %d\n", CONFIG_MAX_NUM_NODES);
                         } else {

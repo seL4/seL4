@@ -1,0 +1,65 @@
+/*
+ * Copyright 2016, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
+ *
+ * This software may be distributed and modified according to the terms of
+ * the GNU General Public License version 2. Note that NO WARRANTY is provided.
+ * See "LICENSE_GPLv2.txt" for details.
+ *
+ * @TAG(D61_GPL)
+ */
+
+#ifndef __ARCH_KERNEL_X2APIC_H_
+#define __ARCH_KERNEL_X2APIC_H_
+
+#include <config.h>
+#include <arch/machine.h>
+
+BOOT_CODE bool_t x2apic_is_enabled(void);
+
+#ifdef CONFIG_X2APIC
+typedef enum _apic_reg_t {
+    APIC_ID             = 0x802,
+    APIC_VERSION        = 0x803,
+    APIC_TASK_PRIO      = 0x808,
+    APIC_PROC_PRIO      = 0x80A,
+    APIC_EOI            = 0x80B,
+    APIC_LOGICAL_DEST   = 0x80D,
+    APIC_SVR            = 0x80F,
+    APIC_ISR_BASE       = 0x810,
+    APIC_TMR_BASE       = 0x818,
+    APIC_IRR_BASE       = 0x820,
+    APIC_ERR_STATUS     = 0x828,
+    APIC_ICR            = 0x830,
+    APIC_LVT_TIMER      = 0x832,
+    APIC_LVT_THERMAL    = 0x833,
+    APIC_LVT_PERF_CNTR  = 0x834,
+    APIC_LVT_LINT0      = 0x835,
+    APIC_LVT_LINT1      = 0x836,
+    APIC_LVT_ERROR      = 0x837,
+    APIC_TIMER_COUNT    = 0x838,
+    APIC_TIMER_CURRENT  = 0x839,
+    APIC_TIMER_DIVIDE   = 0x83E
+} apic_reg_t;
+
+static inline uint32_t
+apic_read_reg(apic_reg_t reg)
+{
+    return x86_rdmsr_low(reg);
+}
+
+static inline void
+apic_write_reg(apic_reg_t reg, uint32_t val)
+{
+    x86_wrmsr(reg, val);
+}
+
+static inline void
+apic_write_icr(word_t high, word_t low)
+{
+    uint64_t icr = ((uint64_t)high << 32) | low;
+    x86_wrmsr(APIC_ICR, icr);
+}
+#endif /* CONFIG_X2APIC */
+#endif /* __ARCH_KERNEL_X2APIC_H_ */

@@ -40,6 +40,24 @@ choice
             Use one or more IOAPIC controllers
 endchoice
 
+choice
+    prompt "Local APIC mode"
+    depends on ARCH_X86
+    default XAPIC if ARCH_IA32
+    default X2APIC if ARCH_X86_64
+    help
+        Select the mode local APIC will use. Not all machines support
+        X2APIC mode.
+    config XAPIC
+        bool "XAPIC"
+        help
+            Use XAPIC mode for local APIC
+    config X2APIC
+        bool "X2APIC"
+        help
+            Use X2APIC mode for local APIC
+endchoice
+
 config MAX_VPIDS
     prompt "Max VPIDs to support"
     depends on VTX
