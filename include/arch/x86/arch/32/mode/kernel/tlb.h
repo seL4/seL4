@@ -19,21 +19,19 @@
 static inline void invalidateTLBEntry(vptr_t vptr, word_t mask)
 {
     invalidateLocalTLBEntry(vptr);
-    SMP_COND_STATEMENT(doRemoteMaskOp1Arg(
-                           IpiRemoteCall_InvalidateTLBEntry, vptr, mask));
+    SMP_COND_STATEMENT(doRemoteInvalidateTLBEntry(vptr, mask));
 }
 
 static inline void invalidatePageStructureCache(word_t mask)
 {
     invalidateLocalPageStructureCache();
-    SMP_COND_STATEMENT(doRemoteMaskOp0Arg(
-                           IpiRemoteCall_InvalidatePageStructureCache, mask));
+    SMP_COND_STATEMENT(doRemoteInvalidatePageStructureCache(mask));
 }
 
 static inline void invalidateTLB(word_t mask)
 {
     invalidateLocalTLB();
-    SMP_COND_STATEMENT(doRemoteMaskOp0Arg(IpiRemoteCall_InvalidateTLB, mask));
+    SMP_COND_STATEMENT(doRemoteInvalidateTLB(mask));
 }
 
 #endif /* __MODE_KERNEL_TLB_H */

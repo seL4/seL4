@@ -134,6 +134,25 @@ static void inline doRemoteswitchFpuOwner(user_fpu_state_t *new_owner, word_t cp
     doRemoteOp1Arg(IpiRemoteCall_switchFpuOwner, (word_t)new_owner, cpu);
 }
 
+static void inline doRemoteInvalidatePageStructureCacheASID(paddr_t root, asid_t asid, word_t mask)
+{
+    doRemoteMaskOp2Arg(IpiRemoteCall_InvalidatePageStructureCacheASID, root, asid, mask);
+}
+
+static void inline doRemoteInvalidateTranslationSingle(vptr_t vptr, word_t mask)
+{
+    doRemoteMaskOp1Arg(IpiRemoteCall_InvalidateTranslationSingle, vptr, mask);
+}
+
+static void inline doRemoteInvalidateTranslationSingleASID(vptr_t vptr, asid_t asid, word_t mask)
+{
+    doRemoteMaskOp2Arg(IpiRemoteCall_InvalidateTranslationSingleASID, vptr, asid, mask);
+}
+
+static void inline doRemoteInvalidateTranslationAll(word_t mask)
+{
+    doRemoteMaskOp0Arg(IpiRemoteCall_InvalidateTranslationAll, mask);
+}
 
 #ifdef CONFIG_VTX
 static inline void
