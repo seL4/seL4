@@ -12,6 +12,8 @@ DIRECTORIES += src/arch/$(ARCH)/kernel
 
 ARCH_C_SOURCES += kernel/vspace.c \
                   kernel/apic.c \
+                  kernel/xapic.c \
+                  kernel/x2apic.c \
                   kernel/boot_sys.c \
                   kernel/smp_sys.c \
                   kernel/boot.c \
