@@ -42,7 +42,7 @@ static void inline doRemoteInvalidateTLB(word_t mask)
     doRemoteMaskOp0Arg(IpiRemoteCall_InvalidateTLB, mask);
 }
 
-void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1);
+void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2);
 
 #endif /* CONFIG_MAX_NUM_NODES */
 #endif /* __ARCH_KERNEL_IPI_H */

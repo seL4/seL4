@@ -18,7 +18,7 @@
 #include <plat/machine.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
-#define MAX_IPI_ARGS    2   /* Maximum number of parameters to remote function */
+#define MAX_IPI_ARGS    3   /* Maximum number of parameters to remote function */
 
 void Arch_handleIPI(irq_t irq);
 
@@ -44,7 +44,7 @@ typedef enum {
  * @param data2 passed to the function as second parameter
  * @param mask cores to run function on
  */
-void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask);
+void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask);
 
 /* Run a synchronous function on a core specified by cpu.
  *
@@ -53,9 +53,9 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mas
  * @param data2 passed to the function as second parameter
  * @param cpu core to run function on
  */
-static void inline doRemoteOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t cpu)
+static void inline doRemoteOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t cpu)
 {
-    doRemoteMaskOp(func, data1, data2, BIT(cpu));
+    doRemoteMaskOp(func, data1, data2, data3, BIT(cpu));
 }
 
 /* List of wrapper functions
@@ -72,36 +72,42 @@ static void inline doRemoteOp(IpiRemoteCall_t func, word_t data1, word_t data2, 
  */
 static void inline doRemoteMaskOp0Arg(IpiRemoteCall_t func, word_t mask)
 {
-    doRemoteMaskOp(func, 0, 0, mask);
+    doRemoteMaskOp(func, 0, 0, 0, mask);
 }
 
 static void inline
 doRemoteMaskOp1Arg(IpiRemoteCall_t func, word_t data1, word_t mask)
 {
-    doRemoteMaskOp(func, data1, 0, mask);
+    doRemoteMaskOp(func, data1, 0, 0, mask);
 }
 
 static void inline
 doRemoteMaskOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask)
 {
-    doRemoteMaskOp(func, data1, data2, mask);
+    doRemoteMaskOp(func, data1, data2, 0, mask);
+}
+
+static void inline
+doRemoteMaskOp3Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
+{
+    doRemoteMaskOp(func, data1, data2, data3, mask);
 }
 
 static void inline doRemoteOp0Arg(IpiRemoteCall_t func, word_t cpu)
 {
-    doRemoteOp(func, 0, 0, cpu);
+    doRemoteOp(func, 0, 0, 0, cpu);
 }
 
 static void inline
 doRemoteOp1Arg(IpiRemoteCall_t func, word_t data1, word_t cpu)
 {
-    doRemoteOp(func, data1, 0, cpu);
+    doRemoteOp(func, data1, 0, 0, cpu);
 }
 
 static void inline
 doRemoteOp2Arg(IpiRemoteCall_t func, word_t data1, word_t data2, word_t cpu)
 {
-    doRemoteOp(func, data1, data2, cpu);
+    doRemoteOp(func, data1, data2, 0, cpu);
 }
 
 /* This is asynchronous call and could be called outside the lock.

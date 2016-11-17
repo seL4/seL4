@@ -102,7 +102,7 @@ static void ipiStallCoreCallback(void)
     }
 }
 
-static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1)
+static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2)
 {
     /* we gets spurious irq_remote_call_ipi calls, e.g. when handling IPI
      * in lock while hardware IPI is pending. Guard against spurious IPIs! */
@@ -138,7 +138,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1)
             break;
 #endif
         default:
-            Mode_handleRemoteCall(call, arg0, arg1);
+            Mode_handleRemoteCall(call, arg0, arg1, arg2);
             break;
         }
 
@@ -155,7 +155,7 @@ static void handleReschedule(void)
 void Arch_handleIPI(irq_t irq)
 {
     if (irq == irq_remote_call_ipi) {
-        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1));
+        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2));
     } else if (irq == irq_reschedule_ipi) {
         handleReschedule();
     } else {
@@ -166,7 +166,7 @@ void Arch_handleIPI(irq_t irq)
 /* make sure all cpu IDs for number of core fit in bitwise word */
 compile_assert(invalid_number_of_supported_nodes, CONFIG_MAX_NUM_NODES <= wordBits);
 
-void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mask)
+void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
 {
     word_t nr_target_cores = 0;
     uint16_t target_cores[CONFIG_MAX_NUM_NODES];
@@ -182,6 +182,7 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mas
         remoteCall = func;
         ipi_args[0] = data1;
         ipi_args[1] = data2;
+        ipi_args[2] = data3;
         while (mask) {
             int index = wordBits - 1 - clzl(mask);
             target_cores[nr_target_cores] = index;
