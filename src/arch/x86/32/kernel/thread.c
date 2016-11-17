@@ -54,7 +54,7 @@ Arch_switchToIdleThread(void)
     setVMRoot(NODE_STATE(ksIdleThread));
 }
 
-void CONST
+void
 Arch_activateIdleThread(tcb_t* tcb)
 {
     /* Don't need to do anything */

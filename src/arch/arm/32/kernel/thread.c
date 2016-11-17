@@ -36,7 +36,7 @@ Arch_switchToIdleThread(void)
     *armKSGlobalsFrame = 0;
 }
 
-void CONST
+void
 Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
