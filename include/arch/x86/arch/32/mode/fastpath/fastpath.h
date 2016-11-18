@@ -68,9 +68,9 @@ static inline bool_t
 isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
 #if defined(CONFIG_PAE_PAGING)
-    return cap_capType_equals(vspace_root_cap, cap_pdpt_cap) && cap_pdpt_cap_get_capPDPTIsMapped(vspace_root_cap);
+    return likely(cap_capType_equals(vspace_root_cap, cap_pdpt_cap) && cap_pdpt_cap_get_capPDPTIsMapped(vspace_root_cap));
 #else
-    return cap_capType_equals(vspace_root_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(vspace_root_cap);
+    return likely(cap_capType_equals(vspace_root_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(vspace_root_cap));
 #endif
 }
 
