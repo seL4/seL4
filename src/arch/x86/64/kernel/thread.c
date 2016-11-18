@@ -53,6 +53,8 @@ void
 Arch_switchToIdleThread(void)
 {
     tcb_t *tcb = NODE_STATE(ksIdleThread);
+    /* Force the idle thread to run on kernel page table */
+    setVMRoot(tcb);
     /* In 64-bit mode the CPU unconditionally pushes to the stack when
      * taking an exception. Therefore we need to provide the idle thread
      * with a stack */
