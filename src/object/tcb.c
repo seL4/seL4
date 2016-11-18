@@ -343,10 +343,7 @@ remoteTCBStall(tcb_t *tcb)
 static exception_t
 invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
 {
-    /* check if thread own its current core FPU */
-    if (nativeThreadUsingFPU(thread)) {
-        switchFpuOwner(NULL, thread->tcbAffinity);
-    }
+    migrateTCB(thread);
 
     /* remove the tcb from scheduler queue in case it is already in one
      * and add it to new queue if required */
@@ -1585,3 +1582,13 @@ setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
     }
 }
 
+#if CONFIG_MAX_NUM_NODES > 1
+void
+migrateTCB(tcb_t *thread)
+{
+    /* check if thread own its current core FPU */
+    if (nativeThreadUsingFPU(thread)) {
+        switchFpuOwner(NULL, thread->tcbAffinity);
+    }
+}
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
