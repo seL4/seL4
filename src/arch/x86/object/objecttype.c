@@ -305,108 +305,112 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
 }
 
 #ifdef CONFIG_VTX
-    case cap_ept_pml4_cap:
-        return cap_ept_pml4_cap_set_capPML4IsMapped(cap, 0);
-    case cap_ept_pdpt_cap:
-        return cap_ept_pdpt_cap_set_capPDPTIsMapped(cap, 0);
-    case cap_ept_pd_cap:
-        return cap_ept_pd_cap_set_capPDIsMapped(cap, 0);
-    case cap_ept_pt_cap:
-        return cap_ept_pt_cap_set_capPTIsMapped(cap, 0);
+case cap_ept_pml4_cap:
+return cap_ept_pml4_cap_set_capPML4IsMapped(cap, 0);
+case cap_ept_pdpt_cap:
+return cap_ept_pdpt_cap_set_capPDPTIsMapped(cap, 0);
+case cap_ept_pd_cap:
+return cap_ept_pd_cap_set_capPDIsMapped(cap, 0);
+case cap_ept_pt_cap:
+return cap_ept_pt_cap_set_capPTIsMapped(cap, 0);
 #endif
 #ifdef CONFIG_VTX
-    case cap_vcpu_cap:
-        vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
-        vcpu_init(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
-        return cap;
+case cap_vcpu_cap:
+vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+vcpu_init(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+return cap;
 
-    case cap_ept_pml4_cap: {
-        ept_pml4e_t *pml4 = (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(cap);
-        clearMemory(pml4, seL4_X86_EPTPML4Bits);
+case cap_ept_pml4_cap:
+{
+    ept_pml4e_t *pml4 = (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(cap);
+    clearMemory(pml4, seL4_X86_EPTPML4Bits);
 
-        if (cap_ept_pml4_cap_get_capPML4IsMapped(cap)) {
-            findEPTForASID_ret_t find_ret;
-            asid_t asid = cap_ept_pml4_cap_get_capPML4MappedASID(cap);
+    if (cap_ept_pml4_cap_get_capPML4IsMapped(cap)) {
+        findEPTForASID_ret_t find_ret;
+        asid_t asid = cap_ept_pml4_cap_get_capPML4MappedASID(cap);
 
-            find_ret = findEPTForASID(asid);
-            if (find_ret.status == EXCEPTION_NONE && find_ret.ept == pml4) {
-                invept(pml4);
-            }
+        find_ret = findEPTForASID(asid);
+        if (find_ret.status == EXCEPTION_NONE && find_ret.ept == pml4) {
+            invept(pml4);
         }
-
-        Arch_finaliseCap(cap, is_final);
-        if (is_final) {
-            return resetMemMapping(cap);
-        }
-
-        return cap;
     }
-    case cap_ept_pdpt_cap: {
-        ept_pdpte_t *pdpt = (ept_pdpte_t*)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap);
-        clearMemory(pdpt, seL4_X86_EPTPDPTBits);
 
-        if (cap_ept_pdpt_cap_get_capPDPTIsMapped(cap)) {
-            EPTPDPTMapped_ret_t ret;
-            asid_t asid = cap_ept_pdpt_cap_get_capPDPTMappedASID(cap);
-            vptr_t vptr = cap_ept_pdpt_cap_get_capPDPTMappedAddress(cap);
-
-            ret = EPTPDPTMapped(asid, vptr, pdpt);
-            if (ret.status == EXCEPTION_NONE) {
-                invept(ret.pml4);
-            }
-        }
-
-        Arch_finaliseCap(cap, is_final);
-        if (is_final) {
-            return resetMemMapping(cap);
-        }
-
-        return cap;
+    Arch_finaliseCap(cap, is_final);
+    if (is_final) {
+        return resetMemMapping(cap);
     }
-    case cap_ept_pd_cap: {
-        ept_pde_t *pd = (ept_pde_t*)cap_ept_pd_cap_get_capPDBasePtr(cap);
-        clearMemory(pd, seL4_X86_EPTPDBits);
 
-        if (cap_ept_pd_cap_get_capPDIsMapped(cap)) {
-            EPTPageDirectoryMapped_ret_t ret;
-            asid_t asid = cap_ept_pd_cap_get_capPDMappedASID(cap);
-            vptr_t vptr = cap_ept_pd_cap_get_capPDMappedAddress(cap);
+    return cap;
+}
+case cap_ept_pdpt_cap:
+{
+    ept_pdpte_t *pdpt = (ept_pdpte_t*)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap);
+    clearMemory(pdpt, seL4_X86_EPTPDPTBits);
 
-            ret = EPTPageDirectoryMapped(asid, vptr, pd);
-            if (ret.status == EXCEPTION_NONE) {
-                invept(ret.pml4);
-            }
+    if (cap_ept_pdpt_cap_get_capPDPTIsMapped(cap)) {
+        EPTPDPTMapped_ret_t ret;
+        asid_t asid = cap_ept_pdpt_cap_get_capPDPTMappedASID(cap);
+        vptr_t vptr = cap_ept_pdpt_cap_get_capPDPTMappedAddress(cap);
+
+        ret = EPTPDPTMapped(asid, vptr, pdpt);
+        if (ret.status == EXCEPTION_NONE) {
+            invept(ret.pml4);
         }
-
-        Arch_finaliseCap(cap, is_final);
-        if (is_final) {
-            return resetMemMapping(cap);
-        }
-
-        return cap;
     }
-    case cap_ept_pt_cap: {
-        ept_pte_t *pt = (ept_pte_t*)cap_ept_pt_cap_get_capPTBasePtr(cap);
-        clearMemory(pt, seL4_X86_EPTPTBits);
 
-        if (cap_ept_pt_cap_get_capPTIsMapped(cap)) {
-            EPTPageTableMapped_ret_t ret;
-            asid_t asid = cap_ept_pt_cap_get_capPTMappedASID(cap);
-            vptr_t vptr = cap_ept_pt_cap_get_capPTMappedAddress(cap);
-
-            ret = EPTPageTableMapped(asid, vptr, pt);
-            if (ret.status == EXCEPTION_NONE) {
-                invept(ret.pml4);
-            }
-        }
-
-        Arch_finaliseCap(cap, is_final);
-        if (is_final) {
-            return resetMemMapping(cap);
-        }
-
-        return cap;
+    Arch_finaliseCap(cap, is_final);
+    if (is_final) {
+        return resetMemMapping(cap);
     }
+
+    return cap;
+}
+case cap_ept_pd_cap:
+{
+    ept_pde_t *pd = (ept_pde_t*)cap_ept_pd_cap_get_capPDBasePtr(cap);
+    clearMemory(pd, seL4_X86_EPTPDBits);
+
+    if (cap_ept_pd_cap_get_capPDIsMapped(cap)) {
+        EPTPageDirectoryMapped_ret_t ret;
+        asid_t asid = cap_ept_pd_cap_get_capPDMappedASID(cap);
+        vptr_t vptr = cap_ept_pd_cap_get_capPDMappedAddress(cap);
+
+        ret = EPTPageDirectoryMapped(asid, vptr, pd);
+        if (ret.status == EXCEPTION_NONE) {
+            invept(ret.pml4);
+        }
+    }
+
+    Arch_finaliseCap(cap, is_final);
+    if (is_final) {
+        return resetMemMapping(cap);
+    }
+
+    return cap;
+}
+case cap_ept_pt_cap:
+{
+    ept_pte_t *pt = (ept_pte_t*)cap_ept_pt_cap_get_capPTBasePtr(cap);
+    clearMemory(pt, seL4_X86_EPTPTBits);
+
+    if (cap_ept_pt_cap_get_capPTIsMapped(cap)) {
+        EPTPageTableMapped_ret_t ret;
+        asid_t asid = cap_ept_pt_cap_get_capPTMappedASID(cap);
+        vptr_t vptr = cap_ept_pt_cap_get_capPTMappedAddress(cap);
+
+        ret = EPTPageTableMapped(asid, vptr, pt);
+        if (ret.status == EXCEPTION_NONE) {
+            invept(ret.pml4);
+        }
+    }
+
+    Arch_finaliseCap(cap, is_final);
+    if (is_final) {
+        return resetMemMapping(cap);
+    }
+
+    return cap;
+}
 #endif
 
 bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
