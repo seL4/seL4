@@ -136,8 +136,9 @@ prioPropsFromWord(word_t w)
  */
 #define userError(...) \
     do {                                                                     \
-        printf(ANSI_DARK "<<" ANSI_GREEN "seL4" ANSI_DARK                    \
+        printf(ANSI_DARK "<<" ANSI_GREEN "seL4(CPU %lu)" ANSI_DARK           \
                 " [%s/%d T%p \"%s\" @%lx]: ",                                \
+                SMP_TERNARY(getCurrentCPUIndex(), 0),                        \
                 __func__, __LINE__, NODE_STATE(ksCurThread),                 \
                 THREAD_NAME,                                                 \
                 (word_t)getRestartPC(NODE_STATE(ksCurThread)));              \
