@@ -136,6 +136,10 @@ void setExtraBadge(word_t *bufferPtr, word_t badge, word_t i);
 exception_t lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info);
 word_t setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer);
 
+#if CONFIG_MAX_NUM_NODES > 1
+void migrateTCB(tcb_t *thread);
+#endif
+
 #ifdef CONFIG_DEBUG_BUILD
 void setThreadName(tcb_t *thread, const char *name);
 #endif /* CONFIG_DEBUG_BUILD */
