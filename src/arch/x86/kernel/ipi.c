@@ -191,7 +191,7 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t mas
 
         /* sending IPIs... */
         totalCoreBarrier = nr_target_cores;
-        asm volatile("" ::: "memory");
+        IPI_ICR_BARRIER;
 
         for (int i = 0; i < nr_target_cores; i++) {
             big_kernel_lock.node_owners[target_cores[i]].ipi = 1;
@@ -207,6 +207,7 @@ void doMaskReschedule(word_t mask)
     /* make sure the current core is not set in the mask */
     mask &= ~BIT(getCurrentCPUIndex());
 
+    IPI_ICR_BARRIER;
     while (mask) {
         int index = wordBits - 1 - clzl(mask);
         apic_send_ipi(int_reschedule_ipi, cpuIndexToID(index));
