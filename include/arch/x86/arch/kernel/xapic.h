@@ -62,5 +62,7 @@ apic_write_icr(word_t high, word_t low)
     apic_write_reg(APIC_ICR2, high);
     apic_write_reg(APIC_ICR1, low);
 }
+
+#define IPI_ICR_BARRIER  asm volatile("" ::: "memory")
 #endif  /* CONFIG_XAPIC */
 #endif /* __ARCH_KERNEL_XAPIC_H_ */

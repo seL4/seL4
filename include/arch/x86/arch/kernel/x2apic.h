@@ -61,5 +61,7 @@ apic_write_icr(word_t high, word_t low)
     uint64_t icr = ((uint64_t)high << 32) | low;
     x86_wrmsr(APIC_ICR, icr);
 }
+
+#define IPI_ICR_BARRIER  asm volatile("mfence" ::: "memory")
 #endif /* CONFIG_X2APIC */
 #endif /* __ARCH_KERNEL_X2APIC_H_ */
