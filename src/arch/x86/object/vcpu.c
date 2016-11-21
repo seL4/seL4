@@ -169,9 +169,7 @@ switchVCPU(vcpu_t *vcpu)
         doRemoteClearCurrentVCPU(vcpu->last_cpu);
     }
 #endif
-    if (ARCH_NODE_STATE(x86KSCurrentVCPU)) {
-        vmclear(ARCH_NODE_STATE(x86KSCurrentVCPU));
-    }
+    clearCurrentVCPU();
     vmptrld(vcpu);
 #if CONFIG_MAX_NUM_NODES > 1
     if (vcpu->last_cpu != getCurrentCPUIndex()) {
