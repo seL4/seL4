@@ -27,6 +27,23 @@ volatile word_t smp_aps_index = 1;
 ALIGN(BIT(PAGE_BITS)) VISIBLE
 char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(seL4_PageBits)];
 
+#ifdef CONFIG_USE_LOGICAL_IDS
+BOOT_CODE static void
+update_logical_id_mappings(void)
+{
+    cpu_mapping.index_to_logical_id[getCurrentCPUIndex()] = apic_get_logical_id();
+
+    for (int i = 0; i < smp_aps_index; i++) {
+        if (apic_get_cluster(cpu_mapping.index_to_logical_id[getCurrentCPUIndex()]) ==
+                apic_get_cluster(cpu_mapping.index_to_logical_id[i])) {
+
+            cpu_mapping.other_indexes_in_cluster[getCurrentCPUIndex()] |= BIT(i);
+            cpu_mapping.other_indexes_in_cluster[i] |= BIT(getCurrentCPUIndex());
+        }
+    }
+}
+#endif /* CONFIG_USE_LOGICAL_IDS */
+
 BOOT_CODE static void
 start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
 {
@@ -43,6 +60,9 @@ start_boot_aps(void)
 {
     /* update cpu mapping for BSP, cpus[0] is always assumed to be BSP */
     cpu_mapping.index_to_cpu_id[getCurrentCPUIndex()] = boot_state.cpus[0];
+#ifdef CONFIG_USE_LOGICAL_IDS
+    cpu_mapping.index_to_logical_id[getCurrentCPUIndex()] = apic_get_logical_id();
+#endif /* CONFIG_USE_LOGICAL_IDS */
 
     /* startup APs one at a time as we use shared kernel boot stack */
     while (smp_aps_index < boot_state.num_cpus) {
@@ -90,6 +110,9 @@ try_boot_node(void)
         return false;
     }
 
+#ifdef CONFIG_USE_LOGICAL_IDS
+    update_logical_id_mappings();
+#endif /* CONFIG_USE_LOGICAL_IDS */
     return true;
 }
 

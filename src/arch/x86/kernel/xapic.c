@@ -15,6 +15,22 @@
 #include <arch/kernel/x2apic.h>
 
 #ifdef CONFIG_XAPIC
+#ifdef CONFIG_USE_LOGICAL_IDS
+/* using flat cluster mode we only support 8 cores */
+compile_assert(number_of_cores_invalid_for_logical_ids, CONFIG_MAX_NUM_NODES <= 8)
+
+BOOT_CODE static void
+init_xapic_ldr(void)
+{
+    uint32_t ldr;
+
+    apic_write_reg(APIC_DEST_FORMAT, XAPIC_DFR_FLAT);
+    ldr = apic_read_reg(APIC_LOGICAL_DEST) & MASK(XAPIC_LDR_SHIFT);
+    ldr |= (BIT(getCurrentCPUIndex()) << XAPIC_LDR_SHIFT);
+    apic_write_reg(APIC_LOGICAL_DEST, ldr);
+}
+#endif /* CONFIG_USE_LOGICAL_IDS */
+
 BOOT_CODE bool_t
 apic_enable(void)
 {
@@ -30,6 +46,10 @@ apic_enable(void)
         printf("x2APIC enabled in BIOS but kernel does not support that\n");
         return false;
     }
+
+#ifdef CONFIG_USE_LOGICAL_IDS
+    init_xapic_ldr();
+#endif /* CONFIG_USE_LOGICAL_IDS */
 
     return true;
 }

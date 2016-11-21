@@ -346,6 +346,11 @@ try_boot_sys(
         return false;
     }
 
+    /* check if kernel configuration matches platform requirments */
+    if (!acpi_fadt_scan(acpi_rsdt)) {
+        return false;
+    }
+
     if (!config_set(CONFIG_IOMMU) || cmdline_opt.disable_iommu) {
         boot_state.num_drhu = 0;
     } else {

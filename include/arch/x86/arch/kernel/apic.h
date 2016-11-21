@@ -26,6 +26,9 @@ BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs);
 uint32_t apic_read_reg(apic_reg_t reg);
 void apic_write_reg(apic_reg_t reg, uint32_t val);
 void apic_write_icr(word_t high, word_t low);
+
+logical_id_t apic_get_logical_id(void);
+word_t apic_get_cluster(logical_id_t logical_id);
 void apic_ack_active_interrupt(void);
 bool_t apic_is_interrupt_pending(void);
 void apic_send_ipi(irq_t vector, cpu_id_t cpu_id);

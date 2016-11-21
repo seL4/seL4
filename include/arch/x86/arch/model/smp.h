@@ -32,6 +32,11 @@ typedef struct smpStatedata {
 
 typedef struct cpu_id_mapping {
     cpu_id_t index_to_cpu_id[CONFIG_MAX_NUM_NODES];
+
+#ifdef CONFIG_USE_LOGICAL_IDS
+    logical_id_t index_to_logical_id[CONFIG_MAX_NUM_NODES];
+    word_t other_indexes_in_cluster[CONFIG_MAX_NUM_NODES];
+#endif /* CONFIG_USE_LOGICAL_IDS */
 } cpu_id_mapping_t;
 
 extern smpStatedata_t ksSMP[CONFIG_MAX_NUM_NODES] VISIBLE;

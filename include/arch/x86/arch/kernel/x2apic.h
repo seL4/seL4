@@ -43,6 +43,9 @@ typedef enum _apic_reg_t {
     APIC_TIMER_DIVIDE   = 0x83E
 } apic_reg_t;
 
+#define X2APIC_LDR_CLUSTER_SHIFT   16
+#define X2APIC_LDR_ID_MASK         16
+
 static inline uint32_t
 apic_read_reg(apic_reg_t reg)
 {
@@ -53,6 +56,18 @@ static inline void
 apic_write_reg(apic_reg_t reg, uint32_t val)
 {
     x86_wrmsr(reg, val);
+}
+
+static inline logical_id_t
+apic_get_logical_id(void)
+{
+    return apic_read_reg(APIC_LOGICAL_DEST);
+}
+
+static inline word_t
+apic_get_cluster(logical_id_t logical_id)
+{
+    return logical_id >> X2APIC_LDR_CLUSTER_SHIFT;
 }
 
 static inline void

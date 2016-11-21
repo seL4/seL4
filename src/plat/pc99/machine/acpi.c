@@ -97,6 +97,15 @@ typedef struct acpi_dmar_rmrr {
 compile_assert(acpi_dmar_rmrr_packed, sizeof(acpi_dmar_rmrr_t) ==
                sizeof(acpi_dmar_header_t) + 20 + sizeof(acpi_dmar_devscope_t))
 
+/* Fixed ACPI Description Table (FADT), partial as we only need flags */
+typedef struct acpi_fadt {
+    acpi_header_t  header;
+    uint8_t        reserved[76];
+    uint32_t       flags;
+} acpi_fadt_t;
+compile_assert(acpi_fadt_packed,
+               sizeof(acpi_fadt_t) == sizeof(acpi_header_t) + 80)
+
 /* Multiple APIC Description Table (MADT) */
 typedef struct acpi_madt {
     acpi_header_t header;
@@ -163,6 +172,7 @@ compile_assert(acpi_madt_iso_packed,
 
 /* workaround because string literals are not supported by C parser */
 const char acpi_str_rsd[]  = {'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ', 0};
+const char acpi_str_fadt[] = {'F', 'A', 'C', 'P', 0};
 const char acpi_str_apic[] = {'A', 'P', 'I', 'C', 0};
 const char acpi_str_dmar[] = {'D', 'M', 'A', 'R', 0};
 
@@ -369,6 +379,42 @@ acpi_madt_scan(
     printf("ACPI: %d CPU(s) detected\n", num_cpu);
 
     return num_cpu;
+}
+
+BOOT_CODE bool_t
+acpi_fadt_scan(
+    acpi_rsdt_t* acpi_rsdt
+)
+{
+    unsigned int entries;
+    uint32_t            count;
+    acpi_fadt_t*        acpi_fadt;
+
+    acpi_rsdt_t* acpi_rsdt_mapped;
+    acpi_fadt_t* acpi_fadt_mapped;
+    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
+
+    assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
+    /* Divide by uint32_t explicitly as this is the size as mandated by the ACPI standard */
+    entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(uint32_t);
+    for (count = 0; count < entries; count++) {
+        acpi_fadt = (acpi_fadt_t*)(word_t)acpi_rsdt_mapped->entry[count];
+        acpi_fadt_mapped = (acpi_fadt_t*)acpi_table_init(acpi_fadt, ACPI_RSDT);
+
+        if (strncmp(acpi_str_fadt, acpi_fadt_mapped->header.signature, 4) == 0) {
+            printf("ACPI: FADT paddr=%p\n", acpi_fadt);
+            printf("ACPI: FADT vaddr=%p\n", acpi_fadt_mapped);
+            printf("ACPI: FADT flags=0x%x\n", acpi_fadt_mapped->flags);
+
+            if (config_set(CONFIG_USE_LOGICAL_IDS) &&
+                    acpi_fadt_mapped->flags & BIT(19)) {
+                printf("system requires apic physical mode\n");
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 BOOT_CODE void

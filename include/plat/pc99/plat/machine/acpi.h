@@ -62,4 +62,8 @@ void acpi_dmar_scan(
     acpi_rmrr_list_t *rmrr_list
 );
 
+bool_t acpi_fadt_scan(
+    acpi_rsdt_t* acpi_rsdt
+);
+
 #endif

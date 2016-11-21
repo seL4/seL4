@@ -58,6 +58,15 @@ choice
             Use X2APIC mode for local APIC
 endchoice
 
+config USE_LOGICAL_IDS
+    bool "Use logical IDs for IPIs broadcasting"
+    depends on MAX_NUM_NODES != 1
+    default n
+    help
+        Use logical IDs to broadcast IPI between cores. Not all machines
+        support logical IDs. In xAPIC mode only 8 cores can be addressed
+        using logical IDs.
+
 config MAX_VPIDS
     prompt "Max VPIDs to support"
     depends on VTX
