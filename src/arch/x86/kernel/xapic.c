@@ -126,13 +126,13 @@ apic_send_startup_ipi(cpu_id_t cpu_id, paddr_t startup_addr)
     );
 }
 
-void apic_send_ipi(irq_t vector, cpu_id_t cpu_id)
+void apic_send_ipi_core(irq_t vector, cpu_id_t cpu_id)
 {
     apic_icr1_t icr1;
     /* wait till we can send an IPI */
     do {
         icr1.words[0] = apic_read_reg(APIC_ICR1);
-    } while (icr1.words[0] & BIT(12));
+    } while (apic_icr1_get_delivery_status(icr1));
 
     apic_write_icr(
         apic_icr2_new(
@@ -144,6 +144,30 @@ void apic_send_ipi(irq_t vector, cpu_id_t cpu_id)
             0,          /* level           */
             0,          /* delivery_status */
             0,          /* dest_mode       */
+            0,          /* delivery_mode   */
+            vector      /* vector          */
+        ).words[0]
+    );
+}
+
+void apic_send_ipi_cluster(irq_t vector, word_t mda)
+{
+    apic_icr1_t icr1;
+    /* wait till we can send an IPI */
+    do {
+        icr1.words[0] = apic_read_reg(APIC_ICR1);
+    } while (apic_icr1_get_delivery_status(icr1));
+
+    apic_write_icr(
+        apic_icr2_new(
+            mda         /* message destination address */
+        ).words[0],
+        apic_icr1_new(
+            0,          /* dest_shorthand  */
+            0,          /* trigger_mode    */
+            0,          /* level           */
+            0,          /* delivery_status */
+            1,          /* dest_mode       */
             0,          /* delivery_mode   */
             vector      /* vector          */
         ).words[0]
