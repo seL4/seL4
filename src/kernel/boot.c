@@ -418,7 +418,7 @@ create_initial_thread(
 #ifdef CONFIG_ARCH_ARM
 #if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
 #elif defined(CONFIG_IPC_BUF_TPIDRURW)
-        setRegister(tcb, TPIDRURW, ipcbuf_vptr);
+    setRegister(tcb, TPIDRURW, ipcbuf_vptr);
 #else
 #error "Unknown IPC buffer strategy"
 #endif
