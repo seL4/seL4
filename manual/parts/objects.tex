@@ -331,7 +331,7 @@ is restricted by the kernel in the following ways:
 \begin{itemize}
 \item Device untyped objects can only be retyped into frames or other
 untyped objects; developers cannot, for example, create an endpoint from device memory.
-\item Device untyped frames cannot be set as thread IPC buffers, or used
+\item Frame objects retyped from device untyped objects cannot be set as thread IPC buffers, or used
 in the creation of an ASID pool
 \end{itemize}
 
