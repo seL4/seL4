@@ -307,7 +307,7 @@ At boot time, seL4 pre-allocates the memory required for the kernel
 itself, including the code, data, and stack sections (seL4 is a single
 kernel-stack operating system). It then creates an initial user
 thread (with an appropriate address and capability space).
-The kernel than hands all remaining memory to
+The kernel then hands all remaining memory to
 the initial thread in the form of capabilities to \obj{Untyped Memory}, and
 some additional capabilities to kernel objects that were required to
 bootstrap the initial thread.  These \obj{Untyped Memory} regions can then be split into
