@@ -1226,6 +1226,31 @@ handleVmEntryFail(void)
     return EXCEPTION_NONE;
 }
 
+#if CONFIG_MAX_NUM_NODES > 1
+void
+VMCheckBoundNotification(void)
+{
+    /* We want to check if the VM we are currently running has received
+     * a message on its bound notification object. This check is done
+     * in c_traps when we first peform a SysVMEnter, but we could presently
+     * be running a VM and another core may have placed a message on the
+     * endpoint
+     */
+    tcb_t *tcb = NODE_STATE(ksCurThread);
+    notification_t *ntfnPtr = tcb->tcbBoundNotification;
+    if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM
+        && ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
+
+        word_t badge = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
+        notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+        setThreadState(tcb, ThreadState_Running);
+        setRegister(tcb, badgeRegister, badge);
+        Arch_leaveVMAsyncTransfer(tcb);
+        attemptSwitchTo(tcb);
+    }
+}
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+
 static void
 invvpid_context(uint16_t vpid)
 {

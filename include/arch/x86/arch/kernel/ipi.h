@@ -26,6 +26,7 @@ typedef enum {
     IpiRemoteCall_Stall,
 #ifdef CONFIG_VTX
     IpiRemoteCall_ClearCurrentVCPU,
+    IpiRemoteCall_VMCheckBoundNotification,
 #endif
     IpiRemoteCall_InvalidatePageStructureCacheASID,
     IpiRemoteCall_InvalidateTranslationSingle,
@@ -165,6 +166,12 @@ static inline void
 doRemoteClearCurrentVCPU(word_t cpu)
 {
     doRemoteOp0Arg(IpiRemoteCall_ClearCurrentVCPU, cpu);
+}
+
+static inline void
+doRemoteVMCheckBoundNotification(word_t cpu)
+{
+    doRemoteOp0Arg(IpiRemoteCall_VMCheckBoundNotification, cpu);
 }
 #endif
 

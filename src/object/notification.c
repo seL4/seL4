@@ -62,11 +62,19 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 switchIfRequiredTo(tcb);
 #ifdef CONFIG_VTX
             } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
-                setThreadState(tcb, ThreadState_Running);
-                setRegister(tcb, badgeRegister, badge);
-                Arch_leaveVMAsyncTransfer(tcb);
-                attemptSwitchTo(tcb);
-#endif
+#if CONFIG_MAX_NUM_NODES > 1
+                if (tcb->tcbAffinity != getCurrentCPUIndex()) {
+                    ntfn_set_active(ntfnPtr, badge);
+                    doRemoteVMCheckBoundNotification(tcb->tcbAffinity);
+                } else
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+                {
+                    setThreadState(tcb, ThreadState_Running);
+                    setRegister(tcb, badgeRegister, badge);
+                    Arch_leaveVMAsyncTransfer(tcb);
+                    attemptSwitchTo(tcb);
+                }
+#endif /* CONFIG_VTX */
             } else {
                 ntfn_set_active(ntfnPtr, badge);
             }

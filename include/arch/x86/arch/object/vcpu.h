@@ -328,6 +328,10 @@ exception_t handleVmEntryFail(void);
 void restoreVMCS(void);
 void clearCurrentVCPU(void);
 
+#if CONFIG_MAX_NUM_NODES > 1
+void VMCheckBoundNotification(void);
+#endif /* CONFIG_MAX_NUM_NODES > 1*/
+
 void invept(ept_pml4e_t *ept_pml4);
 
 /* Removes any IO port mappings that have been cached for the given VPID */
