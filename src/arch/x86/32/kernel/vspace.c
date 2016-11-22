@@ -700,6 +700,7 @@ void setVMRoot(tcb_t* tcb)
 
     vspace_root = getValidNativeRoot(threadRoot);
     if (!vspace_root) {
+        SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
         if (config_set(CONFIG_PAE_PAGING)) {
             setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
         } else {
@@ -711,6 +712,7 @@ void setVMRoot(tcb_t* tcb)
     asid = cap_get_capMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspace_root) {
+        SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
         if (config_set(CONFIG_PAE_PAGING)) {
             setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
         } else {
