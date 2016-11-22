@@ -122,6 +122,19 @@ Capabilities are managed largely through invoking \obj{CNode} methods.
   specified capability.
 \end{description}
 
+\subsection{Capabilities to Newly-Retyped Objects}
+\label{sec:caps_to_new_objects}
+
+When retyping untyped memory into objects with
+\apifunc{seL4\_Untyped\_Retype}{untyped_retype}, capabilities to the
+newly-retyped objects are placed in consecutive slots in a
+\obj{CNode} specified by its \texttt{root}, \texttt{node\_index}, and
+\texttt{node\_depth} arguments. The \texttt{node\_offset} argument specifies the
+index into the \obj{CNode} at which the first capability will be placed.
+The \texttt{num\_objects} argument specifies the number of capabilities (and, hence, objects)
+to create. All slots must be empty or an error will result. All resulting
+capabilities will be placed in the same \obj{CNode}.
+
 \subsection{Capability Rights}
 \label{sec:cap_rights}
 

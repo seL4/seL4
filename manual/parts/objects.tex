@@ -388,3 +388,100 @@ memory region.  Thus, after this invocation there are no valid references
 to any object within the untyped region, and the region may be safely
 retyped and reused.
 
+\subsection{Summary of Object Sizes}
+\label{sec:object_sizes}
+
+When retyping untyped memory it is useful to know how much memory the
+object will require. Object sizes are summarised in Tables
+\ref{tab:obj_sizes}\ifxeightsix, \ref{tab:intel_obj_sizes}\else\ \fi{}
+and~\ref{tab:arm_obj_sizes}.
+
+Note that \obj{CNode}s and \obj{Untyped Object}s have variables sizes.
+When retyping untyped memory into \obj{CNode}s or breaking an
+\obj{Untyped Object} into smaller \obj{Untyped Object}s, the
+\texttt{size\_bits} argument to
+\apifunc{seL4\_Untyped\_Retype}{untyped_retype} is used to specify
+the size of the resulting objects. Table \ref{tab:obj_sizes} shows the
+correspondence between the \texttt{size\_bits} argument ($n$) to
+\apifunc{seL4\_Untyped\_Retype}{untyped_retype}, and the resulting
+size of each variable-sized object.
+
+For all other object types, the size is fixed, and the \texttt{size\_bits}
+argument to \apifunc{seL4\_Untyped\_Retype}{untyped_retype} is ignored.
+
+A single call to \apifunc{seL4\_Untyped\_Retype}{untyped_retype} can retype a
+single \obj{Untyped Object} into multiple objects. The number of objects
+to create is specified by its \texttt{num\_objects} argument. All created
+objects must be of the same type, specified by the \texttt{type} argument. In
+the case of variable-sized objects, each object must also be of the same size.
+If the size of the memory area needed (calculated by the object size multiplied
+by \texttt{num\_objects}) is greater than the remaining unallocated memory of
+the \obj{Untyped Object}, an error will result.
+
+\begin{table}[tbp]
+        \begin{center}
+            \begin{tabular}{ll}
+                \toprule
+                  Object                & Object Size \\
+                \midrule
+                  $n$-bit Untyped       & $2^n$ bytes (where $n \ge 4$) \\
+                  $n$-bit CNode         & $16*2^n$ bytes (where $n \ge 2$) \\
+                  Endpoint              & $16$ bytes \\
+                  Notification          & $16$ bytes \\
+                  IRQ Control           & --- \\
+                  IRQ Handler           & --- \\
+                \bottomrule
+            \end{tabular}
+        \end{center}
+    \caption{Platform-independent object sizes.}
+    \label{tab:obj_sizes}
+\end{table}
+
+\begin{table}[htbp]
+\ifxeightsix
+    \parbox{.45\linewidth}{
+        \begin{center}
+            \begin{tabular}{ l l }
+                \toprule
+                IA-32 Object              & Object Size \\
+                \midrule
+                Thread Control Block      & 1KiB \\
+                IA32 4K Frame             & 4KiB \\
+                IA32 4M Frame             & 4MiB \\
+                IA32 Page Directory       & 4KiB \\
+                IA32 Page Table           & 4KiB \\
+                IA32 ASID Control         & --- \\
+                IA32 ASID Pool            & 4KiB \\
+                IA32 Port                 & --- \\
+                IA32 IO Space             & --- \\
+                IA32 IO Page table        & 4KiB \\
+                \bottomrule
+            \end{tabular}
+        \end{center}
+    \caption{IA-32-specific object sizes.}
+    \label{tab:intel_obj_sizes}
+    }
+\hfill
+\fi
+    \parbox{.45\linewidth}{
+        \begin{center}
+            \begin{tabular}{ l l }
+                \toprule
+                ARM Object              & Object Size \\
+                \midrule
+                Thread Control Block    & 512 bytes \\
+                ARM Small Frame         & 4KiB \\
+                ARM Large Frame         & 64KiB \\
+                ARM Section             & 1MiB \\
+                ARM Supersection        & 16MiB \\
+                ARM Page Directory      & 16KiB \\
+                ARM Page Table          & 1KiB \\
+                ARM ASID Control        & --- \\
+                ARM ASID Pool           & 4KiB \\
+                \bottomrule
+            \end{tabular}
+        \end{center}
+    \caption{ARM-specific object sizes.}
+    \label{tab:arm_obj_sizes}
+    }
+\end{table}
