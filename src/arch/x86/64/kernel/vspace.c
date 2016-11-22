@@ -1027,7 +1027,7 @@ flushPDPT(vspace_root_t *vspace, word_t vptr, pdpte_t *pdpt, asid_t asid)
 }
 
 void
-hwASIDInvalidate(asid_t asid)
+hwASIDInvalidate(asid_t asid, vspace_root_t *vspace)
 {
     invalidatePCID(INVPCID_TYPE_SINGLE, 0, asid);
 }

@@ -73,7 +73,7 @@ void deleteASID(asid_t asid, vspace_root_t *vspace)
     asid_pool_t* poolPtr;
 
     poolPtr = x86KSASIDTable[asid >> asidLowBits];
-    hwASIDInvalidate(asid);
+    hwASIDInvalidate(asid, vspace);
     if (poolPtr != NULL) {
         asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
         if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&

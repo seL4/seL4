@@ -94,7 +94,7 @@ void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt);
 
 exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* vspaceCapSlot);
 exception_t performASIDControlInvocation(void *frame, cte_t *slot, cte_t *parent, asid_t asid_base);
-void hwASIDInvalidate(asid_t asid);
+void hwASIDInvalidate(asid_t asid, vspace_root_t *vspace);
 void deleteASIDPool(asid_t asid_base, asid_pool_t* pool);
 void deleteASID(asid_t asid, vspace_root_t *vspace);
 findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid);
