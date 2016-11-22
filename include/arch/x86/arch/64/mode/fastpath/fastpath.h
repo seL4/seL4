@@ -41,9 +41,9 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
 #if CONFIG_MAX_NUM_NODES > 1
     x86_wrmsr(IA32_KERNEL_GS_BASE_MSR, base);
     asm volatile("movq %[value], %%gs:%c[offset]"
-            :
-            : [value] "r" (&thread->tcbArch.tcbContext.registers[Error + 1]),
-              [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+                 :
+                 : [value] "r" (&thread->tcbArch.tcbContext.registers[Error + 1]),
+                 [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #else
     x86_write_gs_base(base);
 #endif
@@ -133,7 +133,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 
         asm volatile (
 #if CONFIG_MAX_NUM_NODES > 1
-                // Switch to the user GS value
+            // Switch to the user GS value
             "swapgs\n"
 #endif
             "movq %%rcx, %%rsp\n"
@@ -174,7 +174,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     } else {
         asm volatile(
 #if CONFIG_MAX_NUM_NODES > 1
-                // Switch to the user GS value
+            // Switch to the user GS value
             "swapgs\n"
 #endif
             // Set our stack pointer to the top of the tcb so we can efficiently pop

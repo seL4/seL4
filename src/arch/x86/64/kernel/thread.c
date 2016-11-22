@@ -32,9 +32,9 @@ Arch_switchToThread(tcb_t* tcb)
 #if CONFIG_MAX_NUM_NODES > 1
     x86_wrmsr(IA32_KERNEL_GS_BASE_MSR, base);
     asm volatile("movq %[value], %%gs:%c[offset]"
-            :
-            : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),
-              [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+                 :
+                 : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),
+                 [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #else
     x86_write_gs_base(base);
 #endif
@@ -61,9 +61,9 @@ Arch_switchToIdleThread(void)
     setRegister(tcb, RSP, (uint64_t)&MODE_NODE_STATE(x64KSIRQStack)[IRQ_STACK_SIZE]);
 #if CONFIG_MAX_NUM_NODES > 1
     asm volatile("movq %[value], %%gs:%c[offset]"
-            :
-            : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),
-              [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+                 :
+                 : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),
+                 [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif
 }
 
