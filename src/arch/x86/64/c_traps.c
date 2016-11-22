@@ -180,6 +180,10 @@ void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall);
 void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall)
 {
     setRegister(NODE_STATE(ksCurThread), Error, MODE_NODE_STATE(x64KSIRQStack)[0]);
+    /* In the case of an interrupt the NextIP and the FaultIP should be the same value,
+     * i.e. the address of the instruction the CPU was about to execute before the
+     * interrupt. This is the 5th value pushed on by the hardware, so indexing from
+     * the bottom is x64KSIRQStack[1] */
     setRegister(NODE_STATE(ksCurThread), NextIP, MODE_NODE_STATE(x64KSIRQStack)[1]);
     setRegister(NODE_STATE(ksCurThread), FaultIP, MODE_NODE_STATE(x64KSIRQStack)[1]);
     setRegister(NODE_STATE(ksCurThread), FLAGS, MODE_NODE_STATE(x64KSIRQStack)[3]);
