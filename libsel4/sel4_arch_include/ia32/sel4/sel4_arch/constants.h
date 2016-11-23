@@ -30,7 +30,13 @@
 #define seL4_SlotBits         4
 #define seL4_TCBBits         11
 #define seL4_EndpointBits     4
+#ifdef CONFIG_KERNEL_MCS
+#define seL4_NotificationBits 5
+#define seL4_ReplyBits        4
+#define seL4_SchedContextBits 8
+#else
 #define seL4_NotificationBits 4
+#endif
 
 #define seL4_PageTableBits   12
 #define seL4_PageTableEntryBits 2
@@ -46,10 +52,6 @@
 #define seL4_ASIDPoolBits    12
 #define seL4_ASIDPoolIndexBits 10
 #define seL4_WordSizeBits 2
-#define seL4_SchedContextBits 8
-#ifdef CONFIG_KERNEL_MCS
-#define seL4_ReplyBits        4
-#endif
 
 #define seL4_HugePageBits    30 /* 1GB */
 #define seL4_PDPTBits         0

@@ -159,8 +159,15 @@ block endpoint {
     field state 2
 }
 
--- Notification object: size = 16 bytes
+-- Notification object: size = 16 bytes (32 bytes on mcs)
 block notification {
+#ifdef CONFIG_KERNEL_MCS
+    padding 96
+
+    field_high ntfnSchedContext 28
+    padding 4
+#endif
+
     field_high ntfnBoundTCB 28
     padding 4
 

@@ -42,6 +42,27 @@ static inline void ntfn_set_active(notification_t *ntfnPtr, word_t badge)
     notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
 }
 
+#ifdef CONFIG_KERNEL_MCS
+static inline void maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
+{
+    if (tcb->tcbSchedContext == NULL) {
+        sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+        if (sc != NULL && sc->scTcb == NULL) {
+            schedContext_donate(sc, tcb);
+        }
+    }
+}
+
+static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
+{
+
+    sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
+    if (sc == tcb->tcbSchedContext) {
+        tcb->tcbSchedContext = NULL;
+        sc->scTcb = NULL;
+    }
+}
+#endif
 
 void sendSignal(notification_t *ntfnPtr, word_t badge)
 {
@@ -53,6 +74,9 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
             if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
                 /* Send and start thread running */
                 cancelIPC(tcb);
+#ifdef CONFIG_KERNEL_MCS
+                maybeDonateSchedContext(tcb, ntfnPtr);
+#endif
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
                 possibleSwitchTo(tcb);
@@ -65,6 +89,9 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
                 } else
 #endif /* ENABLE_SMP_SUPPORT */
                 {
+#ifdef CONFIG_KERNEL_MCS
+                    maybeDonateSchedContext(tcb, ntfnPtr);
+#endif
                     setThreadState(tcb, ThreadState_Running);
                     setRegister(tcb, badgeRegister, badge);
                     Arch_leaveVMAsyncTransfer(tcb);
@@ -105,6 +132,9 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
             notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
         }
 
+#ifdef CONFIG_KERNEL_MCS
+        maybeDonateSchedContext(dest, ntfnPtr);
+#endif
         setThreadState(dest, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
         possibleSwitchTo(dest);
@@ -140,6 +170,9 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
                                         ThreadState_BlockedOnNotification);
             thread_state_ptr_set_blockingObject(&thread->tcbState,
                                                 NTFN_REF(ntfnPtr));
+#ifdef CONFIG_KERNEL_MCS
+            maybeReturnSchedContext(ntfnPtr, thread);
+#endif
             scheduleTCB(thread);
 
             /* Enqueue TCB */
@@ -160,6 +193,9 @@ void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
             thread, badgeRegister,
             notification_ptr_get_ntfnMsgIdentifier(ntfnPtr));
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
+#ifdef CONFIG_KERNEL_MCS
+        maybeDonateSchedContext(thread, ntfnPtr);
+#endif
         break;
     }
 }

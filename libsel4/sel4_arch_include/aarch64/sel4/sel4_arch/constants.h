@@ -124,10 +124,12 @@ enum {
 #define seL4_SlotBits 5
 #define seL4_TCBBits 11
 #define seL4_EndpointBits 4
-#define seL4_NotificationBits 5
-#define seL4_SchedContextBits 8
 #ifdef CONFIG_KERNEL_MCS
+#define seL4_NotificationBits 6
+#define seL4_SchedContextBits 8
 #define seL4_ReplyBits           5
+#else
+#define seL4_NotificationBits 5
 #endif
 
 #define seL4_PageTableBits 12

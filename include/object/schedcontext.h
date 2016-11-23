@@ -69,4 +69,9 @@ void schedContext_resume(sched_context_t *sc);
  */
 void schedContext_donate(sched_context_t *sc, tcb_t *to);
 
+/* Bind scheduling context to a notification */
+void schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn);
+/* unbind scheduling context from a notification */
+void schedContext_unbindNtfn(sched_context_t *sc);
+
 #endif /* __OBJECT_SCHED_CONTEXT_H */

@@ -207,12 +207,20 @@ block endpoint {
     field state 2
 }
 
--- Async endpoint: size = 32 bytes
+-- Async endpoint: size = 32 bytes (64 bytes on mcs)
 block notification {
 #if BF_CANONICAL_RANGE == 48
+#ifdef CONFIG_KERNEL_MCS
+    padding 16
+    field_high ntfnSchedContext 48
+#endif
     padding 16
     field_high ntfnBoundTCB 48
 #elif BF_CANONICAL_RANGE == 39
+#ifdef CONFIG_KERNEL_MCS
+    padding 25
+    field_high ntfnSchedContext 39
+#endif
     padding 25
     field_high ntfnBoundTCB 39
 #else

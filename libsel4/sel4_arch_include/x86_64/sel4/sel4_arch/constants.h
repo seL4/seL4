@@ -35,7 +35,13 @@
 #define seL4_TCBBits            11
 #endif
 #define seL4_EndpointBits       4
+#ifdef CONFIG_KERNEL_MCS
+#define seL4_NotificationBits   6
+#define seL4_ReplyBits          5
+#define seL4_SchedContextBits    8
+#else
 #define seL4_NotificationBits   5
+#endif
 
 #define seL4_PageTableBits      12
 #define seL4_PageTableEntryBits 3
@@ -60,10 +66,6 @@
 #define seL4_NumASIDPoolsBits    3
 #define seL4_ASIDPoolBits       12
 #define seL4_ASIDPoolIndexBits 9
-#define seL4_SchedContextBits    8
-#ifdef CONFIG_KERNEL_MCS
-#define seL4_ReplyBits           5
-#endif
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4
