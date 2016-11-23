@@ -417,9 +417,9 @@ remoteQueueUpdate(tcb_t *tcb)
 void
 remoteTCBStall(tcb_t *tcb)
 {
-    if (tcb->tcbSchedContext->scCore != getCurrentCPUIndex() &&
+    if (tcb->tcbSchedContext && tcb->tcbSchedContext->scCore != getCurrentCPUIndex() &&
             NODE_STATE_ON_CORE(ksCurThread, tcb->tcbSchedContext->scCore) == tcb) {
-        doRemoteOp(IpiRemoteCall_Stall, 0, tcb->tcbSchedContext->scCore);
+        doRemoteStall(tcb->tcbSchedContext->scCore);
         ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbSchedContext->scCore);
     }
 }
