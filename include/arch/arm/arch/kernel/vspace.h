@@ -71,7 +71,7 @@ hw_asid_t getHWASID(asid_t asid);
 #endif
 void copyGlobalMappings(pde_t *newPD);
 word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
-findPDForASID_ret_t findPDForASID(asid_t asid) VISIBLE;
+findPDForASID_ret_t findPDForASID(asid_t asid);
 lookupPTSlot_ret_t lookupPTSlot(pde_t *pd, vptr_t vptr);
 pde_t* CONST lookupPDSlot(pde_t *pd, vptr_t vptr);
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
@@ -86,7 +86,7 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
                                cap_rights_t cap_rights_mask);
 hw_asid_t getHWASID(asid_t asid);
-hw_asid_t findFreeHWASID(void) VISIBLE;
+hw_asid_t findFreeHWASID(void);
 void flushPage(vm_page_size_t page_size, pde_t* pd, asid_t asid, word_t vptr);
 void flushTable(pde_t* pd, asid_t asid, word_t vptr, pte_t* pt);
 void flushSpace(asid_t asid);

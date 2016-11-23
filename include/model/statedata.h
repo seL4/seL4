@@ -31,11 +31,11 @@ NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
 NODE_STATE_END(nodeState);
 
-extern word_t ksNumCPUs VISIBLE;
+extern word_t ksNumCPUs;
 
 extern word_t ksWorkUnitsCompleted;
-extern irq_state_t intStateIRQTable[] VISIBLE;
-extern cte_t *intStateIRQNode VISIBLE;
+extern irq_state_t intStateIRQTable[];
+extern cte_t *intStateIRQNode;
 extern const dschedule_t ksDomSchedule[];
 extern const word_t ksDomScheduleLength;
 extern word_t ksDomScheduleIdx;

@@ -39,7 +39,7 @@ typedef struct cpu_id_mapping {
 #endif /* CONFIG_USE_LOGICAL_IDS */
 } cpu_id_mapping_t;
 
-extern smpStatedata_t ksSMP[CONFIG_MAX_NUM_NODES] VISIBLE;
+extern smpStatedata_t ksSMP[CONFIG_MAX_NUM_NODES];
 extern cpu_id_mapping_t cpu_mapping;
 
 #define MODE_NODE_STATE_ON_CORE(_state, _core)  ksSMP[(_core)].cpu.mode._state

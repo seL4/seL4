@@ -67,7 +67,7 @@ switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
  * it is disabled. We need to save the current state of the FPU, and hand
  * it over.
  */
-VISIBLE exception_t
+exception_t
 handleUnimplementedDevice(void)
 {
     /*

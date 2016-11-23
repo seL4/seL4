@@ -78,10 +78,10 @@ static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t
 }
 
 void fastpath_call(word_t cptr, word_t r_msgInfo)
-VISIBLE NORETURN SECTION(".vectors.fastpath_call");
+NORETURN SECTION(".vectors.fastpath_call");
 
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
-VISIBLE NORETURN SECTION(".vectors.fastpath_reply_recv");
+NORETURN SECTION(".vectors.fastpath_reply_recv");
 
 #endif /* __ARCH_FASTPATH_H */
 

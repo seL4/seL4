@@ -23,9 +23,9 @@ void slowpath(syscall_t syscall)
 NORETURN;
 
 void fastpath_call(word_t cptr, word_t r_msgInfo)
-VISIBLE NORETURN;
+NORETURN;
 
 void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
-VISIBLE NORETURN;
+NORETURN;
 
 #endif

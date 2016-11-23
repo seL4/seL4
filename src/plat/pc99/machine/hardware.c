@@ -83,7 +83,7 @@ measure_tsc_khz(void)
     return 0;
 }
 
-BOOT_CODE VISIBLE uint32_t
+BOOT_CODE uint32_t
 tsc_init(void)
 {
 

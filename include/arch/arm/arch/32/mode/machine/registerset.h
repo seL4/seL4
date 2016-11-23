@@ -122,11 +122,11 @@ enum messageSizes {
     n_syscallMessage = 12,
 };
 
-extern const register_t msgRegisters[] VISIBLE;
-extern const register_t frameRegisters[] VISIBLE;
-extern const register_t gpRegisters[] VISIBLE;
-extern const register_t exceptionMessage[] VISIBLE;
-extern const register_t syscallMessage[] VISIBLE;
+extern const register_t msgRegisters[];
+extern const register_t frameRegisters[];
+extern const register_t gpRegisters[];
+extern const register_t exceptionMessage[];
+extern const register_t syscallMessage[];
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 typedef struct debug_register_pair {

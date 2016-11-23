@@ -40,7 +40,7 @@ l1index_to_prio(word_t l1index)
 }
 
 void configureIdleThread(tcb_t *tcb);
-void activateThread(void) VISIBLE;
+void activateThread(void);
 void suspend(tcb_t *target);
 void restart(tcb_t *target);
 void doIPCTransfer(tcb_t *sender, endpoint_t *endpoint,
@@ -54,7 +54,7 @@ void doFaultTransfer(word_t badge, tcb_t *sender, tcb_t *receiver,
 void doNBRecvFailedTransfer(tcb_t *thread);
 void schedule(void);
 void chooseThread(void);
-void switchToThread(tcb_t *thread) VISIBLE;
+void switchToThread(tcb_t *thread);
 void switchToIdleThread(void);
 void setDomain(tcb_t *tptr, dom_t dom);
 void setPriority(tcb_t *tptr, prio_t prio);
@@ -62,7 +62,7 @@ void setMCPriority(tcb_t *tptr, prio_t mcp);
 void scheduleTCB(tcb_t *tptr);
 void attemptSwitchTo(tcb_t *tptr);
 void switchIfRequiredTo(tcb_t *tptr);
-void setThreadState(tcb_t *tptr, _thread_state_t ts) VISIBLE;
+void setThreadState(tcb_t *tptr, _thread_state_t ts);
 void timerTick(void);
 void rescheduleRequired(void);
 

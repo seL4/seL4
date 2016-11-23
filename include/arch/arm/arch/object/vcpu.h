@@ -42,7 +42,7 @@ typedef struct vcpu vcpu_t;
 compile_assert(vcpu_size_correct, sizeof(struct vcpu) <= BIT(VCPU_SIZE_BITS))
 
 void VGICMaintenance(void);
-void handleVCPUFault(word_t hsr) VISIBLE;
+void handleVCPUFault(word_t hsr);
 
 void vcpu_init(vcpu_t *vcpu);
 
