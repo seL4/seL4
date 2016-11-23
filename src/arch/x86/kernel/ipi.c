@@ -186,19 +186,24 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t dat
         ipi_args[0] = data1;
         ipi_args[1] = data2;
         ipi_args[2] = data3;
+
+        /* get number of cores involved in this IPI */
+        totalCoreBarrier = popcountl(mask);
+
+        /* make sure no resource access passes from this point */
+        asm volatile("" ::: "memory");
+
         while (mask) {
             int index = wordBits - 1 - clzl(mask);
+            big_kernel_lock.node_owners[index].ipi = 1;
             target_cores[nr_target_cores] = index;
             nr_target_cores++;
             mask &= ~BIT(index);
         }
 
         /* sending IPIs... */
-        totalCoreBarrier = nr_target_cores;
         IPI_ICR_BARRIER;
-
         for (int i = 0; i < nr_target_cores; i++) {
-            big_kernel_lock.node_owners[target_cores[i]].ipi = 1;
             apic_send_ipi_core(int_remote_call_ipi, cpuIndexToID(target_cores[i]));
         }
 

@@ -100,4 +100,12 @@ CONST clzl(unsigned long x)
 
 #define CTZL(x) __builtin_ctzl(x)
 
+static inline long
+CONST popcountl(unsigned long x)
+{
+    return __builtin_popcountl(x);
+}
+
+#define POPCOUNTL(x) __builtin_popcountl(x)
+
 #endif /* __UTIL_H */
