@@ -269,6 +269,83 @@ parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
 }
 
 static BOOT_CODE bool_t
+is_compiled_for_microarchitecture(void)
+{
+    word_t microarch_generation;
+    x86_cpu_identity_t *model_info= x86_cpuid_get_model_info();
+
+    if (config_set(CONFIG_ARCH_X86_BROADWELL) ) {
+        microarch_generation = 6;
+    } else if (config_set(CONFIG_ARCH_X86_HASWELL) ) {
+        microarch_generation = 5;
+    } else if (config_set(CONFIG_ARCH_X86_IVY) ) {
+        microarch_generation = 4;
+    } else if (config_set(CONFIG_ARCH_X86_SANDY) ) {
+        microarch_generation = 3;
+    } else if (config_set(CONFIG_ARCH_X86_WESTMERE) ) {
+        microarch_generation = 2;
+    } else if (config_set(CONFIG_ARCH_X86_NEHALEM) ) {
+        microarch_generation = 1;
+    }
+
+    switch (model_info->model) {
+    case BROADWELL_1_MODEL_ID:
+    case BROADWELL_2_MODEL_ID:
+    case BROADWELL_3_MODEL_ID:
+    case BROADWELL_4_MODEL_ID:
+    case BROADWELL_5_MODEL_ID:
+        break;
+
+    case HASWELL_1_MODEL_ID:
+    case HASWELL_2_MODEL_ID:
+    case HASWELL_3_MODEL_ID:
+    case HASWELL_4_MODEL_ID:
+        if (microarch_generation > 5) {
+            return false;
+        }
+        break;
+
+    case IVY_BRIDGE_1_MODEL_ID:
+    case IVY_BRIDGE_2_MODEL_ID:
+    case IVY_BRIDGE_3_MODEL_ID:
+        if (microarch_generation > 4) {
+            return false;
+        }
+        break;
+
+    case SANDY_BRIDGE_1_MODEL_ID:
+    case SANDY_BRIDGE_2_MODEL_ID:
+        if (microarch_generation > 3) {
+            return false;
+        }
+        break;
+
+    case WESTMERE_1_MODEL_ID:
+    case WESTMERE_2_MODEL_ID:
+    case WESTMERE_3_MODEL_ID:
+        if (microarch_generation > 2) {
+            return false;
+        }
+        break;
+
+    case NEHALEM_1_MODEL_ID:
+    case NEHALEM_2_MODEL_ID:
+    case NEHALEM_3_MODEL_ID:
+        if (microarch_generation > 1) {
+            return false;
+        }
+        break;
+
+    default:
+        if (!config_set(CONFIG_ARCH_X86_GENERIC)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static BOOT_CODE bool_t
 try_boot_sys(
     unsigned long multiboot_magic,
     multiboot_info_t* mbi
@@ -292,6 +369,18 @@ try_boot_sys(
     if ((mbi->flags & MULTIBOOT_INFO_MEM_FLAG) == 0) {
         printf("Boot loader did not provide information about physical memory size\n");
         return false;
+    }
+
+    if (!x86_cpuid_initialize()) {
+        printf("Warning: Your x86 CPU has an unsupported vendor, '%s'.\n"
+               "\tYour setup may not be able to competently run seL4 as "
+               "intended.\n"
+               "\tCurrently supported x86 vendors are AMD and Intel.\n",
+               x86_cpuid_get_identity()->vendor_string);
+    }
+
+    if (!is_compiled_for_microarchitecture()) {
+        printf("Warning: Your kernel was not compiled for the current microarchitecture.\n");
     }
 
 #if CONFIG_MAX_NUM_NODES > 1
