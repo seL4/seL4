@@ -20,7 +20,7 @@
 #include <mode/stack.h>
 #include <arch/kernel/tlb_bitmap.h>
 
-static inline void
+static inline void FORCE_INLINE
 switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
 {
     word_t base;
@@ -102,7 +102,7 @@ static inline bool_t hasDefaultSelectors(tcb_t *thread)
            thread->tcbArch.tcbContext.registers[ES] == SEL_DS_3;
 }
 
-static inline void NORETURN
+static inline void NORETURN FORCE_INLINE
 fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     c_exit_hook();
