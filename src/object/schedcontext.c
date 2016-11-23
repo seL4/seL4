@@ -122,11 +122,6 @@ schedContext_resume(sched_context_t *sc)
     assert(!sc || sc->scTcb != NULL);
     if (likely(sc) && isSchedulable(sc->scTcb)) {
         assert(sc->scTcb != NULL);
-        /* this should NOT be called when migration is possible */
-#if CONFIG_MAX_NUM_NODES > 1
-        SMP_COND_STATEMENT(assert(sc->scCore == sc->scTcb->tcbAffinity));
-        SMP_COND_STATEMENT(assert(sc->scCore == getCurrentCPUIndex()));
-#endif
         refill_unblock_check(sc);
 
         if (isRunnable(sc->scTcb) && sc->scRefillMax > 0) {
@@ -146,14 +141,15 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 
     tcb->tcbSchedContext = sc;
     sc->scTcb = tcb;
-#if CONFIG_MAX_NUM_NODES > 1
-    if (thread->tcbAffinity != sc->scCore)
-        if (nativeThreadUsingFPU(tcb)) {
-            switchFPUOwner(NULL, thread->tcbAffinity);
-        }
-        tcbSchedDequeue(tcb);
 
-        tcb->tcbAffinity = sc->scCore;
+#if CONFIG_MAX_NUM_NODES > 1
+    if (tcb->tcbAffinity != sc->scCore) {
+        if (isSchedulable(tcb)) {
+            SMP_COND_STATEMENT(remoteTCBStall(tcb));
+            tcbSchedDequeue(tcb);
+        }
+        Arch_migrateTCB(tcb);
+        tcb->tcbAffinity = tcb->tcbSchedContext->scCore;
     }
 #endif
 
@@ -167,26 +163,23 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
 {
     assert(sc->scTcb == tcb);
 
+    SMP_COND_STATEMENT(remoteTCBStall(tcb));
+    if (tcb == NODE_STATE(ksCurThread)) {
+        rescheduleRequired();
+    }
+
     tcbSchedDequeue(sc->scTcb);
     tcbReleaseRemove(sc->scTcb);
 
     sc->scTcb->tcbSchedContext = NULL;
     sc->scTcb = NULL;
-
-    SMP_COND_STATEMENT(remoteTCBStall(tcb);)
-
-    if (tcb == NODE_STATE(ksCurThread)) {
-        rescheduleRequired();
-    } else {
-        SMP_COND_STATEMENT(remoteTCBStall(tcb));
-    }
-
 }
 
 void
 schedContext_unbindAllTCBs(sched_context_t *sc)
 {
    if (sc->scTcb) {
+       SMP_COND_STATEMENT(remoteTCBStall(sc->scTcb));
        schedContext_unbindTCB(sc, sc->scTcb);
    }
 }
@@ -200,7 +193,7 @@ schedContext_donate(sched_context_t *sc, tcb_t *to)
 
     tcb_t *from = sc->scTcb;
     if (from) {
-        if (from == ksCurThread) {
+        if (from == NODE_STATE(ksCurThread)) {
             rescheduleRequired();
         } else if (isRunnable(from)) {
             SMP_COND_STATEMENT(remoteTCBStall(from));
@@ -211,10 +204,7 @@ schedContext_donate(sched_context_t *sc, tcb_t *to)
     sc->scTcb = to;
     to->tcbSchedContext = sc;
 
-#if CONFIG_MAX_NUM_NODES > 1
-    if (to->tcbAffinity != sc->scCore) {
-        migrateTCB(to);
-        to->tcbAffinity = sc->scCore;
-    }
-#endif
+    SMP_COND_STATEMENT(remoteTCBStall(to));
+    SMP_COND_STATEMENT(Arch_migrateTCB(to));
+    SMP_COND_STATEMENT(to->tcbAffinity = to->tcbSchedContext->scCore;)
 }

@@ -505,10 +505,6 @@ create_initial_thread(
         return false;
     }
 
-    NODE_STATE(ksConsumed) = 0;
-    NODE_STATE(ksReprogram) = true;
-    NODE_STATE(ksReleaseHead) = NULL;
-
     tcb->tcbPriority = seL4_MaxPrio;
     tcb->tcbMCP = seL4_MaxPrio;
     setThreadState(tcb, ThreadState_Running);
@@ -537,6 +533,10 @@ init_core_state(tcb_t *scheduler_action)
     NODE_STATE(ksSchedulerAction) = scheduler_action;
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread->tcbSchedContext);
+    NODE_STATE(ksConsumed) = 0;
+    NODE_STATE(ksReprogram) = true;
+    NODE_STATE(ksReleaseHead) = NULL;
+    NODE_STATE(ksCurTime) = getCurrentTime();
 }
 
 BOOT_CODE static bool_t

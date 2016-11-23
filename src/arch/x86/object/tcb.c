@@ -89,9 +89,13 @@ exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t excaps)
 void
 Arch_migrateTCB(tcb_t *thread)
 {
-    /* check if thread own its current core FPU */
-    if (nativeThreadUsingFPU(thread)) {
-        switchFpuOwner(NULL, thread->tcbAffinity);
+    assert(thread->tcbSchedContext != NULL);
+
+    if (thread->tcbAffinity != thread->tcbSchedContext->scCore) {
+        /* check if thread own its current core FPU */
+        if (nativeThreadUsingFPU(thread)) {
+            switchFpuOwner(NULL, thread->tcbAffinity);
+        }
     }
 }
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
