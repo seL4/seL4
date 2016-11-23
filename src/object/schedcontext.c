@@ -15,7 +15,17 @@
 static exception_t
 invokeSchedContext_UnbindObject(sched_context_t *sc, cap_t cap)
 {
-    schedContext_unbindTCB(sc, TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
+    switch (cap_get_capType(cap)) {
+    case cap_thread_cap:
+        schedContext_unbindTCB(sc, sc->scTcb);
+        break;
+    case cap_notification_cap:
+        schedContext_unbindNtfn(sc);
+        break;
+    default:
+        fail("invalid cap type");
+    }
+
     return EXCEPTION_NONE;
 }
 
@@ -29,18 +39,28 @@ decodeSchedContext_UnbindObject(sched_context_t *sc, extra_caps_t extraCaps)
     }
 
     cap_t cap = extraCaps.excaprefs[0]->cap;
-    if (cap_get_capType(cap) != cap_thread_cap) {
+    switch (cap_get_capType(cap)) {
+    case cap_thread_cap:
+        if (sc->scTcb != TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) {
+            userError("SchedContext UnbindObject: object not bound");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        break;
+    case cap_notification_cap:
+        if (sc->scNotification != NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap))) {
+            userError("SchedContext UnbindObject: object not bound");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        break;
+
+    default:
         userError("SchedContext_Unbind: invalid cap");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
-    }
 
-    if (sc->scTcb != TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))) {
-        userError("SchedContext_Unbind: object not bound to this sc");
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
@@ -50,7 +70,17 @@ decodeSchedContext_UnbindObject(sched_context_t *sc, extra_caps_t extraCaps)
 static exception_t
 invokeSchedContext_Bind(sched_context_t *sc, cap_t cap)
 {
-    schedContext_bindTCB(sc, TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
+    switch (cap_get_capType(cap)) {
+    case cap_thread_cap:
+        schedContext_bindTCB(sc, TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)));
+        break;
+    case cap_notification_cap:
+        schedContext_bindNtfn(sc, NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)));
+        break;
+    default:
+        fail("invalid cap type");
+    }
+
     return EXCEPTION_NONE;
 }
 
@@ -65,22 +95,32 @@ decodeSchedContext_Bind(sched_context_t *sc, extra_caps_t extraCaps)
 
     cap_t cap = extraCaps.excaprefs[0]->cap;
 
-    if (sc->scTcb != NULL) {
+    if (sc->scTcb != NULL || sc->scNotification != NULL) {
         userError("SchedContext_Bind: sched context already bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (cap_get_capType(cap) != cap_thread_cap) {
+    switch (cap_get_capType(cap)) {
+    case cap_thread_cap:
+        if (TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))->tcbSchedContext != NULL) {
+            userError("SchedContext_Bind: tcb already bound.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        break;
+    case cap_notification_cap:
+        if (notification_ptr_get_ntfnSchedContext(NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)))) {
+            userError("SchedContext_Bind: notification already bound");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        break;
+    default:
         userError("SchedContext_Bind: invalid cap.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (TCB_PTR(cap_thread_cap_get_capTCBPtr(cap))->tcbSchedContext != NULL) {
-        userError("SchedContext_Bind: tcb already bound.");
-        current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -92,6 +132,7 @@ static exception_t
 invokeSchedContext_Unbind(sched_context_t *sc)
 {
     schedContext_unbindAllTCBs(sc);
+    schedContext_unbindNtfn(sc);
     return EXCEPTION_NONE;
 }
 
@@ -207,4 +248,20 @@ schedContext_donate(sched_context_t *sc, tcb_t *to)
     SMP_COND_STATEMENT(remoteTCBStall(to));
     SMP_COND_STATEMENT(Arch_migrateTCB(to));
     SMP_COND_STATEMENT(to->tcbAffinity = to->tcbSchedContext->scCore;)
+}
+
+void
+schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn)
+{
+    notification_ptr_set_ntfnSchedContext(ntfn, SC_REF(sc));
+    sc->scNotification = ntfn;
+}
+
+void
+schedContext_unbindNtfn(sched_context_t *sc)
+{
+    if (sc && sc->scNotification) {
+        notification_ptr_set_ntfnSchedContext(sc->scNotification, SC_REF(0));
+        sc->scNotification = NULL;
+    }
 }

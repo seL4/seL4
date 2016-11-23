@@ -300,6 +300,10 @@ struct sched_context {
      * when the scheduling context was passed over a Call */
     reply_t *scReply;
 
+    /* notification this scheduling context is bound to
+     * (scTcb and scNotification cannot be set at the same time) */
+    notification_t *scNotification;
+
     /* Amount of refills this sc tracks */
     word_t scRefillMax;
     /* Index of the head of the refill circular buffer */

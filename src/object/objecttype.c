@@ -118,7 +118,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     case cap_notification_cap:
         if (final) {
             notification_t *ntfn = NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap));
-
+            schedContext_unbindNtfn(SC_PTR(notification_ptr_get_ntfnSchedContext(ntfn)));
             unbindMaybeNotification(ntfn);
             cancelAllSignals(ntfn);
         }
@@ -199,6 +199,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         if (final) {
             sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
             schedContext_unbindAllTCBs(sc);
+            schedContext_unbindNtfn(sc);
             if (sc->scReply) {
                 assert(call_stack_get_isHead(sc->scReply->replyNext));
                 sc->scReply->replyNext = call_stack_new(0, false);

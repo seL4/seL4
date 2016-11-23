@@ -140,8 +140,11 @@ block endpoint {
     field state 2
 }
 
--- Async endpoint: size = 32 bytes
+-- Async endpoint: size = 64 bytes
 block notification {
+    padding 16
+    field_high ntfnSchedContext 48
+
     padding 16
     field_high ntfnBoundTCB 48
 
