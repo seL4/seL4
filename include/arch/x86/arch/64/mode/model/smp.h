@@ -36,10 +36,10 @@ typedef struct nodeInfo {
 
 extern nodeInfo_t node_info[CONFIG_MAX_NUM_NODES];
 
-static inline PURE cpu_id_t getCurrentCPUIndex(void)
+static inline CONST cpu_id_t getCurrentCPUIndex(void)
 {
     cpu_id_t index;
-    asm volatile("movq %%gs:%c[offset], %[result]"
+    asm ("movq %%gs:%c[offset], %[result]"
                  : [result] "=r" (index)
                  : [offset] "i" (OFFSETOF(nodeInfo_t, index)));
     return index;
