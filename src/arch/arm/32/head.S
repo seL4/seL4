@@ -143,6 +143,10 @@ BEGIN_FUNC(_start)
     /* Restore the initial thread */
     ldr r7, =ksCurThread
     ldr sp, [r7]
+#ifdef CONFIG_IPC_BUF_TPIDRURW
+    ldr r0, [sp, #(PT_TPIDRURW)]
+    mcr p15, 0, r0, c13, c0, 2
+#endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     /* ELR */
     ldr r0, [sp, #60]
@@ -161,10 +165,6 @@ BEGIN_FUNC(_start)
     eret
 #else
     add sp, sp, #PT_LR_svc
-#ifdef CONFIG_IPC_BUF_TPIDRURW
-    ldr r0, [sp, #(PT_TPIDRURW - PT_LR_svc)]
-    mcr p15, 0, r0, c13, c0, 2
-#endif
     ldmdb sp, {r0-lr}^
     rfeia sp
 #endif
