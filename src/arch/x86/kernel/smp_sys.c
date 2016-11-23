@@ -19,7 +19,7 @@
 #if CONFIG_MAX_NUM_NODES > 1
 
 /* Index of next AP to boot, BSP has index zero */
-BOOT_DATA
+BOOT_DATA VISIBLE
 volatile word_t smp_aps_index = 1;
 
 /* These are the stacks used in multi processor mode. There are a lot of assumptions
