@@ -119,7 +119,7 @@ enum {
 #endif
 
 #define seL4_EndpointBits 4
-#define seL4_NotificationBits 4
+#define seL4_NotificationBits 5
 #define seL4_SchedContextBits 8
 #define seL4_ReplyBits 4
 
