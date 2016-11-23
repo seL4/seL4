@@ -169,6 +169,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cte_t *cte_ptr;
 
             tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
+            SMP_COND_STATEMENT(remoteTCBStall(tcb));
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
             if (tcb->tcbSchedContext) {
