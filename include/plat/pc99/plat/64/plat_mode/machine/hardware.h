@@ -14,7 +14,7 @@
 #define __PLAT_MODE_MACHINE_HARDWARE_H_
 
 #include <config.h>
-#include <types.h>
+#include <basic_types.h>
 #include <plat/machine.h>
 #include <plat/machine/hardware_gen.h>
 

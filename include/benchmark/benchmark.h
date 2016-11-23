@@ -16,6 +16,7 @@
 #include <arch/api/constants.h>
 #include <arch/machine/hardware.h>
 #include <benchmark/benchmark_tracepoints_types.h>
+#include <mode/hardware.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 typedef struct {

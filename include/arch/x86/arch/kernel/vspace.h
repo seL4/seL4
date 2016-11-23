@@ -15,6 +15,7 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
+#include <plat/machine.h>
 
 #define IT_ASID 1 /* initial thread's ASID */
 

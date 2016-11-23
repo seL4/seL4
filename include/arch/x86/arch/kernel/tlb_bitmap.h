@@ -15,6 +15,7 @@
 
 #include <config.h>
 #include <types.h>
+#include <mode/types.h>
 #include <plat_mode/machine/hardware.h>
 #include <mode/kernel/vspace.h>
 

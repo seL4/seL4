@@ -16,7 +16,6 @@
 #include <stdint.h>
 #include <arch/object/structures_gen.h>
 #include <arch/api/constants.h>
-#include <benchmark/benchmark.h>
 
 enum irq_state {
     IRQInactive  = 0,
