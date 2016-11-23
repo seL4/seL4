@@ -1239,7 +1239,7 @@ VMCheckBoundNotification(void)
     tcb_t *tcb = NODE_STATE(ksCurThread);
     notification_t *ntfnPtr = tcb->tcbBoundNotification;
     if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM
-        && ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
+            && ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
 
         word_t badge = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
