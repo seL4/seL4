@@ -41,9 +41,9 @@
 /* TLB bitmap is next after the PT */
 #define TLBBITMAP_PPTR (PPTR_KERNEL_PT_BASE - TLBBITMAP_PD_RESERVED)
 /* After TLB bitmap is the log buffer */
-#define KERNEL_LOG_PPTR (TLBBITMAP_PPTR - LOGBUFFER_PD_RESERVED)
+#define KS_LOG_PPTR (TLBBITMAP_PPTR - LOGBUFFER_PD_RESERVED)
 /* This then marks the end of where physical memory gets mapped */
-#define PPTR_TOP KERNEL_LOG_PPTR
+#define PPTR_TOP KS_LOG_PPTR
 
 #define PPTR_KDEV   0xffff0000
 #define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
