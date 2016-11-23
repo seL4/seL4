@@ -426,10 +426,6 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     if (!configure_sched_context(tcb, SC_PTR(rootserver.sc), usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS))) {
         return NULL;
     }
-
-    NODE_STATE(ksConsumed) = 0;
-    NODE_STATE(ksReprogram) = true;
-    NODE_STATE(ksReleaseHead) = NULL;
 #endif
 
     tcb->tcbPriority = seL4_MaxPrio;
@@ -484,6 +480,10 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
 #ifdef CONFIG_KERNEL_MCS
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread->tcbSchedContext);
+    NODE_STATE(ksConsumed) = 0;
+    NODE_STATE(ksReprogram) = true;
+    NODE_STATE(ksReleaseHead) = NULL;
+    NODE_STATE(ksCurTime) = getCurrentTime();
 #endif
 }
 

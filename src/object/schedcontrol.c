@@ -21,7 +21,9 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
 {
     /* don't modify parameters of tcb while it is in a sorted queue */
     if (target->scTcb) {
+        SMP_COND_STATEMENT(remoteTCBStall(target->scTcb));
         tcbReleaseRemove(target->scTcb);
+        tcbSchedDequeue(target->scTcb);
     }
 
     if (budget == period) {
@@ -45,7 +47,8 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
             /* if the core changed and the SC has a tcb, the SC is getting
              * budget - so migrate it */
             target->scCore = core;
-            SMP_COND_STATEMENT(migrateTCB(target->scTcb));
+            SMP_COND_STATEMENT(Arch_migrateTCB(target->scTcb));
+            SMP_COND_STATEMENT(target->scTcb->tcbAffinity = target->scCore;)
         }
     }
 

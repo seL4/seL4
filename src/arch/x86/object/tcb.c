@@ -88,9 +88,20 @@ exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t excaps)
 #ifdef ENABLE_SMP_SUPPORT
 void Arch_migrateTCB(tcb_t *thread)
 {
+#ifdef CONFIG_KERNEL_MCS
+    assert(thread->tcbSchedContext != NULL);
+
+    if (thread->tcbAffinity != thread->tcbSchedContext->scCore) {
+        /* check if thread own its current core FPU */
+        if (nativeThreadUsingFPU(thread)) {
+            switchFpuOwner(NULL, thread->tcbAffinity);
+        }
+    }
+#else
     /* check if thread own its current core FPU */
     if (nativeThreadUsingFPU(thread)) {
         switchFpuOwner(NULL, thread->tcbAffinity);
     }
+#endif
 }
 #endif /* ENABLE_SMP_SUPPORT */
