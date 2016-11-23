@@ -149,8 +149,13 @@ block endpoint {
     field state 2
 }
 
--- Notification object: size = 16 bytes
+-- Notification object: size = 32 bytes
 block notification {
+    padding 96
+
+    field_high ntfnSchedContext 28
+    padding 4
+
     field_high ntfnBoundTCB 28
     padding 4
 
