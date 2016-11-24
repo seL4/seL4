@@ -69,11 +69,7 @@ thread_state_ptr_mset_blockingObject_tsType(thread_state_t *ts_ptr,
                                             word_t ep_ref,
                                             word_t tsType)
 {
-#ifdef __KERNEL_64__
-    ts_ptr->words[0] = (ep_ref << 16) | tsType;
-#else
     ts_ptr->words[0] = ep_ref | tsType;
-#endif
 }
 
 static inline void
@@ -81,7 +77,8 @@ cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyMaster,
                          word_t capTCBPtr)
 {
 #ifdef __KERNEL_64__
-    cap_ptr->words[0] = (TCB_REF(capTCBPtr) & 0xffffffffffff) | (capReplyMaster << 58) | ((word_t)cap_reply_cap << 59);
+    cap_ptr->words[1] = (word_t)capTCBPtr;
+    cap_ptr->words[0] = (capReplyMaster) | ((word_t)cap_reply_cap << 59);
 #else
     cap_ptr->words[0] = TCB_REF(capTCBPtr) | (capReplyMaster << 4) |
                         cap_reply_cap ;
@@ -92,21 +89,13 @@ static inline void
 endpoint_ptr_mset_epQueue_tail_state(endpoint_t *ep_ptr, word_t epQueue_tail,
                                      word_t state)
 {
-#ifdef __KERNEL_64__
-    ep_ptr->words[0] = (epQueue_tail << 16) | state;
-#else
     ep_ptr->words[0] = epQueue_tail | state;
-#endif
 }
 
 static inline void
 endpoint_ptr_set_epQueue_head_np(endpoint_t *ep_ptr, word_t epQueue_head)
 {
-#ifdef __KERNEL_64__
-    ep_ptr->words[1] = epQueue_head << 16;
-#else
     ep_ptr->words[1] = epQueue_head;
-#endif
 }
 
 #include <arch/fastpath/fastpath.h>

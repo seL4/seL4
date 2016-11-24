@@ -62,13 +62,13 @@ mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
 {
-    node_ptr->words[1] = (mdbNext << 16) | (mdbRevocable << 1) | mdbFirstBadged;
+    node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
 }
 
 static inline void
 mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 {
-    node_ptr->words[0] = mdbPrev << 16;
+    node_ptr->words[0] = mdbPrev;
 }
 
 static inline bool_t

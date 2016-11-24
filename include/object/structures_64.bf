@@ -51,12 +51,11 @@ block notification_cap {
 }
 
 block reply_cap(capReplyMaster, capTCBPtr, capType) {
-    padding 64
+    field capTCBPtr 64
 
     field capType 5
+    padding 58
     field capReplyMaster 1
-    padding 10
-    field_high capTCBPtr 48
 }
 
 -- The user-visible format of the data word is defined by cnode_capdata, below.
@@ -122,11 +121,10 @@ block domain_cap {
 
 -- Endpoint: size = 16 bytes
 block endpoint {
-    field_high epQueue_head 48
-    padding 16
+    field epQueue_head 64
 
-    field_high epQueue_tail 48
-    padding     14
+    padding 16
+    field_high epQueue_tail 46
     field state 2
 }
 
@@ -148,13 +146,12 @@ block notification {
 
 -- Mapping database (MDB) node: size = 16 bytes
 block mdb_node {
-    field_high mdbNext 48
-    padding 14
+    padding 16
+    field_high mdbNext 46
     field mdbRevocable 1
     field mdbFirstBadged 1
 
-    field_high mdbPrev 48
-    padding 16
+    field mdbPrev 64
 }
 
 -- Thread state data
@@ -303,7 +300,7 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
     field blockingIPCDiminishCaps 1
     field tcbQueued 1
 
-    field_high blockingObject 48
-    padding 12
+    padding 16
+    field_high blockingObject 44
     field tsType 4
 }
