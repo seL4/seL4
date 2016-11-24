@@ -113,7 +113,7 @@ static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
 }
 #endif
 
-static inline void lazyFPURestore(tcb_t *thread)
+static inline void FORCE_INLINE lazyFPURestore(tcb_t *thread)
 {
     if (unlikely(ARCH_NODE_STATE(x86KSActiveFPUState))) {
         /* If we have enabled/disabled the FPU too many times without
