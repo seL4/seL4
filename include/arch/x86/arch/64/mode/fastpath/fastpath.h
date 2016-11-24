@@ -21,7 +21,6 @@
 static inline void FORCE_INLINE
 switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
 {
-    word_t base;
     word_t new_vroot = pptr_to_paddr(vroot);
     /* the asid is the 12-bit PCID */
     asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xfff);
@@ -30,22 +29,11 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
         setCurrentVSpaceRoot(new_vroot, asid);
     }
 
-    /* Code equivalent to in Arch_switchToThread, see arch/object/structures.bf
-     * for layout of gdt_data */
-    /* update the GDT_TLS entry with the thread's TLS_BASE address */
-    base = getRegister(thread, TLS_BASE);
-    x86_write_fs_base(base);
-
-    /* update the GDT_IPCBUF entry with the thread's IPC buffer address */
-    base = thread->tcbIPCBuffer;
 #if CONFIG_MAX_NUM_NODES > 1
-    x86_wrmsr(IA32_KERNEL_GS_BASE_MSR, base);
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
                  : [value] "r" (&thread->tcbArch.tcbContext.registers[Error + 1]),
                  [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
-#else
-    x86_write_gs_base(base);
 #endif
 
     NODE_STATE(ksCurThread) = thread;
@@ -116,17 +104,26 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     lazyFPURestore(cur_thread);
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    restore_user_debug_context(NODE_STATE(ksCurThread));
+    restore_user_debug_context(cur_thread);
 #endif
+
+#if CONFIG_MAX_NUM_NODES > 1
+    swapgs();
+#endif
+    /* Now that we have swapped back to the user gs we can safely
+     * update the GS base. We must *not* use any kernel functions
+     * that rely on having a kernel GS though. Most notably uses
+     * of NODE_STATE etc cannot be used beyond this point */
+    word_t base = getRegister(cur_thread, TLS_BASE);
+    x86_write_fs_base(base);
+
+    base = cur_thread->tcbIPCBuffer;
+    x86_write_gs_base(base);
 
     if (config_set(CONFIG_SYSENTER)) {
         cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
 
         asm volatile (
-#if CONFIG_MAX_NUM_NODES > 1
-            // Switch to the user GS value
-            "swapgs\n"
-#endif
             "movq %%rcx, %%rsp\n"
             "popq %%rax\n"
             "popq %%rbx\n"
@@ -164,10 +161,6 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         );
     } else {
         asm volatile(
-#if CONFIG_MAX_NUM_NODES > 1
-            // Switch to the user GS value
-            "swapgs\n"
-#endif
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movq %0, %%rsp\n"
             "popq %%rax\n"
@@ -191,7 +184,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             // enable interrupt disabled by sysenter
             "rex.w sysret\n"
             :
-            : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RAX]),
+            : "r"(&cur_thread->tcbArch.tcbContext.registers[RAX]),
             "D" (badge),
             "S" (msgInfo)
             : "memory"

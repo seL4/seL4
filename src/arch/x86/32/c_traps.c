@@ -113,6 +113,12 @@ void NORETURN VISIBLE restore_user_context(void)
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
+    word_t base = getRegister(NODE_STATE(ksCurThread), TLS_BASE);
+    x86_write_gs_base(base);
+
+    base = NODE_STATE(ksCurThread)->tcbIPCBuffer;
+    x86_write_fs_base(base);
+
     /* see if we entered via syscall */
     if (likely(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1)) {
         asm volatile(

@@ -18,20 +18,8 @@
 void
 Arch_switchToThread(tcb_t* tcb)
 {
-    word_t base;
-
     /* set PD */
     setVMRoot(tcb);
-
-    /* update the GDT_TLS entry with the thread's TLS_BASE address */
-    base = getRegister(tcb, TLS_BASE);
-    x86_write_gs_base(base);
-
-
-    /* update the GDT_IPCBUF entry with the thread's IPC buffer address */
-    base = tcb->tcbIPCBuffer;
-    x86_write_fs_base(base);
-
 }
 
 BOOT_CODE void

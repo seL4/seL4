@@ -22,24 +22,36 @@ void VISIBLE NORETURN restore_user_context(void)
 {
     NODE_UNLOCK_IF_HELD;
     c_exit_hook();
-    lazyFPURestore(NODE_STATE(ksCurThread));
+    tcb_t *cur_thread = NODE_STATE(ksCurThread);
+    word_t *irqstack = MODE_NODE_STATE(x64KSIRQStack);
+    lazyFPURestore(cur_thread);
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    restore_user_debug_context(NODE_STATE(ksCurThread));
+    restore_user_debug_context(cur_thread);
 #endif
+
+#if CONFIG_MAX_NUM_NODES > 1
+    swapgs();
+#endif
+
+    /* Now that we have swapped back to the user gs we can safely
+     * update the GS base. We must *not* use any kernel functions
+     * that rely on having a kernel GS though. Most notably uses
+     * of NODE_STATE etc cannot be used beyond this point */
+    word_t base = getRegister(cur_thread, TLS_BASE);
+    x86_write_fs_base(base);
+
+    base = cur_thread->tcbIPCBuffer;
+    x86_write_gs_base(base);
 
     // Check if we are returning from a syscall/sysenter or from an interrupt
     // There is a special case where if we would be returning from a sysenter,
     // but are current singlestepping, do a full return like an interrupt
-    if (likely(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1) &&
-            (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
+    if (likely(cur_thread->tcbArch.tcbContext.registers[Error] == -1) &&
+            (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((cur_thread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
         if (config_set(CONFIG_SYSENTER)) {
-            NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
+            cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
             asm volatile(
-#if CONFIG_MAX_NUM_NODES > 1
-                // Switch to the user GS value
-                "swapgs\n"
-#endif
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
                 "movq %0, %%rsp\n"
                 "popq %%rdi\n"
@@ -78,7 +90,7 @@ void VISIBLE NORETURN restore_user_context(void)
                  * */
                 "rex.w sysexit\n"
                 :
-                : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RDI]),
+                : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI]),
                 [IF] "i" (FLAGS_IF)
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
@@ -86,10 +98,6 @@ void VISIBLE NORETURN restore_user_context(void)
             );
         } else {
             asm volatile(
-#if CONFIG_MAX_NUM_NODES > 1
-                // Switch to the user GS value
-                "swapgs\n"
-#endif
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
                 "movq %0, %%rsp\n"
                 "popq %%rdi\n"
@@ -115,7 +123,7 @@ void VISIBLE NORETURN restore_user_context(void)
                 // enable interrupt disabled by sysenter
                 "rex.w sysret\n"
                 :
-                : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RDI])
+                : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
                 : "memory"
@@ -123,11 +131,11 @@ void VISIBLE NORETURN restore_user_context(void)
         }
     } else {
         /* construct our return from interrupt frame */
-        MODE_NODE_STATE(x64KSIRQStack)[1] = getRegister(NODE_STATE(ksCurThread), NextIP);
-        MODE_NODE_STATE(x64KSIRQStack)[2] = getRegister(NODE_STATE(ksCurThread), CS);
-        MODE_NODE_STATE(x64KSIRQStack)[3] = getRegister(NODE_STATE(ksCurThread), FLAGS);
-        MODE_NODE_STATE(x64KSIRQStack)[4] = getRegister(NODE_STATE(ksCurThread), RSP);
-        MODE_NODE_STATE(x64KSIRQStack)[5] = getRegister(NODE_STATE(ksCurThread), SS);
+        irqstack[1] = getRegister(cur_thread, NextIP);
+        irqstack[2] = getRegister(cur_thread, CS);
+        irqstack[3] = getRegister(cur_thread, FLAGS);
+        irqstack[4] = getRegister(cur_thread, RSP);
+        irqstack[5] = getRegister(cur_thread, SS);
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movq %0, %%rsp\n"
@@ -149,6 +157,9 @@ void VISIBLE NORETURN restore_user_context(void)
             "popq %%r11\n"
             "popq %%rcx\n"
 #if CONFIG_MAX_NUM_NODES > 1
+            // Swapping gs twice here is worth it as it allows us to efficiently
+            // set the user gs base previously
+            "swapgs\n"
             "movq %%gs:8, %%rsp\n"
             "addq $8, %%rsp\n"
             // Switch to the user GS value
@@ -158,7 +169,7 @@ void VISIBLE NORETURN restore_user_context(void)
 #endif
             "iretq\n"
             :
-            : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[RDI])
+            : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"

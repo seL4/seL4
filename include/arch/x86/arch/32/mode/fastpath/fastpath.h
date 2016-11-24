@@ -23,7 +23,6 @@
 static inline void FORCE_INLINE
 switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
 {
-    word_t base;
     uint32_t new_pd = pptr_to_paddr(pd);
 
     if (likely(getCurrentPD() != new_pd)) {
@@ -32,16 +31,6 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
 
         setCurrentPD(new_pd);
     }
-
-    /* Code equivalent to in Arch_switchToThread, see arch/object/structures.bf
-     * for layout of gdt_data */
-    /* update the GDT_TLS entry with the thread's TLS_BASE address */
-    base = getRegister(thread, TLS_BASE);
-    x86_write_gs_base(base);
-
-    /* update the GDT_IPCBUF entry with the thread's IPC buffer address */
-    base = thread->tcbIPCBuffer;
-    x86_write_fs_base(base);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
@@ -111,10 +100,16 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     lazyFPURestore(cur_thread);
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    restore_user_debug_context(NODE_STATE(ksCurThread));
+    restore_user_debug_context(cur_thread);
 #endif
 
-    setKernelEntryStackPointer(NODE_STATE(ksCurThread));
+    setKernelEntryStackPointer(cur_thread);
+
+    word_t base = getRegister(cur_thread, TLS_BASE);
+    x86_write_gs_base(base);
+
+    base = cur_thread->tcbIPCBuffer;
+    x86_write_fs_base(base);
 
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile(
