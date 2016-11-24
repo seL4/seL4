@@ -44,6 +44,8 @@ NODE_STATE_DECLARE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
 NODE_STATE_DECLARE(user_fpu_state_t *, x86KSActiveFPUState);
 /* Bitmask of all cores should receive the reschedule IPI */
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
+/* Number of times we have restored a user context with an active FPU without switching it */
+NODE_STATE_DECLARE(word_t, x86KSFPURestoresSinceSwitch);
 #ifdef CONFIG_VTX
 NODE_STATE_DECLARE(vcpu_t *, x86KSCurrentVCPU);
 #endif

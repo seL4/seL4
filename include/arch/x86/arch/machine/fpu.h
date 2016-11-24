@@ -113,4 +113,30 @@ static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
 }
 #endif
 
+static inline void lazyFPURestore(tcb_t *thread)
+{
+    if (unlikely(ARCH_NODE_STATE(x86KSActiveFPUState))) {
+        /* If we have enabled/disabled the FPU too many times without
+         * someone else trying to use it, we assume it is no longer
+         * in use and switch out its state
+         */
+        if (unlikely(ARCH_NODE_STATE(x86KSFPURestoresSinceSwitch) > CONFIG_X86_FPU_MAX_RESTORES_SINCE_SWITCH)) {
+            switchLocalFpuOwner(NULL);
+            ARCH_NODE_STATE(x86KSFPURestoresSinceSwitch) = 0;
+        } else {
+            if (likely(nativeThreadUsingFPU(thread))) {
+                /* We are using the FPU, make sure it is enabled */
+                enableFpu();
+            } else {
+                /* Someone is using the FPU and it might be enabled */
+                disableFpu();
+            }
+            ARCH_NODE_STATE(x86KSFPURestoresSinceSwitch)++;
+        }
+    } else {
+        /* No-one (including us) is using the FPU, so we assume it
+         * is currently disabled */
+    }
+}
+
 #endif

@@ -31,6 +31,8 @@ UP_STATE_DEFINE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
 /* Currently active FPU state, or NULL if there is no active FPU state */
 UP_STATE_DEFINE(user_fpu_state_t *, x86KSActiveFPUState);
 
+UP_STATE_DEFINE(word_t, x86KSFPURestoresSinceSwitch);
+
 /* The top level ASID table */
 asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
 

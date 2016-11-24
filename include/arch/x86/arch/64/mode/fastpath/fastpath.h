@@ -113,16 +113,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     }
     NODE_UNLOCK;
     c_exit_hook();
-    if (unlikely(nativeThreadUsingFPU(cur_thread))) {
-        /* We are using the FPU, make sure it is enabled */
-        enableFpu();
-    } else if (unlikely(ARCH_NODE_STATE(x86KSActiveFPUState))) {
-        /* Someone is using the FPU and it might be enabled */
-        disableFpu();
-    } else {
-        /* No-one (including us) is using the FPU, so we assume it
-         * is currently disabled */
-    }
+    lazyFPURestore(cur_thread);
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(NODE_STATE(ksCurThread));
