@@ -11,6 +11,7 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 #include <plat/machine/devices.h>
+#include <machine/io.h>
 
 #define N_INTERRUPTS     96
 
