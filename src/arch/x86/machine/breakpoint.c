@@ -627,14 +627,14 @@ handleUserLevelDebugException(int int_vector)
     /* Software break request (INT3) is detected by the vector number */
     if (int_vector == int_software_break_request) {
         current_fault = seL4_Fault_DebugException_new(getRestartPC(NODE_STATE(ksCurThread)),
-                                                  0, seL4_SoftwareBreakRequest);
+                                                      0, seL4_SoftwareBreakRequest);
     } else {
         /* Hardware breakpoint trigger is detected using DR6 */
         active_bp = getAndResetActiveBreakpoint(context);
         if (active_bp.bp_num >= 0) {
             current_fault = seL4_Fault_DebugException_new(active_bp.vaddr,
-                                                      active_bp.bp_num,
-                                                      active_bp.reason);
+                                                          active_bp.bp_num,
+                                                          active_bp.reason);
         } else {
             single_step_info = testAndResetSingleStepException(context);
             if (single_step_info.ret == true) {
@@ -647,7 +647,7 @@ handleUserLevelDebugException(int int_vector)
                     return EXCEPTION_NONE;
                 }
                 current_fault = seL4_Fault_DebugException_new(single_step_info.instr_vaddr,
-                                                          0, seL4_SingleStep);
+                                                              0, seL4_SingleStep);
             } else {
                 return EXCEPTION_SYSCALL_ERROR;
             }
