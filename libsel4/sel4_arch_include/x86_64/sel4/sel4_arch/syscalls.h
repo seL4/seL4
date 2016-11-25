@@ -23,13 +23,13 @@
 #error Unknown method for kernel syscalls
 #endif
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
     x64_sys_send(seL4_SysSend, dest, msgInfo.words[0], seL4_GetMR(0), seL4_GetMR(1), seL4_GetMR(2), seL4_GetMR(3));
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
@@ -41,13 +41,13 @@ seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                 );
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
     x64_sys_send(seL4_SysNBSend, dest, msgInfo.words[0], seL4_GetMR(0), seL4_GetMR(1), seL4_GetMR(2), seL4_GetMR(3));
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                    seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
@@ -59,13 +59,13 @@ seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                 );
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Reply(seL4_MessageInfo_t msgInfo)
 {
     x64_sys_reply(seL4_SysReply, msgInfo.words[0], seL4_GetMR(0), seL4_GetMR(1), seL4_GetMR(2), seL4_GetMR(3));
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
                   seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
@@ -77,13 +77,13 @@ seL4_ReplyWithMRs(seL4_MessageInfo_t msgInfo,
                  );
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Signal(seL4_CPtr dest)
 {
     x64_sys_send_null(seL4_SysSend, dest, seL4_MessageInfo_new(0, 0, 0, 1).words[0]);
 }
 
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Recv(seL4_CPtr src, seL4_Word* sender)
 {
     seL4_MessageInfo_t info;
@@ -107,7 +107,7 @@ seL4_Recv(seL4_CPtr src, seL4_Word* sender)
     return info;
 }
 
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_RecvWithMRs(seL4_CPtr src, seL4_Word* sender,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
@@ -140,7 +140,7 @@ seL4_RecvWithMRs(seL4_CPtr src, seL4_Word* sender,
     return info;
 }
 
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBRecv(seL4_CPtr src, seL4_Word* sender)
 {
     seL4_MessageInfo_t info;
@@ -164,7 +164,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word* sender)
     return info;
 }
 
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
 
@@ -184,7 +184,7 @@ seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
     return info;
 }
 
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
@@ -225,7 +225,7 @@ seL4_CallWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
     return info;
 }
 
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
 {
     seL4_MessageInfo_t info;
@@ -249,7 +249,7 @@ seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender)
     return info;
 }
 
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
                       seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
@@ -295,7 +295,7 @@ seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sen
     return info;
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Yield(void)
 {
     x64_sys_null(seL4_SysYield);
@@ -303,7 +303,7 @@ seL4_Yield(void)
 }
 
 #if defined(SEL4_DEBUG_KERNEL)
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_DebugPutChar(char c)
 {
     seL4_Word unused0 = 0;
@@ -318,7 +318,7 @@ seL4_DebugPutChar(char c)
 #endif
 
 #ifdef SEL4_DEBUG_KERNEL
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_DebugHalt(void)
 {
     x64_sys_null(seL4_SysDebugHalt);
@@ -327,7 +327,7 @@ seL4_DebugHalt(void)
 #endif
 
 #if defined(SEL4_DEBUG_KERNEL)
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_DebugSnapshot(void)
 {
     x64_sys_null(seL4_SysDebugSnapshot);
@@ -336,7 +336,7 @@ seL4_DebugSnapshot(void)
 #endif
 
 #ifdef SEL4_DEBUG_KERNEL
-static inline seL4_Uint32
+LIBSEL4_INLINE_FUNC seL4_Uint32
 seL4_DebugCapIdentify(seL4_CPtr cap)
 {
     seL4_Word unused0 = 0;
@@ -352,7 +352,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 
 #ifdef SEL4_DEBUG_KERNEL
 char *strcpy(char *, const char *);
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 {
 
@@ -370,7 +370,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 #endif
 
 #if defined(SEL4_DANGEROUS_CODE_INJECTION_KERNEL)
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_DebugRun(void (*userfn) (void *), void* userarg)
 {
     x64_sys_send_null(seL4_SysDebugRun, (seL4_Word)userfn, (seL4_Word)userarg);
@@ -379,7 +379,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 #endif
 
 #if CONFIG_ENABLE_BENCHMARKS
-static inline seL4_Error
+LIBSEL4_INLINE_FUNC seL4_Error
 seL4_BenchmarkResetLog(void)
 {
     seL4_Word unused0 = 0;
@@ -395,14 +395,14 @@ seL4_BenchmarkResetLog(void)
     return (seL4_Error)ret;
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkFinalizeLog(void)
 {
     x64_sys_null(seL4_SysBenchmarkFinalizeLog);
     asm volatile("" ::: "memory");
 }
 
-static inline seL4_Error
+LIBSEL4_INLINE_FUNC seL4_Error
 seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
 {
     seL4_Word unused0 = 0;
@@ -416,7 +416,7 @@ seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
     return (seL4_Error) frame_cptr;
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkNullSyscall(void)
 {
     x64_sys_null(seL4_SysBenchmarkNullSyscall);
@@ -424,7 +424,7 @@ seL4_BenchmarkNullSyscall(void)
 }
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
 {
     seL4_Word unused0 = 0;
@@ -437,7 +437,7 @@ seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
     x64_sys_send_recv(seL4_SysBenchmarkGetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
 }
 
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
 {
     seL4_Word unused0 = 0;

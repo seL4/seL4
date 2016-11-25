@@ -33,8 +33,15 @@
 
 #ifdef CONFIG_LIB_SEL4_INLINE_INVOCATIONS
 #define LIBSEL4_INLINE static inline
+#define LIBSEL4_INLINE_FUNC static inline
+
+#elif CONFIG_LIB_SEL4_PUBLIC_SYMBOLS
+#define LIBSEL4_INLINE __attribute__((unused)) __attribute__((weak))
+#define LIBSEL4_INLINE_FUNC __attribute__((unused)) __attribute__((weak))
+
 #else
 #define LIBSEL4_INLINE __attribute__((noinline)) __attribute__((unused)) __attribute__((weak))
+#define LIBSEL4_INLINE_FUNC static inline
 #endif
 
 #define SEL4_DEPRECATED(x) __attribute__((deprecated(x)))

@@ -31,7 +31,7 @@
  * @param[in] dest The capability to be invoked.
  * @param[in] msgInfo The messageinfo structure for the IPC.
  */
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
 
 /**
@@ -55,7 +55,7 @@ seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * as described in <autoref sec="messageinfo"/>
  * @endxmlonly
  */
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Recv(seL4_CPtr src, seL4_Word* sender);
 
 /**
@@ -74,7 +74,7 @@ seL4_Recv(seL4_CPtr src, seL4_Word* sender);
  * as described in <autoref sec="messageinfo"/>
  * @endxmlonly
  */
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
 
 /**
@@ -88,7 +88,7 @@ seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  *
  * @param[in] msgInfo The messageinfo structure for the IPC.
  */
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Reply(seL4_MessageInfo_t msgInfo);
 
 /**
@@ -102,7 +102,7 @@ seL4_Reply(seL4_MessageInfo_t msgInfo);
  * @param[in] dest The capability to be invoked.
  * @param[in] msgInfo The messageinfo structure for the IPC.
  */
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
 
 /**
@@ -127,7 +127,7 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * as described in <autoref sec="messageinfo"/>
  * @endxmlonly
  */
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
 
 /**
@@ -152,7 +152,7 @@ seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
  * as described in <autoref sec="messageinfo"/>
  * @endxmlonly
  */
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBRecv(seL4_CPtr src, seL4_Word* sender);
 
 /**
@@ -163,7 +163,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word* sender);
  * See <autoref sec="sys_yield"/>
  * @endxmlonly
  */
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Yield(void);
 
 /**
@@ -180,7 +180,7 @@ seL4_Yield(void);
  *
  * @param[in] dest The capability to be invoked.
  */
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Signal(seL4_CPtr dest);
 
 /**
@@ -202,7 +202,7 @@ seL4_Signal(seL4_CPtr dest);
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
  */
-static inline void
+LIBSEL4_INLINE_FUNC void
 seL4_Wait(seL4_CPtr src, seL4_Word *sender);
 
 /**
@@ -225,7 +225,7 @@ seL4_Wait(seL4_CPtr src, seL4_Word *sender);
  *               notification object that was signalled.
  *               This parameter is ignored if `NULL`.
  */
-static inline seL4_MessageInfo_t
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_Poll(seL4_CPtr src, seL4_Word *sender);
 
 /** @} */

@@ -48,6 +48,11 @@ ASSERTS = {
     'libsel4': 'seL4_DebugAssert'
 }
 
+INLINE = {
+    'sel4': 'static inline',
+    'libsel4': 'LIBSEL4_INLINE_FUNC'
+}
+
 TYPES = {
     "sel4": {
         8:  "uint8_t",
@@ -218,7 +223,7 @@ typedef_template = \
 typedef struct %(name)s %(name)s_t;"""
 
 generator_template = \
-"""static inline %(block)s_t CONST
+"""%(inline)s %(block)s_t CONST
 %(block)s_new(%(args)s) {
     %(block)s_t %(block)s;
 
@@ -230,7 +235,7 @@ generator_template = \
 }"""
 
 ptr_generator_template = \
-"""static inline void
+"""%(inline)s void
 %(block)s_ptr_new(%(args)s) {
 %(word_inits)s
 
@@ -238,7 +243,7 @@ ptr_generator_template = \
 }"""
 
 reader_template = \
-"""static inline %(type)s CONST
+"""%(inline)s %(type)s CONST
 %(block)s_get_%(field)s(%(block)s_t %(block)s) {
     %(type)s ret;
     ret = (%(block)s.words[%(index)d] & 0x%(mask)x%(suf)s) %(r_shift_op)s %(shift)d;
@@ -250,7 +255,7 @@ reader_template = \
 }"""
 
 ptr_reader_template = \
-"""static inline %(type)s PURE
+"""%(inline)s %(type)s PURE
 %(block)s_ptr_get_%(field)s(%(block)s_t *%(block)s_ptr) {
     %(type)s ret;
     ret = (%(block)s_ptr->words[%(index)d] & 0x%(mask)x%(suf)s) """ \
@@ -263,7 +268,7 @@ ptr_reader_template = \
 }"""
 
 writer_template = \
-"""static inline %(block)s_t CONST
+"""%(inline)s %(block)s_t CONST
 %(block)s_set_%(field)s(%(block)s_t %(block)s, %(type)s v) {
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
@@ -273,7 +278,7 @@ writer_template = \
 }"""
 
 ptr_writer_template = \
-"""static inline void
+"""%(inline)s void
 %(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, %(type)s v) {
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
@@ -283,7 +288,7 @@ ptr_writer_template = \
 }"""
 
 union_generator_template = \
-"""static inline %(union)s_t CONST
+"""%(inline)s %(union)s_t CONST
 %(union)s_%(block)s_new(%(args)s) {
     %(union)s_t %(union)s;
 
@@ -295,7 +300,7 @@ union_generator_template = \
 }"""
 
 ptr_union_generator_template = \
-"""static inline void
+"""%(inline)s void
 %(union)s_%(block)s_ptr_new(%(args)s) {
 %(word_inits)s
 
@@ -303,7 +308,7 @@ ptr_union_generator_template = \
 }"""
 
 union_reader_template = \
-"""static inline %(type)s CONST
+"""%(inline)s %(type)s CONST
 %(union)s_%(block)s_get_%(field)s(%(union)s_t %(union)s) {
     %(type)s ret;
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
@@ -318,7 +323,7 @@ union_reader_template = \
 }"""
 
 ptr_union_reader_template = \
-"""static inline %(type)s PURE
+"""%(inline)s %(type)s PURE
 %(union)s_%(block)s_ptr_get_%(field)s(%(union)s_t *%(union)s_ptr) {
     %(type)s ret;
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
@@ -335,7 +340,7 @@ ptr_union_reader_template = \
 }"""
 
 union_writer_template = \
-"""static inline %(union)s_t CONST
+"""%(inline)s %(union)s_t CONST
 %(union)s_%(block)s_set_%(field)s(%(union)s_t %(union)s, %(type)s v) {
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
@@ -348,7 +353,7 @@ union_writer_template = \
 }"""
 
 ptr_union_writer_template = \
-"""static inline void
+"""%(inline)s void
 %(union)s_%(block)s_ptr_set_%(field)s(%(union)s_t *%(union)s_ptr,
                                       %(type)s v) {
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
@@ -364,7 +369,7 @@ ptr_union_writer_template = \
 }"""
 
 tag_reader_header_template = \
-"""static inline %(type)s CONST
+"""%(inline)s %(type)s CONST
 %(union)s_get_%(tagname)s(%(union)s_t %(union)s) {
 """
 
@@ -381,7 +386,7 @@ tag_reader_footer_template = \
 }"""
 
 tag_eq_reader_header_template = \
-"""static inline int CONST
+"""%(inline)s int CONST
 %(union)s_%(tagname)s_equals(%(union)s_t %(union)s, %(type)s %(union)s_type_tag) {
 """
 
@@ -398,7 +403,7 @@ tag_eq_reader_footer_template = \
 }"""
 
 ptr_tag_reader_header_template = \
-"""static inline %(type)s PURE
+"""%(inline)s %(type)s PURE
 %(union)s_ptr_get_%(tagname)s(%(union)s_t *%(union)s_ptr) {
 """
 
@@ -415,7 +420,7 @@ ptr_tag_reader_footer_template = \
 }"""
 
 tag_writer_template = \
-"""static inline %(union)s_t CONST
+"""%(inline)s %(union)s_t CONST
 %(union)s_set_%(tagname)s(%(union)s_t %(union)s, %(type)s v) {
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
@@ -426,7 +431,7 @@ tag_writer_template = \
 }"""
 
 ptr_tag_writer_template = \
-"""static inline void
+"""%(inline)s void
 %(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, %(type)s v) {
     /* fail if user has passed bits that we will override */
     %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
@@ -1681,6 +1686,7 @@ class TaggedUnion:
         print(file=output)
 
         subs = {\
+            'inline': INLINE[options.environment], \
             'union': self.name, \
             'type':  TYPES[options.environment][self.union_base], \
             'tagname': self.tagname, \
@@ -1812,14 +1818,16 @@ class TaggedUnion:
                         (self.name, index, f_value, shift_op, shift))
 
             generator = union_generator_template % \
-                {"block":        name, \
+                {"inline":       INLINE[options.environment], \
+                 "block":        name, \
                  "union":        self.name, \
                  "args":         args, \
                  "word_inits":   '\n'.join(word_inits), \
                  "field_inits":  '\n'.join(field_inits)}
 
             ptr_generator = ptr_union_generator_template % \
-                {"block":        name, \
+                {"inline":       INLINE[options.environment], \
+                 "block":        name, \
                  "union":        self.name, \
                  "args":         ptr_args, \
                  "word_inits":   '\n'.join(ptr_word_inits), \
@@ -1857,6 +1865,7 @@ class TaggedUnion:
                 mask = ((1 << size) - 1) << (offset % self.base)
 
                 subs = {\
+                    "inline": INLINE[options.environment], \
                     "block": ref.name, \
                     "field": field, \
                     "type": TYPES[options.environment][ref.base], \
@@ -2429,13 +2438,15 @@ class Block:
                     (self.name, index, field, shift_op, shift))
 
         generator = generator_template % \
-            {"block":        self.name, \
+            {"inline":       INLINE[options.environment], \
+             "block":        self.name, \
              "args":         args, \
              "word_inits":   '\n'.join(word_inits), \
              "field_inits":  '\n'.join(field_inits)}
 
         ptr_generator = ptr_generator_template % \
-            {"block":        self.name, \
+            {"inline":       INLINE[options.environment], \
+             "block":        self.name, \
              "args":         ptr_args, \
              "word_inits":   '\n'.join(ptr_word_inits), \
              "field_inits":  '\n'.join(ptr_field_inits)}
@@ -2466,6 +2477,7 @@ class Block:
             mask = ((1 << size) - 1) << (offset % self.base)
 
             subs = {\
+                "inline": INLINE[options.environment], \
                 "block": self.name, \
                 "field": field, \
                 "type": TYPES[options.environment][self.base], \

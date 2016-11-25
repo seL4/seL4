@@ -15,7 +15,7 @@
 #include <sel4/faults.h>
 #include <sel4/sel4_arch/constants.h>
 
-static inline seL4_Fault_t
+LIBSEL4_INLINE_FUNC seL4_Fault_t
 seL4_getArchFault(seL4_MessageInfo_t tag)
 {
     switch (seL4_MessageInfo_get_label(tag)) {
