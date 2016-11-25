@@ -272,7 +272,7 @@ static BOOT_CODE bool_t
 is_compiled_for_microarchitecture(void)
 {
     word_t microarch_generation;
-    x86_cpu_identity_t *model_info= x86_cpuid_get_model_info();
+    x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
 
     if (config_set(CONFIG_ARCH_X86_BROADWELL) ) {
         microarch_generation = 6;
