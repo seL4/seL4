@@ -100,6 +100,7 @@ CONST clzl(unsigned long x)
 
 #define CTZL(x) __builtin_ctzl(x)
 
+/** DONT_TRANSLATE */
 static inline long
 CONST popcountl(unsigned long x)
 {
