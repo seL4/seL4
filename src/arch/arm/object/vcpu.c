@@ -331,9 +331,9 @@ VGICMaintenance(void)
             irq_idx = -1;
         }
         if (irq_idx == -1) {
-            current_fault = fault_vgic_maintenance_new(0, 0);
+            current_fault = seL4_Fault_VGICMaintenance_new(0, 0);
         } else {
-            current_fault = fault_vgic_maintenance_new(irq_idx, 1);
+            current_fault = seL4_Fault_VGICMaintenance_new(irq_idx, 1);
             /* the hardware should never give us an invalid index, but we don't
              * want to trust it that far */
             if (irq_idx < gic_vcpu_num_list_regs) {
@@ -355,7 +355,7 @@ VGICMaintenance(void)
 
     } else {
         /* Assume that it was an EOI for a LR that was not present */
-        current_fault = fault_vgic_maintenance_new(0, 0);
+        current_fault = seL4_Fault_VGICMaintenance_new(0, 0);
     }
 
     handleFault(ksCurThread);
@@ -657,7 +657,7 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 void
 handleVCPUFault(word_t hsr)
 {
-    current_fault = fault_vcpu_fault_new(hsr);
+    current_fault = seL4_Fault_VCPUFault_new(hsr);
     handleFault(ksCurThread);
     schedule();
     activateThread();

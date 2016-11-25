@@ -78,11 +78,38 @@ enum messageSizes {
     n_syscallMessage = 18
 };
 
+#define SYSCALL_MESSAGE \
+{    \
+    [seL4_UnknownSyscall_RAX] = RAX,\
+    [seL4_UnknownSyscall_RBX] = RBX,\
+    [seL4_UnknownSyscall_RCX] = RCX,\
+    [seL4_UnknownSyscall_RDX] = RDX,\
+    [seL4_UnknownSyscall_RSI] = RSI,\
+    [seL4_UnknownSyscall_RDI] = RDI,\
+    [seL4_UnknownSyscall_RBP] = RBP,\
+    [seL4_UnknownSyscall_R8]  = R8,\
+    [seL4_UnknownSyscall_R9]  = R9,\
+    [seL4_UnknownSyscall_R10] = R10,\
+    [seL4_UnknownSyscall_R11] = R11,\
+    [seL4_UnknownSyscall_R12] = R12,\
+    [seL4_UnknownSyscall_R13] = R13,\
+    [seL4_UnknownSyscall_R14] = R14,\
+    [seL4_UnknownSyscall_R15] = R15,\
+    [seL4_UnknownSyscall_FaultIP] = FaultIP,\
+    [seL4_UnknownSyscall_SP] = RSP,\
+    [seL4_UnknownSyscall_FLAGS] = FLAGS\
+}
+
+#define EXCEPTION_MESSAGE \
+{ \
+    [seL4_UserException_FaultIP] = FaultIP,\
+    [seL4_UserException_SP] = RSP,\
+    [seL4_UserException_FLAGS] = FLAGS\
+}
+
 extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
-extern const register_t exceptionMessage[];
-extern const register_t syscallMessage[];
 
 #define FPU_PADDING word_t padding[1];
 

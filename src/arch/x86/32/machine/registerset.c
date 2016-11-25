@@ -9,6 +9,7 @@
  */
 
 #include <config.h>
+#include <arch/api/constants.h>
 #include <arch/machine/registerset.h>
 #include <arch/machine/fpu.h>
 #include <arch/object/structures.h>
@@ -24,14 +25,6 @@ const register_t frameRegisters[] = {
 
 const register_t gpRegisters[] = {
     TLS_BASE, FS, GS
-};
-
-const register_t exceptionMessage[] = {
-    FaultIP, ESP, FLAGS
-};
-
-const register_t syscallMessage[] = {
-    EAX, EBX, ECX, EDX, ESI, EDI, EBP, NextIP, ESP, FLAGS
 };
 
 #ifdef CONFIG_VTX

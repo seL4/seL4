@@ -74,7 +74,7 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         cte_t *srcSlot;
         word_t srcIndex, srcDepth, capData;
         bool_t isMove;
-        cap_rights_t cap_rights;
+        seL4_CapRights_t cap_rights;
         cap_t srcRoot, newCap;
         deriveCap_ret_t dc_ret;
         cap_t srcCap;

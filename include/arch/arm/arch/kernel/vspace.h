@@ -84,7 +84,7 @@ void setVMRoot(tcb_t *tcb);
 bool_t CONST isValidVTableRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
-                               cap_rights_t cap_rights_mask);
+                               seL4_CapRights_t cap_rights_mask);
 hw_asid_t getHWASID(asid_t asid);
 hw_asid_t findFreeHWASID(void);
 void flushPage(vm_page_size_t page_size, pde_t* pd, asid_t asid, word_t vptr);

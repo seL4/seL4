@@ -44,4 +44,49 @@
 #define seL4_MinUntypedBits 4
 #define seL4_MaxUntypedBits 47
 
+#ifndef __ASSEMBLER__
+enum {
+    seL4_VMFault_IP,
+    seL4_VMFault_Addr,
+    seL4_VMFault_PrefetchFault,
+    seL4_VMFault_FSR,
+    seL4_VMFault_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
+} seL4_VMFault_Msg;
+
+enum {
+    seL4_UnknownSyscall_RAX,
+    seL4_UnknownSyscall_RBX,
+    seL4_UnknownSyscall_RCX,
+    seL4_UnknownSyscall_RDX,
+    seL4_UnknownSyscall_RSI,
+    seL4_UnknownSyscall_RDI,
+    seL4_UnknownSyscall_RBP,
+    seL4_UnknownSyscall_R8,
+    seL4_UnknownSyscall_R9,
+    seL4_UnknownSyscall_R10,
+    seL4_UnknownSyscall_R11,
+    seL4_UnknownSyscall_R12,
+    seL4_UnknownSyscall_R13,
+    seL4_UnknownSyscall_R14,
+    seL4_UnknownSyscall_R15,
+    seL4_UnknownSyscall_FaultIP,
+    seL4_UnknownSyscall_SP,
+    seL4_UnknownSyscall_FLAGS,
+    seL4_UnknownSyscall_Syscall,
+    seL4_UnknownSyscall_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_UnknownSyscall_Msg)
+} seL4_UnknownSyscall_Msg;
+
+enum {
+    seL4_UserException_FaultIP,
+    seL4_UserException_SP,
+    seL4_UserException_FLAGS,
+    seL4_UserException_Number,
+    seL4_UserException_Code,
+    seL4_UserException_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_UserException_Msg)
+} seL4_UserException_Msg;
+
+#endif /* __ASSEMBLER__ */
 #endif /* __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_ */

@@ -124,7 +124,7 @@ Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 }
 
 cap_t CONST
-Arch_maskCapRights(cap_rights_t cap_rights_mask, cap_t cap)
+Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
 {
     if (cap_get_capType(cap) == cap_small_frame_cap) {
         vm_rights_t vm_rights;

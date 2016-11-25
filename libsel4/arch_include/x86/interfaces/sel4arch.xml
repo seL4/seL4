@@ -56,18 +56,18 @@
         <method id="X86PageMap" name="Map">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
         </method>
         <method id="X86PageRemap" name="Remap">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
-            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
         </method>
         <method id="X86PageUnmap" name="Unmap"/>
         <method id="X86PageMapIO" name="MapIO">
             <param dir="in" name="iospace" type="seL4_X86_IOSpace"/>
-            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
         </method>
         <method id="X86PageGetAddress" name="GetAddress">
@@ -76,7 +76,7 @@
         <method id="X86PageMapEPT" name="MapEPT" condition="defined(CONFIG_VTX)">
             <param dir="in" name="vroot" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="rights" type="seL4_CapRights"/>
+            <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
         </method>
     </interface>

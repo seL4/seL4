@@ -1,0 +1,30 @@
+--
+-- Copyright 2016, Data61
+-- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+--
+-- This software may be distributed and modified according to the terms of
+-- the BSD 2-Clause license. Note that NO WARRANTY is provided.
+-- See "LICENSE_BSD2.txt" for details.
+--
+-- @TAG(D61BSD)
+--
+
+-- this file contains types shared between libsel4 and the kernel
+
+tagged_union seL4_Fault seL4_FaultType {
+    -- generic faults
+    tag NullFault 0
+    tag CapFault 1
+    tag UnknownSyscall 2
+    tag UserException 3
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    tag DebugException 4
+#endif
+    -- arch specific faults
+    tag VMFault 5
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    tag VGICMaintenance 6
+    tag VCPUFault 7
+#endif
+}

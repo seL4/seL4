@@ -270,7 +270,7 @@ decodeARMIOMapInvocation(
     iopde_t    *pd;
     iopte_t    iopte;
     vm_rights_t     frame_cap_rights;
-    cap_rights_t    dma_cap_rights_mask;
+    seL4_CapRights_t    dma_cap_rights_mask;
     lookupIOPTSlot_ret_t lu_ret;
 
     if (excaps.excaprefs[0] == NULL || length < 2) {

@@ -15,9 +15,6 @@
 #include <types.h>
 #include <object/structures.h>
 
-word_t setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer);
-word_t CONST Arch_decodeTransfer(word_t flags);
-exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest);
 #ifdef CONFIG_VTX
 exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t extraCaps);
 void Arch_leaveVMAsyncTransfer(tcb_t *tcb);

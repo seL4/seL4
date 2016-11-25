@@ -170,7 +170,7 @@ bool_t isDebugFault(word_t hsr_or_fsr);
  * This could be handling a single-stepping exception, or a breakpoint or
  * watchpoint.
  */
-fault_t handleUserLevelDebugException(word_t fault_vaddr);
+seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr);
 
 /** These next two functions are part of some state flags.
  *

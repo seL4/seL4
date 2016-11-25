@@ -65,4 +65,13 @@ enum {
 };
 #define seL4_MsgMaxExtraCaps (LIBSEL4_BIT(seL4_MsgExtraCapBits)-1)
 
+typedef enum {
+    seL4_NoFailure = 0,
+    seL4_InvalidRoot,
+    seL4_MissingCapability,
+    seL4_DepthMismatch,
+    seL4_GuardMismatch,
+    SEL4_FORCE_LONG_ENUM(seL4_LookupFailureType),
+} seL4_LookupFailureType;
+
 #endif /* __API_CONSTANTS_H */

@@ -217,11 +217,11 @@ def init_data_types(wordsize):
         Type("seL4_Uint64", 64, wordsize, double_word=(wordsize == 32)),
         Type("seL4_Word", wordsize, wordsize),
         Type("seL4_Bool", 1, wordsize, native_size_bits=8),
-        Type("seL4_CapRights", wordsize, wordsize),
 
         # seL4 Structures
         BitFieldType("seL4_CapData_t", wordsize, wordsize),
         BitFieldType("seL4_PrioProps_t", wordsize, wordsize),
+        BitFieldType("seL4_CapRights_t", wordsize, wordsize),
 
         # Object types
         CapType("seL4_CPtr", wordsize),

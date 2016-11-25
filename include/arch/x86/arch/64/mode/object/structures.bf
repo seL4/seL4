@@ -181,7 +181,7 @@ tagged_union cap capType {
 
 ---- Arch-independent object types
 
-block vm_fault {
+block VMFault {
     field     address           64
 
     padding                     32
@@ -189,18 +189,7 @@ block vm_fault {
     padding                     7
     field     instructionFault  1
     padding                     16
-    field     faultType         3
-}
-
-tagged_union fault faultType {
-    tag null_fault 0
-    tag cap_fault 1
-    tag vm_fault 2
-    tag unknown_syscall 3
-    tag user_exception 4
-#ifdef CONFIG_HARDWARE_DEBUG_API
-    tag debug_exception 5
-#endif
+    field     seL4_FaultType         3
 }
 
 -- VM attributes
@@ -501,3 +490,6 @@ block cr3 {
     field_high  pml4_base_address   39
     field       pcid                12
 }
+
+
+#include <mode/api/arch_shared_types.bf>

@@ -41,12 +41,12 @@ fastpath_call(word_t cptr, word_t msgInfo)
     /* Get message info, length, and fault type. */
     info = messageInfoFromWord_raw(msgInfo);
     length = seL4_MessageInfo_get_length(info);
-    fault_type = fault_get_faultType(NODE_STATE(ksCurThread)->tcbFault);
+    fault_type = seL4_Fault_get_seL4_FaultType(NODE_STATE(ksCurThread)->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
      * saved fault. */
     if (unlikely(fastpath_mi_check(msgInfo) ||
-                 fault_type != fault_null_fault)) {
+                 fault_type != seL4_Fault_NullFault)) {
         slowpath(SysCall);
     }
 
@@ -209,12 +209,12 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* Get message info and length */
     info = messageInfoFromWord_raw(msgInfo);
     length = seL4_MessageInfo_get_length(info);
-    fault_type = fault_get_faultType(NODE_STATE(ksCurThread)->tcbFault);
+    fault_type = seL4_Fault_get_seL4_FaultType(NODE_STATE(ksCurThread)->tcbFault);
 
     /* Check there's no extra caps, the length is ok and there's no
      * saved fault. */
     if (unlikely(fastpath_mi_check(msgInfo) ||
-                 fault_type != fault_null_fault)) {
+                 fault_type != seL4_Fault_NullFault)) {
         slowpath(SysReplyRecv);
     }
 
@@ -254,8 +254,8 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* Check that the caller has not faulted, in which case a fault
        reply is generated instead. */
-    fault_type = fault_get_faultType(caller->tcbFault);
-    if (unlikely(fault_type != fault_null_fault)) {
+    fault_type = seL4_Fault_get_seL4_FaultType(caller->tcbFault);
+    if (unlikely(fault_type != seL4_Fault_NullFault)) {
         slowpath(SysReplyRecv);
     }
 

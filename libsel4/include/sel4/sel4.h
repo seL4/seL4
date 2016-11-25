@@ -12,6 +12,7 @@
 #define __LIBSEL4_SEL4_H
 
 #include <sel4/types.h>
+#include <sel4/macros.h>
 
 #include <sel4/syscalls.h>
 #include <sel4/arch/syscalls.h>
@@ -21,9 +22,9 @@
 #include <interfaces/sel4_client.h>
 
 #include <sel4/bootinfo.h>
-
+#include <sel4/faults.h>
 #include <sel4/deprecated.h>
-
-#include <sel4/cap_rights.h>
+#include <sel4/constants.h>
+#include <sel4/arch/constants.h>
 
 #endif // __LIBSEL4_SEL4_H

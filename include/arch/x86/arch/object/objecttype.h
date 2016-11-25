@@ -19,7 +19,7 @@
 
 deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap);
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap);
-cap_t CONST Arch_maskCapRights(cap_rights_t cap_rights_mask, cap_t cap);
+cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap);
 cap_t Arch_finaliseCap(cap_t cap, bool_t final);
 bool_t CONST Arch_hasRecycleRights(cap_t cap);
 bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b);
