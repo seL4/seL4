@@ -55,17 +55,22 @@ decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         if (isIRQActive(irq)) {
             current_syscall_error.type = seL4_RevokeFirst;
+            userError("Rejecting request for IRQ %u. Already active.", irq);
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         lu_ret = lookupTargetSlot(cnodeCap, index, depth);
         if (lu_ret.status != EXCEPTION_NONE) {
+            userError("Target slot for new IRQ Handler cap invalid: cap %lu, IRQ %u.",
+                      getExtraCPtr(buffer, 0), irq);
             return lu_ret.status;
         }
         destSlot = lu_ret.slot;
 
         status = ensureEmptySlot(destSlot);
         if (status != EXCEPTION_NONE) {
+            userError("Target slot for new IRQ Handler cap not empty: cap %lu, IRQ %u.",
+                      getExtraCPtr(buffer, 0), irq);
             return status;
         }
 
