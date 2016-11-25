@@ -65,12 +65,12 @@
 #define _is_set__(comma) _is_set___(comma 1, 0)
 #define _is_set___(_, v, ...) v
 
-/* Evalulate the value of a configuration setting, return a default
- * if it isn't defined */
-#define config_default(macro, default) _config_default(macro, default)
-#define _config_default(value, default) _config_default_(_macrotest_##value, value, default)
-#define _config_default_(comma, value, default) _config_default__(comma value, default)
-#define _config_default__(_, v, ...) v
+/* Check the existance of a configuration setting, returning one value if it
+ * exists and a different one if it does not */
+#define config_ternary(macro, true, false) _config_ternary(macro, true, false)
+#define _config_ternary(value, true, false) _config_ternary_(_macrotest_##value, true, false)
+#define _config_ternary_(comma, true, false) _config_ternary__(comma true, false)
+#define _config_ternary__(_, v, ...) v
 
 /** MODIFIES:
     FNSPEC

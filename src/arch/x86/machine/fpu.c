@@ -119,7 +119,7 @@ Arch_initFpu(void)
     if (config_set(CONFIG_XSAVE)) {
         uint64_t xsave_features;
         uint32_t xsave_instruction;
-        uint64_t desired_features = config_default(CONFIG_XSAVE_FEATURE_SET, 1);
+        uint64_t desired_features = config_ternary(CONFIG_XSAVE, CONFIG_XSAVE_FEATURE_SET, 1);
         /* check for XSAVE support */
         if (!(x86_cpuid_ecx(1, 0) & BIT(26))) {
             printf("XSAVE not supported\n");

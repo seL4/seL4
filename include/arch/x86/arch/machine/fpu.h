@@ -36,13 +36,13 @@ void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu);
 
 static inline uint32_t xsave_features_high(void)
 {
-    uint64_t features = config_default(CONFIG_XSAVE_FEATURE_SET, 1);
+    uint64_t features = config_ternary(CONFIG_XSAVE, CONFIG_XSAVE_FEATURE_SET, 1);
     return (uint32_t)(features >> 32);
 }
 
 static inline uint32_t xsave_features_low(void)
 {
-    uint64_t features = config_default(CONFIG_XSAVE_FEATURE_SET, 1);
+    uint64_t features = config_ternary(CONFIG_XSAVE, CONFIG_XSAVE_FEATURE_SET, 1);
     return (uint32_t)(features & 0xffffffff);
 }
 
