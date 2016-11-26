@@ -271,7 +271,7 @@ parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
 static BOOT_CODE bool_t
 is_compiled_for_microarchitecture(void)
 {
-    word_t microarch_generation;
+    word_t microarch_generation = 0;
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
 
     if (config_set(CONFIG_ARCH_X86_BROADWELL) ) {
