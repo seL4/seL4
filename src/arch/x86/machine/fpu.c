@@ -22,11 +22,7 @@
 void
 Arch_initFpuContext(user_context_t *context)
 {
-    if (config_set(CONFIG_FXSAVE)) {
-        context->fpuState = x86KSnullFpuState;
-    } else {
-        /* the 0 state is good enough for XSAVE */
-    }
+    context->fpuState = x86KSnullFpuState;
 }
 
 /*
@@ -120,6 +116,11 @@ Arch_initFpu(void)
         uint64_t xsave_features;
         uint32_t xsave_instruction;
         uint64_t desired_features = config_ternary(CONFIG_XSAVE, CONFIG_XSAVE_FEATURE_SET, 1);
+        xsave_state_t *nullFpuState = (xsave_state_t *) &x86KSnullFpuState;
+
+        /* create NULL state for FPU to be used by XSAVE variants */
+        memzero(&x86KSnullFpuState, sizeof(x86KSnullFpuState));
+
         /* check for XSAVE support */
         if (!(x86_cpuid_ecx(1, 0) & BIT(26))) {
             printf("XSAVE not supported\n");
@@ -137,7 +138,7 @@ Arch_initFpu(void)
         write_xcr0(desired_features);
         /* validate the xsave buffer size and instruction */
         if (x86_cpuid_ebx(0x0d, 0x0) != CONFIG_XSAVE_SIZE) {
-            printf("XSAVE buffer set set to %d, but should be %d\n", CONFIG_XSAVE_SIZE, x86_cpuid_ecx(0x0d, 0x0));
+            printf("XSAVE buffer set set to %d, but should be %d\n", CONFIG_XSAVE_SIZE, x86_cpuid_ebx(0x0d, 0x0));
             return false;
         }
         /* check if a specialized XSAVE instruction was requested */
@@ -157,14 +158,17 @@ Arch_initFpu(void)
                 printf("XSAVES requested, but not supported\n");
                 return false;
             }
+
+            /* AVX state from extended region should be in compacted format */
+            nullFpuState->header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT;
+
             /* initialize the XSS MSR */
             x86_wrmsr(IA32_XSS_MSR, desired_features);
         }
-        /* Load a NULL fpu state so that the idle thread ends up
-         * with a sensible FPU state and we can optimize our
-         * switch of it */
-        memzero(&x86KSnullFpuState, sizeof(x86KSnullFpuState));
-        loadFpuState(&x86KSnullFpuState);
+
+        /* copy i387 FPU initial state from FPU */
+        saveFpuState(&x86KSnullFpuState);
+        nullFpuState->i387.mxcsr = MXCSR_INIT_VALUE;
     } else {
         /* Store the null fpu state */
         saveFpuState(&x86KSnullFpuState);
