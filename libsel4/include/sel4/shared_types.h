@@ -35,11 +35,11 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_CapFault_Msg),
 } seL4_CapFault_Msg;
 
-#define seL4_ReadWrite seL4_CapRights_new(false, true, true)
-#define seL4_AllRights seL4_CapRights_new(true, true, true)
-#define seL4_CanRead   seL4_CapRights_new(false, true, false)
-#define seL4_CanWrite  seL4_CapRights_new(false, false, true)
-#define seL4_CanGrant  seL4_CapRights_new(true, false, false)
-#define seL4_NoWrite   seL4_CapRights_new(true, true, false);
+#define seL4_ReadWrite seL4_CapRights_new(0, 1, 1)
+#define seL4_AllRights seL4_CapRights_new(1, 1, 1)
+#define seL4_CanRead   seL4_CapRights_new(0, 1, 0)
+#define seL4_CanWrite  seL4_CapRights_new(0, 0, 1)
+#define seL4_CanGrant  seL4_CapRights_new(1, 0, 0)
+#define seL4_NoWrite   seL4_CapRights_new(1, 1, 0);
 
 #endif
