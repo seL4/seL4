@@ -17,6 +17,33 @@
 #include <arch/machine.h>
 #include <api/failures.h>
 
+#define MXCSR_INIT_VALUE               0x1f80
+#define XCOMP_BV_COMPACTED_FORMAT      (1ull << 63)
+
+/* The state format, as saved by FXSAVE and restored by FXRSTOR instructions. */
+typedef struct i387_state {
+    uint16_t cwd;               /* control word */
+    uint16_t swd;               /* status word */
+    uint16_t twd;               /* tag word */
+    uint16_t fop;               /* last instruction opcode */
+    uint32_t reserved[4];       /* instruction and data pointers */
+    uint32_t mxcsr;             /* MXCSR register state */
+    uint32_t mxcsr_mask;        /* MXCSR mask */
+    uint32_t st_space[32];      /* FPU registers */
+    uint32_t xmm_space[64];     /* XMM registers */
+    uint32_t padding[13];
+} PACKED i387_state_t;
+
+/* The state format, as saved by XSAVE and restored by XRSTOR instructions. */
+typedef struct xsave_state {
+    i387_state_t i387;
+    struct {
+        uint64_t xfeatures;
+        uint64_t xcomp_bv;      /* state-component bitmap */
+        uint64_t reserved[6];
+    } header;
+} PACKED xsave_state_t;
+
 /* Initialise the FPU. */
 bool_t Arch_initFpu(void);
 
