@@ -92,12 +92,14 @@ def parse_detailed_desc(parent, ref_dict):
 
     param_nodes = parent.getElementsByTagName("param")
     params = {}
+    param_order = []
     for n in param_nodes:
         param_type = get_text(n.getElementsByTagName("type")[0], True)
         if param_type == "void":
             continue
         param_name = get_text(n.getElementsByTagName("declname")[0], True)
         params[param_name] = {"type": param_type}
+        param_order.append(param_name)
 
     detailed_desc = parent.getElementsByTagName("detaileddescription")[0]
 
@@ -115,12 +117,14 @@ def parse_detailed_desc(parent, ref_dict):
         params_str = "\\param{void}{}{}"
     else:
         params_str = ""
-        for param_name, param_info in params.items():
-            params_str += "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
-                "type": param_info["type"],
-                "name": param_name,
-                "desc": param_info["desc"]
-            }
+        for param_name in param_order:
+            param_info = params[param_name]
+            if "desc" in param_info:
+                params_str += "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
+                    "type": param_info["type"],
+                    "name": param_name,
+                    "desc": param_info["desc"].strip(),
+                }
 
     details = ""
     for n in detailed_desc.childNodes:
