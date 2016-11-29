@@ -68,25 +68,28 @@ isValidVTableRoot_fp(cap_t vspace_root_cap)
 static inline void
 fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
-    /* currently we do not take the advantage of 8 additional registers */
-    if (length == 2) {
-        setRegister(dest, R8, getRegister(src, R8));
-    }
-    if (length == 2 || length == 1) {
-        setRegister(dest, R10, getRegister(src, R10));
+    word_t i;
+    register_t reg;
+
+    /* assuming that length < n_msgRegisters */
+    for (i = 0; i < length; i ++) {
+        /* assuming that the message registers simply increment */
+        reg = msgRegisters[0] + i;
+        setRegister(dest, reg, getRegister(src, reg));
     }
 }
 
 /* This is an accelerated check that msgLength, which appears
-   in the bottom of the msgInfo word, is <= 2 and that msgExtraCaps
-   which appears above it is zero. We are assuming that n_msgRegisters == 2
-   for this check to be useful.*/
-compile_assert (n_msgRegisters_eq_2, n_msgRegisters == 2)
-
+   in the bottom of the msgInfo word, is <= 4 and that msgExtraCaps
+   which appears above it is zero. We are assuming that n_msgRegisters == 4
+   for this check to be useful. By masking out the bottom 3 bits, we are
+   really checking that n + 3 <= MASK(3), i.e. n + 3 <= 7 or n <= 4. */
+compile_assert (n_msgRegisters_eq_4, n_msgRegisters == 4)
 static inline int
 fastpath_mi_check(word_t msgInfo)
 {
-    return (msgInfo & MASK(seL4_MsgLengthBits + seL4_MsgExtraCapBits)) > 2;
+    return ((msgInfo & MASK(seL4_MsgLengthBits + seL4_MsgExtraCapBits))
+            + 3) & ~MASK(3);
 }
 
 static inline void NORETURN FORCE_INLINE
@@ -131,12 +134,12 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "popq %%r12\n"
             "popq %%r13\n"
             "popq %%r14\n"
-            "popq %%r15\n"
             // Skip RDX, we need to put NextIP into it
             "addq $8, %%rsp\n"
             "popq %%r10\n"
             "popq %%r8\n"
             "popq %%r9\n"
+            "popq %%r15\n"
             // restore RFLAGS
             "popfq\n"
             // reset interrupt bit
@@ -169,11 +172,11 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "popq %%r12\n"
             "popq %%r13\n"
             "popq %%r14\n"
-            "popq %%r15\n"
             "popq %%rdx\n"
             "popq %%r10\n"
             "popq %%r8\n"
             "popq %%r9\n"
+            "popq %%r15\n"
             //restore RFLAGS
             "popq %%r11\n"
             // Restore NextIP

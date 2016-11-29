@@ -43,13 +43,13 @@ enum _register {
     R12                     = 5,    /* 0x28 */
     R13                     = 6,    /* 0x30 */
     R14                     = 7,    /* 0x38 */
-    R15                     = 8,    /* 0x40 */
-    RDX                     = 9,    /* 0x48 */
+    RDX                     = 8,    /* 0x40 */
     // Group the message registers so they can be efficiently copied
-    R10                     = 10,   /* 0x50 */
-    R8                      = 11,   /* 0x58 */
-    R9                      = 12,   /* 0x60 */
-    FLAGS                  = 13,   /* 0x68 */
+    R10                     = 9,    /* 0x48 */
+    R8                      = 10,   /* 0x50 */
+    R9                      = 11,   /* 0x58 */
+    R15                     = 12,   /* 0x60 */
+    FLAGS                   = 13,   /* 0x68 */
     // Put the NextIP, which is a virtual register, here as we
     // need to set this in the syscall path
     NextIP                  = 14,   /* 0x70 */
@@ -71,9 +71,9 @@ enum _register {
 typedef uint32_t register_t;
 
 enum messageSizes {
-    n_msgRegisters = 2,
+    n_msgRegisters = 4,
     n_frameRegisters = 18,
-    n_gpRegisters = 3,
+    n_gpRegisters = 1,
     n_exceptionMessage = 3,
     n_syscallMessage = 18
 };

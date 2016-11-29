@@ -15,7 +15,7 @@
 #include <arch/object/structures.h>
 
 const register_t msgRegisters[] = {
-    R10, R8
+    R10, R8, R9, R15
 };
 
 const register_t frameRegisters[] = {
