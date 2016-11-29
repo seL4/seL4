@@ -41,6 +41,8 @@
 #     XML method descriptions are added.
 #
 
+import operator
+import itertools
 import xml.dom.minidom
 from argparse import ArgumentParser
 import sys
@@ -81,6 +83,8 @@ TYPES = {
     32: "seL4_Uint32",
     64: "seL4_Uint64"
 }
+
+DEFAULT_CAP_DESC = "The capability to the %(interface_manual_name)s which is being operated on."
 
 class Type(object):
     """
@@ -201,6 +205,10 @@ class Parameter(object):
     def __init__(self, name, type):
         self.name = name
         self.type = type
+
+class Api(object):
+    def __init__(self, name):
+        self.name = name
 
 #
 # Types
@@ -514,7 +522,7 @@ def generate_result_struct(interface_name, method_name, output_params):
 
     return "\n".join(result)
 
-def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_params, output_params, structs, use_only_ipc_buffer):
+def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_params, output_params, structs, use_only_ipc_buffer, comment):
     result = []
 
     if use_only_ipc_buffer:
@@ -539,6 +547,11 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
         returning_struct = True
     else:
         return_type = "long"
+
+    #
+    # Print doxygen comment.
+    #
+    result.append(comment)
 
     #
     # Print function header.
@@ -673,6 +686,49 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
 
     return "\n".join(result) + "\n"
 
+def get_xml_element_contents(element):
+    """
+    Converts the contents of an xml element into a string, with all
+    child xml nodes unchanged.
+    """
+    return "".join([c.toxml() for c in element.childNodes])
+
+def get_xml_element_content_with_xmlonly(element):
+    """
+    Converts the contents of an xml element into a string, wrapping
+    all child xml nodes in doxygen @xmlonly/@endxmlonly keywords.
+    """
+
+    result = []
+    prev_element = False
+    for node in element.childNodes:
+        if node.nodeType == xml.dom.Node.TEXT_NODE:
+            if prev_element:
+                # text node following element node
+                result.append(" @endxmlonly ")
+            prev_element = False
+        else:
+            if not prev_element:
+                # element node following text node
+                result.append(" @xmlonly ")
+            prev_element = True
+
+        result.append(node.toxml())
+
+    return "".join(result)
+
+def normalise_text(text):
+    """
+    Removes leading and trailing whitespace from each line of text.
+    Removes leading and trailing blank lines from text.
+    """
+    stripped = text.strip()
+    stripped_lines = [line.strip() for line in text.split("\n")]
+    # remove leading and trailing empty lines
+    stripped_head = list(itertools.dropwhile(lambda s: not s, stripped_lines))
+    stripped_tail = itertools.dropwhile(lambda s: not s, reversed(stripped_head))
+    return "\n".join(reversed(list(stripped_tail)))
+
 def parse_xml_file(input_file, valid_types):
     """
     Parse an XML file containing method definitions.
@@ -688,6 +744,8 @@ def parse_xml_file(input_file, valid_types):
     structs = []
     doc = xml.dom.minidom.parse(input_file)
 
+    api = Api(doc.getElementsByTagName("api")[0].getAttribute("name"))
+
     for struct in doc.getElementsByTagName("struct"):
         _struct_members = []
         struct_name = struct.getAttribute("name")
@@ -698,17 +756,52 @@ def parse_xml_file(input_file, valid_types):
 
     for interface in doc.getElementsByTagName("interface"):
         interface_name = interface.getAttribute("name")
+        interface_manual_name = interface.getAttribute("manual_name") or interface_name
+
+        interface_cap_description = interface.getAttribute("cap_description") or DEFAULT_CAP_DESC % {"interface_manual_name":interface_manual_name}
+
         for method in interface.getElementsByTagName("method"):
             method_name = method.getAttribute("name")
             method_id = method.getAttribute("id")
             method_condition = method.getAttribute("condition")
+            method_manual_name = method.getAttribute("manual_name") or method_name
+            method_manual_label = method.getAttribute("manual_label") or \
+                    "%s_%s" % (interface_manual_name.lower(), method_name.lower())
+
+            comment_lines = ["@xmlonly <manual name=\"%s - %s\" label=\"%s\"/> @endxmlonly" %
+                    (interface_manual_name, method_manual_name, method_manual_label)]
+
+            method_brief = method.getElementsByTagName("brief")
+            if method_brief:
+                method_brief_text = get_xml_element_contents(method_brief[0])
+                normalised_method_brief_text = normalise_text(method_brief_text)
+                comment_lines.append("@brief @xmlonly %s @endxmlonly" % normalised_method_brief_text)
+
+            method_description = method.getElementsByTagName("description")
+            if method_description:
+                method_description_text = get_xml_element_contents(method_description[0])
+                normalised_method_description_text = normalise_text(method_description_text)
+                comment_lines.append("\n@xmlonly\n%s\n@endxmlonly\n" % normalised_method_description_text)
+
+            method_return_description = method.getElementsByTagName("return")
+            if method_return_description:
+                comment_lines.append("@return @xmlonly %s @endxmlonly" % get_xml_element_contents(method_return_description[0]))
 
             #
             # Get parameters.
             #
             # We always have an implicit cap parameter.
             #
-            input_params = [Parameter("service", type_names[interface_name])]
+            input_params = [Parameter("_service", type_names[interface_name])]
+
+            cap_description = interface_cap_description
+            cap_param = method.getElementsByTagName("cap_param")
+            if cap_param:
+                append_description = cap_param[0].getAttribute("append_description")
+                if append_description:
+                    cap_description += append_description
+
+            comment_lines.append("@param[in] _service %s" % cap_description)
             output_params = []
             for param in method.getElementsByTagName("param"):
                 param_name = param.getAttribute("name")
@@ -721,9 +814,26 @@ def parse_xml_file(input_file, valid_types):
                     input_params.append(Parameter(param_name, param_type))
                 else:
                     output_params.append(Parameter(param_name, param_type))
-            methods.append((interface_name, method_name, method_id, input_params, output_params, method_condition))
 
-    return (methods, structs)
+                if param_dir == "in" or param_type.pass_by_reference():
+                    param_description = param.getAttribute("description")
+                    if not param_description:
+                        param_description_element = param.getElementsByTagName("description")
+                        if param_description_element:
+                            param_description_text = get_xml_element_content_with_xmlonly(param_description_element[0])
+                            param_description = normalise_text(param_description_text)
+
+                    comment_lines.append("@param[%s] %s %s " % (param_dir, param_name, param_description))
+
+            # split each line on newlines
+            comment_lines = reduce(operator.add, [l.split("\n") for l in comment_lines], [])
+
+            # place the comment text in a c comment
+            comment = "\n".join(["/**"] + [" * %s" % l for l in comment_lines] + [" */"])
+
+            methods.append((interface_name, method_name, method_id, input_params, output_params, method_condition, comment))
+
+    return (methods, structs, api)
 
 def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_buffer):
     """
@@ -742,7 +852,7 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
     methods = []
     structs = []
     for infile in input_files:
-        method, struct = parse_xml_file(infile, data_types + arch_types[arch])
+        method, struct, _ = parse_xml_file(infile, data_types + arch_types[arch])
         methods += method
         structs += struct
 
@@ -788,7 +898,7 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
     result.append("/*")
     result.append(" * Return types for generated methods.")
     result.append(" */")
-    for (interface_name, method_name, _, _, output_params, _) in methods:
+    for (interface_name, method_name, _, _, output_params, _, _) in methods:
         results_structure = generate_result_struct(interface_name, method_name, output_params)
         if results_structure:
             result.append(results_structure)
@@ -799,11 +909,11 @@ def generate_stub_file(arch, wordsize, input_files, output_file, use_only_ipc_bu
     result.append("/*")
     result.append(" * Generated stubs.")
     result.append(" */")
-    for (interface_name, method_name, method_id, inputs, outputs, condition) in methods:
+    for (interface_name, method_name, method_id, inputs, outputs, condition, comment) in methods:
         if condition != "":
             result.append("#if %s" % condition)
         result.append(generate_stub(arch, wordsize, interface_name, method_name,
-                                    method_id, inputs, outputs, structs, use_only_ipc_buffer))
+                                    method_id, inputs, outputs, structs, use_only_ipc_buffer, comment))
         if condition != "":
             result.append("#endif")
 
