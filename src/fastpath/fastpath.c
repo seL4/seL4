@@ -60,7 +60,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     }
 
     /* Get the endpoint address */
-    ep_ptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(ep_cap));
+    ep_ptr = cap_endpoint_cap_get_capEPPtr_fp(ep_cap);
 
     /* Get the destination thread, which is only going to be valid
      * if the endpoint is valid. */
@@ -75,15 +75,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
 
     /* Get vspace root. */
-#if defined(ARCH_ARM) || (!defined(CONFIG_PAE_PAGING) && defined(CONFIG_ARCH_IA32))
-    cap_pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
-#elif defined(CONFIG_ARCH_X86_64)
-    cap_pd = PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(newVTable));
-#elif defined(CONFIG_PAE_PAGING)
-    cap_pd = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
-#else
-#error "Invalid vspace root"
-#endif
+    cap_pd = cap_vtable_cap_get_vspace_root_fp(newVTable);
 
     /* Ensure that the destination has a valid VTable. */
     if (unlikely(! isValidVTableRoot_fp(newVTable))) {
@@ -235,7 +227,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     }
 
     /* Get the endpoint address */
-    ep_ptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(ep_cap));
+    ep_ptr = cap_endpoint_cap_get_capEPPtr_fp(ep_cap);
 
     /* Check that there's not a thread waiting to send */
     if (unlikely(endpoint_ptr_get_state(ep_ptr) == EPState_Send)) {
@@ -263,15 +255,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     newVTable = TCB_PTR_CTE_PTR(caller, tcbVTable)->cap;
 
     /* Get vspace root. */
-#if defined(ARCH_ARM) || (!defined(CONFIG_PAE_PAGING) && defined(CONFIG_ARCH_IA32))
-    cap_pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(newVTable));
-#elif defined(CONFIG_ARCH_X86_64)
-    cap_pd = PML4E_PTR(cap_pml4_cap_get_capPML4BasePtr(newVTable));
-#elif defined(CONFIG_PAE_PAGING)
-    cap_pd = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(newVTable));
-#else
-#error "Invalid vspace root"
-#endif
+    cap_pd = cap_vtable_cap_get_vspace_root_fp(newVTable);
 
     /* Ensure that the destination has a valid MMU. */
     if (unlikely(! isValidVTableRoot_fp (newVTable))) {
@@ -332,7 +316,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         &NODE_STATE(ksCurThread)->tcbState, (word_t)ep_ptr, ThreadState_BlockedOnReceive);
 
     /* Place the thread in the endpoint queue */
-    endpointTail = TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr));
+    endpointTail = endpoint_ptr_get_epQueue_tail_fp(ep_ptr);
     if (likely(!endpointTail)) {
         NODE_STATE(ksCurThread)->tcbEPPrev = NULL;
         NODE_STATE(ksCurThread)->tcbEPNext = NULL;

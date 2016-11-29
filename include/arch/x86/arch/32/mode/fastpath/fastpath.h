@@ -20,6 +20,34 @@
 #include <mode/stack.h>
 #include <arch/kernel/tlb_bitmap.h>
 
+static inline cte_t *
+cap_cnode_cap_get_capCNodePtr_fp(cap_t cnode_cap)
+{
+    return CTE_PTR(cap_cnode_cap_get_capCNodePtr(cnode_cap));
+}
+
+static inline endpoint_t *
+cap_endpoint_cap_get_capEPPtr_fp(cap_t ep_cap)
+{
+    return EP_PTR(cap_endpoint_cap_get_capEPPtr(ep_cap));
+}
+
+static inline tcb_t *
+endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
+{
+    return TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr));
+}
+
+static inline vspace_root_t *
+cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
+{
+#if defined(CONFIG_PAE_PAGING)
+    return PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(vtable_cap));
+#else
+    return PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vtable_cap));
+#endif
+}
+
 static inline void FORCE_INLINE
 switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
 {
