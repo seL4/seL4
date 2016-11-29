@@ -145,6 +145,11 @@
             <param dir="in" name="vector" type="seL4_Word"/>
         </method>
     </interface>
+    <interface name="seL4_TCB">
+        <method id="TCBSetEPTRoot" name="SetEPTRoot" condition="defined(CONFIG_VTX)">
+            <param dir="in" name="vcpu" type="seL4_CPtr"/>
+        </method>
+    </interface>
     <interface name="seL4_X86_VCPU">
         <method id="X86VCPUSetTCB" name="SetTCB" condition="defined(CONFIG_VTX)">
             <param dir="in" name="tcb" type="seL4_CNode" />

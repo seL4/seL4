@@ -8,183 +8,574 @@
 
      @TAG(NICTA_BSD)
   -->
-<api>
-    <interface name="seL4_Untyped">
-           <method id="UntypedRetype" name="Retype">
-            <param dir="in" name="type" type="seL4_Word"/>
-            <param dir="in" name="size_bits" type="seL4_Word"/>
-            <param dir="in" name="root" type="seL4_CNode"/>
-            <param dir="in" name="node_index" type="seL4_Word"/>
-            <param dir="in" name="node_depth" type="seL4_Word"/>
-            <param dir="in" name="node_offset" type="seL4_Word"/>
-            <param dir="in" name="num_objects" type="seL4_Word"/>
+<api name="ObjectApi">
+
+    <interface name="seL4_Untyped" manual_name="Untyped" cap_description="CPTR to an untyped object.">
+
+        <method id="UntypedRetype" name="Retype" manual_name="Retype" manual_label="untyped_retype">
+            <brief>
+                Retype an untyped object
+            </brief>
+            <description>
+                Given a capability, <texttt text="_service"/>, to an untyped object,
+                creates <texttt text="num_objects"/> of the requested type. Creates
+                <texttt text="num_objects"/> capabilities to the new objects starting
+                at <texttt text="node_offset"/> in the CNode specified by
+                <texttt text="root"/>, <texttt text="node_index"/>, and
+                <texttt text="node_depth"/>.
+
+                For variable-sized
+                kernel objects, the <texttt text="size_bits"/> argument is used to
+                determine the size of objects to create. The relationship between
+                <texttt text="size_bits"/> and object size depends on the type of object
+                being created. See <autoref sec="object_sizes"/> for more information
+                about object sizes.
+
+                See <autoref sec="kernmemalloc"/> for more information about how untyped
+                memory is retyped.
+
+                See <autoref sec="caps_to_new_objects"/> for more information about the
+                placement of capabilities to created objects.
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="type" type="seL4_Word"
+                description="The seL4 object type that we are retyping to."/>
+            <param dir="in" name="size_bits" type="seL4_Word"
+                description="Used to determine the size of variable-sized objects."/>
+            <param dir="in" name="root" type="seL4_CNode"
+                description="CPTR to the CNode at the root of the destination CSpace."/>
+            <param dir="in" name="node_index" type="seL4_Word"
+                description="CPTR to the destination CNode. Resolved relative to the root parameter."/>
+            <param dir="in" name="node_depth" type="seL4_Word"
+                description="Number of bits of node_index to translate when addressing the destination CNode."/>
+            <param dir="in" name="node_offset" type="seL4_Word"
+                description="Number of slots into the node at which capabilities start being placed."/>
+            <param dir="in" name="num_objects" type="seL4_Word"
+                description="Number of capabilities to create."/>
         </method>
+
     </interface>
-    <interface name="seL4_TCB">
-        <method id="TCBReadRegisters" name="ReadRegisters">
-            <param dir="in" name="suspend_source" type="seL4_Bool"/>
-            <param dir="in" name="arch_flags" type="seL4_Uint8"/>
-            <param dir="in" name="count" type="seL4_Word"/>
-            <param dir="out" name="regs" type="seL4_UserContext"/>
+
+    <interface name="seL4_TCB" manual_name="TCB" cap_description="Capability to the TCB which is being operated on.">
+
+        <method id="TCBReadRegisters" name="ReadRegisters" manual_name="Read Registers" manual_label="tcb_readregisters">
+            <brief>
+                Read a thread's registers into the first <texttt text="count"/> fields of a given
+                seL4_UserContext
+            </brief>
+            <description>
+                See <autoref sec="read_write_registers"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="suspend_source" type="seL4_Bool"
+                description="The invocation should also suspend the source thread."/>
+            <param dir="in" name="arch_flags" type="seL4_Uint8"
+                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+            <param dir="in" name="count" type="seL4_Word" description="The number of registers to read."/>
+            <param dir="out" name="regs" type="seL4_UserContext"
+                description="The structure to read the registers into."/>
         </method>
-        <method id="TCBWriteRegisters" name="WriteRegisters">
-            <param dir="in" name="resume_target" type="seL4_Bool"/>
-            <param dir="in" name="arch_flags" type="seL4_Uint8"/>
-            <param dir="in" name="count" type="seL4_Word"/>
-            <param dir="in" name="regs" type="seL4_UserContext"/>
+
+        <method id="TCBWriteRegisters" name="WriteRegisters" manual_name="Write Registers" manual_label="tcb_writeregisters">
+            <brief>
+                Set a thread's registers to the first <texttt text="count"/> fields of a given seL4_UserContext
+            </brief>
+            <description>
+                See <autoref sec="read_write_registers"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="resume_target" type="seL4_Bool"
+                description="The invocation should also resume the destination thread."/>
+            <param dir="in" name="arch_flags" type="seL4_Uint8"
+                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
+            <param dir="in" name="count" type="seL4_Word"
+                description="The number of registers to be set."/>
+            <param dir="in" name="regs" type="seL4_UserContext"
+                description="Data structure containing the new register values."/>
         </method>
-        <method id="TCBCopyRegisters" name="CopyRegisters">
-            <param dir="in" name="source" type="seL4_TCB"/>
-            <param dir="in" name="suspend_source" type="seL4_Bool"/>
-            <param dir="in" name="resume_target" type="seL4_Bool"/>
-            <param dir="in" name="transfer_frame" type="seL4_Bool"/>
-            <param dir="in" name="transfer_integer" type="seL4_Bool"/>
-            <param dir="in" name="arch_flags" type="seL4_Uint8"/>
+
+        <method id="TCBCopyRegisters" name="CopyRegisters" manual_name="Copy Registers" manual_label="tcb_copyregisters">
+            <brief>
+                Copy the registers from one thread to another
+            </brief>
+            <description>
+                In the context of this function, frame registers are those that are read, modified or preserved by a
+                system call and integer registers are those that are not. Refer to the seL4 userland library source for specifics.
+                <autoref sec="thread_deactivation"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description=" This is the destination TCB."/>
+            <param dir="in" name="source" type="seL4_TCB" description="Cap to the source TCB."/>
+            <param dir="in" name="suspend_source" type="seL4_Bool"
+                description="The invocation should also suspend the source thread."/>
+            <param dir="in" name="resume_target" type="seL4_Bool"
+                description="The invocation should also resume the destination thread."/>
+            <param dir="in" name="transfer_frame" type="seL4_Bool"
+                description="Frame registers should be transferred."/>
+            <param dir="in" name="transfer_integer" type="seL4_Bool"
+                description="Integer registers should be transferred."/>
+            <param dir="in" name="arch_flags" type="seL4_Uint8"
+                description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
         </method>
-        <method id="TCBConfigure" name="Configure">
-            <param dir="in" name="fault_ep" type="seL4_Word"/>
-            <param dir="in" name="priority" type="seL4_PrioProps_t"/>
-            <param dir="in" name="cspace_root" type="seL4_CNode"/>
-            <param dir="in" name="cspace_root_data" type="seL4_CapData_t"/>
-            <param dir="in" name="vspace_root" type="seL4_CNode"/>
-            <param dir="in" name="vspace_root_data" type="seL4_CapData_t"/>
-            <param dir="in" name="buffer" type="seL4_Word"/>
-            <param dir="in" name="bufferFrame" type="seL4_CPtr"/>
+
+        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure">
+            <brief>
+                Set the parameters of a TCB
+            </brief>
+            <description>
+                See <autoref sec="threads"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="fault_ep" type="seL4_Word"
+                description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
+            <param dir="in" name="priority" type="seL4_PrioProps_t"
+                description="The thread's new priority."/>
+            <param dir="in" name="cspace_root" type="seL4_CNode"
+                description="The new CSpace root."/>
+            <param dir="in" name="cspace_root_data" type="seL4_CapData_t"
+                description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="vspace_root" type="seL4_CNode"
+                description="The new VSpace root."/>
+            <param dir="in" name="vspace_root_data" type="seL4_CapData_t"
+                description="Has no effect on x86 or ARM processors."/>
+            <param dir="in" name="buffer" type="seL4_Word"
+                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="bufferFrame" type="seL4_CPtr"
+                description="Capability to a page containing the thread's IPC buffer."/>
         </method>
-        <method id="TCBSetPriority" name="SetPriority">
-            <param dir="in" name="priority" type="seL4_Uint8"/>
+
+        <method id="TCBSetPriority" name="SetPriority" manual_name="Set Priority" manual_label="tcb_setpriority">
+            <brief>
+                Change a thread's priority
+            </brief>
+            <description>
+                See <autoref sec="sched"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="priority" type="seL4_Uint8"
+                description="The thread's new priority."/>
         </method>
-        <method id="TCBSetMCPriority" name="SetMCPriority">
-            <param dir="in" name="mcc" type="seL4_Uint8"/>
+
+        <method id="TCBSetMCPriority" name="SetMCPriority" manual_name="Set Maximum Controlled Priority" manual_label="tcb_setmcpriority">
+            <brief>
+                Change a thread's maximum controlled priority
+            </brief>
+            <description>
+                See <autoref sec="sched"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="mcp" type="seL4_Uint8"
+                description="The thread's new maximum controlled priority."/>
         </method>
-        <method id="TCBSetIPCBuffer" name="SetIPCBuffer">
-            <param dir="in" name="buffer" type="seL4_Word"/>
-            <param dir="in" name="bufferFrame" type="seL4_CPtr"/>
+
+        <method id="TCBSetIPCBuffer" name="SetIPCBuffer" manual_name="Set IPC Buffer" manual_label="tcb_setipcbuffer">
+            <brief>
+                Set a thread's IPC buffer
+            </brief>
+            <description>
+                See Sections <shortref sec="threads"/> and <shortref sec="messageinfo"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="buffer" type="seL4_Word"
+                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="bufferFrame" type="seL4_CPtr"
+                description="Capability to a page containing the thread's IPC buffer."/>
         </method>
-        <method id="TCBSetSpace" name="SetSpace">
-            <param dir="in" name="fault_ep" type="seL4_Word"/>
-            <param dir="in" name="cspace_root" type="seL4_CNode"/>
-            <param dir="in" name="cspace_root_data" type="seL4_CapData_t"/>
-            <param dir="in" name="vspace_root" type="seL4_CNode"/>
-            <param dir="in" name="vspace_root_data" type="seL4_CapData_t"/>
+
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace">
+            <brief>
+                Set the fault endpoint, CSpace and VSpace of a thread
+            </brief>
+            <description>
+                See <autoref sec="threads"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="fault_ep" type="seL4_Word"
+                description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
+            <param dir="in" name="cspace_root" type="seL4_CNode"
+                description="The new CSpace root."/>
+            <param dir="in" name="cspace_root_data" type="seL4_CapData_t"
+                description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="vspace_root" type="seL4_CNode"
+                description="The new VSpace root."/>
+            <param dir="in" name="vspace_root_data" type="seL4_CapData_t"
+                description="Has no effect on x86 or ARM processors."/>
         </method>
-        <method id="TCBSuspend" name="Suspend"/>
-        <method id="TCBResume" name="Resume"/>
-        <method id="TCBBindNotification" name="BindNotification">
-            <param dir="in" name="notification" type="seL4_CPtr"/>
+
+        <method id="TCBSuspend" name="Suspend" manual_name="Suspend" manual_label="tcb_suspend">
+            <brief>
+                Suspend a thread
+            </brief>
+            <description>
+                See <autoref sec="thread_deactivation"/>
+            </description>
+            <return><errorenumdesc/></return>
         </method>
-        <method id="TCBUnbindNotification" name="UnbindNotification"/>
-        <method id="TCBSetAffinity" name="SetAffinity" condition="CONFIG_MAX_NUM_NODES > 1">
-            <param dir="in" name="affinity" type="seL4_Word"/>
+
+        <method id="TCBResume" name="Resume" manual_name="Resume" manual_label="tcb_resume">
+            <brief>
+                Resume a thread
+            </brief>
+            <description>
+                See <autoref sec="thread_deactivation"/>
+            </description>
+            <return><errorenumdesc/></return>
         </method>
-        <method id="TCBSetEPTRoot" name="SetEPTRoot" condition="defined(CONFIG_VTX)">
-            <param dir="in" name="vcpu" type="seL4_CPtr"/>
+
+        <method id="TCBBindNotification" name="BindNotification" manual_name="Bind Notification" manual_label="tcb_bindnotification">
+            <brief>
+                Binds a notification object to a <obj name="TCB"/>
+            </brief>
+            <description>
+                See <autoref sec="notification-binding"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="notification" type="seL4_CPtr" description="Notification to bind."/>
         </method>
-        <method id="TCBSetBreakpoint" name="SetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
-            <param dir="in" name="bp_num" type="seL4_Uint16"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="type" type="seL4_Word"/>
-            <param dir="in" name="size" type="seL4_Word"/>
-            <param dir="in" name="rw" type="seL4_Word"/>
+
+        <method id="TCBUnbindNotification" name="UnbindNotification" manual_name="Unbind Notification" manual_label="tcb_unbindnotification">
+            <brief>
+                Unbinds any notification object from a <obj name="TCB"/>
+            </brief>
+            <description>
+                See <autoref sec="notification-binding"/>
+            </description>
+            <return><errorenumdesc/></return>
         </method>
-        <method id="TCBGetBreakpoint" name="GetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
-            <param dir="in" name="bp_num" type="seL4_Uint16"/>
+
+        <method id="TCBSetAffinity" name="SetAffinity" condition="CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
+            <brief>
+                Change a thread's current CPU in multicore machine
+            </brief>
+            <description>
+                See <autoref sec="thread_creation"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="affinity" type="seL4_Word"
+                description="The thread's new CPU to run."/>
+        </method>
+
+        <method id="TCBSetBreakpoint" name="SetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Set Breakpoint" manual_label="tcb_setbreakpoint">
+            <brief>
+                Set or modify a thread's breakpoints or watchpoints. Calls to this function
+                overwrite previous configurations for the target breakpoint. Do not use this
+                with seL4_SingleStep: the API will reject the call and return an error.
+                Instead, use seL4_TCB_ConfigureSingleStepping to configure single-stepping.
+            </brief>
+            <description>
+                See <autoref sec="debug_exceptions"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="bp_num" type="seL4_Uint16"
+                description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+                description="A virtual address which forms part of the match conditions for the triggering of the breakpoint."/>
+            <param dir="in" name="type" type="seL4_Word"
+                description="One of: seL4_InstructionBreakpoint, which specifies that the breakpoint should occur on instruction execution at the specified vaddr or seL4_DataBreakpoint, which states that the breakpoint should occur on data access at the specified vaddr."/>
+            <param dir="in" name="size" type="seL4_Word"
+                description="A positive integer indicating the trigger-span of the watchpoint. Must be zero when 'type' is seL4_InstructionBreakpoint."/>
+            <param dir="in" name="rw" type="seL4_Word"
+                description="One of seL4_BreakOnRead, meaning the breakpoint will only be triggered on read-access; seL4_BreakOnWrite meaning the breakpoint will only be triggered on write-access, and seL4_BreakOnReadWrite meaning the breakpoint will be triggered on any access."/>
+        </method>
+
+        <method id="TCBGetBreakpoint" name="GetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Get Breakpoint" manual_label="tcb_getbreakpoint">
+            <brief>
+                Read a breakpoint or watchpoint's current configuration.
+            </brief>
+            <description>
+                See <autoref sec="debug_exceptions"/>
+            </description>
+            <return>
+                A <texttt text="seL4_TCB_GetBreakpoint_t"/>: Struct that contains
+                `<texttt text="seL4_Error error"/>', an seL4 API error value,
+                `<texttt text="seL4_Word vaddr"/>', the virtual address at which the breakpoint will currently
+                be triggered;
+                `<texttt text="seL4_Word type"/>', the type of operation which will currently trigger the
+                breakpoint, whether instruction execution, or data access;
+                `<texttt text="seL4_Word size"/>', integer value for the span-size of the breakpoint.
+                Usually a power of two (1, 2, 4, etc.);
+                `<texttt text="seL4_Word rw"/>', the access direction that will currently trigger the breakpoint,
+                whether read, write, or both and
+                `<texttt text="seL4_Bool is_enabled"/>', which indicates whether or not the breakpoint
+                will currently be triggered if the match conditions are met.
+            </return>
+            <param dir="in" name="bp_num" type="seL4_Uint16"
+                description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
             <param dir="out" name="vaddr" type="seL4_Word"/>
             <param dir="out" name="type" type="seL4_Word"/>
             <param dir="out" name="size" type="seL4_Word"/>
             <param dir="out" name="rw" type="seL4_Word"/>
             <param dir="out" name="is_enabled" type="seL4_Bool"/>
         </method>
-        <method id="TCBUnsetBreakpoint" name="UnsetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
-            <param dir="in" name="bp_num" type="seL4_Uint16"/>
+
+        <method id="TCBUnsetBreakpoint" name="UnsetBreakpoint" condition="defined(CONFIG_HARDWARE_DEBUG_API)" manual_name="Unset Breakpoint" manual_label="tcb_unsetbreakpoint">
+            <brief>
+                Disables a hardware breakpoint or watchpoint. The caller should assume that
+                the underlying configuration of the hardware registers has also been cleared.
+                Do not use this to clear single-stepping: the API will reject the call and
+                return an error. Instead, use seL4_TCB_ConfigureSingleStepping to disable
+                single-stepping.
+            </brief>
+            <description>
+                See <autoref sec="debug_exceptions"/>
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="bp_num" type="seL4_Uint16"
+                description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
         </method>
-        <method id="TCBConfigureSingleStepping" name="ConfigureSingleStepping" condition="defined(CONFIG_HARDWARE_DEBUG_API)">
-            <param dir="in" name="bp_num" type="seL4_Uint16"/>
-            <param dir="in" name="num_instructions" type="seL4_Word"/>
+
+        <method id="TCBConfigureSingleStepping" name="ConfigureSingleStepping" condition="defined(CONFIG_HARDWARE_DEBUG_API)"
+            manual_name="Configure Single Stepping" manual_label="tcb_configuresinglestepping">
+            <brief>
+                Set or modify single stepping options for the target TCB. Subsequent calls to this
+                function overwrite previous configuration. Depending on your processor architecture,
+                this may or may not require the consumption of a hardware register.
+            </brief>
+            <description>
+                See Sections <shortref sec="single_stepping_debug_exception"/> and <shortref sec="debug_exceptions"/>
+            </description>
+            <return>
+                A <texttt text="seL4_TCB_ConfigureSingleStepping_t"/>: Struct that contains
+                `<texttt text="seL4_Error error"/>', an seL4 API error value,
+                `<texttt text="seL4_Bool bp_was_consumed"/>', a boolean which indicates whether or not the <texttt text="bp_num"/>
+                breakpoint ID that was passed to the function, was consumed in the setup of the single-stepping
+                functionality: if this is <texttt text="true"/>, the caller should not attempt to re-use <texttt text="bp_num"/>
+                until it has disabled the single-stepping functionality via a subsequent call to
+                seL4_TCB_ConfigureSingleStepping with an <texttt text="num_instructions"/> argument of 0.
+            </return>
+            <param dir="in" name="bp_num" type="seL4_Uint16"
+                description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
+            <param dir="in" name="num_instructions" type="seL4_Word"
+                description="Number of instructions to step over before delivering a fault to the target thread's fault endpoint. Setting this to 0 disables single-stepping."/>
             <param dir="out" name="bp_was_consumed" type="seL4_Bool"/>
         </method>
+
     </interface>
-    <interface name="seL4_CNode">
-        <method id="CNodeRevoke" name="Revoke">
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Uint8"/>
+
+    <interface name="seL4_CNode" manual_name="CNode" cap_description="">
+        <method id="CNodeRevoke" name="Revoke" manual_name="Revoke" manual_label="cnode_revoke">
+            <brief>
+                Delete all child capabilities of a capability
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
         </method>
-        <method id="CNodeDelete" name="Delete">
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Uint8"/>
+
+        <method id="CNodeDelete" name="Delete" manual_name="Delete" manual_label="cnode_delete">
+            <brief>
+                Delete a capability
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
         </method>
-        <method id="CNodeCancelBadgedSends" name="CancelBadgedSends">
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Uint8"/>
+
+        <method id="CNodeCancelBadgedSends" name="CancelBadgedSends" manual_name="Cancel Badged Sends" manual_label="cnode_cancelbadgedsends">
+            <brief>
+                The cancel badged sends method is intend to allow for the reuse of badges by an
+                authority. When used with a badged endpoint capability it
+                will cancel any outstanding send operations for that endpoint and badge.
+                This operation has no effect on un-badged or other objects.
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
         </method>
-        <method id="CNodeCopy" name="Copy">
-            <param dir="in" name="dest_index" type="seL4_Word"/>
-            <param dir="in" name="dest_depth" type="seL4_Uint8"/>
-            <param dir="in" name="src_root" type="seL4_CNode"/>
-            <param dir="in" name="src_index" type="seL4_Word"/>
-            <param dir="in" name="src_depth" type="seL4_Uint8"/>
-            <param dir="in" name="rights" type="seL4_CapRights_t"/>
+
+        <method id="CNodeCopy" name="Copy" manual_name="Copy" manual_label="cnode_copy">
+            <brief>
+                Copy a capability, setting its access rights whilst doing so
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    The rights inherited by the new capability. Possible values for this type are given in <autoref sec="cap_rights"/>.
+                </description>
+            </param>
         </method>
-        <method id="CNodeMint" name="Mint">
-            <param dir="in" name="dest_index" type="seL4_Word"/>
-            <param dir="in" name="dest_depth" type="seL4_Uint8"/>
-            <param dir="in" name="src_root" type="seL4_CNode"/>
-            <param dir="in" name="src_index" type="seL4_Word"/>
-            <param dir="in" name="src_depth" type="seL4_Uint8"/>
-            <param dir="in" name="rights" type="seL4_CapRights_t"/>
-            <param dir="in" name="badge" type="seL4_CapData_t"/>
+
+        <method id="CNodeMint" name="Mint" manual_name="Mint" manual_label="cnode_mint">
+            <brief>
+                Copy a capability, setting its access rights and badge whilst doing so
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    The rights inherited by the new capability. Possible values for this type are given in <autoref sec="cap_rights"/>.
+                </description>
+            </param>
+            <param dir="in" name="badge" type="seL4_CapData_t" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
         </method>
-        <method id="CNodeMove" name="Move">
-            <param dir="in" name="dest_index" type="seL4_Word"/>
-            <param dir="in" name="dest_depth" type="seL4_Uint8"/>
-            <param dir="in" name="src_root" type="seL4_CNode"/>
-            <param dir="in" name="src_index" type="seL4_Word"/>
-            <param dir="in" name="src_depth" type="seL4_Uint8"/>
+
+        <method id="CNodeMove" name="Move" manual_name="Move" manual_label="cnode_move">
+            <brief>
+                Move a capability
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
         </method>
-        <method id="CNodeMutate" name="Mutate">
-            <param dir="in" name="dest_index" type="seL4_Word"/>
-            <param dir="in" name="dest_depth" type="seL4_Uint8"/>
-            <param dir="in" name="src_root" type="seL4_CNode"/>
-            <param dir="in" name="src_index" type="seL4_Word"/>
-            <param dir="in" name="src_depth" type="seL4_Uint8"/>
-            <param dir="in" name="badge" type="seL4_CapData_t"/>
+
+        <method id="CNodeMutate" name="Mutate" manual_name="Mutate" manual_label="cnode_mutate">
+            <brief>
+                Move a capability, setting its badge in the process
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
+            <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
+            <param dir="in" name="badge" type="seL4_CapData_t" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
         </method>
-        <method id="CNodeRotate" name="Rotate">
-            <param dir="in" name="dest_index" type="seL4_Word"/>
-            <param dir="in" name="dest_depth" type="seL4_Uint8"/>
-            <param dir="in" name="dest_badge" type="seL4_CapData_t"/>
-            <param dir="in" name="pivot_root" type="seL4_CNode"/>
-            <param dir="in" name="pivot_index" type="seL4_Word"/>
-            <param dir="in" name="pivot_depth" type="seL4_Uint8"/>
-            <param dir="in" name="pivot_badge" type="seL4_CapData_t"/>
-            <param dir="in" name="src_root" type="seL4_CNode"/>
-            <param dir="in" name="src_index" type="seL4_Word"/>
-            <param dir="in" name="src_depth" type="seL4_Uint8"/>
+
+        <method id="CNodeRotate" name="Rotate" manual_name="Rotate" manual_label="cnode_rotate">
+            <brief>
+                Given 3 capability slots - a destination, pivot and source - move the capability in the
+                pivot slot to the destination slot and the capability in the source slot to the pivot slot
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the destination slot will be found. Must be at a depth of 32."/>
+            <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved relative to _service. Must be empty unless it refers to the same slot as the source slot."/>
+            <param dir="in" name="dest_depth" type="seL4_Uint8" description="Depth to resolve dest_index to."/>
+            <param dir="in" name="dest_badge" type="seL4_CapData_t" description="The new capdata for the capability that ends up in the destination slot."/>
+            <param dir="in" name="pivot_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the pivot slot will be found. Must be at a depth of 32."/>
+            <param dir="in" name="pivot_index" type="seL4_Word" description="CPTR to the pivot slot. Resolved relative to pivot_root. The resolved slot must not refer to the source or destination slots."/>
+            <param dir="in" name="pivot_depth" type="seL4_Uint8" description="Depth to resolve pivot_index to."/>
+            <param dir="in" name="pivot_badge" type="seL4_CapData_t" description="The new capdata for the capability that ends up in the pivot slot."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the source slot will be found. Must be at a depth of 32."/>
+            <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved relative to src_root."/>
+            <param dir="in" name="src_depth" type="seL4_Uint8" description="Depth to resolve src_index to."/>
         </method>
-        <method id="CNodeSaveCaller" name="SaveCaller">
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Uint8"/>
+
+        <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller">
+            <brief>
+                Save the reply capability from the last time the thread was called in the given CSpace so that it can be invoked later
+            </brief>
+            <description>
+                See <autoref sec="cnode-ops"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability is to be saved. Must be at a depth of 32."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the slot in which to save the capability. Resolved from the root of the _service parameter."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the slot being targeted."/>
         </method>
+
     </interface>
-    <interface name="seL4_IRQControl">
-        <method id="IRQIssueIRQHandler" name="Get">
-            <param dir="in" name="irq" type="int"/>
-            <param dir="in" name="root" type="seL4_CNode"/>
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Uint8"/>
+
+    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
+
+        <method id="IRQIssueIRQHandler" name="Get" manual_name="Get" manual_label="irq_controlget">
+            <brief>
+                Create an IRQ handler capability
+            </brief>
+            <description>
+                See <autoref sec="interrupts"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="irq" type="int" description="The IRQ that you want this capability to handle."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
+
     </interface>
-    <interface name="seL4_IRQHandler">
-        <method id="IRQAckIRQ" name="Ack"/>
-        <method id="IRQSetIRQHandler" name="SetNotification">
-            <param dir="in" name="notification" type="seL4_CPtr"/>
+
+    <interface name="seL4_IRQHandler" manual_name="IRQ Handler" cap_description="The IRQ handler capability.">
+
+        <method id="IRQAckIRQ" name="Ack" manual_name="Acknowledge" manual_label="irq_handleracknowledge">
+            <brief>
+                Acknowledge the receipt of an interrupt and re-enable it
+            </brief>
+            <description>
+                See <autoref sec="interrupts"/>.
+            </description>
+            <return><errorenumdesc/></return>
         </method>
-        <method id="IRQClearIRQHandler" name="Clear"/>
-    </interface>
-    <interface name="seL4_DomainSet">
-        <method id="DomainSetSet" name="Set">
-            <param dir="in" name="domain" type="seL4_Uint8"/>
-            <param dir="in" name="thread" type="seL4_TCB"/>
+
+        <method id="IRQSetIRQHandler" name="SetNotification" manual_name="Set Notification" manual_label="irq_handlersetnotification">
+            <brief>
+                Set the notification which the kernel will signal on interrupts
+                controlled by the supplied IRQ handler capability
+            </brief>
+            <description>
+                See <autoref sec="interrupts"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="notification" type="seL4_CPtr" description="The notification which the IRQs will signal."/>
         </method>
+
+        <method id="IRQClearIRQHandler" name="Clear" manual_name="Clear" manual_label="irq_handlerclear">
+            <brief>
+                Clear the handler capability from the IRQ slot
+            </brief>
+            <description>
+                See <autoref sec="interrupts"/>.
+            </description>
+            <return><errorenumdesc/></return>
+        </method>
+
     </interface>
+
+    <interface name="seL4_DomainSet" manual_name="Domain Set" cap_description="Capability allowing domain configuration.">
+
+        <method id="DomainSetSet" name="Set" manual_name="Set" manual_label="domainset_set">
+            <brief>
+                Change the domain of a thread.
+            </brief>
+            <description>
+                See <autoref sec="domains"/>.
+            </description>
+            <return><errorenumdesc/></return>
+            <param dir="in" name="domain" type="seL4_Uint8" description="The thread's new domain."/>
+            <param dir="in" name="thread" type="seL4_TCB" description="Capability to the TCB which is being operated on."/>
+        </method>
+
+    </interface>
+
 </api>
