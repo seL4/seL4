@@ -59,6 +59,8 @@ def parse_para(para_node, ref_dict={}):
             output += parse_para(n, ref_dict)
         elif n.tagName == "computeroutput":
             output += "\\texttt{%s}" % get_text(n)
+        elif n.tagName == "texttt":
+            output += "\\texttt{%s}" % latex_escape(n.getAttribute("text"))
         elif len(ref_dict) != 0 and n.tagName == "ref":
             refid = n.getAttribute("refid")
             ref = ref_dict[refid]
@@ -69,7 +71,12 @@ def parse_para(para_node, ref_dict={}):
             output += "\\apifunc{%(name)s}{%(label)s}" % ref
         elif n.tagName == "autoref":
             output += "\\autoref{sec:%s}" % n.getAttribute("sec")
-
+        elif n.tagName == "shortref":
+            output += "\\ref{sec:%s}" % n.getAttribute("sec")
+        elif n.tagName == "obj":
+            output += "\\obj{%s}" % n.getAttribute("name")
+        elif n.tagName == "errorenumdesc":
+            output += "\\errorenumdesc"
 
     return output
 
