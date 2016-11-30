@@ -14,7 +14,7 @@
 .section .text, "ax"
 .global lockTLBEntry
 
-#if defined(ARM_CORTEX_A15) || defined(ARM_CORTEX_A7) || defined(ARM_CORTEX_A53)
+#if defined(ARM_CORTEX_A15) || defined(ARM_CORTEX_A7)
 /* Hardware does not support TLB locking */
 BEGIN_FUNC(lockTLBEntry)
     bx lr

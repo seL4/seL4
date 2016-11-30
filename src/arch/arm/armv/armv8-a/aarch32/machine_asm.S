@@ -10,13 +10,9 @@
 
 #include <machine/assembler.h>
 
-.code 32
-.section .text, "ax"
+#if defined(ARM_CORTEX_A53)
 
-.global lockTLBEntry
-
-#if defined(ARM_CORTEX_A57)
-/* A57 hardware does not support TLB locking */
+/* A53 hardware does not support TLB locking */
 BEGIN_FUNC(lockTLBEntry)
     bx lr
 END_FUNC(lockTLBEntry)

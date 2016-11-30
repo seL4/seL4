@@ -90,10 +90,6 @@ menu "seL4 System"
         bool
         default n
 
-    config ARM_CORTEX_A57
-        bool
-        default n
-
     config PLAT_EXYNOS54XX
        bool
        default n
@@ -253,9 +249,9 @@ menu "seL4 System"
                 Support for Tegra K1 platform
 
         config PLAT_HIKEY
-            bool "HiKey (ARMv8a, Cortex A57)"
+            bool "HiKey (ARMv8a, Cortex A53)"
             depends on ARCH_ARM
-            select ARM_CORTEX_A57
+            select ARM_CORTEX_A53
             select ARCH_ARM_V8A
             select ARCH_ARM_MPCORE
             help
@@ -265,7 +261,7 @@ menu "seL4 System"
             bool "Raspberry Pi 3 (BCM2837, ARMv7a, Cortex A53)"
             depends on ARCH_ARM
             select ARM_CORTEX_A53
-            select ARCH_ARM_V7A
+            select ARCH_ARM_V8A
             help
                 Support for Raspberry PI 3 platform.
 
