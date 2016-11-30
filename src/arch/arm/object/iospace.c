@@ -325,7 +325,7 @@ decodeARMIOMapInvocation(
     frame_cap_rights = cap_small_frame_cap_get_capFVMRights(cap);
     dma_cap_rights_mask = rightsFromWord(getSyscallArg(0, buffer));
 
-    if ((frame_cap_rights == VMReadOnly) && cap_rights_get_capAllowRead(dma_cap_rights_mask)) {
+    if ((frame_cap_rights == VMReadOnly) && seL4_CapRights_get_capAllowRead(dma_cap_rights_mask)) {
         /* read only */
         iopte = iopte_new(
                     1,      /* read         */
@@ -334,8 +334,8 @@ decodeARMIOMapInvocation(
                     paddr
                 );
     } else if (frame_cap_rights == VMReadWrite) {
-        if (cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
-                !cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
+        if (seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) &&
+                !seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* read only */
             iopte = iopte_new(
                         1,      /* read         */
@@ -343,8 +343,8 @@ decodeARMIOMapInvocation(
                         1,      /* nonsecure    */
                         paddr
                     );
-        } else if (!cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
-                   cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
+        } else if (!seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) &&
+                   seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* write only */
             iopte = iopte_new(
                         0,      /* read         */
@@ -352,8 +352,8 @@ decodeARMIOMapInvocation(
                         1,      /* nonsecure    */
                         paddr
                     );
-        } else if (cap_rights_get_capAllowRead(dma_cap_rights_mask) &&
-                   cap_rights_get_capAllowWrite(dma_cap_rights_mask)) {
+        } else if (seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) &&
+                   seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* read write */
             iopte = iopte_new(
                         1,      /* read         */
