@@ -27,9 +27,15 @@ ifndef SOURCE_ROOT
     export SOURCE_ROOT
 endif
 
-# we don't ARCH or PLAT for the style target, but other 
-# targets fail -- so just bluff.
-ifeq (${MAKECMDGOALS}, style)
+# The ifeq statement below checks to see if the make target doesn't require
+# values for the ARCH, PLAT, or SEL4_ARCH variables.
+ifeq ($(and $(subst style,,${MAKECMDGOALS}),\
+            $(subst astyle,,${MAKECMDGOALS}),\
+            $(subst xmllint,,${MAKECMDGOALS}),\
+            $(subst pylint,,${MAKECMDGOALS})\
+       ),)
+# Pick an arbitrary value for ARCH, PLAT, and SEL4_ARCH to placate
+# other rules that depend on them being defined.
 ARCH:=x86
 PLAT:=pc99
 SEL4_ARCH:=ia32
@@ -545,11 +551,25 @@ theories: ${THEORIES}
 
 preprocess: ${PPFILES}
 
-style:
-	astyle --max-instatement-indent=120 --style=otbs --pad-header --recursive --indent=spaces=4 --pad-oper "src/*.c"
-	astyle --max-instatement-indent=120 --style=otbs --pad-header --recursive --indent=spaces=4 --pad-oper "include/*.h"
-	astyle --max-instatement-indent=120 --style=otbs --pad-header --recursive --indent=spaces=4 --pad-oper "libsel4/*.h"
-	astyle --max-instatement-indent=120 --style=otbs --pad-header --recursive --indent=spaces=4 --pad-oper "libsel4/*.c"
+.PHONY: style astyle xmllint pylint
+
+# Combine style-checking rules into a single rule
+style: astyle xmllint pylint
+
+astyle: $(shell find ${SOURCE_ROOT}/src ${SOURCE_ROOT}/include ${SOURCE_ROOT}/libsel4 -name '*.[ch]')
+	@echo " [Checking C style]"
+	$(Q)astyle --max-instatement-indent=120 --style=otbs --pad-header --indent=spaces=4 --pad-oper $^
+
+API_DTD = libsel4/tools/sel4_idl.dtd
+
+xmllint: libsel4/include/interfaces/sel4.xml $(wildcard ${SOURCE_ROOT}/libsel4/arch_include/*/interfaces/sel4arch.xml) \
+                                             $(wildcard ${SOURCE_ROOT}/libsel4/sel4_arch_include/*/interfaces/sel4arch.xml)
+	@echo " [Checking XML API descriptions against $(API_DTD)]"
+	$(Q)xmllint --dtdvalid $(API_DTD) --noout $^
+
+pylint: $(shell find ${SOURCE_ROOT}/tools ${SOURCE_ROOT}/manual/tools ${SOURCE_ROOT}/libsel4/tools -name '*.py')
+	@echo " [Checking for errors in python scripts]"
+	$(Q)pylint --errors-only $^
 
 validate: c-parser.log
 
