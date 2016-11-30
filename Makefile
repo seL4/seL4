@@ -27,8 +27,9 @@ ifndef SOURCE_ROOT
     export SOURCE_ROOT
 endif
 
-# The ifeq statement below checks to see if the make target doesn't require
+# The if statements below check to see if the make target doesn't require
 # values for the ARCH, PLAT, or SEL4_ARCH variables.
+ifneq (${MAKECMDGOALS},)
 ifeq ($(and $(subst style,,${MAKECMDGOALS}),\
             $(subst astyle,,${MAKECMDGOALS}),\
             $(subst xmllint,,${MAKECMDGOALS}),\
@@ -39,6 +40,7 @@ ifeq ($(and $(subst style,,${MAKECMDGOALS}),\
 ARCH:=x86
 PLAT:=pc99
 SEL4_ARCH:=ia32
+endif
 endif
 
 # we do need them if we want to build anything else
