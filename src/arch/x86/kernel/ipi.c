@@ -35,6 +35,19 @@ static inline word_t get_ipi_arg(word_t n)
     return ipi_args[n];
 }
 
+static inline void init_ipi_args(IpiModeRemoteCall_t func,
+                                 word_t data1, word_t data2, word_t data3,
+                                 word_t mask)
+{
+    remoteCall = func;
+    ipi_args[0] = data1;
+    ipi_args[1] = data2;
+    ipi_args[2] = data3;
+
+    /* get number of cores involved in this IPI */
+    totalCoreBarrier = popcountl(mask);
+}
+
 static inline void ipi_wait(word_t cores)
 {
     word_t localsense = ipiSyncBarrier.globalsense;
@@ -169,44 +182,84 @@ void Arch_handleIPI(irq_t irq)
 /* make sure all cpu IDs for number of core fit in bitwise word */
 compile_assert(invalid_number_of_supported_nodes, CONFIG_MAX_NUM_NODES <= wordBits);
 
-void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
+#ifdef CONFIG_USE_LOGICAL_IDS
+static void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
+{
+    word_t nr_target_clusters = 0;
+    word_t target_clusters[CONFIG_MAX_NUM_NODES];
+
+    do {
+        int core = wordBits - 1 - clzl(mask);
+        target_clusters[nr_target_clusters] = 0;
+
+        /* get mask of all cores in bitmask which are in same cluster as 'core' */
+        word_t sub_mask = mask & cpu_mapping.other_indexes_in_cluster[core];
+        target_clusters[nr_target_clusters] |= cpu_mapping.index_to_logical_id[core];
+        if (isBlocking) {
+            big_kernel_lock.node_owners[core].ipi = 1;
+        }
+
+        /* check if there is any other core in this cluster */
+        while (sub_mask) {
+            int index = wordBits - 1 - clzl(sub_mask);
+            target_clusters[nr_target_clusters] |= cpu_mapping.index_to_logical_id[index];
+            if (isBlocking) {
+                big_kernel_lock.node_owners[index].ipi = 1;
+            }
+            sub_mask &= ~BIT(index);
+        }
+
+        mask &= ~(cpu_mapping.other_indexes_in_cluster[core] | BIT(core));
+        nr_target_clusters++;
+    } while (mask != 0);
+
+    /* broadcast IPIs to clusters... */
+    IPI_ICR_BARRIER;
+    for (int i = 0; i < nr_target_clusters; i++) {
+        apic_send_ipi_cluster(ipi, target_clusters[i]);
+    }
+}
+#else
+static void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
     word_t nr_target_cores = 0;
     uint16_t target_cores[CONFIG_MAX_NUM_NODES];
 
+    while (mask) {
+        int index = wordBits - 1 - clzl(mask);
+        if (isBlocking) {
+            big_kernel_lock.node_owners[index].ipi = 1;
+            target_cores[nr_target_cores] = index;
+            nr_target_cores++;
+        } else {
+            apic_send_ipi_core(ipi, cpuIndexToID(index));
+        }
+        mask &= ~BIT(index);
+    }
+
+    if (nr_target_cores > 0) {
+        /* sending IPIs... */
+        IPI_ICR_BARRIER;
+        for (int i = 0; i < nr_target_cores; i++) {
+            apic_send_ipi_core(ipi, cpuIndexToID(target_cores[i]));
+        }
+    }
+}
+#endif /* CONFIG_USE_LOGICAL_IDS */
+
+void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
+{
     /* make sure the current core is not set in the mask */
     mask &= ~BIT(getCurrentCPUIndex());
 
     /* this may happen, e.g. the caller tries to map a pagetable in
      * newly created PD which has not been run yet. Guard against them! */
     if (mask != 0) {
-
-        /* setup the data and choose the requested cpu to send IPI*/
-        remoteCall = func;
-        ipi_args[0] = data1;
-        ipi_args[1] = data2;
-        ipi_args[2] = data3;
-
-        /* get number of cores involved in this IPI */
-        totalCoreBarrier = popcountl(mask);
+        init_ipi_args(func, data1, data2, data3, mask);
 
         /* make sure no resource access passes from this point */
         asm volatile("" ::: "memory");
-
-        while (mask) {
-            int index = wordBits - 1 - clzl(mask);
-            big_kernel_lock.node_owners[index].ipi = 1;
-            target_cores[nr_target_cores] = index;
-            nr_target_cores++;
-            mask &= ~BIT(index);
-        }
-
-        /* sending IPIs... */
-        IPI_ICR_BARRIER;
-        for (int i = 0; i < nr_target_cores; i++) {
-            apic_send_ipi_core(int_remote_call_ipi, cpuIndexToID(target_cores[i]));
-        }
-
+        ipi_send_mask(int_remote_call_ipi, mask, true);
         ipi_wait(totalCoreBarrier);
     }
 }
@@ -215,13 +268,8 @@ void doMaskReschedule(word_t mask)
 {
     /* make sure the current core is not set in the mask */
     mask &= ~BIT(getCurrentCPUIndex());
-
-    IPI_ICR_BARRIER;
-    while (mask) {
-        int index = wordBits - 1 - clzl(mask);
-        apic_send_ipi_core(int_reschedule_ipi, cpuIndexToID(index));
-        mask &= ~BIT(index);
+    if (mask != 0) {
+        ipi_send_mask(int_reschedule_ipi, mask, false);
     }
 }
-
 #endif /* CONFIG_MAX_NUM_NODES */
