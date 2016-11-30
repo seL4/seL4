@@ -9,6 +9,7 @@
   -->
 
 <!ELEMENT api (struct*,interface*)>
+<!ATTLIST api name CDATA #IMPLIED>
 
 <!ELEMENT struct (member*)>
 <!ATTLIST struct name CDATA #REQUIRED>
@@ -18,14 +19,41 @@
 
 <!ELEMENT interface (method*)>
 <!ATTLIST interface name CDATA #REQUIRED>
+<!ATTLIST interface manual_name CDATA #IMPLIED>
+<!ATTLIST interface cap_description CDATA #IMPLIED>
 
-<!ELEMENT method (param*)>
+<!ELEMENT method (brief?,description?,return?,cap_param?,param*)>
 <!ATTLIST method name CDATA #REQUIRED>
 <!ATTLIST method id CDATA #REQUIRED>
 <!ATTLIST method condition CDATA #IMPLIED>
+<!ATTLIST method manual_name CDATA #IMPLIED>
+<!ATTLIST method manual_label CDATA #IMPLIED>
 
-<!ELEMENT param EMPTY>
+<!ELEMENT param ANY>
 <!ATTLIST param type CDATA #REQUIRED>
 <!ATTLIST param name CDATA #REQUIRED>
 <!ATTLIST param dir CDATA #REQUIRED>
+<!ATTLIST param description CDATA #IMPLIED>
 
+<!ELEMENT brief ANY>
+
+<!ELEMENT description ANY>
+
+<!ELEMENT return ANY>
+
+<!ELEMENT texttt EMPTY>
+<!ATTLIST texttt text CDATA #REQUIRED>
+
+<!ELEMENT autoref EMPTY>
+<!ATTLIST autoref sec CDATA #REQUIRED>
+
+<!ELEMENT shortref EMPTY>
+<!ATTLIST shortref sec CDATA #REQUIRED>
+
+<!ELEMENT obj EMPTY>
+<!ATTLIST obj name CDATA #REQUIRED>
+
+<!ELEMENT errorenumdesc EMPTY>
+
+<!ELEMENT cap_param EMPTY>
+<!ATTLIST cap_param append_description CDATA #IMPLIED>
