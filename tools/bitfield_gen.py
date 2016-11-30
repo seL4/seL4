@@ -26,7 +26,7 @@ import tempfile
 from six.moves import range
 
 import lex
-import yacc
+from ply import yacc
 
 import umm
 
@@ -2632,11 +2632,11 @@ if __name__ == '__main__':
     options.output = out_file
 
     # Parse the spec
-    lex.lex()
+    lexer = lex.lex()
     yacc.yacc(debug=0)
     blocks = {}
     unions = {}
-    _, block_map, union_map = yacc.parse(in_file.read())
+    _, block_map, union_map = yacc.parse(input=in_file.read(), lexer=lexer)
     base_list = [8, 16, 32, 64]
     suffix_map = {8 : 'ul', 16 : 'ul', 32 : 'ul', 64 : 'ull'}
     for base_info, block_list in block_map.items():
