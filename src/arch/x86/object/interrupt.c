@@ -127,6 +127,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
 
 
         if (isIRQActive(irq)) {
+            userError("IOAPICGet: IRQ %d is already active.", (int)irq);
             current_syscall_error.type = seL4_RevokeFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
