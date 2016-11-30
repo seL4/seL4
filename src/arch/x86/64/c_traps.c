@@ -62,12 +62,12 @@ void VISIBLE NORETURN restore_user_context(void)
                 "popq %%r12\n"
                 "popq %%r13\n"
                 "popq %%r14\n"
-                "popq %%r15\n"
                 // skip RDX
                 "addq $8, %%rsp\n"
                 "popq %%r10\n"
                 "popq %%r8\n"
                 "popq %%r9\n"
+                "popq %%r15\n"
                 //restore RFLAGS
                 "popfq\n"
                 // reset interrupt bit
@@ -108,11 +108,11 @@ void VISIBLE NORETURN restore_user_context(void)
                 "popq %%r12\n"
                 "popq %%r13\n"
                 "popq %%r14\n"
-                "popq %%r15\n"
                 "popq %%rdx\n"
                 "popq %%r10\n"
                 "popq %%r8\n"
                 "popq %%r9\n"
+                "popq %%r15\n"
                 //restore RFLAGS
                 "popq %%r11\n"
                 // Restore NextIP
@@ -147,11 +147,11 @@ void VISIBLE NORETURN restore_user_context(void)
             "popq %%r12\n"
             "popq %%r13\n"
             "popq %%r14\n"
-            "popq %%r15\n"
             "popq %%rdx\n"
             "popq %%r10\n"
             "popq %%r8\n"
             "popq %%r9\n"
+            "popq %%r15\n"
             /* skip RFLAGS, Error NextIP RSP, TLS_BASE, FaultIP */
             "addq $48, %%rsp\n"
             "popq %%r11\n"

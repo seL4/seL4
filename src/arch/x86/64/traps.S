@@ -92,11 +92,11 @@ int_##number:                                       \
     push    %r11;                                   \
     /* skip FaultIP TLS_BASE, RSP, NextIP, Error, RFLAGS */ \
     subq    $(6 * 8), %rsp;                         \
+    push    %r15;                                   \
     push    %r9;                                    \
     push    %r8;                                    \
     push    %r10;                                   \
     push    %rdx;                                   \
-    push    %r15;                                   \
     push    %r14;                                   \
     push    %r13;                                   \
     push    %r12;                                   \
@@ -455,11 +455,11 @@ BEGIN_FUNC(kernel_exception)
     popq %r12
     popq %r13
     popq %r14
-    popq %r15
     popq %rdx
     popq %r10
     popq %r8
     popq %r9
+    popq %r15
     /* skip RFLAGS, Error NextIP RSP, TLS_BASE, FaultIP */
     addq $48, %rsp
     popq %r11
@@ -507,11 +507,11 @@ BEGIN_FUNC(handle_fastsyscall)
     pushq   $-1             # set Error -1 to mean entry via syscall
     push    %rcx            # save NextIP
     push    %r11            # save RFLAGS
+    push    %r15            # save R15 (message register)
     push    %r9             # save R9 (message register)
     push    %r8             # save R8 (message register)
     push    %r10            # save R10 (message register)
     push    %rdx            # save RDX (syscall number)
-    push    %r15
     push    %r14
     push    %r13
     push    %r12
@@ -547,11 +547,11 @@ BEGIN_FUNC(handle_syscall)
     push    %rdx            # save FaultIP (which will need to be updated later)
     pushf                   # save RFLAGS
     orq     $0x200, (%rsp)  # set interrupt bit in save RFLAGS
+    push    %r15            # save R15 (message register)
     push    %r9             # save R9 (message register)
     push    %r8             # save R8 (message register)
     push    %r10            # save R10 (message register)
     subq    $8, %rsp        # skip RDX
-    push    %r15
     push    %r14
     push    %r13
     push    %r12
