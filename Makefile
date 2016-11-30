@@ -30,11 +30,7 @@ endif
 # The if statements below check to see if the make target doesn't require
 # values for the ARCH, PLAT, or SEL4_ARCH variables.
 ifneq (${MAKECMDGOALS},)
-ifeq ($(and $(subst style,,${MAKECMDGOALS}),\
-            $(subst astyle,,${MAKECMDGOALS}),\
-            $(subst xmllint,,${MAKECMDGOALS}),\
-            $(subst pylint,,${MAKECMDGOALS})\
-       ),)
+ifeq (${MAKECMDGOALS}, $(filter ${MAKECMDGOALS}, style astyle xmllint pylint))
 # Pick an arbitrary value for ARCH, PLAT, and SEL4_ARCH to placate
 # other rules that depend on them being defined.
 ARCH:=x86
