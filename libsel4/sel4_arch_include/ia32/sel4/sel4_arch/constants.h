@@ -26,7 +26,13 @@
 
 #define seL4_PageBits        12 /* 4K */
 #define seL4_SlotBits         4
+#if CONFIG_XSAVE_SIZE > 576
+/* If we have a larger XSAVE then we're storing AVX state
+ * and will need a larger total TCB size */
+#define seL4_TCBBits         11
+#else
 #define seL4_TCBBits         10
+#endif
 #define seL4_EndpointBits     4
 #define seL4_NotificationBits 4
 #define seL4_PageTableBits   12
