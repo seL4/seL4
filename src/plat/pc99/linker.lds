@@ -39,12 +39,17 @@ SECTIONS
     {
         *(.mbh)
         *(.phys.text)
+        *(.phys.data)
+        . = ALIGN(4K);
+    }
+
+    .phys.bss . (NOLOAD) :
+    {
         boot_stack_bottom = .;
         . = . + 2K;
         . = ALIGN(4K);
         boot_stack_top = .;
-        *(.phys)
-        *(.phys.*)
+        *(.phys.bss)
     }
 
     . = . + KERNEL_OFFSET;
@@ -53,6 +58,11 @@ SECTIONS
     {
         *(.boot.text)
         *(.boot.data)
+    }
+
+    .boot.bss . (NOLOAD) : AT(ADDR(.boot.bss) - KERNEL_OFFSET)
+    {
+        *(.boot.bss)
         . = ALIGN(4K);
     }
 

@@ -19,10 +19,16 @@
 /* data that is linked to physical addresses */
 #define PHYS_DATA SECTION(".phys.data")
 
+/* bss data that is linked to physical addresses */
+#define PHYS_BSS SECTION(".phys.bss")
+
 /* code that is only used during kernel bootstrapping */
 #define BOOT_CODE SECTION(".boot.text")
 
 /* node-local data that is only used during kernel bootstrapping */
 #define BOOT_DATA SECTION(".boot.data")
+
+/* node-local bss data that is only used during kernel bootstrapping */
+#define BOOT_BSS SECTION(".boot.bss")
 
 #endif

@@ -76,7 +76,7 @@ typedef struct allocated_p_region {
     word_t      cur_pos;
 } allocated_p_region_t;
 
-BOOT_DATA static allocated_p_region_t allocated_p_regions;
+BOOT_BSS static allocated_p_region_t allocated_p_regions;
 
 BOOT_CODE static void
 merge_regions(void)

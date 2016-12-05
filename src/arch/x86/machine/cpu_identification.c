@@ -20,7 +20,7 @@
 #define X86_CPUID_VENDOR_STRING_AMD_LEGACY  "AMDisbetter!"
 #define X86_CPUID_VENDOR_STRING_AMD         "AuthenticAMD"
 
-BOOT_DATA static cpu_identity_t cpu_identity;
+BOOT_BSS static cpu_identity_t cpu_identity;
 
 BOOT_CODE cpu_identity_t *x86_cpuid_get_identity(void)
 {

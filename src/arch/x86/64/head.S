@@ -357,6 +357,15 @@ BEGIN_FUNC(_start)
     ljmp $8, $_start64
 END_FUNC(_start)
 
+.code64
+.align 4096
+BEGIN_FUNC(_start64)
+    /* Leave phys code behind and jump to the high kernel virtual address */
+    movabs $_entry_64, %rax
+    jmp *%rax
+END_FUNC(_start64)
+
+.section .phys.data
 _gdt64_ptr:
     .word (3 * 8) - 1
     .long _gdt64
@@ -378,19 +387,11 @@ _gdt64:
     .byte   0
 
 #ifndef CONFIG_HUGE_PAGE
-
+.section .phys.bss
 .align 4096
 _boot_pd:
     .fill 16384
-
 #endif
-
-.code64
-BEGIN_FUNC(_start64)
-    /* Leave phys code behind and jump to the high kernel virtual address */
-    movabs $_entry_64, %rax
-    jmp *%rax
-END_FUNC(_start64)
 
 .section .boot.text
 

@@ -20,7 +20,7 @@
  * It is only used in cmdline_parse(), which therefore is non-reentrant.
  */
 #define MAX_CMDLINE_VAL_LEN 1000
-BOOT_DATA
+BOOT_BSS
 char cmdline_val[MAX_CMDLINE_VAL_LEN];
 
 /* workaround because string literals are not supported by C parser */

@@ -152,7 +152,6 @@ BEGIN_FUNC(boot_cpu_start)
     pushl $restore_user_context
     jmp   boot_node
 END_FUNC(boot_cpu_start)
-#endif /* CONFIG_MAX_NUM_NODES */
 
 _boot_gdt_ptr:
     .word   (3 * 8) - 1 /* Limit: 3 segments * 8 bytes - 1 byte */
@@ -166,3 +165,5 @@ _boot_gdt:
 
 .global boot_cpu_end
 boot_cpu_end:
+
+#endif /* CONFIG_MAX_NUM_NODES */

@@ -34,8 +34,8 @@ typedef struct lookupPML4Slot_ret lookupPML4Slot_ret_t;
  * when we switch paging on, and are still running at physical addresses,
  * we don't explode. Then we also want the high mappings so we can start
  * running at proper kernel virtual addresses */
-pml4e_t boot_pml4[BIT(PML4_INDEX_BITS)] ALIGN(BIT(seL4_PageBits)) VISIBLE PHYS_DATA;
-pdpte_t boot_pdpt[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(seL4_PageBits)) VISIBLE PHYS_DATA;
+pml4e_t boot_pml4[BIT(PML4_INDEX_BITS)] ALIGN(BIT(seL4_PageBits)) VISIBLE PHYS_BSS;
+pdpte_t boot_pdpt[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(seL4_PageBits)) VISIBLE PHYS_BSS;
 
 /* 'gdt_idt_ptr' is declared globally because of a C-subset restriction.
  * It is only used in init_drts(), which therefore is non-reentrant.

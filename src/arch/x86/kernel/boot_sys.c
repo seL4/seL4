@@ -66,7 +66,7 @@ typedef struct boot_state {
     mem_p_regs_t mem_p_regs;  /* physical memory regions */
 } boot_state_t;
 
-BOOT_DATA
+BOOT_BSS
 boot_state_t boot_state;
 
 #if !(CONFIG_MAX_NUM_NODES > 1)
@@ -78,7 +78,7 @@ char kernel_stack_alloc[4096];
 
 /* global variables (not covered by abstract specification) */
 
-BOOT_DATA
+BOOT_BSS
 cmdline_opt_t cmdline_opt;
 
 /* check the module occupies in a contiguous physical memory region */

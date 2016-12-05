@@ -20,9 +20,9 @@
 /* The boot pd is referenced by code that runs before paging, so
  * place it in PHYS_DATA. In PAE mode the top level is actually
  * a PDPTE, but we call it _boot_pd for compatibility */
-pdpte_t _boot_pd[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE  PHYS_DATA;
+pdpte_t _boot_pd[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE  PHYS_BSS;
 /* Allocate enough page directories to fill every slot in the PDPT */
-pde_t _boot_pds[BIT(PD_INDEX_BITS + PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
+pde_t _boot_pds[BIT(PD_INDEX_BITS + PDPT_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_BSS;
 
 BOOT_CODE
 pde_t *get_boot_pd()

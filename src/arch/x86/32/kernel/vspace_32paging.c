@@ -28,7 +28,7 @@
 
 /* The boot pd is referenced by code that runs before paging, so
  * place it in PHYS_DATA */
-pde_t _boot_pd[BIT(PD_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_DATA;
+pde_t _boot_pd[BIT(PD_INDEX_BITS)] ALIGN(BIT(PAGE_BITS)) VISIBLE PHYS_BSS;
 
 BOOT_CODE
 pde_t *get_boot_pd()
