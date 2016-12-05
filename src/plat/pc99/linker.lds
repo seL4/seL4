@@ -43,7 +43,7 @@ SECTIONS
         . = ALIGN(4K);
     }
 
-    .phys.bss . (NOLOAD) :
+    .phys.bss ADDR(.phys) + SIZEOF(.phys) (NOLOAD) :
     {
         boot_stack_bottom = .;
         . = . + 2K;
