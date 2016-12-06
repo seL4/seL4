@@ -57,11 +57,16 @@ static void NORETURN restore_vmx(void)
             // Now do the vmresume
             "vmresume\n"
             // if we get here we failed
-            "leal kernel_stack_alloc, %%esp\n"
+#if CONFIG_MAX_NUM_NODES > 1
+            "movl (%%esp), %%esp\n"
+#else
+            "leal kernel_stack_alloc + %c2, %%esp\n"
+#endif
             "call %1\n"
             :
             : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[VCPU_EAX]),
-            "m"(vmlaunch_failed)
+              "m"(vmlaunch_failed),
+              "i"(BIT(seL4_PageBits) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -81,11 +86,16 @@ static void NORETURN restore_vmx(void)
             // Now do the vmresume
             "vmlaunch\n"
             // if we get here we failed
-            "leal kernel_stack_alloc, %%esp\n"
+#if CONFIG_MAX_NUM_NODES > 1
+            "movl (%%esp), %%esp\n"
+#else
+            "leal kernel_stack_alloc + %c2, %%esp\n"
+#endif
             "call %1\n"
             :
             : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[VCPU_EAX]),
-            "m"(vmlaunch_failed)
+              "m"(vmlaunch_failed),
+              "i"(BIT(seL4_PageBits) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
