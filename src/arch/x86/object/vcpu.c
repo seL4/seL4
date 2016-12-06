@@ -32,6 +32,10 @@
 
 #define VMXON_REGION_SIZE 4096
 
+const vcpu_gp_register_t crExitRegs[] = {
+    VCPU_EAX, VCPU_ECX, VCPU_EDX, VCPU_EBX, VCPU_ESP, VCPU_EBP, VCPU_ESI, VCPU_EDI
+};
+
 typedef struct msr_bitmap {
     word_t bitmap[0x2000 / sizeof(word_t) / 8];
 } msr_bitmap_t;
@@ -373,7 +377,7 @@ vcpu_init(vcpu_t *vcpu)
         vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&ARCH_NODE_STATE(x86KStss).tss.words[0] + 4));
     }
     /* Set host SP to point just beyond the first field to be stored on exit. */
-    vmwrite(VMX_HOST_RSP, (word_t)&vcpu->gp_registers[n_generalRegisters]);
+    vmwrite(VMX_HOST_RSP, (word_t)&vcpu->gp_registers[n_vcpu_gp_register]);
     vmwrite(VMX_HOST_RIP, (word_t)&handle_vmexit);
 
     vmwrite(VMX_HOST_ES_SELECTOR, SEL_DS_0);
@@ -446,7 +450,7 @@ static exception_t
 invokeVCPUWriteRegisters(vcpu_t *vcpu, word_t *buffer)
 {
     int i;
-    for (i = 0; i < n_generalRegisters; i++) {
+    for (i = 0; i < n_vcpu_gp_register; i++) {
         vcpu->gp_registers[i] = getSyscallArg(i, buffer);
     }
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
@@ -1034,7 +1038,7 @@ setMRs_vmexit(uint32_t reason, word_t qualification)
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_GUEST_INT_MR, vmread(VMX_GUEST_INTERRUPTABILITY));
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_CR3_MR, vmread(VMX_GUEST_CR3));
 
-    for (i = 0; i < n_generalRegisters; i++) {
+    for (i = 0; i < n_vcpu_gp_register; i++) {
         setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_EAX + i, NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[i]);
     }
 }
@@ -1132,9 +1136,9 @@ handleVmexit(void)
             case VMX_EXIT_QUAL_TYPE_MOV_CR: {
                 /* check for cr0 */
                 if (vmx_data_exit_qualification_control_regster_get_cr(qual) == 0) {
-                    register_t source = crExitRegs[vmx_data_exit_qualification_control_regster_get_reg(qual)];
+                    vcpu_gp_register_t source = crExitRegs[vmx_data_exit_qualification_control_regster_get_reg(qual)];
                     word_t value;
-                    if (source == ESP) {
+                    if (source == VCPU_ESP) {
                         /* ESP is the only register that is is not part of the general purpose
                          * registers that we have to save and restore ourselves, so we need to
                          * get this one from the vmcs */

@@ -238,6 +238,24 @@ typedef uint16_t vpid_t;
 #ifdef CONFIG_VTX
 #define VTX_TERNARY(vtx, nonvtx) vtx
 
+enum vcpu_gp_register {
+    VCPU_EAX = 0,
+    VCPU_EBX,
+    VCPU_ECX,
+    VCPU_EDX,
+    VCPU_ESI,
+    VCPU_EDI,
+    VCPU_EBP,
+    n_vcpu_gp_register,
+    /* We need to define a sentinal value to detect ESP that is strictly distinct
+     * from any of our other GP register indexes, so put that here */
+    VCPU_ESP,
+};
+
+typedef enum vcpu_gp_register vcpu_gp_register_t;;
+
+const vcpu_gp_register_t crExitRegs[];
+
 struct vcpu {
     /* Storage for VMCS region. First field of vcpu_t so they share address.
      * Will use at most 4KiB of memory. Statically reserve 4KiB for convenience. */
@@ -249,7 +267,7 @@ struct vcpu {
 
     /* General purpose registers that we have to save and restore as they
      * are not part of the vmcs */
-    word_t gp_registers[n_generalRegisters];
+    word_t gp_registers[n_vcpu_gp_register];
 #if CONFIG_MAX_NUM_NODES > 1
     word_t kernelSP;
 #endif

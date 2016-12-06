@@ -60,7 +60,7 @@ static void NORETURN restore_vmx(void)
             "leal kernel_stack_alloc, %%esp\n"
             "call %1\n"
             :
-            : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[EAX]),
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[VCPU_EAX]),
             "m"(vmlaunch_failed)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
@@ -84,7 +84,7 @@ static void NORETURN restore_vmx(void)
             "leal kernel_stack_alloc, %%esp\n"
             "call %1\n"
             :
-            : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[EAX]),
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[VCPU_EAX]),
             "m"(vmlaunch_failed)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler

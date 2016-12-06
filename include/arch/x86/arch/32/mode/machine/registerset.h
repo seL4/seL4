@@ -33,7 +33,6 @@ enum _register {
     msgInfoRegister = 4,
     /* 0x14 */  EDI             = 5,
     /* 0x18 */  EBP             = 6,
-    n_generalRegisters          = 7,
 
     /* segment registers */
 
@@ -93,8 +92,5 @@ enum messageSizes {
 extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
-#ifdef CONFIG_VTX
-extern const register_t crExitRegs[];
-#endif
 
 #endif

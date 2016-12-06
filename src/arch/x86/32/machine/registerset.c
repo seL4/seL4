@@ -27,12 +27,6 @@ const register_t gpRegisters[] = {
     TLS_BASE, FS, GS
 };
 
-#ifdef CONFIG_VTX
-const register_t crExitRegs[] = {
-    EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
-};
-#endif
-
 void Mode_initContext(user_context_t* context)
 {
     context->registers[EAX] = 0;
