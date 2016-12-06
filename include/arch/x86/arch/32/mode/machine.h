@@ -34,6 +34,12 @@ static inline void setCurrentVSpaceRoot(paddr_t addr, word_t pcid)
     setCurrentPD(addr);
 }
 
+static inline cr3_t getCurrentCR3(void)
+{
+    /* on ia32 the PD is the full value of CR3, so we can just return that */
+    return cr3_new(getCurrentPD());
+}
+
 static inline void invalidateLocalTLBEntry(vptr_t vptr)
 {
     asm volatile("invlpg (%[vptr])" :: [vptr] "r"(vptr));

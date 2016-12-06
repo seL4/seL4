@@ -567,4 +567,9 @@ tagged_union asid_map type {
 #endif
 }
 
+block cr3 {
+    field_high  pd_base_address     20
+    padding                         12
+}
+
 #include <mode/api/arch_shared_types.bf>
