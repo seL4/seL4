@@ -36,6 +36,10 @@ UP_STATE_DEFINE(word_t, x86KSFPURestoresSinceSwitch);
 /* The top level ASID table */
 asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
 
+/* Current user value of the fs/gs base */
+UP_STATE_DEFINE(word_t, x86KSCurrentFSBase);
+UP_STATE_DEFINE(word_t, x86KSCurrentGSBase);
+
 /* ==== read-only kernel state (only written during bootstrapping) ==== */
 
 /* Defines a translation of cpu ids from an index of our actual CPUs */

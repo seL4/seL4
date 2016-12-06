@@ -114,10 +114,10 @@ void NORETURN VISIBLE restore_user_context(void)
 #endif
 
     word_t base = getRegister(NODE_STATE(ksCurThread), TLS_BASE);
-    x86_write_gs_base(base);
+    x86_write_gs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
 
     base = NODE_STATE(ksCurThread)->tcbIPCBuffer;
-    x86_write_fs_base(base);
+    x86_write_fs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
 
     /* see if we entered via syscall */
     if (likely(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1)) {
