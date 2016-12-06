@@ -268,7 +268,7 @@ struct vcpu {
     /* General purpose registers that we have to save and restore as they
      * are not part of the vmcs */
     word_t gp_registers[n_vcpu_gp_register];
-#if CONFIG_MAX_NUM_NODES > 1
+#if CONFIG_MAX_NUM_NODES > 1 && defined(CONFIG_ARCH_IA32)
     word_t kernelSP;
 #endif
 
