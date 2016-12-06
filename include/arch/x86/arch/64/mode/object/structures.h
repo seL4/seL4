@@ -140,6 +140,9 @@ cap_get_capMappedASID(cap_t cap)
     case cap_page_directory_cap:
         return cap_page_directory_cap_get_capPDMappedASID(cap);
 
+    case cap_ept_pml4_cap:
+        return cap_ept_pml4_cap_get_capPML4MappedASID(cap);
+
     default:
         fail("Invalid arch cap type");
     }

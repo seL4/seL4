@@ -151,6 +151,60 @@ block io_page_table_cap (capType, capIOPTIsMapped, capIOPTLevel, capIOPTMappedAd
     field_high  capIOPTMappedAddress    48
 }
 
+block vcpu_cap {
+    field capVCPUPtr                64
+
+    field capType                   5
+    padding                         59
+}
+
+-- Fourth-level EPT page table
+block ept_pt_cap (capType, capPTMappedAddress, capPTIsMapped, capPTMappedASID, capPTBasePtr) {
+    field       capPTBasePtr        64
+
+    field       capType             5
+    field       capPTIsMapped       1
+    padding                         10
+    field_high  capPTMappedAddress  27
+    field       capPTMappedASID     16
+    padding                         5
+}
+
+-- third-level EPT page table (page directory)
+block ept_pd_cap (capType, capPDMappedAddress, capPDIsMapped, capPDMappedASID, capPDBasePtr) {
+    field       capPDBasePtr        64
+
+    field       capType             5
+    field       capPDIsMapped       1
+    padding                         10
+    field_high  capPDMappedAddress  19
+    field       capPDMappedASID     16
+    padding                         13
+}
+
+-- Second-level EPT page table (page directory pointer table)
+block ept_pdpt_cap (capType, capPDPTMappedAddress, capPDPTIsMapped, capPDPTMappedASID, capPDPTBasePtr) {
+    field       capPDPTBasePtr      64
+
+    field       capType             5
+    field       capPDPTIsMapped     1
+    padding                         10
+    field_high  capPDPTMappedAddress 17
+    field       capPDPTMappedASID   16
+    padding                         15
+}
+
+-- First-level EPT pml4
+block ept_pml4_cap (capType, capPML4IsMapped, capPML4MappedASID, capPML4BasePtr) {
+    field       capPML4BasePtr      64
+
+    field       capType             5
+    field       capPML4IsMapped     1
+    padding                         42
+
+    field       capPML4MappedASID   16
+}
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     -- 5-bit tag caps
@@ -177,6 +231,11 @@ tagged_union cap capType {
     tag io_space_cap        15
     tag io_page_table_cap   17
     tag io_port_cap         19
+    tag vcpu_cap            21
+    tag ept_pt_cap          23
+    tag ept_pd_cap          25
+    tag ept_pdpt_cap        27
+    tag ept_pml4_cap        29
 }
 
 ---- Arch-independent object types
@@ -364,9 +423,20 @@ block asid_map_vspace {
     field type                      2
 }
 
+#ifdef CONFIG_VTX
+block asid_map_ept {
+    field_high ept_root             48
+    padding                         14
+    field type                      2
+}
+#endif
+
 tagged_union asid_map type {
     tag asid_map_none 0
     tag asid_map_vspace 1
+#ifdef CONFIG_VTX
+    tag asid_map_ept 2
+#endif
 }
 
 -- PML4, PDPE, PDs and PTs, assuming 51-bit physical address
@@ -483,6 +553,77 @@ block pte {
     field       super_user          1
     field       read_write          1
     field       present             1
+}
+
+block ept_pml4e {
+    padding                         13
+    field_high   pdpt_base_address  39
+    padding                         9
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+block ept_pdpte {
+    padding                         13
+    field_high   pd_base_address    39
+    field        avl_cte_depth      3
+    padding                         6
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+block ept_pde_2m {
+    padding                         13
+    field_high   page_base_address  31
+    padding                         8
+    field        avl_cte_depth      2
+    padding                         2
+    field        page_size          1
+    field        ignore_pat         1
+    field        type               3
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+block ept_pde_4k {
+    padding                         13
+    field_high   pt_base_address    39
+    field        avl_cte_depth      3
+    padding                         1
+    field        page_size          1
+    padding                         4
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+tagged_union ept_pde page_size {
+    tag ept_pde_4k 0
+    tag ept_pde_2m 1
+}
+
+block ept_pte {
+    padding                         13
+    field_high   page_base_address  39
+    field        avl_cte_depth      2
+    padding                         3
+    field        ignore_pat         1
+    field        type               3
+    field        execute            1
+    field        write              1
+    field        read               1
+}
+
+block vmx_eptp {
+    padding                         13
+    field_high paddr                39
+    padding                         5
+    field flags                     1
+    field depth_minus_1             3
+    field memory_type               3
 }
 
 block cr3 {

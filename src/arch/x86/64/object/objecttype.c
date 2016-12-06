@@ -20,6 +20,7 @@
 #include <arch/machine/fpu.h>
 #include <arch/object/objecttype.h>
 #include <arch/object/ioport.h>
+#include <arch/kernel/ept.h>
 
 #include <arch/object/iospace.h>
 #include <plat/machine/intel-vtd.h>

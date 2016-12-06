@@ -40,6 +40,12 @@
 #define seL4_HugePageBits       30
 #define seL4_ASIDPoolBits       12
 
+#define seL4_X86_VCPUBits    14
+#define seL4_X86_EPTPML4Bits 12
+#define seL4_X86_EPTPDPTBits 12
+#define seL4_X86_EPTPDBits   12
+#define seL4_X86_EPTPTBits   12
+
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4
 #define seL4_MaxUntypedBits 47

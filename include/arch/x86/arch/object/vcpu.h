@@ -14,6 +14,7 @@
 #define __ARCH_OBJECT_VCPU_H
 
 #include <config.h>
+#include <api/failures.h>
 
 #define VCPU_VMCS_SIZE 4096
 #define VCPU_IOBITMAP_SIZE 8192
