@@ -1430,9 +1430,9 @@ restoreVMCS(void)
         switchVCPU(expected_vmcs);
     }
 
-    if (getCurrentPD() != expected_vmcs->last_host_cr3) {
-        expected_vmcs->last_host_cr3 = getCurrentPD();
-        vmwrite(VMX_HOST_CR3, getCurrentPD());
+    if (getCurrentCR3().words[0] != expected_vmcs->last_host_cr3) {
+        expected_vmcs->last_host_cr3 = getCurrentCR3().words[0];
+        vmwrite(VMX_HOST_CR3, getCurrentCR3().words[0]);
     }
     if (expected_vmcs->vpid == VPID_INVALID) {
         vpid_t vpid = findFreeVPID();
