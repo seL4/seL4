@@ -569,3 +569,23 @@ BEGIN_FUNC(handle_syscall)
     # gtfo to C land, we will not return
     call    c_handle_syscall
 END_FUNC(handle_syscall)
+
+# Handle vmexit
+# RSP points to the end of the VCPUs general purpose register array
+#ifdef CONFIG_VTX
+BEGIN_FUNC(handle_vmexit)
+    MAYBE_SWAPGS
+    push    %rbp
+    push    %rdi
+    push    %rsi
+    push    %rdx
+    push    %rcx
+    push    %rbx
+    push    %rax
+
+    # switch to kernel stack
+    LOAD_KERNEL_STACK
+    # Handle the vmexit, we will not return
+    call    c_handle_vmexit
+END_FUNC(handle_vmexit)
+#endif /* CONFIG_VTX */

@@ -18,12 +18,130 @@
 
 #include <api/syscall.h>
 
+#ifdef CONFIG_VTX
+static void NORETURN vmlaunch_failed(word_t failInvalid, word_t failValid)
+{
+    NODE_LOCK;
+
+    c_entry_hook();
+
+    if (failInvalid) {
+        userError("current VMCS pointer is not valid");
+    }
+    if (failValid) {
+        userError("vmlaunch/vmresume error %d", (int)vmread(VMX_DATA_INSTRUCTION_ERROR));
+    }
+
+    handleVmEntryFail();
+    restore_user_context();
+}
+
+static void NORETURN restore_vmx(void)
+{
+    restoreVMCS();
+    tcb_t *cur_thread = NODE_STATE(ksCurThread);
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    /* Do not support breakpoints in VMs, so just disable all breakpoints */
+    loadAllDisabledBreakpointState(&cur_thread->tcbArch);
+#endif
+    if (cur_thread->tcbArch.vcpu->launched) {
+        /* attempt to do a vmresume */
+        asm volatile(
+            // Set our stack pointer to the top of the tcb so we can efficiently pop
+            "movq %[reg], %%rsp\n"
+            "popq %%rax\n"
+            "popq %%rbx\n"
+            "popq %%rcx\n"
+            "popq %%rdx\n"
+            "popq %%rsi\n"
+            "popq %%rdi\n"
+            "popq %%rbp\n"
+#if CONFIG_MAX_NUM_NODES > 1
+            "swapgs\n"
+#endif
+            // Now do the vmresume
+            "vmresume\n"
+            "setb %%al\n"
+            "sete %%bl\n"
+            "movzx %%al, %%rdi\n"
+            "movzx %%bl, %%rsi\n"
+            // if we get here we failed
+#if CONFIG_MAX_NUM_NODES > 1
+            "swapgs\n"
+            "movq %%gs:%c[stack_offset], %%rsp\n"
+#else
+            "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
+#endif
+            "leaq %[failed], %%rax\n"
+            "jmp *%%rax\n"
+            :
+            : [reg]"r"(&cur_thread->tcbArch.vcpu->gp_registers[VCPU_EAX]),
+              [failed]"m"(vmlaunch_failed),
+              [stack_size]"i"(BIT(seL4_PageBits))
+#if CONFIG_MAX_NUM_NODES > 1
+              ,[stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
+#endif
+            // Clobber memory so the compiler is forced to complete all stores
+            // before running this assembler
+            : "memory"
+        );
+    } else {
+        /* attempt to do a vmlaunch */
+        asm volatile(
+            // Set our stack pointer to the top of the tcb so we can efficiently pop
+            "movq %[reg], %%rsp\n"
+            "popq %%rax\n"
+            "popq %%rbx\n"
+            "popq %%rcx\n"
+            "popq %%rdx\n"
+            "popq %%rsi\n"
+            "popq %%rdi\n"
+            "popq %%rbp\n"
+#if CONFIG_MAX_NUM_NODES > 1
+            "swapgs\n"
+#endif
+            // Now do the vmresume
+            "vmlaunch\n"
+            // if we get here we failed
+            "setb %%al\n"
+            "sete %%bl\n"
+            "movzx %%al, %%rdi\n"
+            "movzx %%bl, %%rsi\n"
+#if CONFIG_MAX_NUM_NODES > 1
+            "swapgs\n"
+            "movq %%gs:%c[stack_offset], %%rsp\n"
+#else
+            "leaq kernel_stack_alloc + %c[stack_size], %%rsp\n"
+#endif
+            "leaq %[failed], %%rax\n"
+            "jmp *%%rax\n"
+            :
+            : [reg]"r"(&cur_thread->tcbArch.vcpu->gp_registers[VCPU_EAX]),
+              [failed]"m"(vmlaunch_failed),
+              [stack_size]"i"(BIT(seL4_PageBits))
+#if CONFIG_MAX_NUM_NODES > 1
+              ,[stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
+#endif
+            // Clobber memory so the compiler is forced to complete all stores
+            // before running this assembler
+            : "memory"
+        );
+    }
+    UNREACHABLE();
+}
+#endif
+
 void VISIBLE NORETURN restore_user_context(void)
 {
     NODE_UNLOCK_IF_HELD;
     c_exit_hook();
     tcb_t *cur_thread = NODE_STATE(ksCurThread);
     word_t *irqstack = MODE_NODE_STATE(x64KSIRQStack);
+#ifdef CONFIG_VTX
+    if (thread_state_ptr_get_tsType(&cur_thread->tcbState) == ThreadState_RunningVM) {
+        restore_vmx();
+    }
+#endif
     lazyFPURestore(cur_thread);
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
