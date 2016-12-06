@@ -1263,7 +1263,7 @@ invvpid_context(uint16_t vpid)
         uint64_t rsvd : 48;
         uint64_t address;
     } PACKED operand = {vpid, 0, 0};
-    asm volatile("invvpid %0, %1" :: "m"(operand), "r"(1) : "cc");
+    asm volatile("invvpid %0, %1" :: "m"(operand), "r"((word_t)1) : "cc");
 }
 
 static void
