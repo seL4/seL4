@@ -15,7 +15,7 @@
 #include <sel4/types.h>
 #include <sel4/sel4_arch/faults.h>
 
-static inline seL4_Fault_t
+LIBSEL4_INLINE_FUNC seL4_Fault_t
 seL4_getFault(seL4_MessageInfo_t tag)
 {
 
@@ -40,38 +40,38 @@ seL4_getFault(seL4_MessageInfo_t tag)
 }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-static inline seL4_Bool
+LIBSEL4_INLINE_FUNC seL4_Bool
 seL4_isDebugException_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_DebugException;
 }
 #endif
 
-static inline seL4_Bool
+LIBSEL4_INLINE_FUNC seL4_Bool
 seL4_isVMFault_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_VMFault;
 }
 
-static inline seL4_Bool
+LIBSEL4_INLINE_FUNC seL4_Bool
 seL4_isUnknownSyscall_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_UnknownSyscall;
 }
 
-static inline seL4_Bool
+LIBSEL4_INLINE_FUNC seL4_Bool
 seL4_isUserException_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_UserException;
 }
 
-static inline seL4_Bool
+LIBSEL4_INLINE_FUNC seL4_Bool
 seL4_isNullFault_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_NullFault;
 }
 
-static inline seL4_Bool
+LIBSEL4_INLINE_FUNC seL4_Bool
 seL4_isCapFault_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_CapFault;

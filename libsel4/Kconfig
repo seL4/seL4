@@ -16,15 +16,34 @@ menu "libsel4"
         help
             seL4 API library
 
+choice
+    prompt "Function attributes"
+    default LIB_SEL4_INLINE_INVOCATIONS
+
+config LIB_SEL4_DEFAULT_FUNCTION_ATTRIBUTES
+    bool "Default"
+    depends on LIB_SEL4
+    help
+        Verification friendly default configuration. syscalls will be inlined,
+        but generated functions will not.
+
 config LIB_SEL4_INLINE_INVOCATIONS
     bool "Inline generated syscall invocations"
     depends on LIB_SEL4
-    default y
     help
         When set to true will mark generated functions as 'inline', allowing
         them to be inlined by the callee user code. This may be undesirable
-        for verification, so setting to 'n' will forcively prevent the function
-        from being inlined
+        for verification, so setting to 'n' will forcibly prevent the function
+        from being inlined.
+
+config LIB_SEL4_PUBLIC_SYMBOLS
+    bool "Public symbols for all external interfaces"
+    depends on LIB_SEL4
+    help
+        When set to true will make all user facing functions available as
+        public symbols, which can be convenient for some language bindings.
+
+endchoice
 
 config LIB_SEL4_STUBS_USE_IPC_BUFFER_ONLY
     bool "use only IPC buffer for syscalls"
