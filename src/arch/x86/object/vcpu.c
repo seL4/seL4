@@ -394,7 +394,7 @@ vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_CONTROL_SECONDARY_PROCESSOR_CONTROLS, secondary_control_high & secondary_control_low);
     vmwrite(VMX_CONTROL_EXIT_CONTROLS, exit_control_high & exit_control_low);
     vmwrite(VMX_CONTROL_ENTRY_CONTROLS, entry_control_high & entry_control_low);
-    vmwrite(VMX_CONTROL_MSR_ADDRESS, (word_t)pptr_to_paddr(&msr_bitmap_region));
+    vmwrite(VMX_CONTROL_MSR_ADDRESS, (word_t)kpptr_to_paddr(&msr_bitmap_region));
     vmwrite(VMX_GUEST_CR0, vcpu->cr0);
     vmwrite(VMX_GUEST_CR4, cr4_high & cr4_low);
 
@@ -989,7 +989,7 @@ vtx_init(void)
     if (!vtx_check_fixed_values(read_cr0(), read_cr4())) {
         return false;
     }
-    if (vmxon(pptr_to_paddr(&vmxon_region))) {
+    if (vmxon(kpptr_to_paddr(&vmxon_region))) {
         printf("vt-x: vmxon failure\n");
         return false;
     }
@@ -1272,7 +1272,7 @@ setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
     paddr_t ept_root;
     if (cap_get_capType(vmxSpace) != cap_ept_pml4_cap ||
             !cap_ept_pml4_cap_get_capPML4IsMapped(vmxSpace)) {
-        ept_root = pptr_to_paddr(null_ept_space);
+        ept_root = kpptr_to_paddr(null_ept_space);
     } else {
         findEPTForASID_ret_t find_ret;
         ept_pml4e_t *pml4;
@@ -1280,7 +1280,7 @@ setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
         pml4 = (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(vmxSpace);
         find_ret = findEPTForASID(cap_ept_pml4_cap_get_capPML4MappedASID(vmxSpace));
         if (find_ret.status != EXCEPTION_NONE || find_ret.ept != pml4) {
-            ept_root = pptr_to_paddr(null_ept_space);
+            ept_root = kpptr_to_paddr(null_ept_space);
         } else {
             ept_root = pptr_to_paddr(pml4);
         }
