@@ -50,6 +50,9 @@ NODE_STATE_DECLARE(word_t, x86KSFPURestoresSinceSwitch);
 NODE_STATE_DECLARE(vcpu_t *, x86KSCurrentVCPU);
 #endif
 
+NODE_STATE_DECLARE(word_t, x86KSCurrentFSBase);
+NODE_STATE_DECLARE(word_t, x86KSCurrentGSBase);
+
 NODE_STATE_TYPE_DECLARE(modeNodeState, mode);
 NODE_STATE_END(archNodeState);
 

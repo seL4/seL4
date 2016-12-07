@@ -134,10 +134,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     setKernelEntryStackPointer(cur_thread);
 
     word_t base = getRegister(cur_thread, TLS_BASE);
-    x86_write_gs_base(base);
+    x86_write_gs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
 
     base = cur_thread->tcbIPCBuffer;
-    x86_write_fs_base(base);
+    x86_write_fs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
 
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile(

@@ -143,6 +143,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #endif
 
 #if CONFIG_MAX_NUM_NODES > 1
+    cpu_id_t cpu = getCurrentCPUIndex();
     swapgs();
 #endif
     /* Now that we have swapped back to the user gs we can safely
@@ -150,10 +151,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
      * that rely on having a kernel GS though. Most notably uses
      * of NODE_STATE etc cannot be used beyond this point */
     word_t base = getRegister(cur_thread, TLS_BASE);
-    x86_write_fs_base(base);
+    x86_write_fs_base(base, SMP_TERNARY(cpu, 0));
 
     base = cur_thread->tcbIPCBuffer;
-    x86_write_gs_base(base);
+    x86_write_gs_base(base, SMP_TERNARY(cpu, 0));
 
     if (config_set(CONFIG_SYSENTER)) {
         cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;

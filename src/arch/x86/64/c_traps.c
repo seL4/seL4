@@ -31,6 +31,7 @@ void VISIBLE NORETURN restore_user_context(void)
 #endif
 
 #if CONFIG_MAX_NUM_NODES > 1
+    cpu_id_t cpu = getCurrentCPUIndex();
     swapgs();
 #endif
 
@@ -39,10 +40,10 @@ void VISIBLE NORETURN restore_user_context(void)
      * that rely on having a kernel GS though. Most notably uses
      * of NODE_STATE etc cannot be used beyond this point */
     word_t base = getRegister(cur_thread, TLS_BASE);
-    x86_write_fs_base(base);
+    x86_write_fs_base(base, SMP_TERNARY(cpu, 0));
 
     base = cur_thread->tcbIPCBuffer;
-    x86_write_gs_base(base);
+    x86_write_gs_base(base, SMP_TERNARY(cpu, 0));
 
     // Check if we are returning from a syscall/sysenter or from an interrupt
     // There is a special case where if we would be returning from a sysenter,

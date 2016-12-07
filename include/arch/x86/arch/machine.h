@@ -222,27 +222,56 @@ cpu_identity_t *x86_cpuid_get_identity(void);
 
 #ifdef CONFIG_FSGSBASE_MSR
 
-static inline void x86_write_fs_base(word_t base)
+static inline void x86_write_fs_base_impl(word_t base)
 {
     x86_wrmsr(IA32_FS_BASE_MSR, base);
 }
 
-static inline void x86_write_gs_base(word_t base)
+static inline void x86_write_gs_base_impl(word_t base)
 {
     x86_wrmsr(IA32_GS_BASE_MSR, base);
 }
 
-static inline word_t x86_read_fs_base(void)
+static inline word_t x86_read_fs_base_impl(void)
 {
     return x86_rdmsr(IA32_FS_BASE_MSR);
 }
 
-static inline word_t x86_read_gs_base(void)
+static inline word_t x86_read_gs_base_impl(void)
 {
     return x86_rdmsr(IA32_GS_BASE_MSR);
 }
 
 #endif
+
+/* Writing the fs/gs bases can be expensive (especially if it requires a MSR
+   write), so we avoid actually writing them if they aren't actually changed. */
+
+static inline void x86_write_fs_base(word_t base, cpu_id_t cpu)
+{
+    if (base != ARCH_NODE_STATE_ON_CORE(x86KSCurrentFSBase, cpu)) {
+        ARCH_NODE_STATE_ON_CORE(x86KSCurrentFSBase, cpu) = base;
+        x86_write_fs_base_impl(base);
+    }
+}
+
+static inline void x86_write_gs_base(word_t base, cpu_id_t cpu)
+{
+    if (likely(base != ARCH_NODE_STATE_ON_CORE(x86KSCurrentGSBase, cpu))) {
+        ARCH_NODE_STATE_ON_CORE(x86KSCurrentGSBase, cpu) = base;
+        x86_write_gs_base_impl(base);
+    }
+}
+
+static inline word_t x86_read_fs_base(cpu_id_t cpu)
+{
+    return ARCH_NODE_STATE_ON_CORE(x86KSCurrentFSBase, cpu);
+}
+
+static inline word_t x86_read_gs_base(cpu_id_t cpu)
+{
+    return ARCH_NODE_STATE_ON_CORE(x86KSCurrentGSBase, cpu);
+}
 
 /* Cleaning memory before user-level access */
 static inline void clearMemory(void* ptr, unsigned int bits)
