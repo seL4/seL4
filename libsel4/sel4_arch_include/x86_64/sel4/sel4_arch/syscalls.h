@@ -302,6 +302,30 @@ seL4_Yield(void)
     asm volatile("" ::: "memory");
 }
 
+#ifdef CONFIG_VTX
+static inline seL4_Word
+seL4_VMEnter(seL4_CPtr vcpu, seL4_Word *sender)
+{
+    seL4_Word fault;
+    seL4_Word badge;
+    seL4_Word mr0 = seL4_GetMR(0);
+    seL4_Word mr1 = seL4_GetMR(1);
+    seL4_Word mr2 = seL4_GetMR(2);
+    seL4_Word mr3 = seL4_GetMR(3);
+
+    x64_sys_send_recv(seL4_SysVMEnter, vcpu, &badge, 0, &fault, &mr0, &mr1, &mr2, &mr3);
+
+    seL4_SetMR(0, mr0);
+    seL4_SetMR(1, mr1);
+    seL4_SetMR(2, mr2);
+    seL4_SetMR(3, mr3);
+    if (!fault && sender) {
+        *sender = badge;
+    }
+    return fault;
+}
+#endif
+
 #if defined(SEL4_DEBUG_KERNEL)
 LIBSEL4_INLINE_FUNC void
 seL4_DebugPutChar(char c)
