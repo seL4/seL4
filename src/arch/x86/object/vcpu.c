@@ -82,30 +82,6 @@ static uint32_t cr4_low;
 static vcpu_t *x86KSVPIDTable[VPID_LAST + 1];
 static vpid_t x86KSNextVPID = VPID_FIRST;
 
-static inline word_t
-vmread(word_t field)
-{
-    word_t value;
-    asm volatile (
-        "vmread %1, %0"
-        : "=r"(value)
-        : "r"(field)
-        : "cc"
-    );
-    return value;
-}
-
-static inline void
-vmwrite(word_t field, word_t value)
-{
-    asm volatile (
-        "vmwrite %0, %1"
-        :
-        : "r"(value), "r"(field)
-        : "cc"
-    );
-}
-
 static inline bool_t
 vmxon(paddr_t vmxon_region)
 {
