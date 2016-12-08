@@ -338,7 +338,7 @@ vcpu_init(vcpu_t *vcpu)
 #endif
 
     vmwrite(VMX_HOST_PAT, x86_rdmsr(IA32_PAT_MSR));
-    vmwrite(VMX_HOST_EFER, 0);
+    vmwrite(VMX_HOST_EFER, x86_rdmsr(IA32_EFER_MSR));
     vmwrite(VMX_HOST_PERF_GLOBAL_CTRL, 0);
     vmwrite(VMX_HOST_CR0, read_cr0());
     vmwrite(VMX_HOST_CR4, read_cr4());
