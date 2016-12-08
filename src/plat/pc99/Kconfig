@@ -8,6 +8,63 @@
 # @TAG(GD_GPL)
 #
 
+menu "System Interrupt Management"
+    choice
+        prompt "IRQ Controller"
+        depends on PLAT_PC99
+        default IRQ_PIC if ARCH_IA32
+        default IRQ_IOAPIC if ARCH_X86_64
+        help
+            Select the IRQ controller seL4 will use. Code for others may
+            still be included if needed to disable at run time
+        config IRQ_PIC
+            bool "PIC"
+            help
+                Use the legacy PIC controller
+        config IRQ_IOAPIC
+            bool "IOAPIC"
+            help
+                Use one or more IOAPIC controllers
+    endchoice
+
+    config MAX_NUM_IOAPIC
+        prompt "Max supported IOAPICs"
+        depends on IRQ_IOAPIC
+        int
+        default 1
+        help
+            Configure the maximum number of IOAPIC controllers that can
+            be supported. SeL4 will detect IOAPICs regardless of whether
+            the IOAPIC will actually be used as the final IRQ controller
+
+    choice
+        prompt "Local APIC mode"
+        depends on ARCH_X86
+        default XAPIC if ARCH_IA32
+        default X2APIC if ARCH_X86_64
+        help
+            Select the mode local APIC will use. Not all machines support
+            X2APIC mode.
+        config XAPIC
+            bool "XAPIC"
+            help
+                Use XAPIC mode for local APIC
+        config X2APIC
+            bool "X2APIC"
+            help
+                Use X2APIC mode for local APIC
+    endchoice
+
+    config USE_LOGICAL_IDS
+        bool "Use logical IDs for IPIs broadcasting"
+        depends on MAX_NUM_NODES != 1
+        default n
+        help
+            Use logical IDs to broadcast IPI between cores. Not all machines
+            support logical IDs. In xAPIC mode only 8 cores can be addressed
+            using logical IDs.
+endmenu
+
 config IOMMU
     bool "IOMMU support"
         depends on PLAT_PC99
@@ -22,51 +79,6 @@ config VTX
         help
             VTX support
 
-choice
-    prompt "IRQ Controller"
-    depends on PLAT_PC99
-    default IRQ_PIC if ARCH_IA32
-    default IRQ_IOAPIC if ARCH_X86_64
-    help
-        Select the IRQ controller seL4 will use. Code for others may
-        still be included if needed to disable at run time
-    config IRQ_PIC
-        bool "PIC"
-        help
-            Use the legacy PIC controller
-    config IRQ_IOAPIC
-        bool "IOAPIC"
-        help
-            Use one or more IOAPIC controllers
-endchoice
-
-choice
-    prompt "Local APIC mode"
-    depends on ARCH_X86
-    default XAPIC if ARCH_IA32
-    default X2APIC if ARCH_X86_64
-    help
-        Select the mode local APIC will use. Not all machines support
-        X2APIC mode.
-    config XAPIC
-        bool "XAPIC"
-        help
-            Use XAPIC mode for local APIC
-    config X2APIC
-        bool "X2APIC"
-        help
-            Use X2APIC mode for local APIC
-endchoice
-
-config USE_LOGICAL_IDS
-    bool "Use logical IDs for IPIs broadcasting"
-    depends on MAX_NUM_NODES != 1
-    default n
-    help
-        Use logical IDs to broadcast IPI between cores. Not all machines
-        support logical IDs. In xAPIC mode only 8 cores can be addressed
-        using logical IDs.
-
 config MAX_VPIDS
     prompt "Max VPIDs to support"
     depends on VTX
@@ -77,16 +89,6 @@ config MAX_VPIDS
         The kernel maintains a mapping of 16-bit VPIDs to VCPUs. This option
         should be sized as small as possible to save memory, but be at least
         the number of VCPUs that will be run for optimum performance
-
-config MAX_NUM_IOAPIC
-    prompt "Max supported IOAPICs"
-    depends on PLAT_PC99
-    int
-    default 1
-    help
-        Configure the maximum number of IOAPIC controllers that can
-        be supported. SeL4 will detect IOAPICs regardless of whether
-        the IOAPIC will actually be used as the final IRQ controller
 
 config PAE_PAGING
     bool "Use PAE Paging"
