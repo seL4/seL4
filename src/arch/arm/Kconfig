@@ -70,20 +70,20 @@ config ARCH_ARM_MPCORE
 choice
     prompt "IPC Buffer location"
     default IPC_BUF_TPIDRURW
+    depends on ARCH_ARM
     help
         Controls how the location of the IPC buffer is
         provided to the user
 
     config IPC_BUF_GLOBALS_FRAME
         bool "Globals frame"
-        depends on ARCH_ARM
         help
             Put the address of the IPC buffer in a dedicated
             frame that is read only at user level. This works
             on all ARM platforms
     config IPC_BUF_TPIDRURW
         bool "ThreadID register"
-        depends on ARCH_ARM && ARCH_ARM_MPCORE
+        depends on ARCH_ARM_MPCORE
         help
             Put the address of the IPC buffer in the user
             readable/writeable ThreadID register. When enabled
