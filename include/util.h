@@ -35,6 +35,7 @@
 #else
 #define VISIBLE      __attribute__((externally_visible))
 #endif
+#define NO_INLINE    __attribute__((noinline))
 #define FORCE_INLINE __attribute__((always_inline))
 #define SECTION(sec) __attribute__((__section__(sec)))
 #define UNUSED       __attribute__((unused))

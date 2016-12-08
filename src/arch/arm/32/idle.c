@@ -19,7 +19,7 @@ void idle_thread(void)
 }
 
 /** DONT_TRANSLATE */
-void VISIBLE halt(void)
+void NORETURN NO_INLINE VISIBLE halt(void)
 {
     /* halt is actually, idle thread without the interrupts */
     asm volatile("cpsid iaf");
