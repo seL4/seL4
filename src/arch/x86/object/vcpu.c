@@ -246,6 +246,9 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
         BIT(19) |   //Load host IA32_PAT
         BIT(20) |   //Save guest IA32_EFER on exit
         BIT(21);    //Load host IA32_EFER
+#ifdef CONFIG_ARCH_X86_64
+    exit_control_mask |= BIT(9); //Host address-space size
+#endif
     /* Read out the fixed high and low bits from the MSRs */
     uint32_t pinbased_ctls;
     uint32_t procbased_ctls;
