@@ -62,8 +62,6 @@ void setNextPC(tcb_t *thread, word_t v);
 
 /* Architecture specific machine operations */
 
-/** MODIFIES: [*] */
-
 static inline word_t getProcessorID(void)
 {
     word_t processor_id;
@@ -107,14 +105,10 @@ static inline void clearExMonitor(void)
     asm volatile("strex r0, r1, [%0]" : : "r"(&tmp) : "r0");
 }
 
-/** MODIFIES: [*] */
-
 static inline void flushBTAC(void)
 {
     asm volatile("mcr p15, 0, %0, c7, c5, 6" : : "r"(0));
 }
-
-/** MODIFIES: [*] */
 
 static inline void writeContextID(word_t id)
 {
@@ -127,7 +121,6 @@ static inline void writeContextID(word_t id)
 }
 
 /* Address space control */
-/** MODIFIES: [*] */
 
 static inline void writeTTBR0(paddr_t addr)
 {
@@ -167,7 +160,6 @@ static inline void setCurrentPD(paddr_t addr)
 }
 
 /* TLB control */
-/** MODIFIES: [*] */
 
 static inline void invalidateTLB(void)
 {
@@ -176,7 +168,6 @@ static inline void invalidateTLB(void)
     dsb();
     isb();
 }
-/** MODIFIES: [*] */
 
 static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
 {
@@ -189,7 +180,6 @@ static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
         isb();
     }
 }
-/** MODIFIES: [*] */
 
 static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
 {
@@ -202,10 +192,8 @@ static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
         isb();
     }
 }
-/** MODIFIES: [*] */
-void lockTLBEntry(vptr_t vaddr);
 
-/** MODIFIES: [*] */
+void lockTLBEntry(vptr_t vaddr);
 
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
@@ -221,8 +209,8 @@ static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
     /* Erratum 586323 - end with DMB to ensure the write goes out. */
     dmb();
 }
+
 /* D-Cache clean to PoU (L2 cache) (v6/v7 common) */
-/** MODIFIES: [*] */
 static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 {
 #ifdef ARM_CORTEX_A8
@@ -247,9 +235,8 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
     /* Erratum 586323 - end with DMB to ensure the write goes out. */
     dmb();
 }
-/* D-Cache invalidate to PoC (v6/v7 common) */
-/** MODIFIES: [*] */
 
+/* D-Cache invalidate to PoC (v6/v7 common) */
 static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 {
 #ifdef ARM_CORTEX_A8
@@ -261,7 +248,6 @@ static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 #endif
     dmb();
 }
-/** MODIFIES: [*] */
 
 /* I-Cache invalidate to PoU (L2 cache) (v6/v7 common) */
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
@@ -274,7 +260,6 @@ static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 #endif
     isb();
 }
-/** MODIFIES: [*] */
 
 /* I-Cache invalidate all to PoU (L2 cache) (v6/v7 common) */
 static inline void invalidate_I_PoU(void)
@@ -286,7 +271,6 @@ static inline void invalidate_I_PoU(void)
     asm volatile("mcr p15, 0, %0, c7, c5, 0" : : "r"(0));
     isb();
 }
-/** MODIFIES: [*] */
 
 /* D-Cache clean & invalidate to PoC (v6/v7 common) */
 static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
@@ -302,7 +286,6 @@ static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
 #endif
     dsb();
 }
-/** MODIFIES: [*] */
 
 /* Invalidate branch predictors by VA (v6/v7 common) */
 static inline void branchFlush(vptr_t vaddr, paddr_t paddr)
@@ -311,7 +294,6 @@ static inline void branchFlush(vptr_t vaddr, paddr_t paddr)
 }
 
 /* Fault status */
-/** MODIFIES: */
 
 static inline word_t PURE getIFSR(void)
 {
@@ -319,7 +301,6 @@ static inline word_t PURE getIFSR(void)
     asm volatile("mrc p15, 0, %0, c5, c0, 1" : "=r"(IFSR));
     return IFSR;
 }
-/** MODIFIES: */
 
 static inline word_t PURE getDFSR(void)
 {
@@ -327,7 +308,6 @@ static inline word_t PURE getDFSR(void)
     asm volatile("mrc p15, 0, %0, c5, c0, 0" : "=r"(DFSR));
     return DFSR;
 }
-/** MODIFIES: */
 
 static inline word_t PURE getFAR(void)
 {
@@ -336,7 +316,6 @@ static inline word_t PURE getFAR(void)
     return FAR;
 }
 
-/** MODIFIES: [*] */
 static inline word_t getACTLR(void)
 {
     word_t ACTLR;
@@ -344,7 +323,6 @@ static inline word_t getACTLR(void)
     return ACTLR;
 }
 
-/** MODIFIES: [*] */
 static inline void setACTLR(word_t actlr)
 {
     asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));

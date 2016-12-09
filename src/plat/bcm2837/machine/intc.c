@@ -29,7 +29,6 @@ initIRQController(void)
 
 
 
-/** MODIFIES: [*] */
 interrupt_t
 getActiveIRQ(void)
 {
@@ -74,7 +73,6 @@ getActiveIRQ(void)
     return irqInvalid;
 }
 
-/** MODIFIES: [*] */
 void
 maskInterrupt(bool_t disable, interrupt_t irq)
 {

@@ -211,7 +211,6 @@ handleSpuriousIRQ(void)
 {
 }
 
-/** MODIFIES: [*] */
 void initIRQController(void);
 
 #endif /* !__ARCH_MACHINE_GICPL390_H */

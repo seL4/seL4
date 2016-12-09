@@ -10,17 +10,16 @@
 
 #include <arch/machine/hardware.h>
 
-/** MODIFIES: [*] */
 static inline void invalidateByWSL(word_t wsl)
 {
     asm volatile("mcr p15, 0, %0, c7, c6, 2" : : "r"(wsl));
 }
-/** MODIFIES: [*] */
+
 static inline void cleanByWSL(word_t wsl)
 {
     asm volatile("mcr p15, 0, %0, c7, c10, 2" : : "r"(wsl));
 }
-/** MODIFIES: [*] */
+
 static inline void cleanInvalidateByWSL(word_t wsl)
 {
     asm volatile("mcr p15, 0, %0, c7, c14, 2" : : "r"(wsl));

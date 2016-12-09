@@ -15,7 +15,6 @@
 #include <arch/api/types.h>
 #include <mode/model/statedata.h>
 
-/** MODIFIES: [*] */
 static inline void setHardwareASID(hw_asid_t hw_asid)
 {
 #if defined(CONFIG_ARM_ERRATA_430973)

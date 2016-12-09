@@ -155,13 +155,10 @@ plat_smmu_get_asid_by_module_id(uint32_t mid)
 
 }
 
-/** MODIFIES: [*] */
 int plat_smmu_init(void);
 
-/** MODIFIES: [*] */
 void plat_smmu_tlb_flush_all(void);
 
-/** MODIFIES: [*] */
 void plat_smmu_ptc_flush_all(void);
 
 iopde_t *plat_smmu_lookup_iopd_by_asid(uint32_t asid);

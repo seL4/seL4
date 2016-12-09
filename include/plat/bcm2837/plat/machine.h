@@ -146,15 +146,12 @@ handleReservedIRQ(irq_t irq)
     }
 }
 
-/** MODIFIES: [*] */
 interrupt_t
 getActiveIRQ(void);
 
-/** MODIFIES: [*] */
 void
 maskInterrupt(bool_t disable, interrupt_t irq);
 
-/** MODIFIES: [*] */
 static inline bool_t
 isIRQPending(void)
 {
@@ -166,7 +163,6 @@ isIRQPending(void)
     return pending != 0;
 }
 
-/** MODIFIES: [*] */
 static inline void
 ackInterrupt(UNUSED irq_t irq)
 {
