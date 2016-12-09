@@ -212,7 +212,7 @@ decodeX86IOPTInvocation(
     }
 
     io_space     = excaps.excaprefs[0]->cap;
-    io_address   = getSyscallArg(0, buffer) & ~MASK(PAGE_BITS);
+    io_address   = getSyscallArg(0, buffer) & ~MASK(VTD_PT_INDEX_BITS + seL4_PageBits);
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(cap)) {
         userError("X86IOPageTableMap: IO page table is already mapped.");
