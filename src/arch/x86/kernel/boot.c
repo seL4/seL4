@@ -105,7 +105,7 @@ static UNUSED BOOT_CODE bool_t p_region_overlaps(p_region_t reg)
     unsigned int i;
     for (i = 0; i < allocated_p_regions.cur_pos; i++) {
         if (allocated_p_regions.regs[i].start < reg.end &&
-                allocated_p_regions.regs[i].end >= reg.start) {
+                allocated_p_regions.regs[i].end > reg.start) {
             return true;
         }
     }
