@@ -318,15 +318,16 @@ BEGIN_FUNC(common_init)
     andl $0x7fffffff, %eax
     movl %eax, %cr0
 
-#ifdef CONFIG_SYSCALL
-    call syscall_enable
-#endif
-
     call fsgsbase_enable
     /* Initialize boot PML4 and switch to long mode */
     call setup_pml4
     call enable_x64_mode
     lgdt _gdt64_ptr
+
+#ifdef CONFIG_SYSCALL
+    call syscall_enable
+#endif
+
     ret
 END_FUNC(common_init)
 
