@@ -157,6 +157,7 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 #ifdef CONFIG_VTX
 void VISIBLE NORETURN c_handle_vmexit(void)
 {
+    c_entry_hook();
     handleVmexit();
     restore_user_context();
     UNREACHABLE();
