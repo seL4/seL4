@@ -158,6 +158,7 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 void VISIBLE NORETURN c_handle_vmexit(void)
 {
     c_entry_hook();
+    /* NODE_LOCK will get called in handleVmexit */
     handleVmexit();
     restore_user_context();
     UNREACHABLE();
