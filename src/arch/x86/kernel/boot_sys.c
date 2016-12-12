@@ -274,7 +274,9 @@ is_compiled_for_microarchitecture(void)
     word_t microarch_generation = 0;
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
 
-    if (config_set(CONFIG_ARCH_X86_BROADWELL) ) {
+    if (config_set(CONFIG_ARCH_X86_SKYLAKE) ) {
+        microarch_generation = 7;
+    } else if (config_set(CONFIG_ARCH_X86_BROADWELL) ) {
         microarch_generation = 6;
     } else if (config_set(CONFIG_ARCH_X86_HASWELL) ) {
         microarch_generation = 5;
@@ -289,11 +291,21 @@ is_compiled_for_microarchitecture(void)
     }
 
     switch (model_info->model) {
+    case SKYLAKE_1_MODEL_ID:
+    case SKYLAKE_2_MODEL_ID:
+        if (microarch_generation > 7) {
+            return false;
+        }
+        break;
+
     case BROADWELL_1_MODEL_ID:
     case BROADWELL_2_MODEL_ID:
     case BROADWELL_3_MODEL_ID:
     case BROADWELL_4_MODEL_ID:
     case BROADWELL_5_MODEL_ID:
+        if (microarch_generation > 6) {
+            return false;
+        }
         break;
 
     case HASWELL_1_MODEL_ID:

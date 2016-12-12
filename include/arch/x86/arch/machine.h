@@ -54,6 +54,8 @@
  *  * Intel manuals, Vol3, table 35-1.
  *  * https://software.intel.com/en-us/articles/intel-architecture-and-processor-identification-with-cpuid-model-and-family-numbers
  */
+#define SKYLAKE_1_MODEL_ID      0x4E
+#define SKYLAKE_2_MODEL_ID      0x5E
 #define BROADWELL_1_MODEL_ID    0x4D
 #define BROADWELL_2_MODEL_ID    0x56
 #define BROADWELL_3_MODEL_ID    0x4F
