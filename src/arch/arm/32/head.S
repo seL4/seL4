@@ -114,6 +114,16 @@ BEGIN_FUNC(_start)
     mcr p15, 0, r4, c1, c0, 1
 #endif
 
+#if defined(CONFIG_PLAT_HIKEY)
+    /* Prefetcher configuration */
+   mrrc p15, 0, r4, r5, c15
+   ldr r6, =PREFETCHER_MASK
+   bic r4, r4, r6
+   ldr r6, =PREFETCHER
+   orr r4, r4, r6
+   mcrr p15, 0, r4, r5, c15
+#endif
+
     /*
      * Load kernel stack pointer. Note that in the traps pages, we
      * can load the remapped version of the stack page from the

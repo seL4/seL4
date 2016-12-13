@@ -529,12 +529,55 @@ menu "Build Options"
 
     config DEBUG_DISABLE_PREFETCHERS
         bool "Disable prefetchers"
-        depends on ARCH_IA32
+        depends on ARCH_IA32 || PLAT_HIKEY
         default n
         help
             On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 
             adjacent cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher.
-            Currently unimplemented on other platforms.
+            On the cortex a53 this disables the L1 Data prefetcher.
+
+    config ARM_HIKEY_OUTSTANDING_PREFETCHERS
+        int "Number of outstanding prefetch allowed"
+        default 5
+        range 1 7
+        depends on PLAT_HIKEY && !DEBUG_DISABLE_PREFETCHERS
+        help
+            Cortex A53 has an L1 Data prefetcher. This config options allows 
+            the number of outstanding prefetcher to be set from a number from
+            1 to 7. Note that a setting of 7 maps to 8 and 5 is the reset value.
+
+    config ARM_HIKEY_PREFETCHER_STRIDE
+        int "Number of strides before prefetcher is triggered"
+        default 2
+        range 2 3
+        depends on PLAT_HIKEY && !DEBUG_DISABLE_PREFETCHERS
+        help
+            Number of strides before prefetcher is triggered.
+            Allowed values are 2 and 3. 2 is the reset value
+
+    config ARM_HIKEY_PREFETCHER_NPFSTRM
+        int "Number of indepedent prefetch streams"
+        default 2
+        range 1 4
+        depends on PLAT_HIKEY && !DEBUG_DISABLE_PREFETCHERS
+        help
+            Number of indepedent prefetch streams. Allowed values are 1 to 4.
+            2 is the reset value
+
+    config ARM_HIKEY_PREFETCHER_STBPFDIS
+        bool "Enable prefetch streams initated by STB access"
+        default y
+        depends on PLAT_HIKEY && !DEBUG_DISABLE_PREFETCHERS
+        help
+            Enable prefetch streams initated by STB access. Enabled is the reset value
+
+    config ARM_HIKEY_PREFETCHER_STBPFRS
+        bool "Prefetcher to initated on a ReadUnique or ReadShared"
+        default n
+        depends on PLAT_HIKEY && !DEBUG_DISABLE_PREFETCHERS
+        help
+            Sets prefetcher to initated on a ReadUnique (n) or ReadShared (y)
+            ReadUnique is the reset value
 
     config ENABLE_BENCHMARKS
         bool
