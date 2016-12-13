@@ -88,12 +88,15 @@ tsc_init(void)
 {
 
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
-    uint32_t valid_models[] = { HASWELL_1_MODEL_ID, HASWELL_2_MODEL_ID,
-                                HASWELL_3_MODEL_ID, HASWELL_4_MODEL_ID,
-                                IVY_BRIDGE_1_MODEL_ID,
-                                IVY_BRIDGE_2_MODEL_ID,
-                                IVY_BRIDGE_3_MODEL_ID
-                              };
+    uint32_t valid_models[] = {
+        NEHALEM_1_MODEL_ID, NEHALEM_2_MODEL_ID, NEHALEM_3_MODEL_ID,
+        SANDY_BRIDGE_1_MODEL_ID, SANDY_BRIDGE_2_MODEL_ID,
+        HASWELL_1_MODEL_ID, HASWELL_2_MODEL_ID, HASWELL_3_MODEL_ID, HASWELL_4_MODEL_ID,
+        IVY_BRIDGE_1_MODEL_ID, IVY_BRIDGE_2_MODEL_ID, IVY_BRIDGE_3_MODEL_ID,
+        /* BROADWELL_1_MODEL_ID is an Atom that doesn't support the MSR */
+        BROADWELL_2_MODEL_ID, BROADWELL_3_MODEL_ID, BROADWELL_4_MODEL_ID, BROADWELL_5_MODEL_ID,
+        SKYLAKE_1_MODEL_ID, SKYLAKE_2_MODEL_ID
+    };
 
     /* try to read the frequency from the platform info MSR */
     if (model_info->family == IA32_PREFETCHER_COMPATIBLE_FAMILIES_ID) {
@@ -105,7 +108,14 @@ tsc_init(void)
                 uint32_t ratio = (((uint32_t) info) & 0xFF00) >> 8u;
                 /* Ignore hardware that claims a tsc frequency of zero */
                 if (ratio != 0) {
-                    return (ratio * 100u); // this gives Mhz
+                    /* Convert to MHz */
+                    if (model_info->model == NEHALEM_1_MODEL_ID ||
+                        model_info->model == NEHALEM_2_MODEL_ID ||
+                        model_info->model == NEHALEM_3_MODEL_ID) {
+                        return ratio * 13333u / 100u;
+                    } else {
+                        return ratio * 100u;
+                    }
                 }
             }
         }
