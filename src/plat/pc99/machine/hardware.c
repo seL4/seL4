@@ -110,8 +110,8 @@ tsc_init(void)
                 if (ratio != 0) {
                     /* Convert to MHz */
                     if (model_info->model == NEHALEM_1_MODEL_ID ||
-                        model_info->model == NEHALEM_2_MODEL_ID ||
-                        model_info->model == NEHALEM_3_MODEL_ID) {
+                            model_info->model == NEHALEM_2_MODEL_ID ||
+                            model_info->model == NEHALEM_3_MODEL_ID) {
                         return ratio * 13333u / 100u;
                     } else {
                         return ratio * 100u;
