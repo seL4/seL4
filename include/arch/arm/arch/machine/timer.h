@@ -35,9 +35,6 @@
 #define CNT_CVAL CNTV_CVAL
 #endif
 
-/**
-  DONT_TRANSLATE
-  */
 static inline void
 resetGenericTimer(void)
 {
@@ -45,9 +42,6 @@ resetGenericTimer(void)
     MCR(CNT_CTL, BIT(0));
 }
 
-/**
- DONT_TRANSLATE
- */
 BOOT_CODE static inline void
 initGenericTimer(void)
 {

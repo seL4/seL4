@@ -35,11 +35,14 @@
 #else
 #define VISIBLE      __attribute__((externally_visible))
 #endif
+#define NO_INLINE    __attribute__((noinline))
 #define FORCE_INLINE __attribute__((always_inline))
 #define SECTION(sec) __attribute__((__section__(sec)))
 #define UNUSED       __attribute__((unused))
 #define USED         __attribute__((used))
 #define FASTCALL     __attribute__((fastcall))
+/** MODIFIES: */
+void __builtin_unreachable(void);
 #define UNREACHABLE()  __builtin_unreachable()
 #define MAY_ALIAS    __attribute__((may_alias))
 
@@ -86,6 +89,8 @@ long PURE str_to_long(const char* str);
 
 #endif /* !__ASSEMBLER__ */
 
+int __builtin_clzl (unsigned long x);
+
 /** MODIFIES: */
 /** DONT_TRANSLATE */
 /** FNSPEC clzl_spec:
@@ -100,7 +105,10 @@ CONST clzl(unsigned long x)
     return __builtin_clzl(x);
 }
 
+int __builtin_ctzl (unsigned long x);
 #define CTZL(x) __builtin_ctzl(x)
+
+int __builtin_popcountl (unsigned long x);
 
 /** DONT_TRANSLATE */
 static inline long

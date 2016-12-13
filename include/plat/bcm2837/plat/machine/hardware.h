@@ -62,14 +62,10 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start */ TIMER_PADDR    , /* .end */ TIMER_PADDR     + (1u << PAGE_BITS) },
 };
 
-/** MODIFIES: [*] */
 void initL2Cache(void);
 
-/** MODIFIES: [*] */
 static inline void plat_cleanL2Range(paddr_t start, paddr_t end) {}
-/** MODIFIES: [*] */
 static inline void plat_invalidateL2Range(paddr_t start, paddr_t end) {}
-/** MODIFIES: [*] */
 static inline void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end) {}
 static inline void plat_cleanInvalidateCache(void) {}
 

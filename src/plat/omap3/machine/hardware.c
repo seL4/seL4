@@ -59,9 +59,6 @@ static volatile struct TIMER_map {
     uint32_t towr;   /* GPTIMER_TOWR 0x58 */
 } *timer = (volatile void*)GPTIMER9_PPTR;
 
-/**
-   DONT_TRANSLATE
- */
 void
 resetTimer(void)
 {
@@ -69,9 +66,6 @@ resetTimer(void)
     ackInterrupt(GPT9_IRQ);
 }
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initTimer(void)
 {
@@ -95,9 +89,6 @@ initTimer(void)
     timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;
 }
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initIRQController(void)
 {

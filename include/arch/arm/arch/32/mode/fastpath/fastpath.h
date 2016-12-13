@@ -30,6 +30,7 @@ compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 #define endpoint_ptr_get_epQueue_tail_fp(ep_ptr) TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr))
 #define cap_vtable_cap_get_vspace_root_fp(vtable_cap) PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vtable_cap))
 
+/** MODIFIES: [*] */
 /** DONT_TRANSLATE */
 static inline void
 clearExMonitor_fp(void)

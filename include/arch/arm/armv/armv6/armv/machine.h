@@ -11,8 +11,6 @@
 #ifndef __ARCH_ARMV6_MACHINE_H
 #define __ARCH_ARMV6_MACHINE_H
 
-/** MODIFIES: [*] */
-/** DONT_TRANSLATE */
 static inline void wfi(void)
 {
     /*
@@ -29,22 +27,16 @@ static inline void wfi(void)
 #endif
 }
 
-/** MODIFIES: [*] */
-/** DONT_TRANSLATE */
 static inline void dsb(void)
 {
     asm volatile("mcr p15, 0, %0, c7, c10, 4" : : "r"(0) : "memory");
 }
 
-/** MODIFIES: [*] */
-/** DONT_TRANSLATE */
 static inline void dmb(void)
 {
     asm volatile("mcr p15, 0, %0, c7, c10, 5" : : "r"(0) : "memory");
 }
 
-/** MODIFIES: [*] */
-/** DONT_TRANSLATE */
 static inline void isb(void)
 {
     asm volatile("mcr p15, 0, %0, c7, c5, 4" : : "r"(0) : "memory");

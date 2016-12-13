@@ -18,7 +18,6 @@
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
 
-/** DONT_TRANSLATE */
 void VISIBLE NORETURN
 c_handle_undefined_instruction(void)
 {
@@ -35,7 +34,6 @@ c_handle_undefined_instruction(void)
     UNREACHABLE();
 }
 
-/** DONT_TRANSLATE */
 static inline void NORETURN
 c_handle_vm_fault(vm_fault_type_t type)
 {
@@ -51,21 +49,18 @@ c_handle_vm_fault(vm_fault_type_t type)
     UNREACHABLE();
 }
 
-/** DONT_TRANSLATE */
 void VISIBLE NORETURN
 c_handle_data_fault(void)
 {
     c_handle_vm_fault(seL4_DataFault);
 }
 
-/** DONT_TRANSLATE */
 void VISIBLE NORETURN
 c_handle_instruction_fault(void)
 {
     c_handle_vm_fault(seL4_InstructionFault);
 }
 
-/** DONT_TRANSLATE */
 void VISIBLE NORETURN
 c_handle_interrupt(void)
 {
@@ -80,7 +75,6 @@ c_handle_interrupt(void)
     restore_user_context();
 }
 
-/** DONT_TRANSLATE */
 void NORETURN
 slowpath(syscall_t syscall)
 {
@@ -93,7 +87,6 @@ slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-/** DONT_TRANSLATE */
 void VISIBLE
 c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
@@ -128,7 +121,6 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-/** DONT_TRANSLATE */
 VISIBLE NORETURN void
 c_handle_vcpu_fault(word_t hsr)
 {

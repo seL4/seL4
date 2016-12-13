@@ -11,9 +11,6 @@
 #include <util.h>
 #include <stdint.h>
 #include <plat/machine.h>
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initIRQController(void)
 {
@@ -32,7 +29,6 @@ initIRQController(void)
 
 
 
-/** MODIFIES: [*] */
 interrupt_t
 getActiveIRQ(void)
 {
@@ -77,7 +73,6 @@ getActiveIRQ(void)
     return irqInvalid;
 }
 
-/** MODIFIES: [*] */
 void
 maskInterrupt(bool_t disable, interrupt_t irq)
 {

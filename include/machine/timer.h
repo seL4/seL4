@@ -10,9 +10,7 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 
-/** MODIFIES: [*] */
 void resetTimer(void);
-/** MODIFIES: [*] */
 void initTimer(void);
 
 #endif

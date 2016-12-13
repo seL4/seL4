@@ -122,9 +122,6 @@ struct mct_map {
 
 static volatile struct mct_map* mct = (volatile struct mct_map*) EXYNOS_MCT_PPTR;
 
-/**
-   DONT_TRANSLATE
- */
 void
 resetTimer(void)
 {
@@ -137,9 +134,6 @@ resetTimer(void)
 
 compile_assert(mct_reload_32_bit, TIMER_RELOAD <= 0xffffffff);
 
-/**
-   DONT_TRANSLATE
- */
 BOOT_CODE void
 initTimer(void)
 {

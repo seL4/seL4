@@ -112,77 +112,66 @@ static volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl =
 
 static unsigned int gic_vcpu_num_list_regs;
 
-/** DONT_TRANSLATE */
 static inline uint32_t
 get_gic_vcpu_ctrl_hcr(void)
 {
     return gic_vcpu_ctrl->hcr;
 }
 
-/** DONT_TRANSLATE */
 static inline void
 set_gic_vcpu_ctrl_hcr(uint32_t hcr)
 {
     gic_vcpu_ctrl->hcr = hcr;
 }
 
-/** DONT_TRANSLATE */
 static inline uint32_t
 get_gic_vcpu_ctrl_vmcr(void)
 {
     return gic_vcpu_ctrl->vmcr;
 }
 
-/** DONT_TRANSLATE */
 static inline void
 set_gic_vcpu_ctrl_vmcr(uint32_t vmcr)
 {
     gic_vcpu_ctrl->vmcr = vmcr;
 }
 
-/** DONT_TRANSLATE */
 static inline uint32_t
 get_gic_vcpu_ctrl_apr(void)
 {
     return gic_vcpu_ctrl->apr;
 }
 
-/** DONT_TRANSLATE */
 static inline void
 set_gic_vcpu_ctrl_apr(uint32_t apr)
 {
     gic_vcpu_ctrl->apr = apr;
 }
 
-/** DONT_TRANSLATE */
 static inline uint32_t
 get_gic_vcpu_ctrl_vtr(void)
 {
     return gic_vcpu_ctrl->vtr;
 }
 
-/** DONT_TRANSLATE */
 static inline uint32_t
 get_gic_vcpu_ctrl_eisr0(void)
 {
     return gic_vcpu_ctrl->eisr0;
 }
 
-/** DONT_TRANSLATE */
 static inline uint32_t
 get_gic_vcpu_ctrl_eisr1(void)
 {
     return gic_vcpu_ctrl->eisr1;
 }
 
-/** DONT_TRANSLATE */
 static inline uint32_t
 get_gic_vcpu_ctrl_misr(void)
 {
     return gic_vcpu_ctrl->misr;
 }
 
-/** DONT_TRANSLATE */
 static inline virq_t
 get_gic_vcpu_ctrl_lr(int num)
 {
@@ -191,7 +180,6 @@ get_gic_vcpu_ctrl_lr(int num)
     return virq;
 }
 
-/** DONT_TRANSLATE */
 static inline void
 set_gic_vcpu_ctrl_lr(int num, virq_t lr)
 {

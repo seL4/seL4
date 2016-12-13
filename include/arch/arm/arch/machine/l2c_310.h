@@ -18,18 +18,12 @@
 #include <arch/types.h>
 
 
-/** MODIFIES: [*] */
 void initL2Cache(void);
 
-/** MODIFIES: [*] */
 void plat_cleanInvalidateCache(void);
-/** MODIFIES: [*] */
 void plat_cleanCache(void);
-/** MODIFIES: [*] */
 void plat_cleanL2Range(paddr_t start, paddr_t end);
-/** MODIFIES: [*] */
 void plat_invalidateL2Range(paddr_t start, paddr_t end);
-/** MODIFIES: [*] */
 void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
 
 #endif /* !__ARCH_MACHINE_L2C_310_H */

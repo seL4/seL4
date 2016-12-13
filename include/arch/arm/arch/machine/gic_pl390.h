@@ -131,7 +131,6 @@ is_irq_edge_triggered(irq_t irq)
     return !!(gic_dist->config[word] & BIT(bit + 1));
 }
 
-/** DONT_TRANSLATE */
 static inline void
 dist_pending_clr(irq_t irq)
 {
@@ -141,7 +140,6 @@ dist_pending_clr(irq_t irq)
     gic_dist->pending_clr[word] = BIT(bit);
 }
 
-/** DONT_TRANSLATE */
 static inline void
 dist_enable_clr(irq_t irq)
 {
@@ -151,7 +149,6 @@ dist_enable_clr(irq_t irq)
     gic_dist->enable_clr[word] = BIT(bit);
 }
 
-/** DONT_TRANSLATE */
 static inline void
 dist_enable_set(irq_t irq)
 {
@@ -160,10 +157,6 @@ dist_enable_set(irq_t irq)
     gic_dist->enable_set[word] = BIT(bit);
 }
 
-/**
-   DONT_TRANSLATE
-   MODIFIES:[*]
- */
 static inline interrupt_t
 getActiveIRQ(void)
 {
@@ -186,20 +179,12 @@ getActiveIRQ(void)
  * seL4 expects two states: active->inactive.
  * We ignore the active state in GIC to conform
  */
-/**
-    DONT_TRANSLATE
-    MODIFIES:[*]
- */
 static inline bool_t
 isIRQPending(void)
 {
     return IS_IRQ_VALID(gic_cpuiface->hi_pend);
 }
 
-/**
-    DONT_TRANSLATE
-    MODIFIES:[*]
- */
 static inline void
 maskInterrupt(bool_t disable, interrupt_t irq)
 {
@@ -210,10 +195,6 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-/**
-   DONT_TRANSLATE
-   MODIFIES:[*]
- */
 static inline void
 ackInterrupt(irq_t irq)
 {
@@ -230,7 +211,6 @@ handleSpuriousIRQ(void)
 {
 }
 
-/** MODIFIES: [*] */
 void initIRQController(void);
 
 #endif /* !__ARCH_MACHINE_GICPL390_H */

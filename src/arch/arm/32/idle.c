@@ -11,7 +11,6 @@
 #include <config.h>
 #include <mode/machine.h>
 
-/** DONT_TRANSLATE */
 void idle_thread(void)
 {
     while (1) {
@@ -20,7 +19,7 @@ void idle_thread(void)
 }
 
 /** DONT_TRANSLATE */
-void VISIBLE halt(void)
+void NORETURN NO_INLINE VISIBLE halt(void)
 {
     /* halt is actually, idle thread without the interrupts */
     asm volatile("cpsid iaf");

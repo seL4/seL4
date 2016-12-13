@@ -49,9 +49,6 @@ extern interrupt_t active_irq;
 
 /* Get the active IRQ number from the AVIC.  Returns 0xff if
  * there isn't one. Note this is also known as irqInvalid */
-/**
-   DONT_TRANSLATE
- */
 static inline interrupt_t
 getActiveIRQ(void)
 {
@@ -77,9 +74,6 @@ isIRQPending(void)
 }
 
 /* Enable or disable irq according to the 'disable' flag. */
-/**
-   DONT_TRANSLATE
-*/
 static inline void
 maskInterrupt(bool_t disable, interrupt_t irq)
 {
