@@ -43,19 +43,8 @@ void Mode_initContext(user_context_t* context)
     context->registers[ESP] = 0;
 }
 
-word_t sanitiseRegister(register_t reg, word_t v)
+word_t Mode_sanitiseRegister(register_t reg, word_t v)
 {
-    if (reg == FLAGS) {
-        /* Set architecturally defined high and low bits */
-        v |=  FLAGS_HIGH;
-        v &= ~FLAGS_LOW;
-        /* require user to have interrupts and no traps */
-        v |=  FLAGS_IF;
-        /* Disallow setting Trap Flag: use the API instead */
-        v &= ~FLAGS_TF;
-        /* remove any other bits that shouldn't be set */
-        v &=  FLAGS_MASK;
-    }
     if (reg == FS || reg == GS) {
         if (v != SEL_TLS && v != SEL_IPCBUF) {
             v = 0;

@@ -74,7 +74,7 @@ void Mode_initContext(user_context_t* context)
     context->registers[RSP] = 0;
 }
 
-word_t sanitiseRegister(register_t reg, word_t v)
+word_t Mode_sanitiseRegister(register_t reg, word_t v)
 {
     if (reg == FaultIP || reg == NextIP) {
         /* ensure instruction address is canonical */
@@ -82,16 +82,6 @@ word_t sanitiseRegister(register_t reg, word_t v)
             /* no way to guess what the user wanted so give them zero */
             reg = 0;
         }
-    }
-    if (reg == FLAGS) {
-        /* Set architecturally defined high and low bits */
-        v |=  FLAGS_HIGH;
-        v &= ~FLAGS_LOW;
-        /* require user to have interrupts and no traps */
-        v |=  FLAGS_IF;
-        v &= ~FLAGS_TF;
-        /* remove any other bits that shouldn't be set */
-        v &=  FLAGS_MASK;
     }
     return v;
 }

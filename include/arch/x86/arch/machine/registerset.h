@@ -80,6 +80,7 @@ typedef struct user_context user_context_t;
 
 void Mode_initContext(user_context_t* context);
 void Arch_initContext(user_context_t* context);
+word_t Mode_sanitiseRegister(register_t reg, word_t v);
 word_t sanitiseRegister(register_t reg, word_t v);
 
 /* Ensure FPU state is aligned within user context. */

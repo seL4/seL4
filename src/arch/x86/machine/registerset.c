@@ -29,3 +29,20 @@ void Arch_initContext(user_context_t* context)
     Arch_initBreakpointContext(&context->breakpointState);
 #endif
 }
+
+word_t sanitiseRegister(register_t reg, word_t v)
+{
+    /* First perform any mode specific sanitization */
+    v = Mode_sanitiseRegister(reg, v);
+    if (reg == FLAGS) {
+        /* Set architecturally defined high and low bits */
+        v |=  FLAGS_HIGH;
+        v &= ~FLAGS_LOW;
+        /* require user to have interrupts and no traps */
+        v |=  FLAGS_IF;
+        v &= ~FLAGS_TF;
+        /* remove any other bits that shouldn't be set */
+        v &=  FLAGS_MASK;
+    }
+    return v;
+}
