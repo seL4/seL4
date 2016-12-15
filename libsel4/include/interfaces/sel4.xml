@@ -352,7 +352,7 @@
 
     </interface>
 
-    <interface name="seL4_CNode" manual_name="CNode" cap_description="">
+    <interface name="seL4_CNode" manual_name="CNode">
         <method id="CNodeRevoke" name="Revoke" manual_name="Revoke" manual_label="cnode_revoke">
             <brief>
                 Delete all child capabilities of a capability
