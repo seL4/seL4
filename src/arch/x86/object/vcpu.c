@@ -1027,7 +1027,13 @@ vtx_init(void)
             printf("vt-x: feature locked\n");
             return false;
         }
-        x86_wrmsr_parts(IA32_FEATURE_CONTROL_MSR, x86_rdmsr_high(IA32_FEATURE_CONTROL_MSR), feature_control_msr_set_vmx_outside_smx(feature_control, 1).words[0]);
+        feature_control = feature_control_msr_set_vmx_outside_smx(feature_control, 1);
+        x86_wrmsr_parts(IA32_FEATURE_CONTROL_MSR, x86_rdmsr_high(IA32_FEATURE_CONTROL_MSR), feature_control.words[0]);
+    }
+    /* make sure the msr is locked */
+    if (!feature_control_msr_get_lock(feature_control)) {
+        feature_control = feature_control_msr_set_lock(feature_control, 1);
+        x86_wrmsr_parts(IA32_FEATURE_CONTROL_MSR, x86_rdmsr_high(IA32_FEATURE_CONTROL_MSR), feature_control.words[0]);
     }
     /* Initialize the fixed values only on the boot core. All other cores
      * will just check that the fixed values are valid */
