@@ -313,6 +313,64 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
     return true;
 }
 
+static bool_t BOOT_CODE
+check_vtx_fixed_values(bool_t useTrueMsrs)
+{
+    uint32_t pinbased_ctls;
+    uint32_t procbased_ctls;
+    uint32_t exit_ctls;
+    uint32_t entry_ctls;
+    if (useTrueMsrs) {
+        pinbased_ctls = IA32_VMX_TRUE_PINBASED_CTLS_MSR;
+        procbased_ctls = IA32_VMX_TRUE_PROCBASED_CTLS_MSR;
+        exit_ctls = IA32_VMX_TRUE_EXIT_CTLS_MSR;
+        entry_ctls = IA32_VMX_TRUE_ENTRY_CTLS_MSR;
+    } else {
+        pinbased_ctls = IA32_VMX_PINBASED_CTLS_MSR;
+        procbased_ctls = IA32_VMX_PROCBASED_CTLS_MSR;
+        exit_ctls = IA32_VMX_EXIT_CTLS_MSR;
+        entry_ctls = IA32_VMX_ENTRY_CTLS_MSR;
+    }
+    uint32_t local_pin_control_high = x86_rdmsr_low(pinbased_ctls);
+    uint32_t local_pin_control_low = x86_rdmsr_high(pinbased_ctls);
+    uint32_t local_primary_control_high = x86_rdmsr_low(procbased_ctls);
+    uint32_t local_primary_control_low = x86_rdmsr_high(procbased_ctls);
+    uint32_t local_secondary_control_high = x86_rdmsr_low(IA32_VMX_PROCBASED_CTLS2_MSR);
+    uint32_t local_secondary_control_low = x86_rdmsr_high(IA32_VMX_PROCBASED_CTLS2_MSR);
+    uint32_t local_exit_control_high = x86_rdmsr_low(exit_ctls);
+    uint32_t local_exit_control_low = x86_rdmsr_high(exit_ctls);
+    uint32_t local_entry_control_high = x86_rdmsr_low(entry_ctls);
+    uint32_t local_entry_control_low = x86_rdmsr_high(entry_ctls);
+
+    uint32_t local_cr0_high = x86_rdmsr_low(IA32_VMX_CR0_FIXED0_MSR);
+    uint32_t local_cr0_low = x86_rdmsr_low(IA32_VMX_CR0_FIXED1_MSR);
+    uint32_t local_cr4_high = x86_rdmsr_low(IA32_VMX_CR4_FIXED0_MSR);
+    uint32_t local_cr4_low = x86_rdmsr_low(IA32_VMX_CR4_FIXED1_MSR);
+
+    /* We want to check that any bits that there are no bits that this core
+     * requires to be high, that the BSP did not require to be high. This can
+     * be checked with 'local_high & high == local_high'.
+     * Also need to make sure that the BSP has not determined that any bits should
+     * be high that this core requires to be low. This can be checked with
+     * '~local_low & high == 0'
+     */
+    return
+        (local_pin_control_high & pin_control_high) == local_pin_control_high &&
+        (~local_pin_control_low & pin_control_high) == 0 &&
+        (local_primary_control_high & primary_control_high) == local_primary_control_high &&
+        (~local_primary_control_low & primary_control_high) == 0 &&
+        (local_secondary_control_high & secondary_control_high) == local_secondary_control_high &&
+        (~local_secondary_control_low & secondary_control_high) == 0 &&
+        (local_exit_control_high & exit_control_high) == local_exit_control_high &&
+        (~local_exit_control_low & exit_control_high) == 0 &&
+        (local_entry_control_high & entry_control_high) == local_entry_control_high &&
+        (~local_entry_control_low & entry_control_high) == 0 &&
+        local_cr0_high == cr0_high &&
+        local_cr0_low == cr0_low &&
+        local_cr4_high == cr4_high &&
+        local_cr4_low == cr4_low;
+}
+
 static inline uint32_t
 applyFixedBits(uint32_t original, uint32_t high, uint32_t low)
 {
@@ -959,8 +1017,16 @@ vtx_init(void)
         }
         x86_wrmsr_parts(IA32_FEATURE_CONTROL_MSR, x86_rdmsr_high(IA32_FEATURE_CONTROL_MSR), feature_control_msr_set_vmx_outside_smx(feature_control, 1).words[0]);
     }
-    if (!init_vtx_fixed_values(vmx_basic_msr_get_true_msrs(vmx_basic))) {
-        printf("vt-x: disabled due to lack of required features\n");
+    /* Initialize the fixed values only on the boot core. All other cores
+     * will just check that the fixed values are valid */
+    if (SMP_TERNARY(getCurrentCPUIndex(), 0) == 0) {
+        if (!init_vtx_fixed_values(vmx_basic_msr_get_true_msrs(vmx_basic))) {
+            printf("vt-x: lack of required features\n");
+            return false;
+        }
+    }
+    if (!check_vtx_fixed_values(vmx_basic_msr_get_true_msrs(vmx_basic))) {
+        printf("vt-x: cores have inconsistent features\n");
         return false;
     }
     write_cr4(read_cr4() | CR4_VMXE);
