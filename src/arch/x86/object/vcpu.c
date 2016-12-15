@@ -224,7 +224,7 @@ vtx_check_fixed_values(word_t cr0, word_t cr4)
     return true;
 }
 
-static bool_t
+static bool_t BOOT_CODE
 init_vtx_fixed_values(bool_t useTrueMsrs)
 {
     uint32_t pin_control_mask =
