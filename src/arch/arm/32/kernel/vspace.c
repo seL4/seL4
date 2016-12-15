@@ -2931,14 +2931,14 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Invalid cap #%lu.", frame_cptr);
-        current_fault = fault_cap_fault_new(frame_cptr, false);
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
 
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (cap_get_capType(lu_ret.cap) != cap_frame_cap) {
         userError("Invalid cap. Log buffer should be of a frame cap");
-        current_fault = fault_cap_fault_new(frame_cptr, false);
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
 
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -2947,7 +2947,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     if (frameSize != ARMSection) {
         userError("Invalid frame size. The kernel expects 1M log buffer");
-        current_fault = fault_cap_fault_new(frame_cptr, false);
+        current_fault = seL4_Fault_CapFault_new(frame_cptr, false);
 
         return EXCEPTION_SYSCALL_ERROR;
     }
