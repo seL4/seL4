@@ -285,22 +285,22 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
     uint32_t missing;
     missing = (~pin_control_low) & pin_control_mask;
     if (missing) {
-        printf("v-tx: Unsupported pin control features %lx\n", (long)missing);
+        printf("vt-x: Unsupported pin control features %lx\n", (long)missing);
         return false;
     }
     missing = (~primary_control_low) & primary_control_mask;
     if (missing) {
-        printf("v-tx: Unsupported primary control features %lx\n", (long)missing);
+        printf("vt-x: Unsupported primary control features %lx\n", (long)missing);
         return false;
     }
     missing = (~secondary_control_low) & secondary_control_mask;
     if (missing) {
-        printf("v-tx: Unsupported secondary control features %lx\n", (long)missing);
+        printf("vt-x: Unsupported secondary control features %lx\n", (long)missing);
         return false;
     }
     missing = (~exit_control_low) & exit_control_mask;
     if (missing) {
-        printf("v-tx: Unsupported exit control features %lx\n", (long)missing);
+        printf("vt-x: Unsupported exit control features %lx\n", (long)missing);
         return false;
     }
 
