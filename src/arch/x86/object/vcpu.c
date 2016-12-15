@@ -82,6 +82,7 @@ static uint32_t cr4_low;
 /* these flags indicate the presence of specific VT-x features. These features
  * are checked for at boot time and are constant from then on */
 static bool_t vmx_feature_vpid;
+static bool_t vmx_feature_load_perf_global_ctrl;
 
 static vcpu_t *x86KSVPIDTable[VPID_LAST + 1];
 static vpid_t x86KSNextVPID = VPID_FIRST;
@@ -243,7 +244,6 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
         BIT(1);     //Enable EPT
     uint32_t exit_control_mask =
         BIT(2)  |   //Save debug controls
-        BIT(12) |   //Load IA32_PERF_GLOBAL_CTRL
         BIT(15) |   //Acknowledge interrupt on exit
         BIT(18) |   //Save guest IA32_PAT on exit
         BIT(19) |   //Load host IA32_PAT
@@ -291,6 +291,15 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
     } else {
         vmx_feature_vpid = 1;
         secondary_control_mask |= BIT(5);
+    }
+
+    /* Check for load perf global control */
+    if (!(exit_control_low & BIT(12))) {
+        vmx_feature_load_perf_global_ctrl = 0;
+        printf("vt-x: Load IA32_PERF_GLOBAL_CONTROL not supported. Hardware debugging may not work\n");
+    } else {
+        vmx_feature_load_perf_global_ctrl = 1;
+        exit_control_mask |= BIT(12);
     }
 
     /* See if the hardware requires bits that require to be high to be low */
@@ -415,7 +424,9 @@ vcpu_init(vcpu_t *vcpu)
     // By default we will disable performance counters when we come out
     // of a VM. When performance counters are supported this host state
     // needs to be updated on VM entry
-    vmwrite(VMX_HOST_PERF_GLOBAL_CTRL, 0);
+    if (vmx_feature_load_perf_global_ctrl) {
+        vmwrite(VMX_HOST_PERF_GLOBAL_CTRL, 0);
+    }
     vmwrite(VMX_HOST_CR0, read_cr0());
     vmwrite(VMX_HOST_CR4, read_cr4());
     vmwrite(VMX_HOST_FS_BASE, 0);
