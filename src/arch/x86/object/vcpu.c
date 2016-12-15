@@ -79,6 +79,10 @@ static uint32_t cr0_low;
 static uint32_t cr4_high;
 static uint32_t cr4_low;
 
+/* these flags indicate the presence of specific VT-x features. These features
+ * are checked for at boot time and are constant from then on */
+static bool_t vmx_feature_vpid;
+
 static vcpu_t *x86KSVPIDTable[VPID_LAST + 1];
 static vpid_t x86KSNextVPID = VPID_FIRST;
 
@@ -236,8 +240,7 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
         BIT(28) |   //Use MSR bitmaps
         BIT(31);    //Activate secondary controls
     uint32_t secondary_control_mask =
-        BIT(1) |    //Enable EPT
-        BIT(5);     //Enable VPID
+        BIT(1);     //Enable EPT
     uint32_t exit_control_mask =
         BIT(2)  |   //Save debug controls
         BIT(12) |   //Load IA32_PERF_GLOBAL_CTRL
@@ -280,6 +283,15 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
     cr0_low = x86_rdmsr_low(IA32_VMX_CR0_FIXED1_MSR);
     cr4_high = x86_rdmsr_low(IA32_VMX_CR4_FIXED0_MSR);
     cr4_low = x86_rdmsr_low(IA32_VMX_CR4_FIXED1_MSR);
+
+    /* Check for VPID support */
+    if (!(secondary_control_low & BIT(5))) {
+        vmx_feature_vpid = 0;
+        printf("vt-x: VPIDs are not supported. Expect performance degredation\n");
+    } else {
+        vmx_feature_vpid = 1;
+        secondary_control_mask |= BIT(5);
+    }
 
     /* See if the hardware requires bits that require to be high to be low */
     uint32_t missing;
@@ -1050,6 +1062,9 @@ vtx_init(void)
     clear_bit(msr_bitmap_region.low_msr_write.bitmap, IA32_SYSENTER_ESP_MSR);
     clear_bit(msr_bitmap_region.low_msr_write.bitmap, IA32_SYSENTER_EIP_MSR);
 
+    /* The VMX_EPT_VPID_CAP MSR exists if VMX supports EPT or VPIDs. Whilst
+     * VPID support is optional, EPT support is not and is already checked for,
+     * so we know that this MSR is safe to read */
     vpid_capability.words[0] = x86_rdmsr_low(IA32_VMX_EPT_VPID_CAP_MSR);
     vpid_capability.words[1] = x86_rdmsr_high(IA32_VMX_EPT_VPID_CAP_MSR);
 
@@ -1343,7 +1358,9 @@ setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
                           );
         vmwrite(VMX_CONTROL_EPT_POINTER, eptp.words[0]);
         assert(vcpu->vpid != VPID_INVALID);
-        invvpid_context(vcpu->vpid);
+        if (vmx_feature_vpid) {
+            invvpid_context(vcpu->vpid);
+        }
     }
 }
 
@@ -1432,7 +1449,9 @@ invalidateVPID(vpid_t vpid)
      * the ability for the references in IO port capabilities to invalidate */
     memset(vcpu->io, ~0, sizeof(vcpu->io));
     /* invalidate the VPID context */
-    invvpid_context(vpid);
+    if (vmx_feature_vpid) {
+        invvpid_context(vpid);
+    }
 }
 
 static vpid_t
@@ -1485,7 +1504,9 @@ restoreVMCS(void)
     if (expected_vmcs->vpid == VPID_INVALID) {
         vpid_t vpid = findFreeVPID();
         storeVPID(expected_vmcs, vpid);
-        vmwrite(VMX_CONTROL_VPID, vpid);
+        if (vmx_feature_vpid) {
+            vmwrite(VMX_CONTROL_VPID, vpid);
+        }
     }
     setEPTRoot(TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbArchEPTRoot)->cap, expected_vmcs);
     handleLazyFpu();
