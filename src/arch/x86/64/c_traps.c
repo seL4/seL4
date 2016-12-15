@@ -76,10 +76,10 @@ static void NORETURN restore_vmx(void)
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.vcpu->gp_registers[VCPU_EAX]),
-              [failed]"m"(vmlaunch_failed),
-              [stack_size]"i"(BIT(seL4_PageBits))
+            [failed]"m"(vmlaunch_failed),
+            [stack_size]"i"(BIT(seL4_PageBits))
 #if CONFIG_MAX_NUM_NODES > 1
-              ,[stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
+            , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
 #endif
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
@@ -117,10 +117,10 @@ static void NORETURN restore_vmx(void)
             "jmp *%%rax\n"
             :
             : [reg]"r"(&cur_thread->tcbArch.vcpu->gp_registers[VCPU_EAX]),
-              [failed]"m"(vmlaunch_failed),
-              [stack_size]"i"(BIT(seL4_PageBits))
+            [failed]"m"(vmlaunch_failed),
+            [stack_size]"i"(BIT(seL4_PageBits))
 #if CONFIG_MAX_NUM_NODES > 1
-              ,[stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
+            , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
 #endif
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
