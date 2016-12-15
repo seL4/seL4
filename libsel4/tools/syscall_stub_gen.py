@@ -84,8 +84,6 @@ TYPES = {
     64: "seL4_Uint64"
 }
 
-DEFAULT_CAP_DESC = "The capability to the %(interface_manual_name)s which is being operated on."
-
 class Type(object):
     """
     This class represents a C type (such as an 'int', structure or
@@ -758,7 +756,7 @@ def parse_xml_file(input_file, valid_types):
         interface_name = interface.getAttribute("name")
         interface_manual_name = interface.getAttribute("manual_name") or interface_name
 
-        interface_cap_description = interface.getAttribute("cap_description") or DEFAULT_CAP_DESC % {"interface_manual_name":interface_manual_name}
+        interface_cap_description = interface.getAttribute("cap_description")
 
         for method in interface.getElementsByTagName("method"):
             method_name = method.getAttribute("name")
