@@ -32,6 +32,8 @@
 #define DMTIMER7_PADDR  0x4804A000
 #define WDT1_PADDR      0x44e35000
 #define CMPER_PADDR     0x44e00000
-
+#define CTRL_PADDR      0x44E10000
+#define PRCM_PADDR      0x44E00000
+#define CPSW_PADDR      0x4A100000
 
 #endif

@@ -79,6 +79,9 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start = */ DMTIMER7_PADDR, /* .end = */ DMTIMER7_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ WDT1_PADDR,     /* .end = */ WDT1_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ CMPER_PADDR,    /* .end = */ CMPER_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ CTRL_PADDR,     /* .end = */ CTRL_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ PRCM_PADDR,     /* .end = */ PRCM_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ CPSW_PADDR,     /* .end = */ CPSW_PADDR + (1 << (PAGE_BITS + 4)) }
     /* Board devices. */
     /* TODO: This should ultimately be replaced with a more general solution. */
 };
