@@ -94,7 +94,9 @@ mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 static inline bool_t
 isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
-    return likely(cap_capType_equals(vspace_root_cap, cap_pml4_cap) && cap_pml4_cap_get_capPML4IsMapped(vspace_root_cap));
+    /* Check the cap is a pml4_cap, and that it is mapped. The fields are next
+       to each other, so they can be read and checked in parallel */
+    return (vspace_root_cap.words[0] >> (64 - 6)) == ((cap_pml4_cap << 1) | 0x1);
 }
 
 static inline void
