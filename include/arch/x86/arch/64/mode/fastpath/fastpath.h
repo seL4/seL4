@@ -47,7 +47,13 @@ endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
 static inline vspace_root_t *
 cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
 {
-    return PML4E_PTR((vtable_cap.words[1] & 0xffffffffffffull) | PPTR_BASE);
+    return PML4E_PTR(vtable_cap.words[1]);
+}
+
+static inline word_t
+cap_pml4_cap_get_capPML4MappedASID_fp(cap_t vtable_cap)
+{
+    return (uint32_t)vtable_cap.words[0];
 }
 
 static inline void FORCE_INLINE

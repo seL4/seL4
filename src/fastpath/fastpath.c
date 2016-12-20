@@ -96,7 +96,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_X86_64
     /* borrow the stored_hw_asid for PCID */
-    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
+    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
 #endif
 
     /* Ensure the destination has a higher/equal priority to us. */
