@@ -17,7 +17,7 @@
 #define PIT_CH0  0x40
 
 /* Count frequency in Hz */
-#define PIT_HZ 1193180
+#define PIT_HZ 1193182
 
 BOOT_CODE void
 pit_init(void)
