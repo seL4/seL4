@@ -25,12 +25,6 @@
    path. Instead, we can do the unpacking ourselves and explicitly set the high
    bits. */
 
-static inline cte_t *
-cap_cnode_cap_get_capCNodePtr_fp(cap_t cnode_cap)
-{
-    return CTE_PTR((cnode_cap.words[0] & 0xffffffffffffull) | PPTR_BASE);
-}
-
 static inline endpoint_t *
 cap_endpoint_cap_get_capEPPtr_fp(cap_t ep_cap)
 {

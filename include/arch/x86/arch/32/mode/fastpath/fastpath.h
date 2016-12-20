@@ -20,12 +20,6 @@
 #include <mode/stack.h>
 #include <arch/kernel/tlb_bitmap.h>
 
-static inline cte_t *
-cap_cnode_cap_get_capCNodePtr_fp(cap_t cnode_cap)
-{
-    return CTE_PTR(cap_cnode_cap_get_capCNodePtr(cnode_cap));
-}
-
 static inline endpoint_t *
 cap_endpoint_cap_get_capEPPtr_fp(cap_t ep_cap)
 {
