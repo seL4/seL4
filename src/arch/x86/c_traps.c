@@ -75,7 +75,7 @@ c_handle_interrupt(int irq, int syscall)
         NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FaultIP] -= 2;
         /* trap number is MSBs of the syscall number and the LSBS of EAX */
         sys_num = (irq << 24) | (syscall & 0x00ffffff);
-#ifdef TRACK_KERNEL_ENTIRES
+#ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_UnknownSyscall;
         ksKernelEntry.word = sys_num;
 #endif
@@ -113,13 +113,13 @@ slowpath(syscall_t syscall)
 #endif
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
-#ifdef TRACK_KERNEL_ENTIRES
+#ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_UnknownSyscall;
         /* ksKernelEntry.word word is already set to syscall */
 #endif /* TRACK_KERNEL_ENTRIES */
         handleUnknownSyscall(syscall);
     } else {
-#ifdef TRACK_KERNEL_ENTIRES
+#ifdef TRACK_KERNEL_ENTRIES
         ksEntry.is_fastpath = 0;
 #endif /* TRACK KERNEL ENTRIES */
         handleSyscall(syscall);

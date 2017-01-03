@@ -78,7 +78,7 @@ c_handle_interrupt(void)
 void NORETURN
 slowpath(syscall_t syscall)
 {
-#ifdef TRACK_KERNEL_ENTIRES
+#ifdef TRACK_KERNEL_ENTRIES
     ksEntry.is_fastpath = 0;
 #endif /* TRACK KERNEL ENTRIES */
     handleSyscall(syscall);
@@ -107,7 +107,7 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 #endif /* CONFIG_FASTPATH */
 
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
-#ifdef TRACK_KERNEL_ENTIRES
+#ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_UnknownSyscall;
         /* ksKernelEntry.word word is already set to syscall */
 #endif /* TRACK_KERNEL_ENTRIES */
