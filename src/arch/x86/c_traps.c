@@ -120,7 +120,7 @@ slowpath(syscall_t syscall)
         handleUnknownSyscall(syscall);
     } else {
 #ifdef TRACK_KERNEL_ENTRIES
-        ksEntry.is_fastpath = 0;
+        ksKernelEntry.is_fastpath = 0;
 #endif /* TRACK KERNEL ENTRIES */
         handleSyscall(syscall);
     }
