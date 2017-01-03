@@ -99,6 +99,24 @@ module_paddr_region_valid(paddr_t pa_start, paddr_t pa_end)
 /* functions not modeled in abstract specification */
 
 BOOT_CODE static paddr_t
+find_load_paddr(paddr_t min_paddr, word_t image_size)
+{
+    int i;
+
+    for (i = 0; i < boot_state.mem_p_regs.count; i++) {
+        paddr_t start = MAX(min_paddr, boot_state.mem_p_regs.list[i].start);
+        paddr_t end = boot_state.mem_p_regs.list[i].end;
+        word_t region_size = end - start;
+
+        if (region_size >= image_size) {
+            return start;
+        }
+    }
+
+    return 0;
+}
+
+BOOT_CODE static paddr_t
 load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
 {
     v_region_t v_reg;
@@ -139,6 +157,9 @@ load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
         printf("Userland image entry point does not lie within userland image\n");
         return 0;
     }
+
+    load_paddr = find_load_paddr(load_paddr, v_reg.end - v_reg.start);
+    assert(load_paddr);
 
     /* fill ui_info struct */
     boot_state.ui_info.pv_offset = load_paddr - v_reg.start;
