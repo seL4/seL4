@@ -75,6 +75,40 @@
 #define CONTROL_TRE 28 /* TEX remap enable */
 #define CONTROL_AP  29 /* Access Flag Enable */
 
+#ifdef CONFIG_PLAT_HIKEY
+/* Prefetcher register fields */
+#ifdef CONFIG_DEBUG_DISABLE_PREFETCHERS
+
+#define PREFETCHER         0x0
+#define PREFETCHER_MASK    0xE000
+
+#else /* CONFIG_DEBUG_DISABLE_PREFETCHERS */
+
+#define L1PCTL          (CONFIG_ARM_HIKEY_OUTSTANDING_PREFETCHERS << 13)      /* Number of outstanding prefetch streams */
+#define STRIDE          ((CONFIG_ARM_HIKEY_PREFETCHER_STRIDE-2) << 17)  /* Consecutive strides to trigger prefetch */
+#define NPFSTRM         ((CONFIG_ARM_HIKEY_PREFETCHER_NPFSTRM-1) << 19) /* Number of independent prefetch streams*/
+
+#ifndef CONFIG_ARM_HIKEY_PREFETCHER_STBPFDIS    /* Disable prefetch streams from STB access */
+#define STBPFDIS (1 << 22)
+#else
+#define STBPFDIS (0 << 22)
+#endif
+
+#ifdef CONFIG_ARM_HIKEY_PREFETCHER_STBPFRS      /* ReadUnique or ReadShared to initiate prefetch from STB access*/
+#define STBPFRS (1 << 23) 
+#else
+#define STBPFRS (0 << 23)
+#endif
+
+#define PREFETCHER      (L1PCTL | \
+                        STRIDE | \
+                        NPFSTRM | \
+                        STBPFDIS| \
+                        STBPFRS)
+#define PREFETCHER_MASK 0xDAE000       /* Mask bits */
+#endif /* CONFIG_DEBUG_DISABLE_PREFETCHERS */
+#endif /* CONFIG_PLAT_HIKEY */
+
 /* Processor mode encodings (for CPS etc.) */
 #define PMODE_USER       0x10
 #define PMODE_FIQ        0x11
