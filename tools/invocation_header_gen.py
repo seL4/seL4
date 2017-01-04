@@ -85,7 +85,11 @@ enum sel4_arch_invocation_label {
 #endif
     {{endif}}
     {{endfor}}
+    {{if len(invocations) == 0}}
+    nSeL4ArchInvocationLabels = nInvocationLabels,
+    {{else}}
     nSeL4ArchInvocationLabels
+    {{endif}}
 };
 
 #endif /* __{{header_title}}_SEL4_ARCH_INVOCATION_H */
@@ -118,7 +122,11 @@ enum arch_invocation_label {
 #endif
     {{endif}}
     {{endfor}}
+    {{if len(invocations) == 0}}
+    nArchInvocationLabels = nSeL4ArchInvocationLabels,
+    {{else}}
     nArchInvocationLabels
+    {{endif}}
 };
 
 #endif /* __{{header_title}}_ARCH_INVOCATION_H */
