@@ -95,7 +95,7 @@
 #endif
 
 #ifdef CONFIG_ARM_HIKEY_PREFETCHER_STBPFRS      /* ReadUnique or ReadShared to initiate prefetch from STB access*/
-#define STBPFRS (1 << 23) 
+#define STBPFRS (1 << 23)
 #else
 #define STBPFRS (0 << 23)
 #endif
