@@ -361,6 +361,8 @@ DEFINES += -DARM_CORTEX_A53
 endif
 endif # ARCH=arm
 ifeq (${ARCH}, x86)
+CFLAGS += -fno-pic
+LDFLAGS += -static
 ifeq (${SEL4_ARCH}, x86_64)
 CFLAGS += -m64 -fno-asynchronous-unwind-tables
 ASFLAGS += -Wa,--64
