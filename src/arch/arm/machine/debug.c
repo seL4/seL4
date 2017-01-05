@@ -27,10 +27,6 @@
 #define DBGDSCR_USER_ACCESS_DISABLE   (BIT(12))
 #define DBGDSCR_SECURE_MODE_DISABLED  (BIT(18))
 
-#define DBGBCR_ENABLE                 (BIT(0))
-
-#define DBGWCR_ENABLE                 (BIT(0))
-
 /* This bit is always RAO */
 #define DBGLSR_LOCK_IMPLEMENTED       (BIT(0))
 #define DBGLSR_LOCK_ENABLED           (BIT(1))
@@ -168,6 +164,14 @@ byte8WatchpointsSupported(void)
  */
 #define DBGAUTHSTATUS "p14,0,%0,c7,c14,6"
 
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+
+#define DBGBCR_ENABLE                 (BIT(0))
+
+#define DBGWCR_ENABLE                 (BIT(0))
+
 #define MAKE_P14(crn, crm, opc2) "p14, 0, %0, c" #crn ", c" #crm ", " #opc2
 #define MAKE_DBGBVR(num) MAKE_P14(0, num, 4)
 #define MAKE_DBGBCR(num) MAKE_P14(0, num, 5)
@@ -304,26 +308,6 @@ DEBUG_GENERATE_WRITE_FN(writeBvrCp, DBGBVR)
 DEBUG_GENERATE_WRITE_FN(writeWcrCp, DBGWCR)
 DEBUG_GENERATE_WRITE_FN(writeWvrCp, DBGWVR)
 
-/** For debugging: prints out the debug register pair values as returned by the
- * coprocessor.
- *
- * @param nBp Number of breakpoint reg pairs to print, starting at BP #0.
- * @param nBp Number of watchpoint reg pairs to print, starting at WP #0.
- */
-UNUSED static void
-dumpBpsAndWpsCp(int nBp, int nWp)
-{
-    int i;
-
-    for (i = 0; i < nBp; i++) {
-        userError("CP BP %d: Bcr %lx, Bvr %lx", i, readBcrCp(i), readBvrCp(i));
-    }
-
-    for (i = 0; i < nWp; i++) {
-        userError("CP WP %d: Wcr %lx, Wvr %lx", i, readWcrCp(i), readWvrCp(i));
-    }
-}
-
 /* These next few functions (read*Context()/write*Context()) read from TCB
  * context and not from the hardware registers.
  */
@@ -381,6 +365,30 @@ writeWvrContext(arch_tcb_t *at, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
     at->tcbContext.breakpointState.watchpoint[index].vr = val;
+}
+
+#endif /* CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+
+/** For debugging: prints out the debug register pair values as returned by the
+ * coprocessor.
+ *
+ * @param nBp Number of breakpoint reg pairs to print, starting at BP #0.
+ * @param nBp Number of watchpoint reg pairs to print, starting at WP #0.
+ */
+UNUSED static void
+dumpBpsAndWpsCp(int nBp, int nWp)
+{
+    int i;
+
+    for (i = 0; i < nBp; i++) {
+        userError("CP BP %d: Bcr %lx, Bvr %lx", i, readBcrCp(i), readBvrCp(i));
+    }
+
+    for (i = 0; i < nWp; i++) {
+        userError("CP WP %d: Wcr %lx, Wvr %lx", i, readWcrCp(i), readWvrCp(i));
+    }
 }
 
 /** Print a thread's saved debug context. For debugging. This differs from
@@ -1170,6 +1178,10 @@ handleUserLevelDebugException(word_t fault_vaddr)
     return ret;
 }
 
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+
 /** Mirrors Arch_initFpuContext.
  *
  * Zeroes out the BVR thread context and preloads reserved bit values from the
@@ -1191,7 +1203,7 @@ Arch_initBreakpointContext(user_breakpoint_state_t *uds)
     }
 }
 
-static void
+void
 loadAllDisabledBreakpointState(void)
 {
     int i;
@@ -1212,6 +1224,60 @@ loadAllDisabledBreakpointState(void)
     for (i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
         writeWcrCp(i, readWcrCp(i) & ~DBGWCR_ENABLE);
     }
+}
+
+/* We only need to save the breakpoint state in the hypervisor
+ * build, and only for threads that have an associated VCPU.
+ *
+ * When the normal kernel is running with the debug API, all
+ * changes to the debug regs are done through the debug API.
+ * In the hypervisor build, the guest VM has full access to the
+ * debug regs in PL1, so we need to save its values on vmexit.
+ *
+ * When saving the debug regs we will always save all of them.
+ * When restoring, we will restore only those that have been used
+ * for native threads; and we will restore all of them
+ * unconditionally for VCPUs (because we don't know which of
+ * them have been changed by the guest).
+ *
+ * To ensure that all the debug regs are restored unconditionally,
+ * we just set the "used_breakpoints_bf" bitfield to all 1s in
+ * associateVcpu.
+ */
+void
+saveAllBreakpointState(arch_tcb_t *at)
+{
+    int i;
+
+    assert(at != NULL);
+
+    for (i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
+        writeBvrContext(at, i, readBvrCp(i));
+        writeBcrContext(at, i, readBcrCp(i));
+    }
+
+    for (i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
+        writeWvrContext(at, i, readWvrCp(i));
+        writeWcrContext(at, i, readWcrCp(i));
+    }
+}
+
+void
+Arch_debugAssociateVCPUTCB(tcb_t *t)
+{
+    /* Don't attempt to shift beyond end of word. */
+    assert(seL4_NumHWBreakpoints < sizeof(word_t) * 8);
+
+    /* Set all the bits to 1, so loadBreakpointState() will
+     * restore all the debug regs unconditionally.
+     */
+    t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf = MASK(seL4_NumHWBreakpoints);
+}
+
+void
+Arch_debugDissociateVCPUTCB(tcb_t *t)
+{
+    t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf = 0;
 }
 
 static void
@@ -1268,4 +1334,4 @@ restore_user_debug_context(tcb_t *target_thread)
      */
 }
 
-#endif /* CONFIG_HARDWARE_DEBUG_API */
+#endif /* CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT */

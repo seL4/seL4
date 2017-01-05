@@ -16,6 +16,14 @@
 #include <plat/api/constants.h>
 #include <armv/debug.h>
 
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+void restore_user_debug_context(tcb_t *target_thread);
+void Arch_debugAssociateVCPUTCB(tcb_t *t);
+void Arch_debugDissociateVCPUTCB(tcb_t *t);
+void saveAllBreakpointState(arch_tcb_t *at);
+void loadAllDisabledBreakpointState(void);
+#endif
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
 static uint16_t

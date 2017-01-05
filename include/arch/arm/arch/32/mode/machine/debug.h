@@ -194,8 +194,6 @@ unsetBreakpointUsedFlag(arch_tcb_t *uds, uint16_t bp_num)
     }
 }
 
-void restore_user_debug_context(tcb_t *target_thread);
-
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
 #endif /* !__ASSEMBLER__ */

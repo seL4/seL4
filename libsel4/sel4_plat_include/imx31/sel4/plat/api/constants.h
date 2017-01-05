@@ -17,12 +17,15 @@
 #include <autoconf.h>
 #endif
 
-#ifdef CONFIG_HARDWARE_DEBUG_API
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
 /* ARM1136-JF-S manual, table 13-3 */
 #define seL4_NumHWBreakpoints (8)
 #define seL4_NumExclusiveBreakpoints (6)
-#define seL4_FirstWatchpoint (6)
 #define seL4_NumExclusiveWatchpoints (2)
+#endif
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+#define seL4_FirstWatchpoint (6)
 #define seL4_NumDualFunctionMonitors (0)
 #endif
 

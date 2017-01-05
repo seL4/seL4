@@ -14,6 +14,7 @@
 
 #include <arch/object/vcpu.h>
 #include <plat/machine/devices.h>
+#include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
 
 #define HCR_TGE      BIT(27)     /* Trap general exceptions        */
 #define HCR_TVM      BIT(26)     /* Trap MMU access                */
@@ -405,6 +406,22 @@ vcpu_enable(vcpu_t *vcpu)
 
     /* Turn on the VGIC */
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
+
+#ifndef CONFIG_HARDWARE_DEBUG_API
+    /* This is guarded by an #ifNdef (negation) because if it wasn't, we'd be
+     * calling restore_user_debug_context twice on a debug-API build; recall
+     * that restore_user_debug_context is called in restore_user_context.
+     *
+     * We call restore_user_debug_context here, because vcpu_restore calls this
+     * function (vcpu_enable). It's better to embed the
+     * restore_user_debug_context call in here than to call it in the outer
+     * level caller (vcpu_switch), because if the structure of this VCPU code
+     * changes later on, it will be less likely that the person who changes
+     * the code will be able to omit the debug register context restore, if
+     * it's done here.
+     */
+    restore_user_debug_context(vcpu->tcb);
+#endif
 }
 
 static void
@@ -423,6 +440,13 @@ vcpu_disable(vcpu_t *vcpu)
     /* Stage 1 MMU off */
     setSCTLR(SCTLR_DEFAULT);
     setHCR(HCR_NATIVE);
+
+    /* Disable all breakpoint registers from triggering their
+     * respective events, so that when we switch from a guest VM
+     * to a native thread, the native thread won't trigger events
+     * that were caused by things the guest VM did.
+     */
+    loadAllDisabledBreakpointState();
     isb();
 }
 
@@ -479,6 +503,17 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     vcpu->r11_fiq = get_r11_fiq();
     vcpu->r12_fiq = get_r12_fiq();
 
+    /* This is unconditionally done even when the hypervisor is
+     * not exporting the debug API. The Guest VMs should be able
+     * make changes to the debug regs, and see their changes
+     * preserved across guest VM context switches.
+     *
+     * The hypervisor build doesn't have to worry about saving
+     * and restoring native threads' debug register state when
+     * not exporting the debug API, because in that case, native
+     * threads can't modify the debug registers (i.e, without the API).
+     */
+    saveAllBreakpointState(&vcpu->tcb->tcbArch);
     isb();
 }
 
@@ -795,6 +830,7 @@ vcpu_switch(vcpu_t *new)
             armHSVCPUActive = true;
         } else if (unlikely(armHSVCPUActive)) {
             /* leave the current VCPU state loaded, but disable vgic and mmu */
+            saveAllBreakpointState(&armHSCurVCPU->tcb->tcbArch);
             vcpu_disable(armHSCurVCPU);
             armHSVCPUActive = false;
         }
@@ -847,6 +883,8 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     }
     tcb->tcbArch.vcpu = NULL;
     vcpu->tcb = NULL;
+    Arch_debugDissociateVCPUTCB(tcb);
+
     /* sanitize the CPSR as without a VCPU a thread should only be in user mode */
     setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), &tcb->tcbArch));
 }

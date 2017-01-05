@@ -14,7 +14,7 @@
 #include <arch/linker.h>
 #include <mode/fastpath/fastpath.h>
 #include <benchmark/benchmark_track.h>
-#include <mode/machine/debug.h>
+#include <arch/machine/debug.h>
 
 void slowpath(syscall_t syscall)
 NORETURN;

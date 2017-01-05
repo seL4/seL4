@@ -149,7 +149,7 @@ extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
 
-#ifdef CONFIG_HARDWARE_DEBUG_API
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
 typedef struct debug_register_pair {
     word_t cr, vr;
 } debug_register_pair_t;
@@ -177,7 +177,7 @@ void Arch_initBreakpointContext(user_breakpoint_state_t *context);
  */
 struct user_context {
     word_t registers[n_contextRegisters];
-#ifdef CONFIG_HARDWARE_DEBUG_API
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
     user_breakpoint_state_t breakpointState;
 #endif
 };
@@ -192,7 +192,7 @@ compile_assert(registers_are_first_member_of_user_context,
 static inline void Arch_initContext(user_context_t* context)
 {
     context->registers[CPSR] = CPSR_USER;
-#ifdef CONFIG_HARDWARE_DEBUG_API
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
     Arch_initBreakpointContext(&context->breakpointState);
 #endif
 }
