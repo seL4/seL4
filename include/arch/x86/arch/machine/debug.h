@@ -106,6 +106,22 @@ restore_user_debug_context(tcb_t *target_thread)
     /* If single-stepping was enabled, we need to re-set the TF flag as well. */
     if (uds->tcbContext.breakpointState.single_step_enabled == true) {
         uds->tcbContext.registers[FLAGS] |= FLAGS_TF;
+        /* Under ia32 we also need to ensure we return via an IRET as the
+         * sysexit return path will pop flags a couple of instructions
+         * before performing sysexit resulting in an exception, due to
+         * single stepping, inside the kernel. To avoid this we will
+         * return via an IRET, which atomically pops the flags and
+         * returns to user level */
+#ifdef CONFIG_ARCH_IA32
+        if (getRegister(target_thread, Error) == -1) {
+            setRegister(target_thread, Error, 0);
+            /* As we did not come in from an interrupt there is no guarantee
+             * the CS and SS in the context are set to anything sensible, so
+             * force them to the correct user value */
+            setRegister(target_thread, CS, SEL_CS_3);
+            setRegister(target_thread, SS, SEL_DS_3);
+        }
+#endif
     }
 }
 

@@ -131,6 +131,7 @@ void NORETURN VISIBLE restore_user_context(void)
 
     /* see if we entered via syscall */
     if (likely(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1)) {
+        NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
             "movl %0, %%esp\n"
@@ -177,14 +178,13 @@ void NORETURN VISIBLE restore_user_context(void)
             // skip cs
             "addl $4,  %%esp\n"
             "movl 4(%%esp), %%ecx\n"
-            // It is not properly documented but on ia32 (but NOT x86-64) if interrupts
-            // are enabled as a result of popf then they will not become enabled till
-            // after the next instruction (much like sti)
-            // see https://lkml.org/lkml/2004/7/15/6
             "popfl\n"
+            "orl %[IFMASK], -4(%%esp)\n"
+            "sti\n"
             "sysexit\n"
             :
-            : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers)
+            : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers),
+              [IFMASK]"i"(FLAGS_IF)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"

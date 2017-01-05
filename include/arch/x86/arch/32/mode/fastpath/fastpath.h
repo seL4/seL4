@@ -129,6 +129,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(cur_thread);
+    assert(!cur_thread->tcbArch.tcbContext.breakpointState.single_step_enabled);
 #endif
 
     setKernelEntryStackPointer(cur_thread);
@@ -139,6 +140,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     base = cur_thread->tcbIPCBuffer;
     x86_write_fs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
 
+    cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
     if (likely(hasDefaultSelectors(cur_thread))) {
         asm volatile(
             "movl %%ecx, %%esp\n"
@@ -158,12 +160,15 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "movl 8(%%esp), %%ecx \n"
             "addl $4, %%esp \n"
             "popfl \n"
+            "orl %[IFMASK], -4(%%esp)\n"
+            "sti\n"
             "sysexit \n"
             :
             : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
             "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
             "b" (badge),
-            "S" (msgInfo)
+            "S" (msgInfo),
+            [IFMASK]"i"(FLAGS_IF)
             : "memory"
         );
     } else {
@@ -186,12 +191,15 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "movl 8(%%esp), %%ecx \n"
             "addl $4, %%esp \n"
             "popfl \n"
+            "orl %[IFMASK], -4(%%esp)\n"
+            "sti\n"
             "sysexit \n"
             :
             : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
             "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
             "b" (badge),
-            "S" (msgInfo)
+            "S" (msgInfo),
+            [IFMASK]"i"(FLAGS_IF)
             : "memory"
         );
     }

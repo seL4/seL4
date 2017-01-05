@@ -71,6 +71,13 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
+    /* ensure we are not single stepping the destination in ia32 */
+#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARCH_IA32)
+    if (dest->tcbArch.tcbContext.breakpointState.single_step_enabled) {
+        slowpath(SysCall);
+    }
+#endif
+
     /* Get destination thread.*/
     newVTable = TCB_PTR_CTE_PTR(dest, tcbVTable)->cap;
 
@@ -243,6 +250,13 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* Determine who the caller is. */
     caller = TCB_PTR(cap_reply_cap_get_capTCBPtr(callerCap));
+
+    /* ensure we are not single stepping the caller in ia32 */
+#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARCH_IA32)
+    if (caller->tcbArch.tcbContext.breakpointState.single_step_enabled) {
+        slowpath(SysReplyRecv);
+    }
+#endif
 
     /* Check that the caller has not faulted, in which case a fault
        reply is generated instead. */
