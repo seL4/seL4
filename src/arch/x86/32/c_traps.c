@@ -184,7 +184,7 @@ void NORETURN VISIBLE restore_user_context(void)
             "sysexit\n"
             :
             : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers),
-              [IFMASK]"i"(FLAGS_IF)
+            [IFMASK]"i"(FLAGS_IF)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
