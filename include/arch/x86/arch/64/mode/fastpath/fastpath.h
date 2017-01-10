@@ -25,12 +25,6 @@
    path. Instead, we can do the unpacking ourselves and explicitly set the high
    bits. */
 
-static inline endpoint_t *
-cap_endpoint_cap_get_capEPPtr_fp(cap_t ep_cap)
-{
-    return EP_PTR((ep_cap.words[0] & 0xffffffffffffull) | PPTR_BASE);
-}
-
 static inline tcb_t *
 endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
 {

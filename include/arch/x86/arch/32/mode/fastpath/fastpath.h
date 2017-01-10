@@ -20,12 +20,6 @@
 #include <mode/stack.h>
 #include <arch/kernel/tlb_bitmap.h>
 
-static inline endpoint_t *
-cap_endpoint_cap_get_capEPPtr_fp(cap_t ep_cap)
-{
-    return EP_PTR(cap_endpoint_cap_get_capEPPtr(ep_cap));
-}
-
 static inline tcb_t *
 endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
 {

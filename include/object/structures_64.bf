@@ -30,14 +30,14 @@ block untyped_cap {
 
 block endpoint_cap(capEPBadge, capType, capCanGrant, capCanSend, capCanReceive,
                    capEPPtr) {
-    field capEPBadge 64
+    field capEPPtr 64
 
     field capType 5
     field capCanGrant 1
     field capCanReceive 1
     field capCanSend 1
-    padding 8
-    field_high capEPPtr 48
+    padding 28
+    field capEPBadge 28
 }
 
 block notification_cap {

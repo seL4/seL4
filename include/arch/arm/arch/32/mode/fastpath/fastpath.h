@@ -25,7 +25,6 @@ compile_assert(SysCall_Minus1, SysCall == -1)
 compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 
 /* Use macros to not break verification */
-#define cap_endpoint_cap_get_capEPPtr_fp(ep_cap) EP_PTR(cap_endpoint_cap_get_capEPPtr(ep_cap))
 #define endpoint_ptr_get_epQueue_tail_fp(ep_ptr) TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr))
 #define cap_vtable_cap_get_vspace_root_fp(vtable_cap) PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vtable_cap))
 
