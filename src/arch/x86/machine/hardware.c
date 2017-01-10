@@ -104,7 +104,8 @@ disablePrefetchers()
                                 IVY_BRIDGE_1_MODEL_ID,  IVY_BRIDGE_2_MODEL_ID,
                                 IVY_BRIDGE_3_MODEL_ID,
                                 SANDY_BRIDGE_1_MODEL_ID, SANDY_BRIDGE_2_MODEL_ID, WESTMERE_1_MODEL_ID, WESTMERE_2_MODEL_ID,
-                                WESTMERE_3_MODEL_ID, NEHALEM_1_MODEL_ID, NEHALEM_2_MODEL_ID, NEHALEM_3_MODEL_ID
+                                WESTMERE_3_MODEL_ID, NEHALEM_1_MODEL_ID, NEHALEM_2_MODEL_ID, NEHALEM_3_MODEL_ID,
+                                SKYLAKE_1_MODEL_ID, SKYLAKE_2_MODEL_ID
                               };
 
     model_info = x86_cpuid_get_model_info();

@@ -529,7 +529,7 @@ menu "Build Options"
 
     config DEBUG_DISABLE_PREFETCHERS
         bool "Disable prefetchers"
-        depends on ARCH_IA32 || PLAT_HIKEY
+        depends on ARCH_X86 || PLAT_HIKEY
         default n
         help
             On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 
