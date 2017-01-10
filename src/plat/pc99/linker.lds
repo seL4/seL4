@@ -14,6 +14,7 @@ ENTRY(_start)
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 #if defined(CONFIG_ARCH_IA32)
+#undef i386
 PADDR_BASE = 0x00000000;
 PADDR_LOAD = 0x00100000;
 KERNEL_BASE  = 0xe0000000;
