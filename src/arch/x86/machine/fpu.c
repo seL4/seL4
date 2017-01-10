@@ -137,9 +137,14 @@ Arch_initFpu(void)
         /* enable feature mask */
         write_xcr0(desired_features);
         /* validate the xsave buffer size and instruction */
-        if (x86_cpuid_ebx(0x0d, 0x0) != CONFIG_XSAVE_SIZE) {
-            printf("XSAVE buffer set set to %d, but should be %d\n", CONFIG_XSAVE_SIZE, x86_cpuid_ebx(0x0d, 0x0));
+        if (x86_cpuid_ebx(0x0d, 0x0) > CONFIG_XSAVE_SIZE) {
+            printf("XSAVE buffer set set to %d, but needs to be at least %d\n", CONFIG_XSAVE_SIZE, x86_cpuid_ebx(0x0d, 0x0));
             return false;
+        }
+        if (x86_cpuid_ebx(0x0d, 0x0) < CONFIG_XSAVE_SIZE) {
+            printf("XSAVE buffer set set to %d, but only needs to be %d.\n"
+                   "Warning: Memory may be wasted with larger than needed TCBs.\n",
+                   CONFIG_XSAVE_SIZE, x86_cpuid_ebx(0x0d, 0x0));
         }
         /* check if a specialized XSAVE instruction was requested */
         xsave_instruction = x86_cpuid_eax(0x0d, 0x1);
