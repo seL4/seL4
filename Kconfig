@@ -34,7 +34,7 @@ config KERNEL_MASTER
 config WORD_SIZE
     int
     default 32 if ARCH_IA32 || ARCH_AARCH32
-    default 64 if ARCH_X86_64
+    default 64 if ARCH_X86_64 || ARCH_AARCH64
 
 menu "seL4 System"
 
@@ -56,13 +56,18 @@ menu "seL4 System"
         default n
         depends on ARCH_X86
 
+    config ARCH_AARCH64
+        bool "64-bit kernel"
+        default n
+        depends on ARCH_ARM
+
     config ARCH_IA32
         bool
         default y if !ARCH_X86_64 && ARCH_X86
 
     config ARCH_AARCH32
         bool
-        default y if ARCH_ARM
+        default y if !ARCH_AARCH64 && ARCH_ARM
 
     # CPU values.
 
@@ -116,7 +121,7 @@ menu "seL4 System"
 
         config PLAT_KZM
             bool "KZM iMX.31 (ARMv6, ARM1136JF-S)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM1136JF_S
             select ARCH_ARM_V6
             help
@@ -124,7 +129,7 @@ menu "seL4 System"
 
         config PLAT_OMAP3
             bool "OMAP3 (BeagleBoard, ARMv7a, Cortex A8)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A8
             select ARCH_ARM_V7A
             help
@@ -132,7 +137,7 @@ menu "seL4 System"
 
         config PLAT_AM335X
             bool "AM335X (BeagleBone, ARMv7a, Cortex A8)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A8
             select ARCH_ARM_V7A
             help
@@ -140,7 +145,7 @@ menu "seL4 System"
 
         config PLAT_EXYNOS4
             bool "EXYNOS4 (ODROID-X, ARMv7a, Cortex A9)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A9
             select ARCH_ARM_V7A
             help
@@ -148,8 +153,8 @@ menu "seL4 System"
 
         config PLAT_EXYNOS5410
             bool "EXYNOS5410 (ODROID-XU, ARMv7a, Cortex A15)"
-	    select PLAT_EXYNOS54XX
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
+            select PLAT_EXYNOS54XX
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help
@@ -157,8 +162,8 @@ menu "seL4 System"
 
         config PLAT_EXYNOS5422
             bool "EXYNOS5422 (ODROID-XU3, ARMv7a, Cortex A15)"
-	    select PLAT_EXYNOS54XX
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
+            select PLAT_EXYNOS54XX
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help
@@ -166,7 +171,7 @@ menu "seL4 System"
 
         config PLAT_EXYNOS5250
             bool "EXYNOS5250 (ARNDALE, ARMv7a, Cortex A15)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help
@@ -174,7 +179,7 @@ menu "seL4 System"
 
         config PLAT_APQ8064
             bool "Qualcomm Snapdrogon S4 APQ8064 (Inforce IFC6410, ARMv7a, Cortex A15)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help
@@ -182,7 +187,7 @@ menu "seL4 System"
 
         config PLAT_SABRE
             bool "iMX6 (Sabre Lite, ARMv7a, Cortex A9)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A9
             select ARCH_ARM_V7A
             select PLAT_IMX6
@@ -191,7 +196,7 @@ menu "seL4 System"
 
         config PLAT_WANDQ
             bool "iMX6 (Wandboard Quad, ARMv7a, Cortex A9)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A9
             select ARCH_ARM_V7A
             select PLAT_IMX6
@@ -200,7 +205,7 @@ menu "seL4 System"
 
         config PLAT_IMX7_SABRE
             bool "iMX7 (Sabre, ARMv7a, Cortex A7)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A7
             select ARCH_ARM_V7A
             select PLAT_IMX7
@@ -209,7 +214,7 @@ menu "seL4 System"
 
         config PLAT_ZYNQ7000
             bool "Zynq-7000 (Xilinx ZC706, ARMv7a, Cortex A9)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A9
             select ARCH_ARM_V7A
             help
@@ -223,7 +228,7 @@ menu "seL4 System"
 
         config PLAT_ALLWINNERA20
             bool "ALLWINNERA20 (CUBIETRUCK, ARMv7a, Cortex A15)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help
@@ -231,14 +236,14 @@ menu "seL4 System"
 
         config PLAT_TK1
             bool "Jetson (Tegra K1, ARMv7a, Cortex A15)"
-            depends on ARCH_ARM
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help
                 Support for Tegra K1 platform
 
         config PLAT_HIKEY
-            bool "HiKey (ARMv8a, Cortex A53)"
+            bool "HiKey (Hi6220, ARMv8a, Cortex A53)"
             depends on ARCH_ARM
             select ARM_CORTEX_A53
             select ARCH_ARM_V8A
@@ -246,8 +251,8 @@ menu "seL4 System"
                 Support for HiKey platform.
 
         config PLAT_BCM2837
-            bool "Raspberry Pi 3 (BCM2837, ARMv7a, Cortex A53)"
-            depends on ARCH_ARM
+            bool "Raspberry Pi 3 (BCM2837, ARMv8a, Cortex A53)"
+            depends on ARCH_AARCH32
             select ARM_CORTEX_A53
             select ARCH_ARM_V8A
             help
