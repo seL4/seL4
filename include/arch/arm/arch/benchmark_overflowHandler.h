@@ -10,6 +10,8 @@
 #include <armv/benchmark_irqHandler.h>
 #endif /* CONFIG_PLAT_KZM */
 
+extern bool_t benchmark_log_utilisation_enabled;
+
 static inline void handleOverflowIRQ(void)
 {
     if (likely(benchmark_log_utilisation_enabled)) {
