@@ -376,6 +376,7 @@ menu "seL4 System Parameters"
 
     config CACHE_LN_SZ
         int "Cache line size"
+        depends on ARCH_X86
         default 64
         help
             Define cache line size for the current architecture
