@@ -25,18 +25,6 @@
    path. Instead, we can do the unpacking ourselves and explicitly set the high
    bits. */
 
-static inline cte_t *
-cap_cnode_cap_get_capCNodePtr_fp(cap_t cnode_cap)
-{
-    return CTE_PTR((cnode_cap.words[0] & 0xffffffffffffull) | PPTR_BASE);
-}
-
-static inline endpoint_t *
-cap_endpoint_cap_get_capEPPtr_fp(cap_t ep_cap)
-{
-    return EP_PTR((ep_cap.words[0] & 0xffffffffffffull) | PPTR_BASE);
-}
-
 static inline tcb_t *
 endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
 {
@@ -47,7 +35,13 @@ endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
 static inline vspace_root_t *
 cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
 {
-    return PML4E_PTR((vtable_cap.words[1] & 0xffffffffffffull) | PPTR_BASE);
+    return PML4E_PTR(vtable_cap.words[1]);
+}
+
+static inline word_t
+cap_pml4_cap_get_capPML4MappedASID_fp(cap_t vtable_cap)
+{
+    return (uint32_t)vtable_cap.words[0];
 }
 
 static inline void FORCE_INLINE
@@ -94,7 +88,9 @@ mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 static inline bool_t
 isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
-    return likely(cap_capType_equals(vspace_root_cap, cap_pml4_cap) && cap_pml4_cap_get_capPML4IsMapped(vspace_root_cap));
+    /* Check the cap is a pml4_cap, and that it is mapped. The fields are next
+       to each other, so they can be read and checked in parallel */
+    return (vspace_root_cap.words[0] >> (64 - 6)) == ((cap_pml4_cap << 1) | 0x1);
 }
 
 static inline void

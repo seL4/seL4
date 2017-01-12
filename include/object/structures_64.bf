@@ -30,14 +30,14 @@ block untyped_cap {
 
 block endpoint_cap(capEPBadge, capType, capCanGrant, capCanSend, capCanReceive,
                    capEPPtr) {
-    field capEPBadge 64
+    field capEPPtr 64
 
     field capType 5
     field capCanGrant 1
     field capCanReceive 1
     field capCanSend 1
-    padding 8
-    field_high capEPPtr 48
+    padding 28
+    field capEPBadge 28
 }
 
 block notification_cap {
@@ -61,14 +61,13 @@ block reply_cap(capReplyMaster, capTCBPtr, capType) {
 -- The user-visible format of the data word is defined by cnode_capdata, below.
 block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
                 capType, capCNodePtr) {
-    padding 34
+    field capCNodePtr 64
+
+    field capType 5
+    padding 29
     field capCNodeGuardSize 6
     field capCNodeRadix 6
     field capCNodeGuard 18
-
-    field capType 5
-    padding 11
-    field_high capCNodePtr 48
 }
 
 block cnode_capdata {

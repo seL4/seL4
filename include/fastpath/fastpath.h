@@ -42,7 +42,7 @@ lookup_fp(cap_t cap, cptr_t cptr)
         }
 
         radix = cptr2 << guardBits >> (wordBits - radixBits);
-        slot = cap_cnode_cap_get_capCNodePtr_fp(cap) + radix;
+        slot = CTE_PTR(cap_cnode_cap_get_capCNodePtr(cap)) + radix;
 
         cap = slot->cap;
         bits += guardBits + radixBits;

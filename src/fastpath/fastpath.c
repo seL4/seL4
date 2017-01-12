@@ -60,7 +60,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     }
 
     /* Get the endpoint address */
-    ep_ptr = cap_endpoint_cap_get_capEPPtr_fp(ep_cap);
+    ep_ptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(ep_cap));
 
     /* Get the destination thread, which is only going to be valid
      * if the endpoint is valid. */
@@ -96,7 +96,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_X86_64
     /* borrow the stored_hw_asid for PCID */
-    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
+    stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
 #endif
 
     /* Ensure the destination has a higher/equal priority to us. */
@@ -234,7 +234,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     }
 
     /* Get the endpoint address */
-    ep_ptr = cap_endpoint_cap_get_capEPPtr_fp(ep_cap);
+    ep_ptr = EP_PTR(cap_endpoint_cap_get_capEPPtr(ep_cap));
 
     /* Check that there's not a thread waiting to send */
     if (unlikely(endpoint_ptr_get_state(ep_ptr) == EPState_Send)) {

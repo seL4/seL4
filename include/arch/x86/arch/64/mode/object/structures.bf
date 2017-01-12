@@ -76,14 +76,13 @@ block pdpt_cap {
     padding                          49
 }
 
-block pml4_cap {
-    padding                         4
-    field       capPML4MappedASID   12
-    field_high  capPML4BasePtr      48
+block pml4_cap(capPML4MappedASID, capPML4BasePtr, capType, capPML4IsMapped) {
+    field       capPML4BasePtr      64
 
     field       capType             5
     field       capPML4IsMapped     1
-    padding                         58
+    padding                         46
+    field       capPML4MappedASID   12
 }
 
 -- Cap to the table of 2^6 ASID pools
