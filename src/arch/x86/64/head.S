@@ -407,7 +407,7 @@ BEGIN_FUNC(_entry_64)
     pop %rsi
 
     /* Load our real kernel stack */
-    leaq kernel_stack_alloc + 0x1000, %rsp
+    leaq kernel_stack_alloc + (1 << CONFIG_KERNEL_STACK_BITS), %rsp
 
     movabs $restore_user_context, %rax
     push %rax
@@ -484,9 +484,9 @@ BEGIN_FUNC(_entry_ap64)
 
     /* Switch to a real kernel stack */
     leaq kernel_stack_alloc, %rsp
-    shlq $12, %rcx
+    inc %rcx
+    shlq $CONFIG_KERNEL_STACK_BITS, %rcx
     addq %rcx, %rsp
-    addq $0x1000, %rsp
 
     movabs $restore_user_context, %rax
     push %rax

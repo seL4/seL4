@@ -63,7 +63,7 @@ int_##number:                                \
     movl    (x)(%esp), %esp
 #else
 #define SET_KERNEL_STACK_FROM(x)            \
-    leal kernel_stack_alloc + 0xffc, %esp
+    leal kernel_stack_alloc + (1 << CONFIG_KERNEL_STACK_BITS) - 4, %esp
 #endif
 
 #define SET_KERNEL_STACK SET_KERNEL_STACK_FROM(0x4c)

@@ -16,7 +16,7 @@
 #if CONFIG_MAX_NUM_NODES > 1
 
 nodeInfo_t node_info[CONFIG_MAX_NUM_NODES];
-extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(seL4_PageBits)];
+extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
 BOOT_CODE void
 mode_init_tls(cpu_id_t cpu_index)

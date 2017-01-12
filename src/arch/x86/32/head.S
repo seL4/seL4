@@ -93,7 +93,7 @@ BEGIN_FUNC(_start)
     popl %esi
 
     /* Stop using shared boot stack and get a real stack and move to the top of the stack */
-    leal kernel_stack_alloc + 0xffc, %esp
+    leal kernel_stack_alloc + (1 << CONFIG_KERNEL_STACK_BITS) - 4, %esp
 
     pushl %esi /* 2nd parameter: multiboot_info_ptr */
     pushl %edi /* 1st parameter: multiboot_magic    */
@@ -144,9 +144,10 @@ BEGIN_FUNC(boot_cpu_start)
 
     /* Stop using shared boot stack and get a real stack and move to the top of the stack */
     leal kernel_stack_alloc, %esp
-    shll $12, %ecx
+    inc %ecx
+    shll $CONFIG_KERNEL_STACK_BITS, %ecx
     addl %ecx, %esp
-    addl $0xffc, %esp
+    subl $4, %esp
 
     /* Call boot_node() and set restore_user_context() as return EIP. */
     pushl $restore_user_context

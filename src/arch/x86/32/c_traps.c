@@ -40,7 +40,7 @@ static void NORETURN restore_vmx(void)
     loadAllDisabledBreakpointState(&NODE_STATE(ksCurThread)->tcbArch);
 #endif
 #if CONFIG_MAX_NUM_NODES > 1
-    NODE_STATE(ksCurThread)->tcbArch.vcpu->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + 0xffc;
+    NODE_STATE(ksCurThread)->tcbArch.vcpu->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(CONFIG_KERNEL_STACK_BITS) - 4;
 #endif
     if (NODE_STATE(ksCurThread)->tcbArch.vcpu->launched) {
         /* attempt to do a vmresume */

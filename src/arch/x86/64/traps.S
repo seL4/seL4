@@ -76,7 +76,7 @@
 #define MAYBE_SWAPGS
 #define LOAD_USER_CONTEXT_OFFSET(x) movq (ksCurThread), %rsp; addq $(CONFIG_XSAVE_SIZE + 23*8 - 7*8 + (x)*8), %rsp
 #define LOAD_USER_CONTEXT LOAD_USER_CONTEXT_OFFSET(0)
-#define LOAD_KERNEL_STACK leaq    kernel_stack_alloc + 4096, %rsp
+#define LOAD_KERNEL_STACK leaq    kernel_stack_alloc + (1 << CONFIG_KERNEL_STACK_BITS), %rsp
 #define LOAD_IRQ_STACK(x)  leaq    x64KSIRQStack, %x
 #endif
 

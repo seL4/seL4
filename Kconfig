@@ -380,6 +380,16 @@ menu "seL4 System Parameters"
         default 64
         help
             Define cache line size for the current architecture
+
+    config KERNEL_STACK_BITS
+        int "Kernel stack size bits"
+        depends on ARCH_X86
+        default 12
+        help
+            This describes the log2 size of the kernel stack. Great care should
+            be taken as there is no guard below the stack so setting this too
+            small will cause random memory corruption
+
 endmenu
 
 menu "Build Options"

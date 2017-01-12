@@ -17,7 +17,7 @@
 
 #if CONFIG_MAX_NUM_NODES > 1
 
-extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(seL4_PageBits)];
+extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
 /* Get current stack pointer */
 static inline void*
@@ -36,7 +36,7 @@ getCurrentCPUIndex(void)
     uint32_t esp = (uint32_t)getCurESP();
 
     esp -= (uint32_t)kernel_stack_alloc;
-    cpu_id = esp >> 12;
+    cpu_id = esp >> CONFIG_KERNEL_STACK_BITS;
     return cpu_id;
 }
 
