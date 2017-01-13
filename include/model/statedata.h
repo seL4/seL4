@@ -18,7 +18,7 @@
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <mode/types.h>
-#include <model/smp.h>
+#include <smp/smp.h>
 
 #define NUM_READY_QUEUES (CONFIG_NUM_DOMAINS * CONFIG_NUM_PRIORITIES)
 

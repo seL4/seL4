@@ -10,8 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#ifndef __MODEL_SMP_H_
-#define __MODEL_SMP_H_
+#ifndef __SMP_H_
+#define __SMP_H_
 
 #include <config.h>
 
@@ -42,4 +42,4 @@
 
 #endif /* CONFIG_MAX_NUM_NODES */
 
-#endif /* __MODEL_SMP_H_ */
+#endif /* __SMP_H_ */

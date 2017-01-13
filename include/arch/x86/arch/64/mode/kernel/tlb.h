@@ -13,7 +13,7 @@
 #ifndef __MODE_KERNEL_TLB_H
 #define __MODE_KERNEL_TLB_H
 
-#include <arch/kernel/ipi.h>
+#include <smp/ipi.h>
 #include <arch/kernel/tlb.h>
 #include <mode/kernel/ipi.h>
 #include <arch/kernel/tlb_bitmap.h>
