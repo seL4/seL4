@@ -189,6 +189,10 @@ static inline uint64_t x86_rdtsc(void)
     return ((uint64_t) hi) << 32llu | (uint64_t) lo;
 }
 
+static inline void arch_pause(void) {
+    asm volatile("pause");
+}
+
 enum x86_vendor {
     X86_VENDOR_INTEL = 0,
     X86_VENDOR_AMD,

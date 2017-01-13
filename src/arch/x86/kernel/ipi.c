@@ -12,9 +12,9 @@
 
 #include <config.h>
 #include <mode/kernel/ipi.h>
-#include <arch/kernel/lock.h>
-#include <smp/smp.h>
 #include <smp/ipi.h>
+#include <smp/lock.h>
+#include <smp/smp.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 

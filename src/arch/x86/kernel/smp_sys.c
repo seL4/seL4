@@ -14,7 +14,7 @@
 #include <arch/machine.h>
 #include <arch/kernel/boot_sys.h>
 #include <arch/kernel/smp_sys.h>
-#include <arch/kernel/lock.h>
+#include <smp/lock.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 

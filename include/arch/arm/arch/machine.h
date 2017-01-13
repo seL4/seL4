@@ -59,6 +59,10 @@ static inline void clearMemoryRAM(word_t* ptr, word_t bits)
     cleanCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
                         addrFromPPtr(ptr));
 }
+
+static inline void arch_pause(void) {
+    /* TODO */
+}
 #endif /* __ASSEMBLER__ */
 
 #endif /* __ARCH_MACHINE_H */

@@ -19,7 +19,7 @@
 #include <arch/kernel/smp_sys.h>
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/elf.h>
-#include <arch/kernel/lock.h>
+#include <smp/lock.h>
 #include <arch/linker.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/devices.h>
