@@ -18,8 +18,10 @@
 typedef enum _object {
     seL4_ARM_SmallPageObject = seL4_ModeObjectTypeCount,
     seL4_ARM_LargePageObject,
+#ifdef CONFIG_ARCH_AARCH32
     seL4_ARM_SectionObject,
     seL4_ARM_SuperSectionObject,
+#endif
     seL4_ARM_PageTableObject,
     seL4_ARM_PageDirectoryObject,
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

@@ -1,15 +1,17 @@
 /*
- * Copyright 2014, NICTA
+ * Copyright 2016, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
  *
  * This software may be distributed and modified according to the terms of
- * the BSD 2-Clause license. Note that NO WARRANTY is provided.
- * See "LICENSE_BSD2.txt" for details.
+ * the GNU General Public License version 2. Note that NO WARRANTY is provided.
+ * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(NICTA_BSD)
+ * @TAG(D61_GPL)
  */
 
-#ifndef __LIBSEL4_SEL4_ARCH_SYSCALLS_H
-#define __LIBSEL4_SEL4_ARCH_SYSCALLS_H
+#ifndef __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
+#define __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
 
 #include <autoconf.h>
 #include <sel4/arch/functions.h>
@@ -50,19 +52,19 @@
 static inline void
 arm_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info_arg, seL4_Word mr0, seL4_Word mr1, seL4_Word mr2, seL4_Word mr3)
 {
-    register seL4_Word destptr asm("r0") = dest;
-    register seL4_Word info asm("r1") = info_arg;
+    register seL4_Word destptr asm("x0") = dest;
+    register seL4_Word info asm("x1") = info_arg;
 
     /* Load beginning of the message into registers. */
-    register seL4_Word msg0 asm("r2") = mr0;
-    register seL4_Word msg1 asm("r3") = mr1;
-    register seL4_Word msg2 asm("r4") = mr2;
-    register seL4_Word msg3 asm("r5") = mr3;
+    register seL4_Word msg0 asm("x2") = mr0;
+    register seL4_Word msg1 asm("x3") = mr1;
+    register seL4_Word msg2 asm("x4") = mr2;
+    register seL4_Word msg3 asm("x5") = mr3;
 
     /* Perform the system call. */
-    register seL4_Word scno asm("r7") = sys;
+    register seL4_Word scno asm("x7") = sys;
     asm volatile (
-        "swi $0"
+        "svc #0"
         : "+r" (destptr), "+r" (msg0), "+r" (msg1), "+r" (msg2),
         "+r" (msg3), "+r" (info)
         : "r"(scno)
@@ -72,18 +74,18 @@ arm_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info_arg, seL4_Word mr0, s
 static inline void
 arm_sys_reply(seL4_Word sys, seL4_Word info_arg, seL4_Word mr0, seL4_Word mr1, seL4_Word mr2, seL4_Word mr3)
 {
-    register seL4_Word info asm("r1") = info_arg;
+    register seL4_Word info asm("x1") = info_arg;
 
     /* Load beginning of the message into registers. */
-    register seL4_Word msg0 asm("r2") = mr0;
-    register seL4_Word msg1 asm("r3") = mr1;
-    register seL4_Word msg2 asm("r4") = mr2;
-    register seL4_Word msg3 asm("r5") = mr3;
+    register seL4_Word msg0 asm("x2") = mr0;
+    register seL4_Word msg1 asm("x3") = mr1;
+    register seL4_Word msg2 asm("x4") = mr2;
+    register seL4_Word msg3 asm("x5") = mr3;
 
     /* Perform the system call. */
-    register seL4_Word scno asm("r7") = sys;
+    register seL4_Word scno asm("x7") = sys;
     asm volatile (
-        "swi $0"
+        "svc #0"
         : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
         "+r" (info)
         : "r"(scno)
@@ -93,13 +95,13 @@ arm_sys_reply(seL4_Word sys, seL4_Word info_arg, seL4_Word mr0, seL4_Word mr1, s
 static inline void
 arm_sys_send_null(seL4_Word sys, seL4_Word src, seL4_Word info_arg)
 {
-    register seL4_Word destptr asm("r0") = src;
-    register seL4_Word info asm("r1") = info_arg;
+    register seL4_Word destptr asm("x0") = src;
+    register seL4_Word info asm("x1") = info_arg;
 
     /* Perform the system call. */
-    register seL4_Word scno asm("r7") = sys;
+    register seL4_Word scno asm("x7") = sys;
     asm volatile (
-        "swi $0"
+        "svc #0"
         : "+r" (destptr), "+r" (info)
         : "r"(scno)
     );
@@ -108,19 +110,19 @@ arm_sys_send_null(seL4_Word sys, seL4_Word src, seL4_Word info_arg)
 static inline void
 arm_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_info, seL4_Word *out_mr0, seL4_Word *out_mr1, seL4_Word *out_mr2, seL4_Word *out_mr3)
 {
-    register seL4_Word src_and_badge asm("r0") = src;
-    register seL4_Word info asm("r1");
+    register seL4_Word src_and_badge asm("x0") = src;
+    register seL4_Word info asm("x1");
 
     /* Incoming message registers. */
-    register seL4_Word msg0 asm("r2");
-    register seL4_Word msg1 asm("r3");
-    register seL4_Word msg2 asm("r4");
-    register seL4_Word msg3 asm("r5");
+    register seL4_Word msg0 asm("x2");
+    register seL4_Word msg1 asm("x3");
+    register seL4_Word msg2 asm("x4");
+    register seL4_Word msg3 asm("x5");
 
     /* Perform the system call. */
-    register seL4_Word scno asm("r7") = sys;
+    register seL4_Word scno asm("x7") = sys;
     asm volatile (
-        "swi $0"
+        "svc #0"
         : "=r" (msg0), "=r" (msg1), "=r" (msg2), "=r" (msg3),
         "=r" (info), "+r" (src_and_badge)
         : "r"(scno)
@@ -137,19 +139,19 @@ arm_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_
 static inline void
 arm_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word info_arg, seL4_Word *out_info, seL4_Word *in_out_mr0, seL4_Word *in_out_mr1, seL4_Word *in_out_mr2, seL4_Word *in_out_mr3)
 {
-    register seL4_Word destptr asm("r0") = dest;
-    register seL4_Word info asm("r1") = info_arg;
+    register seL4_Word destptr asm("x0") = dest;
+    register seL4_Word info asm("x1") = info_arg;
 
     /* Load beginning of the message into registers. */
-    register seL4_Word msg0 asm("r2") = *in_out_mr0;
-    register seL4_Word msg1 asm("r3") = *in_out_mr1;
-    register seL4_Word msg2 asm("r4") = *in_out_mr2;
-    register seL4_Word msg3 asm("r5") = *in_out_mr3;
+    register seL4_Word msg0 asm("x2") = *in_out_mr0;
+    register seL4_Word msg1 asm("x3") = *in_out_mr1;
+    register seL4_Word msg2 asm("x4") = *in_out_mr2;
+    register seL4_Word msg3 asm("x5") = *in_out_mr3;
 
     /* Perform the system call. */
-    register seL4_Word scno asm("r7") = sys;
+    register seL4_Word scno asm("x7") = sys;
     asm volatile (
-        "swi $0"
+        "svc #0"
         : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
         "+r" (info), "+r" (destptr)
         : "r"(scno)
@@ -166,12 +168,12 @@ arm_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word
 static inline void
 arm_sys_null(seL4_Word sys)
 {
-    register seL4_Word scno asm("r7") = sys;
+    register seL4_Word scno asm("x7") = sys;
     asm volatile (
-        "swi $0"
+        "svc #0"
         : /* no outputs */
         : "r"(scno)
     );
 }
 
-#endif /* __LIBSEL4_SEL4_ARCH_SYSCALLS_H */
+#endif /* __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_ */

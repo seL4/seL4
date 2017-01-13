@@ -11,7 +11,7 @@
 <api>
 	<interface name="seL4_ARM_PageTable">
 		<method id="ARMPageTableMap" name="Map">
-			<param dir="in" name="pd" type="seL4_ARM_PageDirectory"/>
+			<param dir="in" name="pd" type="seL4_CPtr"/>
 			<param dir="in" name="vaddr" type="seL4_Word"/>
 			<param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
 		</method>
@@ -28,13 +28,13 @@
     </interface>
 	<interface name="seL4_ARM_Page">
 		<method id="ARMPageMap" name="Map">
-			<param dir="in" name="pd" type="seL4_ARM_PageDirectory"/>
+			<param dir="in" name="pd" type="seL4_CPtr"/>
 			<param dir="in" name="vaddr" type="seL4_Word"/>
 			<param dir="in" name="rights" type="seL4_CapRights_t"/>
 			<param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
 		</method>
 		<method id="ARMPageRemap" name="Remap">
-			<param dir="in" name="pd" type="seL4_ARM_PageDirectory"/>
+			<param dir="in" name="pd" type="seL4_CPtr"/>
 			<param dir="in" name="rights" type="seL4_CapRights_t"/>
 			<param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
 		</method>
@@ -74,7 +74,7 @@
 	</interface>
 	<interface name="seL4_ARM_ASIDPool">
 		<method id="ARMASIDPoolAssign" name="Assign">
-			<param dir="in" name="vroot" type="seL4_ARM_PageDirectory"/>
+			<param dir="in" name="vroot" type="seL4_CPtr"/>
 		</method>
 	</interface>
 </api>

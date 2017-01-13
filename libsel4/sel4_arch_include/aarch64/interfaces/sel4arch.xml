@@ -1,0 +1,86 @@
+<?xml version="1.0" ?>
+<!--
+    Copyright 2016, Data61
+    Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+    ABN 41 687 119 230.
+
+    This software may be distributed and modified according to the terms of
+    the BSD 2-Clause license. Note that NO WARRANTY is provided.
+    See "LICENSE_BSD2.txt" for details.
+
+    @TAG(D61_BSD)
+ -->
+<api>
+    <struct name="seL4_UserContext">
+        <member name="pc"/>
+        <member name="sp"/>
+        <member name="spsr"/>
+        <member name="x0"/>
+        <member name="x1"/>
+        <member name="x2"/>
+        <member name="x3"/>
+        <member name="x4"/>
+        <member name="x5"/>
+        <member name="x6"/>
+        <member name="x7"/>
+        <member name="x8"/>
+        <member name="x16"/>
+        <member name="x17"/>
+        <member name="x18"/>
+        <member name="x29"/>
+        <member name="x30"/>
+        <member name="x9"/>
+        <member name="x10"/>
+        <member name="x11"/>
+        <member name="x12"/>
+        <member name="x13"/>
+        <member name="x14"/>
+        <member name="x15"/>
+        <member name="x19"/>
+        <member name="x20"/>
+        <member name="x21"/>
+        <member name="x22"/>
+        <member name="x23"/>
+        <member name="x24"/>
+        <member name="x25"/>
+        <member name="x26"/>
+        <member name="x27"/>
+        <member name="x28"/>
+    </struct>
+    <interface name="seL4_ARM_PageGlobalDirectory">
+        <method id="ARMPageGlobalDirectoryClean_Data" name="Clean_Data">
+            <param dir="in" name="start" type="seL4_Word"/>
+            <param dir="in" name="end" type="seL4_Word"/>
+        </method>
+        <method id="ARMPageGlobalDirectoryInvalidate_Data" name="Invalidate_Data">
+            <param dir="in" name="start" type="seL4_Word"/>
+            <param dir="in" name="end" type="seL4_Word"/>
+        </method>
+        <method id="ARMPageGlobalDirectoryCleanInvalidate_Data" name="CleanInvalidate_Data">
+            <param dir="in" name="start" type="seL4_Word"/>
+            <param dir="in" name="end" type="seL4_Word"/>
+        </method>
+        <method id="ARMPageGlobalDirectoryUnify_Instruction" name="Unify_Instruction">
+            <param dir="in" name="start" type="seL4_Word"/>
+            <param dir="in" name="end" type="seL4_Word"/>
+        </method>
+    </interface>
+    <interface name="seL4_ARM_PageUpperDirectory">
+        <method id="ARMPageUpperDirectoryMap" name="Map">
+            <param dir="in" name="pgd" type="seL4_CPtr"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
+        </method>
+        <method id="ARMPageUpperDirectoryUnmap" name="Unmap">
+        </method>
+    </interface>
+    <interface name="seL4_ARM_PageDirectory">
+        <method id="ARMPageDirectoryMap" name="Map">
+            <param dir="in" name="pud" type="seL4_CPtr"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
+        </method>
+        <method id="ARMPageDirectoryUnmap" name="Unmap">
+        </method>
+    </interface>
+</api>

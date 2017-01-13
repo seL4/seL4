@@ -11,5 +11,9 @@
 #ifndef __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
 #define __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
 
+typedef signed long long seL4_Int64;
+
+typedef unsigned long long seL4_Uint64;
+
 #endif // __LIBSEL4_SEL4_ARCH_SIMPLE_TYPES_H_
 
