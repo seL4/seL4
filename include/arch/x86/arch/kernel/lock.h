@@ -18,7 +18,7 @@
 #include <util.h>
 #include <mode/machine.h>
 #include <arch/model/statedata.h>
-#include <arch/kernel/ipi.h>
+#include <smp/ipi.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 

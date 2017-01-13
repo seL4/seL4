@@ -13,7 +13,7 @@
 #ifndef __ARCH_KERNEL_TLB_H
 #define __ARCH_KERNEL_TLB_H
 
-#include <arch/kernel/ipi.h>
+#include <arch/smp/ipi_inline.h>
 
 static inline void invalidatePageStructureCacheASID(paddr_t root, asid_t asid, word_t mask)
 {

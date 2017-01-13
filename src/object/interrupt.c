@@ -22,7 +22,7 @@
 #include <kernel/thread.h>
 #include <model/statedata.h>
 #include <machine/timer.h>
-#include <arch/kernel/ipi.h>
+#include <smp/ipi.h>
 
 exception_t
 decodeIRQControlInvocation(word_t invLabel, word_t length,

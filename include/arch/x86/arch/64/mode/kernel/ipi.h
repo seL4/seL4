@@ -16,7 +16,7 @@
 #include <config.h>
 #include <types.h>
 #include <plat/machine.h>
-#include <arch/kernel/ipi.h>
+#include <smp/ipi.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 

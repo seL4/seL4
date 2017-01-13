@@ -10,31 +10,18 @@
  * @TAG(D61_GPL)
  */
 
-#ifndef __ARCH_KERNEL_IPI_H
-#define __ARCH_KERNEL_IPI_H
+#ifndef __IPI_H
+#define __IPI_H
 
 #include <config.h>
 #include <types.h>
 #include <plat/machine.h>
+#include <arch/smp/ipi.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 #define MAX_IPI_ARGS    3   /* Maximum number of parameters to remote function */
 
 void Arch_handleIPI(irq_t irq);
-
-typedef enum {
-    IpiRemoteCall_Stall,
-#ifdef CONFIG_VTX
-    IpiRemoteCall_ClearCurrentVCPU,
-    IpiRemoteCall_VMCheckBoundNotification,
-#endif
-    IpiRemoteCall_InvalidatePageStructureCacheASID,
-    IpiRemoteCall_InvalidateTranslationSingle,
-    IpiRemoteCall_InvalidateTranslationSingleASID,
-    IpiRemoteCall_InvalidateTranslationAll,
-    IpiRemoteCall_switchFpuOwner,
-    IpiNumArchRemoteCall
-} IpiRemoteCall_t;
 
 /*
  * Run a synchronous function on all cores specified by mask. Return when target cores
@@ -131,49 +118,5 @@ static void inline doReschedule(word_t cpu)
     }
 }
 
-static void inline doRemoteStall(word_t cpu)
-{
-    doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);
-}
-
-static void inline doRemoteswitchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
-{
-    doRemoteOp1Arg(IpiRemoteCall_switchFpuOwner, (word_t)new_owner, cpu);
-}
-
-static void inline doRemoteInvalidatePageStructureCacheASID(paddr_t root, asid_t asid, word_t mask)
-{
-    doRemoteMaskOp2Arg(IpiRemoteCall_InvalidatePageStructureCacheASID, root, asid, mask);
-}
-
-static void inline doRemoteInvalidateTranslationSingle(vptr_t vptr, word_t mask)
-{
-    doRemoteMaskOp1Arg(IpiRemoteCall_InvalidateTranslationSingle, vptr, mask);
-}
-
-static void inline doRemoteInvalidateTranslationSingleASID(vptr_t vptr, asid_t asid, word_t mask)
-{
-    doRemoteMaskOp2Arg(IpiRemoteCall_InvalidateTranslationSingleASID, vptr, asid, mask);
-}
-
-static void inline doRemoteInvalidateTranslationAll(word_t mask)
-{
-    doRemoteMaskOp0Arg(IpiRemoteCall_InvalidateTranslationAll, mask);
-}
-
-#ifdef CONFIG_VTX
-static inline void
-doRemoteClearCurrentVCPU(word_t cpu)
-{
-    doRemoteOp0Arg(IpiRemoteCall_ClearCurrentVCPU, cpu);
-}
-
-static inline void
-doRemoteVMCheckBoundNotification(word_t cpu)
-{
-    doRemoteOp0Arg(IpiRemoteCall_VMCheckBoundNotification, cpu);
-}
-#endif
-
 #endif /* CONFIG_MAX_NUM_NODES */
-#endif /* __ARCH_KERNEL_IPI_H */
+#endif /* __IPI_H */
