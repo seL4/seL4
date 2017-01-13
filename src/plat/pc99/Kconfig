@@ -218,6 +218,7 @@ config XSAVE_SIZE
 
 config X86_FPU_MAX_RESTORES_SINCE_SWITCH
     int "Max thread restores without switching FPU"
+    depends on ARCH_X86
     default 64
     help
         This option is a heuristic to attempt to detect when the FPU is no
