@@ -8,8 +8,6 @@
 # @TAG(GD_GPL)
 #
 
-INCLUDE_DIRS += ${SOURCE_ROOT}/include/arch/arm/armv/${ARMV}
-
 include ${SOURCE_ROOT}/src/arch/arm/api/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/object/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/kernel/Makefile

@@ -9,6 +9,8 @@
 #
 DIRECTORIES += src/arch/arm/armv/${ARMV}/$(TYPE_SUFFIX)
 
+INCLUDE_DIRS += ${SOURCE_ROOT}/include/arch/arm/armv/${ARMV}/$(TYPE_SUFFIX)
+
 ARCH_ASM_SOURCES += armv/${ARMV}/$(TYPE_SUFFIX)/machine_asm.S
 
 ARCH_C_SOURCES += armv/${ARMV}/$(TYPE_SUFFIX)/benchmark.c
