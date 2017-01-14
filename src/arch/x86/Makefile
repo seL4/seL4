@@ -15,13 +15,7 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/model/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/machine/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/benchmark/Makefile
 
-ifeq ($(__X86_32__),y)
-include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/Makefile
-else
-ifeq ($(__X86_64__),y)
-include ${SOURCE_ROOT}/src/arch/$(ARCH)/64/Makefile
-endif
-endif
+include ${SOURCE_ROOT}/src/arch/$(ARCH)/${TYPE_SUFFIX}/Makefile
 
 ARCH_C_SOURCES += c_traps.c \
                   idle.c

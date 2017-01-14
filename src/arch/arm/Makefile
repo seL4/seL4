@@ -17,8 +17,6 @@ include ${SOURCE_ROOT}/src/arch/arm/machine/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/benchmark/Makefile
 include ${SOURCE_ROOT}/src/arch/arm/armv/$(ARMV)/Makefile
 
-ARCH_C_SOURCES += c_traps.c
+include ${SOURCE_ROOT}/src/arch/$(ARCH)/${TYPE_SUFFIX}/Makefile
 
-ifeq ($(__ARM_32__),y)
-include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/Makefile
-endif
+ARCH_C_SOURCES += c_traps.c
