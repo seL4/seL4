@@ -11,6 +11,7 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
+#include <plat_mode/machine.h>
 
 #define N_INTERRUPTS             160
 
@@ -177,8 +178,6 @@ enum IRQConstants {
 //  INTERRUPT_RESERVED         =  159,
     maxIRQ = 159
 } platform_interrupt_t;
-
-#define IRQ_CNODE_BITS 12
 
 #define KERNEL_TIMER_IRQ        INTERRUPT_COREINTER0
 
