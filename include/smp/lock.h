@@ -10,8 +10,8 @@
  * @TAG(D61_GPL)
  */
 
-#ifndef __ARCH_KERNEL_LOCK_H_
-#define __ARCH_KERNEL_LOCK_H_
+#ifndef __SMP_LOCK_H_
+#define __SMP_LOCK_H_
 
 #include <config.h>
 #include <types.h>
@@ -19,6 +19,7 @@
 #include <mode/machine.h>
 #include <arch/model/statedata.h>
 #include <smp/ipi.h>
+#include <util.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
@@ -71,8 +72,8 @@ clh_lock_acquire(word_t cpu)
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Pending;
 
     /* rely on the full barrier implied by the GCC builtin*/
-    prev = __sync_lock_test_and_set(&big_kernel_lock.head,
-                                    big_kernel_lock.node_owners[cpu].node);
+    prev = __atomic_exchange_n(&big_kernel_lock.head,
+                                    big_kernel_lock.node_owners[cpu].node, __ATOMIC_ACQUIRE);
     big_kernel_lock.node_owners[cpu].next = prev;
 
     while (big_kernel_lock.node_owners[cpu].next->value != CLHState_Granted) {
@@ -81,7 +82,7 @@ clh_lock_acquire(word_t cpu)
              * are async and could be delayed */
             Arch_handleIPI(irq_remote_call_ipi);
         }
-        asm volatile("pause");
+        arch_pause();
     }
 
     /* make sure no resource access passes from this point */
@@ -91,9 +92,8 @@ clh_lock_acquire(word_t cpu)
 static inline void FORCE_INLINE
 clh_lock_release(word_t cpu)
 {
-    /* make sure no resource access passes from this point,
-     * no need to have any full barrier due x86 TSO memory ordering */
-    asm volatile("" ::: "memory");
+    /* make sure no resource access passes from this point */
+    __atomic_thread_fence(__ATOMIC_RELEASE);
 
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Granted;
     big_kernel_lock.node_owners[cpu].node =
@@ -135,4 +135,4 @@ clh_is_self_in_queue(void)
 
 #endif
 
-#endif /* __ARCH_KERNEL_LOCK_H_ */
+#endif /* __SMP_LOCK_H_ */

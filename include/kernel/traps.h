@@ -14,7 +14,7 @@
 #include <config.h>
 #include <util.h>
 #include <arch/kernel/traps.h>
-#include <arch/kernel/lock.h>
+#include <smp/lock.h>
 
 /* This C function should be the first thing called from C after entry from
  * assembly. It provides a single place to do any entry work that is not

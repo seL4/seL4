@@ -12,9 +12,9 @@
 
 #include <config.h>
 #include <mode/kernel/ipi.h>
-#include <arch/kernel/lock.h>
-#include <smp/smp.h>
 #include <smp/ipi.h>
+#include <smp/lock.h>
+#include <smp/smp.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
@@ -52,7 +52,7 @@ static inline void ipi_wait(word_t cores)
 {
     word_t localsense = ipiSyncBarrier.globalsense;
 
-    if (__sync_fetch_and_add(&ipiSyncBarrier.count, 1) == cores) {
+    if (__atomic_add_fetch(&ipiSyncBarrier.count, 1, __ATOMIC_ACQ_REL) == cores) {
         ipiSyncBarrier.count = 0;
         ipiSyncBarrier.globalsense =
             ~ipiSyncBarrier.globalsense;
