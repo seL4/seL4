@@ -9,9 +9,9 @@
 #
 
 menu "System Interrupt Management"
+    depends on PLAT_PC99
     choice
         prompt "IRQ Controller"
-        depends on PLAT_PC99
         default IRQ_PIC if ARCH_IA32
         default IRQ_IOAPIC if ARCH_X86_64
         help
@@ -39,7 +39,6 @@ menu "System Interrupt Management"
 
     choice
         prompt "Local APIC mode"
-        depends on ARCH_X86
         default XAPIC if ARCH_IA32
         default X2APIC if ARCH_X86_64
         help
@@ -219,6 +218,7 @@ config XSAVE_SIZE
 
 config X86_FPU_MAX_RESTORES_SINCE_SWITCH
     int "Max thread restores without switching FPU"
+    depends on ARCH_X86
     default 64
     help
         This option is a heuristic to attempt to detect when the FPU is no
