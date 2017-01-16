@@ -52,7 +52,7 @@ static inline void ipi_wait(word_t cores)
 {
     word_t localsense = ipiSyncBarrier.globalsense;
 
-    if (__sync_fetch_and_add(&ipiSyncBarrier.count, 1) == cores) {
+    if (__atomic_add_fetch(&ipiSyncBarrier.count, 1, __ATOMIC_ACQ_REL) == cores) {
         ipiSyncBarrier.count = 0;
         ipiSyncBarrier.globalsense =
             ~ipiSyncBarrier.globalsense;

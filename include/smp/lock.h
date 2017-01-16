@@ -73,7 +73,7 @@ clh_lock_acquire(word_t cpu)
 
     /* rely on the full barrier implied by the GCC builtin*/
     prev = __atomic_exchange_n(&big_kernel_lock.head,
-                                    big_kernel_lock.node_owners[cpu].node, __ATOMIC_ACQ_REL);
+                                    big_kernel_lock.node_owners[cpu].node, __ATOMIC_ACQUIRE);
     big_kernel_lock.node_owners[cpu].next = prev;
 
     while (big_kernel_lock.node_owners[cpu].next->value != CLHState_Granted) {
@@ -92,9 +92,8 @@ clh_lock_acquire(word_t cpu)
 static inline void FORCE_INLINE
 clh_lock_release(word_t cpu)
 {
-    /* make sure no resource access passes from this point,
-     * no need to have any full barrier due x86 TSO memory ordering */
-    asm volatile("" ::: "memory");
+    /* make sure no resource access passes from this point */
+    __atomic_thread_fence(__ATOMIC_RELEASE);
 
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Granted;
     big_kernel_lock.node_owners[cpu].node =
