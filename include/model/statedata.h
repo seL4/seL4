@@ -18,7 +18,42 @@
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <mode/types.h>
-#include <smp/smp.h>
+
+#if CONFIG_MAX_NUM_NODES > 1
+#define NODE_STATE_BEGIN(_name)                 typedef struct _name {
+#define NODE_STATE_END(_name)                   } _name ## _t
+#define NODE_STATE_TYPE_DECLARE(_name, _state)  _name ## _t _state
+#define NODE_STATE_DECLARE(_type, _state)       _type _state
+
+#define SMP_STATE_DEFINE(_type, _state)         _type _state
+#define UP_STATE_DEFINE(_type, _state)
+
+#define SMP_COND_STATEMENT(_st)                 _st
+#define SMP_TERNARY(_smp, _up)                  _smp
+
+#define MODE_NODE_STATE_ON_CORE(_state, _core)  ksSMP[(_core)].cpu.mode._state
+#define ARCH_NODE_STATE_ON_CORE(_state, _core)  ksSMP[(_core)].cpu._state
+#define NODE_STATE_ON_CORE(_state, _core)       ksSMP[(_core)].system._state
+
+#else
+
+#define NODE_STATE_BEGIN(_name)
+#define NODE_STATE_END(_name)
+#define NODE_STATE_TYPE_DECLARE(_name, _state)
+/* UP states are declared as VISIBLE so that they are accessible in assembly */
+#define NODE_STATE_DECLARE(_type, _state)       extern _type _state VISIBLE
+
+#define SMP_STATE_DEFINE(_name, _state)
+#define UP_STATE_DEFINE(_type, _state)          _type _state
+
+#define SMP_COND_STATEMENT(_st)
+#define SMP_TERNARY(_smp, _up)                  _up
+
+#define MODE_NODE_STATE_ON_CORE(_state, _core) _state
+#define ARCH_NODE_STATE_ON_CORE(_state, _core) _state
+#define NODE_STATE_ON_CORE(_state, _core)      _state
+
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
 #define NUM_READY_QUEUES (CONFIG_NUM_DOMAINS * CONFIG_NUM_PRIORITIES)
 
@@ -49,5 +84,9 @@ extern paddr_t ksUserLogBuffer;
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
 #define SchedulerAction_ChooseNewThread ((tcb_t*)~0)
+
+#define MODE_NODE_STATE(_state)    MODE_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
+#define ARCH_NODE_STATE(_state)    ARCH_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
+#define NODE_STATE(_state)         NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 
 #endif /* __MODEL_STATEDATA_H_ */

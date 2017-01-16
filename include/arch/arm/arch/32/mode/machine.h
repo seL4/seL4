@@ -57,6 +57,18 @@
 #define ID_DFR0    " p15, 0,  %0,  c0,  c1, 2" /* 32-bit RO Debug feature register */
 #define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
 
+#if CONFIG_MAX_NUM_NODES > 1
+/* TODO: Each platform should define ID numbers for the following
+ * IPI types, and define it with a unique name like (IRQ_KERNEL_CALL_IPI),
+ * in a similar way to how private kernel timer work (KERNEL_TIMER_IRQ).
+ * irq_remote_call_ipi and irq_remote_reschedult_ipi are used from arch-independent
+ * files.
+ * FIXME: the values below are arbitrary just to get the kernel compiled.
+ */
+#define irq_remote_call_ipi        0
+#define irq_remote_reschedult_ipi  0
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
 

@@ -14,7 +14,6 @@
 #include <config.h>
 #include <object/structures.h>
 #include <arch/types.h>
-#include <smp/smp.h>
 
 extern pdpte_t ia32KSGlobalPDPT[BIT(PDPT_INDEX_BITS)];
 extern pde_t ia32KSGlobalPD[BIT(PD_INDEX_BITS + PDPT_INDEX_BITS)];

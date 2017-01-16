@@ -27,6 +27,7 @@ typedef word_t paddr_t;
 typedef word_t pptr_t;
 typedef word_t cptr_t;
 typedef word_t node_id_t;
+typedef word_t cpu_id_t;
 typedef word_t dom_t;
 
 typedef uint8_t  hw_asid_t;

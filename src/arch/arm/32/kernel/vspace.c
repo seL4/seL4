@@ -1125,7 +1125,7 @@ setVMRootForFlush(pde_t* pd, asid_t asid)
 {
     cap_t threadRoot;
 
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) == cap_page_directory_cap &&
             cap_page_directory_cap_get_capPDIsMapped(threadRoot) &&
@@ -1399,7 +1399,7 @@ deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
             }
         }
         armKSASIDTable[asid_base >> asidLowBits] = NULL;
-        setVMRoot(ksCurThread);
+        setVMRoot(NODE_STATE(ksCurThread));
     }
 }
 
@@ -1414,7 +1414,7 @@ deleteASID(asid_t asid, pde_t* pd)
         flushSpace(asid);
         invalidateASIDEntry(asid);
         poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(ksCurThread);
+        setVMRoot(NODE_STATE(ksCurThread));
     }
 }
 
@@ -1590,7 +1590,7 @@ flushPage(vm_page_size_t page_size, pde_t* pd, asid_t asid, word_t vptr)
         invalidateTLB_VAASID(base_addr | pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
 
         if (root_switched) {
-            setVMRoot(ksCurThread);
+            setVMRoot(NODE_STATE(ksCurThread));
         }
     }
 }
@@ -1610,7 +1610,7 @@ flushTable(pde_t* pd, asid_t asid, word_t vptr, pte_t* pt)
     if (pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
         invalidateTLB_ASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
         if (root_switched) {
-            setVMRoot(ksCurThread);
+            setVMRoot(NODE_STATE(ksCurThread));
         }
     }
 }
@@ -1934,7 +1934,7 @@ performPDFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
         doFlush(invLabel, start, end, pstart);
 
         if (root_switched) {
-            setVMRoot(ksCurThread);
+            setVMRoot(NODE_STATE(ksCurThread));
         }
     }
 
@@ -2112,7 +2112,7 @@ performPageFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
         doFlush(invLabel, start, end, pstart);
 
         if (root_switched) {
-            setVMRoot(ksCurThread);
+            setVMRoot(NODE_STATE(ksCurThread));
         }
     }
 
@@ -2128,8 +2128,8 @@ performPageGetAddress(void *vbase_ptr)
     capFBasePtr = addrFromPPtr(vbase_ptr);
 
     /* return it in the first message register */
-    setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
-    setRegister(ksCurThread, msgInfoRegister,
+    setRegister(NODE_STATE(ksCurThread), msgRegisters[0], capFBasePtr);
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
                 wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
 
     return EXCEPTION_NONE;
@@ -2245,7 +2245,7 @@ decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
             /* Fail silently, as there can't be any stale cached data (for the
              * given address space), and getting a syscall error because the
              * relevant page is non-resident would be 'astonishing'. */
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return EXCEPTION_NONE;
         }
 
@@ -2266,7 +2266,7 @@ decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
                  + (start & MASK(pageBitsForSize(resolve_ret.frameSize)));
 
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPDFlush(invLabel, pd, asid, start, end - 1, pstart);
     }
 
@@ -2298,7 +2298,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
             current_syscall_error.type = seL4_RevokeFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageTableInvocationUnmap (cap, cte);
     }
 
@@ -2388,7 +2388,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageTableInvocationMap(cap, cte, pde, pdSlot);
 }
 
@@ -2500,7 +2500,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                 return map_ret.status;
             }
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationMapPTE(asid, cap, cte,
                                                map_ret.pte,
                                                map_ret.pte_entries);
@@ -2513,7 +2513,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                 return map_ret.status;
             }
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationMapPDE(asid, cap, cte,
                                                map_ret.pde,
                                                map_ret.pde_entries);
@@ -2620,7 +2620,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                 return map_ret.status;
             }
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationRemapPTE(mappedASID, map_ret.pte,
                                                  map_ret.pte_entries);
         } else {
@@ -2632,7 +2632,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                 return map_ret.status;
             }
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationRemapPDE(mappedASID, map_ret.pde,
                                                  map_ret.pde_entries);
         }
@@ -2641,12 +2641,12 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
     case ARMPageUnmap: {
 #ifdef CONFIG_ARM_SMMU
         if (isIOSpaceFrameCap(cap)) {
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationUnmapIO(cap, cte);
         } else
 #endif
         {
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationUnmap(cap, cte);
         }
     }
@@ -2726,7 +2726,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         start += vaddr;
         end += vaddr;
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageFlush(invLabel, pd.pd, asid, start, end - 1, pstart);
     }
 
@@ -2736,7 +2736,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         /* Check that there are enough message registers */
         assert(n_msgRegisters >= 1);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageGetAddress((void*)generic_frame_cap_get_capFBasePtr(cap));
     }
 
@@ -2833,7 +2833,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return status;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performASIDControlInvocation(frame, destSlot,
                                             parentSlot, asid_base);
     }
@@ -2898,7 +2898,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         asid += i;
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performASIDPoolInvocation(asid, pool, pdCapSlot);
     }
 
@@ -2915,7 +2915,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
     pptr_t  frame_pptr;
 
     /* faulting section */
-    lu_ret = lookupCapAndSlot(ksCurThread, frame_cptr);
+    lu_ret = lookupCapAndSlot(NODE_STATE(ksCurThread), frame_cptr);
 
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         userError("Invalid cap #%lu.", frame_cptr);

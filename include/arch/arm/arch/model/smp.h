@@ -13,10 +13,8 @@
 #ifndef __ARCH_MODEL_SMP_H_
 #define __ARCH_MODEL_SMP_H_
 
-#define ARCH_NODE_STATE(_state)             _state
-#define MODE_NODE_STATE(_state)             _state
-#define NODE_STATE_ON_CORE(_state, _core)   _state
-
-#define NODE_STATE(_state)                  _state
+#include <config.h>
+#include <mode/smp/smp.h>
+#include <model/smp.h>
 
 #endif /* __ARCH_MODEL_SMP_H_ */

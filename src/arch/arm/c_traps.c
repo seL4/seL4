@@ -25,7 +25,7 @@ c_handle_undefined_instruction(void)
 
 #ifdef TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_UserLevelFault;
-    ksKernelEntry.word = getRegister(ksCurThread, LR_svc);
+    ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), LR_svc);
 #endif
 
     /* There's only one user-level fault on ARM, and the code is (0,0) */
@@ -41,7 +41,7 @@ c_handle_vm_fault(vm_fault_type_t type)
 
 #ifdef TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_VMFault;
-    ksKernelEntry.word = getRegister(ksCurThread, LR_svc);
+    ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), LR_svc);
 #endif
 
     handleVMFaultEvent(type);

@@ -194,11 +194,11 @@ static void sendASIDPool(unsigned int address)
 static void sendRunqueues(void)
 {
     word_t i;
-    sendWord((unsigned int)ksCurThread);
+    sendWord((unsigned int) NODE_STATE(ksCurThread));
     for (i = 0; i < NUM_READY_QUEUES; i++) {
-        tcb_t *current = ksReadyQueues[i].head;
+        tcb_t *current = NODE_STATE(ksReadyQueues[i]).head;
         if (current != 0) {
-            while (current != ksReadyQueues[i].end) {
+            while (current != NODE_STATE(ksReadyQueues[i]).end) {
                 sendWord((unsigned int)current);
                 current = current -> tcbSchedNext;
             }

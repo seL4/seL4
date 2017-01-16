@@ -26,6 +26,7 @@
 #include <util.h>
 #include <string.h>
 #include <stdint.h>
+#include <arch/smp/ipi_inline.h>
 
 #define NULL_PRIO 0
 
@@ -1594,9 +1595,11 @@ setMRs_syscall_error(tcb_t *thread, word_t *receiveIPCBuffer)
 void
 migrateTCB(tcb_t *thread)
 {
+#ifdef ARCH_X86
     /* check if thread own its current core FPU */
     if (nativeThreadUsingFPU(thread)) {
         switchFpuOwner(NULL, thread->tcbAffinity);
     }
+#endif
 }
 #endif /* CONFIG_MAX_NUM_NODES > 1 */

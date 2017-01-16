@@ -10,23 +10,20 @@
  * @TAG(D61_GPL)
  */
 
+#ifndef __MODE_KERNEL_IPI_H
+#define __MODE_KERNEL_IPI_H
+
 #include <config.h>
-#include <smp/lock.h>
+#include <types.h>
+#include <plat/machine.h>
+#include <arch/kernel/ipi.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
-clh_lock_t big_kernel_lock ALIGN(CONFIG_CACHE_LN_SZ);
-
-BOOT_CODE void
-clh_lock_init(void)
-{
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        big_kernel_lock.node_owners[i].node = &big_kernel_lock.nodes[i];
-    }
-
-    /* Initialize the CLH head */
-    big_kernel_lock.nodes[CONFIG_MAX_NUM_NODES].value = CLHState_Granted;
-    big_kernel_lock.head = &big_kernel_lock.nodes[CONFIG_MAX_NUM_NODES];
-}
+typedef enum {
+    /* TODO: placeholder for 32-bit ARM IPI types */
+    IpiNumModeRemoteCall
+} IpiModeRemoteCall_t;
 
 #endif /* CONFIG_MAX_NUM_NODES */
+#endif /* __ARCH_KERNEL_IPI_H */

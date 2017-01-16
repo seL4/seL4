@@ -18,7 +18,6 @@
 #include <arch/types.h>
 #include <util.h>
 #include <object/structures.h>
-#include <smp/smp.h>
 
 /* The top level asid mapping table */
 extern asid_pool_t *armKSASIDTable[BIT(asidHighBits)] VISIBLE;

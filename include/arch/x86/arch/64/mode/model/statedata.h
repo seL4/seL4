@@ -15,7 +15,7 @@
 
 #include <object/structures.h>
 #include <arch/types.h>
-#include <smp/smp.h>
+#include <model/statedata.h>
 
 extern pml4e_t x64KSGlobalPML4[BIT(PML4_INDEX_BITS)];
 extern pdpte_t x64KSGlobalPDPT[BIT(PDPT_INDEX_BITS)];

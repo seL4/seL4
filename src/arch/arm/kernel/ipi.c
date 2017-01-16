@@ -11,22 +11,18 @@
  */
 
 #include <config.h>
+#include <arch/smp/ipi.h>
 #include <smp/lock.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
-clh_lock_t big_kernel_lock ALIGN(CONFIG_CACHE_LN_SZ);
-
-BOOT_CODE void
-clh_lock_init(void)
+void Arch_handleIPI(irq_t irq)
 {
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        big_kernel_lock.node_owners[i].node = &big_kernel_lock.nodes[i];
-    }
-
-    /* Initialize the CLH head */
-    big_kernel_lock.nodes[CONFIG_MAX_NUM_NODES].value = CLHState_Granted;
-    big_kernel_lock.head = &big_kernel_lock.nodes[CONFIG_MAX_NUM_NODES];
+#warning "Arch_handleIPI is not implemented"
 }
 
+void doMaskReschedule(word_t mask)
+{
+#warning "doMaskReschedule is not implemented"
+}
 #endif /* CONFIG_MAX_NUM_NODES */

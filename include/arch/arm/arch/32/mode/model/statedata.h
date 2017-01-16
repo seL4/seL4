@@ -16,7 +16,6 @@
 #include <arch/types.h>
 #include <util.h>
 #include <object/structures.h>
-#include <smp/smp.h>
 
 #ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
 extern word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)] VISIBLE;
