@@ -9,3 +9,5 @@
 #
 
 include ${SOURCE_ROOT}/include/plat/${PLAT}/plat/machine/Makefile
+include ${SOURCE_ROOT}/include/plat/${PLAT}/plat/${TYPE_SUFFIX}/plat_mode/machine/Makefile
+INCLUDE_DIRS += plat/${TYPE_SUFFIX}

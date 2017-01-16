@@ -13,7 +13,7 @@
 
 #include <plat/machine/interrupt.h>
 #include <plat/machine.h>
-#include <plat/machine/hardware_gen.h>
+#include <plat_mode/machine/hardware_gen.h>
 #include <plat_mode/machine/hardware.h>
 
 bool_t platAddDevices(void);

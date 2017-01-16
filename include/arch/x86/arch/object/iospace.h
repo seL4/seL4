@@ -14,7 +14,7 @@
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
-#include <plat/machine/hardware_gen.h>
+#include <plat_mode/machine/hardware_gen.h>
 
 #define get_pci_bus(x) (((x)>>8u) & 0xffu)
 #define get_pci_dev(x) (((x)>>3u) & 0x1fu)

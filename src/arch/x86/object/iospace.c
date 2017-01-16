@@ -188,7 +188,7 @@ decodeX86IOPTInvocation(
     cap_t      io_space;
     paddr_t    paddr;
     uint32_t   pci_request_id;
-    uint32_t   io_address;
+    word_t   io_address;
     uint16_t   domain_id;
     vtd_cte_t* vtd_context_slot;
     vtd_pte_t* vtd_pte;
@@ -315,7 +315,7 @@ decodeX86IOMapInvocation(
 )
 {
     cap_t      io_space;
-    uint32_t   io_address;
+    word_t     io_address;
     uint32_t   pci_request_id;
     vtd_cte_t* vtd_context_slot;
     vtd_pte_t* vtd_pte;
@@ -412,7 +412,7 @@ void deleteIOPageTable(cap_t io_pt_cap)
 {
     lookupIOPTSlot_ret_t lu_ret;
     uint32_t             level;
-    uint32_t             io_address;
+    word_t               io_address;
     vtd_cte_t*           vtd_context_slot;
     vtd_pte_t*           vtd_pte;
 
@@ -468,7 +468,7 @@ void deleteIOPageTable(cap_t io_pt_cap)
 void unmapIOPage(cap_t cap)
 {
     lookupIOPTSlot_ret_t lu_ret;
-    uint32_t             io_address;
+    word_t               io_address;
     vtd_cte_t*           vtd_context_slot;
     vtd_pte_t*           vtd_pte;
 

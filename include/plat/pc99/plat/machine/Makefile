@@ -9,5 +9,3 @@
 #
 
 DIRECTORIES += plat/machine
-
-BF_SOURCES += plat/machine/hardware.bf

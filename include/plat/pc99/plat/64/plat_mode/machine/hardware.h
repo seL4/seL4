@@ -16,7 +16,7 @@
 #include <config.h>
 #include <basic_types.h>
 #include <plat/machine.h>
-#include <plat/machine/hardware_gen.h>
+#include <plat_mode/machine/hardware_gen.h>
 
 /* WARNING: some of these constants are also defined in linker.lds
  * These constants are written out in full instead of using bit arithmetic
