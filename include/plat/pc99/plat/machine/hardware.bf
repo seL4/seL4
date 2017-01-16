@@ -12,27 +12,6 @@
 
 base 32
 
--- PCI base address register (BAR)
-
-block pci_bar_mem {
-    field_high  base_address    28
-    field       prefetchable    1
-    field       above_4GB       1
-    padding                     1
-    field       pci_space       1
-}
-
-block pci_bar_io {
-    field_high  base_address    30
-    padding                     1
-    field       pci_space       1
-}
-
-tagged_union pci_bar pci_space {
-    tag pci_bar_mem 0
-    tag pci_bar_io  1
-}
-
 -- Intel VT-d Root Table Entry
 block vtd_rte {
     padding                         96
