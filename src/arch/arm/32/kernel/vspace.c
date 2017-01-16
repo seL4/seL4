@@ -16,6 +16,7 @@
 #include <kernel/boot.h>
 #include <kernel/cspace.h>
 #include <kernel/thread.h>
+#include <kernel/stack.h>
 #include <machine/io.h>
 #include <machine/debug.h>
 #include <model/statedata.h>
@@ -55,10 +56,6 @@
 #define ATTRINDX_CACHEABLE    0xff /* Inner and Outer RW write-back non-transient */
 #define ATTRINDX_NONCACHEABLE 0x0  /* strongly ordered or device memory */
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-
-
-/* This is the ARM kernel stack. It is accessed from a remapped address. */
-char arm_kernel_stack[4096] ALIGN_BSS(4096) VISIBLE;
 
 struct resolve_ret {
     paddr_t frameBase;
@@ -199,6 +196,9 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
 #endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 
+/* The stack is mapped as 4K page for ARM */
+compile_assert(kernel_stack_alloc, sizeof(kernel_stack_alloc[0]) <= BIT(seL4_PageBits));
+
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 BOOT_CODE void
 map_kernel_window(void)
@@ -313,7 +313,7 @@ map_kernel_window(void)
 
     /* map stack frame */
     map_kernel_frame(
-        addrFromPPtr(arm_kernel_stack),
+        addrFromPPtr(kernel_stack_alloc[0]),
         PPTR_KERNEL_STACK,
         VMKernelOnly,
         vm_attributes_new(
@@ -433,7 +433,7 @@ map_kernel_window(void)
 
     /* map stack frame */
     map_kernel_frame(
-        addrFromPPtr(arm_kernel_stack),
+        addrFromPPtr(kernel_stack_alloc[0]),
         PPTR_KERNEL_STACK,
         VMKernelOnly,
         vm_attributes_new(

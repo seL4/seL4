@@ -383,7 +383,6 @@ menu "seL4 System Parameters"
 
     config KERNEL_STACK_BITS
         int "Kernel stack size bits"
-        depends on ARCH_X86
         default 12
         help
             This describes the log2 size of the kernel stack. Great care should

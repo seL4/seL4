@@ -131,7 +131,7 @@ BEGIN_FUNC(_start)
      * point in time, that page is not yet mapped, so we use the
      * original mapping of the page in the image.
      */
-    ldr sp, =arm_kernel_stack
+    ldr sp, =kernel_stack_alloc
     add sp, sp, #(PPTR_KERNEL_STACK_TOP - PPTR_KERNEL_STACK)
 
     /* Attempt to workaround any known ARM errata. */

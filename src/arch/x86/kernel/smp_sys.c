@@ -22,11 +22,6 @@
 BOOT_DATA VISIBLE
 volatile word_t smp_aps_index = 1;
 
-/* These are the stacks used in multi processor mode. There are a lot of assumptions
- * on this being page aligned and precisely 4K in size. DO NOT MODIFY */
-ALIGN(BIT(CONFIG_KERNEL_STACK_BITS)) VISIBLE
-char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
-
 #ifdef CONFIG_USE_LOGICAL_IDS
 BOOT_CODE static void
 update_logical_id_mappings(void)

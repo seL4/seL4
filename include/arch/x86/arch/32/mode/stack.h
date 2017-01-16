@@ -16,6 +16,7 @@
 #include <config.h>
 #include <mode/model/smp.h>
 #include <mode/machine.h>
+#include <kernel/stack.h>
 
 /** Hardware stack switching on exception/IRQ entry.
  *

@@ -69,12 +69,6 @@ typedef struct boot_state {
 BOOT_BSS
 boot_state_t boot_state;
 
-#if !(CONFIG_MAX_NUM_NODES > 1)
-/* Align the kernel stack to 16 bytes for optimal performance */
-ALIGN(16) VISIBLE
-char kernel_stack_alloc[BIT(CONFIG_KERNEL_STACK_BITS)];
-#endif
-
 /* global variables (not covered by abstract specification) */
 
 BOOT_BSS

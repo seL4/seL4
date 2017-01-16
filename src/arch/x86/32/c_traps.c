@@ -10,6 +10,7 @@
 
 #include <config.h>
 #include <model/statedata.h>
+#include <kernel/stack.h>
 #include <arch/machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
 #include <arch/machine/debug.h>
