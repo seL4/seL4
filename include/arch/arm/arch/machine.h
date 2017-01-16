@@ -60,7 +60,8 @@ static inline void clearMemoryRAM(word_t* ptr, word_t bits)
                         addrFromPPtr(ptr));
 }
 
-static inline void arch_pause(void) {
+static inline void arch_pause(void)
+{
     /* TODO */
 }
 #endif /* __ASSEMBLER__ */

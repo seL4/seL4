@@ -73,7 +73,7 @@ clh_lock_acquire(word_t cpu)
 
     /* rely on the full barrier implied by the GCC builtin*/
     prev = __atomic_exchange_n(&big_kernel_lock.head,
-                                    big_kernel_lock.node_owners[cpu].node, __ATOMIC_ACQUIRE);
+                               big_kernel_lock.node_owners[cpu].node, __ATOMIC_ACQUIRE);
     big_kernel_lock.node_owners[cpu].next = prev;
 
     while (big_kernel_lock.node_owners[cpu].next->value != CLHState_Granted) {

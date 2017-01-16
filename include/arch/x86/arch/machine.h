@@ -189,7 +189,8 @@ static inline uint64_t x86_rdtsc(void)
     return ((uint64_t) hi) << 32llu | (uint64_t) lo;
 }
 
-static inline void arch_pause(void) {
+static inline void arch_pause(void)
+{
     asm volatile("pause");
 }
 
