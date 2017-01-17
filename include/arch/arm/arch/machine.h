@@ -60,10 +60,13 @@ static inline void clearMemoryRAM(word_t* ptr, word_t bits)
                         addrFromPPtr(ptr));
 }
 
+#if CONFIG_MAX_NUM_NODES > 1
 static inline void arch_pause(void)
 {
     /* TODO */
 }
+#endif
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* __ARCH_MACHINE_H */
