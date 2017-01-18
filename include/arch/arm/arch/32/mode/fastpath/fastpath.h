@@ -121,4 +121,64 @@ fastpath_reply_cap_check(cap_t cap)
     return (cap.words[0] & MASK(5)) == cap_reply_cap;
 }
 
+/** DONT_TRANSLATE */
+static inline void NORETURN
+fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
+{
+
+    c_exit_hook();
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
+    restore_user_debug_context(ksCurThread);
+#endif
+
+#ifndef CONFIG_ARCH_ARM_V6
+    writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
+#endif
+
+    register word_t badge_reg asm("r0") = badge;
+    register word_t msgInfo_reg asm("r1") = msgInfo;
+    register word_t cur_thread_reg asm("r2") = (word_t)cur_thread;
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        asm volatile( /* r0 and r1 should be preserved */
+            "mov sp, r2         \n"
+            /* Pop user registers, preserving r0 and r1 */
+            "add sp, sp, #8     \n"
+            "pop {r2-r12}       \n"
+            /* Retore the user stack pointer */
+            "pop {lr}           \n"
+            "msr sp_usr, lr     \n"
+            /* prepare the exception return lr */
+            "ldr lr, [sp, #4]   \n"
+            "msr elr_hyp, lr    \n"
+            /* prepare the user status register */
+            "ldr lr, [sp, #8]   \n"
+            "msr spsr_hyp, lr   \n"
+            /* Finally, pop our LR */
+            "pop {lr}           \n"
+            /* Return to user */
+            "eret"
+            :
+            : [badge] "r" (badge_reg),
+            [msginfo]"r"(msgInfo_reg),
+            [cur_thread]"r"(cur_thread_reg)
+            : "memory"
+        );
+    } else {
+        asm volatile("mov sp, r2 \n\
+                  add sp, sp, %[LR_SVC_OFFSET] \n\
+                  ldmdb sp, {r2-lr}^ \n\
+                  rfeia sp"
+                     :
+                     : [badge]"r"(badge_reg),
+                     [msginfo]"r"(msgInfo_reg),
+                     [cur_thread]"r"(cur_thread_reg),
+                     [LR_SVC_OFFSET]"i"(LR_svc * sizeof(word_t))
+                     : "memory"
+                    );
+    }
+    UNREACHABLE();
+}
+
 #endif /* __ARCH_FASTPATH_32_H */
