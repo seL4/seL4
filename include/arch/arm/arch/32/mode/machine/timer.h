@@ -8,8 +8,8 @@
  * @TAG(D61_GPL)
  */
 
-#ifndef __ARCH_MACHINE_TIMER_H_
-#define __ARCH_MACHINE_TIMER_H_
+#ifndef __ARCH_MODE_MACHINE_TIMER_H_
+#define __ARCH_MODE_MACHINE_TIMER_H_
 
 #include <config.h>
 #include <plat/machine/hardware.h>
@@ -59,4 +59,4 @@ initGenericTimer(void)
     resetGenericTimer();
 }
 
-#endif /* __ARCH_MACHINE_TIMER_H_ */
+#endif /* __ARCH_MODE_MACHINE_TIMER_H_ */
