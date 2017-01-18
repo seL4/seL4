@@ -13,5 +13,9 @@
 #ifndef __PLAT_MODE_MACHINE_HARDWARE_H
 #define __PLAT_MODE_MACHINE_HARDWARE_H
 
+#define kernelBase          0xffffff8000000000
+
+/* Maximum virtual address accessible from userspace */
+#define USER_TOP            0x0000ffffffffffff
 
 #endif /* __PLAT_MODE_MACHINE_HARDWARE_H */

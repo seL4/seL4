@@ -9,3 +9,35 @@
  *
  * @TAG(D61_GPL)
  */
+
+#include <object.h>
+#include <machine.h>
+#include <arch/model/statedata.h>
+#include <arch/kernel/vspace.h>
+#include <arch/kernel/thread.h>
+#include <arch/linker.h>
+
+void
+Arch_switchToThread(tcb_t *tcb)
+{
+    setVMRoot(tcb);
+}
+
+BOOT_CODE void
+Arch_configureIdleThread(tcb_t *tcb)
+{
+    setRegister(tcb, SPSR_EL1, PSTATE_IDLETHREAD);
+    setRegister(tcb, ELR_EL1, (word_t)idleThreadStart);
+}
+
+void
+Arch_switchToIdleThread(void)
+{
+    setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserPGD)));
+}
+
+void CONST
+Arch_activateIdleThread(tcb_t *tcb)
+{
+    /* Don't need to do anything */
+}

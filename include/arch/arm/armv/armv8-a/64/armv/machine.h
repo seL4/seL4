@@ -13,5 +13,24 @@
 #ifndef __ARCH_ARMV_MACHINE_H
 #define __ARCH_ARMV_MACHINE_H
 
+static inline void wfi(void)
+{
+    asm volatile("wfi" ::: "memory");
+}
+
+static inline void dsb(void)
+{
+    asm volatile("dsb sy" ::: "memory");
+}
+
+static inline void dmb(void)
+{
+    asm volatile("dmb sy" ::: "memory");
+}
+
+static inline void isb(void)
+{
+    asm volatile("isb sy" ::: "memory");
+}
 
 #endif /* __ARCH_ARMV_MACHINE_H */

@@ -9,3 +9,8 @@
  *
  * @TAG(D61_GPL)
  */
+
+void capDL(void)
+{
+
+}

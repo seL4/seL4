@@ -8,11 +8,18 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
+
 ENTRY(_start)
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
-KERNEL_BASE   = 0xe0000000;
-PHYS_BASE     = 0x20000000;
+#if defined(CONFIG_ARCH_AARCH32)
+PHYS_BASE = 0x20000000;
+KERNEL_BASE = 0xe0000000;
+#elif defined(CONFIG_ARCH_AARCH64)
+PHYS_BASE = 0x20000000;
+KERNEL_BASE = 0xffffff8000000000;
+#endif
 KERNEL_OFFSET = KERNEL_BASE - PHYS_BASE;
 
 SECTIONS

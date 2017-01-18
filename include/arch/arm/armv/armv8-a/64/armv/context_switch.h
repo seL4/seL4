@@ -13,5 +13,13 @@
 #ifndef __ARMV_CONTEXT_SWITCH_H__
 #define __ARMV_CONTEXT_SWITCH_H__
 
+/*
+ * In AARCH64, hardware and virtual asids are the same and are written
+ * when updating the translation table base register.
+ */
+static inline void armv_contextSwitch(vspace_root_t *vspace, asid_t asid)
+{
+    setCurrentUserVSpaceRoot(ttbr_new(asid, pptr_to_paddr(vspace)));
+}
 
 #endif /* __ARMV_CONTEXT_SWITCH_H__ */

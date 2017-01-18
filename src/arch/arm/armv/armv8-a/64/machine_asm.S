@@ -9,3 +9,9 @@
  *
  * @TAG(D61_GPL)
  */
+
+#include <machine/assembler.h>
+
+BEGIN_FUNC(lockTLBEntry)
+    ret
+END_FUNC(lockTLBEntry)

@@ -67,6 +67,7 @@ choice
 
     config IPC_BUF_GLOBALS_FRAME
         bool "Globals frame"
+        depends on ARCH_AARCH32
         help
             Put the address of the IPC buffer in a dedicated
             frame that is read only at user level. This works

@@ -199,6 +199,10 @@ init_cpu(void)
     }
 #endif
 
+#ifdef CONFIG_ARCH_AARCH64
+    /* initialise CPU's exception vector table */
+    setVtable((pptr_t)arm_vector_table);
+#endif
     return true;
 }
 

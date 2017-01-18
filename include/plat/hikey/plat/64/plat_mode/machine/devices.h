@@ -13,5 +13,9 @@
 #ifndef __PLAT_MODE_MACHINE_DEVICES_H
 #define __PLAT_MODE_MACHINE_DEVICES_H
 
+/* These devices are used by the seL4 kernel. */
+#define UART0_PPTR                  0xffffffffffff0000
+#define GIC_DISTRIBUTOR_PPTR        0xffffffffffff3000
+#define GIC_CONTROLLER_PPTR         0xffffffffffff4000
 
 #endif /* __PLAT_MODE_MACHINE_DEVICES_H */

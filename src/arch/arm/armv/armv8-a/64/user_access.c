@@ -9,3 +9,12 @@
  *
  * @TAG(D61_GPL)
  */
+
+#include <plat/machine/hardware.h>
+#include <arch/user_access.h>
+
+void
+armv_init_user_access(void)
+{
+
+}

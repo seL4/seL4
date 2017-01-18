@@ -13,5 +13,12 @@
 #ifndef __ARCH_MODE_HARDWARE_H
 #define __ARCH_MODE_HARDWARE_H
 
+#include <config.h>
+#include <arch/machine/hardware.h>
+#include <plat/machine/hardware.h>
+
+#define BASE_OFFSET (kernelBase - physBase)
+#define PPTR_TOP 0xffffffffc0000000
+#define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
 
 #endif /* __ARCH_MODE_HARDWARE_H */

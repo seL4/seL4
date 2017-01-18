@@ -9,3 +9,21 @@
  *
  * @TAG(D61_GPL)
  */
+
+#include <config.h>
+#include <util.h>
+#include <api/types.h>
+#include <arch/types.h>
+#include <arch/model/statedata.h>
+#include <arch/object/structures.h>
+#include <arch/linker.h>
+#include <plat/machine/hardware.h>
+
+asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
+
+pgde_t armKSGlobalUserPGD[BIT(PGD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PGDBits));
+pgde_t armKSGlobalKernelPGD[BIT(PGD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PGDBits));
+
+pude_t armKSGlobalKernelPUD[BIT(PUD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PUDBits));
+pde_t armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS)][BIT(PD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));
+pte_t armKSGlobalKernelPT[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));

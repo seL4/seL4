@@ -13,5 +13,14 @@
 #ifndef __ARCH_MODE_MACHINE_PL2_H
 #define __ARCH_MODE_MACHINE_PL2_H
 
+/* used in other files without guards */
+static inline void setCurrentPDPL2(paddr_t pa) {}
+static inline void invalidateHypTLB(void) {}
+static inline void writeContextIDPL2(word_t pd_val) {}
+static inline void writeContextIDAndPD(word_t id, word_t pd_val) {}
+static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
+{
+    return vaddr;
+}
 
 #endif /* __ARCH_MODE_MACHINE_H */

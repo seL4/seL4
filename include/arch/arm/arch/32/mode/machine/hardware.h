@@ -126,12 +126,6 @@
 
 #include <arch/types.h>
 
-enum vm_fault_type {
-    ARMDataAbort = seL4_DataFault,
-    ARMPrefetchAbort = seL4_InstructionFault
-};
-typedef word_t vm_fault_type_t;
-
 enum vm_page_size {
     ARMSmallPage,
     ARMLargePage,

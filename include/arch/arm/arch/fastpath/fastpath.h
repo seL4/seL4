@@ -16,7 +16,8 @@
 #include <benchmark/benchmark_track.h>
 #include <mode/machine/debug.h>
 
-void slowpath(syscall_t syscall) NORETURN;
+void slowpath(syscall_t syscall)
+NORETURN;
 
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 NORETURN SECTION(".vectors.fastpath_call");

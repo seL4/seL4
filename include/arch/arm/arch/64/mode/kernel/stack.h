@@ -13,5 +13,9 @@
 #ifndef __KERNEL_MODE_STACK_H
 #define __KERNEL_MODE_STACK_H
 
+#include <config.h>
+#include <util.h>
+
+#define KERNEL_STACK_ALIGNMENT 4096
 
 #endif /* __KERNEL_MODE_STACK_H */
