@@ -13,4 +13,5 @@ DIRECTORIES += src/kernel
 C_SOURCES += src/kernel/cspace.c \
              src/kernel/faulthandler.c \
              src/kernel/thread.c \
-             src/kernel/boot.c
+             src/kernel/boot.c \
+             src/kernel/stack.c
