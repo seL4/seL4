@@ -256,6 +256,14 @@ try_init_kernel(
     /* setup virtual memory for the kernel */
     map_kernel_window();
 
+    /* Setup kernel stack pointer.
+     * TODO: On ARM SMP, the array index here should be replaced with CPU ID
+     */
+#ifndef CONFIG_ARCH_ARM_V6
+    word_t stack_top = ((word_t) kernel_stack_alloc[0]) + BIT(CONFIG_KERNEL_STACK_BITS);
+    setKernelStack(stack_top);
+#endif /* CONFIG_ARCH_ARM_V6 */
+
     /* initialise the CPU */
     if (!init_cpu()) {
         return false;

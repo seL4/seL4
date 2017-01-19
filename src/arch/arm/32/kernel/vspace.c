@@ -196,9 +196,6 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
 #endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 
-/* The stack is mapped as 4K page for ARM */
-compile_assert(kernel_stack_alloc, sizeof(kernel_stack_alloc[0]) <= BIT(seL4_PageBits));
-
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 BOOT_CODE void
 map_kernel_window(void)
@@ -311,18 +308,6 @@ map_kernel_window(void)
     );
 #endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 
-    /* map stack frame */
-    map_kernel_frame(
-        addrFromPPtr(kernel_stack_alloc[0]),
-        PPTR_KERNEL_STACK,
-        VMKernelOnly,
-        vm_attributes_new(
-            true,  /* armExecuteNever */
-            true,  /* armParityEnabled */
-            true   /* armPageCacheable */
-        )
-    );
-
     map_kernel_devices();
 }
 
@@ -430,18 +415,6 @@ map_kernel_window(void)
     idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_INDEX_BITS));
     armUSGlobalPT[idx] = pteS2;
 #endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
-
-    /* map stack frame */
-    map_kernel_frame(
-        addrFromPPtr(kernel_stack_alloc[0]),
-        PPTR_KERNEL_STACK,
-        VMKernelOnly,
-        vm_attributes_new(
-            false, /* armExecuteNever */
-            true,  /* armParityEnabled */
-            true   /* armPageCacheable */
-        )
-    );
 
     map_kernel_devices();
 }

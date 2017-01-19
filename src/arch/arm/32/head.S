@@ -124,15 +124,11 @@ BEGIN_FUNC(_start)
    mcrr p15, 0, r4, r5, c15
 #endif
 
-    /*
-     * Load kernel stack pointer. Note that in the traps pages, we
-     * can load the remapped version of the stack page from the
-     * address given by PPTR_KERNEL_STACK_TOP. However, at this
-     * point in time, that page is not yet mapped, so we use the
-     * original mapping of the page in the image.
-     */
-    ldr sp, =kernel_stack_alloc
-    add sp, sp, #(PPTR_KERNEL_STACK_TOP - PPTR_KERNEL_STACK)
+     /* Load kernel stack pointer
+      * TODO: On ARM SMP, kernel_stack_alloc should be indexed by CPU ID
+      * to get different stacks for each core
+      */
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
 
     /* Attempt to workaround any known ARM errata. */
     push {r0-r3}

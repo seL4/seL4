@@ -18,16 +18,6 @@
 
 #define PPTR_VECTOR_TABLE 0xffff0000
 
-/* The stack is the very last page of virtual memory. */
-#define PPTR_KERNEL_STACK 0xfffff000
-/*
- * We reserve 16 bytes at the end of the stack - perhaps we could store some
- * useful data here? Also, if we didn't subtract 16 off, the default initial sp
- * is 0x0, which is perfectly valid and would wrap correctly, but let's not
- * test the boundary cases here.
- */
-#define PPTR_KERNEL_STACK_TOP (PPTR_KERNEL_STACK + 0x1000 - 16)
-
 #if defined(CONFIG_ARM1136JF_S)
 #define L1_CACHE_LINE_SIZE_BITS  5 /* 32 bytes */
 
