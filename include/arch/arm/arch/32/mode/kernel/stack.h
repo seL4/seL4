@@ -15,6 +15,6 @@
 #include <config.h>
 #include <util.h>
 
-#define KERNEL_STACK_ALIGNMENT 4096
+#define KERNEL_STACK_ALIGNMENT 16
 
 #endif /* __KERNEL_MODE_STACK_H */
