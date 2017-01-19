@@ -58,6 +58,7 @@ typedef struct {
     uint32_t    smmu_nv2_asid;              /* 0x26c    */
     uint32_t    smmu_ppcs_asid;             /* 0x270    */
     uint32_t    smmu_sata_asid;             /* 0x274    */
+    uint32_t    reserved7_1;                /* 0x278    */
     uint32_t    smmu_vde_asid;              /* 0x27c    */
     uint32_t    smmu_vi_asid;               /* 0x280    */
     uint32_t    smmu_vic_asid;              /* 0x284    */
