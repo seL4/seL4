@@ -167,18 +167,33 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
 
     assert(vaddr >= PPTR_TOP); /* vaddr lies in the region the global PT covers */
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
-    armKSGlobalPT[idx] =
-        pte_pte_small_new(
-            paddr,
-            0, /* global */
-            0, /* Not shared */
-            0, /* APX = 0, privileged full access */
-            0, /* TEX = 0 */
-            APFromVMRights(vm_rights),
-            vm_attributes_get_armPageCacheable(attributes),
-            1, /* Write-back caching */
-            0  /* executable */
-        );
+    if (vm_attributes_get_armPageCacheable(attributes)) {
+        armKSGlobalPT[idx] =
+            pte_pte_small_new(
+                paddr,
+                0, /* global */
+                0, /* Not shared */
+                0, /* APX = 0, privileged full access */
+                5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
+                APFromVMRights(vm_rights),
+                0, /* C (Inner write allocate) */
+                1, /* B (Inner write allocate) */
+                0  /* executable */
+            );
+    } else {
+        armKSGlobalPT[idx] =
+            pte_pte_small_new(
+                paddr,
+                0, /* global */
+                0, /* Not shared */
+                0, /* APX = 0, privileged full access */
+                0, /* TEX = 0 */
+                APFromVMRights(vm_rights),
+                0, /* Shared device */
+                1, /* Shared device */
+                0  /* executable */
+            );
+    }
 #else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     armHSGlobalPT[idx] =
         pteS1_pteS1_small_new(
@@ -218,13 +233,13 @@ map_kernel_window(void)
                   0, /* global */
                   0, /* Not shared */
                   0, /* APX = 0, privileged full access */
-                  0, /* TEX = 0 */
+                  5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
                   1, /* VMKernelOnly */
                   1, /* Parity enabled */
                   0, /* Domain 0 */
                   0, /* XN not set */
-                  1, /* Cacheable */
-                  1  /* Write-back */
+                  0, /* C (Inner write allocate) */
+                  1  /* B (Inner write allocate) */
               );
         for (idx2 = idx; idx2 < idx + SECTIONS_PER_SUPER_SECTION; idx2++) {
             armKSGlobalPD[idx2] = pde;
@@ -240,13 +255,13 @@ map_kernel_window(void)
                   0, /* global */
                   0, /* Not shared */
                   0, /* APX = 0, privileged full access */
-                  0, /* TEX = 0 */
+                  5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
                   1, /* VMKernelOnly */
                   1, /* Parity enabled */
                   0, /* Domain 0 */
                   0, /* XN not set */
-                  1, /* Cacheable */
-                  1  /* Write-back */
+                  0, /* C (Inner write allocate) */
+                  1  /* B (Inner write allocate) */
               );
         armKSGlobalPD[idx] = pde;
         phys += BIT(pageBitsForSize(ARMSection));
@@ -442,10 +457,10 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
                       1, /* not global */
                       0, /* not shared */
                       0, /* APX = 0, privileged full access */
-                      0, /* TEX = 0 */
+                      5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
                       APFromVMRights(VMReadWrite),
-                      1, /* cacheable */
-                      1, /* write-back caching */
+                      0, /* C (Inner write allocate) */
+                      1, /* B (Inner write allocate) */
                       !executable
                   );
 #else
