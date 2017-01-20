@@ -14,6 +14,8 @@
 
 #include <machine/assembler.h>
 
+#define BIT(n) (1 << (n))
+
 .code 32
 .section .vectors, "ax"
 
@@ -51,7 +53,11 @@ BEGIN_FUNC(arm_undefined_inst_exception)
     ldr r8, [sp]
     sub r8, r8, #4
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
-    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+#ifdef CONFIG_ARCH_ARM_V6
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+#else
+    mrc p15, 0, sp, c13, c0, 4
+#endif /* CONFIG_ARCH_ARM_V6 */
     b c_handle_undefined_instruction
 #endif
 END_FUNC(arm_undefined_inst_exception)
@@ -73,7 +79,11 @@ BEGIN_FUNC(arm_swi_syscall)
     stmdb sp, {r0-lr}^
 
     /* Load the kernel's real stack pointer */
-    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+#ifdef CONFIG_ARCH_ARM_V6
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+#else
+    mrc p15, 0, sp, c13, c0, 4
+#endif /* CONFIG_ARCH_ARM_V6 */
 
     /* Load system call number as a c_handle_syscall argument. r0 and r1 are passed
      * unmodified (cptr and msgInfo) respectively.
@@ -103,14 +113,23 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
-    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+
+#ifdef CONFIG_ARCH_ARM_V6
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+#else
+    mrc p15, 0, sp, c13, c0, 4
+#endif /* CONFIG_ARCH_ARM_V6 */
 
     b c_handle_instruction_fault
 
 kernel_prefetch_fault:
 #ifdef DEBUG
     mov r0, r8
-    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+#ifdef CONFIG_ARCH_ARM_V6
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+#else
+    mrc p15, 0, sp, c13, c0, 4
+#endif /* CONFIG_ARCH_ARM_V6 */
     blx kernelPrefetchAbort
     /* Fallthrough to infinite loop should we foolishly return. */
 #endif
@@ -146,7 +165,11 @@ BEGIN_FUNC(arm_data_abort_exception)
 
     /* Store faulting address in TCB and call handleVMFaultEvent. */
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
-    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+#ifdef CONFIG_ARCH_ARM_V6
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+#else
+    mrc p15, 0, sp, c13, c0, 4
+#endif /* CONFIG_ARCH_ARM_V6 */
 
     ldr r7, =ksCurThread
     b c_handle_data_fault
@@ -155,7 +178,11 @@ BEGIN_FUNC(arm_data_abort_exception)
 kernel_data_fault:
 #ifdef DEBUG
     mov r0, r8
-    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+#ifdef CONFIG_ARCH_ARM_V6
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+#else
+    mrc p15, 0, sp, c13, c0, 4
+#endif /* CONFIG_ARCH_ARM_V6 */
     blx kernelDataAbort
     /* Fallthrough to infinite loop should we foolishly return. */
 #endif
@@ -179,7 +206,11 @@ BEGIN_FUNC(arm_irq_exception)
     sub r8, r8, #4
     str r8, [sp]
     str r8, [sp, #(PT_FaultInstruction - PT_LR_svc)]
-    ldr sp, =(PPTR_KERNEL_STACK_TOP)
+#ifdef CONFIG_ARCH_ARM_V6
+    ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+#else
+    mrc p15, 0, sp, c13, c0, 4
+#endif /* CONFIG_ARCH_ARM_V6 */
     b c_handle_interrupt
 END_FUNC(arm_irq_exception)
 

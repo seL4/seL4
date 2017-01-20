@@ -136,6 +136,11 @@ static inline void writeTPIDRURW(word_t reg)
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
 }
 
+static inline void writeTPIDRPRW(word_t reg)
+{
+    asm volatile("mcr p15, 0, %0, c13, c0, 4" :: "r"(reg));
+}
+
 static inline word_t readTPIDRURW(void)
 {
     word_t reg;
@@ -157,6 +162,16 @@ static inline void setCurrentPD(paddr_t addr)
         /* Ensure the PD switch completes before we do anything else */
         isb();
     }
+}
+
+static inline void setKernelStack(word_t stack_address)
+{
+#ifndef CONFIG_ARCH_ARM_V6
+    /* Setup kernel stack pointer.
+     * Load the (per-core) kernel stack pointer to TPIDRPRW for faster reloads on traps.
+     */
+    writeTPIDRPRW(stack_address);
+#endif /* CONFIG_ARCH_ARM_V7A */
 }
 
 /* TLB control */

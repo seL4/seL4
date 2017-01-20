@@ -22,7 +22,6 @@
  * 0xfff00000 devices      (plat/machine/devices.h)
  * 0xffff0000 vectors      (arch/machine/hardware.h)
  * 0xffffc000 global page  (arch/machine/hardware.h)
- * 0xfffff000 kernel stack (arch/machine/hardware.h)
  */
 #define BASE_OFFSET (kernelBase - physBase)
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER

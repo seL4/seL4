@@ -116,7 +116,7 @@ END_FUNC(arm_vector_table)
     /* Stack all user registers */
     push {r0-r12}
     /* Load the kernel's real stack pointer */
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    mrc p15, 0, sp, c13, c0, 4
 .endm
 
 /********************************
@@ -181,7 +181,7 @@ END_FUNC(arm_syscall)
 
 BEGIN_FUNC(arm_hyp_prefetch_abort_exception)
 #ifdef DEBUG
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    mrc p15, 0, sp, c13, c0, 4
     mrs r0, elr_hyp
     blx kernelPrefetchAbort
 #endif
@@ -192,7 +192,7 @@ END_FUNC(arm_hyp_prefetch_abort_exception)
 
 BEGIN_FUNC(arm_hyp_data_abort_exception)
 #ifdef DEBUG
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    mrc p15, 0, sp, c13, c0, 4
     mrs r0, elr_hyp
     blx kernelDataAbort
 #endif
@@ -203,7 +203,7 @@ END_FUNC(arm_hyp_data_abort_exception)
 
 BEGIN_FUNC(arm_hyp_undefined_inst_exception)
 #ifdef DEBUG
-    mov sp, #(PPTR_KERNEL_STACK_TOP)
+    mrc p15, 0, sp, c13, c0, 4
     mrs r0, elr_hyp
     blx kernelUndefinedInstruction
 #endif
