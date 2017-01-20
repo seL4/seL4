@@ -94,7 +94,7 @@ enum _register {
     CPSR = 16,
 
     FaultInstruction = 17,
-#ifdef CONFIG_ARCH_ARM_MPCORE
+#ifndef CONFIG_ARCH_ARM_V6
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
     TPIDRURW = 18,

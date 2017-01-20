@@ -16,7 +16,7 @@
 
 static inline void arch_c_entry_hook(void)
 {
-#ifdef CONFIG_ARCH_ARM_MPCORE
+#ifndef CONFIG_ARCH_ARM_V6
     /* If using the TPIDRURW register for the IPC buffer then
      * there's no pointer in saving whatever the user put into
      * it since we will overwrite it anyway next time we
