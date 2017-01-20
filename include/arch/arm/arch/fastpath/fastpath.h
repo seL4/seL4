@@ -28,7 +28,7 @@ static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t
     restore_user_debug_context(ksCurThread);
 #endif
 
-#ifdef CONFIG_IPC_BUF_TPIDRURW
+#ifndef CONFIG_ARCH_ARM_V6
     writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
 #endif
 

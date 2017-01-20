@@ -29,7 +29,7 @@ static inline void FORCE_INLINE NORETURN restore_user_context(void)
     restore_user_debug_context(ksCurThread);
 #endif
 
-#ifdef CONFIG_IPC_BUF_TPIDRURW
+#ifndef CONFIG_ARCH_ARM_V6
     writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
 #endif
 
