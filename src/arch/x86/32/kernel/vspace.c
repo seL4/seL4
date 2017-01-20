@@ -472,9 +472,6 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
         copyGlobalMappings((vspace_root_t*)pd_pptr);
         pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
-        if (!provide_cap(root_cnode_cap, pd_cap)) {
-            return cap_null_cap_new();
-        }
         write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
         vspace_cap = pd_cap;
     } else {
