@@ -259,23 +259,52 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
 static uint32_t
 readVCPUReg(vcpu_t *vcpu, uint32_t field)
 {
-    switch (field) {
-    case seL4_VCPUReg_SCTLR:
-        return vcpu->cpx.sctlr;
-    default:
-        fail("Unknown VCPU field");
+    if (likely(armHSCurVCPU == vcpu)) {
+        switch (field) {
+        case seL4_VCPUReg_SCTLR:
+            /* The SCTLR value is switched to/from hardware when we enable/disable
+             * the vcpu, not when we switch vcpus */
+            if (armHSVCPUActive) {
+                return getSCTLR();
+            } else {
+                return vcpu->cpx.sctlr;
+            }
+        default:
+            fail("Unknown VCPU field");
+        }
+    } else {
+        switch (field) {
+        case seL4_VCPUReg_SCTLR:
+            return vcpu->cpx.sctlr;
+        default:
+            fail("Unknown VCPU field");
+        }
     }
 }
 
 static void
 writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 {
-    switch (field) {
-    case seL4_VCPUReg_SCTLR:
-        vcpu->cpx.sctlr = value;
-        break;
-    default:
-        fail("Unknown VCPU field");
+    if (likely(armHSCurVCPU == vcpu)) {
+        switch (field) {
+        case seL4_VCPUReg_SCTLR:
+            if (armHSVCPUActive) {
+                setSCTLR(value);
+            } else {
+                vcpu->cpx.sctlr = value;
+            }
+            break;
+        default:
+            fail("Unknown VCPU field");
+        }
+    } else {
+        switch (field) {
+        case seL4_VCPUReg_SCTLR:
+            vcpu->cpx.sctlr = value;
+            break;
+        default:
+            fail("Unknown VCPU field");
+        }
     }
 }
 
@@ -392,13 +421,6 @@ vcpu_invalidate_active(void)
     armHSCurVCPU = NULL;
 }
 
-static void
-vcpu_clean_invalidate_active(void)
-{
-    vcpu_save(armHSCurVCPU, armHSVCPUActive);
-    vcpu_invalidate_active();
-}
-
 void
 vcpu_finalise(vcpu_t *vcpu)
 {
@@ -436,9 +458,6 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 exception_t
 invokeVCPUWriteReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 {
-    if (armHSCurVCPU == vcpu) {
-        vcpu_clean_invalidate_active();
-    }
     writeVCPUReg(vcpu, field, value);
     setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
@@ -473,9 +492,6 @@ invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field)
 {
     tcb_t *thread;
     thread = ksCurThread;
-    if (armHSCurVCPU == vcpu) {
-        vcpu_clean_invalidate_active();
-    }
     setRegister(thread, msgRegisters[0], readVCPUReg(vcpu, field));
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                     seL4_MessageInfo_new(0, 0, 0, 1)));
