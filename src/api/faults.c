@@ -79,7 +79,7 @@ copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
     for (i = 0; i < MIN(length, n_msgRegisters); i++) {
         register_t r = fault_messages[id][i];
         word_t v = getRegister(sender, msgRegisters[i]);
-        setRegister(receiver, r, sanitiseRegister(r, v));
+        setRegister(receiver, r, sanitiseRegister(r, v, &receiver->tcbArch));
     }
 
     if (i < length) {
@@ -88,7 +88,7 @@ copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
             for (; i < length; i++) {
                 register_t r = fault_messages[id][i];
                 word_t v = sendBuf[i + 1];
-                setRegister(receiver, r, sanitiseRegister(r, v));
+                setRegister(receiver, r, sanitiseRegister(r, v, &receiver->tcbArch));
             }
         }
     }

@@ -142,6 +142,8 @@ typedef uint32_t vm_rights_t;
 
 #include <mode/object/structures.h>
 
+word_t sanitiseRegister(register_t reg, word_t v, arch_tcb_t *thread);
+
 static inline word_t CONST
 cap_get_archCapSizeBits(cap_t cap)
 {

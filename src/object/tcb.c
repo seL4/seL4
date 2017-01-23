@@ -1500,14 +1500,14 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
         /* Offset of 2 to get past the initial syscall arguments */
         setRegister(dest, frameRegisters[i],
                     sanitiseRegister(frameRegisters[i],
-                                     getSyscallArg(i + 2, buffer)));
+                                     getSyscallArg(i + 2, buffer), &dest->tcbArch));
     }
 
     for (i = 0; i < n_gpRegisters && i + n_frameRegisters < n; i++) {
         setRegister(dest, gpRegisters[i],
                     sanitiseRegister(gpRegisters[i],
                                      getSyscallArg(i + n_frameRegisters + 2,
-                                                   buffer)));
+                                                   buffer), &dest->tcbArch));
     }
 
 #ifdef CONFIG_ARCH_X86_64

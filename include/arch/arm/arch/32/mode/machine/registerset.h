@@ -197,33 +197,6 @@ static inline void Arch_initContext(user_context_t* context)
 #endif
 }
 
-static inline word_t CONST
-sanitiseRegister(register_t reg, word_t v)
-{
-    if (reg == CPSR) {
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            switch (v & 0x1f) {
-            case PMODE_USER:
-            case PMODE_FIQ:
-            case PMODE_IRQ:
-            case PMODE_SUPERVISOR:
-            case PMODE_ABORT:
-            case PMODE_UNDEFINED:
-            case PMODE_SYSTEM:
-                return v;
-            case PMODE_HYPERVISOR:
-            default:
-                /* For backwards compatibility, Invalid modes revert to USER mode */
-                break;
-            }
-        }
-
-        return (v & 0xf8000000) | CPSR_USER;
-    } else {
-        return v;
-    }
-}
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* !__ARCH_MACHINE_REGISTERSET_32_H */

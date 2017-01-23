@@ -140,6 +140,35 @@ compile_assert(asid_pool_size_sane, ASID_POOL_INDEX_BITS + WORD_SIZE_BITS == seL
 #define ASID_LOW(a) (a & MASK(asidLowBits))
 #define ASID_HIGH(a) ((a >> asidLowBits) & MASK(asidHighBits))
 
+static inline word_t
+sanitiseRegister(register_t reg, word_t v, arch_tcb_t *thread_arch)
+{
+    if (reg == CPSR) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        if (thread_arch->vcpu) {
+            switch (v & 0x1f) {
+            case PMODE_USER:
+            case PMODE_FIQ:
+            case PMODE_IRQ:
+            case PMODE_SUPERVISOR:
+            case PMODE_ABORT:
+            case PMODE_UNDEFINED:
+            case PMODE_SYSTEM:
+                return v;
+            case PMODE_HYPERVISOR:
+            default:
+                /* For backwards compatibility, Invalid modes revert to USER mode */
+                break;
+            }
+        }
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+        return (v & 0xf8000000) | CPSR_USER;
+    } else {
+        return v;
+    }
+}
+
 static inline cap_t CONST
 cap_small_frame_cap_set_capFMappedASID(cap_t cap, word_t asid)
 {

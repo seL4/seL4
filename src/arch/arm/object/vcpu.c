@@ -453,6 +453,8 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     }
     tcb->tcbArch.vcpu = NULL;
     vcpu->tcb = NULL;
+    /* sanitize the CPSR as without a VCPU a thread should only be in user mode */
+    setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), &tcb->tcbArch));
 }
 
 exception_t
