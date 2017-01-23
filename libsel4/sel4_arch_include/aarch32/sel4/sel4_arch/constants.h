@@ -77,6 +77,10 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_VCPUFault_Msg),
 } seL4_VCPUFault_Msg;
 
+enum {
+    seL4_VCPUReg_SCTLR = 0
+} seL4_VCPUReg;
+
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 #endif /* !__ASSEMBLER__ */
 

@@ -260,7 +260,7 @@ static uint32_t
 readVCPUReg(vcpu_t *vcpu, uint32_t field)
 {
     switch (field) {
-    case 0:
+    case seL4_VCPUReg_SCTLR:
         return vcpu->cpx.sctlr;
     default:
         fail("Unknown VCPU field");
@@ -271,7 +271,7 @@ static void
 writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 {
     switch (field) {
-    case 0:
+    case seL4_VCPUReg_SCTLR:
         vcpu->cpx.sctlr = value;
         break;
     default:
@@ -457,7 +457,7 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
     field = getSyscallArg(0, buffer);
     value = getSyscallArg(1, buffer);
     switch (field) {
-    case 0:
+    case seL4_VCPUReg_SCTLR:
         break;
     default:
         userError("VCPUWriteReg: Invalid field 0x%lx.", (long)field);
@@ -496,7 +496,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
     field = getSyscallArg(0, buffer);
 
     switch (field) {
-    case 0:
+    case seL4_VCPUReg_SCTLR:
         break;
     default:
         userError("VCPUReadReg: Invalid field 0x%lx.", (long)field);
