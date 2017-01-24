@@ -78,7 +78,23 @@ enum {
 } seL4_VCPUFault_Msg;
 
 enum {
-    seL4_VCPUReg_SCTLR = 0
+    seL4_VCPUReg_SCTLR = 0,
+    seL4_VCPUReg_LRsvc,
+    seL4_VCPUReg_SPsvc,
+    seL4_VCPUReg_LRabt,
+    seL4_VCPUReg_SPabt,
+    seL4_VCPUReg_LRund,
+    seL4_VCPUReg_SPund,
+    seL4_VCPUReg_LRirq,
+    seL4_VCPUReg_SPirq,
+    seL4_VCPUReg_LRfiq,
+    seL4_VCPUReg_SPfiq,
+    seL4_VCPUReg_R8fiq,
+    seL4_VCPUReg_R9fiq,
+    seL4_VCPUReg_R10fiq,
+    seL4_VCPUReg_R11fiq,
+    seL4_VCPUReg_R12fiq,
+    seL4_VCPUReg_Num,
 } seL4_VCPUReg;
 
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */

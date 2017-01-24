@@ -496,6 +496,36 @@ readVCPUReg(vcpu_t *vcpu, uint32_t field)
             } else {
                 return vcpu->cpx.sctlr;
             }
+        case seL4_VCPUReg_LRsvc:
+            return get_lr_svc();
+        case seL4_VCPUReg_SPsvc:
+            return get_sp_svc();
+        case seL4_VCPUReg_LRabt:
+            return get_lr_abt();
+        case seL4_VCPUReg_SPabt:
+            return get_sp_abt();
+        case seL4_VCPUReg_LRund:
+            return get_lr_und();
+        case seL4_VCPUReg_SPund:
+            return get_sp_und();
+        case seL4_VCPUReg_LRirq:
+            return get_lr_irq();
+        case seL4_VCPUReg_SPirq:
+            return get_sp_irq();
+        case seL4_VCPUReg_LRfiq:
+            return get_lr_fiq();
+        case seL4_VCPUReg_SPfiq:
+            return get_sp_fiq();
+        case seL4_VCPUReg_R8fiq:
+            return get_r8_fiq();
+        case seL4_VCPUReg_R9fiq:
+            return get_r9_fiq();
+        case seL4_VCPUReg_R10fiq:
+            return get_r10_fiq();
+        case seL4_VCPUReg_R11fiq:
+            return get_r11_fiq();
+        case seL4_VCPUReg_R12fiq:
+            return get_r12_fiq();
         default:
             fail("Unknown VCPU field");
         }
@@ -503,6 +533,36 @@ readVCPUReg(vcpu_t *vcpu, uint32_t field)
         switch (field) {
         case seL4_VCPUReg_SCTLR:
             return vcpu->cpx.sctlr;
+        case seL4_VCPUReg_LRsvc:
+            return vcpu->lr_svc;
+        case seL4_VCPUReg_SPsvc:
+            return vcpu->sp_svc;
+        case seL4_VCPUReg_LRabt:
+            return vcpu->lr_abt;
+        case seL4_VCPUReg_SPabt:
+            return vcpu->sp_abt;
+        case seL4_VCPUReg_LRund:
+            return vcpu->lr_und;
+        case seL4_VCPUReg_SPund:
+            return vcpu->sp_und;
+        case seL4_VCPUReg_LRirq:
+            return vcpu->lr_irq;
+        case seL4_VCPUReg_SPirq:
+            return vcpu->sp_irq;
+        case seL4_VCPUReg_LRfiq:
+            return vcpu->lr_fiq;
+        case seL4_VCPUReg_SPfiq:
+            return vcpu->sp_fiq;
+        case seL4_VCPUReg_R8fiq:
+            return vcpu->r8_fiq;
+        case seL4_VCPUReg_R9fiq:
+            return vcpu->r9_fiq;
+        case seL4_VCPUReg_R10fiq:
+            return vcpu->r10_fiq;
+        case seL4_VCPUReg_R11fiq:
+            return vcpu->r11_fiq;
+        case seL4_VCPUReg_R12fiq:
+            return vcpu->r12_fiq;
         default:
             fail("Unknown VCPU field");
         }
@@ -521,6 +581,51 @@ writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
                 vcpu->cpx.sctlr = value;
             }
             break;
+        case seL4_VCPUReg_LRsvc:
+            set_lr_svc(value);
+            break;
+        case seL4_VCPUReg_SPsvc:
+            set_sp_svc(value);
+            break;
+        case seL4_VCPUReg_LRabt:
+            set_lr_abt(value);
+            break;
+        case seL4_VCPUReg_SPabt:
+            set_sp_abt(value);
+            break;
+        case seL4_VCPUReg_LRund:
+            set_lr_und(value);
+            break;
+        case seL4_VCPUReg_SPund:
+            set_sp_und(value);
+            break;
+        case seL4_VCPUReg_LRirq:
+            set_lr_irq(value);
+            break;
+        case seL4_VCPUReg_SPirq:
+            set_sp_irq(value);
+            break;
+        case seL4_VCPUReg_LRfiq:
+            set_lr_fiq(value);
+            break;
+        case seL4_VCPUReg_SPfiq:
+            set_sp_fiq(value);
+            break;
+        case seL4_VCPUReg_R8fiq:
+            set_r8_fiq(value);
+            break;
+        case seL4_VCPUReg_R9fiq:
+            set_r9_fiq(value);
+            break;
+        case seL4_VCPUReg_R10fiq:
+            set_r10_fiq(value);
+            break;
+        case seL4_VCPUReg_R11fiq:
+            set_r11_fiq(value);
+            break;
+        case seL4_VCPUReg_R12fiq:
+            set_r12_fiq(value);
+            break;
         default:
             fail("Unknown VCPU field");
         }
@@ -528,6 +633,51 @@ writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
         switch (field) {
         case seL4_VCPUReg_SCTLR:
             vcpu->cpx.sctlr = value;
+            break;
+        case seL4_VCPUReg_LRsvc:
+            vcpu->lr_svc = value;
+            break;
+        case seL4_VCPUReg_SPsvc:
+            vcpu->sp_svc  = value;
+            break;
+        case seL4_VCPUReg_LRabt:
+            vcpu->lr_abt = value;
+            break;
+        case seL4_VCPUReg_SPabt:
+            vcpu->sp_abt = value;
+            break;
+        case seL4_VCPUReg_LRund:
+            vcpu->lr_und = value;
+            break;
+        case seL4_VCPUReg_SPund:
+            vcpu->sp_und = value;
+            break;
+        case seL4_VCPUReg_LRirq:
+            vcpu->lr_irq = value;
+            break;
+        case seL4_VCPUReg_SPirq:
+            vcpu->sp_irq = value;
+            break;
+        case seL4_VCPUReg_LRfiq:
+            vcpu->lr_fiq = value;
+            break;
+        case seL4_VCPUReg_SPfiq:
+            vcpu->sp_fiq = value;
+            break;
+        case seL4_VCPUReg_R8fiq:
+            vcpu->r8_fiq = value;
+            break;
+        case seL4_VCPUReg_R9fiq:
+            vcpu->r9_fiq = value;
+            break;
+        case seL4_VCPUReg_R10fiq:
+            vcpu->r10_fiq = value;
+            break;
+        case seL4_VCPUReg_R11fiq:
+            vcpu->r11_fiq = value;
+            break;
+        case seL4_VCPUReg_R12fiq:
+            vcpu->r12_fiq = value;
             break;
         default:
             fail("Unknown VCPU field");
@@ -721,10 +871,7 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
     }
     field = getSyscallArg(0, buffer);
     value = getSyscallArg(1, buffer);
-    switch (field) {
-    case seL4_VCPUReg_SCTLR:
-        break;
-    default:
+    if (field >= seL4_VCPUReg_Num) {
         userError("VCPUWriteReg: Invalid field 0x%lx.", (long)field);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
@@ -757,10 +904,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
 
     field = getSyscallArg(0, buffer);
 
-    switch (field) {
-    case seL4_VCPUReg_SCTLR:
-        break;
-    default:
+    if (field >= seL4_VCPUReg_Num) {
         userError("VCPUReadReg: Invalid field 0x%lx.", (long)field);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
