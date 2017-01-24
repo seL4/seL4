@@ -24,8 +24,8 @@ block untyped_cap {
     field capBlockSize 6
 
     field capType 5
-    padding 11
-    field_high capPtr 48
+    padding 10
+    field_high capPtr 49
 }
 
 block endpoint_cap(capEPBadge, capType, capCanGrant, capCanSend, capCanReceive,
@@ -46,8 +46,8 @@ block notification_cap {
     field capType 5
     field capNtfnCanReceive 1
     field capNtfnCanSend 1
-    padding 9
-    field_high capNtfnPtr 48
+    padding 8
+    field_high capNtfnPtr 49
 }
 
 block reply_cap(capReplyMaster, capTCBPtr, capType) {
@@ -82,8 +82,8 @@ block thread_cap {
     padding 64
 
     field capType 5
-    padding 11
-    field_high capTCBPtr 48
+    padding 10
+    field_high capTCBPtr 49
 }
 
 block irq_control_cap {
@@ -122,31 +122,31 @@ block domain_cap {
 block endpoint {
     field epQueue_head 64
 
-    padding 16
-    field_high epQueue_tail 46
+    padding 15
+    field_high epQueue_tail 47
     field state 2
 }
 
 -- Async endpoint: size = 32 bytes
 block notification {
-    padding 16
-    field_high ntfnBoundTCB 48
+    padding 15
+    field_high ntfnBoundTCB 49
 
     field ntfnMsgIdentifier 64
 
-    padding 16
-    field_high ntfnQueue_head 48
+    padding 15
+    field_high ntfnQueue_head 49
 
-    field_high ntfnQueue_tail 48
-    padding 13
+    field_high ntfnQueue_tail 49
+    padding 12
     field bound 1
     field state 2
 }
 
 -- Mapping database (MDB) node: size = 16 bytes
 block mdb_node {
-    padding 16
-    field_high mdbNext 46
+    padding 15
+    field_high mdbNext 47
     field mdbRevocable 1
     field mdbFirstBadged 1
 
@@ -299,7 +299,7 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
     field blockingIPCDiminishCaps 1
     field tcbQueued 1
 
-    padding 16
-    field_high blockingObject 44
+    padding 15
+    field_high blockingObject 45
     field tsType 4
 }

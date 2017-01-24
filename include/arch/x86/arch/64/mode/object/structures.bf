@@ -13,7 +13,7 @@
 #include <config.h>
 
 ---- Default base size: uint64_t
-base 64(48,1)
+base 64(49,1)
 
 -- Including the common structures.bf is neccessary because
 -- we need the structures to be visible here when building
@@ -31,49 +31,49 @@ block frame_cap {
     field       capType             5
     field       capFSize            2
     field       capFMapType         2
-    field_high  capFMappedAddress   48
+    field_high  capFMappedAddress   49
     field       capFVMRights        2
     field       capFIsDevice        1
-    padding                         4
+    padding                         3
 }
 
 -- Second-level page table
 block page_table_cap {
-    padding                         4
+    padding                         3
     field       capPTMappedASID     12
-    field_high  capPTBasePtr        48
+    field_high  capPTBasePtr        49
 
     field       capType             5
-    padding                         10
+    padding                         9
     field       capPTIsMapped       1
-    field_high  capPTMappedAddress  27
+    field_high  capPTMappedAddress  28
 
     padding                         21
 }
 
 -- First-level page table (page directory)
 block page_directory_cap {
-    padding                         4
+    padding                         3
     field       capPDMappedASID     12
-    field_high  capPDBasePtr        48
+    field_high  capPDBasePtr        49
 
     field       capType             5
-    padding                         10
+    padding                         9
     field       capPDIsMapped       1
-    field_high  capPDMappedAddress  18
+    field_high  capPDMappedAddress  19
 
     padding                         30
 }
 
 block pdpt_cap {
-    padding                          4
+    padding                          3
     field       capPDPTMappedASID    12
-    field_high  capPDPTBasePtr       48
+    field_high  capPDPTBasePtr       49
 
     field       capType              5
     field       capPDPTIsMapped      1
-    field_high  capPDPTMappedAddress 9
-    padding                          49
+    field_high  capPDPTMappedAddress 10
+    padding                          48
 }
 
 block pml4_cap(capPML4MappedASID, capPML4BasePtr, capType, capPML4IsMapped) {
@@ -144,10 +144,10 @@ block io_page_table_cap (capType, capIOPTIsMapped, capIOPTLevel, capIOPTMappedAd
     field_high capIOPTBasePtr 48
 
     field       capType                 5
-    padding                             6
+    padding                             5
     field       capIOPTIsMapped         1
     field       capIOPTLevel            4
-    field_high  capIOPTMappedAddress    48
+    field_high  capIOPTMappedAddress    49
 }
 
 block vcpu_cap {
@@ -163,8 +163,8 @@ block ept_pt_cap (capType, capPTMappedAddress, capPTIsMapped, capPTMappedASID, c
 
     field       capType             5
     field       capPTIsMapped       1
-    padding                         10
-    field_high  capPTMappedAddress  27
+    padding                         9
+    field_high  capPTMappedAddress  28
     field       capPTMappedASID     16
     padding                         5
 }
@@ -175,8 +175,8 @@ block ept_pd_cap (capType, capPDMappedAddress, capPDIsMapped, capPDMappedASID, c
 
     field       capType             5
     field       capPDIsMapped       1
-    padding                         10
-    field_high  capPDMappedAddress  19
+    padding                         9
+    field_high  capPDMappedAddress  20
     field       capPDMappedASID     16
     padding                         13
 }
@@ -187,8 +187,8 @@ block ept_pdpt_cap (capType, capPDPTMappedAddress, capPDPTIsMapped, capPDPTMappe
 
     field       capType             5
     field       capPDPTIsMapped     1
-    padding                         10
-    field_high  capPDPTMappedAddress 17
+    padding                         9
+    field_high  capPDPTMappedAddress 18
     field       capPDPTMappedASID   16
     padding                         15
 }
