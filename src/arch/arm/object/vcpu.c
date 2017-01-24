@@ -112,6 +112,216 @@ static volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl =
 
 static unsigned int gic_vcpu_num_list_regs;
 
+static inline word_t
+get_lr_svc(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], lr_svc" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_lr_svc(word_t val)
+{
+    asm ("msr lr_svc, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_sp_svc(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], sp_svc" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_sp_svc(word_t val)
+{
+    asm ("msr sp_svc, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_lr_abt(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], lr_abt" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_lr_abt(word_t val)
+{
+    asm ("msr lr_abt, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_sp_abt(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], sp_abt" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_sp_abt(word_t val)
+{
+    asm ("msr sp_abt, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_lr_und(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], lr_und" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_lr_und(word_t val)
+{
+    asm ("msr lr_und, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_sp_und(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], sp_und" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_sp_und(word_t val)
+{
+    asm ("msr sp_und, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_lr_irq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], lr_irq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_lr_irq(word_t val)
+{
+    asm ("msr lr_irq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_sp_irq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], sp_irq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_sp_irq(word_t val)
+{
+    asm ("msr sp_irq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_lr_fiq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], lr_fiq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_lr_fiq(word_t val)
+{
+    asm ("msr lr_fiq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_sp_fiq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], sp_fiq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_sp_fiq(word_t val)
+{
+    asm ("msr sp_fiq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_r8_fiq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], r8_fiq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_r8_fiq(word_t val)
+{
+    asm ("msr r8_fiq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_r9_fiq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], r9_fiq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_r9_fiq(word_t val)
+{
+    asm ("msr r9_fiq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_r10_fiq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], r10_fiq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_r10_fiq(word_t val)
+{
+    asm ("msr r10_fiq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_r11_fiq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], r11_fiq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_r11_fiq(word_t val)
+{
+    asm ("msr r11_fiq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_r12_fiq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], r12_fiq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_r12_fiq(word_t val)
+{
+    asm ("msr r12_fiq, %[val]" :: [val]"r"(val));
+}
+
 static inline uint32_t
 get_gic_vcpu_ctrl_hcr(void)
 {
@@ -252,6 +462,23 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
         vcpu->vgic.lr[i] = get_gic_vcpu_ctrl_lr(i);
     }
 
+    /* save banked registers */
+    vcpu->lr_svc = get_lr_svc();
+    vcpu->sp_svc = get_sp_svc();
+    vcpu->lr_abt = get_lr_abt();
+    vcpu->sp_abt = get_sp_abt();
+    vcpu->lr_und = get_lr_und();
+    vcpu->sp_und = get_sp_und();
+    vcpu->lr_irq = get_lr_irq();
+    vcpu->sp_irq = get_sp_irq();
+    vcpu->lr_fiq = get_lr_fiq();
+    vcpu->sp_fiq = get_sp_fiq();
+    vcpu->r8_fiq = get_r8_fiq();
+    vcpu->r9_fiq = get_r9_fiq();
+    vcpu->r10_fiq = get_r10_fiq();
+    vcpu->r11_fiq = get_r11_fiq();
+    vcpu->r12_fiq = get_r12_fiq();
+
     isb();
 }
 
@@ -323,6 +550,23 @@ vcpu_restore(vcpu_t *vcpu)
     for (i = 0; i < gic_vcpu_num_list_regs; i++) {
         set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);
     }
+
+    /* restore banked registers */
+    set_lr_svc(vcpu->lr_svc);
+    set_sp_svc(vcpu->sp_svc);
+    set_lr_abt(vcpu->lr_abt);
+    set_sp_abt(vcpu->sp_abt);
+    set_lr_und(vcpu->lr_und);
+    set_sp_und(vcpu->sp_und);
+    set_lr_irq(vcpu->lr_irq);
+    set_sp_irq(vcpu->sp_irq);
+    set_lr_fiq(vcpu->lr_fiq);
+    set_sp_fiq(vcpu->sp_fiq);
+    set_r8_fiq(vcpu->r8_fiq);
+    set_r9_fiq(vcpu->r9_fiq);
+    set_r10_fiq(vcpu->r10_fiq);
+    set_r11_fiq(vcpu->r11_fiq);
+    set_r12_fiq(vcpu->r12_fiq);
 
     /* Restore and enable VCPU state */
     setACTLR(vcpu->cpx.actlr);

@@ -37,6 +37,12 @@ struct vcpu {
     struct tcb *tcb;
     struct cpXRegs cpx;
     struct gicVCpuIface vgic;
+    /* Banked registers */
+    word_t lr_svc, sp_svc;
+    word_t lr_abt, sp_abt;
+    word_t lr_und, sp_und;
+    word_t lr_irq, sp_irq;
+    word_t lr_fiq, sp_fiq, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq;
 };
 typedef struct vcpu vcpu_t;
 compile_assert(vcpu_size_correct, sizeof(struct vcpu) <= BIT(VCPU_SIZE_BITS))
