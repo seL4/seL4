@@ -1042,8 +1042,8 @@ exception_t decodeX86FrameInvocation(
         vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
         asid = cap_get_capMappedASID(vspaceCap);
 
-        if (cap_frame_cap_get_capFMappedASID(cap) == asidInvalid) {
-            userError("X86PageRemap: Frame must already have been mapped.");
+        if (cap_frame_cap_get_capFMappedASID(cap) != asid) {
+            userError("X86PageRemap: Frame must already have been mapped into provided vspace.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
 
