@@ -122,7 +122,7 @@ doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
 
     receiveBuffer = lookupIPCBuffer(true, receiver);
 
-    if (likely(!seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault)) {
+    if (likely(seL4_Fault_get_seL4_FaultType(sender->tcbFault) == seL4_Fault_NullFault)) {
         sendBuffer = lookupIPCBuffer(false, sender);
         doNormalTransfer(sender, sendBuffer, endpoint, badge, grant,
                          receiver, receiveBuffer);
