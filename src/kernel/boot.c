@@ -255,7 +255,7 @@ allocate_bi_frame(
         printf("Kernel init failed: could not allocate bootinfo frame\n");
         return 0;
     }
-    clearMemory((void*)pptr, PAGE_BITS);
+    clearMemory((void*)pptr, BI_FRAME_SIZE_BITS);
 
     /* initialise bootinfo-related global state */
     ndks_boot.bi_frame = BI_PTR(pptr);
