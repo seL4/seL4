@@ -99,8 +99,8 @@ block asid_pool_cap {
 
     field       capType         5
     field       capASIDBase     12
-    padding                     11
-    field_high  capASIDPool     36
+    padding                     10
+    field_high  capASIDPool     37
 }
 
 -- IO Port Cap
