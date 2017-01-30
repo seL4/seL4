@@ -112,16 +112,6 @@ compile_assert(asid_pool_size_sane, ASID_POOL_INDEX_BITS + WORD_SIZE_BITS == seL
 #define ASID_HIGH(a) ((a >> asidLowBits) & MASK(asidHighBits))
 
 static inline word_t CONST
-sanitiseRegister(register_t reg, word_t v, arch_tcb_t *thread_arch)
-{
-    if (reg == SPSR_EL1) {
-        return (v & 0xf0000000) | PSTATE_USER;
-    } else {
-        return v;
-    }
-}
-
-static inline word_t CONST
 cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;

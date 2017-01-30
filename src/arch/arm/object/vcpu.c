@@ -902,7 +902,7 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     Arch_debugDissociateVCPUTCB(tcb);
 
     /* sanitize the CPSR as without a VCPU a thread should only be in user mode */
-    setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), &tcb->tcbArch));
+    setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), tcb));
 }
 
 exception_t

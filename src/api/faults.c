@@ -15,6 +15,7 @@
 #include <api/faults.h>
 #include <api/syscall.h>
 #include <kernel/thread.h>
+#include <arch/kernel/thread.h>
 #include <machine/debug.h>
 
 /* consistency with libsel4 */
@@ -79,7 +80,7 @@ copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
     for (i = 0; i < MIN(length, n_msgRegisters); i++) {
         register_t r = fault_messages[id][i];
         word_t v = getRegister(sender, msgRegisters[i]);
-        setRegister(receiver, r, sanitiseRegister(r, v, &receiver->tcbArch));
+        setRegister(receiver, r, sanitiseRegister(r, v, receiver));
     }
 
     if (i < length) {
@@ -88,7 +89,7 @@ copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
             for (; i < length; i++) {
                 register_t r = fault_messages[id][i];
                 word_t v = sendBuf[i + 1];
-                setRegister(receiver, r, sanitiseRegister(r, v, &receiver->tcbArch));
+                setRegister(receiver, r, sanitiseRegister(r, v, receiver));
             }
         }
     }

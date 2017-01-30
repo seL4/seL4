@@ -12,6 +12,7 @@
 #define __ARCH_KERNEL_THREAD_H
 
 #include <object.h>
+#include <mode/kernel/thread.h>
 
 void Arch_switchToThread(tcb_t *tcb);
 void Arch_switchToIdleThread(void);

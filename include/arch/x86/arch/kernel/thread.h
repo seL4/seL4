@@ -17,5 +17,6 @@ void Arch_switchToThread(tcb_t *tcb);
 void Arch_switchToIdleThread(void);
 void Arch_configureIdleThread(tcb_t *tcb);
 void Arch_activateIdleThread(tcb_t *tcb);
+word_t sanitiseRegister(register_t reg, word_t v, tcb_t *thread);
 
 #endif
