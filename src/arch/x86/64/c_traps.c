@@ -77,7 +77,7 @@ static void NORETURN restore_vmx(void)
             :
             : [reg]"r"(&cur_thread->tcbArch.vcpu->gp_registers[VCPU_EAX]),
             [failed]"m"(vmlaunch_failed),
-            [stack_size]"i"(BIT(seL4_PageBits))
+            [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #if CONFIG_MAX_NUM_NODES > 1
             , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
 #endif
@@ -118,7 +118,7 @@ static void NORETURN restore_vmx(void)
             :
             : [reg]"r"(&cur_thread->tcbArch.vcpu->gp_registers[VCPU_EAX]),
             [failed]"m"(vmlaunch_failed),
-            [stack_size]"i"(BIT(seL4_PageBits))
+            [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #if CONFIG_MAX_NUM_NODES > 1
             , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
 #endif

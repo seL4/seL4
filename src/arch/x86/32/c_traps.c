@@ -67,7 +67,7 @@ static void NORETURN restore_vmx(void)
             :
             : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[VCPU_EAX]),
             "m"(vmlaunch_failed),
-            "i"(BIT(seL4_PageBits) - sizeof(word_t))
+            "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
@@ -96,7 +96,7 @@ static void NORETURN restore_vmx(void)
             :
             : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[VCPU_EAX]),
             "m"(vmlaunch_failed),
-            "i"(BIT(seL4_PageBits) - sizeof(word_t))
+            "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
