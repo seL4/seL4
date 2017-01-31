@@ -855,7 +855,6 @@ exception_t
 invokeVCPUWriteReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 {
     writeVCPUReg(vcpu, field, value);
-    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -877,6 +876,7 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
+    setThreadState(ksCurThread, ThreadState_Restart);
     return invokeVCPUWriteReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, value);
 }
 
@@ -888,7 +888,7 @@ invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field)
     setRegister(thread, msgRegisters[0], readVCPUReg(vcpu, field));
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                     seL4_MessageInfo_new(0, 0, 0, 1)));
-    setThreadState(thread, ThreadState_Running);
+    setThreadState(ksCurThread, ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
@@ -911,6 +911,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    setThreadState(ksCurThread, ThreadState_Restart);
     return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field);
 }
 
@@ -923,7 +924,6 @@ invokeVCPUInjectIRQ(vcpu_t* vcpu, int index, virq_t virq)
         vcpu->vgic.lr[index] = virq;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
@@ -990,6 +990,7 @@ decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer)
     }
     virq_t virq = virq_virq_pending_new(group, priority, 1, vid);
 
+    setThreadState(ksCurThread, ThreadState_Restart);
     return invokeVCPUInjectIRQ(vcpu, index, virq);
 }
 
@@ -1036,6 +1037,7 @@ decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    setThreadState(ksCurThread, ThreadState_Restart);
     return invokeVCPUSetTCB(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), TCB_PTR(cap_thread_cap_get_capTCBPtr(tcbCap)));
 }
 
@@ -1044,7 +1046,6 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     associateVCPUTCB(vcpu, tcb);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
