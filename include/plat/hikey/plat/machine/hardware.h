@@ -58,6 +58,8 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start = */ UART3_PADDR,    /* .end = */ UART3_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ UART4_PADDR,    /* .end = */ UART4_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ GIC_PADDR,      /* .end = */ GIC_PADDR + ((1 << PAGE_BITS) * 8) },
+    { /* .start = */ RTC0_PADDR,     /* .end = */ RTC0_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ RTC1_PADDR,     /* .end = */ RTC1_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER0_PADDR, /* .end = */ DMTIMER0_PADDR + (1 << PAGE_BITS) },
 };
 

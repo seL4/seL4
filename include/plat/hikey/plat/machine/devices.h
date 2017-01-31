@@ -9,7 +9,7 @@
  */
 
 /*
- definitions for memory addresses of allwinner A20 platform
+ definitions for memory addresses of HiSilicon hi6220 platform
  listed in the order of ascending memory address, similar to the datasheet
  the size must all be powers of 2 and page aligned (4k or 1M).
 */
@@ -36,6 +36,8 @@
 #define UART3_PADDR                 0xF7113000
 #define UART4_PADDR                 0xF7114000
 #define GIC_PADDR                   0xf6800000
+#define RTC0_PADDR                  0xF8003000
+#define RTC1_PADDR                  0xF8004000
 #define DMTIMER0_PADDR              0xF8008000
 
 
