@@ -42,6 +42,13 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
     assert(IS_ALIGNED(asid_base, asidLowBits));
 
     if (x86KSASIDTable[asid_base >> asidLowBits] == pool) {
+        for (unsigned int offset = 0; offset < BIT(asidLowBits); offset++) {
+            asid_map_t asid_map = pool->array[offset];
+            if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace) {
+                vspace_root_t *vspace = (vspace_root_t*)asid_map_asid_map_vspace_get_vspace_root(asid_map);
+                hwASIDInvalidate(asid_base + offset, vspace);
+            }
+        }
         x86KSASIDTable[asid_base >> asidLowBits] = NULL;
         setVMRoot(NODE_STATE(ksCurThread));
     }
