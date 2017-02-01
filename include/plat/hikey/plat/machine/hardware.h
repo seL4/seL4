@@ -61,6 +61,14 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { /* .start = */ RTC0_PADDR,     /* .end = */ RTC0_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ RTC1_PADDR,     /* .end = */ RTC1_PADDR + (1 << PAGE_BITS) },
     { /* .start = */ DMTIMER0_PADDR, /* .end = */ DMTIMER0_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ DMTIMER1_PADDR, /* .end = */ DMTIMER1_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ DMTIMER2_PADDR, /* .end = */ DMTIMER2_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ DMTIMER3_PADDR, /* .end = */ DMTIMER3_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ DMTIMER4_PADDR, /* .end = */ DMTIMER4_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ DMTIMER5_PADDR, /* .end = */ DMTIMER5_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ DMTIMER6_PADDR, /* .end = */ DMTIMER6_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ DMTIMER7_PADDR, /* .end = */ DMTIMER7_PADDR + (1 << PAGE_BITS) },
+    { /* .start = */ DMTIMER8_PADDR, /* .end = */ DMTIMER8_PADDR + (1 << PAGE_BITS) },
 };
 
 /* Handle a platform-reserved IRQ. */
