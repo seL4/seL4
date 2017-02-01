@@ -33,11 +33,40 @@ handleReservedIRQ(irq_t irq)
     }
 }
 
+static inline void
+receivePendingIRQ(void)
+{
+    assert(ARCH_NODE_STATE(x86KSPendingInterrupt) == int_invalid);
+    asm volatile("sti\n"
+                 "nop\n"
+                 "cli\n");
+}
+
+static inline irq_t
+servicePendingIRQ(void)
+{
+    assert(ARCH_NODE_STATE(x86KScurInterrupt) == int_invalid);
+    assert(ARCH_NODE_STATE(x86KSPendingInterrupt) != int_invalid);
+    irq_t ret = ARCH_NODE_STATE(x86KSPendingInterrupt);
+    ARCH_NODE_STATE(x86KSPendingInterrupt) = int_invalid;
+    return ret;
+}
+
 /* Get the IRQ number currently working on. */
 static inline irq_t
 getActiveIRQ(void)
 {
     if (ARCH_NODE_STATE(x86KScurInterrupt) == int_invalid) {
+        /* If we tried to get the active IRQ when we don't have one then
+         * we are polling for an interrupt for some reason, in which case
+         * we should try to get a pending interrupt if there isn't already
+         * one.
+         * This logic is here and not in the main call sites in handleSyscall
+         * because this is only relevant on some interrupt controllers (notably
+         * the x86 APIC) and is cleaner to have here */
+        if (ARCH_NODE_STATE(x86KSPendingInterrupt) == int_invalid) {
+            receivePendingIRQ();
+        }
         return irqInvalid;
     }
     return ARCH_NODE_STATE(x86KScurInterrupt) - IRQ_INT_OFFSET;

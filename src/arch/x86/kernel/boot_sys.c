@@ -601,6 +601,7 @@ boot_sys(
     }
 
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
+    ARCH_NODE_STATE(x86KSPendingInterrupt) = int_invalid;
 
     schedule();
     activateThread();

@@ -21,6 +21,16 @@
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
 
+void VISIBLE
+c_nested_interrupt(int irq)
+{
+    /* This is not a real entry point, so we do not grab locks or
+     * run c_entry/exit_hooks, since this occurs only if we're already
+     * running inside the kernel. Just record the irq and return */
+    assert(ARCH_NODE_STATE(x86KSPendingInterrupt) == int_invalid);
+    ARCH_NODE_STATE(x86KSPendingInterrupt) = irq;
+}
+
 void VISIBLE NORETURN
 c_handle_interrupt(int irq, int syscall)
 {
@@ -65,6 +75,8 @@ c_handle_interrupt(int irq, int syscall)
 #endif
         handleInterruptEntry();
         ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
+        /* check for other pending interrupts */
+        receivePendingIRQ();
     } else if (irq == int_spurious) {
         /* fall through to restore_user_context and do nothing */
     } else {

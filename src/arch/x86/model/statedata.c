@@ -20,6 +20,8 @@
 /* Interrupt currently being handled */
 UP_STATE_DEFINE(interrupt_t, x86KScurInterrupt VISIBLE);
 
+UP_STATE_DEFINE(interrupt_t, x86KSPendingInterrupt);
+
 /* ==== proper read/write kernel state ==== */
 
 /* Task State Segment (TSS), contains currently running TCB in ESP0 */

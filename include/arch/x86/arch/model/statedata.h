@@ -34,6 +34,9 @@ typedef struct {
 NODE_STATE_BEGIN(archNodeState)
 /* Interrupt currently being handled, not preserved across kernel entries */
 NODE_STATE_DECLARE(interrupt_t, x86KScurInterrupt);
+/* Interrupt that the hardware believes we are currently handling (is marked in service
+ * in the APIC) but we have not yet gotten around to handling */
+NODE_STATE_DECLARE(interrupt_t, x86KSPendingInterrupt);
 /* Task State Segment (TSS), contains currently running TCB in ESP0 */
 NODE_STATE_DECLARE(tss_io_t, x86KStss);
 /* Global Descriptor Table (GDT) */

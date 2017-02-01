@@ -28,6 +28,9 @@ VISIBLE NORETURN;
 void restore_user_context(void)
 VISIBLE NORETURN;
 
+void c_nested_interrupt(int irq)
+VISIBLE;
+
 void c_handle_interrupt(int irq, int syscall)
 VISIBLE NORETURN;
 

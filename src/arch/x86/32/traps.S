@@ -349,14 +349,10 @@ handle_interrupt:
     movl    %edx,  %es
 
     # determine if we have a kernel exception
-    movl    60(%esp), %edx   # get CS (code segment selector) at time of interrupt
-    andl    $3, %edx         # extract CPL (current privilege level)
-    setz    %dl              # DL is now 1 if kernel was interrupted, 0 in case of userland
-    cmpl    $0x20, %ecx      # if interrupt vector is below 0x20, we have an exception
-    setl    %bl              # BL is now 1 if we have an exception (opposed to IRQ or trap)
-    andb    %bl, %dl         # we have a kernel exception if both BL and DL are 1
-    jnz     kernel_exception
+    testl   $3, 60(%esp)     # extract CPL (current privilege level)
+    jz kernel_interrupt
 
+user_interrupt:
     # switch to kernel stack
     SET_KERNEL_STACK
 
@@ -366,6 +362,34 @@ handle_interrupt:
 
     # gtfo to C land, we will not return
     call    c_handle_interrupt
+
+kernel_interrupt:
+    cmpl    $0x20, %ecx      # if interrupt vector is below 0x20, we have an exception
+    jl kernel_exception
+    # Check the current ESP. If its above the kernel image then we came from
+    # the idle_thread and this is a normal interrupt.
+    cmpl    $(ki_end), %esp
+    jg      user_interrupt
+    # We got an interrupt from the kernel. Call into C to save
+    # the IRQ number, then return back to where we were
+    pushl %ecx
+    call c_nested_interrupt
+    addl $4, %esp
+    # Disable the interrupt flag so that we do not take any additional interrupts
+    andl $~0x200, 0x40(%esp)
+    # Return
+    popl    %eax
+    popl    %ebx
+    popl    %ecx
+    popl    %edx
+    popl    %esi
+    popl    %esi
+    popl    %ebp
+    /* skip segments */
+    addl $16, %esp
+    /* Skip FaultIP, TLS_BASE and error-code. */
+    addl    $12, %esp
+    iretl
 
 # Handle a kernel exception
 

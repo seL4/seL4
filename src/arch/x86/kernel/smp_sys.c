@@ -134,6 +134,7 @@ boot_node(void)
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
+    ARCH_NODE_STATE(x86KSPendingInterrupt) = int_invalid;
 
     schedule();
     activateThread();

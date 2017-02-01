@@ -112,6 +112,29 @@ void NORETURN VISIBLE restore_user_context(void)
     c_exit_hook();
 
     NODE_UNLOCK_IF_HELD;
+
+    /* we've now 'exited' the kernel. If we have a pending interrupt
+     * we should 'enter' it again */
+    if (ARCH_NODE_STATE(x86KSPendingInterrupt) != int_invalid) {
+        /* put this in service */
+        irq_t irq = servicePendingIRQ();
+        /* reset our stack and jmp to the IRQ entry point */
+        asm volatile(
+            /* round our stack back to the top to reset it */
+            "and %[stack_mask], %%esp\n"
+            "add %[stack_size], %%esp\n"
+            "push %[syscall] \n"
+            "push %[irq]\n"
+            "call c_handle_interrupt"
+            :
+            : [stack_mask] "i"(~MASK(CONFIG_KERNEL_STACK_BITS)),
+              [stack_size] "i"(BIT(CONFIG_KERNEL_STACK_BITS)),
+              [syscall] "r"(0), /* syscall is unused for irq path */
+              [irq] "r"(irq)
+            : "memory");
+        UNREACHABLE();
+    }
+
 #ifdef CONFIG_VTX
     if (thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_RunningVM) {
         restore_vmx();
