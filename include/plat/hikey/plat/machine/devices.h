@@ -39,6 +39,14 @@
 #define RTC0_PADDR                  0xF8003000
 #define RTC1_PADDR                  0xF8004000
 #define DMTIMER0_PADDR              0xF8008000
+#define DMTIMER1_PADDR              0xF8009000
+#define DMTIMER2_PADDR              0xF800A000
+#define DMTIMER3_PADDR              0xF800B000
+#define DMTIMER4_PADDR              0xF800C000
+#define DMTIMER5_PADDR              0xF800D000
+#define DMTIMER6_PADDR              0xF800E000
+#define DMTIMER7_PADDR              0xF800F000
+#define DMTIMER8_PADDR              0xF8010000
 
 
 #endif
