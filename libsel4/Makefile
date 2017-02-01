@@ -103,7 +103,7 @@ include/sel4/%.pbf: ${SOURCE_DIR}/include/sel4/%.bf $(srctree)/include/generated
 include/sel4/sel4_arch/%.pbf: ${SOURCE_DIR}/sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/types.bf $(srctree)/include/generated/autoconf.h
 	@echo " [PBF_GEN] $@"
 	@mkdir -p $(dir $@)
-	$(Q)${CPP} ${CPPFLAGS} -P $< > $@
+	$(Q)${CPP} ${CPPFLAGS} -I${SOURCE_DIR}/arch_include/${ARCH}/ -P $< > $@
 
 # Bitfield generator
 include/sel4/types_gen.h: \
