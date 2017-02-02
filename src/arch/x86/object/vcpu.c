@@ -83,6 +83,7 @@ static uint32_t cr4_low;
  * are checked for at boot time and are constant from then on */
 static bool_t vmx_feature_vpid;
 static bool_t vmx_feature_load_perf_global_ctrl;
+static bool_t vmx_feature_ack_on_exit;
 
 static vcpu_t *x86KSVPIDTable[VPID_LAST + 1];
 static vpid_t x86KSNextVPID = VPID_FIRST;
@@ -244,7 +245,6 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
         BIT(1);     //Enable EPT
     uint32_t exit_control_mask =
         BIT(2)  |   //Save debug controls
-        BIT(15) |   //Acknowledge interrupt on exit
         BIT(18) |   //Save guest IA32_PAT on exit
         BIT(19) |   //Load host IA32_PAT
         BIT(20) |   //Save guest IA32_EFER on exit
@@ -300,6 +300,15 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
     } else {
         vmx_feature_load_perf_global_ctrl = 1;
         exit_control_mask |= BIT(12);
+    }
+
+    /* Check for external interrupt exiting */
+    if (!(exit_control_low & BIT(15))) {
+        vmx_feature_ack_on_exit = 0;
+        printf("vt-x: Interrupt ack on exit not supported. Expect performance degredation\n");
+    } else {
+        vmx_feature_ack_on_exit = 1;
+        exit_control_mask |= BIT(15);
     }
 
     /* See if the hardware requires bits that require to be high to be low */
@@ -1176,11 +1185,17 @@ handleVmexit(void)
     /* the basic exit reason is the bottom 16 bits of the exit reason field */
     reason = vmread(VMX_DATA_EXIT_REASON) & MASK(16);
     if (reason == EXTERNAL_INTERRUPT) {
-        interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
-        ARCH_NODE_STATE(x86KScurInterrupt) = interrupt & 0xff;
-        NODE_LOCK_IF(interrupt != int_remote_call_ipi);
-        handleInterruptEntry();
-        ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
+        if (vmx_feature_ack_on_exit) {
+            interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
+            ARCH_NODE_STATE(x86KScurInterrupt) = interrupt & 0xff;
+            NODE_LOCK_IF(interrupt != int_remote_call_ipi);
+            handleInterruptEntry();
+            ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
+        } else {
+            /* poll for the pending irq. We will then handle it once we return back
+             * up to restore_user_context */
+            receivePendingIRQ();
+        }
         return EXCEPTION_NONE;
     }
 
