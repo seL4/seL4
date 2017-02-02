@@ -150,9 +150,9 @@ void VISIBLE NORETURN restore_user_context(void)
             "call c_handle_interrupt"
             :
             : [stack_mask] "i"(~MASK(CONFIG_KERNEL_STACK_BITS)),
-              [stack_size] "i"(BIT(CONFIG_KERNEL_STACK_BITS)),
-              [syscall] "i"(0), /* syscall is unused for irq path */
-              [irq] "r"((seL4_Word)irq)
+            [stack_size] "i"(BIT(CONFIG_KERNEL_STACK_BITS)),
+            [syscall] "i"(0), /* syscall is unused for irq path */
+            [irq] "r"((seL4_Word)irq)
             : "memory");
         UNREACHABLE();
     }
