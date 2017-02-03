@@ -103,18 +103,23 @@ tsc_init(void)
         for (int i = 0; i < ARRAY_SIZE(valid_models); i++) {
             if (model_info->model == valid_models[i]) {
 
-                /* read tsc freq from the platform info msr */
-                uint64_t info = x86_rdmsr(IA32_PLATFORM_INFO_MSR);
-                uint32_t ratio = (((uint32_t) info) & 0xFF00) >> 8u;
-                /* Ignore hardware that claims a tsc frequency of zero */
-                if (ratio != 0) {
-                    /* Convert to MHz */
-                    if (model_info->model == NEHALEM_1_MODEL_ID ||
-                            model_info->model == NEHALEM_2_MODEL_ID ||
-                            model_info->model == NEHALEM_3_MODEL_ID) {
-                        return ratio * 13333u / 100u;
-                    } else {
-                        return ratio * 100u;
+                /* read tsc freq from the platform info msr. Under some environments such
+                 * as KVM this MSR will cause a GP fault even though it should be there.
+                 * As such we perform a 'safe' rdmsr, which will catch a GP fault and
+                 * tells through .success whether or not one happened */
+                rdmsr_safe_result_t info = x86_rdmsr_safe(IA32_PLATFORM_INFO_MSR);
+                if (info.success) {
+                    uint32_t ratio = (((uint32_t) info.value) & 0xFF00) >> 8u;
+                    /* Ignore hardware that claims a tsc frequency of zero */
+                    if (ratio != 0) {
+                        /* Convert to MHz */
+                        if (model_info->model == NEHALEM_1_MODEL_ID ||
+                                model_info->model == NEHALEM_2_MODEL_ID ||
+                                model_info->model == NEHALEM_3_MODEL_ID) {
+                            return ratio * 13333u / 100u;
+                        } else {
+                            return ratio * 100u;
+                        }
                     }
                 }
             }
