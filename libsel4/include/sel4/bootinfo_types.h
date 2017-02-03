@@ -11,7 +11,7 @@
 #ifndef __LIBSEL4_BOOTINFO_TYPES_H
 #define __LIBSEL4_BOOTINFO_TYPES_H
 
-/* caps with fixed slot potitions in the root CNode */
+/* caps with fixed slot positions in the root CNode */
 
 enum {
     seL4_CapNull                =  0, /* null cap */
