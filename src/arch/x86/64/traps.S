@@ -449,6 +449,7 @@ BEGIN_FUNC(nested_interrupt)
     LOAD_IRQ_STACK(rbx)
     andq    $~0x200, 24(%rbx)
     # return
+interrupt_return:
     popq %rdi
     popq %rsi
     popq %rax
@@ -535,7 +536,6 @@ BEGIN_FUNC(kernel_exception)
 .not_eflags_tf:
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#ifdef DEBUG
     movq    %rcx, %rdi
     LOAD_IRQ_STACK(rsi)
     movq    0(%rsi), %rsi    # error code
@@ -554,8 +554,11 @@ BEGIN_FUNC(kernel_exception)
     movq    %cr2, %r11
     push    %r11
     call    handleKernelException
-#endif
-    jmp halt
+    addq    $24, %rsp
+    # Set RIP in the saved register context to the new IP returned from handleKernelException
+    LOAD_IRQ_STACK(r8)
+    movq    %rax, 8(%r8)
+    jmp     interrupt_return
 END_FUNC(kernel_exception)
 
 # For a fast syscall the RFLAGS have been placed in

@@ -45,9 +45,7 @@ Arch_setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer, word
     }
 }
 
-#ifdef DEBUG
-
-void handleKernelException(
+word_t handleKernelException(
     word_t vector,
     word_t errcode,
     word_t ip,
@@ -60,7 +58,7 @@ void handleKernelException(
 );
 
 VISIBLE
-void handleKernelException(
+word_t handleKernelException(
     word_t vector,
     word_t errcode,
     word_t ip,
@@ -90,6 +88,6 @@ void handleKernelException(
         printf("*0x%lx == 0x%lx\n", stack, *(word_t*)stack);
     }
     printf("\nHalting...\n");
+    halt();
+    UNREACHABLE();
 }
-
-#endif

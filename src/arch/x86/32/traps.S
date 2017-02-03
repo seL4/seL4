@@ -378,6 +378,7 @@ kernel_interrupt:
     # Disable the interrupt flag so that we do not take any additional interrupts
     andl $~0x200, 0x40(%esp)
     # Return
+kernel_int_return:
     popl    %eax
     popl    %ebx
     popl    %ecx
@@ -448,7 +449,6 @@ BEGIN_FUNC(kernel_exception)
 .not_eflags_tf:
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#ifdef CONFIG_DEBUG_BUILD
     # prepare debug info
     movl    52(%esp), %eax # EAX contains Error Code
     movl    56(%esp), %ebx # EBX contains EIP of the exception generating instruction
@@ -471,8 +471,10 @@ BEGIN_FUNC(kernel_exception)
     pushl   %eax
     pushl   %ecx
     call    handleKernelException
-#endif /* CONFIG_DEBUG_BUILD */
-    jmp     halt
+    addl    $36, %esp
+    # Set EIP in the saved register context to the new IP returned from handleKernelException
+    movl    %eax, 56(%esp)
+    jmp     kernel_int_return
 END_FUNC(kernel_exception)
 
 #define SET_SEL(sel, offset, val) \
