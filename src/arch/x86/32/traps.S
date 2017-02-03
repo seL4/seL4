@@ -383,7 +383,7 @@ kernel_interrupt:
     popl    %ecx
     popl    %edx
     popl    %esi
-    popl    %esi
+    popl    %edi
     popl    %ebp
     /* skip segments */
     addl $16, %esp
@@ -435,7 +435,7 @@ BEGIN_FUNC(kernel_exception)
     popl    %ecx
     popl    %edx
     popl    %esi
-    popl    %esi
+    popl    %edi
     popl    %ebp
     popl    %ds
     popl    %es
