@@ -23,6 +23,7 @@ typedef enum _interrupt_t {
     int_debug                   = 1,
     int_software_break_request  = 3,
     int_unimpl_dev              = 7,
+    int_gp_fault                = 13,
     int_page_fault              = 14,
     int_irq_min                 = IRQ_INT_OFFSET, /* First IRQ. */
     int_irq_isa_min             = IRQ_INT_OFFSET, /* Beginning of PIC IRQs */

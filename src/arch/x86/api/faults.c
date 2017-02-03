@@ -72,6 +72,12 @@ word_t handleKernelException(
 {
     word_t i;
 
+    /* Check if we are in a state where we expect a GP fault, if so record it and return */
+    if (vector == int_gp_fault && ARCH_NODE_STATE(x86KSGPExceptReturnTo) != 0) {
+        word_t ret = ARCH_NODE_STATE(x86KSGPExceptReturnTo);
+        ARCH_NODE_STATE(x86KSGPExceptReturnTo) = 0;
+        return ret;
+    }
     printf("\n========== KERNEL EXCEPTION ==========\n");
     printf("Vector:  0x%lx\n", vector);
     printf("ErrCode: 0x%lx\n", errcode);

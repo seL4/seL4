@@ -42,6 +42,8 @@ asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
 UP_STATE_DEFINE(word_t, x86KSCurrentFSBase);
 UP_STATE_DEFINE(word_t, x86KSCurrentGSBase);
 
+UP_STATE_DEFINE(word_t, x86KSGPExceptReturnTo);
+
 /* ==== read-only kernel state (only written during bootstrapping) ==== */
 
 /* Defines a translation of cpu ids from an index of our actual CPUs */

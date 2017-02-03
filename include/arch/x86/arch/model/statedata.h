@@ -56,6 +56,11 @@ NODE_STATE_DECLARE(vcpu_t *, x86KSCurrentVCPU);
 NODE_STATE_DECLARE(word_t, x86KSCurrentFSBase);
 NODE_STATE_DECLARE(word_t, x86KSCurrentGSBase);
 
+/* If a GP exception occurs and this is non NULL then the exception should return to
+ * this location instead of faulting. In addition the GP exception will clear this
+ * back to NULL */
+NODE_STATE_DECLARE(word_t, x86KSGPExceptReturnTo);
+
 NODE_STATE_TYPE_DECLARE(modeNodeState, mode);
 NODE_STATE_END(archNodeState);
 
