@@ -146,6 +146,33 @@ static inline void swapgs(void)
     asm volatile("swapgs");
 }
 
+static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
+{
+    uint32_t low;
+    uint32_t high;
+    word_t returnto;
+    word_t temp;
+    rdmsr_safe_result_t result;
+    asm volatile(
+        "movabs $1f, %[temp] \n"
+        "movq %[temp], (%[returnto_addr]) \n\
+         rdmsr \n\
+         1: \n\
+         movq (%[returnto_addr]), %[returnto] \n\
+         movq $0, (%[returnto_addr])"
+        : [returnto] "=&r" (returnto),
+          [temp] "=&r" (temp),
+          [high] "=&d" (high),
+          [low] "=&a" (low)
+        : [returnto_addr] "r" (&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
+          [reg] "c" (reg)
+        : "memory"
+        );
+    result.success = returnto != 0;
+    result.value = ((uint64_t)high << 32) | (uint64_t)low;
+    return result;
+}
+
 #ifdef CONFIG_FSGSBASE_INST
 
 static inline void x86_write_fs_base_impl(word_t base)

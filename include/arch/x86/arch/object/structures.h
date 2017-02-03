@@ -127,6 +127,13 @@ compile_assert(ept_pt_size_sane, EPT_PT_INDEX_BITS + EPT_PTE_SIZE_BITS == seL4_X
 
 #endif /* CONFIG_VTX */
 
+struct rdmsr_safe_result {
+    uint64_t value;
+    bool_t success;
+};
+
+typedef struct rdmsr_safe_result rdmsr_safe_result_t;
+
 /* helper structure for filling descriptor registers */
 typedef struct gdt_idt_ptr {
     uint16_t limit;
