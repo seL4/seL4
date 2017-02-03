@@ -122,6 +122,8 @@ tsc_init(void)
                         }
                     }
                 }
+                /* We just found the matching model, so no point continuing the search */
+                break;
             }
         }
     }
