@@ -91,4 +91,4 @@ block DebugException {
 }
 #endif
 
-#include "shared_types_64.bf"
+#include <sel4/arch/shared_types.bf>

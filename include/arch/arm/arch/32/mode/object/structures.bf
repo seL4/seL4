@@ -580,4 +580,4 @@ block dbg_wcr {
 }
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#include <mode/api/arch_shared_types.bf>
+#include <arch/api/shared_types.bf>
