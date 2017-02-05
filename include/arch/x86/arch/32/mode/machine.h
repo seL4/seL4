@@ -107,12 +107,12 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
          movl (%[returnto_addr]), %[returnto] \n\
          movl $0, (%[returnto_addr])"
         : [returnto] "=&r" (returnto),
-          [high] "=&d" (high),
-          [low] "=&a" (low)
+        [high] "=&d" (high),
+        [low] "=&a" (low)
         : [returnto_addr] "r" (&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
-          [reg] "c" (reg)
+        [reg] "c" (reg)
         : "memory"
-        );
+    );
     result.success = returnto != 0;
     result.value = ((uint64_t)high << 32) | (uint64_t)low;
     return result;
