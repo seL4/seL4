@@ -1327,7 +1327,7 @@ handleVmEntryFail(void)
 
 #if CONFIG_MAX_NUM_NODES > 1
 void
-VMCheckBoundNotification(void)
+VMCheckBoundNotification(tcb_t *tcb)
 {
     /* We want to check if the VM we are currently running has received
      * a message on its bound notification object. This check is done
@@ -1335,7 +1335,7 @@ VMCheckBoundNotification(void)
      * be running a VM and another core may have placed a message on the
      * endpoint
      */
-    tcb_t *tcb = NODE_STATE(ksCurThread);
+    assert(tcb->tcbAffinity == getCurrentCPUIndex());
     notification_t *ntfnPtr = tcb->tcbBoundNotification;
     if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM
             && ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
@@ -1345,7 +1345,13 @@ VMCheckBoundNotification(void)
         setThreadState(tcb, ThreadState_Running);
         setRegister(tcb, badgeRegister, badge);
         Arch_leaveVMAsyncTransfer(tcb);
-        attemptSwitchTo(tcb);
+        /* In the process of performing Arch_leavVMAsyncTransfer we will have
+         * had to switch the active VMCS. As a result we might as well try and
+         * run this tcb if it is permitted instead of switching VMCS contexts
+         * back and forth */
+        if (tcb != NODE_STATE(ksCurThread)) {
+            attemptSwitchTo(tcb);
+        }
     }
 }
 #endif /* CONFIG_MAX_NUM_NODES > 1 */

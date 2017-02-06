@@ -150,7 +150,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1,
             clearCurrentVCPU();
             break;
         case IpiRemoteCall_VMCheckBoundNotification:
-            VMCheckBoundNotification();
+            VMCheckBoundNotification((tcb_t*)arg0);
             break;
 #endif
         default:

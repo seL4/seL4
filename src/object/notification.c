@@ -65,7 +65,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
 #if CONFIG_MAX_NUM_NODES > 1
                 if (tcb->tcbAffinity != getCurrentCPUIndex()) {
                     ntfn_set_active(ntfnPtr, badge);
-                    doRemoteVMCheckBoundNotification(tcb->tcbAffinity);
+                    doRemoteVMCheckBoundNotification(tcb->tcbAffinity, tcb);
                 } else
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
                 {

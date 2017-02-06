@@ -348,7 +348,7 @@ void restoreVMCS(void);
 void clearCurrentVCPU(void);
 
 #if CONFIG_MAX_NUM_NODES > 1
-void VMCheckBoundNotification(void);
+void VMCheckBoundNotification(tcb_t *tcb);
 #endif /* CONFIG_MAX_NUM_NODES > 1*/
 
 void invept(ept_pml4e_t *ept_pml4);
