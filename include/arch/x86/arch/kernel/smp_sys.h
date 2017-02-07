@@ -13,8 +13,12 @@
 #ifndef __ARCH_KERNEL_SMP_SYS_H_
 #define __ARCH_KERNEL_SMP_SYS_H_
 
-/* Lower memory address to copy APs boot code in real mode */
-#define BOOT_NODE_PADDR 0x80000
+/* Lower memory address to copy APs boot code in real mode. Actual memory starts at
+ * 0x500 but we need to round up to a page aligned address in order to send the
+ * startup IPI */
+#define BOOT_NODE_PADDR 0x1000
+/* Limit of memory region we can copy the AP to */
+#define BOOT_NODE_MAX_PADDR 0x7bff
 
 #if CONFIG_MAX_NUM_NODES > 1
 void boot_node(void);

@@ -82,13 +82,25 @@ copy_boot_code_aps(uint32_t mem_lower)
 {
     assert(boot_cpu_end - boot_cpu_start < 0x400);
 
-    if ((mem_lower << 10) < BOOT_NODE_PADDR + 0x400) {
-        printf("Need at least 513K of available lower physical memory\n");
+    /* Ensure that our boot code fits in the memory hole we want to use, and check this region
+     * is free according to multiboot. As boot_cpu_end and boot_cpu_start are link time
+     * symbols (and not compile time) this cannot be a compile time check */
+    word_t boot_size = (word_t)(boot_cpu_end - boot_cpu_start);
+    word_t boot_node_top = BOOT_NODE_PADDR + boot_size;
+    word_t mem_lower_bytes = mem_lower << 10;
+    if (boot_node_top > BOOT_NODE_MAX_PADDR) {
+        printf("AP boot code does not fit in chosen memory hole. Can be at most %lu, is %lu\n",
+               (word_t)(BOOT_NODE_MAX_PADDR - BOOT_NODE_PADDR), boot_size);
+        return false;
+    }
+    if (mem_lower_bytes < boot_node_top) {
+        printf("Need lower physical memory up to %lu to be free. Multiboot reports only up to %lu\n",
+               boot_node_top, mem_lower_bytes);
         return false;
     }
 
     /* copy CPU bootup code to lower memory */
-    memcpy((void*)BOOT_NODE_PADDR, boot_cpu_start, boot_cpu_end - boot_cpu_start);
+    memcpy((void*)BOOT_NODE_PADDR, boot_cpu_start, boot_size);
     return true;
 }
 
