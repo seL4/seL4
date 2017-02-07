@@ -33,6 +33,7 @@ libsel4/arch_include/arm/sel4/arch/invocation.h
 libsel4/arch_include/ia32/sel4/arch/invocation.h
 libsel4/arch_include/x86/sel4/arch/invocation.h
 libsel4/sel4_arch_include/aarch32/sel4/sel4_arch/invocation.h
+libsel4/sel4_arch_include/aarch64/sel4/sel4_arch/invocation.h
 libsel4/sel4_arch_include/ia32/sel4/sel4_arch/invocation.h
 libsel4/sel4_arch_include/x86_64/sel4/sel4_arch/invocation.h
 
