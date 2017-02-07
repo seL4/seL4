@@ -360,9 +360,6 @@ ifeq (${CPU},cortex-a53)
 DEFINES += -DARM_CORTEX_A53
 endif
 endif # ARCH=arm
-ifeq (${ARCH}, x86)
-CFLAGS += -fno-pic
-LDFLAGS += -static
 ifeq (${SEL4_ARCH}, x86_64)
 CFLAGS += -m64 -fno-asynchronous-unwind-tables
 ASFLAGS += -Wa,--64
@@ -378,7 +375,6 @@ LDFLAGS += -Wl,-m,elf_i386
 TYPE_SUFFIX:=32
 export __X86_32__ = y
 endif
-endif # ARCH=x86
 else # NK_CFLAGS
 # Require autoconf to be provided if larger build
 $(if ${HAVE_AUTOCONF},,$(error autoconf.h not provided))
@@ -410,9 +406,9 @@ WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 	missing-declarations undef pointer-arith no-nonnull
 
 CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
-	${WARNINGS:%=-W%} ${INCLUDES}
+	${WARNINGS:%=-W%} ${INCLUDES} -fno-pic
 CPPFLAGS += -nostdinc
-LDFLAGS += -nostdlib -nostdinc
+LDFLAGS += -nostdlib -nostdinc -static
 LDFLAGS += -Wl,--build-id=none
 ASFLAGS += ${INCLUDES}
 
