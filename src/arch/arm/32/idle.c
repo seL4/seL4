@@ -10,6 +10,7 @@
 
 #include <config.h>
 #include <mode/machine.h>
+#include <api/debug.h>
 
 void idle_thread(void)
 {
@@ -26,6 +27,9 @@ void NORETURN NO_INLINE VISIBLE halt(void)
 
 #ifdef CONFIG_PRINTING
     printf("halting...");
+#ifdef CONFIG_DEBUG_BUILD
+    debug_printKernelEntryReason();
+#endif
 #endif
     idle_thread();
     UNREACHABLE();

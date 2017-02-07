@@ -11,6 +11,7 @@
  */
 
 #include <config.h>
+#include <api/debug.h>
 
 void idle_thread(void)
 {
@@ -26,6 +27,9 @@ void VISIBLE halt(void)
 
 #ifdef CONFIG_PRINTING
     printf("halting...");
+#ifdef CONFIG_DEBUG_BUILD
+    debug_printKernelEntryReason();
+#endif
 #endif
     idle_thread();
     UNREACHABLE();

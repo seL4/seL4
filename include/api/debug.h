@@ -23,6 +23,7 @@
 static inline void
 debug_printKernelEntryReason(void)
 {
+    printf("\nKernel entry via ");
     switch (ksKernelEntry.path) {
     case Entry_Interrupt:
         printf("Interrupt, irq %lu\n", (unsigned long) ksKernelEntry.word);
