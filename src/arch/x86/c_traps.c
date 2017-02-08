@@ -100,13 +100,7 @@ c_handle_interrupt(int irq, int syscall)
 void NORETURN
 slowpath(syscall_t syscall)
 {
-    if (config_set(CONFIG_SYSENTER)) {
-        /* increment NextIP to skip sysenter */
-        NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[NextIP] += 2;
-    } else {
-        /* set FaultIP */
-        setRegister(NODE_STATE(ksCurThread), FaultIP, getRegister(NODE_STATE(ksCurThread), NextIP) - 2);
-    }
+
 #ifdef CONFIG_VTX
     if (syscall == SysVMEnter) {
         vcpu_update_state_sysvmenter(NODE_STATE(ksCurThread)->tcbArch.vcpu);
@@ -152,6 +146,14 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);
     ksKernelEntry.is_fastpath = 1;
 #endif /* TRACK_KERNEL_ENTRIES */
+
+    if (config_set(CONFIG_SYSENTER)) {
+        /* increment NextIP to skip sysenter */
+        NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[NextIP] += 2;
+    } else {
+        /* set FaultIP */
+        setRegister(NODE_STATE(ksCurThread), FaultIP, getRegister(NODE_STATE(ksCurThread), NextIP) - 2);
+    }
 
 #ifdef CONFIG_FASTPATH
     if (syscall == (syscall_t)SysCall) {
