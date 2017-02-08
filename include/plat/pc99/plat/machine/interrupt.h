@@ -39,7 +39,8 @@ receivePendingIRQ(void)
     assert(ARCH_NODE_STATE(x86KSPendingInterrupt) == int_invalid);
     asm volatile("sti\n"
                  "nop\n"
-                 "cli\n");
+                 "cli\n"
+                 : "=m"(ARCH_NODE_STATE(x86KSPendingInterrupt)));
 }
 
 static inline irq_t
