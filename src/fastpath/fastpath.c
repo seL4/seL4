@@ -138,13 +138,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
     ksKernelEntry.is_fastpath = true;
 #endif
 
-#ifdef ARCH_X86
-    /* Need to update NextIP in the calling thread */
-    if (config_set(CONFIG_SYSENTER)) {
-        setRegister(NODE_STATE(ksCurThread), NextIP, getRegister(NODE_STATE(ksCurThread), NextIP) + 2);
-    }
-#endif
-
     /* Dequeue the destination. */
     endpoint_ptr_set_epQueue_head_np(ep_ptr, TCB_REF(dest->tcbEPNext));
     if (unlikely(dest->tcbEPNext)) {
@@ -316,13 +309,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     ksKernelEntry.is_fastpath = true;
-#endif
-
-#ifdef ARCH_X86
-    /* Need to update NextIP in the calling thread */
-    if (config_set(CONFIG_SYSENTER)) {
-        setRegister(NODE_STATE(ksCurThread), NextIP, getRegister(NODE_STATE(ksCurThread), NextIP) + 2);
-    }
 #endif
 
     /* Set thread state to BlockedOnReceive */
