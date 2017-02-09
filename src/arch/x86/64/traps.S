@@ -120,6 +120,9 @@
     je      2b;                                     \
     /* nested interrupt, use saved stack */         \
     movq    -16(%rsp), %rsp;                        \
+    /* skip 128 bytes as we need to respect the */  \
+    /* red zone */                                  \
+    subq    $128, %rsp;                             \
     push    %rcx;                                   \
     movq    $0x##number, %rcx;                      \
     jmp     nested_interrupt
