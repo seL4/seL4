@@ -87,6 +87,7 @@ BEGIN_FUNC(x64_install_gdt)
     movw    $0x0, %ax
     movw    %ax, %fs
     movw    %ax, %gs
+    ret
 END_FUNC(x64_install_gdt)
 
 BEGIN_FUNC(x64_install_idt)
