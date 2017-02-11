@@ -147,6 +147,7 @@ handleUnknownSyscall(word_t w)
     } else if (w == SysBenchmarkFinalizeLog) {
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
         ksLogIndexFinalized = ksLogIndex;
+        setRegister(NODE_STATE(ksCurThread), capRegister, ksLogIndexFinalized);
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
         benchmark_utilisation_finalise();

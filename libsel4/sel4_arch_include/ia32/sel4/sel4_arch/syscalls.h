@@ -603,11 +603,16 @@ seL4_BenchmarkResetLog(void)
     return (seL4_Error)ret;
 }
 
-LIBSEL4_INLINE_FUNC void
+LIBSEL4_INLINE_FUNC seL4_Word
 seL4_BenchmarkFinalizeLog(void)
 {
-    x86_sys_null(seL4_SysBenchmarkFinalizeLog);
-    asm volatile("" :::"%esi", "%edi", "memory");
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word index_ret;
+    x86_sys_send_recv(seL4_SysBenchmarkFinalizeLog, 0, &index_ret, 0, &unused0, &unused1, &unused2);
+
+    return (seL4_Word)index_ret;
 }
 
 LIBSEL4_INLINE_FUNC seL4_Error

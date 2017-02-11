@@ -15,8 +15,8 @@
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 
 timestamp_t ksEnter;
-word_t ksLogIndex;
-uint32_t ksLogIndexFinalized;
+seL4_Word ksLogIndex;
+seL4_Word ksLogIndexFinalized;
 
 void benchmark_track_exit(void)
 {

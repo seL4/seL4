@@ -16,9 +16,7 @@
 timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
 bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
 timestamp_t ksExit;
-uint32_t ksLogIndex = 0;
-uint32_t ksLogIndexFinalized = 0;
+seL4_Word ksLogIndex = 0;
+seL4_Word ksLogIndexFinalized = 0;
 
 #endif /* CONFIG_MAX_NUM_TRACE_POINTS > 0 */
-
-
