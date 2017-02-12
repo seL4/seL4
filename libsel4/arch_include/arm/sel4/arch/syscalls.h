@@ -428,7 +428,7 @@ seL4_BenchmarkFlushCaches(void)
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 LIBSEL4_INLINE_FUNC void
-seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)
+seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
 {
     seL4_Word unused0 = 0;
     seL4_Word unused1 = 0;
@@ -437,11 +437,11 @@ seL4_BenchmarkGetThreadUtilisation(seL4_Word tcp_cptr)
     seL4_Word unused4 = 0;
     seL4_Word unused5 = 0;
 
-    arm_sys_send_recv(seL4_BenchmarkGetThreadUtilization, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
+    arm_sys_send_recv(seL4_SysBenchmarkGetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
 }
 
 LIBSEL4_INLINE_FUNC void
-seL4_BenchmarkResetThreadUtilisation(seL4_Word tcp_cptr)
+seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
 {
     seL4_Word unused0 = 0;
     seL4_Word unused1 = 0;
@@ -450,7 +450,7 @@ seL4_BenchmarkResetThreadUtilisation(seL4_Word tcp_cptr)
     seL4_Word unused4 = 0;
     seL4_Word unused5 = 0;
 
-    arm_sys_send_recv(seL4_BenchmarkResetThreadUtilization, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
+    arm_sys_send_recv(seL4_SysBenchmarkResetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
 }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
