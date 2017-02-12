@@ -7,10 +7,12 @@
 #
 # @TAG(GD_GPL)
 #
-DIRECTORIES += src/arch/arm/armv/${ARMV}/$(SEL4_ARCH)
+DIRECTORIES += src/arch/arm/armv/${ARMV}/$(TYPE_SUFFIX)
 
-ARCH_ASM_SOURCES += armv/${ARMV}/$(SEL4_ARCH)/machine_asm.S
+INCLUDE_DIRS += ${SOURCE_ROOT}/include/arch/arm/armv/${ARMV}/$(TYPE_SUFFIX)
 
-ARCH_C_SOURCES += armv/${ARMV}/$(SEL4_ARCH)/benchmark.c
-ARCH_C_SOURCES += armv/${ARMV}/$(SEL4_ARCH)/user_access.c
-ARCH_C_SOURCES += armv/${ARMV}/$(SEL4_ARCH)/cache.c
+ARCH_ASM_SOURCES += armv/${ARMV}/$(TYPE_SUFFIX)/machine_asm.S
+
+ARCH_C_SOURCES += armv/${ARMV}/$(TYPE_SUFFIX)/benchmark.c
+ARCH_C_SOURCES += armv/${ARMV}/$(TYPE_SUFFIX)/user_access.c
+ARCH_C_SOURCES += armv/${ARMV}/$(TYPE_SUFFIX)/cache.c

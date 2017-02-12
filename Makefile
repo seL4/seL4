@@ -15,7 +15,7 @@
 ### Build parameters
 ############################################################
 
-SEL4_ARCH_LIST:=aarch32 ia32 x86_64
+SEL4_ARCH_LIST:=aarch32 aarch64 ia32 x86_64
 ARCH_LIST:=arm x86
 CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15 cortex-a53
 PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1 hikey bcm2837
@@ -52,7 +52,9 @@ $(if $(filter ${CPU},${CPU_LIST}),, \
 
 $(if $(filter ${ARMV},${ARMV_LIST}),, \
 	$(error ARMV ${ARMV} invalid or undefined, should be one of [${ARMV_LIST}]))
+ifeq (${SEL4_ARCH},)
 SEL4_ARCH:=aarch32
+endif
 endif
 
 $(if $(filter ${SEL4_ARCH},${SEL4_ARCH_LIST}),, \
@@ -349,15 +351,20 @@ endif
 ifeq ($(PLAT),allwinnerA20)
 DEFINES += -DALLWINNERA20
 endif
-ifeq ($(PLAT),hikey)
-DEFINES += -DHIKEY
-endif
 ifeq ($(PLAT),bcm2837)
 DEFINES += -DBCM2837
 endif
 endif # SEL4_ARCH=aarch32
+ifeq (${SEL4_ARCH}, aarch64)
+DEFINES += -D__KERNEL_64__ -DAARCH64
+TYPE_SUFFIX:=64
+export __ARM_64__ = y
+endif # SEL4_ARCH=aarch64
 ifeq (${CPU},cortex-a53)
 DEFINES += -DARM_CORTEX_A53
+endif
+ifeq ($(PLAT),hikey)
+DEFINES += -DHIKEY
 endif
 endif # ARCH=arm
 ifeq (${SEL4_ARCH}, x86_64)
@@ -394,6 +401,11 @@ endif
 ifeq ($(SEL4_ARCH), aarch32)
 INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/32"
 INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/32"
+else
+ifeq ($(SEL4_ARCH), aarch64)
+INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/64"
+INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/64"
+endif
 endif
 
 ifeq (${CPU}, arm1136jf-s)

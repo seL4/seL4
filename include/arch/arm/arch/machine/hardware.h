@@ -14,4 +14,16 @@
 #include <config.h>
 #include <mode/machine/hardware.h>
 
+#ifndef __ASSEMBLER__
+enum vm_fault_type {
+    ARMDataAbort = seL4_DataFault,
+    ARMPrefetchAbort = seL4_InstructionFault
+};
+typedef word_t vm_fault_type_t;
+
+#define PAGE_BASE(_p, _s)        ((_p) & ~MASK(pageBitsForSize((_s))))
+#define PAGE_OFFSET(_p, _s)      ((_p) & MASK(pageBitsForSize((_s))))
+#define IS_PAGE_ALIGNED(_p, _s)  (((_p) & MASK(pageBitsForSize((_s)))) == 0)
+
+#endif /* __ASSEMBLER__ */
 #endif /* !__ARCH_MACHINE_HARDWARE_H */

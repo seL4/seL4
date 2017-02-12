@@ -59,6 +59,7 @@ WORD_SIZE_BITS_ARCH = {
 
 MESSAGE_REGISTERS_FOR_ARCH = {
     "aarch32": 4,
+    "aarch64": 4,
     "ia32": 2,
     "x86_64": 4,
     "arm_hyp": 4,
@@ -70,7 +71,7 @@ WORD_CONST_SUFFIX_BITS = {
 }
 
 # Maximum number of words that will be in a message.
-MAX_MESSAGE_LENGTH = 32
+MAX_MESSAGE_LENGTH = 64
 
 # Headers to include
 INCLUDES = [
@@ -254,6 +255,20 @@ def init_arch_types(wordsize):
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 17, wordsize),
+        ],
+
+        "aarch64" : [
+            Type("seL4_ARM_VMAttributes", wordsize, wordsize),
+            CapType("seL4_ARM_Page", wordsize),
+            CapType("seL4_ARM_PageTable", wordsize),
+            CapType("seL4_ARM_PageDirectory", wordsize),
+            CapType("seL4_ARM_PageUpperDirectory", wordsize),
+            CapType("seL4_ARM_PageGlobalDirectory", wordsize),
+            CapType("seL4_ARM_ASIDControl", wordsize),
+            CapType("seL4_ARM_ASIDPool", wordsize),
+            CapType("seL4_ARM_IOSpace", wordsize),
+            CapType("seL4_ARM_IOPageTable", wordsize),
+            StructType("seL4_UserContext", wordsize * 34, wordsize),
         ],
 
         "arm_hyp" : [

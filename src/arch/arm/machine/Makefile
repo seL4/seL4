@@ -36,7 +36,3 @@ endif
 ifeq ($(PLAT), hikey)
     ARCH_C_SOURCES += machine/gic_pl390.c
 endif
-
-ifdef DEBUG
-    ARCH_C_SOURCES += machine/capdl.c
-endif

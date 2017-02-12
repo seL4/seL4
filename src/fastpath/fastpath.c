@@ -30,7 +30,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     word_t badge;
     cte_t *replySlot, *callerSlot;
     cap_t newVTable;
-#ifdef CONFIG_ARCH_X86
+#ifndef CONFIG_ARCH_AARCH32
     vspace_root_t *cap_pd;
 #else
     pde_t *cap_pd;
@@ -89,7 +89,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
-#ifdef ARCH_ARM
+#ifdef CONFIG_ARCH_AARCH32
     /* Get HW ASID */
     stored_hw_asid = cap_pd[PD_ASID_SLOT];
 #endif
@@ -97,6 +97,10 @@ fastpath_call(word_t cptr, word_t msgInfo)
 #ifdef CONFIG_ARCH_X86_64
     /* borrow the stored_hw_asid for PCID */
     stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID_fp(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_AARCH64
+    stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
 #endif
 
     /* Ensure the destination has a higher/equal priority to us. */
@@ -110,7 +114,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
-#ifdef ARCH_ARM
+#ifdef CONFIG_ARCH_AARCH32
     if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
         slowpath(SysCall);
     }
@@ -191,7 +195,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     word_t fault_type;
 
     cap_t newVTable;
-#ifdef CONFIG_ARCH_X86
+#ifndef CONFIG_ARCH_AARCH32
     vspace_root_t *cap_pd;
 #else
     pde_t *cap_pd;
@@ -269,12 +273,17 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
-#ifdef ARCH_ARM
+#ifdef CONFIG_ARCH_AARCH32
     /* Get HWASID. */
     stored_hw_asid = cap_pd[PD_ASID_SLOT];
 #endif
+
 #ifdef CONFIG_ARCH_X86_64
     stored_hw_asid.words[0] = cap_pml4_cap_get_capPML4MappedASID(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_AARCH64
+    stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
@@ -282,7 +291,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
-#ifdef ARCH_ARM
+#ifdef CONFIG_ARCH_AARCH32
     /* Ensure the HWASID is valid. */
     if (unlikely(!pde_pde_invalid_get_stored_asid_valid(stored_hw_asid))) {
         slowpath(SysReplyRecv);

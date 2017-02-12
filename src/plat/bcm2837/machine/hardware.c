@@ -12,7 +12,7 @@
 #include <config.h>
 #include <types.h>
 #include <arch/machine.h>
-#include <arch/machine/timer.h>
+#include <mode/machine/timer.h>
 #include <arch/linker.h>
 
 void resetTimer(void)
