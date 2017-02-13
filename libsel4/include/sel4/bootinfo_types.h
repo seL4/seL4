@@ -50,6 +50,7 @@ typedef struct {
 } SEL4_PACKED seL4_UntypedDesc;
 
 typedef struct {
+    seL4_Word         extraLen;        /* length of any additional bootinfo information */
     seL4_NodeId       nodeID;          /* ID [0..numNodes-1] of the seL4 node (0 if uniprocessor) */
     seL4_Word         numNodes;        /* number of seL4 nodes (1 if uniprocessor) */
     seL4_Word         numIOPTLevels;   /* number of IOMMU PT levels (0 if no IOMMU support) */
@@ -59,6 +60,7 @@ typedef struct {
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */
     seL4_SlotRegion   userImagePaging; /* userland-image paging structure caps */
     seL4_SlotRegion   ioSpaceCaps;     /* IOSpace caps for ARM SMMU */
+    seL4_SlotRegion   extraBIPages;    /* caps for any pages used to back the additional bootinfo information */
     seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
     seL4_Word         archInfo;        /* tsc freq on x86, unused on arm */
@@ -68,5 +70,18 @@ typedef struct {
      * to make this struct easier to represent in other languages */
 } SEL4_PACKED seL4_BootInfo;
 
+/* If extraLen > 0 then 4K after the start of bootinfo is a region of extraLen additional
+ * bootinfo structures. Bootinfo structures are arch/platform specific and may or may not
+ * exist in any given execution. */
+typedef struct {
+    /* identifier of the following chunk. IDs are arch/platform specific */
+    seL4_Word id;
+    /* length of the chunk, including this header */
+    seL4_Word len;
+} SEL4_PACKED seL4_BootInfoHeader;
+
+/* Bootinfo identifiers share a global namespace, even if they are arch or platform specific
+ * and are enumerated here */
+#define SEL4_BOOTINFO_HEADER_PADDING 0
 
 #endif // __LIBSEL4_BOOTINFO_TYPES_H

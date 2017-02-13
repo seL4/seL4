@@ -267,6 +267,9 @@ allocate_bi_frame(
     BI_PTR(pptr)->ipcBuffer = (seL4_IPCBuffer *) ipcbuf_vptr;
     BI_PTR(pptr)->initThreadCNodeSizeBits = CONFIG_ROOT_CNODE_SIZE_BITS;
     BI_PTR(pptr)->initThreadDomain = ksDomSchedule[ksDomScheduleIdx].domain;
+    BI_PTR(pptr)->extraLen = 0;
+    BI_PTR(pptr)->extraBIPages.start = 0;
+    BI_PTR(pptr)->extraBIPages.end = 0;
 
     return pptr;
 }
