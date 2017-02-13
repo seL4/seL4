@@ -31,6 +31,8 @@
 
 #define SEL4_OFFSETOF(type, member) __builtin_offsetof(type, member)
 
+#define SEL4_PACKED __attribute__((packed))
+
 #ifdef CONFIG_LIB_SEL4_INLINE_INVOCATIONS
 #define LIBSEL4_INLINE static inline
 #define LIBSEL4_INLINE_FUNC static inline

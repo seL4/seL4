@@ -39,7 +39,7 @@ typedef seL4_Word seL4_SlotPos;
 typedef struct {
     seL4_SlotPos start; /* first CNode slot position OF region */
     seL4_SlotPos end;   /* first CNode slot position AFTER region */
-} seL4_SlotRegion;
+} SEL4_PACKED seL4_SlotRegion;
 
 typedef struct {
     seL4_Word  paddr;   /* physical address of untyped cap  */
@@ -47,7 +47,7 @@ typedef struct {
     seL4_Uint8 padding2;
     seL4_Uint8 sizeBits;/* size (2^n) bytes of each untyped */
     seL4_Uint8 isDevice;/* whether the untyped is a device  */
-} seL4_UntypedDesc;
+} SEL4_PACKED seL4_UntypedDesc;
 
 typedef struct {
     seL4_NodeId       nodeID;          /* ID [0..numNodes-1] of the seL4 node (0 if uniprocessor) */
@@ -66,7 +66,7 @@ typedef struct {
     seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
     /* the untypedList should be the last entry in this struct, in order
      * to make this struct easier to represent in other languages */
-} seL4_BootInfo;
+} SEL4_PACKED seL4_BootInfo;
 
 
 #endif // __LIBSEL4_BOOTINFO_TYPES_H
