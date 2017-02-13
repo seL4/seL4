@@ -52,7 +52,7 @@ $(if $(filter ${CPU},${CPU_LIST}),, \
 
 $(if $(filter ${ARMV},${ARMV_LIST}),, \
 	$(error ARMV ${ARMV} invalid or undefined, should be one of [${ARMV_LIST}]))
-ifeq (${SEL4_ARCH},)
+ifneq (${SEL4_ARCH}, aarch64)
 SEL4_ARCH:=aarch32
 endif
 endif
