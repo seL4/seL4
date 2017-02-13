@@ -40,6 +40,7 @@ enum hwASIDConstants {
 typedef word_t seL4_Word;
 typedef cptr_t seL4_CPtr;
 typedef uint32_t seL4_Uint32;
+typedef uint16_t seL4_Uint16;
 typedef uint8_t seL4_Uint8;
 typedef node_id_t seL4_NodeId;
 typedef dom_t seL4_Domain;
