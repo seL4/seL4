@@ -22,6 +22,7 @@
 #include <plat/machine/smmu.h>
 #include <mode/machine/hardware.h>
 #include <mode/api/constants.h>
+#include <arch/benchmark_overflowHandler.h>
 
 #define TIMER_CLOCK_HZ		12000000llu
 
