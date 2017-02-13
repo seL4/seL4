@@ -257,3 +257,52 @@ choice
         help
             Use rdfs/gsbase, wrfs/gsbase instructions to change base adddresses.
 endchoice
+
+menu "Multiboot options"
+    choice
+        depends on PLAT_PC99
+        prompt "Multiboot graphics mode"
+        help
+            The type of graphics mode to request from the boot loader.
+            This is encoded into the multiboot header and is merely a hint,
+            the boot loader is free to ignore or set some other mode
+        default  MULTIBOOT_GRAPHICS_MODE_NONE
+        config MULTIBOOT_GRAPHICS_MODE_NONE
+            bool "None"
+            help
+                Request no graphics mode
+        config MULTIBOOT_GRAPHICS_MODE_TEXT
+            bool "Text"
+            help
+                Request a text mode
+        config MULTIBOOT_GRAPHICS_MODE_LINEAR
+            bool "Linear"
+            help
+                Request a linear graphics mode
+    endchoice
+    config MULTIBOOT_GRAPHICS_MODE_WIDTH
+        int "Mode Width"
+        depends on MULTIBOOT_GRAPHICS_MODE_TEXT || MULTIBOOT_GRAPHICS_MODE_LINEAR
+        default 80 if MULTIBOOT_GRAPHICS_MODE_TEXT
+        default 1024 if MULTIBOOT_GRAPHICS_MODE_LINEAR
+        help
+            The width of the graphics mode to request. For a linear graphics mode this
+            is the number of pixels. For a text mode this is the number of characters.
+            Value of zero indicates no preference
+    config MULTIBOOT_GRAPHICS_MODE_HEIGHT
+        int "Mode Height"
+        depends on MULTIBOOT_GRAPHICS_MODE_TEXT || MULTIBOOT_GRAPHICS_MODE_LINEAR
+        default 25 if MULTIBOOT_GRAPHICS_MODE_TEXT
+        default 768 if MULTIBOOT_GRAPHICS_MODE_LINEAR
+        help
+            The height of the graphics mode to request. For a linear graphics mode this
+            is the number of pixels. For a text mode this is the number of characters
+            Value of zero indicates no preference
+     config MULTIBOOT_GRAPHICS_MODE_DEPTH
+        int "Mode Depth"
+        depends on MULTIBOOT_GRAPHICS_MODE_LINEAR
+        default 32
+        help
+            The bits per pixel of the linear graphics mode to request.
+            Value of zero indicates no preference
+endmenu
