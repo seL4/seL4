@@ -17,5 +17,6 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/benchmark/Makefile
 
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/${TYPE_SUFFIX}/Makefile
 
+ARCH_ASM_SOURCES += multiboot.S
 ARCH_C_SOURCES += c_traps.c \
                   idle.c

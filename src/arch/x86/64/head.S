@@ -20,19 +20,9 @@
 #include <config.h>
 #include <machine/assembler.h>
 
-#define MULTIBOOT_HEADER_MAGIC 0x1BADB002
-#define MULTIBOOT_HEADER_FLAGS 3
-
 #define IA32_EFER_MSR 0xC0000080
 #define IA32_APIC_BASE_MSR 0x01B
 #define APIC_ID_OFFSET 0x020
-
-.section .mbh
-    /* MultiBoot header */
-    .align  4
-    .long   MULTIBOOT_HEADER_MAGIC;
-    .long   MULTIBOOT_HEADER_FLAGS;
-    .long   - MULTIBOOT_HEADER_FLAGS - MULTIBOOT_HEADER_MAGIC;
 
 .section .phys.text
 

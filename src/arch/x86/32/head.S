@@ -18,16 +18,6 @@
 #include <config.h>
 #include <machine/assembler.h>
 
-#define MULTIBOOT_HEADER_MAGIC 0x1BADB002
-#define MULTIBOOT_HEADER_FLAGS 3
-
-.section .mbh
-    /* MultiBoot header */
-    .align  4
-    .long   MULTIBOOT_HEADER_MAGIC;
-    .long   MULTIBOOT_HEADER_FLAGS;
-    .long   - MULTIBOOT_HEADER_FLAGS - MULTIBOOT_HEADER_MAGIC;
-
 .section .phys.text
 
 BEGIN_FUNC(enable_paging)
