@@ -240,6 +240,27 @@ create_bi_frame_cap(
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapBootInfoFrame), cap);
 }
 
+BOOT_CODE region_t
+allocate_extra_bi_region(word_t extra_size)
+{
+    /* determine power of 2 size of this region. avoid calling clzl on 0 though */
+    if (extra_size == 0) {
+        /* return any valid address to correspond to the zero allocation */
+        return (region_t){0x1000, 0x1000};
+    }
+    word_t size_bits = seL4_WordBits - 1 - clzl(ROUND_UP(extra_size, seL4_PageBits));
+    pptr_t pptr = alloc_region(size_bits);
+    if (!pptr) {
+        printf("Kernel init failed: could not allocate extra bootinfo region size bits %lu\n", size_bits);
+        return REG_EMPTY;
+    }
+
+    clearMemory((void*)pptr, size_bits);
+    ndks_boot.bi_frame->extraLen = BIT(size_bits);
+
+    return (region_t){pptr, pptr + BIT(size_bits)};
+}
+
 BOOT_CODE pptr_t
 allocate_bi_frame(
     node_id_t  node_id,
