@@ -17,6 +17,7 @@
 #define MULTIBOOT_MAGIC 0x2BADB002
 
 #include <types.h>
+#include <arch/api/bootinfo_types.h>
 
 typedef struct multiboot_module {
     uint32_t  start;
@@ -46,13 +47,26 @@ typedef struct multiboot_info {
     uint32_t syms[4];
     uint32_t mmap_length;
     uint32_t mmap_addr;
-    /* the multiboot spec includes more fields we don't need */
+    uint32_t drives_length;
+    void *drives_addr;
+    void *config_table;
+    void *boot_loader_name;
+    void *apm_table;
+    /* The bootinfo types are declared to be precisely the VBE layout, so
+     * we can reuse those types here */
+    seL4_VBEInfoBlock_t *vbe_control_info;
+    seL4_VBEModeInfoBlock_t *vbe_mode_info;
+    uint16_t vbe_mode;
+    uint16_t vbe_interface_seg;
+    uint16_t vbe_interface_off;
+    uint16_t vbe_interface_len;
 } PACKED multiboot_info_t;
 
 #define MULTIBOOT_INFO_MEM_FLAG     BIT(0)
 #define MULTIBOOT_INFO_CMDLINE_FLAG BIT(2)
 #define MULTIBOOT_INFO_MODS_FLAG    BIT(3)
 #define MULTIBOOT_INFO_MMAP_FLAG    BIT(6)
+#define MULTIBOOT_INFO_GRAPHICS_FLAG BIT(11)
 #define MULTIBOOT_MMAP_USEABLE_TYPE     1
 #define MULTIBOOT_MMAP_RESERVED_TYPE    2
 #define MULTIBOOT_MMAP_ACPI_TYPE        3

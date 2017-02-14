@@ -248,17 +248,23 @@ init_sys_state(
     /* parameters below not modeled in abstract specification */
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
-    acpi_rmrr_list_t *rmrr_list
+    acpi_rmrr_list_t *rmrr_list,
+    seL4_X86_BootInfo_VBE *vbe
 )
 {
     cap_t         root_cnode_cap;
+    vptr_t        extra_bi_frame_vptr;
     vptr_t        bi_frame_vptr;
     vptr_t        ipcbuf_vptr;
     cap_t         it_vspace_cap;
     cap_t         it_ap_cap;
     cap_t         ipcbuf_cap;
     pptr_t        bi_frame_pptr;
+    word_t        extra_bi_size = sizeof(seL4_BootInfoHeader);
+    region_t      extra_bi_region;
+    pptr_t        extra_bi_offset = 0;
     create_frames_of_region_ret_t create_frames_ret;
+    create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to kernel pptrs */
     region_t ui_reg             = paddr_to_pptr_reg(ui_info.p_reg);
@@ -272,10 +278,15 @@ init_sys_state(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+
+    if (vbe->vbeMode != -1) {
+        extra_bi_size += sizeof(seL4_X86_BootInfo_VBE);
+    }
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
+    it_v_reg.end = ROUND_UP(extra_bi_frame_vptr + extra_bi_size, PAGE_BITS);
 
     init_freemem(ui_info.p_reg, mem_p_regs);
 
@@ -309,6 +320,25 @@ init_sys_state(
         return false;
     }
 
+    extra_bi_region = allocate_extra_bi_region(extra_bi_size);
+    if (extra_bi_region.start == 0) {
+        return false;
+    }
+
+    /* populate vbe info block */
+    if (vbe->vbeMode != -1) {
+        vbe->header.id = SEL4_BOOTINFO_HEADER_X86_VBE;
+        vbe->header.len = sizeof(seL4_X86_BootInfo_VBE);
+        memcpy((void*)(extra_bi_region.start + extra_bi_offset), vbe, sizeof(seL4_X86_BootInfo_VBE));
+        extra_bi_offset += sizeof(seL4_X86_BootInfo_VBE);
+    }
+
+    /* provde a chunk for any leftover padding in the extended boot info */
+    seL4_BootInfoHeader padding_header;
+    padding_header.id = SEL4_BOOTINFO_HEADER_PADDING;
+    padding_header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
+    memcpy((void*)(extra_bi_region.start + extra_bi_offset), &padding_header, sizeof(seL4_BootInfoHeader));
+
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
     it_vspace_cap = create_it_address_space(root_cnode_cap, it_v_reg);
@@ -323,6 +353,20 @@ init_sys_state(
         bi_frame_pptr,
         bi_frame_vptr
     );
+
+    /* create and map extra bootinfo region */
+    extra_bi_ret =
+        create_frames_of_region(
+            root_cnode_cap,
+            it_vspace_cap,
+            extra_bi_region,
+            true,
+            pptr_to_paddr((void*)(extra_bi_region.start - extra_bi_frame_vptr))
+        );
+    if (!extra_bi_ret.success) {
+        return false;
+    }
+    ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
 
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_vspace_cap, ipcbuf_vptr);

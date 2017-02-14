@@ -25,6 +25,7 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/pic.h>
 #include <plat/machine/ioapic.h>
+#include <arch/api/bootinfo_types.h>
 
 /* addresses defined in linker script */
 /* need a fake array to get the pointer from the linker script */
@@ -64,6 +65,7 @@ typedef struct boot_state {
     uint32_t     num_cpus;    /* number of detected cpus */
     cpu_id_t     cpus[CONFIG_MAX_NUM_NODES];
     mem_p_regs_t mem_p_regs;  /* physical memory regions */
+    seL4_X86_BootInfo_VBE vbe_info; /* Potential VBE information from multiboot */
 } boot_state_t;
 
 BOOT_BSS
@@ -219,7 +221,8 @@ try_boot_sys_node(cpu_id_t cpu_id)
                 /* parameters below not modeled in abstract specification */
                 boot_state.num_drhu,
                 boot_state.drhu_list,
-                &boot_state.rmrr_list
+                &boot_state.rmrr_list,
+                &boot_state.vbe_info
             )) {
         return false;
     }
@@ -441,6 +444,20 @@ try_boot_sys(
 
     boot_state.ki_p_reg.start = PADDR_LOAD;
     boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
+
+    /* copy VESA information from multiboot header */
+    if ((mbi->flags & MULTIBOOT_INFO_GRAPHICS_FLAG) == 0) {
+        boot_state.vbe_info.vbeMode = -1;
+        printf("Multiboot gave us no video information\n");
+    } else {
+        boot_state.vbe_info.vbeInfoBlock = *mbi->vbe_control_info;
+        boot_state.vbe_info.vbeModeInfoBlock = *mbi->vbe_mode_info;
+        boot_state.vbe_info.vbeMode = mbi->vbe_mode;
+        printf("Got VBE info in multiboot. Current video mode is %d\n", mbi->vbe_mode);
+        boot_state.vbe_info.vbeInterfaceSeg = mbi->vbe_interface_seg;
+        boot_state.vbe_info.vbeInterfaceOff = mbi->vbe_interface_off;
+        boot_state.vbe_info.vbeInterfaceLen = mbi->vbe_interface_len;
+    }
 
     printf("Kernel loaded to: start=0x%lx end=0x%lx size=0x%lx entry=0x%lx\n",
            boot_state.ki_p_reg.start,

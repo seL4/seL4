@@ -83,5 +83,6 @@ typedef struct {
 /* Bootinfo identifiers share a global namespace, even if they are arch or platform specific
  * and are enumerated here */
 #define SEL4_BOOTINFO_HEADER_PADDING 0
+#define SEL4_BOOTINFO_HEADER_X86_VBE 1
 
 #endif // __LIBSEL4_BOOTINFO_TYPES_H

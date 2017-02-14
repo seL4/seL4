@@ -15,6 +15,7 @@
 #include <types.h>
 #include <plat/machine/acpi.h>
 #include <kernel/boot.h>
+#include <arch/api/bootinfo_types.h>
 
 typedef struct mem_p_regs {
     word_t count;
@@ -38,7 +39,8 @@ bool_t init_sys_state(
     /* parameters below not modeled in abstract specification */
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
-    acpi_rmrr_list_t *rmrr_list
+    acpi_rmrr_list_t *rmrr_list,
+    seL4_X86_BootInfo_VBE *vbe
 );
 
 bool_t init_cpu(
