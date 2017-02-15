@@ -483,9 +483,9 @@ init_vm_state(void)
     }
 
     cacheLineSize = BIT(x86KScacheLineSizeBits);
-    if (cacheLineSize != CONFIG_CACHE_LN_SZ) {
+    if (cacheLineSize != L1_CACHE_LINE_SIZE) {
         printf("Configured cache line size is %d but detected size is %lu\n",
-               CONFIG_CACHE_LN_SZ, cacheLineSize);
+               L1_CACHE_LINE_SIZE, cacheLineSize);
         SMP_COND_STATEMENT(return false);
     }
 

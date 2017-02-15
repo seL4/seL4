@@ -15,7 +15,7 @@
 
 #if CONFIG_MAX_NUM_NODES > 1
 
-clh_lock_t big_kernel_lock ALIGN(CONFIG_CACHE_LN_SZ);
+clh_lock_t big_kernel_lock ALIGN(L1_CACHE_LINE_SIZE);
 
 BOOT_CODE void
 clh_lock_init(void)

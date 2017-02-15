@@ -19,6 +19,8 @@
 
 #define PAGE_BITS seL4_PageBits
 #define LARGE_PAGE_BITS seL4_LargePageBits
+#define L1_CACHE_LINE_SIZE_BITS CTZL(CONFIG_CACHE_LN_SZ)
+#define L1_CACHE_LINE_SIZE CONFIG_CACHE_LN_SZ
 
 typedef word_t vm_fault_type_t;
 

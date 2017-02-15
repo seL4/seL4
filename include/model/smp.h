@@ -21,7 +21,7 @@
 #if CONFIG_MAX_NUM_NODES > 1
 
 /* Use this to avoid false sharing between cores for per-core data structures */
-#define PAD_TO_NEXT_CACHE_LN(used) char padding[CONFIG_CACHE_LN_SZ - ((used) % CONFIG_CACHE_LN_SZ)]
+#define PAD_TO_NEXT_CACHE_LN(used) char padding[L1_CACHE_LINE_SIZE - ((used) % L1_CACHE_LINE_SIZE)]
 
 typedef struct smpStatedata {
     archNodeState_t cpu;
