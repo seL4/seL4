@@ -18,6 +18,7 @@
 #include <arch/machine/cpu_registers.h>
 #include <model/statedata.h>
 #include <arch/model/statedata.h>
+#include <object/interrupt.h>
 
 #define IA32_APIC_BASE_MSR      0x01B
 #define IA32_SYSENTER_CS_MSR    0x174
@@ -303,6 +304,13 @@ static inline void x86_mfence(void)
 static inline unsigned long getFaultAddr(void)
 {
     return read_cr2();
+}
+
+/* handleInterrupt wrapper */
+static inline void Arch_handleInterrupt(irq_t irq)
+{
+    handleInterrupt(irq);
+    ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
 }
 
 /* sysenter entry point */

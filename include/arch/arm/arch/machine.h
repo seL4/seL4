@@ -67,6 +67,8 @@ static inline void arch_pause(void)
 }
 #endif
 
+#define Arch_handleInterrupt handleInterrupt
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* __ARCH_MACHINE_H */

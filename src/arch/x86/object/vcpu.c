@@ -1190,7 +1190,6 @@ handleVmexit(void)
             ARCH_NODE_STATE(x86KScurInterrupt) = interrupt & 0xff;
             NODE_LOCK_IF(interrupt != int_remote_call_ipi);
             handleInterruptEntry();
-            ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
         } else {
             /* poll for the pending irq. We will then handle it once we return back
              * up to restore_user_context */

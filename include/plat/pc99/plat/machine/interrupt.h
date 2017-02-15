@@ -67,8 +67,13 @@ getActiveIRQ(void)
          * the x86 APIC) and is cleaner to have here */
         if (ARCH_NODE_STATE(x86KSPendingInterrupt) == int_invalid) {
             receivePendingIRQ();
+            /* Check if there was no pending IRQ */
+            if (ARCH_NODE_STATE(x86KSPendingInterrupt) == int_invalid) {
+                return irqInvalid;
+            }
         }
-        return irqInvalid;
+        /* Prepare to handle pending IRQ */
+        ARCH_NODE_STATE(x86KScurInterrupt) = servicePendingIRQ();
     }
     return ARCH_NODE_STATE(x86KScurInterrupt) - IRQ_INT_OFFSET;
 }
