@@ -28,7 +28,7 @@ config HAVE_FPU
     bool
     default n
 
-config KERNEL_MASTER
+config KERNEL_RT
     bool
     default y
 
