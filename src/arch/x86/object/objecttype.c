@@ -421,6 +421,9 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 
 bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
+    if (cap_get_capType(cap_a) == cap_io_port_cap) {
+        return false;
+    }
     if (cap_get_capType(cap_a) == cap_frame_cap) {
         if (cap_get_capType(cap_b) == cap_frame_cap) {
             return ((cap_frame_cap_get_capFBasePtr(cap_a) ==
