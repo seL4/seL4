@@ -53,6 +53,7 @@
 #define CR_BITS_CLEAR  (CR_ALIGN_CLEAR | \
                         CR_L1_ICACHE_CLEAR | \
                         CR_L1_DCACHE_CLEAR | \
+                        BIT(CONTROL_SA0) | \
                         BIT(CONTROL_EE) | \
                         BIT(CONTROL_E0E))
 
