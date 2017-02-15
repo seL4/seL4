@@ -74,7 +74,6 @@ c_handle_interrupt(int irq, int syscall)
         ksKernelEntry.word = irq;
 #endif
         handleInterruptEntry();
-        ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
         /* check for other pending interrupts */
         receivePendingIRQ();
     } else if (irq == int_spurious) {

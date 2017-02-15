@@ -26,6 +26,7 @@
 #include <model/statedata.h>
 #include <string.h>
 #include <kernel/traps.h>
+#include <arch/machine.h>
 
 #ifdef DEBUG
 #include <arch/machine/capdl.h>
@@ -42,7 +43,7 @@ handleInterruptEntry(void)
     irq = getActiveIRQ();
 
     if (irq != irqInvalid) {
-        handleInterrupt(irq);
+        Arch_handleInterrupt(irq);
     } else {
 #ifdef CONFIG_IRQ_REPORTING
         userError("Spurious interrupt!");
@@ -400,7 +401,7 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                handleInterrupt(irq);
+                Arch_handleInterrupt(irq);
             }
         }
         break;
@@ -410,7 +411,7 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                handleInterrupt(irq);
+                Arch_handleInterrupt(irq);
             }
         }
         break;
@@ -420,7 +421,7 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                handleInterrupt(irq);
+                Arch_handleInterrupt(irq);
             }
         }
         break;
