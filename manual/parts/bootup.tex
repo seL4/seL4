@@ -31,30 +31,30 @@ The first 12 slots contain specific capabilities as listed in
   \begin{center}
     \caption{Initial thread's CNode content.}
     \label{tab:cnode_content}
-    \begin{tabularx}{\textwidth}{llX}
+    \begin{tabularx}{\textwidth}{lX}
       \toprule
-      CPTR & Enum Constant & Capability \\
+      Enum Constant & Capability \\
       \midrule
-      0x0 & \texttt{seL4\_CapNull}                & null \\
-      0x1 & \texttt{seL4\_CapInitThreadTCB}       & initial thread's TCB \\
-      0x2 & \texttt{seL4\_CapInitThreadCNode}     & initial thread's CNode \\
-      0x3 & \texttt{seL4\_CapInitThreadVSpace}    & initial thread's VSpace \\
-      0x4 & \texttt{seL4\_CapIRQControl}          & global IRQ controller (see \autoref{sec:interrupts}) \\
-      0x5 & \texttt{seL4\_CapASIDControl}         & global ASID controller (see \autoref{ch:vspace}) \\
-      0x6 & \texttt{seL4\_CapInitThreadASIDPool}  & initial thread's ASID pool (see \autoref{ch:vspace}) \\
-      0x7 & \texttt{seL4\_CapIOPort}              & global I/O port cap, null cap if unsupported
+      \texttt{seL4\_CapNull}                & null \\
+      \texttt{seL4\_CapInitThreadTCB}       & initial thread's TCB \\
+      \texttt{seL4\_CapInitThreadCNode}     & initial thread's CNode \\
+      \texttt{seL4\_CapInitThreadVSpace}    & initial thread's VSpace \\
+      \texttt{seL4\_CapIRQControl}          & global IRQ controller (see \autoref{sec:interrupts}) \\
+      \texttt{seL4\_CapASIDControl}         & global ASID controller (see \autoref{ch:vspace}) \\
+      \texttt{seL4\_CapInitThreadASIDPool}  & initial thread's ASID pool (see \autoref{ch:vspace}) \\
+      \texttt{seL4\_CapIOPort}              & global I/O port cap, null cap if unsupported
 \ifxeightsix
 (see \autoref{sec:ioports})
 \fi
 \\
-      0x8 & \texttt{seL4\_CapIOSpace}             & global I/O space cap, null cap if unsupported
+      \texttt{seL4\_CapIOSpace}             & global I/O space cap, null cap if unsupported
 \ifxeightsix
 (see \autoref{sec:iospace})
 \fi
 \\
-      0x9 & \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
-      0xa & \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
-      0xb & \texttt{seL4\_CapDomain}              & domain cap (see \autoref{sec:domains}) \\
+      \texttt{seL4\_CapBootInfoFrame}       & BootInfo frame (see \autoref{ch:bootup:bootinfo}) \\
+      \texttt{seL4\_CapInitThreadIPCBuffer} & initial thread's IPC buffer (see \autoref{sec:messageinfo}) \\
+      \texttt{seL4\_CapDomain}              & domain cap (see \autoref{sec:domains}) \\
       \bottomrule
     \end{tabularx}
   \end{center}
