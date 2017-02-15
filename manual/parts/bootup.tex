@@ -143,9 +143,7 @@ untyped-memory capability, it stores the physical addresses backing the
 untyped memory. This allows
 userland to infer physical memory addresses of retyped frames and use them to
 initiate DMA transfers when no IOMMU is available. The kernel makes no
-guarantees about certain sizes of untyped memory being available except that it
-provides a compile-time-configurable minimum number of 4K untyped capabilities
-(default is 12).
+guarantees about certain sizes of untyped memory being available.
 
 \begin{table}[htb]
   \begin{center}
