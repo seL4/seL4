@@ -15,10 +15,11 @@
 # Hardware pushes onto the stack SS, ESP, EFLAGS, CS, NextIP and Error,
 # leaving the stack pointer pointing to TLS_BASE. The kernel pushes the rest.
 
-#define INT_HANDLER_WITH_ERR_CODE(number)    \
+#define INT_HANDLER_COMMON(number, error_code) \
 .global int_##number;                        \
 .type int_##number, %function;               \
 int_##number:                                \
+    error_code;                              \
     subl  $4, %esp; /* skip TLS_BASE */      \
     pushl 8(%esp); /* FaultIP := NextIP */   \
     pushl %gs;                               \
@@ -36,27 +37,8 @@ int_##number:                                \
     jmp   handle_interrupt;                  \
     .size int_##number, .-int_##number;
 
-#define INT_HANDLER_WITHOUT_ERR_CODE(number) \
-.global int_##number;                        \
-.type int_##number, %function;               \
-int_##number:                                \
-    pushl $0x0; /* push Error = 0 */         \
-    subl  $4, %esp; /* skip TLS_BASE */      \
-    pushl 8(%esp); /* FaultIP := NextIP */   \
-    pushl %gs;                               \
-    pushl %fs;                               \
-    pushl %es;                               \
-    pushl %ds;                               \
-    pushl %ebp;                              \
-    pushl %edi;                              \
-    pushl %esi;                              \
-    pushl %edx;                              \
-    pushl %ecx;                              \
-    pushl %ebx;                              \
-    pushl %eax;                              \
-    movl  $0x##number, %ecx;                 \
-    jmp   handle_interrupt;                  \
-    .size int_##number, .-int_##number;
+#define INT_HANDLER_WITH_ERR_CODE(number) INT_HANDLER_COMMON(number,)
+#define INT_HANDLER_WITHOUT_ERR_CODE(number) INT_HANDLER_COMMON(number,pushl $0x0)
 
 #if CONFIG_MAX_NUM_NODES > 1
 #define SET_KERNEL_STACK_FROM(x)            \
