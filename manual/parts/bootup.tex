@@ -100,6 +100,7 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{seL4\_SlotRegion}     & \texttt{sharedFrames}            & reserved \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImageFrames}         & frames containing the userland image \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImagePaging}         & userland-image paging structure caps \\
+      \texttt{seL4\_SlotRegion}     & \texttt{ioSpaceCaps}             & I/O space capabilities for ARM SMMU \\
       \texttt{seL4\_UntypedDesc[]}  & \texttt{untypedList}             & array of information about each untyped \\
       \texttt{seL4\_Uint8}          & \texttt{initThreadCNodeSizeBits} & CNode size ($2^n$ slots) \\
       \texttt{seL4\_Uint32}         & \texttt{initThreadDomain}        & domain of the initial thread (see \autoref{sec:domains}) \\
@@ -167,6 +168,10 @@ If the platform has an seL4-supported IOMMU, \texttt{numIOPTLevels} contains
 the number of IOMMU-page-table levels. This information is needed by userland
 when constructing an IOMMU address space (IOSpace). If there is no IOMMU
 support, \texttt{numIOPTLevels} is \texttt{0}.
+
+On ARM if the platform has any available SMMU units the capabilities for them
+will be described by the \texttt{ioSpaceCaps} slot region. The mapping of a
+capability from this region to a specific SMMU is platform specific.
 
 \ifxeightsix
 \section{Boot Command-line Arguments}
