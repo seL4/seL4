@@ -26,7 +26,7 @@
 
 /* many of the device regions are not 4K page aligned, so some regions may contain more than
  * one devices. it is the user's responsibilty to figure out how to use these regions */
-#define ARM_PERIPHBASE              (0x50040000)                /* 128 KB                  */ 
+#define ARM_PERIPHBASE              (0x50040000)                /* 128 KB                  */
 #define GICD_PADDR                  (ARM_PERIPHBASE + 0x1000)   /* interrupt distributor   */
 #define GICI_PADDR                  (ARM_PERIPHBASE + 0x2000)   /* GIC CPU interface       */
 #define UARTA_SYNC_PADDR            (0x70006000)                /* 12 KB, multiple         */
