@@ -222,10 +222,14 @@ plat_smmu_init(void)
     smmu_enable();
 
     /* also need to unmask interrupts */
-    smmu_regs->intmask = BIT(MC_APB_ASID_UPDATE_BIT) | BIT(MC_SMMU_PAGE_BIT) |
-                         BIT(MC_DECERR_MTS_BIT) | BIT(MC_SECERR_SEC_BIT) |
-                         BIT(MC_DECERR_VPR_BIT) | BIT(MC_ARBITRATION_EMEM_BIT) |
-                         BIT(MC_SECURITY_BIT) | BIT(MC_DECERR_EMEM_BIT);
+    if (config_set(CONFIG_SMMU_INTERUPT_ENABLE)) {
+        smmu_regs->intmask = BIT(MC_APB_ASID_UPDATE_BIT) | BIT(MC_SMMU_PAGE_BIT) |
+                             BIT(MC_DECERR_MTS_BIT) | BIT(MC_SECERR_SEC_BIT) |
+                             BIT(MC_DECERR_VPR_BIT) | BIT(MC_ARBITRATION_EMEM_BIT) |
+                             BIT(MC_SECURITY_BIT) | BIT(MC_DECERR_EMEM_BIT);
+    } else {
+        smmu_regs->intmask = 0;
+    }
     return ARM_PLAT_NUM_SMMU;
 }
 
