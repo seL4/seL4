@@ -134,26 +134,28 @@ the virtual address of each
 frame capability, and the virtual address and type of each paging structure capability.
 
 Untyped memory is given in no particular order. The array entry
-\texttt{untypedSizeBitsList[i]} stores the untyped-memory size ($2^n$ bytes) of
+\texttt{untypedList[i]} stores the untyped-memory information of
 the i-th untyped cap of the slot region \texttt{untyped}. Therefore, the array
 length is at least \texttt{untyped.end - untyped.start}. The actual length is
-hardcoded in the kernel and irrelevant to the reader of the array.
-The same is true for the array \texttt{untypedPaddrList}. For each
-untyped-memory capability, it stores the physical addresses backing the
-untyped memory. This allows
-userland to infer physical memory addresses of retyped frames and use them to
-initiate DMA transfers when no IOMMU is available. The kernel makes no
-guarantees about certain sizes of untyped memory being available.
+hardcoded in the kernel and irrelevant to the reader of the array. The untyped
+memory information is stored in a \texttt{seL4\_UntypedDesc} struct, described
+in \autoref{tab:untyped_desc_struct}, and details the address, size and kind of
+the memory backing the untyped. This allows userland to infer physical memory
+addresses of retyped frames and use them to initiate DMA transfers when no
+IOMMU is available. The kernel makes no guarantees about certain sizes of untyped
+memory being available.
 
 \begin{table}[htb]
   \begin{center}
-    \caption{DeviceRegion struct.}
-    \label{tab:device_region_struct}
+    \caption{seL4\_UntypedDesc struct}
+    \label{tab:untyped_desc_struct}
     \begin{tabular}{lll}
       \toprule
       Field Type & Field Name & Description \\
       \midrule
       \texttt{seL4\_Word}  & \texttt{paddr}    & physical base address of the untyped object \\
+      \texttt{seL4\_Uint8} & \texttt{padding1} & manual padding so final struct is a multiple of the word size \\
+      \texttt{seL4\_Uint8} & \texttt{padding2} & manual padding so final struct is a multiple of the word size \\
       \texttt{seL4\_Uint8} & \texttt{sizeBits} & size ($2^n$ bytes) of the untyped object \\
       \texttt{seL4\_Uint8} & \texttt{isDevice} & is this untyped a device or not (see \autoref{sec:kernmemalloc}) \\
       \bottomrule
