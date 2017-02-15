@@ -95,6 +95,10 @@ menu "seL4 System"
         bool
         default n
 
+    config ARM_CORTEX_A57
+        bool
+        default n
+
     config PLAT_EXYNOS54XX
        bool
        default n
@@ -258,6 +262,13 @@ menu "seL4 System"
             help
                 Support for Raspberry PI 3 platform.
 
+        config PLAT_TX1
+            bool "Jetson (Tegra X1, ARMv8a, Cortex A57)"
+            depends on ARCH_AARCH64
+            select ARM_CORTEX_A57
+            select ARCH_ARM_V8A
+            help
+                Support for Tegra X1 platform
     endchoice
 
     config ARM_HYPERVISOR_SUPPORT

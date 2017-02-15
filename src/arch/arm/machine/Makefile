@@ -28,7 +28,7 @@ endif
 
 endif
 
-ifeq ($(CPU), $(filter $(CPU), cortex-a15 cortex-a7))
+ifeq ($(CPU), $(filter $(CPU), cortex-a15 cortex-a7 cortex-a57))
     # A15 uses the gic_pl400 which is an extention of pl390
     ARCH_C_SOURCES += machine/gic_pl390.c
 endif
