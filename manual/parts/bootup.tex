@@ -100,10 +100,10 @@ of slots in the initial thread's CNode, starting with CPTR \texttt{start} and wi
       \texttt{seL4\_SlotRegion}     & \texttt{sharedFrames}            & reserved \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImageFrames}         & frames containing the userland image \\
       \texttt{seL4\_SlotRegion}     & \texttt{userImagePaging}         & userland-image paging structure caps \\
-      \texttt{seL4\_SlotRegion}     & \texttt{untyped}                 & untyped-memory capabilities \\
       \texttt{seL4\_UntypedDesc[]}  & \texttt{untypedList}             & array of information about each untyped \\
       \texttt{seL4\_Uint8}          & \texttt{initThreadCNodeSizeBits} & CNode size ($2^n$ slots) \\
       \texttt{seL4\_Uint32}         & \texttt{initThreadDomain}        & domain of the initial thread (see \autoref{sec:domains}) \\
+      \texttt{seL4\_SlotRegion}     & \texttt{untyped}                 & untyped-memory capabilities \\
       \bottomrule
     \end{tabularx}
   \end{center}
