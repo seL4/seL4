@@ -20,7 +20,7 @@
 static inline void doRemoteStall(word_t cpu)
 {
     /* TODO */
-    #warning "doRemoteStall is not implemented for ARM yet"
+#warning "doRemoteStall is not implemented for ARM yet"
 }
 
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
