@@ -130,7 +130,7 @@ init_freemem(region_t ui_reg)
 
         /* Check any reserved mode specific reagion */
         region_t mode_res_reg = res_reg[1];
-        for(int m = 0; m < get_num_reserved_region(); m++) {
+        for (int m = 0; m < get_num_reserved_region(); m++) {
             mode_res_reg = get_reserved_region(i, mode_res_reg.end);
             cur_reg = insert_region_excluded(cur_reg, mode_res_reg);
         }
