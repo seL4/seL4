@@ -246,7 +246,9 @@ allocate_extra_bi_region(word_t extra_size)
     /* determine power of 2 size of this region. avoid calling clzl on 0 though */
     if (extra_size == 0) {
         /* return any valid address to correspond to the zero allocation */
-        return (region_t){0x1000, 0x1000};
+        return (region_t) {
+            0x1000, 0x1000
+        };
     }
     word_t size_bits = seL4_WordBits - 1 - clzl(ROUND_UP(extra_size, seL4_PageBits));
     pptr_t pptr = alloc_region(size_bits);
@@ -258,7 +260,9 @@ allocate_extra_bi_region(word_t extra_size)
     clearMemory((void*)pptr, size_bits);
     ndks_boot.bi_frame->extraLen = BIT(size_bits);
 
-    return (region_t){pptr, pptr + BIT(size_bits)};
+    return (region_t) {
+        pptr, pptr + BIT(size_bits)
+    };
 }
 
 BOOT_CODE pptr_t
