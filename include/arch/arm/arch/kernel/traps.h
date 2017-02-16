@@ -31,6 +31,8 @@ static inline void arch_c_exit_hook(void)
 {
 }
 
+void VISIBLE NORETURN restore_user_context(void);
+
 void c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 VISIBLE SECTION(".vectors.text");
 
