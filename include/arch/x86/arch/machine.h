@@ -306,10 +306,8 @@ static inline unsigned long getFaultAddr(void)
     return read_cr2();
 }
 
-/* handleInterrupt wrapper */
-static inline void Arch_handleInterrupt(irq_t irq)
+static inline void Arch_finaliseInterrupt(void)
 {
-    handleInterrupt(irq);
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
 }
 

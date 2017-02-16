@@ -43,7 +43,8 @@ handleInterruptEntry(void)
     irq = getActiveIRQ();
 
     if (irq != irqInvalid) {
-        Arch_handleInterrupt(irq);
+        handleInterrupt(irq);
+        Arch_finaliseInterrupt();
     } else {
 #ifdef CONFIG_IRQ_REPORTING
         userError("Spurious interrupt!");
@@ -401,7 +402,8 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                Arch_handleInterrupt(irq);
+                handleInterrupt(irq);
+                Arch_finaliseInterrupt();
             }
         }
         break;
@@ -411,7 +413,8 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                Arch_handleInterrupt(irq);
+                handleInterrupt(irq);
+                Arch_finaliseInterrupt();
             }
         }
         break;
@@ -421,7 +424,8 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                Arch_handleInterrupt(irq);
+                handleInterrupt(irq);
+                Arch_finaliseInterrupt();
             }
         }
         break;
