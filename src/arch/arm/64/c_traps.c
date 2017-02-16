@@ -21,7 +21,7 @@
 #include <benchmark/benchmark_utilisation.h>
 
 /** DONT_TRANSLATE */
-static inline void FORCE_INLINE NORETURN restore_user_context(void)
+void VISIBLE NORETURN restore_user_context(void)
 {
     c_exit_hook();
 

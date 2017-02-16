@@ -147,31 +147,6 @@ BEGIN_FUNC(_start)
     blx init_kernel
 
     /* Restore the initial thread */
-    ldr r7, =ksCurThread
-    ldr sp, [r7]
-#ifdef CONFIG_IPC_BUF_TPIDRURW
-    ldr r0, [sp, #(PT_TPIDRURW)]
-    mcr p15, 0, r0, c13, c0, 2
-#endif
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    /* ELR */
-    ldr r0, [sp, #60]
-    msr elr_hyp, r0
-    /* SPSR */
-    ldr r0, [sp, #64]
-    msr spsr, r0
-    /* Pop user regs */
-    pop {r0-r12}
-    /* SP_usr */
-    pop {lr}
-    msr sp_usr, lr
-    /* pop the user lr */
-    pop {lr}
-    /* return from exception */
-    eret
-#else
-    add sp, sp, #PT_LR_svc
-    ldmdb sp, {r0-lr}^
-    rfeia sp
-#endif
+    b restore_user_context
+
 END_FUNC(_start)
