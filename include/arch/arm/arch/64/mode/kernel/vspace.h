@@ -36,4 +36,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr);
 void deleteASIDPool(asid_t base, asid_pool_t* pool);
 void deleteASID(asid_t asid, vspace_root_t *vspace);
 
+/* Reserved memory ranges */
+static const region_t BOOT_RODATA mode_reserved_region[] = {};
+
 #endif /* __ARCH_MODE_KERNEL_VSPACE_H_ */

@@ -71,6 +71,23 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
     return residual_reg;
 }
 
+BOOT_CODE static region_t
+get_reserved_region(int i, pptr_t res_reg_end)
+{
+    region_t res_reg = mode_reserved_region[i];
+
+    /* Force ordering and exclusivity of reserved regions. */
+    assert(res_reg.start < res_reg.end);
+    assert(res_reg_end <= res_reg.start);
+    return res_reg;
+}
+
+BOOT_CODE static int
+get_num_reserved_region(void)
+{
+    return sizeof(mode_reserved_region) / sizeof(region_t);
+}
+
 BOOT_CODE static void
 init_freemem(region_t ui_reg)
 {
@@ -86,10 +103,6 @@ init_freemem(region_t ui_reg)
             .start = ui_reg.start,
             .end = ui_reg.end
         },
-        {
-            .start = (PD_ASID_SLOT + 0) << pageBitsForSize(ARMSection),
-            .end   = (PD_ASID_SLOT + 1) << pageBitsForSize(ARMSection)
-        }
     };
 
     for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
@@ -99,9 +112,7 @@ init_freemem(region_t ui_reg)
     /* Force ordering and exclusivity of reserved regions. */
     assert(res_reg[0].start < res_reg[0].end);
     assert(res_reg[1].start < res_reg[1].end);
-    assert(res_reg[2].start < res_reg[2].end);
     assert(res_reg[0].end  <= res_reg[1].start);
-    assert(res_reg[1].end  <= res_reg[2].start);
     for (i = 0; i < get_num_avail_p_regs(); i++) {
         cur_reg = paddr_to_pptr_reg(get_avail_p_reg(i));
         /* Adjust region if it exceeds the kernel window
@@ -116,7 +127,14 @@ init_freemem(region_t ui_reg)
 
         cur_reg = insert_region_excluded(cur_reg, res_reg[0]);
         cur_reg = insert_region_excluded(cur_reg, res_reg[1]);
-        cur_reg = insert_region_excluded(cur_reg, res_reg[2]);
+
+        /* Check any reserved mode specific reagion */
+        region_t mode_res_reg = res_reg[1];
+        for(int m = 0; m < get_num_reserved_region(); m++) {
+            mode_res_reg = get_reserved_region(i, mode_res_reg.end);
+            cur_reg = insert_region_excluded(cur_reg, mode_res_reg);
+        }
+
         if (cur_reg.start != cur_reg.end) {
             result = insert_region(cur_reg);
             assert(result);

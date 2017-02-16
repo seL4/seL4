@@ -66,4 +66,12 @@ void invalidateTLBByASID(asid_t asid);
 
 bool_t CONST isIOSpaceFrameCap(cap_t cap);
 
+/* Reserved memory ranges */
+static const region_t BOOT_RODATA mode_reserved_region[] = {
+    {
+        (PD_ASID_SLOT + 0) << ARMSectionBits,
+        (PD_ASID_SLOT + 1) << ARMSectionBits
+    }
+};
+
 #endif /* __ARCH_MODE_KERNEL_VSPACE_H */
