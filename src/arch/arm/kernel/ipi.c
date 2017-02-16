@@ -10,16 +10,19 @@
  * @TAG(D61_GPL)
  */
 
-#ifndef __ARCH_KERNEL_IPI_H
-#define __ARCH_KERNEL_IPI_H
-
 #include <config.h>
+#include <arch/smp/ipi.h>
+#include <smp/lock.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
-typedef enum {
-    /* TODO: Add remote calls for ARM */
-    IpiNumArchRemoteCall
-} IpiRemoteCall_t;
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
-#endif /* __ARCH_KERNEL_IPI_H */
+void Arch_handleIPI(irq_t irq)
+{
+#warning "Arch_handleIPI is not implemented"
+}
+
+void doMaskReschedule(word_t mask)
+{
+#warning "doMaskReschedule is not implemented"
+}
+#endif /* CONFIG_MAX_NUM_NODES */

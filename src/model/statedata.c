@@ -13,12 +13,13 @@
 #include <types.h>
 #include <plat/machine.h>
 #include <model/statedata.h>
+#include <model/smp.h>
 #include <object/structures.h>
 #include <object/tcb.h>
 #include <benchmark/benchmark_track.h>
 
 /* Collective cpu states, including both pre core architecture dependant and independent data */
-SMP_STATE_DEFINE(smpStatedata_t, ksSMP[CONFIG_MAX_NUM_NODES] ALIGN(CONFIG_CACHE_LN_SZ));
+SMP_STATE_DEFINE(smpStatedata_t, ksSMP[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE));
 
 /* Global count of how many cpus there are */
 word_t ksNumCPUs;

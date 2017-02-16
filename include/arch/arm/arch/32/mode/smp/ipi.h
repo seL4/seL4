@@ -10,16 +10,20 @@
  * @TAG(D61_GPL)
  */
 
-#ifndef __ARCH_KERNEL_IPI_H
-#define __ARCH_KERNEL_IPI_H
+#ifndef __MODE_KERNEL_IPI_H
+#define __MODE_KERNEL_IPI_H
 
 #include <config.h>
+#include <types.h>
+#include <plat/machine.h>
+#include <arch/kernel/ipi.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
-typedef enum {
-    /* TODO: Add remote calls for ARM */
-    IpiNumArchRemoteCall
-} IpiRemoteCall_t;
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+typedef enum {
+    /* TODO: placeholder for 32-bit ARM IPI types */
+    IpiNumModeRemoteCall
+} IpiModeRemoteCall_t;
+
+#endif /* CONFIG_MAX_NUM_NODES */
 #endif /* __ARCH_KERNEL_IPI_H */

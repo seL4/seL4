@@ -22,7 +22,7 @@ static inline void arch_c_entry_hook(void)
      * it since we will overwrite it anyway next time we
      * load the thread */
     if (!config_set(CONFIG_IPC_BUF_TPIDRURW)) {
-        setRegister(ksCurThread, TPIDRURW, readTPIDRURW());
+        setRegister(NODE_STATE(ksCurThread), TPIDRURW, readTPIDRURW());
     }
 #endif
 }

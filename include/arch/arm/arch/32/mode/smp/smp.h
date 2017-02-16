@@ -10,16 +10,21 @@
  * @TAG(D61_GPL)
  */
 
-#ifndef __ARCH_KERNEL_IPI_H
-#define __ARCH_KERNEL_IPI_H
+#ifndef __MODE_SMP_H_
+#define __MODE_SMP_H_
 
 #include <config.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
-typedef enum {
-    /* TODO: Add remote calls for ARM */
-    IpiNumArchRemoteCall
-} IpiRemoteCall_t;
+
+static inline CONST cpu_id_t
+getCurrentCPUIndex(void)
+{
+    /* TODO: currently only supports one core */
+#warning "getCurrentCPUIndex is not implemented yet"
+    return 0;
+}
 
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
-#endif /* __ARCH_KERNEL_IPI_H */
+
+#endif /* __MODE_SMP_H_ */

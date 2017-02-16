@@ -139,7 +139,7 @@ exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src,
                                        tcb_t *tcb_dest);
 
 #if CONFIG_MAX_NUM_NODES > 1
-void migrateTCB(tcb_t *thread);
+void Arch_migrateTCB(tcb_t *thread);
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD

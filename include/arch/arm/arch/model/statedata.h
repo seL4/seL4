@@ -13,7 +13,13 @@
 
 #include <config.h>
 
-#include <mode/model/statedata.h>
+#include <model/statedata.h>
+
+NODE_STATE_BEGIN(archNodeState)
+/* TODO: add ARM-dependent fields here */
+/* Bitmask of all cores should receive the reschedule IPI */
+NODE_STATE_DECLARE(word_t, ipiReschedulePending);
+NODE_STATE_END(archNodeState);
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 extern pdeS1_t armHSGlobalPGD[BIT(PGD_INDEX_BITS)] VISIBLE;

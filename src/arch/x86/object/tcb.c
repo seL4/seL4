@@ -84,3 +84,14 @@ exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t excaps)
     return performSetEPTRoot(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), dc_ret.cap, rootSlot);
 }
 #endif
+
+#if CONFIG_MAX_NUM_NODES > 1
+void
+Arch_migrateTCB(tcb_t *thread)
+{
+    /* check if thread own its current core FPU */
+    if (nativeThreadUsingFPU(thread)) {
+        switchFpuOwner(NULL, thread->tcbAffinity);
+    }
+}
+#endif /* CONFIG_MAX_NUM_NODES > 1 */

@@ -54,7 +54,7 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
     armv_contextSwitch_HWASID(cap_pd, hw_asid);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
-    benchmark_utilisation_switch(ksCurThread, thread);
+    benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
 
 #if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
@@ -63,7 +63,7 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
 #else
 #error "Unknown IPC buffer strategy"
 #endif
-    ksCurThread = thread;
+    NODE_STATE(ksCurThread) = thread;
     clearExMonitor_fp();
 }
 
@@ -129,11 +129,11 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     c_exit_hook();
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-    restore_user_debug_context(ksCurThread);
+    restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
 #ifndef CONFIG_ARCH_ARM_V6
-    writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
+    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
 #endif
 
     register word_t badge_reg asm("r0") = badge;

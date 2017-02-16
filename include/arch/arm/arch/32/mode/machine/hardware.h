@@ -41,6 +41,7 @@
 #error Unable to determine L1 cache line size
 #endif
 
+#define L1_CACHE_LINE_SIZE BIT(L1_CACHE_LINE_SIZE_BITS)
 
 /* Processor ID used to check if errata work arounds need to be performed */
 #define ARM1136_R0PX 0x4107b360

@@ -27,3 +27,12 @@ Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest)
 {
     return EXCEPTION_NONE;
 }
+
+#if CONFIG_MAX_NUM_NODES > 1
+void
+Arch_migrateTCB(tcb_t *thread)
+{
+    /* TODO */
+#warning "Arch_migrateTCB is not implemented for ARM"
+}
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
