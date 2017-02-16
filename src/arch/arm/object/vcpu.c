@@ -821,9 +821,6 @@ vcpu_finalise(vcpu_t *vcpu)
     if (vcpu->tcb) {
         dissociateVCPUTCB(vcpu, vcpu->tcb);
     }
-    if (vcpu == armHSCurVCPU) {
-        vcpu_invalidate_active();
-    }
 }
 
 void
@@ -844,6 +841,9 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.vcpu != vcpu || vcpu->tcb != tcb) {
         fail("TCB and VCPU not associated.");
+    }
+    if (vcpu == armHSCurVCPU) {
+        vcpu_invalidate_active();
     }
     tcb->tcbArch.vcpu = NULL;
     vcpu->tcb = NULL;
