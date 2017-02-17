@@ -67,7 +67,9 @@ static inline void arch_pause(void)
 }
 #endif
 
-#define Arch_handleInterrupt handleInterrupt
+static inline void Arch_finaliseInterrupt(void)
+{
+}
 
 #endif /* __ASSEMBLER__ */
 
