@@ -22,8 +22,6 @@
 #include <arch/linker.h>
 #include <util.h>
 
-#ifndef CONFIG_PAE_PAGING
-
 /* setup initial boot page directory */
 
 /* The boot pd is referenced by code that runs before paging, so
@@ -398,6 +396,4 @@ Arch_userStackTrace(tcb_t *tptr)
         }
     }
 }
-#endif
-
 #endif

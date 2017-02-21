@@ -89,14 +89,6 @@ config MAX_VPIDS
         should be sized as small as possible to save memory, but be at least
         the number of VCPUs that will be run for optimum performance
 
-config PAE_PAGING
-    bool "Use PAE Paging"
-    depends on ARCH_IA32
-    default n
-    help
-        PAE paging uses 4K/2M pages and has three levels of paging. If this
-        is not used the old 32-bit paging with 4K/4M pages will be used
-
 config HUGE_PAGE
     bool "Use 1GB Huge Page"
     depends on ARCH_X86_64

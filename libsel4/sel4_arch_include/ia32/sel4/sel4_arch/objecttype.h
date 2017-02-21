@@ -16,16 +16,9 @@
 #endif /* HAVE_AUTOCONF */
 
 typedef enum _mode_object {
-#ifdef CONFIG_PAE_PAGING
-    seL4_IA32_PDPTObject = seL4_NonArchObjectTypeCount,
-    seL4_ModeObjectTypeCount
-#else
     seL4_ModeObjectTypeCount = seL4_NonArchObjectTypeCount,
-#endif
 } seL4_ModeObjectType;
 
-#ifndef CONFIG_PAE_PAGING
 #define seL4_IA32_PDPTObject 0xffffffff
-#endif
 
 #endif

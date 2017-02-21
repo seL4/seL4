@@ -53,18 +53,6 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
         }
         return ret;
 
-    case cap_pdpt_cap:
-        if (cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
-            ret.cap = cap;
-            ret.status = EXCEPTION_NONE;
-        } else {
-            userError("Deriving a PDPT cap without an assigned ASID");
-            current_syscall_error.type = seL4_IllegalOperation;
-            ret.cap = cap_null_cap_new();
-            ret.status = EXCEPTION_SYSCALL_ERROR;
-        }
-        return ret;
-
     case cap_asid_control_cap:
     case cap_asid_pool_cap:
         ret.cap = cap;
@@ -329,13 +317,6 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         if (cap_get_capType(cap_b) == cap_page_directory_cap) {
             return cap_page_directory_cap_get_capPDBasePtr(cap_a) ==
                    cap_page_directory_cap_get_capPDBasePtr(cap_b);
-        }
-        break;
-
-    case cap_pdpt_cap:
-        if (cap_get_capType(cap_b) == cap_pdpt_cap) {
-            return cap_pdpt_cap_get_capPDPTBasePtr(cap_a) ==
-                   cap_pdpt_cap_get_capPDPTBasePtr(cap_b);
         }
         break;
 

@@ -23,16 +23,6 @@
 #define GDT_IPCBUF  7
 #define GDT_ENTRIES 8
 
-#ifdef CONFIG_PAE_PAGING
-#define PDPTE_SIZE_BITS 3
-#define PDPT_INDEX_BITS    2
-#define PDE_SIZE_BITS  3
-#define PD_INDEX_BITS      9
-#define PTE_SIZE_BITS 3
-#define PT_INDEX_BITS      9
-#define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPDPT
-typedef pdpte_t vspace_root_t;
-#else
 #define PDPTE_SIZE_BITS 0
 #define PDPT_INDEX_BITS 0
 #define PDE_SIZE_BITS  2
@@ -41,7 +31,6 @@ typedef pdpte_t vspace_root_t;
 #define PT_INDEX_BITS      10
 #define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPD
 typedef pde_t vspace_root_t;
-#endif
 
 #define GET_VSPACE_ROOT_INDEX(x) ((x) >> (seL4_PageBits + PT_INDEX_BITS))
 
@@ -128,9 +117,6 @@ cap_get_capMappedASID(cap_t cap)
     ctag = cap_get_capType(cap);
 
     switch (ctag) {
-    case cap_pdpt_cap:
-        return cap_pdpt_cap_get_capPDPTMappedASID(cap);
-
     case cap_page_directory_cap:
         return cap_page_directory_cap_get_capPDMappedASID(cap);
 

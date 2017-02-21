@@ -18,11 +18,7 @@
 #define PADDR_LOAD  0x00100000
 #define PPTR_BASE   0xe0000000
 
-#ifdef CONFIG_PAE_PAGING
-#define PPTR_USER_TOP (PPTR_BASE & (~MASK(seL4_HugePageBits)))
-#else
 #define PPTR_USER_TOP (PPTR_BASE & (~MASK(seL4_LargePageBits)))
-#endif
 
 /* Calculate virtual address space reserved for TLB Bitmap. ROOT_ENTRIES
  * will be zero in the case where the bitmap is unused */

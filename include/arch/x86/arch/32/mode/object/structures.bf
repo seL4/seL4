@@ -59,16 +59,6 @@ block page_directory_cap {
     field       capType             4
 }
 
-block pdpt_cap {
-    padding                         19
-    field       capPDPTIsMapped     1
-    field       capPDPTMappedASID   12
-
-    padding                         1
-    field_high  capPDPTBasePtr      27
-    field       capType             4
-}
-
 -- Cap to the table of 2^6 ASID pools
 block asid_control_cap {
     padding             32
@@ -201,7 +191,6 @@ tagged_union cap capType {
     tag frame_cap           1
     tag page_table_cap      3
     tag page_directory_cap  5
-    tag pdpt_cap            7
     tag asid_control_cap    9
     tag asid_pool_cap       11
     tag io_space_cap        13
@@ -413,9 +402,6 @@ block pdpte {
 }
 
 block pde_small {
-#ifdef CONFIG_PAE_PAGING
-    padding                         32
-#endif
     field_high  pt_base_address     20
     field       avl                 3
     padding                         1
@@ -430,9 +416,6 @@ block pde_small {
 }
 
 block pde_large {
-#ifdef CONFIG_PAE_PAGING
-    padding                         32
-#endif
     field_high  page_base_address   11
     padding                         8
     field       pat                 1
@@ -454,9 +437,6 @@ tagged_union pde page_size {
 }
 
 block pte {
-#ifdef CONFIG_PAE_PAGING
-    padding                         32
-#endif
     field_high  page_base_address   20
     field       avl                 3
     field       global              1

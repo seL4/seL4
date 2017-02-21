@@ -220,18 +220,6 @@ map_kernel_window(
     pte_t    pte;
     unsigned int UNUSED i;
 
-    if (config_set(CONFIG_PAE_PAGING)) {
-        for (idx = 0; idx < BIT(PDPT_INDEX_BITS); idx++) {
-            pdpte_ptr_new(&ia32KSGlobalPDPT[idx],
-                          pptr_to_paddr(&ia32KSGlobalPD[idx * BIT(PD_INDEX_BITS)]),
-                          0, /* avl*/
-                          0, /* cache_disabled */
-                          0, /* write_through */
-                          1  /* present */
-                         );
-        }
-    }
-
     /* Mapping of PPTR_BASE (virtual address) to kernel's PADDR_BASE
      * up to end of virtual address space except for the last large page.
      */
@@ -461,68 +449,18 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     seL4_SlotPos slot_pos_after;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
-    if (PDPT_INDEX_BITS == 0) {
-        cap_t pd_cap;
-        pptr_t pd_pptr;
-        /* just create single PD obj and cap */
-        pd_pptr = alloc_region(seL4_PageDirBits);
-        if (!pd_pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
-        copyGlobalMappings((vspace_root_t*)pd_pptr);
-        pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
-        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
-        vspace_cap = pd_cap;
-    } else {
-        cap_t pdpt_cap;
-        pptr_t pdpt_pptr;
-        unsigned int i;
-        /* create a PDPT obj and cap */
-        pdpt_pptr = alloc_region(seL4_PDPTBits);
-        if (!pdpt_pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PDPTE_PTR(pdpt_pptr), 1 << seL4_PDPTBits);
-        pdpt_cap = cap_pdpt_cap_new(
-                       true,       /* capPDPTISMapped */
-                       IT_ASID,    /* capPDPTMappedASID */
-                       pdpt_pptr        /* capPDPTBasePtr */
-                   );
-        /* create all PD objs and caps necessary to cover userland image. For simplicity
-         * to ensure we also cover the kernel window we create all PDs */
-        for (i = 0; i < BIT(PDPT_INDEX_BITS); i++) {
-            /* The compiler is under the mistaken belief here that this shift could be
-             * undefined. However, in the case that it would be undefined this code path
-             * is not reachable because PDPT_INDEX_BITS == 0 (see if statement at the top of
-             * this function), so to work around it we must both put in a redundant
-             * if statement AND place the shift in a variable. While the variable
-             * will get compiled away it prevents the compiler from evaluating
-             * the 1 << 32 as a constant when it shouldn't
-             * tl;dr gcc evaluates constants even if code is unreachable */
-            int shift = (PD_INDEX_BITS + PT_INDEX_BITS + PAGE_BITS);
-            if (shift != 32) {
-                vptr = i << shift;
-            } else {
-                return cap_null_cap_new();
-            }
-
-            pptr = alloc_region(seL4_PageDirBits);
-            if (!pptr) {
-                return cap_null_cap_new();
-            }
-            memzero(PDE_PTR(pptr), 1 << seL4_PageDirBits);
-            if (!provide_cap(root_cnode_cap,
-                             create_it_page_directory_cap(pdpt_cap, pptr, vptr, IT_ASID))
-               ) {
-                return cap_null_cap_new();
-            }
-        }
-        /* now that PDs exist we can copy the global mappings */
-        copyGlobalMappings((vspace_root_t*)pdpt_pptr);
-        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pdpt_cap);
-        vspace_cap = pdpt_cap;
+    cap_t pd_cap;
+    pptr_t pd_pptr;
+    /* just create single PD obj and cap */
+    pd_pptr = alloc_region(seL4_PageDirBits);
+    if (!pd_pptr) {
+        return cap_null_cap_new();
     }
+    memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
+    copyGlobalMappings((vspace_root_t*)pd_pptr);
+    pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
+    vspace_cap = pd_cap;
 
     /* create all PT objs and caps necessary to cover userland image */
 
@@ -698,11 +636,7 @@ void setVMRoot(tcb_t* tcb)
     vspace_root = getValidNativeRoot(threadRoot);
     if (!vspace_root) {
         SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
-        if (config_set(CONFIG_PAE_PAGING)) {
-            setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
-        } else {
-            setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
-        }
+        setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
         return;
     }
 
@@ -710,11 +644,7 @@ void setVMRoot(tcb_t* tcb)
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != vspace_root) {
         SMP_COND_STATEMENT(tlb_bitmap_unset(paddr_to_pptr(getCurrentPD()), getCurrentCPUIndex());)
-        if (config_set(CONFIG_PAE_PAGING)) {
-            setCurrentPD(pptr_to_paddr(ia32KSGlobalPDPT));
-        } else {
-            setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
-        }
+        setCurrentPD(pptr_to_paddr(ia32KSGlobalPD));
         return;
     }
 
@@ -745,10 +675,6 @@ decodeX86ModeMMUInvocation(
 )
 {
     switch (cap_get_capType(cap)) {
-    case cap_pdpt_cap:
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-
     case cap_page_directory_cap:
         return decodeIA32PageDirectoryInvocation(invLabel, length, cte, cap, excaps, buffer);
 
