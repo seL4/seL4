@@ -735,9 +735,9 @@ VGICMaintenance(void)
     if (flags & VGIC_MISR_EOI) {
         int irq_idx;
         if (eisr0) {
-            irq_idx = __builtin_ctz(eisr0);
+            irq_idx = ctzl(eisr0);
         } else if (eisr1) {
-            irq_idx = __builtin_ctz(eisr1) + 32;
+            irq_idx = ctzl(eisr1) + 32;
         } else {
             irq_idx = -1;
         }

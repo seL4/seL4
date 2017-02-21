@@ -90,6 +90,7 @@ long PURE str_to_long(const char* str);
 #endif /* !__ASSEMBLER__ */
 
 int __builtin_clzl (unsigned long x);
+int __builtin_ctzl (unsigned long x);
 
 /** MODIFIES: */
 /** DONT_TRANSLATE */
@@ -105,7 +106,20 @@ CONST clzl(unsigned long x)
     return __builtin_clzl(x);
 }
 
-int __builtin_ctzl (unsigned long x);
+/** MODIFIES: */
+/** DONT_TRANSLATE */
+/** FNSPEC ctzl_spec:
+  "\<forall>s. \<Gamma> \<turnstile>
+    {\<sigma>. s = \<sigma> \<and> x_' s \<noteq> 0 }
+      \<acute>ret__long :== PROC ctzl(\<acute>x)
+    \<lbrace> \<acute>ret__long = of_nat (word_ctz (x_' s)) \<rbrace>"
+*/
+static inline long
+CONST ctzl(unsigned long x)
+{
+    return __builtin_ctzl(x);
+}
+
 #define CTZL(x) __builtin_ctzl(x)
 
 int __builtin_popcountl (unsigned long x);

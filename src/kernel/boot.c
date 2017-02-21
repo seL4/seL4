@@ -507,7 +507,7 @@ provide_untyped_cap(
 /** DONT_TRANSLATE */
 BOOT_CODE static word_t boot_ctzl (word_t x)
 {
-    return CTZL (x);
+    return ctzl(x);
 }
 
 BOOT_CODE bool_t
