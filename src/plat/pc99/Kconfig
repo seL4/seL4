@@ -251,8 +251,8 @@ choice
 endchoice
 
 menu "Multiboot options"
+depends on PLAT_PC99
     choice
-        depends on PLAT_PC99
         prompt "Multiboot graphics mode"
         help
             The type of graphics mode to request from the boot loader.
