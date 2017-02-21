@@ -7,7 +7,7 @@
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(D61_GPL)
+ * @TAG(DATA61_GPL)
  */
 
 #ifndef __LIBSEL4_SEL4_ARCH_SEL4_DEPRECATED_H

@@ -7,7 +7,7 @@
  * the BSD 2-Clause license. Note that NO WARRANTY is provided.
  * See "LICENSE_BSD2.txt" for details.
  *
- * @TAG(D61_BSD)
+ * @TAG(DATA61_BSD)
  */
 #pragma once
 
