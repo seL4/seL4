@@ -159,6 +159,9 @@ cap_get_modeCapSizeBits(cap_t cap)
     case cap_pml4_cap:
         return seL4_PML4Bits;
 
+    case cap_pdpt_cap:
+        return seL4_PDPTBits;
+
     default:
         fail("Invalid mode cap type");
     }
@@ -176,6 +179,9 @@ cap_get_modeCapIsPhysical(cap_t cap)
     case cap_pml4_cap:
         return true;
 
+    case cap_pdpt_cap:
+        return true;
+
     default:
         fail("Invalid mode cap type");
     }
@@ -191,6 +197,9 @@ cap_get_modeCapPtr(cap_t cap)
     switch (ctag) {
     case cap_pml4_cap:
         return PML4_PTR(cap_pml4_cap_get_capPML4BasePtr(cap));
+
+    case cap_pdpt_cap:
+        return PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
 
     default:
         fail("Invalid mode cap type");
