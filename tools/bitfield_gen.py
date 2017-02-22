@@ -24,6 +24,7 @@ import itertools
 import tempfile
 
 from six.moves import range
+from functools import reduce
 
 import lex
 from ply import yacc

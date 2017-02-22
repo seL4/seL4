@@ -46,6 +46,7 @@ import itertools
 import xml.dom.minidom
 from argparse import ArgumentParser
 import sys
+from functools import reduce
 
 # Number of bits in a standard word
 WORD_SIZE_BITS_ARCH = {
