@@ -404,7 +404,7 @@ def generate_marshal_expressions(params, num_mrs, structs, wordsize):
         be bitwise-or'ed into it.
         """
 
-        target_word = first_bit / wordsize
+        target_word = first_bit // wordsize
         target_offset = first_bit % wordsize
 
         # double word type
@@ -432,7 +432,7 @@ def generate_marshal_expressions(params, num_mrs, structs, wordsize):
 
         # Multiword array
         assert target_offset == 0
-        num_words = num_bits / wordsize
+        num_words = num_bits // wordsize
         for i in range(num_words):
             expr = param.type.c_expression(param.name, i, struct_members(param.type, structs))
             word_array[target_word + i].append(expr)
@@ -464,13 +464,13 @@ def generate_unmarshal_expressions(params, wordsize):
         """
         Unmarshal a single parameter.
         """
-        first_word = first_bit / wordsize
+        first_word = first_bit // wordsize
         bit_offset = first_bit % wordsize
 
         # Multiword type?
         if num_bits > wordsize:
             result = []
-            for x in range(num_bits / wordsize):
+            for x in range(num_bits // wordsize):
                 result.append("%%(w%d)s" % (x + first_word))
             return result
 
