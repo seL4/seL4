@@ -1095,7 +1095,7 @@ setVMRoot(tcb_t *tcb)
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
             !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        setCurrentPD(addrFromPPtr(0));
+        setCurrentPD(addrFromPPtr(armUSGlobalPD));
 #else
         setCurrentPD(addrFromPPtr(armKSGlobalPD));
 #endif
@@ -1107,7 +1107,7 @@ setVMRoot(tcb_t *tcb)
     find_ret = findPDForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.pd != pd)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        setCurrentPD(addrFromPPtr(0));
+        setCurrentPD(addrFromPPtr(armUSGlobalPD));
 #else
         setCurrentPD(addrFromPPtr(armKSGlobalPD));
 #endif
