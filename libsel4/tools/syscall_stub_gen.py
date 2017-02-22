@@ -985,13 +985,13 @@ def main():
                     if line.startswith('CONFIG_WORD_SIZE'):
                         wordsize = int(line.split('=')[1].strip())
         except IndexError:
-            print "Invalid word size in configuration file."
+            print("Invalid word size in configuration file.")
             sys.exit(2)
     else:
         wordsize = int(args.wsize)
 
     if wordsize is -1:
-        print "Invalid word size."
+        print("Invalid word size.")
         sys.exit(2)
 
     # Generate the stubs.
