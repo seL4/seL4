@@ -78,6 +78,20 @@ BEGIN_FUNC(_start)
     ldr    x4, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
     mov    sp, x4
 
+#if CONFIG_MAX_NUM_NODES > 1
+    /*
+     * Read MPIDR in x6
+     * See ARMv8/ARMv8-A Referce Manual, Section G6.2.103
+     * for more details about MPIDR register.
+     */
+    mrs x6, mpidr_el1
+    and x6, x6, #0xff
+    /* Set the sp for each core assuming linear indices */
+    ldr     x5, =BIT(CONFIG_KERNEL_STACK_BITS)
+    mul     x5, x6
+    add     sp, sp, x5
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+
     /* Attempt to workaround any known ARM errata. */
     stp     x0, x1, [sp, #-16]!
     stp     x2, x3, [sp, #-16]!

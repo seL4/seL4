@@ -15,16 +15,30 @@
 
 #include <config.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
+
+/* Get current stack pointer */
+static inline word_t
+getCurSP(void)
+{
+    word_t stack_address;
+    asm ("mov %[stack_address], %[currStackAddress]" : [stack_address] "=r"(stack_address) : [currStackAddress] "r" (&stack_address):);
+    return stack_address;
+}
 
 static inline CONST cpu_id_t
 getCurrentCPUIndex(void)
 {
-    /* TODO: currently only supports one core */
-#warning "getCurrentCPUIndex is not implemented yet"
-    return 0;
-}
+#if CONFIG_MAX_NUM_NODES > 1
+    cpu_id_t cpu_id;
+    word_t sp = getCurSP();
 
+    sp -= (word_t) kernel_stack_alloc;
+    cpu_id = sp >> CONFIG_KERNEL_STACK_BITS;
+    return cpu_id;
+#else
+    return 0;
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
+}
 
 #endif /* __MODE_SMP_H_ */

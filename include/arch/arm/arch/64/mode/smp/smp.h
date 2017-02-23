@@ -15,16 +15,17 @@
 
 #include <config.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
 
 static inline CONST cpu_id_t
 getCurrentCPUIndex(void)
 {
-    /* TODO: currently only supports one core */
-#warning "getCurrentCPUIndex is not implemented yet"
+#if CONFIG_MAX_NUM_NODES > 1
+    cpu_id_t cpu_id;
+    asm volatile ("mov %[cpu_id], mpidr_el1" : [cpu_id] "=r" (cpu_id) ::);
+    return cpu_id;
+#else
     return 0;
+#endif
 }
-
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
 #endif /* __MODE_SMP_H_ */

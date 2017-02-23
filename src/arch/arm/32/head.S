@@ -125,10 +125,24 @@ BEGIN_FUNC(_start)
 #endif
 
      /* Load kernel stack pointer
-      * TODO: On ARM SMP, kernel_stack_alloc should be indexed by CPU ID
+      * On ARM SMP, kernel_stack_alloc is indexed by CPU ID
       * to get different stacks for each core
       */
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
+
+#if CONFIG_MAX_NUM_NODES > 1
+    /*
+     * Read MPIDR in r4
+     * See ARM Referce Manual (ARMv7-A and ARMv7-R edition), Section B4.1.106
+     * for more details about MPIDR register.
+     */
+    mrc p15, 0, r4, c0, c0, 5
+    and r4, r4, #0xff
+    /* Set the sp for each core assuming linear indices */
+    ldr     r5, =BIT(CONFIG_KERNEL_STACK_BITS)
+    mul     r5, r4
+    add     sp, sp, r5
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
     /* Attempt to workaround any known ARM errata. */
     push {r0-r3}
