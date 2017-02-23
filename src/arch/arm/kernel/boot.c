@@ -221,7 +221,7 @@ init_cpu(void)
      * On ARM SMP, the array index here is the CPU ID
      */
 #ifndef CONFIG_ARCH_ARM_V6
-    word_t stack_top = ((word_t) kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(CONFIG_KERNEL_STACK_BITS);
+    word_t stack_top = ((word_t) kernel_stack_alloc[SMP_TERNARY(getCurrentCPUIndex(), 0)]) + BIT(CONFIG_KERNEL_STACK_BITS);
     setKernelStack(stack_top);
 #endif /* CONFIG_ARCH_ARM_V6 */
 
