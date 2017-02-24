@@ -147,9 +147,9 @@ static inline void FORCE_INLINE lazyFPURestore(tcb_t *thread)
          * someone else trying to use it, we assume it is no longer
          * in use and switch out its state
          */
-        if (unlikely(ARCH_NODE_STATE(x86KSFPURestoresSinceSwitch) > CONFIG_FPU_MAX_RESTORES_SINCE_SWITCH)) {
+        if (unlikely(NODE_STATE(ksFPURestoresSinceSwitch) > CONFIG_FPU_MAX_RESTORES_SINCE_SWITCH)) {
             switchLocalFpuOwner(NULL);
-            ARCH_NODE_STATE(x86KSFPURestoresSinceSwitch) = 0;
+            NODE_STATE(ksFPURestoresSinceSwitch) = 0;
         } else {
             if (likely(nativeThreadUsingFPU(thread))) {
                 /* We are using the FPU, make sure it is enabled */
@@ -158,7 +158,7 @@ static inline void FORCE_INLINE lazyFPURestore(tcb_t *thread)
                 /* Someone is using the FPU and it might be enabled */
                 disableFpu();
             }
-            ARCH_NODE_STATE(x86KSFPURestoresSinceSwitch)++;
+            NODE_STATE(ksFPURestoresSinceSwitch)++;
         }
     } else {
         /* No-one (including us) is using the FPU, so we assume it

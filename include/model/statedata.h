@@ -64,6 +64,9 @@ NODE_STATE_DECLARE(word_t, ksReadyQueuesL2Bitmap[CONFIG_NUM_DOMAINS][(CONFIG_NUM
 NODE_STATE_DECLARE(tcb_t, *ksCurThread);
 NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
+
+/* Number of times we have restored a user context with an active FPU without switching it */
+NODE_STATE_DECLARE(word_t, ksFPURestoresSinceSwitch);
 NODE_STATE_END(nodeState);
 
 extern word_t ksNumCPUs;

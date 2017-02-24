@@ -41,6 +41,8 @@ UP_STATE_DEFINE(tcb_t *, ksIdleThread);
  * tcb pointers */
 UP_STATE_DEFINE(tcb_t *, ksSchedulerAction);
 
+UP_STATE_DEFINE(word_t, ksFPURestoresSinceSwitch);
+
 /* Units of work we have completed since the last time we checked for
  * pending interrupts */
 word_t ksWorkUnitsCompleted;

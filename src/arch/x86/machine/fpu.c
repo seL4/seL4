@@ -36,7 +36,7 @@ switchLocalFpuOwner(user_fpu_state_t *new_owner)
         saveFpuState(ARCH_NODE_STATE(x86KSActiveFPUState));
     }
     if (new_owner) {
-        ARCH_NODE_STATE(x86KSFPURestoresSinceSwitch) = 0;
+        NODE_STATE(ksFPURestoresSinceSwitch) = 0;
         loadFpuState(new_owner);
     } else {
         disableFpu();
