@@ -41,6 +41,14 @@
 #define ESR_EL1_EC_IABT_EL0     0x20   // Instruction abort from EL0 to EL1
 #define ESR_EL1_EC_IABT_EL1     0x21   // Instruction abort from EL1 to EL1
 #define ESR_EL1_EC_SVC64        0x15   // SVC instruction execution in AArch64 state
+#define ESR_EL1_EC_ENFP         0x7    // Access to Advanced SIMD or floating-point registers
+
+/* ID_AA64PFR0_EL1 register */
+#define ID_AA64PFR0_EL1_FP      16     // HWCap for Floating Point
+#define ID_AA64PFR0_EL1_ASIMD   20     // HWCap for Advanced SIMD
+
+/* CPACR_EL1 register */
+#define CPACR_EL1_FPEN          20     // FP regiters access
 
 /*
  * We cannot allow async aborts in the verified kernel, but they are useful
@@ -170,6 +178,14 @@ extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
 
+#ifdef CONFIG_HAVE_FPU
+typedef struct user_fpu_state {
+    __uint128_t vregs[32];
+    uint32_t fpsr;
+    uint32_t fpcr;
+} user_fpu_state_t;
+#endif /* CONFIG_HAVE_FPU */
+
 /* ARM user-code context: size = 72 bytes
  * Or with hardware debug support built in:
  *      72 + sizeof(word_t) * (NUM_BPS + NUM_WPS) * 2
@@ -180,6 +196,9 @@ extern const register_t gpRegisters[];
  */
 struct user_context {
     word_t registers[n_contextRegisters];
+#ifdef CONFIG_HAVE_FPU
+    user_fpu_state_t fpuState;
+#endif /* CONFIG_HAVE_FPU */
 };
 typedef struct user_context user_context_t;
 

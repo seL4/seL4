@@ -11,7 +11,8 @@
 #
 
 ARCH_C_SOURCES += 64/machine/hardware.c \
-                  64/machine/registerset.c
+                  64/machine/registerset.c \
+                  64/machine/fpu.c
 
 ifdef DEBUG
     ARCH_C_SOURCES += 64/machine/capdl.c

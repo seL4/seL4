@@ -16,6 +16,7 @@
 #include <arch/kernel/traps.h>
 #include <api/syscall.h>
 #include <arch/linker.h>
+#include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
@@ -24,6 +25,10 @@
 void VISIBLE NORETURN restore_user_context(void)
 {
     c_exit_hook();
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(ksCurThread);
+#endif /* CONFIG_HAVE_FPU */
 
     writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
 

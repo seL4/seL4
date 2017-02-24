@@ -100,7 +100,7 @@ el1_da:
     mrs     x0, elr_el1
     lsp_i   x19
     bl      kernelDataAbort
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
     b       halt
 
 el1_ia:
@@ -108,7 +108,7 @@ el1_ia:
     mrs     x0, elr_el1
     lsp_i   x19
     bl      kernelPrefetchAbort
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
     b       halt
 
 el1_inv:
@@ -138,6 +138,8 @@ BEGIN_FUNC(el0_sync)
     b.eq    el0_ia
     cmp     x24, #ESR_EL1_EC_SVC64
     b.eq    el0_svc
+    cmp     x24, #ESR_EL1_EC_ENFP
+    b.eq    el0_enfp
     b       el0_user
 
 el0_da:
@@ -162,6 +164,12 @@ el0_svc:
     lsp_i   x19
     mov     x2, x7
     b       c_handle_syscall
+
+el0_enfp:
+#ifdef CONFIG_HAVE_FPU
+    lsp_i   x19
+    b       c_handle_enfp
+#endif /* CONFIG_HAVE_FPU */
 
 el0_user:
     mrs     x20, elr_el1

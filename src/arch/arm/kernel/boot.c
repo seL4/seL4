@@ -24,6 +24,7 @@
 #include <plat/machine/hardware.h>
 #include <machine.h>
 #include <machine/timer.h>
+#include <arch/machine/fpu.h>
 
 /* pointer to the end of boot code/data in kernel image */
 /* need a fake array to get the pointer from the linker script */
@@ -228,7 +229,19 @@ init_cpu(void)
 #ifdef CONFIG_ARCH_AARCH64
     /* initialise CPU's exception vector table */
     setVtable((pptr_t)arm_vector_table);
-#endif
+#endif /* CONFIG_ARCH_AARCH64 */
+
+#ifdef CONFIG_HAVE_FPU
+    if (fpsimd_HWCapTest()) {
+        if (!fpsimd_init()) {
+            return false;
+        }
+    } else {
+        printf("Platform claims to have FP hardware, but does not!");
+        return false;
+    }
+#endif /* CONFIG_HAVE_FPU */
+
     return true;
 }
 
@@ -426,6 +439,10 @@ try_init_kernel(
 #ifdef CONFIG_ENABLE_BENCHMARKS
     armv_init_ccnt();
 #endif /* CONFIG_ENABLE_BENCHMARKS */
+
+#ifdef CONFIG_HAVE_FPU
+    NODE_STATE(ksActiveFPUState) = NULL;
+#endif /* CONFIG_HAVE_FPU */
 
     /* Export selected CPU features for access by PL0 */
     armv_init_user_access();

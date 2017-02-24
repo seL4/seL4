@@ -20,6 +20,7 @@
 #include <api/syscall.h>
 #include <armv/context_switch.h>
 #include <mode/model/statedata.h>
+#include <machine/fpu.h>
 
 /* When building the fastpath the assembler in traps.S makes these
  * assumptions. Because compile_asserts are hard to do in assembler,
@@ -97,6 +98,10 @@ static inline void NORETURN
 fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     c_exit_hook();
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(ksCurThread);
+#endif /* CONFIG_HAVE_FPU */
 
     writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
 

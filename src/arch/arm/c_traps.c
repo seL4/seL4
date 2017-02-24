@@ -13,6 +13,7 @@
 #include <arch/object/vcpu.h>
 #include <arch/machine/registerset.h>
 #include <api/syscall.h>
+#include <machine/fpu.h>
 
 #include <benchmark/benchmark_track_types.h>
 #include <benchmark/benchmark_track.h>
@@ -33,6 +34,18 @@ c_handle_undefined_instruction(void)
     restore_user_context();
     UNREACHABLE();
 }
+
+#ifdef CONFIG_HAVE_FPU
+void VISIBLE NORETURN
+c_handle_enfp(void)
+{
+    c_entry_hook();
+
+    handleFPUFault();
+    restore_user_context();
+    UNREACHABLE();
+}
+#endif /* CONFIG_HAVE_FPU */
 
 static inline void NORETURN
 c_handle_vm_fault(vm_fault_type_t type)

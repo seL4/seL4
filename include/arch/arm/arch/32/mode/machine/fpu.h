@@ -10,15 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_MACHINE_FPU_H
-#define __ARCH_MACHINE_FPU_H
+#ifndef __MODE_MACHINE_FPU_H
+#define __MODE_MACHINE_FPU_H
 
-#include <mode/machine/fpu.h>
 
-#ifdef CONFIG_HAVE_FPU
-
-bool_t fpsimd_init(void);
-bool_t fpsimd_HWCapTest(void);
-
-#endif /* CONFIG_HAVE_FPU */
-#endif /* __ARCH_MACHINE_FPU_H */
+#endif /* __MODE_MACHINE_FPU_H */
