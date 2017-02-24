@@ -351,7 +351,7 @@ init_sys_state(
     }
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
-    ARCH_NODE_STATE(x86KSActiveFPUState) = NULL;
+    NODE_STATE(ksActiveFPUState) = NULL;
 
     ndks_boot.bi_frame->archInfo = tsc_init();
 

@@ -65,6 +65,8 @@ NODE_STATE_DECLARE(tcb_t, *ksCurThread);
 NODE_STATE_DECLARE(tcb_t, *ksIdleThread);
 NODE_STATE_DECLARE(tcb_t, *ksSchedulerAction);
 
+/* Current state installed in the FPU, or NULL if the FPU is currently invalid */
+NODE_STATE_DECLARE(user_fpu_state_t *, ksActiveFPUState);
 /* Number of times we have restored a user context with an active FPU without switching it */
 NODE_STATE_DECLARE(word_t, ksFPURestoresSinceSwitch);
 NODE_STATE_END(nodeState);

@@ -32,8 +32,8 @@ void
 switchLocalFpuOwner(user_fpu_state_t *new_owner)
 {
     enableFpu();
-    if (ARCH_NODE_STATE(x86KSActiveFPUState)) {
-        saveFpuState(ARCH_NODE_STATE(x86KSActiveFPUState));
+    if (NODE_STATE(ksActiveFPUState)) {
+        saveFpuState(NODE_STATE(ksActiveFPUState));
     }
     if (new_owner) {
         NODE_STATE(ksFPURestoresSinceSwitch) = 0;
@@ -41,7 +41,7 @@ switchLocalFpuOwner(user_fpu_state_t *new_owner)
     } else {
         disableFpu();
     }
-    ARCH_NODE_STATE(x86KSActiveFPUState) = new_owner;
+    NODE_STATE(ksActiveFPUState) = new_owner;
 }
 
 void
@@ -89,7 +89,7 @@ Arch_fpuThreadDelete(tcb_t *thread)
 {
     /*
      * If the thread being deleted currently owns the FPU, switch away from it
-     * so that 'x86KSActiveFPUState' doesn't point to invalid memory.
+     * so that 'ksActiveFPUState' doesn't point to invalid memory.
      */
     if (nativeThreadUsingFPU(thread)) {
         switchFpuOwner(NULL, SMP_TERNARY(thread->tcbAffinity, 0));

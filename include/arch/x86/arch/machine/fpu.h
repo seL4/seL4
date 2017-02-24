@@ -130,19 +130,19 @@ static inline void disableFpu(void)
  * active fpu state */
 static inline bool_t nativeThreadUsingFPU(tcb_t *thread)
 {
-    return &thread->tcbArch.tcbContext.fpuState == ARCH_NODE_STATE_ON_CORE(x86KSActiveFPUState, thread->tcbAffinity);
+    return &thread->tcbArch.tcbContext.fpuState == NODE_STATE_ON_CORE(ksActiveFPUState, thread->tcbAffinity);
 }
 
 #ifdef CONFIG_VTX
 static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
 {
-    return thread->tcbArch.vcpu && &thread->tcbArch.vcpu->fpuState == ARCH_NODE_STATE(x86KSActiveFPUState);
+    return thread->tcbArch.vcpu && &thread->tcbArch.vcpu->fpuState == NODE_STATE(ksActiveFPUState);
 }
 #endif
 
 static inline void FORCE_INLINE lazyFPURestore(tcb_t *thread)
 {
-    if (unlikely(ARCH_NODE_STATE(x86KSActiveFPUState))) {
+    if (unlikely(NODE_STATE(ksActiveFPUState))) {
         /* If we have enabled/disabled the FPU too many times without
          * someone else trying to use it, we assume it is no longer
          * in use and switch out its state

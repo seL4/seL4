@@ -43,8 +43,6 @@ NODE_STATE_DECLARE(tss_io_t, x86KStss);
 NODE_STATE_DECLARE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
 /* Interrupt Descriptor Table (IDT) */
 NODE_STATE_DECLARE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
-/* Current state installed in the FPU, or NULL if the FPU is currently invalid */
-NODE_STATE_DECLARE(user_fpu_state_t *, x86KSActiveFPUState);
 /* Bitmask of all cores should receive the reschedule IPI */
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
 
