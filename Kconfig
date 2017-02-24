@@ -393,6 +393,17 @@ menu "seL4 System Parameters"
             be taken as there is no guard below the stack so setting this too
             small will cause random memory corruption
 
+config FPU_MAX_RESTORES_SINCE_SWITCH
+    int "Max thread restores without switching FPU"
+    depends on ARCH_X86
+    default 64
+    help
+        This option is a heuristic to attempt to detect when the FPU is no
+        longer in use, allowing the kernel to save the FPU state out so that
+        the FPU does not have to be enabled/disabled every thread swith. Every
+        time we restore a thread and there is active FPU state, we increment
+        this setting and if it exceeds this threshold we switch to the NULL
+        state.
 endmenu
 
 menu "Build Options"
