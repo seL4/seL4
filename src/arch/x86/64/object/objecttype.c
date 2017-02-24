@@ -17,7 +17,7 @@
 #include <object/structures.h>
 #include <arch/machine.h>
 #include <arch/model/statedata.h>
-#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 #include <arch/object/objecttype.h>
 #include <arch/object/ioport.h>
 #include <arch/kernel/ept.h>

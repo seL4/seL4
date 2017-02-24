@@ -11,7 +11,7 @@
 #include <config.h>
 #include <arch/api/constants.h>
 #include <arch/machine/registerset.h>
-#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 #include <arch/object/structures.h>
 #include <machine/debug.h>
 

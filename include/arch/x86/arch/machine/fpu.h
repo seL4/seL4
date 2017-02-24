@@ -8,14 +8,15 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __ARCH_KERNEL_FPU_H
-#define __ARCH_KERNEL_FPU_H
+#ifndef __ARCH_MACHINE_FPU_H
+#define __ARCH_MACHINE_FPU_H
 
 #include <config.h>
 #include <types.h>
 #include <arch/object/vcpu.h>
-#include <arch/machine.h>
-#include <api/failures.h>
+#include <object/structures.h>
+#include <model/statedata.h>
+#include <arch/machine/cpu_registers.h>
 
 #define MXCSR_INIT_VALUE               0x1f80
 #define XCOMP_BV_COMPACTED_FORMAT      (1ull << 63)
@@ -49,17 +50,6 @@ bool_t Arch_initFpu(void);
 
 /* Initialise the FPU state of the given user context. */
 void Arch_initFpuContext(user_context_t *context);
-
-/* Perform any actions required for the deletion of the given thread. */
-void Arch_fpuThreadDelete(tcb_t *thread);
-
-/* Handle an FPU exception. */
-exception_t handleUnimplementedDevice(void);
-
-void switchLocalFpuOwner(user_fpu_state_t *new_owner);
-
-/* Switch the current owner of the FPU state on the core specified by 'cpu'. */
-void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu);
 
 static inline uint32_t xsave_features_high(void)
 {
@@ -126,44 +116,10 @@ static inline void disableFpu(void)
     write_cr0(read_cr0() | CR0_TASK_SWITCH);
 }
 
-/* Returns whether or not the passed thread is using the current
- * active fpu state */
-static inline bool_t nativeThreadUsingFPU(tcb_t *thread)
-{
-    return &thread->tcbArch.tcbContext.fpuState == NODE_STATE_ON_CORE(ksActiveFPUState, thread->tcbAffinity);
-}
-
 #ifdef CONFIG_VTX
 static inline bool_t vcpuThreadUsingFPU(tcb_t *thread)
 {
     return thread->tcbArch.vcpu && &thread->tcbArch.vcpu->fpuState == NODE_STATE(ksActiveFPUState);
 }
-#endif
-
-static inline void FORCE_INLINE lazyFPURestore(tcb_t *thread)
-{
-    if (unlikely(NODE_STATE(ksActiveFPUState))) {
-        /* If we have enabled/disabled the FPU too many times without
-         * someone else trying to use it, we assume it is no longer
-         * in use and switch out its state
-         */
-        if (unlikely(NODE_STATE(ksFPURestoresSinceSwitch) > CONFIG_FPU_MAX_RESTORES_SINCE_SWITCH)) {
-            switchLocalFpuOwner(NULL);
-            NODE_STATE(ksFPURestoresSinceSwitch) = 0;
-        } else {
-            if (likely(nativeThreadUsingFPU(thread))) {
-                /* We are using the FPU, make sure it is enabled */
-                enableFpu();
-            } else {
-                /* Someone is using the FPU and it might be enabled */
-                disableFpu();
-            }
-            NODE_STATE(ksFPURestoresSinceSwitch)++;
-        }
-    } else {
-        /* No-one (including us) is using the FPU, so we assume it
-         * is currently disabled */
-    }
-}
-
-#endif
+#endif /* CONFIG_VTX */
+#endif /* __ARCH_MACHINE_FPU_H */

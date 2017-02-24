@@ -11,7 +11,7 @@
  */
 
 #include <arch/machine/registerset.h>
-#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 #include <arch/object/structures.h>
 
 const register_t msgRegisters[] = {

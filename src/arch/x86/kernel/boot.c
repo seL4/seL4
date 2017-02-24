@@ -19,7 +19,7 @@
 #include <arch/kernel/boot.h>
 #include <arch/kernel/boot_sys.h>
 #include <arch/kernel/vspace.h>
-#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 #include <arch/machine/timer.h>
 #include <arch/object/ioport.h>
 #include <arch/linker.h>

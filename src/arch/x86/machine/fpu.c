@@ -8,13 +8,11 @@
  * @TAG(GD_GPL)
  */
 
-#include <api/failures.h>
-#include <api/syscall.h>
 #include <model/statedata.h>
 #include <arch/machine/fpu.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/object/structures.h>
-#include <arch/linker.h>
+#include <arch/machine/fpu.h>
 
 /*
  * Setup the FPU register state for a new thread.
@@ -23,77 +21,6 @@ void
 Arch_initFpuContext(user_context_t *context)
 {
     context->fpuState = x86KSnullFpuState;
-}
-
-/*
- * Switch the owner of the FPU to the given thread on local core.
- */
-void
-switchLocalFpuOwner(user_fpu_state_t *new_owner)
-{
-    enableFpu();
-    if (NODE_STATE(ksActiveFPUState)) {
-        saveFpuState(NODE_STATE(ksActiveFPUState));
-    }
-    if (new_owner) {
-        NODE_STATE(ksFPURestoresSinceSwitch) = 0;
-        loadFpuState(new_owner);
-    } else {
-        disableFpu();
-    }
-    NODE_STATE(ksActiveFPUState) = new_owner;
-}
-
-void
-switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
-{
-#if CONFIG_MAX_NUM_NODES > 1
-    if (cpu != getCurrentCPUIndex()) {
-        doRemoteswitchFpuOwner(new_owner, cpu);
-    } else
-#endif /* CONFIG_MAX_NUM_NODES */
-    {
-        switchLocalFpuOwner(new_owner);
-    }
-}
-
-/*
- * Handle a FPU fault.
- *
- * This CPU exception is thrown when userspace attempts to use the FPU while
- * it is disabled. We need to save the current state of the FPU, and hand
- * it over.
- */
-exception_t
-handleUnimplementedDevice(void)
-{
-    /*
-     * If we have already given the FPU to the user, we should not reach here.
-     *
-     * This should only be able to occur on CPUs without an FPU at all, which
-     * we presumably are happy to assume will not be running seL4.
-     */
-    assert(!nativeThreadUsingFPU(NODE_STATE(ksCurThread)));
-
-    /* Otherwise, lazily switch over the FPU. */
-    switchLocalFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.fpuState);
-
-    return EXCEPTION_NONE;
-}
-
-/*
- * Prepare for the deletion of the given thread.
- */
-void
-Arch_fpuThreadDelete(tcb_t *thread)
-{
-    /*
-     * If the thread being deleted currently owns the FPU, switch away from it
-     * so that 'ksActiveFPUState' doesn't point to invalid memory.
-     */
-    if (nativeThreadUsingFPU(thread)) {
-        switchFpuOwner(NULL, SMP_TERNARY(thread->tcbAffinity, 0));
-    }
 }
 
 /*

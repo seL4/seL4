@@ -41,10 +41,12 @@ UP_STATE_DEFINE(tcb_t *, ksIdleThread);
  * tcb pointers */
 UP_STATE_DEFINE(tcb_t *, ksSchedulerAction);
 
+#ifdef CONFIG_HAVE_FPU
 /* Currently active FPU state, or NULL if there is no active FPU state */
 UP_STATE_DEFINE(user_fpu_state_t *, ksActiveFPUState);
 
 UP_STATE_DEFINE(word_t, ksFPURestoresSinceSwitch);
+#endif /* CONFIG_HAVE_FPU */
 
 /* Units of work we have completed since the last time we checked for
  * pending interrupts */

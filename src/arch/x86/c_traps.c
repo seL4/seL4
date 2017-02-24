@@ -10,7 +10,7 @@
 
 #include <config.h>
 #include <model/statedata.h>
-#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
 #include <machine/debug.h>
@@ -39,7 +39,7 @@ c_handle_interrupt(int irq, int syscall)
     c_entry_hook();
 
     if (irq == int_unimpl_dev) {
-        handleUnimplementedDevice();
+        handleFPUFault();
 #ifdef TRACK_KERNEL_ENTRIES
         ksKernelEntry.path = Entry_UnimplementedDevice;
         ksKernelEntry.word = irq;

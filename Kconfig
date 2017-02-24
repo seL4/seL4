@@ -24,6 +24,10 @@ config ARCH_ARM_V8A
     bool
     default n
 
+config HAVE_FPU
+    bool
+    default n
+
 config KERNEL_MASTER
     bool
     default y
@@ -45,6 +49,7 @@ menu "seL4 System"
             Select the architecture seL4 will be running on.
 
         config ARCH_X86
+            select HAVE_FPU
             bool "x86"
 
         config ARCH_ARM

@@ -15,7 +15,7 @@
 #include <object/structures.h>
 #include <arch/machine.h>
 #include <arch/model/statedata.h>
-#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 #include <arch/object/objecttype.h>
 #include <arch/object/ioport.h>
 #include <plat/machine/devices.h>
@@ -534,5 +534,5 @@ void
 Arch_prepareThreadDelete(tcb_t *thread)
 {
     /* Notify the lazy FPU module about this thread's deletion. */
-    Arch_fpuThreadDelete(thread);
+    fpuThreadDelete(thread);
 }

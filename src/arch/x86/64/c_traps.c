@@ -12,7 +12,7 @@
 
 #include <config.h>
 #include <model/statedata.h>
-#include <arch/machine/fpu.h>
+#include <machine/fpu.h>
 #include <kernel/traps.h>
 #include <arch/machine/debug.h>
 
