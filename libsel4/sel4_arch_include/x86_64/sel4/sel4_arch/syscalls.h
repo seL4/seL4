@@ -326,7 +326,7 @@ seL4_VMEnter(seL4_CPtr vcpu, seL4_Word *sender)
 }
 #endif
 
-#if defined(SEL4_DEBUG_KERNEL)
+#if defined(CONFIG_DEBUG_BUILD)
 LIBSEL4_INLINE_FUNC void
 seL4_DebugPutChar(char c)
 {
@@ -341,7 +341,7 @@ seL4_DebugPutChar(char c)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_DEBUG_BUILD
 LIBSEL4_INLINE_FUNC void
 seL4_DebugHalt(void)
 {
@@ -350,7 +350,7 @@ seL4_DebugHalt(void)
 }
 #endif
 
-#if defined(SEL4_DEBUG_KERNEL)
+#if defined(CONFIG_DEBUG_BUILD)
 LIBSEL4_INLINE_FUNC void
 seL4_DebugSnapshot(void)
 {
@@ -359,7 +359,7 @@ seL4_DebugSnapshot(void)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_DEBUG_BUILD
 LIBSEL4_INLINE_FUNC seL4_Uint32
 seL4_DebugCapIdentify(seL4_CPtr cap)
 {
@@ -374,7 +374,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 }
 #endif
 
-#ifdef SEL4_DEBUG_KERNEL
+#ifdef CONFIG_DEBUG_BUILD
 char *strcpy(char *, const char *);
 LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
@@ -393,7 +393,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 }
 #endif
 
-#if defined(SEL4_DANGEROUS_CODE_INJECTION_KERNEL)
+#if defined(CONFIG_DANGEROUS_CODE_INJECTION)
 LIBSEL4_INLINE_FUNC void
 seL4_DebugRun(void (*userfn) (void *), void* userarg)
 {

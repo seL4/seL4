@@ -579,7 +579,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 }
 #endif
 
-#if defined(SEL4_DANGEROUS_CODE_INJECTION_KERNEL)
+#if defined(CONFIG_DANGEROUS_CODE_INJECTION)
 LIBSEL4_INLINE_FUNC void
 seL4_DebugRun(void (*userfn) (void *), void* userarg)
 {
