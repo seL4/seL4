@@ -463,6 +463,9 @@ endif
 ifeq (${SEL4_ARCH}, x86_64)
 CFLAGS += -mcmodel=kernel
 endif
+ifeq (${SEL4_ARCH}, aarch64)
+CFLAGS += -mgeneral-regs-only
+endif
 
 # Allow overriding of the CFLAGS. Use with caution.
 ifdef CONFIG_KERNEL_CFLAGS
