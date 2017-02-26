@@ -205,9 +205,9 @@ tcbReleaseRemove(tcb_t *tcb)
         if (tcb->tcbSchedPrev) {
             tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
         } else {
-            NODE_STATE(ksReleaseHead) = tcb->tcbSchedNext;
+            NODE_STATE_ON_CORE(ksReleaseHead, tcb->tcbAffinity) = tcb->tcbSchedNext;
             /* the head has changed, we might need to set a new timeout */
-            NODE_STATE(ksReprogram) = true;
+            NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
         }
 
         if (tcb->tcbSchedNext) {
@@ -227,7 +227,7 @@ tcbReleaseEnqueue(tcb_t *tcb)
     assert(thread_state_get_tcbQueued(tcb->tcbState) == false);
 
     tcb_t *before = NULL;
-    tcb_t *after = NODE_STATE(ksReleaseHead);
+    tcb_t *after = NODE_STATE_ON_CORE(ksReleaseHead, tcb->tcbAffinity);
 
     /* find our place in the ordered queue */
     while (after != NULL &&
@@ -238,8 +238,8 @@ tcbReleaseEnqueue(tcb_t *tcb)
 
     if (before == NULL) {
         /* insert at head */
-        NODE_STATE(ksReleaseHead) = tcb;
-        NODE_STATE(ksReprogram) = true;
+        NODE_STATE_ON_CORE(ksReleaseHead, tcb->tcbAffinity) = tcb;
+        NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity) = true;
     } else {
         before->tcbSchedNext = tcb;
     }
@@ -259,6 +259,7 @@ tcbReleaseDequeue(void)
 {
     assert(NODE_STATE(ksReleaseHead) != NULL);
     assert(NODE_STATE(ksReleaseHead)->tcbSchedPrev == NULL);
+    SMP_COND_STATEMENT(assert(NODE_STATE(ksReleaseHead)->tcbAffinity == getCurrentCPUIndex()));
 
     tcb_t *detached_head = NODE_STATE(ksReleaseHead);
     NODE_STATE(ksReleaseHead) = NODE_STATE(ksReleaseHead)->tcbSchedNext;
@@ -360,9 +361,11 @@ remoteQueueUpdate(tcb_t *tcb)
     if (tcb->tcbSchedContext->scCore != getCurrentCPUIndex() && tcb->tcbDomain == ksCurDomain) {
         tcb_t *targetCurThread = NODE_STATE_ON_CORE(ksCurThread, tcb->tcbSchedContext->scCore);
 
-        /* reschedule if the target core is idle or we are waking a higher priority thread */
+        /* reschedule if the target core is idle or we are waking a higher priority thread or
+         * if a new irq would need to be set */
         if (targetCurThread == NODE_STATE_ON_CORE(ksIdleThread, tcb->tcbSchedContext->scCore)  ||
-                tcb->tcbPriority > targetCurThread->tcbPriority) {
+                tcb->tcbPriority > targetCurThread->tcbPriority ||
+                NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity)) {
             ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbSchedContext->scCore);
         }
     }
