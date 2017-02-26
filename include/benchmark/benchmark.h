@@ -27,8 +27,8 @@
 extern timestamp_t ksEntries[CONFIG_MAX_NUM_TRACE_POINTS];
 extern bool_t ksStarted[CONFIG_MAX_NUM_TRACE_POINTS];
 extern timestamp_t ksExit;
-extern uint32_t ksLogIndex;
-extern uint32_t ksLogIndexFinalized;
+extern seL4_Word ksLogIndex;
+extern seL4_Word ksLogIndexFinalized;
 extern paddr_t ksUserLogBuffer;
 
 static inline void

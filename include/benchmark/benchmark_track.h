@@ -33,8 +33,8 @@ extern kernel_entry_t ksKernelEntry;
              sizeof(benchmark_track_kernel_entry_t))
 
 extern timestamp_t ksEnter;
-extern word_t ksLogIndex;
-extern uint32_t ksLogIndexFinalized;
+extern seL4_Word ksLogIndex;
+extern seL4_Word ksLogIndexFinalized;
 
 /**
  * @brief Fill in logging info for kernel entries
