@@ -20,6 +20,11 @@
 #define TARGET_CPU0_ALLINT   TARGET_CPU_ALLINT(BIT(0))
 #define IRQ_SET_ALL 0xffffffff;
 
+/* Shift positions for GICD_SGIR register */
+#define GICD_SGIR_SGIINTID_SHIFT          0
+#define GICD_SGIR_CPUTARGETLIST_SHIFT     16
+#define GICD_SGIR_TARGETLISTFILTER_SHIFT  24
+
 #ifndef GIC_PL390_DISTRIBUTOR_PPTR
 #error GIC_PL390_DISTRIBUTOR_PPTR must be defined for virtual memory access to the gic distributer
 #else  /* GIC_DISTRIBUTOR_PPTR */
@@ -139,3 +144,29 @@ initIRQController(void)
     cpu_iface_init();
 }
 
+#if CONFIG_MAX_NUM_NODES > 1
+ /*
+ * 25-24: target lister filter
+ * 0b00 - send the ipi to the CPU interfaces specified in the CPU target list
+ * 0b01 - send the ipi to all CPU interfaces except the cpu interface.
+ *        that requrested teh ipi
+ * 0b10 - send the ipi only to the CPU interface that requested the IPI.
+ * 0b11 - reserved
+ *.
+ * 23-16: CPU targets list
+ * each bit of CPU target list [7:0] refers to the corresponding CPU interface.
+ * 3-0:   SGIINTID
+ * software generated interrupt id, from 0 to 15...
+ */
+void ipiBroadcast(irq_t irq, bool_t includeSelfCPU)
+{
+    dmb();
+    gic_dist->sgi_control = (!includeSelfCPU << GICD_SGIR_TARGETLISTFILTER_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
+}
+
+void ipi_send_target(irq_t irq, word_t cpuTargetList)
+{
+    dmb();
+    gic_dist->sgi_control = (cpuTargetList << GICD_SGIR_CPUTARGETLIST_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
+}
+#endif /* CONFIG_MAX_NUM_NODES */

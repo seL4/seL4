@@ -169,7 +169,7 @@ getActiveIRQ(void)
     }
 
     if (IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)])) {
-        irq = active_irq[getCurrentCPUIndex()] & IRQ_MASK;
+        irq = active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK;
     } else {
         irq = irqInvalid;
     }
@@ -217,4 +217,8 @@ handleSpuriousIRQ(void)
 
 void initIRQController(void);
 
+#if CONFIG_MAX_NUM_NODES > 1
+void ipiBroadcast(irq_t irq, bool_t includeSelfCPU);
+void ipi_send_target(irq_t irq, word_t cpuTargetList);
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
 #endif /* !__ARCH_MACHINE_GICPL390_H */
