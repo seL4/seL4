@@ -35,7 +35,7 @@ void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu);
 static inline bool_t nativeThreadUsingFPU(tcb_t *thread)
 {
     return &thread->tcbArch.tcbContext.fpuState ==
-        NODE_STATE_ON_CORE(ksActiveFPUState, thread->tcbAffinity);
+           NODE_STATE_ON_CORE(ksActiveFPUState, thread->tcbAffinity);
 }
 
 static inline void FORCE_INLINE lazyFPURestore(tcb_t *thread)

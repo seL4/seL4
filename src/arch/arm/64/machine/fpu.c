@@ -33,7 +33,7 @@ fpsimd_HWCapTest(void)
     /* Check if the hardware has FP and ASIMD support... */
     MRS("id_aa64pfr0_el1", id_aa64pfr0);
     if ((id_aa64pfr0 >> ID_AA64PFR0_EL1_FP) & MASK(4) ||
-        (id_aa64pfr0 >> ID_AA64PFR0_EL1_ASIMD) & MASK(4)) {
+            (id_aa64pfr0 >> ID_AA64PFR0_EL1_ASIMD) & MASK(4)) {
         return false;
     }
 
