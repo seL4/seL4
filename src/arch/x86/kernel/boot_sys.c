@@ -522,7 +522,7 @@ try_boot_sys(
             modules[i].end - modules[i].start,
             (char *) (long)modules[i].name
         );
-        if ((int32_t)(modules[i].end - modules[i].start) <= 0) {
+        if ((sword_t)(modules[i].end - modules[i].start) <= 0) {
             printf("Invalid boot module size! Possible cause: boot module file not found by QEMU\n");
             return false;
         }

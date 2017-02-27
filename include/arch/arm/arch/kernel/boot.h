@@ -19,7 +19,7 @@ cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t 
 void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
-    int32_t pv_offset,
+    sword_t pv_offset,
     vptr_t  v_entry
 );
 

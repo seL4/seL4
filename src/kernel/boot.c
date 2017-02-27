@@ -317,7 +317,7 @@ create_frames_of_region(
     cap_t    pd_cap,
     region_t reg,
     bool_t   do_map,
-    int32_t  pv_offset
+    sword_t  pv_offset
 )
 {
     pptr_t     f;

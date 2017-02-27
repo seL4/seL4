@@ -262,7 +262,7 @@ static BOOT_CODE bool_t
 try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
-    int32_t pv_offset,
+    sword_t pv_offset,
     vptr_t  v_entry
 )
 {
@@ -455,7 +455,7 @@ BOOT_CODE VISIBLE void
 init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
-    int32_t pv_offset,
+    sword_t pv_offset,
     vptr_t  v_entry
 )
 {

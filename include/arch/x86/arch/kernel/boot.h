@@ -23,7 +23,7 @@ typedef struct mem_p_regs {
 
 typedef struct ui_info {
     p_region_t p_reg;     /* region where the userland image lies in */
-    int32_t    pv_offset; /* UI virtual address + pv_offset = UI physical address */
+    sword_t    pv_offset; /* UI virtual address + pv_offset = UI physical address */
     vptr_t     v_entry;   /* entry point (virtual address) of userland image */
 } ui_info_t;
 
