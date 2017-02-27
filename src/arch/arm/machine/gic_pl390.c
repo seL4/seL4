@@ -41,7 +41,7 @@ set_irq_active(irq_t irq)
     int bit = irq & 0x1f;
     gic_dist->active[word] = BIT(bit);
 }
-uint32_t active_irq = IRQ_NONE;
+uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 
 BOOT_CODE static void
 dist_init(void)
