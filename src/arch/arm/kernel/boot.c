@@ -242,6 +242,15 @@ init_cpu(void)
     }
 #endif /* CONFIG_HAVE_FPU */
 
+#ifdef CONFIG_ENABLE_BENCHMARKS
+    armv_init_ccnt();
+#endif /* CONFIG_ENABLE_BENCHMARKS */
+
+    /* Export selected CPU features for access by PL0 */
+    armv_init_user_access();
+
+    initTimer();
+
     return true;
 }
 
@@ -251,7 +260,6 @@ BOOT_CODE static void
 init_plat(void)
 {
     initIRQController();
-    initTimer();
     initL2Cache();
 }
 
@@ -436,16 +444,9 @@ try_init_kernel(
         invalidateHypTLB();
     }
 
-#ifdef CONFIG_ENABLE_BENCHMARKS
-    armv_init_ccnt();
-#endif /* CONFIG_ENABLE_BENCHMARKS */
-
 #ifdef CONFIG_HAVE_FPU
     NODE_STATE(ksActiveFPUState) = NULL;
 #endif /* CONFIG_HAVE_FPU */
-
-    /* Export selected CPU features for access by PL0 */
-    armv_init_user_access();
 
     /* kernel successfully initialized */
     return true;

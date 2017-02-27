@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 #include <util.h>
+#include <arch/linker.h>
 
 typedef uint16_t interrupt_t;
 typedef uint16_t irq_t;
