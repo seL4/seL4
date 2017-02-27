@@ -69,8 +69,7 @@ platform configuration (devices) etc. In order to tell the initial thread
 which capabilities are stored where in its CNode, the kernel provides
 a \emph{BootInfo Frame} which is mapped into the initial thread's address
 space. The mapped address is chosen by the kernel and given to the initial
-thread via a CPU register. The initial thread can access this address
-through the function \texttt{seL4\_GetBootInfo()}.
+thread via a CPU register.
 
 The BootInfo Frame contains the C struct described in
 \autoref{tab:bootinfo_struct}.
