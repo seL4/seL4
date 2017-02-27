@@ -189,3 +189,7 @@ initIRQController(void)
     /* Do nothing */
 }
 
+BOOT_CODE void cpu_initLocalIRQController(void)
+{
+    /* Do nothing */
+}
