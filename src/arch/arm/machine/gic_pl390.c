@@ -160,13 +160,11 @@ initIRQController(void)
  */
 void ipiBroadcast(irq_t irq, bool_t includeSelfCPU)
 {
-    dmb();
     gic_dist->sgi_control = (!includeSelfCPU << GICD_SGIR_TARGETLISTFILTER_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
 }
 
 void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
-    dmb();
     gic_dist->sgi_control = (cpuTargetList << GICD_SGIR_CPUTARGETLIST_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
 }
 #endif /* CONFIG_MAX_NUM_NODES */
