@@ -17,6 +17,8 @@
 #include <stdint.h>
 #include <util.h>
 #include <arch/linker.h>
+#include <mode/smp/smp.h>
+#include <model/statedata.h>
 
 typedef uint16_t interrupt_t;
 typedef uint16_t irq_t;
@@ -121,7 +123,7 @@ extern volatile struct gic_cpu_iface_map * const gic_cpuiface;
  * reads will not return the same value For this reason, we have a
  * global variable to store the IRQ number.
  */
-extern uint32_t active_irq;
+extern uint32_t active_irq[CONFIG_MAX_NUM_NODES];
 
 /* Helpers */
 static inline int
@@ -162,12 +164,12 @@ static inline interrupt_t
 getActiveIRQ(void)
 {
     uint32_t irq;
-    if (!IS_IRQ_VALID(active_irq)) {
-        active_irq = gic_cpuiface->int_ack;
+    if (!IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)])) {
+        active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] = gic_cpuiface->int_ack;
     }
 
-    if (IS_IRQ_VALID(active_irq)) {
-        irq = active_irq & IRQ_MASK;
+    if (IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)])) {
+        irq = active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK;
     } else {
         irq = irqInvalid;
     }
@@ -199,12 +201,13 @@ maskInterrupt(bool_t disable, interrupt_t irq)
 static inline void
 ackInterrupt(irq_t irq)
 {
-    assert(IS_IRQ_VALID(active_irq) && (active_irq & IRQ_MASK) == irq);
+    assert(IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)]) && (active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK) == irq);
     if (is_irq_edge_triggered(irq)) {
         dist_pending_clr(irq);
     }
-    gic_cpuiface->eoi = active_irq;
-    active_irq = IRQ_NONE;
+    gic_cpuiface->eoi = active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)];
+    active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] = IRQ_NONE;
+
 }
 
 static inline void
@@ -214,4 +217,8 @@ handleSpuriousIRQ(void)
 
 void initIRQController(void);
 
+#if CONFIG_MAX_NUM_NODES > 1
+void ipiBroadcast(irq_t irq, bool_t includeSelfCPU);
+void ipi_send_target(irq_t irq, word_t cpuTargetList);
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
 #endif /* !__ARCH_MACHINE_GICPL390_H */
