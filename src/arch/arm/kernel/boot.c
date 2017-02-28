@@ -242,6 +242,8 @@ init_cpu(void)
     }
 #endif /* CONFIG_HAVE_FPU */
 
+    cpu_initLocalIRQController();
+
 #ifdef CONFIG_ENABLE_BENCHMARKS
     armv_init_ccnt();
 #endif /* CONFIG_ENABLE_BENCHMARKS */

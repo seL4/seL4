@@ -136,6 +136,10 @@ BOOT_CODE void
 initIRQController(void)
 {
     dist_init();
+}
+
+BOOT_CODE void cpu_initLocalIRQController(void)
+{
     cpu_iface_init();
 }
 

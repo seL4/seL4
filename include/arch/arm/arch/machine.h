@@ -27,6 +27,7 @@ void map_kernel_devices(void);
 void initL2Cache(void);
 
 void initIRQController(void);
+void cpu_initLocalIRQController(void);
 
 static inline void plat_cleanL2Range(paddr_t start, paddr_t end);
 static inline void plat_invalidateL2Range(paddr_t start, paddr_t end);

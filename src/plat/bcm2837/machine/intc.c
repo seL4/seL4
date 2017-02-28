@@ -27,7 +27,7 @@ initIRQController(void)
     core_regs->coreTimerPrescaler = 0x80000000;
 }
 
-
+BOOT_CODE void cpu_initLocalIRQController(void) {}
 
 interrupt_t
 getActiveIRQ(void)
