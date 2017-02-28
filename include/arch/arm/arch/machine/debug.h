@@ -24,6 +24,79 @@ void saveAllBreakpointState(arch_tcb_t *at);
 void loadAllDisabledBreakpointState(void);
 #endif
 
+#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+/* Those of these that trap NS accesses trap all NS accesses; we can't cause the
+ * processor to only trap NS-PL0 or NS-PL1, but if we want to trap the accesses,
+ * we get both (PL0 and PL1) non-secure modes' accesses.
+ */
+#define ARM_CP15_HDCR "p15, 4, %0, c1, c1, 1"
+#define HDCR_DEBUG_TDRA_SHIFT     (11) /* Trap debug ROM access from non-secure world */
+#define HDCR_DEBUG_TDOSA_SHIFT    (10) /* Trap debug OS related access from NS world */
+#define HDCR_DEBUG_TDA_SHIFT      (9)  /* Trap debug CP14 register access from NS world */
+#define HDCR_DEBUG_TDE_SHIFT      (8)  /* Trap debug exceptions taken from NS world */
+#define HDCR_PERFMON_HPME_SHIFT   (7)  /* Enable the hyp-mode perfmon counters. */
+#define HDCR_PERFMON_TPM_SHIFT    (6)  /* Trap NS PM accesses */
+#define HDCR_PERFMON_TPMCR_SHIFT  (5)  /* Trap NS PMCR reg access */
+
+static inline void
+initHDCR(void)
+{
+    word_t hdcr;
+
+    MRC(ARM_CP15_HDCR, hdcr);
+    /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
+     * PL0 debug exceptions.
+     *
+     * Subsequently on calls to vcpu_enable/disable, we will modify HDCR.TDE
+     * as needed.
+     */
+    MCR(ARM_CP15_HDCR, hdcr | BIT(HDCR_DEBUG_TDE_SHIFT));
+}
+
+/** When running seL4 as a hypervisor, if we're building with support for the
+ * hardware debug API, we have a case of indirection that we need to handle.
+ *
+ * For native PL0 user threads in the hypervisor seL4 build, if a debug
+ * exception is triggered in one of them, the CPU will raise the exception and
+ * naturally, it will attempt to deliver it to a PL1 exception vector table --
+ * but no such table exists for native hypervisor-seL4 threads, so the CPU will
+ * end up encountering a VM fault while trying to vector into the vector table.
+ *
+ * For this reason, for native hypervisor-seL4 threads, we need to trap the
+ * debug exception DIRECTLY into the hypervisor-seL4 instance, and handle it
+ * directly. So we need to SET HDCR.TDE for this case.
+ *
+ * For the Guest VM, if it programs the CPU to trigger breakpoints, and a
+ * debug exception gets triggered, we don't want to catch those debug exceptions
+ * since we can let the Guest VM handle them on its own. So we need to UNSET
+ * HDCR.TDE for this case.
+ *
+ * This function encapsulates the setting/unsetting, and it is called when we
+ * are about to enable/disable a VCPU.
+ *
+ * If we are enabling a vcpu (vcpu_enable) we UNSET HDCR.TDE.
+ * If we are disabling a vcpu (vcpu_disable) we SET HDCR.TDE.
+ */
+static inline void
+setHDCRTrapDebugExceptionState(bool_t enable_trapping)
+{
+    word_t hdcr;
+
+    MRC(ARM_CP15_HDCR, hdcr);
+    if (enable_trapping) {
+        /* Trap and redirect debug faults that occur in PL0 native threads by
+         * setting HDCR.TDE (trap debug exceptions).
+         */
+        hdcr |= BIT(HDCR_DEBUG_TDE_SHIFT);
+    } else {
+        /* Let the PL1 Guest VM handle debug events on its own */
+        hdcr &= ~BIT(HDCR_DEBUG_TDE_SHIFT);
+    }
+
+    MCR(ARM_CP15_HDCR, hdcr);
+}
+#endif /* defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT) */
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
 static uint16_t

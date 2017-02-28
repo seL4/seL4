@@ -422,6 +422,12 @@ vcpu_enable(vcpu_t *vcpu)
      */
     restore_user_debug_context(vcpu->tcb);
 #endif
+#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+    /* Disable debug exception trapping and let the PL1 Guest VM handle all
+     * of its own debug faults.
+     */
+    setHDCRTrapDebugExceptionState(false);
+#endif
 }
 
 static void
@@ -447,6 +453,12 @@ vcpu_disable(vcpu_t *vcpu)
      * that were caused by things the guest VM did.
      */
     loadAllDisabledBreakpointState();
+#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+    /* Enable debug exception trapping and let seL4 trap all PL0 (user) native
+     * seL4 threads' debug exceptions, so it can deliver them as fault messages.
+     */
+    setHDCRTrapDebugExceptionState(true);
+#endif
     isb();
 }
 
@@ -461,6 +473,10 @@ vcpu_boot_init(void)
     vcpu_disable(NULL);
     armHSCurVCPU = NULL;
     armHSVCPUActive = false;
+
+#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+    initHDCR();
+#endif
 }
 
 static void
