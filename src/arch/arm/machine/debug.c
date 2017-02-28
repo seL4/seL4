@@ -160,6 +160,12 @@ byte8WatchpointsSupported(void)
 #define DBGDEVID "p14,0,%0,c7,c2,7"
 #define DBGDEVTYPE ""
 
+/* ARMv7 manual: C11.11.1: DBGAUTHSTATUS:
+    * "This register is required in all implementations."
+ * However, in v7, it is only visible in the memory mapped interface.
+ * However, in the v6 manual, this register is not mentioned at all and doesn't
+ * exist.
+ */
 #define DBGAUTHSTATUS "p14,0,%0,c7,c14,6"
 
 #define MAKE_P14(crn, crm, opc2) "p14, 0, %0, c" #crn ", c" #crm ", " #opc2
@@ -878,8 +884,7 @@ Arch_initHardwareBreakpoints(void)
             printf("CPU is in secure mode. Enabling debugging in secure user mode.\n");
             MRC(DBGSDER, sder);
             MCR(DBGSDER, sder
-                | DBGSDER_ENABLE_SECURE_USER_INVASIVE_DEBUG
-                | DBGSDER_ENABLE_SECURE_USER_NON_INVASIVE_DEBUG);
+                | DBGSDER_ENABLE_SECURE_USER_INVASIVE_DEBUG);
         }
 
         /* Deal with OS Double-lock: */
