@@ -149,19 +149,19 @@ BOOT_CODE void cpu_initLocalIRQController(void)
 }
 
 #if CONFIG_MAX_NUM_NODES > 1
- /*
- * 25-24: target lister filter
- * 0b00 - send the ipi to the CPU interfaces specified in the CPU target list
- * 0b01 - send the ipi to all CPU interfaces except the cpu interface.
- *        that requrested teh ipi
- * 0b10 - send the ipi only to the CPU interface that requested the IPI.
- * 0b11 - reserved
- *.
- * 23-16: CPU targets list
- * each bit of CPU target list [7:0] refers to the corresponding CPU interface.
- * 3-0:   SGIINTID
- * software generated interrupt id, from 0 to 15...
- */
+/*
+* 25-24: target lister filter
+* 0b00 - send the ipi to the CPU interfaces specified in the CPU target list
+* 0b01 - send the ipi to all CPU interfaces except the cpu interface.
+*        that requrested teh ipi
+* 0b10 - send the ipi only to the CPU interface that requested the IPI.
+* 0b11 - reserved
+*.
+* 23-16: CPU targets list
+* each bit of CPU target list [7:0] refers to the corresponding CPU interface.
+* 3-0:   SGIINTID
+* software generated interrupt id, from 0 to 15...
+*/
 void ipiBroadcast(irq_t irq, bool_t includeSelfCPU)
 {
     gic_dist->sgi_control = (!includeSelfCPU << GICD_SGIR_TARGETLISTFILTER_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
