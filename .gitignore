@@ -22,6 +22,7 @@
 **.toc
 **.mpx
 
+tools/parsetab.py
 manual/env.tex
 manual/manual.pdf
 manual/stage
