@@ -23,6 +23,7 @@
 #include <machine/io.h>
 #include <mode/machine_pl2.h>
 #include <mode/hardware.h>
+#include <kernel/stack.h>
 
 #define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
 #define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
@@ -149,6 +150,13 @@ static inline void writeTPIDRPRW(word_t reg)
     asm volatile("mcr p15, 0, %0, c13, c0, 4" :: "r"(reg));
 }
 
+static inline word_t readTPIDRPRW(void)
+{
+    word_t reg;
+    asm volatile("mrc p15, 0, %0, c13, c0, 4" :"=r"(reg));
+    return reg;
+}
+
 static inline word_t readTPIDRURW(void)
 {
     word_t reg;
@@ -179,7 +187,16 @@ static inline void setKernelStack(word_t stack_address)
      * Load the (per-core) kernel stack pointer to TPIDRPRW for faster reloads on traps.
      */
     writeTPIDRPRW(stack_address);
-#endif /* CONFIG_ARCH_ARM_V7A */
+#endif /* CONFIG_ARCH_ARM_V6 */
+}
+
+static inline word_t getKernelStack(void)
+{
+#ifndef CONFIG_ARCH_ARM_V6
+    return readTPIDRPRW();
+#else
+    return ((word_t) kernel_stack_alloc[0]) + BIT(CONFIG_KERNEL_STACK_BITS);
+#endif /* CONFIG_ARCH_ARM_V6 */
 }
 
 /* TLB control */
