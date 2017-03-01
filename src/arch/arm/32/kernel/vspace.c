@@ -172,7 +172,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
             pte_pte_small_new(
                 paddr,
                 0, /* global */
-                0, /* Not shared */
+                SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                 0, /* APX = 0, privileged full access */
                 5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
                 APFromVMRights(vm_rights),
@@ -185,7 +185,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
             pte_pte_small_new(
                 paddr,
                 0, /* global */
-                0, /* Not shared */
+                SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                 0, /* APX = 0, privileged full access */
                 0, /* TEX = 0 */
                 APFromVMRights(vm_rights),
@@ -231,7 +231,7 @@ map_kernel_window(void)
                   phys,
                   1, /* SuperSection */
                   0, /* global */
-                  0, /* Not shared */
+                  SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                   0, /* APX = 0, privileged full access */
                   5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
                   1, /* VMKernelOnly */
@@ -253,7 +253,7 @@ map_kernel_window(void)
                   phys,
                   0, /* Section */
                   0, /* global */
-                  0, /* Not shared */
+                  SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                   0, /* APX = 0, privileged full access */
                   5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
                   1, /* VMKernelOnly */
@@ -455,7 +455,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
     *targetSlot = pte_pte_small_new(
                       addrFromPPtr(frame),
                       1, /* not global */
-                      0, /* not shared */
+                      SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                       0, /* APX = 0, privileged full access */
                       5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
                       APFromVMRights(VMReadWrite),
@@ -887,7 +887,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
         if (cacheable) {
             pte = pte_pte_small_new(paddr,
                                     1, /* not global */
-                                    0, /* not shared */
+                                    SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                                     0, /* APX = 0, privileged full access */
                                     5, /* TEX = 0b101, outer write-back, write-allocate */
                                     ap,
@@ -912,7 +912,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                                     nonexecutable,
                                     5, /* TEX = 0b101, outer write-back, write-allocate */
                                     1, /* not global */
-                                    0, /* not shared */
+                                    SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                                     0, /* APX = 0, privileged full access */
                                     ap,
                                     0, 1, /* Inner write-back, write-allocate (except on ARM11) */
@@ -1028,7 +1028,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
     if (cacheable) {
         return pde_pde_section_new(paddr, size2,
                                    1, /* not global */
-                                   0, /* not shared */
+                                   SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
                                    0, /* APX = 0, privileged full access */
                                    5, /* TEX = 0b101, outer write-back, write-allocate */
                                    ap, parity, domain, nonexecutable,
