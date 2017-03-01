@@ -164,6 +164,13 @@ static inline word_t readTPIDRURW(void)
     return reg;
 }
 
+static inline word_t readMPIDR(void)
+{
+    word_t reg;
+    asm volatile ("mrc p15, 0, %0, c0, c0, 5" : "=r"(reg));
+    return reg;
+}
+
 static inline void setCurrentPD(paddr_t addr)
 {
     /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
@@ -198,6 +205,16 @@ static inline word_t getKernelStack(void)
     return ((word_t) kernel_stack_alloc[0]) + BIT(CONFIG_KERNEL_STACK_BITS);
 #endif /* CONFIG_ARCH_ARM_V6 */
 }
+
+#if CONFIG_MAX_NUM_NODES > 1
+static inline word_t getHWCPUID(void)
+{
+    /* See ARM Referce Manual (ARMv7-A and ARMv7-R edition), Section B4.1.106
+     * for more details about MPIDR register.
+     */
+    return readMPIDR() & 0xff;
+}
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
 /* TLB control */
 
