@@ -24,6 +24,8 @@
 /** DONT_TRANSLATE */
 void VISIBLE NORETURN restore_user_context(void)
 {
+    NODE_UNLOCK_IF_HELD;
+
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU

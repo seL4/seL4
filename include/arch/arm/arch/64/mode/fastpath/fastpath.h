@@ -21,6 +21,7 @@
 #include <armv/context_switch.h>
 #include <mode/model/statedata.h>
 #include <machine/fpu.h>
+#include <smp/lock.h>
 
 /* When building the fastpath the assembler in traps.S makes these
  * assumptions. Because compile_asserts are hard to do in assembler,
@@ -97,6 +98,8 @@ fastpath_reply_cap_check(cap_t cap)
 static inline void NORETURN
 fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
+    NODE_UNLOCK;
+
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
