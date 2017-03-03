@@ -39,6 +39,9 @@ Arch_configureIdleThread(tcb_t *tcb)
 void
 Arch_switchToIdleThread(void)
 {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(NULL);
+    }
 #ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
     *armKSGlobalsFrame = 0;
 #endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
