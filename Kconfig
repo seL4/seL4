@@ -273,6 +273,7 @@ menu "seL4 System"
             depends on ARCH_AARCH64
             select ARM_CORTEX_A57
             select ARCH_ARM_V8A
+            select HAVE_FPU
             help
                 Support for Tegra X1 platform
     endchoice
