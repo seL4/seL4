@@ -281,7 +281,7 @@ BOOT_CODE static bool_t
 try_init_kernel_secondary_core(void)
 {
     /* need to first wait until some kernel init has been done */
-    while(!node_boot_lock);
+    while (!node_boot_lock);
 
     /* Perform cpu init */
     init_cpu();
@@ -300,7 +300,8 @@ try_init_kernel_secondary_core(void)
 }
 
 BOOT_CODE static void
-release_secondary_cpus(void) {
+release_secondary_cpus(void)
+{
 
     /* release the cpus at the same time */
     node_boot_lock = 1;
@@ -314,7 +315,7 @@ release_secondary_cpus(void) {
     plat_cleanInvalidateCache();
 
     /* Wait until all the secondary cores are done initialising */
-    while(ksNumCPUs != CONFIG_MAX_NUM_NODES);
+    while (ksNumCPUs != CONFIG_MAX_NUM_NODES);
 }
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 
@@ -531,9 +532,9 @@ init_kernel(
     /* we assume there exists a cpu with id 0 and will use it for bootstrapping */
     if (getCurrentCPUIndex() == 0) {
         result = try_init_kernel(ui_p_reg_start,
-                                     ui_p_reg_end,
-                                     pv_offset,
-                                     v_entry);
+                                 ui_p_reg_end,
+                                 pv_offset,
+                                 v_entry);
     } else {
         result = try_init_kernel_secondary_core();
     }
