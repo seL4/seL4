@@ -108,7 +108,7 @@ create_iospace_caps(cap_t root_cnode_cap)
 
     if (num_smmu == 0) {
         printf("SMMU init failuer\n");
-        return (seL4_SlotRegion) S_REG_EMPTY;
+        return S_REG_EMPTY;
     }
 
     /* the 0 is reserved as an invalidASID,
@@ -118,7 +118,7 @@ create_iospace_caps(cap_t root_cnode_cap)
     for (i = 1; i <= num_smmu; i++) {
         io_space_cap = cap_io_space_cap_new(i, i);
         if (!provide_cap(root_cnode_cap, io_space_cap)) {
-            return (seL4_SlotRegion) S_REG_EMPTY;
+            return S_REG_EMPTY;
         }
     }
     end = ndks_boot.slot_pos_cur;
