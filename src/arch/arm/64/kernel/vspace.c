@@ -145,7 +145,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
             paddr,
             0,                          /* global */
             1,                          /* access flag */
-            0,                          /* Not shared only if normal cacheable memory */
+            SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
             APFromVMRights(vm_rights),
             NORMAL,
             0b11                        /* reserved */
@@ -204,7 +204,7 @@ map_kernel_window(void)
             paddr,
             0,                        /* global */
             1,                        /* access flag */
-            0,                        /* Not shared */
+            SMP_TERNARY(3, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
             0,                        /* VMKernelOnly */
             NORMAL
         );
@@ -254,7 +254,7 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t executable)
         pptr_to_paddr(pptr),            /* page_base_address    */
         1,                              /* not global */
         1,                              /* access flag */
-        0,                              /* Not shared */
+        SMP_TERNARY(3, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
         APFromVMRights(VMReadWrite),
         NORMAL,
         0b11                            /* reserved */
@@ -731,7 +731,7 @@ makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
                    paddr,
                    1,                          /* not global */
                    1,                          /* access flag */
-                   0,                          /* Not shared only if normal cacheable memory */
+                   SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
                    NORMAL,
                    0b11                        /* reserved */
@@ -761,7 +761,7 @@ makeUser2ndLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
                    paddr,
                    1,                          /* not global */
                    1,                          /* access flag */
-                   0,                          /* Not shared only if normal cacheable memory */
+                   SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
                    NORMAL
                );
@@ -789,7 +789,7 @@ makeUser1stLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
                    paddr,
                    1,                          /* not global */
                    1,                          /* access flag */
-                   0,                          /* Not shared only if normal cacheable memory */
+                   SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
                    NORMAL
                );

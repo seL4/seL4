@@ -22,6 +22,7 @@
 void VISIBLE NORETURN
 c_handle_undefined_instruction(void)
 {
+    NODE_LOCK;
     c_entry_hook();
 
 #ifdef TRACK_KERNEL_ENTRIES
@@ -50,6 +51,7 @@ c_handle_enfp(void)
 static inline void NORETURN
 c_handle_vm_fault(vm_fault_type_t type)
 {
+    NODE_LOCK;
     c_entry_hook();
 
 #ifdef TRACK_KERNEL_ENTRIES
@@ -77,6 +79,7 @@ c_handle_instruction_fault(void)
 void VISIBLE NORETURN
 c_handle_interrupt(void)
 {
+    NODE_LOCK_IF(getActiveIRQ() != irq_remote_call_ipi);
     c_entry_hook();
 
 #ifdef TRACK_KERNEL_ENTRIES
@@ -103,6 +106,8 @@ slowpath(syscall_t syscall)
 void VISIBLE
 c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+    NODE_LOCK;
+
     c_entry_hook();
 #if TRACK_KERNEL_ENTRIES
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);

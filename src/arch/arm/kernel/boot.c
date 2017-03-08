@@ -32,6 +32,12 @@ extern char ki_boot_end[1];
 /* pointer to end of kernel image */
 extern char ki_end[1];
 
+#if CONFIG_MAX_NUM_NODES > 1
+/* sync variable to prevent other nodes from booting
+ * until kernel data structures initialized */
+BOOT_DATA static volatile int node_boot_lock = 0;
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+
 /**
  * Split mem_reg about reserved_reg. If memory exists in the lower
  * segment, insert it. If memory exists in the upper segment, return it.
@@ -167,6 +173,11 @@ init_irqs(cap_t root_cnode_cap)
 #endif /* KERNEL_TIMER_IRQ */
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
+#if CONFIG_MAX_NUM_NODES > 1
+    setIRQState(IRQIPI, irq_remote_call_ipi);
+    setIRQState(IRQIPI, irq_remote_reschedule_ipi);
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
@@ -265,8 +276,49 @@ init_plat(void)
     initL2Cache();
 }
 
-/* Main kernel initialisation function. */
+#if CONFIG_MAX_NUM_NODES > 1
+BOOT_CODE static bool_t
+try_init_kernel_secondary_core(void)
+{
+    /* need to first wait until some kernel init has been done */
+    while(!node_boot_lock);
 
+    /* Perform cpu init */
+    init_cpu();
+
+    /* Enable per-CPU timer interrupts */
+    maskInterrupt(false, KERNEL_TIMER_IRQ);
+
+    NODE_LOCK;
+
+    ksNumCPUs++;
+
+    NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
+    NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
+
+    return true;
+}
+
+BOOT_CODE static void
+release_secondary_cpus(void) {
+
+    /* release the cpus at the same time */
+    node_boot_lock = 1;
+
+    /* At this point in time the other CPUs do *not* have the seL4 global pd set.
+     * However, they still have a PD from the elfloader (which is mapping mmemory
+     * as strongly ordered uncached, as a result we need to explicitly clean
+     * the cache for it to see the update of node_boot_lock
+     */
+    cleanInvalidateL1Caches();
+    plat_cleanInvalidateCache();
+
+    /* Wait until all the secondary cores are done initialising */
+    while(ksNumCPUs != CONFIG_MAX_NUM_NODES);
+}
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+
+/* Main kernel initialisation function. */
 
 static BOOT_CODE bool_t
 try_init_kernel(
@@ -341,7 +393,7 @@ try_init_kernel(
     init_irqs(root_cnode_cap);
 
     /* create the bootinfo frame */
-    bi_frame_pptr = allocate_bi_frame(0, 1, ipcbuf_vptr);
+    bi_frame_pptr = allocate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr);
     if (!bi_frame_pptr) {
         return false;
     }
@@ -450,6 +502,17 @@ try_init_kernel(
     NODE_STATE(ksActiveFPUState) = NULL;
 #endif /* CONFIG_HAVE_FPU */
 
+    ksNumCPUs = 1;
+
+    /* initialize BKL before booting up other cores */
+    SMP_COND_STATEMENT(clh_lock_init());
+    SMP_COND_STATEMENT(release_secondary_cpus());
+
+    /* grab BKL before leaving the kernel */
+    NODE_LOCK;
+
+    printf("Booting all finished, dropped to user space\n");
+
     /* kernel successfully initialized */
     return true;
 }
@@ -464,16 +527,32 @@ init_kernel(
 {
     bool_t result;
 
+#if CONFIG_MAX_NUM_NODES > 1
+    /* we assume there exists a cpu with id 0 and will use it for bootstrapping */
+    if (getCurrentCPUIndex() == 0) {
+        result = try_init_kernel(ui_p_reg_start,
+                                     ui_p_reg_end,
+                                     pv_offset,
+                                     v_entry);
+    } else {
+        result = try_init_kernel_secondary_core();
+    }
+
+    printf("Core %lu is processing with the root task \n", getCurrentCPUIndex());
+
+#else
     result = try_init_kernel(ui_p_reg_start,
                              ui_p_reg_end,
                              pv_offset,
                              v_entry);
+
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+
     if (!result) {
         fail ("Kernel init failed for some reason :(");
     }
 
     schedule();
     activateThread();
-    c_exit_hook();
 }
 

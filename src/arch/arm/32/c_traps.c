@@ -21,6 +21,8 @@
 /** DONT_TRANSLATE */
 void VISIBLE NORETURN restore_user_context(void)
 {
+    NODE_UNLOCK_IF_HELD;
+
     word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread);
 
     c_exit_hook();
