@@ -25,7 +25,6 @@
 #define DBGDSCR_MDBGEN                (BIT(15))
 #define DBGDSCR_HDBGEN                (BIT(14))
 #define DBGDSCR_USER_ACCESS_DISABLE   (BIT(12))
-#define DBGDSCR_SECURE_MODE_DISABLED  (BIT(18))
 
 /* This bit is always RAO */
 #define DBGLSR_LOCK_IMPLEMENTED       (BIT(0))
@@ -53,7 +52,6 @@
 #define DBGDSAR_VALID                (MASK(2))
 
 #define DBGSDER_ENABLE_SECURE_USER_INVASIVE_DEBUG       (BIT(0))
-#define DBGSDER_ENABLE_SECURE_USER_NON_INVASIVE_DEBUG   (BIT(1))
 
 /* ARMv7 Manuals, c3.3.1:
  *  "Breakpoint debug events are synchronous. That is, the debug event acts
@@ -117,12 +115,8 @@ byte8WatchpointsSupported(void)
 
 #define SCR "p15, 0, %0, c1, c1, 0"
 #define DBGDIDR "p14,0,%0,c0,c0,0"
-#define DBGDSCR_int "p14,0,%0,c0,c1,0"
 /* Not guaranteed in v7, only v7.1+ */
-#define DBGDSCR_ext "p14, 0, %0, c0, c2, 2"
 #define DBGDRCR ""
-#define DBGWFAR "p14,0,%0,c0,c6,0"
-#define DBGSDER "p15, 0, %0, c1, c1, 1"
 #define DBGVCR "p15, 0, %0, c0, c7, 0"
 
 #define DBGDRAR_32 "p14,0,%0,c1,c0,0"

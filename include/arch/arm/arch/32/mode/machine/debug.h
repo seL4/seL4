@@ -14,13 +14,20 @@
 #define __ARCH_MODE_MACHINE_DEBUG_H_
 
 #include <config.h>
-#if defined(CONFIG_DEBUG_BUILD) || defined (CONFIG_HARDWARE_DEBUG_API)
 
 #define DBGDSCR_int "p14,0,%0,c0,c1,0"
+/* Not guaranteed in v7, only v7.1+ */
 #define DBGDSCR_ext "p14, 0, %0, c0, c2, 2"
+#define DBGSDER "p15, 0, %0, c1, c1, 1"
 
 #define DBGWFAR "p14,0,%0,c0,c6,0"
 #define DFAR "p15,0,%0,c6,c0,0"
+
+#define DBGDSCR_SECURE_MODE_DISABLED  (BIT(18))
+
+#define DBGSDER_ENABLE_SECURE_USER_NON_INVASIVE_DEBUG   (BIT(1))
+
+#if defined(CONFIG_DEBUG_BUILD) || defined (CONFIG_HARDWARE_DEBUG_API)
 
 #ifndef __ASSEMBLER__
 #include <stdint.h>
