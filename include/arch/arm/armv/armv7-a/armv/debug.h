@@ -14,11 +14,35 @@
 #define __ARCH_ARMV_DEBUG_H_
 
 #include <config.h>
-#ifdef CONFIG_HARDWARE_DEBUG_API
+
+#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_EXPORT_PMU_USER)
 
 #include <mode/machine/debug.h>
 #include <mode/machine.h> /* MRC/MCR */
 
+/** Read DBGDSCR from CP14.
+ */
+static inline word_t
+readDscrCp(void)
+{
+    word_t v;
+
+    MRC(DBGDSCR_ext, v);
+    return v;
+}
+
+/** Write DBGDSCR (Status and control register).
+ * On ARMv7, the external view of the CP14 DBGDSCR register is preferred since
+ * the internal view is fully read-only.
+ */
+static inline void
+writeDscrCp(word_t val)
+{
+    MCR(DBGDSCR_ext, val);
+}
+#endif /* CONFIG_HARDWARE_DEBUG_API CONFIG_EXPORT_PMU_USER */
+
+#ifdef CONFIG_HARDWARE_DEBUG_API
 #define DBGVCR_RESERVED_BITS_MASK      \
                         (BIT(5)|BIT(8)|BIT(9)|BIT(13)|BIT(16)|BIT(24)|BIT(29))
 
@@ -40,26 +64,6 @@ enum v7_breakpoint_type {
     DBGBCR_TYPE_LINKED_VMID_AND_CONTEXT_MATCH = 0xBu
 };
 
-/** Read DBGDSCR from CP14.
- */
-static word_t
-readDscrCp(void)
-{
-    word_t v;
-
-    MRC(DBGDSCR_ext, v);
-    return v;
-}
-
-/** Write DBGDSCR (Status and control register).
- * On ARMv7, the external view of the CP14 DBGDSCR register is preferred since
- * the internal view is fully read-only.
- */
-static void
-writeDscrCp(word_t val)
-{
-    MCR(DBGDSCR_ext, val);
-}
 
 /** Determines whether or not 8-byte watchpoints are supported.
  *

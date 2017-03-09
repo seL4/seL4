@@ -10,6 +10,7 @@
 
 #include <plat/machine/hardware.h>
 #include <arch/user_access.h>
+#include <mode/machine/debug.h>
 
 #define PMUSERENR_ENABLE BIT(0)
 
@@ -33,6 +34,13 @@ check_export_pmu(void)
     uint32_t v;
     v = PMUSERENR_ENABLE;
     MCR(PMUSERENR, v);
+
+    /* enable user-level pmu event counter if we're in secure mode */
+    if (!(readDscrCp() & DBGDSCR_SECURE_MODE_DISABLED)) {
+        MRC(DBGSDER, v);
+        v |= DBGSDER_ENABLE_SECURE_USER_NON_INVASIVE_DEBUG;
+        MCR(DBGSDER, v);
+    }
 #endif
 }
 
