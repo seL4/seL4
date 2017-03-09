@@ -80,8 +80,9 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { PCIE_1_CFG_PADDR,     PCIE_1_CFG_PADDR + BIT(seL4_PageBits) },
     { PCIE_PCA0_1_PADDR,    PCIE_PCA0_1_PADDR + BIT(seL4_PageBits) },
     { PCIE_PADS_AFI_PADDR,  PCIE_PADS_AFI_PADDR + BIT(seL4_PageBits) },
-    { PCIE_A2_PADDR,        PCIE_A2_PADDR + BIT(20) },
+    { PCIE_A2_PADDR,        PCIE_A2_PADDR + BIT(20)*224 },
     { R8169_NIC_PADDR,      R8169_NIC_PADDR + BIT(20)},
+    { GRAPH_HOST_REGS_PADDR, GRAPH_HOST_REGS_PADDR + BIT(10)*208},             /* 208KB */
     { GRAPH_HOST_PADDR,     GRAPH_HOST_PADDR + (BIT(20) * 16) },               /* 16 MB                        */
     { GPU_PADDR,            GPU_PADDR + (BIT(20) * 144) },                     /* 144 MB                       */
     { UP_TAG_PADDR,         UP_TAG_PADDR + BIT(seL4_PageBits) },               /* 4 KB                         */
@@ -112,6 +113,7 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { I2C_I2C4_PADDR,       I2C_I2C4_PADDR + BIT(seL4_PageBits) },             /* 4 KB                         */
     { I2C5_SPI2B_6_PADDR,   I2C5_SPI2B_6_PADDR + BIT(seL4_PageBits) },         /* 4 KB                         */
     { RTC_KFUSE_PADDR,      RTC_KFUSE_PADDR + BIT(seL4_PageBits) },            /* 4 KB                         */
+    { FUSE_KFUSE_PADDR,     FUSE_KFUSE_PADDR + BIT(seL4_PageBits) },            /* 4 KB                         */
     { LA_PADDR,             LA_PADDR + (BIT(seL4_PageBits) * 2) },             /* 8 KB                         */
     { SE_PADDR,             SE_PADDR + (BIT(seL4_PageBits) * 2) },             /* 8 KB                         */
     { TSENSOR_PADDR,        TSENSOR_PADDR + BIT(seL4_PageBits) },              /* 4 KB                         */

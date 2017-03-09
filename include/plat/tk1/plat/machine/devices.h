@@ -53,6 +53,7 @@
 #define PCIE_A2_PADDR               (0x02000000)                /* 224 MB                       */
 #define PCIE_A3_PADDR               (0x10000000)                /* 763 MB                     */
 #define R8169_NIC_PADDR             (0x13000000)                /* r8169 NIC 1 MB               */
+#define GRAPH_HOST_REGS_PADDR       (0x50000000)                /* 208 KB                       */
 #define GRAPH_HOST_PADDR            (0x54000000)                /* 16 MB                        */
 #define GPU_PADDR                   (0x57000000)                /* 144 MB                       */
 #define UP_TAG_PADDR                (0x60000000)                /* 4 KB                         */
@@ -83,6 +84,7 @@
 #define I2C_I2C4_PADDR              (0x7000c000)                /* 4 KB                         */
 #define I2C5_SPI2B_6_PADDR          (0x7000d000)                /* 4 KB                         */
 #define RTC_KFUSE_PADDR             (0x7000e000)                /* 4 KB                         */
+#define FUSE_KFUSE_PADDR            (0x7000f000)                /* 4 KB                         */
 #define LA_PADDR                    (0x70010000)                /* 8 KB                         */
 #define SE_PADDR                    (0x70012000)                /* 8 KB                         */
 #define TSENSOR_PADDR               (0x70014000)                /* 4 KB                         */
