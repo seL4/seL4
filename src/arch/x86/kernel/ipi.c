@@ -69,13 +69,17 @@ static inline void ipi_wait(word_t cores)
 
  * The core who triggered the store is responsible for triggering a reschedule,
  * or this call will idle forever */
-static void ipiStallCoreCallback(void)
+static void ipiStallCoreCallback(bool_t irqPath)
 {
-    if (clh_is_self_in_queue() &&
-            (NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1)) {
-        /* The current thread is runnable as we would replace this thread with an idle thread.
-         * The instruction should be re-executed if we are in kernel to handle syscalls */
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    if (clh_is_self_in_queue() && !irqPath) {
+        /* The current thread is running as we would replace this thread with an idle thread.
+         * The instruction should be re-executed if we are in kernel to handle syscalls. However,
+         * 'ThreadState_Restart' does not always result in regenerating exception if we
+         * are in kernel to handle them, e.g. hardware single step exception. 
+         * Also, thread in 'ThreadState_RunningVM' should remain in same state. */
+        if(thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running) {
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        }
 
         SCHED_ENQUEUE_CURRENT_TCB;
         switchToIdleThread();
@@ -91,7 +95,7 @@ static void ipiStallCoreCallback(void)
 
                 /* Multiple calls for similar reason could result in stack overflow */
                 assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
-                Arch_handleIPI(irq_remote_call_ipi);
+                Arch_handleIPI(irq_remote_call_ipi, irqPath);
             }
             asm volatile("pause");
         }
@@ -114,14 +118,15 @@ static void ipiStallCoreCallback(void)
     }
 }
 
-static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2)
+static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
+    word_t arg1, word_t arg2, bool_t irqPath)
 {
     /* we gets spurious irq_remote_call_ipi calls, e.g. when handling IPI
      * in lock while hardware IPI is pending. Guard against spurious IPIs! */
     if (clh_is_ipi_pending(getCurrentCPUIndex())) {
         switch ((IpiRemoteCall_t)call) {
         case IpiRemoteCall_Stall:
-            ipiStallCoreCallback();
+            ipiStallCoreCallback(irqPath);
             break;
 
         case IpiRemoteCall_InvalidatePageStructureCacheASID:
@@ -167,10 +172,10 @@ static void handleReschedule(void)
     rescheduleRequired();
 }
 
-void Arch_handleIPI(irq_t irq)
+void Arch_handleIPI(irq_t irq, bool_t irqPath)
 {
     if (irq == irq_remote_call_ipi) {
-        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2));
+        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2), irqPath);
     } else if (irq == irq_reschedule_ipi) {
         handleReschedule();
     } else {

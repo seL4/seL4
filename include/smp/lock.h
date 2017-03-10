@@ -66,7 +66,7 @@ clh_is_ipi_pending(word_t cpu)
 }
 
 static inline void FORCE_INLINE
-clh_lock_acquire(word_t cpu)
+clh_lock_acquire(word_t cpu, bool_t irqPath)
 {
     volatile clh_qnode_t *prev;
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Pending;
@@ -79,8 +79,9 @@ clh_lock_acquire(word_t cpu)
     while (big_kernel_lock.node_owners[cpu].next->value != CLHState_Granted) {
         if (clh_is_ipi_pending(cpu)) {
             /* we only handle irq_remote_call_ipi here as other type of IPIs
-             * are async and could be delayed */
-            Arch_handleIPI(irq_remote_call_ipi);
+             * are async and could be delayed. 'Arch_handleIPI' may not return
+             * based on value of the 'irqPath'. */
+            Arch_handleIPI(irq_remote_call_ipi, irqPath);
         }
         arch_pause();
     }
@@ -106,33 +107,35 @@ clh_is_self_in_queue(void)
     return big_kernel_lock.node_owners[getCurrentCPUIndex()].node->value == CLHState_Pending;
 }
 
-#define NODE_LOCK do {                          \
-    clh_lock_acquire(getCurrentCPUIndex());     \
+#define NODE_LOCK(_irqPath) do {                         \
+    clh_lock_acquire(getCurrentCPUIndex(), _irqPath);    \
 } while(0)
 
-#define NODE_UNLOCK do {                        \
-    clh_lock_release(getCurrentCPUIndex());     \
+#define NODE_UNLOCK do {                                 \
+    clh_lock_release(getCurrentCPUIndex());              \
 } while(0)
 
-#define NODE_LOCK_IF(_cond) do {                \
-    if((_cond)) {                               \
-        NODE_LOCK;                              \
-    }                                           \
+#define NODE_LOCK_IF(_cond, _irqPath) do {               \
+    if((_cond)) {                                        \
+        NODE_LOCK(_irqPath);                             \
+    }                                                    \
 } while(0)
 
-#define NODE_UNLOCK_IF_HELD do {                \
-    if(clh_is_self_in_queue()) {                \
-        NODE_UNLOCK;                            \
-    }                                           \
+#define NODE_UNLOCK_IF_HELD do {                         \
+    if(clh_is_self_in_queue()) {                         \
+        NODE_UNLOCK;                                     \
+    }                                                    \
 } while(0)
 
 #else
-
-#define NODE_LOCK do {} while (0)
+#define NODE_LOCK(_irq) do {} while (0)
 #define NODE_UNLOCK do {} while (0)
-#define NODE_LOCK_IF(_cond) do {} while (0)
+#define NODE_LOCK_IF(_cond, _irq) do {} while (0)
 #define NODE_UNLOCK_IF_HELD do {} while (0)
+#endif /* CONFIG_MAX_NUM_NODES */
 
-#endif
-
+#define NODE_LOCK_SYS NODE_LOCK(false)
+#define NODE_LOCK_IRQ NODE_LOCK(true)
+#define NODE_LOCK_SYS_IF(_cond) NODE_LOCK_IF(_cond, false)
+#define NODE_LOCK_IRQ_IF(_cond) NODE_LOCK_IF(_cond, true)
 #endif /* __SMP_LOCK_H_ */

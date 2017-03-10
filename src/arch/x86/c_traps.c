@@ -34,7 +34,10 @@ c_nested_interrupt(int irq)
 void VISIBLE NORETURN
 c_handle_interrupt(int irq, int syscall)
 {
-    NODE_LOCK_IF(irq != int_remote_call_ipi);
+    /* Only grab the lock if we are not handeling 'int_remote_call_ipi' interrupt
+     * also flag this lock as IRQ lock if handling the irq interrupts. */
+    NODE_LOCK_IF(irq != int_remote_call_ipi,
+        irq >= int_irq_min && irq <= int_irq_max);
 
     c_entry_hook();
 
@@ -137,7 +140,7 @@ slowpath(syscall_t syscall)
 void VISIBLE NORETURN
 c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
-    NODE_LOCK;
+    NODE_LOCK_SYS;
 
     c_entry_hook();
 

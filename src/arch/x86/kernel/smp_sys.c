@@ -141,7 +141,7 @@ boot_node(void)
     smp_aps_index++;
 
     /* grab BKL before leaving the kernel */
-    NODE_LOCK;
+    NODE_LOCK_SYS;
 
     init_core_state(SchedulerAction_ChooseNewThread);
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;

@@ -16,7 +16,7 @@
 
 #if CONFIG_MAX_NUM_NODES > 1
 
-void Arch_handleIPI(irq_t irq)
+void Arch_handleIPI(irq_t irq, bool_t irqPath)
 {
 #warning "Arch_handleIPI is not implemented"
 }

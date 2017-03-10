@@ -21,7 +21,7 @@
 #ifdef CONFIG_VTX
 static void NORETURN vmlaunch_failed(word_t failInvalid, word_t failValid)
 {
-    NODE_LOCK;
+    NODE_LOCK_SYS;
 
     c_entry_hook();
 

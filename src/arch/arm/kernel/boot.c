@@ -289,7 +289,7 @@ try_init_kernel_secondary_core(void)
     /* Enable per-CPU timer interrupts */
     maskInterrupt(false, KERNEL_TIMER_IRQ);
 
-    NODE_LOCK;
+    NODE_LOCK_SYS;
 
     ksNumCPUs++;
 
@@ -510,7 +510,7 @@ try_init_kernel(
     SMP_COND_STATEMENT(release_secondary_cpus());
 
     /* grab BKL before leaving the kernel */
-    NODE_LOCK;
+    NODE_LOCK_SYS;
 
     printf("Booting all finished, dropped to user space\n");
 

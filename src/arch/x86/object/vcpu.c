@@ -1188,7 +1188,7 @@ handleVmexit(void)
         if (vmx_feature_ack_on_exit) {
             interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
             ARCH_NODE_STATE(x86KScurInterrupt) = interrupt & 0xff;
-            NODE_LOCK_IF(interrupt != int_remote_call_ipi);
+            NODE_LOCK_IRQ_IF(interrupt != int_remote_call_ipi);
             handleInterruptEntry();
         } else {
             /* poll for the pending irq. We will then handle it once we return back
@@ -1198,7 +1198,7 @@ handleVmexit(void)
         return EXCEPTION_NONE;
     }
 
-    NODE_LOCK;
+    NODE_LOCK_SYS;
 
     if (!vcpuThreadUsingFPU(NODE_STATE(ksCurThread))) {
         /* since this vcpu does not currently own the fpu state, check if the kernel should

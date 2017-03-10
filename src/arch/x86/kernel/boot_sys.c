@@ -598,7 +598,7 @@ try_boot_sys(
     SMP_COND_STATEMENT(start_boot_aps());
 
     /* grab BKL before leaving the kernel */
-    NODE_LOCK;
+    NODE_LOCK_SYS;
 
     printf("Booting all finished, dropped to user space\n");
 

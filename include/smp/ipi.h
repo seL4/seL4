@@ -21,7 +21,12 @@
 #if CONFIG_MAX_NUM_NODES > 1
 #define MAX_IPI_ARGS    3   /* Maximum number of parameters to remote function */
 
-void Arch_handleIPI(irq_t irq);
+/* IPIs could be handled, both using hardware interrupts and software flag
+ * in CLH lock. 'irqPath' is used to differentiate the caller path, i.e.
+ * if it is called while waiting on the lock to handle the IRQ or not. The
+ * remote call handler, would decide if 'Arch_handleIPI' should return base
+ * on this value, as IRQs could be re/triggered asynchronous */
+void Arch_handleIPI(irq_t irq, bool_t irqPath);
 
 /*
  * Run a synchronous function on all cores specified by mask. Return when target cores
