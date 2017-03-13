@@ -78,9 +78,9 @@ word_t Mode_sanitiseRegister(register_t reg, word_t v)
 {
     if (reg == FaultIP || reg == NextIP) {
         /* ensure instruction address is canonical */
-        if (reg > 0x00007fffffffffff && reg < 0xffff800000000000) {
+        if (v > 0x00007fffffffffff && v < 0xffff800000000000) {
             /* no way to guess what the user wanted so give them zero */
-            reg = 0;
+            v = 0;
         }
     }
     return v;
