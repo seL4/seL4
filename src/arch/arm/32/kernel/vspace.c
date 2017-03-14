@@ -2983,7 +2983,7 @@ void kernelUndefinedInstruction(word_t pc) VISIBLE;
 void
 kernelPrefetchAbort(word_t pc)
 {
-    word_t sr = getHSR();
+    word_t UNUSED sr = getHSR();
 
     printf("\n\nKERNEL PREFETCH ABORT!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
@@ -2995,8 +2995,8 @@ kernelPrefetchAbort(word_t pc)
 void
 kernelDataAbort(word_t pc)
 {
-    word_t far = getHDFAR();
-    word_t sr = getHSR();
+    word_t UNUSED far = getHDFAR();
+    word_t UNUSED sr = getHSR();
 
     printf("\n\nKERNEL DATA ABORT!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
@@ -3008,7 +3008,7 @@ kernelDataAbort(word_t pc)
 void
 kernelUndefinedInstruction(word_t pc)
 {
-    word_t sr = getHSR();
+    word_t UNUSED sr = getHSR();
 
     printf("\n\nKERNEL UNDEFINED INSTRUCTION!\n");
     printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
