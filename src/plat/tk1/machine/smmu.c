@@ -97,7 +97,7 @@ smmu_disable(void)
         asm volatile ("mov r0, %0\n\t"
                       "dsb\nisb\n"
                       "smc #0\n"
-                      ::"r"(addr));
+                      ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
     } else {
         /* in secure mode, can enable it directly */
         smmu_regs->smmu_config = 0;
@@ -115,7 +115,7 @@ smmu_enable(void)
         asm volatile ("mov r0, %0\n\t"
                       "dsb\nisb\n"
                       "smc #0\n"
-                      ::"r"(addr));
+                      ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
     } else {
         smmu_regs->smmu_config = 1;
     }
