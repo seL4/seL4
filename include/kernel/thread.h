@@ -48,6 +48,7 @@ isRunnable(const tcb_t *thread)
     switch (thread_state_get_tsType(thread->tcbState)) {
     case ThreadState_Running:
     case ThreadState_Restart:
+    case ThreadState_YieldTo:
 #ifdef CONFIG_VTX
     case ThreadState_RunningVM:
 #endif

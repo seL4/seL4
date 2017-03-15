@@ -70,6 +70,10 @@ activateThread(void)
 #endif
         break;
 
+    case ThreadState_YieldTo:
+        schedContext_completeYieldTo(NODE_STATE(ksCurThread));
+        break;
+
     case ThreadState_Restart: {
         word_t pc;
 
@@ -95,6 +99,7 @@ suspend(tcb_t *target)
     setThreadState(target, ThreadState_Inactive);
     tcbSchedDequeue(target);
     tcbReleaseRemove(target);
+    schedContext_cancelYieldTo(target);
 }
 
 void
@@ -156,7 +161,6 @@ doReplyTransfer(tcb_t *sender, reply_t *reply)
     }
 
     if (receiver->tcbSchedContext && isRunnable(receiver)) {
-        refill_unblock_check(receiver->tcbSchedContext);
         if ((refill_ready(receiver->tcbSchedContext) && refill_sufficient(receiver->tcbSchedContext, 0))) {
             possibleSwitchTo(receiver);
         } else {

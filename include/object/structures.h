@@ -155,6 +155,7 @@ enum _thread_state {
     ThreadState_Inactive = 0,
     ThreadState_Running,
     ThreadState_Restart,
+    ThreadState_YieldTo,
     ThreadState_BlockedOnReceive,
     ThreadState_BlockedOnSend,
     ThreadState_BlockedOnReply,
@@ -256,6 +257,9 @@ struct tcb {
      * be in the scheduler queues */
     sched_context_t *tcbSchedContext;
 
+    /* scheduling context that this tcb yielded to */
+    sched_context_t *tcbYieldTo;
+
     /* userland virtual address of thread IPC buffer, 4 bytes */
     word_t tcbIPCBuffer;
 
@@ -312,6 +316,9 @@ struct sched_context {
 
      /* data word that is sent with timeout faults that occur on this scheduling context */
     word_t scBadge;
+
+    /* thread that yielded to this scheduling context */
+    tcb_t *scYieldFrom;
 
     /* Amount of refills this sc tracks */
     word_t scRefillMax;
