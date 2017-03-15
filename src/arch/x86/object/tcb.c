@@ -95,3 +95,8 @@ Arch_migrateTCB(tcb_t *thread)
     }
 }
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
+
+void
+Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
+{
+}
