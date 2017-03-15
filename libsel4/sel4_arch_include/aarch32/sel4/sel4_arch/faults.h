@@ -53,7 +53,7 @@ seL4_getArchFault(seL4_MessageInfo_t tag)
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
      case seL4_Fault_Timeout:
         return seL4_Fault_Timeout_new(seL4_GetMR(seL4_Timeout_Data),
-                                      seL4_GetMR(seL4_Timeout_Consumed),
+                                      seL4_GetMR(seL4_Timeout_Consumed_HighBits),
                                       seL4_GetMR(seL4_Timeout_Consumed_LowBits));
 
    default:
