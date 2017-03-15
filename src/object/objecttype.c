@@ -173,6 +173,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
             if (tcb->tcbSchedContext) {
+                schedContext_completeYieldTo(tcb->tcbSchedContext->scYieldFrom);
                 schedContext_unbindTCB(tcb->tcbSchedContext, tcb);
             }
             if (tcb->tcbReply) {
@@ -204,6 +205,9 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
                 assert(call_stack_get_isHead(sc->scReply->replyNext));
                 sc->scReply->replyNext = call_stack_new(0, false);
                 sc->scReply = NULL;
+            }
+            if (sc->scYieldFrom) {
+                schedContext_completeYieldTo(sc->scYieldFrom);
             }
             fc_ret.remainder = cap_null_cap_new();
             fc_ret.cleanupInfo = cap_null_cap_new();

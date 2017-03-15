@@ -676,6 +676,19 @@
         <param dir="out" name="consumed" type="seL4_Time"
                description="Amount consumed by this scheduling context."/>
 
+       </method>
+       <method id="SchedContextYieldTo" name="YieldTo"
+           manual_name="YieldTo" manual_label="schedcontext_yieldto">
+           <brief>
+              If a thread is currently runnable and running on this scheduling context and the scheduling context has available budget, place it at the head of the scheduling queue.
+              If the caller is at an equal priority to the thread this will result in the thread being scheduled.
+              If the caller is at a higher priority the thread will not run until the threads priority is the highest priority in the system.
+              The caller must have a maximum control priority greater than or equal to the threads priority.
+          </brief>
+          <description>
+              TODO
+          </description>
+            <param dir="out" name="consumed" type="seL4_Time"/>
         </method>
     </interface>
 
