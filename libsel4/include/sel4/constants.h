@@ -83,7 +83,7 @@ typedef enum {
 /* Minimum size of a scheduling context (2^{n} bytes) */
 #define seL4_MinSchedContextBits 8
 /* the size of a scheduling context, excluding extra refills */
-#define seL4_CoreSchedContextBytes (8 * sizeof(seL4_Word) + (6 * 8))
+#define seL4_CoreSchedContextBytes (10 * sizeof(seL4_Word) + (6 * 8))
 /* the size of a single extra refill */
 #define seL4_RefillSizeBytes (2 * 8)
 

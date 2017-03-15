@@ -66,6 +66,13 @@ BOOT_CODE void configureIdleThread(tcb_t *tcb)
 
 void activateThread(void)
 {
+#ifdef CONFIG_KERNEL_MCS
+    if (unlikely(NODE_STATE(ksCurThread)->tcbYieldTo)) {
+        schedContext_completeYieldTo(NODE_STATE(ksCurThread));
+        assert(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running);
+    }
+#endif
+
     switch (thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState)) {
     case ThreadState_Running:
 #ifdef CONFIG_VTX
@@ -106,6 +113,7 @@ void suspend(tcb_t *target)
     tcbSchedDequeue(target);
 #ifdef CONFIG_KERNEL_MCS
     tcbReleaseRemove(target);
+    schedContext_cancelYieldTo(target);
 #endif
 }
 
@@ -196,7 +204,6 @@ void doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot, bool_t grant)
 
 #ifdef CONFIG_KERNEL_MCS
     if (receiver->tcbSchedContext && isRunnable(receiver)) {
-        refill_unblock_check(receiver->tcbSchedContext);
         if ((refill_ready(receiver->tcbSchedContext) && refill_sufficient(receiver->tcbSchedContext, 0))) {
             possibleSwitchTo(receiver);
         } else {

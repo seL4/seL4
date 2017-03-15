@@ -234,7 +234,7 @@ typedef struct sched_context sched_context_t;
 typedef struct reply reply_t;
 #endif
 
-/* TCB: size >= 18 words + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size >= 18 words + sizeof(arch_tcb_t) + 1 word on MCS (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
@@ -266,6 +266,9 @@ struct tcb {
     /* scheduling context that this tcb is running on, if it is NULL the tcb cannot
      * be in the scheduler queues, 1 word */
     sched_context_t *tcbSchedContext;
+
+    /* scheduling context that this tcb yielded to */
+    sched_context_t *tcbYieldTo;
 #else
     /* Timeslice remaining, 1 word */
     word_t tcbTimeSlice;
@@ -343,6 +346,9 @@ struct sched_context {
 
     /* data word that is sent with timeout faults that occur on this scheduling context */
     word_t scBadge;
+
+    /* thread that yielded to this scheduling context */
+    tcb_t *scYieldFrom;
 
     /* Amount of refills this sc tracks */
     word_t scRefillMax;
