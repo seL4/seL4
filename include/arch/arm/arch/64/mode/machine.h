@@ -110,7 +110,7 @@ static inline void setVtable(pptr_t addr)
     isb();
 }
 
-static inline void invalidateTLB(void)
+static inline void invalidateLocalTLB(void)
 {
     dsb();
     asm volatile("tlbi vmalle1");
@@ -118,7 +118,7 @@ static inline void invalidateTLB(void)
     isb();
 }
 
-static inline void invalidateTLB_ASID(asid_t asid)
+static inline void invalidateLocalTLB_ASID(asid_t asid)
 {
     assert(asid < BIT(16));
 
@@ -128,7 +128,7 @@ static inline void invalidateTLB_ASID(asid_t asid)
     isb();
 }
 
-static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
+static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 {
     dsb();
     asm volatile("tlbi vae1, %0" : : "r" (mva_plus_asid));

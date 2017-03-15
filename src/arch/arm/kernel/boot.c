@@ -25,6 +25,7 @@
 #include <machine.h>
 #include <machine/timer.h>
 #include <arch/machine/fpu.h>
+#include <arch/machine/tlb.h>
 
 /* pointer to the end of boot code/data in kernel image */
 /* need a fake array to get the pointer from the linker script */
@@ -497,7 +498,7 @@ try_init_kernel(
      * strictly neccessary, but performance is not critical here so clean and invalidate
      * everything to PoC */
     cleanInvalidateL1Caches();
-    invalidateTLB();
+    invalidateLocalTLB();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         invalidateHypTLB();
     }

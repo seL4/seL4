@@ -16,6 +16,7 @@
 #include <arch/machine.h>
 #include <arch/model/statedata.h>
 #include <arch/object/objecttype.h>
+#include <arch/machine/tlb.h>
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #include <arch/object/vcpu.h>
 #endif
@@ -208,7 +209,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                                         addrFromPPtr((void *)&armKSGlobalLogPT[0]));
 
                     for (int idx = 0; idx < BIT(PT_INDEX_BITS); idx++) {
-                        invalidateTLB_VAASID(KS_LOG_PPTR + (idx << seL4_PageBits));
+                        invalidateTranslationSingle(KS_LOG_PPTR + (idx << seL4_PageBits));
                     }
 
                     userError("Log buffer frame is invalidated, kernel can't benchmark anymore");

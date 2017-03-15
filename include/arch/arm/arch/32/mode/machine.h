@@ -218,7 +218,7 @@ static inline word_t getHWCPUID(void)
 
 /* TLB control */
 
-static inline void invalidateTLB(void)
+static inline void invalidateLocalTLB(void)
 {
     dsb();
     asm volatile("mcr p15, 0, %0, c8, c7, 0" : : "r"(0));
@@ -226,10 +226,10 @@ static inline void invalidateTLB(void)
     isb();
 }
 
-static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
+static inline void invalidateLocalTLB_ASID(hw_asid_t hw_asid)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        invalidateTLB();
+        invalidateLocalTLB();
     } else {
         dsb();
         asm volatile("mcr p15, 0, %0, c8, c7, 2" : : "r"(hw_asid));
@@ -238,10 +238,10 @@ static inline void invalidateTLB_ASID(hw_asid_t hw_asid)
     }
 }
 
-static inline void invalidateTLB_VAASID(word_t mva_plus_asid)
+static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        invalidateTLB();
+        invalidateLocalTLB();
     } else {
         dsb();
         asm volatile("mcr p15, 0, %0, c8, c7, 1" : : "r"(mva_plus_asid));
