@@ -471,7 +471,7 @@ try_init_kernel(
                          ipcbuf_cap
                      );
 
-    if (inital == NULL) {
+    if (initial == NULL) {
         return false;
     }
 
