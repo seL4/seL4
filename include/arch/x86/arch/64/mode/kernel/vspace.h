@@ -15,6 +15,12 @@
 
 #include <arch/kernel/vspace.h>
 
+struct lookupPDPTSlot_ret {
+    exception_t status;
+    pdpte_t     *pdptSlot;
+};
+typedef struct lookupPDPTSlot_ret lookupPDPTSlot_ret_t;
+
 static inline pte_t
 x86_make_device_pte(paddr_t phys)
 {

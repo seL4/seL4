@@ -32,13 +32,6 @@ struct lookupPDSlot_ret {
 };
 typedef struct lookupPDSlot_ret lookupPDSlot_ret_t;
 
-
-struct lookupPDPTSlot_ret {
-    exception_t status;
-    pdpte_t     *pdptSlot;
-};
-typedef struct lookupPDPTSlot_ret lookupPDPTSlot_ret_t;
-
 struct findVSpaceForASID_ret {
     exception_t status;
     vspace_root_t *vspace_root;

@@ -389,18 +389,6 @@ block tss {
 
 -- PDs and PTs
 
-block pdpte {
-    padding 32
-
-    field_high  pd_base_address     20
-    field       avl                 3
-    padding                         4
-    field       cache_disabled      1
-    field       write_through       1
-    padding                         2
-    field       present             1
-}
-
 block pde_small {
     field_high  pt_base_address     20
     field       avl                 3
