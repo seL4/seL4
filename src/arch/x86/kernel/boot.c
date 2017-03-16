@@ -404,11 +404,11 @@ init_sys_state(
 
     /* create the initial thread */
     tcb_t *initial = create_initial_thread(root_cnode_cap,
-                                            it_vspace_cap,
-                                            ui_info.v_entry,
-                                            bi_frame_vptr,
-                                            ipcbuf_vptr,
-                                            ipcbuf_cap);
+                                           it_vspace_cap,
+                                           ui_info.v_entry,
+                                           bi_frame_vptr,
+                                           ipcbuf_vptr,
+                                           ipcbuf_cap);
     if (initial == NULL) {
         return false;
     }
