@@ -23,8 +23,6 @@
 #define GDT_IPCBUF  7
 #define GDT_ENTRIES 8
 
-#define PDPTE_SIZE_BITS 0
-#define PDPT_INDEX_BITS 0
 #define PDE_SIZE_BITS  2
 #define PD_INDEX_BITS      10
 #define PTE_SIZE_BITS 2
@@ -33,14 +31,6 @@
 typedef pde_t vspace_root_t;
 
 #define GET_VSPACE_ROOT_INDEX(x) ((x) >> (seL4_PageBits + PT_INDEX_BITS))
-
-#define PDPTE_PTR(r)   ((pdpte_t *)(r))
-#define PDPTE_PTR_PTR(r) ((pdpte_t**)(r))
-#define PDPTE_REF(p)   ((word_t)(p))
-
-compile_assert(pdpt_size_bits_sane, PDPT_INDEX_BITS + PDPTE_SIZE_BITS == seL4_PDPTBits)
-#define PDPT_PTR(r)    ((pdpte_t*)(r))
-#define PDPT_PREF(p)   ((word_t)(p))
 
 #define PDE_PTR(r)     ((pde_t *)(r))
 #define PDE_PTR_PTR(r) ((pde_t **)(r))

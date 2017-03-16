@@ -48,19 +48,12 @@
 #define seL4_X86_EPTPDBits   12
 #define seL4_X86_EPTPTBits   12
 
-#ifdef CONFIG_PAE_PAGING
-#define seL4_PDPTBits        5
-#define seL4_LargePageBits   21 /* 2MB */
-#else
 #define seL4_PDPTBits         0
 #define seL4_LargePageBits    22 /* 4MB */
-#endif
 
 /* Previously large frames were explicitly assumed to be 4M. If not using
  * PAE assuming a legacy environment and leave the old definition */
-#ifndef CONFIG_PAE_PAGING
 #define seL4_4MBits           seL4_LargePageBits
-#endif
 
 #define seL4_WordBits (sizeof(seL4_Word) * 8)
 

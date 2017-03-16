@@ -15,8 +15,7 @@
 #include <object/structures.h>
 #include <arch/types.h>
 
-extern pdpte_t ia32KSGlobalPDPT[BIT(PDPT_INDEX_BITS)];
-extern pde_t ia32KSGlobalPD[BIT(PD_INDEX_BITS + PDPT_INDEX_BITS)];
+extern pde_t ia32KSGlobalPD[BIT(PD_INDEX_BITS)];
 extern pte_t ia32KSGlobalPT[BIT(PT_INDEX_BITS)];
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
