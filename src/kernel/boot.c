@@ -393,7 +393,7 @@ create_idle_thread(void)
     return true;
 }
 
-BOOT_CODE bool_t
+BOOT_CODE tcb_t *
 create_initial_thread(
     cap_t  root_cnode_cap,
     cap_t  it_pd_cap,
@@ -412,7 +412,7 @@ create_initial_thread(
     pptr = alloc_region(seL4_TCBBits);
     if (!pptr) {
         printf("Kernel init failed: Unable to allocate tcb for initial thread\n");
-        return false;
+        return NULL;
     }
     memzero((void*)pptr, 1 << seL4_TCBBits);
     tcb = TCB_PTR(pptr + TCB_OFFSET);
@@ -423,7 +423,7 @@ create_initial_thread(
     dc_ret = deriveCap(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadIPCBuffer), ipcbuf_cap);
     if (dc_ret.status != EXCEPTION_NONE) {
         printf("Failed to derive copy of IPC Buffer\n");
-        return false;
+        return NULL;
     }
 
     /* initialise TCB (corresponds directly to abstract specification) */
@@ -459,8 +459,7 @@ create_initial_thread(
     tcb->tcbMCP = seL4_MaxPrio;
     setupReplyMaster(tcb);
     setThreadState(tcb, ThreadState_Running);
-    NODE_STATE(ksSchedulerAction) = tcb;
-    NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
+
     ksCurDomain = ksDomSchedule[ksDomScheduleIdx].domain;
     ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
     assert(ksCurDomain < CONFIG_NUM_DOMAINS && ksDomainTime > 0);
@@ -475,7 +474,17 @@ create_initial_thread(
     setThreadName(tcb, "rootserver");
 #endif
 
-    return true;
+    return tcb;
+}
+
+BOOT_CODE void
+init_core_state(tcb_t *scheduler_action)
+{
+#ifdef CONFIG_HAVE_FPU
+    NODE_STATE(ksActiveFPUState) = NULL;
+#endif
+    NODE_STATE(ksSchedulerAction) = scheduler_action;
+    NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
 }
 
 BOOT_CODE static bool_t

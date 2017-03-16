@@ -293,8 +293,7 @@ try_init_kernel_secondary_core(void)
 
     ksNumCPUs++;
 
-    NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
-    NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
+    init_core_state(SchedulerAction_ResumeCurrentThread);
 
     return true;
 }
@@ -463,16 +462,20 @@ try_init_kernel(
     cleanInvalidateL1Caches();
 
     /* create the initial thread */
-    if (!create_initial_thread(
-                root_cnode_cap,
-                it_pd_cap,
-                v_entry,
-                bi_frame_vptr,
-                ipcbuf_vptr,
-                ipcbuf_cap
-            )) {
+    tcb_t *initial = create_initial_thread(
+                         root_cnode_cap,
+                         it_pd_cap,
+                         v_entry,
+                         bi_frame_vptr,
+                         ipcbuf_vptr,
+                         ipcbuf_cap
+                     );
+
+    if (inital == NULL) {
         return false;
     }
+
+    init_core_state(initial);
 
     /* create all of the untypeds. Both devices and kernel window memory */
     if (!create_untypeds(
@@ -499,9 +502,6 @@ try_init_kernel(
         invalidateHypTLB();
     }
 
-#ifdef CONFIG_HAVE_FPU
-    NODE_STATE(ksActiveFPUState) = NULL;
-#endif /* CONFIG_HAVE_FPU */
 
     ksNumCPUs = 1;
 

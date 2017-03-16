@@ -403,16 +403,16 @@ init_sys_state(
     }
 
     /* create the initial thread */
-    if (!create_initial_thread(
-                root_cnode_cap,
-                it_vspace_cap,
-                ui_info.v_entry,
-                bi_frame_vptr,
-                ipcbuf_vptr,
-                ipcbuf_cap
-            )) {
+    tcb_t * initial = create_initial_thread(root_cnode_cap,
+                                            it_vspace_cap,
+                                            ui_info.v_entry,
+                                            bi_frame_vptr,
+                                            ipcbuf_vptr,
+                                            ipcbuf_cap);
+    if (initial == NULL) {
         return false;
     }
+    init_core_state(initial);
 
     if (config_set(CONFIG_IOMMU)) {
         /* initialise VTD-related data structures and the IOMMUs */

@@ -90,7 +90,7 @@ create_it_pd_pts(
     vptr_t     bi_frame_vptr
 );
 
-bool_t
+tcb_t *
 create_initial_thread(
     cap_t  root_cnode_cap,
     cap_t  it_pd_cap,
@@ -100,4 +100,5 @@ create_initial_thread(
     cap_t  ipcbuf_cap
 );
 
+void init_core_state(tcb_t *scheduler_action);
 #endif
