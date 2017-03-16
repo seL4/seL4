@@ -11,7 +11,7 @@
  */
 
 #include <config.h>
-#include <mode/kernel/ipi.h>
+#include <mode/smp/ipi.h>
 #include <mode/kernel/tlb.h>
 
 #if CONFIG_MAX_NUM_NODES > 1

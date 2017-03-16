@@ -10,8 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __MODE_KERNEL_IPI_H
-#define __MODE_KERNEL_IPI_H
+#ifndef __MODE_SMP_IPI_H
+#define __MODE_SMP_IPI_H
 
 #include <config.h>
 #include <types.h>
@@ -39,4 +39,4 @@ static inline void doRemoteInvalidateASID(vspace_root_t *vspace, asid_t asid, wo
 }
 
 #endif /* CONFIG_MAX_NUM_NODES */
-#endif /* __ARCH_KERNEL_IPI_H */
+#endif /* __ARCH_SMP_IPI_H */

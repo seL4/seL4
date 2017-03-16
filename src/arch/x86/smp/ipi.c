@@ -11,7 +11,7 @@
  */
 
 #include <config.h>
-#include <mode/kernel/ipi.h>
+#include <mode/smp/ipi.h>
 #include <smp/ipi.h>
 #include <smp/lock.h>
 

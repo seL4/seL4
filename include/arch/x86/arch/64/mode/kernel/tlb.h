@@ -15,7 +15,7 @@
 
 #include <smp/ipi.h>
 #include <arch/kernel/tlb.h>
-#include <mode/kernel/ipi.h>
+#include <mode/smp/ipi.h>
 #include <arch/kernel/tlb_bitmap.h>
 
 /*

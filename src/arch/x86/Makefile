@@ -14,6 +14,7 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/kernel/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/model/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/machine/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/benchmark/Makefile
+include ${SOURCE_ROOT}/src/arch/$(ARCH)/smp/Makefile
 
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/${TYPE_SUFFIX}/Makefile
 

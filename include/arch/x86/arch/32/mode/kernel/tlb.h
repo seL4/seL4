@@ -13,7 +13,7 @@
 #ifndef __MODE_KERNEL_TLB_H
 #define __MODE_KERNEL_TLB_H
 
-#include <mode/kernel/ipi.h>
+#include <mode/smp/ipi.h>
 #include <arch/kernel/tlb.h>
 
 static inline void invalidateTLBEntry(vptr_t vptr, word_t mask)

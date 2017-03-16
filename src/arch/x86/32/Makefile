@@ -14,6 +14,7 @@ include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/object/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/kernel/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/model/Makefile
 include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/machine/Makefile
+include ${SOURCE_ROOT}/src/arch/$(ARCH)/32/smp/Makefile
 
 ARCH_C_SOURCES += 32/c_traps.c
 ARCH_ASM_SOURCES += 32/machine_asm.S \

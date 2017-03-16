@@ -10,8 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_KERNEL_IPI_H
-#define __ARCH_KERNEL_IPI_H
+#ifndef __ARCH_SMP_IPI_H
+#define __ARCH_SMP_IPI_H
 
 #include <config.h>
 
@@ -31,4 +31,4 @@ typedef enum {
 } IpiRemoteCall_t;
 
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
-#endif /* __ARCH_KERNEL_IPI_H */
+#endif /* __ARCH_SMP_IPI_H */
