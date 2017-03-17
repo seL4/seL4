@@ -21,7 +21,7 @@
 #if CONFIG_MAX_NUM_NODES > 1
 
 typedef enum {
-    /* placeholder for 32-bit ARM IPI types */
+    /* placeholder for 64-bit ARM IPI types */
     IpiNumModeRemoteCall
 } IpiModeRemoteCall_t;
 

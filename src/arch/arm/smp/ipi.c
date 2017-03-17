@@ -16,13 +16,4 @@
 
 #if CONFIG_MAX_NUM_NODES > 1
 
-void Arch_handleIPI(irq_t irq, bool_t irqPath)
-{
-#warning "Arch_handleIPI is not implemented"
-}
-
-void doMaskReschedule(word_t mask)
-{
-#warning "doMaskReschedule is not implemented"
-}
 #endif /* CONFIG_MAX_NUM_NODES */
