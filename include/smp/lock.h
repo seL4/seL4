@@ -79,9 +79,9 @@ clh_lock_acquire(word_t cpu, bool_t irqPath)
     while (big_kernel_lock.node_owners[cpu].next->value != CLHState_Granted) {
         if (clh_is_ipi_pending(cpu)) {
             /* we only handle irq_remote_call_ipi here as other type of IPIs
-             * are async and could be delayed. 'Arch_handleIPI' may not return
+             * are async and could be delayed. 'handleIPI' may not return
              * based on value of the 'irqPath'. */
-            Arch_handleIPI(irq_remote_call_ipi, irqPath);
+            handleIPI(irq_remote_call_ipi, irqPath);
         }
         arch_pause();
     }

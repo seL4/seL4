@@ -1,0 +1,140 @@
+/*
+ * Copyright 2016, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
+ *
+ * This software may be distributed and modified according to the terms of
+ * the GNU General Public License version 2. Note that NO WARRANTY is provided.
+ * See "LICENSE_GPLv2.txt" for details.
+ *
+ * @TAG(DATA61_GPL)
+ */
+
+#include <config.h>
+#include <mode/smp/ipi.h>
+#include <smp/ipi.h>
+#include <smp/lock.h>
+
+#if CONFIG_MAX_NUM_NODES > 1
+/* This function switches the core it is called on to the idle thread,
+ * in order to avoid IPI storms. If the core is waiting on the lock, the actual
+ * switch will not occur until the core attempts to obtain the lock, at which
+ * point the core will capture the pending IPI, which is discarded.
+
+ * The core who triggered the store is responsible for triggering a reschedule,
+ * or this call will idle forever */
+void ipiStallCoreCallback(bool_t irqPath)
+{
+    if (clh_is_self_in_queue() && !irqPath) {
+        /* The current thread is running as we would replace this thread with an idle thread
+         *
+         * The instruction should be re-executed if we are in kernel to handle syscalls.
+         * Also, thread in 'ThreadState_RunningVM' should remain in same state.
+         * Note that, 'ThreadState_Restart' does not always result in regenerating exception
+         * if we are in kernel to handle them, e.g. hardware single step exception. */
+        if (thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running) {
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        }
+
+        SCHED_ENQUEUE_CURRENT_TCB;
+        switchToIdleThread();
+        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
+
+        /* Let the cpu requesting this IPI to continue while we waiting on lock */
+        big_kernel_lock.node_owners[getCurrentCPUIndex()].ipi = 0;
+        ipi_wait(totalCoreBarrier);
+
+        /* Continue waiting on lock */
+        while (big_kernel_lock.node_owners[getCurrentCPUIndex()].next->value != CLHState_Granted) {
+            if (clh_is_ipi_pending(getCurrentCPUIndex())) {
+
+                /* Multiple calls for similar reason could result in stack overflow */
+                assert((IpiRemoteCall_t)remoteCall != IpiRemoteCall_Stall);
+                handleIPI(irq_remote_call_ipi, irqPath);
+            }
+            arch_pause();
+        }
+
+        /* make sure no resource access passes from this point */
+        asm volatile("" ::: "memory");
+
+        /* Start idle thread to capture the pending IPI */
+        activateThread();
+        restore_user_context();
+    } else {
+        /* We get here either without grabbing the lock from normal interrupt path or from
+         * inside the lock while waiting to grab the lock for handling pending interrupt.
+         * In latter case, we return to the 'clh_lock_acquire' to grab the lock and
+         * handle the pending interrupt. Its valid as interrups are async events! */
+        SCHED_ENQUEUE_CURRENT_TCB;
+        switchToIdleThread();
+
+        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
+    }
+}
+
+void handleIPI(irq_t irq, bool_t irqPath)
+{
+    if (irq == irq_remote_call_ipi) {
+        handleRemoteCall(remoteCall, get_ipi_arg(0), get_ipi_arg(1), get_ipi_arg(2), irqPath);
+    } else if (irq == irq_reschedule_ipi) {
+        rescheduleRequired();
+    } else {
+        fail("Invalid IPI");
+    }
+}
+
+void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t data3, word_t mask)
+{
+    /* make sure the current core is not set in the mask */
+    mask &= ~BIT(getCurrentCPUIndex());
+
+    /* this may happen, e.g. the caller tries to map a pagetable in
+     * newly created PD which has not been run yet. Guard against them! */
+    if (mask != 0) {
+        init_ipi_args(func, data1, data2, data3, mask);
+
+        /* make sure no resource access passes from this point */
+        asm volatile("" ::: "memory");
+        ipi_send_mask(int_remote_call_ipi, mask, true);
+        ipi_wait(totalCoreBarrier);
+    }
+}
+
+void doMaskReschedule(word_t mask)
+{
+    /* make sure the current core is not set in the mask */
+    mask &= ~BIT(getCurrentCPUIndex());
+    if (mask != 0) {
+        ipi_send_mask(int_reschedule_ipi, mask, false);
+    }
+}
+
+#ifndef CONFIG_USE_LOGICAL_IDS
+void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
+{
+    word_t nr_target_cores = 0;
+    uint16_t target_cores[CONFIG_MAX_NUM_NODES];
+
+    while (mask) {
+        int index = wordBits - 1 - clzl(mask);
+        if (isBlocking) {
+            big_kernel_lock.node_owners[index].ipi = 1;
+            target_cores[nr_target_cores] = index;
+            nr_target_cores++;
+        } else {
+            ipi_send_target(ipi, cpuIndexToID(index));
+        }
+        mask &= ~BIT(index);
+    }
+
+    if (nr_target_cores > 0) {
+        /* sending IPIs... */
+        IPI_MEM_BARRIER;
+        for (int i = 0; i < nr_target_cores; i++) {
+            ipi_send_target(ipi, cpuIndexToID(target_cores[i]));
+        }
+    }
+}
+#endif
+#endif /* CONFIG_MAX_NUM_NODES > 1 */

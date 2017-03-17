@@ -34,4 +34,6 @@ bool_t apic_is_interrupt_pending(void);
 
 void apic_send_ipi_core(irq_t vector, cpu_id_t cpu_id);
 void apic_send_ipi_cluster(irq_t vector, word_t mda);
+
+#define ipi_send_target apic_send_ipi_core
 #endif

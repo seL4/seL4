@@ -223,7 +223,7 @@ handleInterrupt(irq_t irq)
 
 #if CONFIG_MAX_NUM_NODES > 1
     case IRQIPI:
-        Arch_handleIPI(irq, true);
+        handleIPI(irq, true);
         break;
 #endif
 

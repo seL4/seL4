@@ -12,4 +12,5 @@
 
 DIRECTORIES += src/smp
 
-C_SOURCES += src/smp/lock.c
+C_SOURCES += src/smp/lock.c \
+             src/smp/ipi.c

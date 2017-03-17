@@ -78,5 +78,6 @@ apic_write_icr(word_t high, word_t low)
 }
 
 #define IPI_ICR_BARRIER  asm volatile("mfence" ::: "memory")
+#define IPI_MEM_BARRIER  IPI_ICR_BARRIER
 #endif /* CONFIG_X2APIC */
 #endif /* __ARCH_KERNEL_X2APIC_H_ */

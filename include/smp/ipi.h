@@ -21,12 +21,58 @@
 #if CONFIG_MAX_NUM_NODES > 1
 #define MAX_IPI_ARGS    3   /* Maximum number of parameters to remote function */
 
+static volatile struct {
+    word_t count;
+    word_t globalsense;
+
+    PAD_TO_NEXT_CACHE_LN(sizeof(word_t) + sizeof(word_t));
+} ipiSyncBarrier = {0};                  /* IPI barrier for remote call synchronization */
+
+static volatile word_t totalCoreBarrier; /* number of cores involved in IPI 'in progress' */
+static word_t ipi_args[MAX_IPI_ARGS];    /* data to be passed to the remote call function */
+
+static inline word_t get_ipi_arg(word_t n)
+{
+    assert(n < MAX_IPI_ARGS);
+    return ipi_args[n];
+}
+
+static inline void ipi_wait(word_t cores)
+{
+    word_t localsense = ipiSyncBarrier.globalsense;
+
+    if (__atomic_fetch_add(&ipiSyncBarrier.count, 1, __ATOMIC_ACQ_REL) == cores) {
+        ipiSyncBarrier.count = 0;
+        ipiSyncBarrier.globalsense =
+            ~ipiSyncBarrier.globalsense;
+    }
+
+    while (localsense == ipiSyncBarrier.globalsense) {
+        arch_pause();
+    }
+}
+
+/* Architecture independent function for sending handling pre-hardware-send IPIs */
+void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
+
+/* Hardware implementation for sending IPIs */
+void ipi_send_target(irq_t irq, word_t cpuTargetList);
+
+/* This function switches the core it is called on to the idle thread,
+ * in order to avoid IPI storms. If the core is waiting on the lock, the actual
+ * switch will not occur until the core attempts to obtain the lock, at which
+ * point the core will capture the pending IPI, which is discarded.
+
+ * The core who triggered the store is responsible for triggering a reschedule,
+ * or this call will idle forever */
+void ipiStallCoreCallback(bool_t irqPath);
+
 /* IPIs could be handled, both using hardware interrupts and software flag
  * in CLH lock. 'irqPath' is used to differentiate the caller path, i.e.
  * if it is called while waiting on the lock to handle the IRQ or not. The
- * remote call handler, would decide if 'Arch_handleIPI' should return base
+ * remote call handler, would decide if 'handleIPI' should return base
  * on this value, as IRQs could be re/triggered asynchronous */
-void Arch_handleIPI(irq_t irq, bool_t irqPath);
+void handleIPI(irq_t irq, bool_t irqPath);
 
 /*
  * Run a synchronous function on all cores specified by mask. Return when target cores
