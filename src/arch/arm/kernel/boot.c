@@ -176,7 +176,7 @@ init_irqs(cap_t root_cnode_cap)
 
 #if CONFIG_MAX_NUM_NODES > 1
     setIRQState(IRQIPI, irq_remote_call_ipi);
-    setIRQState(IRQIPI, irq_remote_reschedule_ipi);
+    setIRQState(IRQIPI, irq_reschedule_ipi);
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 
     /* provide the IRQ control cap */

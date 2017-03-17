@@ -63,7 +63,7 @@
  * for seL4 IPI implementation. SGIs are per-core banked.
  */
 #define irq_remote_call_ipi        0
-#define irq_remote_reschedule_ipi  1
+#define irq_reschedule_ipi         1
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 
 word_t PURE getRestartPC(tcb_t *thread);
