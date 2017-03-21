@@ -166,7 +166,7 @@ byte8WatchpointsSupported(void)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
 
 #define DBGBCR_ENABLE                 (BIT(0))
 
@@ -367,7 +367,7 @@ writeWvrContext(arch_tcb_t *at, uint16_t index, word_t val)
     at->tcbContext.breakpointState.watchpoint[index].vr = val;
 }
 
-#endif /* CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT */
+#endif /* !defined(CONFIG_VERIFICATION_BUILD) && (CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT) */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
@@ -1180,7 +1180,7 @@ handleUserLevelDebugException(word_t fault_vaddr)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
 
 /** Mirrors Arch_initFpuContext.
  *
@@ -1334,4 +1334,4 @@ restore_user_debug_context(tcb_t *target_thread)
      */
 }
 
-#endif /* CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT */
+#endif /* !defined(CONFIG_VERIFICATION_BUILD) && (CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT) */

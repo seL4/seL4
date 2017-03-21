@@ -407,7 +407,7 @@ vcpu_enable(vcpu_t *vcpu)
     /* Turn on the VGIC */
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
 
-#ifndef CONFIG_HARDWARE_DEBUG_API
+#if !defined(CONFIG_VERIFICATION_BUILD) && !defined(CONFIG_HARDWARE_DEBUG_API)
     /* This is guarded by an #ifNdef (negation) because if it wasn't, we'd be
      * calling restore_user_debug_context twice on a debug-API build; recall
      * that restore_user_debug_context is called in restore_user_context.
@@ -519,6 +519,7 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     vcpu->r11_fiq = get_r11_fiq();
     vcpu->r12_fiq = get_r12_fiq();
 
+#ifndef CONFIG_VERIFICATION_BUILD
     /* This is unconditionally done even when the hypervisor is
      * not exporting the debug API. The Guest VMs should be able
      * make changes to the debug regs, and see their changes
@@ -530,6 +531,7 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
      * threads can't modify the debug registers (i.e, without the API).
      */
     saveAllBreakpointState(&vcpu->tcb->tcbArch);
+#endif
     isb();
 }
 
@@ -846,7 +848,9 @@ vcpu_switch(vcpu_t *new)
             armHSVCPUActive = true;
         } else if (unlikely(armHSVCPUActive)) {
             /* leave the current VCPU state loaded, but disable vgic and mmu */
+#ifndef CONFIG_VERIFICATION_BUILD
             saveAllBreakpointState(&armHSCurVCPU->tcb->tcbArch);
+#endif
             vcpu_disable(armHSCurVCPU);
             armHSVCPUActive = false;
         }
@@ -899,7 +903,9 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     }
     tcb->tcbArch.vcpu = NULL;
     vcpu->tcb = NULL;
+#ifndef CONFIG_VERIFICATION_BUILD
     Arch_debugDissociateVCPUTCB(tcb);
+#endif
 
     /* sanitize the CPSR as without a VCPU a thread should only be in user mode */
     setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), tcb));

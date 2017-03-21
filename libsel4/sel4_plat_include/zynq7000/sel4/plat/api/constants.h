@@ -17,7 +17,7 @@
 #include <autoconf.h>
 #endif
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
 /* Cortex a9 manual, section 10.1.2 */
 #define seL4_NumHWBreakpoints (10)
 #define seL4_NumExclusiveBreakpoints (6)

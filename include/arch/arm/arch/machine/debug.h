@@ -16,7 +16,7 @@
 #include <plat/api/constants.h>
 #include <armv/debug.h>
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
 void restore_user_debug_context(tcb_t *target_thread);
 void Arch_debugAssociateVCPUTCB(tcb_t *t);
 void Arch_debugDissociateVCPUTCB(tcb_t *t);
