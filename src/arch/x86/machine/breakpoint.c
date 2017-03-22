@@ -72,25 +72,25 @@ bitwiseAndDr6Reg(word_t mask)
 }
 
 static inline word_t
-readDr7Context(arch_tcb_t *uds)
+readDr7Context(tcb_t *t)
 {
-    return uds->tcbContext.breakpointState.dr[5];
+    return t->tcbArch.tcbContext.breakpointState.dr[5];
 }
 
 static inline void
-bitwiseOrDr7Context(arch_tcb_t *uds, word_t val)
+bitwiseOrDr7Context(tcb_t *t, word_t val)
 {
-    uds->tcbContext.breakpointState.dr[5] |= val;
+    t->tcbArch.tcbContext.breakpointState.dr[5] |= val;
 }
 
 static inline void
-bitwiseAndDr7Context(arch_tcb_t *uds, word_t mask)
+bitwiseAndDr7Context(tcb_t *t, word_t mask)
 {
-    uds->tcbContext.breakpointState.dr[5] &= mask;
+    t->tcbArch.tcbContext.breakpointState.dr[5] &= mask;
 }
 
 static void
-unsetDr7BitsFor(arch_tcb_t *uds, uint16_t bp_num)
+unsetDr7BitsFor(tcb_t *t, uint16_t bp_num)
 {
     word_t mask;
 
@@ -111,7 +111,7 @@ unsetDr7BitsFor(arch_tcb_t *uds, uint16_t bp_num)
     }
 
     mask = ~mask;
-    bitwiseAndDr7Context(uds, mask);
+    bitwiseAndDr7Context(t, mask);
 }
 
 /** Converts an seL4_BreakpointType value into the underlying hardware
@@ -306,11 +306,11 @@ convertArchToSize(word_t dr7, uint16_t bp_num)
  * @param bp_num Hardware breakpoint ID. Usually an integer from 0..N.
  */
 static void
-enableBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
+enableBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     word_t enable_bit;
 
-    assert(uds != NULL);
+    assert(t != NULL);
     assert(bp_num < X86_DEBUG_BP_N_REGS);
 
     switch (bp_num) {
@@ -328,18 +328,18 @@ enableBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
         break;
     }
 
-    bitwiseOrDr7Context(uds, enable_bit);
+    bitwiseOrDr7Context(t, enable_bit);
 }
 
 /** Disables a breakpoint without clearing its configuration.
  * @param bp_num Hardware breakpoint ID. Usually an integer from 0..N.
  */
 static void
-disableBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
+disableBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     word_t disable_mask;
 
-    assert(uds != NULL);
+    assert(t != NULL);
     assert(bp_num < X86_DEBUG_BP_N_REGS);
 
     switch (bp_num) {
@@ -357,21 +357,21 @@ disableBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
         break;
     }
 
-    bitwiseAndDr7Context(uds, disable_mask);
+    bitwiseAndDr7Context(t, disable_mask);
 }
 
 /** Returns a boolean for whether or not a breakpoint is enabled.
  * @param bp_num Hardware breakpoint ID. Usually an integer from 0..N.
  */
 static bool_t
-breakpointIsEnabled(arch_tcb_t *uds, uint16_t bp_num)
+breakpointIsEnabled(tcb_t *t, uint16_t bp_num)
 {
     word_t dr7;
 
-    assert(uds != NULL);
+    assert(t != NULL);
     assert(bp_num < X86_DEBUG_BP_N_REGS);
 
-    dr7 = readDr7Context(uds);
+    dr7 = readDr7Context(t);
     switch (bp_num) {
     case 0:
         return !!(dr7 & X86_DEBUG_BP0_ENABLE_BIT);
@@ -385,22 +385,24 @@ breakpointIsEnabled(arch_tcb_t *uds, uint16_t bp_num)
 }
 
 static void
-setBpVaddrContext(user_breakpoint_state_t *uds, uint16_t bp_num, word_t vaddr)
+setBpVaddrContext(tcb_t *t, uint16_t bp_num, word_t vaddr)
 {
-    assert(uds != NULL);
+    assert(t != NULL);
+    user_breakpoint_state_t *ubs = &t->tcbArch.tcbContext.breakpointState;
+
     switch (bp_num) {
     case 0:
-        uds->dr[0] = vaddr;
+        ubs->dr[0] = vaddr;
         break;
     case 1:
-        uds->dr[1] = vaddr;
+        ubs->dr[1] = vaddr;
         break;
     case 2:
-        uds->dr[2] = vaddr;
+        ubs->dr[2] = vaddr;
         break;
     default:
         assert(bp_num == 3);
-        uds->dr[3] = vaddr;
+        ubs->dr[3] = vaddr;
         break;
     }
     return;
@@ -418,36 +420,38 @@ setBpVaddrContext(user_breakpoint_state_t *uds, uint16_t bp_num, word_t vaddr)
  * @param rw Access type that should trigger the BP (read/write).
  */
 void
-setBreakpoint(arch_tcb_t *uds,
+setBreakpoint(tcb_t *t,
               uint16_t bp_num, word_t vaddr, word_t types, word_t size, word_t rw)
 {
     word_t dr7val;
 
-    assert(uds != NULL);
+    assert(t != NULL);
 
     dr7val = convertTypeAndAccessToArch(bp_num, types, rw);
     dr7val |= convertSizeToArch(bp_num, types, size);
 
-    setBpVaddrContext(&uds->tcbContext.breakpointState, bp_num, vaddr);
-    unsetDr7BitsFor(uds, bp_num);
-    bitwiseOrDr7Context(uds, dr7val);
-    enableBreakpoint(uds, bp_num);
+    setBpVaddrContext(t, bp_num, vaddr);
+    unsetDr7BitsFor(t, bp_num);
+    bitwiseOrDr7Context(t, dr7val);
+    enableBreakpoint(t, bp_num);
 }
 
 static word_t
-getBpVaddrContext(user_breakpoint_state_t *uds, uint16_t bp_num)
+getBpVaddrContext(tcb_t *t, uint16_t bp_num)
 {
-    assert(uds != NULL);
+    assert(t != NULL);
+    user_breakpoint_state_t *ubs = &t->tcbArch.tcbContext.breakpointState;
+
     switch (bp_num) {
     case 0:
-        return uds->dr[0];
+        return ubs->dr[0];
     case 1:
-        return uds->dr[1];
+        return ubs->dr[1];
     case 2:
-        return uds->dr[2];
+        return ubs->dr[2];
     default:
         assert(bp_num == 3);
-        return uds->dr[3];
+        return ubs->dr[3];
     }
 }
 
@@ -461,19 +465,19 @@ getBpVaddrContext(user_breakpoint_state_t *uds, uint16_t bp_num)
  * @return Structure containing information about the status of the breakpoint.
  */
 getBreakpoint_t
-getBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
+getBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     word_t dr7val;
     getBreakpoint_t ret;
     convertedTypeAndAccess_t res;
 
-    dr7val = readDr7Context(uds);
-    ret.vaddr = getBpVaddrContext(&uds->tcbContext.breakpointState, bp_num);
+    dr7val = readDr7Context(t);
+    ret.vaddr = getBpVaddrContext(t, bp_num);
     ret.size = convertArchToSize(dr7val, bp_num);
     res = convertArchToTypeAndAccess(dr7val, bp_num);
     ret.type = res.type;
     ret.rw = res.rw;
-    ret.is_enabled = breakpointIsEnabled(uds, bp_num);
+    ret.is_enabled = breakpointIsEnabled(t, bp_num);
     return ret;
 }
 
@@ -484,11 +488,11 @@ getBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
  * @param bp_num The hardware breakpoint ID you'd like to clear.
  */
 void
-unsetBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
+unsetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
-    disableBreakpoint(uds, bp_num);
-    unsetDr7BitsFor(uds, bp_num);
-    setBpVaddrContext(&uds->tcbContext.breakpointState, bp_num, 0);
+    disableBreakpoint(t, bp_num);
+    unsetDr7BitsFor(t, bp_num);
+    setBpVaddrContext(t, bp_num, 0);
 }
 
 /** Used in the exception path to determine if an exception was caused by
@@ -504,7 +508,7 @@ typedef struct {
 } testAndResetSingleStepException_t;
 
 static testAndResetSingleStepException_t
-testAndResetSingleStepException(arch_tcb_t *uc)
+testAndResetSingleStepException(tcb_t *t)
 {
     testAndResetSingleStepException_t ret;
     word_t dr6;
@@ -516,7 +520,7 @@ testAndResetSingleStepException(arch_tcb_t *uc)
     }
 
     ret.ret = true;
-    ret.instr_vaddr = uc->tcbContext.registers[FaultIP];
+    ret.instr_vaddr = t->tcbArch.tcbContext.registers[FaultIP];
     bitwiseAndDr6Reg(~X86_DEBUG_DR6_SINGLE_STEP_FLAG);
 
     /* And that's not all: if the breakpoint is an instruction breakpoint, we
@@ -531,12 +535,12 @@ testAndResetSingleStepException(arch_tcb_t *uc)
      * Intel manuals, vol3, section 17.3.1.1.
      */
     /* This will automatically be popped by restore_user_context() */
-    uc->tcbContext.registers[FLAGS] |= X86_DEBUG_EFLAGS_RESUME_FLAG;
+    t->tcbArch.tcbContext.registers[FLAGS] |= X86_DEBUG_EFLAGS_RESUME_FLAG;
     return ret;
 }
 
 bool_t
-configureSingleStepping(arch_tcb_t *uc, uint16_t bp_num, word_t n_instr,
+configureSingleStepping(tcb_t *t, uint16_t bp_num, word_t n_instr,
                         UNUSED bool_t is_reply)
 {
     /* On x86 no hardware breakpoints are needed for single stepping. */
@@ -544,13 +548,13 @@ configureSingleStepping(arch_tcb_t *uc, uint16_t bp_num, word_t n_instr,
         /* If n_instr (number of instructions to single-step) is 0, that is the
           * same as requesting that single-stepping be disabled.
           */
-        uc->tcbContext.breakpointState.single_step_enabled = false;
-        uc->tcbContext.registers[FLAGS] &= ~X86_DEBUG_EFLAGS_TRAP_FLAG;
+        t->tcbArch.tcbContext.breakpointState.single_step_enabled = false;
+        t->tcbArch.tcbContext.registers[FLAGS] &= ~X86_DEBUG_EFLAGS_TRAP_FLAG;
     } else {
-        uc->tcbContext.breakpointState.single_step_enabled = true;
+        t->tcbArch.tcbContext.breakpointState.single_step_enabled = true;
     }
 
-    uc->tcbContext.breakpointState.n_instructions = n_instr;
+    t->tcbArch.tcbContext.breakpointState.n_instructions = n_instr;
     return false;
 }
 
@@ -576,7 +580,7 @@ typedef struct {
 } getAndResetActiveBreakpoint_t;
 
 static getAndResetActiveBreakpoint_t
-getAndResetActiveBreakpoint(arch_tcb_t *at)
+getAndResetActiveBreakpoint(tcb_t *t)
 {
     convertedTypeAndAccess_t tmp;
     getAndResetActiveBreakpoint_t ret;
@@ -596,8 +600,8 @@ getAndResetActiveBreakpoint(arch_tcb_t *at)
         return ret;
     }
 
-    tmp = convertArchToTypeAndAccess(readDr7Context(at), ret.bp_num);
-    ret.vaddr = getBpVaddrContext(&at->tcbContext.breakpointState, ret.bp_num);
+    tmp = convertArchToTypeAndAccess(readDr7Context(t), ret.bp_num);
+    ret.vaddr = getBpVaddrContext(t, ret.bp_num);
     ret.reason = tmp.type;
 
     bitwiseAndDr6Reg(~BIT(ret.bp_num));
@@ -607,7 +611,7 @@ getAndResetActiveBreakpoint(arch_tcb_t *at)
 exception_t
 handleUserLevelDebugException(int int_vector)
 {
-    arch_tcb_t *context;
+    tcb_t *ct;
     getAndResetActiveBreakpoint_t active_bp;
     testAndResetSingleStepException_t single_step_info;
 
@@ -622,7 +626,7 @@ handleUserLevelDebugException(int int_vector)
     benchmark_track_start();
 #endif
 
-    context = &NODE_STATE(ksCurThread)->tcbArch;
+    ct = NODE_STATE(ksCurThread);
 
     /* Software break request (INT3) is detected by the vector number */
     if (int_vector == int_software_break_request) {
@@ -630,20 +634,20 @@ handleUserLevelDebugException(int int_vector)
                                                       0, seL4_SoftwareBreakRequest);
     } else {
         /* Hardware breakpoint trigger is detected using DR6 */
-        active_bp = getAndResetActiveBreakpoint(context);
+        active_bp = getAndResetActiveBreakpoint(ct);
         if (active_bp.bp_num >= 0) {
             current_fault = seL4_Fault_DebugException_new(active_bp.vaddr,
                                                           active_bp.bp_num,
                                                           active_bp.reason);
         } else {
-            single_step_info = testAndResetSingleStepException(context);
+            single_step_info = testAndResetSingleStepException(ct);
             if (single_step_info.ret == true) {
                 /* If the caller asked us to skip over N instructions before
                  * generating the next single-step breakpoint, we shouldn't
                  * bother to construct a fault message until we've skipped N
                  * instructions.
                  */
-                if (singleStepFaultCounterReady(context) == false) {
+                if (singleStepFaultCounterReady(ct) == false) {
                     return EXCEPTION_NONE;
                 }
                 current_fault = seL4_Fault_DebugException_new(single_step_info.instr_vaddr,

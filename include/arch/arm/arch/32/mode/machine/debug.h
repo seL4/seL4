@@ -186,18 +186,18 @@ seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr);
  * bitfield.
  */
 static inline void
-setBreakpointUsedFlag(arch_tcb_t *uds, uint16_t bp_num)
+setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 {
-    if (uds != NULL) {
-        uds->tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
+    if (t != NULL) {
+        t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
     }
 }
 
 static inline void
-unsetBreakpointUsedFlag(arch_tcb_t *uds, uint16_t bp_num)
+unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 {
-    if (uds != NULL) {
-        uds->tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
+    if (t != NULL) {
+        t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
     }
 }
 

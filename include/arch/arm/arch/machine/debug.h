@@ -20,7 +20,7 @@
 void restore_user_debug_context(tcb_t *target_thread);
 void Arch_debugAssociateVCPUTCB(tcb_t *t);
 void Arch_debugDissociateVCPUTCB(tcb_t *t);
-void saveAllBreakpointState(arch_tcb_t *at);
+void saveAllBreakpointState(tcb_t *t);
 void loadAllDisabledBreakpointState(void);
 #endif
 
@@ -117,7 +117,7 @@ getTypeFromBpNum(uint16_t bp_num)
 }
 
 static inline syscall_error_t
-Arch_decodeConfigureSingleStepping(arch_tcb_t *at,
+Arch_decodeConfigureSingleStepping(tcb_t *t,
                                    uint16_t bp_num,
                                    word_t n_instr,
                                    bool_t is_reply)
@@ -132,7 +132,7 @@ Arch_decodeConfigureSingleStepping(arch_tcb_t *at,
          * configured bp_num. Of course, this assumes that a register had
          * already previously been configured for single-stepping.
          */
-        if (!at->tcbContext.breakpointState.single_step_enabled) {
+        if (!t->tcbArch.tcbContext.breakpointState.single_step_enabled) {
             userError("Debug: Single-step reply when single-stepping not "
                       "enabled.");
             ret.type = seL4_IllegalOperation;
@@ -140,7 +140,7 @@ Arch_decodeConfigureSingleStepping(arch_tcb_t *at,
         }
 
         type = seL4_InstructionBreakpoint;
-        bp_num = at->tcbContext.breakpointState.single_step_hw_bp_num;
+        bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
     } else {
         type = getTypeFromBpNum(bp_num);
         bp_num = convertBpNumToArch(bp_num);
@@ -154,8 +154,8 @@ Arch_decodeConfigureSingleStepping(arch_tcb_t *at,
         ret.invalidArgumentNumber = 0;
         return ret;
     }
-    if (at->tcbContext.breakpointState.single_step_enabled == true) {
-        if (bp_num != at->tcbContext.breakpointState.single_step_hw_bp_num) {
+    if (t->tcbArch.tcbContext.breakpointState.single_step_enabled == true) {
+        if (bp_num != t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num) {
             /* Can't configure more than one register for stepping. */
             userError("Debug: Only one register can be configured for "
                       "single-stepping at a time.");
@@ -171,7 +171,7 @@ Arch_decodeConfigureSingleStepping(arch_tcb_t *at,
 bool_t byte8WatchpointsSupported(void);
 
 static inline syscall_error_t
-Arch_decodeSetBreakpoint(arch_tcb_t *uds,
+Arch_decodeSetBreakpoint(tcb_t *t,
                          uint16_t bp_num, word_t vaddr, word_t type,
                          word_t size, word_t rw)
 {
@@ -216,7 +216,7 @@ Arch_decodeSetBreakpoint(arch_tcb_t *uds,
 }
 
 static inline syscall_error_t
-Arch_decodeGetBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
+Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -231,7 +231,7 @@ Arch_decodeGetBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
 }
 
 static inline syscall_error_t
-Arch_decodeUnsetBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
+Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -249,7 +249,7 @@ Arch_decodeUnsetBreakpoint(arch_tcb_t *uds, uint16_t bp_num)
     type = getTypeFromBpNum(bp_num);
     bp_num = convertBpNumToArch(bp_num);
 
-    bcr.words[0] = uds->tcbContext.breakpointState.breakpoint[bp_num].cr;
+    bcr.words[0] = t->tcbArch.tcbContext.breakpointState.breakpoint[bp_num].cr;
     if (type == seL4_InstructionBreakpoint) {
         if (Arch_breakpointIsMismatch(bcr) == true && dbg_bcr_get_enabled(bcr)) {
             userError("Rejecting call to unsetBreakpoint on breakpoint configured "

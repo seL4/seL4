@@ -164,12 +164,12 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
 
         syscall_error_t res;
 
-        res = Arch_decodeConfigureSingleStepping(&receiver->tcbArch, 0, n_instrs, true);
+        res = Arch_decodeConfigureSingleStepping(receiver, 0, n_instrs, true);
         if (res.type != seL4_NoError) {
             return false;
         };
 
-        configureSingleStepping(&receiver->tcbArch, 0, n_instrs, true);
+        configureSingleStepping(receiver, 0, n_instrs, true);
 
         /* Replying will always resume the thread: the only variant behaviour
          * is whether or not the thread will be resumed with stepping still

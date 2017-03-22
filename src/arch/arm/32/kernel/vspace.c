@@ -1364,7 +1364,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
             current_fault = handleUserLevelDebugException(pc);
 
             if (seL4_Fault_DebugException_get_exceptionReason(current_fault) == seL4_SingleStep
-                    && !singleStepFaultCounterReady(&thread->tcbArch)) {
+                    && !singleStepFaultCounterReady(thread)) {
                 /* Don't send a fault message to the thread yet if we were asked
                  * to step through N instructions and the counter isn't depleted
                  * yet.

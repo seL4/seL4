@@ -532,7 +532,7 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
      * not exporting the debug API, because in that case, native
      * threads can't modify the debug registers (i.e, without the API).
      */
-    saveAllBreakpointState(&vcpu->vcpuTCB->tcbArch);
+    saveAllBreakpointState(vcpu->vcpuTCB);
 #endif
     isb();
 }
@@ -851,7 +851,7 @@ vcpu_switch(vcpu_t *new)
         } else if (unlikely(armHSVCPUActive)) {
             /* leave the current VCPU state loaded, but disable vgic and mmu */
 #ifndef CONFIG_VERIFICATION_BUILD
-            saveAllBreakpointState(&armHSCurVCPU->vcpuTCB->tcbArch);
+            saveAllBreakpointState(armHSCurVCPU->vcpuTCB);
 #endif
             vcpu_disable(armHSCurVCPU);
             armHSVCPUActive = false;

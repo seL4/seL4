@@ -193,7 +193,7 @@ static inline void Arch_initContext(user_context_t* context)
 {
     context->registers[CPSR] = CPSR_USER;
 #if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
-    Arch_initBreakpointContext(&context->breakpointState);
+    Arch_initBreakpointContext(context);
 #endif
 }
 

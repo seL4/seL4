@@ -37,7 +37,7 @@ void Arch_breakpointThreadDelete(tcb_t *thread);
  *            context-saving memory block, and this function will write to that
  *            context-saving memory block instead.
  */
-void setBreakpoint(arch_tcb_t *uds,
+void setBreakpoint(tcb_t *t,
                    uint16_t bp_num,
                    word_t vaddr, word_t type, word_t size, word_t rw);
 
@@ -61,7 +61,7 @@ typedef struct getBreakpointRet {
     bool_t is_enabled;
 } getBreakpoint_t;
 
-getBreakpoint_t getBreakpoint(arch_tcb_t *uds, uint16_t bp_num);
+getBreakpoint_t getBreakpoint(tcb_t *t, uint16_t bp_num);
 
 /** Clears a breakpoint's configuration and disables it.
  * @param bp_num Hardware breakpoint ID. Usually an integer from 0..N.
@@ -71,15 +71,15 @@ getBreakpoint_t getBreakpoint(arch_tcb_t *uds, uint16_t bp_num);
  *            context-saving memory block, and this function will write to that
  *            context-saving memory block instead.
  */
-void unsetBreakpoint(arch_tcb_t *uds, uint16_t bp_num);
+void unsetBreakpoint(tcb_t *t, uint16_t bp_num);
 
-bool_t configureSingleStepping(arch_tcb_t *uc,
+bool_t configureSingleStepping(tcb_t *t,
                                uint16_t bp_num,
                                word_t n_instr,
                                bool_t is_reply);
 
 static inline bool_t
-singleStepFaultCounterReady(arch_tcb_t *uc)
+singleStepFaultCounterReady(tcb_t *t)
 {
     /* For a single-step exception, the user may have specified a certain
      * number of instructions to skip over before the next stop-point, so
@@ -88,10 +88,10 @@ singleStepFaultCounterReady(arch_tcb_t *uc)
      * We will check the counter's value when deciding whether or not to
      * actually send a fault message to userspace.
      */
-    if (uc->tcbContext.breakpointState.n_instructions > 0) {
-        uc->tcbContext.breakpointState.n_instructions--;
+    if (t->tcbArch.tcbContext.breakpointState.n_instructions > 0) {
+        t->tcbArch.tcbContext.breakpointState.n_instructions--;
     }
-    return uc->tcbContext.breakpointState.n_instructions == 0;
+    return t->tcbArch.tcbContext.breakpointState.n_instructions == 0;
 }
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */

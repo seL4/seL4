@@ -106,7 +106,7 @@ writeDrReg(uint8_t reg, word_t val)
  *@param source The memory block from which to load the register values.
  */
 static inline void
-loadBreakpointState(arch_tcb_t *source)
+loadBreakpointState(tcb_t *source)
 {
     /* Order does matter when restoring the registers: we want to restore the
      * breakpoint control register (DR7) last since it is what "activates" the
@@ -132,7 +132,7 @@ loadBreakpointState(arch_tcb_t *source)
         "movl (%%edx), %%ecx \n\t"
         "movl %%ecx, %%dr7 \n\t"
         :
-        : "r" (source->tcbContext.breakpointState.dr)
+        : "r" (source->tcbArch.tcbContext.breakpointState.dr)
         : "edx", "ecx");
 }
 
