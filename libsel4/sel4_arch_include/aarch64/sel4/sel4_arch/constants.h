@@ -96,4 +96,5 @@ enum {
 #define seL4_NumDualFunctionMonitors (0)
 #endif
 
+#define seL4_FastMessageRegisters 4
 #endif

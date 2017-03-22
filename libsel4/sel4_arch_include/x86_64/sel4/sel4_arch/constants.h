@@ -95,4 +95,5 @@ enum {
 } seL4_UserException_Msg;
 
 #endif /* __ASSEMBLER__ */
+#define seL4_FastMessageRegisters 4
 #endif /* __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_ */

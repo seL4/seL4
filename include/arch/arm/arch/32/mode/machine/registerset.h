@@ -116,7 +116,7 @@ compile_assert(r8_offset_correct, R8 * sizeof(word_t) == PT_R8)
 typedef word_t register_t;
 
 enum messageSizes {
-    n_msgRegisters = 4,
+    n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 10,
     n_gpRegisters = 7,
     n_exceptionMessage = 3,
