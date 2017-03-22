@@ -678,7 +678,7 @@ seL4_BenchmarkFinalizeLog(void)
     seL4_Word unused3 = 0;
     seL4_Word unused4 = 0;
     seL4_Word index_ret;
-    x64_sys_send_recv(seL4_SysBenchmarkFinalizeLog, 0, &index_ret, 0, &unused0, &unused1, &unused2, &unused3, &unused4);
+    x64_sys_send_recv(seL4_SysBenchmarkFinalizeLog, 0, &index_ret, 0, &unused0, &unused1, &unused2, &unused3, &unused4, 0);
 
     return (seL4_Word)index_ret;
 }
@@ -692,7 +692,7 @@ seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
     seL4_Word unused3 = 0;
     seL4_Word unused4 = 0;
 
-    x64_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2, &unused3, &unused4);
+    x64_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2, &unused3, &unused4, 0);
 
     return (seL4_Error) frame_cptr;
 }

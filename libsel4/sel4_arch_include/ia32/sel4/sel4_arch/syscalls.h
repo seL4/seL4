@@ -752,9 +752,8 @@ seL4_BenchmarkFinalizeLog(void)
 {
     seL4_Word unused0 = 0;
     seL4_Word unused1 = 0;
-    seL4_Word unused2 = 0;
     seL4_Word index_ret;
-    x86_sys_send_recv(seL4_SysBenchmarkFinalizeLog, 0, &index_ret, 0, &unused0, &unused1, &unused2);
+    x86_sys_send_recv(seL4_SysBenchmarkFinalizeLog, 0, &index_ret, 0, &unused0, &unused1, 0);
 
     return (seL4_Word)index_ret;
 }
@@ -802,7 +801,6 @@ seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
     seL4_Word unused0 = 0;
     seL4_Word unused1 = 0;
     seL4_Word unused2 = 0;
-    seL4_Word unused3 = 0;
 
     x86_sys_send_recv(seL4_SysBenchmarkResetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, 0);
 }
