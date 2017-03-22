@@ -14,12 +14,17 @@
 #include <config.h>
 
 #include <model/statedata.h>
+#include <mode/machine/registerset.h>
 
 NODE_STATE_BEGIN(archNodeState)
 /* TODO: add ARM-dependent fields here */
 /* Bitmask of all cores should receive the reschedule IPI */
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
 NODE_STATE_END(archNodeState);
+
+#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+extern user_breakpoint_state_t armKSNullBreakpointState VISIBLE;
+#endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 extern pdeS1_t armHSGlobalPGD[BIT(PGD_INDEX_BITS)] VISIBLE;

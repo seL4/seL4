@@ -926,6 +926,17 @@ Arch_initHardwareBreakpoints(void)
         disableAllBpsAndWps();
     }
 
+    /* Finally, also pre-load some initial register state that can be used
+     * for all new threads so that their initial saved debug register state
+     * is valid when it's first loaded onto the CPU.
+     */
+    for (int i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
+        armKSNullBreakpointState.breakpoint[i].cr = readBcrCp(i) & ~DBGBCR_ENABLE;
+    }
+    for (int i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
+        armKSNullBreakpointState.watchpoint[i].cr = readWcrCp(i) & ~DBGWCR_ENABLE;
+    }
+
     dbg.watchpoint_8b_supported = watchpoint8bSupported();
     return true;
 }
@@ -1186,15 +1197,7 @@ handleUserLevelDebugException(word_t fault_vaddr)
 void
 Arch_initBreakpointContext(user_breakpoint_state_t *uds)
 {
-    memset(uds, 0, sizeof(*uds));
-
-    /* Preload SBZ/reserved values into thread context. */
-    for (int i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
-        uds->breakpoint[i].cr = readBcrCp(i) & ~DBGBCR_ENABLE;
-    }
-    for (int i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
-        uds->watchpoint[i].cr = readWcrCp(i) & ~DBGWCR_ENABLE;
-    }
+    *uds = armKSNullBreakpointState;
 }
 
 void

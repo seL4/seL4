@@ -59,3 +59,8 @@ vcpu_t *armHSCurVCPU;
 /* Whether the current loaded VCPU is enabled in the hardware or not */
 bool_t armHSVCPUActive;
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+/* Null state for the Debug coprocessor's break/watchpoint registers */
+user_breakpoint_state_t armKSNullBreakpointState;
+#endif
