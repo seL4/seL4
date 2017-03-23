@@ -145,6 +145,13 @@ CONST ctzl(unsigned long x)
 
 int __builtin_popcountl(unsigned long x);
 
+/** DONT_TRANSLATE */
+/** FNSPEC clzll_spec:
+  "\<forall>s. \<Gamma> \<turnstile>
+    {\<sigma>. s = \<sigma> \<and> x_' s \<noteq> 0 }
+      \<acute>ret__longlong :== PROC clzll(\<acute>x)
+    \<lbrace> \<acute>ret__longlong = of_nat (word_clz (x_' s)) \<rbrace>"
+*/
 static inline long long CONST clzll(unsigned long long x)
 {
     return __builtin_clzll(x);
