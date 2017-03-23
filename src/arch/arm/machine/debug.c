@@ -15,6 +15,7 @@
 #include <util.h>
 #include <arch/model/statedata.h>
 #include <arch/machine/debug.h>
+#include <arch/machine/debug_conf.h>
 #include <arch/kernel/vspace.h>
 #include <arch/machine/registerset.h>
 #include <armv/debug.h>
@@ -160,7 +161,7 @@ byte8WatchpointsSupported(void)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 
 #define DBGBCR_ENABLE                 (BIT(0))
 
@@ -361,7 +362,7 @@ writeWvrContext(tcb_t *t, uint16_t index, word_t val)
     t->tcbArch.tcbContext.breakpointState.watchpoint[index].vr = val;
 }
 
-#endif /* !defined(CONFIG_VERIFICATION_BUILD) && (CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT) */
+#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
@@ -1185,7 +1186,7 @@ handleUserLevelDebugException(word_t fault_vaddr)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 
 /** Mirrors Arch_initFpuContext.
  *
@@ -1259,6 +1260,7 @@ saveAllBreakpointState(tcb_t *t)
     }
 }
 
+#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
 void
 Arch_debugAssociateVCPUTCB(tcb_t *t)
 {
@@ -1276,6 +1278,7 @@ Arch_debugDissociateVCPUTCB(tcb_t *t)
 {
     t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf = 0;
 }
+#endif
 
 static void
 loadBreakpointState(tcb_t *t)
@@ -1331,4 +1334,4 @@ restore_user_debug_context(tcb_t *target_thread)
      */
 }
 
-#endif /* !defined(CONFIG_VERIFICATION_BUILD) && (CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT) */
+#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */

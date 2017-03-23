@@ -446,6 +446,16 @@ menu "Build Options"
             allows userspace processes to set breakpoints, watchpoints and to
             single-step through thread execution.
 
+    config ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
+        bool "Trap, but don't save/restore VCPUs' CP14 accesses"
+        depends on ARM_HYPERVISOR_SUPPORT && !VERIFICATION_BUILD
+        default y
+        help
+            This allows us to turn off the save and restore of VCPU threads' CP14
+            context for performance (or other) reasons, we can just turn them off
+            and trap them instead, and have the VCPUs' accesses to CP14
+            intercepted and delivered to the VM Monitor as fault messages.
+
     config IRQ_REPORTING
         bool "Report spurious or undelivered IRQs"
         depends on PRINTING

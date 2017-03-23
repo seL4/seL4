@@ -15,6 +15,7 @@
 #include <arch/object/vcpu.h>
 #include <plat/machine/devices.h>
 #include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
+#include <arch/machine/debug_conf.h>
 
 #define HCR_TGE      BIT(27)     /* Trap general exceptions        */
 #define HCR_TVM      BIT(26)     /* Trap MMU access                */
@@ -407,10 +408,11 @@ vcpu_enable(vcpu_t *vcpu)
     /* Turn on the VGIC */
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && !defined(CONFIG_HARDWARE_DEBUG_API)
-    /* This is guarded by an #ifNdef (negation) because if it wasn't, we'd be
-     * calling restore_user_debug_context twice on a debug-API build; recall
-     * that restore_user_debug_context is called in restore_user_context.
+#if !defined(ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS) && defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
+    /* This is guarded by an #ifNdef (negation) ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
+     * because if it wasn't, we'd be calling restore_user_debug_context twice
+     * on a debug-API build; recall that restore_user_debug_context is called
+     * in restore_user_context.
      *
      * We call restore_user_debug_context here, because vcpu_restore calls this
      * function (vcpu_enable). It's better to embed the
@@ -422,7 +424,7 @@ vcpu_enable(vcpu_t *vcpu)
      */
     restore_user_debug_context(vcpu->vcpuTCB);
 #endif
-#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
     /* Disable debug exception trapping and let the PL1 Guest VM handle all
      * of its own debug faults.
      */
@@ -447,7 +449,7 @@ vcpu_disable(vcpu_t *vcpu)
     setSCTLR(SCTLR_DEFAULT);
     setHCR(HCR_NATIVE);
 
-#ifndef CONFIG_VERIFICATION_BUILD
+#if defined(ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS)
     /* Disable all breakpoint registers from triggering their
      * respective events, so that when we switch from a guest VM
      * to a native thread, the native thread won't trigger events
@@ -455,7 +457,7 @@ vcpu_disable(vcpu_t *vcpu)
      */
     loadAllDisabledBreakpointState();
 #endif
-#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
     /* Enable debug exception trapping and let seL4 trap all PL0 (user) native
      * seL4 threads' debug exceptions, so it can deliver them as fault messages.
      */
@@ -476,7 +478,23 @@ vcpu_boot_init(void)
     armHSCurVCPU = NULL;
     armHSVCPUActive = false;
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#if defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
+    /* On the verified build, we have implemented a workaround that ensures
+     * that we don't need to save and restore the debug coprocessor's state
+     * (and therefore don't have to expose the CP14 registers to verification).
+     *
+     * This workaround is simple: we just trap and intercept all Guest VM
+     * accesses to the debug coprocessor, and deliver them as VMFault
+     * messages to the VM Monitor. To that end, the VM Monitor can then
+     * choose to either kill the Guest VM, or it can also choose to silently
+     * step over the Guest VM's accesses to the debug coprocessor, thereby
+     * silently eliminating the communication channel between the Guest VMs
+     * (because the debug coprocessor acted as a communication channel
+     * unless we saved/restored its state between VM switches).
+     *
+     * This workaround delegates the communication channel responsibility
+     * from the kernel to the VM Monitor, essentially.
+     */
     initHDCR();
 #endif
 }
@@ -521,16 +539,9 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     vcpu->r11_fiq = get_r11_fiq();
     vcpu->r12_fiq = get_r12_fiq();
 
-#ifndef CONFIG_VERIFICATION_BUILD
-    /* This is unconditionally done even when the hypervisor is
-     * not exporting the debug API. The Guest VMs should be able
-     * make changes to the debug regs, and see their changes
-     * preserved across guest VM context switches.
-     *
-     * The hypervisor build doesn't have to worry about saving
-     * and restoring native threads' debug register state when
-     * not exporting the debug API, because in that case, native
-     * threads can't modify the debug registers (i.e, without the API).
+#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
+    /* This is done when we are asked to save and restore the CP14 debug context
+     * of VCPU threads; the register context is saved into the underlying TCB.
      */
     saveAllBreakpointState(vcpu->vcpuTCB);
 #endif
@@ -850,7 +861,7 @@ vcpu_switch(vcpu_t *new)
             armHSVCPUActive = true;
         } else if (unlikely(armHSVCPUActive)) {
             /* leave the current VCPU state loaded, but disable vgic and mmu */
-#ifndef CONFIG_VERIFICATION_BUILD
+#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
             saveAllBreakpointState(armHSCurVCPU->vcpuTCB);
 #endif
             vcpu_disable(armHSCurVCPU);
@@ -905,7 +916,7 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     }
     tcb->tcbArch.tcbVCPU = NULL;
     vcpu->vcpuTCB = NULL;
-#ifndef CONFIG_VERIFICATION_BUILD
+#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
     Arch_debugDissociateVCPUTCB(tcb);
 #endif
 

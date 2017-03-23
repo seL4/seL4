@@ -17,6 +17,7 @@
 #include <api/types.h>
 #include <api/syscall.h>
 #include <armv/context_switch.h>
+#include <arch/machine/debug.h>
 #include <smp/lock.h>
 
 /* When building the fastpath the assembler in traps.S makes these
@@ -130,7 +131,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 
     c_exit_hook();
 
-#ifdef CONFIG_HARDWARE_DEBUG_API
+#ifdef CONFIG_ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 

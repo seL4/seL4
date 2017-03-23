@@ -17,13 +17,10 @@
 #include <autoconf.h>
 #endif
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
 /* Cortex A7 manual, table 10-2 */
 #define seL4_NumHWBreakpoints (10)
 #define seL4_NumExclusiveBreakpoints (6)
 #define seL4_NumExclusiveWatchpoints (4)
-#endif
-
 #ifdef CONFIG_HARDWARE_DEBUG_API
 #define seL4_FirstWatchpoint (6)
 #define seL4_NumDualFunctionMonitors (0)

@@ -31,7 +31,6 @@
 
 #ifndef __ASSEMBLER__
 #include <stdint.h>
-#include <mode/machine.h>
 #include <arch/machine/registerset.h>
 
 void debug_init(void) VISIBLE;

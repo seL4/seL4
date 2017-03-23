@@ -13,18 +13,22 @@
 #define __ARCH_MACHINE_DEBUG_H
 
 #include <util.h>
+#include <api/types.h>
+#include <arch/machine/debug_conf.h>
 #include <plat/api/constants.h>
 #include <armv/debug.h>
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 void restore_user_debug_context(tcb_t *target_thread);
-void Arch_debugAssociateVCPUTCB(tcb_t *t);
-void Arch_debugDissociateVCPUTCB(tcb_t *t);
 void saveAllBreakpointState(tcb_t *t);
 void loadAllDisabledBreakpointState(void);
 #endif
+#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
+void Arch_debugAssociateVCPUTCB(tcb_t *t);
+void Arch_debugDissociateVCPUTCB(tcb_t *t);
+#endif
 
-#if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+#ifdef ARM_HYP_TRAP_CP14
 /* Those of these that trap NS accesses trap all NS accesses; we can't cause the
  * processor to only trap NS-PL0 or NS-PL1, but if we want to trap the accesses,
  * we get both (PL0 and PL1) non-secure modes' accesses.
@@ -104,7 +108,7 @@ initHDCR(void)
      */
     setHDCRTrapDebugExceptionState(true);
 }
-#endif /* defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT) */
+#endif /* ARM_HYP_TRAP_CP14 */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 

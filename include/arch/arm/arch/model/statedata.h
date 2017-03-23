@@ -14,6 +14,7 @@
 #include <config.h>
 
 #include <model/statedata.h>
+#include <arch/machine/debug_conf.h>
 #include <mode/machine/registerset.h>
 
 NODE_STATE_BEGIN(archNodeState)
@@ -22,7 +23,7 @@ NODE_STATE_BEGIN(archNodeState)
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
 NODE_STATE_END(archNodeState);
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 extern user_breakpoint_state_t armKSNullBreakpointState VISIBLE;
 #endif
 
