@@ -502,7 +502,7 @@ create_initial_thread(
 
     /* initialise TCB */
     if (!create_sched_context(tcb, usToTicks(CONFIG_BOOT_THREAD_TIME_SLICE * US_IN_MS))) {
-        return false;
+        return NULL;
     }
 
     tcb->tcbPriority = seL4_MaxPrio;
