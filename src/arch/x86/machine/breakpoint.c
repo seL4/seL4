@@ -121,7 +121,7 @@ unsetDr7BitsFor(tcb_t *t, uint16_t bp_num)
  * @param rw Access trigger condition (read/write).
  * @return Hardware specific register value representing the inputs.
  */
-static inline word_t
+PURE static inline word_t
 convertTypeAndAccessToArch(uint16_t bp_num, word_t type, word_t rw)
 {
     switch (type) {
@@ -159,7 +159,7 @@ typedef struct {
     word_t type, rw;
 } convertedTypeAndAccess_t;
 
-static inline convertedTypeAndAccess_t
+PURE static inline convertedTypeAndAccess_t
 convertArchToTypeAndAccess(word_t dr7, uint16_t bp_num)
 {
     convertedTypeAndAccess_t ret;
@@ -207,7 +207,7 @@ convertArchToTypeAndAccess(word_t dr7, uint16_t bp_num)
  * @param size An integer for the operand size of the breakpoint.
  * @return Converted, hardware-specific value.
  */
-static inline word_t
+PURE static inline word_t
 convertSizeToArch(uint16_t bp_num, word_t type, word_t size)
 {
     if (type == seL4_InstructionBreakpoint) {
@@ -252,7 +252,7 @@ convertSizeToArch(uint16_t bp_num, word_t type, word_t size)
  * @param n Breakpoint number.
  * @return Converted size value.
  */
-static inline word_t
+PURE static inline word_t
 convertArchToSize(word_t dr7, uint16_t bp_num)
 {
     word_t type;
