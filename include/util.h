@@ -138,6 +138,13 @@ CONST ctzl(unsigned long x)
 
 #define CTZL(x) __builtin_ctzl(x)
 
+/** DONT_TRANSLATE */
+/** FNSPEC clzl_spec:
+  "\<forall>s. \<Gamma> \<turnstile>
+    {\<sigma>. s = \<sigma> \<and> x_' s \<noteq> 0 }
+      \<acute>ret__long :== PROC clzl(\<acute>x)
+    \<lbrace> \<acute>ret__long = of_nat (word_clz (x_' s)) \<rbrace>"
+*/
 static inline long long
 CONST clzll(unsigned long long x)
 {
