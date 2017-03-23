@@ -447,12 +447,14 @@ vcpu_disable(vcpu_t *vcpu)
     setSCTLR(SCTLR_DEFAULT);
     setHCR(HCR_NATIVE);
 
+#ifndef CONFIG_VERIFICATION_BUILD
     /* Disable all breakpoint registers from triggering their
      * respective events, so that when we switch from a guest VM
      * to a native thread, the native thread won't trigger events
      * that were caused by things the guest VM did.
      */
     loadAllDisabledBreakpointState();
+#endif
 #if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
     /* Enable debug exception trapping and let seL4 trap all PL0 (user) native
      * seL4 threads' debug exceptions, so it can deliver them as fault messages.
