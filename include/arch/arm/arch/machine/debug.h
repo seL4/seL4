@@ -38,21 +38,6 @@ void loadAllDisabledBreakpointState(void);
 #define HDCR_PERFMON_TPM_SHIFT    (6)  /* Trap NS PM accesses */
 #define HDCR_PERFMON_TPMCR_SHIFT  (5)  /* Trap NS PMCR reg access */
 
-static inline void
-initHDCR(void)
-{
-    word_t hdcr;
-
-    MRC(ARM_CP15_HDCR, hdcr);
-    /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
-     * PL0 debug exceptions.
-     *
-     * Subsequently on calls to vcpu_enable/disable, we will modify HDCR.TDE
-     * as needed.
-     */
-    MCR(ARM_CP15_HDCR, hdcr | BIT(HDCR_DEBUG_TDE_SHIFT));
-}
-
 /** When running seL4 as a hypervisor, if we're building with support for the
  * hardware debug API, we have a case of indirection that we need to handle.
  *
@@ -87,13 +72,37 @@ setHDCRTrapDebugExceptionState(bool_t enable_trapping)
         /* Trap and redirect debug faults that occur in PL0 native threads by
          * setting HDCR.TDE (trap debug exceptions).
          */
-        hdcr |= BIT(HDCR_DEBUG_TDE_SHIFT);
+        hdcr |= (BIT(HDCR_DEBUG_TDE_SHIFT)
+                | BIT(HDCR_DEBUG_TDA_SHIFT)
+                | BIT(HDCR_DEBUG_TDRA_SHIFT)
+                | BIT(HDCR_DEBUG_TDOSA_SHIFT));
     } else {
         /* Let the PL1 Guest VM handle debug events on its own */
-        hdcr &= ~BIT(HDCR_DEBUG_TDE_SHIFT);
+        hdcr &= ~(BIT(HDCR_DEBUG_TDE_SHIFT)
+                | BIT(HDCR_DEBUG_TDA_SHIFT)
+                | BIT(HDCR_DEBUG_TDRA_SHIFT)
+                | BIT(HDCR_DEBUG_TDOSA_SHIFT));
     }
 
     MCR(ARM_CP15_HDCR, hdcr);
+}
+
+static inline void
+initHDCR(void)
+{
+    /* By default at boot, we SET HDCR.TDE to catch and redirect native threads'
+     * PL0 debug exceptions.
+     *
+     * Unfortunately, this is complicated a bit by ARM's strange requirement that
+     * if you set HDCR.TDE, you must also set TDA, TDOSA, and TDRA:
+     *  ARMv7 archref manual: section B1.8.9:
+     *      "When HDCR.TDE is set to 1, the HDCR.{TDRA, TDOSA, TDA} bits must all
+     *      be set to 1, otherwise behavior is UNPREDICTABLE"
+     *
+     * Subsequently on calls to vcpu_enable/disable, we will modify HDCR.TDE
+     * as needed.
+     */
+    setHDCRTrapDebugExceptionState(true);
 }
 #endif /* defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT) */
 
