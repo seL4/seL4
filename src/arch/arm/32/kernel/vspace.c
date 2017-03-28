@@ -945,7 +945,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
     case ARMSmallPage: {
         if (cacheable) {
             pte = pte_pte_small_new(
-                      0,      /* Executable */
+                      nonexecutable, /* Executable */
                       0,      /* Not contiguous */
                       paddr,
                       1,      /* AF - Always set */
@@ -954,7 +954,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                       MEMATTR_CACHEABLE /* Cacheable */);
         } else {
             pte = pte_pte_small_new(
-                      0,      /* Executable */
+                      nonexecutable, /* Executable */
                       0,      /* Not contiguous */
                       paddr,
                       1,      /* AF - Always set */
@@ -968,7 +968,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
     case ARMLargePage: {
         if (cacheable) {
             pte = pte_pte_small_new(
-                      0,   /* Executable */
+                      nonexecutable,   /* Executable */
                       1,   /* 16 contiguous */
                       paddr,
                       1,   /* AF - Always set */
@@ -977,7 +977,7 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
                       MEMATTR_CACHEABLE  /* Cacheable */);
         } else {
             pte = pte_pte_small_new(
-                      0,   /* Executable */
+                      nonexecutable,   /* Executable */
                       1,   /* 16 contiguous */
                       paddr,
                       1,   /* AF - Always set */
@@ -1045,7 +1045,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
 #else
     if (cacheable) {
         return pde_pde_section_new(
-                   0, /* Executable */
+                   nonexecutable, /* Executable */
                    size2, /* contiguous */
                    paddr,
                    1, /* AF - Always set */
@@ -1054,7 +1054,7 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
                    MEMATTR_CACHEABLE /* Cacheable */);
     } else {
         return pde_pde_section_new(
-                   0, /* Executable */
+                   nonexecutable, /* Executable */
                    size2, /* contiguous */
                    paddr,
                    1, /* AF - Always set */
