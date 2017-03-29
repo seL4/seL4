@@ -75,9 +75,9 @@ static void ipiStallCoreCallback(bool_t irqPath)
         /* The current thread is running as we would replace this thread with an idle thread.
          * The instruction should be re-executed if we are in kernel to handle syscalls. However,
          * 'ThreadState_Restart' does not always result in regenerating exception if we
-         * are in kernel to handle them, e.g. hardware single step exception. 
+         * are in kernel to handle them, e.g. hardware single step exception.
          * Also, thread in 'ThreadState_RunningVM' should remain in same state. */
-        if(thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running) {
+        if (thread_state_ptr_get_tsType(&NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running) {
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         }
 
@@ -119,7 +119,7 @@ static void ipiStallCoreCallback(bool_t irqPath)
 }
 
 static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
-    word_t arg1, word_t arg2, bool_t irqPath)
+                             word_t arg1, word_t arg2, bool_t irqPath)
 {
     /* we gets spurious irq_remote_call_ipi calls, e.g. when handling IPI
      * in lock while hardware IPI is pending. Guard against spurious IPIs! */

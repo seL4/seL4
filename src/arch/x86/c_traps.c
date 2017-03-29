@@ -37,7 +37,7 @@ c_handle_interrupt(int irq, int syscall)
     /* Only grab the lock if we are not handeling 'int_remote_call_ipi' interrupt
      * also flag this lock as IRQ lock if handling the irq interrupts. */
     NODE_LOCK_IF(irq != int_remote_call_ipi,
-        irq >= int_irq_min && irq <= int_irq_max);
+                 irq >= int_irq_min && irq <= int_irq_max);
 
     c_entry_hook();
 
