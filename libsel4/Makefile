@@ -17,6 +17,7 @@ CHANGED_PATH := ${SOURCE_DIR}/tools/changed.sh
 
 ifeq (${PYTHON},)
 PYTHON = python
+export PYTHONDONTWRITEBYTECODE = true
 endif
 
 ifeq (${KERNEL_32}, y)
