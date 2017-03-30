@@ -186,6 +186,7 @@ endif
 
 ifeq (${PYTHON},)
 PYTHON = python
+export PYTHONDONTWRITEBYTECODE = true
 endif
 
 # Allow manually appending CPP flags.
