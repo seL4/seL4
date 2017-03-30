@@ -186,6 +186,7 @@ endif
 
 ifeq (${PYTHON},)
 PYTHON = python
+# Suppress python bytecode (pyc) files for build thread safety
 export PYTHONDONTWRITEBYTECODE = true
 endif
 
