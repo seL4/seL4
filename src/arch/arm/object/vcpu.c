@@ -420,7 +420,7 @@ vcpu_enable(vcpu_t *vcpu)
      * the code will be able to omit the debug register context restore, if
      * it's done here.
      */
-    restore_user_debug_context(vcpu->tcb);
+    restore_user_debug_context(vcpu->vcpuTCB);
 #endif
 #if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
     /* Disable debug exception trapping and let the PL1 Guest VM handle all
@@ -532,7 +532,7 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
      * not exporting the debug API, because in that case, native
      * threads can't modify the debug registers (i.e, without the API).
      */
-    saveAllBreakpointState(&vcpu->tcb->tcbArch);
+    saveAllBreakpointState(&vcpu->vcpuTCB->tcbArch);
 #endif
     isb();
 }
@@ -851,7 +851,7 @@ vcpu_switch(vcpu_t *new)
         } else if (unlikely(armHSVCPUActive)) {
             /* leave the current VCPU state loaded, but disable vgic and mmu */
 #ifndef CONFIG_VERIFICATION_BUILD
-            saveAllBreakpointState(&armHSCurVCPU->tcb->tcbArch);
+            saveAllBreakpointState(&armHSCurVCPU->vcpuTCB->tcbArch);
 #endif
             vcpu_disable(armHSCurVCPU);
             armHSVCPUActive = false;
@@ -876,35 +876,35 @@ vcpu_invalidate_active(void)
 void
 vcpu_finalise(vcpu_t *vcpu)
 {
-    if (vcpu->tcb) {
-        dissociateVCPUTCB(vcpu, vcpu->tcb);
+    if (vcpu->vcpuTCB) {
+        dissociateVCPUTCB(vcpu, vcpu->vcpuTCB);
     }
 }
 
 void
 associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
-    if (tcb->tcbArch.vcpu) {
-        dissociateVCPUTCB(tcb->tcbArch.vcpu, tcb);
+    if (tcb->tcbArch.tcbVCPU) {
+        dissociateVCPUTCB(tcb->tcbArch.tcbVCPU, tcb);
     }
-    if (vcpu->tcb) {
-        dissociateVCPUTCB(vcpu, vcpu->tcb);
+    if (vcpu->vcpuTCB) {
+        dissociateVCPUTCB(vcpu, vcpu->vcpuTCB);
     }
-    vcpu->tcb = tcb;
-    tcb->tcbArch.vcpu = vcpu;
+    vcpu->vcpuTCB = tcb;
+    tcb->tcbArch.tcbVCPU = vcpu;
 }
 
 void
 dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
-    if (tcb->tcbArch.vcpu != vcpu || vcpu->tcb != tcb) {
+    if (tcb->tcbArch.tcbVCPU != vcpu || vcpu->vcpuTCB != tcb) {
         fail("TCB and VCPU not associated.");
     }
     if (vcpu == armHSCurVCPU) {
         vcpu_invalidate_active();
     }
-    tcb->tcbArch.vcpu = NULL;
-    vcpu->tcb = NULL;
+    tcb->tcbArch.tcbVCPU = NULL;
+    vcpu->vcpuTCB = NULL;
 #ifndef CONFIG_VERIFICATION_BUILD
     Arch_debugDissociateVCPUTCB(tcb);
 #endif

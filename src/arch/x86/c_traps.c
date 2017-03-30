@@ -105,7 +105,7 @@ slowpath(syscall_t syscall)
 
 #ifdef CONFIG_VTX
     if (syscall == SysVMEnter) {
-        vcpu_update_state_sysvmenter(NODE_STATE(ksCurThread)->tcbArch.vcpu);
+        vcpu_update_state_sysvmenter(NODE_STATE(ksCurThread)->tcbArch.tcbVCPU);
         if (NODE_STATE(ksCurThread)->tcbBoundNotification && notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active) {
             completeSignal(NODE_STATE(ksCurThread)->tcbBoundNotification, NODE_STATE(ksCurThread));
             setRegister(NODE_STATE(ksCurThread), msgInfoRegister, SEL4_VMENTER_RESULT_NOTIF);

@@ -34,7 +34,7 @@ struct gicVCpuIface {
 
 struct vcpu {
     /* TCB associated with this VCPU. */
-    struct tcb *tcb;
+    struct tcb *vcpuTCB;
     struct cpXRegs cpx;
     struct gicVCpuIface vgic;
     /* Banked registers */

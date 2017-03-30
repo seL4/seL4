@@ -41,9 +41,9 @@ static void NORETURN restore_vmx(void)
     loadAllDisabledBreakpointState(&NODE_STATE(ksCurThread)->tcbArch);
 #endif
 #if CONFIG_MAX_NUM_NODES > 1
-    NODE_STATE(ksCurThread)->tcbArch.vcpu->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(CONFIG_KERNEL_STACK_BITS) - 4;
+    NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(CONFIG_KERNEL_STACK_BITS) - 4;
 #endif
-    if (NODE_STATE(ksCurThread)->tcbArch.vcpu->launched) {
+    if (NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->launched) {
         /* attempt to do a vmresume */
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
@@ -65,7 +65,7 @@ static void NORETURN restore_vmx(void)
 #endif
             "call %1\n"
             :
-            : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[VCPU_EAX]),
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
             "m"(vmlaunch_failed),
             "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores
@@ -94,7 +94,7 @@ static void NORETURN restore_vmx(void)
 #endif
             "call %1\n"
             :
-            : "r"(&NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[VCPU_EAX]),
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
             "m"(vmlaunch_failed),
             "i"(BIT(CONFIG_KERNEL_STACK_BITS) - sizeof(word_t))
             // Clobber memory so the compiler is forced to complete all stores

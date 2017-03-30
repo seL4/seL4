@@ -44,7 +44,7 @@ static void NORETURN restore_vmx(void)
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
     loadAllDisabledBreakpointState(&cur_thread->tcbArch);
 #endif
-    if (cur_thread->tcbArch.vcpu->launched) {
+    if (cur_thread->tcbArch.tcbVCPU->launched) {
         /* attempt to do a vmresume */
         asm volatile(
             // Set our stack pointer to the top of the tcb so we can efficiently pop
@@ -75,7 +75,7 @@ static void NORETURN restore_vmx(void)
             "leaq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
-            : [reg]"r"(&cur_thread->tcbArch.vcpu->gp_registers[VCPU_EAX]),
+            : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
             [failed]"m"(vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #if CONFIG_MAX_NUM_NODES > 1
@@ -116,7 +116,7 @@ static void NORETURN restore_vmx(void)
             "leaq %[failed], %%rax\n"
             "jmp *%%rax\n"
             :
-            : [reg]"r"(&cur_thread->tcbArch.vcpu->gp_registers[VCPU_EAX]),
+            : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
             [failed]"m"(vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
 #if CONFIG_MAX_NUM_NODES > 1

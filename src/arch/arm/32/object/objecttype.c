@@ -540,8 +540,8 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    if (thread->tcbArch.vcpu) {
-        dissociateVCPUTCB(thread->tcbArch.vcpu, thread);
+    if (thread->tcbArch.tcbVCPU) {
+        dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
     }
 #else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     /* No action required on ARM. */

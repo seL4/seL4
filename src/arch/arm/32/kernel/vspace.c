@@ -1116,7 +1116,7 @@ setVMRoot(tcb_t *tcb)
 
     armv_contextSwitch(pd, asid);
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        vcpu_switch(tcb->tcbArch.vcpu);
+        vcpu_switch(tcb->tcbArch.tcbVCPU);
     }
 }
 

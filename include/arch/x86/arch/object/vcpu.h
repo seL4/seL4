@@ -274,7 +274,7 @@ struct vcpu {
 #endif
 
     /* TCB associated with this VCPU. */
-    struct tcb *tcb;
+    struct tcb *vcpuTCB;
     bool_t launched;
 
     /* Currently assigned VPID */
