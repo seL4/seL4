@@ -86,12 +86,12 @@ static inline void invalidateHypTLB(void)
 
 static inline paddr_t PURE addressTranslateS1CPR(vptr_t vaddr)
 {
-    uint64_t ipa;
+    uint32_t ipa0, ipa1;
     asm volatile ("mcr  p15, 0, %0, c7, c8, 0" :: "r"(vaddr));
     isb();
-    asm volatile ("mrrc p15, 0, %Q0, %R0, c7"   : "=r"(ipa));
+    asm volatile ("mrrc p15, 0, %0, %1, c7"   : "=r"(ipa0), "=r"(ipa1));
 
-    return ipa;
+    return ipa0;
 }
 
 static inline word_t PURE getHSR(void)
