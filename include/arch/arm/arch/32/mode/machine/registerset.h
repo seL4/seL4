@@ -163,8 +163,6 @@ typedef struct user_breakpoint_state {
     bool_t single_step_enabled;
     uint16_t single_step_hw_bp_num;
 } user_breakpoint_state_t;
-
-void Arch_initBreakpointContext(user_breakpoint_state_t *context);
 #endif
 
 /* ARM user-code context: size = 72 bytes
@@ -188,6 +186,9 @@ compile_assert(registers_are_first_member_of_user_context,
                __builtin_offsetof(user_context_t, registers) == 0)
 #endif
 
+#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+void Arch_initBreakpointContext(user_context_t *context);
+#endif
 
 static inline void Arch_initContext(user_context_t* context)
 {
