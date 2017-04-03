@@ -77,15 +77,15 @@ setHDCRTrapDebugExceptionState(bool_t enable_trapping)
          * setting HDCR.TDE (trap debug exceptions).
          */
         hdcr |= (BIT(HDCR_DEBUG_TDE_SHIFT)
-                | BIT(HDCR_DEBUG_TDA_SHIFT)
-                | BIT(HDCR_DEBUG_TDRA_SHIFT)
-                | BIT(HDCR_DEBUG_TDOSA_SHIFT));
+                 | BIT(HDCR_DEBUG_TDA_SHIFT)
+                 | BIT(HDCR_DEBUG_TDRA_SHIFT)
+                 | BIT(HDCR_DEBUG_TDOSA_SHIFT));
     } else {
         /* Let the PL1 Guest VM handle debug events on its own */
         hdcr &= ~(BIT(HDCR_DEBUG_TDE_SHIFT)
-                | BIT(HDCR_DEBUG_TDA_SHIFT)
-                | BIT(HDCR_DEBUG_TDRA_SHIFT)
-                | BIT(HDCR_DEBUG_TDOSA_SHIFT));
+                  | BIT(HDCR_DEBUG_TDA_SHIFT)
+                  | BIT(HDCR_DEBUG_TDRA_SHIFT)
+                  | BIT(HDCR_DEBUG_TDOSA_SHIFT));
     }
 
     MCR(ARM_CP15_HDCR, hdcr);
