@@ -289,7 +289,8 @@ endif
 #
 # This entire block is not executed if building a stand alone kernel!
 ifndef NK_CFLAGS
-STATICHEADERS += autoconf.h
+STATICHEADERS += configs/$(PLAT)/autoconf.h
+INCLUDES += "-Iconfigs/$(PLAT)"
 DEFINES += -DHAVE_AUTOCONF
 ifdef DEBUG
 DEFINES += -DCONFIG_DEBUG_BUILD
@@ -641,9 +642,6 @@ kernel.elf: ${OBJECTS} linker.lds_pp
 	@echo " [LD] $@"
 	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -T linker.lds_pp -Wl,-n \
 	     -o $@ ${OBJECTS}
-
-autoconf.h: include/plat/${PLAT}/autoconf.h
-	${Q}cp $< $@
 
 ############################################################
 ### Pattern rules
