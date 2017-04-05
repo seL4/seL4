@@ -82,7 +82,7 @@ exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps);
 
 exception_t invokeVCPUWriteReg(vcpu_t *vcpu, uint32_t field, uint32_t value);
 exception_t invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field);
-exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, int index, virq_t virq);
+exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq);
 exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb);
 
 #else /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */

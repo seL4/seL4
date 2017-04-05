@@ -989,7 +989,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
 }
 
 exception_t
-invokeVCPUInjectIRQ(vcpu_t* vcpu, int index, virq_t virq)
+invokeVCPUInjectIRQ(vcpu_t* vcpu, unsigned long index, virq_t virq)
 {
     if (likely(armHSCurVCPU == vcpu)) {
         set_gic_vcpu_ctrl_lr(index, virq);
