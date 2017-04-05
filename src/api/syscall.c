@@ -28,7 +28,7 @@
 #include <kernel/traps.h>
 #include <arch/machine.h>
 
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 #include <arch/machine/capdl.h>
 #endif
 

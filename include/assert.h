@@ -13,7 +13,7 @@
 
 #include <util.h>
 
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 
 void _fail(
     const char*  str,

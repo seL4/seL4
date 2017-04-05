@@ -54,7 +54,7 @@
  * We cannot allow async aborts in the verified kernel, but they are useful
  * in identifying invalid memory access bugs so we enable them in debug mode.
  */
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 #define PSTATE_EXTRA_FLAGS  0
 #else
 #define PSTATE_EXTRA_FLAGS  PMODE_SERROR

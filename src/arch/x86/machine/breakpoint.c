@@ -615,7 +615,7 @@ handleUserLevelDebugException(int int_vector)
     getAndResetActiveBreakpoint_t active_bp;
     testAndResetSingleStepException_t single_step_info;
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
     ksKernelEntry.path = Entry_UserLevelFault;
     ksKernelEntry.word = int_vector;
 #else

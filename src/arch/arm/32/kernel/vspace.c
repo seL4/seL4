@@ -2972,7 +2972,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 }
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 void kernelPrefetchAbort(word_t pc) VISIBLE;
 void kernelDataAbort(word_t pc) VISIBLE;
 

@@ -11,7 +11,7 @@
 #include <assert.h>
 #include <machine/io.h>
 
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 
 void _fail(
     const char*  s,

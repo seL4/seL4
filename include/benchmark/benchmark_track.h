@@ -20,7 +20,7 @@
 #include <model/statedata.h>
 #include <mode/machine.h>
 
-#if defined(DEBUG) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
+#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES)
 #define TRACK_KERNEL_ENTRIES 1
 extern kernel_entry_t ksKernelEntry;
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES

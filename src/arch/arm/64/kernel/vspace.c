@@ -2185,7 +2185,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
     }
 }
 
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 void kernelPrefetchAbort(word_t pc) VISIBLE;
 void kernelDataAbort(word_t pc) VISIBLE;
 
