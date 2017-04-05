@@ -176,7 +176,7 @@ static void sendIOPT(unsigned long address, unsigned int level)
         if (vtd_pte_get_addr(vtd_pte) != 0) {
             sendWord(i);
             sendWord(vtd_pte.words[0]);
-#if CONFIG_ARCH_IA32
+#ifdef CONFIG_ARCH_IA32
             sendWord(vtd_pte.words[1]);
 #endif
             if (level == x86KSnumIOPTLevels) {
