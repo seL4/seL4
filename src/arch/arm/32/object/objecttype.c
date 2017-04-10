@@ -486,14 +486,14 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                                           (word_t)regionBase);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
-        memzero(regionBase, 1 << VCPU_SIZE_BITS);
         vcpu_init(VCPU_PTR(regionBase));
         return cap_vcpu_cap_new(VCPU_REF(regionBase));
 #endif
 
 #ifdef CONFIG_ARM_SMMU
     case seL4_ARM_IOPageTableObject:
-        memzero(regionBase, 1 << seL4_IOPageTableBits);
+        /* When the untyped was zeroed it was cleaned to the PoU, but the SMMUs
+         * typically pull directly from RAM, so we do a futher clean to RAM here */
         cleanCacheRange_RAM((word_t)regionBase,
                             (word_t)regionBase + (1 << seL4_IOPageTableBits) - 1,
                             addrFromPPtr(regionBase));
