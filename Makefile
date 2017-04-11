@@ -287,8 +287,8 @@ endif
 # Only set CFLAGS if we're building standalone.
 # common/Makefile.Flags sets NK_CFLAGS  in Kbuild environments.
 ifndef NK_CFLAGS
-STATICHEADERS += configs/$(PLAT)/autoconf.h
-INCLUDES += "-Iconfigs/$(PLAT)"
+STATICHEADERS += ${SOURCE_ROOT}/configs/$(PLAT)/autoconf.h
+INCLUDES += "-I${SOURCE_ROOT}/configs/$(PLAT)"
 DEFINES += -DHAVE_AUTOCONF
 ifdef DEBUG
 DEFINES += -DCONFIG_DEBUG_BUILD
