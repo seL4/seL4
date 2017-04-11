@@ -97,4 +97,16 @@ void flushCacheRange(void* vaddr, uint32_t size_bits);
 /* Disables a variety of prefetchers */
 bool_t disablePrefetchers(void);
 
+/* Flushes entire CPU Cache */
+static inline void x86_wbinvd(void)
+{
+    asm volatile("wbinvd" ::: "memory");
+}
+
+static inline void
+arch_clean_invalidate_caches(void)
+{
+    x86_wbinvd();
+}
+
 #endif

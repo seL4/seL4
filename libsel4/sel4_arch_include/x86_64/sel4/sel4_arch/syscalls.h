@@ -454,6 +454,13 @@ seL4_BenchmarkNullSyscall(void)
     asm volatile("" ::: "memory");
 }
 
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkFlushCaches(void)
+{
+    x64_sys_null(seL4_SysBenchmarkFlushCaches);
+    asm volatile("" ::: "memory");
+}
+
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
