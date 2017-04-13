@@ -260,7 +260,7 @@ initL2Cache(void)
 #endif
 
     prefetch = CTRL2_PFET_INST_PREFETCH_EN | CTRL2_PFET_DATA_PREFETCH_EN;
-#if defined(IMX6)
+#if defined(CONFIG_PLAT_IMX6)
     tag_ram  = CTRL_RAM_LATENCY(1, 2, 1);
     data_ram = CTRL_RAM_LATENCY(1, 2, 1);
 #else
@@ -276,7 +276,7 @@ initL2Cache(void)
                | CTRL_AUX_ASSOCIATIVITY_16WAY
                | CTRL_AUS_REPLPOLICY_RROBIN;
 
-#if defined(EXYNOS4) || defined(IMX6) || defined(PLAT_ZYNQ7000) || defined(PLAT_ALLWINNERA20)
+#if defined(CONFIG_PLAT_EXYNOS4) || defined(CONFIG_PLAT_IMX6) || defined(CONFIG_PLAT_ZYNQ7000) || defined(CONFIG_PLAT_ALLWINNERA20)
     aux |= CTRL_AUX_WAYSIZE_64K;
 #elif defined(OMAP4)
     aux |= CTRL_AUX_WAYSIZE_32K;
