@@ -45,10 +45,12 @@ enum IPGConstants {
 
 #define TIMER_INTERVAL_MS (CONFIG_TIMER_TICK_MS)
 #define TIMER_CLOCK_SRC   IPG_CLK_32K
-#define TIMER_CLOCK_HZ    32768
+#define TIMER_CLOCK_HZ    32768u
+
+#if (TIMER_INTERVAL_MS >= (0xFFFFFFFF / TIMER_CLOCK_HZ))
+#error "Timer reload val out of range"
+#else
 #define TIMER_RELOAD_VAL  (TIMER_CLOCK_HZ * TIMER_INTERVAL_MS / 1000)
-#if TIMER_RELOAD_VAL <= 0 || TIMER_RELOAD_VAL > 0xffffffff
-#error TIMER_RELOAD_VAL out of range
 #endif
 
 interrupt_t active_irq = irqInvalid;
