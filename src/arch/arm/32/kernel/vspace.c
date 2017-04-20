@@ -1984,7 +1984,13 @@ performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
     j = pte_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t base_address = pte_pte_small_get_address(pte);
+#endif
     for (i = 0; i < pte_entries.length; i++) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pte = pte_pte_small_set_address(pte, base_address + i * BIT(pageBitsForSize(ARMSmallPage)));
+#endif
         pte_entries.base[i] = pte;
     }
     cleanCacheRange_PoU((word_t)pte_entries.base,
@@ -2013,7 +2019,13 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
     j = pde_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t base_address = pde_pde_section_get_address(pde);
+#endif
     for (i = 0; i < pde_entries.length; i++) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pde = pde_pde_section_set_address(pde, base_address + i * BIT(pageBitsForSize(ARMSection)));
+#endif
         pde_entries.base[i] = pde;
     }
     cleanCacheRange_PoU((word_t)pde_entries.base,
@@ -2039,11 +2051,14 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
     j = pte_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t base_address = pte_pte_small_get_address(pte);
+#endif
     for (i = 0; i < pte_entries.length; i++) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pte = pte_pte_small_set_address(pte, base_address + i * BIT(pageBitsForSize(ARMSmallPage)));
+#endif
         pte_entries.base[i] = pte;
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            pte.words[0] += BIT(pageBitsForSize(ARMLargePage));
-        }
     }
     cleanCacheRange_PoU((word_t)pte_entries.base,
                         LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
@@ -2068,11 +2083,14 @@ performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
     j = pde_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t base_address = pde_pde_section_get_address(pde);
+#endif
     for (i = 0; i < pde_entries.length; i++) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pde = pde_pde_section_set_address(pde, base_address + i * BIT(pageBitsForSize(ARMSection)));
+#endif
         pde_entries.base[i] = pde;
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            pde.words[0] += BIT(pageBitsForSize(ARMSection));
-        }
     }
     cleanCacheRange_PoU((word_t)pde_entries.base,
                         LAST_BYTE_PDE(pde_entries.base, pde_entries.length),
