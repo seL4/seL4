@@ -1751,13 +1751,12 @@ createSafeMappingEntries_PTE
         ret.pte_entries.base = lu_ret.ptSlot;
 
         for (i = 0; i < PAGES_PER_LARGE_PAGE; i++) {
-#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
             if (unlikely(pte_get_pteType(ret.pte_entries.base[i]) ==
-                         pte_pte_small)) {
-#else
-            if (unlikely(pte_ptr_get_pteType(lu_ret.ptSlot) == pte_pte_small
-                         && !pte_pte_small_get_contiguous_hint(ret.pte_entries.base[i]))) {
+                         pte_pte_small)
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                         && !pte_pte_small_get_contiguous_hint(ret.pte_entries.base[i])
 #endif
+                         ) {
                 current_syscall_error.type =
                     seL4_DeleteFirst;
 
