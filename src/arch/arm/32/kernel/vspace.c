@@ -839,31 +839,30 @@ resolveVAddr(pde_t *pd, vptr_t vaddr)
     case pde_pde_coarse: {
         pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
         pte_t *pte = lookupPTSlot_nofail(pt, vaddr);
-#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         switch (pte_ptr_get_pteType(pte)) {
+        case pte_pte_small:
+            ret.frameBase = pte_pte_small_ptr_get_address(pte);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+            if (pte_pte_small_ptr_get_contiguous_hint(pte)) {
+                /* Entries are represented as 16 contiguous small frames. We need to mask
+                   to get the large frame base */
+                ret.frameBase &= ~MASK(pageBitsForSize(ARMLargePage));
+                ret.frameSize = ARMLargePage;
+            } else {
+                ret.frameSize = ARMSmallPage;
+            }
+#else
+            ret.frameSize = ARMSmallPage;
+#endif
+            return ret;
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         case pte_pte_large:
             ret.frameBase = pte_pte_large_ptr_get_address(pte);
             ret.frameSize = ARMLargePage;
             return ret;
-
-        case pte_pte_small:
-            ret.frameBase = pte_pte_small_ptr_get_address(pte);
-            ret.frameSize = ARMSmallPage;
-            return ret;
-        }
-#else
-        if (pte_pte_small_ptr_get_contiguous_hint(pte)) {
-            ret.frameBase = pte_pte_small_ptr_get_address(pte);
-            /* Entries are represented as 16 contiguous small frames. We need to mask to get the large frame base */
-            ret.frameBase &= ~MASK(pageBitsForSize(ARMLargePage));
-            ret.frameSize = ARMLargePage;
-            return ret;
-        } else {
-            ret.frameBase = pte_pte_small_ptr_get_address(pte);
-            ret.frameSize = ARMSmallPage;
-            return ret;
-        }
 #endif
+        }
         break;
     }
     }
