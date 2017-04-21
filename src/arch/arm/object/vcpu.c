@@ -901,8 +901,8 @@ associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     if (vcpu->vcpuTCB) {
         dissociateVCPUTCB(vcpu, vcpu->vcpuTCB);
     }
-    vcpu->vcpuTCB = tcb;
     tcb->tcbArch.tcbVCPU = vcpu;
+    vcpu->vcpuTCB = tcb;
 }
 
 void
