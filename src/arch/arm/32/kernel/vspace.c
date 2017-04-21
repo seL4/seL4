@@ -862,6 +862,8 @@ resolveVAddr(pde_t *pd, vptr_t vaddr)
             ret.frameSize = ARMLargePage;
             return ret;
 #endif
+        default:
+            break;
         }
         break;
     }
