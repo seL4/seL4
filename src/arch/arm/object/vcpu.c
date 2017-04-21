@@ -435,10 +435,14 @@ vcpu_enable(vcpu_t *vcpu)
 static void
 vcpu_disable(vcpu_t *vcpu)
 {
+    uint32_t hcr;
+    word_t SCTLR;
     dsb();
     if (likely(vcpu)) {
-        vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
-        vcpu->cpx.sctlr = getSCTLR();
+        hcr = get_gic_vcpu_ctrl_hcr();
+        SCTLR = getSCTLR();
+        vcpu->vgic.hcr = hcr;
+        vcpu->cpx.sctlr = SCTLR;
         isb();
     }
     /* Turn off the VGIC */
