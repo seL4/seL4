@@ -502,7 +502,7 @@ vcpu_boot_init(void)
 static void
 vcpu_save(vcpu_t *vcpu, bool_t active)
 {
-    int i;
+    word_t i;
 
     assert(vcpu);
     dsb();
@@ -755,7 +755,7 @@ void
 vcpu_restore(vcpu_t *vcpu)
 {
     assert(vcpu);
-    int i;
+    word_t i;
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
     isb();
