@@ -964,9 +964,10 @@ invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field, bool_t call)
     thread = ksCurThread;
     uint32_t value = readVCPUReg(vcpu, field);
     if (call) {
-        setRegister(thread, msgRegisters[0], value);
+        word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        unsigned int length = setMR(thread, ipcBuffer, 0, value);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                        seL4_MessageInfo_new(0, 0, 0, 1)));
+                        seL4_MessageInfo_new(0, 0, 0, length)));
     }
     setThreadState(ksCurThread, ThreadState_Running);
     return EXCEPTION_NONE;
