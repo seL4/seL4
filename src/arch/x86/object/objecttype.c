@@ -503,6 +503,7 @@ Arch_decodeInvocation(
     cte_t* slot,
     cap_t cap,
     extra_caps_t excaps,
+    bool_t call,
     word_t* buffer
 )
 {

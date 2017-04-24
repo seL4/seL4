@@ -355,7 +355,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 exception_t
 Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
                       cte_t *slot, cap_t cap, extra_caps_t extraCaps,
-                      word_t *buffer)
+                      bool_t call, word_t *buffer)
 {
     return decodeARMMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
 }

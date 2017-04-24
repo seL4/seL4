@@ -544,7 +544,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 exception_t
 Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
                       cte_t *slot, cap_t cap, extra_caps_t excaps,
-                      word_t *buffer)
+                      bool_t call, word_t *buffer)
 {
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if
@@ -559,7 +559,7 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 #endif
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case cap_vcpu_cap:
-        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+        return decodeARMVCPUInvocation(invLabel, length, cptr, slot, cap, excaps, call, buffer);
 #endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
     default:
 #else

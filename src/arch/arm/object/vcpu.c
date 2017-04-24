@@ -958,19 +958,22 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
 }
 
 exception_t
-invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field)
+invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field, bool_t call)
 {
     tcb_t *thread;
     thread = ksCurThread;
-    setRegister(thread, msgRegisters[0], readVCPUReg(vcpu, field));
-    setRegister(thread, msgInfoRegister, wordFromMessageInfo(
-                    seL4_MessageInfo_new(0, 0, 0, 1)));
+    uint32_t value = readVCPUReg(vcpu, field);
+    if (call) {
+        setRegister(thread, msgRegisters[0], value);
+        setRegister(thread, msgInfoRegister, wordFromMessageInfo(
+                        seL4_MessageInfo_new(0, 0, 0, 1)));
+    }
     setThreadState(ksCurThread, ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
 exception_t
-decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
+decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer)
 {
     uint32_t field;
     if (length < 1) {
@@ -989,7 +992,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, word_t* buffer)
     }
 
     setThreadState(ksCurThread, ThreadState_Restart);
-    return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field);
+    return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, call);
 }
 
 exception_t
@@ -1078,6 +1081,7 @@ exception_t decodeARMVCPUInvocation(
     cte_t* slot,
     cap_t cap,
     extra_caps_t extraCaps,
+    bool_t call,
     word_t* buffer
 )
 {
@@ -1085,7 +1089,7 @@ exception_t decodeARMVCPUInvocation(
     case ARMVCPUSetTCB:
         return decodeVCPUSetTCB(cap, extraCaps);
     case ARMVCPUReadReg:
-        return decodeVCPUReadReg(cap, length, buffer);
+        return decodeVCPUReadReg(cap, length, call, buffer);
     case ARMVCPUWriteReg:
         return decodeVCPUWriteReg(cap, length, buffer);
     case ARMVCPUInjectIRQ:

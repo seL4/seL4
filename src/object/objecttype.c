@@ -520,7 +520,7 @@ decodeInvocation(word_t invLabel, word_t length,
 {
     if (isArchCap(cap)) {
         return Arch_decodeInvocation(invLabel, length, capIndex,
-                                     slot, cap, excaps, buffer);
+                                     slot, cap, excaps, call, buffer);
     }
 
     switch (cap_get_capType(cap)) {
