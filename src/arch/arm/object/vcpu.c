@@ -965,6 +965,7 @@ invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field, bool_t call)
     uint32_t value = readVCPUReg(vcpu, field);
     if (call) {
         word_t *ipcBuffer = lookupIPCBuffer(true, thread);
+        setRegister(thread, badgeRegister, 0);
         unsigned int length = setMR(thread, ipcBuffer, 0, value);
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                         seL4_MessageInfo_new(0, 0, 0, length)));
