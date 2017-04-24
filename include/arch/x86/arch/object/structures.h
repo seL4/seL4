@@ -31,8 +31,8 @@ typedef struct arch_tcb {
     user_context_t tcbContext;
 #ifdef CONFIG_VTX
     /* Pointer to associated VCPU. NULL if not associated.
-     * tcb->vcpu->tcb == tcb. */
-    struct vcpu *vcpu;
+     * tcb->tcbVCPU->vcpuTCB == tcb. */
+    struct vcpu *tcbVCPU;
 #endif /* CONFIG_VTX */
 } arch_tcb_t;
 

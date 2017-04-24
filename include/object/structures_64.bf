@@ -138,8 +138,7 @@ block notification {
     field_high ntfnQueue_head 49
 
     field_high ntfnQueue_tail 49
-    padding 12
-    field bound 1
+    padding 13
     field state 2
 }
 

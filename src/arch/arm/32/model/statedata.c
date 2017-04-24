@@ -14,6 +14,7 @@
 #include <arch/types.h>
 #include <arch/model/statedata.h>
 #include <arch/object/structures.h>
+#include <arch/machine/debug_conf.h>
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 
@@ -59,3 +60,8 @@ vcpu_t *armHSCurVCPU;
 /* Whether the current loaded VCPU is enabled in the hardware or not */
 bool_t armHSVCPUActive;
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+/* Null state for the Debug coprocessor's break/watchpoint registers */
+user_breakpoint_state_t armKSNullBreakpointState;
+#endif

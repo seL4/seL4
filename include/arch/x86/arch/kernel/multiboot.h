@@ -48,14 +48,12 @@ typedef struct multiboot_info {
     uint32_t mmap_length;
     uint32_t mmap_addr;
     uint32_t drives_length;
-    void *drives_addr;
-    void *config_table;
-    void *boot_loader_name;
-    void *apm_table;
-    /* The bootinfo types are declared to be precisely the VBE layout, so
-     * we can reuse those types here */
-    seL4_VBEInfoBlock_t *vbe_control_info;
-    seL4_VBEModeInfoBlock_t *vbe_mode_info;
+    uint32_t drives_addr;
+    uint32_t config_table;
+    uint32_t boot_loader_name;
+    uint32_t apm_table;
+    uint32_t vbe_control_info;
+    uint32_t vbe_mode_info;
     uint16_t vbe_mode;
     uint16_t vbe_interface_seg;
     uint16_t vbe_interface_off;

@@ -431,14 +431,24 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 
     case seL4_ARM_SectionObject:
         if (deviceMemory) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+            /** AUXUPD: "(True, ptr_retyps 512
+                 (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
             /** AUXUPD: "(True, ptr_retyps 256
                  (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
                                             (ptr_val \<acute>regionBase)
                                             (unat ARMSectionBits))" */
         } else {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+            /** AUXUPD: "(True, ptr_retyps 512
+                 (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
             /** AUXUPD: "(True, ptr_retyps 256
                  (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSection
                                             (ptr_val \<acute>regionBase)
                                             (unat ARMSectionBits))" */
@@ -450,14 +460,24 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 
     case seL4_ARM_SuperSectionObject:
         if (deviceMemory) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+            /** AUXUPD: "(True, ptr_retyps 8192
+                    (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
             /** AUXUPD: "(True, ptr_retyps 4096
                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
                                                 (ptr_val \<acute>regionBase)
                                                 (unat ARMSuperSectionBits))" */
         } else {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+            /** AUXUPD: "(True, ptr_retyps 8192
+                    (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
             /** AUXUPD: "(True, ptr_retyps 4096
                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
             /** GHOSTUPD: "(True, gs_new_frames vmpage_size.ARMSuperSection
                                                 (ptr_val \<acute>regionBase)
                                                 (unat ARMSuperSectionBits))" */
@@ -468,15 +488,25 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    (word_t)regionBase);
 
     case seL4_ARM_PageTableObject:
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[512]) ptr))" */
+#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pte_C[256]) ptr))" */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
         return cap_page_table_cap_new(false, asidInvalid, 0,
                                       (word_t)regionBase);
 
     case seL4_ARM_PageDirectoryObject:
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pde_C[2048]) ptr))" */
+#else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
         /** AUXUPD: "(True, ptr_retyps 1
               (Ptr (ptr_val \<acute>regionBase) :: (pde_C[4096]) ptr))" */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
         copyGlobalMappings((pde_t *)regionBase);
         cleanCacheRange_PoU((word_t)regionBase,
                             (word_t)regionBase + (1 << (PD_INDEX_BITS + PDE_SIZE_BITS)) - 1,
@@ -486,14 +516,16 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                                           (word_t)regionBase);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     case seL4_ARM_VCPUObject:
-        memzero(regionBase, 1 << VCPU_SIZE_BITS);
+        /** AUXUPD: "(True, ptr_retyp
+          (Ptr (ptr_val \<acute>regionBase) :: vcpu_C ptr))" */
         vcpu_init(VCPU_PTR(regionBase));
         return cap_vcpu_cap_new(VCPU_REF(regionBase));
 #endif
 
 #ifdef CONFIG_ARM_SMMU
     case seL4_ARM_IOPageTableObject:
-        memzero(regionBase, 1 << seL4_IOPageTableBits);
+        /* When the untyped was zeroed it was cleaned to the PoU, but the SMMUs
+         * typically pull directly from RAM, so we do a futher clean to RAM here */
         cleanCacheRange_RAM((word_t)regionBase,
                             (word_t)regionBase + (1 << seL4_IOPageTableBits) - 1,
                             addrFromPPtr(regionBase));
@@ -540,8 +572,8 @@ Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    if (thread->tcbArch.vcpu) {
-        dissociateVCPUTCB(thread->tcbArch.vcpu, thread);
+    if (thread->tcbArch.tcbVCPU) {
+        dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
     }
 #else  /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     /* No action required on ARM. */

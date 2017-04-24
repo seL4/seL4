@@ -208,7 +208,7 @@ enum IRQConstants {
     INTERRUPT_GPU                   = 189,
     INTERRUPT_GPU_NONSTALL          = 190,
     ARDPAUX                         = 191,
-    maxIRQ                          = 192
+    maxIRQ                          = 191
 } platform_interrupt_t;
 
 #define IRQ_CNODE_BITS 12

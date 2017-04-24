@@ -412,7 +412,7 @@ applyFixedBits(uint32_t original, uint32_t high, uint32_t low)
 void
 vcpu_init(vcpu_t *vcpu)
 {
-    vcpu->tcb = NULL;
+    vcpu->vcpuTCB = NULL;
     vcpu->launched = false;
 
     memcpy(vcpu->vmcs, &vmcs_revision, 4);
@@ -481,17 +481,17 @@ vcpu_init(vcpu_t *vcpu)
 static void
 dissociateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
 {
-    assert(tcb->tcbArch.vcpu == vcpu);
-    assert(vcpu->tcb == tcb);
-    tcb->tcbArch.vcpu = NULL;
-    vcpu->tcb = NULL;
+    assert(tcb->tcbArch.tcbVCPU == vcpu);
+    assert(vcpu->vcpuTCB == tcb);
+    tcb->tcbArch.tcbVCPU = NULL;
+    vcpu->vcpuTCB = NULL;
 }
 
 void
 vcpu_finalise(vcpu_t *vcpu)
 {
-    if (vcpu->tcb) {
-        dissociateVcpuTcb(vcpu->tcb, vcpu);
+    if (vcpu->vcpuTCB) {
+        dissociateVcpuTcb(vcpu->vcpuTCB, vcpu);
     }
     if (ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
 #if CONFIG_MAX_NUM_NODES > 1
@@ -508,14 +508,14 @@ vcpu_finalise(vcpu_t *vcpu)
 static void
 associateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
 {
-    if (tcb->tcbArch.vcpu) {
-        dissociateVcpuTcb(tcb, tcb->tcbArch.vcpu);
+    if (tcb->tcbArch.tcbVCPU) {
+        dissociateVcpuTcb(tcb, tcb->tcbArch.tcbVCPU);
     }
-    if (vcpu->tcb) {
-        dissociateVcpuTcb(vcpu->tcb, vcpu);
+    if (vcpu->vcpuTCB) {
+        dissociateVcpuTcb(vcpu->vcpuTCB, vcpu);
     }
-    vcpu->tcb = tcb;
-    tcb->tcbArch.vcpu = vcpu;
+    vcpu->vcpuTCB = tcb;
+    tcb->tcbArch.tcbVCPU = vcpu;
 }
 
 static exception_t
@@ -966,7 +966,7 @@ vcpu_sysvmenter_reply_to_user(tcb_t *tcb)
     vcpu_t *vcpu;
 
     buffer = lookupIPCBuffer(true, tcb);
-    vcpu = tcb->tcbArch.vcpu;
+    vcpu = tcb->tcbArch.tcbVCPU;
 
     assert(vcpu);
 
@@ -1128,7 +1128,7 @@ setMRs_vmexit(uint32_t reason, word_t qualification)
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_CR3_MR, vmread(VMX_GUEST_CR3));
 
     for (i = 0; i < n_vcpu_gp_register; i++) {
-        setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_EAX + i, NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[i]);
+        setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_EAX + i, NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->gp_registers[i]);
     }
 }
 
@@ -1152,7 +1152,7 @@ static inline void
 finishVmexitSaving(void)
 {
     vcpu_t *vcpu = ARCH_NODE_STATE(x86KSCurrentVCPU);
-    assert(vcpu == NODE_STATE(ksCurThread)->tcbArch.vcpu);
+    assert(vcpu == NODE_STATE(ksCurThread)->tcbArch.tcbVCPU);
     vcpu->launched = true;
     /* Update our cache of what is in the vmcs. This is the only value
      * that we cache that can be modified by the guest during execution */
@@ -1170,7 +1170,7 @@ finishVmexitSaving(void)
          * value from the vmcs (thus pulling in any modifications the guest made) but removing
          * the task switched flag that we set and then adding back in the task switched flag
          * that may be in the desired current cr0 */
-        vcpu->cr0 = (vcpu->cached_cr0 & ~CR0_TASK_SWITCH) | (NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 & CR0_TASK_SWITCH);
+        vcpu->cr0 = (vcpu->cached_cr0 & ~CR0_TASK_SWITCH) | (NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0 & CR0_TASK_SWITCH);
     }
 }
 
@@ -1206,14 +1206,14 @@ handleVmexit(void)
          * exception AND the owner of this vcpu has not requested that these exceptions be forwarded
          * to them (i.e. if they have not explicitly set the unimplemented device exception in the
          * exception_bitmap) */
-        if (reason == EXCEPTION_OR_NMI && !(NODE_STATE(ksCurThread)->tcbArch.vcpu->exception_bitmap & BIT(int_unimpl_dev))) {
+        if (reason == EXCEPTION_OR_NMI && !(NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->exception_bitmap & BIT(int_unimpl_dev))) {
             interrupt = vmread(VMX_DATA_EXIT_INTERRUPT_INFO);
             /* The exception number is the bottom 8 bits of the interrupt info */
             if ((interrupt & 0xff) == int_unimpl_dev) {
-                switchLocalFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.vcpu->fpuState);
+                switchLocalFpuOwner(&NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->fpuState);
                 return EXCEPTION_NONE;
             }
-        } else if (reason == CONTROL_REGISTER && !(NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_mask & CR0_TASK_SWITCH)) {
+        } else if (reason == CONTROL_REGISTER && !(NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_mask & CR0_TASK_SWITCH)) {
             /* we get here if the guest is attempting to write to a control register that is set (by
              * a 1 bit in the cr0 mask) as being owned by the host. If we got here then the previous check
              * on cr0_mask meant that the VCPU owner did not claim ownership of the the task switch bit
@@ -1238,19 +1238,19 @@ handleVmexit(void)
                          * get this one from the vmcs */
                         value = vmread(VMX_GUEST_RSP);
                     } else {
-                        value = NODE_STATE(ksCurThread)->tcbArch.vcpu->gp_registers[source];
+                        value = NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->gp_registers[source];
                     }
                     /* First unset the task switch bit in cr0 */
-                    NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
+                    NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0 &= ~CR0_TASK_SWITCH;
                     /* now set it to the value we were given */
-                    NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 |= value & CR0_TASK_SWITCH;
+                    NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0 |= value & CR0_TASK_SWITCH;
                     /* check if there are any parts of the write remaining to forward. we only need
                      * to consider bits that the hardware will not have handled without faulting, which
                      * is writing any bit such that it is different to the shadow, but only considering
                      * bits that the VCPU owner has declared that they want to own (via the cr0_shadow)
                      */
-                    if (!((value ^ NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_shadow) &
-                            NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_mask)) {
+                    if (!((value ^ NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_shadow) &
+                            NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_mask)) {
                         return EXCEPTION_NONE;
                     }
                 }
@@ -1258,15 +1258,15 @@ handleVmexit(void)
             }
             case VMX_EXIT_QUAL_TYPE_CLTS: {
                 /* Easy case. Just remove the task switch bit out of cr0 */
-                NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
+                NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0 &= ~CR0_TASK_SWITCH;
                 return EXCEPTION_NONE;
             }
             case VMX_EXIT_QUAL_TYPE_LMSW: {
                 uint16_t value = vmx_data_exit_qualification_control_regster_get_data(qual);
                 /* First unset the task switch bit in cr0 */
-                NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 &= ~CR0_TASK_SWITCH;
+                NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0 &= ~CR0_TASK_SWITCH;
                 /* now set it to the value we were given */
-                NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0 |= value & CR0_TASK_SWITCH;
+                NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0 |= value & CR0_TASK_SWITCH;
                 /* check if there are any parts of the write remaining to forward. we only need
                  * to consider bits that the hardware will not have handled without faulting, which
                  * is writing any bit such that it is different to the shadow, but only considering
@@ -1274,8 +1274,8 @@ handleVmexit(void)
                  * Additionally since LMSW only loads the bottom 4 bits of CR0 we only consider
                  * the low 4 bits
                  */
-                if (!((value ^ NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_shadow) &
-                        NODE_STATE(ksCurThread)->tcbArch.vcpu->cr0_mask & MASK(4))) {
+                if (!((value ^ NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_shadow) &
+                        NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_mask & MASK(4))) {
                     return EXCEPTION_NONE;
                 }
                 break;
@@ -1404,7 +1404,7 @@ setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
 static void
 handleLazyFpu(void)
 {
-    vcpu_t *vcpu = NODE_STATE(ksCurThread)->tcbArch.vcpu;
+    vcpu_t *vcpu = NODE_STATE(ksCurThread)->tcbArch.tcbVCPU;
     word_t cr0 = vcpu->cr0;
     word_t exception_bitmap = vcpu->exception_bitmap;
     word_t cr0_mask = vcpu->cr0_mask;
@@ -1527,7 +1527,7 @@ storeVPID(vcpu_t *vcpu, vpid_t vpid)
 void
 restoreVMCS(void)
 {
-    vcpu_t *expected_vmcs = NODE_STATE(ksCurThread)->tcbArch.vcpu;
+    vcpu_t *expected_vmcs = NODE_STATE(ksCurThread)->tcbArch.tcbVCPU;
 
     /* Check that the right VMCS is active and current. */
     if (ARCH_NODE_STATE(x86KSCurrentVCPU) != expected_vmcs) {

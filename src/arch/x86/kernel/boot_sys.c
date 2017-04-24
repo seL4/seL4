@@ -450,8 +450,8 @@ try_boot_sys(
         boot_state.vbe_info.vbeMode = -1;
         printf("Multiboot gave us no video information\n");
     } else {
-        boot_state.vbe_info.vbeInfoBlock = *mbi->vbe_control_info;
-        boot_state.vbe_info.vbeModeInfoBlock = *mbi->vbe_mode_info;
+        boot_state.vbe_info.vbeInfoBlock = *(seL4_VBEInfoBlock_t*)(seL4_Word)mbi->vbe_control_info;
+        boot_state.vbe_info.vbeModeInfoBlock = *(seL4_VBEModeInfoBlock_t*)(seL4_Word)mbi->vbe_mode_info;
         boot_state.vbe_info.vbeMode = mbi->vbe_mode;
         printf("Got VBE info in multiboot. Current video mode is %d\n", mbi->vbe_mode);
         boot_state.vbe_info.vbeInterfaceSeg = mbi->vbe_interface_seg;

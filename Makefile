@@ -186,6 +186,8 @@ endif
 
 ifeq (${PYTHON},)
 PYTHON = python
+# Suppress python bytecode (pyc) files for build thread safety
+export PYTHONDONTWRITEBYTECODE = true
 endif
 
 # Allow manually appending CPP flags.
@@ -284,10 +286,9 @@ endif
 
 # Only set CFLAGS if we're building standalone.
 # common/Makefile.Flags sets NK_CFLAGS  in Kbuild environments.
-#
-# This entire block is not executed if building a stand alone kernel!
 ifndef NK_CFLAGS
-STATICHEADERS += autoconf.h
+STATICHEADERS += ${SOURCE_ROOT}/configs/$(PLAT)/autoconf.h
+INCLUDES += "-I${SOURCE_ROOT}/configs/$(PLAT)"
 DEFINES += -DHAVE_AUTOCONF
 ifdef DEBUG
 DEFINES += -DCONFIG_DEBUG_BUILD
@@ -639,9 +640,6 @@ kernel.elf: ${OBJECTS} linker.lds_pp
 	@echo " [LD] $@"
 	$(Q)${CHANGED} $@ ${CC} ${LDFLAGS} -T linker.lds_pp -Wl,-n \
 	     -o $@ ${OBJECTS}
-
-autoconf.h: include/plat/${PLAT}/autoconf.h
-	${Q}cp $< $@
 
 ############################################################
 ### Pattern rules

@@ -25,8 +25,8 @@ typedef struct arch_tcb {
     user_context_t tcbContext;
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     /* Pointer to associated VCPU. NULL if not associated.
-     * tcb->vcpu->tcb == tcb. */
-    struct vcpu* vcpu;
+     * tcb->tcbVCPU->vcpuTCB == tcb. */
+    struct vcpu* tcbVCPU;
 #endif
 } arch_tcb_t;
 

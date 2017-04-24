@@ -16,7 +16,7 @@ sanitiseRegister(register_t reg, word_t v, tcb_t *thread)
 {
     if (reg == CPSR) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        if (thread->tcbArch.vcpu) {
+        if (thread->tcbArch.tcbVCPU) {
             switch (v & 0x1f) {
             case PMODE_USER:
             case PMODE_FIQ:

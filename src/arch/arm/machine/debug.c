@@ -15,6 +15,7 @@
 #include <util.h>
 #include <arch/model/statedata.h>
 #include <arch/machine/debug.h>
+#include <arch/machine/debug_conf.h>
 #include <arch/kernel/vspace.h>
 #include <arch/machine/registerset.h>
 #include <armv/debug.h>
@@ -160,7 +161,7 @@ byte8WatchpointsSupported(void)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 
 #define DBGBCR_ENABLE                 (BIT(0))
 
@@ -306,62 +307,62 @@ DEBUG_GENERATE_WRITE_FN(writeWvrCp, DBGWVR)
  * context and not from the hardware registers.
  */
 static word_t
-readBcrContext(arch_tcb_t *at, uint16_t index)
+readBcrContext(tcb_t *t, uint16_t index)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
-    return at->tcbContext.breakpointState.breakpoint[index].cr;
+    return t->tcbArch.tcbContext.breakpointState.breakpoint[index].cr;
 }
 
 static word_t
-readBvrContext(arch_tcb_t *at, uint16_t index)
+readBvrContext(tcb_t *t, uint16_t index)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
-    return at->tcbContext.breakpointState.breakpoint[index].vr;
+    return t->tcbArch.tcbContext.breakpointState.breakpoint[index].vr;
 }
 
 static word_t
-readWcrContext(arch_tcb_t *at, uint16_t index)
+readWcrContext(tcb_t *t, uint16_t index)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
-    return at->tcbContext.breakpointState.watchpoint[index].cr;
+    return t->tcbArch.tcbContext.breakpointState.watchpoint[index].cr;
 }
 
 static word_t
-readWvrContext(arch_tcb_t *at, uint16_t index)
+readWvrContext(tcb_t *t, uint16_t index)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
-    return at->tcbContext.breakpointState.watchpoint[index].vr;
+    return t->tcbArch.tcbContext.breakpointState.watchpoint[index].vr;
 }
 
 static void
-writeBcrContext(arch_tcb_t *at, uint16_t index, word_t val)
+writeBcrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
-    at->tcbContext.breakpointState.breakpoint[index].cr = val;
+    t->tcbArch.tcbContext.breakpointState.breakpoint[index].cr = val;
 }
 
 static void
-writeBvrContext(arch_tcb_t *at, uint16_t index, word_t val)
+writeBvrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
-    at->tcbContext.breakpointState.breakpoint[index].vr = val;
+    t->tcbArch.tcbContext.breakpointState.breakpoint[index].vr = val;
 }
 
 static void
-writeWcrContext(arch_tcb_t *at, uint16_t index, word_t val)
+writeWcrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
-    at->tcbContext.breakpointState.watchpoint[index].cr = val;
+    t->tcbArch.tcbContext.breakpointState.watchpoint[index].cr = val;
 }
 
 static void
-writeWvrContext(arch_tcb_t *at, uint16_t index, word_t val)
+writeWvrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
-    at->tcbContext.breakpointState.watchpoint[index].vr = val;
+    t->tcbArch.tcbContext.breakpointState.watchpoint[index].vr = val;
 }
 
-#endif /* !defined(CONFIG_VERIFICATION_BUILD) && (CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT) */
+#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
@@ -394,16 +395,16 @@ dumpBpsAndWpsCp(int nBp, int nWp)
  * @param mWp Number of WP regs to print, beginning at WP #0.
  */
 UNUSED static void
-dumpBpsAndWpsContext(arch_tcb_t *at, int nBp, int nWp)
+dumpBpsAndWpsContext(tcb_t *t, int nBp, int nWp)
 {
     int i;
 
     for (i = 0; i < nBp; i++) {
-        userError("Ctxt BP %d: Bcr %lx, Bvr %lx", i, readBcrContext(at, i), readBvrContext(at, i));
+        userError("Ctxt BP %d: Bcr %lx, Bvr %lx", i, readBcrContext(t, i), readBvrContext(t, i));
     }
 
     for (i = 0; i < nWp; i++) {
-        userError("Ctxt WP %d: Wcr %lx, Wvr %lx", i, readWcrContext(at, i), readWvrContext(at, i));
+        userError("Ctxt WP %d: Wcr %lx, Wvr %lx", i, readWcrContext(t, i), readWvrContext(t, i));
     }
 }
 
@@ -547,7 +548,7 @@ getMethodOfEntry(void)
  *         All documented in the seL4 API Manuals.
  */
 void
-setBreakpoint(arch_tcb_t *at,
+setBreakpoint(tcb_t *t,
               uint16_t bp_num,
               word_t vaddr, word_t type, word_t size, word_t rw)
 {
@@ -576,23 +577,23 @@ setBreakpoint(arch_tcb_t *at,
     if (type == seL4_InstructionBreakpoint) {
         dbg_bcr_t bcr;
 
-        writeBvrContext(at, bp_num, vaddr);
+        writeBvrContext(t, bp_num, vaddr);
 
         /* Preserve reserved bits. */
-        bcr.words[0] = readBcrContext(at, bp_num);
+        bcr.words[0] = readBcrContext(t, bp_num);
         bcr = dbg_bcr_set_enabled(bcr, 1);
         bcr = dbg_bcr_set_linkedBrp(bcr, 0);
         bcr = dbg_bcr_set_supervisorAccess(bcr, DBGBCR_PRIV_USER);
         bcr = dbg_bcr_set_byteAddressSelect(bcr, convertSizeToArch(4));
         bcr = Arch_setupBcr(bcr, true);
-        writeBcrContext(at, bp_num, bcr.words[0]);
+        writeBcrContext(t, bp_num, bcr.words[0]);
     } else {
         dbg_wcr_t wcr;
 
-        writeWvrContext(at, bp_num, vaddr);
+        writeWvrContext(t, bp_num, vaddr);
 
         /* Preserve reserved bits */
-        wcr.words[0] = readWcrContext(at, bp_num);
+        wcr.words[0] = readWcrContext(t, bp_num);
         wcr = dbg_wcr_set_enabled(wcr, 1);
         wcr = dbg_wcr_set_supervisorAccess(wcr, DBGWCR_PRIV_USER);
         wcr = dbg_wcr_set_byteAddressSelect(wcr, convertSizeToArch(size));
@@ -600,7 +601,7 @@ setBreakpoint(arch_tcb_t *at,
         wcr = dbg_wcr_set_enableLinking(wcr, 0);
         wcr = dbg_wcr_set_linkedBrp(wcr, 0);
         wcr = Arch_setupWcr(wcr);
-        writeWcrContext(at, bp_num, wcr.words[0]);
+        writeWcrContext(t, bp_num, wcr.words[0]);
     }
 }
 
@@ -616,7 +617,7 @@ setBreakpoint(arch_tcb_t *at,
  *         breakpoint.
  */
 getBreakpoint_t
-getBreakpoint(arch_tcb_t *at, uint16_t bp_num)
+getBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     getBreakpoint_t ret;
 
@@ -626,21 +627,21 @@ getBreakpoint(arch_tcb_t *at, uint16_t bp_num)
     if (ret.type == seL4_InstructionBreakpoint) {
         dbg_bcr_t bcr;
 
-        bcr.words[0] = readBcrContext(at, bp_num);
+        bcr.words[0] = readBcrContext(t, bp_num);
         if (Arch_breakpointIsMismatch(bcr) == true) {
             ret.type = seL4_SingleStep;
         };
         ret.size = 0;
         ret.rw = seL4_BreakOnRead;
-        ret.vaddr = readBvrContext(at, bp_num);
+        ret.vaddr = readBvrContext(t, bp_num);
         ret.is_enabled = dbg_bcr_get_enabled(bcr);
     } else {
         dbg_wcr_t wcr;
 
-        wcr.words[0] = readWcrContext(at, bp_num);
+        wcr.words[0] = readWcrContext(t, bp_num);
         ret.size = convertArchToSize(dbg_wcr_get_byteAddressSelect(wcr));
         ret.rw = convertArchToAccess(dbg_wcr_get_loadStore(wcr));
-        ret.vaddr = readWvrContext(at, bp_num);
+        ret.vaddr = readWvrContext(t, bp_num);
         ret.is_enabled = dbg_wcr_get_enabled(wcr);
     }
     return ret;
@@ -652,7 +653,7 @@ getBreakpoint(arch_tcb_t *at, uint16_t bp_num)
  * @param bp_num The hardware breakpoint you want to disable+clear.
  */
 void
-unsetBreakpoint(arch_tcb_t *at, uint16_t bp_num)
+unsetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     word_t type;
 
@@ -662,17 +663,17 @@ unsetBreakpoint(arch_tcb_t *at, uint16_t bp_num)
     if (type == seL4_InstructionBreakpoint) {
         dbg_bcr_t bcr;
 
-        bcr.words[0] = readBcrContext(at, bp_num);
+        bcr.words[0] = readBcrContext(t, bp_num);
         bcr = dbg_bcr_set_enabled(bcr, 0);
-        writeBcrContext(at, bp_num, bcr.words[0]);
-        writeBvrContext(at, bp_num, 0);
+        writeBcrContext(t, bp_num, bcr.words[0]);
+        writeBvrContext(t, bp_num, 0);
     } else {
         dbg_wcr_t wcr;
 
-        wcr.words[0] = readWcrContext(at, bp_num);
+        wcr.words[0] = readWcrContext(t, bp_num);
         wcr = dbg_wcr_set_enabled(wcr, 0);
-        writeWcrContext(at, bp_num, wcr.words[0]);
-        writeWvrContext(at, bp_num, 0);
+        writeWcrContext(t, bp_num, wcr.words[0]);
+        writeWvrContext(t, bp_num, 0);
     }
 }
 
@@ -683,7 +684,7 @@ unsetBreakpoint(arch_tcb_t *at, uint16_t bp_num)
  * @param n_instr The number of instructions to step over.
  */
 bool_t
-configureSingleStepping(arch_tcb_t *at,
+configureSingleStepping(tcb_t *t,
                         uint16_t bp_num,
                         word_t n_instr,
                         bool_t is_reply)
@@ -697,7 +698,7 @@ configureSingleStepping(arch_tcb_t *at,
      */
 
     if (is_reply) {
-        bp_num = at->tcbContext.breakpointState.single_step_hw_bp_num;
+        bp_num = t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num;
     } else {
         bp_num = convertBpNumToArch(bp_num);
     }
@@ -714,17 +715,17 @@ configureSingleStepping(arch_tcb_t *at,
      */
     dbg_bcr_t bcr;
 
-    bcr.words[0] = readBcrContext(at, bp_num);
+    bcr.words[0] = readBcrContext(t, bp_num);
 
     /* If the user calls us with n_instr == 0, allow them to configure, but
      * leave it disabled.
      */
     if (n_instr > 0) {
         bcr = dbg_bcr_set_enabled(bcr, 1);
-        at->tcbContext.breakpointState.single_step_enabled = true;
+        t->tcbArch.tcbContext.breakpointState.single_step_enabled = true;
     } else {
         bcr = dbg_bcr_set_enabled(bcr, 0);
-        at->tcbContext.breakpointState.single_step_enabled = false;
+        t->tcbArch.tcbContext.breakpointState.single_step_enabled = false;
     }
 
     bcr = dbg_bcr_set_linkedBrp(bcr, 0);
@@ -732,11 +733,11 @@ configureSingleStepping(arch_tcb_t *at,
     bcr = dbg_bcr_set_byteAddressSelect(bcr, convertSizeToArch(1));
     bcr = Arch_setupBcr(bcr, false);
 
-    writeBvrContext(at, bp_num, 0);
-    writeBcrContext(at, bp_num, bcr.words[0]);
+    writeBvrContext(t, bp_num, 0);
+    writeBcrContext(t, bp_num, bcr.words[0]);
 
-    at->tcbContext.breakpointState.n_instructions = n_instr;
-    at->tcbContext.breakpointState.single_step_hw_bp_num = bp_num;
+    t->tcbArch.tcbContext.breakpointState.n_instructions = n_instr;
+    t->tcbArch.tcbContext.breakpointState.single_step_hw_bp_num = bp_num;
     return true;
 }
 
@@ -924,6 +925,17 @@ Arch_initHardwareBreakpoints(void)
             return dbg.is_available = false;
         }
         disableAllBpsAndWps();
+    }
+
+    /* Finally, also pre-load some initial register state that can be used
+     * for all new threads so that their initial saved debug register state
+     * is valid when it's first loaded onto the CPU.
+     */
+    for (int i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
+        armKSNullBreakpointState.breakpoint[i].cr = readBcrCp(i) & ~DBGBCR_ENABLE;
+    }
+    for (int i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
+        armKSNullBreakpointState.watchpoint[i].cr = readWcrCp(i) & ~DBGWCR_ENABLE;
     }
 
     dbg.watchpoint_8b_supported = watchpoint8bSupported();
@@ -1174,7 +1186,7 @@ handleUserLevelDebugException(word_t fault_vaddr)
 
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 
 /** Mirrors Arch_initFpuContext.
  *
@@ -1184,17 +1196,9 @@ handleUserLevelDebugException(word_t fault_vaddr)
  * coprocessor.
  */
 void
-Arch_initBreakpointContext(user_breakpoint_state_t *uds)
+Arch_initBreakpointContext(user_context_t *uc)
 {
-    memset(uds, 0, sizeof(*uds));
-
-    /* Preload SBZ/reserved values into thread context. */
-    for (int i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
-        uds->breakpoint[i].cr = readBcrCp(i) & ~DBGBCR_ENABLE;
-    }
-    for (int i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
-        uds->watchpoint[i].cr = readWcrCp(i) & ~DBGWCR_ENABLE;
-    }
+    uc->breakpointState = armKSNullBreakpointState;
 }
 
 void
@@ -1239,23 +1243,24 @@ loadAllDisabledBreakpointState(void)
  * associateVcpu.
  */
 void
-saveAllBreakpointState(arch_tcb_t *at)
+saveAllBreakpointState(tcb_t *t)
 {
     int i;
 
-    assert(at != NULL);
+    assert(t != NULL);
 
     for (i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
-        writeBvrContext(at, i, readBvrCp(i));
-        writeBcrContext(at, i, readBcrCp(i));
+        writeBvrContext(t, i, readBvrCp(i));
+        writeBcrContext(t, i, readBcrCp(i));
     }
 
     for (i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
-        writeWvrContext(at, i, readWvrCp(i));
-        writeWcrContext(at, i, readWcrCp(i));
+        writeWvrContext(t, i, readWvrCp(i));
+        writeWcrContext(t, i, readWcrCp(i));
     }
 }
 
+#ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
 void
 Arch_debugAssociateVCPUTCB(tcb_t *t)
 {
@@ -1273,18 +1278,19 @@ Arch_debugDissociateVCPUTCB(tcb_t *t)
 {
     t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf = 0;
 }
+#endif
 
 static void
-loadBreakpointState(arch_tcb_t *at)
+loadBreakpointState(tcb_t *t)
 {
     int i;
 
-    assert(at != NULL);
+    assert(t != NULL);
 
     for (i = 0; i < seL4_NumExclusiveBreakpoints; i++) {
-        if (at->tcbContext.breakpointState.used_breakpoints_bf & BIT(i)) {
-            writeBvrCp(i, readBvrContext(at, i));
-            writeBcrCp(i, readBcrContext(at, i));
+        if (t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf & BIT(i)) {
+            writeBvrCp(i, readBvrContext(t, i));
+            writeBcrCp(i, readBcrContext(t, i));
         } else {
             /* If the thread isn't using the BP, then just load
              * a default "disabled" state.
@@ -1294,10 +1300,10 @@ loadBreakpointState(arch_tcb_t *at)
     }
 
     for (i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
-        if (at->tcbContext.breakpointState.used_breakpoints_bf &
+        if (t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &
                 BIT(i + seL4_NumExclusiveBreakpoints)) {
-            writeWvrCp(i, readWvrContext(at, i));
-            writeWcrCp(i, readWcrContext(at, i));
+            writeWvrCp(i, readWvrContext(t, i));
+            writeWcrCp(i, readWcrContext(t, i));
         } else {
             writeWcrCp(i, readWcrCp(i) & ~DBGWCR_ENABLE);
         }
@@ -1316,7 +1322,7 @@ restore_user_debug_context(tcb_t *target_thread)
     if (target_thread->tcbArch.tcbContext.breakpointState.used_breakpoints_bf == 0) {
         loadAllDisabledBreakpointState();
     } else {
-        loadBreakpointState(&target_thread->tcbArch);
+        loadBreakpointState(target_thread);
     }
 
     /* ARMv6 manual, sec D3.3.7:
@@ -1328,4 +1334,4 @@ restore_user_debug_context(tcb_t *target_thread)
      */
 }
 
-#endif /* !defined(CONFIG_VERIFICATION_BUILD) && (CONFIG_HARDWARE_DEBUG_API || CONFIG_ARM_HYPERVISOR_SUPPORT) */
+#endif /* ARM_BASE_CP14_SAVE_AND_RESTORE */

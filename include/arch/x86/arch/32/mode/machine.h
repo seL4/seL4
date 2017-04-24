@@ -82,18 +82,6 @@ static inline void invalidateLocalTranslationAll(void)
     invalidateLocalPageStructureCache();
 }
 
-/* Flushes entire CPU Cache */
-static inline void ia32_wbinvd(void)
-{
-    asm volatile("wbinvd" ::: "memory");
-}
-
-static inline void
-arch_clean_invalidate_caches(void)
-{
-    ia32_wbinvd();
-}
-
 static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
 {
     uint32_t low;

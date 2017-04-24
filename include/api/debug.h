@@ -16,6 +16,7 @@
 
 #include <benchmark/benchmark_track.h>
 #include <arch/api/syscall.h>
+#include <arch/kernel/vspace.h>
 #include <model/statedata.h>
 
 #ifdef CONFIG_PRINTING
@@ -52,6 +53,17 @@ debug_printKernelEntryReason(void)
                    (unsigned long) ksKernelEntry.invocation_tag);
         }
     }
+}
+
+/* Prints the user context and stack trace of the current thread */
+static inline void
+debug_printUserState(void)
+{
+    tcb_t *tptr = NODE_STATE(ksCurThread);
+    printf("Current thread: %s\n", tptr->tcbName);
+    printf("Next instruction adress: %lx\n", getRestartPC(tptr));
+    printf("Stack:\n");
+    Arch_userStackTrace(tptr);
 }
 #endif /* CONFIG_PRINTING */
 #endif /* __API_DEBUG_H */

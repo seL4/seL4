@@ -839,31 +839,32 @@ resolveVAddr(pde_t *pd, vptr_t vaddr)
     case pde_pde_coarse: {
         pte_t *pt = ptrFromPAddr(pde_pde_coarse_ptr_get_address(pde));
         pte_t *pte = lookupPTSlot_nofail(pt, vaddr);
-#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         switch (pte_ptr_get_pteType(pte)) {
+        case pte_pte_small:
+            ret.frameBase = pte_pte_small_ptr_get_address(pte);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+            if (pte_pte_small_ptr_get_contiguous_hint(pte)) {
+                /* Entries are represented as 16 contiguous small frames. We need to mask
+                   to get the large frame base */
+                ret.frameBase &= ~MASK(pageBitsForSize(ARMLargePage));
+                ret.frameSize = ARMLargePage;
+            } else {
+                ret.frameSize = ARMSmallPage;
+            }
+#else
+            ret.frameSize = ARMSmallPage;
+#endif
+            return ret;
+
+#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
         case pte_pte_large:
             ret.frameBase = pte_pte_large_ptr_get_address(pte);
             ret.frameSize = ARMLargePage;
             return ret;
-
-        case pte_pte_small:
-            ret.frameBase = pte_pte_small_ptr_get_address(pte);
-            ret.frameSize = ARMSmallPage;
-            return ret;
-        }
-#else
-        if (pte_pte_small_ptr_get_contiguous_hint(pte)) {
-            ret.frameBase = pte_pte_small_ptr_get_address(pte);
-            /* Entries are represented as 16 contiguous small frames. We need to mask to get the large frame base */
-            ret.frameBase &= ~MASK(pageBitsForSize(ARMLargePage));
-            ret.frameSize = ARMLargePage;
-            return ret;
-        } else {
-            ret.frameBase = pte_pte_small_ptr_get_address(pte);
-            ret.frameSize = ARMSmallPage;
-            return ret;
-        }
 #endif
+        default:
+            break;
+        }
         break;
     }
     }
@@ -1116,7 +1117,7 @@ setVMRoot(tcb_t *tcb)
 
     armv_contextSwitch(pd, asid);
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        vcpu_switch(tcb->tcbArch.vcpu);
+        vcpu_switch(tcb->tcbArch.tcbVCPU);
     }
 }
 
@@ -1364,7 +1365,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
             current_fault = handleUserLevelDebugException(pc);
 
             if (seL4_Fault_DebugException_get_exceptionReason(current_fault) == seL4_SingleStep
-                    && !singleStepFaultCounterReady(&thread->tcbArch)) {
+                    && !singleStepFaultCounterReady(thread)) {
                 /* Don't send a fault message to the thread yet if we were asked
                  * to step through N instructions and the counter isn't depleted
                  * yet.
@@ -1751,13 +1752,12 @@ createSafeMappingEntries_PTE
         ret.pte_entries.base = lu_ret.ptSlot;
 
         for (i = 0; i < PAGES_PER_LARGE_PAGE; i++) {
-#ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
             if (unlikely(pte_get_pteType(ret.pte_entries.base[i]) ==
-                         pte_pte_small)) {
-#else
-            if (unlikely(pte_ptr_get_pteType(lu_ret.ptSlot) == pte_pte_small
-                         && !pte_pte_small_get_contiguous_hint(ret.pte_entries.base[i]))) {
+                         pte_pte_small)
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                    && !pte_pte_small_get_contiguous_hint(ret.pte_entries.base[i])
 #endif
+               ) {
                 current_syscall_error.type =
                     seL4_DeleteFirst;
 
@@ -1984,7 +1984,13 @@ performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
     j = pte_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t base_address = pte_pte_small_get_address(pte);
+#endif
     for (i = 0; i < pte_entries.length; i++) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pte = pte_pte_small_set_address(pte, base_address + i * BIT(pageBitsForSize(ARMSmallPage)));
+#endif
         pte_entries.base[i] = pte;
     }
     cleanCacheRange_PoU((word_t)pte_entries.base,
@@ -2013,7 +2019,13 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
     j = pde_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t base_address = pde_pde_section_get_address(pde);
+#endif
     for (i = 0; i < pde_entries.length; i++) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pde = pde_pde_section_set_address(pde, base_address + i * BIT(pageBitsForSize(ARMSection)));
+#endif
         pde_entries.base[i] = pde;
     }
     cleanCacheRange_PoU((word_t)pde_entries.base,
@@ -2039,11 +2051,14 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
     j = pte_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t base_address = pte_pte_small_get_address(pte);
+#endif
     for (i = 0; i < pte_entries.length; i++) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pte = pte_pte_small_set_address(pte, base_address + i * BIT(pageBitsForSize(ARMSmallPage)));
+#endif
         pte_entries.base[i] = pte;
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            pte.words[0] += BIT(pageBitsForSize(ARMLargePage));
-        }
     }
     cleanCacheRange_PoU((word_t)pte_entries.base,
                         LAST_BYTE_PTE(pte_entries.base, pte_entries.length),
@@ -2068,11 +2083,14 @@ performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
     j = pde_entries.length;
     /** GHOSTUPD: "(\<acute>j <= 16, id)" */
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t base_address = pde_pde_section_get_address(pde);
+#endif
     for (i = 0; i < pde_entries.length; i++) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        pde = pde_pde_section_set_address(pde, base_address + i * BIT(pageBitsForSize(ARMSection)));
+#endif
         pde_entries.base[i] = pde;
-        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-            pde.words[0] += BIT(pageBitsForSize(ARMSection));
-        }
     }
     cleanCacheRange_PoU((word_t)pde_entries.base,
                         LAST_BYTE_PDE(pde_entries.base, pde_entries.length),
@@ -2972,7 +2990,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 }
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 void kernelPrefetchAbort(word_t pc) VISIBLE;
 void kernelDataAbort(word_t pc) VISIBLE;
 

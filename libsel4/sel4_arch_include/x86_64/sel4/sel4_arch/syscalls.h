@@ -442,7 +442,7 @@ seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
     seL4_Word unused3 = 0;
     seL4_Word unused4 = 0;
 
-    x64_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2, &unused4, &unused4);
+    x64_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2, &unused3, &unused4);
 
     return (seL4_Error) frame_cptr;
 }
@@ -451,6 +451,13 @@ LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkNullSyscall(void)
 {
     x64_sys_null(seL4_SysBenchmarkNullSyscall);
+    asm volatile("" ::: "memory");
+}
+
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkFlushCaches(void)
+{
+    x64_sys_null(seL4_SysBenchmarkFlushCaches);
     asm volatile("" ::: "memory");
 }
 

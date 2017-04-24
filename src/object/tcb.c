@@ -389,17 +389,17 @@ decodeSetAffinity(cap_t cap, word_t length, word_t *buffer)
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 static exception_t
-invokeConfigureSingleStepping(word_t *buffer, arch_tcb_t *context,
+invokeConfigureSingleStepping(word_t *buffer, tcb_t *t,
                               uint16_t bp_num, word_t n_instrs)
 {
     bool_t bp_was_consumed;
 
-    bp_was_consumed = configureSingleStepping(context, bp_num, n_instrs, false);
+    bp_was_consumed = configureSingleStepping(t, bp_num, n_instrs, false);
     if (n_instrs == 0) {
-        unsetBreakpointUsedFlag(context, bp_num);
+        unsetBreakpointUsedFlag(t, bp_num);
         setMR(NODE_STATE(ksCurThread), buffer, 0, false);
     } else {
-        setBreakpointUsedFlag(context, bp_num);
+        setBreakpointUsedFlag(t, bp_num);
         setMR(NODE_STATE(ksCurThread), buffer, 0, bp_was_consumed);
     }
     return EXCEPTION_NONE;
@@ -411,32 +411,30 @@ decodeConfigureSingleStepping(cap_t cap, word_t *buffer)
     uint16_t bp_num;
     word_t n_instrs;
     tcb_t *tcb;
-    arch_tcb_t *context;
     syscall_error_t syserr;
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
-    context = &tcb->tcbArch;
 
     bp_num = getSyscallArg(0, buffer);
     n_instrs = getSyscallArg(1, buffer);
 
-    syserr = Arch_decodeConfigureSingleStepping(context, bp_num, n_instrs, false);
+    syserr = Arch_decodeConfigureSingleStepping(tcb, bp_num, n_instrs, false);
     if (syserr.type != seL4_NoError) {
         current_syscall_error = syserr;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeConfigureSingleStepping(buffer, context, bp_num, n_instrs);
+    return invokeConfigureSingleStepping(buffer, tcb, bp_num, n_instrs);
 }
 
 static exception_t
-invokeSetBreakpoint(arch_tcb_t *context, uint16_t bp_num,
+invokeSetBreakpoint(tcb_t *tcb, uint16_t bp_num,
                     word_t vaddr, word_t type, word_t size, word_t rw)
 {
-    setBreakpoint(context, bp_num, vaddr, type, size, rw);
+    setBreakpoint(tcb, bp_num, vaddr, type, size, rw);
     /* Signal restore_user_context() to pop the breakpoint context on return. */
-    setBreakpointUsedFlag(context, bp_num);
+    setBreakpointUsedFlag(tcb, bp_num);
     return EXCEPTION_NONE;
 }
 
@@ -446,7 +444,6 @@ decodeSetBreakpoint(cap_t cap, word_t *buffer)
     uint16_t bp_num;
     word_t vaddr, type, size, rw;
     tcb_t *tcb;
-    arch_tcb_t *context;
     syscall_error_t error;
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
@@ -548,25 +545,23 @@ decodeSetBreakpoint(cap_t cap, word_t *buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    context = &tcb->tcbArch;
-
-    error = Arch_decodeSetBreakpoint(context, bp_num, vaddr, type, size, rw);
+    error = Arch_decodeSetBreakpoint(tcb, bp_num, vaddr, type, size, rw);
     if (error.type != seL4_NoError) {
         current_syscall_error = error;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeSetBreakpoint(context, bp_num,
+    return invokeSetBreakpoint(tcb, bp_num,
                                vaddr, type, size, rw);
 }
 
 static exception_t
-invokeGetBreakpoint(word_t *buffer, arch_tcb_t *context, uint16_t bp_num)
+invokeGetBreakpoint(word_t *buffer, tcb_t *tcb, uint16_t bp_num)
 {
     getBreakpoint_t res;
 
-    res = getBreakpoint(context, bp_num);
+    res = getBreakpoint(tcb, bp_num);
     setMR(NODE_STATE(ksCurThread), buffer, 0, res.vaddr);
     setMR(NODE_STATE(ksCurThread), buffer, 1, res.type);
     setMR(NODE_STATE(ksCurThread), buffer, 2, res.size);
@@ -580,30 +575,27 @@ decodeGetBreakpoint(cap_t cap, word_t *buffer)
 {
     tcb_t *tcb;
     uint16_t bp_num;
-    arch_tcb_t *context;
     syscall_error_t error;
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
     bp_num = getSyscallArg(0, buffer);
 
-    context = &tcb->tcbArch;
-
-    error = Arch_decodeGetBreakpoint(context, bp_num);
+    error = Arch_decodeGetBreakpoint(tcb, bp_num);
     if (error.type != seL4_NoError) {
         current_syscall_error = error;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeGetBreakpoint(buffer, context, bp_num);
+    return invokeGetBreakpoint(buffer, tcb, bp_num);
 }
 
 static exception_t
-invokeUnsetBreakpoint(arch_tcb_t *context, uint16_t bp_num)
+invokeUnsetBreakpoint(tcb_t *tcb, uint16_t bp_num)
 {
     /* Maintain the bitfield of in-use breakpoints. */
-    unsetBreakpoint(context, bp_num);
-    unsetBreakpointUsedFlag(context, bp_num);
+    unsetBreakpoint(tcb, bp_num);
+    unsetBreakpointUsedFlag(tcb, bp_num);
     return EXCEPTION_NONE;
 }
 
@@ -612,22 +604,19 @@ decodeUnsetBreakpoint(cap_t cap, word_t *buffer)
 {
     tcb_t *tcb;
     uint16_t bp_num;
-    arch_tcb_t *context;
     syscall_error_t error;
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
     bp_num = getSyscallArg(0, buffer);
 
-    context = &tcb->tcbArch;
-
-    error = Arch_decodeUnsetBreakpoint(context, bp_num);
+    error = Arch_decodeUnsetBreakpoint(tcb, bp_num);
     if (error.type != seL4_NoError) {
         current_syscall_error = error;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeUnsetBreakpoint(context, bp_num);
+    return invokeUnsetBreakpoint(tcb, bp_num);
 }
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 

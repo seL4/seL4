@@ -53,6 +53,7 @@
 #include <assert.h>
 #include <util.h>
 #include <arch/types.h>
+#include <arch/machine/debug_conf.h>
 #include <plat/api/constants.h>
 
 /* These are the indices of the registers in the
@@ -149,7 +150,7 @@ extern const register_t msgRegisters[];
 extern const register_t frameRegisters[];
 extern const register_t gpRegisters[];
 
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 typedef struct debug_register_pair {
     word_t cr, vr;
 } debug_register_pair_t;
@@ -163,8 +164,6 @@ typedef struct user_breakpoint_state {
     bool_t single_step_enabled;
     uint16_t single_step_hw_bp_num;
 } user_breakpoint_state_t;
-
-void Arch_initBreakpointContext(user_breakpoint_state_t *context);
 #endif
 
 /* ARM user-code context: size = 72 bytes
@@ -177,7 +176,7 @@ void Arch_initBreakpointContext(user_breakpoint_state_t *context);
  */
 struct user_context {
     word_t registers[n_contextRegisters];
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     user_breakpoint_state_t breakpointState;
 #endif
 };
@@ -188,12 +187,15 @@ compile_assert(registers_are_first_member_of_user_context,
                __builtin_offsetof(user_context_t, registers) == 0)
 #endif
 
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+void Arch_initBreakpointContext(user_context_t *context);
+#endif
 
 static inline void Arch_initContext(user_context_t* context)
 {
     context->registers[CPSR] = CPSR_USER;
-#if !defined(CONFIG_VERIFICATION_BUILD) && (defined(CONFIG_HARDWARE_DEBUG_API) || defined(CONFIG_ARM_HYPERVISOR_SUPPORT))
-    Arch_initBreakpointContext(&context->breakpointState);
+#ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
+    Arch_initBreakpointContext(context);
 #endif
 }
 
