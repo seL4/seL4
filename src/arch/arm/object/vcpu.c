@@ -798,6 +798,16 @@ VGICMaintenance(void)
 {
     uint32_t eisr0, eisr1;
     uint32_t flags;
+
+    /* The current thread must be runnable at this point as we can only get
+     * a VGIC maintenance whilst we are actively running a thread with an
+     * associated VCPU. For the moment for the proof we leave a redundant
+     * check in here that this is indeed not happening */
+    if (!isRunnable(ksCurThread)) {
+        printf("Received VGIC maintenance on non-runnable thread!\n");
+        return;
+    }
+
     eisr0 = get_gic_vcpu_ctrl_eisr0();
     eisr1 = get_gic_vcpu_ctrl_eisr1();
     flags = get_gic_vcpu_ctrl_misr();
