@@ -43,22 +43,6 @@ isBlocked(const tcb_t *thread)
     }
 }
 
-static inline bool_t PURE
-isRunnable(const tcb_t *thread)
-{
-    switch (thread_state_get_tsType(thread->tcbState)) {
-    case ThreadState_Running:
-    case ThreadState_Restart:
-#ifdef CONFIG_VTX
-    case ThreadState_RunningVM:
-#endif
-        return true;
-
-    default:
-        return false;
-    }
-}
-
 BOOT_CODE void
 configureIdleThread(tcb_t *tcb)
 {
