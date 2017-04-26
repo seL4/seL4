@@ -507,6 +507,7 @@ static void
 vcpu_save(vcpu_t *vcpu, bool_t active)
 {
     word_t i;
+    unsigned int lr_num;
 
     assert(vcpu);
     dsb();
@@ -522,7 +523,8 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     /* Store GIC VCPU control state */
     vcpu->vgic.vmcr = get_gic_vcpu_ctrl_vmcr();
     vcpu->vgic.apr = get_gic_vcpu_ctrl_apr();
-    for (i = 0; i < gic_vcpu_num_list_regs; i++) {
+    lr_num = gic_vcpu_num_list_regs;
+    for (i = 0; i < lr_num; i++) {
         vcpu->vgic.lr[i] = get_gic_vcpu_ctrl_lr(i);
     }
 
@@ -760,6 +762,7 @@ vcpu_restore(vcpu_t *vcpu)
 {
     assert(vcpu);
     word_t i;
+    unsigned int lr_num;
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
     isb();
@@ -767,7 +770,8 @@ vcpu_restore(vcpu_t *vcpu)
     /* Restore GIC VCPU control state */
     set_gic_vcpu_ctrl_vmcr(vcpu->vgic.vmcr);
     set_gic_vcpu_ctrl_apr(vcpu->vgic.apr);
-    for (i = 0; i < gic_vcpu_num_list_regs; i++) {
+    lr_num = gic_vcpu_num_list_regs;
+    for (i = 0; i < lr_num; i++) {
         set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);
     }
 
