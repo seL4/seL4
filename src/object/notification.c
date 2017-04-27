@@ -91,7 +91,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 } else
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
                 {
-                    maybeDonateSchedContext(thread, ntfnPtr);
+                    maybeDonateSchedContext(tcb, ntfnPtr);
                     setThreadState(tcb, ThreadState_Running);
                     setRegister(tcb, badgeRegister, badge);
                     Arch_leaveVMAsyncTransfer(tcb);
