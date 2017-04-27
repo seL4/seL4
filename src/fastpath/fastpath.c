@@ -387,7 +387,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
     caller->tcbReply = NULL;
     reply_ptr->replyCaller = NULL;
 
-    word_t prev_ptr = reply_ptr->replyPrev.words[0];
+    word_t prev_ptr = call_stack_get_callStackPtr(reply_ptr->replyPrev);
 
     sched_context_t *sc = NODE_STATE(ksCurThread)->tcbSchedContext;
     NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
