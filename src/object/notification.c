@@ -91,7 +91,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 } else
 #endif /* ENABLE_SMP_SUPPORT */
                 {
-                    maybeDonateSchedContext(thread, ntfnPtr);
+                    maybeDonateSchedContext(tcb, ntfnPtr);
                     setThreadState(tcb, ThreadState_Running);
                     setRegister(tcb, badgeRegister, badge);
                     Arch_leaveVMAsyncTransfer(tcb);
