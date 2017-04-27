@@ -49,6 +49,7 @@ isSchedulable(const tcb_t *thread)
 {
     return isRunnable(thread) &&
            thread->tcbSchedContext != NULL &&
+           thread->tcbSchedContext->scRefillMax > 0 &&
            !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
 
@@ -103,7 +104,9 @@ restart(tcb_t *target)
         cancelIPC(target);
         setThreadState(target, ThreadState_Restart);
         schedContext_resume(target->tcbSchedContext);
-        switchIfRequiredTo(target);
+        if (isSchedulable(target)) {
+            possibleSwitchTo(target);
+        }
     }
 }
 
@@ -294,9 +297,8 @@ switchSchedContext(void)
     }
 
     /* if a thread doesn't have enough budget, it should not be in the scheduler */
-    if (!refill_ready(NODE_STATE(ksCurSC)) || !refill_sufficient(NODE_STATE(ksCurSC), 0)) {
-           assert(!thread_state_get_tcbQueued(NODE_STATE(ksCurSC)->scTcb->tcbState));
-    }
+    assert((refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0))
+            || !thread_state_get_tcbQueued(NODE_STATE(ksCurSC)->scTcb->tcbState));
 
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
 }
@@ -533,8 +535,32 @@ setNextInterrupt(void)
 }
 
 void
+chargeBudget(ticks_t capacity, ticks_t consumed)
+{
+
+    if (isRoundRobin(NODE_STATE(ksCurSC))) {
+        assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
+        REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount += REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount;
+        REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount = 0;
+    } else {
+        refill_budget_check(NODE_STATE(ksCurSC), consumed, capacity);
+    }
+
+    assert(REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount >= MIN_BUDGET);
+    NODE_STATE(ksConsumed) = 0;
+    if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
+        endTimeslice();
+        rescheduleRequired();
+    }
+}
+
+void
 endTimeslice(void)
 {
+    if (unlikely(NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread))) {
+            return;
+    }
+
     assert(isRunnable(NODE_STATE(ksCurSC->scTcb)));
     if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
         /* apply round robin */
@@ -566,14 +592,16 @@ awaken(void)
 {
     while (NODE_STATE(ksReleaseHead) != NULL && refill_ready(NODE_STATE(ksReleaseHead)->tcbSchedContext)) {
         tcb_t *awakened = tcbReleaseDequeue();
+        /* the currently running thread cannot have just woken up */
+        assert(awakened != NODE_STATE(ksCurThread));
+        /* round robin threads should not be in the release queue */
+        assert(!isRoundRobin(awakened->tcbSchedContext));
+        /* threads should wake up on the correct core */
         SMP_COND_STATEMENT(assert(awakened->tcbAffinity == getCurrentCPUIndex()));
-        refill_unblock_check(awakened->tcbSchedContext);
-        if (unlikely(!refill_ready(awakened->tcbSchedContext))) {
-            tcbReleaseEnqueue(awakened);
-        } else {
-            assert(refill_sufficient(awakened->tcbSchedContext, 0));
-            tcbSchedAppend(awakened);
-            switchIfRequiredTo(awakened);
-        }
+        /* threads HEAD refill should always be > MIN_BUDGET */
+        assert(refill_sufficient(awakened->tcbSchedContext, 0));
+        possibleSwitchTo(awakened);
+        /* changed head of release queue -> need to reprogram */
+        NODE_STATE(ksReprogram) = true;
     }
 }

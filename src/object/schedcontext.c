@@ -136,10 +136,22 @@ invokeSchedContext_Unbind(sched_context_t *sc)
     return EXCEPTION_NONE;
 }
 
+#if CONFIG_MAX_NUM_NODES > 1
+static inline void
+maybeStallSC(sched_context_t *sc)
+{
+    if (sc->scTcb) {
+        remoteTCBStall(sc->scTcb);
+    }
+}
+#endif
+
 exception_t
 decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
 {
     sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
+
+    SMP_COND_STATEMENT((maybeStallSC(sc));)
 
     switch (label) {
     case SchedContextBind:
@@ -163,7 +175,6 @@ schedContext_resume(sched_context_t *sc)
     assert(!sc || sc->scTcb != NULL);
     if (likely(sc) && isSchedulable(sc->scTcb)) {
         assert(sc->scTcb != NULL);
-        refill_unblock_check(sc);
 
         if (isRunnable(sc->scTcb) && sc->scRefillMax > 0) {
             if (!(refill_ready(sc) && refill_sufficient(sc, 0))) {
