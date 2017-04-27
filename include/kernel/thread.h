@@ -85,7 +85,6 @@ commitTime(void)
     }
 
     NODE_STATE(ksConsumed) = 0llu;
-    NODE_STATE(ksCurTime) += 1llu;
 }
 
 static inline void
