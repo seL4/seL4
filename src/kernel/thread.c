@@ -530,49 +530,6 @@ setNextInterrupt(void)
     setDeadline(next_interrupt - getTimerPrecision());
 }
 
-bool_t
-checkBudget(void) {
-    /* currently running thread must have available capacity */
-    assert(refill_ready(NODE_STATE(ksCurSC)));
-
-    if (unlikely(NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread))) {
-        return true;
-    }
-
-    ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-    if (unlikely(capacity < MIN_BUDGET)) {
-        if (capacity == 0) {
-            NODE_STATE(ksConsumed) = refill_budget_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-        }
-        if (NODE_STATE(ksConsumed) > 0) {
-            refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-        }
-        NODE_STATE(ksConsumed) = 0;
-        NODE_STATE(ksCurTime) += 1llu;
-        if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
-            endTimeslice();
-            rescheduleRequired();
-        }
-        return false;
-    } else if (unlikely(isCurDomainExpired())) {
-        commitTime();
-        rescheduleRequired();
-        return false;
-    }
-    return true;
-}
-
-bool_t
-checkBudgetRestart(void)
-{
-    assert(isRunnable(NODE_STATE(ksCurThread)));
-    bool_t result = checkBudget();
-    if (!result) {
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    }
-    return result;
-}
-
 void
 endTimeslice(void)
 {
