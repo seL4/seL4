@@ -939,7 +939,7 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 #endif
 
     /* sanitize the CPSR as without a VCPU a thread should only be in user mode */
-    setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), tcb));
+    setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), false));
 }
 
 exception_t

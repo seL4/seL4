@@ -30,7 +30,7 @@ void Arch_initContext(user_context_t* context)
 #endif
 }
 
-word_t sanitiseRegister(register_t reg, word_t v, tcb_t *thread)
+word_t sanitiseRegister(register_t reg, word_t v, bool_t hasVCPU)
 {
     /* First perform any mode specific sanitization */
     v = Mode_sanitiseRegister(reg, v);

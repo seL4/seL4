@@ -12,13 +12,19 @@
 #define __MODE_KERNEL_THREAD_H
 
 static inline word_t CONST
-sanitiseRegister(register_t reg, word_t v, tcb_t *thread_arch)
+sanitiseRegister(register_t reg, word_t v, bool_t hasVCPU)
 {
     if (reg == SPSR_EL1) {
         return (v & 0xf0000000) | PSTATE_USER;
     } else {
         return v;
     }
+}
+
+static inline bool_t CONST
+Arch_hasVCPU(tcb_t *thread)
+{
+    return 0;
 }
 
 #endif
