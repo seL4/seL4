@@ -531,6 +531,24 @@ setNextInterrupt(void)
 }
 
 void
+chargeBudget(ticks_t capacity)
+{
+    if (capacity == 0) {
+        NODE_STATE(ksConsumed) = refill_budget_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+    }
+
+    if (NODE_STATE(ksConsumed) > 0) {
+        refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+    }
+
+    NODE_STATE(ksConsumed) = 0;
+    if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
+        endTimeslice();
+        rescheduleRequired();
+    }
+}
+
+void
 endTimeslice(void)
 {
     assert(isRunnable(NODE_STATE(ksCurSC->scTcb)));

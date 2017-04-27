@@ -127,6 +127,8 @@ void rescheduleRequired(void);
  */
 void endTimeslice(void);
 
+/* called when a thread has used up its head refill */
+void chargeBudget(ticks_t capacity);
 
 /* Update the kernels timestamp and stores in ksCurTime.
  * The difference between the previous kernel timestamp and the one just read
@@ -172,7 +174,8 @@ updateTimestamp(bool_t incrementConsumedTime)
  *              get through the current kernel operation.
  */
 static inline bool_t
-checkBudget(void) {
+checkBudget(void)
+{
     /* currently running thread must have available capacity */
     assert(refill_ready(NODE_STATE(ksCurSC)));
 
@@ -181,26 +184,18 @@ checkBudget(void) {
     }
 
     ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-    if (unlikely(capacity < MIN_BUDGET)) {
-        if (capacity == 0) {
-            NODE_STATE(ksConsumed) = refill_budget_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-        }
-        if (NODE_STATE(ksConsumed) > 0) {
-            refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-        }
-        NODE_STATE(ksConsumed) = 0;
-        NODE_STATE(ksCurTime) += 1llu;
-        if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
-            endTimeslice();
+    if (likely(capacity >= MIN_BUDGET && (NODE_STATE(ksCurSC)->scPeriod == 0 ||
+                    !refill_full(NODE_STATE(ksCurSC))))) {
+        if (unlikely(isCurDomainExpired())) {
+            commitTime();
             rescheduleRequired();
+            return false;
         }
-        return false;
-    } else if (unlikely(isCurDomainExpired())) {
-        commitTime();
-        rescheduleRequired();
-        return false;
+        return true;
     }
-    return true;
+
+    chargeBudget(capacity);
+    return false;
 }
 
 /* Everything checkBudget does, but also set the thread
