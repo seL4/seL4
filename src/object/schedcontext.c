@@ -135,9 +135,20 @@ static exception_t invokeSchedContext_Unbind(sched_context_t *sc)
     return EXCEPTION_NONE;
 }
 
+#ifdef ENABLE_SMP_SUPPORT
+static inline void maybeStallSC(sched_context_t *sc)
+{
+    if (sc->scTcb) {
+        remoteTCBStall(sc->scTcb);
+    }
+}
+#endif
+
 exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
 {
     sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
+
+    SMP_COND_STATEMENT((maybeStallSC(sc));)
 
     switch (label) {
     case SchedContextBind:
@@ -160,7 +171,6 @@ void schedContext_resume(sched_context_t *sc)
     assert(!sc || sc->scTcb != NULL);
     if (likely(sc) && isSchedulable(sc->scTcb)) {
         assert(sc->scTcb != NULL);
-        refill_unblock_check(sc);
 
         if (isRunnable(sc->scTcb) && sc->scRefillMax > 0) {
             if (!(refill_ready(sc) && refill_sufficient(sc, 0))) {
@@ -179,10 +189,10 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     tcb->tcbSchedContext = sc;
     sc->scTcb = tcb;
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     if (tcb->tcbAffinity != sc->scCore) {
         if (isSchedulable(tcb)) {
-            SMP_COND_STATEMENT(remoteTCBStall(tcb));
+            remoteTCBStall(tcb);
             tcbSchedDequeue(tcb);
         }
         migrateTCB(tcb, sc->scCore);

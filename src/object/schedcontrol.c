@@ -19,22 +19,35 @@
 static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budget, ticks_t period,
                                                 word_t max_refills)
 {
-    /* don't modify parameters of tcb while it is in a sorted queue */
+
     if (target->scTcb) {
+        /* possibly stall a remote core */
         SMP_COND_STATEMENT(remoteTCBStall(target->scTcb));
+        /* remove from scheduler */
         tcbReleaseRemove(target->scTcb);
         tcbSchedDequeue(target->scTcb);
+        /* bill the current consumed amount before adjusting the params */
+        if (NODE_STATE_ON_CORE(ksCurSC, target->scCore) == target) {
+            ticks_t capacity = refill_capacity(target, NODE_STATE_ON_CORE(ksConsumed, target->scCore));
+            if (checkBudget()) {
+                commitTime();
+            } else {
+                chargeBudget(capacity, NODE_STATE_ON_CORE(ksConsumed, target->scCore));
+            }
+        }
     }
 
     if (budget == period) {
         /* this is a cool hack: for round robin, we set the
          * period to 0, which means that the budget will always be ready to be refilled
-         * and the code doesn't need special casing
+         * and avoids some special casing.
          */
         period = 0;
+        max_refills = MIN_REFILLS;
     }
 
-    if (core == target->scCore && target->scRefillMax > 0 && target->scTcb && isRunnable(target->scTcb)) {
+    if (SMP_COND_STATEMENT(core == target->scCore &&) target->scRefillMax > 0 && target->scTcb
+        && isRunnable(target->scTcb)) {
         /* the scheduling context is active - it can be used, so
          * we need to preserve the bandwidth */
         refill_update(target, period, budget, max_refills);
@@ -42,19 +55,21 @@ static exception_t invokeSchedControl_Configure(sched_context_t *target, word_t 
         /* the scheduling context isn't active - it's budget is not being used, so
          * we can just populate the parameters from now */
         refill_new(target, max_refills, budget, period);
-
-        if (core != target->scCore && target->scTcb) {
-            /* if the core changed and the SC has a tcb, the SC is getting
-             * budget - so migrate it */
-            target->scCore = core;
-            SMP_COND_STATEMENT(Arch_migrateTCB(target->scTcb));
-            SMP_COND_STATEMENT(target->scTcb->tcbAffinity = target->scCore;)
+#ifdef ENABLE_SMP_SUPPORT
+        target->scCore = core;
+        if (target->scTcb && target->scTcb->tcbAffinity != target->scCore) {
+            migrateTCB(target->scTcb, target->scCore);
         }
+#endif /* ENABLE_SMP_SUPPORT */
     }
 
-    if (target->scTcb && isRunnable(target->scTcb) && target->scRefillMax > 0) {
+    if (target->scTcb && target->scRefillMax > 0) {
         schedContext_resume(target);
-        possibleSwitchTo(target->scTcb);
+        if (target->scTcb == NODE_STATE(ksCurThread)) {
+            rescheduleRequired();
+        } else if (isRunnable(target->scTcb)) {
+            possibleSwitchTo(target->scTcb);
+        }
     }
 
     return EXCEPTION_NONE;
@@ -76,7 +91,7 @@ static exception_t decodeSchedControl_Configure(word_t length, cap_t cap, extra_
 
     time_t budget_us = mode_parseTimeArg(0, buffer);
     time_t period_us = mode_parseTimeArg(TIME_ARG_SIZE, buffer);
-    word_t max_refills = MIN_REFILLS + getSyscallArg(TIME_ARG_SIZE * 2, buffer);
+    word_t max_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
 
     cap_t targetCap = extraCaps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {

@@ -42,7 +42,6 @@ exception_t handleInterruptEntry(void)
     irq = getActiveIRQ();
 #ifdef CONFIG_KERNEL_MCS
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-        assert(irq != irq_remote_call_ipi);
         updateTimestamp();
         checkBudget();
     }
@@ -60,7 +59,6 @@ exception_t handleInterruptEntry(void)
 
 #ifdef CONFIG_KERNEL_MCS
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-        assert(irq != irq_remote_call_ipi);
 #endif
         schedule();
         activateThread();
@@ -534,14 +532,8 @@ static inline void mcsIRQ(irq_t irq)
 static void handleYield(void)
 {
 #ifdef CONFIG_KERNEL_MCS
-    /* checkBudgetRestart should have failed if we got here */
-    assert(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)));
     /* Yield the current remaining budget */
-    refill_budget_check(NODE_STATE(ksCurSC), REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount);
-    /* we just charged all of the time to the yielding thread */
-    NODE_STATE(ksConsumed) = 0;
-    endTimeslice();
-    rescheduleRequired();
+    chargeBudget(0, REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount);
 #else
     tcbSchedDequeue(NODE_STATE(ksCurThread));
     SCHED_APPEND_CURRENT_TCB;

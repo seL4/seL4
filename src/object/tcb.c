@@ -88,7 +88,6 @@ void tcbSchedEnqueue(tcb_t *tcb)
 #ifdef CONFIG_KERNEL_MCS
     assert(isSchedulable(tcb));
     assert(refill_sufficient(tcb->tcbSchedContext, 0));
-    assert(refill_ready(tcb->tcbSchedContext));
 #endif
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
