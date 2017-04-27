@@ -89,7 +89,6 @@ tcbSchedEnqueue(tcb_t *tcb)
 {
     assert(isSchedulable(tcb));
     assert(refill_sufficient(tcb->tcbSchedContext, 0));
-    assert(refill_ready(tcb->tcbSchedContext));
 
     if (!thread_state_get_tcbQueued(tcb->tcbState)) {
         tcb_queue_t queue;
