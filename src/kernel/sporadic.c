@@ -36,27 +36,11 @@
  * the fpu or implementing divide.
  */
 
-/* Return the amount of items currently in the refill queue */
-static inline word_t
-refill_size(sched_context_t *sc)
-{
-    if (sc->scRefillHead <= sc->scRefillTail) {
-        return (sc->scRefillTail - sc->scRefillHead + 1u);
-    }
-    return sc->scRefillTail + 1u + (sc->scRefillMax - sc->scRefillHead);
-}
-
 /* return the index of the next item in the refill queue */
 static inline word_t
 refill_next(sched_context_t *sc, word_t index)
 {
     return (index == sc->scRefillMax - 1u) ? (0) : index + 1u;
-}
-
-static inline bool_t
-refill_single(sched_context_t *sc)
-{
-    return sc->scRefillHead == sc->scRefillTail;
 }
 
 #ifdef CONFIG_PRINTING
