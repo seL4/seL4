@@ -44,6 +44,22 @@
 #define REFILL_HEAD(sc) REFILL_INDEX((sc), (sc)->scRefillHead)
 #define REFILL_TAIL(sc) REFILL_INDEX((sc), (sc)->scRefillTail)
 
+/* Return the amount of items currently in the refill queue */
+static inline word_t
+refill_size(sched_context_t *sc)
+{
+    if (sc->scRefillHead <= sc->scRefillTail) {
+        return (sc->scRefillTail - sc->scRefillHead + 1u);
+    }
+    return sc->scRefillTail + 1u + (sc->scRefillMax - sc->scRefillHead);
+}
+
+static inline bool_t
+refill_single(sched_context_t *sc)
+{
+    return sc->scRefillHead == sc->scRefillTail;
+}
+
 /* Return the amount of budget this scheduling context
  * has available if usage is charged to it. */
 static inline ticks_t
