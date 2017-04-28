@@ -1476,6 +1476,7 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
     word_t i;
     word_t pc;
     exception_t e;
+    bool_t hasVCPU;
 
     e = Arch_performTransfer(arch, NODE_STATE(ksCurThread), dest);
     if (e != EXCEPTION_NONE) {
@@ -1486,18 +1487,20 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
         n = n_frameRegisters + n_gpRegisters;
     }
 
+    hasVCPU = Arch_hasVCPU(dest);
+
     for (i = 0; i < n_frameRegisters && i < n; i++) {
         /* Offset of 2 to get past the initial syscall arguments */
         setRegister(dest, frameRegisters[i],
                     sanitiseRegister(frameRegisters[i],
-                                     getSyscallArg(i + 2, buffer), dest));
+                                     getSyscallArg(i + 2, buffer), hasVCPU));
     }
 
     for (i = 0; i < n_gpRegisters && i + n_frameRegisters < n; i++) {
         setRegister(dest, gpRegisters[i],
                     sanitiseRegister(gpRegisters[i],
                                      getSyscallArg(i + n_frameRegisters + 2,
-                                                   buffer), dest));
+                                                   buffer), hasVCPU));
     }
 
 #ifdef CONFIG_ARCH_X86_64

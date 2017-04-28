@@ -939,7 +939,7 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 #endif
 
     /* sanitize the CPSR as without a VCPU a thread should only be in user mode */
-    setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), tcb));
+    setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), false));
 }
 
 exception_t
@@ -1073,7 +1073,7 @@ decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer)
     if (index >= gic_vcpu_num_list_regs) {
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = gic_vcpu_num_list_regs;
+        current_syscall_error.rangeErrorMax = gic_vcpu_num_list_regs - 1;
         current_syscall_error.invalidArgumentNumber = 4;
         current_syscall_error.type = seL4_RangeError;
         return EXCEPTION_SYSCALL_ERROR;
