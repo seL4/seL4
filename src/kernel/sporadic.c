@@ -265,6 +265,7 @@ refill_budget_check(sched_context_t *sc, ticks_t usage)
 
             refill_t refill = refill_pop_head(sc);
             REFILL_HEAD(sc).rAmount += refill.rAmount;
+            REFILL_HEAD(sc).rTime = refill.rTime;
         }
     }
 
@@ -288,28 +289,35 @@ refill_split_check(sched_context_t *sc, ticks_t usage)
 
     /* first deal with the remaining budget of the current replenishment */
     ticks_t remnant = REFILL_HEAD(sc).rAmount - usage;
-    if (remnant < MIN_BUDGET && refill_single(sc)) {
-        /* delay entire replenishment - can't merge, nothing to merge with */
-        REFILL_HEAD(sc).rTime += sc->scPeriod;
-        REFILL_SANITY_END(sc);
-        return;
-    }
+
+    /* set up a new replenishment structure */
+    refill_t new = (refill_t) { .rAmount = usage, .rTime = REFILL_HEAD(sc).rTime + sc->scPeriod };
 
     if (refill_size(sc) == sc->scRefillMax || remnant < MIN_BUDGET) {
-        assert(!refill_single(sc));
         /* merge remnant with next replenishment - either it's too small
          * or we're out of space */
-        refill_pop_head(sc);
-        REFILL_HEAD(sc).rAmount += remnant;
+        if (refill_single(sc)) {
+            /* update inplace */
+            new.rAmount += remnant;
+            REFILL_HEAD(sc) = new;
+        } else {
+            refill_pop_head(sc);
+            REFILL_HEAD(sc).rAmount += remnant;
+            /* schedule the used amount */
+            refill_add_tail(sc, new);
+        }
+        assert(refill_ordered(sc));
     } else  {
+        /* leave remnant as reduced replenishment */
         assert(remnant >= MIN_BUDGET);
         /* split the head refill  */
         REFILL_HEAD(sc).rAmount = remnant;
+        REFILL_HEAD(sc).rTime += (sc->scPeriod == 0 ? 0 : usage);
+        /* schedule the used amount */
+        refill_add_tail(sc, new);
+        assert(refill_ordered(sc));
     }
 
-    /* schedule the used amount */
-    refill_t new = (refill_t) { .rAmount = usage, .rTime = REFILL_HEAD(sc).rTime + sc->scPeriod };
-    refill_add_tail(sc, new);
     REFILL_SANITY_END(sc);
 }
 
