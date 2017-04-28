@@ -105,7 +105,7 @@ refill_ordered(sched_context_t *sc)
 #endif /* CONFIG_DEBUG_BUILD */
 
 /* compute the sum of a refill queue */
-static ticks_t
+static UNUSED ticks_t
 refill_sum(sched_context_t *sc)
 {
     ticks_t sum = REFILL_HEAD(sc).rAmount;
