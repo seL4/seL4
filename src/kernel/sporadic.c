@@ -175,66 +175,27 @@ refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_
     /* refill must be initialised in order to be updated - otherwise refill_new should be used */
     assert(sc->scRefillMax > 0);
 
-    /* figure out how much budget is available */
-    ticks_t total_budget = refill_sum(sc);
-    REFILL_SANITY_CHECK(sc, total_budget);
+    /* this is called on an active thread. We want to preserve the sliding window constraint -
+     * so over new_period, new_budget should not be exceeded even temporarily */
 
-    /* first deal with a difference in max refills - merge
-     * any refills that exceed the new max */
-    while (new_max_refills < refill_size(sc)) {
-        /* merge refills */
+    /* truncate refill list to size 1 */
+    sc->scRefillTail = sc->scRefillHead;
+    /* update max refills */
+    sc->scRefillMax = new_max_refills;
 
-        assert(!refill_single(sc));
-        refill_t refill = refill_pop_head(sc);
-        REFILL_HEAD(sc).rAmount += refill.rAmount;
-    }
 
-    REFILL_SANITY_CHECK(sc, total_budget);
-
-    /* move anything in the list that is beyond the old max */
-    if (sc->scRefillMax > new_max_refills) {
-        word_t curr = sc->scRefillHead;
-        for (curr = sc->scRefillHead; curr < sc->scRefillMax; curr++) {
-            word_t diff = sc->scRefillMax - new_max_refills;
-            REFILL_INDEX(sc, curr - diff) = REFILL_INDEX(sc, curr);
-        }
-    }
-   sc->scRefillMax = new_max_refills;
-
-    /* now deal with the period change - update each refill by the difference in period */
-    word_t current = refill_next(sc, sc->scRefillHead);
-    while (current != sc->scRefillTail) {
-        /* adjust the period of each refill by new one  (except the head) */
-        REFILL_INDEX(sc, current).rTime += (new_period - sc->scPeriod);
-        current = refill_next(sc, current);
-    }
-    sc->scPeriod = new_period;
-    REFILL_SANITY_CHECK(sc, total_budget);
-
-    /* now deal with the new budget */
-    if (new_budget > total_budget) {
-        /* if the budget has increased, just add it to the last refill */
-        REFILL_TAIL(sc).rAmount += (new_budget - total_budget);
+    if (REFILL_HEAD(sc).rAmount >= new_budget) {
+        /* if the heads budget exceeds the new budget just trim it */
+        REFILL_HEAD(sc).rAmount = new_budget;
     } else {
-        /* if the budget has decreased, iterate through from head to
-         * tail until the amount decreased has been removed from the refill
-         * buffer */
-        ticks_t remove = total_budget - new_budget;
-        while (remove >= REFILL_HEAD(sc).rAmount) {
-            assert(!refill_single(sc));
-            refill_t old_head = refill_pop_head(sc);
-            remove -= old_head.rAmount;
-        }
-        REFILL_HEAD(sc).rAmount -= remove;
-        if (REFILL_HEAD(sc).rAmount < MIN_BUDGET) {
-            assert(!refill_single(sc));
-            refill_t old_head = refill_pop_head(sc);
-            REFILL_HEAD(sc).rAmount += old_head.rAmount;
-        }
+        /* otherwise schedule the rest for the next period */
+        refill_t new = { .rAmount = (new_budget - REFILL_HEAD(sc).rAmount),
+                         .rTime = REFILL_HEAD(sc).rTime + new_period
+        };
+        refill_add_tail(sc, new);
     }
 
-    /* merge any overlapping refills */
-    refill_unblock_check(sc);
+    sc->scPeriod = new_period;
     REFILL_SANITY_CHECK(sc, new_budget);
 }
 

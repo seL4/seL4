@@ -38,6 +38,9 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
     if (core == target->scCore && target->scRefillMax > 0 && target->scTcb && isRunnable(target->scTcb)) {
         /* the scheduling context is active - it can be used, so
          * we need to preserve the bandwidth */
+        /* remove from scheduler */
+        tcbSchedDequeue(target->scTcb);
+        tcbReleaseRemove(target->scTcb);
         refill_update(target, period, budget, max_refills);
     } else {
         /* the scheduling context isn't active - it's budget is not being used, so
@@ -53,9 +56,13 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         }
     }
 
-    if (target->scTcb && isRunnable(target->scTcb) && target->scRefillMax > 0) {
+    if (target->scTcb && target->scRefillMax > 0) {
         schedContext_resume(target);
-        switchIfRequiredTo(target->scTcb);
+        if (target->scTcb == NODE_STATE(ksCurThread)) {
+            rescheduleRequired();
+        } else if (isRunnable(target->scTcb)) {
+            switchIfRequiredTo(target->scTcb);
+        }
     }
 
     return EXCEPTION_NONE;
