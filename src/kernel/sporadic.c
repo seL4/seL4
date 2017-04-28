@@ -70,23 +70,28 @@ refill_print(sched_context_t *sc)
 #endif /* CONFIG_PRINTING */
 #ifdef CONFIG_DEBUG_BUILD
 /* check a refill queue is ordered correctly */
-static UNUSED void
+static UNUSED bool_t
 refill_ordered(sched_context_t *sc)
 {
     word_t current = sc->scRefillHead;
     word_t next = refill_next(sc, sc->scRefillHead);
 
     while (current != sc->scRefillTail) {
-        assert(REFILL_INDEX(sc, current).rTime <= REFILL_INDEX(sc, next).rTime);
+        if (!(REFILL_INDEX(sc, current).rTime <= REFILL_INDEX(sc, next).rTime)) {
+            refill_print(sc);
+            return false;
+        }
         current = next;
         next = refill_next(sc, current);
     }
+
+    return true;
 }
 
-#define REFILL_SANITY_START(sc) ticks_t _sum = refill_sum(sc); refill_ordered(sc);
+#define REFILL_SANITY_START(sc) ticks_t _sum = refill_sum(sc); assert(refill_ordered(sc));
 #define REFILL_SANITY_CHECK(sc, budget) \
     do { \
-        assert(refill_sum(sc) == budget); refill_ordered(sc); \
+        assert(refill_sum(sc) == budget); assert(refill_ordered(sc)); \
     } while (0)
 
 #define REFILL_SANITY_END(sc) \
