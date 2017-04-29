@@ -826,8 +826,8 @@ VGICMaintenance(void)
             irq_idx = -1;
         }
 
-       /* the hardware should never give us an invalid index, but we don't
-        * want to trust it that far */
+        /* the hardware should never give us an invalid index, but we don't
+         * want to trust it that far */
         if (irq_idx == -1  || irq_idx >= gic_vcpu_num_list_regs) {
             current_fault = seL4_Fault_VGICMaintenance_new(0, 0);
         } else {
