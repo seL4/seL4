@@ -825,27 +825,26 @@ VGICMaintenance(void)
         } else {
             irq_idx = -1;
         }
-        if (irq_idx == -1) {
+
+       /* the hardware should never give us an invalid index, but we don't
+        * want to trust it that far */
+        if (irq_idx == -1  || irq_idx >= gic_vcpu_num_list_regs) {
             current_fault = seL4_Fault_VGICMaintenance_new(0, 0);
         } else {
-            current_fault = seL4_Fault_VGICMaintenance_new(irq_idx, 1);
-            /* the hardware should never give us an invalid index, but we don't
-             * want to trust it that far */
-            if (irq_idx < gic_vcpu_num_list_regs) {
-                virq_t virq = get_gic_vcpu_ctrl_lr(irq_idx);
-                switch (virq_get_virqType(virq)) {
-                case virq_virq_active:
-                    virq = virq_virq_active_set_virqEOIIRQEN(virq, 0);
-                    break;
-                case virq_virq_pending:
-                    virq = virq_virq_pending_set_virqEOIIRQEN(virq, 0);
-                    break;
-                case virq_virq_invalid:
-                    virq = virq_virq_invalid_set_virqEOIIRQEN(virq, 0);
-                    break;
-                }
-                set_gic_vcpu_ctrl_lr(irq_idx, virq);
+            virq_t virq = get_gic_vcpu_ctrl_lr(irq_idx);
+            switch (virq_get_virqType(virq)) {
+            case virq_virq_active:
+                virq = virq_virq_active_set_virqEOIIRQEN(virq, 0);
+                break;
+            case virq_virq_pending:
+                virq = virq_virq_pending_set_virqEOIIRQEN(virq, 0);
+                break;
+            case virq_virq_invalid:
+                virq = virq_virq_invalid_set_virqEOIIRQEN(virq, 0);
+                break;
             }
+            set_gic_vcpu_ctrl_lr(irq_idx, virq);
+            current_fault = seL4_Fault_VGICMaintenance_new(irq_idx, 1);
         }
 
     } else {
