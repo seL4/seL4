@@ -12,11 +12,12 @@
 #define __MODE_KERNEL_THREAD_H
 
 static inline word_t
-sanitiseRegister(register_t reg, word_t v, bool_t hasVCPU)
+sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
 {
     if (reg == CPSR) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-        if (hasVCPU) {
+        /* on aarch32 archInfo means 'has VCPU', see Arch_getSanitiseRegisterInfo below */
+        if (archInfo) {
             switch (v & 0x1f) {
             case PMODE_USER:
             case PMODE_FIQ:
@@ -40,8 +41,8 @@ sanitiseRegister(register_t reg, word_t v, bool_t hasVCPU)
     }
 }
 
-static inline bool_t
-Arch_hasVCPU(tcb_t *thread)
+static inline bool_t PURE
+Arch_getSanitiseRegisterInfo(tcb_t *thread)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     return (thread->tcbArch.tcbVCPU != NULL);
