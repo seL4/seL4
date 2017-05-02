@@ -50,6 +50,7 @@ decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         status = Arch_checkIRQ(irq);
         if (status != EXCEPTION_NONE) {
+            userError("Rejecting request for IRQ %u. IRQ is greater than maxIRQ.", (int)irq);
             return status;
         }
 
