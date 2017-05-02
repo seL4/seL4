@@ -13,6 +13,8 @@
 #ifndef __LIBSEL4_ARCH_BOOTINFO_TYPES_H
 #define __LIBSEL4_ARCH_BOOTINFO_TYPES_H
 
+#define SEL4_MULTIBOOT_MAX_MMAP_ENTRIES 50
+
 typedef struct seL4_VBEInfoBlock {
     char        signature[4];
     seL4_Uint16 version;
@@ -96,4 +98,17 @@ typedef struct _seL4_X86_BootInfo_VBE {
     seL4_Uint32 vbeInterfaceLen;
 } SEL4_PACKED seL4_X86_BootInfo_VBE;
 
+typedef struct seL4_X86_mb_mmap {
+    uint32_t size;
+    uint64_t base_addr;
+    uint64_t length;
+    uint32_t type;
+} PACKED seL4_X86_mb_mmap_t;
+
+
+typedef struct seL4_X86_BootInfo_mmap {
+    seL4_BootInfoHeader header;
+    seL4_Uint32 mmap_length;
+    seL4_X86_mb_mmap_t mmap[SEL4_MULTIBOOT_MAX_MMAP_ENTRIES];
+} PACKED seL4_X86_BootInfo_mmap_t;
 #endif // __LIBSEL4_ARCH_BOOTINFO_TYPES_H

@@ -66,6 +66,7 @@ typedef struct boot_state {
     cpu_id_t     cpus[CONFIG_MAX_NUM_NODES];
     mem_p_regs_t mem_p_regs;  /* physical memory regions */
     seL4_X86_BootInfo_VBE vbe_info; /* Potential VBE information from multiboot */
+    seL4_X86_BootInfo_mmap_t mb_mmap_info; /* memory map information from multiboot */
 } boot_state_t;
 
 BOOT_BSS
@@ -222,7 +223,8 @@ try_boot_sys_node(cpu_id_t cpu_id)
                 boot_state.num_drhu,
                 boot_state.drhu_list,
                 &boot_state.rmrr_list,
-                &boot_state.vbe_info
+                &boot_state.vbe_info,
+                &boot_state.mb_mmap_info
             )) {
         return false;
     }
@@ -432,6 +434,16 @@ try_boot_sys(
         if (!parse_mem_map(mbi->mmap_length, mbi->mmap_addr)) {
             return false;
         }
+        uint32_t multiboot_mmap_length = mbi->mmap_length;
+        if (multiboot_mmap_length > (SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t))) {
+            multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
+            printf("Warning: Multiboot has reported more memory map entries, %d, "
+                   "than the max amount that will be passed in the bootinfo, %d. "
+                   "These extra regions will still be turned into untyped caps.",
+                   multiboot_mmap_length / sizeof(seL4_X86_mb_mmap_t), SEL4_MULTIBOOT_MAX_MMAP_ENTRIES);
+        }
+        memcpy(&boot_state.mb_mmap_info.mmap, (void*)mbi->mmap_addr, multiboot_mmap_length);
+        boot_state.mb_mmap_info.mmap_length = multiboot_mmap_length;
     } else {
         /* calculate memory the old way */
         p_region_t avail;
