@@ -535,7 +535,11 @@ create_untypeds_for_region(
         size_bits = seL4_WordBits - 1 - clzl(reg.end - reg.start);
 
         /* Determine the alignment of the region */
-        align_bits = boot_ctzl(reg.start);
+        if (reg.start != 0) {
+            align_bits = boot_ctzl(reg.start);
+        } else {
+            align_bits = size_bits;
+        }
         /* Reduce size bits to align if needed */
         if (align_bits < size_bits) {
             size_bits = align_bits;
