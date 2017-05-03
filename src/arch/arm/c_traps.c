@@ -109,7 +109,7 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
     NODE_LOCK_SYS;
 
     c_entry_hook();
-#if TRACK_KERNEL_ENTRIES
+#ifdef TRACK_KERNEL_ENTRIES
     benchmark_debug_syscall_start(cptr, msgInfo, syscall);
     ksKernelEntry.is_fastpath = 1;
 #endif /* DEBUG */

@@ -14,7 +14,7 @@
 /* These devices are used by the seL4 kernel. */
 #ifdef CONFIG_PLAT_SABRE
 #define UART_PADDR                  UART2_PADDR
-#elif CONFIG_PLAT_WANDQ
+#elif defined(CONFIG_PLAT_WANDQ)
 #define UART_PADDR                  UART1_PADDR
 #else
 #error "unknown imx6 platform selected!"
