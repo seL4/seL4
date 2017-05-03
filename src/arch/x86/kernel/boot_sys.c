@@ -437,12 +437,12 @@ try_boot_sys(
         uint32_t multiboot_mmap_length = mbi->mmap_length;
         if (multiboot_mmap_length > (SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t))) {
             multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
-            printf("Warning: Multiboot has reported more memory map entries, %d, "
+            printf("Warning: Multiboot has reported more memory map entries, %zd, "
                    "than the max amount that will be passed in the bootinfo, %d. "
                    "These extra regions will still be turned into untyped caps.",
                    multiboot_mmap_length / sizeof(seL4_X86_mb_mmap_t), SEL4_MULTIBOOT_MAX_MMAP_ENTRIES);
         }
-        memcpy(&boot_state.mb_mmap_info.mmap, (void*)mbi->mmap_addr, multiboot_mmap_length);
+        memcpy(&boot_state.mb_mmap_info.mmap, (void*)(word_t)mbi->mmap_addr, multiboot_mmap_length);
         boot_state.mb_mmap_info.mmap_length = multiboot_mmap_length;
     } else {
         /* calculate memory the old way */
