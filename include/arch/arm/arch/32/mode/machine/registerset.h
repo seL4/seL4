@@ -182,10 +182,8 @@ struct user_context {
 };
 typedef struct user_context user_context_t;
 
-#ifdef CONFIG_DEBUG_BUILD
-compile_assert(registers_are_first_member_of_user_context,
+unverified_compile_assert(registers_are_first_member_of_user_context,
                __builtin_offsetof(user_context_t, registers) == 0)
-#endif
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 void Arch_initBreakpointContext(user_context_t *context);
