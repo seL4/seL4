@@ -47,4 +47,12 @@ void _assert_fail(
 #define compile_assert(name, expr) \
         typedef int __assert_failed_##name[(expr) ? 1 : -1];
 
+/* Sometimes compile asserts contain expressions that the C parser cannot
+ * handle. For such expressions unverified_compile_assert should be used. */
+#ifdef CONFIG_VERIFICATION_BUILD
+#define unverified_compile_assert(name, expr)
+#else
+#define unverified_compile_assert compile_assert
+#endif
+
 #endif
