@@ -11,6 +11,7 @@
 #ifndef __ASSERT_H
 #define __ASSERT_H
 
+#include <config.h>
 #include <util.h>
 
 #ifdef CONFIG_DEBUG_BUILD
