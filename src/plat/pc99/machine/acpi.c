@@ -144,7 +144,7 @@ typedef struct acpi_madt_x2apic {
     uint32_t            flags;
     uint32_t            acpi_processor_uid;
 } acpi_madt_x2apic_t;
-compile_assert(acpi_madt_apic_packed,
+compile_assert(acpi_madt_x2apic_packed,
                sizeof(acpi_madt_x2apic_t) == sizeof(acpi_madt_header_t) + 14)
 
 typedef struct acpi_madt_ioapic {
