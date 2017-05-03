@@ -167,7 +167,7 @@ typedef struct acpi_madt_iso {
 /* We can't assert on the sizeof acpi_madt_iso because it contains trailing
  * padding.
  */
-compile_assert(acpi_madt_iso_packed,
+unverified_compile_assert(acpi_madt_iso_packed,
                OFFSETOF(acpi_madt_iso_t, flags) == sizeof(acpi_madt_header_t) + 6)
 
 /* workaround because string literals are not supported by C parser */
