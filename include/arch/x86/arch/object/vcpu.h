@@ -316,7 +316,7 @@ typedef struct vcpu vcpu_t;
 
 compile_assert(vcpu_size_sane, sizeof(vcpu_t) <= BIT(seL4_X86_VCPUBits))
 unverified_compile_assert(vcpu_fpu_state_alignment_valid,
-               OFFSETOF(vcpu_t, fpuState) % MIN_FPU_ALIGNMENT == 0)
+                          OFFSETOF(vcpu_t, fpuState) % MIN_FPU_ALIGNMENT == 0)
 
 /* Initializes a VCPU object with default values. A VCPU object that is not inititlized
  * must not be run/loaded with vmptrld */

@@ -203,7 +203,7 @@ struct user_context {
 typedef struct user_context user_context_t;
 
 unverified_compile_assert(registers_are_first_member_of_user_context,
-               OFFSETOF(user_context_t, registers) == 0)
+                          OFFSETOF(user_context_t, registers) == 0)
 
 
 static inline void Arch_initContext(user_context_t* context)
