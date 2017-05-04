@@ -308,7 +308,7 @@ seL4_Yield(void)
     asm volatile("" ::: "memory");
 }
 
-#ifdef CONFIG_DEBUG_BUILD
+#ifdef CONFIG_PRINTING
 LIBSEL4_INLINE_FUNC void
 seL4_DebugPutChar(char c)
 {
@@ -321,7 +321,9 @@ seL4_DebugPutChar(char c)
 
     arm_sys_send_recv(seL4_SysDebugPutChar, c, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
 }
+#endif
 
+#if CONFIG_DEBUG_BUILD
 LIBSEL4_INLINE_FUNC void
 seL4_DebugHalt(void)
 {

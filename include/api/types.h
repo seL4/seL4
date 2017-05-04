@@ -20,6 +20,7 @@
 #include <api/macros.h>
 #include <api/constants.h>
 #include <api/shared_types.h>
+#include <machine/io.h>
 
 /* seL4_CapRights_t defined in mode/api/shared_types.bf */
 

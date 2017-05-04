@@ -25,8 +25,10 @@
     </api>
     <!-- Syscalls on the unknown syscall path. These definitions will be wrapped in #ifdef name -->
     <debug>
-        <config condition="defined CONFIG_DEBUG_BUILD">
+        <config condition="defined CONFIG_PRINTING">
             <syscall name="DebugPutChar"  />
+        </config>
+        <config condition="defined CONFIG_DEBUG_BUILD">
             <syscall name="DebugHalt"     />
             <syscall name="DebugCapIdentify"   />
             <syscall name="DebugSnapshot" />

@@ -61,11 +61,13 @@ handleInterruptEntry(void)
 exception_t
 handleUnknownSyscall(word_t w)
 {
-#ifdef CONFIG_DEBUG_BUILD
+#ifdef CONFIG_PRINTING
     if (w == SysDebugPutChar) {
         kernel_putchar(getRegister(NODE_STATE(ksCurThread), capRegister));
         return EXCEPTION_NONE;
     }
+#endif
+#ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugHalt) {
         printf("Debug halt syscall from user thread %p\n", NODE_STATE(ksCurThread));
         halt();
