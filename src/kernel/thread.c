@@ -538,7 +538,7 @@ chargeBudget(ticks_t capacity)
     }
 
     capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-    if (capacity >= 0 && refill_ready(NODE_STATE(ksCurSC))) {
+    if (capacity > 0  && NODE_STATE(ksConsumed) > 0 && refill_ready(NODE_STATE(ksCurSC))) {
         refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
     }
 
