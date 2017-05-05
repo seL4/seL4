@@ -2646,7 +2646,7 @@ if __name__ == '__main__':
 
     # Parse the spec
     lexer = lex.lex()
-    yacc.yacc(debug=0)
+    yacc.yacc(debug=0, write_tables=0)
     blocks = {}
     unions = {}
     _, block_map, union_map = yacc.parse(input=in_file.read(), lexer=lexer)
