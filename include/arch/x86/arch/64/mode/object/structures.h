@@ -13,6 +13,7 @@
 #ifndef __ARCH_MODE_OBJECT_STRUCTURES_H_
 #define __ARCH_MODE_OBJECT_STRUCTURES_H_
 
+#include <api/macros.h>
 /* x86-64 specific object types */
 /* sysexit with rex.w prefix (64-bit) user code = cs + 32, user data = cs + 40.
  * without rex.w user code = cs + 16, user data = cs + 24, so we need to arrange
@@ -40,18 +41,16 @@ compile_assert(unsinged_int_size_32,
 compile_assert(uint64_t_size_64,
                sizeof(uint64_t) == 8)
 
-#define WORD_SIZE_BITS 3
-
 #define X86_GLOBAL_VSPACE_ROOT x64KSGlobalPML4
 
-#define PML4E_SIZE_BITS 3
-#define PML4_INDEX_BITS 9
-#define PDPTE_SIZE_BITS 3
-#define PDPT_INDEX_BITS 9
-#define PDE_SIZE_BITS   3
-#define PD_INDEX_BITS   9
-#define PTE_SIZE_BITS   3
-#define PT_INDEX_BITS   9
+#define PML4E_SIZE_BITS seL4_PML4EntryBits
+#define PML4_INDEX_BITS seL4_PML4IndexBits
+#define PDPTE_SIZE_BITS seL4_PDPTEntryBits
+#define PDPT_INDEX_BITS seL4_PDPTIndexBits
+#define PDE_SIZE_BITS   seL4_PageDirEntryBits
+#define PD_INDEX_BITS   seL4_PageDirIndexBits
+#define PTE_SIZE_BITS   seL4_PageTableEntryBits
+#define PT_INDEX_BITS   seL4_PageTableIndexBits
 
 #define PT_INDEX_OFFSET (seL4_PageBits)
 #define PD_INDEX_OFFSET (PT_INDEX_OFFSET + PT_INDEX_BITS)
@@ -70,7 +69,6 @@ typedef pml4e_t vspace_root_t;
 #define PML4E_PTR_PTR(r) ((pml4e_t **)(r))
 #define PML4E_REF(p)     ((word_t)(p))
 
-compile_assert(pml4_size_bits_sane, PML4_INDEX_BITS + PML4E_SIZE_BITS == seL4_PML4Bits)
 #define PML4_PTR(r)     ((pml4e_t *)(r))
 #define PML4_REF(p)     ((word_t)(r))
 
@@ -78,7 +76,6 @@ compile_assert(pml4_size_bits_sane, PML4_INDEX_BITS + PML4E_SIZE_BITS == seL4_PM
 #define PDPTE_PTR_PTR(r) ((pdpte_t **)(r))
 #define PDPTE_REF(p)   ((word_t)(p))
 
-compile_assert(pdpt_size_bits_sane, PDPT_INDEX_BITS + PDPTE_SIZE_BITS == seL4_PDPTBits)
 #define PDPT_PTR(r)    ((pdpte_t *)(r))
 #define PDPT_PREF(p)   ((word_t)(p))
 
@@ -86,14 +83,12 @@ compile_assert(pdpt_size_bits_sane, PDPT_INDEX_BITS + PDPTE_SIZE_BITS == seL4_PD
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
 #define PDE_REF(p)     ((word_t)(p))
 
-compile_assert(pd_size_bits_sane, PD_INDEX_BITS + PDE_SIZE_BITS == seL4_PageDirBits)
 #define PD_PTR(r)    ((pde_t *)(r))
 #define PD_REF(p)    ((word_t)(p))
 
 #define PTE_PTR(r)    ((pte_t *)(r))
 #define PTE_REF(p)    ((word_t)(p))
 
-compile_assert(pt_size_bits_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r)    ((pte_t *)(r))
 #define PT_REF(p)    ((word_t)(p))
 
@@ -104,7 +99,7 @@ compile_assert(pt_size_bits_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTabl
 
 enum asidSizeConstants {
     asidHighBits = 3,
-    asidLowBits = 9
+    asidLowBits = seL4_ASIDPoolIndexBits
 };
 
 struct asid_pool {
@@ -113,8 +108,8 @@ struct asid_pool {
 
 typedef struct asid_pool asid_pool_t;
 
-#define ASID_POOL_INDEX_BITS      asidLowBits
-#define ASID_POOL_SIZE_BITS (ASID_POOL_BITS + WORD_SIZE_BITS)
+#define ASID_POOL_INDEX_BITS  seL4_ASIDPoolIndexBits
+#define ASID_POOL_SIZE_BITS (seL4_ASIDPoolBits + WORD_SIZE_BITS)
 #define ASID_POOL_PTR(r)    ((asid_pool_t*)r)
 #define ASID_POOL_REF(p)    ((word_t)p)
 #define ASID_BITS           (asidHighBits + asidLowBits)

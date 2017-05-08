@@ -111,21 +111,44 @@ enum {
 #define seL4_NotificationBits 4
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define seL4_PageTableBits      12
+#define seL4_PageTableBits 12
+#define seL4_PageTableEntryBits 3
+#define seL4_PageTableIndexBits 9
 #define seL4_SectionBits 21
 #define seL4_SuperSectionBits 25
+#define seL4_PGDEntryBits 3
+#define seL4_PGDIndexBits 2
+#define seL4_PGDBits (seL4_PGDIndexBits + seL4_PGDEntryBits)
+#define seL4_PageDirEntryBits 3
+#define seL4_PageDirIndexBits 11
+#define seL4_VCPUBits 12
 #else
 #define seL4_PageTableBits 10
+#define seL4_PageTableEntryBits 2
+#define seL4_PageTableIndexBits 8
 #define seL4_SectionBits 20
 #define seL4_SuperSectionBits 24
+#define seL4_PageDirEntryBits 2
+#define seL4_PageDirIndexBits 12
 #endif
 
 #define seL4_PageDirBits 14
+
 #define seL4_ASIDPoolBits 12
+#define seL4_ASIDPoolIndexBits 10
 #define seL4_ARM_VCPUBits       12
 #define seL4_IOPageTableBits    12
-/* word size */
+
+/* bits in a word */
 #define seL4_WordBits (sizeof(seL4_Word) * 8)
+/* log 2 bits in a word */
+#define seL4_WordSizeBits 2
+
+#ifndef __ASSEMBLER__
+SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
+SEL4_SIZE_SANITY(seL4_PageDirEntryBits,   seL4_PageDirIndexBits,   seL4_PageDirBits);
+SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+#endif
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4

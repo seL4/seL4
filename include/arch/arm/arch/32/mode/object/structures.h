@@ -14,6 +14,7 @@
 #include <config.h>
 #include <assert.h>
 #include <util.h>
+#include <api/macros.h>
 #include <api/types.h>
 #include <arch/types.h>
 #include <arch/object/structures_gen.h>
@@ -38,32 +39,23 @@ enum vm_rights {
 };
 typedef word_t vm_rights_t;
 
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define PGDE_SIZE_BITS 3
-#define PDE_SIZE_BITS  3
-#define PTE_SIZE_BITS  3
-#define PGD_INDEX_BITS 2
-#define PD_INDEX_BITS 11
-#define PT_INDEX_BITS 9
-#define VCPU_SIZE_BITS 12
+#define PGDE_SIZE_BITS seL4_PGDEntryBits
+#define PDE_SIZE_BITS  seL4_PageDirEntryBits
+#define PTE_SIZE_BITS  seL4_PageTableEntryBits
+#define PGD_INDEX_BITS seL4_PGDIndexBits
+#define PD_INDEX_BITS seL4_PageDirIndexBits
+#define PT_INDEX_BITS seL4_PageTableIndexBits
+#define VCPU_SIZE_BITS seL4_VCPUBits
+
 /* Generate a vcpu_t pointer from a vcpu block reference */
 #define VCPU_PTR(r)       ((struct vcpu *)(r))
 #define VCPU_REF(p)       ((unsigned int)(p))
-
-#else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-#define PDE_SIZE_BITS  2
-#define PTE_SIZE_BITS  2
-#define PD_INDEX_BITS 12
-#define PT_INDEX_BITS 8
-#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-
 
 #define PDE_PTR(r) ((pde_t *)(r))
 #define PDE_REF(p) ((unsigned int)p)
 
 #define PDE_PTR_PTR(r) ((pde_t **)r)
 
-compile_assert(pd_size_bits_sane, (PD_INDEX_BITS + PDE_SIZE_BITS) == seL4_PageDirBits)
 #define PD_PTR(r) ((pde_t *)(r))
 #define PD_REF(p) ((unsigned int)p)
 
@@ -78,13 +70,11 @@ typedef word_t pde_type_t;
 #define PTE_PTR(r) ((pte_t *)r)
 #define PTE_REF(p) ((unsigned int)p)
 
-compile_assert(pt_size_bits_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r) ((pte_t *)r)
 #define PT_REF(p) ((unsigned int)p)
 
-
 /* LPAE */
-#define PGD_SIZE_BITS (PGD_INDEX_BITS+PGDE_SIZE_BITS)
+#define PGD_SIZE_BITS seL4_PGDBits
 #define LPAE_PGDE_PTR(r) ((lpae_pde_t *)(r))
 #define LPAE_PGDE_REF(p) ((unsigned int)p)
 #define LPAE_PGDE_PTR_PTR(r) ((lpae_pde_t **)r)
@@ -96,8 +86,6 @@ compile_assert(pt_size_bits_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTabl
 
 #define LPAE_PT_PTR(r) ((lpae_pte_t *)r)
 #define LPAE_PT_REF(p) ((unsigned int)p)
-
-#define WORD_SIZE_BITS 2
 
 struct user_data {
     word_t words[BIT(ARMSmallPageBits) / sizeof(word_t)];
@@ -117,7 +105,7 @@ enum asidSizeConstants {
 #else
     asidHighBits = 7,
 #endif
-    asidLowBits = 10
+    asidLowBits = seL4_ASIDPoolIndexBits
 };
 
 struct asid_pool {
@@ -131,8 +119,7 @@ typedef struct asid_pool asid_pool_t;
 
 #define HW_ASID_SIZE_BITS 1
 
-#define ASID_POOL_INDEX_BITS asidLowBits
-compile_assert(asid_pool_size_sane, ASID_POOL_INDEX_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
+#define ASID_POOL_INDEX_BITS seL4_ASIDPoolIndexBits
 #define ASID_BITS (asidHighBits+asidLowBits)
 
 #define nASIDPools BIT(asidHighBits)

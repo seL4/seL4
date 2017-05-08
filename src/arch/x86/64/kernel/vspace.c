@@ -1601,7 +1601,7 @@ Arch_userStackTrace(tcb_t *tptr)
     sp = getRegister(tptr, RSP);
     /* check for alignment so we don't have to worry about accessing
      * words that might be on two different pages */
-    if (!IS_ALIGNED(sp, WORD_SIZE_BITS)) {
+    if (!IS_ALIGNED(sp, seL4_WordSizeBits)) {
         printf("RSP not aligned\n");
         return;
     }

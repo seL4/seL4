@@ -48,4 +48,7 @@
 
 #define SEL4_DEPRECATED(x) __attribute__((deprecated(x)))
 #define SEL4_DEPRECATE_MACRO(x) _Pragma("deprecated") x
+
+#define SEL4_COMPILE_ASSERT(name, expr) typedef int __assert_failed_##name[(expr) ? 1 : -1];
+#define SEL4_SIZE_SANITY(index, entry, size) SEL4_COMPILE_ASSERT(index##entry##size, index + entry == size)
 #endif

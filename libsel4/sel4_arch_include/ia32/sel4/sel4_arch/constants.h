@@ -35,21 +35,29 @@
 #endif
 #define seL4_EndpointBits     4
 #define seL4_NotificationBits 4
+
 #define seL4_PageTableBits   12
+#define seL4_PageTableEntryBits 2
+#define seL4_PageTableIndexBits 10
+
 #define seL4_PageDirBits     12
+#define seL4_PageDirEntryBits 2
+#define seL4_PageDirIndexBits 10
+
 #define seL4_IOPageTableBits 12
 #define seL4_ASIDPoolBits    12
+#define seL4_ASIDPoolIndexBits 10
+#define seL4_WordSizeBits 2
 
 #define seL4_HugePageBits    30 /* 1GB */
-
-#define seL4_X86_VCPUBits    14
-#define seL4_X86_EPTPML4Bits 12
-#define seL4_X86_EPTPDPTBits 12
-#define seL4_X86_EPTPDBits   12
-#define seL4_X86_EPTPTBits   12
-
 #define seL4_PDPTBits         0
 #define seL4_LargePageBits    22 /* 4MB */
+
+#ifndef __ASSEMBLER__
+SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
+SEL4_SIZE_SANITY(seL4_PageDirEntryBits, seL4_PageDirIndexBits, seL4_PageDirBits);
+SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+#endif
 
 /* Previously large frames were explicitly assumed to be 4M. If not using
  * PAE assuming a legacy environment and leave the old definition */

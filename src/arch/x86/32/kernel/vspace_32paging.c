@@ -380,7 +380,7 @@ Arch_userStackTrace(tcb_t *tptr)
     sp = getRegister(tptr, ESP);
     /* check for alignment so we don't have to worry about accessing
      * words that might be on two different pages */
-    if (!IS_ALIGNED(sp, WORD_SIZE_BITS)) {
+    if (!IS_ALIGNED(sp, seL4_WordSizeBits)) {
         printf("ESP not aligned\n");
         return;
     }

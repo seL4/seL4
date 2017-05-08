@@ -26,31 +26,47 @@
 
 /* for x86-64, the large page size is 2 MiB and huge page size is 1 GiB */
 #define seL4_WordBits           64
+#define seL4_WordSizeBits       3
 #define seL4_PageBits           12
 #define seL4_SlotBits           5
 #define seL4_TCBBits            11
 #define seL4_EndpointBits       4
 #define seL4_NotificationBits   5
+
 #define seL4_PageTableBits      12
+#define seL4_PageTableEntryBits 3
+#define seL4_PageTableIndexBits 9
+
 #define seL4_PageDirBits        12
+#define seL4_PageDirEntryBits   3
+#define seL4_PageDirIndexBits   9
+
 #define seL4_PDPTBits           12
+#define seL4_PDPTEntryBits      3
+#define seL4_PDPTIndexBits      9
+
 #define seL4_PML4Bits           12
+#define seL4_PML4EntryBits      3
+#define seL4_PML4IndexBits      9
+
 #define seL4_IOPageTableBits    12
 #define seL4_LargePageBits      21
 #define seL4_HugePageBits       30
 #define seL4_ASIDPoolBits       12
-
-#define seL4_X86_VCPUBits    14
-#define seL4_X86_EPTPML4Bits 12
-#define seL4_X86_EPTPDPTBits 12
-#define seL4_X86_EPTPDBits   12
-#define seL4_X86_EPTPTBits   12
+#define seL4_ASIDPoolIndexBits 9
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4
 #define seL4_MaxUntypedBits 47
 
 #ifndef __ASSEMBLER__
+
+SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
+SEL4_SIZE_SANITY(seL4_PageDirEntryBits, seL4_PageDirIndexBits, seL4_PageDirBits);
+SEL4_SIZE_SANITY(seL4_PDPTEntryBits, seL4_PDPTIndexBits, seL4_PDPTBits);
+SEL4_SIZE_SANITY(seL4_PML4EntryBits, seL4_PML4IndexBits, seL4_PML4Bits);
+SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+
 enum {
     seL4_VMFault_IP,
     seL4_VMFault_Addr,

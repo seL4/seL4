@@ -15,6 +15,7 @@
 #include <api/types.h>
 #include <stdint.h>
 #include <arch/object/structures_gen.h>
+#include <api/macros.h>
 #include <arch/api/constants.h>
 #include <benchmark/benchmark_utilisation_.h>
 
