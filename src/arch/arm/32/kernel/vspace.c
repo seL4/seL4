@@ -2537,9 +2537,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                                                    attr, pd);
             if (unlikely(map_ret.status != EXCEPTION_NONE)) {
 #ifdef CONFIG_PRINTING
-                if (current_syscall_error.type == seL4_FailedLookup) {
-                    userError("ARMPageMap: Page directory entry did not contain a page table.");
-                } else if (current_syscall_error.type == seL4_DeleteFirst) {
+                if (current_syscall_error.type == seL4_DeleteFirst) {
                     userError("ARMPageMap: Page table entry was not free.");
                 }
 #endif
