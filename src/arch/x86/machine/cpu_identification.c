@@ -16,9 +16,10 @@
  *
  * AMD processors would be different.
  */
-#define X86_CPUID_VENDOR_STRING_INTEL       "GenuineIntel"
-#define X86_CPUID_VENDOR_STRING_AMD_LEGACY  "AMDisbetter!"
-#define X86_CPUID_VENDOR_STRING_AMD         "AuthenticAMD"
+
+const char X86_CPUID_VENDOR_STRING_INTEL[] = {'G', 'e', 'n', 'u', 'i', 'n', 'e', 'I', 'n', 't', 'e', 'l', 0};
+const char X86_CPUID_VENDOR_STRING_AMD_LEGACY[] = { 'A', 'M', 'D', 'i', 's', 'b', 'e', 't', 't', 'e', 'r', '!', 0};
+const char X86_CPUID_VENDOR_STRING_AMD[] = {'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'A', 'M', 'D', 0};
 
 BOOT_BSS static cpu_identity_t cpu_identity;
 
