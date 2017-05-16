@@ -347,7 +347,7 @@ init_sys_state(
     seL4_BootInfoHeader padding_header;
     padding_header.id = SEL4_BOOTINFO_HEADER_PADDING;
     padding_header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
-    memcpy((void*)(extra_bi_region.start + extra_bi_offset), &padding_header, sizeof(seL4_BootInfoHeader));
+    *(seL4_BootInfoHeader*)(extra_bi_region.start + extra_bi_offset) = padding_header;
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
