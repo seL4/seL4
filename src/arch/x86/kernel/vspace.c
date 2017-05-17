@@ -509,12 +509,12 @@ init_pat_msr(void)
     pat_msr.words[1] = x86_rdmsr_high(IA32_PAT_MSR);
     /* Set up the PAT MSR to the Intel defaults, just in case
      * they have been changed but a bootloader somewhere along the way */
-    x86_pat_msr_ptr_set_pa0(&pat_msr, IA32_PAT_MT_WRITE_BACK);
-    x86_pat_msr_ptr_set_pa1(&pat_msr, IA32_PAT_MT_WRITE_THROUGH);
-    x86_pat_msr_ptr_set_pa2(&pat_msr, IA32_PAT_MT_UNCACHED);
-    x86_pat_msr_ptr_set_pa3(&pat_msr, IA32_PAT_MT_UNCACHEABLE);
+    pat_msr = x86_pat_msr_set_pa0(pat_msr, IA32_PAT_MT_WRITE_BACK);
+    pat_msr = x86_pat_msr_set_pa1(pat_msr, IA32_PAT_MT_WRITE_THROUGH);
+    pat_msr = x86_pat_msr_set_pa2(pat_msr, IA32_PAT_MT_UNCACHED);
+    pat_msr = x86_pat_msr_set_pa3(pat_msr, IA32_PAT_MT_UNCACHEABLE);
     /* Add the WriteCombining cache type to the PAT */
-    x86_pat_msr_ptr_set_pa4(&pat_msr, IA32_PAT_MT_WRITE_COMBINING);
+    pat_msr = x86_pat_msr_set_pa4(pat_msr, IA32_PAT_MT_WRITE_COMBINING);
     x86_wrmsr(IA32_PAT_MSR, ((uint64_t)pat_msr.words[1]) << 32 | pat_msr.words[0]);
     return true;
 }
