@@ -40,7 +40,9 @@ handleInterruptEntry(void)
 {
     irq_t irq;
 
+    updateTimestamp(false);
     irq = getActiveIRQ();
+    checkBudget();
 
     if (irq != irqInvalid) {
         handleInterrupt(irq);
@@ -472,9 +474,7 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq_t irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                if (checkBudget()) {
-                    commitTime();
-                }
+                checkBudget();
                 handleInterrupt(irq);
                 Arch_finaliseInterrupt();
             }
