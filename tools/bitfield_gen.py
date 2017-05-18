@@ -584,7 +584,7 @@ def ptr_get_template(ptrname):
     return ptr_basic_template('get_%(field)s', ptrname, '\<acute>%(ret_name)s :== ', '',
                               '''\<lbrace>\<acute>%(ret_name)s = ''' \
                               '''%(name)s_CL.%(field)s_CL ''' \
-                              '''(%(name)s_lift (%(access_path)s))\<rbrace>''') #  AND %(mask)s
+                              '''(%(name)s_lift (%(access_path)s))\<rbrace>''')
 
 def ptr_set_template(name, ptrname):
     return ptr_basic_template(name, ptrname, '', ', \<acute>v',
@@ -641,7 +641,7 @@ def ptr_union_get_template(ptrname):
                                     '\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
                                     '''\<lbrace>\<acute>%(ret_name)s = ''' \
                                     '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
-                                    '''(%(name)s_%(block)s_lift %(access_path)s)\<rbrace>''') #  AND %(mask)s --- given by _lift?
+                                    '''(%(name)s_%(block)s_lift %(access_path)s)\<rbrace>''')
 
 def ptr_union_set_template(ptrname):
     return ptr_union_basic_template('set_%(field)s', ptrname, '', ', \<acute>v',
@@ -754,7 +754,7 @@ done'''],
        '''PROC %(name)s_get_%(field)s(\<acute>%(name)s)
        \<lbrace>\<acute>%(ret_name)s = ''' \
        '''%(name)s_CL.%(field)s_CL ''' \
-       '''(%(name)s_lift \<^bsup>s\<^esup>%(name)s)\<rbrace>"''', #  AND %(mask)s
+       '''(%(name)s_lift \<^bsup>s\<^esup>%(name)s)\<rbrace>"''',
 ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp)
  apply(simp add:%(name)s_lift_def
@@ -1028,7 +1028,7 @@ done'''],
        \<lbrace>\<acute>%(ret_name)s = ''' \
        '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
        '''(%(name)s_%(block)s_lift \<^bsup>s\<^esup>%(name)s)''' \
-       '''\<rbrace>"''', # AND %(mask)s
+       '''\<rbrace>"''',
 ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp simp:guard_simps)
  apply(simp add:%(name)s_%(block)s_lift_def)
