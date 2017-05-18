@@ -329,8 +329,6 @@ schedule(void)
             SCHED_ENQUEUE_CURRENT_TCB;
         }
         /* SwitchToThread */
-        assert(refill_sufficient(NODE_STATE(ksSchedulerAction)->tcbSchedContext, 0));
-        assert(refill_ready(NODE_STATE(ksSchedulerAction)->tcbSchedContext));
         switchToThread(NODE_STATE(ksSchedulerAction));
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
