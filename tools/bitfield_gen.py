@@ -476,7 +476,7 @@ where
 
 union_get_tag_def_entry_template = \
 '''if ((index (%(name)s_C.words_C %(name)s) %(tag_index)d)''' \
-''' AND %(classmask)d \<noteq> %(classmask)d)
+''' AND 0x%(classmask)x \<noteq> 0x%(classmask)x)
       then ((index (%(name)s_C.words_C %(name)s) %(tag_index)d)'''\
 ''' >> %(tag_shift)d) AND mask %(tag_size)d
       else '''
@@ -492,7 +492,7 @@ union_get_tag_eq_x_def_header_template = \
   "(%(name)s_get_tag c = x) = (('''
 
 union_get_tag_eq_x_def_entry_template = \
-'''if ((x << %(tag_shift)d) AND %(classmask)d \<noteq> %(classmask)d)
+'''if ((x << %(tag_shift)d) AND 0x%(classmask)x \<noteq> 0x%(classmask)x)
       then ((index (%(name)s_C.words_C c) %(tag_index)d)''' \
 ''' >> %(tag_shift)d) AND mask %(tag_size)d
       else '''
@@ -1610,7 +1610,7 @@ class TaggedUnion:
                     else:
                         mask = (1 << size) - 1
 
-                    initialiser += " AND %d" % mask
+                    initialiser += " AND 0x%x" % mask
 
                 field_inits.append("\n       " + initialiser)
 
@@ -2195,7 +2195,7 @@ class Block:
                     else:
                         mask = (1 << size) - 1
 
-                    initialiser += " AND %d" % mask
+                    initialiser += " AND 0x%x" % mask
 
                 field_inits.append(initialiser)
 
