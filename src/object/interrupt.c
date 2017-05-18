@@ -201,9 +201,6 @@ void handleInterrupt(irq_t irq)
     case IRQSignal: {
         cap_t cap;
 
-#ifdef CONFIG_KERNEL_MCS
-        updateTimestamp();
-#endif
         cap = intStateIRQNode[irq].cap;
 
         if (cap_get_capType(cap) == cap_notification_cap &&
@@ -218,22 +215,12 @@ void handleInterrupt(irq_t irq)
 #ifndef CONFIG_ARCH_RISCV
         maskInterrupt(true, irq);
 #endif
-#ifdef CONFIG_KERNEL_MCS
-        /* Bill the current thread. */
-        if (unlikely(checkBudget())) {
-            commitTime();
-        }
-#endif
         break;
     }
 
     case IRQTimer:
 #ifdef CONFIG_KERNEL_MCS
-        updateTimestamp();
         ackDeadlineIRQ();
-        if (likely(checkBudget())) {
-            commitTime();
-        }
         NODE_STATE(ksReprogram) = true;
 #else
         timerTick();
@@ -243,15 +230,7 @@ void handleInterrupt(irq_t irq)
 
 #ifdef ENABLE_SMP_SUPPORT
     case IRQIPI:
-#ifdef CONFIG_KERNEL_MCS
-        updateTimestamp();
-#endif
         handleIPI(irq, true);
-#ifdef CONFIG_KERNEL_MCS
-        if (unlikely(checkBudget())) {
-            commitTime();
-        }
-#endif
         break;
 #endif /* ENABLE_SMP_SUPPORT */
 

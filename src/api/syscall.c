@@ -40,6 +40,13 @@ exception_t handleInterruptEntry(void)
     irq_t irq;
 
     irq = getActiveIRQ();
+#ifdef CONFIG_KERNEL_MCS
+    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
+        assert(irq != irq_remote_call_ipi);
+        updateTimestamp();
+        checkBudget();
+    }
+#endif
 
     if (irq != irqInvalid) {
         handleInterrupt(irq);
@@ -51,8 +58,15 @@ exception_t handleInterruptEntry(void)
         handleSpuriousIRQ();
     }
 
-    schedule();
-    activateThread();
+#ifdef CONFIG_KERNEL_MCS
+    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
+        assert(irq != irq_remote_call_ipi);
+#endif
+        schedule();
+        activateThread();
+#ifdef CONFIG_KERNEL_MCS
+    }
+#endif
 
     return EXCEPTION_NONE;
 }
@@ -508,9 +522,7 @@ static void handleRecv(bool_t isBlocking)
 #ifdef CONFIG_KERNEL_MCS
 static inline void mcsIRQ(irq_t irq)
 {
-    if (checkBudget()) {
-        commitTime();
-    }
+    checkBudget();
 }
 #else
 #define handleRecv(isBlocking, canReply) handleRecv(isBlocking)
