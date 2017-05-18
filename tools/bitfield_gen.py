@@ -2684,9 +2684,11 @@ if __name__ == '__main__':
     if options.hol_defs:
         # Fetch kernel
         if options.multifile_base is None:
-            print("theory %s_defs imports \"%s/KernelState_C\" begin" % (
-                    module_name, os.path.relpath(options.cspec_dir,
+            print("theory %s_defs" % module_name, file=out_file)
+            print("imports \"%s/KernelState_C\"" % (
+                    os.path.relpath(options.cspec_dir,
                         os.path.dirname(out_file.filename))), file=out_file)
+            print("begin", file=out_file)
             print(file=out_file)
 
             print(defs_global_lemmas, file=out_file)
@@ -2697,9 +2699,9 @@ if __name__ == '__main__':
 
             print("end", file=out_file)
         else:
-            print("theory %s_defs imports" % module_name,
-            file=out_file)
-            print("\"%s/KernelState_C\"" % (
+            print("theory %s_defs" % module_name, file=out_file)
+            print("imports", file=out_file)
+            print("  \"%s/KernelState_C\"" % (
                     os.path.relpath(options.cspec_dir,
                         os.path.dirname(out_file.filename))), file=out_file)
             for e in blocks.values() + unions.values():
@@ -2746,14 +2748,10 @@ if __name__ == '__main__':
                 type_map[tp] = (toptp, path)
 
         if options.multifile_base is None:
-            print(\
-                "theory %s_proofs imports %s_defs \"%s/KernelState_C\" begin" % (
-                    module_name, module_name,
-                        os.path.relpath(options.cspec_dir,
-                            os.path.dirname(out_file.filename))),
-                        file=out_file)
+            print("theory %s_proofs" % module_name, file=out_file)
+            print("imports %s_defs" % module_name, file=out_file)
+            print("begin", file=out_file)
             print(file=out_file)
-
             print(file=out_file)
 
             for e in blocks.values() + unions.values():
@@ -2762,12 +2760,8 @@ if __name__ == '__main__':
             print("end", file=out_file)
         else:
             # top types are broken here.
-            print("theory %s_proofs imports" % module_name, file=out_file)
-            print("  \"%s/KernelState_C\"" % (
-                os.path.relpath(options.cspec_dir,
-                    os.path.dirname(out_file.filename))),
-                file=out_file)
-
+            print("theory %s_proofs" % module_name, file=out_file)
+            print("imports", file=out_file)
             for e in blocks.values() + unions.values():
                 print("  %s_%s_proofs" % (module_name, e.name),
                 file=out_file)
@@ -2783,10 +2777,8 @@ if __name__ == '__main__':
                                 e.name + "_proofs" + ".thy")
 
                 print(("theory %s imports "
-                        + "%s_%s_defs \"%s/KernelState_C\" begin") % (
-                            submodule_name, base_filename, e.name,
-                                os.path.relpath(options.cspec_dir,
-                                    os.path.dirname(out_file.filename))),
+                        + "%s_%s_defs begin") % (
+                            submodule_name, base_filename, e.name),
                                 file=out_file)
                 print(file=out_file)
 
