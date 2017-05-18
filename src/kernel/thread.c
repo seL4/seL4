@@ -300,9 +300,8 @@ switchSchedContext(void)
     }
 
     /* if a thread doesn't have enough budget, it should not be in the scheduler */
-    if (!refill_ready(NODE_STATE(ksCurSC)) || !refill_sufficient(NODE_STATE(ksCurSC), 0)) {
-           assert(!thread_state_get_tcbQueued(NODE_STATE(ksCurSC)->scTcb->tcbState));
-    }
+    assert((refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0))
+            || !thread_state_get_tcbQueued(NODE_STATE(ksCurSC)->scTcb->tcbState));
 
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
 }
