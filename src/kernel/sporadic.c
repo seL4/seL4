@@ -294,6 +294,7 @@ refill_unblock_check(sched_context_t *sc)
     REFILL_SANITY_START(sc);
     if (refill_ready(sc)) {
         REFILL_HEAD(sc).rTime = NODE_STATE(ksCurTime);
+        NODE_STATE(ksReprogram) = true;
 
         /* merge available replenishments */
         while (!refill_single(sc)) {
