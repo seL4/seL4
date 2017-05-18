@@ -232,6 +232,11 @@ refill_budget_check(sched_context_t *sc, ticks_t usage)
         }
     }
 
+    while (REFILL_HEAD(sc).rAmount < MIN_BUDGET) {
+        refill_t refill = refill_pop_head(sc);
+        REFILL_HEAD(sc).rAmount += refill.rAmount;
+    }
+
     /* budget overrun */
     if (usage > 0) {
         /* budget reduced when calculating capacity */
@@ -252,6 +257,19 @@ refill_budget_check(sched_context_t *sc, ticks_t usage)
 
     /* return any usage we haven't dealt with */
     return usage;
+}
+
+static inline void
+schedule_used(sched_context_t *sc, ticks_t usage, refill_t new)
+{
+    /* schedule the used amount */
+    if (usage < MIN_BUDGET && !refill_single(sc)) {
+        /* used amount is to small - merge with last and delay */
+        REFILL_TAIL(sc).rAmount += usage;
+        REFILL_TAIL(sc).rTime = new.rTime;
+    } else {
+        refill_add_tail(sc, new);
+    }
 }
 
 void
@@ -283,8 +301,7 @@ refill_split_check(sched_context_t *sc, ticks_t usage)
         } else {
             refill_pop_head(sc);
             REFILL_HEAD(sc).rAmount += remnant;
-            /* schedule the used amount */
-            refill_add_tail(sc, new);
+            schedule_used(sc, usage, new);
         }
         assert(refill_ordered(sc));
     } else  {
@@ -293,9 +310,7 @@ refill_split_check(sched_context_t *sc, ticks_t usage)
         /* split the head refill  */
         REFILL_HEAD(sc).rAmount = remnant;
         REFILL_HEAD(sc).rTime += usage;
-        /* schedule the used amount */
-        refill_add_tail(sc, new);
-        assert(refill_ordered(sc));
+        schedule_used(sc, usage, new);
     }
 
     REFILL_SANITY_END(sc);
@@ -328,14 +343,7 @@ refill_unblock_check(sched_context_t *sc)
             }
         }
 
-        /* it's possible that a refill is not bigger than min budget (if a task
-         * uses less than min budget, it will still be scheduled for refill), if
-         * so merge with the next refill, as it's not enough to schedule the task. */
-        if (!refill_sufficient(sc, 0)) {
-            assert(!refill_single(sc));
-            refill_t insufficient = refill_pop_head(sc);
-            REFILL_HEAD(sc).rAmount += insufficient.rAmount;
-        }
+        assert(refill_sufficient(sc, 0));
     }
     REFILL_SANITY_END(sc);
 }
