@@ -79,10 +79,6 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         /* Do the transfer */
         doIPCTransfer(thread, epptr, badge, canGrant, dest);
 
-        if (dest->tcbSchedContext != NULL) {
-            canDonate = false;
-        }
-
         if (do_call ||
                 seL4_Fault_ptr_get_seL4_FaultType(&thread->tcbFault) != seL4_Fault_NullFault) {
             reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
@@ -92,7 +88,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
-        } else if (canDonate) {
+        } else if (canDonate && dest->tcbSchedContext == NULL) {
             schedContext_donate(thread->tcbSchedContext, dest);
         }
 
@@ -191,9 +187,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, cap_t replyCap)
             if (do_call ||
                     seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
                 if (canGrant && replyPtr != NULL) {
-                    bool_t donate = (thread->tcbSchedContext == NULL &&
-                                     sender->tcbSchedContext != NULL);
-                    reply_push(sender, thread, replyPtr, donate);
+                    reply_push(sender, thread, replyPtr, sender->tcbSchedContext != NULL);
                     setThreadState(sender, ThreadState_BlockedOnReply);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
