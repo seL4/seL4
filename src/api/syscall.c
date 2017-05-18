@@ -41,6 +41,11 @@ handleInterruptEntry(void)
     irq_t irq;
 
     irq = getActiveIRQ();
+    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
+        assert(irq != irq_remote_call_ipi);
+        updateTimestamp(false);
+        checkBudget();
+    }
 
     if (irq != irqInvalid) {
         handleInterrupt(irq);
@@ -52,8 +57,11 @@ handleInterruptEntry(void)
         handleSpuriousIRQ();
     }
 
-    schedule();
-    activateThread();
+    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
+        assert(irq != irq_remote_call_ipi);
+        schedule();
+        activateThread();
+    }
 
     return EXCEPTION_NONE;
 }
@@ -508,9 +516,7 @@ handleSyscall(syscall_t syscall)
         if (unlikely(ret != EXCEPTION_NONE)) {
             irq_t irq = getActiveIRQ();
             if (irq != irqInvalid) {
-                if (checkBudget()) {
-                    commitTime();
-                }
+                checkBudget();
                 handleInterrupt(irq);
                 Arch_finaliseInterrupt();
             }
