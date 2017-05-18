@@ -68,7 +68,7 @@ static inline bool_t
 isCurDomainExpired(void)
 {
     return CONFIG_NUM_DOMAINS > 1 &&
-           ksDomainTime < (NODE_STATE(ksConsumed) + getKernelWcetTicks());
+           ksDomainTime < (NODE_STATE(ksConsumed) + MIN_BUDGET);
 }
 
 static inline void
