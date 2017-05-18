@@ -312,9 +312,7 @@ schedule(void)
 {
     word_t action;
 
-    if (NODE_STATE(ksReprogram)) {
-        awaken();
-    }
+    awaken();
 
     action = (word_t)NODE_STATE(ksSchedulerAction);
     if (action == (word_t)SchedulerAction_ChooseNewThread) {
@@ -587,7 +585,7 @@ rescheduleRequired(void)
 void
 awaken(void)
 {
-    while (NODE_STATE(ksReleaseHead) != NULL && refill_ready(NODE_STATE(ksReleaseHead)->tcbSchedContext)) {
+    while (unlikely(NODE_STATE(ksReleaseHead) != NULL && refill_ready(NODE_STATE(ksReleaseHead)->tcbSchedContext))) {
         tcb_t *awakened = tcbReleaseDequeue();
         SMP_COND_STATEMENT(assert(awakened->tcbAffinity == getCurrentCPUIndex()));
         refill_unblock_check(awakened->tcbSchedContext);
