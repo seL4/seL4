@@ -382,7 +382,7 @@ create_sched_context(tcb_t *tcb, ticks_t timeslice)
 
     memzero((void *) sc_pptr, BIT(seL4_SchedContextBits));
     tcb->tcbSchedContext = SC_PTR(sc_pptr);
-    refill_new(tcb->tcbSchedContext, 2, timeslice, 0);
+    refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
 
     tcb->tcbSchedContext->scTcb = tcb;
     return true;
