@@ -533,15 +533,17 @@ setNextInterrupt(void)
 }
 
 void
-chargeBudget(ticks_t capacity)
+chargeBudget(ticks_t capacity, ticks_t consumed)
 {
     if (capacity == 0) {
-        NODE_STATE(ksConsumed) = refill_budget_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        consumed = refill_budget_check(NODE_STATE(ksCurSC), consumed);
     }
 
-    capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-    if (capacity > 0  && NODE_STATE(ksConsumed) > 0 && refill_ready(NODE_STATE(ksCurSC))) {
-        refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+    if (consumed > 0) {
+        capacity = refill_capacity(NODE_STATE(ksCurSC), consumed);
+        if (capacity > 0 && refill_ready(NODE_STATE(ksCurSC))) {
+            refill_split_check(NODE_STATE(ksCurSC), consumed);
+        }
     }
 
     NODE_STATE(ksConsumed) = 0;

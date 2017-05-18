@@ -45,7 +45,7 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         if (NODE_STATE(ksCurSC) == target) {
             /* bill the current consumed amount before adjusting the params */
             ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-            chargeBudget(capacity);
+            chargeBudget(capacity, NODE_STATE(ksConsumed));
         }
         refill_update(target, period, budget, max_refills);
     } else {

@@ -391,14 +391,8 @@ handleRecv(bool_t isBlocking, bool_t canReply)
 static void
 handleYield(void)
 {
-    /* checkBudgetRestart should have failed if we got here */
-    assert(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)));
     /* Yield the current remaining budget */
-    refill_budget_check(NODE_STATE(ksCurSC), REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount);
-    /* we just charged all of the time to the yielding thread */
-    NODE_STATE(ksConsumed) = 0;
-    endTimeslice();
-    rescheduleRequired();
+    chargeBudget(0, REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount);
 }
 
 exception_t

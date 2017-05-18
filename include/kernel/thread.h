@@ -131,7 +131,7 @@ void rescheduleRequired(void);
 void endTimeslice(void);
 
 /* called when a thread has used up its head refill */
-void chargeBudget(ticks_t capacity);
+void chargeBudget(ticks_t capacity, ticks_t consumed);
 
 /* Update the kernels timestamp and stores in ksCurTime.
  * The difference between the previous kernel timestamp and the one just read
@@ -197,7 +197,7 @@ checkBudget(void)
         return true;
     }
 
-    chargeBudget(capacity);
+    chargeBudget(capacity, NODE_STATE(ksConsumed));
     return false;
 }
 
