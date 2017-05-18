@@ -389,15 +389,15 @@ try_boot_sys(
     paddr_t load_paddr;
     word_t i;
     p_region_t ui_p_regs;
-    multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->mod_list;
+    multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->part1.mod_list;
 
     if (multiboot_magic != MULTIBOOT_MAGIC) {
         printf("Boot loader not multiboot compliant\n");
         return false;
     }
-    cmdline_parse((const char *)(word_t)mbi->cmdline, &cmdline_opt);
+    cmdline_parse((const char *)(word_t)mbi->part1.cmdline, &cmdline_opt);
 
-    if ((mbi->flags & MULTIBOOT_INFO_MEM_FLAG) == 0) {
+    if ((mbi->part1.flags & MULTIBOOT_INFO_MEM_FLAG) == 0) {
         printf("Boot loader did not provide information about physical memory size\n");
         return false;
     }
@@ -416,7 +416,7 @@ try_boot_sys(
 
 #if CONFIG_MAX_NUM_NODES > 1
     /* copy boot code for APs to lower memory to run in real mode */
-    if (!copy_boot_code_aps(mbi->mem_lower)) {
+    if (!copy_boot_code_aps(mbi->part1.mem_lower)) {
         return false;
     }
     /* Initialize any kernel TLS */
@@ -430,11 +430,11 @@ try_boot_sys(
      * important or kernel devices. */
     boot_state.mem_p_regs.count = 0;
     init_allocated_p_regions();
-    if (mbi->flags & MULTIBOOT_INFO_MMAP_FLAG) {
-        if (!parse_mem_map(mbi->mmap_length, mbi->mmap_addr)) {
+    if (mbi->part1.flags & MULTIBOOT_INFO_MMAP_FLAG) {
+        if (!parse_mem_map(mbi->part2.mmap_length, mbi->part2.mmap_addr)) {
             return false;
         }
-        uint32_t multiboot_mmap_length = mbi->mmap_length;
+        uint32_t multiboot_mmap_length = mbi->part2.mmap_length;
         if (multiboot_mmap_length > (SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t))) {
             multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
             printf("Warning: Multiboot has reported more memory map entries, %zd, "
@@ -442,13 +442,13 @@ try_boot_sys(
                    "These extra regions will still be turned into untyped caps.",
                    multiboot_mmap_length / sizeof(seL4_X86_mb_mmap_t), SEL4_MULTIBOOT_MAX_MMAP_ENTRIES);
         }
-        memcpy(&boot_state.mb_mmap_info.mmap, (void*)(word_t)mbi->mmap_addr, multiboot_mmap_length);
+        memcpy(&boot_state.mb_mmap_info.mmap, (void*)(word_t)mbi->part2.mmap_addr, multiboot_mmap_length);
         boot_state.mb_mmap_info.mmap_length = multiboot_mmap_length;
     } else {
         /* calculate memory the old way */
         p_region_t avail;
         avail.start = HIGHMEM_PADDR;
-        avail.end = ROUND_DOWN(avail.start + (mbi->mem_upper << 10), PAGE_BITS);
+        avail.end = ROUND_DOWN(avail.start + (mbi->part1.mem_upper << 10), PAGE_BITS);
         if (!add_mem_p_regs(avail)) {
             return false;
         }
@@ -458,17 +458,17 @@ try_boot_sys(
     boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
 
     /* copy VESA information from multiboot header */
-    if ((mbi->flags & MULTIBOOT_INFO_GRAPHICS_FLAG) == 0) {
+    if ((mbi->part1.flags & MULTIBOOT_INFO_GRAPHICS_FLAG) == 0) {
         boot_state.vbe_info.vbeMode = -1;
         printf("Multiboot gave us no video information\n");
     } else {
-        boot_state.vbe_info.vbeInfoBlock = *(seL4_VBEInfoBlock_t*)(seL4_Word)mbi->vbe_control_info;
-        boot_state.vbe_info.vbeModeInfoBlock = *(seL4_VBEModeInfoBlock_t*)(seL4_Word)mbi->vbe_mode_info;
-        boot_state.vbe_info.vbeMode = mbi->vbe_mode;
-        printf("Got VBE info in multiboot. Current video mode is %d\n", mbi->vbe_mode);
-        boot_state.vbe_info.vbeInterfaceSeg = mbi->vbe_interface_seg;
-        boot_state.vbe_info.vbeInterfaceOff = mbi->vbe_interface_off;
-        boot_state.vbe_info.vbeInterfaceLen = mbi->vbe_interface_len;
+        boot_state.vbe_info.vbeInfoBlock = *(seL4_VBEInfoBlock_t*)(seL4_Word)mbi->part2.vbe_control_info;
+        boot_state.vbe_info.vbeModeInfoBlock = *(seL4_VBEModeInfoBlock_t*)(seL4_Word)mbi->part2.vbe_mode_info;
+        boot_state.vbe_info.vbeMode = mbi->part2.vbe_mode;
+        printf("Got VBE info in multiboot. Current video mode is %d\n", mbi->part2.vbe_mode);
+        boot_state.vbe_info.vbeInterfaceSeg = mbi->part2.vbe_interface_seg;
+        boot_state.vbe_info.vbeInterfaceOff = mbi->part2.vbe_interface_off;
+        boot_state.vbe_info.vbeInterfaceLen = mbi->part2.vbe_interface_len;
     }
 
     printf("Kernel loaded to: start=0x%lx end=0x%lx size=0x%lx entry=0x%lx\n",
@@ -528,21 +528,21 @@ try_boot_sys(
         }
     }
 
-    if (!(mbi->flags & MULTIBOOT_INFO_MODS_FLAG)) {
+    if (!(mbi->part1.flags & MULTIBOOT_INFO_MODS_FLAG)) {
         printf("Boot loader did not provide information about boot modules\n");
         return false;
     }
 
-    printf("Detected %d boot module(s):\n", mbi->mod_count);
+    printf("Detected %d boot module(s):\n", mbi->part1.mod_count);
 
-    if (mbi->mod_count < 1) {
+    if (mbi->part1.mod_count < 1) {
         printf("Expect at least one boot module (containing a userland image)\n");
         return false;
     }
 
     mods_end_paddr = 0;
 
-    for (i = 0; i < mbi->mod_count; i++) {
+    for (i = 0; i < mbi->part1.mod_count; i++) {
         printf(
             "  module #%ld: start=0x%x end=0x%x size=0x%x name='%s'\n",
             i,
