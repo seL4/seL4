@@ -85,7 +85,7 @@ decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, w
 
     time_t budget_us = mode_parseTimeArg(0, buffer);
     time_t period_us = mode_parseTimeArg(TIME_ARG_SIZE, buffer);
-    word_t max_refills = MIN_REFILLS + getSyscallArg(TIME_ARG_SIZE * 2, buffer);
+    word_t max_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
 
     cap_t targetCap = extraCaps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
