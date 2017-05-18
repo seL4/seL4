@@ -36,9 +36,16 @@ import umm
 # Whether debugging is enabled (turn on with command line option --debug).
 DEBUG = False
 
-# parametrisation for the win
-return_name = 'ret__unsigned'
+# name of locale the bitfield proofs should be in
 loc_name = 'kernel_all_substitute'
+
+# Isabelle word size suffixes for return value names
+ret_name_suffix_map = {8 : '', 16 : '', 32 : '', 64 : '_longlong'}
+
+def return_name(base):
+    # name of return value for standard word sizes
+    return 'ret__unsigned' + ret_name_suffix_map[base]
+
 
 # Headers to include depending on which environment we are generating code for.
 INCLUDES = {
@@ -272,21 +279,21 @@ ptr_reader_template = \
 
 writer_template = \
 """%(inline)s %(block)s_t CONST
-%(block)s_set_%(field)s(%(block)s_t %(block)s, %(type)s v) {
+%(block)s_set_%(field)s(%(block)s_t %(block)s, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
     %(block)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
-    %(block)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
+    %(block)s.words[%(index)d] |= (v%(base)d %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(block)s;
 }"""
 
 ptr_writer_template = \
 """%(inline)s void
-%(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, %(type)s v) {
+%(block)s_ptr_set_%(field)s(%(block)s_t *%(block)s_ptr, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
     %(block)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
-    %(block)s_ptr->words[%(index)d] |= (v %(w_shift_op)s """ \
+    %(block)s_ptr->words[%(index)d] |= (v%(base)d %(w_shift_op)s """ \
     """%(shift)d) & 0x%(mask)x;
 }"""
 
@@ -344,31 +351,31 @@ ptr_union_reader_template = \
 
 union_writer_template = \
 """%(inline)s %(union)s_t CONST
-%(union)s_%(block)s_set_%(field)s(%(union)s_t %(union)s, %(type)s v) {
+%(union)s_%(block)s_set_%(field)s(%(union)s_t %(union)s, %(type)s v%(base)d) {
     %(assert)s(((%(union)s.words[%(tagindex)d] >> %(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d ) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
-    %(union)s.words[%(index)d] |= (v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
+    %(union)s.words[%(index)d] |= (v%(base)d %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
     return %(union)s;
 }"""
 
 ptr_union_writer_template = \
 """%(inline)s void
 %(union)s_%(block)s_ptr_set_%(field)s(%(union)s_t *%(union)s_ptr,
-                                      %(type)s v) {
+                                      %(type)s v%(base)d) {
     %(assert)s(((%(union)s_ptr->words[%(tagindex)d] >> """ \
     """%(tagshift)d) & 0x%(tagmask)x) ==
            %(union)s_%(block)s);
 
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
     %(union)s_ptr->words[%(index)d] |= """ \
-    """(v %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
+    """(v%(base)d %(w_shift_op)s %(shift)d) & 0x%(mask)x%(suf)s;
 }"""
 
 tag_reader_header_template = \
@@ -424,23 +431,23 @@ ptr_tag_reader_footer_template = \
 
 tag_writer_template = \
 """%(inline)s %(union)s_t CONST
-%(union)s_set_%(tagname)s(%(union)s_t %(union)s, %(type)s v) {
+%(union)s_set_%(tagname)s(%(union)s_t %(union)s, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s.words[%(index)d] &= ~0x%(mask)x%(suf)s;
-    %(union)s.words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
+    %(union)s.words[%(index)d] |= (v%(base)d << %(shift)d) & 0x%(mask)x%(suf)s;
     return %(union)s;
 }"""
 
 ptr_tag_writer_template = \
 """%(inline)s void
-%(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, %(type)s v) {
+%(union)s_ptr_set_%(tagname)s(%(union)s_t *%(union)s_ptr, %(type)s v%(base)d) {
     /* fail if user has passed bits that we will override */
-    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v) == ((%(sign_extend)d && (v & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
+    %(assert)s((((~0x%(mask)x%(suf)s %(r_shift_op)s %(shift)d) | 0x%(high_bits)x) & v%(base)d) == ((%(sign_extend)d && (v%(base)d & (1%(suf)s << (%(extend_bit)d)))) ? 0x%(high_bits)x : 0));
 
     %(union)s_ptr->words[%(index)d] &= ~0x%(mask)x%(suf)s;
-    %(union)s_ptr->words[%(index)d] |= (v << %(shift)d) & 0x%(mask)x%(suf)s;
+    %(union)s_ptr->words[%(index)d] |= (v%(base)d << %(shift)d) & 0x%(mask)x%(suf)s;
 }"""
 
 # HOL definition templates
@@ -544,6 +551,7 @@ where
 
 # HOL proof templates
 
+#FIXME: avoid [simp]
 struct_lemmas_template = \
 '''
 lemmas %(name)s_ptr_guards[simp] =
@@ -551,6 +559,7 @@ lemmas %(name)s_ptr_guards[simp] =
   %(name)s_ptr_words_aligned
   %(name)s_ptr_words_ptr_safe'''
 
+# FIXME: move to global theory
 defs_global_lemmas = '''
 lemma word_sub_mask:
   "\<lbrakk> w && m1 = v1; m1 && m2 = m2; v1 && m2 = v2 \<rbrakk>
@@ -587,11 +596,11 @@ def ptr_get_template(ptrname):
                               '''(%(name)s_lift (%(access_path)s))\<rbrace>''')
 
 def ptr_set_template(name, ptrname):
-    return ptr_basic_template(name, ptrname, '', ', \<acute>v',
+    return ptr_basic_template(name, ptrname, '', ', \<acute>v%(base)d',
                               '''{t. \<exists>%(name)s.
                               %(name)s_lift %(name)s =
                               %(name)s_lift (%(access_path)s) \<lparr> %(name)s_CL.%(field)s_CL ''' \
-                              ''':= \<^bsup>s\<^esup>v AND %(mask)s \<rparr> \<and>
+                              ''':= %(sign_extend)s(\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr> \<and>
                               t_hrs_' (globals t) = hrs_mem_update (heap_update
                                       (''' + ptrname + ''')
                                       %(update_path)s)
@@ -644,13 +653,13 @@ def ptr_union_get_template(ptrname):
                                     '''(%(name)s_%(block)s_lift %(access_path)s)\<rbrace>''')
 
 def ptr_union_set_template(ptrname):
-    return ptr_union_basic_template('set_%(field)s', ptrname, '', ', \<acute>v',
+    return ptr_union_basic_template('set_%(field)s', ptrname, '', ', \<acute>v%(base)d',
                                     '\<and> %(name)s_get_tag %(access_path)s = scast %(name)s_%(block)s',
                                     '''{t. \<exists>%(name)s. ''' \
                                     '''%(name)s_%(block)s_lift %(name)s =
                                     %(name)s_%(block)s_lift %(access_path)s ''' \
                                     '''\<lparr> %(name)s_%(block)s_CL.%(field)s_CL ''' \
-                                    ''':= \<^bsup>s\<^esup>v AND %(mask)s \<rparr> \<and>
+                                    ''':= %(sign_extend)s(\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr> \<and>
                                     %(name)s_get_tag %(name)s = scast %(name)s_%(block)s \<and>
                                     t_hrs_' (globals t) = hrs_mem_update (heap_update
                                             (''' + ptrname + ''')
@@ -731,11 +740,11 @@ done'''],
  apply(simp add:shift_over_ao_dists mask_def ucast_id)
  apply(unfold %(name)s_lift_def)
  apply(simp add:shift_over_ao_dists)
- apply(((simp add:word_ao_dist),
-        (simp add:word_bw_assocs),
-        (simp add:multi_shift_simps),
+ apply(((simp add:word_ao_dist)?,
+        (simp add:word_bw_assocs)?,
+        (simp add:multi_shift_simps)?,
         (simp add:mask_def word_size))?)
- apply(simp add:word_bw_assocs)
+ apply(simp add:word_bw_assocs)?
 done'''],
 
 'ptr_new_spec_direct' : [
@@ -760,17 +769,19 @@ done'''],
  apply(simp add:%(name)s_lift_def
                 mask_shift_simps
                 guard_simps)
+ apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
+ apply(simp add:max_word_def word_and_max_word)?
 done'''],
 
 'set_spec' : [
 '''lemma (in ''' + loc_name + ''') %(name)s_set_%(field)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
        \<acute>ret__struct_%(name)s_C :== ''' \
-       '''PROC %(name)s_set_%(field)s(\<acute>%(name)s, \<acute>v)
+       '''PROC %(name)s_set_%(field)s(\<acute>%(name)s, \<acute>v%(base)d)
        \<lbrace>%(name)s_lift \<acute>ret__struct_%(name)s_C = ''' \
        '''%(name)s_lift \<^bsup>s\<^esup>%(name)s \<lparr> ''' \
        '''%(name)s_CL.%(field)s_CL ''' \
-       ''':= \<^bsup>s\<^esup>v AND %(mask) s \<rparr>\<rbrace>"''',
+       ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr>\<rbrace>"''',
 ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp simp:guard_simps ucast_id
                      %(name)s_lift_def
@@ -778,6 +789,8 @@ done'''],
                      multi_shift_simps word_size
                      word_ao_dist word_bw_assocs
                      NOT_eq)
+ apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
+ apply(simp add:max_word_def word_and_max_word)?
 done'''],
 
 # where the top level type is the bitfield type --- these are split because they have different proofs
@@ -788,8 +801,10 @@ done'''],
  apply(clarsimp simp:h_t_valid_clift_Some_iff)
  apply(simp add:guard_simps
                 %(name)s_lift_def
+                mask_def
                 typ_heap_simps
                 ucast_def)
+ apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
  apply(simp add:max_word_def word_and_max_word)?
 done'''],
 
@@ -802,6 +817,8 @@ done'''],
  apply(frule clift_subtype, simp, simp, simp)
  apply(simp add:h_val_field_clift' typ_heap_simps)
  apply(simp add:thread_state_lift_def)
+ apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
+ apply(simp add:max_word_def word_and_max_word)?
  apply(simp add:mask_shift_simps)?
 done'''],
 
@@ -817,7 +834,9 @@ done'''],
                      %(name)s_lift_def
                      typ_heap_simps)
 
- apply(simp add:mask_shift_simps)
+ apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
+ apply(simp add:max_word_def word_and_max_word)?
+ apply(simp add:mask_shift_simps)?
 done'''],
 
 'ptr_set_spec_path' : [
@@ -861,16 +880,18 @@ done'''],
  apply(simp add:o_def %(name)s_lift_def)
 
  (* Solve bitwise arithmetic *)
- apply(simp add:mask_shift_simps)
+ apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
+ apply(simp add:max_word_def word_and_max_word)?
+ apply(simp add:mask_shift_simps)?
  done'''],
 
 
 'get_tag_spec' : [
 '''lemma (in ''' + loc_name + ''') %(name)s_get_%(tagname)s_spec:
   "\<forall>s. \<Gamma> \<turnstile> {s}
-       \<acute>ret__unsigned :== ''' \
+       \<acute>%(ret_name)s :== ''' \
     '''PROC %(name)s_get_%(tagname)s(\<acute>%(name)s)
-       \<lbrace>\<acute>ret__unsigned = ''' \
+       \<lbrace>\<acute>%(ret_name)s = ''' \
     '''%(name)s_get_tag \<^bsup>s\<^esup>%(name)s\<rbrace>"''',
 ''' apply(rule allI, rule conseqPre, vcg)
  apply(clarsimp)
@@ -1051,7 +1072,9 @@ done'''],
                 word_ao_dist
                 word_and_max_word
                 max_word_def
-                ucast_def)
+                ucast_def
+                sign_extend_def'
+                nth_is_and_neq_0)
 done'''],
 
 'union_set_spec' : [
@@ -1061,11 +1084,11 @@ done'''],
 '''\<lbrace>s. %(name)s_get_tag \<acute>%(name)s = ''' \
             '''scast %(name)s_%(block)s\<rbrace>
        \<acute>ret__struct_%(name)s_C :== ''' \
-    '''PROC %(name)s_%(block)s_set_%(field)s(\<acute>%(name)s, \<acute>v)
+    '''PROC %(name)s_%(block)s_set_%(field)s(\<acute>%(name)s, \<acute>v%(base)d)
        \<lbrace>%(name)s_%(block)s_lift \<acute>ret__struct_%(name)s_C = ''' \
     '''%(name)s_%(block)s_lift \<^bsup>s\<^esup>%(name)s \<lparr> ''' \
     '''%(name)s_%(block)s_CL.%(field)s_CL ''' \
-    ''':= \<^bsup>s\<^esup>v AND %(mask)s\<rparr> \<and>
+    ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s)\<rparr> \<and>
         %(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
      '''scast %(name)s_%(block)s\<rbrace>"''',
 ''' apply(rule allI, rule conseqPre, vcg)
@@ -1078,15 +1101,17 @@ done'''],
                 %(name)s_get_tag_eq_x
                 %(tag_mask_helpers)s
                 %(name)s_%(block)s_update_def
-                %(name)s_tag_defs)
+                %(name)s_tag_defs
+                sign_extend_def'
+                nth_is_and_neq_0)
 done'''],
 
 'ptr_union_get_spec_direct' : [
     ptr_union_get_template(direct_ptr_name),
 ''' unfolding ptrval_def
  apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp simp: typ_heap_simps h_t_valid_clift_Some_iff
-                      guard_simps mask_shift_simps
+ apply(clarsimp simp: typ_heap_simps h_t_valid_clift_Some_iff guard_simps
+                      mask_shift_simps sign_extend_def' nth_is_and_neq_0
                       %(name)s_lift_%(block)s %(name)s_%(block)s_lift_def)
 done
 '''],
@@ -1103,7 +1128,7 @@ done
   apply(simp add: guard_simps mask_shift_simps)
   apply(simp add:%(name)s_%(block)s_lift_def)
   apply(subst %(name)s_lift_%(block)s)
-  apply simp+
+  apply(simp add: mask_def)+
   done
  (* ptr_union_get_spec_path *)'''],
 
@@ -1183,6 +1208,22 @@ def emit_named_ptr_proof(fn_name, params, name, type_map, toptps, prf_prefix, su
             substs['update_path'] = '(' + reduce(lambda x, y: y + '_update (' + x + ')',
                                            ['\\<lambda>_. ' + name] + path) + '(the (ptrval s))' + ')'
             emit_named(fn_name, params, make_proof(prf_prefix + '_path', substs, params.sorry))
+
+def field_mask_proof(high, base_bits, base, size):
+    if high:
+        if base_bits == base:
+            # equivalent to below, but nicer in proofs
+            return "NOT (mask %d)" % (base - size)
+        else:
+            return "(mask %d << %d)" % (size, base_bits - size)
+    else:
+        return "mask %d" % size
+
+def sign_extend_proof(high, base_bits, base_sign_extend):
+    if high and base_sign_extend:
+        return "sign_extend %d " % (base_bits - 1)
+    else:
+        return ""
 
 class TaggedUnion:
     def __init__(self, name, tagname, classes, tags):
@@ -1298,7 +1339,7 @@ class TaggedUnion:
         # Generate get_tag specs
         substs = {"name": self.name,
                   "tagname": self.tagname,
-                  "ret_name": return_name}
+                  "ret_name": return_name(self.base)}
 
         if not params.skip_modifies:
             emit_named("%(name)s_get_%(tagname)s" % substs, params,
@@ -1372,14 +1413,11 @@ class TaggedUnion:
                     if field == self.tagname:
                         continue
 
-                    if high:
-                        mask = "NOT (mask %d)" % (self.base - size)
-                    else:
-                        mask = "(mask %d)" % size
-
+                    mask = field_mask_proof(high, self.base_bits, self.base, size)
+                    sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
                     field_eq_list.append(
-                        "%s_%s_CL.%s_CL = \<^bsup>s\<^esup>%s AND %s" % \
-                        (self.name, ref.name, field, field, mask))
+                        "%s_%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" % \
+                        (self.name, ref.name, field, sign_extend, field, mask))
                 field_eqs = ',\n          '.join(field_eq_list)
 
                 emit_named("%s_%s_new" % (self.name, ref.name), params,
@@ -1410,17 +1448,17 @@ class TaggedUnion:
                 if field == self.tagname:
                     continue
 
-                if high:
-                    mask = "NOT (mask %d)" % (ref.base - size)
-                else:
-                    mask = "(mask %d)" % size
+                mask = field_mask_proof(high, self.base_bits, self.base, size)
+                sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
-                substs = {"name":  self.name, \
-                          "block": ref.name, \
-                          "field": field, \
-                          "mask":  mask, \
+                substs = {"name":  self.name,
+                          "block": ref.name,
+                          "field": field,
+                          "mask":  mask,
+                          "sign_extend": sign_extend,
                           "tag_mask_helpers" : tag_mask_helpers,
-                          "ret_name": return_name}
+                          "ret_name": return_name(self.base),
+					      "base" : self.base}
 
                 # Get modifies spec
                 if not params.skip_modifies:
@@ -1459,7 +1497,7 @@ class TaggedUnion:
                                     "args": ', '.join([
                                     "\<acute>ret__struct_%s_C" % self.name,
                                     "\<acute>%s" % self.name,
-                                    "\<acute>v"] )},
+                                    "\<acute>v%(base)d"] )},
                                    params.sorry))
 
                     emit_named("%s_%s_ptr_set_%s" % (self.name, ref.name, field),
@@ -1469,7 +1507,7 @@ class TaggedUnion:
                                         (self.name, ref.name, field), \
                                     "args": ', '.join([
                                     "\<acute>%s_ptr" % self.name,
-                                    "\<acute>v"] )},
+                                    "\<acute>v%(base)d"] )},
                                    params.sorry))
 
                 # Set spec
@@ -1591,28 +1629,30 @@ class TaggedUnion:
                 if field == self.tagname: continue
 
                 index = offset // self.base
+                sign_extend = ""
 
                 if high:
                     shift_op = "<<"
-                    shift = self.base - size - (offset % self.base)
+                    shift = self.base_bits - size - (offset % self.base)
+                    if shift < 0:
+                        shift = -shift
+                        shift_op = ">>"
+                    if self.base_sign_extend:
+                        sign_extend = "sign_extend %d " % (self.base_bits - 1)
                 else:
                     shift_op = ">>"
                     shift = offset % self.base
 
                 initialiser = \
-                    "%s_CL.%s_CL = ((index (%s_C.words_C %s) %d) %s %d)" % \
-                    (gen_name(name), field, self.name, self.name, \
+                    "%s_CL.%s_CL = %s(((index (%s_C.words_C %s) %d) %s %d)" % \
+                    (gen_name(name), field, sign_extend, self.name, self.name, \
                      index, shift_op, shift)
 
                 if size < self.base:
-                    if high:
-                        mask = ((1 << size) - 1) << (self.base - size)
-                    else:
-                        mask = (1 << size) - 1
+                    mask = field_mask_proof(high, self.base_bits, self.base, size)
+                    initialiser += " AND " + mask
 
-                    initialiser += " AND 0x%x" % mask
-
-                field_inits.append("\n       " + initialiser)
+                field_inits.append("\n       " + initialiser + ")")
 
             if len(field_inits) == 0:
                 value = gen_name(name, True)
@@ -1869,7 +1909,8 @@ class TaggedUnion:
                     "suf": self.constant_suffix,
                     "high_bits": high_bits,
                     "sign_extend": self.base_sign_extend and high,
-                    "extend_bit": self.base_bits - 1}
+                    "extend_bit": self.base_bits - 1,
+                    "base": self.base}
 
                 # Reader
                 emit_named("%s_%s_get_%s" % (self.name, ref.name, field),
@@ -2174,31 +2215,34 @@ class Block:
 
             for name in self.visible_order:
                 offset, size, high = self.field_map[name]
-
+                
                 index = offset // self.base
-
+                sign_extend = ""
+                
                 if high:
                     shift_op = "<<"
-                    shift = self.base - size - (offset % self.base)
+                    shift = self.base_bits - size - (offset % self.base)
+                    if shift < 0:
+                        shift = -shift
+                        shift_op = ">>"
+                    if self.base_sign_extend:
+                        sign_extend = "sign_extend %d " % (self.base_bits - 1)
                 else:
                     shift_op = ">>"
                     shift = offset % self.base
-
+                
                 initialiser = \
-                    "%s_CL.%s_CL = ((index (%s_C.words_C %s) %d) %s %d)" % \
-                    (self.name, name, self.name, self.name, \
+                    "%s_CL.%s_CL = %s(((index (%s_C.words_C %s) %d) %s %d)" % \
+                    (self.name, name, sign_extend, self.name, self.name, \
                      index, shift_op, shift)
-
+                
                 if size < self.base:
-                    if high:
-                        mask = ((1 << size) - 1) << (self.base_bits - size)
-                    else:
-                        mask = (1 << size) - 1
-
-                    initialiser += " AND 0x%x" % mask
-
-                field_inits.append(initialiser)
-
+                    mask = field_mask_proof(high, self.base_bits, self.base, size)
+                    
+                    initialiser += " AND " + mask
+                
+                field_inits.append(initialiser + ")")
+            
             print(lift_def_template % \
                             {"name": self.name, \
                              "fields": ',\n       '.join(field_inits)},
@@ -2256,13 +2300,11 @@ class Block:
 
         field_eq_list = []
         for (field, offset, size, high) in self.fields:
-            if high:
-                mask = "NOT (mask %d)" % (self.base - size)
-            else:
-                mask = "(mask %d)" % size
+            mask = field_mask_proof(high, self.base_bits, self.base, size)
+            sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
-            field_eq_list.append("%s_CL.%s_CL = \<^bsup>s\<^esup>%s AND %s" % \
-                                 (self.name, field, field, mask))
+            field_eq_list.append("%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" % \
+                                 (self.name, field, sign_extend, field, mask))
         field_eqs = ',\n          '.join(field_eq_list)
 
         emit_named("%s_new" % self.name, params,
@@ -2281,15 +2323,15 @@ class Block:
 
         # Generate get/set specs
         for (field, offset, size, high) in self.fields:
-            if high:
-                mask = "NOT (mask %d)" % (self.base - size)
-            else:
-                mask = "(mask %d)" % size
+            mask = field_mask_proof(high, self.base_bits, self.base, size)
+            sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
             substs = {"name": self.name, \
                       "field": field, \
                       "mask": mask,
-                      "ret_name": return_name}
+                      "sign_extend": sign_extend,
+                      "ret_name": return_name(self.base),
+                      "base": self.base}
 
             if not params.skip_modifies:
                 # Get modifies spec
@@ -2323,7 +2365,7 @@ class Block:
                                 "args": ', '.join([
                                 "\<acute>ret__struct_%s_C" % self.name,
                                 "\<acute>%s" % self.name,
-                                "\<acute>v"] )},
+                                "\<acute>v%(base)d"] )},
                                params.sorry))
 
                 emit_named("%s_ptr_set_%s" % (self.name, field), params,
@@ -2331,7 +2373,7 @@ class Block:
                                {"fun_name": "%s_ptr_set_%s" % (self.name, field), \
                                 "args": ', '.join([
                                 "\<acute>%s_ptr" % self.name,
-                                "\<acute>v"] )},
+                                "\<acute>v%(base)d"] )},
                                params.sorry))
 
 
@@ -2467,7 +2509,8 @@ class Block:
                 "suf": self.constant_suffix, \
                 "high_bits": high_bits, \
                 "sign_extend": self.base_sign_extend and high,
-                "extend_bit": self.base_bits - 1}
+                "extend_bit": self.base_bits - 1,
+                "base": self.base}
 
             # Reader
             emit_named("%s_get_%s" % (self.name, field), params,
@@ -2627,7 +2670,11 @@ if __name__ == '__main__':
     unions = {}
     _, block_map, union_map = yacc.parse(input=in_file.read(), lexer=lexer)
     base_list = [8, 16, 32, 64]
-    suffix_map = {8 : 'ul', 16 : 'ul', 32 : 'ul', 64 : 'ull'}
+    # assumes that unsigned int = 32 bit on 32-bit and 64-bit platforms,
+    # and that unsigned long long = 64 bit on 64-bit platforms.
+    # Should still work fine if ull = 128 bit, but will not work
+    # if unsigned int is less than 32 bit.
+    suffix_map = {8 : 'u', 16 : 'u', 32 : 'u', 64 : 'ull'}
     for base_info, block_list in block_map.items():
         base, base_bits, base_sign_extend = base_info
         for name, b in block_list.items():
