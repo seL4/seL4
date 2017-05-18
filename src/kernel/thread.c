@@ -322,9 +322,7 @@ void
 schedule(void)
 {
 
-    if (NODE_STATE(ksReprogram)) {
-        awaken();
-    }
+    awaken();
 
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
         bool_t was_runnable;
@@ -596,7 +594,7 @@ rescheduleRequired(void)
 void
 awaken(void)
 {
-    while (NODE_STATE(ksReleaseHead) != NULL && refill_ready(NODE_STATE(ksReleaseHead)->tcbSchedContext)) {
+    while (unlikely(NODE_STATE(ksReleaseHead) != NULL && refill_ready(NODE_STATE(ksReleaseHead)->tcbSchedContext))) {
         tcb_t *awakened = tcbReleaseDequeue();
         /* the currently running thread cannot have just woken up */
         assert(awakened != NODE_STATE(ksCurThread));
