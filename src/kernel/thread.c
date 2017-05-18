@@ -287,12 +287,18 @@ switchSchedContext(void)
 {
     if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext)) {
         NODE_STATE(ksReprogram) = true;
-        commitTime();
         refill_unblock_check(NODE_STATE(ksCurThread->tcbSchedContext));
 
         assert(refill_ready(NODE_STATE(ksCurThread->tcbSchedContext)));
         assert(refill_sufficient(NODE_STATE(ksCurThread->tcbSchedContext), 0));
+    }
+
+    if (NODE_STATE(ksReprogram)) {
+        /* if we are reprogamming, we have acted on the new kernel time and cannot
+         * rollback -> charge the current thread */
+        commitTime();
     } else {
+        /* otherwise, we don't need to do anything - avoid reprogramming the timer */
         rollbackTime();
     }
 
@@ -551,6 +557,7 @@ chargeBudget(ticks_t capacity, ticks_t consumed)
     if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
         endTimeslice();
         rescheduleRequired();
+        NODE_STATE(ksReprogram) = true;
     }
 }
 
@@ -584,7 +591,6 @@ rescheduleRequired(void)
         SCHED_ENQUEUE(NODE_STATE(ksSchedulerAction));
     }
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
-    NODE_STATE(ksReprogram) = true;
 }
 
 void
