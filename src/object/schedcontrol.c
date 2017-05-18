@@ -41,6 +41,12 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         /* remove from scheduler */
         tcbSchedDequeue(target->scTcb);
         tcbReleaseRemove(target->scTcb);
+
+        if (NODE_STATE(ksCurSC) == target) {
+            /* bill the current consumed amount before adjusting the params */
+            ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+            chargeBudget(capacity);
+        }
         refill_update(target, period, budget, max_refills);
     } else {
         /* the scheduling context isn't active - it's budget is not being used, so
