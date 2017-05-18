@@ -284,7 +284,7 @@ typedef struct refill {
 } refill_t;
 
 #define MIN_REFILLS 2u
-#define MAX_REFILLS 12u
+#define MAX_REFILLS (MIN_REFILLS + seL4_MaxRefills)
 
 struct sched_context {
     /* period for this sc -- controls rate at which budget is replenished */
