@@ -30,9 +30,10 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
     if (budget == period) {
         /* this is a cool hack: for round robin, we set the
          * period to 0, which means that the budget will always be ready to be refilled
-         * and the code doesn't need special casing
+         * and avoids some special casing.
          */
         period = 0;
+        max_refills = MIN_REFILLS;
     }
 
     if (core == target->scCore && target->scRefillMax > 0 && target->scTcb && isRunnable(target->scTcb)) {

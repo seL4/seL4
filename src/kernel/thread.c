@@ -535,14 +535,22 @@ setNextInterrupt(void)
 void
 chargeBudget(ticks_t capacity, ticks_t consumed)
 {
-    if (capacity == 0) {
-        consumed = refill_budget_check(NODE_STATE(ksCurSC), consumed);
-    }
 
-    if (consumed > 0) {
-        capacity = refill_capacity(NODE_STATE(ksCurSC), consumed);
-        if (capacity > 0 && refill_ready(NODE_STATE(ksCurSC))) {
-            refill_split_check(NODE_STATE(ksCurSC), consumed);
+    if (isRoundRobin(NODE_STATE(ksCurSC))) {
+        assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
+        REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount += REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount;
+        REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount = 0;
+    } else {
+
+        if (capacity == 0) {
+            consumed = refill_budget_check(NODE_STATE(ksCurSC), consumed);
+        }
+
+        if (consumed > 0) {
+            capacity = refill_capacity(NODE_STATE(ksCurSC), consumed);
+            if (capacity > 0 && refill_ready(NODE_STATE(ksCurSC))) {
+                refill_split_check(NODE_STATE(ksCurSC), consumed);
+            }
         }
     }
 
@@ -557,6 +565,10 @@ chargeBudget(ticks_t capacity, ticks_t consumed)
 void
 endTimeslice(void)
 {
+    if (unlikely(NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread))) {
+            return;
+    }
+
     assert(isRunnable(NODE_STATE(ksCurSC->scTcb)));
     if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
         /* apply round robin */

@@ -58,6 +58,12 @@ isRunnable(const tcb_t *thread)
     }
 }
 
+static inline bool_t PURE
+isRoundRobin(sched_context_t *sc)
+{
+    return sc->scPeriod == 0;
+}
+
 static inline bool_t
 isCurDomainExpired(void)
 {
@@ -68,11 +74,22 @@ isCurDomainExpired(void)
 static inline void
 commitTime(void)
 {
-
-    if (likely(NODE_STATE(ksConsumed) > 0 && (NODE_STATE(ksCurThread) != NODE_STATE(ksIdleThread)))) {
+    if (likely(NODE_STATE(ksConsumed) > 0)) {
+        /* if this function is called the head refil must be sufficient to
+         * charge ksConsumed */
         assert(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)));
+        /* and it must be ready to use */
         assert(refill_ready(NODE_STATE(ksCurSC)));
-        refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+
+        if (isRoundRobin(NODE_STATE(ksCurSC))) {
+            /* for round robin threads, there are only two refills: the HEAD, which is what
+             * we are consuming, and the tail, which is what we have consumed */
+             assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
+             REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount -= NODE_STATE(ksConsumed);
+             REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount += NODE_STATE(ksConsumed);
+        } else {
+            refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        }
         assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
         assert(refill_ready(NODE_STATE(ksCurSC)));
     }
@@ -182,12 +199,12 @@ checkBudget(void)
     /* currently running thread must have available capacity */
     assert(refill_ready(NODE_STATE(ksCurSC)));
 
-    if (unlikely(NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread))) {
-        return true;
-    }
-
     ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-    if (likely(capacity >= MIN_BUDGET && (NODE_STATE(ksCurSC)->scPeriod == 0 ||
+    /* if the budget isn't enought, the timeslice for this SC is over. For
+     * round robin threads this is sufficient, however for periodic threads
+     * we also need to check there is space to schedule the replenishment - if the refill
+     * is full then the timeslice is also over as the rest of the budget is forfeit. */
+	if (likely(capacity >= MIN_BUDGET && (isRoundRobin(NODE_STATE(ksCurSC)) ||
                     !refill_full(NODE_STATE(ksCurSC))))) {
         if (unlikely(isCurDomainExpired())) {
             NODE_STATE(ksReprogram) = true;
