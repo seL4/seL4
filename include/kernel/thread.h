@@ -94,11 +94,9 @@ commitTime(void)
         assert(refill_ready(NODE_STATE(ksCurSC)));
     }
     if (CONFIG_NUM_DOMAINS > 1) {
-        if (unlikely(ksDomainTime < NODE_STATE(ksConsumed))) {
-            ksDomainTime = 0;
-        } else {
-            ksDomainTime -= NODE_STATE(ksConsumed);
-        }
+        assert(ksDomainTime > NODE_STATE(ksConsumed));
+        assert(ksDomainTime - NODE_STATE(ksConsumed) >= MIN_BUDGET);
+        ksDomainTime -= NODE_STATE(ksConsumed);
     }
 
     NODE_STATE(ksConsumed) = 0llu;
