@@ -39,6 +39,8 @@ enum vm_rights {
 };
 typedef word_t vm_rights_t;
 
+typedef pde_t vspace_root_t;
+
 #define PGDE_SIZE_BITS seL4_PGDEntryBits
 #define PDE_SIZE_BITS  seL4_PageDirEntryBits
 #define PTE_SIZE_BITS  seL4_PageTableEntryBits

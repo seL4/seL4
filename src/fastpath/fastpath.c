@@ -30,11 +30,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     word_t badge;
     cte_t *replySlot, *callerSlot;
     cap_t newVTable;
-#ifndef CONFIG_ARCH_AARCH32
     vspace_root_t *cap_pd;
-#else
-    pde_t *cap_pd;
-#endif
     pde_t stored_hw_asid;
     word_t fault_type;
 
@@ -195,11 +191,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     word_t fault_type;
 
     cap_t newVTable;
-#ifndef CONFIG_ARCH_AARCH32
     vspace_root_t *cap_pd;
-#else
-    pde_t *cap_pd;
-#endif
     pde_t stored_hw_asid;
 
     /* Get message info and length */
