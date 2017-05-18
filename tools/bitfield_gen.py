@@ -679,7 +679,7 @@ done'''],
 '''lemma %(name)s_ptr_words_aligned:
   "c_guard (p::%(name)s_C ptr) \<Longrightarrow>
    ptr_aligned ((Ptr &(p\<rightarrow>[''words_C'']))::''' \
-               '''((word32[%(words)d]) ptr))"''',
+               '''((word%(base)d[%(words)d]) ptr))"''',
 ''' apply(fastforce intro:c_guard_ptr_aligned_fl simp:typ_uinfo_t_def)
 done'''],
 
@@ -687,7 +687,7 @@ done'''],
 '''lemma %(name)s_ptr_words_ptr_safe:
   "ptr_safe (p::%(name)s_C ptr) d \<Longrightarrow>
    ptr_safe (Ptr &(p\<rightarrow>[''words_C''])::''' \
-         '''((word32[%(words)d]) ptr)) d"''',
+         '''((word%(base)d[%(words)d]) ptr)) d"''',
 ''' apply(fastforce intro:ptr_safe_mono simp:typ_uinfo_t_def)
 done'''],
 
@@ -1275,7 +1275,8 @@ class TaggedUnion:
 
         # Generate struct field pointer proofs
         substs = {"name": self.name,
-                  "words": self.multiple}
+                  "words": self.multiple,
+                  "base": self.base}
 
         print(make_proof('words_NULL_proof',
                                    substs, params.sorry), file=output)
@@ -2219,7 +2220,8 @@ class Block:
 
         # Generate struct field pointer proofs
         substs = {"name": self.name,
-                  "words": self.multiple}
+                  "words": self.multiple,
+                  "base": self.base}
 
         print(make_proof('words_NULL_proof',
                                    substs, params.sorry), file=output)
