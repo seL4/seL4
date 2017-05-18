@@ -25,6 +25,11 @@ reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonat
         reply_remove(reply);
     }
 
+    if (tcb_callee->tcbSchedContext) {
+        /* receiver already has sc */
+        canDonate = false;
+    }
+
     assert(call_stack_get_callStackPtr(reply->replyPrev) == 0);
     assert(call_stack_get_callStackPtr(reply->replyNext) == 0);
     assert(reply->replyCaller == NULL);
