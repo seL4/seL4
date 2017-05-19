@@ -502,19 +502,6 @@
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved relative to src_root."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Depth to resolve src_index to."/>
         </method>
-
-        <method id="CNodeSaveCaller" name="SaveCaller" manual_name="Save Caller" manual_label="cnode_savecaller">
-            <brief>
-                Save the reply capability from the last time the thread was called in the given CSpace so that it can be invoked later
-            </brief>
-            <description>
-                <docref>See <autoref label="sec:cnode-ops"/>.</docref>
-            </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability is to be saved. Must be at a depth of 32."/>
-            <param dir="in" name="index" type="seL4_Word" description="CPTR to the slot in which to save the capability. Resolved from the root of the _service parameter."/>
-            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the slot being targeted."/>
-        </method>
-
     </interface>
 
     <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
