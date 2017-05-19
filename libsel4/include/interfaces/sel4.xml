@@ -580,9 +580,9 @@
             <param dir="in" name="budget" type="seL4_Time"
                 description="Timeslice in microseconds, when the budget expires the thread will be pre-empted."/>
             <param dir="in" name="period" type="seL4_Time"
-                description="Period in microseconds, the budget is replenished every time the period expires."/>
+                description="Period in microseconds, if equal to budget, this thread will be treated as a round-robin thread. Otherwise, sporadic servers will be used to assure the scheduling context does not exceed the budget over the specified period."/>
             <param dir="in" name="max_refills" type="seL4_Word"
-                description="extra max refills for sporadic real time tasks"/>
+                description="Number of extra sporadic replenishments this scheduling context should use. Ignored for round-robin threads."/>
         </method>
 
     </interface>
@@ -632,14 +632,14 @@
                 notification.
 
                 If the thread being unbound is the thread that is bound to this scheduling context,
-                this will render the thread passive, see Section 6.1.5. However if the thread being
+                this will render the thread passive. However if the thread being
                 unbound received the scheduling context via scheduling context donation over IPC,
                 the scheduling context will be returned to the thread that it was originally bound to.
 
                 If the object is a notification and it is bound to the scheduling context, unbind it.
             </brief>
             <description>
-                See <autoref sec="threads"/>
+                See <autoref sec="passive"/>
             </description>
             <return><errornumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
