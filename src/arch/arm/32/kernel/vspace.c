@@ -2233,6 +2233,7 @@ decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
 
         if (unlikely(cap_get_capType(cap) != cap_page_directory_cap ||
                      !cap_page_directory_cap_get_capPDIsMapped(cap))) {
+            userError("PD Flush: Invalid cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
@@ -2273,6 +2274,7 @@ decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
         /* Refuse to cross a page boundary. */
         if (pageBase(start, resolve_ret.frameSize) !=
                 pageBase(end - 1, resolve_ret.frameSize)) {
+            userError("PD Flush: Range is across page boundary.");
             current_syscall_error.type = seL4_RangeError;
             current_syscall_error.rangeErrorMin = start;
             current_syscall_error.rangeErrorMax =
@@ -2292,6 +2294,7 @@ decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
     }
 
     default:
+        userError("PD: Invalid invocation number");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -2316,6 +2319,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
 
     if (invLabel == ARMPageTableUnmap) {
         if (unlikely(! isFinalCapability(cte))) {
+            userError("ARMPageTableUnmap: Cannot unmap if more than one cap exists.");
             current_syscall_error.type = seL4_RevokeFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -2324,16 +2328,19 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
     }
 
     if (unlikely(invLabel != ARMPageTableMap)) {
+        userError("ARMPageTable: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
+        userError("ARMPageTableMap: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (unlikely(cap_page_table_cap_get_capPTIsMapped(cap))) {
+        userError("ARMPageTableMap: Page table is already mapped to page directory.");
         current_syscall_error.type =
             seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
@@ -2349,6 +2356,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
 
     if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
                  !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
+        userError("ARMPageTableMap: Invalid PD cap.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
@@ -2359,6 +2367,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
     asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
 
     if (unlikely(vaddr >= kernelBase)) {
+        userError("ARMPageTableMap: Virtual address cannot be in kernel window. vaddr: 0x%08lx, kernelBase: 0x%08x", vaddr, kernelBase);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
 
@@ -2370,6 +2379,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
 
         find_ret = findPDForASID(asid);
         if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+            userError("ARMPageTableMap: ASID lookup failed.");
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
 
@@ -2377,6 +2387,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
         }
 
         if (unlikely(find_ret.pd != pd)) {
+            userError("ARMPageTableMap: ASID lookup failed.");
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -2388,6 +2399,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
     pdIndex = vaddr >> (PAGE_BITS + PT_INDEX_BITS);
     pdSlot = &pd[pdIndex];
     if (unlikely(pde_ptr_get_pdeType(pdSlot) != pde_pde_invalid)) {
+        userError("ARMPageTableMap: Page directory already has entry for supplied address.");
         current_syscall_error.type = seL4_DeleteFirst;
 
         return EXCEPTION_SYSCALL_ERROR;
@@ -2430,6 +2442,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         vm_attributes_t attr;
 
         if (unlikely(length < 3 || excaps.excaprefs[0] == NULL)) {
+            userError("ARMPageMap: Truncated message.");
             current_syscall_error.type =
                 seL4_TruncatedMessage;
 
@@ -2445,6 +2458,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         capVMRights = generic_frame_cap_get_capFVMRights(cap);
 
         if (unlikely(generic_frame_cap_get_capFIsMapped(cap))) {
+            userError("ARMPageMap: Cap already has mapping.");
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -2454,6 +2468,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
 
         if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
                      !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
+            userError("ARMPageMap: Bad PageDirectory cap.");
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -2479,6 +2494,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
             }
 
             if (unlikely(find_ret.pd != pd)) {
+                userError("ARMPageMap: ASID lookup failed.");
                 current_syscall_error.type =
                     seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
@@ -2490,6 +2506,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
 
         if (unlikely(vtop >= kernelBase)) {
+            userError("ARMPageMap: Cannot map frame over kernel window. vaddr: 0x%08lx, kernelBase: 0x%08x", vaddr, kernelBase);
             current_syscall_error.type =
                 seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
@@ -2501,6 +2518,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
             maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
 
         if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
+            userError("ARMPageMap: Virtual address has incorrect alignment.");
             current_syscall_error.type =
                 seL4_AlignmentError;
 
@@ -2518,6 +2536,11 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                                                    frameSize, vmRights,
                                                    attr, pd);
             if (unlikely(map_ret.status != EXCEPTION_NONE)) {
+#ifdef CONFIG_PRINTING
+                if (current_syscall_error.type == seL4_DeleteFirst) {
+                    userError("ARMPageMap: Page table entry was not free.");
+                }
+#endif
                 return map_ret.status;
             }
 
@@ -2531,6 +2554,11 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                                                    frameSize, vmRights,
                                                    attr, pd);
             if (unlikely(map_ret.status != EXCEPTION_NONE)) {
+#ifdef CONFIG_PRINTING
+                if (current_syscall_error.type == seL4_DeleteFirst) {
+                    userError("ARMPageMap: Page directory entry was not free.");
+                }
+#endif
                 return map_ret.status;
             }
 
@@ -2553,7 +2581,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
 
 #ifdef CONFIG_ARM_SMMU
         if (isIOSpaceFrameCap(cap)) {
-            userError("ARMFrameRemap: Attempting to remap frame mapped into an IOSpace");
+            userError("ARMPageRemap: Attempting to remap frame mapped into an IOSpace");
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2561,6 +2589,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
 #endif
 
         if (unlikely(length < 2 || excaps.excaprefs[0] == NULL)) {
+            userError("ARMPageRemap: Truncated message.");
             current_syscall_error.type =
                 seL4_TruncatedMessage;
 
@@ -2573,6 +2602,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
 
         if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap ||
                      !cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
+            userError("ARMPageRemap: Invalid pd cap.");
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -2581,6 +2611,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         }
 
         if (unlikely(!generic_frame_cap_get_capFIsMapped(cap))) {
+            userError("ARMPageRemap: Cap is not mapped");
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
@@ -2609,6 +2640,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
             if (unlikely(find_ret.pd != pd ||
                          cap_page_directory_cap_get_capPDMappedASID(pdCap) !=
                          mappedASID)) {
+                userError("ARMPageRemap: Failed ASID lookup.");
                 current_syscall_error.type =
                     seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
@@ -2623,6 +2655,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
             maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
 
         if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
+            userError("ARMPageRemap: Virtual address has incorrect alignment.");
             current_syscall_error.type =
                 seL4_AlignmentError;
 
@@ -2638,6 +2671,13 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                                                    frameSize, vmRights,
                                                    attr, pd);
             if (map_ret.status != EXCEPTION_NONE) {
+#ifdef CONFIG_PRINTING
+                if (current_syscall_error.type == seL4_FailedLookup) {
+                    userError("ARMPageRemap: Page directory entry did not contain a page table.");
+                } else if (current_syscall_error.type == seL4_DeleteFirst) {
+                    userError("ARMPageRemap: Page table entry was not free.");
+                }
+#endif
                 return map_ret.status;
             }
 
@@ -2650,6 +2690,11 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
                                                    frameSize, vmRights,
                                                    attr, pd);
             if (map_ret.status != EXCEPTION_NONE) {
+#ifdef CONFIG_PRINTING
+                if (current_syscall_error.type == seL4_DeleteFirst) {
+                    userError("ARMPageRemap: Page directory entry was not free.");
+                }
+#endif
                 return map_ret.status;
             }
 
@@ -2762,6 +2807,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
     }
 
     default:
+        userError("ARMPage: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
 
         return EXCEPTION_SYSCALL_ERROR;
@@ -2798,6 +2844,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         exception_t status;
 
         if (unlikely(invLabel != ARMASIDControlMakePool)) {
+            userError("ASIDControl: Illegal operation.");
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2805,6 +2852,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         if (unlikely(length < 2 || excaps.excaprefs[0] == NULL
                      || excaps.excaprefs[1] == NULL)) {
+            userError("ASIDControlMakePool: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2820,6 +2868,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         for (i = 0; i < nASIDPools && armKSASIDTable[i]; i++);
 
         if (unlikely(i == nASIDPools)) { /* If no unallocated pool is found */
+            userError("ASIDControlMakePool: No free pools found.");
             current_syscall_error.type = seL4_DeleteFirst;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2830,6 +2879,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         if (unlikely(cap_get_capType(untyped) != cap_untyped_cap ||
                      cap_untyped_cap_get_capBlockSize(untyped) !=
                      seL4_ASIDPoolBits) || cap_untyped_cap_get_capIsDevice(untyped)) {
+            userError("ASIDControlMakePool: Invalid untyped cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -2838,6 +2888,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         status = ensureNoChildren(parentSlot);
         if (unlikely(status != EXCEPTION_NONE)) {
+            userError("ASIDControlMakePool: Untyped has children. Revoke first.");
             return status;
         }
 
@@ -2845,12 +2896,14 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         lu_ret = lookupTargetSlot(root, index, depth);
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+            userError("ASIDControlMakePool: Failed to lookup destination slot.");
             return lu_ret.status;
         }
         destSlot = lu_ret.slot;
 
         status = ensureEmptySlot(destSlot);
         if (unlikely(status != EXCEPTION_NONE)) {
+            userError("ASIDControlMakePool: Destination slot not empty.");
             return status;
         }
 
@@ -2867,12 +2920,14 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         asid_t asid;
 
         if (unlikely(invLabel != ARMASIDPoolAssign)) {
+            userError("ASIDPool: Illegal operation.");
             current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         if (unlikely(excaps.excaprefs[0] == NULL)) {
+            userError("ASIDPoolAssign: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -2884,6 +2939,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         if (unlikely(
                     cap_get_capType(pdCap) != cap_page_directory_cap ||
                     cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
+            userError("ASIDPoolAssign: Invalid page directory cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -2893,6 +2949,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         pool = armKSASIDTable[cap_asid_pool_cap_get_capASIDBase(cap) >>
                               asidLowBits];
         if (unlikely(!pool)) {
+            userError("ASIDPoolAssign: Failed to lookup pool.");
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
             current_lookup_fault = lookup_fault_invalid_root_new();
@@ -2901,6 +2958,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         }
 
         if (unlikely(pool != ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap)))) {
+            userError("ASIDPoolAssign: Failed to lookup pool.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
 
@@ -2912,6 +2970,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         for (i = 0; i < (1 << asidLowBits) && (asid + i == 0 || pool->array[i]); i++);
 
         if (unlikely(i == 1 << asidLowBits)) {
+            userError("ASIDPoolAssign: No free ASID.");
             current_syscall_error.type = seL4_DeleteFirst;
 
             return EXCEPTION_SYSCALL_ERROR;
@@ -3142,7 +3201,7 @@ Arch_userStackTrace(tcb_t *tptr)
     sp = getRegister(tptr, SP);
     /* check for alignment so we don't have to worry about accessing
      * words that might be on two different pages */
-    if (!IS_ALIGNED(sp, WORD_SIZE_BITS)) {
+    if (!IS_ALIGNED(sp, seL4_WordSizeBits)) {
         printf("SP not aligned\n");
         return;
     }

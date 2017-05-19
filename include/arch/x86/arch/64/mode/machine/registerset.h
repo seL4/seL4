@@ -71,7 +71,7 @@ enum _register {
 typedef uint32_t register_t;
 
 enum messageSizes {
-    n_msgRegisters = 4,
+    n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 18,
     n_gpRegisters = 1,
     n_exceptionMessage = 3,

@@ -84,5 +84,6 @@ typedef struct {
  * and are enumerated here */
 #define SEL4_BOOTINFO_HEADER_PADDING 0
 #define SEL4_BOOTINFO_HEADER_X86_VBE 1
+#define SEL4_BOOTINFO_HEADER_X86_MBMMAP 2
 
 #endif // __LIBSEL4_BOOTINFO_TYPES_H

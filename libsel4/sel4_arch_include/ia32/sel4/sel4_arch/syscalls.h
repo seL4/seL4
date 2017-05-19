@@ -521,7 +521,7 @@ seL4_VMEnter(seL4_CPtr vcpu, seL4_Word *sender)
 }
 #endif
 
-#if defined(CONFIG_DEBUG_BUILD)
+#ifdef CONFIG_PRINTING
 LIBSEL4_INLINE_FUNC void
 seL4_DebugPutChar(char c)
 {

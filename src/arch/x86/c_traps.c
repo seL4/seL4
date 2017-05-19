@@ -173,6 +173,10 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 #ifdef CONFIG_VTX
 void VISIBLE NORETURN c_handle_vmexit(void)
 {
+#ifdef TRACK_KERNEL_ENTRIES
+    ksKernelEntry.path = Entry_VMExit;
+#endif
+
     c_entry_hook();
     /* NODE_LOCK will get called in handleVmexit */
     handleVmexit();

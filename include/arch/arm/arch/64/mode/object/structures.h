@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <util.h>
 #include <api/types.h>
+#include <api/macros.h>
 #include <arch/types.h>
 #include <arch/object/structures_gen.h>
 #include <arch/machine/hardware.h>
@@ -34,14 +35,14 @@ enum vm_rights {
 };
 typedef word_t vm_rights_t;
 
-#define PGDE_SIZE_BITS      3
-#define PGD_INDEX_BITS      9
-#define PUDE_SIZE_BITS      3
-#define PUD_INDEX_BITS      9
-#define PDE_SIZE_BITS       3
-#define PD_INDEX_BITS       9
-#define PTE_SIZE_BITS       3
-#define PT_INDEX_BITS       9
+#define PGDE_SIZE_BITS      seL4_PGDEntryBits
+#define PGD_INDEX_BITS      seL4_PGDIndexBits
+#define PUDE_SIZE_BITS      seL4_PUDEntryBits
+#define PUD_INDEX_BITS      seL4_PUDIndexBits
+#define PDE_SIZE_BITS       seL4_PageDirEntryBits
+#define PD_INDEX_BITS       seL4_PageDirIndexBits
+#define PTE_SIZE_BITS       seL4_PageTableEntryBits
+#define PT_INDEX_BITS       seL4_PageTableIndexBits
 
 #define PT_INDEX_OFFSET     (seL4_PageBits)
 #define PD_INDEX_OFFSET     (PT_INDEX_OFFSET + PT_INDEX_BITS)
@@ -59,7 +60,6 @@ typedef pgde_t vspace_root_t;
 #define PGDE_PTR_PTR(r)     ((pgde_t **)(r))
 #define PGDE_REF(p)         ((word_t)(p))
 
-compile_assert(pgd_size_bits_sane, PGD_INDEX_BITS + PGDE_SIZE_BITS == seL4_PGDBits)
 #define PGD_PTR(r)          ((pgde_t *)(r))
 #define PGD_REF(p)          ((word_t)(r))
 
@@ -67,7 +67,6 @@ compile_assert(pgd_size_bits_sane, PGD_INDEX_BITS + PGDE_SIZE_BITS == seL4_PGDBi
 #define PUDE_PTR_PTR(r)     ((pude_t **)(r))
 #define PUDE_REF(p)         ((word_t)(p))
 
-compile_assert(pud_size_bits_sane, PUD_INDEX_BITS + PUDE_SIZE_BITS == seL4_PUDBits)
 #define PUD_PTR(r)          ((pude_t *)(r))
 #define PUD_PREF(p)         ((word_t)(p))
 
@@ -75,22 +74,18 @@ compile_assert(pud_size_bits_sane, PUD_INDEX_BITS + PUDE_SIZE_BITS == seL4_PUDBi
 #define PDE_PTR_PTR(r)      ((pde_t **)(r))
 #define PDE_REF(p)          ((word_t)(p))
 
-compile_assert(pd_size_bits_sane, PD_INDEX_BITS + PDE_SIZE_BITS == seL4_PageDirBits)
 #define PD_PTR(r)           ((pde_t *)(r))
 #define PD_REF(p)           ((word_t)(p))
 
 #define PTE_PTR(r)          ((pte_t *)(r))
 #define PTE_REF(p)          ((word_t)(p))
 
-compile_assert(pt_size_bits_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r)           ((pte_t *)(r))
 #define PT_REF(p)           ((word_t)(p))
 
-#define WORD_SIZE_BITS 3
-
 enum asidSizeConstants {
     asidHighBits = 7,
-    asidLowBits = 9
+    asidLowBits = seL4_ASIDPoolIndexBits
 };
 
 struct asid_pool {
@@ -102,8 +97,7 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_POOL_REF(p)    ((word_t)p)
 
 
-#define ASID_POOL_INDEX_BITS asidLowBits
-compile_assert(asid_pool_size_sane, ASID_POOL_INDEX_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
+#define ASID_POOL_INDEX_BITS seL4_ASIDPoolIndexBits
 #define ASID_BITS (asidHighBits+asidLowBits)
 
 #define nASIDPools BIT(asidHighBits)

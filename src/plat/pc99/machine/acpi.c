@@ -144,7 +144,7 @@ typedef struct acpi_madt_x2apic {
     uint32_t            flags;
     uint32_t            acpi_processor_uid;
 } acpi_madt_x2apic_t;
-compile_assert(acpi_madt_apic_packed,
+compile_assert(acpi_madt_x2apic_packed,
                sizeof(acpi_madt_x2apic_t) == sizeof(acpi_madt_header_t) + 14)
 
 typedef struct acpi_madt_ioapic {
@@ -167,8 +167,8 @@ typedef struct acpi_madt_iso {
 /* We can't assert on the sizeof acpi_madt_iso because it contains trailing
  * padding.
  */
-compile_assert(acpi_madt_iso_packed,
-               OFFSETOF(acpi_madt_iso_t, flags) == sizeof(acpi_madt_header_t) + 6)
+unverified_compile_assert(acpi_madt_iso_packed,
+                          OFFSETOF(acpi_madt_iso_t, flags) == sizeof(acpi_madt_header_t) + 6)
 
 /* workaround because string literals are not supported by C parser */
 const char acpi_str_rsd[]  = {'R', 'S', 'D', ' ', 'P', 'T', 'R', ' ', 0};

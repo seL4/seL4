@@ -15,6 +15,7 @@
 #include <config.h>
 #include <util.h>
 #include <api/types.h>
+#include <api/macros.h>
 #include <arch/types.h>
 #include <arch/object/structures_gen.h>
 #include <arch/machine/hardware.h>
@@ -68,14 +69,14 @@ compile_assert(vtd_pt_size_sane, VTD_PT_INDEX_BITS + VTD_PTE_SIZE_BITS == seL4_I
 
 #ifdef CONFIG_VTX
 
-#define EPT_PML4E_SIZE_BITS 3
-#define EPT_PML4_INDEX_BITS 9
-#define EPT_PDPTE_SIZE_BITS 3
-#define EPT_PDPT_INDEX_BITS 9
-#define EPT_PDE_SIZE_BITS   3
-#define EPT_PD_INDEX_BITS   9
-#define EPT_PTE_SIZE_BITS   3
-#define EPT_PT_INDEX_BITS   9
+#define EPT_PML4E_SIZE_BITS seL4_X86_EPTPML4EntryBits
+#define EPT_PML4_INDEX_BITS seL4_X86_EPTPML4IndexBits
+#define EPT_PDPTE_SIZE_BITS seL4_X86_EPTPDPTEntryBits
+#define EPT_PDPT_INDEX_BITS seL4_X86_EPTPDPTIndexBits
+#define EPT_PDE_SIZE_BITS   seL4_X86_EPTPDEntryBits
+#define EPT_PD_INDEX_BITS   seL4_X86_EPTPDIndexBits
+#define EPT_PTE_SIZE_BITS   seL4_X86_EPTPTEntryBits
+#define EPT_PT_INDEX_BITS   seL4_X86_EPTPTIndexBits
 
 #define EPT_PT_INDEX_OFFSET (seL4_PageBits)
 #define EPT_PD_INDEX_OFFSET (EPT_PT_INDEX_OFFSET + EPT_PT_INDEX_BITS)
@@ -91,36 +92,32 @@ compile_assert(vtd_pt_size_sane, VTD_PT_INDEX_BITS + VTD_PTE_SIZE_BITS == seL4_I
 #define EPT_PML4E_PTR_PTR(r) ((ept_pml4e_t **)(r))
 #define EPT_PML4E_REF(p)     ((word_t)(p))
 
-#define EPT_PML4_SIZE_BITS (EPT_PML4_INDEX_BITS+EPT_PML4E_SIZE_BITS)
+#define EPT_PML4_SIZE_BITS seL4_X86_EPTPML4Bits
 #define EPT_PML4_PTR(r)    ((ept_pml4e_t *)(r))
 #define EPT_PML4_REF(p)    ((word_t)(p))
-compile_assert(ept_pml4_size_sane, EPT_PML4_INDEX_BITS + EPT_PML4E_SIZE_BITS == seL4_X86_EPTPML4Bits)
 
 #define EPT_PDPTE_PTR(r)     ((ept_pdpte_t *)(r))
 #define EPT_PDPTE_PTR_PTR(r) ((ept_pdpte_t **)(r))
 #define EPT_PDPTE_REF(p)     ((word_t)(p))
 
-#define EPT_PDPT_SIZE_BITS (EPT_PDPT_INDEX_BITS+EPT_PDPTE_SIZE_BITS)
+#define EPT_PDPT_SIZE_BITS seL4_X86_EPTPDPTBits
 #define EPT_PDPT_PTR(r)    ((ept_pdpte_t *)(r))
 #define EPT_PDPT_REF(p)    ((word_t)(p))
-compile_assert(ept_pdpt_size_sane, EPT_PDPT_INDEX_BITS + EPT_PDPTE_SIZE_BITS == seL4_X86_EPTPDPTBits)
 
 #define EPT_PDE_PTR(r)     ((ept_pde_t *)(r))
 #define EPT_PDE_PTR_PTR(r) ((ept_pde_t **)(r))
 #define EPT_PDE_REF(p)     ((word_t)(p))
 
-#define EPT_PD_SIZE_BITS (EPT_PD_INDEX_BITS+EPT_PDE_SIZE_BITS)
+#define EPT_PD_SIZE_BITS seL4_X86_EPTPDBits
 #define EPT_PD_PTR(r)    ((ept_pde_t *)(r))
 #define EPT_PD_REF(p)    ((word_t)(p))
-compile_assert(ept_pd_size_sane, EPT_PD_INDEX_BITS + EPT_PDE_SIZE_BITS == seL4_X86_EPTPDBits)
 
 #define EPT_PTE_PTR(r)    ((ept_pte_t *)(r))
 #define EPT_PTE_REF(p)    ((word_t)(p))
 
-#define EPT_PT_SIZE_BITS (EPT_PT_INDEX_BITS+EPT_PTE_SIZE_BITS)
+#define EPT_PT_SIZE_BITS seL4_X86_EPTPTBits
 #define EPT_PT_PTR(r)    ((ept_pte_t *)(r))
 #define EPT_PT_REF(p)    ((word_t)(p))
-compile_assert(ept_pt_size_sane, EPT_PT_INDEX_BITS + EPT_PTE_SIZE_BITS == seL4_X86_EPTPTBits)
 
 #define VCPU_PTR(r)       ((vcpu_t *)(r))
 #define VCPU_REF(p)       ((word_t)(p))

@@ -50,10 +50,10 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
     hw_asid_t hw_asid;
 
     hw_asid = pde_pde_invalid_get_stored_hw_asid(stored_hw_asid);
+    armv_contextSwitch_HWASID(cap_pd, hw_asid);
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(thread->tcbArch.tcbVCPU);
     }
-    armv_contextSwitch_HWASID(cap_pd, hw_asid);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);

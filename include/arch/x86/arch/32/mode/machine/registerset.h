@@ -61,7 +61,7 @@ enum _register {
 typedef word_t register_t;
 
 enum messageSizes {
-    n_msgRegisters = 2,
+    n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 10,
     n_gpRegisters = 3,
     n_exceptionMessage = 3,

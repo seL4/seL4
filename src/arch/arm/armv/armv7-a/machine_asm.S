@@ -8,13 +8,14 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <machine/assembler.h>
 
 .code 32
 .section .text, "ax"
 .global lockTLBEntry
 
-#if defined(ARM_CORTEX_A15) || defined(ARM_CORTEX_A7)
+#if defined(CONFIG_ARM_CORTEX_A15) || defined(CONFIG_ARM_CORTEX_A7)
 /* Hardware does not support TLB locking */
 BEGIN_FUNC(lockTLBEntry)
     bx lr
@@ -33,7 +34,7 @@ BEGIN_FUNC(lockTLBEntry)
     ldr r3, [r3]
 
     /* Set up the values we need to program into the lockdown register. */
-#if defined(ARM_CORTEX_A8)
+#if defined(CONFIG_ARM_CORTEX_A8)
     /* Before lockdown, base = victim = num_locked_tlb_entries. */
     mov r1, #1
     orr r1, r1, r3, lsl #27
@@ -45,7 +46,7 @@ BEGIN_FUNC(lockTLBEntry)
     orr r2, r2, r3, lsl #27
     orr r2, r2, r3, lsl #22
 
-#elif defined(ARM_CORTEX_A9)
+#elif defined(CONFIG_ARM_CORTEX_A9)
     /* Before lockdown, victim = num_locked_tlb_entries. */
     mov r1, #1
     orr r1, r1, r3, lsl #28

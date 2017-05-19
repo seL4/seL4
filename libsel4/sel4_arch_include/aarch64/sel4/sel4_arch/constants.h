@@ -72,18 +72,42 @@ enum {
 #define seL4_TCBBits 11
 #define seL4_EndpointBits 4
 #define seL4_NotificationBits 5
+
 #define seL4_PageTableBits 12
+#define seL4_PageTableEntryBits 3
+#define seL4_PageTableIndexBits 9
+
 #define seL4_PageDirBits 12
-#define seL4_PUDBits 12
-#define seL4_PGDBits 12
+#define seL4_PageDirEntryBits 3
+#define seL4_PageDirIndexBits 9
+
 #define seL4_ASIDPoolBits 12
+#define seL4_ASIDPoolIndexBits 9
 #define seL4_IOPageTableBits 12
+#define seL4_WordSizeBits 3
+
+#define seL4_PGDBits 12
+#define seL4_PGDEntryBits 3
+#define seL4_PGDIndexBits    9
+
+#define seL4_PUDBits 12
+#define seL4_PUDEntryBits 3
+#define seL4_PUDIndexBits 9
+
 /* word size */
 #define seL4_WordBits (sizeof(seL4_Word) * 8)
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4
 #define seL4_MaxUntypedBits 47
+
+#ifndef __ASSEMBLER__
+SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
+SEL4_SIZE_SANITY(seL4_PageDirEntryBits, seL4_PageDirIndexBits, seL4_PageDirBits);
+SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
+SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
+#endif
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 /* size of kernel log buffer in bytes */
@@ -96,4 +120,5 @@ enum {
 #define seL4_NumDualFunctionMonitors (0)
 #endif
 
+#define seL4_FastMessageRegisters 4
 #endif

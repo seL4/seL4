@@ -144,7 +144,7 @@ compile_assert(faultinstruction_offset_correct, FaultInstruction * sizeof(word_t
 typedef word_t register_t;
 
 enum messageSizes {
-    n_msgRegisters = 4,
+    n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 17,
     n_gpRegisters = 17,
     n_exceptionMessage = 3,
@@ -202,10 +202,8 @@ struct user_context {
 };
 typedef struct user_context user_context_t;
 
-#ifdef CONFIG_DEBUG_BUILD
-compile_assert(registers_are_first_member_of_user_context,
-               __builtin_offsetof(user_context_t, registers) == 0)
-#endif
+unverified_compile_assert(registers_are_first_member_of_user_context,
+                          OFFSETOF(user_context_t, registers) == 0)
 
 
 static inline void Arch_initContext(user_context_t* context)

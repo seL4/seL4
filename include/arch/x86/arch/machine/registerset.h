@@ -83,14 +83,14 @@ void Arch_initContext(user_context_t* context);
 word_t Mode_sanitiseRegister(register_t reg, word_t v);
 
 /* Ensure FPU state is aligned within user context. */
-compile_assert(fpu_state_alignment_valid,
-               OFFSETOF(user_context_t, fpuState) % MIN_FPU_ALIGNMENT == 0)
+unverified_compile_assert(fpu_state_alignment_valid,
+                          OFFSETOF(user_context_t, fpuState) % MIN_FPU_ALIGNMENT == 0)
 
 #if CONFIG_MAX_NUM_NODES > 1 && defined(CONFIG_ARCH_IA32)
 /* Ensure kernelSP is the first member following the registers. */
-compile_assert(kernelSP_alignment_valid,
-               OFFSETOF(user_context_t, kernelSP) -
-               OFFSETOF(user_context_t, registers) == 0x4C)
+unverified_compile_assert(kernelSP_alignment_valid,
+                          OFFSETOF(user_context_t, kernelSP) -
+                          OFFSETOF(user_context_t, registers) == 0x4C)
 #endif
 
 #endif

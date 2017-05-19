@@ -11,6 +11,7 @@
 #ifndef __ASSERT_H
 #define __ASSERT_H
 
+#include <config.h>
 #include <util.h>
 
 #ifdef CONFIG_DEBUG_BUILD
@@ -45,5 +46,13 @@ void _assert_fail(
 /* Create an assert that will trigger a compile error if it fails. */
 #define compile_assert(name, expr) \
         typedef int __assert_failed_##name[(expr) ? 1 : -1];
+
+/* Sometimes compile asserts contain expressions that the C parser cannot
+ * handle. For such expressions unverified_compile_assert should be used. */
+#ifdef CONFIG_VERIFICATION_BUILD
+#define unverified_compile_assert(name, expr)
+#else
+#define unverified_compile_assert compile_assert
+#endif
 
 #endif

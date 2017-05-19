@@ -1336,14 +1336,9 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
             return e;
         }
         target->tcbIPCBuffer = bufferAddr;
-#ifdef CONFIG_ARCH_ARM
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
-#elif defined(CONFIG_IPC_BUF_TPIDRURW)
-        setRegister(target, TPIDRURW, bufferAddr);
-#else
-#error "Unknown IPC buffer strategy"
-#endif
-#endif
+
+        Arch_setTCBIPCBuffer(target, bufferAddr);
+
         if (bufferSrcSlot && sameObjectAs(bufferCap, bufferSrcSlot->cap) &&
                 sameObjectAs(tCap, slot->cap)) {
             cteInsert(bufferCap, bufferSrcSlot, bufferSlot);
@@ -1476,6 +1471,7 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
     word_t i;
     word_t pc;
     exception_t e;
+    bool_t archInfo;
 
     e = Arch_performTransfer(arch, NODE_STATE(ksCurThread), dest);
     if (e != EXCEPTION_NONE) {
@@ -1486,18 +1482,20 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
         n = n_frameRegisters + n_gpRegisters;
     }
 
+    archInfo = Arch_getSanitiseRegisterInfo(dest);
+
     for (i = 0; i < n_frameRegisters && i < n; i++) {
         /* Offset of 2 to get past the initial syscall arguments */
         setRegister(dest, frameRegisters[i],
                     sanitiseRegister(frameRegisters[i],
-                                     getSyscallArg(i + 2, buffer), dest));
+                                     getSyscallArg(i + 2, buffer), archInfo));
     }
 
     for (i = 0; i < n_gpRegisters && i + n_frameRegisters < n; i++) {
         setRegister(dest, gpRegisters[i],
                     sanitiseRegister(gpRegisters[i],
                                      getSyscallArg(i + n_frameRegisters + 2,
-                                                   buffer), dest));
+                                                   buffer), archInfo));
     }
 
 #ifdef CONFIG_ARCH_X86_64

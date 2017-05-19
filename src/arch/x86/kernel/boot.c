@@ -249,7 +249,8 @@ init_sys_state(
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
     acpi_rmrr_list_t *rmrr_list,
-    seL4_X86_BootInfo_VBE *vbe
+    seL4_X86_BootInfo_VBE *vbe,
+    seL4_X86_BootInfo_mmap_t *mb_mmap
 )
 {
     cap_t         root_cnode_cap;
@@ -283,6 +284,9 @@ init_sys_state(
     if (vbe->vbeMode != -1) {
         extra_bi_size += sizeof(seL4_X86_BootInfo_VBE);
     }
+
+    word_t mb_mmap_size = sizeof(seL4_X86_BootInfo_mmap_t);
+    extra_bi_size += mb_mmap_size;
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
@@ -332,6 +336,12 @@ init_sys_state(
         memcpy((void*)(extra_bi_region.start + extra_bi_offset), vbe, sizeof(seL4_X86_BootInfo_VBE));
         extra_bi_offset += sizeof(seL4_X86_BootInfo_VBE);
     }
+
+    /* populate multiboot mmap block */
+    mb_mmap->header.id = SEL4_BOOTINFO_HEADER_X86_MBMMAP;
+    mb_mmap->header.len = mb_mmap_size;
+    memcpy((void*)(extra_bi_region.start + extra_bi_offset), mb_mmap, mb_mmap_size);
+    extra_bi_offset += mb_mmap_size;
 
     /* provde a chunk for any leftover padding in the extended boot info */
     seL4_BootInfoHeader padding_header;

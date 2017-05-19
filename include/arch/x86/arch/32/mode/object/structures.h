@@ -12,6 +12,7 @@
 #define __MODE_OBJECT_STRUCTURES_H
 
 #include <config.h>
+#include <api/macros.h>
 
 #define GDT_NULL    0
 #define GDT_CS_0    1
@@ -23,10 +24,10 @@
 #define GDT_IPCBUF  7
 #define GDT_ENTRIES 8
 
-#define PDE_SIZE_BITS  2
-#define PD_INDEX_BITS      10
-#define PTE_SIZE_BITS 2
-#define PT_INDEX_BITS      10
+#define PDE_SIZE_BITS seL4_PageDirEntryBits
+#define PD_INDEX_BITS seL4_PageDirIndexBits
+#define PTE_SIZE_BITS seL4_PageTableEntryBits
+#define PT_INDEX_BITS seL4_PageTableIndexBits
 #define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPD
 typedef pde_t vspace_root_t;
 
@@ -36,25 +37,21 @@ typedef pde_t vspace_root_t;
 #define PDE_PTR_PTR(r) ((pde_t **)(r))
 #define PDE_REF(p)     ((word_t)(p))
 
-compile_assert(pd_size_sane, PD_INDEX_BITS + PDE_SIZE_BITS == seL4_PageDirBits)
 #define PD_PTR(r)    ((pde_t *)(r))
 #define PD_REF(p)    ((word_t)(p))
 
 #define PTE_PTR(r)    ((pte_t *)(r))
 #define PTE_REF(p)    ((word_t)(p))
 
-compile_assert(pt_size_sane, PT_INDEX_BITS + PTE_SIZE_BITS == seL4_PageTableBits)
 #define PT_PTR(r)    ((pte_t *)(r))
 #define PT_REF(p)    ((word_t)(p))
 
 compile_assert(gdt_idt_ptr_packed,
                sizeof(gdt_idt_ptr_t) == sizeof(uint16_t) * 3)
 
-#define WORD_SIZE_BITS 2
-
 enum asidSizeConstants {
     asidHighBits = 2,
-    asidLowBits = 10
+    asidLowBits = seL4_ASIDPoolIndexBits
 };
 
 struct asid_pool {
@@ -63,8 +60,7 @@ struct asid_pool {
 
 typedef struct asid_pool asid_pool_t;
 
-#define ASID_POOL_INDEX_BITS      asidLowBits
-compile_assert(asid_pool_bits_sane, ASID_POOL_INDEX_BITS + WORD_SIZE_BITS == seL4_ASIDPoolBits)
+#define ASID_POOL_INDEX_BITS    seL4_ASIDPoolIndexBits
 #define ASID_POOL_PTR(r)    ((asid_pool_t*)r)
 #define ASID_POOL_REF(p)    ((word_t)p)
 #define ASID_BITS           (asidHighBits + asidLowBits)

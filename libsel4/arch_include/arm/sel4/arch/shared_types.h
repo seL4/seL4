@@ -8,8 +8,8 @@
  * @TAG(NICTA_BSD)
  */
 
-#ifndef __LIBSEL4_ARCH_CONSTANTS_H
-#define __LIBSEL4_ARCH_CONSTANTS_H
+#ifndef __LIBSEL4_ARCH_SHARED_TYPES_H
+#define __LIBSEL4_ARCH_SHARED_TYPES_H
 
 #include <sel4/sel4_arch/constants.h>
 

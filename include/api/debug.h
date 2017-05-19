@@ -52,6 +52,21 @@ debug_printKernelEntryReason(void)
             printf("Cap type: %lu, Invocation tag: %lu\n", (unsigned long) ksKernelEntry.cap_type,
                    (unsigned long) ksKernelEntry.invocation_tag);
         }
+        break;
+#ifdef CONFIG_ARCH_ARM
+    case Entry_VCPUFault:
+        printf("VCPUFault\n");
+        break;
+#endif
+#ifdef CONFIG_ARCH_x86
+    case Entry_VMExit:
+        printf("VMExit\n");
+        break;
+#endif
+    default:
+        printf("Unknown\n");
+        break;
+
     }
 }
 

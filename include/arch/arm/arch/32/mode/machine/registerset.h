@@ -116,7 +116,7 @@ compile_assert(r8_offset_correct, R8 * sizeof(word_t) == PT_R8)
 typedef word_t register_t;
 
 enum messageSizes {
-    n_msgRegisters = 4,
+    n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 10,
     n_gpRegisters = 7,
     n_exceptionMessage = 3,
@@ -182,10 +182,8 @@ struct user_context {
 };
 typedef struct user_context user_context_t;
 
-#ifdef CONFIG_DEBUG_BUILD
-compile_assert(registers_are_first_member_of_user_context,
-               __builtin_offsetof(user_context_t, registers) == 0)
-#endif
+unverified_compile_assert(registers_are_first_member_of_user_context,
+                          OFFSETOF(user_context_t, registers) == 0)
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
 void Arch_initBreakpointContext(user_context_t *context);
