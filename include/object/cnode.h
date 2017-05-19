@@ -32,7 +32,6 @@ exception_t invokeCNodeInsert(cap_t cap, cte_t *srcSlot, cte_t *destSlot);
 exception_t invokeCNodeMove(cap_t cap, cte_t *srcSlot, cte_t *destSlot);
 exception_t invokeCNodeRotate(cap_t cap1, cap_t cap2, cte_t *slot1,
                               cte_t *slot2, cte_t *slot3);
-exception_t invokeCNodeSaveCaller(cte_t *destSlot);
 void cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot);
 void cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot);
 void capSwapForDelete(cte_t *slot1, cte_t *slot2);
