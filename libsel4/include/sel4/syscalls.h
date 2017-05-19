@@ -96,6 +96,32 @@ LIBSEL4_INLINE_FUNC void
 seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
 
 /**
+ * @xmlonly <manual name="Polling Recv" label="sel4_nbrecv"/> @endxmlonly
+ * @brief Poll on an endpoint, and receive a message if one is present.
+ *
+ * @xmlonly
+ * <docref>See <autoref label="sec:sys_recv"/></docref>
+ * @endxmlonly
+ *
+ * @param[in] src The capability to be invoked.
+ * @param[out] sender The address to write sender information to.
+ *               The sender information is the badge of the
+ *               endpoint capability that was invoked by the
+ *               sender, or the notification word of the
+ *               notification object that was signalled.
+ *               This parameter is ignored if `NULL`.
+ * @param[in] reply The capability to the reply object to use on a call.
+ *
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * as described in <autoref label="sec:messageinfo"/>
+ * @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
+seL4_NBRecv(seL4_CPtr src, seL4_Word* sender, seL4_CPtr reply);
+
+
+/**
  * @xmlonly <manual name="Reply Recv" label="sel4_replyrecv"/> @endxmlonly
  * @brief Perform a reply followed by a receive in one system call
  *
@@ -103,8 +129,175 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * <docref>See <autoref label="sec:sys_replyrecv"/></docref>
  * @endxmlonly
  *
+ * @param[in] src The capability to perform the receive on.
+ * @param[in] msgInfo The messageinfo structure for the IPC.
+ * @param[out] sender The address to write sender information to.
+ *               The sender information is the badge of the
+ *               endpoint capability that was invoked by the
+ *               sender, or the notification word of the
+ *               notification object that was signalled.
+ *               This parameter is ignored if `NULL`.
+ *
+ * @param[in] reply The capability to the reply object, which is first invoked and then used
+ *                  for the recv phase to store a new reply capability.
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
+ * @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
+seL4_ReplyRecv(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender, seL4_CPtr reply);
+
+/**
+ * @xmlonly <manual name="NBRecv" label="sel4_nbrecv"/> @endxmlonly
+ * @brief Receive a message from an endpoint but do not block
+ *        in the case that no messages are pending
+ *
+ * @xmlonly
+ * <docref>See <autoref label="sec:sys_nbrecv"/></docref>
+ * @endxmlonly
+ *
+ * @param[in] src The capability to receive on.
+ * @param[out] sender The address to write sender information to.
+ *                    The sender information is the badge of the
+ *                    endpoint capability that was invoked by the
+ *                    sender, or the notification word of the
+ *                    notification object that was signalled.
+ *                    This parameter is ignored if `NULL`.
+ * @param[in] reply The capability to the reply object to use on a call.
+ *
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
+ * @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
+seL4_NBRecv(seL4_CPtr src, seL4_Word* sender, seL4_CPtr reply);
+
+/**
+ * @xmlonly <manual name="NBSend Recv" label="sel4_nbsendrecv"/> @endxmlonly
+ * @brief Non-blocking send on one capability, and a blocking recieve on another in a single
+ *        system call.
+ *
+ * @xmlonly
+ * <docref>See <autoref label="sec:sys_nbsendrecv"/></docref>
+ * @endxmlonly
+ *
  * @param[in] dest The capability to be invoked.
  * @param[in] msgInfo The messageinfo structure for the IPC.
+ * @param[out] sender The address to write sender information to.
+ *               The sender information is the badge of the
+ *               endpoint capability that was invoked by the
+ *               sender, or the notification word of the
+ *               notification object that was signalled.
+ *               This parameter is ignored if `NULL`.
+ * @param[in] src The capability to receive on.
+ * @param[in] reply The capability to the reply object, which is first invoked and then used
+ *                  for the recv phase to store a new reply capability.
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * as described in <autoref label="sec:messageinfo"/>
+ * @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
+seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word *sender, seL4_CPtr reply);
+
+/**
+ * @xmlonly <manual name="NBSend Wait" label="sel4_nbsendwait"/> @endxmlonly
+ * @brief Non-blocking invoke of a capability and wait on another in one system call
+ *
+ * @xmlonly
+ * <docref>See <autoref label="sec:sys_nbsendwait"/></docref>
+ * @endxmlonly
+ *
+ * @param[in] dest The capability to be invoked.
+ * @param[in] msgInfo The messageinfo structure for the IPC.
+ * @param[out] sender The address to write sender information to.
+ *               The sender information is the badge of the
+ *               endpoint capability that was invoked by the
+ *               sender, or the notification word of the
+ *               notification object that was signalled.
+ *               This parameter is ignored if `NULL`.
+ * @param[in] src The capability to receive on.
+ * @return A `seL4_MessageInfo_t` structure
+ * @xmlonly
+ * as described in <autoref label="sec:messageinfo"/>
+ * @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
+seL4_NBSendWait(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word *sender);
+
+/**
+ * @xmlonly <manual name="Yield" label="sel4_yield"/> @endxmlonly
+ * @brief Yield the remaining timeslice. Periodic threads will not be scheduled again until their
+ *        next sporadic replenishment.
+ *
+ * @xmlonly
+ * <docref>See <autoref label="sec:sys_yield"/></docref>
+ * @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_Yield(void);
+
+/**
+ * @xmlonly <manual name="Wait" label="sel4_wait"/> @endxmlonly
+ * @brief Perform a wait on an endpoint or notification object
+ *
+ * Block on a notification or endpoint waiting for a message. No reply object is
+ * required for a Wait. Wait should not be paired with Call, as it does not provide
+ * a reply object. If Wait is paired with a Call the waiter will block after recieving
+ * the message.
+ *
+ * @xmlonly
+ * <docref>See the description of <nameref name="seL4_Wait"/> in <autoref label="sec:sys_wait"/>.</docref>
+ * @endxmlonly
+ *
+ * @param[in] src The capability to be invoked.
+ * @param[out] sender The address to write sender information to.
+ *               The sender information is the badge of the
+ *               endpoint capability that was invoked by the
+ *               sender, or the notification word of the
+ *               notification object that was signalled.
+ *               This parameter is ignored if `NULL`.
+ */
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
+seL4_Wait(seL4_CPtr src, seL4_Word *sender);
+
+/**
+ * @xmlonly <manual name="NBWait" label="sel4_nbwait"/> @endxmlonly
+ * @brief Perform a polling wait on an endpoint or notification object
+ *
+ * Poll a notification or endpoint waiting for a message. No reply object is
+ * required for a Wait. Wait should not be paired with Call.
+ *
+ * @xmlonly
+ * <docref>See the description of <nameref name="seL4_NBWait"/> in <autoref label="sec:sys_nbwait"/>.</docref>
+ * @endxmlonly
+ *
+ * @param[in] src The capability to be invoked.
+ * @param[out] sender The address to write sender information to.
+ *               The sender information is the badge of the
+ *               endpoint capability that was invoked by the
+ *               sender, or the notification word of the
+ *               notification object that was signalled.
+ *               This parameter is ignored if `NULL`.
+ */
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
+seL4_NBWait(seL4_CPtr src, seL4_Word *sender);
+
+/**
+ * @xmlonly <manual name="Poll" label="sel4_poll"/> @endxmlonly
+ * @brief Perform a non-blocking recv on a notification object
+ *
+ * This is not a proper system call known by the kernel. Rather, it is a
+ * convenience wrapper which calls seL4_NBWait().
+ * It is useful for doing a non-blocking wait on a notification.
+ *
+ * @xmlonly
+ * <docref>See the description of <nameref name="seL4_NBWait"/> in <autoref label="sec:sys_nbwait"/>.</docref>
+ * @endxmlonly
+ *
+ * @param[in] src The capability to be invoked.
  * @param[out] sender The address to write sender information to.
  *               The sender information is the badge of the
  *               endpoint capability that was invoked by the
@@ -118,43 +311,7 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender, seL4_CPtr reply);
-
-/**
- * @xmlonly <manual name="NBRecv" label="sel4_nbrecv"/> @endxmlonly
- * @brief Receive a message from an endpoint but do not block
- *        in the case that no messages are pending
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_nbrecv"/></docref>
- * @endxmlonly
- *
- * @param[in] src The capability to be invoked.
- * @param[out] sender The address to write sender information to.
- *                    The sender information is the badge of the
- *                    endpoint capability that was invoked by the
- *                    sender, or the notification word of the
- *                    notification object that was signalled.
- *                    This parameter is ignored if `NULL`.
- *
- * @return A `seL4_MessageInfo_t` structure
- * @xmlonly
- * <docref>as described in <autoref label="sec:messageinfo"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_NBRecv(seL4_CPtr src, seL4_Word* sender, seL4_CPtr reply);
-
-/**
- * @xmlonly <manual name="Yield" label="sel4_yield"/> @endxmlonly
- * @brief Donate the remaining timeslice to a thread of the same priority
- *
- * @xmlonly
- * <docref>See <autoref label="sec:sys_yield"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC void
-seL4_Yield(void);
+seL4_Poll(seL4_CPtr src, seL4_Word *sender);
 
 /**
  * @xmlonly <manual name="Signal" label="sel4_signal"/> @endxmlonly
@@ -173,55 +330,6 @@ seL4_Yield(void);
 LIBSEL4_INLINE_FUNC void
 seL4_Signal(seL4_CPtr dest);
 
-/**
- * @xmlonly <manual name="Wait" label="sel4_wait"/> @endxmlonly
- * @brief Perform a receive on a notification object
- *
- * This is not a proper system call known by the kernel. Rather, it is a
- * convenience wrapper which calls seL4_Recv().
- *
- * @xmlonly
- * <docref>See the description of <nameref name="seL4_Recv"/> in <autoref label="sec:sys_recv"/>.</docref>
- * @endxmlonly
- *
- * @param[in] src The capability to be invoked.
- * @param[out] sender The address to write sender information to.
- *               The sender information is the badge of the
- *               endpoint capability that was invoked by the
- *               sender, or the notification word of the
- *               notification object that was signalled.
- *               This parameter is ignored if `NULL`.
- */
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_Wait(seL4_CPtr src, seL4_Word *sender);
-
-/**
- * @xmlonly <manual name="Poll" label="sel4_poll"/> @endxmlonly
- * @brief Perform a non-blocking recv on a notification object
- *
- * This is not a proper system call known by the kernel. Rather, it is a
- * convenience wrapper which calls seL4_NBRecv().
- * It is useful for doing a non-blocking wait on a notification.
- *
- * @xmlonly
- * <docref>See the description of <nameref name="seL4_NBRecv"/> in <autoref label="sec:sys_nbrecv"/>.</docref>
- * @endxmlonly
- *
- * @param[in] src The capability to be invoked.
- * @param[out] sender The address to write sender information to.
- *               The sender information is the badge of the
- *               endpoint capability that was invoked by the
- *               sender, or the notification word of the
- *               notification object that was signalled.
- *               This parameter is ignored if `NULL`.
- *
- * @return A `seL4_MessageInfo_t` structure
- * @xmlonly
- * <docref>as described in <autoref label="sec:messageinfo"/></docref>
- * @endxmlonly
- */
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_Poll(seL4_CPtr src, seL4_Word *sender);
 
 /** @} */
 
