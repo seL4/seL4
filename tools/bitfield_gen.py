@@ -225,22 +225,22 @@ typedef struct %(name)s %(name)s_t;"""
 
 generator_template = \
 """%(inline)s %(block)s_t CONST
-%(block)s_new(%(args)s) {
+%(block)s_new(%(gen_params)s) {
     %(block)s_t %(block)s;
 
-%(word_inits)s
+%(asserts)s
 
-%(field_inits)s
+%(gen_inits)s
 
     return %(block)s;
 }"""
 
 ptr_generator_template = \
 """%(inline)s void
-%(block)s_ptr_new(%(args)s) {
-%(word_inits)s
+%(block)s_ptr_new(%(ptr_params)s) {
+%(asserts)s
 
-%(field_inits)s
+%(ptr_inits)s
 }"""
 
 reader_template = \
@@ -290,22 +290,22 @@ ptr_writer_template = \
 
 union_generator_template = \
 """%(inline)s %(union)s_t CONST
-%(union)s_%(block)s_new(%(args)s) {
+%(union)s_%(block)s_new(%(gen_params)s) {
     %(union)s_t %(union)s;
 
-%(word_inits)s
+%(asserts)s
 
-%(field_inits)s
+%(gen_inits)s
 
     return %(union)s;
 }"""
 
 ptr_union_generator_template = \
 """%(inline)s void
-%(union)s_%(block)s_ptr_new(%(args)s) {
-%(word_inits)s
+%(union)s_%(block)s_ptr_new(%(ptr_params)s) {
+%(asserts)s
 
-%(field_inits)s
+%(ptr_inits)s
 }"""
 
 union_reader_template = \
@@ -726,7 +726,6 @@ done'''],
 ''' apply(rule allI, rule conseqPre, vcg)
 
  apply(clarsimp simp:guard_simps)
- apply(simp add:o_def)
  apply(simp add:shift_over_ao_dists mask_def ucast_id)
  apply(unfold %(name)s_lift_def)
  apply(simp add:shift_over_ao_dists)
@@ -1709,8 +1708,7 @@ class TaggedUnion:
 
         emit_named("%s_get_%s" % (self.name, self.tagname), params, fs)
 
-	# Generate tag eq reader
-
+        # Generate tag eq reader
         templates = ([tag_eq_reader_entry_template] * (len(self.widths) - 1)
                    + [tag_eq_reader_final_template])
 
@@ -1744,26 +1742,20 @@ class TaggedUnion:
 
         for name, value, ref in self.tags:
             # Generate generators
-            arg_list = ["%s %s" % (TYPES[options.environment][self.base], field) for \
-                            field in ref.visible_order if
-                            field != self.tagname]
+            param_fields = [field for field in ref.visible_order if field != self.tagname]
+            param_list = ["%s %s" % (TYPES[options.environment][self.base], field)
+                          for field in param_fields]
 
-            if len(arg_list) == 0:
-                args = 'void'
+            if len(param_list) == 0:
+                gen_params = 'void'
             else:
-                args = ', '.join(arg_list)
+                gen_params = ', '.join(param_list)
 
-            ptr_args = ', '.join(["%s_t *%s_ptr" % (self.name, self.name)] + \
-                                 arg_list)
+            ptr_params = ', '.join(["%s_t *%s_ptr" % (self.name, self.name)] + param_list)
 
-            word_inits = ["    %s.words[%d] = 0;" % (self.name, i) \
-                          for i in range(self.multiple)]
+            field_updates = {word: [] for word in range(self.multiple)}
+            field_asserts = ["    /* fail if user has passed bits that we will override */"]
 
-            ptr_word_inits = ["    %s_ptr->words[%d] = 0;" % (self.name, i) \
-                              for i in range(self.multiple)]
-
-            field_inits = []
-            ptr_field_inits = []
             for field in ref.visible_order:
                 offset, size, high = ref.field_map[field]
 
@@ -1794,49 +1786,40 @@ class TaggedUnion:
                         mask = (1 << size) - 1
                     suf = self.constant_suffix
 
-                    field_inits.append(
-                        "    /* fail if user has passed bits that we will override */")
-                    field_inits.append(
-                        "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (ASSERTS[options.environment], f_value, mask, suf, self.base_sign_extend, f_value, suf, self.base_bits - 1, high_bits))
-                    field_inits.append(
-                        "    %s.words[%d] |= (%s & 0x%x%s) %s %d;" % \
-                         (self.name, index, f_value, mask, suf, shift_op, shift))
+                    field_asserts.append(
+                        "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));"
+                        % (ASSERTS[options.environment], f_value, mask, suf, self.base_sign_extend,
+                           f_value, suf, self.base_bits - 1, high_bits))
 
-                    ptr_field_inits.append(
-                        "    /* fail if user has passed bits that we will override */")
-                    ptr_field_inits.append(
-                        "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (ASSERTS[options.environment], f_value, mask, suf, self.base_sign_extend, f_value, suf, self.base_bits - 1, high_bits))
-                    ptr_field_inits.append(
-                        "    %s_ptr->words[%d] |= (%s & 0x%x%s) %s %d;" % \
-                        (self.name, index, f_value, mask, suf, shift_op, shift))
+                    field_updates[index].append(
+                        "(%s & 0x%x%s) %s %d" % (f_value, mask, suf, shift_op, shift))
+
                 else:
-                    field_inits.append(
-                            "       %s.words[%d] |= %s %s %d;" % \
-                        (self.name, index, f_value, shift_op, shift))
+                    field_updates[index].append("%s %s %d" % (f_value, shift_op, shift))
 
-                    ptr_field_inits.append(
-                        "    %s_ptr->words[%d] |= %s %s %d;" % \
-                        (self.name, index, f_value, shift_op, shift))
+            word_inits = [
+                ("words[%d] = 0" % index) + ''.join(["\n        | %s" % up for up in ups]) + ';'
+                for (index, ups) in field_updates.items()]
 
-            generator = union_generator_template % \
-                {"inline":       INLINE[options.environment], \
-                 "block":        name, \
-                 "union":        self.name, \
-                 "args":         args, \
-                 "word_inits":   '\n'.join(word_inits), \
-                 "field_inits":  '\n'.join(field_inits)}
+            def mk_inits(prefix):
+                return '\n'.join(["    %s%s" % (prefix, word_init) for word_init in word_inits])
 
-            ptr_generator = ptr_union_generator_template % \
-                {"inline":       INLINE[options.environment], \
-                 "block":        name, \
-                 "union":        self.name, \
-                 "args":         ptr_args, \
-                 "word_inits":   '\n'.join(ptr_word_inits), \
-                 "field_inits":  '\n'.join(ptr_field_inits)}
+            print_params = {
+                "inline":     INLINE[options.environment],
+                "block":      name,
+                "union":      self.name,
+                "gen_params": gen_params,
+                "ptr_params": ptr_params,
+                "gen_inits":  mk_inits("%s." % self.name),
+                "ptr_inits":  mk_inits("%s_ptr->" % self.name),
+                "asserts": '  \n'.join(field_asserts)
+            }
+
+            generator = union_generator_template % print_params
+            ptr_generator = ptr_union_generator_template % print_params
 
             emit_named("%s_%s_new" % (self.name, name), params, generator)
-            emit_named("%s_%s_ptr_new" % (self.name, name), params,
-                       ptr_generator)
+            emit_named("%s_%s_ptr_new" % (self.name, name), params, ptr_generator)
 
             # Generate field readers/writers
             tagnameoffset, tagnamesize, _ = ref.field_map[self.tagname]
@@ -2373,24 +2356,20 @@ class Block:
         print(file=output)
 
         # Generator
-        arg_list = ["%s %s" % (TYPES[options.environment][self.base], field) for \
-                        field in self.visible_order]
-        if len(arg_list) == 0:
-            args = 'void'
+        param_fields = [field for field in self.visible_order]
+        param_list = ["%s %s" % (TYPES[options.environment][self.base], field)
+                      for field in param_fields]
+
+        if len(param_list) == 0:
+            gen_params = 'void'
         else:
-            args = ', '.join(arg_list)
+            gen_params = ', '.join(param_list)
 
-        ptr_args = ', '.join(["%s_t *%s_ptr" % (self.name, self.name)] + \
-                             arg_list)
+        ptr_params = ', '.join(["%s_t *%s_ptr" % (self.name, self.name)] + param_list)
 
-        word_inits = ["    %s.words[%d] = 0;" % (self.name, i) \
-                      for i in range(self.multiple)]
+        field_updates = {word: [] for word in range(self.multiple)}
+        field_asserts = ["    /* fail if user has passed bits that we will override */"]
 
-        ptr_word_inits = ["    %s_ptr->words[%d] = 0;" % (self.name, i) \
-                          for i in range(self.multiple)]
-
-        field_inits = []
-        ptr_field_inits = []
         for field, offset, size, high in self.fields:
             index = offset // self.base
             if high:
@@ -2414,43 +2393,36 @@ class Block:
                     mask = (1 << size) - 1
                 suf = self.constant_suffix
 
-                field_inits.append(
-                    "    /* fail if user has passed bits that we will override */")
-                field_inits.append(
-                    "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (ASSERTS[options.environment], field, mask, suf, self.base_sign_extend, field, suf, self.base_bits - 1, high_bits))
-                field_inits.append(
-                    "    %s.words[%d] |= (%s & 0x%x%s) %s %d;" % \
-                    (self.name, index, field, mask, suf, shift_op, shift))
+                field_asserts.append(
+                    "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));"
+                    % (ASSERTS[options.environment], field, mask, suf, self.base_sign_extend,
+                       field, suf, self.base_bits - 1, high_bits))
 
-                ptr_field_inits.append(
-                    "    /* fail if user has passed bits that we will override */")
-                ptr_field_inits.append(
-                    "    %s((%s & ~0x%x%s) == ((%d && (%s & (1%s << %d))) ? 0x%x : 0));" % (ASSERTS[options.environment], field, mask, suf, self.base_sign_extend, field, suf, self.base_bits - 1, high_bits))
-                ptr_field_inits.append(
-                    "    %s_ptr->words[%d] |= (%s & 0x%x%s) %s %d;" % \
-                    (self.name, index, field, mask, suf, shift_op, shift))
+                field_updates[index].append(
+                    "(%s & 0x%x%s) %s %d" % (field, mask, suf, shift_op, shift))
+
             else:
-                field_inits.append(
-                    "    %s.words[%d] |= %s %s %d;" % \
-                    (self.name, index, field, shift_op, shift))
+                field_updates[index].append("%s %s %d;" % (field, shift_op, shift))
 
-                ptr_field_inits.append(
-                    "    %s_ptr->words[%d] |= %s %s %d;" % \
-                    (self.name, index, field, shift_op, shift))
+        word_inits = [
+            ("words[%d] = 0" % index) + ''.join(["\n        | %s" % up for up in ups]) + ';'
+            for (index, ups) in field_updates.items()]
 
-        generator = generator_template % \
-            {"inline":       INLINE[options.environment], \
-             "block":        self.name, \
-             "args":         args, \
-             "word_inits":   '\n'.join(word_inits), \
-             "field_inits":  '\n'.join(field_inits)}
+        def mk_inits(prefix):
+            return '\n'.join(["    %s%s" % (prefix, word_init) for word_init in word_inits])
 
-        ptr_generator = ptr_generator_template % \
-            {"inline":       INLINE[options.environment], \
-             "block":        self.name, \
-             "args":         ptr_args, \
-             "word_inits":   '\n'.join(ptr_word_inits), \
-             "field_inits":  '\n'.join(ptr_field_inits)}
+        print_params = {
+            "inline": INLINE[options.environment],
+            "block": self.name,
+            "gen_params": gen_params,
+            "ptr_params": ptr_params,
+            "gen_inits": mk_inits("%s." % self.name),
+            "ptr_inits": mk_inits("%s_ptr->" % self.name),
+            "asserts": '  \n'.join(field_asserts)
+        }
+
+        generator = generator_template % print_params
+        ptr_generator = ptr_generator_template % print_params
 
         emit_named("%s_new" % self.name, params, generator)
         emit_named("%s_ptr_new" % self.name, params, ptr_generator)
