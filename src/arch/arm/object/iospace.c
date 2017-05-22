@@ -410,7 +410,7 @@ deleteIOPageTable(cap_t io_pt_cap)
             return;
         }
 
-        iopde_iopde_pt_ptr_new(lu_ret.iopdSlot, 0, 0, 0, 0);
+        *lu_ret.iopdSlot = iopde_iopde_pt_new(0, 0, 0, 0);
         cleanCacheRange_RAM((word_t)lu_ret.iopdSlot,
                             ((word_t)lu_ret.iopdSlot) + sizeof(iopde_t),
                             addrFromPPtr(lu_ret.iopdSlot));
@@ -444,7 +444,7 @@ unmapIOPage(cap_t cap)
         return;
     }
 
-    iopte_ptr_new(lu_ret.ioptSlot, 0, 0, 0, 0);
+    *lu_ret.ioptSlot = iopte_new(0, 0, 0, 0);
     cleanCacheRange_RAM((word_t)lu_ret.ioptSlot,
                         ((word_t)lu_ret.ioptSlot) + sizeof(iopte_t),
                         addrFromPPtr(lu_ret.ioptSlot));

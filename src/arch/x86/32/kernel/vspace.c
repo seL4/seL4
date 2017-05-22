@@ -30,8 +30,7 @@ gdt_idt_ptr_t gdt_idt_ptr;
 BOOT_CODE void
 init_tss(tss_t* tss)
 {
-    tss_ptr_new(
-        tss,
+    *tss = tss_new(
         sizeof(*tss),   /* io_map_base  */
         0,              /* trap         */
         SEL_NULL,       /* sel_ldt      */
@@ -353,7 +352,7 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
     for (i = 0; i < large_pages; ++i) {
         unsigned int pg_offset = i << LARGE_PAGE_BITS; // num pages since start * page size
 
-        pde_pde_large_ptr_new(get_boot_pd() + virt_pd_start + i,
+        *(get_boot_pd() + virt_pd_start + i) = pde_pde_large_new(
                               phys_pg_start + pg_offset, /* physical address */
                               0, /* pat            */
                               0, /* avl            */

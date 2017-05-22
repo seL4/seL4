@@ -139,8 +139,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
     assert(vaddr >= PPTR_TOP);
 
     if (vm_attributes_get_armPageCacheable(attributes)) {
-        pte_ptr_new(
-            &armKSGlobalKernelPT[GET_PT_INDEX(vaddr)],
+        armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
             1,                          /* unprivileged execute never */
             paddr,
             0,                          /* global */
@@ -151,8 +150,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
             0b11                        /* reserved */
         );
     } else {
-        pte_ptr_new(
-            &armKSGlobalKernelPT[GET_PT_INDEX(vaddr)],
+        armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
             1,                          /* unprivileged execute never */
             paddr,
             0,                          /* global */
@@ -181,16 +179,14 @@ map_kernel_window(void)
     assert(IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
 
     /* place the PUD into the PGD */
-    pgde_ptr_new(
-        &armKSGlobalKernelPGD[GET_PGD_INDEX(kernelBase)],
+    armKSGlobalKernelPGD[GET_PGD_INDEX(kernelBase)] = pgde_new(
         pptr_to_paddr(armKSGlobalKernelPUD),
         0b11  /* reserved */
     );
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_PUD_INDEX(kernelBase); idx < GET_PUD_INDEX(PPTR_TOP); idx++) {
-        pude_pude_pd_ptr_new(
-            &armKSGlobalKernelPUD[idx],
+        armKSGlobalKernelPUD[idx] = pude_pude_pd_new(
             pptr_to_paddr(&armKSGlobalKernelPDs[idx][0])
         );
     }
@@ -198,8 +194,7 @@ map_kernel_window(void)
     /* map the kernel window using large pages */
     vaddr = kernelBase;
     for (paddr = physBase; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
-        pde_pde_large_ptr_new(
-            &armKSGlobalKernelPDs[GET_PUD_INDEX(vaddr)][GET_PD_INDEX(vaddr)],
+        armKSGlobalKernelPDs[GET_PUD_INDEX(vaddr)][GET_PD_INDEX(vaddr)] = pde_pde_large_new(
             1,                        /* unprivileged execute never */
             paddr,
             0,                        /* global */
@@ -212,14 +207,12 @@ map_kernel_window(void)
     }
 
     /* put the PD into the PUD for device window */
-    pude_pude_pd_ptr_new(
-        &armKSGlobalKernelPUD[GET_PUD_INDEX(PPTR_TOP)],
+    armKSGlobalKernelPUD[GET_PUD_INDEX(PPTR_TOP)] = pude_pude_pd_new(
         pptr_to_paddr(&armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][0])
     );
 
     /* put the PT into the PD for device window */
-    pde_pde_small_ptr_new(
-        &armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][BIT(PD_INDEX_BITS) - 1],
+    armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][BIT(PD_INDEX_BITS) - 1] = pde_pde_small_new(
         pptr_to_paddr(armKSGlobalKernelPT)
     );
 
@@ -248,8 +241,7 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t executable)
     pd += GET_PD_INDEX(vptr);
     assert(pde_pde_small_ptr_get_present(pd));
     pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
-    pte_ptr_new(
-        pt + GET_PT_INDEX(vptr),
+    *(pt + GET_PT_INDEX(vptr)) = pte_new(
         !executable,                    /* unprivileged execute never */
         pptr_to_paddr(pptr),            /* page_base_address    */
         1,                              /* not global */
@@ -298,8 +290,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     pud += GET_PUD_INDEX(vptr);
     assert(pude_pude_pd_ptr_get_present(pud));
     pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pud));
-    pde_pde_small_ptr_new(
-        pd + GET_PD_INDEX(vptr),
+    *(pd + GET_PD_INDEX(vptr)) = pde_pde_small_new(
         pptr_to_paddr(pt)
     );
 }
@@ -331,8 +322,7 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
     pgd += GET_PGD_INDEX(vptr);
     assert(pgde_ptr_get_present(pgd));
     pud = paddr_to_pptr(pgde_ptr_get_pud_base_address(pgd));
-    pude_pude_pd_ptr_new(
-        pud + GET_PUD_INDEX(vptr),
+    *(pud + GET_PUD_INDEX(vptr)) = pude_pude_pd_new(
         pptr_to_paddr(pd)
     );
 }
@@ -360,8 +350,7 @@ map_it_pud_cap(cap_t vspace_cap, cap_t pud_cap)
 
     assert(cap_page_upper_directory_cap_get_capPUDIsMapped(pud_cap));
 
-    pgde_ptr_new(
-        pgd + GET_PGD_INDEX(vptr),
+    *(pgd + GET_PGD_INDEX(vptr)) = pgde_new(
         pptr_to_paddr(pud),
         0b11                        /* reserved */
     );

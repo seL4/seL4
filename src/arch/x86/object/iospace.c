@@ -129,8 +129,7 @@ unmapVTDContextEntry(cap_t cap)
 {
     vtd_cte_t *cte = lookup_vtd_context_slot(cap);
     assert(cte != 0);
-    vtd_cte_ptr_new(
-        cte,
+    *cte = vtd_cte_new(
         0,
         false,
         0,
@@ -432,8 +431,7 @@ void deleteIOPageTable(cap_t io_pt_cap)
             if (pptr_to_paddr(vtd_pte) != pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap))) {
                 return;
             }
-            vtd_cte_ptr_new(
-                vtd_context_slot,
+            *vtd_context_slot = vtd_cte_new(
                 0,      /* Domain ID          */
                 false,  /* RMRR               */
                 0,      /* Address Width      */
@@ -453,8 +451,7 @@ void deleteIOPageTable(cap_t io_pt_cap)
             if (vtd_pte_ptr_get_addr(lu_ret.ioptSlot) != pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap))) {
                 return;
             }
-            vtd_pte_ptr_new(
-                lu_ret.ioptSlot,
+            *lu_ret.ioptSlot = vtd_pte_new(
                 0,  /* Physical Address */
                 0,  /* Read Permission  */
                 0   /* Write Permission */
@@ -491,8 +488,7 @@ void unmapIOPage(cap_t cap)
         return;
     }
 
-    vtd_pte_ptr_new(
-        lu_ret.ioptSlot,
+    *lu_ret.ioptSlot = vtd_pte_new(
         0,  /* Physical Address */
         0,  /* Read Permission  */
         0   /* Write Permission */

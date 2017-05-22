@@ -292,8 +292,7 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
         memzero(iopt, BIT(seL4_IOPageTableBits));
         flushCacheRange(iopt, seL4_IOPageTableBits);
 
-        vtd_cte_ptr_new(
-            vtd_context_slot,
+        *vtd_context_slot = vtd_cte_new(
             x86KSFirstValidIODomain,  /* Domain ID                              */
             true,                     /* RMRR Mapping                           */
             x86KSnumIOPTLevels - 2,   /* Address Width                          */
@@ -318,7 +317,7 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
         vtd_pte_slot = iopt + iopt_index;
         if (i == 0) {
             /* Now put the mapping in */
-            vtd_pte_ptr_new(vtd_pte_slot, addr, 1, 1);
+            *vtd_pte_slot = vtd_pte_new(addr, 1, 1);
             flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
         } else {
             if (!vtd_pte_ptr_get_write(vtd_pte_slot)) {
@@ -329,7 +328,7 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
                 memzero(iopt, BIT(seL4_IOPageTableBits));
                 flushCacheRange(iopt, seL4_IOPageTableBits);
 
-                vtd_pte_ptr_new(vtd_pte_slot, pptr_to_paddr(iopt), 1, 1);
+                *vtd_pte_slot = vtd_pte_new(pptr_to_paddr(iopt), 1, 1);
                 flushCacheRange(vtd_pte_slot, VTD_PTE_SIZE_BITS);
             } else {
                 iopt = (vtd_pte_t*)paddr_to_pptr(vtd_pte_ptr_get_addr(vtd_pte_slot));

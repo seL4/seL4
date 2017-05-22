@@ -67,7 +67,7 @@ map_kernel_window(
     assert(IS_ALIGNED(KERNEL_BASE, seL4_HugePageBits));
     assert(IS_ALIGNED(PPTR_KDEV, seL4_HugePageBits));
     /* place the PDPT into the PML4 */
-    pml4e_ptr_new(&x64KSGlobalPML4[GET_PML4_INDEX(PPTR_BASE)],
+    x64KSGlobalPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
                   0, /* xd */
                   kpptr_to_paddr(x64KSGlobalPDPT),
                   0, /* accessed */
@@ -78,7 +78,7 @@ map_kernel_window(
                   1  /* present */
                  );
     /* put the 1GB kernel_base mapping into the PDPT */
-    pdpte_pdpte_1g_ptr_new(&x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)],
+    x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_1g_new(
                            0, /* xd */
                            PADDR_BASE,
                            0, /* PAT */
@@ -98,7 +98,7 @@ map_kernel_window(
             paddr += BIT(seL4_HugePageBits)) {
 
         int pdpte_index = GET_PDPT_INDEX(vaddr);
-        pdpte_pdpte_1g_ptr_new(&x64KSGlobalPDPT[pdpte_index],
+        x64KSGlobalPDPT[pdpte_index] = pdpte_pdpte_1g_new(
                                0,          /* xd               */
                                paddr,      /* physical address */
                                0,          /* PAT              */
@@ -116,7 +116,7 @@ map_kernel_window(
     }
 
     /* put the PD into the PDPT */
-    pdpte_pdpte_pd_ptr_new(&x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_KDEV)],
+    x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
                            0, /* xd */
                            kpptr_to_paddr(x64KSGlobalPD),
                            0, /* accessed */
@@ -127,7 +127,7 @@ map_kernel_window(
                            1  /* present */
                           );
     /* put the PT into the PD */
-    pde_pde_small_ptr_new(&x64KSGlobalPD[0],
+    x64KSGlobalPD[0] = pde_pde_small_new(
                           0, /* xd */
                           kpptr_to_paddr(x64KSGlobalPT),
                           0, /* accessed */
@@ -152,7 +152,7 @@ map_kernel_window(
     assert(IS_ALIGNED(PPTR_KDEV, seL4_HugePageBits));
 
     /* place the PDPT into the PML4 */
-    pml4e_ptr_new(&x64KSGlobalPML4[GET_PML4_INDEX(PPTR_BASE)],
+    x64KSGlobalPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
                   0, /* xd */
                   kpptr_to_paddr(x64KSGlobalPDPT),
                   0, /* accessed */
@@ -165,7 +165,7 @@ map_kernel_window(
 
     for (pd_index = 0; pd_index < PADDR_TOP >> seL4_HugePageBits; pd_index++) {
         /* put the 1GB kernel_base mapping into the PDPT */
-        pdpte_pdpte_pd_ptr_new(&x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_BASE) + pd_index],
+        x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_BASE) + pd_index] = pdpte_pdpte_pd_new(
                                0, /* xd */
                                kpptr_to_paddr(&x64KSGlobalPDs[pd_index][0]),
                                0, /* accessed */
@@ -177,7 +177,7 @@ map_kernel_window(
                               );
     }
 
-    pdpte_pdpte_pd_ptr_new(&x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)],
+    x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_pd_new(
                            0, /* xd */
                            kpptr_to_paddr(&x64KSGlobalPDs[0][0]),
                            0, /* accessed */
@@ -197,7 +197,7 @@ map_kernel_window(
         int pd_index = GET_PDPT_INDEX(vaddr) - GET_PDPT_INDEX(PPTR_BASE);
         int pde_index = GET_PD_INDEX(vaddr);
 
-        pde_pde_large_ptr_new(&x64KSGlobalPDs[pd_index][pde_index],
+        x64KSGlobalPDs[pd_index][pde_index] = pde_pde_large_new(
                               0, /* xd */
                               paddr,
                               0, /* pat */
@@ -214,7 +214,7 @@ map_kernel_window(
     }
 
     /* put the PD into the PDPT */
-    pdpte_pdpte_pd_ptr_new(&x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_KDEV)],
+    x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
                            0, /* xd */
                            kpptr_to_paddr(&x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0]),
                            0, /* accessed */
@@ -226,7 +226,7 @@ map_kernel_window(
                           );
 
     /* put the PT into the PD */
-    pde_pde_small_ptr_new(&x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0],
+    x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0] = pde_pde_small_new(
                           0, /* xd */
                           kpptr_to_paddr(x64KSGlobalPT),
                           0, /* accessed */
@@ -265,8 +265,7 @@ BOOT_CODE void
 init_tss(tss_t *tss)
 {
     word_t base = (word_t)&MODE_NODE_STATE(x64KSIRQStack)[IRQ_STACK_SIZE];
-    tss_ptr_new(
-        tss,
+    *tss = tss_new(
         sizeof(*tss),   /* io map base */
         0, 0,       /* ist 7 */
         0, 0,
@@ -504,8 +503,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
     pd += GET_PD_INDEX(vptr);
     assert(pde_pde_small_ptr_get_present(pd));
     pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
-    pte_ptr_new(
-        pt + GET_PT_INDEX(vptr),
+    *(pt + GET_PT_INDEX(vptr)) = pte_new(
         0,                      /* xd                   */
         pptr_to_paddr(pptr),    /* page_base_address    */
         0,                      /* global               */
@@ -528,8 +526,7 @@ map_it_pdpt_cap(cap_t vspace_cap, cap_t pdpt_cap)
     vptr_t vptr = cap_pdpt_cap_get_capPDPTMappedAddress(pdpt_cap);
 
     assert(cap_pdpt_cap_get_capPDPTIsMapped(pdpt_cap));
-    pml4e_ptr_new(
-        pml4 + GET_PML4_INDEX(vptr),
+    *(pml4 + GET_PML4_INDEX(vptr)) = pml4e_new(
         0,                      /* xd                   */
         pptr_to_paddr(pdpt),    /* pdpt_base_address    */
         0,                      /* accessed             */
@@ -553,8 +550,7 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
     pml4 += GET_PML4_INDEX(vptr);
     assert(pml4e_ptr_get_present(pml4));
     pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4));
-    pdpte_pdpte_pd_ptr_new(
-        pdpt + GET_PDPT_INDEX(vptr),
+    *(pdpt + GET_PDPT_INDEX(vptr)) = pdpte_pdpte_pd_new(
         0,                      /* xd                   */
         pptr_to_paddr(pd),      /* pd_base_address      */
         0,                      /* accessed             */
@@ -582,8 +578,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     pdpt += GET_PDPT_INDEX(vptr);
     assert(pdpte_pdpte_pd_ptr_get_present(pdpt));
     pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdpt));
-    pde_pde_small_ptr_new(
-        pd + GET_PD_INDEX(vptr),
+    *(pd + GET_PD_INDEX(vptr)) = pde_pde_small_new(
         0,                      /* xd                   */
         pptr_to_paddr(pt),      /* pt_base_address      */
         0,                      /* accessed             */
