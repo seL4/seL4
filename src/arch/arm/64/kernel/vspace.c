@@ -140,26 +140,26 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
 
     if (vm_attributes_get_armPageCacheable(attributes)) {
         armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
-            1,                          /* unprivileged execute never */
-            paddr,
-            0,                          /* global */
-            1,                          /* access flag */
-            SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
-            APFromVMRights(vm_rights),
-            NORMAL,
-            0b11                        /* reserved */
-        );
+                                                       1,                          /* unprivileged execute never */
+                                                       paddr,
+                                                       0,                          /* global */
+                                                       1,                          /* access flag */
+                                                       SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                       APFromVMRights(vm_rights),
+                                                       NORMAL,
+                                                       0b11                        /* reserved */
+                                                   );
     } else {
         armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
-            1,                          /* unprivileged execute never */
-            paddr,
-            0,                          /* global */
-            1,                          /* access flag */
-            0,                          /* Ignored - Outter shareable */
-            APFromVMRights(vm_rights),
-            DEVICE_nGnRnE,
-            0b11                        /* reserved */
-        );
+                                                       1,                          /* unprivileged execute never */
+                                                       paddr,
+                                                       0,                          /* global */
+                                                       1,                          /* access flag */
+                                                       0,                          /* Ignored - Outter shareable */
+                                                       APFromVMRights(vm_rights),
+                                                       DEVICE_nGnRnE,
+                                                       0b11                        /* reserved */
+                                                   );
     }
 }
 
@@ -180,41 +180,41 @@ map_kernel_window(void)
 
     /* place the PUD into the PGD */
     armKSGlobalKernelPGD[GET_PGD_INDEX(kernelBase)] = pgde_new(
-        pptr_to_paddr(armKSGlobalKernelPUD),
-        0b11  /* reserved */
-    );
+                                                          pptr_to_paddr(armKSGlobalKernelPUD),
+                                                          0b11  /* reserved */
+                                                      );
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_PUD_INDEX(kernelBase); idx < GET_PUD_INDEX(PPTR_TOP); idx++) {
         armKSGlobalKernelPUD[idx] = pude_pude_pd_new(
-            pptr_to_paddr(&armKSGlobalKernelPDs[idx][0])
-        );
+                                        pptr_to_paddr(&armKSGlobalKernelPDs[idx][0])
+                                    );
     }
 
     /* map the kernel window using large pages */
     vaddr = kernelBase;
     for (paddr = physBase; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
         armKSGlobalKernelPDs[GET_PUD_INDEX(vaddr)][GET_PD_INDEX(vaddr)] = pde_pde_large_new(
-            1,                        /* unprivileged execute never */
-            paddr,
-            0,                        /* global */
-            1,                        /* access flag */
-            SMP_TERNARY(3, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
-            0,                        /* VMKernelOnly */
-            NORMAL
-        );
+                                                                              1,                        /* unprivileged execute never */
+                                                                              paddr,
+                                                                              0,                        /* global */
+                                                                              1,                        /* access flag */
+                                                                              SMP_TERNARY(3, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                                              0,                        /* VMKernelOnly */
+                                                                              NORMAL
+                                                                          );
         vaddr += BIT(seL4_LargePageBits);
     }
 
     /* put the PD into the PUD for device window */
     armKSGlobalKernelPUD[GET_PUD_INDEX(PPTR_TOP)] = pude_pude_pd_new(
-        pptr_to_paddr(&armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][0])
-    );
+                                                        pptr_to_paddr(&armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][0])
+                                                    );
 
     /* put the PT into the PD for device window */
     armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS) - 1][BIT(PD_INDEX_BITS) - 1] = pde_pde_small_new(
-        pptr_to_paddr(armKSGlobalKernelPT)
-    );
+                                                                                pptr_to_paddr(armKSGlobalKernelPT)
+                                                                            );
 
     map_kernel_devices();
 }
@@ -242,15 +242,15 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t executable)
     assert(pde_pde_small_ptr_get_present(pd));
     pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
     *(pt + GET_PT_INDEX(vptr)) = pte_new(
-        !executable,                    /* unprivileged execute never */
-        pptr_to_paddr(pptr),            /* page_base_address    */
-        1,                              /* not global */
-        1,                              /* access flag */
-        SMP_TERNARY(3, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
-        APFromVMRights(VMReadWrite),
-        NORMAL,
-        0b11                            /* reserved */
-    );
+                                     !executable,                    /* unprivileged execute never */
+                                     pptr_to_paddr(pptr),            /* page_base_address    */
+                                     1,                              /* not global */
+                                     1,                              /* access flag */
+                                     SMP_TERNARY(3, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
+                                     APFromVMRights(VMReadWrite),
+                                     NORMAL,
+                                     0b11                            /* reserved */
+                                 );
 }
 
 static BOOT_CODE cap_t
@@ -291,8 +291,8 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     assert(pude_pude_pd_ptr_get_present(pud));
     pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pud));
     *(pd + GET_PD_INDEX(vptr)) = pde_pde_small_new(
-        pptr_to_paddr(pt)
-    );
+                                     pptr_to_paddr(pt)
+                                 );
 }
 
 static BOOT_CODE cap_t
@@ -323,8 +323,8 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
     assert(pgde_ptr_get_present(pgd));
     pud = paddr_to_pptr(pgde_ptr_get_pud_base_address(pgd));
     *(pud + GET_PUD_INDEX(vptr)) = pude_pude_pd_new(
-        pptr_to_paddr(pd)
-    );
+                                       pptr_to_paddr(pd)
+                                   );
 }
 
 static BOOT_CODE cap_t
@@ -351,9 +351,9 @@ map_it_pud_cap(cap_t vspace_cap, cap_t pud_cap)
     assert(cap_page_upper_directory_cap_get_capPUDIsMapped(pud_cap));
 
     *(pgd + GET_PGD_INDEX(vptr)) = pgde_new(
-        pptr_to_paddr(pud),
-        0b11                        /* reserved */
-    );
+                                       pptr_to_paddr(pud),
+                                       0b11                        /* reserved */
+                                   );
 }
 
 static BOOT_CODE cap_t

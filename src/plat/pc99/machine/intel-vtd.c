@@ -293,12 +293,12 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
         flushCacheRange(iopt, seL4_IOPageTableBits);
 
         *vtd_context_slot = vtd_cte_new(
-            x86KSFirstValidIODomain,  /* Domain ID                              */
-            true,                     /* RMRR Mapping                           */
-            x86KSnumIOPTLevels - 2,   /* Address Width                          */
-            pptr_to_paddr(iopt),      /* Address Space Root                     */
-            0,                        /* Translation Type                       */
-            true);                    /* Present                                */
+                                x86KSFirstValidIODomain,  /* Domain ID                              */
+                                true,                     /* RMRR Mapping                           */
+                                x86KSnumIOPTLevels - 2,   /* Address Width                          */
+                                pptr_to_paddr(iopt),      /* Address Space Root                     */
+                                0,                        /* Translation Type                       */
+                                true);                    /* Present                                */
         x86KSFirstValidIODomain++;
         flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
     } else {

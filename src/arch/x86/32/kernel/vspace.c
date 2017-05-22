@@ -31,34 +31,34 @@ BOOT_CODE void
 init_tss(tss_t* tss)
 {
     *tss = tss_new(
-        sizeof(*tss),   /* io_map_base  */
-        0,              /* trap         */
-        SEL_NULL,       /* sel_ldt      */
-        SEL_NULL,       /* gs           */
-        SEL_NULL,       /* fs           */
-        SEL_NULL,       /* ds           */
-        SEL_NULL,       /* ss           */
-        SEL_NULL,       /* cs           */
-        SEL_NULL,       /* es           */
-        0,              /* edi          */
-        0,              /* esi          */
-        0,              /* ebp          */
-        0,              /* esp          */
-        0,              /* ebx          */
-        0,              /* edx          */
-        0,              /* ecx          */
-        0,              /* eax          */
-        0,              /* eflags       */
-        0,              /* eip          */
-        0,              /* cr3          */
-        SEL_NULL,       /* ss2          */
-        0,              /* esp2         */
-        SEL_NULL,       /* ss1          */
-        0,              /* esp1         */
-        SEL_DS_0,       /* ss0          */
-        0,              /* esp0         */
-        0               /* prev_task    */
-    );
+               sizeof(*tss),   /* io_map_base  */
+               0,              /* trap         */
+               SEL_NULL,       /* sel_ldt      */
+               SEL_NULL,       /* gs           */
+               SEL_NULL,       /* fs           */
+               SEL_NULL,       /* ds           */
+               SEL_NULL,       /* ss           */
+               SEL_NULL,       /* cs           */
+               SEL_NULL,       /* es           */
+               0,              /* edi          */
+               0,              /* esi          */
+               0,              /* ebp          */
+               0,              /* esp          */
+               0,              /* ebx          */
+               0,              /* edx          */
+               0,              /* ecx          */
+               0,              /* eax          */
+               0,              /* eflags       */
+               0,              /* eip          */
+               0,              /* cr3          */
+               SEL_NULL,       /* ss2          */
+               0,              /* esp2         */
+               SEL_NULL,       /* ss1          */
+               0,              /* esp1         */
+               SEL_DS_0,       /* ss0          */
+               0,              /* esp0         */
+               0               /* prev_task    */
+           );
     memset(&ARCH_NODE_STATE(x86KStss).io_map[0], 0xff, sizeof(ARCH_NODE_STATE(x86KStss).io_map));
 }
 /* initialise Global Descriptor Table (GDT) */
@@ -353,18 +353,18 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
         unsigned int pg_offset = i << LARGE_PAGE_BITS; // num pages since start * page size
 
         *(get_boot_pd() + virt_pd_start + i) = pde_pde_large_new(
-                              phys_pg_start + pg_offset, /* physical address */
-                              0, /* pat            */
-                              0, /* avl            */
-                              1, /* global         */
-                              0, /* dirty          */
-                              0, /* accessed       */
-                              0, /* cache_disabled */
-                              0, /* write_through  */
-                              0, /* super_user     */
-                              1, /* read_write     */
-                              1  /* present        */
-                             );
+                                                   phys_pg_start + pg_offset, /* physical address */
+                                                   0, /* pat            */
+                                                   0, /* avl            */
+                                                   1, /* global         */
+                                                   0, /* dirty          */
+                                                   0, /* accessed       */
+                                                   0, /* cache_disabled */
+                                                   0, /* write_through  */
+                                                   0, /* super_user     */
+                                                   1, /* read_write     */
+                                                   1  /* present        */
+                                               );
         invalidateLocalTranslationSingle(virt_pg_start + pg_offset);
     }
 

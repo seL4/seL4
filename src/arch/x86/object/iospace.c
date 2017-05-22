@@ -130,13 +130,13 @@ unmapVTDContextEntry(cap_t cap)
     vtd_cte_t *cte = lookup_vtd_context_slot(cap);
     assert(cte != 0);
     *cte = vtd_cte_new(
-        0,
-        false,
-        0,
-        0,
-        0,
-        false
-    );
+               0,
+               false,
+               0,
+               0,
+               0,
+               false
+           );
 
     flushCacheRange(cte, VTD_CTE_SIZE_BITS);
     invalidate_iotlb();
@@ -432,13 +432,13 @@ void deleteIOPageTable(cap_t io_pt_cap)
                 return;
             }
             *vtd_context_slot = vtd_cte_new(
-                0,      /* Domain ID          */
-                false,  /* RMRR               */
-                0,      /* Address Width      */
-                0,      /* Address Space Root */
-                0,      /* Translation Type   */
-                0       /* Present            */
-            );
+                                    0,      /* Domain ID          */
+                                    false,  /* RMRR               */
+                                    0,      /* Address Width      */
+                                    0,      /* Address Space Root */
+                                    0,      /* Translation Type   */
+                                    0       /* Present            */
+                                );
             flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
         } else {
             io_address = cap_io_page_table_cap_get_capIOPTMappedAddress(io_pt_cap);
@@ -452,10 +452,10 @@ void deleteIOPageTable(cap_t io_pt_cap)
                 return;
             }
             *lu_ret.ioptSlot = vtd_pte_new(
-                0,  /* Physical Address */
-                0,  /* Read Permission  */
-                0   /* Write Permission */
-            );
+                                   0,  /* Physical Address */
+                                   0,  /* Read Permission  */
+                                   0   /* Write Permission */
+                               );
             flushCacheRange(lu_ret.ioptSlot, VTD_PTE_SIZE_BITS);
         }
         invalidate_iotlb();
@@ -489,10 +489,10 @@ void unmapIOPage(cap_t cap)
     }
 
     *lu_ret.ioptSlot = vtd_pte_new(
-        0,  /* Physical Address */
-        0,  /* Read Permission  */
-        0   /* Write Permission */
-    );
+                           0,  /* Physical Address */
+                           0,  /* Read Permission  */
+                           0   /* Write Permission */
+                       );
 
     flushCacheRange(lu_ret.ioptSlot, VTD_PTE_SIZE_BITS);
     invalidate_iotlb();

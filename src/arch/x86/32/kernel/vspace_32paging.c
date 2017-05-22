@@ -73,35 +73,35 @@ init_boot_pd(void)
     /* identity mapping from 0 up to PPTR_BASE (virtual address) */
     for (i = 0; i < (PPTR_BASE >> seL4_LargePageBits); i++) {
         *(_boot_pd + i) = pde_pde_large_new_phys(
-            i << seL4_LargePageBits, /* physical address */
-            0, /* pat            */
-            0, /* avl            */
-            1, /* global         */
-            0, /* dirty          */
-            0, /* accessed       */
-            0, /* cache_disabled */
-            0, /* write_through  */
-            0, /* super_user     */
-            1, /* read_write     */
-            1  /* present        */
-        );
+                              i << seL4_LargePageBits, /* physical address */
+                              0, /* pat            */
+                              0, /* avl            */
+                              1, /* global         */
+                              0, /* dirty          */
+                              0, /* accessed       */
+                              0, /* cache_disabled */
+                              0, /* write_through  */
+                              0, /* super_user     */
+                              1, /* read_write     */
+                              1  /* present        */
+                          );
     }
 
     /* mapping of PPTR_BASE (virtual address) to PADDR_BASE up to end of virtual address space */
     for (i = 0; i < ((-PPTR_BASE) >> seL4_LargePageBits); i++) {
         *(_boot_pd + i + (PPTR_BASE >> seL4_LargePageBits)) = pde_pde_large_new_phys(
-            (i << seL4_LargePageBits) + PADDR_BASE, /* physical address */
-            0, /* pat            */
-            0, /* avl            */
-            1, /* global         */
-            0, /* dirty          */
-            0, /* accessed       */
-            0, /* cache_disabled */
-            0, /* write_through  */
-            0, /* super_user     */
-            1, /* read_write     */
-            1  /* present        */
-        );
+                                                                  (i << seL4_LargePageBits) + PADDR_BASE, /* physical address */
+                                                                  0, /* pat            */
+                                                                  0, /* avl            */
+                                                                  1, /* global         */
+                                                                  0, /* dirty          */
+                                                                  0, /* accessed       */
+                                                                  0, /* cache_disabled */
+                                                                  0, /* write_through  */
+                                                                  0, /* super_user     */
+                                                                  1, /* read_write     */
+                                                                  1  /* present        */
+                                                              );
     }
 }
 
@@ -114,15 +114,15 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
     *(pd + (vptr >> seL4_LargePageBits)) = pde_pde_small_new(
-        pptr_to_paddr(pt), /* pt_base_address */
-        0,                 /* avl             */
-        0,                 /* accessed        */
-        0,                 /* cache_disabled  */
-        0,                 /* write_through   */
-        1,                 /* super_user      */
-        1,                 /* read_write      */
-        1                  /* present         */
-    );
+                                               pptr_to_paddr(pt), /* pt_base_address */
+                                               0,                 /* avl             */
+                                               0,                 /* accessed        */
+                                               0,                 /* cache_disabled  */
+                                               0,                 /* write_through   */
+                                               1,                 /* super_user      */
+                                               1,                 /* read_write      */
+                                               1                  /* present         */
+                                           );
     invalidateLocalPageStructureCache();
 }
 
@@ -145,18 +145,18 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
     pd += (vptr >> seL4_LargePageBits);
     pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
     *(pt + ((vptr & MASK(seL4_LargePageBits)) >> seL4_PageBits)) = pte_new(
-        pptr_to_paddr(frame), /* page_base_address */
-        0,                    /* avl               */
-        0,                    /* global            */
-        0,                    /* pat               */
-        0,                    /* dirty             */
-        0,                    /* accessed          */
-        0,                    /* cache_disabled    */
-        0,                    /* write_through     */
-        1,                    /* super_user        */
-        1,                    /* read_write        */
-        1                     /* present           */
-    );
+                                                                       pptr_to_paddr(frame), /* page_base_address */
+                                                                       0,                    /* avl               */
+                                                                       0,                    /* global            */
+                                                                       0,                    /* pat               */
+                                                                       0,                    /* dirty             */
+                                                                       0,                    /* accessed          */
+                                                                       0,                    /* cache_disabled    */
+                                                                       0,                    /* write_through     */
+                                                                       1,                    /* super_user        */
+                                                                       1,                    /* read_write        */
+                                                                       1                     /* present           */
+                                                                   );
     invalidateLocalPageStructureCache();
 }
 

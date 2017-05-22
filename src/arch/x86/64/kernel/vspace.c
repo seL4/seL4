@@ -68,29 +68,29 @@ map_kernel_window(
     assert(IS_ALIGNED(PPTR_KDEV, seL4_HugePageBits));
     /* place the PDPT into the PML4 */
     x64KSGlobalPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
-                  0, /* xd */
-                  kpptr_to_paddr(x64KSGlobalPDPT),
-                  0, /* accessed */
-                  0, /* cache_disabled */
-                  0, /* write_through */
-                  0, /* super_user */
-                  1, /* read_write */
-                  1  /* present */
-                 );
+                                                     0, /* xd */
+                                                     kpptr_to_paddr(x64KSGlobalPDPT),
+                                                     0, /* accessed */
+                                                     0, /* cache_disabled */
+                                                     0, /* write_through */
+                                                     0, /* super_user */
+                                                     1, /* read_write */
+                                                     1  /* present */
+                                                 );
     /* put the 1GB kernel_base mapping into the PDPT */
     x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_1g_new(
-                           0, /* xd */
-                           PADDR_BASE,
-                           0, /* PAT */
-                           1, /* global */
-                           0, /* dirty */
-                           0, /* accessed */
-                           0, /* cache_disabled */
-                           0, /* write_through */
-                           0, /* super_user */
-                           1, /* read_write */
-                           1  /* present */
-                          );
+                                                       0, /* xd */
+                                                       PADDR_BASE,
+                                                       0, /* PAT */
+                                                       1, /* global */
+                                                       0, /* dirty */
+                                                       0, /* accessed */
+                                                       0, /* cache_disabled */
+                                                       0, /* write_through */
+                                                       0, /* super_user */
+                                                       1, /* read_write */
+                                                       1  /* present */
+                                                   );
     /* also map the physical memory into the big kernel window */
     paddr = 0;
     vaddr = PPTR_BASE;
@@ -99,44 +99,44 @@ map_kernel_window(
 
         int pdpte_index = GET_PDPT_INDEX(vaddr);
         x64KSGlobalPDPT[pdpte_index] = pdpte_pdpte_1g_new(
-                               0,          /* xd               */
-                               paddr,      /* physical address */
-                               0,          /* PAT              */
-                               1,          /* global           */
-                               0,          /* dirty            */
-                               0,          /* accessed         */
-                               0,          /* cache_disabled   */
-                               0,          /* write_through    */
-                               0,          /* super_user       */
-                               1,          /* read_write       */
-                               1           /* present          */
-                              );
+                                           0,          /* xd               */
+                                           paddr,      /* physical address */
+                                           0,          /* PAT              */
+                                           1,          /* global           */
+                                           0,          /* dirty            */
+                                           0,          /* accessed         */
+                                           0,          /* cache_disabled   */
+                                           0,          /* write_through    */
+                                           0,          /* super_user       */
+                                           1,          /* read_write       */
+                                           1           /* present          */
+                                       );
 
         vaddr += BIT(seL4_HugePageBits);
     }
 
     /* put the PD into the PDPT */
     x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
+                                                     0, /* xd */
+                                                     kpptr_to_paddr(x64KSGlobalPD),
+                                                     0, /* accessed */
+                                                     0, /* cache_disabled */
+                                                     0, /* write_through */
+                                                     0, /* super_user */
+                                                     1, /* read_write */
+                                                     1  /* present */
+                                                 );
+    /* put the PT into the PD */
+    x64KSGlobalPD[0] = pde_pde_small_new(
                            0, /* xd */
-                           kpptr_to_paddr(x64KSGlobalPD),
+                           kpptr_to_paddr(x64KSGlobalPT),
                            0, /* accessed */
                            0, /* cache_disabled */
                            0, /* write_through */
                            0, /* super_user */
                            1, /* read_write */
                            1  /* present */
-                          );
-    /* put the PT into the PD */
-    x64KSGlobalPD[0] = pde_pde_small_new(
-                          0, /* xd */
-                          kpptr_to_paddr(x64KSGlobalPT),
-                          0, /* accessed */
-                          0, /* cache_disabled */
-                          0, /* write_through */
-                          0, /* super_user */
-                          1, /* read_write */
-                          1  /* present */
-                         );
+                       );
 #else
 
     int pd_index = 0;
@@ -153,40 +153,40 @@ map_kernel_window(
 
     /* place the PDPT into the PML4 */
     x64KSGlobalPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
-                  0, /* xd */
-                  kpptr_to_paddr(x64KSGlobalPDPT),
-                  0, /* accessed */
-                  0, /* cache_disabled */
-                  0, /* write_through */
-                  0, /* super_user */
-                  1, /* read_write */
-                  1  /* present */
-                 );
+                                                     0, /* xd */
+                                                     kpptr_to_paddr(x64KSGlobalPDPT),
+                                                     0, /* accessed */
+                                                     0, /* cache_disabled */
+                                                     0, /* write_through */
+                                                     0, /* super_user */
+                                                     1, /* read_write */
+                                                     1  /* present */
+                                                 );
 
     for (pd_index = 0; pd_index < PADDR_TOP >> seL4_HugePageBits; pd_index++) {
         /* put the 1GB kernel_base mapping into the PDPT */
         x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_BASE) + pd_index] = pdpte_pdpte_pd_new(
-                               0, /* xd */
-                               kpptr_to_paddr(&x64KSGlobalPDs[pd_index][0]),
-                               0, /* accessed */
-                               0, /* cache disabled */
-                               0, /* write through */
-                               0, /* super user */
-                               1, /* read write */
-                               1 /* present */
-                              );
+                                                                    0, /* xd */
+                                                                    kpptr_to_paddr(&x64KSGlobalPDs[pd_index][0]),
+                                                                    0, /* accessed */
+                                                                    0, /* cache disabled */
+                                                                    0, /* write through */
+                                                                    0, /* super user */
+                                                                    1, /* read write */
+                                                                    1 /* present */
+                                                                );
     }
 
     x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_pd_new(
-                           0, /* xd */
-                           kpptr_to_paddr(&x64KSGlobalPDs[0][0]),
-                           0, /* accessed */
-                           0, /* cache disable */
-                           1, /* write through */
-                           0, /* super user */
-                           1, /* read write */
-                           1  /* present */
-                          );
+                                                       0, /* xd */
+                                                       kpptr_to_paddr(&x64KSGlobalPDs[0][0]),
+                                                       0, /* accessed */
+                                                       0, /* cache disable */
+                                                       1, /* write through */
+                                                       0, /* super user */
+                                                       1, /* read write */
+                                                       1  /* present */
+                                                   );
 
     paddr = 0;
     vaddr = PPTR_BASE;
@@ -198,44 +198,44 @@ map_kernel_window(
         int pde_index = GET_PD_INDEX(vaddr);
 
         x64KSGlobalPDs[pd_index][pde_index] = pde_pde_large_new(
-                              0, /* xd */
-                              paddr,
-                              0, /* pat */
-                              1, /* global */
-                              0, /* dirty */
-                              0, /* accessed */
-                              0, /* cache disabled */
-                              0, /* write through */
-                              0, /* super user */
-                              1, /* read write */
-                              1  /* present */
-                             );
+                                                  0, /* xd */
+                                                  paddr,
+                                                  0, /* pat */
+                                                  1, /* global */
+                                                  0, /* dirty */
+                                                  0, /* accessed */
+                                                  0, /* cache disabled */
+                                                  0, /* write through */
+                                                  0, /* super user */
+                                                  1, /* read write */
+                                                  1  /* present */
+                                              );
         vaddr += 0x200000;
     }
 
     /* put the PD into the PDPT */
     x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
-                           0, /* xd */
-                           kpptr_to_paddr(&x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0]),
-                           0, /* accessed */
-                           0, /* cache_disabled */
-                           0, /* write_through */
-                           0, /* super_user */
-                           1, /* read_write */
-                           1  /* present */
-                          );
+                                                     0, /* xd */
+                                                     kpptr_to_paddr(&x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0]),
+                                                     0, /* accessed */
+                                                     0, /* cache_disabled */
+                                                     0, /* write_through */
+                                                     0, /* super_user */
+                                                     1, /* read_write */
+                                                     1  /* present */
+                                                 );
 
     /* put the PT into the PD */
     x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0] = pde_pde_small_new(
-                          0, /* xd */
-                          kpptr_to_paddr(x64KSGlobalPT),
-                          0, /* accessed */
-                          0, /* cache_disabled */
-                          0, /* write_through */
-                          0, /* super_user */
-                          1, /* read_write */
-                          1  /* present */
-                         );
+                                                      0, /* xd */
+                                                      kpptr_to_paddr(x64KSGlobalPT),
+                                                      0, /* accessed */
+                                                      0, /* cache_disabled */
+                                                      0, /* write_through */
+                                                      0, /* super_user */
+                                                      1, /* read_write */
+                                                      1  /* present */
+                                                  );
 #endif
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0
@@ -266,19 +266,19 @@ init_tss(tss_t *tss)
 {
     word_t base = (word_t)&MODE_NODE_STATE(x64KSIRQStack)[IRQ_STACK_SIZE];
     *tss = tss_new(
-        sizeof(*tss),   /* io map base */
-        0, 0,       /* ist 7 */
-        0, 0,
-        0, 0,
-        0, 0,
-        0, 0,
-        0, 0,
-        /* ist 1 is the stack frame we use for interrupts */
-        base >> 32, base & 0xffffffff,  /* ist 1 */
-        0, 0,       /* rsp 2 */
-        0, 0,       /* rsp 1 */
-        0, 0        /* rsp 0 */
-    );
+               sizeof(*tss),   /* io map base */
+               0, 0,       /* ist 7 */
+               0, 0,
+               0, 0,
+               0, 0,
+               0, 0,
+               0, 0,
+               /* ist 1 is the stack frame we use for interrupts */
+               base >> 32, base & 0xffffffff,  /* ist 1 */
+               0, 0,       /* rsp 2 */
+               0, 0,       /* rsp 1 */
+               0, 0        /* rsp 0 */
+           );
     /* set the IO map to all 1 to block user IN/OUT instructions */
     memset(&ARCH_NODE_STATE(x86KStss).io_map[0], 0xff, sizeof(ARCH_NODE_STATE(x86KStss).io_map));
 }
@@ -504,18 +504,18 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
     assert(pde_pde_small_ptr_get_present(pd));
     pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
     *(pt + GET_PT_INDEX(vptr)) = pte_new(
-        0,                      /* xd                   */
-        pptr_to_paddr(pptr),    /* page_base_address    */
-        0,                      /* global               */
-        0,                      /* pat                  */
-        0,                      /* dirty                */
-        0,                      /* accessed             */
-        0,                      /* cache_disabled       */
-        0,                      /* write_through        */
-        1,                      /* super_user           */
-        1,                      /* read_write           */
-        1                       /* present              */
-    );
+                                     0,                      /* xd                   */
+                                     pptr_to_paddr(pptr),    /* page_base_address    */
+                                     0,                      /* global               */
+                                     0,                      /* pat                  */
+                                     0,                      /* dirty                */
+                                     0,                      /* accessed             */
+                                     0,                      /* cache_disabled       */
+                                     0,                      /* write_through        */
+                                     1,                      /* super_user           */
+                                     1,                      /* read_write           */
+                                     1                       /* present              */
+                                 );
 }
 
 static BOOT_CODE void
@@ -527,15 +527,15 @@ map_it_pdpt_cap(cap_t vspace_cap, cap_t pdpt_cap)
 
     assert(cap_pdpt_cap_get_capPDPTIsMapped(pdpt_cap));
     *(pml4 + GET_PML4_INDEX(vptr)) = pml4e_new(
-        0,                      /* xd                   */
-        pptr_to_paddr(pdpt),    /* pdpt_base_address    */
-        0,                      /* accessed             */
-        0,                      /* cache_disabled       */
-        0,                      /* write_through        */
-        1,                      /* super_user           */
-        1,                      /* read_write           */
-        1                       /* present              */
-    );
+                                         0,                      /* xd                   */
+                                         pptr_to_paddr(pdpt),    /* pdpt_base_address    */
+                                         0,                      /* accessed             */
+                                         0,                      /* cache_disabled       */
+                                         0,                      /* write_through        */
+                                         1,                      /* super_user           */
+                                         1,                      /* read_write           */
+                                         1                       /* present              */
+                                     );
 }
 
 BOOT_CODE void
@@ -551,15 +551,15 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
     assert(pml4e_ptr_get_present(pml4));
     pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4));
     *(pdpt + GET_PDPT_INDEX(vptr)) = pdpte_pdpte_pd_new(
-        0,                      /* xd                   */
-        pptr_to_paddr(pd),      /* pd_base_address      */
-        0,                      /* accessed             */
-        0,                      /* cache_disabled       */
-        0,                      /* write_through        */
-        1,                      /* super_user           */
-        1,                      /* read_write           */
-        1                       /* present              */
-    );
+                                         0,                      /* xd                   */
+                                         pptr_to_paddr(pd),      /* pd_base_address      */
+                                         0,                      /* accessed             */
+                                         0,                      /* cache_disabled       */
+                                         0,                      /* write_through        */
+                                         1,                      /* super_user           */
+                                         1,                      /* read_write           */
+                                         1                       /* present              */
+                                     );
 }
 
 BOOT_CODE void
@@ -579,15 +579,15 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     assert(pdpte_pdpte_pd_ptr_get_present(pdpt));
     pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdpt));
     *(pd + GET_PD_INDEX(vptr)) = pde_pde_small_new(
-        0,                      /* xd                   */
-        pptr_to_paddr(pt),      /* pt_base_address      */
-        0,                      /* accessed             */
-        0,                      /* cache_disabled       */
-        0,                      /* write_through        */
-        1,                      /* super_user           */
-        1,                      /* read_write           */
-        1                       /* present              */
-    );
+                                     0,                      /* xd                   */
+                                     pptr_to_paddr(pt),      /* pt_base_address      */
+                                     0,                      /* accessed             */
+                                     0,                      /* cache_disabled       */
+                                     0,                      /* write_through        */
+                                     1,                      /* super_user           */
+                                     1,                      /* read_write           */
+                                     1                       /* present              */
+                                 );
 }
 
 BOOT_CODE void*
