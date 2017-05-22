@@ -38,7 +38,7 @@ static void NORETURN restore_vmx(void)
     restoreVMCS();
 #ifdef CONFIG_HARDWARE_DEBUG_API
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
-    loadAllDisabledBreakpointState(&NODE_STATE(ksCurThread)->tcbArch);
+    loadAllDisabledBreakpointState(ksCurThread);
 #endif
 #if CONFIG_MAX_NUM_NODES > 1
     NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(CONFIG_KERNEL_STACK_BITS) - 4;

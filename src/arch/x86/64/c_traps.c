@@ -42,7 +42,7 @@ static void NORETURN restore_vmx(void)
     tcb_t *cur_thread = NODE_STATE(ksCurThread);
 #ifdef CONFIG_HARDWARE_DEBUG_API
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
-    loadAllDisabledBreakpointState(&cur_thread->tcbArch);
+    loadAllDisabledBreakpointState(cur_thread);
 #endif
     if (cur_thread->tcbArch.tcbVCPU->launched) {
         /* attempt to do a vmresume */
