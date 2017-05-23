@@ -129,7 +129,7 @@
             <param dir="in" name="fault_ep" type="seL4_Word"
                 description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
             <param dir="in" name="priority" type="seL4_PrioProps_t"
-                description="The thread's new priority."/>
+                description="The thread's new priority properties: the maximum control priority and priority."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_CapData_t"
