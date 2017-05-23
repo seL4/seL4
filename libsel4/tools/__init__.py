@@ -14,4 +14,4 @@
 # This file allows the the libsel4 tools directory to be imported as
 # a python module.
 
-import syscall_stub_gen
+from . import syscall_stub_gen
