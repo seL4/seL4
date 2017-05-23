@@ -25,6 +25,11 @@ output_filename = sys.argv[1]
 p = subprocess.Popen(["git", "log", "-r", "HEAD", "-n", "1", "--pretty=format:%ci"],
         stdout=subprocess.PIPE)
 commit_date_string = p.communicate()[0]
+
+# in python3, this is a bytes, so convert it to a str
+if isinstance(commit_date_string, bytes):
+    commit_date_string = commit_date_string.decode("utf-8")
+
 commit_date = datetime.datetime.strptime(commit_date_string.split()[0], "%Y-%m-%d")
 
 # Output in a format that LaTeX can read.

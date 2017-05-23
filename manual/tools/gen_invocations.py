@@ -15,6 +15,7 @@ import os
 import sys
 import argparse
 import operator
+from functools import reduce
 from libsel4_tools import syscall_stub_gen
 
 # Word size is required by the syscall_stub_gen library, but won't affect the output
