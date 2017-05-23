@@ -11,6 +11,11 @@
 # @TAG(D61_BSD)
 #
 
+"""
+Script to generate a c header file containing function prototypes and
+doxygen comments from a given interface defined in an xml file.
+"""
+
 import os
 import sys
 import argparse
