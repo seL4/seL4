@@ -329,13 +329,6 @@ menu "seL4 System Parameters"
             to be several bits larger than 4 to fit untyped caps and
             cannot be 27 bits as it won't fit in memory.
 
-    config TIMER_TICK_MS
-        int "Timer tick period in milliseconds"
-        default 2
-        help
-            The number of milliseconds between timer ticks.
-
-
     config BOOT_THREAD_TIME_SLICE
         int "Boot thread time slice"
         default 5
