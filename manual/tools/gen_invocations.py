@@ -20,8 +20,10 @@ import os
 import sys
 import argparse
 import operator
+import logging
 from functools import reduce
 from libsel4_tools import syscall_stub_gen
+from lxml import etree
 
 # Word size is required by the syscall_stub_gen library, but won't affect the output
 WORD_SIZE = 32
@@ -79,8 +81,12 @@ def process_args():
     parser.add_argument("-o", "--output", dest="output", default="/dev/stdout",
                         type=str,
                         help="Output file to write stub to. (default: %(default)s).")
-    parser.add_argument("files", metavar="FILES", nargs="+", type=argparse.FileType('r'),
+    parser.add_argument("files", metavar="FILES", nargs="+", type=str,
                         help="Input XML files.")
+
+    parser.add_argument("-d", "--dtd", nargs="?", type=str,
+                        help="DTD xml schema to validate input files against")
+
     return parser
 
 def gen_header(output_file):
@@ -99,6 +105,15 @@ def gen_footer(output_file):
 def main():
     parser = process_args()
     args = parser.parse_args()
+
+    if args.dtd is not None:
+        dtd = etree.DTD(args.dtd)
+        for f in args.files:
+            xml = etree.parse(f)
+            if not dtd.validate(xml):
+                logging.error("Failed to validate %s against %s" % (f, args.dtd))
+                logging.error(dtd.error_log)
+                return -1
 
     if not os.path.exists(os.path.dirname(args.output)):
         os.makedirs(os.path.dirname(args.output))

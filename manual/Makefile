@@ -86,6 +86,8 @@ GenerateLatexTool = tools/parse_doxygen_xml.py
 
 GenerateObjectInvocationTool = tools/gen_invocations.py
 
+InterfaceDtd = $(Libsel4Dir)/tools/sel4_idl.dtd
+
 .PHONY: FORCE
 
 all: pdf
@@ -146,7 +148,7 @@ ${Stage}/object_invocations.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
                                ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/sel4arch.xml \
                                ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml
 	@echo "====> Generating documented object invocation header"
-	${Q}python ${GenerateObjectInvocationTool} --output $@ $^
+	python ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output $@ $^
 
 # Collect generated headers into single rule
 generated-headers: ${Stage}/object_invocations.h
