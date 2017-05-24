@@ -10,6 +10,7 @@
 
 <!ELEMENT api (struct*,interface*)>
 <!ATTLIST api name CDATA #IMPLIED>
+<!ATTLIST api label_prefix CDATA #IMPLIED>
 
 <!ELEMENT struct (member*)>
 <!ATTLIST struct name CDATA #REQUIRED>
