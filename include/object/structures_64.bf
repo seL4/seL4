@@ -115,11 +115,12 @@ block domain_cap {
 }
 
 block sched_context_cap {
-    padding 64
+    field_high capSCPtr 48
+    field capSCSizeBits 6
+    padding 10
 
     field capType 5
-    padding       11
-    field_high capSCPtr 48
+    padding       59
 }
 
 block sched_control_cap {
