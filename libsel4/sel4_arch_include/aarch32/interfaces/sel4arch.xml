@@ -10,41 +10,41 @@
   -->
 <api>
     <struct name="seL4_UserContext">
-		<member name="pc"/>
-		<member name="sp"/>
-		<member name="cpsr"/>
-		<member name="r0"/>
-		<member name="r1"/>
-		<member name="r8"/>
-		<member name="r9"/>
-		<member name="r10"/>
-		<member name="r11"/>
-		<member name="r12"/>
-		<member name="r2"/>
-		<member name="r3"/>
-		<member name="r4"/>
-		<member name="r5"/>
-		<member name="r6"/>
-		<member name="r7"/>
-		<member name="r14"/>
+        <member name="pc"/>
+        <member name="sp"/>
+        <member name="cpsr"/>
+        <member name="r0"/>
+        <member name="r1"/>
+        <member name="r8"/>
+        <member name="r9"/>
+        <member name="r10"/>
+        <member name="r11"/>
+        <member name="r12"/>
+        <member name="r2"/>
+        <member name="r3"/>
+        <member name="r4"/>
+        <member name="r5"/>
+        <member name="r6"/>
+        <member name="r7"/>
+        <member name="r14"/>
     </struct>
-	<interface name="seL4_ARM_PageDirectory">
-		<method id="ARMPDClean_Data" name="Clean_Data">
-			<param dir="in" name="start" type="seL4_Word"/>
-			<param dir="in" name="end" type="seL4_Word"/>
-		</method>
-		<method id="ARMPDInvalidate_Data" name="Invalidate_Data">
-			<param dir="in" name="start" type="seL4_Word"/>
-			<param dir="in" name="end" type="seL4_Word"/>
-		</method>
-		<method id="ARMPDCleanInvalidate_Data" name="CleanInvalidate_Data">
-			<param dir="in" name="start" type="seL4_Word"/>
-			<param dir="in" name="end" type="seL4_Word"/>
-		</method>
-		<method id="ARMPDUnify_Instruction" name="Unify_Instruction">
-			<param dir="in" name="start" type="seL4_Word"/>
-			<param dir="in" name="end" type="seL4_Word"/>
-		</method>
+    <interface name="seL4_ARM_PageDirectory">
+        <method id="ARMPDClean_Data" name="Clean_Data">
+            <param dir="in" name="start" type="seL4_Word"/>
+            <param dir="in" name="end" type="seL4_Word"/>
+        </method>
+        <method id="ARMPDInvalidate_Data" name="Invalidate_Data">
+            <param dir="in" name="start" type="seL4_Word"/>
+            <param dir="in" name="end" type="seL4_Word"/>
+        </method>
+        <method id="ARMPDCleanInvalidate_Data" name="CleanInvalidate_Data">
+            <param dir="in" name="start" type="seL4_Word"/>
+            <param dir="in" name="end" type="seL4_Word"/>
+        </method>
+        <method id="ARMPDUnify_Instruction" name="Unify_Instruction">
+            <param dir="in" name="start" type="seL4_Word"/>
+            <param dir="in" name="end" type="seL4_Word"/>
+        </method>
     </interface>
     <interface name="seL4_ARM_VCPU">
         <method id="ARMVCPUSetTCB" name="SetTCB" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)">
