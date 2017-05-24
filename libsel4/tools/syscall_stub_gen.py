@@ -802,6 +802,8 @@ def parse_xml_file(input_file, valid_types):
             method_return_description = method.getElementsByTagName("return")
             if method_return_description:
                 comment_lines.append("@return @xmlonly %s @endxmlonly" % get_xml_element_contents(method_return_description[0]))
+            else:
+                comment_lines.append("@return @xmlonly <errorenumdesc/> @endxmlonly")
 
             #
             # Get parameters.
