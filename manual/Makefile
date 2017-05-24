@@ -111,17 +111,40 @@ doxygen: generated-headers
 ${DoxygenXml}/%.xml: doxygen
 	@echo "====> Generating $@"
 
-# Latex files translatef from doxygen-generated xml
+# Latex files translated from doxygen-generated xml
+# Syscalls are listed as subsections
+${GeneratedLatexDir}/GeneralSystemCalls.tex: ${DoxygenXml}/group__GeneralSystemCalls.xml
+	@echo "====> Generating $@"
+	python ${GenerateLatexTool} --level subsection --input $< --output $@
+
+# General object invocations are listed as subsections
+${GeneratedLatexDir}/ObjectApi.tex: ${DoxygenXml}/group__ObjectApi.xml
+	@echo "====> Generating $@"
+	python ${GenerateLatexTool} --level subsection --input $< --output $@
+
+# Architecture-specific invocations are listed as subsubsections
 ${GeneratedLatexDir}/%.tex: ${DoxygenXml}/group__%.xml
 	@echo "====> Generating $@"
-	${Q}python ${GenerateLatexTool} --input $< --output $@
+	python ${GenerateLatexTool} --level subsubsection --input $< --output $@
 
 # Collect generated latex files into single rule
 generated-latex: ${GeneratedLatexDir}/GeneralSystemCalls.tex \
-                 ${GeneratedLatexDir}/ObjectApi.tex
+                 ${GeneratedLatexDir}/ObjectApi.tex \
+                 ${GeneratedLatexDir}/ObjectApiX86.tex \
+                 ${GeneratedLatexDir}/ObjectApiArm.tex \
+                 ${GeneratedLatexDir}/ObjectApiAarch32.tex \
+                 ${GeneratedLatexDir}/ObjectApiAarch64.tex \
+                 ${GeneratedLatexDir}/ObjectApiIa32.tex \
+                 ${GeneratedLatexDir}/ObjectApiX64.tex
 
 # Generate object invocation prototypes
-${Stage}/object_invocations.h: ${Libsel4Dir}/include/interfaces/sel4.xml
+${Stage}/object_invocations.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
+                               ${Libsel4Dir}/arch_include/x86/interfaces/sel4arch.xml \
+                               ${Libsel4Dir}/arch_include/arm/interfaces/sel4arch.xml \
+                               ${Libsel4Dir}/sel4_arch_include/aarch32/interfaces/sel4arch.xml \
+                               ${Libsel4Dir}/sel4_arch_include/aarch64/interfaces/sel4arch.xml \
+                               ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/sel4arch.xml \
+                               ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml
 	@echo "====> Generating documented object invocation header"
 	${Q}python ${GenerateObjectInvocationTool} --output $@ $^
 
