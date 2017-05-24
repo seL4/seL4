@@ -115,7 +115,7 @@ extern word_t tlbLockCount VISIBLE;
 extern char ksIdleThreadTCB[CONFIG_MAX_NUM_NODES][BIT(seL4_TCBBits)];
 
 #ifdef CONFIG_KERNEL_MCS
-extern char ksIdleThreadSC[CONFIG_MAX_NUM_NODES][BIT(seL4_SchedContextBits)];
+extern char ksIdleThreadSC[CONFIG_MAX_NUM_NODES][BIT(seL4_MinSchedContextBits)];
 #endif
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER

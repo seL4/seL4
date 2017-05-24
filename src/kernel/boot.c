@@ -86,7 +86,7 @@ BOOT_CODE static word_t calculate_rootserver_size(v_region_t v_reg, word_t extra
     size += extra_bi_size_bits > 0 ? BIT(extra_bi_size_bits) : 0;
     size += BIT(seL4_VSpaceBits); // root vspace
 #ifdef CONFIG_KERNEL_MCS
-    size += BIT(seL4_SchedContextBits); // root sched context
+    size += BIT(seL4_MinSchedContextBits); // root sched context
 #endif
     /* for all archs, seL4_PageTable Bits is the size of all non top-level paging structures */
     return size + arch_get_n_paging(v_reg) * BIT(seL4_PageTableBits);
@@ -145,7 +145,7 @@ BOOT_CODE void create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t 
 #endif
 
 #ifdef CONFIG_KERNEL_MCS
-    rootserver.sc = alloc_rootserver_obj(seL4_SchedContextBits, 1);
+    rootserver.sc = alloc_rootserver_obj(seL4_MinSchedContextBits, 1);
 #endif
     /* we should have allocated all our memory */
     assert(rootserver_mem.start == rootserver_mem.end);
@@ -452,7 +452,7 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadTCB), cap);
 
 #ifdef CONFIG_KERNEL_MCS
-    cap = cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext));
+    cap = cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext), seL4_MinSchedContextBits);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadSC), cap);
 #endif
 #ifdef CONFIG_DEBUG_BUILD

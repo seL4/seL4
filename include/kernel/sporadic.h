@@ -40,9 +40,15 @@
 #define MIN_BUDGET    (2u * getKernelWcetTicks())
 
 /* Short hand for accessing refill queue items */
-#define REFILL_INDEX(sc, index) ((sc)->scRefills[(index)])
+#define REFILL_INDEX(sc, index) (((refill_t *) (SC_REF(sc) + sizeof(sched_context_t)))[index])
 #define REFILL_HEAD(sc) REFILL_INDEX((sc), (sc)->scRefillHead)
 #define REFILL_TAIL(sc) REFILL_INDEX((sc), (sc)->scRefillTail)
+
+/* return the amount of refills we can fit in this scheduling context */
+static inline word_t refill_absolute_max(cap_t sc_cap)
+{
+    return (BIT(cap_sched_context_cap_get_capSCSizeBits(sc_cap)) - sizeof(sched_context_t)) / sizeof(refill_t);
+}
 
 /* Return the amount of items currently in the refill queue */
 static inline word_t refill_size(sched_context_t *sc)

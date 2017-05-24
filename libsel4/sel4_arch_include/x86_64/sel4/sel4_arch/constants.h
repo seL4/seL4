@@ -38,7 +38,6 @@
 #ifdef CONFIG_KERNEL_MCS
 #define seL4_NotificationBits   6
 #define seL4_ReplyBits          5
-#define seL4_SchedContextBits    8
 #else
 #define seL4_NotificationBits   5
 #endif
