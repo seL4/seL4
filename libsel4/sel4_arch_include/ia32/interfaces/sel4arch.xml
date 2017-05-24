@@ -8,7 +8,7 @@
 
      @TAG(NICTA_BSD)
   -->
-<api>
+<api name="ObjectApiIa32">
     <struct name="seL4_UserContext">
         <member name="eip"/>
         <member name="esp"/>

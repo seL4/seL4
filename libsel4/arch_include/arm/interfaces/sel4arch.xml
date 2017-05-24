@@ -8,17 +8,17 @@
 
      @TAG(NICTA_BSD)
   -->
-<api>
-    <interface name="seL4_ARM_PageTable">
-        <method id="ARMPageTableMap" name="Map">
+<api name="ObjectApiArm" label_prefix="arm_">
+    <interface name="seL4_ARM_PageTable" manual_name="Page Table">
+        <method id="ARMPageTableMap" name="Map" manual_label="pagetable_map">
             <param dir="in" name="pd" type="seL4_CPtr"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
         </method>
-        <method id="ARMPageTableUnmap" name="Unmap">
+        <method id="ARMPageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
         </method>
     </interface>
-    <interface name="seL4_ARM_IOPageTable">
+    <interface name="seL4_ARM_IOPageTable" manual_name="IO Page Table">
         <method id="ARMIOPageTableMap" name="Map" condition="defined(CONFIG_ARM_SMMU)">
             <param dir="in" name="iospace" type="seL4_ARM_IOSpace"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
@@ -26,7 +26,7 @@
         <method id="ARMIOPageTableUnmap" name="Unmap" condition="defined(CONFIG_ARM_SMMU)">
         </method>
     </interface>
-    <interface name="seL4_ARM_Page">
+    <interface name="seL4_ARM_Page" manual_name="Page">
         <method id="ARMPageMap" name="Map">
             <param dir="in" name="pd" type="seL4_CPtr"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
@@ -64,7 +64,7 @@
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
     </interface>
-    <interface name="seL4_ARM_ASIDControl">
+    <interface name="seL4_ARM_ASIDControl" manual_name="ASID Control">
         <method id="ARMASIDControlMakePool" name="MakePool">
             <param dir="in" name="untyped" type="seL4_Untyped"/>
             <param dir="in" name="root" type="seL4_CNode"/>
@@ -72,8 +72,8 @@
             <param dir="in" name="depth" type="seL4_Uint8"/>
         </method>
     </interface>
-    <interface name="seL4_ARM_ASIDPool">
-        <method id="ARMASIDPoolAssign" name="Assign">
+    <interface name="seL4_ARM_ASIDPool" manual_name="ASID Pool">
+        <method id="ARMASIDPoolAssign" name="Assign" manual_label="asidpool_assign">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
         </method>
     </interface>

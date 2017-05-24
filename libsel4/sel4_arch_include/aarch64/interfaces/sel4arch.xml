@@ -10,7 +10,7 @@
 
     @TAG(D61_BSD)
  -->
-<api>
+<api name="ObjectApiAarch64" label_prefix="aarch64_">
     <struct name="seL4_UserContext">
         <member name="pc"/>
         <member name="sp"/>
@@ -47,7 +47,7 @@
         <member name="x27"/>
         <member name="x28"/>
     </struct>
-    <interface name="seL4_ARM_PageGlobalDirectory">
+    <interface name="seL4_ARM_PageGlobalDirectory" manual_name="Page Global Directory">
         <method id="ARMPageGlobalDirectoryClean_Data" name="Clean_Data">
             <param dir="in" name="start" type="seL4_Word"/>
             <param dir="in" name="end" type="seL4_Word"/>
@@ -65,7 +65,7 @@
             <param dir="in" name="end" type="seL4_Word"/>
         </method>
     </interface>
-    <interface name="seL4_ARM_PageUpperDirectory">
+    <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory">
         <method id="ARMPageUpperDirectoryMap" name="Map">
             <param dir="in" name="pgd" type="seL4_CPtr"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
@@ -74,7 +74,7 @@
         <method id="ARMPageUpperDirectoryUnmap" name="Unmap">
         </method>
     </interface>
-    <interface name="seL4_ARM_PageDirectory">
+    <interface name="seL4_ARM_PageDirectory" manual_name="Page Directory">
         <method id="ARMPageDirectoryMap" name="Map">
             <param dir="in" name="pud" type="seL4_CPtr"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>

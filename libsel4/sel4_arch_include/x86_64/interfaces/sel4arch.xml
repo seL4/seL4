@@ -10,7 +10,7 @@
 
      @TAG(D61_BSD)
   -->
-<api>
+<api name="ObjectApiX64" label_prefix="x86_64_">
     <struct name="seL4_UserContext">
         <member name="rip"/>
         <member name="rsp"/>
@@ -33,7 +33,7 @@
         <member name="tls_base"/>
     </struct>
 
-    <interface name="seL4_X86_PDPT">
+    <interface name="seL4_X86_PDPT" manual_name="PDPT">
         <method id="X86PDPTMap" name="Map">
             <param dir="in" name="pml4" type="seL4_X64_PML4"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>

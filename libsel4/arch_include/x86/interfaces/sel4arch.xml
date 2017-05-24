@@ -8,7 +8,7 @@
 
      @TAG(NICTA_BSD)
   -->
-<api>
+<api name="ObjectApiX86" label_prefix="x86_">
     <struct name="seL4_VCPUContext">
         <member name="eax"/>
         <member name="ebx"/>
@@ -18,7 +18,7 @@
         <member name="edi"/>
         <member name="ebp"/>
     </struct>
-    <interface name="seL4_X86_PageDirectory">
+    <interface name="seL4_X86_PageDirectory" manual_name="Page Directory">
         <method id="X86PageDirectoryMap" name="Map">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
@@ -33,17 +33,17 @@
         </method>
     </interface>
 
-    <interface name="seL4_X86_PageTable">
-        <method id="X86PageTableMap" name="Map">
+    <interface name="seL4_X86_PageTable" manual_name="Page Table">
+        <method id="X86PageTableMap" name="Map" manual_label="pagetable_map">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
         </method>
-        <method id="X86PageTableUnmap" name="Unmap">
+        <method id="X86PageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
         </method>
     </interface>
 
-    <interface name="seL4_X86_IOPageTable">
+    <interface name="seL4_X86_IOPageTable" manual_name="IO Page Table">
         <method id="X86IOPageTableMap" name="Map">
             <param dir="in" name="iospace" type="seL4_X86_IOSpace"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
@@ -52,7 +52,7 @@
         </method>
     </interface>
 
-    <interface name="seL4_X86_Page">
+    <interface name="seL4_X86_Page" manual_name="Page">
         <method id="X86PageMap" name="Map">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
@@ -81,7 +81,7 @@
         </method>
     </interface>
 
-    <interface name="seL4_X86_ASIDControl">
+    <interface name="seL4_X86_ASIDControl" manual_name="ASID Control">
         <method id="X86ASIDControlMakePool" name="MakePool">
             <param dir="in" name="untyped" type="seL4_Untyped"/>
             <param dir="in" name="root" type="seL4_CNode"/>
@@ -90,13 +90,13 @@
         </method>
     </interface>
 
-    <interface name="seL4_X86_ASIDPool">
-        <method id="X86ASIDPoolAssign" name="Assign">
+    <interface name="seL4_X86_ASIDPool" manual_name="ASID Pool">
+        <method id="X86ASIDPoolAssign" name="Assign" manual_label="asidpool_assign">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
         </method>
     </interface>
 
-    <interface name="seL4_X86_IOPort">
+    <interface name="seL4_X86_IOPort" manual_name="IO Port">
         <method id="X86IOPortIn8" name="In8">
             <param dir="out" name="result" type="seL4_Uint8"/>
             <param dir="in" name="port" type="seL4_Uint16"/>
@@ -123,7 +123,7 @@
         </method>
     </interface>
 
-    <interface name="seL4_IRQControl">
+    <interface name="seL4_IRQControl" manual_name="IRQ Control">
         <method id="X86IRQIssueIRQHandlerIOAPIC" name="GetIOAPIC">
             <param dir="in" name="root" type="seL4_CNode"/>
             <param dir="in" name="index" type="seL4_Word"/>
@@ -145,12 +145,12 @@
             <param dir="in" name="vector" type="seL4_Word"/>
         </method>
     </interface>
-    <interface name="seL4_TCB">
+    <interface name="seL4_TCB" manual_name="TCB">
         <method id="TCBSetEPTRoot" name="SetEPTRoot" condition="defined(CONFIG_VTX)">
             <param dir="in" name="vcpu" type="seL4_CPtr"/>
         </method>
     </interface>
-    <interface name="seL4_X86_VCPU">
+    <interface name="seL4_X86_VCPU" manual_name="VCPU">
         <method id="X86VCPUSetTCB" name="SetTCB" condition="defined(CONFIG_VTX)">
             <param dir="in" name="tcb" type="seL4_CNode" />
         </method>
@@ -176,7 +176,7 @@
             <param dir="in" name="regs" type="seL4_VCPUContext"/>
         </method>
     </interface>
-    <interface name="seL4_X86_EPTPDPT">
+    <interface name="seL4_X86_EPTPDPT" manual_name="EPTPDPT">
         <method id="X86EPTPDPTMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
@@ -184,7 +184,7 @@
         </method>
         <method id="X86EPTPDPTUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
     </interface>
-    <interface name="seL4_X86_EPTPD">
+    <interface name="seL4_X86_EPTPD" manual_name="EPTPD">
         <method id="X86EPTPDMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
@@ -192,7 +192,7 @@
         </method>
         <method id="X86EPTPDUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
     </interface>
-    <interface name="seL4_X86_EPTPT">
+    <interface name="seL4_X86_EPTPT" manual_name="EPTPT">
         <method id="X86EPTPTMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
