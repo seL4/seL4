@@ -94,7 +94,7 @@ decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, w
 
     time_t budget_us = mode_parseTimeArg(0, buffer);
     time_t period_us = mode_parseTimeArg(TIME_ARG_SIZE, buffer);
-    word_t max_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
+    word_t extra_refills = getSyscallArg(TIME_ARG_SIZE * 2, buffer);
 
     cap_t targetCap = extraCaps.excaprefs[0]->cap;
     if (unlikely(cap_get_capType(targetCap) != cap_sched_context_cap)) {
@@ -128,11 +128,13 @@ decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, w
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (max_refills > MAX_REFILLS) {
-        userError("Max refills invalid");
+    if (extra_refills + MIN_REFILLS > refill_absolute_max(targetCap)) {
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = MAX_REFILLS - MIN_REFILLS - 1;
+        current_syscall_error.rangeErrorMax = refill_absolute_max(targetCap) - MIN_REFILLS;
+        userError("Max refills invalid, got %lu, max %lu",
+                  extra_refills,
+                  current_syscall_error.rangeErrorMax);
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -141,7 +143,7 @@ decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, w
                                         cap_sched_control_cap_get_core(cap),
                                         usToTicks(budget_us),
                                         usToTicks(period_us),
-                                        max_refills + MIN_REFILLS);
+                                        extra_refills + MIN_REFILLS);
 }
 
 exception_t

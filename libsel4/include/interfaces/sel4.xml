@@ -571,7 +571,7 @@
                 description="Timeslice in microseconds, when the budget expires the thread will be pre-empted."/>
             <param dir="in" name="period" type="seL4_Time"
                 description="Period in microseconds, if equal to budget, this thread will be treated as a round-robin thread. Otherwise, sporadic servers will be used to assure the scheduling context does not exceed the budget over the specified period."/>
-            <param dir="in" name="max_refills" type="seL4_Word"
+            <param dir="in" name="extra_refills" type="seL4_Word"
                 description="Number of extra sporadic replenishments this scheduling context should use. Ignored for round-robin threads."/>
         </method>
 

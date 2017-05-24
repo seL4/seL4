@@ -374,13 +374,13 @@ create_it_asid_pool(cap_t root_cnode_cap)
 BOOT_CODE static bool_t
 create_sched_context(tcb_t *tcb, ticks_t timeslice)
 {
-    pptr_t sc_pptr = alloc_region(seL4_SchedContextBits);
+    pptr_t sc_pptr = alloc_region(seL4_MinSchedContextBits);
     if (!sc_pptr) {
         printf("Kernel init failed: unable to allocate sched context for start-up thread\n");
         return false;
     }
 
-    memzero((void *) sc_pptr, BIT(seL4_SchedContextBits));
+    memzero((void *) sc_pptr, BIT(seL4_MinSchedContextBits));
     tcb->tcbSchedContext = SC_PTR(sc_pptr);
     refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
 
@@ -515,7 +515,7 @@ create_initial_thread(
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadTCB), cap);
-    cap = cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext));
+    cap = cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext), seL4_MinSchedContextBits);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadSC), cap);
 #ifdef CONFIG_DEBUG_BUILD
     setThreadName(tcb, "rootserver");

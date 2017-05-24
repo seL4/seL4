@@ -118,7 +118,8 @@ block sched_context_cap {
     field_high capSCPtr 28
     padding              4
 
-    padding             24
+    padding             18
+    field capSCSizeBits  6
     field capType        8
 }
 
