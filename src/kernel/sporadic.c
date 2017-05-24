@@ -154,6 +154,8 @@ refill_add_tail(sched_context_t *sc, refill_t refill)
 void
 refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period)
 {
+    assert(max_refills <= refill_absolute_max(sc));
+
     sc->scPeriod = period;
     sc->scRefillHead = 0;
     sc->scRefillTail = 0;

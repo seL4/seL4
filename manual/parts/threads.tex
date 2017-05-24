@@ -109,19 +109,19 @@ for its priority and appended at the tail.
 Sporadic threads behave differently depending on the amount of replenishments available, which 
 must be bounded. Developers have two options to configure the size of the replenishment list:
 
-\begin{itemize} 
-\item A global parameter, \texttt{CONFIG\_MAX\_REFILLS} determines the maximum size
-of the replenishment list.  
+\begin{itemize}
+\item The maximum number of refills in a single scheduling context is determined by the size
+      of the scheduling context when created by \apifunc{seL4\_Untyped\_Retype}{untyped_retype}.
 \item A per scheduling context parameter, \texttt{extra\_refills} that
 limits the number of refills for that specific scheduling context. This value is added to the base
-value of 2.  
+value of 2 and is limited by the size of the scheduling context.
 \end{itemize}
  
 Threads that have short exection times (e.g interrupt handlers) and are not frequently preempted
 should have less refills, while longer running threads with long values of $b$ should have a higher
-value (range \texttt{seL4\_RefillMin} --- \texttt{seL4\_RefillMax}). Threads bound to a
-scheduling context with 0 extra refills will behave periodically -- tasks that use their head
-replenishment, or call yield, will not be scheduled again until the start of their next period.
+value. Threads bound to a scheduling context with 0 extra refills will behave periodically -- tasks
+that use their head replenishment, or call yield, will not be scheduled again until the start of
+their next period.
 
 Given the number of replenishments is limited, if a node's SC changes and the outgoing SC does not
 have enough space to store the new replenishment, space is created by removing the current

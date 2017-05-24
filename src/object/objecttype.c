@@ -49,7 +49,7 @@ word_t getObjectSize(word_t t, word_t userObjSize)
         case seL4_UntypedObject:
             return userObjSize;
         case seL4_SchedContextObject:
-            return seL4_SchedContextBits;
+            return userObjSize;
         case seL4_ReplyObject:
             return seL4_ReplyBits;
         default:
@@ -521,7 +521,9 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
         return cap_untyped_cap_new(0, !!deviceMemory, userSize, WORD_REF(regionBase));
 
     case seL4_SchedContextObject:
-        memzero(regionBase, 1UL << seL4_SchedContextBits);
+        memzero(regionBase, BIT(userSize));
+        sched_context_t *sc = SC_PTR(regionBase);
+        sc->scSizeBits = userSize;
         return cap_sched_context_cap_new(SC_REF(regionBase));
 
     case seL4_ReplyObject:

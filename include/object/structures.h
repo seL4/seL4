@@ -273,7 +273,6 @@ typedef struct refill {
 } refill_t;
 
 #define MIN_REFILLS 2u
-#define MAX_REFILLS (MIN_REFILLS + seL4_MaxRefills)
 
 struct sched_context {
     /* period for this sc -- controls rate at which budget is replenished */
@@ -294,14 +293,13 @@ struct sched_context {
     notification_t *scNotification;
 
     /* Amount of refills this sc tracks */
-    word_t scRefillMax;
+    uint32_t scRefillMax;
     /* Index of the head of the refill circular buffer */
-    word_t scRefillHead;
+    uint32_t scRefillHead;
     /* Index of the tail of the refill circular buffer */
-    word_t scRefillTail;
-
-    /* circular buffer of budget refills, ordered by rAmount */
-    refill_t scRefills[MAX_REFILLS];
+    uint32_t scRefillTail;
+    /* size of this scheduling context */
+    uint32_t scSizeBits;
 };
 
 struct reply {
@@ -324,7 +322,7 @@ compile_assert(tcb_size_sane,
                (1 << (TCB_SIZE_BITS)) + sizeof(tcb_t) <= (1 << seL4_TCBBits))
 compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << seL4_EndpointBits))
 compile_assert(notification_size_sane, sizeof(notification_t) <= (1 << seL4_NotificationBits))
-compile_assert(sc_size_sane, sizeof(sched_context_t) <= (1 << seL4_SchedContextBits))
+compile_assert(sc_size_sane, (sizeof(sched_context_t) + MIN_REFILLS * sizeof(refill_t)) <= (1 << seL4_MinSchedContextBits))
 compile_assert(reply_size_sane, sizeof(reply_t) <= (1 << seL4_ReplyBits))
 
 /* helper functions */
@@ -384,7 +382,7 @@ cap_get_capSizeBits(cap_t cap)
         return 0;
 
     case cap_sched_context_cap:
-        return seL4_SchedContextBits;
+        return SC_PTR(cap_sched_context_cap_get_capSCPtr(cap))->scSizeBits;
 
     default:
         return cap_get_archCapSizeBits(cap);

@@ -374,14 +374,15 @@ create_it_asid_pool(cap_t root_cnode_cap)
 BOOT_CODE static bool_t
 create_sched_context(tcb_t *tcb, ticks_t timeslice)
 {
-    pptr_t sc_pptr = alloc_region(seL4_SchedContextBits);
+    pptr_t sc_pptr = alloc_region(seL4_MinSchedContextBits);
     if (!sc_pptr) {
         printf("Kernel init failed: unable to allocate sched context for start-up thread\n");
         return false;
     }
 
-    memzero((void *) sc_pptr, BIT(seL4_SchedContextBits));
+    memzero((void *) sc_pptr, BIT(seL4_MinSchedContextBits));
     tcb->tcbSchedContext = SC_PTR(sc_pptr);
+    SC_PTR(sc_pptr)->scSizeBits = seL4_MinSchedContextBits;
     refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
 
     tcb->tcbSchedContext->scTcb = tcb;

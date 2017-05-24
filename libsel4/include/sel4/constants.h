@@ -74,7 +74,6 @@ typedef enum {
     SEL4_FORCE_LONG_ENUM(seL4_LookupFailureType),
 } seL4_LookupFailureType;
 
-#define seL4_MinRefills 0
-#define seL4_MaxRefills 10
-
+/* Minimum size of a scheduling context (2^{n} bytes) */
+#define seL4_MinSchedContextBits 8
 #endif /* __API_CONSTANTS_H */
