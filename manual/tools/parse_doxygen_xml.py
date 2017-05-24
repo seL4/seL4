@@ -187,7 +187,12 @@ def generate_general_syscall_doc(input_file_name, level):
         output = ""
         doc = xml.dom.minidom.parse(f)
         ref_dict = build_ref_dict(doc)
-        for member in doc.getElementsByTagName("memberdef"):
+        elements = doc.getElementsByTagName("memberdef")
+
+        if len(elements) == 0:
+            return "No methods."
+
+        for member in elements:
             manual_node = get_node(member, "manual")
             details, params, ret = parse_detailed_desc(member, ref_dict)
             output += """
