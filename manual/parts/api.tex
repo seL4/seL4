@@ -303,44 +303,36 @@ complete the \apifunc{seL4\_Untyped\_Retype}{untyped_retype} request.
 \inputgeneratedapidoc{ObjectApi}
 
 \ifxeightsix
+
 \clearpage
 
-\section{IA-32-Specific Object Methods}
-\label{sec:kobj_api_intel}
-\inputapidoc{ia32_ASID_controlmakepool}
-\inputapidoc{ia32_ASID_poolassign}
-\inputapidoc{ia32_IO_portin8}
-\inputapidoc{ia32_IO_portin16}
-\inputapidoc{ia32_IO_portin32}
-\inputapidoc{ia32_IO_portout8}
-\inputapidoc{ia32_IO_portout16}
-\inputapidoc{ia32_IO_portout32}
-\inputapidoc{ia32_io_pagetable_map}
-\inputapidoc{ia32_page_mapio}
-\inputapidoc{ia32_page_map}
-\inputapidoc{ia32_page_remap}
-\inputapidoc{ia32_page_unmap}
-\inputapidoc{ia32_page_getaddress}
-\inputapidoc{ia32_pagetable_map}
-\inputapidoc{ia32_pagetable_unmap}
-\inputapidoc{ia32_pagedirectory_getstatusbits}
-\inputapidoc{ia32_irq_control_getioapic}
-\inputapidoc{ia32_irq_control_getmsi}
-\fi
+\section{x86-Specific Object Methods}
+
+\subsection{General x86 Object Methods}
+\inputgeneratedapidoc{ObjectApiX86}
+\clearpage
+
+\subsection{IA32-Specific Object Methods}
+\inputgeneratedapidoc{ObjectApiIa32}
+\clearpage
+
+\subsection{x86\_64-Specific Object Methods}
+\inputgeneratedapidoc{ObjectApiX64}
+
+\fi % xeightsix
 
 \clearpage
 
 \section{ARM-Specific Object Methods}
-\label{sec:kobj_api_arm}
-\inputapidoc{arm_asidcontrol_makepool}
-\inputapidoc{arm_asidpool_assign}
-\inputapidoc{arm_page_cleandata}
-\inputapidoc{arm_page_invalidatedata}
-\inputapidoc{arm_page_cleaninvalidatedata}
-\inputapidoc{arm_page_unifyinstruction}
-\inputapidoc{arm_page_map}
-\inputapidoc{arm_page_remap}
-\inputapidoc{arm_page_unmap}
-\inputapidoc{arm_page_getaddress}
-\inputapidoc{arm_pagetable_map}
-\inputapidoc{arm_pagetable_unmap}
+
+\subsection{General ARM Object Methods}
+\inputgeneratedapidoc{ObjectApiArm}
+\clearpage
+
+\subsection{Aarch32-Specific Object Methods}
+\inputgeneratedapidoc{ObjectApiAarch32}
+\clearpage
+
+\subsection{Aarch64-Specific Object Methods}
+\inputgeneratedapidoc{ObjectApiAarch64}
+\clearpage
