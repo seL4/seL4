@@ -101,7 +101,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     }
 
     /* If the target object is a Untyped, is it at least size 4? */
-    if (newType == seL4_UntypedObject && userObjSize < 4) {
+    if (newType == seL4_UntypedObject && userObjSize < seL4_MinUntypedBits) {
         userError("Untyped Retype: Requested UntypedItem size too small.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
