@@ -21,22 +21,21 @@ import sys
 import argparse
 import operator
 import logging
+import itertools
 from functools import reduce
 from libsel4_tools import syscall_stub_gen
 from lxml import etree
 
 # Word size is required by the syscall_stub_gen library, but won't affect the output
 WORD_SIZE = 32
-ARCH_NAMES = ["aarch32", "arm_hyp", "ia32", "x86_64"]
 FN_DECL_PREFIX = "static inline"
 DEFAULT_RETURN_TYPE = "int"
 
 def init_all_types():
-    data_type_arr = syscall_stub_gen.init_data_types(WORD_SIZE)
-    arch_type_dict = syscall_stub_gen.init_arch_types(WORD_SIZE)
-    arch_type_arr = reduce(operator.add, (arch_type_dict[a] for a in ARCH_NAMES), [])
+    data_types = syscall_stub_gen.init_data_types(WORD_SIZE)
+    arch_types = list(itertools.chain(*syscall_stub_gen.init_arch_types(WORD_SIZE).values()))
 
-    return data_type_arr + arch_type_arr
+    return data_types + arch_types
 
 def generate_prototype(interface_name, method_name, method_id, inputs, outputs, comment):
     prefix = FN_DECL_PREFIX
