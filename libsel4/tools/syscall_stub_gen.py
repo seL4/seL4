@@ -781,7 +781,7 @@ def parse_xml_file(input_file, valid_types):
             method_condition = method.getAttribute("condition")
             method_manual_name = method.getAttribute("manual_name") or method_name
             method_manual_label = method.getAttribute("manual_label") or \
-                    "%s_%s" % (interface_manual_name.lower(), method_name.lower())
+                    "%s_%s" % (interface_manual_name.lower().replace(" ", "_"), method_name.lower())
             method_manual_label = "%s%s" % (api.label_prefix, method_manual_label)
 
             comment_lines = ["@xmlonly <manual name=\"%s - %s\" label=\"%s\"/> @endxmlonly" %
