@@ -66,6 +66,15 @@
 \newcommand{\Htextbf}[1]{\textbf{\hyperpage{#1}}}
 \urlstyle{rm}
 
+% If statements
+\usepackage{ifthen}
+
+% Numbered subsubsections
+\setcounter{secnumdepth}{5}
+
+% Subsubsections it table of contents
+\setcounter{tocdepth}{5}
+
 % API functions / Kernel Objects
 \newcommand{\obj}[1]{\textsf{\small #1}}
 \newcommand{\apifunc}[2]{\hyperref[api:#2]{\texttt{#1()}}}

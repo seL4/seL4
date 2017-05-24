@@ -14,14 +14,19 @@
 \newcommand{\inputapidoc}[1] {\input{parts/api/#1.tex}}
 \newcommand{\inputgeneratedapidoc}[1] {\input{generated/#1.tex}}
 
-\newcommand{\apidoc}[7]
+\newcommand{\apidoc}[8][subsection]
 {
-    \subsection{\label{api:#1}#2}
+    \ifthenelse{\equal{#1}{subsection}}{
+        \subsection{\label{api:#2}#3}
+    }{}
+    \ifthenelse{\equal{#1}{subsubsection}}{
+        \subsubsection{\label{api:#2}#3}
+    }{}
 
-    \texttt{#4}
+    \texttt{#5}
     \vspace*{6pt}
 
-    #3
+    #4
 
     \begin{center}
     \begin{minipage}{0.95\textwidth}
@@ -29,15 +34,15 @@
     \toprule
     \textbf{Type} & \textbf{Name} & \textbf{Description} \\
     \midrule
-    #5
+    #6
     \bottomrule
     \end{tabularx}
     \end{minipage}
     \end{center}
 
-    \textit{Return value:} #6 \par
+    \textit{Return value:} #7 \par
 
-    \textit{Description:} #7 \par
+    \textit{Description:} #8 \par
 
     \vfill
 }

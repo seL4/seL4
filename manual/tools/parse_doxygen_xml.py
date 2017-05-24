@@ -182,7 +182,7 @@ def build_ref_dict(doc):
 # Takes a path to a file containing doxygen-generated xml,
 # and return a string containing latex suitable for inclusion
 # in the sel4 manual.
-def generate_general_syscall_doc(input_file_name):
+def generate_general_syscall_doc(input_file_name, level):
     with open(input_file_name, "r") as f:
         output = ""
         doc = xml.dom.minidom.parse(f)
@@ -192,6 +192,7 @@ def generate_general_syscall_doc(input_file_name):
             details, params, ret = parse_detailed_desc(member, ref_dict)
             output += """
 \\apidoc
+[{%(level)s}]
 {%(label)s}
 {%(name)s}
 {%(brief)s}
@@ -200,6 +201,7 @@ def generate_general_syscall_doc(input_file_name):
 {%(ret)s}
 {%(details)s}
             """ % {
+                "level": level,
                 "label": manual_node.getAttribute("label"),
                 "name": latex_escape(manual_node.getAttribute("name")),
                 "brief": parse_brief(member),
@@ -219,6 +221,9 @@ def process_args():
     parser.add_argument("-o", "--output", dest="output", type=str,
                         help="Output latex file.")
 
+    parser.add_argument("-l", "--level", choices=["subsection", "subsubsection"],
+                        help="LaTeX section level for each method")
+
     return parser
 
 def main():
@@ -227,7 +232,7 @@ def main():
     if not os.path.exists(os.path.dirname(args.output)):
         os.makedirs(os.path.dirname(args.output))
 
-    output_str = generate_general_syscall_doc(args.input)
+    output_str = generate_general_syscall_doc(args.input, args.level)
 
     with open(args.output, "w") as output_file:
         output_file.write(output_str)
