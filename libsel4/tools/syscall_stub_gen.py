@@ -207,8 +207,9 @@ class Parameter(object):
         self.type = type
 
 class Api(object):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, node):
+        self.name = node.getAttribute("name")
+        self.label_prefix = node.getAttribute("label_prefix") or ""
 
 #
 # Types
@@ -758,7 +759,7 @@ def parse_xml_file(input_file, valid_types):
     structs = []
     doc = xml.dom.minidom.parse(input_file)
 
-    api = Api(doc.getElementsByTagName("api")[0].getAttribute("name"))
+    api = Api(doc.getElementsByTagName("api")[0])
 
     for struct in doc.getElementsByTagName("struct"):
         _struct_members = []
@@ -781,6 +782,7 @@ def parse_xml_file(input_file, valid_types):
             method_manual_name = method.getAttribute("manual_name") or method_name
             method_manual_label = method.getAttribute("manual_label") or \
                     "%s_%s" % (interface_manual_name.lower(), method_name.lower())
+            method_manual_label = "%s%s" % (api.label_prefix, method_manual_label)
 
             comment_lines = ["@xmlonly <manual name=\"%s - %s\" label=\"%s\"/> @endxmlonly" %
                     (interface_manual_name, method_manual_name, method_manual_label)]
