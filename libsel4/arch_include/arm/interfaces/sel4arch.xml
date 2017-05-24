@@ -44,28 +44,29 @@
             <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
         </method>
-        <method id="ARMPageClean_Data" name="Clean_Data">
+        <method id="ARMPageClean_Data" name="Clean_Data" manual_name="Clean Data">
             <param dir="in" name="start_offset" type="seL4_Word"/>
             <param dir="in" name="end_offset" type="seL4_Word"/>
         </method>
-        <method id="ARMPageInvalidate_Data" name="Invalidate_Data">
+        <method id="ARMPageInvalidate_Data" name="Invalidate_Data" manual_name="Invalidate Data">
             <param dir="in" name="start_offset" type="seL4_Word"/>
             <param dir="in" name="end_offset" type="seL4_Word"/>
         </method>
-        <method id="ARMPageCleanInvalidate_Data" name="CleanInvalidate_Data">
+        <method id="ARMPageCleanInvalidate_Data" name="CleanInvalidate_Data"
+            manual_name="Clean and Invalidate Data">
             <param dir="in" name="start_offset" type="seL4_Word"/>
             <param dir="in" name="end_offset" type="seL4_Word"/>
         </method>
-        <method id="ARMPageUnify_Instruction" name="Unify_Instruction">
+        <method id="ARMPageUnify_Instruction" name="Unify_Instruction" manual_name="Unify Instruction">
             <param dir="in" name="start_offset" type="seL4_Word"/>
             <param dir="in" name="end_offset" type="seL4_Word"/>
         </method>
-        <method id="ARMPageGetAddress" name="GetAddress">
+        <method id="ARMPageGetAddress" name="GetAddress" manual_name="Get Address">
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
     </interface>
     <interface name="seL4_ARM_ASIDControl" manual_name="ASID Control">
-        <method id="ARMASIDControlMakePool" name="MakePool">
+        <method id="ARMASIDControlMakePool" name="MakePool" manual_name="Make Pool">
             <param dir="in" name="untyped" type="seL4_Untyped"/>
             <param dir="in" name="root" type="seL4_CNode"/>
             <param dir="in" name="index" type="seL4_Word"/>
@@ -73,7 +74,8 @@
         </method>
     </interface>
     <interface name="seL4_ARM_ASIDPool" manual_name="ASID Pool">
-        <method id="ARMASIDPoolAssign" name="Assign" manual_label="asidpool_assign">
+        <method id="ARMASIDPoolAssign" name="Assign" manual_label="asidpool_assign"
+            manual_name="Asid Pool Assign">
             <param dir="in" name="vroot" type="seL4_CPtr"/>
         </method>
     </interface>

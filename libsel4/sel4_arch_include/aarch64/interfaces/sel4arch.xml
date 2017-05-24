@@ -48,19 +48,23 @@
         <member name="x28"/>
     </struct>
     <interface name="seL4_ARM_PageGlobalDirectory" manual_name="Page Global Directory">
-        <method id="ARMPageGlobalDirectoryClean_Data" name="Clean_Data">
+        <method id="ARMPageGlobalDirectoryClean_Data" name="Clean_Data"
+            manual_name="Clean Data">
             <param dir="in" name="start" type="seL4_Word"/>
             <param dir="in" name="end" type="seL4_Word"/>
         </method>
-        <method id="ARMPageGlobalDirectoryInvalidate_Data" name="Invalidate_Data">
+        <method id="ARMPageGlobalDirectoryInvalidate_Data" name="Invalidate_Data"
+            manual_name="Invalidate Data">
             <param dir="in" name="start" type="seL4_Word"/>
             <param dir="in" name="end" type="seL4_Word"/>
         </method>
-        <method id="ARMPageGlobalDirectoryCleanInvalidate_Data" name="CleanInvalidate_Data">
+        <method id="ARMPageGlobalDirectoryCleanInvalidate_Data" name="CleanInvalidate_Data"
+            manual_name="Clean and Invalidate Data">
             <param dir="in" name="start" type="seL4_Word"/>
             <param dir="in" name="end" type="seL4_Word"/>
         </method>
-        <method id="ARMPageGlobalDirectoryUnify_Instruction" name="Unify_Instruction">
+        <method id="ARMPageGlobalDirectoryUnify_Instruction" name="Unify_Instruction"
+            manual_name="Unify Instruction">
             <param dir="in" name="start" type="seL4_Word"/>
             <param dir="in" name="end" type="seL4_Word"/>
         </method>
