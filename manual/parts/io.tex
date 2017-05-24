@@ -55,12 +55,12 @@ resulting capabilities as appropriate. Methods on \obj{IRQControl} can
 be used for creating \obj{IRQHandler} capabilities for interrupt sources.
 
 \ifxeightsix
-\section{IA-32-Specific I/O}
+\section{x86-Specific I/O}
 
 \subsection{Interrupts}
-\label{sec:ia32_interrupts}
+\label{sec:x86_interrupts}
 
-In addition to managing \obj{IRQHandler} capabilities, IA-32 platforms require
+In addition to managing \obj{IRQHandler} capabilities, x86 platforms require
 the delivery location in the CPU vectors to be configured. Regardless of where
 an interrupt comes from (IOAPIC, MSI, etc) it must be assigned a unique vector
 for delivery, ranging from VECTOR\_MIN to VECTOR\_MAX. The rights to allocate
@@ -69,28 +69,28 @@ be considered as the kernel outsourcing the allocation of this namespace to
 user level.
 
 \begin{description}
-    \item[\apifunc{seL4\_IRQControl\_GetIOAPIC}{ia32_irq_handler_getioapic}] creates
+    \item[\apifunc{seL4\_IRQControl\_GetIOAPIC}{x86_irq_handler_getioapic}] creates
     an \obj{IRQHandler} capability for an IOAPIC interrupt
 
-    \item[\apifunc{seL4\_IRQControl\_GetMSI}{ia32_irq_handler_getmsi}] creates
+    \item[\apifunc{seL4\_IRQControl\_GetMSI}{x86_irq_handler_getmsi}] creates
     an \obj{IRQHandler} capability for an MSI interrupt
 \end{description}
 
 \subsection{I/O Ports}
 \label{sec:ioports}
 
-On IA-32 platforms, seL4 provides access to I/O ports to user-level threads.
+On x86 platforms, seL4 provides access to I/O ports to user-level threads.
 Access to I/O ports is controlled by \obj{IO Port} capabilities. Each
 \obj{IO Port} capability identifies a range of ports that can be accessed with
 it. Reading from I/O ports is accomplished with the
-\apifunc{seL4\_IA32\_IOPort\_In8}{ia32_IO_portin8},
-\apifunc{seL4\_IA32\_IOPort\_In16}{ia32_IO_portin16}, and
-\apifunc{seL4\_IA32\_IOPort\_In32}{ia32_IO_portin32} methods, which
+\apifunc{seL4\_X86\_IOPort\_In8}{x86_io_port_in8},
+\apifunc{seL4\_X86\_IOPort\_In16}{x86_io_port_in16}, and
+\apifunc{seL4\_X86\_IOPort\_In32}{x86_io_port_in32} methods, which
 allow for reading of 8-, 16- and 32-bit quantities.
 Similarly, writing to I/O ports is accomplished with the
-\apifunc{seL4\_IA32\_IOPort\_Out8}{ia32_IO_portout8},
-\apifunc{seL4\_IA32\_IOPort\_Out16}{ia32_IO_portout16}, and
-\apifunc{seL4\_IA32\_IOPort\_Out32}{ia32_IO_portout32} methods.
+\apifunc{seL4\_X86\_IOPort\_Out8}{x86_io_port_out8},
+\apifunc{seL4\_X86\_IOPort\_Out16}{x86_io_port_out16}, and
+\apifunc{seL4\_X86\_IOPort\_Out32}{x86_io_port_out32} methods.
 Each of these methods takes as arguments an \obj{IO Port} capability
 and an unsigned integer~\texttt{port}, which indicates the I/O port to read from
 or write to, respectively.
@@ -126,7 +126,7 @@ in user space to keep them out of the trusted computing base.
 A malicious or buggy device driver may, however, program the device to
 access or corrupt memory that is not part of its address space, thus
 subverting security. To mitigate this threat, seL4 provides support for
-the IOMMU on Intel IA-32-based platforms. An IOMMU allows memory to be
+the IOMMU on Intel x86-based platforms. An IOMMU allows memory to be
 remapped from the device's point of view. It acts as an MMU for the
 device, restricting the regions of system memory that it can access.
 More information can be obtained from Intel's IOMMU documentation \cite{extra:vtd}.
@@ -175,17 +175,17 @@ the IOMMU and the \apifunc{seL4\_CNode\_Mint}{cnode_mint} method will fail if an
 unsupported value is chosen.
 
 The IOMMU page-table structure has three levels.
-Page tables are mapped into an \obj{IOSpace} using the \apifunc{seL4\_IA32\_IOPageTable\_Map}{ia32_io_pagetable_map} method.
+Page tables are mapped into an \obj{IOSpace} using the \apifunc{seL4\_X86\_IOPageTable\_Map}{x86_io_page_table_map} method.
 This method takes the \obj{IOPageTable} to map, the \obj{IOSpace} to map into 
 and the address to map at. Three levels of page tables must be mapped before
 a frame can be mapped successfully. A frame is mapped with the
-\apifunc{seL4\_IA32\_Page\_MapIO}{ia32_page_mapio} method whose parameters are analogous to
+\apifunc{seL4\_X86\_Page\_MapIO}{x86_page_mapio} method whose parameters are analogous to
 the corresponding method that maps \obj{Page}s into \obj{VSpaces} (see \autoref{ch:vspace}), 
-namely \apifunc{seL4\_IA32\_Page\_Map}{ia32_page_map}.
+namely \apifunc{seL4\_X86\_Page\_Map}{x86_page_map}.
 
 Unmapping is accomplished with the usual unmap (see \autoref{ch:vspace}) API 
 call,
-\apifunc{seL4\_IA32\_Page\_Unmap}{ia32_page_unmap}.
+\apifunc{seL4\_X86\_Page\_Unmap}{x86_page_unmap}.
 
 More information about seL4's IOMMU abstractions can be found in \cite{Palande:M}.
 \fi

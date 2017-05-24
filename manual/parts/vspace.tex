@@ -73,7 +73,7 @@ It contains a number of slots, each of which contains a page-table entry (PTE).
 \vspace{2ex}\\
 \vmfunc{
 \apifunc{seL4\_ARM\_PageTable\_Map}{arm_pagetable_map}\\
-\ifxeightsix\apifunc{seL4\_IA32\_PageTable\_Map}{ia32_pagetable_map}\fi
+\ifxeightsix\apifunc{seL4\_x86\_PageTable\_Map}{x86_pagetable_map}\fi
 }{
 Takes a \obj{Page Directory} capability as an argument, and installs a reference to the invoked
 \obj{Page Table} in a specified slot in the \obj{Page Directory}.
@@ -81,7 +81,7 @@ Takes a \obj{Page Directory} capability as an argument, and installs a reference
 \vspace{2ex}
 \vmfunc{
 \apifunc{seL4\_ARM\_PageTable\_Unmap}{arm_pagetable_unmap}\\
-\ifxeightsix\apifunc{seL4\_IA32\_PageTable\_Unmap}{ia32_pagetable_unmap}\fi
+\ifxeightsix\apifunc{seL4\_x86\_PageTable\_Unmap}{x86_pagetable_unmap}\fi
 }{
 Removes the reference to the invoked \obj{Page Table} from its containing
 \obj{Page Directory}.
@@ -95,7 +95,7 @@ implement virtual memory pages in a virtual address space. The
 \vspace{2ex}\\
 \vmfunc{
 \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map}\\
-\ifxeightsix\apifunc{seL4\_IA32\_Page\_Map}{ia32_page_map}\fi
+\ifxeightsix\apifunc{seL4\_x86\_Page\_Map}{x86_page_map}\fi
 }{
 Takes a \obj{Page Directory} capability as an argument and installs a reference
 to the given \obj{Page} in the PD or PT slot corresponding to the given address.
@@ -103,14 +103,14 @@ to the given \obj{Page} in the PD or PT slot corresponding to the given address.
 
 \vmfunc{
 \apifunc{seL4\_ARM\_Page\_Remap}{arm_page_remap}\\
-\ifxeightsix\apifunc{seL4\_IA32\_Page\_Remap}{ia32_page_remap}\fi
+\ifxeightsix\apifunc{seL4\_x86\_Page\_Remap}{x86_page_remap}\fi
 }{
 Changes the permissions of an existing mapping.
 }\vspace{2ex}
 
 \vmfunc{
 \apifunc{seL4\_ARM\_Page\_Unmap}{arm_page_unmap}\\
-\ifxeightsix\apifunc{seL4\_IA32\_Page\_Unmap}{ia32_page_unmap}\fi
+\ifxeightsix\apifunc{seL4\_x86\_Page\_Unmap}{x86_page_unmap}\fi
 }{
 Removes an existing mapping.
 }\vspace{2ex}
@@ -123,7 +123,7 @@ to the page
 that is being invoked must have read permissions. To map the page
 writable, the capability must have write permissions. The requested
 mapping permissions are specified with an argument of type
-\texttt{seL4\_CapRights} given to the \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or \apifunc{seL4\_IA32\_Page\_Map}{ia32_page_map} \fi method.
+\texttt{seL4\_CapRights} given to the \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or \apifunc{seL4\_x86\_Page\_Map}{x86_page_map} \fi method.
 \texttt{seL4\_CanRead} and \texttt{seL4\_CanWrite} are the only valid
 permissions on \ifxeightsix both \else the \fi ARM \ifxeightsix and IA-32 \fi architecture\ifxeightsix{s}\fi. If the capability does not have
 sufficient permissions to authorise the given mapping, then
@@ -141,7 +141,7 @@ This newly created capability is called an
 \vspace{2ex}\\
 \vmfunc{
 \apifunc{seL4\_ARM\_ASIDControl\_MakePool}{arm_asidcontrol_makepool}\\
-\ifxeightsix\apifunc{seL4\_IA32\_ASIDControl\_MakePool}{ia32_ASID_controlmakepool}\fi
+\ifxeightsix\apifunc{seL4\_x86\_ASIDControl\_MakePool}{x86_ASID_controlmakepool}\fi
 }{
 Together with a capability to 
 \obj{Untyped Memory} as argument creates an \obj{ASID Pool}.
@@ -160,7 +160,7 @@ must be assigned to an ASID. This is done using a capability to an
 \vspace{2ex}\\
 \vmfunc{
 \apifunc{seL4\_ARM\_ASIDPool\_Assign}{arm_asidpool_assign}\\
-\ifxeightsix\apifunc{seL4\_IA32\_ASIDPool\_Assign}{ia32_ASID_poolassign}\fi
+\ifxeightsix\apifunc{seL4\_x86\_ASIDPool\_Assign}{x86_asidpool_assign}\fi
 }{
 Assigns an ASID to the VSpace
 associated with the \obj{Page Directory} passed in as an argument.
@@ -168,7 +168,7 @@ associated with the \obj{Page Directory} passed in as an argument.
 
 \section{Mapping Attributes}
 A parameter of type \texttt{seL4\_ARM\_VMAttributes} or
-\texttt{seL4\_IA32\_VMAttributes} is used to specify the cache behaviour of the
+\texttt{seL4\_x86\_VMAttributes} is used to specify the cache behaviour of the
 page being mapped; possible values for ARM that can be bitwise OR'd together are
 shown in \autoref{tbl:vmattr_arm} \ifxeightsix and an enumeration of valid values
 for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi.
@@ -197,14 +197,14 @@ for IA-32 are shown in \autoref{tbl:vmattr_ia32}\fi.
       \toprule
       Attribute & Meaning \\
       \midrule
-      \texttt{seL4\_IA32\_WriteBack} & Read and writes are cached \\
-      \texttt{seL4\_IA32\_CacheDisabled} & Prevent data in this mapping
+      \texttt{seL4\_x86\_WriteBack} & Read and writes are cached \\
+      \texttt{seL4\_x86\_CacheDisabled} & Prevent data in this mapping
       from being cached \\
-      \texttt{seL4\_IA32\_WriteThrough} & Enable write through cacheing for this mapping \\
-      \texttt{seL4\_IA32\_WriteCombining} & Enable write combining for this mapping \\
+      \texttt{seL4\_x86\_WriteThrough} & Enable write through cacheing for this mapping \\
+      \texttt{seL4\_x86\_WriteCombining} & Enable write combining for this mapping \\
       \bottomrule
     \end{tabularx}
-    \caption{\label{tbl:vmattr_ia32} Virtual memory attributes for IA32 page
+    \caption{\label{tbl:vmattr_ia32} Virtual memory attributes for x86 page
       table entries.}
   \end{center}
 \end{table}
@@ -216,7 +216,7 @@ pages to be shared between address spaces.
 To share a page, the capability to the 
 \obj{Page} must first be
 duplicated using the \apifunc{seL4\_CNode\_Copy}{cnode_copy} method and the new copy must
-be used in the \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or \apifunc{seL4\_IA32\_Page\_Map}{ia32_page_map} \fi method that maps the page into the second
+be used in the \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or \apifunc{seL4\_x86\_Page\_Map}{x86_page_map} \fi method that maps the page into the second
 address space. Attempting to map the same capability
 twice will result in an error. 
 
