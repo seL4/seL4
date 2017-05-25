@@ -31,12 +31,20 @@ FN_DECL_PREFIX = "static inline"
 DEFAULT_RETURN_TYPE = "int"
 
 def init_all_types():
+    """
+    Return an array of all c types involved in the sel4 interface
+    """
+
     data_types = syscall_stub_gen.init_data_types(WORD_SIZE)
     arch_types = list(itertools.chain(*syscall_stub_gen.init_arch_types(WORD_SIZE).values()))
 
     return data_types + arch_types
 
 def generate_prototype(interface_name, method_name, method_id, inputs, outputs, comment):
+    """
+    Returns a string containing a commented function prototype based on its arguments
+    """
+
     prefix = FN_DECL_PREFIX
     if syscall_stub_gen.generate_result_struct(interface_name, method_name, outputs):
         return_type = "%s_%s_t" % (interface_name, method_name)
@@ -49,8 +57,13 @@ def generate_prototype(interface_name, method_name, method_id, inputs, outputs, 
     return "%s\n%s %s %s(%s);" % (comment, prefix, return_type, name, param_list)
 
 def gen_invocations(input_files, output_file):
-    types = init_all_types()
+    """
+    Given a collection of input xml files describing sel4 interfaces,
+    generates a c header file containing doxygen-commented function
+    prototypes.
+    """
 
+    types = init_all_types()
 
     for input_file in input_files:
         methods, _, api = syscall_stub_gen.parse_xml_file(input_file, types)
@@ -88,6 +101,10 @@ def process_args():
     return parser
 
 def gen_header(output_file):
+    """
+    Writes the header
+    """
+
     output_file.write("""
 /**
  * @defgroup ObjectInvocations Object Invocations
@@ -96,6 +113,10 @@ def gen_header(output_file):
 """)
 
 def gen_footer(output_file):
+    """
+    Writes the footer
+    """
+
     output_file.write("""
 /** @} */
 """)
