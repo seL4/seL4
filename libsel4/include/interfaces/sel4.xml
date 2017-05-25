@@ -37,7 +37,6 @@
                 See <autoref sec="caps_to_new_objects"/> for more information about the
                 placement of capabilities to created objects.
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="type" type="seL4_Word"
                 description="The seL4 object type that we are retyping to."/>
             <param dir="in" name="size_bits" type="seL4_Word"
@@ -66,7 +65,6 @@
             <description>
                 See <autoref sec="read_write_registers"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="suspend_source" type="seL4_Bool"
                 description="The invocation should also suspend the source thread."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
@@ -83,7 +81,6 @@
             <description>
                 See <autoref sec="read_write_registers"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="resume_target" type="seL4_Bool"
                 description="The invocation should also resume the destination thread."/>
             <param dir="in" name="arch_flags" type="seL4_Uint8"
@@ -103,7 +100,6 @@
                 system call and integer registers are those that are not. Refer to the seL4 userland library source for specifics.
                 <autoref sec="thread_deactivation"/>
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description=" This is the destination TCB."/>
             <param dir="in" name="source" type="seL4_TCB" description="Cap to the source TCB."/>
             <param dir="in" name="suspend_source" type="seL4_Bool"
@@ -125,7 +121,6 @@
             <description>
                 See <autoref sec="threads"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="fault_ep" type="seL4_Word"
                 description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
             <param dir="in" name="priority" type="seL4_PrioProps_t"
@@ -151,7 +146,6 @@
             <description>
                 See <autoref sec="sched"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="priority" type="seL4_Uint8"
                 description="The thread's new priority."/>
         </method>
@@ -163,7 +157,6 @@
             <description>
                 See <autoref sec="sched"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="mcp" type="seL4_Uint8"
                 description="The thread's new maximum controlled priority."/>
         </method>
@@ -175,7 +168,6 @@
             <description>
                 See Sections <shortref sec="threads"/> and <shortref sec="messageinfo"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="buffer" type="seL4_Word"
                 description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
             <param dir="in" name="bufferFrame" type="seL4_CPtr"
@@ -189,7 +181,6 @@
             <description>
                 See <autoref sec="threads"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="fault_ep" type="seL4_Word"
                 description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
@@ -209,7 +200,6 @@
             <description>
                 See <autoref sec="thread_deactivation"/>
             </description>
-            <return><errorenumdesc/></return>
         </method>
 
         <method id="TCBResume" name="Resume" manual_name="Resume" manual_label="tcb_resume">
@@ -219,7 +209,6 @@
             <description>
                 See <autoref sec="thread_deactivation"/>
             </description>
-            <return><errorenumdesc/></return>
         </method>
 
         <method id="TCBBindNotification" name="BindNotification" manual_name="Bind Notification" manual_label="tcb_bindnotification">
@@ -229,7 +218,6 @@
             <description>
                 See <autoref sec="notification-binding"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="notification" type="seL4_CPtr" description="Notification to bind."/>
         </method>
 
@@ -240,7 +228,6 @@
             <description>
                 See <autoref sec="notification-binding"/>
             </description>
-            <return><errorenumdesc/></return>
         </method>
 
         <method id="TCBSetAffinity" name="SetAffinity" condition="CONFIG_MAX_NUM_NODES > 1" manual_name="Set CPU Affinity" manual_label="tcb_setaffinity">
@@ -250,7 +237,6 @@
             <description>
                 See <autoref sec="thread_creation"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="affinity" type="seL4_Word"
                 description="The thread's new CPU to run."/>
         </method>
@@ -265,7 +251,6 @@
             <description>
                 See <autoref sec="debug_exceptions"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="bp_num" type="seL4_Uint16"
                 description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
             <param dir="in" name="vaddr" type="seL4_Word"
@@ -319,7 +304,6 @@
             <description>
                 See <autoref sec="debug_exceptions"/>
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="bp_num" type="seL4_Uint16"
                 description="The API-ID of a target breakpoint. This ID will be a positive integer, with values ranging from 0 to seL4_NumHWBreakpoints - 1."/>
         </method>
@@ -360,7 +344,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
@@ -373,7 +356,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
@@ -389,7 +371,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
@@ -402,7 +383,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
@@ -423,7 +403,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
@@ -445,7 +424,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
@@ -461,7 +439,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
@@ -479,7 +456,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the destination slot will be found. Must be at a depth of 32."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved relative to _service. Must be empty unless it refers to the same slot as the source slot."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Depth to resolve dest_index to."/>
@@ -500,7 +476,6 @@
             <description>
                 See <autoref sec="cnode-ops"/>.
             </description>
-            <return><errorenumdesc/></return>
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability is to be saved. Must be at a depth of 32."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the slot in which to save the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the slot being targeted."/>
@@ -517,7 +492,6 @@
             <description>
                 See <autoref sec="interrupts"/>.
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="irq" type="int" description="The IRQ that you want this capability to handle."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
@@ -535,7 +509,6 @@
             <description>
                 See <autoref sec="interrupts"/>.
             </description>
-            <return><errorenumdesc/></return>
         </method>
 
         <method id="IRQSetIRQHandler" name="SetNotification" manual_name="Set Notification" manual_label="irq_handlersetnotification">
@@ -546,7 +519,6 @@
             <description>
                 See <autoref sec="interrupts"/>.
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="notification" type="seL4_CPtr" description="The notification which the IRQs will signal."/>
         </method>
 
@@ -557,7 +529,6 @@
             <description>
                 See <autoref sec="interrupts"/>.
             </description>
-            <return><errorenumdesc/></return>
         </method>
 
     </interface>
@@ -571,7 +542,6 @@
             <description>
                 See <autoref sec="domains"/>.
             </description>
-            <return><errorenumdesc/></return>
             <param dir="in" name="domain" type="seL4_Uint8" description="The thread's new domain."/>
             <param dir="in" name="thread" type="seL4_TCB" description="Capability to the TCB which is being operated on."/>
         </method>
