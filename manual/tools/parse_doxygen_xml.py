@@ -24,6 +24,14 @@ LATEX_ESCAPE_PATTERNS = {
 }
 LATEX_ESCAPE_REGEX = re.compile('|'.join(LATEX_ESCAPE_PATTERNS.keys()))
 
+# Returns the latex doc for the return value of a function
+# implied by its return type
+def default_return_doc(ret_type):
+    if ret_type == "void":
+        return "\\noret"
+
+    return ""
+
 # Return a string with latex special characters escaped
 def latex_escape(string):
     return LATEX_ESCAPE_REGEX.sub(lambda p: LATEX_ESCAPE_PATTERNS[p.group()], string)
@@ -133,13 +141,14 @@ def parse_detailed_desc(parent, ref_dict):
 
             details += parse_para(n, ref_dict)
 
-    ret = "\\noret"
+    ret_str = get_text(parent.getElementsByTagName("type")[0], recur=True, escape=False)
+    ret = default_return_doc(ret_str.split()[-1])
     simplesects = detailed_desc.getElementsByTagName("simplesect")
     for n in simplesects:
         if n.nodeType == xml.dom.Node.ELEMENT_NODE and \
                 n.getAttribute("kind") == "return":
-
             ret = parse_para(n, ref_dict)
+            break
 
     return (details, params_str, ret)
 
@@ -147,7 +156,7 @@ def parse_detailed_desc(parent, ref_dict):
 def parse_prototype(parent):
     inline = parent.getAttribute("inline") == "yes"
     static = parent.getAttribute("static") == "yes"
-    ret_type = get_text(parent.getElementsByTagName("type")[0])
+    ret_type = get_text(parent.getElementsByTagName("type")[0], recur=True)
     name = get_text(parent.getElementsByTagName("name")[0])
 
     output = "%s %s" % (ret_type, name)

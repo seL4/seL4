@@ -494,6 +494,9 @@ def generate_unmarshal_expressions(params, wordsize):
         results.append((param, unmarshal_single_param(first_bit, num_bits, wordsize)))
     return results
 
+def is_result_struct_required(output_params):
+    return len([x for x in output_params if not x.type.pass_by_reference()]) != 0
+
 def generate_result_struct(interface_name, method_name, output_params):
     """
     Generate a structure definition to be returned by the system call stubs to
@@ -512,7 +515,7 @@ def generate_result_struct(interface_name, method_name, output_params):
     """
 
     # Do we actually need a structure?
-    if len([x for x in output_params if not x.type.pass_by_reference()]) == 0:
+    if not is_result_struct_required(output_params):
         return None
 
     #
@@ -799,12 +802,6 @@ def parse_xml_file(input_file, valid_types):
                 normalised_method_description_text = normalise_text(method_description_text)
                 comment_lines.append("\n@xmlonly\n%s\n@endxmlonly\n" % normalised_method_description_text)
 
-            method_return_description = method.getElementsByTagName("return")
-            if method_return_description:
-                comment_lines.append("@return @xmlonly %s @endxmlonly" % get_xml_element_contents(method_return_description[0]))
-            else:
-                comment_lines.append("@return @xmlonly <errorenumdesc/> @endxmlonly")
-
             #
             # Get parameters.
             #
@@ -842,6 +839,17 @@ def parse_xml_file(input_file, valid_types):
                             param_description = normalise_text(param_description_text)
 
                     comment_lines.append("@param[%s] %s %s " % (param_dir, param_name, param_description))
+
+            method_return_description = method.getElementsByTagName("return")
+            if method_return_description:
+                comment_lines.append("@return @xmlonly %s @endxmlonly" % get_xml_element_contents(method_return_description[0]))
+            else:
+                # no return documentation given - default to something sane
+                if is_result_struct_required(output_params):
+                    comment_lines.append("@return @xmlonly @endxmlonly")
+                else:
+                    comment_lines.append("@return @xmlonly <errorenumdesc/> @endxmlonly")
+
 
             # split each line on newlines
             comment_lines = reduce(operator.add, [l.split("\n") for l in comment_lines], [])
