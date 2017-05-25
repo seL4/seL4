@@ -230,6 +230,104 @@ seL4_Poll(seL4_CPtr src, seL4_Word *sender);
 
 /** @} */
 
+/**
+ * @defgroup DebuggingSystemCalls
+ * @{
+ */
+#ifdef CONFIG_PRINTING
+/**
+ * @xmlonly <manual name="Put Char" label="sel4_debugputchar"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_DebugPutChar(char c);
+#endif
+
+#if CONFIG_DEBUG_BUILD
+/**
+ * @xmlonly <manual name="Halt" label="sel4_debughalt"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_DebugHalt(void);
+
+/**
+ * @xmlonly <manual name="Snapshot" label="sel4_debugsnapshot"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_DebugSnapshot(void);
+
+/**
+ * @xmlonly <manual name="Cap Identify" label="sel4_debugcapidentify"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_Uint32
+seL4_DebugCapIdentify(seL4_CPtr cap);
+
+/**
+ * @xmlonly <manual name="Name Thread" label="sel4_debugnamethread"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
+#endif
+
+#ifdef CONFIG_DANGEROUS_CODE_INJECTION
+/**
+ * @xmlonly <manual name="Run" label="sel4_debugrun"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_DebugRun(void (* userfn) (void *), void* userarg);
+#endif
+/** @} */
+
+/**
+ * @defgroup BenchmarkingSystemCalls
+ * @{
+ */
+#ifdef CONFIG_ENABLE_BENCHMARKS
+/**
+ * @xmlonly <manual name="Reset Log" label="sel4_benchmarkresetlog"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_Error
+seL4_BenchmarkResetLog(void);
+
+/**
+ * @xmlonly <manual name="Finalize Log" label="sel4_benchmarkfinalizelog"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_Word
+seL4_BenchmarkFinalizeLog(void);
+
+/**
+ * @xmlonly <manual name="Set Log Buffer" label="sel4_benchmarksetlogbuffer"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC seL4_Error
+seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr);
+
+/**
+ * @xmlonly <manual name="Null Syscall" label="sel4_benchmarknullsyscall"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkNullSyscall(void);
+
+/**
+ * @xmlonly <manual name="Flush Caches" label="sel4_benchmarkflushcaches"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkFlushCaches(void);
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+/**
+ * @xmlonly <manual name="Get Thread Utilisation" label="sel4_benchmarkgetthreadutilisation"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr);
+
+/**
+ * @xmlonly <manual name="Reset Thread Utilisation" label="sel4_benchmarkresetthreadutilisation"/> @endxmlonly
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr);
+#endif
+#endif
+/** @} */
+
 /** @} */
 
 #endif /* __LIBSEL4_SYSCALLS_H */
