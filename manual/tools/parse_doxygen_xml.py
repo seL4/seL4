@@ -134,12 +134,12 @@ def parse_detailed_desc(parent, ref_dict):
         params_str = ""
         for param_name in param_order:
             param_info = params[param_name]
-            if "desc" in param_info:
-                params_str += "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
-                    "type": param_info["type"],
-                    "name": param_name,
-                    "desc": param_info["desc"].strip(),
-                }
+            params_str += "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
+                "type": param_info["type"],
+                "name": param_name,
+                "desc": param_info["desc"].strip() if "desc" in param_info else "",
+            }
+
 
     details = ""
     for n in detailed_desc.childNodes:
