@@ -9,8 +9,10 @@
 # @TAG(NICTA_BSD)
 #
 
-# Script for generating latex from doxygen-generated xml files.
-# The generatetd latex files are compatible with the seL4 manual.
+"""
+Script for generating latex from doxygen-generated xml files.
+The generatetd latex files are compatible with the seL4 manual.
+"""
 
 import xml.dom.minidom
 import argparse
@@ -24,9 +26,12 @@ LATEX_ESCAPE_PATTERNS = {
 }
 LATEX_ESCAPE_REGEX = re.compile('|'.join(LATEX_ESCAPE_PATTERNS.keys()))
 
-# Returns the latex doc for the return value of a function
-# implied by its return type
 def default_return_doc(ret_type):
+    """
+    Returns the latex doc for the return value of a function
+    implied by its return type
+    """
+
     if ret_type == "void":
         return "\\noret"
 
@@ -35,22 +40,31 @@ def default_return_doc(ret_type):
 class NoSuchNode(Exception):
     pass
 
-# Return a string with latex special characters escaped
 def latex_escape(string):
+    """
+    Return a string with latex special characters escaped
+    """
+
     return LATEX_ESCAPE_REGEX.sub(lambda p: LATEX_ESCAPE_PATTERNS[p.group()], string)
 
-# Return the first node with a given tag inside parent
 def get_node(parent, tagname):
+    """
+    Return the first node with a given tag inside parent
+    """
+
     elements = parent.getElementsByTagName(tagname)
     if len(elements) == 0:
         raise NoSuchNode(tagname)
 
     return elements[0]
 
-# Return a string containing a concatenation of a nodes text node
-# children, recursing into non-text nodes or escaping latex if
-# necessary.
 def get_text(node, recur=False, escape=True):
+    """
+    Return a string containing a concatenation of a nodes text node
+    children, recursing into non-text nodes or escaping latex if
+    necessary.
+    """
+
     output = ""
     for n in node.childNodes:
         if n.nodeType == xml.dom.Node.TEXT_NODE:
@@ -63,9 +77,12 @@ def get_text(node, recur=False, escape=True):
 
     return output
 
-# Parse a paragraph node, handling special doxygen node types
-# that may appear inside a paragraph.
 def parse_para(para_node, ref_dict={}):
+    """
+    Parse a paragraph node, handling special doxygen node types
+    that may appear inside a paragraph.
+    """
+
     output = ""
     for n in para_node.childNodes:
         if n.nodeType == xml.dom.Node.TEXT_NODE:
@@ -95,15 +112,20 @@ def parse_para(para_node, ref_dict={}):
 
     return output
 
-# Parse the "brief description" section of a doxygen member.
 def parse_brief(parent):
+    """
+    Parse the "brief description" section of a doxygen member.
+    """
+
     para_nodes = get_node(parent, "briefdescription").getElementsByTagName("para")
     para_text = "\n\n".join([parse_para(n) for n in para_nodes])
 
     return para_text
 
-# Parse the "detailed description" section of a doxygen member.
 def parse_detailed_desc(parent, ref_dict):
+    """
+    Parse the "detailed description" section of a doxygen member.
+    """
 
     param_nodes = parent.getElementsByTagName("param")
     params = {}
@@ -159,8 +181,11 @@ def parse_detailed_desc(parent, ref_dict):
 
     return (details, params_str, ret)
 
-# Extract a function prototype from a doxygen member.
 def parse_prototype(parent):
+    """
+    Extract a function prototype from a doxygen member.
+    """
+
     inline = parent.getAttribute("inline") == "yes"
     static = parent.getAttribute("static") == "yes"
     ret_type = get_text(parent.getElementsByTagName("type")[0], recur=True)
@@ -174,9 +199,12 @@ def parse_prototype(parent):
 
     return output
 
-# Return a dict mapping reference ids and reference names
-# to details about the referee.
 def build_ref_dict(doc):
+    """
+    Return a dict mapping reference ids and reference names
+    to details about the referee.
+    """
+
     ret = {}
     for member in doc.getElementsByTagName("memberdef"):
         manual_node = get_node(member, "manual")
@@ -195,10 +223,13 @@ def build_ref_dict(doc):
 
     return ret
 
-# Takes a path to a file containing doxygen-generated xml,
-# and return a string containing latex suitable for inclusion
-# in the sel4 manual.
 def generate_general_syscall_doc(input_file_name, level):
+    """
+    Takes a path to a file containing doxygen-generated xml,
+    and return a string containing latex suitable for inclusion
+    in the sel4 manual.
+    """
+
     with open(input_file_name, "r") as f:
         output = ""
         doc = xml.dom.minidom.parse(f)
