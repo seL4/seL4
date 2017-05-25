@@ -22,7 +22,6 @@ import argparse
 import operator
 import logging
 import itertools
-from functools import reduce
 from libsel4_tools import syscall_stub_gen
 from lxml import etree
 
