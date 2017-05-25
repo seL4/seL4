@@ -117,12 +117,12 @@ ${DoxygenXml}/%.xml: doxygen
 # General object invocations are listed as subsections
 ${GeneratedLatexDir}/ObjectApi.tex: ${DoxygenXml}/group__ObjectApi.xml
 	@echo "====> Generating $@"
-	python ${GenerateLatexTool} --level subsection --input $< --output $@
+	${Q}python ${GenerateLatexTool} --level subsection --input $< --output $@
 
 # Everything else is listed as subsubsections
 ${GeneratedLatexDir}/%.tex: ${DoxygenXml}/group__%.xml
 	@echo "====> Generating $@"
-	python ${GenerateLatexTool} --level subsubsection --input $< --output $@
+	${Q}python ${GenerateLatexTool} --level subsubsection --input $< --output $@
 
 # Collect generated latex files into single rule
 generated-latex: ${GeneratedLatexDir}/GeneralSystemCalls.tex \
@@ -145,7 +145,7 @@ ${Stage}/object_invocations.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
                                ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/sel4arch.xml \
                                ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml
 	@echo "====> Generating documented object invocation header"
-	python ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output $@ $^
+	${Q}python ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output $@ $^
 
 # Collect generated headers into single rule
 generated-headers: ${Stage}/object_invocations.h
