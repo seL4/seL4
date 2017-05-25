@@ -40,6 +40,7 @@ mv	   = mv
 awk	   = awk
 R	   = R
 doxygen = doxygen
+PYTHON ?= python
 
 # To add a second target, simply append the basename of the .tex file here
 Targets    = manual
@@ -117,12 +118,12 @@ ${DoxygenXml}/%.xml: doxygen
 # General object invocations are listed as subsections
 ${GeneratedLatexDir}/ObjectApi.tex: ${DoxygenXml}/group__ObjectApi.xml
 	@echo "====> Generating $@"
-	${Q}python ${GenerateLatexTool} --level subsection --input $< --output $@
+	${Q}${PYTHON} ${GenerateLatexTool} --level subsection --input $< --output $@
 
 # Everything else is listed as subsubsections
 ${GeneratedLatexDir}/%.tex: ${DoxygenXml}/group__%.xml
 	@echo "====> Generating $@"
-	${Q}python ${GenerateLatexTool} --level subsubsection --input $< --output $@
+	${Q}${PYTHON} ${GenerateLatexTool} --level subsubsection --input $< --output $@
 
 # Collect generated latex files into single rule
 generated-latex: ${GeneratedLatexDir}/GeneralSystemCalls.tex \
@@ -145,7 +146,7 @@ ${Stage}/object_invocations.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
                                ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/sel4arch.xml \
                                ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml
 	@echo "====> Generating documented object invocation header"
-	${Q}python ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output $@ $^
+	${Q}${PYTHON} ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output $@ $^
 
 # Collect generated headers into single rule
 generated-headers: ${Stage}/object_invocations.h
@@ -153,7 +154,7 @@ generated-headers: ${Stage}/object_invocations.h
 # Fetch information from the environment that needs to go into the document.
 env.tex: FORCE
 	@echo 'ENV ->' $@
-	${Q}python tools/gen_env.py $@
+	${Q}${PYTHON} tools/gen_env.py $@
 
 manual.pdf: VERSION env.tex manual.tex parts/*.tex parts/api/*.tex
 
