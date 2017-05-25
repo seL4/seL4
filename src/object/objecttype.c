@@ -522,9 +522,7 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 
     case seL4_SchedContextObject:
         memzero(regionBase, BIT(userSize));
-        sched_context_t *sc = SC_PTR(regionBase);
-        sc->scSizeBits = userSize;
-        return cap_sched_context_cap_new(SC_REF(regionBase));
+        return cap_sched_context_cap_new(SC_REF(regionBase), userSize);
 
     case seL4_ReplyObject:
         memzero(regionBase, 1UL << seL4_ReplyBits);

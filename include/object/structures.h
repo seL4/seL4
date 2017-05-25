@@ -293,13 +293,11 @@ struct sched_context {
     notification_t *scNotification;
 
     /* Amount of refills this sc tracks */
-    uint32_t scRefillMax;
+    word_t scRefillMax;
     /* Index of the head of the refill circular buffer */
-    uint32_t scRefillHead;
+    word_t scRefillHead;
     /* Index of the tail of the refill circular buffer */
-    uint32_t scRefillTail;
-    /* size of this scheduling context */
-    uint32_t scSizeBits;
+    word_t scRefillTail;
 };
 
 struct reply {
@@ -323,6 +321,8 @@ compile_assert(tcb_size_sane,
 compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << seL4_EndpointBits))
 compile_assert(notification_size_sane, sizeof(notification_t) <= (1 << seL4_NotificationBits))
 compile_assert(sc_size_sane, (sizeof(sched_context_t) + MIN_REFILLS * sizeof(refill_t)) <= (1 << seL4_MinSchedContextBits))
+compile_assert(sc_core_size_sane, (sizeof(sched_context_t) + MIN_REFILLS * sizeof(refill_t) <= seL4_CoreSchedContextBytes))
+compile_assert(refill_size_sane, (sizeof(refill_t) == seL4_RefillSizeBytes))
 compile_assert(reply_size_sane, sizeof(reply_t) <= (1 << seL4_ReplyBits))
 
 /* helper functions */
@@ -382,7 +382,7 @@ cap_get_capSizeBits(cap_t cap)
         return 0;
 
     case cap_sched_context_cap:
-        return SC_PTR(cap_sched_context_cap_get_capSCPtr(cap))->scSizeBits;
+        return cap_sched_context_cap_get_capSCSizeBits(cap);
 
     default:
         return cap_get_archCapSizeBits(cap);

@@ -126,17 +126,16 @@ decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, w
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap));
-    if (extra_refills + MIN_REFILLS > refill_absolute_max(sc)) {
+    if (extra_refills + MIN_REFILLS > refill_absolute_max(targetCap)) {
         userError("Max refills invalid");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = refill_absolute_max(sc) - MIN_REFILLS;
+        current_syscall_error.rangeErrorMax = refill_absolute_max(cap) - MIN_REFILLS;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return invokeSchedControl_Configure(sc,
+    return invokeSchedControl_Configure(SC_PTR(cap_sched_context_cap_get_capSCPtr(targetCap)),
                                         cap_sched_control_cap_get_core(cap),
                                         usToTicks(budget_us),
                                         usToTicks(period_us),

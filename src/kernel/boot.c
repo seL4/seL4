@@ -382,7 +382,6 @@ create_sched_context(tcb_t *tcb, ticks_t timeslice)
 
     memzero((void *) sc_pptr, BIT(seL4_MinSchedContextBits));
     tcb->tcbSchedContext = SC_PTR(sc_pptr);
-    SC_PTR(sc_pptr)->scSizeBits = seL4_MinSchedContextBits;
     refill_new(tcb->tcbSchedContext, MIN_REFILLS, timeslice, 0);
 
     tcb->tcbSchedContext->scTcb = tcb;
@@ -516,7 +515,7 @@ create_initial_thread(
     /* create initial thread's TCB cap */
     cap = cap_thread_cap_new(TCB_REF(tcb));
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadTCB), cap);
-    cap = cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext));
+    cap = cap_sched_context_cap_new(SC_REF(tcb->tcbSchedContext), seL4_MinSchedContextBits);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadSC), cap);
 #ifdef CONFIG_DEBUG_BUILD
     setThreadName(tcb, "rootserver");
