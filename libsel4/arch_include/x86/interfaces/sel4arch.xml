@@ -44,7 +44,7 @@
         </method>
     </interface>
 
-    <interface name="seL4_X86_IOPageTable" manual_name="IO Page Table">
+    <interface name="seL4_X86_IOPageTable" manual_name="I/O Page Table">
         <method id="X86IOPageTableMap" name="Map">
             <param dir="in" name="iospace" type="seL4_X86_IOSpace"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
@@ -66,7 +66,7 @@
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
         </method>
         <method id="X86PageUnmap" name="Unmap"/>
-        <method id="X86PageMapIO" name="MapIO" manual_name="Map IO">
+        <method id="X86PageMapIO" name="MapIO" manual_name="Map I/O">
             <param dir="in" name="iospace" type="seL4_X86_IOSpace"/>
             <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
@@ -97,7 +97,7 @@
         </method>
     </interface>
 
-    <interface name="seL4_X86_IOPort" manual_name="IO Port">
+    <interface name="seL4_X86_IOPort" manual_name="I/O Port">
         <method id="X86IOPortIn8" name="In8">
             <param dir="out" name="result" type="seL4_Uint8"/>
             <param dir="in" name="port" type="seL4_Uint16"/>
@@ -125,7 +125,7 @@
     </interface>
 
     <interface name="seL4_IRQControl" manual_name="IRQ Control">
-        <method id="X86IRQIssueIRQHandlerIOAPIC" name="GetIOAPIC" manual_name="Get IOAPIC">
+        <method id="X86IRQIssueIRQHandlerIOAPIC" name="GetIOAPIC" manual_name="Get I/O APIC">
             <param dir="in" name="root" type="seL4_CNode"/>
             <param dir="in" name="index" type="seL4_Word"/>
             <param dir="in" name="depth" type="seL4_Word"/>
