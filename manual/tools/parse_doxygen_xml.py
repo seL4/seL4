@@ -159,7 +159,7 @@ def parse_detailed_desc(parent, ref_dict):
             params_str += "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
                 "type": param_info["type"],
                 "name": param_name,
-                "desc": param_info["desc"].strip() if "desc" in param_info else "",
+                "desc": todo_if_empty(param_info.get("desc", "").strip()),
             }
 
 
@@ -178,8 +178,7 @@ def parse_detailed_desc(parent, ref_dict):
                 n.getAttribute("kind") == "return":
             ret = parse_para(n, ref_dict)
             break
-
-    return (details, params_str, ret)
+    return (todo_if_empty(details.strip()), params_str, todo_if_empty(ret.strip()))
 
 def parse_prototype(parent):
     """
@@ -223,6 +222,13 @@ def build_ref_dict(doc):
 
     return ret
 
+def todo_if_empty(s):
+    """
+    Returns its argument if its argument is non-none and non-empty,
+    otherwise returns "\\todo"
+    """
+    return s if s else "\\todo"
+
 def generate_general_syscall_doc(input_file_name, level):
     """
     Takes a path to a file containing doxygen-generated xml,
@@ -256,7 +262,7 @@ def generate_general_syscall_doc(input_file_name, level):
                 "level": level,
                 "label": manual_node.getAttribute("label"),
                 "name": latex_escape(manual_node.getAttribute("name")),
-                "brief": parse_brief(member),
+                "brief": todo_if_empty(parse_brief(member)),
                 "prototype": parse_prototype(member),
                 "params": params,
                 "ret": ret,
