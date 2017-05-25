@@ -32,13 +32,20 @@ def default_return_doc(ret_type):
 
     return ""
 
+class NoSuchNode(Exception):
+    pass
+
 # Return a string with latex special characters escaped
 def latex_escape(string):
     return LATEX_ESCAPE_REGEX.sub(lambda p: LATEX_ESCAPE_PATTERNS[p.group()], string)
 
 # Return the first node with a given tag inside parent
 def get_node(parent, tagname):
-    return parent.getElementsByTagName(tagname)[0]
+    elements = parent.getElementsByTagName(tagname)
+    if len(elements) == 0:
+        raise NoSuchNode(tagname)
+
+    return elements[0]
 
 # Return a string containing a concatenation of a nodes text node
 # children, recursing into non-text nodes or escaping latex if
