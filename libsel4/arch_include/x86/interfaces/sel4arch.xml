@@ -180,7 +180,7 @@
             <param dir="in" name="regs" type="seL4_VCPUContext"/>
         </method>
     </interface>
-    <interface name="seL4_X86_EPTPDPT" manual_name="EPTPDPT">
+    <interface name="seL4_X86_EPTPDPT" manual_name="Extended Page Table Page Directory Page Table">
         <method id="X86EPTPDPTMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
@@ -188,7 +188,7 @@
         </method>
         <method id="X86EPTPDPTUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
     </interface>
-    <interface name="seL4_X86_EPTPD" manual_name="EPTPD">
+    <interface name="seL4_X86_EPTPD" manual_name="Extended Page Table Page Directory">
         <method id="X86EPTPDMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
@@ -196,7 +196,7 @@
         </method>
         <method id="X86EPTPDUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
     </interface>
-    <interface name="seL4_X86_EPTPT" manual_name="EPTPT">
+    <interface name="seL4_X86_EPTPT" manual_name="Extended Page Table Page Table">
         <method id="X86EPTPTMap" name="Map" condition="defined(CONFIG_VTX)">
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="gpa" type="seL4_Word"/>
