@@ -57,7 +57,13 @@ static inline void
 setDeadline(ticks_t deadline)
 {
     assert(deadline > NODE_STATE(ksCurTime));
-    x86_wrmsr(IA32_TSC_DEADLINE_MSR, deadline);
+    if (likely(x86KSapicRatio == 0)) {
+        x86_wrmsr(IA32_TSC_DEADLINE_MSR, deadline);
+    } else {
+        /* convert deadline from tscKhz to apic khz */
+        deadline -= getCurrentTime();
+        apic_write_reg(APIC_TIMER_COUNT, div64(deadline, x86KSapicRatio));
+    }
 }
 
 BOOT_CODE uint32_t tsc_init(void);

@@ -20,6 +20,24 @@
 #define APIC_TIMER_MODE_ONE_SHOT 0
 #define APIC_TIMER_MODE_TSC_DEADLINE  2
 
+static BOOT_CODE uint32_t
+apic_measure_freq(void)
+{
+    pit_init();
+    /* wait for 1st PIT wraparound */
+    pit_wait_wraparound();
+
+    /* start APIC timer countdown */
+    apic_write_reg(APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
+    apic_write_reg(APIC_TIMER_COUNT, 0xffffffff);
+
+    /* wait for 2nd PIT wraparound */
+    pit_wait_wraparound();
+
+    /* calculate APIC/bus cycles per ms = frequency in kHz */
+    return (0xffffffff - apic_read_reg(APIC_TIMER_CURRENT)) / PIT_WRAPAROUND_MS;
+}
+
 BOOT_CODE paddr_t
 apic_get_base_paddr(void)
 {
@@ -39,14 +57,18 @@ apic_init(bool_t mask_legacy_irqs)
         return false;
     }
 
+    /* find tsc KHz */
+    x86KStscMhz = tsc_init();
+
     /* can we use tsc deadline mode? */
     uint32_t cpuid = x86_cpuid_ecx(0x1, 0x0);
-    if (cpuid & BIT(CPUID_TSC_DEADLINE_BIT)) {
-        /* use the tsc */
-        x86KStscMhz = tsc_init();
+    if (!(cpuid & BIT(CPUID_TSC_DEADLINE_BIT))) {
+        uint32_t apic_khz = apic_measure_freq();
+        x86KSapicRatio = div64((uint64_t )x86KStscMhz * 1000llu, apic_khz);
+        printf("Apic Khz %lu, TSC Mhz %lu, ratio %lu\n", (long) x86KStscMhz, (long) apic_khz, (long) x86KSapicRatio);
     } else {
-        /* SELFOUR-372: this should fall back to the apic timer */
-        return false;
+        // use tsc deadline mode
+        x86KSapicRatio = 0;
     }
     apic_version.words[0] = apic_read_reg(APIC_VERSION);
 
@@ -54,6 +76,11 @@ apic_init(bool_t mask_legacy_irqs)
     if (apic_version_get_version(apic_version) >> 4 != 1) {
         printf("APIC: apic_version must be 0x1X\n");
         return false;
+    }
+
+    if (x86KSapicRatio != 0) {
+        /* initialise APIC timer */
+        apic_write_reg(APIC_TIMER_DIVIDE, 0xb); /* divisor = 1 */
     }
 
     /* check for correct number of LVT entries */
@@ -105,10 +132,12 @@ apic_init(bool_t mask_legacy_irqs)
     );
 
     /* initialise timer */
+    uint32_t timer_mode = x86KSapicRatio == 0 ? APIC_TIMER_MODE_TSC_DEADLINE :
+                                                APIC_TIMER_MODE_ONE_SHOT;
     apic_write_reg(
         APIC_LVT_TIMER,
         apic_lvt_new(
-            APIC_TIMER_MODE_TSC_DEADLINE, /* timer_mode      */
+            timer_mode,
             0,        /* masked          */
             0,        /* trigger_mode    */
             0,        /* remote_irr      */

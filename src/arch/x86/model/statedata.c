@@ -77,3 +77,4 @@ uint16_t x86KSdebugPort;
  * CPU vector */
 x86_irq_state_t x86KSIRQState[maxIRQ + 1];
 uint32_t x86KStscMhz;
+uint32_t x86KSapicRatio;
