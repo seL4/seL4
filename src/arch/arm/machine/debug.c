@@ -9,6 +9,8 @@
  *
  * @TAG(DATA61_GPL)
  */
+
+#include <config.h>
 #ifdef CONFIG_HARDWARE_DEBUG_API
 
 #include <string.h>
