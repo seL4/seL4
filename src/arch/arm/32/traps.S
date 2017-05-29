@@ -9,12 +9,11 @@
  */
 
 #include <config.h>
+#include <util.h>
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <machine/assembler.h>
-
-#define BIT(n) (1 << (n))
 
 .code 32
 .section .vectors, "ax"

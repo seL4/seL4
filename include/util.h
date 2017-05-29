@@ -87,7 +87,6 @@ int PURE strncmp(const char *s1, const char *s2, int n);
 long CONST char_to_long(char c);
 long PURE str_to_long(const char* str);
 
-#endif /* !__ASSEMBLER__ */
 
 int __builtin_clzl (unsigned long x);
 int __builtin_ctzl (unsigned long x);
@@ -133,4 +132,5 @@ CONST popcountl(unsigned long x)
 
 #define POPCOUNTL(x) __builtin_popcountl(x)
 
+#endif /* !__ASSEMBLER__ */
 #endif /* __UTIL_H */
