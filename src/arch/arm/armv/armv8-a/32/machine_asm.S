@@ -8,9 +8,10 @@
  * @TAG(GD_GPL)
  */
 
+#include <config.h>
 #include <machine/assembler.h>
 
-#if defined(ARM_CORTEX_A53)
+#if defined(CONFIG_ARM_CORTEX_A53)
 
 /* A53 hardware does not support TLB locking */
 BEGIN_FUNC(lockTLBEntry)

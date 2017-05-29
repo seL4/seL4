@@ -259,13 +259,13 @@
 #define AUDSS_PADDR           0x03810000
 
 /* SoC specific devices */
-#if defined(PLAT_EXYNOS5250)   /* Arndale */
+#if defined(CONFIG_PLAT_EXYNOS5250)   /* Arndale */
 #define GPIO_LEFT_PADDR       0x11400000
 #define GPIO_RIGHT_PADDR      0x13400000
 #define C2C_GPIO_PADDR        0x10D10000
 #define AUDIO_GPIO_PADDR      0x03860000
 
-#elif defined(PLAT_EXYNOS54XX) /* Odroid XU and XU3 */
+#elif defined(CONFIG_PLAT_EXYNOS54XX) /* Odroid XU and XU3 */
 #define GPIO_LEFT_PADDR       0x14000000
 #define GPIO_RIGHT_PADDR      0x13400000
 #define C2C_GPIO_PADDR        0x10D10000
