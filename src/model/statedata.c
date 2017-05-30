@@ -48,6 +48,10 @@ UP_STATE_DEFINE(user_fpu_state_t *, ksActiveFPUState);
 UP_STATE_DEFINE(word_t, ksFPURestoresSinceSwitch);
 #endif /* CONFIG_HAVE_FPU */
 
+#ifdef CONFIG_DEBUG_BUILD
+UP_STATE_DEFINE(tcb_t *, ksDebugTCBs);
+#endif /* CONFIG_DEBUG_BUILD */
+
 /* Units of work we have completed since the last time we checked for
  * pending interrupts */
 word_t ksWorkUnitsCompleted;

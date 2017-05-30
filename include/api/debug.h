@@ -18,6 +18,7 @@
 #include <arch/api/syscall.h>
 #include <arch/kernel/vspace.h>
 #include <model/statedata.h>
+#include <kernel/thread.h>
 
 #ifdef CONFIG_PRINTING
 
@@ -79,6 +80,58 @@ debug_printUserState(void)
     printf("Next instruction adress: %lx\n", getRestartPC(tptr));
     printf("Stack:\n");
     Arch_userStackTrace(tptr);
+}
+
+static inline void
+debug_printTCB(tcb_t *tcb)
+{
+    printf("Address\tName\t%16s\tIP\tPrio\n", "State");
+    printf("%p\t%s\t", tcb, tcb->tcbName);
+    char* state;
+    switch (thread_state_get_tsType(tcb->tcbState)) {
+    case ThreadState_Inactive:
+        state = "inactive";
+        break;
+    case ThreadState_Running:
+        state = "running";
+        break;
+    case ThreadState_Restart:
+        state = "restart";
+        break;
+    case ThreadState_BlockedOnReceive:
+        state = "blocked on recv";
+        break;
+    case ThreadState_BlockedOnSend:
+        state = "blocked on send";
+        break;
+    case ThreadState_BlockedOnReply:
+        state = "blocked on reply";
+        break;
+    case ThreadState_BlockedOnNotification:
+        state = "blocked on ntfn";
+        break;
+#ifdef CONFIG_VTX
+    case ThreadState_RunningVM:
+        state = "running VM";
+        break;
+#endif
+    case ThreadState_IdleThreadState:
+        state = "idle";
+        break;
+    default:
+        fail("Unknown thread state");
+    }
+
+    printf("%16s\t%p\t%lu\n", state, (void *) getRestartPC(tcb), tcb->tcbPriority);
+}
+
+static inline void
+debug_dumpScheduler(void)
+{
+    printf("Dumping all tcbs!\n");
+    for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
+        debug_printTCB(curr);
+    }
 }
 #endif /* CONFIG_PRINTING */
 #endif /* __API_DEBUG_H */

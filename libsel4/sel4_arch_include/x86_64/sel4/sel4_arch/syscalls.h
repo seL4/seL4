@@ -339,6 +339,19 @@ seL4_DebugPutChar(char c)
 
     x64_sys_send_recv(seL4_SysDebugPutChar, c, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
 }
+
+LIBSEL4_INLINE_FUNC void
+seL4_DebugDumpScheduler(char c)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    x64_sys_send_recv(seL4_SysDebugDumpScheduler, c, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
+}
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD

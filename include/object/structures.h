@@ -252,6 +252,10 @@ struct tcb {
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
+    /* Pointers for list of all tcbs that is maintained
+     * when CONFIG_DEBUG_BUILD is enabled */
+    struct tcb *tcbDebugNext;
+    struct tcb *tcbDebugPrev;
     /* Use any remaining space for a thread name */
     char tcbName[];
 #endif /* CONFIG_DEBUG_BUILD */
