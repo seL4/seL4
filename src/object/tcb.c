@@ -171,7 +171,7 @@ tcbSchedDequeue(tcb_t *tcb)
     }
 }
 
-#if CONFIG_DEBUG_BUILD
+#ifdef CONFIG_DEBUG_BUILD
 void tcbDebugAppend(tcb_t *tcb)
 {
     /* prepend to the list */
