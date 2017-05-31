@@ -15,7 +15,7 @@ def main():
     resulting in the loop is printed out.
     """
 
-    kernel_all_re = re.compile(r'^# 1 "kernel_all\.c"')
+    kernel_all_re = re.compile(r'^# 1 ".*kernel_all\.c"')
     header_re = re.compile(r'^# (\d+) "(.*\..)"')
 
     file_stack = []
