@@ -18,11 +18,11 @@
 
 #define PAGE_BITS seL4_PageBits
 
-#if defined(ARM_CORTEX_A53)
+#if defined(CONFIG_ARM_CORTEX_A53)
 #define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
 #endif
 
-#if defined(ARM_CORTEX_A57)
+#if defined(CONFIG_ARM_CORTEX_A57)
 #define L1_CACHE_LINE_SIZE_BITS  6 /* 64 bytes */
 #endif
 

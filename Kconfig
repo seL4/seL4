@@ -104,6 +104,12 @@ menu "seL4 System"
         bool
         default n
 
+    config PLAT_EXYNOS5
+        bool
+        default n
+        help
+            Common flag for Exynos5 platforms
+
     config PLAT_EXYNOS54XX
        bool
        default n
@@ -164,6 +170,7 @@ menu "seL4 System"
             bool "EXYNOS5410 (ODROID-XU, ARMv7a, Cortex A15)"
             depends on ARCH_AARCH32
             select PLAT_EXYNOS54XX
+            select PLAT_EXYNOS5
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help
@@ -173,6 +180,7 @@ menu "seL4 System"
             bool "EXYNOS5422 (ODROID-XU3, ARMv7a, Cortex A15)"
             depends on ARCH_AARCH32
             select PLAT_EXYNOS54XX
+            select PLAT_EXYNOS5
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help
@@ -181,6 +189,7 @@ menu "seL4 System"
         config PLAT_EXYNOS5250
             bool "EXYNOS5250 (ARNDALE, ARMv7a, Cortex A15)"
             depends on ARCH_AARCH32
+            select PLAT_EXYNOS5
             select ARM_CORTEX_A15
             select ARCH_ARM_V7A
             help

@@ -254,7 +254,7 @@ void lockTLBEntry(vptr_t vaddr);
 
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 {
-#ifdef ARM_CORTEX_A8
+#ifdef CONFIG_ARM_CORTEX_A8
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
     /* Erratum 586320 -- clean twice with interrupts disabled. */
@@ -270,21 +270,21 @@ static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
 /* D-Cache clean to PoU (L2 cache) (v6/v7 common) */
 static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 {
-#ifdef ARM_CORTEX_A8
+#ifdef CONFIG_ARM_CORTEX_A8
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
 #elif defined(CONFIG_ARCH_ARM_V6)
     /* V6 doesn't distinguish PoU and PoC, so use the basic flush. */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(PLAT_EXYNOS5)
+#elif defined(CONFIG_PLAT_EXYNOS5)
     /* Flush to coherency for table walks... Why? */
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(PLAT_IMX7)
+#elif defined(CONFIG_PLAT_IMX7)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #elif defined(CONFIG_PLAT_TK1)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
-#elif defined(ARM_CORTEX_A53)
+#elif defined(CONFIG_ARM_CORTEX_A53)
     asm volatile("mcr p15, 0, %0, c7, c10, 1" : : "r"(vaddr));
 #else
     asm volatile("mcr p15, 0, %0, c7, c11, 1" : : "r"(vaddr));
@@ -296,7 +296,7 @@ static inline void cleanByVA_PoU(vptr_t vaddr, paddr_t paddr)
 /* D-Cache invalidate to PoC (v6/v7 common) */
 static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 {
-#ifdef ARM_CORTEX_A8
+#ifdef CONFIG_ARM_CORTEX_A8
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
     asm volatile("mcr p15, 0, %0, c7, c6, 1" : : "r"(vaddr));
@@ -309,7 +309,7 @@ static inline void invalidateByVA(vptr_t vaddr, paddr_t paddr)
 /* I-Cache invalidate to PoU (L2 cache) (v6/v7 common) */
 static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 {
-#ifdef ARM_CORTEX_A8
+#ifdef CONFIG_ARM_CORTEX_A8
     /* On A8, we just invalidate the lot. */
     asm volatile("mcr p15, 0, %0, c7, c5, 0" : : "r"(0));
 #else
@@ -321,7 +321,7 @@ static inline void invalidateByVA_I(vptr_t vaddr, paddr_t paddr)
 /* I-Cache invalidate all to PoU (L2 cache) (v6/v7 common) */
 static inline void invalidate_I_PoU(void)
 {
-#ifdef ARM_CORTEX_A8
+#ifdef CONFIG_ARM_CORTEX_A8
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
 #endif
@@ -332,7 +332,7 @@ static inline void invalidate_I_PoU(void)
 /* D-Cache clean & invalidate to PoC (v6/v7 common) */
 static inline void cleanInvalByVA(vptr_t vaddr, paddr_t paddr)
 {
-#ifdef ARM_CORTEX_A8
+#ifdef CONFIG_ARM_CORTEX_A8
     /* Erratum 586324 -- perform a dummy cached load before flushing. */
     asm volatile("ldr r0, [sp]" : : : "r0");
     /* Erratum 586320 -- clean twice with interrupts disabled. */

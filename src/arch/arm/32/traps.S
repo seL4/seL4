@@ -122,7 +122,7 @@ BEGIN_FUNC(arm_prefetch_abort_exception)
     b c_handle_instruction_fault
 
 kernel_prefetch_fault:
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
     mov r0, r8
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
@@ -179,7 +179,7 @@ BEGIN_FUNC(arm_data_abort_exception)
 
 
 kernel_data_fault:
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
     mov r0, r8
 #ifdef CONFIG_ARCH_ARM_V6
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)

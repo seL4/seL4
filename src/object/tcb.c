@@ -171,6 +171,39 @@ tcbSchedDequeue(tcb_t *tcb)
     }
 }
 
+#ifdef CONFIG_DEBUG_BUILD
+void tcbDebugAppend(tcb_t *tcb)
+{
+    /* prepend to the list */
+    tcb->tcbDebugPrev = NULL;
+
+    if (NODE_STATE(ksDebugTCBs)) {
+        NODE_STATE(ksDebugTCBs)->tcbDebugPrev = tcb;
+    }
+
+    tcb->tcbDebugNext = NODE_STATE(ksDebugTCBs);
+    NODE_STATE(ksDebugTCBs) = tcb;
+}
+
+void tcbDebugRemove(tcb_t *tcb)
+{
+    assert(NODE_STATE(ksDebugTCBs) != NULL);
+    if (tcb == NODE_STATE(ksDebugTCBs)) {
+        NODE_STATE(ksDebugTCBs) = NODE_STATE(ksDebugTCBs)->tcbDebugNext;
+    } else {
+        assert(tcb->tcbDebugPrev);
+        tcb->tcbDebugPrev->tcbDebugNext = tcb->tcbDebugNext;
+    }
+
+    if (tcb->tcbDebugNext) {
+        tcb->tcbDebugNext->tcbDebugPrev = tcb->tcbDebugPrev;
+    }
+
+    tcb->tcbDebugPrev = NULL;
+    tcb->tcbDebugNext = NULL;
+}
+#endif /* CONFIG_DEBUG_BUILD */
+
 /* Add TCB to the end of an endpoint queue */
 tcb_queue_t
 tcbEPAppend(tcb_t *tcb, tcb_queue_t queue)

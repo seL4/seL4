@@ -81,9 +81,9 @@ enum IRQConstants {
     INTERRUPT_INTG30            =  62,
     INTERRUPT_INTG31            =  63,
     INTERRUPT_EINT16_31         =  64,
-#if defined(PLAT_EXYNOS5250)
+#if defined(CONFIG_PLAT_EXYNOS5250)
     INTERRUPT_MDMA0_CORE        =  65,
-#elif defined(PLAT_EXYNOS5410)
+#elif defined(CONFIG_PLAT_EXYNOS5410)
     INTERRUPT_TMU_CPU0          =  65,
 #else
 #endif

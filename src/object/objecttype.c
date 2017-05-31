@@ -164,6 +164,9 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cte_ptr = TCB_PTR_CTE_PTR(tcb, tcbCTable);
             unbindNotification(tcb);
             suspend(tcb);
+#ifdef CONFIG_DEBUG_BUILD
+            tcbDebugRemove(tcb);
+#endif
             Arch_prepareThreadDelete(tcb);
             fc_ret.remainder =
                 Zombie_new(
@@ -446,6 +449,7 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
         strlcpy(tcb->tcbName, "child of: '", TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, NODE_STATE(ksCurThread)->tcbName, TCB_NAME_LENGTH);
         strlcat(tcb->tcbName, "'", TCB_NAME_LENGTH);
+        tcbDebugAppend(tcb);
 #endif /* CONFIG_DEBUG_BUILD */
 
         return cap_thread_cap_new(TCB_REF(tcb));

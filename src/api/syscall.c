@@ -66,6 +66,12 @@ handleUnknownSyscall(word_t w)
         kernel_putchar(getRegister(NODE_STATE(ksCurThread), capRegister));
         return EXCEPTION_NONE;
     }
+    if (w == SysDebugDumpScheduler) {
+#if CONFIG_DEBUG_BUILD
+        debug_dumpScheduler();
+#endif
+        return EXCEPTION_NONE;
+    }
 #endif
 #ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugHalt) {

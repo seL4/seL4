@@ -387,6 +387,9 @@ create_idle_thread(void)
         memzero((void *)pptr, 1 << seL4_TCBBits);
         NODE_STATE_ON_CORE(ksIdleThread, i) = TCB_PTR(pptr + TCB_OFFSET);
         configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, i));
+#ifdef CONFIG_DEBUG_BUILD
+        setThreadName(NODE_STATE_ON_CORE(ksIdleThread, i), "idle_thread");
+#endif
 #if CONFIG_MAX_NUM_NODES > 1
     }
 #endif
@@ -482,6 +485,17 @@ init_core_state(tcb_t *scheduler_action)
 {
 #ifdef CONFIG_HAVE_FPU
     NODE_STATE(ksActiveFPUState) = NULL;
+#endif
+#ifdef CONFIG_DEBUG_BUILD
+    /* add initial threads to the debug queue */
+    NODE_STATE(ksDebugTCBs) = NULL;
+    if (scheduler_action != SchedulerAction_ResumeCurrentThread &&
+            scheduler_action != SchedulerAction_ChooseNewThread) {
+        tcbDebugAppend(scheduler_action);
+    }
+    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        tcbDebugAppend(NODE_STATE_ON_CORE(ksIdleThread, i));
+    }
 #endif
     NODE_STATE(ksSchedulerAction) = scheduler_action;
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
