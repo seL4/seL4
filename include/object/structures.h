@@ -65,7 +65,7 @@ typedef word_t notification_state_t;
 
 #define TCB_SIZE_BITS (TCB_CNODE_RADIX + seL4_SlotBits)
 #define TCB_CNODE_RADIX     4
-#define TCB_OFFSET          (1 << (TCB_SIZE_BITS))
+#define TCB_OFFSET          BIT(TCB_SIZE_BITS)
 
 /* Generate a tcb_t or cte_t pointer from a tcb block reference */
 #define TCB_PTR(r)       ((tcb_t *)(r))
@@ -263,11 +263,11 @@ struct tcb {
 typedef struct tcb tcb_t;
 
 /* Ensure object sizes are sane */
-compile_assert(cte_size_sane, sizeof(cte_t) <= (1 << seL4_SlotBits))
+compile_assert(cte_size_sane, sizeof(cte_t) <= BIT(seL4_SlotBits))
 compile_assert(tcb_size_sane,
-               (1 << (TCB_SIZE_BITS)) + sizeof(tcb_t) <= (1 << seL4_TCBBits))
-compile_assert(ep_size_sane, sizeof(endpoint_t) <= (1 << seL4_EndpointBits))
-compile_assert(notification_size_sane, sizeof(notification_t) <= (1 << seL4_NotificationBits))
+               BIT(TCB_SIZE_BITS) + sizeof(tcb_t) <= BIT(seL4_TCBBits))
+compile_assert(ep_size_sane, sizeof(endpoint_t) <= BIT(seL4_EndpointBits))
+compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_NotificationBits))
 
 
 /* helper functions */
