@@ -106,7 +106,13 @@ enum {
 #define seL4_PageBits 12
 #define seL4_LargePageBits 16
 #define seL4_SlotBits 4
+
+#ifdef CONFIG_DEBUG_BUILD
+#define seL4_TCBBits 10
+#else
 #define seL4_TCBBits 9
+#endif
+
 #define seL4_EndpointBits 4
 #define seL4_NotificationBits 4
 
