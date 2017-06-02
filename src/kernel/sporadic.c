@@ -151,6 +151,17 @@ refill_add_tail(sched_context_t *sc, refill_t refill)
     assert(new_tail < sc->scRefillMax);
 }
 
+static inline void
+maybe_add_empty_tail(sched_context_t *sc)
+{
+    if (isRoundRobin(sc)) {
+        /* add an empty refill - we track the used up time here */
+        refill_t empty_tail = { .rTime = NODE_STATE(ksCurTime)};
+        refill_add_tail(sc, empty_tail);
+        assert(refill_size(sc) == MIN_REFILLS);
+    }
+}
+
 void
 refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t period)
 {
@@ -163,14 +174,7 @@ refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t peri
     REFILL_HEAD(sc).rAmount = budget;
     /* budget can be used from now */
     REFILL_HEAD(sc).rTime = NODE_STATE(ksCurTime);
-
-    if (period == 0) {
-        /* add an empty refill - we track the used up time here */
-        refill_t empty_tail = { .rTime = NODE_STATE(ksCurTime)};
-        refill_add_tail(sc, empty_tail);
-        assert(refill_size(sc) == MIN_REFILLS);
-    }
-
+    maybe_add_empty_tail(sc);
     REFILL_SANITY_CHECK(sc, budget);
 }
 
@@ -196,9 +200,7 @@ refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_
     if (REFILL_HEAD(sc).rAmount >= new_budget) {
         /* if the heads budget exceeds the new budget just trim it */
         REFILL_HEAD(sc).rAmount = new_budget;
-        refill_t empty_tail = { .rTime = NODE_STATE(ksCurTime)};
-        refill_add_tail(sc, empty_tail);
-        assert(refill_size(sc) == MIN_REFILLS);
+        maybe_add_empty_tail(sc);
     } else {
         /* otherwise schedule the rest for the next period */
         refill_t new = { .rAmount = (new_budget - REFILL_HEAD(sc).rAmount),
