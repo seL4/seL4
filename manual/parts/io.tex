@@ -179,7 +179,7 @@ Page tables are mapped into an \obj{IOSpace} using the \apifunc{seL4\_X86\_IOPag
 This method takes the \obj{IOPageTable} to map, the \obj{IOSpace} to map into 
 and the address to map at. Three levels of page tables must be mapped before
 a frame can be mapped successfully. A frame is mapped with the
-\apifunc{seL4\_X86\_Page\_MapIO}{x86_page_mapio} method whose parameters are analogous to
+\apifunc{seL4\_X86\_Page\_MapIO}{x86_page_map_io} method whose parameters are analogous to
 the corresponding method that maps \obj{Page}s into \obj{VSpaces} (see \autoref{ch:vspace}), 
 namely \apifunc{seL4\_X86\_Page\_Map}{x86_page_map}.
 
