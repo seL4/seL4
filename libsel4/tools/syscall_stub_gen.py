@@ -783,8 +783,17 @@ def parse_xml_file(input_file, valid_types):
             method_id = method.getAttribute("id")
             method_condition = method.getAttribute("condition")
             method_manual_name = method.getAttribute("manual_name") or method_name
-            method_manual_label = method.getAttribute("manual_label") or \
-                    "%s_%s" % (interface_manual_name.lower().replace(" ", "_"), method_name.lower())
+            method_manual_label = method.getAttribute("manual_label")
+
+            if not method_manual_label:
+                # If no manual label is specified, infer one from the interface and method
+                # names by combining the interface name and method name.
+                method_manual_label = ("%s_%s" % (interface_manual_name, method_manual_name)) \
+                    .lower() \
+                    .replace(" ", "_") \
+                    .replace("/", "")
+
+            # Prefix the label with an api-wide label prefix
             method_manual_label = "%s%s" % (api.label_prefix, method_manual_label)
 
             comment_lines = ["@xmlonly <manual name=\"%s - %s\" label=\"%s\"/> @endxmlonly" %
