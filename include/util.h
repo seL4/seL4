@@ -11,7 +11,6 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
-#define BIT(n) (1ul << (n))
 #define MASK(n) (BIT(n)-1ul)
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 #define ROUND_DOWN(n, b) (((n) >> (b)) << (b))
@@ -23,6 +22,7 @@
 #ifndef __ASSEMBLER__
 
 #define NULL ((void *)0)
+#define BIT(n) (1ul << (n))
 
 #define PACKED       __attribute__((packed))
 #define NORETURN     __attribute__((__noreturn__))
@@ -131,6 +131,10 @@ CONST popcountl(unsigned long x)
 }
 
 #define POPCOUNTL(x) __builtin_popcountl(x)
+#else /* __ASSEMBLER__ */
+
+/* Some assemblers don't recognise ul (unsigned long) suffix */
+#define BIT(n) (1 << (n))
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __UTIL_H */

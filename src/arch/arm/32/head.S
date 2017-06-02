@@ -12,12 +12,11 @@
 #include <machine/assembler.h>
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
+#include <util.h>
 
 #ifndef ALLOW_UNALIGNED_ACCESS
 #define ALLOW_UNALIGNED_ACCESS 1
 #endif
-
-#define BIT(n) (1 << (n))
 
 #if ALLOW_UNALIGNED_ACCESS
 #define CR_ALIGN_SET     BIT(CONTROL_U)
