@@ -49,6 +49,7 @@ isSchedulable(const tcb_t *thread)
 {
     return isRunnable(thread) &&
            thread->tcbSchedContext != NULL &&
+           thread->tcbSchedContext->scRefillMax > 0 &&
            !thread_state_get_tcbInReleaseQueue(thread->tcbState);
 }
 
@@ -103,7 +104,9 @@ restart(tcb_t *target)
         cancelIPC(target);
         setThreadState(target, ThreadState_Restart);
         schedContext_resume(target->tcbSchedContext);
-        switchIfRequiredTo(target);
+        if (isSchedulable(target)) {
+            switchIfRequiredTo(target);
+        }
     }
 }
 

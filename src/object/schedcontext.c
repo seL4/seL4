@@ -194,7 +194,7 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 #endif
 
     schedContext_resume(sc);
-    if (isSchedulable(tcb) && sc->scRefillMax > 0) {
+    if (isSchedulable(tcb)) {
         switchIfRequiredTo(tcb);
     }
 }
