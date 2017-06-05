@@ -584,7 +584,7 @@ xmllint: libsel4/include/interfaces/sel4.xml $(wildcard ${SOURCE_ROOT}/libsel4/a
 
 pylint: $(shell find ${SOURCE_ROOT}/tools ${SOURCE_ROOT}/manual/tools ${SOURCE_ROOT}/libsel4/tools -name '*.py')
 	@echo " [Checking for errors in python scripts]"
-	$(Q)pylint --errors-only $^
+	$(Q)pylint --errors-only --rcfile=tools/pylintrc $^
 
 validate: c-parser.log
 
