@@ -39,6 +39,12 @@ __tabversion__ = "3.2"       # Version of table file used
 
 import re, sys, types, copy, os
 
+# Python3 doesn't have a build-in cmp function.
+# We need to import it here, even though it isn't called in this file
+# when interpreted by python3, to prevent pylint from treating it as
+# an error.
+from past.builtins import cmp
+
 # This tuple contains known string types
 try:
     # Python 2.6

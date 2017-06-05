@@ -12,6 +12,8 @@
 
 from __future__ import print_function
 import sys
+import six
+from functools import reduce
 
 ## We assume length tp > 0
 def parse_type(tps):
@@ -113,7 +115,7 @@ def print_graph(filename, out_file):
     mp = build_types(filename)
 
     print('digraph types {', file=out_file)
-    for k, flds in mp.iteritems():
+    for k, flds in six.iteritems(mp):
         for fld, tp in flds:
             #if is_base(tp):
             print('\t "%s" -> "%s" [label="%s"]' % (k, base_name(tp), fld),
