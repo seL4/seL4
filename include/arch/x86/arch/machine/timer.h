@@ -53,6 +53,18 @@ getCurrentTime(void)
     return x86_rdtsc();
 }
 
+static inline PURE time_t
+getMaxTimerUs(void)
+{
+    return div64(UINT64_MAX, x86KStscMhz);
+}
+
+static inline PURE time_t
+ticksToUs(ticks_t ticks)
+{
+    return div64(ticks, x86KStscMhz);
+}
+
 static inline void
 setDeadline(ticks_t deadline)
 {
