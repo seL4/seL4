@@ -16,16 +16,11 @@
 #include <types.h>
 #include <arch/model/statedata.h>
 
-static inline PURE time_t
-getMaxTimerUs(void)
+static inline CONST uint64_t
+div64(uint64_t numerator, uint32_t denominator)
 {
-    return UINT64_MAX / x86KStscMhz;
+    return numerator / denominator;
 }
 
-static inline PURE time_t
-ticksToUs(ticks_t ticks)
-{
-    return ticks / x86KStscMhz;
-}
 
 #endif /* __MODE_MACHINE_TIME_H */
