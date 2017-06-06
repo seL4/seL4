@@ -46,16 +46,4 @@ div64(uint64_t numerator, uint32_t denominator)
     return quotient;
 }
 
-static inline PURE time_t
-getMaxTimerUs(void)
-{
-    return div64(UINT64_MAX, x86KStscMhz);
-}
-
-static inline PURE time_t
-ticksToUs(ticks_t ticks)
-{
-    return div64(ticks, x86KStscMhz);
-}
-
 #endif /* __MODE_MACHINE_TIMER_H */
