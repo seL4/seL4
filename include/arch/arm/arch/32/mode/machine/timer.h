@@ -21,6 +21,10 @@
 /* but multiply by timer tick ms */
 #define TIMER_RELOAD    (TICKS_PER_MS * CONFIG_TIMER_TICK_MS)
 
+#if (TIMER_RELOAD >= 0xFFFFFFFF)
+#error "Timer reload too high"
+#endif
+
 /* ARM generic timer implementation */
 
 /* Use Hypervisor Physical timer */
