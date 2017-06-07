@@ -20,11 +20,17 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
                              ticks_t period, word_t max_refills)
 {
 
-    /* don't modify parameters of tcb while it is in a sorted queue */
     if (target->scTcb) {
+        /* possibly stall a remote core */
         SMP_COND_STATEMENT(remoteTCBStall(target->scTcb));
+        /* remove from scheduler */
         tcbReleaseRemove(target->scTcb);
         tcbSchedDequeue(target->scTcb);
+        /* bill the current consumed amount before adjusting the params */
+        if (NODE_STATE_ON_CORE(ksCurSC, target->scCore) == target) {
+            ticks_t capacity = refill_capacity(target, NODE_STATE_ON_CORE(ksConsumed, target->scCore));
+            chargeBudget(capacity, NODE_STATE_ON_CORE(ksConsumed, target->scCore));
+        }
     }
 
     if (budget == period) {
@@ -36,31 +42,23 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         max_refills = MIN_REFILLS;
     }
 
-    if (core == target->scCore && target->scRefillMax > 0 && target->scTcb && isRunnable(target->scTcb)) {
+    if (SMP_COND_STATEMENT(core == target->scCore &&) target->scRefillMax > 0 && target->scTcb && isRunnable(target->scTcb)) {
         /* the scheduling context is active - it can be used, so
          * we need to preserve the bandwidth */
-        /* remove from scheduler */
-        tcbSchedDequeue(target->scTcb);
-        tcbReleaseRemove(target->scTcb);
-
-        if (NODE_STATE(ksCurSC) == target) {
-            /* bill the current consumed amount before adjusting the params */
-            ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
-            chargeBudget(capacity, NODE_STATE(ksConsumed));
-        }
         refill_update(target, period, budget, max_refills);
     } else {
         /* the scheduling context isn't active - it's budget is not being used, so
          * we can just populate the parameters from now */
         refill_new(target, max_refills, budget, period);
-
+#if CONFIG_MAX_NUM_NODES > 1
         if (core != target->scCore && target->scTcb) {
             /* if the core changed and the SC has a tcb, the SC is getting
              * budget - so migrate it */
             target->scCore = core;
-            SMP_COND_STATEMENT(Arch_migrateTCB(target->scTcb));
-            SMP_COND_STATEMENT(target->scTcb->tcbAffinity = target->scCore;)
+            Arch_migrateTCB(target->scTcb);
+            target->scTcb->tcbAffinity = target->scCore;
         }
+#endif
     }
 
     if (target->scTcb && target->scRefillMax > 0) {

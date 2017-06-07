@@ -42,7 +42,6 @@ handleInterruptEntry(void)
 
     irq = getActiveIRQ();
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-        assert(irq != irq_remote_call_ipi);
         updateTimestamp(false);
         checkBudget();
     }
@@ -58,7 +57,6 @@ handleInterruptEntry(void)
     }
 
     if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
-        assert(irq != irq_remote_call_ipi);
         schedule();
         activateThread();
     }
