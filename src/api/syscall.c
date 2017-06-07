@@ -40,9 +40,12 @@ handleInterruptEntry(void)
 {
     irq_t irq;
 
-    updateTimestamp(false);
     irq = getActiveIRQ();
-    checkBudget();
+    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
+        assert(irq != irq_remote_call_ipi);
+        updateTimestamp(false);
+        checkBudget();
+    }
 
     if (irq != irqInvalid) {
         handleInterrupt(irq);
@@ -54,8 +57,11 @@ handleInterruptEntry(void)
         handleSpuriousIRQ();
     }
 
-    schedule();
-    activateThread();
+    if (SMP_TERNARY(clh_is_self_in_queue(), 1)) {
+        assert(irq != irq_remote_call_ipi);
+        schedule();
+        activateThread();
+    }
 
     return EXCEPTION_NONE;
 }
