@@ -62,7 +62,8 @@ refill_size(sched_context_t *sc)
 }
 
 static inline bool_t
-refill_full(sched_context_t *sc) {
+refill_full(sched_context_t *sc)
+{
     return refill_size(sc) == sc->scRefillMax;
 }
 

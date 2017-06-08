@@ -84,9 +84,9 @@ commitTime(void)
         if (isRoundRobin(NODE_STATE(ksCurSC))) {
             /* for round robin threads, there are only two refills: the HEAD, which is what
              * we are consuming, and the tail, which is what we have consumed */
-             assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
-             REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount -= NODE_STATE(ksConsumed);
-             REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount += NODE_STATE(ksConsumed);
+            assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
+            REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount -= NODE_STATE(ksConsumed);
+            REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount += NODE_STATE(ksConsumed);
         } else {
             refill_split_check(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
         }
@@ -163,7 +163,7 @@ updateTimestamp(bool_t incrementConsumedTime)
     time_t prev = NODE_STATE(ksCurTime);
     NODE_STATE(ksCurTime) = getCurrentTime();
     if ((config_set(CONFIG_DEBUG_BUILD) || config_set(CONFIG_PRINTING))
-        && incrementConsumedTime) {
+            && incrementConsumedTime) {
         /* When executing debugging functions in the kernel that
          * increase the duration of a syscall, it's useful to call
          * updateTimestamp() in those debugging functions (such as printf).
@@ -202,8 +202,8 @@ checkBudget(void)
      * round robin threads this is sufficient, however for periodic threads
      * we also need to check there is space to schedule the replenishment - if the refill
      * is full then the timeslice is also over as the rest of the budget is forfeit. */
-	if (likely(capacity >= MIN_BUDGET && (isRoundRobin(NODE_STATE(ksCurSC)) ||
-                    !refill_full(NODE_STATE(ksCurSC))))) {
+    if (likely(capacity >= MIN_BUDGET && (isRoundRobin(NODE_STATE(ksCurSC)) ||
+                                          !refill_full(NODE_STATE(ksCurSC))))) {
         if (unlikely(isCurDomainExpired())) {
             NODE_STATE(ksReprogram) = true;
             rescheduleRequired();

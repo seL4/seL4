@@ -40,7 +40,7 @@ initTimer(void)
     timer->tclr = 0;
 
     /* wait for reset */
-	while (!timer->tistat);
+    while (!timer->tistat);
 
     maskInterrupt(/*disable*/ true, GPT9_IRQ);
 

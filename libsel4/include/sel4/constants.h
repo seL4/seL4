@@ -88,7 +88,8 @@ typedef enum {
  * @return the max number of extra refills that can be passed to seL4_SchedControl_Configure for
  *         this scheduling context
  */
-static inline seL4_Word seL4_MaxExtraRefills(seL4_Word size) {
+static inline seL4_Word seL4_MaxExtraRefills(seL4_Word size)
+{
     return (LIBSEL4_BIT(size) -  seL4_CoreSchedContextBytes) / seL4_RefillSizeBytes;
 }
 

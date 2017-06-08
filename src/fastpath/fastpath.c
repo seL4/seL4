@@ -259,7 +259,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
     reply_t *reply_ptr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(reply_cap));
     /* check that its valid and at the head of the call chain */
     if (unlikely(reply_ptr->replyCaller == NULL ||
-                  reply_ptr->replyNext.words[0] == 0)) {
+                 reply_ptr->replyNext.words[0] == 0)) {
         slowpath(SysReplyRecv);
     }
 
@@ -382,7 +382,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
 
     sc->scReply = REPLY_PTR(prev_ptr);
     if (unlikely(REPLY_PTR(prev_ptr) != NULL)) {
-       sc->scReply->replyNext = reply_ptr->replyNext;
+        sc->scReply->replyNext = reply_ptr->replyNext;
     }
 
     /* TODO neccessary? */

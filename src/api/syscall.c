@@ -409,7 +409,7 @@ handleSyscall(syscall_t syscall)
         switch (syscall) {
         case SysSend:
             ret = handleInvocation(false, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
-           break;
+            break;
 
         case SysNBSend:
             ret = handleInvocation(false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));

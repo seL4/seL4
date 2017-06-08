@@ -173,7 +173,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word* sender, seL4_CPtr reply);
 
 /**
  * @xmlonly <manual name="NBSend Recv" label="sel4_nbsendrecv"/> @endxmlonly
- * @brief Non-blocking send on one capability, and a blocking recieve on another in a single 
+ * @brief Non-blocking send on one capability, and a blocking recieve on another in a single
  *        system call.
  *
  * @xmlonly
@@ -241,8 +241,8 @@ seL4_Yield(void);
  * @brief Perform a wait on an endpoint or notification object
  *
  * Block on a notification or endpoint waiting for a message. No reply object is
- * required for a Wait. Wait should not be paired with Call, as it does not provide 
- * a reply object. If Wait is paired with a Call the waiter will block after recieving 
+ * required for a Wait. Wait should not be paired with Call, as it does not provide
+ * a reply object. If Wait is paired with a Call the waiter will block after recieving
  * the message.
  *
  * @xmlonly

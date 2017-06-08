@@ -230,7 +230,7 @@ tcbReleaseEnqueue(tcb_t *tcb)
 
     /* find our place in the ordered queue */
     while (after != NULL &&
-           REFILL_HEAD(tcb->tcbSchedContext).rTime >= REFILL_HEAD(after->tcbSchedContext).rTime) {
+            REFILL_HEAD(tcb->tcbSchedContext).rTime >= REFILL_HEAD(after->tcbSchedContext).rTime) {
         before = after;
         after = after->tcbSchedNext;
     }
@@ -951,25 +951,25 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     tcb_t *tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(cap));
     sched_context_t *sc = NULL;
     switch (cap_get_capType(scCap)) {
-        case cap_sched_context_cap:
-            sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(scCap));
-            if (tcb->tcbSchedContext && tcb->tcbSchedContext != sc) {
-                userError("TCB Configure: tcb already has a scheduling context.");
-                current_syscall_error.type = seL4_IllegalOperation;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            if (sc->scTcb && sc->scTcb != tcb) {
-                userError("TCB Configure: sched contextext already bound.");
-                current_syscall_error.type = seL4_IllegalOperation;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            break;
-        case cap_null_cap:
-            break;
-        default:
-            userError("TCB Configure: sched context cap invalid.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 4;
+    case cap_sched_context_cap:
+        sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(scCap));
+        if (tcb->tcbSchedContext && tcb->tcbSchedContext != sc) {
+            userError("TCB Configure: tcb already has a scheduling context.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (sc->scTcb && sc->scTcb != tcb) {
+            userError("TCB Configure: sched contextext already bound.");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        break;
+    case cap_null_cap:
+        break;
+    default:
+        userError("TCB Configure: sched context cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 4;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
