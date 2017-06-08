@@ -12,7 +12,8 @@
 #include <object/reply.h>
 
 void
-reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate) {
+reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate)
+{
     sched_context_t *sc_donated = tcb_caller->tcbSchedContext;
 
     assert(tcb_caller != NULL);
