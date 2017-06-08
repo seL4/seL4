@@ -230,10 +230,10 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
 void
 schedContext_unbindAllTCBs(sched_context_t *sc)
 {
-   if (sc->scTcb) {
-       SMP_COND_STATEMENT(remoteTCBStall(sc->scTcb));
-       schedContext_unbindTCB(sc, sc->scTcb);
-   }
+    if (sc->scTcb) {
+        SMP_COND_STATEMENT(remoteTCBStall(sc->scTcb));
+        schedContext_unbindTCB(sc, sc->scTcb);
+    }
 }
 
 void

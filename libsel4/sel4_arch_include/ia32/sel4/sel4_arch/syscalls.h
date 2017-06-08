@@ -545,7 +545,7 @@ seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word src, seL4_
 
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word src, seL4_Word *sender,
-                      seL4_Word *mr0, seL4_CPtr reply)
+                       seL4_Word *mr0, seL4_CPtr reply)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -591,7 +591,7 @@ seL4_NBSendWait(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word src, seL4_
 
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBSendWaitWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word src, seL4_Word *sender,
-                      seL4_Word *mr0)
+                       seL4_Word *mr0)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;

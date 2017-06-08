@@ -133,7 +133,7 @@ apic_init(bool_t mask_legacy_irqs)
 
     /* initialise timer */
     uint32_t timer_mode = x86KSapicRatio == 0 ? APIC_TIMER_MODE_TSC_DEADLINE :
-                                                APIC_TIMER_MODE_ONE_SHOT;
+                          APIC_TIMER_MODE_ONE_SHOT;
     apic_write_reg(
         APIC_LVT_TIMER,
         apic_lvt_new(
