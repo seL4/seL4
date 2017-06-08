@@ -16,6 +16,8 @@
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
 
+#define TIMER_CLOCK_HZ 8000000llu
+
 #define physBase          0x80000000
 #define kernelBase        0xe0000000
 
@@ -62,51 +64,52 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 };
 
-static const p_region_t BOOT_RODATA dev_p_regs[] = {
-    { GPIO0_PADDR,              GPIO0_PADDR             +   0x10000 },
+const p_region_t BOOT_RODATA dev_p_regs[] = {
     { GPIO1_PADDR,              GPIO1_PADDR             +   0x10000 },
     { GPIO2_PADDR,              GPIO2_PADDR             +   0x10000 },
     { GPIO3_PADDR,              GPIO3_PADDR             +   0x10000 },
     { GPIO4_PADDR,              GPIO4_PADDR             +   0x10000 },
     { GPIO5_PADDR,              GPIO5_PADDR             +   0x10000 },
     { GPIO6_PADDR,              GPIO6_PADDR             +   0x10000 },
-    { WDOG0_PADDR,              WDOG0_PADDR             +   0x10000 },
+    { GPIO7_PADDR,              GPIO7_PADDR             +   0x10000 },
     { WDOG1_PADDR,              WDOG1_PADDR             +   0x10000 },
     { WDOG2_PADDR,              WDOG2_PADDR             +   0x10000 },
     { WDOG3_PADDR,              WDOG3_PADDR             +   0x10000 },
+    { WDOG4_PADDR,              WDOG4_PADDR             +   0x10000 },
     { IOMUXC_LPSR_PADDR,        IOMUXC_LPSR_PADDR       +   0x10000 },
-    { GPT0_PADDR,               GPT0_PADDR              +   0x10000 },
     { GPT1_PADDR,               GPT1_PADDR              +   0x10000 },
     { GPT2_PADDR,               GPT2_PADDR              +   0x10000 },
     { GPT3_PADDR,               GPT3_PADDR              +   0x10000 },
+    { GPT4_PADDR,               GPT4_PADDR              +   0x10000 },
     { IOMUXC_PADDR,             IOMUXC_PADDR            +   0x10000 },
-    { GPR_PADDR,                GPR_PADDR               +   0x10000 },
-    { OCOTP_PADDR,              OCOTP_PADDR             +   0x10000 },
-    { ANATOP_PADDR,             ANATOP_PADDR            +   0x10000 },
-    { CLKS_PADDR,               CLKS_PADDR              +   0x10000 },
+    { IOMUXC_GPR_PADDR,         IOMUXC_GPR_PADDR        +   0x10000 },
+    { OCOTP_CTRL_PADDR,         OCOTP_CTRL_PADDR        +   0x10000 },
+    { ANALOG_PADDR,             ANALOG_PADDR            +   0x10000 },
+    { CCM_PADDR,                CCM_PADDR               +   0x10000 },
     { SRC_PADDR,                SRC_PADDR               +   0x10000 },
-    { PWM0_PADDR,               PWM0_PADDR              +   0x10000 },
     { PWM1_PADDR,               PWM1_PADDR              +   0x10000 },
     { PWM2_PADDR,               PWM2_PADDR              +   0x10000 },
     { PWM3_PADDR,               PWM3_PADDR              +   0x10000 },
+    { PWM4_PADDR,               PWM4_PADDR              +   0x10000 },
     { UART1_PADDR,              UART1_PADDR             +   0x10000 },
     { UART2_PADDR,              UART2_PADDR             +   0x10000 },
     { UART3_PADDR,              UART3_PADDR             +   0x10000 },
     { UART4_PADDR,              UART4_PADDR             +   0x10000 },
     { UART5_PADDR,              UART5_PADDR             +   0x10000 },
     { UART6_PADDR,              UART6_PADDR             +   0x10000 },
-    { I2C0_PADDR,               I2C0_PADDR              +   0x10000 },
+    { UART7_PADDR,              UART7_PADDR             +   0x10000 },
     { I2C1_PADDR,               I2C1_PADDR              +   0x10000 },
     { I2C2_PADDR,               I2C2_PADDR              +   0x10000 },
-    { I2C3_PADDR,               I2C2_PADDR              +   0x10000 },
-    { USBOTG0_PADDR,            USBOTG0_PADDR           +   0x1000  },
-    { USBOTG1_PADDR,            USBOTG1_PADDR           +   0x1000  },
-    { USBH_PADDR,               USBH_PADDR              +   0x1000  },
-    { USDHC0_PADDR,             USDHC0_PADDR            +   0x10000 },
+    { I2C3_PADDR,               I2C3_PADDR              +   0x10000 },
+    { I2C4_PADDR,               I2C4_PADDR              +   0x10000 },
+    { USB1_OTG_PADDR,           USB1_OTG_PADDR          +   0x10000 },
+    { USB2_OTG_PADDR,           USB2_OTG_PADDR          +   0x10000 },
+    { USB_HOST_PADDR,           USB_HOST_PADDR          +   0x10000 },
     { USDHC1_PADDR,             USDHC1_PADDR            +   0x10000 },
     { USDHC2_PADDR,             USDHC2_PADDR            +   0x10000 },
-    { FEC0_PADDR,               FEC0_PADDR              +   0x10000 },
-    { FEC1_PADDR,               FEC1_PADDR              +   0x10000 },
+    { USDHC3_PADDR,             USDHC3_PADDR            +   0x10000 },
+    { ENET1_PADDR,              ENET1_PADDR             +   0x10000 },
+    { ENET2_PADDR,              ENET2_PADDR             +   0x10000 },
 };
 
 /* Handle a platform-reserved IRQ. */
