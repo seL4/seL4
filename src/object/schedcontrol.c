@@ -46,7 +46,7 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         max_refills = MIN_REFILLS;
     }
 
-    if (SMP_COND_STATEMENT(core == target->scCore &&) target->scRefillMax > 0 && target->scTcb && isRunnable(target->scTcb)) {
+    if (SMP_COND_STATEMENT(core == target->scCore && ) target->scRefillMax > 0 && target->scTcb && isRunnable(target->scTcb)) {
         /* the scheduling context is active - it can be used, so
          * we need to preserve the bandwidth */
         refill_update(target, period, budget, max_refills);
@@ -148,7 +148,7 @@ decodeSchedControl_Configure(word_t length, cap_t cap, extra_caps_t extraCaps, w
 
 exception_t
 decodeSchedControlInvocation(word_t label, cap_t cap, word_t length, extra_caps_t extraCaps,
-                            word_t *buffer)
+                             word_t *buffer)
 {
     switch (label) {
     case SchedControlConfigure:

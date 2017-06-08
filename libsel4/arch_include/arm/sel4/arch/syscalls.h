@@ -39,7 +39,8 @@ seL4_SendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
 LIBSEL4_INLINE_FUNC void
 seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo)
 {
-    arm_sys_send(seL4_SysNBSend, dest, msgInfo.words[0], seL4_GetMR(0), seL4_GetMR(1), seL4_GetMR(2), seL4_GetMR(3)); }
+    arm_sys_send(seL4_SysNBSend, dest, msgInfo.words[0], seL4_GetMR(0), seL4_GetMR(1), seL4_GetMR(2), seL4_GetMR(3));
+}
 
 LIBSEL4_INLINE_FUNC void
 seL4_NBSendWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
@@ -318,7 +319,7 @@ seL4_NBSendRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_
 
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBSendRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word *sender,
-                      seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3, seL4_CPtr reply)
+                       seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3, seL4_CPtr reply)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -398,7 +399,7 @@ seL4_NBSendWait(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_
 
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
 seL4_NBSendWaitWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_CPtr src, seL4_Word *sender,
-                      seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
+                       seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -602,7 +603,8 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
     seL4_Word unused4 = 0;
     seL4_Word unused5 = 0;
 
-    arm_sys_send_recv(seL4_SysDebugNameThread, tcb, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5, 0);}
+    arm_sys_send_recv(seL4_SysDebugNameThread, tcb, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5, 0);
+}
 #endif
 
 #ifdef SEL4_DANGEROUS_CODE_INJECTION_KERNEL

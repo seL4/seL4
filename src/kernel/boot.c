@@ -405,7 +405,7 @@ init_sched_control(cap_t root_cnode_cap, word_t num_nodes)
     /* update boot info with slot region for sched control caps */
     ndks_boot.bi_frame->schedcontrol = (seL4_SlotRegion) {
         .start = slot_pos_before,
-        .end = ndks_boot.slot_pos_cur
+         .end = ndks_boot.slot_pos_cur
     };
 
     return true;

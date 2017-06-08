@@ -330,10 +330,10 @@ sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
     case cap_sched_control_cap:
-            if (cap_get_capType(cap_b) == cap_sched_control_cap) {
-                return true;
-            }
-            break;
+        if (cap_get_capType(cap_b) == cap_sched_control_cap) {
+            return true;
+        }
+        break;
     default:
         if (isArchCap(cap_a) &&
                 isArchCap(cap_b)) {

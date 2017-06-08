@@ -53,7 +53,8 @@ word_t Mode_sanitiseRegister(register_t reg, word_t v)
     return v;
 }
 
-word_t getNBSendRecvDest(void) {
+word_t getNBSendRecvDest(void)
+{
     seL4_IPCBuffer *buffer = (seL4_IPCBuffer *) lookupIPCBuffer(false, NODE_STATE(ksCurThread));
     if (buffer != NULL) {
         return buffer->reserved;

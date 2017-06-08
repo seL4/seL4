@@ -61,18 +61,21 @@ getTimerPrecision(void)
 }
 
 static inline ticks_t
-getCurrentTime(void) {
+getCurrentTime(void)
+{
     fail("Not implemented");
     return 0llu;
 }
 
 static inline void
-setDeadline(ticks_t deadline) {
+setDeadline(ticks_t deadline)
+{
     fail("Not implemented");
 }
 
 static inline void
-ackDeadlineIRQ(void) {
+ackDeadlineIRQ(void)
+{
     fail("Not implemented");
 }
 
