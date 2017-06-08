@@ -574,7 +574,7 @@
             <description>
                 See <autoref sec="threads"/>
             </description>
-            <return><errornumdesc/></return>
+            <return><errorenumdesc/></return>
             <param dir="in" name="schedcontext" type="seL4_SchedContext"
                 description="Capability to the scheduling context which is being operated on."/>
             <param dir="in" name="budget" type="seL4_Time"
@@ -608,7 +608,7 @@
             <description>
                 See <autoref sec="threads"/>
             </description>
-            <return><errornumdesc/></return>
+            <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
                 description="Capability to a TCB or a notification object"/>
         </method>
@@ -622,7 +622,7 @@
             <description>
                 See <autoref sec="threads"/>
             </description>
-            <return><errornumdesc/></return>
+            <return><errorenumdesc/></return>
         </method>
 
         <method id="SchedContextUnbindObject" name="UnbindObject"
@@ -641,7 +641,7 @@
             <description>
                 See <autoref sec="passive"/>
             </description>
-            <return><errornumdesc/></return>
+            <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
                 description="Capability to a notification that is bound to the scheduling context or capability to a tcb that is bound to this scheduling context or has received it through scheduling context donation."/>
         </method>
