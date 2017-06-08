@@ -21,6 +21,7 @@
 # see Hacker's delight, Chapter 10, unsigned division.
 from math import floor, ceil
 import argparse
+import sys
 
 # now unsigned
 def magicgu(nmax, d):

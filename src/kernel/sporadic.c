@@ -50,7 +50,7 @@ print_index(sched_context_t *sc, word_t index)
 {
 
     printf("index %lu, Amount: %llx, time %llx\n", index, REFILL_INDEX(sc, index).rAmount,
-                                                          REFILL_INDEX(sc, index).rTime);
+           REFILL_INDEX(sc, index).rTime);
 }
 
 UNUSED static inline void
@@ -212,7 +212,7 @@ refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_
         /* otherwise schedule the rest for the next period */
         refill_t new = { .rAmount = (new_budget - REFILL_HEAD(sc).rAmount),
                          .rTime = REFILL_HEAD(sc).rTime + new_period
-        };
+                       };
         refill_add_tail(sc, new);
     }
 
@@ -264,8 +264,8 @@ refill_budget_check(sched_context_t *sc, ticks_t usage, ticks_t capacity)
         REFILL_HEAD(sc).rTime += usage;
         /* merge front two replenishments if times overlap */
         if (!refill_single(sc) &&
-            REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount >=
-            REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime) {
+                REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount >=
+                REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime) {
 
             refill_t refill = refill_pop_head(sc);
             REFILL_HEAD(sc).rAmount += refill.rAmount;
@@ -307,7 +307,9 @@ refill_split_check(sched_context_t *sc, ticks_t usage)
     ticks_t remnant = REFILL_HEAD(sc).rAmount - usage;
 
     /* set up a new replenishment structure */
-    refill_t new = (refill_t) { .rAmount = usage, .rTime = REFILL_HEAD(sc).rTime + sc->scPeriod };
+    refill_t new = (refill_t) {
+        .rAmount = usage, .rTime = REFILL_HEAD(sc).rTime + sc->scPeriod
+    };
 
     if (refill_size(sc) == sc->scRefillMax || remnant < MIN_BUDGET) {
         /* merge remnant with next replenishment - either it's too small

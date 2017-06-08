@@ -168,7 +168,7 @@ arm_sys_nbsend_recv(seL4_Word sys, seL4_Word dest, seL4_Word src, seL4_Word *out
     asm volatile (
         "swi $0"
         : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
-          "+r" (src_and_badge), "+r" (info)
+        "+r" (src_and_badge), "+r" (info)
         : "r" (scno), "r" (reply_reg), "r" (dest_reg)
         : "memory"
     );
