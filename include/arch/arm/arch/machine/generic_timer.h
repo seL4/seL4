@@ -44,7 +44,7 @@ static inline void
 setDeadline(ticks_t deadline)
 {
     assert(deadline >= ksCurTime);
-    MCRR(CNTV_CVAL, deadline);
+    MCRR(CNT_CVAL, deadline);
     assert(deadline >= getCurrentTime());
 }
 
