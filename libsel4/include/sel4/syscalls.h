@@ -287,26 +287,68 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg);
  * @{
  */
 #ifdef CONFIG_ENABLE_BENCHMARKS
+/*
+ * TODO: The following comment should be added to the manual when SELFOUR-962 is complete.
+ * Currently there are different Benchmarking modes/configs in the kernel:
+ * 1) BENCHMARK_TRACEPOINTS: Enable using tracepoints in the kernel and timing code.
+ * 2) BENCHMARK_TRACK_KERNEL_ENTRIES: Keep track of information on kernel entries.
+ * 3) BENCHMARK_TRACK_UTILISATION: Allow users to get CPU timing info for the system, threads and/or idle thread.
+ *
+ * BENCHMARK_TRACEPOINTS and BENCHMARK_TRACK_KERNEL_ENTRIES use a log buffer that has to be allocated by the user and mapped
+ * to a fixed location in the kernel window.
+ * All of timing info are in cycles.
+ */
+
 /**
  * @xmlonly <manual name="Reset Log" label="sel4_benchmarkresetlog"/> @endxmlonly
+ * @brief Reset benchmark logging.
+ *
+ * The behaviour of this system call depends on benchmarking mode in action while invoking
+ * this system call: 1) BENCHMARK_TRACEPOINTS or BENCHMARK_TRACK_KERNEL_ENTRIES:  resets log index to 0.
+ * 2) BENCHMARK_TRACK_UTILISATION: resets benchmark and current thread start time (to the time of invoking
+ * this syscall), resets idle thread utilisation to 0, and starts tracking utilisation.
+ *
+ * @return A `seL4_Error` error if the user-level log buffer has not been set by the user
+ *                         (BENCHMARK_TRACEPOINTS/BENCHMARK_TRACK_KERNEL_ENTRIES).
  */
 LIBSEL4_INLINE_FUNC seL4_Error
 seL4_BenchmarkResetLog(void);
 
 /**
  * @xmlonly <manual name="Finalize Log" label="sel4_benchmarkfinalizelog"/> @endxmlonly
+ * @brief Stop benchmark logging.
+ *
+ * The behaviour of this system call depends on
+ * benchmarking mode in action while invoking this system call:
+ *         1) BENCHMARK_TRACEPOINTS or BENCHMARK_TRACK_KERNEL_ENTRIES: Sets log buffer's stop index to current index.
+ *         2) BENCHMARK_TRACK_UTILISATION: Sets benchmark end time to current time, stops tracking utilisation.
+ *
+ * @return The index of the final entry in the log buffer (if BENCHMARK_TRACEPOINTS/BENCHMARK_TRACK_KERNEL_ENTRIES are enabled).
+ *
  */
 LIBSEL4_INLINE_FUNC seL4_Word
 seL4_BenchmarkFinalizeLog(void);
 
 /**
  * @xmlonly <manual name="Set Log Buffer" label="sel4_benchmarksetlogbuffer"/> @endxmlonly
+ * @brief Set log buffer.
+ *
+ * Provide a large frame object for the kernel to use as a log-buffer.
+ * The object must not be device memory, and must be seL4_LargePageBits in size.
+ *
+ * @param[in] frame_cptr A capability pointer to a user allocated frame of seL4_LargePage size.
+ * @return A `seL4_IllegalOperation` error if frame_cptr is not valid and couldn't set the buffer.
+ *
  */
 LIBSEL4_INLINE_FUNC seL4_Error
 seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr);
 
 /**
  * @xmlonly <manual name="Null Syscall" label="sel4_benchmarknullsyscall"/> @endxmlonly
+ * @brief Null system call that enters and exits the kernel immediately, for timing kernel traps in microbenchmarks.
+ *
+ *  Used to time kernel traps (in and out).
+ *
  */
 LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkNullSyscall(void);
@@ -320,12 +362,25 @@ seL4_BenchmarkFlushCaches(void);
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 /**
  * @xmlonly <manual name="Get Thread Utilisation" label="sel4_benchmarkgetthreadutilisation"/> @endxmlonly
+ * @brief Get utilisation timing information.
+ *
+ * Get timing information for the system, requested thread and idle thread. Such information is written
+ * into the caller's IPC buffer; see the definition of `benchmark_track_util_ipc_index` enum for more
+ * details on the data/format returned on the IPC buffer.
+ *
+ * @param[in] tcb_cptr TCB cap pointer to a thread to get CPU utilisation for.
  */
 LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr);
 
 /**
  * @xmlonly <manual name="Reset Thread Utilisation" label="sel4_benchmarkresetthreadutilisation"/> @endxmlonly
+ * @brief Reset utilisation timing for a specific thread.
+ *
+ * Reset the kernel's timing information data (start time and utilisation) for a specific thread.
+ *
+ * @param[in] tcb_cptr TCB cap pointer to a thread to get CPU utilisation for.
+ *
  */
 LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr);
