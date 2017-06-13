@@ -242,8 +242,8 @@ refill_budget_check(sched_context_t *sc, ticks_t usage, ticks_t capacity)
             REFILL_HEAD(sc).rTime += usage;
             /* merge front two replenishments if times overlap */
             if (!refill_single(sc) &&
-                REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount >=
-                REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime) {
+                    REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount >=
+                    REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime) {
 
                 refill_t refill = refill_pop_head(sc);
                 REFILL_HEAD(sc).rAmount += refill.rAmount;
