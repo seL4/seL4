@@ -467,6 +467,9 @@ endif
 ifeq (${SEL4_ARCH}, aarch64)
 CFLAGS += -mgeneral-regs-only
 endif
+ifeq (${SEL4_ARCH}, aarch32)
+CFLAGS += -mfloat-abi=soft
+endif
 
 # Allow overriding of the CFLAGS. Use with caution.
 ifdef CONFIG_KERNEL_CFLAGS
