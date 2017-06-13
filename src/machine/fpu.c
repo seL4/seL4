@@ -10,6 +10,7 @@
  * @TAG(DATA61_GPL)
  */
 
+#include <config.h>
 #include <machine/fpu.h>
 #include <api/failures.h>
 #include <model/statedata.h>
