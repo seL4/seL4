@@ -46,9 +46,9 @@ debug_printKernelEntryReason(void)
 #endif
     case Entry_Syscall:
         printf("Syscall, number: %ld, %s\n", (long) ksKernelEntry.syscall_no, syscall_names[ksKernelEntry.syscall_no]);
-        if (ksKernelEntry.syscall_no == SysSend ||
-                ksKernelEntry.syscall_no == SysNBSend ||
-                ksKernelEntry.syscall_no == SysCall) {
+        if (ksKernelEntry.syscall_no == -SysSend ||
+                ksKernelEntry.syscall_no == -SysNBSend ||
+                ksKernelEntry.syscall_no == -SysCall) {
 
             printf("Cap type: %lu, Invocation tag: %lu\n", (unsigned long) ksKernelEntry.cap_type,
                    (unsigned long) ksKernelEntry.invocation_tag);
