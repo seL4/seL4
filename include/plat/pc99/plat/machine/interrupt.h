@@ -110,9 +110,9 @@ handleSpuriousIRQ(void)
 }
 
 static void inline
-updateIRQState(word_t irq, x86_irq_state_t state)
+updateIRQState(irq_t irq, x86_irq_state_t state)
 {
-    assert(irq >= 0 && irq <= maxIRQ);
+    assert(irq <= maxIRQ);
     x86KSIRQState[irq] = state;
 }
 
