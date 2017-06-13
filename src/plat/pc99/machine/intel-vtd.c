@@ -113,11 +113,6 @@ static inline uint32_t get_ivo(drhu_id_t drhu_id)
     return ((vtd_read32(drhu_id, ECAP_REG) >> 8) & IVO_MASK) * 16;
 }
 
-static inline int supports_passthrough(drhu_id_t drhu_id)
-{
-    return (vtd_read32(drhu_id, ECAP_REG) >> 6) & 1;
-}
-
 static uint32_t get_fro_offset(drhu_id_t drhu_id)
 {
     uint32_t fro_offset;
