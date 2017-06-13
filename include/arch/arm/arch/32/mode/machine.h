@@ -57,6 +57,8 @@
 #define PMUSERENR  " p15, 0,  %0,  c9, c14, 0" /* 32-bit RW PMU PL0 enable */
 #define ID_DFR0    " p15, 0,  %0,  c0,  c1, 2" /* 32-bit RO Debug feature register */
 #define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
+#define CPACR      " p15, 0,  %0,  c1,  c0, 2" /* 32-bit Architectural Feature Access Control Register */
+#define FPEXC      " p10, 7,  %0, cr8, cr0, 0" /* 32-bit Floating-Point Exception Control register */
 
 #if CONFIG_MAX_NUM_NODES > 1
 /* Use the first two SGI (Software Generated Interrupt) IDs

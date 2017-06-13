@@ -24,6 +24,7 @@ fpsimd_init(void)
 
     return true;
 }
+#endif /* CONFIG_HAVE_FPU */
 
 BOOT_CODE bool_t
 fpsimd_HWCapTest(void)
@@ -39,4 +40,3 @@ fpsimd_HWCapTest(void)
 
     return true;
 }
-#endif /* CONFIG_HAVE_FPU */

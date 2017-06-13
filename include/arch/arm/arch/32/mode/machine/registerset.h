@@ -166,6 +166,14 @@ typedef struct user_breakpoint_state {
 } user_breakpoint_state_t;
 #endif
 
+#ifdef CONFIG_HAVE_FPU
+typedef struct user_fpu_state {
+    uint64_t fpregs[32];
+    uint32_t fpexc;
+    uint32_t fpscr;
+} user_fpu_state_t;
+#endif /* CONFIG_HAVE_FPU */
+
 /* ARM user-code context: size = 72 bytes
  * Or with hardware debug support built in:
  *      72 + sizeof(word_t) * (NUM_BPS + NUM_WPS) * 2
@@ -178,7 +186,10 @@ struct user_context {
     word_t registers[n_contextRegisters];
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE
     user_breakpoint_state_t breakpointState;
-#endif
+#endif /* CONFIG_HARDWARE_DEBUG_API */
+#ifdef CONFIG_HAVE_FPU
+    user_fpu_state_t fpuState;
+#endif /* CONFIG_HAVE_FPU */
 };
 typedef struct user_context user_context_t;
 

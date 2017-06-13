@@ -9,7 +9,8 @@
 #
 
 ARCH_C_SOURCES += 32/machine/hardware.c \
-                  32/machine/registerset.c
+                  32/machine/registerset.c \
+                  32/machine/fpu.c
 
 ifdef DEBUG
     ARCH_C_SOURCES += 32/machine/capdl.c

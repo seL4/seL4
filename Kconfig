@@ -409,6 +409,17 @@ menu "seL4 System Parameters"
             be taken as there is no guard below the stack so setting this too
             small will cause random memory corruption
 
+config AARCH32_FPU_ENABLE_CONTEXT_SWITCH
+    bool "Enable hardware VFP and SIMD context switch"
+    depends on ARCH_AARCH32 && !ARCH_ARM_V6 && !VERIFICATION_BUILD 
+    select HAVE_FPU
+    default y
+    help
+        This enables the VFP and SIMD context switch on platforms with
+        hardware support, allowing the user to execute hardware VFP and SIMD
+        operations in a multithreading environment, instead of relying on
+        software emulation of FPU/VFP from the C library (e.g. mfloat-abi=soft).
+
 config FPU_MAX_RESTORES_SINCE_SWITCH
     int "Max thread restores without switching FPU"
     depends on HAVE_FPU
@@ -538,7 +549,7 @@ menu "Build Options"
 
     config DANGEROUS_CODE_INJECTION_ON_UNDEF_INSTR
         bool "Make undefined instructions execute code in protected mode"
-        depends on ARCH_ARM_V6 && !VERIFICATION_BUILD
+        depends on ARCH_ARM_V6 && !VERIFICATION_BUILD && !HAVE_FPU
         default n
         help
             Replaces the undefined instruction handler with a call to a function

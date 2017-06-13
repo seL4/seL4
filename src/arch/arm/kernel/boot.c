@@ -217,6 +217,8 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 BOOT_CODE static bool_t
 init_cpu(void)
 {
+    bool_t haveHWFPU;
+
     activate_global_pd();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_boot_init();
@@ -243,8 +245,15 @@ init_cpu(void)
     setVtable((pptr_t)arm_vector_table);
 #endif /* CONFIG_ARCH_AARCH64 */
 
+    haveHWFPU = fpsimd_HWCapTest();
+
+    /* Disable FPU to avoid channels where a platform has an FPU but doesn't make use of it */
+    if (haveHWFPU) {
+        disableFpu();
+    }
+
 #ifdef CONFIG_HAVE_FPU
-    if (fpsimd_HWCapTest()) {
+    if (haveHWFPU) {
         if (!fpsimd_init()) {
             return false;
         }

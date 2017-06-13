@@ -32,7 +32,12 @@ Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest)
 void
 Arch_migrateTCB(tcb_t *thread)
 {
-    /* Nothing to do for ARM */
+#ifdef CONFIG_HAVE_FPU
+    /* check if thread own its current core FPU */
+    if (nativeThreadUsingFPU(thread)) {
+        switchFpuOwner(NULL, thread->tcbAffinity);
+    }
+#endif /* CONFIG_HAVE_FPU */
 }
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 

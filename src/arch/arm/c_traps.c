@@ -20,6 +20,7 @@
 #include <benchmark/benchmark_track_types.h>
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
+#include <arch/machine.h>
 
 void VISIBLE NORETURN
 c_handle_undefined_instruction(void)
@@ -32,13 +33,28 @@ c_handle_undefined_instruction(void)
     ksKernelEntry.word = getRegister(NODE_STATE(ksCurThread), LR_svc);
 #endif
 
+#if defined(CONFIG_HAVE_FPU) && defined(CONFIG_ARCH_AARCH32)
+    /* We assume the first fault is a FP exception and enable FPU, if not already enabled */
+    if (!isFpuEnable()) {
+        handleFPUFault();
+
+        /* Restart the FP instruction that cause the fault */
+        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+    } else {
+        handleUserLevelFault(0, 0);
+    }
+
+    restore_user_context();
+    UNREACHABLE();
+#endif
+
     /* There's only one user-level fault on ARM, and the code is (0,0) */
     handleUserLevelFault(0, 0);
     restore_user_context();
     UNREACHABLE();
 }
 
-#ifdef CONFIG_HAVE_FPU
+#if defined(CONFIG_HAVE_FPU) && defined(CONFIG_ARCH_AARCH64)
 void VISIBLE NORETURN
 c_handle_enfp(void)
 {

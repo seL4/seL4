@@ -97,6 +97,8 @@ static inline void enableFpu(void)
     MSR("cpacr_el1", cpacr);
 }
 
+#endif /* CONFIG_HAVE_FPU */
+
 /* Disable the FPU so that usage of it causes a fault */
 static inline void disableFpu(void)
 {
@@ -108,5 +110,4 @@ static inline void disableFpu(void)
     MSR("cpacr_el1", cpacr);
 }
 
-#endif /* CONFIG_HAVE_FPU */
 #endif /* __MODE_MACHINE_FPU_H */

@@ -15,10 +15,7 @@
 
 #include <mode/machine/fpu.h>
 
-#ifdef CONFIG_HAVE_FPU
-
-bool_t fpsimd_init(void);
 bool_t fpsimd_HWCapTest(void);
+bool_t fpsimd_init(void);
 
-#endif /* CONFIG_HAVE_FPU */
 #endif /* __ARCH_MACHINE_FPU_H */

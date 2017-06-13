@@ -16,6 +16,7 @@
 #include <arch/machine/debug_conf.h>
 #include <api/syscall.h>
 #include <arch/linker.h>
+#include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
@@ -32,6 +33,10 @@ void VISIBLE NORETURN restore_user_context(void)
 #ifdef ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(NODE_STATE(ksCurThread));
+#endif /* CONFIG_HAVE_FPU */
 
 #ifndef CONFIG_ARCH_ARM_V6
     writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));

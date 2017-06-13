@@ -19,6 +19,7 @@
 #include <armv/context_switch.h>
 #include <arch/machine/debug.h>
 #include <smp/lock.h>
+#include <machine/fpu.h>
 
 /* When building the fastpath the assembler in traps.S makes these
  * assumptions. Because compile_asserts are hard to do in assembler,
@@ -138,6 +139,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #ifndef CONFIG_ARCH_ARM_V6
     writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
 #endif
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(NODE_STATE(ksCurThread));
+#endif /* CONFIG_HAVE_FPU */
 
     register word_t badge_reg asm("r0") = badge;
     register word_t msgInfo_reg asm("r1") = msgInfo;
