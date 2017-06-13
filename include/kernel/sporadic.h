@@ -119,9 +119,8 @@ void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, 
  * `used` amount from its current replenishment without
  * depleting the budget, i.e refill_expired returns false.
  *
- * return any uncharged usage.
  */
-ticks_t refill_budget_check(sched_context_t *sc, ticks_t used);
+void refill_budget_check(sched_context_t *sc, ticks_t used, ticks_t capacity);
 
 /*
  * Charge a scheduling context `used` amount from its

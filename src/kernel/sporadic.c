@@ -213,52 +213,60 @@ refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_
     REFILL_SANITY_CHECK(sc, new_budget);
 }
 
-ticks_t
-refill_budget_check(sched_context_t *sc, ticks_t usage)
+void
+refill_budget_check(sched_context_t *sc, ticks_t usage, ticks_t capacity)
 {
     /* this function should only be called when the sc is out of budget */
-    assert(refill_capacity(sc, usage) == 0);
+    assert(capacity < MIN_BUDGET || refill_full(sc));
     assert(sc->scPeriod > 0);
     REFILL_SANITY_START(sc);
 
-    while (REFILL_HEAD(sc).rAmount <= usage) {
-        /* exhaust and schedule replenishment */
-        usage -= REFILL_HEAD(sc).rAmount;
-        if (refill_single(sc)) {
-            /* update in place */
-            REFILL_HEAD(sc).rTime += sc->scPeriod;
-        } else {
-            refill_t old_head = refill_pop_head(sc);
-            old_head.rTime = old_head.rTime + sc->scPeriod;
-            refill_add_tail(sc, old_head);
+    if (capacity == 0) {
+        while (REFILL_HEAD(sc).rAmount <= usage) {
+            /* exhaust and schedule replenishment */
+            usage -= REFILL_HEAD(sc).rAmount;
+            if (refill_single(sc)) {
+                /* update in place */
+                REFILL_HEAD(sc).rTime += sc->scPeriod;
+            } else {
+                refill_t old_head = refill_pop_head(sc);
+                old_head.rTime = old_head.rTime + sc->scPeriod;
+                refill_add_tail(sc, old_head);
+            }
         }
-    }
 
-    while (REFILL_HEAD(sc).rAmount < MIN_BUDGET) {
-        refill_t refill = refill_pop_head(sc);
-        REFILL_HEAD(sc).rAmount += refill.rAmount;
-    }
-
-    /* budget overrun */
-    if (usage > 0) {
-        /* budget reduced when calculating capacity */
-        /* due to overrun delay next replenishment */
-        REFILL_HEAD(sc).rTime += usage;
-        /* merge front two replenishments if times overlap */
-        if (!refill_single(sc) &&
+        /* budget overrun */
+        if (usage > 0) {
+            /* budget reduced when calculating capacity */
+            /* due to overrun delay next replenishment */
+            REFILL_HEAD(sc).rTime += usage;
+            /* merge front two replenishments if times overlap */
+            if (!refill_single(sc) &&
                 REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount >=
                 REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime) {
 
-            refill_t refill = refill_pop_head(sc);
-            REFILL_HEAD(sc).rAmount += refill.rAmount;
-            REFILL_HEAD(sc).rTime = refill.rTime;
+                refill_t refill = refill_pop_head(sc);
+                REFILL_HEAD(sc).rAmount += refill.rAmount;
+                REFILL_HEAD(sc).rTime = refill.rTime;
+            }
         }
     }
 
-    REFILL_SANITY_END(sc);
+    capacity = refill_capacity(sc, usage);
+    if (capacity > 0 && refill_ready(sc)) {
+        refill_split_check(sc, usage);
+    }
 
-    /* return any usage we haven't dealt with */
-    return usage;
+    /* ensure the refill head is sufficient, such that when we wake in awaken,
+     * there is enough budget to run */
+    while (REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount < MIN_BUDGET) {
+        refill_t refill = refill_pop_head(sc);
+        REFILL_HEAD(sc).rAmount += refill.rAmount;
+        /* this loop is guaranteed to terminate as the sum of
+         * rAmount in a refill must be >= MIN_BUDGET */
+    }
+
+    REFILL_SANITY_END(sc);
 }
 
 static inline void

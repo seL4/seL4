@@ -543,19 +543,10 @@ chargeBudget(ticks_t capacity, ticks_t consumed)
         REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount += REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount;
         REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount = 0;
     } else {
-
-        if (capacity == 0) {
-            consumed = refill_budget_check(NODE_STATE(ksCurSC), consumed);
-        }
-
-        if (consumed > 0) {
-            capacity = refill_capacity(NODE_STATE(ksCurSC), consumed);
-            if (capacity > 0 && refill_ready(NODE_STATE(ksCurSC))) {
-                refill_split_check(NODE_STATE(ksCurSC), consumed);
-            }
-        }
+        refill_budget_check(NODE_STATE(ksCurSC), consumed, capacity);
     }
 
+    assert(REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount >= MIN_BUDGET);
     NODE_STATE(ksConsumed) = 0;
     if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
         endTimeslice();
