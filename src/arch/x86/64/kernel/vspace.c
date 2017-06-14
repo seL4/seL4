@@ -783,17 +783,17 @@ exception_t
 performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot)
 {
     asid_map_t asid_map;
-    if (cap_get_capType(vspaceCapSlot->cap) == cap_pml4_cap) {
-        cap_pml4_cap_ptr_set_capPML4MappedASID(&vspaceCapSlot->cap, asid);
-        cap_pml4_cap_ptr_set_capPML4IsMapped(&vspaceCapSlot->cap, 1);
-        asid_map = asid_map_asid_map_vspace_new(cap_pml4_cap_get_capPML4BasePtr(vspaceCapSlot->cap));
-    } else {
+    if (config_set(CONFIG_VTX) && cap_get_capType(vspaceCapSlot->cap) == cap_ept_pml4_cap) {
 #ifdef CONFIG_VTX
-        assert(cap_get_capType(vspaceCapSlot->cap) == cap_ept_pml4_cap);
         cap_ept_pml4_cap_ptr_set_capPML4MappedASID(&vspaceCapSlot->cap, asid);
         cap_ept_pml4_cap_ptr_set_capPML4IsMapped(&vspaceCapSlot->cap, 1);
         asid_map = asid_map_asid_map_ept_new(cap_ept_pml4_cap_get_capPML4BasePtr(vspaceCapSlot->cap));
 #endif
+    } else {
+        assert(cap_get_capType(vspaceCapSlot->cap) == cap_pml4_cap);
+        cap_pml4_cap_ptr_set_capPML4MappedASID(&vspaceCapSlot->cap, asid);
+        cap_pml4_cap_ptr_set_capPML4IsMapped(&vspaceCapSlot->cap, 1);
+        asid_map = asid_map_asid_map_vspace_new(cap_pml4_cap_get_capPML4BasePtr(vspaceCapSlot->cap));
     }
     poolPtr->array[asid & MASK(asidLowBits)] = asid_map;
     return EXCEPTION_NONE;
