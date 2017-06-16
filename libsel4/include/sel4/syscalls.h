@@ -237,11 +237,22 @@ seL4_Poll(seL4_CPtr src, seL4_Word *sender);
 
 /**
  * @defgroup DebuggingSystemCalls
+ * This section documents debugging system calls available when the kernel is
+ * build with the `DEBUG_BUILD` configuration. For any system calls that rely
+ * on a kernel serial driver, `PRINTING` must also be enabled.
+ *
  * @{
  */
 #ifdef CONFIG_PRINTING
 /**
  * @xmlonly <manual name="Put Char" label="sel4_debugputchar"/> @endxmlonly
+ * @brief Output a single char through the kernel.
+ *
+ * Use the kernel serial driver to output a single character. This is useful for
+ * debugging when a user level serial driver is not available.
+ *
+ * @param c The character to output.
+ *
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugPutChar(char c);
@@ -250,24 +261,58 @@ seL4_DebugPutChar(char c);
 #if CONFIG_DEBUG_BUILD
 /**
  * @xmlonly <manual name="Halt" label="sel4_debughalt"/> @endxmlonly
+ * @brief Halt the system.
+ *
+ * This debugging system call will cause the kernel immediately cease responding to
+ * system calls. The kernel will switch permanently to the idle thread with
+ * interrupts disabled. Depending on the platform, the kernel may switch
+ * the hardware into a low-power state.
+ *
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugHalt(void);
 
 /**
  * @xmlonly <manual name="Snapshot" label="sel4_debugsnapshot"/> @endxmlonly
+ * @brief Output a capDL dump of the current kernel state.
+ *
+ * This debugging system call will output all of the capabilities in the current
+ * kernel using capDL.
+ *
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugSnapshot(void);
 
 /**
  * @xmlonly <manual name="Cap Identify" label="sel4_debugcapidentify"/> @endxmlonly
+ * @brief Identify the type of a capability in the current cspace.
+ *
+ * This debugging system call returns the type of capability in a capability
+ * slot in the current cspace. The type returned is not a libsel4 type, but
+ * refers to an internal seL4 type. This can be looked up in a built kernel by
+ * looking for the (generated) `enum cap_tag`, type `cap_tag_t`.
+ *
+ * @param cap A capability slot in the current cspace.
+ * @return The type of capability passed in.
+ *
  */
 LIBSEL4_INLINE_FUNC seL4_Uint32
 seL4_DebugCapIdentify(seL4_CPtr cap);
 
 /**
  * @xmlonly <manual name="Name Thread" label="sel4_debugnamethread"/> @endxmlonly
+ * @brief Name a thread.
+ *
+ * Name a thread. This name will then be output by the kernel in all debugging output.
+ * Note that the max name length that can be passed to this function is limited by the
+ * number of chars that will fit in an IPC message (`seL4_MsgMaxLength` multiplied by the
+ * amount of chars that fit in a word). However the name is also truncated in order to fit into a TCB object.
+ * For some platforms you may need to increase `seL4_TCBBits` by 1 in a debug build in order to
+ * fit a long enough name.
+ *
+ * @param tcb A capability to the tcb object for the thread to name.
+ * @param name The name for the thread.
+ *
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
@@ -276,6 +321,20 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
 /**
  * @xmlonly <manual name="Run" label="sel4_debugrun"/> @endxmlonly
+ * @brief Run a user level function in kernel mode.
+ *
+ * This extremely dangerous function is for running benchmarking and debugging code that
+ * needs to be executed in kernel mode from userlevel. It should never be used in a release kernel.
+ * This works because the kernel can access all user mappings of device memory, and does not switch page directories
+ * on kernel entry.
+ *
+ * Unlike the other system calls in this section, `seL4_DebugRun` does not
+ * depend on the `DEBUG_BUILD` configuration option, but its own config
+ * variable `DANGEROUS_CODE_INJECTION`.
+ *
+ * @param userfn The address in userspace of the function to run.
+ * @param userarg A single argument to pass to the function.
+ *
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugRun(void (* userfn) (void *), void* userarg);
