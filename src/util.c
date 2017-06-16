@@ -45,7 +45,7 @@ memzero(void *s, unsigned long n)
     }
 }
 
-void*
+void* VISIBLE
 memset(void *s, unsigned long c, unsigned long n)
 {
     uint8_t *p;
@@ -66,7 +66,7 @@ memset(void *s, unsigned long c, unsigned long n)
     return s;
 }
 
-void* USED
+void* VISIBLE
 memcpy(void* ptr_dst, const void* ptr_src, unsigned long n)
 {
     uint8_t *p;
