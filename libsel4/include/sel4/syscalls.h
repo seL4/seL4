@@ -349,11 +349,11 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg);
 /*
  * TODO: The following comment should be added to the manual when SELFOUR-962 is complete.
  * Currently there are different Benchmarking modes/configs in the kernel:
- * 1) BENCHMARK_TRACEPOINTS: Enable using tracepoints in the kernel and timing code.
- * 2) BENCHMARK_TRACK_KERNEL_ENTRIES: Keep track of information on kernel entries.
- * 3) BENCHMARK_TRACK_UTILISATION: Allow users to get CPU timing info for the system, threads and/or idle thread.
+ *     1. `BENCHMARK_TRACEPOINTS`: Enable using tracepoints in the kernel and timing code.
+ *     2. `BENCHMARK_TRACK_KERNEL_ENTRIES`: Keep track of information on kernel entries.
+ *     3. `BENCHMARK_TRACK_UTILISATION`: Allow users to get CPU timing info for the system, threads and/or idle thread.
  *
- * BENCHMARK_TRACEPOINTS and BENCHMARK_TRACK_KERNEL_ENTRIES use a log buffer that has to be allocated by the user and mapped
+ * `BENCHMARK_TRACEPOINTS` and `BENCHMARK_TRACK_KERNEL_ENTRIES` use a log buffer that has to be allocated by the user and mapped
  * to a fixed location in the kernel window.
  * All of timing info are in cycles.
  */
@@ -363,12 +363,14 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg);
  * @brief Reset benchmark logging.
  *
  * The behaviour of this system call depends on benchmarking mode in action while invoking
- * this system call: 1) BENCHMARK_TRACEPOINTS or BENCHMARK_TRACK_KERNEL_ENTRIES:  resets log index to 0.
- * 2) BENCHMARK_TRACK_UTILISATION: resets benchmark and current thread start time (to the time of invoking
- * this syscall), resets idle thread utilisation to 0, and starts tracking utilisation.
+ * this system call:
+ *    1. `BENCHMARK_TRACEPOINTS`: resets the log index to 0,
+ *    2. `BENCHMARK_TRACK_KERNEL_ENTRIES`:  resets log index to 0,
+ *    3. `BENCHMARK_TRACK_UTILISATION:` resets benchmark and current thread start time (to the time of invoking
+ *       this syscall), resets idle thread utilisation to 0, and starts tracking utilisation.
  *
  * @return A `seL4_Error` error if the user-level log buffer has not been set by the user
- *                         (BENCHMARK_TRACEPOINTS/BENCHMARK_TRACK_KERNEL_ENTRIES).
+ *                         (`BENCHMARK_TRACEPOINTS`/`BENCHMARK_TRACK_KERNEL_ENTRIES`).
  */
 LIBSEL4_INLINE_FUNC seL4_Error
 seL4_BenchmarkResetLog(void);
@@ -379,8 +381,9 @@ seL4_BenchmarkResetLog(void);
  *
  * The behaviour of this system call depends on
  * benchmarking mode in action while invoking this system call:
- *         1) BENCHMARK_TRACEPOINTS or BENCHMARK_TRACK_KERNEL_ENTRIES: Sets log buffer's stop index to current index.
- *         2) BENCHMARK_TRACK_UTILISATION: Sets benchmark end time to current time, stops tracking utilisation.
+ *      1. BENCHMARK_TRACEPOINTS: Sets the final log buffer index to the current index.
+ *      2. BENCHMARK_TRACK_KERNEL_ENTRIES: as above.
+ *      3. BENCHMARK_TRACK_UTILISATION: Sets benchmark end time to current time, stops tracking utilisation.
  *
  * @return The index of the final entry in the log buffer (if BENCHMARK_TRACEPOINTS/BENCHMARK_TRACK_KERNEL_ENTRIES are enabled).
  *

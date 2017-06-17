@@ -111,6 +111,14 @@ def parse_para(para_node, ref_dict={}):
         return "\\obj{%s}" % para_node['name']
     elif para_node.name == 'errorenumdesc':
         return "\\errorenumdesc"
+    elif para_node.name == 'orderedlist':
+        output = '\\begin{enumerate}\n'
+        for n in para_node.find_all('listitem'):
+            output += '\\item '
+            output += parse_para(n.para, ref_dict)
+            output += '\n'
+        output += '\\end{enumerate}\n'
+        return output
     else:
         return ""
 
