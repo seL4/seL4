@@ -343,20 +343,23 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg);
 
 /**
  * @defgroup BenchmarkingSystemCalls
- * @{
- */
-#ifdef CONFIG_ENABLE_BENCHMARKS
-/*
- * TODO: The following comment should be added to the manual when SELFOUR-962 is complete.
- * Currently there are different Benchmarking modes/configs in the kernel:
+ * This section documents system calls available when the kernel is
+ * configured with benchmarking enabled.
+ * There are several different benchmarking modes which can be configured
+ * when building the kernel:
  *     1. `BENCHMARK_TRACEPOINTS`: Enable using tracepoints in the kernel and timing code.
  *     2. `BENCHMARK_TRACK_KERNEL_ENTRIES`: Keep track of information on kernel entries.
  *     3. `BENCHMARK_TRACK_UTILISATION`: Allow users to get CPU timing info for the system, threads and/or idle thread.
  *
  * `BENCHMARK_TRACEPOINTS` and `BENCHMARK_TRACK_KERNEL_ENTRIES` use a log buffer that has to be allocated by the user and mapped
  * to a fixed location in the kernel window.
- * All of timing info are in cycles.
+ * All of timing information is output in cycles.
+ *
+ * @{
  */
+#ifdef CONFIG_ENABLE_BENCHMARKS
+/*
+  */
 
 /**
  * @xmlonly <manual name="Reset Log" label="sel4_benchmarkresetlog"/> @endxmlonly

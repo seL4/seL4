@@ -255,10 +255,13 @@ def generate_general_syscall_doc(input_file_name, level):
         ref_dict = build_ref_dict(soup)
         elements = soup.find_all("memberdef")
 
-        # parse all of the function definitions
-        if ('detaileddescription' in soup.doxygen):
-        	output += soup.doxygen.detaileddescription.para.text
+        # parse any top level descriptions
+        for n in soup.doxygen.compounddef.contents:
+            if n.name == 'detaileddescription':
+                if n.para:
+                    output += parse_para(n.para)
 
+        # parse all of the function definitions
         if len(elements) == 0:
             return "No methods."
 
