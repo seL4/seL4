@@ -36,9 +36,6 @@ def default_return_doc(ret_type):
 
     return ""
 
-class NoSuchNode(Exception):
-    pass
-
 def latex_escape(string):
     """
     Return a string with latex special characters escaped
@@ -46,94 +43,87 @@ def latex_escape(string):
 
     return LATEX_ESCAPE_REGEX.sub(lambda p: LATEX_ESCAPE_PATTERNS[p.group()], string)
 
-def get_text(soup, recur=False, escape=True):
+def get_text(soup, escape=True):
     """
     Return a string containing a concatenation of a nodes text node
     children, recursing into non-text nodes or escaping latex if
     necessary.
     """
 
-    output = ""
-    string = None
-    if type(soup) == str:
+    if isinstance(soup, str):
         string = soup
+    elif isinstance(soup, unicode):
+        string = str(soup)
     elif soup.string:
         string = str(soup.string)
+    else:
+        string = soup.get_text()
 
     if string is not None:
         if escape:
-            output += latex_escape(string)
+             return latex_escape(string)
         else:
-            output += string
-    elif recur:
-        for child in soup.contents:
-            output += get_text(child, True, escape)
+            return string
 
+def ref_to_tex(p, ref_dict):
+    if len(ref_dict) > 0:
+        refid = p["refid"]
+        ref = ref_dict[refid]
+        return "\\apifunc{%(name)s}{%(label)s}" % ref
+    return ""
+
+def nref_to_tex(p, ref_dict):
+    if len(ref_dict) > 0:
+        name = p["name"]
+        ref = ref_dict[name]
+        return "\\apifunc{%(name)s}{%(label)s}" % ref
+    return ""
+
+def parse_list(p, ref_dict):
+    output = '\\begin{enumerate}\n'
+    for n in p.contents:
+        output += parse_para(n, ref_dict)
+    output += '\\end{enumerate}\n'
     return output
+
+def parse_recurse(p, ref_dict):
+    # recurse on the contents
+    output = ""
+    for n in p.contents:
+        output += parse_para(n, ref_dict)
+    return output
+
+parse_table = {
+    'para'          : lambda p, r: parse_recurse(p, r),
+    'computeroutput': lambda p, r: '\\texttt{%s}' % get_text(p),
+    'texttt'        : lambda p, r: '\\texttt{%s}' % get_text(p['text']),
+    'ref'           : lambda p, r: ref_to_tex(p, r),
+    'nameref'       : lambda p, r: nref_to_tex(p, r),
+    'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
+    'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
+    'errorenumdesc' : lambda p, r: "\\errorenumdesc",
+    'orderedlist'   : lambda p, r: parse_list(p, r),
+    'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r)
+}
 
 def parse_para(para_node, ref_dict={}):
     """
     Parse a paragraph node, handling special doxygen node types
     that may appear inside a paragraph.
     """
-    # recursive case
-    if para_node.name == 'para':
-        # recurse on the contents
-        output = ""
-        for n in para_node.contents:
-            output += parse_para(n, ref_dict)
-        return output
-
-    # base cases
-    if isinstance(para_node, str):
-    	return latex_escape(str(para_node))
-    elif isinstance(para_node, unicode):
-    	return latex_escape(str(para_node))
-    elif para_node.string:
-        return latex_escape(str(para_node.string))
-    elif para_node.name == 'computeroutput':
-        return "\\texttt{%s}" % get_text(para_node)
-    elif para_node.name == 'texttt':
-         return "\\texttt{%s}" % latex_escape(para_node['text'])
-    elif len(ref_dict) != 0 and para_node.name == 'ref':
-        refid = para_node.ref["refid"]
-        ref = ref_dict[refid]
-        return "\\apifunc{%(name)s}{%(label)s}" % ref
-    elif len(ref_dict) != 0 and para_node.name == 'nameref':
-	name = para_node["name"]
-        ref = ref_dict[name]
-        return "\\apifunc{%(name)s}{%(label)s}" % ref
-    elif para_node.name == 'autoref':
-        return "\\autoref{sec:%s}" % para_node['sec']
-    elif para_node.name == 'shortref':
-        return "\\ref{sec:%s}" % para_node['sec']
-    elif para_node.name == 'obj':
-        return "\\obj{%s}" % para_node['name']
-    elif para_node.name == 'errorenumdesc':
-        return "\\errorenumdesc"
-    elif para_node.name == 'orderedlist':
-        output = '\\begin{enumerate}\n'
-        for n in para_node.find_all('listitem'):
-            output += '\\item '
-            output += parse_para(n.para, ref_dict)
-            output += '\n'
-        output += '\\end{enumerate}\n'
-        return output
+    if para_node.name is None:
+        return get_text(para_node, escape=True)
+    elif para_node.name in parse_table:
+        return parse_table[para_node.name](para_node, ref_dict)
     else:
         return ""
-
 
 def parse_brief(parent):
     """
     Parse the "brief description" section of a doxygen member.
     """
-
-    para_text = "\n\n"
-    if 'briefdescription' in parent:
-    	para_nodes = parent.briefdescription.find_all('para')
-    	para_text = "\n\n".join([parse_para(n) for n in para_nodes])
-
-    return para_text
+    para_nodes = parent.find('briefdescription').find_all('para')
+    return "\n\n".join([parse_para(n) for n in para_nodes])
 
 def parse_detailed_desc(parent, ref_dict):
     """
@@ -174,19 +164,19 @@ def parse_detailed_desc(parent, ref_dict):
         for param_name in param_order:
             param_info = params[param_name]
             params_str += "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
-                "type": latex_escape(param_info["type"]),
-                "name": latex_escape(param_name),
+                "type": get_text(param_info["type"]),
+                "name": get_text(param_name),
                 "desc": todo_if_empty(param_info.get("desc", "").strip()),
             }
 
 
     details = ""
-    for n in parent.detaileddescription.contents:
-        if n and isinstance(n, Tag) and n.name == 'para' and not n.parameterlist:
+    for n in parent.detaileddescription.find_all('para', recursive=False):
+        if not n.parameterlist:
             details += parse_para(n, ref_dict)
             details += "\n\n"
 
-    ret_str = get_text(parent.find_all("type")[0], recur=True, escape=False)
+    ret_str = get_text(parent.find("type"), escape=False)
     ret = default_return_doc(ret_str.split()[-1])
     simplesects = parent.find_all("simplesect")
     for n in simplesects:
@@ -202,8 +192,8 @@ def parse_prototype(parent):
 
     inline = parent["inline"] == "yes"
     static = parent["static"] == "yes"
-    ret_type = get_text(parent.find_all("type")[0], recur=True)
-    name = get_text(parent.find_all("name")[0])
+    ret_type = get_text(parent.find("type"))
+    name = get_text(parent.find("name"))
 
     output = "%s %s" % (ret_type, name)
     if inline:
@@ -254,12 +244,11 @@ def generate_general_syscall_doc(input_file_name, level):
         soup = BeautifulSoup(f, "lxml")
         ref_dict = build_ref_dict(soup)
         elements = soup.find_all("memberdef")
-
+        summary = soup.find('compounddef')
         # parse any top level descriptions
-        for n in soup.doxygen.compounddef.contents:
-            if n.name == 'detaileddescription':
-                if n.para:
-                    output += parse_para(n.para)
+        for n in summary.find_all('detaileddescription', recursive=False):
+            if n.para:
+                output += parse_para(n.para)
 
         # parse all of the function definitions
         if len(elements) == 0:
