@@ -39,13 +39,6 @@ volatile struct gic_cpu_iface_map * const gic_cpuiface =
     (volatile struct gic_cpu_iface_map*)(GIC_PL390_CONTROLLER_PPTR);
 #endif /* GIC_CONTROLLER_PPTR */
 
-static inline void
-set_irq_active(irq_t irq)
-{
-    int word = irq >> 5;
-    int bit = irq & 0x1f;
-    gic_dist->active[word] = BIT(bit);
-}
 uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 
 BOOT_CODE static void
