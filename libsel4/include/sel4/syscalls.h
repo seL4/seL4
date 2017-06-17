@@ -365,9 +365,10 @@ seL4_DebugRun(void (* userfn) (void *), void* userarg);
  * The behaviour of this system call depends on benchmarking mode in action while invoking
  * this system call:
  *    1. `BENCHMARK_TRACEPOINTS`: resets the log index to 0,
- *    2. `BENCHMARK_TRACK_KERNEL_ENTRIES`:  resets log index to 0,
- *    3. `BENCHMARK_TRACK_UTILISATION:` resets benchmark and current thread start time (to the time of invoking
- *       this syscall), resets idle thread utilisation to 0, and starts tracking utilisation.
+ *    2. `BENCHMARK_TRACK_KERNEL_ENTRIES`:  as above,
+ *    3. `BENCHMARK_TRACK_UTILISATION`: resets benchmark and current thread
+ *        start time (to the time of invoking this syscall), resets idle
+ *        thread utilisation to 0, and starts tracking utilisation.
  *
  * @return A `seL4_Error` error if the user-level log buffer has not been set by the user
  *                         (`BENCHMARK_TRACEPOINTS`/`BENCHMARK_TRACK_KERNEL_ENTRIES`).
@@ -379,13 +380,12 @@ seL4_BenchmarkResetLog(void);
  * @xmlonly <manual name="Finalize Log" label="sel4_benchmarkfinalizelog"/> @endxmlonly
  * @brief Stop benchmark logging.
  *
- * The behaviour of this system call depends on
- * benchmarking mode in action while invoking this system call:
- *      1. BENCHMARK_TRACEPOINTS: Sets the final log buffer index to the current index.
- *      2. BENCHMARK_TRACK_KERNEL_ENTRIES: as above.
- *      3. BENCHMARK_TRACK_UTILISATION: Sets benchmark end time to current time, stops tracking utilisation.
+ * The behaviour of this system call depends on benchmarking mode in action while invoking this system call:
+ *    1. `BENCHMARK_TRACEPOINTS`: Sets the final log buffer index to the current index,
+ *    2. `BENCHMARK_TRACK_KERNEL_ENTRIES`:  as above,
+ *    3. `BENCHMARK_TRACK_UTILISATION`: sets benchmark end time to current time, stops tracking utilisation.
  *
- * @return The index of the final entry in the log buffer (if BENCHMARK_TRACEPOINTS/BENCHMARK_TRACK_KERNEL_ENTRIES are enabled).
+ * @return The index of the final entry in the log buffer (if `BENCHMARK_TRACEPOINTS`/`BENCHMARK_TRACK_KERNEL_ENTRIES` are enabled).
  *
  */
 LIBSEL4_INLINE_FUNC seL4_Word
@@ -399,7 +399,7 @@ seL4_BenchmarkFinalizeLog(void);
  * The object must not be device memory, and must be seL4_LargePageBits in size.
  *
  * @param[in] frame_cptr A capability pointer to a user allocated frame of seL4_LargePage size.
- * @return A `seL4_IllegalOperation` error if frame_cptr is not valid and couldn't set the buffer.
+ * @return A `seL4_IllegalOperation` error if `frame_cptr` is not valid and couldn't set the buffer.
  *
  */
 LIBSEL4_INLINE_FUNC seL4_Error
@@ -417,6 +417,9 @@ seL4_BenchmarkNullSyscall(void);
 
 /**
  * @xmlonly <manual name="Flush Caches" label="sel4_benchmarkflushcaches"/> @endxmlonly
+ * @brief Flush hardware caches.
+ *
+ * Flush all possible hardware caches for this platform.
  */
 LIBSEL4_INLINE_FUNC void
 seL4_BenchmarkFlushCaches(void);
