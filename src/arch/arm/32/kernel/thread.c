@@ -42,6 +42,12 @@ Arch_switchToIdleThread(void)
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(NULL);
     }
+
+#if CONFIG_MAX_NUM_NODES > 1
+    /* Force the idle thread to run on kernel page table */
+    setVMRoot(NODE_STATE(ksIdleThread));
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
+
 #ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
     *armKSGlobalsFrame = 0;
 #endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
