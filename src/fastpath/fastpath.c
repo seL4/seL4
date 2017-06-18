@@ -121,12 +121,12 @@ fastpath_call(word_t cptr, word_t msgInfo)
         slowpath(SysCall);
     }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     /* Ensure both threads have the same affinity */
     if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != dest->tcbAffinity)) {
         slowpath(SysCall);
     }
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
     /*
      * --- POINT OF NO RETURN ---
@@ -295,12 +295,12 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
         slowpath(SysReplyRecv);
     }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     /* Ensure both threads have the same affinity */
     if (unlikely(NODE_STATE(ksCurThread)->tcbAffinity != caller->tcbAffinity)) {
         slowpath(SysReplyRecv);
     }
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
     /*
      * --- POINT OF NO RETURN ---

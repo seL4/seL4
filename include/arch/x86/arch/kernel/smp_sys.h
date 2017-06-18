@@ -20,10 +20,10 @@
 /* Limit of memory region we can copy the AP to */
 #define BOOT_NODE_MAX_PADDR 0x7bff
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 void boot_node(void);
 BOOT_CODE void start_boot_aps(void);
 BOOT_CODE bool_t copy_boot_code_aps(uint32_t mem_lower);
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
 #endif /* __ARCH_KERNEL_SMP_SYS_H_ */

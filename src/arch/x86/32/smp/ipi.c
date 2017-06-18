@@ -13,7 +13,7 @@
 #include <config.h>
 #include <mode/smp/ipi.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2)
 {
@@ -35,4 +35,4 @@ void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, w
     }
 }
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */

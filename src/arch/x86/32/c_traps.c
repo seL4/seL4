@@ -40,9 +40,9 @@ static void NORETURN restore_vmx(void)
     /* Do not support breakpoints in VMs, so just disable all breakpoints */
     loadAllDisabledBreakpointState(ksCurThread);
 #endif
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(CONFIG_KERNEL_STACK_BITS) - 4;
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
     if (NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->launched) {
         /* attempt to do a vmresume */
         asm volatile(
@@ -58,7 +58,7 @@ static void NORETURN restore_vmx(void)
             // Now do the vmresume
             "vmresume\n"
             // if we get here we failed
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             "movl (%%esp), %%esp\n"
 #else
             "leal kernel_stack_alloc + %c2, %%esp\n"
@@ -87,7 +87,7 @@ static void NORETURN restore_vmx(void)
             // Now do the vmresume
             "vmlaunch\n"
             // if we get here we failed
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             "movl (%%esp), %%esp\n"
 #else
             "leal kernel_stack_alloc + %c2, %%esp\n"

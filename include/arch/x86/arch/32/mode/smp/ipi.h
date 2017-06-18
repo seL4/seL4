@@ -18,7 +18,7 @@
 #include <plat/machine.h>
 #include <smp/ipi.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 typedef enum {
     IpiRemoteCall_InvalidateTLBEntry = IpiNumArchRemoteCall,
@@ -43,5 +43,5 @@ static void inline doRemoteInvalidateTLB(word_t mask)
 }
 
 void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2);
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __ARCH_SMP_IPI_H */

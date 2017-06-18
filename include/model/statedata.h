@@ -19,7 +19,7 @@
 #include <object/tcb.h>
 #include <mode/types.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 #define NODE_STATE_BEGIN(_name)                 typedef struct _name {
 #define NODE_STATE_END(_name)                   } _name ## _t
 #define NODE_STATE_TYPE_DECLARE(_name, _state)  _name ## _t _state
@@ -53,7 +53,7 @@
 #define ARCH_NODE_STATE_ON_CORE(_state, _core) _state
 #define NODE_STATE_ON_CORE(_state, _core)      _state
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 #define NUM_READY_QUEUES (CONFIG_NUM_DOMAINS * CONFIG_NUM_PRIORITIES)
 

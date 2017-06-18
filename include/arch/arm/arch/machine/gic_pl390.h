@@ -217,8 +217,8 @@ handleSpuriousIRQ(void)
 
 void initIRQController(void);
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 void ipiBroadcast(irq_t irq, bool_t includeSelfCPU);
 void ipi_send_target(irq_t irq, word_t cpuTargetList);
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* !__ARCH_MACHINE_GICPL390_H */

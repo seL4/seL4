@@ -15,7 +15,7 @@
 #include <smp/ipi.h>
 #include <smp/lock.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 /* This function switches the core it is called on to the idle thread,
  * in order to avoid IPI storms. If the core is waiting on the lock, the actual
  * switch will not occur until the core attempts to obtain the lock, at which
@@ -135,4 +135,4 @@ void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
         }
     }
 }
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */

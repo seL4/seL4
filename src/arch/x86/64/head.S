@@ -406,7 +406,7 @@ END_FUNC(_entry_64)
 
 .section .phys.text
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 BEGIN_FUNC(boot_cpu_start)
 .code16
@@ -483,4 +483,4 @@ BEGIN_FUNC(_entry_ap64)
     jmp boot_node
 END_FUNC(_entry_64)
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */

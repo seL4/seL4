@@ -15,7 +15,7 @@
 
 #include <config.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 typedef enum {
     IpiRemoteCall_Stall,
 #ifdef CONFIG_VTX
@@ -30,5 +30,5 @@ typedef enum {
     IpiNumArchRemoteCall
 } IpiRemoteCall_t;
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __ARCH_SMP_IPI_H */

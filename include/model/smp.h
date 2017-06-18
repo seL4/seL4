@@ -18,7 +18,7 @@
 #include <arch/model/statedata.h>
 #include <model/statedata.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 /* Use this to avoid false sharing between cores for per-core data structures */
 #define PAD_TO_NEXT_CACHE_LN(used) char padding[L1_CACHE_LINE_SIZE - ((used) % L1_CACHE_LINE_SIZE)]
@@ -31,6 +31,6 @@ typedef struct smpStatedata {
 
 extern smpStatedata_t ksSMP[CONFIG_MAX_NUM_NODES];
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 
 #endif /* __MODEL_SMP_H_ */

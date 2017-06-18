@@ -40,7 +40,7 @@ int_##number:                                \
 #define INT_HANDLER_WITH_ERR_CODE(number) INT_HANDLER_COMMON(number,)
 #define INT_HANDLER_WITHOUT_ERR_CODE(number) INT_HANDLER_COMMON(number,pushl $0x0)
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 #define SET_KERNEL_STACK_FROM(x)            \
     movl    (x)(%esp), %esp
 #else

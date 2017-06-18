@@ -55,12 +55,12 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
         setCurrentVSpaceRoot(new_vroot, asid);
     }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
                  : [value] "r" (&thread->tcbArch.tcbContext.registers[Error + 1]),
                  [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
     NODE_STATE(ksCurThread) = thread;
 }
@@ -138,10 +138,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     restore_user_debug_context(cur_thread);
 #endif
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     cpu_id_t cpu = getCurrentCPUIndex();
     swapgs();
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
     /* Now that we have swapped back to the user gs we can safely
      * update the GS base. We must *not* use any kernel functions
      * that rely on having a kernel GS though. Most notably uses

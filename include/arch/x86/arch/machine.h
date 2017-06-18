@@ -190,12 +190,12 @@ static inline uint64_t x86_rdtsc(void)
     return ((uint64_t) hi) << 32llu | (uint64_t) lo;
 }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 static inline void arch_pause(void)
 {
     asm volatile("pause");
 }
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
 enum x86_vendor {
     X86_VENDOR_INTEL = 0,

@@ -56,7 +56,7 @@ static void NORETURN restore_vmx(void)
             "popq %%rsi\n"
             "popq %%rdi\n"
             "popq %%rbp\n"
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             "swapgs\n"
 #endif
             // Now do the vmresume
@@ -66,7 +66,7 @@ static void NORETURN restore_vmx(void)
             "movzx %%al, %%rdi\n"
             "movzx %%bl, %%rsi\n"
             // if we get here we failed
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             "swapgs\n"
             "movq %%gs:%c[stack_offset], %%rsp\n"
 #else
@@ -78,7 +78,7 @@ static void NORETURN restore_vmx(void)
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
             [failed]"m"(vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
 #endif
             // Clobber memory so the compiler is forced to complete all stores
@@ -97,7 +97,7 @@ static void NORETURN restore_vmx(void)
             "popq %%rsi\n"
             "popq %%rdi\n"
             "popq %%rbp\n"
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             "swapgs\n"
 #endif
             // Now do the vmresume
@@ -107,7 +107,7 @@ static void NORETURN restore_vmx(void)
             "sete %%bl\n"
             "movzx %%al, %%rdi\n"
             "movzx %%bl, %%rsi\n"
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             "swapgs\n"
             "movq %%gs:%c[stack_offset], %%rsp\n"
 #else
@@ -119,7 +119,7 @@ static void NORETURN restore_vmx(void)
             : [reg]"r"(&cur_thread->tcbArch.tcbVCPU->gp_registers[VCPU_EAX]),
             [failed]"m"(vmlaunch_failed),
             [stack_size]"i"(BIT(CONFIG_KERNEL_STACK_BITS))
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             , [stack_offset]"i"(OFFSETOF(nodeInfo_t, stackTop))
 #endif
             // Clobber memory so the compiler is forced to complete all stores
@@ -170,7 +170,7 @@ void VISIBLE NORETURN restore_user_context(void)
     restore_user_debug_context(cur_thread);
 #endif
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     cpu_id_t cpu = getCurrentCPUIndex();
     swapgs();
 #endif
@@ -297,7 +297,7 @@ void VISIBLE NORETURN restore_user_context(void)
             "addq $48, %%rsp\n"
             "popq %%r11\n"
             "popq %%rcx\n"
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
             // Swapping gs twice here is worth it as it allows us to efficiently
             // set the user gs base previously
             "swapgs\n"

@@ -221,11 +221,11 @@ handleInterrupt(irq_t irq)
         resetTimer();
         break;
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     case IRQIPI:
         handleIPI(irq, true);
         break;
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
     case IRQReserved:
 #ifdef CONFIG_IRQ_REPORTING

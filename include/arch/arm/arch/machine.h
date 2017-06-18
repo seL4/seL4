@@ -61,12 +61,12 @@ static inline void clearMemoryRAM(word_t* ptr, word_t bits)
                         addrFromPPtr(ptr));
 }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 static inline void arch_pause(void)
 {
     /* TODO */
 }
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
 static inline void Arch_finaliseInterrupt(void)
 {

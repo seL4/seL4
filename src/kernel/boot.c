@@ -376,9 +376,9 @@ create_idle_thread(void)
 {
     pptr_t pptr;
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
         pptr = alloc_region(seL4_TCBBits);
         if (!pptr) {
             printf("Kernel init failed: Unable to allocate tcb for idle thread\n");
@@ -390,9 +390,9 @@ create_idle_thread(void)
 #ifdef CONFIG_DEBUG_BUILD
         setThreadName(NODE_STATE_ON_CORE(ksIdleThread, i), "idle_thread");
 #endif
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     }
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
     return true;
 }
 

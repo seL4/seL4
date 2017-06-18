@@ -21,7 +21,7 @@
 #include <smp/ipi.h>
 #include <util.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 /* CLH lock is FIFO lock for machines with coherent caches (coherent-FIFO lock).
  * See ftp://ftp.cs.washington.edu/tr/1993/02/UW-CSE-93-02-02.pdf */
@@ -132,7 +132,7 @@ clh_is_self_in_queue(void)
 #define NODE_UNLOCK do {} while (0)
 #define NODE_LOCK_IF(_cond, _irq) do {} while (0)
 #define NODE_UNLOCK_IF_HELD do {} while (0)
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 
 #define NODE_LOCK_SYS NODE_LOCK(false)
 #define NODE_LOCK_IRQ NODE_LOCK(true)

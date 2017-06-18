@@ -28,7 +28,7 @@ Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest)
     return EXCEPTION_NONE;
 }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 void
 Arch_migrateTCB(tcb_t *thread)
 {
@@ -39,7 +39,7 @@ Arch_migrateTCB(tcb_t *thread)
     }
 #endif /* CONFIG_HAVE_FPU */
 }
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 void
 Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)

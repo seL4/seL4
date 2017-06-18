@@ -15,7 +15,7 @@
 
 #include <config.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
 /* Get current stack pointer */
@@ -38,5 +38,5 @@ getCurrentCPUIndex(void)
     return cpu_id;
 }
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __MODE_SMP_H_ */

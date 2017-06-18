@@ -13,7 +13,7 @@
 #include <config.h>
 #include <mode/model/smp.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 nodeInfo_t node_info[CONFIG_MAX_NUM_NODES];
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
@@ -28,4 +28,4 @@ mode_init_tls(cpu_id_t cpu_index)
     swapgs();
 }
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */

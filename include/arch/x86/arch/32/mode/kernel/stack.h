@@ -15,10 +15,10 @@
 #include <config.h>
 #include <util.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 #define KERNEL_STACK_ALIGNMENT 4096
 #else
 #define KERNEL_STACK_ALIGNMENT 16
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 #endif /* __KERNEL_MODE_STACK_H */

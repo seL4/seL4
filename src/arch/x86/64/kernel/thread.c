@@ -22,7 +22,7 @@ Arch_switchToThread(tcb_t* tcb)
 {
     /* set PD */
     setVMRoot(tcb);
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
                  : [value] "r" (&tcb->tcbArch.tcbContext.registers[Error + 1]),
@@ -49,7 +49,7 @@ Arch_switchToIdleThread(void)
      * taking an exception. Therefore we need to provide the idle thread
      * with a stack */
     setRegister(tcb, RSP, (uint64_t)&MODE_NODE_STATE(x64KSIRQStack)[IRQ_STACK_SIZE]);
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
                  : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),

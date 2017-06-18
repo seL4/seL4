@@ -289,10 +289,10 @@ schedule(void)
         NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     doMaskReschedule(ARCH_NODE_STATE(ipiReschedulePending));
     ARCH_NODE_STATE(ipiReschedulePending) = 0;
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 }
 
 void

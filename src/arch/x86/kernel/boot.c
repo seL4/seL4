@@ -37,10 +37,10 @@ init_irqs(cap_t root_cnode_cap)
     for (i = 0; i <= maxIRQ; i++) {
         if (i == irq_timer) {
             setIRQState(IRQTimer, i);
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
         } else if (i == irq_remote_call_ipi || i == irq_reschedule_ipi) {
             setIRQState(IRQIPI, i);
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
         } else if (i == irq_iommu) {
             setIRQState(IRQReserved, i);
         } else if (i == 2 && config_set(CONFIG_IRQ_PIC)) {

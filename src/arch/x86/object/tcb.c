@@ -85,7 +85,7 @@ exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t excaps)
 }
 #endif
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 void
 Arch_migrateTCB(tcb_t *thread)
 {
@@ -94,7 +94,7 @@ Arch_migrateTCB(tcb_t *thread)
         switchFpuOwner(NULL, thread->tcbAffinity);
     }
 }
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 void
 Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)

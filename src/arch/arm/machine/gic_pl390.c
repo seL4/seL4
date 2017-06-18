@@ -141,7 +141,7 @@ BOOT_CODE void cpu_initLocalIRQController(void)
     cpu_iface_init();
 }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 /*
 * 25-24: target lister filter
 * 0b00 - send the ipi to the CPU interfaces specified in the CPU target list
@@ -164,4 +164,4 @@ void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
     gic_dist->sgi_control = (cpuTargetList << GICD_SGIR_CPUTARGETLIST_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
 }
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */

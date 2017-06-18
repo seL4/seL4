@@ -269,7 +269,7 @@ struct vcpu {
     /* General purpose registers that we have to save and restore as they
      * are not part of the vmcs */
     word_t gp_registers[n_vcpu_gp_register];
-#if CONFIG_MAX_NUM_NODES > 1 && defined(CONFIG_ARCH_IA32)
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_IA32)
     word_t kernelSP;
 #endif
 
@@ -307,10 +307,10 @@ struct vcpu {
     /* Last set host cr3 */
     word_t last_host_cr3;
 
-#if CONFIG_MAX_NUM_NODES  > 1
+#ifdef ENABLE_SMP_SUPPORT
     /* Core this VCPU was last loaded on, or is currently loaded on */
     word_t last_cpu;
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 };
 typedef struct vcpu vcpu_t;
 
@@ -347,9 +347,9 @@ exception_t handleVmEntryFail(void);
 void restoreVMCS(void);
 void clearCurrentVCPU(void);
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 void VMCheckBoundNotification(tcb_t *tcb);
-#endif /* CONFIG_MAX_NUM_NODES > 1*/
+#endif /* ENABLE_SMP_SUPPORT */
 
 void invept(ept_pml4e_t *ept_pml4);
 

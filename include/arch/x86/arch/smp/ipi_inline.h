@@ -16,7 +16,7 @@
 #include <config.h>
 #include <smp/ipi.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 static inline void doRemoteStall(word_t cpu)
 {
     doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);
@@ -61,5 +61,5 @@ doRemoteVMCheckBoundNotification(word_t cpu, tcb_t *tcb)
 }
 #endif
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __ARCH_KERNEL_IPI_INLINE_H */

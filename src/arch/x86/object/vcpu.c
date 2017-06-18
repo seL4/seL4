@@ -149,7 +149,7 @@ vmptrld(void *vmcs_ptr)
 static void
 switchVCPU(vcpu_t *vcpu)
 {
-#if CONFIG_MAX_NUM_NODES  > 1
+#ifdef ENABLE_SMP_SUPPORT
     if (vcpu->last_cpu != getCurrentCPUIndex() && ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
         /* vcpu is currently loaded on another core, need to do vmclear on that core */
         doRemoteClearCurrentVCPU(vcpu->last_cpu);
@@ -157,7 +157,7 @@ switchVCPU(vcpu_t *vcpu)
 #endif
     clearCurrentVCPU();
     vmptrld(vcpu);
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     if (vcpu->last_cpu != getCurrentCPUIndex()) {
         /* migrate host state */
         vmwrite(VMX_HOST_TR_BASE, (word_t)&ARCH_NODE_STATE(x86KStss));
@@ -424,9 +424,9 @@ vcpu_init(vcpu_t *vcpu)
     vcpu->cr0_mask = 0;
     vcpu->exception_bitmap = 0;
     vcpu->vpid = VPID_INVALID;
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     vcpu->last_cpu = getCurrentCPUIndex();
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
     vmwrite(VMX_HOST_PAT, x86_rdmsr(IA32_PAT_MSR));
     vmwrite(VMX_HOST_EFER, x86_rdmsr(IA32_EFER_MSR));
@@ -494,11 +494,11 @@ vcpu_finalise(vcpu_t *vcpu)
         dissociateVcpuTcb(vcpu->vcpuTCB, vcpu);
     }
     if (ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
         if (vcpu->last_cpu == getCurrentCPUIndex()) {
             doRemoteClearCurrentVCPU(vcpu->last_cpu);
         } else
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
         {
             clearCurrentVCPU();
         }
@@ -1324,7 +1324,7 @@ handleVmEntryFail(void)
     return EXCEPTION_NONE;
 }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 void
 VMCheckBoundNotification(tcb_t *tcb)
 {
@@ -1353,7 +1353,7 @@ VMCheckBoundNotification(tcb_t *tcb)
         }
     }
 }
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 static void
 invvpid_context(uint16_t vpid)

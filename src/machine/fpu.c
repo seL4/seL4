@@ -35,11 +35,11 @@ void switchLocalFpuOwner(user_fpu_state_t *new_owner)
 
 void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
 {
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     if (cpu != getCurrentCPUIndex()) {
         doRemoteswitchFpuOwner(new_owner, cpu);
     } else
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
     {
         switchLocalFpuOwner(new_owner);
     }

@@ -20,7 +20,7 @@
 #include <model/smp.h>
 #include <mode/model/smp.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 typedef struct cpu_id_mapping {
     cpu_id_t index_to_cpu_id[CONFIG_MAX_NUM_NODES];
@@ -43,5 +43,5 @@ static inline PURE word_t getCurrentCPUID(void)
     return cpu_mapping.index_to_cpu_id[getCurrentCPUIndex()];
 }
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __ARCH_MODEL_SMP_H_ */

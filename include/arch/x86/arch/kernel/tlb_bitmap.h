@@ -19,7 +19,7 @@
 #include <plat_mode/machine/hardware.h>
 #include <mode/kernel/vspace.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 /* Bit zero for entries in PD are present bits and should always be 0 */
 #define TLBBITMAP_ENTRIES_PER_ROOT (wordBits - 1)
 
@@ -74,6 +74,6 @@ tlb_bitmap_get(vspace_root_t *root)
 
 #else
 #define TLBBITMAP_ROOT_ENTRIES 0
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 
 #endif /* __ARCH_KERNEL_TLB_BITMAP_H_ */

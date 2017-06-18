@@ -55,7 +55,7 @@
  * of the data and stack segment selector and the descriptor registers are ignored
  */
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 /* If using multicore our gs base is set to point to a nodeInfo_t structure.
  * Inside that is the 'currentThreadUserContext' that points to the first
  * register we want to push in the case of the fastsyscall trap. See the

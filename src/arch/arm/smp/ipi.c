@@ -15,7 +15,7 @@
 #include <smp/lock.h>
 #include <util.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 static IpiModeRemoteCall_t remoteCall;   /* the remote call being requested */
 
@@ -73,4 +73,4 @@ void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
     generic_ipi_send_mask(ipi, mask, isBlocking);
 }
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */

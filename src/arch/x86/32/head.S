@@ -87,7 +87,7 @@ BEGIN_FUNC(_start)
 END_FUNC(_start)
 
 /* ===== booting up another CPU ===== */
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 BEGIN_FUNC(boot_cpu_start)
 
 .code16
@@ -149,4 +149,4 @@ _boot_gdt:
 .global boot_cpu_end
 boot_cpu_end:
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */

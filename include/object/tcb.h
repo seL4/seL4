@@ -56,7 +56,7 @@ void tcbDebugAppend(tcb_t *tcb);
 void tcbDebugRemove(tcb_t *tcb);
 #endif
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 void remoteQueueUpdate(tcb_t *tcb);
 void remoteTCBStall(tcb_t *tcb);
 
@@ -73,7 +73,7 @@ void remoteTCBStall(tcb_t *tcb);
 #else
 #define SCHED_ENQUEUE(_t)           tcbSchedEnqueue(_t)
 #define SCHED_APPEND(_t)            tcbSchedAppend(_t)
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 
 #define SCHED_ENQUEUE_CURRENT_TCB   tcbSchedEnqueue(NODE_STATE(ksCurThread))
 #define SCHED_APPEND_CURRENT_TCB    tcbSchedAppend(NODE_STATE(ksCurThread))
@@ -144,9 +144,9 @@ word_t CONST Arch_decodeTransfer(word_t flags);
 exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src,
                                        tcb_t *tcb_dest);
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 void Arch_migrateTCB(tcb_t *thread);
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_DEBUG_BUILD
 void setThreadName(tcb_t *thread, const char *name);

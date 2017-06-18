@@ -269,13 +269,13 @@ map_kernel_window(
     idx++;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     /* initialize the TLB bitmap */
     tlb_bitmap_init(ia32KSGlobalPD);
 
     phys += TLBBITMAP_PD_RESERVED;
     idx += TLBBITMAP_ROOT_ENTRIES;
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 
     /* map page table of last 4M of virtual address space to page directory */
     pde = pde_pde_small_new(

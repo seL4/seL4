@@ -32,7 +32,7 @@ typedef enum _interrupt_t {
     int_irq_user_max            = 155,
     int_iommu                   = 156,
     int_timer                   = 157,
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     int_remote_call_ipi         = 158,
     int_reschedule_ipi          = 159,
     int_irq_max                 = 159, /* int_reschedule_ipi is the max irq */
@@ -53,7 +53,7 @@ typedef enum _irq_t {
     irq_user_max                = int_irq_user_max    - IRQ_INT_OFFSET,
     irq_iommu                   = int_iommu           - IRQ_INT_OFFSET,
     irq_timer                   = int_timer           - IRQ_INT_OFFSET,
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     irq_remote_call_ipi         = int_remote_call_ipi - IRQ_INT_OFFSET,
     irq_reschedule_ipi          = int_reschedule_ipi  - IRQ_INT_OFFSET,
 #endif

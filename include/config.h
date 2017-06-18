@@ -84,4 +84,9 @@
 #define CONFIG_MAX_NUM_IOAPIC  1
 #endif
 
+/* Alias CONFIG_MAX_NUM_NODES > 1 to ENABLE_SMP_SUPPORT */
+#if CONFIG_MAX_NUM_NODES > 1
+#define ENABLE_SMP_SUPPORT
+#endif
+
 #endif /* __CONFIG_H */

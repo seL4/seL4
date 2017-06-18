@@ -18,7 +18,7 @@
 #include <plat/machine.h>
 #include <arch/smp/ipi.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 #define MAX_IPI_ARGS    3   /* Maximum number of parameters to remote function */
 
 static volatile struct {
@@ -175,5 +175,5 @@ static void inline doReschedule(word_t cpu)
     }
 }
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __IPI_H */

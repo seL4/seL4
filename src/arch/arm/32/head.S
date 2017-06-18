@@ -129,7 +129,7 @@ BEGIN_FUNC(_start)
       */
     ldr sp, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     /*
      * Read MPIDR in r4
      * See ARM Referce Manual (ARMv7-A and ARMv7-R edition), Section B4.1.106
@@ -141,7 +141,7 @@ BEGIN_FUNC(_start)
     ldr     r5, =BIT(CONFIG_KERNEL_STACK_BITS)
     mul     r5, r4
     add     sp, sp, r5
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
     /* Attempt to workaround any known ARM errata. */
     push {r0-r3}

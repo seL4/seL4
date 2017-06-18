@@ -18,7 +18,7 @@
 #include <plat/machine.h>
 #include <smp/ipi.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 typedef enum {
     IpiRemoteCall_InvalidatePCID = IpiNumArchRemoteCall,
@@ -38,5 +38,5 @@ static inline void doRemoteInvalidateASID(vspace_root_t *vspace, asid_t asid, wo
     doRemoteMaskOp2Arg(IpiRemoteCall_InvalidateASID, (word_t)vspace, asid, mask);
 }
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __ARCH_SMP_IPI_H */

@@ -13,7 +13,7 @@
 #include <config.h>
 #include <smp/lock.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 clh_lock_t big_kernel_lock ALIGN(L1_CACHE_LINE_SIZE);
 
@@ -29,4 +29,4 @@ clh_lock_init(void)
     big_kernel_lock.head = &big_kernel_lock.nodes[CONFIG_MAX_NUM_NODES];
 }
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */

@@ -15,7 +15,7 @@
 
 #include <config.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
@@ -46,6 +46,6 @@ mode_init_tls(cpu_id_t cpu_index)
     /* Nothing to be done on ia32 */
 }
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 #endif /* __MODE_MODEL_SMP_H_ */

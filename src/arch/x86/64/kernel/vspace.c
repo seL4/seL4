@@ -250,10 +250,10 @@ map_kernel_window(
         return false;
     }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     /* initialize the TLB bitmap */
     tlb_bitmap_init(x64KSGlobalPML4);
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 
     /* In boot code, so fine to just trash everything here */
     invalidateLocalTranslationAll();

@@ -15,7 +15,7 @@
 
 #include <config.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 typedef struct nodeInfo {
     void *stackTop;
@@ -48,6 +48,6 @@ static inline CONST cpu_id_t getCurrentCPUIndex(void)
 BOOT_CODE void
 mode_init_tls(cpu_id_t cpu_index);
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 #endif /* __MODE_MODEL_SMP_H_ */

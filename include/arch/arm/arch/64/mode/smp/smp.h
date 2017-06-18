@@ -15,7 +15,7 @@
 
 #include <config.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 static inline CONST cpu_id_t
 getCurrentCPUIndex(void)
@@ -25,5 +25,5 @@ getCurrentCPUIndex(void)
     return cpu_id;
 }
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __MODE_SMP_H_ */

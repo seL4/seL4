@@ -14,16 +14,15 @@
 #define __MODE_SMP_IPI_H
 
 #include <config.h>
-#include <types.h>
-#include <plat/machine.h>
-#include <smp/ipi.h>
+#include <arch/smp/ipi.h>
+#include <smp/lock.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 typedef enum {
     /* placeholder for 64-bit ARM IPI types */
     IpiNumModeRemoteCall
 } IpiModeRemoteCall_t;
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __MODE_SMP_IPI_H */

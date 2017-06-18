@@ -26,11 +26,11 @@
 static inline void invalidateLocalASID(vspace_root_t *vspace, asid_t asid)
 {
     invalidateLocalPCID(INVPCID_TYPE_SINGLE, (void*)0, asid);
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     if (pptr_to_paddr(vspace) != getCurrentVSpaceRoot()) {
         tlb_bitmap_unset(vspace, getCurrentCPUIndex());
     }
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 }
 
 static inline void invalidatePCID(word_t type, void *vaddr, asid_t asid, word_t mask)

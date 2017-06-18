@@ -60,13 +60,13 @@
 #define CPACR      " p15, 0,  %0,  c1,  c0, 2" /* 32-bit Architectural Feature Access Control Register */
 #define FPEXC      " p10, 7,  %0, cr8, cr0, 0" /* 32-bit Floating-Point Exception Control register */
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 /* Use the first two SGI (Software Generated Interrupt) IDs
  * for seL4 IPI implementation. SGIs are per-core banked.
  */
 #define irq_remote_call_ipi        0
 #define irq_reschedule_ipi         1
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
@@ -208,7 +208,7 @@ static inline word_t getKernelStack(void)
 #endif /* CONFIG_ARCH_ARM_V6 */
 }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 static inline word_t getHWCPUID(void)
 {
     /* See ARM Referce Manual (ARMv7-A and ARMv7-R edition), Section B4.1.106
@@ -216,7 +216,7 @@ static inline word_t getHWCPUID(void)
      */
     return readMPIDR() & 0xff;
 }
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 /* TLB control */
 

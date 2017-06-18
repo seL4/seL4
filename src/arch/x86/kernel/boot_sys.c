@@ -414,14 +414,14 @@ try_boot_sys(
         printf("Warning: Your kernel was not compiled for the current microarchitecture.\n");
     }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     /* copy boot code for APs to lower memory to run in real mode */
     if (!copy_boot_code_aps(mbi->part1.mem_lower)) {
         return false;
     }
     /* Initialize any kernel TLS */
     mode_init_tls(0);
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
     /* initialize the memory. We track two kinds of memory regions. Physical memory
      * that we will use for the kernel, and physical memory regions that we must

@@ -33,11 +33,11 @@ extern char ki_boot_end[1];
 /* pointer to end of kernel image */
 extern char ki_end[1];
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 /* sync variable to prevent other nodes from booting
  * until kernel data structures initialized */
 BOOT_DATA static volatile int node_boot_lock = 0;
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 /**
  * Split mem_reg about reserved_reg. If memory exists in the lower
@@ -174,10 +174,10 @@ init_irqs(cap_t root_cnode_cap)
 #endif /* KERNEL_TIMER_IRQ */
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     setIRQState(IRQIPI, irq_remote_call_ipi);
     setIRQState(IRQIPI, irq_reschedule_ipi);
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
     /* provide the IRQ control cap */
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
@@ -286,7 +286,7 @@ init_plat(void)
     initL2Cache();
 }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 BOOT_CODE static bool_t
 try_init_kernel_secondary_core(void)
 {
@@ -326,7 +326,7 @@ release_secondary_cpus(void)
     /* Wait until all the secondary cores are done initialising */
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES);
 }
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
 /* Main kernel initialisation function. */
 
@@ -538,7 +538,7 @@ init_kernel(
 {
     bool_t result;
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     /* we assume there exists a cpu with id 0 and will use it for bootstrapping */
     if (getCurrentCPUIndex() == 0) {
         result = try_init_kernel(ui_p_reg_start,
@@ -555,7 +555,7 @@ init_kernel(
                              pv_offset,
                              v_entry);
 
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
+#endif /* ENABLE_SMP_SUPPORT */
 
     if (!result) {
         fail ("Kernel init failed for some reason :(");

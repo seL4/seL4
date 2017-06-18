@@ -16,7 +16,7 @@
 #include <arch/kernel/smp_sys.h>
 #include <smp/lock.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 
 /* Index of next AP to boot, BSP has index zero */
 BOOT_DATA VISIBLE
@@ -151,4 +151,4 @@ boot_node(void)
     activateThread();
 }
 
-#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* ENABLE_SMP_SUPPORT */
