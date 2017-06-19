@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # Copyright 2017, Data61
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
