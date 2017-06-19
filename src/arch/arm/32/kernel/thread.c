@@ -43,10 +43,8 @@ Arch_switchToIdleThread(void)
         vcpu_switch(NULL);
     }
 
-#ifdef ENABLE_SMP_SUPPORT
     /* Force the idle thread to run on kernel page table */
     setVMRoot(NODE_STATE(ksIdleThread));
-#endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
     *armKSGlobalsFrame = 0;
