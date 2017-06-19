@@ -1,11 +1,13 @@
 /*
- * Copyright 2016, General Dynamics C4 Systems
+ * Copyright 2017, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
  *
  * This software may be distributed and modified according to the terms of
- * the GNU General Public License version 2. Note that NO WARRANTY is provided.
- * See "LICENSE_GPLv2.txt" for details.
+ * the BSD 2-Clause license. Note that NO WARRANTY is provided.
+ * See "LICENSE_BSD2.txt" for details.
  *
- * @TAG(GD_GPL)
+ * @TAG(DATA61_BSD)
  */
 
 #ifndef BENCHMARK_TRACE_POINTS_TYPES_H
