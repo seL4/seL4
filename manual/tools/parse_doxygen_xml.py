@@ -83,13 +83,21 @@ def nref_to_tex(para, ref_dict):
         return ref_tex(para["name"], ref_dict)
     return ""
 
-def parse_list(para, ref_dict):
+def parse_list(para, ref_dict, tag):
     """Parse an ordered list element"""
-    output = '\\begin{enumerate}\n'
+    output = '\\begin{%s}\n' % tag
     for item in para.contents:
         output += parse_para(item, ref_dict)
-    output += '\\end{enumerate}\n'
+    output += '\\end{%s}\n' % tag
     return output
+
+def parse_ordered_list(para, ref_dict):
+    """orderedlist --> enumerate"""
+    return parse_list(para, ref_dict, 'enumerate')
+
+def parse_itemized_list(para, ref_dict):
+    """itemizedlist --> itemize"""
+    return parse_list(para, ref_dict, 'itemize')
 
 def parse_recurse(para, ref_dict):
     """Recursively parse a para element"""
@@ -109,8 +117,9 @@ PARSE_TABLE = {
     'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
     'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
     'errorenumdesc' : lambda p, r: "\\errorenumdesc",
-    'orderedlist'   : parse_list,
-    'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r)
+    'orderedlist'   : parse_ordered_list,
+    'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r) + "\\n",
+    'itemizedlist'  : parse_itemized_list,
 }
 
 def parse_para(para_node, ref_dict={}):
