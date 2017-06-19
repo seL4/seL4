@@ -31,11 +31,12 @@ DEPS = [
     'lxml',
     'ply',
     'psutil',
+    'bs4'
 ]
 
 setup(
     name='sel4-deps',
-    version='0.1.0',
+    version='0.1.1',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     url="https://sel4.systems",
     licence='BSD2',
