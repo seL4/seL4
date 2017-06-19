@@ -18,7 +18,6 @@ import sys
 import os
 import re
 from bs4 import BeautifulSoup
-from bs4 import Tag
 # Dict mapping characters to their escape sequence in latex
 LATEX_ESCAPE_PATTERNS = {
     "_": "\\_",
@@ -61,60 +60,67 @@ def get_text(soup, escape=True):
 
     if string is not None:
         if escape:
-             return latex_escape(string)
+            return latex_escape(string)
         else:
             return string
 
-def ref_to_tex(p, ref_dict):
+def ref_tex(refid, ref_dict):
+    """Lookup refid in ref_dict and output the latex for an apifunc ref"""
+    ref = ref_dict[refid]
+    return "\\apifunc{%(name)s}{%(label)s}" % ref
+
+def ref_to_tex(para, ref_dict):
+    """Convert a reference by id to a latex command by looking up refid in para"""
     if len(ref_dict) > 0:
-        refid = p["refid"]
-        ref = ref_dict[refid]
-        return "\\apifunc{%(name)s}{%(label)s}" % ref
+        return ref_tex(para["refid"], ref_dict)
     return ""
 
-def nref_to_tex(p, ref_dict):
+def nref_to_tex(para, ref_dict):
+    """Convert a reference by name to a latex command by looking up refid in para"""
     if len(ref_dict) > 0:
-        name = p["name"]
-        ref = ref_dict[name]
-        return "\\apifunc{%(name)s}{%(label)s}" % ref
+        return ref_tex(para["name"], ref_dict)
     return ""
 
-def parse_list(p, ref_dict):
+def parse_list(para, ref_dict):
+    """Parse an ordered list element"""
     output = '\\begin{enumerate}\n'
-    for n in p.contents:
-        output += parse_para(n, ref_dict)
+    for item in para.contents:
+        output += parse_para(item, ref_dict)
     output += '\\end{enumerate}\n'
     return output
 
-def parse_recurse(p, ref_dict):
+def parse_recurse(para, ref_dict):
+    """Recursively parse a para element"""
     # recurse on the contents
     output = ""
-    for n in p.contents:
-        output += parse_para(n, ref_dict)
+    for item in para.contents:
+        output += parse_para(item, ref_dict)
     return output
 
-parse_table = {
-    'para'          : lambda p, r: parse_recurse(p, r),
+# table of translations of xml children of 'para' elements
+PARSE_TABLE = {
+    'para'          : parse_recurse,
     'computeroutput': lambda p, r: '\\texttt{%s}' % get_text(p),
     'texttt'        : lambda p, r: '\\texttt{%s}' % get_text(p['text']),
-    'ref'           : lambda p, r: ref_to_tex(p, r),
-    'nameref'       : lambda p, r: nref_to_tex(p, r),
+    'ref'           : ref_to_tex,
+    'nameref'       : nref_to_tex,
     'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
     'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
     'errorenumdesc' : lambda p, r: "\\errorenumdesc",
-    'orderedlist'   : lambda p, r: parse_list(p, r),
+    'orderedlist'   : parse_list,
     'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r)
 }
 
 def parse_para(para_node, ref_dict={}):
     """
     Parse a paragraph node, handling special doxygen node types
-    that may appear inside a paragraph.
+    that may appear inside a paragraph. Unhandled cases are
+    not parsed and result in an empty string.
     """
     if para_node.name is None:
         return get_text(para_node, escape=True)
-    elif para_node.name in parse_table:
-        return parse_table[para_node.name](para_node, ref_dict)
+    elif para_node.name in PARSE_TABLE:
+        return PARSE_TABLE[para_node.name](para_node, ref_dict)
     else:
         return ""
 
@@ -129,17 +135,16 @@ def parse_detailed_desc(parent, ref_dict):
     """
     Parse the "detailed description" section of a doxygen member.
     """
-
     # parse the function parameters
-    param_nodes = parent.find_all("param")
     params = {}
     param_order = []
     types_iter = iter(parent.find_all('type'))
     names = parent.find_all('declname')
 
-    # the first type is the return type, so skip it
-    types = list(types_iter.next())
+    # the first type is the return type
+    ret_type = types_iter.next()
 
+    # the rest are parameters
     for n in names:
         param_type = types_iter.next().text
         if param_type == "void":
@@ -176,7 +181,7 @@ def parse_detailed_desc(parent, ref_dict):
             details += parse_para(n, ref_dict)
             details += "\n\n"
 
-    ret_str = get_text(parent.find("type"), escape=False)
+    ret_str = get_text(ret_type, escape=False)
     ret = default_return_doc(ret_str.split()[-1])
     simplesects = parent.find_all("simplesect")
     for n in simplesects:
@@ -246,9 +251,9 @@ def generate_general_syscall_doc(input_file_name, level):
         elements = soup.find_all("memberdef")
         summary = soup.find('compounddef')
         # parse any top level descriptions
-        for n in summary.find_all('detaileddescription', recursive=False):
-            if n.para:
-                output += parse_para(n.para)
+        for ddesc in summary.find_all('detaileddescription', recursive=False):
+            if ddesc.para:
+                output += parse_para(ddesc.para)
 
         # parse all of the function definitions
         if len(elements) == 0:
@@ -281,6 +286,7 @@ def generate_general_syscall_doc(input_file_name, level):
         return output
 
 def process_args():
+    """Process script arguments"""
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-i", "--input", dest="input", type=str,
@@ -294,6 +300,7 @@ def process_args():
     return parser
 
 def main():
+    """Convert doxygen xml into a seL4 API LaTeX manual format"""
     args = process_args().parse_args()
 
     if not os.path.exists(os.path.dirname(args.output)):
