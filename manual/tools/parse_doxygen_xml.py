@@ -118,7 +118,7 @@ PARSE_TABLE = {
     'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
     'errorenumdesc' : lambda p, r: "\\errorenumdesc",
     'orderedlist'   : parse_ordered_list,
-    'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r) + "\\n",
+    'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r) + "\n",
     'itemizedlist'  : parse_itemized_list,
 }
 
