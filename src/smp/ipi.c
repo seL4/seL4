@@ -110,8 +110,7 @@ void doMaskReschedule(word_t mask)
     }
 }
 
-#ifndef CONFIG_USE_LOGICAL_IDS
-void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
+void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
     word_t nr_target_cores = 0;
     uint16_t target_cores[CONFIG_MAX_NUM_NODES];
@@ -136,5 +135,4 @@ void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
         }
     }
 }
-#endif
 #endif /* CONFIG_MAX_NUM_NODES > 1 */

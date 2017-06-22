@@ -53,6 +53,12 @@ static inline void ipi_wait(word_t cores)
 }
 
 /* Architecture independent function for sending handling pre-hardware-send IPIs */
+void generic_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
+
+/* An architecture/platform should implement this function either as a wrapper to
+ * its own arch_ipi_send_mask() or using the generic_ipi_send_mask() function
+ * provided to be architecture agnostic.
+ */
 void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking);
 
 /* Hardware implementation for sending IPIs */

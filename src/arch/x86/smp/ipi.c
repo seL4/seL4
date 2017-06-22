@@ -85,7 +85,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
 compile_assert(invalid_number_of_supported_nodes, CONFIG_MAX_NUM_NODES <= wordBits);
 
 #ifdef CONFIG_USE_LOGICAL_IDS
-void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
+static void x86_ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
 {
     word_t nr_target_clusters = 0;
     word_t target_clusters[CONFIG_MAX_NUM_NODES];
@@ -122,4 +122,13 @@ void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
     }
 }
 #endif /* CONFIG_USE_LOGICAL_IDS */
+
+void ipi_send_mask(irq_t ipi, word_t mask, bool_t isBlocking)
+{
+#ifdef CONFIG_USE_LOGICAL_IDS
+    x86_ipi_send_mask(ipi, mask, isBlocking);
+#else
+    generic_ipi_send_mask(ipi, mask, isBlocking);
+#endif /* CONFIG_USE_LOGICAL_IDS */
+}
 #endif /* CONFIG_MAX_NUM_NODES */
