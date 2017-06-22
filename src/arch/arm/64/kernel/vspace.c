@@ -1232,7 +1232,7 @@ performHugePageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
         invalidateTranslationSingle((asid << 48) |
-                             cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
+                                    cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
     }
 
     return EXCEPTION_NONE;
@@ -1251,7 +1251,7 @@ performLargePageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
         invalidateTranslationSingle((asid << 48) |
-                             cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
+                                    cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
     }
 
     return EXCEPTION_NONE;
@@ -1270,7 +1270,7 @@ performSmallPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
         invalidateTranslationSingle((asid << 48) |
-                             cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
+                                    cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
     }
 
     return EXCEPTION_NONE;
