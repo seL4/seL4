@@ -85,8 +85,7 @@ debug_printUserState(void)
 static inline void
 debug_printTCB(tcb_t *tcb)
 {
-    printf("Address\tName\t%16s\tIP\tPrio\n", "State");
-    printf("%p\t%s\t", tcb, tcb->tcbName);
+    printf("%40s\t", tcb->tcbName);
     char* state;
     switch (thread_state_get_tsType(tcb->tcbState)) {
     case ThreadState_Inactive:
@@ -122,13 +121,15 @@ debug_printTCB(tcb_t *tcb)
         fail("Unknown thread state");
     }
 
-    printf("%16s\t%p\t%lu\n", state, (void *) getRestartPC(tcb), tcb->tcbPriority);
+    printf("%15s\t%p\t%20lu\n", state, (void *) getRestartPC(tcb), tcb->tcbPriority);
 }
 
 static inline void
 debug_dumpScheduler(void)
 {
     printf("Dumping all tcbs!\n");
+    printf("Name                                    \tState          \tIP                  \t Prio\n");
+    printf("--------------------------------------------------------------------------------------\n");
     for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = curr->tcbDebugNext) {
         debug_printTCB(curr);
     }
