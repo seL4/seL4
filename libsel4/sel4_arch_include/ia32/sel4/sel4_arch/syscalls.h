@@ -657,9 +657,8 @@ seL4_DebugDumpScheduler(void)
     seL4_Word unused0 = 0;
     seL4_Word unused1 = 0;
     seL4_Word unused2 = 0;
-    seL4_Word unused3 = 0;
 
-    x86_sys_send_recv(seL4_SysDebugDumpScheduler, 0, &unused0, 0, &unused1, &unused2, &unused3);
+    x86_sys_send_recv(seL4_SysDebugDumpScheduler, 0, &unused0, 0, &unused1, &unused2, 0);
 }
 #endif
 
