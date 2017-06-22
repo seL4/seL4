@@ -25,6 +25,16 @@ putchar(char c)
 }
 
 static unsigned int
+print_spaces(int n)
+{
+    for (int i = 0; i < n; i++) {
+        kernel_putchar(' ');
+    }
+
+    return n;
+}
+
+static unsigned int
 print_string(const char *s)
 {
     unsigned int n;
@@ -140,12 +150,23 @@ print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
     return n;
 }
 
+static inline bool_t
+isdigit(char c) {
+    return c >= '0' &&
+           c <= '9';
+}
+
+static inline int
+atoi(char c) {
+    return c - '0';
+}
 
 static int
 vprintf(const char *format, va_list ap)
 {
     unsigned int n;
     unsigned int formatting;
+    int nspaces = 0;
 
     if (!format) {
         return 0;
@@ -155,6 +176,13 @@ vprintf(const char *format, va_list ap)
     formatting = 0;
     while (*format) {
         if (formatting) {
+            while (isdigit(*format)) {
+                nspaces = nspaces * 10 + atoi(*format);
+                format++;
+                if (format == NULL) {
+                    break;
+                }
+            }
             switch (*format) {
             case '%':
                 kernel_putchar('%');
@@ -244,6 +272,8 @@ vprintf(const char *format, va_list ap)
                 return -1;
             }
 
+            n += print_spaces(nspaces - n);
+            nspaces = 0;
             formatting = 0;
         } else {
             switch (*format) {
