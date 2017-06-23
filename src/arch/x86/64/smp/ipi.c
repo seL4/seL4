@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Data61
+ * Copyright 2017, Data61
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
@@ -11,23 +11,20 @@
  */
 
 #include <config.h>
-#include <mode/kernel/ipi.h>
+#include <mode/smp/ipi.h>
+#include <mode/kernel/tlb.h>
 
 #if CONFIG_MAX_NUM_NODES > 1
 
 void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2)
 {
     switch (call) {
-    case IpiRemoteCall_InvalidateTLBEntry:
-        invalidateLocalTLBEntry(arg0);
+    case IpiRemoteCall_InvalidatePCID:
+        invalidateLocalPCID(arg0, (void*)arg1, arg2);
         break;
 
-    case IpiRemoteCall_InvalidatePageStructureCache:
-        invalidateLocalPageStructureCache();
-        break;
-
-    case IpiRemoteCall_InvalidateTLB:
-        invalidateLocalTLB();
+    case IpiRemoteCall_InvalidateASID:
+        invalidateLocalASID((vspace_root_t*)arg0, arg1);
         break;
 
     default:

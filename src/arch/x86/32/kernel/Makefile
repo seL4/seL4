@@ -11,5 +11,4 @@
 ARCH_C_SOURCES += 32/kernel/vspace_32paging.c \
                   32/kernel/thread.c \
                   32/kernel/vspace.c \
-                  32/kernel/elf.c \
-                  32/kernel/ipi.c
+                  32/kernel/elf.c

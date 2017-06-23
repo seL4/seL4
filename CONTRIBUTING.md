@@ -1,9 +1,21 @@
+<!--
+  Copyright 2017, Data61
+  Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+  ABN 41 687 119 230.
+
+  This software may be distributed and modified according to the terms of
+  the GNU General Public License version 2. Note that NO WARRANTY is provided.
+  See "LICENSE_GPLv2.txt" for details.
+
+  @TAG(DATA61_GPL)
+-->
+
 Contributions to the seL4 kernel repository are welcome!
 
 
 ## CLA
 
-Please note that GD and NICTA require a contributor license agreement (CLA)
+Please note that GD and Data61 require a contributor license agreement (CLA)
 to be signed for all external contributions. Please see
 https://seL4.systems/Community/Contributing for details (it is a fairly short
 and standard CLA).

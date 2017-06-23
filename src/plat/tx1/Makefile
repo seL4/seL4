@@ -1,5 +1,5 @@
 #
-# Copyright 2016, Data61
+# Copyright 2017, Data61
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # ABN 41 687 119 230.
 #
@@ -7,7 +7,7 @@
 # the GNU General Public License version 2. Note that NO WARRANTY is provided.
 # See "LICENSE_GPLv2.txt" for details.
 #
-# @TAG(D61_GPL)
+# @TAG(DATA61_GPL)
 #
 
 include ${SOURCE_ROOT}/src/plat/${PLAT}/machine/Makefile

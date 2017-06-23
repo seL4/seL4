@@ -1,5 +1,5 @@
 #
-# Copyright 2016, Data61
+# Copyright 2017, Data61
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # ABN 41 687 119 230.
 #
@@ -7,10 +7,9 @@
 # the GNU General Public License version 2. Note that NO WARRANTY is provided.
 # See "LICENSE_GPLv2.txt" for details.
 #
-# @TAG(GD_GPL)
+# @TAG(DATA61_GPL)
 #
 
 ARCH_C_SOURCES += 64/kernel/thread.c \
                   64/kernel/vspace.c \
-                  64/kernel/elf.c \
-                  64/kernel/ipi.c
+                  64/kernel/elf.c

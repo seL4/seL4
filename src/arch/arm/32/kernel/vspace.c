@@ -30,6 +30,7 @@
 #include <armv/context_switch.h>
 #include <arch/object/iospace.h>
 #include <arch/object/vcpu.h>
+#include <arch/machine/tlb.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
 #include <benchmark/benchmark_track.h>
@@ -625,7 +626,7 @@ activate_global_pd(void)
        is committed. */
     cleanInvalidateL1Caches();
     setCurrentPD(addrFromPPtr(armKSGlobalPD));
-    invalidateTLB();
+    invalidateLocalTLB();
     lockTLBEntry(kernelBase);
     lockTLBEntry(PPTR_VECTOR_TABLE);
 }
@@ -1236,7 +1237,7 @@ findFreeHWASID(void)
     invalidateASID(armKSHWASIDTable[hw_asid]);
 
     /* Flush TLB */
-    invalidateTLB_ASID(hw_asid);
+    invalidateTranslationASID(hw_asid);
     armKSHWASIDTable[hw_asid] = asidInvalid;
 
     /* Increment the NextASID index */
@@ -1591,7 +1592,7 @@ flushPage(vm_page_size_t page_size, pde_t* pd, asid_t asid, word_t vptr)
         base_addr = vptr & ~MASK(12);
 
         /* Do the TLB flush */
-        invalidateTLB_VAASID(base_addr | pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
+        invalidateTranslationSingle(base_addr | pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
 
         if (root_switched) {
             setVMRoot(NODE_STATE(ksCurThread));
@@ -1612,7 +1613,7 @@ flushTable(pde_t* pd, asid_t asid, word_t vptr, pte_t* pt)
     stored_hw_asid = loadHWASID(asid);
 
     if (pde_pde_invalid_get_stored_asid_valid(stored_hw_asid)) {
-        invalidateTLB_ASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
+        invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
         if (root_switched) {
             setVMRoot(NODE_STATE(ksCurThread));
         }
@@ -1638,7 +1639,7 @@ flushSpace(asid_t asid)
     }
 
     /* Do the TLB flush */
-    invalidateTLB_ASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
+    invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
 }
 
 void
@@ -1655,7 +1656,7 @@ invalidateTLBByASID(asid_t asid)
     }
 
     /* Do the TLB flush */
-    invalidateTLB_ASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
+    invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
 }
 
 static inline bool_t CONST
@@ -3045,7 +3046,7 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                             (pptr_t) &armKSGlobalLogPT[idx + 1],
                             addrFromPPtr((void *)&armKSGlobalLogPT[idx]));
 
-        invalidateTLB_VAASID(pptr_to_paddr((void *) physical_address));
+        invalidateTranslationSingle(pptr_to_paddr((void *) physical_address));
     }
 
     return EXCEPTION_NONE;

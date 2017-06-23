@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Data61
+ * Copyright 2017, Data61
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
@@ -40,7 +40,7 @@ apic_enable(void)
     }
 
     if (x86_cpuid_ecx(1, 0) & BIT(21)) {
-        apic_base_msr_ptr_set_x2apic(&apic_base_msr, 1);
+        apic_base_msr = apic_base_msr_set_x2apic(apic_base_msr, 1);
         x86_wrmsr(IA32_APIC_BASE_MSR, apic_base_msr.words[0]);
     } else {
         printf("APIC: x2APIC is not supported on this machine\n");

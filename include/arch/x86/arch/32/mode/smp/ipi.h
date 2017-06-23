@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Data61
+ * Copyright 2017, Data61
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
@@ -10,8 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __MODE_KERNEL_IPI_H
-#define __MODE_KERNEL_IPI_H
+#ifndef __MODE_SMP_IPI_H
+#define __MODE_SMP_IPI_H
 
 #include <config.h>
 #include <types.h>
@@ -43,6 +43,5 @@ static void inline doRemoteInvalidateTLB(word_t mask)
 }
 
 void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, word_t arg2);
-
 #endif /* CONFIG_MAX_NUM_NODES */
-#endif /* __ARCH_KERNEL_IPI_H */
+#endif /* __ARCH_SMP_IPI_H */

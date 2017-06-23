@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Data61
+ * Copyright 2017, Data61
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
@@ -10,8 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_KERNEL_IPI_INLINE_H
-#define __ARCH_KERNEL_IPI_INLINE_H
+#ifndef __ARCH_SMP_IPI_INLINE_H
+#define __ARCH_SMP_IPI_INLINE_H
 
 #include <config.h>
 #include <smp/ipi.h>
@@ -19,9 +19,22 @@
 #if CONFIG_MAX_NUM_NODES > 1
 static inline void doRemoteStall(word_t cpu)
 {
-    /* TODO */
-#warning "doRemoteStall is not implemented for ARM yet"
+    doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);
 }
 
+static inline void doRemoteInvalidateTranslationSingle(vptr_t vptr, word_t mask)
+{
+    doRemoteMaskOp1Arg(IpiRemoteCall_InvalidateTranslationSingle, vptr, mask);
+}
+
+static inline void doRemoteInvalidateTranslationASID(asid_t asid, word_t mask)
+{
+    doRemoteMaskOp1Arg(IpiRemoteCall_InvalidateTranslationASID, asid, mask);
+}
+
+static inline void doRemoteInvalidateTranslationAll(word_t mask)
+{
+    doRemoteMaskOp0Arg(IpiRemoteCall_InvalidateTranslationAll, mask);
+}
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
-#endif /* __ARCH_KERNEL_IPI_INLINE_H */
+#endif /* __ARCH_SMP_IPI_INLINE_H */

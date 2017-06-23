@@ -1,5 +1,5 @@
 /*
- * Copyright 2016, Data61
+ * Copyright 2017, Data61
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
@@ -168,6 +168,19 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     switch (t) {
 
     case seL4_X86_4K:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.X64SmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat X64SmallPageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps 1
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.X64SmallPage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat X64SmallPageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,        /* capFMappedASID           */
                    (word_t)regionBase, /* capFBasePtr              */
@@ -179,6 +192,19 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_LargePageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 512
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.X64LargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat X64LargePageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps 512
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.X64LargePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat X64LargePageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,        /* capFMappedASID           */
                    (word_t)regionBase, /* capFBasePtr              */
@@ -190,6 +216,19 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X64_HugePageObject:
+        if (deviceMemory) {
+            /** AUXUPD: "(True, ptr_retyps 262144
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_device_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.X64HugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat X64HugePageBits))" */
+        } else {
+            /** AUXUPD: "(True, ptr_retyps 262144
+                     (Ptr (ptr_val \<acute>regionBase) :: user_data_C ptr))" */
+            /** GHOSTUPD: "(True, gs_new_frames vmpage_size.X64HugePage
+                                                    (ptr_val \<acute>regionBase)
+                                                    (unat X64HugePageBits))" */
+        }
         return cap_frame_cap_new(
                    asidInvalid,        /* capFMappedASID           */
                    (word_t)regionBase, /* capFBasePtr              */
@@ -201,6 +240,8 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PageTableObject:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pte_C[512]) ptr))" */
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */
                    (word_t)regionBase,     /* capPTBasePtr       */
@@ -209,6 +250,8 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PageDirectoryObject:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pde_C[512]) ptr))" */
         return cap_page_directory_cap_new(
                    asidInvalid,                /* capPDMappedASID      */
                    (word_t)regionBase,         /* capPDBasePtr         */
@@ -217,6 +260,8 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X86_PDPTObject:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pdpte_C[512]) ptr))" */
         return cap_pdpt_cap_new(
                    asidInvalid,                /* capPDPTMappedASID    */
                    (word_t)regionBase,         /* capPDPTBasePtr       */
@@ -225,6 +270,8 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                );
 
     case seL4_X64_PML4Object:
+        /** AUXUPD: "(True, ptr_retyps 1
+              (Ptr (ptr_val \<acute>regionBase) :: (pml4e_C[512]) ptr))" */
         copyGlobalMappings(PML4_PTR(regionBase));
         return cap_pml4_cap_new(
                    asidInvalid,                /* capPML4MappedASID   */
