@@ -151,13 +151,15 @@ print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
 }
 
 static inline bool_t
-isdigit(char c) {
+isdigit(char c)
+{
     return c >= '0' &&
            c <= '9';
 }
 
 static inline int
-atoi(char c) {
+atoi(char c)
+{
     return c - '0';
 }
 
