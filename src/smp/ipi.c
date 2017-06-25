@@ -96,7 +96,7 @@ void doRemoteMaskOp(IpiRemoteCall_t func, word_t data1, word_t data2, word_t dat
 
         /* make sure no resource access passes from this point */
         asm volatile("" ::: "memory");
-        ipi_send_mask(int_remote_call_ipi, mask, true);
+        ipi_send_mask(irq_remote_call_ipi, mask, true);
         ipi_wait(totalCoreBarrier);
     }
 }
@@ -106,7 +106,7 @@ void doMaskReschedule(word_t mask)
     /* make sure the current core is not set in the mask */
     mask &= ~BIT(getCurrentCPUIndex());
     if (mask != 0) {
-        ipi_send_mask(int_reschedule_ipi, mask, false);
+        ipi_send_mask(irq_reschedule_ipi, mask, false);
     }
 }
 
