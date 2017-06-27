@@ -21,59 +21,192 @@
         <member name="ebp"/>
     </struct>
     <interface name="seL4_X86_PageDirectory" manual_name="Page Directory"
-        cap_description="Capability to the page directory being operated on">
+        cap_description="Capability to the page directory being operated on.">
         <method id="X86PageDirectoryMap" name="Map">
-            <param dir="in" name="vroot" type="seL4_CPtr"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
+            <brief>
+                Map a page directory.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="vroot" type="seL4_CPtr"
+             description='Capability to the VSpace which will contain the mapping'/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+                description='Virtual address to map the page into.'/>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+                <description>
+                    VM attributes for the mapping. Possible values for this type are
+                    given in <autoref label='ch:vspace'/>
+                </description>
+            </param>
         </method>
         <method id="X86PageDirectoryUnmap" name="Unmap">
+            <brief>
+                Unmap a page directory.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
         </method>
         <method id="X86PageDirectoryGetStatusBits" name="GetStatusBits" manual_name="Get Status Bits">
-            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <brief>
+                Retrieve the accessed and dirty bits of a page mapped mapped into an address space.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <return>
+                A <texttt text='seL4_X86_PageDirectory_GetStatusBits_t'/> structure.
+            </return>
+            <cap_param append_description='Capability to the address space to query.'/>
+            <param dir="in" name="vaddr" type="seL4_Word" description='Virtual address of the page to query'/>
             <param dir="out" name="accessed" type="seL4_Word"/>
             <param dir="out" name="dirty" type="seL4_Word"/>
         </method>
     </interface>
 
-    <interface name="seL4_X86_PageTable" manual_name="Page Table">
+    <interface name="seL4_X86_PageTable" manual_name="Page Table"
+        cap_description="Capability to the page table being operated on.">
         <method id="X86PageTableMap" name="Map" manual_label="pagetable_map">
-            <param dir="in" name="vroot" type="seL4_CPtr"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
+            <brief>
+                Map a page table into an address space.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="vroot" type="seL4_CPtr"
+             description='Capability to the VSpace which will contain the mapping'/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+                description='Virtual address to map the page into.'/>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+                <description>
+                    VM attributes for the mapping. Possible values for this type are
+                    given in <autoref label='ch:vspace'/>
+                </description>
+            </param>
         </method>
         <method id="X86PageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
+            <brief>
+                Unmap a page table from its address space and zero it out.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
         </method>
     </interface>
 
-    <interface name="seL4_X86_IOPageTable" manual_name="I/O Page Table">
+    <interface name="seL4_X86_IOPageTable" manual_name="I/O Page Table"
+        cap_description="Capability to the I/O page table being operated on.">
         <method id="X86IOPageTableMap" name="Map">
-            <param dir="in" name="iospace" type="seL4_X86_IOSpace"/>
-            <param dir="in" name="ioaddr" type="seL4_Word"/>
+            <brief>
+                Map an IO page table into an IOSpace.
+            </brief>
+            <description>
+                See <autoref label="sec:iospace"/>
+            </description>
+            <param dir="in" name="iospace" type="seL4_X86_IOSpace"
+                description='The IOSpace to map the page table into.'/>
+            <param dir="in" name="ioaddr" type="seL4_Word"
+                description='The address to map the page table at.'/>
         </method>
         <method id="X86IOPageTableUnmap" name="Unmap">
+            <brief>
+                Unmap an IO page table from an IOSpace.
+            </brief>
+            <description>
+                See <autoref label="sec:iospace"/>
+            </description>
+            <cap_param append_description='The page table to unmap.'/>
         </method>
     </interface>
 
-    <interface name="seL4_X86_Page" manual_name="Page">
-        <method id="X86PageMap" name="Map">
-            <param dir="in" name="vroot" type="seL4_CPtr"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="rights" type="seL4_CapRights_t"/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
+    <interface name="seL4_X86_Page" manual_name="Page" cap_description="Capability to the page being operated on.">
+        <method id="X86PageMap" name="Map" manual_label='page_map'>
+            <brief>
+                Map a page into an address space.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="vroot" type="seL4_CPtr"
+                description='Capability to the VSpace which will contain the mapping'/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+                description='Virtual address to map the page into.'/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    Rights for the mapping. Possible values for this type are
+                    given in <autoref label='sec:cap_rights'/>
+                </description>
+            </param>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+                <description>
+                    VM attributes for the mapping. Possible values for this type are
+                    given in <autoref label='ch:vspace'/>
+                </description>
+            </param>
         </method>
-        <method id="X86PageRemap" name="Remap">
-            <param dir="in" name="vroot" type="seL4_CPtr"/>
-            <param dir="in" name="rights" type="seL4_CapRights_t"/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
+        <method id="X86PageRemap" name="Remap" manual_label='page_remap'>
+            <brief>
+                Remap a page.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="vroot" type="seL4_CPtr"
+                description='Capability to the VSpace which will contain the mapping'/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    Rights for the mapping. Possible values for this type are
+                    given in <autoref label='sec:cap_rights'/>
+                </description>
+            </param>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+                <description>
+                    VM attributes for the mapping. Possible values for this type are
+                    given in <autoref label='ch:vspace'/>
+                </description>
+            </param>
         </method>
-        <method id="X86PageUnmap" name="Unmap"/>
-        <method id="X86PageMapIO" name="MapIO" manual_name="Map I/O">
-            <param dir="in" name="iospace" type="seL4_X86_IOSpace"/>
-            <param dir="in" name="rights" type="seL4_CapRights_t"/>
-            <param dir="in" name="ioaddr" type="seL4_Word"/>
+        <method id="X86PageUnmap" name="Unmap" manual_label='page_unmap'>
+            <brief>
+                Unmap a page.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
         </method>
-        <method id="X86PageGetAddress" name="GetAddress" manual_name="Get Address">
+        <method id="X86PageMapIO" name="MapIO" manual_name="Map I/O" manual_label='page_map_io'>
+            <brief>
+                Map a page into an IOSpace.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="iospace" type="seL4_X86_IOSpace"
+                description='The IOSpace that the frame is being mapped into'/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    Rights for the mapping. Possible values for this type are
+                    given in <autoref label='sec:cap_rights'/>
+                </description>
+            </param>
+            <param dir="in" name="ioaddr" type="seL4_Word"
+                description='The address that the frame is being mapped at.'/>
+        </method>
+        <method id="X86PageGetAddress" name="GetAddress" manual_name="Get Address"
+            manual_label='page_getaddress'>
+            <brief>
+                Get the physical address of the underlying frame.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <return>
+                A <texttt text='seL4_IA32_Page_GetAddress_t'/> struct that contains a
+                <texttt text='seL4_Word paddr'/>, which holds the physical address of the page,
+                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.
+            </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
         <method id="X86PageMapEPT" name="MapEPT" condition="defined(CONFIG_VTX)" manual_name="Map EPT">
@@ -85,67 +218,153 @@
     </interface>
 
     <interface name="seL4_X86_ASIDControl" manual_name="ASID Control">
-        <method id="X86ASIDControlMakePool" name="MakePool" manual_name="Make Pool">
-            <param dir="in" name="untyped" type="seL4_Untyped"/>
-            <param dir="in" name="root" type="seL4_CNode"/>
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Uint8"/>
+        <method id="X86ASIDControlMakePool" name="MakePool" manual_name="Make Pool"
+            manual_label='ASID_controlmakepool'>
+            <brief>
+                Create an X86 ASID pool.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <cap_param append_description='The master ASIDControl capability.'/>
+            <param dir="in" name="untyped" type="seL4_Untyped"
+                description='Capability to an untyped memory object that will become the pool. Must be 4K bytes.'/>
+            <param dir="in" name="root" type="seL4_CNode"
+                description='CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32.'/>
+            <param dir="in" name="index" type="seL4_Word"
+                description='CPTR to the destination slot. Resolved from the root of the destination CSpace.'/>
+            <param dir="in" name="depth" type="seL4_Uint8"
+                description='Number of bits of index to resolve to find the destination slot.'/>
         </method>
     </interface>
 
     <interface name="seL4_X86_ASIDPool" manual_name="ASID Pool">
-        <method id="X86ASIDPoolAssign" name="Assign" manual_label="asidpool_assign">
-            <param dir="in" name="vroot" type="seL4_CPtr"/>
+        <method id="X86ASIDPoolAssign" name="Assign" manual_label='asid_pool_assign'>
+            <brief>
+                Assign an ASID pool.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <cap_param append_description='The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.'/>
+            <param dir="in" name="vroot" type="seL4_CPtr" description='The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.'/>
         </method>
     </interface>
 
-    <interface name="seL4_X86_IOPort" manual_name="I/O Port">
+    <interface name="seL4_X86_IOPort" manual_name="I/O Port" cap_description='An I/O Port capability.'>
         <method id="X86IOPortIn8" name="In8">
-            <param dir="out" name="result" type="seL4_Uint8"/>
-            <param dir="in" name="port" type="seL4_Uint16"/>
+            <brief>
+                Read 8 bits from an IO port.
+            </brief>
+            <description>
+                See <autoref label='sec:ioports'/>
+            </description>
+            <return>
+                A <texttt text='seL4_X86_IOPort_In8_t'/> structure as described in <autoref label='sec:ioports'/>.
+            </return>
+            <param dir="out" name="result" type="seL4_Uint8" />
+            <param dir="in" name="port" type="seL4_Uint16" description='The port to read from.'/>
         </method>
         <method id="X86IOPortIn16" name="In16">
+            <brief>
+                Read 16 bits from an IO port.
+            </brief>
+            <description>
+                See <autoref label='sec:ioports'/>
+            </description>
+            <return>
+                A <texttt text='seL4_X86_IOPort_In16_t'/> structure as described in <autoref label='sec:ioports'/>.
+            </return>
             <param dir="out" name="result" type="seL4_Uint16"/>
-            <param dir="in" name="port" type="seL4_Uint16"/>
+            <param dir="in" name="port" type="seL4_Uint16" description='The port to read from.'/>
         </method>
         <method id="X86IOPortIn32" name="In32">
+            <brief>
+                Read 32 bits from an IO port.
+            </brief>
+            <description>
+                See <autoref label='sec:ioports'/>
+            </description>
+            <return>
+                A <texttt text='seL4_X86_IOPort_In32_t'/> structure as described in <autoref label='sec:ioports'/>.
+            </return>
             <param dir="out" name="result" type="seL4_Uint32"/>
-            <param dir="in" name="port" type="seL4_Uint16"/>
+            <param dir="in" name="port" type="seL4_Uint16" description='The port to read from.'/>
         </method>
         <method id="X86IOPortOut8" name="Out8">
-            <param dir="in" name="port" type="seL4_Word"/>
-            <param dir="in" name="data" type="seL4_Word"/>
+            <brief>
+                Write 8 bits to an IO port.
+            </brief>
+            <description>
+                See <autoref label='sec:ioports'/>
+            </description>
+            <param dir="in" name="port" type="seL4_Word" description='The port to write to.'/>
+            <param dir="in" name="data" type="seL4_Word" description='Data to write to the IO port.'/>
         </method>
         <method id="X86IOPortOut16" name="Out16">
-            <param dir="in" name="port" type="seL4_Word"/>
-            <param dir="in" name="data" type="seL4_Word"/>
+            <brief>
+                Write 16 bits to an IO port.
+            </brief>
+            <description>
+                See <autoref label='sec:ioports'/>
+            </description>
+            <param dir="in" name="port" type="seL4_Word" description='The port to write to.'/>
+            <param dir="in" name="data" type="seL4_Word" description='Data to write to the IO port.'/>
         </method>
         <method id="X86IOPortOut32" name="Out32">
-            <param dir="in" name="port" type="seL4_Word"/>
-            <param dir="in" name="data" type="seL4_Word"/>
+            <brief>
+                Write 32 bits to an IO port.
+            </brief>
+            <description>
+                See <autoref label='sec:ioports'/>
+            </description>
+            <param dir="in" name="port" type="seL4_Word" description='The port to write to.'/>
+            <param dir="in" name="data" type="seL4_Word" description='Data to write to the IO port.'/>
         </method>
     </interface>
 
-    <interface name="seL4_IRQControl" manual_name="IRQ Control">
+    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description='An IRQControl capability. This gives you the authority to make this call.'>
         <method id="X86IRQIssueIRQHandlerIOAPIC" name="GetIOAPIC" manual_name="Get I/O APIC">
-            <param dir="in" name="root" type="seL4_CNode"/>
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Word"/>
-            <param dir="in" name="ioapic" type="seL4_Word"/>
-            <param dir="in" name="pin" type="seL4_Word"/>
-            <param dir="in" name="level" type="seL4_Word"/>
-            <param dir="in" name="polarity" type="seL4_Word"/>
-            <param dir="in" name="vector" type="seL4_Word"/>
+            <brief>
+                Create an IRQ handler capability for an interrupt from an IOAPIC.
+            </brief>
+            <description>
+                See <autoref label='sec:interrupts'/> and <autoref label='sec:x86_interrupts'/>.
+            </description>
+            <param dir="in" name="root" type="seL4_CNode"
+                description='CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32.'/>
+            <param dir="in" name="index" type="seL4_Word"
+                description='CPTR to the destination slot. Resolved from the root of the destination CSpace.'/>
+            <param dir="in" name="depth" type="seL4_Uint8"
+                description='Number of bits of index to resolve to find the destination slot.'/>
+
+            <param dir="in" name="ioapic" type="seL4_Word"
+                description='Zero based index of IOAPIC to get interrupt from,
+                             ordered the same as in ACPI tables'/>
+            <param dir="in" name="pin" type="seL4_Word" description='IOAPIC pin that generates the interrupt.'/>
+            <param dir="in" name="level" type="seL4_Word" description='Indicates whether the IOAPIC should be programmed to treat this interrupt as level triggered.'/>
+            <param dir="in" name="polarity" type="seL4_Word" description='Indicates whether the IOAPIC should be programmed to treat this interrupt as high or
+                     low triggered'/>
+            <param dir="in" name="vector" type="seL4_Word" description='CPU vector to deliver the interrupt to.'/>
         </method>
         <method id="X86IRQIssueIRQHandlerMSI" name="GetMSI" manual_name="Get MSI">
-            <param dir="in" name="root" type="seL4_CNode"/>
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Word"/>
-            <param dir="in" name="pci_bus" type="seL4_Word"/>
-            <param dir="in" name="pci_dev" type="seL4_Word"/>
-            <param dir="in" name="pci_func" type="seL4_Word"/>
-            <param dir="in" name="handle" type="seL4_Word"/>
-            <param dir="in" name="vector" type="seL4_Word"/>
+            <brief>
+                Create an IRQ handler capability for an interrupt from an MSI.
+            </brief>
+            <description>
+                See <autoref label='sec:interrupts'/> and <autoref label='sec:x86_interrupts'/>.
+            </description>
+            <param dir="in" name="root" type="seL4_CNode"
+                description='CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32.'/>
+            <param dir="in" name="index" type="seL4_Word"
+                description='CPTR to the destination slot. Resolved from the root of the destination CSpace.'/>
+            <param dir="in" name="depth" type="seL4_Uint8"
+                description='Number of bits of index to resolve to find the destination slot.'/>
+            <param dir="in" name="pci_bus" type="seL4_Word" description='PCI bus ID of the device that will generate the interrupt.'/>
+            <param dir="in" name="pci_dev" type="seL4_Word" description='PCI device ID of the device that will generate the interrupt.'/>
+            <param dir="in" name="pci_func" type="seL4_Word" description='PCI function ID of the device that will generate the interrupt.'/>
+            <param dir="in" name="handle" type="seL4_Word" description='Value of the handle programmed into the data portion of the MSI.'/>
+            <param dir="in" name="vector" type="seL4_Word" description='CPU vector to deliver the interrupt to.'/>
         </method>
     </interface>
     <interface name="seL4_TCB" manual_name="TCB">
