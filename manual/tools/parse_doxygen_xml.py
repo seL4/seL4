@@ -120,6 +120,7 @@ PARSE_TABLE = {
     'orderedlist'   : parse_ordered_list,
     'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r) + "\n",
     'itemizedlist'  : parse_itemized_list,
+    'autoref'       : lambda p, r: "\\autoref{%s}" % p['label'],
 }
 
 def parse_para(para_node, ref_dict={}):

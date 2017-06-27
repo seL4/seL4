@@ -48,7 +48,7 @@
 <!ATTLIST texttt text CDATA #REQUIRED>
 
 <!ELEMENT autoref EMPTY>
-<!ATTLIST autoref sec CDATA #REQUIRED>
+<!ATTLIST autoref label CDATA #REQUIRED>
 
 <!ELEMENT shortref EMPTY>
 <!ATTLIST shortref sec CDATA #REQUIRED>
