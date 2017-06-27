@@ -50,21 +50,7 @@
 %Common parameter descriptions
 \newcommand{\destcspacedesc}{CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32.}
 \newcommand{\destindexdesc}{CPTR to the destination slot. Resolved from the root of the destination CSpace.}
-\newcommand{\destdepthdesc}{Number of bits of dest\_index to resolve to find the destination slot.}
-\newcommand{\srccspacedesc}{CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32.}
-\newcommand{\srcindexdesc}{CPTR to the source slot. Resolved from the root of the source CSpace.}
-\newcommand{\srcdepthdesc}{Number of bits of src\_index to resolve to find the source slot.}
 \newcommand{\rightsdesc}{The rights inherited by the new capability. Possible values for this type are given in \autoref{sec:cap_rights}.}
-\newcommand{\badgedesc}{Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored}
-
-\newcommand{\cspacedesc}{CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32.}
-\newcommand{\indexdesc}{CPTR to the capability. Resolved from the root of the \_service parameter.}
-\newcommand{\depthdesc}{Number of bits of index to resolve to find the capability being operated on.}
-
-\newcommand{\ioportcapdesc}{An IO port capability.}
-\newcommand{\ioportdescread}{The port to read from.}
-\newcommand{\ioportdescwrite}{The port to write to.}
-\newcommand{\ioportdatadesc}{Data to write to the IO port.}
 
 \newcommand{\pagecapdesc}{Capability to the page to map.}
 \newcommand{\pdcapdesc}{Capability to the VSpace which will contain the mapping.}
@@ -103,36 +89,8 @@ any access.
   mapping. Possible values for this type are given in \autoref{ch:vspace}. }
 \fi
 
-\newcommand{\tcbcapdesc}{Capability to the TCB which is being operated on.}
-
-\newcommand{\irqhandlercapdesc}{The IRQ handler capability.}
-
-\newcommand{\invokedcapdesc}{The capability to be invoked.}
-\newcommand{\messageinfodesc}{The messageinfo structure for the IPC.}
-\newcommand{\senderdesc}{The address to write sender information to. The sender information is the badge of the endpoint capability that was invoked by the sender, or the notification word of the notification object that was signalled. This parameter is ignored if \texttt{NULL}.}
-\newcommand{\resumetargetdesc}{The invocation should also resume the destination thread.}
-\newcommand{\suspendsourcedesc}{The invocation should also suspend the source thread.}
-\newcommand{\archflagsdesc}{Architecture dependent flags. These have no meaning on \ifxeightsix{either IA-32 or}\fi{} ARM.}
-
-\newcommand{\threadpriodesc}{The thread's new priority.}
-\newcommand{\threadmaxpriodesc}{The thread's new maximum controlled priority.}
-\newcommand{\threadcspacerootdesc}{The new CSpace root.}
-\newcommand{\threadcspacedatadesc}{Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect.}
-\newcommand{\threadvspacerootdesc}{The new VSpace root.}
-\newcommand{\threadvspacedatadesc}{Has no effect on \ifxeightsix{IA-32 or}\fi{} ARM processors.}
-\newcommand{\threadbufferdesc}{Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary.}
-\newcommand{\threadbufferpagedesc}{Capability to a page containing the thread's IPC buffer.}
-\newcommand{\excepthanddesc}{CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured.}
-\newcommand{\threadcputarget}{The thread's new CPU to run.}
-
-\newcommand{\asidassignpooldesc}{The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.}
-\newcommand{\asidassignpddesc}{The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.}
-
-%Return value descriptions
-\newcommand{\messageinforetdesc}{A \texttt{seL4\_MessageInfo\_t} structure as described in \autoref{sec:messageinfo}.}
 \newcommand{\noret}{This method does not return anything.}
 \newcommand{\errorenumdesc}{A return value of \texttt{0} indicates success. A non-zero value indicates that an error occurred. See \autoref{sec:errors} for a description of the message register and tag contents upon error.}
-\newcommand{\pagegetaddresstdesc}{struct that contains \texttt{seL4\_Word paddr}, which holds the physical address of the page, and \texttt{int error}. See \autoref{sec:errors} for a description of the message register and tag contents upon error.}
 \newcommand{\tcbgetbreakpointtdesc}{Struct that contains
 '\texttt{seL4\_Error error}', an seL4 API error value,
 '\texttt{seL4\_Word vaddr}', the virtual address at which the breakpoint will currently
@@ -155,8 +113,6 @@ until it has disabled the single-stepping functionality via a subsequent call to
 seL4\_TCB\_ConfigureSingleStepping with an \texttt{nun\_instructions} argument of 0.
 }
 
-\newcommand{\domcapdesc}{Capability allowing domain configuration.}
-\newcommand{\domargdesc}{The thread's new domain.}
 \newcommand{\todo}{TODO}
 
 \section{Error Codes}
