@@ -127,10 +127,22 @@ int __builtin_popcountl (unsigned long x);
 static inline long
 CONST popcountl(unsigned long x)
 {
+#ifndef __POPCNT__
+
+    unsigned int v; // count the number of bits set in v
+    unsigned int c; // c accumulates the total bits set in v
+    for (c = 0; v; c++) {
+        v &= v - 1; // clear the least significant bit set
+    }
+
+    return v;
+#else
     return __builtin_popcountl(x);
+#endif
 }
 
-#define POPCOUNTL(x) __builtin_popcountl(x)
+#define POPCOUNTL(x) popcountl
+
 #else /* __ASSEMBLER__ */
 
 /* Some assemblers don't recognise ul (unsigned long) suffix */
