@@ -11,13 +11,33 @@
      @TAG(DATA61_BSD)
   -->
 <api name="ObjectApiArm" label_prefix="arm_">
-    <interface name="seL4_ARM_PageTable" manual_name="Page Table">
+    <interface name="seL4_ARM_PageTable" manual_name="Page Table"
+        cap_description="Capability to the page table being operated on.">
         <method id="ARMPageTableMap" name="Map" manual_label="pagetable_map">
-            <param dir="in" name="pd" type="seL4_CPtr"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
+            <brief>
+                Map a page table into an address space.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="pd" type="seL4_CPtr"
+            description="Capability to the VSpace which will contain the mapping."/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+            description="Virtual address to map the page into."/>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
+                <description> 
+                    VM Attributes for the mapping. Possible values for this type are given 
+                    in <autoref label="ch:vspace"/>.
+                </description>
+            </param>
         </method>
         <method id="ARMPageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
+            <brief>
+                Unmap a page table from its address space and zero it out.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
         </method>
     </interface>
     <interface name="seL4_ARM_IOPageTable" manual_name="I/O Page Table">
@@ -28,57 +48,172 @@
         <method id="ARMIOPageTableUnmap" name="Unmap" condition="defined(CONFIG_ARM_SMMU)">
         </method>
     </interface>
-    <interface name="seL4_ARM_Page" manual_name="Page">
+    <interface name="seL4_ARM_Page" manual_name="Page"
+        cap_description="Capability to the page being operated on.">
         <method id="ARMPageMap" name="Map">
-            <param dir="in" name="pd" type="seL4_CPtr"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="rights" type="seL4_CapRights_t"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
+            <brief>
+                Map a page into an address space.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="pd" type="seL4_CPtr"
+            description="Capability to the VSpace which will contain the mapping."/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+            description="Virtual address to map the page into."/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
+                </description>
+            </param>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
+                <description>
+                    VM Attributes for the mapping. Possible values for this type are given in <autoref label="ch:vspace"/>.
+                </description>
+            </param>
         </method>
         <method id="ARMPageRemap" name="Remap">
-            <param dir="in" name="pd" type="seL4_CPtr"/>
-            <param dir="in" name="rights" type="seL4_CapRights_t"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
+            <brief>
+                Remap a page.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="pd" type="seL4_CPtr"
+            description="Capability to the VSpace which will contain the mapping."/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
+                </description>
+            </param>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
+                <description>
+                    VM Attributes for the mapping. Possible values for this type are given in <autoref label="ch:vspace"/>.
+                </description>
+            </param>        
         </method>
-        <method id="ARMPageUnmap" name="Unmap"/>
+        <method id="ARMPageUnmap" name="Unmap">
+            <brief>
+                Unmap a page.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+        </method>
         <method id="ARMPageMapIO" name="MapIO" condition="defined(CONFIG_ARM_SMMU)" manual_name="Map I/O">
+            <brief>
+                
+            </brief>
+            <description>
+
+            </description>
             <param dir="in" name="iospace" type="seL4_ARM_IOSpace"/>
             <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="ioaddr" type="seL4_Word"/>
         </method>
         <method id="ARMPageClean_Data" name="Clean_Data" manual_name="Clean Data">
-            <param dir="in" name="start_offset" type="seL4_Word"/>
-            <param dir="in" name="end_offset" type="seL4_Word"/>
+            <brief>
+                Cleans the data cache out to RAM. The start and end are relative to the page being serviced.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="start_offset" type="seL4_Word"
+            description="The offset, relative to the start of the page inclusive."/>
+            <param dir="in" name="end_offset" type="seL4_Word"
+            description="The offset, relative to the start of the page exclusive."/>
         </method>
         <method id="ARMPageInvalidate_Data" name="Invalidate_Data" manual_name="Invalidate Data">
-            <param dir="in" name="start_offset" type="seL4_Word"/>
-            <param dir="in" name="end_offset" type="seL4_Word"/>
+            <brief>
+                Invalidates the cache range within the given page. The start and end are relative to the page being serviced 
+                and should be aligned to a cache line boundary where possible. 
+                An additional clean is performed on the outer cache lines if the start and end are 
+                not aligned, to clean out the bytes between the requested and the cache line boundary.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="start_offset" type="seL4_Word"
+            description="The offset, relative to the start of the page inclusive."/>
+            <param dir="in" name="end_offset" type="seL4_Word"
+            description="The offset, relative to the start of the page exclusive."/>
         </method>
         <method id="ARMPageCleanInvalidate_Data" name="CleanInvalidate_Data"
             manual_name="Clean and Invalidate Data">
-            <param dir="in" name="start_offset" type="seL4_Word"/>
-            <param dir="in" name="end_offset" type="seL4_Word"/>
+            <brief>
+                Clean and invalidates the cache range within the given page. The range will be flushed out to RAM. 
+                The start and end are relative to the page being serviced.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="start_offset" type="seL4_Word"
+            description="The offset, relative to the start of the page inclusive."/>
+            <param dir="in" name="end_offset" type="seL4_Word"
+            description="The offset, relative to the start of the page exclusive."/>
         </method>
         <method id="ARMPageUnify_Instruction" name="Unify_Instruction" manual_name="Unify Instruction">
-            <param dir="in" name="start_offset" type="seL4_Word"/>
-            <param dir="in" name="end_offset" type="seL4_Word"/>
+            <brief>
+                Unify Instruction Cache. Cleans data lines to point of unification, invalidate 
+                corresponding instruction lines to point of unification, then invalidates branch
+                predictors. The start and end are relative to the page being
+                serviced.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="start_offset" type="seL4_Word"
+            description="The offset, relative to the start of the page inclusive."/>
+            <param dir="in" name="end_offset" type="seL4_Word"
+            description="The offset, relative to the start of the page exclusive."/>
         </method>
         <method id="ARMPageGetAddress" name="GetAddress" manual_name="Get Address">
+            <brief>
+                Get the physical address of the underlying frame.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <return>
+                A <texttt text='seL4_ARM_Page_GetAddress_t'/> struct that contains a
+                <texttt text='seL4_Word paddr'/>, which holds the physical address of the page,
+                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.
+            </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
     </interface>
-    <interface name="seL4_ARM_ASIDControl" manual_name="ASID Control">
+    <interface name="seL4_ARM_ASIDControl" manual_name="ASID Control"
+        cap_description="The master ASIDControl capability being operated on.">
         <method id="ARMASIDControlMakePool" name="MakePool" manual_name="Make Pool">
-            <param dir="in" name="untyped" type="seL4_Untyped"/>
-            <param dir="in" name="root" type="seL4_CNode"/>
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Uint8"/>
+            <brief>
+                Create an ASID Pool.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="untyped" type="seL4_Untyped"
+            description="Capability to an untyped memory object that will become the pool. Must be 4K bytes."/>
+            <param dir="in" name="root" type="seL4_CNode"
+            description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="index" type="seL4_Word"
+            description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8"
+            description="Number of bits of index to resolve to find the destination slot."/>
         </method>
     </interface>
-    <interface name="seL4_ARM_ASIDPool" manual_name="ASID Pool">
+    <interface name="seL4_ARM_ASIDPool" manual_name="ASID Pool"
+        cap_description="The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.">
         <method id="ARMASIDPoolAssign" name="Assign" manual_label="asidpool_assign"
             manual_name="Asid Pool Assign">
-            <param dir="in" name="vroot" type="seL4_CPtr"/>
+            <brief>
+                Assign an ASID Pool.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="vroot" type="seL4_CPtr"
+            description="The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>
         </method>
     </interface>
 </api>
