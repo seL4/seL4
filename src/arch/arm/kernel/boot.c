@@ -540,8 +540,6 @@ init_kernel(
         result = try_init_kernel_secondary_core();
     }
 
-    printf("Core %lu is processing with the root task \n", getCurrentCPUIndex());
-
 #else
     result = try_init_kernel(ui_p_reg_start,
                              ui_p_reg_end,
