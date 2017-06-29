@@ -125,17 +125,17 @@ int __builtin_popcountl (unsigned long x);
 
 /** DONT_TRANSLATE */
 static inline long
-CONST popcountl(unsigned long v)
+CONST popcountl(unsigned long mask)
 {
 #ifndef __POPCNT__
-    unsigned int c; // c accumulates the total bits set in v
-    for (c = 0; v; c++) {
-        v &= v - 1; // clear the least significant bit set
+    unsigned int count; // c accumulates the total bits set in v
+    for (count = 0; mask; count++) {
+        mask &= mask - 1; // clear the least significant bit set
     }
 
-    return c;
+    return count;
 #else
-    return __builtin_popcountl(x);
+    return __builtin_popcountl(mask);
 #endif
 }
 
