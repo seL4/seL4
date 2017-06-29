@@ -17,9 +17,11 @@
 #include <mode/smp/smp.h>
 #include <model/smp.h>
 
+#if CONFIG_MAX_NUM_NODES > 1
 static inline cpu_id_t cpuIndexToID(word_t index)
 {
     return BIT(index);
 }
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
 #endif /* __ARCH_MODEL_SMP_H_ */
