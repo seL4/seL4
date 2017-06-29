@@ -29,7 +29,7 @@ static inline void init_ipi_args(IpiModeRemoteCall_t func,
     ipi_args[2] = data3;
 
     /* get number of cores involved in this IPI */
-    totalCoreBarrier = POPCOUNTL(mask);
+    totalCoreBarrier = popcountl(mask);
 }
 
 static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,

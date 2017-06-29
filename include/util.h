@@ -125,23 +125,21 @@ int __builtin_popcountl (unsigned long x);
 
 /** DONT_TRANSLATE */
 static inline long
-CONST popcountl(unsigned long x)
+CONST popcountl(unsigned long v)
 {
 #ifndef __POPCNT__
-
-    unsigned int v; // count the number of bits set in v
     unsigned int c; // c accumulates the total bits set in v
     for (c = 0; v; c++) {
         v &= v - 1; // clear the least significant bit set
     }
 
-    return v;
+    return c;
 #else
     return __builtin_popcountl(x);
 #endif
 }
 
-#define POPCOUNTL(x) popcountl
+#define POPCOUNTL(x) popcountl(x)
 
 #else /* __ASSEMBLER__ */
 
