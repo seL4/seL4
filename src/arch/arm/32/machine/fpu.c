@@ -20,7 +20,7 @@
  * is called. enableFpu() and disableFpu(), the value is set to cache/reflect the
  * actual HW FPU enable/disable state.
  */
-bool_t isFPUEnabledCached;
+bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 
 #ifdef CONFIG_HAVE_FPU
 /*

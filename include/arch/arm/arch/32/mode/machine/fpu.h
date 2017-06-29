@@ -39,7 +39,7 @@
 #define FPEXC_DEX_BIT                29
 #define FPEXC_FP2V_BIT               28
 
-extern bool_t isFPUEnabledCached;
+extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 
 #ifdef CONFIG_HAVE_FPU
 
@@ -101,13 +101,13 @@ static inline void enableFpu(void)
     MRC(FPEXC, fpexc);
     fpexc |=  BIT(FPEXC_EN_BIT);
     MCR(FPEXC, fpexc);
-    isFPUEnabledCached = true;
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
 }
 
 /* Check if FPU is enable */
 static inline bool_t isFpuEnable(void)
 {
-    return isFPUEnabledCached;
+    return isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)];
 }
 
 /* Load FPU state from memory into the FPU registers. */
@@ -145,6 +145,6 @@ static inline void disableFpu(void)
     fpexc &= ~BIT(FPEXC_EN_BIT);
     MCR(FPEXC, fpexc);
 
-    isFPUEnabledCached = false;
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
 }
 #endif /* __MODE_MACHINE_FPU_H */
