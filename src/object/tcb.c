@@ -1735,10 +1735,6 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
         setMCPriority(target, mcp);
     }
 
-    if (updateFlags & thread_control_update_priority) {
-        setPriority(target, priority);
-    }
-
 #ifdef CONFIG_KERNEL_MCS
     if (updateFlags & thread_control_update_sc) {
         if (sc != NULL && sc != target->tcbSchedContext) {
@@ -1821,6 +1817,10 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
         if (target == NODE_STATE(ksCurThread)) {
             rescheduleRequired();
         }
+    }
+
+    if (updateFlags & thread_control_update_priority) {
+        setPriority(target, priority);
     }
 
     return EXCEPTION_NONE;
