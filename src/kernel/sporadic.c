@@ -243,21 +243,21 @@ void refill_budget_check(sched_context_t *sc, ticks_t usage, ticks_t capacity)
                 schedule_used(sc, old_head);
             }
         }
-    }
 
-    /* budget overrun */
-    if (usage > 0) {
-        /* budget reduced when calculating capacity */
-        /* due to overrun delay next replenishment */
-        REFILL_HEAD(sc).rTime += usage;
-        /* merge front two replenishments if times overlap */
-        if (!refill_single(sc) &&
-            REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount >=
-            REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime) {
+        /* budget overrun */
+        if (usage > 0) {
+            /* budget reduced when calculating capacity */
+            /* due to overrun delay next replenishment */
+            REFILL_HEAD(sc).rTime += usage;
+            /* merge front two replenishments if times overlap */
+            if (!refill_single(sc) &&
+                REFILL_HEAD(sc).rTime + REFILL_HEAD(sc).rAmount >=
+                REFILL_INDEX(sc, refill_next(sc, sc->scRefillHead)).rTime) {
 
-            refill_t refill = refill_pop_head(sc);
-            REFILL_HEAD(sc).rAmount += refill.rAmount;
-            REFILL_HEAD(sc).rTime = refill.rTime;
+                refill_t refill = refill_pop_head(sc);
+                REFILL_HEAD(sc).rAmount += refill.rAmount;
+                REFILL_HEAD(sc).rTime = refill.rTime;
+            }
         }
     }
 
