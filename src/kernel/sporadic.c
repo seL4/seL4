@@ -268,7 +268,7 @@ void refill_budget_check(sched_context_t *sc, ticks_t usage, ticks_t capacity)
 
     /* ensure the refill head is sufficient, such that when we wake in awaken,
      * there is enough budget to run */
-    while (REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount < MIN_BUDGET) {
+    while (REFILL_HEAD(sc).rAmount < MIN_BUDGET || refill_full(sc)) {
         refill_t refill = refill_pop_head(sc);
         REFILL_HEAD(sc).rAmount += refill.rAmount;
         /* this loop is guaranteed to terminate as the sum of
