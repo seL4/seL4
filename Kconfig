@@ -238,6 +238,14 @@ menu "seL4 System"
             help
                 Support for Xilinx Zynq-7000 platforms.
 
+        config PLAT_ZYNQMP
+            bool "Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)"
+            depends on ARCH_ARM
+            select ARM_CORTEX_A53
+            select ARCH_ARM_V8A
+            help
+                Support for Xilinx Zynq UltraScale+ MPSoC platforms.
+
         config PLAT_PC99
             bool "PC99"
             depends on ARCH_X86
