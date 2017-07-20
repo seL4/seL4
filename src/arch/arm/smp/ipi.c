@@ -43,9 +43,11 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             ipiStallCoreCallback(irqPath);
             break;
 
+#ifdef CONFIG_HAVE_FPU
         case IpiRemoteCall_switchFpuOwner:
             switchLocalFpuOwner((user_fpu_state_t *)arg0);
             break;
+#endif /* CONFIG_HAVE_FPU */
 
         case IpiRemoteCall_InvalidateTranslationSingle:
             invalidateLocalTLB_VAASID(arg0);
