@@ -26,8 +26,9 @@
 
 void initTimer(void);
 static inline CONST ticks_t getTimerPrecision(void);
-static inline CONST time_t getMaxTimerUs(void);
+static inline CONST time_t getMaxUsToTicks(void);
 static inline CONST ticks_t usToTicks(time_t us);
+static inline CONST ticks_t getMaxTicksToUs(void);
 static inline CONST time_t ticksToUs(ticks_t ticks);
 
 #include <plat/machine/timer.h>

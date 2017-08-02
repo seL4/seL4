@@ -35,8 +35,20 @@
 /* timer function definitions that work for all 32bit arm platforms that provide
  * CLK_MAGIC and TIMER_CLOCK_MHZ -- these definitions might need to move
  * if we come across an arm platform that does not suit this model */
+/* get the max value usToTicks can be passed without overflowing */
 static inline CONST time_t
-getMaxTimerUs(void)
+getMaxUsToTicks(void)
+{
+    if (USE_KHZ) {
+        return UINT64_MAX / TIMER_CLOCK_KHZ / KHZ_IN_MHZ;
+    } else {
+        return UINT64_MAX / TIMER_CLOCK_MHZ;
+    }
+}
+
+/* get the max value ticksToUs can be passed without overflowing */
+static inline CONST ticks_t
+getMaxTicksToUs(void)
 {
     if (USE_KHZ) {
         return UINT64_MAX / KHZ_IN_MHZ / CLK_MAGIC;

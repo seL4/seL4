@@ -17,11 +17,6 @@
 #include <plat/machine.h>
 #include <mode/machine/timer.h>
 
-/* prototypes for mode specific functions -- these require 64 bit
- * division */
-static inline PURE time_t ticksToUs(ticks_t ticks);
-static inline PURE time_t getMaxTimerUs(void);
-
 /* generic x86 timer functions */
 static inline CONST time_t
 getKernelWcetUs(void)
@@ -34,6 +29,12 @@ usToTicks(time_t us)
 {
     assert(x86KStscMhz > 0);
     return us * x86KStscMhz;
+}
+
+static inline PURE time_t
+getMaxUsToTicks(void)
+{
+    return div64(UINT64_MAX, x86KStscMhz);
 }
 
 static inline PURE ticks_t
@@ -53,10 +54,10 @@ getCurrentTime(void)
     return x86_rdtsc();
 }
 
-static inline PURE time_t
-getMaxTimerUs(void)
+static inline CONST ticks_t
+getMaxTicksToUs(void)
 {
-    return div64(UINT64_MAX, x86KStscMhz);
+   return UINT64_MAX;
 }
 
 static inline PURE time_t
