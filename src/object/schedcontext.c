@@ -359,8 +359,13 @@ time_t
 schedContext_updateConsumed(sched_context_t *sc)
 {
     ticks_t consumed = sc->scConsumed;
-    sc->scConsumed = 0;
-    return ticksToUs(consumed);
+    if (consumed >= getMaxTicksToUs()) {
+        sc->scConsumed -= getMaxTicksToUs();
+        return getMaxTicksToUs();
+    } else {
+        sc->scConsumed = 0;
+        return ticksToUs(consumed);
+    }
 }
 
 void
