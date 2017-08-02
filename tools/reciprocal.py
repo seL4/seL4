@@ -22,6 +22,7 @@
 from math import floor, ceil
 import argparse
 import sys
+from past.builtins import xrange
 
 # now unsigned
 def magicgu(nmax, d):
