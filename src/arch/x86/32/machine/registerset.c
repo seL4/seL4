@@ -38,8 +38,8 @@ void Mode_initContext(user_context_t* context)
     context->registers[EBP] = 0;
     context->registers[DS] = SEL_DS_3;
     context->registers[ES] = SEL_DS_3;
-    context->registers[FS] = SEL_NULL;
-    context->registers[GS] = SEL_NULL;
+    context->registers[FS] = SEL_IPCBUF;
+    context->registers[GS] = SEL_TLS;
     context->registers[ESP] = 0;
 }
 
