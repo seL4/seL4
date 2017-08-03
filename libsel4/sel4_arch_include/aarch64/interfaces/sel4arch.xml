@@ -48,43 +48,97 @@
         <member name="x28"/>
     </struct>
     <interface name="seL4_ARM_PageGlobalDirectory" manual_name="Page Global Directory">
-        <method id="ARMPageGlobalDirectoryClean_Data" name="Clean_Data"
+        <method id="ARMPageGlobalDirectoryClean_Data" name="Clean_Data" manual_label="pgd_clean"
             manual_name="Clean Data">
-            <param dir="in" name="start" type="seL4_Word"/>
-            <param dir="in" name="end" type="seL4_Word"/>
+                <brief>
+                    Clean cached pages within a global page directory
+                </brief>
+                <description>
+                     See <autoref label="ch:vspace"/>.
+                </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
         </method>
         <method id="ARMPageGlobalDirectoryInvalidate_Data" name="Invalidate_Data"
-            manual_name="Invalidate Data">
-            <param dir="in" name="start" type="seL4_Word"/>
-            <param dir="in" name="end" type="seL4_Word"/>
+            manual_name="Invalidate Data" manual_label="pgd_invalidate">
+                <brief>
+                    Invalidate cached pages within a global page directory
+                </brief>
+             <description>
+                 See <autoref label="ch:vspace"/>.
+             </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
         </method>
         <method id="ARMPageGlobalDirectoryCleanInvalidate_Data" name="CleanInvalidate_Data"
-            manual_name="Clean and Invalidate Data">
-            <param dir="in" name="start" type="seL4_Word"/>
-            <param dir="in" name="end" type="seL4_Word"/>
+            manual_name="Clean and Invalidate Data" manual_label="pgd_clean_invalidate">
+                <brief>
+                    Clean and invalidate cached pages within a global page directory
+                </brief>
+             <description>
+                 See <autoref label="ch:vspace"/>.
+             </description>
+            <param dir="in" name="start" type="seL4_Word"
+            description="Start address"/>
+            <param dir="in" name="end" type="seL4_Word"
+            description="End address"/>
         </method>
         <method id="ARMPageGlobalDirectoryUnify_Instruction" name="Unify_Instruction"
-            manual_name="Unify Instruction">
+            manual_name="Unify Instruction" manual_label="pgd_unify_instruction">
+                <brief>
+                    Clean and invalidate cached instruction pages to point of unification
+                </brief>
+             <description>
+                 See <autoref label="ch:vspace"/>.
+             </description>
             <param dir="in" name="start" type="seL4_Word"/>
             <param dir="in" name="end" type="seL4_Word"/>
         </method>
     </interface>
     <interface name="seL4_ARM_PageUpperDirectory" manual_name="Page Upper Directory">
         <method id="ARMPageUpperDirectoryMap" name="Map">
-            <param dir="in" name="pgd" type="seL4_CPtr"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
+                <brief>
+                    Map an upper page directory
+                </brief>
+                <description>
+                    Map an upper page directory (level 1) to a global page directory (level 0)
+                </description>
+            <param dir="in" name="pgd" type="seL4_CPtr"
+            description="Global page directory"/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+            description="Virtual address"/>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"
+            description="Memory attributes"/>
         </method>
         <method id="ARMPageUpperDirectoryUnmap" name="Unmap">
         </method>
     </interface>
     <interface name="seL4_ARM_PageDirectory" manual_name="Page Directory">
         <method id="ARMPageDirectoryMap" name="Map">
-            <param dir="in" name="pud" type="seL4_CPtr"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"/>
+                <brief>
+                    Map a page directory
+                </brief>
+                <description>
+                    Map a page directory (level 2) to an upper page directory (level 1)
+                </description>
+            <param dir="in" name="pud" type="seL4_CPtr"
+            description="Upper page directory"/>
+            <param dir="in" name="vaddr" type="seL4_Word"
+            description="Virtual adress"/>
+            <param dir="in" name="attr" type="seL4_ARM_VMAttributes"
+            description="Memory attributes"/>
         </method>
         <method id="ARMPageDirectoryUnmap" name="Unmap">
+                <brief>
+                    Unmap a page directory
+                </brief>
+                <description>
+                    Unmap a page directory (level 2) from an upper page directory (level 1)
+                </description>
         </method>
     </interface>
 </api>
