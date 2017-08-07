@@ -135,6 +135,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 
 #ifndef CONFIG_ARCH_ARM_V6
     writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
+    writeTPIDRURO(getRegister(NODE_STATE(ksCurThread), TLS_BASE));
 #endif
 
 #ifdef CONFIG_HAVE_FPU

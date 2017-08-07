@@ -143,6 +143,7 @@ enum _register {
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
     TPIDRURW                    = 35,
+    TLS_BASE                    = 35,
     n_contextRegisters          = 36,
 };
 

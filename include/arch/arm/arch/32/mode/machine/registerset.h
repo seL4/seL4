@@ -95,13 +95,14 @@ enum _register {
     CPSR = 16,
 
     FaultInstruction = 17,
+    TLS_BASE = 18,
 #ifndef CONFIG_ARCH_ARM_V6
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
-    TPIDRURW = 18,
-    n_contextRegisters = 19,
+    TPIDRURW = 19,
+    n_contextRegisters = 20,
 #else
-    n_contextRegisters = 18,
+    n_contextRegisters = 19,
 #endif
 };
 

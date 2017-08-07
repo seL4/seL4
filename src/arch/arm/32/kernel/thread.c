@@ -22,6 +22,7 @@ Arch_switchToThread(tcb_t *tcb)
     setVMRoot(tcb);
 #if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
     *armKSGlobalsFrame = tcb->tcbIPCBuffer;
+    armKSGlobalsFrame[1] = getRegister(tcb, TLS_BASE);
 #endif
     clearExMonitor();
 }
@@ -45,6 +46,7 @@ Arch_switchToIdleThread(void)
 
 #ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
     *armKSGlobalsFrame = 0;
+    armKSGlobalsFrame[1] = 0;
 #endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 }
 
