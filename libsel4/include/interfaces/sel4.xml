@@ -353,6 +353,19 @@
             <param dir="out" name="bp_was_consumed" type="seL4_Bool"/>
         </method>
 
+        <method id="TCBSetTLSBase" name="SetTLSBase" manual_name="Set TLS Base" manual_label="tcb_settlsbase">
+            <brief>
+                Set the TLS base of the target TCB. This intended for use on architectures where the register
+                used for TLS can only be written to in privilidged mode
+             </brief>
+             <description>
+             </description>
+             <return>
+             </return>
+             <param dir="in" name="tls_base" type="seL4_Word"
+                description="The TLS base to set"/>
+         </method>
+
     </interface>
 
     <interface name="seL4_CNode" manual_name="CNode">

@@ -660,6 +660,37 @@ decodeUnsetBreakpoint(cap_t cap, word_t *buffer)
 }
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
+static exception_t
+invokeSetTLSBase(tcb_t *thread, word_t tls_base)
+{
+    setRegister(thread, TLS_BASE, tls_base);
+    if (thread == NODE_STATE(ksCurThread)) {
+        /* If this is the current thread force a reschedule to ensure that any changes
+         * to the TLS_BASE are realized */
+        rescheduleRequired();
+    }
+
+    return EXCEPTION_NONE;
+}
+
+static exception_t
+decodeSetTLSBase(cap_t cap, word_t length, word_t *buffer)
+{
+    tcb_t *thread;
+    word_t tls_base;
+
+    if (length < 1) {
+        userError("TCB SetTLSBase: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    tls_base = getSyscallArg(0, buffer);
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeSetTLSBase(TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), tls_base);
+}
+
 /* The following functions sit in the syscall error monad, but include the
  * exception cases for the preemptible bottom end, as they call the invoke
  * functions directly.  This is a significant deviation from the Haskell
@@ -742,6 +773,9 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
     case TCBUnsetBreakpoint:
         return decodeUnsetBreakpoint(cap, buffer);
 #endif
+
+    case TCBSetTLSBase:
+        return decodeSetTLSBase(cap, length, buffer);
 
     default:
         /* Haskell: "throw IllegalOperation" */
