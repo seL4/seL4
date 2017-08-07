@@ -21,6 +21,7 @@ void
 Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
+    writeTPIDRURO(tcb->tcbIPCBuffer);
 }
 
 BOOT_CODE void
@@ -34,6 +35,7 @@ void
 Arch_switchToIdleThread(void)
 {
     setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserPGD)));
+    writeTPIDRURO(0);
 }
 
 void CONST

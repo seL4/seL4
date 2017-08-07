@@ -39,6 +39,7 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
 
     armv_contextSwitch(vroot, asid);
+    writeTPIDRURO(thread->tcbIPCBuffer);
     ksCurThread = thread;
 }
 

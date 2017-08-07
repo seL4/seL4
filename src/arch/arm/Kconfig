@@ -60,7 +60,7 @@ choice
     prompt "IPC Buffer location"
     default IPC_BUF_TPIDRURW if !ARCH_ARM_V6
     default IPC_BUF_GLOBALS_FRAME if ARCH_ARM_V6
-    depends on ARCH_ARM
+    depends on ARCH_AARCH32
     help
         Controls how the location of the IPC buffer is
         provided to the user
