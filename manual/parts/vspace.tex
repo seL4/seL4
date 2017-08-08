@@ -60,8 +60,30 @@ Pages of 64\,KiB and 16\,MiB size occupy 16 slots in a page table and the page d
 The \obj{Page Directory} (PD) is the top-level page table of the 
 two-level page table structure. It has a hardware-defined format, but
 conceptually contains a number of page directory entries (PDEs).
-The \obj{Page Directory} has no methods itself, but it is used
+On x86, the \obj{Page Directory} has no invocations itself, but it is used
 as an argument to several other virtual-memory related object invocations.
+
+On ARM, the highest level page directory (\obj{Page Directory} on aarch32 and global page directory on
+aarch64) objects possess a few invocations for the user to do cache maintenance
+operations:
+
+\begin{description}
+    \item[\apifunc{seL4\_ARM\_PageDirectory\_Clean\_Data}{aarch32_pd_clean}]
+    \item[\apifunc{seL4\_ARM\_PageDirectory\_Invalidate\_Data}{aarch32_pd_invalidate}]
+    \item[\apifunc{seL4\_ARM\_PageDirectory\_CleanInvalidate\_Data}{aarch32_pd_clean_invalidate}]
+    \item[\apifunc{seL4\_ARM\_PageDirectory\_Unify\_Instruction}{aarch32_pd_unify_instruction}]
+
+    \item[\apifunc{seL4\_ARM\_PageGlobalDirectory\_Clean\_Data}{aarch64_pgd_clean}]
+    \item[\apifunc{seL4\_ARM\_PageGlobalDirectory\_Invalidate\_Data}{aarch64_pgd_invalidate}]
+    \item[\apifunc{seL4\_ARM\_PageGlobalDirectory\_CleanInvalidate\_Data}{aarch64_pgd_clean_invalidate}]
+    \item[\apifunc{seL4\_ARM\_PageGlobalDirectory\_Unify\_Instruction}{aarch64_pgd_unify_instruction}]
+\end{description}
+
+By making these cache related operations invocations on page directory capabilities in addition to
+the page capabilities themselves, the
+API allows users more flexible policy options. For example, a process that has delegated a page
+directory can conduct cache operations on all frames mapped from that capability without access
+to those capabilities directly.
 
 \paragraph{\obj{Page Table}} The \obj{Page Table} (PT) object forms the
 second level of the page-table structure.
