@@ -20,7 +20,7 @@
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/elf.h>
 #include <smp/lock.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/pic.h>

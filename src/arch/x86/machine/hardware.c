@@ -15,7 +15,7 @@
 #include <arch/machine.h>
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
-#include <arch/linker.h>
+#include <linker.h>
 
 /* initialises MSRs required to setup sysenter and sysexit */
 BOOT_CODE void

@@ -13,7 +13,7 @@
 
 #include <util.h>
 #include <basic_types.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
 

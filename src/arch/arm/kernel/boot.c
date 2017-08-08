@@ -20,7 +20,7 @@
 #include <arch/benchmark.h>
 #include <arch/user_access.h>
 #include <arch/object/iospace.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
 #include <machine/timer.h>

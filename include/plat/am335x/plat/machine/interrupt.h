@@ -16,7 +16,7 @@
 #include <kernel/vspace.h>
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
-#include <arch/linker.h>
+#include <linker.h>
 
 #define CMPER_REG(base, off) ((volatile uint32_t *)((base) + (off)))
 #define CMPER_TIMER3_CLKCTRL    0x84

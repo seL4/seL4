@@ -13,7 +13,7 @@
 #include <machine/io.h>
 #include <arch/kernel/cmdline.h>
 #include <arch/kernel/boot_sys.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/io.h>
 
 /* 'cmdline_val' is declared globally because of a C-subset restriction.

@@ -16,7 +16,7 @@
 #include <arch/types.h>
 #include <arch/model/statedata.h>
 #include <arch/object/structures.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/hardware.h>
 
 asid_pool_t *armKSASIDTable[BIT(asidHighBits)];

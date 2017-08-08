@@ -14,7 +14,7 @@
 #include <types.h>
 #include <arch/machine.h>
 #include <mode/machine/timer.h>
-#include <arch/linker.h>
+#include <linker.h>
 
 void
 resetTimer(void)

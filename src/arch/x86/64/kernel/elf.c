@@ -11,7 +11,7 @@
  */
 
 #include <arch/kernel/elf.h>
-#include <arch/linker.h>
+#include <linker.h>
 
 BOOT_CODE bool_t
 elf_checkFile(Elf64_Header_t *elf)

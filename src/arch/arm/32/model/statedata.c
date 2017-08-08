@@ -15,7 +15,7 @@
 #include <arch/model/statedata.h>
 #include <arch/object/structures.h>
 #include <arch/machine/debug_conf.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/hardware.h>
 
 #ifdef CONFIG_IPC_BUF_GLOBALS_FRAME

@@ -16,7 +16,7 @@
 #include <arch/api/invocation.h>
 #include <arch/object/iospace.h>
 #include <arch/model/statedata.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/intel-vtd.h>
 
 

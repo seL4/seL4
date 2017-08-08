@@ -15,7 +15,7 @@
 #include <arch/machine/debug.h>
 #include <arch/machine/debug_conf.h>
 #include <api/syscall.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>

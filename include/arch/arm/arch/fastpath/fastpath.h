@@ -11,7 +11,7 @@
 #ifndef __ARCH_FASTPATH_H
 #define __ARCH_FASTPATH_H
 
-#include <arch/linker.h>
+#include <linker.h>
 #include <mode/fastpath/fastpath.h>
 #include <benchmark/benchmark_track.h>
 #include <arch/machine/debug.h>

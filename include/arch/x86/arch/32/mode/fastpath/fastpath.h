@@ -12,7 +12,7 @@
 #define __ARCH_FASTPATH_32_H
 
 #include <util.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <arch/machine/debug.h>
 #include <api/types.h>
 #include <api/syscall.h>

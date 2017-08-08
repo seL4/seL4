@@ -16,7 +16,7 @@
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <api/failures.h>
-#include <arch/linker.h>
+#include <linker.h>
 
 #define GIC_VCPU_MAX_NUM_LR 64
 

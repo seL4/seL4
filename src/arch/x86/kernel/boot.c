@@ -22,7 +22,7 @@
 #include <machine/fpu.h>
 #include <arch/machine/timer.h>
 #include <arch/object/ioport.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <util.h>
 
 #include <plat/machine/intel-vtd.h>

@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 #include <util.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <mode/smp/smp.h>
 #include <model/statedata.h>
 

@@ -8,7 +8,7 @@
  * @TAG(GD_GPL)
  */
 
-#include <arch/linker.h>
+#include <linker.h>
 #include <machine/io.h>
 #include <plat/machine/pit.h>
 

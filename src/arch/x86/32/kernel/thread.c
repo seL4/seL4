@@ -13,7 +13,7 @@
 #include <arch/model/statedata.h>
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/thread.h>
-#include <arch/linker.h>
+#include <linker.h>
 
 void
 Arch_switchToThread(tcb_t* tcb)

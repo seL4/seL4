@@ -12,7 +12,7 @@
 #define __PLAT_MACHINE_IO_H_
 
 #include <config.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <types.h>
 
 void out8(uint16_t port, uint8_t value);

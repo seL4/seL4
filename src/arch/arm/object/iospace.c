@@ -19,7 +19,7 @@
 #include <arch/object/iospace.h>
 #include <arch/model/statedata.h>
 #include <object/structures.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/smmu.h>
 
 

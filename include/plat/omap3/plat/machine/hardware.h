@@ -12,7 +12,7 @@
 #define __PLAT_MACHINE_HARDWARE_H
 
 #include <basic_types.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <armv/machine.h>
 #include <plat/machine.h>
 #include <plat/machine/devices.h>

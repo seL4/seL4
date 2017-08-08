@@ -15,7 +15,7 @@
 #include <machine/io.h>
 #include <arch/kernel/apic.h>
 #include <arch/model/statedata.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/intel-vtd.h>
 #include <util.h>

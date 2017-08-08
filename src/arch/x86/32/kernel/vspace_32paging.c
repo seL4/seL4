@@ -19,7 +19,7 @@
 #include <arch/api/invocation.h>
 #include <arch/kernel/apic.h>
 #include <arch/kernel/vspace.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <util.h>
 
 /* setup initial boot page directory */

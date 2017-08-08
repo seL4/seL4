@@ -13,7 +13,7 @@
 
 #include <config.h>
 #include <util.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <api/types.h>
 #include <api/syscall.h>
 #include <armv/context_switch.h>

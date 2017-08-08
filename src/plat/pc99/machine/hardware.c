@@ -12,7 +12,7 @@
 #include <machine/io.h>
 #include <arch/kernel/apic.h>
 #include <arch/model/statedata.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/pic.h>
 #include <plat/machine/ioapic.h>
 #include <plat/machine.h>

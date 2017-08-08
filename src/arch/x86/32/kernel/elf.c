@@ -11,7 +11,7 @@
  */
 
 #include <arch/kernel/elf.h>
-#include <arch/linker.h>
+#include <linker.h>
 
 /* minimal ELF functionality for loading GRUB boot module */
 

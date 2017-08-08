@@ -12,7 +12,7 @@
 #include <model/statedata.h>
 #include <arch/object/interrupt.h>
 #include <arch/api/invocation.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/hardware.h>
 
 void

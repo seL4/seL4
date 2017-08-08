@@ -14,7 +14,7 @@
 #ifdef CONFIG_ARM_SMMU
 
 #include <plat/machine/smmu.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <object/structures.h>

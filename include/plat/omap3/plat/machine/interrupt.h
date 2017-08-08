@@ -16,7 +16,7 @@
 #include <kernel/vspace.h>
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/devices.h>
 
 #define INTCPS_SIR_IRQ_SPURIOUSIRQFLAG 0xFF0000

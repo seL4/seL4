@@ -15,7 +15,7 @@
 #include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
 #include <api/syscall.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>

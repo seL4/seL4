@@ -14,7 +14,7 @@
 #include <basic_types.h>
 #include <config.h>
 #include <arch/types.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <mode/api/constants.h>
 
 #define PAGE_BITS seL4_PageBits

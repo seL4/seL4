@@ -12,7 +12,7 @@
 #include <util.h>
 #include <assert.h>
 #include <machine/io.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine.h>
 #include <plat/machine/acpi.h>
 #include <plat/machine/devices.h>

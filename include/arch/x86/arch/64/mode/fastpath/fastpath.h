@@ -14,7 +14,7 @@
 #define __ARCH_MODE_FASTPATH_FASTPATH_H_
 
 #include <util.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <api/types.h>
 #include <api/syscall.h>
 #include <plat/machine/hardware.h>

@@ -12,7 +12,7 @@
 #include <machine/io.h>
 #include <arch/machine.h>
 #include <arch/kernel/apic.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/pit.h>
 
