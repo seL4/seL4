@@ -174,9 +174,9 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
         if ((firstPort >= capFirstPort) && (lastPort <= capLastPort)) {
             return cap_io_port_cap_new(firstPort, lastPort
 #ifdef CONFIG_VTX
-                , VPID_INVALID
+                                       , VPID_INVALID
 #endif
-                );
+                                      );
         } else {
             return cap_null_cap_new();
         }

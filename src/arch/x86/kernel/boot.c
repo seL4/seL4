@@ -306,7 +306,7 @@ init_sys_state(
             0,                /* first port */
             NUM_IO_PORTS - 1  /* last port  */
 #ifdef CONFIG_VTX
-            ,VPID_INVALID
+            , VPID_INVALID
 #endif
         )
     );
