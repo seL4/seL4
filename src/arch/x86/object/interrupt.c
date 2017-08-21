@@ -14,6 +14,7 @@
 #include <arch/api/invocation.h>
 #include <linker.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/pci.h>
 
 void
 Arch_irqStateInit(void)
