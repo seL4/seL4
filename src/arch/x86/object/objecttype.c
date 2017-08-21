@@ -62,6 +62,8 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
         return ret;
+
+#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -76,6 +78,7 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
             ret.status = EXCEPTION_SYSCALL_ERROR;
         }
         return ret;
+#endif
 
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:
@@ -138,6 +141,7 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
     switch (cap_get_capType(cap)) {
+#ifdef CONFIG_IOMMU
     case cap_io_space_cap: {
         io_space_capdata_t w = { { data } };
         uint16_t PCIDevice = io_space_capdata_get_PCIDevice(w);
@@ -151,6 +155,7 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
             return cap_null_cap_new();
         }
     }
+#endif
     case cap_io_port_cap: {
         io_port_capdata_t w = { .words = { data } };
         uint16_t firstPort = io_port_capdata_get_firstPort(w);
@@ -232,6 +237,7 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
                                 cap_io_port_cap_get_capIOPortLastPort(cap));
 #endif
         break;
+#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         if (final) {
             unmapVTDContextEntry(cap);
@@ -243,6 +249,7 @@ cap_t Arch_finaliseCap(cap_t cap, bool_t final)
             deleteIOPageTable(cap);
         }
         break;
+#endif
 
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:
@@ -344,6 +351,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
+#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         if (cap_get_capType(cap_b) == cap_io_space_cap) {
             return cap_io_space_cap_get_capPCIDevice(cap_a) ==
@@ -357,6 +365,8 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_io_page_table_cap_get_capIOPTBasePtr(cap_b);
         }
         break;
+#endif
+
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:
         if (cap_get_capType(cap_b) == cap_vcpu_cap) {
@@ -513,10 +523,12 @@ Arch_decodeInvocation(
         return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_port_cap:
         return decodeX86PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         return decodeX86IOSpaceInvocation(invLabel, cap);
     case cap_io_page_table_cap:
         return decodeX86IOPTInvocation(invLabel, length, slot, cap, excaps, buffer);
+#endif
 #ifdef CONFIG_VTX
     case cap_vcpu_cap:
         return decodeX86VCPUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);

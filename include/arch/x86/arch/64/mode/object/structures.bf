@@ -121,6 +121,8 @@ block io_port_capdata {
     field   lastPort           16
 }
 
+#ifdef CONFIG_IOMMU
+
 -- IO Space Cap
 block io_space_cap {
     padding 64
@@ -149,6 +151,8 @@ block io_page_table_cap (capType, capIOPTIsMapped, capIOPTLevel, capIOPTMappedAd
     field       capIOPTLevel            4
     field_high  capIOPTMappedAddress    49
 }
+
+#endif
 
 block vcpu_cap {
     field capVCPUPtr                64
@@ -227,8 +231,10 @@ tagged_union cap capType {
     tag pml4_cap            9
     tag asid_control_cap    11
     tag asid_pool_cap       13
+#ifdef CONFIG_IOMMU
     tag io_space_cap        15
     tag io_page_table_cap   17
+#endif
     tag io_port_cap         19
     tag vcpu_cap            21
     tag ept_pt_cap          23

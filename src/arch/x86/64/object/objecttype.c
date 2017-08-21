@@ -107,9 +107,11 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
                 );
                 break;
 #endif
+#ifdef CONFIG_IOMMU
             case X86_MappingIOSpace:
                 unmapIOPage(cap);
                 break;
+#endif
             case X86_MappingVSpace:
                 unmapPage(
                     cap_frame_cap_get_capFSize(cap),
@@ -279,6 +281,7 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    0                           /* capPML4IsMapped     */
                );
 
+#ifdef CONFIG_IOMMU
     case seL4_X86_IOPageTableObject:
         return cap_io_page_table_cap_new(
                    0,
@@ -287,6 +290,7 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    asidInvalid,
                    (word_t)regionBase
                );
+#endif
 
     default:
         /*

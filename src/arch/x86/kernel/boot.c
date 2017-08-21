@@ -41,8 +41,10 @@ init_irqs(cap_t root_cnode_cap)
         } else if (i == irq_remote_call_ipi || i == irq_reschedule_ipi) {
             setIRQState(IRQIPI, i);
 #endif /* ENABLE_SMP_SUPPORT */
+#ifdef CONFIG_IOMMU
         } else if (i == irq_iommu) {
             setIRQState(IRQReserved, i);
+#endif
         } else if (i == 2 && config_set(CONFIG_IRQ_PIC)) {
             /* cascaded legacy PIC */
             setIRQState(IRQReserved, i);
@@ -424,20 +426,20 @@ init_sys_state(
     }
     init_core_state(initial);
 
-    if (config_set(CONFIG_IOMMU)) {
-        /* initialise VTD-related data structures and the IOMMUs */
-        if (!vtd_init(cpu_id, num_drhu, rmrr_list)) {
-            return false;
-        }
-
-        /* write number of IOMMU PT levels into bootinfo */
-        ndks_boot.bi_frame->numIOPTLevels = x86KSnumIOPTLevels;
-
-        /* write IOSpace master cap */
-        write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOSpace), master_iospace_cap());
-    } else {
-        ndks_boot.bi_frame->numIOPTLevels = -1;
+#ifdef CONFIG_IOMMU
+    /* initialise VTD-related data structures and the IOMMUs */
+    if (!vtd_init(cpu_id, num_drhu, rmrr_list)) {
+        return false;
     }
+
+    /* write number of IOMMU PT levels into bootinfo */
+    ndks_boot.bi_frame->numIOPTLevels = x86KSnumIOPTLevels;
+
+    /* write IOSpace master cap */
+    write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOSpace), master_iospace_cap());
+#else
+    ndks_boot.bi_frame->numIOPTLevels = -1;
+#endif
 
     /* create all of the untypeds. Both devices and kernel window memory */
     if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {

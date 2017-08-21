@@ -56,11 +56,13 @@ user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 /* Number of IOMMUs (DMA Remapping Hardware Units) */
 uint32_t x86KSnumDrhu;
 
+#ifdef CONFIG_IOMMU
 /* Intel VT-d Root Entry Table */
 vtd_rte_t* x86KSvtdRootTable;
 uint32_t x86KSnumIOPTLevels;
 uint32_t x86KSnumIODomainIDBits;
 uint32_t x86KSFirstValidIODomain;
+#endif
 
 #ifdef CONFIG_VTX
 UP_STATE_DEFINE(vcpu_t *, x86KSCurrentVCPU);

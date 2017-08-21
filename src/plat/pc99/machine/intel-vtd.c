@@ -10,6 +10,8 @@
 
 #include <config.h>
 
+#ifdef CONFIG_IOMMU
+
 #include <kernel/boot.h>
 #include <machine.h>
 #include <machine/io.h>
@@ -513,3 +515,5 @@ vtd_init(
     }
     return true;
 }
+
+#endif /* CONFIG_IOMMU */

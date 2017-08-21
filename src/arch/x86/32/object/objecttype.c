@@ -102,9 +102,11 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
                     (void *)cap_frame_cap_get_capFBasePtr(cap)
                 );
                 break;
+#ifdef CONFIG_IOMMU
             case X86_MappingIOSpace:
                 unmapIOPage(cap);
                 break;
+#endif
             default:
                 fail("No mapping type for mapped cap");
                 break;
@@ -176,6 +178,7 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    (word_t)regionBase  /* capPDBasePtr       */
                );
 
+#ifdef CONFIG_IOMMU
     case seL4_X86_IOPageTableObject:
         return cap_io_page_table_cap_new(
                    0,  /* capIOPTIsMapped      */
@@ -184,6 +187,7 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    0,  /* capIOPTIOASID        */
                    (word_t)regionBase  /* capIOPTBasePtr */
                );
+#endif
 
     default:
         fail("Mode_createObject got an API type or invalid object type");

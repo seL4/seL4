@@ -1150,9 +1150,11 @@ exception_t decodeX86FrameInvocation(
             case X86_MappingVSpace:
                 setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
                 return performX86PageInvocationUnmap(cap, cte);
+#ifdef CONFIG_IOMMU
             case X86_MappingIOSpace:
                 setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
                 return performX86IOUnMapInvocation(cap, cte);
+#endif
 #ifdef CONFIG_VTX
             case X86_MappingEPT:
                 setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
@@ -1167,9 +1169,11 @@ exception_t decodeX86FrameInvocation(
         return EXCEPTION_NONE;
     }
 
+#ifdef CONFIG_IOMMU
     case X86PageMapIO: { /* MapIO */
         return decodeX86IOMapInvocation(length, cte, cap, excaps, buffer);
     }
+#endif
 
 #ifdef CONFIG_VTX
     case X86PageMapEPT:

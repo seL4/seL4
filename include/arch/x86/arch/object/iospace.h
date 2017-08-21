@@ -11,6 +11,10 @@
 #ifndef __ARCH_OBJECT_IOSPACE_H
 #define __ARCH_OBJECT_IOSPACE_H
 
+#include <config.h>
+
+#ifdef CONFIG_IOMMU
+
 #include <types.h>
 #include <api/failures.h>
 #include <object/structures.h>
@@ -42,5 +46,7 @@ exception_t performX86IOUnMapInvocation(cap_t cap, cte_t *ctSlot);
 void unmapIOPage(cap_t cap);
 void deleteIOPageTable(cap_t cap);
 void unmapVTDContextEntry(cap_t cap);
+
+#endif /* CONFIG_IOMMU */
 
 #endif

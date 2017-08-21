@@ -40,7 +40,9 @@ enum framSizeConstants {
 enum vm_page_map_type {
     X86_MappingNone = 0,
     X86_MappingVSpace,
+#ifdef CONFIG_IOMMU
     X86_MappingIOSpace,
+#endif
     X86_MappingEPT
 };
 typedef word_t vm_page_map_type_t;

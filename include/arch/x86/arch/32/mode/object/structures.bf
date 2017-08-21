@@ -91,6 +91,8 @@ block io_port_capdata {
     field   lastPort           16
 }
 
+#ifdef CONFIG_IOMMU
+
 -- IO Space Cap
 block io_space_cap {
     field       capDomainID     16
@@ -116,6 +118,8 @@ block io_page_table_cap {
     field_high  capIOPTBasePtr  20
     field       capType         8
 }
+
+#endif
 
 block vcpu_cap {
     padding                 32
@@ -193,7 +197,9 @@ tagged_union cap capType {
     tag page_directory_cap  5
     tag asid_control_cap    9
     tag asid_pool_cap       11
+#ifdef CONFIG_IOMMU
     tag io_space_cap        13
+#endif
     -- Do not extend odd 4-bit caps types beyond 13, as we use
     -- 15 (0xf) to determine which caps are 8-bit.
 
@@ -204,7 +210,9 @@ tagged_union cap capType {
     tag domain_cap	        0x3e
 
     -- 8-bit tag arch caps
+#ifdef CONFIG_IOMMU
     tag io_page_table_cap   0x0f
+#endif
     tag io_port_cap         0x1f
     tag vcpu_cap            0x2f
     tag ept_pt_cap          0x3f

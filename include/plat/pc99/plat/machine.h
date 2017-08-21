@@ -30,7 +30,9 @@ typedef enum _interrupt_t {
     int_irq_isa_max             = IRQ_INT_OFFSET + PIC_IRQ_LINES - 1, /* End of PIC IRQs */
     int_irq_user_min            = IRQ_INT_OFFSET + PIC_IRQ_LINES, /* First user available vector */
     int_irq_user_max            = 155,
+#ifdef CONFIG_IOMMU
     int_iommu                   = 156,
+#endif
     int_timer                   = 157,
 #ifdef ENABLE_SMP_SUPPORT
     int_remote_call_ipi         = 158,
@@ -51,7 +53,9 @@ typedef enum _irq_t {
     irq_isa_max                 = int_irq_isa_max     - IRQ_INT_OFFSET,
     irq_user_min                = int_irq_user_min    - IRQ_INT_OFFSET,
     irq_user_max                = int_irq_user_max    - IRQ_INT_OFFSET,
+#ifdef CONFIG_IOMMU
     irq_iommu                   = int_iommu           - IRQ_INT_OFFSET,
+#endif
     irq_timer                   = int_timer           - IRQ_INT_OFFSET,
 #ifdef ENABLE_SMP_SUPPORT
     irq_remote_call_ipi         = int_remote_call_ipi - IRQ_INT_OFFSET,

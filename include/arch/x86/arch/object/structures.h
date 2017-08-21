@@ -171,11 +171,14 @@ cap_get_archCapSizeBits(cap_t cap)
 
     case cap_io_port_cap:
         return 0;
+
+#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         return 0;
-
     case cap_io_page_table_cap:
         return seL4_IOPageTableBits;
+#endif
+
     case cap_asid_control_cap:
         return 0;
 
@@ -222,11 +225,13 @@ cap_get_archCapIsPhysical(cap_t cap)
     case cap_io_port_cap:
         return false;
 
+#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         return false;
 
     case cap_io_page_table_cap:
         return true;
+#endif
 
     case cap_asid_control_cap:
         return false;
@@ -274,11 +279,13 @@ cap_get_archCapPtr(cap_t cap)
     case cap_io_port_cap:
         return NULL;
 
+#ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         return NULL;
 
     case cap_io_page_table_cap:
         return (void *)(cap_io_page_table_cap_get_capIOPTBasePtr(cap));
+#endif
 
     case cap_asid_control_cap:
         return NULL;

@@ -21,7 +21,11 @@ Arch_irqStateInit(void)
 {
     int i = 0;
     for (i = 0; i <= maxIRQ; i++) {
-        if (i == irq_timer || i == irq_iommu) {
+        if (i == irq_timer
+#ifdef CONFIG_IOMMU
+            || i == irq_iommu
+#endif
+        ) {
             x86KSIRQState[i] = x86_irq_state_irq_reserved_new();
         } else {
             x86KSIRQState[i] = x86_irq_state_irq_free_new();

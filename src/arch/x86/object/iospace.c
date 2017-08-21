@@ -10,6 +10,8 @@
 
 #include <config.h>
 
+#ifdef CONFIG_IOMMU
+
 #include <api/syscall.h>
 #include <machine/io.h>
 #include <kernel/thread.h>
@@ -516,3 +518,5 @@ exception_t decodeX86IOSpaceInvocation(word_t invLabel, cap_t cap)
     current_syscall_error.type = seL4_IllegalOperation;
     return EXCEPTION_SYSCALL_ERROR;
 }
+
+#endif /* CONFIG_IOMMU */

@@ -27,10 +27,12 @@
 static inline void
 handleReservedIRQ(irq_t irq)
 {
-    if (config_set(CONFIG_IOMMU) && irq == irq_iommu) {
+#ifdef CONFIG_IOMMU
+    if (irq == irq_iommu) {
         vtd_handle_fault();
         return;
     }
+#endif
 }
 
 static inline void

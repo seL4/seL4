@@ -97,7 +97,7 @@
 
     <interface name="seL4_X86_IOPageTable" manual_name="I/O Page Table"
         cap_description="Capability to the I/O page table being operated on.">
-        <method id="X86IOPageTableMap" name="Map">
+        <method id="X86IOPageTableMap" name="Map" condition='defined(CONFIG_IOMMU)'>
             <brief>
                 Map an IO page table into an IOSpace.
             </brief>
@@ -109,7 +109,7 @@
             <param dir="in" name="ioaddr" type="seL4_Word"
                 description='The address to map the page table at.'/>
         </method>
-        <method id="X86IOPageTableUnmap" name="Unmap">
+        <method id="X86IOPageTableUnmap" name="Unmap" condition='defined(CONFIG_IOMMU)'>
             <brief>
                 Unmap an IO page table from an IOSpace.
             </brief>
@@ -175,7 +175,7 @@
                 See <autoref label="ch:vspace"/>
             </description>
         </method>
-        <method id="X86PageMapIO" name="MapIO" manual_name="Map I/O" manual_label='page_map_io'>
+        <method id="X86PageMapIO" name="MapIO" manual_name="Map I/O" manual_label='page_map_io' condition='defined(CONFIG_IOMMU)'>
             <brief>
                 Map a page into an IOSpace.
             </brief>

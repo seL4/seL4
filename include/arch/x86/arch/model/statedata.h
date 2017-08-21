@@ -65,11 +65,13 @@ extern asid_pool_t* x86KSASIDTable[];
 extern uint32_t x86KScacheLineSizeBits;
 extern user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 
+#ifdef CONFIG_IOMMU
 extern uint32_t x86KSnumDrhu;
 extern vtd_rte_t* x86KSvtdRootTable;
 extern uint32_t x86KSnumIOPTLevels;
 extern uint32_t x86KSnumIODomainIDBits;
 extern uint32_t x86KSFirstValidIODomain;
+#endif
 
 #ifdef CONFIG_PRINTING
 extern uint16_t x86KSconsolePort;
