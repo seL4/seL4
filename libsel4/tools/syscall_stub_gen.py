@@ -566,7 +566,7 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
         return_type = "%s_%s_t" % (interface_name, method_name)
         returning_struct = True
     else:
-        return_type = "long"
+        return_type = "seL4_Error"
 
     #
     # Print doxygen comment.
@@ -658,7 +658,8 @@ def generate_stub(arch, wordsize, interface_name, method_name, method_id, input_
     # Prepare the result.
     #
     label = "result.error" if returning_struct else "result"
-    result.append("\t%s = seL4_MessageInfo_get_label(output_tag);" % label)
+    cast = " (%s)" % return_type if not returning_struct else ""
+    result.append("\t%s =%s seL4_MessageInfo_get_label(output_tag);" % (label, cast))
     result.append("")
 
     if not use_only_ipc_buffer:
