@@ -112,7 +112,11 @@ block io_port_cap {
     field   capIOPortLastPort  16
 
     padding                    8
+#ifdef CONFIG_VTX
     field   capIOPortVPID      16
+#else
+    padding                    16
+#endif
 }
 
 block io_port_capdata {
@@ -153,6 +157,8 @@ block io_page_table_cap (capType, capIOPTIsMapped, capIOPTLevel, capIOPTMappedAd
 }
 
 #endif
+
+#ifdef CONFIG_VTX
 
 block vcpu_cap {
     field capVCPUPtr                64
@@ -208,6 +214,8 @@ block ept_pml4_cap (capType, capPML4IsMapped, capPML4MappedASID, capPML4BasePtr)
     field       capPML4MappedASID   16
 }
 
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     -- 5-bit tag caps
@@ -236,11 +244,13 @@ tagged_union cap capType {
     tag io_page_table_cap   17
 #endif
     tag io_port_cap         19
+#ifdef CONFIG_VTX
     tag vcpu_cap            21
     tag ept_pt_cap          23
     tag ept_pd_cap          25
     tag ept_pdpt_cap        27
     tag ept_pml4_cap        29
+#endif
 }
 
 ---- Arch-independent object types
@@ -560,6 +570,8 @@ block pte {
     field       present             1
 }
 
+#ifdef CONFIG_VTX
+
 block ept_pml4e {
     padding                         13
     field_high   pdpt_base_address  39
@@ -630,6 +642,8 @@ block vmx_eptp {
     field depth_minus_1             3
     field memory_type               3
 }
+
+#endif
 
 block cr3 {
     padding                         13

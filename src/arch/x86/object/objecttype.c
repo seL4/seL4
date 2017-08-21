@@ -172,7 +172,11 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
         /* Allow the update if the new cap has range no larger than the old
          * cap. */
         if ((firstPort >= capFirstPort) && (lastPort <= capLastPort)) {
-            return cap_io_port_cap_new(firstPort, lastPort, VPID_INVALID);
+            return cap_io_port_cap_new(firstPort, lastPort
+#ifdef CONFIG_VTX
+                , VPID_INVALID
+#endif
+                );
         } else {
             return cap_null_cap_new();
         }

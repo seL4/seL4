@@ -304,8 +304,10 @@ init_sys_state(
         SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOPort),
         cap_io_port_cap_new(
             0,                /* first port */
-            NUM_IO_PORTS - 1, /* last port  */
-            VPID_INVALID
+            NUM_IO_PORTS - 1  /* last port  */
+#ifdef CONFIG_VTX
+            ,VPID_INVALID
+#endif
         )
     );
 

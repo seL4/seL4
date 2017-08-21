@@ -81,7 +81,11 @@ block io_port_cap {
     field   capIOPortFirstPort 16
     field   capIOPortLastPort  16
 
+#ifdef CONFIG_VTX
     field   capIOPortVPID      16
+#else
+    padding                    16
+#endif
     padding                    8
     field   capType            8
 }
@@ -120,6 +124,8 @@ block io_page_table_cap {
 }
 
 #endif
+
+#ifdef CONFIG_VTX
 
 block vcpu_cap {
     padding                 32
@@ -175,6 +181,8 @@ block ept_pml4_cap {
     field       capType             8
 }
 
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     mask 4 0xe
@@ -214,11 +222,13 @@ tagged_union cap capType {
     tag io_page_table_cap   0x0f
 #endif
     tag io_port_cap         0x1f
+#ifdef CONFIG_VTX
     tag vcpu_cap            0x2f
     tag ept_pt_cap          0x3f
     tag ept_pd_cap          0x4f
     tag ept_pdpt_cap        0x5f
     tag ept_pml4_cap        0x6f
+#endif
 }
 
 ---- IA32 specific fault types
@@ -446,6 +456,8 @@ block pte {
     field       present             1
 }
 
+#ifdef CONFIG_VTX
+
 block ept_pml4e {
     padding                         32
     field_high   pdpt_base_address  20
@@ -515,6 +527,8 @@ block vmx_eptp {
     field depth_minus_1             3
     field memory_type               3
 }
+
+#endif
 
 block asid_map_none {
     padding                         30

@@ -43,7 +43,9 @@ enum vm_page_map_type {
 #ifdef CONFIG_IOMMU
     X86_MappingIOSpace,
 #endif
+#ifdef CONFIG_VTX
     X86_MappingEPT
+#endif
 };
 typedef word_t vm_page_map_type_t;
 

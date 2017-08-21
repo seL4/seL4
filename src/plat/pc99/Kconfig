@@ -73,7 +73,7 @@ config IOMMU
 
 config VTX
     bool "VTX support"
-        depends on PLAT_PC99
+        depends on PLAT_PC99 && !VERIFICATION_BUILD
         default n
         help
             VTX support

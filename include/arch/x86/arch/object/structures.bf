@@ -164,6 +164,8 @@ block cpuid_001h_ebx {
     field brand             8
 }
 
+#ifdef CONFIG_VTX
+
 block vmx_basic_msr {
     padding                 8
     field true_msrs         1
@@ -226,3 +228,5 @@ block vmx_data_exit_qualification_control_regster {
     field access_type   2
     field cr            4
 }
+
+#endif
