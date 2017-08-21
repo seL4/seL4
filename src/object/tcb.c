@@ -177,19 +177,19 @@ void tcbDebugAppend(tcb_t *tcb)
     /* prepend to the list */
     tcb->tcbDebugPrev = NULL;
 
-    if (NODE_STATE(ksDebugTCBs)) {
-        NODE_STATE(ksDebugTCBs)->tcbDebugPrev = tcb;
+    if (NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)) {
+        NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)->tcbDebugPrev = tcb;
     }
 
-    tcb->tcbDebugNext = NODE_STATE(ksDebugTCBs);
-    NODE_STATE(ksDebugTCBs) = tcb;
+    tcb->tcbDebugNext = NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity);
+    NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity) = tcb;
 }
 
 void tcbDebugRemove(tcb_t *tcb)
 {
-    assert(NODE_STATE(ksDebugTCBs) != NULL);
-    if (tcb == NODE_STATE(ksDebugTCBs)) {
-        NODE_STATE(ksDebugTCBs) = NODE_STATE(ksDebugTCBs)->tcbDebugNext;
+    assert(NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity) != NULL);
+    if (tcb == NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)) {
+        NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity) = NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)->tcbDebugNext;
     } else {
         assert(tcb->tcbDebugPrev);
         tcb->tcbDebugPrev->tcbDebugNext = tcb->tcbDebugNext;
@@ -382,11 +382,16 @@ invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
     /* remove the tcb from scheduler queue in case it is already in one
      * and add it to new queue if required */
     tcbSchedDequeue(thread);
+#ifdef CONFIG_DEGBUD_BUILD
+    tcbDebugRemove(thread);
+#endif
     thread->tcbAffinity = affinity;
     if (isRunnable(thread)) {
         SCHED_APPEND(thread);
     }
-
+#if CONFIG_DEBUG_BUILD
+    tcbDebugAppend(thread);
+#endif
     /* reschedule current cpu if tcb moves itself */
     if (thread == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
