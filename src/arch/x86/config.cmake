@@ -139,8 +139,8 @@ config_choice(KernelXSave KERNEL_XSAVE "The XSAVE area supports multiple instruc
         XSAVEOPT -> Save state taking advantage of both the init optimization and modified optimization \
         XSAVES -> Save state taking advantage of the modified optimization. This instruction is only \
             available in OS code, and is the preferred save method if it exists."
-    "XSAVEOPT;KernelXSaveXsaveOpt;XSAVE_XSAVEOPT;KernelFPUXSave"
-    "XSAVE;KernelXSaveXsave;XSAVE_XSAVE;KernelFPUXSave"
+    "XSAVEOPT;KernelXSaveXSaveOpt;XSAVE_XSAVEOPT;KernelFPUXSave"
+    "XSAVE;KernelXSaveXSave;XSAVE_XSAVE;KernelFPUXSave"
     "XSAVEC;KernelXSaveXSaveC;XSAVE_XSAVEC;KernelFPUXSave"
 )
 config_string(KernelXSaveFeatureSet XSAVE_FEATURE_SET
