@@ -16,7 +16,8 @@
 
 #ifdef ENABLE_SMP_SUPPORT
 
-void migrateTCB(tcb_t *tcb, word_t new_core) {
+void migrateTCB(tcb_t *tcb, word_t new_core)
+{
 #ifdef CONFIG_DEBUG_BUILD
     tcbDebugRemove(tcb);
 #endif
