@@ -33,6 +33,10 @@
 #ifndef CONFIG_BOOT_THREAD_TIME_SLICE
 #define CONFIG_BOOT_THREAD_TIME_SLICE 5
 #endif
+
+#ifndef CONFIG_KERNEL_WCET_SCALE
+#define CONFIG_KERNEL_WCET_SCALE 1
+#endif
 #endif
 
 /* the number of scheduler domains */

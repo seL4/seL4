@@ -442,4 +442,16 @@ config_option(
 # of the currently running thread without a capability.
 config_set(KernelSetTLSBaseSelf SET_TLS_BASE_SELF ${KernelSetTLSBaseSelf})
 
+config_string(
+    KernelWcetScale KERNEL_WCET_SCALE
+    "Multiplier to scale kernel WCET estimate by: the kernel WCET estimate  \
+     is used to ensure a thread has enough budget to get in and out of the  \
+     kernel. When running in a simulator the WCET estimate, which is tuned  \
+     for hardware, may not be sufficient. This option provides a hacky knob \
+     that can be fiddled with when running inside a simulator."
+    DEFAULT 1
+    UNQUOTE
+    DEPENDS "KernelIsMCS" UNDEF_DISABLED
+)
+
 add_config_library(kernel "${configure_string}")
