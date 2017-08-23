@@ -255,4 +255,13 @@ config_option(KernelDebugDisablePrefetchers DEBUG_DISABLE_PREFETCHERS
     DEPENDS "KernelArchX86 OR KernelPlatformHikey"
 )
 
+config_string(KernelWcetScale KERNEL_WCET_SCALE,
+    "Multiplier to scale kernel WCET estimate by: the kernel WCET estimate  \
+     is used to ensure a thread has enough budget to get in and out of the  \
+     kernel. When running in a simulator the WCET estimate, which is tuned  \
+     for hardware, may not be sufficient. This option provides a hacky knob \
+     that can be fiddled with when running inside a simulator."
+     DEFAULT 1
+)
+
 add_config_library(kernel "${configure_string}")
