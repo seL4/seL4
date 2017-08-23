@@ -11,4 +11,5 @@
 DIRECTORIES += src/model
 
 C_SOURCES += src/model/preemption.c \
-             src/model/statedata.c
+             src/model/statedata.c \
+             src/model/smp.c

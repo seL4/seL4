@@ -377,21 +377,13 @@ remoteTCBStall(tcb_t *tcb)
 static exception_t
 invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
 {
-    Arch_migrateTCB(thread);
-
     /* remove the tcb from scheduler queue in case it is already in one
      * and add it to new queue if required */
     tcbSchedDequeue(thread);
-#ifdef CONFIG_DEGBUD_BUILD
-    tcbDebugRemove(thread);
-#endif
-    thread->tcbAffinity = affinity;
+    migrateTCB(thread, affinity);
     if (isRunnable(thread)) {
         SCHED_APPEND(thread);
     }
-#if CONFIG_DEBUG_BUILD
-    tcbDebugAppend(thread);
-#endif
     /* reschedule current cpu if tcb moves itself */
     if (thread == NODE_STATE(ksCurThread)) {
         rescheduleRequired();

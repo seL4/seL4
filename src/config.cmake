@@ -34,6 +34,7 @@ add_sources(CFILES
     src/object/untyped.c
     src/model/preemption.c
     src/model/statedata.c
+    src/model/smp.c
     src/machine/io.c
     src/machine/registerset.c
     src/machine/fpu.c

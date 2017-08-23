@@ -31,6 +31,8 @@ typedef struct smpStatedata {
 
 extern smpStatedata_t ksSMP[CONFIG_MAX_NUM_NODES];
 
+void migrateTCB(tcb_t *tcb, word_t new_core);
+
 #endif /* ENABLE_SMP_SUPPORT */
 
 #endif /* __MODEL_SMP_H_ */
