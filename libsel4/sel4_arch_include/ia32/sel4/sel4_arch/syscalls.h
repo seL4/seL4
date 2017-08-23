@@ -378,7 +378,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word* sender, seL4_CPtr reply)
     seL4_Word badge;
     seL4_Word mr0;
 
-    x86_sys_recv(seL4_SysRecv, src, &badge, &info.words[0], &mr0, reply);
+    x86_sys_recv(seL4_SysNBRecv, src, &badge, &info.words[0], &mr0, reply);
 
     seL4_SetMR(0, mr0);
 
