@@ -451,6 +451,16 @@ menu "seL4 System Parameters"
             be taken as there is no guard below the stack so setting this too
             small will cause random memory corruption
 
+    config KERNEL_WCET_SCALE
+        int "Multiplier to scale kernel WCET estimate by"
+        default 1
+        help
+            The kernel WCET estimate is used to ensure a thread has enough budget
+            to get in and out of the kernel. When running in a simulator the WCET
+            estimate, which is tuned for hardware, may not be sufficient. This
+            option provides a hacky knob that can be fiddled with when running
+            inside a simulator
+
 config AARCH32_FPU_ENABLE_CONTEXT_SWITCH
     bool "Enable hardware VFP and SIMD context switch"
     depends on ARCH_AARCH32 && !ARCH_ARM_V6 && !VERIFICATION_BUILD 
