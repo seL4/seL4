@@ -38,7 +38,7 @@
 /* To do an operation in the kernel, the thread must have
  * at least this much budget - see comment on refill_sufficient */
 #define MIN_BUDGET_US (2u * getKernelWcetUs() * CONFIG_KERNEL_WCET_SCALE)
-#define MIN_BUDGET    (2u * getKernelWcetTicks() * CONFIG_KERNEL_SCET_SCALE)
+#define MIN_BUDGET    (2u * getKernelWcetTicks() * CONFIG_KERNEL_WCET_SCALE)
 
 /* Short hand for accessing refill queue items */
 #define REFILL_INDEX(sc, index) (((refill_t *) (SC_REF(sc) + sizeof(sched_context_t)))[index])
