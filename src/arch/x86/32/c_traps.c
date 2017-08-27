@@ -117,7 +117,7 @@ void NORETURN VISIBLE restore_user_context(void)
      * we should 'enter' it again */
     if (ARCH_NODE_STATE(x86KSPendingInterrupt) != int_invalid) {
         /* put this in service */
-        irq_t irq = servicePendingIRQ();
+        interrupt_t irq = servicePendingIRQ();
         /* reset our stack and jmp to the IRQ entry point */
         asm volatile(
             /* round our stack back to the top to reset it */

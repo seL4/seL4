@@ -45,12 +45,12 @@ receivePendingIRQ(void)
                  : "=m"(ARCH_NODE_STATE(x86KSPendingInterrupt)));
 }
 
-static inline irq_t
+static inline interrupt_t
 servicePendingIRQ(void)
 {
     assert(ARCH_NODE_STATE(x86KScurInterrupt) == int_invalid);
     assert(ARCH_NODE_STATE(x86KSPendingInterrupt) != int_invalid);
-    irq_t ret = ARCH_NODE_STATE(x86KSPendingInterrupt);
+    interrupt_t ret = ARCH_NODE_STATE(x86KSPendingInterrupt);
     ARCH_NODE_STATE(x86KSPendingInterrupt) = int_invalid;
     return ret;
 }
