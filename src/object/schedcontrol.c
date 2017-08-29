@@ -58,10 +58,8 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
          * we can just populate the parameters from now */
         refill_new(target, max_refills, budget, period);
 #ifdef ENABLE_SMP_SUPPORT
-        if (core != target->scCore && target->scTcb) {
-            /* if the core changed and the SC has a tcb, the SC is getting
-             * budget - so migrate it */
-            target->scCore = core;
+        target->scCore = core;
+        if (target->scTcb && target->scTcb->tcbAffinity != target->scCore) {
             migrateTCB(target->scTcb, target->scCore);
         }
 #endif /* ENABLE_SMP_SUPPORT */
