@@ -136,7 +136,7 @@ invokeSchedContext_Unbind(sched_context_t *sc)
     return EXCEPTION_NONE;
 }
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
 static inline void
 maybeStallSC(sched_context_t *sc)
 {
@@ -272,7 +272,7 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
     tcb->tcbSchedContext = sc;
     sc->scTcb = tcb;
 
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
     if (tcb->tcbAffinity != sc->scCore) {
         if (isSchedulable(tcb)) {
             SMP_COND_STATEMENT(remoteTCBStall(tcb));
