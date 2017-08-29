@@ -333,7 +333,6 @@ schedContext_donate(sched_context_t *sc, tcb_t *to)
     sc->scTcb = to;
     to->tcbSchedContext = sc;
 
-    SMP_COND_STATEMENT(remoteTCBStall(to));
     SMP_COND_STATEMENT(migrateTCB(to, sc->scCore));
 }
 
