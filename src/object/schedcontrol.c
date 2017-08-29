@@ -62,8 +62,7 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
             /* if the core changed and the SC has a tcb, the SC is getting
              * budget - so migrate it */
             target->scCore = core;
-            Arch_migrateTCB(target->scTcb);
-            target->scTcb->tcbAffinity = target->scCore;
+            migrateTCB(target->scTcb, target->scCore);
         }
 #endif /* ENABLE_SMP_SUPPORT */
     }
