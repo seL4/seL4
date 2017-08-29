@@ -57,7 +57,7 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         /* the scheduling context isn't active - it's budget is not being used, so
          * we can just populate the parameters from now */
         refill_new(target, max_refills, budget, period);
-#if CONFIG_MAX_NUM_NODES > 1
+#ifdef ENABLE_SMP_SUPPORT
         if (core != target->scCore && target->scTcb) {
             /* if the core changed and the SC has a tcb, the SC is getting
              * budget - so migrate it */
@@ -65,7 +65,7 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
             Arch_migrateTCB(target->scTcb);
             target->scTcb->tcbAffinity = target->scCore;
         }
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
     }
 
     if (target->scTcb && target->scRefillMax > 0) {
