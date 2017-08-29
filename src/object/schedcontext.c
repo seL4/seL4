@@ -275,7 +275,7 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 #ifdef ENABLE_SMP_SUPPORT
     if (tcb->tcbAffinity != sc->scCore) {
         if (isSchedulable(tcb)) {
-            SMP_COND_STATEMENT(remoteTCBStall(tcb));
+            remoteTCBStall(tcb);
             tcbSchedDequeue(tcb);
         }
         Arch_migrateTCB(tcb);
