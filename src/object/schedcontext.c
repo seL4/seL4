@@ -278,8 +278,7 @@ schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
             remoteTCBStall(tcb);
             tcbSchedDequeue(tcb);
         }
-        Arch_migrateTCB(tcb);
-        tcb->tcbAffinity = tcb->tcbSchedContext->scCore;
+        migrateTCB(tcb, sc->scCore);
     }
 #endif
 
@@ -335,8 +334,7 @@ schedContext_donate(sched_context_t *sc, tcb_t *to)
     to->tcbSchedContext = sc;
 
     SMP_COND_STATEMENT(remoteTCBStall(to));
-    SMP_COND_STATEMENT(Arch_migrateTCB(to));
-    SMP_COND_STATEMENT(to->tcbAffinity = to->tcbSchedContext->scCore;)
+    SMP_COND_STATEMENT(migrateTCB(to, sc->scCore));
 }
 
 void
