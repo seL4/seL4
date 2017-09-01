@@ -44,7 +44,7 @@ typedef struct seL4_VBEModeInfoBlock {
         seL4_Uint16 winBSeg;
         seL4_Uint32 winFuncPtr;
         seL4_Uint16 bytesPerScanLine;
-    } vbe_common;
+    } SEL4_PACKED vbe_common;
 
     /* VBE 1.2+ */
     struct  vbe_info_12_part1 {
@@ -59,7 +59,7 @@ typedef struct seL4_VBEModeInfoBlock {
         seL4_Uint8  bankSize;
         seL4_Uint8  imagePages;
         seL4_Uint8  reserved1;
-    } vbe12_part1;
+    } SEL4_PACKED vbe12_part1;
 
     struct vbe_info_12_part2 {
         seL4_Uint8  redLen;
@@ -71,13 +71,13 @@ typedef struct seL4_VBEModeInfoBlock {
         seL4_Uint8  rsvdLen;
         seL4_Uint8  rsvdOff;
         seL4_Uint8  directColorInfo;  /* direct color mode attributes */
-    } vbe12_part2;
+    } SEL4_PACKED vbe12_part2;
 
     /* VBE 2.0+ */
     struct  vbe_info_20 {
         seL4_Uint32 physBasePtr;
         seL4_Uint8  reserved2[6];
-    } vbe20;
+    } SEL4_PACKED vbe20;
 
     /* VBE 3.0+ */
     struct vbe_info_30 {
@@ -95,7 +95,7 @@ typedef struct seL4_VBEModeInfoBlock {
         seL4_Uint32 maxPixelClock;
         seL4_Uint16 modeId;
         seL4_Uint8  depth;
-    } vbe30;
+    } SEL4_PACKED vbe30;
 
     seL4_Uint8 reserved3[187];
 } SEL4_PACKED seL4_VBEModeInfoBlock_t;
