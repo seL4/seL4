@@ -21,6 +21,7 @@
 
 extern bool_t benchmark_log_utilisation_enabled;
 
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
 static inline void handleOverflowIRQ(void)
 {
     if (likely(benchmark_log_utilisation_enabled)) {
@@ -31,6 +32,7 @@ static inline void handleOverflowIRQ(void)
         armv_handleOverflowIRQ();
     }
 }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 #endif /* ARCH_BENCHMARK_OV_H */
