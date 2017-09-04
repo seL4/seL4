@@ -36,7 +36,12 @@ void benchmark_track_utilisation_dump(void)
 
     tcb = TCB_PTR(cap_thread_cap_get_capTCBPtr(lu_ret.cap));
     buffer[BENCHMARK_TCB_UTILISATION] = tcb->benchmark.utilisation; /* Requested thread utilisation */
-    buffer[BENCHMARK_IDLE_UTILISATION] = NODE_STATE(ksIdleThread)->benchmark.utilisation; /* Idle thread utilisation */
+    buffer[BENCHMARK_IDLE_LOCALCPU_UTILISATION] = NODE_STATE(ksIdleThread)->benchmark.utilisation; /* Idle thread utilisation of current CPU */
+#if CONFIG_MAX_NUM_NODES > 1
+    buffer[BENCHMARK_IDLE_TCBCPU_UTILISATION] = NODE_STATE_ON_CORE(ksIdleThread, tcb->tcbAffinity)->benchmark.utilisation; /* Idle thread utilisation of CPU the TCB is running on */
+#else
+    buffer[BENCHMARK_IDLE_TCBCPU_UTILISATION] = buffer[BENCHMARK_IDLE_LOCALCPU_UTILISATION];
+#endif
 
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
     buffer[BENCHMARK_TOTAL_UTILISATION] =
