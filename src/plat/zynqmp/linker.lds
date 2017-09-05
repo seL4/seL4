@@ -24,7 +24,8 @@ ENTRY(_start)
 PHYS_BASE = 0x00000000;
 KERNEL_BASE = 0xe0000000;
 #elif defined(CONFIG_ARCH_AARCH64)
-#error "64-bit Zynq UltraScale+ MPSoC is not currently supported"
+PHYS_BASE = 0x00000000;
+KERNEL_BASE = 0xffffff8000000000;
 #endif
 KERNEL_OFFSET = KERNEL_BASE - PHYS_BASE;
 

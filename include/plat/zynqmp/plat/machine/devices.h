@@ -21,16 +21,13 @@
 #ifndef __PLAT_MACHINE_DEVICES_H
 #define __PLAT_MACHINE_DEVICES_H
 
+#include <plat_mode/machine/devices.h>
+
+#define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR
+#define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR
+
 /* These devices are used by the seL4 kernel. */
 #define UART_PADDR                  UART0_PADDR
-
-#define UART_PPTR                   0xfff01000
-#define GIC_PL390_DISTRIBUTOR_PPTR  0xfff03000
-#define GIC_PL390_CONTROLLER_PPTR   0xfff04000
-#define ARM_DEBUG_MMAPPING_PPTR     0xfff05000
-
-
-
 
 #define ACPU_GIC_PADDR              0xF9000000
 #define ACPU_GIC_DISTRIBUTOR_PADDR  0xF9010000
