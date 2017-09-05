@@ -243,6 +243,7 @@ menu "seL4 System"
             depends on ARCH_ARM
             select ARM_CORTEX_A53
             select ARCH_ARM_V8A
+            select HAVE_FPU if ARCH_AARCH64
             help
                 Support for Xilinx Zynq UltraScale+ MPSoC platforms.
 
