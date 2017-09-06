@@ -487,4 +487,69 @@ The caller must possess a \obj{Domain} cap and the thread's \obj{TCB} cap.
 The initial thread starts with a \obj{Domain} cap (see
 \autoref{sec:messageinfo}).
 
+\section{Virtualisation}
+\label{sec:virt}
 
+Hardware execution virtualisation is supported on specific arm and x86 platforms. The interface is exposed through a series
+of kernel objects, invocations and syscalls that allow the user to take advantage of hardware
+virtualisation features.
+
+Hardware virtualisation allows for a thread to perform instructions and operations as if it were
+running at a higher privilege level. As higher privilege levels typically have access to
+additional machine registers and other pieces of state a \obj{VCPU} object is introduced to act
+as storage for this state. For simplicity we refer to this virtualised higher privileged level as
+'guest mode'. \obj{VCPU}s are bound in a one-to-one relationship with a \obj{TCB} in order
+to provide a thread with this ability to run in higher privilege mode. See the section on
+ARM or x86 for more precise details.
+
+\obj{VCPU} objects also have additional, architecture specific, invocations for manipulating
+the additional state or other virtualisation controls provided by the hardware. Binding of
+a \obj{VCPU} to a \obj{TCB} is done by an invocation on the \obj{VCPU} only, and not the \obj{TCB}.
+
+The provided objects and invocations are, generally speaking, the thinnest possible shim over
+the underlying hardware primitives and operations. As a result an in depth familiarity with
+the underlying architecture specific harwdare mechanisms is required to use these objects, and
+such familiarity is therefore assumed in description.
+
+\subsection{ARM}
+
+When a \obj{TCB} has a bound \obj{VCPU} it is allowed to have the mode portion of the
+\texttt{cpsr} register set to values other than \texttt{user}. Specifically it may have any value other than
+\texttt{hypervisor}.
+
+TODO: this section needs more detail
+
+\subsection{x86}
+
+A \obj{TCB} with a bound \obj{VCPU} has two execution modes; one is the original thread just as
+if there was no bound \obj{VCPU}, and the other is the guest mode execution using the
+\obj{VCPU}. Switching from regular execution mode into the guest execution mode is
+done by using the \apifunc{seL4\_VMEnter}{sel4_vmenter} syscall. Executing this syscall causes the thread, whenever
+it is scheduled thereafter, to execute using the higher privlidged mode controlled by the \obj{VCPU}.
+Should the guest execution mode generate any kind of fault, or if a message arrives
+on the \obj{TCB}s bound notification, the \obj{TCB} will be switched back to regular mode
+and the \apifunc{seL4\_VMEnter}{sel4_vmenter} syscall will return with a message indicating the reason for return.
+
+\obj{VCPU} state and execution is controlled through the \apifunc{seL4\_VCPU\_ReadVMCS}{x86_vcpu_readvmcs}
+and \apifunc{seL4\_VCPU\_WriteVMCS}{x86_vcpu_writevmcs} invocations.
+These are very thin wrappers around the hardware \texttt{vmread} and \texttt{vmwrite} instructions and the kernel
+merely does enough validation on the parameters to ensure the \obj{VCPU} is not configured
+to run in such a way as to violate any kernel properties. For example, it is not possible to
+disable the use of External Interrupt Exiting, as this would prevent the kernel from receiving
+timer interrupts and allow the thread to monopolise CPU time.
+
+Memory access of the guest execution mode is controlled by requiring the use of Extended
+Page Tables (EPT). A series of EPT related paging structure objects (\obj{EPTPML4}, \obj{EPTPDPT}, \obj{EPTPD}, \obj{EPTPT})
+exist and are manipulated in exactly the same manner as the objects for the regular virtual
+address space. Once constructed a \obj{TCB} can be given an \obj{EPTPML4} as an EPT root with \apifunc{seL4\_TCB\_SetEPTRoot}{x86_set_eptroot},
+which serves as the vspace root when executing in guest mode, with the vspace root set
+with \apifunc{seL4\_TCB\_SetSPace}{tcb_setspace} or \apifunc{seL4\_TCB\_Configure}{tcb_configure}
+continuing to provide translation when the TCB is executing in its normal mode.
+
+Direct access to I/O ports can be given to the privlidged execution mode through the
+\apifunc{seL4\_X86\_VCPU\_EnableIOPort}{x86_vcpu_enableioport} invocation and allows the provided I/O port capability to be
+linked to the VCPU, and a subset of its I/O port range to be made accessible to the \obj{VCPU}.
+Linking means that an I/O port capability can only be used in a single \apifunc{seL4\_X86\_VCPU\_EnableIOPort}{x86_vcpu_enableioport}
+invocation and a second invocation will undo the previous one. The link also means that
+if the I/O port capability is deleted for any reason the access will be correspondingly removed
+from the \obj{VCPU}.
