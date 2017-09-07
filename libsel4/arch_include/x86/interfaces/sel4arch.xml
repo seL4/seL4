@@ -239,7 +239,7 @@
     </interface>
 
     <interface name="seL4_X86_ASIDPool" manual_name="ASID Pool">
-        <method id="X86ASIDPoolAssign" name="Assign" manual_label='asid_pool_assign'>
+        <method id="X86ASIDPoolAssign" name="Assign" manual_label='asidpool_assign'>
             <brief>
                 Assign an ASID pool.
             </brief>
