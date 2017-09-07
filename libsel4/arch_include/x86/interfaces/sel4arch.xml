@@ -369,7 +369,7 @@
     </interface>
     <interface name="seL4_TCB" manual_name="TCB">
         <method id="TCBSetEPTRoot" name="SetEPTRoot" condition="defined(CONFIG_VTX)" manual_name="Set EPT Root">
-            <param dir="in" name="vcpu" type="seL4_CPtr"/>
+            <param dir="in" name="eptpml4" type="seL4_CPtr"/>
         </method>
     </interface>
     <interface name="seL4_X86_VCPU" manual_name="VCPU">
