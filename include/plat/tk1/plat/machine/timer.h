@@ -29,7 +29,7 @@ getTimerPrecision(void)
 CONST static inline time_t
 getKernelWcetUs(void)
 {
-    return 10u;
+    return 100u;
 }
 
 #endif /* !__PLAT_MACHINE_TIMER_H */
