@@ -387,7 +387,7 @@
         </method>
         <method id="X86VCPUEnableIOPort" name="EnableIOPort" condition="defined(CONFIG_VTX)"
             manual_name="Enable IO Port">
-            <param dir="in" name="ioPort" type="seL4_CNode"/>
+            <param dir="in" name="ioPort" type="seL4_CPtr"/>
             <param dir="in" name="low" type="seL4_Word"/>
             <param dir="in" name="high" type="seL4_Word"/>
         </method>
