@@ -34,6 +34,13 @@ exception_t preemptionPoint(void)
         ksWorkUnitsCompleted = 0;
         if (isIRQPending()) {
             return EXCEPTION_PREEMPTED;
+#ifdef CONFIG_KERNEL_MCS
+        } else {
+            updateTimestamp();
+            if (!checkBudget()) {
+                return EXCEPTION_PREEMPTED;
+            }
+#endif
         }
     }
 
