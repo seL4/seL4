@@ -63,7 +63,10 @@ typedef struct boot_state {
     paddr_t      drhu_list[MAX_NUM_DRHU]; /* list of physical addresses of the IOMMUs */
     acpi_rmrr_list_t rmrr_list;
     acpi_rsdp_t  acpi_rsdp; /* copy of the rsdp */
+    paddr_t      mods_end_paddr; /* physical address where boot modules end */
+    paddr_t      boot_module_start; /* physical address of first boot module */
     uint32_t     num_cpus;    /* number of detected cpus */
+    uint32_t     mem_lower;   /* lower memory size for boot code of APs to run in real mode */
     cpu_id_t     cpus[CONFIG_MAX_NUM_NODES];
     mem_p_regs_t mem_p_regs;  /* physical memory regions */
     seL4_X86_BootInfo_VBE vbe_info; /* Potential VBE information from multiboot */
@@ -114,11 +117,11 @@ find_load_paddr(paddr_t min_paddr, word_t image_size)
 }
 
 BOOT_CODE static paddr_t
-load_boot_module(multiboot_module_t* boot_module, paddr_t load_paddr)
+load_boot_module(word_t boot_module_start, paddr_t load_paddr)
 {
     v_region_t v_reg;
     word_t entry;
-    Elf_Header_t* elf_file = (Elf_Header_t*)(word_t)boot_module->start;
+    Elf_Header_t* elf_file = (Elf_Header_t*)boot_module_start;
 
     if (!elf_checkFile(elf_file)) {
         printf("Boot module does not contain a valid ELF image\n");
@@ -379,29 +382,14 @@ is_compiled_for_microarchitecture(void)
 }
 
 static BOOT_CODE bool_t
-try_boot_sys(
-    unsigned long multiboot_magic,
-    multiboot_info_t* mbi
-)
+try_boot_sys(void)
 {
-    /* ==== following code corresponds to the "select" in abstract specification ==== */
-
-    paddr_t mods_end_paddr; /* physical address where boot modules end */
-    paddr_t load_paddr;
-    word_t i;
+    paddr_t mods_end_paddr = boot_state.mods_end_paddr;
     p_region_t ui_p_regs;
-    multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->part1.mod_list;
+    paddr_t load_paddr;
 
-    if (multiboot_magic != MULTIBOOT_MAGIC) {
-        printf("Boot loader not multiboot compliant\n");
-        return false;
-    }
-    cmdline_parse((const char *)(word_t)mbi->part1.cmdline, &cmdline_opt);
-
-    if ((mbi->part1.flags & MULTIBOOT_INFO_MEM_FLAG) == 0) {
-        printf("Boot loader did not provide information about physical memory size\n");
-        return false;
-    }
+    boot_state.ki_p_reg.start = PADDR_LOAD;
+    boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
 
     if (!x86_cpuid_initialize()) {
         printf("Warning: Your x86 CPU has an unsupported vendor, '%s'.\n"
@@ -417,60 +405,12 @@ try_boot_sys(
 
 #ifdef ENABLE_SMP_SUPPORT
     /* copy boot code for APs to lower memory to run in real mode */
-    if (!copy_boot_code_aps(mbi->part1.mem_lower)) {
+    if (!copy_boot_code_aps(boot_state.mem_lower)) {
         return false;
     }
     /* Initialize any kernel TLS */
     mode_init_tls(0);
 #endif /* ENABLE_SMP_SUPPORT */
-
-    /* initialize the memory. We track two kinds of memory regions. Physical memory
-     * that we will use for the kernel, and physical memory regions that we must
-     * not give to the user. Memory regions that must not be given to the user
-     * include all the physical memory in the kernel window, but also includes any
-     * important or kernel devices. */
-    boot_state.mem_p_regs.count = 0;
-    init_allocated_p_regions();
-    if (mbi->part1.flags & MULTIBOOT_INFO_MMAP_FLAG) {
-        if (!parse_mem_map(mbi->part2.mmap_length, mbi->part2.mmap_addr)) {
-            return false;
-        }
-        uint32_t multiboot_mmap_length = mbi->part2.mmap_length;
-        if (multiboot_mmap_length > (SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t))) {
-            multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
-            printf("Warning: Multiboot has reported more memory map entries, %zd, "
-                   "than the max amount that will be passed in the bootinfo, %d. "
-                   "These extra regions will still be turned into untyped caps.",
-                   multiboot_mmap_length / sizeof(seL4_X86_mb_mmap_t), SEL4_MULTIBOOT_MAX_MMAP_ENTRIES);
-        }
-        memcpy(&boot_state.mb_mmap_info.mmap, (void*)(word_t)mbi->part2.mmap_addr, multiboot_mmap_length);
-        boot_state.mb_mmap_info.mmap_length = multiboot_mmap_length;
-    } else {
-        /* calculate memory the old way */
-        p_region_t avail;
-        avail.start = HIGHMEM_PADDR;
-        avail.end = ROUND_DOWN(avail.start + (mbi->part1.mem_upper << 10), PAGE_BITS);
-        if (!add_mem_p_regs(avail)) {
-            return false;
-        }
-    }
-
-    boot_state.ki_p_reg.start = PADDR_LOAD;
-    boot_state.ki_p_reg.end = kpptr_to_paddr(ki_end);
-
-    /* copy VESA information from multiboot header */
-    if ((mbi->part1.flags & MULTIBOOT_INFO_GRAPHICS_FLAG) == 0) {
-        boot_state.vbe_info.vbeMode = -1;
-        printf("Multiboot gave us no video information\n");
-    } else {
-        boot_state.vbe_info.vbeInfoBlock = *(seL4_VBEInfoBlock_t*)(seL4_Word)mbi->part2.vbe_control_info;
-        boot_state.vbe_info.vbeModeInfoBlock = *(seL4_VBEModeInfoBlock_t*)(seL4_Word)mbi->part2.vbe_mode_info;
-        boot_state.vbe_info.vbeMode = mbi->part2.vbe_mode;
-        printf("Got VBE info in multiboot. Current video mode is %d\n", mbi->part2.vbe_mode);
-        boot_state.vbe_info.vbeInterfaceSeg = mbi->part2.vbe_interface_seg;
-        boot_state.vbe_info.vbeInterfaceOff = mbi->part2.vbe_interface_off;
-        boot_state.vbe_info.vbeInterfaceLen = mbi->part2.vbe_interface_len;
-    }
 
     printf("Kernel loaded to: start=0x%lx end=0x%lx size=0x%lx entry=0x%lx\n",
            boot_state.ki_p_reg.start,
@@ -487,7 +427,7 @@ try_boot_sys(
         pic_disable();
     }
 
-    /* get ACPI root table */
+    /* validate the ACPI table */
     if (!acpi_init(&boot_state.acpi_rsdp)) {
         return false;
     }
@@ -528,44 +468,13 @@ try_boot_sys(
         }
     }
 
-    if (!(mbi->part1.flags & MULTIBOOT_INFO_MODS_FLAG)) {
-        printf("Boot loader did not provide information about boot modules\n");
-        return false;
-    }
-
-    printf("Detected %d boot module(s):\n", mbi->part1.mod_count);
-
-    if (mbi->part1.mod_count < 1) {
-        printf("Expect at least one boot module (containing a userland image)\n");
-        return false;
-    }
-
-    mods_end_paddr = 0;
-
-    for (i = 0; i < mbi->part1.mod_count; i++) {
-        printf(
-            "  module #%ld: start=0x%x end=0x%x size=0x%x name='%s'\n",
-            i,
-            modules[i].start,
-            modules[i].end,
-            modules[i].end - modules[i].start,
-            (char *) (long)modules[i].name
-        );
-        if ((sword_t)(modules[i].end - modules[i].start) <= 0) {
-            printf("Invalid boot module size! Possible cause: boot module file not found by QEMU\n");
-            return false;
-        }
-        if (mods_end_paddr < modules[i].end) {
-            mods_end_paddr = modules[i].end;
-        }
-    }
     mods_end_paddr = ROUND_UP(mods_end_paddr, PAGE_BITS);
     assert(mods_end_paddr > boot_state.ki_p_reg.end);
 
     printf("ELF-loading userland images from boot modules:\n");
     load_paddr = mods_end_paddr;
 
-    load_paddr = load_boot_module(modules, load_paddr);
+    load_paddr = load_boot_module(boot_state.boot_module_start, load_paddr);
     if (!load_paddr) {
         return false;
     }
@@ -617,13 +526,123 @@ try_boot_sys(
     return true;
 }
 
+static BOOT_CODE bool_t
+try_boot_sys_mbi1(
+    multiboot_info_t* mbi
+)
+{
+    word_t i;
+    multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->part1.mod_list;
+
+    cmdline_parse((const char *)(word_t)mbi->part1.cmdline, &cmdline_opt);
+
+    if ((mbi->part1.flags & MULTIBOOT_INFO_MEM_FLAG) == 0) {
+        printf("Boot loader did not provide information about physical memory size\n");
+        return false;
+    }
+
+    if (!(mbi->part1.flags & MULTIBOOT_INFO_MODS_FLAG)) {
+        printf("Boot loader did not provide information about boot modules\n");
+        return false;
+    }
+
+    printf("Detected %d boot module(s):\n", mbi->part1.mod_count);
+
+    if (mbi->part1.mod_count < 1) {
+        printf("Expect at least one boot module (containing a userland image)\n");
+        return false;
+    }
+
+    for (i = 0; i < mbi->part1.mod_count; i++) {
+        printf(
+            "  module #%ld: start=0x%x end=0x%x size=0x%x name='%s'\n",
+            i,
+            modules[i].start,
+            modules[i].end,
+            modules[i].end - modules[i].start,
+            (char *) (long)modules[i].name
+        );
+        if ((sword_t)(modules[i].end - modules[i].start) <= 0) {
+            printf("Invalid boot module size! Possible cause: boot module file not found by QEMU\n");
+            return false;
+        }
+        if (boot_state.mods_end_paddr < modules[i].end) {
+            boot_state.mods_end_paddr = modules[i].end;
+        }
+    }
+
+    /* initialize the memory. We track two kinds of memory regions. Physical memory
+     * that we will use for the kernel, and physical memory regions that we must
+     * not give to the user. Memory regions that must not be given to the user
+     * include all the physical memory in the kernel window, but also includes any
+     * important or kernel devices. */
+    boot_state.mem_p_regs.count = 0;
+    init_allocated_p_regions();
+    if (mbi->part1.flags & MULTIBOOT_INFO_MMAP_FLAG) {
+        if (!parse_mem_map(mbi->part2.mmap_length, mbi->part2.mmap_addr)) {
+            return false;
+        }
+        uint32_t multiboot_mmap_length = mbi->part2.mmap_length;
+        if (multiboot_mmap_length > (SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t))) {
+            multiboot_mmap_length = SEL4_MULTIBOOT_MAX_MMAP_ENTRIES * sizeof(seL4_X86_mb_mmap_t);
+            printf("Warning: Multiboot has reported more memory map entries, %zd, "
+                   "than the max amount that will be passed in the bootinfo, %d. "
+                   "These extra regions will still be turned into untyped caps.",
+                   multiboot_mmap_length / sizeof(seL4_X86_mb_mmap_t), SEL4_MULTIBOOT_MAX_MMAP_ENTRIES);
+        }
+        memcpy(&boot_state.mb_mmap_info.mmap, (void*)(word_t)mbi->part2.mmap_addr, multiboot_mmap_length);
+        boot_state.mb_mmap_info.mmap_length = multiboot_mmap_length;
+    } else {
+        /* calculate memory the old way */
+        p_region_t avail;
+        avail.start = HIGHMEM_PADDR;
+        avail.end = ROUND_DOWN(avail.start + (mbi->part1.mem_upper << 10), PAGE_BITS);
+        if (!add_mem_p_regs(avail)) {
+            return false;
+        }
+    }
+
+    /* copy VESA information from multiboot header */
+    if ((mbi->part1.flags & MULTIBOOT_INFO_GRAPHICS_FLAG) == 0) {
+        boot_state.vbe_info.vbeMode = -1;
+        printf("Multiboot gave us no video information\n");
+    } else {
+        boot_state.vbe_info.vbeInfoBlock = *(seL4_VBEInfoBlock_t*)(seL4_Word)mbi->part2.vbe_control_info;
+        boot_state.vbe_info.vbeModeInfoBlock = *(seL4_VBEModeInfoBlock_t*)(seL4_Word)mbi->part2.vbe_mode_info;
+        boot_state.vbe_info.vbeMode = mbi->part2.vbe_mode;
+        printf("Got VBE info in multiboot. Current video mode is %d\n", mbi->part2.vbe_mode);
+        boot_state.vbe_info.vbeInterfaceSeg = mbi->part2.vbe_interface_seg;
+        boot_state.vbe_info.vbeInterfaceOff = mbi->part2.vbe_interface_off;
+        boot_state.vbe_info.vbeInterfaceLen = mbi->part2.vbe_interface_len;
+    }
+
+    boot_state.mem_lower = mbi->part1.mem_lower;
+    boot_state.boot_module_start = modules->start;
+
+    /* Initialize ACPI */
+    if (!acpi_init(&boot_state.acpi_rsdp)) {
+        return false;
+    }
+
+    return true;
+}
+
 BOOT_CODE VISIBLE void
 boot_sys(
     unsigned long multiboot_magic,
-    multiboot_info_t* mbi)
+    void* mbi)
 {
-    bool_t result;
-    result = try_boot_sys(multiboot_magic, mbi);
+    bool_t result = false;
+
+    if (multiboot_magic == MULTIBOOT_MAGIC) {
+        result = try_boot_sys_mbi1(mbi);
+    } else {
+        printf("Boot loader is not multiboot 1 compliant %lx\n", multiboot_magic);
+    }
+
+    if (result) {
+        result = try_boot_sys();
+    }
 
     if (!result) {
         fail("boot_sys failed for some reason :(\n");
