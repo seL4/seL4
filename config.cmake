@@ -83,6 +83,11 @@ config_string(KernelMaxNumWorkUnitsPerPreemption MAX_NUM_WORK_UNITS_PER_PREEMPTI
     DEFAULT 100
     UNQUOTE
 )
+config_string(KernelResetChunkBits RESET_CHUNK_BITS
+    "Maximum size in bits of chunks of memory to zero before checking a preemption point."
+    DEFAULT 8
+    UNQUOTE
+)
 config_string(KernelMaxNumBootinfoUntypedCaps MAX_NUM_BOOTINFO_UNTYPED_CAPS
     "Max number of bootinfo untyped caps"
     DEFAULT 230
