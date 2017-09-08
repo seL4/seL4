@@ -62,3 +62,15 @@
     .long   CONFIG_MULTIBOOT_GRAPHICS_MODE_WIDTH /*width*/
     .long   CONFIG_MULTIBOOT_GRAPHICS_MODE_HEIGHT /*height*/
     .long   CONFIG_MULTIBOOT_GRAPHICS_MODE_DEPTH /*depth*/
+    .align  8
+    __mbi2_start:
+    /* magic multi-boot 2 header */
+    .long   0xe85250d6
+    .long   0x0
+    .long   (__mbi2_end - __mbi2_start)
+    .long  -(0xe85250d6 + (__mbi2_end - __mbi2_start))
+    /* end tag - type, flags, size */
+    .word   0x0
+    .word   0x0
+    .long   0x8
+    __mbi2_end:
