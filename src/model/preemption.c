@@ -35,6 +35,11 @@ preemptionPoint(void)
         ksWorkUnitsCompleted = 0;
         if (isIRQPending()) {
             return EXCEPTION_PREEMPTED;
+        } else {
+            updateTimestamp(true);
+            if (!checkBudget()) {
+                return EXCEPTION_PREEMPTED;
+            }
         }
     }
 
