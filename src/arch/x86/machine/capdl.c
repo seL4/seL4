@@ -128,7 +128,7 @@ static void sendPD(unsigned long address)
         pde_t pde = start[i];
         exists = 1;
         if (pde_get_page_size(pde) == pde_pde_pt && (pde_pde_pt_get_pt_base_address(pde) == 0 ||
-                                                        !pde_pde_pt_get_present(pde) || !pde_pde_pt_get_super_user(pde))) {
+                                                     !pde_pde_pt_get_present(pde) || !pde_pde_pt_get_super_user(pde))) {
             exists = 0;
         } else if (pde_get_page_size(pde) == pde_pde_large && (pde_pde_large_get_page_base_address(pde) == 0 ||
                                                                !pde_pde_large_get_present(pde) || !pde_pde_large_get_super_user(pde))) {
