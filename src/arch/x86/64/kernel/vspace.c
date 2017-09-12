@@ -127,7 +127,7 @@ map_kernel_window(
                                                      1  /* present */
                                                  );
     /* put the PT into the PD */
-    x64KSGlobalPD[0] = pde_pde_small_new(
+    x64KSGlobalPD[0] = pde_pde_pt_new(
                            0, /* xd */
                            kpptr_to_paddr(x64KSGlobalPT),
                            0, /* accessed */
@@ -226,7 +226,7 @@ map_kernel_window(
                                                  );
 
     /* put the PT into the PD */
-    x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0] = pde_pde_small_new(
+    x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0] = pde_pde_pt_new(
                                                       0, /* xd */
                                                       kpptr_to_paddr(x64KSGlobalPT),
                                                       0, /* accessed */
@@ -501,8 +501,8 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
     assert(pdpte_pdpte_pd_ptr_get_present(pdpt));
     pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdpt));
     pd += GET_PD_INDEX(vptr);
-    assert(pde_pde_small_ptr_get_present(pd));
-    pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
+    assert(pde_pde_pt_ptr_get_present(pd));
+    pt = paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pd));
     *(pt + GET_PT_INDEX(vptr)) = pte_new(
                                      0,                      /* xd                   */
                                      pptr_to_paddr(pptr),    /* page_base_address    */
@@ -578,7 +578,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     pdpt += GET_PDPT_INDEX(vptr);
     assert(pdpte_pdpte_pd_ptr_get_present(pdpt));
     pd = paddr_to_pptr(pdpte_pdpte_pd_ptr_get_pd_base_address(pdpt));
-    *(pd + GET_PD_INDEX(vptr)) = pde_pde_small_new(
+    *(pd + GET_PD_INDEX(vptr)) = pde_pde_pt_new(
                                      0,                      /* xd                   */
                                      pptr_to_paddr(pt),      /* pt_base_address      */
                                      0,                      /* accessed             */
@@ -871,7 +871,7 @@ pde_t CONST
 makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
 {
 
-    return  pde_pde_small_new(
+    return  pde_pde_pt_new(
                 0,                                  /* xd               */
                 paddr,                              /* pt_base_address  */
                 0,                                  /* accessed         */
@@ -904,7 +904,7 @@ makeUserPDELargePageInvalid(void)
 pde_t CONST
 makeUserPDEPageTableInvalid(void)
 {
-    return pde_pde_small_new(
+    return pde_pde_pt_new(
                0,      /* xd               */
                0,      /* pt_base_addr     */
                0,      /* accessed         */

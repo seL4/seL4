@@ -532,7 +532,7 @@ block pde_large {
     field       present             1
 }
 
-block pde_small {
+block pde_pt {
     field       xd                  1
     padding                         11
     padding                         1
@@ -549,7 +549,7 @@ block pde_small {
 }
 
 tagged_union pde page_size {
-    tag pde_small 0
+    tag pde_pt 0
     tag pde_large 1
 }
 
@@ -605,7 +605,7 @@ block ept_pde_2m {
     field        read               1
 }
 
-block ept_pde_4k {
+block ept_pde_pt {
     padding                         13
     field_high   pt_base_address    39
     field        avl_cte_depth      3
@@ -618,7 +618,7 @@ block ept_pde_4k {
 }
 
 tagged_union ept_pde page_size {
-    tag ept_pde_4k 0
+    tag ept_pde_pt 0
     tag ept_pde_2m 1
 }
 

@@ -407,7 +407,7 @@ block tss {
 
 -- PDs and PTs
 
-block pde_small {
+block pde_pt {
     field_high  pt_base_address     20
     field       avl                 3
     padding                         1
@@ -438,7 +438,7 @@ block pde_large {
 }
 
 tagged_union pde page_size {
-    tag pde_small 0
+    tag pde_pt 0
     tag pde_large 1
 }
 
@@ -491,7 +491,7 @@ block ept_pde_2m {
     field        read               1
 }
 
-block ept_pde_4k {
+block ept_pde_pt {
     padding                         32
     field_high   pt_base_address    20
     field        avl_cte_depth      3
@@ -504,7 +504,7 @@ block ept_pde_4k {
 }
 
 tagged_union ept_pde page_size {
-    tag ept_pde_4k 0
+    tag ept_pde_pt 0
     tag ept_pde_2m 1
 }
 

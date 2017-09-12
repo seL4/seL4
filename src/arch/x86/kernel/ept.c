@@ -173,8 +173,8 @@ lookupEPTPTSlot(ept_pml4e_t* pml4, vptr_t vptr)
         return ret;
     }
 
-    if ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) != ept_pde_ept_pde_4k) ||
-            !ept_pde_ept_pde_4k_ptr_get_read(lu_ret.pdSlot)) {
+    if ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) != ept_pde_ept_pde_pt) ||
+            !ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(22);
 
         ret.ptSlot = NULL;
@@ -182,7 +182,7 @@ lookupEPTPTSlot(ept_pml4e_t* pml4, vptr_t vptr)
         return ret;
     }
 
-    ept_pte_t *pt = paddr_to_pptr(ept_pde_ept_pde_4k_ptr_get_pt_base_address(lu_ret.pdSlot));
+    ept_pte_t *pt = paddr_to_pptr(ept_pde_ept_pde_pt_ptr_get_pt_base_address(lu_ret.pdSlot));
     uint32_t index = GET_EPT_PT_INDEX(vptr);
 
     ret.ptSlot = pt + index;
@@ -620,8 +620,8 @@ EPTPageTableMapped(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
         return ret;
     }
 
-    if (ept_pde_ptr_get_page_size(find_ret.pdSlot) == ept_pde_ept_pde_4k
-            && ptrFromPAddr(ept_pde_ept_pde_4k_ptr_get_pt_base_address(find_ret.pdSlot)) == pt) {
+    if (ept_pde_ptr_get_page_size(find_ret.pdSlot) == ept_pde_ept_pde_pt
+            && ptrFromPAddr(ept_pde_ept_pde_pt_ptr_get_pt_base_address(find_ret.pdSlot)) == pt) {
         ret.pml4 = asid_ret.ept;
         ret.pdSlot = find_ret.pdSlot;
         ret.status = EXCEPTION_NONE;
@@ -642,7 +642,7 @@ unmapEPTPageTable(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
     lu_ret = EPTPageTableMapped(asid, vaddr, pt);
 
     if (lu_ret.status == EXCEPTION_NONE) {
-        *lu_ret.pdSlot = ept_pde_ept_pde_4k_new(
+        *lu_ret.pdSlot = ept_pde_ept_pde_pt_new(
                              0,  /* pt_base_address  */
                              0,  /* avl_cte_depth    */
                              0,  /* execute          */
@@ -767,8 +767,8 @@ decodeX86EPTPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_4k) &&
-            ept_pde_ept_pde_4k_ptr_get_read(lu_ret.pdSlot)) ||
+    if (((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_pt) &&
+            ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) ||
             ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_2m) &&
              ept_pde_ept_pde_2m_ptr_get_read(lu_ret.pdSlot))) {
         userError("X86EPTPTMap: Page table already mapped here");
@@ -777,7 +777,7 @@ decodeX86EPTPTInvocation(
     }
 
     paddr = pptr_to_paddr((void*)(cap_ept_pt_cap_get_capPTBasePtr(cap)));
-    pde = ept_pde_ept_pde_4k_new(
+    pde = ept_pde_ept_pde_pt_new(
               paddr,/* pt_base_address  */
               0,    /* avl_cte_depth    */
               1,    /* execute          */
@@ -944,15 +944,15 @@ decodeX86EPTPageMap(
         }
 
 
-        if ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_4k) &&
-                ept_pde_ept_pde_4k_ptr_get_read(lu_ret.pdSlot)) {
+        if ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_pt) &&
+                ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) {
             userError("X86EPTPageMap: Page table already present.");
             current_syscall_error.type = seL4_DeleteFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
         if (LARGE_PAGE_BITS != EPT_PD_INDEX_OFFSET &&
-                (ept_pde_ptr_get_page_size(lu_ret.pdSlot + 1) == ept_pde_ept_pde_4k) &&
-                ept_pde_ept_pde_4k_ptr_get_read(lu_ret.pdSlot + 1)) {
+                (ept_pde_ptr_get_page_size(lu_ret.pdSlot + 1) == ept_pde_ept_pde_pt) &&
+                ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot + 1)) {
             userError("X86EPTPageMap: Page table already present.");
             current_syscall_error.type = seL4_DeleteFirst;
             return EXCEPTION_SYSCALL_ERROR;
