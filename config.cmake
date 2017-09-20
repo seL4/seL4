@@ -19,9 +19,9 @@ config_set(KernelIsMaster KERNEL_MASTER ON)
 
 # Proof based configuration variables
 set(CSPEC_DIR "." CACHE PATH "")
-set(SKIP_MODIFIES ON CACHE INTERNAL "")
-set(TOPLEVELTYPES "cte_C;tcb_C;endpoint_C;notification_C;asid_pool_C;pte_C;pde_C;user_data_C;user_data_device_C" CACHE INTERNAL "")
-set(SORRY_BITFIELD_PROOFS OFF CACHE INTERNAL "")
+set(SKIP_MODIFIES ON CACHE BOOL "")
+set(TOPLEVELTYPES "cte_C;tcb_C;endpoint_C;notification_C;asid_pool_C;pte_C;pde_C;user_data_C;user_data_device_C" CACHE STRING "")
+set(SORRY_BITFIELD_PROOFS OFF CACHE BOOL "")
 find_file(UMM_TYPES umm_types.txt CMAKE_FIND_ROOT_PATH_BOTH)
 set(force FORCE)
 if(KernelVerificationBuild)
