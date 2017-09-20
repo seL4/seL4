@@ -63,15 +63,16 @@ configureIdleThread(tcb_t *tcb)
 void
 activateThread(void)
 {
+    if (unlikely(NODE_STATE(ksCurThread)->tcbYieldTo)) {
+        schedContext_completeYieldTo(NODE_STATE(ksCurThread));
+        assert(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) == ThreadState_Running);
+    }
+
     switch (thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState)) {
     case ThreadState_Running:
 #ifdef CONFIG_VTX
     case ThreadState_RunningVM:
 #endif
-        break;
-
-    case ThreadState_YieldTo:
-        schedContext_completeYieldTo(NODE_STATE(ksCurThread));
         break;
 
     case ThreadState_Restart: {

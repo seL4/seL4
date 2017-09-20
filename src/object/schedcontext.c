@@ -176,7 +176,6 @@ invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
             NODE_STATE(ksCurThread)->tcbYieldTo = sc;
             sc->scYieldFrom = NODE_STATE(ksCurThread);
             possibleSwitchTo(sc->scTcb);
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_YieldTo);
 
             /* we are scheduling the thread associated with sc,
              * so we don't need to write to the ipc buffer
