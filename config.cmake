@@ -18,7 +18,7 @@ set(configure_string "")
 config_set(KernelIsMaster KERNEL_MASTER ON)
 
 # Proof based configuration variables
-find_path(CSPEC_DIR KernelState_C.thy CMAKE_FIND_ROOT_PATH_BOTH)
+set(CSPEC_DIR "." CACHE PATH "")
 set(SKIP_MODIFIES ON CACHE INTERNAL "")
 set(TOPLEVELTYPES "cte_C;tcb_C;endpoint_C;notification_C;asid_pool_C;pte_C;pde_C;user_data_C;user_data_device_C" CACHE INTERNAL "")
 set(SORRY_BITFIELD_PROOFS OFF CACHE INTERNAL "")
