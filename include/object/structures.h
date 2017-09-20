@@ -155,7 +155,6 @@ enum _thread_state {
     ThreadState_Inactive = 0,
     ThreadState_Running,
     ThreadState_Restart,
-    ThreadState_YieldTo,
     ThreadState_BlockedOnReceive,
     ThreadState_BlockedOnSend,
     ThreadState_BlockedOnReply,
