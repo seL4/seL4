@@ -40,9 +40,8 @@ initGenericTimer(void)
         uint32_t gpt_cnt_tval;
         MRS("cntfrq_el0", gpt_cnt_tval);
         if (gpt_cnt_tval != 0 && gpt_cnt_tval != TIMER_CLOCK_HZ) {
-            printf("gpt_cnt_tval %u, expected %u\n", gpt_cnt_tval, (uint32_t) TIMER_CLOCK_HZ);
-            /* it's ok to call halt here as it's a debug build */
-            halt();
+            printf("Warning:  gpt_cnt_tval %u, expected %u\n", gpt_cnt_tval,
+                   (uint32_t) TIMER_CLOCK_HZ);
         }
     }
 
