@@ -40,7 +40,7 @@ Arch_irqStateInit(void)
  * if using the legacy PIC interrupt
  */
 exception_t
-Arch_checkIRQ(word_t irq)
+Arch_checkIRQ(irq_t irq)
 {
     if (config_set(CONFIG_IRQ_PIC) && irq >= irq_isa_min && irq <= irq_isa_max) {
         return EXCEPTION_NONE;

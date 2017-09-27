@@ -21,7 +21,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                             word_t *buffer);
 
 static inline exception_t
-Arch_checkIRQ(word_t irq)
+Arch_checkIRQ(irq_t irq)
 {
     if (irq > maxIRQ) {
         current_syscall_error.type = seL4_RangeError;
