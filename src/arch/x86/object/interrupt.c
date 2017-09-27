@@ -81,7 +81,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
     cap_t cnodeCap;
     lookupSlot_ret_t lu_ret;
     exception_t status;
-    word_t irq;
+    irq_t irq;
     word_t vector;
 
     if (!config_set(CONFIG_IRQ_IOAPIC)) {
@@ -109,7 +109,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
         return EXCEPTION_SYSCALL_ERROR;
     }
     irq += irq_user_min;
-    vector = irq + IRQ_INT_OFFSET;
+    vector = (word_t)irq + IRQ_INT_OFFSET;
 
     lu_ret = lookupTargetSlot(cnodeCap, index, depth);
     if (lu_ret.status != EXCEPTION_NONE) {
