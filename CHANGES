@@ -6,6 +6,7 @@ For more information see the release notes at https://wiki.sel4.systems/ReleaseN
 7.0.0-dev
 
 = Changes =
+ * Support for additional zynq platform Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)
 
 = Upgrade notes =
 
