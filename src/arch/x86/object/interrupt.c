@@ -40,16 +40,16 @@ Arch_irqStateInit(void)
  * if using the legacy PIC interrupt
  */
 exception_t
-Arch_checkIRQ(irq_t irq)
+Arch_checkIRQ(word_t irq_w)
 {
-    if (config_set(CONFIG_IRQ_PIC) && irq >= irq_isa_min && irq <= irq_isa_max) {
+    if (config_set(CONFIG_IRQ_PIC) && irq_w >= irq_isa_min && irq_w <= irq_isa_max) {
         return EXCEPTION_NONE;
     }
     if (config_set(CONFIG_IRQ_IOAPIC)) {
         userError("IRQControl: Illegal operation");
         current_syscall_error.type = seL4_IllegalOperation;
     } else {
-        userError("IRQControl: IRQ %ld should in range %ld - %ld", irq, (long)irq_isa_min, (long)irq_isa_max);
+        userError("IRQControl: IRQ %ld should be in range %ld - %ld", irq_w, (long)irq_isa_min, (long)irq_isa_max);
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = irq_isa_min;
         current_syscall_error.rangeErrorMax = irq_isa_max;
