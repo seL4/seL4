@@ -47,8 +47,7 @@ typedef enum _interrupt_t {
     int_max                     = 255
 } interrupt_t;
 
-typedef enum _irq_t {
-    irqInvalid                  = -1,
+typedef enum _platform_irq_t {
     irq_isa_min                 = int_irq_isa_min     - IRQ_INT_OFFSET,
     irq_isa_max                 = int_irq_isa_max     - IRQ_INT_OFFSET,
     irq_user_min                = int_irq_user_min    - IRQ_INT_OFFSET,
@@ -61,8 +60,14 @@ typedef enum _irq_t {
     irq_remote_call_ipi         = int_remote_call_ipi - IRQ_INT_OFFSET,
     irq_reschedule_ipi          = int_reschedule_ipi  - IRQ_INT_OFFSET,
 #endif
-    maxIRQ                      = int_irq_max         - IRQ_INT_OFFSET
-} irq_t;
+    maxIRQ                      = int_irq_max         - IRQ_INT_OFFSET,
+    /* This is explicitly 255, instead of -1 like on some other platforms, to ensure
+     * that comparisons between an irq_t (a uint8_t) and irqInvalid (some kind of signed int)
+     * are well defined and behave as expected */
+    irqInvalid                  = 255,
+} platform_irq_t;
+
+typedef uint8_t irq_t;
 
 #define IRQ_CNODE_BITS 13
 

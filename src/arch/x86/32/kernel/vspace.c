@@ -252,7 +252,7 @@ map_kernel_window(
 
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
     /* Map global page table for the log buffer */
-    pde = pde_pde_small_new(
+    pde = pde_pde_pt_new(
               pptr_to_paddr(ia32KSGlobalLogPT), /* pt_base_address  */
               0,                 /* avl              */
               0,                 /* accessed         */
@@ -278,7 +278,7 @@ map_kernel_window(
 #endif /* ENABLE_SMP_SUPPORT */
 
     /* map page table of last 4M of virtual address space to page directory */
-    pde = pde_pde_small_new(
+    pde = pde_pde_pt_new(
               pptr_to_paddr(ia32KSGlobalPT), /* pt_base_address  */
               0,                 /* avl              */
               0,                 /* accessed         */
@@ -545,7 +545,7 @@ pde_t CONST makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_righ
 
 pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
 {
-    return pde_pde_small_new(
+    return pde_pde_pt_new(
                paddr,                                      /* pt_base_address  */
                0,                                          /* avl              */
                0,                                          /* accessed         */
@@ -576,7 +576,7 @@ pde_t CONST makeUserPDELargePageInvalid(void)
 
 pde_t CONST makeUserPDEPageTableInvalid(void)
 {
-    return pde_pde_small_new(
+    return pde_pde_pt_new(
                0,  /* pt_base_address  */
                0,  /* avl              */
                0,  /* accessed         */

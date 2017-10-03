@@ -113,7 +113,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
-    *(pd + (vptr >> seL4_LargePageBits)) = pde_pde_small_new(
+    *(pd + (vptr >> seL4_LargePageBits)) = pde_pde_pt_new(
                                                pptr_to_paddr(pt), /* pt_base_address */
                                                0,                 /* avl             */
                                                0,                 /* accessed        */
@@ -143,7 +143,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
 
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
     pd += (vptr >> seL4_LargePageBits);
-    pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pd));
+    pt = paddr_to_pptr(pde_pde_pt_ptr_get_pt_base_address(pd));
     *(pt + ((vptr & MASK(seL4_LargePageBits)) >> seL4_PageBits)) = pte_new(
                                                                        pptr_to_paddr(frame), /* page_base_address */
                                                                        0,                    /* avl               */

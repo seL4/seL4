@@ -129,6 +129,7 @@ ${GeneratedLatexDir}/%.tex: ${DoxygenXml}/group__%.xml
 generated-latex: ${GeneratedLatexDir}/GeneralSystemCalls.tex \
                  ${GeneratedLatexDir}/DebuggingSystemCalls.tex \
                  ${GeneratedLatexDir}/BenchmarkingSystemCalls.tex \
+                 ${GeneratedLatexDir}/X86SystemCalls.tex \
                  ${GeneratedLatexDir}/ObjectApi.tex \
                  ${GeneratedLatexDir}/ObjectApiX86.tex \
                  ${GeneratedLatexDir}/ObjectApiArm.tex \

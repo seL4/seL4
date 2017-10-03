@@ -18,10 +18,10 @@ set(configure_string "")
 config_set(KernelIsMaster KERNEL_MASTER ON)
 
 # Proof based configuration variables
-find_path(CSPEC_DIR KernelState_C.thy CMAKE_FIND_ROOT_PATH_BOTH)
-set(SKIP_MODIFIES ON CACHE INTERNAL "")
-set(TOPLEVELTYPES "cte_C;tcb_C;endpoint_C;notification_C;asid_pool_C;pte_C;pde_C;user_data_C;user_data_device_C" CACHE INTERNAL "")
-set(SORRY_BITFIELD_PROOFS OFF CACHE INTERNAL "")
+set(CSPEC_DIR "." CACHE PATH "")
+set(SKIP_MODIFIES ON CACHE BOOL "")
+set(TOPLEVELTYPES "cte_C;tcb_C;endpoint_C;notification_C;asid_pool_C;pte_C;pde_C;user_data_C;user_data_device_C" CACHE STRING "")
+set(SORRY_BITFIELD_PROOFS OFF CACHE BOOL "")
 find_file(UMM_TYPES umm_types.txt CMAKE_FIND_ROOT_PATH_BOTH)
 set(force FORCE)
 if(KernelVerificationBuild)
@@ -81,6 +81,11 @@ config_string(KernelMaxNumWorkUnitsPerPreemption MAX_NUM_WORK_UNITS_PER_PREEMPTI
     "Maximum number of work units (delete/revoke iterations) until the kernel checks for\
     pending interrupts (and preempts the currently running syscall if interrupts are pending)."
     DEFAULT 100
+    UNQUOTE
+)
+config_string(KernelResetChunkBits RESET_CHUNK_BITS
+    "Maximum size in bits of chunks of memory to zero before checking a preemption point."
+    DEFAULT 8
     UNQUOTE
 )
 config_string(KernelMaxNumBootinfoUntypedCaps MAX_NUM_BOOTINFO_UNTYPED_CAPS

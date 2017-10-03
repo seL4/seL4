@@ -133,7 +133,6 @@ function(GenThyBFTarget args target_name target_file pbf_path pbf_target prunes 
     foreach(prune IN LISTS prunes)
         list(APPEND args "--prune" "${prune}")
     endforeach()
-    list(APPEND deps "${CSPEC_DIR}/Kernel_C.thy" ${prunes})
     GenBFTarget("${args}" "${target_name}" "${target_file}" "${pbf_path}" "${pbf_target}" "${deps}")
 endfunction(GenThyBFTarget)
 

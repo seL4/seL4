@@ -357,6 +357,12 @@ menu "seL4 System Parameters"
             the kernel checks for pending interrupts (and preempts the
             currently running syscall if interrupts are pending).
 
+    config RESET_CHUNK_BITS
+        int "Max chunks to reset when clearing memory"
+        default 8
+        help
+            Maximum size in bits of chunks of memory to zero before checking a preemption point.
+
     config MAX_NUM_BOOTINFO_UNTYPED_CAPS
         int "Max number of bootinfo untyped caps"
         default 167

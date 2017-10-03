@@ -474,6 +474,67 @@ seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr);
 #endif
 /** @} */
 
+#ifdef CONFIG_ARCH_X86
+/**
+ * @defgroup X86SystemCalls X86 System Calls
+ * @{
+ */
+
+#ifdef CONFIG_VTX
+/**
+ * @xmlonly <manual name="VMEnter" label="sel4_vmenter"/> @endxmlonly
+ * @brief Change current thread to execute from its bound VCPU
+ *
+ * Changes the execution mode of the current thread from normal TCB execution, to
+ * guest execution using its bound VCPU.
+ * @xmlonly
+ * For details on VCPUs and execution modes see <autoref label="sec:virt"/>.
+ * @endxmlonly
+ *
+ * Invoking `seL4_VMEnter` is similar to replying to a fault in that updates to the registers
+ * can be given in the message, but unlike a fault no message info
+ * @xmlonly
+ * (see <autoref label="sec:messageinfo"/>)
+ * @endxmlonly
+ * is sent as the registers are not optional and the number that must be sent is fixed.
+ * The mapping of hardware register to message register is
+ *      - `SEL4_VMENTER_CALL_EIP_MR` Address to start executing instructions at in the guest mode
+ *      - `SEL4_VMENTER_CALL_CONTROL_PPC_MR` New value for the Primary Processor Based VM Execution Controls
+ *      - `SEL4_VMENTER_CALL_CONTROL_ENTRY_MR` New value for the VM Entry Controls
+ *
+ * On return these same three message registers will be filled with the values at the point
+ * that the privlidged mode ceased executing. If this function returns with `SEL4_VMENTER_RESULT_FAULT`
+ * then the following additional message registers will be filled out
+ *      - `SEL4_VMENTER_FAULT_REASON_MR`
+ *      - `SEL4_VMENTER_FAULT_QUALIFICATION_MR`
+ *      - `SEL4_VMENTER_FAULT_INSTRUCTION_LEN_MR`
+ *      - `SEL4_VMENTER_FAULT_GUEST_PHYSICAL_MR`
+ *      - `SEL4_VMENTER_FAULT_RFLAGS_MR`
+ *      - `SEL4_VMENTER_FAULT_GUEST_INT_MR`
+ *      - `SEL4_VMENTER_FAULT_CR3_MR`
+ *      - `SEL4_VMENTER_FAULT_EAX`
+ *      - `SEL4_VMENTER_FAULT_EBX`
+ *      - `SEL4_VMENTER_FAULT_ECX`
+ *      - `SEL4_VMENTER_FAULT_EDX`
+ *      - `SEL4_VMENTER_FAULT_ESI`
+ *      - `SEL4_VMENTER_FAULT_EDI`
+ *      - `SEL4_VMENTER_FAULT_EBP`
+ *
+ * @param[out] sender The address to write sender information to.
+ *               If the syscall returns due to receiving a notification
+ *               on the bound notification then the sender information
+ *               is the badge of the notification capability that was invoked.
+ *               This parameter is ignored if `NULL`.
+ * @return `SEL4_VMENTER_RESULT_NOTIF` if a notification was received or `SEL4_VMENTER_RESULT_FAULT`
+ *  if the guest mode execution faulted for any reason
+ */
+LIBSEL4_INLINE_FUNC seL4_Word
+seL4_VMEnter(seL4_Word *sender);
+#endif
+
+/** @} */
+#endif
+
 /** @} */
 
 #endif /* __LIBSEL4_SYSCALLS_H */
