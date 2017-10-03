@@ -13,7 +13,7 @@
 #ifndef __LIBSEL4_MODE_TYPES_H
 #define __LIBSEL4_MODE_TYPES_H
 
-#define seL4_GuardSizeBits 5
+#define seL4_GuardSizeBits 6
 #define seL4_GuardBits 18
 #define seL4_BadgeBits 28
 
