@@ -15,6 +15,6 @@
 
 #define seL4_GuardSizeBits 6
 #define seL4_GuardBits 58
-#define seL4_BadgeBits 28
+#define seL4_BadgeBits 64
 
 #endif
