@@ -24,7 +24,7 @@
 #define XUARTPS_SR             0x2C
 #define XUARTPS_FIFO           0x30
 
-#define XUARTPS_SR_TXEMPTY     (1U << 3)
+#define XUARTPS_SR_TXEMPTY     BIT(3)
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
