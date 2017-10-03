@@ -22,20 +22,6 @@ enum acpi_type {
     ACPI_RSDT
 };
 
-/* Root System Descriptor Pointer */
-typedef struct acpi_rsdp {
-    char         signature[8];
-    uint8_t      checksum;
-    char         oem_id[6];
-    uint8_t      revision;
-    uint32_t     rsdt_address;
-    uint32_t     length;
-    uint32_t     xsdt_address[2];
-    uint8_t      extended_checksum;
-    char         reserved[3];
-} acpi_rsdp_t;
-compile_assert(acpi_rsdp_packed, sizeof(acpi_rsdp_t) == 36)
-
 /* DMA Remapping Reporting Table */
 typedef struct acpi_dmar {
     acpi_header_t header;
@@ -177,7 +163,7 @@ const char acpi_str_apic[] = {'A', 'P', 'I', 'C', 0};
 const char acpi_str_dmar[] = {'D', 'M', 'A', 'R', 0};
 
 BOOT_CODE static uint8_t
-acpi_calc_checksum(char* start, uint32_t length)
+acpi_calc_checksum(char const* start, uint32_t length)
 {
     uint8_t checksum = 0;
 
@@ -187,21 +173,6 @@ acpi_calc_checksum(char* start, uint32_t length)
         length--;
     }
     return checksum;
-}
-
-BOOT_CODE static acpi_rsdp_t*
-acpi_get_rsdp(void)
-{
-    char* addr;
-
-    for (addr = (char*)BIOS_PADDR_START; addr < (char*)BIOS_PADDR_END; addr += 16) {
-        if (strncmp(addr, acpi_str_rsd, 8) == 0) {
-            if (acpi_calc_checksum(addr, 20) == 0) {
-                return (acpi_rsdp_t*)addr;
-            }
-        }
-    }
-    return NULL;
 }
 
 void* acpi_table_init(void* entry, enum acpi_type table_type);
@@ -244,20 +215,34 @@ acpi_table_init(void* entry, enum acpi_type table_type)
     return acpi_table;
 }
 
-BOOT_CODE acpi_rsdt_t*
-acpi_init(void)
+BOOT_CODE acpi_rsdp_t*
+acpi_search_rsdp()
 {
-    acpi_rsdp_t* acpi_rsdp = acpi_get_rsdp();
+    char* addr;
+
+    for (addr = (char*)BIOS_PADDR_START; addr < (char*)BIOS_PADDR_END; addr += 16) {
+        if (strncmp(addr, acpi_str_rsd, 8) == 0) {
+            if (acpi_calc_checksum(addr, 20) == 0) {
+                printf("ACPI: RSDP paddr=%p\n", addr);
+                return acpi_table_init(addr, ACPI_RSDP);
+            }
+        }
+    }
+    return NULL;
+}
+
+BOOT_CODE acpi_rsdt_t*
+acpi_init(acpi_rsdp_t const * acpi_rsdp)
+{
     acpi_rsdt_t* acpi_rsdt;
     acpi_rsdt_t* acpi_rsdt_mapped;
 
-    if (acpi_rsdp == NULL) {
+    printf("ACPI: RSDP vaddr=%p\n", acpi_rsdp);
+
+    if (!acpi_rsdp || acpi_calc_checksum((char const *)acpi_rsdp, 20) != 0) {
         printf("BIOS: No ACPI support detected\n");
         return NULL;
     }
-    printf("ACPI: RSDP paddr=%p\n", acpi_rsdp);
-    acpi_rsdp = acpi_table_init(acpi_rsdp, ACPI_RSDP);
-    printf("ACPI: RSDP vaddr=%p\n", acpi_rsdp);
 
     acpi_rsdt = (acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address;
     printf("ACPI: RSDT paddr=%p\n", acpi_rsdt);

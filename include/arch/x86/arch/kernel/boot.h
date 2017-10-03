@@ -40,6 +40,7 @@ bool_t init_sys_state(
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
     acpi_rmrr_list_t *rmrr_list,
+    acpi_rsdp_t      *acpi_rsdp,
     seL4_X86_BootInfo_VBE *vbe,
     seL4_X86_BootInfo_mmap_t *mb_mmap
 );

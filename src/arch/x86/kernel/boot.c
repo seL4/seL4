@@ -251,6 +251,7 @@ init_sys_state(
     uint32_t      num_drhu,
     paddr_t*      drhu_list,
     acpi_rmrr_list_t *rmrr_list,
+    acpi_rsdp_t      *acpi_rsdp,
     seL4_X86_BootInfo_VBE *vbe,
     seL4_X86_BootInfo_mmap_t *mb_mmap
 )
@@ -339,6 +340,17 @@ init_sys_state(
         vbe->header.len = sizeof(seL4_X86_BootInfo_VBE);
         memcpy((void*)(extra_bi_region.start + extra_bi_offset), vbe, sizeof(seL4_X86_BootInfo_VBE));
         extra_bi_offset += sizeof(seL4_X86_BootInfo_VBE);
+    }
+
+    /* populate acpi rsdp block */
+    if (acpi_rsdp) {
+        seL4_BootInfoHeader header;
+        header.id = SEL4_BOOTINFO_HEADER_X86_ACPI_RSDP;
+        header.len = sizeof(header) + sizeof(*acpi_rsdp);
+        memcpy((void*)(extra_bi_region.start + extra_bi_offset), &header, sizeof(header));
+        extra_bi_offset += sizeof(header);
+        memcpy((void*)(extra_bi_region.start + extra_bi_offset), acpi_rsdp, sizeof(*acpi_rsdp));
+        extra_bi_offset += sizeof(*acpi_rsdp);
     }
 
     /* populate multiboot mmap block */
