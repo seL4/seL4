@@ -72,13 +72,6 @@ block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
     field capType 4
 }
 
-block cnode_capdata {
-    padding 6
-    field guard 18
-    field guardSize 5
-    padding 3
-}
-
 block thread_cap {
     padding              32
 

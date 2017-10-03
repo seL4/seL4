@@ -34,3 +34,11 @@ block seL4_CapRights {
     field capAllowRead 1
     field capAllowWrite 1
 }
+
+-- CNode cap data
+block cnode_capdata {
+    padding 6
+    field guard 18
+    field guardSize 5
+    padding 3
+}
