@@ -14,7 +14,7 @@
 #define __LIBSEL4_MODE_TYPES_H
 
 #define seL4_GuardSizeBits 6
-#define seL4_GuardBits 18
+#define seL4_GuardBits 58
 #define seL4_BadgeBits 28
 
 #endif

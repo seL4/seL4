@@ -40,9 +40,6 @@ block seL4_CapRights {
 
 -- CNode cap data
 block seL4_CNode_CapData {
-    padding 32
-    padding 6
-    field guard 18
+    field guard 58
     field guardSize 6
-    padding 2
 }
