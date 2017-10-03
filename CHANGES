@@ -8,13 +8,17 @@ The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BI
 changes are added the compatibility information should be updated.
 
 ---
-upcoming release (SOURCE COMPATIBLE)
+upcoming release (BREAKING)
 
 = Changes =
  * Support for additional zynq platform Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)
  * Support for multiboot2 bootloaders on x86 (contributed change from Genode Labs)
+ * Deprecate seL4_CapData_t type and functions related to it
 
 = Upgrade notes =
+ * seL4_CapData_t should be replaced with just seL4_Word. Construction of badges should just be `x` instead of
+   `seL4_CapData_Badge_new(x)` and guards should be `seL4_CNode_CapData_new(x, y)` instead of
+   `seL4_CapData_Guard_new(x, y)`
 
 ---
 7.0.0 2017-09-05

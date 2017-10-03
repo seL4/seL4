@@ -41,14 +41,10 @@ seL4_SetUserData(seL4_Word data)
     seL4_GetIPCBuffer()->userData = data;
 }
 
-LIBSEL4_INLINE_FUNC seL4_CapData_t
+LIBSEL4_INLINE_FUNC seL4_Word
 seL4_GetBadge(int i)
 {
-    return (seL4_CapData_t) {
-        {
-            seL4_GetIPCBuffer()->caps_or_badges[i]
-        }
-    };
+    return seL4_GetIPCBuffer()->caps_or_badges[i];
 }
 
 LIBSEL4_INLINE_FUNC seL4_CPtr

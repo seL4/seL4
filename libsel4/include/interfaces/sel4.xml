@@ -129,11 +129,11 @@
                 description="The thread's new priority properties: the maximum control priority and priority."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
-            <param dir="in" name="cspace_root_data" type="seL4_CapData_t"
+            <param dir="in" name="cspace_root_data" type="seL4_Word"
                 description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
             <param dir="in" name="vspace_root" type="seL4_CNode"
                 description="The new VSpace root."/>
-            <param dir="in" name="vspace_root_data" type="seL4_CapData_t"
+            <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
             <param dir="in" name="buffer" type="seL4_Word"
                 description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
@@ -187,11 +187,11 @@
                 description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
-            <param dir="in" name="cspace_root_data" type="seL4_CapData_t"
+            <param dir="in" name="cspace_root_data" type="seL4_Word"
                 description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
             <param dir="in" name="vspace_root" type="seL4_CNode"
                 description="The new VSpace root."/>
-            <param dir="in" name="vspace_root_data" type="seL4_CapData_t"
+            <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
         </method>
 
@@ -416,7 +416,7 @@
                     The rights inherited by the new capability. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
                 </description>
             </param>
-            <param dir="in" name="badge" type="seL4_CapData_t" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
         </method>
 
         <method id="CNodeMove" name="Move" manual_name="Move" manual_label="cnode_move">
@@ -447,7 +447,7 @@
             <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
-            <param dir="in" name="badge" type="seL4_CapData_t" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
         </method>
 
         <method id="CNodeRotate" name="Rotate" manual_name="Rotate" manual_label="cnode_rotate">
@@ -461,11 +461,11 @@
             <cap_param append_description="CPTR to the CNode at the root of the CSpace where the destination slot will be found. Must be at a depth of 32."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved relative to _service. Must be empty unless it refers to the same slot as the source slot."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Depth to resolve dest_index to."/>
-            <param dir="in" name="dest_badge" type="seL4_CapData_t" description="The new capdata for the capability that ends up in the destination slot."/>
+            <param dir="in" name="dest_badge" type="seL4_Word" description="The new capdata for the capability that ends up in the destination slot."/>
             <param dir="in" name="pivot_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the pivot slot will be found. Must be at a depth of 32."/>
             <param dir="in" name="pivot_index" type="seL4_Word" description="CPTR to the pivot slot. Resolved relative to pivot_root. The resolved slot must not refer to the source or destination slots."/>
             <param dir="in" name="pivot_depth" type="seL4_Uint8" description="Depth to resolve pivot_index to."/>
-            <param dir="in" name="pivot_badge" type="seL4_CapData_t" description="The new capdata for the capability that ends up in the pivot slot."/>
+            <param dir="in" name="pivot_badge" type="seL4_Word" description="The new capdata for the capability that ends up in the pivot slot."/>
             <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the source slot will be found. Must be at a depth of 32."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved relative to src_root."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Depth to resolve src_index to."/>

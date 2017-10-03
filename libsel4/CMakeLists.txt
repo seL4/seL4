@@ -87,12 +87,6 @@ function(genbf target_prefix pbf_location bf_location header_output)
     GenHBFTarget("libsel4" ${target_prefix}_h "${header_output}" "${pbf_location}" ${target_prefix}_pbf "" "")
 endfunction(genbf)
 
-genbf("libsel4_types_gen"
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/types_gen/types.pbf"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/sel4/types_${KernelWordSize}.bf"
-    "${CMAKE_CURRENT_BINARY_DIR}/include/sel4/types_gen.h"
-)
-
 genbf("libsel4_shared_types_gen"
     "${CMAKE_CURRENT_BINARY_DIR}/generated/shared_types_gen/shared_types.pbf"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/sel4/shared_types_${KernelWordSize}.bf"
@@ -135,7 +129,7 @@ add_custom_command(OUTPUT include/interfaces/sel4_client.h
 
 add_custom_target(sel4_gen
     DEPENDS
-        include/interfaces/sel4_client.h include/sel4/types_gen.h include/sel4/syscall.h
+        include/interfaces/sel4_client.h include/sel4/syscall.h
         include/sel4/invocation.h arch_include/${KernelArch}/sel4/arch/invocation.h
         include/sel4/shared_types_gen.h sel4_arch_include/${KernelSel4Arch}/sel4/sel4_arch/invocation.h
         sel4_arch_include/${KernelSel4Arch}/sel4/sel4_arch/types_gen.h

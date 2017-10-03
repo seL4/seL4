@@ -34,7 +34,7 @@ endif
 endif
 
 # Targets
-PRIORITY_TARGETS := include/interfaces/sel4_client.h include/sel4/types_gen.h include/sel4/syscall.h \
+PRIORITY_TARGETS := include/interfaces/sel4_client.h include/sel4/syscall.h \
 					include/sel4/invocation.h arch_include/${ARCH}/sel4/arch/invocation.h \
 					include/sel4/shared_types_gen.h sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/invocation.h \
 					sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/types_gen.h
@@ -110,13 +110,6 @@ include/sel4/sel4_arch/%.pbf: ${SOURCE_DIR}/sel4_arch_include/${SEL4_ARCH}/sel4/
 	$(Q)${CPP} ${CPPFLAGS} -I${SOURCE_DIR}/arch_include/${ARCH}/ -P $< > $@
 
 # Bitfield generator
-include/sel4/types_gen.h: \
-		include/sel4/types_${TYPE_SUFFIX}.pbf \
-		${BF_GEN_PATH}
-	@echo " [GEN] $@"
-	@mkdir -p $(dir $@)
-	@${CHANGED_PATH} $@ ${PYTHON} ${BF_GEN_PATH} --environment libsel4 $< include/sel4/types_gen.h
-
 include/sel4/shared_types_gen.h: \
 		include/sel4/shared_types_${TYPE_SUFFIX}.pbf \
 		${BF_GEN_PATH}

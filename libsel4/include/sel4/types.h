@@ -21,7 +21,6 @@
 #include <sel4/arch/types.h>
 #include <sel4/sel4_arch/types.h>
 #include <sel4/sel4_arch/types_gen.h>
-#include <sel4/types_gen.h>
 #include <sel4/syscall.h>
 #include <sel4/objecttype.h>
 #include <sel4/sel4_arch/objecttype.h>
@@ -43,7 +42,7 @@ typedef seL4_CPtr seL4_TCB;
 typedef seL4_CPtr seL4_Untyped;
 typedef seL4_CPtr seL4_DomainSet;
 
-#define seL4_NilData seL4_CapData_Badge_new(0)
+#define seL4_NilData 0
 
 #include <sel4/arch/constants.h>
 

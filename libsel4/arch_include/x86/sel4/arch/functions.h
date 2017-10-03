@@ -44,11 +44,11 @@ seL4_SetUserData(seL4_Word data)
     SEL4_SET_IPCBUF(userData, data);
 }
 
-LIBSEL4_INLINE_FUNC seL4_CapData_t
+LIBSEL4_INLINE_FUNC seL4_Word
 seL4_GetBadge(int i)
 {
-    seL4_CapData_t badge;
-    SEL4_GET_IPCBUF_SCALE(caps_or_badges, i, badge.words[0]);
+    seL4_Word badge;
+    SEL4_GET_IPCBUF_SCALE(caps_or_badges, i, badge);
     return badge;
 }
 
