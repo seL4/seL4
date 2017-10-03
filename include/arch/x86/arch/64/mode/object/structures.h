@@ -160,7 +160,7 @@ cap_get_modeCapSizeBits(cap_t cap)
         return seL4_PDPTBits;
 
     default:
-        fail("Invalid mode cap type");
+        return 0;
     }
 }
 
@@ -180,7 +180,7 @@ cap_get_modeCapIsPhysical(cap_t cap)
         return true;
 
     default:
-        fail("Invalid mode cap type");
+        return false;
     }
 }
 
@@ -199,7 +199,7 @@ cap_get_modeCapPtr(cap_t cap)
         return PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
 
     default:
-        fail("Invalid mode cap type");
+        return NULL;
     }
 }
 
