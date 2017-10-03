@@ -71,6 +71,7 @@ set(source_header_dirs
     "${CMAKE_CURRENT_SOURCE_DIR}/arch_include/${KernelArch}"
     "${CMAKE_CURRENT_SOURCE_DIR}/sel4_arch_include/${KernelSel4Arch}"
     "${CMAKE_CURRENT_SOURCE_DIR}/sel4_plat_include/${KernelPlatform}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mode_include/${KernelWordSize}"
 )
 
 # Add the include directory of autoconf.h to the cflags for the bitfield generation

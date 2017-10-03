@@ -51,6 +51,7 @@ HDRFILES := \
 	$(wildcard $(SOURCE_DIR)/arch_include/$(ARCH)/*) \
 	$(wildcard $(SOURCE_DIR)/sel4_arch_include/$(SEL4_ARCH)/*) \
 	$(wildcard $(SOURCE_DIR)/sel4_plat_include/$(PLAT)/*) \
+	$(wildcard $(SOURCE_DIR)/mode_include/$(TYPE_SUFFIX)/*) \
 	$(BUILD_DIR)/include/sel4 \
 	$(BUILD_DIR)/include/interfaces \
     $(BUILD_DIR)/sel4_arch_include/$(SEL4_ARCH)/*

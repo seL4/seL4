@@ -29,11 +29,9 @@
 #include <sel4/constants.h>
 #include <sel4/shared_types_gen.h>
 #include <sel4/shared_types.h>
+#include <sel4/mode/types.h>
 
 #define seL4_UntypedRetypeMaxObjects 256
-#define seL4_GuardSizeBits 5
-#define seL4_GuardBits 18
-#define seL4_BadgeBits 28
 
 typedef seL4_CPtr seL4_CNode;
 typedef seL4_CPtr seL4_IRQHandler;
