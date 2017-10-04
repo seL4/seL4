@@ -31,71 +31,79 @@ typedef struct seL4_VBEInfoBlock {
     seL4_Uint8  oemData[256];
 } SEL4_PACKED seL4_VBEInfoBlock_t;
 
-/* struct is split into multiple parts to aid the C parser */
+/* the seL4_VBEModeInfoBlock struct is split into multiple parts to aid the C parser */
+typedef struct seL4_VBEModeInfoCommon {
+    seL4_Uint16 modeAttr;
+    seL4_Uint8  winAAttr;
+    seL4_Uint8  winBAttr;
+    seL4_Uint16 winGranularity;
+    seL4_Uint16 winSize;
+    seL4_Uint16 winASeg;
+    seL4_Uint16 winBSeg;
+    seL4_Uint32 winFuncPtr;
+    seL4_Uint16 bytesPerScanLine;
+} SEL4_PACKED seL4_VBEModeInfoCommon_t;
+
+typedef struct  seL4_VBEInfo12Part1 {
+    seL4_Uint16 xRes;
+    seL4_Uint16 yRes;
+    seL4_Uint8  xCharSize;
+    seL4_Uint8  yCharSize;
+    seL4_Uint8  planes;
+    seL4_Uint8  bitsPerPixel;
+    seL4_Uint8  banks;
+    seL4_Uint8  memoryModel;
+    seL4_Uint8  bankSize;
+    seL4_Uint8  imagePages;
+    seL4_Uint8  reserved1;
+} SEL4_PACKED seL4_VBEInfo12Part1_t;
+
+typedef struct seL4_VBEInfo12Part2 {
+    seL4_Uint8  redLen;
+    seL4_Uint8  redOff;
+    seL4_Uint8  greenLen;
+    seL4_Uint8  greenOff;
+    seL4_Uint8  blueLen;
+    seL4_Uint8  blueOff;
+    seL4_Uint8  rsvdLen;
+    seL4_Uint8  rsvdOff;
+    seL4_Uint8  directColorInfo;  /* direct color mode attributes */
+} SEL4_PACKED seL4_VBEInfo12Part2_t;
+
+typedef struct  seL4_VBEInfo20 {
+    seL4_Uint32 physBasePtr;
+    seL4_Uint8  reserved2[6];
+} SEL4_PACKED seL4_VBEInfo20_t;
+
+typedef struct seL4_VBEInfo30 {
+    seL4_Uint16 linBytesPerScanLine;
+    seL4_Uint8  bnkImagePages;
+    seL4_Uint8  linImagePages;
+    seL4_Uint8  linRedLen;
+    seL4_Uint8  linRedOff;
+    seL4_Uint8  linGreenLen;
+    seL4_Uint8  linGreenOff;
+    seL4_Uint8  linBlueLen;
+    seL4_Uint8  linBlueOff;
+    seL4_Uint8  linRsvdLen;
+    seL4_Uint8  linRsvdOff;
+    seL4_Uint32 maxPixelClock;
+    seL4_Uint16 modeId;
+    seL4_Uint8  depth;
+} SEL4_PACKED seL4_VBEInfo30_t;
+
 typedef struct seL4_VBEModeInfoBlock {
     /* All VBE revisions */
-    struct vbe_info_common {
-        seL4_Uint16 modeAttr;
-        seL4_Uint8  winAAttr;
-        seL4_Uint8  winBAttr;
-        seL4_Uint16 winGranularity;
-        seL4_Uint16 winSize;
-        seL4_Uint16 winASeg;
-        seL4_Uint16 winBSeg;
-        seL4_Uint32 winFuncPtr;
-        seL4_Uint16 bytesPerScanLine;
-    } vbe_common;
-
+    seL4_VBEModeInfoCommon_t vbe_common;
     /* VBE 1.2+ */
-    struct  vbe_info_12_part1 {
-        seL4_Uint16 xRes;
-        seL4_Uint16 yRes;
-        seL4_Uint8  xCharSize;
-        seL4_Uint8  yCharSize;
-        seL4_Uint8  planes;
-        seL4_Uint8  bitsPerPixel;
-        seL4_Uint8  banks;
-        seL4_Uint8  memoryModel;
-        seL4_Uint8  bankSize;
-        seL4_Uint8  imagePages;
-        seL4_Uint8  reserved1;
-    } vbe12_part1;
-
-    struct vbe_info_12_part2 {
-        seL4_Uint8  redLen;
-        seL4_Uint8  redOff;
-        seL4_Uint8  greenLen;
-        seL4_Uint8  greenOff;
-        seL4_Uint8  blueLen;
-        seL4_Uint8  blueOff;
-        seL4_Uint8  rsvdLen;
-        seL4_Uint8  rsvdOff;
-        seL4_Uint8  directColorInfo;  /* direct color mode attributes */
-    } vbe12_part2;
+    seL4_VBEInfo12Part1_t vbe12_part1;
+    seL4_VBEInfo12Part2_t vbe12_part2;
 
     /* VBE 2.0+ */
-    struct  vbe_info_20 {
-        seL4_Uint32 physBasePtr;
-        seL4_Uint8  reserved2[6];
-    } vbe20;
+    seL4_VBEInfo20_t vbe20;
 
     /* VBE 3.0+ */
-    struct vbe_info_30 {
-        seL4_Uint16 linBytesPerScanLine;
-        seL4_Uint8  bnkImagePages;
-        seL4_Uint8  linImagePages;
-        seL4_Uint8  linRedLen;
-        seL4_Uint8  linRedOff;
-        seL4_Uint8  linGreenLen;
-        seL4_Uint8  linGreenOff;
-        seL4_Uint8  linBlueLen;
-        seL4_Uint8  linBlueOff;
-        seL4_Uint8  linRsvdLen;
-        seL4_Uint8  linRsvdOff;
-        seL4_Uint32 maxPixelClock;
-        seL4_Uint16 modeId;
-        seL4_Uint8  depth;
-    } vbe30;
+    seL4_VBEInfo30_t vbe30;
 
     seL4_Uint8 reserved3[187];
 } SEL4_PACKED seL4_VBEModeInfoBlock_t;

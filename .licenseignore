@@ -1,0 +1,13 @@
+CONTRIBUTORS.md
+LICENSE_BSD2.txt
+LICENSE_GPLv2.txt
+VERSION
+configs/*/autoconf.h
+manual/figs/*
+.licenseignore
+.gitignore
+*.pyc
+.git/*
+*parsetab.py
+manual/*
+CHANGES

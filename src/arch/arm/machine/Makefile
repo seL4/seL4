@@ -33,6 +33,6 @@ ifeq ($(CPU), $(filter $(CPU), cortex-a15 cortex-a7 cortex-a57))
     ARCH_C_SOURCES += machine/gic_pl390.c
 endif
 
-ifeq ($(PLAT), hikey)
+ifeq ($(PLAT), $(filter $(PLAT), zynqmp hikey))
     ARCH_C_SOURCES += machine/gic_pl390.c
 endif

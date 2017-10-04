@@ -1,0 +1,34 @@
+Revision history for seL4
+
+For more information see the release notes at https://wiki.sel4.systems/ReleaseNotes
+
+---
+7.0.0-dev
+
+= Changes =
+ * Support for additional zynq platform Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)
+
+= Upgrade notes =
+
+---
+7.0.0 2017-09-05
+
+= Changes =
+ * Support for building standalone ia32 kernel added
+ * ia32: Set sensible defaults for FS and GS selectors
+ * aarch64: Use tpidrro_el0 for IPC buffer instead of tpidr_el0
+ * More seL4 manual documentation added for aarch64 object invocations
+ * Default NUM_DOMAINS set to 16 for x86-64 standalone builds
+ * libsel4: Return seL4_Error in invocation stubs in 8fb06eecff9 ''' This is a source code level breaking change '''
+ * Add a CMake based build system
+ * x86: Increase TCB size for debug builds
+ * libsel4: x86: Remove nested struct declarations ''' This is a source code level breaking change '''
+ * Bugfix: x86: Unmap pages when delete non final frame caps
+
+= Upgrade notes =
+ * This release is not source compatible with previous releases.
+ * seL4 invocations that previously returned long now return seL4_Error which is an enum. Our libraries have already been updated to reflect this change, but in other places where seL4 invocations are used directly, the return types will need to be updated to reflect this change.
+ * On x86 some structs in the Bootinfo have been rearranged. This only affects seL4_VBEModeInfoBlock_t which is used if VESA BIOS Extensions (VBE) information is being used.
+
+= Known issues =
+ * One of our tests is non-deterministicly becoming unresponsive on the SMP release build on the Sabre IMX.6 platform, which is a non verified configuration of the kernel.  We are working on fixing this problem, and will likely do a point release once it is fixed.

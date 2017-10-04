@@ -22,7 +22,7 @@ config_string(KernelMaxRMRREntries MAX_RMRR_ENTRIES
     "Setsthe maximum number of Reserved Memory Region Reporting structures we support \
     recording from the ACPI tables"
     DEFAULT 32
-    DEPENDS "KernelIOMMU" DEFAULT_DISABLED 0
+    DEPENDS "KernelIOMMU" DEFAULT_DISABLED 1
     UNQUOTE
 )
 

@@ -61,7 +61,7 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
     switch (cap_get_capType(cap)) {
 
     case cap_frame_cap:
-        if (final && cap_frame_cap_get_capFMappedASID(cap)) {
+        if (cap_frame_cap_get_capFMappedASID(cap)) {
             switch (cap_frame_cap_get_capFMapType(cap)) {
 #ifdef CONFIG_VTX
             case X86_MappingEPT:

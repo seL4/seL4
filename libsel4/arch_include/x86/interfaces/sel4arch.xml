@@ -239,7 +239,7 @@
     </interface>
 
     <interface name="seL4_X86_ASIDPool" manual_name="ASID Pool">
-        <method id="X86ASIDPoolAssign" name="Assign" manual_label='asid_pool_assign'>
+        <method id="X86ASIDPoolAssign" name="Assign" manual_label='asidpool_assign'>
             <brief>
                 Assign an ASID pool.
             </brief>
@@ -368,61 +368,206 @@
         </method>
     </interface>
     <interface name="seL4_TCB" manual_name="TCB">
-        <method id="TCBSetEPTRoot" name="SetEPTRoot" condition="defined(CONFIG_VTX)" manual_name="Set EPT Root">
-            <param dir="in" name="vcpu" type="seL4_CPtr"/>
+        <method id="TCBSetEPTRoot" name="SetEPTRoot" condition="defined(CONFIG_VTX)" manual_name="Set EPT Root" manual_label="set_eptroot">
+            <brief>
+                Set the EPT root of a thread
+            </brief>
+            <description>
+                See <autoref label='sec:virt'/>.
+            </description>
+            <param dir="in" name="eptpml4" type="seL4_CPtr"
+                description='CPTR to an EPT PML4 object to act as the guest mode vspace root'/>
         </method>
     </interface>
-    <interface name="seL4_X86_VCPU" manual_name="VCPU">
+    <interface name="seL4_X86_VCPU" manual_name="VCPU" cap_description='VCPU object to operate on'>
         <method id="X86VCPUSetTCB" name="SetTCB" condition="defined(CONFIG_VTX)" manual_name="Set TCB">
-            <param dir="in" name="tcb" type="seL4_CNode" />
+            <brief>
+                Bind TCB to VCPU
+            </brief>
+            <description>
+                Configures the one-to-one binding of a VCPU and TCB, overwriting any previous binding
+                in both. See <autoref label='sec:virt'/>.
+            </description>
+            <param dir="in" name="tcb" type="seL4_CNode" description='CPTR of the TCB to bind to'/>
         </method>
-        <method id="X86VCPUReadVMCS" name="ReadVMCS" condition="defined(CONFIG_VTX)" manual_name="Read VMCS">
-            <param dir="in" name="field" type="seL4_Word"/>
-            <param dir="out" name="value" type="seL4_Word"/>
+        <method id="X86VCPUReadVMCS" name="ReadVMCS" condition="defined(CONFIG_VTX)" manual_name="Read VMCS" manual_label="vcpu_readvmcs">
+            <brief>
+                Read VMCS field from the hardware
+            </brief>
+            <description>
+                Thin wrapper around the <texttt text='vmread'/> instruction that is performed on the
+                VMCS region that is part of the VCPU object. After validating that a legal
+                field is requested the value of `vmread` is returned directly in the result.
+            </description>
+            <return>
+                A <texttt text='seL4_X86_VCPU_ReadVMCS_t'/> struct that contains a
+                <texttt text='seL4_Word value'/>, which holds the return result of the <texttt text='vmread'/> instruction,
+                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.
+            </return>
+            <param dir="in" name="field" type="seL4_Word"
+                description='Field to give to \texttt{vmread} instruction'/>
+            <param dir="out" name="value" type="seL4_Word"
+                description='Value returned by `vmread` instruction'/>
         </method>
-        <method id="X86VCPUWriteVMCS" name="WriteVMCS" condition="defined(CONFIG_VTX)" manual_name="Write VMCS">
-            <param dir="in" name="field" type="seL4_Word"/>
-            <param dir="in" name="value" type="seL4_Word"/>
-            <param dir="out" name="written" type="seL4_Word"/>
+        <method id="X86VCPUWriteVMCS" name="WriteVMCS" condition="defined(CONFIG_VTX)" manual_name="Write VMCS" manual_label="vcpu_writevmcs">
+            <brief>
+                Write VMCS field to the hardware
+            </brief>
+            <description>
+                Thin wrapper around the `vmwrite` instruction that is performed on the
+                VMCS region that is part of the VCPU object. As well as validating that
+                a legal field is requested, the value may be modified to ensure any
+                bits that are fixed in the hardware are correct, and that any features
+                required for kernel correctness are not disabled (see <autoref label='sec:virt'/>).
+
+                The final value written to the hardware is returned and can be compared
+                to the input parameter to determine what bits the kernel changed.
+            </description>
+            <return>
+                A <texttt text='seL4_X86_VCPU_WriteVMCS_t'/> struct that contains a
+                <texttt text='seL4_Word writen'/>, which holds the final value written with the <texttt text='vmwrite'/> instruction,
+                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.
+            </return>
+            <param dir="in" name="field" type="seL4_Word"
+                description='Field to give to `vmwrite` instruction'/>
+            <param dir="in" name="value" type="seL4_Word"
+                description='Value to write using `vmwrite` instruction'/>
+            <param dir="out" name="written" type="seL4_Word"
+                description='Final value written using `vmwrite` after kernel validation'/>
         </method>
         <method id="X86VCPUEnableIOPort" name="EnableIOPort" condition="defined(CONFIG_VTX)"
-            manual_name="Enable IO Port">
-            <param dir="in" name="ioPort" type="seL4_CNode"/>
-            <param dir="in" name="low" type="seL4_Word"/>
-            <param dir="in" name="high" type="seL4_Word"/>
+            manual_name="Enable IO Port" manual_label="vcpu_enableioport">
+            <brief>
+                Enable I/O port range in guest execution
+            </brief>
+            <description>
+                Enables a range of I/O ports for direct access by the execution mode in
+                the <texttt text='VCPU'/>. The requested port range must be a sub range
+                of the provided I/O port capability.
+
+                This also establishes a link between the provided I/O port capability and
+                the <texttt text='VCPU'/>, see <autoref label='sec:virt'/> for details.
+            </description>
+            <param dir="in" name="ioPort" type="seL4_CPtr"
+                description='I/O port capability whose authority is being delegating'/>
+            <param dir="in" name="low" type="seL4_Word"
+                description='Start of the I/O port range to enable'/>
+            <param dir="in" name="high" type="seL4_Word"
+                description='Last I/O port in the range to enable'/>
         </method>
         <method id="X86VCPUDisableIOPort" name="DisableIOPort" condition="defined(CONFIG_VTX)"
             manual_name="Disable IO Port">
-            <param dir="in" name="low" type="seL4_Word"/>
-            <param dir="in" name="high" type="seL4_Word"/>
+            <brief>
+                Disable I/O port range in privileged execution
+            </brief>
+            <description>
+                Disable a range of I/O ports for direct access by the execution mode in
+                the <texttt text='VCPU'/>.
+            </description>
+            <param dir="in" name="low" type="seL4_Word"
+                description='Start of the I/O port range to disable'/>
+            <param dir="in" name="high" type="seL4_Word"
+                description='Last I/O port in the range to disable'/>
         </method>
         <method id="X86VCPUWriteRegisters" name="WriteRegisters" condition="defined(CONFIG_VTX)"
             manual_name="Write Registers">
-            <param dir="in" name="regs" type="seL4_VCPUContext"/>
+            <brief>
+                Set guest mode registers to the fields of a given <texttt text="seL4_VCPUContext"/>
+            </brief>
+            <description>
+                Sets the guest mode registers, which is any registers not already part of the VMCS.
+            </description>
+            <param dir="in" name="regs" type="seL4_VCPUContext"
+                description='Data structure containing the new register values.'/>
         </method>
     </interface>
-    <interface name="seL4_X86_EPTPDPT" manual_name="Extended Page Table Page Directory Page Table">
+    <interface name="seL4_X86_EPTPDPT" manual_name="Extended Page Table Page Directory Page Table"
+        cap_description="Capability to the EPT PDPT being operated on.">
         <method id="X86EPTPDPTMap" name="Map" condition="defined(CONFIG_VTX)">
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
-            <param dir="in" name="gpa" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
+            <brief>
+                Map an EPT page directory page table.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+                description='Capability to the EPT root which will contain the mapping'/>
+            <param dir="in" name="gpa" type="seL4_Word"
+                description='Guest physical address to map the page into.'/>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+                <description>
+                    VM attributes for the mapping. Possible values for this type are
+                    given in <autoref label='ch:vspace'/>
+                </description>
+            </param>
         </method>
-        <method id="X86EPTPDPTUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
+        <method id="X86EPTPDPTUnmap" name="Unmap" condition="defined(CONFIG_VTX)">
+            <brief>
+                Unmap an EPT page directory page table.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+        </method>
     </interface>
-    <interface name="seL4_X86_EPTPD" manual_name="Extended Page Table Page Directory">
+    <interface name="seL4_X86_EPTPD" manual_name="Extended Page Table Page Directory"
+        cap_description="Capability to the EPT PD being operated on.">
         <method id="X86EPTPDMap" name="Map" condition="defined(CONFIG_VTX)">
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
-            <param dir="in" name="gpa" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
+            <brief>
+                Map an EPT page directory.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+                description='Capability to the EPT root which will contain the mapping'/>
+            <param dir="in" name="gpa" type="seL4_Word"
+                description='Guest physical address to map the page into.'/>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+                <description>
+                    VM attributes for the mapping. Possible values for this type are
+                    given in <autoref label='ch:vspace'/>
+                </description>
+            </param>
         </method>
-        <method id="X86EPTPDUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
+        <method id="X86EPTPDUnmap" name="Unmap" condition="defined(CONFIG_VTX)">
+            <brief>
+                Unmap an EPT page directory.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+        </method>
     </interface>
-    <interface name="seL4_X86_EPTPT" manual_name="Extended Page Table Page Table">
+    <interface name="seL4_X86_EPTPT" manual_name="Extended Page Table Page Table"
+            cap_description="Capability to the EPT PT being operated on.">
         <method id="X86EPTPTMap" name="Map" condition="defined(CONFIG_VTX)">
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"/>
-            <param dir="in" name="gpa" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
+            <brief>
+                Map an EPT page table.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+                description='Capability to the EPT root which will contain the mapping'/>
+            <param dir="in" name="gpa" type="seL4_Word"
+                description='Guest physical address to map the page into.'/>
+            <param dir="in" name="attr" type="seL4_X86_VMAttributes">
+                <description>
+                    VM attributes for the mapping. Possible values for this type are
+                    given in <autoref label='ch:vspace'/>
+                </description>
+            </param>
         </method>
-        <method id="X86EPTPTUnmap" name="Unmap" condition="defined(CONFIG_VTX)"/>
+        <method id="X86EPTPTUnmap" name="Unmap" condition="defined(CONFIG_VTX)">
+            <brief>
+                Unmap an EPT page table.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+        </method>
     </interface>
 </api>

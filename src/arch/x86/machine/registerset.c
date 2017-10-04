@@ -44,11 +44,5 @@ word_t sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
         /* remove any other bits that shouldn't be set */
         v &=  FLAGS_MASK;
     }
-    if (reg == TLS_BASE) {
-        /* forbid users from setting a TLS_BASE that is in the kernel window */
-        if (v > PPTR_USER_TOP) {
-            v = PPTR_USER_TOP;
-        }
-    }
     return v;
 }

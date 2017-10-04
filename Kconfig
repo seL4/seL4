@@ -238,6 +238,15 @@ menu "seL4 System"
             help
                 Support for Xilinx Zynq-7000 platforms.
 
+        config PLAT_ZYNQMP
+            bool "Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)"
+            depends on ARCH_ARM
+            select ARM_CORTEX_A53
+            select ARCH_ARM_V8A
+            select HAVE_FPU if ARCH_AARCH64
+            help
+                Support for Xilinx Zynq UltraScale+ MPSoC platforms.
+
         config PLAT_PC99
             bool "PC99"
             depends on ARCH_X86
@@ -347,6 +356,12 @@ menu "seL4 System Parameters"
             Maximum number of work units (delete/revoke iterations) until
             the kernel checks for pending interrupts (and preempts the
             currently running syscall if interrupts are pending).
+
+    config RESET_CHUNK_BITS
+        int "Max chunks to reset when clearing memory"
+        default 8
+        help
+            Maximum size in bits of chunks of memory to zero before checking a preemption point.
 
     config MAX_NUM_BOOTINFO_UNTYPED_CAPS
         int "Max number of bootinfo untyped caps"

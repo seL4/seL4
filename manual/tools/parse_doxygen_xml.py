@@ -20,6 +20,8 @@ import sys
 import os
 import re
 from bs4 import BeautifulSoup
+import six
+
 # Dict mapping characters to their escape sequence in latex
 LATEX_ESCAPE_PATTERNS = {
     "_": "\\_",
@@ -53,7 +55,7 @@ def get_text(soup, escape=True):
 
     if isinstance(soup, str):
         string = soup
-    elif isinstance(soup, unicode):
+    elif isinstance(soup, six.string_types):
         string = str(soup)
     elif soup.string:
         string = str(soup.string)
@@ -154,11 +156,11 @@ def parse_detailed_desc(parent, ref_dict):
     names = parent.find_all('declname')
 
     # the first type is the return type
-    ret_type = types_iter.next()
+    ret_type = six.next(types_iter)
 
     # the rest are parameters
     for n in names:
-        param_type = types_iter.next().text
+        param_type = six.next(types_iter).text
         if param_type == "void":
             continue
         params[str(n.text)] = {"type": param_type}
