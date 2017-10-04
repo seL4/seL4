@@ -334,7 +334,7 @@ foreach(bf_dec ${bf_declarations})
         "${bf_gen_target}_def" "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${defs_target}"
         "${bf_gen_target}_proof" "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${proofs_target}"
     )
-    list(APPEND c_arguments_deps "${bf_gen_target}")
+    list(APPEND c_arguments_deps "${bf_gen_target}" "generated/${bf_gen_dir}/${bf_target}")
     set(bf_gen_target "${bf_gen_target}1")
 endforeach()
 
