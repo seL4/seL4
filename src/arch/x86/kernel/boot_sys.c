@@ -627,13 +627,6 @@ try_boot_sys_mbi1(
     return true;
 }
 
-inline word_t align_up(word_t base, word_t align)
-{
-    base += align - 1;
-    base &= ~(align - 1);
-    return base;
-}
-
 static BOOT_CODE bool_t
 try_boot_sys_mbi2(
     multiboot2_header_t* mbi2
@@ -710,7 +703,7 @@ try_boot_sys_mbi2(
             }
         }
 
-        tag = (multiboot2_tag_t const *)((word_t)tag + align_up(tag->size, 8));
+        tag = (multiboot2_tag_t const *)((word_t)tag + ROUND_UP(tag->size, 3));
     }
 
     printf("Detected %d boot module(s):\n", mod_count);
