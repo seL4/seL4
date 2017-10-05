@@ -343,16 +343,16 @@ updateCapData(bool_t preserve, word_t newData, cap_t cap)
 
     case cap_cnode_cap: {
         word_t guard, guardSize;
-        cnode_capdata_t w = { .words = { newData } };
+        seL4_CNode_CapData_t w = { .words = { newData } };
 
-        guardSize = cnode_capdata_get_guardSize(w);
+        guardSize = seL4_CNode_CapData_get_guardSize(w);
 
         if (guardSize + cap_cnode_cap_get_capCNodeRadix(cap) > wordBits) {
             return cap_null_cap_new();
         } else {
             cap_t new_cap;
 
-            guard = cnode_capdata_get_guard(w) & MASK(guardSize);
+            guard = seL4_CNode_CapData_get_guard(w) & MASK(guardSize);
             new_cap = cap_cnode_cap_set_capCNodeGuard(cap, guard);
             new_cap = cap_cnode_cap_set_capCNodeGuardSize(new_cap,
                                                           guardSize);
