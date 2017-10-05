@@ -627,6 +627,104 @@ try_boot_sys_mbi1(
     return true;
 }
 
+inline word_t align_up(word_t base, word_t align)
+{
+    base += align - 1;
+    base &= ~(align - 1);
+    return base;
+}
+
+static BOOT_CODE bool_t
+try_boot_sys_mbi2(
+    multiboot2_header_t* mbi2
+)
+{
+    int mod_count                  = 0;
+    multiboot2_tag_t const * tag   = (multiboot2_tag_t *)(mbi2 + 1);
+    multiboot2_tag_t const * tag_e = (multiboot2_tag_t *)((word_t)mbi2 + mbi2->total_size);
+
+    /* initialize the memory. We track two kinds of memory regions. Physical memory
+     * that we will use for the kernel, and physical memory regions that we must
+     * not give to the user. Memory regions that must not be given to the user
+     * include all the physical memory in the kernel window, but also includes any
+     * important or kernel devices. */
+    boot_state.mem_p_regs.count = 0;
+    init_allocated_p_regions();
+    boot_state.mb_mmap_info.mmap_length = 0;
+
+    while (tag < tag_e && tag->type != MULTIBOOT2_TAG_END) {
+        word_t const behind_tag = (word_t)tag + sizeof(*tag);
+
+        if (tag->type == MULTIBOOT2_TAG_CMDLINE) {
+            char const * const cmdline = (char const * const)(behind_tag);
+            cmdline_parse(cmdline, &cmdline_opt);
+        } else if (tag->type == MULTIBOOT2_TAG_ACPI) {
+            if (sizeof(boot_state.acpi_rsdp) != tag->size - sizeof(*tag)) {
+                printf("sizeof ACPI RSDP unexpected %ld!=%lu\n", sizeof(boot_state.acpi_rsdp), tag->size - sizeof(*tag));
+                return false;
+            }
+            memcpy(&boot_state.acpi_rsdp, (void *)behind_tag, sizeof(boot_state.acpi_rsdp));
+        } else if (tag->type == MULTIBOOT2_TAG_MODULE) {
+            multiboot2_module_t const * module = (multiboot2_module_t const *)behind_tag;
+            printf(
+                "  module #%d: start=0x%x end=0x%x size=0x%x name='%s'\n",
+                mod_count,
+                module->start,
+                module->end,
+                module->end - module->start,
+                module->string
+            );
+
+            if (mod_count == 0) {
+                boot_state.boot_module_start = module->start;
+            }
+
+            mod_count ++;
+            if ((sword_t)(module->end - module->start) <= 0) {
+                printf("Invalid boot module size! Possible cause: boot module file not found\n");
+                return false;
+            }
+            if (boot_state.mods_end_paddr < module->end) {
+                boot_state.mods_end_paddr = module->end;
+            }
+        } else if (tag->type == MULTIBOOT2_TAG_MEMORY) {
+            multiboot2_memory_t const * s = (multiboot2_memory_t *)(behind_tag + 8);
+            multiboot2_memory_t const * e = (multiboot2_memory_t *)((word_t)tag + tag->size);
+
+            for (multiboot2_memory_t const * m = s; m < e; m++) {
+                if (!m->addr) {
+                    boot_state.mem_lower = m->size;
+                }
+
+                printf("\tPhysical Memory Region from %llx size %llx type %u\n", m->addr, m->size, m->type);
+                if (m->addr != (uint64_t)(word_t)m->addr) {
+                    printf("\t\tPhysical memory region not addressable\n");
+                }
+
+                if (m->type == MULTIBOOT_MMAP_USEABLE_TYPE && m->addr >= HIGHMEM_PADDR) {
+                    if (!add_mem_p_regs((p_region_t) {
+                    m->addr, m->addr + m->size
+                }))
+                    return false;
+                }
+            }
+        }
+
+        tag = (multiboot2_tag_t const *)((word_t)tag + align_up(tag->size, 8));
+    }
+
+    printf("Detected %d boot module(s):\n", mod_count);
+
+    if (mod_count < 1) {
+        printf("Expect at least one boot module (containing a userland image)\n");
+        return false;
+    }
+
+    boot_state.vbe_info.vbeMode = -1;
+
+    return true;
+}
+
 BOOT_CODE VISIBLE void
 boot_sys(
     unsigned long multiboot_magic,
@@ -636,8 +734,10 @@ boot_sys(
 
     if (multiboot_magic == MULTIBOOT_MAGIC) {
         result = try_boot_sys_mbi1(mbi);
+    } else if (multiboot_magic == MULTIBOOT2_MAGIC) {
+        result = try_boot_sys_mbi2(mbi);
     } else {
-        printf("Boot loader is not multiboot 1 compliant %lx\n", multiboot_magic);
+        printf("Boot loader is not multiboot 1 or 2 compliant %lx\n", multiboot_magic);
     }
 
     if (result) {

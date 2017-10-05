@@ -12,6 +12,7 @@
 #define __ARCH_KERNEL_BOOT_SYS_H
 
 #include <arch/kernel/multiboot.h>
+#include <arch/kernel/multiboot2.h>
 
 void boot_sys(
     unsigned long multiboot_magic,
