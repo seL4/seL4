@@ -224,6 +224,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
                 boot_state.num_drhu,
                 boot_state.drhu_list,
                 &boot_state.rmrr_list,
+                &boot_state.acpi_rsdp,
                 &boot_state.vbe_info,
                 &boot_state.mb_mmap_info
             )) {
