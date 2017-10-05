@@ -565,7 +565,7 @@ findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 
 exception_t handleVMFault(tcb_t* thread, vm_fault_type_t vm_faultType)
 {
-    uint32_t addr;
+    word_t addr;
     uint32_t fault;
 
     addr = getFaultAddr();
