@@ -204,8 +204,7 @@ acpi_get_rsdp(void)
     return NULL;
 }
 
-void* acpi_table_init(void* entry, enum acpi_type table_type);
-BOOT_CODE void*
+BOOT_CODE static void*
 acpi_table_init(void* entry, enum acpi_type table_type)
 {
     void* acpi_table;
