@@ -660,7 +660,7 @@ try_boot_sys_mbi2(
             cmdline_parse(cmdline, &cmdline_opt);
         } else if (tag->type == MULTIBOOT2_TAG_ACPI) {
             if (sizeof(boot_state.acpi_rsdp) != tag->size - sizeof(*tag)) {
-                printf("sizeof ACPI RSDP unexpected %ld!=%lu\n", sizeof(boot_state.acpi_rsdp), tag->size - sizeof(*tag));
+                printf("sizeof ACPI RSDP unexpected %ld!=%lu\n", (long)sizeof(boot_state.acpi_rsdp), (long)tag->size - sizeof(*tag));
                 return false;
             }
             memcpy(&boot_state.acpi_rsdp, (void *)behind_tag, sizeof(boot_state.acpi_rsdp));
