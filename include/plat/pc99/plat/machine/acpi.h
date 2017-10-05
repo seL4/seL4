@@ -52,6 +52,9 @@ typedef struct acpi_rsdt {
  * and true is returned, otherwise the contents of rsdp_data are undefined and false is returned. */
 bool_t acpi_init(acpi_rsdp_t *rsdp_data);
 
+/* Validates that a given rsdp block is in fact valid */
+BOOT_CODE bool_t acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp);
+
 uint32_t acpi_madt_scan(
     acpi_rsdp_t* acpi_rsdp,
     cpu_id_t*    cpu_list,

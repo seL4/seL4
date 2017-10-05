@@ -233,8 +233,6 @@ BOOT_CODE bool_t
 acpi_init(acpi_rsdp_t *rsdp_data)
 {
     acpi_rsdp_t* acpi_rsdp = acpi_get_rsdp();
-    acpi_rsdt_t* acpi_rsdt;
-    acpi_rsdt_t* acpi_rsdt_mapped;
 
     if (acpi_rsdp == NULL) {
         printf("BIOS: No ACPI support detected\n");
@@ -244,8 +242,23 @@ acpi_init(acpi_rsdp_t *rsdp_data)
     acpi_rsdp = acpi_table_init(acpi_rsdp, ACPI_RSDP);
     printf("ACPI: RSDP vaddr=%p\n", acpi_rsdp);
 
-    /* create a copy of the rsdp data before we change the mapping */
+    /* create a copy of the rsdp data */
     *rsdp_data = *acpi_rsdp;
+
+    /* perform final validation */
+    return acpi_validate_rsdp(rsdp_data);
+}
+
+BOOT_CODE bool_t
+acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp)
+{
+    acpi_rsdt_t* acpi_rsdt;
+    acpi_rsdt_t* acpi_rsdt_mapped;
+
+    if (acpi_calc_checksum((char*)acpi_rsdp, 20) != 0) {
+        printf("BIOS: ACPI information corrupt\n");
+        return false;
+    }
 
     /* verify the rsdt, even though we do not actually make use of the mapping right now */
     acpi_rsdt = (acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address;
