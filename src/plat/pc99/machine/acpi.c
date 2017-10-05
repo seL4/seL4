@@ -22,20 +22,6 @@ enum acpi_type {
     ACPI_RSDT
 };
 
-/* Root System Descriptor Pointer */
-typedef struct acpi_rsdp {
-    char         signature[8];
-    uint8_t      checksum;
-    char         oem_id[6];
-    uint8_t      revision;
-    uint32_t     rsdt_address;
-    uint32_t     length;
-    uint32_t     xsdt_address[2];
-    uint8_t      extended_checksum;
-    char         reserved[3];
-} acpi_rsdp_t;
-compile_assert(acpi_rsdp_packed, sizeof(acpi_rsdp_t) == 36)
-
 /* DMA Remapping Reporting Table */
 typedef struct acpi_dmar {
     acpi_header_t header;
@@ -243,8 +229,8 @@ acpi_table_init(void* entry, enum acpi_type table_type)
     return acpi_table;
 }
 
-BOOT_CODE acpi_rsdt_t*
-acpi_init(void)
+BOOT_CODE bool_t
+acpi_init(acpi_rsdp_t *rsdp_data)
 {
     acpi_rsdp_t* acpi_rsdp = acpi_get_rsdp();
     acpi_rsdt_t* acpi_rsdt;
@@ -252,12 +238,16 @@ acpi_init(void)
 
     if (acpi_rsdp == NULL) {
         printf("BIOS: No ACPI support detected\n");
-        return NULL;
+        return false;
     }
     printf("ACPI: RSDP paddr=%p\n", acpi_rsdp);
     acpi_rsdp = acpi_table_init(acpi_rsdp, ACPI_RSDP);
     printf("ACPI: RSDP vaddr=%p\n", acpi_rsdp);
 
+    /* create a copy of the rsdp data before we change the mapping */
+    *rsdp_data = *acpi_rsdp;
+
+    /* verify the rsdt, even though we do not actually make use of the mapping right now */
     acpi_rsdt = (acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address;
     printf("ACPI: RSDT paddr=%p\n", acpi_rsdt);
     acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
@@ -266,15 +256,15 @@ acpi_init(void)
     assert(acpi_rsdt_mapped->header.length > 0);
     if (acpi_calc_checksum((char*)acpi_rsdt_mapped, acpi_rsdt_mapped->header.length) != 0) {
         printf("ACPI: RSDT checksum failure\n");
-        return NULL;
+        return false;
     }
 
-    return acpi_rsdt;
+    return true;
 }
 
 BOOT_CODE uint32_t
 acpi_madt_scan(
-    acpi_rsdt_t* acpi_rsdt,
+    acpi_rsdp_t* acpi_rsdp,
     cpu_id_t*    cpu_list,
     uint32_t*    num_ioapic,
     paddr_t*     ioapic_paddrs
@@ -288,7 +278,7 @@ acpi_madt_scan(
 
     acpi_rsdt_t* acpi_rsdt_mapped;
     acpi_madt_t* acpi_madt_mapped;
-    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
+    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init((acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
 
     num_cpu = 0;
     *num_ioapic = 0;
@@ -382,7 +372,7 @@ acpi_madt_scan(
 
 BOOT_CODE bool_t
 acpi_fadt_scan(
-    acpi_rsdt_t* acpi_rsdt
+    acpi_rsdp_t* acpi_rsdp
 )
 {
     unsigned int entries;
@@ -391,7 +381,7 @@ acpi_fadt_scan(
 
     acpi_rsdt_t* acpi_rsdt_mapped;
     acpi_fadt_t* acpi_fadt_mapped;
-    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
+    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init((acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
 
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
     /* Divide by uint32_t explicitly as this is the size as mandated by the ACPI standard */
@@ -418,7 +408,7 @@ acpi_fadt_scan(
 
 BOOT_CODE void
 acpi_dmar_scan(
-    acpi_rsdt_t* acpi_rsdt,
+    acpi_rsdp_t* acpi_rsdp,
     paddr_t*     drhu_list,
     uint32_t*    num_drhu,
     uint32_t     max_drhu_list_len,
@@ -440,7 +430,7 @@ acpi_dmar_scan(
     acpi_rsdt_t* acpi_rsdt_mapped;
     acpi_dmar_t* acpi_dmar_mapped;
 
-    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
+    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init((acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
 
     *num_drhu = 0;
     rmrr_count = 0;

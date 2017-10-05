@@ -62,6 +62,7 @@ typedef struct boot_state {
     uint32_t     num_drhu; /* number of IOMMUs */
     paddr_t      drhu_list[MAX_NUM_DRHU]; /* list of physical addresses of the IOMMUs */
     acpi_rmrr_list_t rmrr_list;
+    acpi_rsdp_t  acpi_rsdp; /* copy of the rsdp */
     uint32_t     num_cpus;    /* number of detected cpus */
     cpu_id_t     cpus[CONFIG_MAX_NUM_NODES];
     mem_p_regs_t mem_p_regs;  /* physical memory regions */
@@ -384,7 +385,6 @@ try_boot_sys(
 {
     /* ==== following code corresponds to the "select" in abstract specification ==== */
 
-    acpi_rsdt_t* acpi_rsdt; /* physical address of ACPI root */
     paddr_t mods_end_paddr; /* physical address where boot modules end */
     paddr_t load_paddr;
     word_t i;
@@ -487,13 +487,12 @@ try_boot_sys(
     }
 
     /* get ACPI root table */
-    acpi_rsdt = acpi_init();
-    if (!acpi_rsdt) {
+    if (!acpi_init(&boot_state.acpi_rsdp)) {
         return false;
     }
 
     /* check if kernel configuration matches platform requirments */
-    if (!acpi_fadt_scan(acpi_rsdt)) {
+    if (!acpi_fadt_scan(&boot_state.acpi_rsdp)) {
         return false;
     }
 
@@ -502,7 +501,7 @@ try_boot_sys(
     } else {
         /* query available IOMMUs from ACPI */
         acpi_dmar_scan(
-            acpi_rsdt,
+            &boot_state.acpi_rsdp,
             boot_state.drhu_list,
             &boot_state.num_drhu,
             MAX_NUM_DRHU,
@@ -511,7 +510,7 @@ try_boot_sys(
     }
 
     /* query available CPUs from ACPI */
-    boot_state.num_cpus = acpi_madt_scan(acpi_rsdt, boot_state.cpus, &boot_state.num_ioapic, boot_state.ioapic_paddr);
+    boot_state.num_cpus = acpi_madt_scan(&boot_state.acpi_rsdp, boot_state.cpus, &boot_state.num_ioapic, boot_state.ioapic_paddr);
     if (boot_state.num_cpus == 0) {
         printf("No CPUs detected\n");
         return false;
