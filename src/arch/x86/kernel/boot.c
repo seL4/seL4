@@ -347,7 +347,7 @@ init_sys_state(
         seL4_BootInfoHeader header;
         header.id = SEL4_BOOTINFO_HEADER_X86_ACPI_RSDP;
         header.len = sizeof(header) + sizeof(*acpi_rsdp);
-        memcpy((void*)(extra_bi_region.start + extra_bi_offset), &header, sizeof(header));
+        *(seL4_BootInfoHeader*)(extra_bi_region.start + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
         memcpy((void*)(extra_bi_region.start + extra_bi_offset), acpi_rsdp, sizeof(*acpi_rsdp));
         extra_bi_offset += sizeof(*acpi_rsdp);
