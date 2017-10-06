@@ -35,7 +35,7 @@ typedef struct multiboot2_memory {
 typedef struct multiboot2_module {
     uint32_t start;
     uint32_t end;
-    char     string [0];
+    char     string [1];
 } PACKED multiboot2_module_t;
 
 enum multiboot2_tags {
