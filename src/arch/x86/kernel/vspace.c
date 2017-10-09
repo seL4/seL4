@@ -572,11 +572,11 @@ exception_t handleVMFault(tcb_t* thread, vm_fault_type_t vm_faultType)
     fault = getRegister(thread, Error);
 
     switch (vm_faultType) {
-    case seL4_DataFault:
+    case X86DataFault:
         current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
 
-    case seL4_InstructionFault:
+    case X86InstructionFault:
         current_fault = seL4_Fault_VMFault_new(addr, fault, true);
         return EXCEPTION_FAULT;
 
