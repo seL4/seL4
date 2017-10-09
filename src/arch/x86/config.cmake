@@ -215,6 +215,19 @@ config_string(KernelMultibootGFXHeight MULTIBOOT_GRAPHICS_MODE_HEIGHT
     UNQUOTE
 )
 
+config_option(KernelMultiboot1Header MULTIBOOT1_HEADER
+    "Inserts a header that indicates to the bootloader that the kernel supports a multiboot 1 boot header"
+    DEFAULT ON
+    DEPENDS "KernelArchX86"
+)
+
+config_option(KernelMultiboot2Header MULTIBOOT2_HEADER
+    "Inserts a header that indicates to the bootloader that the kernel supports a multiboot 2 boot header. \
+    This is can be enabled together with a multiboot 1 header and the boot loader may use either one"
+    DEFAULT ON
+    DEPENDS "KernelArchX86"
+)
+
 add_sources(
     DEP "KernelArchX86"
     PREFIX src/arch/x86

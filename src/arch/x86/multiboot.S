@@ -48,6 +48,7 @@
 #endif
 
 .section .mbh
+#ifdef CONFIG_MULTIBOOT1_HEADER
     /* MultiBoot header */
     .align  4
     .long   MULTIBOOT_HEADER_MAGIC; /*magic*/
@@ -62,6 +63,8 @@
     .long   CONFIG_MULTIBOOT_GRAPHICS_MODE_WIDTH /*width*/
     .long   CONFIG_MULTIBOOT_GRAPHICS_MODE_HEIGHT /*height*/
     .long   CONFIG_MULTIBOOT_GRAPHICS_MODE_DEPTH /*depth*/
+#endif
+#ifdef CONFIG_MULTIBOOT2_HEADER
     .align  8
     __mbi2_start:
     /* magic multi-boot 2 header */
@@ -74,3 +77,4 @@
     .word   0x0
     .long   0x8
     __mbi2_end:
+#endif
