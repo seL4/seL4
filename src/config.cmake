@@ -25,6 +25,7 @@ add_sources(CFILES
     src/kernel/thread.c
     src/kernel/boot.c
     src/kernel/stack.c
+    src/kernel/sporadic.c
     src/object/notification.c
     src/object/cnode.c
     src/object/endpoint.c
@@ -32,6 +33,9 @@ add_sources(CFILES
     src/object/objecttype.c
     src/object/tcb.c
     src/object/untyped.c
+    src/object/schedcontext.c
+    src/object/reply.c
+    src/object/schedcontrol.c
     src/model/preemption.c
     src/model/statedata.c
     src/model/smp.c
