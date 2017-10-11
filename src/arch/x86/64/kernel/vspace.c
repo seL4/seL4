@@ -1239,15 +1239,15 @@ static void unmapPDPT(asid_t asid, vptr_t vaddr, pdpte_t *pdpt)
     flushPDPT(find_ret.vspace_root, vaddr, pdpt, asid);
 
     *pml4Slot = pml4e_new(
-                           0,                  /* xd               */
-                           0,                  /* pdpt_base_addr   */
-                           0,                  /* accessed         */
-                           0,                  /* cache_disabled   */
-                           0,                  /* write through    */
-                           0,                  /* super user       */
-                           0,                  /* read_write       */
-                           0                   /* present          */
-                       );
+                    0,                  /* xd               */
+                    0,                  /* pdpt_base_addr   */
+                    0,                  /* accessed         */
+                    0,                  /* cache_disabled   */
+                    0,                  /* write through    */
+                    0,                  /* super user       */
+                    0,                  /* read_write       */
+                    0                   /* present          */
+                );
 }
 
 static exception_t
