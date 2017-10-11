@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.7.2)
 set(configure_string "")
 
 # Set kernel branch
-config_set(KernelIsMaster KERNEL_MASTER ON)
+config_set(KernelIsMCS KERNEL_RT ON)
 
 # Proof based configuration variables
 set(CSPEC_DIR "." CACHE PATH "")
@@ -68,9 +68,9 @@ config_string(KernelRootCNodeSizeBits ROOT_CNODE_SIZE_BITS
     UNQUOTE
 )
 
-config_string(KernelTimerTickMS TIMER_TICK_MS
-    "Timer tick period in milliseconds"
-    DEFAULT 2
+config_string(KernelBootThreadTimeSlice BOOT_THREAD_TIME_SLICE
+    "Number of milliseconds until the boot thread is preempted."
+    DEFAULT 5
     UNQUOTE
 )
 config_string(KernelTimeSlice TIME_SLICE
@@ -125,6 +125,17 @@ config_string(KernelStackBits KERNEL_STACK_BITS
     there is no guard below the stack so setting this too small will cause random\
     memory corruption"
     DEFAULT 12
+    UNQUOTE
+)
+
+config_string(KernelWCETScale KERNEL_WCET_SCALE
+    "Multiplier to scale kernel WCET estimate by. \
+    The kernel WCET estimate is used to ensure a thread has enough budget \
+    to get in and out of the kernel. When running in a simulator the WCET \
+    estimate, which is tuned for hardware, may not be sufficient. This \
+    option provides a hacky knob that can be fiddled with when running \
+    inside a simulator."
+    DEFAULT 1
     UNQUOTE
 )
 

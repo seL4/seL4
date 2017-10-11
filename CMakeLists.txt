@@ -154,6 +154,8 @@ include_directories("include/arch/${KernelArch}")
 include_directories("include/arch/${KernelArch}/arch/${KernelWordSize}/")
 include_directories("include/plat/${KernelPlatform}/")
 include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}/")
+include_directories("include/${KernelWordSize}/")
+
 if(KernelArchARM)
     include_directories("include/arch/arm/armv/${KernelArmArmV}/")
     include_directories("include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}")
