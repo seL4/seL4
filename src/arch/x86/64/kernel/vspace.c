@@ -21,12 +21,6 @@
 #include <mode/kernel/tlb.h>
 #include <arch/kernel/tlb_bitmap.h>
 
-struct lookupPML4Slot_ret {
-    exception_t status;
-    pml4e_t     *pml4Slot;
-};
-typedef struct lookupPML4Slot_ret lookupPML4Slot_ret_t;
-
 /* For the boot code we create two windows into the physical address space
  * One is at the same location as the kernel window, and is placed up high
  * The other is a 1-to-1 mapping of the first 512gb of memory. The purpose
@@ -953,29 +947,21 @@ makeUserPTEInvalid(void)
 }
 
 
-static lookupPML4Slot_ret_t
+static pml4e_t*
 lookupPML4Slot(vspace_root_t*pml4, vptr_t vptr)
 {
-    lookupPML4Slot_ret_t ret;
     pml4e_t *pml4e = PML4E_PTR(pml4);
     word_t pml4Index = GET_PML4_INDEX(vptr);
-    ret.status = EXCEPTION_NONE;
-    ret.pml4Slot = pml4e + pml4Index;
-    return ret;
+    return pml4e + pml4Index;
 }
 
 static lookupPDPTSlot_ret_t
 lookupPDPTSlot(vspace_root_t *pml4, vptr_t vptr)
 {
-    lookupPML4Slot_ret_t pml4Slot = lookupPML4Slot(pml4, vptr);
+    pml4e_t *pml4Slot = lookupPML4Slot(pml4, vptr);
     lookupPDPTSlot_ret_t ret;
 
-    if (pml4Slot.status != EXCEPTION_NONE) {
-        ret.pdptSlot = NULL;
-        ret.status = pml4Slot.status;
-        return ret;
-    }
-    if (!pml4e_ptr_get_present(pml4Slot.pml4Slot)) {
+    if (!pml4e_ptr_get_present(pml4Slot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(PML4_INDEX_OFFSET);
 
         ret.pdptSlot = NULL;
@@ -985,7 +971,7 @@ lookupPDPTSlot(vspace_root_t *pml4, vptr_t vptr)
         pdpte_t *pdpt;
         pdpte_t *pdptSlot;
         word_t pdptIndex = GET_PDPT_INDEX(vptr);
-        pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4Slot.pml4Slot));
+        pdpt = paddr_to_pptr(pml4e_ptr_get_pdpt_base_address(pml4Slot));
         pdptSlot = pdpt + pdptIndex;
 
         ret.status = EXCEPTION_NONE;
@@ -1235,27 +1221,24 @@ decodeX64PageDirectoryInvocation(
 static void unmapPDPT(asid_t asid, vptr_t vaddr, pdpte_t *pdpt)
 {
     findVSpaceForASID_ret_t find_ret;
-    lookupPML4Slot_ret_t    lu_ret;
+    pml4e_t *pml4Slot;
 
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE) {
         return;
     }
 
-    lu_ret = lookupPML4Slot(find_ret.vspace_root, vaddr);
-    if (lu_ret.status != EXCEPTION_NONE) {
-        return;
-    }
+    pml4Slot = lookupPML4Slot(find_ret.vspace_root, vaddr);
 
     /* check if the PML4 has the PDPT */
-    if (! (pml4e_ptr_get_present(lu_ret.pml4Slot) &&
-            pml4e_ptr_get_pdpt_base_address(lu_ret.pml4Slot) == pptr_to_paddr(pdpt))) {
+    if (! (pml4e_ptr_get_present(pml4Slot) &&
+            pml4e_ptr_get_pdpt_base_address(pml4Slot) == pptr_to_paddr(pdpt))) {
         return;
     }
 
     flushPDPT(find_ret.vspace_root, vaddr, pdpt, asid);
 
-    *lu_ret.pml4Slot = pml4e_new(
+    *pml4Slot = pml4e_new(
                            0,                  /* xd               */
                            0,                  /* pdpt_base_addr   */
                            0,                  /* accessed         */
@@ -1305,7 +1288,7 @@ decodeX64PDPTInvocation(
 {
     word_t                  vaddr;
     vm_attributes_t         attr;
-    lookupPML4Slot_ret_t    pml4Slot;
+    pml4e_t                *pml4Slot;
     cap_t                   vspaceCap;
     vspace_root_t          *vspace;
     pml4e_t                 pml4e;
@@ -1367,14 +1350,8 @@ decodeX64PDPTInvocation(
     }
 
     pml4Slot = lookupPML4Slot(vspace, vaddr);
-    if (pml4Slot.status != EXCEPTION_NONE) {
-        current_syscall_error.type = seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource = false;
 
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (pml4e_ptr_get_present(pml4Slot.pml4Slot)) {
+    if (pml4e_ptr_get_present(pml4Slot)) {
         current_syscall_error.type = seL4_DeleteFirst;
 
         return EXCEPTION_SYSCALL_ERROR;
@@ -1397,7 +1374,7 @@ decodeX64PDPTInvocation(
     cap = cap_pdpt_cap_set_capPDPTMappedAddress(cap, vaddr);
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return performX64PDPTInvocationMap(cap, cte, pml4e, pml4Slot.pml4Slot, vspace);
+    return performX64PDPTInvocationMap(cap, cte, pml4e, pml4Slot, vspace);
 }
 
 exception_t
