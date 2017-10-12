@@ -744,7 +744,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
                     == pptr_to_paddr(pptr)))) {
             return;
         }
-        *pde = makeUserPDELargePageInvalid();
+        *pde = makeUserPDEInvalid();
         break;
 
     default:
@@ -784,7 +784,7 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 
     flushTable(find_ret.vspace_root, vaddr, pt, asid);
 
-    *lu_ret.pdSlot = makeUserPDEPageTableInvalid();
+    *lu_ret.pdSlot = makeUserPDEInvalid();
 
     invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid,
                                      SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));

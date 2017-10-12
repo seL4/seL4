@@ -878,26 +878,11 @@ makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
 }
 
 pde_t CONST
-makeUserPDELargePageInvalid(void)
+makeUserPDEInvalid(void)
 {
-    return pde_pde_large_new(
-               0,           /* xd                   */
-               0,           /* page_base_address    */
-               0,           /* pat                  */
-               0,           /* global               */
-               0,           /* dirty                */
-               0,           /* accessed             */
-               0,           /* cache_disabled       */
-               0,           /* write_through        */
-               0,           /* super_user           */
-               0,           /* read_write           */
-               0            /* present              */
-           );
-}
-
-pde_t CONST
-makeUserPDEPageTableInvalid(void)
-{
+    /* The bitfield only declares two kinds of PDE entries (page tables or large pages)
+     * and an invalid entry should really be a third type, but we can simulate it by
+     * creating an invalid (present bit 0) entry of either of the defined types */
     return pde_pde_pt_new(
                0,      /* xd               */
                0,      /* pt_base_addr     */
