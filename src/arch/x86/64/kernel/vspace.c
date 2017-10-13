@@ -807,6 +807,36 @@ isValidNativeRoot(cap_t cap)
            cap_pml4_cap_get_capPML4IsMapped(cap);
 }
 
+static pml4e_t CONST
+makeUserPML4E(paddr_t paddr, vm_attributes_t vm_attr)
+{
+    return pml4e_new(
+                0,
+                paddr,
+                0,
+                vm_attributes_get_x86PCDBit(vm_attr),
+                vm_attributes_get_x86PWTBit(vm_attr),
+                1,
+                1,
+                1
+            );
+}
+
+static pml4e_t CONST
+makeUserPML4EInvalid(void)
+{
+    return pml4e_new(
+                    0,                  /* xd               */
+                    0,                  /* pdpt_base_addr   */
+                    0,                  /* accessed         */
+                    0,                  /* cache_disabled   */
+                    0,                  /* write through    */
+                    0,                  /* super user       */
+                    0,                  /* read_write       */
+                    0                   /* present          */
+                );
+}
+
 static pdpte_t CONST
 makeUserPDPTEHugePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
 {
@@ -823,6 +853,21 @@ makeUserPDPTEHugePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rig
                WritableFromVMRights(vm_rights),        /* read write     */
                1                                       /* present        */
            );
+}
+
+static pdpte_t CONST
+makeUserPDPTEPageDirectory(paddr_t paddr, vm_attributes_t vm_attr)
+{
+    return pdpte_pdpte_pd_new(
+                0,                      /* xd       */
+                paddr,                  /* paddr    */
+                0,                      /* accessed */
+                vm_attributes_get_x86PCDBit(vm_attr),  /* cache disabled */
+                vm_attributes_get_x86PWTBit(vm_attr),  /* write through  */
+                1,                      /* super user */
+                1,                      /* read write */
+                1                       /* present    */
+            );
 }
 
 static pdpte_t CONST
@@ -1172,16 +1217,7 @@ decodeX64PageDirectoryInvocation(
     }
 
     paddr = pptr_to_paddr(PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap)));
-    pdpte = pdpte_pdpte_pd_new(
-                0,                      /* xd       */
-                paddr,                  /* paddr    */
-                0,                      /* accessed */
-                vm_attributes_get_x86PCDBit(vm_attr),  /* cache disabled */
-                vm_attributes_get_x86PWTBit(vm_attr),  /* write through  */
-                1,                      /* super user */
-                1,                      /* read write */
-                1                       /* present    */
-            );
+    pdpte = makeUserPDPTEPageDirectory(paddr, vm_attr);
 
     cap = cap_page_directory_cap_set_capPDIsMapped(cap, 1);
     cap = cap_page_directory_cap_set_capPDMappedASID(cap, asid);
@@ -1211,16 +1247,7 @@ static void unmapPDPT(asid_t asid, vptr_t vaddr, pdpte_t *pdpt)
 
     flushPDPT(find_ret.vspace_root, vaddr, pdpt, asid);
 
-    *pml4Slot = pml4e_new(
-                    0,                  /* xd               */
-                    0,                  /* pdpt_base_addr   */
-                    0,                  /* accessed         */
-                    0,                  /* cache_disabled   */
-                    0,                  /* write through    */
-                    0,                  /* super user       */
-                    0,                  /* read_write       */
-                    0                   /* present          */
-                );
+    *pml4Slot = makeUserPML4EInvalid();
 }
 
 static exception_t
@@ -1331,16 +1358,7 @@ decodeX64PDPTInvocation(
     }
 
     paddr = pptr_to_paddr(PDPTE_PTR((cap_pdpt_cap_get_capPDPTBasePtr(cap))));
-    pml4e = pml4e_new(
-                0,
-                paddr,
-                0,
-                vm_attributes_get_x86PCDBit(attr),
-                vm_attributes_get_x86PWTBit(attr),
-                1,
-                1,
-                1
-            );
+    pml4e = makeUserPML4E(paddr, attr);
 
     cap = cap_pdpt_cap_set_capPDPTIsMapped(cap, 1);
     cap = cap_pdpt_cap_set_capPDPTMappedASID(cap, asid);
