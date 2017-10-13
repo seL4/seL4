@@ -826,14 +826,11 @@ makeUserPDPTEHugePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rig
 }
 
 static pdpte_t CONST
-makeUserPDPTEHugePageInvalid(void)
+makeUserPDPTEInvalid(void)
 {
-    return pdpte_pdpte_1g_new(
+    return pdpte_pdpte_pd_new(
                0,          /* xd               */
                0,          /* physical address */
-               0,          /* PAT              */
-               0,          /* global           */
-               0,          /* dirty            */
                0,          /* accessed         */
                0,          /* cache disabled */
                0,          /* write through  */
@@ -1408,7 +1405,7 @@ void modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr,
             return;
         }
 
-        *pdpte = makeUserPDPTEHugePageInvalid();
+        *pdpte = makeUserPDPTEInvalid();
         return;
     }
     fail("Invalid page type");
