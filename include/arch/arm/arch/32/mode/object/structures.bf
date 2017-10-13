@@ -124,7 +124,45 @@ block io_space_capdata {
     field   moduleID        16
     field   clientID        16
 }
+#endif
 
+#ifdef CONFIG_ARM_SMMU_V2
+-- IO space caps
+block io_space_cap {
+    field   capStreamID    16
+
+    padding                40
+    field   capType         8
+}
+
+block io_space_capdata {
+    padding                48
+
+    field streamID         16
+}
+
+block iopde {
+    padding            32
+    field_high address 20
+    padding            10
+    field pdeType      2
+}
+
+block iopte {
+    padding                     9
+    field XN                    1
+    padding                     22
+    field_high address          20
+    padding                     1
+    field AF                    1
+    field SH                    2
+    field S2AP                  2
+    field Attr                  4
+    field pteType               2
+}
+#endif
+
+#ifdef CONFIG_ARM_SMMU
 block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, capIOPTMappedAddress) {
     field_high  capIOPTBasePtr          20
     padding                             12
