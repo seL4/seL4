@@ -811,30 +811,30 @@ static pml4e_t CONST
 makeUserPML4E(paddr_t paddr, vm_attributes_t vm_attr)
 {
     return pml4e_new(
-                0,
-                paddr,
-                0,
-                vm_attributes_get_x86PCDBit(vm_attr),
-                vm_attributes_get_x86PWTBit(vm_attr),
-                1,
-                1,
-                1
-            );
+               0,
+               paddr,
+               0,
+               vm_attributes_get_x86PCDBit(vm_attr),
+               vm_attributes_get_x86PWTBit(vm_attr),
+               1,
+               1,
+               1
+           );
 }
 
 static pml4e_t CONST
 makeUserPML4EInvalid(void)
 {
     return pml4e_new(
-                    0,                  /* xd               */
-                    0,                  /* pdpt_base_addr   */
-                    0,                  /* accessed         */
-                    0,                  /* cache_disabled   */
-                    0,                  /* write through    */
-                    0,                  /* super user       */
-                    0,                  /* read_write       */
-                    0                   /* present          */
-                );
+               0,                  /* xd               */
+               0,                  /* pdpt_base_addr   */
+               0,                  /* accessed         */
+               0,                  /* cache_disabled   */
+               0,                  /* write through    */
+               0,                  /* super user       */
+               0,                  /* read_write       */
+               0                   /* present          */
+           );
 }
 
 static pdpte_t CONST
@@ -859,15 +859,15 @@ static pdpte_t CONST
 makeUserPDPTEPageDirectory(paddr_t paddr, vm_attributes_t vm_attr)
 {
     return pdpte_pdpte_pd_new(
-                0,                      /* xd       */
-                paddr,                  /* paddr    */
-                0,                      /* accessed */
-                vm_attributes_get_x86PCDBit(vm_attr),  /* cache disabled */
-                vm_attributes_get_x86PWTBit(vm_attr),  /* write through  */
-                1,                      /* super user */
-                1,                      /* read write */
-                1                       /* present    */
-            );
+               0,                      /* xd       */
+               paddr,                  /* paddr    */
+               0,                      /* accessed */
+               vm_attributes_get_x86PCDBit(vm_attr),  /* cache disabled */
+               vm_attributes_get_x86PWTBit(vm_attr),  /* write through  */
+               1,                      /* super user */
+               1,                      /* read write */
+               1                       /* present    */
+           );
 }
 
 static pdpte_t CONST
