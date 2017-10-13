@@ -1045,16 +1045,7 @@ unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 
     flushPD(find_ret.vspace_root, vaddr, pd, asid);
 
-    *lu_ret.pdptSlot = pdpte_pdpte_pd_new(
-                           0,                      /* xd               */
-                           0,                      /* paddr            */
-                           0,                      /* accessed         */
-                           0,                      /* cache disabled   */
-                           0,                      /* write through    */
-                           0,                      /* super user       */
-                           0,                      /* read write       */
-                           0                       /* present          */
-                       );
+    *lu_ret.pdptSlot = makeUserPDPTEInvalid();
 
     invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid,
                                      SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
