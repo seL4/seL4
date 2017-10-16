@@ -324,7 +324,10 @@ release_secondary_cpus(void)
     plat_cleanInvalidateCache();
 
     /* Wait until all the secondary cores are done initialising */
-    while (ksNumCPUs != CONFIG_MAX_NUM_NODES);
+    while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
+        /* perform a memory release+acquire to get new values of ksNumCPUs */
+        __atomic_signal_fence(__ATOMIC_ACQ_REL);
+    }
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
