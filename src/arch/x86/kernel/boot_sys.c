@@ -428,7 +428,7 @@ try_boot_sys(void)
     }
 
     /* validate the ACPI table */
-    if (!acpi_init(&boot_state.acpi_rsdp)) {
+    if (!acpi_validate_rsdp(&boot_state.acpi_rsdp)) {
         return false;
     }
 
