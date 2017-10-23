@@ -45,7 +45,7 @@ void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
     }
 }
 
-/* Handle a FPU fault.
+/* Handle an FPU fault.
  *
  * This CPU exception is thrown when userspace attempts to use the FPU while
  * it is disabled. We need to save the current state of the FPU, and hand

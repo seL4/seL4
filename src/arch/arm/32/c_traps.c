@@ -51,7 +51,7 @@ void VISIBLE NORETURN restore_user_context(void)
             /* Retore the user stack pointer */
             "pop {lr}                  \n"
             "msr sp_usr, lr            \n"
-            /* prepare the eception return lr */
+            /* prepare the exception return lr */
             "ldr lr, [sp, #4]          \n"
             "msr elr_hyp, lr           \n"
             /* prepare the user status register */
