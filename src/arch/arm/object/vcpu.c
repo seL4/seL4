@@ -19,6 +19,29 @@
 #include <arch/machine/debug_conf.h>
 #include <arch/machine/gic_pl390.h>
 
+#ifdef CONFIG_HAVE_FPU
+static inline void
+access_fpexc(vcpu_t *vcpu, bool_t write)
+{
+    /* save a copy of the current status since
+     * the enableFpuHyp modifies the armHSFPUEnabled
+     */
+    bool_t flag = armHSFPUEnabled;
+    if (!flag) {
+        enableFpuInstInHyp();
+    }
+    if (write) {
+        MCR(FPEXC, vcpu->fpexc);
+    } else {
+        MRC(FPEXC, vcpu->fpexc);
+    }
+    /* restore the status */
+    if (!flag) {
+        trapFpuInstToHyp();
+    }
+}
+#endif
+
 static void
 vcpu_enable(vcpu_t *vcpu)
 {
@@ -54,6 +77,47 @@ vcpu_enable(vcpu_t *vcpu)
      */
     setHDCRTrapDebugExceptionState(false);
 #endif
+#ifdef CONFIG_HAVE_FPU
+    /* We need to restore the FPEXC value early for the following reason:
+     *
+     * 1: When an application inside a VM is trying to execute an FPU
+     * instruction and the EN bit of FPEXC is disabled, an undefined
+     * instruction exception is sent to the guest Linux kernel instead of
+     * the seL4. Until the Linux kernel examines the EN bit of the FPEXC
+     * to determine if the exception FPU related, a VCPU trap is sent to
+     * the seL4 kernel. However, it can be too late to restore the value
+     * of saved FPEXC in the VCPU trap handler: if the EN bit of the saved
+     * FPEXC is enabled, the Linux kernel thinks the FPU is enabled and
+     * thus refuses to handle the exception. The result is the application
+     * is killed with the cause of illegal instruction.
+     *
+     * Note that we restore the FPEXC here, but the current FPU owner
+     * can be a different thread. Thus, it seems that we are modifying
+     * another thread's FPEXC. However, the modification is OK.
+     *
+     * 1: If the other thread is a native thread, even if the EN bit of
+     * the FPEXC is enabled, a trap th HYP mode will be triggered when
+     * the thread tries to use the FPU.
+     *
+     * 2: If the other thread has a VCPU, the FPEXC is already saved
+     * in the VCPU's vcpu->fpexc when the VCPU is saved or disabled.
+     *
+     * We also overwrite the fpuState.fpexc with the value saved in
+     * vcpu->fpexc. Since the following scenario can happen:
+     *
+     * VM0 (the FPU owner) -> VM1 (update the FPEXC in vcpu_enable) ->
+     * switchLocalFpuOwner (save VM0 with modified FPEXC) ->
+     * VM1 (the new FPU owner)
+     *
+     * In the case above, the fpuState.fpexc of VM0 saves the value written
+     * by the VM1, but the vcpu->fpexc of VM0 still contains the correct
+     * value when VM0 is disabed (vcpu_disable) or saved (vcpu_save).
+     *
+     *
+     */
+
+    vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu->fpexc;
+    access_fpexc(vcpu, true);
 #endif
 }
 
@@ -72,6 +136,11 @@ vcpu_disable(vcpu_t *vcpu)
         vcpu->vgic.hcr = hcr;
         vcpu->cpx.sctlr = SCTLR;
         isb();
+#ifdef CONFIG_HAVE_FPU
+        if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
+            access_fpexc(vcpu, false);
+        }
+#endif
     }
     /* Turn off the VGIC */
     set_gic_vcpu_ctrl_hcr(0);
@@ -168,14 +237,19 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     /* save banked registers */
     vcpu->lr_svc = get_lr_svc();
     vcpu->sp_svc = get_sp_svc();
+    vcpu->spsr_svc = get_spsr_svc();
     vcpu->lr_abt = get_lr_abt();
     vcpu->sp_abt = get_sp_abt();
+    vcpu->spsr_abt = get_spsr_abt();
     vcpu->lr_und = get_lr_und();
     vcpu->sp_und = get_sp_und();
+    vcpu->spsr_und = get_spsr_und();
     vcpu->lr_irq = get_lr_irq();
     vcpu->sp_irq = get_sp_irq();
+    vcpu->spsr_irq = get_spsr_irq();
     vcpu->lr_fiq = get_lr_fiq();
     vcpu->sp_fiq = get_sp_fiq();
+    vcpu->spsr_fiq = get_spsr_fiq();
     vcpu->r8_fiq = get_r8_fiq();
     vcpu->r9_fiq = get_r9_fiq();
     vcpu->r10_fiq = get_r10_fiq();
@@ -190,6 +264,47 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     saveAllBreakpointState(vcpu->vcpuTCB);
 #endif
     isb();
+
+    /* save the virtual time registers */
+    MRC(CNTV_TVAL, vcpu->cntv_tval);
+    MRC(CNTV_CTL, vcpu->cntv_ctl);
+    MRRC(CNTV_CVAL, vcpu->cntv_cval);
+
+    /* save PL0/1 stage 1 translation table registers */
+    vcpu->ttbrc = readTTBRC();
+    vcpu->ttbr0 = readTTBR0();
+    vcpu->ttbr1 = readTTBR1();
+
+    /* save domain access control register */
+    vcpu->dacr = readDACR();
+
+    /* save fault status registers */
+    vcpu->dfsr = getDFSR();
+    vcpu->ifsr = getIFSR();
+    vcpu->adfsr = getADFSR();
+    vcpu->aifsr = getAIFSR();
+    vcpu->dfar = getDFAR();
+    vcpu->ifar = getIFAR();
+
+    vcpu->prrr = getPRRR();
+    vcpu->nmrr = getNMRR();
+
+    vcpu->cidr = getCIDR();
+
+    /* save software thread ID registers */
+    vcpu->tpidrprw = readTPIDRPRW();
+    vcpu->tpidruro = readTPIDRURO();
+    vcpu->tpidrurw = readTPIDRURW();
+
+#ifdef CONFIG_HAVE_FPU
+    /* Other FPU registers are still lazily saved and restored when
+     * handleFPUFault is called. See the comments in vcpu_enable
+     * for more information.
+     */
+    if (active && nativeThreadUsingFPU(vcpu->vcpuTCB)) {
+        access_fpexc(vcpu, false);
+    }
+#endif
 }
 
 
@@ -217,19 +332,55 @@ vcpu_restore(vcpu_t *vcpu)
     /* restore banked registers */
     set_lr_svc(vcpu->lr_svc);
     set_sp_svc(vcpu->sp_svc);
+    set_spsr_svc(vcpu->spsr_svc);
     set_lr_abt(vcpu->lr_abt);
     set_sp_abt(vcpu->sp_abt);
+    set_spsr_abt(vcpu->spsr_abt);
     set_lr_und(vcpu->lr_und);
     set_sp_und(vcpu->sp_und);
+    set_spsr_und(vcpu->spsr_und);
     set_lr_irq(vcpu->lr_irq);
     set_sp_irq(vcpu->sp_irq);
+    set_spsr_irq(vcpu->spsr_irq);
     set_lr_fiq(vcpu->lr_fiq);
     set_sp_fiq(vcpu->sp_fiq);
+    set_spsr_fiq(vcpu->spsr_fiq);
     set_r8_fiq(vcpu->r8_fiq);
     set_r9_fiq(vcpu->r9_fiq);
     set_r10_fiq(vcpu->r10_fiq);
     set_r11_fiq(vcpu->r11_fiq);
     set_r12_fiq(vcpu->r12_fiq);
+
+    /* restore the virtual time registers */
+    MCR(CNTV_TVAL, vcpu->cntv_tval);
+    MCR(CNTV_CTL, vcpu->cntv_ctl);
+    MCRR(CNTV_CVAL, vcpu->cntv_cval);
+
+    /* restore PL0/1 stage 1 translation table registers */
+    writeTTBRC(vcpu->ttbrc);
+    writeTTBR0Raw(vcpu->ttbr0);
+    writeTTBR1Raw(vcpu->ttbr1);
+
+    /* restore DACR */
+    writeDACR(vcpu->dacr);
+
+    /* set fault status registes */
+    setDFSR(vcpu->dfsr);
+    setIFSR(vcpu->ifsr);
+    setADFSR(vcpu->adfsr);
+    setAIFSR(vcpu->aifsr);
+    setDFAR(vcpu->dfar);
+    setIFAR(vcpu->ifar);
+
+    setPRRR(vcpu->prrr);
+    setNMRR(vcpu->nmrr);
+
+    setCIDR(vcpu->cidr);
+
+    /* restore software thread ID registers */
+    writeTPIDRPRW(vcpu->tpidrprw);
+    writeTPIDRURO(vcpu->tpidruro);
+    writeTPIDRURW(vcpu->tpidrurw);
 
     /* Restore and enable VCPU state */
     setACTLR(vcpu->cpx.actlr);
@@ -284,14 +435,14 @@ VGICMaintenance(void)
                 break;
             }
             set_gic_vcpu_ctrl_lr(irq_idx, virq);
-#ifdef CONFIG_ARCH_AARCH64
+            /* decodeVCPUInjectIRQ below checks the vgic.lr register,
+             * so we should also sync the shadow data structure as well */
             assert(armHSCurVCPU != NULL && armHSVCPUActive);
             if (armHSCurVCPU != NULL && armHSVCPUActive) {
                 armHSCurVCPU->vgic.lr[irq_idx] = virq;
             } else {
                 /* FIXME This should not happen */
             }
-#endif
             current_fault = seL4_Fault_VGICMaintenance_new(irq_idx, 1);
         }
 
@@ -618,11 +769,22 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
     return EXCEPTION_NONE;
 }
 
+#define HSR_FPU_FAULT   (0x1fe0000a)
+#define HSR_TASE_FAULT  (0x1fe00020)
+
 void
 handleVCPUFault(word_t hsr)
 {
 #ifdef CONFIG_ARCH_AARCH64
     if (armv_handleVCPUFault(hsr)) {
+        return;
+    }
+#endif
+#ifdef CONFIG_HAVE_FPU
+    if (hsr == HSR_FPU_FAULT || hsr == HSR_TASE_FAULT) {
+        assert(!isFpuEnable());
+        handleFPUFault();
+        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
         return;
     }
 #endif

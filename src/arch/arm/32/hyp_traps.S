@@ -116,7 +116,8 @@ END_FUNC(arm_vector_table)
     /* Stack all user registers */
     push {r0-r12}
     /* Load the kernel's real stack pointer */
-    mrc p15, 0, sp, c13, c0, 4
+    /* the hyp mode uses HTPIDR */
+    mrc p15, 4, sp, c13, c0, 2
 .endm
 
 /********************************
@@ -181,7 +182,7 @@ END_FUNC(arm_syscall)
 
 BEGIN_FUNC(arm_hyp_prefetch_abort_exception)
 #ifdef DEBUG
-    mrc p15, 0, sp, c13, c0, 4
+    mrc p15, 4, sp, c13, c0, 2
     mrs r0, elr_hyp
     blx kernelPrefetchAbort
 #endif
@@ -192,7 +193,7 @@ END_FUNC(arm_hyp_prefetch_abort_exception)
 
 BEGIN_FUNC(arm_hyp_data_abort_exception)
 #ifdef DEBUG
-    mrc p15, 0, sp, c13, c0, 4
+    mrc p15, 4, sp, c13, c0, 2
     mrs r0, elr_hyp
     blx kernelDataAbort
 #endif
@@ -203,7 +204,7 @@ END_FUNC(arm_hyp_data_abort_exception)
 
 BEGIN_FUNC(arm_hyp_undefined_inst_exception)
 #ifdef DEBUG
-    mrc p15, 0, sp, c13, c0, 4
+    mrc p15, 4, sp, c13, c0, 2
     mrs r0, elr_hyp
     blx kernelUndefinedInstruction
 #endif

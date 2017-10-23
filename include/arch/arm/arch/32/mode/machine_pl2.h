@@ -62,6 +62,27 @@ static inline void setHCR(word_t r)
     isb();
 }
 
+static inline word_t getHCR(void)
+{
+    word_t HCR;
+    asm volatile("mrc p15, 4, %0, c1, c1, 0" : "=r"(HCR));
+    return HCR;
+}
+
+static inline void setHCPTR(word_t r)
+{
+    dsb();
+    asm volatile("mcr p15, 4, %0, c1, c1, 2" : : "r"(r));
+    isb();
+}
+
+static inline word_t PURE getHCPTR(void)
+{
+    word_t HCPTR;
+    asm volatile("mrc p15, 4, %0, c1, c1, 2" : "=r"(HCPTR));
+    return HCPTR;
+}
+
 static inline void setHMAIR(word_t hmair0, word_t hmair1)
 {
     asm volatile("mcr p15, 4, %0, c10, c2, 0" : : "r"(hmair0));
@@ -134,6 +155,18 @@ static inline void setSCTLR(word_t sctlr)
     asm volatile ("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
 }
 
+static inline void setHTPIDR(word_t htpidr)
+{
+    asm volatile("mcr p15, 4, %0, c13, c0, 2" :: "r"(htpidr));
+}
+
+static inline word_t getHTPIDR(void)
+{
+    word_t HTPIDR;
+    asm volatile("mrc p15, 4, %0, c13, c0, 2" : "=r"(HTPIDR));
+    return HTPIDR;
+}
+
 #else
 
 /* used in other files without guards */
@@ -141,6 +174,8 @@ static inline void setCurrentPDPL2(paddr_t pa) {}
 static inline void invalidateHypTLB(void) {}
 static inline void writeContextIDPL2(word_t pd_val) {}
 static inline void writeContextIDAndPD(word_t id, word_t pd_val) {}
+static inline void setHTPIDR(word_t htpidr) {}
+static inline word_t getHTPIDR(void) { return 0; }
 static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
 {
     return vaddr;

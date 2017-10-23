@@ -13,8 +13,10 @@
 #ifndef __MODE_MACHINE_FPU_H
 #define __MODE_MACHINE_FPU_H
 
+#include <config.h>
 #include <mode/machine/registerset.h>
 #include <util.h>
+#include <mode/machine.h>
 
 
 #define CPACR_CP_10_SHIFT_POS        20
@@ -41,11 +43,59 @@
 
 extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 
+static void clearEnFPEXC(void)
+{
+    word_t fpexc;
+    MRC(FPEXC, fpexc);
+    fpexc &= ~BIT(FPEXC_EN_BIT);
+    MCR(FPEXC, fpexc);
+}
+
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_HAVE_FPU)
+
+#define HCPTR_CP10_BIT  10
+#define HCPTR_CP11_BIT  11
+#define HCPTR_TASE_BIT  15
+#define HCPTR_MASK      ~(BIT(HCPTR_CP10_BIT) | BIT(HCPTR_CP11_BIT) | BIT(HCPTR_TASE_BIT))
+
+/* enable FPU accesses in Hyp mode */
+static inline void
+enableFpuInstInHyp(void)
+{
+    if (!armHSFPUEnabled) {
+        setHCPTR(getHCPTR() & HCPTR_MASK);
+        armHSFPUEnabled = true;
+    }
+}
+
+/* trap PL0/PL1 FPU operations to Hyp mode and disable FPU accesses in Hyp */
+static inline void
+trapFpuInstToHyp(void)
+{
+    if (armHSFPUEnabled) {
+        setHCPTR(getHCPTR() | ~HCPTR_MASK);
+        armHSFPUEnabled = false;
+    }
+}
+
+#else
+
+static inline void enableFpuInstInHyp(void) {}
+static inline void trapFpuInstToHyp(void) {}
+
+#endif
 #ifdef CONFIG_HAVE_FPU
 
 /* This variable is set at init time to true if the FPU supports 32 registers (d0-d31) */
 extern bool_t isFPUD32SupportedCached;
 
+static void setEnFPEXC(void)
+{
+    word_t fpexc;
+    MRC(FPEXC, fpexc);
+    fpexc |=  BIT(FPEXC_EN_BIT);
+    MCR(FPEXC, fpexc);
+}
 /* Store state in the FPU registers into memory. */
 static inline void saveFpuState(user_fpu_state_t *dest)
 {
@@ -66,6 +116,11 @@ static inline void saveFpuState(user_fpu_state_t *dest)
 #endif
 
     dest->fpexc = fpexc;
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        /* before touching the regsiters, we need to set the EN bit */
+        setEnFPEXC();
+    }
 
     /* We don't support asynchronous exceptions */
     assert ((dest->fpexc & BIT(FPEXC_EX_BIT)) == 0);
@@ -91,16 +146,35 @@ static inline void saveFpuState(user_fpu_state_t *dest)
         : [tcb_fpscr] "r" (&dest->fpscr), "r" (regs_d0_d15)
         : "memory", "lr"
     );
+    /* restore the FPEXC */
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MCR(FPEXC, fpexc);
+    }
 }
 
 /* Enable the FPU to be used without faulting.
- * Required even if the kernel attempts to use the FPU. */
+ * Required even if the kernel attempts to use the FPU.
+ *
+ * The FPEXC_EN bit is not set immediately in HYP mode for
+ * the following reason:
+ *
+ *    A VM can set/clear the EN bit in the FPEXC in order to
+ *    trap FPU accesses, implementing its own save/restore
+ *    functions. Thus, we need to save the FPEXC without modifying
+ *    it.
+ *
+ */
+
 static inline void enableFpu(void)
 {
-    word_t fpexc;
-    MRC(FPEXC, fpexc);
-    fpexc |=  BIT(FPEXC_EN_BIT);
-    MCR(FPEXC, fpexc);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    enableFpuInstInHyp();
+    if (!armHSVCPUActive) {
+        setEnFPEXC();
+    }
+#else
+    setEnFPEXC();
+#endif
     isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
 }
 
@@ -113,6 +187,10 @@ static inline bool_t isFpuEnable(void)
 /* Load FPU state from memory into the FPU registers. */
 static inline void loadFpuState(user_fpu_state_t *src)
 {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        /* now we need to enable the EN bit in FPEXC */
+        setEnFPEXC();
+    }
     register word_t regs_d16_d31 asm("r2") =  (word_t) &src->fpregs[16];
     if (isFPUD32SupportedCached) {
         asm volatile(
@@ -137,14 +215,24 @@ static inline void loadFpuState(user_fpu_state_t *src)
 
 #endif /* CONFIG_HAVE_FPU */
 
-/* Disable the FPU so that usage of it causes a fault */
+
+/* Disable the FPU so that usage of it causes a fault.
+ * In HYP mode, when a native thread is running:
+ *     if the EN FPEXC is set, trapFpuHyp causes ensures a trap to HYP mode;
+ *     if the EN is off, an undefined instruction exception is triggered.
+ *
+ * Either way, the kernel gets back in control.
+ * When a VM is running, always, a trap to HYP mode is triggered.
+ * Thus, we do not need to modify the EN bit of the FPEXC.
+ */
 static inline void disableFpu(void)
 {
-    word_t fpexc;
-    MRC(FPEXC, fpexc);
-    fpexc &= ~BIT(FPEXC_EN_BIT);
-    MCR(FPEXC, fpexc);
-
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        trapFpuInstToHyp();
+    } else {
+        clearEnFPEXC();
+    }
     isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
 }
+
 #endif /* __MODE_MACHINE_FPU_H */

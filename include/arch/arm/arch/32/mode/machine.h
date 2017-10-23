@@ -147,9 +147,68 @@ static inline void writeTTBR0(paddr_t addr)
                  "r"((addr & 0xffffe000) | 0x18));
 }
 
+static inline word_t readTTBR0(void)
+{
+    word_t val = 0;
+    asm volatile("mrc p15, 0, %0, c2, c0, 0":"=r"(val):);
+    return val;
+}
+
+static inline void writeTTBR0Raw(word_t val)
+{
+    asm volatile("mcr p15, 0, %0, c2, c0, 0":: "r"(val));
+}
+
+
+static inline word_t readTTBR1(void)
+{
+    word_t val = 0;
+    asm volatile("mrc p15, 0, %0, c2, c0, 1":"=r"(val):);
+    return val;
+}
+
+static inline void writeTTBR1Raw(word_t val)
+{
+    asm volatile("mcr p15, 0, %0, c2, c0, 1":: "r"(val));
+}
+
+
+static inline word_t readTTBRC(void)
+{
+    word_t val = 0;
+    asm volatile("mrc p15, 0, %0, c2, c0, 2":"=r"(val):);
+    return val;
+}
+
+static inline void writeTTBRC(word_t val)
+{
+    asm volatile("mcr p15, 0, %0, c2, c0, 2":: "r"(val));
+}
+
 static inline void writeTPIDRURW(word_t reg)
 {
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
+}
+
+
+static inline word_t readTPIDRURW(void)
+{
+    word_t reg;
+    asm volatile("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
+    return reg;
+}
+
+
+static inline void writeTPIDRURO(word_t reg)
+{
+    asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
+}
+
+static inline word_t readTPIDRURO(void)
+{
+    word_t reg;
+    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
+    return reg;
 }
 
 static inline void writeTPIDRPRW(word_t reg)
@@ -164,17 +223,23 @@ static inline word_t readTPIDRPRW(void)
     return reg;
 }
 
-static inline word_t readTPIDRURW(void)
-{
-    word_t reg;
-    asm volatile("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
-    return reg;
-}
 
 static inline word_t readMPIDR(void)
 {
     word_t reg;
     asm volatile ("mrc p15, 0, %0, c0, c0, 5" : "=r"(reg));
+    return reg;
+}
+
+static inline void writeDACR(word_t reg)
+{
+    asm volatile("mcr p15, 0, %0, c3, c0, 0" :: "r"(reg));
+}
+
+static inline word_t readDACR(void)
+{
+    word_t reg;
+    asm volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(reg));
     return reg;
 }
 
@@ -200,14 +265,22 @@ static inline void setKernelStack(word_t stack_address)
     /* Setup kernel stack pointer.
      * Load the (per-core) kernel stack pointer to TPIDRPRW for faster reloads on traps.
      */
-    writeTPIDRPRW(stack_address);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        setHTPIDR(stack_address);
+    } else {
+        writeTPIDRPRW(stack_address);
+    }
 #endif /* CONFIG_ARCH_ARM_V6 */
 }
 
 static inline word_t getKernelStack(void)
 {
 #ifndef CONFIG_ARCH_ARM_V6
-    return readTPIDRPRW();
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        return getHTPIDR();
+    } else {
+        return readTPIDRPRW();
+    }
 #else
     return ((word_t) kernel_stack_alloc[0]) + BIT(CONFIG_KERNEL_STACK_BITS);
 #endif /* CONFIG_ARCH_ARM_V6 */
@@ -366,6 +439,11 @@ static inline word_t PURE getIFSR(void)
     return IFSR;
 }
 
+static inline void setIFSR(word_t ifsr)
+{
+    asm volatile("mcr p15, 0, %0, c5, c0, 1" : : "r"(ifsr));
+}
+
 static inline word_t PURE getDFSR(void)
 {
     word_t DFSR;
@@ -373,11 +451,100 @@ static inline word_t PURE getDFSR(void)
     return DFSR;
 }
 
+static inline void setDFSR(word_t dfsr)
+{
+    asm volatile("mcr p15, 0, %0, c5, c0, 0" : : "r"(dfsr));
+}
+
+static inline word_t PURE getADFSR(void)
+{
+    word_t ADFSR;
+    asm volatile("mrc p15, 0, %0, c5, c1, 0" : "=r"(ADFSR));
+    return ADFSR;
+}
+
+static inline void setADFSR(word_t adfsr)
+{
+    asm volatile("mcr p15, 0, %0, c5, c1, 0" : : "r"(adfsr));
+}
+
+static inline word_t PURE getAIFSR(void)
+{
+    word_t AIFSR;
+    asm volatile("mrc p15, 0, %0, c5, c1, 1" : "=r"(AIFSR));
+    return AIFSR;
+}
+
+static inline void setAIFSR(word_t aifsr)
+{
+    asm volatile("mcr p15, 0, %0, c5, c1, 1" : : "r"(aifsr));
+}
+
+static inline word_t PURE getDFAR(void)
+{
+    word_t DFAR;
+    asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r"(DFAR));
+    return DFAR;
+}
+
+static inline void setDFAR(word_t dfar)
+{
+    asm volatile("mcr p15, 0, %0, c6, c0, 0" : : "r"(dfar));
+}
+
+static inline word_t PURE getIFAR(void)
+{
+    word_t IFAR;
+    asm volatile("mrc p15, 0, %0, c6, c0, 2" : "=r"(IFAR));
+    return IFAR;
+}
+
+static inline void setIFAR(word_t ifar)
+{
+    asm volatile("mcr p15, 0, %0, c6, c0, 2" : : "r"(ifar));
+}
+
+static inline word_t getPRRR(void)
+{
+    word_t PRRR;
+    asm volatile("mrc p15, 0, %0, c10, c2, 0" : "=r"(PRRR));
+    return PRRR;
+}
+
+static inline void setPRRR(word_t prrr)
+{
+    asm volatile("mcr p15, 0, %0, c10, c2, 0" : : "r"(prrr));
+}
+
+static inline word_t getNMRR(void)
+{
+    word_t NMRR;
+    asm volatile("mrc p15, 0, %0, c10, c2, 1" : "=r"(NMRR));
+    return NMRR;
+}
+
+static inline void setNMRR(word_t nmrr)
+{
+    asm volatile("mcr p15, 0, %0, c10, c2, 1" : : "r"(nmrr));
+}
+
 static inline word_t PURE getFAR(void)
 {
     word_t FAR;
     asm volatile("mrc p15, 0, %0, c6, c0, 0" : "=r"(FAR));
     return FAR;
+}
+
+static inline word_t getCIDR(void)
+{
+    word_t CIDR;
+    asm volatile("mrc p15, 0, %0, c13, c0, 1" : "=r"(CIDR));
+    return CIDR;
+}
+
+static inline void setCIDR(word_t cidr)
+{
+    asm volatile("mcr p15, 0, %0, c13, c0, 1" : : "r"(cidr));
 }
 
 static inline word_t getACTLR(void)

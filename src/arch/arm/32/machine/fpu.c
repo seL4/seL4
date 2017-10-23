@@ -29,6 +29,9 @@ BOOT_CODE static inline bool_t supportsAsyncExceptions(void)
 {
     word_t fpexc;
 
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        enableFpuInstInHyp();
+    }
     /* Set FPEXC.EX=1 */
     MRC(FPEXC, fpexc);
     fpexc |= BIT(FPEXC_EX_BIT);
@@ -98,6 +101,10 @@ fpsimd_HWCapTest(void)
     MCR(CPACR, cpacr);
 
     isb();
+
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        enableFpuInstInHyp();
+    }
 
     /* Check of this platform supports HW FP instructions */
     asm volatile (".word 0xeef00a10  \n" /* vmrs    r0, fpsid */
