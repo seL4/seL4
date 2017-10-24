@@ -43,35 +43,7 @@ Repository Overview
 Build Instructions
 ------------------
 
-tl;dr:
-
-    TOOLPREFIX=arm-none-eabi- ARCH=arm PLAT=imx6 ARMV=armv7-a CPU=cortex-a9 \
- 	make
-
-The kernel source requires a cross-compiler for the target architecture. To
-build using `make`, follow these instructions:
-
- * Ensure that the appropriate cross-compiler for your target
-   architecture is installed.
-
- * Set the `TOOLPREFIX` environment variable to your cross-compiler's
-   prefix. E.g. `arm-none-eabi-`.
-
- * Set the `ARCH`, `PLAT`, `ARMV` and `CPU` variables for the intended target
-   architecture and platform, chosen from the following lists:
-
-    ARCH | PLAT   | ARMV    | CPU
-    -----|--------|---------|-----------
-    arm  | imx31  | armv6   | arm1136jf-s
-    arm  | omap3  | armv7-a | cortex-a8
-    arm  | am335x | armv7-a | cortex-a8
-    arm  | imx6   | armv7-a | cortex-a9
-    ia32 | pc99   |         |
-
- * For a debug build, append `DEBUG=y` and to see serial output additionally
-   append `CONFIG_KERNEL_EXTRA_CPPFLAGS="-DCONFIG_PRINTING=y -DCONFIG_USER_STACK_TRACE_LENGTH=16"`.
-
-See the seL4 website for more [comprehensive build instructions][5].
+See the seL4 website for [build instructions][5].
 
  [5]: http://sel4.systems/Info/GettingStarted/
 
