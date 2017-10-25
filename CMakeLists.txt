@@ -11,7 +11,7 @@
 #
 
 cmake_minimum_required(VERSION 3.7.2)
-include(CheckCSourceCompiles)
+include(CheckCCompilerFlag)
 project(seL4 C ASM)
 
 # First find our helpers
@@ -68,9 +68,8 @@ if(KernelArchARM)
     # newer versions of gcc recommend just setting 'mcpu' and letting the internals determine the
     # approproate march and mtune settings, as such we have already set the desired mcpu and
     # we will just add the march for safety for the older compilers if it does not cause conflicts
-    set(CMAKE_REQUIRED_FLAGS "${c_common_flags} -march=${KernelArmArmV}${KernelArmMachFeatureModifiers}")
-    set(CMAKE_REQUIRED_DEFINITIONS "")
-    check_c_source_compiles("void main(void){}" ARM_MCPU_MARCH_VALID FAIL_REGEX "warning|error")
+    set(CMAKE_REQUIRED_FLAGS "${c_common_flags}")
+    check_c_compiler_flag("-march=${KernelArmArmV}${KernelArmMachFeatureModifiers}" ARM_MCPU_MARCH_VALID)
     if (ARM_MCPU_MARCH_VALID)
         set(c_common_flags "${c_common_flags} -march=${KernelArmArmV}${KernelArmMachFeatureModifiers}")
         set(asm_common_flags "${asm_common_flags} -Wa,-march=${KernelArmArmV}${KernelArmMachFeatureModifiers}")
