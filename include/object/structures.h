@@ -15,6 +15,7 @@
 #include <api/types.h>
 #include <stdint.h>
 #include <arch/object/structures_gen.h>
+#include <mode/types.h>
 #include <api/macros.h>
 #include <arch/api/constants.h>
 #include <benchmark/benchmark_utilisation_.h>
@@ -79,8 +80,8 @@ typedef word_t notification_state_t;
 #define WORD_PTR(r) ((word_t *)(r))
 #define WORD_REF(p) ((word_t)(p))
 
-#define ZombieType_ZombieTCB        BIT(5)
-#define ZombieType_ZombieCNode(n)   ((n) & MASK(5))
+#define ZombieType_ZombieTCB        BIT(wordRadix)
+#define ZombieType_ZombieCNode(n)   ((n) & MASK(wordRadix))
 
 static inline cap_t CONST
 Zombie_new(word_t number, word_t type, word_t ptr)
