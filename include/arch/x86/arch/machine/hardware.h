@@ -22,6 +22,11 @@
 #define L1_CACHE_LINE_SIZE_BITS CTZL(CONFIG_CACHE_LN_SZ)
 #define L1_CACHE_LINE_SIZE CONFIG_CACHE_LN_SZ
 
+enum vm_fault_type {
+    X86DataFault = seL4_DataFault,
+    X86InstructionFault = seL4_InstructionFault
+};
+
 typedef word_t vm_fault_type_t;
 
 enum vm_page_size {

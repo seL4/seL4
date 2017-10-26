@@ -240,6 +240,19 @@ endchoice
 
 menu "Multiboot options"
 depends on PLAT_PC99
+    config MULTIBOOT1_HEADER
+        bool "Insert multiboot1 compatible header"
+        default y
+        help
+            When enabled inserts a header that indicates to the bootloader that the kernel
+            supports a multiboot 1 boot header
+    config MULTIBOOT2_HEADER
+        bool "Insert multiboot2 compatible header"
+        default y
+        help
+            When enabled inserts a header thatn indicates to the bootloader that the kernel
+            supports a mutliboot 2 boot header. This is can be enabled together with a
+            multiboot 1 header and the boot loader may use either one
     choice
         prompt "Multiboot graphics mode"
         help

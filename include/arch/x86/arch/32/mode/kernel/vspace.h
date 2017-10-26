@@ -42,7 +42,7 @@ x86_make_empty_pte(void)
 static inline CONST pde_t
 x86_make_empty_root_mapping(void)
 {
-    return makeUserPDEPageTableInvalid();
+    return makeUserPDEInvalid();
 }
 
 #endif /* __MODE_KERNEL_VSPACE_H */

@@ -565,18 +565,18 @@ findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 
 exception_t handleVMFault(tcb_t* thread, vm_fault_type_t vm_faultType)
 {
-    uint32_t addr;
+    word_t addr;
     uint32_t fault;
 
     addr = getFaultAddr();
     fault = getRegister(thread, Error);
 
     switch (vm_faultType) {
-    case seL4_DataFault:
+    case X86DataFault:
         current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
 
-    case seL4_InstructionFault:
+    case X86InstructionFault:
         current_fault = seL4_Fault_VMFault_new(addr, fault, true);
         return EXCEPTION_FAULT;
 
@@ -744,7 +744,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
                     == pptr_to_paddr(pptr)))) {
             return;
         }
-        *pde = makeUserPDELargePageInvalid();
+        *pde = makeUserPDEInvalid();
         break;
 
     default:
@@ -784,7 +784,7 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 
     flushTable(find_ret.vspace_root, vaddr, pt, asid);
 
-    *lu_ret.pdSlot = makeUserPDEPageTableInvalid();
+    *lu_ret.pdSlot = makeUserPDEInvalid();
 
     invalidatePageStructureCacheASID(pptr_to_paddr(find_ret.vspace_root), asid,
                                      SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));

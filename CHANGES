@@ -12,6 +12,7 @@ upcoming release (SOURCE COMPATIBLE)
 
 = Changes =
  * Support for additional zynq platform Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)
+ * Support for multiboot2 bootloaders on x86 (contributed change from Genode Labs)
 
 = Upgrade notes =
 

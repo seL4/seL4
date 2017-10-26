@@ -125,8 +125,7 @@ pte_t CONST makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_r
 pte_t CONST makeUserPTEInvalid(void);
 pde_t CONST makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights);
 pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr);
-pde_t CONST makeUserPDELargePageInvalid(void);
-pde_t CONST makeUserPDEPageTableInvalid(void);
+pde_t CONST makeUserPDEInvalid(void);
 
 
 #ifdef CONFIG_PRINTING
