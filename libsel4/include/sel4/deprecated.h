@@ -123,11 +123,13 @@ seL4_IsArchExceptionFrom(seL4_MessageInfo_t tag)
 
 typedef seL4_Word seL4_CapData_t SEL4_DEPRECATED("Badge and guard data are just seL4_Word type");
 
-static inline SEL4_DEPRECATED("Badges do not need to be constructed") seL4_Word seL4_CapData_Badge_new(seL4_Word badge) {
+static inline SEL4_DEPRECATED("Badges do not need to be constructed") seL4_Word seL4_CapData_Badge_new(seL4_Word badge)
+{
     return badge;
 }
 
-static inline SEL4_DEPRECATED("Use seL4_CNode_CapData_new().words[0]") seL4_Word seL4_CapData_Guard_new(seL4_Word guard, seL4_Word bits) {
+static inline SEL4_DEPRECATED("Use seL4_CNode_CapData_new().words[0]") seL4_Word seL4_CapData_Guard_new(seL4_Word guard, seL4_Word bits)
+{
     return seL4_CNode_CapData_new(guard, bits).words[0];
 }
 
