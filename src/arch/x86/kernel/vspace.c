@@ -660,7 +660,7 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (!IS_ALIGNED(vptr, 9)) {
+    if (!IS_ALIGNED(vptr, seL4_IPCBufferSizeBits)) {
         userError("IPC Buffer vaddr 0x%x is not aligned.", (int)vptr);
         current_syscall_error.type = seL4_AlignmentError;
         return EXCEPTION_SYSCALL_ERROR;

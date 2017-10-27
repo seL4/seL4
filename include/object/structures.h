@@ -270,6 +270,8 @@ compile_assert(tcb_size_sane,
 compile_assert(ep_size_sane, sizeof(endpoint_t) <= BIT(seL4_EndpointBits))
 compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_NotificationBits))
 
+/* Check the IPC buffer is the right size */
+compile_assert(ipc_buf_size_sane, sizeof(seL4_IPCBuffer) == BIT(seL4_IPCBufferSizeBits))
 
 /* helper functions */
 

@@ -175,4 +175,7 @@ SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
 
 #define seL4_FastMessageRegisters 4
 
+/* IPC buffer is 512 bytes, giving size bits of 9 */
+#define seL4_IPCBufferSizeBits 9
+
 #endif

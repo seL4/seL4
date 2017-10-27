@@ -753,7 +753,7 @@ checkValidIPCBuffer(vptr_t vptr, cap_t cap)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(vptr & MASK(9))) {
+    if (unlikely(vptr & MASK(seL4_IPCBufferSizeBits))) {
         userError("Requested IPC Buffer location 0x%x is not aligned.",
                   (int)vptr);
         current_syscall_error.type = seL4_AlignmentError;

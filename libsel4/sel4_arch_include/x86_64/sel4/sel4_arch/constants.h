@@ -112,4 +112,8 @@ enum {
 
 #endif /* __ASSEMBLER__ */
 #define seL4_FastMessageRegisters 4
+
+/* IPC buffer is 1024 bytes, giving size bits of 10 */
+#define seL4_IPCBufferSizeBits 10
+
 #endif /* __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_ */
