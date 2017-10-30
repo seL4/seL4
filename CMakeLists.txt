@@ -60,20 +60,9 @@ if(KernelArchX86)
     endif()
 endif()
 if(KernelArchARM)
-    set(c_common_flags "${c_common_flags} -mcpu=${KernelArmCPU}")
-    set(asm_common_flags "${asm_common_flags} -Wa,-mcpu=${KernelArmCPU}")
-    # See if the current compiler understands the chosen -mcpu and -march flags when used together.
-    # them not being supported unfortunately does not indicate an error as older versions of gcc
-    # *require* mcpu and march flags that are considered invalid on newer versions of gcc. Overall
-    # newer versions of gcc recommend just setting 'mcpu' and letting the internals determine the
-    # approproate march and mtune settings, as such we have already set the desired mcpu and
-    # we will just add the march for safety for the older compilers if it does not cause conflicts
-    set(CMAKE_REQUIRED_FLAGS "${c_common_flags}")
-    check_c_compiler_flag("-march=${KernelArmArmV}${KernelArmMachFeatureModifiers}" ARM_MCPU_MARCH_VALID)
-    if (ARM_MCPU_MARCH_VALID)
-        set(c_common_flags "${c_common_flags} -march=${KernelArmArmV}${KernelArmMachFeatureModifiers}")
-        set(asm_common_flags "${asm_common_flags} -Wa,-march=${KernelArmArmV}${KernelArmMachFeatureModifiers}")
-    endif()
+    set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
+    set(c_common_flags "${c_common_flags} -march=${arm_march}")
+    set(asm_common_flags "${asm_common_flags} -Wa,-march=${arm_march}")
 endif()
 set(common_flags "${common_flags} ${build_arch}")
 if(Kernel64)
