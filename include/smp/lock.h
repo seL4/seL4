@@ -65,15 +65,36 @@ clh_is_ipi_pending(word_t cpu)
     return big_kernel_lock.node_owners[cpu].ipi == 1;
 }
 
+static inline void *
+sel4_atomic_exchange(void* ptr, bool_t
+                     irqPath, word_t cpu, int memorder)
+{
+    clh_qnode_t *prev;
+
+    while (!try_arch_atomic_exchange(&big_kernel_lock.head,
+                                     (void *) big_kernel_lock.node_owners[cpu].node, (void **) &prev,
+                                     memorder, __ATOMIC_ACQUIRE)) {
+        if (clh_is_ipi_pending(cpu)) {
+            /* we only handle irq_remote_call_ipi here as other type of IPIs
+             * are async and could be delayed. 'handleIPI' may not return
+             * based on value of the 'irqPath'. */
+            handleIPI(irq_remote_call_ipi, irqPath);
+        }
+
+        arch_pause();
+    }
+
+    return prev;
+}
+
 static inline void FORCE_INLINE
 clh_lock_acquire(word_t cpu, bool_t irqPath)
 {
     clh_qnode_t *prev;
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Pending;
 
-    /* rely on the full barrier implied by the GCC builtin*/
-    prev = __atomic_exchange_n(&big_kernel_lock.head,
-                               big_kernel_lock.node_owners[cpu].node, __ATOMIC_ACQUIRE);
+    prev = sel4_atomic_exchange(&big_kernel_lock.head, irqPath, cpu, __ATOMIC_ACQUIRE);
+
     big_kernel_lock.node_owners[cpu].next = prev;
 
     /* We do not have an __atomic_thread_fence here as this is already handled by the

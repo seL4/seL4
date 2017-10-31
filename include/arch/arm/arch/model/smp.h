@@ -22,6 +22,35 @@ static inline cpu_id_t cpuIndexToID(word_t index)
 {
     return BIT(index);
 }
+
+static inline bool_t
+try_arch_atomic_exchange(void* ptr, void *new_val, void **prev, int success_memorder, int failure_memorder)
+{
+    uint32_t atomic_status;
+    void *temp;
+
+    asm volatile (
+        "ldrex %[prev_output], [%[ptr_val]]             \n\t" /* ret = *ptr */
+        "strex %[atomic_var], %[new_val] , [%[ptr_val]] \n\t"  /* *ptr = new */
+        : [atomic_var] "=&r"(atomic_status), [prev_output]"=&r"(temp)     /* output */
+        : [ptr_val] "r"(ptr), [new_val] "r" (new_val)  /* input */
+        :
+    );
+
+    *prev = temp;
+
+    /* Atomic operation success */
+    if (likely(!atomic_status)) {
+        __atomic_thread_fence(success_memorder);
+    } else {
+        /* Atomic operation failure */
+        __atomic_thread_fence(failure_memorder);
+    }
+
+    /* On ARM if an atomic operation succeeds, it returns 0 */
+    return (atomic_status == 0);
+}
+
 #endif /* ENABLE_SMP_SUPPORT */
 
 #endif /* __ARCH_MODEL_SMP_H_ */
