@@ -32,16 +32,16 @@ typedef enum {
 } clh_qnode_state_t;
 
 typedef struct clh_qnode {
-    volatile clh_qnode_state_t value;
+    clh_qnode_state_t value;
 
     PAD_TO_NEXT_CACHE_LN(sizeof(clh_qnode_state_t));
 } clh_qnode_t;
 
 typedef struct clh_qnode_p {
-    volatile clh_qnode_t *node;
-    volatile clh_qnode_t *next;
+    clh_qnode_t *node;
+    clh_qnode_t *next;
     /* This is the software IPI flag */
-    volatile word_t ipi;
+    word_t ipi;
 
     PAD_TO_NEXT_CACHE_LN(sizeof(clh_qnode_t *) +
                          sizeof(clh_qnode_t *) +
@@ -49,10 +49,10 @@ typedef struct clh_qnode_p {
 } clh_qnode_p_t;
 
 typedef struct clh_lock {
-    volatile clh_qnode_t nodes[CONFIG_MAX_NUM_NODES + 1];
-    volatile clh_qnode_p_t node_owners[CONFIG_MAX_NUM_NODES];
+    clh_qnode_t nodes[CONFIG_MAX_NUM_NODES + 1];
+    clh_qnode_p_t node_owners[CONFIG_MAX_NUM_NODES];
 
-    volatile clh_qnode_t *head;
+    clh_qnode_t *head;
     PAD_TO_NEXT_CACHE_LN(sizeof(clh_qnode_t *));
 } clh_lock_t;
 
@@ -68,7 +68,7 @@ clh_is_ipi_pending(word_t cpu)
 static inline void FORCE_INLINE
 clh_lock_acquire(word_t cpu, bool_t irqPath)
 {
-    volatile clh_qnode_t *prev;
+    clh_qnode_t *prev;
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Pending;
 
     /* rely on the full barrier implied by the GCC builtin*/
@@ -76,18 +76,25 @@ clh_lock_acquire(word_t cpu, bool_t irqPath)
                                big_kernel_lock.node_owners[cpu].node, __ATOMIC_ACQUIRE);
     big_kernel_lock.node_owners[cpu].next = prev;
 
+    /* We do not have an __atomic_thread_fence here as this is already handled by the
+     * atomic_exchange just above */
     while (big_kernel_lock.node_owners[cpu].next->value != CLHState_Granted) {
+        /* As we are in a loop we need to ensure that any loads of future iterations of the
+         * loop are performed after this one */
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
         if (clh_is_ipi_pending(cpu)) {
             /* we only handle irq_remote_call_ipi here as other type of IPIs
              * are async and could be delayed. 'handleIPI' may not return
              * based on value of the 'irqPath'. */
             handleIPI(irq_remote_call_ipi, irqPath);
+            /* We do not need to perform a memory release here as we would have only modified
+             * local state that we do not need to make visible */
         }
         arch_pause();
     }
 
     /* make sure no resource access passes from this point */
-    asm volatile("" ::: "memory");
+    __atomic_thread_fence(__ATOMIC_ACQUIRE);
 }
 
 static inline void FORCE_INLINE
