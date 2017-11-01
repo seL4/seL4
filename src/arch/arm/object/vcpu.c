@@ -19,6 +19,365 @@
 #include <arch/machine/debug_conf.h>
 #include <arch/machine/gic_pl390.h>
 
+static void
+access_reg(word_t reg_index, word_t *reg, bool_t write)
+{
+    if (reg_index >= seL4_VCPUReg_Num || reg == NULL) return;
+
+    switch (reg_index) {
+        case seL4_VCPUReg_SCTLR:
+            if (write) {
+                setSCTLR(*reg);
+            } else {
+                *reg = getSCTLR();
+            }
+            break;
+        case seL4_VCPUReg_ACTLR:
+            if (write) {
+                setACTLR(*reg);
+            } else {
+                *reg = getACTLR();
+            }
+            break;
+        case seL4_VCPUReg_TTBRC:
+            if (write) {
+                writeTTBRC(*reg);
+            } else {
+                *reg = readTTBRC();
+            }
+            break;
+        case seL4_VCPUReg_TTBR0:
+            if (write) {
+                writeTTBR0Raw(*reg);
+            } else {
+                *reg = readTTBR0();
+            }
+            break;
+        case seL4_VCPUReg_TTBR1:
+            if (write) {
+                writeTTBR1Raw(*reg);
+            } else {
+                *reg = readTTBR1();
+            }
+            break;
+        case seL4_VCPUReg_DACR:
+            if (write) {
+                writeDACR(*reg);
+            } else {
+                *reg = readDACR();
+            }
+            break;
+        case seL4_VCPUReg_DFSR:
+            if (write) {
+                setDFSR(*reg);
+            } else {
+                *reg = getDFSR();
+            }
+            break;
+        case seL4_VCPUReg_IFSR:
+            if (write) {
+                setIFSR(*reg);
+            } else {
+                *reg = getIFSR();
+            }
+            break;
+        case seL4_VCPUReg_ADFSR:
+            if (write) {
+                setADFSR(*reg);
+            } else {
+                *reg = getADFSR();
+            }
+            break;
+        case seL4_VCPUReg_AIFSR:
+            if (write) {
+                setAIFSR(*reg);
+            } else {
+                *reg = getAIFSR();
+            }
+            break;
+        case seL4_VCPUReg_DFAR:
+            if (write) {
+                setDFAR(*reg);
+            } else {
+                *reg = getDFAR();
+            }
+            break;
+        case seL4_VCPUReg_IFAR:
+            if (write) {
+                setIFAR(*reg);
+            } else {
+                *reg = getIFAR();
+            }
+            break;
+        case seL4_VCPUReg_PRRR:
+            if (write) {
+                setPRRR(*reg);
+            } else {
+                *reg = getPRRR();
+            }
+            break;
+        case seL4_VCPUReg_NMRR:
+            if (write) {
+                setNMRR(*reg);
+            } else {
+                *reg = getNMRR();
+            }
+            break;
+        case seL4_VCPUReg_CIDR:
+            if (write) {
+                setCIDR(*reg);
+            } else {
+                *reg = getCIDR();
+            }
+            break;
+        case seL4_VCPUReg_TPIDRPRW:
+            if (write) {
+                writeTPIDRPRW(*reg);
+            } else {
+                *reg = readTPIDRPRW();
+            }
+            break;
+        case seL4_VCPUReg_TPIDRURO:
+            if (write) {
+                writeTPIDRURO(*reg);
+            } else {
+                *reg = readTPIDRURO();
+            }
+            break;
+        case seL4_VCPUReg_TPIDRURW:
+            if (write) {
+                writeTPIDRURW(*reg);
+            } else {
+               *reg = readTPIDRURW();
+            }
+            break;
+        case seL4_VCPUReg_FPEXC:
+            break;
+        case seL4_VCPUReg_CNTV_TVAL:
+            if (write) {
+                MCR(CNTV_TVAL, *reg);
+            } else {
+                MRC(CNTV_TVAL, *reg);
+            }
+            break;
+        case seL4_VCPUReg_CNTV_CTL:
+            if (write) {
+                MCR(CNTV_CTL, *reg);
+            } else {
+                MRC(CNTV_CTL, *reg);
+            }
+            break;
+        case seL4_VCPUReg_CNTV_CVAL:
+            break;
+        case seL4_VCPUReg_LRsvc:
+            if (write) {
+                set_lr_svc(*reg);
+            } else {
+                *reg = get_lr_svc();
+            }
+            break;
+        case seL4_VCPUReg_SPsvc:
+            if (write) {
+                set_sp_svc(*reg);
+            } else {
+                *reg = get_sp_svc();
+            }
+            break;
+        case seL4_VCPUReg_LRabt:
+            if (write) {
+                set_lr_abt(*reg);
+            } else {
+                *reg = get_lr_abt();
+            }
+            break;
+        case seL4_VCPUReg_SPabt:
+            if (write) {
+                set_sp_abt(*reg);
+            } else {
+                *reg = get_sp_abt();
+            }
+            break;
+        case seL4_VCPUReg_LRund:
+            if (write) {
+                set_lr_und(*reg);
+            } else {
+                *reg = get_lr_und();
+            }
+            break;
+        case seL4_VCPUReg_SPund:
+            if (write) {
+                set_sp_und(*reg);
+            } else {
+                *reg = get_sp_und();
+            }
+            break;
+        case seL4_VCPUReg_LRirq:
+            if (write) {
+                set_lr_irq(*reg);
+            } else {
+                *reg = get_lr_irq();
+            }
+            break;
+        case seL4_VCPUReg_SPirq:
+            if (write) {
+                set_sp_irq(*reg);
+            } else {
+                *reg = get_sp_irq();
+            }
+            break;
+        case seL4_VCPUReg_LRfiq:
+            if (write) {
+                set_lr_fiq(*reg);
+            } else {
+                *reg = get_lr_fiq();
+            }
+            break;
+        case seL4_VCPUReg_SPfiq:
+            if (write) {
+                set_sp_fiq(*reg);
+            } else {
+                *reg = get_sp_fiq();
+            }
+            break;
+        case seL4_VCPUReg_R8fiq:
+            if (write) {
+                set_r8_fiq(*reg);
+            } else {
+                *reg = get_r8_fiq();
+            }
+            break;
+        case seL4_VCPUReg_R9fiq:
+            if (write) {
+                set_r9_fiq(*reg);
+            } else {
+                *reg = get_r9_fiq();
+            }
+            break;
+        case seL4_VCPUReg_R10fiq:
+            if (write) {
+                set_r10_fiq(*reg);
+            } else {
+                *reg = get_r10_fiq();
+            }
+            break;
+        case seL4_VCPUReg_R11fiq:
+            if (write) {
+                set_r11_fiq(*reg);
+            } else {
+                *reg = get_r11_fiq();
+            }
+            break;
+        case seL4_VCPUReg_R12fiq:
+            if (write) {
+                set_r12_fiq(*reg);
+            } else {
+                *reg = get_r12_fiq();
+            }
+            break;
+        case seL4_VCPUReg_SPSRsvc:
+            if (write) {
+                set_spsr_svc(*reg);
+            } else {
+                *reg = get_spsr_svc();
+            }
+            break;
+        case seL4_VCPUReg_SPSRabt:
+            if (write) {
+                set_spsr_abt(*reg);
+            } else {
+                *reg = get_spsr_abt();
+            }
+            break;
+        case seL4_VCPUReg_SPSRund:
+            if (write) {
+                set_spsr_und(*reg);
+            } else {
+                *reg = get_spsr_und();
+            }
+            break;
+        case seL4_VCPUReg_SPSRirq:
+            if (write) {
+                set_spsr_irq(*reg);
+            } else {
+                *reg = get_spsr_irq();
+            }
+            break;
+        case seL4_VCPUReg_SPSRfiq:
+            if (write) {
+                set_spsr_fiq(*reg);
+            } else {
+                *reg = get_spsr_fiq();
+            }
+            break;
+        default:
+            return;
+    }
+}
+
+
+
+static inline void
+vcpu_save_reg(vcpu_t *vcpu, word_t reg)
+{
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
+    access_reg(reg, &vcpu->regs[reg], false);
+}
+
+static inline void
+vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
+{
+    if (start >= seL4_VCPUReg_Num || vcpu == NULL) return;
+    for (word_t i = start; i <= end; i++) {
+        access_reg(i, &vcpu->regs[i], false);
+    }
+}
+
+static inline void
+vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
+{
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
+    access_reg(reg, &vcpu->regs[reg], true);
+}
+
+static inline void
+vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
+{
+    if (start >= seL4_VCPUReg_Num || vcpu == NULL) return;
+    for (word_t i = start; i <= end; i++) {
+        access_reg(i, &vcpu->regs[i], true);
+    }
+}
+
+static inline word_t
+vcpu_read_reg(vcpu_t *vcpu, word_t reg)
+{
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return 0;
+    return vcpu->regs[reg];
+}
+
+static inline void
+vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
+{
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
+    vcpu->regs[reg] = value;
+}
+
+static inline word_t
+read_reg(word_t reg)
+{
+    word_t value = 0;
+    if (reg >= seL4_VCPUReg_Num) return 0;
+    access_reg(reg, &value, false);
+    return value;
+}
+
+static inline void
+write_reg(word_t reg, word_t value)
+{
+    if (reg >= seL4_VCPUReg_Num) return;
+    access_reg(reg, &value, true);
+}
+
 #ifdef CONFIG_HAVE_FPU
 static inline void
 access_fpexc(vcpu_t *vcpu, bool_t write)
@@ -31,9 +390,11 @@ access_fpexc(vcpu_t *vcpu, bool_t write)
         enableFpuInstInHyp();
     }
     if (write) {
-        MCR(FPEXC, vcpu->fpexc);
+        MCR(FPEXC, vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC));
     } else {
-        MRC(FPEXC, vcpu->fpexc);
+        word_t fpexc;
+        MRC(FPEXC, fpexc);
+        vcpu_write_reg(vcpu, seL4_VCPUReg_FPEXC, fpexc);
     }
     /* restore the status */
     if (!flag) {
@@ -48,7 +409,7 @@ vcpu_enable(vcpu_t *vcpu)
 #ifdef CONFIG_ARCH_AARCH64
     armv_vcpu_enable(vcpu);
 #else
-    setSCTLR(vcpu->cpx.sctlr);
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
     setHCR(HCR_VCPU);
     isb();
 
@@ -116,8 +477,9 @@ vcpu_enable(vcpu_t *vcpu)
      *
      */
 
-    vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu->fpexc;
+    vcpu->vcpuTCB->tcbArch.tcbContext.fpuState.fpexc = vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC);
     access_fpexc(vcpu, true);
+#endif
 #endif
 }
 
@@ -128,13 +490,11 @@ vcpu_disable(vcpu_t *vcpu)
     armv_vcpu_disable(vcpu);
 #else
     uint32_t hcr;
-    word_t SCTLR;
     dsb();
     if (likely(vcpu)) {
         hcr = get_gic_vcpu_ctrl_hcr();
-        SCTLR = getSCTLR();
         vcpu->vgic.hcr = hcr;
-        vcpu->cpx.sctlr = SCTLR;
+        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
         isb();
 #ifdef CONFIG_HAVE_FPU
         if (nativeThreadUsingFPU(vcpu->vcpuTCB)) {
@@ -215,13 +575,9 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     /* If we aren't active then this state already got stored when
      * we were disabled */
     if (active) {
-        vcpu->cpx.sctlr = getSCTLR();
+        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
         vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
     }
-#ifndef CONFIG_ARCH_AARCH64
-    /* Store VCPU state */
-    vcpu->cpx.actlr = getACTLR();
-#endif
 
     /* Store GIC VCPU control state */
     vcpu->vgic.vmcr = get_gic_vcpu_ctrl_vmcr();
@@ -234,28 +590,8 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
 #ifdef CONFIG_ARCH_AARCH64
     vcpu_save_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
 #else
-    /* save banked registers */
-    vcpu->lr_svc = get_lr_svc();
-    vcpu->sp_svc = get_sp_svc();
-    vcpu->spsr_svc = get_spsr_svc();
-    vcpu->lr_abt = get_lr_abt();
-    vcpu->sp_abt = get_sp_abt();
-    vcpu->spsr_abt = get_spsr_abt();
-    vcpu->lr_und = get_lr_und();
-    vcpu->sp_und = get_sp_und();
-    vcpu->spsr_und = get_spsr_und();
-    vcpu->lr_irq = get_lr_irq();
-    vcpu->sp_irq = get_sp_irq();
-    vcpu->spsr_irq = get_spsr_irq();
-    vcpu->lr_fiq = get_lr_fiq();
-    vcpu->sp_fiq = get_sp_fiq();
-    vcpu->spsr_fiq = get_spsr_fiq();
-    vcpu->r8_fiq = get_r8_fiq();
-    vcpu->r9_fiq = get_r9_fiq();
-    vcpu->r10_fiq = get_r10_fiq();
-    vcpu->r11_fiq = get_r11_fiq();
-    vcpu->r12_fiq = get_r12_fiq();
-#endif
+    /* save registers */
+    vcpu_save_reg_range(vcpu, seL4_VCPUReg_ACTLR, seL4_VCPUReg_SPSRfiq);
 
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
     /* This is done when we are asked to save and restore the CP14 debug context
@@ -264,38 +600,6 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     saveAllBreakpointState(vcpu->vcpuTCB);
 #endif
     isb();
-
-    /* save the virtual time registers */
-    MRC(CNTV_TVAL, vcpu->cntv_tval);
-    MRC(CNTV_CTL, vcpu->cntv_ctl);
-    MRRC(CNTV_CVAL, vcpu->cntv_cval);
-
-    /* save PL0/1 stage 1 translation table registers */
-    vcpu->ttbrc = readTTBRC();
-    vcpu->ttbr0 = readTTBR0();
-    vcpu->ttbr1 = readTTBR1();
-
-    /* save domain access control register */
-    vcpu->dacr = readDACR();
-
-    /* save fault status registers */
-    vcpu->dfsr = getDFSR();
-    vcpu->ifsr = getIFSR();
-    vcpu->adfsr = getADFSR();
-    vcpu->aifsr = getAIFSR();
-    vcpu->dfar = getDFAR();
-    vcpu->ifar = getIFAR();
-
-    vcpu->prrr = getPRRR();
-    vcpu->nmrr = getNMRR();
-
-    vcpu->cidr = getCIDR();
-
-    /* save software thread ID registers */
-    vcpu->tpidrprw = readTPIDRPRW();
-    vcpu->tpidruro = readTPIDRURO();
-    vcpu->tpidrurw = readTPIDRURW();
-
 #ifdef CONFIG_HAVE_FPU
     /* Other FPU registers are still lazily saved and restored when
      * handleFPUFault is called. See the comments in vcpu_enable
@@ -305,8 +609,50 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
         access_fpexc(vcpu, false);
     }
 #endif
+#endif
 }
 
+
+static uint32_t
+readVCPUReg(vcpu_t *vcpu, uint32_t field)
+{
+    if (likely(armHSCurVCPU == vcpu)) {
+        switch (field) {
+        case seL4_VCPUReg_SCTLR:
+            /* The SCTLR value is switched to/from hardware when we enable/disable
+             * the vcpu, not when we switch vcpus */
+            if (armHSVCPUActive) {
+                return getSCTLR();
+            } else {
+                return vcpu->regs[seL4_VCPUReg_SCTLR];
+            }
+        default:
+            return read_reg(field);
+        }
+    } else {
+        return vcpu_read_reg(vcpu, field);
+    }
+}
+
+static void
+writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
+{
+    if (likely(armHSCurVCPU == vcpu)) {
+        switch (field) {
+        case seL4_VCPUReg_SCTLR:
+            if (armHSVCPUActive) {
+                setSCTLR(value);
+            } else {
+                write_reg(field, value);
+            }
+            break;
+        default:
+            write_reg(field, value);
+        }
+    } else {
+       vcpu_write_reg(vcpu, field, value);
+    }
+}
 
 void
 vcpu_restore(vcpu_t *vcpu)
@@ -326,64 +672,11 @@ vcpu_restore(vcpu_t *vcpu)
         set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);
     }
 
+    /* restore registers */
 #ifdef CONFIG_ARCH_AARCH64
     vcpu_restore_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
 #else
-    /* restore banked registers */
-    set_lr_svc(vcpu->lr_svc);
-    set_sp_svc(vcpu->sp_svc);
-    set_spsr_svc(vcpu->spsr_svc);
-    set_lr_abt(vcpu->lr_abt);
-    set_sp_abt(vcpu->sp_abt);
-    set_spsr_abt(vcpu->spsr_abt);
-    set_lr_und(vcpu->lr_und);
-    set_sp_und(vcpu->sp_und);
-    set_spsr_und(vcpu->spsr_und);
-    set_lr_irq(vcpu->lr_irq);
-    set_sp_irq(vcpu->sp_irq);
-    set_spsr_irq(vcpu->spsr_irq);
-    set_lr_fiq(vcpu->lr_fiq);
-    set_sp_fiq(vcpu->sp_fiq);
-    set_spsr_fiq(vcpu->spsr_fiq);
-    set_r8_fiq(vcpu->r8_fiq);
-    set_r9_fiq(vcpu->r9_fiq);
-    set_r10_fiq(vcpu->r10_fiq);
-    set_r11_fiq(vcpu->r11_fiq);
-    set_r12_fiq(vcpu->r12_fiq);
-
-    /* restore the virtual time registers */
-    MCR(CNTV_TVAL, vcpu->cntv_tval);
-    MCR(CNTV_CTL, vcpu->cntv_ctl);
-    MCRR(CNTV_CVAL, vcpu->cntv_cval);
-
-    /* restore PL0/1 stage 1 translation table registers */
-    writeTTBRC(vcpu->ttbrc);
-    writeTTBR0Raw(vcpu->ttbr0);
-    writeTTBR1Raw(vcpu->ttbr1);
-
-    /* restore DACR */
-    writeDACR(vcpu->dacr);
-
-    /* set fault status registes */
-    setDFSR(vcpu->dfsr);
-    setIFSR(vcpu->ifsr);
-    setADFSR(vcpu->adfsr);
-    setAIFSR(vcpu->aifsr);
-    setDFAR(vcpu->dfar);
-    setIFAR(vcpu->ifar);
-
-    setPRRR(vcpu->prrr);
-    setNMRR(vcpu->nmrr);
-
-    setCIDR(vcpu->cidr);
-
-    /* restore software thread ID registers */
-    writeTPIDRPRW(vcpu->tpidrprw);
-    writeTPIDRURO(vcpu->tpidruro);
-    writeTPIDRURW(vcpu->tpidrurw);
-
-    /* Restore and enable VCPU state */
-    setACTLR(vcpu->cpx.actlr);
+    vcpu_restore_reg_range(vcpu, seL4_VCPUReg_ACTLR, seL4_VCPUReg_SPSRfiq);
 #endif
     vcpu_enable(vcpu);
 }
@@ -460,9 +753,8 @@ vcpu_init(vcpu_t *vcpu)
 #ifdef CONFIG_ARCH_AARCH64
     armv_vcpu_init(vcpu);
 #else
-    /* CPX registers */
-    vcpu->cpx.sctlr = SCTLR_DEFAULT;
-    vcpu->cpx.actlr = ACTLR_DEFAULT;
+    vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_DEFAULT);
+    vcpu_write_reg(vcpu, seL4_VCPUReg_ACTLR, ACTLR_DEFAULT);
 #endif
     /* GICH VCPU interface control */
     vcpu->vgic.hcr = VGIC_HCR_EN;

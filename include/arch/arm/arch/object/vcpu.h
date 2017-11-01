@@ -54,11 +54,6 @@
 
 #define GIC_VCPU_MAX_NUM_LR 64
 
-struct cpXRegs {
-    uint32_t sctlr;
-    uint32_t actlr;
-};
-
 struct gicVCpuIface {
     uint32_t hcr;
     uint32_t vmcr;
@@ -69,41 +64,8 @@ struct gicVCpuIface {
 struct vcpu {
     /* TCB associated with this VCPU. */
     struct tcb *vcpuTCB;
-    struct cpXRegs cpx;
     struct gicVCpuIface vgic;
-#ifdef CONFIG_ARCH_AARCH64
     word_t regs[seL4_VCPUReg_Num];
-#else
-    /* Banked registers */
-    word_t lr_svc, sp_svc, spsr_svc;
-    word_t lr_abt, sp_abt, spsr_abt;
-    word_t lr_und, sp_und, spsr_und;
-    word_t lr_irq, sp_irq, spsr_irq;
-    word_t lr_fiq, sp_fiq, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, spsr_fiq;
-
-    /* virtual timer registers */
-    /* virtual timer value; virtual timer control */
-    word_t   cntv_tval, cntv_ctl;
-    /* virtual count register (read only); virtual timer compare value */
-    uint64_t cntvct, cntv_cval;
-
-    /* various control registers */
-    /* stage 1 translation table registers for PL0/PL1 */
-    word_t ttbrc, ttbr0, ttbr1;
-    /* domain access control register */
-    word_t dacr;
-    /* fault status registers */
-    word_t dfsr, ifsr, adfsr, aifsr, dfar, ifar;
-    /* primary region remap register */
-    word_t prrr;
-    /* normal memory remap register */
-    word_t nmrr;
-    /* context ID register */
-    word_t cidr;
-    /* software thread ID registers */
-    word_t tpidrprw, tpidruro, tpidrurw;
-    /* FPEXC */
-    word_t fpexc;
 };
 typedef struct vcpu vcpu_t;
 compile_assert(vcpu_size_correct, sizeof(struct vcpu) <= BIT(VCPU_SIZE_BITS))
