@@ -10,7 +10,7 @@
 # @TAG(DATA61_GPL)
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.8.2)
 
 include(CMakeDependentOption)
 
@@ -56,19 +56,18 @@ function(GenCPPCommand output input)
     get_filename_component(output_absolute "${output}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     get_absolute_source_or_binary(input_absolute "${input}")
     file(RELATIVE_PATH rel_target_path "${CMAKE_BINARY_DIR}" "${output_absolute}")
+    # The flags are stored as regular space separated command line. As we use COMMAND_EXPAND_LISTS
+    # in the COMMAND we need to first turn our arguments into a proper list for re-expansion
+    separate_arguments(args NATIVE_COMMAND "${CPP_EXTRA_FLAGS} ${CMAKE_C_FLAGS}")
     add_custom_command(OUTPUT "${output_absolute}" OUTPUT "${output_absolute}.d"
-        # Pipe are arguments through sed to turn lists from generator expressions into
-        # proper space separated argument lists. Note that lists from generator expressions
-        # will *not* be separated by the separate_arguments cmake command since separate_arguments
-        # is invoke during generation, not during building and hence generator expressions will
-        # not yet be filled in
-        COMMAND echo "${CPP_EXTRA_FLAGS}" "${CMAKE_C_FLAGS}" -x c ${input_absolute}
-            | xargs "${CMAKE_C_COMPILER}" -MMD -MT "${rel_target_path}"
-                -MF "${output_absolute}.d" -E -o "${output_absolute}"
+        COMMAND "${CMAKE_C_COMPILER}" -MMD -MT "${rel_target_path}"
+                -MF "${output_absolute}.d" -E -o "${output_absolute}" "${args}"
+                -x c "${input_absolute}"
         DEPENDS "${input_absolute}" ${CPP_EXTRA_DEPS}
         COMMENT "Preprocessing ${input} into ${output}"
         DEPFILE "${output_absolute}.d"
         VERBATIM
+        COMMAND_EXPAND_LISTS
     )
     if(NOT "${CPP_TARGET}" STREQUAL "")
         add_custom_target(${CPP_TARGET}

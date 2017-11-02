@@ -10,7 +10,7 @@
 # @TAG(DATA61_GPL)
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.8.2)
 include(CheckCCompilerFlag)
 project(seL4 C ASM)
 
@@ -354,16 +354,17 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${linker_lds_path}")
 # Need a custom build command as we need to not have our already pre-processed file get
 # processed again, which means either using a .ii file or explicitly saying -x cpp-output.
 # Unfortunately  and cmake doesn't understand .ii files directly so we do the latter approach
+separate_arguments(args NATIVE_COMMAND "${custom_command_c_flags} ${CMAKE_C_FLAGS}")
 add_custom_command(OUTPUT kernel_all.o
     # Take the opportunity to check for circular includes
     COMMAND ${CIRCULAR_INCLUDES} < kernel_all_pp.c
-    COMMAND echo "${custom_command_c_flags}" "${CMAKE_C_FLAGS}" -x cpp-output kernel_all_pp.c |
-        xargs ${ccache} ${CMAKE_C_COMPILER} -ffreestanding -c -o kernel_all.o
+    COMMAND ${ccache} ${CMAKE_C_COMPILER} -ffreestanding -c -o kernel_all.o "${args}" -x cpp-output kernel_all_pp.c
     # Cannot make the kernel.elf executable properly depend upon the linker script so depend upon it
     # here
     DEPENDS kernel_all_pp.c kernel_all_pp_wrapper ${c_arguments_deps} linker_ld_wrapper "${linker_lds_path}"
     VERBATIM
     COMMENT "Compiling concatenated kernel sources"
+    COMMAND_EXPAND_LISTS
 )
 
 add_custom_target(kernel_all_wrapper
