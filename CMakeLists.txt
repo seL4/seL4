@@ -231,7 +231,7 @@ set(syscall_xml_base "${CMAKE_CURRENT_SOURCE_DIR}/include/api")
 set(syscall_dest "gen_headers/arch/api/syscall.h")
 add_custom_command(OUTPUT ${syscall_dest}
     COMMAND "${XMLLINT_PATH}" --noout --schema "${syscall_xml_base}/syscall.xsd" "${syscall_xml_base}/syscall.xml"
-    COMMAND rm -f "${syscall_dest}"
+    COMMAND ${CMAKE_COMMAND} -E remove -f "${syscall_dest}"
     COMMAND "${SYSCALL_ID_GEN_PATH}" --xml "${syscall_xml_base}/syscall.xml" --kernel_header "${syscall_dest}"
     DEPENDS "${XMLLINT_PATH}" "${SYSCALL_ID_GEN_PATH}" "${syscall_xml_base}/syscall.xsd" "${syscall_xml_base}/syscall.xml"
     COMMENT "Generate syscall invocations"
@@ -273,7 +273,7 @@ foreach(bf_dec ${bf_declarations})
 endforeach()
 
 add_custom_command(OUTPUT ${dummy_headers}
-    COMMAND touch ${dummy_headers}
+    COMMAND ${CMAKE_COMMAND} -E touch ${dummy_headers}
     COMMENT "Generate dummy headers for prune compilation"
 )
 
