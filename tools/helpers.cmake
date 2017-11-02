@@ -420,7 +420,7 @@ function(add_config_library prefix configure_template)
     add_custom_command(
         OUTPUT "${config_file}"
         COMMAND rm -f "${config_file}"
-        COMMAND echo "${config_header_contents}" | sed "s/;/\\n/g" > "${config_file}"
+        COMMAND echo "${config_header_contents}" | tr ";" "\\n" > "${config_file}"
         COMMENT "Generating config file for ${prefix}"
         VERBATIM
     )
@@ -467,7 +467,7 @@ function(generate_autoconf targetname config_list)
         OUTPUT "${config_file}"
         DEPENDS ${extra_deps_list}
         COMMAND rm -f "${config_file}"
-        COMMAND echo "#define AUTOCONF_INCLUDED;${include_list}" | sed "s/;/\\n/g" > "${config_file}"
+        COMMAND echo "#define AUTOCONF_INCLUDED;${include_list}" | tr ";" "\\n" > "${config_file}"
         COMMENT "Generating autoconf.h"
         VERBATIM
     )
