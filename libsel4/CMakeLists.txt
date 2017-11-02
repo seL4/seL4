@@ -75,7 +75,11 @@ set(source_header_dirs
 )
 
 # Add the include directory of autoconf.h to the cflags for the bitfield generation
-set(extra_cflags "${extra_cflags} -I$<JOIN:$<TARGET_PROPERTY:sel4_autoconf,INTERFACE_INCLUDE_DIRECTORIES>;${source_header_dirs}, -I>")
+set(extra_cflags "${extra_cflags} -I$<JOIN:$<TARGET_PROPERTY:sel4_autoconf,INTERFACE_INCLUDE_DIRECTORIES>, -I>")
+foreach(header IN LISTS source_header_dirs)
+    string(APPEND extra_cflags " -I${header}")
+endforeach()
+
 
 function(genbf target_prefix pbf_location bf_location header_output)
     get_generated_files(gen_list sel4_autoconf_Gen)
