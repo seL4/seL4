@@ -19,298 +19,197 @@
 #include <arch/machine/debug_conf.h>
 #include <arch/machine/gic_pl390.h>
 
-static void
-access_reg(word_t reg_index, word_t *reg, bool_t write)
+static word_t
+vcpu_hw_read_reg(word_t reg_index)
 {
-    if (reg_index >= seL4_VCPUReg_Num || reg == NULL) return;
+    if (reg_index >= seL4_VCPUReg_Num) fail("ARM/HYP: Invalid register index");
+    word_t reg = 0;
+    switch (reg_index) {
+        case seL4_VCPUReg_SCTLR:
+            return getSCTLR();
+        case seL4_VCPUReg_ACTLR:
+            return getACTLR();
+        case seL4_VCPUReg_TTBRC:
+            return readTTBRC();
+        case seL4_VCPUReg_TTBR0:
+            return readTTBR0();
+        case seL4_VCPUReg_TTBR1:
+            return readTTBR1();
+        case seL4_VCPUReg_DACR:
+            return readDACR();
+        case seL4_VCPUReg_DFSR:
+            return getDFSR();
+        case seL4_VCPUReg_IFSR:
+            return getIFSR();
+        case seL4_VCPUReg_ADFSR:
+            return getADFSR();
+        case seL4_VCPUReg_AIFSR:
+            return getAIFSR();
+        case seL4_VCPUReg_DFAR:
+            return getDFAR();
+        case seL4_VCPUReg_IFAR:
+            return getIFAR();
+        case seL4_VCPUReg_PRRR:
+            return getPRRR();
+        case seL4_VCPUReg_NMRR:
+            return getNMRR();
+        case seL4_VCPUReg_CIDR:
+            return getCIDR();
+        case seL4_VCPUReg_TPIDRPRW:
+            return readTPIDRPRW();
+        case seL4_VCPUReg_TPIDRURO:
+            return readTPIDRURO();
+        case seL4_VCPUReg_TPIDRURW:
+            return readTPIDRURW();
+        case seL4_VCPUReg_FPEXC:
+            return reg;
+        case seL4_VCPUReg_CNTV_TVAL:
+            MRC(CNTV_TVAL, reg);
+            return reg;
+        case seL4_VCPUReg_CNTV_CTL:
+            MRC(CNTV_CTL, reg);
+            return reg;
+        case seL4_VCPUReg_CNTV_CVAL:
+            return reg;
+        case seL4_VCPUReg_LRsvc:
+            return get_lr_svc();
+        case seL4_VCPUReg_SPsvc:
+            return get_sp_svc();
+        case seL4_VCPUReg_LRabt:
+            return get_lr_abt();
+        case seL4_VCPUReg_SPabt:
+            return get_sp_abt();
+        case seL4_VCPUReg_LRund:
+            return get_lr_und();
+        case seL4_VCPUReg_SPund:
+            return get_sp_und();
+        case seL4_VCPUReg_LRirq:
+            return get_lr_irq();
+        case seL4_VCPUReg_SPirq:
+            return get_sp_irq();
+        case seL4_VCPUReg_LRfiq:
+            return get_lr_fiq();
+        case seL4_VCPUReg_SPfiq:
+            return get_sp_fiq();
+        case seL4_VCPUReg_R8fiq:
+            return get_r8_fiq();
+        case seL4_VCPUReg_R9fiq:
+            return get_r9_fiq();
+        case seL4_VCPUReg_R10fiq:
+            return get_r10_fiq();
+        case seL4_VCPUReg_R11fiq:
+            return get_r11_fiq();
+        case seL4_VCPUReg_R12fiq:
+            return get_r12_fiq();
+        case seL4_VCPUReg_SPSRsvc:
+            return get_spsr_svc();
+        case seL4_VCPUReg_SPSRabt:
+            return get_spsr_abt();
+        case seL4_VCPUReg_SPSRund:
+            return get_spsr_und();
+        case seL4_VCPUReg_SPSRirq:
+            return get_spsr_irq();
+        case seL4_VCPUReg_SPSRfiq:
+            return get_spsr_fiq();
+        default:
+            fail("ARM/HYP: Invalid register index");
+    }
+}
+
+static void
+vcpu_hw_write_reg(word_t reg_index, word_t reg)
+{
+    if (reg_index >= seL4_VCPUReg_Num) return;
 
     switch (reg_index) {
         case seL4_VCPUReg_SCTLR:
-            if (write) {
-                setSCTLR(*reg);
-            } else {
-                *reg = getSCTLR();
-            }
-            break;
+            return setSCTLR(reg);
         case seL4_VCPUReg_ACTLR:
-            if (write) {
-                setACTLR(*reg);
-            } else {
-                *reg = getACTLR();
-            }
-            break;
+            return setACTLR(reg);
         case seL4_VCPUReg_TTBRC:
-            if (write) {
-                writeTTBRC(*reg);
-            } else {
-                *reg = readTTBRC();
-            }
-            break;
+            return writeTTBRC(reg);
         case seL4_VCPUReg_TTBR0:
-            if (write) {
-                writeTTBR0Raw(*reg);
-            } else {
-                *reg = readTTBR0();
-            }
-            break;
+            return writeTTBR0Raw(reg);
         case seL4_VCPUReg_TTBR1:
-            if (write) {
-                writeTTBR1Raw(*reg);
-            } else {
-                *reg = readTTBR1();
-            }
-            break;
+            return writeTTBR1Raw(reg);
         case seL4_VCPUReg_DACR:
-            if (write) {
-                writeDACR(*reg);
-            } else {
-                *reg = readDACR();
-            }
-            break;
+            return writeDACR(reg);
         case seL4_VCPUReg_DFSR:
-            if (write) {
-                setDFSR(*reg);
-            } else {
-                *reg = getDFSR();
-            }
-            break;
+            return setDFSR(reg);
         case seL4_VCPUReg_IFSR:
-            if (write) {
-                setIFSR(*reg);
-            } else {
-                *reg = getIFSR();
-            }
-            break;
+            return setIFSR(reg);
         case seL4_VCPUReg_ADFSR:
-            if (write) {
-                setADFSR(*reg);
-            } else {
-                *reg = getADFSR();
-            }
-            break;
+            return setADFSR(reg);
         case seL4_VCPUReg_AIFSR:
-            if (write) {
-                setAIFSR(*reg);
-            } else {
-                *reg = getAIFSR();
-            }
-            break;
+            return setAIFSR(reg);
         case seL4_VCPUReg_DFAR:
-            if (write) {
-                setDFAR(*reg);
-            } else {
-                *reg = getDFAR();
-            }
-            break;
+            return setDFAR(reg);
         case seL4_VCPUReg_IFAR:
-            if (write) {
-                setIFAR(*reg);
-            } else {
-                *reg = getIFAR();
-            }
-            break;
+            return setIFAR(reg);
         case seL4_VCPUReg_PRRR:
-            if (write) {
-                setPRRR(*reg);
-            } else {
-                *reg = getPRRR();
-            }
-            break;
+            return setPRRR(reg);
         case seL4_VCPUReg_NMRR:
-            if (write) {
-                setNMRR(*reg);
-            } else {
-                *reg = getNMRR();
-            }
-            break;
+            return setNMRR(reg);
         case seL4_VCPUReg_CIDR:
-            if (write) {
-                setCIDR(*reg);
-            } else {
-                *reg = getCIDR();
-            }
-            break;
+            return setCIDR(reg);
         case seL4_VCPUReg_TPIDRPRW:
-            if (write) {
-                writeTPIDRPRW(*reg);
-            } else {
-                *reg = readTPIDRPRW();
-            }
-            break;
+            return writeTPIDRPRW(reg);
         case seL4_VCPUReg_TPIDRURO:
-            if (write) {
-                writeTPIDRURO(*reg);
-            } else {
-                *reg = readTPIDRURO();
-            }
-            break;
+            return writeTPIDRURO(reg);
         case seL4_VCPUReg_TPIDRURW:
-            if (write) {
-                writeTPIDRURW(*reg);
-            } else {
-               *reg = readTPIDRURW();
-            }
-            break;
+            return writeTPIDRURW(reg);
         case seL4_VCPUReg_FPEXC:
-            break;
-        case seL4_VCPUReg_CNTV_TVAL:
-            if (write) {
-                MCR(CNTV_TVAL, *reg);
-            } else {
-                MRC(CNTV_TVAL, *reg);
-            }
-            break;
-        case seL4_VCPUReg_CNTV_CTL:
-            if (write) {
-                MCR(CNTV_CTL, *reg);
-            } else {
-                MRC(CNTV_CTL, *reg);
-            }
-            break;
-        case seL4_VCPUReg_CNTV_CVAL:
-            break;
-        case seL4_VCPUReg_LRsvc:
-            if (write) {
-                set_lr_svc(*reg);
-            } else {
-                *reg = get_lr_svc();
-            }
-            break;
-        case seL4_VCPUReg_SPsvc:
-            if (write) {
-                set_sp_svc(*reg);
-            } else {
-                *reg = get_sp_svc();
-            }
-            break;
-        case seL4_VCPUReg_LRabt:
-            if (write) {
-                set_lr_abt(*reg);
-            } else {
-                *reg = get_lr_abt();
-            }
-            break;
-        case seL4_VCPUReg_SPabt:
-            if (write) {
-                set_sp_abt(*reg);
-            } else {
-                *reg = get_sp_abt();
-            }
-            break;
-        case seL4_VCPUReg_LRund:
-            if (write) {
-                set_lr_und(*reg);
-            } else {
-                *reg = get_lr_und();
-            }
-            break;
-        case seL4_VCPUReg_SPund:
-            if (write) {
-                set_sp_und(*reg);
-            } else {
-                *reg = get_sp_und();
-            }
-            break;
-        case seL4_VCPUReg_LRirq:
-            if (write) {
-                set_lr_irq(*reg);
-            } else {
-                *reg = get_lr_irq();
-            }
-            break;
-        case seL4_VCPUReg_SPirq:
-            if (write) {
-                set_sp_irq(*reg);
-            } else {
-                *reg = get_sp_irq();
-            }
-            break;
-        case seL4_VCPUReg_LRfiq:
-            if (write) {
-                set_lr_fiq(*reg);
-            } else {
-                *reg = get_lr_fiq();
-            }
-            break;
-        case seL4_VCPUReg_SPfiq:
-            if (write) {
-                set_sp_fiq(*reg);
-            } else {
-                *reg = get_sp_fiq();
-            }
-            break;
-        case seL4_VCPUReg_R8fiq:
-            if (write) {
-                set_r8_fiq(*reg);
-            } else {
-                *reg = get_r8_fiq();
-            }
-            break;
-        case seL4_VCPUReg_R9fiq:
-            if (write) {
-                set_r9_fiq(*reg);
-            } else {
-                *reg = get_r9_fiq();
-            }
-            break;
-        case seL4_VCPUReg_R10fiq:
-            if (write) {
-                set_r10_fiq(*reg);
-            } else {
-                *reg = get_r10_fiq();
-            }
-            break;
-        case seL4_VCPUReg_R11fiq:
-            if (write) {
-                set_r11_fiq(*reg);
-            } else {
-                *reg = get_r11_fiq();
-            }
-            break;
-        case seL4_VCPUReg_R12fiq:
-            if (write) {
-                set_r12_fiq(*reg);
-            } else {
-                *reg = get_r12_fiq();
-            }
-            break;
-        case seL4_VCPUReg_SPSRsvc:
-            if (write) {
-                set_spsr_svc(*reg);
-            } else {
-                *reg = get_spsr_svc();
-            }
-            break;
-        case seL4_VCPUReg_SPSRabt:
-            if (write) {
-                set_spsr_abt(*reg);
-            } else {
-                *reg = get_spsr_abt();
-            }
-            break;
-        case seL4_VCPUReg_SPSRund:
-            if (write) {
-                set_spsr_und(*reg);
-            } else {
-                *reg = get_spsr_und();
-            }
-            break;
-        case seL4_VCPUReg_SPSRirq:
-            if (write) {
-                set_spsr_irq(*reg);
-            } else {
-                *reg = get_spsr_irq();
-            }
-            break;
-        case seL4_VCPUReg_SPSRfiq:
-            if (write) {
-                set_spsr_fiq(*reg);
-            } else {
-                *reg = get_spsr_fiq();
-            }
-            break;
-        default:
             return;
+        case seL4_VCPUReg_CNTV_TVAL:
+            MCR(CNTV_TVAL, reg);
+            return;
+        case seL4_VCPUReg_CNTV_CTL:
+            MCR(CNTV_CTL, reg);
+            return;
+        case seL4_VCPUReg_CNTV_CVAL:
+            return;
+        case seL4_VCPUReg_LRsvc:
+            return set_lr_svc(reg);
+        case seL4_VCPUReg_SPsvc:
+            return set_sp_svc(reg);
+        case seL4_VCPUReg_LRabt:
+            return set_lr_abt(reg);
+        case seL4_VCPUReg_SPabt:
+            return set_sp_abt(reg);
+        case seL4_VCPUReg_LRund:
+            return set_lr_und(reg);
+        case seL4_VCPUReg_SPund:
+            return set_sp_und(reg);
+        case seL4_VCPUReg_LRirq:
+            return set_lr_irq(reg);
+        case seL4_VCPUReg_SPirq:
+            return set_sp_irq(reg);
+        case seL4_VCPUReg_LRfiq:
+            return set_lr_fiq(reg);
+        case seL4_VCPUReg_SPfiq:
+            return set_sp_fiq(reg);
+        case seL4_VCPUReg_R8fiq:
+            return set_r8_fiq(reg);
+        case seL4_VCPUReg_R9fiq:
+            return set_r9_fiq(reg);
+        case seL4_VCPUReg_R10fiq:
+            return set_r10_fiq(reg);
+        case seL4_VCPUReg_R11fiq:
+            return set_r11_fiq(reg);
+        case seL4_VCPUReg_R12fiq:
+            return set_r12_fiq(reg);
+        case seL4_VCPUReg_SPSRsvc:
+            return set_spsr_svc(reg);
+        case seL4_VCPUReg_SPSRabt:
+            return set_spsr_abt(reg);
+        case seL4_VCPUReg_SPSRund:
+            return set_spsr_und(reg);
+        case seL4_VCPUReg_SPSRirq:
+            return set_spsr_irq(reg);
+        case seL4_VCPUReg_SPSRfiq:
+            return set_spsr_fiq(reg);
+        default:
+            fail("ARM/HYP: Invalid register index");
     }
 }
 
@@ -320,7 +219,7 @@ static inline void
 vcpu_save_reg(vcpu_t *vcpu, word_t reg)
 {
     if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
-    access_reg(reg, &vcpu->regs[reg], false);
+    vcpu->regs[reg] = vcpu_hw_read_reg(reg);
 }
 
 static inline void
@@ -328,7 +227,7 @@ vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
 {
     if (start >= seL4_VCPUReg_Num || vcpu == NULL) return;
     for (word_t i = start; i <= end; i++) {
-        access_reg(i, &vcpu->regs[i], false);
+        vcpu_save_reg(vcpu, i);
     }
 }
 
@@ -336,7 +235,7 @@ static inline void
 vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
 {
     if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
-    access_reg(reg, &vcpu->regs[reg], true);
+    vcpu_hw_write_reg(reg, vcpu->regs[reg]);
 }
 
 static inline void
@@ -344,7 +243,7 @@ vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
 {
     if (start >= seL4_VCPUReg_Num || vcpu == NULL) return;
     for (word_t i = start; i <= end; i++) {
-        access_reg(i, &vcpu->regs[i], true);
+        vcpu_restore_reg(vcpu, i);
     }
 }
 
@@ -360,22 +259,6 @@ vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
 {
     if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
     vcpu->regs[reg] = value;
-}
-
-static inline word_t
-read_reg(word_t reg)
-{
-    word_t value = 0;
-    if (reg >= seL4_VCPUReg_Num) return 0;
-    access_reg(reg, &value, false);
-    return value;
-}
-
-static inline void
-write_reg(word_t reg, word_t value)
-{
-    if (reg >= seL4_VCPUReg_Num) return;
-    access_reg(reg, &value, true);
 }
 
 #ifdef CONFIG_HAVE_FPU
@@ -627,7 +510,7 @@ readVCPUReg(vcpu_t *vcpu, uint32_t field)
                 return vcpu->regs[seL4_VCPUReg_SCTLR];
             }
         default:
-            return read_reg(field);
+            return vcpu_hw_read_reg(field);
         }
     } else {
         return vcpu_read_reg(vcpu, field);
@@ -643,11 +526,11 @@ writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
             if (armHSVCPUActive) {
                 setSCTLR(value);
             } else {
-                write_reg(field, value);
+                vcpu_hw_write_reg(field, value);
             }
             break;
         default:
-            write_reg(field, value);
+            vcpu_hw_write_reg(field, value);
         }
     } else {
        vcpu_write_reg(vcpu, field, value);
