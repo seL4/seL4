@@ -416,13 +416,9 @@ function(add_config_library prefix configure_template)
     set(config_dir "${CMAKE_CURRENT_BINARY_DIR}/gen_config")
     set(config_file "${config_dir}/${prefix}/gen_config.h")
     string(CONFIGURE "${configure_template}" config_header_contents)
-    add_custom_command(
-        OUTPUT "${config_file}"
-        COMMAND rm -f "${config_file}"
-        COMMAND echo "${config_header_contents}" | tr ";" "\\n" > "${config_file}"
-        COMMENT "Generating config file for ${prefix}"
-        VERBATIM
-    )
+    # Turn the list of configurations into a valid C file of different lines
+    string(REPLACE ";" "\n" config_header_contents "${config_header_contents}")
+    file(GENERATE OUTPUT "${config_file}" CONTENT "${config_header_contents}")
     add_custom_target(${prefix}_Gen DEPENDS "${config_file}")
     add_library(${prefix}_Config INTERFACE)
     target_include_directories(${prefix}_Config INTERFACE "${config_dir}")
@@ -446,7 +442,6 @@ endmacro(get_generated_files)
 # will allow code to simply #include <autoconf.h>
 function(generate_autoconf targetname config_list)
     set(link_list "")
-    set(extra_deps_list "")
     set(gen_list "")
     set(include_list
         "#ifndef AUTOCONF_${targetname}_H"
@@ -454,7 +449,6 @@ function(generate_autoconf targetname config_list)
     )
     foreach(config IN LISTS config_list)
         list(APPEND link_list "${config}_Config")
-        list(APPEND extrap_deps_list "${config}_Gen")
         get_generated_files(gens ${config}_Gen)
         list(APPEND gen_list ${gens})
         list(APPEND include_list "#include <${config}/gen_config.h>")
@@ -462,14 +456,9 @@ function(generate_autoconf targetname config_list)
     list(APPEND include_list "#endif")
     set(config_dir "${CMAKE_CURRENT_BINARY_DIR}/autoconf")
     set(config_file "${config_dir}/autoconf.h")
-    add_custom_command(
-        OUTPUT "${config_file}"
-        DEPENDS ${extra_deps_list}
-        COMMAND rm -f "${config_file}"
-        COMMAND echo "#define AUTOCONF_INCLUDED;${include_list}" | tr ";" "\\n" > "${config_file}"
-        COMMENT "Generating autoconf.h"
-        VERBATIM
-    )
+
+    string(REPLACE ";" "\n" config_header_contents "#define AUTOCONF_INCLUDED;${include_list}")
+    file(GENERATE OUTPUT "${config_file}" CONTENT "${config_header_contents}")
     add_custom_target(${targetname}_Gen DEPENDS "${config_file}")
     add_library(${targetname} INTERFACE)
     target_link_libraries(${targetname} INTERFACE ${link_list})
