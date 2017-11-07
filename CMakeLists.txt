@@ -149,6 +149,7 @@ endmacro(AddHeader)
 
 # Add static header includes
 AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include")
+AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/${KernelWordSize}")
 AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/arch/${KernelArch}")
 AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/arch/${KernelArch}/arch/${KernelWordSize}/")
 AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/plat/${KernelPlatform}/")

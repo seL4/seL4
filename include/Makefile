@@ -10,3 +10,4 @@
 
 include ${SOURCE_ROOT}/include/api/Makefile
 include ${SOURCE_ROOT}/include/${TYPE_SUFFIX}/mode/Makefile
+INCLUDE_DIRS += ${SOURCE_ROOT}/include/${TYPE_SUFFIX}
