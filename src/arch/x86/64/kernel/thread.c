@@ -37,6 +37,12 @@ Arch_configureIdleThread(tcb_t* tcb)
     setRegister(tcb, NextIP, (uint64_t)idleThreadStart);
     setRegister(tcb, CS, SEL_CS_0);
     setRegister(tcb, SS, SEL_DS_0);
+    /* We set the RSP to 0, even though the idle thread will never touch it, as it
+     * allows us to distinguish an interrupt from the idle thread from an interrupt
+     * from kernel execution, just by examining the saved RSP value (since the kernel
+     * thread will have a valid RSP, and never 0). See traps.S for the other side of this
+     */
+    setRegister(tcb, RSP, 0);
 }
 
 void
@@ -45,10 +51,6 @@ Arch_switchToIdleThread(void)
     tcb_t *tcb = NODE_STATE(ksIdleThread);
     /* Force the idle thread to run on kernel page table */
     setVMRoot(tcb);
-    /* In 64-bit mode the CPU unconditionally pushes to the stack when
-     * taking an exception. Therefore we need to provide the idle thread
-     * with a stack */
-    setRegister(tcb, RSP, (uint64_t)&MODE_NODE_STATE(x64KSIRQStack)[IRQ_STACK_SIZE]);
 #ifdef ENABLE_SMP_SUPPORT
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :

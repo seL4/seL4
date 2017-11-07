@@ -112,11 +112,10 @@
    Either a normal interrupt from the idle thread
    or a nested interrupt. */
 #define EXPAND_EXCEPT_0(number)                     \
-    /* Check the saved esp, if its at the top */    \
-    /* of the irq stack we came from the idle */    \
-    /* thread and have a normal interrupt     */    \
+    /* Check the saved esp, if its 0 we came from */\
+    /* the idle thread and have a normal interrupt*/\
     addq    $48, %rsp;                              \
-    cmpq    -16(%rsp), %rsp;                        \
+    cmpq    $0, -16(%rsp);                          \
     je      2b;                                     \
     /* nested interrupt, use saved stack */         \
     movq    -16(%rsp), %rsp;                        \
