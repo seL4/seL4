@@ -95,7 +95,7 @@ extern paddr_t ksUserLogBuffer;
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 
 #define SchedulerAction_ResumeCurrentThread ((tcb_t*)0)
-#define SchedulerAction_ChooseNewThread ((tcb_t*)~0)
+#define SchedulerAction_ChooseNewThread ((tcb_t*) 1)
 
 #define MODE_NODE_STATE(_state)    MODE_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
 #define ARCH_NODE_STATE(_state)    ARCH_NODE_STATE_ON_CORE(_state, getCurrentCPUIndex())
