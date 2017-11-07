@@ -64,3 +64,14 @@ Arch_activateIdleThread(tcb_t* tcb)
 {
     /* Don't need to do anything */
 }
+
+void
+Mode_postModifyRegisters(tcb_t *tptr)
+{
+    /* Setting Error to 0 will force a return by the interrupt path, which
+     * does a full restore. Unless we're the current thread, in which case
+     * we still have to go back out via a sysret */
+    if (tptr != NODE_STATE(ksCurThread)) {
+        setRegister(tptr, Error, 0);
+    }
+}

@@ -47,3 +47,9 @@ Arch_activateIdleThread(tcb_t* tcb)
 {
     /* Don't need to do anything */
 }
+
+void
+Mode_postModifyRegisters(tcb_t *tptr)
+{
+    /* Don't need to do anything */
+}

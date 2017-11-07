@@ -1429,13 +1429,7 @@ invokeTCB_CopyRegisters(tcb_t *dest, tcb_t *tcb_src,
         }
     }
 
-#ifdef CONFIG_ARCH_X86_64
-    /* To ensure that all registers get reloaded we will force the return to user
-     * path to go back via the IRQ path, which does a full register load */
-    if (dest != NODE_STATE(ksCurThread)) {
-        setRegister(dest, Error, 0);
-    }
-#endif
+    Arch_postModifyRegisters(dest);
 
     if (dest == NODE_STATE(ksCurThread)) {
         /* If we modified the current thread we may need to reschedule
@@ -1547,16 +1541,10 @@ invokeTCB_WriteRegisters(tcb_t *dest, bool_t resumeTarget,
                                                    buffer), archInfo));
     }
 
-#ifdef CONFIG_ARCH_X86_64
-    /* To ensure that all registers get reloaded we will force the return to user
-     * path to go back via the IRQ path, which does a full register load */
-    if (dest != NODE_STATE(ksCurThread)) {
-        setRegister(dest, Error, 0);
-    }
-#endif
-
     pc = getRestartPC(dest);
     setNextPC(dest, pc);
+
+    Arch_postModifyRegisters(dest);
 
     if (resumeTarget) {
         restart(dest);

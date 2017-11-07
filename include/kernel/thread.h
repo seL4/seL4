@@ -113,4 +113,9 @@ void setThreadState(tcb_t *tptr, _thread_state_t ts);
 void timerTick(void);
 void rescheduleRequired(void);
 
+/* declare that the thread has had its registers (in its user_context_t) modified and it
+ * should ignore any 'efficient' restores next time it is run, and instead restore all
+ * registers into their correct place */
+void Arch_postModifyRegisters(tcb_t *tptr);
+
 #endif

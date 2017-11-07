@@ -18,4 +18,5 @@ ARCH_C_SOURCES += kernel/vspace.c \
                   kernel/smp_sys.c \
                   kernel/boot.c \
                   kernel/cmdline.c \
-                  kernel/ept.c
+                  kernel/ept.c  \
+                  kernel/thread.c

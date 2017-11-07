@@ -25,4 +25,6 @@ Arch_getSanitiseRegisterInfo(tcb_t *thread)
     return 0;
 }
 
+void Mode_postModifyRegisters(tcb_t *tptr);
+
 #endif

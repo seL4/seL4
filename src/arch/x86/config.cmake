@@ -257,6 +257,7 @@ add_sources(
         kernel/boot.c
         kernel/cmdline.c
         kernel/ept.c
+        kernel/thread.c
         model/statedata.c
         machine/hardware.c
         machine/fpu.c

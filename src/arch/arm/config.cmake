@@ -301,6 +301,7 @@ add_sources(
         api/faults.c
         benchmark/benchmark.c
         kernel/boot.c
+        kernel/thread.c
         machine/cache.c
         machine/errata.c
         machine/io.c
