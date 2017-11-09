@@ -314,276 +314,532 @@ static inline void Arch_finaliseInterrupt(void)
 /* sysenter entry point */
 void handle_syscall(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_00(void);
+/** MODIFIES: phantom_machine_state */
 void int_01(void);
+/** MODIFIES: phantom_machine_state */
 void int_02(void);
+/** MODIFIES: phantom_machine_state */
 void int_03(void);
+/** MODIFIES: phantom_machine_state */
 void int_04(void);
+/** MODIFIES: phantom_machine_state */
 void int_05(void);
+/** MODIFIES: phantom_machine_state */
 void int_06(void);
+/** MODIFIES: phantom_machine_state */
 void int_07(void);
+/** MODIFIES: phantom_machine_state */
 void int_08(void);
+/** MODIFIES: phantom_machine_state */
 void int_09(void);
+/** MODIFIES: phantom_machine_state */
 void int_0a(void);
+/** MODIFIES: phantom_machine_state */
 void int_0b(void);
+/** MODIFIES: phantom_machine_state */
 void int_0c(void);
+/** MODIFIES: phantom_machine_state */
 void int_0d(void);
+/** MODIFIES: phantom_machine_state */
 void int_0e(void);
+/** MODIFIES: phantom_machine_state */
 void int_0f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_10(void);
+/** MODIFIES: phantom_machine_state */
 void int_11(void);
+/** MODIFIES: phantom_machine_state */
 void int_12(void);
+/** MODIFIES: phantom_machine_state */
 void int_13(void);
+/** MODIFIES: phantom_machine_state */
 void int_14(void);
+/** MODIFIES: phantom_machine_state */
 void int_15(void);
+/** MODIFIES: phantom_machine_state */
 void int_16(void);
+/** MODIFIES: phantom_machine_state */
 void int_17(void);
+/** MODIFIES: phantom_machine_state */
 void int_18(void);
+/** MODIFIES: phantom_machine_state */
 void int_19(void);
+/** MODIFIES: phantom_machine_state */
 void int_1a(void);
+/** MODIFIES: phantom_machine_state */
 void int_1b(void);
+/** MODIFIES: phantom_machine_state */
 void int_1c(void);
+/** MODIFIES: phantom_machine_state */
 void int_1d(void);
+/** MODIFIES: phantom_machine_state */
 void int_1e(void);
+/** MODIFIES: phantom_machine_state */
 void int_1f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_20(void);
+/** MODIFIES: phantom_machine_state */
 void int_21(void);
+/** MODIFIES: phantom_machine_state */
 void int_22(void);
+/** MODIFIES: phantom_machine_state */
 void int_23(void);
+/** MODIFIES: phantom_machine_state */
 void int_24(void);
+/** MODIFIES: phantom_machine_state */
 void int_25(void);
+/** MODIFIES: phantom_machine_state */
 void int_26(void);
+/** MODIFIES: phantom_machine_state */
 void int_27(void);
+/** MODIFIES: phantom_machine_state */
 void int_28(void);
+/** MODIFIES: phantom_machine_state */
 void int_29(void);
+/** MODIFIES: phantom_machine_state */
 void int_2a(void);
+/** MODIFIES: phantom_machine_state */
 void int_2b(void);
+/** MODIFIES: phantom_machine_state */
 void int_2c(void);
+/** MODIFIES: phantom_machine_state */
 void int_2d(void);
+/** MODIFIES: phantom_machine_state */
 void int_2e(void);
+/** MODIFIES: phantom_machine_state */
 void int_2f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_30(void);
+/** MODIFIES: phantom_machine_state */
 void int_31(void);
+/** MODIFIES: phantom_machine_state */
 void int_32(void);
+/** MODIFIES: phantom_machine_state */
 void int_33(void);
+/** MODIFIES: phantom_machine_state */
 void int_34(void);
+/** MODIFIES: phantom_machine_state */
 void int_35(void);
+/** MODIFIES: phantom_machine_state */
 void int_36(void);
+/** MODIFIES: phantom_machine_state */
 void int_37(void);
+/** MODIFIES: phantom_machine_state */
 void int_38(void);
+/** MODIFIES: phantom_machine_state */
 void int_39(void);
+/** MODIFIES: phantom_machine_state */
 void int_3a(void);
+/** MODIFIES: phantom_machine_state */
 void int_3b(void);
+/** MODIFIES: phantom_machine_state */
 void int_3c(void);
+/** MODIFIES: phantom_machine_state */
 void int_3d(void);
+/** MODIFIES: phantom_machine_state */
 void int_3e(void);
+/** MODIFIES: phantom_machine_state */
 void int_3f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_40(void);
+/** MODIFIES: phantom_machine_state */
 void int_41(void);
+/** MODIFIES: phantom_machine_state */
 void int_42(void);
+/** MODIFIES: phantom_machine_state */
 void int_43(void);
+/** MODIFIES: phantom_machine_state */
 void int_44(void);
+/** MODIFIES: phantom_machine_state */
 void int_45(void);
+/** MODIFIES: phantom_machine_state */
 void int_46(void);
+/** MODIFIES: phantom_machine_state */
 void int_47(void);
+/** MODIFIES: phantom_machine_state */
 void int_48(void);
+/** MODIFIES: phantom_machine_state */
 void int_49(void);
+/** MODIFIES: phantom_machine_state */
 void int_4a(void);
+/** MODIFIES: phantom_machine_state */
 void int_4b(void);
+/** MODIFIES: phantom_machine_state */
 void int_4c(void);
+/** MODIFIES: phantom_machine_state */
 void int_4d(void);
+/** MODIFIES: phantom_machine_state */
 void int_4e(void);
+/** MODIFIES: phantom_machine_state */
 void int_4f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_50(void);
+/** MODIFIES: phantom_machine_state */
 void int_51(void);
+/** MODIFIES: phantom_machine_state */
 void int_52(void);
+/** MODIFIES: phantom_machine_state */
 void int_53(void);
+/** MODIFIES: phantom_machine_state */
 void int_54(void);
+/** MODIFIES: phantom_machine_state */
 void int_55(void);
+/** MODIFIES: phantom_machine_state */
 void int_56(void);
+/** MODIFIES: phantom_machine_state */
 void int_57(void);
+/** MODIFIES: phantom_machine_state */
 void int_58(void);
+/** MODIFIES: phantom_machine_state */
 void int_59(void);
+/** MODIFIES: phantom_machine_state */
 void int_5a(void);
+/** MODIFIES: phantom_machine_state */
 void int_5b(void);
+/** MODIFIES: phantom_machine_state */
 void int_5c(void);
+/** MODIFIES: phantom_machine_state */
 void int_5d(void);
+/** MODIFIES: phantom_machine_state */
 void int_5e(void);
+/** MODIFIES: phantom_machine_state */
 void int_5f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_60(void);
+/** MODIFIES: phantom_machine_state */
 void int_61(void);
+/** MODIFIES: phantom_machine_state */
 void int_62(void);
+/** MODIFIES: phantom_machine_state */
 void int_63(void);
+/** MODIFIES: phantom_machine_state */
 void int_64(void);
+/** MODIFIES: phantom_machine_state */
 void int_65(void);
+/** MODIFIES: phantom_machine_state */
 void int_66(void);
+/** MODIFIES: phantom_machine_state */
 void int_67(void);
+/** MODIFIES: phantom_machine_state */
 void int_68(void);
+/** MODIFIES: phantom_machine_state */
 void int_69(void);
+/** MODIFIES: phantom_machine_state */
 void int_6a(void);
+/** MODIFIES: phantom_machine_state */
 void int_6b(void);
+/** MODIFIES: phantom_machine_state */
 void int_6c(void);
+/** MODIFIES: phantom_machine_state */
 void int_6d(void);
+/** MODIFIES: phantom_machine_state */
 void int_6e(void);
+/** MODIFIES: phantom_machine_state */
 void int_6f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_70(void);
+/** MODIFIES: phantom_machine_state */
 void int_71(void);
+/** MODIFIES: phantom_machine_state */
 void int_72(void);
+/** MODIFIES: phantom_machine_state */
 void int_73(void);
+/** MODIFIES: phantom_machine_state */
 void int_74(void);
+/** MODIFIES: phantom_machine_state */
 void int_75(void);
+/** MODIFIES: phantom_machine_state */
 void int_76(void);
+/** MODIFIES: phantom_machine_state */
 void int_77(void);
+/** MODIFIES: phantom_machine_state */
 void int_78(void);
+/** MODIFIES: phantom_machine_state */
 void int_79(void);
+/** MODIFIES: phantom_machine_state */
 void int_7a(void);
+/** MODIFIES: phantom_machine_state */
 void int_7b(void);
+/** MODIFIES: phantom_machine_state */
 void int_7c(void);
+/** MODIFIES: phantom_machine_state */
 void int_7d(void);
+/** MODIFIES: phantom_machine_state */
 void int_7e(void);
+/** MODIFIES: phantom_machine_state */
 void int_7f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_80(void);
+/** MODIFIES: phantom_machine_state */
 void int_81(void);
+/** MODIFIES: phantom_machine_state */
 void int_82(void);
+/** MODIFIES: phantom_machine_state */
 void int_83(void);
+/** MODIFIES: phantom_machine_state */
 void int_84(void);
+/** MODIFIES: phantom_machine_state */
 void int_85(void);
+/** MODIFIES: phantom_machine_state */
 void int_86(void);
+/** MODIFIES: phantom_machine_state */
 void int_87(void);
+/** MODIFIES: phantom_machine_state */
 void int_88(void);
+/** MODIFIES: phantom_machine_state */
 void int_89(void);
+/** MODIFIES: phantom_machine_state */
 void int_8a(void);
+/** MODIFIES: phantom_machine_state */
 void int_8b(void);
+/** MODIFIES: phantom_machine_state */
 void int_8c(void);
+/** MODIFIES: phantom_machine_state */
 void int_8d(void);
+/** MODIFIES: phantom_machine_state */
 void int_8e(void);
+/** MODIFIES: phantom_machine_state */
 void int_8f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_90(void);
+/** MODIFIES: phantom_machine_state */
 void int_91(void);
+/** MODIFIES: phantom_machine_state */
 void int_92(void);
+/** MODIFIES: phantom_machine_state */
 void int_93(void);
+/** MODIFIES: phantom_machine_state */
 void int_94(void);
+/** MODIFIES: phantom_machine_state */
 void int_95(void);
+/** MODIFIES: phantom_machine_state */
 void int_96(void);
+/** MODIFIES: phantom_machine_state */
 void int_97(void);
+/** MODIFIES: phantom_machine_state */
 void int_98(void);
+/** MODIFIES: phantom_machine_state */
 void int_99(void);
+/** MODIFIES: phantom_machine_state */
 void int_9a(void);
+/** MODIFIES: phantom_machine_state */
 void int_9b(void);
+/** MODIFIES: phantom_machine_state */
 void int_9c(void);
+/** MODIFIES: phantom_machine_state */
 void int_9d(void);
+/** MODIFIES: phantom_machine_state */
 void int_9e(void);
+/** MODIFIES: phantom_machine_state */
 void int_9f(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_a0(void);
+/** MODIFIES: phantom_machine_state */
 void int_a1(void);
+/** MODIFIES: phantom_machine_state */
 void int_a2(void);
+/** MODIFIES: phantom_machine_state */
 void int_a3(void);
+/** MODIFIES: phantom_machine_state */
 void int_a4(void);
+/** MODIFIES: phantom_machine_state */
 void int_a5(void);
+/** MODIFIES: phantom_machine_state */
 void int_a6(void);
+/** MODIFIES: phantom_machine_state */
 void int_a7(void);
+/** MODIFIES: phantom_machine_state */
 void int_a8(void);
+/** MODIFIES: phantom_machine_state */
 void int_a9(void);
+/** MODIFIES: phantom_machine_state */
 void int_aa(void);
+/** MODIFIES: phantom_machine_state */
 void int_ab(void);
+/** MODIFIES: phantom_machine_state */
 void int_ac(void);
+/** MODIFIES: phantom_machine_state */
 void int_ad(void);
+/** MODIFIES: phantom_machine_state */
 void int_ae(void);
+/** MODIFIES: phantom_machine_state */
 void int_af(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_b0(void);
+/** MODIFIES: phantom_machine_state */
 void int_b1(void);
+/** MODIFIES: phantom_machine_state */
 void int_b2(void);
+/** MODIFIES: phantom_machine_state */
 void int_b3(void);
+/** MODIFIES: phantom_machine_state */
 void int_b4(void);
+/** MODIFIES: phantom_machine_state */
 void int_b5(void);
+/** MODIFIES: phantom_machine_state */
 void int_b6(void);
+/** MODIFIES: phantom_machine_state */
 void int_b7(void);
+/** MODIFIES: phantom_machine_state */
 void int_b8(void);
+/** MODIFIES: phantom_machine_state */
 void int_b9(void);
+/** MODIFIES: phantom_machine_state */
 void int_ba(void);
+/** MODIFIES: phantom_machine_state */
 void int_bb(void);
+/** MODIFIES: phantom_machine_state */
 void int_bc(void);
+/** MODIFIES: phantom_machine_state */
 void int_bd(void);
+/** MODIFIES: phantom_machine_state */
 void int_be(void);
+/** MODIFIES: phantom_machine_state */
 void int_bf(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_c0(void);
+/** MODIFIES: phantom_machine_state */
 void int_c1(void);
+/** MODIFIES: phantom_machine_state */
 void int_c2(void);
+/** MODIFIES: phantom_machine_state */
 void int_c3(void);
+/** MODIFIES: phantom_machine_state */
 void int_c4(void);
+/** MODIFIES: phantom_machine_state */
 void int_c5(void);
+/** MODIFIES: phantom_machine_state */
 void int_c6(void);
+/** MODIFIES: phantom_machine_state */
 void int_c7(void);
+/** MODIFIES: phantom_machine_state */
 void int_c8(void);
+/** MODIFIES: phantom_machine_state */
 void int_c9(void);
+/** MODIFIES: phantom_machine_state */
 void int_ca(void);
+/** MODIFIES: phantom_machine_state */
 void int_cb(void);
+/** MODIFIES: phantom_machine_state */
 void int_cc(void);
+/** MODIFIES: phantom_machine_state */
 void int_cd(void);
+/** MODIFIES: phantom_machine_state */
 void int_ce(void);
+/** MODIFIES: phantom_machine_state */
 void int_cf(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_d0(void);
+/** MODIFIES: phantom_machine_state */
 void int_d1(void);
+/** MODIFIES: phantom_machine_state */
 void int_d2(void);
+/** MODIFIES: phantom_machine_state */
 void int_d3(void);
+/** MODIFIES: phantom_machine_state */
 void int_d4(void);
+/** MODIFIES: phantom_machine_state */
 void int_d5(void);
+/** MODIFIES: phantom_machine_state */
 void int_d6(void);
+/** MODIFIES: phantom_machine_state */
 void int_d7(void);
+/** MODIFIES: phantom_machine_state */
 void int_d8(void);
+/** MODIFIES: phantom_machine_state */
 void int_d9(void);
+/** MODIFIES: phantom_machine_state */
 void int_da(void);
+/** MODIFIES: phantom_machine_state */
 void int_db(void);
+/** MODIFIES: phantom_machine_state */
 void int_dc(void);
+/** MODIFIES: phantom_machine_state */
 void int_dd(void);
+/** MODIFIES: phantom_machine_state */
 void int_de(void);
+/** MODIFIES: phantom_machine_state */
 void int_df(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_e0(void);
+/** MODIFIES: phantom_machine_state */
 void int_e1(void);
+/** MODIFIES: phantom_machine_state */
 void int_e2(void);
+/** MODIFIES: phantom_machine_state */
 void int_e3(void);
+/** MODIFIES: phantom_machine_state */
 void int_e4(void);
+/** MODIFIES: phantom_machine_state */
 void int_e5(void);
+/** MODIFIES: phantom_machine_state */
 void int_e6(void);
+/** MODIFIES: phantom_machine_state */
 void int_e7(void);
+/** MODIFIES: phantom_machine_state */
 void int_e8(void);
+/** MODIFIES: phantom_machine_state */
 void int_e9(void);
+/** MODIFIES: phantom_machine_state */
 void int_ea(void);
+/** MODIFIES: phantom_machine_state */
 void int_eb(void);
+/** MODIFIES: phantom_machine_state */
 void int_ec(void);
+/** MODIFIES: phantom_machine_state */
 void int_ed(void);
+/** MODIFIES: phantom_machine_state */
 void int_ee(void);
+/** MODIFIES: phantom_machine_state */
 void int_ef(void);
 
+/** MODIFIES: phantom_machine_state */
 void int_f0(void);
+/** MODIFIES: phantom_machine_state */
 void int_f1(void);
+/** MODIFIES: phantom_machine_state */
 void int_f2(void);
+/** MODIFIES: phantom_machine_state */
 void int_f3(void);
+/** MODIFIES: phantom_machine_state */
 void int_f4(void);
+/** MODIFIES: phantom_machine_state */
 void int_f5(void);
+/** MODIFIES: phantom_machine_state */
 void int_f6(void);
+/** MODIFIES: phantom_machine_state */
 void int_f7(void);
+/** MODIFIES: phantom_machine_state */
 void int_f8(void);
+/** MODIFIES: phantom_machine_state */
 void int_f9(void);
+/** MODIFIES: phantom_machine_state */
 void int_fa(void);
+/** MODIFIES: phantom_machine_state */
 void int_fb(void);
+/** MODIFIES: phantom_machine_state */
 void int_fc(void);
+/** MODIFIES: phantom_machine_state */
 void int_fd(void);
+/** MODIFIES: phantom_machine_state */
 void int_fe(void);
+/** MODIFIES: phantom_machine_state */
 void int_ff(void);
 
 #ifdef CONFIG_VTX
