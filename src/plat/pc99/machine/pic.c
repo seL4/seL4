@@ -41,8 +41,6 @@ BOOT_CODE void pic_disable(void)
     out8(PIC2_BASE + 1, 0xff);
 }
 
-#ifdef CONFIG_IRQ_PIC
-
 void pic_mask_irq(bool_t mask, irq_t irq)
 {
     uint8_t  bit_mask;
@@ -110,5 +108,3 @@ void pic_ack_active_irq(void)
         out8(PIC1_BASE, 0x20);
     }
 }
-
-#endif
