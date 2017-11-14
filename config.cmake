@@ -28,6 +28,8 @@ if(KernelVerificationBuild)
     set(force CLEAR)
 endif()
 mark_as_advanced(${force} CSPEC_DIR SKIP_MODIFIES TOPLEVELTYPES SORRY_BITFIELD_PROOFS UMM_TYPES)
+# Use a custom target for collecting information during generation that we need during build
+add_custom_target(kernel_config_target)
 
 ########################
 # Architecture selection
