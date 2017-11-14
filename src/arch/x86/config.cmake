@@ -17,6 +17,13 @@ config_choice(KernelX86Sel4Arch X86_SEL4_ARCH "Architecture mode for building th
     "ia32;KernelSel4ArchIA32;ARCH_IA32;KernelArchX86"
 )
 
+# Add any top level types
+if(KernelseL4ArchX86_64)
+    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
+        pdpte_C pml4e_C
+    )
+endif()
+
 if(KernelArchX86)
     # Only one platform so just force it to be set
     config_set(KernelPlatform PLAT "pc99")
