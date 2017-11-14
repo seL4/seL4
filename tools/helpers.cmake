@@ -90,9 +90,10 @@ function(GenBFCommand args target_name pbf_path pbf_target deps)
     get_filename_component(target_name_absolute "${target_name}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     get_absolute_source_or_binary(pbf_path_absolute "${pbf_path}")
     add_custom_command(OUTPUT "${target_name_absolute}"
-        COMMAND "${PYTHON}" "${BF_GEN_PATH}" ${args} "${pbf_path_absolute}" "${target_name_absolute}"
+        COMMAND "${PYTHON}" "${BF_GEN_PATH}" "${args}" "${pbf_path_absolute}" "${target_name_absolute}"
         DEPENDS "${BF_GEN_PATH}" "${pbf_path_absolute}" "${pbf_target}" ${deps}
         COMMENT "Generating from ${pbf_path}"
+        COMMAND_EXPAND_LISTS
         VERBATIM
     )
 endfunction(GenBFCommand)
