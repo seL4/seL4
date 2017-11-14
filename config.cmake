@@ -20,16 +20,20 @@ config_set(KernelIsMaster KERNEL_MASTER ON)
 # Proof based configuration variables
 set(CSPEC_DIR "." CACHE PATH "")
 set(SKIP_MODIFIES ON CACHE BOOL "")
-set(TOPLEVELTYPES "cte_C;tcb_C;endpoint_C;notification_C;asid_pool_C;pte_C;pde_C;user_data_C;user_data_device_C" CACHE STRING "")
 set(SORRY_BITFIELD_PROOFS OFF CACHE BOOL "")
 find_file(UMM_TYPES umm_types.txt CMAKE_FIND_ROOT_PATH_BOTH)
 set(force FORCE)
 if(KernelVerificationBuild)
     set(force CLEAR)
 endif()
-mark_as_advanced(${force} CSPEC_DIR SKIP_MODIFIES TOPLEVELTYPES SORRY_BITFIELD_PROOFS UMM_TYPES)
+mark_as_advanced(${force} CSPEC_DIR SKIP_MODIFIES SORRY_BITFIELD_PROOFS UMM_TYPES)
 # Use a custom target for collecting information during generation that we need during build
 add_custom_target(kernel_config_target)
+# Put our common top level types in
+set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
+    cte_C tcb_C endpoint_C notification_C asid_pool_C pte_C pde_C user_data_C
+    user_data_device_C
+)
 
 ########################
 # Architecture selection
