@@ -9,6 +9,7 @@
  */
 
 /* A9 MPCORE private timer */
+#include <machine/timer.h>
 
 /* 32 bit down counter */
 struct priv_timer {
