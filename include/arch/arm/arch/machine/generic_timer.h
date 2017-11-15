@@ -17,6 +17,7 @@
 #include <arch/machine/timer.h>
 #include <mode/machine.h>
 #include <mode/machine/timer.h>
+#include <plat/machine/timer.h>
 
 /* ARM generic timer implementation */
 

@@ -29,7 +29,6 @@
 #include <machine/io.h>
 
 #define physBase          0x00000000
-#define TIMER_CLOCK_HZ    100000000llu
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {

@@ -18,6 +18,7 @@
 #include <linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/timer.h>
 
 #define TIOCP_CFG_SOFTRESET BIT(0)
 
@@ -30,8 +31,6 @@
 #define TCLR_STARTTIMER BIT(0)
 
 #define TISR_OVF_FLAG (BIT(0) | BIT(1) | BIT(2))
-
-#define TIMER_CLOCK_HZ 32768llu // 32KHz
 
 struct timer {
     uint32_t tidr; // 00h TIDR Identification Register

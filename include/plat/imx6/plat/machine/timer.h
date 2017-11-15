@@ -13,4 +13,6 @@
 #ifndef __PLAT_MACHINE_TIMER_H
 #define __PLAT_MACHINE_TIMER_H
 
+#include <arch/machine/priv_timer.h>
+
 #endif /* !__PLAT_MACHINE_TIMER_H */

@@ -18,6 +18,7 @@
 #include <linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/timer.h>
 
 #define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
 #define INTCPS_SYSSTATUS_RESETDONE BIT(0)
@@ -31,8 +32,6 @@
 #define TIER_MATCHENABLE    BIT(0)
 #define TIER_OVERFLOWENABLE BIT(1)
 #define TISR_OVF_FLAG       BIT(1)
-
-#define TIMER_CLOCK_HZ 13000000llu
 
 struct timer {
     uint32_t tidr;   /* GPTIMER_TIDR 0x00 */

@@ -16,6 +16,7 @@
 #include <linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/timer.h>
 
 /*
  * Samsung Exynos multi-core timer implementation

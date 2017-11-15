@@ -18,8 +18,6 @@
 #include <plat/machine/devices.h>
 #include <plat_mode/machine/hardware.h>
 
-#define TIMER_CLOCK_HZ		1200000llu
-
 #define physBase            0x20000000
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {

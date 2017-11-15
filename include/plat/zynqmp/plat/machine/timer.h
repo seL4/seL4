@@ -13,4 +13,6 @@
 #ifndef __PLAT_MACHINE_TIMER_H
 #define __PLAT_MACHINE_TIMER_H
 
+#define TIMER_CLOCK_HZ 100000000llu
+
 #endif /* !__PLAT_MACHINE_TIMER_H */

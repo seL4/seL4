@@ -11,6 +11,7 @@
 /* A9 MPCORE private timer */
 #include <machine/timer.h>
 #include <arch/machine/timer.h>
+#include <arch/machine/priv_timer.h>
 
 /* 32 bit down counter */
 struct timer {
@@ -28,7 +29,6 @@ timer_t *priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 #define TMR_CTRL_PRESCALE    8
 #define TMR_INTS_EVENT       BIT(0)
 
-#define TIMER_CLOCK_HZ 400000000ULL
 #define TIMER_INTERVAL_MS    (CONFIG_TIMER_TICK_MS)
 #define TIMER_COUNT_BITS 32
 

@@ -10,8 +10,7 @@
 /* @AUTHOR(akroh@ertos.nicta.com.au) */
 
 #include <plat/machine/hardware.h>
-
-#define TIMER_CLOCK_HZ 7000000llu
+#include <plat/machine/timer.h>
 
 #define DGT_TIMER_PPTR (TIMER_PPTR + 0x024)
 

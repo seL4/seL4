@@ -18,6 +18,7 @@
 #include <linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/timer.h>
 #include <plat/machine/hardware_gen.h>
 #include <arch/benchmark_overflowHandler.h>
 
@@ -45,7 +46,6 @@ enum IPGConstants {
 };
 
 #define TIMER_CLOCK_SRC   IPG_CLK_32K
-#define TIMER_CLOCK_HZ    32768llu
 
 interrupt_t active_irq = irqInvalid;
 

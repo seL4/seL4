@@ -18,8 +18,7 @@
 #include <linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
-
-#define TIMER_CLOCK_HZ 24000000ULL
+#include <plat/machine/timer.h>
 
 #define TIMER0_OFFSET       0xC00
 

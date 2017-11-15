@@ -20,8 +20,6 @@
 #include <plat/machine/devices.h>
 #include <machine/io.h>
 
-#define TIMER_CLOCK_HZ		19200000llu
-
 #define physBase          0x00000000
 #define kernelBase        0xe0000000
 

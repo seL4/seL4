@@ -19,8 +19,6 @@
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
 
-#define TIMER_CLOCK_HZ      19200000llu
-
 #define physBase            0x80000000
 #define kernelBase          0xffffff8000000000
 
