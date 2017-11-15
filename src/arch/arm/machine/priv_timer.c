@@ -12,15 +12,14 @@
 #include <machine/timer.h>
 
 /* 32 bit down counter */
-struct priv_timer {
+struct timer {
     uint32_t load;
     uint32_t count;
     uint32_t ctrl;
     uint32_t ints;
 };
-
-volatile struct priv_timer * const priv_timer
-    = (volatile struct priv_timer*)ARM_MP_PRIV_TIMER_PPTR;
+typedef volatile struct timer timer_t;
+timer_t *priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 
 #define TMR_CTRL_ENABLE      BIT(0)
 #define TMR_CTRL_AUTORELOAD  BIT(1)

@@ -28,14 +28,15 @@
 #define L2_LINE_INDEX(a) (L2_LINE_START(a)>>L2_LINE_SIZE_BITS)
 
 /* Memory map for EPIT (Enhanced Periodic Interrupt Timer). */
-volatile struct epit_map {
+struct timer {
     uint32_t epitcr;
     uint32_t epitsr;
     uint32_t epitlr;
     uint32_t epitcmpr;
     uint32_t epitcnt;
-} *epit1 = (volatile void *)EPIT_PPTR;
-
+};
+typedef volatile struct timer timer_t;
+timer_t *epit1 = (timer_t *) EPIT_PPTR;
 
 enum IPGConstants {
     IPG_CLK = 1,

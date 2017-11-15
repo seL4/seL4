@@ -35,7 +35,7 @@
 #define TICKS_PER_SECOND 13000000llu
 #define TIMER_INTERVAL_TICKS ((int)(1UL * TIMER_INTERVAL_MS * TICKS_PER_SECOND / 1000))
 
-static volatile struct TIMER_map {
+struct timer {
     uint32_t tidr;   /* GPTIMER_TIDR 0x00 */
     uint32_t padding1[3];
     uint32_t cfg;    /* GPTIMER_CFG 0x10 */
@@ -57,7 +57,9 @@ static volatile struct TIMER_map {
     uint32_t tcvr;   /* GPTIMER_TCVR 0x50 */
     uint32_t tocr;   /* GPTIMER_TOCR 0x54 */
     uint32_t towr;   /* GPTIMER_TOWR 0x58 */
-} *timer = (volatile void*)GPTIMER9_PPTR;
+};
+typedef volatile struct timer timer_t;
+timer_t *timer = (timer_t *) GPTIMER9_PPTR;
 
 void
 resetTimer(void)

@@ -119,8 +119,8 @@ struct mct_map {
     struct mct_global_map global;
     struct mct_local_map local[4];
 };
-
-static volatile struct mct_map* mct = (volatile struct mct_map*) EXYNOS_MCT_PPTR;
+typedef volatile struct mct_map timer_t;
+timer_t* mct = (timer_t *) EXYNOS_MCT_PPTR;
 
 void
 resetTimer(void)

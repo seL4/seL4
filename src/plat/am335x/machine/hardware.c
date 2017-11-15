@@ -37,7 +37,7 @@
 #define TICKS_PER_SECOND 32768 // 32KHz
 #define TIMER_INTERVAL_TICKS ((int)(1UL * TIMER_INTERVAL_MS * TICKS_PER_SECOND / 1000))
 
-volatile struct TIMER_map {
+struct timer {
     uint32_t tidr; // 00h TIDR Identification Register
     uint32_t padding1[3];
     uint32_t cfg; // 10h TIOCP_CFG Timer OCP Configuration Register
@@ -57,7 +57,9 @@ volatile struct TIMER_map {
     uint32_t tcar1; // 50h TCAR1 Timer Capture Register
     uint32_t tsicr; // 54h TSICR Timer Synchronous Interface Control Register
     uint32_t tcar2; // 58h TCAR2 Timer Capture Register
-} *timer = (volatile void*)DMTIMER0_PPTR;
+};
+typedef volatile struct timer timer_t;
+timer_t *timer = (timer_t *) DMTIMER0_PPTR;
 
 void
 resetTimer(void)
