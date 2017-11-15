@@ -10,6 +10,7 @@
 
 /* A9 MPCORE private timer */
 #include <machine/timer.h>
+#include <arch/machine/timer.h>
 
 /* 32 bit down counter */
 struct timer {
@@ -29,12 +30,12 @@ timer_t *priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 #define TMR_INTS_EVENT       BIT(0)
 
 
-#define CLK_MHZ 400ULL
+#define TIMER_CLOCK_HZ 400000000ULL
 #define TIMER_INTERVAL_MS    (CONFIG_TIMER_TICK_MS)
 #define TIMER_COUNT_BITS 32
 
-#define PRESCALE ((CLK_MHZ*1000 * TIMER_INTERVAL_MS) >> TIMER_COUNT_BITS)
-#define TMR_LOAD ((CLK_MHZ*1000 * TIMER_INTERVAL_MS) / (PRESCALE + 1))
+#define PRESCALE ((TIMER_RELOAD) >> TIMER_COUNT_BITS)
+#define TMR_LOAD ((TIMER_RELOAD) / (PRESCALE + 1))
 
 BOOT_CODE void
 initTimer(void)

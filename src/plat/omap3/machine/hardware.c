@@ -32,8 +32,7 @@
 #define TIER_OVERFLOWENABLE BIT(1)
 #define TISR_OVF_FLAG       BIT(1)
 
-#define TICKS_PER_SECOND 13000000llu
-#define TIMER_INTERVAL_TICKS ((int)(1UL * TIMER_INTERVAL_MS * TICKS_PER_SECOND / 1000))
+#define TIMER_CLOCK_HZ 13000000llu
 
 struct timer {
     uint32_t tidr;   /* GPTIMER_TIDR 0x00 */
@@ -79,13 +78,13 @@ initTimer(void)
     maskInterrupt(/*disable*/ true, GPT9_IRQ);
 
     /* Set the reload value */
-    timer->tldr = 0xFFFFFFFFUL - TIMER_INTERVAL_TICKS;
+    timer->tldr = 0xFFFFFFFFUL - TIMER_RELOAD;
 
     /* Enables interrupt on overflow */
     timer->tier = TIER_OVERFLOWENABLE;
 
     /* Clear the read register */
-    timer->tcrr = 0xFFFFFFFFUL - TIMER_INTERVAL_TICKS;
+    timer->tcrr = 0xFFFFFFFFUL - TIMER_RELOAD;
 
     /* Set autoreload and start the timer */
     timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;

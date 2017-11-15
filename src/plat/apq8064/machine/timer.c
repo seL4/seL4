@@ -11,8 +11,7 @@
 
 #include <plat/machine/hardware.h>
 
-#define TCXO_CLK_MHZ         7UL /* empirically */
-#define TIMER_FIN_MHZ        TCXO_CLK_MHZ
+#define TIMER_CLOCK_HZ 7000000llu
 
 #define DGT_TIMER_PPTR (TIMER_PPTR + 0x024)
 
@@ -38,23 +37,7 @@ timer_t* dgt_tmr = (timer_t*) DGT_TIMER_PPTR;
 #define PRESCALER          DGTTMR_CLK_CTRL_DIV1
 #define PRESCALE_VAL       1
 
-#define TIMER_INTERVAL_US  (CONFIG_TIMER_TICK_MS * 1000)
-#define TIMER_BITS         32
-
-
-#define TIMER_INTERVAL_TICKS  (TIMER_FIN_MHZ * TIMER_INTERVAL_US / PRESCALE_VAL)
-
-#define TIMER_MATCH_VAL       (TIMER_INTERVAL_TICKS)
-
-/* sanity check */
-#if TIMER_MATCH_VAL >= (1UL << TIMER_BITS)
-#error Timer match value overflow
-#endif
-#if TIMER_MATCH_VAL <= 0
-#error Timer match value underflow
-#endif
-
-
+#define TIMER_MATCH_VAL  (TIMER_RELOAD / PRESCALE_VAL)
 
 BOOT_CODE void
 initTimer(void)

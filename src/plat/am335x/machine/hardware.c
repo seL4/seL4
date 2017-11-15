@@ -19,9 +19,6 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
-
-#define TIMER_INTERVAL_MS (CONFIG_TIMER_TICK_MS)
-
 #define TIOCP_CFG_SOFTRESET BIT(0)
 
 #define TIER_MATCHENABLE BIT(0)
@@ -34,8 +31,7 @@
 
 #define TISR_OVF_FLAG (BIT(0) | BIT(1) | BIT(2))
 
-#define TICKS_PER_SECOND 32768 // 32KHz
-#define TIMER_INTERVAL_TICKS ((int)(1UL * TIMER_INTERVAL_MS * TICKS_PER_SECOND / 1000))
+#define TIMER_CLOCK_HZ 32768llu // 32KHz
 
 struct timer {
     uint32_t tidr; // 00h TIDR Identification Register
@@ -133,13 +129,13 @@ initTimer(void)
     maskInterrupt(/*disable*/ true, DMTIMER0_IRQ);
 
     /* Set the reload value */
-    timer->tldr = 0xFFFFFFFFUL - TIMER_INTERVAL_TICKS;
+    timer->tldr = 0xFFFFFFFFUL - TIMER_RELOAD;
 
     /* Enables interrupt on overflow */
     timer->tier = TIER_OVERFLOWENABLE;
 
     /* Clear the read register */
-    timer->tcrr = 0xFFFFFFFFUL - TIMER_INTERVAL_TICKS;
+    timer->tcrr = 0xFFFFFFFFUL - TIMER_RELOAD;
 
     /* Set autoreload and start the timer */
     timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;

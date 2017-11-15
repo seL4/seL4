@@ -19,9 +19,7 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
-#define TIMER_INTERVAL_US  (CONFIG_TIMER_TICK_MS * 1000)
-#define TIMER_MHZ          24ULL
-#define TIMER_TICKS        (TIMER_MHZ * TIMER_INTERVAL_US)
+#define TIMER_CLOCK_HZ 24000000ULL
 
 #define TIMER0_OFFSET       0xC00
 
@@ -53,7 +51,7 @@ BOOT_CODE void
 initTimer(void)
 {
     /* Set the reload value */
-    timer->tmr0_intv_value_reg = TIMER_TICKS;
+    timer->tmr0_intv_value_reg = TIMER_RELOAD;
 
     /* Enables interrupt */
     timer->tmr_irq_en_reg = TMR0_IRQ_EN_FLAG;

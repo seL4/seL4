@@ -44,15 +44,8 @@ enum IPGConstants {
     IPG_CLK_32K = 3
 };
 
-#define TIMER_INTERVAL_MS (CONFIG_TIMER_TICK_MS)
 #define TIMER_CLOCK_SRC   IPG_CLK_32K
-#define TIMER_CLOCK_HZ    32768u
-
-#if (TIMER_INTERVAL_MS >= (0xFFFFFFFF / TIMER_CLOCK_HZ))
-#error "Timer reload val out of range"
-#else
-#define TIMER_RELOAD_VAL  (TIMER_CLOCK_HZ * TIMER_INTERVAL_MS / 1000)
-#endif
+#define TIMER_CLOCK_HZ    32768llu
 
 interrupt_t active_irq = irqInvalid;
 
@@ -86,7 +79,7 @@ initTimer(void)
     epit1->epitcr = epitcr_kludge.words[0];
 
     /* Set counter modulus */
-    epit1->epitlr = TIMER_RELOAD_VAL;
+    epit1->epitlr = TIMER_RELOAD;
 
     /* Interrupt at zero count */
     epit1->epitcmpr = 0;

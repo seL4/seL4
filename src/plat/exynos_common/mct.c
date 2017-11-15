@@ -132,8 +132,6 @@ resetTimer(void)
     }
 }
 
-compile_assert(mct_reload_32_bit, TIMER_RELOAD <= 0xffffffff);
-
 BOOT_CODE void
 initTimer(void)
 {
