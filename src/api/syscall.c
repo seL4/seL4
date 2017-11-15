@@ -67,7 +67,7 @@ handleUnknownSyscall(word_t w)
         return EXCEPTION_NONE;
     }
     if (w == SysDebugDumpScheduler) {
-#if CONFIG_DEBUG_BUILD
+#ifdef CONFIG_DEBUG_BUILD
         debug_dumpScheduler();
 #endif
         return EXCEPTION_NONE;
