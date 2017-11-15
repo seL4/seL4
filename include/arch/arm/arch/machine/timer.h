@@ -28,31 +28,6 @@
 #error "Timer reload too high"
 #endif
 
-/* ARM generic timer implementation */
-
-static inline void
-resetGenericTimer(void)
-{
-    SYSTEM_WRITE_WORD(CNT_TVAL, TIMER_RELOAD);
-    SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));
-}
-
-BOOT_CODE static inline void
-initGenericTimer(void)
-{
-    if (config_set(CONFIG_DEBUG_BUILD)) {
-        /* check the frequency is correct */
-        uint32_t gpt_cnt_tval = 0;
-        SYSTEM_READ_WORD(CNTFRQ, gpt_cnt_tval);
-        if (gpt_cnt_tval != 0 && gpt_cnt_tval != TIMER_CLOCK_HZ) {
-            printf("Warning:  gpt_cnt_tval %u, expected %u\n", gpt_cnt_tval,
-                   (uint32_t) TIMER_CLOCK_HZ);
-        }
-    }
-
-    resetGenericTimer();
-}
-
 void initTimer(void);
 
 #endif /* __ARCH_MACHINE_TIMER_H_ */

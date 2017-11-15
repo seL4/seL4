@@ -18,7 +18,7 @@
 #include <config.h>
 #include <types.h>
 #include <arch/machine.h>
-#include <arch/machine/timer.h>
+#include <arch/machine/generic_timer.h>
 #include <arch/linker.h>
 
 void
