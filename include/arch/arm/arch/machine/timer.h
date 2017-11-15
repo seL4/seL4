@@ -53,4 +53,6 @@ initGenericTimer(void)
     resetGenericTimer();
 }
 
+void initTimer(void);
+
 #endif /* __ARCH_MACHINE_TIMER_H_ */

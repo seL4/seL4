@@ -11,6 +11,5 @@
 #define __TIMER_H
 
 void resetTimer(void);
-void initTimer(void);
 
 #endif
