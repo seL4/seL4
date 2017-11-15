@@ -26,9 +26,7 @@ timer_t *priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 #define TMR_CTRL_AUTORELOAD  BIT(1)
 #define TMR_CTRL_IRQEN       BIT(2)
 #define TMR_CTRL_PRESCALE    8
-
 #define TMR_INTS_EVENT       BIT(0)
-
 
 #define TIMER_CLOCK_HZ 400000000ULL
 #define TIMER_INTERVAL_MS    (CONFIG_TIMER_TICK_MS)
@@ -58,6 +56,4 @@ resetTimer(void)
 {
     priv_timer->ints = TMR_INTS_EVENT;
 }
-
-
 

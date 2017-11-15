@@ -56,5 +56,3 @@ resetTimer(void)
 {
     /* Nothing to do */
 }
-
-
