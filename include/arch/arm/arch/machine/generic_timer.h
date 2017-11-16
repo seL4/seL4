@@ -15,13 +15,12 @@
 
 #include <config.h>
 #include <arch/machine/timer.h>
-#include <plat/machine/timer.h>
 #include <mode/machine.h>
 
 /* ARM generic timer implementation */
 
 static inline void
-resetGenericTimer(void)
+resetTimer(void)
 {
     SYSTEM_WRITE_WORD(CNT_TVAL, TIMER_RELOAD);
     SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));

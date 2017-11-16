@@ -21,12 +21,6 @@
 #include <arch/machine/generic_timer.h>
 #include <arch/linker.h>
 
-void
-resetTimer(void)
-{
-    resetGenericTimer();
-}
-
 BOOT_CODE void
 initTimer(void)
 {

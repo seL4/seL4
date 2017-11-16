@@ -10,14 +10,12 @@
  * @TAG(DATA61_GPL)
  */
 
+#ifndef __PLAT_MACHINE_TIMER_H
+#define __PLAT_MACHINE_TIMER_H
 
-#include <config.h>
-#include <types.h>
-#include <arch/machine/generic_timer.h>
-#include <linker.h>
-
-BOOT_CODE void
-initTimer(void)
+static inline void resetTimer()
 {
-    initGenericTimer();
+    /* nothing to do */
 }
+
+#endif /* !__PLAT_MACHINE_TIMER_H */

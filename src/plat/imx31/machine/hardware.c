@@ -28,15 +28,6 @@
 #define L2_LINE_START(a) ROUND_DOWN(a, L2_LINE_SIZE_BITS)
 #define L2_LINE_INDEX(a) (L2_LINE_START(a)>>L2_LINE_SIZE_BITS)
 
-/* Memory map for EPIT (Enhanced Periodic Interrupt Timer). */
-struct timer {
-    uint32_t epitcr;
-    uint32_t epitsr;
-    uint32_t epitlr;
-    uint32_t epitcmpr;
-    uint32_t epitcnt;
-};
-typedef volatile struct timer timer_t;
 timer_t *epit1 = (timer_t *) EPIT_PPTR;
 
 enum IPGConstants {
@@ -48,13 +39,6 @@ enum IPGConstants {
 #define TIMER_CLOCK_SRC   IPG_CLK_32K
 
 interrupt_t active_irq = irqInvalid;
-
-void
-resetTimer(void)
-{
-    epit1->epitsr = 1;
-    /* Timer resets automatically */
-}
 
 /* Configure EPIT1 as kernel preemption timer */
 BOOT_CODE void

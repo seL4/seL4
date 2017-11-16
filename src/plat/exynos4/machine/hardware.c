@@ -42,7 +42,3 @@ BOOT_CODE void initTimer(void) {
     while (mct->global.wstat != GWSTAT_TCON);
     mct->global.wstat = GWSTAT_TCON;
 }
-
-void resetTimer(void) {
-    mct_reset();
-}

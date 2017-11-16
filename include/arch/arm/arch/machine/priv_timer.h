@@ -14,5 +14,20 @@
 #define __ARCH_MACHINE_PRIV_TIMER_H_
 
 #define TIMER_CLOCK_HZ 400000000ULL
+#define TMR_INTS_EVENT       BIT(0)
+
+/* 32 bit down counter */
+struct timer {
+    uint32_t load;
+    uint32_t count;
+    uint32_t ctrl;
+    uint32_t ints;
+};
+typedef volatile struct timer timer_t;
+extern timer_t *priv_timer;
+
+static inline void resetTimer(void) {
+    priv_timer->ints = TMR_INTS_EVENT;
+}
 
 #endif /* __ARCH_MACHINE_PRIV_TIMER_H_ */

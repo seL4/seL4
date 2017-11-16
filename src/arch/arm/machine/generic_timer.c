@@ -10,6 +10,7 @@
  * @TAG(DATA61_GPL)
  */
 
+#include <plat/machine/timer.h>
 #include <arch/machine/generic_timer.h>
 
 BOOT_CODE void initGenericTimer(void)
@@ -24,5 +25,5 @@ BOOT_CODE void initGenericTimer(void)
         }
     }
 
-    resetGenericTimer();
+    resetTimer();
 }

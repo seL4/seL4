@@ -15,4 +15,8 @@
 
 #define TIMER_CLOCK_HZ 7000000llu
 
+static inline void resetTimer(void) {
+    /* Nothing to do */
+}
+
 #endif /* !__PLAT_MACHINE_TIMER_H */

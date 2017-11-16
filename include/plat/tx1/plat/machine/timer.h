@@ -15,4 +15,6 @@
 
 #define TIMER_CLOCK_HZ 19200000llu
 
+#include <arch/machine/generic_timer.h>
+
 #endif /* !__PLAT_MACHINE_TIMER_H */

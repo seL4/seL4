@@ -13,21 +13,12 @@
 #include <arch/machine/timer.h>
 #include <arch/machine/priv_timer.h>
 
-/* 32 bit down counter */
-struct timer {
-    uint32_t load;
-    uint32_t count;
-    uint32_t ctrl;
-    uint32_t ints;
-};
-typedef volatile struct timer timer_t;
 timer_t *priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 
 #define TMR_CTRL_ENABLE      BIT(0)
 #define TMR_CTRL_AUTORELOAD  BIT(1)
 #define TMR_CTRL_IRQEN       BIT(2)
 #define TMR_CTRL_PRESCALE    8
-#define TMR_INTS_EVENT       BIT(0)
 
 #define TIMER_INTERVAL_MS    (CONFIG_TIMER_TICK_MS)
 #define TIMER_COUNT_BITS 32
@@ -50,10 +41,3 @@ initTimer(void)
     /* Enable */
     priv_timer->ctrl |= TMR_CTRL_ENABLE;
 }
-
-void
-resetTimer(void)
-{
-    priv_timer->ints = TMR_INTS_EVENT;
-}
-

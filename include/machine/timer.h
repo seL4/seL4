@@ -10,6 +10,6 @@
 #ifndef __TIMER_H
 #define __TIMER_H
 
-void resetTimer(void);
+static inline void resetTimer(void);
 
 #endif

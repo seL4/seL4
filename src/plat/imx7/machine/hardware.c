@@ -20,13 +20,6 @@ initTimer(void)
     initGenericTimer();
 }
 
-/* need to reload the count-down value */
-void
-resetTimer(void)
-{
-    resetGenericTimer();
-}
-
 /* Cortex-A7 uses an integrated L2 cache controller */
 void
 initL2Cache(void)

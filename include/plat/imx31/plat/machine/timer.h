@@ -15,4 +15,21 @@
 
 #define TIMER_CLOCK_HZ 32768llu
 
+/* Memory map for EPIT (Enhanced Periodic Interrupt Timer). */
+struct timer {
+    uint32_t epitcr;
+    uint32_t epitsr;
+    uint32_t epitlr;
+    uint32_t epitcmpr;
+    uint32_t epitcnt;
+};
+typedef volatile struct timer timer_t;
+extern timer_t *epit1;
+
+static inline void resetTimer(void)
+{
+    epit1->epitsr = 1;
+    /* Timer resets automatically */
+}
+
 #endif /* !__PLAT_MACHINE_TIMER_H */
