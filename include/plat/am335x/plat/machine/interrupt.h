@@ -7,6 +7,8 @@
  *
  * @TAG(GD_GPL)
  */
+#ifndef __PLAT_MACHINE_INTERRUPT_H
+#define __PLAT_MACHINE_INTERRUPT_H
 
 #include <config.h>
 #include <types.h>
@@ -126,4 +128,4 @@ handleSpuriousIRQ(void)
     intc->intcps_control = INTCPS_CONTROL_NEWIRQAGR;
     dsb();
 }
-
+#endif /* __PLAT_MACHINE_INTERRUPT_H */
