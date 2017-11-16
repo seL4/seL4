@@ -73,4 +73,5 @@ add_sources(
     CFILES
         src/plat/hikey/machine/hardware.c
         src/plat/hikey/machine/io.c
+        src/arch/arm/machine/generic_timer.c
 )

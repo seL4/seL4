@@ -28,6 +28,11 @@ endif
 
 endif
 
+# platforms that use the generic timer
+ifeq ($(PLAT), $(filter $(PLAT), exynos5 bcm2837 hikey tk1 tx1 zynqmp imx7))
+	ARCH_C_SOURCES += machine/generic_timer.c
+endif
+
 ifeq ($(CPU), $(filter $(CPU), cortex-a15 cortex-a7 cortex-a57))
     # A15 uses the gic_pl400 which is an extention of pl390
     ARCH_C_SOURCES += machine/gic_pl390.c

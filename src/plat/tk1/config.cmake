@@ -27,4 +27,5 @@ add_sources(
         src/plat/tk1/machine/io.c
         src/plat/tk1/machine/l2cache.c
         src/plat/tk1/machine/smmu.c
+        src/arch/arm/machine/generic_timer.c
 )
