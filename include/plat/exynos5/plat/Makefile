@@ -9,3 +9,4 @@
 #
 
 include ${SOURCE_ROOT}/include/plat/${PLAT}/plat/machine/Makefile
+INCLUDE_DIRS += ${SOURCE_ROOT}/include/plat/exynos_common/

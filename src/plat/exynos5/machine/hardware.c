@@ -18,6 +18,26 @@
 #include <linker.h>
 #include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
+#include <arch/machine/generic_timer.h>
+#include <plat/machine/mct.h>
+
+timer_t *mct = (timer_t *) EXYNOS_MCT_PPTR;
+
+BOOT_CODE void initTimer(void) {
+    mct_clear_write_status();
+
+    /* use the arm generic timer, backed by the mct */
+    /* enable the timer */
+    mct->global.tcon = GTCON_EN;
+    while (mct->global.wstat != GWSTAT_TCON);
+    mct->global.wstat = GWSTAT_TCON;
+
+    initGenericTimer();
+}
+
+void resetTimer(void) {
+    resetGenericTimer();
+}
 
 void plat_cleanL2Range(paddr_t start, paddr_t end) {}
 void plat_invalidateL2Range(paddr_t start, paddr_t end) {}

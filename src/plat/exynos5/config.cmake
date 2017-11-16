@@ -33,6 +33,5 @@ add_sources(
     CFILES
         src/plat/exynos5/machine/hardware.c
         src/plat/exynos5/machine/l2cache.c
-        src/plat/exynos_common/mct.c
         src/plat/exynos_common/io.c
 )

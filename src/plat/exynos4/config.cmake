@@ -22,6 +22,6 @@ endif()
 add_sources(
     DEP "KernelPlatformExynos4"
     CFILES
-        src/plat/exynos_common/mct.c
         src/plat/exynos_common/io.c
+        src/plat/exynos4/machine/hardware.c
 )

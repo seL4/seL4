@@ -7,16 +7,10 @@
  *
  * @TAG(GD_GPL)
  */
+#ifndef __PLAT_MACHINE_MCT_H
+#define __PLAT_MACHINE_MCT_H
 
-#include <config.h>
-#include "stdint.h"
-#include <arch/machine.h>
-#include <arch/machine/generic_timer.h>
-#include <plat/machine.h>
-#include <linker.h>
-#include <plat/machine/devices.h>
-#include <plat/machine/hardware.h>
-#include <plat/machine/timer.h>
+#include <stdint.h>
 
 /*
  * Samsung Exynos multi-core timer implementation
@@ -121,52 +115,17 @@ struct mct_map {
     struct mct_local_map local[4];
 };
 typedef volatile struct mct_map timer_t;
-timer_t* mct = (timer_t *) EXYNOS_MCT_PPTR;
+extern timer_t *mct;
 
-void
-resetTimer(void)
+static inline void mct_reset(void)
 {
-    if (config_set(CONFIG_ARM_CORTEX_A15)) {
-        resetGenericTimer();
-    } else {
-        mct->global.int_stat = GINT_COMP0_IRQ;
-    }
+    mct->global.int_stat = GINT_COMP0_IRQ;
 }
 
-BOOT_CODE void
-initTimer(void)
+static inline void mct_clear_write_status(void)
 {
     /* Clear write status */
     mct->global.wstat = mct->global.wstat;
     mct->global.cnt_wstat = mct->global.cnt_wstat;
-
-    if (config_set(CONFIG_ARM_CORTEX_A15)) {
-        /* use the arm generic timer, backed by the mct */
-        /* enable the timer */
-        mct->global.tcon = GTCON_EN;
-        while (mct->global.wstat != GWSTAT_TCON);
-        mct->global.wstat = GWSTAT_TCON;
-
-        initGenericTimer();
-    } else {
-        /* Use the MCT directly */
-        /* Configure the comparator */
-        mct->global.comp0_add_inc = TIMER_RELOAD;
-
-        uint64_t  comparator_value = ((((uint64_t) mct->global.cnth) << 32llu)
-                                      | mct->global.cntl) + TIMER_RELOAD;
-        mct->global.comp0h = (uint32_t) (comparator_value >> 32u);
-        mct->global.comp0l = (uint32_t) comparator_value;
-        /* Enable interrupts */
-        mct->global.int_en = GINT_COMP0_IRQ;
-
-        /* Wait for update */
-        while (mct->global.wstat != (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC));
-        mct->global.wstat = (GWSTAT_COMP0H | GWSTAT_COMP0L | GWSTAT_COMP0_ADD_INC);
-
-        /* enable interrupts */
-        mct->global.tcon = GTCON_EN | GTCON_COMP0_EN | GTCON_COMP0_AUTOINC;
-        while (mct->global.wstat != GWSTAT_TCON);
-        mct->global.wstat = GWSTAT_TCON;
-    }
 }
+#endif /* __PLAT_MACHINE_MCT_H */
