@@ -28,8 +28,8 @@
 static inline void
 resetGenericTimer(void)
 {
-    MSR("cntv_tval_el0", TIMER_RELOAD);
-    MSR("cntv_ctl_el0", BIT(0));
+    SYSTEM_WRITE_WORD("cntv_tval_el0", TIMER_RELOAD);
+    SYSTEM_WRITE_WORD("cntv_ctl_el0", BIT(0));
 }
 
 BOOT_CODE static inline void
@@ -38,7 +38,7 @@ initGenericTimer(void)
     if (config_set(CONFIG_DEBUG_BUILD)) {
         /* check the frequency is correct */
         uint32_t gpt_cnt_tval;
-        MRS("cntfrq_el0", gpt_cnt_tval);
+        SYSTEM_READ_WORD("cntfrq_el0", gpt_cnt_tval);
         if (gpt_cnt_tval != 0 && gpt_cnt_tval != TIMER_CLOCK_HZ) {
             printf("Warning:  gpt_cnt_tval %u, expected %u\n", gpt_cnt_tval,
                    (uint32_t) TIMER_CLOCK_HZ);
