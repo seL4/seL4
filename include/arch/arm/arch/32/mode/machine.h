@@ -38,6 +38,11 @@
         asm volatile("mcrr " cpreg :: "r" (_v));    \
     }while(0)
 
+#define SYSTEM_WRITE_WORD(reg, v) MCR(reg, v)
+#define SYSTEM_READ_WORD(reg, v)  MRC(reg, v)
+#define SYSTEM_WRITE_64(reg, v)  MCRR(reg, v)
+#define SYSTEM_READ_64(reg, v)   MRRC(reg, v)
+
 /** Generic timer CP15 registers **/
 #define CNTFRQ     " p15, 0,  %0, c14,  c0, 0" /* 32-bit RW Counter Frequency register */
 #define CNTPCT     " p15, 0, %Q0, %R0, c14   " /* 64-bit RO Physical Count register */

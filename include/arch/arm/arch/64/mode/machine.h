@@ -33,6 +33,11 @@
         asm volatile("msr " reg ",%0" :: "r" (_v));\
     }while(0)
 
+#define SYSTEM_WRITE_WORD(reg, v) MSR(reg, v)
+#define SYSTEM_READ_WORD(reg, v)  MRS(reg, v)
+#define SYSTEM_WRITE_64(reg, v)   MSR(reg, v)
+#define SYSTEM_READ_64(reg, v)    MRS(reg, v)
+
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
 
