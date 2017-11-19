@@ -11,7 +11,7 @@
 #include <config.h>
 #include "stdint.h"
 #include <arch/machine.h>
-#include <mode/machine/timer.h>
+#include <arch/machine/timer.h>
 #include <plat/machine.h>
 #include <linker.h>
 #include <plat/machine/devices.h>

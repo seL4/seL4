@@ -10,8 +10,7 @@
 
 #include <config.h>
 #include <types.h>
-#include <arch/machine.h>
-#include <mode/machine/timer.h>
+#include <arch/machine/timer.h>
 #include <linker.h>
 
 void
