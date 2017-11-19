@@ -14,6 +14,7 @@
 #define __ARCH_MODE_MACHINE_TIMER_H_
 
 #include <config.h>
+#include <stdint.h>
 #include <plat/machine/hardware.h>
 #include <mode/machine.h>
 
@@ -23,7 +24,7 @@
 /* but multiply by timer tick ms */
 #define TIMER_RELOAD    (TICKS_PER_MS * CONFIG_TIMER_TICK_MS)
 
-#if (TIMER_RELOAD >= 0xFFFFFFFF)
+#if (TIMER_RELOAD >= UINTPTR_MAX)
 #error "Timer reload too high"
 #endif
 
