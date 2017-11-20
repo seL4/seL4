@@ -15,6 +15,11 @@
 #include <config.h>
 #include <types.h>
 
+enum acpi_size {
+    ACPI_V1_SIZE = 20,
+    ACPI_V2_SIZE = 36
+};
+
 /* Generic System Descriptor Table Header */
 typedef struct acpi_header {
     char         signature[4];
@@ -40,7 +45,7 @@ typedef struct acpi_rsdp {
     uint8_t      extended_checksum;
     char         reserved[3];
 } PACKED acpi_rsdp_t;
-compile_assert(acpi_rsdp_packed, sizeof(acpi_rsdp_t) == 36)
+compile_assert(acpi_rsdp_packed, sizeof(acpi_rsdp_t) == ACPI_V2_SIZE)
 
 /* Root System Descriptor Table */
 typedef struct acpi_rsdt {
