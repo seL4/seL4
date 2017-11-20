@@ -71,6 +71,7 @@ typedef struct boot_state {
     mem_p_regs_t mem_p_regs;  /* physical memory regions */
     seL4_X86_BootInfo_VBE vbe_info; /* Potential VBE information from multiboot */
     seL4_X86_BootInfo_mmap_t mb_mmap_info; /* memory map information from multiboot */
+    seL4_X86_BootInfo_fb_t fb_info; /* framebuffer information as set by bootloader */
 } boot_state_t;
 
 BOOT_BSS
@@ -229,7 +230,8 @@ try_boot_sys_node(cpu_id_t cpu_id)
                 &boot_state.rmrr_list,
                 &boot_state.acpi_rsdp,
                 &boot_state.vbe_info,
-                &boot_state.mb_mmap_info
+                &boot_state.mb_mmap_info,
+                &boot_state.fb_info
             )) {
         return false;
     }
@@ -644,6 +646,7 @@ try_boot_sys_mbi2(
     boot_state.mem_p_regs.count = 0;
     init_allocated_p_regions();
     boot_state.mb_mmap_info.mmap_length = 0;
+    boot_state.vbe_info.vbeMode = -1;
 
     while (tag < tag_e && tag->type != MULTIBOOT2_TAG_END) {
         word_t const behind_tag = (word_t)tag + sizeof(*tag);
@@ -703,6 +706,11 @@ try_boot_sys_mbi2(
                     return false;
                 }
             }
+        } else if (tag->type == MULTIBOOT2_TAG_FB) {
+            multiboot2_fb_t const * fb = (multiboot2_fb_t const *)behind_tag;
+            printf("Got framebuffer info in multiboot2. Current video mode is at physical address=%llx pitch=%u resolution=%ux%u@%u type=%u\n",
+                fb->addr, fb->pitch, fb->width, fb->height, fb->bpp, fb->type);
+            boot_state.fb_info = *fb;
         }
 
         tag = (multiboot2_tag_t const *)((word_t)tag + ROUND_UP(tag->size, 3));
@@ -714,8 +722,6 @@ try_boot_sys_mbi2(
         printf("Expect at least one boot module (containing a userland image)\n");
         return false;
     }
-
-    boot_state.vbe_info.vbeMode = -1;
 
     return true;
 }

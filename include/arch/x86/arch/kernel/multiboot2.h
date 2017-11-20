@@ -38,11 +38,21 @@ typedef struct multiboot2_module {
     char     string [1];
 } PACKED multiboot2_module_t;
 
+typedef struct multiboot2_fb {
+    uint64_t addr;
+    uint32_t pitch;
+    uint32_t width;
+    uint32_t height;
+    uint8_t  bpp;
+    uint8_t  type;
+} PACKED multiboot2_fb_t;
+
 enum multiboot2_tags {
     MULTIBOOT2_TAG_END     = 0,
     MULTIBOOT2_TAG_CMDLINE = 1,
     MULTIBOOT2_TAG_MODULE  = 3,
     MULTIBOOT2_TAG_MEMORY  = 6,
+    MULTIBOOT2_TAG_FB      = 8,
     MULTIBOOT2_TAG_ACPI_1  = 14,
     MULTIBOOT2_TAG_ACPI_2  = 15,
 };

@@ -253,7 +253,8 @@ init_sys_state(
     acpi_rmrr_list_t *rmrr_list,
     acpi_rsdp_t      *acpi_rsdp,
     seL4_X86_BootInfo_VBE *vbe,
-    seL4_X86_BootInfo_mmap_t *mb_mmap
+    seL4_X86_BootInfo_mmap_t *mb_mmap,
+    seL4_X86_BootInfo_fb_t *fb_info
 )
 {
     cap_t         root_cnode_cap;
@@ -286,6 +287,12 @@ init_sys_state(
 
     if (vbe->vbeMode != -1) {
         extra_bi_size += sizeof(seL4_X86_BootInfo_VBE);
+    }
+    if (acpi_rsdp) {
+        extra_bi_size += sizeof(seL4_BootInfoHeader) + sizeof(*acpi_rsdp);
+    }
+    if (fb_info && fb_info->addr) {
+        extra_bi_size += sizeof(seL4_BootInfoHeader) + sizeof(*fb_info);
     }
 
     word_t mb_mmap_size = sizeof(seL4_X86_BootInfo_mmap_t);
@@ -351,6 +358,17 @@ init_sys_state(
         extra_bi_offset += sizeof(header);
         memcpy((void*)(extra_bi_region.start + extra_bi_offset), acpi_rsdp, sizeof(*acpi_rsdp));
         extra_bi_offset += sizeof(*acpi_rsdp);
+    }
+
+    /* populate framebuffer information block */
+    if (fb_info && fb_info->addr) {
+        seL4_BootInfoHeader header;
+        header.id = SEL4_BOOTINFO_HEADER_X86_FRAMEBUFFER;
+        header.len = sizeof(header) + sizeof(*fb_info);
+        *(seL4_BootInfoHeader*)(extra_bi_region.start + extra_bi_offset) = header;
+        extra_bi_offset += sizeof(header);
+        memcpy((void*)(extra_bi_region.start + extra_bi_offset), fb_info, sizeof(*fb_info));
+        extra_bi_offset += sizeof(*fb_info);
     }
 
     /* populate multiboot mmap block */

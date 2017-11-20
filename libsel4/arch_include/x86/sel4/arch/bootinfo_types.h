@@ -135,4 +135,6 @@ typedef struct seL4_X86_BootInfo_mmap {
     seL4_X86_mb_mmap_t mmap[SEL4_MULTIBOOT_MAX_MMAP_ENTRIES];
 } SEL4_PACKED seL4_X86_BootInfo_mmap_t;
 
+typedef struct multiboot2_fb seL4_X86_BootInfo_fb_t;
+
 #endif // __LIBSEL4_ARCH_BOOTINFO_TYPES_H

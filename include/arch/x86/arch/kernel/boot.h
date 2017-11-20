@@ -42,7 +42,8 @@ bool_t init_sys_state(
     acpi_rmrr_list_t *rmrr_list,
     acpi_rsdp_t      *acpi_rsdp,
     seL4_X86_BootInfo_VBE *vbe,
-    seL4_X86_BootInfo_mmap_t *mb_mmap
+    seL4_X86_BootInfo_mmap_t *mb_mmap,
+    seL4_X86_BootInfo_fb_t *fb_info
 );
 
 bool_t init_cpu(
