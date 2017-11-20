@@ -182,7 +182,7 @@ acpi_get_rsdp(void)
 
     for (addr = (char*)BIOS_PADDR_START; addr < (char*)BIOS_PADDR_END; addr += 16) {
         if (strncmp(addr, acpi_str_rsd, 8) == 0) {
-            if (acpi_calc_checksum(addr, 20) == 0) {
+            if (acpi_calc_checksum(addr, ACPI_V1_SIZE) == 0) {
                 return (acpi_rsdp_t*)addr;
             }
         }
@@ -255,8 +255,13 @@ acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp)
     acpi_rsdt_t* acpi_rsdt;
     acpi_rsdt_t* acpi_rsdt_mapped;
 
-    if (acpi_calc_checksum((char*)acpi_rsdp, 20) != 0) {
-        printf("BIOS: ACPI information corrupt\n");
+    if (acpi_calc_checksum((char*)acpi_rsdp, ACPI_V1_SIZE) != 0) {
+        printf("BIOS: ACPIv1 information corrupt\n");
+        return false;
+    }
+
+    if (acpi_rsdp->revision > 0 && acpi_calc_checksum((char*)acpi_rsdp, sizeof(*acpi_rsdp)) != 0) {
+        printf("BIOS: ACPIv2 information corrupt\n");
         return false;
     }
 

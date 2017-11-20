@@ -651,12 +651,14 @@ try_boot_sys_mbi2(
         if (tag->type == MULTIBOOT2_TAG_CMDLINE) {
             char const * const cmdline = (char const * const)(behind_tag);
             cmdline_parse(cmdline, &cmdline_opt);
-        } else if (tag->type == MULTIBOOT2_TAG_ACPI) {
-            if (sizeof(boot_state.acpi_rsdp) != tag->size - sizeof(*tag)) {
-                printf("sizeof ACPI RSDP unexpected %ld!=%lu\n", (long)sizeof(boot_state.acpi_rsdp), (long)tag->size - sizeof(*tag));
-                return false;
+        } else if (tag->type == MULTIBOOT2_TAG_ACPI_1) {
+            if (ACPI_V1_SIZE == tag->size - sizeof(*tag)) {
+                memcpy(&boot_state.acpi_rsdp, (void *)behind_tag, tag->size - sizeof(*tag));
             }
-            memcpy(&boot_state.acpi_rsdp, (void *)behind_tag, sizeof(boot_state.acpi_rsdp));
+        } else if (tag->type == MULTIBOOT2_TAG_ACPI_2) {
+            if (sizeof(boot_state.acpi_rsdp) == tag->size - sizeof(*tag)) {
+                memcpy(&boot_state.acpi_rsdp, (void *)behind_tag, sizeof(boot_state.acpi_rsdp));
+            }
         } else if (tag->type == MULTIBOOT2_TAG_MODULE) {
             multiboot2_module_t const * module = (multiboot2_module_t const *)behind_tag;
             printf(
