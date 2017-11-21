@@ -13,10 +13,18 @@
 #ifndef __PLAT_MACHINE_TIMER_H
 #define __PLAT_MACHINE_TIMER_H
 
+#include <config.h>
+#include <basic_types.h>
+#include <arch/linker.h>
 #include <plat/machine/interrupt.h>
 
 #define TIMER_CLOCK_HZ 13000000llu
 #define TISR_OVF_FLAG       BIT(1)
+#define TISR_MATCH_FLAG     BIT(0)
+
+/* see tools/reciprocal.py for calculation of this value */
+#define CLK_MAGIC 1321528399llu
+#define CLK_SHIFT 34u
 
 struct timer {
     uint32_t tidr;   /* GPTIMER_TIDR 0x00 */
@@ -43,11 +51,48 @@ struct timer {
 };
 typedef volatile struct timer timer_t;
 extern timer_t *timer;
+/* this is a 32-bit timer, track high_bits here */
+extern uint32_t high_bits;
 
-static inline void resetTimer(void)
+/** DONT_TRANSLATE */
+static inline void
+setDeadline(ticks_t deadline)
 {
-    timer->tisr = TISR_OVF_FLAG;
-    ackInterrupt(GPT9_IRQ);
+    assert(deadline > ksCurTime);
+    timer->tmar = (uint32_t) deadline;
 }
 
+/** DONT_TRANSLATE */
+static inline ticks_t
+getCurrentTime(void)
+{
+    bool_t overflow = !!(timer->tisr & TISR_OVF_FLAG);
+    return (((uint64_t) high_bits + overflow) << 32llu) + timer->tcrr;
+}
+
+static inline CONST time_t
+getKernelWcetUs(void)
+{
+    return 10u;
+}
+
+/** DONT_TRANSLATE */
+static inline void
+ackDeadlineIRQ(void)
+{
+    /* check if this is an overflow irq */
+    if (timer->tisr & TISR_OVF_FLAG) {
+        high_bits++;
+    }
+
+    /* ack everything */
+    timer->tisr = TISR_OVF_FLAG | TISR_MATCH_FLAG;
+    assert((timer->tisr & TISR_OVF_FLAG) == 0);
+}
+
+static inline PURE ticks_t
+getTimerPrecision(void)
+{
+    return usToTicks(2u);
+}
 #endif /* !__PLAT_MACHINE_TIMER_H */
