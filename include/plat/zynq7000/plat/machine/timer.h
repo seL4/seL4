@@ -13,6 +13,20 @@
 #ifndef __PLAT_MACHINE_TIMER_H
 #define __PLAT_MACHINE_TIMER_H
 
-#include <arch/machine/priv_timer.h>
+#include <config.h>
+#include <basic_types.h>
+#include <arch/machine/global_timer.h>
 
+/* see tools/reciprocal.py for calculation of this value */
+#define CLK_MAGIC 158705489
+#define CLK_SHIFT 36
+#define TIMER_CLOCK_HZ     433000000llu
+
+static inline CONST time_t
+getKernelWcetUs(void)
+{
+    return 10u;
+}
+
+compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 433llu)
 #endif /* !__PLAT_MACHINE_TIMER_H */

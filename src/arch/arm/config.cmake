@@ -328,7 +328,7 @@ add_sources(
 
 add_sources(
     DEP "KernelArmCortexA9;NOT KernelPlatformExynos4"
-    CFILES src/arch/arm/machine/priv_timer.c
+    CFILES src/arch/arm/machine/global_timer.c
 )
 
 add_sources(
