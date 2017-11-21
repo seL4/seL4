@@ -22,12 +22,12 @@
 
 /* Use Hypervisor Physical timer */
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-#define CNT_TVAL CNTHP_TVAL
+#define CNT_CT   CNTPCT
 #define CNT_CTL  CNTHP_CTL
 #define CNT_CVAL CNTHP_CVAL
 #else
 /* Use virtual timer */
-#define CNT_TVAL CNTV_TVAL
+#define CNT_CT   CNTVCT
 #define CNT_CTL  CNTV_CTL
 #define CNT_CVAL CNTV_CVAL
 #endif
