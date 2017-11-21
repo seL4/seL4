@@ -21,13 +21,24 @@ if(KernelPlatformZynq7000)
     config_set(KernelARMPlatform ARM_PLAT zynq7000)
     config_set(KernelArmMach MACH "zynq")
     list(APPEND KernelDTSList "tools/dts/zynq7000.dts")
-    list(APPEND KernelDTSList "src/plat/zynq7000/overlay-zynq7000.dts")
+    if(KernelIsMCS)
+        list(APPEND KernelDTSList "src/plat/zynq7000/mcs-overlay-zynq7000.dts")
+        set(timer_file drivers/timer/arm_global.h)
+        set(timer_freq 433000000llu)
+    else()
+        list(APPEND KernelDTSList "src/plat/zynq7000/overlay-zynq7000.dts")
+        set(timer_file drivers/timer/arm_priv.h)
+        set(timer_freq 400000000llu)
+    endif()
     declare_default_headers(
-        TIMER_FREQUENCY 400000000llu
+        TIMER_FREQUENCY ${timer_freq}
         MAX_IRQ 92
         NUM_PPI 32
-        TIMER drivers/timer/arm_priv.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        TIMER ${timer_file}
+        CLK_SHIFT 36llu
+        CLK_MAGIC 158705489llu
+        KERNEL_WCET 10llu
     )
 endif()
 

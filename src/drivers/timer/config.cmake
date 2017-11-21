@@ -48,6 +48,11 @@ register_driver(
     CFILES "priv_timer.c"
 )
 register_driver(
+    compatibility_strings "arm,cortex-a9-global-timer"
+    PREFIX src/drivers/timer
+    CFILES "global_timer.c"
+)
+register_driver(
     compatibility_strings "arm,armv7-timer"
     PREFIX src/drivers/timer
     CFILES "generic_timer.c"

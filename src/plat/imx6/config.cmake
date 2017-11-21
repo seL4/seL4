@@ -40,12 +40,26 @@ if(KernelPlatImx6)
     config_set(${cmake_config} ${c_config} ON)
     list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/imx6/overlay-${KernelARMPlatform}.dts")
+
+    if(KernelIsMCS)
+        list(APPEND KernelDTSList "src/plat/imx6/mcs-overlay-imx6.dts")
+        set(timer_file drivers/timer/arm_global.h)
+        set(timer_freq 498000000llu)
+    else()
+        set(timer_file drivers/timer/arm_priv.h)
+        set(timer_freq 400000000llu)
+    endif()
+
     declare_default_headers(
-        TIMER_FREQUENCY 400000000llu
+        TIMER_FREQUENCY ${timer_freq}
         MAX_IRQ 159
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32
-        TIMER drivers/timer/arm_priv.h
+        TIMER ${timer_file}
+        CLK_SHIFT 41llu
+        CLK_MAGIC 4415709349llu
+        KERNEL_WCET 10llu
+        TIMER_PRECISION 2u
     )
 endif()
 

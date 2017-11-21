@@ -168,6 +168,15 @@ devices:
         kernel: ARM_MP_PRIV_TIMER_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
+  # Cortex-a9 global timer (timer/arm,global_timer.yaml)
+  - compatible:
+    - arm,cortex-a9-global-timer
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: TIMER_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
   # i.MX EPIT (no Linux binding, this is seL4-specific.)
   - compatible:
     - fsl,imx31-epit
