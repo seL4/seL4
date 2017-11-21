@@ -14,7 +14,26 @@
 #define __PLAT_MACHINE_TIMER_H
 
 #define TIMER_CLOCK_HZ 8000000llu
+#define CLK_MAGIC 1llu
+#define CLK_SHIFT 8llu
 
+/* see tools/reciprocal.py for calculation of CLK_MAGIC and CLK_SHIFT */
+compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 8llu);
+#include <config.h>
+#include <basic_types.h>
+#include <arch/linker.h>
 #include <arch/machine/generic_timer.h>
+
+static inline CONST time_t
+getKernelWcetUs(void)
+{
+    return 10u;
+}
+
+static inline CONST ticks_t
+getTimerPrecision(void)
+{
+    return 0llu;
+}
 
 #endif /* !__PLAT_MACHINE_TIMER_H */

@@ -14,18 +14,37 @@
 #define __ARCH_MACHINE_GENERIC_TIMER_H_
 
 #include <config.h>
-#include <arch/machine/timer.h>
+#include <stdint.h>
+#include <api/types.h>
+#include <mode/machine/timer.h>
 #include <mode/machine.h>
+#include <model/statedata.h>
 
 /* ARM generic timer implementation */
 
-static inline void
-resetTimer(void)
+/** DONT_TRANSLATE **/
+static inline ticks_t
+getCurrentTime(void)
 {
-    SYSTEM_WRITE_WORD(CNT_TVAL, TIMER_RELOAD);
-    SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));
+    ticks_t time;
+    SYSTEM_READ_64(CNT_CT, time);
+    return time;
+}
+
+/** DONT_TRANSLATE **/
+static inline void
+setDeadline(ticks_t deadline)
+{
+    assert(deadline >= ksCurTime);
+    SYSTEM_WRITE_64(CNT_CVAL, deadline);
+}
+
+static inline void
+ackDeadlineIRQ(void)
+{
+    ticks_t deadline = UINT64_MAX;
+    setDeadline(deadline);
 }
 
 BOOT_CODE void initGenericTimer(void);
-
-#endif /* __ARCH_MACHINE_GENERIC_TIMER_H_ */
+#endif /* __ARCH_MACHINE_GENERIC_TIMER_H */

@@ -25,5 +25,7 @@ BOOT_CODE void initGenericTimer(void)
         }
     }
 
-    resetTimer();
+    /* this sets the irq to UINT64_MAX */
+    ackDeadlineIRQ();
+    SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));
 }
