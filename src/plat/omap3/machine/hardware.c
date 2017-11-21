@@ -22,9 +22,6 @@
 
 #define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
 #define INTCPS_SYSSTATUS_RESETDONE BIT(0)
-
-#define TIMER_INTERVAL_MS (CONFIG_TIMER_TICK_MS)
-
 #define TIOCP_CFG_SOFTRESET BIT(1)
 #define TCLR_AUTORELOAD     BIT(1)
 #define TCLR_COMPAREENABLE  BIT(6)
@@ -33,6 +30,7 @@
 #define TIER_OVERFLOWENABLE BIT(1)
 
 timer_t *timer = (timer_t *) GPTIMER9_PPTR;
+uint32_t high_bits = 0;
 
 BOOT_CODE void
 initTimer(void)
@@ -40,21 +38,25 @@ initTimer(void)
     /* Configure gptimer9 as kernel timer */
     timer->cfg = TIOCP_CFG_SOFTRESET;
 
-    while (!timer->tistat);
+    /* disable */
+    timer->tclr = 0;
+
+    /* wait for reset */
+	while (!timer->tistat);
 
     maskInterrupt(/*disable*/ true, GPT9_IRQ);
 
     /* Set the reload value */
-    timer->tldr = 0xFFFFFFFFUL - TIMER_RELOAD;
+    timer->tldr = 0u;
 
-    /* Enables interrupt on overflow */
-    timer->tier = TIER_OVERFLOWENABLE;
+    /* Enables interrupt on overflow and match */
+    timer->tier |= (TIER_OVERFLOWENABLE | TIER_MATCHENABLE);
 
     /* Clear the read register */
-    timer->tcrr = 0xFFFFFFFFUL - TIMER_RELOAD;
+    timer->tcrr = 0u;
 
-    /* Set autoreload and start the timer */
-    timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;
+    /* start the timer */
+    timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER | TCLR_COMPAREENABLE;
 }
 
 BOOT_CODE void
