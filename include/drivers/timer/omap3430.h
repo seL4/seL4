@@ -13,9 +13,10 @@
 #ifndef __DRIVER_TIMER_OMAP3_H
 #define __DRIVER_TIMER_OMAP3_H
 
-#include <plat/machine/devices_gen.h>
+#include <config.h>
 
 #define TISR_OVF_FLAG       BIT(1)
+#define TISR_MATCH_FLAG     BIT(0)
 
 struct timer {
     uint32_t tidr;   /* GPTIMER_TIDR 0x00 */
@@ -43,10 +44,40 @@ struct timer {
 typedef volatile struct timer timer_t;
 extern timer_t *timer;
 
+#ifdef CONFIG_KERNEL_MCS
+/* this is a 32-bit timer, track high_bits here */
+extern uint32_t high_bits;
+
+/** DONT_TRANSLATE */
+static inline void setDeadline(ticks_t deadline)
+{
+    timer->tmar = (uint32_t) deadline;
+}
+
+/** DONT_TRANSLATE */
+static inline ticks_t getCurrentTime(void)
+{
+    bool_t overflow = !!(timer->tisr & TISR_OVF_FLAG);
+    return (((uint64_t) high_bits + overflow) << 32llu) + timer->tcrr;
+}
+
+/** DONT_TRANSLATE */
+static inline void ackDeadlineIRQ(void)
+{
+    /* check if this is an overflow irq */
+    if (timer->tisr & TISR_OVF_FLAG) {
+        high_bits++;
+    }
+
+    /* ack everything */
+    timer->tisr = TISR_OVF_FLAG | TISR_MATCH_FLAG;
+    assert((timer->tisr & TISR_OVF_FLAG) == 0);
+}
+#else /* CONFIG_KERNEL_MCS */
 static inline void resetTimer(void)
 {
     timer->tisr = TISR_OVF_FLAG;
     ackInterrupt(KERNEL_TIMER_IRQ);
 }
-
+#endif /* !CONFIG_KERNEL_MCS */
 #endif /* !__DRIVER_TIMER_OMAP3_H */

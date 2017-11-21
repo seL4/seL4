@@ -19,8 +19,6 @@
 #include <plat/machine/devices_gen.h>
 #include <plat/machine/hardware.h>
 
-#define TIMER_INTERVAL_MS (CONFIG_TIMER_TICK_MS)
-
 #define TIOCP_CFG_SOFTRESET BIT(1)
 #define TCLR_AUTORELOAD     BIT(1)
 #define TCLR_COMPAREENABLE  BIT(6)
@@ -30,6 +28,37 @@
 
 timer_t *timer = (timer_t *) TIMER_PPTR;
 
+#ifdef CONFIG_KERNEL_MCS
+#define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
+#define INTCPS_SYSSTATUS_RESETDONE BIT(0)
+uint32_t high_bits = 0;
+BOOT_CODE void initTimer(void)
+{
+    /* Configure gptimer9 as kernel timer */
+    timer->cfg = TIOCP_CFG_SOFTRESET;
+
+    /* disable */
+    timer->tclr = 0;
+
+    /* wait for reset */
+    while (!timer->tistat);
+
+    maskInterrupt(/*disable*/ true, KERNEL_TIMER_IRQ);
+
+    /* Set the reload value */
+    timer->tldr = 0u;
+
+    /* Enables interrupt on overflow and match */
+    timer->tier |= (TIER_OVERFLOWENABLE | TIER_MATCHENABLE);
+
+    /* Clear the read register */
+    timer->tcrr = 0u;
+
+    /* start the timer */
+    timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER | TCLR_COMPAREENABLE;
+}
+#else /* CONFIG_KERNEL_MCS */
+#define TIMER_INTERVAL_MS (CONFIG_TIMER_TICK_MS)
 BOOT_CODE void initTimer(void)
 {
     /* Configure gptimer9 as kernel timer */
@@ -51,3 +80,4 @@ BOOT_CODE void initTimer(void)
     /* Set autoreload and start the timer */
     timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;
 }
+#endif /* !CONFIG_KERNEL_MCS */
