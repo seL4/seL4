@@ -13,13 +13,44 @@
 #ifndef __PLAT_MACHINE_TIMER_H
 #define __PLAT_MACHINE_TIMER_H
 
+#include <config.h>
+#include <basic_types.h>
+#include <arch/linker.h>
 #include <plat/machine/mct.h>
 
 #define TIMER_CLOCK_HZ 24000000llu
+/* see tools/reciprocal.py for calculation of this value */
+#define CLK_MAGIC 2863311531
+#define CLK_SHIFT 36
+compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 24llu)
 
-static inline void resetTimer(void)
+static inline CONST time_t
+getKernelWcetUs(void)
 {
-    mct_reset();
+    fail("Not implemented");
+}
+
+static inline CONST ticks_t
+getTimerPrecision(void)
+{
+    fail("Not implemented");
+    return 0llu;
+}
+
+static inline ticks_t
+getCurrentTime(void) {
+    fail("Not implemented");
+    return 0llu;
+}
+
+static inline void
+setDeadline(ticks_t deadline) {
+    fail("Not implemented");
+}
+
+static inline void
+ackDeadlineIRQ(void) {
+    fail("Not implemented");
 }
 
 #endif /* !__PLAT_MACHINE_TIMER_H */

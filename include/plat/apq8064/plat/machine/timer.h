@@ -14,10 +14,42 @@
 #define __PLAT_MACHINE_TIMER_H
 
 #define TIMER_CLOCK_HZ 7000000llu
+/* see tools/reciprocal.py for calculation of this value */
+#define CLK_MAGIC 4908534053
+#define CLK_SHIFT 35
+compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 7llu)
 
-static inline void resetTimer(void)
+#include <config.h>
+#include <basic_types.h>
+#include <arch/linker.h>
+
+static inline CONST time_t
+getKernelWcetUs(void)
 {
-    /* Nothing to do */
+    fail("Not implemented");
+}
+
+static inline CONST ticks_t
+getTimerPrecision(void)
+{
+    fail("Not implemented");
+    return 0llu;
+}
+
+static inline ticks_t
+getCurrentTime(void) {
+    fail("Not implemented");
+    return 0llu;
+}
+
+static inline void
+setDeadline(ticks_t deadline) {
+    fail("Not implemented");
+}
+
+static inline void
+ackDeadlineIRQ(void) {
+    fail("Not implemented");
 }
 
 #endif /* !__PLAT_MACHINE_TIMER_H */
