@@ -62,8 +62,7 @@ initTimer(void)
     epitcr_kludge = epitcr_set_enmod(epitcr_kludge, 1);
     epit1->epitcr = epitcr_kludge.words[0];
 
-    /* Set counter modulus */
-    epit1->epitlr = TIMER_RELOAD;
+    fail("unimplemented");
 
     /* Interrupt at zero count */
     epit1->epitcmpr = 0;

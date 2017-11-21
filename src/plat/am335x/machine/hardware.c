@@ -95,15 +95,10 @@ initTimer(void)
     }
 
     maskInterrupt(/*disable*/ true, DMTIMER0_IRQ);
-
-    /* Set the reload value */
-    timer->tldr = 0xFFFFFFFFUL - TIMER_RELOAD;
+    fail("not implemented");
 
     /* Enables interrupt on overflow */
     timer->tier = TIER_OVERFLOWENABLE;
-
-    /* Clear the read register */
-    timer->tcrr = 0xFFFFFFFFUL - TIMER_RELOAD;
 
     /* Set autoreload and start the timer */
     timer->tclr = TCLR_AUTORELOAD | TCLR_STARTTIMER;

@@ -13,7 +13,16 @@
 #ifndef __PLAT_MACHINE_TIMER_H
 #define __PLAT_MACHINE_TIMER_H
 
+#include <config.h>
+#include <basic_types.h>
+#include <arch/linker.h>
+
 #define TIMER_CLOCK_HZ 24000000ULL
+/* see tools/reciprocal.py for calculation of this value */
+#define CLK_MAGIC 2863311531
+#define CLK_SHIFT 36
+compile_assert(magic_will_work, TIMER_CLOCK_MHZ == 24llu)
+
 #define TMR0_IRQ_PEND_FLAG          BIT(0)
 
 struct timer {
@@ -27,9 +36,33 @@ struct timer {
 typedef volatile struct timer timer_t;
 extern timer_t *timer;
 
-static inline void resetTimer(void)
+static inline CONST time_t
+getKernelWcetUs(void)
 {
-    timer->tmr_irq_sta_reg = TMR0_IRQ_PEND_FLAG;
+    fail("Not implemented");
+}
+
+static inline CONST ticks_t
+getTimerPrecision(void)
+{
+    fail("Not implemented");
+    return 0llu;
+}
+
+static inline ticks_t
+getCurrentTime(void) {
+    fail("Not implemented");
+    return 0llu;
+}
+
+static inline void
+setDeadline(ticks_t deadline) {
+    fail("Not implemented");
+}
+
+static inline void
+ackDeadlineIRQ(void) {
+    fail("Not implemented");
 }
 
 #endif /* !__PLAT_MACHINE_TIMER_H */
