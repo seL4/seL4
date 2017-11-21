@@ -26,19 +26,25 @@
 #define CNT_CTL  "cntv_ctl_el0"
 #endif
 #define CNTFRQ   "cntfrq_el0"
-#define CNT_CT   "cntpct_el0"
+#define CNT_CT   "cntvct_el0"
 
 /* timer function definitions that work for all 32bit arm platforms that provide
  * CLK_MAGIC and TIMER_CLOCK_MHZ -- these definitions might need to move
  * if we come across an arm platform that does not suit this model */
 static inline CONST time_t
-getMaxTimerUs(void)
+getMaxUsToTicks(void)
 {
     if (USE_KHZ) {
         return UINT64_MAX / TIMER_CLOCK_KHZ / KHZ_IN_MHZ;
     } else {
         return UINT64_MAX / TIMER_CLOCK_MHZ;
     }
+}
+
+static inline CONST ticks_t
+getMaxTicksToUs(void)
+{
+    return UINT64_MAX;
 }
 
 static inline CONST time_t
