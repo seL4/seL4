@@ -488,6 +488,8 @@ try_init_kernel(
     }
     write_it_asid_pool(it_ap_cap, it_pd_cap);
 
+    NODE_STATE(ksCurTime) = getCurrentTime();
+
     /* create the idle thread */
     if (!create_idle_thread()) {
         return false;
