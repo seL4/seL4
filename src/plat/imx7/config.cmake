@@ -28,6 +28,9 @@ if(KernelPlatImx7)
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        CLK_MAGIC 1llu
+        CLK_SHIFT 8u
+        KERNEL_WCET 10u
     )
 else()
     config_set(KernelPlatImx7 PLAT_IMX7 OFF)

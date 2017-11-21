@@ -28,6 +28,9 @@ if(KernelPlatformTx1)
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
+        CLK_MAGIC 458129845llu
+        CLK_SHIFT 43u
+        KERNEL_WCET 10u
     )
 endif()
 

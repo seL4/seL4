@@ -64,6 +64,20 @@
 #define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
 #define CPACR      " p15, 0,  %0,  c1,  c0, 2" /* 32-bit Architectural Feature Access Control Register */
 
+/* Use Hypervisor Physical timer */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define CNT_TVAL CNTHP_TVAL
+#define CNT_CT   CNTPCT
+#define CNT_CTL  CNTHP_CTL
+#define CNT_CVAL CNTHP_CVAL
+#else
+/* Use virtual timer */
+#define CNT_TVAL CNTV_TVAL
+#define CNT_CT   CNTVCT
+#define CNT_CTL  CNTV_CTL
+#define CNT_CVAL CNTV_CVAL
+#endif
+
 #ifdef ENABLE_SMP_SUPPORT
 /* Use the first two SGI (Software Generated Interrupt) IDs
  * for seL4 IPI implementation. SGIs are per-core banked.

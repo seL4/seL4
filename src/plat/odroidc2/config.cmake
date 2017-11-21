@@ -28,6 +28,9 @@ if(KernelPlatformOdroidc2)
         NUM_PPI 32
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_v2.h
+        CLK_MAGIC 375299969u
+        CLK_SHIFT 53u
+        KERNEL_WCET 10u
     )
 endif()
 
