@@ -112,7 +112,7 @@ enum IRQConstants {
 
 #define IRQ_CNODE_BITS 12
 
-#define KERNEL_TIMER_IRQ INTERRUPT_PRIV_TIMER
+#define KERNEL_TIMER_IRQ INTERRUPT_GLOBAL_TIMER
 #define KERNEL_PMU_IRQ INTERRUPT_PMU0
 
 #include <arch/machine/gic_pl390.h>
