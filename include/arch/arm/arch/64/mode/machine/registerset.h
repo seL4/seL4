@@ -105,8 +105,10 @@ enum _register {
     X4                          = 4,    /* 0x20 */
     X5                          = 5,    /* 0x28 */
     X6                          = 6,    /* 0x30 */
+    replyRegister               = 6,
     X7                          = 7,    /* 0x38 */
     X8                          = 8,    /* 0x40 */
+    nbsendRecvDest              = 8,
     X9                          = 9,    /* 0x48 */
     X10                         = 10,   /* 0x50 */
     X11                         = 11,   /* 0x58 */
