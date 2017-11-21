@@ -36,16 +36,14 @@ timer_t* dgt_tmr = (timer_t*) DGT_TIMER_PPTR;
 #define PRESCALER          DGTTMR_CLK_CTRL_DIV1
 #define PRESCALE_VAL       1
 
-#define TIMER_MATCH_VAL  (TIMER_RELOAD / PRESCALE_VAL)
-
 BOOT_CODE void
 initTimer(void)
 {
     /* Stop the timer */
     dgt_tmr->en = 0;
     dgt_tmr->clr = 0xC0FFEE;
-    /* Configure the timer */
-    dgt_tmr->mtch = TIMER_MATCH_VAL;
+
+    fail("Not implemented");
     /* Start the timer */
     dgt_tmr->en = DGTTMR_EN_CLR_ON_MTCH_EN | DGTTMR_EN_EN;
 }
