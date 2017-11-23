@@ -13,8 +13,18 @@
 #include <plat/machine/hardware.h>
 #include <arch/user_access.h>
 
+
+static void check_export_pmu(void)
+{
+#ifdef CONFIG_EXPORT_PMU_USER
+    /* allow PL1 to access the PMU */
+    uint32_t val = PMUSERENR_EL0_EN;
+    MSR("PMUSERENR_EL0", val);
+#endif
+}
+
 void
 armv_init_user_access(void)
 {
-
+    check_export_pmu();
 }

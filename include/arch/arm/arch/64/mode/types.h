@@ -16,4 +16,6 @@
 #define wordRadix 6
 #define wordBits (1 << wordRadix)
 
+typedef uint64_t timestamp_t;
+
 #endif /* __ARCH_MODE_TYPES_H_ */

@@ -9,3 +9,26 @@
  *
  * @TAG(DATA61_GPL)
  */
+#include <config.h>
+#include <armv/benchmark.h>
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+
+void armv_init_ccnt(void)
+{
+    /* enable the PMU and reset the cycle count to 0 */
+    uint32_t val = 0;
+    MRS("PMCR_EL0", val);
+    val |= PMCR_ENABLE | PMCR_EVENT_COUNT_RESET | PMCR_CYCLE_COUNT_RESET;
+    MSR("PMCR_EL0", val);
+
+    /* enable the cycle count */
+    val = PMCNTENSET_CYCLE_COUNT_ENABLE;
+    MSR("PMCNTENSET_EL0", val);
+
+    /* allow PL1 to access the PMU */
+    val = PMUSERENR_EL0_EN ;
+    MSR("PMUSERENR_EL0", val);
+}
+
+#endif
