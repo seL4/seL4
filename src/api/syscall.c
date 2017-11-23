@@ -121,7 +121,7 @@ handleUnknownSyscall(word_t w)
     }
 #endif /* CONFIG_DEBUG_BUILD */
 
-#ifdef DANGEROUS_CODE_INJECTION
+#ifdef CONFIG_DANGEROUS_CODE_INJECTION
     if (w == SysDebugRun) {
         ((void (*) (void *))getRegister(NODE_STATE(ksCurThread), capRegister))((void*)getRegister(NODE_STATE(ksCurThread), msgInfoRegister));
         return EXCEPTION_NONE;

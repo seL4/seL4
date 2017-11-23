@@ -11,6 +11,7 @@
 #ifndef __API_SYSCALL_H
 #define __API_SYSCALL_H
 
+#include <config.h> // for arch/api/syscall.h
 #include <machine.h>
 #include <api/failures.h>
 #include <model/statedata.h>
