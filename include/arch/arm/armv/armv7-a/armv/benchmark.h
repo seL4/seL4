@@ -13,6 +13,8 @@
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
+#define CCNT "p15, 0, %0, c9, c13, 0"
+
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
 extern uint64_t ccnt_num_overflows;
@@ -24,19 +26,6 @@ static inline void benchmark_arch_utilisation_reset(void)
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
-
-static inline uint32_t
-timestamp(void)
-{
-    int ret;
-
-    asm volatile (
-        "mrc p15, 0, %0, c9, c13, 0\n"
-        : "=r" (ret)
-    );
-
-    return ret;
-}
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #endif /* ARMV_BENCHMARK_H */
