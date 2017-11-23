@@ -42,4 +42,6 @@ typedef uint8_t seL4_Uint8;
 typedef node_id_t seL4_NodeId;
 typedef paddr_t seL4_PAddr;
 typedef dom_t seL4_Domain;
+
+typedef uint64_t timestamp_t;
 #endif

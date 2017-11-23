@@ -14,7 +14,7 @@
 #define _BENCHMARK_UTILISATION_H
 
 #include <config.h>
-#include <arch/benchmark.h>
+#include <basic_types.h>
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 typedef struct {

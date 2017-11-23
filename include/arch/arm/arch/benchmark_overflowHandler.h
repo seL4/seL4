@@ -17,6 +17,7 @@
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 #include <model/statedata.h>
+#include <armv/benchmark.h>
 #include <armv/benchmark_irqHandler.h>
 
 extern bool_t benchmark_log_utilisation_enabled;

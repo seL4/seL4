@@ -16,8 +16,6 @@
 
 #include <armv/benchmark.h>
 
-typedef uint32_t timestamp_t;
-
 void armv_init_ccnt(void);
 
 #endif /* CONFIG_ENABLE_BENCHMARKS */
