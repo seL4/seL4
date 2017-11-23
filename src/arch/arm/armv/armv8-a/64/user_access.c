@@ -13,6 +13,8 @@
 #include <plat/machine/hardware.h>
 #include <arch/user_access.h>
 
+#define EL0VCTEN BIT(1)
+#define EL0PCTEN BIT(0)
 
 static void check_export_pmu(void)
 {
@@ -23,8 +25,22 @@ static void check_export_pmu(void)
 #endif
 }
 
+static void check_export_arch_timer(void)
+{
+    uint32_t val;
+    MRS("CNTKCTL_EL1", val);
+#ifdef CONFIG_EXPORT_PCNT_USER
+    v |= EL0PCTEN;
+#endif
+#ifdef CONFIG_EXPORT_VCNT_USER
+    v |= EL0VCTEN;
+#endif
+    MSR("CNTKCTL_EL1", val);
+}
+
 void
 armv_init_user_access(void)
 {
     check_export_pmu();
+    check_export_arch_timer();
 }
