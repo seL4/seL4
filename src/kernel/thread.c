@@ -309,10 +309,8 @@ chooseThread(void)
     }
 
     if (likely(NODE_STATE(ksReadyQueuesL1Bitmap[dom]))) {
-        word_t l1index = (wordBits - 1) - clzl(NODE_STATE(ksReadyQueuesL1Bitmap[dom]));
-        word_t l2index = (wordBits - 1) - clzl(NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]));
-        prio = l1index_to_prio(l1index) | l2index;
-        thread = NODE_STATE(ksReadyQueues[ready_queues_index(dom, prio)]).head;
+        prio = getHighestPrio(dom);
+        thread = NODE_STATE(ksReadyQueues)[ready_queues_index(dom, prio)].head;
         assert(thread);
         assert(isRunnable(thread));
         switchToThread(thread);

@@ -55,6 +55,22 @@ isRunnable(const tcb_t *thread)
     }
 }
 
+static inline prio_t
+getHighestPrio(word_t dom)
+{
+    word_t l1index;
+    word_t l2index;
+    word_t l1index_inverted;
+
+    /* it's undefined to call clzl on 0 */
+    assert(NODE_STATE(ksReadyQueuesL1Bitmap)[dom] != 0);
+
+    l1index = wordBits - 1 - clzl(NODE_STATE(ksReadyQueuesL1Bitmap)[dom]);
+    assert(NODE_STATE(ksReadyQueuesL2Bitmap)[dom][l1index_inverted] != 0);
+    l2index = wordBits - 1 - clzl(NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]));
+    return (l1index_to_prio(l1index) | l2index);
+}
+
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void);
 void suspend(tcb_t *target);
