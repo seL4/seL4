@@ -80,6 +80,13 @@ getHighestPrio(word_t dom)
     return (l1index_to_prio(l1index) | l2index);
 }
 
+static inline bool_t
+isHighestPrio(word_t dom, prio_t prio)
+{
+    return NODE_STATE(ksReadyQueuesL1Bitmap)[dom] == 0 ||
+           prio >= getHighestPrio(dom);
+}
+
 void configureIdleThread(tcb_t *tcb);
 void activateThread(void);
 void suspend(tcb_t *target);
