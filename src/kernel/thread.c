@@ -94,7 +94,7 @@ restart(tcb_t *target)
         setupReplyMaster(target);
         setThreadState(target, ThreadState_Restart);
         SCHED_ENQUEUE(target);
-        switchIfRequiredTo(target);
+        possibleSwitchTo(target);
     }
 }
 
@@ -126,7 +126,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         /** GHOSTUPD: "(True, gs_set_assn cteDeleteOne_'proc (ucast cap_reply_cap))" */
         cteDeleteOne(slot);
         setThreadState(receiver, ThreadState_Running);
-        attemptSwitchTo(receiver);
+        possibleSwitchTo(receiver);
     } else {
         bool_t restart;
 
@@ -136,7 +136,7 @@ doReplyTransfer(tcb_t *sender, tcb_t *receiver, cte_t *slot)
         receiver->tcbFault = seL4_Fault_NullFault_new();
         if (restart) {
             setThreadState(receiver, ThreadState_Restart);
-            attemptSwitchTo(receiver);
+            possibleSwitchTo(receiver);
         } else {
             setThreadState(receiver, ThreadState_Inactive);
         }
@@ -265,30 +265,58 @@ nextDomain(void)
     ksDomainTime = ksDomSchedule[ksDomScheduleIdx].length;
 }
 
+static void
+scheduleChooseNewThread(void)
+{
+    if (ksDomainTime == 0) {
+        nextDomain();
+    }
+    chooseThread();
+}
+
 void
 schedule(void)
 {
-    word_t action;
+    if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
+        bool_t was_runnable;
+        if (isRunnable(NODE_STATE(ksCurThread))) {
+            was_runnable = true;
+            SCHED_ENQUEUE_CURRENT_TCB;
+        } else {
+            was_runnable = false;
+        }
 
-    action = (word_t)NODE_STATE(ksSchedulerAction);
-    if (action == (word_t)SchedulerAction_ChooseNewThread) {
-        if (isRunnable(NODE_STATE(ksCurThread))) {
-            SCHED_ENQUEUE_CURRENT_TCB;
+        if (NODE_STATE(ksSchedulerAction) == SchedulerAction_ChooseNewThread) {
+            scheduleChooseNewThread();
+        } else {
+            tcb_t *candidate = NODE_STATE(ksSchedulerAction);
+            /* Avoid checking bitmap when ksCurThread is higher prio, to
+             * match fast path.
+             * Don't look at ksCurThread prio when it's idle, to respect
+             * information flow in non-fastpath cases. */
+            bool_t fastfail =
+                NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread)
+                || (candidate->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority);
+            if (fastfail &&
+                !isHighestPrio(ksCurDomain, candidate->tcbPriority)) {
+                SCHED_ENQUEUE(candidate);
+                /* we can't, need to reschedule */
+                NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
+                scheduleChooseNewThread();
+            } else if (was_runnable && candidate->tcbPriority == NODE_STATE(ksCurThread)->tcbPriority) {
+                /* We append the candidate at the end of the scheduling queue, that way the
+                 * current thread, that was enqueued at the start of the scheduling queue
+                 * will get picked during chooseNewThread */
+                SCHED_APPEND(candidate);
+                NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
+                scheduleChooseNewThread();
+            } else {
+                assert(candidate != NODE_STATE(ksCurThread));
+                switchToThread(candidate);
+            }
         }
-        if (ksDomainTime == 0) {
-            nextDomain();
-        }
-        chooseThread();
-        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
-    } else if (action != (word_t)SchedulerAction_ResumeCurrentThread) {
-        if (isRunnable(NODE_STATE(ksCurThread))) {
-            SCHED_ENQUEUE_CURRENT_TCB;
-        }
-        /* SwitchToThread */
-        switchToThread(NODE_STATE(ksSchedulerAction));
-        NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
     }
-
+    NODE_STATE(ksSchedulerAction) = SchedulerAction_ResumeCurrentThread;
 #ifdef ENABLE_SMP_SUPPORT
     doMaskReschedule(ARCH_NODE_STATE(ipiReschedulePending));
     ARCH_NODE_STATE(ipiReschedulePending) = 0;
@@ -372,45 +400,23 @@ setPriority(tcb_t *tptr, prio_t prio)
     }
 }
 
-static void
-possibleSwitchTo(tcb_t* target, bool_t onSamePriority)
+/* Note that this thread will possibly continue at the end of this kernel
+ * entry. Do not queue it yet, since a queue+unqueue operation is wasteful
+ * if it will be picked. Instead, it waits in the 'ksSchedulerAction' site
+ * on which the scheduler will take action. */
+void
+possibleSwitchTo(tcb_t* target)
 {
-    dom_t curDom, targetDom;
-    prio_t curPrio, targetPrio;
-    tcb_t *action;
-
-    curDom = ksCurDomain;
-    curPrio = NODE_STATE(ksCurThread)->tcbPriority;
-    targetDom = target->tcbDomain;
-    targetPrio = target->tcbPriority;
-    action = NODE_STATE(ksSchedulerAction);
-    if (targetDom != curDom) {
+    if (ksCurDomain != target->tcbDomain
+               SMP_COND_STATEMENT(|| target->tcbAffinity != getCurrentCPUIndex())) {
+        SCHED_ENQUEUE(target);
+    } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
+        /* Too many threads want special treatment, use regular queues. */
+        rescheduleRequired();
         SCHED_ENQUEUE(target);
     } else {
-        if ((targetPrio > curPrio || (targetPrio == curPrio && onSamePriority))
-                && action == SchedulerAction_ResumeCurrentThread
-                SMP_COND_STATEMENT( && target->tcbAffinity == getCurrentCPUIndex())) {
-            NODE_STATE(ksSchedulerAction) = target;
-        } else {
-            SCHED_ENQUEUE(target);
-        }
-        if (action != SchedulerAction_ResumeCurrentThread
-                && action != SchedulerAction_ChooseNewThread) {
-            rescheduleRequired();
-        }
+        NODE_STATE(ksSchedulerAction) = target;
     }
-}
-
-void
-attemptSwitchTo(tcb_t* target)
-{
-    possibleSwitchTo(target, true);
-}
-
-void
-switchIfRequiredTo(tcb_t* target)
-{
-    possibleSwitchTo(target, false);
 }
 
 void

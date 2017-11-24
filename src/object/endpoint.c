@@ -91,7 +91,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         doIPCTransfer(thread, epptr, badge, canGrant, dest);
 
         setThreadState(dest, ThreadState_Running);
-        attemptSwitchTo(dest);
+        possibleSwitchTo(dest);
 
         if (do_call ||
                 seL4_Fault_ptr_get_seL4_FaultType(&thread->tcbFault) != seL4_Fault_NullFault) {
@@ -190,7 +190,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                 }
             } else {
                 setThreadState(sender, ThreadState_Running);
-                switchIfRequiredTo(sender);
+                possibleSwitchTo(sender);
             }
 
             break;

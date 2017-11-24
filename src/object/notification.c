@@ -59,7 +59,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                 cancelIPC(tcb);
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
-                switchIfRequiredTo(tcb);
+                possibleSwitchTo(tcb);
 #ifdef CONFIG_VTX
             } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
 #ifdef ENABLE_SMP_SUPPORT
@@ -72,7 +72,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
                     setThreadState(tcb, ThreadState_Running);
                     setRegister(tcb, badgeRegister, badge);
                     Arch_leaveVMAsyncTransfer(tcb);
-                    attemptSwitchTo(tcb);
+                    possibleSwitchTo(tcb);
                 }
 #endif /* CONFIG_VTX */
             } else {
@@ -104,7 +104,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
 
         setThreadState(dest, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
-        switchIfRequiredTo(dest);
+        possibleSwitchTo(dest);
         break;
     }
 
