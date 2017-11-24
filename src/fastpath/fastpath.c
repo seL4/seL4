@@ -33,6 +33,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     vspace_root_t *cap_pd;
     pde_t stored_hw_asid;
     word_t fault_type;
+    dom_t dom;
 
     /* Get message info, length, and fault type. */
     info = messageInfoFromWord_raw(msgInfo);
@@ -99,8 +100,11 @@ fastpath_call(word_t cptr, word_t msgInfo)
     stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
 #endif
 
-    /* Ensure the destination has a higher/equal priority to us. */
-    if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority)) {
+    /* let gcc optimise this out for 1 domain */
+    dom = maxDom ? ksCurDomain : 0;
+    /* ensure only the idle thread or lower prio threads are present in the scheduler */
+    if (likely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority)) &&
+            !isHighestPrio(dom, dest->tcbPriority)) {
         slowpath(SysCall);
     }
 
@@ -193,6 +197,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     cap_t newVTable;
     vspace_root_t *cap_pd;
     pde_t stored_hw_asid;
+    dom_t dom;
 
     /* Get message info and length */
     info = messageInfoFromWord_raw(msgInfo);
@@ -279,7 +284,8 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
-    if (unlikely(caller->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority)) {
+    dom = maxDom ? ksCurDomain : 0;
+    if (unlikely(!isHighestPrio(dom, caller->tcbPriority))) {
         slowpath(SysReplyRecv);
     }
 
