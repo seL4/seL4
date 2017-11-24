@@ -55,6 +55,14 @@ isRunnable(const tcb_t *thread)
     }
 }
 
+static inline CONST word_t
+invert_l1index(word_t l1index)
+{
+    word_t inverted = (L2_BITMAP_SIZE - 1 - l1index);
+    assert(inverted < L2_BITMAP_SIZE);
+    return inverted;
+}
+
 static inline prio_t
 getHighestPrio(word_t dom)
 {
@@ -66,8 +74,9 @@ getHighestPrio(word_t dom)
     assert(NODE_STATE(ksReadyQueuesL1Bitmap)[dom] != 0);
 
     l1index = wordBits - 1 - clzl(NODE_STATE(ksReadyQueuesL1Bitmap)[dom]);
+    l1index_inverted = invert_l1index(l1index);
     assert(NODE_STATE(ksReadyQueuesL2Bitmap)[dom][l1index_inverted] != 0);
-    l2index = wordBits - 1 - clzl(NODE_STATE(ksReadyQueuesL2Bitmap[dom][l1index]));
+    l2index = wordBits - 1 - clzl(NODE_STATE(ksReadyQueuesL2Bitmap)[dom][l1index_inverted]);
     return (l1index_to_prio(l1index) | l2index);
 }
 

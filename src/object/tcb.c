@@ -55,20 +55,29 @@ static inline void
 addToBitmap(word_t cpu, word_t dom, word_t prio)
 {
     word_t l1index;
+    word_t l1index_inverted;
 
     l1index = prio_to_l1index(prio);
+    l1index_inverted = invert_l1index(l1index);
+
     NODE_STATE_ON_CORE(ksReadyQueuesL1Bitmap[dom], cpu) |= BIT(l1index);
-    NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index], cpu) |= BIT(prio & MASK(wordRadix));
+    /* we invert the l1 index when accessed the 2nd level of the bitmap in
+       order to increase the liklihood that high prio threads l2 index word will
+       be on the same cache line as the l1 index word - this makes sure the
+       fastpath is fastest for high prio threads */
+    NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index_inverted], cpu) |= BIT(prio & MASK(wordRadix));
 }
 
 static inline void
 removeFromBitmap(word_t cpu, word_t dom, word_t prio)
 {
     word_t l1index;
+    word_t l1index_inverted;
 
     l1index = prio_to_l1index(prio);
-    NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index], cpu) &= ~BIT(prio & MASK(wordRadix));
-    if (unlikely(!NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index], cpu))) {
+    l1index_inverted = invert_l1index(l1index);
+    NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index_inverted], cpu) &= ~BIT(prio & MASK(wordRadix));
+    if (unlikely(!NODE_STATE_ON_CORE(ksReadyQueuesL2Bitmap[dom][l1index_inverted], cpu))) {
         NODE_STATE_ON_CORE(ksReadyQueuesL1Bitmap[dom], cpu) &= ~BIT(l1index);
     }
 }
