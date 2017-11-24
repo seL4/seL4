@@ -260,6 +260,11 @@ acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp)
         return false;
     }
 
+    if (acpi_rsdp->revision > 0 && acpi_calc_checksum((char*)acpi_rsdp, sizeof(*acpi_rsdp)) != 0) {
+        printf("BIOS: ACPIv2 information corrupt\n");
+        return false;
+    }
+
     /* verify the rsdt, even though we do not actually make use of the mapping right now */
     acpi_rsdt = (acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address;
     printf("ACPI: RSDT paddr=%p\n", acpi_rsdt);
