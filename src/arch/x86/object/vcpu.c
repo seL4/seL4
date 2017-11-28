@@ -1349,7 +1349,7 @@ VMCheckBoundNotification(tcb_t *tcb)
          * run this tcb if it is permitted instead of switching VMCS contexts
          * back and forth */
         if (tcb != NODE_STATE(ksCurThread)) {
-            attemptSwitchTo(tcb);
+            possibleSwitchTo(tcb);
         }
     }
 }
