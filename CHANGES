@@ -14,11 +14,15 @@ upcoming release (BREAKING)
  * Support for additional zynq platform Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)
  * Support for multiboot2 bootloaders on x86 (contributed change from Genode Labs)
  * Deprecate seL4_CapData_t type and functions related to it
+ * A fastpath improvement means that when there are two runnable threads and the target thread is the highest priority in the scheduler, the fastpath will be hit. Previously the fastpath would not be used on IPC from a high priority thread to a low priority thread.
+ * As a consequence of the above change, scheduling behaviour has changed in the case where a non-blocking IPC is sent between two same priority threads: the sender will be scheduled, rather than the destination.
+ * Benchmarking support for armv8/aarch64 is now available.
 
 = Upgrade notes =
  * seL4_CapData_t should be replaced with just seL4_Word. Construction of badges should just be `x` instead of
    `seL4_CapData_Badge_new(x)` and guards should be `seL4_CNode_CapData_new(x, y)` instead of
    `seL4_CapData_Guard_new(x, y)`
+ * Code that relied on non-blocking IPC to switch between threads of the same priority may break.
 
 ---
 7.0.0 2017-09-05
