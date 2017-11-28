@@ -17,7 +17,8 @@
 
 #define TIMER_CLOCK_HZ 24000000llu
 
-static inline void resetTimer(void) {
+static inline void resetTimer(void)
+{
     mct_reset();
 }
 

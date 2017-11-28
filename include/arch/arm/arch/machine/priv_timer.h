@@ -26,7 +26,8 @@ struct timer {
 typedef volatile struct timer timer_t;
 extern timer_t *priv_timer;
 
-static inline void resetTimer(void) {
+static inline void resetTimer(void)
+{
     priv_timer->ints = TMR_INTS_EVENT;
 }
 

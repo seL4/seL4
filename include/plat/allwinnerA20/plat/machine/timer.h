@@ -29,7 +29,7 @@ extern timer_t *timer;
 
 static inline void resetTimer(void)
 {
-	timer->tmr_irq_sta_reg = TMR0_IRQ_PEND_FLAG;
+    timer->tmr_irq_sta_reg = TMR0_IRQ_PEND_FLAG;
 }
 
 #endif /* !__PLAT_MACHINE_TIMER_H */

@@ -298,7 +298,7 @@ schedule(void)
                 NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread)
                 || (candidate->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority);
             if (fastfail &&
-                !isHighestPrio(ksCurDomain, candidate->tcbPriority)) {
+                    !isHighestPrio(ksCurDomain, candidate->tcbPriority)) {
                 SCHED_ENQUEUE(candidate);
                 /* we can't, need to reschedule */
                 NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
@@ -408,7 +408,7 @@ void
 possibleSwitchTo(tcb_t* target)
 {
     if (ksCurDomain != target->tcbDomain
-               SMP_COND_STATEMENT(|| target->tcbAffinity != getCurrentCPUIndex())) {
+            SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
         SCHED_ENQUEUE(target);
     } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
         /* Too many threads want special treatment, use regular queues. */

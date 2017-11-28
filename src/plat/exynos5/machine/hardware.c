@@ -23,7 +23,8 @@
 
 timer_t *mct = (timer_t *) EXYNOS_MCT_PPTR;
 
-BOOT_CODE void initTimer(void) {
+BOOT_CODE void initTimer(void)
+{
     mct_clear_write_status();
 
     /* use the arm generic timer, backed by the mct */

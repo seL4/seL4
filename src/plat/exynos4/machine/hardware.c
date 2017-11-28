@@ -19,7 +19,8 @@
 
 timer_t *mct = (timer_t *) EXYNOS_MCT_PPTR;
 
-BOOT_CODE void initTimer(void) {
+BOOT_CODE void initTimer(void)
+{
 
     mct_clear_write_status();
 
@@ -27,7 +28,7 @@ BOOT_CODE void initTimer(void) {
     mct->global.comp0_add_inc = TIMER_RELOAD;
 
     uint64_t  comparator_value = ((((uint64_t) mct->global.cnth) << 32llu)
-                                        | mct->global.cntl) + TIMER_RELOAD;
+                                  | mct->global.cntl) + TIMER_RELOAD;
     mct->global.comp0h = (uint32_t) (comparator_value >> 32u);
     mct->global.comp0l = (uint32_t) comparator_value;
     /* Enable interrupts */
