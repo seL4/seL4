@@ -41,6 +41,7 @@ reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonat
     /* link tcb and reply */
     reply->replyCaller = tcb_caller;
     tcb_caller->tcbReply = reply;
+    setThreadState(tcb_caller, ThreadState_BlockedOnReply);
 
     if (sc_donated != NULL && canDonate) {
         assert(tcb_callee->tcbSchedContext == NULL);
