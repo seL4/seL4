@@ -709,7 +709,7 @@ try_boot_sys_mbi2(
         } else if (tag->type == MULTIBOOT2_TAG_FB) {
             multiboot2_fb_t const * fb = (multiboot2_fb_t const *)behind_tag;
             printf("Got framebuffer info in multiboot2. Current video mode is at physical address=%llx pitch=%u resolution=%ux%u@%u type=%u\n",
-                fb->addr, fb->pitch, fb->width, fb->height, fb->bpp, fb->type);
+                   fb->addr, fb->pitch, fb->width, fb->height, fb->bpp, fb->type);
             boot_state.fb_info = *fb;
         }
 
