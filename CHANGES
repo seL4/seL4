@@ -17,6 +17,7 @@ upcoming release (BREAKING)
  * A fastpath improvement means that when there are two runnable threads and the target thread is the highest priority in the scheduler, the fastpath will be hit. Previously the fastpath would not be used on IPC from a high priority thread to a low priority thread.
  * As a consequence of the above change, scheduling behaviour has changed in the case where a non-blocking IPC is sent between two same priority threads: the sender will be scheduled, rather than the destination.
  * Benchmarking support for armv8/aarch64 is now available.
+ * Additional x86 extra bootinfo type for retrieving frame buffer information from multiboot 2 
 
 = Upgrade notes =
  * seL4_CapData_t should be replaced with just seL4_Word. Construction of badges should just be `x` instead of
