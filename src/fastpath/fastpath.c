@@ -148,8 +148,6 @@ fastpath_call(word_t cptr, word_t msgInfo)
      * At this stage, we have committed to performing the IPC.
      */
 
-    /* consume reply state */
-    thread_state_ptr_set_replyObject_np(&dest->tcbState, 0);
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     ksKernelEntry.is_fastpath = true;
@@ -165,12 +163,12 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
     badge = cap_endpoint_cap_get_capEPBadge(ep_cap);
 
-    /* Block sender */
+    /* Unlink dest <-> reply, link src (cur thread) <-> reply */
     thread_state_ptr_set_tsType_np(&NODE_STATE(ksCurThread)->tcbState,
                                    ThreadState_BlockedOnReply);
-
-    reply->replyCaller = NODE_STATE(ksCurThread);
-    NODE_STATE(ksCurThread)->tcbReply = reply;
+    thread_state_ptr_set_replyObject_np(&dest->tcbState, 0);
+    thread_state_ptr_set_replyObject_np(&NODE_STATE(ksCurThread)->tcbState, REPLY_REF(reply));
+    reply->replyTCB = NODE_STATE(ksCurThread);
 
     sched_context_t *sc = NODE_STATE(ksCurThread)->tcbSchedContext;
     sc->scTcb = dest;
@@ -262,13 +260,13 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
     /* Get the reply address */
     reply_t *reply_ptr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(reply_cap));
     /* check that its valid and at the head of the call chain */
-    if (unlikely(reply_ptr->replyCaller == NULL ||
+    if (unlikely(reply_ptr->replyTCB == NULL ||
                  reply_ptr->replyNext.words[0] == 0)) {
         slowpath(SysReplyRecv);
     }
 
     /* Determine who the caller is. */
-    caller = reply_ptr->replyCaller;
+    caller = reply_ptr->replyTCB;
 
     /* ensure we are not single stepping the caller in ia32 */
 #if defined(CONFIG_HARDWARE_DEBUG_API) && defined(CONFIG_ARCH_IA32)
@@ -346,8 +344,6 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
      * At this stage, we have committed to performing the IPC.
      */
 
-    /* set the reply object */
-    thread_state_ptr_set_replyObject_np(&NODE_STATE(ksCurThread)->tcbState, REPLY_REF(reply_ptr));
 
 #ifdef CONFIG_BENCHMARK_TRACK_KERNEL_ENTRIES
     ksKernelEntry.is_fastpath = true;
@@ -356,6 +352,11 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
     /* Set thread state to BlockedOnReceive */
     thread_state_ptr_mset_blockingObject_tsType(
         &NODE_STATE(ksCurThread)->tcbState, (word_t)ep_ptr, ThreadState_BlockedOnReceive);
+    /* unlink reply object from caller */
+    thread_state_ptr_set_replyObject_np(&caller->tcbState, 0);
+    /* set the reply object */
+    thread_state_ptr_set_replyObject_np(&NODE_STATE(ksCurThread)->tcbState, REPLY_REF(reply_ptr));
+    reply_ptr->replyTCB = NODE_STATE(ksCurThread);
 
     /* Place the thread in the endpoint queue */
     endpointTail = endpoint_ptr_get_epQueue_tail_fp(ep_ptr);
@@ -374,12 +375,8 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo, word_t reply)
         endpoint_ptr_mset_epQueue_tail_state(ep_ptr, TCB_REF(queue.end), EPState_Recv);
     }
 
-    /* Clear the reply cap. */
-    caller->tcbReply = NULL;
-    reply_ptr->replyCaller = NULL;
-
+    /* update call stack */
     word_t prev_ptr = call_stack_get_callStackPtr(reply_ptr->replyPrev);
-
     sched_context_t *sc = NODE_STATE(ksCurThread)->tcbSchedContext;
     NODE_STATE(ksCurThread)->tcbSchedContext = NULL;
     caller->tcbSchedContext = sc;

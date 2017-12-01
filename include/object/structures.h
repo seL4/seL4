@@ -227,9 +227,6 @@ struct tcb {
      * 4 bytes*/
     notification_t *tcbBoundNotification;
 
-    /* if tcb is in a call, pointer to the reply object, 4 bytes */
-    reply_t *tcbReply;
-
     /* Previous and next pointers for scheduler queues , 8 bytes */
     struct tcb* tcbSchedNext;
     struct tcb* tcbSchedPrev;
@@ -328,8 +325,14 @@ struct sched_context {
 };
 
 struct reply {
-    /* the caller that is blocked on this reply object */
-    tcb_t *replyCaller;
+    /* TCB pointed to by this reply object. This pointer reflects two possible relations, depending
+     * on the thread state.
+     *
+     * ThreadState_BlockedOnReply: this tcb is the caller that is blocked on this reply object,
+     * ThreadState_BlockedOnRecv: this tcb is the callee blocked on an endpoint with this reply object.
+     *
+     * The back pointer for this TCB is stored in the thread state.*/
+    tcb_t *replyTCB;
 
     /* 0 if this is the start of the call chain, or points to the
      * previous reply object in a call chain */
