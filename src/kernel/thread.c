@@ -136,16 +136,16 @@ doIPCTransfer(tcb_t *sender, endpoint_t *endpoint, word_t badge,
 void
 doReplyTransfer(tcb_t *sender, reply_t *reply)
 {
-    if (unlikely(reply->replyCaller == NULL)) {
+    if (reply->replyTCB == NULL ||
+        thread_state_get_tsType(reply->replyTCB->tcbState) != ThreadState_BlockedOnReply) {
+        /* nothing to do */
         return;
     }
 
-    assert(thread_state_get_tsType(reply->replyCaller->tcbState) ==
-           ThreadState_BlockedOnReply);
-
-    tcb_t *receiver = reply->replyCaller;
+    tcb_t *receiver = reply->replyTCB;
     reply_remove(reply);
-    thread_state_ptr_set_replyObject(&receiver->tcbState, REPLY_REF(0));
+    assert(thread_state_get_replyObject(receiver->tcbState) == REPLY_REF(0));
+    assert(reply->replyTCB == NULL);
 
     word_t fault_type = seL4_Fault_get_seL4_FaultType(receiver->tcbFault);
     if (likely(fault_type == seL4_Fault_NullFault)) {
