@@ -91,8 +91,8 @@ reply_pop(reply_t *reply)
             REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
         }
 
-        call_stack_ptr_set_callStackPtr(&reply->replyPrev, 0);
-        call_stack_ptr_set_callStackPtr(&reply->replyNext, 0);
+        reply->replyPrev = call_stack_new(0, false);
+        reply->replyNext = call_stack_new(0, false);
     }
 }
 
@@ -128,6 +128,6 @@ reply_remove(reply_t *reply)
         REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
     }
 
-    call_stack_ptr_set_callStackPtr(&reply->replyPrev, 0);
-    call_stack_ptr_set_callStackPtr(&reply->replyNext, 0);
+    reply->replyPrev = call_stack_new(0, false);
+    reply->replyNext = call_stack_new(0, false);
 }
