@@ -140,15 +140,14 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 #ifdef CONFIG_KERNEL_MCS
         if (final) {
             reply_t *reply = REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
-            if (reply && reply->replyCaller) {
-                reply_remove(reply);
+            if (reply && reply->replyTCB) {
+                reply_clear(reply);
             }
         }
         fc_ret.remainder = cap_null_cap_new();
         fc_ret.cleanupInfo = cap_null_cap_new();
         return fc_ret;
 #endif
-
     case cap_null_cap:
     case cap_domain_cap:
         fc_ret.remainder = cap_null_cap_new();
@@ -188,9 +187,6 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             if (tcb->tcbSchedContext) {
                 schedContext_completeYieldTo(tcb->tcbSchedContext->scYieldFrom);
                 schedContext_unbindTCB(tcb->tcbSchedContext, tcb);
-            }
-            if (tcb->tcbReply) {
-                reply_remove(tcb->tcbReply);
             }
 #endif
             suspend(tcb);

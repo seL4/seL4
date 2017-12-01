@@ -16,11 +16,28 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
+/* Unlink a reply from its tcb */
+static inline void reply_unlink(reply_t *reply)
+{
+    /* check the tcb and reply are linked correctly */
+    assert(thread_state_get_replyObject(reply->replyTCB->tcbState) == REPLY_REF(reply));
+
+    tcb_t *tcb = reply->replyTCB;
+    thread_state_ptr_set_replyObject(&tcb->tcbState, REPLY_REF(0));
+    reply->replyTCB = NULL;
+    setThreadState(tcb, ThreadState_Inactive);
+}
+
 /* Push a reply object onto the call stack */
 void reply_push(tcb_t *tcb_caller, tcb_t *tcb_callee, reply_t *reply, bool_t canDonate);
 /* Pop the head reply from the call stack */
 void reply_pop(reply_t *reply);
-/* Remove a reply from the middle of the call stack */
+/* Remove a reply from the call stack - replyTCB must be in ThreadState_BlockedOnReply */
 void reply_remove(reply_t *reply);
+/* Remove a specific tcb, and the reply it is blocking on, from the call stack */
+void reply_remove_tcb(tcb_t *tcb);
+/* clear a reply object, either for deletion or reuse. Will not be
+ * linked to a tcb or in a call stack after this */
+void reply_clear(reply_t *reply);
 
 #endif /* __OBJECT_REPLY_H */
