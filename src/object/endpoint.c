@@ -79,13 +79,15 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         /* Do the transfer */
         doIPCTransfer(thread, epptr, badge, canGrant, dest);
 
+        reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
+        if (reply) {
+            reply_unlink(reply);
+        }
+
         if (do_call ||
                 seL4_Fault_ptr_get_seL4_FaultType(&thread->tcbFault) != seL4_Fault_NullFault) {
-            reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
             if (reply != NULL && canGrant) {
                 reply_push(thread, dest, reply, canDonate);
-            } else {
-                setThreadState(thread, ThreadState_Inactive);
             }
         } else if (canDonate && dest->tcbSchedContext == NULL) {
             schedContext_donate(thread->tcbSchedContext, dest);
@@ -94,8 +96,6 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         /* blocked threads should have enough budget to get out of the kernel */
         assert(dest->tcbSchedContext == NULL || refill_sufficient(dest->tcbSchedContext, 0));
         assert(dest->tcbSchedContext == NULL || refill_ready(dest->tcbSchedContext));
-
-        thread_state_ptr_set_replyObject(&dest->tcbState, REPLY_REF(0));
         setThreadState(dest, ThreadState_Running);
         possibleSwitchTo(dest);
         break;
@@ -117,6 +117,10 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, cap_t replyCap)
     reply_t *replyPtr = NULL;
     if (cap_get_capType(replyCap) == cap_reply_cap) {
         replyPtr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(replyCap));
+        if (unlikely(replyPtr->replyTCB != NULL && replyPtr->replyTCB != thread)) {
+            userError("Reply object already has unexecuted reply!");
+            reply_clear(replyPtr);
+        }
     }
 
     /* Check for anything waiting in the notification */
@@ -136,6 +140,9 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, cap_t replyCap)
                 thread_state_ptr_set_blockingObject(
                     &thread->tcbState, EP_REF(epptr));
                 thread_state_ptr_set_replyObject(&thread->tcbState, REPLY_REF(replyPtr));
+                if (replyPtr) {
+                    replyPtr->replyTCB = thread;
+                }
 
                 scheduleTCB(thread);
 
@@ -251,10 +258,8 @@ cancelIPC(tcb_t *tptr)
 
         reply_t *reply = REPLY_PTR(thread_state_get_replyObject(tptr->tcbState));
         if (reply != NULL) {
-            reply_remove(reply);
-            thread_state_ptr_set_replyObject(&tptr->tcbState, REPLY_REF(0));
+            reply_unlink(reply);
         }
-
         setThreadState(tptr, ThreadState_Inactive);
         break;
     }
@@ -266,10 +271,7 @@ cancelIPC(tcb_t *tptr)
 
     case ThreadState_BlockedOnReply: {
         seL4_Fault_NullFault_ptr_new(&tptr->tcbFault);
-        if (tptr->tcbReply) {
-            reply_remove(tptr->tcbReply);
-        }
-
+        reply_remove_tcb(tptr);
         break;
     }
     }
@@ -292,12 +294,11 @@ cancelAllIPC(endpoint_t *epptr)
 
         /* Set all blocked threads to restart */
         for (; thread; thread = thread->tcbEPNext) {
-            setThreadState (thread, ThreadState_Restart);
             reply_t *reply = REPLY_PTR(thread_state_get_replyObject(thread->tcbState));
             if (reply != NULL) {
-                reply_remove(reply);
-                thread_state_ptr_set_replyObject(&thread->tcbState, REPLY_REF(0));
+                reply_unlink(reply);
             }
+            setThreadState (thread, ThreadState_Restart);
             possibleSwitchTo(thread);
         }
 
