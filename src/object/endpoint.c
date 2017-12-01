@@ -84,7 +84,6 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             reply_t *reply = REPLY_PTR(thread_state_get_replyObject(dest->tcbState));
             if (reply != NULL && canGrant) {
                 reply_push(thread, dest, reply, canDonate);
-                setThreadState(thread, ThreadState_BlockedOnReply);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
@@ -188,7 +187,6 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, cap_t replyCap)
                     seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
                 if (canGrant && replyPtr != NULL) {
                     reply_push(sender, thread, replyPtr, sender->tcbSchedContext != NULL);
-                    setThreadState(sender, ThreadState_BlockedOnReply);
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }
