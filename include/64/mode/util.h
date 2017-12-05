@@ -7,14 +7,19 @@
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(D61_GPL)
+ * @TAG(DATA61_GPL)
  */
-#ifndef __MODE_MACHINE_TIMER_H
-#define __MODE_MACHINE_TIME_H
+#ifndef __MODE_UTIL_H
+#define __MODE_UTIL_H
 
 #include <config.h>
 #include <types.h>
 #include <arch/model/statedata.h>
-#include <mode/util.h>
 
-#endif /* __MODE_MACHINE_TIME_H */
+static inline CONST uint64_t
+div64(uint64_t numerator, uint32_t denominator)
+{
+    return numerator / denominator;
+}
+
+#endif /* __MODE_UTIL_H */
