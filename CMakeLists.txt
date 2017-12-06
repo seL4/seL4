@@ -158,7 +158,7 @@ if(KernelArchARM)
     AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/arch/arm/armv/${KernelArmArmV}/")
     AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}")
 endif()
-if(${KernelPlatform} STREQUAL "exynos")
+if(KernelArmMach STREQUAL "exynos")
     AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/plat/exynos_common/")
 endif()
 
