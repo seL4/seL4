@@ -148,7 +148,7 @@ config_option(KernelDangerousCodeInjectionOnUndefInstr DANGEROUS_CODE_INJECTION_
     interferes with the caches and branch predictor in such a way that it is unsuitable \
     for benchmarking. This option has no effect on non-ARMv6 platforms."
     DEFAULT OFF
-    DEPENDS "KernelArchARMV6;NOT KernelVerificationBuild"
+    DEPENDS "KernelArchArmV6;NOT KernelVerificationBuild"
 )
 
 config_option(KernelDebugDisableL2Cache DEBUG_DISABLE_L2_CACHE
