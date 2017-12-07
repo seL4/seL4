@@ -258,6 +258,22 @@ seL4_Poll(seL4_CPtr src, seL4_Word *sender);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugPutChar(char c);
+
+/**
+ * @xmlonly <manual name="Dump scheduler" label="sel4_dumpscheduler"/> @endxmlonly
+ * @brief Output the contents of the kernel scheduler.
+ *
+ * Dump the state of the all TCB objects to kernel serial output. This system call
+ * will output a table containing:
+ *    - Address: the address of the TCB object for that thread,
+ *    - Name:    the name of the thread (if set),
+ *    - IP:      the contents of the instruction pointer the thread is at,
+ *    - Priority: the priority of that thread,
+ *    - State   : the state of the thread.
+ */
+
+LIBSEL4_INLINE_FUNC void
+seL4_DebugDumpScheduler(void);
 #endif
 
 #if CONFIG_DEBUG_BUILD
@@ -318,22 +334,6 @@ seL4_DebugCapIdentify(seL4_CPtr cap);
  */
 LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
-
-/**
- * @xmlonly <manual name="Dump scheduler" label="sel4_dumpscheduler"/> @endxmlonly
- * @brief Output the contents of the kernel scheduler.
- *
- * Dump the state of the all TCB objects to kernel serial output. This system call
- * will output a table containing:
- *    - Address: the address of the TCB object for that thread,
- *    - Name:    the name of the thread (if set),
- *    - IP:      the contents of the instruction pointer the thread is at,
- *    - Priority: the priority of that thread,
- *    - State   : the state of the thread.
- */
-
-LIBSEL4_INLINE_FUNC void
-seL4_DebugDumpScheduler(void);
 #endif
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
