@@ -23,6 +23,8 @@ set(CMAKE_STAGING_PREFIX "${CMAKE_BINARY_DIR}/staging")
 if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
     if(ARM)
         set(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" CACHE INTERNAL "")
+    elseif(AARCH64)
+        set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
     endif()
 endif()
 
