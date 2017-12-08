@@ -20,14 +20,14 @@ block VMFault {
     field Addr 64
     field PrefetchFault 64
     field FSR 64
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 block NullFault {
     padding 832
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 block CapFault {
@@ -40,8 +40,8 @@ block CapFault {
     field MR4 64
     field MR5 64
     field MR6 64
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 block UnknownSyscall {
@@ -58,8 +58,8 @@ block UnknownSyscall {
     field LR 64
     field SPSR 64
     field Syscall 64
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 block UserException {
@@ -69,8 +69,8 @@ block UserException {
     field SPSR  64
     field Number  64
     field Code    64
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -97,8 +97,8 @@ block DebugException {
     field ExceptionReason 64
     field TriggerAddress 64
     field BreakpointNumber 64
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 #endif
 
@@ -106,8 +106,8 @@ block Timeout {
     padding 704
     field data 64
     field consumed 64
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 #include <sel4/arch/shared_types.bf>

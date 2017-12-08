@@ -146,8 +146,8 @@ block VMFault {
     field address                   64
     field FSR                       32
     field instructionFault          1
-    padding                         28
-    field seL4_FaultType            3
+    padding                         27
+    field seL4_FaultType            4
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
