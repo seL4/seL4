@@ -20,14 +20,14 @@ block VMFault {
    field Addr 32
    field PrefetchFault 32
    field FSR 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block NullFault {
    padding 352
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block CapFault {
@@ -40,8 +40,8 @@ block CapFault {
    field MR4 32
    field MR5 32
    field MR6 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block UnknownSyscall {
@@ -56,8 +56,8 @@ block UnknownSyscall {
    field ESP 32
    field EFLAGS 32
    field Syscall 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block UserException {
@@ -67,8 +67,8 @@ block UserException {
    field EFLAGS  32
    field Number  32
    field Code    32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
@@ -78,8 +78,8 @@ block DebugException {
     field ExceptionReason 32
     field TriggerAddress 32
     field BreakpointNumber 32
-    padding 29
-    field seL4_FaultType 3
+    padding 28
+    field seL4_FaultType 4
 }
 #endif
 
@@ -88,8 +88,8 @@ block Timeout {
     field data 32
     field consumed_high 32
     field consumed_low 32
-    padding 29
-    field seL4_FaultType 3
+    padding 28
+    field seL4_FaultType 4
 }
 
 #include <sel4/arch/shared_types.bf>

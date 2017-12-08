@@ -264,8 +264,8 @@ block VMFault {
     field     FSR               5
     padding                     7
     field     instructionFault  1
-    padding                     16
-    field     seL4_FaultType         3
+    padding                     15
+    field     seL4_FaultType         4
 }
 
 -- VM attributes
