@@ -20,14 +20,14 @@ block VMFault {
    field Addr 32
    field PrefetchFault 32
    field FSR 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block NullFault {
    padding 416
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block CapFault {
@@ -40,8 +40,8 @@ block CapFault {
    field MR4 32
    field MR5 32
    field MR6 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block UnknownSyscall {
@@ -58,8 +58,8 @@ block UnknownSyscall {
    field LR 32
    field CPSR 32
    field Syscall 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block UserException {
@@ -69,23 +69,23 @@ block UserException {
    field CPSR    32
    field Number  32
    field Code    32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 block VGICMaintenance {
     padding 384
     field IDX 32
-    padding 29
-    field seL4_FaultType 3
+    padding 28
+    field seL4_FaultType 4
 }
 
 block VCPUFault {
     padding 384
     field HSR 32
-    padding 29
-    field seL4_FaultType 3
+    padding 28
+    field seL4_FaultType 4
 }
 #endif
 
@@ -96,8 +96,8 @@ block DebugException {
     field ExceptionReason 32
     field TriggerAddress 32
     field BreakpointNumber 32
-    padding 29
-    field seL4_FaultType 3
+    padding 28
+    field seL4_FaultType 4
 }
 #endif
 

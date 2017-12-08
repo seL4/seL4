@@ -27,8 +27,8 @@ block VMFault {
     field     PrefetchFault     32
     field     FSR               5
     padding                     8
-    padding                     16
-    field     seL4_FaultType    3
+    padding                     15
+    field     seL4_FaultType    4
 }
 
 -- VM attributes
@@ -39,8 +39,8 @@ block vm_attributes {
 
 block NullFault {
    padding 352
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block CapFault {
@@ -53,8 +53,8 @@ block CapFault {
    field MR4 32
    field MR5 32
    field MR6 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block UnknownSyscall {
@@ -69,8 +69,8 @@ block UnknownSyscall {
    field A5 32
    field A6 32
    field Syscall 32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 block UserException {
@@ -80,8 +80,8 @@ block UserException {
    field FLAGS   32
    field Number  32
    field Code    32
-   padding 29
-   field seL4_FaultType 3
+   padding 28
+   field seL4_FaultType 4
 }
 
 #include <sel4/arch/shared_types.bf>

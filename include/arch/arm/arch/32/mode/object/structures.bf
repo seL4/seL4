@@ -187,14 +187,14 @@ block VMFault {
     field address 32
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     field FSR 26
-    padding 2
+    padding 1
     field instructionFault 1
 #else
     field FSR 14
     field instructionFault 1
-    padding 14
+    padding 13
 #endif
-    field seL4_FaultType 3
+    field seL4_FaultType 4
 }
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -202,14 +202,14 @@ block VGICMaintenance {
     field idx        6
     field idxValid   1
     padding         25
-    padding         29
-    field seL4_FaultType  3
+    padding         28
+    field seL4_FaultType  4
 }
 
 block VCPUFault {
     field hsr       32
-    padding         29
-    field seL4_FaultType  3
+    padding         28
+    field seL4_FaultType  4
 }
 #endif
 

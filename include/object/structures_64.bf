@@ -316,45 +316,45 @@ tagged_union lookup_fault lufType {
 block NullFault {
     padding 64
 
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 block CapFault {
     field address 64
 
     field inReceivePhase 1
-    padding 60
-    field seL4_FaultType 3
+    padding 59
+    field seL4_FaultType 4
 }
 
 block UnknownSyscall {
     field syscallNumber 64
 
-    padding 61
-    field seL4_FaultType 3
+    padding 60
+    field seL4_FaultType 4
 }
 
 block UserException {
     padding 64
 
     field number 32
-    field code 29
-    field seL4_FaultType 3
+    field code 28
+    field seL4_FaultType 4
 }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
 block DebugException {
     field breakpointAddress 64
 
-    padding 53
+    padding 52
     -- X86 has 4 breakpoints (DR0-3).
     -- ARM has between 2 and 16 breakpoints
     --   ( ARM Ref manual, C3.3).
     -- So we just use 4 bits to cater for both.
     field breakpointNumber 4
     field exceptionReason 4
-    field seL4_FaultType 3
+    field seL4_FaultType 4
 }
 #endif
 
