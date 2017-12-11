@@ -459,7 +459,7 @@ try_init_kernel(
         bi_frame_vptr
     );
 
-    init_sched_control(root_cnode_cap, 1);
+    init_sched_control(root_cnode_cap, CONFIG_MAX_NUM_NODES);
 
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_pd_cap, ipcbuf_vptr);

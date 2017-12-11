@@ -73,7 +73,7 @@ getCurrentTime(void)
 static inline void
 setDeadline(ticks_t deadline)
 {
-    assert(deadline > ksCurTime);
+    assert(deadline > NODE_STATE(ksCurTime));
     /* disable cmp */
     globalTimer->control &= ~(BIT(COMP_ENABLE));
     /* set low bits */
