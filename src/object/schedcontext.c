@@ -168,7 +168,7 @@ invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
     refill_unblock_check(sc);
     if (isSchedulable(sc->scTcb)) {
         assert(refill_sufficient(sc, 0) && refill_ready(sc));
-        if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUID() ||)
+        if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUIndex() ||)
             sc->scTcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
             tcbSchedDequeue(sc->scTcb);
             SCHED_ENQUEUE(sc->scTcb);
