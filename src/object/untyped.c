@@ -88,7 +88,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
         userError("Untyped Retype: Invalid object size.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
-        current_syscall_error.rangeErrorMax = wordBits - 3;
+        current_syscall_error.rangeErrorMax = seL4_MaxUntypedBits;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
