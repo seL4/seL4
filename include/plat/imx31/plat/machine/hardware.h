@@ -22,9 +22,9 @@
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {
-        /*  EPIT */
-        EPIT_PADDR,
-        EPIT_PPTR,
+        /*  GPT */
+        GPT_PADDR,
+        GPT_PPTR,
         true  /* armExecuteNever */
     },
     {
@@ -94,8 +94,9 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { .start = 0x53f80000, .end = 0x53f81000 }, /* IMX31 CCM */
     { .start = 0x53f84000, .end = 0x53f85000 }, /* IMX31 CSPI 3 */
     { .start = 0x53f8c000, .end = 0x53f8d000 }, /* IMX31 FIR */
-    { .start = 0x53f90000, .end = 0x53f91000 }, /* IMX31 GPT */
-    /* EPIT 1 is used by the kernel */
+    /* GPT is used by the kernel */
+   // { .start = 0x53f90000, .end = 0x53f91000 }, /* IMX31 GPT */
+    { .start = 0x53f94000, .end = 0x53f91000 }, /* IMX31 EPIT 1 */
     { .start = 0x53f98000, .end = 0x53f99000 }, /* IMX31 EPIT 2 */
     { .start = 0x53fa4000, .end = 0x53fa8000 }, /* IMX31 GPIO 3 */
     /* This is disabled until we know what it does */
