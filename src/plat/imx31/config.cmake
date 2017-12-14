@@ -22,14 +22,24 @@ if(KernelPlatformKZM)
     set(KernelArmMach "imx" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/kzm.dts")
     list(APPEND KernelDTSList "src/plat/imx31/overlay-kzm.dts")
+    if(KernelIsMCS)
+        list(APPEND KernelDTSList "src/plat/imx31/mcs-overlay-kzm.dts")
+        set(TimerFrequency 18600000llu) # 18.6MHz -- calculated by trial and error, roughly precise
+        set(TimerDriver drivers/timer/imx31-gpt.h)
+    else()
+        set(TimerFrequency 32768llu)
+        set(TimerDriver drivers/timer/imx31-epit.h)
+        add_bf_source_old("KernelPlatformKZM" "imx31-epit.bf" "include" "drivers/timer")
+    endif()
     declare_default_headers(
-        TIMER_FREQUENCY 32768llu
+        TIMER_FREQUENCY ${TimerFrequency}
         MAX_IRQ 63
         INTERRUPT_CONTROLLER drivers/irq/imx31.h
-        TIMER drivers/timer/imx31-epit.h
+        TIMER ${TimerDriver}
+        KERNEL_WCET 10u
+        CLK_SHIFT 47u
+        CLK_MAGIC 7566531633llu
     )
 endif()
 
 add_sources(DEP "KernelPlatformKZM" CFILES src/plat/imx31/machine/hardware.c)
-
-add_bf_source_old("KernelPlatformKZM" "imx31-epit.bf" "include" "drivers/timer")

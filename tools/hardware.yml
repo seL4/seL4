@@ -176,6 +176,7 @@ devices:
         index: 0
         kernel: TIMER_PPTR
     interrupts:
+      # IMX6 also has the imx31-gpt.
       KERNEL_TIMER_IRQ: 0
   # i.MX EPIT (no Linux binding, this is seL4-specific.)
   - compatible:
@@ -184,6 +185,15 @@ devices:
       - executeNever: true
         index: 0
         kernel: EPIT_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
+  # i.MX GPT
+  - compatible:
+    - fsl,imx31-gpt
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: TIMER_PPTR
     interrupts:
       KERNEL_TIMER_IRQ: 0
   # QCOM Krait timer (timer/qcom,msm-timer.txt)

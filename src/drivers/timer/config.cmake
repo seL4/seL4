@@ -37,6 +37,7 @@ register_driver(
     PREFIX src/drivers/timer
     CFILES "imx31-epit.c"
 )
+register_driver(compatibility_strings "fsl,imx31-gpt" PREFIX src/drivers/timer CFILES "imx31-gpt.c")
 register_driver(
     compatibility_strings "ti,omap3430-timer"
     PREFIX src/drivers/timer
