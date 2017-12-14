@@ -13,53 +13,75 @@
 #ifndef __PLAT_MACHINE_TIMER_H
 #define __PLAT_MACHINE_TIMER_H
 
-#define TIMER_CLOCK_HZ 32768llu // 32KHz
+#define TIMER_CLOCK_HZ 18600000 // 18.6MHz -- calculated by trial and error, roughly precise
 /* see tools/reciprocal.py for calculation of this value */
-#define CLK_MAGIC 1
-#define CLK_SHIFT 5
-compile_assert(magic_will_work, TIMER_CLOCK_KHZ == 32llu)
+#define CLK_MAGIC 7566531633
+#define CLK_SHIFT 47
+compile_assert(magic_will_work, TIMER_CLOCK_KHZ == 18600llu)
 
-/* Memory map for EPIT (Enhanced Periodic Interrupt Timer). */
+/* gptir and gptsr bits */
+#define OF1IE 0 /* output compare 1 */
+#define ROV   5 /* roll over */
+
+/* Memory map for GPT (General Purpose Timer). */
 struct timer {
-    uint32_t epitcr;
-    uint32_t epitsr;
-    uint32_t epitlr;
-    uint32_t epitcmpr;
-    uint32_t epitcnt;
+    uint32_t gptcr; /* control */
+    uint32_t gptpr; /* prescaler */
+    uint32_t gptsr; /* status register */
+    uint32_t gptir; /* interrupt register */
+    uint32_t gptcr1;
+    uint32_t gptcr2;
+    uint32_t gptcr3;
+    uint32_t gpticr1;
+    uint32_t gpticr2;
+    uint32_t gptcnt;
 };
 typedef volatile struct timer timer_t;
-extern timer_t *epit1;
+extern timer_t *gpt;
+extern ticks_t high_bits;
 
 static inline CONST time_t
 getKernelWcetUs(void)
 {
-    fail("Not implemented");
+    return 10;
 }
 
 static inline CONST ticks_t
 getTimerPrecision(void)
 {
-    fail("Not implemented");
-    return 0llu;
+    return 0;
 }
 
 static inline ticks_t
 getCurrentTime(void)
 {
-    fail("Not implemented");
-    return 0llu;
+    return ((high_bits + !!(gpt->gptsr & BIT(ROV))) << 32llu) + gpt->gptcnt;
 }
 
 static inline void
 setDeadline(ticks_t deadline)
 {
-    fail("Not implemented");
+    if (((uint32_t) deadline) > gpt->gptcnt) {
+        /* turn on compare irq */
+        gpt->gptir |= BIT(OF1IE);
+        /* set the deadline */
+        do {
+            gpt->gptcr1 = (uint32_t) deadline;
+        } while (gpt->gptcr1 != (uint32_t) deadline);
+    }
 }
 
 static inline void
 ackDeadlineIRQ(void)
 {
-    fail("Not implemented");
+    if (gpt->gptsr & BIT(ROV)) {
+        high_bits++;
+    }
+
+    /* turn off compare irq */
+    gpt->gptir &= ~(BIT(OF1IE));
+    /* ack either irq */
+    gpt->gptsr |= (BIT(OF1IE) | BIT(ROV));
 }
 
 #endif /* !__PLAT_MACHINE_TIMER_H */
