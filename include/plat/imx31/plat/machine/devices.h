@@ -15,8 +15,8 @@
 
 /* kernel devices */
 
-#define EPIT_PADDR                  0x53f94000
-#define EPIT_PPTR                   0xfff00000
+#define GPT_PADDR                  0x53f90000
+#define GPT_PPTR                   0xfff00000
 
 #define AVIC_PADDR                  0x68000000
 #define AVIC_PPTR                   0xfff01000

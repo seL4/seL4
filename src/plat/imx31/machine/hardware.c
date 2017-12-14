@@ -28,7 +28,8 @@
 #define L2_LINE_START(a) ROUND_DOWN(a, L2_LINE_SIZE_BITS)
 #define L2_LINE_INDEX(a) (L2_LINE_START(a)>>L2_LINE_SIZE_BITS)
 
-timer_t *epit1 = (timer_t *) EPIT_PPTR;
+timer_t *gpt = (timer_t *) GPT_PPTR;
+ticks_t high_bits = 0;
 
 enum IPGConstants {
     IPG_CLK = 1,
@@ -36,43 +37,31 @@ enum IPGConstants {
     IPG_CLK_32K = 3
 };
 
-#define TIMER_CLOCK_SRC   IPG_CLK_32K
+/* gptcr bits */
+#define EN     0
+#define ENMOD  1
+#define FRR    9
+#define CLKSRC 6
+#define SWR    15
 
 interrupt_t active_irq = irqInvalid;
 
-/* Configure EPIT1 as kernel preemption timer */
+/* Configure GPT as kernel preemption timer */
 BOOT_CODE void
 initTimer(void)
 {
-    epitcr_t epitcr_kludge;
-
-    /* Stop timer */
-    epit1->epitcr = 0;
-
-    /* Configure timer */
-    epitcr_kludge.words[0] = 0; /* Zero struct */
-    epitcr_kludge = epitcr_set_clksrc(epitcr_kludge, TIMER_CLOCK_SRC);
-    /* Overwrite counter immediately on write */
-    epitcr_kludge = epitcr_set_iovw(epitcr_kludge, 1);
-    /* Reload from modulus register */
-    epitcr_kludge = epitcr_set_rld(epitcr_kludge, 1);
-    /* Enable interrupt */
-    epitcr_kludge = epitcr_set_ocien(epitcr_kludge, 1);
-    /* Count from modulus value on restart */
-    epitcr_kludge = epitcr_set_enmod(epitcr_kludge, 1);
-    epit1->epitcr = epitcr_kludge.words[0];
-
-    fail("unimplemented");
-
-    /* Interrupt at zero count */
-    epit1->epitcmpr = 0;
-
-    /* Clear pending interrupt */
-    epit1->epitsr = 1;
-
-    /* Enable timer */
-    epitcr_kludge = epitcr_set_en(epitcr_kludge, 1);
-    epit1->epitcr = epitcr_kludge.words[0];
+    /* reset the gpt */
+    gpt->gptcr = 0;
+    /* clear the status register */
+    gpt->gptcr = 0x3F;
+    /* software reset */
+    gpt->gptcr = BIT(SWR);
+    /* configure the gpt */
+    gpt->gptcr = BIT(ENMOD) | BIT(FRR) | (IPG_CLK_HIGHFREQ << CLKSRC);
+    /* enable overflow irq */
+    gpt->gptir = BIT(ROV);
+    /* turn it on */
+    gpt->gptcr |= BIT(EN);
 }
 
 static void cleanL2(void)
