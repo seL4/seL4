@@ -96,8 +96,8 @@ exception_t decodeReadRegisters(cap_t cap, word_t length, bool_t call,
 exception_t decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer);
 exception_t decodeTCBConfigure(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t rootCaps, word_t *buffer);
-exception_t decodeSetPriority(cap_t cap, word_t length, word_t *buffer);
-exception_t decodeSetMCPriority(cap_t cap, word_t length, word_t *buffer);
+exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
+exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
@@ -112,7 +112,6 @@ enum thread_control_flag {
     thread_control_update_ipc_buffer = 0x2,
     thread_control_update_space = 0x4,
     thread_control_update_mcp = 0x8,
-    thread_control_update_all = 0xF,
 };
 
 typedef word_t thread_control_flag_t;

@@ -9,6 +9,8 @@ changes are added the compatibility information should be updated.
 
 upcoming release BREAKING
 
+BREAKING CHANGE
+
 = Changes =
  * Debugging option on x86 for syscall interface to read/write MSRs (this is an, equally dangerous, alternative to
    dangerous code injection)
@@ -27,6 +29,17 @@ upcoming release BREAKING
  * x86 TSC frequency exported in extended bootinfo header
  * `archInfo` is no longer a member of the bootinfo struct. Its only use was for TSC frequency on x86, which
    can now be retrieved through the extended bootinfo
+ * Invocations to set thread priority and maximum control priority (MCP) have changed.
+     - For both invocations, users must now provide a TCB capability `auth`
+     - The requested MCP/priority is checked against the MCP of the `auth` capability.
+     - Previous behavior checked against the invoked TCB, which could be subject to the confused deputy
+       problem.
+ * seL4_TCB_Configure no longer takes prio, mcp as an argument. Instead these fields must be set separately
+   with seL4_TCB_SetPriority and seL4_TCB_SetMCPriority.
+
+= Upgrade notes =
+   * seL4_TCB_Configure calls that set priority should be changed to explicitly call seL4_TCB_SetPriority
+   * seL4_TCB_Configure calls that set MCP should be changed to explicitly call seL4_TCB_SetMCPriority
 
 ---
 8.0.0 2018-01-17

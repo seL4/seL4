@@ -125,8 +125,6 @@
             </description>
             <param dir="in" name="fault_ep" type="seL4_Word"
                 description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
-            <param dir="in" name="priority" type="seL4_PrioProps_t"
-                description="The thread's new priority properties: the maximum control priority and priority."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
@@ -148,6 +146,8 @@
             <description>
                 See <autoref label="sec:sched"/>
             </description>
+            <param dir="in" name="authority" type="seL4_CPtr"
+                description="Capability to the TCB to use the MCP from when setting the priority."/>
             <param dir="in" name="priority" type="seL4_Uint8"
                 description="The thread's new priority."/>
         </method>
@@ -159,6 +159,8 @@
             <description>
                 See <autoref label="sec:sched"/>
             </description>
+            <param dir="in" name="authority" type="seL4_CPtr"
+                description="Capability to the TCB to use the MCP from when setting the MCP."/>
             <param dir="in" name="mcp" type="seL4_Uint8"
                 description="The thread's new maximum controlled priority."/>
         </method>

@@ -22,13 +22,6 @@ block seL4_MessageInfo {
     field length 7
 }
 
-block seL4_PrioProps {
-    padding 32
-    padding 16
-    field mcp  8
-    field prio 8
-}
-
 block seL4_CapRights {
     padding 32
 
