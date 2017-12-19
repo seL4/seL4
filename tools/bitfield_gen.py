@@ -734,18 +734,13 @@ done'''],
        \<acute>ret__struct_%(name)s_C :== PROC %(name)s_new(%(args)s)
        \<lbrace> %(name)s_lift \<acute>ret__struct_%(name)s_C = \<lparr>
           %(field_eqs)s \<rparr> \<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
-
- apply(clarsimp simp:guard_simps)
- apply(simp add:shift_over_ao_dists mask_def ucast_id)
- apply(unfold %(name)s_lift_def)
- apply(simp add:shift_over_ao_dists)
- apply(((simp add:word_ao_dist)?,
-        (simp add:word_bw_assocs)?,
-        (simp add:multi_shift_simps)?,
-        (simp add:mask_def word_size))?)
- apply(simp add:word_bw_assocs)?
-done'''],
+'''  apply (rule allI, rule conseqPre, vcg)
+  apply (clarsimp simp: guard_simps)
+  apply (simp add: %(name)s_lift_def)
+  apply ((intro conjI sign_extend_eq)?;
+         (simp add: mask_def shift_over_ao_dists multi_shift_simps word_size
+                    word_ao_dist word_bw_assocs word_and_max_simps)?)
+  done'''],
 
 'ptr_new_spec_direct' : [
     ptr_new_template(direct_ptr_name),
@@ -764,14 +759,12 @@ done'''],
        \<lbrace>\<acute>%(ret_name)s = ''' \
        '''%(name)s_CL.%(field)s_CL ''' \
        '''(%(name)s_lift \<^bsup>s\<^esup>%(name)s)\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp)
- apply(simp add:%(name)s_lift_def
-                mask_shift_simps
-                guard_simps)
- apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
- apply(simp add:max_word_def word_and_max_word)?
-done'''],
+'''  apply (rule allI, rule conseqPre, vcg)
+  apply clarsimp
+  apply (simp add: %(name)s_lift_def mask_shift_simps guard_simps)
+  apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs
+                   shift_over_ao_dists word_oa_dist word_and_max_simps)?
+  done'''],
 
 'set_spec' : [
 '''lemma (in ''' + loc_name + ''') %(name)s_set_%(field)s_spec:
@@ -782,108 +775,100 @@ done'''],
        '''%(name)s_lift \<^bsup>s\<^esup>%(name)s \<lparr> ''' \
        '''%(name)s_CL.%(field)s_CL ''' \
        ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s) \<rparr>\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp simp:guard_simps ucast_id
-                     %(name)s_lift_def
-                     mask_def shift_over_ao_dists
-                     multi_shift_simps word_size
-                     word_ao_dist word_bw_assocs
-                     NOT_eq)
- apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
- apply(simp add:max_word_def word_and_max_word)?
-done'''],
+'''  apply(rule allI, rule conseqPre, vcg)
+  apply(clarsimp simp: guard_simps ucast_id
+                       %(name)s_lift_def
+                       mask_def shift_over_ao_dists
+                       multi_shift_simps word_size
+                       word_ao_dist word_bw_assocs
+                       NOT_eq)
+  apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs
+                   shift_over_ao_dists word_and_max_simps)?
+  done'''],
 
 # where the top level type is the bitfield type --- these are split because they have different proofs
 'ptr_get_spec_direct' : [
     ptr_get_template(direct_ptr_name),
-''' unfolding ptrval_def
- apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp simp:h_t_valid_clift_Some_iff)
- apply(simp add:guard_simps
-                %(name)s_lift_def
-                mask_def
-                typ_heap_simps
-                ucast_def)
- apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
- apply(simp add:max_word_def word_and_max_word)?
-done'''],
+'''   unfolding ptrval_def
+  apply (rule allI, rule conseqPre, vcg)
+  apply (clarsimp simp: h_t_valid_clift_Some_iff)
+  apply (simp add: %(name)s_lift_def guard_simps mask_def typ_heap_simps ucast_def)
+  apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs
+                   shift_over_ao_dists word_oa_dist word_and_max_simps)?
+  done'''],
 
 'ptr_get_spec_path' : [
     ptr_get_template(path_ptr_name),
-''' unfolding ptrval_def
- apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp simp:guard_simps)
- apply(frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
- apply(frule clift_subtype, simp, simp, simp)
- apply(simp add:h_val_field_clift' typ_heap_simps)
- apply(simp add:thread_state_lift_def)
- apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
- apply(simp add:max_word_def word_and_max_word)?
- apply(simp add:mask_shift_simps)?
-done'''],
+'''  unfolding ptrval_def
+  apply (rule allI, rule conseqPre, vcg)
+  apply (clarsimp simp: guard_simps)
+  apply (frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
+  apply (frule clift_subtype, simp, simp, simp)
+  apply (simp add: h_val_field_clift' typ_heap_simps)
+  apply (simp add: thread_state_lift_def)
+  apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs
+                   shift_over_ao_dists word_oa_dist word_and_max_simps)?
+  apply (simp add: mask_shift_simps)?
+  done'''],
 
 'ptr_set_spec_direct' : [
     ptr_set_template('set_%(field)s', direct_ptr_name),
-''' unfolding ptrval_def
- apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp simp:guard_simps)
- apply(clarsimp simp add: packed_heap_update_collapse_hrs typ_heap_simps)?
-
- apply(rule exI, rule conjI[rotated], rule refl)
- apply(clarsimp simp:h_t_valid_clift_Some_iff
-                     %(name)s_lift_def
-                     typ_heap_simps)
-
- apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
- apply(simp add:max_word_def word_and_max_word)?
- apply(simp add:mask_shift_simps)?
-done'''],
+'''  unfolding ptrval_def
+  apply (rule allI, rule conseqPre, vcg)
+  apply (clarsimp simp: guard_simps)
+  apply (clarsimp simp add: packed_heap_update_collapse_hrs typ_heap_simps)?
+  apply (rule exI, rule conjI[rotated], rule refl)
+  apply (clarsimp simp: h_t_valid_clift_Some_iff %(name)s_lift_def typ_heap_simps)
+  apply ((intro conjI sign_extend_eq)?;
+         (simp add: mask_def shift_over_ao_dists multi_shift_simps word_size
+                    word_ao_dist word_bw_assocs word_and_max_simps))?
+  done'''],
 
 'ptr_set_spec_path' : [
     ptr_set_template('set_%(field)s', path_ptr_name),
-'''(* Invoke vcg *)
- unfolding ptrval_def
- apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp)
+'''  (* Invoke vcg *)
+  unfolding ptrval_def
+  apply (rule allI, rule conseqPre, vcg)
+  apply (clarsimp)
 
- (* Infer h_t_valid for all three levels of indirection *)
- apply(frule h_t_valid_c_guard_cparent, simp, simp add:typ_uinfo_t_def)
- apply(frule h_t_valid_c_guard_field[where f="[''words_C'']"],
-                                     simp, simp add:typ_uinfo_t_def)
+  (* Infer h_t_valid for all three levels of indirection *)
+  apply (frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
+  apply (frule h_t_valid_c_guard_field[where f="[''words_C'']"],
+                                       simp, simp add: typ_uinfo_t_def)
 
- (* Discharge guards, including c_guard for pointers *)
- apply(simp add:h_t_valid_c_guard guard_simps)
+  (* Discharge guards, including c_guard for pointers *)
+  apply (simp add: h_t_valid_c_guard guard_simps)
 
- (* Lift field updates to bitfield struct updates *)
- apply(simp add:heap_update_field_hrs h_t_valid_c_guard typ_heap_simps)
+  (* Lift field updates to bitfield struct updates *)
+  apply (simp add: heap_update_field_hrs h_t_valid_c_guard typ_heap_simps)
 
- (* Collapse multiple updates *)
- apply(simp add:packed_heap_update_collapse_hrs)
+  (* Collapse multiple updates *)
+  apply(simp add: packed_heap_update_collapse_hrs)
 
- (* Instantiate the toplevel object *)
- apply(frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
+  (* Instantiate the toplevel object *)
+  apply(frule iffD1[OF h_t_valid_clift_Some_iff], rule exE, assumption, simp)
 
- (* Instantiate the next-level object in terms of the last *)
- apply(frule clift_subtype, simp+)
+  (* Instantiate the next-level object in terms of the last *)
+  apply(frule clift_subtype, simp+)
 
- (* Resolve pointer accesses *)
- apply(simp add:h_val_field_clift')
+  (* Resolve pointer accesses *)
+  apply(simp add: h_val_field_clift')
 
- (* Rewrite bitfield struct updates as enclosing struct updates *)
- apply(frule h_t_valid_c_guard)
- apply(simp add:parent_update_child)
+  (* Rewrite bitfield struct updates as enclosing struct updates *)
+  apply(frule h_t_valid_c_guard)
+  apply(simp add: parent_update_child)
 
- (* Equate the updated values *)
- apply(rule exI, rule conjI[rotated], simp add:h_val_clift')
+  (* Equate the updated values *)
+  apply(rule exI, rule conjI[rotated], simp add: h_val_clift')
 
- (* Rewrite struct updates *)
- apply(simp add:o_def %(name)s_lift_def)
+  (* Rewrite struct updates *)
+  apply(simp add: o_def %(name)s_lift_def)
 
- (* Solve bitwise arithmetic *)
- apply (simp add: sign_extend_def' mask_def nth_is_and_neq_0 word_bw_assocs shift_over_ao_dists)?
- apply(simp add:max_word_def word_and_max_word)?
- apply(simp add:mask_shift_simps)?
- done'''],
+  (* Solve bitwise arithmetic *)
+  apply ((intro conjI sign_extend_eq)?;
+         (simp add: mask_def shift_over_ao_dists multi_shift_simps word_size
+                    word_ao_dist word_bw_assocs word_and_max_simps))?
+  done'''],
 
 
 'get_tag_spec' : [
@@ -966,22 +951,18 @@ done'''],
           %(field_eqs)s \<rparr> \<and>
         %(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
      '''scast %(name)s_%(block)s\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp simp:guard_simps o_def)
- apply(simp add:shift_over_ao_dists mask_def)
- apply(simp add:%(name)s_%(block)s_lift_def)
- apply(subst %(name)s_lift_%(block)s)
-  apply(simp add:%(name)s_get_tag_def ucast_id
-                 mask_def
-                 %(name)s_%(block)s_def
-                 shift_over_ao_dists
-                 word_ao_dist
-                 word_bw_assocs
-                 multi_shift_simps
-                 word_and_max_word
-                 max_word_def
-                 word_size)+
-done'''],
+'''  apply (rule allI, rule conseqPre, vcg)
+  apply (clarsimp simp: guard_simps o_def)
+  apply (simp add: mask_def shift_over_ao_dists)
+  apply (rule context_conjI[THEN iffD1[OF conj_commute]],
+         fastforce simp: %(name)s_get_tag_eq_x %(name)s_%(block)s_def
+                         mask_def shift_over_ao_dists word_bw_assocs word_ao_dist)
+  apply (simp add: %(name)s_%(block)s_lift_def)
+  apply (erule %(name)s_lift_%(block)s[THEN subst[OF sym]]; simp?)
+  apply ((intro conjI sign_extend_eq)?;
+         (simp add: mask_def shift_over_ao_dists multi_shift_simps word_size
+                    word_ao_dist word_bw_assocs word_and_max_simps))?
+  done'''],
 
 'ptr_empty_union_new_spec_direct' : [
     ptr_empty_union_new_template(direct_ptr_name),
@@ -1017,26 +998,24 @@ done
 
 'ptr_union_new_spec_path' : [
     ptr_union_new_template(path_ptr_name),
-''' unfolding ptrval_def
- apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp)
- apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
- apply(drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
- apply(frule clift_subtype, simp, simp)
- apply(clarsimp simp: typ_heap_simps c_guard_clift
-                      packed_heap_update_collapse_hrs)
-
- apply(simp add: guard_simps mask_shift_simps
-                 %(name)s_tag_defs[THEN tag_eq_to_tag_masked_eq])
-
- apply(simp add: parent_update_child[OF c_guard_clift]
-                 typ_heap_simps c_guard_clift)
-
- apply(simp add: o_def %(name)s_%(block)s_lift_def)
- apply(simp only: %(name)s_lift_%(block)s cong: rev_conj_cong)
- apply(rule exI, rule conjI[rotated], rule conjI[OF _ refl])
-  apply (simp_all add: %(name)s_get_tag_eq_x %(name)s_tag_defs mask_shift_simps)
-done'''],
+'''  unfolding ptrval_def
+  apply (rule allI, rule conseqPre, vcg)
+  apply (clarsimp)
+  apply (frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
+  apply (drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
+  apply (frule clift_subtype, simp, simp)
+  apply (clarsimp simp: typ_heap_simps c_guard_clift
+                        packed_heap_update_collapse_hrs)
+  apply (simp add: guard_simps mask_shift_simps
+                   %(name)s_tag_defs[THEN tag_eq_to_tag_masked_eq])?
+  apply (simp add: parent_update_child[OF c_guard_clift]
+                   typ_heap_simps c_guard_clift)
+  apply (simp add: o_def %(name)s_%(block)s_lift_def)
+  apply (simp only: %(name)s_lift_%(block)s cong: rev_conj_cong)
+  apply (rule exI, rule conjI[rotated], rule conjI[OF _ refl])
+   apply (simp_all add: %(name)s_get_tag_eq_x %(name)s_tag_defs mask_shift_simps)
+  apply (intro conjI sign_extend_eq; simp add: mask_def word_ao_dist word_bw_assocs)?
+  done'''],
 
 'union_get_spec' : [
 '''lemma (in ''' + loc_name + ''') ''' \
@@ -1069,9 +1048,8 @@ done'''],
                 shift_over_ao_dists
                 multi_shift_simps
                 word_bw_assocs
-                word_ao_dist
-                word_and_max_word
-                max_word_def
+                word_oa_dist
+                word_and_max_simps
                 ucast_def
                 sign_extend_def'
                 nth_is_and_neq_0)
@@ -1091,20 +1069,17 @@ done'''],
     ''':= %(sign_extend)s (\<^bsup>s\<^esup>v%(base)d AND %(mask)s)\<rparr> \<and>
         %(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
      '''scast %(name)s_%(block)s\<rbrace>"''',
-''' apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp)
- apply(simp add:%(name)s_lift_def
-                %(name)s_%(block)s_lift_def
-                mask_shift_simps
-                guard_simps
-                Let_def
-                %(name)s_get_tag_eq_x
-                %(tag_mask_helpers)s
-                %(name)s_%(block)s_update_def
-                %(name)s_tag_defs
-                sign_extend_def'
-                nth_is_and_neq_0)
-done'''],
+'''  apply (rule allI, rule conseqPre, vcg)
+  apply clarsimp
+  apply (rule context_conjI[THEN iffD1[OF conj_commute]],
+         fastforce simp: %(name)s_get_tag_eq_x %(name)s_lift_def %(name)s_tag_defs
+                         mask_def shift_over_ao_dists multi_shift_simps word_size
+                         word_ao_dist word_bw_assocs)
+  apply (simp add: %(name)s_%(block)s_lift_def %(name)s_lift_def %(name)s_tag_defs)
+  apply ((intro conjI sign_extend_eq)?;
+         (simp add: mask_def shift_over_ao_dists multi_shift_simps word_size
+                    word_ao_dist word_bw_assocs word_and_max_simps))?
+  done'''],
 
 'ptr_union_get_spec_direct' : [
     ptr_union_get_template(direct_ptr_name),
@@ -1130,7 +1105,7 @@ done
   apply(subst %(name)s_lift_%(block)s)
   apply(simp add: mask_def)+
   done
- (* ptr_union_get_spec_path *)'''],
+  (* ptr_union_get_spec_path *)'''],
 
 'ptr_union_set_spec_direct' : [
         ptr_union_set_template(direct_ptr_name),
@@ -1139,26 +1114,24 @@ done
 
 'ptr_union_set_spec_path' : [
         ptr_union_set_template(path_ptr_name),
-''' unfolding ptrval_def
- apply(rule allI, rule conseqPre, vcg)
- apply(clarsimp)
- apply(frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
- apply(drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
- apply(frule clift_subtype, simp, simp)
- apply(clarsimp simp: typ_heap_simps c_guard_clift
-                      packed_heap_update_collapse_hrs)
-
- apply(simp add: guard_simps mask_shift_simps
-                 %(name)s_tag_defs[THEN tag_eq_to_tag_masked_eq])
-
- apply(simp add: parent_update_child[OF c_guard_clift]
-                 typ_heap_simps c_guard_clift)
-
- apply(simp add: o_def %(name)s_%(block)s_lift_def)
- apply(simp only: %(name)s_lift_%(block)s cong: rev_conj_cong)
- apply(rule exI, rule conjI[rotated], rule conjI[OF _ refl])
-  apply (simp_all add: %(name)s_get_tag_eq_x %(name)s_tag_defs mask_shift_simps)
-done'''],
+'''  unfolding ptrval_def
+  apply (rule allI, rule conseqPre, vcg)
+  apply (clarsimp)
+  apply (frule h_t_valid_c_guard_cparent, simp, simp add: typ_uinfo_t_def)
+  apply (drule h_t_valid_clift_Some_iff[THEN iffD1], erule exE)
+  apply (frule clift_subtype, simp, simp)
+  apply (clarsimp simp: typ_heap_simps c_guard_clift
+                        packed_heap_update_collapse_hrs)
+  apply (simp add: guard_simps mask_shift_simps
+                   %(name)s_tag_defs[THEN tag_eq_to_tag_masked_eq])?
+  apply (simp add: parent_update_child[OF c_guard_clift]
+                   typ_heap_simps c_guard_clift)
+  apply (simp add: o_def %(name)s_%(block)s_lift_def)
+  apply (simp only: %(name)s_lift_%(block)s cong: rev_conj_cong)
+  apply (rule exI, rule conjI[rotated], rule conjI[OF _ refl])
+   apply (simp_all add: %(name)s_get_tag_eq_x %(name)s_tag_defs mask_shift_simps)
+  apply (intro conjI sign_extend_eq; simp add: mask_def word_ao_dist word_bw_assocs)?
+  done'''],
 
 }
 
@@ -1209,11 +1182,11 @@ def emit_named_ptr_proof(fn_name, params, name, type_map, toptps, prf_prefix, su
                                            ['\\<lambda>_. ' + name] + path) + '(the (ptrval s))' + ')'
             emit_named(fn_name, params, make_proof(prf_prefix + '_path', substs, params.sorry))
 
-def field_mask_proof(high, base_bits, base, size):
+def field_mask_proof(base, base_bits, sign_extend, high, size):
     if high:
-        if base_bits == base:
+        if base_bits == base or sign_extend:
             # equivalent to below, but nicer in proofs
-            return "NOT (mask %d)" % (base - size)
+            return "NOT (mask %d)" % (base_bits - size)
         else:
             return "(mask %d << %d)" % (size, base_bits - size)
     else:
@@ -1413,7 +1386,7 @@ class TaggedUnion:
                     if field == self.tagname:
                         continue
 
-                    mask = field_mask_proof(high, self.base_bits, self.base, size)
+                    mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
                     sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
                     field_eq_list.append(
                         "%s_%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" % \
@@ -1448,7 +1421,7 @@ class TaggedUnion:
                 if field == self.tagname:
                     continue
 
-                mask = field_mask_proof(high, self.base_bits, self.base, size)
+                mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
                 sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
                 substs = {"name":  self.name,
@@ -1649,7 +1622,7 @@ class TaggedUnion:
                      index, shift_op, shift)
 
                 if size < self.base:
-                    mask = field_mask_proof(high, self.base_bits, self.base, size)
+                    mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
                     initialiser += " AND " + mask
 
                 field_inits.append("\n       " + initialiser + ")")
@@ -2237,7 +2210,7 @@ class Block:
                      index, shift_op, shift)
                 
                 if size < self.base:
-                    mask = field_mask_proof(high, self.base_bits, self.base, size)
+                    mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
                     
                     initialiser += " AND " + mask
                 
@@ -2300,7 +2273,7 @@ class Block:
 
         field_eq_list = []
         for (field, offset, size, high) in self.fields:
-            mask = field_mask_proof(high, self.base_bits, self.base, size)
+            mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
             field_eq_list.append("%s_CL.%s_CL = %s(\<^bsup>s\<^esup>%s AND %s)" % \
@@ -2323,7 +2296,7 @@ class Block:
 
         # Generate get/set specs
         for (field, offset, size, high) in self.fields:
-            mask = field_mask_proof(high, self.base_bits, self.base, size)
+            mask = field_mask_proof(self.base, self.base_bits, self.base_sign_extend, high, size)
             sign_extend = sign_extend_proof(high, self.base_bits, self.base_sign_extend)
 
             substs = {"name": self.name, \
