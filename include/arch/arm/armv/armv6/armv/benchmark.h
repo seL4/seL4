@@ -13,7 +13,7 @@
 
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
-#define CCNT "p15, %0, c15, c12, 1"
+#define CCNT "p15, 0, %0, c15, c12, 1"
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 extern uint64_t ccnt_num_overflows;
