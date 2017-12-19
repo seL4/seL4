@@ -321,12 +321,11 @@ schedContext_donate(sched_context_t *sc, tcb_t *to)
 
     tcb_t *from = sc->scTcb;
     if (from) {
+        SMP_COND_STATEMENT(remoteTCBStall(from));
+        tcbSchedDequeue(from);
         from->tcbSchedContext = NULL;
         if (from == NODE_STATE(ksCurThread) || from == NODE_STATE(ksSchedulerAction)) {
             rescheduleRequired();
-        } else if (isRunnable(from)) {
-            SMP_COND_STATEMENT(remoteTCBStall(from));
-            tcbSchedDequeue(from);
         }
     }
     sc->scTcb = to;
