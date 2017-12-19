@@ -13,7 +13,7 @@
 #include <config.h>
 
 ---- Default base size: uint64_t
-base 64(49,1)
+base 64(48,1)
 
 -- Including the common structures.bf is neccessary because
 -- we need the structures to be visible here when building
@@ -31,17 +31,17 @@ block frame_cap {
     field       capType             5
     field       capFSize            2
     field       capFMapType         2
-    field_high  capFMappedAddress   49
+    field_high  capFMappedAddress   48
     field       capFVMRights        2
     field       capFIsDevice        1
-    padding                         3
+    padding                         4
 }
 
 -- Second-level page table
 block page_table_cap {
-    padding                         3
+    padding                         4
     field       capPTMappedASID     12
-    field_high  capPTBasePtr        49
+    field_high  capPTBasePtr        48
 
     field       capType             5
     padding                         9
@@ -53,9 +53,9 @@ block page_table_cap {
 
 -- First-level page table (page directory)
 block page_directory_cap {
-    padding                         3
+    padding                         4
     field       capPDMappedASID     12
-    field_high  capPDBasePtr        49
+    field_high  capPDBasePtr        48
 
     field       capType             5
     padding                         9
@@ -66,9 +66,9 @@ block page_directory_cap {
 }
 
 block pdpt_cap {
-    padding                          3
+    padding                          4
     field       capPDPTMappedASID    12
-    field_high  capPDPTBasePtr       49
+    field_high  capPDPTBasePtr       48
 
     field       capType              5
     field       capPDPTIsMapped      1
@@ -150,10 +150,10 @@ block io_page_table_cap (capType, capIOPTIsMapped, capIOPTLevel, capIOPTMappedAd
     field_high capIOPTBasePtr 48
 
     field       capType                 5
-    padding                             5
+    padding                             6
     field       capIOPTIsMapped         1
     field       capIOPTLevel            4
-    field_high  capIOPTMappedAddress    49
+    field_high  capIOPTMappedAddress    48
 }
 
 #endif

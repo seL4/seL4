@@ -24,8 +24,8 @@ block untyped_cap {
     field capBlockSize 6
 
     field capType 5
-    padding 10
-    field_high capPtr 49
+    padding 11
+    field_high capPtr 48
 }
 
 block endpoint_cap(capEPBadge, capType, capCanGrant, capCanSend, capCanReceive,
@@ -36,8 +36,8 @@ block endpoint_cap(capEPBadge, capType, capCanGrant, capCanSend, capCanReceive,
     field capCanGrant 1
     field capCanReceive 1
     field capCanSend 1
-    padding 7
-    field_high capEPPtr 49
+    padding 8
+    field_high capEPPtr 48
 
 }
 
@@ -47,8 +47,8 @@ block notification_cap {
     field capType 5
     field capNtfnCanReceive 1
     field capNtfnCanSend 1
-    padding 8
-    field_high capNtfnPtr 49
+    padding 9
+    field_high capNtfnPtr 48
 }
 
 block reply_cap(capReplyMaster, capTCBPtr, capType) {
@@ -74,8 +74,8 @@ block thread_cap {
     padding 64
 
     field capType 5
-    padding 10
-    field_high capTCBPtr 49
+    padding 11
+    field_high capTCBPtr 48
 }
 
 block irq_control_cap {
@@ -114,30 +114,30 @@ block domain_cap {
 block endpoint {
     field epQueue_head 64
 
-    padding 15
-    field_high epQueue_tail 47
+    padding 16
+    field_high epQueue_tail 46
     field state 2
 }
 
 -- Async endpoint: size = 32 bytes
 block notification {
-    padding 15
-    field_high ntfnBoundTCB 49
+    padding 16
+    field_high ntfnBoundTCB 48
 
     field ntfnMsgIdentifier 64
 
-    padding 15
-    field_high ntfnQueue_head 49
+    padding 16
+    field_high ntfnQueue_head 48
 
-    field_high ntfnQueue_tail 49
-    padding 13
+    field_high ntfnQueue_tail 48
+    padding 14
     field state 2
 }
 
 -- Mapping database (MDB) node: size = 16 bytes
 block mdb_node {
-    padding 15
-    field_high mdbNext 47
+    padding 16
+    field_high mdbNext 46
     field mdbRevocable 1
     field mdbFirstBadged 1
 
@@ -290,7 +290,7 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
     field blockingIPCDiminishCaps 1
     field tcbQueued 1
 
-    padding 15
-    field_high blockingObject 45
+    padding 16
+    field_high blockingObject 44
     field tsType 4
 }
