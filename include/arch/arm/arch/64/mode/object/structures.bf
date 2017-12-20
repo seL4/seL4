@@ -11,7 +11,7 @@
 --
 
 -- Default base size: uint64_t
-base 64(49,1)
+base 64(48,1)
 
 -- Including the common structures_64.bf is neccessary because
 -- we need the structures to be visible here when building
@@ -26,10 +26,10 @@ block frame_cap {
 
     field capType                    5
     field capFSize                   2
-    field_high capFMappedAddress     49
+    field_high capFMappedAddress     48
     field capFVMRights               2
     field capFIsDevice               1
-    padding                          5
+    padding                          6
 }
 
 -- Forth-level page table
