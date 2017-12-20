@@ -23,7 +23,7 @@
 #define kernelBase          0xffffff8000000000
 
 /* Maximum virtual address accessible from userspace */
-#define USER_TOP            0x0000ffffffffffff
+#define USER_TOP            0x00007fffffffffff
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {
