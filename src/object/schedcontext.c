@@ -133,6 +133,10 @@ invokeSchedContext_Unbind(sched_context_t *sc)
 {
     schedContext_unbindAllTCBs(sc);
     schedContext_unbindNtfn(sc);
+    if (sc->scReply) {
+        sc->scReply->replyNext = call_stack_new(0, false);
+        sc->scReply = NULL;
+    }
     return EXCEPTION_NONE;
 }
 
