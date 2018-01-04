@@ -24,9 +24,14 @@ static inline cr3_t getCurrentCR3(void)
     return MODE_NODE_STATE(x64KSCurrentCR3);
 }
 
-static inline paddr_t getCurrentVSpaceRoot(void)
+static inline cr3_t getCurrentUserCR3(void)
 {
-    return cr3_get_pml4_base_address(getCurrentCR3());
+    return getCurrentCR3();
+}
+
+static inline paddr_t getCurrentUserVSpaceRoot(void)
+{
+    return cr3_get_pml4_base_address(getCurrentUserCR3());
 }
 
 static inline void setCurrentCR3(cr3_t cr3, word_t preserve_translation)
@@ -35,13 +40,26 @@ static inline void setCurrentCR3(cr3_t cr3, word_t preserve_translation)
     if (config_set(CONFIG_SUPPORT_PCID)) {
         write_cr3(cr3.words[0]  | (preserve_translation ? BIT(63) : 0));
     } else {
-        write_cr3(cr3_new(getCurrentVSpaceRoot(), 0).words[0]);
+        write_cr3(cr3_new(getCurrentUserVSpaceRoot(), 0).words[0]);
     }
+}
+
+/* there is no option for preservation translation when setting the user cr3
+   as it is assumed you want it preserved as you are doing a context switch.
+   If translation needs to be flushed then setCurrentCR3 should be used instead */
+static inline void setCurrentUserCR3(cr3_t cr3)
+{
+    setCurrentCR3(cr3, 1);
 }
 
 static inline void setCurrentVSpaceRoot(paddr_t addr, word_t pcid)
 {
     setCurrentCR3(cr3_new(addr, pcid), 1);
+}
+
+static inline void setCurrentUserVSpaceRoot(paddr_t addr, word_t pcid)
+{
+    setCurrentVSpaceRoot(addr, pcid);
 }
 
 /* GDT installation */

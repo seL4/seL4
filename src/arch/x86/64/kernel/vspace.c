@@ -434,7 +434,7 @@ void setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_pml4_cap ||
             !cap_pml4_cap_get_capPML4IsMapped(threadRoot)) {
-        setCurrentVSpaceRoot(kpptr_to_paddr(x64KSGlobalPML4), 0);
+        setCurrentUserVSpaceRoot(kpptr_to_paddr(x64KSGlobalPML4), 0);
         return;
     }
 
@@ -442,13 +442,13 @@ void setVMRoot(tcb_t *tcb)
     asid = cap_pml4_cap_get_capPML4MappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != pml4)) {
-        setCurrentVSpaceRoot(kpptr_to_paddr(x64KSGlobalPML4), 0);
+        setCurrentUserVSpaceRoot(kpptr_to_paddr(x64KSGlobalPML4), 0);
         return;
     }
     cr3 = cr3_new(pptr_to_paddr(pml4), asid);
-    if (getCurrentCR3().words[0] != cr3.words[0]) {
+    if (getCurrentUserCR3().words[0] != cr3.words[0]) {
         SMP_COND_STATEMENT(tlb_bitmap_set(pml4, getCurrentCPUIndex());)
-        setCurrentCR3(cr3, 1);
+        setCurrentUserCR3(cr3);
     }
 }
 
