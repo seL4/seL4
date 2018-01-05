@@ -22,7 +22,7 @@ BOOT_CODE void
 mode_init_tls(cpu_id_t cpu_index)
 {
     node_info[cpu_index].stackTop = kernel_stack_alloc[cpu_index + 1];
-    node_info[cpu_index].irqStack = &MODE_NODE_STATE_ON_CORE(x64KSIRQStack, cpu_index)[0];
+    node_info[cpu_index].irqStack = &x64KSIRQStack[cpu_index][0];
     node_info[cpu_index].index = cpu_index;
     x86_wrmsr(IA32_KERNEL_GS_BASE_MSR, (word_t)&node_info[cpu_index]);
     swapgs();

@@ -258,7 +258,7 @@ map_kernel_window(
 BOOT_CODE void
 init_tss(tss_t *tss)
 {
-    word_t base = (word_t)&MODE_NODE_STATE(x64KSIRQStack)[IRQ_STACK_SIZE];
+    word_t base = (word_t)&x64KSIRQStack[CURRENT_CPU_INDEX()][IRQ_STACK_SIZE];
     *tss = tss_new(
                sizeof(*tss),   /* io map base */
                0, 0,       /* ist 7 */
