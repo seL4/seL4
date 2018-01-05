@@ -35,6 +35,8 @@
 #define ARCH_NODE_STATE_ON_CORE(_state, _core)  ksSMP[(_core)].cpu._state
 #define NODE_STATE_ON_CORE(_state, _core)       ksSMP[(_core)].system._state
 
+#define CURRENT_CPU_INDEX() getCurrentCPUIndex()
+
 #else
 
 #define NODE_STATE_BEGIN(_name)
@@ -52,6 +54,8 @@
 #define MODE_NODE_STATE_ON_CORE(_state, _core) _state
 #define ARCH_NODE_STATE_ON_CORE(_state, _core) _state
 #define NODE_STATE_ON_CORE(_state, _core)      _state
+
+#define CURRENT_CPU_INDEX() 0
 
 #endif /* ENABLE_SMP_SUPPORT */
 
