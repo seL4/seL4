@@ -61,9 +61,9 @@ map_kernel_window(
     assert(IS_ALIGNED(KERNEL_BASE, seL4_HugePageBits));
     assert(IS_ALIGNED(PPTR_KDEV, seL4_HugePageBits));
     /* place the PDPT into the PML4 */
-    x64KSGlobalPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
+    x64KSKernelPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
                                                      0, /* xd */
-                                                     kpptr_to_paddr(x64KSGlobalPDPT),
+                                                     kpptr_to_paddr(x64KSKernelPDPT),
                                                      0, /* accessed */
                                                      0, /* cache_disabled */
                                                      0, /* write_through */
@@ -72,7 +72,7 @@ map_kernel_window(
                                                      1  /* present */
                                                  );
     /* put the 1GB kernel_base mapping into the PDPT */
-    x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_1g_new(
+    x64KSKernelPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_1g_new(
                                                        0, /* xd */
                                                        PADDR_BASE,
                                                        0, /* PAT */
@@ -92,7 +92,7 @@ map_kernel_window(
             paddr += BIT(seL4_HugePageBits)) {
 
         int pdpte_index = GET_PDPT_INDEX(vaddr);
-        x64KSGlobalPDPT[pdpte_index] = pdpte_pdpte_1g_new(
+        x64KSKernelPDPT[pdpte_index] = pdpte_pdpte_1g_new(
                                            0,          /* xd               */
                                            paddr,      /* physical address */
                                            0,          /* PAT              */
@@ -110,9 +110,9 @@ map_kernel_window(
     }
 
     /* put the PD into the PDPT */
-    x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
+    x64KSKernelPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
                                                      0, /* xd */
-                                                     kpptr_to_paddr(x64KSGlobalPD),
+                                                     kpptr_to_paddr(x64KSKernelPD),
                                                      0, /* accessed */
                                                      0, /* cache_disabled */
                                                      0, /* write_through */
@@ -121,9 +121,9 @@ map_kernel_window(
                                                      1  /* present */
                                                  );
     /* put the PT into the PD */
-    x64KSGlobalPD[0] = pde_pde_pt_new(
+    x64KSKernelPD[0] = pde_pde_pt_new(
                            0, /* xd */
-                           kpptr_to_paddr(x64KSGlobalPT),
+                           kpptr_to_paddr(x64KSKernelPT),
                            0, /* accessed */
                            0, /* cache_disabled */
                            0, /* write_through */
@@ -146,9 +146,9 @@ map_kernel_window(
     assert(IS_ALIGNED(PPTR_KDEV, seL4_HugePageBits));
 
     /* place the PDPT into the PML4 */
-    x64KSGlobalPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
+    x64KSKernelPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
                                                      0, /* xd */
-                                                     kpptr_to_paddr(x64KSGlobalPDPT),
+                                                     kpptr_to_paddr(x64KSKernelPDPT),
                                                      0, /* accessed */
                                                      0, /* cache_disabled */
                                                      0, /* write_through */
@@ -159,9 +159,9 @@ map_kernel_window(
 
     for (pd_index = 0; pd_index < PADDR_TOP >> seL4_HugePageBits; pd_index++) {
         /* put the 1GB kernel_base mapping into the PDPT */
-        x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_BASE) + pd_index] = pdpte_pdpte_pd_new(
+        x64KSKernelPDPT[GET_PDPT_INDEX(PPTR_BASE) + pd_index] = pdpte_pdpte_pd_new(
                                                                     0, /* xd */
-                                                                    kpptr_to_paddr(&x64KSGlobalPDs[pd_index][0]),
+                                                                    kpptr_to_paddr(&x64KSKernelPDs[pd_index][0]),
                                                                     0, /* accessed */
                                                                     0, /* cache disabled */
                                                                     0, /* write through */
@@ -171,9 +171,9 @@ map_kernel_window(
                                                                 );
     }
 
-    x64KSGlobalPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_pd_new(
+    x64KSKernelPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_pd_new(
                                                        0, /* xd */
-                                                       kpptr_to_paddr(&x64KSGlobalPDs[0][0]),
+                                                       kpptr_to_paddr(&x64KSKernelPDs[0][0]),
                                                        0, /* accessed */
                                                        0, /* cache disable */
                                                        1, /* write through */
@@ -191,7 +191,7 @@ map_kernel_window(
         int pd_index = GET_PDPT_INDEX(vaddr) - GET_PDPT_INDEX(PPTR_BASE);
         int pde_index = GET_PD_INDEX(vaddr);
 
-        x64KSGlobalPDs[pd_index][pde_index] = pde_pde_large_new(
+        x64KSKernelPDs[pd_index][pde_index] = pde_pde_large_new(
                                                   0, /* xd */
                                                   paddr,
                                                   0, /* pat */
@@ -208,9 +208,9 @@ map_kernel_window(
     }
 
     /* put the PD into the PDPT */
-    x64KSGlobalPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
+    x64KSKernelPDPT[GET_PDPT_INDEX(PPTR_KDEV)] = pdpte_pdpte_pd_new(
                                                      0, /* xd */
-                                                     kpptr_to_paddr(&x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0]),
+                                                     kpptr_to_paddr(&x64KSKernelPDs[BIT(PDPT_INDEX_BITS) - 1][0]),
                                                      0, /* accessed */
                                                      0, /* cache_disabled */
                                                      0, /* write_through */
@@ -220,9 +220,9 @@ map_kernel_window(
                                                  );
 
     /* put the PT into the PD */
-    x64KSGlobalPDs[BIT(PDPT_INDEX_BITS) - 1][0] = pde_pde_pt_new(
+    x64KSKernelPDs[BIT(PDPT_INDEX_BITS) - 1][0] = pde_pde_pt_new(
                                                       0, /* xd */
-                                                      kpptr_to_paddr(x64KSGlobalPT),
+                                                      kpptr_to_paddr(x64KSKernelPT),
                                                       0, /* accessed */
                                                       0, /* cache_disabled */
                                                       0, /* write_through */
@@ -240,13 +240,13 @@ map_kernel_window(
 #endif
 
     /* now map in the kernel devices */
-    if (!map_kernel_window_devices(x64KSGlobalPT, num_ioapic, ioapic_paddrs, num_drhu, drhu_list)) {
+    if (!map_kernel_window_devices(x64KSKernelPT, num_ioapic, ioapic_paddrs, num_drhu, drhu_list)) {
         return false;
     }
 
 #ifdef ENABLE_SMP_SUPPORT
     /* initialize the TLB bitmap */
-    tlb_bitmap_init(x64KSGlobalPML4);
+    tlb_bitmap_init(x64KSKernelPML4);
 #endif /* ENABLE_SMP_SUPPORT */
 
     /* In boot code, so fine to just trash everything here */
@@ -434,7 +434,7 @@ void setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_pml4_cap ||
             !cap_pml4_cap_get_capPML4IsMapped(threadRoot)) {
-        setCurrentUserVSpaceRoot(kpptr_to_paddr(x64KSGlobalPML4), 0);
+        setCurrentUserVSpaceRoot(kpptr_to_paddr(x64KSKernelPML4), 0);
         return;
     }
 
@@ -442,7 +442,7 @@ void setVMRoot(tcb_t *tcb)
     asid = cap_pml4_cap_get_capPML4MappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != pml4)) {
-        setCurrentUserVSpaceRoot(kpptr_to_paddr(x64KSGlobalPML4), 0);
+        setCurrentUserVSpaceRoot(kpptr_to_paddr(x64KSKernelPML4), 0);
         return;
     }
     cr3 = makeCR3(pptr_to_paddr(pml4), asid);
@@ -728,7 +728,7 @@ void copyGlobalMappings(vspace_root_t *new_vspace)
      * will be equivalent to copying from PPTR_BASE
      */
     for (i = GET_PML4_INDEX(PPTR_USER_TOP); i < BIT(PML4_INDEX_BITS); i++) {
-        vspace[i] = x64KSGlobalPML4[i];
+        vspace[i] = x64KSKernelPML4[i];
     }
 }
 

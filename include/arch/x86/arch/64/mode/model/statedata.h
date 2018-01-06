@@ -17,14 +17,14 @@
 #include <arch/types.h>
 #include <model/statedata.h>
 
-extern pml4e_t x64KSGlobalPML4[BIT(PML4_INDEX_BITS)];
-extern pdpte_t x64KSGlobalPDPT[BIT(PDPT_INDEX_BITS)];
+extern pml4e_t x64KSKernelPML4[BIT(PML4_INDEX_BITS)];
+extern pdpte_t x64KSKernelPDPT[BIT(PDPT_INDEX_BITS)];
 #ifdef CONFIG_HUGE_PAGE
-extern pde_t x64KSGlobalPD[BIT(PD_INDEX_BITS)];
+extern pde_t x64KSKernelPD[BIT(PD_INDEX_BITS)];
 #else
-extern pde_t x64KSGlobalPDs[BIT(PDPT_INDEX_BITS)][BIT(PD_INDEX_BITS)];
+extern pde_t x64KSKernelPDs[BIT(PDPT_INDEX_BITS)][BIT(PD_INDEX_BITS)];
 #endif
-extern pte_t x64KSGlobalPT[BIT(PT_INDEX_BITS)];
+extern pte_t x64KSKernelPT[BIT(PT_INDEX_BITS)];
 
 NODE_STATE_BEGIN(modeNodeState)
 NODE_STATE_DECLARE(cr3_t, x64KSCurrentCR3);

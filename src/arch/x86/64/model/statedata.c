@@ -13,14 +13,14 @@
 #include <arch/model/statedata.h>
 
 /* The privileged kernel mapping PD & PT */
-pml4e_t x64KSGlobalPML4[BIT(PML4_INDEX_BITS)] ALIGN(BIT(seL4_PML4Bits));
-pdpte_t x64KSGlobalPDPT[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(seL4_PDPTBits));
+pml4e_t x64KSKernelPML4[BIT(PML4_INDEX_BITS)] ALIGN(BIT(seL4_PML4Bits));
+pdpte_t x64KSKernelPDPT[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(seL4_PDPTBits));
 #ifdef CONFIG_HUGE_PAGE
-pde_t x64KSGlobalPD[BIT(PD_INDEX_BITS)] ALIGN(BIT(seL4_PageDirBits));
+pde_t x64KSKernelPD[BIT(PD_INDEX_BITS)] ALIGN(BIT(seL4_PageDirBits));
 #else
-pde_t x64KSGlobalPDs[BIT(PDPT_INDEX_BITS)][BIT(PD_INDEX_BITS)] ALIGN(BIT(seL4_PageDirBits));
+pde_t x64KSKernelPDs[BIT(PDPT_INDEX_BITS)][BIT(PD_INDEX_BITS)] ALIGN(BIT(seL4_PageDirBits));
 #endif
-pte_t x64KSGlobalPT[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
+pte_t x64KSKernelPT[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
 
 UP_STATE_DEFINE(cr3_t, x64KSCurrentCR3);
 
