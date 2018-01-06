@@ -18,6 +18,11 @@
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/smp.h>
 
+static inline cr3_t makeCR3(paddr_t addr, word_t pcid)
+{
+    return cr3_new(addr, config_set(CONFIG_SUPPORT_PCID) ? pcid : 0);
+}
+
 /* Address space control */
 static inline cr3_t getCurrentCR3(void)
 {
@@ -37,11 +42,15 @@ static inline paddr_t getCurrentUserVSpaceRoot(void)
 static inline void setCurrentCR3(cr3_t cr3, word_t preserve_translation)
 {
     MODE_NODE_STATE(x64KSCurrentCR3) = cr3;
+    word_t cr3_word = cr3.words[0];
     if (config_set(CONFIG_SUPPORT_PCID)) {
-        write_cr3(cr3.words[0]  | (preserve_translation ? BIT(63) : 0));
+        if (preserve_translation) {
+            cr3_word |= BIT(63);
+        }
     } else {
-        write_cr3(cr3_new(getCurrentUserVSpaceRoot(), 0).words[0]);
+        assert(cr3_get_pcid(cr3) == 0);
     }
+    write_cr3(cr3_word);
 }
 
 /* there is no option for preservation translation when setting the user cr3
@@ -54,7 +63,7 @@ static inline void setCurrentUserCR3(cr3_t cr3)
 
 static inline void setCurrentVSpaceRoot(paddr_t addr, word_t pcid)
 {
-    setCurrentCR3(cr3_new(addr, pcid), 1);
+    setCurrentCR3(makeCR3(addr, pcid), 1);
 }
 
 static inline void setCurrentUserVSpaceRoot(paddr_t addr, word_t pcid)
@@ -149,7 +158,7 @@ static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t as
         /* store our previous cr3 */
         cr3_t cr3 = getCurrentCR3();
         /* load new vspace root, invalidating translation for it */
-        setCurrentCR3(cr3_new(root, asid), 0);
+        setCurrentCR3(makeCR3(root, asid), 0);
         /* reload old cr3, preserving its translation */
         setCurrentCR3(cr3, 1);
     } else {
