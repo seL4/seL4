@@ -29,6 +29,7 @@
 #define PTE_SIZE_BITS seL4_PageTableEntryBits
 #define PT_INDEX_BITS seL4_PageTableIndexBits
 #define X86_GLOBAL_VSPACE_ROOT ia32KSGlobalPD
+#define X86_KERNEL_VSPACE_ROOT ia32KSGlobalPD
 typedef pde_t vspace_root_t;
 
 #define GET_VSPACE_ROOT_INDEX(x) ((x) >> (seL4_PageBits + PT_INDEX_BITS))

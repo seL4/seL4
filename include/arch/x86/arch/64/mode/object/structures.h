@@ -42,6 +42,7 @@ compile_assert(uint64_t_size_64,
                sizeof(uint64_t) == 8)
 
 #define X86_GLOBAL_VSPACE_ROOT x64KSKernelPML4
+#define X86_KERNEL_VSPACE_ROOT x64KSKernelPML4
 
 #define PML4E_SIZE_BITS seL4_PML4EntryBits
 #define PML4_INDEX_BITS seL4_PML4IndexBits
