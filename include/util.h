@@ -141,6 +141,9 @@ CONST popcountl(unsigned long mask)
 
 #define POPCOUNTL(x) popcountl(x)
 
+/* Can be used to insert padding to the next L1 cache line boundary */
+#define PAD_TO_NEXT_CACHE_LN(used) char padding[L1_CACHE_LINE_SIZE - ((used) % L1_CACHE_LINE_SIZE)]
+
 #else /* __ASSEMBLER__ */
 
 /* Some assemblers don't recognise ul (unsigned long) suffix */
