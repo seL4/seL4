@@ -122,16 +122,16 @@ void ia32_install_tss(uint32_t tss_sel);
 
 static inline void FORCE_INLINE x86_write_fs_base_impl(word_t base)
 {
-    gdt_entry_gdt_data_ptr_set_base_low(ARCH_NODE_STATE(x86KSgdt) + GDT_IPCBUF, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(ARCH_NODE_STATE(x86KSgdt) + GDT_IPCBUF,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(ARCH_NODE_STATE(x86KSgdt) + GDT_IPCBUF, (base >> 24) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_low(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF, base);
+    gdt_entry_gdt_data_ptr_set_base_mid(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF,  (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_high(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF, (base >> 24) & 0xFF);
 }
 
 static inline void FORCE_INLINE x86_write_gs_base_impl(word_t base)
 {
-    gdt_entry_gdt_data_ptr_set_base_low(ARCH_NODE_STATE(x86KSgdt) + GDT_TLS, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(ARCH_NODE_STATE(x86KSgdt) + GDT_TLS,  (base >> 16) & 0xFF);
-    gdt_entry_gdt_data_ptr_set_base_high(ARCH_NODE_STATE(x86KSgdt) + GDT_TLS, (base >> 24) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_low(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS, base);
+    gdt_entry_gdt_data_ptr_set_base_mid(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS,  (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_high(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS, (base >> 24) & 0xFF);
 }
 
 #endif

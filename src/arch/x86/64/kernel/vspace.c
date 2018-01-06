@@ -274,7 +274,7 @@ init_tss(tss_t *tss)
                0, 0        /* rsp 0 */
            );
     /* set the IO map to all 1 to block user IN/OUT instructions */
-    memset(&ARCH_NODE_STATE(x86KStss).io_map[0], 0xff, sizeof(ARCH_NODE_STATE(x86KStss).io_map));
+    memset(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map[0], 0xff, sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
 }
 
 BOOT_CODE void
@@ -457,7 +457,7 @@ BOOT_CODE void
 init_dtrs(void)
 {
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
-    gdt_idt_ptr.base = (uint64_t)ARCH_NODE_STATE(x86KSgdt);
+    gdt_idt_ptr.base = (uint64_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt;
 
     /* When we install the gdt it will clobber any value of gs that
      * we have. Since we might be using it for TLS we can stash
@@ -468,7 +468,7 @@ init_dtrs(void)
     swapgs();
 
     gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1 )) - 1;
-    gdt_idt_ptr.base = (uint64_t)ARCH_NODE_STATE(x86KSidt);
+    gdt_idt_ptr.base = (uint64_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSidt;
     x64_install_idt(&gdt_idt_ptr);
 
     x64_install_ldt(SEL_NULL);

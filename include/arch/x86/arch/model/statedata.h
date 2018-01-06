@@ -37,12 +37,6 @@ NODE_STATE_DECLARE(interrupt_t, x86KScurInterrupt);
 /* Interrupt that the hardware believes we are currently handling (is marked in service
  * in the APIC) but we have not yet gotten around to handling */
 NODE_STATE_DECLARE(interrupt_t, x86KSPendingInterrupt);
-/* Task State Segment (TSS), contains currently running TCB in ESP0 */
-NODE_STATE_DECLARE(tss_io_t, x86KStss);
-/* Global Descriptor Table (GDT) */
-NODE_STATE_DECLARE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
-/* Interrupt Descriptor Table (IDT) */
-NODE_STATE_DECLARE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
 /* Bitmask of all cores should receive the reschedule IPI */
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
 
@@ -60,6 +54,21 @@ NODE_STATE_DECLARE(word_t, x86KSGPExceptReturnTo);
 
 NODE_STATE_TYPE_DECLARE(modeNodeState, mode);
 NODE_STATE_END(archNodeState);
+
+/* this is per core state grouped into a separate struct as it needs to be available
+ * at all times by the hardware, even when we are running in user mode */
+typedef struct x86_arch_global_state {
+    /* Task State Segment (TSS), contains currently running TCB in ESP0 */
+    tss_io_t x86KStss;
+    /* Global Descriptor Table (GDT) */
+    gdt_entry_t x86KSgdt[GDT_ENTRIES];
+    /* Interrupt Descriptor Table (IDT) */
+    idt_entry_t x86KSidt[IDT_ENTRIES];
+    PAD_TO_NEXT_CACHE_LN(sizeof(tss_io_t) + GDT_ENTRIES * sizeof(gdt_entry_t) + IDT_ENTRIES * sizeof(idt_entry_t));
+} x86_arch_global_state_t;
+compile_assert(x86_arch_global_state_padded, (sizeof(x86_arch_global_state_t) % L1_CACHE_LINE_SIZE) == 0)
+
+extern x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE);
 
 extern asid_pool_t* x86KSASIDTable[];
 extern uint32_t x86KScacheLineSizeBits;

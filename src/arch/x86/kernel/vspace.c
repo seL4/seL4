@@ -495,9 +495,9 @@ init_vm_state(void)
         SMP_COND_STATEMENT(return false);
     }
 
-    init_tss(&ARCH_NODE_STATE(x86KStss).tss);
-    init_gdt(ARCH_NODE_STATE(x86KSgdt), &ARCH_NODE_STATE(x86KStss).tss);
-    init_idt(ARCH_NODE_STATE(x86KSidt));
+    init_tss(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss);
+    init_gdt(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt, &x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss);
+    init_idt(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSidt);
     return true;
 }
 

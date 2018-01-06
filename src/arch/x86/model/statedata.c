@@ -24,11 +24,7 @@ UP_STATE_DEFINE(interrupt_t, x86KSPendingInterrupt);
 
 /* ==== proper read/write kernel state ==== */
 
-/* Task State Segment (TSS), contains currently running TCB in ESP0 */
-UP_STATE_DEFINE(tss_io_t, x86KStss VISIBLE);
-
-/* Global Descriptor Table (GDT) */
-UP_STATE_DEFINE(gdt_entry_t, x86KSgdt[GDT_ENTRIES]);
+x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE);
 
 /* The top level ASID table */
 asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];
@@ -43,9 +39,6 @@ UP_STATE_DEFINE(word_t, x86KSGPExceptReturnTo);
 
 /* Defines a translation of cpu ids from an index of our actual CPUs */
 SMP_STATE_DEFINE(cpu_id_mapping_t, cpu_mapping);
-
-/* Interrupt Descriptor Table (IDT) */
-UP_STATE_DEFINE(idt_entry_t, x86KSidt[IDT_ENTRIES]);
 
 /* CPU Cache Line Size */
 uint32_t x86KScacheLineSizeBits;

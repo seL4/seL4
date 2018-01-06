@@ -160,10 +160,10 @@ switchVCPU(vcpu_t *vcpu)
 #ifdef ENABLE_SMP_SUPPORT
     if (vcpu->last_cpu != getCurrentCPUIndex()) {
         /* migrate host state */
-        vmwrite(VMX_HOST_TR_BASE, (word_t)&ARCH_NODE_STATE(x86KStss));
-        vmwrite(VMX_HOST_GDTR_BASE, (word_t)ARCH_NODE_STATE(x86KSgdt));
-        vmwrite(VMX_HOST_IDTR_BASE, (word_t)ARCH_NODE_STATE(x86KSidt));
-        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&ARCH_NODE_STATE(x86KStss).tss.words[0] + 4));
+        vmwrite(VMX_HOST_TR_BASE, (word_t)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss);
+        vmwrite(VMX_HOST_GDTR_BASE, (word_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt);
+        vmwrite(VMX_HOST_IDTR_BASE, (word_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSidt);
+        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0] + 4));
     }
     vcpu->last_cpu = getCurrentCPUIndex();
 #endif
@@ -440,13 +440,13 @@ vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_HOST_CR4, read_cr4());
     vmwrite(VMX_HOST_FS_BASE, 0);
     vmwrite(VMX_HOST_GS_BASE, 0);
-    vmwrite(VMX_HOST_TR_BASE, (word_t)&ARCH_NODE_STATE(x86KStss));
-    vmwrite(VMX_HOST_GDTR_BASE, (word_t)ARCH_NODE_STATE(x86KSgdt));
-    vmwrite(VMX_HOST_IDTR_BASE, (word_t)ARCH_NODE_STATE(x86KSidt));
+    vmwrite(VMX_HOST_TR_BASE, (word_t)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss);
+    vmwrite(VMX_HOST_GDTR_BASE, (word_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt);
+    vmwrite(VMX_HOST_IDTR_BASE, (word_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSidt);
     vmwrite(VMX_HOST_SYSENTER_CS, (word_t)SEL_CS_0);
     vmwrite(VMX_HOST_SYSENTER_EIP, (word_t)&handle_syscall);
     if (!config_set(CONFIG_HARDWARE_DEBUG_API)) {
-        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&ARCH_NODE_STATE(x86KStss).tss.words[0] + 4));
+        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0] + 4));
     }
     /* Set host SP to point just beyond the first field to be stored on exit. */
     vmwrite(VMX_HOST_RSP, (word_t)&vcpu->gp_registers[n_vcpu_gp_register]);
