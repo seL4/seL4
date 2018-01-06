@@ -15,6 +15,7 @@
 #include <machine/fpu.h>
 #include <kernel/traps.h>
 #include <arch/machine/debug.h>
+#include <kernel/stack.h>
 
 #include <api/syscall.h>
 
@@ -142,15 +143,12 @@ void VISIBLE NORETURN restore_user_context(void)
         interrupt_t irq = servicePendingIRQ();
         /* reset our stack and jmp to the IRQ entry point */
         asm volatile(
-            /* round our stack back to the top to reset it */
-            "andq %[stack_mask], %%rsp\n"
-            "addq %[stack_size], %%rsp\n"
+            "movq %[stack_top], %%rsp\n"
             "movq %[syscall], %%rsi\n"
             "movq %[irq], %%rdi\n"
             "call c_handle_interrupt"
             :
-            : [stack_mask] "i"(~MASK(CONFIG_KERNEL_STACK_BITS)),
-            [stack_size] "i"(BIT(CONFIG_KERNEL_STACK_BITS)),
+            : [stack_top] "r"(&(kernel_stack_alloc[CURRENT_CPU_INDEX()][BIT(CONFIG_KERNEL_STACK_BITS)])),
             [syscall] "i"(0), /* syscall is unused for irq path */
             [irq] "r"((seL4_Word)irq)
             : "memory");

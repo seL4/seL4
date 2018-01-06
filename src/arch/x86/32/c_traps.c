@@ -120,15 +120,12 @@ void NORETURN VISIBLE restore_user_context(void)
         interrupt_t irq = servicePendingIRQ();
         /* reset our stack and jmp to the IRQ entry point */
         asm volatile(
-            /* round our stack back to the top to reset it */
-            "and %[stack_mask], %%esp\n"
-            "add %[stack_size], %%esp\n"
+            "mov %[stack_top], %%esp\n"
             "push %[syscall] \n"
             "push %[irq]\n"
             "call c_handle_interrupt"
             :
-            : [stack_mask] "i"(~MASK(CONFIG_KERNEL_STACK_BITS)),
-            [stack_size] "i"(BIT(CONFIG_KERNEL_STACK_BITS)),
+            : [stack_top] "r"(&(kernel_stack_alloc[CURRENT_CPU_INDEX()][BIT(CONFIG_KERNEL_STACK_BITS)])),
             [syscall] "r"(0), /* syscall is unused for irq path */
             [irq] "r"(irq)
             : "memory");
