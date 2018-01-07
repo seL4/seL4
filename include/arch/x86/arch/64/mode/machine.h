@@ -157,10 +157,18 @@ static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t as
     if (config_set(CONFIG_SUPPORT_PCID)) {
         /* store our previous cr3 */
         cr3_t cr3 = getCurrentCR3();
-        /* load new vspace root, invalidating translation for it */
-        setCurrentCR3(makeCR3(root, asid), 0);
-        /* reload old cr3, preserving its translation */
-        setCurrentCR3(cr3, 1);
+        /* we load the new vspace root, invalidating translation for it
+         * and then switch back to the old CR3. We do this in a single
+         * asm block to ensure we only rely on the code being mapped in
+         * the temporary address space and not the stack. We preserve the
+         * translation of the old cr3 */
+        asm volatile(
+            "mov %[new_cr3], %%cr3\n"
+            "mov %[old_cr3], %%cr3\n"
+            ::
+                [new_cr3] "r" (makeCR3(root, asid).words[0]),
+                [old_cr3] "r" (cr3.words[0] | BIT(63))
+        );
     } else {
         /* just invalidate the page structure cache as per normal, by
          * doing a dummy invalidation of a tlb entry */
