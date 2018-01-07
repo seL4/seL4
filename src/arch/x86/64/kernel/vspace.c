@@ -434,7 +434,7 @@ void setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_pml4_cap ||
             !cap_pml4_cap_get_capPML4IsMapped(threadRoot)) {
-        setCurrentUserVSpaceRoot(kpptr_to_paddr(x64KSKernelPML4), 0);
+        setCurrentUserVSpaceRoot(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT), 0);
         return;
     }
 
@@ -442,7 +442,7 @@ void setVMRoot(tcb_t *tcb)
     asid = cap_pml4_cap_get_capPML4MappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != pml4)) {
-        setCurrentUserVSpaceRoot(kpptr_to_paddr(x64KSKernelPML4), 0);
+        setCurrentUserVSpaceRoot(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT), 0);
         return;
     }
     cr3 = makeCR3(pptr_to_paddr(pml4), asid);
@@ -728,7 +728,7 @@ void copyGlobalMappings(vspace_root_t *new_vspace)
      * will be equivalent to copying from PPTR_BASE
      */
     for (i = GET_PML4_INDEX(PPTR_USER_TOP); i < BIT(PML4_INDEX_BITS); i++) {
-        vspace[i] = x64KSKernelPML4[i];
+        vspace[i] = X86_GLOBAL_VSPACE_ROOT[i];
     }
 }
 
