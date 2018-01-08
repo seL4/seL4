@@ -139,12 +139,26 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     c_exit_hook();
     lazyFPURestore(cur_thread);
 
+    if (config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
+        /* see restore_user_context for a full explanation of why we do this */
+        word_t *irqstack = x64KSIRQStack[CURRENT_CPU_INDEX()];
+        irqstack[0] = 0;
+        irqstack[1] = 0;
+        irqstack[2] = 0;
+        irqstack[3] = 0;
+        irqstack[4] = 0;
+        irqstack[5] = 0;
+    }
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
     restore_user_debug_context(cur_thread);
 #endif
 
 #ifdef ENABLE_SMP_SUPPORT
     cpu_id_t cpu = getCurrentCPUIndex();
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    word_t next_cr3 = MODE_NODE_STATE(x64KSCurrentUserCR3);
+#endif
     swapgs();
 #endif /* ENABLE_SMP_SUPPORT */
     /* Now that we have swapped back to the user gs we can safely
@@ -160,6 +174,9 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     if (config_set(CONFIG_SYSENTER)) {
         cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
 
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+        register word_t next_cr3_r11 asm("r11") = next_cr3;
+#endif
         asm volatile (
             "movq %%rcx, %%rsp\n"
             "popq %%rax\n"
@@ -186,13 +203,26 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "popq %%rcx\n"
             // Skip TLS_BASE FaultIP
             "addq $16, %%rsp\n"
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+            "popq %%rsp\n"
+            "movq %%r11, %%cr3\n"
+            "movq %%rsp, %%r11\n"
+#else
             "popq %%r11\n"
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+            "movq (x64KSCurrentUserCR3), %%rsp\n"
+            "movq %%rsp, %%cr3\n"
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
+#endif /* defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW) */
             "sti\n"
             "rex.w sysexit\n"
             :
             : "c" (&cur_thread->tcbArch.tcbContext.registers[RAX]),
             "D" (badge),
             "S" (msgInfo),
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+            "r"(next_cr3_r11),
+#endif
             [IF] "i" (FLAGS_IF)
             : "memory"
         );
@@ -214,7 +244,17 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             //restore RFLAGS
             "popq %%r11\n"
             // Restore NextIP
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+            "popq %%rsp\n"
+            "movq %%rcx, %%cr3\n"
+            "movq %%rsp, %%rcx\n"
+#else
             "popq %%rcx\n"
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+            "movq (x64KSCurrentUserCR3), %%rsp\n"
+            "movq %%rsp, %%cr3\n"
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
+#endif /* defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW) */
             // clear RSP to not leak information to the user
             "xor %%rsp, %%rsp\n"
             // More register but we can ignore and are done restoring
@@ -224,6 +264,9 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             : "r"(&cur_thread->tcbArch.tcbContext.registers[RAX]),
             "D" (badge),
             "S" (msgInfo)
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+                 ,"c" (next_cr3)
+#endif
             : "memory"
         );
     }

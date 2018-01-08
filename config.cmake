@@ -242,7 +242,7 @@ config_option(KernelDangerousCodeInjection DANGEROUS_CODE_INJECTION
     "Adds a system call that allows users to specify code to be run in kernel mode. \
     Useful for profiling."
     DEFAULT OFF
-    DEPENDS "NOT KernelARMHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey"
+    DEPENDS "NOT KernelARMHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
 )
 
 config_option(KernelDebugDisablePrefetchers DEBUG_DISABLE_PREFETCHERS

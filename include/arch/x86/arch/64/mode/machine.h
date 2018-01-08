@@ -17,6 +17,7 @@
 #include <arch/model/statedata.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/smp.h>
+#include <plat_mode/machine/hardware.h>
 
 static inline cr3_t makeCR3(paddr_t addr, word_t pcid)
 {
@@ -26,12 +27,30 @@ static inline cr3_t makeCR3(paddr_t addr, word_t pcid)
 /* Address space control */
 static inline cr3_t getCurrentCR3(void)
 {
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    /* If we're running in the kernel to call this function, then by definition
+     * this must be the current cr3 */
+    return cr3_new(kpptr_to_paddr(x64KSKernelPML4), 0);
+#else
     return MODE_NODE_STATE(x64KSCurrentCR3);
+#endif
 }
 
 static inline cr3_t getCurrentUserCR3(void)
 {
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    // Construct a cr3_t from the state word, dropping any command information
+    // if needed
+    word_t cr3_word = MODE_NODE_STATE(x64KSCurrentUserCR3);
+    cr3_t cr3_ret;
+    if (config_set(CONFIG_SUPPORT_PCID)) {
+        cr3_word &= ~BIT(63);
+    }
+    cr3_ret.words[0] = cr3_word;
+    return cr3_ret;
+#else
     return getCurrentCR3();
+#endif
 }
 
 static inline paddr_t getCurrentUserVSpaceRoot(void)
@@ -41,7 +60,14 @@ static inline paddr_t getCurrentUserVSpaceRoot(void)
 
 static inline void setCurrentCR3(cr3_t cr3, word_t preserve_translation)
 {
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    /* we should only ever be enabling the kernel window, as the bulk of the
+     * cr3 loading when using the SKIM window will happen on kernel entry/exit
+     * in assembly stubs */
+    assert(cr3_get_pml4_base_address(cr3) == kpptr_to_paddr(x64KSKernelPML4));
+#else
     MODE_NODE_STATE(x64KSCurrentCR3) = cr3;
+#endif
     word_t cr3_word = cr3.words[0];
     if (config_set(CONFIG_SUPPORT_PCID)) {
         if (preserve_translation) {
@@ -58,7 +84,18 @@ static inline void setCurrentCR3(cr3_t cr3, word_t preserve_translation)
    If translation needs to be flushed then setCurrentCR3 should be used instead */
 static inline void setCurrentUserCR3(cr3_t cr3)
 {
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    // To make the restore stubs more efficient we will set the preserve_translation
+    // command in the state. If we look at the cr3 later on we need to remember to
+    // remove that bit
+    word_t cr3_word = cr3.words[0];
+    if (config_set(CONFIG_SUPPORT_PCID)) {
+        cr3_word |= BIT(63);
+    }
+    MODE_NODE_STATE(x64KSCurrentUserCR3) = cr3_word;
+#else
     setCurrentCR3(cr3, 1);
+#endif
 }
 
 static inline void setCurrentVSpaceRoot(paddr_t addr, word_t pcid)
@@ -68,7 +105,11 @@ static inline void setCurrentVSpaceRoot(paddr_t addr, word_t pcid)
 
 static inline void setCurrentUserVSpaceRoot(paddr_t addr, word_t pcid)
 {
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    setCurrentUserCR3(makeCR3(addr, pcid));
+#else
     setCurrentVSpaceRoot(addr, pcid);
+#endif
 }
 
 /* GDT installation */

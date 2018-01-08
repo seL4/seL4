@@ -235,6 +235,15 @@ config_option(KernelMultiboot2Header MULTIBOOT2_HEADER
     DEPENDS "KernelArchX86"
 )
 
+config_option(KernelSkimWindow KERNEL_SKIM_WINDOW
+    "Prevent against the Meltdown vulnerability by using a reduced Static Kernel
+    Image and Micro-state window instead of having all kernel state in the kernel window.
+    This only needs to be enabled if deploying to a vulnerable processor"
+    DEFAULT ON
+    DEPENDS "KernelSel4ArchX86_64"
+    DEFAULT_DISABLED OFF
+)
+
 config_option(KernelExportPMCUser EXPORT_PMC_USER
     "Grant user access to the Performance Monitoring Counters.
     This allows the user to read performance counters, although

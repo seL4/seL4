@@ -25,6 +25,9 @@ PADDR_BASE = 0x00000000;
 PADDR_LOAD = 0x00100000;
 KERNEL_BASE = 0xffffffff80000000;
 OUTPUT_FORMAT(elf64-x86-64)
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+nodeSkimScratchOffset = nodeSkimScratch - node_info;
+#endif
 #endif
 
 KERNEL_OFFSET = KERNEL_BASE - PADDR_BASE;
@@ -66,8 +69,18 @@ SECTIONS
         *(.boot.bss)
         . = ALIGN(4K);
     }
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    /* Align up so that the SKIM portion of the kernel is by itself
+       on large pages */
+#ifdef CONFIG_ARCH_IA32
+    . = ALIGN(4M);
+#else
+    . = ALIGN(2M);
+#endif
+#endif
 
     ki_boot_end = .;
+    ki_skim_start = .;
 
     .text . : AT(ADDR(.text) - KERNEL_OFFSET)
     {
@@ -79,6 +92,29 @@ SECTIONS
         *(.rodata)
         *(.rodata.*)
     }
+
+    .skim_data . : AT(ADDR(.skim_data) - KERNEL_OFFSET)
+    {
+        *(.skim.data)
+        *(.skim.data.*)
+    }
+
+    .skim_bss . : AT(ADDR(.skim_bss) - KERNEL_OFFSET)
+    {
+        *(.skim.bss)
+        *(.skim.bss.*)
+    }
+
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    /* Align up so that the SKIM portion of the kernel is by itself
+       on large pages */
+#ifdef CONFIG_ARCH_IA32
+    . = ALIGN(4M);
+#else
+    . = ALIGN(2M);
+#endif
+#endif
+    ki_skim_end = .;
 
     .data . : AT(ADDR(.data) - KERNEL_OFFSET)
     {

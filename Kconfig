@@ -556,7 +556,7 @@ menu "Build Options"
 
     config DANGEROUS_CODE_INJECTION
 	    bool "Build kernel with support for executing arbitrary code in protected mode"
-           depends on !ARM_HYPERVISOR_SUPPORT && !VERIFICATION_BUILD && !PLAT_HIKEY
+           depends on !ARM_HYPERVISOR_SUPPORT && !VERIFICATION_BUILD && !PLAT_HIKEY && !KERNEL_SKIM_WINDOW
         default n
         help
             Adds a system call that allows users to specify code to be run in kernel

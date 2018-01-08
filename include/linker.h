@@ -29,4 +29,11 @@
 /* data will be aligned to n bytes in a special BSS section */
 #define ALIGN_BSS(n) ALIGN(n) SECTION(".bss.aligned")
 
+/* data that will be mapped into and permitted to be used in the restricted SKIM
+ * address space */
+#define SKIM_DATA SECTION(".skim.data")
+
+/* bss data that is permitted to be used in the restricted SKIM address space */
+#define SKIM_BSS SECTION(".skim.bss")
+
 #endif /* __LINKER_H */

@@ -68,7 +68,7 @@ typedef struct x86_arch_global_state {
 } x86_arch_global_state_t;
 compile_assert(x86_arch_global_state_padded, (sizeof(x86_arch_global_state_t) % L1_CACHE_LINE_SIZE) == 0)
 
-extern x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE);
+extern x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE) SKIM_BSS;
 
 extern asid_pool_t* x86KSASIDTable[];
 extern uint32_t x86KScacheLineSizeBits;

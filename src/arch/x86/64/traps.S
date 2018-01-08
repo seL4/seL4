@@ -12,6 +12,7 @@
 
 #include <machine/assembler.h>
 #include <config.h>
+#include <plat_mode/machine/hardware.h>
 
 /*
  * The exception in 64-bit mode:
@@ -80,6 +81,27 @@
 #define LOAD_IRQ_STACK(x)  leaq    x64KSIRQStack, %x
 #endif
 
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+/* If using PCIDs then our final value is not an address with a valid 32-bit relocation for
+ * the linker, but rather requires a full 64-bit representation. To work around this we
+ * use movabs to generate a full 64-bit immediate if using PCID, but lea if not. We prefer
+ * lea where possible as it has a more efficient instruction representation
+ */
+#ifdef CONFIG_SUPPORT_PCID
+#define LOAD_KERNEL_AS(reg) \
+    movabs $x64KSKernelPML4 - KERNEL_BASE_OFFSET + (1 << 63), %reg; \
+    movq %reg, %cr3;
+#else /* !CONFIG_SUPPORT_PCID */
+#define LOAD_KERNEL_AS(reg) \
+    lea x64KSKernelPML4 - KERNEL_BASE_OFFSET, %reg; \
+    movq %reg, %cr3;
+#endif /* CONFIG_SUPPORT_PCID */
+#else /* !CONFIG_KERNEL_SKIM_WINDOW */
+
+#define LOAD_KERNEL_AS(reg)
+
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
+
 /* Registers to be pushed after an interrupt
    %rcx must be pushed beforehand */
 #define INT_SAVE_STATE                              \
@@ -138,6 +160,7 @@ int_##number:                                       \
     testq   $3, 16(%rsp);                           \
     jz      1f;                                     \
 2:                                                  \
+    LOAD_KERNEL_AS(rsp)                             \
     /* we need to not skip RSP, TLS_BASE, FaultIP, R11 and RCX for now */ \
     MAYBE_SWAPGS;                                   \
     LOAD_USER_CONTEXT_OFFSET(5);                    \
@@ -570,6 +593,7 @@ END_FUNC(kernel_exception)
 # the current RFLAGS (after saving) have been masked
 # with IA32_FMASK.
 BEGIN_FUNC(handle_fastsyscall)
+    LOAD_KERNEL_AS(rsp)
     MAYBE_SWAPGS
     LOAD_USER_CONTEXT
     pushq   $-1             # set Error -1 to mean entry via syscall
@@ -605,6 +629,7 @@ END_FUNC(handle_fastsyscall)
 #   RSP : NULL
 BEGIN_FUNC(handle_syscall)
     /* We need to save r11, rdx TLS_BASE and RSP */
+    LOAD_KERNEL_AS(rsp)
     MAYBE_SWAPGS
     LOAD_USER_CONTEXT_OFFSET(4)
     push    %r11

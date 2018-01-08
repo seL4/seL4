@@ -304,8 +304,10 @@ struct vcpu {
     /* Last used EPT root */
     word_t last_ept_root;
 
+#ifndef CONFIG_KERNEL_SKIM_WINDOW
     /* Last set host cr3 */
     word_t last_host_cr3;
+#endif
 
 #ifdef ENABLE_SMP_SUPPORT
     /* Core this VCPU was last loaded on, or is currently loaded on */

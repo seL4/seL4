@@ -41,6 +41,8 @@ extern char boot_stack_top[1];
 /* locations in kernel image */
 extern char ki_boot_end[1];
 extern char ki_end[1];
+extern char ki_skim_start[1];
+extern char ki_skim_end[1];
 
 #ifdef CONFIG_PRINTING
 /* kernel entry point */
@@ -208,6 +210,12 @@ try_boot_sys_node(cpu_id_t cpu_id)
     /* Sync up the compilers view of the world here to force the PD to actually
      * be set *right now* instead of delayed */
     asm volatile("" ::: "memory");
+
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    if (!map_skim_window((vptr_t)ki_skim_start, (vptr_t)ki_skim_end)) {
+        return false;
+    }
+#endif
 
     /* reuse boot code/data memory */
     boot_mem_reuse_p_reg.start = PADDR_LOAD;
@@ -403,6 +411,34 @@ try_boot_sys(void)
 
     if (!is_compiled_for_microarchitecture()) {
         printf("Warning: Your kernel was not compiled for the current microarchitecture.\n");
+    }
+
+    cpuid_007h_edx_t edx;
+    edx.words[0] = x86_cpuid_edx(0x7, 0);
+    /* see if we can definitively say whether or not we need the skim window by
+     * checking whether the CPU is vulnerable to rogue data cache loads (rdcl) */
+    if (cpuid_007h_edx_get_ia32_arch_cap_msr(edx)) {
+        ia32_arch_capabilities_msr_t cap_msr;
+        cap_msr.words[0] = x86_rdmsr(IA32_ARCH_CAPABILITIES_MSR);
+        if (ia32_arch_capabilities_msr_get_rdcl_no(cap_msr) && config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
+            printf("CPU reports not vulnerable to Rogue Data Cache Load (aka Meltdown https://meltdownattack.com) "
+                   "yet SKIM window is enabled. Performance is needlessly being impacted, consider disabling.\n");
+        } else if (!ia32_arch_capabilities_msr_get_rdcl_no(cap_msr) && !config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
+            printf("CPU reports vulernable to Rogue Data Cache Load (aka Meltdown https://meltdownattack.com) "
+                   "yet SKIM window is *not* enabled. Please re-build with SKIM window enabled.");
+            return false;
+        }
+    } else {
+        /* hardware doesn't tell us directly so guess based on CPU vendor */
+        if (config_set(CONFIG_KERNEL_SKIM_WINDOW) && x86_cpuid_get_identity()->vendor == X86_VENDOR_AMD) {
+            printf("SKIM window for mitigating Meltdown (https://www.meltdownattack.com) "
+                    "not necessary for AMD and performance is being needlessly affected, "
+                    "consider disabling\n");
+        }
+        if (!config_set(CONFIG_KERNEL_SKIM_WINDOW) && x86_cpuid_get_identity()->vendor == X86_VENDOR_INTEL) {
+            printf("***WARNING*** SKIM window not enabled, this machine is probably vulernable "
+                   "to Meltdown (https://www.meltdownattack.com), consider enabling\n");
+        }
     }
 
 #ifdef ENABLE_SMP_SUPPORT

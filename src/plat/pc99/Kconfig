@@ -300,6 +300,15 @@ depends on PLAT_PC99
             Value of zero indicates no preference
 endmenu
 
+config KERNEL_SKIM_WINDOW
+    bool "Kernel Static Kernel Image and Micro-state (SKIM) window"
+    depends on ARCH_X86_64
+    default y
+    help
+        Prevent against the Meltdown vulnerability by using a reduced Static Kernel
+        Image and Micro-state window instead of having all kernel state in the kernel window.
+        This only needs to be enabled if deploying to a vulnerable processor
+
 config EXPORT_PMC_USER
     bool "User access to PMC"
     depends on ARCH_X86 && !VERIFICATION_BUILD

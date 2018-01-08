@@ -21,6 +21,12 @@
 #include <mode/kernel/tlb.h>
 #include <arch/kernel/tlb_bitmap.h>
 
+/* When using the SKIM window to isolate the kernel from the user we also need to
+ * not use global mappings as having global mappings and entries in the TLB is
+ * equivalent, for the purpose of exploitation, to having the mappings in the
+ * kernel window */
+#define KERNEL_IS_GLOBAL() (config_set(CONFIG_KERNEL_SKIM_WINDOW) ? 0 : 1)
+
 /* For the boot code we create two windows into the physical address space
  * One is at the same location as the kernel window, and is placed up high
  * The other is a 1-to-1 mapping of the first 512gb of memory. The purpose
@@ -76,7 +82,7 @@ map_kernel_window(
                                                        0, /* xd */
                                                        PADDR_BASE,
                                                        0, /* PAT */
-                                                       1, /* global */
+                                                       KERNEL_IS_GLOBAL(), /* global */
                                                        0, /* dirty */
                                                        0, /* accessed */
                                                        0, /* cache_disabled */
@@ -96,7 +102,7 @@ map_kernel_window(
                                            0,          /* xd               */
                                            paddr,      /* physical address */
                                            0,          /* PAT              */
-                                           1,          /* global           */
+                                           KERNEL_IS_GLOBAL(), /* global   */
                                            0,          /* dirty            */
                                            0,          /* accessed         */
                                            0,          /* cache_disabled   */
@@ -195,7 +201,7 @@ map_kernel_window(
                                                   0, /* xd */
                                                   paddr,
                                                   0, /* pat */
-                                                  1, /* global */
+                                                  KERNEL_IS_GLOBAL(), /* global */
                                                   0, /* dirty */
                                                   0, /* accessed */
                                                   0, /* cache disabled */
@@ -254,6 +260,56 @@ map_kernel_window(
     printf("Mapping kernel window is done\n");
     return true;
 }
+
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+BOOT_CODE bool_t
+map_skim_window(vptr_t skim_start, vptr_t skim_end)
+{
+    /* place the PDPT into the PML4 */
+    x64KSSKIMPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
+                                                     0, /* xd */
+                                                     kpptr_to_paddr(x64KSSKIMPDPT),
+                                                     0, /* accessed */
+                                                     0, /* cache_disabled */
+                                                     0, /* write_through */
+                                                     0, /* super_user */
+                                                     1, /* read_write */
+                                                     1  /* present */
+                                                 );
+    /* place the PD into the kernel_base slot of the PDPT */
+    x64KSSKIMPDPT[GET_PDPT_INDEX(KERNEL_BASE)] = pdpte_pdpte_pd_new(
+                                                       0, /* xd */
+                                                       kpptr_to_paddr(x64KSSKIMPD),
+                                                       0, /* accessed */
+                                                       0, /* cache_disabled */
+                                                       0, /* write_through */
+                                                       0, /* super_user */
+                                                       1, /* read_write */
+                                                       1  /* present */
+                                                   );
+    /* map the skim portion into the PD. we expect it to be 2M aligned */
+    assert((skim_start % BIT(seL4_LargePageBits)) == 0);
+    assert((skim_end % BIT(seL4_LargePageBits)) == 0);
+    uint64_t paddr = kpptr_to_paddr((void*)skim_start);
+    for (int i = GET_PD_INDEX(skim_start); i < GET_PD_INDEX(skim_end); i++) {
+        x64KSSKIMPD[i] = pde_pde_large_new(
+                                        0, /* xd */
+                                        paddr,
+                                        0, /* pat */
+                                        KERNEL_IS_GLOBAL(), /* global */
+                                        0, /* dirty */
+                                        0, /* accessed */
+                                        0, /* cache_disabled */
+                                        0, /* write_through */
+                                        0, /* super_user */
+                                        1, /* read_write */
+                                        1  /* present */
+                                    );
+        paddr += BIT(seL4_LargePageBits);
+    }
+    return true;
+}
+#endif
 
 BOOT_CODE void
 init_tss(tss_t *tss)

@@ -46,6 +46,7 @@ bool_t map_kernel_window(
     uint32_t   num_drhu,
     paddr_t*   drhu_list
 );
+bool_t map_skim_window(vptr_t skim_start, vptr_t skim_end);
 bool_t map_kernel_window_devices(
     pte_t *pt,
     uint32_t num_ioapic,

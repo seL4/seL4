@@ -24,7 +24,7 @@ UP_STATE_DEFINE(interrupt_t, x86KSPendingInterrupt);
 
 /* ==== proper read/write kernel state ==== */
 
-x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE);
+x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE) SKIM_BSS;
 
 /* The top level ASID table */
 asid_pool_t* x86KSASIDTable[BIT(asidHighBits)];

@@ -41,7 +41,12 @@ compile_assert(unsinged_int_size_32,
 compile_assert(uint64_t_size_64,
                sizeof(uint64_t) == 8)
 
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+#define X86_GLOBAL_VSPACE_ROOT x64KSSKIMPML4
+#else
 #define X86_GLOBAL_VSPACE_ROOT x64KSKernelPML4
+#endif
+
 #define X86_KERNEL_VSPACE_ROOT x64KSKernelPML4
 
 #define PML4E_SIZE_BITS seL4_PML4EntryBits

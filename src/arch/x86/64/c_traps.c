@@ -170,8 +170,11 @@ void VISIBLE NORETURN restore_user_context(void)
 
 #ifdef ENABLE_SMP_SUPPORT
     cpu_id_t cpu = getCurrentCPUIndex();
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    word_t user_cr3 = MODE_NODE_STATE(x64KSCurrentUserCR3);
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
     swapgs();
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
 
     /* Now that we have swapped back to the user gs we can safely
      * update the GS base. We must *not* use any kernel functions
@@ -188,8 +191,27 @@ void VISIBLE NORETURN restore_user_context(void)
     // but are current singlestepping, do a full return like an interrupt
     if (likely(cur_thread->tcbArch.tcbContext.registers[Error] == -1) &&
             (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((cur_thread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
+        if (config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
+            /* if we are using the SKIM window then we are trying to hide kernel state from
+             * the user in the case of Meltdown where the kernel region is effectively readable
+             * by the user. To prevent a storage channel across threads through the irq stack,
+             * which is idirectly controlled by the user, we need to clear the stack. We perform
+             * this here since when we return *from* an interrupt we must use this stack and
+             * cannot clear it. This means if we restore from interrupt, then enter from a syscall
+             * and switch to a different thread we must either on syscall entry, or before leaving
+             * the kernel, clear the irq stack. */
+            irqstack[0] = 0;
+            irqstack[1] = 0;
+            irqstack[2] = 0;
+            irqstack[3] = 0;
+            irqstack[4] = 0;
+            irqstack[5] = 0;
+        }
         if (config_set(CONFIG_SYSENTER)) {
             cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+            register word_t user_cr3_r11 asm("r11") = user_cr3;
+#endif
             asm volatile(
                 // Set our stack pointer to the top of the tcb so we can efficiently pop
                 "movq %0, %%rsp\n"
@@ -219,7 +241,17 @@ void VISIBLE NORETURN restore_user_context(void)
                 "popq %%rcx\n"
                 // Skip TLS_BASE, FaultIP
                 "addq $16, %%rsp\n"
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+                "popq %%rsp\n"
+                "movq %%r11, %%cr3\n"
+                "movq %%rsp, %%r11\n"
+#else
                 "popq %%r11\n"
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+                "movq (x64KSCurrentUserCR3), %%rsp\n"
+                "movq %%rsp, %%cr3\n"
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
+#endif /* defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW) */
                 // More register but we can ignore and are done restoring
                 // enable interrupt disabled by sysenter
                 "sti\n"
@@ -230,6 +262,9 @@ void VISIBLE NORETURN restore_user_context(void)
                 "rex.w sysexit\n"
                 :
                 : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI]),
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+                  "r"(user_cr3_r11),
+#endif
                 [IF] "i" (FLAGS_IF)
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
@@ -255,7 +290,17 @@ void VISIBLE NORETURN restore_user_context(void)
                 //restore RFLAGS
                 "popq %%r11\n"
                 // Restore NextIP
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+                "popq %%rsp\n"
+                "movq %%rcx, %%cr3\n"
+                "movq %%rsp, %%rcx\n"
+#else
                 "popq %%rcx\n"
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+                "movq (x64KSCurrentUserCR3), %%rsp\n"
+                "movq %%rsp, %%cr3\n"
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
+#endif /* defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW) */
                 // clear RSP to not leak information to the user
                 "xor %%rsp, %%rsp\n"
                 // More register but we can ignore and are done restoring
@@ -263,6 +308,9 @@ void VISIBLE NORETURN restore_user_context(void)
                 "rex.w sysret\n"
                 :
                 : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+                 ,"c" (user_cr3)
+#endif
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
                 : "memory"
@@ -270,6 +318,10 @@ void VISIBLE NORETURN restore_user_context(void)
         }
     } else {
         /* construct our return from interrupt frame */
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+        /* Have to zero this to prevent storage channel */
+        irqstack[0] = 0;
+#endif
         irqstack[1] = getRegister(cur_thread, NextIP);
         irqstack[2] = getRegister(cur_thread, CS);
         irqstack[3] = getRegister(cur_thread, FLAGS);
@@ -294,21 +346,48 @@ void VISIBLE NORETURN restore_user_context(void)
             /* skip RFLAGS, Error NextIP RSP, TLS_BASE, FaultIP */
             "addq $48, %%rsp\n"
             "popq %%r11\n"
+
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+            /* pop into rsp as we're done with the stack for now and we need to
+             * preserve our rcx value as it has our next cr3 value */
+            "popq %%rsp\n"
+#else
             "popq %%rcx\n"
+#endif /* defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW) */
+
 #ifdef ENABLE_SMP_SUPPORT
             // Swapping gs twice here is worth it as it allows us to efficiently
             // set the user gs base previously
             "swapgs\n"
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+            /* now we stash rcx in the scratch space that we can access once we've
+             * loaded the user cr3 */
+            "movq %%rsp, %%gs:%c[scratch_offset]\n"
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
             "movq %%gs:8, %%rsp\n"
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+            /* change to the user address space and then load the value of rcx that
+             * we stashed */
+            "movq %%rcx, %%cr3\n"
+            "movq %%gs:%c[scratch_offset], %%rcx\n"
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
             "addq $8, %%rsp\n"
             // Switch to the user GS value
             "swapgs\n"
-#else
+#else /* !ENABLE_SMP_SUPPORT */
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+            "movq (x64KSCurrentUserCR3), %%rsp\n"
+            "movq %%rsp, %%cr3\n"
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
             "leaq x64KSIRQStack + 8, %%rsp\n"
-#endif
+#endif /* ENABLE_SMP_SUPPORT */
             "iretq\n"
             :
             : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
+             ,"c" (user_cr3)
+             ,[scratch_offset] "i" (nodeSkimScratchOffset)
+#endif
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"
