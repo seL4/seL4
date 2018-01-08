@@ -24,6 +24,7 @@
 
 #define NULL ((void *)0)
 #define BIT(n) (1ul << (n))
+#define UL_CONST(x) PASTE(x, ul)
 
 #define PACKED       __attribute__((packed))
 #define NORETURN     __attribute__((__noreturn__))
@@ -149,6 +150,7 @@ CONST popcountl(unsigned long mask)
 
 /* Some assemblers don't recognise ul (unsigned long) suffix */
 #define BIT(n) (1 << (n))
+#define UL_CONST(x) x
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __UTIL_H */
