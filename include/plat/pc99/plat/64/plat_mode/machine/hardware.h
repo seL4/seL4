@@ -13,33 +13,30 @@
 #ifndef __PLAT_MODE_MACHINE_HARDWARE_H_
 #define __PLAT_MODE_MACHINE_HARDWARE_H_
 
-#include <config.h>
-#include <basic_types.h>
-#include <plat/machine.h>
-#include <plat_mode/machine/hardware_gen.h>
+#include <util.h>
 
 /* WARNING: some of these constants are also defined in linker.lds
  * These constants are written out in full instead of using bit arithmetic
  * because they need to defined like this in linker.lds
  */
-#define PADDR_BASE  0x00000000ul
-#define PADDR_LOAD  0x00100000ul
+#define PADDR_BASE  UL_CONST(0x00000000)
+#define PADDR_LOAD  UL_CONST(0x00100000)
 /* our kernel window is 2^39 bits (2^9 * 1gb) and the virtual address
  * range is 48 bits. Therefore our base is 2^48 - 2^39
  */
-#define PPTR_BASE   0xffffff8000000000ul
+#define PPTR_BASE   UL_CONST(0xffffff8000000000)
 
 /* The kernel binary itself is placed in the bottom 1gb of the top
  * 2gb of virtual address space. This is so we can use the 'kernel'
  * memory model of GCC, which requires all symbols to be linked
  * within the top 2GiB of memory. This is (2^48 - 2 ^ 31) */
-#define KERNEL_BASE 0xffffffff80000000ul
+#define KERNEL_BASE UL_CONST(0xffffffff80000000)
 
 /* Put the kernel devices at the very beginning of the top
  * 1GB. This means they are precisely after the kernel binary
  * region. This is 2^48 - 2^30
  */
-#define PPTR_KDEV 0xffffffffc0000000ul
+#define PPTR_KDEV UL_CONST(0xffffffffc0000000)
 
 /* PADDR_TOP is the end of our larger kernel window, just before the
  * kernel image itself */
@@ -63,6 +60,13 @@
 
 #define BASE_OFFSET PPTR_BASE
 
+#ifndef __ASSEMBLER__
+
+#include <config.h>
+#include <basic_types.h>
+#include <plat/machine.h>
+#include <plat_mode/machine/hardware_gen.h>
+
 /* since we have two kernel VM windows, we have two pptr to paddr
  * conversion functions.
  * paddr_to_kpptr converts physical address to the second small kernel
@@ -81,5 +85,7 @@ kpptr_to_paddr(void *pptr)
     assert((word_t)pptr >= KERNEL_BASE);
     return (paddr_t)pptr - KERNEL_BASE_OFFSET;
 }
+
+#endif /* __ASSEMBLER__ */
 
 #endif /* __PLAT_MODE_MACHINE_HARDWARE_H_ */
