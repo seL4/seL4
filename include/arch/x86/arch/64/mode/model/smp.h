@@ -32,9 +32,11 @@ typedef struct nodeInfo {
      */
     word_t currentThreadUserContext;
     cpu_id_t index;
+    PAD_TO_NEXT_CACHE_LN(sizeof(void*) + sizeof(void*) + sizeof(word_t) + sizeof(cpu_id_t));
 } nodeInfo_t;
+compile_assert(nodeInfoIsCacheSized, (sizeof(nodeInfo_t) % L1_CACHE_LINE_SIZE) == 0)
 
-extern nodeInfo_t node_info[CONFIG_MAX_NUM_NODES];
+extern nodeInfo_t node_info[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE);
 
 static inline CONST cpu_id_t getCurrentCPUIndex(void)
 {
