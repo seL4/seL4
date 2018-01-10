@@ -107,6 +107,9 @@ word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     if (cap_get_capType(bufferCap) != cap_frame_cap) {
         return NULL;
     }
+    if (unlikely(cap_frame_cap_get_capFIsDevice(bufferCap))) {
+        return NULL;
+    }
 
     vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
     if (vm_rights == VMReadWrite || (!isReceiver && vm_rights == VMReadOnly)) {
