@@ -489,9 +489,7 @@ init_core_state(tcb_t *scheduler_action)
             scheduler_action != SchedulerAction_ChooseNewThread) {
         tcbDebugAppend(scheduler_action);
     }
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
-        tcbDebugAppend(NODE_STATE_ON_CORE(ksIdleThread, i));
-    }
+    tcbDebugAppend(NODE_STATE(ksIdleThread));
 #endif
     NODE_STATE(ksSchedulerAction) = scheduler_action;
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
