@@ -186,11 +186,12 @@ void tcbDebugAppend(tcb_t *tcb)
     /* prepend to the list */
     tcb->tcbDebugPrev = NULL;
 
+    tcb->tcbDebugNext = NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity);
+
     if (NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)) {
         NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity)->tcbDebugPrev = tcb;
     }
 
-    tcb->tcbDebugNext = NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity);
     NODE_STATE_ON_CORE(ksDebugTCBs, tcb->tcbAffinity) = tcb;
 }
 
