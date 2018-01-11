@@ -113,8 +113,7 @@ word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 
     vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
     if (vm_rights == VMReadWrite || (!isReceiver && vm_rights == VMReadOnly)) {
-        word_t basePtr;
-        unsigned int pageBits;
+        word_t basePtr, pageBits;
 
         basePtr = cap_frame_cap_get_capFBasePtr(bufferCap);
         pageBits = pageBitsForSize(cap_frame_cap_get_capFSize(bufferCap));
