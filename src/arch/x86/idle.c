@@ -20,6 +20,7 @@ void idle_thread(void)
     }
 }
 
+/** DONT_TRANSLATE */
 void VISIBLE halt(void)
 {
     /* halt is actually, idle thread without the interrupts */
