@@ -16,6 +16,7 @@ if(KernelPlatformZynq7000)
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
     config_set(KernelPlatform PLAT "zynq7000")
+    config_set(KernelArmMach MACH "zynq")
 endif()
 
 add_sources(
