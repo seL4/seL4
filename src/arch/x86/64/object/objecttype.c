@@ -137,6 +137,13 @@ bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b)
 {
     switch (cap_get_capType(cap_a)) {
 
+    case cap_pdpt_cap:
+        if (cap_get_capType(cap_b) == cap_pdpt_cap) {
+            return cap_pdpt_cap_get_capPDPTBasePtr(cap_a) ==
+                   cap_pdpt_cap_get_capPDPTBasePtr(cap_b);
+        }
+        return false;
+
     case cap_pml4_cap:
         if (cap_get_capType(cap_b) == cap_pml4_cap) {
             return cap_pml4_cap_get_capPML4BasePtr(cap_a) ==
