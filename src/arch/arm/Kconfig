@@ -30,7 +30,7 @@ config ENABLE_A9_PREFETCHER
 config EXPORT_PMU_USER
     bool "PL0 access to PMU"
     default n
-    depends on ARCH_ARM_V7A || ARCH_ARM_V8A
+    depends on (ARCH_ARM_V7A || ARCH_ARM_V8A) && !ARM_CORTEX_A8
     help
         Grant user access to Performance Monitoring Unit.
         WARNING: While useful for evaluating performance,

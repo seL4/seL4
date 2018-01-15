@@ -234,7 +234,7 @@ config_option(KernelArmExportPMUUser EXPORT_PMU_USER
     WARNING: While useful for evaluating performance, \
     this option opens timing and covert channels."
     DEFAULT OFF
-    DEPENDS "KernelArchArmV7a OR KernelArchArmV8a"
+    DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8"
 )
 
 config_option(KernelArmExportPCNTUser EXPORT_PCNT_USER
