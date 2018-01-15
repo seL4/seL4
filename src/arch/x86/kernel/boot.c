@@ -535,6 +535,10 @@ init_cpu(
     }
 #endif
 
+    if (config_set(CONFIG_EXPORT_PMC_USER)) {
+        enablePMCUser();
+    }
+
 #ifdef CONFIG_VTX
     /* initialise Intel VT-x extensions */
     if (!vtx_init()) {

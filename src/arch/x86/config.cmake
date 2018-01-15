@@ -235,6 +235,17 @@ config_option(KernelMultiboot2Header MULTIBOOT2_HEADER
     DEPENDS "KernelArchX86"
 )
 
+config_option(KernelExportPMCUser EXPORT_PMC_USER
+    "Grant user access to the Performance Monitoring Counters.
+    This allows the user to read performance counters, although
+    not control what the counters are and whether or not they
+    are counting. Nevertheless whilst this is useful for
+    evalulating performance this option opens timing and covert
+    channels."
+    DEFAULT OFF
+    DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
+)
+
 add_sources(
     DEP "KernelArchX86"
     PREFIX src/arch/x86

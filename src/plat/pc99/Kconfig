@@ -299,3 +299,15 @@ depends on PLAT_PC99
             The bits per pixel of the linear graphics mode to request.
             Value of zero indicates no preference
 endmenu
+
+config EXPORT_PMC_USER
+    bool "User access to PMC"
+    depends on ARCH_X86 && !VERIFICATION_BUILD
+    default n
+    help
+        Grant user access to the Performance Monitoring Counters.
+        This allows the user to read performance counters, although
+        not control what the counters are and whether or not they
+        are counting. Nevertheless whilst this is useful for
+        evalulating performance this option opens timing and covert
+        channels.

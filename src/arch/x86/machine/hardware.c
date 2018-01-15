@@ -138,3 +138,9 @@ disablePrefetchers()
            model_info->family, model_info->model);
     return false;
 }
+
+BOOT_CODE void
+enablePMCUser(void)
+{
+    write_cr4(read_cr4() | CR4_PCE);
+}

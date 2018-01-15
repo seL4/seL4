@@ -112,6 +112,9 @@ void flushCacheRange(void* vaddr, uint32_t size_bits);
 /* Disables a variety of prefetchers */
 bool_t disablePrefetchers(void);
 
+/* Enable user level access to the performance counters */
+BOOT_CODE void enablePMCUser(void);
+
 /* Flushes entire CPU Cache */
 static inline void x86_wbinvd(void)
 {
