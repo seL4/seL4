@@ -12,6 +12,7 @@
 #define __PLAT_MODE_MACHINE_HARDWARE_H
 
 #include <config.h>
+#include <arch/kernel/tlb_bitmap_defs.h>
 
 /* WARNING: some of these constants are also defined in linker.lds */
 #define PADDR_BASE  0x00000000
