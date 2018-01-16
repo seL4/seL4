@@ -29,7 +29,7 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
     "exynos5250;KernelPlatformExynos5250;PLAT_EXYNOS5250;KernelSel4ArchAarch32"
     "apq8064;KernelPlatformAPQ8064;PLAT_APQ8064;KernelSel4ArchAarch32"
     "wandq;KernelPlatformWandQ;PLAT_WANDQ;KernelSel4ArchAarch32"
-    "imx7sabre;KernelPlatformImx7Sabre;PLAT_IMX6_SABRE;KernelSel4ArchAarch32"
+    "imx7sabre;KernelPlatformImx7Sabre;PLAT_IMX7_SABRE;KernelSel4ArchAarch32"
     "zynq7000;KernelPlatformZynq7000;PLAT_ZYNQ7000;KernelSel4ArchAarch32"
     "allwinnera20;KernelPlatformAllwinnerA20;PLAT_ALLWINNERA20;KernelSel4ArchAarch32"
     "jetson;KernelPlatformJetson;PLAT_TK1;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
