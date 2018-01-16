@@ -18,6 +18,7 @@ upcoming release (BREAKING)
  * As a consequence of the above change, scheduling behaviour has changed in the case where a non-blocking IPC is sent between two same priority threads: the sender will be scheduled, rather than the destination.
  * Benchmarking support for armv8/aarch64 is now available.
  * Additional x86 extra bootinfo type for retrieving frame buffer information from multiboot 2 
+ * Debugging option to export x86 Performance-Monitoring Counters to user level
 
 = Upgrade notes =
  * seL4_CapData_t should be replaced with just seL4_Word. Construction of badges should just be `x` instead of
