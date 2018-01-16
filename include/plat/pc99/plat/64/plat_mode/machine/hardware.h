@@ -49,8 +49,15 @@
 #define TLBBITMAP_PML4_RESERVED (TLBBITMAP_ROOT_ENTRIES * BIT(PML4_INDEX_OFFSET))
 #define TLBBITMAP_PPTR (PPTR_BASE - TLBBITMAP_PML4_RESERVED)
 
-/* The start of the this TLB bitmap becomes the highest valid user address */
-#define PPTR_USER_TOP TLBBITMAP_PPTR
+/* Define PPTR_USER_TOP to be 1 before the last address before sign extension occurs.
+ * This ensures that
+ *  1. user addresses never needed to be sign extended to be valid canonical addresses
+ *  2. the user cannot map the last page before addresses need sign extension. This prevents
+ *     the user doing a syscall as the very last instruction and the CPU calculated PC + 2
+ *     from being an invalid (non sign extended) address
+ */
+#define PPTR_USER_TOP 0x7FFFFFFFFFFF
+
 #define KERNEL_BASE_OFFSET (KERNEL_BASE - PADDR_BASE)
 #define kernelBase KERNEL_BASE
 
@@ -66,6 +73,11 @@
 #include <basic_types.h>
 #include <plat/machine.h>
 #include <plat_mode/machine/hardware_gen.h>
+
+/* ensure the user top and tlb bitmap do not overlap if multicore */
+#ifdef ENABLE_SMP_SUPPORT
+compile_assert(user_top_tlbbitmap_no_overlap, GET_PML4_INDEX(PPTR_USER_TOP) != GET_PML4_INDEX(TLBBITMAP_PPTR))
+#endif
 
 /* since we have two kernel VM windows, we have two pptr to paddr
  * conversion functions.
