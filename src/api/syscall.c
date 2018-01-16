@@ -128,6 +128,34 @@ handleUnknownSyscall(word_t w)
     }
 #endif
 
+#ifdef CONFIG_KERNEL_X86_DANGEROUS_MSR
+    if (w == SysX86DangerousWRMSR) {
+        uint64_t val;
+        uint32_t reg = getRegister(NODE_STATE(ksCurThread), capRegister);
+        if (CONFIG_WORD_SIZE == 32) {
+            val = (uint64_t)getSyscallArg(0, NULL) | ((uint64_t)getSyscallArg(1, NULL) << 32);
+        } else {
+            val = getSyscallArg(0, NULL);
+        }
+        x86_wrmsr(reg, val);
+        return EXCEPTION_NONE;
+    } else if (w == SysX86DangerousRDMSR) {
+        uint64_t val;
+        uint32_t reg = getRegister(NODE_STATE(ksCurThread), capRegister);
+        val = x86_rdmsr(reg);
+        int num = 1;
+        if (CONFIG_WORD_SIZE == 32) {
+            setMR(NODE_STATE(ksCurThread), NULL, 0, val & 0xffffffff);
+            setMR(NODE_STATE(ksCurThread), NULL, 1, val >> 32);
+            num++;
+        } else {
+            setMR(NODE_STATE(ksCurThread), NULL, 0, val);
+        }
+        setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, num)));
+        return EXCEPTION_NONE;
+    }
+#endif
+
 #ifdef CONFIG_ENABLE_BENCHMARKS
     if (w == SysBenchmarkFlushCaches) {
         arch_clean_invalidate_caches();

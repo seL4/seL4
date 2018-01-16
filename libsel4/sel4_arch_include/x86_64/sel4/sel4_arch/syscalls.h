@@ -363,6 +363,26 @@ seL4_DebugHalt(void)
 }
 #endif
 
+#if defined(CONFIG_KERNEL_X86_DANGEROUS_MSR)
+LIBSEL4_INLINE_FUNC void
+seL4_X86DangerousWRMSR(seL4_Uint32 msr, seL4_Uint64 value)
+{
+    x64_sys_send(seL4_SysX86DangerousWRMSR, msr, 0, value, 0, 0, 0);
+}
+LIBSEL4_INLINE_FUNC seL4_Uint64
+seL4_X86DangerousRDMSR(seL4_Uint32 msr)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word val;
+    x64_sys_recv(seL4_SysX86DangerousRDMSR, msr, &unused0, &unused1, &val, &unused2, &unused3, &unused4);
+    return val;
+}
+#endif
+
 #if defined(CONFIG_DEBUG_BUILD)
 LIBSEL4_INLINE_FUNC void
 seL4_DebugSnapshot(void)

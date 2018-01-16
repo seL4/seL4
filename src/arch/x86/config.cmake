@@ -246,6 +246,14 @@ config_option(KernelExportPMCUser EXPORT_PMC_USER
     DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
 )
 
+config_option(KernelX86DangerousMSR KERNEL_X86_DANGEROUS_MSR
+    "rdmsr/wrmsr kernel interface. Provides a syscall interface for reading and writing arbitrary MSRs.
+    This is extremely dangerous as no checks are performed and exists
+    to aid debugging and benchmarking."
+    DEFAULT OFF
+    DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
+)
+
 add_sources(
     DEP "KernelArchX86"
     PREFIX src/arch/x86

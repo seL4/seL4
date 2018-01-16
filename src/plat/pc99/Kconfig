@@ -311,3 +311,12 @@ config EXPORT_PMC_USER
         are counting. Nevertheless whilst this is useful for
         evalulating performance this option opens timing and covert
         channels.
+
+config KERNEL_X86_DANGEROUS_MSR
+    bool "rdmsr/wrmsr kernel interface"
+    depends on ARCH_X86 && !VERIFICATION_BUILD
+    default n
+    help
+        Provides a syscall interface for reading and writing arbitrary MSRs.
+        This is extremely dangerous as no checks are performed and exists
+        to aid debugging and benchmarking

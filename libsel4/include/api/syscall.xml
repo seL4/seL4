@@ -51,6 +51,10 @@
             <syscall name="BenchmarkGetThreadUtilisation"  />
             <syscall name="BenchmarkResetThreadUtilisation"  />
         </config>
+        <config condition="defined CONFIG_KERNEL_X86_DANGEROUS_MSR">
+            <syscall name="X86DangerousWRMSR"/>
+            <syscall name="X86DangerousRDMSR"/>
+        </config>
         <!-- This is not a debug syscall, but it needs to not appear in the 'API' syscall list
              so that the check of 'is this a valid syscall' can remain a simple range check.
              Therefore we'll put this here and the arch code will handle it before
