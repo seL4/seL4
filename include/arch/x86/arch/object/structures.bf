@@ -164,6 +164,15 @@ block cpuid_001h_ebx {
     field brand             8
 }
 
+block cpuid_007h_edx {
+    padding                 2
+    field ia32_arch_cap_msr 1
+    padding                 1
+    field stibp             1
+    field ibrs_ibpb         1
+    padding                 26
+}
+
 #ifdef CONFIG_VTX
 
 block vmx_basic_msr {
@@ -230,3 +239,9 @@ block vmx_data_exit_qualification_control_regster {
 }
 
 #endif
+
+block ia32_arch_capabilities_msr {
+    padding             30
+    field ibrs_all      1
+    field rdcl_no       1
+}

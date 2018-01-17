@@ -21,6 +21,7 @@
 #include <object/interrupt.h>
 
 #define IA32_APIC_BASE_MSR      0x01B
+#define IA32_ARCH_CAPABILITIES_MSR 0x10A
 #define IA32_SYSENTER_CS_MSR    0x174
 #define IA32_SYSENTER_ESP_MSR   0x175
 #define IA32_SYSENTER_EIP_MSR   0x176
