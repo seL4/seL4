@@ -518,6 +518,24 @@ init_cpu(
      * read only memory, which we shouldn't do under correct execution */
     write_cr0(read_cr0() | CR0_WRITE_PROTECT);
 
+    /* check for SMAP and SMEP and enable */
+    cpuid_007h_ebx_t ebx_007;
+    ebx_007.words[0] = x86_cpuid_ebx(0x7, 0);
+    if (cpuid_007h_ebx_get_smap(ebx_007)) {
+        /* if we have user stack trace enabled or dangerous code injection then we cannot
+         * enable this as SMAP will make them fault. */
+        if (!config_set(CONFIG_PRINTING) && !config_set(CONFIG_DANGEROUS_CODE_INJECTION)) {
+            write_cr4(read_cr4() | CR4_SMAP);
+        }
+    }
+    if (cpuid_007h_ebx_get_smep(ebx_007)) {
+        /* similar to smap we cannot enable smep if using dangerous code injenction. it
+         * does not affect stack trace printing though */
+        if (!config_set(CONFIG_DANGEROUS_CODE_INJECTION)) {
+            write_cr4(read_cr4() | CR4_SMEP);
+        }
+    }
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
     /* Initialize hardware breakpoints */
     Arch_initHardwareBreakpoints();
