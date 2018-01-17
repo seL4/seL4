@@ -514,6 +514,10 @@ init_cpu(
         return false;
     }
 
+    /* enable the Write Protect bit in cr0. This prevents the kernel from writing to
+     * read only memory, which we shouldn't do under correct execution */
+    write_cr0(read_cr0() | CR0_WRITE_PROTECT);
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
     /* Initialize hardware breakpoints */
     Arch_initHardwareBreakpoints();
