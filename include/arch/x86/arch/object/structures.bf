@@ -164,6 +164,36 @@ block cpuid_001h_ebx {
     field brand             8
 }
 
+block cpuid_007h_ebx {
+    padding                     2
+    field sha                   1
+    padding                     3
+    field intel_processor_trace 1
+    padding                     1
+    field clfushopt             1
+    padding                     2
+    field smap                  1
+    field adx                   1
+    field rdseed                1
+    padding                     2
+    field rdt_a                 1
+    field mpx                   1
+    field deprecate_fpu_cs_ds   1
+    field rdt_m                 1
+    field rtm                   1
+    field invpcid               1
+    field enhanced_rep_mov      1
+    field bmi2                  1
+    field smep                  1
+    field fdp_excptn_only       1
+    field avx2                  1
+    field hle                   1
+    field bmi1                  1
+    field sgx                   1
+    field ia32_tsc_adjust       1
+    field fsgsbase              1
+}
+
 block cpuid_007h_edx {
     padding                 2
     field ia32_arch_cap_msr 1
