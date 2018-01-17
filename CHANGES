@@ -12,6 +12,10 @@ upcoming release
 = Changes =
  * Debugging option on x86 for syscall interface to read/write MSRs (this is an, equally dangerous, alternative to
    dangerous code injection)
+ * Mitigation for Meltdown (https://meltdownattack.com) on x86-64 implemented. Mitigation is via a form of kernel
+   page table isolation through the use of a Static Kernel Image with Microstate (SKIM) window that is used for
+   trapping to and from the kernel address space. This can be enabled/disabled through the build configuration
+   depending on whether you are running on vulnerable hardware or not.
 
 ---
 8.0.0 2018-01-17
