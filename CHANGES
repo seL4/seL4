@@ -10,6 +10,8 @@ changes are added the compatibility information should be updated.
 upcoming release
 
 = Changes =
+ * Debugging option on x86 for syscall interface to read/write MSRs (this is an, equally dangerous, alternative to
+   dangerous code injection)
 
 ---
 8.0.0 2018-01-17
@@ -26,7 +28,6 @@ between two same priority threads: the sender will be scheduled, rather than the
  * Benchmarking support for armv8/aarch64 is now available.
  * Additional x86 extra bootinfo type for retrieving frame buffer information from multiboot 2 
  * Debugging option to export x86 Performance-Monitoring Counters to user level
- * Debugging option on x86 for syscall interface to read/write MSRs (this is an, equally dangerous, alternative to dangerous code injection)
 
 = Upgrade notes =
  * seL4_CapData_t should be replaced with just seL4_Word. Construction of badges should just be `x` instead of
