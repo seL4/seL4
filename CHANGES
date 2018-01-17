@@ -8,14 +8,17 @@ The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BI
 changes are added the compatibility information should be updated.
 
 ---
-upcoming release (BREAKING)
+8.0.0 2018-01-17
 
 = Changes =
  * Support for additional zynq platform Zynq UltraScale+ MPSoC (Xilinx ZCU102, ARMv8a, Cortex A53)
  * Support for multiboot2 bootloaders on x86 (contributed change from Genode Labs)
  * Deprecate seL4_CapData_t type and functions related to it
- * A fastpath improvement means that when there are two runnable threads and the target thread is the highest priority in the scheduler, the fastpath will be hit. Previously the fastpath would not be used on IPC from a high priority thread to a low priority thread.
- * As a consequence of the above change, scheduling behaviour has changed in the case where a non-blocking IPC is sent between two same priority threads: the sender will be scheduled, rather than the destination.
+ * A fastpath improvement means that when there are two runnable threads and the target thread is the highest priority 
+in the scheduler, the fastpath will be hit. Previously the fastpath would not be used on IPC from a high priority 
+thread to a low priority thread.
+ * As a consequence of the above change, scheduling behaviour has changed in the case where a non-blocking IPC is sent 
+between two same priority threads: the sender will be scheduled, rather than the destination.
  * Benchmarking support for armv8/aarch64 is now available.
  * Additional x86 extra bootinfo type for retrieving frame buffer information from multiboot 2 
  * Debugging option to export x86 Performance-Monitoring Counters to user level
@@ -53,3 +56,6 @@ upcoming release (BREAKING)
  * One of our tests is non-deterministicly becoming unresponsive on the SMP release build on the Sabre IMX.6 platform,
    which is a non verified configuration of the kernel.  We are working on fixing this problem, and will likely do a
    point release once it is fixed.
+
+---
+For previous releases see https://wiki.sel4.systems/ReleaseNotes
