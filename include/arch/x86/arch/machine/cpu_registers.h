@@ -21,6 +21,8 @@
 #define CR4_OSXMMEXCPT      BIT(10) /* Enable SSE exceptions. */
 #define CR4_OSXSAVE         BIT(18) /* Enavle XSAVE feature set */
 #define CR4_VMXE            BIT(13) /* Enable VMX mode. */
+#define CR4_SMEP            BIT(20) /* Supervisor Mode Execution Prevention. */
+#define CR4_SMAP            BIT(21) /* Supervisor Mode Access Prevention. */
 
 #define FLAGS_TF            BIT(8)  /* Trap Flag */
 #define FLAGS_IF            BIT(9)  /* Interrupt enable Flag */
