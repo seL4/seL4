@@ -432,8 +432,8 @@ try_boot_sys(void)
         /* hardware doesn't tell us directly so guess based on CPU vendor */
         if (config_set(CONFIG_KERNEL_SKIM_WINDOW) && x86_cpuid_get_identity()->vendor == X86_VENDOR_AMD) {
             printf("SKIM window for mitigating Meltdown (https://www.meltdownattack.com) "
-                    "not necessary for AMD and performance is being needlessly affected, "
-                    "consider disabling\n");
+                   "not necessary for AMD and performance is being needlessly affected, "
+                   "consider disabling\n");
         }
         if (!config_set(CONFIG_KERNEL_SKIM_WINDOW) && x86_cpuid_get_identity()->vendor == X86_VENDOR_INTEL) {
             printf("***WARNING*** SKIM window not enabled, this machine is probably vulernable "

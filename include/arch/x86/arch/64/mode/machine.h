@@ -207,8 +207,8 @@ static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t as
             "mov %[new_cr3], %%cr3\n"
             "mov %[old_cr3], %%cr3\n"
             ::
-                [new_cr3] "r" (makeCR3(root, asid).words[0]),
-                [old_cr3] "r" (cr3.words[0] | BIT(63))
+            [new_cr3] "r" (makeCR3(root, asid).words[0]),
+            [old_cr3] "r" (cr3.words[0] | BIT(63))
         );
     } else {
         /* just invalidate the page structure cache as per normal, by

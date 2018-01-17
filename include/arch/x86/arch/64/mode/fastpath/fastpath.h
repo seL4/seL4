@@ -265,7 +265,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "D" (badge),
             "S" (msgInfo)
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
-                 ,"c" (next_cr3)
+            , "c" (next_cr3)
 #endif
             : "memory"
         );

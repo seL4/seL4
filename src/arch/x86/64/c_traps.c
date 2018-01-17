@@ -263,7 +263,7 @@ void VISIBLE NORETURN restore_user_context(void)
                 :
                 : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI]),
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
-                  "r"(user_cr3_r11),
+                "r"(user_cr3_r11),
 #endif
                 [IF] "i" (FLAGS_IF)
                 // Clobber memory so the compiler is forced to complete all stores
@@ -309,7 +309,7 @@ void VISIBLE NORETURN restore_user_context(void)
                 :
                 : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
-                 ,"c" (user_cr3)
+                , "c" (user_cr3)
 #endif
                 // Clobber memory so the compiler is forced to complete all stores
                 // before running this assembler
@@ -385,8 +385,8 @@ void VISIBLE NORETURN restore_user_context(void)
             :
             : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
-             ,"c" (user_cr3)
-             ,[scratch_offset] "i" (nodeSkimScratchOffset)
+            , "c" (user_cr3)
+            , [scratch_offset] "i" (nodeSkimScratchOffset)
 #endif
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
