@@ -2201,8 +2201,8 @@ kernelDataAbort(word_t pc)
     word_t far = getFAR();
 
     printf("\n\nKERNEL DATA ABORT!\n");
-    printf("Faulting instruction: 0x%x\n", (unsigned int)pc);
-    printf("FAR: 0x%x ESR (DFSR): 0x%x\n", (unsigned int)far, (unsigned int)dfsr);
+    printf("Faulting instruction: 0x%lx\n", (unsigned long)pc);
+    printf("FAR: 0x%lx ESR (DFSR): 0x%x\n", (unsigned long)far, (unsigned int)dfsr);
 
     halt();
 }
