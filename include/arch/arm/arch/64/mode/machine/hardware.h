@@ -30,6 +30,8 @@
 #error Unable to determine L1 cache line size
 #endif
 
+#define L1_CACHE_LINE_SIZE BIT(L1_CACHE_LINE_SIZE_BITS)
+
 /* Control register fields */
 #define CONTROL_M         0  /* MMU enable */
 #define CONTROL_A         1  /* Alignment check enable */
