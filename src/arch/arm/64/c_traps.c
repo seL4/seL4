@@ -29,10 +29,10 @@ void VISIBLE NORETURN restore_user_context(void)
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(ksCurThread);
+    lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
 
-    writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
+    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
 
     asm volatile(
         "mov     sp, %0                     \n"
@@ -63,7 +63,7 @@ void VISIBLE NORETURN restore_user_context(void)
         "ldr     x30, [sp, %[LR]]          \n"
         "eret"
         :
-        : "r" (ksCurThread->tcbArch.tcbContext.registers),
+        : "r" (NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers),
         [SP_EL0] "i" (PT_SP_EL0), [SPSR_EL1] "i" (PT_SPSR_EL1), [LR] "i" (PT_LR)
         : "memory"
     );

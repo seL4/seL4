@@ -51,6 +51,13 @@ enum mair_types {
     NORMAL = 4
 };
 
+/* Leif from Linaro said the big.LITTLE clusters should be treated as
+ * inner shareable, and we believe so, although the Example B2-1 given in
+ * ARM ARM DDI 0487B.b (ID092517) says otherwise.
+ */
+
+#define SMP_SHARE   3
+
 struct lookupPGDSlot_ret {
     exception_t status;
     pgde_t *pgdSlot;
@@ -145,7 +152,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
                                                        paddr,
                                                        0,                          /* global */
                                                        1,                          /* access flag */
-                                                       SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                       SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                                                        APFromVMRights(vm_rights),
                                                        NORMAL,
                                                        0b11                        /* reserved */
@@ -200,7 +207,7 @@ map_kernel_window(void)
                                                                               paddr,
                                                                               0,                        /* global */
                                                                               1,                        /* access flag */
-                                                                              SMP_TERNARY(3, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
+                                                                              SMP_TERNARY(SMP_SHARE, 0),        /* Inner-shareable if SMP enabled, otherwise unshared */
                                                                               0,                        /* VMKernelOnly */
                                                                               NORMAL
                                                                           );
@@ -247,7 +254,7 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t executable)
                                      pptr_to_paddr(pptr),            /* page_base_address    */
                                      1,                              /* not global */
                                      1,                              /* access flag */
-                                     SMP_TERNARY(3, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
+                                     SMP_TERNARY(SMP_SHARE, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
                                      APFromVMRights(VMReadWrite),
                                      NORMAL,
                                      0b11                            /* reserved */
@@ -724,7 +731,7 @@ makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
                    paddr,
                    1,                          /* not global */
                    1,                          /* access flag */
-                   SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
+                   SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
                    NORMAL,
                    0b11                        /* reserved */
@@ -754,7 +761,7 @@ makeUser2ndLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
                    paddr,
                    1,                          /* not global */
                    1,                          /* access flag */
-                   SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
+                   SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
                    NORMAL
                );
@@ -782,7 +789,7 @@ makeUser1stLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
                    paddr,
                    1,                          /* not global */
                    1,                          /* access flag */
-                   SMP_TERNARY(3, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
+                   SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
                    NORMAL
                );
@@ -876,7 +883,7 @@ setVMRootForFlush(vspace_root_t *vspace, asid_t asid)
 {
     cap_t threadRoot;
 
-    threadRoot = TCB_PTR_CTE_PTR(ksCurThread, tcbVTable)->cap;
+    threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) == cap_page_global_directory_cap &&
             cap_page_global_directory_cap_get_capPGDIsMapped(threadRoot) &&
@@ -1073,7 +1080,7 @@ deleteASID(asid_t asid, vspace_root_t *vspace)
     if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
         invalidateTranslationASID(asid);
         poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(ksCurThread);
+        setVMRoot(NODE_STATE(ksCurThread));
     }
 }
 
@@ -1091,7 +1098,7 @@ deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
             }
         }
         armKSASIDTable[asid_base >> asidLowBits] = NULL;
-        setVMRoot(ksCurThread);
+        setVMRoot(NODE_STATE(ksCurThread));
     }
 }
 
@@ -1144,7 +1151,7 @@ performPageGlobalDirectoryFlush(int invLabel, pgde_t *pgd, asid_t asid,
         root_switched = setVMRootForFlush(pgd, asid);
         doFlush(invLabel, start, end, pstart);
         if (root_switched) {
-            setVMRoot(ksCurThread);
+            setVMRoot(NODE_STATE(ksCurThread));
         }
     }
     return EXCEPTION_NONE;
@@ -1304,7 +1311,7 @@ performPageFlush(int invLabel, pgde_t *pgd, asid_t asid,
         root_switched = setVMRootForFlush(pgd, asid);
         doFlush(invLabel, start, end, pstart);
         if (root_switched) {
-            setVMRoot(ksCurThread);
+            setVMRoot(NODE_STATE(ksCurThread));
         }
     }
     return EXCEPTION_NONE;
@@ -1315,8 +1322,8 @@ performPageGetAddress(pptr_t base_ptr)
 {
     paddr_t base = pptr_to_paddr((void *)base_ptr);
 
-    setRegister(ksCurThread, msgRegisters[0], base);
-    setRegister(ksCurThread, msgInfoRegister,
+    setRegister(NODE_STATE(ksCurThread), msgRegisters[0], base);
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
                 wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
 
     return EXCEPTION_NONE;
@@ -1428,7 +1435,7 @@ decodeARMPageGlobalDirectoryInvocation(word_t invLabel, unsigned int length,
             /* Fail silently, as there can't be any stale cached data (for the
              * given address space), and getting a syscall error because the
              * relevant page is non-resident would be 'astonishing'. */
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return EXCEPTION_NONE;
         }
 
@@ -1444,7 +1451,7 @@ decodeARMPageGlobalDirectoryInvocation(word_t invLabel, unsigned int length,
         /* Calculate the physical start address. */
         pstart = resolve_ret.frameBase + PAGE_OFFSET(start, resolve_ret.frameSize);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageGlobalDirectoryFlush(invLabel, pgd, asid, start, end - 1, pstart);
 
     default:
@@ -1472,7 +1479,7 @@ decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performUpperPageDirectoryInvocationUnmap(cap, cte);
     }
 
@@ -1539,7 +1546,7 @@ decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsigned int length,
     cap_page_upper_directory_cap_ptr_set_capPUDMappedASID(&cap, asid);
     cap_page_upper_directory_cap_ptr_set_capPUDMappedAddress(&cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performUpperPageDirectoryInvocationMap(cap, cte, pgde, pgdSlot.pgdSlot);
 }
 
@@ -1562,7 +1569,7 @@ decodeARMPageDirectoryInvocation(word_t invLabel, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageDirectoryInvocationUnmap(cap, cte);
     }
 
@@ -1633,7 +1640,7 @@ decodeARMPageDirectoryInvocation(word_t invLabel, unsigned int length,
     cap_page_directory_cap_ptr_set_capPDMappedASID(&cap, asid);
     cap_page_directory_cap_ptr_set_capPDMappedAddress(&cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageDirectoryInvocationMap(cap, cte, pude, pudSlot.pudSlot);
 }
 
@@ -1656,7 +1663,7 @@ decodeARMPageTableInvocation(word_t invLabel, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageTableInvocationUnmap(cap, cte);
     }
 
@@ -1727,7 +1734,7 @@ decodeARMPageTableInvocation(word_t invLabel, unsigned int length,
     cap_page_table_cap_ptr_set_capPTMappedASID(&cap, asid);
     cap_page_table_cap_ptr_set_capPTMappedAddress(&cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageTableInvocationMap(cap, cte, pde, pdSlot.pdSlot);
 }
 
@@ -1819,7 +1826,7 @@ decodeARMFrameInvocation(word_t invLabel, unsigned int length,
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performSmallPageInvocationMap(asid, cap, cte,
                                                  makeUser3rdLevel(base, vmRights, attributes), lu_ret.ptSlot);
 
@@ -1838,7 +1845,7 @@ decodeARMFrameInvocation(word_t invLabel, unsigned int length,
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performLargePageInvocationMap(asid, cap, cte,
                                                  makeUser2ndLevel(base, vmRights, attributes), lu_ret.pdSlot);
 
@@ -1857,7 +1864,7 @@ decodeARMFrameInvocation(word_t invLabel, unsigned int length,
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performHugePageInvocationMap(asid, cap, cte,
                                                 makeUser1stLevel(base, vmRights, attributes), lu_ret.pudSlot);
         }
@@ -1920,28 +1927,28 @@ decodeARMFrameInvocation(word_t invLabel, unsigned int length,
         if (frameSize == ARMSmallPage) {
             lookupPTSlot_ret_t lu_ret = lookupPTSlot(pgd, vaddr);
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performSmallPageInvocationMap(asid, cap, cte,
                                                  makeUser3rdLevel(base, vmRights, attributes), lu_ret.ptSlot);
 
         } else if (frameSize == ARMLargePage) {
             lookupPDSlot_ret_t lu_ret = lookupPDSlot(pgd, vaddr);
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performLargePageInvocationMap(asid, cap, cte,
                                                  makeUser2ndLevel(base, vmRights, attributes), lu_ret.pdSlot);
 
         } else {
             lookupPUDSlot_ret_t lu_ret = lookupPUDSlot(pgd, vaddr);
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performHugePageInvocationMap(asid, cap, cte,
                                                 makeUser1stLevel(base, vmRights, attributes), lu_ret.pudSlot);
         }
     }
 
     case ARMPageUnmap:
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationUnmap(cap, cte);
 
     case ARMPageClean_Data:
@@ -1997,13 +2004,13 @@ decodeARMFrameInvocation(word_t invLabel, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + start, vaddr + end - 1,
                                 pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap)) + start);
     }
 
     case ARMPageGetAddress:
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageGetAddress(cap_frame_cap_get_capFBasePtr(cap));
 
     default:
@@ -2106,7 +2113,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
             return status;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performASIDControlInvocation(frame, destSlot, parentSlot, asid_base);
     }
 
@@ -2169,7 +2176,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         asid += i;
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performASIDPoolInvocation(asid, pool, vspaceCapSlot);
     }
 

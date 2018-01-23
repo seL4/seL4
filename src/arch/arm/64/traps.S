@@ -21,6 +21,9 @@
  
 .macro lsp_i _tmp
     mrs     \_tmp, tpidr_el1
+#if CONFIG_MAX_NUM_NODES > 1
+    bic     \_tmp, \_tmp, #0xfff
+#endif
     mov     sp, \_tmp
 .endm
 

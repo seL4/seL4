@@ -45,7 +45,7 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
 
-    ksCurThread = thread;
+    NODE_STATE(ksCurThread) = thread;
 }
 
 static inline void
@@ -109,10 +109,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
-    lazyFPURestore(ksCurThread);
+    lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
 
-    writeTPIDRURW(getRegister(ksCurThread, TPIDRURW));
+    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
 
     register word_t badge_reg asm("x0") = badge;
     register word_t msgInfo_reg asm("x1") = msgInfo;

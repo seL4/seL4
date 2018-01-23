@@ -14,15 +14,26 @@
 #define __MODE_SMP_H_
 
 #include <config.h>
+#include <util.h>
+#include <kernel/stack.h>
 
 #ifdef ENABLE_SMP_SUPPORT
+
+#define LD_EX               "ldxr "
+#define ST_EX               "stxr "
+#define OP_WIDTH            "w"
+
+extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
+compile_assert(kernel_stack_4k_aligned, KERNEL_STACK_ALIGNMENT == 4096)
+
+#define CPUID_MASK  (BIT(CONFIG_KERNEL_STACK_BITS) - 1)
 
 static inline CONST cpu_id_t
 getCurrentCPUIndex(void)
 {
-    cpu_id_t cpu_id;
-    asm volatile ("mov %[cpu_id], mpidr_el1" : [cpu_id] "=r" (cpu_id) ::);
-    return cpu_id;
+    cpu_id_t id;
+    asm volatile ("mrs %0, tpidr_el1" : "=r"(id));
+    return (id & CPUID_MASK);
 }
 
 #endif /* ENABLE_SMP_SUPPORT */

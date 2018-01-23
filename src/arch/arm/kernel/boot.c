@@ -238,6 +238,10 @@ init_cpu(void)
      */
 #ifndef CONFIG_ARCH_ARM_V6
     word_t stack_top = ((word_t) kernel_stack_alloc[SMP_TERNARY(getCurrentCPUIndex(), 0)]) + BIT(CONFIG_KERNEL_STACK_BITS);
+#if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_AARCH64)
+    /* the least 12 bits are used to store logical core ID */
+    stack_top |= getCurrentCPUIndex();
+#endif
     setKernelStack(stack_top);
 #endif /* CONFIG_ARCH_ARM_V6 */
 
@@ -316,13 +320,19 @@ release_secondary_cpus(void)
     /* release the cpus at the same time */
     node_boot_lock = 1;
 
+#ifndef CONFIG_ARCH_AARCH64
     /* At this point in time the other CPUs do *not* have the seL4 global pd set.
      * However, they still have a PD from the elfloader (which is mapping mmemory
      * as strongly ordered uncached, as a result we need to explicitly clean
      * the cache for it to see the update of node_boot_lock
+     *
+     * For ARMv8, the elfloader sets the page table entries as inner shareable
+     * (so is the attribute of the seL4 global PD) when SMP is enabled, and
+     * turns on the cache. Thus, we do not need to clean and invaliate the cache.
      */
     cleanInvalidateL1Caches();
     plat_cleanInvalidateCache();
+#endif
 
     /* Wait until all the secondary cores are done initialising */
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES) {
