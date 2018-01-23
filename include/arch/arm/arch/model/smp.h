@@ -30,8 +30,8 @@ try_arch_atomic_exchange(void* ptr, void *new_val, void **prev, int success_memo
     void *temp;
 
     asm volatile (
-        "ldrex %[prev_output], [%[ptr_val]]             \n\t" /* ret = *ptr */
-        "strex %[atomic_var], %[new_val] , [%[ptr_val]] \n\t"  /* *ptr = new */
+        LD_EX "%[prev_output], [%[ptr_val]]             \n\t" /* ret = *ptr */
+        ST_EX "%" OP_WIDTH "[atomic_var], %[new_val] , [%[ptr_val]] \n\t"  /* *ptr = new */
         : [atomic_var] "=&r"(atomic_status), [prev_output]"=&r"(temp)     /* output */
         : [ptr_val] "r"(ptr), [new_val] "r" (new_val)  /* input */
         :
