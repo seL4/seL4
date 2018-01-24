@@ -38,9 +38,13 @@ BREAKING CHANGE
    with seL4_TCB_SetPriority and seL4_TCB_SetMCPriority.
  * seL4_TCB_SetPriority and seL4_TCB_SetMCPriority now take seL4_Word instead of seL4_Uint8.
        - seL4_MaxPrio remains at 255.
+ * seL4_TCB_SetSchedParams is a new method where MCP and priority can be set in the same sytsem call.
+
 = Upgrade notes =
-   * seL4_TCB_Configure calls that set priority should be changed to explicitly call seL4_TCB_SetPriority
-   * seL4_TCB_Configure calls that set MCP should be changed to explicitly call seL4_TCB_SetMCPriority
+ * seL4_TCB_Configure calls that set priority should be changed to explicitly call seL4_TCB_SetSchedParams
+   or SetPriority
+ * seL4_TCB_Configure calls that set MCP should be changed to explicitly call seL4_TCB_SetSchedParams
+   or seL4_TCB_SetMCPriority
 
 ---
 8.0.0 2018-01-17

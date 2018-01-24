@@ -703,6 +703,9 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
     case TCBSetMCPriority:
         return decodeSetMCPriority(cap, length, excaps, buffer);
 
+    case TCBSetSchedParams:
+        return decodeSetSchedParams(cap, length, excaps, buffer);
+
     case TCBSetIPCBuffer:
         return decodeSetIPCBuffer(cap, length, slot, excaps, buffer);
 
@@ -884,7 +887,7 @@ decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
                                     w, transferArch, buffer);
 }
 
-/* SetPriority, SetMCPriority, SetIPCBuffer and SetSpace are all
+/* SetPriority, SetMCPriority, SetSchedParams, SetIPCBuffer and SetSpace are all
  * specialisations of TCBConfigure. */
 exception_t
 decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
@@ -1056,6 +1059,53 @@ decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffe
                0, cap_null_cap_new(),
                NULL, thread_control_update_mcp);
 }
+
+exception_t
+decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer)
+{
+    if (length < 2 || excaps.excaprefs[0] == NULL) {
+        userError("TCB SetMCPriority: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    prio_t newMcp = getSyscallArg(0, buffer);
+    prio_t newPrio = getSyscallArg(1, buffer);
+    cap_t authCap = excaps.excaprefs[0]->cap;
+
+    if (cap_get_capType(authCap) != cap_thread_cap) {
+        userError("TCB SetMCPriority: authority cap not a TCB.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    tcb_t *authTCB = TCB_PTR(cap_thread_cap_get_capTCBPtr(authCap));
+    exception_t status = checkPrio(newMcp, authTCB);
+    if (status != EXCEPTION_NONE) {
+        userError("TCB SetMCPriority: Requested maximum controlled priority %lu too high (max %lu).",
+                  (unsigned long) newMcp, (unsigned long) authTCB->tcbMCP);
+        return status;
+    }
+
+    status = checkPrio(newPrio, authTCB);
+    if (status != EXCEPTION_NONE) {
+        userError("TCB SetMCPriority: Requested priority %lu too high (max %lu).",
+                  (unsigned long) newMcp, (unsigned long) authTCB->tcbMCP);
+        return status;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeTCB_ThreadControl(
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
+               0, newMcp, newPrio,
+               cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
+               0, cap_null_cap_new(),
+               NULL, thread_control_update_mcp |
+               thread_control_update_priority);
+}
+
 
 exception_t
 decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,

@@ -165,6 +165,21 @@
                 description="The thread's new maximum controlled priority."/>
         </method>
 
+        <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams">
+            <brief>
+                Change a thread's priority and maximum controlled priority.
+            </brief>
+            <description>
+                See <autoref label="sec:sched"/>
+            </description>
+            <param dir="in" name="authority" type="seL4_CPtr"
+                description="Capability to the TCB to use the MCP from when setting the priority and MCP."/>
+            <param dir="in" name="mcp" type="seL4_Word"
+                description="The thread's new maximum controlled priority."/>
+            <param dir="in" name="priority" type="seL4_Word"
+                description="The thread's new priority."/>
+        </method>
+
         <method id="TCBSetIPCBuffer" name="SetIPCBuffer" manual_name="Set IPC Buffer" manual_label="tcb_setipcbuffer">
             <brief>
                 Set a thread's IPC buffer
