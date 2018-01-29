@@ -159,6 +159,11 @@ init_ibrs(void)
          * us to enable STIBP, and we can then forget about it */
         x86_disable_ibrs();
     }
+    /* IBRS is also the feature flag for IBPB */
+    if (config_set(CONFIG_KERNEL_X86_IBPB_ON_CONTEXT_SWITCH) && !support_ibrs) {
+        printf("IBPB not supported by CPU\n");
+        return false;
+    }
     /* check for enhanced IBRS */
     bool_t enhanced_ibrs = false;
     if (cpuid_007h_edx_get_ia32_arch_cap_msr(edx)) {

@@ -20,6 +20,9 @@ Arch_switchToThread(tcb_t* tcb)
 {
     /* set PD */
     setVMRoot(tcb);
+    if (config_set(CONFIG_KERNEL_X86_IBPB_ON_CONTEXT_SWITCH)) {
+        x86_ibpb();
+    }
 }
 
 BOOT_CODE void

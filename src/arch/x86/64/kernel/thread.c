@@ -28,6 +28,9 @@ Arch_switchToThread(tcb_t* tcb)
                  : [value] "r" (&tcb->tcbArch.tcbContext.registers[Error + 1]),
                  [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif
+    if (config_set(CONFIG_KERNEL_X86_IBPB_ON_CONTEXT_SWITCH)) {
+        x86_ibpb();
+    }
 }
 
 BOOT_CODE void

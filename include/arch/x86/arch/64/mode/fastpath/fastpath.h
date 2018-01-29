@@ -63,6 +63,10 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
                  [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif /* ENABLE_SMP_SUPPORT */
 
+    if (config_set(CONFIG_KERNEL_X86_IBPB_ON_CONTEXT_SWITCH)) {
+        x86_ibpb();
+    }
+
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif

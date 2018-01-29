@@ -293,6 +293,16 @@ if (KernelX86IBRSBasic OR KernelX86IBRSSTIBP)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-jump-tables")
 endif()
 
+config_option(KernelX86IBPBOnContextSwitch KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
+    "Performs a IBPB on every context switch to prevent Spectre attacks between user
+    processes. This is extremely expensive and is recommended you only turn this on
+    if absolutely necessary.
+    Note that in a multicore environment you should also enable STIBP to prevent
+    other cores retraining the branch predictor even after context switch."
+    DEFAULT OFF
+    DEPENDS "KernelArchX86"
+)
+
 add_sources(
     DEP "KernelArchX86"
     PREFIX src/arch/x86

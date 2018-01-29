@@ -19,6 +19,8 @@ upcoming release
  * Mitigation for Spectre (https://spectreattack.com) on x86 against the kernel implemented. Default is software
    mitigation and is the best performing so users need to do nothing. This does *not* prevent user processes from
    exploiting each other.
+ * x86 configuration option for performing branch prediction barrier on context switch to prevent Spectre style
+   attacks between user processes using the indirect branch predictor
 
 ---
 8.0.0 2018-01-17

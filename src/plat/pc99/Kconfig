@@ -356,3 +356,14 @@ choice
         bool "All"
         depends on ARCH_X86
 endchoice
+
+config KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
+    prompt "Branch prediction barrier on context switch"
+    depends on ARCH_X86
+    default n
+    help
+        Performs a IBPB on every context switch to prevent Spectre attacks between user
+        processes. This is extremely expensive and is recommended you only turn this on
+        if absolutely necessary.
+        Note that in a multicore environment you should also enable STIBP to prevent
+        other cores retraining the branch predictor even after context switch.
