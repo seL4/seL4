@@ -303,6 +303,15 @@ config_option(KernelX86IBPBOnContextSwitch KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
     DEPENDS "KernelArchX86"
 )
 
+config_option(KernelX86RSBOnContextSwitch KERNEL_X86_RSB_ON_CONTEXT_SWITCH
+    "Flushes the RSB on context switch to prevent Spectre attacks between user processes.
+    Whilst not nearly as expensive as an IBPB it is not enabled by default as it is
+    largely pointless to flush the RSB without also doing an IBPB as the RSB is already
+    a harder attack vector."
+    DEFAULT OFF
+    DEPENDS "KernelArchX86"
+)
+
 add_sources(
     DEP "KernelArchX86"
     PREFIX src/arch/x86

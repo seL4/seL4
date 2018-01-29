@@ -367,3 +367,13 @@ config KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
         if absolutely necessary.
         Note that in a multicore environment you should also enable STIBP to prevent
         other cores retraining the branch predictor even after context switch.
+
+config KERNEL_X86_RSB_ON_CONTEXT_SWITCH
+    prompt "Flush RSB on context switch"
+    depends on ARCH_X86
+    default n
+    help
+        Flushes the RSB on context switch to prevent Spectre attacks between user processes.
+        Whilst not nearly as expensive as an IBPB it is not enabled by default as it is
+        largely pointless to flush the RSB without also doing an IBPB as the RSB is already
+        a harder attack vector.

@@ -21,6 +21,8 @@ upcoming release
    exploiting each other.
  * x86 configuration option for performing branch prediction barrier on context switch to prevent Spectre style
    attacks between user processes using the indirect branch predictor
+ * x86 configuration option for flushing the RSB on context switch to prevent Spectre style attacks between user
+   processes using the RSB
 
 ---
 8.0.0 2018-01-17
