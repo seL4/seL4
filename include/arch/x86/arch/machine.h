@@ -312,6 +312,35 @@ static inline void Arch_finaliseInterrupt(void)
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
 }
 
+static inline void x86_flush_rsb(void)
+{
+    /* perform 32 near calls with a non zero displacement to flush the rsb with
+     * speculation traps. */
+    word_t iter = 32;
+    asm volatile(
+        "1:\n"
+        "sub %[iter], $2\n"
+        "call 2f\n"
+        "pause\n"
+        "jmp 1b\n"
+        "2:\n"
+        "call 3f\n"
+        "pause\n"
+        "jmp 2b\n"
+        "3:\n"
+        "cmp %[iter], $0\n"
+        "jne 1b\n"
+#ifdef CONFIG_ARCH_X86_64
+        "add %[stack_amount], %%rsp\n"
+#else
+        "add %[stack_amount], %%esp\n"
+#endif
+        : [iter]"+r"(iter)
+        : [stack_amount]"i"(sizeof(word_t) * iter)
+        : "cc"
+    );
+}
+
 /* sysenter entry point */
 void handle_syscall(void);
 
