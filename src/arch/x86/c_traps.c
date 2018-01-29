@@ -34,6 +34,13 @@ c_nested_interrupt(int irq)
 void VISIBLE NORETURN
 c_handle_interrupt(int irq, int syscall)
 {
+    /* need to run this first as the NODE_LOCK code might end up as a function call
+     * with a return, and we need to make sure returns are not exploitable yet
+     * on x64 this code ran already */
+    if (config_set(CONFIG_ARCH_IA32) && config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
+        x86_enable_ibrs();
+    }
+
     /* Only grab the lock if we are not handeling 'int_remote_call_ipi' interrupt
      * also flag this lock as IRQ lock if handling the irq interrupts. */
     NODE_LOCK_IF(irq != int_remote_call_ipi,
@@ -140,6 +147,12 @@ slowpath(syscall_t syscall)
 void VISIBLE NORETURN
 c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
+    /* need to run this first as the NODE_LOCK code might end up as a function call
+     * with a return, and we need to make sure returns are not exploitable yet */
+    if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
+        x86_enable_ibrs();
+    }
+
     NODE_LOCK_SYS;
 
     c_entry_hook();

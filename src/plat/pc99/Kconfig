@@ -329,3 +329,30 @@ config KERNEL_X86_DANGEROUS_MSR
         Provides a syscall interface for reading and writing arbitrary MSRs.
         This is extremely dangerous as no checks are performed and exists
         to aid debugging and benchmarking
+
+choice
+    prompt "Indirect Branch Restricted Speculation mode"
+    help
+        Used to prevent a user from manipulating the branch predictor to manipulate speculative
+        execution of other processes. On current processors IBRS has a prohibitive performance
+        penalty and it is recommended that it be disabled such that software mitigations are
+        used instead. Software mitigation is done by disabling jump tables (the only form of
+        indirect jump in seL4 except for 'ret') and flushing the RSB on vmexit. Flushing the RSB
+        at other times is not needed as seL4 does not switch kernel stacks and so is not
+        vulernable to RSB underflow. The STIBP is essentially software mitigation but enables
+        the single thread isolation for branch predictions. This is only needed if attempting
+        to protect user level process from each other in a multicore environment.
+    default KERNEL_X86_IBRS_NONE
+    config KERNEL_X86_IBRS_NONE
+        bool "None"
+        depends on ARCH_X86
+    config KERNEL_X86_IBRS_STIBP
+        bool "Only STIBP"
+        depends on ARCH_X86 && MAX_NUM_NODES > 1
+    config KERNEL_X86_IBRS_BASIC
+        bool "Basic"
+        depends on ARCH_X86
+    config KERNEL_X86_IBRS_ALL
+        bool "All"
+        depends on ARCH_X86
+endchoice

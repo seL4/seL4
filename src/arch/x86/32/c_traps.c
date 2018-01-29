@@ -150,6 +150,10 @@ void NORETURN VISIBLE restore_user_context(void)
     base = NODE_STATE(ksCurThread)->tcbIPCBuffer;
     x86_write_fs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
 
+    if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
+        x86_disable_ibrs();
+    }
+
     /* see if we entered via syscall */
     if (likely(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[Error] == -1)) {
         NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;

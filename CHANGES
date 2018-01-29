@@ -16,6 +16,9 @@ upcoming release
    page table isolation through the use of a Static Kernel Image with Microstate (SKIM) window that is used for
    trapping to and from the kernel address space. This can be enabled/disabled through the build configuration
    depending on whether you are running on vulnerable hardware or not.
+ * Mitigation for Spectre (https://spectreattack.com) on x86 against the kernel implemented. Default is software
+   mitigation and is the best performing so users need to do nothing. This does *not* prevent user processes from
+   exploiting each other.
 
 ---
 8.0.0 2018-01-17

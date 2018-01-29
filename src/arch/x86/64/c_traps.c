@@ -186,6 +186,10 @@ void VISIBLE NORETURN restore_user_context(void)
     base = cur_thread->tcbIPCBuffer;
     x86_write_gs_base(base, SMP_TERNARY(cpu, 0));
 
+    if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
+        x86_disable_ibrs();
+    }
+
     // Check if we are returning from a syscall/sysenter or from an interrupt
     // There is a special case where if we would be returning from a sysenter,
     // but are current singlestepping, do a full return like an interrupt
@@ -399,6 +403,9 @@ void VISIBLE NORETURN restore_user_context(void)
 void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall);
 void VISIBLE NORETURN c_x64_handle_interrupt(int irq, int syscall)
 {
+    if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
+        x86_enable_ibrs();
+    }
     word_t *irq_stack = x64KSIRQStack[CURRENT_CPU_INDEX()];
     setRegister(NODE_STATE(ksCurThread), Error, irq_stack[0]);
     /* In the case of an interrupt the NextIP and the FaultIP should be the same value,

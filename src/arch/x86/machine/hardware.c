@@ -144,3 +144,41 @@ enablePMCUser(void)
 {
     write_cr4(read_cr4() | CR4_PCE);
 }
+
+BOOT_CODE bool_t
+init_ibrs(void)
+{
+    cpuid_007h_edx_t edx;
+    edx.words[0] = x86_cpuid_edx(0x7, 0);
+    bool_t support_ibrs = cpuid_007h_edx_get_ibrs_ibpb(edx);
+    if ((config_set(CONFIG_KERNEL_X86_IBRS_BASIC) || config_set(CONFIG_KERNEL_X86_IBRS_STIBP)) && !support_ibrs) {
+        printf("IBRS not supported by CPU\n");
+        return false;
+    } else {
+        /* 'disable' IBRS. For IBRS_BASIC this does nothing, and for STIBP this will cause
+         * us to enable STIBP, and we can then forget about it */
+        x86_disable_ibrs();
+    }
+    /* check for enhanced IBRS */
+    bool_t enhanced_ibrs = false;
+    if (cpuid_007h_edx_get_ia32_arch_cap_msr(edx)) {
+        ia32_arch_capabilities_msr_t cap_msr;
+        cap_msr.words[0] = x86_rdmsr(IA32_ARCH_CAPABILITIES_MSR);
+        if (ia32_arch_capabilities_msr_get_ibrs_all(cap_msr)) {
+            enhanced_ibrs = true;
+        }
+    }
+    if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC) && enhanced_ibrs) {
+        printf("Kernel configured for basic IBRS, but CPU supports enhanced IBRS. "
+               "Enable enhanced IBRS for improved performance\n");
+    }
+    if (config_set(CONFIG_KERNEL_X86_IBRS_ALL)) {
+        if (!enhanced_ibrs) {
+            printf("Enhanced IBRS not supported by CPU\n");
+            return false;
+        }
+        /* enable IBRS and then we can forget about it */
+        x86_enable_ibrs();
+    }
+    return true;
+}

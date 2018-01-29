@@ -536,6 +536,10 @@ init_cpu(
         }
     }
 
+    if (!init_ibrs()) {
+        return false;
+    }
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
     /* Initialize hardware breakpoints */
     Arch_initHardwareBreakpoints();

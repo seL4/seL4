@@ -127,4 +127,7 @@ arch_clean_invalidate_caches(void)
     x86_wbinvd();
 }
 
+/* Initialize Indirect Branch Restricted Speculation into the mode specified by the build configuration */
+bool_t init_ibrs(void);
+
 #endif

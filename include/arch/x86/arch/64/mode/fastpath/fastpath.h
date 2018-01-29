@@ -171,6 +171,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     base = cur_thread->tcbIPCBuffer;
     x86_write_gs_base(base, SMP_TERNARY(cpu, 0));
 
+    if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
+        x86_disable_ibrs();
+    }
+
     if (config_set(CONFIG_SYSENTER)) {
         cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
 
