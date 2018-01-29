@@ -92,6 +92,12 @@
 #define IA32_PREFETCHER_MSR_DCU             BIT(2)
 #define IA32_PREFETCHER_MSR_DCU_IP          BIT(3)
 
+#define IA32_SPEC_CTRL_MSR                  0x48
+#define IA32_SPEC_CTRL_MSR_IBRS             BIT(0) /* Indirect Branch Restricted Speculation */
+#define IA32_SPEC_CTRL_MSR_STIBP            BIT(1) /* Single Thread Indirect Branch Predictors */
+
+#define IA32_PRED_CMD_MSR                   0x49
+
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
 
