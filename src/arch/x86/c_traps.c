@@ -177,6 +177,9 @@ void VISIBLE NORETURN c_handle_vmexit(void)
     ksKernelEntry.path = Entry_VMExit;
 #endif
 
+    /* We *always* need to flush the rsb as a guest may have been able to train the rsb with kernel addresses */
+    x86_flush_rsb();
+
     c_entry_hook();
     /* NODE_LOCK will get called in handleVmexit */
     handleVmexit();
