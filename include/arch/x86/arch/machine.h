@@ -318,6 +318,28 @@ static inline void Arch_finaliseInterrupt(void)
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
 }
 
+/* we do not cache the IBRS value as writing the enable bit is meaningful even if it
+ * is already set. On some processors if the enable bit was set it must be 're-written'
+ * in order for a higher privilege to correctly not have its branch predictions affected */
+static inline void x86_enable_ibrs(void)
+{
+    /* we always enable the STIBP bit since we want it on if its supported and it
+     * isn't a fault to set the bit if support is missing */
+    x86_wrmsr(IA32_SPEC_CTRL_MSR, IA32_SPEC_CTRL_MSR_IBRS | IA32_SPEC_CTRL_MSR_STIBP);
+}
+
+static inline void x86_disable_ibrs(void)
+{
+    /* we always enable the STIBP bit since we want it on if its supported and it
+     * isn't a fault to set the bit if support is missing */
+    x86_wrmsr(IA32_SPEC_CTRL_MSR, IA32_SPEC_CTRL_MSR_STIBP);
+}
+
+static inline void x86_ibpb(void)
+{
+    x86_wrmsr(IA32_PRED_CMD_MSR, 1);
+}
+
 static inline void x86_flush_rsb(void)
 {
     /* perform 32 near calls with a non zero displacement to flush the rsb with
