@@ -32,7 +32,7 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
     "imx7sabre;KernelPlatformImx7Sabre;PLAT_IMX7_SABRE;KernelSel4ArchAarch32"
     "zynq7000;KernelPlatformZynq7000;PLAT_ZYNQ7000;KernelSel4ArchAarch32"
     "allwinnera20;KernelPlatformAllwinnerA20;PLAT_ALLWINNERA20;KernelSel4ArchAarch32"
-    "jetson;KernelPlatformJetson;PLAT_TK1;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
+    "tk1;KernelPlatformTK1;PLAT_TK1;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
     "hikey;KernelPlatformHikey;PLAT_HIKEY;KernelArchARM"
     "rpi3;KernelPlatformRpi3;PLAT_BCM2837;KernelSel4ArchAarch32"
     "tx1;KernelPlatformTx1;PLAT_TX1;KernelSel4ArchAarch64"
@@ -211,7 +211,7 @@ config_option(KernelArmErrata773022 ARM_ERRATA_773022
 config_option(KernelArmSMMU ARM_SMMU
     "Enable SystemMMU for the Tegra TK1 SoC"
     DEFAULT OFF
-    DEPENDS "KernelPlatformJetson"
+    DEPENDS "KernelPlatformTK1"
 )
 
 config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER

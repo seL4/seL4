@@ -10,7 +10,7 @@
 # @TAG(DATA61_GPL)
 #
 
-set(KernelARMPlatform "jetson" CACHE STRING "")
+set(KernelARMPlatform "tk1" CACHE STRING "")
 set(KernelArch "arm" CACHE STRING "")
 set(KernelArmSel4Arch "arm_hyp" CACHE STRING "")
 set(KernelArmHypervisorSupport ON CACHE BOOL "")

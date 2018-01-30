@@ -12,7 +12,7 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelPlatformJetson)
+if(KernelPlatformTK1)
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7a ON)
     set(KernelArchArmV7ve ON)
@@ -21,7 +21,7 @@ if(KernelPlatformJetson)
 endif()
 
 add_sources(
-    DEP "KernelPlatformJetson"
+    DEP "KernelPlatformTK1"
     CFILES
         src/plat/tk1/machine/hardware.c
         src/plat/tk1/machine/io.c
