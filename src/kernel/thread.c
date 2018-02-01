@@ -78,6 +78,14 @@ void activateThread(void)
 void suspend(tcb_t *target)
 {
     cancelIPC(target);
+    if (thread_state_get_tsType(target->tcbState) == ThreadState_Running) {
+        /* whilst in the running state it is possible that restart pc of a thread is
+         * incorrect. As we do not know what state this thread will transition to
+         * after we make it inactive we update its restart pc so that the thread next
+         * runs at the correct address whether it is restarted or moved directly to
+         * running */
+        updateRestartPC(target);
+    }
     setThreadState(target, ThreadState_Inactive);
     tcbSchedDequeue(target);
 }

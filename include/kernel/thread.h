@@ -111,4 +111,13 @@ void rescheduleRequired(void);
  * registers into their correct place */
 void Arch_postModifyRegisters(tcb_t *tptr);
 
+/* Updates a threads FaultIP to match its NextIP. This is used to indicate that a
+ * thread has completed its fault and by updating the restartPC means that if the thread
+ * should get restarted in the future for any reason it is restart in such a way as to
+ * not cause the fault again. */
+static inline void updateRestartPC(tcb_t *tcb)
+{
+    setRegister(tcb, FaultIP, getRegister(tcb, NextIP));
+}
+
 #endif
