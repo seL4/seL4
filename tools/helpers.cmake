@@ -338,6 +338,8 @@ function(config_choice optionname configname doc)
         list(GET option 1 option_cache)
         list(GET option 2 option_config)
         list(REMOVE_AT option 0 1 2)
+        # Construct a list of all of our options
+        list(APPEND all_strings "${option_value}")
         # By default we assume is valid, we may change our mind after checking dependencies
         # (if there are any). This loop is again based off the one in cmake_dependent_option
         set(valid ON)
@@ -403,6 +405,9 @@ function(config_choice optionname configname doc)
             )
         endif()
     endif()
+    # Save all possible options to an internal value.  This is to allow enumerating the options elsewhere.
+    # We create a new variable because cmake doesn't support arbitrary properties on cache variables.
+    set(${optionname}_all_strings ${all_strings} CACHE INTERNAL "")
     set(configure_string "${local_config_string}" PARENT_SCOPE)
 endfunction(config_choice)
 
