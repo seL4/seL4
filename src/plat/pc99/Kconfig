@@ -348,7 +348,7 @@ choice
         depends on ARCH_X86
     config KERNEL_X86_IBRS_STIBP
         bool "Only STIBP"
-        depends on ARCH_X86 && MAX_NUM_NODES > 1
+        depends on ARCH_X86 && MAX_NUM_NODES != 1
     config KERNEL_X86_IBRS_BASIC
         bool "Basic"
         depends on ARCH_X86
@@ -358,7 +358,7 @@ choice
 endchoice
 
 config KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
-    prompt "Branch prediction barrier on context switch"
+    bool "Branch prediction barrier on context switch"
     depends on ARCH_X86
     default n
     help
@@ -369,7 +369,7 @@ config KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
         other cores retraining the branch predictor even after context switch.
 
 config KERNEL_X86_RSB_ON_CONTEXT_SWITCH
-    prompt "Flush RSB on context switch"
+    bool "Flush RSB on context switch"
     depends on ARCH_X86
     default n
     help
