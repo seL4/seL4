@@ -32,4 +32,9 @@ exception_t Arch_decodeInvocation(word_t invLabel, word_t length,
 void Arch_prepareThreadDelete(tcb_t *thread);
 word_t Arch_getObjectSize(word_t t);
 
+static inline void
+Arch_postCapDeletion(cap_t cap)
+{
+}
+
 #endif

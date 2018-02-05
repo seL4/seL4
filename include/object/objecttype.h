@@ -48,6 +48,8 @@ postCapDeletion(cap_t cap)
     if (cap_get_capType(cap) == cap_irq_handler_cap) {
         irq_t irq = cap_irq_handler_cap_get_capIRQ(cap);
         deletedIRQHandler(irq);
+    } else if (isArchCap(cap)) {
+        Arch_postCapDeletion(cap);
     }
 }
 

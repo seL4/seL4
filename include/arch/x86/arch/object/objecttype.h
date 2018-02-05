@@ -38,4 +38,10 @@ bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b);
 cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory);
 exception_t Mode_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t excaps, word_t* buffer);
 word_t Mode_getObjectSize(word_t t);
+
+static inline void
+Arch_postCapDeletion(cap_t cap)
+{
+}
+
 #endif
