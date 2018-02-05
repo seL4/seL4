@@ -101,9 +101,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
     finaliseCap_ret_t fc_ret;
 
     if (isArchCap(cap)) {
-        fc_ret.remainder = Arch_finaliseCap(cap, final);
-        fc_ret.cleanupInfo = cap_null_cap_new();
-        return fc_ret;
+        return Arch_finaliseCap(cap, final);
     }
 
     switch (cap_get_capType(cap)) {

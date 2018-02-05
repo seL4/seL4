@@ -56,8 +56,10 @@ Mode_deriveCap(cte_t* slot, cap_t cap)
     }
 }
 
-cap_t Mode_finaliseCap(cap_t cap, bool_t final)
+finaliseCap_ret_t Mode_finaliseCap(cap_t cap, bool_t final)
 {
+    finaliseCap_ret_t fc_ret;
+
     switch (cap_get_capType(cap)) {
 
     case cap_frame_cap:
@@ -118,7 +120,9 @@ cap_t Mode_finaliseCap(cap_t cap, bool_t final)
         fail("Invalid arch cap type");
     }
 
-    return cap_null_cap_new();
+    fc_ret.remainder = cap_null_cap_new();
+    fc_ret.cleanupInfo = cap_null_cap_new();
+    return fc_ret;
 }
 
 bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b)
