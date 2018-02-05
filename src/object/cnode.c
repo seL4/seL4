@@ -29,12 +29,12 @@
 struct finaliseSlot_ret {
     exception_t status;
     bool_t success;
-    irq_t irq;
+    cap_t cleanupInfo;
 };
 typedef struct finaliseSlot_ret finaliseSlot_ret_t;
 
 static finaliseSlot_ret_t finaliseSlot(cte_t *slot, bool_t exposed);
-static void emptySlot(cte_t *slot, irq_t irq);
+static void emptySlot(cte_t *slot, cap_t cleanupInfo);
 static exception_t reduceZombie(cte_t* slot, bool_t exposed);
 
 exception_t
@@ -592,13 +592,13 @@ cteDelete(cte_t *slot, bool_t exposed)
     }
 
     if (exposed || fs_ret.success) {
-        emptySlot(slot, fs_ret.irq);
+        emptySlot(slot, fs_ret.cleanupInfo);
     }
     return EXCEPTION_NONE;
 }
 
 static void
-emptySlot(cte_t *slot, irq_t irq)
+emptySlot(cte_t *slot, cap_t cleanupInfo)
 {
     if (cap_get_capType(slot->cap) != cap_null_cap) {
         mdb_node_t mdbNode;
@@ -621,7 +621,8 @@ emptySlot(cte_t *slot, irq_t irq)
         slot->cap = cap_null_cap_new();
         slot->cteMDBNode = nullMDBNode;
 
-        if (irq != irqInvalid) {
+        if (cap_get_capType(cleanupInfo) != cap_null_cap) {
+            irq_t irq = cap_irq_handler_cap_get_capIRQ(cleanupInfo);
             deletedIRQHandler(irq);
         }
     }
@@ -665,7 +666,7 @@ finaliseSlot(cte_t *slot, bool_t immediate)
         if (capRemovable(fc_ret.remainder, slot)) {
             ret.status = EXCEPTION_NONE;
             ret.success = true;
-            ret.irq = fc_ret.irq;
+            ret.cleanupInfo = fc_ret.cleanupInfo;
             return ret;
         }
 
@@ -674,7 +675,7 @@ finaliseSlot(cte_t *slot, bool_t immediate)
         if (!immediate && capCyclicZombie(fc_ret.remainder, slot)) {
             ret.status = EXCEPTION_NONE;
             ret.success = false;
-            ret.irq = fc_ret.irq;
+            ret.cleanupInfo = fc_ret.cleanupInfo;
             return ret;
         }
 
@@ -682,7 +683,7 @@ finaliseSlot(cte_t *slot, bool_t immediate)
         if (status != EXCEPTION_NONE) {
             ret.status = status;
             ret.success = false;
-            ret.irq = irqInvalid;
+            ret.cleanupInfo = cap_null_cap_new();
             return ret;
         }
 
@@ -690,13 +691,13 @@ finaliseSlot(cte_t *slot, bool_t immediate)
         if (status != EXCEPTION_NONE) {
             ret.status = status;
             ret.success = false;
-            ret.irq = irqInvalid;
+            ret.cleanupInfo = cap_null_cap_new();
             return ret;
         }
     }
     ret.status = EXCEPTION_NONE;
     ret.success = true;
-    ret.irq = irqInvalid;
+    ret.cleanupInfo = cap_null_cap_new();
     return ret;
 }
 
@@ -778,8 +779,8 @@ cteDeleteOne(cte_t* slot)
         fc_ret = finaliseCap(slot->cap, final, true);
         /* Haskell error: "cteDeleteOne: cap should be removable" */
         assert(capRemovable(fc_ret.remainder, slot) &&
-               fc_ret.irq == irqInvalid);
-        emptySlot(slot, irqInvalid);
+               cap_get_capType(fc_ret.cleanupInfo) == cap_null_cap);
+        emptySlot(slot, cap_null_cap_new());
     }
 }
 

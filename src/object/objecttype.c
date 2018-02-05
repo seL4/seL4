@@ -102,7 +102,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
     if (isArchCap(cap)) {
         fc_ret.remainder = Arch_finaliseCap(cap, final);
-        fc_ret.irq = irqInvalid;
+        fc_ret.cleanupInfo = cap_null_cap_new();
         return fc_ret;
     }
 
@@ -113,7 +113,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         }
 
         fc_ret.remainder = cap_null_cap_new();
-        fc_ret.irq = irqInvalid;
+        fc_ret.cleanupInfo = cap_null_cap_new();
         return fc_ret;
 
     case cap_notification_cap:
@@ -124,14 +124,14 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             cancelAllSignals(ntfn);
         }
         fc_ret.remainder = cap_null_cap_new();
-        fc_ret.irq = irqInvalid;
+        fc_ret.cleanupInfo = cap_null_cap_new();
         return fc_ret;
 
     case cap_reply_cap:
     case cap_null_cap:
     case cap_domain_cap:
         fc_ret.remainder = cap_null_cap_new();
-        fc_ret.irq = irqInvalid;
+        fc_ret.cleanupInfo = cap_null_cap_new();
         return fc_ret;
     }
 
@@ -148,7 +148,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
                     cap_cnode_cap_get_capCNodeRadix(cap),
                     cap_cnode_cap_get_capCNodePtr(cap)
                 );
-            fc_ret.irq = irqInvalid;
+            fc_ret.cleanupInfo = cap_null_cap_new();
             return fc_ret;
         }
         break;
@@ -174,7 +174,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
                     ZombieType_ZombieTCB,
                     CTE_REF(cte_ptr)
                 );
-            fc_ret.irq = irqInvalid;
+            fc_ret.cleanupInfo = cap_null_cap_new();
             return fc_ret;
         }
         break;
@@ -182,7 +182,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
 
     case cap_zombie_cap:
         fc_ret.remainder = cap;
-        fc_ret.irq = irqInvalid;
+        fc_ret.cleanupInfo = cap_null_cap_new();
         return fc_ret;
 
     case cap_irq_handler_cap:
@@ -192,14 +192,14 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
             deletingIRQHandler(irq);
 
             fc_ret.remainder = cap_null_cap_new();
-            fc_ret.irq = irq;
+            fc_ret.cleanupInfo = cap;
             return fc_ret;
         }
         break;
     }
 
     fc_ret.remainder = cap_null_cap_new();
-    fc_ret.irq = irqInvalid;
+    fc_ret.cleanupInfo = cap_null_cap_new();
     return fc_ret;
 }
 
