@@ -18,6 +18,7 @@
 #include <plat/machine/hardware.h>
 #include <object/cap.h>
 #include <arch/object/objecttype.h>
+#include <object/interrupt.h>
 
 deriveCap_ret_t deriveCap(cte_t *slot, cap_t cap);
 finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed);
@@ -40,5 +41,14 @@ exception_t performInvocation_Notification(notification_t *ntfn,
                                            word_t badge);
 exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot);
 word_t getObjectSize(word_t t, word_t userObjSize);
+
+static inline void
+postCapDeletion(cap_t cap)
+{
+    if (cap_get_capType(cap) == cap_irq_handler_cap) {
+        irq_t irq = cap_irq_handler_cap_get_capIRQ(cap);
+        deletedIRQHandler(irq);
+    }
+}
 
 #endif

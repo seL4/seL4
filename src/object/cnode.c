@@ -621,10 +621,7 @@ emptySlot(cte_t *slot, cap_t cleanupInfo)
         slot->cap = cap_null_cap_new();
         slot->cteMDBNode = nullMDBNode;
 
-        if (cap_get_capType(cleanupInfo) != cap_null_cap) {
-            irq_t irq = cap_irq_handler_cap_get_capIRQ(cleanupInfo);
-            deletedIRQHandler(irq);
-        }
+        postCapDeletion(cleanupInfo);
     }
 }
 
