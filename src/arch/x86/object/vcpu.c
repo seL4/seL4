@@ -451,11 +451,11 @@ vcpu_init(vcpu_t *vcpu)
     /* Set host SP to point just beyond the first field to be stored on exit. */
     vmwrite(VMX_HOST_RSP, (word_t)&vcpu->gp_registers[n_vcpu_gp_register]);
     vmwrite(VMX_HOST_RIP, (word_t)&handle_vmexit);
-    if (config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
-        /* if we have a skim window then our host cr3 is a constant and is always the
-         * the kernel address space, so we set it here instead of lazily in restoreVMCS */
-        vmwrite(VMX_HOST_CR3, makeCR3(kpptr_to_paddr(x64KSKernelPML4), 0).words[0]);
-    }
+#ifdef CONFIG_KERNEL_SKIM_WINDOW
+    /* if we have a skim window then our host cr3 is a constant and is always the
+     * the kernel address space, so we set it here instead of lazily in restoreVMCS */
+    vmwrite(VMX_HOST_CR3, makeCR3(kpptr_to_paddr(x64KSKernelPML4), 0).words[0]);
+#endif /* CONFIG_KERNEL_SKIM_WINDOW */
 
     vmwrite(VMX_HOST_ES_SELECTOR, SEL_DS_0);
     vmwrite(VMX_HOST_CS_SELECTOR, SEL_CS_0);
