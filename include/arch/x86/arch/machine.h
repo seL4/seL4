@@ -347,7 +347,7 @@ static inline void x86_flush_rsb(void)
     word_t iter = 32;
     asm volatile(
         "1:\n"
-        "sub %[iter], $2\n"
+        "sub $2, %[iter]\n"
         "call 2f\n"
         "pause\n"
         "jmp 1b\n"
@@ -356,7 +356,7 @@ static inline void x86_flush_rsb(void)
         "pause\n"
         "jmp 2b\n"
         "3:\n"
-        "cmp %[iter], $0\n"
+        "cmp $0, %[iter]\n"
         "jne 1b\n"
 #ifdef CONFIG_ARCH_X86_64
         "add %[stack_amount], %%rsp\n"
