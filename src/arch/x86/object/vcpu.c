@@ -23,6 +23,7 @@
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/statedata.h>
 #include <arch/object/vcpu.h>
+#include <arch/object/ioport.h>
 #include <util.h>
 #include <arch/api/vmenter.h>
 
@@ -545,28 +546,6 @@ decodeVCPUWriteRegisters(cap_t cap, word_t length, word_t *buffer)
     return invokeVCPUWriteRegisters(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), buffer);
 }
 
-static void
-performSetIOPortMask(vcpu_t *vcpu, uint16_t low, uint16_t high, int mask)
-{
-    while (low <= high) {
-        int low_word = low / CONFIG_WORD_SIZE;
-        int low_index = low % CONFIG_WORD_SIZE;
-        int high_word = high / CONFIG_WORD_SIZE;
-        /* See if we can optimize a whole word of bits */
-        if (low_index == 0 && low_word != high_word) {
-            vcpu->io[low_word] = mask ? ~(word_t)0 : 0;
-            low += CONFIG_WORD_SIZE;
-        } else {
-            if (mask) {
-                vcpu->io[low_word] |= BIT(low_index);
-            } else {
-                vcpu->io[low_word] &= ~BIT(low_index);
-            }
-            low++;
-        }
-    }
-}
-
 static exception_t
 invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint16_t low, uint16_t high)
 {
@@ -579,7 +558,7 @@ invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint16_t low, uint16_t 
      * will have its port mask cleared when it gets assigned a vpid */
     cap = cap_io_port_cap_set_capIOPortVPID(cap, vcpu->vpid);
     slot->cap = cap;
-    performSetIOPortMask(vcpu, low, high, 0);
+    setIOPortMask(vcpu->io, low, high, 0);
     return EXCEPTION_NONE;
 }
 
@@ -629,7 +608,7 @@ decodeEnableIOPort(cap_t cap, word_t length, word_t* buffer, extra_caps_t excaps
 static exception_t
 invokeDisableIOPort(vcpu_t *vcpu, uint16_t low, uint16_t high)
 {
-    performSetIOPortMask(vcpu, low, high, 1);
+    setIOPortMask(vcpu->io, low, high, 1);
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
@@ -1470,7 +1449,7 @@ clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last)
         return;
     }
     assert(vcpu->vpid == vpid);
-    performSetIOPortMask(vcpu, first, last, 1);
+    setIOPortMask(vcpu->io, first, last, 1);
 }
 
 static inline vpid_t

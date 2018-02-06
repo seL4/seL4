@@ -17,6 +17,9 @@
 
 #define NUM_IO_PORTS BIT(16)
 
+/* given a pointer to an 8K IO port bitmap can set a range of bits to 0 or 1 based on the value of mask */
+void setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, int mask);
+
 exception_t decodeX86PortInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t excaps, word_t* buffer);
 
 #endif

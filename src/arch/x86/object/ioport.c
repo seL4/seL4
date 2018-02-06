@@ -191,3 +191,27 @@ decodeX86PortInvocation(
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
+
+void
+setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, int mask)
+{
+    //get an aliasing pointer
+    word_t_may_alias *bitmap = ioport_bitmap;
+    while (low <= high) {
+        int low_word = low / CONFIG_WORD_SIZE;
+        int low_index = low % CONFIG_WORD_SIZE;
+        int high_word = high / CONFIG_WORD_SIZE;
+        /* See if we can optimize a whole word of bits */
+        if (low_index == 0 && low_word != high_word) {
+            bitmap[low_word] = mask ? ~(word_t)0 : 0;
+            low += CONFIG_WORD_SIZE;
+        } else {
+            if (mask) {
+                bitmap[low_word] |= BIT(low_index);
+            } else {
+                bitmap[low_word] &= ~BIT(low_index);
+            }
+            low++;
+        }
+    }
+}
