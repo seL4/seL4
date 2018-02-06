@@ -38,4 +38,8 @@ typedef struct v_region {
 #define REG_EMPTY (region_t){ .start = 0, .end = 0 }
 #define P_REG_EMPTY (p_region_t){ .start = 0, .end = 0 }
 
+/* equivalent to a word_t except that we tell the compiler that we may alias with
+ * any other type (similar to a char pointer) */
+typedef word_t __attribute__((__may_alias__)) word_t_may_alias;
+
 #endif /* __BASIC_TYPES_H */
