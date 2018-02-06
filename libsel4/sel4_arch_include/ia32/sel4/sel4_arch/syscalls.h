@@ -603,7 +603,7 @@ seL4_DebugRun(void (*userfn) (void *), void* userarg)
 
 #if defined(CONFIG_KERNEL_X86_DANGEROUS_MSR)
 LIBSEL4_INLINE_FUNC void
-seL4_X86DangerousWRMSR(seL4_Uint32 msr, uint64_t value)
+seL4_X86DangerousWRMSR(seL4_Uint32 msr, seL4_Uint64 value)
 {
     seL4_Uint32 value_low = value & 0xffffffff;
     seL4_Uint32 value_high = value >> 32;
