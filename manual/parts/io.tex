@@ -94,18 +94,6 @@ or write to, respectively.
 In each case, \texttt{port} must be within the range of I/O ports identified
 by the given \obj{IO Port} capability in order for the method to succeed.
 
-At system initialisation, the initial thread's \obj{CSpace} contains the
-master \obj{IO Port} capability, which allows access to all I/O ports.
-Other \obj{IO Port} capabilities, which authorise access to a specific
-range of I/O Ports, may be derived from this master capability using
-the \apifunc{seL4\_CNode\_Mint}{cnode_mint} method. 
-The range of I/O ports that the newly created capability should identify
-are specified via the 32-bit \texttt{badge} argument provided to 
-\apifunc{seL4\_CNode\_Mint}{cnode_mint}. The first port number in the range
-occupies the top 16 bits of \texttt{badge}, while the last port number in
-the range occupies the bottom 16 bits. The range is interpreted as being
-inclusive of these two numbers.
-
 The I/O port methods return error codes upon failure.
 A \texttt{seL4\_IllegalOperation} code is returned if port access is
 attempted outside the range allowed by the \obj{IO Port} capability. 
@@ -113,6 +101,11 @@ Since invocations that
 read from I/O ports are required to return two values -- the value read
 and the error code -- a structure containing two members, \texttt{result}
 and \texttt{error}, is returned from these API calls.
+
+At system initialisation, the initial thread's \obj{CSpace} contains the
+\obj{IOPortControl} capability, which can be used to \apifunc{seL4\_X86\_IOPort\_Issue}{x86_ioport_issue}
+\obj{IO Port} capabilities to sub ranges of I/O ports. Any range that is issued
+may not have overlap with any existing issued \obj{IO Port} capability.
 
 \subsection{I/O Space}
 \label{sec:iospace}

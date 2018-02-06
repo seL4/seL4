@@ -103,6 +103,14 @@ block asid_pool_cap {
     field_high  capASIDPool     37
 }
 
+-- IO Port Control Cap
+block io_port_control_cap {
+    padding 64
+
+    field   capType             5
+    padding 59
+}
+
 -- IO Port Cap
 block io_port_cap {
     padding 64
@@ -117,12 +125,6 @@ block io_port_cap {
 #else
     padding                    16
 #endif
-}
-
-block io_port_capdata {
-    padding 32
-    field   firstPort          16
-    field   lastPort           16
 }
 
 #ifdef CONFIG_IOMMU
@@ -251,6 +253,7 @@ tagged_union cap capType {
     tag ept_pdpt_cap        27
     tag ept_pml4_cap        29
 #endif
+    tag io_port_control_cap 31
 }
 
 ---- Arch-independent object types

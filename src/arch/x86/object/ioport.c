@@ -56,6 +56,128 @@ ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)
     return EXCEPTION_NONE;
 }
 
+void
+freeIOPortRange(uint16_t first_port, uint16_t last_port)
+{
+    setIOPortMask(x86KSAllocatedIOPorts, first_port, last_port, false);
+}
+
+static bool_t
+isIOPortRangeFree(uint16_t first_port, uint16_t last_port)
+{
+    word_t low_word = first_port / CONFIG_WORD_SIZE;
+    word_t high_word = last_port / CONFIG_WORD_SIZE;
+    word_t low_index = first_port % CONFIG_WORD_SIZE;
+    word_t high_index = last_port % CONFIG_WORD_SIZE;
+
+    // check if we are operating on a partial word
+    if (low_word == high_word) {
+        if ((x86KSAllocatedIOPorts[low_word] & make_pattern(first_port, last_port + 1)) != 0) {
+            return false;
+        }
+        return true;
+    }
+    // check the starting word
+    if ((x86KSAllocatedIOPorts[low_word] & make_pattern(low_index, CONFIG_WORD_SIZE)) != 0) {
+        return false;
+    }
+    low_word++;
+    // check the rest of the whole words
+    while (low_word < high_word) {
+        if (x86KSAllocatedIOPorts[low_word] != 0) {
+            return false;
+        }
+        low_word++;
+    }
+    // check any trailing bits
+    if ((x86KSAllocatedIOPorts[low_word] & make_pattern(0, high_index + 1)) != 0) {
+        return false;
+    }
+    return true;
+}
+
+static exception_t
+invokeX86PortControl(uint16_t first_port, uint16_t last_port, cte_t *ioportSlot, cte_t *controlSlot)
+{
+    setIOPortMask(x86KSAllocatedIOPorts, first_port, last_port, true);
+    cteInsert(cap_io_port_cap_new(first_port, last_port
+#ifdef CONFIG_VTX
+                                  , VPID_INVALID
+#endif
+                                 ),
+              controlSlot, ioportSlot);
+
+    return EXCEPTION_NONE;
+}
+
+exception_t
+decodeX86PortControlInvocation(
+    word_t invLabel,
+    word_t length,
+    cptr_t cptr,
+    cte_t* slot,
+    cap_t cap,
+    extra_caps_t excaps,
+    word_t* buffer
+)
+{
+    uint16_t first_port;
+    uint16_t last_port;
+    word_t index, depth;
+    cap_t cnodeCap;
+    cte_t *destSlot;
+    lookupSlot_ret_t lu_ret;
+    exception_t status;
+
+    if (length != 4 || excaps.excaprefs[0] == NULL) {
+        userError("IOPortControl: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (invLabel != X86IOPortControlIssue) {
+        userError("IOPortControl: Unknown operation.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    first_port = getSyscallArg(0, buffer) & 0xffff;
+    last_port = getSyscallArg(1, buffer) & 0xffff;
+    index = getSyscallArg(2, buffer);
+    depth = getSyscallArg(3, buffer);
+
+    cnodeCap = excaps.excaprefs[0]->cap;
+
+    if (last_port < first_port) {
+        userError("IOPortControl: Last port must be > first port.");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidArgumentNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (!isIOPortRangeFree(first_port, last_port)) {
+        userError("IOPortControl: Some ports in range already in use.");
+        current_syscall_error.type = seL4_RevokeFirst;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    lu_ret = lookupTargetSlot(cnodeCap, index, depth);
+    if (lu_ret.status != EXCEPTION_NONE ) {
+        userError("Target slot for new IO Port cap invalid: cap %lu.", getExtraCPtr(buffer, 0));
+        return lu_ret.status;
+    }
+    destSlot = lu_ret.slot;
+
+    status = ensureEmptySlot(destSlot);
+    if (status != EXCEPTION_NONE) {
+        userError("Target slot for new IO Port cap not empty: cap %lu.", getExtraCPtr(buffer, 0));
+        return status;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeX86PortControl(first_port, last_port, destSlot, slot);
+}
+
 exception_t
 decodeX86PortInvocation(
     word_t invLabel,

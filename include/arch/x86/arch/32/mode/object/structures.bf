@@ -76,23 +76,27 @@ block asid_pool_cap {
     field       capType         4
 }
 
+
+-- IO Port Control Cap
+block io_port_control_cap {
+    padding 32
+
+    padding 24
+    field   capType             8
+}
+
 -- IO Port Cap
 block io_port_cap {
     field   capIOPortFirstPort 16
     field   capIOPortLastPort  16
 
+    padding                    8
 #ifdef CONFIG_VTX
     field   capIOPortVPID      16
 #else
     padding                    16
 #endif
-    padding                    8
     field   capType            8
-}
-
-block io_port_capdata {
-    field   firstPort          16
-    field   lastPort           16
 }
 
 #ifdef CONFIG_IOMMU
@@ -229,6 +233,7 @@ tagged_union cap capType {
     tag ept_pdpt_cap        0x5f
     tag ept_pml4_cap        0x6f
 #endif
+    tag io_port_control_cap 0x7f
 }
 
 ---- IA32 specific fault types

@@ -315,7 +315,13 @@ cap_get_archCapPtr(cap_t cap)
 static inline bool_t CONST
 Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 {
-    return false;
+    switch (cap_get_capType(derivedCap)) {
+    case cap_io_port_cap:
+        return cap_get_capType(srcCap) == cap_io_port_control_cap;
+
+    default:
+        return false;
+    }
 }
 
 #endif /* __ARCH_OBJECT_STRUCTURES_H */

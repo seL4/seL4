@@ -21,6 +21,7 @@ typedef seL4_CPtr seL4_X86_ASIDControl;
 typedef seL4_CPtr seL4_X86_ASIDPool;
 typedef seL4_CPtr seL4_X86_IOSpace;
 typedef seL4_CPtr seL4_X86_IOPort;
+typedef seL4_CPtr seL4_X86_IOPortControl;
 typedef seL4_CPtr seL4_X86_Page;
 typedef seL4_CPtr seL4_X86_PDPT;
 typedef seL4_CPtr seL4_X86_PageDirectory;

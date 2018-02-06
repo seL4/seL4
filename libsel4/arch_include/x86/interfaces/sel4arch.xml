@@ -251,6 +251,22 @@
         </method>
     </interface>
 
+    <interface name="seL4_X86_IOPortControl" manual_name="I/O Port Control" cap_description='Control capability for I/O ports.'>
+        <method id="X86IOPortControlIssue" name="Issue" manual_label="ioport_issue">
+            <brief>
+                Issue an IO port sub range.
+            </brief>
+            <description>
+                See <autoref label='sec:ioports'/>
+                </description>
+            <param dir="in" name="first_port" type="seL4_Word" description="First port of the range of the issued capability."/>
+            <param dir="in" name="last_port" type="seL4_Word" description="Last port of the range of the issued capability."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace."/>
+            <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
+            <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
+        </method>
+    </interface>
+
     <interface name="seL4_X86_IOPort" manual_name="I/O Port" cap_description='An I/O Port capability.'>
         <method id="X86IOPortIn8" name="In8">
             <brief>

@@ -21,5 +21,9 @@
 void setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, bool_t set);
 
 exception_t decodeX86PortInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t excaps, word_t* buffer);
+exception_t decodeX86PortControlInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *slot, cap_t cap, extra_caps_t excaps, word_t *buffer);
+
+/* used to clean up the final capability to an allocated I/O port range */
+void freeIOPortRange(uint16_t first_port, uint16_t last_port);
 
 #endif

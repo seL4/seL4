@@ -19,6 +19,7 @@
 #include <plat/machine/devices.h>
 #include <arch/object/vcpu.h>
 #include <arch/object/iospace.h>
+#include <arch/object/ioport.h>
 #include <plat/machine.h>
 
 #include <mode/model/statedata.h>
@@ -90,5 +91,7 @@ extern uint16_t x86KSdebugPort;
 #endif
 
 extern x86_irq_state_t x86KSIRQState[];
+
+extern word_t x86KSAllocatedIOPorts[NUM_IO_PORTS / CONFIG_WORD_SIZE];
 
 #endif

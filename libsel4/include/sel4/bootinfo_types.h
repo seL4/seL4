@@ -23,7 +23,7 @@ enum {
     seL4_CapIRQControl          =  4, /* global IRQ controller cap */
     seL4_CapASIDControl         =  5, /* global ASID controller cap */
     seL4_CapInitThreadASIDPool  =  6, /* initial thread's ASID pool cap */
-    seL4_CapIOPort              =  7, /* global IO port cap (null cap if not supported) */
+    seL4_CapIOPortControl       =  7, /* global IO port control cap (null cap if not supported) */
     seL4_CapIOSpace             =  8, /* global IO space cap (null cap if no IOMMU support) */
     seL4_CapBootInfoFrame       =  9, /* bootinfo frame cap */
     seL4_CapInitThreadIPCBuffer = 10, /* initial thread's IPC buffer frame cap */

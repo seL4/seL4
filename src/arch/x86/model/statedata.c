@@ -71,3 +71,5 @@ uint16_t x86KSdebugPort;
 /* State data tracking what IRQ source is related to each
  * CPU vector */
 x86_irq_state_t x86KSIRQState[maxIRQ + 1];
+
+word_t x86KSAllocatedIOPorts[NUM_IO_PORTS / CONFIG_WORD_SIZE];

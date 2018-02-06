@@ -58,6 +58,10 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
         return ret;
+    case cap_io_port_control_cap:
+        ret.status = EXCEPTION_NONE;
+        ret.cap = cap_null_cap_new();
+        return ret;
     case cap_io_port_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -140,8 +144,9 @@ deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
 
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
-    switch (cap_get_capType(cap)) {
+    /* Avoid a switch statement with just a 'default' case as the C parser does not like this */
 #ifdef CONFIG_IOMMU
+    switch (cap_get_capType(cap)) {
     case cap_io_space_cap: {
         io_space_capdata_t w = { { data } };
         uint16_t PCIDevice = io_space_capdata_get_PCIDevice(w);
@@ -155,36 +160,12 @@ cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
             return cap_null_cap_new();
         }
     }
-#endif
-    case cap_io_port_cap: {
-        io_port_capdata_t w = { .words = { data } };
-        uint16_t firstPort = io_port_capdata_get_firstPort(w);
-        uint16_t lastPort = io_port_capdata_get_lastPort(w);
-        uint16_t capFirstPort = cap_io_port_cap_get_capIOPortFirstPort(cap);
-        uint16_t capLastPort = cap_io_port_cap_get_capIOPortLastPort(cap);
-        assert(capFirstPort <= capLastPort);
-
-        /* Ensure input data is ordered correctly. */
-        if (firstPort > lastPort) {
-            return cap_null_cap_new();
-        }
-
-        /* Allow the update if the new cap has range no larger than the old
-         * cap. */
-        if ((firstPort >= capFirstPort) && (lastPort <= capLastPort)) {
-            return cap_io_port_cap_new(firstPort, lastPort
-#ifdef CONFIG_VTX
-                                       , VPID_INVALID
-#endif
-                                      );
-        } else {
-            return cap_null_cap_new();
-        }
-    }
 
     default:
         return cap;
     }
+#endif
+    return cap;
 }
 
 cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
@@ -241,6 +222,11 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
                                 cap_io_port_cap_get_capIOPortFirstPort(cap),
                                 cap_io_port_cap_get_capIOPortLastPort(cap));
 #endif
+        if (final) {
+            fc_ret.remainder = cap_null_cap_new();
+            fc_ret.cleanupInfo = cap;
+            return fc_ret;
+        }
         break;
 #ifdef CONFIG_IOMMU
     case cap_io_space_cap:
@@ -347,14 +333,19 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         }
         break;
 
+    case cap_io_port_control_cap:
+        if (cap_get_capType(cap_b) == cap_io_port_control_cap ||
+                cap_get_capType(cap_b) == cap_io_port_cap) {
+            return true;
+        }
+        break;
+
     case cap_io_port_cap:
         if (cap_get_capType(cap_b) == cap_io_port_cap) {
-            word_t botA, botB, topA, topB;
-            botA = cap_io_port_cap_get_capIOPortFirstPort(cap_a);
-            botB = cap_io_port_cap_get_capIOPortFirstPort(cap_b);
-            topA = cap_io_port_cap_get_capIOPortLastPort(cap_a);
-            topB = cap_io_port_cap_get_capIOPortLastPort(cap_b);
-            return ((botA <= botB) && (topA >= topB));
+            /* we only compare the first port as since IO ports cannot overlap
+             * if the first port is the same the last port is by definition the same */
+            return  cap_io_port_cap_get_capIOPortFirstPort(cap_a) ==
+                    cap_io_port_cap_get_capIOPortFirstPort(cap_b);
         }
         break;
 
@@ -419,8 +410,9 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 
 bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
-    if (cap_get_capType(cap_a) == cap_io_port_cap) {
-        return cap_get_capType(cap_b) == cap_io_port_cap;
+    if (cap_get_capType(cap_a) == cap_io_port_control_cap &&
+            cap_get_capType(cap_b) == cap_io_port_cap) {
+        return false;
     }
     if (cap_get_capType(cap_a) == cap_frame_cap) {
         if (cap_get_capType(cap_b) == cap_frame_cap) {
@@ -530,6 +522,8 @@ Arch_decodeInvocation(
     case cap_asid_control_cap:
     case cap_asid_pool_cap:
         return decodeX86MMUInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+    case cap_io_port_control_cap:
+        return decodeX86PortControlInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_port_cap:
         return decodeX86PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
 #ifdef CONFIG_IOMMU
@@ -557,4 +551,14 @@ Arch_prepareThreadDelete(tcb_t *thread)
 {
     /* Notify the lazy FPU module about this thread's deletion. */
     fpuThreadDelete(thread);
+}
+
+void Arch_postCapDeletion(cap_t cap)
+{
+    if (cap_get_capType(cap) == cap_io_port_cap) {
+        uint16_t first_port = cap_io_port_cap_get_capIOPortFirstPort(cap);
+        uint16_t last_port = cap_io_port_cap_get_capIOPortLastPort(cap);
+
+        freeIOPortRange(first_port, last_port);
+    }
 }

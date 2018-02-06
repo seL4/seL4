@@ -313,14 +313,8 @@ init_sys_state(
 
     /* create the IO port cap */
     write_slot(
-        SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOPort),
-        cap_io_port_cap_new(
-            0,                /* first port */
-            NUM_IO_PORTS - 1  /* last port  */
-#ifdef CONFIG_VTX
-            , VPID_INVALID
-#endif
-        )
+        SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIOPortControl),
+        cap_io_port_control_cap_new()
     );
 
     /* create the cap for managing thread domains */
