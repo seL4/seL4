@@ -63,19 +63,26 @@
  * Note that for SMP kernel, the tpidr_el1 is used to pass
  * the logical core ID.
  */
- 
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define SCTLR   sctlr_el2
+#else
+#define SCTLR   sctlr_el1
+#endif
+
 .section .boot.text
 BEGIN_FUNC(_start)
     /* Make sure interrupts are disable */
     msr daifset, #DAIFSET_MASK
 
-    /* Initialise ctrlr_el1 control register */
-    mrs     x4, sctlr_el1
+    /* Initialise sctlr_el1 or sctlr_el2 register */
+    msr     spsel, #1
+    mrs     x4, SCTLR
     ldr     x19, =CR_BITS_SET
     ldr     x20, =CR_BITS_CLEAR
     orr     x4, x4, x19
     bic     x4, x4, x20
-    msr     sctlr_el1, x4
+    msr     SCTLR, x4
 
 #ifdef ENABLE_SMP_SUPPORT
     /* tpidr_el1 has the logic ID of the core, starting from 0 */
