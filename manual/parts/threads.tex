@@ -322,8 +322,21 @@ IA-32 architecture.}
 Debug exceptions are used to deliver trace and debug related events to threads.
 Breakpoints, watchpoints, trace-events and instruction-performance sampling
 events are examples. These events are supported for userspace threads when the kernel
-is configured to include them (when CONFIG\_HARDWARE\_DEBUG\_API is set). Information
-on the available hardware debugging resources is presented in the form of the following constants:
+is configured to include them (when CONFIG\_HARDWARE\_DEBUG\_API is set). The hardware
+debugging extensions API is supported on the following subset of the platforms that the
+kernel has been ported to:
+
+\begin{itemize}
+\item PC99: IA-32 and x86\_64
+\item Sabrelite (i.MX6)
+\item Jetson TegraK1
+\item HiSilicon Hikey
+\item Raspberry Pi 3
+\item Odroid
+\item Zilinx ZC7 (zynq)
+\end{itemize}
+
+Information on the available hardware debugging resources is presented in the form of the following constants:
 
 \begin{description}
 \item[seL4\_NumHWBreakpoints]: Defines the total number of hardware break
