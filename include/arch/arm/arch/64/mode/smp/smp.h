@@ -26,7 +26,7 @@
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 compile_assert(kernel_stack_4k_aligned, KERNEL_STACK_ALIGNMENT == 4096)
 
-#define CPUID_MASK  (BIT(CONFIG_KERNEL_STACK_BITS) - 1)
+#define CPUID_MASK  (KERNEL_STACK_ALIGNMENT - 1)
 
 static inline CONST cpu_id_t
 getCurrentCPUIndex(void)
