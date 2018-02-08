@@ -16,6 +16,26 @@
 #include <arch/api/invocation.h>
 #include <plat/machine/io.h>
 
+static inline void
+apply_pattern(word_t_may_alias *w, word_t pattern, bool_t set)
+{
+    if (set) {
+        *w |= pattern;
+    } else {
+        *w &= ~pattern;
+    }
+}
+
+static inline word_t
+make_pattern(int start, int end)
+{
+    // number of bits we want to have set
+    int num_bits = end - start;
+    // shift down to cut off the bits we don't want, then shift up to put the
+    // bits into position
+    return (~(word_t)0) >> (CONFIG_WORD_SIZE - num_bits) << start;
+}
+
 static exception_t
 ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)
 {
@@ -193,25 +213,30 @@ decodeX86PortInvocation(
 }
 
 void
-setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, int mask)
+setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, bool_t set)
 {
     //get an aliasing pointer
     word_t_may_alias *bitmap = ioport_bitmap;
-    while (low <= high) {
-        int low_word = low / CONFIG_WORD_SIZE;
-        int low_index = low % CONFIG_WORD_SIZE;
-        int high_word = high / CONFIG_WORD_SIZE;
-        /* See if we can optimize a whole word of bits */
-        if (low_index == 0 && low_word != high_word) {
-            bitmap[low_word] = mask ? ~(word_t)0 : 0;
-            low += CONFIG_WORD_SIZE;
-        } else {
-            if (mask) {
-                bitmap[low_word] |= BIT(low_index);
-            } else {
-                bitmap[low_word] &= ~BIT(low_index);
-            }
-            low++;
+
+    word_t low_word = low / CONFIG_WORD_SIZE;
+    word_t high_word = high / CONFIG_WORD_SIZE;
+
+    // see if we are just manipulating bits inside a single word. handling this
+    // specially makes reasoning easier
+    if (low_word == high_word) {
+        apply_pattern(bitmap + low_word, make_pattern(low, high + 1), set);
+    } else {
+        word_t low_index = low % CONFIG_WORD_SIZE;
+        // operate on the potentially partial first word
+        apply_pattern(bitmap + low_word, make_pattern(low_index, CONFIG_WORD_SIZE), set);
+        low_word++;
+        // iterate over the whole words
+        while (low_word < high_word) {
+            apply_pattern(bitmap + low_word, ~(word_t)0, set);
+            low_word++;
         }
+        // apply to any remaining bits
+        word_t high_index = high % CONFIG_WORD_SIZE;
+        apply_pattern(bitmap + low_word, make_pattern(0, high_index + 1), set);
     }
 }

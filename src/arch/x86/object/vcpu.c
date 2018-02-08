@@ -558,7 +558,7 @@ invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint16_t low, uint16_t 
      * will have its port mask cleared when it gets assigned a vpid */
     cap = cap_io_port_cap_set_capIOPortVPID(cap, vcpu->vpid);
     slot->cap = cap;
-    setIOPortMask(vcpu->io, low, high, 0);
+    setIOPortMask(vcpu->io, low, high, false);
     return EXCEPTION_NONE;
 }
 
@@ -608,7 +608,7 @@ decodeEnableIOPort(cap_t cap, word_t length, word_t* buffer, extra_caps_t excaps
 static exception_t
 invokeDisableIOPort(vcpu_t *vcpu, uint16_t low, uint16_t high)
 {
-    setIOPortMask(vcpu->io, low, high, 1);
+    setIOPortMask(vcpu->io, low, high, true);
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
@@ -1449,7 +1449,7 @@ clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last)
         return;
     }
     assert(vcpu->vpid == vpid);
-    setIOPortMask(vcpu->io, first, last, 1);
+    setIOPortMask(vcpu->io, first, last, true);
 }
 
 static inline vpid_t
