@@ -154,7 +154,7 @@ init_ibrs(void)
     if ((config_set(CONFIG_KERNEL_X86_IBRS_BASIC) || config_set(CONFIG_KERNEL_X86_IBRS_STIBP)) && !support_ibrs) {
         printf("IBRS not supported by CPU\n");
         return false;
-    } else {
+    } else if (support_ibrs) {
         /* 'disable' IBRS. For IBRS_BASIC this does nothing, and for STIBP this will cause
          * us to enable STIBP, and we can then forget about it */
         x86_disable_ibrs();
