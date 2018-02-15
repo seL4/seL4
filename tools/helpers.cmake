@@ -39,45 +39,6 @@ function(get_absolute_source_or_binary output input)
 endfunction(get_absolute_source_or_binary)
 
 # Generates a custom command that preprocesses an input file into an output file
-# Uses the current CMAKE_C_FLAGS as well as any EXTRA_FLAGS provided. Can also
-# be given any EXTRA_DEPS to depend upon
-# If TARGET is provided then an additional custom_target with that name will be generated
-# that just depends upon output
-# Output and input files will be converted to absolute paths based on the following rules
-#  * Output is assumed to be in CMAKE_CURRENT_BINARY_DIR
-#  * Input is assumed to be in CMAKE_CURRENT_SOURCE_DIR if it resolves to a file that exists
-#    otherwise it is assumed to be in CMAKE_CURRENT_BINARY_DIR
-function(GenCPPCommand output input)
-    cmake_parse_arguments(PARSE_ARGV 2 "CPP" "" "EXTRA_DEPS;EXTRA_FLAGS;TARGET" "")
-    if(NOT "${CPP_UNPARSED_ARGUMENTS}" STREQUAL "")
-        message(FATAL_ERROR "Unknown arguments to GenCPPCommand")
-    endif()
-    # Get the absolute path of the output file so we can then get its path relative
-    # to the binary directory, which we need to do for correct dependency generation
-    get_filename_component(output_absolute "${output}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-    get_absolute_source_or_binary(input_absolute "${input}")
-    file(RELATIVE_PATH rel_target_path "${CMAKE_BINARY_DIR}" "${output_absolute}")
-    # The flags are stored as regular space separated command line. As we use COMMAND_EXPAND_LISTS
-    # in the COMMAND we need to first turn our arguments into a proper list for re-expansion
-    separate_arguments(args NATIVE_COMMAND "${CPP_EXTRA_FLAGS} ${CMAKE_C_FLAGS}")
-    add_custom_command(OUTPUT "${output_absolute}" OUTPUT "${output_absolute}.d"
-        COMMAND "${CMAKE_C_COMPILER}" -MMD -MT "${rel_target_path}"
-                -MF "${output_absolute}.d" -E -o "${output_absolute}" "${args}"
-                -x c "${input_absolute}"
-        DEPENDS "${input_absolute}" ${CPP_EXTRA_DEPS}
-        COMMENT "Preprocessing ${input} into ${output}"
-        DEPFILE "${output_absolute}.d"
-        VERBATIM
-        COMMAND_EXPAND_LISTS
-    )
-    if(NOT "${CPP_TARGET}" STREQUAL "")
-        add_custom_target(${CPP_TARGET}
-            DEPENDS ${output}
-        )
-    endif()
-endfunction(GenCPPCommand)
-
-# Generates a custom command that preprocesses an input file into an output file
 # Uses the current compilation settings as well as any EXTRA_FLAGS provided. Can also
 # be given any EXTRA_DEPS to depend upon
 # A target with the name `output_target` will be generated to create a target based dependency
