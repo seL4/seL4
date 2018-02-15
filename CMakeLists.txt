@@ -94,12 +94,18 @@ set(BASE_EXE_LINKER_FLAGS "${common_flags} ${common_exe_flags} " CACHE INTERNAL
 include(${KERNEL_FLAGS_PATH})
 
 # Setup kernel specific flags
-set(kernel_common_flags "${kernel_common_flags} -nostdinc -nostdlib ${KernelOptimisation} -DHAVE_AUTOCONF")
+macro(KernelCommonFlags)
+    foreach(common_flag IN ITEMS ${ARGV})
+        add_compile_options(${common_flag})
+        string(APPEND CMAKE_EXE_LINKER_FLAGS " ${common_flag} ")
+    endforeach()
+endmacro(KernelCommonFlags)
+KernelCommonFlags(-nostdinc -nostdlib ${KernelOptimisation} -DHAVE_AUTOCONF)
 if(KernelFWholeProgram)
-    set(kernel_common_flags "${kernel_common_flags} -fwhole-program")
+    KernelCommonFlags(-fwhole-program)
 endif()
 if(KernelDebugBuild)
-    set(kernel_common_flags "${kernel_common_flags} -DDEBUG -g -ggdb")
+    KernelCommonFlags(-DDEBUG -g -ggdb)
     # Pretend to CMake that we're a release build with debug info. This is because
     # we do actually allow CMake to do the final link step, so we'd like it not to
     # strip our binary
@@ -108,26 +114,23 @@ else()
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 if(KernelArchX86 AND Kernel64)
-    set(kernel_common_flags "${kernel_common_flags} -mcmodel=kernel")
+    KernelCommonFlags(-mcmodel=kernel)
 endif()
 if(kernelArchARM)
-    set(kernel_common_flags "${kernel_common_flags} -mfloat-abi=soft")
+    KernelCommonFlags(-mfloat-abi=soft)
 endif()
-set(kernel_common_flags "${kernel_common_flags} -fno-pic -fno-pie")
-set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${kernel_common_flags}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${kernel_common_flags} \
-    -fno-stack-protector -fno-asynchronous-unwind-tables -std=c99 ${KernelOptimisation} \
-    -Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wnested-externs -Wmissing-declarations \
-    -Wundef -Wpointer-arith -Wno-nonnull -ffreestanding"
+KernelCommonFlags(-fno-pic -fno-pie)
+add_compile_options(
+    -fno-stack-protector -fno-asynchronous-unwind-tables -std=c99
+    -Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wnested-externs -Wmissing-declarations
+    -Wundef -Wpointer-arith -Wno-nonnull -ffreestanding
 )
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kernel_common_flags} \
-    -ffreestanding -Wl,--build-id=none -static")
-
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-n")
+# Add all the common flags to the linker args
+string(APPEND CMAKE_EXE_LINKER_FLAGS " -ffreestanding -Wl,--build-id=none -static -Wl,-n ")
 
 if(KernelArchX86)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mno-mmx -mno-sse -mno-sse2 -mno-3dnow")
+    add_compile_options(-mno-mmx -mno-sse -mno-sse2 -mno-3dnow)
 endif()
 
 # Sort the C sources to ensure a stable layout of the final C file
