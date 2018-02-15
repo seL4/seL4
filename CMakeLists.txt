@@ -168,11 +168,6 @@ include_directories($<TARGET_PROPERTY:kernel_Config,INTERFACE_INCLUDE_DIRECTORIE
 # generate one for it to use
 # TODO: use the kernel_Config directly
 generate_autoconf(kernel_autoconf "kernel")
-# When doing custom compilations we need to add the config header directories to our
-# include path, since we cannot get them automatically through link libraries. For
-# this purpose we have an additional variable for arguments that may have generator
-# expressions
-set(custom_command_c_flags "${custom_command_c_flags} -I$<JOIN:$<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>, -I>")
 include_directories($<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>)
 
 # Target for the config / autoconf headers. This is what all the other generated headers
