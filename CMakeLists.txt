@@ -135,10 +135,7 @@ list(SORT c_sources)
 # Add the domain schedule now that its sorted
 list(APPEND c_sources "${KernelDomainSchedule}")
 
-# 'c_arguments_deps' is a variable that will hold dependencies for any generated header paths added
-# to 'CMAKE_C/ASM_FLAGS'. This means whenever a command uses 'CMAKE_C/ASM_FLAGS' it should also
-# depends upon 'c_arguments_deps'
-# We define some macros for keeping these in sync
+# We define some macros for keeping flags in sync
 macro(add_flags)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ARGN}")
     set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${ARGN}")
@@ -176,11 +173,20 @@ generate_autoconf(kernel_autoconf "kernel")
 # expressions
 set(custom_command_c_flags "${custom_command_c_flags} -I$<JOIN:$<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>, -I>")
 
-# We also need to manually depend upon the targets and generated files
-get_generated_files(gen_files kernel_autoconf_Gen)
-list(APPEND c_arguments_deps kernel_autoconf_Gen
-    ${gen_files}
+# Target for the config / autoconf headers. This is what all the other generated headers
+# can depend upon
+add_custom_target(kernel_config_headers
+    DEPENDS kernel_autoconf_Gen kernel_autoconf kernel_Config kernel_Gen
 )
+
+# Target for all generated headers. We start with just all the config / autoconf headers
+add_custom_target(kernel_headers DEPENDS kernel_config_headers
+)
+
+# Build up a list of generated files. needed for dependencies in custom commands
+get_generated_files(gen_files_list kernel_autoconf_Gen)
+get_generated_files(gen_files2 kernel_Gen)
+list(APPEND gen_files_list "${gen_files2}")
 
 #####################
 # C source generation
@@ -208,13 +214,15 @@ add_custom_target(kernel_all_c_wrapper
 # Aside from generating file rules for dependencies this section will also produce a target
 # that can be depended upon (along with the desired files themselves) to control parallelism
 
+set(xml_headers "")
 set(header_dest "gen_headers/arch/api/invocation.h")
 gen_invocation_header(
     OUTPUT ${header_dest}
     XML ${CMAKE_CURRENT_SOURCE_DIR}/libsel4/arch_include/${KernelArch}/interfaces/sel4arch.xml
     ARCH
 )
-list(APPEND gen_headers_deps "${header_dest}")
+list(APPEND xml_headers "${header_dest}")
+list(APPEND gen_files_list "${header_dest}")
 
 set(header_dest "gen_headers/arch/api/sel4_invocation.h")
 gen_invocation_header(
@@ -222,14 +230,16 @@ gen_invocation_header(
     XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/sel4_arch_include/${KernelSel4Arch}/interfaces/sel4arch.xml"
     SEL4ARCH
 )
-list(APPEND gen_headers_deps "${header_dest}")
+list(APPEND xml_headers "${header_dest}")
+list(APPEND gen_files_list "${header_dest}")
 
 set(header_dest "gen_headers/api/invocation.h")
 gen_invocation_header(
     OUTPUT "${header_dest}"
     XML "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/interfaces/sel4.xml"
 )
-list(APPEND gen_headers_deps "${header_dest}")
+list(APPEND xml_headers "${header_dest}")
+list(APPEND gen_files_list "${header_dest}")
 
 set(syscall_xml_base "${CMAKE_CURRENT_SOURCE_DIR}/include/api")
 set(syscall_dest "gen_headers/arch/api/syscall.h")
@@ -241,13 +251,13 @@ add_custom_command(OUTPUT ${syscall_dest}
     COMMENT "Generate syscall invocations"
     VERBATIM
 )
-list(APPEND gen_headers_deps "${syscall_dest}")
-# Create a target for all the headers generation commands to control parallel builds
-add_custom_target(gen_headers_wrapper
-    DEPENDS ${gen_headers_deps}
-)
 AddHeader("${CMAKE_CURRENT_BINARY_DIR}/gen_headers")
-list(APPEND c_arguments_deps ${gen_headers_deps} gen_headers_wrapper)
+list(APPEND xml_headers "${syscall_dest}")
+list(APPEND gen_files_list "${syscall_dest}")
+# Construct target for just the xml headers
+add_custom_target(xml_headers_target DEPENDS ${xml_headers})
+# Add the xml headers to all the kernel headers
+add_dependencies(kernel_headers xml_headers_target)
 
 #######################
 # Prune list generation
@@ -290,14 +300,15 @@ GenCPPCommand(
     kernel_all.c
     EXTRA_FLAGS "${custom_command_c_flags} -CC -I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
     TARGET kernel_all_pp_prune_wrapper
-    EXTRA_DEPS "kernel_all_c_wrapper;${c_arguments_deps};dummy_header_wrapper;${dummy_headers}"
+    EXTRA_DEPS "kernel_all_c_wrapper;xml_headers_target;kernel_config_headers;${gen_files_list};dummy_header_wrapper;${dummy_headers}"
 )
 
 ############################
 # Bitfield header generation
 ############################
 
-set(bf_gen_target "kernel_bf_gen_target")
+# Need to generate a bunch of unique targets, we'll do this with piano numbers
+set(bf_gen_target "kernel_bf_gen_target_1")
 
 foreach(bf_dec ${bf_declarations})
     string(REPLACE ":" ";" bf_dec ${bf_dec})
@@ -314,7 +325,7 @@ foreach(bf_dec ${bf_declarations})
         "${bf_file}"
         EXTRA_FLAGS "${custom_command_c_flags} -P"
         TARGET "${pbf_target}"
-        EXTRA_DEPS "${c_arguments_deps}"
+        EXTRA_DEPS "${gen_files_list};xml_headers_target;kernel_config_headers"
     )
     GenHBFTarget("" ${bf_gen_target} "generated/${bf_gen_dir}/${bf_target}" "${pbf_name}" "${pbf_target}"
         "kernel_all_pp_prune.c" "kernel_all_pp_prune_wrapper")
@@ -326,7 +337,8 @@ foreach(bf_dec ${bf_declarations})
         "${bf_gen_target}_def" "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${defs_target}"
         "${bf_gen_target}_proof" "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${proofs_target}"
     )
-    list(APPEND c_arguments_deps "${bf_gen_target}" "generated/${bf_gen_dir}/${bf_target}")
+    add_dependencies(kernel_headers "${bf_gen_target}")
+    list(APPEND gen_files_list "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${bf_target}")
     set(bf_gen_target "${bf_gen_target}1")
 endforeach()
 
@@ -341,7 +353,7 @@ GenCPPCommand(
     kernel_all.c
     EXTRA_FLAGS "${custom_command_c_flags} -CC"
     TARGET kernel_all_pp_wrapper
-    EXTRA_DEPS "kernel_all_c_wrapper;${c_arguments_deps}"
+    EXTRA_DEPS "kernel_all_c_wrapper;kernel_headers;${gen_files_list}"
 )
 
 set(linker_lds_path "${CMAKE_CURRENT_BINARY_DIR}/linker.lds_pp")
@@ -351,7 +363,7 @@ GenCPPCommand(
     "${linker_source}"
     EXTRA_FLAGS "${custom_command_c_flags} -P"
     TARGET linker_ld_wrapper
-    EXTRA_DEPS "${c_arguments_deps}"
+    EXTRA_DEPS "kernel_headers;${gen_files_list}"
 )
 
 # Need a custom build command as we need to not have our already pre-processed file get
@@ -364,7 +376,7 @@ add_custom_command(OUTPUT kernel_all.o
     COMMAND ${ccache} ${CMAKE_C_COMPILER} -ffreestanding -c -o kernel_all.o "${args}" -x cpp-output kernel_all_pp.c
     # Cannot make the kernel.elf executable properly depend upon the linker script so depend upon it
     # here
-    DEPENDS kernel_all_pp.c kernel_all_pp_wrapper ${c_arguments_deps} linker_ld_wrapper "${linker_lds_path}"
+    DEPENDS kernel_all_pp.c kernel_all_pp_wrapper kernel_headers ${gen_files_list} linker_ld_wrapper "${linker_lds_path}"
     VERBATIM
     COMMENT "Compiling concatenated kernel sources"
     COMMAND_EXPAND_LISTS
