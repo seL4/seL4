@@ -77,6 +77,56 @@ function(GenCPPCommand output input)
     endif()
 endfunction(GenCPPCommand)
 
+# Generates a custom command that preprocesses an input file into an output file
+# Uses the current compilation settings as well as any EXTRA_FLAGS provided. Can also
+# be given any EXTRA_DEPS to depend upon
+# A target with the name `output_target` will be generated to create a target based dependency
+# for the output file
+# Output and input files will be converted to absolute paths based on the following rules
+#  * Output is assumed to be in CMAKE_CURRENT_BINARY_DIR
+#  * Input is assumed to be in CMAKE_CURRENT_SOURCE_DIR if it resolves to a file that exists
+#    otherwise it is assumed to be in CMAKE_CURRENT_BINARY_DIR
+function(CPPFile output output_target input)
+    cmake_parse_arguments(PARSE_ARGV 3 "CPP" "EXACT_INPUT" "" "EXTRA_DEPS;EXTRA_FLAGS")
+    if(NOT "${CPP_UNPARSED_ARGUMENTS}" STREQUAL "")
+        message(FATAL_ERROR "Unknown arguments to CPPFile: ${CPP_UNPARSED_ARGUMENTS}")
+    endif()
+    get_absolute_source_or_binary(input "${input}")
+    # If EXACT_INPUT then we must use the exact input file for the compilation and
+    # trust that the user gave something that the compiler will understand. Otherwise
+    # generate a rule for copying the input into a .c file. This prevents the
+    # compiler for getting confused if you are trying to preprocess a file type
+    # that it would normally understand as something else (such as a linker script)
+    if (NOT CPP_EXACT_INPUT)
+        add_custom_command(OUTPUT ${output_target}_temp.c
+            COMMAND ${CMAKE_COMMAND} -E copy ${input} ${CMAKE_CURRENT_BINARY_DIR}/${output_target}_temp.c
+            COMMENT "Creating C input file for preprocessor"
+            DEPENDS ${CPP_EXTRA_DEPS}
+        )
+        set(input ${output_target}_temp.c)
+        add_custom_target(${output_target}_copy_in DEPENDS ${input})
+    else()
+        # Still need to generate a custom target even if not copying as EXRTRA_DEPS may
+        # have target and file level dependencies, which we cannot add directly as
+        # dependencies to the library
+        add_custom_target(${output_target}_copy_in DEPENDS ${CPP_EXTRA_DEPS})
+    endif()
+    # Now generate an object library to persuade cmake to just do compilation and not try
+    # and link our 'object' files
+    add_library(${output_target}_temp_lib OBJECT ${input})
+    add_dependencies(${output_target}_temp_lib ${output_target}_copy_in)
+    # Give the preprecess flag
+    target_compile_options(${output_target}_temp_lib PRIVATE -E)
+    # Give any other flags from the user
+    target_compile_options(${output_target}_temp_lib PRIVATE ${CPP_EXTRA_FLAGS})
+    # Now copy from the random name cmake gave our object file into the one desired by the user
+    add_custom_command(OUTPUT ${output}
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_OBJECTS:${output_target}_temp_lib> ${output}
+        DEPENDS ${output_target}_temp_lib $<TARGET_OBJECTS:${output_target}_temp_lib>
+    )
+    add_custom_target(${output_target} DEPENDS ${output})
+endfunction(CPPFile)
+
 # Function to generate a custom command to process a bitfield file. The input
 # (pbf_path) is either a .bf file or, if you used pre-processor directives, a
 # pre-processed .bf file. As this invokes a python tool that places a file
