@@ -319,12 +319,9 @@ foreach(bf_dec ${bf_declarations})
     string(REPLACE ".bf" "_proofs.thy" proofs_target "${bf_name}")
     set(pbf_name "generated/${bf_gen_dir}/${bf_name}.pbf")
     set(pbf_target "${bf_gen_target}_pbf")
-    GenCPPCommand(
-        "${pbf_name}"
-        "${bf_file}"
-        EXTRA_FLAGS "${custom_command_c_flags} -P"
-        TARGET "${pbf_target}"
-        EXTRA_DEPS "${gen_files_list};xml_headers_target;kernel_config_headers"
+    CPPFile("${pbf_name}" "${pbf_target}" "${bf_file}"
+        EXTRA_FLAGS -P
+        EXTRA_DEPS kernel_config_headers ${gen_files_list}
     )
     GenHBFTarget("" ${bf_gen_target} "generated/${bf_gen_dir}/${bf_target}" "${pbf_name}" "${pbf_target}"
         "kernel_all_pp_prune.c" "kernel_all_pp_prune_wrapper")
