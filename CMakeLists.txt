@@ -163,6 +163,7 @@ endif()
 # Config generation
 ###################
 
+include_directories($<TARGET_PROPERTY:kernel_Config,INTERFACE_INCLUDE_DIRECTORIES>)
 # The kernel expects to be able to include an 'autoconf.h' file at the moment. So lets
 # generate one for it to use
 # TODO: use the kernel_Config directly
@@ -172,6 +173,7 @@ generate_autoconf(kernel_autoconf "kernel")
 # this purpose we have an additional variable for arguments that may have generator
 # expressions
 set(custom_command_c_flags "${custom_command_c_flags} -I$<JOIN:$<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>, -I>")
+include_directories($<TARGET_PROPERTY:kernel_autoconf,INTERFACE_INCLUDE_DIRECTORIES>)
 
 # Target for the config / autoconf headers. This is what all the other generated headers
 # can depend upon
