@@ -353,7 +353,6 @@ GenCPPCommand(
     TARGET linker_ld_wrapper
     EXTRA_DEPS "${c_arguments_deps}"
 )
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${linker_lds_path}")
 
 # Need a custom build command as we need to not have our already pre-processed file get
 # processed again, which means either using a .ii file or explicitly saying -x cpp-output.
@@ -385,3 +384,4 @@ target_include_directories(kernel.elf PRIVATE ${config_dir})
 target_include_directories(kernel.elf PRIVATE include)
 target_link_libraries(kernel.elf PRIVATE kernel_Config kernel_autoconf)
 add_dependencies(kernel.elf kernel_all_wrapper)
+set_property(TARGET kernel.elf APPEND_STRING PROPERTY LINK_FLAGS " -T ${linker_lds_path} ")
