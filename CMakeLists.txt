@@ -145,18 +145,18 @@ macro(AddHeader header)
 endmacro(AddHeader)
 
 # Add static header includes
-AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include")
-AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/${KernelWordSize}")
-AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/arch/${KernelArch}")
-AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/arch/${KernelArch}/arch/${KernelWordSize}/")
-AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/plat/${KernelPlatform}/")
-AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/plat/${KernelPlatform}/plat/${KernelWordSize}/")
+include_directories("include")
+include_directories("include/${KernelWordSize}")
+include_directories("include/arch/${KernelArch}")
+include_directories("include/arch/${KernelArch}/arch/${KernelWordSize}/")
+include_directories("include/plat/${KernelPlatform}/")
+include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}/")
 if(KernelArchARM)
-    AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/arch/arm/armv/${KernelArmArmV}/")
-    AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}")
+    include_directories("include/arch/arm/armv/${KernelArmArmV}/")
+    include_directories("include/arch/arm/armv/${KernelArmArmV}/${KernelWordSize}")
 endif()
 if(KernelArmMach STREQUAL "exynos")
-    AddHeader("${CMAKE_CURRENT_SOURCE_DIR}/include/plat/exynos_common/")
+    include_directories("include/plat/exynos_common/")
 endif()
 
 ###################
@@ -248,13 +248,13 @@ add_custom_command(OUTPUT ${syscall_dest}
     COMMENT "Generate syscall invocations"
     VERBATIM
 )
-AddHeader("${CMAKE_CURRENT_BINARY_DIR}/gen_headers")
 list(APPEND xml_headers "${syscall_dest}")
 list(APPEND gen_files_list "${syscall_dest}")
 # Construct target for just the xml headers
 add_custom_target(xml_headers_target DEPENDS ${xml_headers})
 # Add the xml headers to all the kernel headers
 add_dependencies(kernel_headers xml_headers_target)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen_headers")
 
 #######################
 # Prune list generation
@@ -333,7 +333,7 @@ foreach(bf_dec ${bf_declarations})
     set(bf_gen_target "${bf_gen_target}1")
 endforeach()
 
-AddHeader("${CMAKE_CURRENT_BINARY_DIR}/generated")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 ####################
 # Kernel compilation
