@@ -297,12 +297,9 @@ add_custom_target(dummy_header_wrapper
     DEPENDS ${dummy_headers}
 )
 
-GenCPPCommand(
-    kernel_all_pp_prune.c
-    kernel_all.c
-    EXTRA_FLAGS "${custom_command_c_flags} -CC -I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
-    TARGET kernel_all_pp_prune_wrapper
-    EXTRA_DEPS "kernel_all_c_wrapper;xml_headers_target;kernel_config_headers;${gen_files_list};dummy_header_wrapper;${dummy_headers}"
+CPPFile(kernel_all_pp_prune.c kernel_all_pp_prune_wrapper kernel_all.c
+    EXTRA_FLAGS -CC "-I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
+    EXTRA_DEPS kernel_all_c_wrapper dummy_header_wrapper xml_headers_target kernel_config_headers ${gen_files_list}
 )
 
 ############################
