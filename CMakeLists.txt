@@ -135,15 +135,6 @@ list(SORT c_sources)
 # Add the domain schedule now that its sorted
 list(APPEND c_sources "${KernelDomainSchedule}")
 
-# We define some macros for keeping flags in sync
-macro(add_flags)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ARGN}")
-    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${ARGN}")
-endmacro(add_flags)
-macro(AddHeader header)
-    add_flags("-I${header}")
-endmacro(AddHeader)
-
 # Add static header includes
 include_directories("include")
 include_directories("include/${KernelWordSize}")
