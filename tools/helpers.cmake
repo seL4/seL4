@@ -25,17 +25,18 @@ function(RequireFile config_name file_name)
     mark_as_advanced(FORCE ${config_name})
 endfunction(RequireFile)
 
-# Helper macro for converting a filename to an absolute path. It first converts to
+# Helper function for converting a filename to an absolute path. It first converts to
 # an absolute path based in the current source directory, and if the results in a file
 # that doesn't exist it returns an absolute path based from the binary directory
 # This file check is done at generation time and is considered safe as source files
 # should not be being added as part of the build step (except into the build directory)
-macro(get_absolute_source_or_binary output input)
-    get_filename_component(${output} "${input}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-    if(NOT EXISTS "${${output}}")
-        get_filename_component(${output} "${input}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+function(get_absolute_source_or_binary output input)
+    get_filename_component(test "${input}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    if(NOT EXISTS "${test}")
+        get_filename_component(test "${input}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     endif()
-endmacro(get_absolute_source_or_binary)
+    set("${output}" "${test}" PARENT_SCOPE)
+endfunction(get_absolute_source_or_binary)
 
 # Generates a custom command that preprocesses an input file into an output file
 # Uses the current CMAKE_C_FLAGS as well as any EXTRA_FLAGS provided. Can also
