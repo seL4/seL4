@@ -344,52 +344,47 @@ AddHeader("${CMAKE_CURRENT_BINARY_DIR}/generated")
 # Kernel compilation
 ####################
 
-GenCPPCommand(
-    kernel_all_pp.c
-    kernel_all.c
-    EXTRA_FLAGS "${custom_command_c_flags} -CC"
-    TARGET kernel_all_pp_wrapper
-    EXTRA_DEPS "kernel_all_c_wrapper;kernel_headers;${gen_files_list}"
+CPPFile(kernel_all.i kernel_i_wrapper kernel_all.c
+    EXTRA_DEPS kernel_all_c_wrapper kernel_headers ${gen_files_list}
+    EXTRA_FLAGS -CC
+    # The circulr_includes script relies upon parsing out exactly 'kernel_all.c' as
+    # a special case so we must ask CPPFile to not change the input name
+    EXACT_INPUT
 )
+# Explain to cmake that our object file is actually a C input file
+set_property(SOURCE kernel_all.i PROPERTY LANGUAGE C)
 
-set(linker_lds_path "${CMAKE_CURRENT_BINARY_DIR}/linker.lds_pp")
 set(linker_source "src/plat/${KernelPlatform}/linker.lds")
-GenCPPCommand(
-    "${linker_lds_path}"
-    "${linker_source}"
-    EXTRA_FLAGS "${custom_command_c_flags} -P"
-    TARGET linker_ld_wrapper
-    EXTRA_DEPS "kernel_headers;${gen_files_list}"
+set(linker_lds_path "${CMAKE_CURRENT_BINARY_DIR}/linker.lds_pp")
+CPPFile("${linker_lds_path}" linker_ld_wrapper "${linker_source}"
+    EXTRA_DEPS kernel_headers ${gen_files_list}
+    EXTRA_FLAGS -CC -P
 )
 
-# Need a custom build command as we need to not have our already pre-processed file get
-# processed again, which means either using a .ii file or explicitly saying -x cpp-output.
-# Unfortunately  and cmake doesn't understand .ii files directly so we do the latter approach
-separate_arguments(args NATIVE_COMMAND "${custom_command_c_flags} ${CMAKE_C_FLAGS}")
-add_custom_command(OUTPUT kernel_all.o
-    # Take the opportunity to check for circular includes
-    COMMAND ${CIRCULAR_INCLUDES} < kernel_all_pp.c
-    COMMAND ${ccache} ${CMAKE_C_COMPILER} -ffreestanding -c -o kernel_all.o "${args}" -x cpp-output kernel_all_pp.c
-    # Cannot make the kernel.elf executable properly depend upon the linker script so depend upon it
-    # here
-    DEPENDS kernel_all_pp.c kernel_all_pp_wrapper kernel_headers ${gen_files_list} linker_ld_wrapper "${linker_lds_path}"
-    VERBATIM
-    COMMENT "Compiling concatenated kernel sources"
-    COMMAND_EXPAND_LISTS
+add_custom_command(OUTPUT circular_includes_valid
+    COMMAND ${CIRCULAR_INCLUDES} < kernel_all.i
+    COMMAND touch circular_includes_valid
+    DEPENDS kernel_i_wrapper kernel_all.i
 )
 
-add_custom_target(kernel_all_wrapper
-    DEPENDS kernel_all.o
+add_custom_target(circular_includes
+    DEPENDS circular_includes_valid
 )
+
+add_custom_command(OUTPUT kernel_all_pp.c
+    COMMAND ${CMAKE_COMMAND} -E copy kernel_all.i kernel_all_pp.c
+    DEPENDS kernel_i_wrapper kernel_all.i
+)
+add_custom_target(kernel_all_pp_wrapper DEPENDS kernel_all_pp.c)
 
 add_custom_target(kernel_theories
     DEPENDS ${theories_deps}
 )
 
 # Declare final kernel output
-add_executable(kernel.elf EXCLUDE_FROM_ALL ${asm_sources} kernel_all.o)
+add_executable(kernel.elf EXCLUDE_FROM_ALL ${asm_sources} kernel_all.i)
 target_include_directories(kernel.elf PRIVATE ${config_dir})
 target_include_directories(kernel.elf PRIVATE include)
 target_link_libraries(kernel.elf PRIVATE kernel_Config kernel_autoconf)
-add_dependencies(kernel.elf kernel_all_wrapper)
 set_property(TARGET kernel.elf APPEND_STRING PROPERTY LINK_FLAGS " -T ${linker_lds_path} ")
+add_dependencies(kernel.elf linker_ld_wrapper kernel_i_wrapper kernel_all_pp_wrapper circular_includes)
