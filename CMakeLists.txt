@@ -191,7 +191,7 @@ list(APPEND c_arguments_deps kernel_autoconf_Gen
 
 add_custom_command(OUTPUT kernel_all.c
     COMMAND "${CPP_GEN_PATH}" ${c_sources} > kernel_all.c
-    DEPENDS "${CPP_GEN_PATH}" ${c_sources} ${c_arguments_deps}
+    DEPENDS "${CPP_GEN_PATH}" ${c_sources}
     COMMENT "Concatenating C files"
     VERBATIM
 )
