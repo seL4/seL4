@@ -154,6 +154,11 @@ static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
     case cap_asid_control_cap:
         return 0;
 
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_page_table_cap:
+        return seL4_IOPageTableBits;
+#endif
+
     default:
         /* Unreachable, but GCC can't figure that out */
         return 0;
@@ -189,6 +194,11 @@ static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
     case cap_asid_control_cap:
         return false;
 
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_page_table_cap:
+        return true;
+#endif
+
     default:
         /* Unreachable, but GCC can't figure that out */
         return false;
@@ -222,6 +232,11 @@ static inline void *CONST cap_get_archCapPtr(cap_t cap)
 
     case cap_asid_pool_cap:
         return ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap));
+
+#ifdef CONFIG_ARM_SMMU
+    case cap_io_page_table_cap:
+        return (void *)(cap_io_page_table_cap_get_capIOPTBasePtr(cap));
+#endif
 
     default:
         /* Unreachable, but GCC can't figure that out */

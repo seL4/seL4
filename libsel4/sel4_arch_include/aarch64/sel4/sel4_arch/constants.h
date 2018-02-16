@@ -186,7 +186,11 @@ enum {
 #define seL4_PageDirEntryBits 3
 #define seL4_PageDirIndexBits 9
 
+#ifdef CONFIG_ARM_SMMU
+#define seL4_NumASIDPoolsBits 6
+#else
 #define seL4_NumASIDPoolsBits 7
+#endif
 #define seL4_ASIDPoolBits 12
 #define seL4_ASIDPoolIndexBits 9
 #define seL4_IOPageTableBits 12

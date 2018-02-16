@@ -112,7 +112,22 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
-    return cap;
+    switch (cap_get_capType(cap)) {
+#ifdef CONFIG_ARM_SMMU_V2
+    case cap_io_space_cap: {
+        io_space_capdata_t w = { { data } };
+        uint32_t streamID = io_space_capdata_get_streamID(w);
+        if (!preserve && cap_io_space_cap_get_capStreamID(cap) == 0 &&
+            streamID != 0) {
+            return cap_io_space_cap_new(streamID);
+        } else {
+            return cap_null_cap_new();
+        }
+    }
+#endif
+    default:
+        return cap;
+    }
 }
 
 cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
