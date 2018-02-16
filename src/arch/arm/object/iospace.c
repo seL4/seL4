@@ -23,6 +23,12 @@
 #include <linker.h>
 #include <arch/machine/smmu.h>
 
+BOOT_CODE cap_t
+master_iospace_cap(void)
+{
+    return cap_io_space_cap_new(0);
+}
+
 static inline iopde_t iopde_new_invalid(void)
 {
    iopde_t pde;

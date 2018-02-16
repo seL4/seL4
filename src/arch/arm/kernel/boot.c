@@ -404,7 +404,23 @@ static BOOT_CODE bool_t try_init_kernel(
             return false;
         }
     } else {
-        ndks_boot.bi_frame->ioSpaceCaps = S_REG_EMPTY;
+       ndks_boot.bi_frame->ioSpaceCaps = S_REG_EMPTY;
+    }
+
+    if (config_set(CONFIG_ARM_SMMU_V2)) {
+        if (plat_smmu_init() > 0) {
+            seL4_SlotPos start = ndks_boot.slot_pos_cur;
+            if (!provide_cap(root_cnode_cap, master_iospace_cap())) {
+                return false;
+            }
+            seL4_SlotPos end = ndks_boot.slot_pos_cur;
+            ndks_boot.bi_frame->ioSpaceCaps = (seL4_SlotRegion) {
+                start, end
+            };
+        }
+        else {
+           printf("SMMU Init Failed.\n");
+        }
     }
 
     /* Construct an initial address space with enough virtual addresses

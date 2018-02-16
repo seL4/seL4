@@ -69,7 +69,7 @@ typedef struct seL4_BootInfo {
     seL4_SlotRegion   sharedFrames;    /* shared-frame caps (shared between seL4 nodes) */
     seL4_SlotRegion   userImageFrames; /* userland-image frame caps */
     seL4_SlotRegion   userImagePaging; /* userland-image paging structure caps */
-    seL4_SlotRegion   ioSpaceCaps;     /* IOSpace caps for ARM SMMU */
+    seL4_SlotRegion   ioSpaceCaps;     /* IOSpace caps for TK1 SMMU */
     seL4_SlotRegion   extraBIPages;    /* caps for any pages used to back the additional bootinfo information */
     seL4_Word         initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
