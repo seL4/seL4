@@ -272,6 +272,34 @@ static inline word_t CONST generic_frame_cap_get_capFIsDevice(cap_t cap)
     }
 }
 
+#ifdef CONFIG_ARM_SMMU
+static inline word_t CONST generic_frame_cap_get_capFIsIOSpace(cap_t cap)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+    assert(ctag == cap_small_frame_cap ||
+           ctag == cap_frame_cap);
+
+    if (ctag == cap_small_frame_cap) {
+        return cap_small_frame_cap_get_capFIsIOSpace(cap);
+    } else {
+        return 0;
+    }
+}
+
+static inline cap_t CONST
+generic_frame_cap_set_capFIsIOSpace(cap_t cap, word_t is_io)
+{
+    cap_tag_t ctag;
+
+    ctag = cap_get_capType(cap);
+    assert(ctag == cap_small_frame_cap);
+
+    return cap_small_frame_cap_set_capFIsIOSpace(cap, is_io);
+}
+#endif
+
 static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
