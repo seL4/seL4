@@ -40,6 +40,8 @@ void deleteASID(asid_t asid, vspace_root_t *vspace);
 hw_asid_t getHWASID(asid_t asid);
 #endif
 
+bool_t CONST isIOSpaceFrameCap(cap_t cap);
+
 static const region_t BOOT_RODATA *mode_reserved_region = NULL;
 
 #ifdef AARCH64_VSPACE_S2_START_L1
