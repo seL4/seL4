@@ -390,6 +390,7 @@ create_idle_thread(void)
 #ifdef CONFIG_DEBUG_BUILD
         setThreadName(NODE_STATE_ON_CORE(ksIdleThread, i), "idle_thread");
 #endif
+        SMP_COND_STATEMENT(NODE_STATE_ON_CORE(ksIdleThread, i)->tcbAffinity = i);
 #ifdef ENABLE_SMP_SUPPORT
     }
 #endif /* ENABLE_SMP_SUPPORT */
