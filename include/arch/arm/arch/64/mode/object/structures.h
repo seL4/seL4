@@ -126,6 +126,27 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_LOW(a) (a & MASK(asidLowBits))
 #define ASID_HIGH(a) ((a >> asidLowBits) & MASK(asidHighBits))
 
+#define generic_frame_cap_get_capFSize(cap) \
+    cap_frame_cap_get_capFSize(cap)
+#define generic_frame_cap_get_capFMappedASID(cap) \
+    cap_frame_cap_get_capFMappedASID(cap)
+#define generic_frame_cap_get_capFMappedAddress(cap) \
+    cap_frame_cap_get_capFMappedAddress(cap)
+#define generic_frame_cap_get_capFBasePtr(cap) \
+    cap_frame_cap_get_capFBasePtr(cap)
+#define generic_frame_cap_get_capFVMRights(cap) \
+    cap_frame_cap_get_capFVMRights(cap)
+#define generic_frame_cap_set_capFIsIOSpace(cap, is_io) \
+    cap_frame_cap_set_capFIsIOSpace(cap, is_io)
+
+static inline cap_t CONST
+generic_frame_cap_set_capFMappedAddress(cap_t cap, word_t asid, word_t addr)
+{
+   cap = cap_frame_cap_set_capFMappedASID(cap, asid);
+   cap = cap_frame_cap_set_capFMappedAddress(cap, addr);
+   return cap;
+}
+
 static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
