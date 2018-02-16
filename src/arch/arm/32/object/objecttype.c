@@ -118,7 +118,22 @@ deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 
 cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
-    return cap;
+#ifdef CONFIG_ARM_SMMU_V2
+    if (cap_get_capType(cap) == cap_io_space_cap) {
+        io_space_capdata_t w = { { data } };
+        uint32_t streamID = io_space_capdata_get_streamID(w);
+        if (!preserve && cap_io_space_cap_get_capStreamID(cap) == 0 &&
+                streamID != 0) {
+            return cap_io_space_cap_new(streamID);
+        } else {
+            return cap_null_cap_new();
+        }
+    }
+    else
+#endif
+    {
+        return cap;
+    }
 }
 
 cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
@@ -311,7 +326,14 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_io_space_cap_get_capModuleID(cap_b);
         }
         break;
-
+#ifdef CONFIG_ARM_SMMU_V2
+    case cap_io_space_cap:
+        if (cap_get_capType(cap_b) == cap_io_space_cap) {
+            return cap_io_space_cap_get_capStreamID(cap_a) ==
+                   cap_io_space_cap_get_capStreamID(cap_b);
+        }
+        break;
+#endif
     case cap_io_page_table_cap:
         if (cap_get_capType(cap_b) == cap_io_page_table_cap) {
             return cap_io_page_table_cap_get_capIOPTBasePtr(cap_a) ==
