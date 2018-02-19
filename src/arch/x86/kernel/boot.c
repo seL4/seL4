@@ -268,6 +268,7 @@ init_sys_state(
     word_t        extra_bi_size = sizeof(seL4_BootInfoHeader);
     region_t      extra_bi_region;
     pptr_t        extra_bi_offset = 0;
+    uint32_t      tsc_freq;
     create_frames_of_region_ret_t create_frames_ret;
     create_frames_of_region_ret_t extra_bi_ret;
 
@@ -329,6 +330,8 @@ init_sys_state(
 
     /* initialise the IRQ states and provide the IRQ control cap */
     init_irqs(root_cnode_cap);
+
+    tsc_freq = tsc_init();
 
     /* create the bootinfo frame */
     bi_frame_pptr = allocate_bi_frame(0, ksNumCPUs, ipcbuf_vptr);
@@ -439,7 +442,7 @@ init_sys_state(
     }
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
-    ndks_boot.bi_frame->archInfo = tsc_init();
+    ndks_boot.bi_frame->archInfo = tsc_freq;
 
     /* create the idle thread */
     if (!create_idle_thread()) {
