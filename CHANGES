@@ -7,7 +7,7 @@ This file should be word wrapped to 120 characters
 The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BINARY COMPATIBLE or BREAKING change. As
 changes are added the compatibility information should be updated.
 
-upcoming release
+upcoming release BREAKING
 
 = Changes =
  * Debugging option on x86 for syscall interface to read/write MSRs (this is an, equally dangerous, alternative to
@@ -25,6 +25,8 @@ upcoming release
    processes using the RSB
  * Define extended bootinfo header for the x86 TSC frequency
  * x86 TSC frequency exported in extended bootinfo header
+ * `archInfo` is no longer a member of the bootinfo struct. Its only use was for TSC frequency on x86, which
+   can now be retrieved through the extended bootinfo
 
 ---
 8.0.0 2018-01-17

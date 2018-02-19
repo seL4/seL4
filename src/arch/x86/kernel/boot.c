@@ -456,8 +456,6 @@ init_sys_state(
     }
     write_it_asid_pool(it_ap_cap, it_vspace_cap);
 
-    ndks_boot.bi_frame->archInfo = tsc_freq;
-
     /* create the idle thread */
     if (!create_idle_thread()) {
         return false;

@@ -65,7 +65,6 @@ typedef struct {
     seL4_SlotRegion   extraBIPages;    /* caps for any pages used to back the additional bootinfo information */
     seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
-    seL4_Word         archInfo;        /* tsc freq on x86, unused on arm */
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
     seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
     /* the untypedList should be the last entry in this struct, in order
