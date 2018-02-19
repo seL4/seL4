@@ -24,6 +24,7 @@ upcoming release
  * x86 configuration option for flushing the RSB on context switch to prevent Spectre style attacks between user
    processes using the RSB
  * Define extended bootinfo header for the x86 TSC frequency
+ * x86 TSC frequency exported in extended bootinfo header
 
 ---
 8.0.0 2018-01-17

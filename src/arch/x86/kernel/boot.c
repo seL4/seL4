@@ -299,6 +299,9 @@ init_sys_state(
     word_t mb_mmap_size = sizeof(seL4_X86_BootInfo_mmap_t);
     extra_bi_size += mb_mmap_size;
 
+    // room for tsc frequency
+    extra_bi_size += sizeof(seL4_BootInfoHeader) + 4;
+
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = ROUND_UP(extra_bi_frame_vptr + extra_bi_size, PAGE_BITS);
@@ -379,6 +382,17 @@ init_sys_state(
     mb_mmap->header.len = mb_mmap_size;
     memcpy((void*)(extra_bi_region.start + extra_bi_offset), mb_mmap, mb_mmap_size);
     extra_bi_offset += mb_mmap_size;
+
+    /* populate tsc frequency block */
+    {
+        seL4_BootInfoHeader header;
+        header.id = SEL4_BOOTINFO_HEADER_X86_TSC_FREQ;
+        header.len = sizeof(header) + 4;
+        *(seL4_BootInfoHeader*)(extra_bi_region.start + extra_bi_offset) = header;
+        extra_bi_offset += sizeof(header);
+        *(uint32_t*)(extra_bi_region.start + extra_bi_offset) = tsc_freq;
+        extra_bi_offset += 4;
+    }
 
     /* provde a chunk for any leftover padding in the extended boot info */
     seL4_BootInfoHeader padding_header;
