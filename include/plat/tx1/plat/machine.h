@@ -245,7 +245,15 @@ enum IRQConstants {
 
 #define IRQ_CNODE_BITS      13
 
-#define KERNEL_TIMER_IRQ    INTERRUPT_PPI_11
+#define INTERRUPT_VGIC_MAINTENANCE  INTERRUPT_PPI_9
+#define INTERRUPT_HGPT              INTERRUPT_PPI_10
+#define INTERRUPT_VGPT              INTERRUPT_PPI_11
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define KERNEL_TIMER_IRQ    INTERRUPT_HGPT
+#else
+#define KERNEL_TIMER_IRQ    INTERRUPT_VGPT
+#endif
 
 #include <arch/machine/gic_pl390.h>
 
