@@ -375,9 +375,10 @@ BOOT_CODE bool_t
 create_idle_thread(void)
 {
     pptr_t pptr;
+    UNUSED int i = 0;
 
 #ifdef ENABLE_SMP_SUPPORT
-    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+    for (i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
 #endif /* ENABLE_SMP_SUPPORT */
         pptr = alloc_region(seL4_TCBBits);
         if (!pptr) {
@@ -386,7 +387,11 @@ create_idle_thread(void)
         }
         memzero((void *)pptr, 1 << seL4_TCBBits);
         NODE_STATE_ON_CORE(ksIdleThread, i) = TCB_PTR(pptr + TCB_OFFSET);
-        configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, i));
+#ifdef CONFIG_ARCH_RISCV
+        configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, 0), 0);
+#else
+        configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, 0));
+#endif
 #ifdef CONFIG_DEBUG_BUILD
         setThreadName(NODE_STATE_ON_CORE(ksIdleThread, i), "idle_thread");
 #endif

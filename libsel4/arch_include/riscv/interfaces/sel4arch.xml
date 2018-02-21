@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<!--
+  Copyright 2018, Data61
+  Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+  ABN 41 687 119 230.
+
+  This software may be distributed and modified according to the terms of
+  the BSD 2-Clause license. Note that NO WARRANTY is provided.
+  See "LICENSE_BSD2.txt" for details.
+
+     @TAG(DATA61_BSD)
+  -->
+<!--
+ 
+  Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+  Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
+  -->
+<api>
+	<interface name="seL4_RISCV_PageTable">
+		<method id="RISCVPageTableMap" name="Map">
+			<param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
+			<param dir="in" name="vaddr" type="seL4_Word"/>
+			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+		</method>
+        <method id="RISCVPageTableUnmap" name="Unmap">
+        </method>
+	</interface>
+	<interface name="seL4_RISCV_Page">
+		<method id="RISCVPageMap" name="Map">
+			<param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
+			<param dir="in" name="vaddr" type="seL4_Word"/>
+			<param dir="in" name="rights" type="seL4_CapRights_t"/>
+			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+		</method>
+		<method id="RISCVPageUnmap" name="Unmap"/>
+		<method id="RISCVPageGetAddress" name="GetAddress">
+			<param dir="out" name="paddr" type="seL4_Word"/>
+		</method>
+	</interface>
+    <interface name="seL4_RISCV_ASIDControl">
+        <method id="RISCVASIDControlMakePool" name="MakePool">
+            <param dir="in" name="untyped" type="seL4_Untyped"/>
+            <param dir="in" name="root" type="seL4_CNode"/>
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Uint8"/>
+        </method>
+    </interface>
+    <interface name="seL4_RISCV_ASIDPool">
+        <method id="RISCVASIDPoolAssign" name="Assign">
+            <param dir="in" name="vroot" type="seL4_CPtr"/>
+        </method>
+    </interface>
+
+    <struct name="seL4_UserContext">
+            <member name="pc"/>
+            <member name="ra"/>
+            <member name="sp"/>
+            <member name="x3"/>
+            <member name="x4"/>
+            <member name="t0"/>
+            <member name="t1"/>
+            <member name="t2"/>
+            <member name="s0"/>
+            <member name="s1"/>
+            <member name="a0"/>
+            <member name="a1"/>
+            <member name="a2"/>
+            <member name="a3"/>
+            <member name="a4"/>
+            <member name="a5"/>
+            <member name="a6"/>
+    </struct>
+
+
+</api>

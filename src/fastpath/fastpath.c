@@ -100,6 +100,11 @@ fastpath_call(word_t cptr, word_t msgInfo)
     stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
 #endif
 
+#ifdef CONFIG_ARCH_RISCV
+    /* Get HW ASID */
+    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
+#endif
+
     /* let gcc optimise this out for 1 domain */
     dom = maxDom ? ksCurDomain : 0;
     /* ensure only the idle thread or lower prio threads are present in the scheduler */
@@ -281,6 +286,10 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_AARCH64
     stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_RISCV
+    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 
     /* Ensure the original caller can be scheduled directly. */

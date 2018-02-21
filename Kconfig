@@ -37,8 +37,8 @@ config KERNEL_MASTER
 # the target platform.
 config WORD_SIZE
     int
-    default 32 if ARCH_IA32 || ARCH_AARCH32
-    default 64 if ARCH_X86_64 || ARCH_AARCH64
+    default 32 if ARCH_IA32 || ARCH_AARCH32 || ARCH_RISCV_RV32
+    default 64 if ARCH_X86_64 || ARCH_AARCH64 || ARCH_RISCV_RV64
 
 menu "seL4 System"
 
@@ -54,6 +54,10 @@ menu "seL4 System"
 
         config ARCH_ARM
             bool "ARM"
+
+        config ARCH_RISCV
+            bool "RISCV"
+
     endchoice
 
     config ARCH_X86_64
@@ -109,6 +113,26 @@ menu "seL4 System"
         default n
         help
             Common flag for Exynos5 platforms
+
+    choice
+       prompt "RISC-V CPU selection"
+       depends on ARCH_RISCV
+       default ARCH_RISCV_RV64
+       help
+            Select the RISC-V CPU Implementation
+
+        config ARCH_RISCV_RV64
+            bool "RISCV RV64"
+            help
+                Support for RV64 (RISC-V 64-bit)
+
+        config ARCH_RISCV_RV32
+            bool "RISCV RV32"
+            depends on PT_LEVELS = 2
+            help
+                Support for RV32 (RISC-V 32-bit). Only 2 levels PT is supported
+                for RV32
+    endchoice
 
     config PLAT_EXYNOS54XX
        bool
@@ -294,6 +318,12 @@ menu "seL4 System"
             select HAVE_FPU
             help
                 Support for Tegra X1 platform
+
+        config PLAT_SPIKE
+            bool "PLAT_SPIKE"
+            depends on ARCH_RISCV
+            help
+                Support for spike platform
     endchoice
 
     config ARM_HYPERVISOR_SUPPORT
@@ -310,6 +340,7 @@ menu "seL4 System"
         help
             Support for TK1 SoC-specific SystemMMU
 
+source "$KERNEL_PATH/src/arch/riscv/Kconfig"
 source "$KERNEL_PATH/src/arch/arm/Kconfig"
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"
 
@@ -434,6 +465,14 @@ config AARCH32_FPU_ENABLE_CONTEXT_SWITCH
         hardware support, allowing the user to execute hardware VFP and SIMD
         operations in a multithreading environment, instead of relying on
         software emulation of FPU/VFP from the C library (e.g. mfloat-abi=soft).
+
+config RISCV_FPU_ENABLE_CONTEXT_SWITCH
+    bool "Enable hardware FPU"
+    depends on ARCH_RISCV
+    select HAVE_FPU
+    default n
+    help
+        This enables FPU, if HW supports it
 
 config FPU_MAX_RESTORES_SINCE_SWITCH
     int "Max thread restores without switching FPU"

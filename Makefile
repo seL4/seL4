@@ -15,10 +15,10 @@
 ### Build parameters
 ############################################################
 
-SEL4_ARCH_LIST:=aarch32 aarch64 ia32 x86_64
-ARCH_LIST:=arm x86
+SEL4_ARCH_LIST:=aarch32 aarch64 ia32 x86_64 riscv32 riscv64
+ARCH_LIST:=arm x86 riscv
 CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15 cortex-a53 cortex-a57
-PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 zynqmp allwinnerA20 tk1 hikey bcm2837 tx1
+PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 zynqmp allwinnerA20 tk1 hikey bcm2837 tx1 spike
 ARMV_LIST:=armv6 armv7-a armv8-a
 
 ifndef SOURCE_ROOT
@@ -45,6 +45,16 @@ $(if $(filter ${ARCH},${ARCH_LIST}),, \
 
 $(if $(filter ${PLAT},${PLAT_LIST}),, \
 	$(error PLAT ${PLAT} invalid or undefined, should be one of [${PLAT_LIST}]))
+
+ifeq (${ARCH}, riscv)
+ifeq (${KERNEL_32}, y)
+TYPE_SUFFIX:=32
+SEL4_ARCH:=riscv32
+else
+TYPE_SUFFIX:=64
+SEL4_ARCH:=riscv64
+endif
+endif
 
 ifeq (${ARCH}, arm)
 $(if $(filter ${CPU},${CPU_LIST}),, \
@@ -409,6 +419,10 @@ else
 ifeq ($(SEL4_ARCH), aarch64)
 INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/64"
 INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/64"
+endif
+ifeq ($(ARCH), riscv)
+INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/$(TYPE_SUFFIX)"
+INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/$(TYPE_SUFFIX)"
 endif
 endif
 
