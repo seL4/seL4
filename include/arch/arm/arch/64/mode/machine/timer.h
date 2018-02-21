@@ -17,8 +17,13 @@
 #include <plat/machine/hardware.h>
 #include <mode/machine.h>
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define CNT_TVAL "cnthp_tval_el2"
+#define CNT_CTL  "cnthp_ctl_el2"
+#else
 #define CNT_TVAL "cntv_tval_el0"
 #define CNT_CTL  "cntv_ctl_el0"
+#endif
 #define CNTFRQ   "cntfrq_el0"
 
 #endif /*  __ARCH_MODE_MACHINE_TIMER_H_ */
