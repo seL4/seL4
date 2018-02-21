@@ -37,6 +37,7 @@
 #define CONTROL_A         1  /* Alignment check enable */
 #define CONTROL_C         2  /* Cacheability control, for data caching */
 #define CONTROL_SA0       4  /* Stack Alignment Check Enable for EL0 */
+#define CONTROL_SA        3  /* Stack Alignment Check for EL1 */
 #define CONTROL_I         12 /* Instruction access Cacheability control */
 #define CONTROL_E0E       24 /* Endianness of data accesses at EL0 */
 #define CONTROL_EE        25 /* Endianness of data accesses at EL1 */
