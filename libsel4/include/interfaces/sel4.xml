@@ -148,7 +148,7 @@
             </description>
             <param dir="in" name="authority" type="seL4_CPtr"
                 description="Capability to the TCB to use the MCP from when setting the priority."/>
-            <param dir="in" name="priority" type="seL4_Uint8"
+            <param dir="in" name="priority" type="seL4_Word"
                 description="The thread's new priority."/>
         </method>
 
@@ -161,7 +161,7 @@
             </description>
             <param dir="in" name="authority" type="seL4_CPtr"
                 description="Capability to the TCB to use the MCP from when setting the MCP."/>
-            <param dir="in" name="mcp" type="seL4_Uint8"
+            <param dir="in" name="mcp" type="seL4_Word"
                 description="The thread's new maximum controlled priority."/>
         </method>
 

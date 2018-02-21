@@ -36,7 +36,8 @@ BREAKING CHANGE
        problem.
  * seL4_TCB_Configure no longer takes prio, mcp as an argument. Instead these fields must be set separately
    with seL4_TCB_SetPriority and seL4_TCB_SetMCPriority.
-
+ * seL4_TCB_SetPriority and seL4_TCB_SetMCPriority now take seL4_Word instead of seL4_Uint8.
+       - seL4_MaxPrio remains at 255.
 = Upgrade notes =
    * seL4_TCB_Configure calls that set priority should be changed to explicitly call seL4_TCB_SetPriority
    * seL4_TCB_Configure calls that set MCP should be changed to explicitly call seL4_TCB_SetMCPriority
