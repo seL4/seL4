@@ -18,7 +18,7 @@ config_choice(KernelX86Sel4Arch X86_SEL4_ARCH "Architecture mode for building th
 )
 
 # Add any top level types
-if(KernelseL4ArchX86_64)
+if(KernelSel4ArchX86_64)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
         pdpte_C pml4e_C
     )
