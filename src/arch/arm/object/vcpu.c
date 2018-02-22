@@ -22,7 +22,6 @@
 static word_t
 vcpu_hw_read_reg(word_t reg_index)
 {
-    if (reg_index >= seL4_VCPUReg_Num) fail("ARM/HYP: Invalid register index");
     word_t reg = 0;
     switch (reg_index) {
         case seL4_VCPUReg_SCTLR:
@@ -119,8 +118,6 @@ vcpu_hw_read_reg(word_t reg_index)
 static void
 vcpu_hw_write_reg(word_t reg_index, word_t reg)
 {
-    if (reg_index >= seL4_VCPUReg_Num) return;
-
     switch (reg_index) {
         case seL4_VCPUReg_SCTLR:
             return setSCTLR(reg);
