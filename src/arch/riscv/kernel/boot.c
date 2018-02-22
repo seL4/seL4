@@ -229,8 +229,9 @@ init_cpu()
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
 
 BOOT_CODE static void
-init_plat(void)
+init_plat(void *dtb_output)
 {
+    fdt_print(dtb_output);
     initIRQController();
     initTimer();
 }
@@ -444,12 +445,14 @@ init_kernel(
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
     vptr_t  v_entry,
-    uint64_t hartid
+    word_t hartid,
+    paddr_t dtb_output
 )
 {
     // RVTODO: is it safe to initialize the platform before the cpu?
-    init_plat();
     bool_t result;
+
+    init_plat(dtb_output);
 
 #if CONFIG_MAX_NUM_NODES > 1
     if (hartid == 0) {
