@@ -101,7 +101,6 @@ enum {
     seL4_VCPUReg_FPEXC,
     seL4_VCPUReg_CNTV_TVAL,
     seL4_VCPUReg_CNTV_CTL,
-    seL4_VCPUReg_CNTV_CVAL,
     seL4_VCPUReg_LRsvc,
     seL4_VCPUReg_SPsvc,
     seL4_VCPUReg_LRabt,

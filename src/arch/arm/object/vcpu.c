@@ -68,8 +68,6 @@ vcpu_hw_read_reg(word_t reg_index)
         case seL4_VCPUReg_CNTV_CTL:
             MRC(CNTV_CTL, reg);
             return reg;
-        case seL4_VCPUReg_CNTV_CVAL:
-            return reg;
         case seL4_VCPUReg_LRsvc:
             return get_lr_svc();
         case seL4_VCPUReg_SPsvc:
@@ -162,8 +160,6 @@ vcpu_hw_write_reg(word_t reg_index, word_t reg)
             return;
         case seL4_VCPUReg_CNTV_CTL:
             MCR(CNTV_CTL, reg);
-            return;
-        case seL4_VCPUReg_CNTV_CVAL:
             return;
         case seL4_VCPUReg_LRsvc:
             return set_lr_svc(reg);
