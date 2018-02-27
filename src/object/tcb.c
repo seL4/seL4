@@ -1064,7 +1064,7 @@ exception_t
 decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer)
 {
     if (length < 2 || excaps.excaprefs[0] == NULL) {
-        userError("TCB SetMCPriority: Truncated message.");
+        userError("TCB SetSchedParams: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1074,7 +1074,7 @@ decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buff
     cap_t authCap = excaps.excaprefs[0]->cap;
 
     if (cap_get_capType(authCap) != cap_thread_cap) {
-        userError("TCB SetMCPriority: authority cap not a TCB.");
+        userError("TCB SetSchedParams: authority cap not a TCB.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1083,14 +1083,14 @@ decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buff
     tcb_t *authTCB = TCB_PTR(cap_thread_cap_get_capTCBPtr(authCap));
     exception_t status = checkPrio(newMcp, authTCB);
     if (status != EXCEPTION_NONE) {
-        userError("TCB SetMCPriority: Requested maximum controlled priority %lu too high (max %lu).",
+        userError("TCB SetSchedParams: Requested maximum controlled priority %lu too high (max %lu).",
                   (unsigned long) newMcp, (unsigned long) authTCB->tcbMCP);
         return status;
     }
 
     status = checkPrio(newPrio, authTCB);
     if (status != EXCEPTION_NONE) {
-        userError("TCB SetMCPriority: Requested priority %lu too high (max %lu).",
+        userError("TCB SetSchedParams: Requested priority %lu too high (max %lu).",
                   (unsigned long) newMcp, (unsigned long) authTCB->tcbMCP);
         return status;
     }
