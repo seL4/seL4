@@ -28,7 +28,11 @@
 .extern trap_entry
 
 _start:
-  la gp, __global_pointer$
+.option push
+.option norelax
+1:auipc gp, %pcrel_hi(__global_pointer$)
+  addi  gp, gp, %pcrel_lo(1b)
+.option pop
 
   /* hartid is in a4 */
   li  sp, BIT(CONFIG_KERNEL_STACK_BITS)
