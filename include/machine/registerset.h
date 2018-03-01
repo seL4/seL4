@@ -18,10 +18,11 @@
 
 typedef enum {
     MessageID_Syscall,
-    MessageID_Exception
+    MessageID_Exception,
+    MessageID_TimeoutReply,
 } MessageID_t;
 
-#define MAX_MSG_SIZE MAX(n_syscallMessage, n_exceptionMessage)
+#define MAX_MSG_SIZE MAX(n_syscallMessage, MAX(n_timeoutMessage, n_exceptionMessage))
 extern const register_t fault_messages[][MAX_MSG_SIZE] VISIBLE;
 
 static inline void

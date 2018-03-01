@@ -101,4 +101,13 @@ block DebugException {
 }
 #endif
 
+block Timeout {
+    padding 320
+    field data 32
+    field consumed_high 32
+    field consumed_low 32
+    padding 29
+    field seL4_FaultType 3
+}
+
 #include <sel4/arch/shared_types.bf>

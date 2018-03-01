@@ -140,6 +140,7 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length,
                                    extra_caps_t excaps, word_t *buffer);
 exception_t decodeBindNotification(cap_t cap, extra_caps_t excaps);
 exception_t decodeUnbindNotification(cap_t cap);
+exception_t decodeSetTimeoutEndpoint(cap_t cap, extra_caps_t excaps);
 
 enum thread_control_flag {
     thread_control_update_priority = 0x1,
@@ -148,6 +149,7 @@ enum thread_control_flag {
     thread_control_update_mcp = 0x8,
     thread_control_update_sc = 0x10,
     thread_control_update_fault = 0x20,
+    thread_control_update_timeout = 0x40,
 };
 
 typedef word_t thread_control_flag_t;
@@ -156,6 +158,7 @@ exception_t invokeTCB_Suspend(tcb_t *thread);
 exception_t invokeTCB_Resume(tcb_t *thread);
 exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
                                     cap_t fh_newCap, cte_t* fh_srcSlot,
+                                    cap_t th_newCap, cte_t *th_srcSlot,
                                     prio_t mcp, prio_t priority, cap_t cRoot_newCap,
                                     cte_t *cRoot_srcSlot, cap_t vRoot_newCap,
                                     cte_t *vRoot_srcSlot, word_t bufferAddr,

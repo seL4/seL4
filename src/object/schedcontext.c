@@ -146,14 +146,27 @@ maybeStallSC(sched_context_t *sc)
 }
 #endif
 
+static exception_t
+invokeSchedContext_Consumed(sched_context_t *sc, word_t *buffer)
+{
+    time_t consumed = schedContext_updateConsumed(sc);
+    word_t length = mode_setTimeArg(0, consumed, buffer, NODE_STATE(ksCurThread));
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister, wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, length)));
+    return EXCEPTION_NONE;
+}
+
 exception_t
-decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps)
+decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t extraCaps, word_t *buffer)
 {
     sched_context_t *sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(cap));
 
     SMP_COND_STATEMENT((maybeStallSC(sc));)
 
     switch (label) {
+    case SchedContextConsumed:
+        /* no decode */
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        return invokeSchedContext_Consumed(sc, buffer);
     case SchedContextBind:
         return decodeSchedContext_Bind(sc, extraCaps);
     case SchedContextUnbindObject:
@@ -275,4 +288,12 @@ schedContext_unbindNtfn(sched_context_t *sc)
         notification_ptr_set_ntfnSchedContext(sc->scNotification, SC_REF(0));
         sc->scNotification = NULL;
     }
+}
+
+time_t
+schedContext_updateConsumed(sched_context_t *sc)
+{
+    ticks_t consumed = sc->scConsumed;
+    sc->scConsumed = 0;
+    return ticksToUs(consumed);
 }

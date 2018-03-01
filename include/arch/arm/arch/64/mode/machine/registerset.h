@@ -159,6 +159,7 @@ enum messageSizes {
     n_gpRegisters = 17,
     n_exceptionMessage = 3,
     n_syscallMessage = 12,
+    n_timeoutMessage = 34,
 };
 
 #define EXCEPTION_MESSAGE \
@@ -182,6 +183,44 @@ enum messageSizes {
     [seL4_UnknownSyscall_SP] = SP_EL0,\
     [seL4_UnknownSyscall_LR] = ELR_EL1,\
     [seL4_UnknownSyscall_SPSR] = SPSR_EL1\
+}
+
+#define TIMEOUT_REPLY_MESSAGE \
+{\
+    [seL4_TimeoutReply_FaultIP] = FaultInstruction,\
+    [seL4_TimeoutReply_SP] = SP_EL0,\
+    [seL4_TimeoutReply_SPSR_EL1] = SPSR_EL1,\
+    [seL4_TimeoutReply_X0] = X0,\
+    [seL4_TimeoutReply_X1] = X1,\
+    [seL4_TimeoutReply_X2] = X2,\
+    [seL4_TimeoutReply_X3] = X3,\
+    [seL4_TimeoutReply_X4] = X4,\
+    [seL4_TimeoutReply_X5] = X5,\
+    [seL4_TimeoutReply_X6] = X6,\
+    [seL4_TimeoutReply_X7] = X7,\
+    [seL4_TimeoutReply_X8] = X8,\
+    [seL4_TimeoutReply_X16] = X16,\
+    [seL4_TimeoutReply_X17] = X17,\
+    [seL4_TimeoutReply_X18] = X18,\
+    [seL4_TimeoutReply_X29] = X29,\
+    [seL4_TimeoutReply_X30] = X30,\
+    [seL4_TimeoutReply_X9] = X9,\
+    [seL4_TimeoutReply_X10] = X10,\
+    [seL4_TimeoutReply_X11] = X11,\
+    [seL4_TimeoutReply_X12] = X12,\
+    [seL4_TimeoutReply_X13] = X13,\
+    [seL4_TimeoutReply_X14] = X14,\
+    [seL4_TimeoutReply_X15] = X15,\
+    [seL4_TimeoutReply_X19] = X19,\
+    [seL4_TimeoutReply_X20] = X20,\
+    [seL4_TimeoutReply_X21] = X21,\
+    [seL4_TimeoutReply_X22] = X22,\
+    [seL4_TimeoutReply_X23] = X23,\
+    [seL4_TimeoutReply_X24] = X24,\
+    [seL4_TimeoutReply_X25] = X25,\
+    [seL4_TimeoutReply_X26] = X26,\
+    [seL4_TimeoutReply_X27] = X27,\
+    [seL4_TimeoutReply_X28] = X28,\
 }
 
 extern const register_t msgRegisters[];
