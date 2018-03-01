@@ -179,6 +179,9 @@ enum tcb_cnode_index {
 #ifdef CONFIG_KERNEL_MCS
     /* IPC buffer cap slot */
     tcbBuffer = 2,
+
+    /* Fault endpoint slot */
+    tcbFaultHandler = 3,
 #else
     /* Reply cap slot */
     tcbReply = 2,
@@ -228,7 +231,7 @@ typedef struct sched_context sched_context_t;
 typedef struct reply reply_t;
 #endif
 
-/* TCB: size >= 19 words + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size >= 18 words + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
@@ -263,10 +266,10 @@ struct tcb {
 #else
     /* Timeslice remaining, 1 word */
     word_t tcbTimeSlice;
-#endif
 
     /* Capability pointer to thread fault handler, 1 word */
     cptr_t tcbFaultHandler;
+#endif
 
     /* userland virtual address of thread IPC buffer, 1 word */
     word_t tcbIPCBuffer;

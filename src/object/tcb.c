@@ -1007,10 +1007,13 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
     cte_t *bufferSlot, *cRootSlot, *vRootSlot;
     cap_t bufferCap, cRootCap, vRootCap;
     deriveCap_ret_t dc_ret;
-    cptr_t faultEP;
     word_t cRootData, vRootData, bufferAddr;
-
-    if (length < 4 || rootCaps.excaprefs[0] == NULL
+#ifdef CONFIG_KERNEL_MCS
+#define TCBCONFIGURE_ARGS 3
+#else
+#define TCBCONFIGURE_ARGS 4
+#endif
+    if (length < TCBCONFIGURE_ARGS || rootCaps.excaprefs[0] == NULL
         || rootCaps.excaprefs[1] == NULL
         || rootCaps.excaprefs[2] == NULL) {
         userError("TCB Configure: Truncated message.");
@@ -1018,10 +1021,16 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    faultEP       = getSyscallArg(0, buffer);
+#ifdef CONFIG_KERNEL_MCS
+    cRootData     = getSyscallArg(0, buffer);
+    vRootData     = getSyscallArg(1, buffer);
+    bufferAddr    = getSyscallArg(2, buffer);
+#else
+    cptr_t faultEP       = getSyscallArg(0, buffer);
     cRootData     = getSyscallArg(1, buffer);
     vRootData     = getSyscallArg(2, buffer);
     bufferAddr    = getSyscallArg(3, buffer);
+#endif
 
     cRootSlot  = rootCaps.excaprefs[0];
     cRootCap   = rootCaps.excaprefs[0]->cap;
@@ -1090,7 +1099,8 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
 #ifdef CONFIG_KERNEL_MCS
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
-               faultEP, NULL_PRIO, NULL_PRIO,
+               cap_null_cap_new(), NULL,
+               NULL_PRIO, NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
                bufferAddr, bufferCap,
@@ -1138,7 +1148,8 @@ exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, wor
 #ifdef CONFIG_KERNEL_MCS
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
-               0, NULL_PRIO, newPrio,
+               cap_null_cap_new(), NULL,
+               NULL_PRIO, newPrio,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(),
@@ -1184,7 +1195,8 @@ exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, w
 #ifdef CONFIG_KERNEL_MCS
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
-               0, newMcp, NULL_PRIO,
+               cap_null_cap_new(), NULL,
+               newMcp, NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(),
@@ -1204,7 +1216,7 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
 {
     if (length < 2 || excaps.excaprefs[0] == NULL
 #ifdef CONFIG_KERNEL_MCS
-        || excaps.excaprefs[1] == NULL
+        || excaps.excaprefs[1] == NULL || excaps.excaprefs[2] == NULL
 #endif
        ) {
         userError("TCB SetSchedParams: Truncated message.");
@@ -1217,6 +1229,8 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
     cap_t authCap = excaps.excaprefs[0]->cap;
 #ifdef CONFIG_KERNEL_MCS
     cap_t scCap   = excaps.excaprefs[1]->cap;
+    cte_t *fhSlot = excaps.excaprefs[2];
+    cap_t fhCap   = excaps.excaprefs[2]->cap;
 #endif
 
     if (cap_get_capType(authCap) != cap_thread_cap) {
@@ -1266,18 +1280,42 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
         current_syscall_error.invalidCapNumber = 2;
         return EXCEPTION_SYSCALL_ERROR;
     }
-#endif
 
+    switch (cap_get_capType(fhCap)) {
+    case cap_endpoint_cap:
+        if (!cap_endpoint_cap_get_capCanSend(fhCap) ||
+            !cap_endpoint_cap_get_capCanGrant(fhCap)) {
+            userError("TCB Configure: fault endpoint cap has invalid rights.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        break;
+    case cap_null_cap:
+        /* just has no fault endpoint */
+        break;
+    default:
+        userError("TCB Configure: fault endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+#endif
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
-               0, newMcp, newPrio,
+               fhCap, fhSlot,
+               newMcp, newPrio,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
-               sc, thread_control_update_mcp |
-               thread_control_update_priority | thread_control_update_sc);
+               sc,
+               thread_control_update_mcp |
+               thread_control_update_priority |
+               thread_control_update_sc |
+               thread_control_update_fault);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
@@ -1329,7 +1367,8 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot,
 #ifdef CONFIG_KERNEL_MCS
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
-               0, NULL_PRIO, NULL_PRIO,
+               cap_null_cap_new(), NULL,
+               NULL_PRIO, NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                cptr_bufferPtr, bufferCap,
@@ -1346,23 +1385,42 @@ exception_t decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot,
 #endif
 }
 
+#ifdef CONFIG_KERNEL_MCS
+#define DECODE_SET_SPACE_PARAMS 2
+#else
+#define DECODE_SET_SPACE_PARAMS 3
+#endif
 exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
                            extra_caps_t excaps, word_t *buffer)
 {
-    cptr_t faultEP;
     word_t cRootData, vRootData;
     cte_t *cRootSlot, *vRootSlot;
     cap_t cRootCap, vRootCap;
     deriveCap_ret_t dc_ret;
 
-    if (length < 3 || excaps.excaprefs[0] == NULL
-        || excaps.excaprefs[1] == NULL) {
+    if (length < DECODE_SET_SPACE_PARAMS || excaps.excaprefs[0] == NULL
+        || excaps.excaprefs[1] == NULL
+#ifdef CONFIG_KERNEL_MCS
+        || excaps.excaprefs[2] == NULL
+#endif
+       ) {
         userError("TCB SetSpace: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    faultEP   = getSyscallArg(0, buffer);
+#ifdef CONFIG_KERNEL_MCS
+    cRootData = getSyscallArg(0, buffer);
+    vRootData = getSyscallArg(1, buffer);
+
+    cte_t *fhSlot     = excaps.excaprefs[0];
+    cap_t fhCap      = excaps.excaprefs[0]->cap;
+    cRootSlot  = excaps.excaprefs[1];
+    cRootCap   = excaps.excaprefs[1]->cap;
+    vRootSlot  = excaps.excaprefs[2];
+    vRootCap   = excaps.excaprefs[2]->cap;
+#else
+    cptr_t faultEP   = getSyscallArg(0, buffer);
     cRootData = getSyscallArg(1, buffer);
     vRootData = getSyscallArg(2, buffer);
 
@@ -1370,6 +1428,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
     cRootCap   = excaps.excaprefs[0]->cap;
     vRootSlot  = excaps.excaprefs[1];
     vRootCap   = excaps.excaprefs[1]->cap;
+#endif
 
     if (slotCapLongRunningDelete(
             TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbCTable)) ||
@@ -1412,15 +1471,37 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+#ifdef CONFIG_KERNEL_MCS
+    switch (cap_get_capType(fhCap)) {
+    case cap_endpoint_cap:
+        if (!cap_endpoint_cap_get_capCanSend(fhCap) ||
+            !cap_endpoint_cap_get_capCanGrant(fhCap)) {
+            userError("TCB SetSpace: fault endpoint cap has invalid rights.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        break;
+    case cap_null_cap:
+        /* just has no fault endpoint */
+        break;
+    default:
+        userError("TCB SetSpace: fault endpoint cap invalid.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+#endif
+
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 #ifdef CONFIG_KERNEL_MCS
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
-               faultEP,
+               fhCap, fhSlot,
                NULL_PRIO, NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
-               0, cap_null_cap_new(), NULL, NULL, thread_control_update_space);
+               0, cap_null_cap_new(), NULL, NULL, thread_control_update_space | thread_control_update_fault);
 #else
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
@@ -1555,12 +1636,33 @@ exception_t invokeTCB_Resume(tcb_t *thread)
 }
 
 #ifdef CONFIG_KERNEL_MCS
+static inline exception_t installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
+                                        tcb_cnode_index_t index, cap_t newCap, cte_t *srcSlot)
+{
+    cte_t *rootSlot = TCB_PTR_CTE_PTR(target, index);
+    UNUSED exception_t e = cteDelete(rootSlot, true);
+    if (e != EXCEPTION_NONE) {
+        return e;
+    }
+
+    /* cteDelete on a cap installed in the tcb cannot fail */
+    if (sameObjectAs(newCap, srcSlot->cap) &&
+        sameObjectAs(tCap, slot->cap)) {
+        cteInsert(newCap, srcSlot, rootSlot);
+    }
+    return e;
+}
+#endif
+
+#ifdef CONFIG_KERNEL_MCS
 exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
-                                    cptr_t faultep, prio_t mcp, prio_t priority,
+                                    cap_t fh_newCap, cte_t *fh_srcSlot,
+                                    prio_t mcp, prio_t priority,
                                     cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
                                     cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
                                     word_t bufferAddr, cap_t bufferCap,
-                                    cte_t *bufferSrcSlot, sched_context_t *sc,
+                                    cte_t *bufferSrcSlot,
+                                    sched_context_t *sc,
                                     thread_control_flag_t updateFlags)
 #else
 exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
@@ -1575,9 +1677,11 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
     exception_t e;
     cap_t tCap = cap_thread_cap_new((word_t)target);
 
+#ifndef CONFIG_KERNEL_MCS
     if (updateFlags & thread_control_update_space) {
         target->tcbFaultHandler = faultep;
     }
+#endif
 
     if (updateFlags & thread_control_update_mcp) {
         setMCPriority(target, mcp);
@@ -1595,8 +1699,26 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
             schedContext_unbindTCB(target->tcbSchedContext, target);
         }
     }
-#endif
 
+    if (updateFlags & thread_control_update_space) {
+        e = installTCBCap(target, tCap, slot, tcbCTable, cRoot_newCap, cRoot_srcSlot);
+        if (e != EXCEPTION_NONE) {
+            return e;
+        }
+
+        e = installTCBCap(target, tCap, slot, tcbVTable, vRoot_newCap, vRoot_srcSlot);
+        if (e != EXCEPTION_NONE) {
+            return e;
+        }
+    }
+
+    if (updateFlags & thread_control_update_fault) {
+        e = installTCBCap(target, tCap, slot, tcbFaultHandler, fh_newCap, fh_srcSlot);
+        if (e != EXCEPTION_NONE) {
+            return e;
+        }
+    }
+#else
     if (updateFlags & thread_control_update_space) {
         cte_t *rootSlot;
 
@@ -1624,7 +1746,7 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
             cteInsert(vRoot_newCap, vRoot_srcSlot, rootSlot);
         }
     }
-
+#endif
     if (updateFlags & thread_control_update_ipc_buffer) {
         cte_t *bufferSlot;
 

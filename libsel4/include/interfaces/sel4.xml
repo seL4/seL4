@@ -116,7 +116,7 @@
                 description="Architecture dependent flags. These have no mearing on either x86 or ARM."/>
         </method>
 
-        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure">
+        <method id="TCBConfigure" name="Configure" manual_name="Configure" manual_label="tcb_configure" condition="!defined(CONFIG_KERNEL_MCS)">
             <brief>
                 Set the parameters of a TCB
             </brief>
@@ -125,6 +125,26 @@
             </description>
             <param dir="in" name="fault_ep" type="seL4_Word"
                 description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
+            <param dir="in" name="cspace_root" type="seL4_CNode"
+                description="The new CSpace root."/>
+            <param dir="in" name="cspace_root_data" type="seL4_Word"
+                description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
+                description="The new VSpace root."/>
+            <param dir="in" name="vspace_root_data" type="seL4_Word"
+                description="Has no effect on x86 or ARM processors."/>
+            <param dir="in" name="buffer" type="seL4_Word"
+                description="Location of the thread's IPC buffer. Must be 512-byte aligned. The IPC buffer may not cross a page boundary."/>
+            <param dir="in" name="bufferFrame" type="seL4_CPtr"
+                description="Capability to a page containing the thread's IPC buffer."/>
+        </method>
+        <method id="TCBConfigure" name="Configure" manual_name="Configure (MCS)" manual_label="tcb_configure_mcs" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Set the parameters of a TCB
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:threads"/></docref>
+            </description>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
@@ -181,7 +201,8 @@
         </method>
         <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params (MCS)" manual_label="tcb_setschedparams_mcs" condition="defined(CONFIG_KERNEL_MCS)">
             <brief>
-                Change a thread's priority, maximum controlled priority, and scheduling context.
+                Change a thread's priority, maximum controlled priority, scheduling context
+                and fault handler.
             </brief>
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
@@ -194,6 +215,8 @@
                 description="The thread's new priority."/>
             <param dir="in" name="sched_context" type="seL4_CPtr"
                 description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
+            <param dir="in" name="fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread faults."/>
         </method>
 
         <method id="TCBSetIPCBuffer" name="SetIPCBuffer" manual_name="Set IPC Buffer" manual_label="tcb_setipcbuffer">
@@ -209,7 +232,7 @@
                 description="Capability to a page containing the thread's IPC buffer."/>
         </method>
 
-        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace">
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace" condition="!defined(CONFIG_KERNEL_MCS)">
             <brief>
                 Set the fault endpoint, CSpace and VSpace of a thread
             </brief>
@@ -218,6 +241,25 @@
             </description>
             <param dir="in" name="fault_ep" type="seL4_Word"
                 description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
+            <param dir="in" name="cspace_root" type="seL4_CNode"
+                description="The new CSpace root."/>
+            <param dir="in" name="cspace_root_data" type="seL4_Word"
+                description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
+                description="The new VSpace root."/>
+            <param dir="in" name="vspace_root_data" type="seL4_Word"
+                description="Has no effect on x86 or ARM processors."/>
+        </method>
+
+        <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace_mcs" condition="defined(CONFIG_KERNEL_MCS)">
+            <brief>
+                Set the fault endpoint, CSpace and VSpace of a thread
+            </brief>
+            <description>
+                <docref>See <autoref label="sec:threads"/></docref>
+            </description>
+            <param dir="in" name="fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread faults. On MCS this cap gets copied into the TCB."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
