@@ -57,7 +57,7 @@ getCurrentTime(void)
 static inline CONST ticks_t
 getMaxTicksToUs(void)
 {
-   return UINT64_MAX;
+    return UINT64_MAX;
 }
 
 static inline PURE time_t

@@ -172,8 +172,8 @@ invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
     refill_unblock_check(sc);
     if (isSchedulable(sc->scTcb)) {
         assert(refill_sufficient(sc, 0) && refill_ready(sc));
-        if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUIndex() ||)
-            sc->scTcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
+        if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUIndex() || )
+                sc->scTcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
             tcbSchedDequeue(sc->scTcb);
             SCHED_ENQUEUE(sc->scTcb);
         } else {
@@ -211,10 +211,10 @@ decodeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
     }
 
     if (sc->scTcb->tcbPriority > NODE_STATE(ksCurThread)->tcbMCP) {
-          userError("SchedContext_YieldTo: insufficient mcp (%lu) to yield to a thread with prio (%lu)",
-                 (unsigned long) NODE_STATE(ksCurThread)->tcbMCP, (unsigned long) sc->scTcb->tcbPriority);
-          current_syscall_error.type = seL4_IllegalOperation;
-          return EXCEPTION_SYSCALL_ERROR;
+        userError("SchedContext_YieldTo: insufficient mcp (%lu) to yield to a thread with prio (%lu)",
+                  (unsigned long) NODE_STATE(ksCurThread)->tcbMCP, (unsigned long) sc->scTcb->tcbPriority);
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);

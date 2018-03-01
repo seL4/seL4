@@ -162,7 +162,8 @@ void reply_remove_tcb(tcb_t *tcb)
     reply_unlink(reply);
 }
 
-void reply_clear(reply_t *reply) {
+void reply_clear(reply_t *reply)
+{
     assert(reply && reply->replyTCB);
 
     switch (thread_state_get_tsType(reply->replyTCB->tcbState)) {

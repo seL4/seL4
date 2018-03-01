@@ -43,12 +43,12 @@ seL4_getArchFault(seL4_MessageInfo_t tag)
                                       seL4_GetMR(seL4_VMFault_Addr),
                                       seL4_GetMR(seL4_VMFault_PrefetchFault),
                                       seL4_GetMR(seL4_VMFault_FSR));
-     case seL4_Fault_Timeout:
+    case seL4_Fault_Timeout:
         return seL4_Fault_Timeout_new(seL4_GetMR(seL4_Timeout_Data),
                                       seL4_GetMR(seL4_Timeout_Consumed_HighBits),
                                       seL4_GetMR(seL4_Timeout_Consumed_LowBits));
 
-   default:
+    default:
         return seL4_Fault_NullFault_new();
     }
 }
