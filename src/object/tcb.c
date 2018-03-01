@@ -747,6 +747,9 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
     case TCBUnbindNotification:
         return decodeUnbindNotification(cap);
 
+    case TCBSetTimeoutEndpoint:
+        return decodeSetTimeoutEndpoint(cap, excaps);
+
         /* There is no notion of arch specific TCB invocations so this needs to go here */
 #ifdef CONFIG_VTX
     case TCBSetEPTRoot:
@@ -914,6 +917,27 @@ decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
                                     w, transferArch, buffer);
 }
 
+static bool_t
+validFaultHandler(cap_t cap)
+{
+    switch (cap_get_capType(cap)) {
+    case cap_endpoint_cap:
+        if (!cap_endpoint_cap_get_capCanSend(cap) ||
+            !cap_endpoint_cap_get_capCanGrant(cap)) {
+            current_syscall_error.type = seL4_InvalidCapability;
+            return false;
+        }
+        break;
+    case cap_null_cap:
+        /* just has no fault endpoint */
+        break;
+    default:
+        current_syscall_error.type = seL4_InvalidCapability;
+        return false;
+    }
+    return true;
+}
+
 /* SetPriority, SetMCPriority, SetSchedParams, SetIPCBuffer and SetSpace are all
  * specialisations of TCBConfigure. */
 exception_t
@@ -1004,6 +1028,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot, 
                cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
                NULL_PRIO, NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
@@ -1043,6 +1068,7 @@ decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer)
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
                NULL_PRIO, newPrio,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
@@ -1081,11 +1107,42 @@ decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffe
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                cap_null_cap_new(), NULL,
+               cap_null_cap_new(), NULL,
                newMcp, NULL_PRIO,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(),
                NULL, NULL, thread_control_update_mcp);
+}
+
+exception_t 
+decodeSetTimeoutEndpoint(cap_t cap, extra_caps_t excaps)
+{
+    if (excaps.excaprefs[0] == NULL) {
+        userError("TCB SetSchedParams: Truncated message.");
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    cte_t *thSlot = excaps.excaprefs[2];
+    cap_t thCap   = excaps.excaprefs[2]->cap; 
+
+    /* timeout handler */
+    if (!validFaultHandler(thCap)) {
+        userError("TCB Configure: timeout endpoint cap invalid.");
+        current_syscall_error.invalidCapNumber = 3;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+    return invokeTCB_ThreadControl(
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
+               cap_null_cap_new(), NULL, 
+               thCap, thSlot,
+               NULL_PRIO, NULL_PRIO,
+               cap_null_cap_new(), NULL,
+               thCap, thSlot,
+               0, cap_null_cap_new(), NULL, NULL, 
+               thread_control_update_timeout);
 }
 
 exception_t
@@ -1151,23 +1208,10 @@ decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buff
         current_syscall_error.invalidCapNumber = 2;
     }
 
-    switch (cap_get_capType(fhCap)) {
-    case cap_endpoint_cap:
-        if (!cap_endpoint_cap_get_capCanSend(fhCap) ||
-            !cap_endpoint_cap_get_capCanGrant(fhCap)) {
-            userError("TCB Configure: fault endpoint cap has invalid rights.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-    break;
-    case cap_null_cap:
-        /* just has no fault endpoint */
-        break;
-    default:
+    if (!validFaultHandler(fhCap)) {
         userError("TCB Configure: fault endpoint cap invalid.");
         current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
+        current_syscall_error.invalidCapNumber = 3;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -1175,6 +1219,7 @@ decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buff
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
                fhCap, fhSlot,
+               cap_null_cap_new(), NULL,
                newMcp, newPrio,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
@@ -1224,6 +1269,7 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
+               cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                NULL_PRIO, NULL_PRIO,
                cap_null_cap_new(), NULL,
@@ -1300,30 +1346,18 @@ decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    switch (cap_get_capType(fhCap)) {
-        case cap_endpoint_cap:
-            if (!cap_endpoint_cap_get_capCanSend(fhCap) ||
-                !cap_endpoint_cap_get_capCanGrant(fhCap)) {
-                userError("TCB SetSpace: fault endpoint cap has invalid rights.");
-                current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 1;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            break;
-        case cap_null_cap:
-            /* just has no fault endpoint */
-            break;
-        default:
-            userError("TCB SetSpace: fault endpoint cap invalid.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
+    /* fault handler */
+    if (!validFaultHandler(fhCap)) {
+        userError("TCB SetSpace: fault endpoint cap invalid.");
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                fhCap, fhSlot,
+               cap_null_cap_new(), NULL,
                NULL_PRIO, NULL_PRIO,
                cRootCap, cRootSlot,
                vRootCap, vRootSlot,
@@ -1478,6 +1512,7 @@ installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
 exception_t
 invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
                         cap_t fh_newCap, cte_t *fh_srcSlot,
+                        cap_t th_newCap, cte_t *th_srcSlot,
                         prio_t mcp, prio_t priority,
                         cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
                         cap_t vRoot_newCap, cte_t *vRoot_srcSlot,
@@ -1519,6 +1554,14 @@ invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
 
     if (updateFlags & thread_control_update_fault) {
         e = installTCBCap(target, tCap, slot, tcbFaultHandler, fh_newCap, fh_srcSlot);
+        if (e != EXCEPTION_NONE) {
+            return e;
+        }
+
+    }
+
+    if (updateFlags & thread_control_update_timeout) {
+        e = installTCBCap(target, tCap, slot, tcbTimeoutHandler, th_newCap, th_srcSlot);
         if (e != EXCEPTION_NONE) {
             return e;
         }

@@ -21,11 +21,13 @@ tagged_union seL4_Fault seL4_FaultType {
 #ifdef CONFIG_HARDWARE_DEBUG_API
     tag DebugException 4
 #endif
+    tag Timeout 5
+
     -- arch specific faults
-    tag VMFault 5
+    tag VMFault 6
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    tag VGICMaintenance 6
-    tag VCPUFault 7
+    tag VGICMaintenance 7
+    tag VCPUFault 8
 #endif
 }

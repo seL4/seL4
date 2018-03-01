@@ -294,6 +294,12 @@ block DebugException {
 }
 #endif
 
+block Timeout {
+    field badge 32
+    padding 29
+    field seL4_FaultType 3
+}
+
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
                    tcbQueued, blockingObject,
