@@ -18,51 +18,29 @@
 void
 handleFault(tcb_t *tptr)
 {
-    exception_t status;
-    seL4_Fault_t fault = current_fault;
-
-    status = sendFaultIPC(tptr);
-    if (status != EXCEPTION_NONE) {
-        handleDoubleFault(tptr, fault);
+    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap);
+    if (!hasFaultHandler) {
+        handleNoFaultHandler(tptr);
     }
 }
 
-exception_t
-sendFaultIPC(tcb_t *tptr)
+bool_t
+sendFaultIPC(tcb_t *tptr, cap_t handlerCap)
 {
-    cptr_t handlerCPtr;
-    cap_t  handlerCap;
-    lookupCap_ret_t lu_ret;
-    lookup_fault_t original_lookup_fault;
+    if (cap_get_capType(handlerCap) == cap_endpoint_cap) {
+        assert(cap_endpoint_cap_get_capCanSend(handlerCap));
+        assert(cap_endpoint_cap_get_capCanGrant(handlerCap));
 
-    original_lookup_fault = current_lookup_fault;
-
-    handlerCPtr = tptr->tcbFaultHandler;
-    lu_ret = lookupCap(tptr, handlerCPtr);
-    if (lu_ret.status != EXCEPTION_NONE) {
-        current_fault = seL4_Fault_CapFault_new(handlerCPtr, false);
-        return EXCEPTION_FAULT;
-    }
-    handlerCap = lu_ret.cap;
-
-    if (cap_get_capType(handlerCap) == cap_endpoint_cap &&
-            cap_endpoint_cap_get_capCanSend(handlerCap) &&
-            cap_endpoint_cap_get_capCanGrant(handlerCap)) {
         tptr->tcbFault = current_fault;
-        if (seL4_Fault_get_seL4_FaultType(current_fault) == seL4_Fault_CapFault) {
-            tptr->tcbLookupFailure = original_lookup_fault;
-        }
         sendIPC(true, false,
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
                 true, true, tptr,
                 EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
 
-        return EXCEPTION_NONE;
+        return true;
     } else {
-        current_fault = seL4_Fault_CapFault_new(handlerCPtr, false);
-        current_lookup_fault = lookup_fault_missing_capability_new(0);
-
-        return EXCEPTION_FAULT;
+        assert(cap_get_capType(handlerCap) == cap_null_cap);
+        return false;
     }
 }
 
@@ -101,16 +79,12 @@ print_fault(seL4_Fault_t f)
 }
 #endif
 
-/* The second fault, ex2, is stored in the global current_fault */
 void
-handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1)
+handleNoFaultHandler(tcb_t *tptr)
 {
 #ifdef CONFIG_PRINTING
-    seL4_Fault_t ex2 = current_fault;
-    printf("Caught ");
-    print_fault(ex2);
-    printf("\nwhile trying to handle:\n");
-    print_fault(ex1);
+    printf("Found thread has no fault handler while trying to handle:\n");
+    print_fault(current_fault);
 
 #ifdef CONFIG_DEBUG_BUILD
     printf("\nin thread %p \"%s\" ", tptr, tptr->tcbName);

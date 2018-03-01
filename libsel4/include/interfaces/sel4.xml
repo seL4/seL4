@@ -123,8 +123,6 @@
             <description>
                 <docref>See <autoref label="sec:threads"/></docref>
             </description>
-            <param dir="in" name="fault_ep" type="seL4_Word"
-                description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
@@ -167,7 +165,8 @@
 
         <method id="TCBSetSchedParams" name="SetSchedParams" manual_name="Set Sched Params" manual_label="tcb_setschedparams">
             <brief>
-                Change a thread's priority, maximum controlled priority, and scheduling context.
+                Change a thread's priority, maximum controlled priority, scheduling context
+                and fault handler.
             </brief>
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
@@ -180,6 +179,8 @@
                 description="The thread's new priority."/>
             <param dir="in" name="sched_context" type="seL4_CPtr"
                 description="Capability to the scheduling context that the TCB should run on. If the scheduling context is already bound to a notification or TCB that is not this TCB this operation will fail. Similarly, if this TCB is already bound to a scheduling context that is not this scheduling context, this will also fail."/>
+            <param dir="in" name="fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread faults."/>
         </method>
 
         <method id="TCBSetIPCBuffer" name="SetIPCBuffer" manual_name="Set IPC Buffer" manual_label="tcb_setipcbuffer">
@@ -202,8 +203,8 @@
             <description>
                 <docref>See <autoref label="sec:threads"/></docref>
             </description>
-            <param dir="in" name="fault_ep" type="seL4_Word"
-                description="CPTR to the endpoint which receives IPCs when this thread faults. This capability is in the CSpace of the thread being configured."/>
+            <param dir="in" name="fault_ep" type="seL4_CPtr"
+                description="CPTR to the endpoint which receives IPCs when this thread faults."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
