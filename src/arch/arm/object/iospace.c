@@ -134,7 +134,6 @@ static exception_t performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *
                         addrFromPPtr(iopdSlot));
 
     plat_smmu_tlb_flush_all();
-    plat_smmu_ptc_flush_all();
 
     slot->cap = cap;
     setThreadState(ksCurThread, ThreadState_Restart);
@@ -236,7 +235,6 @@ static exception_t performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *io
                         addrFromPPtr(ioptSlot));
 
     plat_smmu_tlb_flush_all();
-    plat_smmu_ptc_flush_all();
 
     slot->cap = cap;
 
@@ -409,7 +407,6 @@ void deleteIOPageTable(cap_t io_pt_cap)
 
         /* nice to have: flush by address and asid */
         plat_smmu_tlb_flush_all();
-        plat_smmu_ptc_flush_all();
     }
 }
 
@@ -440,7 +437,7 @@ void unmapIOPage(cap_t cap)
                         addrFromPPtr(lu_ret.ioptSlot));
 
     plat_smmu_tlb_flush_all();
-    plat_smmu_ptc_flush_all();
+
     return;
 }
 
@@ -456,7 +453,7 @@ void clearIOPageDirectory(cap_t cap)
     cleanCacheRange_RAM((word_t)pd, (word_t)pd + size, addrFromPPtr(pd));
 
     plat_smmu_tlb_flush_all();
-    plat_smmu_ptc_flush_all();
+
     return;
 }
 
