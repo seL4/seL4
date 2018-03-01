@@ -17,7 +17,8 @@
 #include <object/structures.h>
 
 /* Unlink a reply from its tcb */
-static inline void reply_unlink(reply_t *reply) {
+static inline void reply_unlink(reply_t *reply)
+{
     /* check the tcb and reply are linked correctly */
     assert(thread_state_get_replyObject(reply->replyTCB->tcbState) == REPLY_REF(reply));
 

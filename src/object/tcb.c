@@ -923,7 +923,7 @@ validFaultHandler(cap_t cap)
     switch (cap_get_capType(cap)) {
     case cap_endpoint_cap:
         if (!cap_endpoint_cap_get_capCanSend(cap) ||
-            !cap_endpoint_cap_get_capCanGrant(cap)) {
+                !cap_endpoint_cap_get_capCanGrant(cap)) {
             current_syscall_error.type = seL4_InvalidCapability;
             return false;
         }
@@ -1026,7 +1026,7 @@ decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
-               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot, 
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                NULL_PRIO, NULL_PRIO,
@@ -1115,7 +1115,7 @@ decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffe
                NULL, NULL, thread_control_update_mcp);
 }
 
-exception_t 
+exception_t
 decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps)
 {
     if (excaps.excaprefs[0] == NULL) {
@@ -1124,7 +1124,7 @@ decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps)
     }
 
     cte_t *thSlot = excaps.excaprefs[0];
-    cap_t thCap   = excaps.excaprefs[0]->cap; 
+    cap_t thCap   = excaps.excaprefs[0]->cap;
 
     /* timeout handler */
     if (!validFaultHandler(thCap)) {
@@ -1136,12 +1136,12 @@ decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps)
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
                TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
-               cap_null_cap_new(), NULL, 
+               cap_null_cap_new(), NULL,
                thCap, thSlot,
                NULL_PRIO, NULL_PRIO,
                cap_null_cap_new(), NULL,
                thCap, thSlot,
-               0, cap_null_cap_new(), NULL, NULL, 
+               0, cap_null_cap_new(), NULL, NULL,
                thread_control_update_timeout);
 }
 
@@ -1224,10 +1224,10 @@ decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, extra_caps_t excaps,
                cap_null_cap_new(), NULL,
                cap_null_cap_new(), NULL,
                0, cap_null_cap_new(), NULL,
-               sc, 
+               sc,
                thread_control_update_mcp |
-               thread_control_update_priority | 
-               thread_control_update_sc | 
+               thread_control_update_priority |
+               thread_control_update_sc |
                thread_control_update_fault);
 }
 
@@ -1503,7 +1503,7 @@ installTCBCap(tcb_t *target, cap_t tCap, cte_t *slot,
 
     /* cteDelete on a cap installed in the tcb cannot fail */
     if (sameObjectAs(newCap, srcSlot->cap) &&
-        sameObjectAs(tCap, slot->cap)) {
+            sameObjectAs(tCap, slot->cap)) {
         cteInsert(newCap, srcSlot, rootSlot);
     }
     return e;

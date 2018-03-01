@@ -310,7 +310,7 @@ struct sched_context {
      * (scTcb and scNotification cannot be set at the same time) */
     notification_t *scNotification;
 
-     /* data word that is sent with timeout faults that occur on this scheduling context */
+    /* data word that is sent with timeout faults that occur on this scheduling context */
     word_t scBadge;
 
     /* thread that yielded to this scheduling context */
