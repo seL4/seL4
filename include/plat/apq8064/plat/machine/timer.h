@@ -50,7 +50,8 @@ setDeadline(ticks_t deadline)
 }
 
 static inline void
-ackDeadlineIRQ(void) {
+ackDeadlineIRQ(void)
+{
     fail("Not implemented");
 }
 

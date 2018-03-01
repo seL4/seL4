@@ -24,7 +24,8 @@ mode_parseTimeArg(word_t i, word_t *buffer)
 }
 
 static inline word_t
-mode_setTimeArg(word_t i, time_t time, word_t *buffer, tcb_t *thread) {
+mode_setTimeArg(word_t i, time_t time, word_t *buffer, tcb_t *thread)
+{
     setMR(thread, buffer, i, (uint32_t) time);
     return setMR(thread, buffer, i + 1, (uint32_t) (time >> 32llu));
 }

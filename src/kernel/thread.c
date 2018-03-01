@@ -137,7 +137,7 @@ void
 doReplyTransfer(tcb_t *sender, reply_t *reply)
 {
     if (reply->replyTCB == NULL ||
-        thread_state_get_tsType(reply->replyTCB->tcbState) != ThreadState_BlockedOnReply) {
+            thread_state_get_tsType(reply->replyTCB->tcbState) != ThreadState_BlockedOnReply) {
         /* nothing to do */
         return;
     }

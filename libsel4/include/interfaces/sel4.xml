@@ -574,7 +574,7 @@
                 Set the parameters of a scheduling context by invoking the scheduling control capability. If the scheduling context is bound to a currently running thread, the parameters will take effect immediately: that is the current budget will be increased or reduced by the difference between the new and previous budget and the replenishment time will be updated according to any difference in the period. This can result in active threads being post-poned or released depending on the nature of the parameter change and the state of the thread. Additionally, if the scheduling context was previously empty (no budget) but bound to a runnable thread, this can result in a thread running for the first time since it now has access to CPU time. This call will return seL4 Invalid Argument if the parameters are too small (smaller than the kernel WCET for this platform) or too large (will overflow the timer).
             </brief>
             <description>
-                See <autoref sec="threads"/>
+                See <autoref label="sec:threads"/>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="schedcontext" type="seL4_SchedContext"
@@ -610,7 +610,7 @@
                 notification object.
             </brief>
             <description>
-                See <autoref sec="threads"/>
+                See <autoref label="sec:threads"/>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
@@ -624,7 +624,7 @@
                 will render the bound thread passive, see Section 6.1.5.
             </brief>
             <description>
-                See <autoref sec="threads"/>
+                See <autoref label="sec:threads"/>
             </description>
             <return><errorenumdesc/></return>
         </method>
@@ -643,7 +643,7 @@
                 If the object is a notification and it is bound to the scheduling context, unbind it.
             </brief>
             <description>
-                See <autoref sec="passive"/>
+                See <autoref label="sec:passive"/>
             </description>
             <return><errorenumdesc/></return>
             <param dir="in" name="cap" type="seL4_CPtr"
@@ -655,7 +655,7 @@
                 Return the amount of time used by this scheduling context since this function was last called or a timeout exception triggered.
             </brief>
             <description>
-                See <autoref sec="threads"/>
+                See <autoref label="sec:threads"/>
             </description>
         <return><errorenumdesc/></return>
         <param dir="out" name="consumed" type="seL4_Time"
