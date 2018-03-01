@@ -46,6 +46,11 @@ LIBSEL4_INLINE_FUNC seL4_Fault_t seL4_getArchFault(seL4_MessageInfo_t tag)
                                       seL4_GetMR(seL4_VMFault_Addr),
                                       seL4_GetMR(seL4_VMFault_PrefetchFault),
                                       seL4_GetMR(seL4_VMFault_FSR));
+#ifdef CONFIG_KERNEL_MCS
+    case seL4_Fault_Timeout:
+        return seL4_Fault_Timeout_new(seL4_GetMR(seL4_Timeout_Data),
+                                      seL4_GetMR(seL4_Timeout_Consumed));
+#endif /* CONFIG_KERNEL_MCS */
     default:
         return seL4_Fault_NullFault_new();
     }

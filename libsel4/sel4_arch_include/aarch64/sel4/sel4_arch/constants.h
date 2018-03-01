@@ -113,6 +113,54 @@ enum {
 } seL4_VCPUReg;
 
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+
+#ifdef CONFIG_KERNEL_MCS
+enum {
+    seL4_TimeoutReply_FaultIP,
+    seL4_TimeoutReply_SP,
+    seL4_TimeoutReply_SPSR_EL1,
+    seL4_TimeoutReply_X0,
+    seL4_TimeoutReply_X1,
+    seL4_TimeoutReply_X2,
+    seL4_TimeoutReply_X3,
+    seL4_TimeoutReply_X4,
+    seL4_TimeoutReply_X5,
+    seL4_TimeoutReply_X6,
+    seL4_TimeoutReply_X7,
+    seL4_TimeoutReply_X8,
+    seL4_TimeoutReply_X16,
+    seL4_TimeoutReply_X17,
+    seL4_TimeoutReply_X18,
+    seL4_TimeoutReply_X29,
+    seL4_TimeoutReply_X30,
+    seL4_TimeoutReply_X9,
+    seL4_TimeoutReply_X10,
+    seL4_TimeoutReply_X11,
+    seL4_TimeoutReply_X12,
+    seL4_TimeoutReply_X13,
+    seL4_TimeoutReply_X14,
+    seL4_TimeoutReply_X15,
+    seL4_TimeoutReply_X19,
+    seL4_TimeoutReply_X20,
+    seL4_TimeoutReply_X21,
+    seL4_TimeoutReply_X22,
+    seL4_TimeoutReply_X23,
+    seL4_TimeoutReply_X24,
+    seL4_TimeoutReply_X25,
+    seL4_TimeoutReply_X26,
+    seL4_TimeoutReply_X27,
+    seL4_TimeoutReply_X28,
+    seL4_TimeoutReply_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TimeoutReply_Msg)
+} seL4_TimeoutReply_Msg;
+
+enum {
+    seL4_Timeout_Data,
+    seL4_Timeout_Consumed,
+    seL4_Timeout_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
+} seL4_TimeoutMsg;
+#endif
 #endif /* !__ASSEMBLER__ */
 
 #define seL4_DataFault 0

@@ -18,13 +18,19 @@
 #ifdef CONFIG_KERNEL_MCS
 void handleFault(tcb_t *tptr)
 {
-    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap);
+    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap, true);
     if (!hasFaultHandler) {
         handleNoFaultHandler(tptr);
     }
 }
 
-bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap)
+void handleTimeout(tcb_t *tptr)
+{
+    assert(validTimeoutHandler(tptr));
+    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
+}
+
+bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
 {
     if (cap_get_capType(handlerCap) == cap_endpoint_cap) {
         assert(cap_endpoint_cap_get_capCanSend(handlerCap));
@@ -35,7 +41,7 @@ bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap)
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
                 cap_endpoint_cap_get_capCanGrant(handlerCap),
                 cap_endpoint_cap_get_capCanGrantReply(handlerCap),
-                true, tptr,
+                can_donate, tptr,
                 EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
 
         return true;
@@ -97,7 +103,6 @@ exception_t sendFaultIPC(tcb_t *tptr)
 }
 #endif
 
-
 #ifdef CONFIG_PRINTING
 static void print_fault(seL4_Fault_t f)
 {
@@ -125,6 +130,11 @@ static void print_fault(seL4_Fault_t f)
                (void *)seL4_Fault_UserException_get_number(f),
                (void *)seL4_Fault_UserException_get_code(f));
         break;
+#ifdef CONFIG_KERNEL_MCS
+    case seL4_Fault_Timeout:
+        printf("Timeout fault for 0x%x\n", (unsigned int) seL4_Fault_Timeout_get_badge(f));
+        break;
+#endif
     default:
         printf("unknown fault");
         break;

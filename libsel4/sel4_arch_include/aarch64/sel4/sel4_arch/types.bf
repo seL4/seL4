@@ -102,4 +102,14 @@ block DebugException {
 }
 #endif
 
+#ifdef CONFIG_KERNEL_MCS
+block Timeout {
+    padding 704
+    field data 64
+    field consumed 64
+    padding 60
+    field seL4_FaultType 4
+}
+#endif
+
 #include <sel4/arch/shared_types.bf>

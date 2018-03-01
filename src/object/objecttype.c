@@ -722,7 +722,7 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
         return decodeSchedControlInvocation(invLabel, cap, length, excaps, buffer);
 
     case cap_sched_context_cap:
-        return decodeSchedContextInvocation(invLabel, cap, excaps);
+        return decodeSchedContextInvocation(invLabel, cap, excaps, buffer);
 #endif
     default:
         fail("Invalid cap type");

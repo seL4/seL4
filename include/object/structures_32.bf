@@ -315,6 +315,14 @@ block DebugException {
 }
 #endif
 
+#ifdef CONFIG_KERNEL_MCS
+block Timeout {
+    field badge 32
+    padding 28
+    field seL4_FaultType 4
+}
+#endif
+
 -- Thread state: size = 12 bytes
 block thread_state(blockingIPCBadge, blockingIPCCanGrant,
                    blockingIPCCanGrantReply, blockingIPCIsCall,

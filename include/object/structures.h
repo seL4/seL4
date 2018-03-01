@@ -182,6 +182,9 @@ enum tcb_cnode_index {
 
     /* Fault endpoint slot */
     tcbFaultHandler = 3,
+
+    /* Timeout endpoint slot */
+    tcbTimeoutHandler = 4,
 #else
     /* Reply cap slot */
     tcbReply = 2,
@@ -320,6 +323,10 @@ struct sched_context {
     /* period for this sc -- controls rate at which budget is replenished */
     ticks_t scPeriod;
 
+    /* amount of ticks this sc has been scheduled for since seL4_SchedContext_Consumed
+     * was last called or a timeout exception fired */
+    ticks_t scConsumed;
+
     /* core this scheduling context provides time for - 0 if uniprocessor */
     word_t scCore;
 
@@ -333,6 +340,9 @@ struct sched_context {
     /* notification this scheduling context is bound to
      * (scTcb and scNotification cannot be set at the same time) */
     notification_t *scNotification;
+
+    /* data word that is sent with timeout faults that occur on this scheduling context */
+    word_t scBadge;
 
     /* Amount of refills this sc tracks */
     word_t scRefillMax;

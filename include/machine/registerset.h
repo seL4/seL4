@@ -18,10 +18,17 @@
 
 typedef enum {
     MessageID_Syscall,
-    MessageID_Exception
+    MessageID_Exception,
+#ifdef CONFIG_KERNEL_MCS
+    MessageID_TimeoutReply,
+#endif
 } MessageID_t;
 
+#ifdef CONFIG_KERNEL_MCS
+#define MAX_MSG_SIZE MAX(n_syscallMessage, MAX(n_timeoutMessage, n_exceptionMessage))
+#else
 #define MAX_MSG_SIZE MAX(n_syscallMessage, n_exceptionMessage)
+#endif
 extern const register_t fault_messages[][MAX_MSG_SIZE] VISIBLE;
 
 static inline void setRegister(tcb_t *thread, register_t reg, word_t w)

@@ -20,6 +20,13 @@ tagged_union seL4_Fault seL4_FaultType {
 #ifdef CONFIG_HARDWARE_DEBUG_API
     tag DebugException 4
 #endif
+#ifdef CONFIG_KERNEL_MCS
+    tag Timeout       5
+
+    -- arch specific faults
+    tag VMFault 6
+#else
     -- arch specific faults
     tag VMFault 5
+#endif
 }

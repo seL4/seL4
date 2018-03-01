@@ -70,3 +70,20 @@ LIBSEL4_INLINE_FUNC seL4_Bool seL4_isCapFault_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_CapFault;
 }
+
+#ifdef CONFIG_KERNEL_MCS
+LIBSEL4_INLINE_FUNC seL4_Bool seL4_isTimeoutFault_tag(seL4_MessageInfo_t tag)
+{
+    return seL4_MessageInfo_get_label(tag) == seL4_Fault_Timeout;
+}
+
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_TimeoutReply_new(seL4_Bool resume, seL4_UserContext regs, seL4_Word length)
+{
+    seL4_MessageInfo_t info = seL4_MessageInfo_new(!resume, 0, 0, length);
+    for (seL4_Word i = 0; i < length; i++) {
+        seL4_SetMR(i, ((seL4_Word *) &regs)[i]);
+    }
+
+    return info;
+}
+#endif /* CONFIG_KERNEL_MCS */

@@ -121,6 +121,38 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_UserException_Msg)
 } seL4_UserException_Msg;
 
+#ifdef CONFIG_KERNEL_MCS
+enum {
+    seL4_Timeout_Data,
+    seL4_Timeout_Consumed,
+    seL4_Timeout_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg)
+} seL4_TimeoutMsg;
+
+enum {
+    seL4_TimeoutReply_FaultIP,
+    seL4_TimeoutReply_RSP,
+    seL4_TimeoutReply_FLAGS,
+    seL4_TimeoutReply_RAX,
+    seL4_TimeoutReply_RBX,
+    seL4_TimeoutReply_RCX,
+    seL4_TimeoutReply_RDX,
+    seL4_TimeoutReply_RSI,
+    seL4_TimeoutReply_RDI,
+    seL4_TimeoutReply_RBP,
+    seL4_TimeoutReply_R8,
+    seL4_TimeoutReply_R9,
+    seL4_TimeoutReply_R10,
+    seL4_TimeoutReply_R11,
+    seL4_TimeoutReply_R12,
+    seL4_TimeoutReply_R13,
+    seL4_TimeoutReply_R14,
+    seL4_TimeoutReply_R15,
+    seL4_TimeoutReply_TLS_BASE,
+    seL4_TimeoutReply_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TimeoutReply_Msg)
+} seL4_TimeoutReply_Msg;
+#endif
 #endif /* __ASSEMBLER__ */
 #define seL4_FastMessageRegisters 4
 

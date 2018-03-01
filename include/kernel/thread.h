@@ -124,6 +124,7 @@ static inline void commitTime(void)
         ksDomainTime -= NODE_STATE(ksConsumed);
     }
 
+    NODE_STATE(ksCurSC)->scConsumed += NODE_STATE(ksConsumed);
     NODE_STATE(ksConsumed) = 0llu;
 }
 
@@ -187,10 +188,10 @@ static inline void updateRestartPC(tcb_t *tcb)
  * This will recharge the threads timeslice and place it at the
  * end of the scheduling queue for its priority.
  */
-void endTimeslice(void);
+void endTimeslice(bool_t can_timeout_fault);
 
 /* called when a thread has used up its head refill */
-void chargeBudget(ticks_t capacity, ticks_t consumed);
+void chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault);
 
 /* Update the kernels timestamp and stores in ksCurTime.
  * The difference between the previous kernel timestamp and the one just read
@@ -235,7 +236,7 @@ static inline bool_t checkBudget(void)
         return true;
     }
 
-    chargeBudget(capacity, NODE_STATE(ksConsumed));
+    chargeBudget(capacity, NODE_STATE(ksConsumed), true);
     return false;
 }
 
@@ -249,7 +250,7 @@ static inline bool_t checkBudgetRestart(void)
 {
     assert(isRunnable(NODE_STATE(ksCurThread)));
     bool_t result = checkBudget();
-    if (!result) {
+    if (!result && isRunnable(NODE_STATE(ksCurThread))) {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     }
     return result;

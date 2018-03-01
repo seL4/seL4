@@ -140,7 +140,11 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length,
                                cte_t *slot, extra_caps_t rootCaps, word_t *buffer);
 exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
+#ifdef CONFIG_KERNEL_MCS
+exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, extra_caps_t excaps, word_t *buffer);
+#else
 exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
+#endif
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t *slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
@@ -149,6 +153,9 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length,
                                    extra_caps_t excaps, word_t *buffer);
 exception_t decodeBindNotification(cap_t cap, extra_caps_t excaps);
 exception_t decodeUnbindNotification(cap_t cap);
+#ifdef CONFIG_KERNEL_MCS
+exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps);
+#endif
 
 enum thread_control_flag {
     thread_control_update_priority = 0x1,
@@ -158,6 +165,7 @@ enum thread_control_flag {
 #ifdef CONFIG_KERNEL_MCS
     thread_control_update_sc = 0x10,
     thread_control_update_fault = 0x20,
+    thread_control_update_timeout = 0x40,
 #endif
 };
 
@@ -168,6 +176,7 @@ exception_t invokeTCB_Resume(tcb_t *thread);
 #ifdef CONFIG_KERNEL_MCS
 exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
                                     cap_t fh_newCap, cte_t *fh_srcSlot,
+                                    cap_t th_newCap, cte_t *th_srcSlot,
                                     prio_t mcp, prio_t priority, cap_t cRoot_newCap,
                                     cte_t *cRoot_srcSlot, cap_t vRoot_newCap,
                                     cte_t *vRoot_srcSlot, word_t bufferAddr,
