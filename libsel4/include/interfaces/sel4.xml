@@ -209,15 +209,13 @@
 
         <method id="TCBSetSpace" name="SetSpace" manual_name="Set Space" manual_label="tcb_setspace">
             <brief>
-                Set the fault endpoint, timeout fault endpoint, CSpace and VSpace of a thread
+                Set the fault endpoint, CSpace and VSpace of a thread
             </brief>
             <description>
                 See <autoref label="sec:threads"/>
             </description>
             <param dir="in" name="fault_ep" type="seL4_CPtr"
                 description="CPTR to the endpoint which receives IPCs when this thread faults."/>
-            <param dir="in" name="timeout_fault_ep" type="seL4_CPtr"
-                description="CPTR to the endpoint which receives IPCs when this thread triggers timeout faults. Can be null or invalid."/>
             <param dir="in" name="cspace_root" type="seL4_CNode"
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
