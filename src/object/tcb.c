@@ -733,7 +733,7 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
         return decodeSetMCPriority(cap, length, excaps, buffer);
 
     case TCBSetSchedParams:
-        return decodeSetSchedParams(cap, length, excaps, buffer);
+        return decodeSetSchedParams(cap, length, slot, excaps, buffer);
 
     case TCBSetIPCBuffer:
         return decodeSetIPCBuffer(cap, length, slot, excaps, buffer);
@@ -748,7 +748,7 @@ decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
         return decodeUnbindNotification(cap);
 
     case TCBSetTimeoutEndpoint:
-        return decodeSetTimeoutEndpoint(cap, excaps);
+        return decodeSetTimeoutEndpoint(cap, slot, excaps);
 
         /* There is no notion of arch specific TCB invocations so this needs to go here */
 #ifdef CONFIG_VTX
@@ -1116,26 +1116,26 @@ decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffe
 }
 
 exception_t 
-decodeSetTimeoutEndpoint(cap_t cap, extra_caps_t excaps)
+decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps)
 {
     if (excaps.excaprefs[0] == NULL) {
         userError("TCB SetSchedParams: Truncated message.");
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    cte_t *thSlot = excaps.excaprefs[2];
-    cap_t thCap   = excaps.excaprefs[2]->cap; 
+    cte_t *thSlot = excaps.excaprefs[0];
+    cap_t thCap   = excaps.excaprefs[0]->cap; 
 
     /* timeout handler */
     if (!validFaultHandler(thCap)) {
-        userError("TCB Configure: timeout endpoint cap invalid.");
-        current_syscall_error.invalidCapNumber = 3;
+        userError("TCB SetTimeoutEndpoint: timeout endpoint cap invalid.");
+        current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
-               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                cap_null_cap_new(), NULL, 
                thCap, thSlot,
                NULL_PRIO, NULL_PRIO,
@@ -1146,7 +1146,7 @@ decodeSetTimeoutEndpoint(cap_t cap, extra_caps_t excaps)
 }
 
 exception_t
-decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer)
+decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, extra_caps_t excaps, word_t *buffer)
 {
     if (length < 2 || excaps.excaprefs[0] == NULL || excaps.excaprefs[1] == NULL ||
             excaps.excaprefs[2] == NULL) {
@@ -1217,7 +1217,7 @@ decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buff
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeTCB_ThreadControl(
-               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), NULL,
+               TCB_PTR(cap_thread_cap_get_capTCBPtr(cap)), slot,
                fhCap, fhSlot,
                cap_null_cap_new(), NULL,
                newMcp, newPrio,
