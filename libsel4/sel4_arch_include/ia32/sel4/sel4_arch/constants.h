@@ -108,6 +108,33 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_UserException_Msg)
 } seL4_UserException_Msg;
 
+enum {
+    seL4_Timeout_Data,
+    seL4_Timeout_Consumed,
+    /* consumed is 64 bits */
+    seL4_Timeout_Consumed_LowBits,
+    seL4_Timeout_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_Timeout_Msg),
+} seL4_Timeout_Msg;
+
+enum {
+    seL4_TimeoutReply_FaultIP,
+    seL4_TimeoutReply_SP,
+    seL4_TimeoutReply_FLAGS,
+    seL4_TimeoutReply_EAX,
+    seL4_TimeoutReply_EBX,
+    seL4_TimeoutReply_ECX,
+    seL4_TimeoutReply_EDX,
+    seL4_TimeoutReply_ESI,
+    seL4_TimeoutReply_EDI,
+    seL4_TimeoutReply_EBP,
+    seL4_TimeoutReply_TLS_BASE,
+    seL4_TimeoutReply_FS,
+    seL4_TimeoutReply_GS,
+    seL4_TimeoutReply_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_TimeoutReply_Msg)
+} seL4_TimeoutReply_Msg;
+
 #endif /* __ASSEMBLER__ */
 #define seL4_FastMessageRegisters 1
 

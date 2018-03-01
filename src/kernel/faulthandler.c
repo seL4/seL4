@@ -18,14 +18,21 @@
 void
 handleFault(tcb_t *tptr)
 {
-    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap);
+    bool_t hasFaultHandler = sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbFaultHandler)->cap, true);
     if (!hasFaultHandler) {
         handleNoFaultHandler(tptr);
     }
 }
 
+void
+handleTimeout(tcb_t *tptr)
+{
+    assert(validTimeoutHandler(tptr));
+    sendFaultIPC(tptr, TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap, false);
+}
+
 bool_t
-sendFaultIPC(tcb_t *tptr, cap_t handlerCap)
+sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate)
 {
     if (cap_get_capType(handlerCap) == cap_endpoint_cap) {
         assert(cap_endpoint_cap_get_capCanSend(handlerCap));
@@ -34,7 +41,7 @@ sendFaultIPC(tcb_t *tptr, cap_t handlerCap)
         tptr->tcbFault = current_fault;
         sendIPC(true, false,
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
-                true, true, tptr,
+                true, can_donate, tptr,
                 EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
 
         return true;
@@ -71,6 +78,9 @@ print_fault(seL4_Fault_t f)
         printf("user exception 0x%x code 0x%x",
                (unsigned int)seL4_Fault_UserException_get_number(f),
                (unsigned int)seL4_Fault_UserException_get_code(f));
+        break;
+    case seL4_Fault_Timeout:
+        printf("Timeout fault for 0x%x\n", (unsigned int) seL4_Fault_Timeout_get_badge(f));
         break;
     default:
         printf("unknown fault");

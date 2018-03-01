@@ -432,7 +432,7 @@ static void
 handleYield(void)
 {
     /* Yield the current remaining budget */
-    chargeBudget(0, REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount);
+    chargeBudget(0, REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount, false);
 }
 
 exception_t

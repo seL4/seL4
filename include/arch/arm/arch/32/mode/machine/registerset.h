@@ -126,6 +126,7 @@ enum messageSizes {
     n_gpRegisters = 7,
     n_exceptionMessage = 3,
     n_syscallMessage = 12,
+    n_timeoutMessage = 17,
 };
 
 #define EXCEPTION_MESSAGE \
@@ -149,6 +150,27 @@ enum messageSizes {
     [seL4_UnknownSyscall_SP] = SP,\
     [seL4_UnknownSyscall_LR] = LR,\
     [seL4_UnknownSyscall_CPSR] = CPSR\
+}
+
+#define TIMEOUT_REPLY_MESSAGE \
+{\
+    [seL4_TimeoutReply_FaultIP] = FaultInstruction,\
+    [seL4_TimeoutReply_SP] = SP, \
+    [seL4_TimeoutReply_CPSR] = CPSR,\
+    [seL4_TimeoutReply_R0] = R0,\
+    [seL4_TimeoutReply_R1] = R1,\
+    [seL4_TimeoutReply_R8] = R8,\
+    [seL4_TimeoutReply_R9] = R9,\
+    [seL4_TimeoutReply_R10] = R10,\
+    [seL4_TimeoutReply_R11] = R11,\
+    [seL4_TimeoutReply_R12] = R12,\
+    [seL4_TimeoutReply_R2] = R2,\
+    [seL4_TimeoutReply_R3] = R3,\
+    [seL4_TimeoutReply_R4] = R4,\
+    [seL4_TimeoutReply_R5] = R5,\
+    [seL4_TimeoutReply_R6] = R6,\
+    [seL4_TimeoutReply_R7] = R7,\
+    [seL4_TimeoutReply_R14] = R14,\
 }
 
 extern const register_t msgRegisters[];

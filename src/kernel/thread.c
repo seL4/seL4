@@ -141,20 +141,31 @@ doReplyTransfer(tcb_t *sender, reply_t *reply)
     reply_remove(reply);
     thread_state_ptr_set_replyObject(&receiver->tcbState, REPLY_REF(0));
 
-    if (likely(seL4_Fault_get_seL4_FaultType(receiver->tcbFault) == seL4_Fault_NullFault)) {
+    word_t fault_type = seL4_Fault_get_seL4_FaultType(receiver->tcbFault);
+    if (likely(fault_type == seL4_Fault_NullFault)) {
         doIPCTransfer(sender, NULL, 0, true, receiver);
         setThreadState(receiver, ThreadState_Running);
-        possibleSwitchTo(receiver);
     } else {
-        bool_t restart;
-
-        restart = handleFaultReply(receiver, sender);
+        bool_t restart = handleFaultReply(receiver, sender);
         receiver->tcbFault = seL4_Fault_NullFault_new();
         if (restart) {
             setThreadState(receiver, ThreadState_Restart);
-            possibleSwitchTo(receiver);
         } else {
             setThreadState(receiver, ThreadState_Inactive);
+        }
+    }
+
+    if (receiver->tcbSchedContext && isRunnable(receiver)) {
+        refill_unblock_check(receiver->tcbSchedContext);
+        if ((refill_ready(receiver->tcbSchedContext) && refill_sufficient(receiver->tcbSchedContext, 0))) {
+            possibleSwitchTo(receiver);
+        } else {
+            if (validTimeoutHandler(receiver) && fault_type != seL4_Fault_Timeout) {
+                current_fault = seL4_Fault_Timeout_new(receiver->tcbSchedContext->scBadge);
+                handleTimeout(receiver);
+            } else {
+                postpone(receiver->tcbSchedContext);
+            }
         }
     }
 }
@@ -539,7 +550,7 @@ setNextInterrupt(void)
 }
 
 void
-chargeBudget(ticks_t capacity, ticks_t consumed)
+chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault)
 {
 
     if (isRoundRobin(NODE_STATE(ksCurSC))) {
@@ -551,23 +562,27 @@ chargeBudget(ticks_t capacity, ticks_t consumed)
     }
 
     assert(REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount >= MIN_BUDGET);
+    NODE_STATE(ksCurSC)->scConsumed += consumed;
     NODE_STATE(ksConsumed) = 0;
     if (likely(isRunnable(NODE_STATE(ksCurThread)))) {
-        endTimeslice();
+        endTimeslice(canTimeoutFault);
         rescheduleRequired();
         NODE_STATE(ksReprogram) = true;
     }
 }
 
 void
-endTimeslice(void)
+endTimeslice(bool_t can_timeout_fault)
 {
     if (unlikely(NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread))) {
         return;
     }
 
     assert(isRunnable(NODE_STATE(ksCurSC->scTcb)));
-    if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
+    if (can_timeout_fault && validTimeoutHandler(NODE_STATE(ksCurThread))) {
+        current_fault = seL4_Fault_Timeout_new(NODE_STATE(ksCurSC)->scBadge);
+        handleTimeout(NODE_STATE(ksCurThread));
+    } else if (refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0)) {
         /* apply round robin */
         assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
         assert(!thread_state_get_tcbQueued(NODE_STATE(ksCurThread)->tcbState));
