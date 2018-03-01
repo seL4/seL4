@@ -178,6 +178,9 @@ enum tcb_cnode_index {
     /* IPC buffer cap slot */
     tcbBuffer = 2,
 
+    /* Fault endpoint slot */
+    tcbFaultHandler = 3,
+
     tcbCNodeEntries
 };
 typedef word_t tcb_cnode_index_t;
@@ -249,9 +252,6 @@ struct tcb {
     /* scheduling context that this tcb is running on, if it is NULL the tcb cannot
      * be in the scheduler queues */
     sched_context_t *tcbSchedContext;
-
-    /* Capability pointer to thread fault handler, 4 bytes */
-    cptr_t tcbFaultHandler;
 
     /* userland virtual address of thread IPC buffer, 4 bytes */
     word_t tcbIPCBuffer;
