@@ -13,8 +13,15 @@
 
 #include <object.h>
 
+static inline bool_t
+validTimeoutHandler(tcb_t *tptr)
+{
+    return cap_get_capType(TCB_PTR_CTE_PTR(tptr, tcbTimeoutHandler)->cap) == cap_endpoint_cap;
+}
+
 void handleFault(tcb_t *tptr);
-bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap);
+void handleTimeout(tcb_t *tptr);
 void handleNoFaultHandler(tcb_t *tptr);
+bool_t sendFaultIPC(tcb_t *tptr, cap_t handlerCap, bool_t can_donate);
 
 #endif

@@ -15,11 +15,17 @@
 
 #include <types.h>
 #include <api/syscall.h>
+#include <object/structures.h>
 
-static inline ticks_t
+static inline time_t
 mode_parseTimeArg(word_t i, word_t *buffer)
 {
     return (((ticks_t) getSyscallArg(i + 1, buffer) << 32llu) + getSyscallArg(i, buffer));
 }
 
+static inline word_t
+mode_setTimeArg(word_t i, time_t time, word_t *buffer, tcb_t *thread) {
+    setMR(thread, buffer, i, (uint32_t) time);
+    return setMR(thread, buffer, i + 1, (uint32_t) (time >> 32llu));
+}
 #endif /* __IPC_BUFFER_H */

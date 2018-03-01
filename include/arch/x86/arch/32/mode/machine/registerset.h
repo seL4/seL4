@@ -67,7 +67,8 @@ enum messageSizes {
     n_frameRegisters = 10,
     n_gpRegisters = 3,
     n_exceptionMessage = 3,
-    n_syscallMessage = 10
+    n_syscallMessage = 10,
+    n_timeoutMessage = 13,
 };
 
 #define SYSCALL_MESSAGE \
@@ -89,6 +90,23 @@ enum messageSizes {
     [seL4_UserException_FaultIP] = FaultIP,\
     [seL4_UserException_SP] = ESP,\
     [seL4_UserException_FLAGS] = FLAGS\
+}
+
+#define TIMEOUT_REPLY_MESSAGE \
+{    \
+    [seL4_TimeoutReply_FaultIP] = FaultIP,\
+    [seL4_TimeoutReply_SP] = ESP,\
+    [seL4_TimeoutReply_FLAGS] = FLAGS,\
+    [seL4_TimeoutReply_EAX] = EAX,\
+    [seL4_TimeoutReply_EBX] = EBX,\
+    [seL4_TimeoutReply_ECX] = ECX,\
+    [seL4_TimeoutReply_EDX] = EDX,\
+    [seL4_TimeoutReply_ESI] = ESI,\
+    [seL4_TimeoutReply_EDI] = EDI,\
+    [seL4_TimeoutReply_EBP] = EBP,\
+    [seL4_TimeoutReply_TLS_BASE] = TLS_BASE,\
+    [seL4_TimeoutReply_FS] = FS,\
+    [seL4_TimeoutReply_GS] = GS,\
 }
 
 extern const register_t msgRegisters[];

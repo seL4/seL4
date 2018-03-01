@@ -14,9 +14,12 @@
 #include <types.h>
 #include <api/faults.h>
 #include <api/syscall.h>
+#include <mode/api/constants.h>
 #include <kernel/thread.h>
 #include <arch/kernel/thread.h>
 #include <machine/debug.h>
+#include <mode/api/ipc_buffer.h>
+#include <object/schedcontext.h>
 
 /* consistency with libsel4 */
 compile_assert(InvalidRoot, lookup_fault_invalid_root + 1 == seL4_InvalidRoot)
@@ -136,6 +139,9 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
         copyMRsFaultReply(sender, receiver, MessageID_Exception, MIN(length, n_exceptionMessage));
         return (label == 0);
 
+    case seL4_Fault_Timeout:
+        copyMRsFaultReply(sender, receiver, MessageID_TimeoutReply, MIN(length, n_timeoutMessage));
+        return (label == 0);
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case seL4_Fault_DebugException: {
         word_t n_instrs;
@@ -218,6 +224,17 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                      seL4_Fault_UserException_get_code(sender->tcbFault));
     }
 
+    case seL4_Fault_Timeout: {
+        word_t len = setMR(receiver, receiveIPCBuffer, seL4_Timeout_Data,
+                           seL4_Fault_Timeout_get_badge(sender->tcbFault));
+        if (sender->tcbSchedContext) {
+            time_t consumed = schedContext_updateConsumed(sender->tcbSchedContext);
+            return mode_setTimeArg(seL4_Timeout_Consumed, consumed,
+                                   receiveIPCBuffer, receiver);
+        } else {
+            return len;
+        }
+    }
 #ifdef CONFIG_HARDWARE_DEBUG_API
     case seL4_Fault_DebugException: {
         word_t reason = seL4_Fault_DebugException_get_exceptionReason(sender->tcbFault);
