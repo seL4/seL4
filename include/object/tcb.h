@@ -131,7 +131,7 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t rootCaps, word_t *buffer);
 exception_t decodeSetPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetMCPriority(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
-exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buffer);
+exception_t decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetIPCBuffer(cap_t cap, word_t length,
                                cte_t* slot, extra_caps_t excaps, word_t *buffer);
 exception_t decodeSetSpace(cap_t cap, word_t length,
@@ -140,7 +140,7 @@ exception_t decodeDomainInvocation(word_t invLabel, word_t length,
                                    extra_caps_t excaps, word_t *buffer);
 exception_t decodeBindNotification(cap_t cap, extra_caps_t excaps);
 exception_t decodeUnbindNotification(cap_t cap);
-exception_t decodeSetTimeoutEndpoint(cap_t cap, extra_caps_t excaps);
+exception_t decodeSetTimeoutEndpoint(cap_t cap, cte_t *slot, extra_caps_t excaps);
 
 enum thread_control_flag {
     thread_control_update_priority = 0x1,
