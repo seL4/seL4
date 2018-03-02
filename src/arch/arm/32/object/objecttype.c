@@ -320,12 +320,14 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 #endif
 
 #ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
     case cap_io_space_cap:
         if (cap_get_capType(cap_b) == cap_io_space_cap) {
             return cap_io_space_cap_get_capModuleID(cap_a) ==
                    cap_io_space_cap_get_capModuleID(cap_b);
         }
         break;
+#endif
 #ifdef CONFIG_ARM_SMMU_V2
     case cap_io_space_cap:
         if (cap_get_capType(cap_b) == cap_io_space_cap) {

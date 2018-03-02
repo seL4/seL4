@@ -106,7 +106,7 @@ block vcpu_cap {
 }
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 -- IO space caps
 -- each module has an engine that can be enabled
 -- the clients use the same module can be separately enabled

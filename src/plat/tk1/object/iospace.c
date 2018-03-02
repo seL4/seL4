@@ -10,7 +10,7 @@
 
 #include <config.h>
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 
 #include <api/syscall.h>
 #include <machine/io.h>
@@ -476,4 +476,4 @@ exception_t decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
     current_syscall_error.type = seL4_IllegalOperation;
     return EXCEPTION_SYSCALL_ERROR;
 }
-#endif /* end of CONFIG_ARM_SMMU */
+#endif /* end of CONFIG_TK1_SMMU */
