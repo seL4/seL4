@@ -49,8 +49,15 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
 
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
+
+/* The TegraBoot carveout memory regions starting from 0xff03f000, so we
+ * skip the 0xff000000 to 0xffffffff region. The carveout regions may change
+ * if the TegraBoot version changes, so keep an eye on the booting process
+ * if something strange happens.
+ */
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
-    { .start = 0x80000000, .end = 0xa7f00000 }
+    { .start = 0x80000000, .end = 0xff000000 },
+    { .start = 0x100000000, .end = 0x180000000 }
 };
 
 static const p_region_t BOOT_RODATA dev_p_regs[] = {
