@@ -25,12 +25,16 @@
 #define UARTA_PPTR                  (KDEV_PPTR)
 #define GIC_DISTRIBUTOR_PPTR        (KDEV_PPTR + 0x3000)
 #define GIC_CONTROLLER_PPTR         (KDEV_PPTR + 0x4000)
+#define GICH_PPTR                   (KDEV_PPTR + 0x6000)
 
 #define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR
 #define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR
 
 #define GIC_DISTRIBUTOR_PADDR       GICD_PADDR
 #define GIC_CONTROLLER_PADDR        GICI_PADDR
+
+#define GIC_PL400_VCPUCTRL_PPTR     GICH_PPTR
+
 
 /* many of the device regions are not 4K page aligned, so some regions may contain more than
  * one devices. it is the user's responsibilty to figure out how to use these regions */

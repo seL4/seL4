@@ -62,6 +62,13 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         UARTA_PPTR,
         true
 #endif /* CONFIG_PRINTING */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    },
+    {
+        GICH_PADDR,
+        GICH_PPTR,
+        true
+#endif
     }
 };
 
