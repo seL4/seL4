@@ -22,7 +22,7 @@
 #define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR
 
 #define GIC_DISTRIBUTOR_PADDR       GICD_PADDR
-#define GIC_CONTROLLER0_PADDR       GICI_PADDR
+#define GIC_CONTROLLER_PADDR        GICI_PADDR
 
 /* many of the device regions are not 4K page aligned, so some regions may contain more than
  * one devices. it is the user's responsibilty to figure out how to use these regions */

@@ -28,7 +28,7 @@
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {
         /* map kernel device: GIC */
-        GIC_CONTROLLER0_PADDR,
+        GIC_CONTROLLER_PADDR,
         GIC_CONTROLLER_PPTR,
         true  /* armExecuteNever */
     },
