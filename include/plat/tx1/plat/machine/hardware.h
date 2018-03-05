@@ -20,10 +20,28 @@
 #include <plat/machine/devices.h>
 
 #define physBase            0x80000000
-#define kernelBase          0xffffff8000000000
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* The HYP mode kernel uses TTBR0_EL2 which covers the range of
+ * 0x0 - 0x0000ffffffffffff.
+ */
+#define kernelBase          0x0000ff8080000000llu
+
+/* The userspace occupies the range 0x0 to 0xfffffffffff.
+ * The stage-1 translation is disabled, and the stage-2
+ * translation input addree size is constrained by the
+ * ID_AA64MMFR0_EL1.PARange which is 44 bits on TX1.
+ * Anything address above the range above triggers an
+ * address size fault.
+ */
+#define USER_TOP            0x00000fffffffffffllu
+#else
+#define kernelBase          0xffffff8000000000llu
 
 /* Maximum virtual address accessible from userspace */
 #define USER_TOP            0x00007fffffffffff
+
+#endif
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {

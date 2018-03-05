@@ -16,7 +16,11 @@ ENTRY(_start)
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 PHYS_BASE = 0x80000000;
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+KERNEL_BASE = 0x0000ff8080000000;
+#else
 KERNEL_BASE = 0xffffff8000000000;
+#endif
 KERNEL_OFFSET = KERNEL_BASE - PHYS_BASE;
 
 SECTIONS
