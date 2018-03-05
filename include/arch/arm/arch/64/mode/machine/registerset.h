@@ -26,6 +26,7 @@
 #define PMODE_DEBUG             (1 << 9)
 #define PMODE_EL0t              0
 #define PMODE_EL1h              5
+#define PMODE_EL2h              9
 
 /* DAIF register */
 #define DAIF_FIRQ               (1 << 6)
@@ -61,7 +62,12 @@
 #endif
 
 #define PSTATE_USER         (PMODE_FIRQ | PMODE_EL0t | PSTATE_EXTRA_FLAGS)
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define PSTATE_IDLETHREAD   (PMODE_FIRQ | PMODE_EL2h | PSTATE_EXTRA_FLAGS)
+#else
 #define PSTATE_IDLETHREAD   (PMODE_FIRQ | PMODE_EL1h | PSTATE_EXTRA_FLAGS)
+#endif
 
 /* Offsets within the user context, these need to match the order in
  * register_t below */
