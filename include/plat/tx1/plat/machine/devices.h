@@ -13,10 +13,18 @@
 #ifndef __PLAT_MACHINE_DEVICES_H
 #define __PLAT_MACHINE_DEVICES_H
 
+#include <config.h>
+
 /* These devices are used by the seL4 kernel. */
-#define UARTA_PPTR                  0xffffffffffff0000
-#define GIC_DISTRIBUTOR_PPTR        0xffffffffffff3000
-#define GIC_CONTROLLER_PPTR         0xffffffffffff4000
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define KDEV_PPTR                   0x0000ffffffff0000lu
+#else
+#define KDEV_PPTR                   0xffffffffffff0000lu
+#endif
+
+#define UARTA_PPTR                  (KDEV_PPTR)
+#define GIC_DISTRIBUTOR_PPTR        (KDEV_PPTR + 0x3000)
+#define GIC_CONTROLLER_PPTR         (KDEV_PPTR + 0x4000)
 
 #define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR
 #define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR
