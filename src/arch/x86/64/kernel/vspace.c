@@ -779,11 +779,11 @@ void copyGlobalMappings(vspace_root_t *new_vspace)
     unsigned long i;
     pml4e_t *vspace = (pml4e_t *)new_vspace;
 
-    /* Copy from the user top so that we copy the default entries of the
+    /* Copy from the tlbbitmap_pptr so that we copy the default entries of the
      * tlb bitmap (if it exists). If it doesn't exist then this loop
      * will be equivalent to copying from PPTR_BASE
      */
-    for (i = GET_PML4_INDEX(PPTR_USER_TOP); i < BIT(PML4_INDEX_BITS); i++) {
+    for (i = GET_PML4_INDEX(TLBBITMAP_PPTR); i < BIT(PML4_INDEX_BITS); i++) {
         vspace[i] = X86_GLOBAL_VSPACE_ROOT[i];
     }
 }
