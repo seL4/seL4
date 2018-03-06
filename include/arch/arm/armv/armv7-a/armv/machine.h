@@ -11,7 +11,10 @@
 #ifndef __ARCH_ARMV7A_MACHINE_H
 #define __ARCH_ARMV7A_MACHINE_H
 
-static inline void wfi(void)
+#include <util.h>
+
+/* See idle_thread for an explanation as to why FORCE_INLINE is required here. */
+static inline void FORCE_INLINE wfi(void)
 {
     asm volatile("wfi" ::: "memory");
 }

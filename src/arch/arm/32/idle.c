@@ -12,7 +12,15 @@
 #include <mode/machine.h>
 #include <api/debug.h>
 
-void idle_thread(void)
+/*
+ * The idle thread currently does not receive a stack pointer and so we rely on
+ * optimisations for correctness here. More specifically, we assume:
+ *  - Ordinary prologue/epilogue stack operations are optimised out
+ *  - All nested function calls are inlined
+ * Note that GCC does not correctly implement optimisation annotations on nested
+ * functions, so FORCE_INLINE is required on the wfi declaration in this case.
+ */
+void FORCE_O2 idle_thread(void)
 {
     while (1) {
         wfi();
