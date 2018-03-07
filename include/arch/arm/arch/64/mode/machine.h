@@ -148,7 +148,11 @@ static inline void setKernelStack(word_t stack_address)
 static inline void setVtable(pptr_t addr)
 {
     dsb();
-    MSR("vbar_el1", addr);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MSR("vbar_el2", addr);
+    } else {
+        MSR("vbar_el1", addr);
+    }
     isb();
 }
 
