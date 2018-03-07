@@ -133,6 +133,13 @@ static inline void setCurrentUserVSpaceRoot(ttbr_t ttbr)
     isb();
 }
 
+static inline word_t getVTTBR(void)
+{
+    word_t vttbr;
+    MRS("vttbr_el2", vttbr);
+    return vttbr;
+}
+
 static inline void setKernelStack(word_t stack_address)
 {
     writeTPIDRPRW(stack_address);
