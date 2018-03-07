@@ -246,14 +246,22 @@ static inline void branchFlush(vptr_t vaddr, paddr_t paddr)
 static inline word_t PURE getESR(void)
 {
     word_t ESR;
-    MRS("esr_el1", ESR);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MRS("esr_el2", ESR);
+    } else {
+        MRS("esr_el1", ESR);
+    }
     return ESR;
 }
 
 static inline word_t PURE getFAR(void)
 {
     word_t FAR;
-    MRS("far_el1", FAR);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MRS("far_el2", FAR);
+    } else {
+        MRS("far_el1", FAR);
+    }
     return FAR;
 }
 
