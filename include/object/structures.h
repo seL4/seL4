@@ -432,5 +432,31 @@ cap_get_capPtr(cap_t cap)
     }
 }
 
+static inline bool_t CONST
+isCapRevocable(cap_t derivedCap, cap_t srcCap)
+{
+    if (isArchCap(derivedCap)) {
+        return Arch_isCapRevocable(derivedCap, srcCap);
+    }
+    switch (cap_get_capType(derivedCap)) {
+    case cap_endpoint_cap:
+        return (cap_endpoint_cap_get_capEPBadge(derivedCap) !=
+                cap_endpoint_cap_get_capEPBadge(srcCap));
+
+    case cap_notification_cap:
+        return (cap_notification_cap_get_capNtfnBadge(derivedCap) !=
+                cap_notification_cap_get_capNtfnBadge(srcCap));
+
+    case cap_irq_handler_cap:
+        return (cap_get_capType(srcCap) ==
+                cap_irq_control_cap);
+
+    case cap_untyped_cap:
+        return true;
+
+    default:
+        return false;
+    }
+}
 
 #endif

@@ -420,31 +420,7 @@ cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
     srcMDB = srcSlot->cteMDBNode;
     srcCap = srcSlot->cap;
 
-    switch (cap_get_capType(newCap)) {
-    case cap_endpoint_cap:
-        newCapIsRevocable = (cap_endpoint_cap_get_capEPBadge(newCap) !=
-                             cap_endpoint_cap_get_capEPBadge(srcCap));
-        break;
-
-    case cap_notification_cap:
-        newCapIsRevocable =
-            (cap_notification_cap_get_capNtfnBadge(newCap) !=
-             cap_notification_cap_get_capNtfnBadge(srcCap));
-        break;
-
-    case cap_irq_handler_cap:
-        newCapIsRevocable = (cap_get_capType(srcCap) ==
-                             cap_irq_control_cap);
-        break;
-
-    case cap_untyped_cap:
-        newCapIsRevocable = true;
-        break;
-
-    default:
-        newCapIsRevocable = false;
-        break;
-    }
+    newCapIsRevocable = isCapRevocable(newCap, srcCap);
 
     newMDB = mdb_node_set_mdbPrev(srcMDB, CTE_REF(srcSlot));
     newMDB = mdb_node_set_mdbRevocable(newMDB, newCapIsRevocable);
