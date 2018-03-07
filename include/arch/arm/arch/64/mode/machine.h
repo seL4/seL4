@@ -83,7 +83,11 @@ static inline void writeAuxiliaryControlRegister(word_t acr)
 
 static inline void writeTPIDRPRW(word_t reg)
 {
-    MSR("tpidr_el1", reg);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MSR("tpidr_el2", reg);
+    } else {
+        MSR("tpidr_el1", reg);
+    }
 }
 
 static inline void writeTPIDRURW(word_t reg)
