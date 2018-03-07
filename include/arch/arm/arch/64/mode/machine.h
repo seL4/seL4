@@ -125,7 +125,11 @@ static inline void setCurrentKernelVSpaceRoot(ttbr_t ttbr)
 static inline void setCurrentUserVSpaceRoot(ttbr_t ttbr)
 {
     dsb();
-    MSR("ttbr0_el1", ttbr.words[0]);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MSR("vttbr_el2", ttbr.words[0]);
+    } else {
+        MSR("ttbr0_el1", ttbr.words[0]);
+    }
     isb();
 }
 
