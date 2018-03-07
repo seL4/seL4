@@ -156,6 +156,16 @@ static inline void setVtable(pptr_t addr)
     isb();
 }
 
+static inline void invalidateLocalTLB_EL2(void)
+{
+    asm volatile ("tlbi alle2");
+}
+
+static inline void invalidateLocalTLB_EL1(void)
+{
+    asm volatile ("tlbi alle1");
+}
+
 static inline void invalidateLocalTLB(void)
 {
     dsb();
