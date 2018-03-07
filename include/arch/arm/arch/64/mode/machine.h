@@ -169,7 +169,13 @@ static inline void invalidateLocalTLB_EL1(void)
 static inline void invalidateLocalTLB(void)
 {
     dsb();
-    asm volatile("tlbi vmalle1");
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        invalidateLocalTLB_EL2();
+        dsb();
+        invalidateLocalTLB_EL1();
+    } else {
+        asm volatile("tlbi vmalle1");
+    }
     dsb();
     isb();
 }
