@@ -219,10 +219,42 @@ void plat_smmu_tlb_flush_all(void)
    dsb();
 }
 
+static void smmu_clear_cb(uint8_t cbidx)
+{
+   uint32_t* gr0 = ARM_SMMU_GR0;
+   uint32_t *cb = ARM_SMMU_CB(cbidx);
+   uint32_t reg;
+
+   /* Clear stream match id */
+   ARM_SMMU_WR(0, gr0, ARM_SMMU_GR0_SMR(cbidx));
+
+   /* Set default match behavior */
+#ifdef CONFIG_ARM_SMMU_UNKNOWN_STREAM_FAULT
+   reg = S2CR_TYPE_FAULT;
+#else
+   reg = S2CR_TYPE_BYPASS;
+#endif
+
+   /* Clear stream to context bank mapping */
+   ARM_SMMU_WR(reg, gr0, ARM_SMMU_GR0_S2CR(cbidx));
+
+   /* Clear control register */
+   ARM_SMMU_WR(0, cb, ARM_SMMU_CB_SCTLR);
+
+   /* Clear faults */
+   reg = ARM_SMMU_RD(cb, ARM_SMMU_CB_FSR);
+   ARM_SMMU_WR(reg, cb, ARM_SMMU_CB_FSR);
+
+   /* Clear TTBR0 */
+   ARM_SMMU_WR(0, cb, ARM_SMMU_CB_TTBR0_LO);
+   ARM_SMMU_WR(0, cb, ARM_SMMU_CB_TTBR0_HI);
+
+   plat_smmu_tlb_inval_all();
+}
+
 BOOT_CODE int plat_smmu_init(void)
 {
    uint32_t *gr0 = ARM_SMMU_GR0;
-   uint32_t *cb;
    uint32_t reg;
 
    int i = 0;
@@ -254,32 +286,11 @@ BOOT_CODE int plat_smmu_init(void)
    reg = ARM_SMMU_RD(gr0, ARM_SMMU_GR0_sGFSR);
    ARM_SMMU_WR(reg, gr0, ARM_SMMU_GR0_sGFSR);
 
+   /* clear all context banks */
    for (i = 0; i < ARM_PLAT_NUM_CB; ++i)
    {
-      /* Invalidate matches */
-      ARM_SMMU_WR(0, gr0, ARM_SMMU_GR0_SMR(i));
-
-      /* Default match behavior */
-#ifdef CONFIG_ARM_SMMU_UNKNOWN_STREAM_FAULT
-      reg = S2CR_TYPE_FAULT;
-#else
-      reg = S2CR_TYPE_BYPASS;
-#endif
-
-      ARM_SMMU_WR(reg, gr0, ARM_SMMU_GR0_S2CR(i));
+      smmu_clear_cb(i);
    }
-
-   /* Make sure all context banks are disabled and faults clear */
-   for (i = 0; i < ARM_PLAT_NUM_CB; ++i)
-   {
-      cb = ARM_SMMU_CB(i);
-      ARM_SMMU_WR(0, cb, ARM_SMMU_CB_SCTLR);
-
-      reg = ARM_SMMU_RD(cb, ARM_SMMU_CB_FSR);
-      ARM_SMMU_WR(reg, cb, ARM_SMMU_CB_FSR);
-   }
-
-   plat_smmu_tlb_inval_all();
 
    /* Configure SMMU */
    reg = ARM_SMMU_RD(gr0, ARM_SMMU_GR0_sCR0);
@@ -435,9 +446,36 @@ iopde_t* plat_smmu_lookup_iopd_by_asid(uint32_t asid)
    return fentry->iopd;
 }
 
+void plat_smmu_release_asid(uint32_t asid)
+{
+   struct smmu_entry* fentry;
+   int idx = SMMU_ASID_IDX(asid);
+   iopde_t* iopd;
+
+   if (idx > ARM_PLAT_NUM_CB)
+   {
+      return;
+   }
+
+   fentry = &smmu_entries[idx];
+   iopd = fentry->iopd;
+
+   memset(iopd, 0, BIT(PD_INDEX_BITS));
+   cleanCacheRange_RAM((word_t)iopd, ((word_t)iopd + BIT(PD_INDEX_BITS)),
+                       addrFromPPtr(iopd));
+
+   fentry->sid    = 0xFF;
+   fentry->in_use = false;
+
+   smmu_clear_cb(idx);
+
+   return;
+}
+
 uint32_t plat_smmu_get_asid_by_stream_id(uint16_t sid)
 {
    int idx;
+   int eslot = -1;
    struct smmu_entry* pentry = smmu_entries;
    struct smmu_entry* fentry = NULL;
 
@@ -450,24 +488,23 @@ uint32_t plat_smmu_get_asid_by_stream_id(uint16_t sid)
             return SMMU_IDX_ASID(idx);
          }
       }
-      else
+      else if (eslot < 0)
       {
-         /* Fill from the front. */
-         fentry = pentry;
-         break;
+         eslot = idx;
       }
    }
 
    /* Allocate new context bank */
-   if (fentry != NULL)
+   if (eslot >= 0)
    {
-      iopde_t* iopd = fentry->iopd;
+      fentry = &smmu_entries[eslot];
 
-      smmu_alloc_cb(idx, sid, iopd);
       fentry->sid    = sid;
       fentry->in_use = true;
 
-      return SMMU_IDX_ASID(idx);
+      smmu_alloc_cb(eslot, sid, fentry->iopd);
+
+      return SMMU_IDX_ASID(eslot);
    }
 
    printf("Ran out of SMMU context banks.\n");

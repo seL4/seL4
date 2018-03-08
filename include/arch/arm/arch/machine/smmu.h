@@ -25,6 +25,7 @@ int plat_smmu_init(void);
 void plat_smmu_tlb_flush_all(void);
 
 iopde_t *plat_smmu_lookup_iopd_by_asid(uint32_t asid);
+void plat_smmu_release_asid(uint32_t asid);
 void plat_smmu_handle_interrupt(void);
 
 #else /* !CONFIG_ARM_SMMU_V2 */
