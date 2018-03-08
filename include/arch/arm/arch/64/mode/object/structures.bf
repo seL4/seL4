@@ -139,14 +139,14 @@ block io_space_capdata {
 #endif
 
 #ifdef CONFIG_ARM_SMMU
-block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, capIOPTMappedAddress) {
+block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTLevel, capIOPTBasePtr, capIOPTMappedAddress) {
     field_high  capIOPTBasePtr          48
     padding                             16
 
     field capType                       5
     padding                             11
     field_high  capIOPTMappedAddress    28
-    padding                             4
+    field       capIOPTLevel            4
     field       capIOPTASID             7
     field       capIOPTIsMapped         1
     padding                             8

@@ -473,7 +473,13 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
 
 #ifdef CONFIG_ARM_SMMU
     case seL4_ARM_IOPageTableObject:
-        return cap_io_page_table_cap_new(0, asidInvalid, (word_t)regionBase, 0);
+        return cap_io_page_table_cap_new(
+                   0,                  /* capIOPTIsMapped      */
+                   asidInvalid,        /* capIOPTASID          */
+                   0xF,                /* capIOPTLevel         */
+                   (word_t)regionBase, /* capIOPTBasePtr       */
+                   0                   /* capIOPTMappedAddress */
+               );
 #endif
     default:
         fail("Arch_createObject got an API type or invalid object type");

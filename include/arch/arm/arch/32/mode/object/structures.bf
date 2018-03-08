@@ -160,9 +160,21 @@ block iopte {
     field Attr                  4
     field pteType               2
 }
+
+block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTLevel, capIOPTBasePtr, capIOPTMappedAddress) {
+    field_high  capIOPTBasePtr          20
+    padding                             12
+
+    field_high  capIOPTMappedAddress    10
+    padding                             2
+    field       capIOPTLevel            4
+    field       capIOPTASID             7
+    field       capIOPTIsMapped         1
+    field       capType                 8
+}
 #endif
 
-#ifdef CONFIG_ARM_SMMU
+#ifdef CONFIG_TK1_SMMU
 block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTBasePtr, capIOPTMappedAddress) {
     field_high  capIOPTBasePtr          20
     padding                             12

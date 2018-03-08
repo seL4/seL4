@@ -549,7 +549,11 @@ cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t de
         cleanCacheRange_RAM((word_t)regionBase,
                             (word_t)regionBase + (1 << seL4_IOPageTableBits) - 1,
                             addrFromPPtr(regionBase));
+#ifdef CONFIG_TK1_SMMU
         return cap_io_page_table_cap_new(0, asidInvalid, (word_t)regionBase, 0);
+#else
+        return cap_io_page_table_cap_new(0, asidInvalid, 0xF, (word_t)regionBase, 0);
+#endif
 #endif
     default:
         /*
