@@ -96,7 +96,11 @@ BEGIN_FUNC(_start)
     /* the kernel stack must be 4-KiB aligned since we use the
        lowest 12 bits to store the logical core ID. */
     orr     x6, x6, x4
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    msr     tpidr_el2, x6
+#else
     msr     tpidr_el1, x6
+#endif
 #else
     ldr    x4, =kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)
     mov    sp, x4
