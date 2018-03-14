@@ -750,7 +750,9 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         break;
 
     default:
-        modeUnmapPage(page_size, find_ret.vspace_root, vptr, pptr);
+        if (!modeUnmapPage(page_size, find_ret.vspace_root, vptr, pptr)) {
+            return;
+        }
         break;
     }
 

@@ -1452,13 +1452,13 @@ decodeX86ModeMMUInvocation(
     }
 }
 
-void modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr, void *pptr)
+bool_t modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr, void *pptr)
 {
     if (config_set(CONFIG_HUGE_PAGE) && page_size == X64_HugePage) {
         pdpte_t     *pdpte;
         lookupPDPTSlot_ret_t pdpt_ret = lookupPDPTSlot(vroot, vaddr);
         if (pdpt_ret.status != EXCEPTION_NONE) {
-            return;
+            return false;
         }
         pdpte = pdpt_ret.pdptSlot;
 
@@ -1467,14 +1467,14 @@ void modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vaddr,
                 && pdpte_pdpte_1g_ptr_get_present(pdpte)
                 &&  (pdpte_pdpte_1g_ptr_get_page_base_address(pdpte)
                      == pptr_to_paddr(pptr)))) {
-            return;
+            return false;
         }
 
         *pdpte = makeUserPDPTEInvalid();
-        return;
+        return true;
     }
     fail("Invalid page type");
-
+    return false;
 }
 
 static exception_t
