@@ -110,7 +110,15 @@ static inline word_t readTPIDRURW(void)
 static inline void setCurrentKernelVSpaceRoot(ttbr_t ttbr)
 {
     dsb();
-    MSR("ttbr1_el1", ttbr.words[0]);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        MSR("ttbr0_el2", ttbr.words[0]);
+        dsb();
+        isb();
+        asm volatile ("ic ialluis");
+        dsb();
+    } else {
+        MSR("ttbr1_el1", ttbr.words[0]);
+    }
     isb();
 }
 
