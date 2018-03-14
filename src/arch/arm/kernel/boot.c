@@ -220,6 +220,14 @@ init_cpu(void)
 {
     bool_t haveHWFPU;
 
+#ifdef CONFIG_ARCH_AARCH64
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        if (!checkTCR_EL2()) {
+            return false;
+        }
+    }
+#endif
+
     activate_global_pd();
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_boot_init();
