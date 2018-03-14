@@ -107,6 +107,28 @@ static inline word_t readTPIDRURW(void)
     return reg;
 }
 
+#define TCR_EL2_RES1 (BIT(23) | BIT(31))
+#define TCR_EL2_T0SZ (16)
+#define TCR_EL2_IRGN0_WBWC  BIT(8)
+#define TCR_EL2_ORGN0_WBWC  BIT(10)
+#define TCR_EL2_SH0_ISH     (3 << 12)
+#define TCR_EL2_TG0_4K      (0 << 14)
+#define TCR_EL2_TCR_PS_16T  (4 << 16)
+
+/* The default value for TCR_EL2 is for 44-bit PARange. */
+#define TCR_EL2_DEFAULT (TCR_EL2_T0SZ | TCR_EL2_IRGN0_WBWC | TCR_EL2_ORGN0_WBWC | \
+                 TCR_EL2_SH0_ISH | TCR_EL2_TG0_4K | TCR_EL2_TCR_PS_16T  | \
+                 TCR_EL2_RES1)
+
+/* Check if the elfloader set up the TCR_EL2 correctly. */
+static inline bool_t checkTCR_EL2(void)
+{
+    word_t tcr_el2 = 0;
+    MRS("tcr_el2", tcr_el2);
+
+    return (tcr_el2 == TCR_EL2_DEFAULT);
+}
+
 static inline void setCurrentKernelVSpaceRoot(ttbr_t ttbr)
 {
     dsb();
