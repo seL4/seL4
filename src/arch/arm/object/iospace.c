@@ -54,15 +54,31 @@ static inline iopte_t iopte_arm_new(bool_t read, bool_t write, word_t paddr)
 {
    iopte_t pte;
 
+#ifdef CONFIG_SMMU_S1_TRANS
+   int ap = (write ? 0x1 : 0x3);
+#else
    int ap = (write ? 0x3 : 0x1);
+#endif
+
 
    pte = iopte_new(
              1,     /* Do not Execute */
+#ifdef CONFIG_SMMU_S1_TRANS
+             1,     /* Ditto */
+#endif
              paddr,
+#ifdef CONFIG_SMMU_S1_TRANS
+             1,     /* Non-Global */
+#endif
              1,     /* Access Flag.  Always 1. */
              0,     /* Non-shareable */
              ap,
+#ifdef CONFIG_SMMU_S1_TRANS
+             1,     /* Non-Secure */
+             0,     /* Normal, Non-cacheable */
+#else
              0x5,   /* Normal, Non-cacheable */
+#endif
              0x3    /* small */
            );
 
@@ -73,7 +89,11 @@ static inline iopte_t iopte_new_invalid(void)
 {
    iopte_t pte;
 
-   pte = iopte_new(0, 0, 0, 0, 0, 0, 0);
+   pte = iopte_new(0, 0, 0, 0, 0, 0, 0
+#ifdef CONFIG_SMMU_S1_TRANS
+                   ,0, 0, 0
+#endif
+      );
 
    return pte;
 }
@@ -127,7 +147,22 @@ static lookupIOPDSlot_ret_t lookupIOPDSlot_resolve_levels(iopde_t *iopd, word_t 
         return ret;
     }
 
-#if defined(CONFIG_ARCH_AARCH64)
+#if defined(CONFIG_ARCH_AARCH64) && defined(CONFIG_SMMU_S1_TRANS)
+    switch (current_level) {
+    case 3:
+        iopd_index = GET_PT_INDEX(translation);
+        break;
+    case 2:
+        iopd_index = GET_PD_INDEX(translation);
+        break;
+    case 1:
+        iopd_index = GET_PUD_INDEX(translation);
+        break;
+    default:
+        iopd_index = GET_PGD_INDEX(translation);
+        break;
+    }
+#elif defined(CONFIG_ARCH_AARCH64)
     switch (current_level) {
     case 2:
         iopd_index = GET_PT_INDEX(translation);
@@ -182,7 +217,11 @@ static lookupIOPDSlot_ret_t lookupIOPDSlot(iopde_t *iopd, word_t io_address)
         return ret;
     } else {
 #ifdef CONFIG_ARCH_AARCH64
+#ifdef CONFIG_SMMU_S1_TRANS
+       return lookupIOPDSlot_resolve_levels(iopd, io_address, 3, 3);
+#else
        return lookupIOPDSlot_resolve_levels(iopd, io_address, 2, 2);
+#endif
 #else
        return lookupIOPDSlot_resolve_levels(iopd, io_address, 1, 1);
 #endif
@@ -370,7 +409,11 @@ exception_t decodeARMIOMapInvocation(
 
     if (lu_ret.status != EXCEPTION_NONE ||
 #ifdef CONFIG_ARCH_AARCH64
+#ifdef CONFIG_SMMU_S1_TRANS
+        lu_ret.level != 3
+#else
         lu_ret.level != 2
+#endif
 #else
         lu_ret.level != 1
 #endif

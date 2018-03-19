@@ -394,6 +394,22 @@ block iopde {
     field pde_type                  2
 }
 
+#ifdef CONFIG_SMMU_S1_TRANS
+block iopte {
+    padding                      9
+    field XN                     1
+    field PXN                    1
+    padding                      5
+    field_high address           36
+    field nG                     1
+    field AF                     1
+    field SH                     2
+    field AP                     2
+    field NS                     1
+    field AttrIndx               3
+    field pteType                2
+}
+#else
 block iopte {
     padding                      9
     field XN                     1
@@ -406,6 +422,7 @@ block iopte {
     field Attr                   4
     field pteType                2
 }
+#endif
 #endif
 
 #include <sel4/arch/shared_types.bf>

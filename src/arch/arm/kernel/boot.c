@@ -423,7 +423,11 @@ static BOOT_CODE bool_t try_init_kernel(
         }
 
 #ifdef CONFIG_ARCH_AARCH64
+#ifdef CONFIG_SMMU_S1_TRANS
+        ndks_boot.bi_frame->numIOPTLevels = 3;
+#else
         ndks_boot.bi_frame->numIOPTLevels = 2;
+#endif
 #else
         ndks_boot.bi_frame->numIOPTLevels = 1;
 #endif

@@ -51,6 +51,7 @@
 #define ARM_SMMU_CB_TTBR0_LO 0x20
 #define ARM_SMMU_CB_TTBR0_HI 0x24
 #define ARM_SMMU_CB_TTBCR    0x30
+#define ARM_SMMU_CB_S1_MAIR0 0x38
 #define ARM_SMMU_CB_FSR      0x58
 #define ARM_SMMU_CB_FAR_LO   0x60
 #define ARM_SMMU_CB_FAR_HI   0x64
@@ -98,12 +99,16 @@
 #define TTBCR_T0SZ_SHIFT 0
 #define TTBCR_PA_SHIFT   16
 #define TTBCR_ADDR_32    (0 << TTBCR_PA_SHIFT)
-#define TTBCR_ADDR_48    (2 << TTBCR_PA_SHIFT)
+#define TTBCR_ADDR_48    (5 << TTBCR_PA_SHIFT)
 
 #define TTBCR2_SEP_SHIFT 15
 #define TTBCR2_ADDR_32   0
 #define TTBCR2_ADDR_48   5
 #define TTBCR2_ADDR_UBS  0x7
+
+#define MAIR_ATTR_SHIFT(n)  ((n) << 3)
+#define MAIR_ATTR_NC        0x44
+#define MAIR_ATTR_IDX_NC    0
 
 /* Attribute registers */
 #define ARM_SMMU_GR1_CBAR(n) (0x0 + ((n) << 2))
@@ -116,6 +121,7 @@
 #define CBAR_S1_MEMATTR_WB    0xf
 #define CBAR_TYPE_MASK        0x3
 #define CBAR_TYPE_S2_TRANS             (0 << CBAR_TYPE_SHIFT)
+#define CBAR_TYPE_S1_TRANS_S2_BYPASS   (1 << CBAR_TYPE_SHIFT)
 
 #define ARM_SMMU_GR1_CBA2R(n) (0x800 + ((n) << 2))
 #define CBA2R_RW64_32BIT      0
@@ -169,7 +175,11 @@
 #define SMMU_IDX_ASID(idx) ((idx) + 1)
 
 #ifdef CONFIG_ARCH_AARCH64
+#ifdef CONFIG_SMMU_S1_TRANS
+#define SMMU_SIZE_BITS seL4_PGDBits
+#else
 #define SMMU_SIZE_BITS seL4_PUDBits
+#endif
 #else
 #define SMMU_SIZE_BITS seL4_PDBits
 #endif
@@ -343,8 +353,15 @@ static void smmu_alloc_cb(uint8_t cbidx, uint16_t sid, iopde_t* iopd)
 
    reg = ARM_SMMU_RD(gr1, ARM_SMMU_GR1_CBAR(cbidx));
 
+#ifdef CONFIG_SMMU_S1_TRANS
+   /* Weakest settings.  Will be overridden by the page-table entries */
+   reg = ((CBAR_S1_BPSHCFG_NSH << CBAR_S1_BPSHCFG_SHIFT)
+          | (CBAR_S1_MEMATTR_WB << CBAR_S1_MEMATTR_SHIFT)
+          | CBAR_TYPE_S1_TRANS_S2_BYPASS);
+#else
    /* We're not currently using VMID for anything, but we could in the future. */
    reg = CBAR_TYPE_S2_TRANS;
+#endif
 
    ARM_SMMU_WR(reg, gr1, ARM_SMMU_GR1_CBAR(cbidx));
 
@@ -356,15 +373,20 @@ static void smmu_alloc_cb(uint8_t cbidx, uint16_t sid, iopde_t* iopd)
 
    ARM_SMMU_WR(reg, gr1, ARM_SMMU_GR1_CBA2R(cbidx));
 
+   /* TTBCR2 only exists for Stage 1 translations */
+#ifdef CONFIG_SMMU_S1_TRANS
    /* Output Size = 49 bits.  Let the SMMU configuration dictate sign-extension */
    reg = (TTBCR2_ADDR_UBS << TTBCR2_SEP_SHIFT);
 
-#ifndef CONFIG_ARCH_AARCH64
+#ifdef CONFIG_ARCH_AARCH64
    /* Limit SMMU to 32 bits */
    reg |= TTBCR2_ADDR_32;
+#elif defined(CONFIG_SMMU_S1_TRANS)
+   reg |= TTBCR2_ADDR_48;
 #endif
 
    ARM_SMMU_WR(reg, cb, ARM_SMMU_CB_TTBCR2);
+#endif
 
    addr = pptr_to_paddr(iopd);
    reg = (uint32_t)(addr & 0xFFFFFFFF);
@@ -401,15 +423,19 @@ static void smmu_alloc_cb(uint8_t cbidx, uint16_t sid, iopde_t* iopd)
    reg &= ~(TTBCR_TG0_MASK << TTBCR_TG0_SHIFT);
    reg |= TTBCR_TG0_4K;
 
+#ifndef CONFIG_SMMU_S1_TRANS
    reg |= TTBCR_ADDR_48;
+#endif
 #endif
 
 #ifdef CONFIG_ARCH_AARCH64
+#ifdef CONFIG_SMMU_S1_TRANS
+   /* Input = 48 bits.  Limit translation to this range with T0SZ. */
+   reg |= 16;  /* 64 - 48 */
+#else
+
 #ifdef AARCH64_VSPACE_S2_START_L1
    reg |= (TTBCR_SL0_LVL_1 << TTBCR_SL0_SHIFT);
-#else
-   reg |= (TTBCR_SL0_LVL_0 << TTBCR_SL0_SHIFT);
-#endif
 
    /*
       We're only using 39 IPA bits, because we'd need concatenated tables with the full 40 bits.
@@ -418,13 +444,31 @@ static void smmu_alloc_cb(uint8_t cbidx, uint16_t sid, iopde_t* iopd)
    */
    reg |= 25;  /* 64 - 39 */
 #else
+   reg |= (TTBCR_SL0_LVL_0 << TTBCR_SL0_SHIFT);
+#endif /* CONFIG_START_L1 */
+
+#endif /* CONFIG_SMMU_S1_TRANS */
+
+#else
    /* Don't touch T0SZ for 32-bit, since we only use TTBR0. */
-#endif
+#endif /* CONFIG_ARCH_AARCH64 */
 
    ARM_SMMU_WR(reg, cb, ARM_SMMU_CB_TTBCR);
 
+#ifdef CONFIG_SMMU_S1_TRANS
+   /* MAIR0 (non-cacheable) */
+   reg = (MAIR_ATTR_NC << MAIR_ATTR_SHIFT(MAIR_ATTR_IDX_NC));
+   ARM_SMMU_WR(reg, cb, ARM_SMMU_CB_S1_MAIR0);
+#endif
+
    /* SCTLR */
-   reg = SCTLR_CFCFG | SCTLR_CFIE | SCTLR_CFRE | SCTLR_M | SCTLR_EAE_SBOP;
+#ifdef CONFIG_SMMU_S1_TRANS
+   reg = SCTLR_S1_ASIDPNE;
+#else
+   reg = 0;
+#endif
+
+   reg |= SCTLR_CFCFG | SCTLR_CFIE | SCTLR_CFRE | SCTLR_M | SCTLR_EAE_SBOP;
 
    ARM_SMMU_WR(reg, cb, ARM_SMMU_CB_SCTLR);
 

@@ -148,6 +148,22 @@ block iopde {
     field pdeType      2
 }
 
+#ifdef CONFIG_SMMU_S1_TRANS
+block iopte {
+    padding                     9
+    field XN                    1
+    field PXN                   1
+    padding                     21
+    field_high address          20
+    field nG                    1
+    field AF                    1
+    field SH                    2
+    field AP                    2
+    field NS                    1
+    field AttrIndx              3
+    field pteType               2
+}
+#else
 block iopte {
     padding                     9
     field XN                    1
@@ -160,6 +176,7 @@ block iopte {
     field Attr                  4
     field pteType               2
 }
+#endif
 
 block io_page_table_cap (capType, capIOPTIsMapped, capIOPTASID, capIOPTLevel, capIOPTBasePtr, capIOPTMappedAddress) {
     field_high  capIOPTBasePtr          20
