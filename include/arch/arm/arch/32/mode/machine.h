@@ -138,15 +138,6 @@ static inline void writeContextID(word_t id)
 
 /* Address space control */
 
-static inline void writeTTBR0(paddr_t addr)
-{
-    /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
-     * outer write-back cacheable, no allocate on write, inner non-cacheable.
-     */
-    asm volatile("mcr p15, 0, %0, c2, c0, 0" : :
-                 "r"((addr & 0xffffe000) | 0x18));
-}
-
 static inline word_t readTTBR0(void)
 {
     word_t val = 0;
@@ -154,11 +145,18 @@ static inline word_t readTTBR0(void)
     return val;
 }
 
-static inline void writeTTBR0Raw(word_t val)
+static inline void writeTTBR0(word_t val)
 {
     asm volatile("mcr p15, 0, %0, c2, c0, 0":: "r"(val));
 }
 
+static inline void writeTTBR0Ptr(paddr_t addr)
+{
+    /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
+     * outer write-back cacheable, no allocate on write, inner non-cacheable.
+     */
+    writeTTBR0((addr & 0xffffe000) | 0x18);
+}
 
 static inline word_t readTTBR1(void)
 {
@@ -167,7 +165,7 @@ static inline word_t readTTBR1(void)
     return val;
 }
 
-static inline void writeTTBR1Raw(word_t val)
+static inline void writeTTBR1(word_t val)
 {
     asm volatile("mcr p15, 0, %0, c2, c0, 1":: "r"(val));
 }

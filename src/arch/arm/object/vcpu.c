@@ -124,9 +124,9 @@ vcpu_hw_write_reg(word_t reg_index, word_t reg)
         case seL4_VCPUReg_TTBRC:
             return writeTTBRC(reg);
         case seL4_VCPUReg_TTBR0:
-            return writeTTBR0Raw(reg);
+            return writeTTBR0(reg);
         case seL4_VCPUReg_TTBR1:
-            return writeTTBR1Raw(reg);
+            return writeTTBR1(reg);
         case seL4_VCPUReg_DACR:
             return writeDACR(reg);
         case seL4_VCPUReg_DFSR:
