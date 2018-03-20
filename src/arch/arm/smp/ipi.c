@@ -50,15 +50,15 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
 #endif /* CONFIG_HAVE_FPU */
 
         case IpiRemoteCall_InvalidateTranslationSingle:
-            invalidateLocalTLB_VAASID(arg0);
+            invalidateTranslationSingleLocal(arg0);
             break;
 
         case IpiRemoteCall_InvalidateTranslationASID:
-            invalidateLocalTLB_ASID(arg0);
+            invalidateTranslationASIDLocal(arg0);
             break;
 
         case IpiRemoteCall_InvalidateTranslationAll:
-            invalidateLocalTLB();
+            invalidateTranslationAllLocal();
             break;
 
         default:
