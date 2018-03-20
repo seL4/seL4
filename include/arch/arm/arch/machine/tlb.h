@@ -16,21 +16,36 @@
 #include <mode/machine.h>
 #include <arch/smp/ipi_inline.h>
 
-static inline void invalidateTranslationSingle(vptr_t vptr)
+static inline void invalidateTranslationSingleLocal(vptr_t vptr)
 {
     invalidateLocalTLB_VAASID(vptr);
+}
+
+static inline void invalidateTranslationASIDLocal(hw_asid_t hw_asid)
+{
+    invalidateLocalTLB_ASID(hw_asid);
+}
+
+static inline void invalidateTranslationAllLocal(void)
+{
+    invalidateLocalTLB();
+}
+
+static inline void invalidateTranslationSingle(vptr_t vptr)
+{
+    invalidateTranslationSingleLocal(vptr);
     SMP_COND_STATEMENT(doRemoteInvalidateTranslationSingle(vptr, MASK(CONFIG_MAX_NUM_NODES)));
 }
 
 static inline void invalidateTranslationASID(hw_asid_t hw_asid)
 {
-    invalidateLocalTLB_ASID(hw_asid);
+    invalidateTranslationASIDLocal(hw_asid);
     SMP_COND_STATEMENT(doRemoteInvalidateTranslationASID(hw_asid, MASK(CONFIG_MAX_NUM_NODES)));
 }
 
 static inline void invalidateTranslationAll(void)
 {
-    invalidateLocalTLB();
+    invalidateTranslationAllLocal();
     SMP_COND_STATEMENT(doRemoteInvalidateTranslationAll(MASK(CONFIG_MAX_NUM_NODES)));
 }
 
