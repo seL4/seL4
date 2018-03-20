@@ -835,12 +835,14 @@ performX86PageInvocationRemapPDE(pde_t *pdSlot, pde_t pde, asid_t asid, vspace_r
 static exception_t
 performX86PageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
-    unmapPage(
-        cap_frame_cap_get_capFSize(cap),
-        cap_frame_cap_get_capFMappedASID(cap),
-        cap_frame_cap_get_capFMappedAddress(cap),
-        (void *)cap_frame_cap_get_capFBasePtr(cap)
-    );
+    if (cap_frame_cap_get_capFMapType(cap) != X86_MappingNone) {
+        unmapPage(
+            cap_frame_cap_get_capFSize(cap),
+            cap_frame_cap_get_capFMappedASID(cap),
+            cap_frame_cap_get_capFMappedAddress(cap),
+            (void *)cap_frame_cap_get_capFBasePtr(cap)
+        );
+    }
 
     cap_frame_cap_ptr_set_capFMappedAddress(&ctSlot->cap, 0);
     cap_frame_cap_ptr_set_capFMappedASID(&ctSlot->cap, asidInvalid);
