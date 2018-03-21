@@ -109,7 +109,9 @@ enum {
 #define seL4_LargePageBits 16
 #define seL4_SlotBits 4
 
-#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_HAVE_FPU)
+#if defined(CONFIG_DEBUG_BUILD) && defined(CONFIG_HAVE_FPU) && defined(CONFIG_HARDWARE_DEBUG_API)
+#define seL4_TCBBits 11
+#elif defined(CONFIG_HAVE_FPU)
 #define seL4_TCBBits 10
 #else
 #define seL4_TCBBits 9
