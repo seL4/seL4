@@ -236,14 +236,16 @@ vcpu_hw_write_reg(word_t reg_index, word_t reg)
 static inline void
 vcpu_save_reg(vcpu_t *vcpu, word_t reg)
 {
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
+        fail("ARM/HYP: Invalid register index or NULL VCPU");
+        return;
+    }
     vcpu->regs[reg] = vcpu_hw_read_reg(reg);
 }
 
 static inline void
 vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
 {
-    if (start >= seL4_VCPUReg_Num || vcpu == NULL) return;
     for (word_t i = start; i <= end; i++) {
         vcpu_save_reg(vcpu, i);
     }
@@ -252,14 +254,16 @@ vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
 static inline void
 vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
 {
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
+        fail("ARM/HYP: Invalid register index or NULL VCPU");
+        return;
+    }
     vcpu_hw_write_reg(reg, vcpu->regs[reg]);
 }
 
 static inline void
 vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
 {
-    if (start >= seL4_VCPUReg_Num || vcpu == NULL) return;
     for (word_t i = start; i <= end; i++) {
         vcpu_restore_reg(vcpu, i);
     }
@@ -268,14 +272,20 @@ vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
 static inline word_t
 vcpu_read_reg(vcpu_t *vcpu, word_t reg)
 {
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return 0;
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
+        fail("ARM/HYP: Invalid register index or NULL VCPU");
+        return 0;
+    }
     return vcpu->regs[reg];
 }
 
 static inline void
 vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
 {
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) return;
+    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
+        fail("ARM/HYP: Invalid register index or NULL VCPU");
+        return;
+    }
     vcpu->regs[reg] = value;
 }
 
