@@ -19,6 +19,35 @@
 #include <arch/machine/debug_conf.h>
 #include <arch/machine/gic_pl390.h>
 
+static inline word_t
+get_cntv_tval(void)
+{
+    word_t ret = 0;
+    MRC(CNTV_TVAL, ret);
+    return ret;
+}
+
+static inline void
+set_cntv_tval(word_t val)
+{
+    MCR(CNTV_TVAL, val);
+}
+
+static inline word_t
+get_cntv_ctl(void)
+{
+    word_t ret = 0;
+    MRC(CNTV_CTL, ret);
+    return ret;
+}
+
+static inline void
+set_cntv_ctl(word_t val)
+{
+    MCR(CNTV_CTL, val);
+}
+
+
 static word_t
 vcpu_hw_read_reg(word_t reg_index)
 {
@@ -63,11 +92,9 @@ vcpu_hw_read_reg(word_t reg_index)
         case seL4_VCPUReg_FPEXC:
             return reg;
         case seL4_VCPUReg_CNTV_TVAL:
-            MRC(CNTV_TVAL, reg);
-            return reg;
+            return get_cntv_tval();
         case seL4_VCPUReg_CNTV_CTL:
-            MRC(CNTV_CTL, reg);
-            return reg;
+            return get_cntv_ctl();
         case seL4_VCPUReg_LRsvc:
             return get_lr_svc();
         case seL4_VCPUReg_SPsvc:
@@ -156,11 +183,9 @@ vcpu_hw_write_reg(word_t reg_index, word_t reg)
         case seL4_VCPUReg_FPEXC:
             return;
         case seL4_VCPUReg_CNTV_TVAL:
-            MCR(CNTV_TVAL, reg);
-            return;
+            return set_cntv_tval(reg);
         case seL4_VCPUReg_CNTV_CTL:
-            MCR(CNTV_CTL, reg);
-            return;
+            return set_cntv_ctl(reg);
         case seL4_VCPUReg_LRsvc:
             return set_lr_svc(reg);
         case seL4_VCPUReg_SPsvc:
