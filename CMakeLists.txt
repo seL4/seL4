@@ -326,8 +326,12 @@ foreach(bf_dec ${bf_declarations})
     list(APPEND gen_files_list "${CMAKE_CURRENT_BINARY_DIR}/generated/${bf_gen_dir}/${bf_target}")
     set(bf_gen_target "${bf_gen_target}1")
 endforeach()
-
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/generated")
+# At this point we have generated a bunch of headers into ${CMAKE_CURRENT_BINARY_DIR}/generated
+# but we do not pass this to include_directories, as that will cause it to be an include directory
+# for *all* targets in this file (including ones we defined earlier) and the prune generation
+# *must not* see this files and generate dependencies on them as this will result in nonsense.
+# As such we must manually add this as an include directory to future targets
+set(CPPExtraFlags "-I${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 ####################
 # Kernel compilation
@@ -335,7 +339,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 CPPFile(kernel_all.i kernel_i_wrapper kernel_all.c
     EXTRA_DEPS kernel_all_c_wrapper kernel_headers ${gen_files_list}
-    EXTRA_FLAGS -CC
+    EXTRA_FLAGS -CC "${CPPExtraFlags}"
     # The circulr_includes script relies upon parsing out exactly 'kernel_all.c' as
     # a special case so we must ask CPPFile to not change the input name
     EXACT_INPUT
@@ -347,7 +351,7 @@ set(linker_source "src/plat/${KernelPlatform}/linker.lds")
 set(linker_lds_path "${CMAKE_CURRENT_BINARY_DIR}/linker.lds_pp")
 CPPFile("${linker_lds_path}" linker_ld_wrapper "${linker_source}"
     EXTRA_DEPS kernel_headers ${gen_files_list}
-    EXTRA_FLAGS -CC -P
+    EXTRA_FLAGS -CC -P "${CPPExtraFlags}"
 )
 
 add_custom_command(OUTPUT circular_includes_valid
@@ -374,6 +378,7 @@ add_custom_target(kernel_theories
 add_executable(kernel.elf EXCLUDE_FROM_ALL ${asm_sources} kernel_all.i)
 target_include_directories(kernel.elf PRIVATE ${config_dir})
 target_include_directories(kernel.elf PRIVATE include)
+target_include_directories(kernel.elf PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 target_link_libraries(kernel.elf PRIVATE kernel_Config kernel_autoconf)
 set_property(TARGET kernel.elf APPEND_STRING PROPERTY LINK_FLAGS " -T ${linker_lds_path} ")
 add_dependencies(kernel.elf linker_ld_wrapper kernel_i_wrapper kernel_all_pp_wrapper circular_includes)
