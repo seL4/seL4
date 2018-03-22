@@ -158,9 +158,21 @@ BEGIN_FUNC(lower_el_sync)
     b.eq    lel_ia
     cmp     x24, #ESR_EC_LEL_SVC64
     b.eq    lel_syscall
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    cmp     x24, #ESR_EC_LEL_HVC64
+    b.eq    lel_syscall
+    mrs     x20, ELR
+    str     x20, [sp, #PT_FaultInstruction]
+
+    lsp_i   x19
+    /* move the ESR as the input */
+    mov     x0, x25
+    b       c_handle_vcpu_fault
+#else
     cmp     x24, #ESR_EL1_EC_ENFP
     b.eq    el0_enfp
     b       el0_user
+#endif
 
 lel_da:
     mrs     x20, ELR
