@@ -100,6 +100,16 @@ block asid_pool_cap {
     field_high capASIDPool          37
 }
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+block vcpu_cap {
+    padding                         64
+
+    field      capType              5
+    field_high capVCPUPtr           48
+    padding                         11
+}
+#endif
+
 -- NB: odd numbers are arch caps (see isArchCap())
 tagged_union cap capType {
     -- 5-bit tag caps
@@ -123,6 +133,9 @@ tagged_union cap capType {
     tag page_global_directory_cap   9
     tag asid_control_cap            11
     tag asid_pool_cap               13
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    tag vcpu_cap                    15
+#endif
 }
 
 ---- Arch-independent object types
