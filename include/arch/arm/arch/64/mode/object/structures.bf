@@ -198,8 +198,12 @@ block pude_1g {
     field AF                        1
     field SH                        2
     field AP                        2
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    field AttrIndx                  4
+#else
     padding                         1
     field AttrIndx                  3
+#endif
     field pude_type                 2
 }
 
@@ -225,8 +229,12 @@ block pde_large {
     field AF                        1
     field SH                        2
     field AP                        2
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    field AttrIndx                  4
+#else
     padding                         1
     field AttrIndx                  3
+#endif
     field pde_type                  2
 }
 
@@ -251,8 +259,12 @@ block pte {
     field AF                        1
     field SH                        2
     field AP                        2
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    field AttrIndx                  4
+#else
     padding                         1
     field AttrIndx                  3
+#endif
     field reserved                  2 -- must be 0b11
 }
 
