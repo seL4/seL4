@@ -1,0 +1,56 @@
+/*
+ * Copyright 2019, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
+ *
+ * This software may be distributed and modified according to the terms of
+ * the GNU General Public License version 2. Note that NO WARRANTY is provided.
+ * See "LICENSE_GPLv2.txt" for details.
+ *
+ * @TAG(DATA61_GPL)
+ */
+
+/ {
+
+	/* Redefine the memory region. */
+	/delete-node/ memory;
+	memory@90000000 {
+		device_type = "memory";
+		reg = <0x8 0x90000000 0x0 0xf0000000>;
+	};
+
+	/* These devices exist in the SOC documentation, but not in the DTS from Linux */
+	gpt1@5d150000 {
+		compatible = "fsl,imx8qm-gpt";
+		reg = < 0x00 0x5d150000 0x00 0x4000 >;
+		interrupts = < 0x00 0x51 0x04 >;
+		clocks = < 0x04 0x25 0x04 0x22c >;
+		clock-names = "ipg\0per";
+		power-domains = < 0x10b >;
+	};
+
+	gpt2@5d160000 {
+		compatible = "fsl,imx8qm-gpt";
+		reg = < 0x00 0x5d160000 0x00 0x4000 >;
+		interrupts = < 0x00 0x52 0x04 >;
+		clocks = < 0x04 0x25 0x04 0x22c >;
+		clock-names = "ipg\0per";
+		power-domains = < 0x10b >;
+	};
+
+	gpt3@5d170000 {
+		compatible = "fsl,imx8qm-gpt";
+		reg = <0x0 0x5d170000 0x0 0x4000>;
+		interrupts = <0x0 0x53 0x4>;
+		clocks = <0x4 43>, <0x4 556>;
+		clock-names = "ipg", "per";
+	};
+
+	gpt4@5d180000 {
+		compatible = "fsl,imx8qm-gpt";
+		reg = <0x0 0x5d180000 0x0 0x4000>;
+		interrupts = <0x0 0x54 0x4>;
+		clocks = <0x4 45>, <0x4 556>;
+		clock-names = "ipg", "per";
+	};
+};

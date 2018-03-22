@@ -67,6 +67,7 @@ hisilicon/hi6220-hikey=hikey
 nvidia/tegra210-p2371-2180=tx1
 xilinx/avnet-ultra96-rev1=ultra96
 xilinx/zynqmp-zcu102-rev1.0=zynqmp
+freescale/fsl-imx8qm-ddr4-arm2=imx8QM
 freescale/fsl-imx8mq-evk=imx8mq-evk
 "
 

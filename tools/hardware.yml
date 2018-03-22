@@ -220,6 +220,7 @@ devices:
     - brcm,bcm2835-aux-uart
     - fsl,imx31-uart
     - fsl,imx6q-uart
+    - fsl,imx8qm-lpuart
     - nvidia,tegra124-hsuart
     - nvidia,tegra20-uart
     - qcom,msm-uartdm
