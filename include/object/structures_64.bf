@@ -130,8 +130,8 @@ block irq_control_cap {
 }
 
 block irq_handler_cap {
-    padding 56
-    field capIRQ 8
+    padding 52
+    field capIRQ 12
 
     field capType  5
     padding 59
