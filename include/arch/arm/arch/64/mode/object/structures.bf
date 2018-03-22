@@ -148,6 +148,25 @@ block VMFault {
     field seL4_FaultType            3
 }
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+block VGICMaintenance {
+    padding          64
+
+    field idx        6
+    field idxValid   1
+    padding         25
+    padding         29
+    field seL4_FaultType  3
+}
+
+block VCPUFault {
+    padding         64
+    field hsr       32
+    padding         29
+    field seL4_FaultType  3
+}
+#endif
+
 -- VM attributes
 
 block vm_attributes {
