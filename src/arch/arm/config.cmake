@@ -285,7 +285,7 @@ config_option(KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWI
 )
 
 if(KernelAArch32FPUEnableContextSwitch)
-    set(HaveFPU ON)
+    set(KernelHaveFPU ON)
 endif()
 
 # TODO: this config has no business being in the build system, and should
