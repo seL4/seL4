@@ -63,6 +63,8 @@ if(KernelArchARM)
     set(arm_march "${KernelArmArmV}${KernelArmMachFeatureModifiers}")
     string(APPEND c_common_flags " -march=${arm_march}")
     string(APPEND asm_common_flags " -Wa,-march=${arm_march}")
+    # Explicitly request ARM instead of THUMB for compilation
+    string(APPEND c_common_flags " -marm")
 endif()
 string(APPEND common_flags " ${build_arch}")
 if(Kernel64)
