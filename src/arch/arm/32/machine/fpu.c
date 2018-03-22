@@ -108,13 +108,17 @@ fpsimd_HWCapTest(void)
         return false;
     }
 
-#ifdef CONFIG_HAVE_FPU
     word_t fpsid_subarch;
 
     if (supportsAsyncExceptions()) {
         /* In the future, when we've targets that support asynchronous FPU exceptions, we've to support them */
-        printf("Error: seL4 doesn't support FPU subarchitectures that support asynchronous exceptions\n");
-        return false;
+        if (config_set(CONFIG_HAVE_FPU)) {
+            printf("Error: seL4 doesn't support FPU subarchitectures that support asynchronous exceptions\n");
+            return false;
+        } else {
+            // if we aren't using the fpu then we have detected an fpu that we cannot use, but that is fine
+            return true;
+        }
     }
     /* Check for subarchitectures we support */
     fpsid_subarch = (fpsid >> FPSID_SUBARCH_SHIFT_POS) & 0x7f;
@@ -126,12 +130,19 @@ fpsimd_HWCapTest(void)
     case 0x4:
         break;
     default: {
-        printf("Error: seL4 doesn't support this VFP subarchitecture\n");
-        return false;
+        if (config_set(CONFIG_HAVE_FPU)) {
+            printf("Error: seL4 doesn't support this VFP subarchitecture\n");
+            return false;
+        } else {
+            // if we aren't using the fpu then we have detected an fpu that we cannot use, but that is fine
+            return true;
+        }
     }
 
     }
-#endif /* CONFIG_HAVE_FPU */
 
+    if (!config_set(CONFIG_HAVE_FPU)) {
+        printf("Info: Not using supported FPU as FPU is disabled in the build configuration\n");
+    }
     return true;
 }
