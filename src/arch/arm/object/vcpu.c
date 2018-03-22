@@ -554,7 +554,7 @@ writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
             if (armHSVCPUActive) {
                 setSCTLR(value);
             } else {
-                vcpu_hw_write_reg(field, value);
+                vcpu->regs[seL4_VCPUReg_SCTLR] = value;
             }
             break;
         default:
