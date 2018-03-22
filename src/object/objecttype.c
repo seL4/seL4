@@ -431,7 +431,7 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
         tcb_t *tcb;
         tcb = TCB_PTR((word_t)regionBase + TCB_OFFSET);
         /** AUXUPD: "(True, ptr_retyps 1
-          (Ptr ((ptr_val \<acute>tcb) - 0x100) :: (cte_C[5]) ptr)
+          (Ptr ((ptr_val \<acute>tcb) - ctcb_offset) :: (cte_C[5]) ptr)
             o (ptr_retyp \<acute>tcb))" */
 
         /* Setup non-zero parts of the TCB. */
