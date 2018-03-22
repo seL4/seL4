@@ -22,7 +22,6 @@
  */
 bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 
-#ifdef CONFIG_HAVE_FPU
 /*
  * The following function checks if the subarchitecture support asynchronous exceptions
  */
@@ -41,6 +40,7 @@ BOOT_CODE static inline bool_t supportsAsyncExceptions(void)
     return !!(fpexc & BIT(FPEXC_EX_BIT));
 }
 
+#ifdef CONFIG_HAVE_FPU
 /* This variable is set at boot/init time to true if the FPU supports 32 registers (d0-d31).
  * otherwise it only supports 16 registers (d0-d15).
  * We cache this value in the following variable to avoid reading the coprocessor
