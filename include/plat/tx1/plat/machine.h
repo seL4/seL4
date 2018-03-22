@@ -255,6 +255,8 @@ enum IRQConstants {
 #define KERNEL_TIMER_IRQ    INTERRUPT_VGPT
 #endif
 
+#define KERNEL_PMU_IRQ      INTERRUPT_CPU0_PMU_INTR
+
 #include <arch/machine/gic_pl390.h>
 
 #endif  /* ! __PLAT_MACHINE_H */

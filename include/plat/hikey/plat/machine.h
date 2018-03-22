@@ -180,7 +180,7 @@ enum IRQConstants {
 } platform_interrupt_t;
 
 #define KERNEL_TIMER_IRQ        INTERRUPT_COREINTER0
-
+#define KERNEL_PMU_IRQ          INTERRUPT_ACPU_PMUIRQ
 #include <arch/machine/gic_pl390.h>
 
 #endif  /* ! __PLAT_MACHINE_H */
