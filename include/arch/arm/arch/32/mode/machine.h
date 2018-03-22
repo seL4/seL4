@@ -171,14 +171,14 @@ static inline void writeTTBR1(word_t val)
 }
 
 
-static inline word_t readTTBRC(void)
+static inline word_t readTTBCR(void)
 {
     word_t val = 0;
     asm volatile("mrc p15, 0, %0, c2, c0, 2":"=r"(val):);
     return val;
 }
 
-static inline void writeTTBRC(word_t val)
+static inline void writeTTBCR(word_t val)
 {
     asm volatile("mcr p15, 0, %0, c2, c0, 2":: "r"(val));
 }

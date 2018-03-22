@@ -57,8 +57,8 @@ vcpu_hw_read_reg(word_t reg_index)
             return getSCTLR();
         case seL4_VCPUReg_ACTLR:
             return getACTLR();
-        case seL4_VCPUReg_TTBRC:
-            return readTTBRC();
+        case seL4_VCPUReg_TTBCR:
+            return readTTBCR();
         case seL4_VCPUReg_TTBR0:
             return readTTBR0();
         case seL4_VCPUReg_TTBR1:
@@ -148,8 +148,8 @@ vcpu_hw_write_reg(word_t reg_index, word_t reg)
             return setSCTLR(reg);
         case seL4_VCPUReg_ACTLR:
             return setACTLR(reg);
-        case seL4_VCPUReg_TTBRC:
-            return writeTTBRC(reg);
+        case seL4_VCPUReg_TTBCR:
+            return writeTTBCR(reg);
         case seL4_VCPUReg_TTBR0:
             return writeTTBR0(reg);
         case seL4_VCPUReg_TTBR1:
