@@ -274,6 +274,8 @@ compile_assert(cte_size_sane, sizeof(cte_t) <= BIT(seL4_SlotBits))
 compile_assert(tcb_cte_size_sane, TCB_CNODE_SIZE_BITS <= TCB_SIZE_BITS)
 compile_assert(tcb_size_sane,
                BIT(TCB_SIZE_BITS) >= sizeof(tcb_t))
+compile_assert(tcb_size_not_excessive,
+               BIT(TCB_SIZE_BITS - 1) < sizeof(tcb_t))
 compile_assert(ep_size_sane, sizeof(endpoint_t) <= BIT(seL4_EndpointBits))
 compile_assert(notification_size_sane, sizeof(notification_t) <= BIT(seL4_NotificationBits))
 
