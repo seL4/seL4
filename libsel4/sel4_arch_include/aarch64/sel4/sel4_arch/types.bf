@@ -73,6 +73,23 @@ block UserException {
     field seL4_FaultType 3
 }
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+block VGICMaintenance {
+    padding 768
+    field IDX 64
+    padding 61
+    field seL4_FaultType 3
+}
+
+block VCPUFault {
+    padding 768
+    padding 32
+    field HSR 32
+    padding 61
+    field seL4_FaultType 3
+}
+#endif
+
 #ifdef CONFIG_HARDWARE_DEBUG_API
 block DebugException {
     padding 576
