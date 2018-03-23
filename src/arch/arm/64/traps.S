@@ -19,8 +19,13 @@
 #define VM_EVENT_DATA_ABORT 0
 #define VM_EVENT_PREFETCH_ABORT 1
  
+#define ELR     elr_el1
+#define ESR     esr_el1
+#define SPSR    spsr_el1
+#define TPIDR   tpidr_el1
+
 .macro lsp_i _tmp
-    mrs     \_tmp, tpidr_el1
+    mrs     \_tmp, TPIDR
 #if CONFIG_MAX_NUM_NODES > 1
     bic     \_tmp, \_tmp, #0xfff
 #endif
@@ -78,8 +83,8 @@ END_FUNC(arm_vector_table)
 
     /* Store thread's SPSR, LR, and SP */
     mrs     x21, sp_el0
-    mrs     x22, elr_el1
-    mrs     x23, spsr_el1
+    mrs     x22, ELR
+    mrs     x23, SPSR
     stp     x30, x21, [sp, #PT_LR]
     stp     x22, x23, [sp, #PT_ELR_EL1]
 .endm
@@ -90,7 +95,7 @@ END_FUNC(invalid_vector_entry)
 
 BEGIN_FUNC(el1_sync)
     /* Read esr_el1 and branch to respective labels*/
-    mrs     x25, esr_el1
+    mrs     x25, ESR
     lsr     x24, x25, #ESR_EC_SHIFT
     cmp     x24, #ESR_EC_CEL_DABT
     b.eq    el1_da
@@ -100,7 +105,7 @@ BEGIN_FUNC(el1_sync)
 
 el1_da:
 #ifdef CONFIG_DEBUG_BUILD
-    mrs     x0, elr_el1
+    mrs     x0, ELR
     lsp_i   x19
     bl      kernelDataAbort
 #endif /* CONFIG_DEBUG_BUILD */
@@ -108,7 +113,7 @@ el1_da:
 
 el1_ia:
 #ifdef CONFIG_DEBUG_BUILD
-    mrs     x0, elr_el1
+    mrs     x0, ELR
     lsp_i   x19
     bl      kernelPrefetchAbort
 #endif /* CONFIG_DEBUG_BUILD */
@@ -133,7 +138,7 @@ BEGIN_FUNC(el0_sync)
     kernel_enter
 
     /* Read esr_el1 and branch to respective labels*/
-    mrs     x25, esr_el1
+    mrs     x25, ESR
     lsr     x24, x25, #ESR_EC_SHIFT
     cmp     x24, #ESR_EC_LEL_DABT
     b.eq    el0_da
@@ -146,21 +151,21 @@ BEGIN_FUNC(el0_sync)
     b       el0_user
 
 el0_da:
-    mrs     x20, elr_el1
+    mrs     x20, ELR
     str     x20, [sp, #PT_FaultInstruction]
 
     lsp_i   x19
     b       c_handle_data_fault
 
 el0_ia:
-    mrs     x20, elr_el1
+    mrs     x20, ELR
     str     x20, [sp, #PT_FaultInstruction]
 
     lsp_i   x19
     b       c_handle_instruction_fault
 
 el0_svc:
-    mrs     x20, elr_el1
+    mrs     x20, ELR
     sub     x20, x20, #4
     str     x20, [sp, #PT_FaultInstruction]
 
@@ -175,7 +180,7 @@ el0_enfp:
 #endif /* CONFIG_HAVE_FPU */
 
 el0_user:
-    mrs     x20, elr_el1
+    mrs     x20, ELR
     str     x20, [sp, #PT_FaultInstruction]
 
     lsp_i   x19
@@ -185,7 +190,7 @@ END_FUNC(el0_sync)
 BEGIN_FUNC(el0_irq)
     kernel_enter
 
-    mrs     x20, elr_el1
+    mrs     x20, ELR
     str     x20, [sp, #PT_FaultInstruction]
 
     lsp_i   x19
