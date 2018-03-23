@@ -102,6 +102,7 @@ END_FUNC(arm_vector_table)
 .endm
 
 BEGIN_FUNC(invalid_vector_entry)
+    lsp_i   x19
     b       halt
 END_FUNC(invalid_vector_entry)
 
