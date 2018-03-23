@@ -41,9 +41,13 @@ void VISIBLE NORETURN restore_user_context(void)
         "ldp     x21, x22, [sp, %[SP_EL0]] \n"
         "ldr     x23, [sp, %[SPSR_EL1]]    \n"
         "msr     sp_el0, x21                \n"
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        "msr     elr_el2, x22               \n"
+        "msr     spsr_el2, x23              \n"
+#else
         "msr     elr_el1, x22               \n"
         "msr     spsr_el1, x23              \n"
-
+#endif
         /* Restore remaining registers */
         "ldp     x0,  x1,  [sp, #16 * 0]    \n"
         "ldp     x2,  x3,  [sp, #16 * 1]    \n"
