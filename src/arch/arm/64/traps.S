@@ -106,6 +106,7 @@ BEGIN_FUNC(invalid_vector_entry)
 END_FUNC(invalid_vector_entry)
 
 BEGIN_FUNC(cur_el_sync)
+    lsp_i   x19
     /* Read esr and branch to respective labels */
     mrs     x25, ESR
     lsr     x24, x25, #ESR_EC_SHIFT
@@ -118,7 +119,6 @@ BEGIN_FUNC(cur_el_sync)
 cur_el_da:
 #ifdef CONFIG_DEBUG_BUILD
     mrs     x0, ELR
-    lsp_i   x19
     bl      kernelDataAbort
 #endif /* CONFIG_DEBUG_BUILD */
     b       halt
@@ -126,7 +126,6 @@ cur_el_da:
 cur_el_ia:
 #ifdef CONFIG_DEBUG_BUILD
     mrs     x0, ELR
-    lsp_i   x19
     bl      kernelPrefetchAbort
 #endif /* CONFIG_DEBUG_BUILD */
     b       halt
