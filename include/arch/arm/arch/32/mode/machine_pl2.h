@@ -175,7 +175,10 @@ static inline void invalidateHypTLB(void) {}
 static inline void writeContextIDPL2(word_t pd_val) {}
 static inline void writeContextIDAndPD(word_t id, word_t pd_val) {}
 static inline void setHTPIDR(word_t htpidr) {}
-static inline word_t getHTPIDR(void) { return 0; }
+static inline word_t getHTPIDR(void)
+{
+    return 0;
+}
 static inline paddr_t addressTranslateS1CPR(vptr_t vaddr)
 {
     return vaddr;
