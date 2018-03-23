@@ -535,7 +535,7 @@ readVCPUReg(vcpu_t *vcpu, uint32_t field)
             if (armHSVCPUActive) {
                 return getSCTLR();
             } else {
-                return vcpu->regs[seL4_VCPUReg_SCTLR];
+                return vcpu_read_reg(vcpu, field);
             }
         default:
             return vcpu_hw_read_reg(field);
@@ -554,7 +554,7 @@ writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
             if (armHSVCPUActive) {
                 setSCTLR(value);
             } else {
-                vcpu->regs[seL4_VCPUReg_SCTLR] = value;
+                vcpu_write_reg(vcpu, field, value);
             }
             break;
         default:
