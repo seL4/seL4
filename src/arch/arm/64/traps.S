@@ -91,10 +91,10 @@ END_FUNC(invalid_vector_entry)
 BEGIN_FUNC(el1_sync)
     /* Read esr_el1 and branch to respective labels*/
     mrs     x25, esr_el1
-    lsr     x24, x25, #ESR_EL1_EC_SHIFT
-    cmp     x24, #ESR_EL1_EC_DABT_EL1
+    lsr     x24, x25, #ESR_EC_SHIFT
+    cmp     x24, #ESR_EC_CEL_DABT
     b.eq    el1_da
-    cmp     x24, #ESR_EL1_EC_IABT_EL1
+    cmp     x24, #ESR_EC_CEL_IABT
     b.eq    el1_ia
     b       el1_inv
 
@@ -134,12 +134,12 @@ BEGIN_FUNC(el0_sync)
 
     /* Read esr_el1 and branch to respective labels*/
     mrs     x25, esr_el1
-    lsr     x24, x25, #ESR_EL1_EC_SHIFT
-    cmp     x24, #ESR_EL1_EC_DABT_EL0
+    lsr     x24, x25, #ESR_EC_SHIFT
+    cmp     x24, #ESR_EC_LEL_DABT
     b.eq    el0_da
-    cmp     x24, #ESR_EL1_EC_IABT_EL0
+    cmp     x24, #ESR_EC_LEL_IABT
     b.eq    el0_ia
-    cmp     x24, #ESR_EL1_EC_SVC64
+    cmp     x24, #ESR_EC_LEL_SVC64
     b.eq    el0_svc
     cmp     x24, #ESR_EL1_EC_ENFP
     b.eq    el0_enfp

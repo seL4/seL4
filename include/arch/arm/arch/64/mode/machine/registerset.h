@@ -36,13 +36,15 @@
 #define DAIFSET_MASK            0xf
 
 /* ESR register */
-#define ESR_EL1_EC_SHIFT        26
-#define ESR_EL1_EC_DABT_EL0     0x24   // Data abort from EL0 to EL1
-#define ESR_EL1_EC_DABT_EL1     0x25   // Data abort from EL1 to EL1
-#define ESR_EL1_EC_IABT_EL0     0x20   // Instruction abort from EL0 to EL1
-#define ESR_EL1_EC_IABT_EL1     0x21   // Instruction abort from EL1 to EL1
-#define ESR_EL1_EC_SVC64        0x15   // SVC instruction execution in AArch64 state
-#define ESR_EL1_EC_ENFP         0x7    // Access to Advanced SIMD or floating-point registers
+#define ESR_EC_SHIFT            26
+#define ESR_EC_LEL_DABT         0x24    // Data abort from a lower EL
+#define ESR_EC_CEL_DABT         0x25    // Data abort from the current EL
+#define ESR_EC_LEL_IABT         0x20    // Instruction abort from a lower EL
+#define ESR_EC_CEL_IABT         0x21    // Instruction abort from the current EL
+#define ESR_EC_LEL_SVC64        0x15    // SVC from a lower EL in AArch64 state
+#define ESR_EC_LEL_HVC64        0x16    // HVC from EL1 in AArch64 state
+#define ESR_EL1_EC_ENFP         0x7     // Access to Advanced SIMD or floating-point registers
+
 
 /* ID_AA64PFR0_EL1 register */
 #define ID_AA64PFR0_EL1_FP      16     // HWCap for Floating Point
