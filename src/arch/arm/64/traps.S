@@ -18,11 +18,23 @@
 
 #define VM_EVENT_DATA_ABORT 0
 #define VM_EVENT_PREFETCH_ABORT 1
- 
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+#define ELR     elr_el2
+#define ESR     esr_el2
+#define SPSR    spsr_el2
+#define TPIDR   tpidr_el2
+
+#else
+
 #define ELR     elr_el1
 #define ESR     esr_el1
 #define SPSR    spsr_el1
 #define TPIDR   tpidr_el1
+
+#endif
+
 
 .macro lsp_i _tmp
     mrs     \_tmp, TPIDR
