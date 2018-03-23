@@ -40,25 +40,25 @@
 .section .vectors
 
 BEGIN_FUNC(arm_vector_table)
-    ventry  invalid_vector_entry           // Synchronous EL1t
-    ventry  invalid_vector_entry           // IRQ EL1t
-    ventry  invalid_vector_entry           // FIQ EL1t
-    ventry  invalid_vector_entry           // SError EL1t
+    ventry  invalid_vector_entry           // Synchronous EL1t/EL2t
+    ventry  invalid_vector_entry           // IRQ EL1t/EL2t
+    ventry  invalid_vector_entry           // FIQ EL1t/EL2t
+    ventry  invalid_vector_entry           // SError EL1t/EL2t
 
-    ventry  el1_sync                       // Synchronous EL1h
-    ventry  el1_irq                        // IRQ EL1h
-    ventry  invalid_vector_entry           // FIQ EL1h
-    ventry  invalid_vector_entry           // SError EL1h
+    ventry  cur_el_sync                    // Current EL Synchronous (EL1/2)
+    ventry  cur_el_irq                     // IRQ
+    ventry  invalid_vector_entry           // FIQ
+    ventry  invalid_vector_entry           // SError
 
-    ventry  el0_sync                       // Synchronous 64-bit EL0
-    ventry  el0_irq                        // IRQ 64-bit EL0
-    ventry  invalid_vector_entry           // FIQ 64-bit EL0
-    ventry  invalid_vector_entry           // SError 64-bit EL0
+    ventry  lower_el_sync                  // Synchronous 64-bit EL0/EL1
+    ventry  lower_el_irq                   // IRQ 64-bit EL0/EL1
+    ventry  invalid_vector_entry           // FIQ 64-bit EL0/EL1
+    ventry  invalid_vector_entry           // SError 64-bit EL0/EL1
 
-    ventry  invalid_vector_entry           // Synchronous 32-bit EL0
-    ventry  invalid_vector_entry           // IRQ 32-bit EL0
-    ventry  invalid_vector_entry           // FIQ 32-bit EL0
-    ventry  invalid_vector_entry           // SError 32-bit EL0
+    ventry  invalid_vector_entry           // Synchronous 32-bit EL0/EL1
+    ventry  invalid_vector_entry           // IRQ 32-bit EL0/EL1
+    ventry  invalid_vector_entry           // FIQ 32-bit EL0/EL1
+    ventry  invalid_vector_entry           // SError 32-bit EL0/EL1
 END_FUNC(arm_vector_table)
 
 .section .vectors.text
@@ -93,17 +93,17 @@ BEGIN_FUNC(invalid_vector_entry)
     b       halt
 END_FUNC(invalid_vector_entry)
 
-BEGIN_FUNC(el1_sync)
-    /* Read esr_el1 and branch to respective labels*/
+BEGIN_FUNC(cur_el_sync)
+    /* Read esr and branch to respective labels */
     mrs     x25, ESR
     lsr     x24, x25, #ESR_EC_SHIFT
     cmp     x24, #ESR_EC_CEL_DABT
-    b.eq    el1_da
+    b.eq    cur_el_da
     cmp     x24, #ESR_EC_CEL_IABT
-    b.eq    el1_ia
-    b       el1_inv
+    b.eq    cur_el_ia
+    b       cur_el_inv
 
-el1_da:
+cur_el_da:
 #ifdef CONFIG_DEBUG_BUILD
     mrs     x0, ELR
     lsp_i   x19
@@ -111,7 +111,7 @@ el1_da:
 #endif /* CONFIG_DEBUG_BUILD */
     b       halt
 
-el1_ia:
+cur_el_ia:
 #ifdef CONFIG_DEBUG_BUILD
     mrs     x0, ELR
     lsp_i   x19
@@ -119,9 +119,9 @@ el1_ia:
 #endif /* CONFIG_DEBUG_BUILD */
     b       halt
 
-el1_inv:
+cur_el_inv:
     b       invalid_vector_entry
-END_FUNC(el1_sync)
+END_FUNC(cur_el_sync)
 
 /*
  * This is only called if ksCurThread is idle thread.
@@ -129,42 +129,42 @@ END_FUNC(el1_sync)
  * No need to store the state of idle thread and simply call c_handle_interrupt to
  * activate ksCurThread when returning from interrupt as long as idle thread is stateless.
  */
-BEGIN_FUNC(el1_irq)
+BEGIN_FUNC(cur_el_irq)
     lsp_i   x19
     b       c_handle_interrupt
-END_FUNC(el1_irq)
+END_FUNC(cur_el_irq)
 
-BEGIN_FUNC(el0_sync)
+BEGIN_FUNC(lower_el_sync)
     kernel_enter
 
-    /* Read esr_el1 and branch to respective labels*/
+    /* Read esr and branch to respective labels */
     mrs     x25, ESR
     lsr     x24, x25, #ESR_EC_SHIFT
     cmp     x24, #ESR_EC_LEL_DABT
-    b.eq    el0_da
+    b.eq    lel_da
     cmp     x24, #ESR_EC_LEL_IABT
-    b.eq    el0_ia
+    b.eq    lel_ia
     cmp     x24, #ESR_EC_LEL_SVC64
-    b.eq    el0_svc
+    b.eq    lel_syscall
     cmp     x24, #ESR_EL1_EC_ENFP
     b.eq    el0_enfp
     b       el0_user
 
-el0_da:
+lel_da:
     mrs     x20, ELR
     str     x20, [sp, #PT_FaultInstruction]
 
     lsp_i   x19
     b       c_handle_data_fault
 
-el0_ia:
+lel_ia:
     mrs     x20, ELR
     str     x20, [sp, #PT_FaultInstruction]
 
     lsp_i   x19
     b       c_handle_instruction_fault
 
-el0_svc:
+lel_syscall:
     mrs     x20, ELR
     sub     x20, x20, #4
     str     x20, [sp, #PT_FaultInstruction]
@@ -185,14 +185,13 @@ el0_user:
 
     lsp_i   x19
     b       c_handle_undefined_instruction
-END_FUNC(el0_sync)
+END_FUNC(lower_el_sync)
 
-BEGIN_FUNC(el0_irq)
+BEGIN_FUNC(lower_el_irq)
     kernel_enter
-
     mrs     x20, ELR
     str     x20, [sp, #PT_FaultInstruction]
 
     lsp_i   x19
     b       c_handle_interrupt
-END_FUNC(el0_irq)
+END_FUNC(lower_el_irq)
