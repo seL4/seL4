@@ -18,7 +18,7 @@ correctness proof, please see the [`sel4.systems`][1] website and associated
 [FAQ][2].
 
 DOIs for citing recent releases of this repository:
-  * [![DOI][4]](http://dx.doi.org/10.5281/zenodo.11247)
+  * [![DOI][4]](https://doi.org/10.5281/zenodo.591727)
 
 We welcome contributions to seL4. Please see the website for information
 on [how to contribute][3].
@@ -29,7 +29,7 @@ system in a larger project.
   [1]: http://sel4.systems/
   [2]: http://sel4.systems/Info/FAQ/
   [3]: http://sel4.systems/Community/Contributing/
-  [4]: https://zenodo.org/badge/doi/10.5281/zenodo.11247.png
+  [4]: https://zenodo.org/badge/DOI/10.5281/zenodo.591727.svg
 
 Repository Overview
 -------------------
