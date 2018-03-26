@@ -94,6 +94,9 @@ enum {
 #define seL4_PUDEntryBits 3
 #define seL4_PUDIndexBits 9
 
+#define seL4_ARM_VCPUBits   12
+#define seL4_VCPUBits       12
+
 /* word size */
 #define seL4_WordBits (sizeof(seL4_Word) * 8)
 
