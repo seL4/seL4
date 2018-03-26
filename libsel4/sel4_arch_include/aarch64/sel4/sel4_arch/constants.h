@@ -74,6 +74,45 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_VCPUFault_Msg),
 } seL4_VCPUFault_Msg;
 
+enum {
+    /* VM control registers EL1 */
+    seL4_VCPUReg_SCTLR = 0,
+    seL4_VCPUReg_TTBR0,
+    seL4_VCPUReg_TTBR1,
+    seL4_VCPUReg_TCR,
+    seL4_VCPUReg_MAIR,
+    seL4_VCPUReg_AMAIR,
+    seL4_VCPUReg_CIDR,
+
+    /* other system registers EL1 */
+    seL4_VCPUReg_ACTLR,
+    seL4_VCPUReg_CPACR,
+
+    /* exception handling registers EL1 */
+    seL4_VCPUReg_AFSR0,
+    seL4_VCPUReg_AFSR1,
+    seL4_VCPUReg_ESR,
+    seL4_VCPUReg_FAR,
+    seL4_VCPUReg_ISR,
+    seL4_VCPUReg_VBAR,
+
+    /* thread pointer/ID registers EL0/EL1 */
+    seL4_VCPUReg_TPIDR_EL0,
+    seL4_VCPUReg_TPIDR_EL1,
+    seL4_VCPUReg_TPIDRRO_EL0,
+
+    /* generic timer registers, to be completed */
+    seL4_VCPUReg_CNTV_TVAL,
+    seL4_VCPUReg_CNTV_CTL,
+    seL4_VCPUReg_CNTV_CVAL,
+
+    /* general registers x0 to x30 have been saved by traps.S */
+    seL4_VCPUReg_SP_EL1,
+    seL4_VCPUReg_ELR_EL1,
+    seL4_VCPUReg_SPSR_EL1, // 32-bit
+    seL4_VCPUReg_Num,
+} seL4_VCPUReg;
+
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 #endif /* !__ASSEMBLER__ */
 
