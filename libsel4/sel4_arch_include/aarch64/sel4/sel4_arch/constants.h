@@ -60,6 +60,21 @@ enum {
     SEL4_FORCE_LONG_ENUM(seL4_VMFault_Msg),
 } seL4_VMFault_Msg;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+enum {
+    seL4_VGICMaintenance_IDX,
+    seL4_VGICMaintenance_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_VGICMaintenance_Msg),
+} seL4_VGICMaintenance_Msg;
+
+enum {
+    seL4_VCPUFault_HSR,
+    seL4_VCPUFault_Length,
+    SEL4_FORCE_LONG_ENUM(seL4_VCPUFault_Msg),
+} seL4_VCPUFault_Msg;
+
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 #endif /* !__ASSEMBLER__ */
 
 #define seL4_DataFault 0
