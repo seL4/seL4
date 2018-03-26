@@ -67,7 +67,7 @@ typedef word_t notification_state_t;
 // We would like the actual 'tcb' region (the portion that contains the tcb_t) of the tcb
 // to be as large as possible, but it still needs to be aligned. As the TCB object contains
 // two sub objects the largest we can make either sub object whilst preserving size alignment
-// is half the total size. To halve an object size defined in bits we just substract 1
+// is half the total size. To halve an object size defined in bits we just subtract 1
 #define TCB_SIZE_BITS (seL4_TCBBits - 1)
 
 #define TCB_CNODE_SIZE_BITS (TCB_CNODE_RADIX + seL4_SlotBits)
@@ -227,7 +227,7 @@ struct tcb {
     /* Domain, 1 byte (packed to 4) */
     dom_t tcbDomain;
 
-    /*  maximum controlled priorioty, 1 byte (packed to 4) */
+    /*  maximum controlled priority, 1 byte (packed to 4) */
     prio_t tcbMCP;
 
     /* Priority, 1 byte (packed to 4) */
@@ -344,8 +344,8 @@ cap_get_capSizeBits(cap_t cap)
 }
 
 /* Returns whether or not this capability has memory associated
- * with it or not. Refering to this as 'being physical' is to
- * match up with the haskell and abstract specifications */
+ * with it or not. Referring to this as 'being physical' is to
+ * match up with the Haskell and abstract specifications */
 static inline bool_t CONST
 cap_get_capIsPhysical(cap_t cap)
 {

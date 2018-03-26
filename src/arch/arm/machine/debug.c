@@ -521,7 +521,7 @@ getBpNumFromType(uint16_t bp_num, word_t type)
 
 /** Extracts the "Method of Entry" bits from DBGDSCR.
  *
- * Used to detemine what type of debug exception has occured.
+ * Used to determine what type of debug exception has occurred.
  */
 static inline word_t
 getMethodOfEntry(void)

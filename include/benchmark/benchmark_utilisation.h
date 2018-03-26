@@ -38,7 +38,7 @@ static inline void benchmark_utilisation_switch(tcb_t *heir, tcb_t *next)
     /* Add heir thread utilisation */
     if (likely(benchmark_log_utilisation_enabled)) {
 
-        /* Check if an overflow occured while we have been in the kernel */
+        /* Check if an overflow occurred while we have been in the kernel */
         if (likely(ksEnter > heir->benchmark.schedule_start_time)) {
 
             heir->benchmark.utilisation += (ksEnter - heir->benchmark.schedule_start_time);

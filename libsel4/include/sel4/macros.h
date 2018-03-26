@@ -17,7 +17,7 @@
 
 /*
  * Some compilers attempt to pack enums into the smallest possible type.
- * For ABI compatability with the kernel, we need to ensure they remain
+ * For ABI compatibility with the kernel, we need to ensure they remain
  * the same size as a 'long'.
  */
 #define SEL4_FORCE_LONG_ENUM(type) \

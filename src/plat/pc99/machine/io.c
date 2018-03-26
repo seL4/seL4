@@ -27,7 +27,7 @@ serial_init(uint16_t port)
     out8(port + 3, 0x03); /* line control register: set 8 bit, no parity, 1 stop bit */
     out8(port + 4, 0x0b); /* modem control register: set DTR/RTS/OUT2 */
 
-    in8(port);     /* clear recevier port */
+    in8(port);     /* clear receiver port */
     in8(port + 5); /* clear line status port */
     in8(port + 6); /* clear modem status port */
 }
