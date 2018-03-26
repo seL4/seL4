@@ -25,6 +25,7 @@
 #define PMODE_SERROR            (1 << 8)
 #define PMODE_DEBUG             (1 << 9)
 #define PMODE_EL0t              0
+#define PMODE_EL1t              4
 #define PMODE_EL1h              5
 #define PMODE_EL2h              9
 
