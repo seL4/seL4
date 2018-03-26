@@ -18,7 +18,13 @@
 #include <plat/machine/hardware.h>
 
 #define BASE_OFFSET (kernelBase - physBase)
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define PPTR_TOP 0xffffc0000000lu
+#else
 #define PPTR_TOP 0xffffffffc0000000
+#endif
+
 #define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
 
 #endif /* __ARCH_MODE_HARDWARE_H */
