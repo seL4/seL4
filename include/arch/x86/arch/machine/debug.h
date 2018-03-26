@@ -46,7 +46,7 @@ void Arch_initBreakpointContext(user_breakpoint_state_t *context);
  * ARM's exception-path flow works differently.
  *
  * @param int_vector Processor-level vector number on which the exception
- *                   occured. May be 1 or 3, depending on whether the exception
+ *                   occurred. May be 1 or 3, depending on whether the exception
  *                   is a breakpoint, single-step, or INT3 exception.
  */
 exception_t handleUserLevelDebugException(int int_vector);

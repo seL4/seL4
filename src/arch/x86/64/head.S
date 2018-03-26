@@ -95,7 +95,7 @@ BEGIN_FUNC(setup_pml4)
     movl %ebx, 4(%edi)
     addl $0x40000000, %edx
     jnc 2f
-    /* Carry occured, need to increase the high part
+    /* Carry occurred, need to increase the high part
      * of the address */
     incl %ebx
 2:

@@ -71,7 +71,7 @@ void __builtin_unreachable(void);
 #define _is_set__(comma) _is_set___(comma 1, 0)
 #define _is_set___(_, v, ...) v
 
-/* Check the existance of a configuration setting, returning one value if it
+/* Check the existence of a configuration setting, returning one value if it
  * exists and a different one if it does not */
 #define config_ternary(macro, true, false) _config_ternary(macro, true, false)
 #define _config_ternary(value, true, false) _config_ternary_(_macrotest_##value, true, false)

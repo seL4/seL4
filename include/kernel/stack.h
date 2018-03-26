@@ -16,7 +16,7 @@
 #include <util.h>
 #include <mode/kernel/stack.h>
 
-/* These are the stacks used in kernel, shared between architecures/modes.
+/* These are the stacks used in kernel, shared between architectures/modes.
  * CONFIG_KERNEL_STACK_BITS is defined in kernel/Kconfig. The physical/offset
  * address of the stack is per-arch-mode aligned. KERNEL_STACK_ALIGNMENT is
  * defined for each arch/mode in <mode/kernel/stack.h>

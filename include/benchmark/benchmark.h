@@ -56,7 +56,7 @@ trace_point_stop(word_t id)
              * this is so we can tell if we need a bigger log */
             ksLogIndex++;
         }
-        /* If this fails integer overflow has occured. */
+        /* If this fails integer overflow has occurred. */
         assert(ksLogIndex > 0);
     }
 }

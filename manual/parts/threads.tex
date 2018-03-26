@@ -160,7 +160,7 @@ A thread's actions may result in a fault. Faults are delivered to the
 thread's exception handler so that it can take the appropriate action.
 The fault type is specified in the message label and is one of:
 seL4\_Fault\_CapFault, seL4\_Fault\_VMFault, seL4\_Fault\_UnknownSyscall, seL4\_Fault\_UserException, seL4\_Fault\_DebugException,
-or seL4\_Fault\_NullFault (indicating no fault occured and this is a normal IPC message).
+or seL4\_Fault\_NullFault (indicating no fault occurred and this is a normal IPC message).
 
 Fault are delivered in such a way as to imitate a Call from the faulting
 thread. This means that to send a fault message the fault endpoint
