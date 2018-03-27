@@ -312,6 +312,11 @@ map_kernel_window(void)
     map_kernel_devices();
 }
 
+/* When the hypervisor support is enabled, the stage-2 translation table format
+ * is used for applications.
+ * The global bit is always 0.
+ * The memory attributes use the S2 translation values.
+ */
 static BOOT_CODE void
 map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t executable)
 {
@@ -337,11 +342,19 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t executable)
     *(pt + GET_PT_INDEX(vptr)) = pte_new(
                                      !executable,                    /* unprivileged execute never */
                                      pptr_to_paddr(pptr),            /* page_base_address    */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                                     0,
+#else
                                      1,                              /* not global */
+#endif
                                      1,                              /* access flag */
                                      SMP_TERNARY(SMP_SHARE, 0),              /* Inner-shareable if SMP enabled, otherwise unshared */
                                      APFromVMRights(VMReadWrite),
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                                     S2_NORMAL,
+#else
                                      NORMAL,
+#endif
                                      0b11                            /* reserved */
                                  );
 }
@@ -805,6 +818,9 @@ lookupFrame(vspace_root_t *vspace, vptr_t vptr)
     return ret;
 }
 
+/* Note that if the hypervisor support is enabled, the user page tables use
+ * stage-2 translation format. Otherwise, they follow the stage-1 translation format.
+ */
 static pte_t
 makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attributes)
 {
@@ -814,22 +830,39 @@ makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
         return pte_new(
                    nonexecutable,              /* unprivileged execute never */
                    paddr,
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   0,
+#else
                    1,                          /* not global */
+#endif
                    1,                          /* access flag */
                    SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   S2_NORMAL,
+#else
                    NORMAL,
+#endif
                    0b11                        /* reserved */
                );
     } else {
         return pte_new(
                    nonexecutable,              /* unprivileged execute never */
                    paddr,
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   0,
+#else
                    1,                          /* not global */
+#endif
                    1,                          /* access flag */
                    0,                          /* Ignored - Outter shareable */
                    APFromVMRights(vm_rights),
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   S2_DEVICE_nGnRnE,
+#else
                    DEVICE_nGnRnE,
+#endif
+
                    0b11                        /* reserved */
                );
     }
@@ -844,21 +877,37 @@ makeUser2ndLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
         return pde_pde_large_new(
                    nonexecutable,              /* unprivileged execute never */
                    paddr,
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   0,
+#else
                    1,                          /* not global */
+#endif
                    1,                          /* access flag */
                    SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   S2_NORMAL
+#else
                    NORMAL
+#endif
                );
     } else {
         return pde_pde_large_new(
                    nonexecutable,              /* unprivileged execute never */
                    paddr,
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   0,
+#else
                    1,                          /* not global */
+#endif
                    1,                          /* access flag */
                    0,                          /* Ignored - Outter shareable */
                    APFromVMRights(vm_rights),
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   S2_DEVICE_nGnRnE
+#else
                    DEVICE_nGnRnE
+#endif
                );
     }
 }
@@ -872,21 +921,37 @@ makeUser1stLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
         return pude_pude_1g_new(
                    nonexecutable,              /* unprivileged execute never */
                    paddr,
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   0,
+#else
                    1,                          /* not global */
+#endif
                    1,                          /* access flag */
                    SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                    APFromVMRights(vm_rights),
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   S2_NORMAL
+#else
                    NORMAL
+#endif
                );
     } else {
         return pude_pude_1g_new(
                    nonexecutable,              /* unprivileged execute never */
                    paddr,
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   0,
+#else
                    1,                          /* not global */
+#endif
                    1,                          /* access flag */
                    0,                          /* Ignored - Outter shareable */
                    APFromVMRights(vm_rights),
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                   S2_DEVICE_nGnRnE
+#else
                    DEVICE_nGnRnE
+#endif
                );
     }
 }
