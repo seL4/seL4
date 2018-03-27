@@ -88,6 +88,10 @@ typedef pgde_t vspace_root_t;
 #define PT_PTR(r)           ((pte_t *)(r))
 #define PT_REF(p)           ((word_t)(p))
 
+/* Generate a vcpu_t pointer from a vcpu block reference */
+#define VCPU_PTR(r)       ((struct vcpu *)(r))
+#define VCPU_REF(p)       ((word_t)(p))
+
 enum asidSizeConstants {
     asidHighBits = 7,
     asidLowBits = seL4_ASIDPoolIndexBits
