@@ -1041,6 +1041,9 @@ setVMRoot(tcb_t *tcb)
     }
 
     armv_contextSwitch(pgd, asid);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(tcb->tcbArch.tcbVCPU);
+    }
 }
 
 static bool_t
