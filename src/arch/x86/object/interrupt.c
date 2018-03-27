@@ -90,6 +90,13 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    /* ensure we have a valid invocation before continuing any decoding */
+    if (invLabel != X86IRQIssueIRQHandlerIOAPIC && invLabel != X86IRQIssueIRQHandlerMSI) {
+        userError("IRQControl: Illegal operation");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     /* check the common parameters */
 
     if (length < 7 || excaps.excaprefs[0] == NULL) {
@@ -184,8 +191,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
     }
     break;
     default:
-        userError("IRQControl: Illegal operation.");
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
+        /* the check at the start of this function should guarantee we do not get here */
+        fail("IRQControl: Illegal operation");
     }
 }
