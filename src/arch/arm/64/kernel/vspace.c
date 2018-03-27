@@ -1312,14 +1312,24 @@ static exception_t
 performPageGlobalDirectoryFlush(int invLabel, pgde_t *pgd, asid_t asid,
                                 vptr_t start, vptr_t end, paddr_t pstart)
 {
-    bool_t root_switched;
 
-    /* Flush if given a non zero range */
-    if (start < end) {
-        root_switched = setVMRootForFlush(pgd, asid);
-        doFlush(invLabel, start, end, pstart);
-        if (root_switched) {
-            setVMRoot(NODE_STATE(ksCurThread));
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        word_t size = end - start;
+        start = (vptr_t)paddr_to_pptr(pstart);
+        end = start + size;
+        if (start < end) {
+            doFlush(invLabel, start, end, pstart);
+        }
+    } else {
+        bool_t root_switched;
+
+        /* Flush if given a non zero range */
+        if (start < end) {
+            root_switched = setVMRootForFlush(pgd, asid);
+            doFlush(invLabel, start, end, pstart);
+            if (root_switched) {
+                setVMRoot(NODE_STATE(ksCurThread));
+            }
         }
     }
     return EXCEPTION_NONE;
@@ -1473,13 +1483,27 @@ static exception_t
 performPageFlush(int invLabel, pgde_t *pgd, asid_t asid,
                  vptr_t start, vptr_t end, paddr_t pstart)
 {
-    bool_t root_switched;
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        /* We flush the cache with kernel virtual addresses since
+         * the user virtual addresses are not valid in EL2.
+         * Switching VMRoot is not required.
+         */
+        word_t size = end - start;
+        start = (vptr_t)paddr_to_pptr(pstart);
+        end = start + size;
 
-    if (start < end) {
-        root_switched = setVMRootForFlush(pgd, asid);
-        doFlush(invLabel, start, end, pstart);
-        if (root_switched) {
-            setVMRoot(NODE_STATE(ksCurThread));
+        if (start < end) {
+            doFlush(invLabel, start, end, pstart);
+        }
+    } else {
+        bool_t root_switched;
+
+        if (start < end) {
+            root_switched = setVMRootForFlush(pgd, asid);
+            doFlush(invLabel, start, end, pstart);
+            if (root_switched) {
+                setVMRoot(NODE_STATE(ksCurThread));
+            }
         }
     }
     return EXCEPTION_NONE;
