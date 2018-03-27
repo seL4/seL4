@@ -268,6 +268,7 @@ def init_arch_types(wordsize):
             CapType("seL4_ARM_PageGlobalDirectory", wordsize),
             CapType("seL4_ARM_ASIDControl", wordsize),
             CapType("seL4_ARM_ASIDPool", wordsize),
+            CapType("seL4_ARM_VCPU", wordsize),
             CapType("seL4_ARM_IOSpace", wordsize),
             CapType("seL4_ARM_IOPageTable", wordsize),
             StructType("seL4_UserContext", wordsize * 34, wordsize),
