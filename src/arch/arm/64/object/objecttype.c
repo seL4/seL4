@@ -99,6 +99,12 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+#endif
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
@@ -179,6 +185,13 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                       cap_frame_cap_get_capFBasePtr(cap));
         }
         break;
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        if (final) {
+            vcpu_finalise(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)));
+        }
+        break;
+#endif
     }
 
     fc_ret.remainder = cap_null_cap_new();
@@ -241,6 +254,14 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_asid_pool_cap_get_capASIDPool(cap_b);
         }
         break;
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        if (cap_get_capType(cap_b) == cap_vcpu_cap) {
+            return cap_vcpu_cap_get_capVCPUPtr(cap_a) ==
+                   cap_vcpu_cap_get_capVCPUPtr(cap_b);
+        }
+#endif
     }
 
     return false;
@@ -280,6 +301,10 @@ Arch_getObjectSize(word_t t)
         return seL4_PUDBits;
     case seL4_ARM_PageGlobalDirectoryObject:
         return seL4_PGDBits;
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case seL4_ARM_VCPUObject:
+        return VCPU_SIZE_BITS;
+#endif
     default:
         fail("Invalid object type");
         return 0;
@@ -351,6 +376,14 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
                    0                      /* capPTMappedAddress */
                );
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case seL4_ARM_VCPUObject:
+        /** AUXUPD: "(True, ptr_retyp
+          (Ptr (ptr_val \<acute>regionBase) :: vcpu_C ptr))" */
+        vcpu_init(VCPU_PTR(regionBase));
+        return cap_vcpu_cap_new(VCPU_REF(regionBase));
+#endif
+
     default:
         fail("Arch_createObject got an API type or invalid object type");
     }
@@ -361,7 +394,22 @@ Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
                       cte_t *slot, cap_t cap, extra_caps_t extraCaps,
                       bool_t call, word_t *buffer)
 {
+
+    /* The C parser cannot handle a switch statement with only a default
+     * case. So we need to do some gymnastics to remove the switch if
+     * there are no other cases */
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT)
+    switch (cap_get_capType(cap)) {
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    case cap_vcpu_cap:
+        return decodeARMVCPUInvocation(label, length, cptr, slot, cap, extraCaps, call, buffer);
+#endif /* end of CONFIG_ARM_HYPERVISOR_SUPPORT */
+    default:
+#else
+{
+#endif
     return decodeARMMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
+}
 }
 
 void
