@@ -104,6 +104,15 @@ static inline void disableTrapFpu(void)
     MSR("cptr_el2", cptr);
 }
 
+/* Enable FPU access in EL0 and EL1 */
+static inline void enableFpuEL01(void)
+{
+    word_t cpacr;
+    MRS("cpacr_el1", cpacr);
+    cpacr |= (3 << CPACR_EL1_FPEN);
+    MSR("cpacr_el1", cpacr);
+}
+
 /* Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU. */
 static inline void enableFpu(void)
