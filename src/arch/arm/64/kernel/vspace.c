@@ -117,21 +117,57 @@ struct findVSpaceForASID_ret {
 };
 typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
 
+/* Stage-1 access permissions:
+ * AP[2:1]  higer EL        EL0
+ *   00       rw            None
+ *   01       rw            rw
+ *   10       r             None
+ *   11       r             r
+ *
+ * Stage-2 access permissions:
+ * S2AP    Access from Nonsecure EL1 or Non-secure EL0
+ *  00                      None
+ *  01                      r
+ *  10                      w
+ *  11                      rw
+ *
+ *  For VMs or native seL4 applications, if hypervisor support
+ *  is enabled, we use the S2AP. The kernel itself running in
+ *  EL2 still uses the Stage-1 AP format.
+ */
+
 static word_t CONST
 APFromVMRights(vm_rights_t vm_rights)
 {
     switch (vm_rights) {
     case VMKernelOnly:
-        return 0;
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            return 0;
+        } else {
+            return 0;
+        }
 
     case VMReadWrite:
-        return 1;
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            return 3;
+        } else {
+            return 1;
+        }
 
     case VMKernelReadOnly:
-        return 2;
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            /* no corresponding AP for S2AP, return None */
+            return 0;
+        } else {
+            return 2;
+        }
 
     case VMReadOnly:
-        return 3;
+        if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+            return 1;
+        } else {
+            return 3;
+        }
 
     default:
         fail("Invalid VM rights");
