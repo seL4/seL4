@@ -129,11 +129,12 @@ static inline void disableFpuEL0(void)
  * Required even if the kernel attempts to use the FPU. */
 static inline void enableFpu(void)
 {
-    word_t cpacr;
-
-    MRS("cpacr_el1", cpacr);
-    cpacr |= (3 << CPACR_EL1_FPEN);
-    MSR("cpacr_el1", cpacr);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        disableTrapFpu();
+    } else {
+        enableFpuEL01();
+    }
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = true;
 }
 
 static inline bool_t isFpuEnable(void)
@@ -145,12 +146,12 @@ static inline bool_t isFpuEnable(void)
 /* Disable the FPU so that usage of it causes a fault */
 static inline void disableFpu(void)
 {
-    word_t cpacr;
-
-    MRS("cpacr_el1", cpacr);
-    cpacr &= ~(3 << CPACR_EL1_FPEN);
-    cpacr |= (1 << CPACR_EL1_FPEN);
-    MSR("cpacr_el1", cpacr);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        enableTrapFpu();
+    } else {
+        disableFpuEL0();
+    }
+    isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)] = false;
 }
 
 #endif /* __MODE_MACHINE_FPU_H */
