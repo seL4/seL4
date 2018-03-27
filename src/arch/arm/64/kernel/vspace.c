@@ -199,6 +199,21 @@ maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 
 /* ==================== BOOT CODE STARTS HERE ==================== */
 
+/* The 54th bit is defined as UXN (unprivileged execute-never) for stage 1
+ * of any tranlsation regime for which stage 1 translation can support
+ * two VA ranges. This field applies only to execution at EL0. A value
+ * of 0 indicates that this control permits execution.
+ *
+ * The 54th bit is defined as XN (execute-never) for stage 1 of any translation
+ * regime for which the stage 1 translation can support only a singe VA range or
+ * stage 2 translation when ARMVv8.2-TTS2UXN is not implemented.
+ * This field applies to execution at any exception level to which the stage of
+ * translation applies. A value of 0 indicates that this control permits execution.
+ *
+ * When the kernel is running in EL2, the stage-1 translation only supports one
+ * VA range so that the 54th bit is XN. Setting the bit to 0 allows execution.
+ *
+ */
 BOOT_CODE void
 map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attributes_t attributes)
 {
@@ -206,7 +221,11 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
 
     if (vm_attributes_get_armPageCacheable(attributes)) {
         armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
-                                                       1,                          /* unprivileged execute never */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                                                       0, // XN
+#else
+                                                       1, /* unprivileged execute never */
+#endif
                                                        paddr,
                                                        0,                          /* global */
                                                        1,                          /* access flag */
@@ -217,7 +236,11 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
                                                    );
     } else {
         armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
-                                                       1,                          /* unprivileged execute never */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                                                       0, // XN
+#else
+                                                       1, /* unprivileged execute never */
+#endif
                                                        paddr,
                                                        0,                          /* global */
                                                        1,                          /* access flag */
@@ -261,7 +284,11 @@ map_kernel_window(void)
     vaddr = kernelBase;
     for (paddr = physBase; paddr < PADDR_TOP; paddr += BIT(seL4_LargePageBits)) {
         armKSGlobalKernelPDs[GET_PUD_INDEX(vaddr)][GET_PD_INDEX(vaddr)] = pde_pde_large_new(
-                                                                              1,                        /* unprivileged execute never */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+                                                                              0, // XN
+#else
+                                                                              1, // UXN
+#endif
                                                                               paddr,
                                                                               0,                        /* global */
                                                                               1,                        /* access flag */
