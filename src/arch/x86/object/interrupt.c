@@ -102,7 +102,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
     cnodeCap = excaps.excaprefs[0]->cap;
     irq = getSyscallArg(6, buffer);
     if (irq > irq_user_max - irq_user_min) {
-        userError("IRQControl: Invalid irq %ld should be between 0-%ld", (long)irq, (long)(irq_user_max - irq_user_min - 1));
+        userError("IRQControl: Invalid irq %ld should be between 0-%ld", (long)irq, (long)(irq_user_max - irq_user_min));
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
         current_syscall_error.rangeErrorMax = irq_user_max - irq_user_min;
