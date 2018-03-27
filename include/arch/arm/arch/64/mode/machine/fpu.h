@@ -86,6 +86,24 @@ static inline void loadFpuState(user_fpu_state_t *src)
     );
 }
 
+/* Trap any FPU related instructions to EL2 */
+static inline void enableTrapFpu(void)
+{
+    word_t cptr;
+    MRS("cptr_el2", cptr);
+    cptr |= (BIT(10) | BIT(31));
+    MSR("cptr_el2", cptr);
+}
+
+/* Disable trapping FPU instructions to EL2 */
+static inline void disableTrapFpu(void)
+{
+    word_t cptr;
+    MRS("cptr_el2", cptr);
+    cptr &= ~(BIT(10) | BIT(31));
+    MSR("cptr_el2", cptr);
+}
+
 /* Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU. */
 static inline void enableFpu(void)
