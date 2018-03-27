@@ -15,6 +15,8 @@
 
 #include <mode/machine/registerset.h>
 
+extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
+
 #ifdef CONFIG_HAVE_FPU
 /* Store state in the FPU registers into memory. */
 static inline void saveFpuState(user_fpu_state_t *dest)
@@ -134,6 +136,10 @@ static inline void enableFpu(void)
     MSR("cpacr_el1", cpacr);
 }
 
+static inline bool_t isFpuEnable(void)
+{
+    return isFPUEnabledCached[SMP_TERNARY(getCurrentCPUIndex(), 0)];
+}
 #endif /* CONFIG_HAVE_FPU */
 
 /* Disable the FPU so that usage of it causes a fault */
