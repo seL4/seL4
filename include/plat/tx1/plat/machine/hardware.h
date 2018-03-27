@@ -16,6 +16,7 @@
 #include <config.h>
 #include <basic_types.h>
 #include <linker.h>
+#include <arch/object/vcpu.h>
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
 
@@ -94,7 +95,11 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
 static inline void
 handleReservedIRQ(irq_t irq)
 {
-
+    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+        VGICMaintenance();
+        return;
+    }
+    printf("spurious irq %d\n", (int)irq);
 }
 
 #endif /* __PLAT_MACHINE_HARDWARE_H */
