@@ -87,8 +87,22 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 };
 
 static const p_region_t BOOT_RODATA dev_p_regs[] = {
-    { UARTA_SYNC_PADDR,     UARTA_SYNC_PADDR + (BIT(seL4_PageBits) * 3 ) },    /* 12 KB, multiple */
-    { TMR_PADDR,            TMR_PADDR + BIT(seL4_PageBits) }                   /* 4 KB            */
+    { GICV_PADDR,            GICV_PADDR + BIT(seL4_PageBits) },
+    { CLK_RESET_PADDR,       CLK_RESET_PADDR + BIT(seL4_PageBits) },
+    { ICTLR_PADDR,           ICTLR_PADDR + BIT(seL4_PageBits) },
+    { SYS_REG_PADDR,         SYS_REG_PADDR + BIT(seL4_PageBits) },
+    { GPIO_PADDR,            GPIO_PADDR + BIT(seL4_PageBits) },
+    { APB_DMA_PADDR,         APB_DMA_PADDR + BIT(seL4_PageBits) * 4 },
+    { I2C1_4_PADDR,          I2C1_4_PADDR + BIT(seL4_PageBits) },
+    { I2C5_6_SPI2B1_4_PADDR, I2C5_6_SPI2B1_4_PADDR + BIT(seL4_PageBits) },
+    { RTC_PMC_PADDR,         RTC_PMC_PADDR + BIT(seL4_PageBits) },
+    { MISC_PADDR,            MISC_PADDR + BIT(seL4_PageBits) * 3 },
+    { FUSE_KFUSE_PADDR,      FUSE_KFUSE_PADDR + BIT(seL4_PageBits) },
+    { MC_PADDR,              MC_PADDR + BIT(seL4_PageBits) },
+    { PINMUX_AUX_PADDR,      PINMUX_AUX_PADDR + BIT(seL4_PageBits) },
+    { CSITE_PADDR,           CSITE_PADDR + BIT(seL4_PageBits) * 8192 },         /* 32 MB           */
+    { UARTA_SYNC_PADDR,      UARTA_SYNC_PADDR + (BIT(seL4_PageBits) * 3 ) },    /* 12 KB, multiple */
+    { TMR_PADDR,             TMR_PADDR + BIT(seL4_PageBits) }                   /* 4 KB            */
 };
 
 /* Handle a platform-reserved IRQ. */
