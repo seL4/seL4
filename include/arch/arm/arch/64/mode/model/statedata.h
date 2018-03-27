@@ -31,4 +31,8 @@ extern pude_t armKSGlobalKernelPUD[BIT(PUD_INDEX_BITS)] VISIBLE;
 extern pde_t armKSGlobalKernelPDs[BIT(PUD_INDEX_BITS)][BIT(PD_INDEX_BITS)] VISIBLE;
 extern pte_t armKSGlobalKernelPT[BIT(PT_INDEX_BITS)] VISIBLE;
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+extern vcpu_t *armHSCurVCPU;
+extern bool_t armHSVCPUActive;
+#endif
 #endif /* __ARCH_MODEL_STATEDATA_64_H */
