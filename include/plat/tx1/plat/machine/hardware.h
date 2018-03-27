@@ -88,7 +88,7 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 
 static const p_region_t BOOT_RODATA dev_p_regs[] = {
     { UARTA_SYNC_PADDR,     UARTA_SYNC_PADDR + (BIT(seL4_PageBits) * 3 ) },    /* 12 KB, multiple */
-    { TMR_PADDR,            TMR_PADDR + BIT(seL4_PageBits) }                   /* 4 Kb            */
+    { TMR_PADDR,            TMR_PADDR + BIT(seL4_PageBits) }                   /* 4 KB            */
 };
 
 /* Handle a platform-reserved IRQ. */
