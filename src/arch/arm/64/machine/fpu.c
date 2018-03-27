@@ -23,6 +23,9 @@ fpsimd_init(void)
 {
     /* Set the FPU to lazy switch mode */
     disableFpu();
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        enableFpuEL01();
+    }
 
     return true;
 }
