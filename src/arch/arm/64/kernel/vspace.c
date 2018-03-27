@@ -51,6 +51,28 @@ enum mair_types {
     NORMAL = 4
 };
 
+/* Stage-2 translation memory attributes */
+enum mair_s2_types {
+    S2_DEVICE_nGnRnE = 0b0000,
+    S2_DEVICE_nGnRE = 0b0001,
+    S2_DEVICE_nGRE  = 0b0010,
+    S2_DEVICE_GRE = 0b0011,
+
+    S2_NORMAL_INNER_NC_OUTER_NC = 0b0101,
+    S2_NORMAL_INNER_WTC_OUTER_NC = 0b0110,
+    S2_NORMAL_INNER_WBC_OUTER_NC = 0b0111,
+
+    S2_NORMAL_INNER_NC_OUTER_WTC = 0b1001,
+    S2_NORMAL_INNER_WTC_OUTER_WTC = 0b1010,
+    S2_NORMAL_INNER_WBC_OUTER_WTC = 0b1011,
+
+    S2_NORMAL_INNER_NC_OUTER_WBC = 0b1101,
+    S2_NORMAL_INNER_WTC_OUTER_WBC = 0b1110,
+    S2_NORMAL_INNER_WBC_OUTER_WBC = 0b1111,
+
+    S2_NORMAL = S2_NORMAL_INNER_WBC_OUTER_WBC
+};
+
 /* Leif from Linaro said the big.LITTLE clusters should be treated as
  * inner shareable, and we believe so, although the Example B2-1 given in
  * ARM ARM DDI 0487B.b (ID092517) says otherwise.
