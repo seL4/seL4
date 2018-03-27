@@ -1515,7 +1515,7 @@ performASIDControlInvocation(void *frame, cte_t *slot,
     cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
                                          MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
 
-    memzero(frame, BIT(pageBitsForSize(ARMSmallPage)));
+    memzero(frame, BIT(seL4_ASIDPoolBits));
 
     cteInsert(
         cap_asid_pool_cap_new(
