@@ -109,6 +109,13 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
         return EXCEPTION_SYSCALL_ERROR;
     }
     irq += irq_user_min;
+
+    if (isIRQActive(irq)) {
+        userError("IRQControl: IRQ %d is already active.", (int)irq);
+        current_syscall_error.type = seL4_RevokeFirst;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     vector = (word_t)irq + IRQ_INT_OFFSET;
 
     lu_ret = lookupTargetSlot(cnodeCap, index, depth);
@@ -130,13 +137,6 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
         word_t level = getSyscallArg(4, buffer);
         word_t polarity = getSyscallArg(5, buffer);
 
-
-        if (isIRQActive(irq)) {
-            userError("IOAPICGet: IRQ %d is already active.", (int)irq);
-            current_syscall_error.type = seL4_RevokeFirst;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
         status = ioapic_decode_map_pin_to_vector(ioapic, pin, level, polarity, vector);
         if (status != EXCEPTION_NONE) {
             return status;
@@ -155,10 +155,6 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, 
         /* until we support msi interrupt remaping through vt-d we ignore the
          * vector and trust the user */
         (void)vector;
-        if (isIRQActive(irq)) {
-            current_syscall_error.type = seL4_RevokeFirst;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
 
         if (pci_bus > PCI_BUS_MAX) {
             current_syscall_error.type = seL4_RangeError;
