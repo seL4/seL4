@@ -113,6 +113,16 @@ static inline void enableFpuEL01(void)
     MSR("cpacr_el1", cpacr);
 }
 
+/* Disable FPU access in EL0 */
+static inline void disableFpuEL0(void)
+{
+    word_t cpacr;
+    MRS("cpacr_el1", cpacr);
+    cpacr &= ~(3 << CPACR_EL1_FPEN);
+    cpacr |= (1 << CPACR_EL1_FPEN);
+    MSR("cpacr_el1", cpacr);
+}
+
 /* Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU. */
 static inline void enableFpu(void)
