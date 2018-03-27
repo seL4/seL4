@@ -956,6 +956,8 @@ makeUser1stLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t attribute
     }
 }
 
+#define PAR_EL1_MASK 0x0000fffffffff000ul
+#define GET_PAR_ADDR(x) ((x) & PAR_EL1_MASK)
 exception_t
 handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
@@ -965,6 +967,13 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
         addr = getFAR();
         fault = getDFSR();
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+            /* use the IPA */
+            if (armHSVCPUActive) {
+                addr = GET_PAR_ADDR(ats1e1r(addr)) | (addr & MASK(PAGE_BITS));
+            }
+#endif
         current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
     }
@@ -974,6 +983,12 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 
         pc = getRestartPC(thread);
         fault = getIFSR();
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+        if (armHSVCPUActive) {
+            pc = GET_PAR_ADDR(ats1e1r(pc)) | (pc & MASK(PAGE_BITS));
+        }
+#endif
         current_fault = seL4_Fault_VMFault_new(pc, fault, true);
         return EXCEPTION_FAULT;
     }
