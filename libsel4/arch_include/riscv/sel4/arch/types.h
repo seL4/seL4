@@ -59,6 +59,7 @@ typedef struct seL4_UserContext_ {
 
 typedef enum {
     seL4_RISCV_Default_VMAttributes = 7,
+    // RVTODO: understand and document these attributes
 
     seL4_RISCV_PTE_TYPE_TABLE = 0,
     seL4_RISCV_PTE_TYPE_TABLE_GLOBAL = 1,

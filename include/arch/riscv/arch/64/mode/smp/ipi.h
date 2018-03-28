@@ -26,6 +26,7 @@
 #ifdef ENABLE_SMP_SUPPORT
 
 typedef enum {
+    // RVTODO: fix this
     /* placeholder for 64-bit ARM IPI types */
     IpiNumModeRemoteCall
 } IpiModeRemoteCall_t;

@@ -22,6 +22,7 @@
 #if CONFIG_MAX_NUM_NODES > 1
 
 /* Emulate popcount in software */
+// RVTODO: This has been copied from x86, deduplicate
 static int popcount_emulate(word_t mask)
 {
     char count = 0;

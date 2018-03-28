@@ -31,6 +31,8 @@
 void slowpath(syscall_t syscall)
 NORETURN;
 
+// RVTODO: why are we putting things in custom sections? This needs benchmarking and some
+// post compilation binary analysis to justify
 void fastpath_call(word_t cptr, word_t r_msgInfo)
 VISIBLE NORETURN SECTION(".vectors.text");
 
@@ -115,11 +117,13 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
+    // RVTODO: the current thread is passed into this function
     lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
 
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;
+    // RVTODO: the current thread is passed into this function
     register word_t cur_thread_reg asm("a2") = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
 
     asm volatile(
@@ -178,6 +182,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         [REGSIZE] "i" (sizeof(word_t)),
         [badge] "r" (badge),
         [info]  "r" (msgInfo)
+        // RVTODO: why is t0 being declared clobbered when this doesn't return?
         : "memory", "t0"
     );
 

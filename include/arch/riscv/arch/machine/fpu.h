@@ -25,6 +25,7 @@ static inline bool_t isDirtyFPU(void)
 {
     word_t sstatus = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS];
     /* Check SD Flag in sstatus */
+    // RVTODO: Give SD Flag a definition. sstatus in bitfield perhaps?
     return !!(sstatus & BIT(CONFIG_WORD_SIZE - 1));
 }
 
@@ -95,6 +96,9 @@ static inline void saveFpuState(user_fpu_state_t *dest)
 static inline void loadFpuState(user_fpu_state_t *src)
 {
 
+    // RVTODO: This comment or function name is wrong as 'dirty' and 'on'
+    // are not the same thing. Overall something is very wrong with the
+    // logic in this function
     /* FPU is not off */
     if (!isDirtyFPU()) {
         word_t temp_fcsr = 0;
@@ -142,9 +146,11 @@ static inline void loadFpuState(user_fpu_state_t *src)
             [FREGSIZE] "i" (sizeof(src->fpregs[0]))
         );
 
+        // RVTODO: should this be here?
         /* set fpu to clean state */
         //cleanFPUState();
     } else {
+        // RVTODO: should this be a panic then?
         printf("FPU restore should never be dirty\n");
     }
 }
@@ -161,6 +167,7 @@ static inline bool_t isFpuEnable(void)
 static inline void enableFpu(void)
 {
     word_t sstatus = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS];
+    // RVTODO: why do enableFpu and disableFpu fiddle with different bits?
     sstatus |=  SSTATUS_FS_INITIAL;
     NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS] = sstatus;
 

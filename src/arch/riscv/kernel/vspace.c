@@ -95,6 +95,8 @@ map_kernel_window(void)
 
 
     /* Calculate the number of PTEs to map the kernel in the first level PT */
+    // RVTODO: window size should be well defined multiple of the page size and should not need
+    // any rounding
     int num_lvl1_entries = ROUND_UP((BIT(CONFIG_KERNEL_WINDOW_SIZE_BIT) / RISCV_GET_LVL_PGSIZE(1)), 1);
 
     for (int i = 0; i < num_lvl1_entries; i++) {
@@ -142,6 +144,8 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap, uint32_t ptLevel)
                       0,  /* read */
                       1 /* valid */
                   );
+    // RVTODO: make this a mcahine helper. probably needs a compiler barrier to ensure
+    // *targetSlot happened before
     asm volatile ("sfence.vma");
 }
 
@@ -325,12 +329,14 @@ bool_t CONST isVTableRoot(cap_t cap)
     return isRoot;
 }
 
+// RVTODO: is this indirection needed? seems to only be one root type at the moment
 bool_t CONST isValidNativeRoot(cap_t cap)
 {
     return isVTableRoot(cap) &&
            cap_page_table_cap_get_capPTIsMapped(cap);
 }
 
+// RVTODO: is this indirection needed? seems to only be one root type at the moment
 pte_t *getValidNativeRoot(cap_t vspace_cap)
 {
     if (isValidNativeRoot(vspace_cap)) {
@@ -364,6 +370,7 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
                  cap_get_capType(bufferCap) != cap_frame_cap)) {
         return NULL;
     }
+    // RVTODO: check if cap is device cap
 
     vm_rights = cap_frame_cap_get_capFVMRights(bufferCap);
     if (likely(vm_rights == VMReadWrite ||
@@ -381,11 +388,15 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 
 static inline pptr_t getPPtrFromHWPTE(pte_t *pte)
 {
+    // RVTODO: use bitfield accessors
     return ptrFromPAddr((pte->words[0] >> PTE_PPN_SHIFT) << (seL4_PageTableBits));
 }
 
+// RVTODO: this function has a confusing name as it is doing two things
+// checking if the entry is for another page table *AND* if the entry is valid
 static inline pptr_t isValidHWPageTable(pte_t *pte)
 {
+    // RVTODO: read the R W X bits and valid bits explicitly
     return (pte->words[0] & 0xf) == 1;
 }
 
@@ -396,6 +407,7 @@ static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, ppt
     pte_t* pt;
     paddr_t pt_paddr;
 
+    // RVTODO: where is ptLevel declared????
     assert(ptLevel <= CONFIG_PT_LEVELS);
 
     find_ret = findVSpaceForASID(asid);
@@ -540,6 +552,7 @@ exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* 
 
 void hwASIDFlush(asid_t asid)
 {
+    // RVTODO: define abstraction operation for this in machine.h
     asm volatile ("sfence.vma x0, %0" :: "r" (asid): "memory");
 }
 
@@ -580,6 +593,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     }
 }
 
+// RVTODO: this appears to be unused
 static pte_t pte_pte_invalid_new(void)
 {
     pte_t invalid_pte = (pte_t) {
@@ -600,6 +614,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
 
+    // RVTODO: use a lookup leaf function instead of looking up at a particular level
     lu_ret = lookupPTSlot(find_ret.vspace_root, vptr, RISCVpageAtPTLevel(page_size));
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
         return;
@@ -637,6 +652,7 @@ setVMRoot(tcb_t *tcb)
     setVSpaceRoot(lvl1pt, asid);
 }
 
+// RVTODO: is this abstraction around vtables needed?
 bool_t CONST
 isValidVTableRoot(cap_t cap)
 {
@@ -652,6 +668,10 @@ checkValidIPCBuffer(vptr_t vptr, cap_t cap)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    // RVTODO: check for that frame is not a device frame
+
+    // RVTODO use seL4_IPCBufferSizeBits constant as the ipc buffer is not 9
+    // bits on 64-bit
     if (unlikely(vptr & MASK(9))) {
         userError("Requested IPC Buffer location 0x%x is not aligned.",
                   (int)vptr);
@@ -695,6 +715,7 @@ makeUserPTE(paddr_t paddr, vm_rights_t vm_rights)
                1, /* accessed */
                0, /* global */
                RISCVGetUserFromVMRights(vm_rights),   /* user */
+               // RVTODO: no support for no execute?
                1, /* execute */
                RISCVGetWriteFromVMRights(vm_rights),  /* write */
                1, /* read */
@@ -762,6 +783,8 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    // RVTODO: we have checked for validnative root, compared against page table cap
+    // and are now checking for vtable root, this seems excessive and redundant
     if (unlikely(!isVTableRoot(lvl1ptCap))) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
@@ -804,6 +827,8 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
      * this PT be mapped in. The functions returns the ptSlot of ptLevel -1
      * that this newly PT should be installed at.
      */
+    // RVTODO: we just want to lookup the leaf and then see how many bits are left to
+    // translate (i.e. the level of the leaf)
     lu_ret = lookupPTSlot(lvl1pt, vaddr, CONFIG_PT_LEVELS);
     ptLevel = lu_ret.missingPTLevel;
 
@@ -818,6 +843,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     paddr = addrFromPPtr(
                 PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
 
+    // RVTODO: why is there makeUserPTE helper and yet we make a user pte manually here
     pte = pte_new(
               (paddr >> RISCV_4K_PageBits),
               0, /* sw */
@@ -842,10 +868,12 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
 struct create_mappings_pte_return {
     exception_t status;
     pte_t pte;
+    // RVTODO: does riscv support pte ranges for 'larger' frames?
     pte_range_t pte_entries;
 };
 typedef struct create_mappings_pte_return create_mappings_pte_return_t;
 
+// RVTODO: what is the point of this safe mapping entries?
 static create_mappings_pte_return_t
 createSafeMappingEntries_PTE
 (paddr_t base, word_t vaddr, vm_page_size_t frameSize,
@@ -910,6 +938,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
         if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) != asidInvalid) {
+            // RVTODO: this is nonsense. a mapped frame *CANNOT* be mapped
             if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
                 userError("RISCVPageMap: Trying to map the same frame cap to different vaddr %p", vaddr);
                 current_syscall_error.type =
@@ -940,6 +969,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
                              lvl1ptCap));
 
         /* Check if this page is already mapped */
+        // RVTODO: lookup leaf node and see if remaining bits == frameSize
         lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
 
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
@@ -953,6 +983,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
         asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
 
+        // RVTODO: how are we checking the lvl1pt *AFTER* having just done lookups with it
         {
             findVSpaceForASID_ret_t find_ret;
 
@@ -1019,6 +1050,8 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationUnmap(cap, cte);
     }
+
+    // RVTODO: what happend to PageReMap
 
     case RISCVPageGetAddress: {
 
@@ -1254,6 +1287,7 @@ exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
     return EXCEPTION_NONE;
 }
 
+// RVTODO: this function does not look to be called
 exception_t
 performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 {
@@ -1292,7 +1326,9 @@ performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 void
 Arch_userStackTrace(tcb_t *tptr)
 {
+    // RVTODO: implement
     /* Not implemented */
     printf("Arch_userStackTrace not implemented\n");
+    // RVTODO: not having implemented a strictly informational call is not a halt'able offense
     halt();
 }

@@ -10,6 +10,10 @@
  * @TAG(DATA61_GPL)
  */
 
+// RVTODO: this does not look like a correct capdl implementation
+
+// RVTODO: the DEBUG macro is *not* meant to be checked in the kernel as there are
+// too many notions of debug
 #ifdef DEBUG
 
 #include <object/structures.h>

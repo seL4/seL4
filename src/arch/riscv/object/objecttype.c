@@ -58,6 +58,7 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
+        // RVTODO: remove printf
         printf("Invalid arch cap type %d\n", cap_get_capType(cap));
         fail("Invalid arch cap type");
     }
@@ -105,6 +106,8 @@ Arch_finaliseCap(cap_t cap, bool_t final)
     return cap_null_cap_new();
 }
 
+// RVTODO: this does not appear to be used. determine whether it should be, and if it is
+// why it claims we only need to clear whether it is mapped
 static cap_t CONST
 resetMemMapping(cap_t cap)
 {
@@ -274,6 +277,7 @@ Arch_decodeInvocation(
     case cap_asid_pool_cap:
         return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
     default:
+        // RVTODO: it's not many things. this function needs to have a return value as well
         printf("Not page_cap");
     }
 }
@@ -288,6 +292,7 @@ bool_t
 Arch_isFrameType(word_t t)
 {
     switch (t) {
+    // RVTODO: there are more frame types than this
     case seL4_RISCV_4K_Page:
         return true;
     default:

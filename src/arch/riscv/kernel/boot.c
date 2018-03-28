@@ -42,6 +42,7 @@ extern char ki_end[1];
 BOOT_DATA static volatile int node_boot_lock = 0;
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 
+// RVTODO: this is an exact copy of the ARM code
 BOOT_CODE static bool_t
 create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
@@ -95,6 +96,7 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, 
     return cap;
 }
 
+// RVTODO: this looks copied from ARM, dedup
 /**
  * Split mem_reg about reserved_reg. If memory exists in the lower
  * segment, insert it. If memory exists in the upper segment, return it.
@@ -135,6 +137,7 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
     return residual_reg;
 }
 
+// RVTODO: direct copy of ARM
 BOOT_CODE static void
 init_freemem(region_t ui_reg)
 {
@@ -262,6 +265,8 @@ release_secondary_cpus(void)
     /* release the cpus at the same time */
     node_boot_lock = 1;
 
+    // RVTODO: there is no memory barrer in below loop and ksNumCPUs is not
+    // volatile. how does this work?
     /* Wait until all the secondary cores are done initialising */
     while (ksNumCPUs != CONFIG_MAX_NUM_NODES);
 }
@@ -337,6 +342,7 @@ try_init_kernel(
      * to cover the user image + ipc buffer and bootinfo frames */
     it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
     if (cap_get_capType(it_pd_cap) == cap_null_cap) {
+        // RVTODO: cryptic printout
         printf("cap == null \n");
         return false;
     }
@@ -401,6 +407,8 @@ try_init_kernel(
     /* convert the remaining free memory into UT objects and provide the caps */
     if (!create_untypeds(
                 root_cnode_cap,
+                // RVTODO: why are the vectors declared as boot only then if they are used
+                // after boot ???
                 /* don't retype kernek boot area, vectors are still used */
     (region_t) {
     0
@@ -439,12 +447,14 @@ init_kernel(
     uint64_t hartid
 )
 {
+    // RVTODO: is it safe to initialize the platform before the cpu?
     init_plat();
     bool_t result;
 
 #if CONFIG_MAX_NUM_NODES > 1
     if (hartid == 0) {
         printf( "********* seL4 microkernel on RISC-V %d-bit platform *********\n", CONFIG_WORD_SIZE);
+        // RVTODO: why are we initializing the platform again?
         init_plat();
         result = try_init_kernel(ui_p_reg_start,
                                  ui_p_reg_end,

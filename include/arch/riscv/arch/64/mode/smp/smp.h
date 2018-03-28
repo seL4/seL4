@@ -36,6 +36,7 @@ static inline CONST cpu_id_t
 getCurrentCPUIndex(void)
 {
     cpu_id_t cpu_id;
+    // RVTODO: RISC-V should have better TLS mechanisms than this
     word_t sp = getCurSP();
 
     sp -= (word_t) kernel_stack_alloc;

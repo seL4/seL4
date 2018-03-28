@@ -72,6 +72,7 @@ enum _register {
     SCAUSE,
     SSTATUS,
     SEPC,
+    // RVTODO: understand why HARTID a register?
     HARTID,
     NEXTPC,
 

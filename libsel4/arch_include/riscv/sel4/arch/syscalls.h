@@ -531,7 +531,7 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
     riscv_sys_send_recv(seL4_SysDebugCapIdentify, cap, &cap, 0, &unused0, &unused1, &unused2,
                         &unused3, &unused4);
     return (seL4_Uint32)cap;
-
+// RVTODO: missing  end brace? what is even happening here
     char *strcpy(char *, const char *);
     LIBSEL4_INLINE_FUNC void
     seL4_DebugNameThread(seL4_CPtr tcb, const char *name) {

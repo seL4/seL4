@@ -25,6 +25,7 @@
 #ifdef CONFIG_ENABLE_BENCHMARK
 #error "RISC-V doesn't support timestamp() function yet"
 
+// RVTODO: why is there anything here if there is a #error above?
 extern uint64_t ksEntry;
 extern uint64_t ksExit;
 extern uint32_t ksLogIndex;

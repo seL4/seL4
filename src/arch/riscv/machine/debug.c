@@ -16,6 +16,8 @@
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  */
 
+// RVTODO: what is this? why is nothing implemented?
+
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>

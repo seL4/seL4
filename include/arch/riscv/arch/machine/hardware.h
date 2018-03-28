@@ -19,6 +19,7 @@
 #ifndef __ARCH_MACHINE_HARDWARE_H
 #define __ARCH_MACHINE_HARDWARE_H
 
+/* RVTODO: check if risc-v spec actually declares the l1 cache line size */
 #define L1_CACHE_LINE_SIZE 64
 
 #ifndef __ASSEMBLER__
@@ -102,6 +103,8 @@ pageBitsForSize(vm_page_size_t pagesize)
     }
 }
 
+// RVTODO: this is horribly fragile and the abstractions in the vspace code should be
+// looked at to remove this
 /* For optimisation/simplicity, this function assumes size types start from 0 linearly, otherwise it won't work */
 static inline uint32_t CONST
 RISCVpageAtPTLevel(vm_page_size_t pagesize)
@@ -127,6 +130,7 @@ RISCVpageAtPTLevel(vm_page_size_t pagesize)
 #define FSTORE fsd
 #endif /* CONFIG_HAVE_FPU */
 
+/* RVTODO: this is a general utility macro and shouldn't be here */
 #define _STRINGIFY(a) #a
 #define STRINGIFY(a) _STRINGIFY(a)
 

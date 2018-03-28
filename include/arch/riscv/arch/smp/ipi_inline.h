@@ -23,6 +23,7 @@
 #include <arch/sbi.h>
 
 #ifdef ENABLE_SMP_SUPPORT
+// RVTODO: these functions appear unused
 static inline void doRemoteStall(word_t cpu)
 {
     doRemoteOp0Arg(IpiRemoteCall_Stall, cpu);

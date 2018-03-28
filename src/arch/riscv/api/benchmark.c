@@ -16,6 +16,8 @@
  */
 
 #ifdef CONFIG_ENABLE_BENCHMARK
+// RVTODO: #error in benchmark.h implies that this code cannot be used and
+// may not be correct
 
 #include <benchmark.h>
 #include <arch/benchmark.h>

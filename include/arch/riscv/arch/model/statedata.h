@@ -35,6 +35,8 @@ NODE_STATE_END(archNodeState);
 
 extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
+// RVTODO: hardware structures are normally size aligned, use consistent definition
+// for size and alignment
 /* RISC-V has n-level page tables (depending on configured paging mode),
  * each of which is 4KiB, PTEs are of word_t size
   */
