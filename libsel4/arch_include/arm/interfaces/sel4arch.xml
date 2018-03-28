@@ -216,4 +216,53 @@
             description="The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>
         </method>
     </interface>
+    <interface name="seL4_ARM_VCPU" manual_name="VCPU">
+        <method id="ARMVCPUSetTCB" name="SetTCB" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
+            manual_name="Set TCB">
+                <brief>
+                    Bind a TCB to a virtual CPU
+                </brief>
+             <description>
+                 There is a 1:1 relationship between a virtual CPU and a TCB. If either (or both) of them is
+                 associated with another one, they will be dissociated, and then associated to the
+                 ones called in this system calls.
+             </description>
+            <param dir="in" name="tcb" type="seL4_TCB"
+            description="Capability to TCB to bind to a virtual CPU"/>
+        </method>
+        <method id="ARMVCPUInjectIRQ" name="InjectIRQ" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
+            manual_name="Inject IRQ">
+                <brief>
+                    Inject an IRQ to a virtual CPU
+                </brief>
+            <param dir="in" name="virq" type="seL4_Uint16"
+            description="Virtual IRQ ID"/>
+            <param dir="in" name="priority" type="seL4_Uint8"
+            description="Priority of the IRQ to be injected"/>
+            <param dir="in" name="group" type="seL4_Uint8"
+            description="IRQ group"/>
+            <param dir="in" name="index" type="seL4_Uint8"
+            description="IRQ index"/>
+        </method>
+        <method id="ARMVCPUReadReg" name="ReadRegs" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
+            manual_name="Read Registers">
+                <brief>
+                    Read a virtual CPU register
+                </brief>
+            <param dir="in" name="field" type="seL4_Word"
+            description="Register to read from a VCPU"/>
+            <param dir="out" name="value" type="seL4_Word"
+            description="Returned value of the VCPU register"/>
+        </method>
+        <method id="ARMVCPUWriteReg" name="WriteRegs" condition="defined(CONFIG_ARM_HYPERVISOR_SUPPORT)"
+            manual_name="Write Registers">
+                <brief>
+                    Write a virtual CPU register
+                </brief>
+            <param dir="in" name="field" type="seL4_Word"
+            description="Register ID to write to a VCPU"/>
+            <param dir="in" name="value" type="seL4_Word"
+            description="Value to be written to the VCPU register"/>
+        </method>
+    </interface>
 </api>
