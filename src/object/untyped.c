@@ -131,7 +131,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     }
 
     /* Is the region where the user wants to put the caps valid? */
-    nodeSize = 1 << cap_cnode_cap_get_capCNodeRadix(nodeCap);
+    nodeSize = 1ul << cap_cnode_cap_get_capCNodeRadix(nodeCap);
     if (nodeOffset > nodeSize - 1) {
         userError("Untyped Retype: Destination node offset #%d too large.",
                   (int)nodeOffset);
