@@ -31,6 +31,9 @@
 /* NOTE: Regions are not allowed to be adjacent! */
 
 const p_region_t BOOT_RODATA avail_p_regs[] = {
+    // RVTODO: the simulator allows us to pass different values for the amount of memory,
+    // and so this is far too fragile. These values should be filled from the fdt once
+    // the kernel window mappings are fixed and we can access the dtb
     { .start = 0x00000000C0000000, .end = 0x0000000ffffffff }
 };
 
