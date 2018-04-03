@@ -51,7 +51,7 @@ static bool_t PURE pteCheckIfMapped(pte_t *pte);
 static word_t CONST
 RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
 {
-    return vm_rights != VMNoAccess;
+    return (vm_rights != VMNoAccess) && (vm_rights != VMReadOnly);
 }
 
 RISCVGetUserFromVMRights(vm_rights_t vm_rights)
