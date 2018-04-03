@@ -59,6 +59,12 @@ RISCVGetUserFromVMRights(vm_rights_t vm_rights)
     return vm_rights != VMKernelOnly;
 }
 
+static inline word_t CONST
+RISCVGetReadFromVMRights(vm_rights_t vm_rights)
+{
+    return (vm_rights != VMNoAccess) && (vm_rights != VMWriteOnly);
+}
+
 /* ==================== BOOT CODE STARTS HERE ==================== */
 
 BOOT_CODE void
