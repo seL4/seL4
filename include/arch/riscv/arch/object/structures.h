@@ -53,7 +53,8 @@ enum vm_rights {
     VMNoAccess = 0,
     VMKernelOnly = 1,
     VMReadOnly = 2,
-    VMReadWrite = 3
+    VMWriteOnly = 3,
+    VMReadWrite = 4
 };
 typedef uint32_t vm_rights_t;
 
