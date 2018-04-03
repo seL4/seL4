@@ -413,9 +413,6 @@ static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, ppt
     pte_t* pt;
     paddr_t pt_paddr;
 
-    // RVTODO: where is ptLevel declared????
-    assert(ptLevel <= CONFIG_PT_LEVELS);
-
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE)) {
         userError("Couldn't find a root vspace for asid");
