@@ -21,9 +21,10 @@ base 64
 ---- Arch-independent object types
 
 block VMFault {
-    padding   576
+    padding   512
     field     IP                64
     field     Addr              64
+    field     PrefetchFault     64
     padding                     32
     field     FSR               5
     padding                     8

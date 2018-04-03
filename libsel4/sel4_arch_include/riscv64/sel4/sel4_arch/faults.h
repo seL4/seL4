@@ -50,6 +50,7 @@ seL4_getArchFault(seL4_MessageInfo_t tag)
     case seL4_Fault_VMFault:
         return seL4_Fault_VMFault_new(seL4_GetMR(seL4_VMFault_IP),
                                       seL4_GetMR(seL4_VMFault_Addr),
+                                      seL4_GetMR(seL4_VMFault_PrefetchFault),
                                       seL4_GetMR(seL4_VMFault_FSR));
     default:
         return seL4_Fault_NullFault_new();

@@ -64,6 +64,7 @@
 enum {
     seL4_VMFault_IP,
     seL4_VMFault_Addr,
+    seL4_VMFault_PrefetchFault,
     seL4_VMFault_FSR,
     seL4_VMFault_Length,
 } seL4_VMFault_Msg;
