@@ -79,12 +79,12 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    /* Exclude impossibly large object sizes. This eliminates a
-       possible shift-overflow problem. It looks like this check
-       might be subsumed by the (objectSize >= word_bits) check below,
-       however further changes will require re-verification and are
-       considered low priority. */
-    if (userObjSize > seL4_MaxUntypedBits) {
+    objectSize = getObjectSize(newType, userObjSize);
+
+    /* Exclude impossibly large object sizes. getObjectSize can overflow if userObjSize
+       is close to 2^wordBits, which is nonsensical in any case, so we check that this
+       did not happen. userObjSize will always need to be less than wordBits. */
+    if (userObjSize >= wordBits || objectSize > seL4_MaxUntypedBits) {
         userError("Untyped Retype: Invalid object size.");
         current_syscall_error.type = seL4_RangeError;
         current_syscall_error.rangeErrorMin = 0;
@@ -198,11 +198,10 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
      * fits, it will also fit aligned up (by packing it on the right hand side
      * of the untyped).
      */
-    objectSize = getObjectSize(newType, userObjSize);
     untypedFreeBytes = BIT(cap_untyped_cap_get_capBlockSize(cap)) -
                        FREE_INDEX_TO_OFFSET(freeIndex);
 
-    if (objectSize >= wordBits || (untypedFreeBytes >> objectSize) < nodeWindow) {
+    if ((untypedFreeBytes >> objectSize) < nodeWindow) {
         userError("Untyped Retype: Insufficient memory "
                   "(%lu * %lu bytes needed, %lu bytes available).",
                   (word_t)nodeWindow,
