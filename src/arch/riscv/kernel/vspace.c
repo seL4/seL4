@@ -706,7 +706,7 @@ maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 /* The rest of the file implements the RISCV object invocations */
 
 static pte_t CONST
-makeUserPTE(paddr_t paddr, vm_rights_t vm_rights)
+makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
 {
     return pte_new(
                paddr >> RISCV_4K_PageBits,
@@ -715,8 +715,7 @@ makeUserPTE(paddr_t paddr, vm_rights_t vm_rights)
                1, /* accessed */
                0, /* global */
                RISCVGetUserFromVMRights(vm_rights),   /* user */
-               // RVTODO: no support for no execute?
-               1, /* execute */
+               executable, /* execute */
                RISCVGetWriteFromVMRights(vm_rights),  /* write */
                1, /* read */
                1 /* valid */
@@ -881,11 +880,12 @@ createSafeMappingEntries_PTE
 {
     create_mappings_pte_return_t ret;
     lookupPTSlot_ret_t lu_ret;
+    bool_t executable = vm_attributes_get_riscvExecuteNever(attr) ? 0 : 1;
 
     ret.pte_entries.base = 0;
     ret.pte_entries.length = 1;
 
-    ret.pte = makeUserPTE(base, vmRights);
+    ret.pte = makeUserPTE(base, executable, vmRights);
 
     lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
     if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
