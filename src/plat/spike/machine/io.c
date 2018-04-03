@@ -26,15 +26,6 @@
 #include <machine/fpu.h>
 #include <arch/machine/fpu.h>
 
-#define KNRM  "\x1B[0m"
-#define KRED  "\x1B[31m"
-#define KGRN  "\x1B[32m"
-#define KYEL  "\x1B[33m"
-#define KBLU  "\x1B[34m"
-#define KMAG  "\x1B[35m"
-#define KCYN  "\x1B[36m"
-#define KWHT  "\x1B[37m"
-
 static inline void print_format_cause(int cause_num)
 {
     switch (cause_num) {
@@ -110,9 +101,9 @@ void handle_exception(void)
         printf("sepc = %p\n", read_csr(sepc));
         printf("sbadaddr = %p\n", read_csr(sbadaddr));
         printf("sstatus = %p\n", read_csr(sstatus));
-        printf(KRED "Halt!\n");
+        printf("Halt!\n");
 
-        printf(KBLU"Register Context Dump \n");
+        printf("Register Context Dump \n");
 
         register word_t thread_context asm("t0");
         for (int i = 0; i < 32; i++) {
