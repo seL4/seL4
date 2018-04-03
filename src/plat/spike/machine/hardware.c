@@ -154,11 +154,15 @@ static inline int read_current_timer(unsigned long *timer_val)
 void
 resetTimer(void)
 {
-    // RVTODO: this has a race as if we run slow (like on a simulator)
-    // we will set a timeout in the past that will never trigger
-    /* This should be set properly relying on the frequency (on real HW) */
-    // RVTODO: decode this magic number into something sensible
-    sbi_set_timer(get_cycles() + (0x1fff));
+    uint64_t target;
+    // repeatedly try and set the timer in a loop as otherwise there is a race and we
+    // may set a timeout in the past, resulting in it never getting triggered
+    do {
+        /* This should be set properly relying on the frequency (on real HW) */
+        // RVTODO: decode this magic number into something sensible
+        target = get_cycles() + 0x1fff;
+        sbi_set_timer(target);
+    } while (get_cycles() > target);
 }
 
 /**
