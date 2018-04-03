@@ -76,9 +76,11 @@ Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
     return cap;
 }
 
-cap_t
+finaliseCap_ret_t
 Arch_finaliseCap(cap_t cap, bool_t final)
 {
+    finaliseCap_ret_t fc_ret;
+
     switch (cap_get_capType(cap)) {
     case cap_frame_cap:
 
@@ -103,7 +105,9 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
     }
-    return cap_null_cap_new();
+    fc_ret.remainder = cap_null_cap_new();
+    fc_ret.cleanupInfo = cap_null_cap_new();
+    return fc_ret;
 }
 
 // RVTODO: this does not appear to be used. determine whether it should be, and if it is
