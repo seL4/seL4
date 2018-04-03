@@ -58,25 +58,8 @@ typedef struct seL4_UserContext_ {
 } seL4_UserContext;
 
 typedef enum {
-    seL4_RISCV_Default_VMAttributes = 7,
-    // RVTODO: understand and document these attributes
-
-    seL4_RISCV_PTE_TYPE_TABLE = 0,
-    seL4_RISCV_PTE_TYPE_TABLE_GLOBAL = 1,
-    seL4_RISCV_PTE_TYPE_URX_SR = 2,
-    seL4_RISCV_PTE_TYPE_URWX_SRW = 3,
-    seL4_RISCV_PTE_TYPE_UR_SR = 4,
-    seL4_RISCV_PTE_TYPE_URW_SRW = 5,
-    seL4_RISCV_PTE_TYPE_URX_SRX = 6,
-    seL4_RISCV_PTE_TYPE_URWX_SRWX = 7,
-    seL4_RISCV_PTE_TYPE_SR = 8,
-    seL4_RISCV_PTE_TYPE_SRW = 9,
-    seL4_RISCV_PTE_TYPE_SRX = 10,
-    seL4_RISCV_PTE_TYPE_SRWX = 11,
-    seL4_RISCV_PTE_TYPE_SR_GLOBAL = 12,
-    seL4_RISCV_PTE_TYPE_SRW_GLOBAL = 13,
-    seL4_RISCV_PTE_TYPE_SRX_GLOBAL = 14,
-    seL4_RISCV_PTE_TYPE_SRWX_GLOBAL = 15,
+    seL4_RISCV_ExecuteNever = 0x1,
+    seL4_RISCV_Default_VMAttributes = 0,
     SEL4_FORCE_LONG_ENUM(seL4_RISCV_VMAttributes)
 } seL4_RISCV_VMAttributes;
 
