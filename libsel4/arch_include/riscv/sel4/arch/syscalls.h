@@ -531,32 +531,33 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
     riscv_sys_send_recv(seL4_SysDebugCapIdentify, cap, &cap, 0, &unused0, &unused1, &unused2,
                         &unused3, &unused4);
     return (seL4_Uint32)cap;
-// RVTODO: missing  end brace? what is even happening here
-    char *strcpy(char *, const char *);
-    LIBSEL4_INLINE_FUNC void
-    seL4_DebugNameThread(seL4_CPtr tcb, const char *name) {
-        strcpy((char*)seL4_GetIPCBuffer()->msg, name);
+}
 
-        seL4_Word unused0 = 0;
-        seL4_Word unused1 = 0;
-        seL4_Word unused2 = 0;
-        seL4_Word unused3 = 0;
-        seL4_Word unused4 = 0;
-        seL4_Word unused5 = 0;
+char *strcpy(char *, const char *);
+LIBSEL4_INLINE_FUNC void
+seL4_DebugNameThread(seL4_CPtr tcb, const char *name) {
+    strcpy((char*)seL4_GetIPCBuffer()->msg, name);
 
-        riscv_sys_send_recv(seL4_SysDebugNameThread, tcb, &unused0, 0, &unused1, &unused2, &unused3,
-                            &unused4, &unused5);
-    }
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    riscv_sys_send_recv(seL4_SysDebugNameThread, tcb, &unused0, 0, &unused1, &unused2, &unused3,
+                        &unused4, &unused5);
+}
 #endif
 
 #ifdef SEL4_DANGEROUS_CODE_INJECTION_KERNEL
-    static inline void
-    seL4_DebugRun(void (* userfn) (void *), void* userarg) {
-        register seL4_Word arg1 asm("a0") = (seL4_Word)userfn;
-        register seL4_Word arg2 asm("a1") = (seL4_Word)userarg;
-        register seL4_Word scno asm("a7") = seL4_SysDebugRun;
-        asm volatile ("ecall" : "+r"(arg1) : "r"(arg2), "r"(scno));
-    }
+static inline void
+seL4_DebugRun(void (* userfn) (void *), void* userarg) {
+    register seL4_Word arg1 asm("a0") = (seL4_Word)userfn;
+    register seL4_Word arg2 asm("a1") = (seL4_Word)userarg;
+    register seL4_Word scno asm("a7") = seL4_SysDebugRun;
+    asm volatile ("ecall" : "+r"(arg1) : "r"(arg2), "r"(scno));
+}
 #endif
 
 #endif
