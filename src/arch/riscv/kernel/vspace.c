@@ -693,14 +693,23 @@ maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
         return VMReadOnly;
     }
     if (vm_rights == VMReadWrite &&
-            seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+            (seL4_CapRights_get_capAllowRead(cap_rights_mask) || seL4_CapRights_get_capAllowWrite(cap_rights_mask))) {
         if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
+        } else if (!seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+            return VMWriteOnly;
         } else {
             return VMReadWrite;
         }
     }
-    return VMKernelOnly;
+    if (vm_rights == VMWriteOnly &&
+            seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
+        return VMWriteOnly;
+    }
+    if (vm_rights == VMKernelOnly) {
+        return VMKernelOnly;
+    }
+    return VMNoAccess;
 }
 
 /* The rest of the file implements the RISCV object invocations */
