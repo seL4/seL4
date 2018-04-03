@@ -732,7 +732,7 @@ makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
                RISCVGetUserFromVMRights(vm_rights),   /* user */
                executable, /* execute */
                RISCVGetWriteFromVMRights(vm_rights),  /* write */
-               1, /* read */
+               RISCVGetReadFromVMRights(vm_rights), /* read */
                1 /* valid */
            );
 }
