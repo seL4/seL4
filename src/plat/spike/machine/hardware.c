@@ -127,7 +127,6 @@ ackInterrupt(irq_t irq)
     }
 }
 
-static unsigned long timebase;
 static inline uint64_t get_cycles(void)
 #ifdef CONFIG_ARCH_RISCV_RV32
 {
@@ -177,14 +176,6 @@ initTimer(void)
     // RVTODO: why is this setting a different timeout to resetTimer?
     /* This should be set properly relying on the frequency (on real HW) */
     sbi_set_timer(get_cycles() + 0xfffff);
-}
-
-static void invalidateL2(void)
-{
-}
-
-static void finaliseL2Op(void)
-{
 }
 
 void plat_cleanL2Range(paddr_t start, paddr_t end)

@@ -206,13 +206,6 @@ init_irqs(cap_t root_cnode_cap)
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
 
-BOOT_CODE static bool_t
-create_device_frames(cap_t root_cnode_cap)
-{
-    /* No device frames for RISC-V so far */
-    return true;
-}
-
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 
 BOOT_CODE static void
