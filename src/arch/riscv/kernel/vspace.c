@@ -1288,38 +1288,29 @@ pteCheckIfMapped(pte_t *pte)
     return *((uint64_t *) pte) != 0;
 }
 
-exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
-                                        pte_t pte, pte_range_t pte_entries)
+static exception_t updatePTE(pte_t pte, pte_range_t pte_entries)
 {
-    unsigned int i;
+    /* we only need to check the first entries because of how createSafeMappingEntries
+     * works to preserve the consistency of tables */
 
-    ctSlot->cap = cap;
-
-    for (i = 0; i < pte_entries.length; i++) {
+    for (word_t i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
     }
     asm volatile ("sfence.vma");
     return EXCEPTION_NONE;
 }
 
-// RVTODO: this function does not look to be called
-exception_t
-performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
+exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
+                                        pte_t pte, pte_range_t pte_entries)
 {
-    word_t i, j UNUSED;
+    ctSlot->cap = cap;
+    return updatePTE(pte, pte_entries);
+}
 
-    /* we only need to check the first entries because of how createSafeMappingEntries
-     * works to preserve the consistency of tables */
-
-    j = pte_entries.length;
-    /** GHOSTUPD: "(\<acute>j <= 16, id)" */
-
-    for (i = 0; i < pte_entries.length; i++) {
-        pte_entries.base[i] = pte;
-    }
-    asm volatile ("sfence.vma");
-
-    return EXCEPTION_NONE;
+exception_t
+performPageInvocationRemapPTE(pte_t pte, pte_range_t pte_entries)
+{
+    return updatePTE(pte, pte_entries);
 }
 
 exception_t
