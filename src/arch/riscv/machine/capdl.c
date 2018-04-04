@@ -10,8 +10,6 @@
  * @TAG(DATA61_GPL)
  */
 
-// RVTODO: this does not look like a correct capdl implementation
-
 // RVTODO: the DEBUG macro is *not* meant to be checked in the kernel as there are
 // too many notions of debug
 #ifdef DEBUG
@@ -24,60 +22,9 @@
 #include <plat/machine/debug_helpers.h>
 #include <plat/machine/hardware.h>
 
-static int getDecodedChar(unsigned char *result)
-{
-}
-
-static void putEncodedChar(unsigned char c)
-{
-}
-
-static int getArg32(unsigned int *res)
-{
-}
-
-static void sendWord(unsigned int word)
-{
-}
-
-static cte_t *getMDBParent(cte_t *slot)
-{
-}
-
-static void sendPD(unsigned int address)
-{
-}
-
-static void sendPT(unsigned int address)
-{
-}
-
-static void sendASIDPool(unsigned int address)
-{
-}
-
-static void sendRunqueues(void)
-{
-}
-
-static void sendEPQueue(unsigned int epptr)
-{
-}
-
-static void sendCNode(unsigned int address, unsigned int sizebits)
-{
-}
-
-static void sendIRQNode(void)
-{
-}
-
-static void sendVersion(void)
-{
-}
-
 void capDL(void)
 {
+    fail("capDL support not implemented");
 }
 
 #endif
