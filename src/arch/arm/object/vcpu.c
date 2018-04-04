@@ -399,8 +399,8 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
 }
 
 
-static uint32_t
-readVCPUReg(vcpu_t *vcpu, uint32_t field)
+static word_t
+readVCPUReg(vcpu_t *vcpu, word_t field)
 {
     if (likely(armHSCurVCPU == vcpu)) {
         switch (field) {
@@ -486,7 +486,7 @@ readVCPUReg(vcpu_t *vcpu, uint32_t field)
 }
 
 static void
-writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
+writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     if (likely(armHSCurVCPU == vcpu)) {
         switch (field) {
@@ -786,7 +786,7 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 }
 
 exception_t
-invokeVCPUWriteReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
+invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     writeVCPUReg(vcpu, field, value);
     return EXCEPTION_NONE;
@@ -795,8 +795,8 @@ invokeVCPUWriteReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
 exception_t
 decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
 {
-    uint32_t field;
-    uint32_t value;
+    word_t field;
+    word_t value;
     if (length < 2) {
         userError("VCPUWriteReg: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
@@ -815,11 +815,11 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
 }
 
 exception_t
-invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field, bool_t call)
+invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
 {
     tcb_t *thread;
     thread = ksCurThread;
-    uint32_t value = readVCPUReg(vcpu, field);
+    word_t value = readVCPUReg(vcpu, field);
     if (call) {
         word_t *ipcBuffer = lookupIPCBuffer(true, thread);
         setRegister(thread, badgeRegister, 0);
@@ -834,7 +834,7 @@ invokeVCPUReadReg(vcpu_t *vcpu, uint32_t field, bool_t call)
 exception_t
 decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer)
 {
-    uint32_t field;
+    word_t field;
     if (length < 1) {
         userError("VCPUReadReg: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
