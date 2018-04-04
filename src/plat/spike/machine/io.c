@@ -117,22 +117,8 @@ void handle_exception(void)
 
 #ifdef CONFIG_PRINTING
 void
-qemu_uart_putchar(char c)
-{
-}
-
-unsigned char getDebugChar(void)
-{
-}
-
-void putDebugChar(unsigned char c)
-{
-    sbi_console_putchar(c);
-}
-
-void
 putConsoleChar(unsigned char c)
 {
-    putDebugChar(c);
+    sbi_console_putchar(c);
 }
 #endif

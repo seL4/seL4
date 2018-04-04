@@ -22,15 +22,4 @@
 #include <types.h>
 #include <stdarg.h>
 
-// RVTODO: the DEBUG macro is *not* meant to be checked in the kernel as there are too many
-// notions of debug
-#ifdef DEBUG
-void putDebugChar(unsigned char c);
-unsigned char getDebugChar(void);
-
-#define kernel_putchar(c) putDebugChar(c)
-#else /* !DEBUG */
-#define kernel_putchar(c) ((void)(0))
-#endif
-
 #endif
