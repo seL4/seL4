@@ -28,6 +28,15 @@
                    | HCR_TAC | HCR_SWIO |  HCR_TSC | HCR_IMO | HCR_FMO | HCR_AMO)
 #define HCR_VCPU   ( HCR_COMMON)
 
+#define SCTLR_EL1_UCI   BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
+                                       and IC IVAU in AArch64 state   */
+#define SCTLR_EL1_C     BIT(2)      /* Enable data and unified caches */
+#define SCTLR_EL1_I     BIT(12)     /* Enable instruction cache       */
+/* Disable MMU, SP alignment check, and alignment check */
+/* A57 default value */
+#define SCTLR_EL1_NATIVE   (0x34d58820 | SCTLR_EL1_C | SCTLR_EL1_I | SCTLR_EL1_UCI)
+#define SCTLR_EL1_VM       0x34d58820
+#define SCTLR_DEFAULT      SCTLR_EL1_NATIVE
 
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
