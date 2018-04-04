@@ -258,16 +258,7 @@ Arch_decodeInvocation(
     word_t *buffer
 )
 {
-    switch (cap_get_capType(cap)) {
-    case cap_page_table_cap:
-    case cap_frame_cap:
-    case cap_asid_control_cap:
-    case cap_asid_pool_cap:
-        return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
-    default:
-        // RVTODO: it's not many things. this function needs to have a return value as well
-        printf("Not page_cap");
-    }
+    return decodeRISCVMMUInvocation(label, length, cptr, slot, cap, extraCaps, buffer);
 }
 
 void
