@@ -59,6 +59,8 @@ static inline void print_format_cause(int cause_num)
     }
 }
 
+// RVTODO: are the exceptions formats meant to be platform specific and not defined
+// by the architecture?
 void handle_exception(void)
 {
     word_t scause = read_csr(scause);
