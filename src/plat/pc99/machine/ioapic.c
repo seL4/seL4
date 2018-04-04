@@ -109,6 +109,11 @@ void ioapic_mask(bool_t mask, uint32_t ioapic, uint32_t pin)
 exception_t ioapic_decode_map_pin_to_vector(word_t ioapic, word_t pin, word_t level,
                                             word_t polarity, word_t vector)
 {
+    if (num_ioapics == 0) {
+        userError("System has no IOAPICs");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
     if (ioapic >= num_ioapics) {
         userError("Invalid IOAPIC %ld, only have %ld", (long)ioapic, (long)num_ioapics);
         current_syscall_error.type = seL4_RangeError;
