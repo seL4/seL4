@@ -26,8 +26,6 @@ static inline seL4_Word seL4_MappingFailedLookupLevel()
 
 #if CONFIG_PT_LEVELS == 2
 #define SEL4_MAPPING_LOOKUP_NO_PT 22
-#define SEL4_MAPPING_LOOKUP_NO_LVL2PT 22
-#define SEL4_MAPPING_LOOKUP_NO_PD 30
 #else
 #error "Only 2-level PTs are supported for RV32"
 #endif
