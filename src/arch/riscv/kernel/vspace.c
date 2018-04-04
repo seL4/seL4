@@ -1407,6 +1407,7 @@ performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
+#ifdef CONFIG_PRINTING
 void
 Arch_userStackTrace(tcb_t *tptr)
 {
@@ -1416,3 +1417,4 @@ Arch_userStackTrace(tcb_t *tptr)
     // RVTODO: not having implemented a strictly informational call is not a halt'able offense
     halt();
 }
+#endif

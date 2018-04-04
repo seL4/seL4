@@ -72,4 +72,9 @@ exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
 exception_t performPageInvocationRemapPTE(pte_t pte, pte_range_t pte_entries);
 exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot);
 void setVMRoot(tcb_t *tcb);
+
+#ifdef CONFIG_PRINTING
+void Arch_userStackTrace(tcb_t *tptr);
+#endif
+
 #endif
