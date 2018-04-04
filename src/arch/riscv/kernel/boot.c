@@ -209,7 +209,7 @@ init_irqs(cap_t root_cnode_cap)
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 
 BOOT_CODE static void
-init_cpu()
+init_cpu(void)
 {
     extern char trap_entry[];
 
@@ -222,7 +222,7 @@ init_cpu()
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
 
 BOOT_CODE static void
-init_plat()
+init_plat(void)
 {
     initIRQController();
     initTimer();
