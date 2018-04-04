@@ -16,27 +16,27 @@
   Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
   -->
 <api>
-	<interface name="seL4_RISCV_PageTable">
-		<method id="RISCVPageTableMap" name="Map">
-			<param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
-			<param dir="in" name="vaddr" type="seL4_Word"/>
-			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
-		</method>
+    <interface name="seL4_RISCV_PageTable">
+        <method id="RISCVPageTableMap" name="Map">
+            <param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+        </method>
         <method id="RISCVPageTableUnmap" name="Unmap">
         </method>
-	</interface>
-	<interface name="seL4_RISCV_Page">
-		<method id="RISCVPageMap" name="Map">
-			<param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
-			<param dir="in" name="vaddr" type="seL4_Word"/>
-			<param dir="in" name="rights" type="seL4_CapRights_t"/>
-			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
-		</method>
-		<method id="RISCVPageUnmap" name="Unmap"/>
-		<method id="RISCVPageGetAddress" name="GetAddress">
-			<param dir="out" name="paddr" type="seL4_Word"/>
-		</method>
-	</interface>
+    </interface>
+    <interface name="seL4_RISCV_Page">
+        <method id="RISCVPageMap" name="Map">
+            <param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
+            <param dir="in" name="vaddr" type="seL4_Word"/>
+            <param dir="in" name="rights" type="seL4_CapRights_t"/>
+            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+        </method>
+        <method id="RISCVPageUnmap" name="Unmap"/>
+        <method id="RISCVPageGetAddress" name="GetAddress">
+            <param dir="out" name="paddr" type="seL4_Word"/>
+        </method>
+    </interface>
     <interface name="seL4_RISCV_ASIDControl">
         <method id="RISCVASIDControlMakePool" name="MakePool">
             <param dir="in" name="untyped" type="seL4_Untyped"/>
