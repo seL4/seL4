@@ -596,7 +596,6 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     }
 }
 
-// RVTODO: this appears to be unused
 static pte_t pte_pte_invalid_new(void)
 {
     pte_t invalid_pte = (pte_t) {
@@ -623,7 +622,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
 
-    lu_ret.ptSlot->words[0] = 0;
+    lu_ret.ptSlot[0] = pte_pte_invalid_new();
 
     asm volatile ("sfence.vma");
 }
