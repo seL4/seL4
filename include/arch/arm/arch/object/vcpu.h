@@ -18,6 +18,10 @@
 #include <api/failures.h>
 #include <linker.h>
 
+#define HCR_RW       BIT(31)     /* Execution state control        */
+#define HCR_TRVM     BIT(30)     /* trap reads of VM controls      */
+#define HCR_HCD      BIT(29)     /* Disable HVC                    */
+#define HCR_TDZ      BIT(28)     /* trap DC ZVA AArch64 only       */
 #define HCR_TGE      BIT(27)     /* Trap general exceptions        */
 #define HCR_TVM      BIT(26)     /* Trap MMU access                */
 #define HCR_TTLB     BIT(25)     /* Trap TLB operations            */
