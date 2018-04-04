@@ -32,6 +32,25 @@
             <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
         </method>
+        <method id="RISCVPageRemap" name="Remap">
+            <brief>
+                Remap a page.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
+                </description>
+            </param>
+            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes">
+                <description>
+                    VM Attributes for the mapping. Possible values for this type are given in <autoref label="ch:vspace"/>.
+                </description>
+            </param>        
+        </method>
         <method id="RISCVPageUnmap" name="Unmap"/>
         <method id="RISCVPageGetAddress" name="GetAddress">
             <param dir="out" name="paddr" type="seL4_Word"/>

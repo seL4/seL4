@@ -1060,13 +1060,96 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
                                            map_ret.pte_entries);
     }
 
+    case RISCVPageRemap: {
+        word_t vaddr, w_rightsMask;
+        paddr_t frame_paddr;
+        cap_t lvl1ptCap;
+        pte_t *lvl1pt;
+        asid_t asid;
+        vm_rights_t capVMRights, vmRights;
+        vm_page_size_t frameSize;
+        vm_attributes_t attr;
 
+        if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+            userError("RISCVPageRemap: Truncated message.");
+            current_syscall_error.type = seL4_TruncatedMessage;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        w_rightsMask = getSyscallArg(0, buffer);
+        attr = vmAttributesFromWord(getSyscallArg(1, buffer));
+        lvl1ptCap = extraCaps.excaprefs[0]->cap;
+        frameSize = cap_frame_cap_get_capFSize(cap);
+        capVMRights = cap_frame_cap_get_capFVMRights(cap);
+
+
+        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
+            userError("RISCVPageRemap: Invalid level 1 pt cap.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (unlikely(!isVTableRoot(lvl1ptCap))) {
+            userError("RISCVPageReMap: Invalid level 1 pt cap.");
+            current_syscall_error.type =
+                seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) == asidInvalid) {
+            userError("RISCVPageRemap: Cap is not mapped");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        vaddr = cap_frame_cap_get_capFMappedAddress(cap);
+        asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
+        lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
+        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        if (find_ret.status != EXCEPTION_NONE) {
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (find_ret.vspace_root != lvl1pt) {
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        /* Check if this page is already mapped */
+        // RVTODO: lookup leaf node and see if remaining bits == frameSize
+        lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
+
+        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+            userError("RISCVPageMap: No PageTable for this page %p", vaddr);
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
+        frame_paddr = addrFromPPtr((void *)
+                                   cap_frame_cap_get_capFBasePtr(cap));
+        create_mappings_pte_return_t map_ret;
+        map_ret = createSafeMappingEntries_PTE(frame_paddr, vaddr,
+                                               frameSize, vmRights,
+                                               attr, lvl1pt);
+        if (unlikely(map_ret.status != EXCEPTION_NONE)) {
+            return map_ret.status;
+        }
+
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        return performPageInvocationRemapPTE(map_ret.pte, map_ret.pte_entries);
+    }
     case RISCVPageUnmap: {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationUnmap(cap, cte);
     }
-
-    // RVTODO: what happend to PageReMap
 
     case RISCVPageGetAddress: {
 
