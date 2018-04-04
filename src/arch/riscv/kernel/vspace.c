@@ -963,7 +963,6 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
 
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            userError("RISCVPageMap: No PageTable for this page %p", (void*)vaddr);
             current_syscall_error.type =
                 seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource =
