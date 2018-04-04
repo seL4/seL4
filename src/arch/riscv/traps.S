@@ -85,18 +85,8 @@ trap_entry:
 
   la gp, __global_pointer$
 
-#if CONFIG_MAX_NUM_NODES > 1
-  li  x4, BIT(CONFIG_KERNEL_STACK_BITS)
-  ld  x2, (34*REGBYTES)(t0)
-  mul x4, x4, x2
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
-
   /* Load kernel's stack address */
   la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
-
-#if CONFIG_MAX_NUM_NODES > 1
-  add sp, sp, x4
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
   /* Check if it's an interrupt */
   srli s2, s0, (CONFIG_WORD_SIZE - 1)
@@ -111,17 +101,17 @@ syscall:
   /* Set the return address to sepc + 4 in the case of a system/environment call */
   addi x1, x1, 4
   /* Save NEXTPC */
-  STORE   x1, (35*REGBYTES)(t0)
+  STORE   x1, (34*REGBYTES)(t0)
 
   j c_handle_syscall
 
 /* Not an interrupt or a syscall */
 exception:
   /* Save NEXTPC */
-  STORE   x1, (35*REGBYTES)(t0)
+  STORE   x1, (34*REGBYTES)(t0)
   j c_handle_exception
 
 interrupt:
   /* Save NEXTPC */
-  STORE   x1, (35*REGBYTES)(t0)
+  STORE   x1, (34*REGBYTES)(t0)
   j c_handle_interrupt

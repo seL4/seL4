@@ -165,7 +165,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         /* get restored tp */
         "add tp, t1, x0  \n"
         /* get sepc */
-        LOAD_S "  t1, 35*%[REGSIZE](t0)\n"
+        LOAD_S "  t1, 34*%[REGSIZE](t0)\n"
         "csrw sepc, t1  \n"
 
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */

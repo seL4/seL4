@@ -78,7 +78,7 @@ void VISIBLE NORETURN restore_user_context(void)
         /* get restored tp */
         "add tp, t1, x0  \n"
         /* get sepc */
-        LOAD_S "  t1, (35*%[REGSIZE])(t0)\n"
+        LOAD_S "  t1, (34*%[REGSIZE])(t0)\n"
         "csrw sepc, t1  \n"
 
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */

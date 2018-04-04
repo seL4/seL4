@@ -72,8 +72,6 @@ enum _register {
     SCAUSE,
     SSTATUS,
     SEPC,
-    // RVTODO: understand why HARTID a register?
-    HARTID,
     NEXTPC,
 
     /* TODO: add other user-level CSRs if needed (i.e. to avoid channels) */
