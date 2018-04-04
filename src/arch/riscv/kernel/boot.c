@@ -207,11 +207,11 @@ init_irqs(cap_t root_cnode_cap)
 }
 
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
+extern char trap_entry[];
 
 BOOT_CODE static void
 init_cpu(void)
 {
-    extern char trap_entry[];
 
     /* Write trap entry address to stvec */
     write_csr(stvec, trap_entry);
