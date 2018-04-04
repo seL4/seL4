@@ -121,7 +121,11 @@ handleReservedIRQ(irq_t irq)
 void
 ackInterrupt(irq_t irq)
 {
-    clear_csr(sip, BIT(irq));
+    // don't ack the kernel timer interrupt, see the comment in resetTimer
+    // to understand why
+    if (irq != KERNEL_TIMER_IRQ) {
+        clear_csr(sip, BIT(irq));
+    }
     //set_csr(scause, 0);
 
     if (irq == 1) {
@@ -159,6 +163,10 @@ void
 resetTimer(void)
 {
     uint64_t target;
+    // ack the timer interrupt. we do this here as due to slow simulation platform there
+    // is a race between us setting the new interrupt here, and the ackInterrupt call in
+    // handleInterrupt that will happen at some point after this call to resetTimer
+    clear_csr(sip, KERNEL_TIMER_IRQ);
     // repeatedly try and set the timer in a loop as otherwise there is a race and we
     // may set a timeout in the past, resulting in it never getting triggered
     do {
