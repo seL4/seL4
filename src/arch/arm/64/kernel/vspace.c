@@ -969,10 +969,10 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         fault = getDFSR();
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-            /* use the IPA */
-            if (armHSVCPUActive) {
-                addr = GET_PAR_ADDR(ats1e1r(addr)) | (addr & MASK(PAGE_BITS));
-            }
+        /* use the IPA */
+        if (armHSVCPUActive) {
+            addr = GET_PAR_ADDR(ats1e1r(addr)) | (addr & MASK(PAGE_BITS));
+        }
 #endif
         current_fault = seL4_Fault_VMFault_new(addr, fault, false);
         return EXCEPTION_FAULT;
