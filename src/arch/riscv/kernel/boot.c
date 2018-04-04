@@ -229,9 +229,8 @@ init_cpu()
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
 
 BOOT_CODE static void
-init_plat(void *dtb_output)
+init_plat()
 {
-    fdt_print(dtb_output);
     initIRQController();
     initTimer();
 }
@@ -449,10 +448,15 @@ init_kernel(
     paddr_t dtb_output
 )
 {
+    // RVTODO: the dtb_output is currently placed *below* the kernel in physical memory,
+    // as the physBase for the kernel does not represent the actual bottom of physical
+    // memory. This means that after we enable the kernel window we *cannot* access the
+    // dtb_output. Until this is fixed we must therefore just throw this away and not use it
+    (void)dtb_output;
     // RVTODO: is it safe to initialize the platform before the cpu?
     bool_t result;
 
-    init_plat(dtb_output);
+    init_plat();
 
 #if CONFIG_MAX_NUM_NODES > 1
     if (hartid == 0) {
