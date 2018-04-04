@@ -58,8 +58,6 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
-        // RVTODO: remove printf
-        printf("Invalid arch cap type %d\n", cap_get_capType(cap));
         fail("Invalid arch cap type");
     }
 }
