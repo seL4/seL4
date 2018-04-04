@@ -949,7 +949,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) != asidInvalid) {
             // RVTODO: this is nonsense. a mapped frame *CANNOT* be mapped
             if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
-                userError("RISCVPageMap: Trying to map the same frame cap to different vaddr %p", vaddr);
+                userError("RISCVPageMap: Trying to map the same frame cap to different vaddr %p", (void*)vaddr);
                 current_syscall_error.type =
                     seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 0;
@@ -984,7 +984,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
 
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            userError("RISCVPageMap: No PageTable for this page %p", vaddr);
+            userError("RISCVPageMap: No PageTable for this page %p", (void*)vaddr);
             current_syscall_error.type =
                 seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource =
@@ -1122,7 +1122,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
 
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            userError("RISCVPageMap: No PageTable for this page %p", vaddr);
+            userError("RISCVPageMap: No PageTable for this page %p", (void*)vaddr);
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
             return EXCEPTION_SYSCALL_ERROR;
