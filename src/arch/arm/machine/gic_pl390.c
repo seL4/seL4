@@ -165,3 +165,16 @@ void ipi_send_target(irq_t irq, word_t cpuTargetList)
     gic_dist->sgi_control = (cpuTargetList << GICD_SGIR_CPUTARGETLIST_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
 }
 #endif /* ENABLE_SMP_SUPPORT */
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+#ifndef GIC_PL400_VCPUCTRL_PPTR
+#error GIC_PL400_VCPUCTRL_PPTR must be defined for virtual memory access to the gic virtual cpu interface control
+#else  /* GIC_PL400_GICVCPUCTRL_PPTR */
+volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl =
+    (volatile struct gich_vcpu_ctrl_map*)(GIC_PL400_VCPUCTRL_PPTR);
+#endif /* GIC_PL400_GICVCPUCTRL_PPTR */
+
+unsigned int gic_vcpu_num_list_regs;
+
+#endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
