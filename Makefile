@@ -496,8 +496,6 @@ CFLAGS += -mfloat-abi=soft
 endif
 ifeq (${ARCH}, riscv)
 CFLAGS += -mcmodel=medany
-# TODO: remove this once the riscv kernel port is fixed
-CFLAGS += -Wno-error
 endif
 
 # Allow overriding of the CFLAGS. Use with caution.
