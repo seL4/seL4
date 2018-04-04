@@ -378,12 +378,6 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     }
 }
 
-static inline pptr_t getPPtrFromHWPTE(pte_t *pte)
-{
-    // RVTODO: use bitfield accessors
-    return ptrFromPAddr((pte->words[0] >> PTE_PPN_SHIFT) << (seL4_PageTableBits));
-}
-
 // RVTODO: this function has a confusing name as it is doing two things
 // checking if the entry is for another page table *AND* if the entry is valid
 static inline pptr_t isValidHWPageTable(pte_t *pte)
@@ -392,7 +386,14 @@ static inline pptr_t isValidHWPageTable(pte_t *pte)
     return (pte->words[0] & 0xf) == 1;
 }
 
-static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, pptr_t pt_pptr)
+static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
+{
+    // RVTODO: use bitfield accessors
+    assert(isValidHWPageTable(pte));
+    return (pte_t*)ptrFromPAddr((pte->words[0] >> PTE_PPN_SHIFT) << (seL4_PageTableBits));
+}
+
+static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, pte_t *target_pt)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPTSlot_ret_t ret;
@@ -412,16 +413,16 @@ static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, ppt
         if (unlikely(!isValidHWPageTable(ret.ptSlot))) {
             userError("Page table walk terminated, failed to find a PT");
             ret.status = EXCEPTION_LOOKUP_FAULT;
-        } else if (getPPtrFromHWPTE(ret.ptSlot) == pt_pptr) {
+            return ret;
+        }
+        pt = getPPtrFromHWPTE(ret.ptSlot);
+        if (pt == target_pt) {
             /* Found the PT Slot */
             ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i - 1);
             ret.status = EXCEPTION_NONE;
             return ret;
-        } else {
-            /* Go to the next PT level */
-            pt = (void *) getPPtrFromHWPTE(ret.ptSlot);
-            ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
         }
+        ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
     }
 
     /* Failed to find a corredponding PT  */
