@@ -136,30 +136,6 @@ struct gic_cpu_iface_map {
     uint32_t component_id[4];       /* [0xFF0, 0xFFF] PL390 only */
 };
 
-/* GIC VCPU Control Interface */
-struct gich_vcpu_ctrl_map {
-    uint32_t hcr;    /* 0x000 RW 0x00000000 Hypervisor Control Register */
-    uint32_t vtr;    /* 0x004 RO IMPLEMENTATION DEFINED VGIC Type Register */
-    /* Save restore on VCPU switch */
-    uint32_t vmcr;   /* 0x008 RW IMPLEMENTATION DEFINED Virtual Machine Control Register */
-    uint32_t res1[1];
-    /* IRQ pending flags */
-    uint32_t misr;   /* 0x010 RO 0x00000000 Maintenance Interrupt Status Register */
-    uint32_t res2[3];
-    /* Bitfield of list registers that have EOI */
-    uint32_t eisr0;  /* 0x020 RO 0x00000000 End of Interrupt Status Registers 0 and 1, see EISRn */
-    uint32_t eisr1;  /* 0x024 RO 0x00000000 */
-    uint32_t res3[2];
-    /* Bitfield of list registers that are empty */
-    uint32_t elsr0;  /* 0x030 RO IMPLEMENTATION DEFINED a */
-    uint32_t elsr1;  /* 0x034 RO IMPLEMENTATION DEFINED a Empty List Register Status Registers 0 and 1, see ELRSRn */
-    uint32_t res4[46];
-    /* Active priority: bitfield of active priorities */
-    uint32_t apr;    /* 0x0F0 RW 0x00000000 Active Priorities Register */
-    uint32_t res5[3];
-    uint32_t lr[64]; /* 0x100 RW 0x00000000 List Registers 0-63, see LRn */
-};
-
 extern volatile struct gic_dist_map * const gic_dist;
 extern volatile struct gic_cpu_iface_map * const gic_cpuiface;
 /*
@@ -269,6 +245,30 @@ void ipi_send_target(irq_t irq, word_t cpuTargetList);
 #endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+/* GIC VCPU Control Interface */
+struct gich_vcpu_ctrl_map {
+    uint32_t hcr;    /* 0x000 RW 0x00000000 Hypervisor Control Register */
+    uint32_t vtr;    /* 0x004 RO IMPLEMENTATION DEFINED VGIC Type Register */
+    /* Save restore on VCPU switch */
+    uint32_t vmcr;   /* 0x008 RW IMPLEMENTATION DEFINED Virtual Machine Control Register */
+    uint32_t res1[1];
+    /* IRQ pending flags */
+    uint32_t misr;   /* 0x010 RO 0x00000000 Maintenance Interrupt Status Register */
+    uint32_t res2[3];
+    /* Bitfield of list registers that have EOI */
+    uint32_t eisr0;  /* 0x020 RO 0x00000000 End of Interrupt Status Registers 0 and 1, see EISRn */
+    uint32_t eisr1;  /* 0x024 RO 0x00000000 */
+    uint32_t res3[2];
+    /* Bitfield of list registers that are empty */
+    uint32_t elsr0;  /* 0x030 RO IMPLEMENTATION DEFINED a */
+    uint32_t elsr1;  /* 0x034 RO IMPLEMENTATION DEFINED a Empty List Register Status Registers 0 and 1, see ELRSRn */
+    uint32_t res4[46];
+    /* Active priority: bitfield of active priorities */
+    uint32_t apr;    /* 0x0F0 RW 0x00000000 Active Priorities Register */
+    uint32_t res5[3];
+    uint32_t lr[64]; /* 0x100 RW 0x00000000 List Registers 0-63, see LRn */
+};
 
 extern volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl;
 extern unsigned int gic_vcpu_num_list_regs;
