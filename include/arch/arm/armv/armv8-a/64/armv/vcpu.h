@@ -530,6 +530,30 @@ vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
     vcpu->regs[reg] = value;
 }
 
+#define UNKNOWN_FAULT       0x2000000
+#define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
+#define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
+#define ESR_EC(x)           (((x) & 0xfc000000) >> 26)
+
+static inline bool_t
+armv_handleVCPUFault(word_t hsr)
+{
+#ifdef CONFIG_HAVE_FPU
+    if ((ESR_EC(hsr) == ESR_EC_TFP || ESR_EC(hsr) == ESR_EC_CPACR) && !isFpuEnable()) {
+        handleFPUFault();
+        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+        return true;
+    }
+#endif
+
+    if (hsr == UNKNOWN_FAULT) {
+        handleUserLevelFault(0, 0);
+        return true;
+    }
+
+    return false;
+}
+
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #endif
