@@ -354,6 +354,126 @@ writeCNTV_CTL_EL0(word_t reg)
     MSR("cntv_ctl_el0", reg);
 }
 
+static word_t
+vcpu_hw_read_reg(word_t reg_index)
+{
+    word_t reg = 0;
+    switch (reg_index) {
+    case seL4_VCPUReg_SCTLR:
+        return getSCTLR();
+    case seL4_VCPUReg_TTBR0:
+        return readTTBR0();
+    case seL4_VCPUReg_TTBR1:
+        return readTTBR1();
+    case seL4_VCPUReg_TCR:
+        return readTCR();
+    case seL4_VCPUReg_MAIR:
+        return readMAIR();
+    case seL4_VCPUReg_AMAIR:
+        return readAMAIR();
+    case seL4_VCPUReg_CIDR:
+        return readCIDR();
+    case seL4_VCPUReg_ACTLR:
+        return readACTLR();
+    case seL4_VCPUReg_CPACR:
+        return readCPACR_EL1();
+    case seL4_VCPUReg_AFSR0:
+        return readAFSR0();
+    case seL4_VCPUReg_AFSR1:
+        return readAFSR1();
+    case seL4_VCPUReg_ESR:
+        return readESR();
+    case seL4_VCPUReg_FAR:
+        return readFAR();
+    case seL4_VCPUReg_ISR:
+        return readISR();
+    case seL4_VCPUReg_VBAR:
+        return readVBAR();
+    case seL4_VCPUReg_TPIDR_EL0:
+        return readTPIDR_EL0();
+    case seL4_VCPUReg_TPIDR_EL1:
+        return readTPIDR_EL1();
+    case seL4_VCPUReg_TPIDRRO_EL0:
+        return readTPIDRRO_EL0();
+    case seL4_VCPUReg_CNTV_TVAL:
+        return readCNTV_TVAL_EL0();
+    case seL4_VCPUReg_CNTV_CTL:
+        return readCNTV_CTL_EL0();
+    case seL4_VCPUReg_CNTV_CVAL:
+        return 0;
+    case seL4_VCPUReg_SP_EL1:
+        return readSP_EL1();
+    case seL4_VCPUReg_ELR_EL1:
+        return readELR_EL1();
+    case seL4_VCPUReg_SPSR_EL1:
+        return readSPSR_EL1();
+    default:
+        fail("ARM/HYP: Invalid register index");
+    }
+
+    return reg;
+}
+
+static void
+vcpu_hw_write_reg(word_t reg_index, word_t reg)
+{
+    switch (reg_index) {
+    case seL4_VCPUReg_SCTLR:
+        return setSCTLR(reg);
+    case seL4_VCPUReg_TTBR0:
+        return writeTTBR0(reg);
+    case seL4_VCPUReg_TTBR1:
+        return writeTTBR1(reg);
+    case seL4_VCPUReg_TCR:
+        return writeTCR(reg);
+    case seL4_VCPUReg_MAIR:
+        return writeMAIR(reg);
+    case seL4_VCPUReg_AMAIR:
+        return writeAMAIR(reg);
+    case seL4_VCPUReg_CIDR:
+        return writeCIDR(reg);
+    case seL4_VCPUReg_ACTLR:
+        return writeACTLR(reg);
+    case seL4_VCPUReg_CPACR:
+        return writeCPACR_EL1(reg);
+    case seL4_VCPUReg_AFSR0:
+        return writeAFSR0(reg);
+    case seL4_VCPUReg_AFSR1:
+        return writeAFSR1(reg);
+    case seL4_VCPUReg_ESR:
+        return writeESR(reg);
+    case seL4_VCPUReg_FAR:
+        return writeFAR(reg);
+    case seL4_VCPUReg_ISR:
+        /* ISR is read-only */
+        return;
+    case seL4_VCPUReg_VBAR:
+        return writeVBAR(reg);
+    case seL4_VCPUReg_TPIDR_EL0:
+        return writeTPIDR_EL0(reg);
+    case seL4_VCPUReg_TPIDR_EL1:
+        return writeTPIDR_EL1(reg);
+    case seL4_VCPUReg_TPIDRRO_EL0:
+        return writeTPIDRRO_EL0(reg);
+    case seL4_VCPUReg_CNTV_TVAL:
+        return writeCNTV_TVAL_EL0(reg);
+    case seL4_VCPUReg_CNTV_CTL:
+        return writeCNTV_CTL_EL0(reg);
+    case seL4_VCPUReg_CNTV_CVAL:
+        return;
+    case seL4_VCPUReg_SP_EL1:
+        return writeSP_EL1(reg);
+    case seL4_VCPUReg_ELR_EL1:
+        return writeELR_EL1(reg);
+    case seL4_VCPUReg_SPSR_EL1:
+        return writeSPSR_EL1(reg);
+    default:
+        fail("ARM/HYP: Invalid register index");
+    }
+
+    return;
+}
+
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #endif
