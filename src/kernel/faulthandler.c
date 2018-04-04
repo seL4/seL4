@@ -14,7 +14,6 @@
 #include <kernel/thread.h>
 #include <machine/io.h>
 #include <arch/machine.h>
-#include <arch/machine/fpu.h>
 
 void
 handleFault(tcb_t *tptr)
@@ -76,14 +75,14 @@ print_fault(seL4_Fault_t f)
         printf("null fault");
         break;
     case seL4_Fault_CapFault:
-        printf("cap fault in %s phase at address %p",
+        printf("cap fault in %s phase at address 0x%x",
                seL4_Fault_CapFault_get_inReceivePhase(f) ? "receive" : "send",
-               seL4_Fault_CapFault_get_address(f));
+               (unsigned int)seL4_Fault_CapFault_get_address(f));
         break;
     case seL4_Fault_VMFault:
-        printf("vm fault on %s at address %p with status 0x%x",
+        printf("vm fault on %s at address 0x%x with status 0x%x",
                seL4_Fault_VMFault_get_instructionFault(f) ? "code" : "data",
-               seL4_Fault_VMFault_get_address(f),
+               (unsigned int)seL4_Fault_VMFault_get_address(f),
                (unsigned int)seL4_Fault_VMFault_get_FSR(f));
         break;
     case seL4_Fault_UnknownSyscall:

@@ -43,22 +43,12 @@ isBlocked(const tcb_t *thread)
     }
 }
 
-#ifdef CONFIG_ARCH_RISCV
-BOOT_CODE void
-configureIdleThread(tcb_t *tcb, int affinity)
-{
-    Arch_configureIdleThread(tcb, affinity);
-    setThreadState(tcb, ThreadState_IdleThreadState);
-}
-#else
 BOOT_CODE void
 configureIdleThread(tcb_t *tcb)
 {
     Arch_configureIdleThread(tcb);
-    Arch_configureIdleThread(tcb);
     setThreadState(tcb, ThreadState_IdleThreadState);
 }
-#endif
 
 void
 activateThread(void)
