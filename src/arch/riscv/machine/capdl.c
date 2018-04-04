@@ -10,15 +10,11 @@
  * @TAG(DATA61_GPL)
  */
 
+#include <config.h>
+
 #ifdef CONFIG_DEBUG_BUILD
 
-#include <object/structures.h>
-#include <object/tcb.h>
-#include <model/statedata.h>
-#include <machine/capdl.h>
 #include <arch/machine/capdl.h>
-#include <plat/machine/debug_helpers.h>
-#include <plat/machine/hardware.h>
 
 void capDL(void)
 {
