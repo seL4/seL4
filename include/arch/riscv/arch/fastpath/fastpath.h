@@ -122,14 +122,9 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;
     // RVTODO: the current thread is passed into this function
-    register word_t cur_thread_reg asm("a2") = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
+    register word_t cur_thread_reg asm("t0") = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
 
     asm volatile(
-        "mv t0, %[cur_thread]    \n"
-
-        "mv a0, %[badge] \n"
-        "mv a1, %[info] \n"
-
         LOAD_S "  ra, (0*%[REGSIZE])(t0)  \n"
         LOAD_S "  sp, (1*%[REGSIZE])(t0)  \n"
         LOAD_S "  gp, (2*%[REGSIZE])(t0)  \n"
@@ -176,12 +171,11 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
         "sret"
         : /* no output */
-        : [cur_thread] "r" (cur_thread_reg),
+        : "r" (cur_thread_reg),
         [REGSIZE] "i" (sizeof(word_t)),
-        [badge] "r" (badge),
-        [info]  "r" (msgInfo)
-        // RVTODO: why is t0 being declared clobbered when this doesn't return?
-        : "memory", "t0"
+        "r" (badge_reg),
+        "r" (msgInfo_reg)
+        : "memory"
     );
 
     UNREACHABLE();
