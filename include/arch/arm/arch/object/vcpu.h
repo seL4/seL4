@@ -18,6 +18,36 @@
 #include <api/failures.h>
 #include <linker.h>
 
+#define HCR_TGE      BIT(27)     /* Trap general exceptions        */
+#define HCR_TVM      BIT(26)     /* Trap MMU access                */
+#define HCR_TTLB     BIT(25)     /* Trap TLB operations            */
+#define HCR_TPU      BIT(24)     /* Trap cache maintenance         */
+#define HCR_TPC      BIT(23)     /* Trap cache maintenance PoC     */
+#define HCR_TSW      BIT(22)     /* Trap cache maintenance set/way */
+#define HCR_TCACHE   (HCR_TPU | HCR_TPC | HCR_TSW)
+#define HCR_TAC      BIT(21)     /* Trap ACTLR access              */
+#define HCR_TIDCP    BIT(20)     /* Trap lockdown                  */
+#define HCR_TSC      BIT(19)     /* Trap SMC instructions          */
+#define HCR_TID3     BIT(18)     /* Trap ID register 3             */
+#define HCR_TID2     BIT(17)     /* Trap ID register 2             */
+#define HCR_TID1     BIT(16)     /* Trap ID register 1             */
+#define HCR_TID0     BIT(15)     /* Trap ID register 0             */
+#define HCR_TID      (HCR_TID0 | HCR_TID1 | HCR_TID2 | HCR_TID3)
+#define HCR_TWE      BIT(14)     /* Trap WFE                       */
+#define HCR_TWI      BIT(13)     /* Trap WFI                       */
+#define HCR_DC       BIT(12)     /* Default cacheable              */
+#define HCR_BSU(x)   ((x) << 10) /* Barrier sharability upgrade    */
+#define HCR_FB       BIT( 9)     /* Force broadcast                */
+#define HCR_VA       BIT( 8)     /* Virtual async abort            */
+#define HCR_VI       BIT( 7)     /* Virtual IRQ                    */
+#define HCR_VF       BIT( 6)     /* Virtual FIRQ                   */
+#define HCR_AMO      BIT( 5)     /* CPSR.A override enable         */
+#define HCR_IMO      BIT( 4)     /* CPSR.I override enable         */
+#define HCR_FMO      BIT( 3)     /* CPSR.F override enable         */
+#define HCR_PTW      BIT( 2)     /* Protected table walk           */
+#define HCR_SWIO     BIT( 1)     /* set/way invalidate override    */
+#define HCR_VM       BIT( 0)     /* Virtualization MMU enable      */
+
 #define GIC_VCPU_MAX_NUM_LR 64
 
 struct cpXRegs {
