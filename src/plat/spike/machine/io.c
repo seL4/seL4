@@ -98,16 +98,16 @@ void handle_exception(void)
         break;
     default:
         print_format_cause(read_csr(scause));
-        printf("sepc = %p\n", read_csr(sepc));
-        printf("sbadaddr = %p\n", read_csr(sbadaddr));
-        printf("sstatus = %p\n", read_csr(sstatus));
+        printf("sepc = %p\n", (void*)(word_t)read_csr(sepc));
+        printf("sbadaddr = %p\n", (void*)(word_t)read_csr(sbadaddr));
+        printf("sstatus = %p\n", (void*)(word_t)read_csr(sstatus));
         printf("Halt!\n");
 
         printf("Register Context Dump \n");
 
         register word_t thread_context asm("t0");
         for (int i = 0; i < 32; i++) {
-            printf("x%d = %p\n", i, *(((uint64_t *) thread_context) + i));
+            printf("x%d = %p\n", i, (void*)*(((word_t *) thread_context) + i));
         }
 
         halt();
