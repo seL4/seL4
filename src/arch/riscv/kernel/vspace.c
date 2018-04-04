@@ -337,15 +337,6 @@ static bool_t CONST isValidNativeRoot(cap_t cap)
            cap_page_table_cap_get_capPTIsMapped(cap);
 }
 
-// RVTODO: is this indirection needed? seems to only be one root type at the moment
-pte_t *getValidNativeRoot(cap_t vspace_cap)
-{
-    if (isValidNativeRoot(vspace_cap)) {
-        return PTE_PTR(cap_page_table_cap_get_capPTBasePtr(vspace_cap));
-    }
-    return NULL;
-}
-
 void
 copyGlobalMappings(pte_t *newLvl1pt)
 {
