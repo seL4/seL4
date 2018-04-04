@@ -935,6 +935,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         vm_attributes_t attr;
 
         if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
+            userError("RISCVPageMap: Truncated message.");
             current_syscall_error.type =
                 seL4_TruncatedMessage;
 
@@ -962,6 +963,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         }
 
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
+            userError("RISCVPageMap: Invalid level 1 pt cap.");
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -970,6 +972,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         }
 
         if (unlikely(!isVTableRoot(lvl1ptCap))) {
+            userError("RISCVPageMap: Invalid level 1 pt cap.");
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
