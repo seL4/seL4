@@ -137,7 +137,7 @@ endfunction(GenHBFTarget)
 
 # Wrapper for generating different kinds of .thy files from bitfield specifications
 function(GenThyBFTarget args target_name target_file pbf_path pbf_target prunes deps)
-    get_filename_component(cspec_dir "${CSPEC_DIR}" REALPATH BASE_DIR)
+    get_filename_component(cspec_dir "${CSPEC_DIR}" ABSOLUTE BASE_DIR)
     list(APPEND args --cspec-dir "${cspec_dir}")
     if(SKIP_MODIFIES)
         list(APPEND args "--skip_modifies")
