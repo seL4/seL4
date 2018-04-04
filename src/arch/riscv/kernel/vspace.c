@@ -1159,6 +1159,11 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
     }
 
+    default:
+        userError("RISCVPage: Illegal operation.");
+        current_syscall_error.type = seL4_IllegalOperation;
+
+        return EXCEPTION_SYSCALL_ERROR;
     }
 
 }
