@@ -219,8 +219,6 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     cap_t      lvl1pt_cap;
     vptr_t     pt_vptr;
     pptr_t     pt_pptr;
-    seL4_SlotPos slot_pos_before;
-    seL4_SlotPos slot_pos_after;
     pptr_t lvl1pt_pptr;
 
     /* create 1st level page table obj and cap */
@@ -244,7 +242,6 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), lvl1pt_cap);
 
     /* create all n level PT objs and caps necessary to cover userland image in 4KiB pages */
-    slot_pos_before = ndks_boot.slot_pos_cur;
 
     for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
 
@@ -409,7 +406,6 @@ static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, ppt
     findVSpaceForASID_ret_t find_ret;
     lookupPTSlot_ret_t ret;
     pte_t* pt;
-    paddr_t pt_paddr;
 
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE)) {
@@ -480,7 +476,6 @@ exception_t
 handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
     uint64_t addr;
-    uint64_t fault;
 
     addr = read_csr(sbadaddr);
 
@@ -572,9 +567,6 @@ void deleteASID(asid_t asid, pte_t *vspace)
 void
 unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 {
-    pte_t *pt_pptr, *ptSlot;
-    uint32_t lvl1ptIndex;
-
     lookupPTSlot_ret_t pt_ret = lookupPageTableLevelSlot(asid, vaddr, pt);
 
     if (pt_ret.status != EXCEPTION_NONE) {
@@ -606,8 +598,6 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPTSlot_ret_t  lu_ret;
-    cap_t               threadRoot;
-    pte_t               *lvl1pt;
 
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE) {
@@ -742,15 +732,13 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
                                cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                word_t *buffer)
 {
-    word_t vaddr, lvl1ptIndex;
-    vm_attributes_t attr;
+    word_t vaddr;
     cap_t lvl1ptCap;
     pte_t *lvl1pt, *ptSlot;
     pte_t pte;
     paddr_t paddr;
     lookupPTSlot_ret_t lu_ret;
     asid_t          asid;
-    uint32_t ptLevel;
 
     /* No invocations at level 1 page table (aka page directory) are not supported */
     if (isVTableRoot(cap)) {
@@ -774,7 +762,6 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     }
 
     vaddr = getSyscallArg(0, buffer);
-    attr = vmAttributesFromWord(getSyscallArg(1, buffer));
     lvl1ptCap = extraCaps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(lvl1ptCap)) {
@@ -838,7 +825,6 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     // RVTODO: we just want to lookup the leaf and then see how many bits are left to
     // translate (i.e. the level of the leaf)
     lu_ret = lookupPTSlot(lvl1pt, vaddr, CONFIG_PT_LEVELS);
-    ptLevel = lu_ret.missingPTLevel;
 
     /* Get the slot to install the PT in */
     ptSlot = lu_ret.ptSlot;
