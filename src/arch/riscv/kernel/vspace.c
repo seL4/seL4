@@ -51,7 +51,7 @@ RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
     return (vm_rights != VMNoAccess) && (vm_rights != VMReadOnly);
 }
 
-RISCVGetUserFromVMRights(vm_rights_t vm_rights)
+static word_t RISCVGetUserFromVMRights(vm_rights_t vm_rights)
 {
     return vm_rights != VMKernelOnly;
 }
@@ -284,7 +284,7 @@ write_it_asid_pool(cap_t it_ap_cap, cap_t it_lvl1pt_cap)
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
+static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 {
     findVSpaceForASID_ret_t ret;
     asid_pool_t*        poolPtr;
@@ -331,7 +331,7 @@ bool_t CONST isVTableRoot(cap_t cap)
 }
 
 // RVTODO: is this indirection needed? seems to only be one root type at the moment
-bool_t CONST isValidNativeRoot(cap_t cap)
+static bool_t CONST isValidNativeRoot(cap_t cap)
 {
     return isVTableRoot(cap) &&
            cap_page_table_cap_get_capPTIsMapped(cap);
@@ -510,7 +510,7 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
     }
 }
 
-exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent, asid_t asid_base)
+static exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent, asid_t asid_base)
 {
     cap_untyped_cap_ptr_set_capFreeIndex(&(parent->cap),
                                          MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(parent->cap)));
@@ -531,7 +531,7 @@ exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent
     return EXCEPTION_NONE;
 }
 
-exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* vspaceCapSlot)
+static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* vspaceCapSlot)
 {
     pte_t *regionBase = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(vspaceCapSlot->cap));
     cap_t cap = vspaceCapSlot->cap;
@@ -546,7 +546,7 @@ exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* 
     return EXCEPTION_NONE;
 }
 
-void hwASIDFlush(asid_t asid)
+static void hwASIDFlush(asid_t asid)
 {
     // RVTODO: define abstraction operation for this in machine.h
     asm volatile ("sfence.vma x0, %0" :: "r" (asid): "memory");
