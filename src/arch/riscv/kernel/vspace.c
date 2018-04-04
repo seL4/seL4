@@ -1364,12 +1364,6 @@ performPageGetAddress(void *vbase_ptr)
     return EXCEPTION_NONE;
 }
 
-static bool_t PURE
-pteCheckIfMapped(pte_t *pte)
-{
-    return *((uint64_t *) pte) != 0;
-}
-
 static exception_t updatePTE(pte_t pte, pte_range_t pte_entries)
 {
     /* we only need to check the first entries because of how createSafeMappingEntries
