@@ -43,10 +43,7 @@ struct resolve_ret {
 };
 typedef struct resolve_ret resolve_ret_t;
 
-static resolve_ret_t resolveVAddr(pte_t *pt, vptr_t vaddr);
 static exception_t performPageGetAddress(void *vbase_ptr);
-
-static bool_t PURE pteCheckIfMapped(pte_t *pte);
 
 static word_t CONST
 RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
