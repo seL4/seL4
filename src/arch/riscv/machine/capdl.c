@@ -10,9 +10,7 @@
  * @TAG(DATA61_GPL)
  */
 
-// RVTODO: the DEBUG macro is *not* meant to be checked in the kernel as there are
-// too many notions of debug
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG_BUILD
 
 #include <object/structures.h>
 #include <object/tcb.h>
@@ -27,4 +25,4 @@ void capDL(void)
     fail("capDL support not implemented");
 }
 
-#endif
+#endif /* CONFIG_DEBUG_BUILD */
