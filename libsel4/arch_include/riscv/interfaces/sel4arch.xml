@@ -74,8 +74,8 @@
             <member name="pc"/>
             <member name="ra"/>
             <member name="sp"/>
-            <member name="x3"/>
-            <member name="x4"/>
+            <member name="gp"/>
+            <member name="tp"/>
             <member name="t0"/>
             <member name="t1"/>
             <member name="t2"/>
