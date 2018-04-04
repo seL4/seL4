@@ -110,22 +110,6 @@ Arch_finaliseCap(cap_t cap, bool_t final)
     return fc_ret;
 }
 
-// RVTODO: this does not appear to be used. determine whether it should be, and if it is
-// why it claims we only need to clear whether it is mapped
-static cap_t CONST
-resetMemMapping(cap_t cap)
-{
-    switch (cap_get_capType(cap)) {
-    case cap_frame_cap:
-        return cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
-    case cap_page_table_cap:
-        /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
-        return cap_page_table_cap_set_capPTIsMapped(cap, 0);
-    }
-    return cap;
-}
-
-
 bool_t CONST
 Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 {
