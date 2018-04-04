@@ -736,6 +736,8 @@ void filter_harts(uintptr_t fdt, unsigned long hart_mask)
     fdt_scan(fdt, &cb);
 }
 
+#ifdef CONFIG_PRINTING
+
 #define FDT_PRINT_MAX_DEPTH 32
 
 struct fdt_print_info {
@@ -867,3 +869,4 @@ void fdt_print(uintptr_t fdt)
     }
 }
 
+#endif /* CONFIG_PRINTING */
