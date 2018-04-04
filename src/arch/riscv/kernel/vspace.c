@@ -595,7 +595,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 
 static pte_t pte_pte_invalid_new(void)
 {
-    pte_t invalid_pte = (pte_t) {
+    return (pte_t) {
         0
     };
 }
