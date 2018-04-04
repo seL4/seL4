@@ -226,7 +226,7 @@ VGICMaintenance(void)
      * a VGIC maintenance whilst we are actively running a thread with an
      * associated VCPU. For the moment for the proof we leave a redundant
      * check in here that this is indeed not happening */
-    if (!isRunnable(ksCurThread)) {
+    if (!isRunnable(NODE_STATE(ksCurThread))) {
         printf("Received VGIC maintenance on non-runnable thread!\n");
         return;
     }
@@ -271,7 +271,7 @@ VGICMaintenance(void)
         current_fault = seL4_Fault_VGICMaintenance_new(0, 0);
     }
 
-    handleFault(ksCurThread);
+    handleFault(NODE_STATE(ksCurThread));
 }
 
 void
@@ -385,7 +385,7 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
         current_syscall_error.invalidArgumentNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeVCPUWriteReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, value);
 }
 
@@ -393,7 +393,7 @@ exception_t
 invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
 {
     tcb_t *thread;
-    thread = ksCurThread;
+    thread = NODE_STATE(ksCurThread);
     word_t value = readVCPUReg(vcpu, field);
     if (call) {
         word_t *ipcBuffer = lookupIPCBuffer(true, thread);
@@ -402,7 +402,7 @@ invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
         setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                         seL4_MessageInfo_new(0, 0, 0, length)));
     }
-    setThreadState(ksCurThread, ThreadState_Running);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
     return EXCEPTION_NONE;
 }
 
@@ -425,7 +425,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, call);
 }
 
@@ -504,7 +504,7 @@ decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer)
     }
     virq_t virq = virq_virq_pending_new(group, priority, 1, vid);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeVCPUInjectIRQ(vcpu, index, virq);
 }
 
@@ -552,7 +552,7 @@ decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeVCPUSetTCB(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), TCB_PTR(cap_thread_cap_get_capTCBPtr(tcbCap)));
 }
 
@@ -568,7 +568,7 @@ void
 handleVCPUFault(word_t hsr)
 {
     current_fault = seL4_Fault_VCPUFault_new(hsr);
-    handleFault(ksCurThread);
+    handleFault(NODE_STATE(ksCurThread));
     schedule();
     activateThread();
 }
