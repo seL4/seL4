@@ -30,19 +30,17 @@ static inline void arch_c_exit_hook(void)
 {
 }
 
-// RVTODO: why are we putting things in custom sections? This needs benchmarking and some
-// post compilation binary analysis to justify
 void c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3, word_t unused4, word_t unused5, syscall_t syscall)
-VISIBLE SECTION(".vectors.text");
+VISIBLE NORETURN;
 
 void c_handle_interrupt(void)
-VISIBLE SECTION(".vectors.text");
+VISIBLE NORETURN;
 
 void c_handle_exception(void)
-VISIBLE SECTION(".vectors.text");
+VISIBLE NORETURN;
 
 void restore_user_context(void)
-VISIBLE NORETURN SECTION(".vectors.text");
+VISIBLE NORETURN;
 
 void handle_exception(void);
 #endif /* __KERNEL_RISCV_TRAPS_H */

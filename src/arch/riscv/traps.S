@@ -31,9 +31,6 @@
 .extern c_handle_exception
 .extern restore_user_context
 
-.section .vector, "ax"
-.balign 4096
-
 trap_entry:
 
   csrrw t0, sscratch, t0

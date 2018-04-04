@@ -31,13 +31,11 @@
 void slowpath(syscall_t syscall)
 NORETURN;
 
-// RVTODO: why are we putting things in custom sections? This needs benchmarking and some
-// post compilation binary analysis to justify
 void fastpath_call(word_t cptr, word_t r_msgInfo)
-VISIBLE NORETURN SECTION(".vectors.text");
+NORETURN;
 
-void fastpath_reply_wait(word_t cptr, word_t r_msgInfo)
-VISIBLE NORETURN SECTION(".vectors.text");
+void fastpath_reply_recv(word_t cptr, word_t r_msgInfo)
+NORETURN;
 
 /* Use macros to not break verification */
 #define endpoint_ptr_get_epQueue_tail_fp(ep_ptr) TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr))

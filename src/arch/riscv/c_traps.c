@@ -18,6 +18,7 @@
 
 #include <config.h>
 #include <model/statedata.h>
+#include <arch/fastpath/fastpath.h>
 #include <arch/kernel/traps.h>
 #include <machine/debug.h>
 #include <api/syscall.h>

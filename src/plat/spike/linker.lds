@@ -53,15 +53,6 @@ SECTIONS
         /* Sit inside a large frame */
         . = ALIGN(4K);
 
-        /* Hopefully all that fits into 4K! */
-        /* Fastpath code */
-        *(.vectors)
-        *(.vectors.fastpath_call)
-        *(.vectors.fastpath_reply_wait)
-        *(.vectors.text)
-        /* Anything else that should be in the vectors page. */
-        *(.vectors.*)
-
 
         /* Standard kernel */
         *(.text)
