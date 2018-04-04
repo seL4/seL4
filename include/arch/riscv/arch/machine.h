@@ -68,7 +68,7 @@ static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
 {
     satp_t satp = satp_new(SATP_MODE,              /* mode */
                            asid,                         /* asid */
-                           (addrFromPPtr(addr) >> RISCV_4K_PageBits)); /* PPN */
+                           addr >> RISCV_4K_PageBits); /* PPN */
 
     /* Current toolchain still uses sptbr register name although it got renamed in priv-1.10.
      * This will most likely need to change with newer toolchains

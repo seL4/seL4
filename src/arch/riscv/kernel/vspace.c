@@ -271,7 +271,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 BOOT_CODE void
 activate_kernel_vspace(void)
 {
-    setVSpaceRoot(&kernel_pageTables[0], 0);
+    setVSpaceRoot(addrFromPPtr(&kernel_pageTables[0]), 0);
 }
 
 BOOT_CODE void
@@ -626,7 +626,7 @@ setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) != cap_page_table_cap) {
-        setVSpaceRoot(&kernel_pageTables[0], 0);
+        setVSpaceRoot(addrFromPPtr(&kernel_pageTables[0]), 0);
         return;
     }
 
@@ -635,11 +635,11 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_table_cap_get_capPTMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != lvl1pt)) {
-        setVSpaceRoot(&kernel_pageTables[0], asid);
+        setVSpaceRoot(addrFromPPtr(&kernel_pageTables[0]), asid);
         return;
     }
 
-    setVSpaceRoot(lvl1pt, asid);
+    setVSpaceRoot(addrFromPPtr(lvl1pt), asid);
 }
 
 // RVTODO: is this abstraction around vtables needed?

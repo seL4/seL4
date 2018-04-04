@@ -46,7 +46,7 @@ switchToThread_fp(tcb_t *thread, pte_t *vroot, pte_t stored_hw_asid)
 {
     asid_t asid = (asid_t)(stored_hw_asid.words[0]);
 
-    setVSpaceRoot(vroot, asid);
+    setVSpaceRoot(addrFromPPtr(vroot), asid);
 
     setRegister(thread, tp, thread->tcbIPCBuffer);
 
