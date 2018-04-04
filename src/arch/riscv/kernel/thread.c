@@ -39,7 +39,7 @@ Arch_configureIdleThread(tcb_t *tcb)
 
     /* Enable interrupts and keep working in supervisor mode */
     setRegister(tcb, SSTATUS, (word_t) SSTATUS_SPP | SSTATUS_SPIE | SSTATUS_SIE);
-    setRegister(tcb, SP, kernel_stack_alloc);
+    setRegister(tcb, SP, (word_t)kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS));
 }
 
 void

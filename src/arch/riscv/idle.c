@@ -19,8 +19,6 @@
 #include <config.h>
 #include <arch/sbi.h>
 
-// RVTODO: should the idle thread just have a stack to avoid this?
-#pragma GCC optimize ("O3")
 void idle_thread(void)
 {
     while (1) {
