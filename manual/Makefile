@@ -136,7 +136,8 @@ generated-latex: ${GeneratedLatexDir}/GeneralSystemCalls.tex \
                  ${GeneratedLatexDir}/ObjectApiAarch32.tex \
                  ${GeneratedLatexDir}/ObjectApiAarch64.tex \
                  ${GeneratedLatexDir}/ObjectApiIa32.tex \
-                 ${GeneratedLatexDir}/ObjectApiX64.tex
+                 ${GeneratedLatexDir}/ObjectApiX64.tex \
+                 ${GeneratedLatexDir}/ObjectApiRISCV.tex
 
 # Generate object invocation prototypes
 ${Stage}/object_invocations.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
@@ -145,7 +146,8 @@ ${Stage}/object_invocations.h: ${Libsel4Dir}/include/interfaces/sel4.xml \
                                ${Libsel4Dir}/sel4_arch_include/aarch32/interfaces/sel4arch.xml \
                                ${Libsel4Dir}/sel4_arch_include/aarch64/interfaces/sel4arch.xml \
                                ${Libsel4Dir}/sel4_arch_include/ia32/interfaces/sel4arch.xml \
-                               ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml
+                               ${Libsel4Dir}/sel4_arch_include/x86_64/interfaces/sel4arch.xml \
+                               ${Libsel4Dir}/arch_include/riscv/interfaces/sel4arch.xml
 	@echo "====> Generating documented object invocation header"
 	${Q}${PYTHON} ${GenerateObjectInvocationTool} --dtd ${InterfaceDtd} --output $@ $^
 

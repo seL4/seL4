@@ -15,7 +15,8 @@
   Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
   Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
   -->
-<api name="ObjectApiRiscv" label_prefix="riscv_">
+<api name="ObjectApiRISCV" label_prefix="riscv_">
+
     <struct name="seL4_UserContext">
             <member name="pc"/>
             <member name="ra"/>
@@ -35,21 +36,61 @@
             <member name="a5"/>
             <member name="a6"/>
     </struct>
-    <interface name="seL4_RISCV_PageTable">
-        <method id="RISCVPageTableMap" name="Map">
-            <param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+    <interface name="seL4_RISCV_PageTable" manual_name="Page Table" cap_description="Capability to the page table to invoke.">
+        <method id="RISCVPageTableMap" name="Map" manual_label="pagetable_map">
+            <brief>
+                Map a page table into a higher-level page table.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="pt" type="seL4_RISCV_PageTable">
+                <description>Higher-level page table to map the lower-level page table into.</description>
+            </param>
+            <param dir="in" name="vaddr" type="seL4_Word">
+                <description>Virtual address at which to map the page table.</description>
+            </param>
+            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes">
+            <description>
+                VM Attributes for the mapping. Possible values for this type are given
+                in <autoref label="ch:vspace"/>.
+            </description>
+            </param>
         </method>
-        <method id="RISCVPageTableUnmap" name="Unmap">
+        <method id="RISCVPageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
+            <brief>
+                Unmap a page table.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
         </method>
     </interface>
-    <interface name="seL4_RISCV_Page">
+    <interface name="seL4_RISCV_Page" manual_name="Page" cap_description="Capability to the page to invoke.">
         <method id="RISCVPageMap" name="Map">
-            <param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
-            <param dir="in" name="vaddr" type="seL4_Word"/>
-            <param dir="in" name="rights" type="seL4_CapRights_t"/>
-            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+            <brief>
+                Map a page into a page table.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>
+            </description>
+            <param dir="in" name="pt" type="seL4_RISCV_PageTable">
+                <description>Page table to map the page into.</description>
+            </param>
+            <param dir="in" name="vaddr" type="seL4_Word">
+                <description>Virtual address at which to map the page.</description>
+            </param>
+            <param dir="in" name="rights" type="seL4_CapRights_t">
+                <description>
+                    Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
+                </description>
+            </param>
+            <param dir="in" name="attr" type="seL4_RISCV_VMAttributes">
+            <description>
+                VM Attributes for the mapping. Possible values for this type are given
+                in <autoref label="ch:vspace"/>.
+            </description>
+            </param>
         </method>
         <method id="RISCVPageRemap" name="Remap">
             <brief>
@@ -58,7 +99,9 @@
             <description>
                 See <autoref label="ch:vspace"/>.
             </description>
-            <param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
+            <param dir="in" name="pt" type="seL4_RISCV_PageTable">
+                <description>Page table to remap the page into.</description>
+            </param>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
                     Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
@@ -68,24 +111,66 @@
                 <description>
                     VM Attributes for the mapping. Possible values for this type are given in <autoref label="ch:vspace"/>.
                 </description>
-            </param>        
+            </param>
         </method>
-        <method id="RISCVPageUnmap" name="Unmap"/>
+        <method id="RISCVPageUnmap" name="Unmap">
+            <brief>
+               Unmap a page.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+        </method>
         <method id="RISCVPageGetAddress" name="GetAddress">
+            <brief>
+                Get the physical address of a page.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <return>
+                A <texttt text='seL4_RISCV_Page_GetAddress_t'/> struct that contains a
+                <texttt text='seL4_Word paddr'/>, which holds the physical address of the page,
+                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.
+            </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
     </interface>
-    <interface name="seL4_RISCV_ASIDControl">
+    <interface name="seL4_RISCV_ASIDControl" manual_name="ASID Control"
+        cap_description="The master ASIDControl capability to invoke.">
         <method id="RISCVASIDControlMakePool" name="MakePool">
-            <param dir="in" name="untyped" type="seL4_Untyped"/>
-            <param dir="in" name="root" type="seL4_CNode"/>
-            <param dir="in" name="index" type="seL4_Word"/>
-            <param dir="in" name="depth" type="seL4_Uint8"/>
+           <brief>
+                Create an ASID Pool.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="untyped" type="seL4_Untyped"
+            description="Capability to an untyped memory object that will become the pool. Must be 4K bytes."/>
+            <param dir="in" name="root" type="seL4_CNode"
+            description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="index" type="seL4_Word"
+            description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="depth" type="seL4_Uint8"
+            description="Number of bits of index to resolve to find the destination slot."/>
         </method>
     </interface>
-    <interface name="seL4_RISCV_ASIDPool">
+    <interface name="seL4_RISCV_ASIDPool" manual_name="ASID Pool"
+        cap_description="The ASID Pool capability to invoke, which must be to an ASID pool that is not full.">
         <method id="RISCVASIDPoolAssign" name="Assign">
-            <param dir="in" name="vroot" type="seL4_CPtr"/>
+            <brief>
+                Assign an ASID Pool.
+            </brief>
+            <description>
+                See <autoref label="ch:vspace"/>.
+            </description>
+            <param dir="in" name="vroot" type="seL4_CPtr">
+            <description>
+                The top level page table that is being assigned to an ASID pool. Must not already be assigned
+                    to an ASID pool.
+            </description>
+            </param>
         </method>
     </interface>
 
