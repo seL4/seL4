@@ -115,14 +115,12 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
     c_exit_hook();
 
 #ifdef CONFIG_HAVE_FPU
-    // RVTODO: the current thread is passed into this function
-    lazyFPURestore(NODE_STATE(ksCurThread));
+    lazyFPURestore(cur_thread);
 #endif /* CONFIG_HAVE_FPU */
 
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;
-    // RVTODO: the current thread is passed into this function
-    register word_t cur_thread_reg asm("t0") = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
+    register word_t cur_thread_reg asm("t0") = TCB_REF(cur_thread);
 
     asm volatile(
         LOAD_S "  ra, (0*%[REGSIZE])(t0)  \n"
