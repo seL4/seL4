@@ -22,6 +22,9 @@
 static void
 vcpu_enable(vcpu_t *vcpu)
 {
+#ifdef CONFIG_ARCH_AARCH64
+    armv_vcpu_enable(vcpu);
+#else
     setSCTLR(vcpu->cpx.sctlr);
     setHCR(HCR_VCPU);
     isb();
@@ -51,11 +54,15 @@ vcpu_enable(vcpu_t *vcpu)
      */
     setHDCRTrapDebugExceptionState(false);
 #endif
+#endif
 }
 
 static void
 vcpu_disable(vcpu_t *vcpu)
 {
+#ifdef CONFIG_ARCH_AARCH64
+    armv_vcpu_disable(vcpu);
+#else
     uint32_t hcr;
     word_t SCTLR;
     dsb();
@@ -89,6 +96,7 @@ vcpu_disable(vcpu_t *vcpu)
     setHDCRTrapDebugExceptionState(true);
 #endif
     isb();
+#endif
 }
 
 BOOT_CODE void
