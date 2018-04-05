@@ -535,7 +535,8 @@ seL4_DebugCapIdentify(seL4_CPtr cap)
 
 char *strcpy(char *, const char *);
 LIBSEL4_INLINE_FUNC void
-seL4_DebugNameThread(seL4_CPtr tcb, const char *name) {
+seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
+{
     strcpy((char*)seL4_GetIPCBuffer()->msg, name);
 
     seL4_Word unused0 = 0;
@@ -552,7 +553,8 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name) {
 
 #ifdef SEL4_DANGEROUS_CODE_INJECTION_KERNEL
 static inline void
-seL4_DebugRun(void (* userfn) (void *), void* userarg) {
+seL4_DebugRun(void (* userfn) (void *), void* userarg)
+{
     register seL4_Word arg1 asm("a0") = (seL4_Word)userfn;
     register seL4_Word arg2 asm("a1") = (seL4_Word)userarg;
     register seL4_Word scno asm("a7") = seL4_SysDebugRun;
