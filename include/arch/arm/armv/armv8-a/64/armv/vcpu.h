@@ -554,6 +554,23 @@ vcpu_init_vtcr(void)
     MSR("vtcr_el2", vtcr_el2);
     isb();
 }
+
+static inline void
+armv_vcpu_boot_init(void)
+{
+    word_t hcr_el2 = 0;
+
+    vcpu_init_vtcr();
+
+    hcr_el2 = HCR_NATIVE;
+    MSR("hcr_el2", hcr_el2);
+    isb();
+
+    /* set the SCTLR_EL1 for running native seL4 threads */
+    MSR("sctlr_el1", SCTLR_EL1_NATIVE);
+    isb();
+}
+
 #define UNKNOWN_FAULT       0x2000000
 #define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
 #define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
