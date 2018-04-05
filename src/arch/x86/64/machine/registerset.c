@@ -27,12 +27,6 @@ const register_t gpRegisters[] = {
     TLS_BASE
 };
 
-const register_t exceptionMessage[] = {
-    [seL4_UserException_FaultIP] = FaultIP,
-    [seL4_UserException_SP] = RSP,
-    [seL4_UserException_FLAGS] = FLAGS
-};
-
 const register_t syscallMessage[] = {
     [seL4_UnknownSyscall_RAX] = RAX,
     [seL4_UnknownSyscall_RBX] = RBX,
