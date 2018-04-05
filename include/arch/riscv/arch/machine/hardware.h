@@ -19,6 +19,8 @@
 #ifndef __ARCH_MACHINE_HARDWARE_H
 #define __ARCH_MACHINE_HARDWARE_H
 
+#include <util.h>
+
 /* RVTODO: check if risc-v spec actually declares the l1 cache line size */
 #define L1_CACHE_LINE_SIZE 64
 
@@ -129,10 +131,6 @@ RISCVpageAtPTLevel(vm_page_size_t pagesize)
 #define FLOAD  fld
 #define FSTORE fsd
 #endif /* CONFIG_HAVE_FPU */
-
-/* RVTODO: this is a general utility macro and shouldn't be here */
-#define _STRINGIFY(a) #a
-#define STRINGIFY(a) _STRINGIFY(a)
 
 #define LOAD_S STRINGIFY(LOAD)
 #define STORE_S STRINGIFY(STORE)
