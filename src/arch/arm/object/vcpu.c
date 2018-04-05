@@ -102,6 +102,9 @@ vcpu_disable(vcpu_t *vcpu)
 BOOT_CODE void
 vcpu_boot_init(void)
 {
+#ifdef CONFIG_ARCH_AARCH64
+    armv_vcpu_boot_init();
+#endif
     gic_vcpu_num_list_regs = VGIC_VTR_NLISTREGS(get_gic_vcpu_ctrl_vtr());
     if (gic_vcpu_num_list_regs > GIC_VCPU_MAX_NUM_LR) {
         printf("Warning: VGIC is reporting more list registers than we support. Truncating\n");
@@ -146,8 +149,10 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
         vcpu->cpx.sctlr = getSCTLR();
         vcpu->vgic.hcr = get_gic_vcpu_ctrl_hcr();
     }
+#ifndef CONFIG_ARCH_AARCH64
     /* Store VCPU state */
     vcpu->cpx.actlr = getACTLR();
+#endif
 
     /* Store GIC VCPU control state */
     vcpu->vgic.vmcr = get_gic_vcpu_ctrl_vmcr();
@@ -157,6 +162,9 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
         vcpu->vgic.lr[i] = get_gic_vcpu_ctrl_lr(i);
     }
 
+#ifdef CONFIG_ARCH_AARCH64
+    vcpu_save_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
+#else
     /* save banked registers */
     vcpu->lr_svc = get_lr_svc();
     vcpu->sp_svc = get_sp_svc();
@@ -173,6 +181,7 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
     vcpu->r10_fiq = get_r10_fiq();
     vcpu->r11_fiq = get_r11_fiq();
     vcpu->r12_fiq = get_r12_fiq();
+#endif
 
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
     /* This is done when we are asked to save and restore the CP14 debug context
@@ -202,6 +211,9 @@ vcpu_restore(vcpu_t *vcpu)
         set_gic_vcpu_ctrl_lr(i, vcpu->vgic.lr[i]);
     }
 
+#ifdef CONFIG_ARCH_AARCH64
+    vcpu_restore_reg_range(vcpu, seL4_VCPUReg_TTBR0, seL4_VCPUReg_SPSR_EL1);
+#else
     /* restore banked registers */
     set_lr_svc(vcpu->lr_svc);
     set_sp_svc(vcpu->sp_svc);
@@ -221,6 +233,7 @@ vcpu_restore(vcpu_t *vcpu)
 
     /* Restore and enable VCPU state */
     setACTLR(vcpu->cpx.actlr);
+#endif
     vcpu_enable(vcpu);
 }
 
@@ -285,9 +298,13 @@ VGICMaintenance(void)
 void
 vcpu_init(vcpu_t *vcpu)
 {
+#ifdef CONFIG_ARCH_AARCH64
+    armv_vcpu_init(vcpu);
+#else
     /* CPX registers */
     vcpu->cpx.sctlr = SCTLR_DEFAULT;
     vcpu->cpx.actlr = ACTLR_DEFAULT;
+#endif
     /* GICH VCPU interface control */
     vcpu->vgic.hcr = VGIC_HCR_EN;
 }
@@ -365,7 +382,11 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 #endif
 
     /* sanitize the CPSR as without a VCPU a thread should only be in user mode */
+#ifdef CONFIG_ARCH_AARCH64
+    setRegister(tcb, SPSR_EL1, sanitiseRegister(SPSR_EL1, getRegister(tcb, SPSR_EL1), false));
+#else
     setRegister(tcb, CPSR, sanitiseRegister(CPSR, getRegister(tcb, CPSR), false));
+#endif
 }
 
 exception_t
@@ -575,6 +596,11 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 void
 handleVCPUFault(word_t hsr)
 {
+#ifdef CONFIG_ARCH_AARCH64
+    if (armv_handleVCPUFault(hsr)) {
+        return;
+    }
+#endif
     current_fault = seL4_Fault_VCPUFault_new(hsr);
     handleFault(NODE_STATE(ksCurThread));
     schedule();
