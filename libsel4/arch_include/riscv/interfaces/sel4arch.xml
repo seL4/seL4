@@ -15,7 +15,26 @@
   Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
   Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
   -->
-<api>
+<api name="ObjectApiRiscv" label_prefix="riscv_">
+    <struct name="seL4_UserContext">
+            <member name="pc"/>
+            <member name="ra"/>
+            <member name="sp"/>
+            <member name="gp"/>
+            <member name="tp"/>
+            <member name="t0"/>
+            <member name="t1"/>
+            <member name="t2"/>
+            <member name="s0"/>
+            <member name="s1"/>
+            <member name="a0"/>
+            <member name="a1"/>
+            <member name="a2"/>
+            <member name="a3"/>
+            <member name="a4"/>
+            <member name="a5"/>
+            <member name="a6"/>
+    </struct>
     <interface name="seL4_RISCV_PageTable">
         <method id="RISCVPageTableMap" name="Map">
             <param dir="in" name="pt" type="seL4_RISCV_PageTable"/>
@@ -69,26 +88,6 @@
             <param dir="in" name="vroot" type="seL4_CPtr"/>
         </method>
     </interface>
-
-    <struct name="seL4_UserContext">
-            <member name="pc"/>
-            <member name="ra"/>
-            <member name="sp"/>
-            <member name="gp"/>
-            <member name="tp"/>
-            <member name="t0"/>
-            <member name="t1"/>
-            <member name="t2"/>
-            <member name="s0"/>
-            <member name="s1"/>
-            <member name="a0"/>
-            <member name="a1"/>
-            <member name="a2"/>
-            <member name="a3"/>
-            <member name="a4"/>
-            <member name="a5"/>
-            <member name="a6"/>
-    </struct>
 
 
 </api>
