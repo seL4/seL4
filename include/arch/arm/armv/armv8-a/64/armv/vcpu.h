@@ -585,6 +585,39 @@ armv_vcpu_enable(vcpu_t *vcpu)
 #endif
 }
 
+static inline void
+armv_vcpu_disable(vcpu_t *vcpu)
+{
+
+    uint32_t hcr;
+    dsb();
+    if (likely(vcpu)) {
+        hcr = get_gic_vcpu_ctrl_hcr();
+        vcpu->vgic.hcr = hcr;
+        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
+#ifdef CONFIG_HAVE_FPU
+        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
+#endif
+        isb();
+    }
+    /* Turn off the VGIC */
+    set_gic_vcpu_ctrl_hcr(0);
+    isb();
+
+    /* Stage 1 MMU off */
+    setSCTLR(SCTLR_DEFAULT);
+    isb();
+    MSR("hcr_el2", HCR_NATIVE);
+    isb();
+
+#ifdef CONFIG_HAVE_FPU
+    /* Allow FPU instructions in EL0 and EL1 for native
+     * threads by setting the CPACR_EL1. The CPTR_EL2 is
+     * used to trap the FPU instructions to EL2.
+     */
+    enableFpuEL01();
+#endif
+}
 
 #define UNKNOWN_FAULT       0x2000000
 #define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
