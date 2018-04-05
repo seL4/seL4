@@ -530,6 +530,14 @@ vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
     vcpu->regs[reg] = value;
 }
 
+#define VTCR_EL2_T0SZ(x)    (x)
+#define VTCR_EL2_SL0(x)     ((x) << 6)
+#define VTCR_EL2_IRGN0(x)   ((x) << 8)
+#define VTCR_EL2_ORGN0(x)   ((x) << 10)
+#define VTCR_EL2_SH0(x)     ((x) << 12)
+#define VTCR_EL2_TG0(x)     ((x) << 14)
+#define VTCR_EL2_PS(x)      ((x) << 16)
+
 #define UNKNOWN_FAULT       0x2000000
 #define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
 #define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
