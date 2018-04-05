@@ -40,6 +40,7 @@ set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
 ########################
 config_choice(KernelArch ARCH "Architecture to use when building the kernel"
     "arm;KernelArchARM;ARCH_ARM"
+    "riscv;KernelArchRiscV;ARCH_RISCV"
     "x86;KernelArchX86;ARCH_X86"
 )
 
@@ -47,6 +48,7 @@ config_choice(KernelArch ARCH "Architecture to use when building the kernel"
 set(KernelHaveFPU OFF)
 
 include(src/arch/arm/config.cmake)
+include(src/arch/riscv/config.cmake)
 include(src/arch/x86/config.cmake)
 
 include(include/32/mode/config.cmake)
