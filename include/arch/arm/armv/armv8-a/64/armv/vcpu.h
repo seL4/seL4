@@ -571,6 +571,21 @@ armv_vcpu_boot_init(void)
     isb();
 }
 
+static inline void
+armv_vcpu_enable(vcpu_t *vcpu)
+{
+    MSR("hcr_el2", HCR_VCPU);
+    isb();
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
+    isb();
+
+    set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
+#ifdef CONFIG_HAVE_FPU
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
+#endif
+}
+
+
 #define UNKNOWN_FAULT       0x2000000
 #define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
 #define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
