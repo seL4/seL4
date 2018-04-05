@@ -60,6 +60,7 @@ endif()
 # and let the platforms override them.
 set(KernelArmMachFeatureModifiers "" CACHE INTERNAL "")
 set(KernelArmMach "" CACHE INTERNAL "")
+set(KernelArmCortexA7 OFF)
 set(KernelArmCortexA8 OFF)
 set(KernelArmCortexA9 OFF)
 set(KernelArmCortexA15 OFF)
