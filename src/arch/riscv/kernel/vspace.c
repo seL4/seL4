@@ -186,7 +186,6 @@ create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
                     asidInvalid,                     /* capFMappedASID       */
                     pptr,                            /* capFBasePtr          */
                     0,                               /* capFSize             */
-                    0,                               /* capFTMapype          */
                     0,                               /* capFVMRights         */
                     0,
                     0                                /* capFMappedAddress    */

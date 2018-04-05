@@ -184,7 +184,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
                    RISCV_4K_Page,                  /* capFSize             */
-                   0,                              /* capFTMapype          */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    0,                              /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
@@ -199,7 +198,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
                    RISCV_Mega_Page,                  /* capFSize             */
-                   0,                              /* capFTMapype          */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    0,                              /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
@@ -216,7 +214,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
                    RISCV_Giga_Page,                  /* capFSize             */
-                   0,                              /* capFTMapype          */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    0,                              /* capFIsDevice         */
                    0                               /* capFMappedAddress    */

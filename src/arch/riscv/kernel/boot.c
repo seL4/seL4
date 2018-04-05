@@ -86,7 +86,6 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, 
               asid,                            /* capFMappedASID       */
               pptr,                            /* capFBasePtr          */
               frame_size,                      /* capFSize             */
-              0,                               /* capFTMapype          */
               wordFromVMRights(VMReadWrite),   /* capFVMRights         */
               0,                               /* capFIsDevice         */
               vptr                             /* capFMappedAddress    */

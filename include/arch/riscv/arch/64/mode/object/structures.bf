@@ -32,11 +32,9 @@ block frame_cap {
 
     field       capType             5
     field       capFSize            2
--- RVTODO: MapType was copied from x86 and is not used and should be removed
-    field       capFMapType         2
     field       capFVMRights        3
     field       capFIsDevice        1
-    padding                         3
+    padding                         5
     field_high  capFMappedAddress   48
 }
 
