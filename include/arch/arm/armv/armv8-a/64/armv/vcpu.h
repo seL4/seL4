@@ -619,6 +619,12 @@ armv_vcpu_disable(vcpu_t *vcpu)
 #endif
 }
 
+static inline void
+armv_vcpu_init(vcpu_t *vcpu)
+{
+    vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_EL1_VM);
+}
+
 #define UNKNOWN_FAULT       0x2000000
 #define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
 #define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
