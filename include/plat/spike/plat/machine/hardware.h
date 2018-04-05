@@ -20,25 +20,12 @@
 #define __PLAT_MACHINE_HARDWARE_H
 
 #include <config.h>
+#include <plat_mode/machine/hardware.h>
 
-#define physBase          0x00000000C0000000llu
 #define PADDR_BASE        physBase /* for compatibility with proofs */
-
-#if CONFIG_PT_LEVELS == 2
-#define kernelBase        0xffffffff80000000llu
-#elif CONFIG_PT_LEVELS == 3
-#define kernelBase        0xFFFFFFC000000000llu
-#elif CONFIG_PT_LEVELS == 4
-#define kernelBase        0xFFFF800000000000llu
-#endif /* COFIG_PT_LEVELS */
 
 #define physMappingOffset (kernelBase - physBase)
 #define BASE_OFFSET       physMappingOffset
-#ifdef CONFIG_ROCKET_CHIP
-#define PPTR_TOP         0xFFFFFFFF8FE00000llu
-#else
-#define PPTR_TOP          0x4FC00000
-#endif
 #define PADDR_TOP         (PPTR_TOP - BASE_OFFSET)
 
 #ifndef __ASSEMBLER__

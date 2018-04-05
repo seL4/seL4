@@ -31,7 +31,7 @@
 #define seL4_NotificationBits   4
 #define seL4_EndpointBits       4
 #define seL4_IPCBufferSizeBits  9
-#define seL4_TCBBits            11
+#define seL4_TCBBits            9
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits     4
