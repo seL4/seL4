@@ -30,11 +30,6 @@ const register_t gpRegisters[] = {
 
 };
 
-// RVTODO: this is not used anywhere. what is it meant to mean?
-const register_t exceptionMessage[] = {
-    SP /* TODO: Add other realted registers */
-};
-
 const register_t syscallMessage[] = {
     a0, a1, a2, a3, a4, a5, a5, a7
 };
