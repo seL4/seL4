@@ -530,6 +530,47 @@ vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
     vcpu->regs[reg] = value;
 }
 
+static word_t
+readVCPUReg(vcpu_t *vcpu, word_t field)
+{
+    if (likely(armHSCurVCPU == vcpu)) {
+        switch (field) {
+        case seL4_VCPUReg_SCTLR:
+            /* The SCTLR value is switched to/from hardware when we enable/disable
+             * the vcpu, not when we switch vcpus */
+            if (armHSVCPUActive) {
+                return getSCTLR();
+            } else {
+                return vcpu_read_reg(vcpu, field);
+            }
+        default:
+            return vcpu_hw_read_reg(field);
+        }
+    } else {
+        return vcpu_read_reg(vcpu, field);
+    }
+}
+
+static void
+writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
+{
+    if (likely(armHSCurVCPU == vcpu)) {
+        switch (field) {
+        case seL4_VCPUReg_SCTLR:
+            if (armHSVCPUActive) {
+                setSCTLR(value);
+            } else {
+                vcpu_write_reg(vcpu, field, value);
+            }
+            break;
+        default:
+            return vcpu_hw_write_reg(field, value);
+        }
+    } else {
+       vcpu_write_reg(vcpu, field, value);
+    }
+}
+
 #define VTCR_EL2_T0SZ(x)    (x)
 #define VTCR_EL2_SL0(x)     ((x) << 6)
 #define VTCR_EL2_IRGN0(x)   ((x) << 8)
