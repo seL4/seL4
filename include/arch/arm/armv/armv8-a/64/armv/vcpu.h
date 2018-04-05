@@ -538,6 +538,22 @@ vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
 #define VTCR_EL2_TG0(x)     ((x) << 14)
 #define VTCR_EL2_PS(x)      ((x) << 16)
 
+static inline void
+vcpu_init_vtcr(void)
+{
+    /* Set up the stage-2 translation control register for cores supporting 44-bit PA */
+    uint32_t vtcr_el2 = VTCR_EL2_T0SZ(20); // 44-bit input IPA
+    vtcr_el2 |= VTCR_EL2_SL0(0b10);        // 4KiB, start at level 0
+    vtcr_el2 |= VTCR_EL2_IRGN0(0b01);      // inner normal, write-back, read/write allocate
+    vtcr_el2 |= VTCR_EL2_ORGN0(0b01);      // outer normal, write-back, read/write allocate
+    vtcr_el2 |= VTCR_EL2_SH0(0b11);        // inner sharable
+    vtcr_el2 |= VTCR_EL2_TG0(0);           // 4KiB page size
+    vtcr_el2 |= VTCR_EL2_PS(0b100);        // 44-bit PA size
+    vtcr_el2 |= BIT(31);                   // reserved as 1
+
+    MSR("vtcr_el2", vtcr_el2);
+    isb();
+}
 #define UNKNOWN_FAULT       0x2000000
 #define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
 #define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
