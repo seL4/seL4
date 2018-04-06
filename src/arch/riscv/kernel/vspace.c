@@ -710,12 +710,6 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
                                cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                word_t *buffer)
 {
-    /* No invocations at level 1 page table (aka page directory) are not supported */
-    if (isVTableRoot(cap)) {
-        current_syscall_error.type = seL4_IllegalOperation;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
     if (label == RISCVPageTableUnmap) {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageTableInvocationUnmap (cap, cte);
