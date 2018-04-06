@@ -721,11 +721,13 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     }
 
     if (unlikely((label != RISCVPageTableMap))) {
+        userError("RISCVPageTable: Illegal Operation");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
     if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
+        userError("RISCVPageTable: truncated message");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -760,6 +762,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
 
     if (unlikely(vaddr >= kernelBase)) {
+        userError("RISCVPageTableMap: Virtual address cannot be in kernel window.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
 
