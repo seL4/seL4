@@ -313,22 +313,6 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
     return ret;
 }
 
-bool_t CONST isVTableRoot(cap_t cap)
-{
-    findVSpaceForASID_ret_t ret = findVSpaceForASID(cap_page_table_cap_get_capPTMappedASID(cap));
-    bool_t isRoot = false;
-
-    if (cap_get_capType(cap) == cap_page_table_cap) {
-        if (ret.status == EXCEPTION_NONE) {
-            if (cap_page_table_cap_get_capPTBasePtr(cap) == (word_t) ret.vspace_root) {
-                isRoot = true;
-            }
-        }
-    }
-
-    return isRoot;
-}
-
 void
 copyGlobalMappings(pte_t *newLvl1pt)
 {

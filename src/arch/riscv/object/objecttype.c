@@ -90,16 +90,17 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
     case cap_page_table_cap:
-        if (final && isVTableRoot(cap)) {
-            deleteASID(cap_page_table_cap_get_capPTMappedASID(cap),
-                       PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
-
-        } else if (final && cap_page_table_cap_get_capPTIsMapped(cap)) {
-            unmapPageTable(
-                cap_page_table_cap_get_capPTMappedASID(cap),
-                cap_page_table_cap_get_capPTMappedAddress(cap),
-                PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap))
-            );
+        if (final) {
+            asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
+            if (asid != asidInvalid) {
+                findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+                pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+                if (find_ret.status == EXCEPTION_NONE && find_ret.vspace_root == pte) {
+                    deleteASID(cap_page_table_cap_get_capPTMappedASID(cap), pte);
+                } else if (cap_page_table_cap_get_capPTIsMapped(cap)) {
+                    unmapPageTable(asid, cap_page_table_cap_get_capPTMappedAddress(cap), pte);
+                }
+            }
         }
         break;
     }
