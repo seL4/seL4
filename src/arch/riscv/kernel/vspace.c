@@ -907,21 +907,43 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
-            userError("RISCVPageMap: Invalid level 1 pt cap.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(!isVTableRoot(lvl1ptCap))) {
-            userError("RISCVPageMap: Invalid level 1 pt cap.");
+        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap &&
+                     cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) == asidInvalid)) {
+            userError("RISCVPageMap: Bad PageTable cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
+        asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
+
+        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+        if (find_ret.status != EXCEPTION_NONE) {
+            userError("RISCVPageMap: No PageTable for ASID");
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (find_ret.vspace_root != lvl1pt) {
+            userError("RISCVPageMap: ASID lookup failed");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        /* check the vaddr is valid */
+        word_t vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
+        if (unlikely(vtop >= kernelBase)) {
+            current_syscall_error.type = seL4_InvalidArgument;
+            current_syscall_error.invalidArgumentNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
+            current_syscall_error.type = seL4_AlignmentError;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
 
         /* Check if this page is already mapped */
         // RVTODO: lookup leaf node and see if remaining bits == frameSize
@@ -933,38 +955,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
-
-        // RVTODO: how are we checking the lvl1pt *AFTER* having just done lookups with it
-        {
-            findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-            if (find_ret.status != EXCEPTION_NONE) {
-                current_syscall_error.type = seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource = false;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            if (find_ret.vspace_root != lvl1pt) {
-                current_syscall_error.type = seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 1;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-        }
-
-        word_t vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
-        if (unlikely(vtop >= kernelBase)) {
-            current_syscall_error.type = seL4_InvalidArgument;
-            current_syscall_error.invalidArgumentNumber = 0;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
         vm_rights_t vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-
-        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
-            current_syscall_error.type = seL4_AlignmentError;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
         paddr_t frame_paddr = addrFromPPtr((void *) cap_frame_cap_get_capFBasePtr(cap));
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
         cap = cap_frame_cap_set_capFMappedAddress(cap,  vaddr);
@@ -997,40 +988,42 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
         vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
-        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
-            userError("RISCVPageRemap: Invalid level 1 pt cap.");
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (unlikely(!isVTableRoot(lvl1ptCap))) {
-            userError("RISCVPageReMap: Invalid level 1 pt cap.");
+        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap &&
+                     cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) == asidInvalid)) {
+            userError("RISCVPageMap: Bad PageTable cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) == asidInvalid) {
-            userError("RISCVPageRemap: Cap is not mapped");
+            userError("RISCVPageMap: frame is not mapped");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        word_t vaddr = cap_frame_cap_get_capFMappedAddress(cap);
-        asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
-        pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
-        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        if (find_ret.status != EXCEPTION_NONE) {
+        asid_t mappedASID = cap_frame_cap_get_capFMappedASID(cap);
+        findVSpaceForASID_ret_t find_ret = findVSpaceForASID(mappedASID);
+        if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+            userError("RISCVPageMap: No PageTable for ASID");
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (find_ret.vspace_root != lvl1pt) {
+
+        pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
+        if (unlikely(find_ret.vspace_root != lvl1pt ||
+                     cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) != mappedASID)) {
+            userError("RISCVPageMap: ASID lookup failed");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
 
+        word_t vaddr = cap_frame_cap_get_capFMappedAddress(cap);
+        if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
+            current_syscall_error.type = seL4_AlignmentError;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
