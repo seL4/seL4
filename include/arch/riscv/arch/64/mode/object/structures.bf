@@ -25,7 +25,7 @@ base 64(48,1)
 -- the capType
 #include <object/structures_64.bf>
 
--- 4K frames
+-- frames
 block frame_cap {
     field       capFMappedASID      16
     field_high  capFBasePtr         48

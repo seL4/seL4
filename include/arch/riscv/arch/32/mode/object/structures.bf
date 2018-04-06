@@ -24,7 +24,7 @@ base 32(32,1)
 -- the capType
 #include <object/structures_32.bf>
 
--- 4K frames
+-- frames
 block frame_cap {
     field       capFMappedASID      9
     field_high  capFBasePtr         20
