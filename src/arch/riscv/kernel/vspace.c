@@ -64,32 +64,6 @@ RISCVGetReadFromVMRights(vm_rights_t vm_rights)
 
 /* ==================== BOOT CODE STARTS HERE ==================== */
 
-BOOT_CODE void
-map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
-{
-    /* This maps a 4KiB page on the corresponding PT level (depending on the
-     * configured PT level
-     */
-    uint32_t idx = RISCV_GET_PT_INDEX(vaddr, RISCVpageAtPTLevel(RISCV_4K_Page));
-
-    /* vaddr lies in the region the global PT covers */
-    assert(vaddr >= PPTR_TOP);
-
-    /* array starts at index 0, so (level - 1) to index */
-    kernel_pageTables[RISCVpageAtPTLevel(RISCV_4K_Page) - 1][idx] =    pte_new(
-                                                                           paddr >> RISCV_4K_PageBits,
-                                                                           0,  /* sw */
-                                                                           1,  /* dirty */
-                                                                           1,  /* accessed */
-                                                                           1,  /* global */
-                                                                           0,  /* user */
-                                                                           1,  /* execute */
-                                                                           1,  /* write */
-                                                                           1,  /* read */
-                                                                           1   /* valid */
-                                                                       );
-}
-
 BOOT_CODE VISIBLE void
 map_kernel_window(void)
 {
