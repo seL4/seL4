@@ -711,6 +711,11 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
                                word_t *buffer)
 {
     if (label == RISCVPageTableUnmap) {
+        if (unlikely(!isFinalCapability(cte))) {
+            userError("RISCVPageTableUnmap: cannot unmap if more than once cap exists");
+            current_syscall_error.type = seL4_RevokeFirst;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageTableInvocationUnmap (cap, cte);
     }
