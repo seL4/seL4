@@ -70,26 +70,52 @@ map_kernel_window(void)
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
     assert(CONFIG_PT_LEVELS > 1 && CONFIG_PT_LEVELS <= 4);
 
+    /* kernel window starts at PPTR_BASE */
+    word_t pptr = PPTR_BASE;
 
-    /* Calculate the number of PTEs to map the kernel in the first level PT */
-    // RVTODO: window size should be well defined multiple of the page size and should not need
-    // any rounding
-    int num_lvl1_entries = ROUND_UP((BIT(CONFIG_KERNEL_WINDOW_SIZE_BIT) / RISCV_GET_LVL_PGSIZE(1)), 1);
-
-    for (int i = 0; i < num_lvl1_entries; i++) {
-        kernel_pageTables[0][RISCV_GET_PT_INDEX(kernelBase, 1) + i] =  pte_new(
-                                                                           /* physical address has to be strictly aligned to the correponding page size */
-                                                                           ((physBase + RISCV_GET_LVL_PGSIZE(1) * i) >> RISCV_4K_PageBits),
-                                                                           0,  /* sw */
-                                                                           1,  /* dirty */
-                                                                           1,  /* accessed */
-                                                                           1,  /* global */
-                                                                           0,  /* user */
-                                                                           1,  /* execute */
-                                                                           1,  /* write */
-                                                                           1,  /* read */
-                                                                           1   /* valid */
-                                                                       );
+    /* first we map in memory from PADDR_BASE */
+    word_t paddr = PADDR_BASE;
+    while (pptr < KERNEL_BASE) {
+        assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
+        assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
+        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] =
+            pte_new(
+                paddr >> RISCV_4K_PageBits,
+                0,  /* sw */
+                1,  /* dirty */
+                1,  /* accessed */
+                1,  /* global */
+                0,  /* user */
+                1,  /* execute */
+                1,  /* write */
+                1,  /* read */
+                1   /* valid */
+            );
+        pptr += RISCV_GET_LVL_PGSIZE(1);
+        paddr += RISCV_GET_LVL_PGSIZE(1);
+    }
+    /* now we should be mapping the kernel base, starting again from PADDR_LOAD */
+    assert(pptr == KERNEL_BASE);
+    paddr = PADDR_LOAD;
+    /* pptr will overflow at the end of the address range so this loop condition looks odd */
+    while (pptr >= KERNEL_BASE) {
+        assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
+        assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
+        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] =
+            pte_new(
+                paddr >> RISCV_4K_PageBits,
+                0,  /* sw */
+                1,  /* dirty */
+                1,  /* accessed */
+                1,  /* global */
+                0,  /* user */
+                1,  /* execute */
+                1,  /* write */
+                1,  /* read */
+                1   /* valid */
+            );
+        pptr += RISCV_GET_LVL_PGSIZE(1);
+        paddr += RISCV_GET_LVL_PGSIZE(1);
     }
 }
 
@@ -244,7 +270,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 BOOT_CODE void
 activate_kernel_vspace(void)
 {
-    setVSpaceRoot(addrFromPPtr(&kernel_pageTables[0]), 0);
+    setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
 }
 
 BOOT_CODE void
@@ -293,7 +319,7 @@ copyGlobalMappings(pte_t *newLvl1pt)
     unsigned int i;
     pte_t *global_kernel_vspace = kernel_pageTables[0];
 
-    for (i = RISCV_GET_PT_INDEX(kernelBase, 1); i < BIT(PT_INDEX_BITS); i++) {
+    for (i = RISCV_GET_PT_INDEX(PPTR_BASE, 1); i < BIT(PT_INDEX_BITS); i++) {
         newLvl1pt[i] = global_kernel_vspace[i];
     }
 }
@@ -552,7 +578,7 @@ setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) != cap_page_table_cap) {
-        setVSpaceRoot(addrFromPPtr(&kernel_pageTables[0]), 0);
+        setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
         return;
     }
 
@@ -561,7 +587,7 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_table_cap_get_capPTMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != lvl1pt)) {
-        setVSpaceRoot(addrFromPPtr(&kernel_pageTables[0]), asid);
+        setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), asid);
         return;
     }
 
@@ -699,7 +725,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
     asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
 
-    if (unlikely(vaddr >= kernelBase)) {
+    if (unlikely(vaddr >= PPTR_USER_TOP)) {
         userError("RISCVPageTableMap: Virtual address cannot be in kernel window.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
@@ -821,7 +847,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
         /* check the vaddr is valid */
         word_t vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
-        if (unlikely(vtop >= kernelBase)) {
+        if (unlikely(vtop >= PPTR_USER_TOP)) {
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;

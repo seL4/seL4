@@ -14,13 +14,7 @@
 
 #include <config.h>
 
-#define physBase          0xC0000000lu
-#define kernelBase        0x80000000lu
-
-#ifdef CONFIG_ROCKET_CHIP
-#define PPTR_TOP          0x8FE00000lu
-#else
-#define PPTR_TOP          0x4FC00000lu
-#endif
+#define PPTR_BASE  0x80000000lu
+#define KERNEL_BASE 0xFFC00000lu
 
 #endif

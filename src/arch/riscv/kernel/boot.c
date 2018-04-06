@@ -136,7 +136,8 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
     return residual_reg;
 }
 
-// RVTODO: direct copy of ARM
+// RVTODO: (almost) a direct copy of ARM
+// should create some unified freememory helper/allocator routines
 BOOT_CODE static void
 init_freemem(region_t ui_reg)
 {
@@ -145,8 +146,10 @@ init_freemem(region_t ui_reg)
     region_t cur_reg;
     region_t res_reg[] = {
         {
-            .start = kernelBase,
-            .end   = (pptr_t)ki_end
+            // This looks a bit awkward as our symbols are a reference in the kernel image window, but
+            // we want to do all allocations in terms of the main kernel window, so we do some translation
+            .start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void*)kernelBase)),
+            .end   = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void*)ki_end))
         },
         {
             .start = ui_reg.start,

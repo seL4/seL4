@@ -22,11 +22,28 @@
 #include <config.h>
 #include <plat_mode/machine/hardware.h>
 
-#define PADDR_BASE        physBase /* for compatibility with proofs */
+/* The main kernel window will start at the 0 physical address so that it can contain
+ * any potential memory that may exist */
+#define PADDR_BASE 0x0lu
+/* This represents the physical address that the kernel image will be linked to. This needs to
+ * be on a 1gb boundary as we currently require being able to creating a mapping to this address
+ * as the largest frame size */
+#define PADDR_LOAD 0xC0000000lu
 
-#define physMappingOffset (kernelBase - physBase)
-#define BASE_OFFSET       physMappingOffset
-#define PADDR_TOP         (PPTR_TOP - BASE_OFFSET)
+/* The highest valid physical address that can be indexed in the kernel window */
+#define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
+/* The highest valid physical address that can be used for the kernel image. We offset by
+ * PADDR_LOAD as the window for the kernel image is mapped started at PADDR_LOAD */
+#define PADDR_HIGH_TOP (-KERNEL_BASE + PADDR_LOAD)
+
+/* Translates from a physical address and a value in the kernel image */
+#define KERNEL_BASE_OFFSET (KERNEL_BASE - PADDR_LOAD)
+
+/* Convert our values into general values expected by the common code */
+#define kernelBase KERNEL_BASE
+#define PPTR_TOP KERNEL_BASE
+#define PPTR_USER_TOP PPTR_BASE
+#define BASE_OFFSET PPTR_BASE
 
 #ifndef __ASSEMBLER__
 
@@ -62,6 +79,21 @@ void plat_cleanL2Range(paddr_t start, paddr_t end);
 void plat_invalidateL2Range(paddr_t start, paddr_t end);
 /** MODIFIES: [*] */
 void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
+
+static inline void* CONST
+paddr_to_kpptr(paddr_t paddr)
+{
+    assert(paddr < PADDR_HIGH_TOP);
+    assert(paddr >= PADDR_LOAD);
+    return (void*)(paddr + KERNEL_BASE_OFFSET);
+}
+
+static inline paddr_t CONST
+kpptr_to_paddr(void *pptr)
+{
+    assert((word_t)pptr >= KERNEL_BASE);
+    return (paddr_t)pptr - KERNEL_BASE_OFFSET;
+}
 
 #endif /* !__ASSEMBLER__ */
 

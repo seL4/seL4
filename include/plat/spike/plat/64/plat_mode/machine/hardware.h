@@ -14,20 +14,18 @@
 
 #include <config.h>
 
-#define physBase          0x00000000C0000000llu
-
-#if CONFIG_PT_LEVELS == 2
-#define kernelBase        0xffffffff80000000llu
-#elif CONFIG_PT_LEVELS == 3
-#define kernelBase        0xFFFFFFC000000000llu
-#elif CONFIG_PT_LEVELS == 4
-#define kernelBase        0xFFFF800000000000llu
-#endif /* CONFIG_PT_LEVELS */
-
-#ifdef CONFIG_ROCKET_CHIP
-#define PPTR_TOP         0xFFFFFFFF8FE00000llu
+#if CONFIG_PT_LEVELS == 3
+/* The top half of the address space is reserved for the kernel. This means that 256 top level
+ * entires are for the user, and 256 are for the kernel. This will be further split into the
+ * 'regular' kernel window, which contains mappings to physical memory, and a small higher
+ * kernel image window that we use for running the actual kernel from */
+#define PPTR_BASE        0xFFFFFFC000000000lu
+/* We steal the top 2 gb entries for the kernel, this means that between PPTR_BASE and
+ * KERNEL_BASE there are 254 entries remaining, which represents how much physical memory
+ * can be used */
+#define KERNEL_BASE      0xFFFFFFFF80000000lu
 #else
-#define PPTR_TOP         0x000000004FC00000llu
+#error Only PT_LEVELS == 3 is supported
 #endif
 
 #endif
