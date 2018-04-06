@@ -926,16 +926,11 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         frameSize = cap_frame_cap_get_capFSize(cap);
         capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
+        /* check the frame isn't already mapped */
         if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) != asidInvalid) {
-            // RVTODO: this is nonsense. a mapped frame *CANNOT* be mapped
-            if (cap_frame_cap_get_capFMappedAddress(cap) != vaddr) {
-                userError("RISCVPageMap: Trying to map the same frame cap to different vaddr %p", (void*)vaddr);
-                current_syscall_error.type =
-                    seL4_InvalidCapability;
-                current_syscall_error.invalidCapNumber = 0;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
+            userError("RISCVPageMap: frame already mapped");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
         }
 
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
