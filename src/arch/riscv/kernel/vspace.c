@@ -813,21 +813,21 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     }
 
     paddr_t paddr = addrFromPPtr(
-                PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
+                        PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
 
     // RVTODO: why is there makeUserPTE helper and yet we make a user pte manually here
     pte_t pte = pte_new(
-              (paddr >> RISCV_4K_PageBits),
-              0, /* sw */
-              1, /* dirty */
-              1, /* accessed */
-              0,  /* global */
-              0,  /* user */
-              0,  /* execute */
-              0,  /* write */
-              0,  /* read */
-              1 /* valid */
-          );
+                    (paddr >> RISCV_4K_PageBits),
+                    0, /* sw */
+                    1, /* dirty */
+                    1, /* accessed */
+                    0,  /* global */
+                    0,  /* user */
+                    0,  /* execute */
+                    0,  /* write */
+                    0,  /* read */
+                    1 /* valid */
+                );
 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
