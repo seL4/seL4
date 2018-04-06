@@ -623,7 +623,11 @@ checkValidIPCBuffer(vptr_t vptr, cap_t cap)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    // RVTODO: check for that frame is not a device frame
+    if (unlikely(cap_frame_cap_get_capFIsDevice(cap))) {
+        userError("Specifying a device frame as an IPC buffer is not permitted.");
+        current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
 
     // RVTODO use seL4_IPCBufferSizeBits constant as the ipc buffer is not 9
     // bits on 64-bit
