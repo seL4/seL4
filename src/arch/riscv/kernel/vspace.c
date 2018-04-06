@@ -48,7 +48,7 @@ static exception_t performPageGetAddress(void *vbase_ptr);
 static word_t CONST
 RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
 {
-    return (vm_rights != VMNoAccess) && (vm_rights != VMReadOnly);
+    return vm_rights != VMReadOnly;
 }
 
 static word_t RISCVGetUserFromVMRights(vm_rights_t vm_rights)
@@ -59,7 +59,7 @@ static word_t RISCVGetUserFromVMRights(vm_rights_t vm_rights)
 static inline word_t CONST
 RISCVGetReadFromVMRights(vm_rights_t vm_rights)
 {
-    return (vm_rights != VMNoAccess) && (vm_rights != VMWriteOnly);
+    return vm_rights != VMWriteOnly;
 }
 
 /* ==================== BOOT CODE STARTS HERE ==================== */
@@ -664,9 +664,6 @@ checkValidIPCBuffer(vptr_t vptr, cap_t cap)
 vm_rights_t CONST
 maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
-    if (vm_rights == VMNoAccess) {
-        return VMNoAccess;
-    }
     if (vm_rights == VMReadOnly &&
             seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
@@ -688,7 +685,7 @@ maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
     if (vm_rights == VMKernelOnly) {
         return VMKernelOnly;
     }
-    return VMNoAccess;
+    return VMKernelOnly;
 }
 
 /* The rest of the file implements the RISCV object invocations */

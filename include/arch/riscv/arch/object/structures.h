@@ -50,11 +50,10 @@ typedef struct arch_tcb {
 } arch_tcb_t;
 
 enum vm_rights {
-    VMNoAccess = 0,
-    VMKernelOnly = 1,
-    VMReadOnly = 2,
-    VMWriteOnly = 3,
-    VMReadWrite = 4
+    VMKernelOnly = 0,
+    VMReadOnly = 1,
+    VMWriteOnly = 2,
+    VMReadWrite = 3
 };
 typedef uint32_t vm_rights_t;
 
