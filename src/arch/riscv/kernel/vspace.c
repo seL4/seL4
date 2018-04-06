@@ -718,14 +718,6 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
                                cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                word_t *buffer)
 {
-    word_t vaddr;
-    cap_t lvl1ptCap;
-    pte_t *lvl1pt, *ptSlot;
-    pte_t pte;
-    paddr_t paddr;
-    lookupPTSlot_ret_t lu_ret;
-    asid_t          asid;
-
     /* No invocations at level 1 page table (aka page directory) are not supported */
     if (isVTableRoot(cap)) {
         current_syscall_error.type = seL4_IllegalOperation;
@@ -747,8 +739,8 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vaddr = getSyscallArg(0, buffer);
-    lvl1ptCap = extraCaps.excaprefs[0]->cap;
+    word_t vaddr = getSyscallArg(0, buffer);
+    cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
 
     if (!isValidNativeRoot(lvl1ptCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
@@ -773,8 +765,8 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
-    asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
+    pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
+    asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
 
     if (unlikely(vaddr >= kernelBase)) {
         current_syscall_error.type = seL4_InvalidArgument;
@@ -810,21 +802,21 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
      */
     // RVTODO: we just want to lookup the leaf and then see how many bits are left to
     // translate (i.e. the level of the leaf)
-    lu_ret = lookupPTSlot(lvl1pt, vaddr, CONFIG_PT_LEVELS);
+    lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, CONFIG_PT_LEVELS);
 
     /* Get the slot to install the PT in */
-    ptSlot = lu_ret.ptSlot;
+    pte_t *ptSlot = lu_ret.ptSlot;
 
     if (unlikely(ptSlot->words[0] != 0) ) {
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    paddr = addrFromPPtr(
+    paddr_t paddr = addrFromPPtr(
                 PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
 
     // RVTODO: why is there makeUserPTE helper and yet we make a user pte manually here
-    pte = pte_new(
+    pte_t pte = pte_new(
               (paddr >> RISCV_4K_PageBits),
               0, /* sw */
               1, /* dirty */
@@ -893,16 +885,6 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 {
     switch (label) {
     case RISCVPageMap: {
-
-        word_t vaddr, vtop, w_rightsMask;
-        paddr_t frame_paddr;
-        cap_t lvl1ptCap;
-        pte_t *lvl1pt;
-        asid_t asid;
-        vm_rights_t capVMRights, vmRights;
-        vm_page_size_t frameSize;
-        vm_attributes_t attr;
-
         if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
             userError("RISCVPageMap: Truncated message.");
             current_syscall_error.type =
@@ -911,13 +893,13 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vaddr = getSyscallArg(0, buffer);
-        w_rightsMask = getSyscallArg(1, buffer);
-        attr = vmAttributesFromWord(getSyscallArg(2, buffer));
-        lvl1ptCap = extraCaps.excaprefs[0]->cap;
+        word_t vaddr = getSyscallArg(0, buffer);
+        word_t w_rightsMask = getSyscallArg(1, buffer);
+        vm_attributes_t attr = vmAttributesFromWord(getSyscallArg(2, buffer));
+        cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
 
-        frameSize = cap_frame_cap_get_capFSize(cap);
-        capVMRights = cap_frame_cap_get_capFVMRights(cap);
+        vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
+        vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
         /* check the frame isn't already mapped */
         if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) != asidInvalid) {
@@ -944,7 +926,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(
+        pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(
                              lvl1ptCap));
 
         /* Check if this page is already mapped */
@@ -959,7 +941,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
+        asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
 
         // RVTODO: how are we checking the lvl1pt *AFTER* having just done lookups with it
         {
@@ -981,7 +963,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             }
         }
 
-        vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
+        word_t vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
 
         if (unlikely(vtop >= kernelBase)) {
             current_syscall_error.type =
@@ -991,7 +973,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vmRights =
+        vm_rights_t vmRights =
             maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
 
         if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
@@ -1001,7 +983,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        frame_paddr = addrFromPPtr((void *)
+        paddr_t frame_paddr = addrFromPPtr((void *)
                                    cap_frame_cap_get_capFBasePtr(cap));
 
 
@@ -1024,26 +1006,17 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
     }
 
     case RISCVPageRemap: {
-        word_t vaddr, w_rightsMask;
-        paddr_t frame_paddr;
-        cap_t lvl1ptCap;
-        pte_t *lvl1pt;
-        asid_t asid;
-        vm_rights_t capVMRights, vmRights;
-        vm_page_size_t frameSize;
-        vm_attributes_t attr;
-
         if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
             userError("RISCVPageRemap: Truncated message.");
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        w_rightsMask = getSyscallArg(0, buffer);
-        attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-        lvl1ptCap = extraCaps.excaprefs[0]->cap;
-        frameSize = cap_frame_cap_get_capFSize(cap);
-        capVMRights = cap_frame_cap_get_capFVMRights(cap);
+        word_t w_rightsMask = getSyscallArg(0, buffer);
+        vm_attributes_t attr = vmAttributesFromWord(getSyscallArg(1, buffer));
+        cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
+        vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
+        vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
 
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
@@ -1068,9 +1041,9 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vaddr = cap_frame_cap_get_capFMappedAddress(cap);
-        asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
-        lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
+        word_t vaddr = cap_frame_cap_get_capFMappedAddress(cap);
+        asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
+        pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
         findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
         if (find_ret.status != EXCEPTION_NONE) {
             current_syscall_error.type = seL4_FailedLookup;
@@ -1095,8 +1068,8 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-        frame_paddr = addrFromPPtr((void *)
+        vm_rights_t vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
+        paddr_t frame_paddr = addrFromPPtr((void *)
                                    cap_frame_cap_get_capFBasePtr(cap));
         create_mappings_pte_return_t map_ret;
         map_ret = createSafeMappingEntries_PTE(frame_paddr, vaddr,
