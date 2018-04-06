@@ -312,6 +312,34 @@ set_r12_fiq(word_t val)
 {
     asm ("msr r12_fiq, %[val]" :: [val]"r"(val));
 }
+static inline word_t
+get_cntv_tval(void)
+{
+    word_t ret = 0;
+    MRC(CNTV_TVAL, ret);
+    return ret;
+}
+
+static inline void
+set_cntv_tval(word_t val)
+{
+    MCR(CNTV_TVAL, val);
+}
+
+static inline word_t
+get_cntv_ctl(void)
+{
+    word_t ret = 0;
+    MRC(CNTV_CTL, ret);
+    return ret;
+}
+
+static inline void
+set_cntv_ctl(word_t val)
+{
+    MCR(CNTV_CTL, val);
+}
+
 
 static word_t
 readVCPUReg(vcpu_t *vcpu, word_t field)
