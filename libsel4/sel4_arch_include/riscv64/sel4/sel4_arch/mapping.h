@@ -30,10 +30,6 @@ static inline seL4_Word seL4_MappingFailedLookupLevel()
     return seL4_GetMR(SEL4_MAPPING_LOOKUP_LEVEL);
 }
 
-#if CONFIG_PT_LEVELS == 3
 #define SEL4_MAPPING_LOOKUP_NO_PT 21
-#else
-#error "These definitions need to be supported for the required PT levels"
-#endif
 
 #endif
