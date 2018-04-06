@@ -624,7 +624,6 @@ setVMRoot(tcb_t *tcb)
     setVSpaceRoot(addrFromPPtr(lvl1pt), asid);
 }
 
-// RVTODO: is this abstraction around vtables needed?
 bool_t CONST
 isValidVTableRoot(cap_t cap)
 {
