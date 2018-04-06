@@ -379,9 +379,7 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     }
 }
 
-// RVTODO: this function has a confusing name as it is doing two things
-// checking if the entry is for another page table *AND* if the entry is valid
-static inline pptr_t isValidHWPageTable(pte_t *pte)
+static inline pptr_t isPTEPageTable(pte_t *pte)
 {
     return pte_ptr_get_valid(pte) &&
            !(pte_ptr_get_read(pte) || pte_ptr_get_write(pte) || pte_ptr_get_execute(pte));
@@ -409,7 +407,7 @@ static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, pte
     }
 
     for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
-        if (unlikely(!isValidHWPageTable(ret.ptSlot))) {
+        if (unlikely(!isPTEPageTable(ret.ptSlot))) {
             userError("Page table walk terminated, failed to find a PT");
             ret.status = EXCEPTION_LOOKUP_FAULT;
             return ret;
