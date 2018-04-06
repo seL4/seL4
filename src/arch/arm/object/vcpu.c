@@ -524,8 +524,8 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
 }
 
 
-static uint32_t
-readVCPUReg(vcpu_t *vcpu, uint32_t field)
+static word_t
+readVCPUReg(vcpu_t *vcpu, word_t field)
 {
     if (likely(armHSCurVCPU == vcpu)) {
         switch (field) {
@@ -546,7 +546,7 @@ readVCPUReg(vcpu_t *vcpu, uint32_t field)
 }
 
 static void
-writeVCPUReg(vcpu_t *vcpu, uint32_t field, uint32_t value)
+writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     if (likely(armHSCurVCPU == vcpu)) {
         switch (field) {
