@@ -904,6 +904,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             userError("RISCVPageMap: frame already mapped");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
         }
 
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
