@@ -389,9 +389,7 @@ static inline pptr_t isValidHWPageTable(pte_t *pte)
 
 static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
 {
-    // RVTODO: use bitfield accessors
-    assert(isValidHWPageTable(pte));
-    return (pte_t*)ptrFromPAddr((pte->words[0] >> PTE_PPN_SHIFT) << (seL4_PageTableBits));
+    return PTE_PTR(ptrFromPAddr(pte_ptr_get_ppn(pte) << seL4_PageTableBits));
 }
 
 static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, pte_t *target_pt)
