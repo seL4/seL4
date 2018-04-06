@@ -887,9 +887,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
     case RISCVPageMap: {
         if (unlikely(length < 3 || extraCaps.excaprefs[0] == NULL)) {
             userError("RISCVPageMap: Truncated message.");
-            current_syscall_error.type =
-                seL4_TruncatedMessage;
-
+            current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
@@ -910,34 +908,27 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
             userError("RISCVPageMap: Invalid level 1 pt cap.");
-            current_syscall_error.type =
-                seL4_InvalidCapability;
+            current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
-
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         if (unlikely(!isVTableRoot(lvl1ptCap))) {
             userError("RISCVPageMap: Invalid level 1 pt cap.");
-            current_syscall_error.type =
-                seL4_InvalidCapability;
+            current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
-
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(
-                             lvl1ptCap));
+        pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
 
         /* Check if this page is already mapped */
         // RVTODO: lookup leaf node and see if remaining bits == frameSize
         lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
 
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            current_syscall_error.type =
-                seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource =
-                false;
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
@@ -945,48 +936,35 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
         // RVTODO: how are we checking the lvl1pt *AFTER* having just done lookups with it
         {
-            findVSpaceForASID_ret_t find_ret;
-
-            find_ret = findVSpaceForASID(asid);
+            findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
             if (find_ret.status != EXCEPTION_NONE) {
                 current_syscall_error.type = seL4_FailedLookup;
                 current_syscall_error.failedLookupWasSource = false;
-
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
             if (find_ret.vspace_root != lvl1pt) {
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
-
                 return EXCEPTION_SYSCALL_ERROR;
             }
         }
 
         word_t vtop = vaddr + BIT(pageBitsForSize(frameSize)) - 1;
-
         if (unlikely(vtop >= kernelBase)) {
-            current_syscall_error.type =
-                seL4_InvalidArgument;
+            current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
-
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vm_rights_t vmRights =
-            maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
+        vm_rights_t vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
 
         if (unlikely(!checkVPAlignment(frameSize, vaddr))) {
-            current_syscall_error.type =
-                seL4_AlignmentError;
-
+            current_syscall_error.type = seL4_AlignmentError;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        paddr_t frame_paddr = addrFromPPtr((void *)
-                                   cap_frame_cap_get_capFBasePtr(cap));
-
-
+        paddr_t frame_paddr = addrFromPPtr((void *) cap_frame_cap_get_capFBasePtr(cap));
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
         cap = cap_frame_cap_set_capFMappedAddress(cap,  vaddr);
 
@@ -1018,7 +996,6 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
         vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
-
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
             userError("RISCVPageRemap: Invalid level 1 pt cap.");
             current_syscall_error.type = seL4_InvalidCapability;
@@ -1028,8 +1005,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
         if (unlikely(!isVTableRoot(lvl1ptCap))) {
             userError("RISCVPageReMap: Invalid level 1 pt cap.");
-            current_syscall_error.type =
-                seL4_InvalidCapability;
+            current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -1069,8 +1045,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         }
 
         vm_rights_t vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
-        paddr_t frame_paddr = addrFromPPtr((void *)
-                                   cap_frame_cap_get_capFBasePtr(cap));
+        paddr_t frame_paddr = addrFromPPtr((void *) cap_frame_cap_get_capFBasePtr(cap));
         create_mappings_pte_return_t map_ret;
         map_ret = createSafeMappingEntries_PTE(frame_paddr, vaddr,
                                                frameSize, vmRights,
