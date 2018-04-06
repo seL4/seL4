@@ -732,26 +732,18 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    if (unlikely(cap_page_table_cap_get_capPTMappedASID(cap) != asidInvalid)) {
+        userError("RISCVPageTable: PageTable is already mapped.");
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 0;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     word_t vaddr = getSyscallArg(0, buffer);
     cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
 
-    if (!isVTableRoot(lvl1ptCap) && cap_page_table_cap_get_capPTIsMapped(lvl1ptCap)) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap)) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    // RVTODO: we have checked for validnative root, compared against page table cap
-    // and are now checking for vtable root, this seems excessive and redundant
-    if (unlikely(!isVTableRoot(lvl1ptCap))) {
+    if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap && cap_page_table_cap_get_capPTIsMapped(lvl1ptCap))) {
+        userError("RISCVPageTableMap: Invalid top-level PageTable.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
@@ -769,23 +761,19 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    {
-        findVSpaceForASID_ret_t find_ret;
+    findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+    if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+        userError("RISCVPageTableMap: ASID lookup failed");
+        current_syscall_error.type = seL4_FailedLookup;
+        current_syscall_error.failedLookupWasSource = false;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
 
-        find_ret = findVSpaceForASID(asid);
-        if (find_ret.status != EXCEPTION_NONE) {
-            current_syscall_error.type = seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource = false;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (find_ret.vspace_root != lvl1pt) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
+    if (unlikely(find_ret.vspace_root != lvl1pt)) {
+        userError("RISCVPageTableMap: ASID lookup failed");
+        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.invalidCapNumber = 1;
+        return EXCEPTION_SYSCALL_ERROR;
     }
 
     /* Check if there's a "ptLevel - 1" PT to map "ptLevel" PT in */
