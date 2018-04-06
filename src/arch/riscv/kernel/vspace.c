@@ -329,13 +329,6 @@ bool_t CONST isVTableRoot(cap_t cap)
     return isRoot;
 }
 
-// RVTODO: is this indirection needed? seems to only be one root type at the moment
-static bool_t CONST isValidNativeRoot(cap_t cap)
-{
-    return isVTableRoot(cap) &&
-           cap_page_table_cap_get_capPTIsMapped(cap);
-}
-
 void
 copyGlobalMappings(pte_t *newLvl1pt)
 {
@@ -742,7 +735,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     word_t vaddr = getSyscallArg(0, buffer);
     cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
 
-    if (!isValidNativeRoot(lvl1ptCap)) {
+    if (!isVTableRoot(lvl1ptCap) && cap_page_table_cap_get_capPTIsMapped(lvl1ptCap)) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
