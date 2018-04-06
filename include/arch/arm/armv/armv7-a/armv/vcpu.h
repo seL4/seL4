@@ -62,6 +62,20 @@ set_sp_svc(word_t val)
 }
 
 static inline word_t
+get_spsr_svc(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], spsr_svc" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_spsr_svc(word_t val)
+{
+    asm ("msr spsr_svc, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
 get_lr_abt(void)
 {
     word_t ret;
@@ -87,6 +101,20 @@ static inline void
 set_sp_abt(word_t val)
 {
     asm ("msr sp_abt, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_spsr_abt(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], spsr_abt" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_spsr_abt(word_t val)
+{
+    asm ("msr spsr_abt, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
@@ -118,6 +146,20 @@ set_sp_und(word_t val)
 }
 
 static inline word_t
+get_spsr_und(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], spsr_und" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_spsr_und(word_t val)
+{
+    asm ("msr spsr_und, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
 get_lr_irq(void)
 {
     word_t ret;
@@ -146,6 +188,20 @@ set_sp_irq(word_t val)
 }
 
 static inline word_t
+get_spsr_irq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], spsr_irq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_spsr_irq(word_t val)
+{
+    asm ("msr spsr_irq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
 get_lr_fiq(void)
 {
     word_t ret;
@@ -171,6 +227,20 @@ static inline void
 set_sp_fiq(word_t val)
 {
     asm ("msr sp_fiq, %[val]" :: [val]"r"(val));
+}
+
+static inline word_t
+get_spsr_fiq(void)
+{
+    word_t ret;
+    asm ("mrs %[ret], spsr_fiq" : [ret]"=r"(ret));
+    return ret;
+}
+
+static inline void
+set_spsr_fiq(word_t val)
+{
+    asm ("msr spsr_fiq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
