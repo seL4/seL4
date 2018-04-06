@@ -383,8 +383,8 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 // checking if the entry is for another page table *AND* if the entry is valid
 static inline pptr_t isValidHWPageTable(pte_t *pte)
 {
-    // RVTODO: read the R W X bits and valid bits explicitly
-    return (pte->words[0] & 0xf) == 1;
+    return pte_ptr_get_valid(pte) &&
+           !(pte_ptr_get_read(pte) || pte_ptr_get_write(pte) || pte_ptr_get_execute(pte));
 }
 
 static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
