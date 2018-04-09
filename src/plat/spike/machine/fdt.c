@@ -69,6 +69,13 @@ struct fdt_scan_prop {
     int len; // in bytes of value
 };
 
+/* workaround because string literals are not supported by the C parser */
+const char fdt_address_cells[] = {'#', 'a', 'd', 'd', 'r', 'e', 's', 's', '-', 'c', 'e', 'l', 'l', 's', 0};
+const char fdt_size_cells[] = {'#', 's', 'i', 'z', 'e', '-', 'c', 'e', 'l', 'l', 's', 0};
+const char fdt_reg[] = {'r', 'e', 'g', 0};
+const char fdt_device_type[] = {'d', 'e', 'v', 'i', 'c', 'e', '_', 't', 'y', 'p', 'e', 0};
+const char fdt_memory[] = {'m', 'e', 'm', 'o', 'r', 'y', 0};
+
 // RVTODO: this code needs to updated to not have function pointers or string literals "like this"
 // and any of these appropriate string functions should be moved to common utils
 static word_t strlen(const char *s)
@@ -150,18 +157,18 @@ static uint32_t *fdt_scan_helper(
             prop.name  = strings + bswap(lex[2]);
             prop.len   = bswap(lex[1]);
             prop.value = lex + 3;
-            if (node && !strcmp(prop.name, "#address-cells")) {
+            if (node && !strcmp(prop.name, fdt_address_cells)) {
                 node->address_cells = bswap(lex[3]);
             }
-            if (node && !strcmp(prop.name, "#size-cells"))    {
+            if (node && !strcmp(prop.name, fdt_size_cells))    {
                 node->size_cells    = bswap(lex[3]);
             }
             lex += 3 + (prop.len + 3) / 4;
-            if (state->found_memory && strcmp(prop.name, "reg") == 0) {
+            if (state->found_memory && strcmp(prop.name, fdt_reg) == 0) {
                 state->reg_value = prop.value;
                 state->reg_len = prop.len;
             }
-            if (strcmp(prop.name, "device_type") == 0 && strcmp((const char*)prop.value, "memory") == 0) {
+            if (strcmp(prop.name, fdt_device_type) == 0 && strcmp((const char*)prop.value, fdt_memory) == 0) {
                 state->found_memory = 1;
             }
             break;
