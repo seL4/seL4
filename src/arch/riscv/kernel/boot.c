@@ -227,8 +227,9 @@ init_cpu(void)
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
 
 BOOT_CODE static void
-init_plat(void)
+init_plat(region_t dtb)
 {
+    parseFDT((void*)dtb.start);
     initIRQController();
     initTimer();
 }
@@ -279,7 +280,7 @@ try_init_kernel(
     init_cpu();
 
     /* initialize the platform */
-    init_plat();
+    init_plat(dtb_reg);
 
     /* make the free memory available to alloc_region() */
     init_freemem(ui_reg, dtb_reg);
