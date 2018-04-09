@@ -59,7 +59,6 @@ void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt);
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr);
 void deleteASID(asid_t asid, pte_t *vspace);
 void deleteASIDPool(asid_t asid_base, asid_pool_t* pool);
-bool_t CONST isVTableRoot(cap_t cap);
 bool_t CONST isValidVTableRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
