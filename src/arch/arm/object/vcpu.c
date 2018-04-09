@@ -284,6 +284,14 @@ VGICMaintenance(void)
                 break;
             }
             set_gic_vcpu_ctrl_lr(irq_idx, virq);
+#ifdef CONFIG_ARCH_AARCH64
+            assert(armHSCurVCPU != NULL && armHSVCPUActive);
+            if (armHSCurVCPU != NULL && armHSVCPUActive) {
+                armHSCurVCPU->vgic.lr[irq_idx] = virq;
+            } else {
+                /* FIXME This should not happen */
+            }
+#endif
             current_fault = seL4_Fault_VGICMaintenance_new(irq_idx, 1);
         }
 
