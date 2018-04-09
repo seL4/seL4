@@ -78,18 +78,6 @@ const char fdt_memory[] = {'m', 'e', 'm', 'o', 'r', 'y', 0};
 
 // RVTODO: this code needs to updated to not have function pointers or string literals "like this"
 // and any of these appropriate string functions should be moved to common utils
-static int strcmp(const char* s1, const char* s2)
-{
-    unsigned char c1, c2;
-
-    do {
-        c1 = *s1++;
-        c2 = *s2++;
-    } while (c1 != 0 && c1 == c2);
-
-    return c1 - c2;
-}
-
 static inline uint32_t bswap(uint32_t x)
 {
     uint32_t y = (x & 0x00FF00FF) <<  8 | (x & 0xFF00FF00) >>  8;
