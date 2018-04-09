@@ -824,14 +824,14 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         asid_t asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
 
         findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-        if (find_ret.status != EXCEPTION_NONE) {
+        if (unlikely(find_ret.status != EXCEPTION_NONE)) {
             userError("RISCVPageMap: No PageTable for ASID");
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (find_ret.vspace_root != lvl1pt) {
+        if (unlikely(find_ret.vspace_root != lvl1pt)) {
             userError("RISCVPageMap: ASID lookup failed");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
