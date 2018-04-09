@@ -733,7 +733,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
 
     if (unlikely(find_ret.vspace_root != lvl1pt)) {
         userError("RISCVPageTableMap: ASID lookup failed");
-        current_syscall_error.type = seL4_InvalidArgument;
+        current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
         return EXCEPTION_SYSCALL_ERROR;
     }
