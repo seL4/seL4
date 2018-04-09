@@ -13,7 +13,7 @@
 
 #include <bootinfo.h>
 
-#ifdef CONFIG_ARCH_X86
+#ifndef CONFIG_ARCH_ARM
 #define MAX_NUM_FREEMEM_REG 16
 #else
 #define MAX_NUM_FREEMEM_REG 2
