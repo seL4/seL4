@@ -483,6 +483,22 @@ decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer)
 {
     word_t vid, priority, group, index;
     vcpu_t *vcpu;
+#ifdef CONFIG_ARCH_AARCH64
+    word_t mr0;
+
+    vcpu = VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
+
+    if (length < 1) {
+        current_syscall_error.type = seL4_TruncatedMessage;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    mr0 = getSyscallArg(0, buffer);
+    vid = mr0 & 0xffff;
+    priority = (mr0 >> 16) & 0xff;
+    group = (mr0 >> 24) & 0xff;
+    index = (mr0 >> 32) & 0xff;
+#else
     uint32_t mr0, mr1;
 
     vcpu = VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap));
@@ -498,6 +514,7 @@ decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer)
     priority = (mr0 >> 16) & 0xff;
     group = (mr0 >> 24) & 0xff;
     index = mr1 & 0xff;
+#endif
 
     /* Check IRQ parameters */
     if (vid > (1U << 10) - 1) {
