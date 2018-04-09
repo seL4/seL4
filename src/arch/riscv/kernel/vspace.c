@@ -586,7 +586,8 @@ setVMRoot(tcb_t *tcb)
 bool_t CONST
 isValidVTableRoot(cap_t cap)
 {
-    return (cap_get_capType(cap) == cap_page_table_cap);
+    return (cap_get_capType(cap) == cap_page_table_cap &&
+            cap_page_table_cap_get_capPTMappedASID(cap) != asidInvalid);
 }
 
 exception_t
