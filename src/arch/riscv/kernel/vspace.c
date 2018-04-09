@@ -1211,6 +1211,29 @@ performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 void
 Arch_userStackTrace(tcb_t *tptr)
 {
-    // RVTODO: implement
+    cap_t threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
+    if (!isValidVTableRoot(threadRoot)) {
+        printf("Invalid vspace\n");
+        return;
+    }
+
+    word_t sp = getRegister(tptr, SP);
+    if (!IS_ALIGNED(sp, seL4_WordSizeBits)) {
+        printf("SP %p not aligned", (void *) sp);
+        return;
+    }
+
+    pte_t *vspace_root = PTE_PTR(pptr_of_cap(threadRoot));
+    for (int i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+        word_t address = sp + (i * sizeof(word_t));
+        lookupPTSlot_ret_t ret = lookupPTSlot(vspace_root, address);
+        if (pte_ptr_get_valid(ret.ptSlot) && !isPTEPageTable(ret.ptSlot)) {
+            pptr_t pptr = (pptr_t) (getPPtrFromHWPTE(ret.ptSlot));
+            word_t *value = (word_t*) ((word_t)pptr + (address & MASK(ret.ptBitsLeft)));
+            printf("0x%lx: 0x%lx\n", (long) address, (long) *value);
+        } else {
+            printf("0x%lx: INVALID\n", (long) address);
+        }
+    }
 }
 #endif
