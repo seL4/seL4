@@ -33,6 +33,42 @@
 #include <config.h>
 #include <util.h>
 
+#define FDT_MAGIC   0xd00dfeed
+#define FDT_VERSION 17
+
+#define FDT_BEGIN_NODE  1
+#define FDT_END_NODE    2
+#define FDT_PROP    3
+#define FDT_NOP     4
+#define FDT_END     9
+
+struct fdt_header {
+    uint32_t magic;
+    uint32_t totalsize;
+    uint32_t off_dt_struct;
+    uint32_t off_dt_strings;
+    uint32_t off_mem_rsvmap;
+    uint32_t version;
+    uint32_t last_comp_version; /* <= 17 */
+    uint32_t boot_cpuid_phys;
+    uint32_t size_dt_strings;
+    uint32_t size_dt_struct;
+};
+
+struct fdt_scan_node {
+    const struct fdt_scan_node *parent;
+    const char *name;
+    int address_cells;
+    int size_cells;
+};
+
+struct fdt_scan_prop {
+    const struct fdt_scan_node *node;
+    const char *name;
+    uint32_t *value;
+    int len; // in bytes of value
+};
+
 // RVTODO: this code needs to updated to not have function pointers or string literals "like this"
 // and any of these appropriate string functions should be moved to common utils
 static word_t strlen(const char *s)
@@ -63,11 +99,35 @@ static inline uint32_t bswap(uint32_t x)
     return z;
 }
 
+struct scan_state {
+    int found_memory;
+    const uint32_t *reg_value;
+    int reg_len;
+};
+
+static const uint32_t *fdt_get_address(const struct fdt_scan_node *node, const uint32_t *value, uint64_t *result)
+{
+    *result = 0;
+    for (int cells = node->address_cells; cells > 0; --cells) {
+        *result = (*result << 32) + bswap(*value++);
+    }
+    return value;
+}
+
+static const uint32_t *fdt_get_size(const struct fdt_scan_node *node, const uint32_t *value, uint64_t *result)
+{
+    *result = 0;
+    for (int cells = node->size_cells; cells > 0; --cells) {
+        *result = (*result << 32) + bswap(*value++);
+    }
+    return value;
+}
+
 static uint32_t *fdt_scan_helper(
     uint32_t *lex,
     const char *strings,
     struct fdt_scan_node *node,
-    const struct fdt_cb *cb)
+    struct scan_state *state)
 {
     struct fdt_scan_node child;
     struct fdt_scan_prop prop;
@@ -97,46 +157,50 @@ static uint32_t *fdt_scan_helper(
                 node->size_cells    = bswap(lex[3]);
             }
             lex += 3 + (prop.len + 3) / 4;
-            cb->prop(&prop, cb->extra);
+            if (state->found_memory && strcmp(prop.name, "reg") == 0) {
+                state->reg_value = prop.value;
+                state->reg_len = prop.len;
+            }
+            if (strcmp(prop.name, "device_type") == 0 && strcmp((const char*)prop.value, "memory") == 0) {
+                state->found_memory = 1;
+            }
             break;
         }
         case FDT_BEGIN_NODE: {
             uint32_t *lex_next;
-            if (!last && node && cb->done) {
-                cb->done(node, cb->extra);
-            }
             last = 1;
             child.name = (const char *)(lex + 1);
-            if (cb->open) {
-                cb->open(&child, cb->extra);
-            }
             lex_next = fdt_scan_helper(
                            lex + 2 + strlen(child.name) / 4,
-                           strings, &child, cb);
-            if (cb->close && cb->close(&child, cb->extra) == -1)
-                while (lex != lex_next) {
-                    *lex++ = bswap(FDT_NOP);
-                }
+                           strings, &child, state);
             lex = lex_next;
             break;
         }
         case FDT_END_NODE: {
-            if (!last && node && cb->done) {
-                cb->done(node, cb->extra);
+            if (state->found_memory) {
+                const uint32_t *value = state->reg_value;
+                const uint32_t *end = value + state->reg_len / 4;
+
+                assert (state->reg_value && state->reg_len % 4 == 0);
+
+                while (end - value > 0) {
+                    uint64_t base, size;
+                    value = fdt_get_address(node->parent, value, &base);
+                    value = fdt_get_size   (node->parent, value, &size);
+                    printf("Found memory %p %p\n", (void*)base, (void*)size);
+                }
+                state->found_memory = 0;
             }
             return lex + 1;
         }
         default: { // FDT_END
-            if (!last && node && cb->done) {
-                cb->done(node, cb->extra);
-            }
             return lex;
         }
         }
     }
 }
 
-void fdt_scan(uintptr_t fdt, const struct fdt_cb *cb)
+void parseFDT(void *fdt)
 {
     struct fdt_header *header = (struct fdt_header *)fdt;
 
@@ -146,13 +210,16 @@ void fdt_scan(uintptr_t fdt, const struct fdt_cb *cb)
         return;
     }
 
-    const char *strings = (const char *)(fdt + bswap(header->off_dt_strings));
-    uint32_t *lex = (uint32_t *)(fdt + bswap(header->off_dt_struct));
+    const char *strings = (const char *)((word_t)fdt + bswap(header->off_dt_strings));
+    uint32_t *lex = (uint32_t *)((word_t)fdt + bswap(header->off_dt_struct));
 
-    fdt_scan_helper(lex, strings, 0, cb);
+    struct scan_state state;
+    state.found_memory = 0;
+
+    fdt_scan_helper(lex, strings, 0, &state);
 }
 
-uint32_t fdt_size(uintptr_t fdt)
+uint32_t fdt_size(void *fdt)
 {
     struct fdt_header *header = (struct fdt_header *)fdt;
 
@@ -163,236 +230,3 @@ uint32_t fdt_size(uintptr_t fdt)
     }
     return bswap(header->totalsize);
 }
-
-const uint32_t *fdt_get_address(const struct fdt_scan_node *node, const uint32_t *value, uint64_t *result)
-{
-    *result = 0;
-    for (int cells = node->address_cells; cells > 0; --cells) {
-        *result = (*result << 32) + bswap(*value++);
-    }
-    return value;
-}
-
-const uint32_t *fdt_get_size(const struct fdt_scan_node *node, const uint32_t *value, uint64_t *result)
-{
-    *result = 0;
-    for (int cells = node->size_cells; cells > 0; --cells) {
-        *result = (*result << 32) + bswap(*value++);
-    }
-    return value;
-}
-
-int fdt_string_list_index(const struct fdt_scan_prop *prop, const char *str)
-{
-    const char *list = (const char *)prop->value;
-    const char *end = list + prop->len;
-    int index = 0;
-    while (end - list > 0) {
-        if (!strcmp(list, str)) {
-            return index;
-        }
-        ++index;
-        list += strlen(list) + 1;
-    }
-    return -1;
-}
-
-//////////////////////////////////////////// MEMORY SCAN /////////////////////////////////////////
-
-// This code is left as an example for the future, but functionally it is useless as it has
-// no actual interface or relevant side affects
-#if 0
-
-struct mem_scan {
-    int memory;
-    const uint32_t *reg_value;
-    int reg_len;
-};
-
-static void mem_open(const struct fdt_scan_node *node, void *extra)
-{
-    struct mem_scan *scan = (struct mem_scan *)extra;
-    memset(scan, 0, sizeof(*scan));
-}
-
-static void mem_prop(const struct fdt_scan_prop *prop, void *extra)
-{
-    struct mem_scan *scan = (struct mem_scan *)extra;
-    if (!strcmp(prop->name, "device_type") && !strcmp((const char*)prop->value, "memory")) {
-        scan->memory = 1;
-    } else if (!strcmp(prop->name, "reg")) {
-        scan->reg_value = prop->value;
-        scan->reg_len = prop->len;
-    }
-}
-
-static void mem_done(const struct fdt_scan_node *node, void *extra)
-{
-    struct mem_scan *scan = (struct mem_scan *)extra;
-    const uint32_t *value = scan->reg_value;
-    const uint32_t *end = value + scan->reg_len / 4;
-    uintptr_t self = (uintptr_t)mem_done;
-
-    if (!scan->memory) {
-        return;
-    }
-    assert (scan->reg_value && scan->reg_len % 4 == 0);
-
-    while (end - value > 0) {
-        uint64_t base, size;
-        value = fdt_get_address(node->parent, value, &base);
-        value = fdt_get_size   (node->parent, value, &size);
-    }
-    assert (end == value);
-}
-
-void query_mem(uintptr_t fdt)
-{
-    struct fdt_cb cb;
-    struct mem_scan scan;
-
-    memset(&cb, 0, sizeof(cb));
-    cb.open = mem_open;
-    cb.prop = mem_prop;
-    cb.done = mem_done;
-    cb.extra = &scan;
-
-    fdt_scan(fdt, &cb);
-}
-
-#endif
-
-#ifdef CONFIG_PRINTING
-
-#define FDT_PRINT_MAX_DEPTH 32
-
-struct fdt_print_info {
-    int depth;
-    const struct fdt_scan_node *stack[FDT_PRINT_MAX_DEPTH];
-};
-
-static inline int isstring(char c)
-{
-    if (c >= 'A' && c <= 'Z') {
-        return 1;
-    }
-    if (c >= 'a' && c <= 'z') {
-        return 1;
-    }
-    if (c >= '0' && c <= '9') {
-        return 1;
-    }
-    if (c == '\0' || c == ' ' || c == ',' || c == '-') {
-        return 1;
-    }
-    return 0;
-}
-
-static void fdt_print_printm(struct fdt_print_info *info, const char *format, ...)
-{
-    va_list vl;
-
-    for (int i = 0; i < info->depth; ++i) {
-        printf("  ");
-    }
-
-    va_start(vl, format);
-    vprintf(format, vl);
-    va_end(vl);
-}
-
-static void fdt_print_open(const struct fdt_scan_node *node, void *extra)
-{
-    struct fdt_print_info *info = (struct fdt_print_info *)extra;
-
-    while (node->parent != NULL && info->stack[info->depth - 1] != node->parent) {
-        info->depth--;
-        fdt_print_printm(info, "}\r\n");
-    }
-
-    fdt_print_printm(info, "%s {\r\n", node->name);
-    info->stack[info->depth] = node;
-    info->depth++;
-}
-
-static void fdt_print_prop(const struct fdt_scan_prop *prop, void *extra)
-{
-    struct fdt_print_info *info = (struct fdt_print_info *)extra;
-    int asstring = 1;
-    char *char_data = (char *)(prop->value);
-
-    fdt_print_printm(info, "%s", prop->name);
-
-    if (prop->len == 0) {
-        printf(";\r\n");
-        return;
-    } else {
-        printf(" = ");
-    }
-
-    /* It appears that dtc uses a hueristic to detect strings so I'm using a
-     * similar one here. */
-    for (int i = 0; i < prop->len; ++i) {
-        if (!isstring(char_data[i])) {
-            asstring = 0;
-        }
-        if (i > 0 && char_data[i] == '\0' && char_data[i - 1] == '\0') {
-            asstring = 0;
-        }
-    }
-
-    if (asstring) {
-        for (word_t i = 0; i < prop->len; i += strlen(char_data + i) + 1) {
-            if (i != 0) {
-                printf(", ");
-            }
-            printf("\"%s\"", char_data + i);
-        }
-    } else {
-        printf("<");
-        for (word_t i = 0; i < prop->len / 4; ++i) {
-            if (i != 0) {
-                printf(" ");
-            }
-            printf("0x%08x", bswap(prop->value[i]));
-        }
-        printf(">");
-    }
-
-    printf(";\r\n");
-}
-
-static void fdt_print_done(const struct fdt_scan_node *node, void *extra)
-{
-    struct fdt_print_info * UNUSED info = (struct fdt_print_info *)extra;
-}
-
-static int fdt_print_close(const struct fdt_scan_node *node, void *extra)
-{
-    struct fdt_print_info * UNUSED info = (struct fdt_print_info *)extra;
-    return 0;
-}
-
-void fdt_print(uintptr_t fdt)
-{
-    struct fdt_print_info info;
-    struct fdt_cb cb;
-
-    info.depth = 0;
-
-    memset(&cb, 0, sizeof(cb));
-    cb.open = fdt_print_open;
-    cb.prop = fdt_print_prop;
-    cb.done = fdt_print_done;
-    cb.close = fdt_print_close;
-    cb.extra = &info;
-
-    fdt_scan(fdt, &cb);
-
-    while (info.depth > 0) {
-        info.depth--;
-        fdt_print_printm(&info, "}\r\n");
-    }
-}
-
-#endif /* CONFIG_PRINTING */
