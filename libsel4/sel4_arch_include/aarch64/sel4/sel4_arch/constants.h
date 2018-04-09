@@ -102,8 +102,8 @@ enum {
     seL4_VCPUReg_TPIDRRO_EL0,
 
     /* generic timer registers, to be completed */
-    seL4_VCPUReg_CNTV_TVAL,
     seL4_VCPUReg_CNTV_CTL,
+    seL4_VCPUReg_CNTV_TVAL,
     seL4_VCPUReg_CNTV_CVAL,
 
     /* general registers x0 to x30 have been saved by traps.S */
