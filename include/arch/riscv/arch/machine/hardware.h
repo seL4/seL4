@@ -104,16 +104,6 @@ pageBitsForSize(vm_page_size_t pagesize)
         fail("Invalid page size");
     }
 }
-
-// RVTODO: this is horribly fragile and the abstractions in the vspace code should be
-// looked at to remove this
-/* For optimisation/simplicity, this function assumes size types start from 0 linearly, otherwise it won't work */
-static inline uint32_t CONST
-RISCVpageAtPTLevel(vm_page_size_t pagesize)
-{
-    return (CONFIG_PT_LEVELS - pagesize);
-}
-
 #endif /* __ASSEMBLER__ */
 
 #if __riscv_xlen == 32
