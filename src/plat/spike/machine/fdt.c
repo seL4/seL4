@@ -78,15 +78,6 @@ const char fdt_memory[] = {'m', 'e', 'm', 'o', 'r', 'y', 0};
 
 // RVTODO: this code needs to updated to not have function pointers or string literals "like this"
 // and any of these appropriate string functions should be moved to common utils
-static word_t strlen(const char *s)
-{
-    const char *p = s;
-    while (*p) {
-        p++;
-    }
-    return p - s;
-}
-
 static int strcmp(const char* s1, const char* s2)
 {
     unsigned char c1, c2;
