@@ -821,7 +821,7 @@ createSafeMappingEntries_PTE
 {
     create_mappings_pte_return_t ret;
     lookupPTSlot_ret_t lu_ret;
-    bool_t executable = vm_attributes_get_riscvExecuteNever(attr) ? 0 : 1;
+    bool_t executable = !vm_attributes_get_riscvExecuteNever(attr);
 
     ret.pte_entries.base = 0;
     ret.pte_entries.length = 1;
