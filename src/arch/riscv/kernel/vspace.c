@@ -120,17 +120,17 @@ map_kernel_window(void)
 }
 
 BOOT_CODE void
-map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap, uint32_t ptLevel)
+map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 {
     lookupPTSlot_ret_t pt_ret;
     pte_t* targetSlot;
     vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
     pte_t* lvl1pt = PTE_PTR(pptr_of_cap(vspace_cap));
 
-    /* lvl[ptLevel]pt to be mapped */
+    /* pt to be mapped */
     pte_t* pt   = PTE_PTR(pptr_of_cap(pt_cap));
 
-    /* Get PT[ptLevel - 1] slot to install the address of ptLevel in */
+    /* Get PT slot to install the address in */
     pt_ret = lookupPTSlot(lvl1pt, vptr);
 
     targetSlot = pt_ret.ptSlot;
@@ -197,7 +197,7 @@ create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 
 /* Create a page table for the initial thread */
 static BOOT_CODE cap_t
-create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, uint32_t ptLevel)
+create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_table_cap_new(
@@ -207,7 +207,7 @@ create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, uint32
               vptr    /* capPTMappedAddress   */
           );
 
-    map_it_pt_cap(vspace_cap, cap, ptLevel);
+    map_it_pt_cap(vspace_cap, cap);
     return cap;
 }
 
@@ -256,7 +256,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 
             memzero(PTE_PTR(pt_pptr), 1 << PT_SIZE_BITS);
             if (!provide_cap(root_cnode_cap,
-                             create_it_pt_cap(lvl1pt_cap, pt_pptr, pt_vptr, IT_ASID, i))
+                             create_it_pt_cap(lvl1pt_cap, pt_pptr, pt_vptr, IT_ASID))
                ) {
                 return cap_null_cap_new();
             }
@@ -750,7 +750,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
 
     /* is the slot empty ? */
     if (pte_ptr_get_valid(lu_ret.ptSlot)) {
-        userError("RISCVPageTableMap: all page tables mapped at this address");
+        userError("RISCVPageTableMap: frame already mapped at this address");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
