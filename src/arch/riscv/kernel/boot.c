@@ -27,6 +27,7 @@
 #include <arch/benchmark.h>
 #include <linker.h>
 #include <plat/machine/hardware.h>
+#include <plat/machine/fdt.h>
 #include <machine.h>
 #include <stdarg.h>
 
@@ -225,6 +226,8 @@ static BOOT_CODE bool_t
 try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
+    paddr_t dtb_p_reg_start,
+    paddr_t dtb_p_reg_end,
     uint32_t pv_offset,
     vptr_t  v_entry
 )
@@ -384,19 +387,17 @@ init_kernel(
     sword_t pv_offset,
     vptr_t  v_entry,
     word_t hartid,
-    paddr_t dtb_output
+    paddr_t dtb_output_p
 )
 {
-    // RVTODO: the dtb_output is currently placed *below* the kernel in physical memory,
-    // as the physBase for the kernel does not represent the actual bottom of physical
-    // memory. This means that after we enable the kernel window we *cannot* access the
-    // dtb_output. Until this is fixed we must therefore just throw this away and not use it
-    (void)dtb_output;
+    pptr_t dtb_output = (pptr_t)paddr_to_pptr(dtb_output_p);
     // RVTODO: is it safe to initialize the platform before the cpu?
     init_plat();
 
     bool_t result = try_init_kernel(ui_p_reg_start,
                                     ui_p_reg_end,
+                                    dtb_output_p,
+                                    dtb_output_p + fdt_size((void*)dtb_output),
                                     pv_offset,
                                     v_entry
                                    );
