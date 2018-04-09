@@ -187,7 +187,11 @@ static uint32_t *fdt_scan_helper(
                     uint64_t base, size;
                     value = fdt_get_address(node->parent, value, &base);
                     value = fdt_get_size   (node->parent, value, &size);
-                    printf("Found memory %p %p\n", (void*)base, (void*)size);
+                    if (!add_avail_p_reg((p_region_t) {
+                    base, base + size
+                })) {
+                        printf("Failed to add physical memory region %llu-%llu\n", (unsigned long long)base, (unsigned long long)(base + size));
+                    }
                 }
                 state->found_memory = 0;
             }

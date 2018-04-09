@@ -49,6 +49,7 @@
 
 int get_num_avail_p_regs(void);
 p_region_t get_avail_p_reg(unsigned int i);
+bool_t add_avail_p_reg(p_region_t reg);
 int get_num_dev_p_regs(void);
 p_region_t get_dev_p_reg(unsigned int i);
 void map_kernel_devices(void);

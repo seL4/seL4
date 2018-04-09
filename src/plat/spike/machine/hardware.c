@@ -27,19 +27,17 @@
 #include <plat/machine/hardware.h>
 #include <arch/sbi.h>
 
+#define MAX_AVAIL_P_REGS 2
+
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 
-const p_region_t BOOT_RODATA avail_p_regs[] = {
-    // RVTODO: the simulator allows us to pass different values for the amount of memory,
-    // and so this is far too fragile. These values should be filled from the fdt once
-    // the kernel window mappings are fixed and we can access the dtb
-    { .start = 0x00000000C0000000, .end = 0x0000000ffffffff }
-};
+static word_t BOOT_DATA num_avail_p_regs = 0;
+static p_region_t BOOT_DATA avail_p_regs[MAX_AVAIL_P_REGS];
 
 BOOT_CODE int get_num_avail_p_regs(void)
 {
-    return sizeof(avail_p_regs) / sizeof(p_region_t);
+    return num_avail_p_regs;
 }
 
 BOOT_CODE p_region_t get_avail_p_reg(unsigned int i)
@@ -47,6 +45,15 @@ BOOT_CODE p_region_t get_avail_p_reg(unsigned int i)
     return avail_p_regs[i];
 }
 
+BOOT_CODE bool_t add_avail_p_reg(p_region_t reg)
+{
+    if (num_avail_p_regs == MAX_AVAIL_P_REGS) {
+        return false;
+    }
+    avail_p_regs[num_avail_p_regs] = reg;
+    num_avail_p_regs++;
+    return true;
+}
 
 BOOT_CODE int get_num_dev_p_regs(void)
 {
