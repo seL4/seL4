@@ -82,6 +82,7 @@ SECTIONS
     .bss . : AT(ADDR(.bss) - KERNEL_OFFSET)
     {
         *(.bss)
+        *(.sbss)
 
         /* 4k breakpoint stack */
         _breakpoint_stack_bottom = .;
