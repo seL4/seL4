@@ -262,6 +262,9 @@ try_init_kernel(
     /* initialise the CPU */
     init_cpu();
 
+    /* initialize the platform */
+    init_plat();
+
     /* make the free memory available to alloc_region() */
     init_freemem(ui_reg);
 
@@ -391,8 +394,6 @@ init_kernel(
 )
 {
     pptr_t dtb_output = (pptr_t)paddr_to_pptr(dtb_output_p);
-    // RVTODO: is it safe to initialize the platform before the cpu?
-    init_plat();
 
     bool_t result = try_init_kernel(ui_p_reg_start,
                                     ui_p_reg_end,
