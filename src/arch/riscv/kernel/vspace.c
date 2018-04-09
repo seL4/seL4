@@ -131,7 +131,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap, uint32_t ptLevel)
     pte_t* pt   = PTE_PTR(pptr_of_cap(pt_cap));
 
     /* Get PT[ptLevel - 1] slot to install the address of ptLevel in */
-    pt_ret = lookupPTSlot(lvl1pt, vptr, ptLevel - 1);
+    pt_ret = lookupPTSlot(lvl1pt, vptr);
 
     targetSlot = pt_ret.ptSlot;
 
@@ -160,7 +160,8 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
     vptr_t frame_vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
 
     /* We deal with a frame as 4KiB */
-    lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, frame_vptr, RISCVpageAtPTLevel(RISCV_4K_Page));
+    lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, frame_vptr);
+    assert(lu_ret.ptBitsLeft == RISCV_4K_PageBits);
 
     pte_t* targetSlot = lu_ret.ptSlot;
 
@@ -368,35 +369,24 @@ static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
 }
 
 lookupPTSlot_ret_t
-lookupPTSlot(pte_t *lvl1pt, vptr_t vptr, uint32_t ptLevel)
+lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
 {
     lookupPTSlot_ret_t ret;
-    pte_t* pt;
+    /* this is how many bits we have decoded before reaching an empty
+     * page table entry or a frame mapping */
+    ret.ptBitsLeft = PT_INDEX_BITS * CONFIG_PT_LEVELS + seL4_PageBits;
+    ret.ptSlot = NULL;
 
-    assert(ptLevel <= CONFIG_PT_LEVELS);
+    pte_t* pt = lvl1pt;
+    do {
+        ret.ptBitsLeft -= PT_INDEX_BITS;
+        word_t index = (vptr >> ret.ptBitsLeft) & MASK(PT_INDEX_BITS);
+        ret.ptSlot = pt + index;
+        pt = getPPtrFromHWPTE(ret.ptSlot);
+        /* stop when we find something that isn't a page table - either a mapped frame or
+         * an empty slot */
+    } while (isPTEPageTable(ret.ptSlot));
 
-    /* Is lvl1pt valid? */
-    if (lvl1pt == 0) {
-        userError("lvl1pt is invalid");
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    } else {
-        ret.ptSlot = lvl1pt + RISCV_GET_PT_INDEX(vptr, 1);
-    }
-
-    for (int i = 2; i <= ptLevel; i++) {
-        if (ret.ptSlot->words[0] == 0) {
-            current_lookup_fault = lookup_fault_missing_capability_new(RISCV_GET_LVL_PGSIZE_BITS(i - 1));
-            ret.missingPTLevel = i;
-            ret.status = EXCEPTION_LOOKUP_FAULT;
-            return ret;
-        } else {
-            pt = getPPtrFromHWPTE(ret.ptSlot);
-            ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
-        }
-    }
-
-    ret.status = EXCEPTION_NONE;
     return ret;
 }
 
@@ -556,9 +546,8 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
 
-    // RVTODO: use a lookup leaf function instead of looking up at a particular level
-    lu_ret = lookupPTSlot(find_ret.vspace_root, vptr, RISCVpageAtPTLevel(page_size));
-    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+    lu_ret = lookupPTSlot(find_ret.vspace_root, vptr);
+    if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(page_size))) {
         return;
     }
 
@@ -748,23 +737,26 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    /* Check if there's a "ptLevel - 1" PT to map "ptLevel" PT in */
+    lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr);
 
-    /* Try to map the PT at the last level to figure out which level should
-     * this PT be mapped in. The functions returns the ptSlot of ptLevel -1
-     * that this newly PT should be installed at.
-     */
-    // RVTODO: we just want to lookup the leaf and then see how many bits are left to
-    // translate (i.e. the level of the leaf)
-    lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, CONFIG_PT_LEVELS);
+    /* is the slot valid for a pte ? */
+    if (lu_ret.ptBitsLeft == seL4_PageBits) {
+        userError("RISCVPageTableMap: all page tables mapped at this address");
+        current_lookup_fault = lookup_fault_missing_capability_new(lu_ret.ptBitsLeft);
+        current_syscall_error.type = seL4_FailedLookup;
+        current_syscall_error.failedLookupWasSource = false;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
 
-    /* Get the slot to install the PT in */
-    pte_t *ptSlot = lu_ret.ptSlot;
-
-    if (unlikely(ptSlot->words[0] != 0) ) {
+    /* is the slot empty ? */
+    if (pte_ptr_get_valid(lu_ret.ptSlot)) {
+        userError("RISCVPageTableMap: all page tables mapped at this address");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
+
+    /* Get the slot to install the PT in */
+    pte_t *ptSlot = lu_ret.ptSlot;
 
     // RVTODO: investigate whether tags in the bitfield
     // generator can be used to distinguish pt and frame mapping entries
@@ -858,12 +850,18 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         }
 
         /* Check if this page is already mapped */
-        // RVTODO: lookup leaf node and see if remaining bits == frameSize
-        lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
-
-        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+        lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr);
+        if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(frameSize))) {
+            current_lookup_fault = lookup_fault_missing_capability_new(lu_ret.ptBitsLeft);
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        /* check this vaddr isn't already mapped */
+        if (unlikely(pte_ptr_get_valid(lu_ret.ptSlot))) {
+            userError("Virtual address already mapped");
+            current_syscall_error.type = seL4_DeleteFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
@@ -931,13 +929,20 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         }
 
         /* Check if this page is already mapped */
-        // RVTODO: lookup leaf node and see if remaining bits == frameSize
-        lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
+        lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr);
 
-        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            userError("RISCVPageMap: No PageTable for this page %p", (void*)vaddr);
+        if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(frameSize))) {
+            userError("RISCVPageRemap: No PageTable for this page %p", (void*)vaddr);
+            current_lookup_fault = lookup_fault_missing_capability_new(lu_ret.ptBitsLeft);
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (unlikely(isPTEPageTable(lu_ret.ptSlot))) {
+            userError("RISCVPageRemap: no mapping to remap.");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
