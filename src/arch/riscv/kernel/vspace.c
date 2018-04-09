@@ -805,47 +805,6 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     return performPageTableInvocationMap(cap, cte, pte, ptSlot);
 }
 
-struct create_mappings_pte_return {
-    exception_t status;
-    pte_t pte;
-    // RVTODO: does riscv support pte ranges for 'larger' frames?
-    pte_range_t pte_entries;
-};
-typedef struct create_mappings_pte_return create_mappings_pte_return_t;
-
-// RVTODO: what is the point of this safe mapping entries?
-static create_mappings_pte_return_t
-createSafeMappingEntries_PTE
-(paddr_t base, word_t vaddr, vm_page_size_t frameSize,
- vm_rights_t vmRights, vm_attributes_t attr, pte_t *lvl1pt)
-{
-    create_mappings_pte_return_t ret;
-    lookupPTSlot_ret_t lu_ret;
-    bool_t executable = !vm_attributes_get_riscvExecuteNever(attr);
-
-    ret.pte_entries.base = 0;
-    ret.pte_entries.length = 1;
-
-    ret.pte = makeUserPTE(base, executable, vmRights);
-
-    lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
-    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-        current_syscall_error.type =
-            seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource =
-            false;
-        ret.status = EXCEPTION_SYSCALL_ERROR;
-        /* current_lookup_fault will have been set by
-         * lookupPTSlot */
-        return ret;
-    }
-
-    ret.pte_entries.base = lu_ret.ptSlot;
-
-    ret.status = EXCEPTION_NONE;
-    return ret;
-}
-
 static exception_t
 decodeRISCVFrameInvocation(word_t label, unsigned int length,
                            cte_t *cte, cap_t cap, extra_caps_t extraCaps,
@@ -928,19 +887,10 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
         cap = cap_frame_cap_set_capFMappedAddress(cap,  vaddr);
 
-        create_mappings_pte_return_t map_ret;
-        map_ret = createSafeMappingEntries_PTE(frame_paddr, vaddr,
-                                               frameSize, vmRights,
-                                               attr, lvl1pt);
-
-        if (unlikely(map_ret.status != EXCEPTION_NONE)) {
-            return map_ret.status;
-        }
-
+        bool_t executable = !vm_attributes_get_riscvExecuteNever(attr);
+        pte_t pte = makeUserPTE(frame_paddr, executable, vmRights);
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageInvocationMapPTE(cap, cte,
-                                           map_ret.pte,
-                                           map_ret.pte_entries);
+        return performPageInvocationMapPTE(cap, cte, pte, lu_ret.ptSlot);
     }
 
     case RISCVPageRemap: {
@@ -1008,16 +958,10 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
         vm_rights_t vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
         paddr_t frame_paddr = addrFromPPtr((void *) cap_frame_cap_get_capFBasePtr(cap));
-        create_mappings_pte_return_t map_ret;
-        map_ret = createSafeMappingEntries_PTE(frame_paddr, vaddr,
-                                               frameSize, vmRights,
-                                               attr, lvl1pt);
-        if (unlikely(map_ret.status != EXCEPTION_NONE)) {
-            return map_ret.status;
-        }
-
+        bool_t executable = !vm_attributes_get_riscvExecuteNever(attr);
+        pte_t pte = makeUserPTE(frame_paddr, executable, vmRights);
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageInvocationRemapPTE(map_ret.pte, map_ret.pte_entries);
+        return performPageInvocationRemapPTE(pte, lu_ret.ptSlot);
     }
     case RISCVPageUnmap: {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
@@ -1243,29 +1187,24 @@ performPageGetAddress(void *vbase_ptr)
     return EXCEPTION_NONE;
 }
 
-static exception_t updatePTE(pte_t pte, pte_range_t pte_entries)
+static exception_t updatePTE(pte_t pte, pte_t *base)
 {
-    /* we only need to check the first entries because of how createSafeMappingEntries
-     * works to preserve the consistency of tables */
-
-    for (word_t i = 0; i < pte_entries.length; i++) {
-        pte_entries.base[i] = pte;
-    }
+    *base = pte;
     asm volatile ("sfence.vma");
     return EXCEPTION_NONE;
 }
 
 exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
-                                        pte_t pte, pte_range_t pte_entries)
+                                        pte_t pte, pte_t *base)
 {
     ctSlot->cap = cap;
-    return updatePTE(pte, pte_entries);
+    return updatePTE(pte, base);
 }
 
 exception_t
-performPageInvocationRemapPTE(pte_t pte, pte_range_t pte_entries)
+performPageInvocationRemapPTE(pte_t pte, pte_t *base)
 {
-    return updatePTE(pte, pte_entries);
+    return updatePTE(pte, base);
 }
 
 exception_t
