@@ -367,44 +367,6 @@ static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
     return PTE_PTR(ptrFromPAddr(pte_ptr_get_ppn(pte) << seL4_PageTableBits));
 }
 
-static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, pte_t *target_pt)
-{
-    findVSpaceForASID_ret_t find_ret;
-    lookupPTSlot_ret_t ret;
-    pte_t* pt;
-
-    find_ret = findVSpaceForASID(asid);
-    if (unlikely(find_ret.status != EXCEPTION_NONE)) {
-        userError("Couldn't find a root vspace for asid");
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    } else {
-        ret.ptSlot = find_ret.vspace_root + RISCV_GET_PT_INDEX(vptr, 1);
-        pt = find_ret.vspace_root;
-    }
-
-    for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
-        if (unlikely(!isPTEPageTable(ret.ptSlot))) {
-            userError("Page table walk terminated, failed to find a PT");
-            ret.status = EXCEPTION_LOOKUP_FAULT;
-            return ret;
-        }
-        pt = getPPtrFromHWPTE(ret.ptSlot);
-        if (pt == target_pt) {
-            /* Found the PT Slot */
-            ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i - 1);
-            ret.status = EXCEPTION_NONE;
-            return ret;
-        }
-        ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
-    }
-
-    /* Failed to find a corredponding PT  */
-    userError("Couldn't find a corresponding PT in HW to delete");
-    ret.status = EXCEPTION_LOOKUP_FAULT;
-    return ret;
-}
-
 lookupPTSlot_ret_t
 lookupPTSlot(pte_t *lvl1pt, vptr_t vptr, uint32_t ptLevel)
 {
@@ -531,25 +493,49 @@ void deleteASID(asid_t asid, pte_t *vspace)
 }
 
 void
-unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
+unmapPageTable(asid_t asid, vptr_t vptr, pte_t* target_pt)
 {
-    lookupPTSlot_ret_t pt_ret = lookupPageTableLevelSlot(asid, vaddr, pt);
-
-    if (pt_ret.status != EXCEPTION_NONE) {
-        *pt_ret.ptSlot = pte_new(
-                             0,  /* phy_address */
-                             0,  /* sw */
-                             0,  /* dirty */
-                             0,  /* accessed */
-                             0,  /* global */
-                             0,  /* user */
-                             0,  /* execute */
-                             0,  /* write */
-                             0,  /* read */
-                             0  /* valid */
-                         );
-        asm volatile ("sfence.vma");
+    findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+    if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+        /* nothing to do */
+        return;
     }
+
+    pte_t *ptSlot = find_ret.vspace_root + RISCV_GET_PT_INDEX(vptr, 1);
+    pte_t *pt = find_ret.vspace_root;
+
+    for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
+        if (unlikely(!isPTEPageTable(ptSlot))) {
+            /* couldn't find it */
+            return;
+        }
+        pt = getPPtrFromHWPTE(ptSlot);
+        if (pt == target_pt) {
+            /* Found the PT Slot */
+            ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i - 1);
+            break;
+        }
+        ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
+    }
+
+    if (pt != target_pt) {
+        /* didn't find it */
+        return;
+    }
+
+    *ptSlot = pte_new(
+                  0,  /* phy_address */
+                  0,  /* sw */
+                  0,  /* dirty */
+                  0,  /* accessed */
+                  0,  /* global */
+                  0,  /* user */
+                  0,  /* execute */
+                  0,  /* write */
+                  0,  /* read */
+                  0  /* valid */
+              );
+    asm volatile ("sfence.vma");
 }
 
 static pte_t pte_pte_invalid_new(void)
