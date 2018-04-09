@@ -740,18 +740,11 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
 
     lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr);
 
-    /* is the slot valid for a pte ? */
-    if (lu_ret.ptBitsLeft == seL4_PageBits) {
-        userError("RISCVPageTableMap: all page tables mapped at this address");
-        current_lookup_fault = lookup_fault_missing_capability_new(lu_ret.ptBitsLeft);
-        current_syscall_error.type = seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource = false;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    /* is the slot empty ? */
-    if (pte_ptr_get_valid(lu_ret.ptSlot)) {
-        userError("RISCVPageTableMap: frame already mapped at this address");
+    /* if there is already something mapped (valid is set) or we have traversed far enough
+     * that a page table is not valid to map then tell the user that they ahve to delete
+     * something before they can put a PT here */
+    if (lu_ret.ptBitsLeft == seL4_PageBits || pte_ptr_get_valid(lu_ret.ptSlot)) {
+        userError("RISCVPageTableMap: All objects mapped at this address");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
