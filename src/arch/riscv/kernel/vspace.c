@@ -892,14 +892,14 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap &&
                      cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) == asidInvalid)) {
-            userError("RISCVPageMap: Bad PageTable cap.");
+            userError("RISCVPageRemap: Bad PageTable cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
             return EXCEPTION_SYSCALL_ERROR;
         }
 
         if (unlikely(cap_frame_cap_get_capFMappedASID(cap)) == asidInvalid) {
-            userError("RISCVPageMap: frame is not mapped");
+            userError("RISCVPageRemap: frame is not mapped");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
             return EXCEPTION_SYSCALL_ERROR;
@@ -908,7 +908,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         asid_t mappedASID = cap_frame_cap_get_capFMappedASID(cap);
         findVSpaceForASID_ret_t find_ret = findVSpaceForASID(mappedASID);
         if (unlikely(find_ret.status != EXCEPTION_NONE)) {
-            userError("RISCVPageMap: No PageTable for ASID");
+            userError("RISCVPageRemap: No PageTable for ASID");
             current_syscall_error.type = seL4_FailedLookup;
             current_syscall_error.failedLookupWasSource = false;
             return EXCEPTION_SYSCALL_ERROR;
@@ -917,7 +917,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         pte_t *lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(lvl1ptCap));
         if (unlikely(find_ret.vspace_root != lvl1pt ||
                      cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) != mappedASID)) {
-            userError("RISCVPageMap: ASID lookup failed");
+            userError("RISCVPageRemap: ASID lookup failed");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
             return EXCEPTION_SYSCALL_ERROR;
