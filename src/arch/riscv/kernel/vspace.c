@@ -1212,9 +1212,5 @@ void
 Arch_userStackTrace(tcb_t *tptr)
 {
     // RVTODO: implement
-    /* Not implemented */
-    printf("Arch_userStackTrace not implemented\n");
-    // RVTODO: not having implemented a strictly informational call is not a halt'able offense
-    halt();
 }
 #endif
