@@ -53,6 +53,15 @@ static inline void print_format_cause(int cause_num)
     case RISCVEnvCall:
         printf("Environment call\n");
         break;
+    case RISCVInstructionPageFault:
+        printf("Instruction page fault\n");
+        break;
+    case RISCVLoadPageFault:
+        printf("Load page fault\n");
+        break;
+    case RISCVStorePageFault:
+        printf("Store page fault\n");
+        break;
     default:
         printf("Reserved cause %d\n", cause_num);
         break;
