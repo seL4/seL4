@@ -10,22 +10,7 @@
  * @TAG(DATA61_GPL)
  */
 
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
- */
-
 #ifdef CONFIG_ENABLE_BENCHMARK
-// RVTODO: #error in benchmark.h implies that this code cannot be used and
-// may not be correct
-
-#include <benchmark.h>
-#include <arch/benchmark.h>
-
-uint32_t ksEntry;
-uint32_t ksExit;
-uint32_t ksLogIndex = 0;
-uint32_t *ksLog;
 
 #endif /* CONFIG_ENABLE_BENCHMARK */
 

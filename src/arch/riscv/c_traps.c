@@ -126,19 +126,8 @@ slowpath(syscall_t syscall)
 {
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
-        /* TODO: benchmarks - this is only added for future benchmark support
-         * doesn't do anything now, and benchmarking support is currently broken,
-         * and not tested.
-         */
-#ifdef TRACK_KERNEL_ENTRIES
-        ksKernelEntry.path = Entry_UnknownSyscall;
-        /* ksKernelEntry.word word is already set to syscall */
-#endif /* TRACK_KERNEL_ENTRIES */
         handleUnknownSyscall(syscall);
     } else {
-#ifdef TRACK_KERNEL_ENTRIES
-        ksKernelEntry.is_fastpath = 0;
-#endif /* TRACK KERNEL ENTRIES */
         handleSyscall(syscall);
     }
 
@@ -152,15 +141,6 @@ c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, wo
     NODE_LOCK_SYS;
 
     c_entry_hook();
-
-    /* TODO: benchmarks - this is only added for future benchmark support
-     * doesn't do anything now, and benchmarking support is currently broken,
-     * and not tested.
-     */
-#ifdef TRACK_KERNEL_ENTRIES
-    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
-    ksKernelEntry.is_fastpath = 1;
-#endif /* TRACK_KERNEL_ENTRIES */
 
 #ifdef CONFIG_FASTPATH
     if (syscall == (syscall_t)SysCall) {
