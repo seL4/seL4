@@ -37,9 +37,7 @@
 #define seL4_PageTableEntryBits 3
 #define seL4_PageTableIndexBits 9
 
-#if CONFIG_PT_LEVELS == 4
 #define RISCV_Tera_PageBits    39
-#endif
 
 #define seL4_HugePageBits       RISCV_Giga_PageBits
 #define seL4_TeraPageBits       RISCV_Tera_PageBits

@@ -60,23 +60,15 @@ typedef uint32_t vm_fault_type_t;
 enum frameSizeConstants {
     RISCVPageBits        = RISCV_4K_PageBits,
     RISCVMegaPageBits    = RISCV_Mega_PageBits,
-#if CONFIG_PT_LEVELS > 2
     RISCVGigaPageBits    = RISCV_Giga_PageBits,
-#endif
-#if CONFIG_PT_LEVELS == 4
     RISCVTeraPageBits    = RISCV_Tera_PageBits
-#endif
 };
 
 enum vm_page_size {
     RISCV_4K_Page,
     RISCV_Mega_Page,
-#if CONFIG_PT_LEVELS > 2
     RISCV_Giga_Page,
-#endif
-#if CONFIG_PT_LEVELS > 3
     RISCV_Tera_Page
-#endif
 };
 typedef uint32_t vm_page_size_t;
 
