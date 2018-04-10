@@ -10,22 +10,7 @@
  * @TAG(DATA61_GPL)
  */
 
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
- */
-
 #ifndef __ARCH_SMP_IPI_H
 #define __ARCH_SMP_IPI_H
 
-#include <config.h>
-
-#ifdef ENABLE_SMP_SUPPORT
-typedef enum {
-    IpiRemoteCall_Stall,
-    /* Add relevant calls here upon required */
-    IpiNumArchRemoteCall
-} IpiRemoteCall_t;
-
-#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __ARCH_SMP_IPI_H */

@@ -10,26 +10,7 @@
  * @TAG(DATA61_GPL)
  */
 
-/*
- *
- * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
- */
-
 #ifndef __MODE_SMP_IPI_H
 #define __MODE_SMP_IPI_H
 
-#include <config.h>
-#include <types.h>
-#include <plat/machine.h>
-#include <smp/ipi.h>
-
-#ifdef ENABLE_SMP_SUPPORT
-
-typedef enum {
-    // RVTODO: fix this
-    /* placeholder for 64-bit ARM IPI types */
-    IpiNumModeRemoteCall
-} IpiModeRemoteCall_t;
-
-#endif /* ENABLE_SMP_SUPPORT */
 #endif /* __MODE_SMP_IPI_H */
