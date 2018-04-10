@@ -29,28 +29,28 @@
 static inline void print_format_cause(int cause_num)
 {
     switch (cause_num) {
-    case 0:
+    case RISCVInstructionMisaligned:
         printf("Instruction address misaligned\n");
         break;
-    case 1:
+    case RISCVInstructionAccessFault:
         printf("Instruction access fault\n");
         break;
-    case 2:
+    case RISCVInstructionIllegal:
         printf("Illegal instruction\n");
         break;
-    case 3:
+    case RISCVBreakpoint:
         printf("Breakpoint\n");
         break;
-    case 5:
+    case RISCVLoadAccessFault:
         printf("Load access fault\n");
         break;
-    case 6:
+    case RISCVAddressMisaligned:
         printf("AMO address misaligned\n");
         break;
-    case 7:
+    case RISCVStoreAccessFault:
         printf("Store/AMO access fault\n");
         break;
-    case 8:
+    case RISCVEnvCall:
         printf("Environment call\n");
         break;
     default:
@@ -64,23 +64,17 @@ void handle_exception(void)
     word_t scause = read_csr(scause);
 
     /* handleVMFaultEvent
-     * 1 -> Instruction access fault
-     * 5 -> Load access fault
-     * 7 -> Store/AMO access fault
-     * 12 -> Instruction page fault
-     * 13 -> Load page fault
-     * 15 -> Store/AMO page fault
      * */
     switch (scause) {
-    case 1:
-    case 5:
-    case 7:
-    case 12:
-    case 13:
-    case 15:
+    case RISCVInstructionAccessFault:
+    case RISCVLoadAccessFault:
+    case RISCVStoreAccessFault:
+    case RISCVInstructionPageFault:
+    case RISCVLoadPageFault:
+    case RISCVStorePageFault:
         handleVMFaultEvent(scause);
         break;
-    case 2:
+    case RISCVInstructionIllegal:
 #if defined(CONFIG_HAVE_FPU)
         /* We assume the first fault is a FP exception and enable FPU, if not already enabled */
         if (!isFpuEnable()) {
