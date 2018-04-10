@@ -48,9 +48,14 @@
  * exception codes saved in scause register (by the hardware) on traps.
  */
 enum vm_fault_type {
+    RISCVInstructionMisaligned = 0,
     RISCVInstructionAccessFault = 1,
+    RISCVInstructionIllegal = 2,
+    RISCVBreakpoint = 3,
     RISCVLoadAccessFault = 5,
+    RISCVAddressMisaligned = 6,
     RISCVStoreAccessFault = 7,
+    RISCVEnvCall = 8,
     RISCVInstructionPageFault = 12,
     RISCVLoadPageFault = 13,
     RISCVStorePageFault = 15
