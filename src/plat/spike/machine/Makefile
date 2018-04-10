@@ -20,5 +20,4 @@ DIRECTORIES += src/plat/${PLAT}/machine
 
 PLAT_C_SOURCES += machine/hardware.c
 
-PLAT_C_SOURCES += machine/io.c
 PLAT_C_SOURCES += machine/fdt.c

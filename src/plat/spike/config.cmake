@@ -21,5 +21,4 @@ add_sources(
     CFILES
         src/plat/spike/machine/fdt.c
         src/plat/spike/machine/hardware.c
-        src/plat/spike/machine/io.c
 )

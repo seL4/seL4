@@ -13,7 +13,8 @@
 DIRECTORIES += src/arch/riscv/machine
 
 ARCH_C_SOURCES += machine/registerset.c \
-    machine/hardware.c
+    machine/hardware.c \
+	machine/io.c
 
 ifdef DEBUG
     ARCH_C_SOURCES += machine/capdl.c

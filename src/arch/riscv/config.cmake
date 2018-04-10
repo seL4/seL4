@@ -70,6 +70,7 @@ add_sources(
         machine/capdl.c
         machine/hardware.c
         machine/registerset.c
+        machine/io.c
         model/statedata.c
         object/interrupt.c
         object/objecttype.c
