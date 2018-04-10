@@ -35,6 +35,9 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr);
 
 void deleteASIDPool(asid_t base, asid_pool_t* pool);
 void deleteASID(asid_t asid, vspace_root_t *vspace);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+hw_asid_t getHWASID(asid_t asid);
+#endif
 
 /* Reserved memory ranges */
 static const region_t BOOT_RODATA mode_reserved_region[] = {};

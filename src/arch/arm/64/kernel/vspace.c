@@ -34,6 +34,16 @@
 #include <arch/object/vcpu.h>
 #include <arch/machine/tlb.h>
 
+/* PGD slot reserved for storing the PGD's allocated hardware VMID.
+ * This is only necessary when running EL2 and when we only have
+ * 8-bit VMID. Note that this assumes that the IPA size for S2
+ * translation does not use full 48-bit.
+ */
+#define PGD_VMID_SLOT   511
+#define VMID_MASK       0xff
+#define PGDE_VMID_SHIFT 12
+
+
 /*
  * Memory types are defined in Memory Attribute Indirection Register.
  *  - nGnRnE Device non-Gathering, non-Reordering, No Early write acknowledgement
@@ -1104,6 +1114,126 @@ pude_t *pageDirectoryMapped(asid_t asid, vptr_t vaddr, pde_t* pd)
 
     return NULL;
 }
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+
+static inline pgde_t
+makePGDEWithHWASID(hw_asid_t hw_asid)
+{
+    /* We need to shift the hw_asid by PGDE_VMID_SHIFT bits in
+     * order to avoid assertion failures in pgde_new which
+     * expects the least 12 bits are 0s.
+     */
+    return pgde_new(((hw_asid & VMID_MASK) << PGDE_VMID_SHIFT), 0);
+}
+
+static inline hw_asid_t
+getHWASIDFromPGDE(pgde_t pgde)
+{
+    return (hw_asid_t)((pgde_get_pud_base_address(pgde) >> PGDE_VMID_SHIFT) & VMID_MASK);
+}
+
+static void
+invalidateASID(asid_t asid)
+{
+    asid_pool_t *asidPool;
+    pgde_t *pgd;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    pgd = asidPool->array[asid & MASK(asidLowBits)];
+    assert(pgd);
+    /* 0 is reserved as the invalid VMID */
+    pgd[PGD_VMID_SLOT] = makePGDEWithHWASID(0);
+}
+
+static pgde_t PURE
+loadHWASID(asid_t asid)
+{
+    asid_pool_t *asidPool;
+    pgde_t *pgd;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    pgd = asidPool->array[asid & MASK(asidLowBits)];
+    assert(pgd);
+
+    return pgd[PGD_VMID_SLOT];
+}
+
+static void
+storeHWASID(asid_t asid, hw_asid_t hw_asid)
+{
+    asid_pool_t *asidPool;
+    pgde_t *pgd;
+
+    asidPool = armKSASIDTable[asid >> asidLowBits];
+    assert(asidPool);
+
+    pgd = asidPool->array[asid & MASK(asidLowBits)];
+    assert(pgd);
+
+    /* Store HW VMID in the last entry
+       Masquerade as an invalid PDGE */
+    pgd[PGD_VMID_SLOT] = makePGDEWithHWASID(hw_asid);
+
+    armKSHWASIDTable[hw_asid] = asid;
+}
+
+static hw_asid_t
+findFreeHWASID(void)
+{
+    word_t hw_asid_offset;
+    hw_asid_t hw_asid;
+
+    /* Find a free hardware ASID */
+    for (hw_asid_offset = 0;
+            hw_asid_offset <= (word_t)((hw_asid_t) - 1);
+            hw_asid_offset++) {
+        hw_asid = armKSNextASID + ((hw_asid_t)hw_asid_offset);
+        if (armKSHWASIDTable[hw_asid] == asidInvalid) {
+            return hw_asid;
+        }
+    }
+
+    hw_asid = armKSNextASID;
+
+    /* If we've scanned the table without finding a free ASID */
+    invalidateASID(armKSHWASIDTable[hw_asid]);
+
+    /* Flush TLB */
+    invalidateTranslationASID(hw_asid);
+    armKSHWASIDTable[hw_asid] = asidInvalid;
+
+    /* Increment the NextASID index */
+    armKSNextASID++;
+
+    return hw_asid;
+}
+
+static inline hw_asid_t
+getHWASIDByASID(asid_t asid)
+{
+    return getHWASIDFromPGDE(loadHWASID(asid));
+}
+
+hw_asid_t
+getHWASID(asid_t asid)
+{
+    if (getHWASIDByASID(asid)) {
+        return getHWASIDByASID(asid);
+    } else {
+        hw_asid_t new_hw_asid;
+
+        new_hw_asid = findFreeHWASID();
+        storeHWASID(asid, new_hw_asid);
+        return new_hw_asid;
+    }
+}
+
+#endif
 
 pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
 {
