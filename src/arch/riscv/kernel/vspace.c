@@ -33,6 +33,7 @@
 #include <arch/kernel/vspace.h>
 #include <linker.h>
 #include <plat/machine/devices.h>
+#include <arch/machine.h>
 #include <plat/machine/hardware.h>
 #include <kernel/stack.h>
 
@@ -147,9 +148,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
                       0,  /* read */
                       1 /* valid */
                   );
-    // RVTODO: make this a mcahine helper. probably needs a compiler barrier to ensure
-    // *targetSlot happened before
-    asm volatile ("sfence.vma");
+    sfence();
 }
 
 BOOT_CODE void
@@ -177,7 +176,7 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
                       1,  /* read */
                       1   /* valid */
                   );
-    asm volatile ("sfence.vma");
+    sfence();
 }
 
 BOOT_CODE cap_t
@@ -464,12 +463,6 @@ static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, 
     return EXCEPTION_NONE;
 }
 
-static void hwASIDFlush(asid_t asid)
-{
-    // RVTODO: define abstraction operation for this in machine.h
-    asm volatile ("sfence.vma x0, %0" :: "r" (asid): "memory");
-}
-
 void deleteASID(asid_t asid, pte_t *vspace)
 {
     asid_pool_t* poolPtr;
@@ -525,7 +518,7 @@ unmapPageTable(asid_t asid, vptr_t vptr, pte_t* target_pt)
                   0,  /* read */
                   0  /* valid */
               );
-    asm volatile ("sfence.vma");
+    sfence();
 }
 
 static pte_t pte_pte_invalid_new(void)
@@ -552,8 +545,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
     }
 
     lu_ret.ptSlot[0] = pte_pte_invalid_new();
-
-    asm volatile ("sfence.vma");
+    sfence();
 }
 
 void
@@ -1174,7 +1166,7 @@ performPageGetAddress(void *vbase_ptr)
 static exception_t updatePTE(pte_t pte, pte_t *base)
 {
     *base = pte;
-    asm volatile ("sfence.vma");
+    sfence();
     return EXCEPTION_NONE;
 }
 

@@ -28,13 +28,23 @@
 #include <arch/model/smp.h>
 #include <arch/sbi.h>
 
+static inline void sfence(void)
+{
+    asm volatile ("sfence.vma" ::: "memory");
+}
+
+static inline void hwASIDFlush(asid_t asid)
+{
+    asm volatile ("sfence.vma x0, %0" :: "r" (asid): "memory");
+}
+
 #ifdef ENABLE_SMP_SUPPORT
 #define irq_remote_call_ipi        0
 #define irq_reschedule_ipi         1
 #define int_remote_call_ipi       irq_remote_call_ipi
 #define int_reschedule_ipi        irq_reschedule_ipi
 
-#define IPI_MEM_BARRIER asm volatile("sfence.vma");
+#define IPI_MEM_BARRIER sfence()
 
 void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
