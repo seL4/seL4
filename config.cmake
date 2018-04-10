@@ -118,7 +118,7 @@ config_string(KernelNumPriorities NUM_PRIORITIES
 
 config_string(KernelMaxNumNodes MAX_NUM_NODES "Max number of CPU cores to boot"
     DEFAULT 1
-    DEPENDS "${KernelNumDomains} EQUAL 1"
+    DEPENDS "${KernelNumDomains} EQUAL 1;NOT KernelArchRiscV"
     UNQUOTE
 )
 

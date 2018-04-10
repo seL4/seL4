@@ -434,7 +434,7 @@ menu "seL4 System Parameters"
 
     config MAX_NUM_NODES
         int "Max number of CPU nodes"
-        depends on NUM_DOMAINS = 1
+        depends on NUM_DOMAINS = 1 && !ARCH_RISCV
         range 1 256
         default 1
         help
