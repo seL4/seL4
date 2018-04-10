@@ -21,9 +21,6 @@
 
 #include <util.h>
 
-/* RVTODO: check if risc-v spec actually declares the l1 cache line size */
-#define L1_CACHE_LINE_SIZE 64
-
 #ifndef __ASSEMBLER__
 
 #include <config.h>
