@@ -23,8 +23,6 @@
 #include <arch/machine.h>
 #include <arch/sbi.h>
 #include <arch/kernel/traps.h>
-#include <machine/fpu.h>
-#include <arch/machine/fpu.h>
 
 static inline void print_format_cause(int cause_num)
 {
@@ -84,19 +82,7 @@ void handle_exception(void)
         handleVMFaultEvent(scause);
         break;
     case RISCVInstructionIllegal:
-#if defined(CONFIG_HAVE_FPU)
-        /* We assume the first fault is a FP exception and enable FPU, if not already enabled */
-        if (!isFpuEnable()) {
-            handleFPUFault();
-
-            /* Restart the FP instruction that caused the fault */
-            setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-        } else {
-            handleUserLevelFault(0, 0);
-        }
-#else
         handleUserLevelFault(0, 0);
-#endif
 
         break;
     default:

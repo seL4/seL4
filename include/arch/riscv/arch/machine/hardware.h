@@ -111,22 +111,7 @@ pageBitsForSize(vm_page_size_t pagesize)
 #define STORE sd
 #endif
 
-#ifdef CONFIG_HAVE_FPU
-#if __riscv_flen == 32
-#define FLOAD  flw
-#define FSTORE fsw
-#elif __riscv_flen == 64
-#define FLOAD  fld
-#define FSTORE fsd
-#endif
-#endif /* CONFIG_HAVE_FPU */
-
 #define LOAD_S STRINGIFY(LOAD)
 #define STORE_S STRINGIFY(STORE)
-
-#ifdef CONFIG_HAVE_FPU
-#define FLOAD_S STRINGIFY(FLOAD)
-#define FSTORE_S STRINGIFY(FSTORE)
-#endif
 
 #endif /* !__ARCH_MACHINE_HARDWARE_H */

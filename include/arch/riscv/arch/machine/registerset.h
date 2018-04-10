@@ -95,23 +95,8 @@ extern const register_t gpRegisters[] VISIBLE;
 extern const register_t exceptionMessage[] VISIBLE;
 extern const register_t syscallMessage[] VISIBLE;
 
-#ifdef CONFIG_HAVE_FPU
-typedef struct user_fpu_state {
-#if __riscv_flen == 32 /* Single percision */
-    uint32_t fpregs[32];
-    uint32_t fcsr;
-#else /* __riscv_flen == 64 */
-    uint64_t fpregs[32];
-    uint64_t fcsr;
-#endif
-} user_fpu_state_t;
-#endif /* CONFIG_HAVE_FPU */
-
 struct user_context {
     word_t registers[n_contextRegisters];
-#ifdef CONFIG_HAVE_FPU
-    user_fpu_state_t fpuState;
-#endif /* CONFIG_HAVE_FPU */
 };
 typedef struct user_context user_context_t;
 

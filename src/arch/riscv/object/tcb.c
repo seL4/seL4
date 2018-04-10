@@ -40,8 +40,6 @@ void
 Arch_migrateTCB(tcb_t *thread)
 {
     word_t hart_mask = BIT(thread->tcbAffinity);
-
-    // RVTODO: what about FPU migration?
 }
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 
