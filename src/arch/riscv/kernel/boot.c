@@ -312,8 +312,6 @@ try_init_kernel(
      * to cover the user image + ipc buffer and bootinfo frames */
     it_pd_cap = create_it_address_space(root_cnode_cap, it_v_reg);
     if (cap_get_capType(it_pd_cap) == cap_null_cap) {
-        // RVTODO: cryptic printout
-        printf("cap == null \n");
         return false;
     }
 
