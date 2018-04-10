@@ -267,7 +267,13 @@ bool_t
 Arch_isFrameType(word_t t)
 {
     switch (t) {
-    // RVTODO: there are more frame types than this
+#if CONFIG_PT_LEVELS == 4
+    case seL4_RISCV_Tera_Page:
+#endif
+#if CONFIG_PT_LEVELS > 2
+    case seL4_RISCV_Giga_Page:
+#endif
+    case seL4_RISCV_Mega_Page:
     case seL4_RISCV_4K_Page:
         return true;
     default:
