@@ -30,6 +30,12 @@ system in a larger project.
   [2]: http://sel4.systems/Info/FAQ/
   [3]: http://sel4.systems/Community/Contributing/
   [4]: https://zenodo.org/badge/DOI/10.5281/zenodo.591727.svg
+  [5]: https://sel4.systems/Info/Docs/seL4-manual-latest.pdf
+
+Manual
+------
+
+A hosted version of the [manual](manual/) for the most recent release can be found [here][5].
 
 Repository Overview
 -------------------
