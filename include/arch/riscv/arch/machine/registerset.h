@@ -100,7 +100,7 @@ typedef struct user_fpu_state {
 #if __riscv_flen == 32 /* Single percision */
     uint32_t fpregs[32];
     uint32_t fcsr;
-#else /* __riscv_xlen == 64 */
+#else /* __riscv_flen == 64 */
     uint64_t fpregs[32];
     uint64_t fcsr;
 #endif
