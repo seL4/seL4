@@ -31,4 +31,11 @@ pte_t armKSGlobalKernelPT[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits))
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 vcpu_t *armHSCurVCPU;
 bool_t armHSVCPUActive;
+
+/* The hardware VMID to virtual ASID mapping table.
+ * The ARMv8 supports 8-bit VMID which is used as logical ASID
+ * when the kernel runs in EL2.
+ */
+asid_t armKSHWASIDTable[BIT(hwASIDBits)];
+hw_asid_t armKSNextASID;
 #endif
