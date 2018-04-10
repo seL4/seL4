@@ -238,6 +238,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
             (word_t) lvl1pt_pptr   /* capPTMappedAddress */
         );
 
+    seL4_SlotPos slot_pos_before = ndks_boot.slot_pos_cur;
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), lvl1pt_cap);
 
     /* create all n level PT objs and caps necessary to cover userland image in 4KiB pages */
@@ -262,7 +263,11 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         }
 
     }
-    // RVTODO: does not seem to populate ndks_boot.bi_frame->userImagePaging
+
+    seL4_SlotPos slot_pos_after = ndks_boot.slot_pos_cur;
+    ndks_boot.bi_frame->userImagePaging = (seL4_SlotRegion) {
+        slot_pos_before, slot_pos_after
+    };
 
     return lvl1pt_cap;
 }
