@@ -17,7 +17,8 @@ Upcoming release: BINARY COMPATIBLE
      - `seL4_MessageInfo_new`
      - `seL4_MessageInfo_get_label`
      - `seL4_MessageInfo_set_label`
-
+ * Initial prototype RISC-V architecture port. This port currently only supports running in 64-bit mode without FPU or
+   or multicore support on the Spike simulation platform. There is *no verification* for this platform.
 
 ## Upgrade Notes
 ---
