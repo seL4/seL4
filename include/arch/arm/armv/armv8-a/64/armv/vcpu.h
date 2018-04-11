@@ -621,7 +621,7 @@ vcpu_init_vtcr(void)
     vtcr_el2 |= VTCR_EL2_SL0(SL0_4K_L0);                     // 4KiB, start at level 0
     vtcr_el2 |= VTCR_EL2_IRGN0(NORMAL_WB_WA_CACHEABLE);      // inner write-back, read/write allocate
     vtcr_el2 |= VTCR_EL2_ORGN0(NORMAL_WB_WA_CACHEABLE);      // outer write-back, read/write allocate
-    vtcr_el2 |= VTCR_EL2_SH0(SH0_INNER);                     // inner sharable
+    vtcr_el2 |= VTCR_EL2_SH0(SH0_INNER);                     // inner shareable
     vtcr_el2 |= VTCR_EL2_TG0(TG0_4K);                        // 4KiB page size
     vtcr_el2 |= VTCR_EL2_PS(PS_16T);                         // 44-bit PA size
     vtcr_el2 |= BIT(31);                                     // reserved as 1
