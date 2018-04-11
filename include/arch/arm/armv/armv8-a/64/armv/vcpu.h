@@ -609,7 +609,7 @@ writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
             return vcpu_hw_write_reg(field, value);
         }
     } else {
-       vcpu_write_reg(vcpu, field, value);
+        vcpu_write_reg(vcpu, field, value);
     }
 }
 
