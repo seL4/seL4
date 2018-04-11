@@ -75,6 +75,11 @@
 #define NORMAL_WT_CACHEABLE     0b10 /* write-through                   */
 #define NORMAL_WB_NWA_CACHEABLE 0b11 /* write-back, no write-allocate   */
 
+/* Start level  */
+#define SL0_4K_L2       0           /* 4K, start at level 2 */
+#define SL0_4K_L1       0b01        /* 4K, start at level 1 */
+#define SL0_4K_L0       0b10        /* 4K, start at level 0 */
+
 /* for EL1 SCTLR */
 static inline word_t
 getSCTLR(void)
