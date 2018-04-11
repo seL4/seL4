@@ -31,7 +31,7 @@
 #include <arch/types.h>
 #include <mode/api/constants.h>
 
-#define PAGE_BITS RISCV_4K_PageBits
+#define PAGE_BITS seL4_PageBits
 
 /* MMU RISC-V related definitions. See RISC-V manual priv-1.10 */
 
@@ -39,8 +39,8 @@
  * configured RISC-V system with CONFIG_PT_LEVEL (which can be 2 on Sv32,
  * 3 on Sv38, or 4 on Sv48)
  */
-#define RISCV_GET_PT_INDEX(addr, n)  (((addr) >> (((PT_INDEX_BITS) * ((CONFIG_PT_LEVELS) - (n))) + RISCV_4K_PageBits)) & MASK(PT_INDEX_BITS))
-#define RISCV_GET_LVL_PGSIZE_BITS(n) (((PT_INDEX_BITS) * (CONFIG_PT_LEVELS - (n))) + RISCV_4K_PageBits)
+#define RISCV_GET_PT_INDEX(addr, n)  (((addr) >> (((PT_INDEX_BITS) * ((CONFIG_PT_LEVELS) - (n))) + seL4_PageBits)) & MASK(PT_INDEX_BITS))
+#define RISCV_GET_LVL_PGSIZE_BITS(n) (((PT_INDEX_BITS) * (CONFIG_PT_LEVELS - (n))) + seL4_PageBits)
 #define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
 /*
  * These values are defined in RISC-V priv-1.10 manual, they represent the
@@ -62,11 +62,11 @@ enum vm_fault_type {
 typedef uint32_t vm_fault_type_t;
 
 enum frameSizeConstants {
-    RISCVPageBits        = RISCV_4K_PageBits,
-    RISCVMegaPageBits    = RISCV_Mega_PageBits
-#if CONFIG_PT_LEVELS > 2
-                           , RISCVGigaPageBits    = RISCV_Giga_PageBits,
-    RISCVTeraPageBits    = RISCV_Tera_PageBits
+    RISCVPageBits        = seL4_PageBits,
+    RISCVMegaPageBits    = seL4_LargePageBits,
+    RISCVGigaPageBits    = seL4_HugePageBits,
+#if CONFIG_PT_LEVELS == 4
+    RISCVTeraPageBits    = seL4_TeraPageBits
 #endif
 };
 

@@ -37,15 +37,10 @@
 #define seL4_PageTableEntryBits 3
 #define seL4_PageTableIndexBits 9
 
-#define RISCV_Tera_PageBits    39
-
-#define seL4_HugePageBits       RISCV_Giga_PageBits
-#define seL4_TeraPageBits       RISCV_Tera_PageBits
-
-/* Shared definitions */
-#define RISCV_4K_PageBits      12
-#define RISCV_Mega_PageBits    21
-#define RISCV_Giga_PageBits    30
+#define seL4_PageBits          12
+#define seL4_LargePageBits     21
+#define seL4_HugePageBits      30
+#define seL4_TeraPageBits      39
 #define seL4_PageTableBits     12
 
 #define seL4_ASIDPoolIndexBits  10
@@ -54,10 +49,6 @@
 /* Untyped size limits */
 #define seL4_MinUntypedBits     4
 #define seL4_MaxUntypedBits     47
-
-/* Map RISC-V-related page sizes to seL4 */
-#define seL4_PageBits        RISCV_4K_PageBits
-#define seL4_LargePageBits   RISCV_Mega_PageBits
 
 enum {
     seL4_VMFault_IP,

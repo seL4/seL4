@@ -155,16 +155,16 @@ Arch_getObjectSize(word_t t)
     switch (t) {
     case seL4_RISCV_4K_Page:
     case seL4_RISCV_PageTableObject:
-        return RISCV_4K_PageBits;
+        return seL4_PageBits;
     case seL4_RISCV_Mega_Page:
-        return RISCV_Mega_PageBits;
+        return seL4_LargePageBits;
 #if CONFIG_PT_LEVELS > 2
     case seL4_RISCV_Giga_Page:
-        return RISCV_Giga_PageBits;
+        return seL4_HugePageBits;
 #endif
 #if CONFIG_PT_LEVELS > 3
     case seL4_RISCV_Tera_Page:
-        return RISCV_Tera_PageBits;
+        return seL4_TeraPageBits;
 #endif
     default:
         fail("Invalid object type");
@@ -178,7 +178,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
     switch (t) {
     case seL4_RISCV_4K_Page:
         if (!deviceMemory) {
-            memzero(regionBase, BIT(RISCV_4K_PageBits));
+            memzero(regionBase, BIT(seL4_PageBits));
         }
 
         return cap_frame_cap_new(
@@ -192,7 +192,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 
     case seL4_RISCV_Mega_Page: {
         if (!deviceMemory) {
-            memzero(regionBase, BIT(RISCV_Mega_PageBits));
+            memzero(regionBase, BIT(seL4_LargePageBits));
         }
 
         return cap_frame_cap_new(
@@ -208,7 +208,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 #if CONFIG_PT_LEVELS > 2
     case seL4_RISCV_Giga_Page: {
         if (!deviceMemory) {
-            memzero(regionBase, BIT(RISCV_Giga_PageBits));
+            memzero(regionBase, BIT(seL4_HugePageBits));
         }
 
         return cap_frame_cap_new(
@@ -223,7 +223,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 #endif
 
     case seL4_RISCV_PageTableObject:
-        memzero(regionBase, BIT(RISCV_4K_PageBits));
+        memzero(regionBase, BIT(seL4_PageBits));
 
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */

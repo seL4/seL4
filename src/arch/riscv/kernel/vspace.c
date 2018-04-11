@@ -81,7 +81,7 @@ map_kernel_window(void)
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] =
             pte_new(
-                paddr >> RISCV_4K_PageBits,
+                paddr >> seL4_PageBits,
                 0,  /* sw */
                 1,  /* dirty */
                 1,  /* accessed */
@@ -104,7 +104,7 @@ map_kernel_window(void)
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] =
             pte_new(
-                paddr >> RISCV_4K_PageBits,
+                paddr >> seL4_PageBits,
                 0,  /* sw */
                 1,  /* dirty */
                 1,  /* accessed */
@@ -137,7 +137,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     targetSlot = pt_ret.ptSlot;
 
     *targetSlot = pte_new(
-                      (addrFromPPtr(pt) >> RISCV_4K_PageBits),
+                      (addrFromPPtr(pt) >> seL4_PageBits),
                       0, /* sw */
                       1, /* dirty */
                       1, /* accessed */
@@ -160,12 +160,12 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
 
     /* We deal with a frame as 4KiB */
     lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, frame_vptr);
-    assert(lu_ret.ptBitsLeft == RISCV_4K_PageBits);
+    assert(lu_ret.ptBitsLeft == seL4_PageBits);
 
     pte_t* targetSlot = lu_ret.ptSlot;
 
     *targetSlot = pte_new(
-                      (pptr_to_paddr(frame_pptr) >> RISCV_4K_PageBits),
+                      (pptr_to_paddr(frame_pptr) >> seL4_PageBits),
                       0, /* sw */
                       1, /* dirty */
                       1, /* accessed */
@@ -645,7 +645,7 @@ static pte_t CONST
 makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
 {
     return pte_new(
-               paddr >> RISCV_4K_PageBits,
+               paddr >> seL4_PageBits,
                0, /* sw */
                1, /* dirty */
                1, /* accessed */
@@ -751,7 +751,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
 
     paddr_t paddr = addrFromPPtr(
                         PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
-    pte_t pte = pte_new((paddr >> RISCV_4K_PageBits),
+    pte_t pte = pte_new((paddr >> seL4_PageBits),
                         0, /* sw */
                         1, /* dirty */
                         1, /* accessed */
@@ -1143,7 +1143,7 @@ performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
             cap_page_table_cap_get_capPTMappedAddress(cap),
             pt
         );
-        clearMemory((void *)pt, RISCV_4K_PageBits);
+        clearMemory((void *)pt, seL4_PageBits);
     }
     cap_page_table_cap_ptr_set_capPTIsMapped(&(ctSlot->cap), 0);
 
