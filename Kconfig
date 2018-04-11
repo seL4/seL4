@@ -439,6 +439,9 @@ menu "seL4 System Parameters"
         default 1
         help
             The number of CPU cores to boot
+    config MAX_NUM_NODES
+        depends on ARCH_RISCV
+        default 1
 
     config CACHE_LN_SZ
         int "Cache line size"
