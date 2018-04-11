@@ -1306,7 +1306,7 @@ void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t* pud)
         *pgdSlot = pgde_invalid_new();
 
         cleanByVA_PoU((vptr_t)pgdSlot, pptr_to_paddr(pgdSlot));
-        invalidateTranslationASID(asid);
+        invalidateTLBByASID(asid);
     }
 }
 
@@ -1319,7 +1319,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t* pd)
         *pudSlot = pude_invalid_new();
 
         cleanByVA_PoU((vptr_t)pudSlot, pptr_to_paddr(pudSlot));
-        invalidateTranslationASID(asid);
+        invalidateTLBByASID(asid);
     }
 }
 
@@ -1332,7 +1332,7 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
         *pdSlot = pde_invalid_new();
 
         cleanByVA_PoU((vptr_t)pdSlot, pptr_to_paddr(pdSlot));
-        invalidateTranslationASID(asid);
+        invalidateTLBByASID(asid);
     }
 }
 
@@ -1404,7 +1404,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
     }
 
     assert(asid < BIT(16));
-    invalidateTranslationSingle((asid << 48) | vptr >> seL4_PageBits);
+    invalidateTLBByASIDVA(asid, vptr);
 }
 
 void
@@ -1415,7 +1415,7 @@ deleteASID(asid_t asid, vspace_root_t *vspace)
     poolPtr = armKSASIDTable[asid >> asidLowBits];
 
     if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
-        invalidateTranslationASID(asid);
+        invalidateTLBByASID(asid);
         poolPtr->array[asid & MASK(asidLowBits)] = NULL;
         setVMRoot(NODE_STATE(ksCurThread));
     }
@@ -1431,7 +1431,7 @@ deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
     if (armKSASIDTable[asid_base >> asidLowBits] == pool) {
         for (offset = 0; offset < BIT(asidLowBits); offset++) {
             if (pool->array[offset]) {
-                invalidateTranslationASID(asid_base + offset);
+                invalidateTLBByASID(asid_base + offset);
             }
         }
         armKSASIDTable[asid_base >> asidLowBits] = NULL;
@@ -1588,8 +1588,7 @@ performHugePageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
     cleanByVA_PoU((vptr_t)pudSlot, pptr_to_paddr(pudSlot));
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
-        invalidateTranslationSingle((asid << 48) |
-                                    cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
+        invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
     }
 
     return EXCEPTION_NONE;
@@ -1607,8 +1606,7 @@ performLargePageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
     cleanByVA_PoU((vptr_t)pdSlot, pptr_to_paddr(pdSlot));
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
-        invalidateTranslationSingle((asid << 48) |
-                                    cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
+        invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
     }
 
     return EXCEPTION_NONE;
@@ -1626,8 +1624,7 @@ performSmallPageInvocationMap(asid_t asid, cap_t cap, cte_t *ctSlot,
     cleanByVA_PoU((vptr_t)ptSlot, pptr_to_paddr(ptSlot));
     if (unlikely(tlbflush_required)) {
         assert(asid < BIT(16));
-        invalidateTranslationSingle((asid << 48) |
-                                    cap_frame_cap_get_capFMappedAddress(cap) >> seL4_PageBits);
+        invalidateTLBByASIDVA(asid, cap_frame_cap_get_capFMappedAddress(cap));
     }
 
     return EXCEPTION_NONE;
