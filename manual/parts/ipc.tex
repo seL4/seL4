@@ -29,48 +29,8 @@ using physical CPU registers, while the rest are backed by a fixed region of
 memory called the \emph{IPC buffer}.
 The reason for this design is efficiency:
 very short messages need not use the memory.
-The physical CPU registers used for the
-message registers are described in \ifxeightsix\autoref{tbl:mrs_x86} for x86
-% x86 is used rather than IA-32 to be vendor neutral.
-and \fi \autoref{tbl:mrs_arm} for ARM.
 The IPC buffer is assigned to the calling thread (see \autoref{sec:threads} and \autoref{api:tcb_setipcbuffer}).
 %FIXME: seL4_TCB_SetIPCBuffer is only mentioned in the API reference!
-
-\ifxeightsix
-\begin{table}[htb]
-    \begin{center}
-        \begin{tabular}{lc}
-            \toprule
-            Role                                    & CPU Register \\
-            \midrule
-            Capability register \emph{(in)}         & \texttt{ebx} \\
-            Badge register \emph{(out)}             & \texttt{ebx} \\
-            Message tag \emph{(in/out)}     & \texttt{esi} \\
-            Message register 1 \emph{(in/out)}      & \texttt{edi} \\
-            Message register 2 \emph{(in/out)}      & \texttt{ebp} \\
-            \bottomrule
-        \end{tabular}
-    \caption{\label{tbl:mrs_x86}Physical register allocation for IPC messages
-    on the x86 architecture.}
-    \end{center}
-\end{table}
-\fi
-
-\begin{table}[htb]
-    \begin{center}
-        \begin{tabular}{lc}
-            \toprule
-            Role                                    & CPU Register \\
-            \midrule
-            Capability register \emph{(in)}         & \texttt{r0} \\
-            Badge register \emph{(out)}             & \texttt{r0} \\
-            Message tag \emph{(in/out)}     & \texttt{r1} \\
-            Message register 1--4 \emph{(in/out)}   & \texttt{r2} -- \texttt{r5} \\
-            \bottomrule
-        \end{tabular}
-    \caption{\label{tbl:mrs_arm}Physical register allocation for IPC messages on the ARM architecture.}
-    \end{center}
-\end{table}
 
 Every IPC message also has a tag (structure \texttt{seL4\_MessageInfo\_t}).  The
 tag consists of four fields: the label, message length, number of capabilities
