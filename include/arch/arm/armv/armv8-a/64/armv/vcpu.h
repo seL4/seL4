@@ -64,6 +64,10 @@
 #define TG0_64K             0b01
 #define TG0_16K             0b10
 
+/* Shareability attributes */
+#define SH0_NONE            0
+#define SH0_OUTER           0b10
+#define SH0_INNER           0b11
 
 /* for EL1 SCTLR */
 static inline word_t
