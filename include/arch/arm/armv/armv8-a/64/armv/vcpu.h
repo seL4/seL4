@@ -69,6 +69,12 @@
 #define SH0_OUTER           0b10
 #define SH0_INNER           0b11
 
+/* Cacheability attributes */
+#define NORMAL_NON_CACHEABLE    0
+#define NORMAL_WB_WA_CACHEABLE  0b01 /* write-back, write-allocate      */
+#define NORMAL_WT_CACHEABLE     0b10 /* write-through                   */
+#define NORMAL_WB_NWA_CACHEABLE 0b11 /* write-back, no write-allocate   */
+
 /* for EL1 SCTLR */
 static inline word_t
 getSCTLR(void)
