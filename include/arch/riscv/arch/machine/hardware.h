@@ -21,6 +21,8 @@
 
 #include <util.h>
 
+#include <mode/hardware.h>
+
 #ifndef __ASSEMBLER__
 
 #include <config.h>
@@ -99,14 +101,6 @@ pageBitsForSize(vm_page_size_t pagesize)
     }
 }
 #endif /* __ASSEMBLER__ */
-
-#if __riscv_xlen == 32
-#define LOAD  lw
-#define STORE sw
-#else /* __riscv_xlen == 64 */
-#define LOAD  ld
-#define STORE sd
-#endif
 
 #define LOAD_S STRINGIFY(LOAD)
 #define STORE_S STRINGIFY(STORE)

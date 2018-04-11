@@ -18,7 +18,8 @@
 #ifndef __ARCH_MODE_HARDWARE_H
 #define __ARCH_MODE_HARDWARE_H
 
-/* Place holder for 64-bit hardware header */
+#define LOAD  ld
+#define STORE sd
 
 #endif /* __ARCH_MODE_HARDWARE_H */
 
