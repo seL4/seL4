@@ -316,8 +316,6 @@ the fault-reply to a single-step debug fault.
 The thread caused a page fault. Replying to the fault IPC will restart
 the thread. The contents of the IPC message are given below.\\
 
-\subsubsection{ARM}
-
 \begin{table}[htb]
 \begin{tabularx}{\textwidth}{XXX}
 \toprule
@@ -329,28 +327,8 @@ Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
 Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
 \bottomrule
 \end{tabularx}
-\caption{\label{tbl:vm_fault_result_arm} VM Fault outcome on the ARM
-architecture.}
+\caption{\label{tbl:vm_fault_result_arm} VM Fault outcome on all architectures.}
 \end{table}
-
-\ifxeightsix
-\subsubsection{IA-32}
-
-\begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXX}
-\toprule
-\textbf{Meaning} & \textbf{IPC buffer location} \\
-\midrule
-    Program counter to restart execution at. & \ipcbloc{seL4\_VMFault\_IP} \\
-Address that caused the fault. & \ipcbloc{seL4\_VMFault\_SP} \\
-    Instruction fault (1 if the fault was caused by an instruction fetch). & \ipcbloc{seL4\_VMFault\_PrefetchFault}  \\
-Fault status register (FSR). Contains information about the cause of the fault. Architecture dependent. & \ipcbloc{seL4\_VMFault\_FSR} \\
-\bottomrule
-\end{tabularx}
-\caption{\label{tbl:vm_fault_result_ia32} VM fault outcome on the
-IA-32 architecture.}
-\end{table}
-\fi
 
 \section{Domains}
 \label{sec:domains}
