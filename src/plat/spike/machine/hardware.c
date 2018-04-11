@@ -55,17 +55,6 @@ BOOT_CODE bool_t add_avail_p_reg(p_region_t reg)
     return true;
 }
 
-BOOT_CODE int get_num_dev_p_regs(void)
-{
-    return 0;
-}
-
-BOOT_CODE p_region_t get_dev_p_reg(unsigned int i)
-{
-    assert(!"This should never get called as we do not have any device regions at the moment");
-    return P_REG_EMPTY;
-}
-
 /**
    DONT_TRANSLATE
  */
