@@ -52,6 +52,11 @@ mapped into must have been installed.
 Pages of 4\,KiB and 1\,MiB size occupy one slot in a page table and the page directory, respectively.
 Pages of 64\,KiB and 16\,MiB size occupy 16 slots in a page table and the page directory, respectively.
 
+\paragraph{RISC-V}
+
+The RISC-V architecture has a configurable number of page-table levels. Configuration settings
+make appropriate page sizes available. On RISC-V, each page-table level, including the top level, is
+the same object, a page table object.
 
 \section{Objects}
 
