@@ -38,6 +38,19 @@
 #define SCTLR_EL1_VM       0x34d58820
 #define SCTLR_DEFAULT      SCTLR_EL1_NATIVE
 
+#define UNKNOWN_FAULT       0x2000000
+#define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
+#define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
+#define ESR_EC(x)           (((x) & 0xfc000000) >> 26)
+
+#define VTCR_EL2_T0SZ(x)    (x)
+#define VTCR_EL2_SL0(x)     ((x) << 6)
+#define VTCR_EL2_IRGN0(x)   ((x) << 8)
+#define VTCR_EL2_ORGN0(x)   ((x) << 10)
+#define VTCR_EL2_SH0(x)     ((x) << 12)
+#define VTCR_EL2_TG0(x)     ((x) << 14)
+#define VTCR_EL2_PS(x)      ((x) << 16)
+
 /* for EL1 SCTLR */
 static inline word_t
 getSCTLR(void)
@@ -571,14 +584,6 @@ writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
     }
 }
 
-#define VTCR_EL2_T0SZ(x)    (x)
-#define VTCR_EL2_SL0(x)     ((x) << 6)
-#define VTCR_EL2_IRGN0(x)   ((x) << 8)
-#define VTCR_EL2_ORGN0(x)   ((x) << 10)
-#define VTCR_EL2_SH0(x)     ((x) << 12)
-#define VTCR_EL2_TG0(x)     ((x) << 14)
-#define VTCR_EL2_PS(x)      ((x) << 16)
-
 static inline void
 vcpu_init_vtcr(void)
 {
@@ -665,11 +670,6 @@ armv_vcpu_init(vcpu_t *vcpu)
 {
     vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_EL1_VM);
 }
-
-#define UNKNOWN_FAULT       0x2000000
-#define ESR_EC_TFP          0x7         /* Trap instructions that access FPU registers */
-#define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
-#define ESR_EC(x)           (((x) & 0xfc000000) >> 26)
 
 static inline bool_t
 armv_handleVCPUFault(word_t hsr)
