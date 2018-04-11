@@ -749,8 +749,6 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     /* Get the slot to install the PT in */
     pte_t *ptSlot = lu_ret.ptSlot;
 
-    // RVTODO: investigate whether tags in the bitfield
-    // generator can be used to distinguish pt and frame mapping entries
     paddr_t paddr = addrFromPPtr(
                         PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
     pte_t pte = pte_new((paddr >> RISCV_4K_PageBits),

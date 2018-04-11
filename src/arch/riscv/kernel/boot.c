@@ -80,7 +80,6 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, 
     return cap;
 }
 
-// RVTODO: this looks copied from ARM, dedup
 /**
  * Split mem_reg about reserved_reg. If memory exists in the lower
  * segment, insert it. If memory exists in the upper segment, return it.
@@ -121,8 +120,6 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
     return residual_reg;
 }
 
-// RVTODO: (almost) a direct copy of ARM
-// should create some unified freememory helper/allocator routines
 BOOT_CODE static void
 init_freemem(region_t ui_reg, region_t dtb_reg)
 {

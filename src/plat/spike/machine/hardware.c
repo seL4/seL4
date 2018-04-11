@@ -167,7 +167,6 @@ resetTimer(void)
     // may set a timeout in the past, resulting in it never getting triggered
     do {
         /* This should be set properly relying on the frequency (on real HW) */
-        // RVTODO: decode this magic number into something sensible
         target = get_cycles() + 0x1fff;
         sbi_set_timer(target);
     } while (get_cycles() > target);
@@ -179,8 +178,6 @@ resetTimer(void)
 BOOT_CODE void
 initTimer(void)
 {
-    // RVTODO: why is this setting a different timeout to resetTimer?
-    /* This should be set properly relying on the frequency (on real HW) */
     sbi_set_timer(get_cycles() + 0xfffff);
 }
 
