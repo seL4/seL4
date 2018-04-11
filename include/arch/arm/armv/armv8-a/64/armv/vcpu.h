@@ -59,6 +59,12 @@
 #define PS_16T              0b100
 #define PS_256T             0b101
 
+/* Translation granule size */
+#define TG0_4K              0
+#define TG0_64K             0b01
+#define TG0_16K             0b10
+
+
 /* for EL1 SCTLR */
 static inline word_t
 getSCTLR(void)
