@@ -617,14 +617,14 @@ static inline void
 vcpu_init_vtcr(void)
 {
     /* Set up the stage-2 translation control register for cores supporting 44-bit PA */
-    uint32_t vtcr_el2 = VTCR_EL2_T0SZ(20); // 44-bit input IPA
-    vtcr_el2 |= VTCR_EL2_SL0(0b10);        // 4KiB, start at level 0
-    vtcr_el2 |= VTCR_EL2_IRGN0(0b01);      // inner normal, write-back, read/write allocate
-    vtcr_el2 |= VTCR_EL2_ORGN0(0b01);      // outer normal, write-back, read/write allocate
-    vtcr_el2 |= VTCR_EL2_SH0(0b11);        // inner sharable
-    vtcr_el2 |= VTCR_EL2_TG0(0);           // 4KiB page size
-    vtcr_el2 |= VTCR_EL2_PS(0b100);        // 44-bit PA size
-    vtcr_el2 |= BIT(31);                   // reserved as 1
+    uint32_t vtcr_el2 = VTCR_EL2_T0SZ(20);                   // 44-bit input IPA
+    vtcr_el2 |= VTCR_EL2_SL0(SL0_4K_L0);                     // 4KiB, start at level 0
+    vtcr_el2 |= VTCR_EL2_IRGN0(NORMAL_WB_WA_CACHEABLE);      // inner write-back, read/write allocate
+    vtcr_el2 |= VTCR_EL2_ORGN0(NORMAL_WB_WA_CACHEABLE);      // outer write-back, read/write allocate
+    vtcr_el2 |= VTCR_EL2_SH0(SH0_INNER);                     // inner sharable
+    vtcr_el2 |= VTCR_EL2_TG0(TG0_4K);                        // 4KiB page size
+    vtcr_el2 |= VTCR_EL2_PS(PS_16T);                         // 44-bit PA size
+    vtcr_el2 |= BIT(31);                                     // reserved as 1
 
     MSR("vtcr_el2", vtcr_el2);
     isb();
