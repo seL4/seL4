@@ -105,53 +105,8 @@ The registers of a thread can be read and written with the
 \apifunc{seL4\_TCB\_ReadRegisters}{tcb_readregisters} and \apifunc{seL4\_TCB\_WriteRegisters}{tcb_writeregisters} methods.
 For some registers, the kernel will silently mask certain bits or ranges of bits off, and force them to contain certain
 values to ensure that they cannot be maliciously set to values that would compromise the running system, or to respect
-values that the architecture specifications have mandated to be certain values. On X86, these bits currently are:
-\begin{itemize}
-\item \texttt{EFLAGS}: Bits 1, 3 and 5, TF, Bits 12-31, and IF.
-\end{itemize}
-
-The register contents are transferred via the IPC buffer. The IPC buffer locations that registers are copied to/from are given below.
-
-\ifxeightsix
-\subsubsection{IA-32}
-
-\begin{tabularx}{\textwidth}{p{0.4\textwidth}X}
-\toprule
-\textbf{Register} & \textbf{IPC Buffer location} \\
-\midrule
-\reg{EIP} & \ipcbloc{IPCBuffer[0]} \\
-\reg{ESP} & \ipcbloc{IPCBuffer[1]} \\
-\reg{EFLAGS} & \ipcbloc{IPCBuffer[2]} \\
-\reg{EAX} & \ipcbloc{IPCBuffer[3]} \\
-\reg{EBX} & \ipcbloc{IPCBuffer[4]} \\
-\reg{ECX} & \ipcbloc{IPCBuffer[5]} \\
-\reg{EDX} & \ipcbloc{IPCBuffer[6]} \\
-\reg{ESI} & \ipcbloc{IPCBuffer[7]} \\
-\reg{EDI} & \ipcbloc{IPCBuffer[8]} \\
-\reg{EBP} & \ipcbloc{IPCBuffer[9]} \\
-\reg{TLS\_BASE} & \ipcbloc{IPCBuffer[10]} \\
-\reg{FS} & \ipcbloc{IPCBuffer[11]} \\
-\reg{GS} & \ipcbloc{IPCBuffer[12]} \\
-\bottomrule
-\end{tabularx}
-\fi
-
-\subsubsection{ARM}
-
-\begin{tabularx}{\textwidth}{p{0.4\textwidth}X}
-\toprule
-\textbf{Register} & \textbf{IPC Buffer location} \\
-\midrule
-\reg{PC} & \ipcbloc{IPCBuffer[0]} \\
-\reg{SP} & \ipcbloc{IPCBuffer[1]} \\
-\reg{CPSR} & \ipcbloc{IPCBuffer[2]} \\
-\reg{R0-R1} & \ipcbloc{IPCBuffer[3-4]} \\
-\reg{R8-R12} & \ipcbloc{IPCBuffer[5-9]} \\
-\reg{R2-R7} & \ipcbloc{IPCBuffer[10-15]} \\
-\reg{R14} & \ipcbloc{IPCBuffer[16]} \\
-\bottomrule
-\end{tabularx}
-
+values that the architecture specifications have mandated to be certain values.
+The register contents are transferred via the IPC buffer.
 
 \section{Faults}
 \label{sec:faults}
@@ -213,57 +168,9 @@ Replying to the fault IPC allows the thread to be restarted
 and/or the thread's register set to be modified. If the reply has
 a label of zero, the thread will be restarted. Additionally, if the
 message length is non-zero, the faulting thread's register set will be
-updated as shown in \autoref{tbl:unknown_syscall_result_arm} \ifxeightsix and
-\autoref{tbl:unknown_syscall_result_ia32}\fi. In this case, the number of
+updated. In this case, the number of
 registers updated is controlled with the length field of the message
 tag.
-
-\subsubsection{ARM}
-
-\begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
-\toprule
-\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
-\midrule
-\reg{R0-R7} & (same) & \ipcbloc{seL4\_UnknownSyscall\_R[0-7]} \\
-\reg{FaultInstruction} & (same) & \ipcbloc{seL4\_UnknownSyscall\_FaultIP} \\
-\reg{SP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_SP} \\
-\reg{LR} & (same) & \ipcbloc{seL4\_UnknownSyscall\_LR} \\
-\reg{CPSR} & (same) & \ipcbloc{seL4\_UknownSyscall\_CPSR} \\
-Syscall number & --- & \ipcbloc{seL4\_UnknownSyscall\_Syscall} \\
-\bottomrule
-\end{tabularx}
-\caption{\label{tbl:unknown_syscall_result_arm}Unknown system call outcome on
-the ARM architecture.}
-\end{table}
-
-\ifxeightsix
-\subsubsection{IA-32}
-% FIXME: This table now reflows onto the following page with the paragraph after
-% inserted here :(
-\begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
-\toprule
-\textbf{Value sent} & \textbf{Reply register} & \textbf{IPC buffer location} \\
-\midrule
-\reg{EAX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EAX} \\
-\reg{EBX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EBX} \\
-\reg{ECX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_ECX} \\
-\reg{EDX} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EDX} \\
-\reg{ESI} & (same) & \ipcbloc{seL4\_UnknownSyscall\_ESI} \\
-\reg{EDI} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EDI} \\
-\reg{EBP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EBP} \\
-\reg{EIP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_FaultIP} \\
-\reg{ESP} & (same) & \ipcbloc{seL4\_UnknownSyscall\_SP} \\
-\reg{EFLAGS} & (same) & \ipcbloc{seL4\_UnknownSyscall\_EFLAGS} \\
-Syscall number & --- & \ipcbloc{seL4\_UnknownSyscall\_Syscall} \\
-\bottomrule
-\end{tabularx}
-\caption{\label{tbl:unknown_syscall_result_ia32}Unknown system call outcome on
-the IA-32 architecture.}
-\end{table}
-\fi
-
 
 \subsection{User Exception}
 
@@ -275,48 +182,9 @@ Replying to the fault IPC allows the thread to be restarted
 and/or the thread's register set to be modified. If the reply has
 a label of zero, the thread will be restarted. Additionally, if the
 message length is non-zero, the faulting thread's register set will be
-updated as shown in \autoref{tbl:user_exception_result_arm} \ifxeightsix and
-\autoref{tbl:user_exception_result_ia32}\fi. In this case, the number of
+updated. In this case, the number of
 registers updated is controlled with the length field of the message
 tag.
-
-\subsubsection{ARM}
-
-\begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
-\toprule
-\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
-\midrule
-\reg{FaultInstruction} & (same) & \ipcbloc{seL4\_UserException\_FaultIP} \\
-\reg{SP} & (same) & \ipcbloc{seL4\_UserException\_SP} \\
-\reg{CPSR} & (same) & \ipcbloc{seL4\_UserException\_CPSR} \\
-Exception number & --- & \ipcbloc{seL4\_UserException\_Number} \\
-Exception code & --- & \ipcbloc{seL4\_UserException\_Code} \\
-\bottomrule
-\end{tabularx}
-\caption{\label{tbl:user_exception_result_arm}User exception outcome on the ARM
-architecture.}
-\end{table}
-
-\ifxeightsix
-\subsubsection{IA-32}
-
-\begin{table}[htb]
-\begin{tabularx}{\textwidth}{XXp{0.4\textwidth}}
-\toprule
-\textbf{Value sent} & \textbf{Register set by reply} & \textbf{IPC buffer location} \\
-\midrule
-\reg{EIP} & (same) & \ipcbloc{seL4\_UserException\_FaultIP} \\
-\reg{ESP} & (same) & \ipcbloc{seL4\_UserException\_SP} \\
-\reg{EFLAGS} & (same) & \ipcbloc{seL4\_UserException\_EFLAGS} \\
-Exception number & --- & \ipcbloc{seL4\_UserException\_Number} \\
-Exception code & --- & \ipcbloc{seL4\_UserException\_Code} \\
-\bottomrule
-\end{tabularx}
-\caption{\label{tbl:user_exception_result_ia32}User exception outcome on the
-IA-32 architecture.}
-\end{table}
-\fi
 
 \subsection{Debug Exception: Breakpoints and Watchpoints}
 \label{sec:debug_exceptions}
