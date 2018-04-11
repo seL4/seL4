@@ -51,6 +51,14 @@
 #define VTCR_EL2_TG0(x)     ((x) << 14)
 #define VTCR_EL2_PS(x)      ((x) << 16)
 
+/* Physical address size */
+#define PS_4G               0
+#define PS_64G              0b001
+#define PS_1T               0b010
+#define PS_4T               0b011
+#define PS_16T              0b100
+#define PS_256T             0b101
+
 /* for EL1 SCTLR */
 static inline word_t
 getSCTLR(void)
