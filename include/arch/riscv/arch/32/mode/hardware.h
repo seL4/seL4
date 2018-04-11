@@ -22,4 +22,3 @@
 #define STORE sw
 
 #endif /* __ARCH_MODE_HARDWARE_H */
-

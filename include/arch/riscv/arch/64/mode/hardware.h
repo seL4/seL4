@@ -22,4 +22,3 @@
 #define STORE sd
 
 #endif /* __ARCH_MODE_HARDWARE_H */
-
