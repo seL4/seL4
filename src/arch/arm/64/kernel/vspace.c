@@ -1233,7 +1233,46 @@ getHWASID(asid_t asid)
     }
 }
 
+static void
+invalidateASIDEntry(asid_t asid)
+{
+    hw_asid_t hw_asid = getHWASIDByASID(asid);
+    if (hw_asid) {
+        armKSHWASIDTable[hw_asid] =
+            asidInvalid;
+    }
+    invalidateASID(asid);
+}
+
 #endif
+
+static inline void
+invalidateTLBByASID(asid_t asid)
+{
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    hw_asid_t hw_asid = getHWASIDByASID(asid);
+    if (!hw_asid) {
+        return;
+    }
+    invalidateTranslationASID(hw_asid);
+#else
+    invalidateTranslationASID(asid);
+#endif
+}
+
+static inline void
+invalidateTLBByASIDVA(asid_t asid, vptr_t vaddr)
+{
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t hw_asid = getHWASIDByASID(asid);
+    if (!hw_asid) {
+        return;
+    }
+    invalidateTranslationSingle((hw_asid << 48) | vaddr >> seL4_PageBits);
+#else
+    invalidateTranslationSingle((asid << 48) | vaddr >> seL4_PageBits);
+#endif
+}
 
 pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
 {
