@@ -240,6 +240,10 @@ try_init_kernel(
     cap_t it_pd_cap;
     cap_t it_ap_cap;
     cap_t ipcbuf_cap;
+    p_region_t boot_mem_reuse_p_reg = ((p_region_t) {
+        kpptr_to_paddr((void*)KERNEL_BASE), kpptr_to_paddr(ki_boot_end)
+    });
+    region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
     });
@@ -365,14 +369,7 @@ try_init_kernel(
     /* convert the remaining free memory into UT objects and provide the caps */
     if (!create_untypeds(
                 root_cnode_cap,
-                // RVTODO: why are the vectors declared as boot only then if they are used
-                // after boot ???
-                /* don't retype kernek boot area, vectors are still used */
-    (region_t) {
-    0
-    //kernelBase, (pptr_t)ki_boot_end
-} /* reusable boot code/data */
-        )) {
+                boot_mem_reuse_reg)) {
         return false;
     }
 
