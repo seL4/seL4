@@ -65,7 +65,7 @@ enum frameSizeConstants {
     RISCVPageBits        = RISCV_4K_PageBits,
     RISCVMegaPageBits    = RISCV_Mega_PageBits
 #if CONFIG_PT_LEVELS > 2
-    ,RISCVGigaPageBits    = RISCV_Giga_PageBits,
+                           , RISCVGigaPageBits    = RISCV_Giga_PageBits,
     RISCVTeraPageBits    = RISCV_Tera_PageBits
 #endif
 };
