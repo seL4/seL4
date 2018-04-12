@@ -134,18 +134,18 @@ static uint32_t *fdt_scan_helper(
             prop.name  = strings + bswap(lex[2]);
             prop.len   = bswap(lex[1]);
             prop.value = lex + 3;
-            if (node && !strcmp(prop.name, fdt_address_cells)) {
+            if (node && !strncmp(prop.name, fdt_address_cells, 14)) {
                 node->address_cells = bswap(lex[3]);
             }
-            if (node && !strcmp(prop.name, fdt_size_cells))    {
+            if (node && !strncmp(prop.name, fdt_size_cells, 11))    {
                 node->size_cells    = bswap(lex[3]);
             }
             lex += 3 + (prop.len + 3) / 4;
-            if (state->found_memory && strcmp(prop.name, fdt_reg) == 0) {
+            if (state->found_memory && strncmp(prop.name, fdt_reg, 3) == 0) {
                 state->reg_value = prop.value;
                 state->reg_len = prop.len;
             }
-            if (strcmp(prop.name, fdt_device_type) == 0 && strcmp((const char*)prop.value, fdt_memory) == 0) {
+            if (strncmp(prop.name, fdt_device_type, 11) == 0 && strncmp((const char*)prop.value, fdt_memory, 6) == 0) {
                 state->found_memory = 1;
             }
             break;
