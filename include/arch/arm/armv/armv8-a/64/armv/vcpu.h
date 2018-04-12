@@ -88,6 +88,32 @@
 #define SL0_4K_L1       0b01        /* 4K, start at level 1 */
 #define SL0_4K_L0       0b10        /* 4K, start at level 0 */
 
+#define REG_SCTLR_EL1       "sctlr_el1"
+#define REG_TTBR0_EL1       "ttbr0_el1"
+#define REG_TTBR1_EL1       "ttbr1_el1"
+#define REG_TCR_EL1         "tcr_el1"
+#define REG_MAIR_EL1        "mair_el1"
+#define REG_AMAIR_EL1       "amair_el1"
+#define REG_CONTEXTIDR_EL1  "contextidr_el1"
+#define REG_ACTLR_EL1       "actlr_el1"
+#define REG_AFSR0_EL1       "afsr0_el1"
+#define REG_AFSR1_EL1       "afsr1_el1"
+#define REG_ESR_EL1         "esr_el1"
+#define REG_FAR_EL1         "far_el1"
+#define REG_ISR_EL1         "isr_el1"
+#define REG_VBAR_EL1        "vbar_el1"
+#define REG_TPIDR_EL0       "tpidr_el0"
+#define REG_TPIDR_EL1       "tpidr_el1"
+#define REG_TPIDRRO_EL0     "tpidrro_el0"
+#define REG_SP_EL1          "sp_el1"
+#define REG_ELR_EL1         "elr_el1"
+#define REG_SPSR_EL1        "spsr_el1"
+#define REG_CPACR_EL1       "cpacr_el1"
+#define REG_CNTV_TVAL_EL0   "cntv_tval_el0"
+#define REG_CNTV_CTL_EL0    "cntv_ctl_el0"
+#define REG_HCR_EL2         "hcr_el2"
+#define REG_VTCR_EL2        "vtcr_el2"
+
 /* for EL1 SCTLR */
 static inline word_t
 getSCTLR(void)
