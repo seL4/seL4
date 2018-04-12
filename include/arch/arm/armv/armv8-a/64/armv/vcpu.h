@@ -28,14 +28,22 @@
                    | HCR_TAC | HCR_SWIO |  HCR_TSC | HCR_IMO | HCR_FMO | HCR_AMO)
 #define HCR_VCPU   ( HCR_COMMON)
 
-#define SCTLR_EL1_UCI   BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
-                                       and IC IVAU in AArch64 state   */
-#define SCTLR_EL1_C     BIT(2)      /* Enable data and unified caches */
-#define SCTLR_EL1_I     BIT(12)     /* Enable instruction cache       */
+#define SCTLR_EL1_UCI       BIT(26)     /* Enable EL0 access to DC CVAU, DC CIVAC, DC CVAC,
+                                           and IC IVAU in AArch64 state   */
+#define SCTLR_EL1_C         BIT(2)      /* Enable data and unified caches */
+#define SCTLR_EL1_I         BIT(12)     /* Enable instruction cache       */
+#define SCTLR_EL1_CP15BEN   BIT(5)      /* AArch32 CP15 barrier enable    */
+#define SCTLR_EL1_UTC       BIT(15)     /* Enable EL0 access to CTR_EL0   */
+#define SCTLR_EL1_NTWI      BIT(16)     /* WFI executed as normal         */
+#define SCTLR_EL1_NTWE      BIT(18)     /* WFE executed as normal         */
+
 /* Disable MMU, SP alignment check, and alignment check */
 /* A57 default value */
-#define SCTLR_EL1_NATIVE   (0x34d58820 | SCTLR_EL1_C | SCTLR_EL1_I | SCTLR_EL1_UCI)
-#define SCTLR_EL1_VM       0x34d58820
+#define SCTLR_EL1_RES      0x30d00800   /* Reserved value */
+#define SCTLR_EL1          ( SCTLR_EL1_RES | SCTLR_EL1_CP15BEN | SCTLR_EL1_UTC \
+                           | SCTLR_EL1_NTWI | SCTLR_EL1_NTWE )
+#define SCTLR_EL1_NATIVE   (SCTLR_EL1 | SCTLR_EL1_C | SCTLR_EL1_I | SCTLR_EL1_UCI)
+#define SCTLR_EL1_VM       (SCTLR_EL1 | SCTLR_EL1_UCI)
 #define SCTLR_DEFAULT      SCTLR_EL1_NATIVE
 
 #define UNKNOWN_FAULT       0x2000000
