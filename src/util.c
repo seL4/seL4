@@ -95,16 +95,6 @@ strncmp(const char* s1, const char* s2, int n)
     return 0;
 }
 
-unsigned long
-strlen(const char *s)
-{
-    const char *p = s;
-    while (*p) {
-        p++;
-    }
-    return p - s;
-}
-
 long CONST
 char_to_long(char c)
 {
