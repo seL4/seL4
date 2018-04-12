@@ -1,6 +1,6 @@
 Revision history for seL4
 
-For more information see the release notes at https://wiki.sel4.systems/ReleaseNotes
+For more information see the release notes at https://docs.sel4.systems/sel4_release/
 
 This file should be word wrapped to 120 characters
 
@@ -104,4 +104,4 @@ between two same priority threads: the sender will be scheduled, rather than the
    point release once it is fixed.
 
 ---
-For previous releases see https://wiki.sel4.systems/ReleaseNotes
+For previous releases see https://docs.sel4.systems/sel4_release/
