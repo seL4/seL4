@@ -36,7 +36,7 @@ enum vm_page_size {
 };
 typedef word_t vm_page_size_t;
 
-enum framSizeConstants {
+enum frameSizeConstants {
     X64SmallPageBits = seL4_PageBits,
     X64LargePageBits = seL4_LargePageBits,
     X64HugePageBits  = seL4_HugePageBits
