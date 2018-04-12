@@ -168,6 +168,10 @@ invokeSchedContext_Consumed(sched_context_t *sc, word_t *buffer)
 static exception_t
 invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
 {
+    if (sc->scYieldFrom) {
+        schedContext_completeYieldTo(sc->scYieldFrom);
+        assert(sc->scYieldFrom == NULL);
+    }
     bool_t return_now = true;
     refill_unblock_check(sc);
     if (isSchedulable(sc->scTcb)) {
