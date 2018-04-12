@@ -31,6 +31,7 @@ system in a larger project.
   [3]: http://sel4.systems/Community/Contributing/
   [4]: https://zenodo.org/badge/DOI/10.5281/zenodo.591727.svg
   [5]: https://sel4.systems/Info/Docs/seL4-manual-latest.pdf
+  [6]: http://sel4.systems/Info/GettingStarted/
 
 Manual
 ------
@@ -49,10 +50,7 @@ Repository Overview
 Build Instructions
 ------------------
 
-See the seL4 website for [build instructions][5].
-
- [5]: http://sel4.systems/Info/GettingStarted/
-
+See the seL4 website for [build instructions][6].
 
 License
 =======
