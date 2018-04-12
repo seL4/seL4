@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdint.h>
+#include <string.h>
 #include <plat/machine/fdt.h>
 #include <config.h>
 #include <util.h>
@@ -155,7 +156,7 @@ static uint32_t *fdt_scan_helper(
             last = 1;
             child.name = (const char *)(lex + 1);
             lex_next = fdt_scan_helper(
-                           lex + 2 + strlen(child.name) / 4,
+                           lex + 2 + strnlen(child.name, 1024) / 4,
                            strings, &child, state);
             lex = lex_next;
             break;
