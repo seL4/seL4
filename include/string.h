@@ -11,16 +11,10 @@
 #ifndef __STRING_H
 #define __STRING_H
 
-#include <config.h>
-
-#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
 #include <stdint.h>
 
 word_t strnlen(const char *s, word_t maxlen);
 word_t strlcpy(char *dest, const char *src, word_t size);
 word_t strlcat(char *dest, const char *src, word_t size);
-
-#endif
 
 #endif

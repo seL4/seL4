@@ -12,8 +12,6 @@
 #include <assert.h>
 #include <string.h>
 
-#if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-
 word_t strnlen(const char *s, word_t maxlen)
 {
     word_t len;
@@ -46,5 +44,3 @@ word_t strlcat(char *dest, const char *src, word_t size)
     }
     return len;
 }
-
-#endif
