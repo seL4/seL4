@@ -70,8 +70,11 @@ static inline void
 setHDCRTrapDebugExceptionState(bool_t enable_trapping)
 {
     word_t hdcr;
-
+#ifdef CONFIG_ARCH_AARCH64
+    MRS("mdcr_el2", hdcr);
+#else
     MRC(ARM_CP15_HDCR, hdcr);
+#endif
     if (enable_trapping) {
         /* Trap and redirect debug faults that occur in PL0 native threads by
          * setting HDCR.TDE (trap debug exceptions).
@@ -87,8 +90,11 @@ setHDCRTrapDebugExceptionState(bool_t enable_trapping)
                   | BIT(HDCR_DEBUG_TDRA_SHIFT)
                   | BIT(HDCR_DEBUG_TDOSA_SHIFT));
     }
-
+#ifdef CONFIG_ARCH_AARCH64
+    MSR("mdcr_el2", hdcr);
+#else
     MCR(ARM_CP15_HDCR, hdcr);
+#endif
 }
 
 static inline void
