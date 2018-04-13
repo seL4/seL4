@@ -414,5 +414,9 @@ Arch_decodeInvocation(word_t label, word_t length, cptr_t cptr,
 
 void
 Arch_prepareThreadDelete(tcb_t * thread) {
-    /* No action required on ARM. */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    if (thread->tcbArch.tcbVCPU) {
+        dissociateVCPUTCB(thread->tcbArch.tcbVCPU, thread);
+    }
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
