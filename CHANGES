@@ -11,6 +11,12 @@ changes are added the compatibility information should be updated.
 Upcoming release: BINARY COMPATIBLE
 
 ## Changes
+ * On 64-bit architectures, the `label` field of `seL4_MessageInfo` is now 52 bits wide. User-level programs
+   which use any of the following functions may break, if the program relies on these functions to mask the
+   `label` field to the previous width of 20 bits.
+     - `seL4_MessageInfo_new`
+     - `seL4_MessageInfo_get_label`
+     - `seL4_MessageInfo_set_label`
 
 
 ## Upgrade Notes
