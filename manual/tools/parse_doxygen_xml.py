@@ -278,14 +278,12 @@ class Generator(object):
         """
         return s if s else "\\todo"
 
-def generate_general_syscall_doc(input_file_name, level):
+def generate_general_syscall_doc(generator, input_file_name, level):
     """
     Takes a path to a file containing doxygen-generated xml,
     and return a string containing latex suitable for inclusion
     in the sel4 manual.
     """
-
-    generator = Generator()
 
     with open(input_file_name, "r") as f:
         output = ""
@@ -329,7 +327,9 @@ def main():
     if not os.path.exists(os.path.dirname(args.output)):
         os.makedirs(os.path.dirname(args.output))
 
-    output_str = generate_general_syscall_doc(args.input, args.level)
+    generator = Generator()
+
+    output_str = generate_general_syscall_doc(generator, args.input, args.level)
 
     with open(args.output, "w") as output_file:
         output_file.write(output_str)
