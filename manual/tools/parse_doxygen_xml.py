@@ -24,10 +24,9 @@ import six
 
 class Generator(object):
     # Dict mapping characters to their escape sequence in latex
-    LATEX_ESCAPE_PATTERNS = {
+    ESCAPE_PATTERNS = {
         "_": "\\_",
     }
-    LATEX_ESCAPE_REGEX = re.compile('|'.join(LATEX_ESCAPE_PATTERNS.keys()))
 
     def default_return_doc(self, ret_type):
         """
@@ -44,8 +43,8 @@ class Generator(object):
         """
         Return a string with latex special characters escaped
         """
-
-        return self.LATEX_ESCAPE_REGEX.sub(lambda p: self.LATEX_ESCAPE_PATTERNS[p.group()], string)
+        escape_regex = re.compile('|'.join(self.ESCAPE_PATTERNS.keys()))
+        return escape_regex.sub(lambda p: self.ESCAPE_PATTERNS[p.group()], string)
 
     def get_text(self, soup, escape=True):
         """
