@@ -248,6 +248,29 @@ class Generator(object):
 
         return ret
 
+    def generate_api_doc(self, level, member, params, ret, details):
+        manual_node = member.manual
+        return """
+\\apidoc
+[{%(level)s}]
+{%(label)s}
+{%(name)s}
+{%(brief)s}
+{%(prototype)s}
+{%(params)s}
+{%(ret)s}
+{%(details)s}
+        """ % {
+            "level": level,
+            "label": manual_node["label"],
+            "name": self.latex_escape(manual_node["name"]),
+            "brief": self.todo_if_empty(self.parse_brief(member)),
+            "prototype": self.parse_prototype(member),
+            "params": params,
+            "ret": ret,
+            "details": details,
+        }
+
     def todo_if_empty(self, s):
         """
         Returns its argument if its argument is non-none and non-empty,
@@ -282,27 +305,7 @@ def generate_general_syscall_doc(input_file_name, level):
         for member in elements:
             manual_node = member.manual
             details, params, ret = generator.parse_detailed_desc(member, ref_dict)
-            output += """
-\\apidoc
-[{%(level)s}]
-{%(label)s}
-{%(name)s}
-{%(brief)s}
-{%(prototype)s}
-{%(params)s}
-{%(ret)s}
-{%(details)s}
-            """ % {
-                "level": level,
-                "label": manual_node["label"],
-                "name": generator.latex_escape(manual_node["name"]),
-                "brief": generator.todo_if_empty(generator.parse_brief(member)),
-                "prototype": generator.parse_prototype(member),
-                "params": params,
-                "ret": ret,
-                "details": details,
-            }
-
+            output += generator.generate_api_doc(level, member, params, ret, details)
         return output
 
 def process_args():
