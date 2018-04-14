@@ -24,25 +24,23 @@ import six
 
 class Generator(object):
     # Dict mapping characters to their escape sequence in latex
-    ESCAPE_PATTERNS = {
-        "_": "\\_",
-    }
+    ESCAPE_PATTERNS = {}
 
     def get_parse_table(self):
         # table of translations of xml children of 'para' elements
         parse_table = {
             'para'          : self.parse_recurse,
-            'computeroutput': lambda p, r: '\\texttt{%s}' % self.get_text(p),
-            'texttt'        : lambda p, r: '\\texttt{%s}' % self.get_text(p['text']),
+            'computeroutput': lambda p, r: '%s' % self.get_text(p),
+            'texttt'        : lambda p, r: '%s' % self.get_text(p['text']),
             'ref'           : self.ref_to_format,
             'nameref'       : self.nref_to_format,
-            'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
-            'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
-            'errorenumdesc' : lambda p, r: "\\errorenumdesc",
+            'shortref'      : lambda p, r: "%s" % p['sec'],
+            'obj'           : lambda p, r: "%s" % p['name'],
+            'errorenumdesc' : lambda p, r: "",
             'orderedlist'   : self.parse_ordered_list,
-            'listitem'      : lambda p, r: "\\item " + self.parse_para(p.para, r) + "\n",
+            'listitem'      : lambda p, r: self.parse_para(p.para, r),
             'itemizedlist'  : self.parse_itemized_list,
-            'autoref'       : lambda p, r: "\\autoref{%s}" % p['label'],
+            'autoref'       : lambda p, r: "%s" % p['label'],
         }
         return parse_table
 
@@ -51,9 +49,6 @@ class Generator(object):
         Returns the latex doc for the return value of a function
         implied by its return type
         """
-
-        if ret_type == "void":
-            return "\\noret"
 
         return ""
 
@@ -88,8 +83,7 @@ class Generator(object):
 
     def ref_format(self, refid, ref_dict):
         """Lookup refid in ref_dict and output the latex for an apifunc ref"""
-        ref = ref_dict[refid]
-        return "\\apifunc{%(name)s}{%(label)s}" % ref
+        return ""
 
     def ref_to_format(self, para, ref_dict):
         """Convert a reference by id to a latex command by looking up refid in para"""
@@ -104,12 +98,7 @@ class Generator(object):
         return ""
 
     def parse_list(self, para, ref_dict, tag):
-        """Parse an ordered list element"""
-        output = '\\begin{%s}\n' % tag
-        for item in para.contents:
-            output += self.parse_para(item, ref_dict)
-        output += '\\end{%s}\n' % tag
-        return output
+        return ""
 
     def parse_ordered_list(self, para, ref_dict):
         """orderedlist --> enumerate"""
@@ -248,34 +237,14 @@ class Generator(object):
         return ret
 
     def generate_api_doc(self, level, member, params, ret, details):
-        manual_node = member.manual
-        return """
-\\apidoc
-[{%(level)s}]
-{%(label)s}
-{%(name)s}
-{%(brief)s}
-{%(prototype)s}
-{%(params)s}
-{%(ret)s}
-{%(details)s}
-        """ % {
-            "level": level,
-            "label": manual_node["label"],
-            "name": self.text_escape(manual_node["name"]),
-            "brief": self.todo_if_empty(self.parse_brief(member)),
-            "prototype": self.parse_prototype(member),
-            "params": params,
-            "ret": ret,
-            "details": details,
-        }
+        return ""
 
     def todo_if_empty(self, s):
         """
         Returns its argument if its argument is non-none and non-empty,
-        otherwise returns "\\todo"
+        otherwise returns "TODO"
         """
-        return s if s else "\\todo"
+        return s if s else "TODO"
 
 class LatexGenerator(Generator):
     """
