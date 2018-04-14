@@ -34,8 +34,8 @@ class Generator(object):
             'para'          : self.parse_recurse,
             'computeroutput': lambda p, r: '\\texttt{%s}' % self.get_text(p),
             'texttt'        : lambda p, r: '\\texttt{%s}' % self.get_text(p['text']),
-            'ref'           : self.ref_to_tex,
-            'nameref'       : self.nref_to_tex,
+            'ref'           : self.ref_to_format,
+            'nameref'       : self.nref_to_format,
             'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
             'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
             'errorenumdesc' : lambda p, r: "\\errorenumdesc",
@@ -57,7 +57,7 @@ class Generator(object):
 
         return ""
 
-    def latex_escape(self, string):
+    def text_escape(self, string):
         """
         Return a string with latex special characters escaped
         """
@@ -82,25 +82,25 @@ class Generator(object):
 
         if string is not None:
             if escape:
-                return self.latex_escape(string)
+                return self.text_escape(string)
             else:
                 return string
 
-    def ref_tex(self, refid, ref_dict):
+    def ref_format(self, refid, ref_dict):
         """Lookup refid in ref_dict and output the latex for an apifunc ref"""
         ref = ref_dict[refid]
         return "\\apifunc{%(name)s}{%(label)s}" % ref
 
-    def ref_to_tex(self, para, ref_dict):
+    def ref_to_format(self, para, ref_dict):
         """Convert a reference by id to a latex command by looking up refid in para"""
         if len(ref_dict) > 0:
-            return self.ref_tex(para["refid"], ref_dict)
+            return self.ref_format(para["refid"], ref_dict)
         return ""
 
-    def nref_to_tex(self, para, ref_dict):
+    def nref_to_format(self, para, ref_dict):
         """Convert a reference by name to a latex command by looking up refid in para"""
         if len(ref_dict) > 0:
-            return self.ref_tex(para["name"], ref_dict)
+            return self.ref_format(para["name"], ref_dict)
         return ""
 
     def parse_list(self, para, ref_dict, tag):
@@ -237,7 +237,7 @@ class Generator(object):
             label = member.manual['label']
             ref_id = member['id']
             data = {
-                "name": self.latex_escape(name),
+                "name": self.text_escape(name),
                 "label": label,
                 "ref": ref_id,
             }
@@ -262,7 +262,7 @@ class Generator(object):
         """ % {
             "level": level,
             "label": manual_node["label"],
-            "name": self.latex_escape(manual_node["name"]),
+            "name": self.text_escape(manual_node["name"]),
             "brief": self.todo_if_empty(self.parse_brief(member)),
             "prototype": self.parse_prototype(member),
             "params": params,
