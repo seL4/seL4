@@ -169,17 +169,12 @@ class Generator(object):
             params[param_name]["desc"] = param_desc
 
         if len(params) == 0:
-            params_str = "\\param{void}{}{}"
+            params_str = self.generate_empty_param_string()
         else:
             params_str = ""
             for param_name in param_order:
                 param_info = params[param_name]
-                params_str += "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
-                    "type": self.get_text(param_info["type"]),
-                    "name": self.get_text(param_name),
-                    "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
-                }
-
+                params_str += self.generate_param_string(param_info, param_name)
 
         details = ""
         for n in parent.detaileddescription.find_all('para', recursive=False):
@@ -235,6 +230,12 @@ class Generator(object):
             ret[name] = data
 
         return ret
+
+    def generate_param_string(self, param_info, param_name):
+        return ""
+
+    def generate_empty_param_string(self):
+        return ""
 
     def generate_api_doc(self, level, member, params, ret, details):
         return ""
@@ -301,6 +302,9 @@ class LatexGenerator(Generator):
                     "name": self.get_text(param_name),
                     "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
         }
+
+    def generate_empty_param_string(self):
+        return "\\param{void}{}{}"
 
     def generate_api_doc(self, level, member, params, ret, details):
         manual_node = member.manual
