@@ -277,6 +277,85 @@ class Generator(object):
         """
         return s if s else "\\todo"
 
+class LatexGenerator(Generator):
+    """
+    A class that represents the generator for Doxygen to Latex. A child of the Generator class.
+    """
+
+    # Dict mapping characters to their escape sequence in latex
+    ESCAPE_PATTERNS = {
+        "_": "\\_",
+    }
+
+    def get_parse_table(self):
+        parse_table = super(LatexGenerator, self).get_parse_table()
+        parse_table['computeroutput'] = lambda p, r: '\\texttt{%s}' % self.get_text(p)
+        parse_table['texttt'] = lambda p, r: '\\texttt{%s}' % self.get_text(p['text'])
+        parse_table['shortref'] =  lambda p, r: "\\ref{sec:%s}" % p['sec']
+        parse_table['obj'] = lambda p, r: "\\obj{%s}" % p['name']
+        parse_table['errorenumdesc'] = lambda p, r: "\\errorenumdesc"
+        parse_table['listitem'] = lambda p, r: "\\item " + self.parse_para(p.para, r) + "\n"
+        parse_table['autoref'] = lambda p, r: "\\autoref{%s}" % p['label']
+        return parse_table
+
+    def default_return_doc(self, ret_type):
+        """
+        Returns the latex doc for the return value of a function
+        implied by its return type
+        """
+
+        if ret_type == "void":
+            return "\\noret"
+        return ""
+
+    def ref_format(self, refid, ref_dict):
+        """Lookup refid in ref_dict and output the latex for an apifunc ref"""
+
+        ref = ref_dict[refid]
+        return "\\apifunc{%(name)s}{%(label)s}" % ref
+
+    def parse_list(self, para, ref_dict, tag):
+        """Parse an ordered list element"""
+
+        output = '\\begin{%s}\n' % tag
+        for item in para.contents:
+            output += self.parse_para(item, ref_dict)
+        output += '\\end{%s}\n' % tag
+        return output
+
+    def todo_if_empty(self, s):
+        return s if s else "\\todo"
+
+    def generate_param_string(self, param_info, param_name):
+        return "\\param{%(type)s}{%(name)s}{%(desc)s}\n" % {
+                    "type": self.get_text(param_info["type"]),
+                    "name": self.get_text(param_name),
+                    "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
+        }
+
+    def generate_api_doc(self, level, member, params, ret, details):
+        manual_node = member.manual
+        return """
+\\apidoc
+[{%(level)s}]
+{%(label)s}
+{%(name)s}
+{%(brief)s}
+{%(prototype)s}
+{%(params)s}
+{%(ret)s}
+{%(details)s}
+        """ % {
+            "level": level,
+            "label": manual_node["label"],
+            "name": self.text_escape(manual_node["name"]),
+            "brief": self.todo_if_empty(self.parse_brief(member)),
+            "prototype": self.parse_prototype(member),
+            "params": params,
+            "ret": ret,
+            "details": details,
+        }
+
 def generate_general_syscall_doc(generator, input_file_name, level):
     """
     Takes a path to a file containing doxygen-generated xml,
@@ -326,7 +405,7 @@ def main():
     if not os.path.exists(os.path.dirname(args.output)):
         os.makedirs(os.path.dirname(args.output))
 
-    generator = Generator()
+    generator = LatexGenerator()
 
     output_str = generate_general_syscall_doc(generator, args.input, args.level)
 
