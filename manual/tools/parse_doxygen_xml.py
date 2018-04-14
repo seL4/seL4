@@ -109,21 +109,23 @@ def parse_recurse(para, ref_dict):
         output += parse_para(item, ref_dict)
     return output
 
-# table of translations of xml children of 'para' elements
-PARSE_TABLE = {
-    'para'          : parse_recurse,
-    'computeroutput': lambda p, r: '\\texttt{%s}' % get_text(p),
-    'texttt'        : lambda p, r: '\\texttt{%s}' % get_text(p['text']),
-    'ref'           : ref_to_tex,
-    'nameref'       : nref_to_tex,
-    'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
-    'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
-    'errorenumdesc' : lambda p, r: "\\errorenumdesc",
-    'orderedlist'   : parse_ordered_list,
-    'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r) + "\n",
-    'itemizedlist'  : parse_itemized_list,
-    'autoref'       : lambda p, r: "\\autoref{%s}" % p['label'],
-}
+def get_parse_table():
+    # table of translations of xml children of 'para' elements
+    parse_table = {
+        'para'          : parse_recurse,
+        'computeroutput': lambda p, r: '\\texttt{%s}' % get_text(p),
+        'texttt'        : lambda p, r: '\\texttt{%s}' % get_text(p['text']),
+        'ref'           : ref_to_tex,
+        'nameref'       : nref_to_tex,
+        'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
+        'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
+        'errorenumdesc' : lambda p, r: "\\errorenumdesc",
+        'orderedlist'   : parse_ordered_list,
+        'listitem'      : lambda p, r: "\\item " + parse_para(p.para, r) + "\n",
+        'itemizedlist'  : parse_itemized_list,
+        'autoref'       : lambda p, r: "\\autoref{%s}" % p['label'],
+    }
+    return parse_table
 
 def parse_para(para_node, ref_dict={}):
     """
@@ -131,10 +133,11 @@ def parse_para(para_node, ref_dict={}):
     that may appear inside a paragraph. Unhandled cases are
     not parsed and result in an empty string.
     """
+    parse_table = get_parse_table()
     if para_node.name is None:
         return get_text(para_node, escape=True)
-    elif para_node.name in PARSE_TABLE:
-        return PARSE_TABLE[para_node.name](para_node, ref_dict)
+    elif para_node.name in parse_table:
+        return parse_table[para_node.name](para_node, ref_dict)
     else:
         return ""
 
