@@ -54,6 +54,7 @@ HDRFILES := \
 	$(wildcard $(SOURCE_DIR)/mode_include/$(TYPE_SUFFIX)/*) \
 	$(BUILD_DIR)/include/sel4 \
 	$(BUILD_DIR)/include/interfaces \
+	$(BUILD_DIR)/arch_include/${ARCH}/* \
     $(BUILD_DIR)/sel4_arch_include/$(SEL4_ARCH)/*
 #TODO proper prefix instruction
 
@@ -81,14 +82,14 @@ include/sel4/invocation.h: ${SOURCE_DIR}/include/interfaces/sel4.xml
 sel4_arch_include/${SEL4_ARCH}/sel4/sel4_arch/invocation.h: ${SOURCE_DIR}/sel4_arch_include/${SEL4_ARCH}/interfaces/sel4arch.xml
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
-	@${CHANGED_PATH} ${SOURCE_DIR}/$@ ${PYTHON} ${INVOCATION_ID_GEN_PATH} \
-		--xml $< --libsel4 --sel4_arch --dest ${SOURCE_DIR}/$@
+	@${CHANGED_PATH} $@ ${PYTHON} ${INVOCATION_ID_GEN_PATH} \
+		--xml $< --libsel4 --sel4_arch --dest $@
 
 arch_include/${ARCH}/sel4/arch/invocation.h: ${SOURCE_DIR}/arch_include/${ARCH}/interfaces/sel4arch.xml
 	@echo " [GEN] $@"
 	@mkdir -p $(dir $@)
-	@${CHANGED_PATH} ${SOURCE_DIR}/$@ ${PYTHON} ${INVOCATION_ID_GEN_PATH} \
-		--xml $< --libsel4 --arch --dest ${SOURCE_DIR}/$@
+	@${CHANGED_PATH} $@ ${PYTHON} ${INVOCATION_ID_GEN_PATH} \
+		--xml $< --libsel4 --arch --dest $@
 
 # Header generator
 include/sel4/syscall.h: ${SOURCE_DIR}/include/api/syscall.xsd \
