@@ -191,15 +191,15 @@ class Generator(object):
                 break
         return (self.todo_if_empty(details.strip()), params_str, self.todo_if_empty(ret.strip()))
 
-    def parse_prototype(self, parent):
+    def parse_prototype(self, parent, escape=True):
         """
         Extract a function prototype from a doxygen member.
         """
 
         inline = parent["inline"] == "yes"
         static = parent["static"] == "yes"
-        ret_type = self.get_text(parent.find("type"))
-        name = self.get_text(parent.find("name"))
+        ret_type = self.get_text(parent.find("type"), escape)
+        name = self.get_text(parent.find("name"), escape)
 
         output = "%s %s" % (ret_type, name)
         if inline:
