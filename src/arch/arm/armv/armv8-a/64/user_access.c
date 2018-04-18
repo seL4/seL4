@@ -30,10 +30,10 @@ static void check_export_arch_timer(void)
     uint32_t val;
     MRS("CNTKCTL_EL1", val);
 #ifdef CONFIG_EXPORT_PCNT_USER
-    v |= EL0PCTEN;
+    val |= EL0PCTEN;
 #endif
 #ifdef CONFIG_EXPORT_VCNT_USER
-    v |= EL0VCTEN;
+    val |= EL0VCTEN;
 #endif
     MSR("CNTKCTL_EL1", val);
 }
