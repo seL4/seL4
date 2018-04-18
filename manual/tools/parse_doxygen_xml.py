@@ -222,6 +222,7 @@ class Generator(object):
             ref_id = member['id']
             data = {
                 "name": self.text_escape(name),
+                "original_name" : name,
                 "label": label,
                 "ref": ref_id,
             }
