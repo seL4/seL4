@@ -7,7 +7,7 @@
 -- the BSD 2-Clause license. Note that NO WARRANTY is provided.
 -- See "LICENSE_BSD2.txt" for details.
 --
--- @TAG(D61BSD)
+-- @TAG(DATA61_BSD)
 --
 -- this file contains sel4arch specific types shared between libsel4 and the kernel
 

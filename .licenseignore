@@ -11,3 +11,7 @@ manual/figs/*
 *parsetab.py
 manual/*
 CHANGES
+src/plat/spike/machine/fdt.c
+include/plat/spike/plat/machine/fdt.h
+include/arch/riscv/arch/sbi.h
+include/arch/riscv/arch/encoding.h
