@@ -513,6 +513,9 @@ def process_args():
     """Process script arguments"""
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("-f", "--format", choices=["latex", "markdown"],
+                        default="latex", help="Format of doxygen output")
+
     parser.add_argument("-i", "--input", dest="input", type=str,
                         help="File containing doxygen-generated xml.")
     parser.add_argument("-o", "--output", dest="output", type=str,
@@ -530,7 +533,10 @@ def main():
     if not os.path.exists(os.path.dirname(args.output)):
         os.makedirs(os.path.dirname(args.output))
 
-    generator = LatexGenerator()
+    if args.format == "latex":
+        generator = LatexGenerator()
+    elif args.format == "markdown":
+        generator = MarkdownGenerator()
 
     output_str = generate_general_syscall_doc(generator, args.input, args.level)
 
