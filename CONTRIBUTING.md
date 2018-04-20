@@ -54,4 +54,4 @@ unverified platform, etc, or they should come with proof updates to `l4v`.
 If you have larger changes or additions, it might be a good idea to get in
 contact with us as <devel@sel4.systems>, so we can help you get started.
 
-[1] https://seL4.systems/Community/Contributing
+[1] https://docs.sel4.systems/Contributing
