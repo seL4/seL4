@@ -32,8 +32,11 @@ comment.
 
 ## Kernel Development Process
 
-Please read [1].
+In addition to our guidelines[1], the kernel has additional history requirements:
 
+* Please try to make sure every commit is in a working state to facilitate bisecting.
+    + unless there is a concrete reason, if so please state that reason in the commit message.
+* Try to keep commits small for ease of reviewing.
 
 ## Build/Test
 
