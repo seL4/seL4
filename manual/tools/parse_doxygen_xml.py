@@ -28,6 +28,24 @@ class Generator(object):
         "_": "\\_",
     }
 
+    def get_parse_table(self):
+        # table of translations of xml children of 'para' elements
+        parse_table = {
+            'para'          : self.parse_recurse,
+            'computeroutput': lambda p, r: '\\texttt{%s}' % self.get_text(p),
+            'texttt'        : lambda p, r: '\\texttt{%s}' % self.get_text(p['text']),
+            'ref'           : self.ref_to_tex,
+            'nameref'       : self.nref_to_tex,
+            'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
+            'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
+            'errorenumdesc' : lambda p, r: "\\errorenumdesc",
+            'orderedlist'   : self.parse_ordered_list,
+            'listitem'      : lambda p, r: "\\item " + self.parse_para(p.para, r) + "\n",
+            'itemizedlist'  : self.parse_itemized_list,
+            'autoref'       : lambda p, r: "\\autoref{%s}" % p['label'],
+        }
+        return parse_table
+
     def default_return_doc(self, ret_type):
         """
         Returns the latex doc for the return value of a function
@@ -108,24 +126,6 @@ class Generator(object):
         for item in para.contents:
             output += self.parse_para(item, ref_dict)
         return output
-
-    def get_parse_table(self):
-        # table of translations of xml children of 'para' elements
-        parse_table = {
-            'para'          : self.parse_recurse,
-            'computeroutput': lambda p, r: '\\texttt{%s}' % self.get_text(p),
-            'texttt'        : lambda p, r: '\\texttt{%s}' % self.get_text(p['text']),
-            'ref'           : self.ref_to_tex,
-            'nameref'       : self.nref_to_tex,
-            'shortref'      : lambda p, r: "\\ref{sec:%s}" % p['sec'],
-            'obj'           : lambda p, r: "\\obj{%s}" % p['name'],
-            'errorenumdesc' : lambda p, r: "\\errorenumdesc",
-            'orderedlist'   : self.parse_ordered_list,
-            'listitem'      : lambda p, r: "\\item " + self.parse_para(p.para, r) + "\n",
-            'itemizedlist'  : self.parse_itemized_list,
-            'autoref'       : lambda p, r: "\\autoref{%s}" % p['label'],
-        }
-        return parse_table
 
     def parse_para(self, para_node, ref_dict={}):
         """
