@@ -142,7 +142,7 @@ finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         if (final) {
             fc_ret.remainder =
                 Zombie_new(
-                    1 << cap_cnode_cap_get_capCNodeRadix(cap),
+                    1ul << cap_cnode_cap_get_capCNodeRadix(cap),
                     cap_cnode_cap_get_capCNodeRadix(cap),
                     cap_cnode_cap_get_capCNodePtr(cap)
                 );
