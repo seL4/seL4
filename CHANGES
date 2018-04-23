@@ -8,10 +8,18 @@ The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BI
 changes are added the compatibility information should be updated.
 
 ---
-Upcoming release: BINARY COMPATIBLE
+Upcoming release: BREAKING
 
 ## Changes
 
+ * GrantReply right was added to the right system (`seL4_CapRights`)
+    - `seL4_CapRights_new` now takes 4 parameters
+    - The endpoint capabilities now have 4 rights with the GrantReply reply right. Calling can be done with either
+      Grant or GrantReply, However with only GrantReply and not Grant, capabilities other than the Reply
+      capability will not be transferred.
+    - Reply capabilities now have a Grant right. This right is set depending according to the Grant right of the
+      endpoint capability on which `seL4_Recv` is performed when a call is received. In the case where the caller
+      has Grant to the receiver but the latter doesn't have it towards the former, this is an ABI breaking change.
 
 ## Upgrade Notes
 ---

@@ -29,10 +29,10 @@ block untyped_cap {
     field capType     4
 }
 
-block endpoint_cap(capEPBadge, capCanGrant, capCanSend, capCanReceive,
-                   capEPPtr, capType) {
+block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
+                   capCanReceive, capEPPtr, capType) {
     field_high capEPPtr 28
-    padding 1
+    field capCanGrantReply 1
     field capCanGrant 1
     field capCanReceive 1
     field capCanSend 1
@@ -51,10 +51,11 @@ block notification_cap {
     field capType 4
 }
 
-block reply_cap(capReplyMaster, capTCBPtr, capType) {
+block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     padding 32
 
-    field_high capTCBPtr 27
+    field_high capTCBPtr 26
+    field capReplyCanGrant 1
     field capReplyMaster 1
     field capType 4
 }
@@ -157,9 +158,11 @@ block mdb_node {
 -- * Inactive
 -- * BlockedOnReceive
 --   - Endpoint
+--   - CanGrant
 -- * BlockedOnSend
 --   - Endpoint
 --   - CanGrant
+--   - CanGrantReply
 --   - IsCall
 --   - IPCBadge
 --   - Fault
@@ -270,13 +273,15 @@ block DebugException {
 #endif
 
 -- Thread state: size = 12 bytes
-block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
+block thread_state(blockingIPCBadge, blockingIPCCanGrant,
+                   blockingIPCCanGrantReply, blockingIPCIsCall,
                    tcbQueued, blockingObject,
                    tsType) {
     field blockingIPCBadge 28
     field blockingIPCCanGrant 1
+    field blockingIPCCanGrantReply 1
     field blockingIPCIsCall 1
-    padding 2
+    padding 1
 
     -- this is fastpath-specific. it is useful to be able to write
     -- tsType and without changing tcbQueued

@@ -352,7 +352,8 @@ handleReply(void)
         /* Haskell error:
          * "handleReply: caller must not be the current thread" */
         assert(caller != NODE_STATE(ksCurThread));
-        doReplyTransfer(NODE_STATE(ksCurThread), caller, callerSlot);
+        doReplyTransfer(NODE_STATE(ksCurThread), caller, callerSlot,
+                        cap_reply_cap_get_capReplyCanGrant(callerCap));
         return;
     }
 

@@ -47,14 +47,15 @@ sendFaultIPC(tcb_t *tptr)
 
     if (cap_get_capType(handlerCap) == cap_endpoint_cap &&
             cap_endpoint_cap_get_capCanSend(handlerCap) &&
-            cap_endpoint_cap_get_capCanGrant(handlerCap)) {
+            (cap_endpoint_cap_get_capCanGrant(handlerCap) ||
+             cap_endpoint_cap_get_capCanGrantReply(handlerCap))) {
         tptr->tcbFault = current_fault;
         if (seL4_Fault_get_seL4_FaultType(current_fault) == seL4_Fault_CapFault) {
             tptr->tcbLookupFailure = original_lookup_fault;
         }
-        sendIPC(true, false,
+        sendIPC(true, true,
                 cap_endpoint_cap_get_capEPBadge(handlerCap),
-                true, tptr,
+                cap_endpoint_cap_get_capCanGrant(handlerCap), true, tptr,
                 EP_PTR(cap_endpoint_cap_get_capEPPtr(handlerCap)));
 
         return EXCEPTION_NONE;

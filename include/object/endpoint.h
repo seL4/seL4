@@ -15,7 +15,8 @@
 #include <object/structures.h>
 
 void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
-             bool_t canGrant, tcb_t *thread, endpoint_t *epptr);
+             bool_t canGrant, bool_t canGrantReply, tcb_t *thread,
+             endpoint_t *epptr);
 void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking);
 void cancelIPC(tcb_t *tptr);
 void cancelAllIPC(endpoint_t *epptr);

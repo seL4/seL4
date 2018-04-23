@@ -780,7 +780,7 @@ setupReplyMaster(tcb_t *thread)
     if (cap_get_capType(slot->cap) == cap_null_cap) {
         /* Haskell asserts that no reply caps exist for this thread here. This
          * cannot be translated. */
-        slot->cap = cap_reply_cap_new(true, TCB_REF(thread));
+        slot->cap = cap_reply_cap_new(true, true, TCB_REF(thread));
         slot->cteMDBNode = nullMDBNode;
         mdb_node_ptr_set_mdbRevocable(&slot->cteMDBNode, true);
         mdb_node_ptr_set_mdbFirstBadged(&slot->cteMDBNode, true);

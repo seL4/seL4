@@ -208,6 +208,7 @@ hasCancelSendRights(cap_t cap)
     case cap_endpoint_cap:
         return cap_endpoint_cap_get_capCanSend(cap) &&
                cap_endpoint_cap_get_capCanReceive(cap) &&
+               cap_endpoint_cap_get_capCanGrantReply(cap) &&
                cap_endpoint_cap_get_capCanGrant(cap);
 
     default:
@@ -376,7 +377,6 @@ maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
     case cap_domain_cap:
     case cap_cnode_cap:
     case cap_untyped_cap:
-    case cap_reply_cap:
     case cap_irq_control_cap:
     case cap_irq_handler_cap:
     case cap_zombie_cap:
@@ -395,6 +395,9 @@ maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
         new_cap = cap_endpoint_cap_set_capCanGrant(
                       new_cap, cap_endpoint_cap_get_capCanGrant(cap) &
                       seL4_CapRights_get_capAllowGrant(cap_rights));
+        new_cap = cap_endpoint_cap_set_capCanGrantReply(
+                      new_cap, cap_endpoint_cap_get_capCanGrantReply(cap) &
+                      seL4_CapRights_get_capAllowGrantReply(cap_rights));
 
         return new_cap;
     }
@@ -411,6 +414,15 @@ maskCapRights(seL4_CapRights_t cap_rights, cap_t cap)
 
         return new_cap;
     }
+    case cap_reply_cap: {
+        cap_t new_cap;
+
+        new_cap = cap_reply_cap_set_capReplyCanGrant(
+                      cap, cap_reply_cap_get_capReplyCanGrant(cap) &
+                      seL4_CapRights_get_capAllowGrant(cap_rights));
+        return new_cap;
+    }
+
 
     default:
         fail("Invalid cap type"); /* Sentinel for invalid enums */
@@ -456,7 +468,7 @@ createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
     case seL4_EndpointObject:
         /** AUXUPD: "(True, ptr_retyp
           (Ptr (ptr_val \<acute>regionBase) :: endpoint_C ptr))" */
-        return cap_endpoint_cap_new(0, true, true, true,
+        return cap_endpoint_cap_new(0, true, true, true, true,
                                     EP_REF(regionBase));
 
     case seL4_NotificationObject:
@@ -551,7 +563,8 @@ decodeInvocation(word_t invLabel, word_t length,
         return performInvocation_Endpoint(
                    EP_PTR(cap_endpoint_cap_get_capEPPtr(cap)),
                    cap_endpoint_cap_get_capEPBadge(cap),
-                   cap_endpoint_cap_get_capCanGrant(cap), block, call);
+                   cap_endpoint_cap_get_capCanGrant(cap),
+                   cap_endpoint_cap_get_capCanGrantReply(cap), block, call);
 
     case cap_notification_cap: {
         if (unlikely(!cap_notification_cap_get_capNtfnCanSend(cap))) {
@@ -579,7 +592,8 @@ decodeInvocation(word_t invLabel, word_t length,
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performInvocation_Reply(
-                   TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot);
+                   TCB_PTR(cap_reply_cap_get_capTCBPtr(cap)), slot,
+                   cap_reply_cap_get_capReplyCanGrant(cap));
 
     case cap_thread_cap:
         return decodeTCBInvocation(invLabel, length, cap,
@@ -610,10 +624,10 @@ decodeInvocation(word_t invLabel, word_t length,
 
 exception_t
 performInvocation_Endpoint(endpoint_t *ep, word_t badge,
-                           bool_t canGrant, bool_t block,
-                           bool_t call)
+                           bool_t canGrant, bool_t canGrantReply,
+                           bool_t block, bool_t call)
 {
-    sendIPC(block, call, badge, canGrant, NODE_STATE(ksCurThread), ep);
+    sendIPC(block, call, badge, canGrant, canGrantReply, NODE_STATE(ksCurThread), ep);
 
     return EXCEPTION_NONE;
 }
@@ -627,8 +641,8 @@ performInvocation_Notification(notification_t *ntfn, word_t badge)
 }
 
 exception_t
-performInvocation_Reply(tcb_t *thread, cte_t *slot)
+performInvocation_Reply(tcb_t *thread, cte_t *slot, bool_t canGrant)
 {
-    doReplyTransfer(NODE_STATE(ksCurThread), thread, slot);
+    doReplyTransfer(NODE_STATE(ksCurThread), thread, slot, canGrant);
     return EXCEPTION_NONE;
 }

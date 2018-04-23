@@ -24,7 +24,8 @@ block seL4_MessageInfo {
 block seL4_CapRights {
     padding 32
 
-    padding 29
+    padding 28
+    field capAllowGrantReply 1
     field capAllowGrant 1
     field capAllowRead 1
     field capAllowWrite 1

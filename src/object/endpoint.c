@@ -38,7 +38,7 @@ ep_ptr_set_queue(endpoint_t *epptr, tcb_queue_t queue)
 
 void
 sendIPC(bool_t blocking, bool_t do_call, word_t badge,
-        bool_t canGrant, tcb_t *thread, endpoint_t *epptr)
+        bool_t canGrant, bool_t canGrantReply, tcb_t *thread, endpoint_t *epptr)
 {
     switch (endpoint_ptr_get_state(epptr)) {
     case EPState_Idle:
@@ -55,6 +55,8 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
                 &thread->tcbState, badge);
             thread_state_ptr_set_blockingIPCCanGrant(
                 &thread->tcbState, canGrant);
+            thread_state_ptr_set_blockingIPCCanGrantReply(
+                &thread->tcbState, canGrantReply);
             thread_state_ptr_set_blockingIPCIsCall(
                 &thread->tcbState, do_call);
 
@@ -71,6 +73,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
     case EPState_Recv: {
         tcb_queue_t queue;
         tcb_t *dest;
+        bool_t replyCanGrant;
 
         /* Get the head of the endpoint queue. */
         queue = ep_ptr_get_queue(epptr);
@@ -90,13 +93,14 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
         /* Do the transfer */
         doIPCTransfer(thread, epptr, badge, canGrant, dest);
 
+        replyCanGrant = thread_state_ptr_get_blockingIPCCanGrant(&dest->tcbState);;
+
         setThreadState(dest, ThreadState_Running);
         possibleSwitchTo(dest);
 
-        if (do_call ||
-                seL4_Fault_ptr_get_seL4_FaultType(&thread->tcbFault) != seL4_Fault_NullFault) {
-            if (canGrant) {
-                setupCallerCap(thread, dest);
+        if (do_call) {
+            if (canGrant || canGrantReply) {
+                setupCallerCap(thread, dest, replyCanGrant);
             } else {
                 setThreadState(thread, ThreadState_Inactive);
             }
@@ -134,6 +138,8 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
                                             ThreadState_BlockedOnReceive);
                 thread_state_ptr_set_blockingObject(
                     &thread->tcbState, EP_REF(epptr));
+                thread_state_ptr_set_blockingIPCCanGrant(
+                    &thread->tcbState, cap_endpoint_cap_get_capCanGrant(cap));
 
                 scheduleTCB(thread);
 
@@ -153,6 +159,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             tcb_t *sender;
             word_t badge;
             bool_t canGrant;
+            bool_t canGrantReply;
             bool_t do_call;
 
             /* Get the head of the endpoint queue. */
@@ -174,6 +181,8 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
             badge = thread_state_ptr_get_blockingIPCBadge(&sender->tcbState);
             canGrant =
                 thread_state_ptr_get_blockingIPCCanGrant(&sender->tcbState);
+            canGrantReply =
+                thread_state_ptr_get_blockingIPCCanGrantReply(&sender->tcbState);
 
             /* Do the transfer */
             doIPCTransfer(sender, epptr, badge,
@@ -181,10 +190,9 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 
             do_call = thread_state_ptr_get_blockingIPCIsCall(&sender->tcbState);
 
-            if (do_call ||
-                    seL4_Fault_get_seL4_FaultType(sender->tcbFault) != seL4_Fault_NullFault) {
-                if (canGrant) {
-                    setupCallerCap(sender, thread);
+            if (do_call) {
+                if (canGrant || canGrantReply) {
+                    setupCallerCap(sender, thread, cap_endpoint_cap_get_capCanGrant(cap));
                 } else {
                     setThreadState(sender, ThreadState_Inactive);
                 }

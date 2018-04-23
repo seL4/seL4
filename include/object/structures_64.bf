@@ -28,15 +28,16 @@ block untyped_cap {
     field_high capPtr 48
 }
 
-block endpoint_cap(capEPBadge, capType, capCanGrant, capCanSend, capCanReceive,
-                   capEPPtr) {
+block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
+                   capCanReceive, capEPPtr, capType) {
     field capEPBadge 64
 
     field capType 5
+    field capCanGrantReply 1
     field capCanGrant 1
     field capCanReceive 1
     field capCanSend 1
-    padding 8
+    padding 7
     field_high capEPPtr 48
 
 }
@@ -51,17 +52,18 @@ block notification_cap {
     field_high capNtfnPtr 48
 }
 
-block reply_cap(capReplyMaster, capTCBPtr, capType) {
+block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
     field capTCBPtr 64
 
     field capType 5
-    padding 58
+    padding 57
+    field capReplyCanGrant 1
     field capReplyMaster 1
 }
 
 -- The user-visible format of the data word is defined by cnode_capdata, below.
 block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
-                capType, capCNodePtr) {
+                capCNodePtr, capType) {
     field capCNodeGuard 64
 
     field capType 5
@@ -151,11 +153,12 @@ block mdb_node {
 -- * Restart
 -- * Inactive
 -- * BlockedOnReceive
---   - DiminishCaps
 --   - Endpoint
+--   - CanGrant
 -- * BlockedOnSend
 --   - Endpoint
 --   - CanGrant
+--   - CanGrantReply
 --   - IsCall
 --   - IPCBadge
 --   - Fault
@@ -278,16 +281,17 @@ block DebugException {
 }
 #endif
 
--- Thread state: size = 8 bytes
-block thread_state(blockingIPCBadge, blockingIPCCanGrant, blockingIPCIsCall,
-                   tcbQueued, blockingIPCDiminishCaps, tsType,
-                   blockingObject) {
+-- Thread state: size = 24 bytes
+block thread_state(blockingIPCBadge, blockingIPCCanGrant,
+                   blockingIPCCanGrantReply, blockingIPCIsCall,
+                   tcbQueued, blockingObject,
+                   tsType) {
     field blockingIPCBadge 64
 
     padding 60
     field blockingIPCCanGrant 1
+    field blockingIPCCanGrantReply 1
     field blockingIPCIsCall 1
-    field blockingIPCDiminishCaps 1
     field tcbQueued 1
 
     padding 16

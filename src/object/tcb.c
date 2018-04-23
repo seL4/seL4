@@ -263,7 +263,7 @@ setExtraBadge(word_t *bufferPtr, word_t badge,
 }
 
 void
-setupCallerCap(tcb_t *sender, tcb_t *receiver)
+setupCallerCap(tcb_t *sender, tcb_t *receiver, bool_t canGrant)
 {
     cte_t *replySlot, *callerSlot;
     cap_t masterCap UNUSED, callerCap UNUSED;
@@ -274,12 +274,13 @@ setupCallerCap(tcb_t *sender, tcb_t *receiver)
     /* Haskell error: "Sender must have a valid master reply cap" */
     assert(cap_get_capType(masterCap) == cap_reply_cap);
     assert(cap_reply_cap_get_capReplyMaster(masterCap));
+    assert(cap_reply_cap_get_capReplyCanGrant(masterCap));
     assert(TCB_PTR(cap_reply_cap_get_capTCBPtr(masterCap)) == sender);
     callerSlot = TCB_PTR_CTE_PTR(receiver, tcbCaller);
     callerCap = callerSlot->cap;
     /* Haskell error: "Caller cap must not already exist" */
     assert(cap_get_capType(callerCap) == cap_null_cap);
-    cteInsert(cap_reply_cap_new(false, TCB_REF(sender)),
+    cteInsert(cap_reply_cap_new(canGrant, false, TCB_REF(sender)),
               replySlot, callerSlot);
 }
 

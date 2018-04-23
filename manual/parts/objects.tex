@@ -109,21 +109,28 @@ number of data words and possibly some capabilities. The structure and encoding
 of these messages are described in detail in \autoref{ch:ipc}. 
 
 Threads send messages by invoking capabilities within their capability space.
-When an endpoint capability is invoked in this way, the message will be
-transferred through the kernel to another thread. When capabilities to kernel
-objects are invoked, the message will be interpreted as a method invocation in a
-manner specific to the type of kernel object. For example, invoking a thread
-control block (TCB) capability with a correctly formatted message will suspend
-the target thread.
+When an endpoint, notification or reply capability is invoked in this way, the
+message will be transferred through the kernel to another thread.
+When other capabilities to kernel objects are invoked, the message will be
+interpreted as a method invocation in a manner specific to the type of kernel
+object. For example, invoking a thread control block (TCB) capability with a
+correctly formatted message will suspend the target thread.
+
 
 Logically, the kernel provides three system calls, \emph{Send},
 \emph{Receive} and \emph{Yield}. However, there are also combinations
-and variants of the basic \emph{Send} and \emph{Receive} calls, e.g.\
-the \emph{Call} operation, which consists of a send followed by a
-\emph{Receive} from the same object. Methods on kernel objects other
-than endpoints and notifications are all mapped to \emph{Send} or
-\emph{Call}, depending on whether or not the method returns a
-result. The \emph{Yield} system call is not associated with any kernel
+and variants of the basic \emph{Send} and \emph{Receive} calls. An
+important variant is the \emph{Call} operation, which consists of a standard
+\emph{Send} operation atomically followed by a variant of \emph{Receive} which is waiting
+for a \emph{Reply}. Replying is
+always targeted at a specific thread instead of going through standard IPC mechanics.
+
+Invoking Methods on kernel object other than endpoints and notifications
+is done with \emph{Send} or \emph{Call},
+depending on whether or not the invoker wants a reply from the kernel.
+By using functions provided by the libsel4 API you are guaranteed to always use the most
+appropriate one.
+The \emph{Yield} system call is not associated with any kernel
 object and is the only operation that does not invoke a capability.
 
 The complete set of system calls is:
@@ -144,53 +151,38 @@ The complete set of system calls is:
     \apifunc{seL4\_Send}{sel4_send}, no error code or response will be returned.
 
     \item[\apifunc{seL4\_Call}{sel4_call}] combines \apifunc{seL4\_Send}{sel4_send}
-      and \apifunc{seL4\_Recv}{sel4_recv}. The call
-      blocks the sending thread until its message is delivered and a reply message is received. When the
-    sent message is delivered to another thread (via an
-    \obj{Endpoint}), the kernel adds an
-    additional `\emph{reply}' capability to the message that is delivered
-    to the receiver, giving the latter the right to reply to the original sender. The reply
-    capability is deposited in a dedicated slot in the receiver's
-    \obj{TCB}, and is a single-use right, meaning that the kernel
-    invalidates it as soon as it has been invoked.
+      and \apifunc{seL4\_Recv}{sel4_recv} with some important differences. The call
+      blocks the sending thread until its message is delivered and a reply
+      message is received.
 
-    The \apifunc{seL4\_Call}{sel4_call} operation exists not only for
-    efficiency reasons (combining two operations into a single system
-    call). It differs from
-    \apifunc{seL4\_Send}{sel4_send} immediately followed by
-    \apifunc{seL4\_Recv}{sel4_recv} in two ways:
-    \begin{enumerate}
-    \item the single-use reply capability is created to establish a 
-      reply channel with minimal trust;
-    \item the transition from send to recv phase is atomic, meaning it
-      cannot be preempted, and the receiver can reply without any risk
-      of blocking.
-    \end{enumerate}
+      When invoking capabilities to kernel services other than endpoints, using
+      \apifunc{seL4\_Call}{sel4_call} allows the kernel to return an error code
+      or other response through the reply message.
 
-    When invoking capabilities to kernel services, using
-    \apifunc{seL4\_Call}{sel4_call} allows the kernel to return an error code
-    or other response through the reply message.
+      When the sent message is delivered to another thread (via an
+      \obj{Endpoint}), the kernel does the same operation as
+      \apifunc{seL4\_Send}{sel4_send}, then deposits a \emph{reply} capability
+      in a dedicated slot in the receiver's \obj{TCB}. A \emph{reply} capability
+      is a single-use right to send a reply message and wake up the caller,
+      meaning that the kernel invalidates it as soon as it has been invoked.
+      The calling thread is blocked until the reply capability is invoked.
+      For more information, see \autoref{sec:ep-cal}.
 
     \item[\apifunc{seL4\_Recv}{sel4_recv}] is used by a thread to receive
     messages through endpoints or notifications. If no sender or
     notification is pending, the caller
     will block until a message or notification can be delivered. This system call works only on
-    \obj{Endpoint} or \obj{Notification} capabilities, raising a fault (see section \ref{sec:faults}) when
+    \obj{Endpoint} or \obj{Notification} capabilities, raising a fault
+    (see section \ref{sec:faults}) when
     attempted with other capability types.
 
     \item[\apifunc{seL4\_Reply}{sel4_reply}] is used to respond to a
-    \apifunc{seL4\_Call}{sel4_call}, using the reply capability generated by the
-    \apifunc{seL4\_Call}{sel4_call} system call and stored in the replying
-    thread's TCB. It delivers the message to the thread that invoked
-    the \apifunc{seL4\_Call}{sel4_call}, waking it in
-    the process.
-
-    There is space for only one reply capability in each thread's TCB, so the
-    \apifunc{seL4\_Reply}{sel4_reply} syscall can be used to reply to the most
-    recent caller only. The \apifunc{seL4\_CNode\_SaveCaller}{cnode_savecaller}
-    method that will be described later can be used to save the reply
-    capability into regular capability space, where it can be used with
-    \apifunc{seL4\_Send}{sel4_send}.
+      \apifunc{seL4\_Call}{sel4_call}, by invoking the reply capability
+      generated by the \apifunc{seL4\_Call}{sel4_call} system call and
+      stored in a dedicated slot in the replying thread's TCB. It has exactly the
+      same behavior as invoking the reply cap with
+      \apifunc{seL4\_Send}{sel4_send} which is described in
+      \autoref{sec:ep-cal}.
 
     \item[\apifunc{seL4\_ReplyRecv}{sel4_replyrecv}] combines \apifunc{seL4\_Reply}{sel4_reply} and
     \apifunc{seL4\_Recv}{sel4_recv}. It exists mostly for efficiency reasons: the common case of
