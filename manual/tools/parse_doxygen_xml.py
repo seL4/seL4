@@ -333,6 +333,154 @@ class LatexGenerator(Generator):
             "details": details,
         }
 
+class MarkdownGenerator(Generator):
+    """
+    A class that represents the generator for Doxygen to Markdown. A child of the Generator class
+    """
+
+    # Dict mapping characters to their escape sequence in markdown
+    ESCAPE_PATTERNS = {
+        "`" : "\`",
+        "#" : "\#",
+        "_" : "\_",
+        "*" : "\*",
+        "[" : "\[",
+        "]" : "\]",
+        "-" : "\-",
+        "+" : "\+",
+        "!" : "\!",
+    }
+
+    def get_parse_table(self):
+        parse_table = super(MarkdownGenerator, self).get_parse_table()
+        parse_table['computeroutput'] = lambda p, r: '`%s`' % self.get_text(p, escape=False)
+        parse_table['texttt'] = lambda p, r: '`%s`' % self.get_text(p['text'], escape=False)
+        parse_table['obj'] = lambda p, r: '**%s**' % p['name']
+        parse_table['errorenumdesc'] = lambda p, r: '%s' % self.get_error_num_description()
+        parse_table['listitem'] = lambda p, r: self.parse_para(p.para, r) + "\n\n"
+        parse_table['autoref'] = lambda p, r: "autoref[%s]" % p['label']
+        parse_table['docref'] = lambda p, r: "DOCREF"
+        return parse_table
+
+
+    def default_return_doc(self, ret_type):
+        """
+        Returns the description for the return value of a function
+        implied by its return type
+        """
+
+        if ret_type == "void":
+            return "This method does not return anything."
+        return ""
+
+    def ref_format(self, refid, ref_dict):
+        """
+        Lookup refid in ref_dict and output the Markdown for an api functions ref
+        Creates a Markdown link
+        """
+
+        ref = ref_dict[refid]
+        ref_anchor = (ref['heading'].lower()).replace(" ", "-")
+        return "[`%s`](#%s)" % (ref['original_name'], ref_anchor)
+
+    def get_error_num_description(self):
+        return "A return value of `0` indicates success. A non-zero value indicates that an error occurred."
+
+    def generate_itemize_list(self, para, ref_dict, output):
+        """ Returns a Markdown item list """
+
+        for item in para.contents:
+            parsed_item = self.parse_para(item, ref_dict)
+            output +="* %s" % parsed_item if parsed_item.rstrip() else ""
+        return output
+
+    def generate_enumerate_list(self, para, ref_dict, output):
+        """ Returns a Markdown number list """
+
+        for num,item in zip(xrange(sys.maxint),para.contents):
+            parsed_item = self.parse_para(item, ref_dict)
+            output +="%d. %s" % (num, parsed_item) if parsed_item.rstrip() else ""
+        return output
+
+    def parse_list(self, para, ref_dict, tag):
+        """Parse an ordered list element"""
+
+        if tag == "enumerate":
+            list_generator =  self.generate_enumerate_list
+        elif tag == "itemize":
+            list_generator = self.generate_itemize_list
+        output = '\n'
+        output += list_generator(para, ref_dict, output)
+        return output
+
+    def todo_if_empty(self, s):
+        return s if s else "*TODO*"
+
+    def generate_params(self, param_string):
+        """
+        Returns the params in a formatted Markdown table
+        """
+
+        if param_string:
+            return """
+Type | Name | Description
+--- | --- | ---
+%s
+            """ % param_string
+        return ""
+
+    def generate_param_string(self, param_info, param_name):
+        return "`%(type)s` | `%(name)s` | %(desc)s\n" % {
+                    "type": self.get_text(param_info["type"],escape=False),
+                    "name": self.get_text(param_name,escape=False),
+                    "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
+        }
+
+    def level_to_markdown(self, string):
+        """Converts the level to an corresponding markdown heading prefix"""
+
+        if string == "subsubsection":
+            return "####"
+        return "###"
+
+    def generate_api_doc(self, level, member, params, ret, details):
+        manual_node = member.manual
+
+        # Descriptions that just contain a document reference are removed.
+        # Found by the 'DOCREF' symbol
+        match_details = re.match( r'^DOCREF$', details, re.M|re.I)
+        if match_details:
+            details_string = ""
+        else:
+            details_string = "**Description:** " + re.sub(r"\n(?!\n)", " ", details)
+
+        ret_string = "**Return value:** " + re.sub("\n(?!\n)", " ", ret)
+
+        # Removed any DOCREF symbols from the return, details and param strings
+        ret_string = re.sub(r'DOCREF', "", ret_string)
+        details_string = re.sub(r'DOCREF', "", details_string)
+        params_string = re.sub(r'DOCREF', "", params)
+
+        return """
+%(hash)s %(name)s
+`%(prototype)s`
+
+%(brief)s
+%(params)s
+%(ret)s
+
+%(details)s
+        """ % {
+                "hash": self.level_to_markdown(level),
+                "name": self.text_escape(manual_node["name"]),
+                "label": manual_node["label"],
+                "brief": self.todo_if_empty(self.parse_brief(member)),
+                "prototype": self.parse_prototype(member, escape=False),
+                "params": self.generate_params(params_string),
+                "ret": ret_string,
+                "details": details_string,
+        }
+
 def generate_general_syscall_doc(generator, input_file_name, level):
     """
     Takes a path to a file containing doxygen-generated xml,
