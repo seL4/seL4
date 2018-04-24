@@ -83,7 +83,7 @@ class Generator(object):
                 return string
 
     def ref_format(self, refid, ref_dict):
-        """Lookup refid in ref_dict and output the latex for an apifunc ref"""
+        """Lookup refid in ref_dict and output the api function reference"""
         return ""
 
     def ref_to_format(self, para, ref_dict):
@@ -283,7 +283,7 @@ class LatexGenerator(Generator):
         return ""
 
     def ref_format(self, refid, ref_dict):
-        """Lookup refid in ref_dict and output the latex for an apifunc ref"""
+        """Lookup refid in ref_dict and output the formatted latex reference"""
 
         ref = ref_dict[refid]
         return "\\apifunc{%(name)s}{%(label)s}" % ref
@@ -375,7 +375,7 @@ class MarkdownGenerator(Generator):
 
     def ref_format(self, refid, ref_dict):
         """
-        Lookup refid in ref_dict and output the Markdown for an api functions ref
+        Lookup refid in ref_dict and output the formatted Markdown reference
         Creates a Markdown link
         """
 
@@ -437,7 +437,7 @@ Type | Name | Description
         }
 
     def level_to_markdown(self, string):
-        """Converts the level to an corresponding markdown heading prefix"""
+        """Converts the level to a corresponding markdown heading prefix"""
 
         if string == "subsubsection":
             return "####"
