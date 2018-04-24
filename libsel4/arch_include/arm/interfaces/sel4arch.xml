@@ -18,7 +18,7 @@
                 Map a page table into an address space.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="pd" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
@@ -26,8 +26,7 @@
             description="Virtual address to map the page into."/>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
                 <description> 
-                    VM Attributes for the mapping. Possible values for this type are given 
-                    in <autoref label="ch:vspace"/>.
+                    VM Attributes for the mapping. <docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             </param>
         </method>
@@ -36,7 +35,7 @@
                 Unmap a page table from its address space and zero it out.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
         </method>
     </interface>
@@ -55,7 +54,7 @@
                 Map a page into an address space.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="pd" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
@@ -63,12 +62,12 @@
             description="Virtual address to map the page into."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
+                    Rights for the mapping.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
                 <description>
-                    VM Attributes for the mapping. Possible values for this type are given in <autoref label="ch:vspace"/>.
+                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             </param>
         </method>
@@ -77,18 +76,18 @@
                 Remap a page.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="pd" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
+                    Rights for the mapping.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_ARM_VMAttributes">
                 <description>
-                    VM Attributes for the mapping. Possible values for this type are given in <autoref label="ch:vspace"/>.
+                    VM Attributes for the mapping.<docref>Possible values for this type are given in <autoref label="ch:vspace"/>  .</docref>
                 </description>
             </param>        
         </method>
@@ -97,7 +96,7 @@
                 Unmap a page.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
         </method>
         <method id="ARMPageMapIO" name="MapIO" condition="defined(CONFIG_ARM_SMMU)" manual_name="Map I/O">
@@ -116,7 +115,7 @@
                 Cleans the data cache out to RAM. The start and end are relative to the page being serviced.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="start_offset" type="seL4_Word"
             description="The offset, relative to the start of the page inclusive."/>
@@ -131,7 +130,7 @@
                 not aligned, to clean out the bytes between the requested and the cache line boundary.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="start_offset" type="seL4_Word"
             description="The offset, relative to the start of the page inclusive."/>
@@ -145,7 +144,7 @@
                 The start and end are relative to the page being serviced.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="start_offset" type="seL4_Word"
             description="The offset, relative to the start of the page inclusive."/>
@@ -160,7 +159,7 @@
                 serviced.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="start_offset" type="seL4_Word"
             description="The offset, relative to the start of the page inclusive."/>
@@ -172,13 +171,13 @@
                 Get the physical address of the underlying frame.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <return>
                 A <texttt text='seL4_ARM_Page_GetAddress_t'/> struct that contains a
                 <texttt text='seL4_Word paddr'/>, which holds the physical address of the page,
-                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
-                of the message register and tag contents upon error.
+                and <texttt text='int error'/>.<docref> See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
             </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
@@ -190,7 +189,7 @@
                 Create an ASID Pool.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="untyped" type="seL4_Untyped"
             description="Capability to an untyped memory object that will become the pool. Must be 4K bytes."/>
@@ -210,7 +209,7 @@
                 Assign an ASID Pool.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="vroot" type="seL4_CPtr"
             description="The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>

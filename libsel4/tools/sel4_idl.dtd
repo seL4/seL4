@@ -44,6 +44,8 @@
 
 <!ELEMENT return ANY>
 
+<!ELEMENT docref ANY>
+
 <!ELEMENT texttt EMPTY>
 <!ATTLIST texttt text CDATA #REQUIRED>
 

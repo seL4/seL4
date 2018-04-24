@@ -27,7 +27,7 @@
                 Map a page directory.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="vroot" type="seL4_CPtr"
              description='Capability to the VSpace which will contain the mapping'/>
@@ -35,8 +35,7 @@
                 description='Virtual address to map the page into.'/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are
-                    given in <autoref label='ch:vspace'/>
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
             </param>
         </method>
@@ -45,7 +44,7 @@
                 Unmap a page directory.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
         </method>
         <method id="X86PageDirectoryGetStatusBits" name="GetStatusBits" manual_name="Get Status Bits" condition="defined(CONFIG_ARCH_IA32)">
@@ -53,7 +52,7 @@
                 Retrieve the accessed and dirty bits of a page mapped mapped into an address space.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <return>
                 A <texttt text='seL4_X86_PageDirectory_GetStatusBits_t'/> structure.
@@ -72,7 +71,7 @@
                 Map a page table into an address space.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="vroot" type="seL4_CPtr"
              description='Capability to the VSpace which will contain the mapping'/>
@@ -80,8 +79,7 @@
                 description='Virtual address to map the page into.'/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are
-                    given in <autoref label='ch:vspace'/>
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
             </param>
         </method>
@@ -90,7 +88,7 @@
                 Unmap a page table from its address space and zero it out.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
         </method>
     </interface>
@@ -102,7 +100,7 @@
                 Map an IO page table into an IOSpace.
             </brief>
             <description>
-                See <autoref label="sec:iospace"/>
+                <docref>See <autoref label="sec:iospace"/></docref>
             </description>
             <param dir="in" name="iospace" type="seL4_X86_IOSpace"
                 description='The IOSpace to map the page table into.'/>
@@ -114,7 +112,7 @@
                 Unmap an IO page table from an IOSpace.
             </brief>
             <description>
-                See <autoref label="sec:iospace"/>
+                <docref>See <autoref label="sec:iospace"/></docref>
             </description>
             <cap_param append_description='The page table to unmap.'/>
         </method>
@@ -126,7 +124,7 @@
                 Map a page into an address space.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="vroot" type="seL4_CPtr"
                 description='Capability to the VSpace which will contain the mapping'/>
@@ -134,14 +132,12 @@
                 description='Virtual address to map the page into.'/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping. Possible values for this type are
-                    given in <autoref label='sec:cap_rights'/>
+                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/></docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are
-                    given in <autoref label='ch:vspace'/>
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
             </param>
         </method>
@@ -150,20 +146,18 @@
                 Remap a page.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="vroot" type="seL4_CPtr"
                 description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping. Possible values for this type are
-                    given in <autoref label='sec:cap_rights'/>
+                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/></docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are
-                    given in <autoref label='ch:vspace'/>
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
             </param>
         </method>
@@ -172,7 +166,7 @@
                 Unmap a page.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
         </method>
         <method id="X86PageMapIO" name="MapIO" manual_name="Map I/O" manual_label='page_map_io' condition='defined(CONFIG_IOMMU)'>
@@ -180,14 +174,13 @@
                 Map a page into an IOSpace.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="iospace" type="seL4_X86_IOSpace"
                 description='The IOSpace that the frame is being mapped into'/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping. Possible values for this type are
-                    given in <autoref label='sec:cap_rights'/>
+                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label='sec:cap_rights'/></docref>
                 </description>
             </param>
             <param dir="in" name="ioaddr" type="seL4_Word"
@@ -199,13 +192,13 @@
                 Get the physical address of the underlying frame.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <return>
                 A <texttt text='seL4_IA32_Page_GetAddress_t'/> struct that contains a
                 <texttt text='seL4_Word paddr'/>, which holds the physical address of the page,
-                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
-                of the message register and tag contents upon error.
+                and <texttt text='int error'/>. <docref>See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
             </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
@@ -224,7 +217,7 @@
                 Create an X86 ASID pool.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <cap_param append_description='The master ASIDControl capability.'/>
             <param dir="in" name="untyped" type="seL4_Untyped"
@@ -244,7 +237,7 @@
                 Assign an ASID pool.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <cap_param append_description='The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.'/>
             <param dir="in" name="vroot" type="seL4_CPtr" description='The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.'/>
@@ -257,7 +250,7 @@
                 Issue an IO port sub range.
             </brief>
             <description>
-                See <autoref label='sec:ioports'/>
+                <docref>See <autoref label='sec:ioports'/></docref>
                 </description>
             <param dir="in" name="first_port" type="seL4_Word" description="First port of the range of the issued capability."/>
             <param dir="in" name="last_port" type="seL4_Word" description="Last port of the range of the issued capability."/>
@@ -273,10 +266,10 @@
                 Read 8 bits from an IO port.
             </brief>
             <description>
-                See <autoref label='sec:ioports'/>
+                <docref>See <autoref label='sec:ioports'/></docref>
             </description>
             <return>
-                A <texttt text='seL4_X86_IOPort_In8_t'/> structure as described in <autoref label='sec:ioports'/>.
+                A <texttt text='seL4_X86_IOPort_In8_t'/> structure <docref>as described in <autoref label='sec:ioports'/>.</docref>
             </return>
             <param dir="out" name="result" type="seL4_Uint8" />
             <param dir="in" name="port" type="seL4_Uint16" description='The port to read from.'/>
@@ -286,10 +279,10 @@
                 Read 16 bits from an IO port.
             </brief>
             <description>
-                See <autoref label='sec:ioports'/>
+                <docref>See <autoref label='sec:ioports'/></docref>
             </description>
             <return>
-                A <texttt text='seL4_X86_IOPort_In16_t'/> structure as described in <autoref label='sec:ioports'/>.
+                A <texttt text='seL4_X86_IOPort_In16_t'/> structure <docref>as described in <autoref label='sec:ioports'/>.</docref>
             </return>
             <param dir="out" name="result" type="seL4_Uint16"/>
             <param dir="in" name="port" type="seL4_Uint16" description='The port to read from.'/>
@@ -299,10 +292,10 @@
                 Read 32 bits from an IO port.
             </brief>
             <description>
-                See <autoref label='sec:ioports'/>
+                <docref>See <autoref label='sec:ioports'/></docref>
             </description>
             <return>
-                A <texttt text='seL4_X86_IOPort_In32_t'/> structure as described in <autoref label='sec:ioports'/>.
+                A <texttt text='seL4_X86_IOPort_In32_t'/> structure <docref>as described in <autoref label='sec:ioports'/>.</docref>
             </return>
             <param dir="out" name="result" type="seL4_Uint32"/>
             <param dir="in" name="port" type="seL4_Uint16" description='The port to read from.'/>
@@ -312,7 +305,7 @@
                 Write 8 bits to an IO port.
             </brief>
             <description>
-                See <autoref label='sec:ioports'/>
+                <docref>See <autoref label='sec:ioports'/></docref>
             </description>
             <param dir="in" name="port" type="seL4_Word" description='The port to write to.'/>
             <param dir="in" name="data" type="seL4_Word" description='Data to write to the IO port.'/>
@@ -322,7 +315,7 @@
                 Write 16 bits to an IO port.
             </brief>
             <description>
-                See <autoref label='sec:ioports'/>
+                <docref>See <autoref label='sec:ioports'/></docref>
             </description>
             <param dir="in" name="port" type="seL4_Word" description='The port to write to.'/>
             <param dir="in" name="data" type="seL4_Word" description='Data to write to the IO port.'/>
@@ -332,7 +325,7 @@
                 Write 32 bits to an IO port.
             </brief>
             <description>
-                See <autoref label='sec:ioports'/>
+                <docref>See <autoref label='sec:ioports'/></docref>
             </description>
             <param dir="in" name="port" type="seL4_Word" description='The port to write to.'/>
             <param dir="in" name="data" type="seL4_Word" description='Data to write to the IO port.'/>
@@ -345,7 +338,7 @@
                 Create an IRQ handler capability for an interrupt from an IOAPIC.
             </brief>
             <description>
-                See <autoref label='sec:interrupts'/> and <autoref label='sec:x86_interrupts'/>.
+                <docref>See <autoref label='sec:interrupts'/> and <autoref label='sec:x86_interrupts'/>.</docref>
             </description>
             <param dir="in" name="root" type="seL4_CNode"
                 description='CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32.'/>
@@ -368,7 +361,7 @@
                 Create an IRQ handler capability for an interrupt from an MSI.
             </brief>
             <description>
-                See <autoref label='sec:interrupts'/> and <autoref label='sec:x86_interrupts'/>.
+                <docref>See <autoref label='sec:interrupts'/> and <autoref label='sec:x86_interrupts'/>.</docref>
             </description>
             <param dir="in" name="root" type="seL4_CNode"
                 description='CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32.'/>
@@ -389,7 +382,7 @@
                 Set the EPT root of a thread
             </brief>
             <description>
-                See <autoref label='sec:virt'/>.
+                <docref>See <autoref label='sec:virt'/>.</docref>
             </description>
             <param dir="in" name="eptpml4" type="seL4_CPtr"
                 description='CPTR to an EPT PML4 object to act as the guest mode vspace root'/>
@@ -402,7 +395,7 @@
             </brief>
             <description>
                 Configures the one-to-one binding of a VCPU and TCB, overwriting any previous binding
-                in both. See <autoref label='sec:virt'/>.
+                in both. <docref>See <autoref label='sec:virt'/>.</docref>
             </description>
             <param dir="in" name="tcb" type="seL4_CNode" description='CPTR of the TCB to bind to'/>
         </method>
@@ -418,8 +411,8 @@
             <return>
                 A <texttt text='seL4_X86_VCPU_ReadVMCS_t'/> struct that contains a
                 <texttt text='seL4_Word value'/>, which holds the return result of the <texttt text='vmread'/> instruction,
-                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
-                of the message register and tag contents upon error.
+                and <texttt text='int error'/>. <docref>See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
             </return>
             <param dir="in" name="field" type="seL4_Word"
                 description='Field to give to \texttt{vmread} instruction'/>
@@ -435,7 +428,7 @@
                 VMCS region that is part of the VCPU object. As well as validating that
                 a legal field is requested, the value may be modified to ensure any
                 bits that are fixed in the hardware are correct, and that any features
-                required for kernel correctness are not disabled (see <autoref label='sec:virt'/>).
+                required for kernel correctness are not disabled <docref>(see <autoref label='sec:virt'/>)</docref>.
 
                 The final value written to the hardware is returned and can be compared
                 to the input parameter to determine what bits the kernel changed.
@@ -443,8 +436,8 @@
             <return>
                 A <texttt text='seL4_X86_VCPU_WriteVMCS_t'/> struct that contains a
                 <texttt text='seL4_Word writen'/>, which holds the final value written with the <texttt text='vmwrite'/> instruction,
-                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
-                of the message register and tag contents upon error.
+                and <texttt text='int error'/>. <docref>See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
             </return>
             <param dir="in" name="field" type="seL4_Word"
                 description='Field to give to `vmwrite` instruction'/>
@@ -464,7 +457,7 @@
                 of the provided I/O port capability.
 
                 This also establishes a link between the provided I/O port capability and
-                the <texttt text='VCPU'/>, see <autoref label='sec:virt'/> for details.
+                the <texttt text='VCPU'/><docref>, see <autoref label='sec:virt'/> for details.</docref>
             </description>
             <param dir="in" name="ioPort" type="seL4_CPtr"
                 description='I/O port capability whose authority is being delegating'/>
@@ -506,7 +499,7 @@
                 Map an EPT page directory page table.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
@@ -514,8 +507,7 @@
                 description='Guest physical address to map the page into.'/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are
-                    given in <autoref label='ch:vspace'/>
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
             </param>
         </method>
@@ -524,7 +516,7 @@
                 Unmap an EPT page directory page table.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
         </method>
     </interface>
@@ -535,7 +527,7 @@
                 Map an EPT page directory.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
@@ -543,8 +535,7 @@
                 description='Guest physical address to map the page into.'/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are
-                    given in <autoref label='ch:vspace'/>
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
             </param>
         </method>
@@ -553,7 +544,7 @@
                 Unmap an EPT page directory.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
         </method>
     </interface>
@@ -564,7 +555,7 @@
                 Map an EPT page table.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
@@ -572,8 +563,7 @@
                 description='Guest physical address to map the page into.'/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes">
                 <description>
-                    VM attributes for the mapping. Possible values for this type are
-                    given in <autoref label='ch:vspace'/>
+                    VM attributes for the mapping. <docref>Possible values for this type are given in <autoref label='ch:vspace'/></docref>
                 </description>
             </param>
         </method>
@@ -582,7 +572,7 @@
                 Unmap an EPT page table.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
         </method>
     </interface>

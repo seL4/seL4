@@ -42,7 +42,7 @@
                 Map a page table into a higher-level page table.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="pt" type="seL4_RISCV_PageTable">
                 <description>Higher-level page table to map the lower-level page table into.</description>
@@ -52,8 +52,8 @@
             </param>
             <param dir="in" name="attr" type="seL4_RISCV_VMAttributes">
             <description>
-                VM Attributes for the mapping. Possible values for this type are given
-                in <autoref label="ch:vspace"/>.
+                VM Attributes for the mapping. <docref>Possible values for this type are given
+                in <autoref label="ch:vspace"/>.</docref>
             </description>
             </param>
         </method>
@@ -62,7 +62,7 @@
                 Unmap a page table.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
         </method>
     </interface>
@@ -72,7 +72,7 @@
                 Map a page into a page table.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>
+                <docref>See <autoref label="ch:vspace"/></docref>
             </description>
             <param dir="in" name="pt" type="seL4_RISCV_PageTable">
                 <description>Page table to map the page into.</description>
@@ -82,13 +82,13 @@
             </param>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
+                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>.</docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_RISCV_VMAttributes">
             <description>
-                VM Attributes for the mapping. Possible values for this type are given
-                in <autoref label="ch:vspace"/>.
+                VM Attributes for the mapping. <docref>Possible values for this type are given
+                in <autoref label="ch:vspace"/>.</docref>
             </description>
             </param>
         </method>
@@ -97,19 +97,19 @@
                 Remap a page.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="pt" type="seL4_RISCV_PageTable">
                 <description>Page table to remap the page into.</description>
             </param>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
-                    Rights for the mapping. Possible values for this type are given in <autoref label="sec:cap_rights"/>.
+                    Rights for the mapping. <docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>.</docref>
                 </description>
             </param>
             <param dir="in" name="attr" type="seL4_RISCV_VMAttributes">
                 <description>
-                    VM Attributes for the mapping. Possible values for this type are given in <autoref label="ch:vspace"/>.
+                    VM Attributes for the mapping. <docref>Possible values for this type are given in <autoref label="ch:vspace"/>.</docref>
                 </description>
             </param>
         </method>
@@ -118,7 +118,7 @@
                Unmap a page.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
         </method>
         <method id="RISCVPageGetAddress" name="GetAddress">
@@ -126,13 +126,13 @@
                 Get the physical address of a page.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <return>
                 A <texttt text='seL4_RISCV_Page_GetAddress_t'/> struct that contains a
                 <texttt text='seL4_Word paddr'/>, which holds the physical address of the page,
-                and <texttt text='int error'/>. See <autoref label='sec:errors'/> for a description
-                of the message register and tag contents upon error.
+                and <texttt text='int error'/>. <docref>See <autoref label='sec:errors'/> for a description
+                of the message register and tag contents upon error.</docref>
             </return>
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
@@ -144,7 +144,7 @@
                 Create an ASID Pool.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="untyped" type="seL4_Untyped"
             description="Capability to an untyped memory object that will become the pool. Must be 4K bytes."/>
@@ -163,7 +163,7 @@
                 Assign an ASID Pool.
             </brief>
             <description>
-                See <autoref label="ch:vspace"/>.
+                <docref>See <autoref label="ch:vspace"/>.</docref>
             </description>
             <param dir="in" name="vroot" type="seL4_CPtr">
             <description>

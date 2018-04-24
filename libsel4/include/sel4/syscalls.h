@@ -27,7 +27,7 @@
  * @brief Send to a capability
  *
  * @xmlonly
- * See <autoref label="sec:sys_send"/>
+ * <docref>See <autoref label="sec:sys_send"/></docref>
  * @endxmlonly
  *
  * @param[in] dest The capability to be invoked.
@@ -41,7 +41,7 @@ seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * @brief Block until a message is received on an endpoint
  *
  * @xmlonly
- * See <autoref label="sec:sys_recv"/>
+ * <docref>See <autoref label="sec:sys_recv"/></docref>
  * @endxmlonly
  *
  * @param[in] src The capability to be invoked.
@@ -54,7 +54,7 @@ seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  *
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
- * as described in <autoref label="sec:messageinfo"/>
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
@@ -65,7 +65,7 @@ seL4_Recv(seL4_CPtr src, seL4_Word* sender);
  * @brief  Call a capability
  *
  * @xmlonly
- * See <autoref label="sec:sys_call"/>
+ * <docref>See <autoref label="sec:sys_call"/></docref>
  * @endxmlonly
  *
  * @param[in] dest The capability to be invoked.
@@ -73,7 +73,7 @@ seL4_Recv(seL4_CPtr src, seL4_Word* sender);
  *
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
- * as described in <autoref label="sec:messageinfo"/>
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
@@ -85,7 +85,7 @@ seL4_Call(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  *        the thread was last called
  *
  * @xmlonly
- * See <autoref label="sec:sys_reply"/>
+ * <docref>See <autoref label="sec:sys_reply"/></docref>
  * @endxmlonly
  *
  * @param[in] msgInfo The messageinfo structure for the IPC.
@@ -98,7 +98,7 @@ seL4_Reply(seL4_MessageInfo_t msgInfo);
  * @brief Perform a polling send to a capability
  *
  * @xmlonly
- * See <autoref label="sec:sys_nbsend"/>
+ * <docref>See <autoref label="sec:sys_nbsend"/></docref>
  * @endxmlonly
  *
  * @param[in] dest The capability to be invoked.
@@ -112,7 +112,7 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * @brief Perform a reply followed by a receive in one system call
  *
  * @xmlonly
- * See <autoref label="sec:sys_replyrecv"/>
+ * <docref>See <autoref label="sec:sys_replyrecv"/></docref>
  * @endxmlonly
  *
  * @param[in] dest The capability to be invoked.
@@ -126,7 +126,7 @@ seL4_NBSend(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  *
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
- * as described in <autoref label="sec:messageinfo"/>
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
@@ -138,7 +138,7 @@ seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
  *        in the case that no messages are pending
  *
  * @xmlonly
- * See <autoref label="sec:sys_nbrecv"/>
+ * <docref>See <autoref label="sec:sys_nbrecv"/></docref>
  * @endxmlonly
  *
  * @param[in] src The capability to be invoked.
@@ -151,7 +151,7 @@ seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
  *
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
- * as described in <autoref label="sec:messageinfo"/>
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
@@ -162,7 +162,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word* sender);
  * @brief Donate the remaining timeslice to a thread of the same priority
  *
  * @xmlonly
- * See <autoref label="sec:sys_yield"/>
+ * <docref>See <autoref label="sec:sys_yield"/></docref>
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC void
@@ -177,7 +177,7 @@ seL4_Yield(void);
  * It is useful for signalling a notification.
  *
  * @xmlonly
- * See the description of <nameref name="seL4_Send"/> in <autoref label="sec:sys_send"/>.
+ * <docref>See the description of <nameref name="seL4_Send"/> in <autoref label="sec:sys_send"/>.</docref>
  * @endxmlonly
  *
  * @param[in] dest The capability to be invoked.
@@ -193,7 +193,7 @@ seL4_Signal(seL4_CPtr dest);
  * convenience wrapper which calls seL4_Recv().
  *
  * @xmlonly
- * See the description of <nameref name="seL4_Recv"/> in <autoref label="sec:sys_recv"/>.
+ * <docref>See the description of <nameref name="seL4_Recv"/> in <autoref label="sec:sys_recv"/>.</docref>
  * @endxmlonly
  *
  * @param[in] src The capability to be invoked.
@@ -216,7 +216,7 @@ seL4_Wait(seL4_CPtr src, seL4_Word *sender);
  * It is useful for doing a non-blocking wait on a notification.
  *
  * @xmlonly
- * See the description of <nameref name="seL4_NBRecv"/> in <autoref label="sec:sys_nbrecv"/>.
+ * <docref>See the description of <nameref name="seL4_NBRecv"/> in <autoref label="sec:sys_nbrecv"/>.</docref>
  * @endxmlonly
  *
  * @param[in] src The capability to be invoked.
@@ -229,7 +229,7 @@ seL4_Wait(seL4_CPtr src, seL4_Word *sender);
  *
  * @return A `seL4_MessageInfo_t` structure
  * @xmlonly
- * as described in <autoref label="sec:messageinfo"/>
+ * <docref>as described in <autoref label="sec:messageinfo"/></docref>
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
@@ -488,13 +488,13 @@ seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr);
  * Changes the execution mode of the current thread from normal TCB execution, to
  * guest execution using its bound VCPU.
  * @xmlonly
- * For details on VCPUs and execution modes see <autoref label="sec:virt"/>.
+ * <docref>For details on VCPUs and execution modes see <autoref label="sec:virt"/>.</docref>
  * @endxmlonly
  *
  * Invoking `seL4_VMEnter` is similar to replying to a fault in that updates to the registers
  * can be given in the message, but unlike a fault no message info
  * @xmlonly
- * (see <autoref label="sec:messageinfo"/>)
+ * <docref>(see <autoref label="sec:messageinfo"/>)</docref>
  * @endxmlonly
  * is sent as the registers are not optional and the number that must be sent is fixed.
  * The mapping of hardware register to message register is

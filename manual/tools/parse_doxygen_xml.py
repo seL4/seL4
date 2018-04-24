@@ -41,6 +41,7 @@ class Generator(object):
             'listitem'      : lambda p, r: self.parse_para(p.para, r),
             'itemizedlist'  : self.parse_itemized_list,
             'autoref'       : lambda p, r: "%s" % p['label'],
+            'docref'        : self.parse_recurse
         }
         return parse_table
 

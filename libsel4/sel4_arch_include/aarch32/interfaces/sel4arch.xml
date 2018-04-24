@@ -36,7 +36,7 @@
                     Clean cached pages within a page directory
                 </brief>
                 <description>
-                    See <autoref label="ch:vspace"/>.
+                    <docref>See <autoref label="ch:vspace"/>.</docref>
                 </description>
             <param dir="in" name="start" type="seL4_Word"
             description="Start address"/>
@@ -48,7 +48,7 @@
                     Invalidate cached pages within a page directory
                 </brief>
              <description>
-                 See <autoref label="ch:vspace"/>.
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
              </description>
             <param dir="in" name="start" type="seL4_Word"
             description="Start address"/>
@@ -61,7 +61,7 @@
                     Clean and invalidate cached pages within a page directory
                 </brief>
              <description>
-                 See <autoref label="ch:vspace"/>.
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
              </description>
             <param dir="in" name="start" type="seL4_Word"
             description="Start address"/>
@@ -73,7 +73,7 @@
                     Clean and invalidate cached instruction pages to point of unification
                 </brief>
              <description>
-                 See <autoref label="ch:vspace"/>.
+                 <docref>See <autoref label="ch:vspace"/>.</docref>
              </description>
             <param dir="in" name="start" type="seL4_Word"
             description="Start address"/>
