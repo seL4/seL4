@@ -59,6 +59,18 @@ Mode_deriveCap(cte_t* slot, cap_t cap)
         }
         return ret;
 
+    case cap_pdpt_cap:
+        if (cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
+            ret.cap = cap;
+            ret.status = EXCEPTION_NONE;
+        } else {
+            userError("Deriving an unmapped PTPD cap");
+            current_syscall_error.type = seL4_IllegalOperation;
+            ret.cap = cap_null_cap_new();
+            ret.status = EXCEPTION_SYSCALL_ERROR;
+        }
+        return ret;
+
     case cap_frame_cap:
         cap = cap_frame_cap_set_capFMapType(cap, X86_MappingNone);
         ret.cap = cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
