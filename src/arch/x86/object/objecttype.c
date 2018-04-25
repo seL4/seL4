@@ -342,10 +342,10 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_io_port_cap:
         if (cap_get_capType(cap_b) == cap_io_port_cap) {
-            /* we only compare the first port as since IO ports cannot overlap
-             * if the first port is the same the last port is by definition the same */
             return  cap_io_port_cap_get_capIOPortFirstPort(cap_a) ==
-                    cap_io_port_cap_get_capIOPortFirstPort(cap_b);
+                    cap_io_port_cap_get_capIOPortFirstPort(cap_b) &&
+                    cap_io_port_cap_get_capIOPortLastPort(cap_a) ==
+                    cap_io_port_cap_get_capIOPortLastPort(cap_b);
         }
         break;
 
