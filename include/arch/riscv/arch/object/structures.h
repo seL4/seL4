@@ -157,5 +157,12 @@ cap_get_archCapPtr(cap_t cap)
         return NULL;
     }
 }
+
+static inline bool_t CONST
+Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
+{
+    return false;
+}
+
 #endif /* !__ASSEMBLER__  */
 #endif
