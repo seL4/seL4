@@ -31,7 +31,7 @@ configuration of the system.
 * Real Time
 
 This version of seL4 is not a real-time kernel. It has a small number of
-potentially long-running kernel operations that are not preemptable (e.g.,
+potentially long-running kernel operations that are not preemptible (e.g.,
 endpoint deletion and recycling, scheduling, frame and CNode initialisation).
 This may change in future versions.
 
