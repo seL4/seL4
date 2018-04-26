@@ -415,7 +415,7 @@
                 of the message register and tag contents upon error.</docref>
             </return>
             <param dir="in" name="field" type="seL4_Word"
-                description='Field to give to \texttt{vmread} instruction'/>
+                description='Field to give to `vmread` instruction'/>
             <param dir="out" name="value" type="seL4_Word"
                 description='Value returned by `vmread` instruction'/>
         </method>
