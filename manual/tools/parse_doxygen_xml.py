@@ -57,7 +57,7 @@ class Generator(object):
         """
         Return a string with latex special characters escaped
         """
-        escape_regex = re.compile('|'.join(self.ESCAPE_PATTERNS.keys()))
+        escape_regex = re.compile(re.escape('|'.join(self.ESCAPE_PATTERNS.keys())))
         return escape_regex.sub(lambda p: self.ESCAPE_PATTERNS[p.group()], string)
 
     def get_text(self, soup, escape=True):
