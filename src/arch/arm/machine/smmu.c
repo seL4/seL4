@@ -26,6 +26,19 @@
 #define ARM_SMMU_GR0 (uint32_t*)SMMU_PPTR
 #define ARM_SMMU_GR1 (uint32_t*)(SMMU_PPTR + (1 << 12))
 
+#ifdef DEBUG
+/* Identification registers */
+#define ARM_SMMU_ID_REGS      8
+#define ARM_SMMU_GR0_ID0      0x20
+#define ARM_SMMU_GR0_ID1      0x24
+#define ARM_SMMU_GR0_ID2      0x28
+#define ARM_SMMU_GR0_ID3      0x2c
+#define ARM_SMMU_GR0_ID4      0x30
+#define ARM_SMMU_GR0_ID5      0x34
+#define ARM_SMMU_GR0_ID6      0x38
+#define ARM_SMMU_GR0_ID7      0x3c
+#endif
+
 #define ARM_SMMU_GR0_sGFSR    0x48
 #define ARM_SMMU_GR0_sGFSYNR0 0x50
 #define ARM_SMMU_GR0_sGFSYNR1 0x54
@@ -268,12 +281,35 @@ static void smmu_clear_cb(uint8_t cbidx)
    plat_smmu_tlb_inval_all();
 }
 
+#ifdef DEBUG
+static void print_smmu_id_regs(void)
+{
+   uint32_t *gr0 = ARM_SMMU_GR0;
+   uint32_t id;
+   uint32_t reg = ARM_SMMU_GR0_ID0;
+
+   int i;
+
+   for (i = 0; i < ARM_SMMU_ID_REGS; ++i)
+   {
+      id = ARM_SMMU_RD(gr0, reg);
+      reg += sizeof(uint32_t);
+
+      printf("SMMU ID%d:  0x%x\n", i, id);
+   }
+}
+#endif
+
 BOOT_CODE int plat_smmu_init(void)
 {
    uint32_t *gr0 = ARM_SMMU_GR0;
    uint32_t reg;
 
    int i = 0;
+
+#ifdef DEBUG
+   print_smmu_id_regs();
+#endif
 
    /* Allocate a page directories per context bank */
    for (i = 0; i < ARM_PLAT_NUM_CB; ++i)
