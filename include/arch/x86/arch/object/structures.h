@@ -23,9 +23,13 @@
 #include <arch/api/constants.h>
 
 enum tcb_arch_cnode_index {
+#ifdef CONFIG_VTX
     /* VSpace root for running any associated VCPU in */
     tcbArchEPTRoot = tcbCNodeEntries,
     tcbArchCNodeEntries
+#else
+    tcbArchCNodeEntries = tcbCNodeEntries
+#endif
 };
 
 typedef struct arch_tcb {
