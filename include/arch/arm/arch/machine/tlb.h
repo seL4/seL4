@@ -15,15 +15,26 @@
 
 #include <mode/machine.h>
 #include <arch/smp/ipi_inline.h>
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARCH_AARCH64)
+#include <armv/tlb.h>
+#endif
 
 static inline void invalidateTranslationSingleLocal(vptr_t vptr)
 {
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARCH_AARCH64)
+    invalidateLocalTLB_IPA_VMID(vptr);
+#else
     invalidateLocalTLB_VAASID(vptr);
+#endif
 }
 
 static inline void invalidateTranslationASIDLocal(hw_asid_t hw_asid)
 {
+#if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_ARCH_AARCH64)
+    invalidateLocalTLB_VMID(hw_asid);
+#else
     invalidateLocalTLB_ASID(hw_asid);
+#endif
 }
 
 static inline void invalidateTranslationAllLocal(void)
