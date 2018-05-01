@@ -291,16 +291,16 @@
             </description>
             <return>
                 A <texttt text="seL4_TCB_GetBreakpoint_t"/>: Struct that contains
-                `<texttt text="seL4_Error error"/>', an seL4 API error value,
-                `<texttt text="seL4_Word vaddr"/>', the virtual address at which the breakpoint will currently
+                <texttt text="seL4_Error error"/>, an seL4 API error value,
+                <texttt text="seL4_Word vaddr"/>, the virtual address at which the breakpoint will currently
                 be triggered;
-                `<texttt text="seL4_Word type"/>', the type of operation which will currently trigger the
+                <texttt text="seL4_Word type"/>, the type of operation which will currently trigger the
                 breakpoint, whether instruction execution, or data access;
-                `<texttt text="seL4_Word size"/>', integer value for the span-size of the breakpoint.
+                <texttt text="seL4_Word size"/>, integer value for the span-size of the breakpoint.
                 Usually a power of two (1, 2, 4, etc.);
-                `<texttt text="seL4_Word rw"/>', the access direction that will currently trigger the breakpoint,
+                <texttt text="seL4_Word rw"/>, the access direction that will currently trigger the breakpoint,
                 whether read, write, or both and
-                `<texttt text="seL4_Bool is_enabled"/>', which indicates whether or not the breakpoint
+                <texttt text="seL4_Bool is_enabled"/>, which indicates whether or not the breakpoint
                 will currently be triggered if the match conditions are met.
             </return>
             <param dir="in" name="bp_num" type="seL4_Uint16"
@@ -339,8 +339,8 @@
             </description>
             <return>
                 A <texttt text="seL4_TCB_ConfigureSingleStepping_t"/>: Struct that contains
-                `<texttt text="seL4_Error error"/>', an seL4 API error value,
-                `<texttt text="seL4_Bool bp_was_consumed"/>', a boolean which indicates whether or not the <texttt text="bp_num"/>
+                <texttt text="seL4_Error error"/>, an seL4 API error value,
+                <texttt text="seL4_Bool bp_was_consumed"/>, a boolean which indicates whether or not the <texttt text="bp_num"/>
                 breakpoint ID that was passed to the function, was consumed in the setup of the single-stepping
                 functionality: if this is <texttt text="true"/>, the caller should not attempt to re-use <texttt text="bp_num"/>
                 until it has disabled the single-stepping functionality via a subsequent call to
