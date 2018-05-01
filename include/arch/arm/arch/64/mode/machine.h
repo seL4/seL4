@@ -228,6 +228,17 @@ static inline void invalidateLocalTLB_VMALLS12E1(void)
     dsb();
     isb();
 }
+
+/* Invalidate IPA with the current VMID */
+static inline void invalidateLocalTLB_IPA(word_t ipa)
+{
+    asm volatile ("tlbi ipas2e1, %0" :: "r"(ipa));
+    dsb();
+    asm volatile ("tlbi vmalle1");
+    dsb();
+    isb();
+}
+
 void lockTLBEntry(vptr_t vaddr);
 
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
