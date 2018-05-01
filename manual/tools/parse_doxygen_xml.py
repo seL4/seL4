@@ -219,12 +219,14 @@ class Generator(object):
         for member in soup.find_all("memberdef"):
             name = str(member.find('name').string)
             label = member.manual['label']
+            heading = member.manual['name']
             ref_id = member['id']
             data = {
                 "name": self.text_escape(name),
                 "original_name" : name,
                 "label": label,
                 "ref": ref_id,
+                "heading": heading,
             }
 
             ret[ref_id] = data
