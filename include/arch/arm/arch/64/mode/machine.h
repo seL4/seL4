@@ -220,6 +220,14 @@ static inline void invalidateLocalTLB_VAASID(word_t mva_plus_asid)
     isb();
 }
 
+/* Invalidate all stage 1 and stage 2 translations used at
+ * EL1 with the current VMID which is specified by vttbr_el2 */
+static inline void invalidateLocalTLB_VMALLS12E1(void)
+{
+    asm volatile ("tlbi vmalls12e1");
+    dsb();
+    isb();
+}
 void lockTLBEntry(vptr_t vaddr);
 
 static inline void cleanByVA(vptr_t vaddr, paddr_t paddr)
