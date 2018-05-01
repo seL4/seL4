@@ -127,7 +127,12 @@ config_option(
 
 config_option(KernelArmSMMU ARM_SMMU "Enable SystemMMU support"
     DEFAULT OFF
-    DEPENDS "KernelArmSMMUTK1"
+    DEPENDS "KernelArmSMMUTK1 OR KernelArmSMMUv2"
+)
+
+config_option(KernelArmSMMUv2 ARM_SMMU_V2 "Enable SystemMMUv2 Support"
+    DEFAULT OFF
+    DEPENDS "KernelPlatformZynqmp"
 )
 
 config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER "Enable Cortex-A9 prefetcher \
