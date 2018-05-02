@@ -22,9 +22,15 @@
 #include <config.h>
 #include <plat_mode/machine/hardware.h>
 
+#if __riscv_xlen == 32
+/* Contain the typical location of memory */
+#define PADDR_BASE 0x80000000lu
+#else
 /* The main kernel window will start at the 0 physical address so that it can contain
  * any potential memory that may exist */
 #define PADDR_BASE 0x0lu
+#endif
+
 /* This represents the physical address that the kernel image will be linked to. This needs to
  * be on a 1gb boundary as we currently require being able to creating a mapping to this address
  * as the largest frame size */
@@ -43,7 +49,7 @@
 #define kernelBase KERNEL_BASE
 #define PPTR_TOP KERNEL_BASE
 #define PPTR_USER_TOP PPTR_BASE
-#define BASE_OFFSET PPTR_BASE
+#define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
 
 #ifndef __ASSEMBLER__
 
