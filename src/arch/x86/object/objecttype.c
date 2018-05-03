@@ -215,6 +215,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
     case cap_asid_control_cap:
+    case cap_io_port_control_cap:
         break;
     case cap_io_port_cap:
 #ifdef CONFIG_VTX
