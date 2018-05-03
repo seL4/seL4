@@ -84,11 +84,11 @@ void deleteASID(asid_t asid, vspace_root_t *vspace)
     asid_pool_t* poolPtr;
 
     poolPtr = x86KSASIDTable[asid >> asidLowBits];
-    hwASIDInvalidate(asid, vspace);
     if (poolPtr != NULL) {
         asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
         if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&
                 (vspace_root_t*)asid_map_asid_map_vspace_get_vspace_root(asid_map) == vspace) {
+            hwASIDInvalidate(asid, vspace);
             poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
             setVMRoot(NODE_STATE(ksCurThread));
         }
