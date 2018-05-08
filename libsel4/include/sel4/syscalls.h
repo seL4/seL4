@@ -94,8 +94,8 @@ LIBSEL4_INLINE_FUNC void
 seL4_Reply(seL4_MessageInfo_t msgInfo);
 
 /**
- * @xmlonly <manual name="Polling Send" label="sel4_nbsend"/> @endxmlonly
- * @brief Perform a polling send to a capability
+ * @xmlonly <manual name="Non-Blocking Send" label="sel4_nbsend"/> @endxmlonly
+ * @brief Perform a non-blocking send to a capability
  *
  * @xmlonly
  * <docref>See <autoref label="sec:sys_nbsend"/></docref>
