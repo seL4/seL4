@@ -27,9 +27,3 @@ config PT_LEVELS
         Number of page tables levels for RISC-V depends on the mode. For
         example there are: 2, 3 and 4 levels on Sv32, Sv39, Sv48 RISC-V paging
         modes respectively.
-
-config KERNEL_WINDOW_SIZE_BIT
-    int "Desired kernel window size in bits"
-    default 30
-    help
-        Configure the desired kernel window size

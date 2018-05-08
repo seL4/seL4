@@ -48,14 +48,6 @@ if (KernelSel4ArchRiscV32)
     set(KernelPTLevels 2 CACHE STRING "" FORCE)
 endif()
 
-config_string(KernelWindowSizeBit KERNEL_WINDOW_SIZE_BIT "Configure the \
-    desired kernel window size"
-    DEFAULT 30
-    UNDEF_DISABLED
-    UNQUOTE
-    DEPENDS "KernelArchRiscV"
-)
-
 add_sources(
     DEP "KernelArchRiscV"
     PREFIX src/arch/riscv
