@@ -72,7 +72,8 @@
                 Map a page into a page table.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/></docref>
+                Takes a <texttt text="Page Table"/> capability as an argument and installs a reference
+                to the given <texttt text="Page"/> in the page table slot corresponding to the given address.
             </description>
             <param dir="in" name="pt" type="seL4_RISCV_PageTable">
                 <description>Page table to map the page into.</description>
@@ -97,7 +98,7 @@
                 Remap a page.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/>.</docref>
+                Changes the permissions of an existing mapping.
             </description>
             <param dir="in" name="pt" type="seL4_RISCV_PageTable">
                 <description>Page table to remap the page into.</description>
@@ -118,7 +119,7 @@
                Unmap a page.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/>.</docref>
+                Removes an existing mapping.
             </description>
         </method>
         <method id="RISCVPageGetAddress" name="GetAddress">

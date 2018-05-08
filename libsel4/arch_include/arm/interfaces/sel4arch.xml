@@ -18,7 +18,9 @@
                 Map a page table into an address space.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/></docref>
+                Takes a <texttt text='PageDirectory'/> capability as an argument,
+                and installs a reference to the invoked
+                <texttt text='PageTable'/> in a specified slot in the <texttt text="PageDirectory"/>.
             </description>
             <param dir="in" name="pd" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
@@ -35,7 +37,8 @@
                 Unmap a page table from its address space and zero it out.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/>.</docref>
+                Removes the reference to the invoked <texttt text="Page Table"/> from its
+                containing <texttt text="Page Directory"/>.
             </description>
         </method>
     </interface>
@@ -54,7 +57,8 @@
                 Map a page into an address space.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/>.</docref>
+                Takes a <texttt text="Page Directory"/> capability as an argument and installs a reference
+                  to the given <texttt text="Page"/> in the PD or PT slot corresponding to the given address.
             </description>
             <param dir="in" name="pd" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
@@ -76,7 +80,7 @@
                 Remap a page.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/>.</docref>
+                Changes the permissions of an existing mapping.
             </description>
             <param dir="in" name="pd" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
@@ -96,7 +100,7 @@
                 Unmap a page.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/>.</docref>
+                Removes an existing mapping.
             </description>
         </method>
         <method id="ARMPageMapIO" name="MapIO" condition="defined(CONFIG_ARM_SMMU)" manual_name="Map I/O">

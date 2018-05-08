@@ -72,17 +72,7 @@ On ARM, the highest level page directory (\obj{Page Directory} on aarch32 and gl
 aarch64) objects possess a few invocations for the user to do cache maintenance
 operations:
 
-\begin{description}
-    \item[\apifunc{seL4\_ARM\_PageDirectory\_Clean\_Data}{aarch32_pd_clean}]
-    \item[\apifunc{seL4\_ARM\_PageDirectory\_Invalidate\_Data}{aarch32_pd_invalidate}]
-    \item[\apifunc{seL4\_ARM\_PageDirectory\_CleanInvalidate\_Data}{aarch32_pd_clean_invalidate}]
-    \item[\apifunc{seL4\_ARM\_PageDirectory\_Unify\_Instruction}{aarch32_pd_unify_instruction}]
 
-    \item[\apifunc{seL4\_ARM\_PageGlobalDirectory\_Clean\_Data}{aarch64_pgd_clean}]
-    \item[\apifunc{seL4\_ARM\_PageGlobalDirectory\_Invalidate\_Data}{aarch64_pgd_invalidate}]
-    \item[\apifunc{seL4\_ARM\_PageGlobalDirectory\_CleanInvalidate\_Data}{aarch64_pgd_clean_invalidate}]
-    \item[\apifunc{seL4\_ARM\_PageGlobalDirectory\_Unify\_Instruction}{aarch64_pgd_unify_instruction}]
-\end{description}
 
 By making these cache related operations invocations on page directory capabilities in addition to
 the page capabilities themselves, the
@@ -93,54 +83,9 @@ to those capabilities directly.
 \paragraph{\obj{Page Table}} The \obj{Page Table} (PT) object forms the
 second level of the page-table structure.
 It contains a number of slots, each of which contains a page-table entry (PTE).
-
-\newcommand{\vmfunc}[2]{{#1}\par{\addtolength{\leftskip}{2em}{#2}\par}}
-
-\obj{Page Table} objects possess only two methods:
-\vspace{2ex}\\
-\vmfunc{
-\apifunc{seL4\_ARM\_PageTable\_Map}{arm_pagetable_map}\\
-\ifxeightsix\apifunc{seL4\_x86\_PageTable\_Map}{x86_pagetable_map}\fi
-}{
-Takes a \obj{Page Directory} capability as an argument, and installs a reference to the invoked
-\obj{Page Table} in a specified slot in the \obj{Page Directory}.
-}
-\vspace{2ex}
-\vmfunc{
-\apifunc{seL4\_ARM\_PageTable\_Unmap}{arm_pagetable_unmap}\\
-\ifxeightsix\apifunc{seL4\_x86\_PageTable\_Unmap}{x86_pagetable_unmap}\fi
-}{
-Removes the reference to the invoked \obj{Page Table} from its containing
-\obj{Page Directory}.
-}
-
 \paragraph{\obj{Page}}
-
-A \obj{Page} object is a region of physical memory that is used to
-implement virtual memory pages in a virtual address space. The
-\obj{Page} object has the following methods:
-\vspace{2ex}\\
-\vmfunc{
-\apifunc{seL4\_ARM\_Page\_Map}{arm_page_map}\\
-\ifxeightsix\apifunc{seL4\_x86\_Page\_Map}{x86_page_map}\fi
-}{
-Takes a \obj{Page Directory} capability as an argument and installs a reference
-to the given \obj{Page} in the PD or PT slot corresponding to the given address.
-}\vspace{2ex}
-
-\vmfunc{
-\apifunc{seL4\_ARM\_Page\_Remap}{arm_page_remap}\\
-\ifxeightsix\apifunc{seL4\_x86\_Page\_Remap}{x86_page_remap}\fi
-}{
-Changes the permissions of an existing mapping.
-}\vspace{2ex}
-
-\vmfunc{
-\apifunc{seL4\_ARM\_Page\_Unmap}{arm_page_unmap}\\
-\ifxeightsix\apifunc{seL4\_x86\_Page\_Unmap}{x86_page_unmap}\fi
-}{
-Removes an existing mapping.
-}\vspace{2ex}
+A \obj{Page} object corresponds to a frame of physical memory that is used to
+implement virtual memory pages in a virtual address space.
 
 The virtual address for a \obj{Page} mapping
 must be aligned to
