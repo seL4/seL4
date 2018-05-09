@@ -119,15 +119,9 @@ ${DoxygenXml}/%.xml: doxygen
 	@echo "====> Generating $@"
 
 # Latex files translated from doxygen-generated xml
-# General object invocations are listed as subsections
-${GeneratedLatexDir}/ObjectApi.tex: ${DoxygenXml}/group__ObjectApi.xml
-	@echo "====> Generating $@"
-	${Q}${PYTHON} ${GenerationTool} --level 2 --input $< --output $@
-
-# Everything else is listed as subsubsections
 ${GeneratedLatexDir}/%.tex: ${DoxygenXml}/group__%.xml
 	@echo "====> Generating $@"
-	${Q}${PYTHON} ${GenerationTool} --level 3 --input $< --output $@
+	${Q}${PYTHON} ${GenerationTool} --level 2 --input $< --output $@
 
 # Collect generated latex files into single rule
 generated-latex: ${GeneratedLatexDir}/GeneralSystemCalls.tex \
