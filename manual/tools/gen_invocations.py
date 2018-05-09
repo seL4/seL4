@@ -118,27 +118,6 @@ def process_args():
 
     return parser
 
-def gen_header(output_file):
-    """
-    Writes the header
-    """
-
-    output_file.write("""
-/**
- * @defgroup ObjectInvocations Object Invocations
- * @{
- */
-""")
-
-def gen_footer(output_file):
-    """
-    Writes the footer
-    """
-
-    output_file.write("""
-/** @} */
-""")
-
 def main():
     parser = process_args()
     args = parser.parse_args()
