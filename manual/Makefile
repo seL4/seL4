@@ -119,6 +119,10 @@ ${DoxygenXml}/%.xml: doxygen
 	@echo "====> Generating $@"
 
 # Latex files translated from doxygen-generated xml
+${GeneratedLatexDir}/%SystemCalls.tex: ${DoxygenXml}/group__%SystemCalls.xml
+	@echo "====> Generating $@"
+	${Q}${PYTHON} ${GenerationTool} --level 3 --input $< --output $@
+
 ${GeneratedLatexDir}/%.tex: ${DoxygenXml}/group__%.xml
 	@echo "====> Generating $@"
 	${Q}${PYTHON} ${GenerationTool} --level 2 --input $< --output $@
