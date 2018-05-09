@@ -122,12 +122,12 @@ ${DoxygenXml}/%.xml: doxygen
 # General object invocations are listed as subsections
 ${GeneratedLatexDir}/ObjectApi.tex: ${DoxygenXml}/group__ObjectApi.xml
 	@echo "====> Generating $@"
-	${Q}${PYTHON} ${GenerationTool} --level subsection --input $< --output $@
+	${Q}${PYTHON} ${GenerationTool} --level 2 --input $< --output $@
 
 # Everything else is listed as subsubsections
 ${GeneratedLatexDir}/%.tex: ${DoxygenXml}/group__%.xml
 	@echo "====> Generating $@"
-	${Q}${PYTHON} ${GenerationTool} --level subsubsection --input $< --output $@
+	${Q}${PYTHON} ${GenerationTool} --level 3 --input $< --output $@
 
 # Collect generated latex files into single rule
 generated-latex: ${GeneratedLatexDir}/GeneralSystemCalls.tex \
@@ -146,7 +146,7 @@ generated-latex: ${GeneratedLatexDir}/GeneralSystemCalls.tex \
 # Markdown files translated from doxygen-generated xml
 ${GeneratedMarkdownDir}/%.md: ${DoxygenXml}/group__%.xml Makefile
 	@echo "====> Generating $@"
-	${Q}${PYTHON} ${GenerationTool} --format markdown --level subsubsection --input $< --output $@
+	${Q}${PYTHON} ${GenerationTool} --format markdown --level 2 --input $< --output $@
 
 # Collect generated markdown files into single rule
 generated-markdown: ${GeneratedMarkdownDir}/GeneralSystemCalls.md \

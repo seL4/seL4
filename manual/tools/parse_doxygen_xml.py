@@ -323,7 +323,7 @@ class LatexGenerator(Generator):
 {%(ret)s}
 {%(details)s}
         """ % {
-            "level": level,
+            "level": self.level_to_header(level),
             "label": manual_node["label"],
             "name": self.text_escape(manual_node["name"]),
             "brief": self.todo_if_empty(self.parse_brief(member)),
@@ -332,6 +332,18 @@ class LatexGenerator(Generator):
             "ret": ret,
             "details": details,
         }
+
+    def level_to_header(self, level):
+        if level == 0:
+            return 'chapter'
+        elif level == 1:
+            return 'section'
+        elif level == 2:
+            return 'subsection'
+        elif level == 3:
+            return 'subsubsection'
+        else:
+            return 'paragraph'
 
 class MarkdownGenerator(Generator):
     """
@@ -436,13 +448,6 @@ Type | Name | Description
                     "desc": self.todo_if_empty(param_info.get("desc", "").strip()),
         }
 
-    def level_to_markdown(self, string):
-        """Converts the level to a corresponding markdown heading prefix"""
-
-        if string == "subsubsection":
-            return "####"
-        return "###"
-
     def generate_api_doc(self, level, member, params, ret, details):
         manual_node = member.manual
 
@@ -471,7 +476,7 @@ Type | Name | Description
 
 %(details)s
         """ % {
-                "hash": self.level_to_markdown(level),
+                "hash": self.level_to_header(level),
                 "name": self.text_escape(manual_node["name"]),
                 "label": manual_node["label"],
                 "brief": self.todo_if_empty(self.parse_brief(member)),
@@ -480,6 +485,9 @@ Type | Name | Description
                 "ret": ret_string,
                 "details": details_string,
         }
+
+    def level_to_header(self, level):
+        return (level + 1) * '#'
 
 def generate_general_syscall_doc(generator, input_file_name, level):
     """
@@ -521,8 +529,8 @@ def process_args():
     parser.add_argument("-o", "--output", dest="output", type=str,
                         help="Output latex file.")
 
-    parser.add_argument("-l", "--level", choices=["subsection", "subsubsection"],
-                        help="LaTeX section level for each method")
+    parser.add_argument("-l", "--level", type=int,
+                        help="Level for each method, 0 = top level")
 
     return parser
 
