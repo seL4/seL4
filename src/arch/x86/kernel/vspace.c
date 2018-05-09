@@ -1297,7 +1297,7 @@ decodeX86PageTableInvocation(
     vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
     asid = cap_get_capMappedASID(vspaceCap);
 
-    if (vaddr >= PPTR_USER_TOP) {
+    if (vaddr > PPTR_USER_TOP) {
         userError("X86PageTable: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
