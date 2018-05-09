@@ -820,8 +820,8 @@ def parse_xml_file(input_file, valid_types):
             # Prefix the label with an api-wide label prefix
             method_manual_label = "%s%s" % (api.label_prefix, method_manual_label)
 
-            comment_lines = ["@xmlonly <manual name=\"%s - %s\" label=\"%s\"/> @endxmlonly" %
-                    (interface_manual_name, method_manual_name, method_manual_label)]
+            comment_lines = ["@xmlonly <manual name=\"%s\" label=\"%s\"/> @endxmlonly" %
+                    (method_manual_name, method_manual_label)]
 
             method_brief = method.getElementsByTagName("brief")
             if method_brief:

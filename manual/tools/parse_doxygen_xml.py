@@ -345,6 +345,9 @@ class LatexGenerator(Generator):
         else:
             return 'paragraph'
 
+    def level_to_heading(self, level, name):
+        return '\\' + self.level_to_header(level) + '{' + self.text_escape(name) + '}'
+
 class MarkdownGenerator(Generator):
     """
     A class that represents the generator for Doxygen to Markdown. A child of the Generator class
@@ -489,6 +492,9 @@ Type | Name | Description
     def level_to_header(self, level):
         return (level + 1) * '#'
 
+    def level_to_heading(self, level, name):
+        return self.level_to_header(level) + ' ' + self.text_escape(name)
+
 def generate_general_syscall_doc(generator, input_file_name, level):
     """
     Takes a path to a file containing doxygen-generated xml,
@@ -496,6 +502,7 @@ def generate_general_syscall_doc(generator, input_file_name, level):
     in the sel4 manual.
     """
 
+    dir_name = os.path.dirname(input_file_name)
     with open(input_file_name, "r") as f:
         output = ""
         soup = BeautifulSoup(f, "lxml")
@@ -507,8 +514,15 @@ def generate_general_syscall_doc(generator, input_file_name, level):
             if ddesc.para:
                 output += generator.parse_para(ddesc.para)
 
+        # parse any nested groups
+        for inner_group in soup.find_all("innergroup"):
+            new_input_file_name = inner_group["refid"] + '.xml'
+            new_input_file = os.path.join(dir_name, new_input_file_name)
+            output += generator.level_to_heading(level, inner_group.text)
+            output += generate_general_syscall_doc(generator, new_input_file, level + 1)
+
         # parse all of the function definitions
-        if len(elements) == 0:
+        if len(elements) == 0 and output == "":
             return "No methods."
 
         for member in elements:

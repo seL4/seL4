@@ -68,9 +68,27 @@ def gen_invocations(input_files, output_file):
     for input_file in input_files:
         methods, _, api = syscall_stub_gen.parse_xml_file(input_file, types)
         prototypes = []
-        for (interface_name, method_name, method_id, inputs, outputs, _, comment) in methods:
-            prototype = generate_prototype(interface_name, method_name, method_id, inputs, outputs, comment)
-            prototypes.append(prototype)
+
+        # figure out the prefix to use for an interface group id. This makes groups per arch,
+        # sel4_arch unique even through the interface name is the same.
+        prefix = None
+        if "arch_include" in input_file:
+            # extract the 2nd last path member
+            (path, tail) = os.path.split(os.path.dirname(input_file))
+            assert tail == "interfaces"
+            (path, prefix) = os.path.split(path)
+
+        # group the methods in each interface
+        for interface_name, methods in itertools.groupby(methods, lambda x: x[0]):
+            group_id = interface_name if prefix is None else prefix + '_' + interface_name
+            group_name = interface_name
+            output_file.write("/**\n * @defgroup %s %s\n * @{{\n */\n\n" % (group_id, group_name))
+            output_file.write("/** @} */\n")
+            for (interface_name, method_name, method_id, inputs, outputs, _, comment) in methods:
+                prototype = "/**\n * @addtogroup %s %s\n * @{{\n */\n\n" % (group_id, group_name)
+                prototype += generate_prototype(interface_name, method_name, method_id, inputs, outputs, comment)
+                prototype += "/** @} */\n"
+                prototypes.append(prototype)
 
         prototypes.sort()
 
