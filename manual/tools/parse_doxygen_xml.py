@@ -348,6 +348,9 @@ class LatexGenerator(Generator):
     def level_to_heading(self, level, name):
         return '\\' + self.level_to_header(level) + '{' + self.text_escape(name) + '}'
 
+    def gen_label(self, label):
+        return '\\label{' + label + '}\n'
+
 class MarkdownGenerator(Generator):
     """
     A class that represents the generator for Doxygen to Markdown. A child of the Generator class
@@ -495,6 +498,9 @@ Type | Name | Description
     def level_to_heading(self, level, name):
         return self.level_to_header(level) + ' ' + self.text_escape(name)
 
+    def gen_label(self, label):
+        return ''
+
 def generate_general_syscall_doc(generator, input_file_name, level):
     """
     Takes a path to a file containing doxygen-generated xml,
@@ -519,6 +525,7 @@ def generate_general_syscall_doc(generator, input_file_name, level):
             new_input_file_name = inner_group["refid"] + '.xml'
             new_input_file = os.path.join(dir_name, new_input_file_name)
             output += generator.level_to_heading(level, inner_group.text)
+            output += generator.gen_label(inner_group["refid"])
             output += generate_general_syscall_doc(generator, new_input_file, level + 1)
 
         # parse all of the function definitions
