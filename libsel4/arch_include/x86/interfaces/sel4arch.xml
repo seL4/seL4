@@ -128,8 +128,11 @@
                 Map a page into an address space.
             </brief>
             <description>
-                Takes a <texttt text="Page Directory"/> capability as an argument and installs a reference
-                  to the given <texttt text="Page"/> in the PD or PT slot corresponding to the given address.
+                Takes a <texttt text="Page Directory"/> capability, which refers to the VSpace, as an
+                argument and installs a reference
+                to the given <texttt text="Page"/> in the lowest-level unmapped paging structure
+                corresponding to the given address. If the required paging structures are not present
+                this operation will fail, returning a seL4_FailedLookup error.
             </description>
             <param dir="in" name="vroot" type="seL4_CPtr"
                 description='Capability to the VSpace which will contain the mapping'/>
