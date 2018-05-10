@@ -11,11 +11,12 @@
 \chapter{\label{ch:vspace}Address Spaces and Virtual Memory}
 
 A virtual address space in seL4 is called a VSpace. In a similar
-way to a CSpace (see \autoref{ch:cspace}), a VSpace is composed of objects 
+way to a CSpace (see \autoref{ch:cspace}), a VSpace is composed of objects
 provided by the microkernel. Unlike CSpaces, these objects for managing
-virtual memory largely correspond to those of the hardware;
-that is, a page directory pointing to page tables, which in turn map
-physical frames.  The kernel also includes \obj{ASID Pool} and
+virtual memory largely correspond to those of the hardware. Consequently,
+each architecture defines its own objects for top-level and intermediate paging structures.
+Common to every architecture is the \obj{Page}, representing a frame of physical memory.
+The kernel also includes \obj{ASID Pool} and
 \obj{ASID Control} objects for tracking the status of address spaces.
 
 These VSpace-related objects are sufficient to implement the
@@ -24,66 +25,103 @@ virtual memory address spaces. It should be noted that, as usual, the
 manipulator of a virtual memory space needs the appropriate
 capabilities to the required objects.
 
-\section{Overview}
-\ifxeightsix
-\paragraph{IA-32}
-
-IA-32 processors have a two-level page-table structure.
-The top-level page directory covers a 4\,GiB range and each page table covers a 4\,MiB range.
-Frames can be 4\,KiB or 4\,MiB.
-Before a 4\,KiB
-frame can be mapped, a page table covering the range that the frame will
-be mapped into must have been mapped, otherwise seL4 will return an
-error.
-4\,MiB frames are mapped directly into the page directory, thus,
-a page table does not need to be mapped first.
-\fi
-
-\paragraph{ARM}
-
-ARM processors \ifxeightsix{also }\fi have a two-level page-table structure.
-The top-level page directory covers a range of 4\,GiB and each page table covers a 1\,MiB range.
-Four page sizes are allowed: 4\,KiB, 64\,KiB, 1\,MiB and 16\,MiB.
-4\,KiB and 64\,KiB pages are mapped into the second-level page table.
-Before
-they can be mapped, a page table covering the range that they will be
-mapped into must have been installed.
-1\,MiB and 16\,MiB pages are installed directly into the page directory such that it is not necessary to map a page table first.
-Pages of 4\,KiB and 1\,MiB size occupy one slot in a page table and the page directory, respectively.
-Pages of 64\,KiB and 16\,MiB size occupy 16 slots in a page table and the page directory, respectively.
-
-\paragraph{RISC-V}
-
-The RISC-V architecture has a configurable number of page-table levels. Configuration settings
-make appropriate page sizes available. On RISC-V, each page-table level, including the top level, is
-the same object, a page table object.
-
 \section{Objects}
 
-\paragraph{\obj{Page Directory}}
+\subsection{Hardware Virtual Memory Objects}
 
-The \obj{Page Directory} (PD) is the top-level page table of the 
-two-level page table structure. It has a hardware-defined format, but
-conceptually contains a number of page directory entries (PDEs).
-On x86, the \obj{Page Directory} has no invocations itself, but it is used
-as an argument to several other virtual-memory related object invocations.
+Each architecture has a top-level paging structure (level 0) and a number of intermediate levels.
+In general, each level contains slots where the next level paging structure, or a frame of memory,
+can be mapped. If the previous level is not mapped, a mapping operation will fail.
+The size and type of structure at each level, and the number of bits in the virtual address resolved
+for that level, is hardware defined.
 
-On ARM, the highest level page directory (\obj{Page Directory} on aarch32 and global page directory on
-aarch64) objects possess a few invocations for the user to do cache maintenance
-operations:
+seL4 provides methods for operating on these
+hardware paging structures including mapping and cache operations. Mapping operations are invoked on
+the capability being mapped, e.g. to map a level 1 paging structure at a specific virtual address,
+the capability to the corresponding object is invoked with a map operation, where the top-level
+structure is passed as an argument.
 
-
-
+In general, the top-level structure has no invocations for mapping, but is used as an argument to
+several other virtual-memory related object invocations.
+For some architectures, the top-level page table can be invoked for cache operations.
 By making these cache related operations invocations on page directory capabilities in addition to
 the page capabilities themselves, the
 API allows users more flexible policy options. For example, a process that has delegated a page
 directory can conduct cache operations on all frames mapped from that capability without access
 to those capabilities directly.
 
-\paragraph{\obj{Page Table}} The \obj{Page Table} (PT) object forms the
-second level of the page-table structure.
-It contains a number of slots, each of which contains a page-table entry (PTE).
-\paragraph{\obj{Page}}
+The rest of this section details the paging structures for each architecture.
+
+\subsubsection{IA-32}
+
+IA-32 processors have a two-level page-table structure.
+The top-level page directory covers a 4\,GiB range and each page table covers a 4\,MiB range.
+
+\begin{tabularx}{\textwidth}{Xlll} \toprule
+\emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
+\texttt{PageDirectory} & 22---31             & 0            & \autoref{group__x86__seL4__X86__PageDirectory} \\
+\texttt{PageTable}     & 12---21             & 1            & \autoref{group__x86__seL4__X86__PageTable} \\
+\bottomrule
+\end{tabularx}
+
+\subsubsection{x64}
+
+% TODO describe
+
+\begin{tabularx}{\textwidth}{Xlll} \toprule
+\emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
+\texttt{PML4}          & 39---47             & 0            & None \\
+\texttt{PDPT}          & 30---38             & 1            & \autoref{group__x86__64__seL4__X86__PDPT} \\
+\texttt{PageDirectory} & 21---29             & 2            & \autoref{group__x86__seL4__X86__PageDirectory} \\
+\texttt{PageTable}     & 12---20             & 3            & \autoref{group__x86__seL4__X86__PageTable} \\
+\bottomrule
+\end{tabularx}
+
+\subsubsection{AArch32}
+
+ARM AArch32 processors have a two-level page-table structure.
+The top-level page directory covers a range of 4\,GiB and each page table covers a 1\,MiB range.
+
+\begin{tabularx}{\textwidth}{Xlll} \toprule
+\emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
+\texttt{PageDirectory} & 20---31             & 0            & \autoref{group__aarch32__seL4__ARM__PageDirectory} \\
+\texttt{PageTable}     & 12---19             & 1            & \autoref{group__arm__seL4__ARM__PageTable} \\
+\bottomrule
+\end{tabularx}
+
+\subsubsection{AArch64}
+
+\begin{tabularx}{\textwidth}{Xlll} \toprule
+\emph{Object}                    & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
+    \texttt{PageGlobalDirectory} & 39---47             & 0            & \autoref{group__aarch64__seL4__ARM__PageGlobalDirectory} \\
+    \texttt{PageUpperDirectory}  & 30---38             & 1            & \autoref{group__aarch64__seL4__ARM__PageUpperDirectory} \\
+\texttt{PageDirectory}           & 21---29             & 2            & \autoref{group__aarch64__seL4__ARM__PageDirectory} \\
+\texttt{PageTable}               & 12---20             & 3            & \autoref{group__arm__seL4__ARM__PageTable} \\
+\bottomrule
+\end{tabularx}
+
+
+\subsubsection{RISC-V 32-bit}
+
+\begin{tabularx}{\textwidth}{Xlll} \toprule
+\emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
+\texttt{PageTable}     & 22---31             & 0            & \autoref{group__riscv__seL4__RISCV__PageTable} \\
+\texttt{PageTable}     & 12---21             & 1            & \autoref{group__riscv__seL4__RISCV__PageTable} \\
+\bottomrule
+\end{tabularx}
+
+\subsubsection{RISC-V 64-bit}
+
+\begin{tabularx}{\textwidth}{Xlll} \toprule
+\emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
+\texttt{PageTable}     & 30---38             & 0            & \autoref{group__riscv__seL4__RISCV__PageTable} \\
+\texttt{PageTable}     & 21---29             & 1            & \autoref{group__riscv__seL4__RISCV__PageTable} \\
+\texttt{PageTable}     & 12---20             & 2            & \autoref{group__riscv__seL4__RISCV__PageTable} \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Page}
+
 A \obj{Page} object corresponds to a frame of physical memory that is used to
 implement virtual memory pages in a virtual address space.
 
@@ -93,15 +131,95 @@ the size of the \obj{Page} and must be mapped to a suitable \obj{Page Directory}
 or \obj{Page Table}. To map a page readable, the capability
 to the page
 that is being invoked must have read permissions. To map the page
-writable, the capability must have write permissions. The requested
+writeable, the capability must have write permissions. The requested
 mapping permissions are specified with an argument of type
-\texttt{seL4\_CapRights} given to the \apifunc{seL4\_ARM\_Page\_Map}{arm_page_map} \ifxeightsix or \apifunc{seL4\_x86\_Page\_Map}{x86_page_map} \fi method.
-\texttt{seL4\_CanRead} and \texttt{seL4\_CanWrite} are the only valid
-permissions on \ifxeightsix both \else the \fi ARM \ifxeightsix and IA-32 \fi architecture\ifxeightsix{s}\fi. If the capability does not have
+\texttt{seL4\_CapRights} given to the mapping function.
+If the capability does not have
 sufficient permissions to authorise the given mapping, then
-the mapping permissions are silently downgraded.
+the mapping permissions are silently downgraded. Specific mapping permissions are dependant on the
+architecture and are documented in the \autoref{sec:api_reference} for each function.
 
-\paragraph{\obj{ASID Control}}
+At minimum, each architecture defines \texttt{Map}, \texttt{Unmap},\texttt{Remap} and
+\texttt{GetAddress} methods for pages.
+Methods for page objects for each architecture can be found in the \autoref{sec:api_reference}, and
+are indexed per architecture in the table below.
+
+\begin{tabularx}{\textwidth}{Xl} \toprule
+\emph{Architectures} & \emph{Methods} \\ \midrule
+IA32, X64            & \autoref{group__x86__seL4__X86__Page} \\
+AArch32, AArch64     & \autoref{group__arm__seL4__ARM__Page} \\
+    RISC-V           & \autoref{group__riscv__seL4__RISCV__Page} \\
+\bottomrule
+\end{tabularx}
+
+Each architecture also defines a range of page sizes. In the next section we show the available page
+sizes, as well as the \emph{mapping level}, which refers to
+the level of the paging structure at which this page must be mapped.
+
+\subsubsection{AArch32 page sizes}
+
+\begin{tabularx}{\textwidth}{Xll} \toprule
+    \emph{Constant}             & \emph{Size} & \emph{Mapping level} \\ \midrule
+    \texttt{seL4\_PageBits}      & 4\,KiB      & 1                   \\
+    \texttt{seL4\_LargePageBits} & 64\,KiB     & 1                   \\
+    \texttt{seL4\_SectionBits}   & 1\,MiB      & 0                   \\
+    \texttt{seL4\_SuperSectionBits} & 16\,MiB  & 0                   \\
+    \bottomrule
+\end{tabularx}
+
+Mappings for sections and super sections consume 16 slots in the page table and page directory
+respectively.
+
+\subsubsection{AArch64 page sizes}
+
+\begin{tabularx}{\textwidth}{Xll} \toprule
+    \emph{Constant}             & \emph{Size} & \emph{Mapping level} \\ \midrule
+    \texttt{seL4\_PageBits}      & 4\,KiB      & 3                   \\
+    \texttt{seL4\_LargePageBits} & 2\,MiB     & 2                    \\
+    \texttt{seL4\_HugePageBits}  & 1\,GiB     & 1                    \\
+    \bottomrule
+\end{tabularx}
+
+\subsubsection{IA-32 page sizes}
+
+\begin{tabularx}{\textwidth}{Xll} \toprule
+    \emph{Constant}             & \emph{Size} & \emph{Mapping level} \\ \midrule
+    \texttt{seL4\_PageBits}      & 4\,KiB      & 1                   \\
+    \texttt{seL4\_LargePageBits} & 4\,MiB      & 0                   \\
+    \bottomrule
+\end{tabularx}
+
+\subsubsection{X64 page sizes}
+
+\begin{tabularx}{\textwidth}{Xll} \toprule
+    \emph{Constant}             & \emph{Size} & \emph{Mapping level} \\ \midrule
+    \texttt{seL4\_PageBits}      & 4\,KiB      & 3                   \\
+    \texttt{seL4\_LargePageBits} & 2\,MiB      & 2                   \\
+    \texttt{seL4\_HugePageBits}  & 1\,GiB      & 1                   \\
+    \bottomrule
+\end{tabularx}
+
+\subsubsection{RISC-V 32-bit page sizes}
+
+\begin{tabularx}{\textwidth}{Xll} \toprule
+    \emph{Constant}             & \emph{Size} & \emph{Mapping level} \\ \midrule
+    \texttt{seL4\_PageBits}      & 4\,KiB      & 1                   \\
+    \texttt{seL4\_LargePageBits} & 4\,MiB      & 0                   \\
+    \texttt{seL4\_HugePageBits}  & 512\,MiB    & 0                   \\
+    \bottomrule
+\end{tabularx}
+
+\subsubsection{RISC-V 64-bit page sizes}
+
+\begin{tabularx}{\textwidth}{Xll} \toprule
+    \emph{Constant}             & \emph{Size} & \emph{Mapping level} \\ \midrule
+    \texttt{seL4\_PageBits}      & 4\,KiB      & 2                   \\
+    \texttt{seL4\_LargePageBits} & 2\,MiB      & 1                   \\
+    \texttt{seL4\_HugePageBits}  & 1\,GiB      & 0                   \\
+    \bottomrule
+\end{tabularx}
+
+\subsection{ASID Control}
 
 For internal kernel book-keeping purposes, there is a fixed maximum
 number of applications the system can support.  In order to manage
