@@ -29,7 +29,7 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="vroot" type="seL4_CPtr"
+            <param dir="in" name="vspace" type="seL4_CPtr"
              description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="vaddr" type="seL4_Word"
                 description='Virtual address to map the page into.'/>
@@ -75,7 +75,7 @@
                 and installs a reference to the invoked
                 <texttt text='PageTable'/> in a specified slot in the <texttt text="PageDirectory"/>.
             </description>
-            <param dir="in" name="vroot" type="seL4_CPtr"
+            <param dir="in" name="vspace" type="seL4_CPtr"
              description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="vaddr" type="seL4_Word"
                 description='Virtual address to map the page into.'/>
@@ -134,7 +134,7 @@
                 corresponding to the given address. If the required paging structures are not present
                 this operation will fail, returning a seL4_FailedLookup error.
             </description>
-            <param dir="in" name="vroot" type="seL4_CPtr"
+            <param dir="in" name="vspace" type="seL4_CPtr"
                 description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="vaddr" type="seL4_Word"
                 description='Virtual address to map the page into.'/>
@@ -156,7 +156,7 @@
             <description>
                  Changes the permissions of an existing mapping.
             </description>
-            <param dir="in" name="vroot" type="seL4_CPtr"
+            <param dir="in" name="vspace" type="seL4_CPtr"
                 description='Capability to the VSpace which will contain the mapping'/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
@@ -211,7 +211,7 @@
             <param dir="out" name="paddr" type="seL4_Word"/>
         </method>
         <method id="X86PageMapEPT" name="MapEPT" condition="defined(CONFIG_VTX)" manual_name="Map EPT">
-            <param dir="in" name="vroot" type="seL4_X86_EPTPML4"/>
+            <param dir="in" name="vspace" type="seL4_X86_EPTPML4"/>
             <param dir="in" name="vaddr" type="seL4_Word"/>
             <param dir="in" name="rights" type="seL4_CapRights_t"/>
             <param dir="in" name="attr" type="seL4_X86_VMAttributes"/>
@@ -250,7 +250,7 @@
                 Assigns an ASID to the VSpace associated with the <texttt text="Page Directory"/> passed in as an argument.
             </description>
             <cap_param append_description='The ASID pool which is being assigned to. Must not be full. Each ASID pool can contain 1024 entries.'/>
-            <param dir="in" name="vroot" type="seL4_CPtr" description='The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.'/>
+            <param dir="in" name="vspace" type="seL4_CPtr" description='The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool.'/>
         </method>
     </interface>
 

@@ -14,7 +14,7 @@ A virtual address space in seL4 is called a VSpace. In a similar
 way to a CSpace (see \autoref{ch:cspace}), a VSpace is composed of objects
 provided by the microkernel. Unlike CSpaces, these objects for managing
 virtual memory largely correspond to those of the hardware. Consequently,
-each architecture defines its own objects for top-level and intermediate paging structures.
+each architecture defines its own objects for the top-level VSpace and further intermediate paging structures.
 Common to every architecture is the \obj{Page}, representing a frame of physical memory.
 The kernel also includes \obj{ASID Pool} and
 \obj{ASID Control} objects for tracking the status of address spaces.
@@ -30,8 +30,13 @@ capabilities to the required objects.
 \subsection{Hardware Virtual Memory Objects}
 
 Each architecture has a top-level paging structure (level 0) and a number of intermediate levels.
-In general, each level contains slots where the next level paging structure, or a frame of memory,
-can be mapped. If the previous level is not mapped, a mapping operation will fail.
+The top-level paging structure corresponds directly to the higher-level concept of a VSpace in seL4.
+For each architecture, the VSpace is realised as a different object, as determined by the
+architectural details.
+
+In general, each paging structure at each level contains slots where the next level paging structure,
+or a specifically sized frame of memory, can be mapped. If the previous level is not mapped,
+a mapping operation will fail. Developers need to manually create and map all paging structures.
 The size and type of structure at each level, and the number of bits in the virtual address resolved
 for that level, is hardware defined.
 
@@ -54,8 +59,10 @@ The rest of this section details the paging structures for each architecture.
 
 \subsubsection{IA-32}
 
-IA-32 processors have a two-level page-table structure.
-The top-level page directory covers a 4\,GiB range and each page table covers a 4\,MiB range.
+On IA-32, the VSpace is realised as a \texttt{PageDirectory}, which covers the entire 4\,GiB range
+in the 32-bit address space, and forms the top-level paging structure. Second level page-tables
+(\texttt{PageTable} objects) each cover a 4\,MiB range.
+Structures at both levels are indexed by 10 bits in the virtual address.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
@@ -66,7 +73,9 @@ The top-level page directory covers a 4\,GiB range and each page table covers a 
 
 \subsubsection{x64}
 
-% TODO describe
+On x86-64, the VSpace is realised as a \texttt{PML4}. Three further levels of paging structure are
+defined, as shown in the table below. All structures are indexed with 9 bits of the virtual
+address.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
@@ -78,6 +87,10 @@ The top-level page directory covers a 4\,GiB range and each page table covers a 
 \end{tabularx}
 
 \subsubsection{AArch32}
+
+Like IA-32, ARM AArch32 realise the VSpace as a \texttt{PageDirectory}, which covers the entire
+4\,GiB address range, and a second-level \texttt{PageTable}. The second-level structures on AArch32
+cover 1\,MiB address ranges.
 
 ARM AArch32 processors have a two-level page-table structure.
 The top-level page directory covers a range of 4\,GiB and each page table covers a 1\,MiB range.
@@ -91,6 +104,9 @@ The top-level page directory covers a range of 4\,GiB and each page table covers
 
 \subsubsection{AArch64}
 
+ARM AArch64 processors have a four-level page-table structure, where the VSpace is realised as a
+\texttt{PageGlobalDirectory}. All paging structures are index by 9 bits of the virtual address.
+
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}                    & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
     \texttt{PageGlobalDirectory} & 39---47             & 0            & \autoref{group__aarch64__seL4__ARM__PageGlobalDirectory} \\
@@ -100,8 +116,14 @@ The top-level page directory covers a range of 4\,GiB and each page table covers
 \bottomrule
 \end{tabularx}
 
+\subsection{RISC-V}
+
+RISC-V provides the same paging structure for all levels, \texttt{PageTable}. The VSpace is then
+realised as a \texttt{PageTable}.
 
 \subsubsection{RISC-V 32-bit}
+
+32-bit RISC-V \texttt{PageTables} are indexed by 10 bits of virtual address.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
@@ -111,6 +133,11 @@ The top-level page directory covers a range of 4\,GiB and each page table covers
 \end{tabularx}
 
 \subsubsection{RISC-V 64-bit}
+
+64-bit RISC-V follows the SV39 model, where \texttt{PageTables} are indexed by 9 bits of virtual address.
+Although RISC-V allows
+for multiple different numbers of paging levels, currently seL4 only supports exactly three levels
+of paging structures.
 
 \begin{tabularx}{\textwidth}{Xlll} \toprule
 \emph{Object}          & \emph{Address Bits} & \emph{Level} & \emph{Methods} \\ \midrule
@@ -127,8 +154,9 @@ implement virtual memory pages in a virtual address space.
 
 The virtual address for a \obj{Page} mapping
 must be aligned to
-the size of the \obj{Page} and must be mapped to a suitable \obj{Page Directory}
-or \obj{Page Table}. To map a page readable, the capability
+the size of the \obj{Page} and must be mapped to a suitable VSpace, and every intermediate paging
+structure required.
+To map a page readable, the capability
 to the page
 that is being invoked must have read permissions. To map the page
 writeable, the capability must have write permissions. The requested

@@ -39,13 +39,13 @@
     <interface name="seL4_RISCV_PageTable" manual_name="Page Table" cap_description="Capability to the page table to invoke.">
         <method id="RISCVPageTableMap" name="Map" manual_label="pagetable_map">
             <brief>
-                Map a page table into a higher-level page table.
+                Map a page table at a specific virtual address.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/></docref>
+                Starting from the VSpace, map the page table object at any unpopulated level for the provided virtual address. If all paging structures and mappings are present for this virtual address, return an seL4_DeleteFirst error.
             </description>
-            <param dir="in" name="pt" type="seL4_RISCV_PageTable">
-                <description>Higher-level page table to map the lower-level page table into.</description>
+            <param dir="in" name="vspace" type="seL4_RISCV_PageTable">
+                <description>VSpace to map the lower-level page table into.</description>
             </param>
             <param dir="in" name="vaddr" type="seL4_Word">
                 <description>Virtual address at which to map the page table.</description>
@@ -72,13 +72,14 @@
                 Map a page into a page table.
             </brief>
             <description>
-                Takes a <texttt text="Page Table"/> capability as an argument and installs a reference
+                Takes a VSpace, or top-level <texttt text="Page Table"/>,
+                capability as an argument and installs a reference
                 to the given <texttt text="Page"/> in the page table slot corresponding to the given address.
                 If the required paging structures are not present
                 this operation will fail, returning a seL4_FailedLookup error.
             </description>
-            <param dir="in" name="pt" type="seL4_RISCV_PageTable">
-                <description>Page table to map the page into.</description>
+            <param dir="in" name="vspace" type="seL4_RISCV_PageTable">
+                <description>VSpace to map the page into.</description>
             </param>
             <param dir="in" name="vaddr" type="seL4_Word">
                 <description>Virtual address at which to map the page.</description>
@@ -102,8 +103,8 @@
             <description>
                 Changes the permissions of an existing mapping.
             </description>
-            <param dir="in" name="pt" type="seL4_RISCV_PageTable">
-                <description>Page table to remap the page into.</description>
+            <param dir="in" name="vspace" type="seL4_RISCV_PageTable">
+                <description>VSpace to remap the page into.</description>
             </param>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
@@ -168,11 +169,11 @@
                 Assign an ASID Pool.
             </brief>
             <description>
-                Assigns an ASID to the VSpace associated with the <texttt text="Page Directory"/> passed in as an argument.
+                Assigns an ASID to the VSpace passed in as an argument.
             </description>
-            <param dir="in" name="vroot" type="seL4_CPtr">
+            <param dir="in" name="vspace" type="seL4_CPtr">
             <description>
-                The top level page table that is being assigned to an ASID pool. Must not already be assigned
+                The top-level <texttt text="PageTable" /> that is being assigned to an ASID pool. Must not already be assigned
                     to an ASID pool.
             </description>
             </param>

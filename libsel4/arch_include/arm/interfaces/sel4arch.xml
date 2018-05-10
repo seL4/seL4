@@ -22,7 +22,7 @@
                 and installs a reference to the invoked
                 <texttt text='PageTable'/> in a specified slot in the <texttt text="PageDirectory"/>.
             </description>
-            <param dir="in" name="pd" type="seL4_CPtr"
+            <param dir="in" name="vspace" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual address to map the page into."/>
@@ -63,7 +63,7 @@
                 corresponding to the given address. If the required paging structures are not present
                 this operation will fail, returning a seL4_FailedLookup error.
             </description>
-            <param dir="in" name="pd" type="seL4_CPtr"
+            <param dir="in" name="vspace" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
             <param dir="in" name="vaddr" type="seL4_Word"
             description="Virtual address to map the page into."/>
@@ -85,7 +85,7 @@
             <description>
                 Changes the permissions of an existing mapping.
             </description>
-            <param dir="in" name="pd" type="seL4_CPtr"
+            <param dir="in" name="vspace" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
                 <description>
@@ -218,10 +218,10 @@
                 Assign an ASID Pool.
             </brief>
             <description>
-                Assigns an ASID to the VSpace associated with the <texttt text="Page Directory"/> passed in as an argument.
+                Assigns an ASID to the VSpace passed in as an argument.
             </description>
-            <param dir="in" name="vroot" type="seL4_CPtr"
-            description="The page directory that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>
+            <param dir="in" name="vspace" type="seL4_CPtr"
+            description="The VSpace that is being assigned to an ASID pool. Must not already be assigned to an ASID pool."/>
         </method>
     </interface>
     <interface name="seL4_ARM_VCPU" manual_name="VCPU">
