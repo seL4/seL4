@@ -222,13 +222,13 @@ static exception_t
 invokeX86PortOut(word_t invLabel, uint16_t port, uint32_t data)
 {
     switch (invLabel) {
-    case X86IOPortIn8:
+    case X86IOPortOut8:
         out8(port, data);
         break;
-    case X86IOPortIn16:
+    case X86IOPortOut16:
         out16(port, data);
         break;
-    case X86IOPortIn32:
+    case X86IOPortOut32:
         out32(port, data);
         break;
     }
