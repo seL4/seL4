@@ -164,34 +164,32 @@ this limited resource, the microkernel provides an \obj{ASID Control}
 capability. The \obj{ASID Control} capability is used to generate a
 capability that authorises the use of a subset of available address-space identifiers.
 This newly created capability is called an
-\obj{ASID Pool}. \obj{ASID Control} only has a single method:
-\vspace{2ex}\\
-\vmfunc{
-\apifunc{seL4\_ARM\_ASIDControl\_MakePool}{arm_asidcontrol_makepool}\\
-\ifxeightsix\apifunc{seL4\_x86\_ASIDControl\_MakePool}{x86_ASID_controlmakepool}\fi
-}{
-Together with a capability to 
-\obj{Untyped Memory} as argument creates an \obj{ASID Pool}.
-}\vspace{2ex}
+\obj{ASID Pool}. \obj{ASID Control} only has a single \texttt{MakePool} method for each
+architecture, listed in the table below.
 
-The untyped
-capability given to the \apifunc{seL4\_ARM\_ASIDControl\_MakePool}{arm_asidcontrol_makepool} call must represent a 4K memory object.
-This will create an ASID pool with enough space for 1024 VSpaces.
+\begin{tabularx}{\textwidth}{Xl} \toprule
+\emph{Architectures} & \emph{Methods} \\ \midrule
+IA32, X64            & \autoref{group__x86__seL4__X86__ASIDControl} \\
+AArch32, AArch64     & \autoref{group__arm__seL4__ARM__ASIDControl} \\
+RISC-V               & \autoref{group__riscv__seL4__RISCV__ASIDControl} \\
+\bottomrule
+\end{tabularx}
 
-\paragraph{\obj{ASID Pool}}
+\subsection{ASID Pool}
 
 An \obj{ASID Pool} confers the right to create a subset of the available
 maximum applications. For a VSpace to be usable by an application, it
 must be assigned to an ASID. This is done using a capability to an
-\obj{ASID Pool}. The \obj{ASID Pool} object has a single method:
-\vspace{2ex}\\
-\vmfunc{
-\apifunc{seL4\_ARM\_ASIDPool\_Assign}{arm_asidpool_assign}\\
-\ifxeightsix\apifunc{seL4\_x86\_ASIDPool\_Assign}{x86_asidpool_assign}\fi
-}{
-Assigns an ASID to the VSpace
-associated with the \obj{Page Directory} passed in as an argument.
-}
+\obj{ASID Pool}. The \obj{ASID Pool} object has a single method, \texttt{Assign}, for each
+architecture:
+
+\begin{tabularx}{\textwidth}{Xl} \toprule
+\emph{Architectures} & \emph{Methods} \\ \midrule
+IA32, X64            & \autoref{group__x86__seL4__X86__ASIDPool} \\
+AArch32, AArch64     & \autoref{group__arm__seL4__ARM__ASIDPool} \\
+RISC-V               & \autoref{group__riscv__seL4__RISCV__ASIDPool} \\
+\bottomrule
+\end{tabularx}
 
 \section{Mapping Attributes}
 A parameter of type \texttt{seL4\_ARM\_VMAttributes} or

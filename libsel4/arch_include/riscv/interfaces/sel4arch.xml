@@ -144,7 +144,9 @@
                 Create an ASID Pool.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/>.</docref>
+                Together with a capability to <texttt text="Untyped Memory"/>, which is passed as an argument,
+                create an <texttt text="ASID Pool"/>. The untyped capability must represent a
+                4K memory object. This will create an ASID pool with enough space for 1024 VSpaces.
             </description>
             <param dir="in" name="untyped" type="seL4_Untyped"
             description="Capability to an untyped memory object that will become the pool. Must be 4K bytes."/>
@@ -163,7 +165,7 @@
                 Assign an ASID Pool.
             </brief>
             <description>
-                <docref>See <autoref label="ch:vspace"/>.</docref>
+                Assigns an ASID to the VSpace associated with the <texttt text="Page Directory"/> passed in as an argument.
             </description>
             <param dir="in" name="vroot" type="seL4_CPtr">
             <description>
