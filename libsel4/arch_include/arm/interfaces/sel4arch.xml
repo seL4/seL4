@@ -18,9 +18,9 @@
                 Map a page table into an address space.
             </brief>
             <description>
-                Takes a <texttt text='PageDirectory'/> capability as an argument,
+                Takes a VSpace capability as an argument,
                 and installs a reference to the invoked
-                <texttt text='PageTable'/> in a specified slot in the <texttt text="PageDirectory"/>.
+                <texttt text='PageTable'/> in the VSpace according to the provided virtual address.
             </description>
             <param dir="in" name="vspace" type="seL4_CPtr"
             description="Capability to the VSpace which will contain the mapping."/>
@@ -34,7 +34,7 @@
         </method>
         <method id="ARMPageTableUnmap" name="Unmap" manual_label="pagetable_unmap">
             <brief>
-                Unmap a page table from its address space and zero it out.
+                Unmap a page table from its <texttt text="Page Directory"/> and zero it out.
             </brief>
             <description>
                 Removes the reference to the invoked <texttt text="Page Table"/> from its
@@ -57,7 +57,7 @@
                 Map a page into an address space.
             </brief>
             <description>
-                Takes a <texttt text="Page Directory"/> capability, which refers to the VSpace, as an
+                Takes a VSpace capability, as an
                 argument and installs a reference
                 to the given <texttt text="Page"/> in the lowest-level unmapped paging structure
                 corresponding to the given address. If the required paging structures are not present
