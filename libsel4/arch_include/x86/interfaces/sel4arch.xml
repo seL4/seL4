@@ -49,7 +49,7 @@
         </method>
         <method id="X86PageDirectoryGetStatusBits" name="GetStatusBits" manual_name="Get Status Bits" condition="defined(CONFIG_ARCH_IA32)">
             <brief>
-                Retrieve the accessed and dirty bits of a page mapped mapped into an address space.
+                Retrieve the accessed and dirty bits of a page mapped into an address space.
             </brief>
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
