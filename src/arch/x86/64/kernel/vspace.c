@@ -1477,14 +1477,26 @@ bool_t modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vadd
     return false;
 }
 
-static exception_t
-performX64ModeMapRemapPage(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
+static exception_t updatePDPTE(asid_t asid, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
 {
-    ctSlot->cap = cap;
     *pdptSlot = pdpte;
-    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), cap_frame_cap_get_capFMappedASID(cap),
+    invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid,
                                      SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return EXCEPTION_NONE;
+}
+
+static exception_t
+performX64ModeRemap(asid_t asid, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
+{
+    return updatePDPTE(asid, pdpte, pdptSlot, vspace);
+}
+
+
+static exception_t
+performX64ModeMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
+{
+    ctSlot->cap = cap;
+    return updatePDPTE(cap_frame_cap_get_capFMappedASID(cap), pdpte, pdptSlot, vspace);
 }
 
 
@@ -1522,7 +1534,7 @@ decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, ca
 
             pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performX64ModeMapRemapPage(cap, cte, pdpte, pdptSlot, vroot);
+            return performX64ModeMap(cap, cte, pdpte, pdptSlot, vroot);
         }
 
         case X86PageRemap: {
@@ -1535,7 +1547,7 @@ decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, ca
 
             pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performX64ModeMapRemapPage(cap, cte, pdpte, pdptSlot, vroot);
+            return performX64ModeRemap(cap_frame_cap_get_capFMappedASID(cap), pdpte, pdptSlot, vroot);
         }
 
         default: {
