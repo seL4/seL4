@@ -496,7 +496,7 @@ Type | Name | Description
         return (level + 1) * '#'
 
     def level_to_heading(self, level, name):
-        return self.level_to_header(level) + ' ' + self.text_escape(name)
+        return self.level_to_header(level) + ' ' + self.text_escape(name) + '\n'
 
     def gen_label(self, label):
         return ''
