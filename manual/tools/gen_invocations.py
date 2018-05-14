@@ -82,10 +82,10 @@ def gen_invocations(input_files, output_file):
         for interface_name, methods in itertools.groupby(methods, lambda x: x[0]):
             group_id = interface_name if prefix is None else prefix + '_' + interface_name
             group_name = interface_name
-            output_file.write("/**\n * @defgroup %s %s\n * @{{\n */\n\n" % (group_id, group_name))
+            output_file.write("/**\n * @defgroup %s %s\n * @{\n */\n\n" % (group_id, group_name))
             output_file.write("/** @} */\n")
             for (interface_name, method_name, method_id, inputs, outputs, _, comment) in methods:
-                prototype = "/**\n * @addtogroup %s %s\n * @{{\n */\n\n" % (group_id, group_name)
+                prototype = "/**\n * @addtogroup %s %s\n * @{\n */\n\n" % (group_id, group_name)
                 prototype += generate_prototype(interface_name, method_name, method_id, inputs, outputs, comment)
                 prototype += "/** @} */\n"
                 prototypes.append(prototype)
