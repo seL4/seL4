@@ -526,7 +526,7 @@ Arch_decodeInvocation(
     case cap_io_port_control_cap:
         return decodeX86PortControlInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
     case cap_io_port_cap:
-        return decodeX86PortInvocation(invLabel, length, cptr, slot, cap, excaps, buffer);
+        return decodeX86PortInvocation(invLabel, length, cptr, slot, cap, excaps, call, buffer);
 #ifdef CONFIG_IOMMU
     case cap_io_space_cap:
         return decodeX86IOSpaceInvocation(invLabel, cap);

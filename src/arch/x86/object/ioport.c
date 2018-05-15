@@ -179,7 +179,7 @@ decodeX86PortControlInvocation(
 }
 
 static exception_t
-invokeX86PortIn(word_t invLabel, uint16_t port)
+invokeX86PortIn(word_t invLabel, uint16_t port, bool_t call)
 {
     uint32_t res;
     word_t len;
@@ -196,24 +196,31 @@ invokeX86PortIn(word_t invLabel, uint16_t port)
         break;
     }
 
-    setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
+    if (call) {
+        setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
 
-    if (n_msgRegisters < 1) {
-        word_t* ipcBuffer;
-        ipcBuffer = lookupIPCBuffer(true, NODE_STATE(ksCurThread));
-        if (ipcBuffer != NULL) {
-            ipcBuffer[1] = res;
-            len = 1;
+        if (n_msgRegisters < 1) {
+            word_t* ipcBuffer;
+            ipcBuffer = lookupIPCBuffer(true, NODE_STATE(ksCurThread));
+            if (ipcBuffer != NULL) {
+                ipcBuffer[1] = res;
+                len = 1;
+            } else {
+                len = 0;
+            }
         } else {
-            len = 0;
+            setRegister(NODE_STATE(ksCurThread), msgRegisters[0], res);
+            len = 1;
         }
-    } else {
-        setRegister(NODE_STATE(ksCurThread), msgRegisters[0], res);
-        len = 1;
-    }
 
-    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, len)));
+        setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
+                    wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, len)));
+    }
+    // Prevent handleInvocation from attempting to complete the 'call' with an empty
+    // message (via replyFromKernel_success_empty) by forcing the thread state to
+    // be running. This prevents our stored message we just created from being
+    // overwritten.
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Running);
 
     return EXCEPTION_NONE;
 }
@@ -248,6 +255,7 @@ decodeX86PortInvocation(
     cte_t* slot,
     cap_t cap,
     extra_caps_t excaps,
+    bool_t call,
     word_t* buffer
 )
 {
@@ -276,7 +284,7 @@ decodeX86PortInvocation(
             return ret;
         }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return invokeX86PortIn(invLabel, port);
+        return invokeX86PortIn(invLabel, port, call);
     } else if (invLabel == X86IOPortOut8 || invLabel == X86IOPortOut16 || invLabel == X86IOPortOut32) {
         /* Ensure the incoming message is long enough for the write. */
         if (length < 2) {
