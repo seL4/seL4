@@ -130,7 +130,7 @@ ackInterrupt(irq_t irq)
 }
 
 static inline uint64_t get_cycles(void)
-#ifdef CONFIG_ARCH_RISCV_RV32
+#if __riscv_xlen == 32
 {
     uint32_t nH, nL;
     __asm__ __volatile__ (
