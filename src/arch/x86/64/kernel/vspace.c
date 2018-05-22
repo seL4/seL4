@@ -1255,6 +1255,23 @@ decodeX64PageDirectoryInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
+    findVSpaceForASID_ret_t find_ret;
+
+    find_ret = findVSpaceForASID(asid);
+    if (find_ret.status != EXCEPTION_NONE) {
+        current_syscall_error.type = seL4_FailedLookup;
+        current_syscall_error.failedLookupWasSource = false;
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (find_ret.vspace_root != vspace) {
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
     pdptSlot = lookupPDPTSlot(vspace, vaddr);
     if (pdptSlot.status != EXCEPTION_NONE) {
         current_syscall_error.type = seL4_FailedLookup;
@@ -1401,6 +1418,23 @@ decodeX64PDPTInvocation(
         userError("X64PDPT: Mapping address too high.");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    findVSpaceForASID_ret_t find_ret;
+
+    find_ret = findVSpaceForASID(asid);
+    if (find_ret.status != EXCEPTION_NONE) {
+        current_syscall_error.type = seL4_FailedLookup;
+        current_syscall_error.failedLookupWasSource = false;
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (find_ret.vspace_root != vspace) {
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
 
         return EXCEPTION_SYSCALL_ERROR;
     }
