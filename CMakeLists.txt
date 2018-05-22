@@ -262,7 +262,7 @@ set(syscall_dest "gen_headers/arch/api/syscall.h")
 add_custom_command(OUTPUT ${syscall_dest}
     COMMAND "${XMLLINT_PATH}" --noout --schema "${syscall_xml_base}/syscall.xsd" "${syscall_xml_base}/syscall.xml"
     COMMAND ${CMAKE_COMMAND} -E remove -f "${syscall_dest}"
-    COMMAND "${SYSCALL_ID_GEN_PATH}" --xml "${syscall_xml_base}/syscall.xml" --kernel_header "${syscall_dest}"
+    COMMAND ${PYTHON} "${SYSCALL_ID_GEN_PATH}" --xml "${syscall_xml_base}/syscall.xml" --kernel_header "${syscall_dest}"
     DEPENDS "${XMLLINT_PATH}" "${SYSCALL_ID_GEN_PATH}" "${syscall_xml_base}/syscall.xsd" "${syscall_xml_base}/syscall.xml"
     COMMENT "Generate syscall invocations"
     VERBATIM
