@@ -394,6 +394,5 @@ schedContext_completeYieldTo(tcb_t *yielder)
     if (yielder && yielder->tcbYieldTo) {
         setConsumed(yielder->tcbYieldTo, lookupIPCBuffer(true, yielder));
         schedContext_cancelYieldTo(yielder);
-        setThreadState(yielder, ThreadState_Running);
     }
 }
