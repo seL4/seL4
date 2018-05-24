@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -22,6 +32,7 @@
 #include <arch/api/syscall.h>
 #include <arch/machine/registerset.h>
 #include <util.h>
+#include <arch/encoding.h>
 
 #define REGBYTES (CONFIG_WORD_SIZE / 8)
 
@@ -72,14 +83,14 @@ trap_entry:
   csrr  x1, sscratch
   STORE    x1, (4*REGBYTES)(t0)
 
-  csrr x1, sstatus
+  csrr x1, STATUS_REG
   STORE x1, (32*REGBYTES)(t0)
 
-  csrr s0, scause
+  csrr s0, CAUSE_REG
   STORE s0, (31*REGBYTES)(t0)
 
   /* Save exception PC */
-  csrr x1,  sepc
+  csrr x1, EPC_REG
   STORE   x1, (33*REGBYTES)(t0)
 
   la gp, __global_pointer$

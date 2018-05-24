@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -69,9 +79,9 @@ enum _register {
     t6 = 30,
 
     /* End of GP registers, the following are additional kernel-saved state. */
-    SCAUSE,
-    SSTATUS,
-    SEPC,
+    CAUSE,
+    STATUS,
+    EPC,
     NEXTPC,
 
     /* TODO: add other user-level CSRs if needed (i.e. to avoid channels) */
@@ -102,8 +112,8 @@ typedef struct user_context user_context_t;
 
 static inline void Arch_initContext(user_context_t* context)
 {
-    /* Enable supervisor interrupts (when going to user-mode) */
-    context->registers[SSTATUS] = SSTATUS_SPIE;
+    /* Enable interrupts (when going to user-mode) */
+    context->registers[STATUS] = config_set(CONFIG_SEL4_RV_MACHINE) ? MSTATUS_MPIE : SSTATUS_SPIE;
 }
 
 static inline word_t CONST
@@ -115,14 +125,14 @@ sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
 
 #define EXCEPTION_MESSAGE \
  {\
-    [seL4_UserException_FaultIP] = SEPC,\
+    [seL4_UserException_FaultIP] = EPC,\
     [seL4_UserException_SP] = SP,\
     [seL4_UserException_Number] = a7,\
  }
 
 #define SYSCALL_MESSAGE \
 {\
-    [seL4_UnknownSyscall_FaultIP] = SEPC,\
+    [seL4_UnknownSyscall_FaultIP] = EPC,\
     [seL4_UnknownSyscall_SP] = SP,\
     [seL4_UnknownSyscall_RA] = LR,\
     [seL4_UnknownSyscall_A0] = a0,\

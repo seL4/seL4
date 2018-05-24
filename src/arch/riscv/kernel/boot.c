@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -206,7 +216,7 @@ init_cpu(void)
 {
 
     /* Write trap entry address to stvec */
-    write_csr(stvec, trap_entry);
+    write_csr_env(tvec, trap_entry);
 
     activate_kernel_vspace();
 }

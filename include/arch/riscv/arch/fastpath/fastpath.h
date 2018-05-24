@@ -151,19 +151,19 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         LOAD_S "  t1, 3*%[REGSIZE](t0)  \n"
         /* get restored tp */
         "add tp, t1, x0  \n"
-        /* get sepc */
+        /* get eepc */
         LOAD_S "  t1, 34*%[REGSIZE](t0)\n"
-        "csrw sepc, t1  \n"
+        "csrw "  EEPC ", t1  \n"
 
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
         "csrw sscratch, t0\n"
 
         LOAD_S "  t1, 32*%[REGSIZE](t0) \n"
-        "csrw sstatus, t1\n"
+        "csrw " ESTATUS ", t1\n"
 
         LOAD_S "  t1, (5*%[REGSIZE])(t0) \n"
         LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
-        "sret"
+        ERET
         : /* no output */
         : "r" (cur_thread_reg),
         [REGSIZE] "i" (sizeof(word_t)),

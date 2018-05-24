@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -73,19 +83,19 @@ void VISIBLE NORETURN restore_user_context(void)
         LOAD_S "  t1, (3*%[REGSIZE])(t0)  \n"
         /* get restored tp */
         "add tp, t1, x0  \n"
-        /* get sepc */
+        /* get eepc */
         LOAD_S "  t1, (34*%[REGSIZE])(t0)\n"
-        "csrw sepc, t1  \n"
+        "csrw " EEPC ", t1  \n"
 
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
         "csrw sscratch, t0         \n"
 
         LOAD_S "  t1, (32*%[REGSIZE])(t0) \n"
-        "csrw sstatus, t1\n"
+        "csrw " ESTATUS ", t1\n"
 
         LOAD_S "  t1, (5*%[REGSIZE])(t0) \n"
         LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
-        "sret"
+        ERET
         : /* no output */
         : [REGSIZE] "i" (sizeof(word_t)),
         [cur_thread] "r" (cur_thread_reg)
