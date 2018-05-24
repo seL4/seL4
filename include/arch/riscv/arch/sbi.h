@@ -24,6 +24,16 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
+/*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
 /* This file is copied from RISC-V tools/linux project, it might change for
  * new spec releases.
  */
@@ -31,6 +41,7 @@
 #ifndef _ASM_RISCV_SBI_H
 #define _ASM_RISCV_SBI_H
 
+#include <config.h>
 #include <stdint.h>
 
 #define SBI_SET_TIMER 0
@@ -43,6 +54,23 @@
 #define SBI_REMOTE_SFENCE_VMA_ASID 7
 #define SBI_SHUTDOWN 8
 
+#ifdef CONFIG_SEL4_RV_MACHINE
+extern unsigned long pk_trap_addr;
+#define SBI_CALL(which, arg0, arg1, arg2) ({ 			\
+        unsigned long prev_mtvec = read_csr(mtvec);             \
+        write_csr(mtvec, pk_trap_addr);                         \
+	register unsigned long a0 asm ("a0") = (unsigned long)(arg0);	\
+	register unsigned long a1 asm ("a1") = (unsigned long)(arg1);	\
+	register unsigned long a2 asm ("a2") = (unsigned long)(arg2);	\
+	register unsigned long a7 asm ("a7") = (unsigned long)(which);	\
+	asm volatile ("ecall"					\
+		      : "+r" (a0)				\
+		      : "r" (a1), "r" (a2), "r" (a7)		\
+		      : "memory");				\
+        write_csr(mtvec, prev_mtvec);                           \
+	a0;							\
+})
+#else
 #define SBI_CALL(which, arg0, arg1, arg2) ({ 			\
 	register unsigned long a0 asm ("a0") = (unsigned long)(arg0);	\
 	register unsigned long a1 asm ("a1") = (unsigned long)(arg1);	\
@@ -54,6 +82,7 @@
 		      : "memory");				\
 	a0;							\
 })
+#endif
 
 /* Lazy implementations until SBI is finalized */
 #define SBI_CALL_0(which) SBI_CALL(which, 0, 0, 0)
