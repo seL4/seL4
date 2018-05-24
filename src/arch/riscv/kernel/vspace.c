@@ -238,7 +238,9 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     }
     memzero(PTE_PTR(lvl1pt_pptr), 1 << PT_SIZE_BITS);
 
-    copyGlobalMappings(PTE_PTR(lvl1pt_pptr));
+    if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
+        copyGlobalMappings(PTE_PTR(lvl1pt_pptr));
+    }
 
     lvl1pt_cap =
         cap_page_table_cap_new(
@@ -469,7 +471,9 @@ static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     vspaceCapSlot->cap = cap;
 
-    copyGlobalMappings(regionBase);
+    if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
+        copyGlobalMappings(regionBase);
+    }
 
     poolPtr->array[asid & MASK(asidLowBits)] = regionBase;
 

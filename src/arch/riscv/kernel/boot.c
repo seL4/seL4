@@ -214,11 +214,13 @@ extern char trap_entry[];
 BOOT_CODE static void
 init_cpu(void)
 {
-
     /* Write trap entry address to stvec */
     write_csr_env(tvec, trap_entry);
 
-    activate_kernel_vspace();
+    if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
+        activate_kernel_vspace();
+    }
+
 }
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
@@ -275,7 +277,9 @@ try_init_kernel(
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
 
-    map_kernel_window();
+    if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
+        map_kernel_window();
+    }
 
     /* initialise the CPU */
     init_cpu();
