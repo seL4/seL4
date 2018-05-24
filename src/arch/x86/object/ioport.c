@@ -129,15 +129,15 @@ decodeX86PortControlInvocation(
     lookupSlot_ret_t lu_ret;
     exception_t status;
 
-    if (length != 4 || excaps.excaprefs[0] == NULL) {
-        userError("IOPortControl: Truncated message.");
-        current_syscall_error.type = seL4_TruncatedMessage;
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
     if (invLabel != X86IOPortControlIssue) {
         userError("IOPortControl: Unknown operation.");
         current_syscall_error.type = seL4_IllegalOperation;
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    if (length < 4 || excaps.excaprefs[0] == NULL) {
+        userError("IOPortControl: Truncated message.");
+        current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
