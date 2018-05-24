@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -36,20 +46,33 @@
  * as the largest frame size */
 #define PADDR_LOAD 0xC0000000lu
 
+#ifdef CONFIG_SEL4_RV_MACHINE
+#define PADDR_TOP -1UL
+#else
 /* The highest valid physical address that can be indexed in the kernel window */
 #define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
+#endif
+
 /* The highest valid physical address that can be used for the kernel image. We offset by
  * PADDR_LOAD as the window for the kernel image is mapped started at PADDR_LOAD */
 #define PADDR_HIGH_TOP (-KERNEL_BASE + PADDR_LOAD)
 
-/* Translates from a physical address and a value in the kernel image */
-#define KERNEL_BASE_OFFSET (KERNEL_BASE - PADDR_LOAD)
-
 /* Convert our values into general values expected by the common code */
 #define kernelBase KERNEL_BASE
+
+#ifdef CONFIG_SEL4_RV_MACHINE
+#define BASE_OFFSET 0
+#define KERNEL_BASE_OFFSET 0
+#define PPTR_TOP PADDR_TOP
+#define PPTR_USER_TOP PADDR_TOP
+#else
 #define PPTR_TOP KERNEL_BASE
 #define PPTR_USER_TOP PPTR_BASE
 #define BASE_OFFSET (PPTR_BASE - PADDR_BASE)
+/* Translates from a physical address and a value in the kernel image */
+#define KERNEL_BASE_OFFSET (KERNEL_BASE - PADDR_LOAD)
+
+#endif /* CONFIG_SEL4_RV_MACHINE */
 
 #ifndef __ASSEMBLER__
 
