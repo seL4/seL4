@@ -8,12 +8,21 @@ The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BI
 changes are added the compatibility information should be updated.
 
 ---
-Upcoming release: BINARY COMPATIBLE
+Upcoming release: BREAKING
 
 ## Changes
 
+ * x86 IO ports now have an explicit IOPortControl capability to gate their creation. IOPort capabilities  may now only
+   be created through the IOPortControl capability that is passed to the rootserver. Additionally IOPort capabilities
+   may not be derived to have smaller ranges and the IOPortControl will not issue overlapping IOPorts
 
 ## Upgrade Notes
+
+ * A rootserver must now create IOPort capabilities from the provided IOPortControl capability. As IOPorts can not
+   have their ranges further restricted after creation it must capabilities with the final desired granularity,
+   remembering that since ranges cannot overlap you cannot issue a larger and smaller range that have any IO ports
+   in common.
+
 ---
 9.0.1 2018-04-18: BINARY COMPATIBLE
 
