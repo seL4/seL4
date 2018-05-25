@@ -81,7 +81,13 @@ reply_pop(reply_t *reply)
         assert(call_stack_get_isHead(reply->replyNext));
 
         /* give it back */
-        schedContext_donate(SC_PTR(next_ptr), tcb);
+        if (tcb->tcbSchedContext == NULL) {
+            /* only give the SC back if our SC is NULL. This prevents
+             * strange behaviour when a thread is bound to an sc while it is
+             * in the BlockedOnReply state. The semantics in this case are that the
+             * SC cannot go back to the caller if the caller has received another one */
+            schedContext_donate(SC_PTR(next_ptr), tcb);
+        }
 
         SC_PTR(next_ptr)->scReply = REPLY_PTR(prev_ptr);
         if (prev_ptr != 0) {
