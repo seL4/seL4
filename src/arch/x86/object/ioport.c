@@ -240,10 +240,6 @@ invokeX86PortOut(word_t invLabel, uint16_t port, uint32_t data)
         break;
     }
 
-    setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
-    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
-                wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 0)));
-
     return EXCEPTION_NONE;
 }
 
