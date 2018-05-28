@@ -8,7 +8,14 @@ The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BI
 changes are added the compatibility information should be updated.
 
 ---
-Upcoming release: BREAKING
+Upcoming release: BINARY COMPATIBLE
+
+## Changes
+
+
+## Upgrade Notes
+---
+10.0.0 2018-05-28: BREAKING
 
 - Final version of the kernel  which supports integration with Kbuild based projects
 - Future versions, including this one, provide a CMake based build system
