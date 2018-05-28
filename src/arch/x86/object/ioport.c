@@ -290,17 +290,26 @@ decodeX86PortInvocation(
         }
         /* Get the port the user is trying to write to. */
         uint16_t port = getSyscallArg(0, buffer) & 0xffff;
-        uint32_t data = getSyscallArg(1, buffer) & 0xffffffff;
+        seL4_Word raw_data = getSyscallArg(1, buffer);
+        /* We construct the value for data from raw_data based on the actual size of the port
+           operation. This ensures that there is no 'random' user data left over in the value
+           passed to invokeX86PortOut. Whilst invokeX86PortOut will ignore any extra data and
+           cast down to the correct word size removing the extra here is currently relied upon
+           for verification */
+        uint32_t data;
 
         switch (invLabel) {
         case X86IOPortOut8:
             ret = ensurePortOperationAllowed(cap, port, 1);
+            data = raw_data & 0xff;
             break;
         case X86IOPortOut16:
             ret = ensurePortOperationAllowed(cap, port, 2);
+            data = raw_data & 0xffff;
             break;
         case X86IOPortOut32:
             ret = ensurePortOperationAllowed(cap, port, 4);
+            data = raw_data & 0xffffffff;
             break;
         }
         if (ret != EXCEPTION_NONE) {
