@@ -67,6 +67,17 @@ static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
     write_csr(sptbr, satp.words[0]);
 }
 
+static inline void
+arch_clean_invalidate_caches(void)
+{
+    asm volatile ("fence.i" ::: "memory");
+
+    /*
+     * RISC-V does not have instructions to flush data caches
+     * It does leave this to the platform implementation (i.e. cache controller)
+     */
+}
+
 static inline void Arch_finaliseInterrupt(void)
 {
 }

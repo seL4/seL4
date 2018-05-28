@@ -10,6 +10,17 @@
  * @TAG(DATA61_GPL)
  */
 
+
+/*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
 /*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
@@ -550,6 +561,94 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
                         &unused4, &unused5);
 }
 #endif
+
+#ifdef CONFIG_ENABLE_BENCHMARKS
+/* set the log index back to 0 */
+LIBSEL4_INLINE_FUNC seL4_Error
+seL4_BenchmarkResetLog(void)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+
+    seL4_Word ret;
+    riscv_sys_send_recv(seL4_SysBenchmarkResetLog, 0, &ret, 0, &unused0, &unused1, &unused2, &unused3, &unused4);
+
+    return (seL4_Error) ret;
+}
+
+LIBSEL4_INLINE_FUNC seL4_Word
+seL4_BenchmarkFinalizeLog(void)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word index_ret;
+    riscv_sys_send_recv(seL4_SysBenchmarkFinalizeLog, 0, &index_ret, 0, &unused0, &unused1, &unused2, &unused3, &unused4);
+
+    return (seL4_Word)index_ret;
+}
+
+LIBSEL4_INLINE_FUNC seL4_Error
+seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+
+    riscv_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2, &unused3, &unused4);
+
+    return (seL4_Error) frame_cptr;
+}
+
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkNullSyscall(void)
+{
+    riscv_sys_null(seL4_SysBenchmarkNullSyscall);
+    asm volatile("" ::: "memory");
+}
+
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkFlushCaches(void)
+{
+    riscv_sys_null(seL4_SysBenchmarkFlushCaches);
+    asm volatile("" ::: "memory");
+}
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    riscv_sys_send_recv(seL4_SysBenchmarkGetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
+}
+
+LIBSEL4_INLINE_FUNC void
+seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
+{
+    seL4_Word unused0 = 0;
+    seL4_Word unused1 = 0;
+    seL4_Word unused2 = 0;
+    seL4_Word unused3 = 0;
+    seL4_Word unused4 = 0;
+    seL4_Word unused5 = 0;
+
+    riscv_sys_send_recv(seL4_SysBenchmarkResetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
+}
+#endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
+#endif /* CONFIG_ENABLE_BENCHMARKS */
 
 #ifdef SEL4_DANGEROUS_CODE_INJECTION_KERNEL
 static inline void
