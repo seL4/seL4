@@ -15,6 +15,7 @@ Upcoming release: BREAKING
  * x86 IO ports now have an explicit IOPortControl capability to gate their creation. IOPort capabilities  may now only
    be created through the IOPortControl capability that is passed to the rootserver. Additionally IOPort capabilities
    may not be derived to have smaller ranges and the IOPortControl will not issue overlapping IOPorts
+ * 32-bit support added for the initial prototype RISC-V architecture port
 
 ## Upgrade Notes
 
