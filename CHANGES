@@ -25,7 +25,7 @@ For more information see https://docs.sel4.systems/Developing/Building.
 ## Upgrade Notes
 
  * A rootserver must now create IOPort capabilities from the provided IOPortControl capability. As IOPorts can not
-   have their ranges further restricted after creation it must capabilities with the final desired granularity,
+   have their ranges further restricted after creation it must create capabilities with the final desired granularity,
    remembering that since ranges cannot overlap you cannot issue a larger and smaller range that have any IO ports
    in common.
 
