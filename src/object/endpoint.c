@@ -119,7 +119,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking, cap_t replyCap)
         replyPtr = REPLY_PTR(cap_reply_cap_get_capReplyPtr(replyCap));
         if (unlikely(replyPtr->replyTCB != NULL && replyPtr->replyTCB != thread)) {
             userError("Reply object already has unexecuted reply!");
-            reply_clear(replyPtr);
+            cancelIPC(replyPtr->replyTCB);
         }
     }
 
