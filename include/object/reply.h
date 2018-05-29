@@ -36,8 +36,5 @@ void reply_pop(reply_t *reply);
 void reply_remove(reply_t *reply);
 /* Remove a specific tcb, and the reply it is blocking on, from the call stack */
 void reply_remove_tcb(tcb_t *tcb);
-/* clear a reply object, either for deletion or reuse. Will not be
- * linked to a tcb or in a call stack after this */
-void reply_clear(reply_t *reply);
 
 #endif /* __OBJECT_REPLY_H */

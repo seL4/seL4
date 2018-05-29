@@ -167,19 +167,3 @@ void reply_remove_tcb(tcb_t *tcb)
     reply->replyNext = call_stack_new(0, false);
     reply_unlink(reply);
 }
-
-void reply_clear(reply_t *reply)
-{
-    assert(reply && reply->replyTCB);
-
-    switch (thread_state_get_tsType(reply->replyTCB->tcbState)) {
-    case ThreadState_BlockedOnReply:
-        reply_remove(reply);
-        break;
-    case ThreadState_BlockedOnReceive:
-        reply_unlink(reply);
-        break;
-    default:
-        fail("Invalid state of replyTCB");
-    }
-}
