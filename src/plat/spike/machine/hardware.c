@@ -29,6 +29,7 @@
 #include <types.h>
 #include <machine/io.h>
 #include <kernel/vspace.h>
+#include <model/statedata.h>
 #include <arch/machine.h>
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
@@ -139,30 +140,26 @@ ackInterrupt(irq_t irq)
     }
 }
 
-static inline uint64_t get_cycles(void)
-#if __riscv_xlen == 32
+static inline uint64_t read_current_timer(void)
 {
-    uint32_t nH, nL;
-    __asm__ __volatile__ (
-        "rdtimeh %0\n"
-        "rdtime  %1\n"
-        : "=r" (nH), "=r" (nL));
-    return ((uint64_t) ((uint64_t) nH << 32)) | (nL);
-}
-#else
-{
-    uint64_t n;
-    __asm__ __volatile__ (
-        "rdtime %0"
-        : "=r" (n));
-    return n;
-}
-#endif
+    UNUSED unsigned long prev_trap_address;
+    uint64_t time = 0;
 
-static inline int read_current_timer(unsigned long *timer_val)
-{
-    *timer_val = get_cycles();
-    return 0;
+    if (config_set(CONFIG_SEL4_RV_MACHINE)) {
+        prev_trap_address = read_csr(mtvec);
+        /* Set mtvec to riscv-pk trap address */
+        write_csr(mtvec, pk_trap_addr);
+    }
+
+    /* read_current_timer reads time[h] CSR, which in the case of Spike traps and emulated by riscv-pk */
+    time = get_time();
+
+    if (config_set(CONFIG_SEL4_RV_MACHINE)) {
+        /* Write back sel4 trap address to mtvec */
+        write_csr(mtvec, prev_trap_address);
+    }
+
+    return time;
 }
 
 void
@@ -177,9 +174,9 @@ resetTimer(void)
     // may set a timeout in the past, resulting in it never getting triggered
     do {
         /* This should be set properly relying on the frequency (on real HW) */
-        target = get_cycles() + 0x1fff;
+        target = read_current_timer() + 0x1fff;
         sbi_set_timer(target);
-    } while (get_cycles() > target);
+    } while (read_current_timer() > target);
 }
 
 /**
@@ -188,7 +185,7 @@ resetTimer(void)
 BOOT_CODE void
 initTimer(void)
 {
-    sbi_set_timer(get_cycles() + 0xfffff);
+    sbi_set_timer(read_current_timer() + 0xfffff);
 }
 
 void plat_cleanL2Range(paddr_t start, paddr_t end)
