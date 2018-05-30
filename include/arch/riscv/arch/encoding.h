@@ -304,6 +304,9 @@
 #define rdcycle() read_csr(cycle)
 #define rdinstret() read_csr(instret)
 
+#define get_cycles() (uint64_t) (rdcycle() | (config_set(CONFIG_ARCH_RISCV_RV32)? (uint64_t) (read_csr(cycleh) << 32) : 0))
+#define get_time() (uint64_t) (rdtime() | (config_set(CONFIG_ARCH_RISCV_RV32)? (uint64_t) (read_csr(timeh) << 32) : 0))
+
 #endif
 
 #endif
