@@ -214,13 +214,15 @@ extern char trap_entry[];
 BOOT_CODE static void
 init_cpu(void)
 {
-    /* Write trap entry address to stvec */
-    write_csr_env(tvec, trap_entry);
-
     if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
         activate_kernel_vspace();
+    } else {
+        /* Save the trap address entry of riscv-pk before overwritting it */
+        pk_trap_addr = read_csr(mtvec);
     }
 
+    /* Write trap entry address to stvec */
+    write_csr_env(tvec, trap_entry);
 }
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
