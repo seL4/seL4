@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -22,6 +32,7 @@
 #include <plat/machine/devices.h>
 #include <arch/machine.h>
 #include <arch/sbi.h>
+#include <arch/encoding.h>
 #include <arch/kernel/traps.h>
 
 static inline void print_format_cause(int cause_num)
@@ -68,28 +79,28 @@ static inline void print_format_cause(int cause_num)
 
 void handle_exception(void)
 {
-    word_t scause = read_csr(scause);
+    word_t cause = read_csr_env(cause);
 
     /* handleVMFaultEvent
      * */
-    switch (scause) {
+    switch (cause) {
     case RISCVInstructionAccessFault:
     case RISCVLoadAccessFault:
     case RISCVStoreAccessFault:
     case RISCVInstructionPageFault:
     case RISCVLoadPageFault:
     case RISCVStorePageFault:
-        handleVMFaultEvent(scause);
+        handleVMFaultEvent(cause);
         break;
     case RISCVInstructionIllegal:
         handleUserLevelFault(0, 0);
 
         break;
     default:
-        print_format_cause(read_csr(scause));
-        printf("sepc = %p\n", (void*)(word_t)read_csr(sepc));
-        printf("sbadaddr = %p\n", (void*)(word_t)read_csr(sbadaddr));
-        printf("sstatus = %p\n", (void*)(word_t)read_csr(sstatus));
+        print_format_cause(read_csr_env(cause));
+        printf("epc = %p\n", (void*)(word_t)read_csr_env(epc));
+        printf("badaddr = %p\n", (void*)(word_t)read_csr_env(badaddr));
+        printf("status = %p\n", (void*)(word_t)read_csr_env(status));
         printf("Halt!\n");
 
         printf("Register Context Dump \n");

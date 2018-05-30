@@ -24,11 +24,23 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
+/*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
 /* This file is copied from RISC-V tools, it might change for
  * new spec releases.
  */
 #ifndef RISCV_CSR_ENCODING_H
 #define RISCV_CSR_ENCODING_H
+
+#include <config.h>
 
 #define MSTATUS_UIE         0x00000001
 #define MSTATUS_SIE         0x00000002
@@ -215,9 +227,59 @@
 #define RISCV_PGSHIFT 12
 #define RISCV_PGSIZE (1 << RISCV_PGSHIFT)
 
+/* Similar to ecall instruction (environment call), pre-fix registers according to
+ * the RISC-V mode seL4 is working in (Machine or Supervisor)
+ */
+#ifdef CONFIG_SEL4_RV_MACHINE
+#define PREFIX_ENV(token) m ## token
+#define ENV_STRING "m"
+#else
+#define PREFIX_ENV(token) s ## token
+#define ENV_STRING "s"
+#endif
+
+#define EPC_REG     PREFIX_ENV(epc)
+#define TVEC_REG    PREFIX_ENV(tvec)
+#define STATUS_REG  PREFIX_ENV(status)
+#define SCRATCH_REG PREFIX_ENV(scratch)
+#define BADADDR_REG PREFIX_ENV(badaddr)
+#define CAUSE_REG   PREFIX_ENV(cause)
+#define IE_REG      PREFIX_ENV(ie)
+#define IP_REG      PREFIX_ENV(ip)
+#define RET_INSN    PREFIX_ENV(ret)
+
 #ifndef __ASSEMBLER__
 
 #ifdef __GNUC__
+
+#define EEPC      STRINGIFY(EPC_REG)
+#define ECAUSE    STRINGIFY(CAUSE_REG)
+#define EBADADDR  STRINGIFY(BADADDR_REG)
+#define ESTATUS   STRINGIFY(STATUS_REG)
+#define ESCRATCH  STRINGIFY(SCRATCH_REG)
+#define ETVEC     STRINGIFY(TVEC_REG)
+#define EIE       STRINGIFY(IE_REG)
+#define EIP       STRINGIFY(IP_REG)
+#define ERET      STRINGIFY(RET_INSN)
+
+#define read_csr_env(reg) ({ unsigned long __tmp; \
+  asm volatile ("csrr %0, " ENV_STRING#reg : "=r"(__tmp)); \
+  __tmp; })
+
+#define clear_csr_env(reg, bit) ({ unsigned long __tmp; \
+  asm volatile ("csrrc %0, " ENV_STRING#reg ", %1" : "=r"(__tmp) : "rK"(bit)); \
+  __tmp; })
+
+#define write_csr_env(reg, val) ({ \
+  asm volatile ("csrw " ENV_STRING#reg ", %0" :: "rK"(val)); })
+
+#define swap_csr_env(reg, val) ({ unsigned long __tmp; \
+  asm volatile ("csrrw %0, " ENV_STRING#reg ", %1" : "=r"(__tmp) : "rK"(val)); \
+  __tmp; })
+
+#define set_csr_env(reg, bit) ({ unsigned long __tmp; \
+  asm volatile ("csrrs %0, " ENV_STRING#reg ", %1" : "=r"(__tmp) : "rK"(bit)); \
+  __tmp; })
 
 #define read_csr(reg) ({ unsigned long __tmp; \
   asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
@@ -241,6 +303,9 @@
 #define rdtime() read_csr(time)
 #define rdcycle() read_csr(cycle)
 #define rdinstret() read_csr(instret)
+
+#define get_cycles() (uint64_t) (rdcycle() | (config_set(CONFIG_ARCH_RISCV_RV32)? (uint64_t) (read_csr(cycleh) << 32) : 0))
+#define get_time() (uint64_t) (rdtime() | (config_set(CONFIG_ARCH_RISCV_RV32)? (uint64_t) (read_csr(timeh) << 32) : 0))
 
 #endif
 

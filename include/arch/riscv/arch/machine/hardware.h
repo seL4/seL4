@@ -44,17 +44,20 @@
 #define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
 /*
  * These values are defined in RISC-V priv-1.10 manual, they represent the
- * exception codes saved in scause register (by the hardware) on traps.
+ * exception codes saved in cause register (by the hardware) on traps.
  */
 enum vm_fault_type {
     RISCVInstructionMisaligned = 0,
     RISCVInstructionAccessFault = 1,
     RISCVInstructionIllegal = 2,
     RISCVBreakpoint = 3,
+    RISCVLoadAddressMisaligned = 4,
     RISCVLoadAccessFault = 5,
     RISCVAddressMisaligned = 6,
     RISCVStoreAccessFault = 7,
     RISCVEnvCall = 8,
+    RISCVSEnvCall = 9,
+    RISCVMEnvCall = 11,
     RISCVInstructionPageFault = 12,
     RISCVLoadPageFault = 13,
     RISCVStorePageFault = 15

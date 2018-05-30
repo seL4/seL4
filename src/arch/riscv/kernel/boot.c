@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -204,11 +214,15 @@ extern char trap_entry[];
 BOOT_CODE static void
 init_cpu(void)
 {
+    if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
+        activate_kernel_vspace();
+    } else {
+        /* Save the trap address entry of riscv-pk before overwritting it */
+        pk_trap_addr = read_csr(mtvec);
+    }
 
     /* Write trap entry address to stvec */
-    write_csr(stvec, trap_entry);
-
-    activate_kernel_vspace();
+    write_csr_env(tvec, trap_entry);
 }
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
@@ -265,7 +279,9 @@ try_init_kernel(
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
 
-    map_kernel_window();
+    if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
+        map_kernel_window();
+    }
 
     /* initialise the CPU */
     init_cpu();

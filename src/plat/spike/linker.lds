@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -22,16 +32,29 @@ ENTRY(_start)
 #include <config.h>
 
 #if CONFIG_PT_LEVELS == 2
+#ifdef CONFIG_SEL4_RV_MACHINE
+KERNEL_BASE  = 0xC0000000;
+#else
 KERNEL_BASE  = 0xFFC00000;
+#endif
 #elif CONFIG_PT_LEVELS == 3
+#ifdef CONFIG_SEL4_RV_MACHINE
+KERNEL_BASE  = 0x00000000C0000000;
+#else
 KERNEL_BASE  = 0xFFFFFFFF80000000;
+#endif
 #elif CONFIG_PT_LEVELS == 4
 #error PT_LEVELS == 4 is not supported yet
 #endif
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 PADDR_LOAD     = 0x00000000C0000000;
+
+#ifdef CONFIG_SEL4_RV_MACHINE
+KERNEL_OFFSET = 0;
+#else
 KERNEL_OFFSET = KERNEL_BASE - PADDR_LOAD;
+#endif
 
 SECTIONS
 {

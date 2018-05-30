@@ -9,6 +9,16 @@
  *
  * @TAG(DATA61_GPL)
  */
+
+/*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
 #ifndef __PLAT_MODE_MACHINE_HARDWARE_H
 #define __PLAT_MODE_MACHINE_HARDWARE_H
 
@@ -23,7 +33,11 @@
 /* We steal the top 2 gb entries for the kernel, this means that between PPTR_BASE and
  * KERNEL_BASE there are 254 entries remaining, which represents how much physical memory
  * can be used */
+#ifdef CONFIG_SEL4_RV_MACHINE
+#define KERNEL_BASE      0x00000000C0000000lu
+#else
 #define KERNEL_BASE      0xFFFFFFFF80000000lu
+#endif
 #else
 #error Only PT_LEVELS == 3 is supported
 #endif

@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -37,8 +47,13 @@ Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, NEXTPC, (word_t)idleThreadStart);
 
-    /* Enable interrupts and keep working in supervisor mode */
-    setRegister(tcb, SSTATUS, (word_t) SSTATUS_SPP | SSTATUS_SPIE | SSTATUS_SIE);
+    /* Enable interrupts and keep working in X privilege mode */
+    if (config_set(CONFIG_SEL4_RV_MACHINE)) {
+        setRegister(tcb, STATUS, (word_t) MSTATUS_MPP | MSTATUS_MPIE | MSTATUS_MIE);
+    } else {
+        setRegister(tcb, STATUS, (word_t) SSTATUS_SPP | SSTATUS_SPIE | SSTATUS_SIE);
+    }
+
     setRegister(tcb, SP, (word_t)kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS));
 }
 

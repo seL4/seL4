@@ -11,6 +11,16 @@
  */
 
 /*
+ * Copyright (c) 2018, Hesham Almatary <Hesham.Almatary@cl.cam.ac.uk>
+ * All rights reserved.
+ *
+ * This software was was developed in part by SRI International and the University of
+ * Cambridge Computer Laboratory (Department of Computer Science and
+ * Technology) under DARPA contract HR0011-18-C-0016 ("ECATS"), as part of the
+ * DARPA SSITH research programme.
+ */
+
+/*
  *
  * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
@@ -228,7 +238,9 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     }
     memzero(PTE_PTR(lvl1pt_pptr), 1 << PT_SIZE_BITS);
 
-    copyGlobalMappings(PTE_PTR(lvl1pt_pptr));
+    if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
+        copyGlobalMappings(PTE_PTR(lvl1pt_pptr));
+    }
 
     lvl1pt_cap =
         cap_page_table_cap_new(
@@ -397,9 +409,7 @@ lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
 exception_t
 handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
-    uint64_t addr;
-
-    addr = read_csr(sbadaddr);
+    word_t addr = read_csr_env(badaddr);
 
     switch (vm_faultType) {
     case RISCVLoadPageFault:
@@ -412,7 +422,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         return EXCEPTION_FAULT;
     case RISCVInstructionPageFault:
     case RISCVInstructionAccessFault:
-        setRegister(thread, NEXTPC, getRegister(thread, SEPC));
+        setRegister(thread, NEXTPC, getRegister(thread, EPC));
         current_fault = seL4_Fault_VMFault_new(addr, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
 
@@ -461,7 +471,9 @@ static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, 
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     vspaceCapSlot->cap = cap;
 
-    copyGlobalMappings(regionBase);
+    if (!config_set(CONFIG_SEL4_RV_MACHINE)) {
+        copyGlobalMappings(regionBase);
+    }
 
     poolPtr->array[asid & MASK(asidLowBits)] = regionBase;
 

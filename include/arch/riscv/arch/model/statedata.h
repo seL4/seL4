@@ -39,4 +39,8 @@ extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
  * each of which is 4KiB, PTEs are of word_t size
   */
 extern pte_t kernel_pageTables[CONFIG_PT_LEVELS][BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
+
+/* Address of pk trap address */
+extern word_t pk_trap_addr;
+
 #endif
