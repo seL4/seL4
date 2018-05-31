@@ -438,87 +438,127 @@ vcpu_hw_write_reg(word_t reg_index, word_t reg)
 {
     switch (reg_index) {
     case seL4_VCPUReg_SCTLR:
-        return setSCTLR(reg);
+        setSCTLR(reg);
+        break;
     case seL4_VCPUReg_ACTLR:
-        return setACTLR(reg);
+        setACTLR(reg);
+        break;
     case seL4_VCPUReg_TTBCR:
-        return writeTTBCR(reg);
+        writeTTBCR(reg);
+        break;
     case seL4_VCPUReg_TTBR0:
-        return writeTTBR0(reg);
+        writeTTBR0(reg);
+        break;
     case seL4_VCPUReg_TTBR1:
-        return writeTTBR1(reg);
+        writeTTBR1(reg);
+        break;
     case seL4_VCPUReg_DACR:
-        return writeDACR(reg);
+        writeDACR(reg);
+        break;
     case seL4_VCPUReg_DFSR:
-        return setDFSR(reg);
+        setDFSR(reg);
+        break;
     case seL4_VCPUReg_IFSR:
-        return setIFSR(reg);
+        setIFSR(reg);
+        break;
     case seL4_VCPUReg_ADFSR:
-        return setADFSR(reg);
+        setADFSR(reg);
+        break;
     case seL4_VCPUReg_AIFSR:
-        return setAIFSR(reg);
+        setAIFSR(reg);
+        break;
     case seL4_VCPUReg_DFAR:
-        return setDFAR(reg);
+        setDFAR(reg);
+        break;
     case seL4_VCPUReg_IFAR:
-        return setIFAR(reg);
+        setIFAR(reg);
+        break;
     case seL4_VCPUReg_PRRR:
-        return setPRRR(reg);
+        setPRRR(reg);
+        break;
     case seL4_VCPUReg_NMRR:
-        return setNMRR(reg);
+        setNMRR(reg);
+        break;
     case seL4_VCPUReg_CIDR:
-        return setCIDR(reg);
+        setCIDR(reg);
+        break;
     case seL4_VCPUReg_TPIDRPRW:
-        return writeTPIDRPRW(reg);
+        writeTPIDRPRW(reg);
+        break;
     case seL4_VCPUReg_TPIDRURO:
-        return writeTPIDRURO(reg);
+        writeTPIDRURO(reg);
+        break;
     case seL4_VCPUReg_TPIDRURW:
-        return writeTPIDRURW(reg);
+        writeTPIDRURW(reg);
+        break;
     case seL4_VCPUReg_FPEXC:
-        return;
+        break;
     case seL4_VCPUReg_CNTV_TVAL:
-        return set_cntv_tval(reg);
+        set_cntv_tval(reg);
+        break;
     case seL4_VCPUReg_CNTV_CTL:
-        return set_cntv_ctl(reg);
+        set_cntv_ctl(reg);
+        break;
     case seL4_VCPUReg_LRsvc:
-        return set_lr_svc(reg);
+        set_lr_svc(reg);
+        break;
     case seL4_VCPUReg_SPsvc:
-        return set_sp_svc(reg);
+        set_sp_svc(reg);
+        break;
     case seL4_VCPUReg_LRabt:
-        return set_lr_abt(reg);
+        set_lr_abt(reg);
+        break;
     case seL4_VCPUReg_SPabt:
-        return set_sp_abt(reg);
+        set_sp_abt(reg);
+        break;
     case seL4_VCPUReg_LRund:
-        return set_lr_und(reg);
+        set_lr_und(reg);
+        break;
     case seL4_VCPUReg_SPund:
-        return set_sp_und(reg);
+        set_sp_und(reg);
+        break;
     case seL4_VCPUReg_LRirq:
-        return set_lr_irq(reg);
+        set_lr_irq(reg);
+        break;
     case seL4_VCPUReg_SPirq:
-        return set_sp_irq(reg);
+        set_sp_irq(reg);
+        break;
     case seL4_VCPUReg_LRfiq:
-        return set_lr_fiq(reg);
+        set_lr_fiq(reg);
+        break;
     case seL4_VCPUReg_SPfiq:
-        return set_sp_fiq(reg);
+        set_sp_fiq(reg);
+        break;
     case seL4_VCPUReg_R8fiq:
-        return set_r8_fiq(reg);
+        set_r8_fiq(reg);
+        break;
     case seL4_VCPUReg_R9fiq:
-        return set_r9_fiq(reg);
+        set_r9_fiq(reg);
+        break;
     case seL4_VCPUReg_R10fiq:
-        return set_r10_fiq(reg);
+        set_r10_fiq(reg);
+        break;
     case seL4_VCPUReg_R11fiq:
-        return set_r11_fiq(reg);
+        set_r11_fiq(reg);
+        break;
     case seL4_VCPUReg_R12fiq:
-        return set_r12_fiq(reg);
+        set_r12_fiq(reg);
+        break;
     case seL4_VCPUReg_SPSRsvc:
-        return set_spsr_svc(reg);
+        set_spsr_svc(reg);
+        break;
     case seL4_VCPUReg_SPSRabt:
-        return set_spsr_abt(reg);
+        set_spsr_abt(reg);
+        break;
     case seL4_VCPUReg_SPSRund:
-        return set_spsr_und(reg);
+        set_spsr_und(reg);
+        break;
     case seL4_VCPUReg_SPSRirq:
-        return set_spsr_irq(reg);
+        set_spsr_irq(reg);
+        break;
     case seL4_VCPUReg_SPSRfiq:
-        return set_spsr_fiq(reg);
+        set_spsr_fiq(reg);
+        break;
     default:
         fail("ARM/HYP: Invalid register index");
     }
