@@ -10,11 +10,17 @@
  * @TAG(DATA61_GPL)
  */
 
+#include <config.h>
+
 ENTRY(_start)
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
-KERNEL_BASE   = 0xe0000000;
-PHYS_BASE     = 0x00000000;
+PHYS_BASE   = 0x01000000;
+#if defined(CONFIG_ARCH_AARCH32)
+KERNEL_BASE = 0xe0000000;
+#elif defined(CONFIG_ARCH_AARCH64)
+KERNEL_BASE = 0xffffff8000000000;
+#endif
 KERNEL_OFFSET = KERNEL_BASE - PHYS_BASE;
 
 SECTIONS

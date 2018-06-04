@@ -18,10 +18,10 @@
 #include <linker.h>
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
+#include <plat_mode/machine/hardware.h>
 #include <machine/io.h>
 
-#define physBase          0x00000000
-#define kernelBase        0xe0000000
+#define physBase          0x01000000
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {
@@ -52,7 +52,7 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
 const p_region_t BOOT_RODATA avail_p_regs[] = {
     /* RPI has 1 GiB but it is split between the videocard and the processor.
         Currently the processor gets 128MiB as according to the current uboot */
-    { /* .start = */ 0x00000000, /* .end = */ 0x8000000 }
+    { .start = 0x01000000, .end = 0x08000000 }
 };
 
 const p_region_t BOOT_RODATA dev_p_regs[] = {
