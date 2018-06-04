@@ -24,11 +24,6 @@
 #define SYSTEM_TIMER_BUSADDR        0x7E003000
 #define ARM_TIMER_BUSADDR           0x7E00B000
 
-#define UART_PPTR                   0xFFF01000
-#define INTC_PPTR                   0xFFF02000
-#define TIMER_PPTR                  0xFFF03000
-#define ARM_LOCAL_PPTR              0xFFF04000
-
 #define ARM_LOCAL_PADDR             0x40000000
 
 /* We convert from the VC CPU BUS addresses to ARM Physical addresses due to the extra
