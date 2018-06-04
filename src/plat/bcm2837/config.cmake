@@ -17,6 +17,9 @@ if(KernelPlatformRpi3)
     set(KernelArchArmV8a ON)
     config_set(KernelPlatform PLAT "bcm2837")
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
+    if(KernelSel4ArchAarch64)
+        set(KernelHaveFPU ON)
+    endif()
 endif()
 
 add_sources(

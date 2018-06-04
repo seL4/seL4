@@ -34,7 +34,7 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
     "allwinnera20;KernelPlatformAllwinnerA20;PLAT_ALLWINNERA20;KernelSel4ArchAarch32"
     "tk1;KernelPlatformTK1;PLAT_TK1;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
     "hikey;KernelPlatformHikey;PLAT_HIKEY;KernelArchARM"
-    "rpi3;KernelPlatformRpi3;PLAT_BCM2837;KernelSel4ArchAarch32"
+    "rpi3;KernelPlatformRpi3;PLAT_BCM2837;KernelArchARM"
     "tx1;KernelPlatformTx1;PLAT_TX1;KernelSel4ArchAarch64"
 )
 
