@@ -15,7 +15,7 @@
 
 /* These devices are used by the seL4 kernel. */
 #define BUS_ADDR_OFFSET             0x7E000000
-#define PADDDR_OFFSET               0x3F000000
+#define PADDR_OFFSET                0x3F000000
 
 #define INTC_BUSADDR                0x7E00B000
 #define UART_BUSADDR                0x7E215000
@@ -28,10 +28,10 @@
 
 /* We convert from the VC CPU BUS addresses to ARM Physical addresses due to the extra
     VC (Video controller) MMU */
-#define INTC_PADDR                  (INTC_BUSADDR-BUS_ADDR_OFFSET+PADDDR_OFFSET)
-#define UART_PADDR                  (UART_BUSADDR-BUS_ADDR_OFFSET+PADDDR_OFFSET)
-#define SDHC_PADDR                  (SDHC_BUSADDR-BUS_ADDR_OFFSET+PADDDR_OFFSET)
-#define USB2_PADDR                  (USB2_BUSADDR-BUS_ADDR_OFFSET+PADDDR_OFFSET)
-#define TIMER_PADDR                 (ARM_TIMER_BUSADDR-BUS_ADDR_OFFSET+PADDDR_OFFSET)
+#define INTC_PADDR                  (INTC_BUSADDR-BUS_ADDR_OFFSET+PADDR_OFFSET)
+#define UART_PADDR                  (UART_BUSADDR-BUS_ADDR_OFFSET+PADDR_OFFSET)
+#define SDHC_PADDR                  (SDHC_BUSADDR-BUS_ADDR_OFFSET+PADDR_OFFSET)
+#define USB2_PADDR                  (USB2_BUSADDR-BUS_ADDR_OFFSET+PADDR_OFFSET)
+#define TIMER_PADDR                 (ARM_TIMER_BUSADDR-BUS_ADDR_OFFSET+PADDR_OFFSET)
 
 #endif /* !__PLAT_MACHINE_DEVICES_H */
