@@ -96,7 +96,7 @@ config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
 config_set(KernelArchArmV6 ARCH_ARM_V6 "${KernelArchArmV6}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
-config_set(KernelArchArmV78a ARCH_ARM_V8A "${KernelArchArmV8a}")
+config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 
 set(KernelArmCPU "" CACHE INTERNAL "")
 set(KernelArmArmV "" CACHE INTERNAL "")
