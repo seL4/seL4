@@ -46,7 +46,7 @@ getActiveIRQ(void)
     }
 
     /* Get IRQ number */
-    irq = (31 - clzl(pending));
+    irq = (wordBits - 1 - clzl(pending));
     if (irq != INTERRUPT_CORE_GPU) {
         return irq;
     }
@@ -58,18 +58,18 @@ getActiveIRQ(void)
     pending &= ~BIT(INTERRUPT_BASIC_IRQ_PENDING_REGISTER1 - BASIC_IRQ_OFFSET);
     pending &= ~BIT(INTERRUPT_BASIC_IRQ_PENDING_REGISTER2 - BASIC_IRQ_OFFSET);
     if (pending) {
-        return (31 - clzl(pending)) + BASIC_IRQ_OFFSET;
+        return (wordBits - 1 - clzl(pending)) + BASIC_IRQ_OFFSET;
     }
 
     pending = intc_regs->bfGPUIRQPending[1];
     pending &= intc_regs->bfEnableIRQs[1];
     if (pending) {
-        return (31 - clzl(pending)) + 32 + NORMAL_IRQ_OFFSET;
+        return (wordBits - 1 - clzl(pending)) + 32 + NORMAL_IRQ_OFFSET;
     }
     pending = intc_regs->bfGPUIRQPending[0];
     pending &= intc_regs->bfEnableIRQs[0];
     if (pending) {
-        return (31 - clzl(pending)) + 0 + NORMAL_IRQ_OFFSET;
+        return (wordBits - 1 - clzl(pending)) + 0 + NORMAL_IRQ_OFFSET;
     }
 
     return irqInvalid;
