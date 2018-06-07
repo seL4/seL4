@@ -183,7 +183,7 @@ void Arch_postModifyRegisters(tcb_t *tptr);
 void endTimeslice(bool_t can_timeout_fault);
 
 /* called when a thread has used up its head refill */
-void chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault);
+void chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault, word_t core, bool_t isCurCPU);
 
 /* Update the kernels timestamp and stores in ksCurTime.
  * The difference between the previous kernel timestamp and the one just read
@@ -249,7 +249,7 @@ checkBudget(void)
         return true;
     }
 
-    chargeBudget(capacity, NODE_STATE(ksConsumed), true);
+    chargeBudget(capacity, NODE_STATE(ksConsumed), true, CURRENT_CPU_INDEX(), true);
     return false;
 }
 

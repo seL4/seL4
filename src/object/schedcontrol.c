@@ -31,12 +31,21 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         tcbSchedDequeue(target->scTcb);
         /* bill the current consumed amount before adjusting the params */
         if (NODE_STATE_ON_CORE(ksCurSC, target->scCore) == target) {
-            ticks_t capacity = refill_capacity(target, NODE_STATE_ON_CORE(ksConsumed, target->scCore));
-            if (checkBudget()) {
-                commitTime();
+#ifdef ENABLE_SMP_SUPPORT
+            if (target->scCore) == getCurrentCPUIndex() {
+#endif /* ENABLE_SMP_SUPPORT */
+                if (checkBudget()) {
+                    commitTime();
+                }
+#ifdef ENABLE_SMP_SUPPORT
             } else {
-                chargeBudget(capacity, NODE_STATE_ON_CORE(ksConsumed, target->scCore), false);
+                /* if its a remote core, manually charge the budget */
+                ticks_t capacity = refill_capacity(target, NODE_STATE_ON_CORE(ksConsumed, target->scCore));
+
+                chargeBudget(capacity, NODE_STATE_ON_CORE(ksConsumed, target->scCore), false, target->scCore, false);
+                doReschedule(target->scCore);
             }
+#endif /* ENABLE_SMP_SUPPORT */
         }
     }
 
