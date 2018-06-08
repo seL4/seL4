@@ -2580,9 +2580,71 @@ kernelDataAbort(word_t pc)
 #endif
 
 #ifdef CONFIG_PRINTING
+typedef struct readWordFromVSpace_ret {
+    exception_t status;
+    word_t value;
+} readWordFromVSpace_ret_t;
+
+static readWordFromVSpace_ret_t
+readWordFromVSpace(vspace_root_t *pd, word_t vaddr)
+{
+    lookupFrame_ret_t lookup_frame_ret;
+    readWordFromVSpace_ret_t ret;
+    word_t offset;
+    pptr_t kernel_vaddr;
+    word_t *value;
+
+    lookup_frame_ret = lookupFrame(pd, vaddr);
+
+    if (!lookup_frame_ret.valid) {
+        ret.status = EXCEPTION_LOOKUP_FAULT;
+        return ret;
+    }
+
+    offset = vaddr & MASK(pageBitsForSize(lookup_frame_ret.frameSize));
+    kernel_vaddr = (word_t)paddr_to_pptr(lookup_frame_ret.frameBase);
+    value = (word_t*)(kernel_vaddr + offset);
+
+    ret.status = EXCEPTION_NONE;
+    ret.value = *value;
+    return ret;
+}
+
 void Arch_userStackTrace(tcb_t *tptr)
 {
+    cap_t threadRoot;
+    pgde_t *pgd;
+    word_t sp;
+    int i;
 
+    threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
+
+    /* lookup the PGD */
+    if (cap_get_capType(threadRoot) != cap_page_global_directory_cap) {
+        printf("Invalid vspace\n");
+        return;
+    }
+
+    pgd = PGDE_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(threadRoot));
+    sp = getRegister(tptr, SP_EL0);
+
+    /* check for alignment so we don't have to worry about accessing
+     * words that might be on two different pages */
+    if (!IS_ALIGNED(sp, seL4_WordSizeBits)) {
+        printf("SP not aligned\n");
+        return;
+    }
+
+    for (i = 0; i < CONFIG_USER_STACK_TRACE_LENGTH; i++) {
+        word_t address = sp + (i * sizeof(word_t));
+        readWordFromVSpace_ret_t result;
+        result = readWordFromVSpace(pgd, address);
+        if (result.status == EXCEPTION_NONE) {
+            printf("0x%lx: 0x%lx\n", (unsigned long)address, (unsigned long)result.value);
+        } else {
+            printf("0x%lx: INVALID\n", (unsigned long)address);
+        }
+    }
 }
 #endif
 
