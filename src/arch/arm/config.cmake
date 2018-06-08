@@ -259,7 +259,7 @@ config_option(KernelArmExportVCNTUser EXPORT_VCNT_USER
     WARNING: selecting this option opens a timing \
     channel"
     DEFAULT OFF
-    DEPENDS "KernelArmCortexA15"
+    DEPENDS "KernelArmCortexA15 OR KernelArmCortexA53"
 )
 
 config_option(KernelARMSMMUInterruptEnable SMMU_INTERRUPT_ENABLE
