@@ -18,9 +18,8 @@ from __future__ import print_function
 import argparse
 import re
 import sys
-# install tempita using sudo apt-get install python-tempita or similar for your distro
-import tempita
 import xml.dom.minidom
+from jinja2 import Environment, BaseLoader
 
 
 COMMON_HEADER = """
@@ -46,53 +45,54 @@ KERNEL_HEADER_TEMPLATE = """/*
 #ifdef __ASSEMBLER__
 
 /* System Calls */
-{{py:syscall_number = -1}}
-{{for condition, list in assembler}}
-    {{for syscall in list}}
-#define SYSCALL_{{upper(syscall)}} ({{syscall_number}})
-    {{py:syscall_number -= 1}}
-    {{endfor}}
-{{endfor}}
+{%- set ns = namespace(syscall_number=-1) -%}
+{%- for condition, list in assembler  -%}
+    {%- for syscall in list %}
+#define SYSCALL_{{upper(syscall)}} ({{ns.syscall_number}})
+    {%- set ns.syscall_number = ns.syscall_number -1 -%}
+    {%- endfor  %}
+{%- endfor  %}
 
 #endif
 
 #define SYSCALL_MAX (-1)
-#define SYSCALL_MIN ({{syscall_number + 1}})
+#define SYSCALL_MIN ({{ns.syscall_number+ 1}})
 
 #ifndef __ASSEMBLER__
 
 enum syscall {
-{{py:syscall_number = -1}}
-{{for condition, list in enum}}
-    {{if len(condition) > 0}}
+{%- set ns.syscall_number = -1 -%}
+{% for condition, list in enum %}
+   {%- if condition | length > 0 %}
 #if {{condition}}
-    {{endif}}
-    {{for syscall in list}}
-    Sys{{syscall}} = {{syscall_number}},
-    {{py:syscall_number -= 1}}
-    {{endfor}}
-    {{if len(condition) > 0}}
+   {%- endif %}
+   {%- for syscall in list %}
+    Sys{{syscall}} = {{ns.syscall_number}},
+    {%- set ns.syscall_number = ns.syscall_number -1 -%}
+   {%- endfor %}
+   {%- if condition | length > 0 %}
 #endif /* {{condition}} */
-    {{endif}}
-{{endfor}}
+   {%- endif %}
+{%- endfor %}
 };
 typedef word_t syscall_t;
 
 /* System call names */
 #ifdef CONFIG_DEBUG_BUILD
 static char *syscall_names[] UNUSED = {
-{{py:syscall_number = 1}}
-{{for condition, list in assembler}}
-    {{for syscall in list}}
-         [{{syscall_number}}] = "{{syscall}}",
-        {{py:syscall_number += 1}}
-    {{endfor}}
-{{endfor}}
+{%- set ns.syscall_number = 1 -%}
+{%- for condition, list in assembler %}
+   {%- for syscall in list %}
+         [{{ns.syscall_number}}] = "{{syscall}}",
+        {%- set ns.syscall_number = ns.syscall_number +1 -%}
+   {%- endfor %}
+{%- endfor %}
 };
 #endif /* CONFIG_DEBUG_BUILD */
 #endif
 
 #endif /* __ARCH_API_SYSCALL_H */
+
 """
 
 LIBSEL4_HEADER_TEMPLATE = """/*
@@ -113,23 +113,24 @@ LIBSEL4_HEADER_TEMPLATE = """/*
 #include <autoconf.h>
 
 typedef enum {
-{{py:syscall_number = -1}}
-{{for condition, list in enum}}
-    {{if len(condition) > 0}}
+{%- for condition, list in enum %}
+   {%- if condition | length > 0 %}
 #if {{condition}}
-    {{endif}}
-    {{for syscall in list}}
-    seL4_Sys{{syscall}} = {{syscall_number}},
-    {{py:syscall_number -= 1}}
-    {{endfor}}
-    {{if len(condition) > 0}}
+   {%- endif %}
+   {%- set ns = namespace(syscall_number=-1) -%}
+   {% for syscall in list %}
+    seL4_Sys{{syscall}} = {{ns.syscall_number}},
+    {%- set ns.syscall_number = ns.syscall_number - 1 -%}
+   {%- endfor %}
+   {%- if condition | length > 0 %}
 #endif /* {{condition}} */
-    {{endif}}
-{{endfor}}
-    SEL4_FORCE_LONG_ENUM(seL4_Syscall_ID)
+   {%- endif %}
+{%- endfor %}
+   SEL4_FORCE_LONG_ENUM(seL4_Syscall_ID)
 } seL4_Syscall_ID;
 
 #endif /* __ARCH_API_SYSCALL_H */
+
 """
 
 def parse_args():
@@ -210,14 +211,16 @@ def convert_to_assembler_format(s):
     return '_'.join(words).upper()
 
 def generate_kernel_file(kernel_header, api, debug):
-    tmpl = tempita.Template(kernel_header_template)
-    kernel_header.write(tmpl.substitute(assembler=api,
-        enum=api + debug, upper=convert_to_assembler_format))
+    template = Environment(loader=BaseLoader, trim_blocks=False, lstrip_blocks=False).from_string(KERNEL_HEADER_TEMPLATE)
+    data = template.render({'assembler': api, 'enum' : api + debug, 'upper' : convert_to_assembler_format})
+    kernel_header.write(data)
+
 
 def generate_libsel4_file(libsel4_header, syscalls):
+    template = Environment(loader=BaseLoader, trim_blocks=False, lstrip_blocks=False).from_string(LIBSEL4_HEADER_TEMPLATE )
+    data = template.render({'enum': syscalls})
+    libsel4_header.write(data)
 
-    tmpl = tempita.Template(libsel4_header_template)
-    libsel4_header.write(tmpl.substitute(enum=syscalls))
 
 if __name__ == "__main__":
     args = parse_args()
