@@ -106,7 +106,9 @@ LIBSEL4_HEADER_TEMPLATE = """/*
  *
  *
  * @TAG(DATA61_BSD)
- */""" + COMMON_HEADER + """
+ */
+
+""" + COMMON_HEADER + """
 #ifndef __LIBSEL4_SYSCALL_H
 #define __LIBSEL4_SYSCALL_H
 
@@ -118,7 +120,7 @@ typedef enum {
 #if {{condition}}
    {%- endif %}
    {%- set ns = namespace(syscall_number=-1) -%}
-   {% for syscall in list %}
+   {%- for syscall in list %}
     seL4_Sys{{syscall}} = {{ns.syscall_number}},
     {%- set ns.syscall_number = ns.syscall_number - 1 -%}
    {%- endfor %}
@@ -126,7 +128,7 @@ typedef enum {
 #endif /* {{condition}} */
    {%- endif %}
 {%- endfor %}
-   SEL4_FORCE_LONG_ENUM(seL4_Syscall_ID)
+    SEL4_FORCE_LONG_ENUM(seL4_Syscall_ID)
 } seL4_Syscall_ID;
 
 #endif /* __ARCH_API_SYSCALL_H */

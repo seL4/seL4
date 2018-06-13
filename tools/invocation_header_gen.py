@@ -78,6 +78,7 @@ enum invocation_label {
 {%- endif %}
 
 #endif /* __{{header_title}}_INVOCATION_H */
+
 """
 
 SEL4_ARCH_INVOCATION_TEMPLATE = COMMON_HEADER + """
@@ -99,9 +100,9 @@ enum sel4_arch_invocation_label {
         {%- endif %}
         {%- if ns.first %}
             {%- set ns.first = False %}
-            {{label}} = nInvocationLabels,
+    {{label}} = nInvocationLabels,
         {%- else %}
-            {{label}},
+    {{label}},
         {%- endif %}
         {%- if condition %}
 #endif
