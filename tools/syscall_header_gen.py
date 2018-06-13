@@ -115,11 +115,11 @@ LIBSEL4_HEADER_TEMPLATE = """/*
 #include <autoconf.h>
 
 typedef enum {
+{%- set ns = namespace(syscall_number=-1) -%}
 {%- for condition, list in enum %}
    {%- if condition | length > 0 %}
 #if {{condition}}
    {%- endif %}
-   {%- set ns = namespace(syscall_number=-1) -%}
    {%- for syscall in list %}
     seL4_Sys{{syscall}} = {{ns.syscall_number}},
     {%- set ns.syscall_number = ns.syscall_number - 1 -%}
