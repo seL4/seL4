@@ -17,8 +17,6 @@
 from __future__ import print_function
 import argparse
 import sys
-# install tempita using sudo apt-get install python-tempita or similar for your distro
-import tempita
 import xml.dom.minidom
 from jinja2 import Environment, BaseLoader
 
