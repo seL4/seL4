@@ -1036,16 +1036,16 @@ exception_t decodeX86FrameInvocation(
         vm_page_size_t  frameSize;
         asid_t          asid;
 
-        if (cap_frame_cap_get_capFMapType(cap) != X86_MappingVSpace) {
-            userError("X86FrameRemap: Attempting to remap frame with different mapping type");
-            current_syscall_error.type = seL4_IllegalOperation;
+        if (length < 2 || excaps.excaprefs[0] == NULL) {
+            userError("X86FrameRemap: Truncated message");
+            current_syscall_error.type = seL4_TruncatedMessage;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (length < 2 || excaps.excaprefs[0] == NULL) {
-            userError("X86FrameRemap: Truncated message");
-            current_syscall_error.type = seL4_TruncatedMessage;
+        if (cap_frame_cap_get_capFMapType(cap) != X86_MappingVSpace) {
+            userError("X86FrameRemap: Attempting to remap frame with different mapping type");
+            current_syscall_error.type = seL4_IllegalOperation;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
