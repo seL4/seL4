@@ -28,7 +28,7 @@ from setuptools import setup
 DEPS = [
     'six',
     'future',
-    'tempita',
+    'jinja2',
     'lxml',
     'ply',
     'psutil',
@@ -37,7 +37,7 @@ DEPS = [
 
 setup(
     name='sel4-deps',
-    version='0.1.1',
+    version='0.1.2',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     url="https://sel4.systems",
     licence='BSD2',
