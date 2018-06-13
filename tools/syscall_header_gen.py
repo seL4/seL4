@@ -19,6 +19,10 @@ import argparse
 import re
 import sys
 import xml.dom.minidom
+import pkg_resources;
+# We require jinja2 to be at least version 2.10 as we use the 'namespace' feature from
+# that version
+pkg_resources.require("jinja2>=2.10")
 from jinja2 import Environment, BaseLoader
 
 
