@@ -856,6 +856,30 @@ performX86PageInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
+static exception_t
+performX86FrameInvocationUnmap(cap_t cap, cte_t *cte)
+{
+    if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
+        switch (cap_frame_cap_get_capFMapType(cap)) {
+        case X86_MappingVSpace:
+            return performX86PageInvocationUnmap(cap, cte);
+#ifdef CONFIG_IOMMU
+        case X86_MappingIOSpace:
+            return performX86IOUnMapInvocation(cap, cte);
+#endif
+#ifdef CONFIG_VTX
+        case X86_MappingEPT:
+            return performX86EPTPageInvocationUnmap(cap, cte);
+#endif
+        case X86_MappingNone:
+            fail("Mapped frame cap was not mapped");
+            break;
+        }
+    }
+
+    return EXCEPTION_NONE;
+}
+
 exception_t decodeX86FrameInvocation(
     word_t invLabel,
     word_t length,
@@ -1156,28 +1180,8 @@ exception_t decodeX86FrameInvocation(
     }
 
     case X86PageUnmap: { /* Unmap */
-        if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            switch (cap_frame_cap_get_capFMapType(cap)) {
-            case X86_MappingVSpace:
-                setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-                return performX86PageInvocationUnmap(cap, cte);
-#ifdef CONFIG_IOMMU
-            case X86_MappingIOSpace:
-                setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-                return performX86IOUnMapInvocation(cap, cte);
-#endif
-#ifdef CONFIG_VTX
-            case X86_MappingEPT:
-                setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-                return performX86EPTPageInvocationUnmap(cap, cte);
-#endif
-            case X86_MappingNone:
-                fail("Mapped frame cap was not mapped");
-                break;
-            }
-        }
-
-        return EXCEPTION_NONE;
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        return performX86FrameInvocationUnmap(cap, cte);
     }
 
 #ifdef CONFIG_IOMMU
