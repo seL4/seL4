@@ -92,8 +92,6 @@ enum messageSizes {
 extern const register_t msgRegisters[] VISIBLE;
 extern const register_t frameRegisters[] VISIBLE;
 extern const register_t gpRegisters[] VISIBLE;
-extern const register_t exceptionMessage[] VISIBLE;
-extern const register_t syscallMessage[] VISIBLE;
 
 struct user_context {
     word_t registers[n_contextRegisters];
