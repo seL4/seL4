@@ -27,27 +27,6 @@ const register_t gpRegisters[] = {
     TLS_BASE
 };
 
-const register_t syscallMessage[] = {
-    [seL4_UnknownSyscall_RAX] = RAX,
-    [seL4_UnknownSyscall_RBX] = RBX,
-    [seL4_UnknownSyscall_RCX] = RCX,
-    [seL4_UnknownSyscall_RDX] = RDX,
-    [seL4_UnknownSyscall_RSI] = RSI,
-    [seL4_UnknownSyscall_RDI] = RDI,
-    [seL4_UnknownSyscall_RBP] = RBP,
-    [seL4_UnknownSyscall_R8]  = R8,
-    [seL4_UnknownSyscall_R9]  = R9,
-    [seL4_UnknownSyscall_R10] = R10,
-    [seL4_UnknownSyscall_R11] = R11,
-    [seL4_UnknownSyscall_R12] = R12,
-    [seL4_UnknownSyscall_R13] = R13,
-    [seL4_UnknownSyscall_R14] = R14,
-    [seL4_UnknownSyscall_R15] = R15,
-    [seL4_UnknownSyscall_FaultIP] = FaultIP,
-    [seL4_UnknownSyscall_SP] = RSP,
-    [seL4_UnknownSyscall_FLAGS] = FLAGS
-};
-
 void Mode_initContext(user_context_t* context)
 {
     context->registers[RAX] = 0;
