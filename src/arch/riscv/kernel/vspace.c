@@ -573,7 +573,7 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_table_cap_get_capPTMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != lvl1pt)) {
-        setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), asid);
+        setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
         return;
     }
 
