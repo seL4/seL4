@@ -359,7 +359,7 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     }
 }
 
-static inline pptr_t isPTEPageTable(pte_t *pte)
+static inline bool_t isPTEPageTable(pte_t *pte)
 {
     return pte_ptr_get_valid(pte) &&
            !(pte_ptr_get_read(pte) || pte_ptr_get_write(pte) || pte_ptr_get_execute(pte));
