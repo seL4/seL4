@@ -374,8 +374,10 @@ lookupPTSlot_ret_t
 lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
 {
     lookupPTSlot_ret_t ret;
-    /* this is how many bits we have decoded before reaching an empty
-     * page table entry or a frame mapping */
+    /* this is how many bits we potentially have left to decode. Initially we have the
+     * full address space to decode, and every time we walk this will be reduced. The
+     * final value of this after the walk is the size of the frame that can be inserted,
+     * or already exists, in ret.ptSlot */
     ret.ptBitsLeft = PT_INDEX_BITS * CONFIG_PT_LEVELS + seL4_PageBits;
     ret.ptSlot = NULL;
 
