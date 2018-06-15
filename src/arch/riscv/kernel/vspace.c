@@ -305,8 +305,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 
     vspace_root = poolPtr->array[asid & MASK(asidLowBits)];
     if (!vspace_root) {
-        //current_lookup_fault = lookup_fault_invalid_root_new();
-        current_lookup_fault = lookup_fault_missing_capability_new(RISCV_GET_LVL_PGSIZE_BITS(1));
+        current_lookup_fault = lookup_fault_invalid_root_new();
 
         ret.vspace_root = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
