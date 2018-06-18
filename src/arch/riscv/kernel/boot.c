@@ -206,7 +206,7 @@ init_cpu(void)
 {
 
     /* Write trap entry address to stvec */
-    write_csr(stvec, trap_entry);
+    write_stvec((word_t)trap_entry);
 
     activate_kernel_vspace();
 }

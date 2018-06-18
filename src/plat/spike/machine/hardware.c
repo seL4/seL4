@@ -87,12 +87,12 @@ maskInterrupt(bool_t disable, interrupt_t irq)
 {
     if (disable) {
         if (irq > 1) {
-            clear_csr(sie, BIT(irq));
+            clear_sie_mask(BIT(irq));
         }
     } else {
         /* FIXME: currently only account for user/supervisor and timer interrupts */
         if (irq == 4 /* user timer */ || irq == 5 /* supervisor timer */) {
-            set_csr(sie, BIT(irq));
+            set_sie_mask(BIT(irq));
         } else {
             /* TODO: account for external and PLIC interrupts */
         }
@@ -120,7 +120,7 @@ ackInterrupt(irq_t irq)
     // don't ack the kernel timer interrupt, see the comment in resetTimer
     // to understand why
     if (irq != KERNEL_TIMER_IRQ) {
-        clear_csr(sip, BIT(irq));
+        clear_sip_mask(BIT(irq));
     }
     //set_csr(scause, 0);
 
@@ -162,7 +162,7 @@ resetTimer(void)
     // ack the timer interrupt. we do this here as due to slow simulation platform there
     // is a race between us setting the new interrupt here, and the ackInterrupt call in
     // handleInterrupt that will happen at some point after this call to resetTimer
-    clear_csr(sip, KERNEL_TIMER_IRQ);
+    clear_sip_mask(KERNEL_TIMER_IRQ);
     // repeatedly try and set the timer in a loop as otherwise there is a race and we
     // may set a timeout in the past, resulting in it never getting triggered
     do {

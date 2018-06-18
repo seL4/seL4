@@ -68,7 +68,7 @@ static inline void print_format_cause(int cause_num)
 
 void handle_exception(void)
 {
-    word_t scause = read_csr(scause);
+    word_t scause = read_scause();
 
     /* handleVMFaultEvent
      * */
@@ -86,10 +86,10 @@ void handle_exception(void)
 
         break;
     default:
-        print_format_cause(read_csr(scause));
-        printf("sepc = %p\n", (void*)(word_t)read_csr(sepc));
-        printf("sbadaddr = %p\n", (void*)(word_t)read_csr(sbadaddr));
-        printf("sstatus = %p\n", (void*)(word_t)read_csr(sstatus));
+        print_format_cause(read_scause());
+        printf("sepc = %p\n", (void*)(word_t)read_sepc());
+        printf("sbadaddr = %p\n", (void*)(word_t)read_sbadaddr());
+        printf("sstatus = %p\n", (void*)(word_t)read_sstatus());
         printf("Halt!\n");
 
         printf("Register Context Dump \n");

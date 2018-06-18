@@ -399,7 +399,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
     uint64_t addr;
 
-    addr = read_csr(sbadaddr);
+    addr = read_sbadaddr();
 
     switch (vm_faultType) {
     case RISCVLoadPageFault:
