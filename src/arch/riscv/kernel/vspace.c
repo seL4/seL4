@@ -339,8 +339,7 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     w_bufferPtr = thread->tcbIPCBuffer;
     bufferCap = TCB_PTR_CTE_PTR(thread, tcbBuffer)->cap;
 
-    if (unlikely(cap_get_capType(bufferCap) != cap_frame_cap &&
-                 cap_get_capType(bufferCap) != cap_frame_cap)) {
+    if (unlikely(cap_get_capType(bufferCap) != cap_frame_cap)) {
         return NULL;
     }
     if (unlikely(cap_frame_cap_get_capFIsDevice(bufferCap))) {
