@@ -1550,37 +1550,22 @@ decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, ca
         }
 
         pdptSlot = lu_ret.pdptSlot;
+        /* check for existing page directory */
+        if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_pd)  &&
+                (pdpte_pdpte_pd_ptr_get_present(pdptSlot))) {
+            current_syscall_error.type = seL4_DeleteFirst;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+
         switch (label) {
-
         case X86PageMap: {
-            /* check for existing page directory */
-            if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_pd)  &&
-                    (pdpte_pdpte_pd_ptr_get_present(pdptSlot))) {
-                current_syscall_error.type = seL4_DeleteFirst;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-            /* check for existing huge page */
-            if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_1g) &&
-                    (pdpte_pdpte_1g_ptr_get_present(pdptSlot))) {
-                current_syscall_error.type = seL4_DeleteFirst;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX64ModeMap(cap, cte, pdpte, pdptSlot, vroot);
         }
 
         case X86PageRemap: {
-            /* check for existing page directory */
-            if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_pd)  &&
-                    (pdpte_pdpte_pd_ptr_get_present(pdptSlot))) {
-                current_syscall_error.type = seL4_DeleteFirst;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-            pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX64ModeRemap(cap_frame_cap_get_capFMappedASID(cap), pdpte, pdptSlot, vroot);
         }
 

@@ -918,7 +918,7 @@ exception_t decodeX86FrameInvocation(
         capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
         if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
-            userError("X86Frame: Frame already mapped.");
+            userError("X86FrameMap: Frame already mapped.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
 
@@ -928,7 +928,7 @@ exception_t decodeX86FrameInvocation(
         assert(cap_frame_cap_get_capFMapType(cap) == X86_MappingNone);
 
         if (!isValidNativeRoot(vspaceCap)) {
-            userError("X86Frame: Attempting to map frame into invalid page directory cap.");
+            userError("X86FrameMap: Attempting to map frame into invalid page directory cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -994,11 +994,6 @@ exception_t decodeX86FrameInvocation(
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            if (pte_ptr_get_present(lu_ret.ptSlot)) {
-                current_syscall_error.type = seL4_DeleteFirst;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
             pte = makeUserPTE(paddr, vmAttr, vmRights);
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX86PageInvocationMapPTE(cap, cte, lu_ret.ptSlot, pte, vspace);
@@ -1027,14 +1022,6 @@ exception_t decodeX86FrameInvocation(
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            /* check for existing large page */
-            if ((pde_ptr_get_page_size(pdeSlot) == pde_pde_large) &&
-                    (pde_pde_large_ptr_get_present(pdeSlot))) {
-                current_syscall_error.type = seL4_DeleteFirst;
-
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
             pde = makeUserPDELargePage(paddr, vmAttr, vmRights);
             setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performX86PageInvocationMapPDE(cap, cte, lu_ret.pdSlot, pde, vspace);
@@ -1058,7 +1045,7 @@ exception_t decodeX86FrameInvocation(
         vm_rights_t     vmRights;
         vm_attributes_t vmAttr;
         vm_page_size_t  frameSize;
-        asid_t          asid;
+        asid_t          asid, mappedASID;
 
         if (length < 2 || excaps.excaprefs[0] == NULL) {
             userError("X86FrameRemap: Truncated message");
@@ -1079,35 +1066,40 @@ exception_t decodeX86FrameInvocation(
         vspaceCap = excaps.excaprefs[0]->cap;
 
         if (!isValidNativeRoot(vspaceCap)) {
-            userError("X86FrameRemap: Attempting to map frame into invalid page directory.");
+            userError("X86FrameRemap: Attempting to map frame into invalid vspace.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
-        vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
-        asid = cap_get_capMappedASID(vspaceCap);
 
-        if (cap_frame_cap_get_capFMappedASID(cap) != asid) {
-            userError("X86PageRemap: Frame must already have been mapped into provided vspace.");
+        mappedASID = cap_frame_cap_get_capFMappedASID(cap);
+
+        if (mappedASID == asidInvalid) {
+            userError("X86PageRemap: Frame cap is not mapped.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 0;
 
             return EXCEPTION_SYSCALL_ERROR;
         }
 
+        vspace = (vspace_root_t*)pptr_of_cap(vspaceCap);
+        asid = cap_get_capMappedASID(vspaceCap);
+
         {
             findVSpaceForASID_ret_t find_ret;
 
-            find_ret = findVSpaceForASID(asid);
+            find_ret = findVSpaceForASID(mappedASID);
             if (find_ret.status != EXCEPTION_NONE) {
+                userError("X86PageRemap: No VSpace for ASID");
                 current_syscall_error.type = seL4_FailedLookup;
                 current_syscall_error.failedLookupWasSource = false;
 
                 return EXCEPTION_SYSCALL_ERROR;
             }
 
-            if (find_ret.vspace_root != vspace) {
+            if (find_ret.vspace_root != vspace || asid != mappedASID) {
+                userError("X86PageRemap: Failed ASID lookup");
                 current_syscall_error.type = seL4_InvalidCapability;
                 current_syscall_error.invalidCapNumber = 1;
 
@@ -1121,6 +1113,12 @@ exception_t decodeX86FrameInvocation(
         paddr       = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
 
         vmRights = maskVMRights(capVMRights, rightsFromWord(w_rightsMask));
+
+        if (!checkVPAlignment(frameSize, vaddr)) {
+            current_syscall_error.type = seL4_AlignmentError;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
 
         switch (frameSize) {
         /* PTE mappings */
@@ -1158,6 +1156,7 @@ exception_t decodeX86FrameInvocation(
             }
             pdeSlot = lu_ret.pdSlot;
 
+            /* check for existing pt */
             if ((pde_ptr_get_page_size(pdeSlot) == pde_pde_pt) &&
                     (pde_pde_pt_ptr_get_present(pdeSlot))) {
                 current_syscall_error.type = seL4_DeleteFirst;
