@@ -71,7 +71,15 @@ Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 cap_t CONST
 Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
 {
-    return cap;
+    if (cap_get_capType(cap) == cap_frame_cap) {
+        vm_rights_t vm_rights;
+
+        vm_rights = vmRightsFromWord(cap_frame_cap_get_capFVMRights(cap));
+        vm_rights = maskVMRights(vm_rights, cap_rights_mask);
+        return cap_frame_cap_set_capFVMRights(cap, wordFromVMRights(vm_rights));
+    } else {
+        return cap;
+    }
 }
 
 finaliseCap_ret_t
