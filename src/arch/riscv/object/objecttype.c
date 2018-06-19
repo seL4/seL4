@@ -174,7 +174,9 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
         return ((cap_frame_cap_get_capFBasePtr(cap_a) ==
                  cap_frame_cap_get_capFBasePtr(cap_b)) &&
                 (cap_frame_cap_get_capFSize(cap_a) ==
-                 cap_frame_cap_get_capFSize(cap_b)));
+                 cap_frame_cap_get_capFSize(cap_b)) &&
+                ((cap_frame_cap_get_capFIsDevice(cap_a) == 0) ==
+                 (cap_frame_cap_get_capFIsDevice(cap_b) == 0)));
     }
     return Arch_sameRegionAs(cap_a, cap_b);
 }
