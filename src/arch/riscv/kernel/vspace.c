@@ -700,7 +700,8 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     word_t vaddr = getSyscallArg(0, buffer);
     cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
 
-    if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap && cap_page_table_cap_get_capPTIsMapped(lvl1ptCap))) {
+    if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
+            cap_page_table_cap_get_capPTIsMapped(lvl1ptCap) == asidInvalid)) {
         userError("RISCVPageTableMap: Invalid top-level PageTable.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
@@ -799,7 +800,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap &&
+        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
                      cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) == asidInvalid)) {
             userError("RISCVPageMap: Bad PageTable cap.");
             current_syscall_error.type = seL4_InvalidCapability;
@@ -877,7 +878,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         vm_page_size_t frameSize = cap_frame_cap_get_capFSize(cap);
         vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
-        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap &&
+        if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
                      cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) == asidInvalid)) {
             userError("RISCVPageRemap: Bad PageTable cap.");
             current_syscall_error.type = seL4_InvalidCapability;
