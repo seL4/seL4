@@ -701,7 +701,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     cap_t lvl1ptCap = extraCaps.excaprefs[0]->cap;
 
     if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
-            cap_page_table_cap_get_capPTIsMapped(lvl1ptCap) == asidInvalid)) {
+                 cap_page_table_cap_get_capPTIsMapped(lvl1ptCap) == asidInvalid)) {
         userError("RISCVPageTableMap: Invalid top-level PageTable.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
