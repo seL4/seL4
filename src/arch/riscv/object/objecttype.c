@@ -148,6 +148,18 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
                    cap_page_table_cap_get_capPTBasePtr(cap_b);
         }
         break;
+    case cap_asid_control_cap:
+        if (cap_get_capType(cap_b) == cap_asid_control_cap) {
+            return true;
+        }
+        break;
+
+    case cap_asid_pool_cap:
+        if (cap_get_capType(cap_b) == cap_asid_pool_cap) {
+            return cap_asid_pool_cap_get_capASIDPool(cap_a) ==
+                   cap_asid_pool_cap_get_capASIDPool(cap_b);
+        }
+        break;
     }
 
     return false;
