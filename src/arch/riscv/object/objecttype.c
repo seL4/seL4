@@ -209,10 +209,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 {
     switch (t) {
     case seL4_RISCV_4K_Page:
-        if (!deviceMemory) {
-            memzero(regionBase, BIT(seL4_PageBits));
-        }
-
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
@@ -223,10 +219,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                );
 
     case seL4_RISCV_Mega_Page: {
-        if (!deviceMemory) {
-            memzero(regionBase, BIT(seL4_LargePageBits));
-        }
-
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
@@ -239,10 +231,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 
 #if CONFIG_PT_LEVELS > 2
     case seL4_RISCV_Giga_Page: {
-        if (!deviceMemory) {
-            memzero(regionBase, BIT(seL4_HugePageBits));
-        }
-
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
@@ -255,8 +243,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 #endif
 
     case seL4_RISCV_PageTableObject:
-        memzero(regionBase, BIT(seL4_PageBits));
-
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */
                    (word_t)regionBase,     /* capPTBasePtr       */
