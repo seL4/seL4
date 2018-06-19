@@ -1128,6 +1128,7 @@ performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
+    sfence();
 
     return EXCEPTION_NONE;
 }
