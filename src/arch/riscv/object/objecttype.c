@@ -111,6 +111,16 @@ Arch_finaliseCap(cap_t cap, bool_t final)
             }
         }
         break;
+    case cap_asid_pool_cap:
+        if (final) {
+            deleteASIDPool(
+                cap_asid_pool_cap_get_capASIDBase(cap),
+                ASID_POOL_PTR(cap_asid_pool_cap_get_capASIDPool(cap))
+            );
+        }
+        break;
+    case cap_asid_control_cap:
+        break;
     }
     fc_ret.remainder = cap_null_cap_new();
     fc_ret.cleanupInfo = cap_null_cap_new();
