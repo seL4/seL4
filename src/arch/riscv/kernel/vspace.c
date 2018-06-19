@@ -965,14 +965,6 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
 }
 
-static const resolve_ret_t default_resolve_ret_t;
-
-static inline vptr_t
-pageBase(vptr_t vaddr, vm_page_size_t size)
-{
-    return vaddr & ~MASK(pageBitsForSize(size));
-}
-
 exception_t
 decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
