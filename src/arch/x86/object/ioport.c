@@ -65,14 +65,14 @@ freeIOPortRange(uint16_t first_port, uint16_t last_port)
 static bool_t
 isIOPortRangeFree(uint16_t first_port, uint16_t last_port)
 {
-    word_t low_word = first_port / CONFIG_WORD_SIZE;
-    word_t high_word = last_port / CONFIG_WORD_SIZE;
-    word_t low_index = first_port % CONFIG_WORD_SIZE;
-    word_t high_index = last_port % CONFIG_WORD_SIZE;
+    int low_word = first_port >> wordRadix;
+    int high_word = last_port >> wordRadix;
+    int low_index = first_port & MASK(wordRadix);
+    int high_index = last_port & MASK(wordRadix);
 
     // check if we are operating on a partial word
     if (low_word == high_word) {
-        if ((x86KSAllocatedIOPorts[low_word] & make_pattern(first_port, last_port + 1)) != 0) {
+        if ((x86KSAllocatedIOPorts[low_word] & make_pattern(low_index, high_index + 1)) != 0) {
             return false;
         }
         return true;
@@ -330,15 +330,16 @@ setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, bool_t set)
     //get an aliasing pointer
     word_t_may_alias *bitmap = ioport_bitmap;
 
-    word_t low_word = low / CONFIG_WORD_SIZE;
-    word_t high_word = high / CONFIG_WORD_SIZE;
+    int low_word = low >> wordRadix;
+    int high_word = high >> wordRadix;
+    int low_index = low & MASK(wordRadix);
+    int high_index = high & MASK(wordRadix);
 
     // see if we are just manipulating bits inside a single word. handling this
     // specially makes reasoning easier
     if (low_word == high_word) {
-        apply_pattern(bitmap + low_word, make_pattern(low, high + 1), set);
+        apply_pattern(bitmap + low_word, make_pattern(low_index, high_index + 1), set);
     } else {
-        word_t low_index = low % CONFIG_WORD_SIZE;
         // operate on the potentially partial first word
         apply_pattern(bitmap + low_word, make_pattern(low_index, CONFIG_WORD_SIZE), set);
         low_word++;
@@ -348,7 +349,6 @@ setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, bool_t set)
             low_word++;
         }
         // apply to any remaining bits
-        word_t high_index = high % CONFIG_WORD_SIZE;
         apply_pattern(bitmap + low_word, make_pattern(0, high_index + 1), set);
     }
 }
