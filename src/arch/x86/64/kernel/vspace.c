@@ -1533,40 +1533,64 @@ performX64ModeMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vs
     return updatePDPTE(cap_frame_cap_get_capFMappedASID(cap), pdpte, pdptSlot, vspace);
 }
 
+struct create_mapping_pdpte_return {
+    exception_t status;
+    pdpte_t pdpte;
+    pdpte_t *pdptSlot;
+};
+typedef struct create_mapping_pdpte_return create_mapping_pdpte_return_t;
+
+static create_mapping_pdpte_return_t
+createSafeMappingEntries_PDPTE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
+                               vspace_root_t *vspace)
+{
+    create_mapping_pdpte_return_t ret;
+    lookupPDPTSlot_ret_t          lu_ret;
+
+    lu_ret = lookupPDPTSlot(vspace, vaddr);
+    if (lu_ret.status != EXCEPTION_NONE) {
+        current_syscall_error.type = seL4_FailedLookup;
+        current_syscall_error.failedLookupWasSource = false;
+        ret.status = EXCEPTION_SYSCALL_ERROR;
+        /* current_lookup_fault will have been set by lookupPDSlot */
+        return ret;
+    }
+    ret.pdptSlot = lu_ret.pdptSlot;
+
+    /* check for existing page directory */
+    if ((pdpte_ptr_get_page_size(ret.pdptSlot) == pdpte_pdpte_pd) &&
+            (pdpte_pdpte_pd_ptr_get_present(ret.pdptSlot))) {
+        current_syscall_error.type = seL4_DeleteFirst;
+        ret.status = EXCEPTION_SYSCALL_ERROR;
+        return ret;
+    }
+
+
+    ret.pdpte = makeUserPDPTEHugePage(base, attr, vmRights);
+    ret.status = EXCEPTION_NONE;
+    return ret;
+}
 
 exception_t
 decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
 {
     if (config_set(CONFIG_HUGE_PAGE) && page_size == X64_HugePage) {
-        pdpte_t pdpte;
-        pdpte_t *pdptSlot;
-        lookupPDPTSlot_ret_t lu_ret;
-        lu_ret = lookupPDPTSlot(vroot, vaddr);
+        create_mapping_pdpte_return_t map_ret;
 
-        if (lu_ret.status != EXCEPTION_NONE) {
-            current_syscall_error.type = seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource = false;
-            return EXCEPTION_SYSCALL_ERROR;
+        map_ret = createSafeMappingEntries_PDPTE(paddr, vaddr, vm_rights, vm_attr, vroot);
+        if (map_ret.status != EXCEPTION_NONE) {
+            return map_ret.status;
         }
 
-        pdptSlot = lu_ret.pdptSlot;
-        /* check for existing page directory */
-        if ((pdpte_ptr_get_page_size(pdptSlot) == pdpte_pdpte_pd)  &&
-                (pdpte_pdpte_pd_ptr_get_present(pdptSlot))) {
-            current_syscall_error.type = seL4_DeleteFirst;
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        pdpte = makeUserPDPTEHugePage(paddr, vm_attr, vm_rights);
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
 
         switch (label) {
         case X86PageMap: {
-            return performX64ModeMap(cap, cte, pdpte, pdptSlot, vroot);
+            return performX64ModeMap(cap, cte, map_ret.pdpte, map_ret.pdptSlot, vroot);
         }
 
         case X86PageRemap: {
-            return performX64ModeRemap(cap_frame_cap_get_capFMappedASID(cap), pdpte, pdptSlot, vroot);
+            return performX64ModeRemap(cap_frame_cap_get_capFMappedASID(cap), map_ret.pdpte, map_ret.pdptSlot, vroot);
         }
 
         default: {
