@@ -251,7 +251,7 @@ static inline void setCurrentPD(paddr_t addr)
         setCurrentPDPL2(addr);
     } else {
         dsb();
-        writeTTBR0(addr);
+        writeTTBR0Ptr(addr);
         /* Ensure the PD switch completes before we do anything else */
         isb();
     }
