@@ -243,9 +243,6 @@ static inline word_t readDACR(void)
 
 static inline void setCurrentPD(paddr_t addr)
 {
-    /* Mask supplied address (retain top 19 bits).  Set the lookup cache bits:
-     * outer write-back cacheable, no allocate on write, inner non-cacheable.
-     */
     /* Before changing the PD ensure all memory stores have completed */
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         setCurrentPDPL2(addr);
