@@ -548,6 +548,10 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
     if (unlikely(lu_ret.ptBitsLeft != pageBitsForSize(page_size))) {
         return;
     }
+    if (!pte_ptr_get_valid(lu_ret.ptSlot) || isPTEPageTable(lu_ret.ptSlot)
+        || (pte_ptr_get_ppn(lu_ret.ptSlot) << seL4_PageBits) != pptr_to_paddr((void*)pptr)) {
+        return;
+    }
 
     lu_ret.ptSlot[0] = pte_pte_invalid_new();
     sfence();
