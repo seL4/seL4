@@ -203,7 +203,7 @@
             <param dir="in" name="untyped" type="seL4_Untyped"
             description="Capability to an untyped memory object that will become the pool. Must be 4K bytes."/>
             <param dir="in" name="root" type="seL4_CNode"
-            description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word"
             description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8"

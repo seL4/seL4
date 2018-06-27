@@ -376,7 +376,7 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
         </method>
@@ -388,7 +388,7 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
         </method>
@@ -403,7 +403,7 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the capability being operated on."/>
         </method>
@@ -415,10 +415,10 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
@@ -435,10 +435,10 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <param dir="in" name="rights" type="seL4_CapRights_t">
@@ -456,10 +456,10 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
         </method>
@@ -471,10 +471,10 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
             <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
@@ -488,15 +488,15 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the destination slot will be found. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the destination slot will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="dest_index" type="seL4_Word" description="CPTR to the destination slot. Resolved relative to _service. Must be empty unless it refers to the same slot as the source slot."/>
             <param dir="in" name="dest_depth" type="seL4_Uint8" description="Depth to resolve dest_index to."/>
             <param dir="in" name="dest_badge" type="seL4_Word" description="The new capdata for the capability that ends up in the destination slot."/>
-            <param dir="in" name="pivot_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the pivot slot will be found. Must be at a depth of 32."/>
+            <param dir="in" name="pivot_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the pivot slot will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="pivot_index" type="seL4_Word" description="CPTR to the pivot slot. Resolved relative to pivot_root. The resolved slot must not refer to the source or destination slots."/>
             <param dir="in" name="pivot_depth" type="seL4_Uint8" description="Depth to resolve pivot_index to."/>
             <param dir="in" name="pivot_badge" type="seL4_Word" description="The new capdata for the capability that ends up in the pivot slot."/>
-            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the source slot will be found. Must be at a depth of 32."/>
+            <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode at the root of the CSpace where the source slot will be found. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved relative to src_root."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Depth to resolve src_index to."/>
         </method>
@@ -508,7 +508,7 @@
             <description>
                 <docref>See <autoref label="sec:cnode-ops"/>.</docref>
             </description>
-            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability is to be saved. Must be at a depth of 32."/>
+            <cap_param append_description="CPTR to the CNode at the root of the CSpace where the capability is to be saved. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the slot in which to save the capability. Resolved from the root of the _service parameter."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of index to resolve to find the slot being targeted."/>
         </method>
@@ -525,7 +525,7 @@
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
             <param dir="in" name="irq" type="int" description="The IRQ that you want this capability to handle."/>
-            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth of 32."/>
+            <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
         </method>
