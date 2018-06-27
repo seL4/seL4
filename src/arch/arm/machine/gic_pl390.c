@@ -130,6 +130,21 @@ cpu_iface_init(void)
     gic_cpuiface->icontrol = 1;
 }
 
+void setIRQTrigger(irq_t irq, int trigger)
+{
+    /* in the gic_config, there is a 2 bit field for each irq,
+     * setting the most significant bit of this field makes the irq edge-triggered,
+     * while 0 indicates that it is level-triggered */
+    word_t index = irq / 16u;
+    word_t offset = (irq % 16u) * 2;
+    if (trigger) {
+        /* set the bit */
+        gic_dist->config[index] |= BIT(offset + 1);
+    } else {
+        gic_dist->config[index] &= ~BIT(offset + 1);
+    }
+}
+
 BOOT_CODE void
 initIRQController(void)
 {

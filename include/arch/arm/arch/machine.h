@@ -28,6 +28,7 @@ void initL2Cache(void);
 
 void initIRQController(void);
 void cpu_initLocalIRQController(void);
+void setIRQTrigger(irq_t irq, int trigger);
 
 static inline void plat_cleanL2Range(paddr_t start, paddr_t end);
 static inline void plat_invalidateL2Range(paddr_t start, paddr_t end);

@@ -16,6 +16,9 @@ Upcoming release: SOURCE COMPATIBLE
     - these were previously packed (in the GCC attribute sense)
     - some field lengths are tweaked to avoid padding
     - this is a source-compatible change
+ * ARM platforms can now set the trigger of an IRQ Handler capability
+     - seL4_IRQControl_GetTrigger allows users to obtain an IRQ Handler capability
+       and set the trigger (edge or level) in the interrupt controller.
 
 ## Upgrade Notes
 ---
