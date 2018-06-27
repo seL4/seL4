@@ -62,9 +62,6 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
 
 #if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
     *armKSGlobalsFrame = thread->tcbIPCBuffer;
-#elif defined(CONFIG_IPC_BUF_TPIDRURW)
-#else
-#error "Unknown IPC buffer strategy"
 #endif
     NODE_STATE(ksCurThread) = thread;
     clearExMonitor_fp();

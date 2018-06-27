@@ -44,12 +44,7 @@ Arch_migrateTCB(tcb_t *thread)
 void
 Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
 {
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
-#elif defined(CONFIG_IPC_BUF_TPIDRURW)
+#if defined(CONFIG_IPC_BUF_TPIDRURW)
     setRegister(thread, TPIDRURW, bufferAddr);
-#elif defined(CONFIG_ARCH_AARCH64)
-    /* nothing to do on aarch64 */
-#else
-#error "Unknown IPC buffer strategy"
 #endif
 }
