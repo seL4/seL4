@@ -75,24 +75,24 @@ print_fault(seL4_Fault_t f)
         printf("null fault");
         break;
     case seL4_Fault_CapFault:
-        printf("cap fault in %s phase at address 0x%x",
+        printf("cap fault in %s phase at address %p",
                seL4_Fault_CapFault_get_inReceivePhase(f) ? "receive" : "send",
-               (unsigned int)seL4_Fault_CapFault_get_address(f));
+               (void *)seL4_Fault_CapFault_get_address(f));
         break;
     case seL4_Fault_VMFault:
-        printf("vm fault on %s at address 0x%x with status 0x%x",
+        printf("vm fault on %s at address %p with status %p",
                seL4_Fault_VMFault_get_instructionFault(f) ? "code" : "data",
-               (unsigned int)seL4_Fault_VMFault_get_address(f),
-               (unsigned int)seL4_Fault_VMFault_get_FSR(f));
+               (void *)seL4_Fault_VMFault_get_address(f),
+               (void *)seL4_Fault_VMFault_get_FSR(f));
         break;
     case seL4_Fault_UnknownSyscall:
-        printf("unknown syscall 0x%x",
-               (unsigned int)seL4_Fault_UnknownSyscall_get_syscallNumber(f));
+        printf("unknown syscall %p",
+               (void *)seL4_Fault_UnknownSyscall_get_syscallNumber(f));
         break;
     case seL4_Fault_UserException:
-        printf("user exception 0x%x code 0x%x",
-               (unsigned int)seL4_Fault_UserException_get_number(f),
-               (unsigned int)seL4_Fault_UserException_get_code(f));
+        printf("user exception %p code %p",
+               (void *)seL4_Fault_UserException_get_number(f),
+               (void *)seL4_Fault_UserException_get_code(f));
         break;
     default:
         printf("unknown fault");
