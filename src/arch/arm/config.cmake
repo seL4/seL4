@@ -137,13 +137,13 @@ include(src/arch/arm/armv/armv7-a/config.cmake)
 include(src/arch/arm/armv/armv8-a/config.cmake)
 
 config_choice(KernelIPCBufferLocation KERNEL_IPC_BUFFER_LOCATION
-    "Controls how the location of the IPC buffer is provided to the user \
+    "Controls how the location of the IPC buffer is provided to the user for aarch32 \
     globals_frame-> Put the address of the IPC buffer in a dedicated frame that is \
         read only at user level. This works on all ARM platforms \
     threadID_register-> Put the address of the IPC buffer in the user readable/writeable \
         ThreadID register. When enabled this has the result of the kernel overwriting \
         any value the user writes to this register."
-    "threadID_register;KernelIPCBufferThreadID;IPC_BUF_TPIDRURW;KernelArchARM;NOT KernelArchArmV6"
+    "threadID_register;KernelIPCBufferThreadID;IPC_BUF_TPIDRURW;KernelSel4ArchAarch32;NOT KernelArchArmV6"
     "globals_frame;KernelIPCBufferGlobalsFrame;IPC_BUF_GLOBALS_FRAME;KernelSel4ArchAarch32"
 )
 
