@@ -739,6 +739,7 @@ decodeWriteVMCS(cap_t cap, word_t length, word_t* buffer)
     case VMX_GUEST_CR3:
     case VMX_CONTROL_EXCEPTION_BITMAP:
     case VMX_CONTROL_ENTRY_INTERRUPTION_INFO:
+    case VMX_CONTROL_ENTRY_EXCEPTION_ERROR_CODE:
         break;
     case VMX_CONTROL_PIN_EXECUTION_CONTROLS:
         value = applyFixedBits(value, pin_control_high, pin_control_low);
