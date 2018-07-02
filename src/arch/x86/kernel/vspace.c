@@ -978,7 +978,7 @@ exception_t decodeX86FrameInvocation(
         }
 
         frameSize = cap_frame_cap_get_capFSize(cap);
-        vaddr = getSyscallArg(0, buffer) & PPTR_USER_TOP;
+        vaddr = getSyscallArg(0, buffer);
         w_rightsMask = getSyscallArg(1, buffer);
         vmAttr = vmAttributesFromWord(getSyscallArg(2, buffer));
         vspaceCap = excaps.excaprefs[0]->cap;
@@ -1026,7 +1026,8 @@ exception_t decodeX86FrameInvocation(
 
         vtop = vaddr + BIT(pageBitsForSize(frameSize));
 
-        if (vtop > PPTR_USER_TOP) {
+        // check vaddr and vtop against PPTR_USER_TOP to catch case where vaddr + frame_size wrapped around
+        if (vaddr > PPTR_USER_TOP || vtop > PPTR_USER_TOP) {
             userError("X86Frame: Mapping address too high.");
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 0;
