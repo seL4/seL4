@@ -188,12 +188,6 @@ static inline void writeTPIDRURW(word_t reg)
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
 }
 
-static inline void writeTPIDRURO(word_t reg)
-{
-    asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
-}
-
-
 static inline word_t readTPIDRURW(void)
 {
     word_t reg;
@@ -205,13 +199,6 @@ static inline word_t readTPIDRURW(void)
 static inline void writeTPIDRURO(word_t reg)
 {
     asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
-}
-
-static inline word_t readTPIDRURO(void)
-{
-    word_t reg;
-    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
-    return reg;
 }
 
 static inline void writeTPIDRPRW(word_t reg)
