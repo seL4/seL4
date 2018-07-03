@@ -676,7 +676,6 @@ invokeSetTLSBase(tcb_t *thread, word_t tls_base)
 static exception_t
 decodeSetTLSBase(cap_t cap, word_t length, word_t *buffer)
 {
-    tcb_t *thread;
     word_t tls_base;
 
     if (length < 1) {
