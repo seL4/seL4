@@ -116,7 +116,7 @@ static uint32_t *fdt_scan_helper(
 {
     struct fdt_scan_node child;
     struct fdt_scan_prop prop;
-    int last = 0;
+    int UNUSED last = 0;
 
     child.parent = node;
     // these are the default cell counts, as per the FDT spec

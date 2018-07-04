@@ -94,7 +94,7 @@ void handle_exception(void)
 
         printf("Register Context Dump \n");
 
-        register word_t thread_context asm("t0");
+        register word_t UNUSED thread_context asm("t0");
         for (int i = 0; i < 32; i++) {
             printf("x%d = %p\n", i, (void*) * (((word_t *) thread_context) + i));
         }
