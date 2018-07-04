@@ -35,6 +35,7 @@ enum _register {
     sp = 1, SP = 1,
     gp = 2,
     tp = 3,
+    TLS_BASE = tp,
 
     t0 = 4,
     t1 = 5,
