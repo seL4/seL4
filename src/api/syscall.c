@@ -75,12 +75,12 @@ handleUnknownSyscall(word_t w)
 #endif
 #ifdef CONFIG_DEBUG_BUILD
     if (w == SysDebugHalt) {
-        tcb_t *tptr = NODE_STATE(ksCurThread);
+        tcb_t * UNUSED tptr = NODE_STATE(ksCurThread);
         printf("Debug halt syscall from user thread %p \"%s\"\n", tptr, tptr->tcbName);
         halt();
     }
     if (w == SysDebugSnapshot) {
-        tcb_t *tptr = NODE_STATE(ksCurThread);
+        tcb_t * UNUSED tptr = NODE_STATE(ksCurThread);
         printf("Debug snapshot syscall from user thread %p \"%s\"\n", tptr, tptr->tcbName);
         capDL();
         return EXCEPTION_NONE;
