@@ -25,6 +25,14 @@ static inline void arch_c_entry_hook(void)
         setRegister(NODE_STATE(ksCurThread), TPIDRURW, readTPIDRURW());
     }
 #endif
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    if (NODE_STATE(ksCurThread)->tcbArch.tcbVCPU) {
+        /* Although the TPIDRURO register is user read only it *is* writeable
+         * a thread running in supervisor mode and so in that case we need to
+         * save it here as it actually could have changed */
+        setRegister(NODE_STATE(ksCurThread), TLS_BASE, readTPIDRURO());
+    }
+#endif
 }
 
 static inline void arch_c_exit_hook(void)
