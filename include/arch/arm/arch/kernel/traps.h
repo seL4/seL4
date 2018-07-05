@@ -28,9 +28,17 @@ static inline void arch_c_entry_hook(void)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     if (NODE_STATE(ksCurThread)->tcbArch.tcbVCPU) {
         /* Although the TPIDRURO register is user read only it *is* writeable
-         * a thread running in supervisor mode and so in that case we need to
+         * by a thread running in supervisor mode and so in that case we need to
          * save it here as it actually could have changed */
         setRegister(NODE_STATE(ksCurThread), TLS_BASE, readTPIDRURO());
+        /* in the case where we are using TPIDRURW as the IPC buffer we still
+         * want to save the value of TPIDRURW (even though we skipped it just
+         * above) as a supervisor mode thread will not understand or appreciate
+         * seL4s desire that it be used as the IPC buffer and so we should respect
+         * its changes */
+        if (config_set(CONFIG_IPC_BUF_TPIDRURW)) {
+            setRegister(NODE_STATE(ksCurThread), TPIDRURW, readTPIDRURW());
+        }
     }
 #endif
 }
