@@ -19,6 +19,7 @@ add_sources(
         benchmark.c
         cache.c
         user_access.c
+        tlb.c
     ASMFILES
         machine_asm.S
 )

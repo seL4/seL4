@@ -34,4 +34,6 @@ static inline void isb(void)
     asm volatile("isb" ::: "memory");
 }
 
+void lockTLBEntryCritical(unsigned int addr, unsigned int x, unsigned int y);
+
 #endif

@@ -11,62 +11,14 @@
 #include <config.h>
 #include <machine/assembler.h>
 
+#if defined(CONFIG_ARM_CORTEX_A15) || defined(CONFIG_ARM_CORTEX_A7)
+  /* The hardware does not support tlb locking */
+
+#else
+
 .code 32
 .section .text, "ax"
-.global lockTLBEntry
-
-#if defined(CONFIG_ARM_CORTEX_A15) || defined(CONFIG_ARM_CORTEX_A7)
-/* Hardware does not support TLB locking */
-BEGIN_FUNC(lockTLBEntry)
-    bx lr
-END_FUNC(lockTLBEntry)
-
-#else /* !ARM_CORTEX_A15 */
-
-BEGIN_FUNC(lockTLBEntry)
-    /* Lock this entry into the next position.
-     * On Cortex-A8, the first N TLB entries can be locked,
-     * where N is specified in the TLB lockdown register.
-     *
-     * Find out how many entries are already locked.
-     */
-    ldr r3, =tlbLockCount
-    ldr r3, [r3]
-
-    /* Set up the values we need to program into the lockdown register. */
-#if defined(CONFIG_ARM_CORTEX_A8)
-    /* Before lockdown, base = victim = num_locked_tlb_entries. */
-    mov r1, #1
-    orr r1, r1, r3, lsl #27
-    orr r1, r1, r3, lsl #22
-
-    /* After lockdown, base = victim = num_locked_tlb_entries + 1. */
-    add r3, r3, #1
-    mov r2, #0
-    orr r2, r2, r3, lsl #27
-    orr r2, r2, r3, lsl #22
-
-#elif defined(CONFIG_ARM_CORTEX_A9)
-    /* Before lockdown, victim = num_locked_tlb_entries. */
-    mov r1, #1
-    orr r1, r1, r3, lsl #28
-
-    /* After lockdown, victim = num_locked_tlb_entries + 1. */
-    add r3, r3, #1
-    mov r2, #0
-    orr r2, r2, r3, lsl #28
-#else
-#   error Undefined CPU for TLB lockdown
-#endif
-    push {r2, lr}
-    ldr r2, =tlbLockCount
-    str r3, [r2]
-    pop {r2}
-    bl lockTLBEntryCritical
-    pop {lr}
-    bx lr
-
-END_FUNC(lockTLBEntry)
+.global lockTLBEntryCritical
 
 .balign (16*4)    
 BEGIN_FUNC(lockTLBEntryCritical)
