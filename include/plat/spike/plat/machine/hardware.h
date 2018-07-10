@@ -31,10 +31,15 @@
 #define PADDR_BASE 0x0lu
 #endif
 
+#ifdef CONFIG_BUILD_ROCKET_CHIP_ZEDBOARD
+/* The Rocket-Chip for zedboard only has 256MiB of Memory. */
+#define PADDR_LOAD 0x88000000lu
+#else
 /* This represents the physical address that the kernel image will be linked to. This needs to
  * be on a 1gb boundary as we currently require being able to creating a mapping to this address
  * as the largest frame size */
 #define PADDR_LOAD 0xC0000000lu
+#endif
 
 /* The highest valid physical address that can be indexed in the kernel window */
 #define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
