@@ -952,8 +952,7 @@ done'''],
         %(name)s_get_tag \<acute>ret__struct_%(name)s_C = ''' \
      '''scast %(name)s_%(block)s\<rbrace>"''',
 '''  apply (rule allI, rule conseqPre, vcg)
-  apply (clarsimp simp: guard_simps o_def)
-  apply (simp add: mask_def shift_over_ao_dists)
+  apply (clarsimp simp: guard_simps o_def mask_def shift_over_ao_dists)
   apply (rule context_conjI[THEN iffD1[OF conj_commute]],
          fastforce simp: %(name)s_get_tag_eq_x %(name)s_%(block)s_def
                          mask_def shift_over_ao_dists word_bw_assocs word_ao_dist)
