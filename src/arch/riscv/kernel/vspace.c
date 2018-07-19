@@ -103,7 +103,7 @@ map_kernel_window(void)
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
 
-        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+        kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
 
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
@@ -116,7 +116,7 @@ map_kernel_window(void)
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
 
-        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+        kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
 
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
@@ -278,7 +278,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 BOOT_CODE void
 activate_kernel_vspace(void)
 {
-    setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
+    setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
 }
 
 BOOT_CODE void
@@ -324,7 +324,7 @@ void
 copyGlobalMappings(pte_t *newLvl1pt)
 {
     unsigned int i;
-    pte_t *global_kernel_vspace = kernel_pageTables[0];
+    pte_t *global_kernel_vspace = kernel_root_pageTable;
 
     for (i = RISCV_GET_PT_INDEX(PPTR_BASE, 1); i < BIT(PT_INDEX_BITS); i++) {
         newLvl1pt[i] = global_kernel_vspace[i];
@@ -571,7 +571,7 @@ setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) != cap_page_table_cap) {
-        setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
+        setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
         return;
     }
 
@@ -580,7 +580,7 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_table_cap_get_capPTMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != lvl1pt)) {
-        setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
+        setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
         return;
     }
 

@@ -3,11 +3,13 @@
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
+ * Copyright 2018, DornerWorks
+ *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(DATA61_GPL)
+ * @TAG(DATA61_DORNERWORKS_GPL)
  */
 
 /*
@@ -35,8 +37,46 @@ NODE_STATE_END(archNodeState);
 
 extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
+/* Kernel Page Tables */
+extern pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] VISIBLE;
+
+#if CONFIG_PT_LEVELS == 3
+
 /* RISC-V has n-level page tables (depending on configured paging mode),
- * each of which is 4KiB, PTEs are of word_t size
-  */
-extern pte_t kernel_pageTables[CONFIG_PT_LEVELS][BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
+ *  As of RISC-V priv 1.10,
+ *  - level 1 are entries for 1GiB pages
+ *  - level 2 are entries for 2MiB pages
+ *  - level 3 are entries for 4KiB pages
+ */
+/* This consists of a one dimensional page table for the first level and a
+   two dimensional page table for the second level. The number of
+   second level page tables are bound by the macro: NUM_2MB_ENTRIES.
+   This allows a page table entry in the first level to be either a leaf or
+   point to one of the second level page tables.
+*/
+
+/*
+        Level 1 Page Table              Level 2 Page Tables
+        +----------------+              +---------------------------+
+        | Leaf PTE       |              | +-----------------------+ |
+        +----------------+    +------->[0]|    |    |    |    |   | |
+        | Next Level PTE +----+         | +-----------------------+ |
+        +----------------+              | +-----------------------+ |
+        | Next Level PTE +------------>[1]|    |    |    |    |   | |
+        +----------------+              | +-----------------------+ |
+        |                |              | +-----------------------+ |
+        +----------------+           [...]|    |    |    |    |   | |
+        |                |              | +-----------------------+ |
+        +----------------+              | +-----------------------+ |
+                      [NUM_2MiB_ENTRIES-1]|    |    |    |    |   | |
+                                        | +-----------------------+ |
+                                        +---------------------------+
+ */
+
+/* Kernel has Upper 2GiB of Virtual Memory. 512 Entries per PTE * 2MiB = 1GiB, so 2 of these are needed */
+#define NUM_2MB_ENTRIES 2
+
+extern pte_t kernel_level2_Tables[NUM_2MB_ENTRIES][BIT(PT_INDEX_BITS)] VISIBLE;
+
+#endif
 #endif
