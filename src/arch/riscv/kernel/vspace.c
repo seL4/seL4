@@ -3,11 +3,13 @@
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
+ * Copyright 2018, DornerWorks
+ *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(DATA61_GPL)
+ * @TAG(DATA61_DORNERWORKS_GPL)
  */
 
 /*
@@ -63,6 +65,27 @@ RISCVGetReadFromVMRights(vm_rights_t vm_rights)
     return vm_rights != VMWriteOnly;
 }
 
+static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
+{
+    word_t ppn = (word_t)(phys_addr >> 12);
+
+    uint8_t read = is_leaf ? 1 : 0;
+    uint8_t write = read;
+    uint8_t exec = read;
+
+    return pte_new(ppn,
+                   0,     /* sw */
+                   1,     /* dirty */
+                   1,     /* accessed */
+                   1,     /* global */
+                   0,     /* user */
+                   exec,  /* execute */
+                   write, /* write */
+                   read,  /* read */
+                   1      /* valid */
+                  );
+}
+
 /* ==================== BOOT CODE STARTS HERE ==================== */
 
 BOOT_CODE VISIBLE void
@@ -79,19 +102,9 @@ map_kernel_window(void)
     while (pptr < KERNEL_BASE) {
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
-        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] =
-            pte_new(
-                paddr >> seL4_PageBits,
-                0,  /* sw */
-                1,  /* dirty */
-                1,  /* accessed */
-                1,  /* global */
-                0,  /* user */
-                1,  /* execute */
-                1,  /* write */
-                1,  /* read */
-                1   /* valid */
-            );
+
+        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
     }
@@ -102,19 +115,9 @@ map_kernel_window(void)
     while (pptr >= KERNEL_BASE) {
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
-        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] =
-            pte_new(
-                paddr >> seL4_PageBits,
-                0,  /* sw */
-                1,  /* dirty */
-                1,  /* accessed */
-                1,  /* global */
-                0,  /* user */
-                1,  /* execute */
-                1,  /* write */
-                1,  /* read */
-                1   /* valid */
-            );
+
+        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
     }
