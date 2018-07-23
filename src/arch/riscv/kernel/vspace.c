@@ -65,6 +65,12 @@ RISCVGetReadFromVMRights(vm_rights_t vm_rights)
     return vm_rights != VMWriteOnly;
 }
 
+static inline bool_t isPTEPageTable(pte_t *pte)
+{
+    return pte_ptr_get_valid(pte) &&
+           !(pte_ptr_get_read(pte) || pte_ptr_get_write(pte) || pte_ptr_get_execute(pte));
+}
+
 static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 {
     word_t ppn = (word_t)(phys_addr >> 12);
@@ -360,12 +366,6 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     } else {
         return NULL;
     }
-}
-
-static inline bool_t isPTEPageTable(pte_t *pte)
-{
-    return pte_ptr_get_valid(pte) &&
-           !(pte_ptr_get_read(pte) || pte_ptr_get_write(pte) || pte_ptr_get_execute(pte));
 }
 
 static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
