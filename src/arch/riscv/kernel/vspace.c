@@ -117,15 +117,47 @@ map_kernel_window(void)
     /* now we should be mapping the kernel base, starting again from PADDR_LOAD */
     assert(pptr == KERNEL_BASE);
     paddr = PADDR_LOAD;
-    /* pptr will overflow at the end of the address range so this loop condition looks odd */
-    while (pptr >= KERNEL_BASE) {
-        assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
-        assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
 
-        kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+#if CONFIG_PT_LEVELS == 3
+    word_t orig_indx_1GiB = RISCV_GET_PT_INDEX(pptr, 1);
+#endif
 
-        pptr += RISCV_GET_LVL_PGSIZE(1);
-        paddr += RISCV_GET_LVL_PGSIZE(1);
+    while (pptr < UINTPTR_MAX && pptr >= KERNEL_BASE) {
+
+        /* Sv39: if both phy and virt address are aligned on 1GiB boundary, use Level 1 mappings
+         * Sv32: this checks if phy and virt address are aligned on 2MiB boundary.
+         */
+        if (IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)) &&
+                IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1))) {
+            kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+            pptr += RISCV_GET_LVL_PGSIZE(1);
+            paddr += RISCV_GET_LVL_PGSIZE(1);
+        }
+#if CONFIG_PT_LEVELS == 3
+        else if (IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(2)) &&
+                 IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(2))) {
+            word_t indx_1GiB = RISCV_GET_PT_INDEX(pptr, 1);
+            word_t indx_2MiB = RISCV_GET_PT_INDEX(pptr, 2);
+            word_t level2_ref = indx_1GiB % orig_indx_1GiB;
+
+            assert(level2_ref < NUM_2MB_ENTRIES);
+
+            if (!isPTEPageTable(&kernel_root_pageTable[indx_1GiB])) {
+                // Check if it is already pointing to a 2MiB page table
+                // if not, make a next level page table
+                // otherwise continue filling in the second level page table
+                kernel_root_pageTable[indx_1GiB] =
+                    pte_next(kpptr_to_paddr(kernel_level2_Tables[level2_ref]), false);
+            }
+
+            kernel_level2_Tables[level2_ref][indx_2MiB] = pte_next(paddr, true);
+            pptr += RISCV_GET_LVL_PGSIZE(2);
+            paddr += RISCV_GET_LVL_PGSIZE(2);
+        }
+#endif
+        else {
+            fail("Kernel not properly aligned");
+        }
     }
 }
 
