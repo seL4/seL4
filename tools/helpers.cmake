@@ -38,6 +38,14 @@ function(get_absolute_source_or_binary output input)
     set("${output}" "${test}" PARENT_SCOPE)
 endfunction(get_absolute_source_or_binary)
 
+function(get_absolute_list_source_or_binary output input)
+    get_filename_component(test "${input}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+    if(NOT EXISTS "${test}")
+        get_absolute_source_or_binary(test ${input})
+    endif()
+    set("${output}" "${test}" PARENT_SCOPE)
+endfunction()
+
 # Generates a custom command that preprocesses an input file into an output file
 # Uses the current compilation settings as well as any EXTRA_FLAGS provided. Can also
 # be given any EXTRA_DEPS to depend upon
