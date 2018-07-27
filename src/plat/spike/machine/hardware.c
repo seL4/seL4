@@ -29,6 +29,9 @@
 
 #define MAX_AVAIL_P_REGS 2
 
+#define MS_PER_S     1000
+#define RESET_CYCLES ((CONFIG_SPIKE_CLOCK_FREQ / MS_PER_S) * CONFIG_TIMER_TICK_MS)
+
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 
@@ -166,8 +169,7 @@ resetTimer(void)
     // repeatedly try and set the timer in a loop as otherwise there is a race and we
     // may set a timeout in the past, resulting in it never getting triggered
     do {
-        /* This should be set properly relying on the frequency (on real HW) */
-        target = get_cycles() + 0x1fff;
+        target = get_cycles() + RESET_CYCLES;
         sbi_set_timer(target);
     } while (get_cycles() > target);
 }
@@ -178,7 +180,7 @@ resetTimer(void)
 BOOT_CODE void
 initTimer(void)
 {
-    sbi_set_timer(get_cycles() + 0xfffff);
+    sbi_set_timer(get_cycles() + RESET_CYCLES);
 }
 
 void plat_cleanL2Range(paddr_t start, paddr_t end)

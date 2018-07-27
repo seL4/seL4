@@ -24,6 +24,12 @@ config_option(KernelPlatformSpikeRocketChip BUILD_ROCKET_CHIP_ZEDBOARD "Build ap
     DEPENDS "KernelSel4ArchRiscV64;KernelPlatformSpike"
 )
 
+config_string(KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ
+    "Frequency of Clock used for Scheduler"
+    DEFAULT 10000000
+    UNQUOTE
+)
+
 add_sources(
     DEP "KernelPlatformSpike"
     CFILES
