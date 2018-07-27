@@ -18,10 +18,9 @@ if(KernelPlatformSpike)
     config_set(KernelPlatform PLAT "spike")
 endif()
 
-config_option(KernelPlatformSpikeRocketChip BUILD_ROCKET_CHIP_ZEDBOARD "Build application to \
-    run on the Rocket-Chip for the zedboard."
-    DEFAULT OFF
-    DEPENDS "KernelSel4ArchRiscV64;KernelPlatformSpike"
+config_choice(KernelSpikeInstance RISCV_SPIKE_INSTANCE "Select the instance for Spike to run on"
+    "qemu;KernelPlatformSpikeQemu;BUILD_SPIKE_QEMU;KernelArchRiscV"
+    "rocket-chip-zedboard;KernelPlatformSpikeRocketChip;BUILD_ROCKET_CHIP_ZEDBOARD;KernelSel4ArchRiscV64"
 )
 
 config_string(KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ
@@ -29,6 +28,10 @@ config_string(KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ
     DEFAULT 10000000
     UNQUOTE
 )
+
+# Include all of the different instances of the Spike platform
+include(src/plat/spike/instance/qemu/config.cmake)
+include(src/plat/spike/instance/rocket-chip/config.cmake)
 
 add_sources(
     DEP "KernelPlatformSpike"
