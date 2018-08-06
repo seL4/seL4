@@ -13,7 +13,7 @@
 #include <arch/machine/timer.h>
 #include <arch/machine/priv_timer.h>
 
-timer_t *priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
+timer_t * const priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 
 #define TMR_CTRL_ENABLE      BIT(0)
 #define TMR_CTRL_AUTORELOAD  BIT(1)
