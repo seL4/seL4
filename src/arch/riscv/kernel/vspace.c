@@ -71,6 +71,11 @@ static inline bool_t isPTEPageTable(pte_t *pte)
            !(pte_ptr_get_read(pte) || pte_ptr_get_write(pte) || pte_ptr_get_execute(pte));
 }
 
+/** Helper function meant only to be used for mapping the kernel
+ * window.
+ *
+ * Maps all pages with full RWX and supervisor perms by default.
+ */
 static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 {
     word_t ppn = (word_t)(phys_addr >> 12);
