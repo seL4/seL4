@@ -3,11 +3,13 @@
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
+ * Copyright 2018, DornerWorks
+ *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(DATA61_GPL)
+ * @TAG(DATA61_DORNERWORKS_GPL)
  */
 
 /*
@@ -63,6 +65,33 @@ RISCVGetReadFromVMRights(vm_rights_t vm_rights)
     return vm_rights != VMWriteOnly;
 }
 
+static inline bool_t isPTEPageTable(pte_t *pte)
+{
+    return pte_ptr_get_valid(pte) &&
+           !(pte_ptr_get_read(pte) || pte_ptr_get_write(pte) || pte_ptr_get_execute(pte));
+}
+
+static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
+{
+    word_t ppn = (word_t)(phys_addr >> 12);
+
+    uint8_t read = is_leaf ? 1 : 0;
+    uint8_t write = read;
+    uint8_t exec = read;
+
+    return pte_new(ppn,
+                   0,     /* sw */
+                   1,     /* dirty */
+                   1,     /* accessed */
+                   1,     /* global */
+                   0,     /* user */
+                   exec,  /* execute */
+                   write, /* write */
+                   read,  /* read */
+                   1      /* valid */
+                  );
+}
+
 /* ==================== BOOT CODE STARTS HERE ==================== */
 
 BOOT_CODE VISIBLE void
@@ -79,44 +108,56 @@ map_kernel_window(void)
     while (pptr < KERNEL_BASE) {
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
-        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] =
-            pte_new(
-                paddr >> seL4_PageBits,
-                0,  /* sw */
-                1,  /* dirty */
-                1,  /* accessed */
-                1,  /* global */
-                0,  /* user */
-                1,  /* execute */
-                1,  /* write */
-                1,  /* read */
-                1   /* valid */
-            );
+
+        kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
     }
     /* now we should be mapping the kernel base, starting again from PADDR_LOAD */
     assert(pptr == KERNEL_BASE);
     paddr = PADDR_LOAD;
-    /* pptr will overflow at the end of the address range so this loop condition looks odd */
-    while (pptr >= KERNEL_BASE) {
-        assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
-        assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
-        kernel_pageTables[0][RISCV_GET_PT_INDEX(pptr, 1)] =
-            pte_new(
-                paddr >> seL4_PageBits,
-                0,  /* sw */
-                1,  /* dirty */
-                1,  /* accessed */
-                1,  /* global */
-                0,  /* user */
-                1,  /* execute */
-                1,  /* write */
-                1,  /* read */
-                1   /* valid */
-            );
-        pptr += RISCV_GET_LVL_PGSIZE(1);
-        paddr += RISCV_GET_LVL_PGSIZE(1);
+
+#if CONFIG_PT_LEVELS == 3
+    word_t orig_indx_1GiB = RISCV_GET_PT_INDEX(pptr, 1);
+#endif
+
+    while (pptr < UINTPTR_MAX && pptr >= KERNEL_BASE) {
+
+        /* Sv39: if both phy and virt address are aligned on 1GiB boundary, use Level 1 mappings
+         * Sv32: this checks if phy and virt address are aligned on 2MiB boundary.
+         */
+        if (IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)) &&
+                IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1))) {
+            kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+            pptr += RISCV_GET_LVL_PGSIZE(1);
+            paddr += RISCV_GET_LVL_PGSIZE(1);
+        }
+#if CONFIG_PT_LEVELS == 3
+        else if (IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(2)) &&
+                 IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(2))) {
+            word_t indx_1GiB = RISCV_GET_PT_INDEX(pptr, 1);
+            word_t indx_2MiB = RISCV_GET_PT_INDEX(pptr, 2);
+            word_t level2_ref = indx_1GiB % orig_indx_1GiB;
+
+            assert(level2_ref < NUM_2MB_ENTRIES);
+
+            if (!isPTEPageTable(&kernel_root_pageTable[indx_1GiB])) {
+                // Check if it is already pointing to a 2MiB page table
+                // if not, make a next level page table
+                // otherwise continue filling in the second level page table
+                kernel_root_pageTable[indx_1GiB] =
+                    pte_next(kpptr_to_paddr(kernel_level2_Tables[level2_ref]), false);
+            }
+
+            kernel_level2_Tables[level2_ref][indx_2MiB] = pte_next(paddr, true);
+            pptr += RISCV_GET_LVL_PGSIZE(2);
+            paddr += RISCV_GET_LVL_PGSIZE(2);
+        }
+#endif
+        else {
+            fail("Kernel not properly aligned");
+        }
     }
 }
 
@@ -275,7 +316,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 BOOT_CODE void
 activate_kernel_vspace(void)
 {
-    setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
+    setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
 }
 
 BOOT_CODE void
@@ -321,7 +362,7 @@ void
 copyGlobalMappings(pte_t *newLvl1pt)
 {
     unsigned int i;
-    pte_t *global_kernel_vspace = kernel_pageTables[0];
+    pte_t *global_kernel_vspace = kernel_root_pageTable;
 
     for (i = RISCV_GET_PT_INDEX(PPTR_BASE, 1); i < BIT(PT_INDEX_BITS); i++) {
         newLvl1pt[i] = global_kernel_vspace[i];
@@ -357,12 +398,6 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     } else {
         return NULL;
     }
-}
-
-static inline bool_t isPTEPageTable(pte_t *pte)
-{
-    return pte_ptr_get_valid(pte) &&
-           !(pte_ptr_get_read(pte) || pte_ptr_get_write(pte) || pte_ptr_get_execute(pte));
 }
 
 static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
@@ -568,7 +603,7 @@ setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) != cap_page_table_cap) {
-        setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
+        setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
         return;
     }
 
@@ -577,7 +612,7 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_table_cap_get_capPTMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != lvl1pt)) {
-        setVSpaceRoot(kpptr_to_paddr(&kernel_pageTables[0]), 0);
+        setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
         return;
     }
 

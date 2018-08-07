@@ -3,11 +3,13 @@
  * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
  * ABN 41 687 119 230.
  *
+ * Copyright 2018, DornerWorks
+ *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
  * See "LICENSE_GPLv2.txt" for details.
  *
- * @TAG(DATA61_GPL)
+ * @TAG(DATA61_DORNERWORKS_GPL)
  */
 
 /*
@@ -27,4 +29,8 @@
 /* The top level asid mapping table */
 asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
-pte_t kernel_pageTables[CONFIG_PT_LEVELS][BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
+/* Kernel Page Tables */
+pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
+#if CONFIG_PT_LEVELS == 3
+pte_t kernel_level2_Tables[NUM_2MB_ENTRIES][BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
+#endif
