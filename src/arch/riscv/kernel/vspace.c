@@ -131,9 +131,9 @@ map_kernel_window(void)
     word_t indx_1GiB = RISCV_GET_PT_INDEX(pptr, 1);
     word_t indx_2MiB = 0;
     kernel_root_pageTable[indx_1GiB] =
-        pte_next(kpptr_to_paddr(kernel_level2_Tables[0]), false);
+        pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
     while (pptr < KERNEL_BASE + RISCV_GET_LVL_PGSIZE(1)) {
-        kernel_level2_Tables[0][indx_2MiB] = pte_next(paddr, true);
+        kernel_image_level2_pt[indx_2MiB] = pte_next(paddr, true);
             indx_2MiB++;
         pptr += RISCV_GET_LVL_PGSIZE(2);
         paddr += RISCV_GET_LVL_PGSIZE(2);

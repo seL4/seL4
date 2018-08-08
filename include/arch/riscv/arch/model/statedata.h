@@ -44,42 +44,6 @@ extern pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] VISIBLE;
  * in order to map in our kernel image at KERNEL_BASE */
 #if CONFIG_PT_LEVELS == 3 && !IS_ALIGNED(PADDR_LOAD, RISCV_GET_LVL_PGSIZE_BITS(1))
 #define RISCV_KERNEL_WINDOW_LEVEL2_PT
-
-/* RISC-V has n-level page tables (depending on configured paging mode),
- *  As of RISC-V priv 1.10,
- *  - level 1 are entries for 1GiB pages
- *  - level 2 are entries for 2MiB pages
- *  - level 3 are entries for 4KiB pages
- */
-/* This consists of a one dimensional page table for the first level and a
-   two dimensional page table for the second level. The number of
-   second level page tables are bound by the macro: NUM_2MB_ENTRIES.
-   This allows a page table entry in the first level to be either a leaf or
-   point to one of the second level page tables.
-*/
-
-/*
-        Level 1 Page Table              Level 2 Page Tables
-        +----------------+              +---------------------------+
-        | Leaf PTE       |              | +-----------------------+ |
-        +----------------+    +------->[0]|    |    |    |    |   | |
-        | Next Level PTE +----+         | +-----------------------+ |
-        +----------------+              | +-----------------------+ |
-        | Next Level PTE +------------>[1]|    |    |    |    |   | |
-        +----------------+              | +-----------------------+ |
-        |                |              | +-----------------------+ |
-        +----------------+           [...]|    |    |    |    |   | |
-        |                |              | +-----------------------+ |
-        +----------------+              | +-----------------------+ |
-                      [NUM_2MiB_ENTRIES-1]|    |    |    |    |   | |
-                                        | +-----------------------+ |
-                                        +---------------------------+
- */
-
-/* Kernel has Upper 2GiB of Virtual Memory. 512 Entries per PTE * 2MiB = 1GiB, so 2 of these are needed */
-#define NUM_2MB_ENTRIES 2
-
-extern pte_t kernel_level2_Tables[NUM_2MB_ENTRIES][BIT(PT_INDEX_BITS)] VISIBLE;
-
+extern pte_t kernel_image_level2_pt[BIT(PT_INDEX_BITS)];
 #endif
 #endif
