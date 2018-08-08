@@ -123,33 +123,22 @@ map_kernel_window(void)
     assert(pptr == KERNEL_BASE);
     paddr = PADDR_LOAD;
 
-    /* Sv39: if both phy and virt address are aligned on 1GiB boundary, use Level 1 mappings
-     * Sv32: this checks if phy and virt address are aligned on 2MiB boundary.
-     */
-    if (IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)) &&
-            IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1))) {
-        kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
-        pptr += RISCV_GET_LVL_PGSIZE(1);
-        paddr += RISCV_GET_LVL_PGSIZE(1);
-    }
-#if CONFIG_PT_LEVELS == 3
-    else if (IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(2)) &&
-             IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(2))) {
-        word_t indx_1GiB = RISCV_GET_PT_INDEX(pptr, 1);
-        word_t indx_2MiB = 0;
-        kernel_root_pageTable[indx_1GiB] =
-            pte_next(kpptr_to_paddr(kernel_level2_Tables[0]), false);
-        while (pptr < KERNEL_BASE + RISCV_GET_LVL_PGSIZE(1)) {
-            kernel_level2_Tables[0][indx_2MiB] = pte_next(paddr, true);
+#ifndef RISCV_KERNEL_WINDOW_LEVEL2_PT
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
+    pptr += RISCV_GET_LVL_PGSIZE(1);
+    paddr += RISCV_GET_LVL_PGSIZE(1);
+#else
+    word_t indx_1GiB = RISCV_GET_PT_INDEX(pptr, 1);
+    word_t indx_2MiB = 0;
+    kernel_root_pageTable[indx_1GiB] =
+        pte_next(kpptr_to_paddr(kernel_level2_Tables[0]), false);
+    while (pptr < KERNEL_BASE + RISCV_GET_LVL_PGSIZE(1)) {
+        kernel_level2_Tables[0][indx_2MiB] = pte_next(paddr, true);
             indx_2MiB++;
-            pptr += RISCV_GET_LVL_PGSIZE(2);
-            paddr += RISCV_GET_LVL_PGSIZE(2);
-        }
+        pptr += RISCV_GET_LVL_PGSIZE(2);
+        paddr += RISCV_GET_LVL_PGSIZE(2);
     }
 #endif
-    else {
-        fail("Kernel not properly aligned");
-    }
 
     /* There should be 1GiB free where we will put device mapping some day */
     assert(pptr == UINTPTR_MAX - RISCV_GET_LVL_PGSIZE(1) + 1);

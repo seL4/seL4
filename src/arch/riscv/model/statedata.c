@@ -31,6 +31,6 @@ asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
 /* Kernel Page Tables */
 pte_t kernel_root_pageTable[BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
-#if CONFIG_PT_LEVELS == 3
+#ifdef RISCV_KERNEL_WINDOW_LEVEL2_PT
 pte_t kernel_level2_Tables[NUM_2MB_ENTRIES][BIT(PT_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageTableBits));
 #endif
