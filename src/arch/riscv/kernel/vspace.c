@@ -119,7 +119,7 @@ map_kernel_window(void)
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
     }
-    /* now we should be mapping the kernel base, starting again from PADDR_LOAD */
+    /* now we should be mapping the 1GiB kernel base, starting again from PADDR_LOAD */
     assert(pptr == KERNEL_BASE);
     paddr = PADDR_LOAD;
 
@@ -127,7 +127,7 @@ map_kernel_window(void)
     word_t orig_indx_1GiB = RISCV_GET_PT_INDEX(pptr, 1);
 #endif
 
-    while (pptr < UINTPTR_MAX && pptr >= KERNEL_BASE) {
+    while (pptr < UINTPTR_MAX - RISCV_GET_LVL_PGSIZE(1) + 1) {
 
         /* Sv39: if both phy and virt address are aligned on 1GiB boundary, use Level 1 mappings
          * Sv32: this checks if phy and virt address are aligned on 2MiB boundary.
@@ -164,6 +164,9 @@ map_kernel_window(void)
             fail("Kernel not properly aligned");
         }
     }
+
+    /* There should be 1GiB free where we will put device mapping some day */
+    assert(pptr == UINTPTR_MAX - RISCV_GET_LVL_PGSIZE(1) + 1);
 }
 
 BOOT_CODE void
