@@ -15,6 +15,6 @@
 #include <config.h>
 
 #define PPTR_BASE  0x80000000lu
-#define KERNEL_BASE 0xFFC00000lu
+#define KERNEL_BASE 0xFF800000lu
 
 #endif
