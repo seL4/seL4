@@ -31,6 +31,7 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
     "wandq;KernelPlatformWandQ;PLAT_WANDQ;KernelSel4ArchAarch32"
     "imx7sabre;KernelPlatformImx7Sabre;PLAT_IMX7_SABRE;KernelSel4ArchAarch32"
     "zynq7000;KernelPlatformZynq7000;PLAT_ZYNQ7000;KernelSel4ArchAarch32"
+    "zynqmp;KernelPlatformZynqmp;PLAT_ZYNQMP;KernelArchARM"
     "allwinnera20;KernelPlatformAllwinnerA20;PLAT_ALLWINNERA20;KernelSel4ArchAarch32"
     "tk1;KernelPlatformTK1;PLAT_TK1;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
     "hikey;KernelPlatformHikey;PLAT_HIKEY;KernelArchARM"
@@ -84,6 +85,7 @@ include(src/plat/bcm2837/config.cmake)
 include(src/plat/tk1/config.cmake)
 include(src/plat/tx1/config.cmake)
 include(src/plat/zynq7000/config.cmake)
+include(src/plat/zynqmp/config.cmake)
 
 # Now enshrine all the common variables in the config
 config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")
@@ -329,7 +331,7 @@ add_sources(
 )
 
 add_sources(
-    DEP "KernelArmCortexA15 OR KernelArmCortexA7 OR KernelArmCortexA57 OR KernelArmCortexA9 OR KernelPlatformHikey"
+    DEP "KernelArmCortexA15 OR KernelArmCortexA7 OR KernelArmCortexA57 OR KernelArmCortexA9 OR KernelPlatformHikey OR KernelPlatformZynqmp"
     CFILES src/arch/arm/machine/gic_pl390.c
 )
 
