@@ -61,6 +61,9 @@
 #define FRO_MASK    0xFF
 #define FI          12
 #define SID_MASK    0xFFFF
+#define SID_BUS(a)  (MASK(8) & (a >> 8))
+#define SID_DEV(a)  (MASK(5) & (a >> 3))
+#define SID_FUNC(a) (MASK(3) & a)
 #define FR_MASK     0xFF
 #define FAULT_TYPE  30
 #define FAULT       31
@@ -236,7 +239,8 @@ static void vtd_process_faults(drhu_id_t i)
             reason = vtd_read32(i, fr_reg + 12) & FR_MASK;
 
             printf("IOMMU: DMA %s page fault ", fault_type ? "read" : "write");
-            printf("from bus/dev/fun 0x%x ", source_id);
+            printf("from 0x%x (bus: 0x%lx/dev: 0x%lx/fun: 0x%lx) ", source_id,
+                   SID_BUS(source_id), SID_DEV(source_id), SID_FUNC(source_id));
             printf("on address 0x%x:%x ", address[1], address[0]);
             printf("with reason code 0x%x\n", reason);
 
