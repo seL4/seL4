@@ -51,7 +51,7 @@ Arch_switchToIdleThread(void)
     setVMRoot(tcb);
 }
 
-void CONST
+void
 Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
