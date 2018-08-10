@@ -41,7 +41,7 @@ typedef seL4_Word seL4_SlotPos;
 typedef struct {
     seL4_SlotPos start; /* first CNode slot position OF region */
     seL4_SlotPos end;   /* first CNode slot position AFTER region */
-} SEL4_PACKED seL4_SlotRegion;
+} seL4_SlotRegion;
 
 typedef struct {
     seL4_Word  paddr;   /* physical address of untyped cap  */
@@ -49,7 +49,7 @@ typedef struct {
     seL4_Uint8 padding2;
     seL4_Uint8 sizeBits;/* size (2^n) bytes of each untyped */
     seL4_Uint8 isDevice;/* whether the untyped is a device  */
-} SEL4_PACKED seL4_UntypedDesc;
+} seL4_UntypedDesc;
 
 typedef struct {
     seL4_Word         extraLen;        /* length of any additional bootinfo information */
@@ -63,13 +63,13 @@ typedef struct {
     seL4_SlotRegion   userImagePaging; /* userland-image paging structure caps */
     seL4_SlotRegion   ioSpaceCaps;     /* IOSpace caps for ARM SMMU */
     seL4_SlotRegion   extraBIPages;    /* caps for any pages used to back the additional bootinfo information */
-    seL4_Uint8        initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
+    seL4_Word         initThreadCNodeSizeBits; /* initial thread's root CNode size (2^n slots) */
     seL4_Domain       initThreadDomain; /* Initial thread's domain ID */
     seL4_SlotRegion   untyped;         /* untyped-object caps (untyped caps) */
     seL4_UntypedDesc  untypedList[CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS]; /* information about each untyped */
     /* the untypedList should be the last entry in this struct, in order
      * to make this struct easier to represent in other languages */
-} SEL4_PACKED seL4_BootInfo;
+} seL4_BootInfo;
 
 /* If extraLen > 0 then 4K after the start of bootinfo is a region of extraLen additional
  * bootinfo structures. Bootinfo structures are arch/platform specific and may or may not
@@ -79,7 +79,7 @@ typedef struct {
     seL4_Word id;
     /* length of the chunk, including this header */
     seL4_Word len;
-} SEL4_PACKED seL4_BootInfoHeader;
+} seL4_BootInfoHeader;
 
 /* Bootinfo identifiers share a global namespace, even if they are arch or platform specific
  * and are enumerated here */

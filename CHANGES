@@ -8,10 +8,14 @@ The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BI
 changes are added the compatibility information should be updated.
 
 ---
-Upcoming release: BINARY COMPATIBLE
+Upcoming release: SOURCE COMPATIBLE
 
 ## Changes
 
+ * structures in the boot info are not declared 'packed'
+    - these were previously packed (in the GCC attribute sense)
+    - some field lengths are tweaked to avoid padding
+    - this is a source-compatible change
 
 ## Upgrade Notes
 ---
