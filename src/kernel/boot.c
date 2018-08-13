@@ -522,12 +522,6 @@ provide_untyped_cap(
     return ret;
 }
 
-/** DONT_TRANSLATE */
-BOOT_CODE static word_t boot_ctzl (word_t x)
-{
-    return ctzl(x);
-}
-
 BOOT_CODE bool_t
 create_untypeds_for_region(
     cap_t      root_cnode_cap,
@@ -545,7 +539,7 @@ create_untypeds_for_region(
 
         /* Determine the alignment of the region */
         if (reg.start != 0) {
-            align_bits = boot_ctzl(reg.start);
+            align_bits = ctzl(reg.start);
         } else {
             align_bits = size_bits;
         }
