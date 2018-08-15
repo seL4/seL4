@@ -551,103 +551,6 @@ vcpu_hw_write_reg(word_t reg_index, word_t reg)
 }
 
 static inline void
-vcpu_save_reg(vcpu_t *vcpu, word_t reg)
-{
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
-        fail("ARM/HYP: Invalid register index or NULL VCPU");
-        return;
-    }
-    vcpu->regs[reg] = vcpu_hw_read_reg(reg);
-}
-
-static inline void
-vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
-{
-    for (word_t i = start; i <= end; i++) {
-        vcpu_save_reg(vcpu, i);
-    }
-}
-
-static inline void
-vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
-{
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
-        fail("ARM/HYP: Invalid register index or NULL VCPU");
-        return;
-    }
-    vcpu_hw_write_reg(reg, vcpu->regs[reg]);
-}
-
-static inline void
-vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
-{
-    for (word_t i = start; i <= end; i++) {
-        vcpu_restore_reg(vcpu, i);
-    }
-}
-
-static inline word_t
-vcpu_read_reg(vcpu_t *vcpu, word_t reg)
-{
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
-        fail("ARM/HYP: Invalid register index or NULL VCPU");
-        return 0;
-    }
-    return vcpu->regs[reg];
-}
-
-static inline void
-vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
-{
-    if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
-        fail("ARM/HYP: Invalid register index or NULL VCPU");
-        return;
-    }
-    vcpu->regs[reg] = value;
-}
-
-static word_t
-readVCPUReg(vcpu_t *vcpu, word_t field)
-{
-    if (likely(armHSCurVCPU == vcpu)) {
-        switch (field) {
-        case seL4_VCPUReg_SCTLR:
-            /* The SCTLR value is switched to/from hardware when we enable/disable
-             * the vcpu, not when we switch vcpus */
-            if (armHSVCPUActive) {
-                return getSCTLR();
-            } else {
-                return vcpu_read_reg(vcpu, field);
-            }
-        default:
-            return vcpu_hw_read_reg(field);
-        }
-    } else {
-        return vcpu_read_reg(vcpu, field);
-    }
-}
-
-static void
-writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
-{
-    if (likely(armHSCurVCPU == vcpu)) {
-        switch (field) {
-        case seL4_VCPUReg_SCTLR:
-            if (armHSVCPUActive) {
-                setSCTLR(value);
-            } else {
-                vcpu_write_reg(vcpu, field, value);
-            }
-            break;
-        default:
-            return vcpu_hw_write_reg(field, value);
-        }
-    } else {
-        vcpu_write_reg(vcpu, field, value);
-    }
-}
-
-static inline void
 vcpu_init_vtcr(void)
 {
     /* Set up the stage-2 translation control register for cores supporting 44-bit PA */
@@ -685,12 +588,12 @@ armv_vcpu_enable(vcpu_t *vcpu)
 {
     MSR(REG_HCR_EL2, HCR_VCPU);
     isb();
-    vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
+    vcpu_hw_write_reg(seL4_VCPUReg_SCTLR, vcpu->regs[seL4_VCPUReg_SCTLR]);
     isb();
 
     set_gic_vcpu_ctrl_hcr(vcpu->vgic.hcr);
 #ifdef CONFIG_HAVE_FPU
-    vcpu_restore_reg(vcpu, seL4_VCPUReg_CPACR);
+    vcpu_hw_write_reg(seL4_VCPUReg_CPACR, vcpu->regs[seL4_VCPUReg_CPACR]);
 #endif
 }
 
@@ -703,9 +606,9 @@ armv_vcpu_disable(vcpu_t *vcpu)
     if (likely(vcpu)) {
         hcr = get_gic_vcpu_ctrl_hcr();
         vcpu->vgic.hcr = hcr;
-        vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);
+        vcpu->regs[seL4_VCPUReg_SCTLR] = vcpu_hw_read_reg(seL4_VCPUReg_SCTLR);
 #ifdef CONFIG_HAVE_FPU
-        vcpu_save_reg(vcpu, seL4_VCPUReg_CPACR);
+        vcpu->regs[seL4_VCPUReg_CPACR] = vcpu_hw_read_reg(seL4_VCPUReg_CPACR);
 #endif
         isb();
     }
@@ -731,7 +634,7 @@ armv_vcpu_disable(vcpu_t *vcpu)
 static inline void
 armv_vcpu_init(vcpu_t *vcpu)
 {
-    vcpu_write_reg(vcpu, seL4_VCPUReg_SCTLR, SCTLR_EL1_VM);
+    vcpu->regs[seL4_VCPUReg_SCTLR] = SCTLR_EL1_VM;
 }
 
 static inline bool_t
