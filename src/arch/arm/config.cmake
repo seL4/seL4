@@ -190,7 +190,7 @@ config_option(KernelDebugDisableBranchPrediction DEBUG_DISABLE_BRANCH_PREDICTION
 config_option(KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
     DEFAULT OFF
-    DEPENDS "KernelArmCortexA15"
+    DEPENDS "KernelArmCortexA15 OR KernelArmCortexA57"
 )
 
 config_option(KernelArmHypEnableVCPUCP14SaveAndRestore ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
