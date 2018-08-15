@@ -76,7 +76,7 @@ vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
     vcpu->regs[reg] = value;
 }
 
-#ifdef CONFIG_HAVE_FPU
+#if defined(CONFIG_ARCH_AARCH32) && defined(CONFIG_HAVE_FPU)
 static inline void
 access_fpexc(vcpu_t *vcpu, bool_t write)
 {
