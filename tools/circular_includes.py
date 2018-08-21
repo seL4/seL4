@@ -18,22 +18,29 @@ prints circular dependency and exits with a status of -1.
 
 import sys
 import re
+import argparse
 
-def main():
+def main(parse_args):
     """
     Reads pre-processed sel4 source from standard input.
     If a circular dependency is found, the chain of includes
     resulting in the loop is printed out.
     """
 
-    kernel_all_re = re.compile(r'^# 1 ".*kernel_all\.c"')
+    ignore_re = None
+    ignore_args = parse_args.ignore
+    if ignore_args and len(ignore_args):
+        ignore_args = [re.escape(ignore) for ignore in ignore_args]
+        ignore_re_string = '(' + '|'.join(ignore_args) + ')'
+        ignore_re = re.compile(r'^# 1 ".*' + ignore_re_string + '"')
+
     header_re = re.compile(r'^# (\d+) "(.*\..)"')
 
     file_stack = []
 
     for line in sys.stdin:
 
-        if kernel_all_re.match(line):
+        if ignore_re and ignore_re.match(line):
             continue
 
         match = header_re.match(line)
@@ -62,9 +69,9 @@ def main():
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 1:
-        print("Usage: %s < path/to/kernel_all.c_pp" % sys.argv[0])
-        print(__doc__)
-        sys.exit(-1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ignore', nargs='+',
+                        help="Files to ignore when parsing the sel4 source")
+    args = parser.parse_args()
 
-    sys.exit(main())
+    sys.exit(main(args))

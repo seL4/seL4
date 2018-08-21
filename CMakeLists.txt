@@ -380,7 +380,7 @@ CPPFile("${linker_lds_path}" linker_ld_wrapper "${linker_source}"
 )
 
 add_custom_command(OUTPUT circular_includes_valid
-    COMMAND ${CIRCULAR_INCLUDES} < kernel_all.i
+    COMMAND ${CIRCULAR_INCLUDES} --ignore kernel_all.c < kernel_all.i
     COMMAND touch circular_includes_valid
     DEPENDS kernel_i_wrapper kernel_all.i
 )
