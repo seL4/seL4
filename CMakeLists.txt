@@ -365,10 +365,11 @@ set(CPPExtraFlags "-I${CMAKE_CURRENT_BINARY_DIR}/generated")
 CPPFile(kernel_all.i kernel_i_wrapper kernel_all.c
     EXTRA_DEPS kernel_all_c_wrapper kernel_headers ${gen_files_list}
     EXTRA_FLAGS -CC "${CPPExtraFlags}"
-    # The circulr_includes script relies upon parsing out exactly 'kernel_all.c' as
-    # a special case so we must ask CPPFile to not change the input name
-    EXACT_INPUT
+    # The circular_includes script relies upon parsing out exactly 'kernel_all_copy.c' as
+    # a special case so we must ask CPPFile to use this input name
+    EXACT_NAME kernel_all_copy.c
 )
+
 # Explain to cmake that our object file is actually a C input file
 set_property(SOURCE kernel_all.i PROPERTY LANGUAGE C)
 
@@ -380,7 +381,7 @@ CPPFile("${linker_lds_path}" linker_ld_wrapper "${linker_source}"
 )
 
 add_custom_command(OUTPUT circular_includes_valid
-    COMMAND ${CIRCULAR_INCLUDES} --ignore kernel_all.c < kernel_all.i
+    COMMAND ${CIRCULAR_INCLUDES} --ignore kernel_all_copy.c < kernel_all.i
     COMMAND touch circular_includes_valid
     DEPENDS kernel_i_wrapper kernel_all.i
 )

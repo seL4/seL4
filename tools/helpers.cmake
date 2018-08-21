@@ -56,33 +56,26 @@ endfunction()
 #  * Input is assumed to be in CMAKE_CURRENT_SOURCE_DIR if it resolves to a file that exists
 #    otherwise it is assumed to be in CMAKE_CURRENT_BINARY_DIR
 function(CPPFile output output_target input)
-    cmake_parse_arguments(PARSE_ARGV 3 "CPP" "EXACT_INPUT" "" "EXTRA_DEPS;EXTRA_FLAGS")
+    cmake_parse_arguments(PARSE_ARGV 3 "CPP" "" "EXACT_NAME" "EXTRA_DEPS;EXTRA_FLAGS")
     if(NOT "${CPP_UNPARSED_ARGUMENTS}" STREQUAL "")
         message(FATAL_ERROR "Unknown arguments to CPPFile: ${CPP_UNPARSED_ARGUMENTS}")
     endif()
     get_absolute_source_or_binary(input "${input}")
-    # If EXACT_INPUT then we must use the exact input file for the compilation and
-    # trust that the user gave something that the compiler will understand. Otherwise
-    # generate a rule for copying the input into a .c file. This prevents the
-    # compiler for getting confused if you are trying to preprocess a file type
-    # that it would normally understand as something else (such as a linker script)
-    if (NOT CPP_EXACT_INPUT)
-        add_custom_command(OUTPUT ${output_target}_temp.c
-            COMMAND ${CMAKE_COMMAND} -E copy ${input} ${CMAKE_CURRENT_BINARY_DIR}/${output_target}_temp.c
-            COMMENT "Creating C input file for preprocessor"
-            DEPENDS ${CPP_EXTRA_DEPS}
-        )
-        set(input ${output_target}_temp.c)
-        add_custom_target(${output_target}_copy_in DEPENDS ${input})
-    else()
-        # Still need to generate a custom target even if not copying as EXRTRA_DEPS may
-        # have target and file level dependencies, which we cannot add directly as
-        # dependencies to the library
-        add_custom_target(${output_target}_copy_in DEPENDS ${CPP_EXTRA_DEPS})
+    set(file_copy_name "${output_target}_temp.c")
+    # If EXACT_NAME then we copy the input file to the name given by the caller. Otherwise
+    # generate a rule for copying the input file to a default name.
+    if(CPP_EXACT_NAME)
+        set(file_copy_name ${CPP_EXACT_NAME})
     endif()
+    add_custom_command(OUTPUT ${file_copy_name}
+        COMMAND ${CMAKE_COMMAND} -E copy ${input} ${CMAKE_CURRENT_BINARY_DIR}/${file_copy_name}
+        COMMENT "Creating C input file for preprocessor"
+        DEPENDS ${CPP_EXTRA_DEPS}
+    )
+    add_custom_target(${output_target}_copy_in DEPENDS ${file_copy_name})
     # Now generate an object library to persuade cmake to just do compilation and not try
     # and link our 'object' files
-    add_library(${output_target}_temp_lib OBJECT ${input})
+    add_library(${output_target}_temp_lib OBJECT ${file_copy_name})
     add_dependencies(${output_target}_temp_lib ${output_target}_copy_in)
     # Give the preprecess flag
     target_compile_options(${output_target}_temp_lib PRIVATE -E)
