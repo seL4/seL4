@@ -32,7 +32,7 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         /* bill the current consumed amount before adjusting the params */
         if (NODE_STATE_ON_CORE(ksCurSC, target->scCore) == target) {
 #ifdef ENABLE_SMP_SUPPORT
-            if (target->scCore) == getCurrentCPUIndex() {
+            if (target->scCore == getCurrentCPUIndex()) {
 #endif /* ENABLE_SMP_SUPPORT */
                 if (checkBudget()) {
                     commitTime();
