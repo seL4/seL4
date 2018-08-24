@@ -2682,21 +2682,19 @@ if __name__ == '__main__':
     for e in itertools.chain(blocks.values(), unions.values()):
         name_list += e.make_names()
 
-    # Sort the list of names by decreasing length.  This should have the
-    # effect of making the match greedy, as any string will appear before
-    # its (initial) substrings
-    name_list.sort(key=len, reverse=True)
+    name_list = set(name_list)
     if len(options.prune_files) > 0:
-        search_re = re.compile('|'.join(name_list))
+        search_re = re.compile('[a-zA-Z0-9_]+');
 
         pruned_names = set()
         for filename in options.prune_files:
             f = open(filename)
             string = f.read()
-            for match in search_re.finditer(string):
-                pruned_names.add(string[match.start():match.end()])
+
+            matched_tokens = set(search_re.findall(string))
+            pruned_names.update(matched_tokens & name_list)
     else:
-        pruned_names = set(name_list)
+        pruned_names = name_list
 
     options.names = pruned_names
 
