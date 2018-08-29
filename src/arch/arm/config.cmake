@@ -200,7 +200,7 @@ config_option(KernelArmHypEnableVCPUCP14SaveAndRestore ARM_HYP_ENABLE_VCPU_CP14_
     and trap them instead, and have the VCPUs' accesses to CP14 \
     intercepted and delivered to the VM Monitor as fault messages"
     DEFAULT ON
-    DEPENDS "KernelArmHypervisorSupport;NOT KernelVerificationBuild" DEFAULT_DISABLED OFF
+    DEPENDS "KernelSel4ArmHypAarch32;NOT KernelVerificationBuild" DEFAULT_DISABLED OFF
 )
 
 config_option(KernelArmErrata430973 ARM_ERRATA_430973
