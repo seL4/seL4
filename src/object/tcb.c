@@ -99,11 +99,11 @@ tcbSchedEnqueue(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
         if (!queue.end) { /* Empty list */
             queue.end = tcb;
-            addToBitmap(SMP_TERNARY(tcb->tcbSchedContext->scCore, 0), dom, prio);
+            addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
         } else {
             queue.head->tcbSchedPrev = tcb;
         }
@@ -111,7 +111,7 @@ tcbSchedEnqueue(tcb_t *tcb)
         tcb->tcbSchedNext = queue.head;
         queue.head = tcb;
 
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -133,11 +133,11 @@ tcbSchedAppend(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
         if (!queue.head) { /* Empty list */
             queue.head = tcb;
-            addToBitmap(SMP_TERNARY(tcb->tcbSchedContext->scCore, 0), dom, prio);
+            addToBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
         } else {
             queue.end->tcbSchedNext = tcb;
         }
@@ -145,7 +145,7 @@ tcbSchedAppend(tcb_t *tcb)
         tcb->tcbSchedNext = NULL;
         queue.end = tcb;
 
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, true);
     }
@@ -164,14 +164,14 @@ tcbSchedDequeue(tcb_t *tcb)
         dom = tcb->tcbDomain;
         prio = tcb->tcbPriority;
         idx = ready_queues_index(dom, prio);
-        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore);
+        queue = NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity);
 
         if (tcb->tcbSchedPrev) {
             tcb->tcbSchedPrev->tcbSchedNext = tcb->tcbSchedNext;
         } else {
             queue.head = tcb->tcbSchedNext;
             if (likely(!tcb->tcbSchedNext)) {
-                removeFromBitmap(SMP_TERNARY(tcb->tcbSchedContext->scCore, 0), dom, prio);
+                removeFromBitmap(SMP_TERNARY(tcb->tcbAffinity, 0), dom, prio);
             }
         }
 
@@ -181,7 +181,7 @@ tcbSchedDequeue(tcb_t *tcb)
             queue.end = tcb->tcbSchedPrev;
         }
 
-        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbSchedContext->scCore) = queue;
+        NODE_STATE_ON_CORE(ksReadyQueues[idx], tcb->tcbAffinity) = queue;
 
         thread_state_ptr_set_tcbQueued(&tcb->tcbState, false);
     }
@@ -400,15 +400,15 @@ void
 remoteQueueUpdate(tcb_t *tcb)
 {
     /* only ipi if the target is for the current domain */
-    if (tcb->tcbSchedContext->scCore != getCurrentCPUIndex() && tcb->tcbDomain == ksCurDomain) {
-        tcb_t *targetCurThread = NODE_STATE_ON_CORE(ksCurThread, tcb->tcbSchedContext->scCore);
+    if (tcb->tcbAffinity != getCurrentCPUIndex() && tcb->tcbDomain == ksCurDomain) {
+        tcb_t *targetCurThread = NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity);
 
         /* reschedule if the target core is idle or we are waking a higher priority thread or
          * if a new irq would need to be set */
-        if (targetCurThread == NODE_STATE_ON_CORE(ksIdleThread, tcb->tcbSchedContext->scCore)  ||
+        if (targetCurThread == NODE_STATE_ON_CORE(ksIdleThread, tcb->tcbAffinity)  ||
                 tcb->tcbPriority > targetCurThread->tcbPriority ||
                 NODE_STATE_ON_CORE(ksReprogram, tcb->tcbAffinity)) {
-            ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbSchedContext->scCore);
+            ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
         }
     }
 }
@@ -419,10 +419,10 @@ remoteQueueUpdate(tcb_t *tcb)
 void
 remoteTCBStall(tcb_t *tcb)
 {
-    if (tcb->tcbSchedContext && tcb->tcbSchedContext->scCore != getCurrentCPUIndex() &&
-            NODE_STATE_ON_CORE(ksCurThread, tcb->tcbSchedContext->scCore) == tcb) {
-        doRemoteStall(tcb->tcbSchedContext->scCore);
-        ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbSchedContext->scCore);
+    if (tcb->tcbSchedContext && tcb->tcbAffinity != getCurrentCPUIndex() &&
+            NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity) == tcb) {
+        doRemoteStall(tcb->tcbAffinity);
+        ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
     }
 }
 #endif
