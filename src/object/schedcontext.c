@@ -278,7 +278,7 @@ void schedContext_unbindTCB(sched_context_t *sc, tcb_t *tcb)
 {
     assert(sc->scTcb == tcb);
 
-    SMP_COND_STATEMENT(remoteTCBStall(tcb));
+    /* tcb must already be stalled at this point */
     if (tcb == NODE_STATE(ksCurThread)) {
         rescheduleRequired();
     }
