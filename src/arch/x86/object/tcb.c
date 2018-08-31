@@ -91,11 +91,9 @@ Arch_migrateTCB(tcb_t *thread)
 {
     assert(thread->tcbSchedContext != NULL);
 
-    if (thread->tcbAffinity != thread->tcbSchedContext->scCore) {
-        /* check if thread own its current core FPU */
-        if (nativeThreadUsingFPU(thread)) {
-            switchFpuOwner(NULL, thread->tcbAffinity);
-        }
+    /* check if thread own its current core FPU */
+    if (nativeThreadUsingFPU(thread)) {
+        switchFpuOwner(NULL, thread->tcbAffinity);
     }
 }
 #endif /* ENABLE_SMP_SUPPORT */
