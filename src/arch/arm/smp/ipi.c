@@ -54,6 +54,7 @@ static void handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0,
             break;
 
         case IpiRemoteCall_InvalidateTranslationASID:
+            cleanCaches_PoU();
             invalidateTranslationASIDLocal(arg0);
             break;
 
