@@ -170,11 +170,6 @@ BEGIN_FUNC(arm_data_abort_exception)
     mrc p15, 0, sp, c13, c0, 4
 #endif /* CONFIG_ARCH_ARM_V6 */
 
-#ifdef ENABLE_SMP_SUPPORT 
-/* TODO, load the per-core kernel stack */
-#else
-    ldr r7, =ksCurThread
-#endif
     b c_handle_data_fault
 
 
