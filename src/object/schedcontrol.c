@@ -66,13 +66,14 @@ invokeSchedControl_Configure(sched_context_t *target, word_t core, ticks_t budge
         /* the scheduling context isn't active - it's budget is not being used, so
          * we can just populate the parameters from now */
         refill_new(target, max_refills, budget, period);
-#ifdef ENABLE_SMP_SUPPORT
-        target->scCore = core;
-        if (target->scTcb && target->scTcb->tcbAffinity != target->scCore) {
-            migrateTCB(target->scTcb, target->scCore);
-        }
-#endif /* ENABLE_SMP_SUPPORT */
     }
+
+#ifdef ENABLE_SMP_SUPPORT
+    target->scCore = core;
+    if (target->scTcb) {
+        migrateTCB(target->scTcb, target->scCore);
+    }
+#endif /* ENABLE_SMP_SUPPORT */
 
     if (target->scTcb && target->scRefillMax > 0) {
         schedContext_resume(target);
