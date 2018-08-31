@@ -90,18 +90,11 @@ void Arch_migrateTCB(tcb_t *thread)
 {
 #ifdef CONFIG_KERNEL_MCS
     assert(thread->tcbSchedContext != NULL);
+#endif
 
-    if (thread->tcbAffinity != thread->tcbSchedContext->scCore) {
-        /* check if thread own its current core FPU */
-        if (nativeThreadUsingFPU(thread)) {
-            switchFpuOwner(NULL, thread->tcbAffinity);
-        }
-    }
-#else
     /* check if thread own its current core FPU */
     if (nativeThreadUsingFPU(thread)) {
         switchFpuOwner(NULL, thread->tcbAffinity);
     }
-#endif
 }
 #endif /* ENABLE_SMP_SUPPORT */
