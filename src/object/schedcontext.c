@@ -316,15 +316,7 @@ void schedContext_donate(sched_context_t *sc, tcb_t *to)
     sc->scTcb = to;
     to->tcbSchedContext = sc;
 
-#ifdef ENABLE_SMP_SUPPORT
-    if (sc->scCore != to->tcbAffinity) {
-        migrateTCB(to, sc->scCore);
-        remoteQueueUpdate(to);
-        if (to == NODE_STATE(ksCurThread)) {
-            rescheduleRequired();
-        }
-    }
-#endif
+    SMP_COND_STATEMENT(migrateTCB(to, sc->scCore));
 }
 
 void schedContext_bindNtfn(sched_context_t *sc, notification_t *ntfn)
