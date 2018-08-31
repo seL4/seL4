@@ -500,7 +500,7 @@ possibleSwitchTo(tcb_t* target)
 {
     if (target->tcbSchedContext != NULL && !thread_state_get_tcbInReleaseQueue(target->tcbState)) {
         if (ksCurDomain != target->tcbDomain
-                SMP_COND_STATEMENT( || target->tcbSchedContext->scCore != getCurrentCPUIndex())) {
+                SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
             SCHED_ENQUEUE(target);
         } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
             /* Too many threads want special treatment, use regular queues. */
