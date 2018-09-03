@@ -329,7 +329,6 @@ refill_split_check(sched_context_t *sc, ticks_t usage)
         assert(remnant >= MIN_BUDGET);
         /* split the head refill  */
         REFILL_HEAD(sc).rAmount = remnant;
-        REFILL_HEAD(sc).rTime += usage;
         schedule_used(sc, new);
     }
 
