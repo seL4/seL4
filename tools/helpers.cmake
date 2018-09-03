@@ -70,7 +70,7 @@ function(CPPFile output output_target input)
     add_custom_command(OUTPUT ${file_copy_name}
         COMMAND ${CMAKE_COMMAND} -E copy ${input} ${CMAKE_CURRENT_BINARY_DIR}/${file_copy_name}
         COMMENT "Creating C input file for preprocessor"
-        DEPENDS ${CPP_EXTRA_DEPS}
+        DEPENDS ${CPP_EXTRA_DEPS} ${input}
     )
     add_custom_target(${output_target}_copy_in DEPENDS ${file_copy_name})
     # Now generate an object library to persuade cmake to just do compilation and not try
