@@ -481,7 +481,7 @@ Type | Name | Description
 %(ret)s
 
 %(details)s
-        """ % {
+""" % {
                 "hash": self.level_to_header(level),
                 "name": self.text_escape(manual_node["name"]),
                 "label": manual_node["label"],
