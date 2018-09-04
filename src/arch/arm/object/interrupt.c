@@ -14,7 +14,7 @@
 #include <arch/object/interrupt.h>
 
 static exception_t
-Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, int trigger)
+Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, bool_t trigger)
 {
     setIRQTrigger(irq, trigger);
     invokeIRQControl(irq, handlerSlot, controlSlot);
@@ -26,7 +26,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                 cte_t *srcSlot, extra_caps_t excaps,
                                 word_t *buffer)
 {
-    if (invLabel == IRQIssueIRQHandlerTrigger) {
+    if (invLabel == ARMIRQIssueIRQHandlerTrigger) {
         if (length < 4 || excaps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
@@ -34,7 +34,7 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         word_t irq_w = getSyscallArg(0, buffer);
         irq_t irq = (irq_t) irq_w;
-        word_t trigger = getSyscallArg(1, buffer);
+        bool_t trigger = !!getSyscallArg(1, buffer);
         word_t index = getSyscallArg(2, buffer);
         word_t depth = getSyscallArg(3, buffer);
 

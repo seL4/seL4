@@ -275,7 +275,7 @@
     </interface>
    <interface name="seL4_IRQControl" manual_name="IRQ Control" cap_description="An IRQControl capability. This gives you the authority to make this call.">
 
-       <method id="IRQIssueIRQHandlerTrigger" name="GetTrigger" manual_name="GetTrigger"
+       <method id="ARMIRQIssueIRQHandlerTrigger" name="GetTrigger" manual_name="GetTrigger"
            manual_label="irq_controlgettrigger">
             <brief>
                 Create an IRQ handler capability and specify the trigger method (edge or level).
