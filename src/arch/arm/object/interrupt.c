@@ -17,8 +17,7 @@ static exception_t
 Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, bool_t trigger)
 {
     setIRQTrigger(irq, trigger);
-    invokeIRQControl(irq, handlerSlot, controlSlot);
-    return EXCEPTION_NONE;
+    return invokeIRQControl(irq, handlerSlot, controlSlot);
 }
 
 exception_t
