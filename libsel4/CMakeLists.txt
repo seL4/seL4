@@ -128,7 +128,7 @@ add_custom_command(OUTPUT include/interfaces/sel4_client.h
     VERBATIM
 )
 
-add_custom_target(sel4_gen
+add_custom_target(sel4_generated
     DEPENDS
         include/interfaces/sel4_client.h include/sel4/syscall.h
         include/sel4/invocation.h arch_include/${KernelArch}/sel4/arch/invocation.h
@@ -144,4 +144,4 @@ target_include_directories(sel4 PUBLIC
     "${CMAKE_CURRENT_BINARY_DIR}/arch_include/${KernelArch}"
     "${CMAKE_CURRENT_BINARY_DIR}/sel4_arch_include/${KernelSel4Arch}"
 )
-add_dependencies(sel4 sel4_gen)
+add_dependencies(sel4 sel4_generated)
