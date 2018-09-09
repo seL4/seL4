@@ -34,6 +34,8 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         set(CROSS_COMPILER_PREFIX "riscv32-unknown-elf-" CACHE INTERNAL "")
     elseif(RISCV64)
         set(CROSS_COMPILER_PREFIX "riscv64-unknown-elf-" CACHE INTERNAL "")
+    elseif(APPLE)
+        set(CROSS_COMPILER_PREFIX "x86_64-unknown-linux-gnu-" CACHE INTERNAL "")
     endif()
 endif()
 
