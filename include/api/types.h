@@ -54,7 +54,7 @@ rightsFromWord(word_t w)
 static inline word_t CONST
 wordFromRights(seL4_CapRights_t seL4_CapRights)
 {
-    return seL4_CapRights.words[0] & MASK(4);
+    return seL4_CapRights.words[0] & MASK(seL4_CapRightsBits);
 }
 
 static inline cap_transfer_t PURE

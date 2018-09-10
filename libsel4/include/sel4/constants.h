@@ -67,6 +67,9 @@ enum {
 };
 #define seL4_MsgMaxExtraCaps (LIBSEL4_BIT(seL4_MsgExtraCapBits)-1)
 
+/* seL4_CapRights_t defined in shared_types_*.bf */
+#define seL4_CapRightsBits 4
+
 typedef enum {
     seL4_NoFailure = 0,
     seL4_InvalidRoot,

@@ -12,14 +12,12 @@ Upcoming release: BREAKING
 
 ## Changes
 
- * GrantReply right was added to the right system (`seL4_CapRights`)
-    - `seL4_CapRights_new` now takes 4 parameters
-    - The endpoint capabilities now have 4 rights with the GrantReply reply right. Calling can be done with either
-      Grant or GrantReply, However with only GrantReply and not Grant, capabilities other than the Reply
-      capability will not be transferred.
-    - Reply capabilities now have a Grant right. This right is set depending according to the Grant right of the
-      endpoint capability on which `seL4_Recv` is performed when a call is received. In the case where the caller
-      has Grant to the receiver but the latter doesn't have it towards the former, this is an ABI breaking change.
+ * Add GrantReply access right for endpoint capabilities.
+   - seL4_Call is permitted on endpoints with either the Grant or the GrantReply access rights.
+   - Capabilities can only be transferred in a reply message if receiver's endpoint capability has the Grant right.
+ * `seL4_CapRights_new` now takes 4 parameters
+ * seL4_CapRightsBits added to libsel4. seL4_CapRightsBits is the number of bits
+   to encode seL4_CapRights.
 
 ## Upgrade Notes
 ---
