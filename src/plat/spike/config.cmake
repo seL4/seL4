@@ -21,6 +21,7 @@ endif()
 config_choice(KernelSpikeInstance RISCV_SPIKE_INSTANCE "Select the instance for Spike to run on"
     "qemu;KernelPlatformSpikeQemu;BUILD_SPIKE_QEMU;KernelArchRiscV"
     "rocket-chip-zedboard;KernelPlatformSpikeRocketChip;BUILD_ROCKET_CHIP_ZEDBOARD;KernelSel4ArchRiscV64"
+    "hi-five-unleashed;KernelPlatformSpikeSiFiveFreedom;BUILD_HI_FIVE_UNLEASHED;KernelSel4ArchRiscV64"
 )
 
 config_string(KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ
@@ -32,6 +33,7 @@ config_string(KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ
 # Include all of the different instances of the Spike platform
 include(src/plat/spike/instance/qemu/config.cmake)
 include(src/plat/spike/instance/rocket-chip/config.cmake)
+include(src/plat/spike/instance/freedom/config.cmake)
 
 add_sources(
     DEP "KernelPlatformSpike"
