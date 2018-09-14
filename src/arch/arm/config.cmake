@@ -32,6 +32,7 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
     "imx7sabre;KernelPlatformImx7Sabre;PLAT_IMX7_SABRE;KernelSel4ArchAarch32"
     "zynq7000;KernelPlatformZynq7000;PLAT_ZYNQ7000;KernelSel4ArchAarch32"
     "zynqmp;KernelPlatformZynqmp;PLAT_ZYNQMP;KernelArchARM"
+    "ultra96;KernelPlatformUltra96;PLAT_ULTRA96;KernelArchARM"
     "allwinnera20;KernelPlatformAllwinnerA20;PLAT_ALLWINNERA20;KernelSel4ArchAarch32"
     "tk1;KernelPlatformTK1;PLAT_TK1;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
     "hikey;KernelPlatformHikey;PLAT_HIKEY;KernelArchARM"
