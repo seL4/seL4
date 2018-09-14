@@ -12,6 +12,12 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+if(KernelPlatformUltra96)
+    # Ultra96 is is basically Zynqmp
+    config_set(KernelPlatformZynqmp PLAT_ZYNQMP ON)
+    config_set(KernelPlatformZynqmpUltra96 PLAT_ZYNQMP_ULTRA96 ON)
+endif()
+
 if(KernelPlatformZynqmp)
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)

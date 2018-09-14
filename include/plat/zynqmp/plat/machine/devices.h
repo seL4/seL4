@@ -27,7 +27,11 @@
 #define GIC_PL390_DISTRIBUTOR_PPTR  GIC_DISTRIBUTOR_PPTR
 
 /* These devices are used by the seL4 kernel. */
+#ifdef CONFIG_PLAT_ZYNQMP_ULTRA96
+#define UART_PADDR                  UART1_PADDR
+#else
 #define UART_PADDR                  UART0_PADDR
+#endif
 
 #define ACPU_GIC_PADDR              0xF9000000
 #define ACPU_GIC_DISTRIBUTOR_PADDR  0xF9010000
