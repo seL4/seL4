@@ -11,6 +11,8 @@
 #ifndef __PLAT_MACHINE_DEVICES_H
 #define __PLAT_MACHINE_DEVICES_H
 
+#include <config.h>
+
 /* These devices are used by the seL4 kernel. */
 #ifdef CONFIG_PLAT_SABRE
 #define UART_PADDR                  UART2_PADDR

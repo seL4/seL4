@@ -21,6 +21,7 @@
 #ifndef __PLAT_MACHINE_DEVICES_H
 #define __PLAT_MACHINE_DEVICES_H
 
+#include <config.h>
 #include <plat_mode/machine/devices.h>
 
 #define GIC_PL390_CONTROLLER_PPTR   GIC_CONTROLLER_PPTR

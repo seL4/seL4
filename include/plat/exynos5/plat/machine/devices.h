@@ -11,6 +11,8 @@
 #ifndef __PLAT_MACHINE_DEVICES_H
 #define __PLAT_MACHINE_DEVICES_H
 
+#include <config.h>
+
 /* These devices are used by the seL4 kernel. */
 #define UART_PPTR                   0xfff01000
 #define MCT_PPTR                    0xfff02000
