@@ -29,7 +29,7 @@
 
 #define MAX_AVAIL_P_REGS 2
 
-#define MS_IN_S     1000
+#define MS_IN_S     1000llu
 #define RESET_CYCLES ((CONFIG_SPIKE_CLOCK_FREQ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
 
 /* Available physical memory regions on platform (RAM minus kernel image). */
