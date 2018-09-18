@@ -22,6 +22,9 @@
 #define _STRINGIFY(a) #a
 #define STRINGIFY(a) _STRINGIFY(a)
 
+/* time constants */
+#define MS_IN_S     1000llu
+
 #ifndef __ASSEMBLER__
 
 #define NULL ((void *)0)

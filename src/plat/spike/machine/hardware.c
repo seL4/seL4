@@ -17,6 +17,7 @@
  */
 
 #include <types.h>
+#include <util.h>
 #include <machine/io.h>
 #include <kernel/vspace.h>
 #include <arch/machine.h>
@@ -29,7 +30,6 @@
 
 #define MAX_AVAIL_P_REGS 2
 
-#define MS_IN_S     1000llu
 #define RESET_CYCLES ((CONFIG_SPIKE_CLOCK_FREQ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
 
 /* Available physical memory regions on platform (RAM minus kernel image). */
