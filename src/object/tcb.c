@@ -1744,18 +1744,6 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
         }
     }
 
-    if (updateFlags & thread_control_update_space) {
-        e = installTCBCap(target, tCap, slot, tcbCTable, cRoot_newCap, cRoot_srcSlot);
-        if (e != EXCEPTION_NONE) {
-            return e;
-        }
-
-        e = installTCBCap(target, tCap, slot, tcbVTable, vRoot_newCap, vRoot_srcSlot);
-        if (e != EXCEPTION_NONE) {
-            return e;
-        }
-    }
-
     if (updateFlags & thread_control_update_fault) {
         e = installTCBCap(target, tCap, slot, tcbFaultHandler, fh_newCap, fh_srcSlot);
         if (e != EXCEPTION_NONE) {
@@ -1766,6 +1754,18 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
 
     if (updateFlags & thread_control_update_timeout) {
         e = installTCBCap(target, tCap, slot, tcbTimeoutHandler, th_newCap, th_srcSlot);
+        if (e != EXCEPTION_NONE) {
+            return e;
+        }
+    }
+
+    if (updateFlags & thread_control_update_space) {
+        e = installTCBCap(target, tCap, slot, tcbCTable, cRoot_newCap, cRoot_srcSlot);
+        if (e != EXCEPTION_NONE) {
+            return e;
+        }
+
+        e = installTCBCap(target, tCap, slot, tcbVTable, vRoot_newCap, vRoot_srcSlot);
         if (e != EXCEPTION_NONE) {
             return e;
         }
