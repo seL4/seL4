@@ -1028,8 +1028,7 @@ static bool_t validFaultHandler(cap_t cap)
 }
 #endif
 
-/* SetPriority, SetMCPriority, SetSchedParams, SetIPCBuffer and SetSpace are all
- * specialisations of TCBConfigure. */
+/* TCBConfigure batches SetIPCBuffer and parts of SetSpace. */
 exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
                                extra_caps_t rootCaps, word_t *buffer)
 {
