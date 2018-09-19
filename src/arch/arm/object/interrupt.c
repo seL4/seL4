@@ -16,7 +16,9 @@
 static exception_t
 Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, bool_t trigger)
 {
+#ifdef HAVE_SET_TRIGGER
     setIRQTrigger(irq, trigger);
+#endif
     return invokeIRQControl(irq, handlerSlot, controlSlot);
 }
 
@@ -28,6 +30,12 @@ Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
     if (invLabel == ARMIRQIssueIRQHandlerTrigger) {
         if (length < 4 || excaps.excaprefs[0] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        if (!config_set(HAVE_SET_TRIGGER)) {
+            userError("This platform does not support setting the IRQ trigger");
+            current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
 

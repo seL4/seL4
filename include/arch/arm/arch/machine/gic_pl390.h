@@ -14,6 +14,9 @@
 #ifndef __ARCH_MACHINE_GICPL390_H
 #define __ARCH_MACHINE_GICPL390_H
 
+/* tell the kernel we have the set trigger feature */
+#define HAVE_SET_TRIGGER 1
+
 #include <stdint.h>
 #include <util.h>
 #include <linker.h>
