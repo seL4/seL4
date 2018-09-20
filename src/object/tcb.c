@@ -1188,12 +1188,12 @@ decodeSetSchedParams(cap_t cap, word_t length, cte_t *slot, extra_caps_t excaps,
     switch (cap_get_capType(scCap)) {
     case cap_sched_context_cap:
         sc = SC_PTR(cap_sched_context_cap_get_capSCPtr(scCap));
-        if (tcb->tcbSchedContext && tcb->tcbSchedContext != sc) {
+        if (tcb->tcbSchedContext) {
             userError("TCB Configure: tcb already has a scheduling context.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (sc->scTcb && sc->scTcb != tcb) {
+        if (sc->scTcb) {
             userError("TCB Configure: sched contextext already bound.");
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
