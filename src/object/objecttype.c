@@ -141,7 +141,16 @@ finaliseCap_ret_t finaliseCap(cap_t cap, bool_t final, bool_t exposed)
         if (final) {
             reply_t *reply = REPLY_PTR(cap_reply_cap_get_capReplyPtr(cap));
             if (reply && reply->replyTCB) {
-                cancelIPC(reply->replyTCB);
+                switch (thread_state_get_tsType(reply->replyTCB->tcbState)) {
+                case ThreadState_BlockedOnReply:
+                    reply_remove(reply);
+                    break;
+                case ThreadState_BlockedOnReceive:
+                    reply_unlink(reply);
+                    break;
+                default:
+                    fail("Invalid tcb state");
+                }
             }
         }
         fc_ret.remainder = cap_null_cap_new();

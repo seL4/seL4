@@ -112,27 +112,16 @@ void reply_remove(reply_t *reply)
             reply_pop(reply);
             return;
         }
-        /* not the head, remove from middle */
-        REPLY_PTR(next_ptr)->replyPrev = reply->replyPrev;
-        if (REPLY_PTR(next_ptr)->replyTCB) {
-            reply_unlink(REPLY_PTR(next_ptr));
-        }
-        tcb_t *tcb = reply->replyTCB;
-        assert(tcb);
-        /* to maintain the call chain, we remove this caller and
-         * replaced them with the next - so the TCB that the reply object
-         * we are passing in is linked to is linked to the next reply object, and the
-         * tcb of the next_ptr is dropped */
-        REPLY_PTR(next_ptr)->replyTCB = tcb;
-        reply->replyTCB = NULL;
-        thread_state_ptr_set_replyObject(&tcb->tcbState, REPLY_REF(next_ptr));
+        /* not the head, remove from middle - break the chain */
+        REPLY_PTR(next_ptr)->replyPrev = call_stack_new(0, false);
+        reply_unlink(REPLY_PTR(reply));
     } else if (reply->replyTCB) {
         /* removing start of call chain */
         reply_unlink(reply);
     }
 
     if (prev_ptr) {
-        REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
+        REPLY_PTR(prev_ptr)->replyNext = call_stack_new(0, false);
     }
 
     reply->replyPrev = call_stack_new(0, false);
@@ -146,18 +135,16 @@ void reply_remove_tcb(tcb_t *tcb)
     word_t next_ptr = call_stack_get_callStackPtr(reply->replyNext);
     word_t prev_ptr = call_stack_get_callStackPtr(reply->replyPrev);
 
-
-    if (call_stack_get_isHead(reply->replyNext)) {
-        reply_pop(reply);
-        return;
-    }
-
     if (next_ptr) {
-        REPLY_PTR(next_ptr)->replyPrev = reply->replyPrev;
+        if (call_stack_get_isHead(reply->replyNext)) {
+            SC_PTR(next_ptr)->scReply = NULL;
+        } else {
+            REPLY_PTR(next_ptr)->replyPrev = call_stack_new(0, false);
+        }
     }
 
     if (prev_ptr) {
-        REPLY_PTR(prev_ptr)->replyNext = reply->replyNext;
+        REPLY_PTR(prev_ptr)->replyNext = call_stack_new(0, false);
     }
 
     reply->replyPrev = call_stack_new(0, false);
