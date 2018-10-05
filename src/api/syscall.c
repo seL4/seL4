@@ -432,7 +432,9 @@ static void
 handleYield(void)
 {
     /* Yield the current remaining budget */
+    ticks_t consumed = NODE_STATE(ksCurSC)->scConsumed;
     chargeBudget(0, REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount, false, CURRENT_CPU_INDEX(), true);
+    NODE_STATE(ksCurSC)->scConsumed = consumed;
 }
 
 exception_t

@@ -183,6 +183,7 @@ invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffer)
         } else {
             NODE_STATE(ksCurThread)->tcbYieldTo = sc;
             sc->scYieldFrom = NODE_STATE(ksCurThread);
+            tcbSchedAppend(NODE_STATE(ksCurThread));
             possibleSwitchTo(sc->scTcb);
 
             /* we are scheduling the thread associated with sc,
