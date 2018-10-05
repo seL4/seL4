@@ -533,7 +533,9 @@ static void handleYield(void)
 {
 #ifdef CONFIG_KERNEL_MCS
     /* Yield the current remaining budget */
+    ticks_t consumed = NODE_STATE(ksCurSC)->scConsumed;
     chargeBudget(0, REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount, false, CURRENT_CPU_INDEX(), true);
+    NODE_STATE(ksCurSC)->scConsumed = consumed;
 #else
     tcbSchedDequeue(NODE_STATE(ksCurThread));
     SCHED_APPEND_CURRENT_TCB;
