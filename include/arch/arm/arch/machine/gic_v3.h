@@ -20,6 +20,7 @@
 #include <mode/smp/smp.h>
 #include <model/statedata.h>
 #include <armv/machine.h>
+#include <mode/machine/gic_v3_gen.h>
 
 #include "gic_common.h"
 
