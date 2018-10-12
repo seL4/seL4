@@ -19,8 +19,8 @@
 static inline void writeContextIDPL2(word_t id)
 {
     word_t pd_val, vmid;
-    asm volatile("mrrc p15, 4, %0, %1, c2" : "=r"(pd_val), "=r"(vmid));
-    asm volatile("mcrr p15, 4, %0, %1, c2" : : "r"(pd_val), "r"(id << (48-32)));
+    asm volatile("mrrc p15, 6, %0, %1, c2" : "=r"(pd_val), "=r"(vmid));
+    asm volatile("mcrr p15, 6, %0, %1, c2" : : "r"(pd_val), "r"(id << (48-32)));
     isb();
 }
 
