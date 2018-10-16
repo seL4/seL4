@@ -19,6 +19,7 @@ Upcoming release: SOURCE COMPATIBLE
  * ARM platforms can now set the trigger of an IRQ Handler capability
      - seL4_IRQControl_GetTrigger allows users to obtain an IRQ Handler capability
        and set the trigger (edge or level) in the interrupt controller.
+ * Initial support for NVIDIA Jetson TX2 (ARMv8a, Cortex A57)
 
 ## Upgrade Notes
 ---

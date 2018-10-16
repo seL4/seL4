@@ -38,6 +38,7 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
     "hikey;KernelPlatformHikey;PLAT_HIKEY;KernelArchARM"
     "rpi3;KernelPlatformRpi3;PLAT_BCM2837;KernelArchARM"
     "tx1;KernelPlatformTx1;PLAT_TX1;KernelSel4ArchAarch64"
+    "tx2;KernelPlatformTx2;PLAT_TX2;KernelSel4ArchAarch64"
 )
 
 if(KernelArchARM)
@@ -85,6 +86,7 @@ include(src/plat/apq8064/config.cmake)
 include(src/plat/bcm2837/config.cmake)
 include(src/plat/tk1/config.cmake)
 include(src/plat/tx1/config.cmake)
+include(src/plat/tx2/config.cmake)
 include(src/plat/zynq7000/config.cmake)
 include(src/plat/zynqmp/config.cmake)
 
