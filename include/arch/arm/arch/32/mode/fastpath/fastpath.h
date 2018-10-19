@@ -62,6 +62,7 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
 
 #if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
     *armKSGlobalsFrame = thread->tcbIPCBuffer;
+    armKSGlobalsFrame[1] = getRegister(thread, TLS_BASE);
 #endif
     NODE_STATE(ksCurThread) = thread;
     clearExMonitor_fp();
