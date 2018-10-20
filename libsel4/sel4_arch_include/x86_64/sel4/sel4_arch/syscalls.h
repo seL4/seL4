@@ -303,7 +303,7 @@ seL4_Yield(void)
 }
 
 #ifdef CONFIG_VTX
-static inline seL4_Word
+LIBSEL4_INLINE_FUNC seL4_Word
 seL4_VMEnter(seL4_Word *sender)
 {
     seL4_Word fault;

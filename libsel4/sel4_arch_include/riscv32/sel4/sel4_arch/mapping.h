@@ -19,7 +19,7 @@
 
 #define SEL4_MAPPING_LOOKUP_LEVEL 2
 
-static inline seL4_Word seL4_MappingFailedLookupLevel()
+LIBSEL4_INLINE_FUNC seL4_Word seL4_MappingFailedLookupLevel()
 {
     return seL4_GetMR(SEL4_MAPPING_LOOKUP_LEVEL);
 }
