@@ -18,6 +18,10 @@
         ( ((CPU)&0xff)<<24u ) \
     )
 #define TARGET_CPU0_ALLINT   TARGET_CPU_ALLINT(BIT(0))
+
+/* Use this to forward interrupts to all CPUs when debugging */
+#define TARGET_CPU_ALL_ALLINT   TARGET_CPU_ALLINT(0xff)
+
 #define IRQ_SET_ALL 0xffffffff;
 
 /* Shift positions for GICD_SGIR register */
@@ -40,6 +44,30 @@ volatile struct gic_cpu_iface_map * const gic_cpuiface =
 #endif /* GIC_CONTROLLER_PPTR */
 
 uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
+
+/* Get the target id for this processor. We rely on the constraint that the registers
+ * for PPI are read only and return only the current processor as the target.
+ * If this doesn't lead to a valid ID, we emit a warning and default to core 0.
+ */
+BOOT_CODE static uint8_t
+infer_cpu_gic_id(int nirqs)
+{
+    word_t i;
+    uint32_t target;
+    for (i = 0; i < nirqs; i += 4) {
+        target = gic_dist->targets[i >> 2];
+        target |= target >> 16;
+        target |= target >> 8;
+        if (target) {
+            break;
+        }
+    }
+    if (!target) {
+        printf("Warning: Could not infer GIC interrupt target ID, assuming 0.\n");
+        target = BIT(0);
+    }
+    return target & 0xff;
+}
 
 BOOT_CODE static void
 dist_init(void)
@@ -65,11 +93,12 @@ dist_init(void)
     }
 
     /*
-     * reset int target to cpu 0
-     * (Should really query which processor we're running on and use that)
+     * reset int target to current cpu
+     * We query which id that the GIC uses for us and use that.
      */
+    uint8_t target = infer_cpu_gic_id(nirqs);
     for (i = 0; i < nirqs; i += 4) {
-        gic_dist->targets[i >> 2] = TARGET_CPU0_ALLINT;
+        gic_dist->targets[i >> 2] = TARGET_CPU_ALLINT(target);
     }
 
     /* level-triggered, 1-N */
