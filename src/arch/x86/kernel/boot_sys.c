@@ -291,7 +291,7 @@ parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
             printf("\tPhysical Memory Region from %lx size %lx type %d\n", (long)mem_start, (long)mem_length, type);
             if (type == MULTIBOOT_MMAP_USEABLE_TYPE && mem_start >= HIGHMEM_PADDR) {
                 if (!add_mem_p_regs((p_region_t) {
-                mem_start, mem_start + mem_length
+                mem_start, ROUND_UP(mem_start + mem_length, PAGE_BITS),
             })) {
                     return false;
                 }
