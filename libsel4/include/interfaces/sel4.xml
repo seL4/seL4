@@ -129,7 +129,7 @@
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
                 description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
-            <param dir="in" name="vspace_root" type="seL4_CNode"
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
@@ -206,7 +206,7 @@
                 description="The new CSpace root."/>
             <param dir="in" name="cspace_root_data" type="seL4_Word"
                 description="Optionally set the guard and guard size of the new root CNode. If set to zero, this parameter has no effect."/>
-            <param dir="in" name="vspace_root" type="seL4_CNode"
+            <param dir="in" name="vspace_root" type="seL4_CPtr"
                 description="The new VSpace root."/>
             <param dir="in" name="vspace_root_data" type="seL4_Word"
                 description="Has no effect on x86 or ARM processors."/>
