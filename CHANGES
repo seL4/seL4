@@ -20,8 +20,14 @@ Upcoming release: SOURCE COMPATIBLE
      - seL4_IRQControl_GetTrigger allows users to obtain an IRQ Handler capability
        and set the trigger (edge or level) in the interrupt controller.
  * Initial support for NVIDIA Jetson TX2 (ARMv8a, Cortex A57)
+ * AARCH64 support added for raspberry pi 3 platform.
+ * Code generation now use jinja2 instead of tempita.
+ * AARCH32 HYP support added for running multiple ARM VMs
+ * AARCH32 HYP VCPU registers updated.
+ * A new invocation for setting TLSBase on all platforms.
+     - seL4_TCB_SetTLSBase
+ * Kbuild/Kconfig/Makefile build system removed.
 
-## Upgrade Notes
 ---
 10.0.0 2018-05-28: BREAKING
 
