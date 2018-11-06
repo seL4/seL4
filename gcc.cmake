@@ -12,6 +12,8 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+include(${CMAKE_CURRENT_LIST_DIR}/utils.cmake)
+
 set(CMAKE_SYSTEM_NAME Generic)
 # For a generic system this is unused, so define it to something that will be
 # obvious if someone accidentally uses it
@@ -20,28 +22,7 @@ set(CMAKE_SYSTEM_PROCESSOR seL4CPU)
 set(CMAKE_SYSROOT "${CMAKE_BINARY_DIR}")
 set(CMAKE_STAGING_PREFIX "${CMAKE_BINARY_DIR}/staging")
 
-if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
-    if(AARCH32 OR ARM)
-        set(CROSS_COMPILER_PREFIX "arm-linux-gnueabi-" CACHE INTERNAL "")
-        if(ARM)
-            message("ARM flag is deprecated, please use AARCH32")
-        endif()
-    elseif(AARCH32HF)
-        set(CROSS_COMPILER_PREFIX "arm-linux-gnueabihf-" CACHE INTERNAL "")
-    elseif(AARCH64)
-        set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
-    elseif(RISCV32)
-        set(CROSS_COMPILER_PREFIX "riscv32-unknown-elf-" CACHE INTERNAL "")
-    elseif(RISCV64)
-        set(CROSS_COMPILER_PREFIX "riscv64-unknown-elf-" CACHE INTERNAL "")
-    else()
-        # If we haven't set a target above we assume x86_64/ia32 target
-        if(APPLE)
-            # APPLE is a CMake variable that evaluates to True on a Mac OSX system
-            set(CROSS_COMPILER_PREFIX "x86_64-unknown-linux-gnu-" CACHE INTERNAL "")
-        endif()
-    endif()
-endif()
+set_cross_compiler_prefix()
 
 set(CMAKE_C_COMPILER ${CROSS_COMPILER_PREFIX}gcc)
 set(CMAKE_ASM_COMPILER ${CROSS_COMPILER_PREFIX}gcc)
