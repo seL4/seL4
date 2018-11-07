@@ -8,7 +8,14 @@ The upcoming release notes should indicate whether it is a SOURCE COMPATIBLE, BI
 changes are added the compatibility information should be updated.
 
 ---
-Upcoming release: SOURCE COMPATIBLE
+Upcoming release: BINARY COMPATIBLE
+
+## Changes
+
+
+## Upgrade Notes
+---
+10.1.0 2018-11-07: SOURCE COMPATIBLE
 
 ## Changes
 
