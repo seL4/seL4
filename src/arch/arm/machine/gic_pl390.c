@@ -53,7 +53,7 @@ BOOT_CODE static uint8_t
 infer_cpu_gic_id(int nirqs)
 {
     word_t i;
-    uint32_t target;
+    uint32_t target = 0;
     for (i = 0; i < nirqs; i += 4) {
         target = gic_dist->targets[i >> 2];
         target |= target >> 16;
