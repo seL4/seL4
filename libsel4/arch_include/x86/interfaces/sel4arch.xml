@@ -394,7 +394,7 @@
             <description>
                 <docref>See <autoref label='sec:virt'/>.</docref>
             </description>
-            <param dir="in" name="eptpml4" type="seL4_CPtr"
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
                 description='CPTR to an EPT PML4 object to act as the guest mode vspace root'/>
         </method>
     </interface>
@@ -407,7 +407,7 @@
                 Configures the one-to-one binding of a VCPU and TCB, overwriting any previous binding
                 in both. <docref>See <autoref label='sec:virt'/>.</docref>
             </description>
-            <param dir="in" name="tcb" type="seL4_CNode" description='CPTR of the TCB to bind to'/>
+            <param dir="in" name="tcb" type="seL4_TCB" description='CPTR of the TCB to bind to'/>
         </method>
         <method id="X86VCPUReadVMCS" name="ReadVMCS" condition="defined(CONFIG_VTX)" manual_name="Read VMCS" manual_label="vcpu_readvmcs">
             <brief>
@@ -469,7 +469,7 @@
                 This also establishes a link between the provided I/O port capability and
                 the <texttt text='VCPU'/><docref>, see <autoref label='sec:virt'/> for details.</docref>
             </description>
-            <param dir="in" name="ioPort" type="seL4_CPtr"
+            <param dir="in" name="ioPort" type="seL4_X86_IOPort"
                 description='I/O port capability whose authority is being delegating'/>
             <param dir="in" name="low" type="seL4_Word"
                 description='Start of the I/O port range to enable'/>
@@ -511,7 +511,7 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>
@@ -539,7 +539,7 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>
@@ -567,7 +567,7 @@
             <description>
                 <docref>See <autoref label="ch:vspace"/></docref>
             </description>
-            <param dir="in" name="pml4" type="seL4_X86_EPTPML4"
+            <param dir="in" name="eptpml4" type="seL4_X86_EPTPML4"
                 description='Capability to the EPT root which will contain the mapping'/>
             <param dir="in" name="gpa" type="seL4_Word"
                 description='Guest physical address to map the page into.'/>

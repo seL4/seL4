@@ -146,7 +146,7 @@
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
             </description>
-            <param dir="in" name="authority" type="seL4_CPtr"
+            <param dir="in" name="authority" type="seL4_TCB"
                 description="Capability to the TCB to use the MCP from when setting the priority."/>
             <param dir="in" name="priority" type="seL4_Word"
                 description="The thread's new priority."/>
@@ -159,7 +159,7 @@
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
             </description>
-            <param dir="in" name="authority" type="seL4_CPtr"
+            <param dir="in" name="authority" type="seL4_TCB"
                 description="Capability to the TCB to use the MCP from when setting the MCP."/>
             <param dir="in" name="mcp" type="seL4_Word"
                 description="The thread's new maximum controlled priority."/>
@@ -172,7 +172,7 @@
             <description>
                 <docref>See <autoref label="sec:sched"/></docref>
             </description>
-            <param dir="in" name="authority" type="seL4_CPtr"
+            <param dir="in" name="authority" type="seL4_TCB"
                 description="Capability to the TCB to use the MCP from when setting the priority and MCP."/>
             <param dir="in" name="mcp" type="seL4_Word"
                 description="The thread's new maximum controlled priority."/>
@@ -524,7 +524,7 @@
             <description>
                 <docref>See <autoref label="sec:interrupts"/>.</docref>
             </description>
-            <param dir="in" name="irq" type="int" description="The IRQ that you want this capability to handle."/>
+            <param dir="in" name="irq" type="seL4_Word" description="The IRQ that you want this capability to handle."/>
             <param dir="in" name="root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the destination CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="index" type="seL4_Word" description="CPTR to the destination slot. Resolved from the root of the destination CSpace."/>
             <param dir="in" name="depth" type="seL4_Uint8" description="Number of bits of dest_index to resolve to find the destination slot."/>
