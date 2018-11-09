@@ -438,7 +438,12 @@ void
 timerTick(void)
 {
     if (likely(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
-               ThreadState_Running)) {
+               ThreadState_Running)
+#ifdef CONFIG_VTX
+            || thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
+            ThreadState_RunningVM
+#endif
+       ) {
         if (NODE_STATE(ksCurThread)->tcbTimeSlice > 1) {
             NODE_STATE(ksCurThread)->tcbTimeSlice--;
         } else {
