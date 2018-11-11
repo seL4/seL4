@@ -15,6 +15,15 @@ Upcoming release: BINARY COMPATIBLE
 
 ## Upgrade Notes
 ---
+10.1.1 2018-11-12: BINARY COMPATIBLE
+
+## Changes
+ * Remove theoretical uninitialised variable use in infer_cpu_gic_id for binary translation validation
+
+## Upgrade Notes
+ * 10.1.0 has a known broken test in the proofs.  10.1.1 fixes this test.
+
+---
 10.1.0 2018-11-07: SOURCE COMPATIBLE
 
 ## Changes
