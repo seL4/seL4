@@ -45,6 +45,11 @@ RequireTool(XMLLINT_PATH xmllint.sh)
 
 # Define default global flag information so that users can compile with the same basic architecture
 # flags as the kernel
+if(ClangGccToolchain)
+    string(APPEND c_common_flags " -Qunused-arguments")
+    string(APPEND c_common_flags " -fno-integrated-as")
+    string(APPEND c_common_flags " -Wno-shift-negative-value")
+endif()
 if(KernelArchX86)
     if(${KernelX86MicroArch} STREQUAL generic)
         set(build_arch "-mtune=generic")
