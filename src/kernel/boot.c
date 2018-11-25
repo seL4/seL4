@@ -243,7 +243,14 @@ BOOT_CODE region_t allocate_extra_bi_region(word_t extra_size)
             0x1000, 0x1000
         };
     }
-    word_t size_bits = seL4_WordBits - 1 - clzl(ROUND_UP(extra_size, seL4_PageBits));
+
+    word_t clzl_ret = clzl(ROUND_UP(extra_size, seL4_PageBits));
+    /* If region is bigger than a page, make sure we overallocate rather than underallocate */
+    if (extra_size & ((1 << clzl_ret) - 1)) {
+        clzl_ret--;
+    }
+    word_t size_bits = seL4_WordBits - 1 - clzl_ret;
+
     pptr_t pptr = alloc_region(size_bits);
     if (!pptr) {
         printf("Kernel init failed: could not allocate extra bootinfo region size bits %lu\n", size_bits);
