@@ -21,7 +21,9 @@ void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
-    vptr_t  v_entry
+    vptr_t  v_entry,
+    paddr_t dtb_addr_p,
+    uint32_t dtb_size
 );
 
 #endif

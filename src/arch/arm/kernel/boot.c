@@ -89,7 +89,7 @@ BOOT_CODE static region_t get_reserved_region(int i, pptr_t res_reg_end)
     return res_reg;
 }
 
-BOOT_CODE static void init_freemem(region_t ui_reg)
+BOOT_CODE static void init_freemem(region_t ui_reg, region_t dtb_reg)
 {
     word_t i;
     bool_t result UNUSED;
@@ -98,6 +98,10 @@ BOOT_CODE static void init_freemem(region_t ui_reg)
         {
             .start = kernelBase,
             .end   = (pptr_t)ki_end
+        },
+        {
+            .start = dtb_reg.start,
+            .end = dtb_reg.end
         },
         {
             .start = ui_reg.start,
@@ -111,8 +115,17 @@ BOOT_CODE static void init_freemem(region_t ui_reg)
 
     /* Force ordering and exclusivity of reserved regions. */
     assert(res_reg[0].start < res_reg[0].end);
-    assert(res_reg[1].start < res_reg[1].end);
-    assert(res_reg[0].end  <= res_reg[1].start);
+    /* The DTB region may not be present, so allow skipping it. */
+    if (res_reg[1].start) {
+        assert(res_reg[1].start < res_reg[1].end);
+    }
+    assert(res_reg[2].start < res_reg[2].end);
+    if (res_reg[1].start) {
+        assert(res_reg[0].end  <= res_reg[1].start);
+        assert(res_reg[1].end  <= res_reg[2].start);
+    } else {
+        assert(res_reg[0].end <= res_reg[2].start);
+    }
     for (i = 0; i < get_num_avail_p_regs(); i++) {
         cur_reg = paddr_to_pptr_reg(get_avail_p_reg(i));
         /* Adjust region if it exceeds the kernel window
@@ -126,10 +139,13 @@ BOOT_CODE static void init_freemem(region_t ui_reg)
         }
 
         cur_reg = insert_region_excluded(cur_reg, res_reg[0]);
-        cur_reg = insert_region_excluded(cur_reg, res_reg[1]);
+        if (res_reg[1].start) {
+            cur_reg = insert_region_excluded(cur_reg, res_reg[1]);
+        }
+        cur_reg = insert_region_excluded(cur_reg, res_reg[2]);
 
         /* Check any reserved mode specific reagion */
-        region_t mode_res_reg = res_reg[1];
+        region_t mode_res_reg = res_reg[2];
         for (int m = 0; m < get_num_reserved_region(); m++) {
             mode_res_reg = get_reserved_region(i, mode_res_reg.end);
             cur_reg = insert_region_excluded(cur_reg, mode_res_reg);
@@ -352,7 +368,9 @@ static BOOT_CODE bool_t try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
-    vptr_t  v_entry
+    vptr_t  v_entry,
+    paddr_t dtb_addr_start,
+    paddr_t dtb_addr_end
 )
 {
     cap_t root_cnode_cap;
@@ -362,10 +380,16 @@ static BOOT_CODE bool_t try_init_kernel(
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
     });
+    region_t dtb_reg;
+    word_t extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_addr_end - dtb_addr_start);
+    region_t extra_bi_region;
+    pptr_t extra_bi_offset = 0;
+    vptr_t extra_bi_frame_vptr;
     pptr_t bi_frame_pptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
     create_frames_of_region_ret_t create_frames_ret;
+    create_frames_of_region_ret_t extra_bi_ret;
 
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg;
@@ -375,10 +399,23 @@ static BOOT_CODE bool_t try_init_kernel(
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
+    extra_bi_frame_vptr = bi_frame_vptr + BIT(PAGE_BITS);
+
+    /* If no DTB was provided, skip allocating extra bootinfo */
+    if (dtb_addr_start == 0) {
+        extra_bi_size = 0;
+        dtb_reg = (region_t) {
+            0, 0
+        };
+    } else {
+        dtb_reg = paddr_to_pptr_reg((p_region_t) {
+            dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
+        });
+    }
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
+    it_v_reg.end = extra_bi_frame_vptr;
 
     if (it_v_reg.end > kernelBase) {
         printf("Userland image virtual end address too high\n");
@@ -400,7 +437,7 @@ static BOOT_CODE bool_t try_init_kernel(
     init_plat();
 
     /* make the free memory available to alloc_region() */
-    init_freemem(ui_reg);
+    init_freemem(ui_reg, dtb_reg);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
@@ -423,6 +460,38 @@ static BOOT_CODE bool_t try_init_kernel(
     bi_frame_pptr = allocate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr);
     if (!bi_frame_pptr) {
         return false;
+    }
+
+    /* create extra bootinfo region - will return an empty allocation if extra_bi_size = 0 */
+    extra_bi_region = allocate_extra_bi_region(extra_bi_size);
+    if (extra_bi_region.start == 0) {
+        return false;
+    }
+
+    /* update initial thread virtual address range for extra bootinfo */
+    it_v_reg.end += extra_bi_region.end - extra_bi_region.start;
+    if (it_v_reg.end > kernelBase) {
+        printf("Userland extra bootinfo end address too high\n");
+        return false;
+    }
+
+    /* put DTB in the bootinfo block, if present. */
+    seL4_BootInfoHeader header;
+    if (dtb_reg.start) {
+        header.id = SEL4_BOOTINFO_HEADER_FDT;
+        header.len = sizeof(header) + dtb_reg.end - dtb_reg.start;
+        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
+        extra_bi_offset += sizeof(header);
+        memcpy((void *)(extra_bi_region.start + extra_bi_offset), (void *)dtb_reg.start,
+               dtb_reg.end - dtb_reg.start);
+        extra_bi_offset += dtb_reg.end - dtb_reg.start;
+    }
+
+    if ((extra_bi_region.end - extra_bi_region.start) - extra_bi_offset > 0) {
+        /* provde a chunk for any leftover padding in the extended boot info */
+        header.id = SEL4_BOOTINFO_HEADER_PADDING;
+        header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
+        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
     }
 
     if (config_set(CONFIG_ARM_SMMU)) {
@@ -449,6 +518,22 @@ static BOOT_CODE bool_t try_init_kernel(
         bi_frame_pptr,
         bi_frame_vptr
     );
+
+    /* create and map extra bootinfo region */
+    if (extra_bi_size > 0) {
+        extra_bi_ret =
+            create_frames_of_region(
+                root_cnode_cap,
+                it_pd_cap,
+                extra_bi_region,
+                true,
+                pptr_to_paddr((void *)extra_bi_region.start) - extra_bi_frame_vptr
+            );
+        if (!extra_bi_ret.success) {
+            return false;
+        }
+        ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
+    }
 
     /* create the initial thread's IPC buffer */
     ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
@@ -549,10 +634,17 @@ BOOT_CODE VISIBLE void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
-    vptr_t  v_entry
+    vptr_t  v_entry,
+    paddr_t dtb_addr_p,
+    uint32_t dtb_size
 )
 {
     bool_t result;
+    paddr_t dtb_end_p = 0;
+
+    if (dtb_addr_p) {
+        dtb_end_p = dtb_addr_p + dtb_size;
+    }
 
 #ifdef ENABLE_SMP_SUPPORT
     /* we assume there exists a cpu with id 0 and will use it for bootstrapping */
@@ -560,7 +652,8 @@ BOOT_CODE VISIBLE void init_kernel(
         result = try_init_kernel(ui_p_reg_start,
                                  ui_p_reg_end,
                                  pv_offset,
-                                 v_entry);
+                                 v_entry,
+                                 dtb_addr_p, dtb_end_p);
     } else {
         result = try_init_kernel_secondary_core();
     }
@@ -569,7 +662,8 @@ BOOT_CODE VISIBLE void init_kernel(
     result = try_init_kernel(ui_p_reg_start,
                              ui_p_reg_end,
                              pv_offset,
-                             v_entry);
+                             v_entry,
+                             dtb_addr_p, dtb_end_p);
 
 #endif /* ENABLE_SMP_SUPPORT */
 

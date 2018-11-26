@@ -27,6 +27,7 @@ Upcoming release: BREAKING
 * Support added for compiling verified configurations of the kernel with Clang 7.
 * Support added for Hardkernel ODROID-C2.
 * Added extended bootinfo header for device tree (SEL4_BOOTINFO_HEADER_FDT).
+* Support added for passing a device tree from the bootloader to the root task on ARM.
 
 ## Upgrade Notes
 ---
