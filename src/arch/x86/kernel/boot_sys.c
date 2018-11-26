@@ -424,7 +424,7 @@ try_boot_sys(void)
             printf("CPU reports not vulnerable to Rogue Data Cache Load (aka Meltdown https://meltdownattack.com) "
                    "yet SKIM window is enabled. Performance is needlessly being impacted, consider disabling.\n");
         } else if (!ia32_arch_capabilities_msr_get_rdcl_no(cap_msr) && !config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
-            printf("CPU reports vulernable to Rogue Data Cache Load (aka Meltdown https://meltdownattack.com) "
+            printf("CPU reports vulnerable to Rogue Data Cache Load (aka Meltdown https://meltdownattack.com) "
                    "yet SKIM window is *not* enabled. Please re-build with SKIM window enabled.");
             return false;
         }
@@ -436,7 +436,7 @@ try_boot_sys(void)
                    "consider disabling\n");
         }
         if (!config_set(CONFIG_KERNEL_SKIM_WINDOW) && x86_cpuid_get_identity()->vendor == X86_VENDOR_INTEL) {
-            printf("***WARNING*** SKIM window not enabled, this machine is probably vulernable "
+            printf("***WARNING*** SKIM window not enabled, this machine is probably vulnerable "
                    "to Meltdown (https://www.meltdownattack.com), consider enabling\n");
         }
     }

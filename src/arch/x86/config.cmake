@@ -277,7 +277,7 @@ config_choice(KernelX86IBRSMode KERNEL_X86_IBRS
     used instead. Software mitigation is done by disabling jump tables (the only form of
     indirect jump in seL4 except for 'ret') and flushing the RSB on vmexit. Flushing the RSB
     at other times is not needed as seL4 does not switch kernel stacks and so is not
-    vulernable to RSB underflow. The STIBP is essentially software mitigation but enables
+    vulnerable to RSB underflow. The STIBP is essentially software mitigation but enables
     the single thread isolation for branch predictions. This is only needed if attempting
     to protect user level process from each other in a multicore environment."
     "ibrs_none;KernelX86IBRSnone;KERNEL_X86_IBRS_NONE;KernelArchX86"
