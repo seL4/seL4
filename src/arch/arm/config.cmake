@@ -25,7 +25,7 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
     "am335x;KernelPlatformAM335X;PLAT_AM335X;KernelSel4ArchAarch32"
     "exynos4;KernelPlatformExynos4;PLAT_EXYNOS4;KernelSel4ArchAarch32"
     "exynos5410;KernelPlatformExynos5410;PLAT_EXYNOS5410;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
-    "exynos5422;KernelPlatformExynos5422;PLAT_EXYNOS5422;KernelSel4ArchAarch32"
+    "exynos5422;KernelPlatformExynos5422;PLAT_EXYNOS5422;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
     "exynos5250;KernelPlatformExynos5250;PLAT_EXYNOS5250;KernelSel4ArchAarch32"
     "apq8064;KernelPlatformAPQ8064;PLAT_APQ8064;KernelSel4ArchAarch32"
     "wandq;KernelPlatformWandQ;PLAT_WANDQ;KernelSel4ArchAarch32"
