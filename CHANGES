@@ -26,6 +26,7 @@ Upcoming release: BREAKING
 * Support added for ARM kernel serial driver to be linked in at build time based on the device tree compatibility string.
 * Support added for compiling verified configurations of the kernel with Clang 7.
 * Support added for Hardkernel ODROID-C2.
+* Added extended bootinfo header for device tree (SEL4_BOOTINFO_HEADER_FDT).
 
 ## Upgrade Notes
 ---
