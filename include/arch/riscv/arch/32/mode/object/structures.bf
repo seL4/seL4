@@ -17,7 +17,7 @@
 #include <config.h>
 
 ---- Default base size: uint32_t
-base 32(32,1)
+base 32
 
 -- Including the common structures.bf is neccessary because
 -- we need the structures to be visible here when building
