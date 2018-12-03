@@ -48,7 +48,7 @@
 
 /* Untyped size limits */
 #define seL4_MinUntypedBits     4
-#define seL4_MaxUntypedBits     47
+#define seL4_MaxUntypedBits     38
 
 enum {
     seL4_VMFault_IP,

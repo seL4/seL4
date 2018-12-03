@@ -18,7 +18,12 @@
 #include <config.h>
 
 ---- Default base size: uint64_t
-base 64(48,1)
+#if (CONFIG_PT_LEVELS == 3)
+base 64(39,1)
+#define BF_CANONICAL_RANGE 39
+#else
+#error "Only PT_LEVELS == 3 is currently supported on RISCV64"
+#endif
 
 -- Including the common structures.bf is neccessary because
 -- we need the structures to be visible here when building
@@ -28,25 +33,27 @@ base 64(48,1)
 -- frames
 block frame_cap {
     field       capFMappedASID      16
-    field_high  capFBasePtr         48
+    field_high  capFBasePtr         39
+    padding                         9
 
     field       capType             5
     field       capFSize            2
     field       capFVMRights        3
     field       capFIsDevice        1
-    padding                         5
-    field_high  capFMappedAddress   48
+    padding                         14
+    field_high  capFMappedAddress   39
 }
 
 -- N-level page table
 block page_table_cap {
     field       capPTMappedASID     16
-    field_high  capPTBasePtr        48
+    field_high  capPTBasePtr        39
+    padding                         9
 
     field       capType             5
-    padding                         10
+    padding                         19
     field       capPTIsMapped       1
-    field_high  capPTMappedAddress  48
+    field_high  capPTMappedAddress  39
 }
 
 -- Cap to the table of 2^6 ASID pools
@@ -113,6 +120,14 @@ block vm_attributes {
 ---- RISCV-specific object types
 
 -- RISC-V PTE format (priv-1.10) requires MSBs after PPN to be reserved 0s
+-- RISC-V supports up to 56 bytes physical addressing.
+-- Notice that the ppn field in the next two blocks is not field_high.
+-- This means that ppn values are shifted manually in the code before the generated
+-- bitfield accessors are used.
+-- This is because Sv32 supports up to 34 bits of physical addressing and we
+-- cannot return 34-bit values on RISCV-32.  This still affects us here in RISCV64
+-- because the vspace source code is the same for both architectures and doing
+-- the bit shifting manually only for 32-bit and not 64-bit is counter-intuitive.
 block pte {
     padding                10
     field ppn              44
