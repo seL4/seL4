@@ -481,6 +481,6 @@ BEGIN_FUNC(_entry_ap64)
     movabs $restore_user_context, %rax
     push %rax
     jmp boot_node
-END_FUNC(_entry_64)
+END_FUNC(_entry_ap64)
 
 #endif /* ENABLE_SMP_SUPPORT */
