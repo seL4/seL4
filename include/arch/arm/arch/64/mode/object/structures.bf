@@ -17,6 +17,7 @@ base 64(48,0)
 #else
 base 64(48,1)
 #endif
+#define BF_CANONICAL_RANGE 48
 
 -- Including the common structures_64.bf is neccessary because
 -- we need the structures to be visible here when building

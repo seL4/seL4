@@ -14,6 +14,7 @@
 
 ---- Default base size: uint64_t
 base 64(48,1)
+#define BF_CANONICAL_RANGE 48
 
 -- Including the common structures.bf is neccessary because
 -- we need the structures to be visible here when building

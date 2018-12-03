@@ -18,14 +18,28 @@ block null_cap {
 }
 
 block untyped_cap {
+#if BF_CANONICAL_RANGE == 48
     field capFreeIndex 48
     padding 9
+#elif BF_CANONICAL_RANGE == 39
+    field capFreeIndex 39
+    padding 18
+#else
+#error "Unspecified cannonical address range"
+#endif
     field capIsDevice 1
     field capBlockSize 6
 
     field capType 5
+#if BF_CANONICAL_RANGE == 48
     padding 11
     field_high capPtr 48
+#elif BF_CANONICAL_RANGE == 39
+    padding 20
+    field_high capPtr 39
+#else
+#error "Unspecified cannonical address range"
+#endif
 }
 
 block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
@@ -37,8 +51,15 @@ block endpoint_cap(capEPBadge, capCanGrantReply, capCanGrant, capCanSend,
     field capCanGrant 1
     field capCanReceive 1
     field capCanSend 1
+#if BF_CANONICAL_RANGE == 48
     padding 7
     field_high capEPPtr 48
+#elif BF_CANONICAL_RANGE == 39
+    padding 16
+    field_high capEPPtr 39
+#else
+#error "Unspecified cannonical address range"
+#endif
 
 }
 
@@ -48,8 +69,15 @@ block notification_cap {
     field capType 5
     field capNtfnCanReceive 1
     field capNtfnCanSend 1
+#if BF_CANONICAL_RANGE == 48
     padding 9
     field_high capNtfnPtr 48
+#elif BF_CANONICAL_RANGE == 39
+    padding 18
+    field_high capNtfnPtr 39
+#else
+#error "Unspecified cannonical address range"
+#endif
 }
 
 block reply_cap(capReplyCanGrant, capReplyMaster, capTCBPtr, capType) {
@@ -69,15 +97,29 @@ block cnode_cap(capCNodeRadix, capCNodeGuardSize, capCNodeGuard,
     field capType 5
     field capCNodeGuardSize 6
     field capCNodeRadix 6
+#if BF_CANONICAL_RANGE == 48
     field_high capCNodePtr 47
+#elif BF_CANONICAL_RANGE == 39
+    padding 9
+    field_high capCNodePtr 38
+#else
+#error "Unspecified cannonical address range"
+#endif
 }
 
 block thread_cap {
     padding 64
 
     field capType 5
+#if BF_CANONICAL_RANGE == 48
     padding 11
     field_high capTCBPtr 48
+#elif BF_CANONICAL_RANGE == 39
+    padding 20
+    field_high capTCBPtr 39
+#else
+#error "Unspecified cannonical address range"
+#endif
 }
 
 block irq_control_cap {
@@ -116,30 +158,65 @@ block domain_cap {
 block endpoint {
     field epQueue_head 64
 
+#if BF_CANONICAL_RANGE == 48
     padding 16
     field_high epQueue_tail 46
+#elif BF_CANONICAL_RANGE == 39
+    padding 25
+    field_high epQueue_tail 37
+#else
+#error "Unspecified cannonical address range"
+#endif
     field state 2
 }
 
 -- Async endpoint: size = 32 bytes
 block notification {
+#if BF_CANONICAL_RANGE == 48
     padding 16
     field_high ntfnBoundTCB 48
+#elif BF_CANONICAL_RANGE == 39
+    padding 25
+    field_high ntfnBoundTCB 39
+#else
+#error "Unspecified cannonical address range"
+#endif
 
     field ntfnMsgIdentifier 64
 
+#if BF_CANONICAL_RANGE == 48
     padding 16
     field_high ntfnQueue_head 48
+#elif BF_CANONICAL_RANGE == 39
+    padding 25
+    field_high ntfnQueue_head 39
+#else
+#error "Unspecified cannonical address range"
+#endif
 
+#if BF_CANONICAL_RANGE == 48
     field_high ntfnQueue_tail 48
     padding 14
+#elif BF_CANONICAL_RANGE == 39
+    field_high ntfnQueue_tail 39
+    padding 23
+#else
+#error "Unspecified cannonical address range"
+#endif
     field state 2
 }
 
 -- Mapping database (MDB) node: size = 16 bytes
 block mdb_node {
+#if BF_CANONICAL_RANGE == 48
     padding 16
     field_high mdbNext 46
+#elif BF_CANONICAL_RANGE == 39
+    padding 25
+    field_high mdbNext 37
+#else
+#error "Unspecified cannonical address range"
+#endif
     field mdbRevocable 1
     field mdbFirstBadged 1
 
@@ -294,7 +371,14 @@ block thread_state(blockingIPCBadge, blockingIPCCanGrant,
     field blockingIPCIsCall 1
     field tcbQueued 1
 
+#if BF_CANONICAL_RANGE == 48
     padding 16
     field_high blockingObject 44
+#elif BF_CANONICAL_RANGE == 39
+    padding 25
+    field_high blockingObject 35
+#else
+#error "Unspecified cannonical address range"
+#endif
     field tsType 4
 }
