@@ -28,9 +28,9 @@ base 32(32,1)
 block frame_cap {
     field       capFMappedASID      9
     field_high  capFBasePtr         20
+    padding                         3
 
-    padding                         5
-
+    padding                         2
     field       capFSize            2
     field       capFVMRights        3
     field       capFIsDevice        1
@@ -42,8 +42,9 @@ block frame_cap {
 block page_table_cap {
     field       capPTMappedASID     9
     field_high  capPTBasePtr        20
+    padding                         3
 
-    padding                         10
+    padding                         7
     field       capPTIsMapped       1
     field_high  capPTMappedAddress  20
     field       capType             4
@@ -52,6 +53,7 @@ block page_table_cap {
 -- Cap to the table of 1 ASID pool
 block asid_control_cap {
     padding             32
+
     padding             28
     field   capType     4
 }
