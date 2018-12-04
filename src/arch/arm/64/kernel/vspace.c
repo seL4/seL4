@@ -232,7 +232,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
     if (vm_attributes_get_armPageCacheable(attributes)) {
         armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                                       0, // XN
+                                                       vm_attributes_get_armExecuteNever(attributes),
 #else
                                                        1, /* unprivileged execute never */
 #endif
@@ -247,7 +247,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
     } else {
         armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                                       0, // XN
+                                                       vm_attributes_get_armExecuteNever(attributes),
 #else
                                                        1, /* unprivileged execute never */
 #endif
