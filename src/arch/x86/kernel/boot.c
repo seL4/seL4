@@ -538,7 +538,7 @@ init_cpu(
         }
     }
     if (cpuid_007h_ebx_get_smep(ebx_007)) {
-        /* similar to smap we cannot enable smep if using dangerous code injenction. it
+        /* similar to smap we cannot enable smep if using dangerous code injection. it
          * does not affect stack trace printing though */
         if (!config_set(CONFIG_DANGEROUS_CODE_INJECTION)) {
             write_cr4(read_cr4() | CR4_SMEP);
