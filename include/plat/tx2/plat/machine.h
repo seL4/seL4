@@ -67,7 +67,11 @@ compile_assert(interuppt_mapping_check, (maxIRQ == (32 + 288 + 64 - 1)))
 #define INTERRUPT_HGPT              INTERRUPT_PPI_10
 #define INTERRUPT_VGPT              INTERRUPT_PPI_11
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define KERNEL_TIMER_IRQ    INTERRUPT_HGPT
+#else
 #define KERNEL_TIMER_IRQ    INTERRUPT_VGPT
+#endif
 
 #define KERNEL_PMU_IRQ      HOST1X_SYNCPT_CPU
 
