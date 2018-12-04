@@ -63,64 +63,12 @@ huge_page_error_string:
     .string "Huge page not supported by the processor"
     .set huge_page_error_size, . - huge_page_error_string
 END_FUNC(huge_page_check)
+#endif /* CONFIG_HUGE_PAGE */
 
 BEGIN_FUNC(setup_pml4)
+#ifdef CONFIG_HUGE_PAGE
     call huge_page_check
-    /* Zero the boot pml4 */
-    movl %cr0, %eax
-    andl $0x7fffffff, %eax
-    movl %eax, %cr0
-    movl $boot_pml4, %edi
-    movl $0x0, %edx
-    movl $1024, %ecx
-1:
-    movl %edx, (%edi)
-    addl $4, %edi
-    loop 1b
-    /* Zero the boot PDPT */
-    movl $boot_pdpt, %edi
-    movl $1024, %ecx
-1:
-    movl %edx, (%edi)
-    addl $4, %edi
-    loop 1b
-    /* Set the first 4 entries in the PDPT to the first
-     * 4gb of memory */
-    movl $boot_pdpt, %edi
-    movl $0x87, %edx
-    movl $4, %ecx
-    movl $0, %ebx
-1:
-    movl %edx, (%edi)
-    movl %ebx, 4(%edi)
-    addl $0x40000000, %edx
-    jnc 2f
-    /* Carry occurred, need to increase the high part
-     * of the address */
-    incl %ebx
-2:
-    addl $8, %edi
-    loop 1b
-    /* Set the second highest entry in the PDPT to also map to the
-     * first part of memory. This is our actual kernel window */
-    movl $boot_pdpt, %edi
-    movl $0x87, %edx
-    movl %edx, 4080(%edi)
-    /* Put the PDPTs into the PML4 twice
-     * Once to create a 1-to-1 mapping, and once
-     * to create the higher kernel window */
-    movl $boot_pml4, %edi
-    movl $boot_pdpt, %edx
-    orl $0x7, %edx
-    movl %edx, (%edi)
-    movl %edx, 4088(%edi)
-    /* done */
-    ret
-END_FUNC(setup_pml4)
-
-#else
-
-BEGIN_FUNC(setup_pml4)
+#endif /* CONFIG_HUGE_PAGE */
     movl %cr0, %eax
     andl $0x7fffffff, %eax
     movl %eax, %cr0
@@ -170,8 +118,6 @@ BEGIN_FUNC(setup_pml4)
     loop 2b
     ret
 END_FUNC(setup_pml4)
-
-#endif
 
 BEGIN_FUNC(pcid_check)
     movl $0x1, %eax
@@ -377,12 +323,10 @@ _gdt64:
     .byte   0
     .byte   0
 
-#ifndef CONFIG_HUGE_PAGE
 .section .phys.bss
 .align 4096
 _boot_pd:
     .fill 16384
-#endif
 
 .section .boot.text
 
