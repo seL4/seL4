@@ -293,6 +293,18 @@ config_option(KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWI
     DEFAULT_DISABLED OFF
 )
 
+config_option(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40
+    "Specify the physical address size to 40 bits"
+    DEFAULT OFF
+    DEPENDS "KernelArmHypervisorSupport AND KernelArchArmV8a"
+)
+
+config_option(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44
+    "Specify the physical address size to 44 bits"
+    DEFAULT OFF
+    DEPENDS "KernelArmHypervisorSupport AND KernelArchArmV8a"
+)
+
 if(KernelAArch32FPUEnableContextSwitch)
     set(KernelHaveFPU ON)
 endif()
