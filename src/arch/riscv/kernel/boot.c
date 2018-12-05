@@ -29,7 +29,6 @@
 #include <plat/machine/hardware.h>
 #include <plat/machine/fdt.h>
 #include <machine.h>
-#include <stdarg.h>
 
 /* pointer to the end of boot code/data in kernel image */
 /* need a fake array to get the pointer from the linker script */
