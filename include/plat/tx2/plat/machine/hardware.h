@@ -23,6 +23,11 @@
 #define physBase            0x80000000
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* These values are chosen simply to mirror the address space layout
+ * of the TX1.
+ *
+ * Please see the comments inside of hardware.h for the TX1's AArch64 port.
+ */
 #define kernelBase          0x0000ff8080000000llu
 #define USER_TOP            0x00000fffffffffffllu
 #else
