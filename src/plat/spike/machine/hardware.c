@@ -136,7 +136,7 @@ static inline uint64_t get_cycles(void)
 #if __riscv_xlen == 32
 {
     uint32_t nH, nL;
-    __asm__ __volatile__ (
+    asm volatile (
         "rdtimeh %0\n"
         "rdtime  %1\n"
         : "=r" (nH), "=r" (nL));
@@ -145,7 +145,7 @@ static inline uint64_t get_cycles(void)
 #else
 {
     uint64_t n;
-    __asm__ __volatile__ (
+    asm volatile (
         "rdtime %0"
         : "=r" (n));
     return n;
