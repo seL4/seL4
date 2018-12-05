@@ -83,11 +83,10 @@ void initIRQController(void);
 
 void handleSpuriousIRQ(void);
 
-/** MODIFIES: [*] */
 void plat_cleanL2Range(paddr_t start, paddr_t end);
-/** MODIFIES: [*] */
+
 void plat_invalidateL2Range(paddr_t start, paddr_t end);
-/** MODIFIES: [*] */
+
 void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
 
 static inline void* CONST
