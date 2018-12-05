@@ -18,6 +18,7 @@ if(KernelPlatformTx1)
     config_set(KernelPlatform PLAT "tx1")
     config_set(KernelArmMach MACH "nvidia")
     set(KernelHaveFPU ON)
+    set(KernelArmPASizeBits44 ON)
 endif()
 
 add_sources(
