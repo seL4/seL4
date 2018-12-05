@@ -16,7 +16,11 @@
 #include <config.h>
 
 /* These devices are used by the seL4 kernel. */
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define KDEV_PPTR                   0x0000ffffffff0000ull
+#else
 #define KDEV_PPTR                   0xffffffffffff0000lu
+#endif
 
 #define UARTA_PPTR                  (KDEV_PPTR)
 #define GIC_DISTRIBUTOR_PPTR        (KDEV_PPTR + 0x3000)

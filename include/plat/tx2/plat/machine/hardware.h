@@ -22,10 +22,15 @@
 
 #define physBase            0x80000000
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+#define kernelBase          0x0000ff8080000000llu
+#define USER_TOP            0x00000fffffffffffllu
+#else
 #define kernelBase          0xffffff8000000000llu
 
 /* Maximum virtual address accessible from userspace */
 #define USER_TOP            0x00007fffffffffff
+#endif
 
 /*
  * Physical addresses are supported up to 34 bits (0x3FFFFFFFF).
