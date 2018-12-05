@@ -66,7 +66,7 @@ getActiveIRQ(void)
 {
 
     uint64_t temp = 0;
-    asm volatile ("csrr %0, scause":"=r" (temp)::);
+    asm volatile ("csrr %0, scause":"=r" (temp));
 
     if (!(temp & BIT(CONFIG_WORD_SIZE - 1))) {
         return irqInvalid;
