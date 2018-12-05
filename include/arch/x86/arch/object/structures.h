@@ -41,18 +41,6 @@ typedef struct arch_tcb {
 #endif /* CONFIG_VTX */
 } arch_tcb_t;
 
-struct user_data {
-    word_t words[BIT(seL4_PageBits) / sizeof(word_t)];
-};
-
-typedef struct user_data user_data_t;
-
-struct user_data_device {
-    word_t words[BIT(seL4_PageBits) / sizeof(word_t)];
-};
-
-typedef struct user_data_device user_data_device_t;
-
 #define SEL_NULL    GDT_NULL
 #define SEL_CS_0    (GDT_CS_0 << 3)
 #define SEL_DS_0    (GDT_DS_0 << 3)

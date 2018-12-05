@@ -184,6 +184,16 @@ typedef word_t tcb_cnode_index_t;
 
 #include <arch/object/structures.h>
 
+struct user_data {
+    word_t words[BIT(seL4_PageBits) / sizeof(word_t)];
+};
+typedef struct user_data user_data_t;
+
+struct user_data_device {
+    word_t words[BIT(seL4_PageBits) / sizeof(word_t)];
+};
+typedef struct user_data_device user_data_device_t;
+
 static inline word_t CONST
 wordFromVMRights(vm_rights_t vm_rights)
 {

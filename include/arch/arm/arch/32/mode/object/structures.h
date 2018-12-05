@@ -89,18 +89,6 @@ typedef word_t pde_type_t;
 #define LPAE_PT_PTR(r) ((lpae_pte_t *)r)
 #define LPAE_PT_REF(p) ((unsigned int)p)
 
-struct user_data {
-    word_t words[BIT(ARMSmallPageBits) / sizeof(word_t)];
-};
-
-typedef struct user_data user_data_t;
-
-struct user_data_device {
-    word_t words[BIT(ARMSmallPageBits) / sizeof(word_t)];
-};
-
-typedef struct user_data user_data_device_t;
-
 enum asidSizeConstants {
 #ifdef CONFIG_ARM_SMMU
     asidHighBits = 6,
