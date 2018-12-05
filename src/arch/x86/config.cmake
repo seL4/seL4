@@ -31,6 +31,9 @@ if(KernelArchX86)
     config_set(KernelSel4Arch SEL4_ARCH "${KernelX86Sel4Arch}")
     # x86 always has an FPU
     set(KernelHaveFPU ON)
+    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
+        pde_C
+    )
 else()
     config_set(KernelPlatPC99 PLAT_PC99 OFF)
 endif()

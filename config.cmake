@@ -31,8 +31,7 @@ mark_as_advanced(${force} CSPEC_DIR SKIP_MODIFIES SORRY_BITFIELD_PROOFS UMM_TYPE
 add_custom_target(kernel_config_target)
 # Put our common top level types in
 set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
-    cte_C tcb_C endpoint_C notification_C asid_pool_C pte_C pde_C user_data_C
-    user_data_device_C
+    cte_C tcb_C endpoint_C notification_C asid_pool_C pte_C user_data_C user_data_device_C
 )
 
 ########################

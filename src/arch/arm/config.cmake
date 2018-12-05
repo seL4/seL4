@@ -43,6 +43,9 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
 
 if(KernelArchARM)
     config_set(KernelSel4Arch SEL4_ARCH "${KernelArmSel4Arch}")
+    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
+        pde_C
+    )
 endif()
 
 # arm-hyp masquerades as an aarch32 build
