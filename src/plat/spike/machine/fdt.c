@@ -93,8 +93,9 @@ struct scan_state {
 static const uint32_t *fdt_get_address(const struct fdt_scan_node *node, const uint32_t *value, uint64_t *result)
 {
     *result = 0;
-    for (int cells = node->address_cells; cells > 0; --cells) {
-        *result = (*result << 32) + bswap(*value++);
+    for (int cells = node->address_cells; cells > 0; cells--) {
+        *result = (*result << 32) + bswap(*value);
+        value++;
     }
     return value;
 }
@@ -102,8 +103,9 @@ static const uint32_t *fdt_get_address(const struct fdt_scan_node *node, const u
 static const uint32_t *fdt_get_size(const struct fdt_scan_node *node, const uint32_t *value, uint64_t *result)
 {
     *result = 0;
-    for (int cells = node->size_cells; cells > 0; --cells) {
-        *result = (*result << 32) + bswap(*value++);
+    for (int cells = node->size_cells; cells > 0; cells--) {
+        *result = (*result << 32) + bswap(*value);
+        value++;
     }
     return value;
 }
