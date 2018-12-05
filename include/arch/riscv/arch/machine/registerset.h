@@ -84,8 +84,8 @@ typedef uint64_t register_t;
 
 enum messageSizes {
     n_msgRegisters = 4,
-    n_frameRegisters = 17,
-    n_gpRegisters = 0,
+    n_frameRegisters = 31,
+    n_gpRegisters = 1,
     n_exceptionMessage = 3,
     n_syscallMessage = 10
 };
