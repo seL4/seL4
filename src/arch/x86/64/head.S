@@ -179,9 +179,8 @@ syscall_error_string:
     .set syscall_error_size, . - syscall_error_string
 END_FUNC(syscall_check)
 
-/* if fsgsbase instructions are supported, we enable them. */
-BEGIN_FUNC(fsgsbase_enable)
 #ifdef CONFIG_FSGSBASE_INST
+BEGIN_FUNC(fsgsbase_enable)
     movl $0x7, %eax
     xorl %ecx, %ecx
     cpuid
@@ -203,10 +202,8 @@ BEGIN_FUNC(fsgsbase_enable)
 fsgsbase_error_string:
     .string "fsgsbase instructions not supported by the processor"
     .set fsgsbase_error_size, . - fsgsbase_error_string
-#else
-    ret
-#endif
 END_FUNC(fsgsbase_enable)
+#endif /* CONFIG_FSGSBASE_INST */
 
 BEGIN_FUNC(syscall_enable)
     call syscall_check
@@ -254,7 +251,10 @@ BEGIN_FUNC(common_init)
     andl $0x7fffffff, %eax
     movl %eax, %cr0
 
+#ifdef CONFIG_FSGSBASE_INST
     call fsgsbase_enable
+#endif /* CONFIG_FSGSBASE_INST */
+
     /* Initialize boot PML4 and switch to long mode */
     call setup_pml4
     call enable_x64_mode
