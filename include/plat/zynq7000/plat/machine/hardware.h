@@ -19,7 +19,6 @@
 #include <arch/benchmark_overflowHandler.h>
 
 #define physBase          0x00000000
-#define kernelBase        0xe0000000
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {

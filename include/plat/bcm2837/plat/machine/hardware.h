@@ -18,7 +18,6 @@
 #include <linker.h>
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
-#include <plat_mode/machine/hardware.h>
 #include <machine/io.h>
 
 #define physBase          0x01000000

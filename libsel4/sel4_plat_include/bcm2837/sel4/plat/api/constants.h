@@ -26,4 +26,11 @@
 #define seL4_NumDualFunctionMonitors (0)
 #endif
 
+#if CONFIG_WORD_SIZE == 32
+/* First address in the virtual address space that is not accessible to user level */
+#define seL4_UserTop 0xe0000000
+#else
+/* otherwise this is defined at the arch level */
+#endif
+
 #endif /* __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_ */

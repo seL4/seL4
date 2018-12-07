@@ -20,10 +20,6 @@
  * 'regular' kernel window, which contains mappings to physical memory, and a small higher
  * kernel image window that we use for running the actual kernel from */
 #define PPTR_BASE        0xFFFFFFC000000000lu
-/* We steal the top 2 gb entries for the kernel, this means that between PPTR_BASE and
- * KERNEL_BASE there are 254 entries remaining, which represents how much physical memory
- * can be used */
-#define KERNEL_BASE      0xFFFFFFFF80000000lu
 #else
 #error Only PT_LEVELS == 3 is supported
 #endif

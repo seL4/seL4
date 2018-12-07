@@ -18,6 +18,9 @@ Upcoming release: BREAKING
  * `seL4_CapRights_new` now takes 4 parameters
  * seL4_CapRightsBits added to libsel4. seL4_CapRightsBits is the number of bits
    to encode seL4_CapRights.
+ * `seL4_UserTop` added
+    - a new constant in libsel4 that contains the first virtual address unavailable to
+      user level.
 
 ## Upgrade Notes
 ---

@@ -42,6 +42,7 @@
 #endif
 
 /* The highest valid physical address that can be indexed in the kernel window */
+#define KERNEL_BASE seL4_UserTop
 #define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
 /* The highest valid physical address that can be used for the kernel image. We offset by
  * PADDR_LOAD as the window for the kernel image is mapped started at PADDR_LOAD */
@@ -51,7 +52,7 @@
 #define KERNEL_BASE_OFFSET (KERNEL_BASE - PADDR_LOAD)
 
 /* Convert our values into general values expected by the common code */
-#define kernelBase KERNEL_BASE
+#define kernelBase seL4_UserTop
 #define PPTR_TOP KERNEL_BASE
 #define PPTR_USER_TOP PPTR_BASE
 #define BASE_OFFSET (PPTR_BASE - PADDR_BASE)

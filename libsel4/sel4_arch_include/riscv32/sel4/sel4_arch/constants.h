@@ -81,4 +81,7 @@ enum {
     seL4_UserException_Length,
 } seL4_UserException_Msg;
 
+/* First address in the virtual address space that is not accessible to user level */
+#define seL4_UserTop 0xFF800000lu
+
 #endif

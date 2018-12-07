@@ -120,4 +120,7 @@ enum {
 /* IPC buffer is 1024 bytes, giving size bits of 10 */
 #define seL4_IPCBufferSizeBits 10
 
+/* First address in the virtual address space that is not accessible to user level */
+#define seL4_UserTop 0x00007ffffffff000
+
 #endif /* __LIBSEL4_SEL4_SEL4_ARCH_CONSTANTS_H_ */

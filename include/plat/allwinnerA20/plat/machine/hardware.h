@@ -18,7 +18,6 @@
 #include <plat/machine/devices.h>
 
 #define physBase          0x48000000
-#define kernelBase        0xA0000000
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     /*  GP Timer 11 */

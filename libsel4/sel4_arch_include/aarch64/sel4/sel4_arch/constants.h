@@ -182,4 +182,19 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
 /* IPC buffer is 1024 bytes, giving size bits of 10 */
 #define seL4_IPCBufferSizeBits 10
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* The userspace occupies the range 0x0 to 0xfffffffffff.
+ * The stage-1 translation is disabled, and the stage-2
+ * translation input addree size is constrained by the
+ * ID_AA64MMFR0_EL1.PARange which is 44 bits on TX1.
+ * Anything address above the range above triggers an
+ * address size fault.
+ */
+/* First address in the virtual address space that is not accessible to user level */
+#define seL4_UserTop 0x00000fffffffffff
+#else
+/* First address in the virtual address space that is not accessible to user level */
+#define seL4_UserTop 0x00007fffffffffff
+#endif
+
 #endif

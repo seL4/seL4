@@ -13,7 +13,7 @@
 
 #include <plat/machine.h>
 #include <machine/registerset.h>
-
+#include <mode/hardware.h>
 #include <mode/machine.h>
 #include <plat/machine/hardware.h>
 

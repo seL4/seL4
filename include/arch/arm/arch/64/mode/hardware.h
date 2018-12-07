@@ -16,7 +16,57 @@
 #include <config.h>
 #include <arch/machine/hardware.h>
 #include <plat/machine/hardware.h>
+#include <plat/api/constants.h>
 
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+/* EL2 kernel address map:
+ *
+ * The EL2 mode kernel uses TTBR0_EL2 which covers the range of
+ * 0x0 - 0x0000ffffffffffff (48 bits of vaddrspace).
+ *
+ * The CPU on the TX1 only allows for 48-bits of addressable virtual memory.
+ * Within the seL4 EL2 kernel's separate vaddrspace, it uses
+ * the approximately 510 GiB at the top of that 48 bits of addressable
+ * virtual memory.
+ *
+ * In EL2 there is no canonical-high portion of the address space since
+ * address tagging is not supported in EL2. Therefore the kernel is linked
+ * to the canonical lower portion of the address space (all the unused top bits
+ * are set to 0, not 1).
+ *
+ * The memory map used by the EL2 kernel's separate address space
+ * ends up looking something like this:
+ *
+ * +-----------------------------------+ <- 0xFFFFFFFF_FFFFFFFF
+ * | Canonical high portion - unusable |
+ * | virtual addrs                     |
+ * +-----------------------------------+ <- 256TiB mark (top of 48 bits)
+ * | seL4 EL2 kernel                   |    ^
+ * |                                   |    |
+ * |                                   |    510GiB
+ * |                                   |    of EL2 kernel windowing
+ * |                                   |    into memory.
+ * |                                   |    |
+ * |                                   |    v
+ * +-----------------------------------+ <- Kernel Base, @ 256TiB minus 510GiB.
+ * | Unused virtual addresses within   |    ^
+ * | the EL2 kernel's                  |    |
+ * | separate vaddrspace.              |    Rest of the
+ * |                                   |    EL2 kernel
+ * |                                   |    vaddrspace, unused,
+ * |                                   |    which is the rest of
+ * |                                   |    the lower 256 TiB.
+ * |                                   |    |
+ * |                                   |    v
+ * +-----------------------------------+ <- 0x0
+ */
+#define kernelBase          0x0000ff8080000000llu
+#else
+#define kernelBase          0xffffff8000000000llu
+#endif
+
+#define USER_TOP seL4_UserTop
 #define BASE_OFFSET (kernelBase - physBase)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

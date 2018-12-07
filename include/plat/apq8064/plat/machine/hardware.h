@@ -17,7 +17,6 @@
 #include <plat/machine/devices.h>
 
 #define physBase          0x80000000
-#define kernelBase        0xe0000000
 
 static const BOOT_RODATA kernel_frame_t kernel_devices[] = {
     {

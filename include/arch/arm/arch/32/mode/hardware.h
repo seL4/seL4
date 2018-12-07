@@ -15,7 +15,7 @@
 
 #include <config.h>
 #include <arch/machine/hardware.h>
-#include <plat/machine/hardware.h>
+#include <plat/api/constants.h>
 
 /*
  * 0xffe00000 asid id slot (arm/arch/kernel/vspace.h)
@@ -23,6 +23,7 @@
  * 0xffff0000 vectors      (arch/machine/hardware.h)
  * 0xffffc000 global page  (arch/machine/hardware.h)
  */
+#define kernelBase seL4_UserTop
 #define BASE_OFFSET (kernelBase - physBase)
 #ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
 #define PPTR_TOP 0xffe00000
@@ -31,5 +32,7 @@
 #define PPTR_TOP 0xfff00000
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
 #define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
+
+#include <plat/machine/hardware.h>
 
 #endif /* __ARCH_HARDWARE_32_H */

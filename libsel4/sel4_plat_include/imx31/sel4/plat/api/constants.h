@@ -26,4 +26,7 @@
 #define seL4_NumDualFunctionMonitors (0)
 #endif
 
+/* First address in the virtual address space that is not accessible to user level */
+#define seL4_UserTop 0xf0000000
+
 #endif /* __LIBSEL4_SEL4_PLAT_API_CONSTANTS_H_ */

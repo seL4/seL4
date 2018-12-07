@@ -18,7 +18,6 @@
 #include <plat/machine/interrupt.h>
 
 #define physBase          0x80000000
-#define kernelBase        0xf0000000
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {
