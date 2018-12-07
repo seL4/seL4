@@ -44,20 +44,24 @@ BEGIN_FUNC(print_string)
     ret
 END_FUNC(print_string)
 
+BEGIN_FUNC(hang)
+1:
+    hlt
+    jmp  1b
+END_FUNC(hang)
+
 #ifdef CONFIG_HUGE_PAGE
 BEGIN_FUNC(huge_page_check)
     movl $0x80000001, %eax
     cpuid
     andl $0x04000000, %edx
-    jnz  2f
+    jz   1f
+    ret
+1:
     movl $huge_page_error_string, %ebx
     movl $huge_page_error_size, %ecx
     call print_string
-1:
-    hlt
-    jmp  1b
-2:
-    ret
+    call hang
 
 huge_page_error_string:
     .string "Huge page not supported by the processor"
@@ -124,15 +128,13 @@ BEGIN_FUNC(pcid_check)
     xorl %ecx, %ecx
     cpuid
     andl $0x800000, %ecx
-    jnz 2f
+    jz   1f
+    ret
+1:
     movl $pcid_error_string, %ebx
     movl $pcid_error_size, %ecx
     call print_string
-1:
-    hlt
-    jmp 1b
-2:
-    ret
+    call hang
 
 pcid_error_string:
     .string "PCIDs not supported by the processor"
@@ -144,15 +146,13 @@ BEGIN_FUNC(invpcid_check)
     xorl %ecx, %ecx
     cpuid
     andl $0x400, %ebx
-    jnz   2f
+    jz   1f
+    ret
+1:
     movl  $invpcid_error_string, %ebx
     movl  $invpcid_error_size, %ecx
     call  print_string
-1:
-    hlt
-    jmp   1b
-2:
-    ret
+    call  hang
 
 invpcid_error_string:
     .string "INVPCID instruction not supported by the processor"
@@ -164,15 +164,13 @@ BEGIN_FUNC(syscall_check)
     xorl %ecx, %ecx
     cpuid
     andl $0x20000000, %edx
-    jnz   2f
+    jz   1f
+    ret
+1:
     movl  $syscall_error_string, %ebx
     movl  $syscall_error_size, %ecx
     call  print_string
-1:
-    hlt
-    jmp   1b
-2:
-    ret
+    call  hang
 
 syscall_error_string:
     .string "SYSCALL/SYSRET instruction not supported by the processor"
@@ -185,19 +183,17 @@ BEGIN_FUNC(fsgsbase_enable)
     xorl %ecx, %ecx
     cpuid
     andl $1, %ebx
-    jnz  2f
-    movl $fsgsbase_error_string, %ebx
-    movl $fsgsbase_error_size, %ecx
-    call print_string
-1:
-    hlt
-    jmp 1b
-2:
+    jz   1f
     movl %cr4, %eax
     /* enable the bit in CR4 */
     orl  $0x10000, %eax
     movl %eax, %cr4
     ret
+1:
+    movl $fsgsbase_error_string, %ebx
+    movl $fsgsbase_error_size, %ecx
+    call print_string
+    call hang
 
 fsgsbase_error_string:
     .string "fsgsbase instructions not supported by the processor"
