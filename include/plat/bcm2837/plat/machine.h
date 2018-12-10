@@ -13,7 +13,6 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 #include <plat_mode/machine/devices.h>
-#include <plat_mode/machine.h>
 #include <machine/io.h>
 
 #define BASIC_IRQ_OFFSET                32

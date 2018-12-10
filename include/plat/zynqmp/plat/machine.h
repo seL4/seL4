@@ -21,7 +21,6 @@
 #define __PLAT_MACHINE_H
 #include <plat/machine/devices.h>
 #include <machine/io.h>
-#include <plat_mode/machine.h>
 
 enum IRQConstants {
 //  INTERRUPT_RESERVED      =   0,
