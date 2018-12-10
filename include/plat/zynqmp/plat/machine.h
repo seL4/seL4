@@ -23,7 +23,6 @@
 #include <machine/io.h>
 #include <plat_mode/machine.h>
 
-#define MAX_IRQ (187)
 enum IRQConstants {
 //  INTERRUPT_RESERVED      =   0,
 //  INTERRUPT_RESERVED      =   1,
@@ -222,7 +221,7 @@ enum IRQConstants {
     INTERRUPT_APU_REGERROR      = 185,
     INTERRUPT_CCI               = 186,
     INTERRUPT_SMMU              = 187,
-    maxIRQ = MAX_IRQ
+    maxIRQ = 187
 } platform_interrupt_t;
 
 #define KERNEL_TIMER_IRQ INTERRUPT_CORE_VIRT_TIMER

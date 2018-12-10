@@ -19,7 +19,6 @@
 #define BASIC_IRQ_OFFSET                32
 #define NORMAL_IRQ_OFFSET               (BASIC_IRQ_OFFSET + 32)
 
-#define MAX_IRQ (32 + 32 + 64 -1)
 enum IRQConstants {
     INTERRUPT_CORE_CNTPSIRQ                  =  0,
     INTERRUPT_CORE_CNTPNSIRQ                 =  1,
@@ -72,7 +71,7 @@ enum IRQConstants {
     INTERRUPT_IRQ_SPI                        = (NORMAL_IRQ_OFFSET + 54),
     INTERRUPT_IRQ_PCM                        = (NORMAL_IRQ_OFFSET + 55),
     INTERRUPT_IRQ_UART                       = (NORMAL_IRQ_OFFSET + 57),
-    maxIRQ = MAX_IRQ
+    maxIRQ = (32 + 32 + 64 - 1)
 } platform_interrupt_t;
 
 #define KERNEL_TIMER_IRQ INTERRUPT_CORE_CNTVIRQ
