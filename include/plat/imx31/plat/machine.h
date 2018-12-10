@@ -21,8 +21,6 @@ enum IRQConstants {
     maxIRQ = 63
 } platform_interrupt_t;
 
-#define IRQ_CNODE_BITS 12
-
 enum irqNumbers {
     irqInvalid = 255
 };

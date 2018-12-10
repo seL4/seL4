@@ -13,6 +13,4 @@
 #ifndef __PLAT_MODE_MACHINE_H
 #define __PLAT_MODE_MACHINE_H
 
-#define IRQ_CNODE_BITS 12
-
 #endif /* __PLAT_MODE_MACHINE_H */

@@ -61,8 +61,6 @@ enum IRQConstants {
 
 compile_assert(interuppt_mapping_check, (maxIRQ == (32 + 288 + 64 - 1)))
 
-#define IRQ_CNODE_BITS      14
-
 #define INTERRUPT_VGIC_MAINTENANCE  INTERRUPT_PPI_9
 #define INTERRUPT_HGPT              INTERRUPT_PPI_10
 #define INTERRUPT_VGPT              INTERRUPT_PPI_11

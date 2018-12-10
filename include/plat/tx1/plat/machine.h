@@ -243,8 +243,6 @@ enum IRQConstants {
     maxIRQ                          = 224
 } platform_interrupt_t;
 
-#define IRQ_CNODE_BITS      13
-
 #define INTERRUPT_VGIC_MAINTENANCE  INTERRUPT_PPI_9
 #define INTERRUPT_HGPT              INTERRUPT_PPI_10
 #define INTERRUPT_VGPT              INTERRUPT_PPI_11

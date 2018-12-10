@@ -52,8 +52,6 @@ enum IRQConstants {
     maxIRQ                      = 283
 } platform_interrupt_t;
 
-#define IRQ_CNODE_BITS 13
-
 #define KERNEL_TIMER_IRQ INTERRUPT_KPSS_DBGT
 
 #endif /* !__PLAT_MACHINE_H */

@@ -22,6 +22,7 @@
 #include <util.h>
 
 /* (node-local) state accessed only during bootstrapping */
+#define IRQ_CNODE_BITS (seL4_WordBits - clzl(maxIRQ * sizeof(cte_t)))
 
 ndks_boot_t ndks_boot BOOT_DATA;
 
@@ -163,12 +164,12 @@ create_root_cnode(void)
     return cap;
 }
 
-compile_assert(irq_cnode_size, BIT(IRQ_CNODE_BITS - seL4_SlotBits) > maxIRQ)
 
 BOOT_CODE bool_t
 create_irq_cnode(void)
 {
     pptr_t pptr;
+    assert(BIT(IRQ_CNODE_BITS - seL4_SlotBits) > maxIRQ);
     /* create an empty IRQ CNode */
     pptr = alloc_region(IRQ_CNODE_BITS);
     if (!pptr) {

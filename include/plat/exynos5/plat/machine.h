@@ -197,8 +197,6 @@ enum IRQConstants {
     maxIRQ = 232
 } platform_interrupt_t;
 
-#define IRQ_CNODE_BITS 12
-
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define KERNEL_TIMER_IRQ INTERRUPT_CNTHPIRQ
 #else
