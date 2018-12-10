@@ -13,8 +13,6 @@
 
 #include <config.h>
 
-#define N_INTERRUPTS     160
-
 enum IRQConstants {
 //  INTERRUPT_RESERVED          =   0,
 //  INTERRUPT_RESERVED          =   1,

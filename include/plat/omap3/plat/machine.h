@@ -11,8 +11,6 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
-#define N_INTERRUPTS 96
-
 enum IRQConstants {
     EMUINT          =  0,
     COMMTX          =  1,

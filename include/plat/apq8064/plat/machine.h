@@ -13,8 +13,6 @@
 
 #include <arch/machine/gic_pl390.h>
 
-#define N_INTERRUPTS             (maxIRQ + 1)
-
 enum IRQConstants {
 // INTERRUPT_RESERVED          =  0,
 // INTERRUPT_RESERVED          =  1,

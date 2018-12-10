@@ -13,8 +13,6 @@
 
 #define KERNEL_TIMER_IRQ INTERRUPT_EPIT1
 
-#define N_INTERRUPTS 64
-
 enum IRQConstants {
     INTERRUPT_PMU = 23,
     INTERRUPT_EPIT1 = 28,

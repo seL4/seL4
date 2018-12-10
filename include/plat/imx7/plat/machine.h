@@ -13,8 +13,6 @@
 
 #include <arch/machine/gic_pl390.h>
 
-#define N_INTERRUPTS     160
-
 /* pull some device interrupts from Linux device tree, need to
  * confirm them when the offcial manual is available.
  */

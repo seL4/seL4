@@ -13,8 +13,6 @@
 
 #include <arch/machine/gic_pl390.h>
 
-#define N_INTERRUPTS 122
-
 enum IRQConstants {
     SGI_0           = 0,
     SGI_1           = 1,

@@ -13,8 +13,6 @@
 
 #include <config.h>
 
-#define N_INTERRUPTS 192
-
 enum IRQConstants {
     INTERRUPT_SGI_0                 = 0,
     INTERRUPT_SGI_1                 = 1,

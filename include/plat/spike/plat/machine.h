@@ -19,9 +19,6 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
-
-#define N_INTERRUPTS 6
-
 #ifndef __ASSEMBLER__
 enum IRQConstants {
     INTERRUPT_SW = 0,

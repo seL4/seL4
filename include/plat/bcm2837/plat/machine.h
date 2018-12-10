@@ -16,8 +16,6 @@
 #include <plat_mode/machine.h>
 #include <machine/io.h>
 
-#define N_INTERRUPTS     96
-
 #define BASIC_IRQ_OFFSET                32
 #define NORMAL_IRQ_OFFSET               (BASIC_IRQ_OFFSET + 32)
 

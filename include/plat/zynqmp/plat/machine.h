@@ -23,8 +23,6 @@
 #include <machine/io.h>
 #include <plat_mode/machine.h>
 
-#define N_INTERRUPTS     96
-
 #define MAX_IRQ (187)
 enum IRQConstants {
 //  INTERRUPT_RESERVED      =   0,

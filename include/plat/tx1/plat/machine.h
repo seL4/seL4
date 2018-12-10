@@ -13,8 +13,6 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
-#define N_INTERRUPTS 224
-
 enum IRQConstants {
     INTERRUPT_SGI_0                 = 0,
     INTERRUPT_SGI_1                 = 1,
