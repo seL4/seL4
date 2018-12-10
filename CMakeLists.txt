@@ -39,6 +39,7 @@ set(PYTHON "python" CACHE INTERNAL "")
 RequireTool(CPP_GEN_PATH cpp_gen.sh)
 RequireTool(CIRCULAR_INCLUDES circular_includes.py)
 RequireTool(BF_GEN_PATH bitfield_gen.py)
+RequireTool(HARDWARE_GEN_PATH hardware_gen.py)
 RequireTool(INVOCATION_ID_GEN_PATH invocation_header_gen.py)
 RequireTool(SYSCALL_ID_GEN_PATH syscall_header_gen.py)
 RequireTool(XMLLINT_PATH xmllint.sh)
@@ -274,6 +275,48 @@ add_custom_target(xml_headers_target DEPENDS ${xml_headers})
 # Add the xml headers to all the kernel headers
 add_dependencies(kernel_headers xml_headers_target)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen_headers")
+
+if (DEFINED KernelDTSList)
+    find_program(DTC_TOOL dtc)
+    if ("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
+        message(FATAL_ERROR "Cannot find 'dtc' program.")
+    endif()
+
+    foreach(entry ${KernelDTSList})
+        get_absolute_source_or_binary(dts_tmp ${entry})
+        list(APPEND dts_list ${dts_tmp})
+    endforeach()
+
+    # Generate final DTS based on Linux DTS + seL4 overlay[s]
+    set(KernelDTSIntermediate "kernel.dts")
+    add_custom_command(OUTPUT ${KernelDTSIntermediate}
+        COMMAND cat ${dts_list} > "${KernelDTSIntermediate}"
+        COMMENT "Generate kernel DTS"
+        DEPENDS ${dts_list})
+
+    # Compile DTS to DTB
+    set(KernelDTBPath "kernel.dtb")
+    add_custom_command(OUTPUT ${KernelDTBPath}
+        COMMAND ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
+        DEPENDS ${KernelDTSIntermediate})
+
+    # Generate devices_gen header based on DTB
+    set(device_dest "gen_headers/plat/machine/devices_gen.h")
+    set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
+    set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
+    add_custom_command(OUTPUT ${device_dest}
+        COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
+        DEPENDS "${HARDWARE_GEN_PATH}" "${KernelDTBPath}" "${config_file}" "${config_schema}"
+        COMMENT "Generate hardware description"
+        VERBATIM
+    )
+
+    # Construct target for the generated hardware header
+    add_custom_target(hardware_gen_target DEPENDS "${device_dest}")
+    # Add the hardware header to all the kernel headers
+    add_dependencies(kernel_headers hardware_gen_target)
+    list(APPEND gen_files_list "${device_dest}")
+endif()
 
 #######################
 # Prune list generation

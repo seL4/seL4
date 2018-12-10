@@ -1,0 +1,107 @@
+#
+# Copyright 2018, Data61
+# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+# ABN 41 687 119 230.
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(DATA61_GPL)
+#
+---
+$schema: http://json-schema.org/draft-07/schema#
+description: Schema for seL4 hardware.yml
+type: object
+additionalProperties: false
+properties:
+  buses:
+    type: array
+    uniqueItems: true
+    description: list of compatibles to treat as MMIO buses
+    items:
+      type: string
+  devices:
+    type: array
+    uniqueItems: true
+    description: top-level list of devices
+    items:
+      $ref: '#/definitions/device'
+required: [devices]
+definitions:
+  device:
+    type: object
+    additionalProperties: false
+    properties:
+      compatible:
+        description: List of compatible strings to which this rule applies
+        type: array
+        minItems: 1
+        uniqueItems: true
+      regions:
+        description: Memory regions this device has that the kernel might use
+        type: array
+        items:
+          $ref: '#/definitions/region'
+        uniqueItems: true
+      chosen:
+        description: >
+          Apply this rule only to the device referenced by the correspondingly named
+          property in the chosen node. For instance, a dts like this
+
+          aliases {
+            serial0 = &serial_0;
+          };
+
+          chosen {
+            stdout-path = "serial0";
+          };
+
+          serial_0: serial@13800000 {
+            compatible = "samsung,exynos4210-uart";
+            reg = <0x13800000 0x100>;
+            /* etc */
+          };
+
+          serial_1: serial@13810000 {
+            compatible = "samsung,exynos4210-uart";
+            reg = <0x13810000 0x100>;
+            /* etc */
+          };
+
+          and a device with the property chosen set to stdout-path will only match the serial@13800000
+          device and not any other device with the samsung,exynos4210-uart compatible.
+        type: string
+    required: [compatible]
+  region:
+    type: object
+    additionalProperties: false
+    properties:
+      executeNever:
+        description: should this region be mapped as execute never?
+        type: boolean
+      index:
+        description: Region index this property should apply to
+        type: integer
+        minimum: 0
+      kernel:
+        description: kernel macro used to access this region. If not present, region will not be mapped.
+        $ref: '#/definitions/macro'
+      macro:
+        description: only map the region to the kernel if this macro is defined
+        $ref: '#/definitions/macro'
+      user:
+        description: >
+          Whether or not to make a device untyped for userspace.
+          If true, will always expose this device to userspace.
+          If there is a macro and the macro is undefined, and user is not present,
+          the device will be made.
+          If false, the device will never be made.
+        type: boolean
+    dependencies:
+      kernel: [executeNever, index]
+      executeNever: [kernel]
+  macro:
+    type: string
+    pattern: '^[A-Za-z_][A-Za-z0-9_]*$'
+    minLength: 1

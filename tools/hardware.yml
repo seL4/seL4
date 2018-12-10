@@ -1,0 +1,174 @@
+#
+# Copyright 2018, Data61
+# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+# ABN 41 687 119 230.
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(DATA61_GPL)
+#
+# Documentation for bindings is relative to Documentation/devicetree/bindings in Linux,
+# unless otherwise noted.
+buses:
+  - simple-bus
+  - qcom,gsbi-v1.0.0
+devices:
+  # ARM GIC (interrupt-controller/arm,gic.txt)
+  - compatible:
+    - arm,cortex-a15-gic
+    - arm,cortex-a7-gic
+    - arm,cortex-a9-gic
+    - arm,gic-400
+    - qcom,msm-qgic2
+    regions:
+        # distributor
+      - executeNever: true
+        index: 0
+        kernel: GIC_PL390_DISTRIBUTOR_PPTR
+        # controller
+      - executeNever: true
+        index: 1
+        kernel: GIC_PL390_CONTROLLER_PPTR
+        # GICV
+      - executeNever: false
+        index: 2
+        kernel: GIC_PL400_VCPUCTRL_PPTR
+        macro: CONFIG_ARM_HYPERVISOR_SUPPORT
+        user: false # never expose to userspace, even if macro is false.
+        # other regions (i.e. GICH)
+      - user: true
+  # Broadcom second level IRQ controller (interrupt-controller/brcm,bcm2835-armctrl-ic.txt),
+  # TI AM33XX/OMAP3 intc (interrupt-controller/ti,omap-intc-irq.txt)
+  - compatible:
+    - brcm,bcm2836-armctrl-ic
+    - ti,am33xx-intc
+    - ti,omap3-intc
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: INTC_PPTR
+  # Broadcom top level IRQ controller (interrupt-controller/brcm,bcm2836-l1-intc.txt)
+  - compatible:
+    - brcm,bcm2836-l1-intc
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: ARM_LOCAL_PPTR
+  # i.MX AVIC (no Linux docs, used in arch/arm/mach-imx/avic.c)
+  - compatible:
+    - fsl,imx31-avic
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: AVIC_PPTR
+  # ARM PL310 L2 cache controller (arm/l2c2x0.txt)
+  - compatible:
+    - arm,pl310-cache
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: L2CC_L2C310_PPTR
+  # i.MX31 L2CC (seL4 only)
+  - compatible:
+    - fsl,imx31-l2cc
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: L2CC_PPTR
+  # Exynos multi core timer (timer/samsung,exynos4210-mct.txt)
+  # Exynos4412 MCT is separate as we use it for the timer IRQ.
+  # Other Exynos platforms use the ARM architecture timer.
+  - compatible:
+    - samsung,exynos4412-mct
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: EXYNOS_MCT_PPTR
+  - compatible:
+    - samsung,exynos4210-mct
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: EXYNOS_MCT_PPTR
+  # Tegra SMMU (memory-controllers/nvidia,tegra30-mc.txt)
+  - compatible:
+    - nvidia,tegra124-mc
+    regions:
+      - executeNever: false
+        index: 0
+        kernel: SMMU_PPTR
+        macro: CONFIG_ARM_SMMU
+  # ARM per-core timer-watchdog (timer/arm,twd.txt)
+  - compatible:
+    - arm,cortex-a9-twd-timer
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: ARM_MP_PRIV_TIMER_PPTR
+  # i.MX EPIT (no Linux binding, this is seL4-specific.)
+  - compatible:
+    - fsl,imx31-epit
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: EPIT_PPTR
+  # QCOM Krait timer (timer/qcom,msm-timer.txt)
+  - compatible:
+    - qcom,kpss-timer
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: TIMER_PPTR
+  # TI AM335x/OMAP3430 timer
+  - compatible:
+    - ti,am335x-timer
+    - ti,omap3430-timer
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: TIMER_PPTR
+    chosen: seL4,timer
+  # TI prcm (arm/omap/prcm.txt)
+  - compatible:
+    - ti,omap4-cm
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: CMPER_PPTR
+        user: true
+  # TI watchdog
+  - compatible:
+    - ti,omap3-wdt
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: WDT1_PPTR
+        user: true
+  # various serial consoles (`grep <compatible> serial/*`)
+  - compatible:
+    - arm,pl011
+    - brcm,bcm2835-aux-uart
+    - fsl,imx31-uart
+    - fsl,imx6q-uart
+    - nvidia,tegra124-hsuart
+    - nvidia,tegra20-uart
+    - qcom,msm-uartdm
+    - samsung,exynos4210-uart
+    - snps,dw-apb-uart
+    - ti,am3352-uart
+    - ti,omap3-uart
+    - xlnx,xuartps
+    chosen: stdout-path
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: UART_PPTR
+        macro: CONFIG_PRINTING
+        user: true
+
+
+
+
+
