@@ -77,7 +77,7 @@ static inline void debug_printUserState(void)
 
 static inline void debug_printTCB(tcb_t *tcb)
 {
-    printf("%40s\t", TCB_PTR_DEBUG_PTR(tcb)->tcbName);
+    printf("%50s\t", TCB_PTR_DEBUG_PTR(tcb)->tcbName);
     char *state;
     switch (thread_state_get_tsType(tcb->tcbState)) {
     case ThreadState_Inactive:
@@ -114,7 +114,7 @@ static inline void debug_printTCB(tcb_t *tcb)
     }
 
     word_t core = SMP_TERNARY(tcb->tcbAffinity, 0);
-    printf("%15s\t%p\t%20lu\t%lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
+    printf("%20s\t%p\t0x%lx\t%3lu", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
 #ifdef CONFIG_KERNEL_MCS
     printf("\t%lu", (word_t) thread_state_get_tcbInReleaseQueue(tcb->tcbState));
 #endif
@@ -123,14 +123,18 @@ static inline void debug_printTCB(tcb_t *tcb)
 
 static inline void debug_dumpScheduler(void)
 {
-    printf("Dumping all tcbs!\n");
-    printf("Name                                    \tState          \tIP                  \t Prio \t Core%s\n",
-           config_set(CONFIG_KERNEL_MCS) ?  "\t InReleaseQueue" : "");
-    printf("--------------------------------------------------------------------------------------\n");
-    for (tcb_t *curr = NODE_STATE(ksDebugTCBs); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
-        debug_printTCB(curr);
+    /* Loop through each core and print out scheduler! */
+    for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        printf(ANSI_BOLD_GREEN "\n" "Dumping all tcbs on Core %d!\n", i);
+        printf("Name                                              State               IP                  Prio \tCore\n");
+        printf("-----------------------------------------------------------------------------------------------------"
+               ANSI_BOLD_WHITE "\n");
+
+        for (tcb_t *curr = NODE_STATE_ON_CORE(ksDebugTCBs, i); curr != NULL; curr = TCB_PTR_DEBUG_PTR(curr)->tcbDebugNext) {
+            debug_printTCB(curr);
+        }
+        printf(ANSI_RESET);
     }
 }
 #endif /* CONFIG_PRINTING */
 #endif /* CONFIG_DEBUG_BUILD */
-

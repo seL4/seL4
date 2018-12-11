@@ -95,10 +95,14 @@ static inline word_t CONST wordFromMessageInfo(seL4_MessageInfo_t mi)
 #define ANSI_RESET "\033[0m"
 #define ANSI_GREEN ANSI_RESET "\033[32m"
 #define ANSI_DARK  ANSI_RESET "\033[30;1m"
+#define ANSI_BOLD_GREEN ANSI_RESET "\033[32;1m"
+#define ANSI_BOLD_WHITE ANSI_RESET "\033[37;1m"
 #else
 #define ANSI_RESET ""
 #define ANSI_GREEN ANSI_RESET ""
 #define ANSI_DARK  ANSI_RESET ""
+#define ANSI_BOLD_GREEN ""
+#define ANSI_BOLD_WHITE ""
 #endif
 
 /*
