@@ -13,7 +13,11 @@
 #define __PLAT_MODE_MACHINE_HARDWARE_H
 
 #include <config.h>
+#include <plat/api/constants.h>
 
-#define PPTR_BASE  0x80000000lu
+/* This is the base of the kernel window, which is directly mapped to PADDR_BASE */
+#define PPTR_BASE  seL4_UserTop
+/* This is the mapping of the kernel (mapped above the kernel window currently) */
+#define KERNEL_BASE 0xFF800000lu
 
 #endif

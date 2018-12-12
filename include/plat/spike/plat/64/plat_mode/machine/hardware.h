@@ -19,7 +19,14 @@
  * entires are for the user, and 256 are for the kernel. This will be further split into the
  * 'regular' kernel window, which contains mappings to physical memory, and a small higher
  * kernel image window that we use for running the actual kernel from */
+/* We steal the top 2 gb entries for the kernel, this means that between PPTR_BASE and
+ * KERNEL_BASE there are 254 entries remaining, which represents how much physical memory
+ * can be used */
+
+/* This is the base of the kernel window, which is directly mapped to PADDR_BASE */
 #define PPTR_BASE        0xFFFFFFC000000000lu
+/* This is the mapping of the kernel (mapped above the kernel window currently) */
+#define KERNEL_BASE      0xFFFFFFFF80000000lu
 #else
 #error Only PT_LEVELS == 3 is supported
 #endif

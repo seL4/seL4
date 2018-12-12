@@ -83,9 +83,6 @@ enum {
 } seL4_UserException_Msg;
 
 /* First address in the virtual address space that is not accessible to user level */
-/* We steal the top 2 gb entries for the kernel, this means that between PPTR_BASE and
- * KERNEL_BASE there are 254 entries remaining, which represents how much physical memory
- * can be used */
-#define seL4_UserTop 0xFFFFFFFF80000000lu
+#define seL4_UserTop 0x0000003ffffff000
 
 #endif
