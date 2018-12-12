@@ -21,6 +21,7 @@ Upcoming release: BREAKING
  * `seL4_UserTop` added
     - a new constant in libsel4 that contains the first virtual address unavailable to
       user level.
+* Support added for Aarch64 hypervisor mode (EL2) for Nvidia TX1 and TX2. This is not verified.
 
 ## Upgrade Notes
 ---
