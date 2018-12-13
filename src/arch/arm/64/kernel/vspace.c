@@ -1396,10 +1396,10 @@ deleteASID(asid_t asid, vspace_root_t *vspace)
     poolPtr = armKSASIDTable[asid >> asidLowBits];
 
     if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
+        invalidateTLBByASID(asid);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         invalidateASIDEntry(asid);
 #endif
-        invalidateTLBByASID(asid);
         poolPtr->array[asid & MASK(asidLowBits)] = NULL;
         setVMRoot(NODE_STATE(ksCurThread));
     }
@@ -1415,10 +1415,10 @@ deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
     if (armKSASIDTable[asid_base >> asidLowBits] == pool) {
         for (offset = 0; offset < BIT(asidLowBits); offset++) {
             if (pool->array[offset]) {
+                invalidateTLBByASID(asid_base + offset);
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
                 invalidateASIDEntry(asid_base + offset);
 #endif
-                invalidateTLBByASID(asid_base + offset);
             }
         }
         armKSASIDTable[asid_base >> asidLowBits] = NULL;
