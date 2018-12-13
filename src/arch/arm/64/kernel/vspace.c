@@ -40,9 +40,6 @@
  * translation does not use full 48-bit.
  */
 #define PGD_VMID_SLOT   511
-#define VMID_MASK       0xff
-#define PGDE_VMID_SHIFT 12
-
 
 /*
  * Memory types are defined in Memory Attribute Indirection Register.
@@ -278,10 +275,8 @@ map_kernel_window(void)
     assert(IS_ALIGNED(PPTR_TOP, seL4_HugePageBits));
 
     /* place the PUD into the PGD */
-    armKSGlobalKernelPGD[GET_PGD_INDEX(kernelBase)] = pgde_new(
-                                                          pptr_to_paddr(armKSGlobalKernelPUD),
-                                                          0b11  /* reserved */
-                                                      );
+    armKSGlobalKernelPGD[GET_PGD_INDEX(kernelBase)] = pgde_pgde_pud_new(
+                                                          pptr_to_paddr(armKSGlobalKernelPUD));
 
     /* place all PDs except the last one in PUD */
     for (idx = GET_PUD_INDEX(kernelBase); idx < GET_PUD_INDEX(PPTR_TOP); idx++) {
@@ -341,8 +336,8 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t executable)
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
 
     pgd += GET_PGD_INDEX(vptr);
-    assert(pgde_ptr_get_present(pgd));
-    pud = paddr_to_pptr(pgde_ptr_get_pud_base_address(pgd));
+    assert(pgde_pgde_pud_ptr_get_present(pgd));
+    pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(pgd));
     pud += GET_PUD_INDEX(vptr);
     assert(pude_pude_pd_ptr_get_present(pud));
     pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pud));
@@ -401,8 +396,8 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
 
     pgd += GET_PGD_INDEX(vptr);
-    assert(pgde_ptr_get_present(pgd));
-    pud = paddr_to_pptr(pgde_ptr_get_pud_base_address(pgd));
+    assert(pgde_pgde_pud_ptr_get_present(pgd));
+    pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(pgd));
     pud += GET_PUD_INDEX(vptr);
     assert(pude_pude_pd_ptr_get_present(pud));
     pd = paddr_to_pptr(pude_pude_pd_ptr_get_pd_base_address(pud));
@@ -436,8 +431,8 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
     assert(cap_page_directory_cap_get_capPDIsMapped(pd_cap));
 
     pgd += GET_PGD_INDEX(vptr);
-    assert(pgde_ptr_get_present(pgd));
-    pud = paddr_to_pptr(pgde_ptr_get_pud_base_address(pgd));
+    assert(pgde_pgde_pud_ptr_get_present(pgd));
+    pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(pgd));
     *(pud + GET_PUD_INDEX(vptr)) = pude_pude_pd_new(
                                        pptr_to_paddr(pd)
                                    );
@@ -466,10 +461,8 @@ map_it_pud_cap(cap_t vspace_cap, cap_t pud_cap)
 
     assert(cap_page_upper_directory_cap_get_capPUDIsMapped(pud_cap));
 
-    *(pgd + GET_PGD_INDEX(vptr)) = pgde_new(
-                                       pptr_to_paddr(pud),
-                                       0b11                        /* reserved */
-                                   );
+    *(pgd + GET_PGD_INDEX(vptr)) = pgde_pgde_pud_new(
+                                       pptr_to_paddr(pud));
 }
 
 static BOOT_CODE cap_t
@@ -699,7 +692,7 @@ static lookupPUDSlot_ret_t lookupPUDSlot(vspace_root_t *vspace, vptr_t vptr)
 
     pgdSlot = lookupPGDSlot(vspace, vptr);
 
-    if (!pgde_ptr_get_present(pgdSlot.pgdSlot)) {
+    if (!pgde_pgde_pud_ptr_get_present(pgdSlot.pgdSlot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(PGD_INDEX_OFFSET);
 
         ret.pudSlot = NULL;
@@ -709,7 +702,7 @@ static lookupPUDSlot_ret_t lookupPUDSlot(vspace_root_t *vspace, vptr_t vptr)
         pude_t *pud;
         pude_t *pudSlot;
         word_t pudIndex = GET_PUD_INDEX(vptr);
-        pud = paddr_to_pptr(pgde_ptr_get_pud_base_address(pgdSlot.pgdSlot));
+        pud = paddr_to_pptr(pgde_pgde_pud_ptr_get_pud_base_address(pgdSlot.pgdSlot));
         pudSlot = pud + pudIndex;
 
         ret.status = EXCEPTION_NONE;
@@ -1084,8 +1077,8 @@ pgde_t *pageUpperDirectoryMapped(asid_t asid, vptr_t vaddr, pude_t* pud)
     }
 
     lu_ret = lookupPGDSlot(find_ret.vspace_root, vaddr);
-    if (pgde_ptr_get_present(lu_ret.pgdSlot) &&
-            (pgde_ptr_get_pud_base_address(lu_ret.pgdSlot) == pptr_to_paddr(pud))) {
+    if (pgde_pgde_pud_ptr_get_present(lu_ret.pgdSlot) &&
+            (pgde_pgde_pud_ptr_get_pud_base_address(lu_ret.pgdSlot) == pptr_to_paddr(pud))) {
         return lu_ret.pgdSlot;
     }
 
@@ -1117,22 +1110,6 @@ pude_t *pageDirectoryMapped(asid_t asid, vptr_t vaddr, pde_t* pd)
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-static inline pgde_t
-makePGDEWithHWASID(hw_asid_t hw_asid)
-{
-    /* We need to shift the hw_asid by PGDE_VMID_SHIFT bits in
-     * order to avoid assertion failures in pgde_new which
-     * expects the least 12 bits are 0s.
-     */
-    return pgde_new(((hw_asid & VMID_MASK) << PGDE_VMID_SHIFT), 0);
-}
-
-static inline hw_asid_t
-getHWASIDFromPGDE(pgde_t pgde)
-{
-    return (hw_asid_t)((pgde_get_pud_base_address(pgde) >> PGDE_VMID_SHIFT) & VMID_MASK);
-}
-
 static void
 invalidateASID(asid_t asid)
 {
@@ -1144,8 +1121,8 @@ invalidateASID(asid_t asid)
 
     pgd = asidPool->array[asid & MASK(asidLowBits)];
     assert(pgd);
-    /* 0 is reserved as the invalid VMID */
-    pgd[PGD_VMID_SLOT] = makePGDEWithHWASID(0);
+
+    pgd[PGD_VMID_SLOT] = pgde_pgde_invalid_new(0, false);
 }
 
 static pgde_t PURE
@@ -1177,7 +1154,7 @@ storeHWASID(asid_t asid, hw_asid_t hw_asid)
 
     /* Store HW VMID in the last entry
        Masquerade as an invalid PDGE */
-    pgd[PGD_VMID_SLOT] = makePGDEWithHWASID(hw_asid);
+    pgd[PGD_VMID_SLOT] = pgde_pgde_invalid_new(hw_asid, true);
 
     armKSHWASIDTable[hw_asid] = asid;
 }
@@ -1213,17 +1190,14 @@ findFreeHWASID(void)
     return hw_asid;
 }
 
-static inline hw_asid_t
-getHWASIDByASID(asid_t asid)
-{
-    return getHWASIDFromPGDE(loadHWASID(asid));
-}
-
 hw_asid_t
 getHWASID(asid_t asid)
 {
-    if (getHWASIDByASID(asid)) {
-        return getHWASIDByASID(asid);
+    pgde_t stored_hw_asid;
+
+    stored_hw_asid = loadHWASID(asid);
+    if (pgde_pgde_invalid_get_stored_asid_valid(stored_hw_asid)) {
+        return pgde_pgde_invalid_get_stored_hw_asid(stored_hw_asid);
     } else {
         hw_asid_t new_hw_asid;
 
@@ -1236,9 +1210,11 @@ getHWASID(asid_t asid)
 static void
 invalidateASIDEntry(asid_t asid)
 {
-    hw_asid_t hw_asid = getHWASIDByASID(asid);
-    if (hw_asid) {
-        armKSHWASIDTable[hw_asid] =
+    pgde_t stored_hw_asid;
+
+    stored_hw_asid = loadHWASID(asid);
+    if (pgde_pgde_invalid_get_stored_asid_valid(stored_hw_asid)) {
+        armKSHWASIDTable[pgde_pgde_invalid_get_stored_hw_asid(stored_hw_asid)] =
             asidInvalid;
     }
     invalidateASID(asid);
@@ -1250,11 +1226,13 @@ static inline void
 invalidateTLBByASID(asid_t asid)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    hw_asid_t hw_asid = getHWASIDByASID(asid);
-    if (!hw_asid) {
+    pgde_t stored_hw_asid;
+
+    stored_hw_asid = loadHWASID(asid);
+    if (!pgde_pgde_invalid_get_stored_asid_valid(stored_hw_asid)) {
         return;
     }
-    invalidateTranslationASID(hw_asid);
+    invalidateTranslationASID(pgde_pgde_invalid_get_stored_hw_asid(stored_hw_asid));
 #else
     invalidateTranslationASID(asid);
 #endif
@@ -1264,10 +1242,13 @@ static inline void
 invalidateTLBByASIDVA(asid_t asid, vptr_t vaddr)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    word_t hw_asid = getHWASIDByASID(asid);
-    if (!hw_asid) {
+    pgde_t stored_hw_asid;
+
+    stored_hw_asid = loadHWASID(asid);
+    if (!pgde_pgde_invalid_get_stored_asid_valid(stored_hw_asid)) {
         return;
     }
+    uint64_t hw_asid = pgde_pgde_invalid_get_stored_hw_asid(stored_hw_asid);
     invalidateTranslationSingle((hw_asid << 48) | vaddr >> seL4_PageBits);
 #else
     invalidateTranslationSingle((asid << 48) | vaddr >> seL4_PageBits);
@@ -1303,7 +1284,7 @@ void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t* pud)
 
     pgdSlot = pageUpperDirectoryMapped(asid, vaddr, pud);
     if (likely(pgdSlot != NULL)) {
-        *pgdSlot = pgde_invalid_new();
+        *pgdSlot = pgde_pgde_invalid_new(0, false);
 
         cleanByVA_PoU((vptr_t)pgdSlot, pptr_to_paddr(pgdSlot));
         invalidateTLBByASID(asid);
@@ -1896,15 +1877,13 @@ decodeARMPageUpperDirectoryInvocation(word_t invLabel, unsigned int length,
 
     pgdSlot = lookupPGDSlot(pgd, vaddr);
 
-    if (unlikely(pgde_ptr_get_present(pgdSlot.pgdSlot))) {
+    if (unlikely(pgde_pgde_pud_ptr_get_present(pgdSlot.pgdSlot))) {
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pgde = pgde_new(
-               pptr_to_paddr(PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap))),
-               0b11  /* reserved */
-           );
+    pgde = pgde_pgde_pud_new(
+               pptr_to_paddr(PUDE_PTR(cap_page_upper_directory_cap_get_capPUDBasePtr(cap))));
 
     cap_page_upper_directory_cap_ptr_set_capPUDIsMapped(&cap, 1);
     cap_page_upper_directory_cap_ptr_set_capPUDMappedASID(&cap, asid);

@@ -221,19 +221,9 @@ cap_get_archCapPtr(cap_t cap)
 }
 
 static inline bool_t
-pgde_ptr_get_present(pgde_t *pgd)
+pgde_pgde_pud_ptr_get_present(pgde_t *pgd)
 {
-    return (pgde_ptr_get_reserved(pgd) == 0b11);
-}
-
-static inline pgde_t
-pgde_invalid_new(void)
-{
-    return (pgde_t) {
-        {
-            0
-        }
-    };
+    return (pgde_ptr_get_pgde_type(pgd) == pgde_pgde_pud);
 }
 
 static inline bool_t
