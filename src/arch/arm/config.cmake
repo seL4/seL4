@@ -77,6 +77,8 @@ set(KernelArchArmV7a OFF)
 set(KernelArchArmV7ve OFF)
 set(KernelArchArmV8a OFF)
 set(KernelArm1136JF_S OFF)
+set(KernelArmPASizeBits40 OFF)
+set(KernelArmPASizeBits44 OFF)
 include(src/plat/imx6/config.cmake)
 include(src/plat/imx7/config.cmake)
 include(src/plat/imx31/config.cmake)
@@ -295,13 +297,13 @@ config_option(KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWI
 
 config_option(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40
     "Specify the physical address size to 40 bits"
-    DEFAULT OFF
+    DEFAULT ${KernelArmPASizeBits40}
     DEPENDS "KernelArmHypervisorSupport AND KernelArchArmV8a"
 )
 
 config_option(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44
     "Specify the physical address size to 44 bits"
-    DEFAULT OFF
+    DEFAULT ${KernelArmPASizeBits44}
     DEPENDS "KernelArmHypervisorSupport AND KernelArchArmV8a"
 )
 
