@@ -39,6 +39,9 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
 
     armv_contextSwitch(vroot, asid);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(thread->tcbArch.tcbVCPU);
+    }
     writeTPIDRURO(thread->tcbIPCBuffer);
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
