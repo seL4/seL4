@@ -712,7 +712,6 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPTSlot_ret_t  lu_ret;
-    cap_t               threadRoot;
     lookupPDSlot_ret_t  pd_ret;
     pde_t               *pde;
 
@@ -757,13 +756,8 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         break;
     }
 
-    /* check if page belongs to current address space */
-    threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
-    if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot)
-                                            && (vspace_root_t *)pptr_of_cap(threadRoot) == find_ret.vspace_root)) {
-        invalidateTranslationSingleASID(vptr, asid,
-                                        SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
-    }
+    invalidateTranslationSingleASID(vptr, asid,
+                                    SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
 }
 
 void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
