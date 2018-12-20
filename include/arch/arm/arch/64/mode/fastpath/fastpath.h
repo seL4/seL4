@@ -20,6 +20,7 @@
 #include <api/syscall.h>
 #include <armv/context_switch.h>
 #include <mode/model/statedata.h>
+#include <arch/object/vcpu.h>
 #include <machine/fpu.h>
 #include <smp/lock.h>
 
