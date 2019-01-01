@@ -3041,12 +3041,8 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
                 0  /* executable */
             );
 
-
-        cleanCacheRange_PoU((pptr_t) &armKSGlobalLogPT[idx],
-                            (pptr_t) &armKSGlobalLogPT[idx + 1],
-                            addrFromPPtr((void *)&armKSGlobalLogPT[idx]));
-
-        invalidateTranslationSingle(pptr_to_paddr((void *) physical_address));
+        cleanByVA_PoU((vptr_t)&armKSGlobalLogPT[idx], pptr_to_paddr(&armKSGlobalLogPT[idx]));
+        invalidateTranslationSingle(KS_LOG_PPTR + (idx * BIT(seL4_PageBits)));
     }
 
     return EXCEPTION_NONE;
