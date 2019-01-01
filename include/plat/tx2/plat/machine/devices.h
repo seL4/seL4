@@ -22,6 +22,22 @@
 #define KDEV_PPTR                   0xffffffffffff0000lu
 #endif
 
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+/* Since the AArch64 memory layout leaves a massive (approx) 1GiB hole between
+ * the end of PPTR_TOP and the start of KDEV_PPTR, we can just backtrack from
+ * KDEV_PPTR to the first 2MiB aligned virtual address and use that as the
+ * kernel log vaddr. Basically we backtrack 4MiB from KDEV_PPTR and then force
+ * align that address to be 2MiB aligned.
+ *
+ * This is defined as a platform-specific address so that it can reference
+ * KDEV_PPTR (defined above) without having to pollute the arch-specific header
+ * (arch/64/mode/hardware.h).
+ */
+#define KS_LOG_PPTR ((KDEV_PPTR & ~(0x200000 - 1)) - 0x200000)
+compile_assert(log_buffer_vaddr_2MiB_aligned, (KS_LOG_PPTR & (0x200000 - 1)) == 0)
+#endif
+
+
 #define UARTA_PPTR                  (KDEV_PPTR)
 #define GIC_DISTRIBUTOR_PPTR        (KDEV_PPTR + 0x3000)
 #define GIC_CONTROLLER_PPTR         (KDEV_PPTR + 0x4000)

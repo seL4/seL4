@@ -38,4 +38,9 @@ extern bool_t armHSVCPUActive;
 extern asid_t armKSHWASIDTable[BIT(hwASIDBits)] VISIBLE;
 extern hw_asid_t armKSNextASID VISIBLE;
 #endif
+
+#ifdef CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER
+pde_t *armKSGlobalLogPDE;
+#endif
+
 #endif /* __ARCH_MODEL_STATEDATA_64_H */
