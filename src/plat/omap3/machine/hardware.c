@@ -42,7 +42,7 @@ initTimer(void)
 
     while (!timer->tistat);
 
-    maskInterrupt(/*disable*/ true, GPT9_IRQ);
+    maskInterrupt(/*disable*/ true, KERNEL_TIMER_IRQ);
 
     /* Set the reload value */
     timer->tldr = 0xFFFFFFFFUL - TIMER_RELOAD;

@@ -47,7 +47,7 @@ extern timer_t *timer;
 static inline void resetTimer(void)
 {
     timer->tisr = TISR_OVF_FLAG;
-    ackInterrupt(GPT9_IRQ);
+    ackInterrupt(KERNEL_TIMER_IRQ);
 }
 
 #endif /* !__PLAT_MACHINE_TIMER_H */
