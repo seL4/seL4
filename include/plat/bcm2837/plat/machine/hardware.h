@@ -59,6 +59,7 @@ const p_region_t BOOT_RODATA dev_p_regs[] = {
     { .start = USB2_PADDR,         .end = USB2_PADDR         + (1u << PAGE_BITS) },
     { .start = UART_PADDR,         .end = UART_PADDR         + (1u << PAGE_BITS) },
     { .start = TIMER_PADDR,        .end = TIMER_PADDR        + (1u << PAGE_BITS) },
+    { .start = SYSTEM_TIMER_PADDR, .end = SYSTEM_TIMER_PADDR + (1u << PAGE_BITS) },
 };
 
 void initL2Cache(void);
