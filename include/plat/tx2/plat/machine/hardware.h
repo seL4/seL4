@@ -20,7 +20,7 @@
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
 
-#define physBase            0x80000000
+#define physBase            0x81000000
 
 /*
  * Physical addresses are supported up to 34 bits (0x3FFFFFFFF).
