@@ -94,7 +94,7 @@ initTimer(void)
         return;
     }
 
-    maskInterrupt(/*disable*/ true, DMTIMER0_IRQ);
+    maskInterrupt(/*disable*/ true, KERNEL_TIMER_IRQ);
 
     /* Set the reload value */
     timer->tldr = 0xFFFFFFFFUL - TIMER_RELOAD;
