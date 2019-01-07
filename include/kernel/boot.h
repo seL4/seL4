@@ -16,7 +16,7 @@
 #ifndef CONFIG_ARCH_ARM
 #define MAX_NUM_FREEMEM_REG 16
 #else
-#define MAX_NUM_FREEMEM_REG 2
+#define MAX_NUM_FREEMEM_REG (ARRAY_SIZE(avail_p_regs) + 1)
 #endif
 
 /*
