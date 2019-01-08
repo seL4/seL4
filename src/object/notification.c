@@ -49,6 +49,8 @@ static inline void maybeDonateSchedContext(tcb_t *tcb, notification_t *ntfnPtr)
         sched_context_t *sc = SC_PTR(notification_ptr_get_ntfnSchedContext(ntfnPtr));
         if (sc != NULL && sc->scTcb == NULL) {
             schedContext_donate(sc, tcb);
+            refill_unblock_check(sc);
+            schedContext_resume(sc);
         }
     }
 }
@@ -64,6 +66,19 @@ static inline void maybeReturnSchedContext(notification_t *ntfnPtr, tcb_t *tcb)
 }
 #endif
 
+#ifdef CONFIG_KERNEL_MCS
+#define MCS_DO_IF_SC(tcb, ntfnPtr, _block) \
+    maybeDonateSchedContext(tcb, ntfnPtr); \
+    if (isSchedulable(tcb)) { \
+        _block \
+    }
+#else
+#define MCS_DO_IF_SC(tcb, ntfnPtr, _block) \
+    { \
+        _block \
+    }
+#endif
+
 void sendSignal(notification_t *ntfnPtr, word_t badge)
 {
     switch (notification_ptr_get_state(ntfnPtr)) {
@@ -74,12 +89,11 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
             if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_BlockedOnReceive) {
                 /* Send and start thread running */
                 cancelIPC(tcb);
-#ifdef CONFIG_KERNEL_MCS
-                maybeDonateSchedContext(tcb, ntfnPtr);
-#endif
                 setThreadState(tcb, ThreadState_Running);
                 setRegister(tcb, badgeRegister, badge);
-                possibleSwitchTo(tcb);
+                MCS_DO_IF_SC(tcb, ntfnPtr, {
+                    possibleSwitchTo(tcb);
+                })
 #ifdef CONFIG_VTX
             } else if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM) {
 #ifdef ENABLE_SMP_SUPPORT
@@ -89,13 +103,12 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
                 } else
 #endif /* ENABLE_SMP_SUPPORT */
                 {
-#ifdef CONFIG_KERNEL_MCS
-                    maybeDonateSchedContext(tcb, ntfnPtr);
-#endif
                     setThreadState(tcb, ThreadState_Running);
                     setRegister(tcb, badgeRegister, badge);
                     Arch_leaveVMAsyncTransfer(tcb);
-                    possibleSwitchTo(tcb);
+                    MCS_DO_IF_SC(tcb, ntfnPtr, {
+                        possibleSwitchTo(tcb);
+                    })
                 }
 #endif /* CONFIG_VTX */
             } else {
@@ -132,12 +145,11 @@ void sendSignal(notification_t *ntfnPtr, word_t badge)
             notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
         }
 
-#ifdef CONFIG_KERNEL_MCS
-        maybeDonateSchedContext(dest, ntfnPtr);
-#endif
         setThreadState(dest, ThreadState_Running);
         setRegister(dest, badgeRegister, badge);
-        possibleSwitchTo(dest);
+        MCS_DO_IF_SC(dest, ntfnPtr, {
+            possibleSwitchTo(dest);
+        })
         break;
     }
 
