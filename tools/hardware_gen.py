@@ -41,6 +41,84 @@ def make_number(cells, array):
         ret |= array.pop(0)
     return ret
 
+def parse_arm_gic_irq(self, child, by_phandle, data):
+    # 3 cells:
+    # first cell is 1 if PPI, 0 if SPI
+    # second cell: PPI or SPI number
+    # third cell: interrupt trigger flags, ignored by us
+    is_spi = data.pop(0) == 0
+    number = data.pop(0)
+    flags = data.pop(0)
+
+    number += 16 # SGI takes 0-15
+    if is_spi:
+        number += 16 # PPI is 16-31
+
+    return number
+
+def parse_raw_irq(self, child, by_phandle, data):
+    # first cells is interrupt number, may have flags or other data
+    # we don't need afterwards.
+    num = data.pop(0)
+    cells = self.get_interrupt_cells(by_phandle)
+    while cells > 1:
+        data.pop(0)
+        cells -= 1
+    return num
+
+def parse_bcm2836_armctrl_irq(self, child, by_phandle, data):
+    # two cells, first is bank, second is number within bank
+    bank = data.pop(0)
+    num = data.pop(0)
+
+    bank += 1
+    return (32 * bank) + num
+
+def parse_passthrough_irq(self, child, by_phandle, data):
+    # IRQ just passes through to this node's interrupt-parent.
+    parent = self.get_interrupt_parent(by_phandle)
+
+    return parent.parse_interrupt(child, by_phandle, data)
+
+interrupt_controllers = {
+    'arm,cortex-a15-gic': parse_arm_gic_irq,
+    'arm,cortex-a7-gic': parse_arm_gic_irq,
+    'arm,cortex-a9-gic': parse_arm_gic_irq,
+    'arm,gic-400': parse_arm_gic_irq,
+    'brcm,bcm2836-l1-intc': parse_raw_irq,
+    'brcm,bcm2836-armctrl-ic': parse_bcm2836_armctrl_irq, # maybe not actually needed?
+    'fsl,avic': parse_raw_irq,
+    'fsl,imx6q-gpc': parse_passthrough_irq,
+    'fsl,imx7d-gpc': parse_passthrough_irq,
+    'nvidia,tegra124-ictlr': parse_passthrough_irq,
+    'qcom,msm-qgic2': parse_arm_gic_irq,
+    'ti,am33xx-intc': parse_raw_irq,
+    'ti,omap3-intc': parse_raw_irq,
+}
+
+class Interrupt:
+    def __init__(self, num, name, macro=None, prio=0):
+        self.num = num
+        self.name = name
+        self.macro = macro
+        self.priority = prio
+        self.desc = ""
+
+    def get_macro_name(self):
+        return self.macro[1:] if self.macro[0] == '!' else self.macro
+
+    def get_macro_conditional(self):
+        return 'ifdef' if self.macro[0] != '!' else 'ifndef'
+
+    def __hash__(self):
+        return hash(self.num)
+
+    def __str__(self):
+        return 'Interrupt(num=%d,name=%s,macro=%s)'%(self.num, self.name, self.macro)
+
+    def __repr__(self):
+        return str(self)
+
 class Region:
     def __init__(self, start, size, name, index=0):
         self.start = start
@@ -126,6 +204,125 @@ class Device:
         if '#size-cells' in self.props:
             return self.props['#size-cells'].words[0]
         return 1
+
+    def get_interrupt_cells(self, by_phandle):
+        if '#interrupt-cells' in self.props:
+            return self.props['#interrupt-cells'].words[0]
+        parent = self.get_interrupt_parent(by_phandle)
+        return parent.get_interrupt_cells(by_phandle)
+
+    def get_interrupt_parent(self, by_phandle):
+        if 'interrupt-parent' not in self.props:
+            return self.parent.get_interrupt_parent(by_phandle)
+        phandle = self.props['interrupt-parent'].words[0]
+        return by_phandle[phandle]
+
+    def get_interrupts(self, config, by_phandle):
+        irqs = []
+        if 'compatible' not in self.props:
+            return set()
+        if 'interrupts' in self.props:
+            interrupt_parent = self.get_interrupt_parent(by_phandle)
+            data = list(self.props['interrupts'].words)
+            while len(data) > 0:
+                irqs.append(interrupt_parent.parse_interrupt(self, by_phandle, data))
+        elif 'interrupts-extended' in self.props:
+            data = list(self.props['interrupts-extended'].words)
+            while len(data) > 0:
+                phandle = data.pop(0)
+                interrupt_parent = by_phandle[phandle]
+                irqs.append(interrupt_parent.parse_interrupt(self, by_phandle, data))
+        if len(irqs) > 0:
+            affinities = []
+            if 'interrupt-affinity' in self.props:
+                affinities = list(self.props['interrupt-affinity'].words)
+            return set(config.get_irqs(self, irqs, affinities, by_phandle))
+        return set()
+
+    def _recursive_get_addr_cells(self):
+        if '#address-cells' in self:
+            return self['#address-cells'].words[0]
+        return self.parent._recursive_get_addr_cells()
+
+    def _parse_interrupt_nexus(self, child, by_phandle, data):
+        nexus_data = list(self.props['interrupt-map'].words)
+
+        # interrupt-map is a list of the following:
+        # <<child unit address> <child interrupt specifier> <interrupt parent>
+        #  <parent unit address> <parent interrupt specifier>>
+
+        # "child unit address" seems to be special: the docs say one thing, but
+        # Linux implements something else. We go with the Linux implementation here:
+        # child unit address size is specified by '#address-cells' in the nexus node,
+        # or the first '#address-cells' specified in a parent node. (note: not interrupt parent)
+        chaddr_cells = self._recursive_get_addr_cells()
+        chint_cells = self.props['#interrupt-cells'].words[0]
+
+        # we only care about the first address, like Linux.
+        addr = make_number(chaddr_cells, list(child['reg'].words)) if 'reg' in child else 0
+        addr_mask = (1 << (32 * chaddr_cells)) - 1
+        intspec = make_number(chint_cells, data)
+        int_mask = (1 << (32 * chint_cells)) - 1
+        if 'interrupt-map-mask' in self.props:
+            masks = list(self.props['interrupt-map-mask'].words)
+            addr_mask = make_number(chaddr_cells, masks)
+            int_mask = make_number(chint_cells, masks)
+
+        addr &= addr_mask
+        intspec &= int_mask
+
+        # next: figure out which interrupt it is that we're interested in.
+        ok = False
+        while len(nexus_data) > 0:
+            my_addr = make_number(chaddr_cells, nexus_data) & addr_mask
+            my_intspec = make_number(chint_cells, nexus_data) & int_mask
+            node = by_phandle[nexus_data.pop(0)]
+            # found it!
+            if my_addr == addr and my_intspec == intspec:
+                ok = True
+                break
+
+            # not yet: keep going. get address-cells and interrupt-cells so we know how much to skip
+            cells = node['#address-cells'].words[0] if '#address-cells' in node else 0
+            cells += node['#interrupt-cells'].words[0]
+            if cells > len(nexus_data):
+                logging.warning("malformed device tree!")
+                return -1
+            # slice off specifier for this entry
+            nexus_data = nexus_data[cells:]
+
+        if not ok:
+            logging.warning("could not find match in interrupt nexus :(")
+            return -1
+
+        # okay. now we figure out what the number is
+        return node.parse_interrupt(child, by_phandle, nexus_data)
+
+    def parse_interrupt(self, child, by_phandle, data):
+        if 'interrupt-map' in self.props:
+            # this is an "interrupt nexus". Actual interrupt numbers are determined elsewhere,
+            # we just need to decode the interrupt info and pass it off.
+            return self._parse_interrupt_nexus(child, by_phandle, data)
+
+        if 'compatible' not in self.props:
+            if '#interrupt-cells' in self.props:
+                for i in range(self.props['#interrupt-cells'].words[0]):
+                    data.pop(0)
+            else:
+                data.pop(0)
+            return -1
+
+        for compat in self.props['compatible'].strings:
+            if compat in interrupt_controllers:
+                return interrupt_controllers[compat](self, child, by_phandle, data)
+
+        logging.info('Unknown interrupt controller: "%s"'%'", "'.join(self.props['compatible'].strings))
+        if '#interrupt-cells' in self.props:
+            for i in range(self.props['#interrupt-cells'].words[0]):
+                data.pop(0)
+        else:
+            data.pop(0)
+        return -1
 
     def translate_child_address(self, addr):
         if self.parent is None:
@@ -288,6 +485,57 @@ class Config:
             return (user, kernel)
         return (set(regions), set())
 
+    def get_irqs(self, device, irqs, affinities, by_phandle):
+        ret = set()
+        compat = device['compatible']
+        for compatible in compat.strings:
+            if compatible not in self.devices:
+                continue
+
+            for rule in self.devices[compatible]:
+                if 'interrupts' not in rule or not self._is_chosen(device, rule, by_phandle):
+                    continue
+                for irq in rule['interrupts']:
+                    irq_rule = rule['interrupts'][irq]
+                    if type(irq_rule) is dict:
+                        idx = irq_rule['index']
+                        macro = irq_rule.get('macro', None)
+                        prio = irq_rule.get('priority', 0)
+                    else:
+                        idx = irq_rule
+                        macro = None
+                        prio = 0
+                    if idx == 'boot-cpu':
+                        if self.chosen is not None and 'seL4,boot-cpu' in self.chosen:
+                            bootcpu = self.chosen['seL4,boot-cpu'].words[0]
+                            if bootcpu in affinities:
+                                num = affinities.index(bootcpu)
+                            else:
+                                # skip this rule - no matching IRQ.
+                                continue
+                        else:
+                            num = 0
+                    elif type(idx) is dict:
+                        res = Interrupt(irqs[idx['defined']], irq, idx['macro'], prio)
+                        res.desc = "%s '%s' IRQ %d"%(device.name, compatible, idx['defined'])
+                        ret.add(res)
+
+                        res = Interrupt(irqs[idx['undefined']], irq, '!' + idx['macro'], prio)
+                        res.desc = "%s '%s' IRQ %d"%(device.name, compatible, idx['undefined'])
+                        ret.add(res)
+                        continue
+                    elif type(irq_rule) is int:
+                        num = irq_rule
+                    else:
+                        num = idx
+                    if num < len(irqs):
+                        irq = Interrupt(irqs[num], irq, macro if macro != 'all' else None, prio)
+                        irq.desc = "%s '%s' IRQ %d"%(device.name, compatible, num)
+                        ret.add(irq)
+            if len(ret) > 0:
+                break
+        return ret
+
 def is_compatible(node, compatibles):
     """ returns True if node matches a compatible in the given list """
     try:
@@ -336,6 +584,7 @@ def find_devices(dtb, cfg):
 
         prop = child[idx]
         by_phandle[prop.words[0]] = nodes[child]
+
     # the root node is not actually a device, so remove it.
     del devices[root]
     return {d.name: d for d in devices.values()}, by_phandle
@@ -427,10 +676,25 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     {%- endfor %}
 };
 
+/* INTERRUPTS */
+{%- for irq in interrupts %}
+    {%- if irq.macro %}
+#{{ irq.get_macro_conditional() }} {{ irq.get_macro_name() }}
+    {%- endif %}
+    {%- if irq.num == -1 %}
+/*#define {{ irq.name }} {{ irq.num }} {{ irq.desc }} */
+    {%- else %}
+#define {{ irq.name }} {{ irq.num }} /* {{ irq.desc }} */
+    {%- endif %}
+    {%- if irq.macro %}
+#endif
+    {%- endif %}
+{%- endfor %}
+
 #endif /* __PLAT_DEVICES_GEN_H */
 """
 
-def output_regions(args, devices, memory, kernel, fp):
+def output_regions(args, devices, memory, kernel, irqs, fp):
     """ generate the device list for the C header file """
     memory = sorted(memory, key=lambda a: a.start)
     kernel = sorted(kernel, key=lambda a: a.start)
@@ -445,7 +709,7 @@ def output_regions(args, devices, memory, kernel, fp):
     memory[0].start = paddr
     template = Environment(loader=BaseLoader, trim_blocks=False, lstrip_blocks=False).from_string(HEADER_TEMPLATE)
     data = template.render({'args': args, 'devices': sorted(devices, key=lambda a: a.start), 'sorted': sorted,
-        'memory': memory, 'physBase': paddr, 'kernel': kernel})
+        'memory': memory, 'physBase': paddr, 'kernel': kernel, 'interrupts': irqs})
     fp.write(data)
 
 def main(args):
@@ -458,7 +722,9 @@ def main(args):
     memory, user, kernel = set(), set(), set()
     fdt = pyfdt.pyfdt.FdtBlobParse(args.dtb).to_fdt()
     devices, by_phandle = find_devices(fdt, cfg)
+    kernel_irqs = set()
     for d in devices.values():
+        kernel_irqs.update(d.get_interrupts(cfg, by_phandle))
         if d.is_memory():
             m, _ = d.regions(cfg, by_phandle) # second set is always empty for memory
             res = set()
@@ -470,9 +736,26 @@ def main(args):
             user.update(u)
             kernel.update(k)
 
+    irq_dict = {}
+    for el in kernel_irqs:
+        if el.name in irq_dict:
+            irq_dict[el.name].append(el)
+        else:
+            irq_dict[el.name] = [el]
+
+    kernel_irqs = []
+    for el in irq_dict:
+
+        irq_dict[el].sort(key=lambda a: a.priority, reverse=True)
+        max_prio = irq_dict[el][0].priority
+        for irq in irq_dict[el]:
+            if irq.priority != max_prio:
+                break
+            kernel_irqs.append(irq)
+
     user = fixup_device_regions(user, 1 << args.page_bits, merge=True)
     kernel = fixup_device_regions(kernel, 1 << args.page_bits)
-    output_regions(args, user, memory, kernel, args.output)
+    output_regions(args, user, memory, kernel, kernel_irqs, args.output)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

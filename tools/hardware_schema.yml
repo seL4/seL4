@@ -44,6 +44,13 @@ definitions:
         items:
           $ref: '#/definitions/region'
         uniqueItems: true
+      interrupts:
+        description: Interrupts this device has that the kernel might use.
+        type: object
+        additionalProperties: false
+        patternProperties:
+          '^[A-Za-z_][A-Za-z0-9_]*$':
+            $ref: '#/definitions/interrupt'
       chosen:
         description: >
           Apply this rule only to the device referenced by the correspondingly named
@@ -101,7 +108,67 @@ definitions:
     dependencies:
       kernel: [executeNever, index]
       executeNever: [kernel]
+  interrupt:
+    oneOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          macro:
+            description: only set interrupt if this macro is defined
+            $ref: '#/definitions/macro'
+          index:
+            description: index of interrupt in device's interrupts array
+            $ref: '#/definitions/interrupt_index'
+          priority:
+            description: if multiple conflicting IRQs are present, the IRQ with the highest priority will be selected.
+            type: integer
+        required: [index]
+      - type: integer
+        description: index of interrupt in device's interrupts array
+        minimum: 0
+      - $ref: '#/definitions/boot-cpu'
+  interrupt_index:
+    oneOf:
+      - type: object
+        additionalProperties: false
+        properties:
+          macro:
+            description: macro to use when picking index
+            $ref: '#/definitions/macro'
+          defined:
+            description: if macro is defined, use this index in the interrupts array
+            type: integer
+            minimum: 0
+          undefined:
+            description: if macro is undefined, use this index in the interrupts array.
+            type: integer
+            minimum: 0
+        required: [macro, defined, undefined]
+      - type: integer
+        description: index of interrupt in device's interrupts array
+        minimum: 0
+      - $ref: '#/definitions/boot-cpu'
   macro:
     type: string
     pattern: '^[A-Za-z_][A-Za-z0-9_]*$'
     minLength: 1
+  boot-cpu:
+    type: string # TODO: why does 'const' not work here?
+    description: >
+      Use interrupt associated with the seL4,boot-cpu set in the chosen node.
+      For instance, a chosen node like
+
+      chosen {
+        seL4,boot-cpu = <&cpu2>;
+      }
+
+      and a device like
+
+      device {
+        interrupts = <0x1 0x2 0x3 0x4>;
+        interrupt-affinity = <&cpu0 &cpu1 &cpu2 &cpu3>;
+      }
+
+      would use interrupt 0x3 if the boot-cpu option was used as the index.
+    pattern: '^boot-cpu$'
+

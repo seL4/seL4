@@ -39,6 +39,8 @@ devices:
         user: false # never expose to userspace, even if macro is false.
         # other regions (i.e. GICH)
       - user: true
+    interrupts:
+      INTERRUPT_VGIC_MAINTENANCE: 0
   # Broadcom second level IRQ controller (interrupt-controller/brcm,bcm2835-armctrl-ic.txt),
   # TI AM33XX/OMAP3 intc (interrupt-controller/ti,omap-intc-irq.txt)
   - compatible:
@@ -86,12 +88,27 @@ devices:
       - executeNever: true
         index: 0
         kernel: EXYNOS_MCT_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
   - compatible:
     - samsung,exynos4210-mct
     regions:
       - executeNever: true
         index: 0
         kernel: EXYNOS_MCT_PPTR
+  # ARM PMU (arm/pmu.txt)
+  - compatible:
+    - arm,armv8-pmuv3
+    - arm,cortex-a15-pmu
+    - arm,cortex-a7-pmu
+    - arm,cortex-a9-pmu
+    interrupts:
+      KERNEL_PMU_IRQ: boot-cpu
+  # i.MX evtmon (no Linux binding, this one is seL4-specific.)
+  - compatible:
+    - fsl,imx31-evtmon
+    interrupts:
+      KERNEL_PMU_IRQ: 0
   # Tegra SMMU (memory-controllers/nvidia,tegra30-mc.txt)
   - compatible:
     - nvidia,tegra124-mc
@@ -100,6 +117,32 @@ devices:
         index: 0
         kernel: SMMU_PPTR
         macro: CONFIG_ARM_SMMU
+    interrupts:
+      INTERRUPT_SMMU: 0
+  # ARM architected timer (timer/arm,arch_timer.txt)
+  - compatible:
+    - arm,armv7-timer
+    - arm,armv8-timer
+    interrupts:
+      KERNEL_TIMER_IRQ:
+        index:
+          macro: CONFIG_ARM_HYPERVISOR_SUPPORT
+          defined: 3
+          undefined: 2
+  # Allwinner A10 Timer (timer/allwinner,sun4i-timer.txt)
+  - compatible:
+    - allwinner,sun4i-a10-timer
+    regions:
+      - executeNever: true
+        index: 0
+        kernel: TIMER0_PPTR
+    interrupts:
+      # A20 also has the ARM architected timer,
+      # but we want to use the allwinner timer
+      # for now at least.
+      KERNEL_TIMER_IRQ:
+          index: 0
+          priority: 1
   # ARM per-core timer-watchdog (timer/arm,twd.txt)
   - compatible:
     - arm,cortex-a9-twd-timer
@@ -107,6 +150,8 @@ devices:
       - executeNever: true
         index: 0
         kernel: ARM_MP_PRIV_TIMER_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
   # i.MX EPIT (no Linux binding, this is seL4-specific.)
   - compatible:
     - fsl,imx31-epit
@@ -114,6 +159,8 @@ devices:
       - executeNever: true
         index: 0
         kernel: EPIT_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
   # QCOM Krait timer (timer/qcom,msm-timer.txt)
   - compatible:
     - qcom,kpss-timer
@@ -121,6 +168,8 @@ devices:
       - executeNever: true
         index: 0
         kernel: TIMER_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
   # TI AM335x/OMAP3430 timer
   - compatible:
     - ti,am335x-timer
@@ -129,6 +178,8 @@ devices:
       - executeNever: true
         index: 0
         kernel: TIMER_PPTR
+    interrupts:
+      KERNEL_TIMER_IRQ: 0
     chosen: seL4,timer
   # TI prcm (arm/omap/prcm.txt)
   - compatible:
