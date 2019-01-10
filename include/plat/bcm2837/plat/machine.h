@@ -73,8 +73,6 @@ enum IRQConstants {
     maxIRQ = (32 + 32 + 64 - 1)
 } platform_interrupt_t;
 
-#define KERNEL_TIMER_IRQ INTERRUPT_CORE_CNTVIRQ
-
 #define FIQCTRL_FIQ_ENABLE                   BIT(7)
 #define FIQCTRL_FIQ_SRC_GPU_IRQ(x)           (x)
 #define FIQCTRL_FIQ_SRC_ARM_TIMER            64

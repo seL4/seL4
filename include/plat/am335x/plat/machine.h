@@ -12,13 +12,8 @@
 #define __PLAT_MACHINE_H
 
 enum IRQConstants {
-    DMTIMER0_IRQ = 66,
-    SYS_INT_3PGSWRXINT0 = 41,
-    SYS_INT_3PGSWTXINT0 = 42,
     maxIRQ = 127
 } platform_interrupt_t;
-
-#define KERNEL_TIMER_IRQ    DMTIMER0_IRQ
 
 enum irqNumbers {
     irqInvalid = 255

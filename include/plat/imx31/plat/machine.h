@@ -11,19 +11,13 @@
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
 
-#define KERNEL_TIMER_IRQ INTERRUPT_EPIT1
-
 enum IRQConstants {
-    INTERRUPT_PMU = 23,
-    INTERRUPT_EPIT1 = 28,
     maxIRQ = 63
 } platform_interrupt_t;
 
 enum irqNumbers {
     irqInvalid = 255
 };
-
-#define KERNEL_PMU_IRQ   INTERRUPT_PMU
 
 typedef word_t interrupt_t;
 typedef word_t irq_t;
