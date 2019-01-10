@@ -25,9 +25,8 @@
 #include <arch/linker.h>
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 #include <machine/io.h>
-
-#define physBase          0x00000000
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {
@@ -49,27 +48,6 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         true  /* armExecuteNever */
 #endif /* CONFIG_PRINTING */
     }
-};
-
-
-/* Available physical memory regions on platform (RAM) */
-/* NOTE: Regions are not allowed to be adjacent! */
-const p_region_t BOOT_RODATA avail_p_regs[] = {
-    /* 2 GiB */
-    { /* .start = */ 0x00000000, /* .end = */ 0x80000000 }
-};
-
-const p_region_t BOOT_RODATA dev_p_regs[] = {
-    { /* .start = */ UART0_PADDR             , /* .end = */ UART0_PADDR              + ( 1 << PAGE_BITS)},
-    { /* .start = */ UART1_PADDR             , /* .end = */ UART1_PADDR              + ( 1 << PAGE_BITS)},
-    { /* .start = */ TTC0_PADDR              , /* .end = */ TTC0_PADDR               + ( 1 << PAGE_BITS)},
-    { /* .start = */ TTC1_PADDR              , /* .end = */ TTC1_PADDR               + ( 1 << PAGE_BITS)},
-    { /* .start = */ TTC2_PADDR              , /* .end = */ TTC2_PADDR               + ( 1 << PAGE_BITS)},
-    { /* .start = */ TTC3_PADDR              , /* .end = */ TTC3_PADDR               + ( 1 << PAGE_BITS)},
-    { /* .start = */ ACPU_GIC_PADDR          , /* .end = */ ACPU_GIC_PADDR           + ( 0x71000)},
-    { /* .start = */ I2C0_PADDR              , /* .end = */ I2C0_PADDR               + ( 1 << PAGE_BITS)},
-    { /* .start = */ I2C1_PADDR              , /* .end = */ I2C1_PADDR               + ( 1 << PAGE_BITS)},
-    { /* .start = */ GPIO_PADDR              , /* .end = */ GPIO_PADDR               + ( 1 << PAGE_BITS)},
 };
 
 /* Handle a platform-reserved IRQ. */

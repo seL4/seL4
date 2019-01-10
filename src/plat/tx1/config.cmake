@@ -19,6 +19,8 @@ if(KernelPlatformTx1)
     config_set(KernelArmMach MACH "nvidia")
     set(KernelHaveFPU ON)
     set(KernelArmPASizeBits44 ON)
+    list(APPEND KernelDTSList "tools/dts/tx1.dts")
+    list(APPEND KernelDTSList "src/plat/tx1/overlay-tx1.dts")
 endif()
 
 add_sources(

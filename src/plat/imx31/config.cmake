@@ -17,6 +17,8 @@ if(KernelPlatformKZM)
     set(KernelArchArmV6 ON)
     config_set(KernelPlatform PLAT "imx31")
     set(KernelArmMach "imx" CACHE INTERNAL "")
+    list(APPEND KernelDTSList "tools/dts/kzm.dts")
+    list(APPEND KernelDTSList "src/plat/imx31/overlay-kzm.dts")
 endif()
 
 add_sources(

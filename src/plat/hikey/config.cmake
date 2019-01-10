@@ -66,6 +66,8 @@ if(KernelPlatformHikey)
     if(KernelSel4ArchAarch64)
         set(KernelHaveFPU ON)
     endif()
+    list(APPEND KernelDTSList "tools/dts/hikey.dts")
+    list(APPEND KernelDTSList "src/plat/hikey/overlay-hikey.dts")
 endif()
 
 add_sources(

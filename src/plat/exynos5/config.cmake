@@ -20,9 +20,12 @@ if(KernelPlatformExynos5250 OR KernelPlatformExynos5410 OR KernelPlatformExynos5
     config_set(KernelPlatform PLAT "exynos5")
     config_set(KernelArmMach MACH "exynos")
     config_set(KernelPlatExynos5 PLAT_EXYNOS5 ON)
-    if (KernelPlatformExynos5410 OR KernelPlatformExynos5422)
+    if(KernelPlatformExynos5410 OR KernelPlatformExynos5422)
         config_set(KernelPlatExynos54xx PLAT_EXYNOS54XX ON)
     endif()
+
+    list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
+    list(APPEND KernelDTSList "src/plat/exynos5/overlay-${KernelARMPlatform}.dts")
 else()
     config_set(KernelPlatExynos5 PLAT_EXYNOS5 OFF)
     config_set(KernelPlatExynos54xx PLAT_EXYNOS54XX OFF)

@@ -16,6 +16,8 @@ if(KernelPlatformAM335X)
     set(KernelArmCortexA8 ON)
     set(KernelArchArmV7a ON)
     config_set(KernelPlatform PLAT "am335x")
+    list(APPEND KernelDTSList "tools/dts/am335x.dts")
+    list(APPEND KernelDTSList "src/plat/am335x/overlay-am335x.dts")
 endif()
 
 add_sources(

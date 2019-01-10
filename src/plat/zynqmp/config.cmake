@@ -14,6 +14,7 @@ cmake_minimum_required(VERSION 3.7.2)
 
 if(KernelPlatformUltra96)
     # Ultra96 is is basically Zynqmp
+    list(APPEND KernelDTSList "tools/dts/ultra96.dts")
     config_set(KernelPlatformZynqmp PLAT_ZYNQMP ON)
     config_set(KernelPlatformZynqmpUltra96 PLAT_ZYNQMP_ULTRA96 ON)
 endif()
@@ -25,6 +26,10 @@ if(KernelPlatformZynqmp)
     config_set(KernelArmMach MACH "zynq")
     if(KernelSel4ArchAarch64)
         set(KernelHaveFPU ON)
+    endif()
+
+    if (NOT KernelPlatformUltra96)
+        list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
     endif()
 endif()
 

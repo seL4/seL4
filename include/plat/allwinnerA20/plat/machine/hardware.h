@@ -16,8 +16,7 @@
 #include <linker.h>
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
-
-#define physBase          0x48000000
+#include <plat/machine/devices_gen.h>
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     /*  GP Timer 11 */
@@ -40,23 +39,6 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         true  /* armExecuteNever */
 #endif
     }
-};
-
-/* Available physical memory regions on platform (RAM minus kernel image). */
-/* NOTE: Regions are not allowed to be adjacent! */
-static const p_region_t BOOT_RODATA avail_p_regs[] = {
-    /* 1408 MB */
-    { .start = 0x48000000, .end = 0xA0000000 }
-};
-
-static const p_region_t BOOT_RODATA dev_p_regs[] = {
-    /* sorted by increasing memory address */
-    /* region caps must be a power of 2. */
-
-    /* TODO: Add more devices. */
-    { SPI0_PADDR                    , SPI0_PADDR                        + ( 2 << PAGE_BITS) },
-    { SPI1_PADDR                    , SPI1_PADDR                        + ( 2 << PAGE_BITS) },
-
 };
 
 /* Handle a platform-reserved IRQ. */

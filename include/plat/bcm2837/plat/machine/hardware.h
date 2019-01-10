@@ -18,9 +18,8 @@
 #include <linker.h>
 #include <plat/machine.h>
 #include <plat/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 #include <machine/io.h>
-
-#define physBase          0x01000000
 
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {
@@ -43,23 +42,6 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
         true  /* armExecuteNever */
 #endif /* CONFIG_PRINTING */
     }
-};
-
-
-/* Available physical memory regions on platform (RAM) */
-/* NOTE: Regions are not allowed to be adjacent! */
-const p_region_t BOOT_RODATA avail_p_regs[] = {
-    /* RPI has 1 GiB but it is split between the videocard and the processor.
-        Currently the processor gets 128MiB as according to the current uboot */
-    { .start = 0x01000000, .end = 0x08000000 }
-};
-
-const p_region_t BOOT_RODATA dev_p_regs[] = {
-    { .start = SDHC_PADDR,         .end = SDHC_PADDR         + (1u << PAGE_BITS) },
-    { .start = USB2_PADDR,         .end = USB2_PADDR         + (1u << PAGE_BITS) },
-    { .start = UART_PADDR,         .end = UART_PADDR         + (1u << PAGE_BITS) },
-    { .start = TIMER_PADDR,        .end = TIMER_PADDR        + (1u << PAGE_BITS) },
-    { .start = SYSTEM_TIMER_PADDR, .end = SYSTEM_TIMER_PADDR + (1u << PAGE_BITS) },
 };
 
 void initL2Cache(void);

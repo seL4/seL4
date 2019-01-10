@@ -22,6 +22,8 @@ if(KernelPlatformTx2)
     # If we enable the Denver 2 cores, which support 40-bit PA,
     # KernelArmPASizeBits40 should be enabled instead.
     set(KernelArmPASizeBits44 ON)
+    list(APPEND KernelDTSList "tools/dts/tx2.dts")
+    list(APPEND KernelDTSList "src/plat/tx2/overlay-tx2.dts")
 endif()
 
 add_sources(

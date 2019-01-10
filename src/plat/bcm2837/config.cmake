@@ -20,6 +20,8 @@ if(KernelPlatformRpi3)
     if(KernelSel4ArchAarch64)
         set(KernelHaveFPU ON)
     endif()
+    list(APPEND KernelDTSList "tools/dts/rpi3.dts")
+    list(APPEND KernelDTSList "src/plat/bcm2837/overlay-rpi3.dts")
 endif()
 
 add_sources(

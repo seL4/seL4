@@ -17,6 +17,7 @@ if(KernelPlatformExynos4)
     set(KernelArchArmV7a ON)
     config_set(KernelPlatform PLAT "exynos4")
     config_set(KernelArmMach MACH "exynos")
+    list(APPEND KernelDTSList "tools/dts/exynos4.dts")
 endif()
 
 add_sources(

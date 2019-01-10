@@ -17,6 +17,8 @@ if(KernelPlatformOMAP3)
     set(KernelArchArmV7a ON)
     config_set(KernelPlatform PLAT "omap3")
     config_set(KernelArmMach MACH "omap")
+    list(APPEND KernelDTSList "tools/dts/omap3.dts")
+    list(APPEND KernelDTSList "src/plat/omap3/overlay-omap3.dts")
 endif()
 
 add_sources(
