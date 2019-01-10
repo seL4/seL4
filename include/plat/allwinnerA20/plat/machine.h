@@ -142,8 +142,4 @@ enum IRQConstants {
 
 #define KERNEL_TIMER_IRQ    TIMER_0
 
-enum irqNumbers {
-    irqInvalid = 255
-};
-
 #endif  /* ! __PLAT_MACHINE_H */
