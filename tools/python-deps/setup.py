@@ -35,7 +35,8 @@ DEPS = [
     'bs4',
     'sh',
     'pexpect',
-    'pyaml'
+    'pyaml',
+    'jsonschema'
 ]
 
 setup(
