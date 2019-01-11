@@ -1,0 +1,23 @@
+/*
+ * Copyright 2018, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
+ *
+ * This software may be distributed and modified according to the terms of
+ * the GNU General Public License version 2. Note that NO WARRANTY is provided.
+ * See "LICENSE_GPLv2.txt" for details.
+ *
+ * @TAG(DATA61_GPL)
+ */
+
+/ {
+	memory@80000000 {
+		/* 1MiB carveout at 0xa7f00000 for the elfloader's monitor mode hooks */
+		reg = <0x0 0x80000000 0x0 0x27f00000>;
+	};
+
+	vm-memory {
+		/* Expose the second gigabyte of RAM as a device untyped. */
+		reg = <0x0 0xb0000000 0x0 0x40000000>;
+	};
+};

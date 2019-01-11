@@ -1,0 +1,28 @@
+/*
+ * Copyright 2018, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
+ *
+ * This software may be distributed and modified according to the terms of
+ * the GNU General Public License version 2. Note that NO WARRANTY is provided.
+ * See "LICENSE_GPLv2.txt" for details.
+ *
+ * @TAG(DATA61_GPL)
+ */
+
+/ {
+	pmu {
+		compatible = "arm,armv8-pmuv3";
+		interrupts = <0x00 0x63 0x04>;
+	};
+
+	memory@0 {
+		/*
+		 * Ignore the first 512MB of RAM (0x0-0x1fffffff), to match what was hardcoded in the kernel
+		 * before the switch to DTS. If we try and use all of RAM, in 32-bit mode the ELF loader
+		 * gets loaded where the kernel wants to be loaded.
+		 * The last 16MB of RAM (0x3f000000-0x3fffffff) are reserved for OP-TEE.
+		 */
+		reg = <0x00 0x20000000 0x00 0x1f000000>;
+	};
+};
