@@ -46,20 +46,14 @@ invoker blocks. Else, the call returns immediately, setting the
 notification word to zero and returning to the invoker the previous
 notification-word value.
 
-The \apifunc{seL4\_Poll}{sel4_poll} is the same as \apifunc{seL4\_Wait}{sel4_wait}, except if 
+The \apifunc{seL4\_Poll}{sel4_poll} is the same as \apifunc{seL4\_Wait}{sel4_wait}, except if
 no signals are pending (the notification word is 0) the call will return immediately
 without blocking.
 
 If threads are waiting on the \obj{Notification} object at the time
 \apifunc{seL4\_Signal}{sel4_signal} is invoked, the first queued thread
 receives the notification. All other threads keep waiting until the
-next time the notification is signalled. 
-
-If \apifunc{seL4\_Signal}{sel4_signal} is invoked with an unbadged or 0-badged
-capability, the first queued thread is unblocked with a zero return value. If
-no thread is waiting, the \apifunc{\mbox{seL4\_Signal}}{sel4_signal} operation with
-an unbadged capability has no effect.
-
+next time the notification is signalled.
 
 \section{Binding Notifications}
 \label{sec:notification-binding}
