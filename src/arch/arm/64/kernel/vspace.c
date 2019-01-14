@@ -2666,16 +2666,16 @@ exception_t benchmark_arch_map_logBuffer(word_t frame_cptr)
 
     *armKSGlobalLogPDE = pde_pde_large_new(
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                      0, // XN
+                             0, // XN
 #else
-                                      1, // UXN
+                             1, // UXN
 #endif
-                                      ksUserLogBuffer,
-                                      0,                         /* global */
-                                      1,                         /* access flag */
-                                      SMP_TERNARY(SMP_SHARE, 0), /* Inner-shareable if SMP enabled, otherwise unshared */
-                                      0,                         /* VMKernelOnly */
-                                      NORMAL);
+                             ksUserLogBuffer,
+                             0,                         /* global */
+                             1,                         /* access flag */
+                             SMP_TERNARY(SMP_SHARE, 0), /* Inner-shareable if SMP enabled, otherwise unshared */
+                             0,                         /* VMKernelOnly */
+                             NORMAL);
 
     cleanByVA_PoU((vptr_t)armKSGlobalLogPDE, pptr_to_paddr(armKSGlobalLogPDE));
     invalidateTranslationSingle(KS_LOG_PPTR);
