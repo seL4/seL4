@@ -291,7 +291,11 @@ invokeUntyped_Retype(cte_t *srcSlot,
         }
     }
 
-    /* Update the amount of free space left in this untyped cap. */
+    /* Update the amount of free space left in this untyped cap.
+     *
+     * Note that userSize is not necessarily the true size of the object in
+     * memory. In the case where newType is seL4_CapTableObject, the size is
+     * transformed by getObjectSize. */
     totalObjectSize = destSlots.length << getObjectSize(newType, userSize);
     freeRef = (word_t)retypeBase + totalObjectSize;
     srcSlot->cap = cap_untyped_cap_set_capFreeIndex(srcSlot->cap,
