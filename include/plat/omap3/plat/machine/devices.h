@@ -19,7 +19,7 @@
 #define __PLAT_MACHINE_DEVICES_H
 
 /* These devices are used by the seL4 kernel. */
-#define UART3_PPTR                     0xfff01000
+#define UART_PPTR                     0xfff01000
 #define INTC_PPTR                      0xfff02000
 #define GPTIMER9_PPTR                  0xfff03000
 #define ARM_DEBUG_MMAPPING_PPTR        0xfff04000

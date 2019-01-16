@@ -18,7 +18,7 @@
 #define ULSR 0x14 /* UART Line Status Register */
 #define ULSR_THRE 0x20 /* Transmit Holding Register Empty */
 
-#define UART_REG(x) ((volatile uint32_t *)(UART3_PPTR + (x)))
+#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void

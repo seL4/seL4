@@ -18,7 +18,7 @@
 #define UARTFR                    0x018
 #define PL011_UARTFR_TXFF         (1 << 5)
 
-#define UART_REG(x) ((volatile uint32_t *)(UART0_PPTR + (x)))
+#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void

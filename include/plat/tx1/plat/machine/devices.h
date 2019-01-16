@@ -22,7 +22,7 @@
 #define KDEV_PPTR                   0xffffffffffff0000lu
 #endif
 
-#define UARTA_PPTR                  (KDEV_PPTR)
+#define UART_PPTR                  (KDEV_PPTR)
 #define GIC_DISTRIBUTOR_PPTR        (KDEV_PPTR + 0x3000)
 #define GIC_CONTROLLER_PPTR         (KDEV_PPTR + 0x4000)
 #define GICH_PPTR                   (KDEV_PPTR + 0x6000)

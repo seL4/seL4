@@ -38,7 +38,7 @@ compile_assert(log_buffer_vaddr_2MiB_aligned, (KS_LOG_PPTR & (0x200000 - 1)) == 
 #endif
 
 
-#define UARTA_PPTR                  (KDEV_PPTR)
+#define UART_PPTR                  (KDEV_PPTR)
 #define GIC_DISTRIBUTOR_PPTR        (KDEV_PPTR + 0x3000)
 #define GIC_CONTROLLER_PPTR         (KDEV_PPTR + 0x4000)
 #define GICH_PPTR                   (KDEV_PPTR + 0x6000)

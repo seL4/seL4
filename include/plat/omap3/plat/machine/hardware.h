@@ -36,7 +36,7 @@ static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
     {
         /*  UART */
         UART3_PADDR,
-        UART3_PPTR,
+        UART_PPTR,
         true  /* armExecuteNever */
 #endif
     }

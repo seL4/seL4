@@ -18,7 +18,7 @@
 #define ULSR        0x14
 #define ULSR_THRE   (1 << 5)
 
-#define UART_REG(x) ((volatile uint32_t *)(UARTD_PPTR + (x)))
+#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void
