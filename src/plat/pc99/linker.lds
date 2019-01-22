@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#define __ASSEMBLER__
 #include <config.h>
 
 ENTRY(_start)
