@@ -60,9 +60,9 @@
  * |                                   |    v
  * +-----------------------------------+ <- 0x0
  */
-#define kernelBase          0x0000ff8080000000llu
+#define kernelBase          0x0000ff8080000000
 #else
-#define kernelBase          0xffffff8000000000llu
+#define kernelBase          0xffffff8000000000
 #endif
 
 #define USER_TOP seL4_UserTop
