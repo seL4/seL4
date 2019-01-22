@@ -16,7 +16,7 @@ ENTRY(_start)
 
 CHIPSET_BASE_PADDR = 0x00000000;
 KLOAD_PADDR = 0x00100000;
-KLOAD_VADDR  = 0xe0000000;
+KLOAD_VADDR  = kernelBase;
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 #if defined(CONFIG_ARCH_IA32)
