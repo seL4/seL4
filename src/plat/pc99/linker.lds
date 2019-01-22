@@ -10,20 +10,20 @@
 
 #define __ASSEMBLER__
 #include <config.h>
+#include <plat_mode/machine/hardware.h>
 
 ENTRY(_start)
+
+CHIPSET_BASE_PADDR = 0x00000000;
+KLOAD_PADDR = 0x00100000;
+KLOAD_VADDR  = 0xe0000000;
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
 #if defined(CONFIG_ARCH_IA32)
 #undef i386
-CHIPSET_BASE_PADDR = 0x00000000;
-KLOAD_PADDR = 0x00100000;
-KLOAD_VADDR  = 0xe0000000;
 OUTPUT_ARCH(i386)
 OUTPUT_FORMAT(elf32-i386)
 #elif defined(CONFIG_ARCH_X86_64)
-CHIPSET_BASE_PADDR = 0x00000000;
-KLOAD_PADDR = 0x00100000;
 KLOAD_VADDR = 0xffffffff80000000;
 OUTPUT_FORMAT(elf64-x86-64)
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
