@@ -15,27 +15,27 @@ ENTRY(_start)
 /* WARNING: constants also defined in plat/machine/hardware.h */
 #if defined(CONFIG_ARCH_IA32)
 #undef i386
-PADDR_BASE = 0x00000000;
-PADDR_LOAD = 0x00100000;
-KERNEL_BASE  = 0xe0000000;
+CHIPSET_BASE_PADDR = 0x00000000;
+KLOAD_PADDR = 0x00100000;
+KLOAD_VADDR  = 0xe0000000;
 OUTPUT_ARCH(i386)
 OUTPUT_FORMAT(elf32-i386)
 #elif defined(CONFIG_ARCH_X86_64)
-PADDR_BASE = 0x00000000;
-PADDR_LOAD = 0x00100000;
-KERNEL_BASE = 0xffffffff80000000;
+CHIPSET_BASE_PADDR = 0x00000000;
+KLOAD_PADDR = 0x00100000;
+KLOAD_VADDR = 0xffffffff80000000;
 OUTPUT_FORMAT(elf64-x86-64)
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
 nodeSkimScratchOffset = nodeSkimScratch - node_info;
 #endif
 #endif
 
-KERNEL_OFFSET = KERNEL_BASE - PADDR_BASE;
+KERNEL_OFFSET = KLOAD_VADDR - CHIPSET_BASE_PADDR;
 
 SECTIONS
 {
     /* load kernel to 1M to avoid the famous IA-32 memory holes below */
-    . = PADDR_LOAD;
+    . = KLOAD_PADDR;
 
     /* code/data only needed during bootstrapping, linked to physical addresses */
 
