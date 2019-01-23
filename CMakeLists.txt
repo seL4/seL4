@@ -378,8 +378,14 @@ CPPFile(kernel_all.i kernel_i_wrapper kernel_all.c
 # Explain to cmake that our object file is actually a C input file
 set_property(SOURCE kernel_all.i PROPERTY LANGUAGE C)
 
-set(linker_source "src/plat/${KernelPlatform}/linker.lds")
+if (KernelArchARM)
+    set(linker_source "src/arch/arm/common_arm.lds")
+else()
+    set(linker_source "src/plat/${KernelPlatform}/linker.lds")
+endif()
 set(linker_lds_path "${CMAKE_CURRENT_BINARY_DIR}/linker.lds_pp")
+
+# Preprocess the linker script
 CPPFile("${linker_lds_path}" linker_ld_wrapper "${linker_source}"
     EXTRA_DEPS kernel_headers ${gen_files_list}
     EXTRA_FLAGS -CC -P "${CPPExtraFlags}"
