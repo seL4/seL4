@@ -14,8 +14,10 @@
 #define __ARCH_HARDWARE_32_H
 
 #include <config.h>
+#ifndef __ASSEMBLER__
 #include <arch/machine/hardware.h>
 #include <plat/api/constants.h>
+#endif
 
 /*
  * 0xffe00000 asid id slot (arm/arch/kernel/vspace.h)
@@ -34,6 +36,8 @@
 #define KDEV_PPTR 0xfff00000
 #define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
 
+#ifndef __ASSEMBLER__
 #include <plat/machine/hardware.h>
+#endif
 
 #endif /* __ARCH_HARDWARE_32_H */
