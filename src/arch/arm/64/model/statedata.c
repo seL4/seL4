@@ -39,9 +39,6 @@ asid_pool_t *armKSASIDTable[BIT(asidHighBits)];
  *
  * Common Aarch64 address space layout:
  *
- * Each AArch64 platform may vary slightly and for example, the TX1 and TX2 only
- * use 510 GiB.
- *
  * The reason why 512 GiB was chosen is because assuming a 48-bit virtual
  * address space using a 4KiB Translation Granule (and therefore, 4 levels of
  * page tables):

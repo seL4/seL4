@@ -26,7 +26,7 @@
  *
  * The CPU on the TX1 only allows for 48-bits of addressable virtual memory.
  * Within the seL4 EL2 kernel's separate vaddrspace, it uses
- * the approximately 510 GiB at the top of that 48 bits of addressable
+ * the 512 GiB at the top of that 48 bits of addressable
  * virtual memory.
  *
  * In EL2 there is no canonical-high portion of the address space since
@@ -43,12 +43,12 @@
  * +-----------------------------------+ <- 256TiB mark (top of 48 bits)
  * | seL4 EL2 kernel                   |    ^
  * |                                   |    |
- * |                                   |    510GiB
+ * |                                   |    512GiB
  * |                                   |    of EL2 kernel windowing
  * |                                   |    into memory.
  * |                                   |    |
  * |                                   |    v
- * +-----------------------------------+ <- Kernel Base, @ 256TiB minus 510GiB.
+ * +-----------------------------------+ <- Kernel Base, @ 256TiB minus 512GiB.
  * | Unused virtual addresses within   |    ^
  * | the EL2 kernel's                  |    |
  * | separate vaddrspace.              |    Rest of the
@@ -60,7 +60,7 @@
  * |                                   |    v
  * +-----------------------------------+ <- 0x0
  */
-#define kernelBase          0x0000ff8080000000
+#define kernelBase          0x0000ff8000000000
 #else
 #define kernelBase          0xffffff8000000000
 #endif
