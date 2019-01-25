@@ -57,7 +57,7 @@ doRemoteClearCurrentVCPU(word_t cpu)
 static inline void
 doRemoteVMCheckBoundNotification(word_t cpu, tcb_t *tcb)
 {
-    doRemoteOp1Arg(IpiRemoteCall_VMCheckBoundNotification, cpu, (word_t)tcb);
+    doRemoteOp1Arg(IpiRemoteCall_VMCheckBoundNotification, (word_t)tcb, cpu);
 }
 #endif
 
