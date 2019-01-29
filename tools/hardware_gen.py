@@ -15,6 +15,7 @@ from __future__ import print_function, division
 import sys
 import os.path
 import argparse
+import functools
 import logging
 import pyfdt.pyfdt
 import yaml
@@ -119,26 +120,44 @@ class Interrupt:
     def __repr__(self):
         return str(self)
 
+@functools.total_ordering
+class Offset:
+    def __init__(self, name, offset, macro=""):
+        self.name = name
+        self.offset = offset
+        self.macro = macro
+        self.base = -1
+
+    def __eq__(self, other):
+        return self.base == other.base and self.offset == other.offset
+
+    def __ne__(self, other):
+        # This is needed on Python 2, but on Python 3 this is implicit.
+        return not self.__eq__(other)
+
+    def __gt__(self, other):
+        return (self.base + self.offset) > (other.base + other.offset)
+
 class Region:
     def __init__(self, start, size, name, index=0):
         self.start = start
         self.size = size
 
+        self.macro_string = None
         if isinstance(name, Region):
             other = name
             self.names = set(other.names)
             self.index = other.index
             self.kaddr = other.kaddr
-            self.kernel_var = other.kernel_var
-            self.kernel_macro = other.kernel_macro
-            self.user_macro = other.kernel_macro
+            self.kernel_var = other.kernel_var[:]
+            self.var_names = other.var_names[:]
         else:
             self.names = set()
             self.names.add(name)
             self.index = index
             self.kaddr = 0
-            self.kernel_var = ""
-            self.kernel_macro = ""
+            self.kernel_var = []
+            self.var_names = []
             self.user_macro = False
 
     def __eq__(self, other):
@@ -165,6 +184,29 @@ class Region:
         oend = other.start + other.size
         return (sstart <= ostart and send > ostart) or \
                 (ostart <= sstart and oend > sstart)
+
+    def get_macro_string(self, invert=False):
+        ret = ''
+        if self.macro_string:
+            return self.macro_string
+        for v in self.kernel_var:
+            if v.macro:
+                ret += 'defined(' + v.macro + ') ||'
+            else:
+                # if any region has no macro, we want to do this unconditionally
+                return ''
+        if len(ret) > 0:
+            ret = ret[:-3]
+            if invert:
+                ret = '!(' + ret + ')'
+            ret = '#if ' + ret
+
+        return ret
+
+    def get_macro_end(self):
+        if len(self.get_macro_string()) > 0:
+            return '#endif'
+        return ''
 
     def remove_subregions(self, subregions):
         new = []
@@ -417,10 +459,9 @@ class Config:
 
     def _apply_rule(self, region, rule):
         if 'kernel' in rule and rule['kernel'] != False:
-            region.kernel_var = rule['kernel']
-            region.kernel_macro = rule.get('macro', None)
+            region.kernel_var.append(Offset(rule['kernel'], 0, rule.get('macro', None)))
             region.executeNever = rule['executeNever']
-            region.user_macro = (not rule.get('user', False)) and region.kernel_macro is not None
+            region.user_macro = (not rule.get('user', False)) and 'macro' in rule
         return region
 
     def _lookup_alias(self, name):
@@ -610,12 +651,18 @@ def fixup_device_regions(regions, pagesz, merge=False):
     ret = list()
     # first, make sure all regions are page aligned
     for r in regions:
-        r.start = align_down(r.start, pagesz)
-        r.size = align_up(r.size, pagesz)
+        new_start = align_down(r.start, pagesz)
+        new_size = align_up(r.size, pagesz)
+        for v in r.kernel_var:
+            v.offset += r.start - new_start
+        r.start = new_start
+        r.size = new_size
         # we abuse the fact that regions will be
         # "equal" if they have different names but the same range.
         if r in ret:
-            ret[ret.index(r)].names.update(r.names)
+            idx = ret.index(r)
+            ret[idx].names.update(r.names)
+            ret[idx].kernel_var += r.kernel_var
         else:
             ret.append(r)
 
@@ -629,8 +676,8 @@ def fixup_device_regions(regions, pagesz, merge=False):
             # or (b) hiding other regions that shouldn't be hidden
             # FIXME: this will break some proof invariants if conditional regions overlap
             # with unconditional regions. We don't handle this case for now.
-            if (ret[i].user_macro and ret[i].kernel_macro) or \
-                (ret[i-1].user_macro and ret[i-1].kernel_macro):
+            if (ret[i].user_macro and ret[i].get_macro_string()) or \
+                (ret[i-1].user_macro and ret[i-1].get_macro_string()):
                 i += 1
                 continue
             # check if this region overlaps with the previous region.
@@ -674,27 +721,37 @@ HEADER_TEMPLATE = """
 
 #ifndef __PLAT_DEVICES_GEN_H
 #define __PLAT_DEVICES_GEN_H
-
+#ifndef KDEV_PPTR
+#include <mode/hardware.h>
+#endif
 #define physBase        {{ "0x%x" % physBase }}
+{% for var in sorted(macros.values()) -%}
+{%- if var.macro %}
+#ifdef {{ var.macro }}
+{%- endif %}
+#define {{ var.name }} (KDEV_PPTR + {{ "0x%x" % (var.base + var.offset) }})
+{%- if var.macro %}
+#endif
+{%- endif %}
+{%- endfor %}
 
-#if 0
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
-    {%- for reg in kernel %}
-    {%- if reg.kernel_macro %}
-#ifdef {{ reg.kernel_macro }}
-    {%- endif %}
-#define {{ reg.kernel_var }} {{ "0x%x" % reg.kaddr }}
+{% for reg in kernel %}{{ reg.get_macro_string() }}
     { /* {{ ' '.join(sorted(reg.names)) }} */
       {{ "0x%x" % reg.start }},
-      {{ reg.kernel_var }},
+      {% if reg.kaddr in macros -%}
+      {{ macros[reg.kaddr].name }},
+      {%- else -%}
+      /* region contains {{ ', '.join(reg.var_names) }} */
+      {{ "KDEV_PPTR + 0x%x" % reg.kaddr }},
+      {%- endif %}
       {{ "true" if reg.executeNever else "false" }} /* armExecuteNever */
     },
-    {%- if reg.kernel_macro %}
-#endif /* {{ reg.kernel_macro }} */
-    {%- endif %}
-    {%- endfor %}
+{% if reg.get_macro_end() -%}
+{{ reg.get_macro_end()}}
+{% endif -%}
+{% endfor %}
 };
-#endif
 
 static const p_region_t BOOT_RODATA avail_p_regs[] = {
     {%- for reg in memory %}
@@ -705,11 +762,11 @@ static const p_region_t BOOT_RODATA avail_p_regs[] = {
 static const p_region_t BOOT_RODATA dev_p_regs[] = {
     {%- for reg in devices %}
     {%- if reg.user_macro %}
-#ifndef {{ reg.kernel_macro }}
+{{ reg.get_macro_string(True) }}
     {%- endif %}
     { {{ "0x%x" % reg.start }}, {{ "0x%x" % (reg.start + reg.size) }} }, /* {{ ' '.join(sorted(reg.names)) }} */
     {%- if reg.user_macro %}
-#endif /* {{ reg.kernel_macro }} */
+#endif /* {{ reg.get_macro_string(True)[len('#if '):] }} */
     {%- endif %}
     {%- endfor %}
 };
@@ -736,18 +793,43 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
     """ generate the device list for the C header file """
     memory = sorted(memory, key=lambda a: a.start)
     kernel = sorted(kernel, key=lambda a: a.start)
-    addr = 0x0 # args.kernel_base
+    addr = 0
+    macros = {}
+    # TODO: this will only map the first page of each device. That seems to be adequate for now,
+    # but in the future we may need more.
     for reg in kernel:
         reg.kaddr = addr
-        addr += align_up(reg.size, 1 << args.page_bits)
+        addr += 1 << args.page_bits
+        if reg.size > (1 << args.page_bits):
+            # print out a warning for now
+            logging.warning('Only mapping 0x%x bytes of 0x%x for kernel region at 0x%x (%s)'%
+                    (1 << args.page_bits, reg.size, reg.start, ' '.join(sorted(reg.names))))
+        for var in reg.kernel_var:
+            var.base = reg.kaddr
+            if var.base + var.offset in macros:
+                logging.warning('Multiple kernel device macros with the same address 0x%x (%s, %s), ignoring %s.'%
+                    (var.base + var.offset, var.name, macros[var.base + var.offset].name, var.name))
+                continue
+            macros[var.base + var.offset] = var
+        reg.var_names = sorted(i.name for i in reg.kernel_var)
     # make sure physBase is at least 16MB (supersection) aligned for the ELF loader's sake.
     # TODO: this may need to be larger for aarch64. It seems to work OK on currently supported platforms though.
     paddr = align_up(memory[0].start, 1 << args.phys_align)
     memory[0].size -= paddr - memory[0].start
     memory[0].start = paddr
+
     template = Environment(loader=BaseLoader, trim_blocks=False, lstrip_blocks=False).from_string(HEADER_TEMPLATE)
-    data = template.render({'args': args, 'devices': sorted(devices, key=lambda a: a.start), 'sorted': sorted,
-        'memory': memory, 'physBase': paddr, 'kernel': kernel, 'interrupts': irqs})
+    data = template.render(dict(
+        __builtins__.__dict__,
+        **{
+            'args': args,
+            'devices': sorted(devices, key=lambda a: a.start),
+            'memory': memory,
+            'physBase': paddr,
+            'kernel': kernel,
+            'interrupts': irqs,
+            'macros': macros
+        }))
     fp.write(data)
 
 def main(args):
@@ -800,7 +882,6 @@ if __name__ == '__main__':
     parser.add_argument('--output', help='output file for generated header', required=True, type=argparse.FileType('w'))
     parser.add_argument('--page-bits', help='number of bits per page', default=12, type=int)
     parser.add_argument('--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
-    #parser.add_argument('--kernel-base', help='first address to use for kernel device mappings', type=lambda a: int(a, 0), required=True)
     parser.add_argument('--config', help='kernel device configuration', required=True, type=argparse.FileType())
     parser.add_argument('--schema', help='config file schema for validation', required=True, type=argparse.FileType())
 

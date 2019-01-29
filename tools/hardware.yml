@@ -180,7 +180,7 @@ devices:
     chosen: seL4,timer
   # TI prcm (arm/omap/prcm.txt)
   - compatible:
-    - ti,omap4-cm
+    - ti,am3-prcm
     regions:
       - executeNever: true
         index: 0
