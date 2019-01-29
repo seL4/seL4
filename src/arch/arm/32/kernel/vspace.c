@@ -25,7 +25,6 @@
 #include <arch/api/invocation.h>
 #include <arch/kernel/vspace.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <armv/context_switch.h>
 #include <arch/object/iospace.h>

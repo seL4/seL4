@@ -22,7 +22,6 @@
 #include <arch/machine/registerset.h>
 #include <armv/debug.h>
 #include <mode/machine/debug.h>
-#include <plat/machine/devices.h>
 #include <api/constants.h> /* seL4_NumExclusiveBreakpoints/Watchpoints */
 
 #define DBGDSCR_MDBGEN                (BIT(15))

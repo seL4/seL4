@@ -14,7 +14,6 @@
 
 #include <arch/object/vcpu.h>
 #include <armv/vcpu.h>
-#include <plat/machine/devices.h>
 #include <arch/machine/debug.h> /* Arch_debug[A/Di]ssociateVCPUTCB() */
 #include <arch/machine/debug_conf.h>
 #include <arch/machine/gic_pl390.h>
