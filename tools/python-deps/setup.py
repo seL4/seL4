@@ -36,7 +36,8 @@ DEPS = [
     'sh',
     'pexpect',
     'pyaml',
-    'jsonschema'
+    'jsonschema',
+    'pyfdt'
 ]
 
 setup(
