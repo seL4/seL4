@@ -12,7 +12,6 @@
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
-#include <plat/machine/devices.h>
 
 #define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 

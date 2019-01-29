@@ -14,23 +14,22 @@
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
-#include <plat/machine/devices.h>
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 /* When DLAB=1, MU_IO is a baud rate register.
  * Otherwise, write to TX, read to RX */
-#define MU_IO       0x40
+#define MU_IO       0x00
 /* When DLAB=1, MU_IIR is a baud rate register.
  * Otherwise IRQ enable */
-#define MU_IIR      0x44
-#define MU_IER      0x48
-#define MU_LCR      0x4C
-#define MU_MCR      0x50
-#define MU_LSR      0x54
-#define MU_MSR      0x58
-#define MU_SCRATCH  0x5C
-#define MU_CNTL     0x60
+#define MU_IIR      0x04
+#define MU_IER      0x08
+#define MU_LCR      0x0C
+#define MU_MCR      0x10
+#define MU_LSR      0x14
+#define MU_MSR      0x18
+#define MU_SCRATCH  0x1C
+#define MU_CNTL     0x20
 
 
 /* This bit is set if the transmit FIFO can accept at least one byte.*/

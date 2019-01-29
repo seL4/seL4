@@ -16,18 +16,15 @@
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <plat/machine/timer.h>
-
-#define TIMER0_OFFSET       0xC00
 
 #define TIMER_CTL_EN_FLAG               BIT(0)
 #define TIMER_CTL_RELOAD_FLAG           BIT(1)
 
 #define TMR0_IRQ_EN_FLAG            BIT(0)
 
-timer_t *timer = (timer_t *) TIMER0_PPTR + TIMER0_OFFSET;
+timer_t *timer = (timer_t *) TIMER0_PPTR;
 
 /* Configure gptimer11 as kernel preemption timer */
 BOOT_CODE void

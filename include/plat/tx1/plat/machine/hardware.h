@@ -18,37 +18,7 @@
 #include <linker.h>
 #include <arch/object/vcpu.h>
 #include <plat/machine.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/devices_gen.h>
-
-static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
-    {
-        /* map kernel device: GIC */
-        GIC_CONTROLLER_PADDR,
-        GIC_CONTROLLER_PPTR,
-        true  /* armExecuteNever */
-    },
-    {
-        GIC_DISTRIBUTOR_PADDR,
-        GIC_DISTRIBUTOR_PPTR,
-        true  /* armExecuteNever */
-#ifdef CONFIG_PRINTING
-    },
-    {
-        /* UART */
-        UARTA_PADDR,
-        UART_PPTR,
-        true
-#endif /* CONFIG_PRINTING */
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    },
-    {
-        GICH_PADDR,
-        GICH_PPTR,
-        true
-#endif
-    }
-};
 
 /* Handle a platform-reserved IRQ. */
 static inline void

@@ -17,7 +17,6 @@
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 
 void plat_cleanL2Range(paddr_t start, paddr_t end) {}

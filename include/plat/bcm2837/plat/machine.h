@@ -12,7 +12,7 @@
 
 #ifndef __PLAT_MACHINE_H
 #define __PLAT_MACHINE_H
-#include <plat_mode/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 #include <machine/io.h>
 
 #define BASIC_IRQ_OFFSET                32
@@ -86,7 +86,6 @@ enum IRQConstants {
 #define FIQCTRL_FIQ_SRC(src)                 (FIQCTRL_FIQ_SRC_##src)
 
 volatile struct intc_regs {
-    uint8_t  res[0x200];
     uint32_t bfIRQBasicPending;  /* 0x200 R     */
     uint32_t bfGPUIRQPending[2]; /* 0x204 R     */
     uint32_t FIQ_control;        /* 0x20C R/W   */

@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
-#include <plat/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 
 #define UARTDR                    0x000
 #define UARTFR                    0x018

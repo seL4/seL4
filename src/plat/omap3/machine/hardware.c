@@ -16,7 +16,7 @@
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 #include <plat/machine/hardware.h>
 #include <plat/machine/timer.h>
 
@@ -32,7 +32,7 @@
 #define TIER_MATCHENABLE    BIT(0)
 #define TIER_OVERFLOWENABLE BIT(1)
 
-timer_t *timer = (timer_t *) GPTIMER9_PPTR;
+timer_t *timer = (timer_t *) TIMER_PPTR;
 
 BOOT_CODE void
 initTimer(void)

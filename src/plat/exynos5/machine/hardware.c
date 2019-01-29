@@ -16,7 +16,7 @@
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 #include <plat/machine/hardware.h>
 #include <arch/machine/generic_timer.h>
 #include <plat/machine/mct.h>

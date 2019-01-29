@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
-#include <plat/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 
 #define XUARTPS_SR             0x2C
 #define XUARTPS_FIFO           0x30

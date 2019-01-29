@@ -15,39 +15,8 @@
 #include <basic_types.h>
 #include <linker.h>
 #include <plat/machine.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/devices_gen.h>
 #include <arch/benchmark_overflowHandler.h>
-
-static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
-    {
-        /*  GIC controller and private timers */
-        ARM_MP_PADDR,
-        ARM_MP_PPTR1,
-        true  /* armExecuteNever */
-    },
-    {
-        /*  GIC distributor */
-        ARM_MP_PADDR + BIT(PAGE_BITS),
-        ARM_MP_PPTR2,
-        true  /* armExecuteNever */
-    },
-    {
-        /*  L2CC */
-        L2CC_PL310_PADDR,
-        L2CC_PL310_PPTR,
-        true  /* armExecuteNever */
-
-#ifdef CONFIG_PRINTING
-    },
-    {
-        /*  UART */
-        UART_PADDR,
-        UART_PPTR,
-        true  /* armExecuteNever */
-#endif
-    }
-};
 
 static inline void
 handleReservedIRQ(irq_t irq)

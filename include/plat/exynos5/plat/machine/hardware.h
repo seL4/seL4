@@ -16,42 +16,7 @@
 #include <linker.h>
 #include <arch/object/vcpu.h>
 #include <plat/machine.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/devices_gen.h>
-
-static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
-    {
-        /*  Watch dog timer used as PIT */
-        MCT_PADDR,
-        MCT_PPTR,
-        true  /* armExecuteNever */
-    },
-    {
-        /*  GIC */
-        GIC_CONTROLLER0_PADDR,
-        GIC_CONTROLLER_PPTR,
-        true  /* armExecuteNever */
-    },
-    {
-        GIC_DISTRIBUTOR_PADDR,
-        GIC_DISTRIBUTOR_PPTR,
-        true  /* armExecuteNever */
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    },
-    {
-        GIC_VCPUCTRL_PADDR,
-        GIC_VCPUCTRL_PPTR,
-        false, /* armExecuteNever */
-#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
-#ifdef CONFIG_PRINTING
-    },
-    {
-        UART2_PADDR,
-        UART_PPTR,
-        true  /* armExecuteNever */
-#endif /* CONFIG_PRINTING */
-    }
-};
 
 /* Handle a platform-reserved IRQ. */
 static inline void

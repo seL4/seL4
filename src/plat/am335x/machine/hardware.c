@@ -16,7 +16,7 @@
 #include <arch/kernel/vspace.h>
 #include <plat/machine.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 #include <plat/machine/hardware.h>
 #include <plat/machine/timer.h>
 
@@ -30,7 +30,7 @@
 #define TCLR_COMPAREENABLE BIT(6)
 #define TCLR_STARTTIMER BIT(0)
 
-timer_t *timer = (timer_t *) DMTIMER0_PPTR;
+timer_t *timer = (timer_t *) TIMER_PPTR;
 
 #define WDT_REG(base, off) ((volatile uint32_t *)((base) + (off)))
 #define WDT_REG_WWPS 0x34

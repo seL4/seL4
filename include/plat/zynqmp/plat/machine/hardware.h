@@ -24,31 +24,8 @@
 #include <basic_types.h>
 #include <arch/linker.h>
 #include <plat/machine.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/devices_gen.h>
 #include <machine/io.h>
-
-static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
-    {
-        /* GIC */
-        ACPU_GIC_CONTROLLER_PADDR,
-        GIC_PL390_CONTROLLER_PPTR,
-        true  /* armExecuteNever */
-    },
-    {
-        ACPU_GIC_DISTRIBUTOR_PADDR,
-        GIC_PL390_DISTRIBUTOR_PPTR,
-        true  /* armExecuteNever */
-#ifdef CONFIG_PRINTING
-    },
-    {
-        /*  UART */
-        UART_PADDR,
-        UART_PPTR,
-        true  /* armExecuteNever */
-#endif /* CONFIG_PRINTING */
-    }
-};
 
 /* Handle a platform-reserved IRQ. */
 static inline void

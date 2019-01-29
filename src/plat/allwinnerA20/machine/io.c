@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <util.h>
 #include <machine/io.h>
-#include <plat/machine/devices.h>
+#include <plat/machine/devices_gen.h>
 
 #define UTHR 0x00 /* UART Transmit Holding Register */
 #define ULSR 0x14 /* UART Line Status Register */

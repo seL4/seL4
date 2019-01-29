@@ -13,7 +13,6 @@
 #include <types.h>
 #include <plat/machine.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/timer.h>
 #include <plat/machine/mct.h>
 

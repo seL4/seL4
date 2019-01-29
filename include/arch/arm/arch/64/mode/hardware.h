@@ -15,7 +15,6 @@
 
 #include <config.h>
 #include <arch/machine/hardware.h>
-#include <plat/machine/hardware.h>
 #include <plat/api/constants.h>
 
 
