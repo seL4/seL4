@@ -13,7 +13,7 @@
 / {
 	/* Pick serial console */
 	chosen {
-		stdout-path = "serial1";
+		stdout-path = "serial0";
 	};
 
 	/* Upstream bug: the memory node doesn't have a device_type,
