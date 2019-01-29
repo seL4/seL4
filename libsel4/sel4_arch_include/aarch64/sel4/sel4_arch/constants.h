@@ -192,7 +192,14 @@ SEL4_SIZE_SANITY(seL4_PUDEntryBits, seL4_PUDIndexBits, seL4_PUDBits);
  * address size fault.
  */
 /* First address in the virtual address space that is not accessible to user level */
+#if defined(CONFIG_ARM_PA_SIZE_BITS_44)
 #define seL4_UserTop 0x00000fffffffffff
+#elif defined(CONFIG_ARM_PA_SIZE_BITS_40)
+#define seL4_UserTop 0x000000ffffffffff
+#else
+#error Undefined seL4_UserTop
+#endif
+
 #else
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x00007fffffffffff
