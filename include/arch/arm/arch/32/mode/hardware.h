@@ -31,6 +31,7 @@
 #else
 #define PPTR_TOP 0xfff00000
 #endif /* CONFIG_BENCHMARK_USE_KERNEL_LOG_BUFFER */
+#define KDEV_BASE 0xfff00000
 #define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
 
 #include <plat/machine/hardware.h>

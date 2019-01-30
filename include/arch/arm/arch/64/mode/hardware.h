@@ -71,8 +71,10 @@
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 #define PPTR_TOP 0xffffc0000000lu
+#define KDEV_BASE 0xffffffff0000lu
 #else
 #define PPTR_TOP 0xffffffffc0000000
+#define KDEV_BASE 0xffffffffffff0000lu
 #endif
 
 #define PADDR_TOP (PPTR_TOP - BASE_OFFSET)
