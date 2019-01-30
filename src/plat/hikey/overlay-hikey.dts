@@ -11,6 +11,10 @@
  */
 
 / {
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
 	pmu {
 		compatible = "arm,armv8-pmuv3";
 		interrupts = <0x00 0x63 0x04>;
