@@ -560,8 +560,8 @@ def find_devices(dtb, cfg):
     chosen = None
     aliases = None
     root = dtb.get_rootnode()
-    devices[root] = Device(root, None, '/')
-    nodes[root] = devices[root]
+    devices[root.name] = Device(root, None, '/')
+    nodes[root.name] = devices[root.name]
     for child in root.walk(): # walk every node in the whole tree
         name = child[0]
         child = child[1]
@@ -572,10 +572,10 @@ def find_devices(dtb, cfg):
         elif name == '/aliases':
             cfg.set_aliases(Device(child, None, name))
         if should_parse_regions(root, child, cfg.buses):
-            devices[child] = Device(child, devices[child.get_parent_node()], name)
-            nodes[child] = devices[child]
+            devices[child.name] = Device(child, devices[child.get_parent_node().name], name)
+            nodes[child.name] = devices[child.name]
         else:
-            nodes[child] = Device(child, nodes[child.get_parent_node()], name)
+            nodes[child.name] = Device(child, nodes[child.get_parent_node().name], name)
 
         try:
             idx = child.index('phandle')
@@ -583,11 +583,11 @@ def find_devices(dtb, cfg):
             continue
 
         prop = child[idx]
-        by_phandle[prop.words[0]] = nodes[child]
+        by_phandle[prop.words[0]] = nodes[child.name]
 
     # the root node is not actually a device, so remove it.
-    del devices[root]
-    return {d.name: d for d in devices.values()}, by_phandle
+    del devices[root.name]
+    return devices, by_phandle
 
 def fixup_device_regions(regions, pagesz, merge=False):
     """ page align all regions and check for overlapping regions """
@@ -759,7 +759,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dtb', help='device tree blob to use for generation', required=True, type=argparse.FileType())
+    parser.add_argument('--dtb', help='device tree blob to use for generation', required=True, type=argparse.FileType('rb'))
     parser.add_argument('--output', help='output file for generated header', required=True, type=argparse.FileType('w'))
     parser.add_argument('--page-bits', help='number of bits per page', default=12, type=int)
     parser.add_argument('--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
