@@ -713,12 +713,11 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
     fp.write(data)
 
 def main(args):
-    with open(args.schema) as fp:
-        schema = yaml.load(fp)
-    with open(args.config) as blob:
-        kernel_devices = yaml.load(blob)
-        validate(kernel_devices, schema)
-        cfg = Config(kernel_devices)
+    schema = yaml.load(args.schema)
+    kernel_devices = yaml.load(args.config)
+    validate(kernel_devices, schema)
+    cfg = Config(kernel_devices)
+
     memory, user, kernel = set(), set(), set()
     fdt = pyfdt.pyfdt.FdtBlobParse(args.dtb).to_fdt()
     devices, by_phandle = find_devices(fdt, cfg)
@@ -764,8 +763,8 @@ if __name__ == '__main__':
     parser.add_argument('--page-bits', help='number of bits per page', default=12, type=int)
     parser.add_argument('--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
     #parser.add_argument('--kernel-base', help='first address to use for kernel device mappings', type=lambda a: int(a, 0), required=True)
-    parser.add_argument('--config', help='kernel device configuration', required=True)
-    parser.add_argument('--schema', help='config file schema for validation', required=True)
+    parser.add_argument('--config', help='kernel device configuration', required=True, type=argparse.FileType())
+    parser.add_argument('--schema', help='config file schema for validation', required=True, type=argparse.FileType())
 
     args = parser.parse_args()
     main(args)
