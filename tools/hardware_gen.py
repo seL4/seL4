@@ -592,6 +592,7 @@ def find_devices(dtb, cfg):
 def fixup_device_regions(regions, pagesz, merge=False):
     """ page align all regions and check for overlapping regions """
     ret = list()
+    # first, make sure all regions are page aligned
     for r in regions:
         r.start = align_down(r.start, pagesz)
         r.size = align_up(r.size, pagesz)
@@ -602,17 +603,34 @@ def fixup_device_regions(regions, pagesz, merge=False):
         else:
             ret.append(r)
 
+    # combine overlapping regions
     if merge:
         ret = sorted(ret, key=lambda a: a.start)
         i = 1
         while i < len(ret):
-            if (ret[i].user_macro and ret[i].get_macro_string()) \
-                    or (ret[i-1].user_macro and ret[i-1].get_macro_string()):
+            # don't combine regions which are conditionally exposed to userspace
+            # as we might end up either (a) losing the condition and exposing them
+            # or (b) hiding other regions that shouldn't be hidden
+            # FIXME: this will break some proof invariants if conditional regions overlap
+            # with unconditional regions. We don't handle this case for now.
+            if (ret[i].user_macro and ret[i].kernel_macro) or \
+                (ret[i-1].user_macro and ret[i-1].kernel_macro):
                 i += 1
                 continue
-            if ret[i].start == ret[i-1].start + ret[i-1].size:
-                ret[i-1].size += ret[i].size
+            # check if this region overlaps with the previous region.
+            # regions are ordered by start address, so ret[i-1].start <= ret[i].start is always true.
+            if ret[i].start <= ret[i-1].start + ret[i-1].size:
+                # figure out how much overlap there is
+                overlap = (ret[i-1].start + ret[i-1].size) - ret[i].start
+                # if the region is bigger than the overlap,
+                # then we need to extend the previous region.
+                # Otherwise, we can just leave the previous region
+                # as-is.
+                if ret[i].size > overlap:
+                    ret[i-1].size += ret[i].size - overlap
                 ret[i-1].names.update(ret[i].names)
+                # The current region is now covered by the previous region,
+                # so we can safely delete it.
                 del ret[i]
             else:
                 i += 1
