@@ -606,6 +606,10 @@ def fixup_device_regions(regions, pagesz, merge=False):
         ret = sorted(ret, key=lambda a: a.start)
         i = 1
         while i < len(ret):
+            if (ret[i].user_macro and ret[i].get_macro_string()) \
+                    or (ret[i-1].user_macro and ret[i-1].get_macro_string()):
+                i += 1
+                continue
             if ret[i].start == ret[i-1].start + ret[i-1].size:
                 ret[i-1].size += ret[i].size
                 ret[i-1].names.update(ret[i].names)
