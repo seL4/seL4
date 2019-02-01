@@ -21,4 +21,20 @@
 		interrupts = <0x1 0xd 0xf08>, <0x1 0xe 0xf08>, <0x1 0xb 0xf08>, <0x1 0xa 0xf08>;
 		clock-frequency = <0x16e3600>;
 	};
+
+	/* Mainline Linux does not have these SPI nodes, but we want to include them. */
+	spi@12d20000 {
+		compatible = "samsung,exynos4210-spi";
+		reg = <0x12d20000 0x100>;
+	};
+
+	spi@12d30000 {
+		compatible = "samsung,exynos4210-spi";
+		reg = <0x12d30000 0x100>;
+	};
+
+	spi@12d40000 {
+		compatible = "samsung,exynos4210-spi";
+		reg = <0x12d40000 0x100>;
+	};
 };
