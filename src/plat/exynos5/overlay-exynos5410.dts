@@ -37,4 +37,12 @@
 		compatible = "samsung,exynos4210-spi";
 		reg = <0x12d40000 0x100>;
 	};
+
+	memory@40000000 {
+		reg = <0x60000000 0x5ea00000>;
+	};
+
+	vm-memory@40000000 {
+		reg = <0x40000000 0x20000000>;
+	};
 };
