@@ -198,7 +198,14 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 
     slot_pos_before = ndks_boot.slot_pos_cur;
     create_kernel_untypeds(root_cnode_cap, boot_mem_reuse_reg, slot_pos_before);
+    UNUSED paddr_t current_region_pos = 0;
     for (i = 0; i < get_num_dev_p_regs(); i++) {
+        /* It is required that untyped regions are non-overlapping.
+         * We assume that hardware regions are defined in ascending order to make
+         * overlapping checks simpler
+         */
+        assert(get_dev_p_reg(i).start >= current_region_pos);
+        current_region_pos = get_dev_p_reg(i).end;
         dev_reg = paddr_to_pptr_reg(get_dev_p_reg(i));
         if (!create_untypeds_for_region(root_cnode_cap, true,
                                         dev_reg, slot_pos_before)) {
