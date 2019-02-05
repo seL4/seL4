@@ -1325,7 +1325,6 @@ VMCheckBoundNotification(tcb_t *tcb)
             && ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
 
         word_t badge = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
-        notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
         setThreadState(tcb, ThreadState_Running);
         setRegister(tcb, badgeRegister, badge);
         Arch_leaveVMAsyncTransfer(tcb);
