@@ -15,12 +15,6 @@ description: Schema for seL4 hardware.yml
 type: object
 additionalProperties: false
 properties:
-  buses:
-    type: array
-    uniqueItems: true
-    description: list of compatibles to treat as MMIO buses
-    items:
-      type: string
   devices:
     type: array
     uniqueItems: true

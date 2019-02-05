@@ -11,9 +11,6 @@
 #
 # Documentation for bindings is relative to Documentation/devicetree/bindings in Linux,
 # unless otherwise noted.
-buses:
-  - simple-bus
-  - qcom,gsbi-v1.0.0
 devices:
   # ARM GIC (interrupt-controller/arm,gic.txt)
   - compatible:

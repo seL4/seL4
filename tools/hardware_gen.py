@@ -344,7 +344,13 @@ class Device:
         # will stay within one "ranges" entry.
         data = list(self.props['ranges'].words)
         while len(data) > 0:
-            cbase = make_number(child_addr_cells, data)
+            # for PCI, skip the high cell (per of_bus_pci_map in linux/drivers/of/address.c).
+            if 'device_type' in self and self['device_type'].strings[0] == 'pci':
+                addr &= (1 << (4 * child_addr_cells)) - 1
+                data.pop(0)
+                cbase = make_number(child_addr_cells - 1, data)
+            else:
+                cbase = make_number(child_addr_cells, data)
             pbase = make_number(parent_addr_cells, data)
             length = make_number(size_cells, data)
 
@@ -394,7 +400,6 @@ class Config:
         self.blob = blob
         self.chosen = None
         self.aliases = None
-        self.buses = blob['buses']
         # wrangle the json a little so it's easier
         # to figure out which rules apply to a given device
         for dev in blob['devices']:
@@ -547,11 +552,22 @@ def is_compatible(node, compatibles):
             return True
     return False
 
-def should_parse_regions(root, node, buses):
+def should_parse_regions(root, node):
     """ returns True if we should parse regions found in this node. """
     parent = node.get_parent_node()
 
-    return parent == root or is_compatible(parent, buses)
+    if parent == root:
+        return True
+
+    try:
+        # a ranges property indicates that children of the parent node
+        # are accessible by the grandparent node. If this property holds
+        # all the way up the tree, children of the parent will be addressable
+        # by the CPU.
+        idx = parent.index('ranges')
+        return should_parse_regions(root, parent)
+    except ValueError:
+        return False
 
 def find_devices(dtb, cfg):
     devices = {}
@@ -571,7 +587,7 @@ def find_devices(dtb, cfg):
             cfg.set_chosen(Device(child, None, name))
         elif name == '/aliases':
             cfg.set_aliases(Device(child, None, name))
-        if should_parse_regions(root, child, cfg.buses):
+        if should_parse_regions(root, child):
             devices[child.name] = Device(child, devices[child.get_parent_node().name], name)
             nodes[child.name] = devices[child.name]
         else:
