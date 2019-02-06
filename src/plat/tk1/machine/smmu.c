@@ -15,11 +15,11 @@
 
 #include <plat/machine/smmu.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
 #include <plat/machine/hardware.h>
 #include <object/structures.h>
 
 
+#define MC_PADDR                    0x70019000
 #define SMMU_CONFIG_OFFSET          0x10
 
 #define PTB_DATA_BASE_SHIFT         12
