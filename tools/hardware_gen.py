@@ -139,7 +139,7 @@ class Offset:
         return (self.base + self.offset) > (other.base + other.offset)
 
 class Region:
-    def __init__(self, start, size, name, index=0):
+    def __init__(self, start, size, name, index=0, kaddr=0):
         self.start = start
         self.size = size
 
@@ -149,13 +149,15 @@ class Region:
             self.names = set(other.names)
             self.index = other.index
             self.kaddr = other.kaddr
+            self.kernel_size = other.kernel_size
             self.kernel_var = other.kernel_var[:]
             self.var_names = other.var_names[:]
         else:
             self.names = set()
             self.names.add(name)
             self.index = index
-            self.kaddr = 0
+            self.kaddr = kaddr
+            self.kernel_size = 0
             self.kernel_var = []
             self.var_names = []
             self.user_macro = False
@@ -461,6 +463,7 @@ class Config:
         if 'kernel' in rule and rule['kernel'] != False:
             region.kernel_var.append(Offset(rule['kernel'], 0, rule.get('macro', None)))
             region.executeNever = rule['executeNever']
+            region.kernel_size = rule.get('kernel_size', 0)
             region.user_macro = (not rule.get('user', False)) and 'macro' in rule
         return region
 
@@ -793,17 +796,24 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
     """ generate the device list for the C header file """
     memory = sorted(memory, key=lambda a: a.start)
     kernel = sorted(kernel, key=lambda a: a.start)
+    extra_kernel = []
     addr = 0
     macros = {}
-    # TODO: this will only map the first page of each device. That seems to be adequate for now,
-    # but in the future we may need more.
     for reg in kernel:
         reg.kaddr = addr
         addr += 1 << args.page_bits
-        if reg.size > (1 << args.page_bits):
-            # print out a warning for now
-            logging.warning('Only mapping 0x%x bytes of 0x%x for kernel region at 0x%x (%s)'%
+        if reg.size > (1 << args.page_bits) and reg.kernel_size == 0x0:
+            # print out a warning if the region has more than one page and max size is not set
+            logging.warning('Only mapping 0x%x bytes of 0x%x for kernel region at 0x%x (%s), set "kernel_size" in YAML to silence'%
                     (1 << args.page_bits, reg.size, reg.start, ' '.join(sorted(reg.names))))
+
+        size = 1 << args.page_bits
+        while size < reg.kernel_size and size < reg.size:
+            extra_kernel.append(Region(reg.start + size, 1 << args.page_bits,
+                'above region continued...', kaddr=addr))
+            addr += 1 << args.page_bits
+            size += 1 << args.page_bits
+
         for var in reg.kernel_var:
             var.base = reg.kaddr
             if var.base + var.offset in macros:
@@ -812,6 +822,9 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
                 continue
             macros[var.base + var.offset] = var
         reg.var_names = sorted(i.name for i in reg.kernel_var)
+
+    kernel += extra_kernel
+    kernel.sort(key=lambda a: a.start)
     # make sure physBase is at least 16MB (supersection) aligned for the ELF loader's sake.
     # TODO: this may need to be larger for aarch64. It seems to work OK on currently supported platforms though.
     paddr = align_up(memory[0].start, 1 << args.phys_align)

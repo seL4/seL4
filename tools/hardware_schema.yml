@@ -88,6 +88,13 @@ definitions:
       kernel:
         description: kernel macro used to access this region. If not present, region will not be mapped.
         $ref: '#/definitions/macro'
+      kernel_size:
+        description: >
+          Maximum size of the region in the kernel.
+          This will map PAGE_ALIGN_UP(max(kernel_size, region_size)) bytes starting at the
+          device's base address into the kernel.
+        type: integer
+        default: 1 << PAGE_BITS
       macro:
         description: only map the region to the kernel if this macro is defined
         $ref: '#/definitions/macro'
