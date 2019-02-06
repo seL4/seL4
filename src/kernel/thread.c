@@ -513,25 +513,29 @@ void setMCPriority(tcb_t *tptr, prio_t mcp)
 #ifdef CONFIG_KERNEL_MCS
 void setPriority(tcb_t *tptr, prio_t prio)
 {
-    tcbSchedDequeue(tptr);
-    tptr->tcbPriority = prio;
-
     switch (thread_state_get_tsType(tptr->tcbState)) {
     case ThreadState_Running:
     case ThreadState_Restart:
-        if (isSchedulable(tptr)) {
+        if (thread_state_get_tcbQueued(tptr->tcbState) || tptr == NODE_STATE(ksCurThread)) {
+            tcbSchedDequeue(tptr);
+            tptr->tcbPriority = prio;
             SCHED_ENQUEUE(tptr);
             rescheduleRequired();
+        } else {
+            tptr->tcbPriority = prio;
         }
         break;
     case ThreadState_BlockedOnReceive:
     case ThreadState_BlockedOnSend:
+        tptr->tcbPriority = prio;
         reorderEP(EP_PTR(thread_state_get_blockingObject(tptr->tcbState)), tptr);
         break;
     case ThreadState_BlockedOnNotification:
+        tptr->tcbPriority = prio;
         reorderNTFN(NTFN_PTR(thread_state_get_blockingObject(tptr->tcbState)), tptr);
         break;
     default:
+        tptr->tcbPriority = prio;
         break;
     }
 }
