@@ -725,6 +725,7 @@ HEADER_TEMPLATE = """
 
 #ifndef __PLAT_DEVICES_GEN_H
 #define __PLAT_DEVICES_GEN_H
+#include <linker.h>
 #ifndef KDEV_PPTR
 #include <mode/hardware.h>
 #endif
