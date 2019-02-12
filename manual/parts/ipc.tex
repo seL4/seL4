@@ -143,7 +143,7 @@ silently ignore any usage of the high 4 bits.
 \subsection{Capability Transfer}
 \label{sec:cap-transfer}
 
-Messages may contain capabilities, which will be transferred to the
+Messages may contain capabilities, which will be copied to the
 receiver, provided that the endpoint capability
 invoked by the sending thread has Grant rights. An attempt to send
 capabilities using an endpoint capability without the Grant right will
@@ -173,6 +173,10 @@ position of the receiver's badges array, and the kernel sets the n-th bit (count
 least significant) in the \texttt{capsUnwrapped} field of the message
 tag. The capability itself is not transferred, so the receive slot may be used
 for another capability.
+
+A capability that is not unwrapped is transferred by copying it from the
+sender's CNode slot to the receiver's CNode slot. The sender retains access
+to the sent capability.
 
 If a receiver gets a message whose tag has an \texttt{extraCaps} of 2 and a
 \texttt{capsUnwrapped} of 2, then the first capability in the message was
