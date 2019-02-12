@@ -199,6 +199,19 @@ A capability could not be looked up.
 \end{tabularx}
 \vfill
 
+\subsection{Truncated Message}
+
+Too few message words or capabilities were sent in the message.
+
+\begin{tabularx}{\textwidth}{p{0.25\textwidth}X}
+\toprule
+    Field & Meaning \\
+\midrule
+    \ipcbloc{Label} & \enummem{seL4\_TruncatedMessage} \\
+\bottomrule
+\end{tabularx}
+\vfill
+
 \subsection{Delete First}
 
 A destination slot specified in the syscall arguments is occupied.
