@@ -273,7 +273,13 @@ void schedContext_bindTCB(sched_context_t *sc, tcb_t *tcb)
 
     schedContext_resume(sc);
     if (isSchedulable(tcb)) {
-        possibleSwitchTo(tcb);
+        SCHED_ENQUEUE(tcb);
+        rescheduleRequired();
+        // TODO -- at some stage we should take this call out of any TCB invocations that
+        // alter capabilities, so that we can do a direct switch. The prefernce here is to
+        // remove seL4_SetSchedParams from using ThreadControl. It's currently out of scope for
+        // verification work, so the work around is to use rescheduleRequired()
+        //possibleSwitchTo(tcb);
     }
 }
 
