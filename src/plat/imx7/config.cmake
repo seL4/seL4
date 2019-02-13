@@ -27,7 +27,7 @@ endif()
 add_sources(
     DEP "KernelPlatImx7"
     CFILES src/plat/imx7/machine/io.c
-           src/plat/imx7/machine/hardware.c
            src/arch/arm/machine/generic_timer.c
            src/arch/arm/machine/gic_pl390.c
+           src/arch/arm/machine/l2c_nop.c
 )

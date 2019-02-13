@@ -18,11 +18,4 @@
 #include <linker.h>
 #include <machine/io.h>
 
-void initL2Cache(void);
-
-static inline void plat_cleanL2Range(paddr_t start, paddr_t end) {}
-static inline void plat_invalidateL2Range(paddr_t start, paddr_t end) {}
-static inline void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end) {}
-static inline void plat_cleanInvalidateCache(void) {}
-
 #endif /* !__PLAT_MACHINE_HARDWARE_H */
