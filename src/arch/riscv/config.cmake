@@ -74,5 +74,3 @@ add_sources(
 )
 
 add_bf_source_old("KernelArchRiscV" "structures.bf" "include/arch/riscv" "arch/object")
-add_bf_source_old("KernelArchRiscV" "hardware.bf" "include/plat/${KernelPlatform}" "plat/machine")
-

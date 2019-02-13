@@ -27,3 +27,5 @@ add_sources(
         src/plat/imx31/machine/io.c
         src/plat/imx31/machine/hardware.c
 )
+
+add_bf_source_old("KernelPlatformKZM" "hardware.bf" "include/plat/imx31" "plat/machine")
