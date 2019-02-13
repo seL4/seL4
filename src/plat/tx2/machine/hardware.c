@@ -13,14 +13,8 @@
 #include <config.h>
 #include <types.h>
 #include <arch/machine.h>
-#include <arch/machine/generic_timer.h>
 #include <linker.h>
 
-BOOT_CODE void
-initTimer(void)
-{
-    initGenericTimer();
-}
 
 void plat_cleanL2Range(paddr_t start, paddr_t end) {}
 void plat_invalidateL2Range(paddr_t start, paddr_t end) {}

@@ -27,3 +27,17 @@ BOOT_CODE void initGenericTimer(void)
 
     resetTimer();
 }
+
+/*
+ * The exynos5 platforms require custom hardware initialisation before the
+ * generic timer is usable. They need to overwrite initTimer before calling
+ * initGenericTimer because of this. We cannot use a `weak` symbol definition
+ * in this case because the kernel is built as a single file and multiple
+ * symbol definitions with the same name are not allowed. We therefore resort
+ * to ifdef'ing out this initTimer definition for exynos5 platforms.
+ */
+#ifndef CONFIG_PLAT_EXYNOS5
+BOOT_CODE void initTimer(void) {
+    initGenericTimer();
+}
+#endif

@@ -10,14 +10,7 @@
 
 #include <config.h>
 #include <types.h>
-#include <arch/machine/generic_timer.h>
 #include <linker.h>
-
-BOOT_CODE void
-initTimer(void)
-{
-    initGenericTimer();
-}
 
 void
 initL2Cache(void)

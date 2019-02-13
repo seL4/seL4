@@ -11,14 +11,6 @@
 #include <config.h>
 #include <types.h>
 #include <arch/machine.h>
-#include <arch/machine/generic_timer.h>
-
-/* we use the count-down timer of the GPT as the kernel preemption timer */
-void
-initTimer(void)
-{
-    initGenericTimer();
-}
 
 /* Cortex-A7 uses an integrated L2 cache controller */
 void
