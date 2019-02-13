@@ -360,7 +360,7 @@ static inline void L2_cacheSync(void)
     while (l2cc->maintenance.cache_sync & MAINTENANCE_PENDING);
 }
 
-void plat_cleanInvalidateCache(void)
+void plat_cleanInvalidateL2Cache(void)
 {
     if (!config_set(CONFIG_DEBUG_DISABLE_L2_CACHE)) {
         l2cc->maintenance.clean_way = 0xffff;

@@ -143,7 +143,7 @@ void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
     finaliseL2Op();
 }
 
-void plat_cleanInvalidateCache(void)
+void plat_cleanInvalidateL2Cache(void)
 {
     cleanL2();
     invalidateL2();

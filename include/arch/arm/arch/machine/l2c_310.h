@@ -20,7 +20,7 @@
 
 void initL2Cache(void);
 
-void plat_cleanInvalidateCache(void);
+void plat_cleanInvalidateL2Cache(void);
 void plat_cleanCache(void);
 void plat_cleanL2Range(paddr_t start, paddr_t end);
 void plat_invalidateL2Range(paddr_t start, paddr_t end);

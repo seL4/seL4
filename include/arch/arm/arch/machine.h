@@ -33,7 +33,7 @@ void setIRQTrigger(irq_t irq, bool_t trigger);
 static inline void plat_cleanL2Range(paddr_t start, paddr_t end);
 static inline void plat_invalidateL2Range(paddr_t start, paddr_t end);
 static inline void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
-static inline void plat_cleanInvalidateCache(void);
+static inline void plat_cleanInvalidateL2Cache(void);
 
 void cleanInvalidateCacheRange_RAM(word_t start, word_t end, paddr_t pstart);
 void cleanCacheRange_RAM(word_t start, word_t end, paddr_t pstart);

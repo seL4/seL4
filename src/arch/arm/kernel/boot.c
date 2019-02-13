@@ -350,7 +350,7 @@ release_secondary_cpus(void)
      * turns on the cache. Thus, we do not need to clean and invaliate the cache.
      */
     cleanInvalidateL1Caches();
-    plat_cleanInvalidateCache();
+    plat_cleanInvalidateL2Cache();
 #endif
 
     /* Wait until all the secondary cores are done initialising */

@@ -190,7 +190,7 @@ void
 arch_clean_invalidate_caches(void)
 {
     cleanCaches_PoU();
-    plat_cleanInvalidateCache();
+    plat_cleanInvalidateL2Cache();
     cleanInvalidateL1Caches();
     isb();
 }
