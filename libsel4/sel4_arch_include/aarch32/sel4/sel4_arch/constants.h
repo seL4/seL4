@@ -152,7 +152,7 @@ enum {
 #define seL4_SuperSectionBits 25
 #define seL4_PGDEntryBits 3
 #define seL4_PGDIndexBits 2
-#define seL4_PGDBits (seL4_PGDIndexBits + seL4_PGDEntryBits)
+#define seL4_PGDBits 5
 #define seL4_PageDirEntryBits 3
 #define seL4_PageDirIndexBits 11
 #define seL4_VCPUBits 12
@@ -182,6 +182,9 @@ enum {
 SEL4_SIZE_SANITY(seL4_PageTableEntryBits, seL4_PageTableIndexBits, seL4_PageTableBits);
 SEL4_SIZE_SANITY(seL4_PageDirEntryBits,   seL4_PageDirIndexBits,   seL4_PageDirBits);
 SEL4_SIZE_SANITY(seL4_WordSizeBits, seL4_ASIDPoolIndexBits, seL4_ASIDPoolBits);
+#ifdef seL4_PGDBits
+SEL4_SIZE_SANITY(seL4_PGDEntryBits, seL4_PGDIndexBits, seL4_PGDBits);
+#endif
 #endif
 
 /* Untyped size limits */
