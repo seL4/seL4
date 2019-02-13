@@ -38,4 +38,5 @@ add_sources(
         src/plat/exynos5/machine/hardware.c
         src/plat/exynos5/machine/l2cache.c
         src/plat/exynos_common/io.c
+        src/arch/arm/machine/gic_pl390.c
 )

@@ -32,5 +32,9 @@ endif()
 
 add_sources(
     DEP "KernelPlatImx6"
-    CFILES src/plat/imx6/machine/io.c
+    CFILES
+        src/plat/imx6/machine/io.c
+        src/arch/arm/machine/l2c_310.c
+        src/arch/arm/machine/priv_timer.c
+        src/arch/arm/machine/gic_pl390.c
 )

@@ -25,4 +25,6 @@ add_sources(
     CFILES
         src/plat/exynos_common/io.c
         src/plat/exynos4/machine/hardware.c
+        src/arch/arm/machine/l2c_310.c
+        src/arch/arm/machine/gic_pl390.c
 )

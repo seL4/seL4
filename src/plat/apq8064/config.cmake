@@ -28,4 +28,5 @@ add_sources(
         src/plat/apq8064/machine/l2cache.c
         src/plat/apq8064/machine/io.c
         src/plat/apq8064/machine/timer.c
+        src/arch/arm/machine/gic_pl390.c
 )

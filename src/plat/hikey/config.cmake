@@ -76,4 +76,5 @@ add_sources(
         src/plat/hikey/machine/hardware.c
         src/plat/hikey/machine/io.c
         src/arch/arm/machine/generic_timer.c
+        src/arch/arm/machine/gic_pl390.c
 )

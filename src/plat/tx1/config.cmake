@@ -30,4 +30,5 @@ add_sources(
         src/plat/tx1/machine/io.c
         src/plat/tx1/machine/l2cache.c
         src/arch/arm/machine/generic_timer.c
+        src/arch/arm/machine/gic_pl390.c
 )
