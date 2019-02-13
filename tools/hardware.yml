@@ -38,6 +38,25 @@ devices:
       - user: true
     interrupts:
       INTERRUPT_VGIC_MAINTENANCE: 0
+  # ARM GICv3
+  # We only need GIC distributor and GIC redistributor regions and
+  # use system registers for GICC, GICH.
+  - compatible:
+      - arm,gic-v3
+    regions:
+        # GICDistributor
+      - executeNever: true
+        index: 0
+        kernel: GICD_PPTR
+        kernel_size: 0x10000
+        # GICRedistributor
+      - executeNever: true
+        index: 1
+        kernel: GICR_PPTR
+        # Assume 8 cores max
+        kernel_size: 0x100000
+    interrupts:
+      INTERRUPT_VGIC_MAINTENANCE: 0
   # Broadcom second level IRQ controller (interrupt-controller/brcm,bcm2835-armctrl-ic.txt),
   # TI AM33XX/OMAP3 intc (interrupt-controller/ti,omap-intc-irq.txt)
   - compatible:

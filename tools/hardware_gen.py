@@ -86,6 +86,7 @@ interrupt_controllers = {
     'arm,cortex-a7-gic': parse_arm_gic_irq,
     'arm,cortex-a9-gic': parse_arm_gic_irq,
     'arm,gic-400': parse_arm_gic_irq,
+    'arm,gic-v3': parse_arm_gic_irq,
     'brcm,bcm2836-l1-intc': parse_raw_irq,
     'brcm,bcm2836-armctrl-ic': parse_bcm2836_armctrl_irq, # maybe not actually needed?
     'fsl,avic': parse_raw_irq,
