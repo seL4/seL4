@@ -621,6 +621,7 @@ def find_devices(dtb, cfg):
     chosen = None
     aliases = None
     root = dtb.get_rootnode()
+    root.path = '/'
     devices[root.name] = Device(root, None, '/')
     nodes[root.name] = devices[root.name]
     for child in root.walk(): # walk every node in the whole tree
@@ -628,15 +629,18 @@ def find_devices(dtb, cfg):
         child = child[1]
         if not isinstance(child, pyfdt.pyfdt.FdtNode):
             continue
+        # keep the full path in order to avoid
+        # collisions (node names may not be globally unique)
+        child.path = name
         if name == '/chosen':
             cfg.set_chosen(Device(child, None, name))
         elif name == '/aliases':
             cfg.set_aliases(Device(child, None, name))
         if should_parse_regions(root, child):
-            devices[child.name] = Device(child, devices[child.get_parent_node().name], name)
-            nodes[child.name] = devices[child.name]
+            devices[child.path] = Device(child, devices[child.get_parent_node().path], name)
+            nodes[child.path] = devices[child.path]
         else:
-            nodes[child.name] = Device(child, nodes[child.get_parent_node().name], name)
+            nodes[child.path] = Device(child, nodes[child.get_parent_node().path], name)
 
         try:
             idx = child.index('phandle')
@@ -644,7 +648,7 @@ def find_devices(dtb, cfg):
             continue
 
         prop = child[idx]
-        by_phandle[prop.words[0]] = nodes[child.name]
+        by_phandle[prop.words[0]] = nodes[child.path]
 
     # the root node is not actually a device, so remove it.
     del devices[root.name]
