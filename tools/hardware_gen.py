@@ -614,12 +614,33 @@ def should_parse_regions(root, node):
     except ValueError:
         return False
 
+def parse_reserved_memory(node, devices, cfg, by_phandle):
+    regions = []
+    for child in node.walk():
+        name = child[0]
+        child = child[1]
+        if not isinstance(child, pyfdt.pyfdt.FdtNode):
+            continue
+
+        dev = devices[child.path]
+        # reserved memory regions overlap with physical RAM.
+        # never expose them to userspace (even if they are mappable)
+        del devices[child.path]
+
+        if 'reg' in dev and 'no-map' in dev:
+            reg, _ = dev.regions(cfg, by_phandle)
+            for r in reg:
+                regions.append({'address': r.start, 'size': r.size})
+
+    return regions
+
 def find_devices(dtb, cfg):
     devices = {}
     nodes = {}
     by_phandle = {}
     chosen = None
     aliases = None
+    reserved_memory = []
     root = dtb.get_rootnode()
     root.path = '/'
     devices[root.name] = Device(root, None, '/')
@@ -860,6 +881,11 @@ def main(args):
     memory, user, kernel = set(), set(), set()
     fdt = pyfdt.pyfdt.FdtBlobParse(args.dtb).to_fdt()
     devices, by_phandle = find_devices(fdt, cfg)
+
+    rsvmem = []
+    if '/reserved-memory' in devices:
+        rsvmem = parse_reserved_memory(devices['/reserved-memory'].node, devices, cfg, by_phandle)
+    rsvmem += fdt.reserve_entries
     kernel_irqs = set()
     for d in devices.values():
         kernel_irqs.update(d.get_interrupts(cfg, by_phandle))
@@ -867,7 +893,7 @@ def main(args):
             m, _ = d.regions(cfg, by_phandle) # second set is always empty for memory
             res = set()
             for e in m:
-                res.update(set(e.remove_subregions(fdt.reserve_entries)))
+                res.update(set(e.remove_subregions(rsvmem)))
             memory.update(res)
         else:
             (u, k) = d.regions(cfg, by_phandle)
