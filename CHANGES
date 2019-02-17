@@ -40,6 +40,7 @@ Upcoming release: BREAKING
 * Add configurable system call allowing userspace to set TLS register without capability on all platforms.
 * Non-hyp support added for Arm GICv3 interrupt controller.
 * Add initial i.MX8M Quad evk 64-bit Support. Currently only AArch64 EL1 non-secure is supported.
+* Add FVP platform with fixed configuration. This currently assumes A57 configuration described in tools/dts/fvp.dts.
 
 ## Upgrade Notes
 ---
