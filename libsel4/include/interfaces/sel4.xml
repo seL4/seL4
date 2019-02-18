@@ -446,7 +446,7 @@
                     The rights inherited by the new capability.<docref>Possible values for this type are given in <autoref label="sec:cap_rights"/>  .</docref>
                 </description>
             </param>
-            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
         </method>
 
         <method id="CNodeMove" name="Move" manual_name="Move" manual_label="cnode_move">
@@ -477,7 +477,7 @@
             <param dir="in" name="src_root" type="seL4_CNode" description="CPTR to the CNode that forms the root of the source CSpace. Must be at a depth equivalent to the wordsize."/>
             <param dir="in" name="src_index" type="seL4_Word" description="CPTR to the source slot. Resolved from the root of the source CSpace."/>
             <param dir="in" name="src_depth" type="seL4_Uint8" description="Number of bits of src_index to resolve to find the source slot."/>
-            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges the high 4 bits are ignored."/>
+            <param dir="in" name="badge" type="seL4_Word" description="Badge or guard to be applied to the new capability. For badges on 32-bit platforms, the high 4 bits are ignored."/>
         </method>
 
         <method id="CNodeRotate" name="Rotate" manual_name="Rotate" manual_label="cnode_rotate">

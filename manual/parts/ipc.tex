@@ -137,8 +137,9 @@ invocations on the \obj{CNode} containing the capability. Endpoint
 capabilities with badges cannot be unbadged, rebadged or used to create
 child capabilities with different badges.
 
-Only the low 28 bits of the badge are available for use. The kernel will
-silently ignore any usage of the high 4 bits.
+On 32-bit platforms, only the low 28 bits of the badge are available for use.
+The kernel will silently ignore any usage of the high 4 bits.
+On 64-bit platforms, 64 bits are available for badges.
 
 \subsection{Capability Transfer}
 \label{sec:cap-transfer}
