@@ -160,6 +160,8 @@ c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 VISIBLE NORETURN void
 c_handle_vcpu_fault(word_t hsr)
 {
+    NODE_LOCK_SYS;
+
     c_entry_hook();
 
 #ifdef TRACK_KERNEL_ENTRIES
