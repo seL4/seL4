@@ -358,8 +358,12 @@ void cancelAllIPC(endpoint_t *epptr)
             if (reply != NULL) {
                 reply_unlink(reply);
             }
-            setThreadState(thread, ThreadState_Restart);
-            possibleSwitchTo(thread);
+            if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) == seL4_Fault_NullFault) {
+                setThreadState(thread, ThreadState_Restart);
+                possibleSwitchTo(thread);
+            } else {
+                setThreadState(thread, ThreadState_Inactive);
+            }
 #else
             setThreadState(thread, ThreadState_Restart);
             SCHED_ENQUEUE(thread);
