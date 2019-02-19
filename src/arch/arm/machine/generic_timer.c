@@ -37,7 +37,8 @@ BOOT_CODE void initGenericTimer(void)
  * to ifdef'ing out this initTimer definition for exynos5 platforms.
  */
 #ifndef CONFIG_PLAT_EXYNOS5
-BOOT_CODE void initTimer(void) {
+BOOT_CODE void initTimer(void)
+{
     initGenericTimer();
 }
 #endif
