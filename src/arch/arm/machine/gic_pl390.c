@@ -206,7 +206,14 @@ void ipiBroadcast(irq_t irq, bool_t includeSelfCPU)
 
 void ipi_send_target(irq_t irq, word_t cpuTargetList)
 {
-    gic_dist->sgi_control = (cpuTargetList << GICD_SGIR_CPUTARGETLIST_SHIFT) | (irq << GICD_SGIR_SGIINTID_SHIFT);
+    if (config_set(CONFIG_PLAT_TX2)) {
+        /* We need to swap the top 4 bits and the bottom 4 bits of the
+         * cpuTargetList since the A57 cores with logical core ID 0-3 are
+         * in cluster 1 and the Denver2 cores with logical core ID 4-5 are
+         * in cluster 0. */
+        cpuTargetList = ((cpuTargetList & 0xf) << 4) | ((cpuTargetList & 0xf0) >> 4);
+    }
+    gic_dist->sgi_control = (cpuTargetList << (GICD_SGIR_CPUTARGETLIST_SHIFT)) | (irq << GICD_SGIR_SGIINTID_SHIFT);
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
