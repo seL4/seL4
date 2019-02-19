@@ -24,7 +24,6 @@ endif()
 add_sources(
     DEP "KernelPlatformAPQ8064"
     CFILES
-        src/plat/apq8064/machine/io.c
         src/plat/apq8064/machine/timer.c
         src/arch/arm/machine/gic_pl390.c
         src/arch/arm/machine/l2c_nop.c

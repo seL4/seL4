@@ -445,6 +445,8 @@ class Config:
         self.blob = blob
         self.chosen = None
         self.aliases = None
+        self.matched_devices = set()
+
         # wrangle the json a little so it's easier
         # to figure out which rules apply to a given device
         for dev in blob['devices']:
@@ -526,6 +528,7 @@ class Config:
                         if reg.user_macro or ('user' in reg_rule and reg_rule['user'] == True):
                             user.add(reg)
                         regs.append(reg)
+                        self.matched_devices.add(compatible)
 
                 kernel.update(set(regs))
 
@@ -585,6 +588,9 @@ class Config:
             if len(ret) > 0:
                 break
         return ret
+
+    def get_matched_devices(self):
+        return sorted(self.matched_devices)
 
 def is_compatible(node, compatibles):
     """ returns True if node matches a compatible in the given list """
@@ -819,6 +825,11 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
 #endif /* __PLAT_DEVICES_GEN_H */
 """
 
+def add_build_rules(devices):
+    devices[-1] = devices[-1] + ";"
+    #print result to cmake variable
+    print(';'.join(devices))
+
 def output_regions(args, devices, memory, kernel, irqs, fp):
     """ generate the device list for the C header file """
     memory = sorted(memory, key=lambda a: a.start)
@@ -920,6 +931,9 @@ def main(args):
     user = fixup_device_regions(user, 1 << args.page_bits, merge=True)
     kernel = fixup_device_regions(kernel, 1 << args.page_bits)
     output_regions(args, user, memory, kernel, kernel_irqs, args.output)
+  
+    #generate cmake
+    add_build_rules(cfg.get_matched_devices())
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -929,6 +943,5 @@ if __name__ == '__main__':
     parser.add_argument('--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
     parser.add_argument('--config', help='kernel device configuration', required=True, type=argparse.FileType())
     parser.add_argument('--schema', help='config file schema for validation', required=True, type=argparse.FileType())
-
     args = parser.parse_args()
     main(args)

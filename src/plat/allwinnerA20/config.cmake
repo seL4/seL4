@@ -25,8 +25,7 @@ endif()
 
 add_sources(
     DEP "KernelPlatAllwinnerA20"
-    CFILES src/plat/allwinnerA20/machine/io.c
-           src/plat/allwinnerA20/machine/hardware.c
+    CFILES src/plat/allwinnerA20/machine/hardware.c
            src/plat/allwinnerA20/machine/l2cache.c
            src/arch/arm/machine/gic_pl390.c
 )

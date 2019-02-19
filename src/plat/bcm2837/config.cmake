@@ -27,7 +27,6 @@ endif()
 add_sources(
     DEP "KernelPlatformRpi3"
     CFILES
-        src/plat/bcm2837/machine/io.c
         src/plat/bcm2837/machine/intc.c
         src/arch/arm/machine/generic_timer.c
         src/arch/arm/machine/l2c_nop.c

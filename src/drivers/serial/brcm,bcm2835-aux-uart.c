@@ -59,4 +59,4 @@ unsigned char getDebugChar(void)
     while ( !(*UART_REG(MU_LSR) & MU_LSR_DATAREADY) );
     return *UART_REG(MU_IO);
 }
-#endif /* CONFIG_DEBUG_BUILD */
+#endif //CONFIG_DEBUG_BUILD

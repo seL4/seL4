@@ -24,7 +24,6 @@ endif()
 add_sources(
     DEP "KernelPlatformKZM"
     CFILES
-        src/plat/imx31/machine/io.c
         src/plat/imx31/machine/hardware.c
 )
 

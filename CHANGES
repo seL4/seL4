@@ -23,6 +23,7 @@ Upcoming release: BREAKING
       user level.
 * Support added for Aarch64 hypervisor mode (EL2) for Nvidia TX1 and TX2. This is not verified.
 * Support for generating ARM machine header files (memory regions and interrupts) based on a device tree.
+* Support added for ARM kernel serial driver to be linked in at build time based on the device tree compatibility string.
 
 ## Upgrade Notes
 ---

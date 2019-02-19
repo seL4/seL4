@@ -1,5 +1,5 @@
 /*
- * Copyright 2014, General Dynamics C4 Systems
+ * Copyright 2016, General Dynamics C4 Systems
  *
  * This software may be distributed and modified according to the terms of
  * the GNU General Public License version 2. Note that NO WARRANTY is provided.
@@ -14,9 +14,10 @@
 #include <machine/io.h>
 #include <plat/machine/devices_gen.h>
 
-#define UTHR 0x00 /* UART Transmit Holding Register */
-#define ULSR 0x14 /* UART Line Status Register */
-#define ULSR_THRE 0x20 /* Transmit Holding Register Empty */
+#define UARTDR                    0x000
+#define UARTFR                    0x018
+#define PL011_UARTFR_TXFF         (1 << 5)
+#define PL011_UARTFR_RXFE         (1 << 4)
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
@@ -24,9 +25,9 @@
 void
 putDebugChar(unsigned char c)
 {
-    while ((*UART_REG(ULSR) & ULSR_THRE) == 0);
+    while ((*UART_REG(UARTFR) & PL011_UARTFR_TXFF) != 0);
 
-    *UART_REG(UTHR) = c;
+    *UART_REG(UARTDR) = c;
 }
 #endif
 
@@ -34,6 +35,8 @@ putDebugChar(unsigned char c)
 unsigned char
 getDebugChar(void)
 {
-    return 0;
+    while ((*UART_REG(UARTFR) & PL011_UARTFR_RXFE) != 0);
+
+    return *UART_REG(UARTDR);
 }
-#endif
+#endif //CONFIG_DEBUG_BUILD

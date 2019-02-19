@@ -24,6 +24,5 @@ add_sources(
     DEP "KernelPlatformAM335X"
     CFILES
         src/plat/am335x/machine/hardware.c
-        src/plat/am335x/machine/io.c
         src/plat/am335x/machine/l2cache.c
 )
