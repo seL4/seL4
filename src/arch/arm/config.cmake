@@ -96,6 +96,45 @@ include(src/plat/tx2/config.cmake)
 include(src/plat/zynq7000/config.cmake)
 include(src/plat/zynqmp/config.cmake)
 
+if (DEFINED KernelDTSList)
+    set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
+    set(KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb")
+    set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
+    set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
+    set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
+        
+    find_program(DTC_TOOL dtc)
+    if ("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
+        message(FATAL_ERROR "Cannot find 'dtc' program.")
+    endif()
+
+    foreach(entry ${KernelDTSList})
+        get_absolute_source_or_binary(dts_tmp ${entry})
+        set(dts_list "${dts_list} ${dts_tmp}")
+    endforeach()
+
+    # Generate final DTS based on Linux DTS + seL4 overlay[s]
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/"
+    )
+    execute_process(
+        COMMAND bash -c "cat ${dts_list} > ${KernelDTSIntermediate}"
+    )
+
+    # Compile DTS to DTB
+    execute_process(
+        COMMAND ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
+    )
+
+    # Generate devices_gen header based on DTB
+    execute_process(
+        COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
+        OUTPUT_VARIABLE compatibility_strings
+    )
+
+    include(src/drivers/serial/config.cmake)
+endif()
+
 # Now enshrine all the common variables in the config
 config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")
 config_set(KernelArmCortexA8 ARM_CORTEX_A8 "${KernelArmCortexA8}")
