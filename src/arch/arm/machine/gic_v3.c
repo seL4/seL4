@@ -272,6 +272,42 @@ BOOT_CODE static void cpu_iface_init(void)
     isb();
 }
 
+void setIRQTrigger(irq_t irq, bool_t trigger)
+{
+
+    /* GICv3 has read-only GICR_ICFG0 for SGI with
+     * default value 0xaaaaaaaa, and read-write GICR_ICFG1
+     * for PPI with default 0x00000000.*/
+    if (is_sgi(irq)) {
+        return;
+    }
+    int word = irq >> 4;
+    int bit = ((irq & 0xf) * 2);
+    uint32_t icfgr = 0;
+    if (is_ppi(irq)) {
+        icfgr = gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgr1;
+    } else {
+        icfgr = gic_dist->icfgrn[word];
+    }
+
+    if (trigger) {
+        icfgr |= (0b10 << bit);
+    } else {
+        icfgr &= ~(0b11 << bit);
+    }
+
+    if (is_ppi(irq)) {
+        gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgr1 = icfgr;
+    } else {
+        /* Update GICD_ICFGR<n>. Note that the interrupt should
+         * be disabled before changing the field, and this function
+         * assumes the caller has disabled the interrupt. */
+        gic_dist->icfgrn[word] = icfgr;
+    }
+
+    return;
+}
+
 BOOT_CODE void initIRQController(void)
 {
     dist_init();

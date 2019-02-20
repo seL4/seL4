@@ -18,6 +18,9 @@
 #ifndef ARCH_MACHINE_GIC_3_H
 #define ARCH_MACHINE_GIC_3_H
 
+/* tell the kernel we have the set trigger feature */
+#define HAVE_SET_TRIGGER 1
+
 #include <stdint.h>
 #include <util.h>
 #include <linker.h>
