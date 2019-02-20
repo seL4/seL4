@@ -199,8 +199,8 @@ struct gic_rdist_sgi_ppi_map {  /* Starting */
 };
 
 extern volatile struct gic_dist_map *const gic_dist;
-extern volatile struct gic_rdist_map *const gic_rdist;
-extern volatile struct gic_rdist_sgi_ppi_map *const gic_rdist_sgi_ppi;
+extern volatile struct gic_rdist_map *gic_rdist_map[CONFIG_MAX_NUM_NODES];
+extern volatile struct gic_rdist_sgi_ppi_map *gic_rdist_sgi_ppi_map[CONFIG_MAX_NUM_NODES];
 /*
  * The only sane way to get an GIC IRQ number that can be properly
  * ACKED later is through the int_ack register. Unfortunately, reading
@@ -232,7 +232,7 @@ static inline int is_irq_edge_triggered(irq_t irq)
         return 0;
     }
     if (is_ppi(irq)) {
-        icfgr = gic_rdist_sgi_ppi->icfgrn_rw;
+        icfgr = gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icfgrn_rw;
     } else {
         icfgr = gic_dist->config[word];
     }
@@ -247,7 +247,7 @@ static inline void gic_pending_clr(irq_t irq)
     /* Using |= here is detrimental to your health */
     /* Applicable for SPI and PPIs */
     if (irq < NR_GIC_LOCAL_IRQS) {
-        gic_rdist_sgi_ppi->icpendr0 = BIT(bit);
+        gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icpendr0 = BIT(bit);
     } else {
         gic_dist->pending_clr[word] = BIT(bit);
     }
@@ -259,7 +259,7 @@ static inline void gic_enable_clr(irq_t irq)
     int bit = IRQ_BIT(irq);
     /* Using |= here is detrimental to your health */
     if (irq < NR_GIC_LOCAL_IRQS) {
-        gic_rdist_sgi_ppi->icenabler0 = BIT(bit);
+        gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->icenabler0 = BIT(bit);
     } else {
         gic_dist->enable_clr[word] = BIT(bit);
     }
@@ -272,7 +272,7 @@ static inline void gic_enable_set(irq_t irq)
     int bit = IRQ_BIT(irq);
 
     if (irq < NR_GIC_LOCAL_IRQS) {
-        gic_rdist_sgi_ppi->isenabler0 = BIT(bit);
+        gic_rdist_sgi_ppi_map[CURRENT_CPU_INDEX()]->isenabler0 = BIT(bit);
     } else {
         gic_dist->enable_set[word] = BIT(bit);
     }
