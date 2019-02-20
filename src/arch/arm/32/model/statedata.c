@@ -56,13 +56,13 @@ pde_t armUSGlobalPD[BIT(PD_INDEX_BITS)] ALIGN_BSS(BIT(seL4_PageDirBits));;
 pte_t  armUSGlobalPT[BIT(PT_INDEX_BITS)]   ALIGN_BSS(BIT(seL4_PageTableBits));
 #endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 /* Current VCPU */
-vcpu_t *armHSCurVCPU;
+UP_STATE_DEFINE(vcpu_t, *armHSCurVCPU);
 /* Whether the current loaded VCPU is enabled in the hardware or not */
-bool_t armHSVCPUActive;
+UP_STATE_DEFINE(bool_t, armHSVCPUActive);
 
 #ifdef CONFIG_HAVE_FPU
 /* Whether the hyper-mode kernel is allowed to execute FPU instructions */
-bool_t armHSFPUEnabled;
+UP_STATE_DEFINE(bool_t, armHSFPUEnabled);
 #endif
 
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */

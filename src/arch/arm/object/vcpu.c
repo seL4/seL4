@@ -82,7 +82,7 @@ access_fpexc(vcpu_t *vcpu, bool_t write)
     /* save a copy of the current status since
      * the enableFpuHyp modifies the armHSFPUEnabled
      */
-    bool_t flag = armHSFPUEnabled;
+    bool_t flag = ARCH_NODE_STATE(armHSFPUEnabled);
     if (!flag) {
         enableFpuInstInHyp();
     }
@@ -237,8 +237,8 @@ vcpu_boot_init(void)
         gic_vcpu_num_list_regs = GIC_VCPU_MAX_NUM_LR;
     }
     vcpu_disable(NULL);
-    armHSCurVCPU = NULL;
-    armHSVCPUActive = false;
+    ARCH_NODE_STATE(armHSCurVCPU) = NULL;
+    ARCH_NODE_STATE(armHSVCPUActive) = false;
 
 #if defined(ARM_HYP_TRAP_CP14_IN_VCPU_THREADS) || defined(ARM_HYP_TRAP_CP14_IN_NATIVE_USER_THREADS)
     /* On the verified build, we have implemented a workaround that ensures
@@ -313,12 +313,12 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
 static word_t
 readVCPUReg(vcpu_t *vcpu, word_t field)
 {
-    if (likely(armHSCurVCPU == vcpu)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         switch (field) {
         case seL4_VCPUReg_SCTLR:
             /* The SCTLR value is switched to/from hardware when we enable/disable
              * the vcpu, not when we switch vcpus */
-            if (armHSVCPUActive) {
+            if (ARCH_NODE_STATE(armHSVCPUActive)) {
                 return getSCTLR();
             } else {
                 return vcpu_read_reg(vcpu, field);
@@ -334,10 +334,10 @@ readVCPUReg(vcpu_t *vcpu, word_t field)
 static void
 writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 {
-    if (likely(armHSCurVCPU == vcpu)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         switch (field) {
         case seL4_VCPUReg_SCTLR:
-            if (armHSVCPUActive) {
+            if (ARCH_NODE_STATE(armHSVCPUActive)) {
                 setSCTLR(value);
             } else {
                 vcpu_write_reg(vcpu, field, value);
@@ -427,9 +427,9 @@ VGICMaintenance(void)
             set_gic_vcpu_ctrl_lr(irq_idx, virq);
             /* decodeVCPUInjectIRQ below checks the vgic.lr register,
              * so we should also sync the shadow data structure as well */
-            assert(armHSCurVCPU != NULL && armHSVCPUActive);
-            if (armHSCurVCPU != NULL && armHSVCPUActive) {
-                armHSCurVCPU->vgic.lr[irq_idx] = virq;
+            assert(ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive));
+            if (ARCH_NODE_STATE(armHSCurVCPU) != NULL && ARCH_NODE_STATE(armHSVCPUActive)) {
+                ARCH_NODE_STATE(armHSCurVCPU)->vgic.lr[irq_idx] = virq;
             } else {
                 /* FIXME This should not happen */
             }
@@ -460,37 +460,37 @@ vcpu_init(vcpu_t *vcpu)
 void
 vcpu_switch(vcpu_t *new)
 {
-    if (likely(armHSCurVCPU != new)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) != new)) {
         if (unlikely(new != NULL)) {
-            if (unlikely(armHSCurVCPU != NULL)) {
-                vcpu_save(armHSCurVCPU, armHSVCPUActive);
+            if (unlikely(ARCH_NODE_STATE(armHSCurVCPU) != NULL)) {
+                vcpu_save(ARCH_NODE_STATE(armHSCurVCPU), ARCH_NODE_STATE(armHSVCPUActive));
             }
             vcpu_restore(new);
-            armHSCurVCPU = new;
-            armHSVCPUActive = true;
-        } else if (unlikely(armHSVCPUActive)) {
+            ARCH_NODE_STATE(armHSCurVCPU) = new;
+            ARCH_NODE_STATE(armHSVCPUActive) = true;
+        } else if (unlikely(ARCH_NODE_STATE(armHSVCPUActive))) {
             /* leave the current VCPU state loaded, but disable vgic and mmu */
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-            saveAllBreakpointState(armHSCurVCPU->vcpuTCB);
+            saveAllBreakpointState(ARCH_NODE_STATE(armHSCurVCPU)->vcpuTCB);
 #endif
-            vcpu_disable(armHSCurVCPU);
-            armHSVCPUActive = false;
+            vcpu_disable(ARCH_NODE_STATE(armHSCurVCPU));
+            ARCH_NODE_STATE(armHSVCPUActive) = false;
         }
-    } else if (likely(!armHSVCPUActive && new != NULL)) {
+    } else if (likely(!ARCH_NODE_STATE(armHSVCPUActive) && new != NULL)) {
         isb();
         vcpu_enable(new);
-        armHSVCPUActive = true;
+        ARCH_NODE_STATE(armHSVCPUActive) = true;
     }
 }
 
 static void
 vcpu_invalidate_active(void)
 {
-    if (armHSVCPUActive) {
+    if (ARCH_NODE_STATE(armHSVCPUActive)) {
         vcpu_disable(NULL);
-        armHSVCPUActive = false;
+        ARCH_NODE_STATE(armHSVCPUActive) = false;
     }
-    armHSCurVCPU = NULL;
+    ARCH_NODE_STATE(armHSCurVCPU) = NULL;
 }
 
 void
@@ -520,7 +520,7 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     if (tcb->tcbArch.tcbVCPU != vcpu || vcpu->vcpuTCB != tcb) {
         fail("TCB and VCPU not associated.");
     }
-    if (vcpu == armHSCurVCPU) {
+    if (vcpu == ARCH_NODE_STATE(armHSCurVCPU)) {
         vcpu_invalidate_active();
     }
     tcb->tcbArch.tcbVCPU = NULL;
@@ -609,7 +609,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer)
 exception_t
 invokeVCPUInjectIRQ(vcpu_t* vcpu, unsigned long index, virq_t virq)
 {
-    if (likely(armHSCurVCPU == vcpu)) {
+    if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         set_gic_vcpu_ctrl_lr(index, virq);
     } else {
         vcpu->vgic.lr[index] = virq;

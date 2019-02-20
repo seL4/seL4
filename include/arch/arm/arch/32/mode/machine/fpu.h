@@ -62,9 +62,9 @@ static void clearEnFPEXC(void)
 static inline void
 enableFpuInstInHyp(void)
 {
-    if (!armHSFPUEnabled) {
+    if (!ARCH_NODE_STATE(armHSFPUEnabled)) {
         setHCPTR(getHCPTR() & HCPTR_MASK);
-        armHSFPUEnabled = true;
+        ARCH_NODE_STATE(armHSFPUEnabled) = true;
     }
 }
 
@@ -72,9 +72,9 @@ enableFpuInstInHyp(void)
 static inline void
 trapFpuInstToHyp(void)
 {
-    if (armHSFPUEnabled) {
+    if (ARCH_NODE_STATE(armHSFPUEnabled)) {
         setHCPTR(getHCPTR() | ~HCPTR_MASK);
-        armHSFPUEnabled = false;
+        ARCH_NODE_STATE(armHSFPUEnabled) = false;
     }
 }
 
@@ -169,7 +169,7 @@ static inline void enableFpu(void)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     enableFpuInstInHyp();
-    if (!armHSVCPUActive) {
+    if (!ARCH_NODE_STATE(armHSVCPUActive)) {
         setEnFPEXC();
     }
 #else

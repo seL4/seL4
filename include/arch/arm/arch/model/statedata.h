@@ -21,6 +21,13 @@ NODE_STATE_BEGIN(archNodeState)
 /* TODO: add ARM-dependent fields here */
 /* Bitmask of all cores should receive the reschedule IPI */
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+NODE_STATE_DECLARE(vcpu_t, *armHSCurVCPU);
+NODE_STATE_DECLARE(bool_t, armHSVCPUActive);
+#if defined(CONFIG_ARCH_AARCH32) && defined(CONFIG_HAVE_FPU)
+NODE_STATE_DECLARE(bool_t, armHSFPUEnabled);
+#endif
+#endif
 NODE_STATE_END(archNodeState);
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE

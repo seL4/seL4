@@ -40,11 +40,6 @@ extern pde_t armUSGlobalPD[BIT(PD_INDEX_BITS)] VISIBLE;
 /* Stage 2 translations have a slightly different encoding to Stage 1
  * So we need to build a User global PT for global mappings */
 extern pte_t   armUSGlobalPT[BIT(PT_INDEX_BITS)]   VISIBLE;
-extern vcpu_t *armHSCurVCPU;
-extern bool_t armHSVCPUActive;
-#ifdef CONFIG_HAVE_FPU
-extern bool_t armHSFPUEnabled;
-#endif
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
 #endif /* __ARCH_MODEL_STATEDATA_32_H */

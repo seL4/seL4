@@ -102,8 +102,8 @@ compile_assert(log_pde_is_correct_preallocated_pde,
 #endif
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-vcpu_t *armHSCurVCPU;
-bool_t armHSVCPUActive;
+UP_STATE_DEFINE(vcpu_t, *armHSCurVCPU);
+UP_STATE_DEFINE(bool_t, armHSVCPUActive);
 
 /* The hardware VMID to virtual ASID mapping table.
  * The ARMv8 supports 8-bit VMID which is used as logical ASID
