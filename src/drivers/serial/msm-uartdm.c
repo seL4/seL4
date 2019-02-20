@@ -19,6 +19,9 @@
 #define UTF                   0x70
 #define UNTX                  0x40
 
+#define USR_RXRDY             (1U << 0)
+#define USR_RXFUL             (1U << 1)
+
 #define USR_TXRDY             (1U << 2)
 #define USR_TXEMP             (1U << 3)
 
@@ -38,6 +41,8 @@ putDebugChar(unsigned char c)
 unsigned char
 getDebugChar(void)
 {
-    return -1;
+    while ( (*UART_REG(USR) & USR_RXRDY) == 0 );
+
+    return *UART_REG(UTF) & 0xff;
 }
 #endif /* CONFIG_DEBUG_BUILD */

@@ -35,6 +35,8 @@ putDebugChar(unsigned char c)
 unsigned char
 getDebugChar(void)
 {
-    return 0;
+    while ((*UART_REG(UARTFR) & PL011_UARTFR_RXFE) != 0);
+
+    return *UART_REG(UARTDR);
 }
 #endif //CONFIG_DEBUG_BUILD
