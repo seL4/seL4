@@ -75,6 +75,12 @@ static uint32_t gicv3_do_wait_for_rwp(volatile uint32_t *ctlr_addr)
     uint32_t gpt_cnt_tval = 0;
     uint32_t deadline_ms =  GIC_DEADLINE_MS;
     uint32_t gpt_cnt_ciel;
+
+    /* Check the value before reading the generic timer */
+    val = *ctlr_addr;
+    if (!(val & GICD_CTLR_RWP)) {
+        return 0;
+    }
     SYSTEM_READ_WORD(CNTFRQ, gpt_cnt_tval);
     gpt_cnt_ciel = gpt_cnt_tval + (deadline_ms * TICKS_PER_MS);
 
