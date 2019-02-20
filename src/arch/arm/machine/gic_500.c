@@ -43,6 +43,34 @@ volatile struct gic_rdist_sgi_ppi_map *const gic_rdist_sgi_ppi =
 
 uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
 
+#define MPIDR_AFF0(x) (x & 0xff)
+#define MPIDR_AFF1(x) ((x >> 8) & 0xff)
+#define MPIDR_AFF2(x) ((x >> 16) & 0xff)
+#define MPIDR_AFF3(x) ((x >> 32) & 0xff)
+#define MPIDR_MT(x)   (x & BIT(24))
+
+static uint64_t mpidr_map[CONFIG_MAX_NUM_NODES];
+
+static inline uint64_t get_mpidr(word_t core_id)
+{
+    return mpidr_map[core_id];
+}
+
+static inline uint64_t get_current_mpidr(void)
+{
+    word_t core_id = CURRENT_CPU_INDEX();
+    return get_mpidr(core_id);
+}
+
+static inline uint64_t mpidr_to_gic_affinity(void)
+{
+    uint64_t mpidr = get_current_mpidr();
+    uint64_t affinity = 0;
+    affinity = MPIDR_AFF3(mpidr) << 32 | MPIDR_AFF2(mpidr) << 16 |
+               MPIDR_AFF1(mpidr) << 8  | MPIDR_AFF0(mpidr);
+    return affinity;
+}
+
 /* Wait for completion of a distributor change */
 static uint32_t gicv3_do_wait_for_rwp(volatile uint32_t *ctlr_addr)
 {
@@ -134,12 +162,7 @@ BOOT_CODE static void dist_init(void)
     gicv3_dist_wait_for_rwp();
 
     /* Route all global IRQs to this CPU */
-    SYSTEM_READ_WORD("mpidr_el1", affinity);
-    /* Mask cpu affinity part */
-    affinity &= 0xFFFFFF;
-    /* Make sure we don't broadcast the interrupt */
-    affinity &= ~GICD_IROUTER_SPI_MODE_ANY;
-
+    affinity = mpidr_to_gic_affinity();
     for (i = NR_GIC_LOCAL_IRQS; i < nr_lines; i++) {
         gic_dist->irouter[i] = affinity;
     }
@@ -180,9 +203,7 @@ static int gicv3_populate_rdist(void)
     uint32_t reg;
     uint64_t typer;
 
-    SYSTEM_READ_WORD("mpidr_el1", aff);
-    // Mask MPIDR to just show the register that code is runnig on
-    aff &= 0xFFFFFF;
+    aff = get_current_mpidr();
 
     reg = gic_rdist->pidr2 & GIC_PIDR2_ARCH_MASK;
     if (reg != GIC_PIDR2_ARCH_GICv3 && reg != GIC_PIDR2_ARCH_GICv4) {
@@ -264,6 +285,11 @@ BOOT_CODE void initIRQController(void)
 
 BOOT_CODE void cpu_initLocalIRQController(void)
 {
+    uint64_t mpidr = 0;
+    SYSTEM_READ_WORD("mpidr_el1", mpidr);
+
+    mpidr_map[CURRENT_CPU_INDEX()] = mpidr;
+
     cpu_iface_init();
 }
 
