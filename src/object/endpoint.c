@@ -94,6 +94,8 @@ void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
             seL4_Fault_ptr_get_seL4_FaultType(&thread->tcbFault) != seL4_Fault_NullFault) {
             if (reply != NULL && (canGrant || canGrantReply)) {
                 reply_push(thread, dest, reply, canDonate);
+            } else {
+                setThreadState(thread, ThreadState_Inactive);
             }
         } else if (canDonate && dest->tcbSchedContext == NULL) {
             schedContext_donate(thread->tcbSchedContext, dest);
