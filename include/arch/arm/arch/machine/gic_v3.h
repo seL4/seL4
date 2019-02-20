@@ -12,11 +12,11 @@
  */
 
 /*
- * ARM Generic Interrupt Controller v3 and v4 (GIC-500)
+ * Arm Generic Interrupt Controller v3
  */
 
-#ifndef ARCH_MACHINE_GIC500_H
-#define ARCH_MACHINE_GIC500_H
+#ifndef ARCH_MACHINE_GIC_3_H
+#define ARCH_MACHINE_GIC_3_H
 
 #include <stdint.h>
 #include <util.h>
@@ -323,4 +323,4 @@ void ipiBroadcast(irq_t irq, bool_t includeSelfCPU);
 void ipi_send_target(irq_t irq, word_t cpuTargetList);
 #endif /* ENABLE_SMP_SUPPORT */
 
-#endif /* ARCH_MACHINE_GIC500_H */
+#endif /* ARCH_MACHINE_GIC_3_H */

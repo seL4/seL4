@@ -12,7 +12,7 @@
  */
 #include <config.h>
 #include <types.h>
-#include <arch/machine/gic_500.h>
+#include <arch/machine/gic_v3.h>
 
 #define IRQ_SET_ALL 0xffffffff
 
