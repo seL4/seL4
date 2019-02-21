@@ -23,12 +23,7 @@
 #include <mode/smp/smp.h>
 #include <model/statedata.h>
 
-typedef uint16_t interrupt_t;
-typedef uint16_t irq_t;
-
-enum irqNumbers {
-    irqInvalid = (irq_t) - 1
-};
+#include "gic_common.h"
 
 /* CPU specific IRQ's */
 #define SGI_START         0u
@@ -148,14 +143,6 @@ struct gic_cpu_iface_map {
 
 extern volatile struct gic_dist_map *const gic_dist;
 extern volatile struct gic_cpu_iface_map *const gic_cpuiface;
-/*
- * The only sane way to get an GIC IRQ number that can be properly
- * ACKED later is through the int_ack register. Unfortunately, reading
- * this register changes the interrupt state to pending so future
- * reads will not return the same value For this reason, we have a
- * global variable to store the IRQ number.
- */
-extern uint32_t active_irq[CONFIG_MAX_NUM_NODES];
 
 /* Helpers */
 static inline int is_irq_edge_triggered(irq_t irq)
@@ -234,12 +221,6 @@ static inline void ackInterrupt(irq_t irq)
     active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] = IRQ_NONE;
 
 }
-
-static inline void handleSpuriousIRQ(void)
-{
-}
-
-void initIRQController(void);
 
 #ifdef ENABLE_SMP_SUPPORT
 void ipiBroadcast(irq_t irq, bool_t includeSelfCPU);

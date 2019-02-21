@@ -22,11 +22,6 @@
 /* Assume 8 cores */
 #define GICR_SIZE           (0x100000)
 
-/* Shift positions for GICD_SGIR register */
-#define GICD_SGIR_SGIINTID_SHIFT          0
-#define GICD_SGIR_CPUTARGETLIST_SHIFT     16
-#define GICD_SGIR_TARGETLISTFILTER_SHIFT  24
-
 #define GIC_DEADLINE_MS 2
 #define GIC_REG_WIDTH   32
 

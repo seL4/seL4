@@ -24,11 +24,6 @@
 
 #define IRQ_SET_ALL 0xffffffff;
 
-/* Shift positions for GICD_SGIR register */
-#define GICD_SGIR_SGIINTID_SHIFT          0
-#define GICD_SGIR_CPUTARGETLIST_SHIFT     16
-#define GICD_SGIR_TARGETLISTFILTER_SHIFT  24
-
 #ifndef GIC_PL390_DISTRIBUTOR_PPTR
 #error GIC_PL390_DISTRIBUTOR_PPTR must be defined for virtual memory access to the gic distributer
 #else  /* GIC_DISTRIBUTOR_PPTR */
