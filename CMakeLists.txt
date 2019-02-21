@@ -31,9 +31,6 @@ endif()
 
 include(tools/internal.cmake)
 
-# Process the configuration scripts
-include(config.cmake)
-
 # Define tools used by the kernel
 set(PYTHON "python" CACHE INTERNAL "")
 RequireTool(CPP_GEN_PATH cpp_gen.sh)
@@ -43,6 +40,9 @@ RequireTool(HARDWARE_GEN_PATH hardware_gen.py)
 RequireTool(INVOCATION_ID_GEN_PATH invocation_header_gen.py)
 RequireTool(SYSCALL_ID_GEN_PATH syscall_header_gen.py)
 RequireTool(XMLLINT_PATH xmllint.sh)
+
+# Process the configuration scripts
+include(config.cmake)
 
 # Define default global flag information so that users can compile with the same basic architecture
 # flags as the kernel
