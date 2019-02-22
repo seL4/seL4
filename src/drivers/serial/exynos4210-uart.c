@@ -29,12 +29,13 @@
 #define UINTSP      0x0034 /* interrupt source pending */
 #define UINTM       0x0038 /* interrupt mask */
 
-#define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 /* UTRSTAT */
 #define TX_EMPTY        BIT(2)
 #define TXBUF_EMPTY     BIT(1)
 #define RXBUF_READY     BIT(0)
+
+#define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void

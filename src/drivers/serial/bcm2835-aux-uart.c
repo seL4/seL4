@@ -15,7 +15,6 @@
 #include <util.h>
 #include <machine/io.h>
 
-#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 /* When DLAB=1, MU_IO is a baud rate register.
  * Otherwise, write to TX, read to RX */
@@ -44,6 +43,7 @@
 #define MU_LCR_BREAK     BIT(6)
 #define MU_LCR_DATASIZE  BIT(0)
 
+#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void putDebugChar(unsigned char c)

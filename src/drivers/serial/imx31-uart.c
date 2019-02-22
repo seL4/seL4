@@ -31,12 +31,12 @@
 #define ONEMS 0xb0 /* UART One Millisecond Register */
 #define UTS   0xb4 /* UART Test Register */
 
-#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 enum UARTControlBits {
     UART_SR1_TRDY = 13,
     UART_SR1_RRDY = 9
 };
+#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void

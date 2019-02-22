@@ -13,7 +13,6 @@
 #include <util.h>
 #include <machine/io.h>
 
-#define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #define USR                   0x08
 #define UTF                   0x70
@@ -24,6 +23,7 @@
 
 #define USR_TXRDY             (1U << 2)
 #define USR_TXEMP             (1U << 3)
+#define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void
