@@ -31,16 +31,18 @@
 #define ONEMS 0xb0 /* UART One Millisecond Register */
 #define UTS   0xb4 /* UART Test Register */
 
-#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
+#define UART_SR1_TRDY 		  BIT(13)
+#define UART_SR1_RRDY 		  BIT(9)
+#define UART_SR2_TXFIFO_EMPTY BIT(14)
+#define UART_SR2_RXFIFO_RDR   BIT(0)
 
-#define UART_SR2_TXFIFO_EMPTY 14
-#define UART_SR2_RXFIFO_RDR    0
+#define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void
 putDebugChar(unsigned char c)
 {
-    while (!(*UART_REG(USR2) & BIT(UART_SR2_TXFIFO_EMPTY)));
+    while (!(*UART_REG(USR2) & UART_SR2_TXFIFO_EMPTY));
     *UART_REG(UTXD) = c;
 }
 #endif
@@ -49,7 +51,7 @@ putDebugChar(unsigned char c)
 unsigned char
 getDebugChar(void)
 {
-    while (!(*UART_REG(USR2) & BIT(UART_SR2_RXFIFO_RDR)));
+    while (!(*UART_REG(USR2) & UART_SR2_RXFIFO_RDR));
     return *UART_REG(URXD);
 }
 #endif /* CONFIG_DEBUG_BUILD */
