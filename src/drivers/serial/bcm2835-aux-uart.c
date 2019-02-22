@@ -15,7 +15,6 @@
 #include <util.h>
 #include <machine/io.h>
 
-
 /* When DLAB=1, MU_IO is a baud rate register.
  * Otherwise, write to TX, read to RX */
 #define MU_IO       0x00
@@ -30,7 +29,6 @@
 #define MU_SCRATCH  0x1C
 #define MU_CNTL     0x20
 
-
 /* This bit is set if the transmit FIFO can accept at least one byte.*/
 #define MU_LSR_TXEMPTY   BIT(5)
 /* This bit is set if the transmit FIFO is empty and the
@@ -38,7 +36,6 @@
 #define MU_LSR_TXIDLE    BIT(6)
 #define MU_LSR_RXOVERRUN BIT(1)
 #define MU_LSR_DATAREADY BIT(0)
-
 #define MU_LCR_DLAB      BIT(7)
 #define MU_LCR_BREAK     BIT(6)
 #define MU_LCR_DATASIZE  BIT(0)

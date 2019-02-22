@@ -13,7 +13,6 @@
 #include <util.h>
 #include <machine/io.h>
 
-
 #define USR                   0x08
 #define UTF                   0x70
 #define UNTX                  0x40

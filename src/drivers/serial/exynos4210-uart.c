@@ -29,7 +29,6 @@
 #define UINTSP      0x0034 /* interrupt source pending */
 #define UINTM       0x0038 /* interrupt mask */
 
-
 /* UTRSTAT */
 #define TX_EMPTY        BIT(2)
 #define TXBUF_EMPTY     BIT(1)
