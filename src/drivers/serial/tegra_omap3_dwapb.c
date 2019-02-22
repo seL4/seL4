@@ -16,8 +16,9 @@
 
 #define UTHR        0x0
 #define ULSR        0x14
-#define ULSR_THRE   (1 << 5)
-#define ULSR_RDR    (1 << 0)
+
+#define ULSR_THRE   BIT(5)
+#define ULSR_RDR    BIT(0)
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 

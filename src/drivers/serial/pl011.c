@@ -16,8 +16,9 @@
 
 #define UARTDR                    0x000
 #define UARTFR                    0x018
-#define PL011_UARTFR_TXFF         (1 << 5)
-#define PL011_UARTFR_RXFE         (1 << 4)
+
+#define PL011_UARTFR_TXFF         BIT(5)
+#define PL011_UARTFR_RXFE         BIT(4)
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 

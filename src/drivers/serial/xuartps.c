@@ -31,8 +31,8 @@
 #define UART_FLOW_DELAY              0x38
 #define UART_TX_FIFO_TRIGGER_LEVEL   0x44
 
-#define UART_INTRPT_MASK_TXEMPTY     (1U << 3)
-#define UART_CHANNEL_STS_TXEMPTY     (1U << 3)
+#define UART_INTRPT_MASK_TXEMPTY     BIT(3)
+#define UART_CHANNEL_STS_TXEMPTY     BIT(3)
 
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 

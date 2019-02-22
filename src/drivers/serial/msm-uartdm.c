@@ -17,11 +17,11 @@
 #define UTF                   0x70
 #define UNTX                  0x40
 
-#define USR_RXRDY             (1U << 0)
-#define USR_RXFUL             (1U << 1)
+#define USR_RXRDY             BIT(0)
+#define USR_RXFUL             BIT(1)
+#define USR_TXRDY             BIT(2)
+#define USR_TXEMP             BIT(3)
 
-#define USR_TXRDY             (1U << 2)
-#define USR_TXEMP             (1U << 3)
 #define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
