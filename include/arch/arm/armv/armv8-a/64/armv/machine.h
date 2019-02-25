@@ -33,4 +33,16 @@ static inline void isb(void)
     asm volatile("isb sy" ::: "memory");
 }
 
+#define MRS(reg, v)  asm volatile("mrs %0," reg : "=r"(v))
+#define MSR(reg, v)                                \
+    do {                                           \
+        word_t _v = v;                             \
+        asm volatile("msr " reg ",%0" :: "r" (_v));\
+    }while(0)
+
+#define SYSTEM_WRITE_WORD(reg, v) MSR(reg, v)
+#define SYSTEM_READ_WORD(reg, v)  MRS(reg, v)
+#define SYSTEM_WRITE_64(reg, v)   MSR(reg, v)
+#define SYSTEM_READ_64(reg, v)    MRS(reg, v)
+
 #endif /* __ARCH_ARMV_MACHINE_H */

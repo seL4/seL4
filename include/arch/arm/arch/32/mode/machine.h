@@ -43,24 +43,6 @@
 #define FPEXC      "fpexc" /* 32-bit Floating-Point Exception Control register */
 #define FPSCR      "fpscr" /* 32-bit Floating-Point Status and Control register */
 
-#define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
-#define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
-#define MCR(cpreg, v)                               \
-    do {                                            \
-        word_t _v = v;                            \
-        asm volatile("mcr  " cpreg :: "r" (_v));    \
-    }while(0)
-#define MCRR(cpreg, v)                              \
-    do {                                            \
-        uint64_t _v = v;                            \
-        asm volatile("mcrr " cpreg :: "r" (_v));    \
-    }while(0)
-
-#define SYSTEM_WRITE_WORD(reg, v) MCR(reg, v)
-#define SYSTEM_READ_WORD(reg, v)  MRC(reg, v)
-#define SYSTEM_WRITE_64(reg, v)  MCRR(reg, v)
-#define SYSTEM_READ_64(reg, v)   MRRC(reg, v)
-
 /** Generic timer CP15 registers **/
 #define CNTFRQ     " p15, 0,  %0, c14,  c0, 0" /* 32-bit RW Counter Frequency register */
 #define CNTPCT     " p15, 0, %Q0, %R0, c14   " /* 64-bit RO Physical Count register */
