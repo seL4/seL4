@@ -12,11 +12,6 @@
 
 #include <arch/machine/hardware.h>
 
-static inline void invalidateByWSL(word_t wsl)
-{
-    asm volatile("dc isw, %0" : : "r"(wsl));
-}
-
 static inline void cleanByWSL(word_t wsl)
 {
     asm volatile("dc csw, %0" : : "r"(wsl));
