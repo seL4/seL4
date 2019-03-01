@@ -17,10 +17,11 @@ BOOT_CODE void initGenericTimer(void)
 {
     if (config_set(CONFIG_DEBUG_BUILD)) {
         /* check the frequency is correct */
-        uint32_t gpt_cnt_tval = 0;
-        SYSTEM_READ_WORD(CNTFRQ, gpt_cnt_tval);
-        if (gpt_cnt_tval != 0 && gpt_cnt_tval != TIMER_CLOCK_HZ) {
-            printf("Warning:  gpt_cnt_tval %u, expected %u\n", gpt_cnt_tval,
+        word_t gpt_cntfrq = 0;
+        SYSTEM_READ_WORD(CNTFRQ, gpt_cntfrq);
+        /* The CNTFRQ register is 32-bits and is safe to compare with TIMER_CLOCK_HZ. */
+        if (gpt_cntfrq != 0 && gpt_cntfrq != TIMER_CLOCK_HZ) {
+            printf("Warning:  gpt_cntfrq %lu, expected %u\n", gpt_cntfrq,
                    (uint32_t) TIMER_CLOCK_HZ);
         }
     }
