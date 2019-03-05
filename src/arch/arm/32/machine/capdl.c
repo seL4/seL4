@@ -193,16 +193,13 @@ static void sendASIDPool(unsigned int address)
 
 static void sendRunqueues(void)
 {
-    word_t i;
-    sendWord((unsigned int) NODE_STATE(ksCurThread));
-    for (i = 0; i < NUM_READY_QUEUES; i++) {
-        tcb_t *current = NODE_STATE(ksReadyQueues[i]).head;
-        if (current != 0) {
-            while (current != NODE_STATE(ksReadyQueues[i]).end) {
-                sendWord((unsigned int)current);
-                current = current -> tcbSchedNext;
+    for (uint32_t i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
+        for (tcb_t *curr = NODE_STATE_ON_CORE(ksDebugTCBs, i); curr != NULL; curr = curr->tcbDebugNext) {
+            thread_state_t *state = &curr->tcbState;
+            if (thread_state_ptr_get_tsType(state) != ThreadState_IdleThreadState &&
+                thread_state_ptr_get_tsType(state) != ThreadState_Inactive) {
+                sendWord((unsigned int)curr);
             }
-            sendWord((unsigned int)current);
         }
     }
 }
@@ -210,15 +207,9 @@ static void sendRunqueues(void)
 static void sendEPQueue(unsigned int epptr)
 {
     tcb_t *current = (tcb_t *)endpoint_ptr_get_epQueue_head((endpoint_t *)epptr);
-    tcb_t *tail = (tcb_t *)endpoint_ptr_get_epQueue_tail((endpoint_t *)epptr);
-    if (current == 0) {
-        return;
-    }
-    while (current != tail) {
+    for (; current != NULL; current = current->tcbEPNext) {
         sendWord((unsigned int)current);
-        current = current->tcbEPNext;
     }
-    sendWord((unsigned int)current);
 }
 
 static void sendCNode(unsigned int address, unsigned int sizebits)
@@ -327,6 +318,21 @@ void capDL(void)
                 }
 
                 sendCNode(address, sizebits);
+                putDebugChar(END);
+            }
+            case TCB_COMMAND: {
+                /*cnode */
+                unsigned int address, sizebits;
+                result = getArg32(&address);
+                if (result) {
+                    continue;
+                }
+                result = getArg32(&sizebits);
+                if (result) {
+                    continue;
+                }
+
+                sendCNode((unsigned int)TCB_PTR_CTE_PTR(address, 0), sizebits);
                 putDebugChar(END);
             }
             break;

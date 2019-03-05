@@ -23,6 +23,7 @@
 #define RQ_COMMAND           0xf1
 #define EP_COMMAND           0xf2
 #define CN_COMMAND           0xf3
+#define TCB_COMMAND          0xfb
 #define IRQ_COMMAND          0xf4
 #define PT_COMMAND           0xf5
 #define ASID_POOL_COMMAND    0xf6
