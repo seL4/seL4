@@ -84,21 +84,6 @@ boot_state_t boot_state;
 BOOT_BSS
 cmdline_opt_t cmdline_opt;
 
-/* check the module occupies in a contiguous physical memory region */
-BOOT_CODE static bool_t
-module_paddr_region_valid(paddr_t pa_start, paddr_t pa_end)
-{
-    int i = 0;
-    for (i = 0; i < boot_state.mem_p_regs.count; i++) {
-        paddr_t start = boot_state.mem_p_regs.list[i].start;
-        paddr_t end = boot_state.mem_p_regs.list[i].end;
-        if (pa_start >= start && pa_end < end) {
-            return true;
-        }
-    }
-    return false;
-}
-
 /* functions not modeled in abstract specification */
 
 BOOT_CODE static paddr_t
@@ -175,13 +160,6 @@ load_boot_module(word_t boot_module_start, paddr_t load_paddr)
            boot_state.ui_info.p_reg.start,
            boot_state.ui_info.p_reg.end
           );
-
-    if (!module_paddr_region_valid(
-                boot_state.ui_info.p_reg.start,
-                boot_state.ui_info.p_reg.end)) {
-        printf("End of loaded userland image lies outside of usable physical memory\n");
-        return 0;
-    }
 
     /* initialise all initial userland memory and load potentially sparse ELF image */
     memzero(
