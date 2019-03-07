@@ -132,7 +132,7 @@ if (DEFINED KernelDTSList)
         OUTPUT_VARIABLE compatibility_strings
     )
 
-    include(src/drivers/serial/config.cmake)
+    include(src/drivers/config.cmake)
 endif()
 
 # Now enshrine all the common variables in the config

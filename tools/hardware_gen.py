@@ -528,7 +528,6 @@ class Config:
                         if reg.user_macro or ('user' in reg_rule and reg_rule['user'] == True):
                             user.add(reg)
                         regs.append(reg)
-                        self.matched_devices.add(compatible)
 
                 kernel.update(set(regs))
 
@@ -546,6 +545,9 @@ class Config:
                 continue
 
             for rule in self.devices[compatible]:
+                if self._is_chosen(device, rule, by_phandle):
+                    self.matched_devices.add(compatible)
+
                 if 'interrupts' not in rule or not self._is_chosen(device, rule, by_phandle):
                     continue
                 for irq in rule['interrupts']:
