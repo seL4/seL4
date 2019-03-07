@@ -23,3 +23,4 @@ macro(RegisterDriver compatibility_strings match_strings)
 endmacro()
 
 include(src/drivers/serial/config.cmake)
+include(src/drivers/timer/config.cmake)

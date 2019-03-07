@@ -34,8 +34,6 @@ endif()
 add_sources(
     DEP "KernelPlatExynos5"
     CFILES
-        src/arch/arm/machine/generic_timer.c
-        src/plat/exynos5/machine/hardware.c
         src/arch/arm/machine/gic_pl390.c
         src/arch/arm/machine/l2c_nop.c
 )

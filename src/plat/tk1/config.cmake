@@ -26,7 +26,6 @@ add_sources(
     DEP "KernelPlatformTK1"
     CFILES
         src/plat/tk1/machine/smmu.c
-        src/arch/arm/machine/generic_timer.c
         src/arch/arm/machine/gic_pl390.c
         src/arch/arm/machine/l2c_nop.c
 )

@@ -24,6 +24,5 @@ add_sources(
     DEP "KernelPlatformZynq7000"
     CFILES
         src/arch/arm/machine/l2c_310.c
-        src/arch/arm/machine/priv_timer.c
         src/arch/arm/machine/gic_pl390.c
 )
