@@ -20,6 +20,33 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                             cte_t *srcSlot, extra_caps_t excaps,
                                             word_t *buffer);
 
+/* Handle a platform-reserved IRQ. */
+#define DEF_HANDLE_RESERVED_IRQ
+static inline void
+handleReservedIRQ(irq_t irq)
+{
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+    if (irq == KERNEL_PMU_IRQ) {
+        handleOverflowIRQ();
+    }
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
+        VGICMaintenance();
+        return;
+    }
+#endif
+
+#ifdef CONFIG_ARM_SMMMU
+    if (config_set(CONFIG_ARM_SMMU) && (irq == INTERRUPT_SMMU)) {
+        plat_smmu_handle_interrupt();
+        return;
+    }
+#endif
+}
+
+
 static inline exception_t
 Arch_checkIRQ(word_t irq_w)
 {

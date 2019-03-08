@@ -110,13 +110,6 @@ isReservedIRQ(irq_t irq)
     return false;
 }
 
-/* Handle a platform-reserved IRQ. */
-void
-handleReservedIRQ(irq_t irq)
-{
-    printf("handleReservedIRQ \n");
-}
-
 void
 ackInterrupt(irq_t irq)
 {

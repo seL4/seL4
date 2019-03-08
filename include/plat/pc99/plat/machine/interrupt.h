@@ -24,6 +24,7 @@
 #include <plat/machine/intel-vtd.h>
 
 /* Handle a platform-reserved IRQ. */
+#define DEF_HANDLE_RESERVED_IRQ
 static inline void
 handleReservedIRQ(irq_t irq)
 {

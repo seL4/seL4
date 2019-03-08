@@ -84,17 +84,6 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-/* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-    if (irq == KERNEL_PMU_IRQ) {
-        handleOverflowIRQ();
-    }
-#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
-}
-
 static inline void
 ackInterrupt(irq_t irq)
 {

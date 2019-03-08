@@ -65,7 +65,6 @@ bool_t add_avail_p_reg(p_region_t reg);
 void map_kernel_devices(void);
 
 bool_t CONST isReservedIRQ(irq_t irq);
-void handleReservedIRQ(irq_t irq);
 void ackInterrupt(irq_t irq);
 bool_t isIRQPending(void);
 /** MODIFIES: [*] */

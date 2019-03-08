@@ -17,10 +17,4 @@
 #include <plat/machine.h>
 #include <plat/machine/devices_gen.h>
 
-/* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-}
-
 #endif

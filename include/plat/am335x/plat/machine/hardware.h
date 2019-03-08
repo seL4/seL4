@@ -11,9 +11,6 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
-#include <basic_types.h>
-#include <linker.h>
-#include <plat/machine.h>
 #include <plat/machine/devices_gen.h>
 #include <plat/machine/interrupt.h>
 

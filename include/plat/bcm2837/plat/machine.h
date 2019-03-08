@@ -132,14 +132,6 @@ enum irqNumbers {
     irqInvalid = (irq_t) - 1
 };
 
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-    if (config_set(CONFIG_IRQ_REPORTING)) {
-        printf("Received reserved IRQ: %d\n", (int)irq);
-    }
-}
-
 interrupt_t
 getActiveIRQ(void);
 

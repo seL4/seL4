@@ -18,15 +18,4 @@
 #include <plat/machine.h>
 #include <plat/machine/devices_gen.h>
 
-/* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) &&
-            (irq == INTERRUPT_VGIC_MAINTENANCE)) {
-        VGICMaintenance();
-        return;
-    }
-}
-
 #endif /* !__PLAT_MACHINE_HARDWARE_H */

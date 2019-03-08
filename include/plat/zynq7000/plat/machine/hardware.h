@@ -18,15 +18,4 @@
 #include <plat/machine/devices_gen.h>
 #include <arch/benchmark_overflowHandler.h>
 
-/* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-    if (irq == KERNEL_PMU_IRQ) {
-        handleOverflowIRQ();
-    }
-#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
-}
-
 #endif /* !__PLAT_MACHINE_HARDWARE_H */

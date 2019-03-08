@@ -11,16 +11,6 @@
 #ifndef __PLAT_MACHINE_HARDWARE_H
 #define __PLAT_MACHINE_HARDWARE_H
 
-#include <util.h>
-#include <basic_types.h>
-#include <linker.h>
-#include <plat/machine.h>
 #include <plat/machine/devices_gen.h>
-
-/* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-}
 
 #endif

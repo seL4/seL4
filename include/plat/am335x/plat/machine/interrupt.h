@@ -101,12 +101,6 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-/* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-}
-
 static inline void
 ackInterrupt(irq_t irq)
 {

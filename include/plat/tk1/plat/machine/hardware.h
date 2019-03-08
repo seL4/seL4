@@ -24,25 +24,4 @@
 #include <mode/api/constants.h>
 #include <arch/benchmark_overflowHandler.h>
 
-/* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-    if (irq == KERNEL_PMU_IRQ) {
-        handleOverflowIRQ();
-    }
-#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
-
-    if ((config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) && (irq == INTERRUPT_VGIC_MAINTENANCE)) {
-        VGICMaintenance();
-        return;
-    }
-
-    if (config_set(CONFIG_ARM_SMMU) && (irq == INTERRUPT_SMMU)) {
-        plat_smmu_handle_interrupt();
-        return;
-    }
-}
-
 #endif
