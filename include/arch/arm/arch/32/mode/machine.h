@@ -25,6 +25,24 @@
 #include <mode/hardware.h>
 #include <kernel/stack.h>
 
+/* The new spec requires the use of vmsr/vmrs to access floating point
+ * registers (including control registers).
+ *
+ * GCC will still accept the old MRC/MCR instructions but Clang will not.
+ * Both result in the same encoding and are here only to satisfy compilers. */
+#define VMRS(vfp_reg, v) asm volatile(".fpu vfp\n" \
+                                      "vmrs %0, " vfp_reg : "=r"(v))
+#define VMSR(vfp_reg, v)                                 \
+    do {                                                 \
+        word_t _v = v;                                   \
+        asm volatile(".fpu vfp\n"                        \
+                     "vmsr " vfp_reg ", %0" :: "r"(_v)); \
+    } while(0)
+
+/* VFP registers. */
+#define FPEXC      "fpexc" /* 32-bit Floating-Point Exception Control register */
+#define FPSCR      "fpscr" /* 32-bit Floating-Point Status and Control register */
+
 #define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
 #define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
 #define MCR(cpreg, v)                               \
@@ -63,7 +81,6 @@
 #define ID_DFR0    " p15, 0,  %0,  c0,  c1, 2" /* 32-bit RO Debug feature register */
 #define ID_PFR1    " p15, 0,  %0,  c0,  c1, 1" /* 32-bit RO CPU feature register */
 #define CPACR      " p15, 0,  %0,  c1,  c0, 2" /* 32-bit Architectural Feature Access Control Register */
-#define FPEXC      " p10, 7,  %0, cr8, cr0, 0" /* 32-bit Floating-Point Exception Control register */
 
 #ifdef ENABLE_SMP_SUPPORT
 /* Use the first two SGI (Software Generated Interrupt) IDs

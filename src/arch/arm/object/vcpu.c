@@ -87,10 +87,10 @@ access_fpexc(vcpu_t *vcpu, bool_t write)
         enableFpuInstInHyp();
     }
     if (write) {
-        MCR(FPEXC, vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC));
+        VMSR(FPEXC, vcpu_read_reg(vcpu, seL4_VCPUReg_FPEXC));
     } else {
         word_t fpexc;
-        MRC(FPEXC, fpexc);
+        VMRS(FPEXC, fpexc);
         vcpu_write_reg(vcpu, seL4_VCPUReg_FPEXC, fpexc);
     }
     /* restore the status */

@@ -46,9 +46,9 @@ extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 static void clearEnFPEXC(void)
 {
     word_t fpexc;
-    MRC(FPEXC, fpexc);
+    VMRS(FPEXC, fpexc);
     fpexc &= ~BIT(FPEXC_EN_BIT);
-    MCR(FPEXC, fpexc);
+    VMSR(FPEXC, fpexc);
 }
 
 #if defined(CONFIG_ARM_HYPERVISOR_SUPPORT) && defined(CONFIG_HAVE_FPU)
@@ -92,17 +92,17 @@ extern bool_t isFPUD32SupportedCached;
 static void setEnFPEXC(void)
 {
     word_t fpexc;
-    MRC(FPEXC, fpexc);
+    VMRS(FPEXC, fpexc);
     fpexc |=  BIT(FPEXC_EN_BIT);
-    MCR(FPEXC, fpexc);
+    VMSR(FPEXC, fpexc);
 }
 /* Store state in the FPU registers into memory. */
 static inline void saveFpuState(user_fpu_state_t *dest)
 {
     word_t fpexc;
 
-    /* Store FPEXC */
-    MRC(FPEXC, fpexc);
+    /* Fetch FPEXC. */
+    VMRS(FPEXC, fpexc);
 
 #if defined(CONFIG_ARM_CORTEX_A7) || defined(CONFIG_ARM_CORTEX_A9)
     /*
@@ -111,7 +111,7 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     */
     if (unlikely(fpexc & BIT(FPEXC_DEX_BIT))) {
         fpexc &= ~BIT(FPEXC_DEX_BIT);
-        MCR(FPEXC, fpexc);
+        VMSR(FPEXC, fpexc);
     }
 #endif
 
@@ -139,16 +139,16 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     asm volatile(
         /* Store d0 - d15 to memory */
         ".word 0xec820b20       \n" /* vstmia  r2, {d0-d15}" */
-        /* Store PFSCR */
-        ".word 0xeef1ea10       \n" /* vmrs   lr, fpscr */
-        "str  lr, [%[tcb_fpscr]]\n"
         :
-        : [tcb_fpscr] "r" (&dest->fpscr), "r" (regs_d0_d15)
-        : "memory", "lr"
+        : "r" (regs_d0_d15)
     );
-    /* restore the FPEXC */
+
+    /* Store FPSCR. */
+    VMRS(FPSCR, dest->fpscr);
+
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        MCR(FPEXC, fpexc);
+        /* Restore the FPEXC. */
+        VMSR(FPEXC, fpexc);
     }
 }
 
@@ -200,17 +200,17 @@ static inline void loadFpuState(user_fpu_state_t *src)
     }
 
     register word_t regs_d0_d15 asm("r0") =  (word_t) &src->fpregs[0];
-    register word_t regs_fpscr asm("r1") = src->fpscr;
     asm volatile(
         /* Restore d0 - d15 from memory */
         ".word 0xec900b20         \n"    /*  vldmia  r0, {d0-d15} */
-        /* Load fpscr */
-        ".word 0xeee11a10         \n"    /*  vmsr    fpscr, r1 */
-        :: "r" (regs_d0_d15), "r" (regs_fpscr)
+        :: "r" (regs_d0_d15)
     );
 
-    /* Restore FPEXC */
-    MCR(FPEXC, src->fpexc);
+    /* Load FPSCR. */
+    VMSR(FPSCR, src->fpscr);
+
+    /* Restore FPEXC. */
+    VMSR(FPEXC, src->fpexc);
 }
 
 #endif /* CONFIG_HAVE_FPU */

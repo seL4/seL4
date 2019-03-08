@@ -33,12 +33,12 @@ BOOT_CODE static inline bool_t supportsAsyncExceptions(void)
         enableFpuInstInHyp();
     }
     /* Set FPEXC.EX=1 */
-    MRC(FPEXC, fpexc);
+    VMRS(FPEXC, fpexc);
     fpexc |= BIT(FPEXC_EX_BIT);
-    MCR(FPEXC, fpexc);
+    VMSR(FPEXC, fpexc);
 
     /* Read back the FPEXC register*/
-    MRC(FPEXC, fpexc);
+    VMRS(FPEXC, fpexc);
 
     return !!(fpexc & BIT(FPEXC_EX_BIT));
 }
