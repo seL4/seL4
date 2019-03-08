@@ -24,7 +24,7 @@ from jinja2 import Environment, BaseLoader
 try:
     from jsonschema import validate
 except ImportError:
-    print("Skipping hardware YAML validation, `pip install jsonschema` to validate")
+    logging.warning("Skipping hardware YAML validation, `pip install jsonschema` to validate")
     def validate(*args, **kwargs):
         pass
 
