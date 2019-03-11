@@ -149,6 +149,10 @@ if (DEFINED KernelDTSList)
     endif()
     file(READ "${compatibility_outfile}" compatibility_strings)
 
+    # Mark all file dependencies as CMake rerun dependencies.
+    set(cmake_deps ${deps} ${KernelDTSIntermediate} ${KernelDTSList} ${compatibility_outfile})
+    set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${cmake_deps})
+
     include(src/drivers/config.cmake)
 endif()
 
