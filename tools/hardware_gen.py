@@ -826,10 +826,10 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
 #endif /* __PLAT_DEVICES_GEN_H */
 """
 
-def add_build_rules(devices):
+def add_build_rules(devices, output):
     devices[-1] = devices[-1] + ";"
     #print result to cmake variable
-    print(';'.join(devices))
+    print(';'.join(devices), file=output)
 
 def output_regions(args, devices, memory, kernel, irqs, fp):
     """ generate the device list for the C header file """
@@ -934,12 +934,14 @@ def main(args):
     output_regions(args, user, memory, kernel, kernel_irqs, args.output)
   
     #generate cmake
-    add_build_rules(cfg.get_matched_devices())
+    if args.compatibility_strings:
+        add_build_rules(cfg.get_matched_devices(), args.compatibility_strings)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dtb', help='device tree blob to use for generation', required=True, type=argparse.FileType('rb'))
     parser.add_argument('--output', help='output file for generated header', required=True, type=argparse.FileType('w'))
+    parser.add_argument('--compatibility-strings', help='File to write CMake list of compatibility strings', type=argparse.FileType('w'))
     parser.add_argument('--page-bits', help='number of bits per page', default=12, type=int)
     parser.add_argument('--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
     parser.add_argument('--config', help='kernel device configuration', required=True, type=argparse.FileType())

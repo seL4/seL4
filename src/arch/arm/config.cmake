@@ -99,6 +99,7 @@ include(src/plat/zynqmp/config.cmake)
 if (DEFINED KernelDTSList)
     set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
     set(KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb")
+    set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
     set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
@@ -128,9 +129,9 @@ if (DEFINED KernelDTSList)
 
     # Generate devices_gen header based on DTB
     execute_process(
-        COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
-        OUTPUT_VARIABLE compatibility_strings
+        COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
     )
+    file(READ "${compatibility_outfile}" compatibility_strings)
 
     include(src/drivers/config.cmake)
 endif()
