@@ -130,16 +130,22 @@ if (DEFINED KernelDTSList)
             COMMAND ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
         )
     endif()
-    # Generate devices_gen header based on DTB
-    execute_process(
-        COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
-        INPUT_FILE /dev/stdin
-        OUTPUT_FILE /dev/stdout
-        ERROR_FILE /dev/stderr
-        RESULT_VARIABLE error
-    )
-    if (error)
-        message(FATAL_ERROR "Failed to generate: ${device_dest}")
+
+    set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
+    check_outfile_stale(regen ${device_dest} deps)
+    if (regen)
+        # Generate devices_gen header based on DTB
+        message(STATUS "${device_dest} is out of date. Regenerating...")
+        execute_process(
+            COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
+            INPUT_FILE /dev/stdin
+            OUTPUT_FILE /dev/stdout
+            ERROR_FILE /dev/stderr
+            RESULT_VARIABLE error
+        )
+        if (error)
+            message(FATAL_ERROR "Failed to generate: ${device_dest}")
+        endif()
     endif()
     file(READ "${compatibility_outfile}" compatibility_strings)
 
