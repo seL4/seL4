@@ -130,7 +130,14 @@ if (DEFINED KernelDTSList)
     # Generate devices_gen header based on DTB
     execute_process(
         COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
+        INPUT_FILE /dev/stdin
+        OUTPUT_FILE /dev/stdout
+        ERROR_FILE /dev/stderr
+        RESULT_VARIABLE error
     )
+    if (error)
+        message(FATAL_ERROR "Failed to generate: ${device_dest}")
+    endif()
     file(READ "${compatibility_outfile}" compatibility_strings)
 
     include(src/drivers/config.cmake)
