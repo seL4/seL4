@@ -522,3 +522,33 @@ macro(kernel_platforms_string target)
     kernel_platforms_list(plat_names)
     string(REPLACE ";" "\n  " ${target} "${plat_names}")
 endmacro(kernel_platforms_string)
+
+# Checks if a file is older than its dependencies
+# Will set `stale` to TRUE if outfile doesn't exist,
+# or if outfile is older than any file in `deps_list`.
+# stale: A variable to overwrite with TRUE or FALSE
+# outfile: A value that is a valid file path
+# deps_list: A variable that holds a list of file paths
+# e.g:
+#  set(KernelDTSIntermediate "filea" "fileb" "filec")
+#  set(KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb")
+#  check_outfile_stale(regen ${KernelDTBPath} KernelDTSIntermediate)
+#  if (regen)
+#    regen_file(${KernelDTBPath})
+#  endif()
+#
+# The above call will set regen to TRUE if the file referred
+# to by KernelDTBPath doesn't exist, or is older than any files
+# in KernelDTSIntermediate.
+macro(check_outfile_stale stale outfile deps_list)
+    set(${stale} TRUE)
+    if (EXISTS ${outfile})
+        set(${stale} FALSE)
+        foreach(dep IN LISTS ${deps_list})
+            if("${dep}" IS_NEWER_THAN "${outfile}")
+                set(${stale} TRUE)
+                break()
+            endif()
+        endforeach()
+    endif()
+endmacro()
