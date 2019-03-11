@@ -119,14 +119,17 @@ if (DEFINED KernelDTSList)
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/"
     )
     execute_process(
-        COMMAND bash -c "cat ${dts_list} > ${KernelDTSIntermediate}"
+        COMMAND bash -c "cat ${dts_list} > ${KernelDTSIntermediate}.in"
     )
+    configure_file(${KernelDTSIntermediate}.in ${KernelDTSIntermediate} COPYONLY)
 
-    # Compile DTS to DTB
-    execute_process(
-        COMMAND ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
-    )
-
+    check_outfile_stale(regen ${KernelDTBPath} KernelDTSIntermediate)
+    if (regen)
+        # Compile DTS to DTB
+        execute_process(
+            COMMAND ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
+        )
+    endif()
     # Generate devices_gen header based on DTB
     execute_process(
         COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
