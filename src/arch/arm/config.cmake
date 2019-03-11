@@ -98,7 +98,7 @@ include(src/plat/zynqmp/config.cmake)
 
 if (DEFINED KernelDTSList)
     set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
-    set(KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb")
+    set(KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb" CACHE INTERNAL "Location of kernel DTB file")
     set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
     set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
