@@ -19,6 +19,8 @@
  *  - All nested function calls are inlined
  * Note that GCC does not correctly implement optimisation annotations on nested
  * functions, so FORCE_INLINE is required on the wfi declaration in this case.
+ * Note that Clang doesn't obey FORCE_O2 and relies on the kernel being compiled
+ * with optimisations enabled.
  */
 void FORCE_O2 idle_thread(void)
 {

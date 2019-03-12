@@ -48,7 +48,11 @@
 #define UNUSED       __attribute__((unused))
 #define USED         __attribute__((used))
 #define FASTCALL     __attribute__((fastcall))
+#ifdef __clang__
+#define FORCE_O2     /* nothing */
+#else
 #define FORCE_O2     __attribute__((optimize("O2")))
+#endif
 /** MODIFIES: */
 void __builtin_unreachable(void);
 #define UNREACHABLE()  __builtin_unreachable()
