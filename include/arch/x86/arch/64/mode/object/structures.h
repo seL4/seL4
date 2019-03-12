@@ -15,8 +15,8 @@
 
 #include <api/macros.h>
 /* x86-64 specific object types */
-/* sysexit with rex.w prefix (64-bit) user code = cs + 32, user data = cs + 40.
- * without rex.w user code = cs + 16, user data = cs + 24, so we need to arrange
+/* sysexitq (64-bit) user code = cs + 32, user data = cs + 40.
+ * sysexit user code = cs + 16, user data = cs + 24, so we need to arrange
  * user CS and DS as 5 and 6.
  * */
 #define GDT_NULL    0

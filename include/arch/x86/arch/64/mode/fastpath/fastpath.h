@@ -227,7 +227,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #endif /* CONFIG_KERNEL_SKIM_WINDOW */
 #endif /* defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW) */
             "sti\n"
-            "rex.w sysexit\n"
+            "sysexitq\n"
             :
             : "c" (&cur_thread->tcbArch.tcbContext.registers[RAX]),
             "D" (badge),
@@ -271,7 +271,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "xor %%rsp, %%rsp\n"
             // More register but we can ignore and are done restoring
             // enable interrupt disabled by sysenter
-            "rex.w sysret\n"
+            "sysretq\n"
             :
             : "r"(&cur_thread->tcbArch.tcbContext.registers[RAX]),
             "D" (badge),

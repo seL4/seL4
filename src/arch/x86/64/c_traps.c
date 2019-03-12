@@ -259,11 +259,12 @@ void VISIBLE NORETURN restore_user_context(void)
                 // More register but we can ignore and are done restoring
                 // enable interrupt disabled by sysenter
                 "sti\n"
-                /* return to user
-                 * sysexit with rex.w user code = cs + 32, user data = cs + 40.
-                 * without rex.w user code = cs + 16, user data = cs + 24
+                /* Return to user.
+                 *
+                 * SYSEXIT  0F 35     ; Return to compatibility mode from fast system call.
+                 * SYSEXITQ 48 0F 35  ; Return to 64-bit mode from fast system call.
                  * */
-                "rex.w sysexit\n"
+                "sysexitq\n"
                 :
                 : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI]),
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
@@ -309,7 +310,7 @@ void VISIBLE NORETURN restore_user_context(void)
                 "xor %%rsp, %%rsp\n"
                 // More register but we can ignore and are done restoring
                 // enable interrupt disabled by sysenter
-                "rex.w sysret\n"
+                "sysretq\n"
                 :
                 : "r"(&cur_thread->tcbArch.tcbContext.registers[RDI])
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
