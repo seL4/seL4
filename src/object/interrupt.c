@@ -25,13 +25,6 @@
 #include <plat/machine/timer.h>
 #include <smp/ipi.h>
 
-#ifndef DEF_HANDLE_RESERVED_IRQ
-static inline void
-handleReservedIRQ(irq_t irq)
-{
-}
-#endif
-
 exception_t
 decodeIRQControlInvocation(word_t invLabel, word_t length,
                            cte_t *srcSlot, extra_caps_t excaps,

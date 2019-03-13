@@ -15,6 +15,14 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
+static inline void
+handleReservedIRQ(irq_t irq)
+{
+#ifdef CONFIG_IRQ_REPORTING
+    printf("Received reserved IRQ: %d\n", (int)irq);
+#endif
+}
+
 exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                             cte_t *srcSlot, extra_caps_t excaps,
                                             word_t *buffer);
