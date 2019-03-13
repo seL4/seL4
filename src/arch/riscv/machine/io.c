@@ -16,95 +16,10 @@
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  */
 
-#include <stdint.h>
-#include <util.h>
 #include <machine/io.h>
-#include <plat/machine/devices.h>
-#include <arch/machine.h>
 #include <arch/sbi.h>
-#include <arch/kernel/traps.h>
 
-static inline void print_format_cause(int cause_num)
-{
-    switch (cause_num) {
-    case RISCVInstructionMisaligned:
-        printf("Instruction address misaligned\n");
-        break;
-    case RISCVInstructionAccessFault:
-        printf("Instruction access fault\n");
-        break;
-    case RISCVInstructionIllegal:
-        printf("Illegal instruction\n");
-        break;
-    case RISCVBreakpoint:
-        printf("Breakpoint\n");
-        break;
-    case RISCVLoadAccessFault:
-        printf("Load access fault\n");
-        break;
-    case RISCVAddressMisaligned:
-        printf("AMO address misaligned\n");
-        break;
-    case RISCVStoreAccessFault:
-        printf("Store/AMO access fault\n");
-        break;
-    case RISCVEnvCall:
-        printf("Environment call\n");
-        break;
-    case RISCVInstructionPageFault:
-        printf("Instruction page fault\n");
-        break;
-    case RISCVLoadPageFault:
-        printf("Load page fault\n");
-        break;
-    case RISCVStorePageFault:
-        printf("Store page fault\n");
-        break;
-    default:
-        printf("Reserved cause %d\n", cause_num);
-        break;
-    }
-}
-
-void handle_exception(void)
-{
-    word_t scause = read_scause();
-
-    /* handleVMFaultEvent
-     * */
-    switch (scause) {
-    case RISCVInstructionAccessFault:
-    case RISCVLoadAccessFault:
-    case RISCVStoreAccessFault:
-    case RISCVInstructionPageFault:
-    case RISCVLoadPageFault:
-    case RISCVStorePageFault:
-        handleVMFaultEvent(scause);
-        break;
-    case RISCVInstructionIllegal:
-        handleUserLevelFault(0, 0);
-
-        break;
-    default:
-        print_format_cause(read_scause());
-        printf("sepc = %p\n", (void*)(word_t)read_sepc());
-        printf("sbadaddr = %p\n", (void*)(word_t)read_sbadaddr());
-        printf("sstatus = %p\n", (void*)(word_t)read_sstatus());
-        printf("Halt!\n");
-
-        printf("Register Context Dump \n");
-
-        register word_t UNUSED thread_context asm("t0");
-        for (int i = 0; i < 32; i++) {
-            printf("x%d = %p\n", i, (void*) * (((word_t *) thread_context) + i));
-        }
-
-        halt();
-
-    }
-}
-
-#ifdef CONFIG_PRINTING
+#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG)
 void
 putDebugChar(unsigned char c)
 {

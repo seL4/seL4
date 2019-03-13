@@ -115,7 +115,22 @@ c_handle_exception(void)
 
     c_entry_hook();
 
-    handle_exception();
+    word_t scause = read_scause();
+    switch (scause) {
+    /* vm faults */
+    case RISCVInstructionAccessFault:
+    case RISCVLoadAccessFault:
+    case RISCVStoreAccessFault:
+    case RISCVLoadPageFault:
+    case RISCVStorePageFault:
+    case RISCVInstructionPageFault:
+        handleVMFaultEvent(scause);
+        break;
+	/* user level exceptions */
+    default:
+        handleUserLevelFault(scause, read_sbadaddr());
+        break;
+    }
 
     restore_user_context();
     UNREACHABLE();

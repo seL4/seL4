@@ -51,13 +51,17 @@ enum vm_fault_type {
     RISCVInstructionAccessFault = 1,
     RISCVInstructionIllegal = 2,
     RISCVBreakpoint = 3,
+    /* reserved */
     RISCVLoadAccessFault = 5,
     RISCVAddressMisaligned = 6,
     RISCVStoreAccessFault = 7,
     RISCVEnvCall = 8,
+    /* 9-11 reserved */
     RISCVInstructionPageFault = 12,
     RISCVLoadPageFault = 13,
+    /* 14 - reserved */
     RISCVStorePageFault = 15
+                          /* >= 16 reserved */
 };
 typedef uint32_t vm_fault_type_t;
 
