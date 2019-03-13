@@ -429,7 +429,6 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         return EXCEPTION_FAULT;
     case RISCVInstructionPageFault:
     case RISCVInstructionAccessFault:
-        setRegister(thread, NEXTPC, getRegister(thread, SEPC));
         current_fault = seL4_Fault_VMFault_new(addr, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
 
