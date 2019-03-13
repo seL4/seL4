@@ -31,18 +31,7 @@ serial_init(uint16_t port)
     in8(port + 5); /* clear line status port */
     in8(port + 6); /* clear modem status port */
 }
-#endif /* CONFIG_PRINTING || CONFIG_DEBUG_BUILD */
 
-#ifdef CONFIG_PRINTING
-void
-putConsoleChar(unsigned char a)
-{
-    while (x86KSconsolePort && !(in8(x86KSconsolePort + 5) & 0x20));
-    out8(x86KSconsolePort, a);
-}
-#endif /* CONFIG_PRINTING */
-
-#ifdef CONFIG_DEBUG_BUILD
 void
 putDebugChar(unsigned char a)
 {
@@ -50,6 +39,9 @@ putDebugChar(unsigned char a)
     out8(x86KSdebugPort, a);
 }
 
+#endif /* CONFIG_PRINTING || CONFIG_DEBUG_BUILD */
+
+#ifdef CONFIG_DEBUG_BUILD
 unsigned char
 getDebugChar(void)
 {

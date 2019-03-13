@@ -19,8 +19,6 @@
         __attribute__((format(archetype, string_index, first_to_check)))
 
 #if (defined CONFIG_DEBUG_BUILD) || (defined CONFIG_PRINTING)
-/* most arm platforms just call this for putConsoleChar, so
- * prototype it here */
 void putDebugChar(unsigned char c);
 #endif
 
@@ -31,7 +29,6 @@ unsigned char getDebugChar(void);
 
 #ifdef CONFIG_PRINTING
 /* printf will result in output */
-void putConsoleChar(unsigned char c);
 void putchar(char c);
 #define kernel_putchar(c) putchar(c)
 word_t kprintf(const char *format, ...) VISIBLE FORMAT(printf, 1, 2);

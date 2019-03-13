@@ -106,7 +106,7 @@ void handle_exception(void)
 
 #ifdef CONFIG_PRINTING
 void
-putConsoleChar(unsigned char c)
+putDebugChar(unsigned char c)
 {
     sbi_console_putchar(c);
 }

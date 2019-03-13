@@ -392,7 +392,6 @@ add_sources(
         kernel/thread.c
         machine/cache.c
         machine/errata.c
-        machine/io.c
         machine/debug.c
         object/interrupt.c
         object/tcb.c
