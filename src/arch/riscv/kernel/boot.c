@@ -178,8 +178,10 @@ BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapIRQControl), cap_irq_control_cap_new());
 }
 
+/* ASM symbol for the CPU initialisation trap. */
+extern char trap_entry[1];
+
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
-extern char trap_entry[];
 
 BOOT_CODE static void init_cpu(void)
 {
