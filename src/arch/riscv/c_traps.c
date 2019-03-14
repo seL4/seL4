@@ -117,7 +117,6 @@ c_handle_exception(void)
 
     word_t scause = read_scause();
     switch (scause) {
-    /* vm faults */
     case RISCVInstructionAccessFault:
     case RISCVLoadAccessFault:
     case RISCVStoreAccessFault:
@@ -126,7 +125,6 @@ c_handle_exception(void)
     case RISCVInstructionPageFault:
         handleVMFaultEvent(scause);
         break;
-	/* user level exceptions */
     default:
         handleUserLevelFault(scause, read_sbadaddr());
         break;
