@@ -37,8 +37,6 @@
  * handler.
  */
 #define ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-#else
-#define ARM_HYP_TRAP_CP14_IN_VCPU_THREADS
 #endif
 #endif
 
