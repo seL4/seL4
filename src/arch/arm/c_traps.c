@@ -48,7 +48,11 @@ void VISIBLE NORETURN c_handle_undefined_instruction(void)
 #endif
 
     /* There's only one user-level fault on ARM, and the code is (0,0) */
+#ifdef CONFIG_ARCH_AARCH32
     handleUserLevelFault(0, 0);
+#else
+    handleUserLevelFault(getESR(), 0);
+#endif
     restore_user_context();
     UNREACHABLE();
 }
