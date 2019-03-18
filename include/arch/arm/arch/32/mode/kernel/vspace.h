@@ -70,7 +70,7 @@ bool_t CONST isIOSpaceFrameCap(cap_t cap);
 static const region_t BOOT_RODATA mode_reserved_region[] = {
     {
         (PD_ASID_SLOT + 0) << ARMSectionBits,
-        (PD_ASID_SLOT + 1) << ARMSectionBits
+                           (PD_ASID_SLOT + 1) << ARMSectionBits
     }
 };
 

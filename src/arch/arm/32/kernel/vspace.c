@@ -2947,7 +2947,7 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         }
 
         pool = armKSASIDTable[cap_asid_pool_cap_get_capASIDBase(cap) >>
-                              asidLowBits];
+                                                                     asidLowBits];
         if (unlikely(!pool)) {
             userError("ASIDPoolAssign: Failed to lookup pool.");
             current_syscall_error.type = seL4_FailedLookup;

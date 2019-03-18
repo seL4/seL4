@@ -288,7 +288,7 @@ initL2Cache(void)
     /* Access secure registers through Security Middleware Call */
     /* 1: Write to aux Tag RAM latentcy, Data RAM latency, prefect, power control registers  */
     mshield_smc(MSHIELD_SMC_ROM_CTRL_CTRL, 0, 0);
-    mshield_smc(MSHIELD_SMC_ROM_CTRL_AUX , aux, 0);
+    mshield_smc(MSHIELD_SMC_ROM_CTRL_AUX, aux, 0);
     mshield_smc(MSHIELD_SMC_ROM_CTRL_LATENCY, tag_ram, data_ram);
 
 #else /* !TI_MSHIELD */
