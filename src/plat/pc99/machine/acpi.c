@@ -162,8 +162,7 @@ const char acpi_str_fadt[] = {'F', 'A', 'C', 'P', 0};
 const char acpi_str_apic[] = {'A', 'P', 'I', 'C', 0};
 const char acpi_str_dmar[] = {'D', 'M', 'A', 'R', 0};
 
-BOOT_CODE static uint8_t
-acpi_calc_checksum(char *start, uint32_t length)
+BOOT_CODE static uint8_t acpi_calc_checksum(char *start, uint32_t length)
 {
     uint8_t checksum = 0;
 
@@ -175,8 +174,7 @@ acpi_calc_checksum(char *start, uint32_t length)
     return checksum;
 }
 
-BOOT_CODE static acpi_rsdp_t *
-acpi_get_rsdp(void)
+BOOT_CODE static acpi_rsdp_t *acpi_get_rsdp(void)
 {
     char *addr;
 
@@ -190,8 +188,7 @@ acpi_get_rsdp(void)
     return NULL;
 }
 
-BOOT_CODE static void *
-acpi_table_init(void *entry, enum acpi_type table_type)
+BOOT_CODE static void *acpi_table_init(void *entry, enum acpi_type table_type)
 {
     void *acpi_table;
     unsigned int pages_for_table;
@@ -229,8 +226,7 @@ acpi_table_init(void *entry, enum acpi_type table_type)
     return acpi_table;
 }
 
-BOOT_CODE bool_t
-acpi_init(acpi_rsdp_t *rsdp_data)
+BOOT_CODE bool_t acpi_init(acpi_rsdp_t *rsdp_data)
 {
     acpi_rsdp_t *acpi_rsdp = acpi_get_rsdp();
 
@@ -249,8 +245,7 @@ acpi_init(acpi_rsdp_t *rsdp_data)
     return acpi_validate_rsdp(rsdp_data);
 }
 
-BOOT_CODE bool_t
-acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp)
+BOOT_CODE bool_t acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp)
 {
     acpi_rsdt_t *acpi_rsdt;
     acpi_rsdt_t *acpi_rsdt_mapped;
@@ -280,8 +275,7 @@ acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp)
     return true;
 }
 
-BOOT_CODE uint32_t
-acpi_madt_scan(
+BOOT_CODE uint32_t acpi_madt_scan(
     acpi_rsdp_t *acpi_rsdp,
     cpu_id_t    *cpu_list,
     uint32_t    *num_ioapic,
@@ -388,8 +382,7 @@ acpi_madt_scan(
     return num_cpu;
 }
 
-BOOT_CODE bool_t
-acpi_fadt_scan(
+BOOT_CODE bool_t acpi_fadt_scan(
     acpi_rsdp_t *acpi_rsdp
 )
 {
@@ -424,8 +417,7 @@ acpi_fadt_scan(
     return true;
 }
 
-BOOT_CODE void
-acpi_dmar_scan(
+BOOT_CODE void acpi_dmar_scan(
     acpi_rsdp_t *acpi_rsdp,
     paddr_t     *drhu_list,
     uint32_t    *num_drhu,

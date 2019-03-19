@@ -138,8 +138,7 @@ getActiveIRQ(void);
 void
 maskInterrupt(bool_t disable, interrupt_t irq);
 
-static inline bool_t
-isIRQPending(void)
+static inline bool_t isIRQPending(void)
 {
     uint32_t pending;
     pending = core_regs->coreIRQSource[0];
@@ -149,14 +148,12 @@ isIRQPending(void)
     return pending != 0;
 }
 
-static inline void
-ackInterrupt(UNUSED irq_t irq)
+static inline void ackInterrupt(UNUSED irq_t irq)
 {
     /* No way to ACK an interrupt */
 }
 
-static inline void
-handleSpuriousIRQ(void)
+static inline void handleSpuriousIRQ(void)
 {
     /* Nothing to do here */
 }

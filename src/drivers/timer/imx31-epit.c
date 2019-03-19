@@ -42,8 +42,7 @@ enum IPGConstants {
 interrupt_t active_irq = irqInvalid;
 
 /* Configure EPIT1 as kernel preemption timer */
-BOOT_CODE void
-initTimer(void)
+BOOT_CODE void initTimer(void)
 {
     epitcr_t epitcr_kludge;
 

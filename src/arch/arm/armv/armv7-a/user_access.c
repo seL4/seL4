@@ -26,8 +26,7 @@
 
 
 
-static void
-check_export_pmu(void)
+static void check_export_pmu(void)
 {
 #ifdef CONFIG_EXPORT_PMU_USER
     /* Export performance counters */
@@ -45,8 +44,7 @@ check_export_pmu(void)
 }
 
 
-static void
-check_export_arch_timer(void)
+static void check_export_arch_timer(void)
 {
     uint32_t v;
     MRC(CNTKCTL, v);
@@ -60,8 +58,7 @@ check_export_arch_timer(void)
 }
 
 
-void
-armv_init_user_access(void)
+void armv_init_user_access(void)
 {
     uint32_t v;
     /* Performance Monitoring Unit */

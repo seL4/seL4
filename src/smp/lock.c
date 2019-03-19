@@ -17,8 +17,7 @@
 
 clh_lock_t big_kernel_lock ALIGN(L1_CACHE_LINE_SIZE);
 
-BOOT_CODE void
-clh_lock_init(void)
+BOOT_CODE void clh_lock_init(void)
 {
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
         big_kernel_lock.node_owners[i].node = &big_kernel_lock.nodes[i];

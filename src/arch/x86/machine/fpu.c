@@ -17,8 +17,7 @@
 /*
  * Setup the FPU register state for a new thread.
  */
-void
-Arch_initFpuContext(user_context_t *context)
+void Arch_initFpuContext(user_context_t *context)
 {
     context->fpuState = x86KSnullFpuState;
 }
@@ -26,8 +25,7 @@ Arch_initFpuContext(user_context_t *context)
 /*
  * Initialise the FPU for this machine.
  */
-BOOT_CODE bool_t
-Arch_initFpu(void)
+BOOT_CODE bool_t Arch_initFpu(void)
 {
     /* Enable FPU / SSE / SSE2 / SSE3 / SSSE3 / SSE4 Extensions. */
     write_cr4(read_cr4() | CR4_OSFXSR);

@@ -92,8 +92,7 @@ paddr_to_kpptr(paddr_t paddr)
     return (void *)(paddr + KERNEL_BASE_OFFSET);
 }
 
-static inline paddr_t CONST
-kpptr_to_paddr(void *pptr)
+static inline paddr_t CONST kpptr_to_paddr(void *pptr)
 {
     assert((word_t)pptr >= KERNEL_BASE);
     return (paddr_t)pptr - KERNEL_BASE_OFFSET;

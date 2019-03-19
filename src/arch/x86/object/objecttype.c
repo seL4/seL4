@@ -428,8 +428,7 @@ bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
-word_t
-Arch_getObjectSize(word_t t)
+word_t Arch_getObjectSize(word_t t)
 {
     switch (t) {
     case seL4_X86_4K:
@@ -461,8 +460,7 @@ Arch_getObjectSize(word_t t)
     }
 }
 
-cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
 #ifdef CONFIG_VTX
     switch (t) {
@@ -507,8 +505,7 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
 #endif
 }
 
-exception_t
-Arch_decodeInvocation(
+exception_t Arch_decodeInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
@@ -547,8 +544,7 @@ Arch_decodeInvocation(
     }
 }
 
-void
-Arch_prepareThreadDelete(tcb_t *thread)
+void Arch_prepareThreadDelete(tcb_t *thread)
 {
     /* Notify the lazy FPU module about this thread's deletion. */
     fpuThreadDelete(thread);

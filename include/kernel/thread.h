@@ -16,8 +16,7 @@
 #include <object/structures.h>
 #include <arch/machine.h>
 
-static inline CONST word_t
-ready_queues_index(word_t dom, word_t prio)
+static inline CONST word_t ready_queues_index(word_t dom, word_t prio)
 {
     if (CONFIG_NUM_DOMAINS > 1) {
         return dom * CONFIG_NUM_PRIORITIES + prio;
@@ -27,20 +26,17 @@ ready_queues_index(word_t dom, word_t prio)
     }
 }
 
-static inline CONST word_t
-prio_to_l1index(word_t prio)
+static inline CONST word_t prio_to_l1index(word_t prio)
 {
     return (prio >> wordRadix);
 }
 
-static inline CONST word_t
-l1index_to_prio(word_t l1index)
+static inline CONST word_t l1index_to_prio(word_t l1index)
 {
     return (l1index << wordRadix);
 }
 
-static inline bool_t PURE
-isRunnable(const tcb_t *thread)
+static inline bool_t PURE isRunnable(const tcb_t *thread)
 {
     switch (thread_state_get_tsType(thread->tcbState)) {
     case ThreadState_Running:
@@ -55,16 +51,14 @@ isRunnable(const tcb_t *thread)
     }
 }
 
-static inline CONST word_t
-invert_l1index(word_t l1index)
+static inline CONST word_t invert_l1index(word_t l1index)
 {
     word_t inverted = (L2_BITMAP_SIZE - 1 - l1index);
     assert(inverted < L2_BITMAP_SIZE);
     return inverted;
 }
 
-static inline prio_t
-getHighestPrio(word_t dom)
+static inline prio_t getHighestPrio(word_t dom)
 {
     word_t l1index;
     word_t l2index;
@@ -80,8 +74,7 @@ getHighestPrio(word_t dom)
     return (l1index_to_prio(l1index) | l2index);
 }
 
-static inline bool_t
-isHighestPrio(word_t dom, prio_t prio)
+static inline bool_t isHighestPrio(word_t dom, prio_t prio)
 {
     return NODE_STATE(ksReadyQueuesL1Bitmap)[dom] == 0 ||
            prio >= getHighestPrio(dom);

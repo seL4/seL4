@@ -16,8 +16,7 @@
 #include <autoconf.h>
 #include <sel4/constants.h>
 
-LIBSEL4_INLINE_FUNC seL4_IPCBuffer *
-seL4_GetIPCBuffer(void)
+LIBSEL4_INLINE_FUNC seL4_IPCBuffer *seL4_GetIPCBuffer(void)
 {
     seL4_Word reg;
     asm("mrs %0, tpidrro_el0" : "=r"(reg));

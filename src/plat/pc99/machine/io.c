@@ -15,8 +15,7 @@
 #include <plat/machine/io.h>
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-void
-serial_init(uint16_t port)
+void serial_init(uint16_t port)
 {
     while (!(in8(port + 5) & 0x60)); /* wait until not busy */
 
@@ -32,8 +31,7 @@ serial_init(uint16_t port)
     in8(port + 6); /* clear modem status port */
 }
 
-void
-putDebugChar(unsigned char a)
+void putDebugChar(unsigned char a)
 {
     while (x86KSdebugPort && (in8(x86KSdebugPort + 5) & 0x20) == 0);
     out8(x86KSdebugPort, a);
@@ -42,8 +40,7 @@ putDebugChar(unsigned char a)
 #endif /* CONFIG_PRINTING || CONFIG_DEBUG_BUILD */
 
 #ifdef CONFIG_DEBUG_BUILD
-unsigned char
-getDebugChar(void)
+unsigned char getDebugChar(void)
 {
     while ((in8(x86KSdebugPort + 5) & 1) == 0);
     return in8(x86KSdebugPort);

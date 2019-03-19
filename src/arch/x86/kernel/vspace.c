@@ -19,8 +19,7 @@
 #include <mode/kernel/tlb.h>
 #include <mode/kernel/vspace.h>
 
-static exception_t
-performPageGetAddress(void *vbase_ptr)
+static exception_t performPageGetAddress(void *vbase_ptr)
 {
     paddr_t capFBasePtr;
 
@@ -203,8 +202,7 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     return true;
 }
 
-BOOT_CODE static void
-init_idt(idt_entry_t *idt)
+BOOT_CODE static void init_idt(idt_entry_t *idt)
 {
     init_idt_entry(idt, 0x00, int_00);
     init_idt_entry(idt, 0x01, int_01);
@@ -479,8 +477,7 @@ init_idt(idt_entry_t *idt)
     init_idt_entry(idt, 0xff, int_ff);
 }
 
-BOOT_CODE bool_t
-init_vm_state(void)
+BOOT_CODE bool_t init_vm_state(void)
 {
     word_t cacheLineSize;
     x86KScacheLineSizeBits = getCacheLineSizeBits();
@@ -501,8 +498,7 @@ init_vm_state(void)
     return true;
 }
 
-BOOT_CODE bool_t
-init_pat_msr(void)
+BOOT_CODE bool_t init_pat_msr(void)
 {
     x86_pat_msr_t pat_msr;
     /* First verify PAT is supported by the machine.
@@ -525,16 +521,14 @@ init_pat_msr(void)
     return true;
 }
 
-BOOT_CODE void
-write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
+BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = asid_map_asid_map_vspace_new(pptr_of_cap(it_vspace_cap));
     x86KSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
 
-asid_map_t
-findMapForASID(asid_t asid)
+asid_map_t findMapForASID(asid_t asid)
 {
     asid_pool_t        *poolPtr;
 
@@ -794,8 +788,7 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
                                      SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
 }
 
-static exception_t
-performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pte, vspace_root_t *vspace)
+static exception_t performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pte, vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
@@ -804,8 +797,7 @@ performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pt
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pde, vspace_root_t *vspace)
+static exception_t performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pde, vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
@@ -814,8 +806,7 @@ performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pd
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX86PageInvocationRemapPTE(pte_t *ptSlot, pte_t pte, asid_t asid, vspace_root_t *vspace)
+static exception_t performX86PageInvocationRemapPTE(pte_t *ptSlot, pte_t pte, asid_t asid, vspace_root_t *vspace)
 {
     *ptSlot = pte;
     invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid,
@@ -823,8 +814,7 @@ performX86PageInvocationRemapPTE(pte_t *ptSlot, pte_t pte, asid_t asid, vspace_r
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX86PageInvocationRemapPDE(pde_t *pdSlot, pde_t pde, asid_t asid, vspace_root_t *vspace)
+static exception_t performX86PageInvocationRemapPDE(pde_t *pdSlot, pde_t pde, asid_t asid, vspace_root_t *vspace)
 {
     *pdSlot = pde;
     invalidatePageStructureCacheASID(pptr_to_paddr(vspace), asid,
@@ -832,8 +822,7 @@ performX86PageInvocationRemapPDE(pde_t *pdSlot, pde_t pde, asid_t asid, vspace_r
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX86PageInvocationUnmap(cap_t cap, cte_t *ctSlot)
+static exception_t performX86PageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     assert(cap_frame_cap_get_capFMappedASID(cap));
     assert(cap_frame_cap_get_capFMapType(cap) == X86_MappingVSpace);
@@ -856,8 +845,7 @@ performX86PageInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX86FrameInvocationUnmap(cap_t cap, cte_t *cte)
+static exception_t performX86FrameInvocationUnmap(cap_t cap, cte_t *cte)
 {
     if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
         switch (cap_frame_cap_get_capFMapType(cap)) {
@@ -887,9 +875,8 @@ struct create_mapping_pte_return {
 };
 typedef struct create_mapping_pte_return create_mapping_pte_return_t;
 
-static create_mapping_pte_return_t
-createSafeMappingEntries_PTE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
-                             vspace_root_t *vspace)
+static create_mapping_pte_return_t createSafeMappingEntries_PTE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
+                                                                vspace_root_t *vspace)
 {
     create_mapping_pte_return_t ret;
     lookupPTSlot_ret_t          lu_ret;
@@ -916,9 +903,8 @@ struct create_mapping_pde_return {
 };
 typedef struct create_mapping_pde_return create_mapping_pde_return_t;
 
-static create_mapping_pde_return_t
-createSafeMappingEntries_PDE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
-                             vspace_root_t *vspace)
+static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
+                                                                vspace_root_t *vspace)
 {
     create_mapping_pde_return_t ret;
     lookupPDSlot_ret_t          lu_ret;
@@ -1236,8 +1222,7 @@ exception_t decodeX86FrameInvocation(
     }
 }
 
-static exception_t
-performX86PageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
+static exception_t performX86PageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
 
     if (cap_page_table_cap_get_capPTIsMapped(cap)) {
@@ -1254,8 +1239,7 @@ performX86PageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdSlot, vspace_root_t *root)
+static exception_t performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdSlot, vspace_root_t *root)
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
@@ -1264,8 +1248,7 @@ performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdS
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeX86PageTableInvocation(
+static exception_t decodeX86PageTableInvocation(
     word_t invLabel,
     word_t length,
     cte_t *cte, cap_t cap,

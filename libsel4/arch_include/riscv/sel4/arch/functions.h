@@ -21,8 +21,7 @@
 
 #include <sel4/types.h>
 
-LIBSEL4_INLINE_FUNC seL4_IPCBuffer *
-seL4_GetIPCBuffer(void)
+LIBSEL4_INLINE_FUNC seL4_IPCBuffer *seL4_GetIPCBuffer(void)
 {
     seL4_Word reg;
     asm("mv %0, tp" : "=r"(reg));
@@ -30,50 +29,42 @@ seL4_GetIPCBuffer(void)
 }
 
 
-LIBSEL4_INLINE_FUNC seL4_Word
-seL4_GetMR(int i)
+LIBSEL4_INLINE_FUNC seL4_Word seL4_GetMR(int i)
 {
     return seL4_GetIPCBuffer()->msg[i];
 }
 
-LIBSEL4_INLINE_FUNC void
-seL4_SetMR(int i, seL4_Word mr)
+LIBSEL4_INLINE_FUNC void seL4_SetMR(int i, seL4_Word mr)
 {
     seL4_GetIPCBuffer()->msg[i] = mr;
 }
 
-LIBSEL4_INLINE_FUNC seL4_Word
-seL4_GetUserData(void)
+LIBSEL4_INLINE_FUNC seL4_Word seL4_GetUserData(void)
 {
     return seL4_GetIPCBuffer()->userData;
 }
 
-LIBSEL4_INLINE_FUNC void
-seL4_SetUserData(seL4_Word data)
+LIBSEL4_INLINE_FUNC void seL4_SetUserData(seL4_Word data)
 {
     seL4_GetIPCBuffer()->userData = data;
 }
 
-LIBSEL4_INLINE_FUNC seL4_Word
-seL4_GetBadge(int i)
+LIBSEL4_INLINE_FUNC seL4_Word seL4_GetBadge(int i)
 {
     return seL4_GetIPCBuffer()->caps_or_badges[i];
 }
 
-LIBSEL4_INLINE_FUNC seL4_CPtr
-seL4_GetCap(int i)
+LIBSEL4_INLINE_FUNC seL4_CPtr seL4_GetCap(int i)
 {
     return (seL4_CPtr)seL4_GetIPCBuffer()->caps_or_badges[i];
 }
 
-LIBSEL4_INLINE_FUNC void
-seL4_SetCap(int i, seL4_CPtr cptr)
+LIBSEL4_INLINE_FUNC void seL4_SetCap(int i, seL4_CPtr cptr)
 {
     seL4_GetIPCBuffer()->caps_or_badges[i] = (seL4_Word)cptr;
 }
 
-LIBSEL4_INLINE_FUNC void
-seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex, seL4_Word *receiveDepth)
+LIBSEL4_INLINE_FUNC void seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex, seL4_Word *receiveDepth)
 {
     seL4_IPCBuffer *ipcbuffer = seL4_GetIPCBuffer();
     if (receiveCNode != (void *)0) {
@@ -89,8 +80,7 @@ seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex, seL4_Wo
     }
 }
 
-LIBSEL4_INLINE_FUNC void
-seL4_SetCapReceivePath(seL4_CPtr receiveCNode, seL4_CPtr receiveIndex, seL4_Word receiveDepth)
+LIBSEL4_INLINE_FUNC void seL4_SetCapReceivePath(seL4_CPtr receiveCNode, seL4_CPtr receiveIndex, seL4_Word receiveDepth)
 {
     seL4_IPCBuffer *ipcbuffer = seL4_GetIPCBuffer();
     ipcbuffer->receiveCNode = receiveCNode;

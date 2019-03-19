@@ -19,8 +19,7 @@
 
 #define X86_DEBUG_BP_N_REGS                 (4)
 
-static inline word_t
-readDr6Reg(void)
+static inline word_t readDr6Reg(void)
 {
     word_t ret;
 
@@ -30,8 +29,7 @@ readDr6Reg(void)
     return ret;
 }
 
-static inline void
-writeDr6Reg(word_t val)
+static inline void writeDr6Reg(word_t val)
 {
     asm volatile(
         "movl %0, %%dr6 \n\t"
@@ -39,8 +37,7 @@ writeDr6Reg(word_t val)
         : "r"(val));
 }
 
-static inline word_t
-readDr7Reg(void)
+static inline word_t readDr7Reg(void)
 {
     word_t ret;
 
@@ -50,8 +47,7 @@ readDr7Reg(void)
     return ret;
 }
 
-static inline void
-writeDr7Reg(word_t val)
+static inline void writeDr7Reg(word_t val)
 {
     asm volatile(
         "movl %0, %%dr7 \n\t"
@@ -59,8 +55,7 @@ writeDr7Reg(word_t val)
         : "r"(val));
 }
 
-static inline word_t
-readDrReg(uint8_t reg)
+static inline word_t readDrReg(uint8_t reg)
 {
     word_t ret;
 
@@ -82,8 +77,7 @@ readDrReg(uint8_t reg)
     return ret;
 }
 
-static inline void
-writeDrReg(uint8_t reg, word_t val)
+static inline void writeDrReg(uint8_t reg, word_t val)
 {
     assert(reg < X86_DEBUG_BP_N_REGS);
     switch (reg) {
@@ -105,8 +99,7 @@ writeDrReg(uint8_t reg, word_t val)
 /** Restore debug register context from a block of memory.
  *@param source The memory block from which to load the register values.
  */
-static inline void
-loadBreakpointState(tcb_t *source)
+static inline void loadBreakpointState(tcb_t *source)
 {
     /* Order does matter when restoring the registers: we want to restore the
      * breakpoint control register (DR7) last since it is what "activates" the

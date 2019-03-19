@@ -231,8 +231,7 @@ volatile struct l2cc_map *const l2cc
 
 
 #ifdef TI_MSHIELD
-BOOT_CODE static void
-mshield_smc(uint32_t callid, uint32_t arg1, uint32_t arg2)
+BOOT_CODE static void mshield_smc(uint32_t callid, uint32_t arg1, uint32_t arg2)
 {
     register uint32_t _arg1 asm("r0") = arg1;
     register uint32_t _arg2 asm("r1") = arg2;
@@ -245,8 +244,7 @@ mshield_smc(uint32_t callid, uint32_t arg1, uint32_t arg2)
 }
 #endif /* TI_MSHIELD */
 
-BOOT_CODE void
-initL2Cache(void)
+BOOT_CODE void initL2Cache(void)
 {
 #ifndef CONFIG_DEBUG_DISABLE_L2_CACHE
     uint32_t aux;

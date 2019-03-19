@@ -19,8 +19,7 @@
 
 void armv_init_ccnt(void);
 
-static inline timestamp_t
-timestamp(void)
+static inline timestamp_t timestamp(void)
 {
     timestamp_t ccnt;
     SYSTEM_READ_WORD(CCNT, ccnt);

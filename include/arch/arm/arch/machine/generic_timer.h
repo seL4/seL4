@@ -19,8 +19,7 @@
 
 /* ARM generic timer implementation */
 
-static inline void
-resetTimer(void)
+static inline void resetTimer(void)
 {
     SYSTEM_WRITE_WORD(CNT_TVAL, TIMER_RELOAD);
     SYSTEM_WRITE_WORD(CNT_CTL, BIT(0));

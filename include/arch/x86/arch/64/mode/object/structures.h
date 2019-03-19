@@ -123,8 +123,7 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_LOW(a)         (a & MASK(asidLowBits))
 #define ASID_HIGH(a)        ((a >> asidLowBits) & MASK(asidHighBits))
 
-static inline asid_t PURE
-cap_get_capMappedASID(cap_t cap)
+static inline asid_t PURE cap_get_capMappedASID(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -151,8 +150,7 @@ cap_get_capMappedASID(cap_t cap)
     }
 }
 
-static inline word_t CONST
-cap_get_modeCapSizeBits(cap_t cap)
+static inline word_t CONST cap_get_modeCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -170,8 +168,7 @@ cap_get_modeCapSizeBits(cap_t cap)
     }
 }
 
-static inline bool_t CONST
-cap_get_modeCapIsPhysical(cap_t cap)
+static inline bool_t CONST cap_get_modeCapIsPhysical(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -190,8 +187,7 @@ cap_get_modeCapIsPhysical(cap_t cap)
     }
 }
 
-static inline void *CONST
-cap_get_modeCapPtr(cap_t cap)
+static inline void *CONST cap_get_modeCapPtr(cap_t cap)
 {
     cap_tag_t ctag;
 

@@ -89,8 +89,7 @@ typedef word_t notification_state_t;
 #define ZombieType_ZombieTCB        BIT(wordRadix)
 #define ZombieType_ZombieCNode(n)   ((n) & MASK(wordRadix))
 
-static inline cap_t CONST
-Zombie_new(word_t number, word_t type, word_t ptr)
+static inline cap_t CONST Zombie_new(word_t number, word_t type, word_t ptr)
 {
     word_t mask;
 
@@ -103,8 +102,7 @@ Zombie_new(word_t number, word_t type, word_t ptr)
     return cap_zombie_cap_new((ptr & ~mask) | (number & mask), type);
 }
 
-static inline word_t CONST
-cap_zombie_cap_get_capZombieBits(cap_t cap)
+static inline word_t CONST cap_zombie_cap_get_capZombieBits(cap_t cap)
 {
     word_t type = cap_zombie_cap_get_capZombieType(cap);
     if (type == ZombieType_ZombieTCB) {
@@ -113,22 +111,19 @@ cap_zombie_cap_get_capZombieBits(cap_t cap)
     return ZombieType_ZombieCNode(type); /* cnode radix */
 }
 
-static inline word_t CONST
-cap_zombie_cap_get_capZombieNumber(cap_t cap)
+static inline word_t CONST cap_zombie_cap_get_capZombieNumber(cap_t cap)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     return cap_zombie_cap_get_capZombieID(cap) & MASK(radix + 1);
 }
 
-static inline word_t CONST
-cap_zombie_cap_get_capZombiePtr(cap_t cap)
+static inline word_t CONST cap_zombie_cap_get_capZombiePtr(cap_t cap)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     return cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
 }
 
-static inline cap_t CONST
-cap_zombie_cap_set_capZombieNumber(cap_t cap, word_t n)
+static inline cap_t CONST cap_zombie_cap_set_capZombieNumber(cap_t cap, word_t n)
 {
     word_t radix = cap_zombie_cap_get_capZombieBits(cap);
     word_t ptr = cap_zombie_cap_get_capZombieID(cap) & ~MASK(radix + 1);
@@ -194,20 +189,17 @@ struct user_data_device {
 };
 typedef struct user_data_device user_data_device_t;
 
-static inline word_t CONST
-wordFromVMRights(vm_rights_t vm_rights)
+static inline word_t CONST wordFromVMRights(vm_rights_t vm_rights)
 {
     return (word_t)vm_rights;
 }
 
-static inline vm_rights_t CONST
-vmRightsFromWord(word_t w)
+static inline vm_rights_t CONST vmRightsFromWord(word_t w)
 {
     return (vm_rights_t)w;
 }
 
-static inline vm_attributes_t CONST
-vmAttributesFromWord(word_t w)
+static inline vm_attributes_t CONST vmAttributesFromWord(word_t w)
 {
     vm_attributes_t attr;
 
@@ -300,8 +292,7 @@ isArchCap(cap_t cap)
     return (cap_get_capType(cap) % 2);
 }
 
-static inline word_t CONST
-cap_get_capSizeBits(cap_t cap)
+static inline word_t CONST cap_get_capSizeBits(cap_t cap)
 {
 
     cap_tag_t ctag;
@@ -356,8 +347,7 @@ cap_get_capSizeBits(cap_t cap)
 /* Returns whether or not this capability has memory associated
  * with it or not. Referring to this as 'being physical' is to
  * match up with the Haskell and abstract specifications */
-static inline bool_t CONST
-cap_get_capIsPhysical(cap_t cap)
+static inline bool_t CONST cap_get_capIsPhysical(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -399,8 +389,7 @@ cap_get_capIsPhysical(cap_t cap)
     }
 }
 
-static inline void *CONST
-cap_get_capPtr(cap_t cap)
+static inline void *CONST cap_get_capPtr(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -442,8 +431,7 @@ cap_get_capPtr(cap_t cap)
     }
 }
 
-static inline bool_t CONST
-isCapRevocable(cap_t derivedCap, cap_t srcCap)
+static inline bool_t CONST isCapRevocable(cap_t derivedCap, cap_t srcCap)
 {
     if (isArchCap(derivedCap)) {
         return Arch_isCapRevocable(derivedCap, srcCap);

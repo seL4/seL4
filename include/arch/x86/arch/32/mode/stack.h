@@ -24,8 +24,7 @@
  * can push to it on entry.
  * @param target_thread The thread we're about to switch to.
  */
-static inline void
-setKernelEntryStackPointer(tcb_t *target_thread)
+static inline void setKernelEntryStackPointer(tcb_t *target_thread)
 {
     word_t register_context_top;
     SMP_COND_STATEMENT(word_t kernel_stack_top);

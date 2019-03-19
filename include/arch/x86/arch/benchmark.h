@@ -14,8 +14,7 @@
 #include <config.h>
 #ifdef CONFIG_ENABLE_BENCHMARKS
 
-static inline uint64_t
-timestamp(void)
+static inline uint64_t timestamp(void)
 {
     uint32_t low, high;
 

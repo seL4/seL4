@@ -18,8 +18,7 @@
 #include <object/endpoint.h>
 #include <object/tcb.h>
 
-static inline tcb_queue_t PURE
-ep_ptr_get_queue(endpoint_t *epptr)
+static inline tcb_queue_t PURE ep_ptr_get_queue(endpoint_t *epptr)
 {
     tcb_queue_t queue;
 
@@ -29,16 +28,14 @@ ep_ptr_get_queue(endpoint_t *epptr)
     return queue;
 }
 
-static inline void
-ep_ptr_set_queue(endpoint_t *epptr, tcb_queue_t queue)
+static inline void ep_ptr_set_queue(endpoint_t *epptr, tcb_queue_t queue)
 {
     endpoint_ptr_set_epQueue_head(epptr, (word_t)queue.head);
     endpoint_ptr_set_epQueue_tail(epptr, (word_t)queue.end);
 }
 
-void
-sendIPC(bool_t blocking, bool_t do_call, word_t badge,
-        bool_t canGrant, bool_t canGrantReply, tcb_t *thread, endpoint_t *epptr)
+void sendIPC(bool_t blocking, bool_t do_call, word_t badge,
+             bool_t canGrant, bool_t canGrantReply, tcb_t *thread, endpoint_t *epptr)
 {
     switch (endpoint_ptr_get_state(epptr)) {
     case EPState_Idle:
@@ -111,8 +108,7 @@ sendIPC(bool_t blocking, bool_t do_call, word_t badge,
     }
 }
 
-void
-receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
+void receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
 {
     endpoint_t *epptr;
     notification_t *ntfnPtr;
@@ -207,8 +203,7 @@ receiveIPC(tcb_t *thread, cap_t cap, bool_t isBlocking)
     }
 }
 
-void
-replyFromKernel_error(tcb_t *thread)
+void replyFromKernel_error(tcb_t *thread)
 {
     word_t len;
     word_t *ipcBuffer;
@@ -220,16 +215,14 @@ replyFromKernel_error(tcb_t *thread)
                     seL4_MessageInfo_new(current_syscall_error.type, 0, 0, len)));
 }
 
-void
-replyFromKernel_success_empty(tcb_t *thread)
+void replyFromKernel_success_empty(tcb_t *thread)
 {
     setRegister(thread, badgeRegister, 0);
     setRegister(thread, msgInfoRegister, wordFromMessageInfo(
                     seL4_MessageInfo_new(0, 0, 0, 0)));
 }
 
-void
-cancelIPC(tcb_t *tptr)
+void cancelIPC(tcb_t *tptr)
 {
     thread_state_t *state = &tptr->tcbState;
 
@@ -283,8 +276,7 @@ cancelIPC(tcb_t *tptr)
     }
 }
 
-void
-cancelAllIPC(endpoint_t *epptr)
+void cancelAllIPC(endpoint_t *epptr)
 {
     switch (endpoint_ptr_get_state(epptr)) {
     case EPState_Idle:
@@ -310,8 +302,7 @@ cancelAllIPC(endpoint_t *epptr)
     }
 }
 
-void
-cancelBadgedSends(endpoint_t *epptr, word_t badge)
+void cancelBadgedSends(endpoint_t *epptr, word_t badge)
 {
     switch (endpoint_ptr_get_state(epptr)) {
     case EPState_Idle:

@@ -59,8 +59,7 @@ BOOT_CODE p_region_t get_avail_p_reg(unsigned int i)
 /**
    DONT_TRANSLATE
  */
-interrupt_t
-getActiveIRQ(void)
+interrupt_t getActiveIRQ(void)
 {
 
     uint64_t temp = 0;
@@ -83,8 +82,7 @@ bool_t isIRQPending(void)
 /**
    DONT_TRANSLATE
 */
-void
-maskInterrupt(bool_t disable, interrupt_t irq)
+void maskInterrupt(bool_t disable, interrupt_t irq)
 {
     if (disable) {
         if (irq > 1) {
@@ -101,15 +99,13 @@ maskInterrupt(bool_t disable, interrupt_t irq)
 }
 
 /* Determine if the given IRQ should be reserved by the kernel. */
-bool_t CONST
-isReservedIRQ(irq_t irq)
+bool_t CONST isReservedIRQ(irq_t irq)
 {
     printf("isReservedIRQ \n");
     return false;
 }
 
-void
-ackInterrupt(irq_t irq)
+void ackInterrupt(irq_t irq)
 {
     // don't ack the kernel timer interrupt, see the comment in resetTimer
     // to understand why
@@ -149,8 +145,7 @@ static inline int read_current_timer(unsigned long *timer_val)
     return 0;
 }
 
-void
-resetTimer(void)
+void resetTimer(void)
 {
     uint64_t target;
     // ack the timer interrupt. we do this here as due to slow simulation platform there
@@ -168,8 +163,7 @@ resetTimer(void)
 /**
    DONT_TRANSLATE
  */
-BOOT_CODE void
-initTimer(void)
+BOOT_CODE void initTimer(void)
 {
     sbi_set_timer(get_cycles() + RESET_CYCLES);
 }
@@ -188,22 +182,19 @@ void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
 /**
    DONT_TRANSLATE
  */
-BOOT_CODE void
-initL2Cache(void)
+BOOT_CODE void initL2Cache(void)
 {
 }
 
 /**
    DONT_TRANSLATE
  */
-BOOT_CODE void
-initIRQController(void)
+BOOT_CODE void initIRQController(void)
 {
     /* Do nothing */
 }
 
-void
-handleSpuriousIRQ(void)
+void handleSpuriousIRQ(void)
 {
     /* Do nothing */
     printf("Superior IRQ!! \n");

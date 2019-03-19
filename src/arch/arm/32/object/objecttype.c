@@ -21,8 +21,7 @@
 #include <arch/object/vcpu.h>
 #endif
 
-bool_t
-Arch_isFrameType(word_t type)
+bool_t Arch_isFrameType(word_t type)
 {
     switch (type) {
     case seL4_ARM_SmallPageObject:
@@ -38,8 +37,7 @@ Arch_isFrameType(word_t type)
     }
 }
 
-deriveCap_ret_t
-Arch_deriveCap(cte_t *slot, cap_t cap)
+deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -118,14 +116,12 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
     }
 }
 
-cap_t CONST
-Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
+cap_t CONST Arch_updateCapData(bool_t preserve, word_t data, cap_t cap)
 {
     return cap;
 }
 
-cap_t CONST
-Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
+cap_t CONST Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
 {
     if (cap_get_capType(cap) == cap_small_frame_cap) {
         vm_rights_t vm_rights;
@@ -148,8 +144,7 @@ Arch_maskCapRights(seL4_CapRights_t cap_rights_mask, cap_t cap)
     }
 }
 
-finaliseCap_ret_t
-Arch_finaliseCap(cap_t cap, bool_t final)
+finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
 {
     finaliseCap_ret_t fc_ret;
 
@@ -257,8 +252,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
     return fc_ret;
 }
 
-bool_t CONST
-Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
+bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
 {
     switch (cap_get_capType(cap_a)) {
     case cap_small_frame_cap:
@@ -330,8 +324,7 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
     return false;
 }
 
-bool_t CONST
-Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
+bool_t CONST Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
 {
     if (cap_get_capType(cap_a) == cap_small_frame_cap) {
         if (cap_get_capType(cap_b) == cap_small_frame_cap) {
@@ -358,8 +351,7 @@ Arch_sameObjectAs(cap_t cap_a, cap_t cap_b)
     return Arch_sameRegionAs(cap_a, cap_b);
 }
 
-word_t
-Arch_getObjectSize(word_t t)
+word_t Arch_getObjectSize(word_t t)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
@@ -388,8 +380,7 @@ Arch_getObjectSize(word_t t)
     }
 }
 
-cap_t
-Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
+cap_t Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_ARM_SmallPageObject:
@@ -546,10 +537,9 @@ Arch_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     }
 }
 
-exception_t
-Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                      cte_t *slot, cap_t cap, extra_caps_t excaps,
-                      bool_t call, word_t *buffer)
+exception_t Arch_decodeInvocation(word_t invLabel, word_t length, cptr_t cptr,
+                                  cte_t *slot, cap_t cap, extra_caps_t excaps,
+                                  bool_t call, word_t *buffer)
 {
     /* The C parser cannot handle a switch statement with only a default
      * case. So we need to do some gymnastics to remove the switch if

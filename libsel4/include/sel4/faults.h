@@ -15,8 +15,7 @@
 #include <sel4/types.h>
 #include <sel4/sel4_arch/faults.h>
 
-LIBSEL4_INLINE_FUNC seL4_Fault_t
-seL4_getFault(seL4_MessageInfo_t tag)
+LIBSEL4_INLINE_FUNC seL4_Fault_t seL4_getFault(seL4_MessageInfo_t tag)
 {
 
     switch (seL4_MessageInfo_get_label(tag)) {
@@ -41,39 +40,33 @@ seL4_getFault(seL4_MessageInfo_t tag)
 }
 
 #ifdef CONFIG_HARDWARE_DEBUG_API
-LIBSEL4_INLINE_FUNC seL4_Bool
-seL4_isDebugException_tag(seL4_MessageInfo_t tag)
+LIBSEL4_INLINE_FUNC seL4_Bool seL4_isDebugException_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_DebugException;
 }
 #endif
 
-LIBSEL4_INLINE_FUNC seL4_Bool
-seL4_isVMFault_tag(seL4_MessageInfo_t tag)
+LIBSEL4_INLINE_FUNC seL4_Bool seL4_isVMFault_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_VMFault;
 }
 
-LIBSEL4_INLINE_FUNC seL4_Bool
-seL4_isUnknownSyscall_tag(seL4_MessageInfo_t tag)
+LIBSEL4_INLINE_FUNC seL4_Bool seL4_isUnknownSyscall_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_UnknownSyscall;
 }
 
-LIBSEL4_INLINE_FUNC seL4_Bool
-seL4_isUserException_tag(seL4_MessageInfo_t tag)
+LIBSEL4_INLINE_FUNC seL4_Bool seL4_isUserException_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_UserException;
 }
 
-LIBSEL4_INLINE_FUNC seL4_Bool
-seL4_isNullFault_tag(seL4_MessageInfo_t tag)
+LIBSEL4_INLINE_FUNC seL4_Bool seL4_isNullFault_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_NullFault;
 }
 
-LIBSEL4_INLINE_FUNC seL4_Bool
-seL4_isCapFault_tag(seL4_MessageInfo_t tag)
+LIBSEL4_INLINE_FUNC seL4_Bool seL4_isCapFault_tag(seL4_MessageInfo_t tag)
 {
     return seL4_MessageInfo_get_label(tag) == seL4_Fault_CapFault;
 }

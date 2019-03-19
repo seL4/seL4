@@ -13,8 +13,7 @@
 #include <kernel/thread.h>
 #include <arch/kernel/thread.h>
 
-void
-Arch_postModifyRegisters(tcb_t *tptr)
+void Arch_postModifyRegisters(tcb_t *tptr)
 {
     Mode_postModifyRegisters(tptr);
 }

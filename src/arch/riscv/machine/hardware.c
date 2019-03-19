@@ -19,14 +19,12 @@
 #include <machine/registerset.h>
 #include <arch/machine.h>
 
-word_t PURE
-getRestartPC(tcb_t *thread)
+word_t PURE getRestartPC(tcb_t *thread)
 {
     return getRegister(thread, SEPC);
 }
 
-void
-setNextPC(tcb_t *thread, word_t v)
+void setNextPC(tcb_t *thread, word_t v)
 {
     setRegister(thread, NEXTPC, v);
 }

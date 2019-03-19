@@ -57,16 +57,14 @@ exception_t handleUserLevelDebugException(int int_vector);
  * thread's TCB. These two functions here set and unset the bits in that
  * bitfield.
  */
-static inline void
-setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+static inline void setBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 {
     if (t != NULL) {
         t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf |= BIT(bp_num);
     }
 }
 
-static inline void
-unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
+static inline void unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
 {
     if (t != NULL) {
         t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &= ~BIT(bp_num);
@@ -81,8 +79,7 @@ unsetBreakpointUsedFlag(tcb_t *t, uint16_t bp_num)
  * @param at arch_tcb_t from which the reserved bits will be loaded before
  *           setting the disable bits.
  */
-static void
-loadAllDisabledBreakpointState(tcb_t *t)
+static void loadAllDisabledBreakpointState(tcb_t *t)
 {
     word_t disable_value;
 
@@ -93,8 +90,7 @@ loadAllDisabledBreakpointState(tcb_t *t)
     writeDr7Reg(disable_value);
 }
 
-static inline void
-restore_user_debug_context(tcb_t *target_thread)
+static inline void restore_user_debug_context(tcb_t *target_thread)
 {
     arch_tcb_t *uds = &target_thread->tcbArch;
     if (uds->tcbContext.breakpointState.used_breakpoints_bf != 0) {
@@ -125,11 +121,10 @@ restore_user_debug_context(tcb_t *target_thread)
     }
 }
 
-static inline syscall_error_t
-Arch_decodeConfigureSingleStepping(tcb_t *t,
-                                   uint16_t bp_num,
-                                   word_t n_instr,
-                                   bool_t is_reply)
+static inline syscall_error_t Arch_decodeConfigureSingleStepping(tcb_t *t,
+                                                                 uint16_t bp_num,
+                                                                 word_t n_instr,
+                                                                 bool_t is_reply)
 {
     syscall_error_t ret;
 
@@ -139,10 +134,9 @@ Arch_decodeConfigureSingleStepping(tcb_t *t,
 
 bool_t byte8BreakpointsSupported(void);
 
-static inline syscall_error_t
-Arch_decodeSetBreakpoint(tcb_t *t,
-                         uint16_t bp_num, word_t vaddr, word_t types,
-                         word_t size, word_t rw)
+static inline syscall_error_t Arch_decodeSetBreakpoint(tcb_t *t,
+                                                       uint16_t bp_num, word_t vaddr, word_t types,
+                                                       word_t size, word_t rw)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -164,8 +158,7 @@ Arch_decodeSetBreakpoint(tcb_t *t,
     return ret;
 }
 
-static inline syscall_error_t
-Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
+static inline syscall_error_t Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     syscall_error_t ret = {
         .type = seL4_NoError
@@ -180,8 +173,7 @@ Arch_decodeGetBreakpoint(tcb_t *t, uint16_t bp_num)
     return ret;
 }
 
-static inline syscall_error_t
-Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
+static inline syscall_error_t Arch_decodeUnsetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     syscall_error_t ret = {
         .type = seL4_NoError

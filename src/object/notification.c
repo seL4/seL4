@@ -20,8 +20,7 @@
 
 #include <object/notification.h>
 
-static inline tcb_queue_t PURE
-ntfn_ptr_get_queue(notification_t *ntfnPtr)
+static inline tcb_queue_t PURE ntfn_ptr_get_queue(notification_t *ntfnPtr)
 {
     tcb_queue_t ntfn_queue;
 
@@ -31,23 +30,20 @@ ntfn_ptr_get_queue(notification_t *ntfnPtr)
     return ntfn_queue;
 }
 
-static inline void
-ntfn_ptr_set_queue(notification_t *ntfnPtr, tcb_queue_t ntfn_queue)
+static inline void ntfn_ptr_set_queue(notification_t *ntfnPtr, tcb_queue_t ntfn_queue)
 {
     notification_ptr_set_ntfnQueue_head(ntfnPtr, (word_t)ntfn_queue.head);
     notification_ptr_set_ntfnQueue_tail(ntfnPtr, (word_t)ntfn_queue.end);
 }
 
-static inline void
-ntfn_set_active(notification_t *ntfnPtr, word_t badge)
+static inline void ntfn_set_active(notification_t *ntfnPtr, word_t badge)
 {
     notification_ptr_set_state(ntfnPtr, NtfnState_Active);
     notification_ptr_set_ntfnMsgIdentifier(ntfnPtr, badge);
 }
 
 
-void
-sendSignal(notification_t *ntfnPtr, word_t badge)
+void sendSignal(notification_t *ntfnPtr, word_t badge)
 {
     switch (notification_ptr_get_state(ntfnPtr)) {
     case NtfnState_Idle: {
@@ -127,8 +123,7 @@ sendSignal(notification_t *ntfnPtr, word_t badge)
     }
 }
 
-void
-receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
+void receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
 {
     notification_t *ntfnPtr;
 
@@ -169,8 +164,7 @@ receiveSignal(tcb_t *thread, cap_t cap, bool_t isBlocking)
     }
 }
 
-void
-cancelAllSignals(notification_t *ntfnPtr)
+void cancelAllSignals(notification_t *ntfnPtr)
 {
     if (notification_ptr_get_state(ntfnPtr) == NtfnState_Waiting) {
         tcb_t *thread = TCB_PTR(notification_ptr_get_ntfnQueue_head(ntfnPtr));
@@ -188,8 +182,7 @@ cancelAllSignals(notification_t *ntfnPtr)
     }
 }
 
-void
-cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
+void cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
 {
     tcb_queue_t ntfn_queue;
 
@@ -210,8 +203,7 @@ cancelSignal(tcb_t *threadPtr, notification_t *ntfnPtr)
     setThreadState(threadPtr, ThreadState_Inactive);
 }
 
-void
-completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
+void completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
 {
     word_t badge;
 
@@ -224,15 +216,13 @@ completeSignal(notification_t *ntfnPtr, tcb_t *tcb)
     }
 }
 
-static inline void
-doUnbindNotification(notification_t *ntfnPtr, tcb_t *tcbptr)
+static inline void doUnbindNotification(notification_t *ntfnPtr, tcb_t *tcbptr)
 {
     notification_ptr_set_ntfnBoundTCB(ntfnPtr, (word_t) 0);
     tcbptr->tcbBoundNotification = NULL;
 }
 
-void
-unbindMaybeNotification(notification_t *ntfnPtr)
+void unbindMaybeNotification(notification_t *ntfnPtr)
 {
     tcb_t *boundTCB;
     boundTCB = (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr);
@@ -242,8 +232,7 @@ unbindMaybeNotification(notification_t *ntfnPtr)
     }
 }
 
-void
-unbindNotification(tcb_t *tcb)
+void unbindNotification(tcb_t *tcb)
 {
     notification_t *ntfnPtr;
     ntfnPtr = tcb->tcbBoundNotification;
@@ -253,8 +242,7 @@ unbindNotification(tcb_t *tcb)
     }
 }
 
-void
-bindNotification(tcb_t *tcb, notification_t *ntfnPtr)
+void bindNotification(tcb_t *tcb, notification_t *ntfnPtr)
 {
     notification_ptr_set_ntfnBoundTCB(ntfnPtr, (word_t)tcb);
     tcb->tcbBoundNotification = ntfnPtr;

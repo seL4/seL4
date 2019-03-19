@@ -22,8 +22,7 @@
 
 #ifdef CONFIG_PRINTING
 
-static inline void
-debug_printKernelEntryReason(void)
+static inline void debug_printKernelEntryReason(void)
 {
     printf("\nKernel entry via ");
     switch (ksKernelEntry.path) {
@@ -72,8 +71,7 @@ debug_printKernelEntryReason(void)
 }
 
 /* Prints the user context and stack trace of the current thread */
-static inline void
-debug_printUserState(void)
+static inline void debug_printUserState(void)
 {
     tcb_t *tptr = NODE_STATE(ksCurThread);
     printf("Current thread: %s\n", tptr->tcbName);
@@ -82,8 +80,7 @@ debug_printUserState(void)
     Arch_userStackTrace(tptr);
 }
 
-static inline void
-debug_printTCB(tcb_t *tcb)
+static inline void debug_printTCB(tcb_t *tcb)
 {
     printf("%40s\t", tcb->tcbName);
     char *state;
@@ -125,8 +122,7 @@ debug_printTCB(tcb_t *tcb)
     printf("%15s\t%p\t%20lu\t%lu\n", state, (void *) getRestartPC(tcb), tcb->tcbPriority, core);
 }
 
-static inline void
-debug_dumpScheduler(void)
+static inline void debug_dumpScheduler(void)
 {
     printf("Dumping all tcbs!\n");
     printf("Name                                    \tState          \tIP                  \t Prio \t Core\n");

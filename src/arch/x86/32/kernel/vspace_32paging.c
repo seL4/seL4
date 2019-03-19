@@ -40,11 +40,10 @@ pde_t *get_boot_pd()
  * generation need to be replicated here.
  */
 PHYS_CODE
-static inline pde_t
-pde_pde_large_new_phys(uint32_t page_base_address,
-                       uint32_t pat, uint32_t avl, uint32_t global, uint32_t dirty,
-                       uint32_t accessed, uint32_t cache_disabled, uint32_t write_through,
-                       uint32_t super_user, uint32_t read_write, uint32_t present)
+static inline pde_t pde_pde_large_new_phys(uint32_t page_base_address,
+                                           uint32_t pat, uint32_t avl, uint32_t global, uint32_t dirty,
+                                           uint32_t accessed, uint32_t cache_disabled, uint32_t write_through,
+                                           uint32_t super_user, uint32_t read_write, uint32_t present)
 {
     pde_t pde;
     pde.words[0] = 0;
@@ -65,8 +64,7 @@ pde_pde_large_new_phys(uint32_t page_base_address,
     return pde;
 }
 
-PHYS_CODE VISIBLE void
-init_boot_pd(void)
+PHYS_CODE VISIBLE void init_boot_pd(void)
 {
     word_t i;
 
@@ -105,8 +103,7 @@ init_boot_pd(void)
     }
 }
 
-BOOT_CODE void
-map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
+BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 {
     pde_t *pd   = PDE_PTR(pptr_of_cap(vspace_cap));
     pte_t *pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
@@ -126,15 +123,13 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     invalidateLocalPageStructureCache();
 }
 
-BOOT_CODE void
-map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
+BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 {
     /* this shouldn't be called, and it does nothing */
     fail("Should not be called");
 }
 
-BOOT_CODE void
-map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
+BOOT_CODE void map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
 {
     pte_t *pt;
     pde_t *pd    = PDE_PTR(pptr_of_cap(pd_cap));
@@ -229,8 +224,7 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
     deleteASID(asid, pd);
 }
 
-static exception_t
-performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_ret_t pdSlot, word_t *buffer)
+static exception_t performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_ret_t pdSlot, word_t *buffer)
 {
     if (pdSlot.status == EXCEPTION_NONE &&
             ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
@@ -249,8 +243,7 @@ performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_re
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeIA32PageDirectoryInvocation(
+exception_t decodeIA32PageDirectoryInvocation(
     word_t invLabel,
     word_t length,
     cte_t *cte,
@@ -322,8 +315,7 @@ typedef struct readWordFromVSpace_ret {
     word_t value;
 } readWordFromVSpace_ret_t;
 
-static readWordFromVSpace_ret_t
-readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
+static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
 {
     readWordFromVSpace_ret_t ret;
     lookupPTSlot_ret_t ptSlot;
@@ -359,8 +351,7 @@ readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
     return ret;
 }
 
-void
-Arch_userStackTrace(tcb_t *tptr)
+void Arch_userStackTrace(tcb_t *tptr)
 {
     cap_t threadRoot;
     vspace_root_t *vspace_root;

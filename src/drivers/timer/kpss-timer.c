@@ -38,8 +38,7 @@ timer_t *dgt_tmr = (timer_t *) DGT_TIMER_PPTR;
 
 #define TIMER_MATCH_VAL  (TIMER_RELOAD / PRESCALE_VAL)
 
-BOOT_CODE void
-initTimer(void)
+BOOT_CODE void initTimer(void)
 {
     /* Stop the timer */
     dgt_tmr->en = 0;

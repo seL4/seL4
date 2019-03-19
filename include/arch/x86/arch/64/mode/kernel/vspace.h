@@ -21,8 +21,7 @@ struct lookupPDPTSlot_ret {
 };
 typedef struct lookupPDPTSlot_ret lookupPDPTSlot_ret_t;
 
-static inline pte_t
-x86_make_device_pte(paddr_t phys)
+static inline pte_t x86_make_device_pte(paddr_t phys)
 {
     return pte_new(
                0,      /* xd */
@@ -39,8 +38,7 @@ x86_make_device_pte(paddr_t phys)
            );
 }
 
-static inline pte_t
-x86_make_empty_pte(void)
+static inline pte_t x86_make_empty_pte(void)
 {
     return pte_new(
                0,      /* xd */
@@ -57,8 +55,7 @@ x86_make_empty_pte(void)
            );
 }
 
-static inline CONST pml4e_t
-x86_make_empty_root_mapping(void)
+static inline CONST pml4e_t x86_make_empty_root_mapping(void)
 {
     return pml4e_new(
                0,                  /* xd               */

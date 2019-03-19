@@ -30,9 +30,8 @@ struct tcb_queue {
 };
 typedef struct tcb_queue tcb_queue_t;
 
-static inline unsigned int
-setMR(tcb_t *receiver, word_t *receiveIPCBuffer,
-      unsigned int offset, word_t reg)
+static inline unsigned int setMR(tcb_t *receiver, word_t *receiveIPCBuffer,
+                                 unsigned int offset, word_t reg)
 {
     if (offset >= n_msgRegisters) {
         if (receiveIPCBuffer) {

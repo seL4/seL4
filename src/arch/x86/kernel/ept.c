@@ -45,8 +45,7 @@ enum ept_cache_options {
 };
 typedef enum ept_cache_options ept_cache_options_t;
 
-void
-deleteEPTASID(asid_t asid, ept_pml4e_t *ept)
+void deleteEPTASID(asid_t asid, ept_pml4e_t *ept)
 {
     asid_pool_t *poolPtr;
 
@@ -60,8 +59,7 @@ deleteEPTASID(asid_t asid, ept_pml4e_t *ept)
     }
 }
 
-exception_t
-performX86EPTPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
+exception_t performX86EPTPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     unmapEPTPage(
         cap_frame_cap_get_capFSize(cap),
@@ -77,8 +75,7 @@ performX86EPTPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-findEPTForASID_ret_t
-findEPTForASID(asid_t asid)
+findEPTForASID_ret_t findEPTForASID(asid_t asid)
 {
     findEPTForASID_ret_t ret;
     asid_map_t asid_map;
@@ -97,14 +94,12 @@ findEPTForASID(asid_t asid)
     return ret;
 }
 
-static ept_pml4e_t *CONST
-lookupEPTPML4Slot(ept_pml4e_t *pml4, vptr_t vptr)
+static ept_pml4e_t *CONST lookupEPTPML4Slot(ept_pml4e_t *pml4, vptr_t vptr)
 {
     return pml4 + GET_EPT_PML4_INDEX(vptr);
 }
 
-static lookupEPTPDPTSlot_ret_t CONST
-lookupEPTPDPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
+static lookupEPTPDPTSlot_ret_t CONST lookupEPTPDPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
 {
     lookupEPTPDPTSlot_ret_t ret;
     ept_pml4e_t *pml4Slot;
@@ -126,8 +121,7 @@ lookupEPTPDPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
     return ret;
 }
 
-static lookupEPTPDSlot_ret_t
-lookupEPTPDSlot(ept_pml4e_t *pml4, vptr_t vptr)
+static lookupEPTPDSlot_ret_t lookupEPTPDSlot(ept_pml4e_t *pml4, vptr_t vptr)
 {
     lookupEPTPDSlot_ret_t ret;
     lookupEPTPDPTSlot_ret_t lu_ret;
@@ -157,8 +151,7 @@ lookupEPTPDSlot(ept_pml4e_t *pml4, vptr_t vptr)
     return ret;
 }
 
-static lookupEPTPTSlot_ret_t
-lookupEPTPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
+static lookupEPTPTSlot_ret_t lookupEPTPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
 {
     lookupEPTPTSlot_ret_t ret;
     lookupEPTPDSlot_ret_t lu_ret;
@@ -190,8 +183,7 @@ lookupEPTPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
     return ret;
 }
 
-static ept_cache_options_t
-eptCacheFromVmAttr(vm_attributes_t vmAttr)
+static ept_cache_options_t eptCacheFromVmAttr(vm_attributes_t vmAttr)
 {
     /* PAT cache options are 1-1 with ept_cache_options. But need to
        verify user has specified a sensible option */
@@ -206,8 +198,7 @@ eptCacheFromVmAttr(vm_attributes_t vmAttr)
     return option;
 }
 
-EPTPDPTMapped_ret_t
-EPTPDPTMapped(asid_t asid, vptr_t vptr, ept_pdpte_t *pdpt)
+EPTPDPTMapped_ret_t EPTPDPTMapped(asid_t asid, vptr_t vptr, ept_pdpte_t *pdpt)
 {
     EPTPDPTMapped_ret_t ret;
     findEPTForASID_ret_t asid_ret;
@@ -237,8 +228,7 @@ EPTPDPTMapped(asid_t asid, vptr_t vptr, ept_pdpte_t *pdpt)
     }
 }
 
-void
-unmapEPTPDPT(asid_t asid, vptr_t vaddr, ept_pdpte_t *pdpt)
+void unmapEPTPDPT(asid_t asid, vptr_t vaddr, ept_pdpte_t *pdpt)
 {
     EPTPDPTMapped_ret_t lu_ret;
 
@@ -250,8 +240,7 @@ unmapEPTPDPT(asid_t asid, vptr_t vaddr, ept_pdpte_t *pdpt)
     }
 }
 
-static exception_t
-performEPTPDPTInvocationUnmap(cap_t cap, cte_t *cte)
+static exception_t performEPTPDPTInvocationUnmap(cap_t cap, cte_t *cte)
 {
     if (cap_ept_pdpt_cap_get_capPDPTIsMapped(cap)) {
         ept_pdpte_t *pdpt = (ept_pdpte_t *)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap);
@@ -266,8 +255,7 @@ performEPTPDPTInvocationUnmap(cap_t cap, cte_t *cte)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performEPTPDPTInvocationMap(cap_t cap, cte_t *cte, ept_pml4e_t pml4e, ept_pml4e_t *pml4Slot, ept_pml4e_t *pml4)
+static exception_t performEPTPDPTInvocationMap(cap_t cap, cte_t *cte, ept_pml4e_t pml4e, ept_pml4e_t *pml4Slot, ept_pml4e_t *pml4)
 {
     cte->cap = cap;
     *pml4Slot = pml4e;
@@ -276,8 +264,7 @@ performEPTPDPTInvocationMap(cap_t cap, cte_t *cte, ept_pml4e_t pml4e, ept_pml4e_
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeX86EPTPDPTInvocation(
+static exception_t decodeX86EPTPDPTInvocation(
     word_t invLabel,
     word_t length,
     cte_t *cte,
@@ -381,8 +368,7 @@ decodeX86EPTPDPTInvocation(
     return performEPTPDPTInvocationMap(cap, cte, pml4e, pml4Slot, pml4);
 }
 
-exception_t
-decodeX86EPTInvocation(
+exception_t decodeX86EPTInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
@@ -404,8 +390,7 @@ decodeX86EPTInvocation(
     }
 }
 
-EPTPageDirectoryMapped_ret_t
-EPTPageDirectoryMapped(asid_t asid, vptr_t vaddr, ept_pde_t *pd)
+EPTPageDirectoryMapped_ret_t EPTPageDirectoryMapped(asid_t asid, vptr_t vaddr, ept_pde_t *pd)
 {
     EPTPageDirectoryMapped_ret_t ret;
     lookupEPTPDPTSlot_ret_t find_ret;
@@ -441,8 +426,7 @@ EPTPageDirectoryMapped(asid_t asid, vptr_t vaddr, ept_pde_t *pd)
     }
 }
 
-void
-unmapEPTPageDirectory(asid_t asid, vptr_t vaddr, ept_pde_t *pd)
+void unmapEPTPageDirectory(asid_t asid, vptr_t vaddr, ept_pde_t *pd)
 {
     EPTPageDirectoryMapped_ret_t lu_ret;
 
@@ -460,8 +444,7 @@ unmapEPTPageDirectory(asid_t asid, vptr_t vaddr, ept_pde_t *pd)
     }
 }
 
-static exception_t
-performEPTPDInvocationUnmap(cap_t cap, cte_t *cte)
+static exception_t performEPTPDInvocationUnmap(cap_t cap, cte_t *cte)
 {
     if (cap_ept_pd_cap_get_capPDIsMapped(cap)) {
         ept_pde_t *pd = (ept_pde_t *)cap_ept_pd_cap_get_capPDBasePtr(cap);
@@ -476,8 +459,7 @@ performEPTPDInvocationUnmap(cap_t cap, cte_t *cte)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performEPTPDInvocationMap(cap_t cap, cte_t *cte, ept_pdpte_t pdpte, ept_pdpte_t *pdptSlot, ept_pml4e_t *pml4)
+static exception_t performEPTPDInvocationMap(cap_t cap, cte_t *cte, ept_pdpte_t pdpte, ept_pdpte_t *pdptSlot, ept_pml4e_t *pml4)
 {
     cte->cap = cap;
     *pdptSlot = pdpte;
@@ -486,8 +468,7 @@ performEPTPDInvocationMap(cap_t cap, cte_t *cte, ept_pdpte_t pdpte, ept_pdpte_t 
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeX86EPTPDInvocation(
+exception_t decodeX86EPTPDInvocation(
     word_t invLabel,
     word_t length,
     cte_t *cte,
@@ -597,8 +578,7 @@ decodeX86EPTPDInvocation(
     return performEPTPDInvocationMap(cap, cte, pdpte, lu_ret.pdptSlot, pml4);
 }
 
-EPTPageTableMapped_ret_t
-EPTPageTableMapped(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
+EPTPageTableMapped_ret_t EPTPageTableMapped(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
 {
     EPTPageTableMapped_ret_t ret;
     lookupEPTPDSlot_ret_t find_ret;
@@ -634,8 +614,7 @@ EPTPageTableMapped(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
     }
 }
 
-void
-unmapEPTPageTable(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
+void unmapEPTPageTable(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
 {
     EPTPageTableMapped_ret_t lu_ret;
 
@@ -653,8 +632,7 @@ unmapEPTPageTable(asid_t asid, vptr_t vaddr, ept_pte_t *pt)
     }
 }
 
-static exception_t
-performEPTPTInvocationUnmap(cap_t cap, cte_t *cte)
+static exception_t performEPTPTInvocationUnmap(cap_t cap, cte_t *cte)
 {
     if (cap_ept_pt_cap_get_capPTIsMapped(cap)) {
         ept_pte_t *pt = (ept_pte_t *)cap_ept_pt_cap_get_capPTBasePtr(cap);
@@ -669,8 +647,7 @@ performEPTPTInvocationUnmap(cap_t cap, cte_t *cte)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performEPTPTInvocationMap(cap_t cap, cte_t *cte, ept_pde_t pde, ept_pde_t *pdSlot, ept_pml4e_t *pml4)
+static exception_t performEPTPTInvocationMap(cap_t cap, cte_t *cte, ept_pde_t pde, ept_pde_t *pdSlot, ept_pml4e_t *pml4)
 {
     cte->cap = cap;
     *pdSlot = pde;
@@ -679,8 +656,7 @@ performEPTPTInvocationMap(cap_t cap, cte_t *cte, ept_pde_t pde, ept_pde_t *pdSlo
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeX86EPTPTInvocation(
+exception_t decodeX86EPTPTInvocation(
     word_t invLabel,
     word_t length,
     cte_t *cte,
@@ -793,8 +769,7 @@ decodeX86EPTPTInvocation(
     return performEPTPTInvocationMap(cap, cte, pde, lu_ret.pdSlot, pml4);
 }
 
-static exception_t
-performEPTPageMapPTE(cap_t cap, cte_t *cte, ept_pte_t *ptSlot, ept_pte_t pte, ept_pml4e_t *pml4)
+static exception_t performEPTPageMapPTE(cap_t cap, cte_t *cte, ept_pte_t *ptSlot, ept_pte_t pte, ept_pml4e_t *pml4)
 {
     *ptSlot = pte;
     cte->cap = cap;
@@ -803,8 +778,7 @@ performEPTPageMapPTE(cap_t cap, cte_t *cte, ept_pte_t *ptSlot, ept_pte_t pte, ep
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performEPTPageMapPDE(cap_t cap, cte_t *cte, ept_pde_t *pdSlot, ept_pde_t pde1, ept_pde_t pde2, ept_pml4e_t *pml4)
+static exception_t performEPTPageMapPDE(cap_t cap, cte_t *cte, ept_pde_t *pdSlot, ept_pde_t pde1, ept_pde_t pde2, ept_pml4e_t *pml4)
 {
     pdSlot[0] = pde1;
     if (LARGE_PAGE_BITS == 22) {
@@ -816,8 +790,7 @@ performEPTPageMapPDE(cap_t cap, cte_t *cte, ept_pde_t *pdSlot, ept_pde_t pde1, e
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeX86EPTPageMap(
+exception_t decodeX86EPTPageMap(
     word_t invLabel,
     word_t length,
     cte_t *cte,
@@ -996,8 +969,7 @@ decodeX86EPTPageMap(
     }
 }
 
-void
-unmapEPTPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
+void unmapEPTPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 {
     findEPTForASID_ret_t find_ret;
     paddr_t addr = addrFromPPtr(pptr);

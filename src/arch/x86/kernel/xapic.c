@@ -31,8 +31,7 @@ init_xapic_ldr(void)
 }
 #endif /* CONFIG_USE_LOGICAL_IDS */
 
-BOOT_CODE bool_t
-apic_enable(void)
+BOOT_CODE bool_t apic_enable(void)
 {
     apic_base_msr_t apic_base_msr;
     apic_base_msr.words[0] = x86_rdmsr_low(IA32_APIC_BASE_MSR);
@@ -68,8 +67,7 @@ bool_t apic_is_interrupt_pending(void)
     return false;
 }
 
-BOOT_CODE void
-apic_send_init_ipi(cpu_id_t cpu_id)
+BOOT_CODE void apic_send_init_ipi(cpu_id_t cpu_id)
 {
     apic_write_icr(
         apic_icr2_new(
@@ -101,8 +99,7 @@ apic_send_init_ipi(cpu_id_t cpu_id)
     );
 }
 
-BOOT_CODE void
-apic_send_startup_ipi(cpu_id_t cpu_id, paddr_t startup_addr)
+BOOT_CODE void apic_send_startup_ipi(cpu_id_t cpu_id, paddr_t startup_addr)
 {
     /* check if 4K aligned */
     assert(IS_ALIGNED(startup_addr, PAGE_BITS));

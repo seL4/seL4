@@ -17,29 +17,25 @@
 #include <arch/kernel/thread.h>
 #include <linker.h>
 
-void
-Arch_switchToThread(tcb_t *tcb)
+void Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
     writeTPIDRURO(tcb->tcbIPCBuffer);
 }
 
-BOOT_CODE void
-Arch_configureIdleThread(tcb_t *tcb)
+BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, SPSR_EL1, PSTATE_IDLETHREAD);
     setRegister(tcb, ELR_EL1, (word_t)idleThreadStart);
 }
 
-void
-Arch_switchToIdleThread(void)
+void Arch_switchToIdleThread(void)
 {
     setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserPGD)));
     writeTPIDRURO(0);
 }
 
-void
-Arch_activateIdleThread(tcb_t *tcb)
+void Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }

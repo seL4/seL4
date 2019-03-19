@@ -25,15 +25,13 @@
 
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
-void
-Arch_switchToThread(tcb_t *tcb)
+void Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
     setRegister(tcb, tp, tcb->tcbIPCBuffer);
 }
 
-BOOT_CODE void
-Arch_configureIdleThread(tcb_t *tcb)
+BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, NEXTPC, (word_t)idleThreadStart);
 
@@ -42,8 +40,7 @@ Arch_configureIdleThread(tcb_t *tcb)
     setRegister(tcb, SP, (word_t)kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS));
 }
 
-void
-Arch_switchToIdleThread(void)
+void Arch_switchToIdleThread(void)
 {
     tcb_t *tcb = NODE_STATE(ksIdleThread);
 
@@ -51,14 +48,12 @@ Arch_switchToIdleThread(void)
     setVMRoot(tcb);
 }
 
-void
-Arch_activateIdleThread(tcb_t *tcb)
+void Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }
 
-void
-Arch_postModifyRegisters(tcb_t *tptr)
+void Arch_postModifyRegisters(tcb_t *tptr)
 {
     /* Nothing to do */
 }

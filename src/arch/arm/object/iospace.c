@@ -37,23 +37,20 @@ typedef struct lookupIOPTSlot_ret {
 #define IOPDE_VALID_MASK    0xe0000000
 #define IOPTE_EMPTY_MASK    0xe0000000
 
-static bool_t
-isIOPDEValid(iopde_t *iopde)
+static bool_t isIOPDEValid(iopde_t *iopde)
 {
     assert(iopde != 0);
     return (iopde->words[0] & IOPDE_VALID_MASK) != 0;
 }
 
-static bool_t
-isIOPTEEmpty(iopte_t *iopte)
+static bool_t isIOPTEEmpty(iopte_t *iopte)
 {
     assert(iopte != 0);
     return (iopte->words[0] & IOPTE_EMPTY_MASK) == 0;
 }
 
 
-static lookupIOPDSlot_ret_t
-lookupIOPDSlot(iopde_t *iopd, word_t io_address)
+static lookupIOPDSlot_ret_t lookupIOPDSlot(iopde_t *iopd, word_t io_address)
 {
     lookupIOPDSlot_ret_t ret;
     uint32_t index = plat_smmu_iopd_index(io_address);
@@ -62,8 +59,7 @@ lookupIOPDSlot(iopde_t *iopd, word_t io_address)
     return ret;
 }
 
-static lookupIOPTSlot_ret_t
-lookupIOPTSlot(iopde_t *iopd, word_t io_address)
+static lookupIOPTSlot_ret_t lookupIOPTSlot(iopde_t *iopd, word_t io_address)
 {
     lookupIOPTSlot_ret_t pt_ret;
     uint32_t index;
@@ -97,8 +93,7 @@ lookupIOPTSlot(iopde_t *iopd, word_t io_address)
     return pt_ret;
 }
 
-BOOT_CODE seL4_SlotRegion
-create_iospace_caps(cap_t root_cnode_cap)
+BOOT_CODE seL4_SlotRegion create_iospace_caps(cap_t root_cnode_cap)
 {
     seL4_SlotPos start = ndks_boot.slot_pos_cur;
     seL4_SlotPos end = 0;
@@ -128,9 +123,8 @@ create_iospace_caps(cap_t root_cnode_cap)
     };
 }
 
-static exception_t
-performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
-                            iopde_t iopde)
+static exception_t performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
+                                               iopde_t iopde)
 {
 
 
@@ -148,8 +142,7 @@ performARMIOPTInvocationMap(cap_t cap, cte_t *slot, iopde_t *iopdSlot,
 }
 
 
-exception_t
-decodeARMIOPTInvocation(
+exception_t decodeARMIOPTInvocation(
     word_t       invLabel,
     uint32_t     length,
     cte_t       *slot,
@@ -234,9 +227,8 @@ decodeARMIOPTInvocation(
     return performARMIOPTInvocationMap(cap, slot, lu_ret.iopdSlot, iopde);
 }
 
-static exception_t
-performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
-                          iopte_t iopte)
+static exception_t performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
+                                             iopte_t iopte)
 {
     *ioptSlot = iopte;
     cleanCacheRange_RAM((word_t)ioptSlot,
@@ -252,8 +244,7 @@ performARMIOMapInvocation(cap_t cap, cte_t *slot, iopte_t *ioptSlot,
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeARMIOMapInvocation(
+exception_t decodeARMIOMapInvocation(
     word_t       invLabel,
     uint32_t     length,
     cte_t       *slot,
@@ -384,8 +375,7 @@ decodeARMIOMapInvocation(
 }
 
 
-void
-deleteIOPageTable(cap_t io_pt_cap)
+void deleteIOPageTable(cap_t io_pt_cap)
 {
 
     uint32_t asid;
@@ -422,8 +412,7 @@ deleteIOPageTable(cap_t io_pt_cap)
     }
 }
 
-void
-unmapIOPage(cap_t cap)
+void unmapIOPage(cap_t cap)
 {
     lookupIOPTSlot_ret_t lu_ret;
     iopde_t *pd;
@@ -470,8 +459,7 @@ void clearIOPageDirectory(cap_t cap)
     return;
 }
 
-exception_t
-performPageInvocationUnmapIO(
+exception_t performPageInvocationUnmapIO(
     cap_t        cap,
     cte_t       *slot
 )
@@ -484,8 +472,7 @@ performPageInvocationUnmapIO(
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
+exception_t decodeARMIOSpaceInvocation(word_t invLabel, cap_t cap)
 {
     userError("IOSpace capability has no invocations");
     current_syscall_error.type = seL4_IllegalOperation;

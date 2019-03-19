@@ -101,8 +101,7 @@ void plat_cleanInvalidateL2Cache(void)
     invalidateL2();
 }
 
-BOOT_CODE void
-initL2Cache(void)
+BOOT_CODE void initL2Cache(void)
 {
 #ifndef CONFIG_DEBUG_DISABLE_L2_CACHE
     /* Configure L2 cache */
@@ -116,8 +115,7 @@ initL2Cache(void)
 #endif
 }
 
-BOOT_CODE void
-initIRQController(void)
+BOOT_CODE void initIRQController(void)
 {
     /* Do nothing */
 }

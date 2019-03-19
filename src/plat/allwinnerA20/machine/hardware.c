@@ -27,8 +27,7 @@
 timer_t *timer = (timer_t *) TIMER0_PPTR;
 
 /* Configure gptimer11 as kernel preemption timer */
-BOOT_CODE void
-initTimer(void)
+BOOT_CODE void initTimer(void)
 {
     /* Set the reload value */
     timer->tmr0_intv_value_reg = TIMER_RELOAD;

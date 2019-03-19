@@ -12,16 +12,14 @@
 
 #if defined(CONFIG_ARM_CORTEX_A15) || defined(CONFIG_ARM_CORTEX_A7)
 /* The hardware does not support tlb locking */
-void
-lockTLBEntry(vptr_t vaddr)
+void lockTLBEntry(vptr_t vaddr)
 {
 
 }
 
 #else
 
-void
-lockTLBEntry(vptr_t vaddr)
+void lockTLBEntry(vptr_t vaddr)
 {
     int n = tlbLockCount;
     int x, y;

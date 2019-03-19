@@ -21,8 +21,7 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
                                             word_t *buffer);
 
 /* Handle a platform-reserved IRQ. */
-static inline void
-handleReservedIRQ(irq_t irq)
+static inline void handleReservedIRQ(irq_t irq)
 {
 #ifdef CONFIG_IRQ_REPORTING
     printf("Received reserved IRQ: %d\n", (int)irq);
@@ -51,8 +50,7 @@ handleReservedIRQ(irq_t irq)
 }
 
 
-static inline exception_t
-Arch_checkIRQ(word_t irq_w)
+static inline exception_t Arch_checkIRQ(word_t irq_w)
 {
     if (irq_w > maxIRQ) {
         current_syscall_error.type = seL4_RangeError;

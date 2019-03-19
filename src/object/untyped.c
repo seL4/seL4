@@ -22,16 +22,14 @@
 #include <kernel/thread.h>
 #include <util.h>
 
-static word_t
-alignUp(word_t baseValue, word_t alignment)
+static word_t alignUp(word_t baseValue, word_t alignment)
 {
     return (baseValue + (BIT(alignment) - 1)) & ~MASK(alignment);
 }
 
-exception_t
-decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
-                        cap_t cap, extra_caps_t excaps,
-                        bool_t call, word_t *buffer)
+exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
+                                    cap_t cap, extra_caps_t excaps,
+                                    bool_t call, word_t *buffer)
 {
     word_t newType, userObjSize, nodeIndex;
     word_t nodeDepth, nodeOffset, nodeWindow;
@@ -232,8 +230,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
                                 slots, deviceMemory);
 }
 
-static exception_t
-resetUntypedCap(cte_t *srcSlot)
+static exception_t resetUntypedCap(cte_t *srcSlot)
 {
     cap_t prev_cap = srcSlot->cap;
     word_t block_size = cap_untyped_cap_get_capBlockSize(prev_cap);
@@ -271,11 +268,10 @@ resetUntypedCap(cte_t *srcSlot)
     return EXCEPTION_NONE;
 }
 
-exception_t
-invokeUntyped_Retype(cte_t *srcSlot,
-                     bool_t reset, void *retypeBase,
-                     object_t newType, word_t userSize,
-                     slot_range_t destSlots, bool_t deviceMemory)
+exception_t invokeUntyped_Retype(cte_t *srcSlot,
+                                 bool_t reset, void *retypeBase,
+                                 object_t newType, word_t userSize,
+                                 slot_range_t destSlots, bool_t deviceMemory)
 {
     word_t freeRef;
     word_t totalObjectSize;

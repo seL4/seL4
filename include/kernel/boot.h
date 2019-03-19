@@ -41,8 +41,7 @@ extern ndks_boot_t ndks_boot;
 
 /* function prototypes */
 
-static inline bool_t
-is_reg_empty(region_t reg)
+static inline bool_t is_reg_empty(region_t reg)
 {
     return reg.start == reg.end;
 }

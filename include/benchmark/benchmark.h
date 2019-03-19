@@ -31,15 +31,13 @@ extern seL4_Word ksLogIndex;
 extern seL4_Word ksLogIndexFinalized;
 extern paddr_t ksUserLogBuffer;
 
-static inline void
-trace_point_start(word_t id)
+static inline void trace_point_start(word_t id)
 {
     ksEntries[id] = timestamp();
     ksStarted[id] = true;
 }
 
-static inline void
-trace_point_stop(word_t id)
+static inline void trace_point_stop(word_t id)
 {
     benchmark_tracepoint_log_entry_t *ksLog = (benchmark_tracepoint_log_entry_t *) KS_LOG_PPTR;
     ksExit = timestamp();

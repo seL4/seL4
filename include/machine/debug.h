@@ -78,8 +78,7 @@ bool_t configureSingleStepping(tcb_t *t,
                                word_t n_instr,
                                bool_t is_reply);
 
-static inline bool_t
-singleStepFaultCounterReady(tcb_t *t)
+static inline bool_t singleStepFaultCounterReady(tcb_t *t)
 {
     /* For a single-step exception, the user may have specified a certain
      * number of instructions to skip over before the next stop-point, so

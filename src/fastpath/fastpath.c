@@ -189,8 +189,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     fastpath_restore(badge, msgInfo, NODE_STATE(ksCurThread));
 }
 
-void
-fastpath_reply_recv(word_t cptr, word_t msgInfo)
+void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 {
     seL4_MessageInfo_t info;
     cap_t ep_cap;

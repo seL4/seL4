@@ -15,8 +15,7 @@
 #include <arch/kernel/thread.h>
 #include <linker.h>
 
-void
-Arch_switchToThread(tcb_t *tcb)
+void Arch_switchToThread(tcb_t *tcb)
 {
     /* set PD */
     setVMRoot(tcb);
@@ -29,8 +28,7 @@ Arch_switchToThread(tcb_t *tcb)
     }
 }
 
-BOOT_CODE void
-Arch_configureIdleThread(tcb_t *tcb)
+BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, FLAGS, FLAGS_USER_DEFAULT);
     setRegister(tcb, NextIP, (word_t)idleThreadStart);
@@ -42,21 +40,18 @@ Arch_configureIdleThread(tcb_t *tcb)
     setRegister(tcb, SS, SEL_DS_0);
 }
 
-void
-Arch_switchToIdleThread(void)
+void Arch_switchToIdleThread(void)
 {
     /* Force the idle thread to run on kernel page table */
     setVMRoot(NODE_STATE(ksIdleThread));
 }
 
-void
-Arch_activateIdleThread(tcb_t *tcb)
+void Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }
 
-void
-Mode_postModifyRegisters(tcb_t *tptr)
+void Mode_postModifyRegisters(tcb_t *tptr)
 {
     /* Don't need to do anything */
 }

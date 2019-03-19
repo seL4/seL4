@@ -11,8 +11,7 @@
 #include <arch/user_access.h>
 #include <arch/user_access.h>
 
-void
-armv_init_user_access(void)
+void armv_init_user_access(void)
 {
 }
 

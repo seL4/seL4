@@ -12,8 +12,7 @@
 
 #include <kernel/thread.h>
 
-void
-Arch_postModifyRegisters(tcb_t *tptr)
+void Arch_postModifyRegisters(tcb_t *tptr)
 {
     /* Nothing to do */
 }

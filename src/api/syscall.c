@@ -35,8 +35,7 @@
 /* The haskell function 'handleEvent' is split into 'handleXXX' variants
  * for each event causing a kernel entry */
 
-exception_t
-handleInterruptEntry(void)
+exception_t handleInterruptEntry(void)
 {
     irq_t irq;
 
@@ -58,8 +57,7 @@ handleInterruptEntry(void)
     return EXCEPTION_NONE;
 }
 
-exception_t
-handleUnknownSyscall(word_t w)
+exception_t handleUnknownSyscall(word_t w)
 {
 #ifdef CONFIG_PRINTING
     if (w == SysDebugPutChar) {
@@ -229,8 +227,7 @@ handleUnknownSyscall(word_t w)
     return EXCEPTION_NONE;
 }
 
-exception_t
-handleUserLevelFault(word_t w_a, word_t w_b)
+exception_t handleUserLevelFault(word_t w_a, word_t w_b)
 {
     current_fault = seL4_Fault_UserException_new(w_a, w_b);
     handleFault(NODE_STATE(ksCurThread));
@@ -241,8 +238,7 @@ handleUserLevelFault(word_t w_a, word_t w_b)
     return EXCEPTION_NONE;
 }
 
-exception_t
-handleVMFaultEvent(vm_fault_type_t vm_faultType)
+exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
 {
     exception_t status;
 
@@ -258,8 +254,7 @@ handleVMFaultEvent(vm_fault_type_t vm_faultType)
 }
 
 
-static exception_t
-handleInvocation(bool_t isCall, bool_t isBlocking)
+static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
 {
     seL4_MessageInfo_t info;
     cptr_t cptr;
@@ -332,8 +327,7 @@ handleInvocation(bool_t isCall, bool_t isBlocking)
     return EXCEPTION_NONE;
 }
 
-static void
-handleReply(void)
+static void handleReply(void)
 {
     cte_t *callerSlot;
     cap_t callerCap;
@@ -368,8 +362,7 @@ handleReply(void)
     fail("handleReply: invalid caller cap");
 }
 
-static void
-handleRecv(bool_t isBlocking)
+static void handleRecv(bool_t isBlocking)
 {
     word_t epCPtr;
     lookupCap_ret_t lu_ret;
@@ -422,16 +415,14 @@ handleRecv(bool_t isBlocking)
     }
 }
 
-static void
-handleYield(void)
+static void handleYield(void)
 {
     tcbSchedDequeue(NODE_STATE(ksCurThread));
     SCHED_APPEND_CURRENT_TCB;
     rescheduleRequired();
 }
 
-exception_t
-handleSyscall(syscall_t syscall)
+exception_t handleSyscall(syscall_t syscall)
 {
     exception_t ret;
     irq_t irq;

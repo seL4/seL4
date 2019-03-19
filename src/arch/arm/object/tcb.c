@@ -16,21 +16,18 @@
 #include <object/structures.h>
 #include <arch/machine.h>
 
-word_t CONST
-Arch_decodeTransfer(word_t flags)
+word_t CONST Arch_decodeTransfer(word_t flags)
 {
     return 0;
 }
 
-exception_t CONST
-Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest)
+exception_t CONST Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest)
 {
     return EXCEPTION_NONE;
 }
 
 #ifdef ENABLE_SMP_SUPPORT
-void
-Arch_migrateTCB(tcb_t *thread)
+void Arch_migrateTCB(tcb_t *thread)
 {
 #ifdef CONFIG_HAVE_FPU
     /* check if thread own its current core FPU */
@@ -41,8 +38,7 @@ Arch_migrateTCB(tcb_t *thread)
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
-void
-Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
+void Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
 {
 #if defined(CONFIG_IPC_BUF_TPIDRURW)
     setRegister(thread, TPIDRURW, bufferAddr);

@@ -42,8 +42,7 @@ exception_t performInvocation_Notification(notification_t *ntfn,
 exception_t performInvocation_Reply(tcb_t *thread, cte_t *slot, bool_t canGrant);
 word_t getObjectSize(word_t t, word_t userObjSize);
 
-static inline void
-postCapDeletion(cap_t cap)
+static inline void postCapDeletion(cap_t cap)
 {
     if (cap_get_capType(cap) == cap_irq_handler_cap) {
         irq_t irq = cap_irq_handler_cap_get_capIRQ(cap);

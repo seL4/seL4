@@ -86,8 +86,7 @@ exception_t decodeSetEPTRoot(cap_t cap, extra_caps_t excaps)
 #endif
 
 #ifdef ENABLE_SMP_SUPPORT
-void
-Arch_migrateTCB(tcb_t *thread)
+void Arch_migrateTCB(tcb_t *thread)
 {
     /* check if thread own its current core FPU */
     if (nativeThreadUsingFPU(thread)) {
@@ -96,7 +95,6 @@ Arch_migrateTCB(tcb_t *thread)
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
-void
-Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
+void Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
 {
 }

@@ -15,8 +15,7 @@
 
 #include <arch/kernel/vspace.h>
 
-static inline pte_t
-x86_make_device_pte(paddr_t phys)
+static inline pte_t x86_make_device_pte(paddr_t phys)
 {
     return pte_new(
                phys,   /* page_base_address    */
@@ -33,14 +32,12 @@ x86_make_device_pte(paddr_t phys)
            );
 }
 
-static inline CONST pte_t
-x86_make_empty_pte(void)
+static inline CONST pte_t x86_make_empty_pte(void)
 {
     return makeUserPTEInvalid();
 }
 
-static inline CONST pde_t
-x86_make_empty_root_mapping(void)
+static inline CONST pde_t x86_make_empty_root_mapping(void)
 {
     return makeUserPDEInvalid();
 }

@@ -56,8 +56,7 @@ typedef word_t vm_page_map_type_t;
 
 /* Any changes to this function need to be replicated in pageBitsForSize_phys.
  */
-static inline word_t CONST
-pageBitsForSize(vm_page_size_t pagesize)
+static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case X86_SmallPage:
@@ -79,8 +78,7 @@ pageBitsForSize(vm_page_size_t pagesize)
  * be replicated in pageBitsForSize.
  */
 PHYS_CODE
-static inline word_t CONST
-pageBitsForSize_phys(vm_page_size_t pagesize)
+static inline word_t CONST pageBitsForSize_phys(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case X86_SmallPage:
@@ -121,8 +119,7 @@ static inline void x86_wbinvd(void)
     asm volatile("wbinvd" ::: "memory");
 }
 
-static inline void
-arch_clean_invalidate_caches(void)
+static inline void arch_clean_invalidate_caches(void)
 {
     x86_wbinvd();
 }

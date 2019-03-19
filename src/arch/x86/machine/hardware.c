@@ -18,8 +18,7 @@
 #include <linker.h>
 
 /* initialises MSRs required to setup sysenter and sysexit */
-BOOT_CODE void
-init_sysenter_msrs(void)
+BOOT_CODE void init_sysenter_msrs(void)
 {
     x86_wrmsr(IA32_SYSENTER_CS_MSR, (uint64_t)(word_t)SEL_CS_0);
     x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
@@ -42,8 +41,7 @@ void setNextPC(tcb_t *thread, word_t v)
 }
 
 /* Returns the size of CPU's cacheline */
-BOOT_CODE uint32_t CONST
-getCacheLineSizeBits(void)
+BOOT_CODE uint32_t CONST getCacheLineSizeBits(void)
 {
     uint32_t line_size;
     uint32_t n;
@@ -89,8 +87,7 @@ void flushCacheRange(void *vaddr, uint32_t size_bits)
 }
 
 /* Disables as many prefetchers as possible */
-BOOT_CODE bool_t
-disablePrefetchers()
+BOOT_CODE bool_t disablePrefetchers()
 {
     x86_cpu_identity_t *model_info;
     uint32_t low, high;
@@ -139,14 +136,12 @@ disablePrefetchers()
     return false;
 }
 
-BOOT_CODE void
-enablePMCUser(void)
+BOOT_CODE void enablePMCUser(void)
 {
     write_cr4(read_cr4() | CR4_PCE);
 }
 
-BOOT_CODE bool_t
-init_ibrs(void)
+BOOT_CODE bool_t init_ibrs(void)
 {
     cpuid_007h_edx_t edx;
     edx.words[0] = x86_cpuid_edx(0x7, 0);

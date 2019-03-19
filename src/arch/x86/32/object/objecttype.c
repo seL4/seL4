@@ -24,8 +24,7 @@
 #include <plat/machine/intel-vtd.h>
 
 
-bool_t
-Arch_isFrameType(word_t type)
+bool_t Arch_isFrameType(word_t type)
 {
     switch (type) {
     case seL4_X86_4K:
@@ -37,8 +36,7 @@ Arch_isFrameType(word_t type)
     }
 }
 
-deriveCap_ret_t
-Mode_deriveCap(cte_t *slot, cap_t cap)
+deriveCap_ret_t Mode_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -130,15 +128,13 @@ bool_t CONST Mode_sameRegionAs(cap_t cap_a, cap_t cap_b)
     return false;
 }
 
-word_t
-Mode_getObjectSize(word_t t)
+word_t Mode_getObjectSize(word_t t)
 {
     fail("Invalid object type");
     return 0;
 }
 
-cap_t
-Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
+cap_t Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMemory)
 {
     switch (t) {
     case seL4_X86_4K:
@@ -198,8 +194,7 @@ Mode_createObject(object_t t, void *regionBase, word_t userSize, bool_t deviceMe
     }
 }
 
-exception_t
-Mode_decodeInvocation(
+exception_t Mode_decodeInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,

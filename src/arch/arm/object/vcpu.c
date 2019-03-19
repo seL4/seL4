@@ -19,8 +19,7 @@
 #include <arch/machine/gic_pl390.h>
 
 
-static inline void
-vcpu_save_reg(vcpu_t *vcpu, word_t reg)
+static inline void vcpu_save_reg(vcpu_t *vcpu, word_t reg)
 {
     if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
         fail("ARM/HYP: Invalid register index or NULL VCPU");
@@ -29,16 +28,14 @@ vcpu_save_reg(vcpu_t *vcpu, word_t reg)
     vcpu->regs[reg] = vcpu_hw_read_reg(reg);
 }
 
-static inline void
-vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
+static inline void vcpu_save_reg_range(vcpu_t *vcpu, word_t start, word_t end)
 {
     for (word_t i = start; i <= end; i++) {
         vcpu_save_reg(vcpu, i);
     }
 }
 
-static inline void
-vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
+static inline void vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
 {
     if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
         fail("ARM/HYP: Invalid register index or NULL VCPU");
@@ -47,16 +44,14 @@ vcpu_restore_reg(vcpu_t *vcpu, word_t reg)
     vcpu_hw_write_reg(reg, vcpu->regs[reg]);
 }
 
-static inline void
-vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
+static inline void vcpu_restore_reg_range(vcpu_t *vcpu, word_t start, word_t end)
 {
     for (word_t i = start; i <= end; i++) {
         vcpu_restore_reg(vcpu, i);
     }
 }
 
-static inline word_t
-vcpu_read_reg(vcpu_t *vcpu, word_t reg)
+static inline word_t vcpu_read_reg(vcpu_t *vcpu, word_t reg)
 {
     if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
         fail("ARM/HYP: Invalid register index or NULL VCPU");
@@ -65,8 +60,7 @@ vcpu_read_reg(vcpu_t *vcpu, word_t reg)
     return vcpu->regs[reg];
 }
 
-static inline void
-vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
+static inline void vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
 {
     if (reg >= seL4_VCPUReg_Num || vcpu == NULL) {
         fail("ARM/HYP: Invalid register index or NULL VCPU");
@@ -76,8 +70,7 @@ vcpu_write_reg(vcpu_t *vcpu, word_t reg, word_t value)
 }
 
 #if defined(CONFIG_ARCH_AARCH32) && defined(CONFIG_HAVE_FPU)
-static inline void
-access_fpexc(vcpu_t *vcpu, bool_t write)
+static inline void access_fpexc(vcpu_t *vcpu, bool_t write)
 {
     /* save a copy of the current status since
      * the enableFpuHyp modifies the armHSFPUEnabled
@@ -100,8 +93,7 @@ access_fpexc(vcpu_t *vcpu, bool_t write)
 }
 #endif
 
-static void
-vcpu_enable(vcpu_t *vcpu)
+static void vcpu_enable(vcpu_t *vcpu)
 {
 #ifdef CONFIG_ARCH_AARCH64
     armv_vcpu_enable(vcpu);
@@ -180,8 +172,7 @@ vcpu_enable(vcpu_t *vcpu)
 #endif
 }
 
-static void
-vcpu_disable(vcpu_t *vcpu)
+static void vcpu_disable(vcpu_t *vcpu)
 {
 #ifdef CONFIG_ARCH_AARCH64
     armv_vcpu_disable(vcpu);
@@ -225,8 +216,7 @@ vcpu_disable(vcpu_t *vcpu)
 #endif
 }
 
-BOOT_CODE void
-vcpu_boot_init(void)
+BOOT_CODE void vcpu_boot_init(void)
 {
 #ifdef CONFIG_ARCH_AARCH64
     armv_vcpu_boot_init();
@@ -261,8 +251,7 @@ vcpu_boot_init(void)
 #endif
 }
 
-static void
-vcpu_save(vcpu_t *vcpu, bool_t active)
+static void vcpu_save(vcpu_t *vcpu, bool_t active)
 {
     word_t i;
     unsigned int lr_num;
@@ -310,8 +299,7 @@ vcpu_save(vcpu_t *vcpu, bool_t active)
 }
 
 
-static word_t
-readVCPUReg(vcpu_t *vcpu, word_t field)
+static word_t readVCPUReg(vcpu_t *vcpu, word_t field)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         switch (field) {
@@ -331,8 +319,7 @@ readVCPUReg(vcpu_t *vcpu, word_t field)
     }
 }
 
-static void
-writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
+static void writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         switch (field) {
@@ -351,8 +338,7 @@ writeVCPUReg(vcpu_t *vcpu, word_t field, word_t value)
     }
 }
 
-void
-vcpu_restore(vcpu_t *vcpu)
+void vcpu_restore(vcpu_t *vcpu)
 {
     assert(vcpu);
     word_t i;
@@ -378,8 +364,7 @@ vcpu_restore(vcpu_t *vcpu)
     vcpu_enable(vcpu);
 }
 
-void
-VGICMaintenance(void)
+void VGICMaintenance(void)
 {
     uint32_t eisr0, eisr1;
     uint32_t flags;
@@ -444,8 +429,7 @@ VGICMaintenance(void)
     handleFault(NODE_STATE(ksCurThread));
 }
 
-void
-vcpu_init(vcpu_t *vcpu)
+void vcpu_init(vcpu_t *vcpu)
 {
 #ifdef CONFIG_ARCH_AARCH64
     armv_vcpu_init(vcpu);
@@ -457,8 +441,7 @@ vcpu_init(vcpu_t *vcpu)
     vcpu->vgic.hcr = VGIC_HCR_EN;
 }
 
-void
-vcpu_switch(vcpu_t *new)
+void vcpu_switch(vcpu_t *new)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) != new)) {
         if (unlikely(new != NULL)) {
@@ -483,8 +466,7 @@ vcpu_switch(vcpu_t *new)
     }
 }
 
-static void
-vcpu_invalidate_active(void)
+static void vcpu_invalidate_active(void)
 {
     if (ARCH_NODE_STATE(armHSVCPUActive)) {
         vcpu_disable(NULL);
@@ -493,16 +475,14 @@ vcpu_invalidate_active(void)
     ARCH_NODE_STATE(armHSCurVCPU) = NULL;
 }
 
-void
-vcpu_finalise(vcpu_t *vcpu)
+void vcpu_finalise(vcpu_t *vcpu)
 {
     if (vcpu->vcpuTCB) {
         dissociateVCPUTCB(vcpu, vcpu->vcpuTCB);
     }
 }
 
-void
-associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
+void associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.tcbVCPU) {
         dissociateVCPUTCB(tcb->tcbArch.tcbVCPU, tcb);
@@ -514,8 +494,7 @@ associateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
     vcpu->vcpuTCB = tcb;
 }
 
-void
-dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
+void dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     if (tcb->tcbArch.tcbVCPU != vcpu || vcpu->vcpuTCB != tcb) {
         fail("TCB and VCPU not associated.");
@@ -537,15 +516,13 @@ dissociateVCPUTCB(vcpu_t *vcpu, tcb_t *tcb)
 #endif
 }
 
-exception_t
-invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value)
+exception_t invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value)
 {
     writeVCPUReg(vcpu, field, value);
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer)
+exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer)
 {
     word_t field;
     word_t value;
@@ -566,8 +543,7 @@ decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer)
     return invokeVCPUWriteReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, value);
 }
 
-exception_t
-invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
+exception_t invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
@@ -583,8 +559,7 @@ invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer)
+exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer)
 {
     word_t field;
     if (length < 1) {
@@ -606,8 +581,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer)
     return invokeVCPUReadReg(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, call);
 }
 
-exception_t
-invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
+exception_t invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         set_gic_vcpu_ctrl_lr(index, virq);
@@ -618,8 +592,7 @@ invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer)
+exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer)
 {
     word_t vid, priority, group, index;
     vcpu_t *vcpu;
@@ -729,8 +702,7 @@ exception_t decodeARMVCPUInvocation(
     }
 }
 
-exception_t
-decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
+exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
 {
     cap_t tcbCap;
     if (extraCaps.excaprefs[0] == NULL) {
@@ -750,8 +722,7 @@ decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
     return invokeVCPUSetTCB(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), TCB_PTR(cap_thread_cap_get_capTCBPtr(tcbCap)));
 }
 
-exception_t
-invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
+exception_t invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     associateVCPUTCB(vcpu, tcb);
 
@@ -761,8 +732,7 @@ invokeVCPUSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 #define HSR_FPU_FAULT   (0x1fe0000a)
 #define HSR_TASE_FAULT  (0x1fe00020)
 
-void
-handleVCPUFault(word_t hsr)
+void handleVCPUFault(word_t hsr)
 {
 #ifdef CONFIG_ARCH_AARCH64
     if (armv_handleVCPUFault(hsr)) {

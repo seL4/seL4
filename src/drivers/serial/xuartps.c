@@ -37,8 +37,7 @@
 #define UART_REG(x) ((volatile uint32_t *)(UART_PPTR + (x)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-void
-putDebugChar(unsigned char c)
+void putDebugChar(unsigned char c)
 {
     while (!(*UART_REG(UART_CHANNEL_STS) & UART_CHANNEL_STS_TXEMPTY));
     *UART_REG(UART_TX_RX_FIFO) = c;
@@ -46,8 +45,7 @@ putDebugChar(unsigned char c)
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-unsigned char
-getDebugChar(void)
+unsigned char getDebugChar(void)
 {
     while (!(*UART_REG(UART_CHANNEL_STS) & BIT(UART_CHANNEL_STS_TXEMPTY)));
     return *UART_REG(UART_TX_RX_FIFO);

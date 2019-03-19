@@ -18,8 +18,7 @@
 uint64_t ccnt_num_overflows;
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
-void
-armv_init_ccnt(void)
+void armv_init_ccnt(void)
 {
     uint32_t pmcr = 0;
 

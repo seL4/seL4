@@ -20,8 +20,7 @@
 #include <plat/machine/hardware.h>
 #include <plat/machine/timer.h>
 
-BOOT_CODE void
-initIRQController(void)
+BOOT_CODE void initIRQController(void)
 {
     intc->intcps_sysconfig = INTCPS_SYSCONFIG_SOFTRESET;
     while (!(intc->intcps_sysstatus & INTCPS_SYSSTATUS_RESETDONE)) ;

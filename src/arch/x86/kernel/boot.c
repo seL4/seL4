@@ -29,8 +29,7 @@
 
 /* functions exactly corresponding to abstract specification */
 
-BOOT_CODE static void
-init_irqs(cap_t root_cnode_cap)
+BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
     irq_t i;
 
@@ -80,8 +79,7 @@ typedef struct allocated_p_region {
 
 BOOT_BSS static allocated_p_region_t allocated_p_regions;
 
-BOOT_CODE static void
-merge_regions(void)
+BOOT_CODE static void merge_regions(void)
 {
     unsigned int i, j;
     /* Walk through all the regions and see if any can get merged */
@@ -114,8 +112,7 @@ static UNUSED BOOT_CODE bool_t p_region_overlaps(p_region_t reg)
     return false;
 }
 
-BOOT_CODE bool_t
-add_allocated_p_region(p_region_t reg)
+BOOT_CODE bool_t add_allocated_p_region(p_region_t reg)
 {
     unsigned int i, j;
 
@@ -164,14 +161,12 @@ add_allocated_p_region(p_region_t reg)
     return true;
 }
 
-BOOT_CODE void
-init_allocated_p_regions()
+BOOT_CODE void init_allocated_p_regions()
 {
     allocated_p_regions.cur_pos = 0;
 }
 
-BOOT_CODE static bool_t
-create_untypeds(
+BOOT_CODE static bool_t create_untypeds(
     cap_t root_cnode_cap,
     region_t boot_mem_reuse_reg)
 {
@@ -214,8 +209,7 @@ create_untypeds(
     return true;
 }
 
-BOOT_CODE static void
-init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs)
+BOOT_CODE static void init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs)
 {
     word_t i;
     /* we are guaranteed that we started loading the user image after the kernel
@@ -241,8 +235,7 @@ init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs)
 
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
 
-BOOT_CODE bool_t
-init_sys_state(
+BOOT_CODE bool_t init_sys_state(
     cpu_id_t      cpu_id,
     mem_p_regs_t  mem_p_regs,
     ui_info_t     ui_info,
@@ -496,8 +489,7 @@ init_sys_state(
 
 /* This function initialises the CPU. It does NOT initialise any kernel state. */
 
-BOOT_CODE bool_t
-init_cpu(
+BOOT_CODE bool_t init_cpu(
     bool_t   mask_legacy_irqs
 )
 {

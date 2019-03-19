@@ -26,8 +26,7 @@ timer_t *const priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 #define PRESCALE ((TIMER_RELOAD) >> TIMER_COUNT_BITS)
 #define TMR_LOAD ((TIMER_RELOAD) / (PRESCALE + 1))
 
-BOOT_CODE void
-initTimer(void)
+BOOT_CODE void initTimer(void)
 {
     /* reset */
     priv_timer->ctrl = 0;

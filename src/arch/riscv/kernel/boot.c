@@ -35,8 +35,7 @@ extern char ki_boot_end[1];
 /* pointer to end of kernel image */
 extern char ki_end[1];
 
-BOOT_CODE static bool_t
-create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
+BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
     seL4_SlotPos   slot_pos_before;
     seL4_SlotPos   slot_pos_after;
@@ -52,9 +51,8 @@ create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 
 }
 
-BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t
-                           use_large, bool_t executable)
+BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t
+                                           use_large, bool_t executable)
 {
     cap_t cap;
     vm_page_size_t frame_size;
@@ -82,8 +80,7 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, 
  * Split mem_reg about reserved_reg. If memory exists in the lower
  * segment, insert it. If memory exists in the upper segment, return it.
  */
-BOOT_CODE static region_t
-insert_region_excluded(region_t mem_reg, region_t reserved_reg)
+BOOT_CODE static region_t insert_region_excluded(region_t mem_reg, region_t reserved_reg)
 {
     region_t residual_reg = mem_reg;
     bool_t result UNUSED;
@@ -118,8 +115,7 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
     return residual_reg;
 }
 
-BOOT_CODE static void
-init_freemem(region_t ui_reg)
+BOOT_CODE static void init_freemem(region_t ui_reg)
 {
     unsigned int i;
     bool_t result UNUSED;
@@ -169,8 +165,7 @@ init_freemem(region_t ui_reg)
     }
 }
 
-BOOT_CODE static void
-init_irqs(cap_t root_cnode_cap)
+BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
 {
     irq_t i;
 
@@ -186,8 +181,7 @@ init_irqs(cap_t root_cnode_cap)
 /* This and only this function initialises the CPU. It does NOT initialise any kernel state. */
 extern char trap_entry[];
 
-BOOT_CODE static void
-init_cpu(void)
+BOOT_CODE static void init_cpu(void)
 {
 
     /* Write trap entry address to stvec */
@@ -198,8 +192,7 @@ init_cpu(void)
 
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
 
-BOOT_CODE static void
-init_plat(void)
+BOOT_CODE static void init_plat(void)
 {
     initIRQController();
     initTimer();
@@ -207,8 +200,7 @@ init_plat(void)
 
 /* Main kernel initialisation function. */
 
-static BOOT_CODE bool_t
-try_init_kernel(
+static BOOT_CODE bool_t try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     uint32_t pv_offset,
@@ -361,8 +353,7 @@ try_init_kernel(
     return true;
 }
 
-BOOT_CODE VISIBLE void
-init_kernel(
+BOOT_CODE VISIBLE void init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,

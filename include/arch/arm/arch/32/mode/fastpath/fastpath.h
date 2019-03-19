@@ -45,8 +45,7 @@ clearExMonitor_fp(void)
     );
 }
 
-static inline void FORCE_INLINE
-switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
+static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
 {
     hw_asid_t hw_asid;
 
@@ -68,22 +67,19 @@ switchToThread_fp(tcb_t *thread, pde_t *cap_pd, pde_t stored_hw_asid)
     clearExMonitor_fp();
 }
 
-static inline void
-mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
+static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
 {
     node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
 }
 
-static inline void
-mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
+static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 {
     node_ptr->words[0] = mdbPrev;
 }
 
-static inline bool_t
-isValidVTableRoot_fp(cap_t pd_cap)
+static inline bool_t isValidVTableRoot_fp(cap_t pd_cap)
 {
     return (pd_cap.words[0] & MASK(5)) ==
            (BIT(4) | cap_page_directory_cap);
@@ -102,8 +98,7 @@ fastpath_mi_check(word_t msgInfo)
             + 3) & ~MASK(3);
 }
 
-static inline void
-fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
+static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
     word_t i;
     register_t reg;
@@ -116,15 +111,13 @@ fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
     }
 }
 
-static inline int
-fastpath_reply_cap_check(cap_t cap)
+static inline int fastpath_reply_cap_check(cap_t cap)
 {
     return (cap.words[0] & MASK(5)) == cap_reply_cap;
 }
 
 /** DONT_TRANSLATE */
-static inline void NORETURN
-fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
+static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     NODE_UNLOCK;
 

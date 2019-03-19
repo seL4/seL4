@@ -16,8 +16,7 @@
 #include <arch/api/invocation.h>
 #include <plat/machine/io.h>
 
-static inline void
-apply_pattern(word_t_may_alias *w, word_t pattern, bool_t set)
+static inline void apply_pattern(word_t_may_alias *w, word_t pattern, bool_t set)
 {
     if (set) {
         *w |= pattern;
@@ -26,8 +25,7 @@ apply_pattern(word_t_may_alias *w, word_t pattern, bool_t set)
     }
 }
 
-static inline word_t
-make_pattern(int start, int end)
+static inline word_t make_pattern(int start, int end)
 {
     // number of bits we want to have set
     int num_bits = end - start;
@@ -36,8 +34,7 @@ make_pattern(int start, int end)
     return (~(word_t)0) >> (CONFIG_WORD_SIZE - num_bits) << start;
 }
 
-static exception_t
-ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)
+static exception_t ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)
 {
     uint32_t first_allowed = cap_io_port_cap_get_capIOPortFirstPort(cap);
     uint32_t last_allowed = cap_io_port_cap_get_capIOPortLastPort(cap);
@@ -56,14 +53,12 @@ ensurePortOperationAllowed(cap_t cap, uint32_t start_port, uint32_t size)
     return EXCEPTION_NONE;
 }
 
-void
-freeIOPortRange(uint16_t first_port, uint16_t last_port)
+void freeIOPortRange(uint16_t first_port, uint16_t last_port)
 {
     setIOPortMask(x86KSAllocatedIOPorts, first_port, last_port, false);
 }
 
-static bool_t
-isIOPortRangeFree(uint16_t first_port, uint16_t last_port)
+static bool_t isIOPortRangeFree(uint16_t first_port, uint16_t last_port)
 {
     int low_word = first_port >> wordRadix;
     int high_word = last_port >> wordRadix;
@@ -96,8 +91,7 @@ isIOPortRangeFree(uint16_t first_port, uint16_t last_port)
     return true;
 }
 
-static exception_t
-invokeX86PortControl(uint16_t first_port, uint16_t last_port, cte_t *ioportSlot, cte_t *controlSlot)
+static exception_t invokeX86PortControl(uint16_t first_port, uint16_t last_port, cte_t *ioportSlot, cte_t *controlSlot)
 {
     setIOPortMask(x86KSAllocatedIOPorts, first_port, last_port, true);
     cteInsert(cap_io_port_cap_new(first_port, last_port
@@ -110,8 +104,7 @@ invokeX86PortControl(uint16_t first_port, uint16_t last_port, cte_t *ioportSlot,
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeX86PortControlInvocation(
+exception_t decodeX86PortControlInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
@@ -178,8 +171,7 @@ decodeX86PortControlInvocation(
     return invokeX86PortControl(first_port, last_port, destSlot, slot);
 }
 
-static exception_t
-invokeX86PortIn(word_t invLabel, uint16_t port, bool_t call)
+static exception_t invokeX86PortIn(word_t invLabel, uint16_t port, bool_t call)
 {
     uint32_t res;
     word_t len;
@@ -225,8 +217,7 @@ invokeX86PortIn(word_t invLabel, uint16_t port, bool_t call)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-invokeX86PortOut(word_t invLabel, uint16_t port, uint32_t data)
+static exception_t invokeX86PortOut(word_t invLabel, uint16_t port, uint32_t data)
 {
     switch (invLabel) {
     case X86IOPortOut8:
@@ -243,8 +234,7 @@ invokeX86PortOut(word_t invLabel, uint16_t port, uint32_t data)
     return EXCEPTION_NONE;
 }
 
-exception_t
-decodeX86PortInvocation(
+exception_t decodeX86PortInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
@@ -324,8 +314,7 @@ decodeX86PortInvocation(
     }
 }
 
-void
-setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, bool_t set)
+void setIOPortMask(void *ioport_bitmap, uint16_t low, uint16_t high, bool_t set)
 {
     //get an aliasing pointer
     word_t_may_alias *bitmap = ioport_bitmap;

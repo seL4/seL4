@@ -89,8 +89,7 @@ static bool_t vmx_feature_ack_on_exit;
 static vcpu_t *x86KSVPIDTable[VPID_LAST + 1];
 static vpid_t x86KSNextVPID = VPID_FIRST;
 
-static inline bool_t
-vmxon(paddr_t vmxon_region)
+static inline bool_t vmxon(paddr_t vmxon_region)
 {
     uint8_t error;
     /* vmxon requires a 64bit memory address, so perform a
@@ -105,8 +104,7 @@ vmxon(paddr_t vmxon_region)
     return !!error;
 }
 
-static void
-vmclear(void *vmcs_ptr)
+static void vmclear(void *vmcs_ptr)
 {
     uint64_t physical_address;
     physical_address = pptr_to_paddr((void *)vmcs_ptr);
@@ -118,8 +116,7 @@ vmclear(void *vmcs_ptr)
     );
 }
 
-void
-clearCurrentVCPU(void)
+void clearCurrentVCPU(void)
 {
     vcpu_t *vcpu = ARCH_NODE_STATE(x86KSCurrentVCPU);
     if (vcpu) {
@@ -129,8 +126,7 @@ clearCurrentVCPU(void)
     }
 }
 
-static void
-vmptrld(void *vmcs_ptr)
+static void vmptrld(void *vmcs_ptr)
 {
     uint64_t physical_address;
     uint8_t error;
@@ -147,8 +143,7 @@ vmptrld(void *vmcs_ptr)
     assert(!error);
 }
 
-static void
-switchVCPU(vcpu_t *vcpu)
+static void switchVCPU(vcpu_t *vcpu)
 {
 #ifdef ENABLE_SMP_SUPPORT
     if (vcpu->last_cpu != getCurrentCPUIndex() && ARCH_NODE_STATE_ON_CORE(x86KSCurrentVCPU, vcpu->last_cpu) == vcpu) {
@@ -171,8 +166,7 @@ switchVCPU(vcpu_t *vcpu)
     ARCH_NODE_STATE(x86KSCurrentVCPU) = vcpu;
 }
 
-static void
-print_bits(word_t bits)
+static void print_bits(word_t bits)
 {
     bool_t first = true;
     while (bits) {
@@ -187,8 +181,7 @@ print_bits(word_t bits)
     }
 }
 
-static bool_t
-check_fixed_value(word_t val, word_t low, word_t high)
+static bool_t check_fixed_value(word_t val, word_t low, word_t high)
 {
     word_t not_high;
     word_t not_low;
@@ -217,8 +210,7 @@ check_fixed_value(word_t val, word_t low, word_t high)
     return true;
 }
 
-static bool_t
-vtx_check_fixed_values(word_t cr0, word_t cr4)
+static bool_t vtx_check_fixed_values(word_t cr0, word_t cr4)
 {
     if (!check_fixed_value(cr0, cr0_low, cr0_high)) {
         printf(" of CR0\n");
@@ -231,8 +223,7 @@ vtx_check_fixed_values(word_t cr0, word_t cr4)
     return true;
 }
 
-static bool_t BOOT_CODE
-init_vtx_fixed_values(bool_t useTrueMsrs)
+static bool_t BOOT_CODE init_vtx_fixed_values(bool_t useTrueMsrs)
 {
     uint32_t pin_control_mask =
         BIT(0) |    //Extern interrupt exiting
@@ -344,8 +335,7 @@ init_vtx_fixed_values(bool_t useTrueMsrs)
     return true;
 }
 
-static bool_t BOOT_CODE
-check_vtx_fixed_values(bool_t useTrueMsrs)
+static bool_t BOOT_CODE check_vtx_fixed_values(bool_t useTrueMsrs)
 {
     uint32_t pinbased_ctls;
     uint32_t procbased_ctls;
@@ -402,16 +392,14 @@ check_vtx_fixed_values(bool_t useTrueMsrs)
         local_cr4_low == cr4_low;
 }
 
-static inline uint32_t
-applyFixedBits(uint32_t original, uint32_t high, uint32_t low)
+static inline uint32_t applyFixedBits(uint32_t original, uint32_t high, uint32_t low)
 {
     original |= high;
     original &= low;
     return original;
 }
 
-void
-vcpu_init(vcpu_t *vcpu)
+void vcpu_init(vcpu_t *vcpu)
 {
     vcpu->vcpuTCB = NULL;
     vcpu->launched = false;
@@ -484,8 +472,7 @@ vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_CONTROL_IOB_ADDRESS, pptr_to_paddr((char *)vcpu->io + (VCPU_IOBITMAP_SIZE / 2)));
 }
 
-static void
-dissociateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
+static void dissociateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
 {
     assert(tcb->tcbArch.tcbVCPU == vcpu);
     assert(vcpu->vcpuTCB == tcb);
@@ -493,8 +480,7 @@ dissociateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
     vcpu->vcpuTCB = NULL;
 }
 
-void
-vcpu_finalise(vcpu_t *vcpu)
+void vcpu_finalise(vcpu_t *vcpu)
 {
     if (vcpu->vcpuTCB) {
         dissociateVcpuTcb(vcpu->vcpuTCB, vcpu);
@@ -511,8 +497,7 @@ vcpu_finalise(vcpu_t *vcpu)
     }
 }
 
-static void
-associateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
+static void associateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
 {
     if (tcb->tcbArch.tcbVCPU) {
         dissociateVcpuTcb(tcb, tcb->tcbArch.tcbVCPU);
@@ -524,8 +509,7 @@ associateVcpuTcb(tcb_t *tcb, vcpu_t *vcpu)
     tcb->tcbArch.tcbVCPU = vcpu;
 }
 
-static exception_t
-invokeVCPUWriteRegisters(vcpu_t *vcpu, word_t *buffer)
+static exception_t invokeVCPUWriteRegisters(vcpu_t *vcpu, word_t *buffer)
 {
     int i;
     for (i = 0; i < n_vcpu_gp_register; i++) {
@@ -535,8 +519,7 @@ invokeVCPUWriteRegisters(vcpu_t *vcpu, word_t *buffer)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeVCPUWriteRegisters(cap_t cap, word_t length, word_t *buffer)
+static exception_t decodeVCPUWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 {
     if (length < 7) {
         userError("VCPU WriteRegisters: Truncated message.");
@@ -546,8 +529,7 @@ decodeVCPUWriteRegisters(cap_t cap, word_t length, word_t *buffer)
     return invokeVCPUWriteRegisters(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), buffer);
 }
 
-static exception_t
-invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint16_t low, uint16_t high)
+static exception_t invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint16_t low, uint16_t high)
 {
     /* remove any existing io ports from this cap */
     clearVPIDIOPortMappings(cap_io_port_cap_get_capIOPortVPID(cap),
@@ -562,8 +544,7 @@ invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint16_t low, uint16_t 
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeEnableIOPort(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
+static exception_t decodeEnableIOPort(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
 {
     vcpu_t *vcpu;
     cap_t ioCap;
@@ -605,16 +586,14 @@ decodeEnableIOPort(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps
     return invokeEnableIOPort(vcpu, ioSlot, ioCap, low, high);
 }
 
-static exception_t
-invokeDisableIOPort(vcpu_t *vcpu, uint16_t low, uint16_t high)
+static exception_t invokeDisableIOPort(vcpu_t *vcpu, uint16_t low, uint16_t high)
 {
     setIOPortMask(vcpu->io, low, high, true);
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeDisableIOPort(cap_t cap, word_t length, word_t *buffer)
+static exception_t decodeDisableIOPort(cap_t cap, word_t length, word_t *buffer)
 {
     vcpu_t *vcpu;
     uint16_t low, high;
@@ -633,8 +612,7 @@ decodeDisableIOPort(cap_t cap, word_t length, word_t *buffer)
     return invokeDisableIOPort(vcpu, low, high);
 }
 
-static exception_t
-invokeWriteVMCS(vcpu_t *vcpu, word_t *buffer, word_t field, word_t value)
+static exception_t invokeWriteVMCS(vcpu_t *vcpu, word_t *buffer, word_t field, word_t value)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
@@ -661,8 +639,7 @@ invokeWriteVMCS(vcpu_t *vcpu, word_t *buffer, word_t field, word_t value)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeWriteVMCS(cap_t cap, word_t length, word_t *buffer)
+static exception_t decodeWriteVMCS(cap_t cap, word_t length, word_t *buffer)
 {
     word_t field;
     word_t value;
@@ -785,8 +762,7 @@ static word_t readVMCSField(vcpu_t *vcpu, word_t field)
     return vmread(field);
 }
 
-static exception_t
-invokeReadVMCS(vcpu_t *vcpu, word_t field, word_t *buffer)
+static exception_t invokeReadVMCS(vcpu_t *vcpu, word_t field, word_t *buffer)
 {
     tcb_t *thread;
     thread = NODE_STATE(ksCurThread);
@@ -798,8 +774,7 @@ invokeReadVMCS(vcpu_t *vcpu, word_t field, word_t *buffer)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeReadVMCS(cap_t cap, word_t length, word_t *buffer)
+static exception_t decodeReadVMCS(cap_t cap, word_t length, word_t *buffer)
 {
     if (length < 1) {
         userError("VCPU ReadVMCS: Not enough arguments.");
@@ -898,8 +873,7 @@ decodeReadVMCS(cap_t cap, word_t length, word_t *buffer)
     return invokeReadVMCS(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), field, buffer);
 }
 
-static exception_t
-invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb)
+static exception_t invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 {
     associateVcpuTcb(tcb, vcpu);
 
@@ -907,8 +881,7 @@ invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeSetTCB(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
+static exception_t decodeSetTCB(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
 {
     cap_t tcbCap;
     if (excaps.excaprefs[0] == NULL) {
@@ -927,8 +900,7 @@ decodeSetTCB(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
     return invokeSetTCB(VCPU_PTR(cap_vcpu_cap_get_capVCPUPtr(cap)), TCB_PTR(cap_thread_cap_get_capTCBPtr(tcbCap)));
 }
 
-void
-vcpu_update_state_sysvmenter(vcpu_t *vcpu)
+void vcpu_update_state_sysvmenter(vcpu_t *vcpu)
 {
     word_t *buffer;
     if (ARCH_NODE_STATE(x86KSCurrentVCPU) != vcpu) {
@@ -944,8 +916,7 @@ vcpu_update_state_sysvmenter(vcpu_t *vcpu)
     vmwrite(VMX_CONTROL_ENTRY_INTERRUPTION_INFO, getSyscallArg(2, buffer));
 }
 
-void
-vcpu_sysvmenter_reply_to_user(tcb_t *tcb)
+void vcpu_sysvmenter_reply_to_user(tcb_t *tcb)
 {
     word_t *buffer;
     vcpu_t *vcpu;
@@ -966,8 +937,7 @@ vcpu_sysvmenter_reply_to_user(tcb_t *tcb)
     setRegister(tcb, msgInfoRegister, 0);
 }
 
-exception_t
-decodeX86VCPUInvocation(
+exception_t decodeX86VCPUInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
@@ -997,24 +967,21 @@ decodeX86VCPUInvocation(
     }
 }
 
-static bool_t
-is_vtx_supported(void)
+static bool_t is_vtx_supported(void)
 {
     /* check for VMX support in CPUID
      * see section 23.7 of Volume 3 of the Intel manual */
     return !!(x86_cpuid_ecx(0x1, 0) & BIT(5));
 }
 
-static inline void
-clear_bit(word_t *bitmap, word_t bit)
+static inline void clear_bit(word_t *bitmap, word_t bit)
 {
     int index = bit / (sizeof(word_t) * 8);
     int offset = bit % (sizeof(word_t) * 8);
     bitmap[index] &= ~BIT(offset);
 }
 
-BOOT_CODE bool_t
-vtx_init(void)
+BOOT_CODE bool_t vtx_init(void)
 {
     if (!is_vtx_supported()) {
         printf("vt-x: not supported\n");
@@ -1092,8 +1059,7 @@ vtx_init(void)
     return true;
 }
 
-static void
-setMRs_vmexit(uint32_t reason, word_t qualification)
+static void setMRs_vmexit(uint32_t reason, word_t qualification)
 {
     word_t *buffer;
     int i;
@@ -1117,8 +1083,7 @@ setMRs_vmexit(uint32_t reason, word_t qualification)
     }
 }
 
-static void
-handleVmxFault(uint32_t reason, word_t qualification)
+static void handleVmxFault(uint32_t reason, word_t qualification)
 {
     /* Indicate that we are returning the from VMEnter with a fault */
     setRegister(NODE_STATE(ksCurThread), msgInfoRegister, SEL4_VMENTER_RESULT_FAULT);
@@ -1133,8 +1098,7 @@ handleVmxFault(uint32_t reason, word_t qualification)
     activateThread();
 }
 
-static inline void
-finishVmexitSaving(void)
+static inline void finishVmexitSaving(void)
 {
     vcpu_t *vcpu = ARCH_NODE_STATE(x86KSCurrentVCPU);
     assert(vcpu == NODE_STATE(ksCurThread)->tcbArch.tcbVCPU);
@@ -1159,8 +1123,7 @@ finishVmexitSaving(void)
     }
 }
 
-exception_t
-handleVmexit(void)
+exception_t handleVmexit(void)
 {
     uint32_t interrupt;
     /* qualification is host width, reason is defined as being 32 bit */
@@ -1301,8 +1264,7 @@ handleVmexit(void)
     return EXCEPTION_NONE;
 }
 
-exception_t
-handleVmEntryFail(void)
+exception_t handleVmEntryFail(void)
 {
     handleVmxFault(-1, -1);
 
@@ -1310,8 +1272,7 @@ handleVmEntryFail(void)
 }
 
 #ifdef ENABLE_SMP_SUPPORT
-void
-VMCheckBoundNotification(tcb_t *tcb)
+void VMCheckBoundNotification(tcb_t *tcb)
 {
     /* We want to check if the VM we are currently running has received
      * a message on its bound notification object. This check is done
@@ -1340,8 +1301,7 @@ VMCheckBoundNotification(tcb_t *tcb)
 }
 #endif /* ENABLE_SMP_SUPPORT */
 
-static void
-invvpid_context(uint16_t vpid)
+static void invvpid_context(uint16_t vpid)
 {
     struct {
         uint64_t vpid : 16;
@@ -1351,8 +1311,7 @@ invvpid_context(uint16_t vpid)
     asm volatile("invvpid %0, %1" :: "m"(operand), "r"((word_t)1) : "cc");
 }
 
-static void
-setEPTRoot(cap_t vmxSpace, vcpu_t *vcpu)
+static void setEPTRoot(cap_t vmxSpace, vcpu_t *vcpu)
 {
     paddr_t ept_root;
     if (cap_get_capType(vmxSpace) != cap_ept_pml4_cap ||
@@ -1386,8 +1345,7 @@ setEPTRoot(cap_t vmxSpace, vcpu_t *vcpu)
     }
 }
 
-static void
-handleLazyFpu(void)
+static void handleLazyFpu(void)
 {
     vcpu_t *vcpu = NODE_STATE(ksCurThread)->tcbArch.tcbVCPU;
     word_t cr0 = vcpu->cr0;
@@ -1439,8 +1397,7 @@ handleLazyFpu(void)
     }
 }
 
-void
-clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last)
+void clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last)
 {
     if (vpid == VPID_INVALID) {
         return;
@@ -1453,8 +1410,7 @@ clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last)
     setIOPortMask(vcpu->io, first, last, true);
 }
 
-static inline vpid_t
-nextVPID(vpid_t vpid)
+static inline vpid_t nextVPID(vpid_t vpid)
 {
     if (vpid == VPID_LAST) {
         return VPID_FIRST;
@@ -1463,8 +1419,7 @@ nextVPID(vpid_t vpid)
     }
 }
 
-static void
-invalidateVPID(vpid_t vpid)
+static void invalidateVPID(vpid_t vpid)
 {
     vcpu_t *vcpu = x86KSVPIDTable[vpid];
     /* clear the IO bitmap as when we sever the VPID asignment we lose
@@ -1476,8 +1431,7 @@ invalidateVPID(vpid_t vpid)
     }
 }
 
-static vpid_t
-findFreeVPID(void)
+static vpid_t findFreeVPID(void)
 {
     vpid_t vpid;
 
@@ -1500,8 +1454,7 @@ findFreeVPID(void)
     return vpid;
 }
 
-static void
-storeVPID(vcpu_t *vcpu, vpid_t vpid)
+static void storeVPID(vcpu_t *vcpu, vpid_t vpid)
 {
     assert(x86KSVPIDTable[vpid] == NULL);
     assert(vcpu->vpid == VPID_INVALID);
@@ -1509,8 +1462,7 @@ storeVPID(vcpu_t *vcpu, vpid_t vpid)
     vcpu->vpid = vpid;
 }
 
-void
-restoreVMCS(void)
+void restoreVMCS(void)
 {
     vcpu_t *expected_vmcs = NODE_STATE(ksCurThread)->tcbArch.tcbVCPU;
 
@@ -1536,8 +1488,7 @@ restoreVMCS(void)
     handleLazyFpu();
 }
 
-void
-invept(ept_pml4e_t *ept_pml4)
+void invept(ept_pml4e_t *ept_pml4)
 {
     if (vmx_ept_vpid_cap_msr_get_invept(vpid_capability)) {
         struct {

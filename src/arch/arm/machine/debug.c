@@ -109,8 +109,7 @@ typedef struct debug_state {
 } debug_state_t;
 static debug_state_t dbg;
 
-bool_t
-byte8WatchpointsSupported(void)
+bool_t byte8WatchpointsSupported(void)
 {
     return dbg.watchpoint_8b_supported;
 }
@@ -314,50 +313,43 @@ readBcrContext(tcb_t *t, uint16_t index)
     return t->tcbArch.tcbContext.breakpointState.breakpoint[index].cr;
 }
 
-static word_t
-readBvrContext(tcb_t *t, uint16_t index)
+static word_t readBvrContext(tcb_t *t, uint16_t index)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
     return t->tcbArch.tcbContext.breakpointState.breakpoint[index].vr;
 }
 
-static word_t
-readWcrContext(tcb_t *t, uint16_t index)
+static word_t readWcrContext(tcb_t *t, uint16_t index)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
     return t->tcbArch.tcbContext.breakpointState.watchpoint[index].cr;
 }
 
-static word_t
-readWvrContext(tcb_t *t, uint16_t index)
+static word_t readWvrContext(tcb_t *t, uint16_t index)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
     return t->tcbArch.tcbContext.breakpointState.watchpoint[index].vr;
 }
 
-static void
-writeBcrContext(tcb_t *t, uint16_t index, word_t val)
+static void writeBcrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
     t->tcbArch.tcbContext.breakpointState.breakpoint[index].cr = val;
 }
 
-static void
-writeBvrContext(tcb_t *t, uint16_t index, word_t val)
+static void writeBvrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveBreakpoints);
     t->tcbArch.tcbContext.breakpointState.breakpoint[index].vr = val;
 }
 
-static void
-writeWcrContext(tcb_t *t, uint16_t index, word_t val)
+static void writeWcrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
     t->tcbArch.tcbContext.breakpointState.watchpoint[index].cr = val;
 }
 
-static void
-writeWvrContext(tcb_t *t, uint16_t index, word_t val)
+static void writeWvrContext(tcb_t *t, uint16_t index, word_t val)
 {
     assert(index < seL4_NumExclusiveWatchpoints);
     t->tcbArch.tcbContext.breakpointState.watchpoint[index].vr = val;
@@ -373,8 +365,7 @@ writeWvrContext(tcb_t *t, uint16_t index, word_t val)
  * @param nBp Number of breakpoint reg pairs to print, starting at BP #0.
  * @param nBp Number of watchpoint reg pairs to print, starting at WP #0.
  */
-UNUSED static void
-dumpBpsAndWpsCp(int nBp, int nWp)
+UNUSED static void dumpBpsAndWpsCp(int nBp, int nWp)
 {
     int i;
 
@@ -395,8 +386,7 @@ dumpBpsAndWpsCp(int nBp, int nWp)
  * @param nBp Number of BP regs to print, beginning at BP #0.
  * @param mWp Number of WP regs to print, beginning at WP #0.
  */
-UNUSED static void
-dumpBpsAndWpsContext(tcb_t *t, int nBp, int nWp)
+UNUSED static void dumpBpsAndWpsContext(tcb_t *t, int nBp, int nWp)
 {
     int i;
 
@@ -433,8 +423,7 @@ dumpBpsAndWpsContext(tcb_t *t, int nBp, int nWp)
 /** Convert a watchpoint size (0, 1, 2, 4 or 8 bytes) into the arch specific
  * register encoding.
  */
-static word_t
-convertSizeToArch(word_t size)
+static word_t convertSizeToArch(word_t size)
 {
     switch (size) {
     case 1:
@@ -452,8 +441,7 @@ convertSizeToArch(word_t size)
 /** Convert an arch specific encoded watchpoint size back into a simple integer
  * representation.
  */
-static word_t
-convertArchToSize(word_t archsize)
+static word_t convertArchToSize(word_t archsize)
 {
     switch (archsize) {
     case 0x1:
@@ -471,8 +459,7 @@ convertArchToSize(word_t archsize)
 /** Convert an access perms API value (seL4_BreakOnRead, etc) into the register
  * encoding that matches it.
  */
-static word_t
-convertAccessToArch(word_t access)
+static word_t convertAccessToArch(word_t access)
 {
     switch (access) {
     case seL4_BreakOnRead:
@@ -488,8 +475,7 @@ convertAccessToArch(word_t access)
 /** Convert an arch-specific register encoding back into an API access perms
  * value.
  */
-static word_t
-convertArchToAccess(word_t archaccess)
+static word_t convertArchToAccess(word_t archaccess)
 {
     switch (archaccess) {
     case DBGWCR_ACCESS_LOAD:
@@ -502,8 +488,7 @@ convertArchToAccess(word_t archaccess)
     }
 }
 
-static uint16_t
-getBpNumFromType(uint16_t bp_num, word_t type)
+static uint16_t getBpNumFromType(uint16_t bp_num, word_t type)
 {
     assert(type == seL4_InstructionBreakpoint || type == seL4_DataBreakpoint
            || type == seL4_SingleStep);
@@ -522,8 +507,7 @@ getBpNumFromType(uint16_t bp_num, word_t type)
  *
  * Used to determine what type of debug exception has occurred.
  */
-static inline word_t
-getMethodOfEntry(void)
+static inline word_t getMethodOfEntry(void)
 {
     dbg_dscr_t dscr;
 
@@ -548,10 +532,9 @@ getMethodOfEntry(void)
  * @params vaddr, type, size, rw: seL4 API values for seL4_TCB_SetBreakpoint.
  *         All documented in the seL4 API Manuals.
  */
-void
-setBreakpoint(tcb_t *t,
-              uint16_t bp_num,
-              word_t vaddr, word_t type, word_t size, word_t rw)
+void setBreakpoint(tcb_t *t,
+                   uint16_t bp_num,
+                   word_t vaddr, word_t type, word_t size, word_t rw)
 {
     bp_num = convertBpNumToArch(bp_num);
 
@@ -617,8 +600,7 @@ setBreakpoint(tcb_t *t,
  * @return A struct describing the current configuration of the requested
  *         breakpoint.
  */
-getBreakpoint_t
-getBreakpoint(tcb_t *t, uint16_t bp_num)
+getBreakpoint_t getBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     getBreakpoint_t ret;
 
@@ -653,8 +635,7 @@ getBreakpoint(tcb_t *t, uint16_t bp_num)
  * @param at arch_tcb_t holding the reg context for the target thread.
  * @param bp_num The hardware breakpoint you want to disable+clear.
  */
-void
-unsetBreakpoint(tcb_t *t, uint16_t bp_num)
+void unsetBreakpoint(tcb_t *t, uint16_t bp_num)
 {
     word_t type;
 
@@ -684,11 +665,10 @@ unsetBreakpoint(tcb_t *t, uint16_t bp_num)
  * @param bp_num The hardware ID of the breakpoint register to be used.
  * @param n_instr The number of instructions to step over.
  */
-bool_t
-configureSingleStepping(tcb_t *t,
-                        uint16_t bp_num,
-                        word_t n_instr,
-                        bool_t is_reply)
+bool_t configureSingleStepping(tcb_t *t,
+                               uint16_t bp_num,
+                               word_t n_instr,
+                               bool_t is_reply)
 {
     /* ARMv7 manual, section D13.3.1:
      *  "v6.1 Debug introduces instruction address mismatch comparisons.
@@ -753,8 +733,7 @@ configureSingleStepping(tcb_t *t,
  * different across different CPUs and platforms, so genericity is fairly
  * challenging.
  */
-BOOT_CODE static void
-initVersionInfo(void)
+BOOT_CODE static void initVersionInfo(void)
 {
     dbg_didr_t didr;
 
@@ -800,8 +779,7 @@ initVersionInfo(void)
 
 /** Load an initial, all-disabled setup state for the registers.
  */
-BOOT_CODE static void
-disableAllBpsAndWps(void)
+BOOT_CODE static void disableAllBpsAndWps(void)
 {
     int i;
 
@@ -842,8 +820,7 @@ disableAllBpsAndWps(void)
  * nothing more, you're told so, and that basically means you can't do anything
  * with it because you have no reliable access to the debug registers.
  */
-BOOT_CODE bool_t
-Arch_initHardwareBreakpoints(void)
+BOOT_CODE bool_t Arch_initHardwareBreakpoints(void)
 {
     word_t dbgosdlr, dbgoslsr;
 
@@ -964,8 +941,7 @@ Arch_initHardwareBreakpoints(void)
  *         successfully detected which debug register triggered the exception.
  *         "Bp_num" will be negative otherwise.
  */
-static int
-getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
+static int getAndResetActiveBreakpoint(word_t vaddr, word_t reason)
 {
     word_t align_mask;
     int i, ret = -1;
@@ -1023,8 +999,7 @@ typedef struct fault_status {
     bool_t is_long_desc_format;
 } fault_status_t;
 
-static fault_status_t
-getFaultStatus(word_t hsr_or_fsr)
+static fault_status_t getFaultStatus(word_t hsr_or_fsr)
 {
     fault_status_t ret;
 
@@ -1064,8 +1039,7 @@ getFaultStatus(word_t hsr_or_fsr)
  *           values change. This also makes the debug code forward compatible
  *           aarch64.
  */
-bool_t
-isDebugFault(word_t hsr_or_fsr)
+bool_t isDebugFault(word_t hsr_or_fsr)
 {
     fault_status_t fs;
 
@@ -1103,8 +1077,7 @@ isDebugFault(word_t hsr_or_fsr)
  * @param fault_vaddr The instruction vaddr which triggered the exception, as
  *                    extracted by the kernel.
  */
-seL4_Fault_t
-handleUserLevelDebugException(word_t fault_vaddr)
+seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr)
 {
 #ifdef TRACK_KERNEL_ENTRIES
     ksKernelEntry.path = Entry_DebugFault;
@@ -1196,14 +1169,12 @@ handleUserLevelDebugException(word_t fault_vaddr)
  * cached in RAM in API calls, rather than retrieving the values from the
  * coprocessor.
  */
-void
-Arch_initBreakpointContext(user_context_t *uc)
+void Arch_initBreakpointContext(user_context_t *uc)
 {
     uc->breakpointState = armKSNullBreakpointState;
 }
 
-void
-loadAllDisabledBreakpointState(void)
+void loadAllDisabledBreakpointState(void)
 {
     int i;
 
@@ -1243,8 +1214,7 @@ loadAllDisabledBreakpointState(void)
  * we just set the "used_breakpoints_bf" bitfield to all 1s in
  * associateVcpu.
  */
-void
-saveAllBreakpointState(tcb_t *t)
+void saveAllBreakpointState(tcb_t *t)
 {
     int i;
 
@@ -1262,8 +1232,7 @@ saveAllBreakpointState(tcb_t *t)
 }
 
 #ifdef ARM_HYP_CP14_SAVE_AND_RESTORE_VCPU_THREADS
-void
-Arch_debugAssociateVCPUTCB(tcb_t *t)
+void Arch_debugAssociateVCPUTCB(tcb_t *t)
 {
     /* Don't attempt to shift beyond end of word. */
     assert(seL4_NumHWBreakpoints < sizeof(word_t) * 8);
@@ -1274,15 +1243,13 @@ Arch_debugAssociateVCPUTCB(tcb_t *t)
     t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf = MASK(seL4_NumHWBreakpoints);
 }
 
-void
-Arch_debugDissociateVCPUTCB(tcb_t *t)
+void Arch_debugDissociateVCPUTCB(tcb_t *t)
 {
     t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf = 0;
 }
 #endif
 
-static void
-loadBreakpointState(tcb_t *t)
+static void loadBreakpointState(tcb_t *t)
 {
     int i;
 
@@ -1315,8 +1282,7 @@ loadBreakpointState(tcb_t *t)
  *
  * Mirrors the idea of restore_user_context.
  */
-void
-restore_user_debug_context(tcb_t *target_thread)
+void restore_user_debug_context(tcb_t *target_thread)
 {
     assert(target_thread != NULL);
 

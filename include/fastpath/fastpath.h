@@ -12,8 +12,7 @@
 #define __FASTPATH_H
 
 /* Fastpath cap lookup.  Returns a null_cap on failure. */
-static inline cap_t FORCE_INLINE
-lookup_fp(cap_t cap, cptr_t cptr)
+static inline cap_t FORCE_INLINE lookup_fp(cap_t cap, cptr_t cptr)
 {
     word_t cptr2;
     cte_t *slot;
@@ -58,23 +57,20 @@ lookup_fp(cap_t cap, cptr_t cptr)
     return cap;
 }
 /* make sure the fastpath functions conform with structure_*.bf */
-static inline void
-thread_state_ptr_set_tsType_np(thread_state_t *ts_ptr, word_t tsType)
+static inline void thread_state_ptr_set_tsType_np(thread_state_t *ts_ptr, word_t tsType)
 {
     ts_ptr->words[0] = tsType;
 }
 
-static inline void
-thread_state_ptr_mset_blockingObject_tsType(thread_state_t *ts_ptr,
-                                            word_t ep_ref,
-                                            word_t tsType)
+static inline void thread_state_ptr_mset_blockingObject_tsType(thread_state_t *ts_ptr,
+                                                               word_t ep_ref,
+                                                               word_t tsType)
 {
     ts_ptr->words[0] = ep_ref | tsType;
 }
 
-static inline void
-cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGrant,
-                         word_t capReplyMaster, word_t capTCBPtr)
+static inline void cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGrant,
+                                            word_t capReplyMaster, word_t capTCBPtr)
 {
 #ifdef __KERNEL_64__
     cap_ptr->words[1] = (word_t)capTCBPtr;
@@ -86,15 +82,13 @@ cap_reply_cap_ptr_new_np(cap_t *cap_ptr, word_t capReplyCanGrant,
 #endif
 }
 
-static inline void
-endpoint_ptr_mset_epQueue_tail_state(endpoint_t *ep_ptr, word_t epQueue_tail,
-                                     word_t state)
+static inline void endpoint_ptr_mset_epQueue_tail_state(endpoint_t *ep_ptr, word_t epQueue_tail,
+                                                        word_t state)
 {
     ep_ptr->words[0] = epQueue_tail | state;
 }
 
-static inline void
-endpoint_ptr_set_epQueue_head_np(endpoint_t *ep_ptr, word_t epQueue_head)
+static inline void endpoint_ptr_set_epQueue_head_np(endpoint_t *ep_ptr, word_t epQueue_head)
 {
     ep_ptr->words[1] = epQueue_head;
 }

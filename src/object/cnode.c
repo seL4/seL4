@@ -37,9 +37,8 @@ static finaliseSlot_ret_t finaliseSlot(cte_t *slot, bool_t exposed);
 static void emptySlot(cte_t *slot, cap_t cleanupInfo);
 static exception_t reduceZombie(cte_t *slot, bool_t exposed);
 
-exception_t
-decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
-                      extra_caps_t excaps, word_t *buffer)
+exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
+                                  extra_caps_t excaps, word_t *buffer)
 {
     lookupSlot_ret_t lu_ret;
     cte_t *destSlot;
@@ -309,20 +308,17 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
     return EXCEPTION_NONE;
 }
 
-exception_t
-invokeCNodeRevoke(cte_t *destSlot)
+exception_t invokeCNodeRevoke(cte_t *destSlot)
 {
     return cteRevoke(destSlot);
 }
 
-exception_t
-invokeCNodeDelete(cte_t *destSlot)
+exception_t invokeCNodeDelete(cte_t *destSlot)
 {
     return cteDelete(destSlot, true);
 }
 
-exception_t
-invokeCNodeCancelBadgedSends(cap_t cap)
+exception_t invokeCNodeCancelBadgedSends(cap_t cap)
 {
     word_t badge = cap_endpoint_cap_get_capEPBadge(cap);
     if (badge) {
@@ -333,25 +329,22 @@ invokeCNodeCancelBadgedSends(cap_t cap)
     return EXCEPTION_NONE;
 }
 
-exception_t
-invokeCNodeInsert(cap_t cap, cte_t *srcSlot, cte_t *destSlot)
+exception_t invokeCNodeInsert(cap_t cap, cte_t *srcSlot, cte_t *destSlot)
 {
     cteInsert(cap, srcSlot, destSlot);
 
     return EXCEPTION_NONE;
 }
 
-exception_t
-invokeCNodeMove(cap_t cap, cte_t *srcSlot, cte_t *destSlot)
+exception_t invokeCNodeMove(cap_t cap, cte_t *srcSlot, cte_t *destSlot)
 {
     cteMove(cap, srcSlot, destSlot);
 
     return EXCEPTION_NONE;
 }
 
-exception_t
-invokeCNodeRotate(cap_t cap1, cap_t cap2, cte_t *slot1,
-                  cte_t *slot2, cte_t *slot3)
+exception_t invokeCNodeRotate(cap_t cap1, cap_t cap2, cte_t *slot1,
+                              cte_t *slot2, cte_t *slot3)
 {
     if (slot1 == slot3) {
         cteSwap(cap1, slot1, cap2, slot2);
@@ -363,8 +356,7 @@ invokeCNodeRotate(cap_t cap1, cap_t cap2, cte_t *slot1,
     return EXCEPTION_NONE;
 }
 
-exception_t
-invokeCNodeSaveCaller(cte_t *destSlot)
+exception_t invokeCNodeSaveCaller(cte_t *destSlot)
 {
     cap_t cap;
     cte_t *srcSlot;
@@ -395,8 +387,7 @@ invokeCNodeSaveCaller(cte_t *destSlot)
  * If creating a child UntypedCap, don't allow new objects to be created in the
  * parent.
  */
-static void
-setUntypedCapAsFull(cap_t srcCap, cap_t newCap, cte_t *srcSlot)
+static void setUntypedCapAsFull(cap_t srcCap, cap_t newCap, cte_t *srcSlot)
 {
     if ((cap_get_capType(srcCap) == cap_untyped_cap)
             && (cap_get_capType(newCap) == cap_untyped_cap)) {
@@ -410,8 +401,7 @@ setUntypedCapAsFull(cap_t srcCap, cap_t newCap, cte_t *srcSlot)
     }
 }
 
-void
-cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
+void cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 {
     mdb_node_t srcMDB, newMDB;
     cap_t srcCap;
@@ -446,8 +436,7 @@ cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
     }
 }
 
-void
-cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
+void cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
 {
     mdb_node_t mdb;
     word_t prev_ptr, next_ptr;
@@ -477,8 +466,7 @@ cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
             CTE_REF(destSlot));
 }
 
-void
-capSwapForDelete(cte_t *slot1, cte_t *slot2)
+void capSwapForDelete(cte_t *slot1, cte_t *slot2)
 {
     cap_t cap1, cap2;
 
@@ -492,8 +480,7 @@ capSwapForDelete(cte_t *slot1, cte_t *slot2)
     cteSwap(cap1, slot1, cap2, slot2);
 }
 
-void
-cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
+void cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
 {
     mdb_node_t mdb1, mdb2;
     word_t next_ptr, prev_ptr;
@@ -532,8 +519,7 @@ cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2)
             CTE_REF(slot1));
 }
 
-exception_t
-cteRevoke(cte_t *slot)
+exception_t cteRevoke(cte_t *slot)
 {
     cte_t *nextPtr;
     exception_t status;
@@ -557,8 +543,7 @@ cteRevoke(cte_t *slot)
     return EXCEPTION_NONE;
 }
 
-exception_t
-cteDelete(cte_t *slot, bool_t exposed)
+exception_t cteDelete(cte_t *slot, bool_t exposed)
 {
     finaliseSlot_ret_t fs_ret;
 
@@ -573,8 +558,7 @@ cteDelete(cte_t *slot, bool_t exposed)
     return EXCEPTION_NONE;
 }
 
-static void
-emptySlot(cte_t *slot, cap_t cleanupInfo)
+static void emptySlot(cte_t *slot, cap_t cleanupInfo)
 {
     if (cap_get_capType(slot->cap) != cap_null_cap) {
         mdb_node_t mdbNode;
@@ -601,8 +585,7 @@ emptySlot(cte_t *slot, cap_t cleanupInfo)
     }
 }
 
-static inline bool_t CONST
-capRemovable(cap_t cap, cte_t *slot)
+static inline bool_t CONST capRemovable(cap_t cap, cte_t *slot)
 {
     switch (cap_get_capType(cap)) {
     case cap_null_cap:
@@ -617,15 +600,13 @@ capRemovable(cap_t cap, cte_t *slot)
     }
 }
 
-static inline bool_t CONST
-capCyclicZombie(cap_t cap, cte_t *slot)
+static inline bool_t CONST capCyclicZombie(cap_t cap, cte_t *slot)
 {
     return cap_get_capType(cap) == cap_zombie_cap &&
            CTE_PTR(cap_zombie_cap_get_capZombiePtr(cap)) == slot;
 }
 
-static finaliseSlot_ret_t
-finaliseSlot(cte_t *slot, bool_t immediate)
+static finaliseSlot_ret_t finaliseSlot(cte_t *slot, bool_t immediate)
 {
     bool_t final;
     finaliseCap_ret_t fc_ret;
@@ -674,8 +655,7 @@ finaliseSlot(cte_t *slot, bool_t immediate)
     return ret;
 }
 
-static exception_t
-reduceZombie(cte_t *slot, bool_t immediate)
+static exception_t reduceZombie(cte_t *slot, bool_t immediate)
 {
     cte_t *ptr;
     word_t n, type;
@@ -737,8 +717,7 @@ reduceZombie(cte_t *slot, bool_t immediate)
     return EXCEPTION_NONE;
 }
 
-void
-cteDeleteOne(cte_t *slot)
+void cteDeleteOne(cte_t *slot)
 {
     word_t cap_type = cap_get_capType(slot->cap);
     if (cap_type != cap_null_cap) {
@@ -757,8 +736,7 @@ cteDeleteOne(cte_t *slot)
     }
 }
 
-void
-insertNewCap(cte_t *parent, cte_t *slot, cap_t cap)
+void insertNewCap(cte_t *parent, cte_t *slot, cap_t cap)
 {
     cte_t *next;
 
@@ -771,8 +749,7 @@ insertNewCap(cte_t *parent, cte_t *slot, cap_t cap)
     mdb_node_ptr_set_mdbNext(&parent->cteMDBNode, CTE_REF(slot));
 }
 
-void
-setupReplyMaster(tcb_t *thread)
+void setupReplyMaster(tcb_t *thread)
 {
     cte_t *slot;
 
@@ -787,8 +764,7 @@ setupReplyMaster(tcb_t *thread)
     }
 }
 
-bool_t PURE
-isMDBParentOf(cte_t *cte_a, cte_t *cte_b)
+bool_t PURE isMDBParentOf(cte_t *cte_a, cte_t *cte_b)
 {
     if (!mdb_node_get_mdbRevocable(cte_a->cteMDBNode)) {
         return false;
@@ -828,8 +804,7 @@ isMDBParentOf(cte_t *cte_a, cte_t *cte_b)
     }
 }
 
-exception_t
-ensureNoChildren(cte_t *slot)
+exception_t ensureNoChildren(cte_t *slot)
 {
     if (mdb_node_get_mdbNext(slot->cteMDBNode) != 0) {
         cte_t *next;
@@ -844,8 +819,7 @@ ensureNoChildren(cte_t *slot)
     return EXCEPTION_NONE;
 }
 
-exception_t
-ensureEmptySlot(cte_t *slot)
+exception_t ensureEmptySlot(cte_t *slot)
 {
     if (cap_get_capType(slot->cap) != cap_null_cap) {
         current_syscall_error.type = seL4_DeleteFirst;
@@ -855,8 +829,7 @@ ensureEmptySlot(cte_t *slot)
     return EXCEPTION_NONE;
 }
 
-bool_t PURE
-isFinalCapability(cte_t *cte)
+bool_t PURE isFinalCapability(cte_t *cte)
 {
     mdb_node_t mdb;
     bool_t prevIsSameObject;
@@ -886,8 +859,7 @@ isFinalCapability(cte_t *cte)
     }
 }
 
-bool_t PURE
-slotCapLongRunningDelete(cte_t *slot)
+bool_t PURE slotCapLongRunningDelete(cte_t *slot)
 {
     if (cap_get_capType(slot->cap) == cap_null_cap) {
         return false;
@@ -906,8 +878,7 @@ slotCapLongRunningDelete(cte_t *slot)
 
 /* This implementation is specialised to the (current) limit
  * of one cap receive slot. */
-cte_t *
-getReceiveSlots(tcb_t *thread, word_t *buffer)
+cte_t *getReceiveSlots(tcb_t *thread, word_t *buffer)
 {
     cap_transfer_t ct;
     cptr_t cptr;
@@ -942,8 +913,7 @@ getReceiveSlots(tcb_t *thread, word_t *buffer)
     return slot;
 }
 
-cap_transfer_t PURE
-loadCapTransfer(word_t *buffer)
+cap_transfer_t PURE loadCapTransfer(word_t *buffer)
 {
     const int offset = seL4_MsgMaxLength + seL4_MsgMaxExtraCaps + 2;
     return capTransferFromWords(buffer + offset);

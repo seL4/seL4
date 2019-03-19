@@ -73,8 +73,7 @@ setMRs_lookup_failure(tcb_t *receiver, word_t *receiveIPCBuffer,
     }
 }
 
-static inline void
-copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
+static inline void copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
 {
     word_t i;
     bool_t archInfo;
@@ -99,9 +98,8 @@ copyMRsFaultReply(tcb_t *sender, tcb_t *receiver, MessageID_t id, word_t length)
     }
 }
 
-static inline void
-copyMRsFault(tcb_t *sender, tcb_t *receiver, MessageID_t id,
-             word_t length, word_t *receiveIPCBuffer)
+static inline void copyMRsFault(tcb_t *sender, tcb_t *receiver, MessageID_t id,
+                                word_t length, word_t *receiveIPCBuffer)
 {
     word_t i;
     for (i = 0; i < MIN(length, n_msgRegisters); i++) {
@@ -115,8 +113,7 @@ copyMRsFault(tcb_t *sender, tcb_t *receiver, MessageID_t id,
     }
 }
 
-bool_t
-handleFaultReply(tcb_t *receiver, tcb_t *sender)
+bool_t handleFaultReply(tcb_t *receiver, tcb_t *sender)
 {
     /* These lookups are moved inward from doReplyTransfer */
     seL4_MessageInfo_t tag = messageInfoFromWord(getRegister(sender, msgInfoRegister));
@@ -188,8 +185,7 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
     }
 }
 
-word_t
-setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffer)
+word_t setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffer)
 {
     switch (seL4_Fault_get_seL4_FaultType(sender->tcbFault)) {
     case seL4_Fault_CapFault:

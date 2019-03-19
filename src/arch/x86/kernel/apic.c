@@ -16,8 +16,7 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/pit.h>
 
-static BOOT_CODE uint32_t
-apic_measure_freq(void)
+static BOOT_CODE uint32_t apic_measure_freq(void)
 {
     pit_init();
     /* wait for 1st PIT wraparound */
@@ -34,8 +33,7 @@ apic_measure_freq(void)
     return (0xffffffff - apic_read_reg(APIC_TIMER_CURRENT)) / PIT_WRAPAROUND_MS;
 }
 
-BOOT_CODE paddr_t
-apic_get_base_paddr(void)
+BOOT_CODE paddr_t apic_get_base_paddr(void)
 {
     apic_base_msr_t apic_base_msr;
 
@@ -43,8 +41,7 @@ apic_get_base_paddr(void)
     return apic_base_msr_get_base_addr(apic_base_msr);
 }
 
-BOOT_CODE bool_t
-apic_init(bool_t mask_legacy_irqs)
+BOOT_CODE bool_t apic_init(bool_t mask_legacy_irqs)
 {
     apic_version_t apic_version;
     uint32_t num_lvt_entries;

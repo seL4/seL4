@@ -23,8 +23,7 @@
 #define INTCPS_SYSCONFIG_SOFTRESET BIT(1)
 #define INTCPS_SYSSTATUS_RESETDONE BIT(0)
 
-BOOT_CODE void
-initIRQController(void)
+BOOT_CODE void initIRQController(void)
 {
     intc->intcps_sysconfig = INTCPS_SYSCONFIG_SOFTRESET;
     while (!(intc->intcps_sysstatus & INTCPS_SYSSTATUS_RESETDONE)) ;

@@ -31,8 +31,7 @@
 
 timer_t *timer = (timer_t *) TIMER_PPTR;
 
-BOOT_CODE void
-initTimer(void)
+BOOT_CODE void initTimer(void)
 {
     /* Configure gptimer9 as kernel timer */
     timer->cfg = TIOCP_CFG_SOFTRESET;

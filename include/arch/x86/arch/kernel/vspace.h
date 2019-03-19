@@ -134,8 +134,7 @@ pde_t CONST makeUserPDEInvalid(void);
 void Arch_userStackTrace(tcb_t *tptr);
 #endif
 
-static inline bool_t
-checkVPAlignment(vm_page_size_t sz, word_t w)
+static inline bool_t checkVPAlignment(vm_page_size_t sz, word_t w)
 {
     return IS_ALIGNED(w, pageBitsForSize(sz));
 }

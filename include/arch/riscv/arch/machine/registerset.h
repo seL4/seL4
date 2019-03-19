@@ -105,8 +105,7 @@ static inline void Arch_initContext(user_context_t *context)
     context->registers[SSTATUS] = SSTATUS_SPIE;
 }
 
-static inline word_t CONST
-sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
+static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
 {
     return v;
 }

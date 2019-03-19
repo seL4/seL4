@@ -48,14 +48,12 @@ static inline void doRemoteInvalidateTranslationAll(word_t mask)
 }
 
 #ifdef CONFIG_VTX
-static inline void
-doRemoteClearCurrentVCPU(word_t cpu)
+static inline void doRemoteClearCurrentVCPU(word_t cpu)
 {
     doRemoteOp0Arg(IpiRemoteCall_ClearCurrentVCPU, cpu);
 }
 
-static inline void
-doRemoteVMCheckBoundNotification(word_t cpu, tcb_t *tcb)
+static inline void doRemoteVMCheckBoundNotification(word_t cpu, tcb_t *tcb)
 {
     doRemoteOp1Arg(IpiRemoteCall_VMCheckBoundNotification, (word_t)tcb, cpu);
 }

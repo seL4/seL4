@@ -59,8 +59,7 @@ enum frameSizeConstants {
     ARMHugePageBits     = seL4_HugePageBits
 };
 
-static inline word_t CONST
-pageBitsForSize(vm_page_size_t pagesize)
+static inline word_t CONST pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case ARMSmallPage:

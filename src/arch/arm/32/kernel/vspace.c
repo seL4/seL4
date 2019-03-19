@@ -68,8 +68,7 @@ typedef struct resolve_ret resolve_ret_t;
 static bool_t PURE pteCheckIfMapped(pte_t *pte);
 static bool_t PURE pdeCheckIfMapped(pde_t *pde);
 
-static word_t CONST
-APFromVMRights(vm_rights_t vm_rights)
+static word_t CONST APFromVMRights(vm_rights_t vm_rights)
 {
     switch (vm_rights) {
     case VMNoAccess:
@@ -92,8 +91,7 @@ APFromVMRights(vm_rights_t vm_rights)
 #else
 /* AP encoding slightly different. AP only used for kernel mappings which are fixed after boot time */
 BOOT_CODE
-static word_t CONST
-APFromVMRights(vm_rights_t vm_rights)
+static word_t CONST APFromVMRights(vm_rights_t vm_rights)
 {
     switch (vm_rights) {
     case VMKernelOnly:
@@ -110,8 +108,7 @@ APFromVMRights(vm_rights_t vm_rights)
     }
 }
 
-static word_t CONST
-HAPFromVMRights(vm_rights_t vm_rights)
+static word_t CONST HAPFromVMRights(vm_rights_t vm_rights)
 {
     switch (vm_rights) {
     case VMKernelOnly:
@@ -132,8 +129,7 @@ HAPFromVMRights(vm_rights_t vm_rights)
 
 #endif
 
-vm_rights_t CONST
-maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
+vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
     if (vm_rights == VMNoAccess) {
         return VMNoAccess;
@@ -160,8 +156,7 @@ maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 
 /* ==================== BOOT CODE STARTS HERE ==================== */
 
-BOOT_CODE void
-map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attributes_t attributes)
+BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attributes_t attributes)
 {
     word_t idx = (vaddr & MASK(pageBitsForSize(ARMSection))) >> pageBitsForSize(ARMSmallPage);
 
@@ -212,8 +207,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights, vm_attribut
 }
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
-BOOT_CODE void
-map_kernel_window(void)
+BOOT_CODE void map_kernel_window(void)
 {
     paddr_t  phys;
     word_t idx;
@@ -328,8 +322,7 @@ map_kernel_window(void)
 
 #else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-BOOT_CODE void
-map_kernel_window(void)
+BOOT_CODE void map_kernel_window(void)
 {
     paddr_t    phys;
     uint32_t   idx;
@@ -436,8 +429,7 @@ map_kernel_window(void)
 
 #endif /* !CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-static BOOT_CODE void
-map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
+static BOOT_CODE void map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 {
     pte_t *pt;
     pte_t *targetSlot;
@@ -478,8 +470,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 
 /* Create a frame cap for the initial thread. */
 
-static BOOT_CODE cap_t
-create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
+static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
 {
     if (use_large)
         return
@@ -507,8 +498,7 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
             );
 }
 
-static BOOT_CODE void
-map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
+static BOOT_CODE void map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
 {
     pde_t *pd   = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
     pte_t *pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
@@ -530,8 +520,7 @@ map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
 
 /* Create a page table for the initial thread */
 
-static BOOT_CODE cap_t
-create_it_page_table_cap(cap_t pd, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_page_table_cap(cap_t pd, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_table_cap_new(
@@ -548,8 +537,7 @@ create_it_page_table_cap(cap_t pd, pptr_t pptr, vptr_t vptr, asid_t asid)
 
 /* Create an address space for the initial thread.
  * This includes page directory and page tables */
-BOOT_CODE cap_t
-create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
+BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      pd_cap;
     vptr_t     pt_vptr;
@@ -601,14 +589,12 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     return pd_cap;
 }
 
-BOOT_CODE cap_t
-create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
+BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 {
     return create_it_frame_cap(pptr, 0, asidInvalid, use_large);
 }
 
-BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable)
+BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable)
 {
     cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large);
     map_it_frame_cap(pd_cap, cap, executable);
@@ -617,8 +603,7 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, 
 
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
 
-BOOT_CODE void
-activate_global_pd(void)
+BOOT_CODE void activate_global_pd(void)
 {
     /* Ensure that there's nothing stale in newly-mapped regions, and
        that everything we've written (particularly the kernel page tables)
@@ -632,8 +617,7 @@ activate_global_pd(void)
 
 #else
 
-BOOT_CODE void
-activate_global_pd(void)
+BOOT_CODE void activate_global_pd(void)
 {
     uint32_t r;
     /* Ensure that there's nothing stale in newly-mapped regions, and
@@ -665,8 +649,7 @@ activate_global_pd(void)
 
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-BOOT_CODE void
-write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
+BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = PDE_PTR(pptr_of_cap(it_pd_cap));
@@ -675,8 +658,7 @@ write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 
 /* ==================== BOOT CODE FINISHES HERE ==================== */
 
-findPDForASID_ret_t
-findPDForASID(asid_t asid)
+findPDForASID_ret_t findPDForASID(asid_t asid)
 {
     findPDForASID_ret_t ret;
     asid_pool_t *poolPtr;
@@ -705,8 +687,7 @@ findPDForASID(asid_t asid)
     return ret;
 }
 
-word_t *PURE
-lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
+word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
     word_t w_bufferPtr;
     cap_t bufferCap;
@@ -737,8 +718,7 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     }
 }
 
-exception_t
-checkValidIPCBuffer(vptr_t vptr, cap_t cap)
+exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
 {
     if (unlikely(cap_get_capType(cap) != cap_small_frame_cap &&
                  cap_get_capType(cap) != cap_frame_cap)) {
@@ -762,8 +742,7 @@ checkValidIPCBuffer(vptr_t vptr, cap_t cap)
     return EXCEPTION_NONE;
 }
 
-pde_t *CONST
-lookupPDSlot(pde_t *pd, vptr_t vptr)
+pde_t *CONST lookupPDSlot(pde_t *pd, vptr_t vptr)
 {
     unsigned int pdIndex;
 
@@ -771,8 +750,7 @@ lookupPDSlot(pde_t *pd, vptr_t vptr)
     return pd + pdIndex;
 }
 
-lookupPTSlot_ret_t
-lookupPTSlot(pde_t *pd, vptr_t vptr)
+lookupPTSlot_ret_t lookupPTSlot(pde_t *pd, vptr_t vptr)
 {
     lookupPTSlot_ret_t ret;
     pde_t *pdSlot;
@@ -799,8 +777,7 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
     }
 }
 
-static pte_t *
-lookupPTSlot_nofail(pte_t *pt, vptr_t vptr)
+static pte_t *lookupPTSlot_nofail(pte_t *pt, vptr_t vptr)
 {
     unsigned int ptIndex;
 
@@ -810,8 +787,7 @@ lookupPTSlot_nofail(pte_t *pt, vptr_t vptr)
 
 static const resolve_ret_t default_resolve_ret_t;
 
-static resolve_ret_t
-resolveVAddr(pde_t *pd, vptr_t vaddr)
+static resolve_ret_t resolveVAddr(pde_t *pd, vptr_t vaddr)
 {
     pde_t *pde = lookupPDSlot(pd, vaddr);
     resolve_ret_t ret = default_resolve_ret_t;
@@ -876,9 +852,8 @@ resolveVAddr(pde_t *pd, vptr_t vaddr)
     return ret;
 }
 
-static pte_t CONST
-makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
-            bool_t cacheable, bool_t nonexecutable, vm_rights_t vm_rights)
+static pte_t CONST makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
+                               bool_t cacheable, bool_t nonexecutable, vm_rights_t vm_rights)
 {
     pte_t pte;
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
@@ -999,10 +974,9 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr,
     return pte;
 }
 
-static pde_t CONST
-makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
-            bool_t cacheable, bool_t nonexecutable, word_t domain,
-            vm_rights_t vm_rights)
+static pde_t CONST makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
+                               bool_t cacheable, bool_t nonexecutable, word_t domain,
+                               vm_rights_t vm_rights)
 {
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     word_t ap, size2;
@@ -1069,15 +1043,13 @@ makeUserPDE(vm_page_size_t page_size, paddr_t paddr, bool_t parity,
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 }
 
-bool_t CONST
-isValidVTableRoot(cap_t cap)
+bool_t CONST isValidVTableRoot(cap_t cap)
 {
     return cap_get_capType(cap) == cap_page_directory_cap &&
            cap_page_directory_cap_get_capPDIsMapped(cap);
 }
 
-bool_t CONST
-isIOSpaceFrameCap(cap_t cap)
+bool_t CONST isIOSpaceFrameCap(cap_t cap)
 {
 #ifdef CONFIG_ARM_SMMU
     return cap_get_capType(cap) == cap_small_frame_cap && cap_small_frame_cap_get_capFIsIOSpace(cap);
@@ -1086,8 +1058,7 @@ isIOSpaceFrameCap(cap_t cap)
 #endif
 }
 
-void
-setVMRoot(tcb_t *tcb)
+void setVMRoot(tcb_t *tcb)
 {
     cap_t threadRoot;
     asid_t asid;
@@ -1124,8 +1095,7 @@ setVMRoot(tcb_t *tcb)
     }
 }
 
-static bool_t
-setVMRootForFlush(pde_t *pd, asid_t asid)
+static bool_t setVMRootForFlush(pde_t *pd, asid_t asid)
 {
     cap_t threadRoot;
 
@@ -1142,8 +1112,7 @@ setVMRootForFlush(pde_t *pd, asid_t asid)
     return true;
 }
 
-pde_t *
-pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt)
+pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt)
 {
     findPDForASID_ret_t find_ret;
     pde_t pde;
@@ -1165,8 +1134,7 @@ pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt)
     }
 }
 
-static void
-invalidateASID(asid_t asid)
+static void invalidateASID(asid_t asid)
 {
     asid_pool_t *asidPool;
     pde_t *pd;
@@ -1180,8 +1148,7 @@ invalidateASID(asid_t asid)
     pd[PD_ASID_SLOT] = pde_pde_invalid_new(0, false);
 }
 
-static pde_t PURE
-loadHWASID(asid_t asid)
+static pde_t PURE loadHWASID(asid_t asid)
 {
     asid_pool_t *asidPool;
     pde_t *pd;
@@ -1195,8 +1162,7 @@ loadHWASID(asid_t asid)
     return pd[PD_ASID_SLOT];
 }
 
-static void
-storeHWASID(asid_t asid, hw_asid_t hw_asid)
+static void storeHWASID(asid_t asid, hw_asid_t hw_asid)
 {
     asid_pool_t *asidPool;
     pde_t *pd;
@@ -1214,8 +1180,7 @@ storeHWASID(asid_t asid, hw_asid_t hw_asid)
     armKSHWASIDTable[hw_asid] = asid;
 }
 
-hw_asid_t
-findFreeHWASID(void)
+hw_asid_t findFreeHWASID(void)
 {
     word_t hw_asid_offset;
     hw_asid_t hw_asid;
@@ -1245,8 +1210,7 @@ findFreeHWASID(void)
     return hw_asid;
 }
 
-hw_asid_t
-getHWASID(asid_t asid)
+hw_asid_t getHWASID(asid_t asid)
 {
     pde_t stored_hw_asid;
 
@@ -1262,8 +1226,7 @@ getHWASID(asid_t asid)
     }
 }
 
-static void
-invalidateASIDEntry(asid_t asid)
+static void invalidateASIDEntry(asid_t asid)
 {
     pde_t stored_hw_asid;
 
@@ -1275,8 +1238,7 @@ invalidateASIDEntry(asid_t asid)
     invalidateASID(asid);
 }
 
-void
-unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
+void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
 {
     pde_t *pd, *pdSlot;
     unsigned int pdIndex;
@@ -1293,8 +1255,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
     }
 }
 
-void
-copyGlobalMappings(pde_t *newPD)
+void copyGlobalMappings(pde_t *newPD)
 {
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
     word_t i;
@@ -1316,8 +1277,7 @@ copyGlobalMappings(pde_t *newPD)
 #endif
 }
 
-exception_t
-handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
+exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
     switch (vm_faultType) {
     case ARMDataAbort: {
@@ -1387,8 +1347,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
     }
 }
 
-void
-deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
+void deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
 {
     unsigned int offset;
 
@@ -1407,8 +1366,7 @@ deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
     }
 }
 
-void
-deleteASID(asid_t asid, pde_t *pd)
+void deleteASID(asid_t asid, pde_t *pd)
 {
     asid_pool_t *poolPtr;
 
@@ -1436,8 +1394,7 @@ static pte_t pte_pte_invalid_new(void)
 }
 #endif
 
-void
-unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
+void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 {
     findPDForASID_ret_t find_ret;
     paddr_t addr = addrFromPPtr(pptr);
@@ -1574,8 +1531,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
     flushPage(page_size, find_ret.pd, asid, vptr);
 }
 
-void
-flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
+void flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
 {
     pde_t stored_hw_asid;
     word_t base_addr;
@@ -1599,8 +1555,7 @@ flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
     }
 }
 
-void
-flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt)
+void flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt)
 {
     pde_t stored_hw_asid;
     bool_t root_switched;
@@ -1619,8 +1574,7 @@ flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt)
     }
 }
 
-void
-flushSpace(asid_t asid)
+void flushSpace(asid_t asid)
 {
     pde_t stored_hw_asid;
 
@@ -1641,8 +1595,7 @@ flushSpace(asid_t asid)
     invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
 }
 
-void
-invalidateTLBByASID(asid_t asid)
+void invalidateTLBByASID(asid_t asid)
 {
     pde_t stored_hw_asid;
 
@@ -1658,8 +1611,7 @@ invalidateTLBByASID(asid_t asid)
     invalidateTranslationASID(pde_pde_invalid_get_stored_hw_asid(stored_hw_asid));
 }
 
-static inline bool_t CONST
-checkVPAlignment(vm_page_size_t sz, word_t w)
+static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 {
     return (w & MASK(pageBitsForSize(sz))) == 0;
 }
@@ -1859,26 +1811,22 @@ createSafeMappingEntries_PDE
     }
 }
 
-static inline vptr_t
-pageBase(vptr_t vaddr, vm_page_size_t size)
+static inline vptr_t pageBase(vptr_t vaddr, vm_page_size_t size)
 {
     return vaddr & ~MASK(pageBitsForSize(size));
 }
 
-static bool_t PURE
-pteCheckIfMapped(pte_t *pte)
+static bool_t PURE pteCheckIfMapped(pte_t *pte)
 {
     return pte_ptr_get_pteType(pte) != pte_pte_invalid;
 }
 
-static bool_t PURE
-pdeCheckIfMapped(pde_t *pde)
+static bool_t PURE pdeCheckIfMapped(pde_t *pde)
 {
     return pde_ptr_get_pdeType(pde) != pde_pde_invalid;
 }
 
-static void
-doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
+static void doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 {
     /** GHOSTUPD: "((gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state = 0
             \<or> \<acute>end - \<acute>start <= gs_get_assn cap_get_capSizeBits_'proc \<acute>ghost'state)
@@ -1924,9 +1872,8 @@ doFlush(int invLabel, vptr_t start, vptr_t end, paddr_t pstart)
 
 /* ================= INVOCATION HANDLING STARTS HERE ================== */
 
-static exception_t
-performPDFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
-               vptr_t end, paddr_t pstart)
+static exception_t performPDFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
+                                  vptr_t end, paddr_t pstart)
 {
     bool_t root_switched;
 
@@ -1944,9 +1891,8 @@ performPDFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
-                              pde_t pde, pde_t *pdSlot)
+static exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
+                                                 pde_t pde, pde_t *pdSlot)
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
@@ -1955,8 +1901,7 @@ performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
+static exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     if (cap_page_table_cap_get_capPTIsMapped(cap)) {
         pte_t *pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
@@ -1971,9 +1916,8 @@ performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
-                            pte_range_t pte_entries)
+static exception_t performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
+                                               pte_range_t pte_entries)
 {
     word_t i, j UNUSED;
     bool_t tlbflush_required;
@@ -2006,9 +1950,8 @@ performPageInvocationMapPTE(asid_t asid, cap_t cap, cte_t *ctSlot, pte_t pte,
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
-                            pde_range_t pde_entries)
+static exception_t performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
+                                               pde_range_t pde_entries)
 {
     word_t i, j UNUSED;
     bool_t tlbflush_required;
@@ -2041,8 +1984,7 @@ performPageInvocationMapPDE(asid_t asid, cap_t cap, cte_t *ctSlot, pde_t pde,
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
+static exception_t performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
 {
     word_t i, j UNUSED;
     bool_t tlbflush_required;
@@ -2073,8 +2015,7 @@ performPageInvocationRemapPTE(asid_t asid, pte_t pte, pte_range_t pte_entries)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
+static exception_t performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
 {
     word_t i, j UNUSED;
     bool_t tlbflush_required;
@@ -2105,8 +2046,7 @@ performPageInvocationRemapPDE(asid_t asid, pde_t pde, pde_range_t pde_entries)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
+static exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     if (generic_frame_cap_get_capFIsMapped(cap)) {
         unmapPage(generic_frame_cap_get_capFSize(cap),
@@ -2120,9 +2060,8 @@ performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
-                 vptr_t end, paddr_t pstart)
+static exception_t performPageFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
+                                    vptr_t end, paddr_t pstart)
 {
     bool_t root_switched;
 
@@ -2140,8 +2079,7 @@ performPageFlush(int invLabel, pde_t *pd, asid_t asid, vptr_t start,
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageGetAddress(void *vbase_ptr)
+static exception_t performPageGetAddress(void *vbase_ptr)
 {
     paddr_t capFBasePtr;
 
@@ -2156,9 +2094,8 @@ performPageGetAddress(void *vbase_ptr)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
-                          cte_t *pdCapSlot)
+static exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
+                                             cte_t *pdCapSlot)
 {
     cap_page_directory_cap_ptr_set_capPDMappedASID(&pdCapSlot->cap, asid);
     cap_page_directory_cap_ptr_set_capPDIsMapped(&pdCapSlot->cap, 1);
@@ -2168,9 +2105,8 @@ performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr,
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performASIDControlInvocation(void *frame, cte_t *slot,
-                             cte_t *parent, asid_t asid_base)
+static exception_t performASIDControlInvocation(void *frame, cte_t *slot,
+                                                cte_t *parent, asid_t asid_base)
 {
 
     /** AUXUPD: "(True, typ_region_bytes (ptr_val \<acute>frame) 12)" */
@@ -2190,10 +2126,9 @@ performASIDControlInvocation(void *frame, cte_t *slot,
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
-                                 cptr_t cptr, cte_t *cte, cap_t cap,
-                                 extra_caps_t excaps, word_t *buffer)
+static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
+                                                    cptr_t cptr, cte_t *cte, cap_t cap,
+                                                    extra_caps_t excaps, word_t *buffer)
 {
     switch (invLabel) {
     case ARMPDClean_Data:
@@ -2301,10 +2236,9 @@ decodeARMPageDirectoryInvocation(word_t invLabel, word_t length,
 
 }
 
-static exception_t
-decodeARMPageTableInvocation(word_t invLabel, word_t length,
-                             cte_t *cte, cap_t cap, extra_caps_t excaps,
-                             word_t *buffer)
+static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
+                                                cte_t *cte, cap_t cap, extra_caps_t excaps,
+                                                word_t *buffer)
 {
     word_t vaddr, pdIndex;
 
@@ -2425,10 +2359,9 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
     return performPageTableInvocationMap(cap, cte, pde, pdSlot);
 }
 
-static exception_t
-decodeARMFrameInvocation(word_t invLabel, word_t length,
-                         cte_t *cte, cap_t cap, extra_caps_t excaps,
-                         word_t *buffer)
+static exception_t decodeARMFrameInvocation(word_t invLabel, word_t length,
+                                            cte_t *cte, cap_t cap, extra_caps_t excaps,
+                                            word_t *buffer)
 {
     switch (invLabel) {
     case ARMPageMap: {
@@ -2814,10 +2747,9 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
     }
 }
 
-exception_t
-decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
-                       cte_t *cte, cap_t cap, extra_caps_t excaps,
-                       word_t *buffer)
+exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
+                                   cte_t *cte, cap_t cap, extra_caps_t excaps,
+                                   word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
@@ -3056,8 +2988,7 @@ void kernelDataAbort(word_t pc) VISIBLE;
 
 void kernelUndefinedInstruction(word_t pc) VISIBLE;
 
-void
-kernelPrefetchAbort(word_t pc)
+void kernelPrefetchAbort(word_t pc)
 {
     word_t UNUSED sr = getHSR();
 
@@ -3068,8 +2999,7 @@ kernelPrefetchAbort(word_t pc)
     halt();
 }
 
-void
-kernelDataAbort(word_t pc)
+void kernelDataAbort(word_t pc)
 {
     word_t UNUSED far = getHDFAR();
     word_t UNUSED sr = getHSR();
@@ -3081,8 +3011,7 @@ kernelDataAbort(word_t pc)
     halt();
 }
 
-void
-kernelUndefinedInstruction(word_t pc)
+void kernelUndefinedInstruction(word_t pc)
 {
     word_t UNUSED sr = getHSR();
 
@@ -3095,8 +3024,7 @@ kernelUndefinedInstruction(word_t pc)
 
 #else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-void
-kernelPrefetchAbort(word_t pc)
+void kernelPrefetchAbort(word_t pc)
 {
     word_t UNUSED ifsr = getIFSR();
 
@@ -3107,8 +3035,7 @@ kernelPrefetchAbort(word_t pc)
     halt();
 }
 
-void
-kernelDataAbort(word_t pc)
+void kernelDataAbort(word_t pc)
 {
     word_t UNUSED dfsr = getDFSR();
     word_t UNUSED far = getFAR();
@@ -3129,8 +3056,7 @@ typedef struct readWordFromVSpace_ret {
     word_t value;
 } readWordFromVSpace_ret_t;
 
-static readWordFromVSpace_ret_t
-readWordFromVSpace(pde_t *pd, word_t vaddr)
+static readWordFromVSpace_ret_t readWordFromVSpace(pde_t *pd, word_t vaddr)
 {
     readWordFromVSpace_ret_t ret;
     lookupPTSlot_ret_t ptSlot;
@@ -3176,8 +3102,7 @@ readWordFromVSpace(pde_t *pd, word_t vaddr)
     return ret;
 }
 
-void
-Arch_userStackTrace(tcb_t *tptr)
+void Arch_userStackTrace(tcb_t *tptr)
 {
     cap_t threadRoot;
     pde_t *pd;

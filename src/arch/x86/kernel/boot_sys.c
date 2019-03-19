@@ -86,8 +86,7 @@ cmdline_opt_t cmdline_opt;
 
 /* functions not modeled in abstract specification */
 
-BOOT_CODE static paddr_t
-find_load_paddr(paddr_t min_paddr, word_t image_size)
+BOOT_CODE static paddr_t find_load_paddr(paddr_t min_paddr, word_t image_size)
 {
     int i;
 
@@ -104,8 +103,7 @@ find_load_paddr(paddr_t min_paddr, word_t image_size)
     return 0;
 }
 
-BOOT_CODE static paddr_t
-load_boot_module(word_t boot_module_start, paddr_t load_paddr)
+BOOT_CODE static paddr_t load_boot_module(word_t boot_module_start, paddr_t load_paddr)
 {
     v_region_t v_reg;
     word_t entry;
@@ -171,8 +169,7 @@ load_boot_module(word_t boot_module_start, paddr_t load_paddr)
     return load_paddr;
 }
 
-static BOOT_CODE bool_t
-try_boot_sys_node(cpu_id_t cpu_id)
+static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
 {
     p_region_t boot_mem_reuse_p_reg;
 
@@ -225,8 +222,7 @@ try_boot_sys_node(cpu_id_t cpu_id)
     return true;
 }
 
-static BOOT_CODE bool_t
-add_mem_p_regs(p_region_t reg)
+static BOOT_CODE bool_t add_mem_p_regs(p_region_t reg)
 {
     if (reg.end > PADDR_TOP) {
         reg.end = PADDR_TOP;
@@ -253,8 +249,7 @@ add_mem_p_regs(p_region_t reg)
  * the code relies that the GRUB provides correct information
  * about the actual physical memory regions.
  */
-static BOOT_CODE bool_t
-parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
+static BOOT_CODE bool_t parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
 {
     multiboot_mmap_t *mmap = (multiboot_mmap_t *)((word_t)mmap_addr);
     printf("Parsing GRUB physical memory map\n");
@@ -280,8 +275,7 @@ parse_mem_map(uint32_t mmap_length, uint32_t mmap_addr)
     return true;
 }
 
-static BOOT_CODE bool_t
-is_compiled_for_microarchitecture(void)
+static BOOT_CODE bool_t is_compiled_for_microarchitecture(void)
 {
     word_t microarch_generation = 0;
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
@@ -369,8 +363,7 @@ is_compiled_for_microarchitecture(void)
     return true;
 }
 
-static BOOT_CODE bool_t
-try_boot_sys(void)
+static BOOT_CODE bool_t try_boot_sys(void)
 {
     paddr_t mods_end_paddr = boot_state.mods_end_paddr;
     p_region_t ui_p_regs;
@@ -542,8 +535,7 @@ try_boot_sys(void)
     return true;
 }
 
-static BOOT_CODE bool_t
-try_boot_sys_mbi1(
+static BOOT_CODE bool_t try_boot_sys_mbi1(
     multiboot_info_t *mbi
 )
 {
@@ -643,8 +635,7 @@ try_boot_sys_mbi1(
     return true;
 }
 
-static BOOT_CODE bool_t
-try_boot_sys_mbi2(
+static BOOT_CODE bool_t try_boot_sys_mbi2(
     multiboot2_header_t *mbi2
 )
 {
@@ -740,8 +731,7 @@ try_boot_sys_mbi2(
     return true;
 }
 
-BOOT_CODE VISIBLE void
-boot_sys(
+BOOT_CODE VISIBLE void boot_sys(
     unsigned long multiboot_magic,
     void *mbi)
 {

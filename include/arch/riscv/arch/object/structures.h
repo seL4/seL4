@@ -77,8 +77,7 @@ typedef pte_t pde_t;
 #define WORD_BITS   (8 * sizeof(word_t))
 #define WORD_PTR(r) ((word_t *)(r))
 
-static inline bool_t CONST
-cap_get_archCapIsPhysical(cap_t cap)
+static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -103,8 +102,7 @@ cap_get_archCapIsPhysical(cap_t cap)
     }
 }
 
-static inline unsigned int CONST
-cap_get_archCapSizeBits(cap_t cap)
+static inline unsigned int CONST cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -130,8 +128,7 @@ cap_get_archCapSizeBits(cap_t cap)
     }
 }
 
-static inline void *CONST
-cap_get_archCapPtr(cap_t cap)
+static inline void *CONST cap_get_archCapPtr(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -158,8 +155,7 @@ cap_get_archCapPtr(cap_t cap)
     }
 }
 
-static inline bool_t CONST
-Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
+static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 {
     return false;
 }

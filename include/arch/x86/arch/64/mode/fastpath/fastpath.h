@@ -25,27 +25,23 @@
    path. Instead, we can do the unpacking ourselves and explicitly set the high
    bits. */
 
-static inline tcb_t *
-endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
+static inline tcb_t *endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
 {
     uint64_t ret = ep_ptr->words[0] & 0xfffffffffffcull;
     return unlikely(ret) ? TCB_PTR(ret | PPTR_BASE) : NULL;
 }
 
-static inline vspace_root_t *
-cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
+static inline vspace_root_t *cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
 {
     return PML4E_PTR(vtable_cap.words[1]);
 }
 
-static inline word_t
-cap_pml4_cap_get_capPML4MappedASID_fp(cap_t vtable_cap)
+static inline word_t cap_pml4_cap_get_capPML4MappedASID_fp(cap_t vtable_cap)
 {
     return (uint32_t)vtable_cap.words[0];
 }
 
-static inline void FORCE_INLINE
-switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
+static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
 {
     word_t new_vroot = pptr_to_paddr(vroot);
     /* the asid is the 12-bit PCID */
@@ -78,36 +74,31 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     NODE_STATE(ksCurThread) = thread;
 }
 
-static inline void
-thread_state_ptr_set_blockingIPCDiminish_np(thread_state_t *ts_ptr, word_t dim)
+static inline void thread_state_ptr_set_blockingIPCDiminish_np(thread_state_t *ts_ptr, word_t dim)
 {
     ts_ptr->words[1] = (ts_ptr->words[1] & 1) | dim;
 }
 
-static inline void
-mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
+static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
 {
     node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
 }
 
-static inline void
-mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
+static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 {
     node_ptr->words[0] = mdbPrev;
 }
 
-static inline bool_t
-isValidVTableRoot_fp(cap_t vspace_root_cap)
+static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
     /* Check the cap is a pml4_cap, and that it is mapped. The fields are next
        to each other, so they can be read and checked in parallel */
     return (vspace_root_cap.words[0] >> (64 - 6)) == ((cap_pml4_cap << 1) | 0x1);
 }
 
-static inline void
-fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
+static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
     word_t i;
     register_t reg;
@@ -133,8 +124,7 @@ fastpath_mi_check(word_t msgInfo)
             + 3) & ~MASK(3);
 }
 
-static inline void NORETURN FORCE_INLINE
-fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
+static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     if (config_set(CONFIG_SYSENTER) && config_set(CONFIG_HARDWARE_DEBUG_API) && ((getRegister(NODE_STATE(ksCurThread), FLAGS) & FLAGS_TF) != 0)) {
         /* If single stepping using sysenter we need to do a return using iret to avoid

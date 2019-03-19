@@ -27,8 +27,7 @@ gdt_idt_ptr_t gdt_idt_ptr;
 
 /* initialise the Task State Segment (TSS) */
 
-BOOT_CODE void
-init_tss(tss_t *tss)
+BOOT_CODE void init_tss(tss_t *tss)
 {
     *tss = tss_new(
                sizeof(*tss),   /* io_map_base  */
@@ -63,8 +62,7 @@ init_tss(tss_t *tss)
 }
 /* initialise Global Descriptor Table (GDT) */
 
-BOOT_CODE void
-init_gdt(gdt_entry_t *gdt, tss_t *tss)
+BOOT_CODE void init_gdt(gdt_entry_t *gdt, tss_t *tss)
 {
     uint32_t tss_addr = (uint32_t)tss;
 
@@ -185,8 +183,7 @@ init_gdt(gdt_entry_t *gdt, tss_t *tss)
 
 /* initialise the Interrupt Descriptor Table (IDT) */
 
-BOOT_CODE void
-init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
+BOOT_CODE void init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
 {
     uint32_t handler_addr = (uint32_t)handler;
     uint32_t dpl = 3;
@@ -205,8 +202,7 @@ init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
                      );
 }
 
-BOOT_CODE bool_t
-map_kernel_window(
+BOOT_CODE bool_t map_kernel_window(
     uint32_t num_ioapic,
     paddr_t   *ioapic_paddrs,
     uint32_t   num_drhu,
@@ -338,8 +334,7 @@ map_kernel_window(
 }
 
 /* Note: this function will invalidate any pointers previously returned from this function */
-BOOT_CODE void *
-map_temp_boot_page(void *entry, uint32_t large_pages)
+BOOT_CODE void *map_temp_boot_page(void *entry, uint32_t large_pages)
 {
     void *replacement_vaddr;
     unsigned int i;
@@ -379,8 +374,7 @@ map_temp_boot_page(void *entry, uint32_t large_pages)
 
 /* initialise CPU's descriptor table registers (GDTR, IDTR, LDTR, TR) */
 
-BOOT_CODE void
-init_dtrs(void)
+BOOT_CODE void init_dtrs(void)
 {
     /* setup the GDT pointer and limit and load into GDTR */
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
@@ -404,8 +398,7 @@ init_dtrs(void)
     }
 }
 
-static BOOT_CODE cap_t
-create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_table_cap_new(
@@ -420,8 +413,7 @@ create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid
     return cap;
 }
 
-static BOOT_CODE cap_t
-create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_directory_cap_new(
@@ -438,8 +430,7 @@ create_it_page_directory_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t 
 
 /* Create an address space for the initial thread.
  * This includes page directory and page tables */
-BOOT_CODE cap_t
-create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
+BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      vspace_cap;
     vptr_t     vptr;
@@ -486,8 +477,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     return vspace_cap;
 }
 
-static BOOT_CODE cap_t
-create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, vm_page_map_type_t map_type)
+static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, vm_page_map_type_t map_type)
 {
     vm_page_size_t frame_size;
 
@@ -510,14 +500,12 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, vm_
         );
 }
 
-BOOT_CODE cap_t
-create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
+BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 {
     return create_it_frame_cap(pptr, 0, asidInvalid, use_large, X86_MappingNone);
 }
 
-BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
+BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
 {
     cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large, X86_MappingVSpace);
     map_it_frame_cap(vspace_cap, cap);
@@ -648,8 +636,7 @@ void hwASIDInvalidate(asid_t asid, vspace_root_t *vspace)
     return;
 }
 
-exception_t
-decodeX86ModeMMUInvocation(
+exception_t decodeX86ModeMMUInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,

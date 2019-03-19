@@ -19,8 +19,7 @@
 /* Count frequency in Hz */
 #define PIT_HZ 1193182
 
-BOOT_CODE void
-pit_init(void)
+BOOT_CODE void pit_init(void)
 {
     uint16_t divisor = (PIT_HZ * PIT_WRAPAROUND_MS) / 1000;
 
@@ -29,8 +28,7 @@ pit_init(void)
     out8(PIT_CH0, divisor >> 8);   /* Set high byte of divisor */
 }
 
-BOOT_CODE void
-pit_wait_wraparound(void)
+BOOT_CODE void pit_wait_wraparound(void)
 {
     uint16_t count;
     uint16_t count_old;

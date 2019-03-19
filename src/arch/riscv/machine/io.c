@@ -20,8 +20,7 @@
 #include <arch/sbi.h>
 
 #if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG)
-void
-putDebugChar(unsigned char c)
+void putDebugChar(unsigned char c)
 {
     sbi_console_putchar(c);
 }

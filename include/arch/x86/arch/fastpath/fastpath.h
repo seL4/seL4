@@ -13,8 +13,7 @@
 
 #include <mode/fastpath/fastpath.h>
 
-static inline int
-fastpath_reply_cap_check(cap_t cap)
+static inline int fastpath_reply_cap_check(cap_t cap)
 {
     return cap_capType_equals(cap, cap_reply_cap);
 }

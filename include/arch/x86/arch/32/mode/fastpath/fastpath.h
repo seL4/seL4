@@ -20,20 +20,17 @@
 #include <mode/stack.h>
 #include <arch/kernel/tlb_bitmap.h>
 
-static inline tcb_t *
-endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
+static inline tcb_t *endpoint_ptr_get_epQueue_tail_fp(endpoint_t *ep_ptr)
 {
     return TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr));
 }
 
-static inline vspace_root_t *
-cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
+static inline vspace_root_t *cap_vtable_cap_get_vspace_root_fp(cap_t vtable_cap)
 {
     return PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vtable_cap));
 }
 
-static inline void FORCE_INLINE
-switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
+static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
 {
     uint32_t new_pd = pptr_to_paddr(pd);
 
@@ -57,28 +54,24 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *pd, pde_t stored_hw_asid)
     NODE_STATE(ksCurThread) = thread;
 }
 
-static inline void
-mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
+static inline void mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
     mdb_node_t *node_ptr, word_t mdbNext,
     word_t mdbRevocable, word_t mdbFirstBadged)
 {
     node_ptr->words[1] = mdbNext | (mdbRevocable << 1) | mdbFirstBadged;
 }
 
-static inline void
-mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
+static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 {
     node_ptr->words[0] = mdbPrev;
 }
 
-static inline bool_t
-isValidVTableRoot_fp(cap_t vspace_root_cap)
+static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
     return cap_capType_equals(vspace_root_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(vspace_root_cap);
 }
 
-static inline void
-fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
+static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
 {
     if (length == 2) {
         setRegister(dest, EBP, getRegister(src, EBP));
@@ -105,8 +98,7 @@ static inline bool_t hasDefaultSelectors(tcb_t *thread)
            thread->tcbArch.tcbContext.registers[ES] == SEL_DS_3;
 }
 
-static inline void NORETURN FORCE_INLINE
-fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
+static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     c_exit_hook();
 

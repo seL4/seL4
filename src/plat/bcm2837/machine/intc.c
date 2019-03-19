@@ -13,8 +13,7 @@
 #include <util.h>
 #include <stdint.h>
 #include <plat/machine.h>
-BOOT_CODE void
-initIRQController(void)
+BOOT_CODE void initIRQController(void)
 {
     /* Disable all interrupts */
     intc_regs->bfDisableIRQs[0] = 0xffffffff;
@@ -31,8 +30,7 @@ initIRQController(void)
 
 BOOT_CODE void cpu_initLocalIRQController(void) {}
 
-interrupt_t
-getActiveIRQ(void)
+interrupt_t getActiveIRQ(void)
 {
     uint32_t pending;
     uint32_t irq;
@@ -75,8 +73,7 @@ getActiveIRQ(void)
     return irqInvalid;
 }
 
-void
-maskInterrupt(bool_t disable, interrupt_t irq)
+void maskInterrupt(bool_t disable, interrupt_t irq)
 {
     switch (irq) {
     case INTERRUPT_CORE_CNTPSIRQ :

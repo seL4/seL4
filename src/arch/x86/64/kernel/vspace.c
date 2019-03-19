@@ -42,8 +42,7 @@ pdpte_t boot_pdpt[BIT(PDPT_INDEX_BITS)] ALIGN(BIT(seL4_PageBits)) VISIBLE PHYS_B
  */
 gdt_idt_ptr_t gdt_idt_ptr;
 
-BOOT_CODE bool_t
-map_kernel_window(
+BOOT_CODE bool_t map_kernel_window(
     uint32_t num_ioapic,
     paddr_t   *ioapic_paddrs,
     uint32_t   num_drhu,
@@ -262,8 +261,7 @@ map_kernel_window(
 }
 
 #ifdef CONFIG_KERNEL_SKIM_WINDOW
-BOOT_CODE bool_t
-map_skim_window(vptr_t skim_start, vptr_t skim_end)
+BOOT_CODE bool_t map_skim_window(vptr_t skim_start, vptr_t skim_end)
 {
     /* place the PDPT into the PML4 */
     x64KSSKIMPML4[GET_PML4_INDEX(PPTR_BASE)] = pml4e_new(
@@ -311,8 +309,7 @@ map_skim_window(vptr_t skim_start, vptr_t skim_end)
 }
 #endif
 
-BOOT_CODE void
-init_tss(tss_t *tss)
+BOOT_CODE void init_tss(tss_t *tss)
 {
     word_t base = (word_t)&x64KSIRQStack[CURRENT_CPU_INDEX()][IRQ_STACK_SIZE];
     *tss = tss_new(
@@ -333,8 +330,7 @@ init_tss(tss_t *tss)
     memset(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map[0], 0xff, sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
 }
 
-BOOT_CODE void
-init_syscall_msrs(void)
+BOOT_CODE void init_syscall_msrs(void)
 {
     x86_wrmsr(IA32_LSTAR_MSR, (uint64_t)&handle_fastsyscall);
     // mask bit 9 in the kernel (which is the interrupt enable bit)
@@ -344,8 +340,7 @@ init_syscall_msrs(void)
     x86_wrmsr(IA32_STAR_MSR, ((uint64_t)SEL_CS_0 << 32) | ((uint64_t)SEL_CS_3 << 48));
 }
 
-BOOT_CODE void
-init_gdt(gdt_entry_t *gdt, tss_t *tss)
+BOOT_CODE void init_gdt(gdt_entry_t *gdt, tss_t *tss)
 {
 
     uint64_t tss_base = (uint64_t)tss;
@@ -457,8 +452,7 @@ init_gdt(gdt_entry_t *gdt, tss_t *tss)
     gdt[GDT_TSS + 1].words[0] = gdt_tss.words[1];
 }
 
-BOOT_CODE void
-init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
+BOOT_CODE void init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
 {
     uint64_t handler_addr = (uint64_t)handler;
     uint64_t dpl = 3;
@@ -509,8 +503,7 @@ void setVMRoot(tcb_t *tcb)
 }
 
 
-BOOT_CODE void
-init_dtrs(void)
+BOOT_CODE void init_dtrs(void)
 {
     gdt_idt_ptr.limit = (sizeof(gdt_entry_t) * GDT_ENTRIES) - 1;
     gdt_idt_ptr.base = (uint64_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt;
@@ -532,8 +525,7 @@ init_dtrs(void)
     x64_install_tss(SEL_TSS);
 }
 
-BOOT_CODE void
-map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
+BOOT_CODE void map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
 {
     pml4e_t *pml4 = PML4_PTR(pptr_of_cap(pd_cap));
     pdpte_t *pdpt;
@@ -568,8 +560,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
                                  );
 }
 
-static BOOT_CODE void
-map_it_pdpt_cap(cap_t vspace_cap, cap_t pdpt_cap)
+static BOOT_CODE void map_it_pdpt_cap(cap_t vspace_cap, cap_t pdpt_cap)
 {
     pml4e_t *pml4 = PML4_PTR(pptr_of_cap(vspace_cap));
     pdpte_t *pdpt = PDPT_PTR(cap_pdpt_cap_get_capPDPTBasePtr(pdpt_cap));
@@ -588,8 +579,7 @@ map_it_pdpt_cap(cap_t vspace_cap, cap_t pdpt_cap)
                                      );
 }
 
-BOOT_CODE void
-map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
+BOOT_CODE void map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 {
     pml4e_t *pml4 = PML4_PTR(pptr_of_cap(vspace_cap));
     pdpte_t *pdpt;
@@ -612,8 +602,7 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
                                      );
 }
 
-BOOT_CODE void
-map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
+BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 {
     pml4e_t *pml4 = PML4_PTR(pptr_of_cap(vspace_cap));
     pdpte_t *pdpt;
@@ -640,8 +629,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
                                  );
 }
 
-BOOT_CODE void *
-map_temp_boot_page(void *entry, uint32_t large_pages)
+BOOT_CODE void *map_temp_boot_page(void *entry, uint32_t large_pages)
 {
     /* this function is for legacy 32-bit systems where the ACPI tables might
      * collide with the kernel window. Here we just assert that the table is
@@ -651,8 +639,7 @@ map_temp_boot_page(void *entry, uint32_t large_pages)
     return entry;
 }
 
-static BOOT_CODE cap_t
-create_it_pdpt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_pdpt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_pdpt_cap_new(
@@ -665,8 +652,7 @@ create_it_pdpt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
     return cap;
 }
 
-static BOOT_CODE cap_t
-create_it_pd_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_pd_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_directory_cap_new(
@@ -679,8 +665,7 @@ create_it_pd_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
     return cap;
 }
 
-static BOOT_CODE cap_t
-create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_table_cap_new(
@@ -693,8 +678,7 @@ create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
     return cap;
 }
 
-BOOT_CODE cap_t
-create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
+BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      vspace_cap;
     vptr_t     vptr;
@@ -788,8 +772,7 @@ void copyGlobalMappings(vspace_root_t *new_vspace)
     }
 }
 
-static BOOT_CODE cap_t
-create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, seL4_Word map_type)
+static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, seL4_Word map_type)
 {
     vm_page_size_t frame_size;
 
@@ -811,14 +794,12 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, seL
         );
 }
 
-BOOT_CODE cap_t
-create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
+BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 {
     return create_it_frame_cap(pptr, 0, asidInvalid, use_large, X86_MappingNone);
 }
 
-BOOT_CODE cap_t
-create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
+BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
 {
     cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large, X86_MappingVSpace);
     map_it_frame_cap(vspace_cap, cap);
@@ -829,8 +810,7 @@ create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t as
 
 
 
-exception_t
-performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot)
+exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot)
 {
     asid_map_t asid_map;
 #ifdef CONFIG_VTX
@@ -850,21 +830,18 @@ performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlo
     return EXCEPTION_NONE;
 }
 
-bool_t CONST
-isVTableRoot(cap_t cap)
+bool_t CONST isVTableRoot(cap_t cap)
 {
     return cap_get_capType(cap) == cap_pml4_cap;
 }
 
-bool_t CONST
-isValidNativeRoot(cap_t cap)
+bool_t CONST isValidNativeRoot(cap_t cap)
 {
     return isVTableRoot(cap) &&
            cap_pml4_cap_get_capPML4IsMapped(cap);
 }
 
-static pml4e_t CONST
-makeUserPML4E(paddr_t paddr, vm_attributes_t vm_attr)
+static pml4e_t CONST makeUserPML4E(paddr_t paddr, vm_attributes_t vm_attr)
 {
     return pml4e_new(
                0,
@@ -878,8 +855,7 @@ makeUserPML4E(paddr_t paddr, vm_attributes_t vm_attr)
            );
 }
 
-static pml4e_t CONST
-makeUserPML4EInvalid(void)
+static pml4e_t CONST makeUserPML4EInvalid(void)
 {
     return pml4e_new(
                0,                  /* xd               */
@@ -893,8 +869,7 @@ makeUserPML4EInvalid(void)
            );
 }
 
-static pdpte_t CONST
-makeUserPDPTEHugePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
+static pdpte_t CONST makeUserPDPTEHugePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
 {
     return pdpte_pdpte_1g_new(
                0,          /* xd               */
@@ -911,8 +886,7 @@ makeUserPDPTEHugePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rig
            );
 }
 
-static pdpte_t CONST
-makeUserPDPTEPageDirectory(paddr_t paddr, vm_attributes_t vm_attr)
+static pdpte_t CONST makeUserPDPTEPageDirectory(paddr_t paddr, vm_attributes_t vm_attr)
 {
     return pdpte_pdpte_pd_new(
                0,                      /* xd       */
@@ -926,8 +900,7 @@ makeUserPDPTEPageDirectory(paddr_t paddr, vm_attributes_t vm_attr)
            );
 }
 
-static pdpte_t CONST
-makeUserPDPTEInvalid(void)
+static pdpte_t CONST makeUserPDPTEInvalid(void)
 {
     return pdpte_pdpte_pd_new(
                0,          /* xd               */
@@ -941,8 +914,7 @@ makeUserPDPTEInvalid(void)
            );
 }
 
-pde_t CONST
-makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
+pde_t CONST makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
 {
     return pde_pde_large_new(
                0,                                              /* xd                   */
@@ -959,8 +931,7 @@ makeUserPDELargePage(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_righ
            );
 }
 
-pde_t CONST
-makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
+pde_t CONST makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
 {
 
     return  pde_pde_pt_new(
@@ -975,8 +946,7 @@ makeUserPDEPageTable(paddr_t paddr, vm_attributes_t vm_attr)
             );
 }
 
-pde_t CONST
-makeUserPDEInvalid(void)
+pde_t CONST makeUserPDEInvalid(void)
 {
     /* The bitfield only declares two kinds of PDE entries (page tables or large pages)
      * and an invalid entry should really be a third type, but we can simulate it by
@@ -993,8 +963,7 @@ makeUserPDEInvalid(void)
            );
 }
 
-pte_t CONST
-makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
+pte_t CONST makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
 {
     return pte_new(
                0,                                              /* xd                   */
@@ -1011,8 +980,7 @@ makeUserPTE(paddr_t paddr, vm_attributes_t vm_attr, vm_rights_t vm_rights)
            );
 }
 
-pte_t CONST
-makeUserPTEInvalid(void)
+pte_t CONST makeUserPTEInvalid(void)
 {
     return pte_new(
                0,                   /* xd                   */
@@ -1030,16 +998,14 @@ makeUserPTEInvalid(void)
 }
 
 
-static pml4e_t *
-lookupPML4Slot(vspace_root_t *pml4, vptr_t vptr)
+static pml4e_t *lookupPML4Slot(vspace_root_t *pml4, vptr_t vptr)
 {
     pml4e_t *pml4e = PML4E_PTR(pml4);
     word_t pml4Index = GET_PML4_INDEX(vptr);
     return pml4e + pml4Index;
 }
 
-static lookupPDPTSlot_ret_t
-lookupPDPTSlot(vspace_root_t *pml4, vptr_t vptr)
+static lookupPDPTSlot_ret_t lookupPDPTSlot(vspace_root_t *pml4, vptr_t vptr)
 {
     pml4e_t *pml4Slot = lookupPML4Slot(pml4, vptr);
     lookupPDPTSlot_ret_t ret;
@@ -1063,8 +1029,7 @@ lookupPDPTSlot(vspace_root_t *pml4, vptr_t vptr)
     }
 }
 
-lookupPDSlot_ret_t
-lookupPDSlot(vspace_root_t *pml4, vptr_t vptr)
+lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *pml4, vptr_t vptr)
 {
     lookupPDPTSlot_ret_t pdptSlot;
     lookupPDSlot_ret_t ret;
@@ -1096,8 +1061,7 @@ lookupPDSlot(vspace_root_t *pml4, vptr_t vptr)
     }
 }
 
-static void
-flushPD(vspace_root_t *vspace, word_t vptr, pde_t *pd, asid_t asid)
+static void flushPD(vspace_root_t *vspace, word_t vptr, pde_t *pd, asid_t asid)
 {
     /* clearing the entire PCID vs flushing the virtual addresses
      * one by one using invplg.
@@ -1107,22 +1071,19 @@ flushPD(vspace_root_t *vspace, word_t vptr, pde_t *pd, asid_t asid)
 
 }
 
-static void
-flushPDPT(vspace_root_t *vspace, word_t vptr, pdpte_t *pdpt, asid_t asid)
+static void flushPDPT(vspace_root_t *vspace, word_t vptr, pdpte_t *pdpt, asid_t asid)
 {
     /* similar here */
     invalidateASID(vspace, asid, SMP_TERNARY(tlb_bitmap_get(vspace), 0));
     return;
 }
 
-void
-hwASIDInvalidate(asid_t asid, vspace_root_t *vspace)
+void hwASIDInvalidate(asid_t asid, vspace_root_t *vspace)
 {
     invalidateASID(vspace, asid, SMP_TERNARY(tlb_bitmap_get(vspace), 0));
 }
 
-void
-unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
+void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPDPTSlot_ret_t    lu_ret;
@@ -1153,8 +1114,7 @@ unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 }
 
 
-static exception_t
-performX64PageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
+static exception_t performX64PageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
 
     if (cap_page_directory_cap_get_capPDIsMapped(cap)) {
@@ -1172,8 +1132,7 @@ performX64PageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX64PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
+static exception_t performX64PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *pdptSlot = pdpte;
@@ -1183,8 +1142,7 @@ performX64PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pd
 }
 
 
-static exception_t
-decodeX64PageDirectoryInvocation(
+static exception_t decodeX64PageDirectoryInvocation(
     word_t label,
     word_t length,
     cte_t *cte,
@@ -1323,8 +1281,7 @@ static void unmapPDPT(asid_t asid, vptr_t vaddr, pdpte_t *pdpt)
     *pml4Slot = makeUserPML4EInvalid();
 }
 
-static exception_t
-performX64PDPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
+static exception_t performX64PDPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     if (cap_pdpt_cap_get_capPDPTIsMapped(cap)) {
         pdpte_t *pdpt = PDPTE_PTR(cap_pdpt_cap_get_capPDPTBasePtr(cap));
@@ -1339,8 +1296,7 @@ performX64PDPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX64PDPTInvocationMap(cap_t cap, cte_t *ctSlot, pml4e_t pml4e, pml4e_t *pml4Slot, vspace_root_t *vspace)
+static exception_t performX64PDPTInvocationMap(cap_t cap, cte_t *ctSlot, pml4e_t pml4e, pml4e_t *pml4Slot, vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *pml4Slot = pml4e;
@@ -1350,8 +1306,7 @@ performX64PDPTInvocationMap(cap_t cap, cte_t *ctSlot, pml4e_t pml4e, pml4e_t *pm
     return EXCEPTION_NONE;
 }
 
-static exception_t
-decodeX64PDPTInvocation(
+static exception_t decodeX64PDPTInvocation(
     word_t  label,
     word_t length,
     cte_t   *cte,
@@ -1458,8 +1413,7 @@ decodeX64PDPTInvocation(
     return performX64PDPTInvocationMap(cap, cte, pml4e, pml4Slot, vspace);
 }
 
-exception_t
-decodeX86ModeMMUInvocation(
+exception_t decodeX86ModeMMUInvocation(
     word_t label,
     word_t length,
     cptr_t cptr,
@@ -1519,15 +1473,13 @@ static exception_t updatePDPTE(asid_t asid, pdpte_t pdpte, pdpte_t *pdptSlot, vs
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performX64ModeRemap(asid_t asid, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
+static exception_t performX64ModeRemap(asid_t asid, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
 {
     return updatePDPTE(asid, pdpte, pdptSlot, vspace);
 }
 
 
-static exception_t
-performX64ModeMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
+static exception_t performX64ModeMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     return updatePDPTE(cap_frame_cap_get_capFMappedASID(cap), pdpte, pdptSlot, vspace);
@@ -1540,9 +1492,8 @@ struct create_mapping_pdpte_return {
 };
 typedef struct create_mapping_pdpte_return create_mapping_pdpte_return_t;
 
-static create_mapping_pdpte_return_t
-createSafeMappingEntries_PDPTE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
-                               vspace_root_t *vspace)
+static create_mapping_pdpte_return_t createSafeMappingEntries_PDPTE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
+                                                                    vspace_root_t *vspace)
 {
     create_mapping_pdpte_return_t ret;
     lookupPDPTSlot_ret_t          lu_ret;
@@ -1571,8 +1522,7 @@ createSafeMappingEntries_PDPTE(paddr_t base, word_t vaddr, vm_rights_t vmRights,
     return ret;
 }
 
-exception_t
-decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+exception_t decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
 {
     if (config_set(CONFIG_HUGE_PAGE) && page_size == X64_HugePage) {
         create_mapping_pdpte_return_t map_ret;
@@ -1608,8 +1558,7 @@ typedef struct readWordFromVSpace_ret {
     word_t value;
 } readWordFromVSpace_ret_t;
 
-static readWordFromVSpace_ret_t
-readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
+static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
 {
     readWordFromVSpace_ret_t ret;
     lookupPTSlot_ret_t ptSlot;
@@ -1655,8 +1604,7 @@ readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
     return ret;
 }
 
-void
-Arch_userStackTrace(tcb_t *tptr)
+void Arch_userStackTrace(tcb_t *tptr)
 {
     cap_t threadRoot;
     vspace_root_t *vspace_root;

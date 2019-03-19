@@ -15,8 +15,7 @@
 #include <api/failures.h>
 #include <object/structures.h>
 
-static inline void
-handleReservedIRQ(irq_t irq)
+static inline void handleReservedIRQ(irq_t irq)
 {
 #ifdef CONFIG_IRQ_REPORTING
     printf("Received reserved IRQ: %d\n", (int)irq);

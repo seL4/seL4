@@ -63,8 +63,7 @@ BOOT_CODE static inline bool_t isFPUD32Supported(void)
 }
 
 /* Initialise the FP/SIMD for this machine. */
-BOOT_CODE bool_t
-fpsimd_init(void)
+BOOT_CODE bool_t fpsimd_init(void)
 {
     word_t cpacr;
 
@@ -89,8 +88,7 @@ fpsimd_init(void)
 }
 #endif /* CONFIG_HAVE_FPU */
 
-BOOT_CODE bool_t
-fpsimd_HWCapTest(void)
+BOOT_CODE bool_t fpsimd_HWCapTest(void)
 {
     word_t cpacr, fpsid;
 

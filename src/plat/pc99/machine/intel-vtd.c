@@ -267,8 +267,7 @@ void vtd_handle_fault(void)
     }
 }
 
-BOOT_CODE static void
-vtd_create_root_table(void)
+BOOT_CODE static void vtd_create_root_table(void)
 {
     x86KSvtdRootTable = (void *)alloc_region(VTD_RT_SIZE_BITS);
     memzero((void *)x86KSvtdRootTable, BIT(VTD_RT_SIZE_BITS));
@@ -277,8 +276,7 @@ vtd_create_root_table(void)
 /* This function is a simplistic duplication of some of the logic
  * in iospace.c
  */
-BOOT_CODE static void
-vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t addr)
+BOOT_CODE static void vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t addr)
 {
     int i;
     vtd_pte_t *iopt;
@@ -338,8 +336,7 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
     }
 }
 
-BOOT_CODE static void
-vtd_create_context_table(
+BOOT_CODE static void vtd_create_context_table(
     uint8_t   bus,
     uint32_t  max_num_iopt_levels,
     acpi_rmrr_list_t *rmrr_list
@@ -372,8 +369,7 @@ vtd_create_context_table(
     }
 }
 
-BOOT_CODE static bool_t
-vtd_enable(cpu_id_t cpu_id)
+BOOT_CODE static bool_t vtd_enable(cpu_id_t cpu_id)
 {
     drhu_id_t i;
     uint32_t status = 0;
@@ -438,8 +434,7 @@ vtd_enable(cpu_id_t cpu_id)
     return true;
 }
 
-BOOT_CODE bool_t
-vtd_init(
+BOOT_CODE bool_t vtd_init(
     cpu_id_t  cpu_id,
     uint32_t  num_drhu,
     acpi_rmrr_list_t *rmrr_list

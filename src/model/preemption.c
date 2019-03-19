@@ -17,8 +17,7 @@
 /*
  * Possibly preempt the current thread to allow an interrupt to be handled.
  */
-exception_t
-preemptionPoint(void)
+exception_t preemptionPoint(void)
 {
     /* Record that we have performed some work. */
     ksWorkUnitsCompleted++;

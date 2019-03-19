@@ -26,8 +26,7 @@
 
 ndks_boot_t ndks_boot BOOT_DATA;
 
-BOOT_CODE bool_t
-insert_region(region_t reg)
+BOOT_CODE bool_t insert_region(region_t reg)
 {
     word_t i;
 
@@ -44,14 +43,12 @@ insert_region(region_t reg)
     return false;
 }
 
-BOOT_CODE static inline word_t
-reg_size(region_t reg)
+BOOT_CODE static inline word_t reg_size(region_t reg)
 {
     return reg.end - reg.start;
 }
 
-BOOT_CODE pptr_t
-alloc_region(word_t size_bits)
+BOOT_CODE pptr_t alloc_region(word_t size_bits)
 {
     word_t i;
     word_t reg_index = 0; /* gcc cannot work out that this will not be used uninitialized */
@@ -117,8 +114,7 @@ alloc_region(word_t size_bits)
     return reg.start;
 }
 
-BOOT_CODE void
-write_slot(slot_ptr_t slot_ptr, cap_t cap)
+BOOT_CODE void write_slot(slot_ptr_t slot_ptr, cap_t cap)
 {
     slot_ptr->cap = cap;
 
@@ -165,8 +161,7 @@ create_root_cnode(void)
 }
 
 
-BOOT_CODE bool_t
-create_irq_cnode(void)
+BOOT_CODE bool_t create_irq_cnode(void)
 {
     pptr_t pptr;
     assert(BIT(IRQ_CNODE_BITS - seL4_SlotBits) > maxIRQ);
@@ -205,8 +200,7 @@ create_domain_cap(cap_t root_cnode_cap)
 }
 
 
-BOOT_CODE cap_t
-create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
+BOOT_CODE cap_t create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
 {
     cap_t cap;
     pptr_t pptr;
@@ -226,8 +220,7 @@ create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
     return cap;
 }
 
-BOOT_CODE void
-create_bi_frame_cap(
+BOOT_CODE void create_bi_frame_cap(
     cap_t      root_cnode_cap,
     cap_t      pd_cap,
     pptr_t     pptr,
@@ -241,8 +234,7 @@ create_bi_frame_cap(
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapBootInfoFrame), cap);
 }
 
-BOOT_CODE region_t
-allocate_extra_bi_region(word_t extra_size)
+BOOT_CODE region_t allocate_extra_bi_region(word_t extra_size)
 {
     /* determine power of 2 size of this region. avoid calling clzl on 0 though */
     if (extra_size == 0) {
@@ -266,8 +258,7 @@ allocate_extra_bi_region(word_t extra_size)
     };
 }
 
-BOOT_CODE pptr_t
-allocate_bi_frame(
+BOOT_CODE pptr_t allocate_bi_frame(
     node_id_t  node_id,
     word_t   num_nodes,
     vptr_t ipcbuf_vptr
@@ -300,8 +291,7 @@ allocate_bi_frame(
     return pptr;
 }
 
-BOOT_CODE bool_t
-provide_cap(cap_t root_cnode_cap, cap_t cap)
+BOOT_CODE bool_t provide_cap(cap_t root_cnode_cap, cap_t cap)
 {
     if (ndks_boot.slot_pos_cur >= ndks_boot.slot_pos_max) {
         printf("Kernel init failed: ran out of cap slots\n");
@@ -312,8 +302,7 @@ provide_cap(cap_t root_cnode_cap, cap_t cap)
     return true;
 }
 
-BOOT_CODE create_frames_of_region_ret_t
-create_frames_of_region(
+BOOT_CODE create_frames_of_region_ret_t create_frames_of_region(
     cap_t    root_cnode_cap,
     cap_t    pd_cap,
     region_t reg,
@@ -347,8 +336,7 @@ create_frames_of_region(
     };
 }
 
-BOOT_CODE cap_t
-create_it_asid_pool(cap_t root_cnode_cap)
+BOOT_CODE cap_t create_it_asid_pool(cap_t root_cnode_cap)
 {
     pptr_t ap_pptr;
     cap_t  ap_cap;
@@ -372,8 +360,7 @@ create_it_asid_pool(cap_t root_cnode_cap)
     return ap_cap;
 }
 
-BOOT_CODE bool_t
-create_idle_thread(void)
+BOOT_CODE bool_t create_idle_thread(void)
 {
     pptr_t pptr;
 
@@ -398,8 +385,7 @@ create_idle_thread(void)
     return true;
 }
 
-BOOT_CODE tcb_t *
-create_initial_thread(
+BOOT_CODE tcb_t *create_initial_thread(
     cap_t  root_cnode_cap,
     cap_t  it_pd_cap,
     vptr_t ui_v_entry,
@@ -478,8 +464,7 @@ create_initial_thread(
     return tcb;
 }
 
-BOOT_CODE void
-init_core_state(tcb_t *scheduler_action)
+BOOT_CODE void init_core_state(tcb_t *scheduler_action)
 {
 #ifdef CONFIG_HAVE_FPU
     NODE_STATE(ksActiveFPUState) = NULL;
@@ -497,8 +482,7 @@ init_core_state(tcb_t *scheduler_action)
     NODE_STATE(ksCurThread) = NODE_STATE(ksIdleThread);
 }
 
-BOOT_CODE static bool_t
-provide_untyped_cap(
+BOOT_CODE static bool_t provide_untyped_cap(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
     pptr_t     pptr,
@@ -523,8 +507,7 @@ provide_untyped_cap(
     return ret;
 }
 
-BOOT_CODE bool_t
-create_untypeds_for_region(
+BOOT_CODE bool_t create_untypeds_for_region(
     cap_t      root_cnode_cap,
     bool_t     device_memory,
     region_t   reg,
@@ -562,8 +545,7 @@ create_untypeds_for_region(
     return true;
 }
 
-BOOT_CODE bool_t
-create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg, seL4_SlotPos first_untyped_slot)
+BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg, seL4_SlotPos first_untyped_slot)
 {
     word_t     i;
     region_t   reg;
@@ -585,8 +567,7 @@ create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg, seL4_S
     return true;
 }
 
-BOOT_CODE void
-bi_finalise(void)
+BOOT_CODE void bi_finalise(void)
 {
     seL4_SlotPos slot_pos_start = ndks_boot.slot_pos_cur;
     seL4_SlotPos slot_pos_end = ndks_boot.slot_pos_max;

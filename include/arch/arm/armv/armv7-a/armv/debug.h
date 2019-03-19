@@ -22,8 +22,7 @@
 
 /** Read DBGDSCR from CP14.
  */
-static inline word_t
-readDscrCp(void)
+static inline word_t readDscrCp(void)
 {
     word_t v;
 
@@ -35,8 +34,7 @@ readDscrCp(void)
  * On ARMv7, the external view of the CP14 DBGDSCR register is preferred since
  * the internal view is fully read-only.
  */
-static inline void
-writeDscrCp(word_t val)
+static inline void writeDscrCp(word_t val)
 {
     MCR(DBGDSCR_ext, val);
 }
@@ -69,8 +67,7 @@ enum v7_breakpoint_type {
  *
  * Checks to see if the 8-byte byte-address-select high bits ignore writes.
  */
-static inline bool_t
-watchpoint8bSupported(void)
+static inline bool_t watchpoint8bSupported(void)
 {
     word_t wcrtmp;
 
@@ -105,8 +102,7 @@ watchpoint8bSupported(void)
  * Unfortunately, it's also gated behind a hardware pin signal, #DBGEN. If
  * #DBGEN is held low, monitor mode is unavailable.
  */
-BOOT_CODE static bool_t
-enableMonitorMode(void)
+BOOT_CODE static bool_t enableMonitorMode(void)
 {
     dbg_dscr_t dscr;
 
@@ -144,8 +140,7 @@ enableMonitorMode(void)
     return true;
 }
 
-static inline dbg_bcr_t
-Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
+static inline dbg_bcr_t Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
 {
     dbg_bcr_t bcr;
 
@@ -160,8 +155,7 @@ Arch_setupBcr(dbg_bcr_t in_val, bool_t is_match)
     return bcr;
 }
 
-static inline dbg_wcr_t
-Arch_setupWcr(dbg_wcr_t in_val)
+static inline dbg_wcr_t Arch_setupWcr(dbg_wcr_t in_val)
 {
     dbg_wcr_t wcr;
 
@@ -171,8 +165,7 @@ Arch_setupWcr(dbg_wcr_t in_val)
     return wcr;
 }
 
-static inline bool_t
-Arch_breakpointIsMismatch(dbg_bcr_t in_val)
+static inline bool_t Arch_breakpointIsMismatch(dbg_bcr_t in_val)
 {
     /* Detect if the register is set up for mismatch (single-step). */
     if (dbg_bcr_get_breakpointType(in_val) == DBGBCR_TYPE_UNLINKED_INSTRUCTION_MISMATCH) {

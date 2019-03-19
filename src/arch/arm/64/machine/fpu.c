@@ -18,8 +18,7 @@ bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
 
 #ifdef CONFIG_HAVE_FPU
 /* Initialise the FP/SIMD for this machine. */
-BOOT_CODE bool_t
-fpsimd_init(void)
+BOOT_CODE bool_t fpsimd_init(void)
 {
     /* Set the FPU to lazy switch mode */
     disableFpu();
@@ -31,8 +30,7 @@ fpsimd_init(void)
 }
 #endif /* CONFIG_HAVE_FPU */
 
-BOOT_CODE bool_t
-fpsimd_HWCapTest(void)
+BOOT_CODE bool_t fpsimd_HWCapTest(void)
 {
     word_t id_aa64pfr0;
 

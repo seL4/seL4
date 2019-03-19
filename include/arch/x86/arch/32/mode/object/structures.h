@@ -69,35 +69,30 @@ typedef struct asid_pool asid_pool_t;
 #define ASID_LOW(a)         (a & MASK(asidLowBits))
 #define ASID_HIGH(a)        ((a >> asidLowBits) & MASK(asidHighBits))
 
-static inline asid_t CONST
-cap_frame_cap_get_capFMappedASID(cap_t cap)
+static inline asid_t CONST cap_frame_cap_get_capFMappedASID(cap_t cap)
 {
     return
         (cap_frame_cap_get_capFMappedASIDHigh(cap) << asidLowBits) +
         cap_frame_cap_get_capFMappedASIDLow(cap);
 }
 
-static inline cap_t CONST
-cap_frame_cap_set_capFMappedASID(cap_t cap, word_t asid)
+static inline cap_t CONST cap_frame_cap_set_capFMappedASID(cap_t cap, word_t asid)
 {
     cap = cap_frame_cap_set_capFMappedASIDLow(cap, ASID_LOW(asid));
     return cap_frame_cap_set_capFMappedASIDHigh(cap, ASID_HIGH(asid));
 }
 
-static inline asid_t PURE
-cap_frame_cap_ptr_get_capFMappedASID(cap_t *cap)
+static inline asid_t PURE cap_frame_cap_ptr_get_capFMappedASID(cap_t *cap)
 {
     return cap_frame_cap_get_capFMappedASID(*cap);
 }
 
-static inline void
-cap_frame_cap_ptr_set_capFMappedASID(cap_t *cap, asid_t asid)
+static inline void cap_frame_cap_ptr_set_capFMappedASID(cap_t *cap, asid_t asid)
 {
     *cap = cap_frame_cap_set_capFMappedASID(*cap, asid);
 }
 
-static inline asid_t PURE
-cap_get_capMappedASID(cap_t cap)
+static inline asid_t PURE cap_get_capMappedASID(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -117,20 +112,17 @@ cap_get_capMappedASID(cap_t cap)
     }
 }
 
-static inline word_t CONST
-cap_get_modeCapSizeBits(cap_t cap)
+static inline word_t CONST cap_get_modeCapSizeBits(cap_t cap)
 {
     fail("Invalid mode cap type");
 }
 
-static inline bool_t CONST
-cap_get_modeCapIsPhysical(cap_t cap)
+static inline bool_t CONST cap_get_modeCapIsPhysical(cap_t cap)
 {
     fail("Invalid mode cap type");
 }
 
-static inline void *CONST
-cap_get_modeCapPtr(cap_t cap)
+static inline void *CONST cap_get_modeCapPtr(cap_t cap)
 {
     fail("Invalid mode cap type");
 }

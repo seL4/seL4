@@ -358,8 +358,7 @@ void invept(ept_pml4e_t *ept_pml4);
 /* Removes any IO port mappings that have been cached for the given VPID */
 void clearVPIDIOPortMappings(vpid_t vpid, uint16_t first, uint16_t last);
 
-static inline word_t
-vmread(word_t field)
+static inline word_t vmread(word_t field)
 {
     word_t value;
     asm volatile(
@@ -373,8 +372,7 @@ vmread(word_t field)
 
 #include <machine/io.h>
 
-static inline void
-vmwrite(word_t field, word_t value)
+static inline void vmwrite(word_t field, word_t value)
 {
     asm volatile(
         "vmwrite %0, %1"

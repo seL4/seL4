@@ -20,8 +20,7 @@
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
 /* Get current stack pointer */
-static inline void *
-getCurESP(void)
+static inline void *getCurESP(void)
 {
     word_t stack;
     void *result;
@@ -29,8 +28,7 @@ getCurESP(void)
     return result;
 }
 
-static inline CONST cpu_id_t
-getCurrentCPUIndex(void)
+static inline CONST cpu_id_t getCurrentCPUIndex(void)
 {
     cpu_id_t cpu_id;
     uint32_t esp = (uint32_t)getCurESP();
@@ -40,8 +38,7 @@ getCurrentCPUIndex(void)
     return cpu_id;
 }
 
-static inline BOOT_CODE void
-mode_init_tls(cpu_id_t cpu_index)
+static inline BOOT_CODE void mode_init_tls(cpu_id_t cpu_index)
 {
     /* Nothing to be done on ia32 */
 }

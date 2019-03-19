@@ -13,8 +13,7 @@
 
 #include <arch/object/interrupt.h>
 
-static exception_t
-Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, bool_t trigger)
+static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, bool_t trigger)
 {
 #ifdef HAVE_SET_TRIGGER
     setIRQTrigger(irq, trigger);
@@ -22,10 +21,9 @@ Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *controlSlot, bool_t 
     return invokeIRQControl(irq, handlerSlot, controlSlot);
 }
 
-exception_t
-Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
-                                cte_t *srcSlot, extra_caps_t excaps,
-                                word_t *buffer)
+exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
+                                            cte_t *srcSlot, extra_caps_t excaps,
+                                            word_t *buffer)
 {
     if (invLabel == ARMIRQIssueIRQHandlerTrigger) {
         if (length < 4 || excaps.excaprefs[0] == NULL) {

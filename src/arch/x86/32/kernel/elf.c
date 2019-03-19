@@ -15,8 +15,7 @@
 
 /* minimal ELF functionality for loading GRUB boot module */
 
-BOOT_CODE bool_t
-elf_checkFile(Elf32_Header_t *elfFile)
+BOOT_CODE bool_t elf_checkFile(Elf32_Header_t *elfFile)
 {
     return (
                elfFile->e_ident[0] == '\177' &&
@@ -27,8 +26,7 @@ elf_checkFile(Elf32_Header_t *elfFile)
            );
 }
 
-BOOT_CODE v_region_t
-elf_getMemoryBounds(Elf32_Header_t *elfFile)
+BOOT_CODE v_region_t elf_getMemoryBounds(Elf32_Header_t *elfFile)
 {
     Elf32_Phdr_t *phdr = (Elf32_Phdr_t *)((paddr_t)elfFile + elfFile->e_phoff);
     v_region_t elf_reg;
@@ -56,8 +54,7 @@ elf_getMemoryBounds(Elf32_Header_t *elfFile)
     return elf_reg;
 }
 
-BOOT_CODE void
-elf_load(Elf32_Header_t *elfFile, seL4_Word offset)
+BOOT_CODE void elf_load(Elf32_Header_t *elfFile, seL4_Word offset)
 {
     Elf32_Phdr_t *phdr = (Elf32_Phdr_t *)((paddr_t)elfFile + elfFile->e_phoff);
     paddr_t       src;

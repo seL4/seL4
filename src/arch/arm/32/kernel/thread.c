@@ -16,8 +16,7 @@
 #include <arch/kernel/thread.h>
 #include <linker.h>
 
-void
-Arch_switchToThread(tcb_t *tcb)
+void Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
 #if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
@@ -27,15 +26,13 @@ Arch_switchToThread(tcb_t *tcb)
     clearExMonitor();
 }
 
-BOOT_CODE void
-Arch_configureIdleThread(tcb_t *tcb)
+BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, CPSR, CPSR_IDLETHREAD);
     setRegister(tcb, LR_svc, (word_t)idleThreadStart);
 }
 
-void
-Arch_switchToIdleThread(void)
+void Arch_switchToIdleThread(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         vcpu_switch(NULL);
@@ -50,8 +47,7 @@ Arch_switchToIdleThread(void)
 #endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 }
 
-void
-Arch_activateIdleThread(tcb_t *tcb)
+void Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }

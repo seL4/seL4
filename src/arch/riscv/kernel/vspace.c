@@ -48,8 +48,7 @@ typedef struct resolve_ret resolve_ret_t;
 
 static exception_t performPageGetAddress(void *vbase_ptr);
 
-static word_t CONST
-RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
+static word_t CONST RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
 {
     return vm_rights != VMReadOnly;
 }
@@ -59,8 +58,7 @@ static word_t RISCVGetUserFromVMRights(vm_rights_t vm_rights)
     return vm_rights != VMKernelOnly;
 }
 
-static inline word_t CONST
-RISCVGetReadFromVMRights(vm_rights_t vm_rights)
+static inline word_t CONST RISCVGetReadFromVMRights(vm_rights_t vm_rights)
 {
     return vm_rights != VMWriteOnly;
 }
@@ -99,8 +97,7 @@ static pte_t pte_next(word_t phys_addr, bool_t is_leaf)
 
 /* ==================== BOOT CODE STARTS HERE ==================== */
 
-BOOT_CODE VISIBLE void
-map_kernel_window(void)
+BOOT_CODE VISIBLE void map_kernel_window(void)
 {
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
     assert(CONFIG_PT_LEVELS > 1 && CONFIG_PT_LEVELS <= 4);
@@ -143,8 +140,7 @@ map_kernel_window(void)
     assert(pptr == UINTPTR_MAX - RISCV_GET_LVL_PGSIZE(1) + 1);
 }
 
-BOOT_CODE void
-map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
+BOOT_CODE void map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 {
     lookupPTSlot_ret_t pt_ret;
     pte_t *targetSlot;
@@ -174,8 +170,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
     sfence();
 }
 
-BOOT_CODE void
-map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
+BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
 {
     pte_t *lvl1pt   = PTE_PTR(pptr_of_cap(vspace_cap));
     pte_t *frame_pptr   = PTE_PTR(pptr_of_cap(frame_cap));
@@ -202,8 +197,7 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
     sfence();
 }
 
-BOOT_CODE cap_t
-create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
+BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 {
     cap_t cap = cap_frame_cap_new(
                     asidInvalid,                     /* capFMappedASID       */
@@ -218,8 +212,7 @@ create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
 }
 
 /* Create a page table for the initial thread */
-static BOOT_CODE cap_t
-create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
+static BOOT_CODE cap_t create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_table_cap_new(
@@ -235,8 +228,7 @@ create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 
 /* Create an address space for the initial thread.
  * This includes page directory and page tables */
-BOOT_CODE cap_t
-create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
+BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      lvl1pt_cap;
     vptr_t     pt_vptr;
@@ -295,14 +287,12 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     return lvl1pt_cap;
 }
 
-BOOT_CODE void
-activate_kernel_vspace(void)
+BOOT_CODE void activate_kernel_vspace(void)
 {
     setVSpaceRoot(kpptr_to_paddr(&kernel_root_pageTable), 0);
 }
 
-BOOT_CODE void
-write_it_asid_pool(cap_t it_ap_cap, cap_t it_lvl1pt_cap)
+BOOT_CODE void write_it_asid_pool(cap_t it_ap_cap, cap_t it_lvl1pt_cap)
 {
     asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = PTE_PTR(pptr_of_cap(it_lvl1pt_cap));
@@ -340,8 +330,7 @@ static findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
     return ret;
 }
 
-void
-copyGlobalMappings(pte_t *newLvl1pt)
+void copyGlobalMappings(pte_t *newLvl1pt)
 {
     unsigned int i;
     pte_t *global_kernel_vspace = kernel_root_pageTable;
@@ -351,8 +340,7 @@ copyGlobalMappings(pte_t *newLvl1pt)
     }
 }
 
-word_t *PURE
-lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
+word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
     word_t w_bufferPtr;
     cap_t bufferCap;
@@ -387,8 +375,7 @@ static inline pte_t *getPPtrFromHWPTE(pte_t *pte)
     return PTE_PTR(ptrFromPAddr(pte_ptr_get_ppn(pte) << seL4_PageTableBits));
 }
 
-lookupPTSlot_ret_t
-lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
+lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
 {
     lookupPTSlot_ret_t ret;
     /* this is how many bits we potentially have left to decode. Initially we have the
@@ -411,8 +398,7 @@ lookupPTSlot(pte_t *lvl1pt, vptr_t vptr)
     return ret;
 }
 
-exception_t
-handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
+exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
     uint64_t addr;
 
@@ -496,8 +482,7 @@ void deleteASID(asid_t asid, pte_t *vspace)
     }
 }
 
-void
-unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
+void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
 {
     findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE)) {
@@ -549,8 +534,7 @@ static pte_t pte_pte_invalid_new(void)
     };
 }
 
-void
-unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
+void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPTSlot_ret_t  lu_ret;
@@ -573,8 +557,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
     sfence();
 }
 
-void
-setVMRoot(tcb_t *tcb)
+void setVMRoot(tcb_t *tcb)
 {
     cap_t threadRoot;
     asid_t asid;
@@ -600,15 +583,13 @@ setVMRoot(tcb_t *tcb)
     setVSpaceRoot(addrFromPPtr(lvl1pt), asid);
 }
 
-bool_t CONST
-isValidVTableRoot(cap_t cap)
+bool_t CONST isValidVTableRoot(cap_t cap)
 {
     return (cap_get_capType(cap) == cap_page_table_cap &&
             cap_page_table_cap_get_capPTMappedASID(cap) != asidInvalid);
 }
 
-exception_t
-checkValidIPCBuffer(vptr_t vptr, cap_t cap)
+exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
 {
     if (unlikely(cap_get_capType(cap) != cap_frame_cap)) {
         userError("Requested IPC Buffer is not a frame cap.");
@@ -632,8 +613,7 @@ checkValidIPCBuffer(vptr_t vptr, cap_t cap)
     return EXCEPTION_NONE;
 }
 
-vm_rights_t CONST
-maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
+vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
     if (vm_rights == VMReadOnly &&
             seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
@@ -661,8 +641,7 @@ maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 
 /* The rest of the file implements the RISCV object invocations */
 
-static pte_t CONST
-makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
+static pte_t CONST makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
 {
     return pte_new(
                paddr >> seL4_PageBits,
@@ -678,16 +657,14 @@ makeUserPTE(paddr_t paddr, bool_t executable, vm_rights_t vm_rights)
            );
 }
 
-static inline bool_t CONST
-checkVPAlignment(vm_page_size_t sz, word_t w)
+static inline bool_t CONST checkVPAlignment(vm_page_size_t sz, word_t w)
 {
     return (w & MASK(pageBitsForSize(sz))) == 0;
 }
 
-static exception_t
-decodeRISCVPageTableInvocation(word_t label, unsigned int length,
-                               cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                               word_t *buffer)
+static exception_t decodeRISCVPageTableInvocation(word_t label, unsigned int length,
+                                                  cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+                                                  word_t *buffer)
 {
     if (label == RISCVPageTableUnmap) {
         if (unlikely(!isFinalCapability(cte))) {
@@ -792,10 +769,9 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     return performPageTableInvocationMap(cap, cte, pte, ptSlot);
 }
 
-static exception_t
-decodeRISCVFrameInvocation(word_t label, unsigned int length,
-                           cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                           word_t *buffer)
+static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
+                                              cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+                                              word_t *buffer)
 {
     switch (label) {
     case RISCVPageMap: {
@@ -986,10 +962,9 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
 }
 
-exception_t
-decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
-                         cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                         word_t *buffer)
+exception_t decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
+                                     cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+                                     word_t *buffer)
 {
     switch (cap_get_capType(cap)) {
 
@@ -1136,9 +1111,8 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
     }
 }
 
-exception_t
-performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
-                              pte_t pte, pte_t *ptSlot)
+exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
+                                          pte_t pte, pte_t *ptSlot)
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
@@ -1147,8 +1121,7 @@ performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
     return EXCEPTION_NONE;
 }
 
-exception_t
-performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
+exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
     if (cap_page_table_cap_get_capPTIsMapped(cap)) {
         pte_t *pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
@@ -1164,8 +1137,7 @@ performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t
-performPageGetAddress(void *vbase_ptr)
+static exception_t performPageGetAddress(void *vbase_ptr)
 {
     paddr_t capFBasePtr;
 
@@ -1194,14 +1166,12 @@ exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
     return updatePTE(pte, base);
 }
 
-exception_t
-performPageInvocationRemapPTE(pte_t pte, pte_t *base)
+exception_t performPageInvocationRemapPTE(pte_t pte, pte_t *base)
 {
     return updatePTE(pte, base);
 }
 
-exception_t
-performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
+exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 {
 
     if (cap_frame_cap_get_capFMappedASID(cap) != asidInvalid) {
@@ -1217,8 +1187,7 @@ performPageInvocationUnmap(cap_t cap, cte_t *ctSlot)
 }
 
 #ifdef CONFIG_PRINTING
-void
-Arch_userStackTrace(tcb_t *tptr)
+void Arch_userStackTrace(tcb_t *tptr)
 {
     cap_t threadRoot = TCB_PTR_CTE_PTR(tptr, tcbVTable)->cap;
     if (!isValidVTableRoot(threadRoot)) {

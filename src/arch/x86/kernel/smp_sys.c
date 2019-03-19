@@ -23,8 +23,7 @@ BOOT_DATA VISIBLE
 volatile word_t smp_aps_index = 1;
 
 #ifdef CONFIG_USE_LOGICAL_IDS
-BOOT_CODE static void
-update_logical_id_mappings(void)
+BOOT_CODE static void update_logical_id_mappings(void)
 {
     cpu_mapping.index_to_logical_id[getCurrentCPUIndex()] = apic_get_logical_id();
 
@@ -39,8 +38,7 @@ update_logical_id_mappings(void)
 }
 #endif /* CONFIG_USE_LOGICAL_IDS */
 
-BOOT_CODE static void
-start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
+BOOT_CODE static void start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
 {
     /* memory fence needed before starting the other CPU */
     x86_mfence();
@@ -50,8 +48,7 @@ start_cpu(cpu_id_t cpu_id, paddr_t boot_fun_paddr)
     apic_send_startup_ipi(cpu_id, boot_fun_paddr);
 }
 
-BOOT_CODE void
-start_boot_aps(void)
+BOOT_CODE void start_boot_aps(void)
 {
     /* update cpu mapping for BSP, cpus[0] is always assumed to be BSP */
     cpu_mapping.index_to_cpu_id[getCurrentCPUIndex()] = boot_state.cpus[0];
@@ -77,8 +74,7 @@ start_boot_aps(void)
     }
 }
 
-BOOT_CODE bool_t
-copy_boot_code_aps(uint32_t mem_lower)
+BOOT_CODE bool_t copy_boot_code_aps(uint32_t mem_lower)
 {
     assert(boot_cpu_end - boot_cpu_start < 0x400);
 
@@ -104,8 +100,7 @@ copy_boot_code_aps(uint32_t mem_lower)
     return true;
 }
 
-static BOOT_CODE bool_t
-try_boot_node(void)
+static BOOT_CODE bool_t try_boot_node(void)
 {
     setCurrentVSpaceRoot(kpptr_to_paddr(X86_KERNEL_VSPACE_ROOT), 0);
     /* Sync up the compilers view of the world here to force the PD to actually
@@ -126,8 +121,7 @@ try_boot_node(void)
 /* This is the entry function for APs. However, it is not a BOOT_CODE as
  * there is a race between exiting this function and root task running on
  * node #0 to possibly reallocate this memory */
-VISIBLE void
-boot_node(void)
+VISIBLE void boot_node(void)
 {
     bool_t result;
 

@@ -144,8 +144,7 @@ typedef word_t vm_rights_t;
 
 #include <mode/object/structures.h>
 
-static inline word_t CONST
-cap_get_archCapSizeBits(cap_t cap)
+static inline word_t CONST cap_get_archCapSizeBits(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -196,8 +195,7 @@ cap_get_archCapSizeBits(cap_t cap)
     }
 }
 
-static inline bool_t CONST
-cap_get_archCapIsPhysical(cap_t cap)
+static inline bool_t CONST cap_get_archCapIsPhysical(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -250,8 +248,7 @@ cap_get_archCapIsPhysical(cap_t cap)
     }
 }
 
-static inline void *CONST
-cap_get_archCapPtr(cap_t cap)
+static inline void *CONST cap_get_archCapPtr(cap_t cap)
 {
     cap_tag_t ctag;
 
@@ -304,8 +301,7 @@ cap_get_archCapPtr(cap_t cap)
     }
 }
 
-static inline bool_t CONST
-Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
+static inline bool_t CONST Arch_isCapRevocable(cap_t derivedCap, cap_t srcCap)
 {
     switch (cap_get_capType(derivedCap)) {
     case cap_io_port_cap:

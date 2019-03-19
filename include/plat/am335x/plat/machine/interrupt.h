@@ -66,8 +66,7 @@ volatile struct INTC_map {
 } *intc = (volatile void *)INTC_PPTR;
 
 
-static inline interrupt_t
-getActiveIRQ(void)
+static inline interrupt_t getActiveIRQ(void)
 {
     uint32_t intcps_sir_irq = intc->intcps_sir_irq;
     interrupt_t irq = (interrupt_t)(intcps_sir_irq & 0x7f);
@@ -82,15 +81,13 @@ getActiveIRQ(void)
 }
 
 /* Check for pending IRQ */
-static inline bool_t
-isIRQPending(void)
+static inline bool_t isIRQPending(void)
 {
     return getActiveIRQ() != irqInvalid;
 }
 
 /* Enable or disable irq according to the 'disable' flag. */
-static inline void
-maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, interrupt_t irq)
 {
     if (likely(irq < maxIRQ)) {
         if (disable) {
@@ -101,8 +98,7 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-static inline void
-ackInterrupt(irq_t irq)
+static inline void ackInterrupt(irq_t irq)
 {
     /*
      * am335x ref man, sec 6.2.2 only requires a DSB after NEWIRQAGR.
@@ -115,8 +111,7 @@ ackInterrupt(irq_t irq)
     dsb();
 }
 
-static inline void
-handleSpuriousIRQ(void)
+static inline void handleSpuriousIRQ(void)
 {
     /* Reset and re-enable IRQs. */
     intc->intcps_control = INTCPS_CONTROL_NEWIRQAGR;

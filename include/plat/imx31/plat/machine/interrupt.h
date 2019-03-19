@@ -49,8 +49,7 @@ extern interrupt_t active_irq;
 
 /* Get the active IRQ number from the AVIC.  Returns 0xff if
  * there isn't one. Note this is also known as irqInvalid */
-static inline interrupt_t
-getActiveIRQ(void)
+static inline interrupt_t getActiveIRQ(void)
 {
     if (active_irq == irqInvalid) {
         /* Read the IRQ number from the IRQ controller.
@@ -67,15 +66,13 @@ getActiveIRQ(void)
 }
 
 /* Check for pending IRQ */
-static inline bool_t
-isIRQPending(void)
+static inline bool_t isIRQPending(void)
 {
     return getActiveIRQ() != irqInvalid;
 }
 
 /* Enable or disable irq according to the 'disable' flag. */
-static inline void
-maskInterrupt(bool_t disable, interrupt_t irq)
+static inline void maskInterrupt(bool_t disable, interrupt_t irq)
 {
     if (disable) {
         avic->intdisnum = irq;
@@ -84,8 +81,7 @@ maskInterrupt(bool_t disable, interrupt_t irq)
     }
 }
 
-static inline void
-ackInterrupt(irq_t irq)
+static inline void ackInterrupt(irq_t irq)
 {
     /* The interrupt was acked when the IRQ number was read from
      * the IRQ controller in getActiveIRQ. Here we reset the
@@ -95,8 +91,7 @@ ackInterrupt(irq_t irq)
     active_irq = irqInvalid;
 }
 
-static inline void
-handleSpuriousIRQ(void)
+static inline void handleSpuriousIRQ(void)
 {
     /* do nothing */
 }

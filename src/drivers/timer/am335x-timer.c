@@ -37,8 +37,7 @@ timer_t *timer = (timer_t *) TIMER_PPTR;
 #define WDT_REG_WSPR 0x48
 #define WDT_WWPS_PEND_WSPR BIT(4)
 
-static BOOT_CODE void
-disableWatchdog(void)
+static BOOT_CODE void disableWatchdog(void)
 {
     uint32_t wdt = WDT1_PPTR;
 
@@ -57,8 +56,7 @@ disableWatchdog(void)
  * Enable DMTIMER clocks, otherwise their registers wont be accessible.
  * This could be moved out of kernel.
  */
-static BOOT_CODE void
-enableTimers(void)
+static BOOT_CODE void enableTimers(void)
 {
     uint32_t cmper = CMPER_PPTR;
 
@@ -77,8 +75,7 @@ enableTimers(void)
 }
 
 /* Configure dmtimer0 as kernel preemption timer */
-BOOT_CODE void
-initTimer(void)
+BOOT_CODE void initTimer(void)
 {
     int timeout;
 

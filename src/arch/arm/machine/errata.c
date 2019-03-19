@@ -28,8 +28,7 @@ void arm_errata(void);
  * interrupts to *not* be enabled, but hit-under-miss to be disabled. We
  * only need to do this for a particular revision of the ARM1136.
  */
-BOOT_CODE static void
-errata_arm1136(void)
+BOOT_CODE static void errata_arm1136(void)
 {
     /* See if we are affected by the errata. */
     if ((getProcessorID() & ~0xf) == ARM1136_R0PX) {

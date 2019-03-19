@@ -95,8 +95,7 @@ void VISIBLE NORETURN restore_user_context(void)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN
-c_handle_interrupt(void)
+void VISIBLE NORETURN c_handle_interrupt(void)
 {
     NODE_LOCK_IRQ;
 
@@ -108,8 +107,7 @@ c_handle_interrupt(void)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN
-c_handle_exception(void)
+void VISIBLE NORETURN c_handle_exception(void)
 {
     NODE_LOCK_SYS;
 
@@ -134,8 +132,7 @@ c_handle_exception(void)
     UNREACHABLE();
 }
 
-void NORETURN
-slowpath(syscall_t syscall)
+void NORETURN slowpath(syscall_t syscall)
 {
     /* check for undefined syscall */
     if (unlikely(syscall < SYSCALL_MIN || syscall > SYSCALL_MAX)) {
@@ -148,8 +145,7 @@ slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN
-c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3, word_t unused4, word_t unused5, syscall_t syscall)
+void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3, word_t unused4, word_t unused5, syscall_t syscall)
 {
     NODE_LOCK_SYS;
 

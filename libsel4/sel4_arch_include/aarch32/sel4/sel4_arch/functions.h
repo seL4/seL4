@@ -17,8 +17,7 @@
 #include <sel4/constants.h>
 #include <sel4/sel4_arch/constants.h>
 
-LIBSEL4_INLINE_FUNC seL4_IPCBuffer *
-seL4_GetIPCBuffer(void)
+LIBSEL4_INLINE_FUNC seL4_IPCBuffer *seL4_GetIPCBuffer(void)
 {
 #if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
     return *(seL4_IPCBuffer **)seL4_GlobalsFrame;

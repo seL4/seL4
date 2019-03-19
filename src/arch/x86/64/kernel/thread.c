@@ -17,8 +17,7 @@
 #include <arch/kernel/thread.h>
 #include <linker.h>
 
-void
-Arch_switchToThread(tcb_t *tcb)
+void Arch_switchToThread(tcb_t *tcb)
 {
     /* set PD */
     setVMRoot(tcb);
@@ -37,8 +36,7 @@ Arch_switchToThread(tcb_t *tcb)
     }
 }
 
-BOOT_CODE void
-Arch_configureIdleThread(tcb_t *tcb)
+BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, FLAGS, FLAGS_USER_DEFAULT);
     setRegister(tcb, NextIP, (uint64_t)idleThreadStart);
@@ -52,8 +50,7 @@ Arch_configureIdleThread(tcb_t *tcb)
     setRegister(tcb, RSP, 0);
 }
 
-void
-Arch_switchToIdleThread(void)
+void Arch_switchToIdleThread(void)
 {
     tcb_t *tcb = NODE_STATE(ksIdleThread);
     /* Force the idle thread to run on kernel page table */
@@ -66,14 +63,12 @@ Arch_switchToIdleThread(void)
 #endif
 }
 
-void
-Arch_activateIdleThread(tcb_t *tcb)
+void Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }
 
-void
-Mode_postModifyRegisters(tcb_t *tptr)
+void Mode_postModifyRegisters(tcb_t *tptr)
 {
     /* Setting Error to 0 will force a return by the interrupt path, which
      * does a full restore. Unless we're the current thread, in which case

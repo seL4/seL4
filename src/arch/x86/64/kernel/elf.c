@@ -13,8 +13,7 @@
 #include <arch/kernel/elf.h>
 #include <linker.h>
 
-BOOT_CODE bool_t
-elf_checkFile(Elf64_Header_t *elf)
+BOOT_CODE bool_t elf_checkFile(Elf64_Header_t *elf)
 {
     return (
                elf->e_ident[0] == '\177' &&
@@ -26,8 +25,7 @@ elf_checkFile(Elf64_Header_t *elf)
 }
 
 
-BOOT_CODE v_region_t
-elf_getMemoryBounds(Elf64_Header_t *elf)
+BOOT_CODE v_region_t elf_getMemoryBounds(Elf64_Header_t *elf)
 {
     v_region_t  elf_reg;
     vptr_t      sect_start;
@@ -54,8 +52,7 @@ elf_getMemoryBounds(Elf64_Header_t *elf)
     return elf_reg;
 }
 
-BOOT_CODE void
-elf_load(Elf64_Header_t *elf, seL4_Word offset)
+BOOT_CODE void elf_load(Elf64_Header_t *elf, seL4_Word offset)
 {
     paddr_t     src;
     paddr_t     dst;

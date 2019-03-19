@@ -18,8 +18,7 @@
 #define PIC2_BASE 0xa0
 
 /* Program PIC (i8259) to remap IRQs 0-15 to interrupt vectors starting at 'interrupt' */
-BOOT_CODE void
-pic_remap_irqs(interrupt_t interrupt)
+BOOT_CODE void pic_remap_irqs(interrupt_t interrupt)
 {
     out8(PIC1_BASE, 0x11);
     out8(PIC2_BASE, 0x11);

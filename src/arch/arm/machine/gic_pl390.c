@@ -49,8 +49,7 @@ uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
  * for PPI are read only and return only the current processor as the target.
  * If this doesn't lead to a valid ID, we emit a warning and default to core 0.
  */
-BOOT_CODE static uint8_t
-infer_cpu_gic_id(int nirqs)
+BOOT_CODE static uint8_t infer_cpu_gic_id(int nirqs)
 {
     word_t i;
     uint32_t target = 0;
@@ -69,8 +68,7 @@ infer_cpu_gic_id(int nirqs)
     return target & 0xff;
 }
 
-BOOT_CODE static void
-dist_init(void)
+BOOT_CODE static void dist_init(void)
 {
     word_t i;
     int nirqs = 32 * ((gic_dist->ic_type & 0x1f) + 1);
@@ -118,8 +116,7 @@ dist_init(void)
     gic_dist->enable = 1;
 }
 
-BOOT_CODE static void
-cpu_iface_init(void)
+BOOT_CODE static void cpu_iface_init(void)
 {
     uint32_t i;
 
@@ -174,8 +171,7 @@ void setIRQTrigger(irq_t irq, bool_t trigger)
     }
 }
 
-BOOT_CODE void
-initIRQController(void)
+BOOT_CODE void initIRQController(void)
 {
     dist_init();
 }

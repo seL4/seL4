@@ -65,8 +65,7 @@ static inline word_t readCacheSize(int level, bool_t instruction)
 #define NSETS(s)    ((((s) >> 13) & MASK(15)) + 1)
 
 
-void
-clean_D_PoU(void)
+void clean_D_PoU(void)
 {
     int clid = readCLID();
     int lou = LOUU(clid);
@@ -94,8 +93,7 @@ clean_D_PoU(void)
 }
 
 
-void
-cleanInvalidate_D_PoC(void)
+void cleanInvalidate_D_PoC(void)
 {
     int clid = readCLID();
     int loc = LOC(clid);

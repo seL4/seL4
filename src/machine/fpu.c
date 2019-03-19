@@ -50,8 +50,7 @@ void switchFpuOwner(user_fpu_state_t *new_owner, word_t cpu)
  * This CPU exception is thrown when userspace attempts to use the FPU while
  * it is disabled. We need to save the current state of the FPU, and hand
  * it over. */
-exception_t
-handleFPUFault(void)
+exception_t handleFPUFault(void)
 {
     /* If we have already given the FPU to the user, we should not reach here.
      * This should only be able to occur on CPUs without an FPU at all, which

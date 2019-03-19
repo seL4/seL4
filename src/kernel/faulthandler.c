@@ -15,8 +15,7 @@
 #include <machine/io.h>
 #include <arch/machine.h>
 
-void
-handleFault(tcb_t *tptr)
+void handleFault(tcb_t *tptr)
 {
     exception_t status;
     seL4_Fault_t fault = current_fault;
@@ -27,8 +26,7 @@ handleFault(tcb_t *tptr)
     }
 }
 
-exception_t
-sendFaultIPC(tcb_t *tptr)
+exception_t sendFaultIPC(tcb_t *tptr)
 {
     cptr_t handlerCPtr;
     cap_t  handlerCap;
@@ -68,8 +66,7 @@ sendFaultIPC(tcb_t *tptr)
 }
 
 #ifdef CONFIG_PRINTING
-static void
-print_fault(seL4_Fault_t f)
+static void print_fault(seL4_Fault_t f)
 {
     switch (seL4_Fault_get_seL4_FaultType(f)) {
     case seL4_Fault_NullFault:
@@ -103,8 +100,7 @@ print_fault(seL4_Fault_t f)
 #endif
 
 /* The second fault, ex2, is stored in the global current_fault */
-void
-handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1)
+void handleDoubleFault(tcb_t *tptr, seL4_Fault_t ex1)
 {
 #ifdef CONFIG_PRINTING
     seL4_Fault_t ex2 = current_fault;

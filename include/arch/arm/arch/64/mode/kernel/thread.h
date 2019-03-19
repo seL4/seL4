@@ -11,8 +11,7 @@
 #ifndef __MODE_KERNEL_THREAD_H
 #define __MODE_KERNEL_THREAD_H
 
-static inline word_t CONST
-sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
+static inline word_t CONST sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
 {
     if (reg == SPSR_EL1) {
         if (archInfo) {
@@ -31,8 +30,7 @@ sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
     }
 }
 
-static inline bool_t CONST
-Arch_getSanitiseRegisterInfo(tcb_t *thread)
+static inline bool_t CONST Arch_getSanitiseRegisterInfo(tcb_t *thread)
 {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
     return (thread->tcbArch.tcbVCPU != NULL);

@@ -25,8 +25,7 @@
 #define UART_REG(X) ((volatile uint32_t *)(UART_PPTR + (X)))
 
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
-void
-putDebugChar(unsigned char c)
+void putDebugChar(unsigned char c)
 {
     while ((*UART_REG(USR) & USR_TXEMP) == 0);
     /* Tell the peripheral how many characters to send */
@@ -37,8 +36,7 @@ putDebugChar(unsigned char c)
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
-unsigned char
-getDebugChar(void)
+unsigned char getDebugChar(void)
 {
     while ((*UART_REG(USR) & USR_RXRDY) == 0);
 

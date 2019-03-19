@@ -38,8 +38,7 @@ BOOT_CODE bool_t platAddDevices(void)
 
 #define TSC_FREQ_RETRIES 10
 
-BOOT_CODE static inline uint32_t
-measure_tsc_khz(void)
+BOOT_CODE static inline uint32_t measure_tsc_khz(void)
 {
     /* The frequency is repeatedly measured until the number of TSC
      * ticks in the pit wraparound interval (~50ms) fits in 32 bits.
@@ -78,8 +77,7 @@ measure_tsc_khz(void)
     return 0;
 }
 
-BOOT_CODE uint32_t
-tsc_init(void)
+BOOT_CODE uint32_t tsc_init(void)
 {
 
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();

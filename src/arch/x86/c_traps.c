@@ -21,8 +21,7 @@
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
 
-void VISIBLE
-c_nested_interrupt(int irq)
+void VISIBLE c_nested_interrupt(int irq)
 {
     /* This is not a real entry point, so we do not grab locks or
      * run c_entry/exit_hooks, since this occurs only if we're already
@@ -31,8 +30,7 @@ c_nested_interrupt(int irq)
     ARCH_NODE_STATE(x86KSPendingInterrupt) = irq;
 }
 
-void VISIBLE NORETURN
-c_handle_interrupt(int irq, int syscall)
+void VISIBLE NORETURN c_handle_interrupt(int irq, int syscall)
 {
     /* need to run this first as the NODE_LOCK code might end up as a function call
      * with a return, and we need to make sure returns are not exploitable yet
@@ -106,8 +104,7 @@ c_handle_interrupt(int irq, int syscall)
     UNREACHABLE();
 }
 
-void NORETURN
-slowpath(syscall_t syscall)
+void NORETURN slowpath(syscall_t syscall)
 {
 
 #ifdef CONFIG_VTX
@@ -144,8 +141,7 @@ slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN
-c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
+void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, syscall_t syscall)
 {
     /* need to run this first as the NODE_LOCK code might end up as a function call
      * with a return, and we need to make sure returns are not exploitable yet */

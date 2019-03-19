@@ -59,15 +59,13 @@ typedef struct clh_lock {
 extern clh_lock_t big_kernel_lock;
 BOOT_CODE void clh_lock_init(void);
 
-static inline bool_t FORCE_INLINE
-clh_is_ipi_pending(word_t cpu)
+static inline bool_t FORCE_INLINE clh_is_ipi_pending(word_t cpu)
 {
     return big_kernel_lock.node_owners[cpu].ipi == 1;
 }
 
-static inline void *
-sel4_atomic_exchange(void *ptr, bool_t
-                     irqPath, word_t cpu, int memorder)
+static inline void *sel4_atomic_exchange(void *ptr, bool_t
+                                         irqPath, word_t cpu, int memorder)
 {
     clh_qnode_t *prev;
 
@@ -87,8 +85,7 @@ sel4_atomic_exchange(void *ptr, bool_t
     return prev;
 }
 
-static inline void FORCE_INLINE
-clh_lock_acquire(word_t cpu, bool_t irqPath)
+static inline void FORCE_INLINE clh_lock_acquire(word_t cpu, bool_t irqPath)
 {
     clh_qnode_t *prev;
     big_kernel_lock.node_owners[cpu].node->value = CLHState_Pending;
@@ -118,8 +115,7 @@ clh_lock_acquire(word_t cpu, bool_t irqPath)
     __atomic_thread_fence(__ATOMIC_ACQUIRE);
 }
 
-static inline void FORCE_INLINE
-clh_lock_release(word_t cpu)
+static inline void FORCE_INLINE clh_lock_release(word_t cpu)
 {
     /* make sure no resource access passes from this point */
     __atomic_thread_fence(__ATOMIC_RELEASE);
@@ -129,8 +125,7 @@ clh_lock_release(word_t cpu)
         big_kernel_lock.node_owners[cpu].next;
 }
 
-static inline bool_t FORCE_INLINE
-clh_is_self_in_queue(void)
+static inline bool_t FORCE_INLINE clh_is_self_in_queue(void)
 {
     return big_kernel_lock.node_owners[getCurrentCPUIndex()].node->value == CLHState_Pending;
 }

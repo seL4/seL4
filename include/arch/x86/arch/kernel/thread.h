@@ -19,8 +19,7 @@ void Arch_configureIdleThread(tcb_t *tcb);
 void Arch_activateIdleThread(tcb_t *tcb);
 word_t sanitiseRegister(register_t reg, word_t v, bool_t archInfo);
 
-static inline bool_t CONST
-Arch_getSanitiseRegisterInfo(tcb_t *thread)
+static inline bool_t CONST Arch_getSanitiseRegisterInfo(tcb_t *thread)
 {
     return 0;
 }

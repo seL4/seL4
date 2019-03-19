@@ -59,8 +59,7 @@ static void clearEnFPEXC(void)
 #define HCPTR_MASK      ~(BIT(HCPTR_CP10_BIT) | BIT(HCPTR_CP11_BIT) | BIT(HCPTR_TASE_BIT))
 
 /* enable FPU accesses in Hyp mode */
-static inline void
-enableFpuInstInHyp(void)
+static inline void enableFpuInstInHyp(void)
 {
     if (!ARCH_NODE_STATE(armHSFPUEnabled)) {
         setHCPTR(getHCPTR() & HCPTR_MASK);
@@ -69,8 +68,7 @@ enableFpuInstInHyp(void)
 }
 
 /* trap PL0/PL1 FPU operations to Hyp mode and disable FPU accesses in Hyp */
-static inline void
-trapFpuInstToHyp(void)
+static inline void trapFpuInstToHyp(void)
 {
     if (ARCH_NODE_STATE(armHSFPUEnabled)) {
         setHCPTR(getHCPTR() | ~HCPTR_MASK);

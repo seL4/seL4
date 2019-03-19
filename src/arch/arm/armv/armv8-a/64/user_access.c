@@ -38,8 +38,7 @@ static void check_export_arch_timer(void)
     MSR("CNTKCTL_EL1", val);
 }
 
-void
-armv_init_user_access(void)
+void armv_init_user_access(void)
 {
     check_export_pmu();
     check_export_arch_timer();

@@ -46,32 +46,27 @@ typedef enum _apic_reg_t {
 #define X2APIC_LDR_CLUSTER_SHIFT   16
 #define X2APIC_LDR_ID_MASK         16
 
-static inline uint32_t
-apic_read_reg(apic_reg_t reg)
+static inline uint32_t apic_read_reg(apic_reg_t reg)
 {
     return x86_rdmsr_low(reg);
 }
 
-static inline void
-apic_write_reg(apic_reg_t reg, uint32_t val)
+static inline void apic_write_reg(apic_reg_t reg, uint32_t val)
 {
     x86_wrmsr(reg, val);
 }
 
-static inline logical_id_t
-apic_get_logical_id(void)
+static inline logical_id_t apic_get_logical_id(void)
 {
     return apic_read_reg(APIC_LOGICAL_DEST);
 }
 
-static inline word_t
-apic_get_cluster(logical_id_t logical_id)
+static inline word_t apic_get_cluster(logical_id_t logical_id)
 {
     return logical_id >> X2APIC_LDR_CLUSTER_SHIFT;
 }
 
-static inline void
-apic_write_icr(word_t high, word_t low)
+static inline void apic_write_icr(word_t high, word_t low)
 {
     uint64_t icr = ((uint64_t)high << 32) | low;
     x86_wrmsr(APIC_ICR, icr);
