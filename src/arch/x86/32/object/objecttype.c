@@ -38,7 +38,7 @@ Arch_isFrameType(word_t type)
 }
 
 deriveCap_ret_t
-Mode_deriveCap(cte_t* slot, cap_t cap)
+Mode_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -203,10 +203,10 @@ Mode_decodeInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {

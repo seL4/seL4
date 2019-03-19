@@ -28,7 +28,7 @@ bool_t Arch_handleFaultReply(tcb_t *receiver, tcb_t *sender, word_t faultType)
 }
 
 word_t
-Arch_setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer, word_t faultType)
+Arch_setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffer, word_t faultType)
 {
     switch (faultType) {
     case seL4_Fault_VMFault: {
@@ -91,7 +91,7 @@ word_t handleKernelException(
     printf("\nStack Dump:\n");
     for (i = 0; i < 20; i++) {
         word_t UNUSED stack = sp + i * sizeof(word_t);
-        printf("*0x%lx == 0x%lx\n", stack, *(word_t*)stack);
+        printf("*0x%lx == 0x%lx\n", stack, *(word_t *)stack);
     }
     printf("\nHalting...\n");
     halt();

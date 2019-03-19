@@ -17,15 +17,15 @@
 #include <sel4/constants.h>
 #include <sel4/sel4_arch/constants.h>
 
-LIBSEL4_INLINE_FUNC seL4_IPCBuffer*
+LIBSEL4_INLINE_FUNC seL4_IPCBuffer *
 seL4_GetIPCBuffer(void)
 {
 #if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
-    return *(seL4_IPCBuffer**)seL4_GlobalsFrame;
+    return *(seL4_IPCBuffer **)seL4_GlobalsFrame;
 #elif defined(CONFIG_IPC_BUF_TPIDRURW)
     seL4_Word reg;
     asm("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
-    return (seL4_IPCBuffer*)reg;
+    return (seL4_IPCBuffer *)reg;
 #else
 #error "Unknown IPC buffer strategy"
 #endif

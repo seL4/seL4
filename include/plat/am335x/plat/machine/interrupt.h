@@ -63,7 +63,7 @@ volatile struct INTC_map {
         uint32_t intcps_pending_fiq;
     } intcps_n[4];
     uint32_t intcps_ilr[128];
-} *intc = (volatile void*)INTC_PPTR;
+} *intc = (volatile void *)INTC_PPTR;
 
 
 static inline interrupt_t

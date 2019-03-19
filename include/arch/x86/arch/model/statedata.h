@@ -65,19 +65,19 @@ typedef struct x86_arch_global_state {
     gdt_entry_t x86KSgdt[GDT_ENTRIES];
     /* Interrupt Descriptor Table (IDT) */
     idt_entry_t x86KSidt[IDT_ENTRIES];
-    PAD_TO_NEXT_CACHE_LN(sizeof(tss_io_t) + GDT_ENTRIES * sizeof(gdt_entry_t) + IDT_ENTRIES * sizeof(idt_entry_t));
+    PAD_TO_NEXT_CACHE_LN(sizeof(tss_io_t) + GDT_ENTRIES *sizeof(gdt_entry_t) + IDT_ENTRIES *sizeof(idt_entry_t));
 } x86_arch_global_state_t;
 compile_assert(x86_arch_global_state_padded, (sizeof(x86_arch_global_state_t) % L1_CACHE_LINE_SIZE) == 0)
 
 extern x86_arch_global_state_t x86KSGlobalState[CONFIG_MAX_NUM_NODES] ALIGN(L1_CACHE_LINE_SIZE) SKIM_BSS;
 
-extern asid_pool_t* x86KSASIDTable[];
+extern asid_pool_t *x86KSASIDTable[];
 extern uint32_t x86KScacheLineSizeBits;
 extern user_fpu_state_t x86KSnullFpuState ALIGN(MIN_FPU_ALIGNMENT);
 
 #ifdef CONFIG_IOMMU
 extern uint32_t x86KSnumDrhu;
-extern vtd_rte_t* x86KSvtdRootTable;
+extern vtd_rte_t *x86KSvtdRootTable;
 extern uint32_t x86KSnumIOPTLevels;
 extern uint32_t x86KSnumIODomainIDBits;
 extern uint32_t x86KSFirstValidIODomain;

@@ -22,7 +22,7 @@ struct timer {
     uint32_t clk_ctl;     /* +0x034 */
 };
 typedef volatile struct timer timer_t;
-timer_t* dgt_tmr = (timer_t*) DGT_TIMER_PPTR;
+timer_t *dgt_tmr = (timer_t *) DGT_TIMER_PPTR;
 
 #define DGTTMR_EN_CLR_ON_MTCH_EN    (1U << 1)
 #define DGTTMR_EN_EN                (1U << 0)

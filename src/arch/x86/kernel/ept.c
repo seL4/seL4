@@ -20,19 +20,19 @@
 
 struct lookupEPTPDPTSlot_ret {
     exception_t status;
-    ept_pdpte_t* pdptSlot;
+    ept_pdpte_t *pdptSlot;
 };
 typedef struct lookupEPTPDPTSlot_ret lookupEPTPDPTSlot_ret_t;
 
 struct lookupEPTPDSlot_ret {
     exception_t status;
-    ept_pde_t*  pdSlot;
+    ept_pde_t  *pdSlot;
 };
 typedef struct lookupEPTPDSlot_ret lookupEPTPDSlot_ret_t;
 
 struct lookupEPTPTSlot_ret {
     exception_t status;
-    ept_pte_t*  ptSlot;
+    ept_pte_t  *ptSlot;
 };
 typedef struct lookupEPTPTSlot_ret lookupEPTPTSlot_ret_t;
 
@@ -48,13 +48,13 @@ typedef enum ept_cache_options ept_cache_options_t;
 void
 deleteEPTASID(asid_t asid, ept_pml4e_t *ept)
 {
-    asid_pool_t* poolPtr;
+    asid_pool_t *poolPtr;
 
     poolPtr = x86KSASIDTable[asid >> asidLowBits];
     if (poolPtr != NULL) {
         asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
         if (asid_map_get_type(asid_map) == asid_map_asid_map_ept &&
-                (ept_pml4e_t*)asid_map_asid_map_ept_get_ept_root(asid_map) == ept) {
+                (ept_pml4e_t *)asid_map_asid_map_ept_get_ept_root(asid_map) == ept) {
             poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
         }
     }
@@ -92,12 +92,12 @@ findEPTForASID(asid_t asid)
         return ret;
     }
 
-    ret.ept = (ept_pml4e_t*)asid_map_asid_map_ept_get_ept_root(asid_map);
+    ret.ept = (ept_pml4e_t *)asid_map_asid_map_ept_get_ept_root(asid_map);
     ret.status = EXCEPTION_NONE;
     return ret;
 }
 
-static ept_pml4e_t* CONST
+static ept_pml4e_t *CONST
 lookupEPTPML4Slot(ept_pml4e_t *pml4, vptr_t vptr)
 {
     return pml4 + GET_EPT_PML4_INDEX(vptr);
@@ -127,7 +127,7 @@ lookupEPTPDPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
 }
 
 static lookupEPTPDSlot_ret_t
-lookupEPTPDSlot(ept_pml4e_t* pml4, vptr_t vptr)
+lookupEPTPDSlot(ept_pml4e_t *pml4, vptr_t vptr)
 {
     lookupEPTPDSlot_ret_t ret;
     lookupEPTPDPTSlot_ret_t lu_ret;
@@ -158,7 +158,7 @@ lookupEPTPDSlot(ept_pml4e_t* pml4, vptr_t vptr)
 }
 
 static lookupEPTPTSlot_ret_t
-lookupEPTPTSlot(ept_pml4e_t* pml4, vptr_t vptr)
+lookupEPTPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
 {
     lookupEPTPTSlot_ret_t ret;
     lookupEPTPDSlot_ret_t lu_ret;
@@ -254,7 +254,7 @@ static exception_t
 performEPTPDPTInvocationUnmap(cap_t cap, cte_t *cte)
 {
     if (cap_ept_pdpt_cap_get_capPDPTIsMapped(cap)) {
-        ept_pdpte_t *pdpt = (ept_pdpte_t*)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap);
+        ept_pdpte_t *pdpt = (ept_pdpte_t *)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap);
         unmapEPTPDPT(
             cap_ept_pdpt_cap_get_capPDPTMappedASID(cap),
             cap_ept_pdpt_cap_get_capPDPTMappedAddress(cap),
@@ -288,12 +288,12 @@ decodeX86EPTPDPTInvocation(
 {
     word_t          vaddr;
     cap_t           pml4Cap;
-    ept_pml4e_t*    pml4;
+    ept_pml4e_t    *pml4;
     ept_pml4e_t     pml4e;
     paddr_t         paddr;
     asid_t          asid;
     findEPTForASID_ret_t find_ret;
-    ept_pml4e_t*    pml4Slot;
+    ept_pml4e_t    *pml4Slot;
 
     if (invLabel == X86EPTPDPTUnmap) {
         if (!isFinalCapability(cte)) {
@@ -339,7 +339,7 @@ decodeX86EPTPDPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pml4 = (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(pml4Cap);
+    pml4 = (ept_pml4e_t *)cap_ept_pml4_cap_get_capPML4BasePtr(pml4Cap);
     asid = cap_ept_pml4_cap_get_capPML4MappedASID(pml4Cap);
 
     find_ret = findEPTForASID(asid);
@@ -365,7 +365,7 @@ decodeX86EPTPDPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    paddr = pptr_to_paddr((void*)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap));
+    paddr = pptr_to_paddr((void *)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap));
     pml4e = ept_pml4e_new(
                 paddr,
                 1,
@@ -386,10 +386,10 @@ decodeX86EPTInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
@@ -464,12 +464,12 @@ static exception_t
 performEPTPDInvocationUnmap(cap_t cap, cte_t *cte)
 {
     if (cap_ept_pd_cap_get_capPDIsMapped(cap)) {
-        ept_pde_t *pd = (ept_pde_t*)cap_ept_pd_cap_get_capPDBasePtr(cap);
+        ept_pde_t *pd = (ept_pde_t *)cap_ept_pd_cap_get_capPDBasePtr(cap);
         unmapEPTPageDirectory(
             cap_ept_pd_cap_get_capPDMappedASID(cap),
             cap_ept_pd_cap_get_capPDMappedAddress(cap),
             pd);
-        clearMemory((void*)pd, cap_get_capSizeBits(cap));
+        clearMemory((void *)pd, cap_get_capSizeBits(cap));
     }
     cap_ept_pd_cap_ptr_set_capPDIsMapped(&(cte->cap), 0);
 
@@ -490,15 +490,15 @@ exception_t
 decodeX86EPTPDInvocation(
     word_t invLabel,
     word_t length,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     word_t          vaddr;
     cap_t           pml4Cap;
-    ept_pml4e_t*    pml4;
+    ept_pml4e_t    *pml4;
     ept_pdpte_t     pdpte;
     paddr_t         paddr;
     asid_t          asid;
@@ -547,7 +547,7 @@ decodeX86EPTPDInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pml4 = (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(pml4Cap);
+    pml4 = (ept_pml4e_t *)cap_ept_pml4_cap_get_capPML4BasePtr(pml4Cap);
     asid = cap_ept_pml4_cap_get_capPML4MappedASID(pml4Cap);
 
     find_ret = findEPTForASID(asid);
@@ -580,7 +580,7 @@ decodeX86EPTPDInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    paddr = pptr_to_paddr((void*)(cap_ept_pd_cap_get_capPDBasePtr(cap)));
+    paddr = pptr_to_paddr((void *)(cap_ept_pd_cap_get_capPDBasePtr(cap)));
     pdpte = ept_pdpte_new(
                 paddr,  /* pd_base_address  */
                 0,      /* avl_cte_depth    */
@@ -657,7 +657,7 @@ static exception_t
 performEPTPTInvocationUnmap(cap_t cap, cte_t *cte)
 {
     if (cap_ept_pt_cap_get_capPTIsMapped(cap)) {
-        ept_pte_t *pt = (ept_pte_t*)cap_ept_pt_cap_get_capPTBasePtr(cap);
+        ept_pte_t *pt = (ept_pte_t *)cap_ept_pt_cap_get_capPTBasePtr(cap);
         unmapEPTPageTable(
             cap_ept_pt_cap_get_capPTMappedASID(cap),
             cap_ept_pt_cap_get_capPTMappedAddress(cap),
@@ -683,15 +683,15 @@ exception_t
 decodeX86EPTPTInvocation(
     word_t invLabel,
     word_t length,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     word_t          vaddr;
     cap_t           pml4Cap;
-    ept_pml4e_t*    pml4;
+    ept_pml4e_t    *pml4;
     ept_pde_t       pde;
     paddr_t         paddr;
     asid_t          asid;
@@ -741,7 +741,7 @@ decodeX86EPTPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pml4 = (ept_pml4e_t*)(cap_ept_pml4_cap_get_capPML4BasePtr(pml4Cap));
+    pml4 = (ept_pml4e_t *)(cap_ept_pml4_cap_get_capPML4BasePtr(pml4Cap));
     asid = cap_ept_pml4_cap_get_capPML4MappedASID(pml4Cap);
 
     find_ret = findEPTForASID(asid);
@@ -776,7 +776,7 @@ decodeX86EPTPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    paddr = pptr_to_paddr((void*)(cap_ept_pt_cap_get_capPTBasePtr(cap)));
+    paddr = pptr_to_paddr((void *)(cap_ept_pt_cap_get_capPTBasePtr(cap)));
     pde = ept_pde_ept_pde_pt_new(
               paddr,/* pt_base_address  */
               0,    /* avl_cte_depth    */
@@ -820,16 +820,16 @@ exception_t
 decodeX86EPTPageMap(
     word_t invLabel,
     word_t length,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer)
+    word_t *buffer)
 {
     word_t          vaddr;
     word_t          w_rightsMask;
     paddr_t         paddr;
     cap_t           pml4Cap;
-    ept_pml4e_t*    pml4;
+    ept_pml4e_t    *pml4;
     vm_rights_t     capVMRights;
     vm_rights_t     vmRights;
     vm_attributes_t vmAttr;
@@ -864,7 +864,7 @@ decodeX86EPTPageMap(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pml4 = (ept_pml4e_t*)(cap_ept_pml4_cap_get_capPML4BasePtr(pml4Cap));
+    pml4 = (ept_pml4e_t *)(cap_ept_pml4_cap_get_capPML4BasePtr(pml4Cap));
     asid = cap_ept_pml4_cap_get_capPML4MappedASID(pml4Cap);
 
     findEPTForASID_ret_t find_ret = findEPTForASID(asid);
@@ -891,7 +891,7 @@ decodeX86EPTPageMap(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    paddr = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
+    paddr = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
 
     cap = cap_frame_cap_set_capFMappedASID(cap, asid);
     cap = cap_frame_cap_set_capFMappedAddress(cap, vaddr);

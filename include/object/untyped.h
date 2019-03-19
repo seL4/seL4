@@ -37,7 +37,7 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length,
                                     extra_caps_t excaps, bool_t call,
                                     word_t *buffer);
 exception_t invokeUntyped_Retype(cte_t *srcSlot, bool_t reset,
-                                 void* retypeBase, object_t newType,
+                                 void *retypeBase, object_t newType,
                                  word_t userSize, slot_range_t destSlots,
                                  bool_t deviceMemory);
 #endif

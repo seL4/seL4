@@ -20,11 +20,11 @@ void Mode_handleRemoteCall(IpiModeRemoteCall_t call, word_t arg0, word_t arg1, w
 {
     switch (call) {
     case IpiRemoteCall_InvalidatePCID:
-        invalidateLocalPCID(arg0, (void*)arg1, arg2);
+        invalidateLocalPCID(arg0, (void *)arg1, arg2);
         break;
 
     case IpiRemoteCall_InvalidateASID:
-        invalidateLocalASID((vspace_root_t*)arg0, arg1);
+        invalidateLocalASID((vspace_root_t *)arg0, arg1);
         break;
 
     default:

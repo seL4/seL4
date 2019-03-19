@@ -17,19 +17,19 @@
 #ifdef CONFIG_DEBUG_BUILD
 
 void _fail(
-    const char*  str,
-    const char*  file,
+    const char  *str,
+    const char  *file,
     unsigned int line,
-    const char*  function
+    const char  *function
 ) NORETURN;
 
 #define fail(s) _fail(s, __FILE__, __LINE__, __func__)
 
 void _assert_fail(
-    const char*  assertion,
-    const char*  file,
+    const char  *assertion,
+    const char  *file,
     unsigned int line,
-    const char*  function
+    const char  *function
 ) NORETURN;
 
 #define assert(expr) \

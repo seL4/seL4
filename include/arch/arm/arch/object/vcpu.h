@@ -89,19 +89,19 @@ exception_t decodeARMVCPUInvocation(
     word_t label,
     unsigned int length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t extraCaps,
     bool_t call,
-    word_t* buffer
+    word_t *buffer
 );
 
 void vcpu_restore(vcpu_t *cpu);
 void vcpu_switch(vcpu_t *cpu);
 
-exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer);
-exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer);
-exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer);
+exception_t decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer);
+exception_t decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer);
+exception_t decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer);
 exception_t decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps);
 
 exception_t invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value);

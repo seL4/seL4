@@ -45,9 +45,9 @@ gdt_idt_ptr_t gdt_idt_ptr;
 BOOT_CODE bool_t
 map_kernel_window(
     uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs,
+    paddr_t   *ioapic_paddrs,
     uint32_t   num_drhu,
-    paddr_t*   drhu_list
+    paddr_t   *drhu_list
 )
 {
 
@@ -290,7 +290,7 @@ map_skim_window(vptr_t skim_start, vptr_t skim_end)
     /* map the skim portion into the PD. we expect it to be 2M aligned */
     assert((skim_start % BIT(seL4_LargePageBits)) == 0);
     assert((skim_end % BIT(seL4_LargePageBits)) == 0);
-    uint64_t paddr = kpptr_to_paddr((void*)skim_start);
+    uint64_t paddr = kpptr_to_paddr((void *)skim_start);
     for (int i = GET_PD_INDEX(skim_start); i < GET_PD_INDEX(skim_end); i++) {
         x64KSSKIMPD[i] = pde_pde_large_new(
                              0, /* xd */
@@ -540,7 +540,7 @@ map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
     pde_t *pd;
     pte_t *pt;
     vptr_t vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
-    void *pptr = (void*)cap_frame_cap_get_capFBasePtr(frame_cap);
+    void *pptr = (void *)cap_frame_cap_get_capFBasePtr(frame_cap);
 
     assert(cap_frame_cap_get_capFMapType(frame_cap) == X86_MappingVSpace);
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != asidInvalid);
@@ -640,8 +640,8 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
                                  );
 }
 
-BOOT_CODE void*
-map_temp_boot_page(void* entry, uint32_t large_pages)
+BOOT_CODE void *
+map_temp_boot_page(void *entry, uint32_t large_pages)
 {
     /* this function is for legacy 32-bit systems where the ACPI tables might
      * collide with the kernel window. Here we just assert that the table is
@@ -1030,8 +1030,8 @@ makeUserPTEInvalid(void)
 }
 
 
-static pml4e_t*
-lookupPML4Slot(vspace_root_t*pml4, vptr_t vptr)
+static pml4e_t *
+lookupPML4Slot(vspace_root_t *pml4, vptr_t vptr)
 {
     pml4e_t *pml4e = PML4E_PTR(pml4);
     word_t pml4Index = GET_PML4_INDEX(vptr);
@@ -1187,10 +1187,10 @@ static exception_t
 decodeX64PageDirectoryInvocation(
     word_t label,
     word_t length,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t extraCaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     word_t              vaddr;
@@ -1463,10 +1463,10 @@ decodeX86ModeMMUInvocation(
     word_t label,
     word_t length,
     cptr_t cptr,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t extraCaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {
@@ -1649,7 +1649,7 @@ readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
 
 
     kernel_vaddr = (word_t)paddr_to_pptr(paddr);
-    value = (word_t*)(kernel_vaddr + offset);
+    value = (word_t *)(kernel_vaddr + offset);
     ret.status = EXCEPTION_NONE;
     ret.value = *value;
     return ret;
@@ -1671,7 +1671,7 @@ Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    vspace_root = (vspace_root_t*)pptr_of_cap(threadRoot);
+    vspace_root = (vspace_root_t *)pptr_of_cap(threadRoot);
 
     sp = getRegister(tptr, RSP);
     /* check for alignment so we don't have to worry about accessing

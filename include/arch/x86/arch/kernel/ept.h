@@ -51,10 +51,10 @@ EPTPageTableMapped_ret_t EPTPageTableMapped(asid_t asid, vptr_t vaddr, ept_pte_t
 findEPTForASID_ret_t findEPTForASID(asid_t asid);
 
 void deleteEPTASID(asid_t asid, ept_pml4e_t *ept);
-exception_t decodeX86EPTInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
-exception_t decodeX86EPTPDInvocation(word_t invLabel, word_t length, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
-exception_t decodeX86EPTPTInvocation(word_t invLabel, word_t length, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
-exception_t decodeX86EPTPageMap(word_t invLabel, word_t length, cte_t* cte, cap_t cap, extra_caps_t excaps, word_t* buffer);
+exception_t decodeX86EPTInvocation(word_t invLabel, word_t length, cptr_t cptr, cte_t *cte, cap_t cap, extra_caps_t excaps, word_t *buffer);
+exception_t decodeX86EPTPDInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps, word_t *buffer);
+exception_t decodeX86EPTPTInvocation(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps, word_t *buffer);
+exception_t decodeX86EPTPageMap(word_t invLabel, word_t length, cte_t *cte, cap_t cap, extra_caps_t excaps, word_t *buffer);
 exception_t performX86EPTPageInvocationUnmap(cap_t cap, cte_t *ctSlot);
 void unmapEPTPDPT(asid_t asid, vptr_t vaddr, ept_pdpte_t *pdpt);
 void unmapEPTPageDirectory(asid_t asid, vptr_t vaddr, ept_pde_t *pd);

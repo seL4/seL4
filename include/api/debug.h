@@ -86,7 +86,7 @@ static inline void
 debug_printTCB(tcb_t *tcb)
 {
     printf("%40s\t", tcb->tcbName);
-    char* state;
+    char *state;
     switch (thread_state_get_tsType(tcb->tcbState)) {
     case ThreadState_Inactive:
         state = "inactive";

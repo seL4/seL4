@@ -48,14 +48,14 @@ void cleanCaches_PoU(void);
 void cleanInvalidateL1Caches(void);
 
 /* Cleaning memory before user-level access */
-static inline void clearMemory(word_t* ptr, word_t bits)
+static inline void clearMemory(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
     cleanCacheRange_PoU((word_t)ptr, (word_t)ptr + BIT(bits) - 1,
                         addrFromPPtr(ptr));
 }
 
-static inline void clearMemoryRAM(word_t* ptr, word_t bits)
+static inline void clearMemoryRAM(word_t *ptr, word_t bits)
 {
     memzero(ptr, BIT(bits));
     cleanCacheRange_RAM((word_t)ptr, (word_t)ptr + BIT(bits) - 1,

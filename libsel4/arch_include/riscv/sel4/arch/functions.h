@@ -21,12 +21,12 @@
 
 #include <sel4/types.h>
 
-LIBSEL4_INLINE_FUNC seL4_IPCBuffer*
+LIBSEL4_INLINE_FUNC seL4_IPCBuffer *
 seL4_GetIPCBuffer(void)
 {
     seL4_Word reg;
     asm("mv %0, tp" : "=r"(reg));
-    return (seL4_IPCBuffer*)reg;
+    return (seL4_IPCBuffer *)reg;
 }
 
 
@@ -73,18 +73,18 @@ seL4_SetCap(int i, seL4_CPtr cptr)
 }
 
 LIBSEL4_INLINE_FUNC void
-seL4_GetCapReceivePath(seL4_CPtr* receiveCNode, seL4_CPtr* receiveIndex, seL4_Word* receiveDepth)
+seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex, seL4_Word *receiveDepth)
 {
-    seL4_IPCBuffer* ipcbuffer = seL4_GetIPCBuffer();
-    if (receiveCNode != (void*)0) {
+    seL4_IPCBuffer *ipcbuffer = seL4_GetIPCBuffer();
+    if (receiveCNode != (void *)0) {
         *receiveCNode = ipcbuffer->receiveCNode;
     }
 
-    if (receiveIndex != (void*)0) {
+    if (receiveIndex != (void *)0) {
         *receiveIndex = ipcbuffer->receiveIndex;
     }
 
-    if (receiveDepth != (void*)0) {
+    if (receiveDepth != (void *)0) {
         *receiveDepth = ipcbuffer->receiveDepth;
     }
 }
@@ -92,7 +92,7 @@ seL4_GetCapReceivePath(seL4_CPtr* receiveCNode, seL4_CPtr* receiveIndex, seL4_Wo
 LIBSEL4_INLINE_FUNC void
 seL4_SetCapReceivePath(seL4_CPtr receiveCNode, seL4_CPtr receiveIndex, seL4_Word receiveDepth)
 {
-    seL4_IPCBuffer* ipcbuffer = seL4_GetIPCBuffer();
+    seL4_IPCBuffer *ipcbuffer = seL4_GetIPCBuffer();
     ipcbuffer->receiveCNode = receiveCNode;
     ipcbuffer->receiveIndex = receiveIndex;
     ipcbuffer->receiveDepth = receiveDepth;

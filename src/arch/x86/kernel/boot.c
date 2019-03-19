@@ -249,7 +249,7 @@ init_sys_state(
     p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */
     uint32_t      num_drhu,
-    paddr_t*      drhu_list,
+    paddr_t      *drhu_list,
     acpi_rmrr_list_t *rmrr_list,
     acpi_rsdp_t      *acpi_rsdp,
     seL4_X86_BootInfo_VBE *vbe,
@@ -345,7 +345,7 @@ init_sys_state(
     if (vbe->vbeMode != -1) {
         vbe->header.id = SEL4_BOOTINFO_HEADER_X86_VBE;
         vbe->header.len = sizeof(seL4_X86_BootInfo_VBE);
-        memcpy((void*)(extra_bi_region.start + extra_bi_offset), vbe, sizeof(seL4_X86_BootInfo_VBE));
+        memcpy((void *)(extra_bi_region.start + extra_bi_offset), vbe, sizeof(seL4_X86_BootInfo_VBE));
         extra_bi_offset += sizeof(seL4_X86_BootInfo_VBE);
     }
 
@@ -354,9 +354,9 @@ init_sys_state(
         seL4_BootInfoHeader header;
         header.id = SEL4_BOOTINFO_HEADER_X86_ACPI_RSDP;
         header.len = sizeof(header) + sizeof(*acpi_rsdp);
-        *(seL4_BootInfoHeader*)(extra_bi_region.start + extra_bi_offset) = header;
+        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
-        memcpy((void*)(extra_bi_region.start + extra_bi_offset), acpi_rsdp, sizeof(*acpi_rsdp));
+        memcpy((void *)(extra_bi_region.start + extra_bi_offset), acpi_rsdp, sizeof(*acpi_rsdp));
         extra_bi_offset += sizeof(*acpi_rsdp);
     }
 
@@ -365,16 +365,16 @@ init_sys_state(
         seL4_BootInfoHeader header;
         header.id = SEL4_BOOTINFO_HEADER_X86_FRAMEBUFFER;
         header.len = sizeof(header) + sizeof(*fb_info);
-        *(seL4_BootInfoHeader*)(extra_bi_region.start + extra_bi_offset) = header;
+        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
-        memcpy((void*)(extra_bi_region.start + extra_bi_offset), fb_info, sizeof(*fb_info));
+        memcpy((void *)(extra_bi_region.start + extra_bi_offset), fb_info, sizeof(*fb_info));
         extra_bi_offset += sizeof(*fb_info);
     }
 
     /* populate multiboot mmap block */
     mb_mmap->header.id = SEL4_BOOTINFO_HEADER_X86_MBMMAP;
     mb_mmap->header.len = mb_mmap_size;
-    memcpy((void*)(extra_bi_region.start + extra_bi_offset), mb_mmap, mb_mmap_size);
+    memcpy((void *)(extra_bi_region.start + extra_bi_offset), mb_mmap, mb_mmap_size);
     extra_bi_offset += mb_mmap_size;
 
     /* populate tsc frequency block */
@@ -382,9 +382,9 @@ init_sys_state(
         seL4_BootInfoHeader header;
         header.id = SEL4_BOOTINFO_HEADER_X86_TSC_FREQ;
         header.len = sizeof(header) + 4;
-        *(seL4_BootInfoHeader*)(extra_bi_region.start + extra_bi_offset) = header;
+        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
-        *(uint32_t*)(extra_bi_region.start + extra_bi_offset) = tsc_freq;
+        *(uint32_t *)(extra_bi_region.start + extra_bi_offset) = tsc_freq;
         extra_bi_offset += 4;
     }
 
@@ -392,7 +392,7 @@ init_sys_state(
     seL4_BootInfoHeader padding_header;
     padding_header.id = SEL4_BOOTINFO_HEADER_PADDING;
     padding_header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
-    *(seL4_BootInfoHeader*)(extra_bi_region.start + extra_bi_offset) = padding_header;
+    *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = padding_header;
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
@@ -416,7 +416,7 @@ init_sys_state(
             it_vspace_cap,
             extra_bi_region,
             true,
-            pptr_to_paddr((void*)(extra_bi_region.start - extra_bi_frame_vptr))
+            pptr_to_paddr((void *)(extra_bi_region.start - extra_bi_frame_vptr))
         );
     if (!extra_bi_ret.success) {
         return false;

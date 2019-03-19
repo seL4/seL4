@@ -100,7 +100,7 @@ copy_boot_code_aps(uint32_t mem_lower)
     }
 
     /* copy CPU bootup code to lower memory */
-    memcpy((void*)BOOT_NODE_PADDR, boot_cpu_start, boot_size);
+    memcpy((void *)BOOT_NODE_PADDR, boot_cpu_start, boot_size);
     return true;
 }
 

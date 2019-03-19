@@ -71,7 +71,7 @@ getCacheLineSizeBits(void)
 
 /* Flushes a specific memory range from the CPU cache */
 
-void flushCacheRange(void* vaddr, uint32_t size_bits)
+void flushCacheRange(void *vaddr, uint32_t size_bits)
 {
     word_t v;
 
@@ -83,7 +83,7 @@ void flushCacheRange(void* vaddr, uint32_t size_bits)
     for (v = ROUND_DOWN((word_t)vaddr, x86KScacheLineSizeBits);
             v < (word_t)vaddr + BIT(size_bits);
             v += BIT(x86KScacheLineSizeBits)) {
-        flushCacheLine((void*)v);
+        flushCacheLine((void *)v);
     }
     x86_mfence();
 }

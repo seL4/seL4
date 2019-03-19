@@ -24,7 +24,7 @@
  * of the bootstrapping phase and the runtime phase of the kernel.
  */
 typedef cte_t  slot_t;
-typedef cte_t* slot_ptr_t;
+typedef cte_t *slot_ptr_t;
 #define SLOT_PTR(pptr, pos) (((slot_ptr_t)(pptr)) + (pos))
 #define pptr_of_cap (pptr_t)cap_get_capPtr
 
@@ -32,7 +32,7 @@ typedef cte_t* slot_ptr_t;
 
 typedef struct ndks_boot {
     region_t   freemem[MAX_NUM_FREEMEM_REG];
-    seL4_BootInfo*      bi_frame;
+    seL4_BootInfo      *bi_frame;
     seL4_SlotPos slot_pos_cur;
     seL4_SlotPos slot_pos_max;
 } ndks_boot_t;

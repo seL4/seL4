@@ -32,15 +32,15 @@
 #ifndef GIC_PL390_DISTRIBUTOR_PPTR
 #error GIC_PL390_DISTRIBUTOR_PPTR must be defined for virtual memory access to the gic distributer
 #else  /* GIC_DISTRIBUTOR_PPTR */
-volatile struct gic_dist_map * const gic_dist =
-    (volatile struct gic_dist_map*)(GIC_PL390_DISTRIBUTOR_PPTR);
+volatile struct gic_dist_map *const gic_dist =
+    (volatile struct gic_dist_map *)(GIC_PL390_DISTRIBUTOR_PPTR);
 #endif /* GIC_DISTRIBUTOR_PPTR */
 
 #ifndef GIC_PL390_CONTROLLER_PPTR
 #error GIC_PL390_CONTROLLER_PPTR must be defined for virtual memory access to the gic cpu interface
 #else  /* GIC_CONTROLLER_PPTR */
-volatile struct gic_cpu_iface_map * const gic_cpuiface =
-    (volatile struct gic_cpu_iface_map*)(GIC_PL390_CONTROLLER_PPTR);
+volatile struct gic_cpu_iface_map *const gic_cpuiface =
+    (volatile struct gic_cpu_iface_map *)(GIC_PL390_CONTROLLER_PPTR);
 #endif /* GIC_CONTROLLER_PPTR */
 
 uint32_t active_irq[CONFIG_MAX_NUM_NODES] = {IRQ_NONE};
@@ -223,7 +223,7 @@ void ipi_send_target(irq_t irq, word_t cpuTargetList)
 #error GIC_PL400_VCPUCTRL_PPTR must be defined for virtual memory access to the gic virtual cpu interface control
 #else  /* GIC_PL400_GICVCPUCTRL_PPTR */
 volatile struct gich_vcpu_ctrl_map *gic_vcpu_ctrl =
-    (volatile struct gich_vcpu_ctrl_map*)(GIC_PL400_VCPUCTRL_PPTR);
+    (volatile struct gich_vcpu_ctrl_map *)(GIC_PL400_VCPUCTRL_PPTR);
 #endif /* GIC_PL400_GICVCPUCTRL_PPTR */
 
 unsigned int gic_vcpu_num_list_regs;

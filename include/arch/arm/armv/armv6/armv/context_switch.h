@@ -21,13 +21,13 @@ static inline void setHardwareASID(hw_asid_t hw_asid)
     writeContextID(hw_asid);
 }
 
-static inline void armv_contextSwitch_HWASID(pde_t* cap_pd, hw_asid_t hw_asid)
+static inline void armv_contextSwitch_HWASID(pde_t *cap_pd, hw_asid_t hw_asid)
 {
     setCurrentPD(addrFromPPtr(cap_pd));
     setHardwareASID(hw_asid);
 }
 
-static inline void armv_contextSwitch(pde_t* cap_pd, asid_t asid)
+static inline void armv_contextSwitch(pde_t *cap_pd, asid_t asid)
 {
     armv_contextSwitch_HWASID(cap_pd, getHWASID(asid));
 }

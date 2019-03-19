@@ -127,10 +127,10 @@ init_freemem(region_t ui_reg)
         /* Adjust region if it exceeds the kernel window
          * Note that we compare physical address in case of overflow.
          */
-        if (pptr_to_paddr((void*)cur_reg.end) > PADDR_TOP) {
+        if (pptr_to_paddr((void *)cur_reg.end) > PADDR_TOP) {
             cur_reg.end = PPTR_TOP;
         }
-        if (pptr_to_paddr((void*)cur_reg.start) > PADDR_TOP) {
+        if (pptr_to_paddr((void *)cur_reg.start) > PADDR_TOP) {
             cur_reg.start = PPTR_TOP;
         }
 

@@ -439,10 +439,10 @@ map_kernel_window(void)
 static BOOT_CODE void
 map_it_frame_cap(cap_t pd_cap, cap_t frame_cap, bool_t executable)
 {
-    pte_t* pt;
-    pte_t* targetSlot;
-    pde_t* pd    = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
-    void*  frame = (void*)generic_frame_cap_get_capFBasePtr(frame_cap);
+    pte_t *pt;
+    pte_t *targetSlot;
+    pde_t *pd    = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
+    void  *frame = (void *)generic_frame_cap_get_capFBasePtr(frame_cap);
     vptr_t vptr  = generic_frame_cap_get_capFMappedAddress(frame_cap);
 
     assert(generic_frame_cap_get_capFMappedASID(frame_cap) != 0);
@@ -510,10 +510,10 @@ create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large)
 static BOOT_CODE void
 map_it_pt_cap(cap_t pd_cap, cap_t pt_cap)
 {
-    pde_t* pd   = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
-    pte_t* pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
+    pde_t *pd   = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pd_cap));
+    pte_t *pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
     vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
-    pde_t* targetSlot = pd + (vptr >> pageBitsForSize(ARMSection));
+    pde_t *targetSlot = pd + (vptr >> pageBitsForSize(ARMSection));
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
 
@@ -668,7 +668,7 @@ activate_global_pd(void)
 BOOT_CODE void
 write_it_asid_pool(cap_t it_ap_cap, cap_t it_pd_cap)
 {
-    asid_pool_t* ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
+    asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = PDE_PTR(pptr_of_cap(it_pd_cap));
     armKSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
@@ -705,7 +705,7 @@ findPDForASID(asid_t asid)
     return ret;
 }
 
-word_t * PURE
+word_t *PURE
 lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
     word_t w_bufferPtr;
@@ -762,7 +762,7 @@ checkValidIPCBuffer(vptr_t vptr, cap_t cap)
     return EXCEPTION_NONE;
 }
 
-pde_t * CONST
+pde_t *CONST
 lookupPDSlot(pde_t *pd, vptr_t vptr)
 {
     unsigned int pdIndex;
@@ -1125,7 +1125,7 @@ setVMRoot(tcb_t *tcb)
 }
 
 static bool_t
-setVMRootForFlush(pde_t* pd, asid_t asid)
+setVMRootForFlush(pde_t *pd, asid_t asid)
 {
     cap_t threadRoot;
 
@@ -1143,7 +1143,7 @@ setVMRootForFlush(pde_t* pd, asid_t asid)
 }
 
 pde_t *
-pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
+pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt)
 {
     findPDForASID_ret_t find_ret;
     pde_t pde;
@@ -1276,7 +1276,7 @@ invalidateASIDEntry(asid_t asid)
 }
 
 void
-unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
+unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
 {
     pde_t *pd, *pdSlot;
     unsigned int pdIndex;
@@ -1388,7 +1388,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 }
 
 void
-deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
+deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
 {
     unsigned int offset;
 
@@ -1408,7 +1408,7 @@ deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
 }
 
 void
-deleteASID(asid_t asid, pde_t* pd)
+deleteASID(asid_t asid, pde_t *pd)
 {
     asid_pool_t *poolPtr;
 
@@ -1575,7 +1575,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 }
 
 void
-flushPage(vm_page_size_t page_size, pde_t* pd, asid_t asid, word_t vptr)
+flushPage(vm_page_size_t page_size, pde_t *pd, asid_t asid, word_t vptr)
 {
     pde_t stored_hw_asid;
     word_t base_addr;
@@ -1600,7 +1600,7 @@ flushPage(vm_page_size_t page_size, pde_t* pd, asid_t asid, word_t vptr)
 }
 
 void
-flushTable(pde_t* pd, asid_t asid, word_t vptr, pte_t* pt)
+flushTable(pde_t *pd, asid_t asid, word_t vptr, pte_t *pt)
 {
     pde_t stored_hw_asid;
     bool_t root_switched;
@@ -2778,7 +2778,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
 
         /* start and end are currently relative inside this page */
         page_size = 1 << pageBitsForSize(generic_frame_cap_get_capFSize(cap));
-        page_base = addrFromPPtr((void*)generic_frame_cap_get_capFBasePtr(cap));
+        page_base = addrFromPPtr((void *)generic_frame_cap_get_capFBasePtr(cap));
 
         if (start >= page_size || end > page_size) {
             userError("Page Flush: Requested range not inside page");
@@ -2803,7 +2803,7 @@ decodeARMFrameInvocation(word_t invLabel, word_t length,
         assert(n_msgRegisters >= 1);
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageGetAddress((void*)generic_frame_cap_get_capFBasePtr(cap));
+        return performPageGetAddress((void *)generic_frame_cap_get_capFBasePtr(cap));
     }
 
     default:
@@ -3170,7 +3170,7 @@ readWordFromVSpace(pde_t *pd, word_t vaddr)
 
 
     kernel_vaddr = (word_t)paddr_to_pptr(paddr);
-    value = (word_t*)(kernel_vaddr + offset);
+    value = (word_t *)(kernel_vaddr + offset);
     ret.status = EXCEPTION_NONE;
     ret.value = *value;
     return ret;
@@ -3192,7 +3192,7 @@ Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    pd = (pde_t*)pptr_of_cap(threadRoot);
+    pd = (pde_t *)pptr_of_cap(threadRoot);
 
     sp = getRegister(tptr, SP);
     /* check for alignment so we don't have to worry about accessing

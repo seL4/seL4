@@ -250,7 +250,7 @@ cap_get_archCapIsPhysical(cap_t cap)
     }
 }
 
-static inline void * CONST
+static inline void *CONST
 cap_get_archCapPtr(cap_t cap)
 {
     cap_tag_t ctag;

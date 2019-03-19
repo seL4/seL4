@@ -41,7 +41,7 @@ word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);
 
 /* Cleaning memory before user-level access */
-static inline void clearMemory(void* ptr, unsigned int bits)
+static inline void clearMemory(void *ptr, unsigned int bits)
 {
     memzero(ptr, BIT(bits));
 }

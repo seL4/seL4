@@ -107,10 +107,10 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
 }
 
 /* GDT installation */
-void ia32_install_gdt(gdt_idt_ptr_t* gdt_idt_ptr);
+void ia32_install_gdt(gdt_idt_ptr_t *gdt_idt_ptr);
 
 /* IDT installation */
-void ia32_install_idt(gdt_idt_ptr_t* gdt_idt_ptr);
+void ia32_install_idt(gdt_idt_ptr_t *gdt_idt_ptr);
 
 /* LDT installation */
 void ia32_install_ldt(uint32_t ldt_sel);

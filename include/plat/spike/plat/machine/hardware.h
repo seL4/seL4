@@ -89,12 +89,12 @@ void plat_invalidateL2Range(paddr_t start, paddr_t end);
 
 void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end);
 
-static inline void* CONST
+static inline void *CONST
 paddr_to_kpptr(paddr_t paddr)
 {
     assert(paddr < PADDR_HIGH_TOP);
     assert(paddr >= PADDR_LOAD);
-    return (void*)(paddr + KERNEL_BASE_OFFSET);
+    return (void *)(paddr + KERNEL_BASE_OFFSET);
 }
 
 static inline paddr_t CONST

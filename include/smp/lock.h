@@ -66,7 +66,7 @@ clh_is_ipi_pending(word_t cpu)
 }
 
 static inline void *
-sel4_atomic_exchange(void* ptr, bool_t
+sel4_atomic_exchange(void *ptr, bool_t
                      irqPath, word_t cpu, int memorder)
 {
     clh_qnode_t *prev;

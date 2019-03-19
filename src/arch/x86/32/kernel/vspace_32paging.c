@@ -108,8 +108,8 @@ init_boot_pd(void)
 BOOT_CODE void
 map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 {
-    pde_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
-    pte_t* pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
+    pde_t *pd   = PDE_PTR(pptr_of_cap(vspace_cap));
+    pte_t *pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
     vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
 
     assert(cap_page_table_cap_get_capPTIsMapped(pt_cap));
@@ -136,9 +136,9 @@ map_it_pd_cap(cap_t vspace_cap, cap_t pd_cap)
 BOOT_CODE void
 map_it_frame_cap(cap_t pd_cap, cap_t frame_cap)
 {
-    pte_t* pt;
-    pde_t* pd    = PDE_PTR(pptr_of_cap(pd_cap));
-    void*  frame = (void*)cap_frame_cap_get_capFBasePtr(frame_cap);
+    pte_t *pt;
+    pde_t *pd    = PDE_PTR(pptr_of_cap(pd_cap));
+    void  *frame = (void *)cap_frame_cap_get_capFBasePtr(frame_cap);
     vptr_t vptr  = cap_frame_cap_get_capFMappedAddress(frame_cap);
 
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
@@ -193,17 +193,17 @@ vspace_root_t *getValidNativeRoot(cap_t vspace_cap)
     return NULL;
 }
 
-void copyGlobalMappings(vspace_root_t* new_vspace)
+void copyGlobalMappings(vspace_root_t *new_vspace)
 {
     word_t i;
-    pde_t *newPD = (pde_t*)new_vspace;
+    pde_t *newPD = (pde_t *)new_vspace;
 
     for (i = PPTR_BASE >> seL4_LargePageBits; i < BIT(PD_INDEX_BITS); i++) {
         newPD[i] = ia32KSGlobalPD[i];
     }
 }
 
-exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* vspaceCapSlot)
+exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t *poolPtr, cte_t *vspaceCapSlot)
 {
     asid_map_t asid_map;
 #ifdef CONFIG_VTX
@@ -253,10 +253,10 @@ exception_t
 decodeIA32PageDirectoryInvocation(
     word_t invLabel,
     word_t length,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
 
@@ -284,7 +284,7 @@ decodeIA32PageDirectoryInvocation(
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        vspace = (vspace_root_t*)pptr_of_cap(cap);
+        vspace = (vspace_root_t *)pptr_of_cap(cap);
 
         /* perform both lookups */
         pdSlot = lookupPDSlot(vspace, vaddr);
@@ -353,7 +353,7 @@ readWordFromVSpace(vspace_root_t *vspace, word_t vaddr)
 
 
     kernel_vaddr = (word_t)paddr_to_pptr(paddr);
-    value = (word_t*)(kernel_vaddr + offset);
+    value = (word_t *)(kernel_vaddr + offset);
     ret.status = EXCEPTION_NONE;
     ret.value = *value;
     return ret;
@@ -375,7 +375,7 @@ Arch_userStackTrace(tcb_t *tptr)
         return;
     }
 
-    vspace_root = (vspace_root_t*)pptr_of_cap(threadRoot);
+    vspace_root = (vspace_root_t *)pptr_of_cap(threadRoot);
 
     sp = getRegister(tptr, ESP);
     /* check for alignment so we don't have to worry about accessing

@@ -228,7 +228,7 @@ decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
     /* Perform the retype. */
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return invokeUntyped_Retype(slot, reset,
-                                (void*)alignedFreeRef, newType, userObjSize,
+                                (void *)alignedFreeRef, newType, userObjSize,
                                 slots, deviceMemory);
 }
 
@@ -273,7 +273,7 @@ resetUntypedCap(cte_t *srcSlot)
 
 exception_t
 invokeUntyped_Retype(cte_t *srcSlot,
-                     bool_t reset, void* retypeBase,
+                     bool_t reset, void *retypeBase,
                      object_t newType, word_t userSize,
                      slot_range_t destSlots, bool_t deviceMemory)
 {

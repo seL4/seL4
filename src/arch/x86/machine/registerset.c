@@ -13,7 +13,7 @@
 #include <config.h>
 #include <arch/machine/registerset.h>
 
-void Arch_initContext(user_context_t* context)
+void Arch_initContext(user_context_t *context)
 {
     Mode_initContext(context);
     context->registers[TLS_BASE] = 0;

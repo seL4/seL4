@@ -18,7 +18,7 @@
 #include <linker.h>
 
 void
-Arch_switchToThread(tcb_t* tcb)
+Arch_switchToThread(tcb_t *tcb)
 {
     /* set PD */
     setVMRoot(tcb);
@@ -38,7 +38,7 @@ Arch_switchToThread(tcb_t* tcb)
 }
 
 BOOT_CODE void
-Arch_configureIdleThread(tcb_t* tcb)
+Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, FLAGS, FLAGS_USER_DEFAULT);
     setRegister(tcb, NextIP, (uint64_t)idleThreadStart);
@@ -67,7 +67,7 @@ Arch_switchToIdleThread(void)
 }
 
 void
-Arch_activateIdleThread(tcb_t* tcb)
+Arch_activateIdleThread(tcb_t *tcb)
 {
     /* Don't need to do anything */
 }

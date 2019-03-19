@@ -51,7 +51,7 @@ volatile struct INTC_map {
     } intcps_n[3];
     uint32_t padding5[8];
     uint32_t intcps_ilr[96];
-} *intc = (volatile void*)INTC_PPTR;
+} *intc = (volatile void *)INTC_PPTR;
 
 static inline interrupt_t
 getActiveIRQ(void)

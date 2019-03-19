@@ -45,7 +45,7 @@ memzero(void *s, unsigned long n)
     }
 }
 
-void* VISIBLE
+void *VISIBLE
 memset(void *s, unsigned long c, unsigned long n)
 {
     uint8_t *p;
@@ -66,8 +66,8 @@ memset(void *s, unsigned long c, unsigned long n)
     return s;
 }
 
-void* VISIBLE
-memcpy(void* ptr_dst, const void* ptr_src, unsigned long n)
+void *VISIBLE
+memcpy(void *ptr_dst, const void *ptr_src, unsigned long n)
 {
     uint8_t *p;
     const uint8_t *q;
@@ -80,13 +80,13 @@ memcpy(void* ptr_dst, const void* ptr_src, unsigned long n)
 }
 
 int PURE
-strncmp(const char* s1, const char* s2, int n)
+strncmp(const char *s1, const char *s2, int n)
 {
     word_t i;
     int diff;
 
     for (i = 0; i < n; i++) {
-        diff = ((unsigned char*)s1)[i] - ((unsigned char*)s2)[i];
+        diff = ((unsigned char *)s1)[i] - ((unsigned char *)s2)[i];
         if (diff != 0 || s1[i] == '\0') {
             return diff;
         }
@@ -109,7 +109,7 @@ char_to_long(char c)
 }
 
 long PURE
-str_to_long(const char* str)
+str_to_long(const char *str)
 {
     unsigned int base;
     long res;

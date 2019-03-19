@@ -163,7 +163,7 @@ const char acpi_str_apic[] = {'A', 'P', 'I', 'C', 0};
 const char acpi_str_dmar[] = {'D', 'M', 'A', 'R', 0};
 
 BOOT_CODE static uint8_t
-acpi_calc_checksum(char* start, uint32_t length)
+acpi_calc_checksum(char *start, uint32_t length)
 {
     uint8_t checksum = 0;
 
@@ -175,25 +175,25 @@ acpi_calc_checksum(char* start, uint32_t length)
     return checksum;
 }
 
-BOOT_CODE static acpi_rsdp_t*
+BOOT_CODE static acpi_rsdp_t *
 acpi_get_rsdp(void)
 {
-    char* addr;
+    char *addr;
 
-    for (addr = (char*)BIOS_PADDR_START; addr < (char*)BIOS_PADDR_END; addr += 16) {
+    for (addr = (char *)BIOS_PADDR_START; addr < (char *)BIOS_PADDR_END; addr += 16) {
         if (strncmp(addr, acpi_str_rsd, 8) == 0) {
             if (acpi_calc_checksum(addr, ACPI_V1_SIZE) == 0) {
-                return (acpi_rsdp_t*)addr;
+                return (acpi_rsdp_t *)addr;
             }
         }
     }
     return NULL;
 }
 
-BOOT_CODE static void*
-acpi_table_init(void* entry, enum acpi_type table_type)
+BOOT_CODE static void *
+acpi_table_init(void *entry, enum acpi_type table_type)
 {
-    void* acpi_table;
+    void *acpi_table;
     unsigned int pages_for_table;
     unsigned int pages_for_header = 1;
 
@@ -208,12 +208,12 @@ acpi_table_init(void* entry, enum acpi_type table_type)
 
     switch (table_type) {
     case ACPI_RSDP: {
-        acpi_rsdp_t *rsdp_entry = (acpi_rsdp_t*)entry;
+        acpi_rsdp_t *rsdp_entry = (acpi_rsdp_t *)entry;
         pages_for_table = (rsdp_entry->length + offset_in_page) / MASK(LARGE_PAGE_BITS) + 1;
         break;
     }
     case ACPI_RSDT: { // RSDT, MADT, DMAR etc.
-        acpi_rsdt_t *rsdt_entry = (acpi_rsdt_t*)entry;
+        acpi_rsdt_t *rsdt_entry = (acpi_rsdt_t *)entry;
         pages_for_table = (rsdt_entry->header.length + offset_in_page) / MASK(LARGE_PAGE_BITS) + 1;
         break;
     }
@@ -232,7 +232,7 @@ acpi_table_init(void* entry, enum acpi_type table_type)
 BOOT_CODE bool_t
 acpi_init(acpi_rsdp_t *rsdp_data)
 {
-    acpi_rsdp_t* acpi_rsdp = acpi_get_rsdp();
+    acpi_rsdp_t *acpi_rsdp = acpi_get_rsdp();
 
     if (acpi_rsdp == NULL) {
         printf("BIOS: No ACPI support detected\n");
@@ -252,27 +252,27 @@ acpi_init(acpi_rsdp_t *rsdp_data)
 BOOT_CODE bool_t
 acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp)
 {
-    acpi_rsdt_t* acpi_rsdt;
-    acpi_rsdt_t* acpi_rsdt_mapped;
+    acpi_rsdt_t *acpi_rsdt;
+    acpi_rsdt_t *acpi_rsdt_mapped;
 
-    if (acpi_calc_checksum((char*)acpi_rsdp, ACPI_V1_SIZE) != 0) {
+    if (acpi_calc_checksum((char *)acpi_rsdp, ACPI_V1_SIZE) != 0) {
         printf("BIOS: ACPIv1 information corrupt\n");
         return false;
     }
 
-    if (acpi_rsdp->revision > 0 && acpi_calc_checksum((char*)acpi_rsdp, sizeof(*acpi_rsdp)) != 0) {
+    if (acpi_rsdp->revision > 0 && acpi_calc_checksum((char *)acpi_rsdp, sizeof(*acpi_rsdp)) != 0) {
         printf("BIOS: ACPIv2 information corrupt\n");
         return false;
     }
 
     /* verify the rsdt, even though we do not actually make use of the mapping right now */
-    acpi_rsdt = (acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address;
+    acpi_rsdt = (acpi_rsdt_t *)(word_t)acpi_rsdp->rsdt_address;
     printf("ACPI: RSDT paddr=%p\n", acpi_rsdt);
-    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init(acpi_rsdt, ACPI_RSDT);
+    acpi_rsdt_mapped = (acpi_rsdt_t *)acpi_table_init(acpi_rsdt, ACPI_RSDT);
     printf("ACPI: RSDT vaddr=%p\n", acpi_rsdt_mapped);
 
     assert(acpi_rsdt_mapped->header.length > 0);
-    if (acpi_calc_checksum((char*)acpi_rsdt_mapped, acpi_rsdt_mapped->header.length) != 0) {
+    if (acpi_calc_checksum((char *)acpi_rsdt_mapped, acpi_rsdt_mapped->header.length) != 0) {
         printf("ACPI: RSDT checksum failure\n");
         return false;
     }
@@ -282,21 +282,21 @@ acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp)
 
 BOOT_CODE uint32_t
 acpi_madt_scan(
-    acpi_rsdp_t* acpi_rsdp,
-    cpu_id_t*    cpu_list,
-    uint32_t*    num_ioapic,
-    paddr_t*     ioapic_paddrs
+    acpi_rsdp_t *acpi_rsdp,
+    cpu_id_t    *cpu_list,
+    uint32_t    *num_ioapic,
+    paddr_t     *ioapic_paddrs
 )
 {
     unsigned int entries;
     uint32_t            num_cpu;
     uint32_t            count;
-    acpi_madt_t*        acpi_madt;
-    acpi_madt_header_t* acpi_madt_header;
+    acpi_madt_t        *acpi_madt;
+    acpi_madt_header_t *acpi_madt_header;
 
-    acpi_rsdt_t* acpi_rsdt_mapped;
-    acpi_madt_t* acpi_madt_mapped;
-    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init((acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
+    acpi_rsdt_t *acpi_rsdt_mapped;
+    acpi_madt_t *acpi_madt_mapped;
+    acpi_rsdt_mapped = (acpi_rsdt_t *)acpi_table_init((acpi_rsdt_t *)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
 
     num_cpu = 0;
     *num_ioapic = 0;
@@ -305,8 +305,8 @@ acpi_madt_scan(
     /* Divide by uint32_t explicitly as this is the size as mandated by the ACPI standard */
     entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(uint32_t);
     for (count = 0; count < entries; count++) {
-        acpi_madt = (acpi_madt_t*)(word_t)acpi_rsdt_mapped->entry[count];
-        acpi_madt_mapped = (acpi_madt_t*)acpi_table_init(acpi_madt, ACPI_RSDT);
+        acpi_madt = (acpi_madt_t *)(word_t)acpi_rsdt_mapped->entry[count];
+        acpi_madt_mapped = (acpi_madt_t *)acpi_table_init(acpi_madt, ACPI_RSDT);
 
         if (strncmp(acpi_str_apic, acpi_madt_mapped->header.signature, 4) == 0) {
             printf("ACPI: MADT paddr=%p\n", acpi_madt);
@@ -314,9 +314,9 @@ acpi_madt_scan(
             printf("ACPI: MADT apic_addr=0x%x\n", acpi_madt_mapped->apic_addr);
             printf("ACPI: MADT flags=0x%x\n", acpi_madt_mapped->flags);
 
-            acpi_madt_header = (acpi_madt_header_t*)(acpi_madt_mapped + 1);
+            acpi_madt_header = (acpi_madt_header_t *)(acpi_madt_mapped + 1);
 
-            while ((char*)acpi_madt_header < (char*)acpi_madt_mapped + acpi_madt_mapped->header.length) {
+            while ((char *)acpi_madt_header < (char *)acpi_madt_mapped + acpi_madt_mapped->header.length) {
                 switch (acpi_madt_header->type) {
                 /* ACPI specifies the following rules when listing APIC IDs:
                  *  - Boot processor is listed first
@@ -327,8 +327,8 @@ acpi_madt_scan(
                  *    should be listed in X2APIC subtable */
                 case MADT_APIC: {
                     /* what Intel calls apic_id is what is called cpu_id in seL4! */
-                    uint8_t  cpu_id = ((acpi_madt_apic_t*)acpi_madt_header)->apic_id;
-                    uint32_t flags  = ((acpi_madt_apic_t*)acpi_madt_header)->flags;
+                    uint8_t  cpu_id = ((acpi_madt_apic_t *)acpi_madt_header)->apic_id;
+                    uint32_t flags  = ((acpi_madt_apic_t *)acpi_madt_header)->flags;
                     if (flags == 1) {
                         printf("ACPI: MADT_APIC apic_id=0x%x\n", cpu_id);
                         if (num_cpu == CONFIG_MAX_NUM_NODES) {
@@ -341,8 +341,8 @@ acpi_madt_scan(
                     break;
                 }
                 case MADT_x2APIC: {
-                    uint32_t cpu_id = ((acpi_madt_x2apic_t*)acpi_madt_header)->x2apic_id;
-                    uint32_t flags  = ((acpi_madt_x2apic_t*)acpi_madt_header)->flags;
+                    uint32_t cpu_id = ((acpi_madt_x2apic_t *)acpi_madt_header)->x2apic_id;
+                    uint32_t flags  = ((acpi_madt_x2apic_t *)acpi_madt_header)->flags;
                     if (flags == 1) {
                         printf("ACPI: MADT_x2APIC apic_id=0x%x\n", cpu_id);
                         if (num_cpu == CONFIG_MAX_NUM_NODES) {
@@ -357,28 +357,28 @@ acpi_madt_scan(
                 case MADT_IOAPIC:
                     printf(
                         "ACPI: MADT_IOAPIC ioapic_id=%d ioapic_addr=0x%x gsib=%d\n",
-                        ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_id,
-                        ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_addr,
-                        ((acpi_madt_ioapic_t*)acpi_madt_header)->gsib
+                        ((acpi_madt_ioapic_t *)acpi_madt_header)->ioapic_id,
+                        ((acpi_madt_ioapic_t *)acpi_madt_header)->ioapic_addr,
+                        ((acpi_madt_ioapic_t *)acpi_madt_header)->gsib
                     );
                     if (*num_ioapic == CONFIG_MAX_NUM_IOAPIC) {
                         printf("ACPI: Not recording this IOAPIC, only support %d\n", CONFIG_MAX_NUM_IOAPIC);
                     } else {
-                        ioapic_paddrs[*num_ioapic] = ((acpi_madt_ioapic_t*)acpi_madt_header)->ioapic_addr;
+                        ioapic_paddrs[*num_ioapic] = ((acpi_madt_ioapic_t *)acpi_madt_header)->ioapic_addr;
                         (*num_ioapic)++;
                     }
                     break;
                 case MADT_ISO:
                     printf("ACPI: MADT_ISO bus=%d source=%d gsi=%d flags=0x%x\n",
-                           ((acpi_madt_iso_t*)acpi_madt_header)->bus,
-                           ((acpi_madt_iso_t*)acpi_madt_header)->source,
-                           ((acpi_madt_iso_t*)acpi_madt_header)->gsi,
-                           ((acpi_madt_iso_t*)acpi_madt_header)->flags);
+                           ((acpi_madt_iso_t *)acpi_madt_header)->bus,
+                           ((acpi_madt_iso_t *)acpi_madt_header)->source,
+                           ((acpi_madt_iso_t *)acpi_madt_header)->gsi,
+                           ((acpi_madt_iso_t *)acpi_madt_header)->flags);
                     break;
                 default:
                     break;
                 }
-                acpi_madt_header = (acpi_madt_header_t*)((char*)acpi_madt_header + acpi_madt_header->length);
+                acpi_madt_header = (acpi_madt_header_t *)((char *)acpi_madt_header + acpi_madt_header->length);
             }
         }
     }
@@ -390,23 +390,23 @@ acpi_madt_scan(
 
 BOOT_CODE bool_t
 acpi_fadt_scan(
-    acpi_rsdp_t* acpi_rsdp
+    acpi_rsdp_t *acpi_rsdp
 )
 {
     unsigned int entries;
     uint32_t            count;
-    acpi_fadt_t*        acpi_fadt;
+    acpi_fadt_t        *acpi_fadt;
 
-    acpi_rsdt_t* acpi_rsdt_mapped;
-    acpi_fadt_t* acpi_fadt_mapped;
-    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init((acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
+    acpi_rsdt_t *acpi_rsdt_mapped;
+    acpi_fadt_t *acpi_fadt_mapped;
+    acpi_rsdt_mapped = (acpi_rsdt_t *)acpi_table_init((acpi_rsdt_t *)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
 
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
     /* Divide by uint32_t explicitly as this is the size as mandated by the ACPI standard */
     entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(uint32_t);
     for (count = 0; count < entries; count++) {
-        acpi_fadt = (acpi_fadt_t*)(word_t)acpi_rsdt_mapped->entry[count];
-        acpi_fadt_mapped = (acpi_fadt_t*)acpi_table_init(acpi_fadt, ACPI_RSDT);
+        acpi_fadt = (acpi_fadt_t *)(word_t)acpi_rsdt_mapped->entry[count];
+        acpi_fadt_mapped = (acpi_fadt_t *)acpi_table_init(acpi_fadt, ACPI_RSDT);
 
         if (strncmp(acpi_str_fadt, acpi_fadt_mapped->header.signature, 4) == 0) {
             printf("ACPI: FADT paddr=%p\n", acpi_fadt);
@@ -426,9 +426,9 @@ acpi_fadt_scan(
 
 BOOT_CODE void
 acpi_dmar_scan(
-    acpi_rsdp_t* acpi_rsdp,
-    paddr_t*     drhu_list,
-    uint32_t*    num_drhu,
+    acpi_rsdp_t *acpi_rsdp,
+    paddr_t     *drhu_list,
+    uint32_t    *num_drhu,
     uint32_t     max_drhu_list_len,
     acpi_rmrr_list_t *rmrr_list
 )
@@ -440,15 +440,15 @@ acpi_dmar_scan(
     int rmrr_count;
     dev_id_t dev_id;
 
-    acpi_dmar_t*          acpi_dmar;
-    acpi_dmar_header_t*   acpi_dmar_header;
-    acpi_dmar_rmrr_t*     acpi_dmar_rmrr;
-    acpi_dmar_devscope_t* acpi_dmar_devscope;
+    acpi_dmar_t          *acpi_dmar;
+    acpi_dmar_header_t   *acpi_dmar_header;
+    acpi_dmar_rmrr_t     *acpi_dmar_rmrr;
+    acpi_dmar_devscope_t *acpi_dmar_devscope;
 
-    acpi_rsdt_t* acpi_rsdt_mapped;
-    acpi_dmar_t* acpi_dmar_mapped;
+    acpi_rsdt_t *acpi_rsdt_mapped;
+    acpi_dmar_t *acpi_dmar_mapped;
 
-    acpi_rsdt_mapped = (acpi_rsdt_t*)acpi_table_init((acpi_rsdt_t*)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
+    acpi_rsdt_mapped = (acpi_rsdt_t *)acpi_table_init((acpi_rsdt_t *)(word_t)acpi_rsdp->rsdt_address, ACPI_RSDT);
 
     *num_drhu = 0;
     rmrr_count = 0;
@@ -456,16 +456,16 @@ acpi_dmar_scan(
     assert(acpi_rsdt_mapped->header.length >= sizeof(acpi_header_t));
     entries = (acpi_rsdt_mapped->header.length - sizeof(acpi_header_t)) / sizeof(uint32_t);
     for (count = 0; count < entries; count++) {
-        acpi_dmar = (acpi_dmar_t*)(word_t)acpi_rsdt_mapped->entry[count];
-        acpi_dmar_mapped = (acpi_dmar_t*)acpi_table_init(acpi_dmar, ACPI_RSDT);
+        acpi_dmar = (acpi_dmar_t *)(word_t)acpi_rsdt_mapped->entry[count];
+        acpi_dmar_mapped = (acpi_dmar_t *)acpi_table_init(acpi_dmar, ACPI_RSDT);
 
         if (strncmp(acpi_str_dmar, acpi_dmar_mapped->header.signature, 4) == 0) {
             printf("ACPI: DMAR paddr=%p\n", acpi_dmar);
             printf("ACPI: DMAR vaddr=%p\n", acpi_dmar_mapped);
             printf("ACPI: IOMMU host address width: %d\n", acpi_dmar_mapped->host_addr_width + 1);
-            acpi_dmar_header = (acpi_dmar_header_t*)(acpi_dmar_mapped + 1);
+            acpi_dmar_header = (acpi_dmar_header_t *)(acpi_dmar_mapped + 1);
 
-            while ((char*)acpi_dmar_header < (char*)acpi_dmar_mapped + acpi_dmar_mapped->header.length) {
+            while ((char *)acpi_dmar_header < (char *)acpi_dmar_mapped + acpi_dmar_mapped->header.length) {
                 switch (acpi_dmar_header->type) {
 
                 case DMAR_DRHD:
@@ -475,8 +475,8 @@ acpi_dmar_scan(
                         *num_drhu = 0; /* report zero IOMMUs */
                         return;
                     }
-                    reg_basel = ((acpi_dmar_drhd_t*)acpi_dmar_header)->reg_base[0];
-                    reg_baseh = ((acpi_dmar_drhd_t*)acpi_dmar_header)->reg_base[1];
+                    reg_basel = ((acpi_dmar_drhd_t *)acpi_dmar_header)->reg_base[0];
+                    reg_baseh = ((acpi_dmar_drhd_t *)acpi_dmar_header)->reg_base[1];
                     /* check if value fits into uint32_t */
                     if (reg_baseh != 0) {
                         printf("ACPI: DMAR_DRHD reg_base exceeds 32 bit, disabling IOMMU support\n");
@@ -490,7 +490,7 @@ acpi_dmar_scan(
 
                 case DMAR_RMRR:
                     /* loop through all device scopes of this RMRR */
-                    acpi_dmar_rmrr = (acpi_dmar_rmrr_t*)acpi_dmar_header;
+                    acpi_dmar_rmrr = (acpi_dmar_rmrr_t *)acpi_dmar_header;
                     if (acpi_dmar_rmrr->reg_base[1] != 0 ||
                             acpi_dmar_rmrr->reg_limit[1] != 0) {
                         printf("ACPI: RMRR device above 4GiB, disabling IOMMU support\n");
@@ -547,7 +547,7 @@ acpi_dmar_scan(
                 default:
                     printf("ACPI: Unknown DMA remapping structure type: %x\n", acpi_dmar_header->type);
                 }
-                acpi_dmar_header = (acpi_dmar_header_t*)((char*)acpi_dmar_header + acpi_dmar_header->length);
+                acpi_dmar_header = (acpi_dmar_header_t *)((char *)acpi_dmar_header + acpi_dmar_header->length);
             }
         }
     }

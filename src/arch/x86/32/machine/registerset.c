@@ -27,7 +27,7 @@ const register_t gpRegisters[] = {
     TLS_BASE, FS, GS
 };
 
-void Mode_initContext(user_context_t* context)
+void Mode_initContext(user_context_t *context)
 {
     context->registers[EAX] = 0;
     context->registers[EBX] = 0;

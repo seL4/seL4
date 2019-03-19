@@ -84,7 +84,7 @@ seL4_Signal(seL4_CPtr dest)
 }
 
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_Recv(seL4_CPtr src, seL4_Word* sender)
+seL4_Recv(seL4_CPtr src, seL4_Word *sender)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -108,7 +108,7 @@ seL4_Recv(seL4_CPtr src, seL4_Word* sender)
 }
 
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_RecvWithMRs(seL4_CPtr src, seL4_Word* sender,
+seL4_RecvWithMRs(seL4_CPtr src, seL4_Word *sender,
                  seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
     seL4_MessageInfo_t info;
@@ -141,7 +141,7 @@ seL4_RecvWithMRs(seL4_CPtr src, seL4_Word* sender,
 }
 
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_NBRecv(seL4_CPtr src, seL4_Word* sender)
+seL4_NBRecv(seL4_CPtr src, seL4_Word *sender)
 {
     seL4_MessageInfo_t info;
     seL4_Word badge;
@@ -413,7 +413,7 @@ LIBSEL4_INLINE_FUNC void
 seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 {
 
-    strcpy((char*)seL4_GetIPCBuffer()->msg, name);
+    strcpy((char *)seL4_GetIPCBuffer()->msg, name);
 
     seL4_Word unused0 = 0;
     seL4_Word unused1 = 0;
@@ -428,7 +428,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 
 #if defined(CONFIG_DANGEROUS_CODE_INJECTION)
 LIBSEL4_INLINE_FUNC void
-seL4_DebugRun(void (*userfn)(void *), void* userarg)
+seL4_DebugRun(void (*userfn)(void *), void *userarg)
 {
     x64_sys_send_null(seL4_SysDebugRun, (seL4_Word)userfn, (seL4_Word)userarg);
     asm volatile("" ::: "memory");

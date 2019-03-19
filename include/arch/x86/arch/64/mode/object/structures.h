@@ -190,7 +190,7 @@ cap_get_modeCapIsPhysical(cap_t cap)
     }
 }
 
-static inline void * CONST
+static inline void *CONST
 cap_get_modeCapPtr(cap_t cap)
 {
     cap_tag_t ctag;

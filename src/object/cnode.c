@@ -35,7 +35,7 @@ typedef struct finaliseSlot_ret finaliseSlot_ret_t;
 
 static finaliseSlot_ret_t finaliseSlot(cte_t *slot, bool_t exposed);
 static void emptySlot(cte_t *slot, cap_t cleanupInfo);
-static exception_t reduceZombie(cte_t* slot, bool_t exposed);
+static exception_t reduceZombie(cte_t *slot, bool_t exposed);
 
 exception_t
 decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
@@ -326,7 +326,7 @@ invokeCNodeCancelBadgedSends(cap_t cap)
 {
     word_t badge = cap_endpoint_cap_get_capEPBadge(cap);
     if (badge) {
-        endpoint_t* ep = (endpoint_t*)
+        endpoint_t *ep = (endpoint_t *)
                          cap_endpoint_cap_get_capEPPtr(cap);
         cancelBadgedSends(ep, badge);
     }
@@ -429,8 +429,8 @@ cteInsert(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
     /* Haskell error: "cteInsert to non-empty destination" */
     assert(cap_get_capType(destSlot->cap) == cap_null_cap);
     /* Haskell error: "cteInsert: mdb entry must be empty" */
-    assert((cte_t*)mdb_node_get_mdbNext(destSlot->cteMDBNode) == NULL &&
-           (cte_t*)mdb_node_get_mdbPrev(destSlot->cteMDBNode) == NULL);
+    assert((cte_t *)mdb_node_get_mdbNext(destSlot->cteMDBNode) == NULL &&
+           (cte_t *)mdb_node_get_mdbPrev(destSlot->cteMDBNode) == NULL);
 
     /* Prevent parent untyped cap from being used again if creating a child
      * untyped from it. */
@@ -455,8 +455,8 @@ cteMove(cap_t newCap, cte_t *srcSlot, cte_t *destSlot)
     /* Haskell error: "cteMove to non-empty destination" */
     assert(cap_get_capType(destSlot->cap) == cap_null_cap);
     /* Haskell error: "cteMove: mdb entry must be empty" */
-    assert((cte_t*)mdb_node_get_mdbNext(destSlot->cteMDBNode) == NULL &&
-           (cte_t*)mdb_node_get_mdbPrev(destSlot->cteMDBNode) == NULL);
+    assert((cte_t *)mdb_node_get_mdbNext(destSlot->cteMDBNode) == NULL &&
+           (cte_t *)mdb_node_get_mdbPrev(destSlot->cteMDBNode) == NULL);
 
     mdb = srcSlot->cteMDBNode;
     destSlot->cap = newCap;
@@ -602,14 +602,14 @@ emptySlot(cte_t *slot, cap_t cleanupInfo)
 }
 
 static inline bool_t CONST
-capRemovable(cap_t cap, cte_t* slot)
+capRemovable(cap_t cap, cte_t *slot)
 {
     switch (cap_get_capType(cap)) {
     case cap_null_cap:
         return true;
     case cap_zombie_cap: {
         word_t n = cap_zombie_cap_get_capZombieNumber(cap);
-        cte_t* z_slot = (cte_t*)cap_zombie_cap_get_capZombiePtr(cap);
+        cte_t *z_slot = (cte_t *)cap_zombie_cap_get_capZombiePtr(cap);
         return (n == 0 || (n == 1 && slot == z_slot));
     }
     default:
@@ -675,14 +675,14 @@ finaliseSlot(cte_t *slot, bool_t immediate)
 }
 
 static exception_t
-reduceZombie(cte_t* slot, bool_t immediate)
+reduceZombie(cte_t *slot, bool_t immediate)
 {
-    cte_t* ptr;
+    cte_t *ptr;
     word_t n, type;
     exception_t status;
 
     assert(cap_get_capType(slot->cap) == cap_zombie_cap);
-    ptr = (cte_t*)cap_zombie_cap_get_capZombiePtr(slot->cap);
+    ptr = (cte_t *)cap_zombie_cap_get_capZombiePtr(slot->cap);
     n = cap_zombie_cap_get_capZombieNumber(slot->cap);
     type = cap_zombie_cap_get_capZombieType(slot->cap);
 
@@ -690,7 +690,7 @@ reduceZombie(cte_t* slot, bool_t immediate)
     assert(n > 0);
 
     if (immediate) {
-        cte_t* endSlot = &ptr[n - 1];
+        cte_t *endSlot = &ptr[n - 1];
 
         status = cteDelete(endSlot, false);
         if (status != EXCEPTION_NONE) {
@@ -702,8 +702,8 @@ reduceZombie(cte_t* slot, bool_t immediate)
             break;
 
         case cap_zombie_cap: {
-            cte_t* ptr2 =
-                (cte_t*)cap_zombie_cap_get_capZombiePtr(slot->cap);
+            cte_t *ptr2 =
+                (cte_t *)cap_zombie_cap_get_capZombiePtr(slot->cap);
 
             if (ptr == ptr2 &&
                     cap_zombie_cap_get_capZombieNumber(slot->cap) == n &&
@@ -738,7 +738,7 @@ reduceZombie(cte_t* slot, bool_t immediate)
 }
 
 void
-cteDeleteOne(cte_t* slot)
+cteDeleteOne(cte_t *slot)
 {
     word_t cap_type = cap_get_capType(slot->cap);
     if (cap_type != cap_null_cap) {

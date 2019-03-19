@@ -58,7 +58,7 @@ seL4_Send(seL4_CPtr dest, seL4_MessageInfo_t msgInfo);
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_Recv(seL4_CPtr src, seL4_Word* sender);
+seL4_Recv(seL4_CPtr src, seL4_Word *sender);
 
 /**
  * @xmlonly <manual name="Call" label="sel4_call"/> @endxmlonly
@@ -155,7 +155,7 @@ seL4_ReplyRecv(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender);
  * @endxmlonly
  */
 LIBSEL4_INLINE_FUNC seL4_MessageInfo_t
-seL4_NBRecv(seL4_CPtr src, seL4_Word* sender);
+seL4_NBRecv(seL4_CPtr src, seL4_Word *sender);
 
 /**
  * @xmlonly <manual name="Yield" label="sel4_yield"/> @endxmlonly
@@ -355,7 +355,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
  *
  */
 LIBSEL4_INLINE_FUNC void
-seL4_DebugRun(void (* userfn)(void *), void* userarg);
+seL4_DebugRun(void (* userfn)(void *), void *userarg);
 #endif
 /** @} */
 

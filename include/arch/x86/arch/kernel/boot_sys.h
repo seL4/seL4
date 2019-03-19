@@ -16,7 +16,7 @@
 
 void boot_sys(
     unsigned long multiboot_magic,
-    void * multiboot
+    void *multiboot
 );
 
 #endif

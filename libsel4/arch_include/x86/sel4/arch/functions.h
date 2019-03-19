@@ -67,7 +67,7 @@ seL4_SetCap(int i, seL4_CPtr cptr)
 }
 
 LIBSEL4_INLINE_FUNC void
-seL4_GetCapReceivePath(seL4_CPtr* receiveCNode, seL4_CPtr* receiveIndex, seL4_Word* receiveDepth)
+seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex, seL4_Word *receiveDepth)
 {
     if (receiveCNode != seL4_Null) {
         SEL4_GET_IPCBUF(receiveCNode, *receiveCNode);
@@ -90,7 +90,7 @@ seL4_SetCapReceivePath(seL4_CPtr receiveCNode, seL4_CPtr receiveIndex, seL4_Word
     SEL4_SET_IPCBUF(receiveDepth, receiveDepth);
 }
 
-LIBSEL4_INLINE_FUNC seL4_IPCBuffer*
+LIBSEL4_INLINE_FUNC seL4_IPCBuffer *
 seL4_GetIPCBuffer(void)
 {
     /* Assume that the address of our IPC buffer is in the user data word. Our
@@ -99,7 +99,7 @@ seL4_GetIPCBuffer(void)
      * something else, but should then be aware they lose the functionality of
      * this function.
      */
-    return (seL4_IPCBuffer*)seL4_GetUserData();
+    return (seL4_IPCBuffer *)seL4_GetUserData();
 }
 
 #endif

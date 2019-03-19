@@ -176,8 +176,8 @@ create_irq_cnode(void)
         printf("Kernel init failing: could not create irq cnode\n");
         return false;
     }
-    memzero((void*)pptr, 1 << IRQ_CNODE_BITS);
-    intStateIRQNode = (cte_t*)pptr;
+    memzero((void *)pptr, 1 << IRQ_CNODE_BITS);
+    intStateIRQNode = (cte_t *)pptr;
     return true;
 }
 
@@ -217,7 +217,7 @@ create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr)
         printf("Kernel init failing: could not create ipc buffer frame\n");
         return cap_null_cap_new();
     }
-    clearMemory((void*)pptr, PAGE_BITS);
+    clearMemory((void *)pptr, PAGE_BITS);
 
     /* create a cap of it and write it into the root CNode */
     cap = create_mapped_it_frame_cap(pd_cap, pptr, vptr, IT_ASID, false, false);
@@ -258,7 +258,7 @@ allocate_extra_bi_region(word_t extra_size)
         return REG_EMPTY;
     }
 
-    clearMemory((void*)pptr, size_bits);
+    clearMemory((void *)pptr, size_bits);
     ndks_boot.bi_frame->extraLen = BIT(size_bits);
 
     return (region_t) {
@@ -281,7 +281,7 @@ allocate_bi_frame(
         printf("Kernel init failed: could not allocate bootinfo frame\n");
         return 0;
     }
-    clearMemory((void*)pptr, BI_FRAME_SIZE_BITS);
+    clearMemory((void *)pptr, BI_FRAME_SIZE_BITS);
 
     /* initialise bootinfo-related global state */
     ndks_boot.bi_frame = BI_PTR(pptr);
@@ -330,7 +330,7 @@ create_frames_of_region(
 
     for (f = reg.start; f < reg.end; f += BIT(PAGE_BITS)) {
         if (do_map) {
-            frame_cap = create_mapped_it_frame_cap(pd_cap, f, pptr_to_paddr((void*)(f - pv_offset)), IT_ASID, false, true);
+            frame_cap = create_mapped_it_frame_cap(pd_cap, f, pptr_to_paddr((void *)(f - pv_offset)), IT_ASID, false, true);
         } else {
             frame_cap = create_unmapped_it_frame_cap(f, false);
         }
@@ -410,7 +410,7 @@ create_initial_thread(
 {
     pptr_t pptr;
     cap_t  cap;
-    tcb_t* tcb;
+    tcb_t *tcb;
     deriveCap_ret_t dc_ret;
 
     /* allocate TCB */
@@ -419,7 +419,7 @@ create_initial_thread(
         printf("Kernel init failed: Unable to allocate tcb for initial thread\n");
         return NULL;
     }
-    memzero((void*)pptr, 1 << seL4_TCBBits);
+    memzero((void *)pptr, 1 << seL4_TCBBits);
     tcb = TCB_PTR(pptr + TCB_OFFSET);
     tcb->tcbTimeSlice = CONFIG_TIME_SLICE;
     Arch_initContext(&tcb->tcbArch.tcbContext);
@@ -511,7 +511,7 @@ provide_untyped_cap(
     word_t i = ndks_boot.slot_pos_cur - first_untyped_slot;
     if (i < CONFIG_MAX_NUM_BOOTINFO_UNTYPED_CAPS) {
         ndks_boot.bi_frame->untypedList[i] = (seL4_UntypedDesc) {
-            pptr_to_paddr((void*)pptr), 0, 0, size_bits, device_memory
+            pptr_to_paddr((void *)pptr), 0, 0, size_bits, device_memory
         };
         ut_cap = cap_untyped_cap_new(MAX_FREE_INDEX(size_bits),
                                      device_memory, size_bits, pptr);

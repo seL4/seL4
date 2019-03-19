@@ -33,7 +33,7 @@
 #define tcbArchCNodeEntries tcbCNodeEntries
 
 struct asid_pool {
-    pte_t* array[BIT(asidLowBits)];
+    pte_t *array[BIT(asidLowBits)];
 };
 
 typedef struct asid_pool asid_pool_t;
@@ -130,7 +130,7 @@ cap_get_archCapSizeBits(cap_t cap)
     }
 }
 
-static inline void * CONST
+static inline void *CONST
 cap_get_archCapPtr(cap_t cap)
 {
     cap_tag_t ctag;

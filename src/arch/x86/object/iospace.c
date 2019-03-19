@@ -42,15 +42,15 @@ master_iospace_cap(void)
         );
 }
 
-static vtd_cte_t*
+static vtd_cte_t *
 lookup_vtd_context_slot(cap_t cap)
 {
     uint32_t   vtd_root_index;
     uint32_t   vtd_context_index;
     uint32_t   pci_request_id;
-    vtd_rte_t* vtd_root_slot;
-    vtd_cte_t* vtd_context;
-    vtd_cte_t* vtd_context_slot;
+    vtd_rte_t *vtd_root_slot;
+    vtd_cte_t *vtd_context;
+    vtd_cte_t *vtd_context_slot;
 
     switch (cap_get_capType(cap)) {
     case cap_io_space_cap:
@@ -72,7 +72,7 @@ lookup_vtd_context_slot(cap_t cap)
     vtd_root_index = get_pci_bus(pci_request_id);
     vtd_root_slot = x86KSvtdRootTable + vtd_root_index;
 
-    vtd_context = (vtd_cte_t*)paddr_to_pptr(vtd_rte_ptr_get_ctp(vtd_root_slot));
+    vtd_context = (vtd_cte_t *)paddr_to_pptr(vtd_rte_ptr_get_ctp(vtd_root_slot));
     vtd_context_index = (get_pci_dev(pci_request_id) << 3) | get_pci_fun(pci_request_id);
     vtd_context_slot = &vtd_context[vtd_context_index];
 
@@ -111,7 +111,7 @@ lookupIOPTSlot_resolve_levels(vtd_pte_t *iopt, word_t translation,
 
 
 static inline lookupIOPTSlot_ret_t
-lookupIOPTSlot(vtd_pte_t* iopt, word_t io_address)
+lookupIOPTSlot(vtd_pte_t *iopt, word_t io_address)
 {
     lookupIOPTSlot_ret_t ret;
 
@@ -180,10 +180,10 @@ exception_t
 decodeX86IOPTInvocation(
     word_t       invLabel,
     word_t       length,
-    cte_t*       slot,
+    cte_t       *slot,
     cap_t        cap,
     extra_caps_t excaps,
-    word_t*      buffer
+    word_t      *buffer
 )
 {
     cap_t      io_space;
@@ -191,8 +191,8 @@ decodeX86IOPTInvocation(
     uint32_t   pci_request_id;
     word_t   io_address;
     uint16_t   domain_id;
-    vtd_cte_t* vtd_context_slot;
-    vtd_pte_t* vtd_pte;
+    vtd_cte_t *vtd_context_slot;
+    vtd_pte_t *vtd_pte;
 
     if (invLabel == X86IOPageTableUnmap) {
 
@@ -309,17 +309,17 @@ performX86IOInvocationMap(cap_t cap, cte_t *ctSlot, vtd_pte_t iopte, vtd_pte_t *
 exception_t
 decodeX86IOMapInvocation(
     word_t       length,
-    cte_t*       slot,
+    cte_t       *slot,
     cap_t        cap,
     extra_caps_t excaps,
-    word_t*      buffer
+    word_t      *buffer
 )
 {
     cap_t      io_space;
     word_t     io_address;
     uint32_t   pci_request_id;
-    vtd_cte_t* vtd_context_slot;
-    vtd_pte_t* vtd_pte;
+    vtd_cte_t *vtd_context_slot;
+    vtd_pte_t *vtd_pte;
     vtd_pte_t  iopte;
     paddr_t    paddr;
     lookupIOPTSlot_ret_t lu_ret;
@@ -348,7 +348,7 @@ decodeX86IOMapInvocation(
 
     io_space    = excaps.excaprefs[0]->cap;
     io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
-    paddr       = pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap));
+    paddr       = pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap));
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
         userError("X86PageMapIO: Invalid IO space capability.");
@@ -375,7 +375,7 @@ decodeX86IOMapInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
+    vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
     lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
     if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {
         current_syscall_error.type = seL4_FailedLookup;
@@ -414,8 +414,8 @@ void deleteIOPageTable(cap_t io_pt_cap)
     lookupIOPTSlot_ret_t lu_ret;
     uint32_t             level;
     word_t               io_address;
-    vtd_cte_t*           vtd_context_slot;
-    vtd_pte_t*           vtd_pte;
+    vtd_cte_t           *vtd_context_slot;
+    vtd_pte_t           *vtd_pte;
 
     if (cap_io_page_table_cap_get_capIOPTIsMapped(io_pt_cap)) {
         io_pt_cap = cap_io_page_table_cap_set_capIOPTIsMapped(io_pt_cap, 0);
@@ -426,7 +426,7 @@ void deleteIOPageTable(cap_t io_pt_cap)
             return;
         }
 
-        vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
+        vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
 
         if (level == 0) {
             /* if we have been overmapped or something */
@@ -468,8 +468,8 @@ void unmapIOPage(cap_t cap)
 {
     lookupIOPTSlot_ret_t lu_ret;
     word_t               io_address;
-    vtd_cte_t*           vtd_context_slot;
-    vtd_pte_t*           vtd_pte;
+    vtd_cte_t           *vtd_context_slot;
+    vtd_pte_t           *vtd_pte;
 
     io_address  = cap_frame_cap_get_capFMappedAddress(cap);
     vtd_context_slot = lookup_vtd_context_slot(cap);
@@ -479,7 +479,7 @@ void unmapIOPage(cap_t cap)
         return;
     }
 
-    vtd_pte = (vtd_pte_t*)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
+    vtd_pte = (vtd_pte_t *)paddr_to_pptr(vtd_cte_ptr_get_asr(vtd_context_slot));
 
     lu_ret  = lookupIOPTSlot(vtd_pte, io_address);
     if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {

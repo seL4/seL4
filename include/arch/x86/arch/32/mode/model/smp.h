@@ -20,7 +20,7 @@
 extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BITS)];
 
 /* Get current stack pointer */
-static inline void*
+static inline void *
 getCurESP(void)
 {
     word_t stack;

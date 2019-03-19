@@ -297,7 +297,7 @@ deleteCallerCap(tcb_t *receiver)
 extra_caps_t current_extra_caps;
 
 exception_t
-lookupExtraCaps(tcb_t* thread, word_t *bufferPtr, seL4_MessageInfo_t info)
+lookupExtraCaps(tcb_t *thread, word_t *bufferPtr, seL4_MessageInfo_t info)
 {
     lookupSlot_raw_ret_t lu_ret;
     cptr_t cptr;
@@ -697,7 +697,7 @@ decodeSetTLSBase(cap_t cap, word_t length, word_t *buffer)
  * spec. */
 exception_t
 decodeTCBInvocation(word_t invLabel, word_t length, cap_t cap,
-                    cte_t* slot, extra_caps_t excaps, bool_t call,
+                    cte_t *slot, extra_caps_t excaps, bool_t call,
                     word_t *buffer)
 {
     /* Stall the core if we are operating on a remote TCB that is currently running */
@@ -842,7 +842,7 @@ decodeReadRegisters(cap_t cap, word_t length, bool_t call,
                     word_t *buffer)
 {
     word_t transferArch, flags, n;
-    tcb_t* thread;
+    tcb_t *thread;
 
     if (length < 2) {
         userError("TCB ReadRegisters: Truncated message.");
@@ -888,7 +888,7 @@ decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 {
     word_t flags, w;
     word_t transferArch;
-    tcb_t* thread;
+    tcb_t *thread;
 
     if (length < 2) {
         userError("TCB WriteRegisters: Truncated message.");
@@ -924,7 +924,7 @@ decodeWriteRegisters(cap_t cap, word_t length, word_t *buffer)
 /* SetPriority, SetMCPriority, SetSchedParams, SetIPCBuffer and SetSpace are all
  * specialisations of TCBConfigure. */
 exception_t
-decodeTCBConfigure(cap_t cap, word_t length, cte_t* slot,
+decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
                    extra_caps_t rootCaps, word_t *buffer)
 {
     cte_t *bufferSlot, *cRootSlot, *vRootSlot;
@@ -1142,7 +1142,7 @@ decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, word_t *buff
 
 
 exception_t
-decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
+decodeSetIPCBuffer(cap_t cap, word_t length, cte_t *slot,
                    extra_caps_t excaps, word_t *buffer)
 {
     cptr_t cptr_bufferPtr;
@@ -1187,7 +1187,7 @@ decodeSetIPCBuffer(cap_t cap, word_t length, cte_t* slot,
 }
 
 exception_t
-decodeSetSpace(cap_t cap, word_t length, cte_t* slot,
+decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
                extra_caps_t excaps, word_t *buffer)
 {
     cptr_t faultEP;
@@ -1345,8 +1345,8 @@ decodeBindNotification(cap_t cap, extra_caps_t excaps)
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if ((tcb_t*)notification_ptr_get_ntfnQueue_head(ntfnPtr)
-            || (tcb_t*)notification_ptr_get_ntfnBoundTCB(ntfnPtr)) {
+    if ((tcb_t *)notification_ptr_get_ntfnQueue_head(ntfnPtr)
+            || (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr)) {
         userError("TCB BindNotification: Notification cannot be bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1391,7 +1391,7 @@ invokeTCB_Resume(tcb_t *thread)
 }
 
 exception_t
-invokeTCB_ThreadControl(tcb_t *target, cte_t* slot,
+invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
                         cptr_t faultep, prio_t mcp, prio_t priority,
                         cap_t cRoot_newCap, cte_t *cRoot_srcSlot,
                         cap_t vRoot_newCap, cte_t *vRoot_srcSlot,

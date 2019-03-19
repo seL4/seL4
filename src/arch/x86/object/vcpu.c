@@ -109,7 +109,7 @@ static void
 vmclear(void *vmcs_ptr)
 {
     uint64_t physical_address;
-    physical_address = pptr_to_paddr((void*)vmcs_ptr);
+    physical_address = pptr_to_paddr((void *)vmcs_ptr);
     asm volatile(
         "vmclear %0"
         :
@@ -563,7 +563,7 @@ invokeEnableIOPort(vcpu_t *vcpu, cte_t *slot, cap_t cap, uint16_t low, uint16_t 
 }
 
 static exception_t
-decodeEnableIOPort(cap_t cap, word_t length, word_t* buffer, extra_caps_t excaps)
+decodeEnableIOPort(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
 {
     vcpu_t *vcpu;
     cap_t ioCap;
@@ -614,7 +614,7 @@ invokeDisableIOPort(vcpu_t *vcpu, uint16_t low, uint16_t high)
 }
 
 static exception_t
-decodeDisableIOPort(cap_t cap, word_t length, word_t* buffer)
+decodeDisableIOPort(cap_t cap, word_t length, word_t *buffer)
 {
     vcpu_t *vcpu;
     uint16_t low, high;
@@ -662,7 +662,7 @@ invokeWriteVMCS(vcpu_t *vcpu, word_t *buffer, word_t field, word_t value)
 }
 
 static exception_t
-decodeWriteVMCS(cap_t cap, word_t length, word_t* buffer)
+decodeWriteVMCS(cap_t cap, word_t length, word_t *buffer)
 {
     word_t field;
     word_t value;
@@ -799,7 +799,7 @@ invokeReadVMCS(vcpu_t *vcpu, word_t field, word_t *buffer)
 }
 
 static exception_t
-decodeReadVMCS(cap_t cap, word_t length, word_t* buffer)
+decodeReadVMCS(cap_t cap, word_t length, word_t *buffer)
 {
     if (length < 1) {
         userError("VCPU ReadVMCS: Not enough arguments.");
@@ -908,7 +908,7 @@ invokeSetTCB(vcpu_t *vcpu, tcb_t *tcb)
 }
 
 static exception_t
-decodeSetTCB(cap_t cap, word_t length, word_t* buffer, extra_caps_t excaps)
+decodeSetTCB(cap_t cap, word_t length, word_t *buffer, extra_caps_t excaps)
 {
     cap_t tcbCap;
     if (excaps.excaprefs[0] == NULL) {
@@ -971,10 +971,10 @@ decodeX86VCPUInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (invLabel) {
@@ -1352,7 +1352,7 @@ invvpid_context(uint16_t vpid)
 }
 
 static void
-setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
+setEPTRoot(cap_t vmxSpace, vcpu_t *vcpu)
 {
     paddr_t ept_root;
     if (cap_get_capType(vmxSpace) != cap_ept_pml4_cap ||
@@ -1362,7 +1362,7 @@ setEPTRoot(cap_t vmxSpace, vcpu_t* vcpu)
         findEPTForASID_ret_t find_ret;
         ept_pml4e_t *pml4;
 
-        pml4 = (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(vmxSpace);
+        pml4 = (ept_pml4e_t *)cap_ept_pml4_cap_get_capPML4BasePtr(vmxSpace);
         find_ret = findEPTForASID(cap_ept_pml4_cap_get_capPML4MappedASID(vmxSpace));
         if (find_ret.status != EXCEPTION_NONE || find_ret.ept != pml4) {
             ept_root = kpptr_to_paddr(null_ept_space);
@@ -1556,7 +1556,7 @@ invept(ept_pml4e_t *ept_pml4)
             return;
         }
 
-        address.parts[0] = pptr_to_paddr((void*)ept_pml4);
+        address.parts[0] = pptr_to_paddr((void *)ept_pml4);
         address.parts[1] = 0;
         asm volatile(
             "invept %0, %1"

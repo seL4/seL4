@@ -102,12 +102,12 @@ uint32_t CONST getCacheLineSize(void);
 uint32_t CONST getCacheLineSizeBits(void);
 
 /* Flushes a specific memory range from the CPU cache */
-static inline void flushCacheLine(volatile void* vaddr)
+static inline void flushCacheLine(volatile void *vaddr)
 {
     asm volatile("clflush %[vaddr]" : [vaddr] "+m"(*((volatile char *)vaddr)));
 }
 
-void flushCacheRange(void* vaddr, uint32_t size_bits);
+void flushCacheRange(void *vaddr, uint32_t size_bits);
 
 /* Disables a variety of prefetchers */
 bool_t disablePrefetchers(void);

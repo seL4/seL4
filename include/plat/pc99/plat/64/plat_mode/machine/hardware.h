@@ -85,11 +85,11 @@ compile_assert(user_top_tlbbitmap_no_overlap, GET_PML4_INDEX(PPTR_USER_TOP) != G
  * paddr_to_kpptr converts physical address to the second small kernel
  * window which locates at the top 2GiB.
  */
-static inline void* CONST
+static inline void *CONST
 paddr_to_kpptr(paddr_t paddr)
 {
     assert(paddr < PADDR_HIGH_TOP);
-    return (void*)(paddr + KERNEL_BASE_OFFSET);
+    return (void *)(paddr + KERNEL_BASE_OFFSET);
 }
 
 static inline paddr_t CONST

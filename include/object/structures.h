@@ -258,11 +258,11 @@ struct tcb {
 #endif /* ENABLE_SMP_SUPPORT */
 
     /* Previous and next pointers for scheduler queues , 8 bytes */
-    struct tcb* tcbSchedNext;
-    struct tcb* tcbSchedPrev;
+    struct tcb *tcbSchedNext;
+    struct tcb *tcbSchedPrev;
     /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
-    struct tcb* tcbEPNext;
-    struct tcb* tcbEPPrev;
+    struct tcb *tcbEPNext;
+    struct tcb *tcbEPPrev;
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_util_t benchmark;
@@ -399,7 +399,7 @@ cap_get_capIsPhysical(cap_t cap)
     }
 }
 
-static inline void * CONST
+static inline void *CONST
 cap_get_capPtr(cap_t cap)
 {
     cap_tag_t ctag;

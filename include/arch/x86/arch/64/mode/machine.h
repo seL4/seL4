@@ -113,10 +113,10 @@ static inline void setCurrentUserVSpaceRoot(paddr_t addr, word_t pcid)
 }
 
 /* GDT installation */
-void x64_install_gdt(gdt_idt_ptr_t* gdt_idt_ptr);
+void x64_install_gdt(gdt_idt_ptr_t *gdt_idt_ptr);
 
 /* IDT installation */
-void x64_install_idt(gdt_idt_ptr_t* gdt_idt_ptr);
+void x64_install_idt(gdt_idt_ptr_t *gdt_idt_ptr);
 
 /* LDT installation */
 void x64_install_ldt(uint32_t ldt_sel);
@@ -129,7 +129,7 @@ void handle_fastsyscall(void);
 void init_syscall_msrs(void);
 
 /* Get current stack pointer */
-static inline void* get_current_esp(void)
+static inline void *get_current_esp(void)
 {
     word_t stack;
     void *result;
@@ -180,17 +180,17 @@ static inline void invalidateLocalTranslationSingle(vptr_t vptr)
     /* As this may be used to invalidate global mappings by the kernel,
      * and as its only used in boot code, we can just invalidate
      * absolutely everything form the tlb */
-    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
+    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void *)0, 0);
 }
 
 static inline void invalidateLocalTranslationSingleASID(vptr_t vptr, asid_t asid)
 {
-    invalidateLocalPCID(INVPCID_TYPE_ADDR, (void*)vptr, asid);
+    invalidateLocalPCID(INVPCID_TYPE_ADDR, (void *)vptr, asid);
 }
 
 static inline void invalidateLocalTranslationAll(void)
 {
-    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void*)0, 0);
+    invalidateLocalPCID(INVPCID_TYPE_ALL_GLOBAL, (void *)0, 0);
 }
 
 static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t asid)

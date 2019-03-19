@@ -26,7 +26,7 @@
 typedef struct arch_tcb {
     user_context_t tcbContext;
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    struct vcpu* tcbVCPU;
+    struct vcpu *tcbVCPU;
 #endif
 } arch_tcb_t;
 
@@ -98,7 +98,7 @@ enum asidSizeConstants {
 };
 
 struct asid_pool {
-    vspace_root_t* array[BIT(asidLowBits)];
+    vspace_root_t *array[BIT(asidLowBits)];
 };
 typedef struct asid_pool asid_pool_t;
 
@@ -185,7 +185,7 @@ cap_get_archCapIsPhysical(cap_t cap)
     }
 }
 
-static inline void * CONST
+static inline void *CONST
 cap_get_archCapPtr(cap_t cap)
 {
     cap_tag_t ctag;

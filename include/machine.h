@@ -17,14 +17,14 @@
 #include <mode/machine.h>
 #include <plat/machine/hardware.h>
 
-static inline void* CONST
+static inline void *CONST
 ptrFromPAddr(paddr_t paddr)
 {
-    return (void*)(paddr + BASE_OFFSET);
+    return (void *)(paddr + BASE_OFFSET);
 }
 
 static inline paddr_t CONST
-addrFromPPtr(void* pptr)
+addrFromPPtr(void *pptr)
 {
     return (paddr_t)pptr - BASE_OFFSET;
 }

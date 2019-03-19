@@ -197,7 +197,7 @@ transferCaps(seL4_MessageInfo_t info, extra_caps_t caps,
              word_t *receiveBuffer)
 {
     word_t i;
-    cte_t* destSlot;
+    cte_t *destSlot;
 
     info = seL4_MessageInfo_set_extraCaps(info, 0);
     info = seL4_MessageInfo_set_capsUnwrapped(info, 0);
@@ -403,7 +403,7 @@ setPriority(tcb_t *tptr, prio_t prio)
  * if it will be picked. Instead, it waits in the 'ksSchedulerAction' site
  * on which the scheduler will take action. */
 void
-possibleSwitchTo(tcb_t* target)
+possibleSwitchTo(tcb_t *target)
 {
     if (ksCurDomain != target->tcbDomain
             SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {

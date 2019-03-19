@@ -52,13 +52,13 @@ struct findVSpaceForASID_ret {
 typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
 
 void copyGlobalMappings(pte_t *newlvl1pt);
-word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
+word_t *PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr);
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
-void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt);
+void unmapPageTable(asid_t, vptr_t vaddr, pte_t *pt);
 void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr);
 void deleteASID(asid_t asid, pte_t *vspace);
-void deleteASIDPool(asid_t asid_base, asid_pool_t* pool);
+void deleteASIDPool(asid_t asid_base, asid_pool_t *pool);
 bool_t CONST isValidVTableRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,

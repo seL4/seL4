@@ -128,8 +128,8 @@ init_freemem(region_t ui_reg)
         {
             // This looks a bit awkward as our symbols are a reference in the kernel image window, but
             // we want to do all allocations in terms of the main kernel window, so we do some translation
-            .start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void*)kernelBase)),
-            .end   = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void*)ki_end))
+            .start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)kernelBase)),
+            .end   = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end))
         },
         {
             .start = ui_reg.start,
@@ -152,10 +152,10 @@ init_freemem(region_t ui_reg)
         /* Adjust region if it exceeds the kernel window
          * Note that we compare physical address in case of overflow.
          */
-        if (pptr_to_paddr((void*)cur_reg.end) > PADDR_TOP) {
+        if (pptr_to_paddr((void *)cur_reg.end) > PADDR_TOP) {
             cur_reg.end = PPTR_TOP;
         }
-        if (pptr_to_paddr((void*)cur_reg.start) > PADDR_TOP) {
+        if (pptr_to_paddr((void *)cur_reg.start) > PADDR_TOP) {
             cur_reg.start = PPTR_TOP;
         }
 
@@ -220,7 +220,7 @@ try_init_kernel(
     cap_t it_ap_cap;
     cap_t ipcbuf_cap;
     p_region_t boot_mem_reuse_p_reg = ((p_region_t) {
-        kpptr_to_paddr((void*)KERNEL_BASE), kpptr_to_paddr(ki_boot_end)
+        kpptr_to_paddr((void *)KERNEL_BASE), kpptr_to_paddr(ki_boot_end)
     });
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {

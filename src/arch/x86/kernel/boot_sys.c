@@ -109,7 +109,7 @@ load_boot_module(word_t boot_module_start, paddr_t load_paddr)
 {
     v_region_t v_reg;
     word_t entry;
-    Elf_Header_t* elf_file = (Elf_Header_t*)boot_module_start;
+    Elf_Header_t *elf_file = (Elf_Header_t *)boot_module_start;
 
     if (!elf_checkFile(elf_file)) {
         printf("Boot module does not contain a valid ELF image\n");
@@ -127,9 +127,9 @@ load_boot_module(word_t boot_module_start, paddr_t load_paddr)
 
     printf("size=0x%lx v_entry=%p v_start=%p v_end=%p ",
            v_reg.end - v_reg.start,
-           (void*)entry,
-           (void*)v_reg.start,
-           (void*)v_reg.end
+           (void *)entry,
+           (void *)v_reg.start,
+           (void *)v_reg.end
           );
 
     if (!IS_ALIGNED(v_reg.start, PAGE_BITS)) {
@@ -163,7 +163,7 @@ load_boot_module(word_t boot_module_start, paddr_t load_paddr)
 
     /* initialise all initial userland memory and load potentially sparse ELF image */
     memzero(
-        (void*)boot_state.ui_info.p_reg.start,
+        (void *)boot_state.ui_info.p_reg.start,
         boot_state.ui_info.p_reg.end - boot_state.ui_info.p_reg.start
     );
     elf_load(elf_file, boot_state.ui_info.pv_offset);
@@ -505,7 +505,7 @@ try_boot_sys(void)
         ui_p_regs.start,
         ui_p_regs.end - ui_p_regs.start
     );
-    memcpy((void*)ui_p_regs.start, (void*)mods_end_paddr, ui_p_regs.end - ui_p_regs.start);
+    memcpy((void *)ui_p_regs.start, (void *)mods_end_paddr, ui_p_regs.end - ui_p_regs.start);
 
     /* adjust p_reg and pv_offset to final load address */
     boot_state.ui_info.p_reg.start -= mods_end_paddr - ui_p_regs.start;
@@ -544,11 +544,11 @@ try_boot_sys(void)
 
 static BOOT_CODE bool_t
 try_boot_sys_mbi1(
-    multiboot_info_t* mbi
+    multiboot_info_t *mbi
 )
 {
     word_t i;
-    multiboot_module_t *modules = (multiboot_module_t*)(word_t)mbi->part1.mod_list;
+    multiboot_module_t *modules = (multiboot_module_t *)(word_t)mbi->part1.mod_list;
 
     cmdline_parse((const char *)(word_t)mbi->part1.cmdline, &cmdline_opt);
 
@@ -606,7 +606,7 @@ try_boot_sys_mbi1(
                    "These extra regions will still be turned into untyped caps.",
                    multiboot_mmap_length / sizeof(seL4_X86_mb_mmap_t), SEL4_MULTIBOOT_MAX_MMAP_ENTRIES);
         }
-        memcpy(&boot_state.mb_mmap_info.mmap, (void*)(word_t)mbi->part2.mmap_addr, multiboot_mmap_length);
+        memcpy(&boot_state.mb_mmap_info.mmap, (void *)(word_t)mbi->part2.mmap_addr, multiboot_mmap_length);
         boot_state.mb_mmap_info.mmap_length = multiboot_mmap_length;
     } else {
         /* calculate memory the old way */
@@ -623,8 +623,8 @@ try_boot_sys_mbi1(
         boot_state.vbe_info.vbeMode = -1;
         printf("Multiboot gave us no video information\n");
     } else {
-        boot_state.vbe_info.vbeInfoBlock = *(seL4_VBEInfoBlock_t*)(seL4_Word)mbi->part2.vbe_control_info;
-        boot_state.vbe_info.vbeModeInfoBlock = *(seL4_VBEModeInfoBlock_t*)(seL4_Word)mbi->part2.vbe_mode_info;
+        boot_state.vbe_info.vbeInfoBlock = *(seL4_VBEInfoBlock_t *)(seL4_Word)mbi->part2.vbe_control_info;
+        boot_state.vbe_info.vbeModeInfoBlock = *(seL4_VBEModeInfoBlock_t *)(seL4_Word)mbi->part2.vbe_mode_info;
         boot_state.vbe_info.vbeMode = mbi->part2.vbe_mode;
         printf("Got VBE info in multiboot. Current video mode is %d\n", mbi->part2.vbe_mode);
         boot_state.vbe_info.vbeInterfaceSeg = mbi->part2.vbe_interface_seg;
@@ -645,12 +645,12 @@ try_boot_sys_mbi1(
 
 static BOOT_CODE bool_t
 try_boot_sys_mbi2(
-    multiboot2_header_t* mbi2
+    multiboot2_header_t *mbi2
 )
 {
     int mod_count                  = 0;
-    multiboot2_tag_t const * tag   = (multiboot2_tag_t *)(mbi2 + 1);
-    multiboot2_tag_t const * tag_e = (multiboot2_tag_t *)((word_t)mbi2 + mbi2->total_size);
+    multiboot2_tag_t const *tag   = (multiboot2_tag_t *)(mbi2 + 1);
+    multiboot2_tag_t const *tag_e = (multiboot2_tag_t *)((word_t)mbi2 + mbi2->total_size);
 
     /* initialize the memory. We track two kinds of memory regions. Physical memory
      * that we will use for the kernel, and physical memory regions that we must
@@ -666,7 +666,7 @@ try_boot_sys_mbi2(
         word_t const behind_tag = (word_t)tag + sizeof(*tag);
 
         if (tag->type == MULTIBOOT2_TAG_CMDLINE) {
-            char const * const cmdline = (char const * const)(behind_tag);
+            char const *const cmdline = (char const * const)(behind_tag);
             cmdline_parse(cmdline, &cmdline_opt);
         } else if (tag->type == MULTIBOOT2_TAG_ACPI_1) {
             if (ACPI_V1_SIZE == tag->size - sizeof(*tag)) {
@@ -677,7 +677,7 @@ try_boot_sys_mbi2(
                 memcpy(&boot_state.acpi_rsdp, (void *)behind_tag, sizeof(boot_state.acpi_rsdp));
             }
         } else if (tag->type == MULTIBOOT2_TAG_MODULE) {
-            multiboot2_module_t const * module = (multiboot2_module_t const *)behind_tag;
+            multiboot2_module_t const *module = (multiboot2_module_t const *)behind_tag;
             printf(
                 "  module #%d: start=0x%x end=0x%x size=0x%x name='%s'\n",
                 mod_count,
@@ -700,10 +700,10 @@ try_boot_sys_mbi2(
                 boot_state.mods_end_paddr = module->end;
             }
         } else if (tag->type == MULTIBOOT2_TAG_MEMORY) {
-            multiboot2_memory_t const * s = (multiboot2_memory_t *)(behind_tag + 8);
-            multiboot2_memory_t const * e = (multiboot2_memory_t *)((word_t)tag + tag->size);
+            multiboot2_memory_t const *s = (multiboot2_memory_t *)(behind_tag + 8);
+            multiboot2_memory_t const *e = (multiboot2_memory_t *)((word_t)tag + tag->size);
 
-            for (multiboot2_memory_t const * m = s; m < e; m++) {
+            for (multiboot2_memory_t const *m = s; m < e; m++) {
                 if (!m->addr) {
                     boot_state.mem_lower = m->size;
                 }
@@ -721,7 +721,7 @@ try_boot_sys_mbi2(
                 }
             }
         } else if (tag->type == MULTIBOOT2_TAG_FB) {
-            multiboot2_fb_t const * fb = (multiboot2_fb_t const *)behind_tag;
+            multiboot2_fb_t const *fb = (multiboot2_fb_t const *)behind_tag;
             printf("Got framebuffer info in multiboot2. Current video mode is at physical address=%llx pitch=%u resolution=%ux%u@%u type=%u\n",
                    fb->addr, fb->pitch, fb->width, fb->height, fb->bpp, fb->type);
             boot_state.fb_info = *fb;
@@ -743,7 +743,7 @@ try_boot_sys_mbi2(
 BOOT_CODE VISIBLE void
 boot_sys(
     unsigned long multiboot_magic,
-    void* mbi)
+    void *mbi)
 {
     bool_t result = false;
 

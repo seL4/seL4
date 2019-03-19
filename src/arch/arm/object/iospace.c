@@ -152,10 +152,10 @@ exception_t
 decodeARMIOPTInvocation(
     word_t       invLabel,
     uint32_t     length,
-    cte_t*       slot,
+    cte_t       *slot,
     cap_t        cap,
     extra_caps_t excaps,
-    word_t*      buffer
+    word_t      *buffer
 )
 {
     cap_t      io_space;
@@ -256,10 +256,10 @@ exception_t
 decodeARMIOMapInvocation(
     word_t       invLabel,
     uint32_t     length,
-    cte_t*       slot,
+    cte_t       *slot,
     cap_t        cap,
     extra_caps_t excaps,
-    word_t*      buffer
+    word_t      *buffer
 )
 {
     cap_t      io_space;
@@ -295,7 +295,7 @@ decodeARMIOMapInvocation(
 
     io_space    = excaps.excaprefs[0]->cap;
     io_address  = getSyscallArg(1, buffer) & ~MASK(PAGE_BITS);
-    paddr       = pptr_to_paddr((void*)cap_small_frame_cap_get_capFBasePtr(cap));
+    paddr       = pptr_to_paddr((void *)cap_small_frame_cap_get_capFBasePtr(cap));
 
     if (cap_get_capType(io_space) != cap_io_space_cap) {
         userError("IOMap: Invalid IOSpace cap.");
@@ -473,7 +473,7 @@ void clearIOPageDirectory(cap_t cap)
 exception_t
 performPageInvocationUnmapIO(
     cap_t        cap,
-    cte_t*       slot
+    cte_t       *slot
 )
 {
     unmapIOPage(slot->cap);

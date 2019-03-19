@@ -330,7 +330,7 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t executable)
     pte_t *pt;
 
     vptr_t vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
-    void *pptr = (void*)cap_frame_cap_get_capFBasePtr(frame_cap);
+    void *pptr = (void *)cap_frame_cap_get_capFBasePtr(frame_cap);
 
     assert(cap_frame_cap_get_capFMappedASID(frame_cap) != 0);
 
@@ -580,7 +580,7 @@ activate_kernel_vspace(void)
 BOOT_CODE void
 write_it_asid_pool(cap_t it_ap_cap, cap_t it_vspace_cap)
 {
-    asid_pool_t* ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
+    asid_pool_t *ap = ASID_POOL_PTR(pptr_of_cap(it_ap_cap));
     ap->array[IT_ASID] = (void *)(pptr_of_cap(it_vspace_cap));
     armKSASIDTable[IT_ASID >> asidLowBits] = ap;
 }
@@ -617,7 +617,7 @@ findVSpaceForASID(asid_t asid)
     return ret;
 }
 
-word_t * PURE
+word_t *PURE
 lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 {
     word_t w_bufferPtr;
@@ -760,8 +760,8 @@ lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
     } else {
-        pte_t* pt;
-        pte_t* ptSlot;
+        pte_t *pt;
+        pte_t *ptSlot;
         word_t ptIndex = GET_PT_INDEX(vptr);
         pt = paddr_to_pptr(pde_pde_small_ptr_get_pt_base_address(pdSlot.pdSlot));
         ptSlot = pt + ptIndex;
@@ -1065,7 +1065,7 @@ setVMRootForFlush(vspace_root_t *vspace, asid_t asid)
     return true;
 }
 
-pgde_t *pageUpperDirectoryMapped(asid_t asid, vptr_t vaddr, pude_t* pud)
+pgde_t *pageUpperDirectoryMapped(asid_t asid, vptr_t vaddr, pude_t *pud)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPGDSlot_ret_t lu_ret;
@@ -1084,7 +1084,7 @@ pgde_t *pageUpperDirectoryMapped(asid_t asid, vptr_t vaddr, pude_t* pud)
     return NULL;
 }
 
-pude_t *pageDirectoryMapped(asid_t asid, vptr_t vaddr, pde_t* pd)
+pude_t *pageDirectoryMapped(asid_t asid, vptr_t vaddr, pde_t *pd)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPUDSlot_ret_t lu_ret;
@@ -1254,7 +1254,7 @@ invalidateTLBByASIDVA(asid_t asid, vptr_t vaddr)
 #endif
 }
 
-pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
+pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupPDSlot_ret_t lu_ret;
@@ -1277,7 +1277,7 @@ pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
     return NULL;
 }
 
-void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t* pud)
+void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t *pud)
 {
     pgde_t *pgdSlot;
 
@@ -1290,7 +1290,7 @@ void unmapPageUpperDirectory(asid_t asid, vptr_t vaddr, pude_t* pud)
     }
 }
 
-void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t* pd)
+void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 {
     pude_t *pudSlot;
 
@@ -1405,7 +1405,7 @@ deleteASID(asid_t asid, vspace_root_t *vspace)
 }
 
 void
-deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
+deleteASIDPool(asid_t asid_base, asid_pool_t *pool)
 {
     word_t offset;
 
@@ -2348,7 +2348,7 @@ decodeARMFrameInvocation(word_t invLabel, unsigned int length,
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageFlush(invLabel, find_ret.vspace_root, asid, vaddr + start, vaddr + end - 1,
-                                pptr_to_paddr((void*)cap_frame_cap_get_capFBasePtr(cap)) + start);
+                                pptr_to_paddr((void *)cap_frame_cap_get_capFBasePtr(cap)) + start);
     }
 
     case ARMPageGetAddress:
@@ -2581,7 +2581,7 @@ readWordFromVSpace(vspace_root_t *pd, word_t vaddr)
 
     offset = vaddr & MASK(pageBitsForSize(lookup_frame_ret.frameSize));
     kernel_vaddr = (word_t)paddr_to_pptr(lookup_frame_ret.frameBase);
-    value = (word_t*)(kernel_vaddr + offset);
+    value = (word_t *)(kernel_vaddr + offset);
 
     ret.status = EXCEPTION_NONE;
     ret.value = *value;

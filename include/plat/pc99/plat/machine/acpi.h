@@ -61,10 +61,10 @@ bool_t acpi_init(acpi_rsdp_t *rsdp_data);
 BOOT_CODE bool_t acpi_validate_rsdp(acpi_rsdp_t *acpi_rsdp);
 
 uint32_t acpi_madt_scan(
-    acpi_rsdp_t* acpi_rsdp,
-    cpu_id_t*    cpu_list,
-    uint32_t*    num_ioapic,
-    paddr_t*     ioapic_addrs
+    acpi_rsdp_t *acpi_rsdp,
+    cpu_id_t    *cpu_list,
+    uint32_t    *num_ioapic,
+    paddr_t     *ioapic_addrs
 );
 
 typedef struct acpi_rmrr_entry {
@@ -79,15 +79,15 @@ typedef struct acpi_rmrr_list {
 } acpi_rmrr_list_t;
 
 void acpi_dmar_scan(
-    acpi_rsdp_t* acpi_rsdp,
-    paddr_t*     drhu_list,
-    uint32_t*    num_drhu,
+    acpi_rsdp_t *acpi_rsdp,
+    paddr_t     *drhu_list,
+    uint32_t    *num_drhu,
     uint32_t     max_dhru_list_len,
     acpi_rmrr_list_t *rmrr_list
 );
 
 bool_t acpi_fadt_scan(
-    acpi_rsdp_t* acpi_rsdp
+    acpi_rsdp_t *acpi_rsdp
 );
 
 #endif

@@ -99,7 +99,7 @@ struct user_context {
 };
 typedef struct user_context user_context_t;
 
-static inline void Arch_initContext(user_context_t* context)
+static inline void Arch_initContext(user_context_t *context)
 {
     /* Enable supervisor interrupts (when going to user-mode) */
     context->registers[SSTATUS] = SSTATUS_SPIE;

@@ -24,7 +24,7 @@
 #include <arch/object/vcpu.h>
 #include <plat/machine/intel-vtd.h>
 
-deriveCap_ret_t Arch_deriveCap(cte_t* slot, cap_t cap)
+deriveCap_ret_t Arch_deriveCap(cte_t *slot, cap_t cap)
 {
     deriveCap_ret_t ret;
 
@@ -252,7 +252,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
     case cap_ept_pml4_cap:
         if (final && cap_ept_pml4_cap_get_capPML4IsMapped(cap)) {
             deleteEPTASID(cap_ept_pml4_cap_get_capPML4MappedASID(cap),
-                          (ept_pml4e_t*)cap_ept_pml4_cap_get_capPML4BasePtr(cap));
+                          (ept_pml4e_t *)cap_ept_pml4_cap_get_capPML4BasePtr(cap));
         }
         break;
 
@@ -261,7 +261,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             unmapEPTPDPT(
                 cap_ept_pdpt_cap_get_capPDPTMappedASID(cap),
                 cap_ept_pdpt_cap_get_capPDPTMappedAddress(cap),
-                (ept_pdpte_t*)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap));
+                (ept_pdpte_t *)cap_ept_pdpt_cap_get_capPDPTBasePtr(cap));
         }
         break;
 
@@ -270,7 +270,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             unmapEPTPageDirectory(
                 cap_ept_pd_cap_get_capPDMappedASID(cap),
                 cap_ept_pd_cap_get_capPDMappedAddress(cap),
-                (ept_pde_t*)cap_ept_pd_cap_get_capPDBasePtr(cap));
+                (ept_pde_t *)cap_ept_pd_cap_get_capPDBasePtr(cap));
         }
         break;
 
@@ -279,7 +279,7 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
             unmapEPTPageTable(
                 cap_ept_pt_cap_get_capPTMappedASID(cap),
                 cap_ept_pt_cap_get_capPTMappedAddress(cap),
-                (ept_pte_t*)cap_ept_pt_cap_get_capPTBasePtr(cap));
+                (ept_pte_t *)cap_ept_pt_cap_get_capPTBasePtr(cap));
         }
         break;
 #endif
@@ -512,11 +512,11 @@ Arch_decodeInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t excaps,
     bool_t call,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {

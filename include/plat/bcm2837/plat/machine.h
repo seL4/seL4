@@ -93,7 +93,7 @@ volatile struct intc_regs {
     uint32_t bfEnableBasicIRQs;  /* 0x218 R/Wbs */
     uint32_t bfDisableIRQs[2];   /* 0x21C R/Wbc */
     uint32_t bfDisableBasicIRQs; /* 0x224 R/Wbc */
-} *intc_regs = (volatile struct intc_regs*)INTC_PPTR;
+} *intc_regs = (volatile struct intc_regs *)INTC_PPTR;
 
 volatile struct core_regs {
     uint32_t controlRegister;           /* 0x00 */
@@ -118,7 +118,7 @@ volatile struct core_regs {
     uint32_t coreFIQSource[4];          /* 0x70 FIQ source registers */
     uint32_t coreMailboxWriteset[4][4]; /* 0x80 Mailbox write-set registers (Write only) */
     uint32_t coreMailboxRW[4][4];       /* 0xC0 Mailbox write-clear registers (Read & Write) */
-} *core_regs = (volatile struct core_regs*) ARM_LOCAL_PPTR;
+} *core_regs = (volatile struct core_regs *) ARM_LOCAL_PPTR;
 
 #define LOCAL_TIMER_IRQ_STATUS  31
 #define LOCAL_TIMER_CTRL_IRQ_BIT 29

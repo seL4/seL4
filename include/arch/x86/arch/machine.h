@@ -292,7 +292,7 @@ static inline word_t x86_read_gs_base(cpu_id_t cpu)
 }
 
 /* Cleaning memory before user-level access */
-static inline void clearMemory(void* ptr, unsigned int bits)
+static inline void clearMemory(void *ptr, unsigned int bits)
 {
     memzero(ptr, BIT(bits));
     /* no cleaning of caches necessary on IA-32 */

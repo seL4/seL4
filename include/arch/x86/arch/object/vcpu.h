@@ -331,10 +331,10 @@ exception_t decodeX86VCPUInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 );
 
 /* Updates the state of the provided VCPU for a SysVMEnter syscall. The state

@@ -24,7 +24,7 @@
 /**
  * Hidden function, use the macros seL4_Fail or seL4_Assert.
  */
-void __assert_fail(const char*  str, const char* file, int line, const char* function);
+void __assert_fail(const char  *str, const char *file, int line, const char *function);
 
 /**
  * If expr evaluates to false _seL4_Fail is called with the

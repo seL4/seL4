@@ -545,7 +545,7 @@ invokeVCPUWriteReg(vcpu_t *vcpu, word_t field, word_t value)
 }
 
 exception_t
-decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t* buffer)
+decodeVCPUWriteReg(cap_t cap, unsigned int length, word_t *buffer)
 {
     word_t field;
     word_t value;
@@ -584,7 +584,7 @@ invokeVCPUReadReg(vcpu_t *vcpu, word_t field, bool_t call)
 }
 
 exception_t
-decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer)
+decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t *buffer)
 {
     word_t field;
     if (length < 1) {
@@ -607,7 +607,7 @@ decodeVCPUReadReg(cap_t cap, unsigned int length, bool_t call, word_t* buffer)
 }
 
 exception_t
-invokeVCPUInjectIRQ(vcpu_t* vcpu, unsigned long index, virq_t virq)
+invokeVCPUInjectIRQ(vcpu_t *vcpu, unsigned long index, virq_t virq)
 {
     if (likely(ARCH_NODE_STATE(armHSCurVCPU) == vcpu)) {
         set_gic_vcpu_ctrl_lr(index, virq);
@@ -619,7 +619,7 @@ invokeVCPUInjectIRQ(vcpu_t* vcpu, unsigned long index, virq_t virq)
 }
 
 exception_t
-decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t* buffer)
+decodeVCPUInjectIRQ(cap_t cap, unsigned int length, word_t *buffer)
 {
     word_t vid, priority, group, index;
     vcpu_t *vcpu;
@@ -706,11 +706,11 @@ exception_t decodeARMVCPUInvocation(
     word_t label,
     unsigned int length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t extraCaps,
     bool_t call,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (label) {

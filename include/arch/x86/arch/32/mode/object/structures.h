@@ -85,13 +85,13 @@ cap_frame_cap_set_capFMappedASID(cap_t cap, word_t asid)
 }
 
 static inline asid_t PURE
-cap_frame_cap_ptr_get_capFMappedASID(cap_t* cap)
+cap_frame_cap_ptr_get_capFMappedASID(cap_t *cap)
 {
     return cap_frame_cap_get_capFMappedASID(*cap);
 }
 
 static inline void
-cap_frame_cap_ptr_set_capFMappedASID(cap_t* cap, asid_t asid)
+cap_frame_cap_ptr_set_capFMappedASID(cap_t *cap, asid_t asid)
 {
     *cap = cap_frame_cap_set_capFMappedASID(*cap, asid);
 }
@@ -129,7 +129,7 @@ cap_get_modeCapIsPhysical(cap_t cap)
     fail("Invalid mode cap type");
 }
 
-static inline void * CONST
+static inline void *CONST
 cap_get_modeCapPtr(cap_t cap)
 {
     fail("Invalid mode cap type");

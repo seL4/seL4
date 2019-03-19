@@ -17,8 +17,8 @@
 #include <mode/kernel/elf.h>
 
 /* minimal ELF functionality for loading GRUB boot module */
-bool_t elf_checkFile(Elf_Header_t* elfFile);
-v_region_t elf_getMemoryBounds(Elf_Header_t* elfFile);
-void elf_load(Elf_Header_t* elfFile, seL4_Word offset);
+bool_t elf_checkFile(Elf_Header_t *elfFile);
+v_region_t elf_getMemoryBounds(Elf_Header_t *elfFile);
+void elf_load(Elf_Header_t *elfFile, seL4_Word offset);
 
 #endif /* __ARCH_KERNEL_ELF_H_ */

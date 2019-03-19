@@ -23,8 +23,8 @@ ep_ptr_get_queue(endpoint_t *epptr)
 {
     tcb_queue_t queue;
 
-    queue.head = (tcb_t*)endpoint_ptr_get_epQueue_head(epptr);
-    queue.end = (tcb_t*)endpoint_ptr_get_epQueue_tail(epptr);
+    queue.head = (tcb_t *)endpoint_ptr_get_epQueue_head(epptr);
+    queue.end = (tcb_t *)endpoint_ptr_get_epQueue_tail(epptr);
 
     return queue;
 }

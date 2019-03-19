@@ -106,13 +106,13 @@ enum _register {
 #endif
 };
 
-compile_assert(sp_offset_correct, SP * sizeof(word_t) == PT_SP)
-compile_assert(lr_svc_offset_correct, LR_svc * sizeof(word_t) == PT_LR_svc)
+compile_assert(sp_offset_correct, SP *sizeof(word_t) == PT_SP)
+compile_assert(lr_svc_offset_correct, LR_svc *sizeof(word_t) == PT_LR_svc)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-compile_assert(elr_hyp_offset_correct, ELR_hyp * sizeof(word_t) == PT_ELR_hyp)
+compile_assert(elr_hyp_offset_correct, ELR_hyp *sizeof(word_t) == PT_ELR_hyp)
 #endif
-compile_assert(faultinstruction_offset_correct, FaultInstruction * sizeof(word_t) == PT_FaultInstruction)
-compile_assert(r8_offset_correct, R8 * sizeof(word_t) == PT_R8)
+compile_assert(faultinstruction_offset_correct, FaultInstruction *sizeof(word_t) == PT_FaultInstruction)
+compile_assert(r8_offset_correct, R8 *sizeof(word_t) == PT_R8)
 
 typedef word_t register_t;
 
@@ -201,7 +201,7 @@ unverified_compile_assert(registers_are_first_member_of_user_context,
 void Arch_initBreakpointContext(user_context_t *context);
 #endif
 
-static inline void Arch_initContext(user_context_t* context)
+static inline void Arch_initContext(user_context_t *context)
 {
     context->registers[CPSR] = CPSR_USER;
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE

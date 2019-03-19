@@ -28,7 +28,7 @@ gdt_idt_ptr_t gdt_idt_ptr;
 /* initialise the Task State Segment (TSS) */
 
 BOOT_CODE void
-init_tss(tss_t* tss)
+init_tss(tss_t *tss)
 {
     *tss = tss_new(
                sizeof(*tss),   /* io_map_base  */
@@ -64,7 +64,7 @@ init_tss(tss_t* tss)
 /* initialise Global Descriptor Table (GDT) */
 
 BOOT_CODE void
-init_gdt(gdt_entry_t* gdt, tss_t* tss)
+init_gdt(gdt_entry_t *gdt, tss_t *tss)
 {
     uint32_t tss_addr = (uint32_t)tss;
 
@@ -186,7 +186,7 @@ init_gdt(gdt_entry_t* gdt, tss_t* tss)
 /* initialise the Interrupt Descriptor Table (IDT) */
 
 BOOT_CODE void
-init_idt_entry(idt_entry_t* idt, interrupt_t interrupt, void(*handler)(void))
+init_idt_entry(idt_entry_t *idt, interrupt_t interrupt, void(*handler)(void))
 {
     uint32_t handler_addr = (uint32_t)handler;
     uint32_t dpl = 3;
@@ -208,9 +208,9 @@ init_idt_entry(idt_entry_t* idt, interrupt_t interrupt, void(*handler)(void))
 BOOT_CODE bool_t
 map_kernel_window(
     uint32_t num_ioapic,
-    paddr_t*   ioapic_paddrs,
+    paddr_t   *ioapic_paddrs,
     uint32_t   num_drhu,
-    paddr_t*   drhu_list
+    paddr_t   *drhu_list
 )
 {
     paddr_t  phys;
@@ -310,7 +310,7 @@ map_kernel_window(
 
     /* null mappings up to PPTR_KDEV */
 
-    while (idx < (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
+    while (idx < (PPTR_KDEV &MASK(LARGE_PAGE_BITS)) >> PAGE_BITS) {
         pte = pte_new(
                   0,      /* page_base_address    */
                   0,      /* avl                  */
@@ -338,10 +338,10 @@ map_kernel_window(
 }
 
 /* Note: this function will invalidate any pointers previously returned from this function */
-BOOT_CODE void*
-map_temp_boot_page(void* entry, uint32_t large_pages)
+BOOT_CODE void *
+map_temp_boot_page(void *entry, uint32_t large_pages)
 {
-    void* replacement_vaddr;
+    void *replacement_vaddr;
     unsigned int i;
     unsigned int offset_in_page;
 
@@ -370,7 +370,7 @@ map_temp_boot_page(void* entry, uint32_t large_pages)
 
     // assign replacement virtual addresses page
     offset_in_page = (unsigned int)(entry) & MASK(LARGE_PAGE_BITS);
-    replacement_vaddr = (void*)(virt_pg_start + offset_in_page);
+    replacement_vaddr = (void *)(virt_pg_start + offset_in_page);
 
     invalidateLocalPageStructureCache();
 
@@ -456,7 +456,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         return cap_null_cap_new();
     }
     memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
-    copyGlobalMappings((vspace_root_t*)pd_pptr);
+    copyGlobalMappings((vspace_root_t *)pd_pptr);
     pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
     vspace_cap = pd_cap;
@@ -609,7 +609,7 @@ pte_t CONST makeUserPTEInvalid(void)
            );
 }
 
-void setVMRoot(tcb_t* tcb)
+void setVMRoot(tcb_t *tcb)
 {
     cap_t               threadRoot;
     vspace_root_t *vspace_root;
@@ -653,10 +653,10 @@ decodeX86ModeMMUInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* cte,
+    cte_t *cte,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     switch (cap_get_capType(cap)) {

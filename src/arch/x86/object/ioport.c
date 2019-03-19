@@ -115,10 +115,10 @@ decodeX86PortControlInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t excaps,
-    word_t* buffer
+    word_t *buffer
 )
 {
     uint16_t first_port;
@@ -200,7 +200,7 @@ invokeX86PortIn(word_t invLabel, uint16_t port, bool_t call)
         setRegister(NODE_STATE(ksCurThread), badgeRegister, 0);
 
         if (n_msgRegisters < 1) {
-            word_t* ipcBuffer;
+            word_t *ipcBuffer;
             ipcBuffer = lookupIPCBuffer(true, NODE_STATE(ksCurThread));
             if (ipcBuffer != NULL) {
                 ipcBuffer[1] = res;
@@ -248,11 +248,11 @@ decodeX86PortInvocation(
     word_t invLabel,
     word_t length,
     cptr_t cptr,
-    cte_t* slot,
+    cte_t *slot,
     cap_t cap,
     extra_caps_t excaps,
     bool_t call,
-    word_t* buffer
+    word_t *buffer
 )
 {
     exception_t ret;

@@ -28,7 +28,7 @@ compile_assert(seL4_UserException_Number, (word_t) n_exceptionMessage == seL4_Us
 compile_assert(seL4_UserException_Code, (word_t) n_exceptionMessage + 1 == seL4_UserException_Code)
 
 static inline unsigned int
-setMRs_lookup_failure(tcb_t *receiver, word_t* receiveIPCBuffer,
+setMRs_lookup_failure(tcb_t *receiver, word_t *receiveIPCBuffer,
                       lookup_fault_t luf, unsigned int offset)
 {
     word_t lufType = lookup_fault_get_lufType(luf);
@@ -189,7 +189,7 @@ handleFaultReply(tcb_t *receiver, tcb_t *sender)
 }
 
 word_t
-setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
+setMRs_fault(tcb_t *sender, tcb_t *receiver, word_t *receiveIPCBuffer)
 {
     switch (seL4_Fault_get_seL4_FaultType(sender->tcbFault)) {
     case seL4_Fault_CapFault:

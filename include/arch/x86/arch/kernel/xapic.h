@@ -50,13 +50,13 @@ typedef enum _apic_reg_t {
 static inline uint32_t
 apic_read_reg(apic_reg_t reg)
 {
-    return *(volatile uint32_t*)(PPTR_APIC + reg);
+    return *(volatile uint32_t *)(PPTR_APIC + reg);
 }
 
 static inline void
 apic_write_reg(apic_reg_t reg, uint32_t val)
 {
-    *(volatile uint32_t*)(PPTR_APIC + reg) = val;
+    *(volatile uint32_t *)(PPTR_APIC + reg) = val;
 }
 
 static inline logical_id_t

@@ -39,7 +39,7 @@ void capSwapForDelete(cte_t *slot1, cte_t *slot2);
 void cteSwap(cap_t cap1, cte_t *slot1, cap_t cap2, cte_t *slot2);
 exception_t cteRevoke(cte_t *slot);
 exception_t cteDelete(cte_t *slot, bool_t exposed);
-void cteDeleteOne(cte_t* slot);
+void cteDeleteOne(cte_t *slot);
 void insertNewCap(cte_t *parent, cte_t *slot, cap_t cap);
 void setupReplyMaster(tcb_t *thread);
 bool_t PURE isMDBParentOf(cte_t *cte_a, cte_t *cte_b);
