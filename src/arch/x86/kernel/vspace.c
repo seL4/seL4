@@ -128,7 +128,8 @@ bool_t CONST isValidVTableRoot(cap_t cap)
 }
 
 
-BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr_t *ioapic_paddrs, uint32_t num_drhu, paddr_t *drhu_list)
+BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr_t *ioapic_paddrs, uint32_t num_drhu,
+                                           paddr_t *drhu_list)
 {
     word_t idx = (PPTR_KDEV & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS;
     paddr_t phys;
@@ -692,7 +693,8 @@ void flushTable(vspace_root_t *vspace, word_t vptr, pte_t *pt, asid_t asid)
     /* find valid mappings */
     for (i = 0; i < BIT(PT_INDEX_BITS); i++) {
         if (pte_get_present(pt[i])) {
-            if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t *)pptr_of_cap(threadRoot) == vspace)) {
+            if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot)
+                                                    && (vspace_root_t *)pptr_of_cap(threadRoot) == vspace)) {
                 invalidateTranslationSingleASID(vptr + (i << PAGE_BITS), asid,
                                                 SMP_TERNARY(tlb_bitmap_get(vspace), 0));
             }
@@ -752,7 +754,8 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
 
     /* check if page belongs to current address space */
     threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
-    if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot) && (vspace_root_t *)pptr_of_cap(threadRoot) == find_ret.vspace_root)) {
+    if (config_set(CONFIG_SUPPORT_PCID) || (isValidNativeRoot(threadRoot)
+                                            && (vspace_root_t *)pptr_of_cap(threadRoot) == find_ret.vspace_root)) {
         invalidateTranslationSingleASID(vptr, asid,
                                         SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
     }
@@ -788,7 +791,8 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
                                      SMP_TERNARY(tlb_bitmap_get(find_ret.vspace_root), 0));
 }
 
-static exception_t performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pte, vspace_root_t *vspace)
+static exception_t performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_t *ptSlot, pte_t pte,
+                                                  vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *ptSlot = pte;
@@ -797,7 +801,8 @@ static exception_t performX86PageInvocationMapPTE(cap_t cap, cte_t *ctSlot, pte_
     return EXCEPTION_NONE;
 }
 
-static exception_t performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pde, vspace_root_t *vspace)
+static exception_t performX86PageInvocationMapPDE(cap_t cap, cte_t *ctSlot, pde_t *pdSlot, pde_t pde,
+                                                  vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
@@ -875,7 +880,8 @@ struct create_mapping_pte_return {
 };
 typedef struct create_mapping_pte_return create_mapping_pte_return_t;
 
-static create_mapping_pte_return_t createSafeMappingEntries_PTE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
+static create_mapping_pte_return_t createSafeMappingEntries_PTE(paddr_t base, word_t vaddr, vm_rights_t vmRights,
+                                                                vm_attributes_t attr,
                                                                 vspace_root_t *vspace)
 {
     create_mapping_pte_return_t ret;
@@ -903,7 +909,8 @@ struct create_mapping_pde_return {
 };
 typedef struct create_mapping_pde_return create_mapping_pde_return_t;
 
-static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
+static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, word_t vaddr, vm_rights_t vmRights,
+                                                                vm_attributes_t attr,
                                                                 vspace_root_t *vspace)
 {
     create_mapping_pde_return_t ret;
@@ -1239,7 +1246,8 @@ static exception_t performX86PageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdSlot, vspace_root_t *root)
+static exception_t performX86PageTableInvocationMap(cap_t cap, cte_t *ctSlot, pde_t pde, pde_t *pdSlot,
+                                                    vspace_root_t *root)
 {
     ctSlot->cap = cap;
     *pdSlot = pde;
@@ -1502,7 +1510,8 @@ exception_t decodeX86MMUInvocation(
 
         /* Find first free ASID */
         asid = cap_asid_pool_cap_get_capASIDBase(cap);
-        for (i = 0; i < BIT(asidLowBits) && (asid + i == 0 || asid_map_get_type(pool->array[i]) != asid_map_asid_map_none); i++);
+        for (i = 0; i < BIT(asidLowBits) && (asid + i == 0
+                                             || asid_map_get_type(pool->array[i]) != asid_map_asid_map_none); i++);
 
         if (i == BIT(asidLowBits)) {
             current_syscall_error.type = seL4_DeleteFirst;

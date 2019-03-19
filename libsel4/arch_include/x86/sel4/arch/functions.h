@@ -59,7 +59,8 @@ LIBSEL4_INLINE_FUNC void seL4_SetCap(int i, seL4_CPtr cptr)
     SEL4_SET_IPCBUF_SCALE(caps_or_badges, i, cptr);
 }
 
-LIBSEL4_INLINE_FUNC void seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex, seL4_Word *receiveDepth)
+LIBSEL4_INLINE_FUNC void seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex,
+                                                seL4_Word *receiveDepth)
 {
     if (receiveCNode != seL4_Null) {
         SEL4_GET_IPCBUF(receiveCNode, *receiveCNode);

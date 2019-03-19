@@ -41,7 +41,8 @@ static void NORETURN restore_vmx(void)
     loadAllDisabledBreakpointState(ksCurThread);
 #endif
 #ifdef ENABLE_SMP_SUPPORT
-    NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(CONFIG_KERNEL_STACK_BITS) - 4;
+    NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->kernelSP = ((word_t)kernel_stack_alloc[getCurrentCPUIndex()]) + BIT(
+                                                             CONFIG_KERNEL_STACK_BITS) - 4;
 #endif /* ENABLE_SMP_SUPPORT */
     if (NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->launched) {
         /* attempt to do a vmresume */

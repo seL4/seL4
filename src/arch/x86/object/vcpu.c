@@ -159,7 +159,8 @@ static void switchVCPU(vcpu_t *vcpu)
         vmwrite(VMX_HOST_TR_BASE, (word_t)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss);
         vmwrite(VMX_HOST_GDTR_BASE, (word_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt);
         vmwrite(VMX_HOST_IDTR_BASE, (word_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSidt);
-        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0] + 4));
+        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0] +
+                                                          4));
     }
     vcpu->last_cpu = getCurrentCPUIndex();
 #endif
@@ -435,7 +436,8 @@ void vcpu_init(vcpu_t *vcpu)
     vmwrite(VMX_HOST_SYSENTER_CS, (word_t)SEL_CS_0);
     vmwrite(VMX_HOST_SYSENTER_EIP, (word_t)&handle_syscall);
     if (!config_set(CONFIG_HARDWARE_DEBUG_API)) {
-        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0] + 4));
+        vmwrite(VMX_HOST_SYSENTER_ESP, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0] +
+                                                          4));
     }
     /* Set host SP to point just beyond the first field to be stored on exit. */
     vmwrite(VMX_HOST_RSP, (word_t)&vcpu->gp_registers[n_vcpu_gp_register]);
@@ -912,7 +914,8 @@ void vcpu_update_state_sysvmenter(vcpu_t *vcpu)
         return;
     }
     vmwrite(VMX_GUEST_RIP, getSyscallArg(0, buffer));
-    vmwrite(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS, applyFixedBits(getSyscallArg(1, buffer), primary_control_high, primary_control_low));
+    vmwrite(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS, applyFixedBits(getSyscallArg(1, buffer), primary_control_high,
+                                                                   primary_control_low));
     vmwrite(VMX_CONTROL_ENTRY_INTERRUPTION_INFO, getSyscallArg(2, buffer));
 }
 
@@ -1067,7 +1070,8 @@ static void setMRs_vmexit(uint32_t reason, word_t qualification)
     buffer = lookupIPCBuffer(true, NODE_STATE(ksCurThread));
 
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_EIP_MR, vmread(VMX_GUEST_RIP));
-    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_CONTROL_PPC_MR, vmread(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS));
+    setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_CONTROL_PPC_MR,
+          vmread(VMX_CONTROL_PRIMARY_PROCESSOR_CONTROLS));
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_CALL_CONTROL_ENTRY_MR, vmread(VMX_CONTROL_ENTRY_INTERRUPTION_INFO));
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_REASON_MR, reason);
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_QUALIFICATION_MR, qualification);
@@ -1079,7 +1083,8 @@ static void setMRs_vmexit(uint32_t reason, word_t qualification)
     setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_CR3_MR, vmread(VMX_GUEST_CR3));
 
     for (i = 0; i < n_vcpu_gp_register; i++) {
-        setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_EAX + i, NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->gp_registers[i]);
+        setMR(NODE_STATE(ksCurThread), buffer, SEL4_VMENTER_FAULT_EAX + i,
+              NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->gp_registers[i]);
     }
 }
 

@@ -23,7 +23,8 @@ static inline cpu_id_t cpuIndexToID(word_t index)
     return BIT(index);
 }
 
-static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **prev, int success_memorder, int failure_memorder)
+static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **prev, int success_memorder,
+                                              int failure_memorder)
 {
     uint32_t atomic_status;
     void *temp;

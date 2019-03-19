@@ -396,7 +396,8 @@ void deleteIOPageTable(cap_t io_pt_cap)
 
         if (isIOPDEValid(lu_ret.iopdSlot) &&
             iopde_ptr_get_page_size(lu_ret.iopdSlot) == iopde_iopde_pt &&
-            iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap)))) {
+            iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(
+                                                                                  io_pt_cap)))) {
             return;
         }
 

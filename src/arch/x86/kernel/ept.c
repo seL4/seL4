@@ -255,7 +255,8 @@ static exception_t performEPTPDPTInvocationUnmap(cap_t cap, cte_t *cte)
     return EXCEPTION_NONE;
 }
 
-static exception_t performEPTPDPTInvocationMap(cap_t cap, cte_t *cte, ept_pml4e_t pml4e, ept_pml4e_t *pml4Slot, ept_pml4e_t *pml4)
+static exception_t performEPTPDPTInvocationMap(cap_t cap, cte_t *cte, ept_pml4e_t pml4e, ept_pml4e_t *pml4Slot,
+                                               ept_pml4e_t *pml4)
 {
     cte->cap = cap;
     *pml4Slot = pml4e;
@@ -459,7 +460,8 @@ static exception_t performEPTPDInvocationUnmap(cap_t cap, cte_t *cte)
     return EXCEPTION_NONE;
 }
 
-static exception_t performEPTPDInvocationMap(cap_t cap, cte_t *cte, ept_pdpte_t pdpte, ept_pdpte_t *pdptSlot, ept_pml4e_t *pml4)
+static exception_t performEPTPDInvocationMap(cap_t cap, cte_t *cte, ept_pdpte_t pdpte, ept_pdpte_t *pdptSlot,
+                                             ept_pml4e_t *pml4)
 {
     cte->cap = cap;
     *pdptSlot = pdpte;
@@ -778,7 +780,8 @@ static exception_t performEPTPageMapPTE(cap_t cap, cte_t *cte, ept_pte_t *ptSlot
     return EXCEPTION_NONE;
 }
 
-static exception_t performEPTPageMapPDE(cap_t cap, cte_t *cte, ept_pde_t *pdSlot, ept_pde_t pde1, ept_pde_t pde2, ept_pml4e_t *pml4)
+static exception_t performEPTPageMapPDE(cap_t cap, cte_t *cte, ept_pde_t *pdSlot, ept_pde_t pde1, ept_pde_t pde2,
+                                        ept_pml4e_t *pml4)
 {
     pdSlot[0] = pde1;
     if (LARGE_PAGE_BITS == 22) {

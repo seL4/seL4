@@ -26,7 +26,8 @@ BOOT_CODE void init_sysenter_msrs(void)
         /* manually add 4 bytes to x86KStss so that it is valid for both
          * 32-bit and 64-bit, although only ia32 actually requires a valid
          * sysenter esp */
-        x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0] + 4));
+        x86_wrmsr(IA32_SYSENTER_ESP_MSR, (uint64_t)(word_t)((char *)&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss.words[0]
+                                                            + 4));
     }
 }
 

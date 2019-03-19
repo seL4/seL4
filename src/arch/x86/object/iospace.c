@@ -93,7 +93,8 @@ static lookupIOPTSlot_ret_t lookupIOPTSlot_resolve_levels(vtd_pte_t *iopt, word_
         return ret;
     }
 
-    iopt_index = (translation  >> (VTD_PT_INDEX_BITS * (x86KSnumIOPTLevels - 1 - (levels_to_resolve - levels_remaining)))) & MASK(VTD_PT_INDEX_BITS);
+    iopt_index = (translation  >> (VTD_PT_INDEX_BITS * (x86KSnumIOPTLevels - 1 - (levels_to_resolve - levels_remaining)))) &
+                 MASK(VTD_PT_INDEX_BITS);
     iopt_slot = iopt + iopt_index;
 
     if (!vtd_pte_ptr_get_write(iopt_slot) || levels_remaining == 0) {
@@ -150,7 +151,8 @@ static exception_t performX86IOPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t performX86IOPTInvocationMapContextRoot(cap_t cap, cte_t *ctSlot, vtd_cte_t vtd_cte, vtd_cte_t *vtd_context_slot)
+static exception_t performX86IOPTInvocationMapContextRoot(cap_t cap, cte_t *ctSlot, vtd_cte_t vtd_cte,
+                                                          vtd_cte_t *vtd_context_slot)
 {
     *vtd_context_slot = vtd_cte;
     flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
@@ -439,7 +441,8 @@ void deleteIOPageTable(cap_t io_pt_cap)
             if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {
                 return;
             }
-            if (vtd_pte_ptr_get_addr(lu_ret.ioptSlot) != pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap))) {
+            if (vtd_pte_ptr_get_addr(lu_ret.ioptSlot) != pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(
+                                                                           io_pt_cap))) {
                 return;
             }
             *lu_ret.ioptSlot = vtd_pte_new(

@@ -61,7 +61,8 @@ static exception_t Arch_invokeIRQControl(irq_t irq, cte_t *handlerSlot, cte_t *c
     return invokeIRQControl(irq, handlerSlot, controlSlot);
 }
 
-static exception_t invokeIssueIRQHandlerIOAPIC(irq_t irq, word_t ioapic, word_t pin, word_t level, word_t polarity, word_t vector,
+static exception_t invokeIssueIRQHandlerIOAPIC(irq_t irq, word_t ioapic, word_t pin, word_t level, word_t polarity,
+                                               word_t vector,
                                                cte_t *handlerSlot, cte_t *controlSlot)
 {
     x86_irq_state_t irqState = x86_irq_state_irq_ioapic_new(ioapic, pin, level, polarity, 1);
@@ -69,7 +70,8 @@ static exception_t invokeIssueIRQHandlerIOAPIC(irq_t irq, word_t ioapic, word_t 
     return Arch_invokeIRQControl(irq, handlerSlot, controlSlot, irqState);
 }
 
-exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, extra_caps_t excaps, word_t *buffer)
+exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_t *srcSlot, extra_caps_t excaps,
+                                            word_t *buffer)
 {
     word_t index, depth;
     cte_t *destSlot;

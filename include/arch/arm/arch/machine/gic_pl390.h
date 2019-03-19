@@ -218,7 +218,8 @@ static inline void maskInterrupt(bool_t disable, interrupt_t irq)
 
 static inline void ackInterrupt(irq_t irq)
 {
-    assert(IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)]) && (active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK) == irq);
+    assert(IS_IRQ_VALID(active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)])
+           && (active_irq[SMP_TERNARY(getCurrentCPUIndex(), 0)] & IRQ_MASK) == irq);
     if (is_irq_edge_triggered(irq)) {
         dist_pending_clr(irq);
     }

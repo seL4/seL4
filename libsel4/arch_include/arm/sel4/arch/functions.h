@@ -52,7 +52,8 @@ LIBSEL4_INLINE_FUNC void seL4_SetCap(int i, seL4_CPtr cptr)
     seL4_GetIPCBuffer()->caps_or_badges[i] = (seL4_Word)cptr;
 }
 
-LIBSEL4_INLINE_FUNC void seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex, seL4_Word *receiveDepth)
+LIBSEL4_INLINE_FUNC void seL4_GetCapReceivePath(seL4_CPtr *receiveCNode, seL4_CPtr *receiveIndex,
+                                                seL4_Word *receiveDepth)
 {
     seL4_IPCBuffer *ipcbuffer = seL4_GetIPCBuffer();
     if (receiveCNode != (void *)0) {

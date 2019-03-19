@@ -242,7 +242,8 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_ReplyRecv(seL4_CPtr src, seL4_Messag
     return info;
 }
 
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_ReplyRecvWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_ReplyRecvWithMRs(seL4_CPtr src, seL4_MessageInfo_t msgInfo,
+                                                             seL4_Word *sender,
                                                              seL4_Word *mr0, seL4_Word *mr1, seL4_Word *mr2, seL4_Word *mr3)
 {
     seL4_MessageInfo_t info;
@@ -406,7 +407,8 @@ LIBSEL4_INLINE_FUNC seL4_Error seL4_BenchmarkSetLogBuffer(seL4_Word frame_cptr)
     seL4_Word unused3 = 0;
     seL4_Word unused4 = 0;
 
-    arm_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2, &unused3, &unused4);
+    arm_sys_send_recv(seL4_SysBenchmarkSetLogBuffer, frame_cptr, &frame_cptr, 0, &unused0, &unused1, &unused2, &unused3,
+                      &unused4);
 
     return (seL4_Error) frame_cptr;
 }
@@ -433,7 +435,8 @@ LIBSEL4_INLINE_FUNC void seL4_BenchmarkGetThreadUtilisation(seL4_Word tcb_cptr)
     seL4_Word unused4 = 0;
     seL4_Word unused5 = 0;
 
-    arm_sys_send_recv(seL4_SysBenchmarkGetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
+    arm_sys_send_recv(seL4_SysBenchmarkGetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4,
+                      &unused5);
 }
 
 LIBSEL4_INLINE_FUNC void seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr)
@@ -445,7 +448,8 @@ LIBSEL4_INLINE_FUNC void seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr
     seL4_Word unused4 = 0;
     seL4_Word unused5 = 0;
 
-    arm_sys_send_recv(seL4_SysBenchmarkResetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3, &unused4, &unused5);
+    arm_sys_send_recv(seL4_SysBenchmarkResetThreadUtilisation, tcb_cptr, &unused0, 0, &unused1, &unused2, &unused3,
+                      &unused4, &unused5);
 }
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */

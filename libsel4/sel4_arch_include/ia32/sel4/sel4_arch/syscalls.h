@@ -90,7 +90,8 @@ static inline void x86_sys_send_null(seL4_Word sys, seL4_Word src, seL4_Word inf
     );
 }
 
-static inline void x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_info, seL4_Word *out_mr1, seL4_Word *out_mr2)
+static inline void x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_info,
+                                seL4_Word *out_mr1, seL4_Word *out_mr2)
 {
     asm volatile(
         "pushl %%ebp       \n"
@@ -115,7 +116,8 @@ static inline void x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_bad
     );
 }
 
-static inline void x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word info, seL4_Word *out_info, seL4_Word *in_out_mr1, seL4_Word *in_out_mr2)
+static inline void x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word info,
+                                     seL4_Word *out_info, seL4_Word *in_out_mr1, seL4_Word *in_out_mr2)
 {
     asm volatile(
         "pushl %%ebp       \n"
@@ -219,7 +221,8 @@ static inline void x86_sys_send_null(seL4_Word sys, seL4_Word dest, seL4_Word in
                 );
 }
 
-static inline void x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_info, seL4_Word *out_mr1, seL4_Word *out_mr2)
+static inline void x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_info,
+                                seL4_Word *out_mr1, seL4_Word *out_mr2)
 {
     asm volatile(\
                  "pushl %%ebp       \n"
@@ -239,7 +242,8 @@ static inline void x86_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_bad
                 );
 }
 
-static inline void x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word info, seL4_Word *out_info, seL4_Word *in_out_mr1, seL4_Word *in_out_mr2)
+static inline void x86_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word info,
+                                     seL4_Word *out_info, seL4_Word *in_out_mr1, seL4_Word *in_out_mr2)
 {
     asm volatile(
         "pushl %%ebp       \n"
@@ -439,7 +443,8 @@ LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_ReplyRecv(seL4_CPtr dest, seL4_Messa
     return info;
 }
 
-LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo, seL4_Word *sender,
+LIBSEL4_INLINE_FUNC seL4_MessageInfo_t seL4_ReplyRecvWithMRs(seL4_CPtr dest, seL4_MessageInfo_t msgInfo,
+                                                             seL4_Word *sender,
                                                              seL4_Word *mr0, seL4_Word *mr1)
 {
     seL4_MessageInfo_t info;

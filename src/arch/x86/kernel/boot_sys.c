@@ -460,7 +460,8 @@ static BOOT_CODE bool_t try_boot_sys(void)
     }
 
     /* query available CPUs from ACPI */
-    boot_state.num_cpus = acpi_madt_scan(&boot_state.acpi_rsdp, boot_state.cpus, &boot_state.num_ioapic, boot_state.ioapic_paddr);
+    boot_state.num_cpus = acpi_madt_scan(&boot_state.acpi_rsdp, boot_state.cpus, &boot_state.num_ioapic,
+                                         boot_state.ioapic_paddr);
     if (boot_state.num_cpus == 0) {
         printf("No CPUs detected\n");
         return false;

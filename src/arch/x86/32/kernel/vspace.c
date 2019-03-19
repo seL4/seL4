@@ -58,7 +58,8 @@ BOOT_CODE void init_tss(tss_t *tss)
                0,              /* esp0         */
                0               /* prev_task    */
            );
-    memset(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map[0], 0xff, sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
+    memset(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map[0], 0xff,
+           sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
 }
 /* initialise Global Descriptor Table (GDT) */
 
@@ -477,7 +478,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     return vspace_cap;
 }
 
-static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, vm_page_map_type_t map_type)
+static BOOT_CODE cap_t create_it_frame_cap(pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large,
+                                           vm_page_map_type_t map_type)
 {
     vm_page_size_t frame_size;
 
@@ -505,7 +507,8 @@ BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
     return create_it_frame_cap(pptr, 0, asidInvalid, use_large, X86_MappingNone);
 }
 
-BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
+BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large,
+                                           bool_t executable UNUSED)
 {
     cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large, X86_MappingVSpace);
     map_it_frame_cap(vspace_cap, cap);
@@ -662,7 +665,8 @@ bool_t modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vadd
     return false;
 }
 
-exception_t decodeX86ModeMapRemapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+exception_t decodeX86ModeMapRemapPage(word_t invLabel, vm_page_size_t page_size, cte_t *cte, cap_t cap,
+                                      vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
 {
     fail("Invalid Page type");
 }

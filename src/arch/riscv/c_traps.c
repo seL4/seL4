@@ -145,7 +145,8 @@ void NORETURN slowpath(syscall_t syscall)
     UNREACHABLE();
 }
 
-void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3, word_t unused4, word_t unused5, syscall_t syscall)
+void VISIBLE NORETURN c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, word_t unused3,
+                                       word_t unused4, word_t unused5, syscall_t syscall)
 {
     NODE_LOCK_SYS;
 

@@ -545,7 +545,8 @@ BOOT_CODE bool_t create_untypeds_for_region(
     return true;
 }
 
-BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg, seL4_SlotPos first_untyped_slot)
+BOOT_CODE bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg,
+                                        seL4_SlotPos first_untyped_slot)
 {
     word_t     i;
     region_t   reg;

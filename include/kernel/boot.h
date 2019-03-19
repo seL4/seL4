@@ -54,7 +54,8 @@ bool_t provide_cap(cap_t root_cnode_cap, cap_t cap);
 cap_t create_it_asid_pool(cap_t root_cnode_cap);
 void write_it_pd_pts(cap_t root_cnode_cap, cap_t it_pd_cap);
 bool_t create_idle_thread(void);
-bool_t create_untypeds_for_region(cap_t root_cnode_cap, bool_t device_memory, region_t reg, seL4_SlotPos first_untyped_slot);
+bool_t create_untypeds_for_region(cap_t root_cnode_cap, bool_t device_memory, region_t reg,
+                                  seL4_SlotPos first_untyped_slot);
 bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg, seL4_SlotPos first_untyped_slot);
 void bi_finalise(void);
 bool_t create_irq_cnode(void);

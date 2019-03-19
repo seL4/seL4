@@ -68,7 +68,8 @@ static inline void mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbP
 
 static inline bool_t isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
-    return cap_capType_equals(vspace_root_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(vspace_root_cap);
+    return cap_capType_equals(vspace_root_cap, cap_page_directory_cap)
+           && cap_page_directory_cap_get_capPDIsMapped(vspace_root_cap);
 }
 
 static inline void fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)

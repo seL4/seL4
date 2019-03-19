@@ -327,7 +327,8 @@ BOOT_CODE void init_tss(tss_t *tss)
                0, 0        /* rsp 0 */
            );
     /* set the IO map to all 1 to block user IN/OUT instructions */
-    memset(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map[0], 0xff, sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
+    memset(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map[0], 0xff,
+           sizeof(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.io_map));
 }
 
 BOOT_CODE void init_syscall_msrs(void)
@@ -799,7 +800,8 @@ BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
     return create_it_frame_cap(pptr, 0, asidInvalid, use_large, X86_MappingNone);
 }
 
-BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable UNUSED)
+BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large,
+                                           bool_t executable UNUSED)
 {
     cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large, X86_MappingVSpace);
     map_it_frame_cap(vspace_cap, cap);
@@ -1132,7 +1134,8 @@ static exception_t performX64PageDirectoryInvocationUnmap(cap_t cap, cte_t *ctSl
     return EXCEPTION_NONE;
 }
 
-static exception_t performX64PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot, vspace_root_t *vspace)
+static exception_t performX64PageDirectoryInvocationMap(cap_t cap, cte_t *ctSlot, pdpte_t pdpte, pdpte_t *pdptSlot,
+                                                        vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *pdptSlot = pdpte;
@@ -1296,7 +1299,8 @@ static exception_t performX64PDPTInvocationUnmap(cap_t cap, cte_t *ctSlot)
     return EXCEPTION_NONE;
 }
 
-static exception_t performX64PDPTInvocationMap(cap_t cap, cte_t *ctSlot, pml4e_t pml4e, pml4e_t *pml4Slot, vspace_root_t *vspace)
+static exception_t performX64PDPTInvocationMap(cap_t cap, cte_t *ctSlot, pml4e_t pml4e, pml4e_t *pml4Slot,
+                                               vspace_root_t *vspace)
 {
     ctSlot->cap = cap;
     *pml4Slot = pml4e;
@@ -1492,7 +1496,8 @@ struct create_mapping_pdpte_return {
 };
 typedef struct create_mapping_pdpte_return create_mapping_pdpte_return_t;
 
-static create_mapping_pdpte_return_t createSafeMappingEntries_PDPTE(paddr_t base, word_t vaddr, vm_rights_t vmRights, vm_attributes_t attr,
+static create_mapping_pdpte_return_t createSafeMappingEntries_PDPTE(paddr_t base, word_t vaddr, vm_rights_t vmRights,
+                                                                    vm_attributes_t attr,
                                                                     vspace_root_t *vspace)
 {
     create_mapping_pdpte_return_t ret;
@@ -1522,7 +1527,8 @@ static create_mapping_pdpte_return_t createSafeMappingEntries_PDPTE(paddr_t base
     return ret;
 }
 
-exception_t decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, cap_t cap, vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
+exception_t decodeX86ModeMapRemapPage(word_t label, vm_page_size_t page_size, cte_t *cte, cap_t cap,
+                                      vspace_root_t *vroot, vptr_t vaddr, paddr_t paddr, vm_rights_t vm_rights, vm_attributes_t vm_attr)
 {
     if (config_set(CONFIG_HUGE_PAGE) && page_size == X64_HugePage) {
         create_mapping_pdpte_return_t map_ret;

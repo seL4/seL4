@@ -224,7 +224,8 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
     deleteASID(asid, pd);
 }
 
-static exception_t performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_ret_t pdSlot, word_t *buffer)
+static exception_t performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_ret_t pdSlot,
+                                                         word_t *buffer)
 {
     if (pdSlot.status == EXCEPTION_NONE &&
         ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&

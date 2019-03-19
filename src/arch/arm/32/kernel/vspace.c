@@ -594,7 +594,8 @@ BOOT_CODE cap_t create_unmapped_it_frame_cap(pptr_t pptr, bool_t use_large)
     return create_it_frame_cap(pptr, 0, asidInvalid, use_large);
 }
 
-BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large, bool_t executable)
+BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, bool_t use_large,
+                                           bool_t executable)
 {
     cap_t cap = create_it_frame_cap(pptr, vptr, asid, use_large);
     map_it_frame_cap(pd_cap, cap, executable);
@@ -2301,7 +2302,8 @@ static exception_t decodeARMPageTableInvocation(word_t invLabel, word_t length,
     asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
 
     if (unlikely(vaddr >= kernelBase)) {
-        userError("ARMPageTableMap: Virtual address cannot be in kernel window. vaddr: 0x%08lx, kernelBase: 0x%08x", vaddr, kernelBase);
+        userError("ARMPageTableMap: Virtual address cannot be in kernel window. vaddr: 0x%08lx, kernelBase: 0x%08x", vaddr,
+                  kernelBase);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 0;
 

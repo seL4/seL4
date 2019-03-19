@@ -123,7 +123,8 @@ exception_t handleUnknownSyscall(word_t w)
 
 #ifdef CONFIG_DANGEROUS_CODE_INJECTION
     if (w == SysDebugRun) {
-        ((void (*)(void *))getRegister(NODE_STATE(ksCurThread), capRegister))((void *)getRegister(NODE_STATE(ksCurThread), msgInfoRegister));
+        ((void (*)(void *))getRegister(NODE_STATE(ksCurThread), capRegister))((void *)getRegister(NODE_STATE(ksCurThread),
+                                                                                                  msgInfoRegister));
         return EXCEPTION_NONE;
     }
 #endif

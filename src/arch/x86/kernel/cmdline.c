@@ -44,7 +44,8 @@ static int UNUSED parse_opt(const char *cmdline, const char *opt, char *value, i
             break;
         }
 
-        for (optptr = opt; *optptr && *cmdline && (*cmdline != '=') && !is_space(*cmdline) && (*optptr == *cmdline); optptr++, cmdline++);
+        for (optptr = opt; *optptr && *cmdline && (*cmdline != '=') && !is_space(*cmdline)
+             && (*optptr == *cmdline); optptr++, cmdline++);
 
         if (*optptr == '\0' && *cmdline == '=') {
             cmdline++;

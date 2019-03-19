@@ -43,7 +43,8 @@ static inline PURE word_t getCurrentCPUID(void)
     return cpu_mapping.index_to_cpu_id[getCurrentCPUIndex()];
 }
 
-static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **prev, int success_memorder, int failure_memorder)
+static inline bool_t try_arch_atomic_exchange(void *ptr, void *new_val, void **prev, int success_memorder,
+                                              int failure_memorder)
 {
     *prev = __atomic_exchange_n((void **) ptr, new_val, success_memorder);
     return true;
