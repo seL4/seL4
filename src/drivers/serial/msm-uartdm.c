@@ -28,7 +28,7 @@
 void
 putDebugChar(unsigned char c)
 {
-    while ( (*UART_REG(USR) & USR_TXEMP) == 0 );
+    while ((*UART_REG(USR) & USR_TXEMP) == 0);
     /* Tell the peripheral how many characters to send */
     *UART_REG(UNTX) = 1;
     /* Write the character into the FIFO */
@@ -40,7 +40,7 @@ putDebugChar(unsigned char c)
 unsigned char
 getDebugChar(void)
 {
-    while ( (*UART_REG(USR) & USR_RXRDY) == 0 );
+    while ((*UART_REG(USR) & USR_RXRDY) == 0);
 
     return *UART_REG(UTF) & 0xff;
 }

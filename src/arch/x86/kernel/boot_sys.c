@@ -286,19 +286,19 @@ is_compiled_for_microarchitecture(void)
     word_t microarch_generation = 0;
     x86_cpu_identity_t *model_info = x86_cpuid_get_model_info();
 
-    if (config_set(CONFIG_ARCH_X86_SKYLAKE) ) {
+    if (config_set(CONFIG_ARCH_X86_SKYLAKE)) {
         microarch_generation = 7;
-    } else if (config_set(CONFIG_ARCH_X86_BROADWELL) ) {
+    } else if (config_set(CONFIG_ARCH_X86_BROADWELL)) {
         microarch_generation = 6;
-    } else if (config_set(CONFIG_ARCH_X86_HASWELL) ) {
+    } else if (config_set(CONFIG_ARCH_X86_HASWELL)) {
         microarch_generation = 5;
-    } else if (config_set(CONFIG_ARCH_X86_IVY) ) {
+    } else if (config_set(CONFIG_ARCH_X86_IVY)) {
         microarch_generation = 4;
-    } else if (config_set(CONFIG_ARCH_X86_SANDY) ) {
+    } else if (config_set(CONFIG_ARCH_X86_SANDY)) {
         microarch_generation = 3;
-    } else if (config_set(CONFIG_ARCH_X86_WESTMERE) ) {
+    } else if (config_set(CONFIG_ARCH_X86_WESTMERE)) {
         microarch_generation = 2;
-    } else if (config_set(CONFIG_ARCH_X86_NEHALEM) ) {
+    } else if (config_set(CONFIG_ARCH_X86_NEHALEM)) {
         microarch_generation = 1;
     }
 
@@ -576,7 +576,7 @@ try_boot_sys_mbi1(
             modules[i].start,
             modules[i].end,
             modules[i].end - modules[i].start,
-            (char *) (long)modules[i].name
+            (char *)(long)modules[i].name
         );
         if ((sword_t)(modules[i].end - modules[i].start) <= 0) {
             printf("Invalid boot module size! Possible cause: boot module file not found by QEMU\n");

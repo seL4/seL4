@@ -234,8 +234,8 @@ try_init_kernel(
     /* convert from physical addresses to userland vptrs */
     v_region_t ui_v_reg;
     v_region_t it_v_reg;
-    ui_v_reg.start = (uint32_t) (ui_p_reg_start - pv_offset);
-    ui_v_reg.end   = (uint32_t) (ui_p_reg_end   - pv_offset);
+    ui_v_reg.start = (uint32_t)(ui_p_reg_start - pv_offset);
+    ui_v_reg.end   = (uint32_t)(ui_p_reg_end   - pv_offset);
 
     ipcbuf_vptr = ui_v_reg.end;
     bi_frame_vptr = ipcbuf_vptr + BIT(PAGE_BITS);
@@ -375,7 +375,7 @@ init_kernel(
                                     v_entry);
 
     if (!result) {
-        fail ("Kernel init failed for some reason :(");
+        fail("Kernel init failed for some reason :(");
     }
 
     schedule();

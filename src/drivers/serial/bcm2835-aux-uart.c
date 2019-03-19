@@ -45,7 +45,7 @@
 #if defined(CONFIG_DEBUG_BUILD) || defined(CONFIG_PRINTING)
 void putDebugChar(unsigned char c)
 {
-    while ( !(*UART_REG(MU_LSR) & MU_LSR_TXIDLE) );
+    while (!(*UART_REG(MU_LSR) & MU_LSR_TXIDLE));
     *UART_REG(MU_IO) = (c & 0xff);
 }
 #endif
@@ -53,7 +53,7 @@ void putDebugChar(unsigned char c)
 #ifdef CONFIG_DEBUG_BUILD
 unsigned char getDebugChar(void)
 {
-    while ( !(*UART_REG(MU_LSR) & MU_LSR_DATAREADY) );
+    while (!(*UART_REG(MU_LSR) & MU_LSR_DATAREADY));
     return *UART_REG(MU_IO);
 }
 #endif //CONFIG_DEBUG_BUILD

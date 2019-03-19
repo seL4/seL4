@@ -21,7 +21,7 @@
 BOOT_CODE void
 init_sysenter_msrs(void)
 {
-    x86_wrmsr(IA32_SYSENTER_CS_MSR,  (uint64_t)(word_t)SEL_CS_0);
+    x86_wrmsr(IA32_SYSENTER_CS_MSR, (uint64_t)(word_t)SEL_CS_0);
     x86_wrmsr(IA32_SYSENTER_EIP_MSR, (uint64_t)(word_t)&handle_syscall);
     if (config_set(CONFIG_ARCH_IA32) && !config_set(CONFIG_HARDWARE_DEBUG_API)) {
         /* manually add 4 bytes to x86KStss so that it is valid for both

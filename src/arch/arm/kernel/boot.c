@@ -591,7 +591,7 @@ init_kernel(
 #endif /* ENABLE_SMP_SUPPORT */
 
     if (!result) {
-        fail ("Kernel init failed for some reason :(");
+        fail("Kernel init failed for some reason :(");
     }
 
     schedule();

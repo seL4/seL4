@@ -38,7 +38,7 @@ clearExMonitor_fp(void)
 {
     word_t temp1 = 0;
     word_t temp2;
-    asm volatile (
+    asm volatile(
         "strex %[output], %[mem], [%[mem]]"
         : [output]"+r"(temp1)
         : [mem]"r"(&temp2)
@@ -94,7 +94,7 @@ isValidVTableRoot_fp(cap_t pd_cap)
    which appears above it is zero. We are assuming that n_msgRegisters == 4
    for this check to be useful. By masking out the bottom 3 bits, we are
    really checking that n + 3 <= MASK(3), i.e. n + 3 <= 7 or n <= 4. */
-compile_assert (n_msgRegisters_eq_4, n_msgRegisters == 4)
+compile_assert(n_msgRegisters_eq_4, n_msgRegisters == 4)
 static inline int
 fastpath_mi_check(word_t msgInfo)
 {
@@ -167,7 +167,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             /* Return to user */
             "eret"
             :
-            : [badge] "r" (badge_reg),
+            : [badge] "r"(badge_reg),
             [msginfo]"r"(msgInfo_reg),
             [cur_thread]"r"(cur_thread_reg)
             : "memory"

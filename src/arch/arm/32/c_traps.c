@@ -63,7 +63,7 @@ void VISIBLE NORETURN restore_user_context(void)
             /* Return to user */
             "eret"
             : /* no output */
-            : [cur_thread_reg] "r" (cur_thread_reg)
+            : [cur_thread_reg] "r"(cur_thread_reg)
             : "memory"
         );
     } else {
@@ -71,7 +71,7 @@ void VISIBLE NORETURN restore_user_context(void)
                   ldmdb sp, {r0-lr}^ \n\
                   rfeia sp"
                      : /* no output */
-                     : [cur_thread] "r" (cur_thread_reg + LR_svc * sizeof(word_t))
+                     : [cur_thread] "r"(cur_thread_reg + LR_svc * sizeof(word_t))
                     );
     }
     UNREACHABLE();

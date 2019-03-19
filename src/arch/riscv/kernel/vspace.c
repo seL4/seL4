@@ -696,7 +696,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageTableInvocationUnmap (cap, cte);
+        return performPageTableInvocationUnmap(cap, cte);
     }
 
     if (unlikely((label != RISCVPageTableMap))) {
@@ -1237,8 +1237,8 @@ Arch_userStackTrace(tcb_t *tptr)
         word_t address = sp + (i * sizeof(word_t));
         lookupPTSlot_ret_t ret = lookupPTSlot(vspace_root, address);
         if (pte_ptr_get_valid(ret.ptSlot) && !isPTEPageTable(ret.ptSlot)) {
-            pptr_t pptr = (pptr_t) (getPPtrFromHWPTE(ret.ptSlot));
-            word_t *value = (word_t*) ((word_t)pptr + (address & MASK(ret.ptBitsLeft)));
+            pptr_t pptr = (pptr_t)(getPPtrFromHWPTE(ret.ptSlot));
+            word_t *value = (word_t*)((word_t)pptr + (address & MASK(ret.ptBitsLeft)));
             printf("0x%lx: 0x%lx\n", (long) address, (long) *value);
         } else {
             printf("0x%lx: INVALID\n", (long) address);

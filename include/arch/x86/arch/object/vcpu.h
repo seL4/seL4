@@ -362,7 +362,7 @@ static inline word_t
 vmread(word_t field)
 {
     word_t value;
-    asm volatile (
+    asm volatile(
         "vmread %1, %0"
         : "=r"(value)
         : "r"(field)
@@ -376,7 +376,7 @@ vmread(word_t field)
 static inline void
 vmwrite(word_t field, word_t value)
 {
-    asm volatile (
+    asm volatile(
         "vmwrite %0, %1"
         :
         : "r"(value), "r"(field)

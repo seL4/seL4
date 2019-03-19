@@ -25,8 +25,8 @@ Arch_switchToThread(tcb_t* tcb)
 #ifdef ENABLE_SMP_SUPPORT
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
-                 : [value] "r" (&tcb->tcbArch.tcbContext.registers[Error + 1]),
-                 [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+                 : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),
+                 [offset] "i"(OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif
     if (config_set(CONFIG_KERNEL_X86_IBPB_ON_CONTEXT_SWITCH)) {
         x86_ibpb();
@@ -62,7 +62,7 @@ Arch_switchToIdleThread(void)
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
                  : [value] "r"(&tcb->tcbArch.tcbContext.registers[Error + 1]),
-                 [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+                 [offset] "i"(OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif
 }
 

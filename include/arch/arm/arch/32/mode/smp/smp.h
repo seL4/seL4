@@ -28,7 +28,7 @@ static inline word_t
 getCurSP(void)
 {
     word_t stack_address;
-    asm ("mov %[stack_address], %[currStackAddress]" : [stack_address] "=r"(stack_address) : [currStackAddress] "r" (&stack_address):);
+    asm("mov %[stack_address], %[currStackAddress]" : [stack_address] "=r"(stack_address) : [currStackAddress] "r"(&stack_address):);
     return stack_address;
 }
 

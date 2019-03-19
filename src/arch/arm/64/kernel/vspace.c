@@ -2380,12 +2380,12 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
                                                 cap, extraCaps, buffer);
 
     case cap_page_table_cap:
-        return decodeARMPageTableInvocation (invLabel, length, cte,
-                                             cap, extraCaps, buffer);
+        return decodeARMPageTableInvocation(invLabel, length, cte,
+                                            cap, extraCaps, buffer);
 
     case cap_frame_cap:
-        return decodeARMFrameInvocation (invLabel, length, cte,
-                                         cap, extraCaps, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte,
+                                        cap, extraCaps, buffer);
 
     case cap_asid_control_cap: {
         unsigned int i;

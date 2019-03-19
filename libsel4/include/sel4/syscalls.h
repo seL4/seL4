@@ -355,7 +355,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name);
  *
  */
 LIBSEL4_INLINE_FUNC void
-seL4_DebugRun(void (* userfn) (void *), void* userarg);
+seL4_DebugRun(void (* userfn)(void *), void* userarg);
 #endif
 /** @} */
 

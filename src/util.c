@@ -146,7 +146,7 @@ str_to_long(const char* str)
 uint32_t __clzsi2(uint32_t x)
 {
     uint32_t count = 0;
-    while ( !(x & 0x80000000U) && count < 34) {
+    while (!(x & 0x80000000U) && count < 34) {
         x <<= 1;
         count++;
     }
@@ -156,7 +156,7 @@ uint32_t __clzsi2(uint32_t x)
 uint32_t __ctzsi2(uint32_t x)
 {
     uint32_t count = 0;
-    while ( !(x & 0x000000001) && count <= 32) {
+    while (!(x & 0x000000001) && count <= 32) {
         x >>= 1;
         count++;
     }
@@ -166,7 +166,7 @@ uint32_t __ctzsi2(uint32_t x)
 uint32_t __clzdi2(uint64_t x)
 {
     uint32_t count = 0;
-    while ( !(x & 0x8000000000000000U) && count < 65) {
+    while (!(x & 0x8000000000000000U) && count < 65) {
         x <<= 1;
         count++;
     }
@@ -176,7 +176,7 @@ uint32_t __clzdi2(uint64_t x)
 uint32_t __ctzdi2(uint64_t x)
 {
     uint32_t count = 0;
-    while ( !(x & 0x00000000000000001) && count <= 64) {
+    while (!(x & 0x00000000000000001) && count <= 64) {
         x >>= 1;
         count++;
     }

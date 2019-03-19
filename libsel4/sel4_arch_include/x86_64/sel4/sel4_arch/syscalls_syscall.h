@@ -25,18 +25,18 @@ x64_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info, seL4_Word msg0, seL4
     register seL4_Word mr2 asm("r9") = msg2;
     register seL4_Word mr3 asm("r15") = msg3;
 
-    asm volatile (
+    asm volatile(
         "movq   %%rsp, %%rbx        \n"
         "syscall                    \n"
         "movq   %%rbx, %%rsp        \n"
         :
-        : "d" (sys),
-        "D" (dest),
-        "S" (info),
-        "r" (mr0),
-        "r" (mr1),
-        "r" (mr2),
-        "r" (mr3)
+        : "d"(sys),
+        "D"(dest),
+        "S"(info),
+        "r"(mr0),
+        "r"(mr1),
+        "r"(mr2),
+        "r"(mr3)
         : "%rcx", "%rbx", "r11"
     );
 }
@@ -49,17 +49,17 @@ x64_sys_reply(seL4_Word sys, seL4_Word info, seL4_Word msg0, seL4_Word msg1, seL
     register seL4_Word mr2 asm("r9") = msg2;
     register seL4_Word mr3 asm("r15") = msg3;
 
-    asm volatile (
+    asm volatile(
         "movq   %%rsp, %%rbx        \n"
         "syscall                    \n"
         "movq   %%rbx, %%rsp        \n"
         :
-        : "d" (sys),
-        "S" (info),
-        "r" (mr0),
-        "r" (mr1),
-        "r" (mr2),
-        "r" (mr3)
+        : "d"(sys),
+        "S"(info),
+        "r"(mr0),
+        "r"(mr1),
+        "r"(mr2),
+        "r"(mr3)
         : "%rbx", "%rcx", "%r11"
     );
 }
@@ -67,14 +67,14 @@ x64_sys_reply(seL4_Word sys, seL4_Word info, seL4_Word msg0, seL4_Word msg1, seL
 static inline void
 x64_sys_send_null(seL4_Word sys, seL4_Word dest, seL4_Word info)
 {
-    asm volatile (
+    asm volatile(
         "movq   %%rsp, %%rbx        \n"
         "syscall                    \n"
         "movq   %%rbx, %%rsp        \n"
         :
-        : "d" (sys),
-        "D" (dest),
-        "S" (info)
+        : "d"(sys),
+        "D"(dest),
+        "S"(info)
         : "%rcx", "%rbx", "%r11"
     );
 }
@@ -87,18 +87,18 @@ x64_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_
     register seL4_Word mr2 asm("r9");
     register seL4_Word mr3 asm("r15");
 
-    asm volatile (
+    asm volatile(
         "movq   %%rsp, %%rbx    \n"
         "syscall                \n"
         "movq   %%rbx, %%rsp    \n"
-        : "=D" (*out_badge),
-        "=S" (*out_info),
-        "=r" (mr0),
-        "=r" (mr1),
-        "=r" (mr2),
-        "=r" (mr3)
-        : "d" (sys),
-        "D" (src)
+        : "=D"(*out_badge),
+        "=S"(*out_info),
+        "=r"(mr0),
+        "=r"(mr1),
+        "=r"(mr2),
+        "=r"(mr3)
+        : "d"(sys),
+        "D"(src)
         : "%rcx", "%rbx", "r11", "memory"
     );
     *out_mr0 = mr0;
@@ -115,23 +115,23 @@ x64_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_dest, seL4_Word 
     register seL4_Word mr2 asm("r9") = *in_out_mr2;
     register seL4_Word mr3 asm("r15") = *in_out_mr3;
 
-    asm volatile (
+    asm volatile(
         "movq   %%rsp, %%rbx    \n"
         "syscall                \n"
         "movq   %%rbx, %%rsp    \n"
-        : "=S" (*out_info),
-        "=r" (mr0),
-        "=r" (mr1),
-        "=r" (mr2),
-        "=r" (mr3),
-        "=D" (*out_dest)
-        : "d" (sys),
-        "D" (dest),
-        "S" (info),
-        "r" (mr0),
-        "r" (mr1),
-        "r" (mr2),
-        "r" (mr3)
+        : "=S"(*out_info),
+        "=r"(mr0),
+        "=r"(mr1),
+        "=r"(mr2),
+        "=r"(mr3),
+        "=D"(*out_dest)
+        : "d"(sys),
+        "D"(dest),
+        "S"(info),
+        "r"(mr0),
+        "r"(mr1),
+        "r"(mr2),
+        "r"(mr3)
         : "%rcx", "%rbx", "r11", "memory"
     );
     *in_out_mr0 = mr0;
@@ -143,12 +143,12 @@ x64_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_dest, seL4_Word 
 static inline void
 x64_sys_null(seL4_Word sys)
 {
-    asm volatile (
+    asm volatile(
         "movq   %%rsp, %%rbx    \n"
         "syscall                \n"
         "movq   %%rbx, %%rsp    \n"
         :
-        : "d" (sys)
+        : "d"(sys)
         : "%rbx", "%rcx", "%rsi", "%rdi", "%r11"
     );
 }

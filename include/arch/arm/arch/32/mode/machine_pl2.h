@@ -126,9 +126,9 @@ static inline void invalidateHypTLB(void)
 static inline paddr_t PURE addressTranslateS1CPR(vptr_t vaddr)
 {
     uint32_t ipa0, ipa1;
-    asm volatile ("mcr  p15, 0, %0, c7, c8, 0" :: "r"(vaddr));
+    asm volatile("mcr  p15, 0, %0, c7, c8, 0" :: "r"(vaddr));
     isb();
-    asm volatile ("mrrc p15, 0, %0, %1, c7"   : "=r"(ipa0), "=r"(ipa1));
+    asm volatile("mrrc p15, 0, %0, %1, c7"   : "=r"(ipa0), "=r"(ipa1));
 
     return ipa0;
 }
@@ -164,13 +164,13 @@ static inline word_t PURE getHPFAR(void)
 static inline word_t getSCTLR(void)
 {
     word_t SCTLR;
-    asm volatile ("mrc p15, 0, %0, c1, c0, 0" : "=r"(SCTLR));
+    asm volatile("mrc p15, 0, %0, c1, c0, 0" : "=r"(SCTLR));
     return SCTLR;
 }
 
 static inline void setSCTLR(word_t sctlr)
 {
-    asm volatile ("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
+    asm volatile("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
 }
 
 static inline void setHTPIDR(word_t htpidr)

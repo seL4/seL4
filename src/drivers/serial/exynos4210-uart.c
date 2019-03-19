@@ -40,7 +40,7 @@
 void
 putDebugChar(unsigned char c)
 {
-    while ( (*UART_REG(UTRSTAT) & TXBUF_EMPTY) == 0 );
+    while ((*UART_REG(UTRSTAT) & TXBUF_EMPTY) == 0);
     *UART_REG(UTXH) = (c & 0xff);
 }
 #endif
@@ -49,7 +49,7 @@ putDebugChar(unsigned char c)
 unsigned char
 getDebugChar(void)
 {
-    if ( (*UART_REG(UTRSTAT) & RXBUF_READY)) {
+    if ((*UART_REG(UTRSTAT) & RXBUF_READY)) {
         return (unsigned char) * UART_REG(URXH);
     } else {
         return -1;

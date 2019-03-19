@@ -234,14 +234,14 @@ volatile struct l2cc_map * const l2cc
 BOOT_CODE static void
 mshield_smc(uint32_t callid, uint32_t arg1, uint32_t arg2)
 {
-    register uint32_t _arg1 asm ("r0") = arg1;
-    register uint32_t _arg2 asm ("r1") = arg2;
-    register uint32_t _callid asm ("r12") = callid;
-    asm volatile ("push {r2-r12, lr}\n"
-                  "dsb\n"
-                  "smc #0\n"
-                  "pop {r2-r12, lr}"
-                  :: "r"(_callid), "r"(_arg1), "r"(_arg2));
+    register uint32_t _arg1 asm("r0") = arg1;
+    register uint32_t _arg2 asm("r1") = arg2;
+    register uint32_t _callid asm("r12") = callid;
+    asm volatile("push {r2-r12, lr}\n"
+                 "dsb\n"
+                 "smc #0\n"
+                 "pop {r2-r12, lr}"
+                 :: "r"(_callid), "r"(_arg1), "r"(_arg2));
 }
 #endif /* TI_MSHIELD */
 
@@ -303,10 +303,10 @@ initL2Cache(void)
 
     /* 2: Invalidate by way. */
     l2cc->maintenance.inv_way = 0xffff;
-    while ( l2cc->maintenance.inv_way & 0xffff );
+    while (l2cc->maintenance.inv_way & 0xffff);
 
     /* 3: write to lockdown D & I reg9 if required  */
-    if ( (l2cc->id.cache_type & PL310_LOCKDOWN_BY_MASK) == PL310_LOCKDOWN_BY_MASTER) {
+    if ((l2cc->id.cache_type & PL310_LOCKDOWN_BY_MASK) == PL310_LOCKDOWN_BY_MASTER) {
         /* disable lockdown */
         l2cc->lockdown.d_lockdown0 = 0;
         l2cc->lockdown.i_lockdown0 = 0;
@@ -325,7 +325,7 @@ initL2Cache(void)
         l2cc->lockdown.d_lockdown7 = 0;
         l2cc->lockdown.i_lockdown7 = 0;
     }
-    if ( (l2cc->id.cache_type & PL310_LOCKDOWN_BY_MASK) == PL310_LOCKDOWN_BY_LINE) {
+    if ((l2cc->id.cache_type & PL310_LOCKDOWN_BY_MASK) == PL310_LOCKDOWN_BY_LINE) {
         /* disable lockdown */
         l2cc->lockdown.lock_line_eng = 0;
     }
@@ -377,7 +377,7 @@ void plat_cleanCache(void)
 #ifndef CONFIG_DEBUG_DISABLE_L2_CACHE
     /* Clean by way. */
     l2cc->maintenance.clean_way = 0xffff;
-    while ( l2cc->maintenance.clean_way & 0xffff );
+    while (l2cc->maintenance.clean_way & 0xffff);
     L2_cacheSync();
 #endif /* !CONFIG_DEBUG_DISABLE_L2_CACHE */
 }

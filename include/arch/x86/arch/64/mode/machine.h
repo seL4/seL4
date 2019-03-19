@@ -153,7 +153,7 @@ static inline void invalidateLocalPCID(word_t type, void *vaddr, asid_t asid)
         invpcid_desc_t desc;
         desc.asid = asid & 0xfff;
         desc.addr = (uint64_t)vaddr;
-        asm volatile ("invpcid %1, %0" :: "r"(type), "m"(desc));
+        asm volatile("invpcid %1, %0" :: "r"(type), "m"(desc));
     } else {
         switch (type) {
         case INVPCID_TYPE_ADDR:
@@ -207,8 +207,8 @@ static inline void invalidateLocalPageStructureCacheASID(paddr_t root, asid_t as
             "mov %[new_cr3], %%cr3\n"
             "mov %[old_cr3], %%cr3\n"
             ::
-            [new_cr3] "r" (makeCR3(root, asid).words[0]),
-            [old_cr3] "r" (cr3.words[0] | BIT(63))
+            [new_cr3] "r"(makeCR3(root, asid).words[0]),
+            [old_cr3] "r"(cr3.words[0] | BIT(63))
         );
     } else {
         /* just invalidate the page structure cache as per normal, by
@@ -236,12 +236,12 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
          1: \n\
          movq (%[returnto_addr]), %[returnto] \n\
          movq $0, (%[returnto_addr])"
-        : [returnto] "=&r" (returnto),
-        [temp] "=&r" (temp),
-        [high] "=&d" (high),
-        [low] "=&a" (low)
-        : [returnto_addr] "r" (&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
-        [reg] "c" (reg)
+        : [returnto] "=&r"(returnto),
+        [temp] "=&r"(temp),
+        [high] "=&d"(high),
+        [low] "=&a"(low)
+        : [returnto_addr] "r"(&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
+        [reg] "c"(reg)
         : "memory"
     );
     result.success = returnto != 0;
@@ -253,25 +253,25 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
 
 static inline void x86_write_fs_base_impl(word_t base)
 {
-    asm volatile ("wrfsbase %0"::"r"(base));
+    asm volatile("wrfsbase %0"::"r"(base));
 }
 
 static inline void x86_write_gs_base_impl(word_t base)
 {
-    asm volatile ("wrgsbase %0"::"r"(base));
+    asm volatile("wrgsbase %0"::"r"(base));
 }
 
 static inline word_t x86_read_fs_base_impl(void)
 {
     word_t base = 0;
-    asm volatile ("rdfsbase %0":"=r"(base));
+    asm volatile("rdfsbase %0":"=r"(base));
     return base;
 }
 
 static inline word_t x86_read_gs_base_impl(void)
 {
     word_t base = 0;
-    asm volatile ("rdgsbase %0":"=r"(base));
+    asm volatile("rdgsbase %0":"=r"(base));
     return base;
 }
 

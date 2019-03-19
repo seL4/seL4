@@ -87,8 +87,8 @@ void VISIBLE NORETURN restore_user_context(void)
         LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
         "sret"
         : /* no output */
-        : [REGSIZE] "i" (sizeof(word_t)),
-        [cur_thread] "r" (cur_thread_reg)
+        : [REGSIZE] "i"(sizeof(word_t)),
+        [cur_thread] "r"(cur_thread_reg)
         : "memory"
     );
 

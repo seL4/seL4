@@ -48,11 +48,11 @@ static inline register_t sbi_call(register_t cmd,
                                   register_t arg_1,
                                   register_t arg_2)
 {
-    register register_t a0 asm ("a0") = arg_0;
-    register register_t a1 asm ("a1") = arg_1;
-    register register_t a2 asm ("a2") = arg_2;
-    register register_t a7 asm ("a7") = cmd;
-    register register_t result asm ("a0");
+    register register_t a0 asm("a0") = arg_0;
+    register register_t a1 asm("a1") = arg_1;
+    register register_t a2 asm("a2") = arg_2;
+    register register_t a7 asm("a7") = cmd;
+    register register_t result asm("a0");
     asm volatile("ecall"
                  : "=r"(result)
                  : "r"(a0), "r"(a1), "r"(a2), "r"(a7)

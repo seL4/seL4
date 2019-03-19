@@ -162,7 +162,7 @@ decodeX86PortControlInvocation(
     }
 
     lu_ret = lookupTargetSlot(cnodeCap, index, depth);
-    if (lu_ret.status != EXCEPTION_NONE ) {
+    if (lu_ret.status != EXCEPTION_NONE) {
         userError("Target slot for new IO Port cap invalid: cap %lu.", getExtraCPtr(buffer, 0));
         return lu_ret.status;
     }

@@ -300,7 +300,7 @@ cancelAllIPC(endpoint_t *epptr)
 
         /* Set all blocked threads to restart */
         for (; thread; thread = thread->tcbEPNext) {
-            setThreadState (thread, ThreadState_Restart);
+            setThreadState(thread, ThreadState_Restart);
             SCHED_ENQUEUE(thread);
         }
 

@@ -26,35 +26,35 @@ armv_init_ccnt(void)
 #ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
     /* Enable generating interrupts on overflows */
     val = BIT(31);
-    asm volatile (
+    asm volatile(
         "mcr p15, 0, %0, c9, c14, 1\n"
         :
-        : "r" (val)
+        : "r"(val)
     );
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 
     /* enable them */
     val = 1;
-    asm volatile (
+    asm volatile(
         "mcr p15, 0, %0, c9, c14, 0\n"
         :
-        : "r" (val)
+        : "r"(val)
     );
 
     /* reset to 0 and make available at user level */
     pmcr = (1 << 2) | 1;
-    asm volatile (
+    asm volatile(
         "mcr p15, 0, %0, c9, c12, 0\n"
         : /* no outputs */
-        : "r" (pmcr)
+        : "r"(pmcr)
     );
 
     /* turn the cycle counter on */
     val = BIT(31);
-    asm volatile (
+    asm volatile(
         "mcr p15, 0, %0, c9, c12, 1\n"
         : /* no outputs */
-        : "r" (val)
+        : "r"(val)
     );
 }
 

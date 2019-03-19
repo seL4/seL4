@@ -79,7 +79,7 @@ isValidVTableRoot_fp(cap_t vspace_root_cap)
    which appears above it is zero. We are assuming that n_msgRegisters == 4
    for this check to be useful. By masking out the bottom 3 bits, we are
    really checking that n + 3 <= MASK(3), i.e. n + 3 <= 7 or n <= 4. */
-compile_assert (n_msgRegisters_eq_4, n_msgRegisters == 4)
+compile_assert(n_msgRegisters_eq_4, n_msgRegisters == 4)
 static inline int
 fastpath_mi_check(word_t msgInfo)
 {
@@ -165,10 +165,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         LOAD_S "  t0, (4*%[REGSIZE])(t0) \n"
         "sret"
         : /* no output */
-        : "r" (cur_thread_reg),
-        [REGSIZE] "i" (sizeof(word_t)),
-        "r" (badge_reg),
-        "r" (msgInfo_reg)
+        : "r"(cur_thread_reg),
+        [REGSIZE] "i"(sizeof(word_t)),
+        "r"(badge_reg),
+        "r"(msgInfo_reg)
         : "memory"
     );
 

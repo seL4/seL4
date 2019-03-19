@@ -158,7 +158,7 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
             return false;
         }
         pte = x86_make_device_pte(phys);
-        assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
+        assert(idx == ((PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
         pt[idx] = pte;
         idx++;
         if (idx == BIT(PT_INDEX_BITS)) {
@@ -168,7 +168,7 @@ BOOT_CODE bool_t map_kernel_window_devices(pte_t *pt, uint32_t num_ioapic, paddr
     /* put in null mappings for any extra IOAPICs */
     for (; i < CONFIG_MAX_NUM_IOAPIC; i++) {
         pte = x86_make_empty_pte();
-        assert(idx == ( (PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
+        assert(idx == ((PPTR_IOAPIC_START + i * BIT(PAGE_BITS)) & MASK(LARGE_PAGE_BITS)) >> PAGE_BITS);
         pt[idx] = pte;
         idx++;
     }
@@ -507,7 +507,7 @@ init_pat_msr(void)
     x86_pat_msr_t pat_msr;
     /* First verify PAT is supported by the machine.
      *      See section 11.12.1 of Volume 3 of the Intel manual */
-    if ( (x86_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
+    if ((x86_cpuid_edx(0x1, 0x0) & BIT(16)) == 0) {
         printf("PAT support not found\n");
         return false;
     }
@@ -726,7 +726,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         if (lu_ret.status != EXCEPTION_NONE) {
             return;
         }
-        if (! (pte_ptr_get_present(lu_ret.ptSlot)
+        if (!(pte_ptr_get_present(lu_ret.ptSlot)
                 && (pte_ptr_get_page_base_address(lu_ret.ptSlot)
                     == pptr_to_paddr(pptr)))) {
             return;
@@ -740,7 +740,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
             return;
         }
         pde = pd_ret.pdSlot;
-        if (! (pde_ptr_get_page_size(pde) == pde_pde_large
+        if (!(pde_ptr_get_page_size(pde) == pde_pde_large
                 && pde_pde_large_ptr_get_present(pde)
                 && (pde_pde_large_ptr_get_page_base_address(pde)
                     == pptr_to_paddr(pptr)))) {
@@ -780,7 +780,7 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     }
 
     /* check if the PD actually refers to the PT */
-    if (! (pde_ptr_get_page_size(lu_ret.pdSlot) == pde_pde_pt &&
+    if (!(pde_ptr_get_page_size(lu_ret.pdSlot) == pde_pde_pt &&
             pde_pde_pt_ptr_get_present(lu_ret.pdSlot) &&
             (pde_pde_pt_ptr_get_pt_base_address(lu_ret.pdSlot) == pptr_to_paddr(pt)))) {
         return;
@@ -1292,7 +1292,7 @@ decodeX86PageTableInvocation(
         return performX86PageTableInvocationUnmap(cap, cte);
     }
 
-    if (invLabel != X86PageTableMap ) {
+    if (invLabel != X86PageTableMap) {
         userError("X86PageTable: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;

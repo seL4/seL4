@@ -92,7 +92,7 @@ fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
    in the bottom of the msgInfo word, is <= 2 and that msgExtraCaps
    which appears above it is zero. We are assuming that n_msgRegisters == 2
    for this check to be useful.*/
-compile_assert (n_msgRegisters_eq_2, n_msgRegisters == 2)
+compile_assert(n_msgRegisters_eq_2, n_msgRegisters == 2)
 static inline int
 fastpath_mi_check(word_t msgInfo)
 {
@@ -155,9 +155,9 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "sysexit \n"
             :
             : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
-            "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
-            "b" (badge),
-            "S" (msgInfo),
+            "a"(cur_thread->tcbArch.tcbContext.registers[EAX]),
+            "b"(badge),
+            "S"(msgInfo),
             [IFMASK]"i"(FLAGS_IF)
             : "memory"
         );
@@ -186,9 +186,9 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "sysexit \n"
             :
             : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
-            "a" (cur_thread->tcbArch.tcbContext.registers[EAX]),
-            "b" (badge),
-            "S" (msgInfo),
+            "a"(cur_thread->tcbArch.tcbContext.registers[EAX]),
+            "b"(badge),
+            "S"(msgInfo),
             [IFMASK]"i"(FLAGS_IF)
             : "memory"
         );

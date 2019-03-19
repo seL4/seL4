@@ -92,9 +92,9 @@ alloc_region(word_t size_bits)
                 new_rem_small.start = new_reg.end;
                 new_rem_small.end = ndks_boot.freemem[i].end;
             }
-            if ( is_reg_empty(reg) ||
+            if (is_reg_empty(reg) ||
                     (reg_size(new_rem_small) < reg_size(rem_small)) ||
-                    (reg_size(new_rem_small) == reg_size(rem_small) && reg_size(new_rem_large) < reg_size(rem_large)) ) {
+                    (reg_size(new_rem_small) == reg_size(rem_small) && reg_size(new_rem_large) < reg_size(rem_large))) {
                 reg = new_reg;
                 rem_small = new_rem_small;
                 rem_large = new_rem_large;
@@ -123,7 +123,7 @@ write_slot(slot_ptr_t slot_ptr, cap_t cap)
     slot_ptr->cap = cap;
 
     slot_ptr->cteMDBNode = nullMDBNode;
-    mdb_node_ptr_set_mdbRevocable  (&slot_ptr->cteMDBNode, true);
+    mdb_node_ptr_set_mdbRevocable(&slot_ptr->cteMDBNode, true);
     mdb_node_ptr_set_mdbFirstBadged(&slot_ptr->cteMDBNode, true);
 }
 

@@ -63,10 +63,10 @@ arm_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info_arg, seL4_Word mr0, s
 
     /* Perform the system call. */
     register seL4_Word scno asm("x7") = sys;
-    asm volatile (
+    asm volatile(
         "svc #0"
-        : "+r" (destptr), "+r" (msg0), "+r" (msg1), "+r" (msg2),
-        "+r" (msg3), "+r" (info)
+        : "+r"(destptr), "+r"(msg0), "+r"(msg1), "+r"(msg2),
+        "+r"(msg3), "+r"(info)
         : "r"(scno)
     );
 }
@@ -84,10 +84,10 @@ arm_sys_reply(seL4_Word sys, seL4_Word info_arg, seL4_Word mr0, seL4_Word mr1, s
 
     /* Perform the system call. */
     register seL4_Word scno asm("x7") = sys;
-    asm volatile (
+    asm volatile(
         "svc #0"
-        : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
-        "+r" (info)
+        : "+r"(msg0), "+r"(msg1), "+r"(msg2), "+r"(msg3),
+        "+r"(info)
         : "r"(scno)
     );
 }
@@ -100,9 +100,9 @@ arm_sys_send_null(seL4_Word sys, seL4_Word src, seL4_Word info_arg)
 
     /* Perform the system call. */
     register seL4_Word scno asm("x7") = sys;
-    asm volatile (
+    asm volatile(
         "svc #0"
-        : "+r" (destptr), "+r" (info)
+        : "+r"(destptr), "+r"(info)
         : "r"(scno)
     );
 }
@@ -121,10 +121,10 @@ arm_sys_recv(seL4_Word sys, seL4_Word src, seL4_Word *out_badge, seL4_Word *out_
 
     /* Perform the system call. */
     register seL4_Word scno asm("x7") = sys;
-    asm volatile (
+    asm volatile(
         "svc #0"
-        : "=r" (msg0), "=r" (msg1), "=r" (msg2), "=r" (msg3),
-        "=r" (info), "+r" (src_and_badge)
+        : "=r"(msg0), "=r"(msg1), "=r"(msg2), "=r"(msg3),
+        "=r"(info), "+r"(src_and_badge)
         : "r"(scno)
         : "memory"
     );
@@ -150,10 +150,10 @@ arm_sys_send_recv(seL4_Word sys, seL4_Word dest, seL4_Word *out_badge, seL4_Word
 
     /* Perform the system call. */
     register seL4_Word scno asm("x7") = sys;
-    asm volatile (
+    asm volatile(
         "svc #0"
-        : "+r" (msg0), "+r" (msg1), "+r" (msg2), "+r" (msg3),
-        "+r" (info), "+r" (destptr)
+        : "+r"(msg0), "+r"(msg1), "+r"(msg2), "+r"(msg3),
+        "+r"(info), "+r"(destptr)
         : "r"(scno)
         : "memory"
     );
@@ -169,7 +169,7 @@ static inline void
 arm_sys_null(seL4_Word sys)
 {
     register seL4_Word scno asm("x7") = sys;
-    asm volatile (
+    asm volatile(
         "svc #0"
         : /* no outputs */
         : "r"(scno)

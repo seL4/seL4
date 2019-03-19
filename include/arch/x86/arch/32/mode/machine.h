@@ -94,11 +94,11 @@ static inline rdmsr_safe_result_t x86_rdmsr_safe(const uint32_t reg)
          1: \n\
          movl (%[returnto_addr]), %[returnto] \n\
          movl $0, (%[returnto_addr])"
-        : [returnto] "=&r" (returnto),
-        [high] "=&d" (high),
-        [low] "=&a" (low)
-        : [returnto_addr] "r" (&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
-        [reg] "c" (reg)
+        : [returnto] "=&r"(returnto),
+        [high] "=&d"(high),
+        [low] "=&a"(low)
+        : [returnto_addr] "r"(&ARCH_NODE_STATE(x86KSGPExceptReturnTo)),
+        [reg] "c"(reg)
         : "memory"
     );
     result.success = returnto != 0;
@@ -123,14 +123,14 @@ void ia32_install_tss(uint32_t tss_sel);
 static inline void FORCE_INLINE x86_write_fs_base_impl(word_t base)
 {
     gdt_entry_gdt_data_ptr_set_base_low(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF,  (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_mid(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF, (base >> 16) & 0xFF);
     gdt_entry_gdt_data_ptr_set_base_high(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_IPCBUF, (base >> 24) & 0xFF);
 }
 
 static inline void FORCE_INLINE x86_write_gs_base_impl(word_t base)
 {
     gdt_entry_gdt_data_ptr_set_base_low(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS, base);
-    gdt_entry_gdt_data_ptr_set_base_mid(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS,  (base >> 16) & 0xFF);
+    gdt_entry_gdt_data_ptr_set_base_mid(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS, (base >> 16) & 0xFF);
     gdt_entry_gdt_data_ptr_set_base_high(x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSgdt + GDT_TLS, (base >> 24) & 0xFF);
 }
 

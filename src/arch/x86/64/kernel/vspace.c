@@ -523,7 +523,7 @@ init_dtrs(void)
     x64_install_gdt(&gdt_idt_ptr);
     swapgs();
 
-    gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1 )) - 1;
+    gdt_idt_ptr.limit = (sizeof(idt_entry_t) * (int_max + 1)) - 1;
     gdt_idt_ptr.base = (uint64_t)x86KSGlobalState[CURRENT_CPU_INDEX()].x86KSidt;
     x64_install_idt(&gdt_idt_ptr);
 
@@ -1138,7 +1138,7 @@ unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
     }
 
     /* check if the PDPT has the PD */
-    if (! (pdpte_ptr_get_page_size(lu_ret.pdptSlot) == pdpte_pdpte_pd &&
+    if (!(pdpte_ptr_get_page_size(lu_ret.pdptSlot) == pdpte_pdpte_pd &&
             pdpte_pdpte_pd_ptr_get_present(lu_ret.pdptSlot) &&
             (pdpte_pdpte_pd_ptr_get_pd_base_address(lu_ret.pdptSlot) == pptr_to_paddr(pd)))) {
         return;
@@ -1313,7 +1313,7 @@ static void unmapPDPT(asid_t asid, vptr_t vaddr, pdpte_t *pdpt)
     pml4Slot = lookupPML4Slot(find_ret.vspace_root, vaddr);
 
     /* check if the PML4 has the PDPT */
-    if (! (pml4e_ptr_get_present(pml4Slot) &&
+    if (!(pml4e_ptr_get_present(pml4Slot) &&
             pml4e_ptr_get_pdpt_base_address(pml4Slot) == pptr_to_paddr(pdpt))) {
         return;
     }
@@ -1497,10 +1497,10 @@ bool_t modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vadd
         pdpte = pdpt_ret.pdptSlot;
 
 
-        if (! (pdpte_ptr_get_page_size(pdpte) == pdpte_pdpte_1g
+        if (!(pdpte_ptr_get_page_size(pdpte) == pdpte_pdpte_1g
                 && pdpte_pdpte_1g_ptr_get_present(pdpte)
-                &&  (pdpte_pdpte_1g_ptr_get_page_base_address(pdpte)
-                     == pptr_to_paddr(pptr)))) {
+                && (pdpte_pdpte_1g_ptr_get_page_base_address(pdpte)
+                    == pptr_to_paddr(pptr)))) {
             return false;
         }
 

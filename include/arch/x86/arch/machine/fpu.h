@@ -105,7 +105,7 @@ static inline void finit(void)
  */
 static inline void enableFpu(void)
 {
-    asm volatile("clts" :: "m" (control_reg_order));
+    asm volatile("clts" :: "m"(control_reg_order));
 }
 
 /*

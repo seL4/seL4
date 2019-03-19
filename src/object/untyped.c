@@ -259,7 +259,7 @@ resetUntypedCap(cte_t *srcSlot)
         srcSlot->cap = cap_untyped_cap_set_capFreeIndex(prev_cap, 0);
     } else {
         for (offset = ROUND_DOWN(offset - 1, chunk);
-                offset != - BIT (chunk); offset -= BIT (chunk)) {
+                offset != - BIT(chunk); offset -= BIT(chunk)) {
             clearMemory(GET_OFFSET_FREE_PTR(regionBase, offset), chunk);
             srcSlot->cap = cap_untyped_cap_set_capFreeIndex(prev_cap, OFFSET_TO_FREE_INDEX(offset));
             status = preemptionPoint();

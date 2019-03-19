@@ -14,14 +14,14 @@ static inline word_t
 readACR(void)
 {
     word_t ACR;
-    asm volatile ("mrc p15,0,%0,c1,c0,1" : "=r"(ACR));
+    asm volatile("mrc p15,0,%0,c1,c0,1" : "=r"(ACR));
     return ACR;
 }
 
 static inline void
 writeACR(word_t ACR)
 {
-    asm volatile ("mcr p15,0,%0,c1,c0,1" : : "r"(ACR));
+    asm volatile("mcr p15,0,%0,c1,c0,1" : : "r"(ACR));
 }
 
 void

@@ -733,7 +733,7 @@ exception_t
 decodeVCPUSetTCB(cap_t cap, extra_caps_t extraCaps)
 {
     cap_t tcbCap;
-    if ( extraCaps.excaprefs[0] == NULL) {
+    if (extraCaps.excaprefs[0] == NULL) {
         userError("VCPU SetTCB: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;

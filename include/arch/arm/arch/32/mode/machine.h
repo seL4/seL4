@@ -241,7 +241,7 @@ static inline word_t readTPIDRURO(void)
 static inline word_t readMPIDR(void)
 {
     word_t reg;
-    asm volatile ("mrc p15, 0, %0, c0, c0, 5" : "=r"(reg));
+    asm volatile("mrc p15, 0, %0, c0, c0, 5" : "=r"(reg));
     return reg;
 }
 
@@ -561,13 +561,13 @@ static inline void setCIDR(word_t cidr)
 static inline word_t getACTLR(void)
 {
     word_t ACTLR;
-    asm volatile ("mrc p15, 0, %0, c1, c0, 1" : "=r"(ACTLR));
+    asm volatile("mrc p15, 0, %0, c1, c0, 1" : "=r"(ACTLR));
     return ACTLR;
 }
 
 static inline void setACTLR(word_t actlr)
 {
-    asm volatile ("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
+    asm volatile("mcr p15, 0, %0, c1, c0, 1" :: "r"(actlr));
 }
 
 void arch_clean_invalidate_caches(void);

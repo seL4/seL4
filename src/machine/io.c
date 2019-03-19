@@ -127,7 +127,7 @@ print_unsigned_long_long(unsigned long long x, unsigned int ui_base)
     }
 
     /* we can't do 64 bit division so break it up into two hex numbers */
-    upper = (unsigned int) (x >> 32llu);
+    upper = (unsigned int)(x >> 32llu);
     lower = (unsigned int) x & 0xffffffff;
 
     /* print first 32 bits if they exist */

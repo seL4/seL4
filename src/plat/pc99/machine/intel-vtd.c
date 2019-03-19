@@ -313,7 +313,7 @@ vtd_map_reserved_page(vtd_cte_t *vtd_context_table, int context_index, paddr_t a
         if (VTD_PT_INDEX_BITS * i >= 32) {
             iopt_index = 0;
         } else {
-            iopt_index = ( (addr >> seL4_PageBits) >> (VTD_PT_INDEX_BITS * i)) & MASK(VTD_PT_INDEX_BITS);
+            iopt_index = ((addr >> seL4_PageBits) >> (VTD_PT_INDEX_BITS * i)) & MASK(VTD_PT_INDEX_BITS);
         }
         vtd_pte_slot = iopt + iopt_index;
         if (i == 0) {

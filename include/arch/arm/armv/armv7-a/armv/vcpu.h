@@ -37,280 +37,280 @@ static inline word_t
 get_lr_svc(void)
 {
     word_t ret;
-    asm ("mrs %[ret], lr_svc" : [ret]"=r"(ret));
+    asm("mrs %[ret], lr_svc" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_lr_svc(word_t val)
 {
-    asm ("msr lr_svc, %[val]" :: [val]"r"(val));
+    asm("msr lr_svc, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_sp_svc(void)
 {
     word_t ret;
-    asm ("mrs %[ret], sp_svc" : [ret]"=r"(ret));
+    asm("mrs %[ret], sp_svc" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_sp_svc(word_t val)
 {
-    asm ("msr sp_svc, %[val]" :: [val]"r"(val));
+    asm("msr sp_svc, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_spsr_svc(void)
 {
     word_t ret;
-    asm ("mrs %[ret], spsr_svc" : [ret]"=r"(ret));
+    asm("mrs %[ret], spsr_svc" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_spsr_svc(word_t val)
 {
-    asm ("msr spsr_svc, %[val]" :: [val]"r"(val));
+    asm("msr spsr_svc, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_lr_abt(void)
 {
     word_t ret;
-    asm ("mrs %[ret], lr_abt" : [ret]"=r"(ret));
+    asm("mrs %[ret], lr_abt" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_lr_abt(word_t val)
 {
-    asm ("msr lr_abt, %[val]" :: [val]"r"(val));
+    asm("msr lr_abt, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_sp_abt(void)
 {
     word_t ret;
-    asm ("mrs %[ret], sp_abt" : [ret]"=r"(ret));
+    asm("mrs %[ret], sp_abt" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_sp_abt(word_t val)
 {
-    asm ("msr sp_abt, %[val]" :: [val]"r"(val));
+    asm("msr sp_abt, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_spsr_abt(void)
 {
     word_t ret;
-    asm ("mrs %[ret], spsr_abt" : [ret]"=r"(ret));
+    asm("mrs %[ret], spsr_abt" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_spsr_abt(word_t val)
 {
-    asm ("msr spsr_abt, %[val]" :: [val]"r"(val));
+    asm("msr spsr_abt, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_lr_und(void)
 {
     word_t ret;
-    asm ("mrs %[ret], lr_und" : [ret]"=r"(ret));
+    asm("mrs %[ret], lr_und" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_lr_und(word_t val)
 {
-    asm ("msr lr_und, %[val]" :: [val]"r"(val));
+    asm("msr lr_und, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_sp_und(void)
 {
     word_t ret;
-    asm ("mrs %[ret], sp_und" : [ret]"=r"(ret));
+    asm("mrs %[ret], sp_und" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_sp_und(word_t val)
 {
-    asm ("msr sp_und, %[val]" :: [val]"r"(val));
+    asm("msr sp_und, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_spsr_und(void)
 {
     word_t ret;
-    asm ("mrs %[ret], spsr_und" : [ret]"=r"(ret));
+    asm("mrs %[ret], spsr_und" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_spsr_und(word_t val)
 {
-    asm ("msr spsr_und, %[val]" :: [val]"r"(val));
+    asm("msr spsr_und, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_lr_irq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], lr_irq" : [ret]"=r"(ret));
+    asm("mrs %[ret], lr_irq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_lr_irq(word_t val)
 {
-    asm ("msr lr_irq, %[val]" :: [val]"r"(val));
+    asm("msr lr_irq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_sp_irq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], sp_irq" : [ret]"=r"(ret));
+    asm("mrs %[ret], sp_irq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_sp_irq(word_t val)
 {
-    asm ("msr sp_irq, %[val]" :: [val]"r"(val));
+    asm("msr sp_irq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_spsr_irq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], spsr_irq" : [ret]"=r"(ret));
+    asm("mrs %[ret], spsr_irq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_spsr_irq(word_t val)
 {
-    asm ("msr spsr_irq, %[val]" :: [val]"r"(val));
+    asm("msr spsr_irq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_lr_fiq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], lr_fiq" : [ret]"=r"(ret));
+    asm("mrs %[ret], lr_fiq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_lr_fiq(word_t val)
 {
-    asm ("msr lr_fiq, %[val]" :: [val]"r"(val));
+    asm("msr lr_fiq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_sp_fiq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], sp_fiq" : [ret]"=r"(ret));
+    asm("mrs %[ret], sp_fiq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_sp_fiq(word_t val)
 {
-    asm ("msr sp_fiq, %[val]" :: [val]"r"(val));
+    asm("msr sp_fiq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_spsr_fiq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], spsr_fiq" : [ret]"=r"(ret));
+    asm("mrs %[ret], spsr_fiq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_spsr_fiq(word_t val)
 {
-    asm ("msr spsr_fiq, %[val]" :: [val]"r"(val));
+    asm("msr spsr_fiq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_r8_fiq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], r8_fiq" : [ret]"=r"(ret));
+    asm("mrs %[ret], r8_fiq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_r8_fiq(word_t val)
 {
-    asm ("msr r8_fiq, %[val]" :: [val]"r"(val));
+    asm("msr r8_fiq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_r9_fiq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], r9_fiq" : [ret]"=r"(ret));
+    asm("mrs %[ret], r9_fiq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_r9_fiq(word_t val)
 {
-    asm ("msr r9_fiq, %[val]" :: [val]"r"(val));
+    asm("msr r9_fiq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_r10_fiq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], r10_fiq" : [ret]"=r"(ret));
+    asm("mrs %[ret], r10_fiq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_r10_fiq(word_t val)
 {
-    asm ("msr r10_fiq, %[val]" :: [val]"r"(val));
+    asm("msr r10_fiq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_r11_fiq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], r11_fiq" : [ret]"=r"(ret));
+    asm("mrs %[ret], r11_fiq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_r11_fiq(word_t val)
 {
-    asm ("msr r11_fiq, %[val]" :: [val]"r"(val));
+    asm("msr r11_fiq, %[val]" :: [val]"r"(val));
 }
 
 static inline word_t
 get_r12_fiq(void)
 {
     word_t ret;
-    asm ("mrs %[ret], r12_fiq" : [ret]"=r"(ret));
+    asm("mrs %[ret], r12_fiq" : [ret]"=r"(ret));
     return ret;
 }
 
 static inline void
 set_r12_fiq(word_t val)
 {
-    asm ("msr r12_fiq, %[val]" :: [val]"r"(val));
+    asm("msr r12_fiq, %[val]" :: [val]"r"(val));
 }
 static inline word_t
 get_cntv_tval(void)

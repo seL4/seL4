@@ -177,7 +177,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     mdb_node_ptr_mset_mdbNext_mdbRevocable_mdbFirstBadged(
         &replySlot->cteMDBNode, CTE_REF(callerSlot), 1, 1);
 
-    fastpath_copy_mrs (length, NODE_STATE(ksCurThread), dest);
+    fastpath_copy_mrs(length, NODE_STATE(ksCurThread), dest);
 
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&dest->tcbState,
@@ -275,7 +275,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     cap_pd = cap_vtable_cap_get_vspace_root_fp(newVTable);
 
     /* Ensure that the destination has a valid MMU. */
-    if (unlikely(! isValidVTableRoot_fp (newVTable))) {
+    if (unlikely(! isValidVTableRoot_fp(newVTable))) {
         slowpath(SysReplyRecv);
     }
 
@@ -370,7 +370,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
     /* Replies don't have a badge. */
     badge = 0;
 
-    fastpath_copy_mrs (length, NODE_STATE(ksCurThread), caller);
+    fastpath_copy_mrs(length, NODE_STATE(ksCurThread), caller);
 
     /* Dest thread is set Running, but not queued. */
     thread_state_ptr_set_tsType_np(&caller->tcbState,

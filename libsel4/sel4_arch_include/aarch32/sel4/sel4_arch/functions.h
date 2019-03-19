@@ -24,7 +24,7 @@ seL4_GetIPCBuffer(void)
     return *(seL4_IPCBuffer**)seL4_GlobalsFrame;
 #elif defined(CONFIG_IPC_BUF_TPIDRURW)
     seL4_Word reg;
-    asm ("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
+    asm("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
     return (seL4_IPCBuffer*)reg;
 #else
 #error "Unknown IPC buffer strategy"

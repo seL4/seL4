@@ -64,7 +64,7 @@ getActiveIRQ(void)
 {
 
     uint64_t temp = 0;
-    asm volatile ("csrr %0, scause":"=r" (temp));
+    asm volatile("csrr %0, scause":"=r"(temp));
 
     if (!(temp & BIT(CONFIG_WORD_SIZE - 1))) {
         return irqInvalid;
@@ -127,18 +127,18 @@ static inline uint64_t get_cycles(void)
 #if __riscv_xlen == 32
 {
     uint32_t nH, nL;
-    asm volatile (
+    asm volatile(
         "rdtimeh %0\n"
         "rdtime  %1\n"
-        : "=r" (nH), "=r" (nL));
-    return ((uint64_t) ((uint64_t) nH << 32)) | (nL);
+        : "=r"(nH), "=r"(nL));
+    return ((uint64_t)((uint64_t) nH << 32)) | (nL);
 }
 #else
 {
     uint64_t n;
-    asm volatile (
+    asm volatile(
         "rdtime %0"
-        : "=r" (n));
+        : "=r"(n));
     return n;
 }
 #endif

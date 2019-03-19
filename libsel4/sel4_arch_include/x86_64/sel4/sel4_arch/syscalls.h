@@ -428,7 +428,7 @@ seL4_DebugNameThread(seL4_CPtr tcb, const char *name)
 
 #if defined(CONFIG_DANGEROUS_CODE_INJECTION)
 LIBSEL4_INLINE_FUNC void
-seL4_DebugRun(void (*userfn) (void *), void* userarg)
+seL4_DebugRun(void (*userfn)(void *), void* userarg)
 {
     x64_sys_send_null(seL4_SysDebugRun, (seL4_Word)userfn, (seL4_Word)userarg);
     asm volatile("" ::: "memory");

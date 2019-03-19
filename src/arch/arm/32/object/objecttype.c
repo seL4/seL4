@@ -268,8 +268,8 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
             word_t botA, botB, topA, topB;
             botA = generic_frame_cap_get_capFBasePtr(cap_a);
             botB = generic_frame_cap_get_capFBasePtr(cap_b);
-            topA = botA + MASK (pageBitsForSize(generic_frame_cap_get_capFSize(cap_a)));
-            topB = botB + MASK (pageBitsForSize(generic_frame_cap_get_capFSize(cap_b))) ;
+            topA = botA + MASK(pageBitsForSize(generic_frame_cap_get_capFSize(cap_a)));
+            topB = botB + MASK(pageBitsForSize(generic_frame_cap_get_capFSize(cap_b))) ;
             return ((botA <= botB) && (topA >= topB) && (botB <= topB));
         }
         break;

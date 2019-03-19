@@ -123,24 +123,24 @@ static inline void saveFpuState(user_fpu_state_t *dest)
     }
 
     /* We don't support asynchronous exceptions */
-    assert ((dest->fpexc & BIT(FPEXC_EX_BIT)) == 0);
+    assert((dest->fpexc & BIT(FPEXC_EX_BIT)) == 0);
 
     if (isFPUD32SupportedCached) {
         register word_t regs_d16_d31 asm("ip") = (word_t) &dest->fpregs[16];
         asm volatile(
             ".word 0xeccc0b20        \n"    /*  vstmia  ip, {d16-d31} */
             :
-            : "r" (regs_d16_d31)
+            : "r"(regs_d16_d31)
             : "memory"
         );
     }
 
-    register word_t regs_d0_d15 asm("r2") =  (word_t) &dest->fpregs[0];
+    register word_t regs_d0_d15 asm("r2") = (word_t) &dest->fpregs[0];
     asm volatile(
         /* Store d0 - d15 to memory */
         ".word 0xec820b20       \n" /* vstmia  r2, {d0-d15}" */
         :
-        : "r" (regs_d0_d15)
+        : "r"(regs_d0_d15)
     );
 
     /* Store FPSCR. */
@@ -191,19 +191,19 @@ static inline void loadFpuState(user_fpu_state_t *src)
         /* now we need to enable the EN bit in FPEXC */
         setEnFPEXC();
     }
-    register word_t regs_d16_d31 asm("r2") =  (word_t) &src->fpregs[16];
+    register word_t regs_d16_d31 asm("r2") = (word_t) &src->fpregs[16];
     if (isFPUD32SupportedCached) {
         asm volatile(
             ".word 0xecd20b20       \n" /*   vldmia  r2, {d16-d31} */
-            :: "r" (regs_d16_d31)
+            :: "r"(regs_d16_d31)
         );
     }
 
-    register word_t regs_d0_d15 asm("r0") =  (word_t) &src->fpregs[0];
+    register word_t regs_d0_d15 asm("r0") = (word_t) &src->fpregs[0];
     asm volatile(
         /* Restore d0 - d15 from memory */
         ".word 0xec900b20         \n"    /*  vldmia  r0, {d0-d15} */
-        :: "r" (regs_d0_d15)
+        :: "r"(regs_d0_d15)
     );
 
     /* Load FPSCR. */

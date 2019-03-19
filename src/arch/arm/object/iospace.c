@@ -181,7 +181,7 @@ decodeARMIOPTInvocation(
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (invLabel != ARMIOPageTableMap ) {
+    if (invLabel != ARMIOPageTableMap) {
         userError("IOPTInvocation: Invalid operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;

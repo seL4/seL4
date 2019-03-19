@@ -104,7 +104,7 @@ static void sendWord(unsigned long word)
 {
     unsigned long i;
     for (i = 0; i < sizeof(unsigned long); i++) {
-        putEncodedChar( (word >> (i * 8)) & 0xff);
+        putEncodedChar((word >> (i * 8)) & 0xff);
     }
 }
 

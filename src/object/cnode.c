@@ -173,7 +173,7 @@ decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
             break;
 
         default:
-            assert (0);
+            assert(0);
             return EXCEPTION_NONE;
         }
 

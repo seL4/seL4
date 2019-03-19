@@ -67,8 +67,8 @@ void VISIBLE NORETURN restore_user_context(void)
         "ldr     x30, [sp, %[LR]]          \n"
         "eret"
         :
-        : "r" (NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers),
-        [SP_EL0] "i" (PT_SP_EL0), [SPSR_EL1] "i" (PT_SPSR_EL1), [LR] "i" (PT_LR)
+        : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers),
+        [SP_EL0] "i"(PT_SP_EL0), [SPSR_EL1] "i"(PT_SPSR_EL1), [LR] "i"(PT_LR)
         : "memory"
     );
     UNREACHABLE();

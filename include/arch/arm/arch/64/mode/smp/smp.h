@@ -33,9 +33,9 @@ getCurrentCPUIndex(void)
 {
     cpu_id_t id;
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        asm volatile ("mrs %0, tpidr_el2" : "=r"(id));
+        asm volatile("mrs %0, tpidr_el2" : "=r"(id));
     } else {
-        asm volatile ("mrs %0, tpidr_el1" : "=r"(id));
+        asm volatile("mrs %0, tpidr_el1" : "=r"(id));
     }
     return (id & CPUID_MASK);
 }

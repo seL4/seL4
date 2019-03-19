@@ -54,11 +54,11 @@ bool_t isFPUD32SupportedCached;
 BOOT_CODE static inline bool_t isFPUD32Supported(void)
 {
     word_t mvfr0;
-    asm volatile (".word 0xeef73a10 \n"  /* vmrs    r3, mvfr0 */
-                  "mov %0, r3       \n"
-                  : "=r" (mvfr0)
-                  :
-                  : "r3");
+    asm volatile(".word 0xeef73a10 \n"   /* vmrs    r3, mvfr0 */
+                 "mov %0, r3       \n"
+                 : "=r"(mvfr0)
+                 :
+                 : "r3");
     return ((mvfr0 & 0xf) == 2);
 }
 
@@ -107,10 +107,10 @@ fpsimd_HWCapTest(void)
     }
 
     /* Check of this platform supports HW FP instructions */
-    asm volatile (".word 0xeef00a10  \n" /* vmrs    r0, fpsid */
-                  "mov %0, r0        \n"
-                  : "=r" (fpsid) :
-                  : "r0");
+    asm volatile(".word 0xeef00a10  \n"  /* vmrs    r0, fpsid */
+                 "mov %0, r0        \n"
+                 : "=r"(fpsid) :
+                 : "r0");
     if (fpsid & BIT(FPSID_SW_BIT)) {
         return false;
     }

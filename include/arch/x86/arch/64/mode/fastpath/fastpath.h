@@ -59,8 +59,8 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
 #ifdef ENABLE_SMP_SUPPORT
     asm volatile("movq %[value], %%gs:%c[offset]"
                  :
-                 : [value] "r" (&thread->tcbArch.tcbContext.registers[Error + 1]),
-                 [offset] "i" (OFFSETOF(nodeInfo_t, currentThreadUserContext)));
+                 : [value] "r"(&thread->tcbArch.tcbContext.registers[Error + 1]),
+                 [offset] "i"(OFFSETOF(nodeInfo_t, currentThreadUserContext)));
 #endif /* ENABLE_SMP_SUPPORT */
 
     if (config_set(CONFIG_KERNEL_X86_IBPB_ON_CONTEXT_SWITCH)) {
@@ -125,7 +125,7 @@ fastpath_copy_mrs(word_t length, tcb_t *src, tcb_t *dest)
    which appears above it is zero. We are assuming that n_msgRegisters == 4
    for this check to be useful. By masking out the bottom 3 bits, we are
    really checking that n + 3 <= MASK(3), i.e. n + 3 <= 7 or n <= 4. */
-compile_assert (n_msgRegisters_eq_4, n_msgRegisters == 4)
+compile_assert(n_msgRegisters_eq_4, n_msgRegisters == 4)
 static inline int
 fastpath_mi_check(word_t msgInfo)
 {
@@ -189,7 +189,7 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
         register word_t next_cr3_r11 asm("r11") = next_cr3;
 #endif
-        asm volatile (
+        asm volatile(
             "movq %%rcx, %%rsp\n"
             "popq %%rax\n"
             "popq %%rbx\n"
@@ -229,13 +229,13 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "sti\n"
             "sysexitq\n"
             :
-            : "c" (&cur_thread->tcbArch.tcbContext.registers[RAX]),
-            "D" (badge),
-            "S" (msgInfo),
+            : "c"(&cur_thread->tcbArch.tcbContext.registers[RAX]),
+            "D"(badge),
+            "S"(msgInfo),
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
             "r"(next_cr3_r11),
 #endif
-            [IF] "i" (FLAGS_IF)
+            [IF] "i"(FLAGS_IF)
             : "memory"
         );
     } else {
@@ -274,10 +274,10 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
             "sysretq\n"
             :
             : "r"(&cur_thread->tcbArch.tcbContext.registers[RAX]),
-            "D" (badge),
-            "S" (msgInfo)
+            "D"(badge),
+            "S"(msgInfo)
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
-            , "c" (next_cr3)
+            , "c"(next_cr3)
 #endif
             : "memory"
         );

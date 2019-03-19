@@ -110,7 +110,7 @@ vmclear(void *vmcs_ptr)
 {
     uint64_t physical_address;
     physical_address = pptr_to_paddr((void*)vmcs_ptr);
-    asm volatile (
+    asm volatile(
         "vmclear %0"
         :
         : "m"(physical_address)
@@ -135,7 +135,7 @@ vmptrld(void *vmcs_ptr)
     uint64_t physical_address;
     uint8_t error;
     physical_address = pptr_to_paddr(vmcs_ptr);
-    asm volatile (
+    asm volatile(
         "vmptrld %1; setna %0"
         : "=q"(error)
         : "m"(physical_address)
@@ -911,7 +911,7 @@ static exception_t
 decodeSetTCB(cap_t cap, word_t length, word_t* buffer, extra_caps_t excaps)
 {
     cap_t tcbCap;
-    if ( excaps.excaprefs[0] == NULL) {
+    if (excaps.excaprefs[0] == NULL) {
         userError("VCPU SetTCB: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1558,7 +1558,7 @@ invept(ept_pml4e_t *ept_pml4)
 
         address.parts[0] = pptr_to_paddr((void*)ept_pml4);
         address.parts[1] = 0;
-        asm volatile (
+        asm volatile(
             "invept %0, %1"
             :
             : "m"(address),  "r"(type)

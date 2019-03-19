@@ -200,7 +200,7 @@ decodeX86IOPTInvocation(
         return performX86IOPTInvocationUnmap(cap, slot);
     }
 
-    if (invLabel != X86IOPageTableMap ) {
+    if (invLabel != X86IOPageTableMap) {
         userError("X86IOPageTable: Illegal operation.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -444,7 +444,7 @@ void deleteIOPageTable(cap_t io_pt_cap)
             flushCacheRange(vtd_context_slot, VTD_CTE_SIZE_BITS);
         } else {
             io_address = cap_io_page_table_cap_get_capIOPTMappedAddress(io_pt_cap);
-            lu_ret = lookupIOPTSlot_resolve_levels(vtd_pte, io_address >> PAGE_BITS, level - 1, level - 1 );
+            lu_ret = lookupIOPTSlot_resolve_levels(vtd_pte, io_address >> PAGE_BITS, level - 1, level - 1);
 
             /* if we have been overmapped or something */
             if (lu_ret.status != EXCEPTION_NONE || lu_ret.level != 0) {

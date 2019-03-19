@@ -100,8 +100,8 @@ long CONST char_to_long(char c);
 long PURE str_to_long(const char* str);
 
 
-int __builtin_clzl (unsigned long x);
-int __builtin_ctzl (unsigned long x);
+int __builtin_clzl(unsigned long x);
+int __builtin_ctzl(unsigned long x);
 
 #ifdef CONFIG_ARCH_RISCV
 uint32_t __clzsi2(uint32_t x);
@@ -139,7 +139,7 @@ CONST ctzl(unsigned long x)
 
 #define CTZL(x) __builtin_ctzl(x)
 
-int __builtin_popcountl (unsigned long x);
+int __builtin_popcountl(unsigned long x);
 
 /** DONT_TRANSLATE */
 static inline long

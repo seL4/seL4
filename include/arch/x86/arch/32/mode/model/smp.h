@@ -25,7 +25,7 @@ getCurESP(void)
 {
     word_t stack;
     void *result;
-    asm ("movl %[stack_address], %[result]" : [result] "=r"(result) : [stack_address] "r"(&stack));
+    asm("movl %[stack_address], %[result]" : [result] "=r"(result) : [stack_address] "r"(&stack));
     return result;
 }
 

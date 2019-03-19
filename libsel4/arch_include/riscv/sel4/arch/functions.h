@@ -25,7 +25,7 @@ LIBSEL4_INLINE_FUNC seL4_IPCBuffer*
 seL4_GetIPCBuffer(void)
 {
     seL4_Word reg;
-    asm ("mv %0, tp" : "=r"(reg));
+    asm("mv %0, tp" : "=r"(reg));
     return (seL4_IPCBuffer*)reg;
 }
 

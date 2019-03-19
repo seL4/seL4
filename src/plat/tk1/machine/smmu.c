@@ -93,11 +93,11 @@ smmu_disable(void)
         /* in hyp mode, we need call the hook in monitor mode */
         /* we need physical address here */
         paddr_t addr = addrFromPPtr(&do_smmu_disable);
-        asm (".arch_extension sec\n");
-        asm volatile ("mov r0, %0\n\t"
-                      "dsb\nisb\n"
-                      "smc #0\n"
-                      ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
+        asm(".arch_extension sec\n");
+        asm volatile("mov r0, %0\n\t"
+                     "dsb\nisb\n"
+                     "smc #0\n"
+                     ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
     } else {
         /* in secure mode, can enable it directly */
         smmu_regs->smmu_config = 0;
@@ -111,11 +111,11 @@ smmu_enable(void)
 {
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         paddr_t addr = addrFromPPtr(&do_smmu_enable);
-        asm (".arch_extension sec\n");
-        asm volatile ("mov r0, %0\n\t"
-                      "dsb\nisb\n"
-                      "smc #0\n"
-                      ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
+        asm(".arch_extension sec\n");
+        asm volatile("mov r0, %0\n\t"
+                     "dsb\nisb\n"
+                     "smc #0\n"
+                     ::"r"(addr):"r0", "r1", "r2", "r3", "ip");
     } else {
         smmu_regs->smmu_config = 1;
     }

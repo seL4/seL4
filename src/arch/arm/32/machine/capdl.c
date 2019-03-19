@@ -103,7 +103,7 @@ static int getArg32(unsigned int *res)
     if (getDecodedChar(&b4)) {
         return 1;
     }
-    *res = (b1 << 24 ) | (b2 << 16) | (b3 << 8) | b4;
+    *res = (b1 << 24) | (b2 << 16) | (b3 << 8) | b4;
     return 0;
 }
 

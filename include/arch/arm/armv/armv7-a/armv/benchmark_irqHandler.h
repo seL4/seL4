@@ -18,7 +18,7 @@ static inline void armv_handleOverflowIRQ(void)
     uint32_t val;
     /* Clear the overflow flag */
     val = BIT(31);
-    asm volatile ("mcr p15, 0, %0, c9, c12, 3;" : : "r" (val));
+    asm volatile("mcr p15, 0, %0, c9, c12, 3;" : : "r"(val));
 }
 #endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
 #endif /* ARMV_BENCHMARK_IRQ_H */

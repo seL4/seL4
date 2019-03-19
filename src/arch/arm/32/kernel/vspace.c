@@ -719,7 +719,7 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
                  cap_get_capType(bufferCap) != cap_frame_cap)) {
         return NULL;
     }
-    if (unlikely (generic_frame_cap_get_capFIsDevice(bufferCap))) {
+    if (unlikely(generic_frame_cap_get_capFIsDevice(bufferCap))) {
         return NULL;
     }
 
@@ -1158,7 +1158,7 @@ pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
     pde = find_ret.pd[pdIndex];
 
     if (likely(pde_get_pdeType(pde) == pde_pde_coarse
-               && ptrFromPAddr (pde_pde_coarse_get_address(pde)) == pt)) {
+               && ptrFromPAddr(pde_pde_coarse_get_address(pde)) == pt)) {
         return find_ret.pd;
     } else {
         return NULL;
@@ -1281,7 +1281,7 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
     pde_t *pd, *pdSlot;
     unsigned int pdIndex;
 
-    pd = pageTableMapped (asid, vaddr, pt);
+    pd = pageTableMapped(asid, vaddr, pt);
 
     if (likely(pd != NULL)) {
         pdIndex = vaddr >> (PT_INDEX_BITS + PAGE_BITS);
@@ -2324,7 +2324,7 @@ decodeARMPageTableInvocation(word_t invLabel, word_t length,
             return EXCEPTION_SYSCALL_ERROR;
         }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageTableInvocationUnmap (cap, cte);
+        return performPageTableInvocationUnmap(cap, cte);
     }
 
     if (unlikely(invLabel != ARMPageTableMap)) {
@@ -2825,13 +2825,13 @@ decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
                                                 cap, excaps, buffer);
 
     case cap_page_table_cap:
-        return decodeARMPageTableInvocation (invLabel, length, cte,
-                                             cap, excaps, buffer);
+        return decodeARMPageTableInvocation(invLabel, length, cte,
+                                            cap, excaps, buffer);
 
     case cap_small_frame_cap:
     case cap_frame_cap:
-        return decodeARMFrameInvocation (invLabel, length, cte,
-                                         cap, excaps, buffer);
+        return decodeARMFrameInvocation(invLabel, length, cte,
+                                        cap, excaps, buffer);
 
     case cap_asid_control_cap: {
         word_t i;
