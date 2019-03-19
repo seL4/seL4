@@ -31,8 +31,8 @@
 #define ONEMS 0xb0 /* UART One Millisecond Register */
 #define UTS   0xb4 /* UART Test Register */
 
-#define UART_SR1_TRDY 		  BIT(13)
-#define UART_SR1_RRDY 		  BIT(9)
+#define UART_SR1_TRDY         BIT(13)
+#define UART_SR1_RRDY         BIT(9)
 #define UART_SR2_TXFIFO_EMPTY BIT(14)
 #define UART_SR2_RXFIFO_RDR   BIT(0)
 
