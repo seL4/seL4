@@ -623,7 +623,7 @@ void chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault, wo
         REFILL_HEAD(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount += REFILL_TAIL(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount;
         REFILL_TAIL(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount = 0;
     } else {
-        refill_budget_check(NODE_STATE_ON_CORE(ksCurSC, core), consumed, capacity);
+        refill_budget_check(consumed, capacity);
     }
 
     assert(REFILL_HEAD(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount >= MIN_BUDGET);

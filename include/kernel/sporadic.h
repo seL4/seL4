@@ -45,13 +45,20 @@
 #define REFILL_HEAD(sc) REFILL_INDEX((sc), (sc)->scRefillHead)
 #define REFILL_TAIL(sc) REFILL_INDEX((sc), (sc)->scRefillTail)
 
-/* return the amount of refills we can fit in this scheduling context */
+
+/* Scheduling context objects consist of a sched_context_t at the start, followed by a
+ * circular buffer of refills. As scheduling context objects are of variable size, the
+ * amount of refill_ts that can fit into a scheduling context object is also variable.
+ *
+ * @return the maximum number of refill_t data structures that can fit into this
+ * specific scheduling context object.
+ */
 static inline word_t refill_absolute_max(cap_t sc_cap)
 {
     return (BIT(cap_sched_context_cap_get_capSCSizeBits(sc_cap)) - sizeof(sched_context_t)) / sizeof(refill_t);
 }
 
-/* Return the amount of items currently in the refill queue */
+/* @return the current amount of empty slots in the refill buffer */
 static inline word_t refill_size(sched_context_t *sc)
 {
     if (sc->scRefillHead <= sc->scRefillTail) {
@@ -60,11 +67,14 @@ static inline word_t refill_size(sched_context_t *sc)
     return sc->scRefillTail + 1u + (sc->scRefillMax - sc->scRefillHead);
 }
 
+/* @return true if the circular buffer of refills is current full (all slots in the
+ * buffer are currently being used */
 static inline bool_t refill_full(sched_context_t *sc)
 {
     return refill_size(sc) == sc->scRefillMax;
 }
 
+/* @return true if the ciruclar buffer only contains 1 used slot */
 static inline bool_t refill_single(sched_context_t *sc)
 {
     return sc->scRefillHead == sc->scRefillTail;
@@ -91,7 +101,7 @@ static inline bool_t refill_sufficient(sched_context_t *sc, ticks_t usage)
 }
 
 /*
- * Return true if the refill is eligible to be used.
+ * Return true if the head refill is eligible to be used.
  * This indicates if the thread bound to the sc can be placed
  * into the scheduler, otherwise it needs to go into the release queue
  * to wait.
@@ -108,20 +118,23 @@ void refill_new(sched_context_t *sc, word_t max_refills, ticks_t budget, ticks_t
 void refill_update(sched_context_t *sc, ticks_t new_period, ticks_t new_budget, word_t new_max_refills);
 
 
-/* Charge the head refill its entire amount.
+/* Charge `usage` to the current scheduling context.
+ * This function should only be called only when charging `used` will deplete
+ * the head refill, resulting in refill_sufficient failing.
  *
- * `used` amount from its current replenishment without
- * depleting the budget, i.e refill_expired returns false.
- *
+ * @param usage the amount of time to charge.
+ * @param capacity the value returned by refill_capacity. At most call sites this
+ * has already been calculated so pass the value in rather than calculating it again.
  */
-void refill_budget_check(sched_context_t *sc, ticks_t used, ticks_t capacity);
+void refill_budget_check(ticks_t used, ticks_t capacity);
 
 /*
- * Charge a scheduling context `used` amount from its
+ * Charge a the current scheduling context `used` amount from its
  * current refill. This will split the refill, leaving whatever is
- * left over at the head of the refill.
+ * left over at the head of the refill. This is only called when charging
+ * `used` will not deplete the head refill.
  */
-void refill_split_check(sched_context_t *sc, ticks_t used);
+void refill_split_check(ticks_t used);
 
 /*
  * This is called when a thread is eligible to start running: it

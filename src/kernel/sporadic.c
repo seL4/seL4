@@ -223,8 +223,9 @@ static inline void schedule_used(sched_context_t *sc, refill_t new)
     }
 }
 
-void refill_budget_check(sched_context_t *sc, ticks_t usage, ticks_t capacity)
+void refill_budget_check(ticks_t usage, ticks_t capacity)
 {
+    sched_context_t *sc = NODE_STATE(ksCurSC);
     /* this function should only be called when the sc is out of budget */
     assert(capacity < MIN_BUDGET || refill_full(sc));
     assert(sc->scPeriod > 0);
@@ -263,7 +264,7 @@ void refill_budget_check(sched_context_t *sc, ticks_t usage, ticks_t capacity)
 
     capacity = refill_capacity(sc, usage);
     if (capacity > 0 && refill_ready(sc)) {
-        refill_split_check(sc, usage);
+        refill_split_check(usage);
     }
 
     /* ensure the refill head is sufficient, such that when we wake in awaken,
@@ -278,8 +279,9 @@ void refill_budget_check(sched_context_t *sc, ticks_t usage, ticks_t capacity)
     REFILL_SANITY_END(sc);
 }
 
-void refill_split_check(sched_context_t *sc, ticks_t usage)
+void refill_split_check(ticks_t usage)
 {
+    sched_context_t *sc = NODE_STATE(ksCurSC);
     /* invalid to call this on a NULL sc */
     assert(sc != NULL);
     /* something is seriously wrong if this is called and no
@@ -311,7 +313,7 @@ void refill_split_check(sched_context_t *sc, ticks_t usage)
             schedule_used(sc, new);
         }
         assert(refill_ordered(sc));
-    } else  {
+    } else {
         /* leave remnant as reduced replenishment */
         assert(remnant >= MIN_BUDGET);
         /* split the head refill  */
