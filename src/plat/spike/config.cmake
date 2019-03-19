@@ -38,6 +38,5 @@ include(src/plat/spike/instance/freedom/config.cmake)
 add_sources(
     DEP "KernelPlatformSpike"
     CFILES
-        src/plat/spike/machine/fdt.c
         src/plat/spike/machine/hardware.c
 )

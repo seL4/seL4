@@ -34,15 +34,10 @@ _start:
   addi  gp, gp, %pcrel_lo(1b)
 .option pop
 
-  /* hartid is in a4 */
-  li  sp, BIT(CONFIG_KERNEL_STACK_BITS)
-  mul sp, sp, a4
-  la  x1, (kernel_stack_alloc + (BIT(CONFIG_KERNEL_STACK_BITS)))
-  add sp, sp, x1
+  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
 
-  csrrw x0, sscratch, a4 /* zero sscratch for the init task */
+  csrw sscratch, x0 /* zero sscratch for the init task */
 
-  /* la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)) */
   jal init_kernel
 
   la ra, restore_user_context

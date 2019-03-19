@@ -27,7 +27,6 @@
 #include <arch/benchmark.h>
 #include <linker.h>
 #include <plat/machine/hardware.h>
-#include <plat/machine/fdt.h>
 #include <machine.h>
 
 /* pointer to the end of boot code/data in kernel image */
@@ -120,22 +119,12 @@ insert_region_excluded(region_t mem_reg, region_t reserved_reg)
 }
 
 BOOT_CODE static void
-init_freemem(region_t ui_reg, region_t dtb_reg)
+init_freemem(region_t ui_reg)
 {
     unsigned int i;
     bool_t result UNUSED;
     region_t cur_reg;
     region_t res_reg[] = {
-        {
-            // We ignore all physical memory before the dtb as the current riscv-pk (proxy kernel)
-            // that we use for loading is broken and provides an incorrect memory map where
-            // it claims that the memory that is used to provide the m-mode services are
-            // free physical memory. As there is no interface to determine what the memory
-            // reserved for this is we simply hope it placed the dtb after itself and exclude
-            // all memory up until then.
-            .start = 0,
-            .end = dtb_reg.end
-        },
         {
             // This looks a bit awkward as our symbols are a reference in the kernel image window, but
             // we want to do all allocations in terms of the main kernel window, so we do some translation
@@ -155,10 +144,8 @@ init_freemem(region_t ui_reg, region_t dtb_reg)
     /* Force ordering and exclusivity of reserved regions. */
     assert(res_reg[0].start < res_reg[0].end);
     assert(res_reg[1].start < res_reg[1].end);
-    assert(res_reg[2].start < res_reg[2].end);
 
     assert(res_reg[0].end <= res_reg[1].start);
-    assert(res_reg[1].end <= res_reg[2].start);
 
     for (i = 0; i < get_num_avail_p_regs(); i++) {
         cur_reg = paddr_to_pptr_reg(get_avail_p_reg(i));
@@ -174,7 +161,6 @@ init_freemem(region_t ui_reg, region_t dtb_reg)
 
         cur_reg = insert_region_excluded(cur_reg, res_reg[0]);
         cur_reg = insert_region_excluded(cur_reg, res_reg[1]);
-        cur_reg = insert_region_excluded(cur_reg, res_reg[2]);
 
         if (cur_reg.start != cur_reg.end) {
             result = insert_region(cur_reg);
@@ -213,9 +199,8 @@ init_cpu(void)
 /* This and only this function initialises the platform. It does NOT initialise any kernel state. */
 
 BOOT_CODE static void
-init_plat(region_t dtb)
+init_plat(void)
 {
-    parseFDT((void*)dtb.start);
     initIRQController();
     initTimer();
 }
@@ -226,8 +211,6 @@ static BOOT_CODE bool_t
 try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
-    paddr_t dtb_p_reg_start,
-    paddr_t dtb_p_reg_end,
     uint32_t pv_offset,
     vptr_t  v_entry
 )
@@ -242,9 +225,6 @@ try_init_kernel(
     region_t boot_mem_reuse_reg = paddr_to_pptr_reg(boot_mem_reuse_p_reg);
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
-    });
-    region_t dtb_reg = paddr_to_pptr_reg((p_region_t) {
-        dtb_p_reg_start, dtb_p_reg_end
     });
     pptr_t bi_frame_pptr;
     vptr_t bi_frame_vptr;
@@ -270,10 +250,10 @@ try_init_kernel(
     init_cpu();
 
     /* initialize the platform */
-    init_plat(dtb_reg);
+    init_plat();
 
     /* make the free memory available to alloc_region() */
-    init_freemem(ui_reg, dtb_reg);
+    init_freemem(ui_reg);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
@@ -386,20 +366,13 @@ init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     sword_t pv_offset,
-    vptr_t  v_entry,
-    word_t hartid,
-    paddr_t dtb_output_p
+    vptr_t  v_entry
 )
 {
-    pptr_t dtb_output = (pptr_t)paddr_to_pptr(dtb_output_p);
-
     bool_t result = try_init_kernel(ui_p_reg_start,
                                     ui_p_reg_end,
-                                    dtb_output_p,
-                                    dtb_output_p + fdt_size((void*)dtb_output),
                                     pv_offset,
-                                    v_entry
-                                   );
+                                    v_entry);
 
     if (!result) {
         fail ("Kernel init failed for some reason :(");

@@ -35,27 +35,25 @@
 /* Available physical memory regions on platform (RAM minus kernel image). */
 /* NOTE: Regions are not allowed to be adjacent! */
 
-static word_t BOOT_DATA num_avail_p_regs = 0;
-static p_region_t BOOT_DATA avail_p_regs[MAX_AVAIL_P_REGS];
+static p_region_t BOOT_DATA avail_p_regs[] = {
+    /* The first 2MB are reserved for the SBI in the BBL */
+#if defined(CONFIG_BUILD_ROCKET_CHIP_ZEDBOARD)
+    { /*.start = */ 0x0, /* .end = */ 0x10000000}
+#elif defined(CONFIG_ARCH_RISCV64)
+    { /*.start = */ 0x80200000, /* .end = */ 0x17FF00000}
+#elif defined(CONFIG_ARCH_RISCV32)
+    { /*.start = */ 0x80200000, /* .end = */ 0xFD000000}
+#endif
+};
 
 BOOT_CODE int get_num_avail_p_regs(void)
 {
-    return num_avail_p_regs;
+    return sizeof(avail_p_regs) / sizeof(p_region_t);
 }
 
 BOOT_CODE p_region_t get_avail_p_reg(unsigned int i)
 {
     return avail_p_regs[i];
-}
-
-BOOT_CODE bool_t add_avail_p_reg(p_region_t reg)
-{
-    if (num_avail_p_regs == MAX_AVAIL_P_REGS) {
-        return false;
-    }
-    avail_p_regs[num_avail_p_regs] = reg;
-    num_avail_p_regs++;
-    return true;
 }
 
 /**
