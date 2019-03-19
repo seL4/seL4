@@ -79,8 +79,8 @@ void flushCacheRange(void *vaddr, uint32_t size_bits)
     x86_mfence();
 
     for (v = ROUND_DOWN((word_t)vaddr, x86KScacheLineSizeBits);
-            v < (word_t)vaddr + BIT(size_bits);
-            v += BIT(x86KScacheLineSizeBits)) {
+         v < (word_t)vaddr + BIT(size_bits);
+         v += BIT(x86KScacheLineSizeBits)) {
         flushCacheLine((void *)v);
     }
     x86_mfence();
@@ -116,7 +116,7 @@ BOOT_CODE bool_t disablePrefetchers()
          * there is no need to also look at the model_ID.
          */
         if (model_info->family == IA32_PREFETCHER_COMPATIBLE_FAMILIES_ID
-                && model_info->model == valid_models[i]) {
+            && model_info->model == valid_models[i]) {
             low = x86_rdmsr_low(IA32_PREFETCHER_MSR);
             high = x86_rdmsr_high(IA32_PREFETCHER_MSR);
 

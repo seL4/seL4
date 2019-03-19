@@ -44,9 +44,9 @@ exception_t sendFaultIPC(tcb_t *tptr)
     handlerCap = lu_ret.cap;
 
     if (cap_get_capType(handlerCap) == cap_endpoint_cap &&
-            cap_endpoint_cap_get_capCanSend(handlerCap) &&
-            (cap_endpoint_cap_get_capCanGrant(handlerCap) ||
-             cap_endpoint_cap_get_capCanGrantReply(handlerCap))) {
+        cap_endpoint_cap_get_capCanSend(handlerCap) &&
+        (cap_endpoint_cap_get_capCanGrant(handlerCap) ||
+         cap_endpoint_cap_get_capCanGrantReply(handlerCap))) {
         tptr->tcbFault = current_fault;
         if (seL4_Fault_get_seL4_FaultType(current_fault) == seL4_Fault_CapFault) {
             tptr->tcbLookupFailure = original_lookup_fault;

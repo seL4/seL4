@@ -135,11 +135,11 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
         return VMNoAccess;
     }
     if (vm_rights == VMReadOnly &&
-            seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+        seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
     }
     if (vm_rights == VMReadWrite &&
-            seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+        seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
         } else {
@@ -147,8 +147,8 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
         }
     }
     if (vm_rights == VMReadWrite &&
-            !seL4_CapRights_get_capAllowRead(cap_rights_mask) &&
-            seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
+        !seL4_CapRights_get_capAllowRead(cap_rights_mask) &&
+        seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
         userError("Attempted to make unsupported write only mapping");
     }
     return VMKernelOnly;
@@ -567,8 +567,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     /* create all PT objs and caps necessary to cover userland image */
 
     for (pt_vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
-            pt_vptr < it_v_reg.end;
-            pt_vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
+         pt_vptr < it_v_reg.end;
+         pt_vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
         pt_pptr = alloc_region(seL4_PageTableBits);
         if (!pt_pptr) {
             return cap_null_cap_new();
@@ -1068,7 +1068,7 @@ void setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) != cap_page_directory_cap ||
-            !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
+        !cap_page_directory_cap_get_capPDIsMapped(threadRoot)) {
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
         setCurrentPD(addrFromPPtr(armUSGlobalPD));
 #else
@@ -1102,8 +1102,8 @@ static bool_t setVMRootForFlush(pde_t *pd, asid_t asid)
     threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) == cap_page_directory_cap &&
-            cap_page_directory_cap_get_capPDIsMapped(threadRoot) &&
-            PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(threadRoot)) == pd) {
+        cap_page_directory_cap_get_capPDIsMapped(threadRoot) &&
+        PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(threadRoot)) == pd) {
         return false;
     }
 
@@ -1187,8 +1187,8 @@ hw_asid_t findFreeHWASID(void)
 
     /* Find a free hardware ASID */
     for (hw_asid_offset = 0;
-            hw_asid_offset <= (word_t)((hw_asid_t) - 1);
-            hw_asid_offset ++) {
+         hw_asid_offset <= (word_t)((hw_asid_t) - 1);
+         hw_asid_offset ++) {
         hw_asid = armKSNextASID + ((hw_asid_t)hw_asid_offset);
         if (armKSHWASIDTable[hw_asid] == asidInvalid) {
             return hw_asid;
@@ -1328,7 +1328,7 @@ exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
             current_fault = handleUserLevelDebugException(pc);
 
             if (seL4_Fault_DebugException_get_exceptionReason(current_fault) == seL4_SingleStep
-                    && !singleStepFaultCounterReady(thread)) {
+                && !singleStepFaultCounterReady(thread)) {
                 /* Don't send a fault message to the thread yet if we were asked
                  * to step through N instructions and the counter isn't depleted
                  * yet.
@@ -1710,7 +1710,7 @@ createSafeMappingEntries_PTE
             if (unlikely(pte_get_pteType(ret.pte_entries.base[i]) ==
                          pte_pte_small)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                    && !pte_pte_small_get_contiguous_hint(ret.pte_entries.base[i])
+                && !pte_pte_small_get_contiguous_hint(ret.pte_entries.base[i])
 #endif
                ) {
                 current_syscall_error.type =
@@ -2208,7 +2208,7 @@ static exception_t decodeARMPageDirectoryInvocation(word_t invLabel, word_t leng
 
         /* Refuse to cross a page boundary. */
         if (pageBase(start, resolve_ret.frameSize) !=
-                pageBase(end - 1, resolve_ret.frameSize)) {
+            pageBase(end - 1, resolve_ret.frameSize)) {
             userError("PD Flush: Range is across page boundary.");
             current_syscall_error.type = seL4_RangeError;
             current_syscall_error.rangeErrorMin = start;
@@ -2869,8 +2869,8 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
         pdCap = pdCapSlot->cap;
 
         if (unlikely(
-                    cap_get_capType(pdCap) != cap_page_directory_cap ||
-                    cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
+                cap_get_capType(pdCap) != cap_page_directory_cap ||
+                cap_page_directory_cap_get_capPDIsMapped(pdCap))) {
             userError("ASIDPoolAssign: Invalid page directory cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;

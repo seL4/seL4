@@ -53,7 +53,7 @@ void deleteEPTASID(asid_t asid, ept_pml4e_t *ept)
     if (poolPtr != NULL) {
         asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
         if (asid_map_get_type(asid_map) == asid_map_asid_map_ept &&
-                (ept_pml4e_t *)asid_map_asid_map_ept_get_ept_root(asid_map) == ept) {
+            (ept_pml4e_t *)asid_map_asid_map_ept_get_ept_root(asid_map) == ept) {
             poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
         }
     }
@@ -167,7 +167,7 @@ static lookupEPTPTSlot_ret_t lookupEPTPTSlot(ept_pml4e_t *pml4, vptr_t vptr)
     }
 
     if ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) != ept_pde_ept_pde_pt) ||
-            !ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) {
+        !ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(22);
 
         ret.ptSlot = NULL;
@@ -189,9 +189,9 @@ static ept_cache_options_t eptCacheFromVmAttr(vm_attributes_t vmAttr)
        verify user has specified a sensible option */
     ept_cache_options_t option = vmAttr.words[0];
     if (option != EPTUncacheable ||
-            option != EPTWriteCombining ||
-            option != EPTWriteThrough ||
-            option != EPTWriteBack) {
+        option != EPTWriteCombining ||
+        option != EPTWriteThrough ||
+        option != EPTWriteBack) {
         /* No failure mode is supported here, vmAttr settings should be verified earlier */
         option = EPTWriteBack;
     }
@@ -215,7 +215,7 @@ EPTPDPTMapped_ret_t EPTPDPTMapped(asid_t asid, vptr_t vptr, ept_pdpte_t *pdpt)
     pml4Slot = lookupEPTPML4Slot(asid_ret.ept, vptr);
 
     if (ept_pml4e_ptr_get_read(pml4Slot)
-            && ptrFromPAddr(ept_pml4e_ptr_get_pdpt_base_address(pml4Slot)) == pdpt) {
+        && ptrFromPAddr(ept_pml4e_ptr_get_pdpt_base_address(pml4Slot)) == pdpt) {
         ret.pml4 = asid_ret.ept;
         ret.pml4Slot = pml4Slot;
         ret.status = EXCEPTION_NONE;
@@ -413,7 +413,7 @@ EPTPageDirectoryMapped_ret_t EPTPageDirectoryMapped(asid_t asid, vptr_t vaddr, e
     }
 
     if (ept_pdpte_ptr_get_read(find_ret.pdptSlot)
-            && ptrFromPAddr(ept_pdpte_ptr_get_pd_base_address(find_ret.pdptSlot)) == pd) {
+        && ptrFromPAddr(ept_pdpte_ptr_get_pd_base_address(find_ret.pdptSlot)) == pd) {
         ret.pml4 = asid_ret.ept;
         ret.pdptSlot = find_ret.pdptSlot;
         ret.status = EXCEPTION_NONE;
@@ -601,7 +601,7 @@ EPTPageTableMapped_ret_t EPTPageTableMapped(asid_t asid, vptr_t vaddr, ept_pte_t
     }
 
     if (ept_pde_ptr_get_page_size(find_ret.pdSlot) == ept_pde_ept_pde_pt
-            && ptrFromPAddr(ept_pde_ept_pde_pt_ptr_get_pt_base_address(find_ret.pdSlot)) == pt) {
+        && ptrFromPAddr(ept_pde_ept_pde_pt_ptr_get_pt_base_address(find_ret.pdSlot)) == pt) {
         ret.pml4 = asid_ret.ept;
         ret.pdSlot = find_ret.pdSlot;
         ret.status = EXCEPTION_NONE;
@@ -709,7 +709,7 @@ exception_t decodeX86EPTPTInvocation(
     pml4Cap = excaps.excaprefs[0]->cap;
 
     if (cap_get_capType(pml4Cap) != cap_ept_pml4_cap ||
-            !cap_ept_pml4_cap_get_capPML4IsMapped(pml4Cap)) {
+        !cap_ept_pml4_cap_get_capPML4IsMapped(pml4Cap)) {
         userError("X86EPTPTMap: Not a valid EPT pml4.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
@@ -744,9 +744,9 @@ exception_t decodeX86EPTPTInvocation(
     }
 
     if (((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_pt) &&
-            ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) ||
-            ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_2m) &&
-             ept_pde_ept_pde_2m_ptr_get_read(lu_ret.pdSlot))) {
+         ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) ||
+        ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_2m) &&
+         ept_pde_ept_pde_2m_ptr_get_read(lu_ret.pdSlot))) {
         userError("X86EPTPTMap: Page table already mapped here");
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
@@ -829,7 +829,7 @@ exception_t decodeX86EPTPageMap(
     assert(cap_frame_cap_get_capFMapType(cap) == X86_MappingNone);
 
     if (cap_get_capType(pml4Cap) != cap_ept_pml4_cap ||
-            !cap_ept_pml4_cap_get_capPML4IsMapped(pml4Cap)) {
+        !cap_ept_pml4_cap_get_capPML4IsMapped(pml4Cap)) {
         userError("X86EPTPageMap: Attempting to map frame into invalid ept pml4.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
@@ -918,20 +918,20 @@ exception_t decodeX86EPTPageMap(
 
 
         if ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_pt) &&
-                ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) {
+            ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot)) {
             userError("X86EPTPageMap: Page table already present.");
             current_syscall_error.type = seL4_DeleteFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
         if (LARGE_PAGE_BITS != EPT_PD_INDEX_OFFSET &&
-                (ept_pde_ptr_get_page_size(lu_ret.pdSlot + 1) == ept_pde_ept_pde_pt) &&
-                ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot + 1)) {
+            (ept_pde_ptr_get_page_size(lu_ret.pdSlot + 1) == ept_pde_ept_pde_pt) &&
+            ept_pde_ept_pde_pt_ptr_get_read(lu_ret.pdSlot + 1)) {
             userError("X86EPTPageMap: Page table already present.");
             current_syscall_error.type = seL4_DeleteFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
         if ((ept_pde_ptr_get_page_size(lu_ret.pdSlot) == ept_pde_ept_pde_2m) &&
-                ept_pde_ept_pde_2m_ptr_get_read(lu_ret.pdSlot)) {
+            ept_pde_ept_pde_2m_ptr_get_read(lu_ret.pdSlot)) {
             userError("X86EPTPageMap: Mapping already present.");
             current_syscall_error.type = seL4_DeleteFirst;
             return EXCEPTION_SYSCALL_ERROR;

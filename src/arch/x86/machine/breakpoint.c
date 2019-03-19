@@ -652,13 +652,13 @@ BOOT_CODE bool_t Arch_initHardwareBreakpoints(void)
     /* Intel manuals, vol3, section 17.2.4, "NOTES". */
     if (modelinfo->family == 15) {
         if (modelinfo->model == 3 || modelinfo->model == 4
-                || modelinfo->model == 6) {
+            || modelinfo->model == 6) {
             byte8_bps_supported = true;
         }
     }
     if (modelinfo->family == 6) {
         if (modelinfo->model == 15 || modelinfo->model == 23
-                || modelinfo->model == 0x1C) {
+            || modelinfo->model == 0x1C) {
             byte8_bps_supported = true;
         }
     }

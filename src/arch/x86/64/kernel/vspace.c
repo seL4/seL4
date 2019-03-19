@@ -94,7 +94,7 @@ BOOT_CODE bool_t map_kernel_window(
     paddr = 0;
     vaddr = PPTR_BASE;
     for (paddr = 0; paddr < PADDR_TOP;
-            paddr += BIT(seL4_HugePageBits)) {
+         paddr += BIT(seL4_HugePageBits)) {
 
         int pdpte_index = GET_PDPT_INDEX(vaddr);
         x64KSKernelPDPT[pdpte_index] = pdpte_pdpte_1g_new(
@@ -191,7 +191,7 @@ BOOT_CODE bool_t map_kernel_window(
     vaddr = PPTR_BASE;
 
     for (paddr = 0; paddr < PADDR_TOP;
-            paddr += 0x200000) {
+         paddr += 0x200000) {
 
         int pd_index = GET_PDPT_INDEX(vaddr) - GET_PDPT_INDEX(PPTR_BASE);
         int pde_index = GET_PD_INDEX(vaddr);
@@ -483,7 +483,7 @@ void setVMRoot(tcb_t *tcb)
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) != cap_pml4_cap ||
-            !cap_pml4_cap_get_capPML4IsMapped(threadRoot)) {
+        !cap_pml4_cap_get_capPML4IsMapped(threadRoot)) {
         setCurrentUserVSpaceRoot(kpptr_to_paddr(X86_GLOBAL_VSPACE_ROOT), 0);
         return;
     }
@@ -705,8 +705,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* Create any PDPTs needed for the user land image */
     for (vptr = ROUND_DOWN(it_v_reg.start, PML4_INDEX_OFFSET);
-            vptr < it_v_reg.end;
-            vptr += BIT(PML4_INDEX_OFFSET)) {
+         vptr < it_v_reg.end;
+         vptr += BIT(PML4_INDEX_OFFSET)) {
         pptr = alloc_region(seL4_PDPTBits);
         if (!pptr) {
             return cap_null_cap_new();
@@ -721,8 +721,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* Create any PDs needed for the user land image */
     for (vptr = ROUND_DOWN(it_v_reg.start, PDPT_INDEX_OFFSET);
-            vptr < it_v_reg.end;
-            vptr += BIT(PDPT_INDEX_OFFSET)) {
+         vptr < it_v_reg.end;
+         vptr += BIT(PDPT_INDEX_OFFSET)) {
         pptr = alloc_region(seL4_PageDirBits);
         if (!pptr) {
             return cap_null_cap_new();
@@ -737,8 +737,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* Create any PTs needed for the user land image */
     for (vptr = ROUND_DOWN(it_v_reg.start, PD_INDEX_OFFSET);
-            vptr < it_v_reg.end;
-            vptr += BIT(PD_INDEX_OFFSET)) {
+         vptr < it_v_reg.end;
+         vptr += BIT(PD_INDEX_OFFSET)) {
         pptr = alloc_region(seL4_PageTableBits);
         if (!pptr) {
             return cap_null_cap_new();
@@ -1042,7 +1042,7 @@ lookupPDSlot_ret_t lookupPDSlot(vspace_root_t *pml4, vptr_t vptr)
         return ret;
     }
     if ((pdpte_ptr_get_page_size(pdptSlot.pdptSlot) != pdpte_pdpte_pd) ||
-            !pdpte_pdpte_pd_ptr_get_present(pdptSlot.pdptSlot)) {
+        !pdpte_pdpte_pd_ptr_get_present(pdptSlot.pdptSlot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(PDPT_INDEX_OFFSET);
 
         ret.pdSlot = NULL;
@@ -1100,8 +1100,8 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 
     /* check if the PDPT has the PD */
     if (!(pdpte_ptr_get_page_size(lu_ret.pdptSlot) == pdpte_pdpte_pd &&
-            pdpte_pdpte_pd_ptr_get_present(lu_ret.pdptSlot) &&
-            (pdpte_pdpte_pd_ptr_get_pd_base_address(lu_ret.pdptSlot) == pptr_to_paddr(pd)))) {
+          pdpte_pdpte_pd_ptr_get_present(lu_ret.pdptSlot) &&
+          (pdpte_pdpte_pd_ptr_get_pd_base_address(lu_ret.pdptSlot) == pptr_to_paddr(pd)))) {
         return;
     }
 
@@ -1239,9 +1239,9 @@ static exception_t decodeX64PageDirectoryInvocation(
     }
 
     if ((pdpte_ptr_get_page_size(pdptSlot.pdptSlot) == pdpte_pdpte_pd &&
-            pdpte_pdpte_pd_ptr_get_present(pdptSlot.pdptSlot)) ||
-            (pdpte_ptr_get_page_size(pdptSlot.pdptSlot) == pdpte_pdpte_1g
-             && pdpte_pdpte_1g_ptr_get_present(pdptSlot.pdptSlot))) {
+         pdpte_pdpte_pd_ptr_get_present(pdptSlot.pdptSlot)) ||
+        (pdpte_ptr_get_page_size(pdptSlot.pdptSlot) == pdpte_pdpte_1g
+         && pdpte_pdpte_1g_ptr_get_present(pdptSlot.pdptSlot))) {
         current_syscall_error.type = seL4_DeleteFirst;
 
         return EXCEPTION_SYSCALL_ERROR;
@@ -1272,7 +1272,7 @@ static void unmapPDPT(asid_t asid, vptr_t vaddr, pdpte_t *pdpt)
 
     /* check if the PML4 has the PDPT */
     if (!(pml4e_ptr_get_present(pml4Slot) &&
-            pml4e_ptr_get_pdpt_base_address(pml4Slot) == pptr_to_paddr(pdpt))) {
+          pml4e_ptr_get_pdpt_base_address(pml4Slot) == pptr_to_paddr(pdpt))) {
         return;
     }
 
@@ -1452,9 +1452,9 @@ bool_t modeUnmapPage(vm_page_size_t page_size, vspace_root_t *vroot, vptr_t vadd
 
 
         if (!(pdpte_ptr_get_page_size(pdpte) == pdpte_pdpte_1g
-                && pdpte_pdpte_1g_ptr_get_present(pdpte)
-                && (pdpte_pdpte_1g_ptr_get_page_base_address(pdpte)
-                    == pptr_to_paddr(pptr)))) {
+              && pdpte_pdpte_1g_ptr_get_present(pdpte)
+              && (pdpte_pdpte_1g_ptr_get_page_base_address(pdpte)
+                  == pptr_to_paddr(pptr)))) {
             return false;
         }
 
@@ -1510,7 +1510,7 @@ static create_mapping_pdpte_return_t createSafeMappingEntries_PDPTE(paddr_t base
 
     /* check for existing page directory */
     if ((pdpte_ptr_get_page_size(ret.pdptSlot) == pdpte_pdpte_pd) &&
-            (pdpte_pdpte_pd_ptr_get_present(ret.pdptSlot))) {
+        (pdpte_pdpte_pd_ptr_get_present(ret.pdptSlot))) {
         current_syscall_error.type = seL4_DeleteFirst;
         ret.status = EXCEPTION_SYSCALL_ERROR;
         return ret;
@@ -1571,16 +1571,16 @@ static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *vspace, word_t
 
     pdptSlot = lookupPDPTSlot(vspace, vaddr);
     if (pdptSlot.status == EXCEPTION_NONE &&
-            pdpte_ptr_get_page_size(pdptSlot.pdptSlot) == pdpte_pdpte_1g &&
-            pdpte_pdpte_1g_ptr_get_present(pdptSlot.pdptSlot)) {
+        pdpte_ptr_get_page_size(pdptSlot.pdptSlot) == pdpte_pdpte_1g &&
+        pdpte_pdpte_1g_ptr_get_present(pdptSlot.pdptSlot)) {
 
         paddr = pdpte_pdpte_1g_ptr_get_page_base_address(pdptSlot.pdptSlot);
         offset = vaddr & MASK(seL4_HugePageBits);
     } else {
         pdSlot = lookupPDSlot(vspace, vaddr);
         if (pdSlot.status == EXCEPTION_NONE &&
-                ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
-                 pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
+             pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
 
             paddr = pde_pde_large_ptr_get_page_base_address(pdSlot.pdSlot);
             offset = vaddr & MASK(seL4_LargePageBits);

@@ -182,11 +182,11 @@ static word_t CONST APFromVMRights(vm_rights_t vm_rights)
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
     if (vm_rights == VMReadOnly &&
-            seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+        seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
     }
     if (vm_rights == VMReadWrite &&
-            seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+        seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
         } else {
@@ -194,8 +194,8 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
         }
     }
     if (vm_rights == VMReadWrite &&
-            !seL4_CapRights_get_capAllowRead(cap_rights_mask) &&
-            seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
+        !seL4_CapRights_get_capAllowRead(cap_rights_mask) &&
+        seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
         userError("Attempted to make unsupported write only mapping");
     }
     return VMKernelOnly;
@@ -490,8 +490,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* Create any PUDs needed for the user land image */
     for (vptr = ROUND_DOWN(it_v_reg.start, PGD_INDEX_OFFSET);
-            vptr < it_v_reg.end;
-            vptr += BIT(PGD_INDEX_OFFSET)) {
+         vptr < it_v_reg.end;
+         vptr += BIT(PGD_INDEX_OFFSET)) {
         pptr = alloc_region(seL4_PUDBits);
         if (!pptr) {
             return cap_null_cap_new();
@@ -504,8 +504,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* Create any PDs needed for the user land image */
     for (vptr = ROUND_DOWN(it_v_reg.start, PUD_INDEX_OFFSET);
-            vptr < it_v_reg.end;
-            vptr += BIT(PUD_INDEX_OFFSET)) {
+         vptr < it_v_reg.end;
+         vptr += BIT(PUD_INDEX_OFFSET)) {
         pptr = alloc_region(seL4_PageDirBits);
         if (!pptr) {
             return cap_null_cap_new();
@@ -518,8 +518,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
 
     /* Create any PTs needed for the user land image */
     for (vptr = ROUND_DOWN(it_v_reg.start, PD_INDEX_OFFSET);
-            vptr < it_v_reg.end;
-            vptr += BIT(PD_INDEX_OFFSET)) {
+         vptr < it_v_reg.end;
+         vptr += BIT(PD_INDEX_OFFSET)) {
         pptr = alloc_region(seL4_PageTableBits);
         if (!pptr) {
             return cap_null_cap_new();
@@ -1023,8 +1023,8 @@ static bool_t setVMRootForFlush(vspace_root_t *vspace, asid_t asid)
     threadRoot = TCB_PTR_CTE_PTR(NODE_STATE(ksCurThread), tcbVTable)->cap;
 
     if (cap_get_capType(threadRoot) == cap_page_global_directory_cap &&
-            cap_page_global_directory_cap_get_capPGDIsMapped(threadRoot) &&
-            PGD_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(threadRoot)) == vspace) {
+        cap_page_global_directory_cap_get_capPGDIsMapped(threadRoot) &&
+        PGD_PTR(cap_page_global_directory_cap_get_capPGDBasePtr(threadRoot)) == vspace) {
         return false;
     }
 
@@ -1044,7 +1044,7 @@ pgde_t *pageUpperDirectoryMapped(asid_t asid, vptr_t vaddr, pude_t *pud)
 
     lu_ret = lookupPGDSlot(find_ret.vspace_root, vaddr);
     if (pgde_pgde_pud_ptr_get_present(lu_ret.pgdSlot) &&
-            (pgde_pgde_pud_ptr_get_pud_base_address(lu_ret.pgdSlot) == pptr_to_paddr(pud))) {
+        (pgde_pgde_pud_ptr_get_pud_base_address(lu_ret.pgdSlot) == pptr_to_paddr(pud))) {
         return lu_ret.pgdSlot;
     }
 
@@ -1067,7 +1067,7 @@ pude_t *pageDirectoryMapped(asid_t asid, vptr_t vaddr, pde_t *pd)
     }
 
     if (pude_pude_pd_ptr_get_present(lu_ret.pudSlot) &&
-            (pude_pude_pd_ptr_get_pd_base_address(lu_ret.pudSlot) == pptr_to_paddr(pd))) {
+        (pude_pude_pd_ptr_get_pd_base_address(lu_ret.pudSlot) == pptr_to_paddr(pd))) {
         return lu_ret.pudSlot;
     }
 
@@ -1129,8 +1129,8 @@ static hw_asid_t findFreeHWASID(void)
 
     /* Find a free hardware ASID */
     for (hw_asid_offset = 0;
-            hw_asid_offset <= (word_t)((hw_asid_t) - 1);
-            hw_asid_offset++) {
+         hw_asid_offset <= (word_t)((hw_asid_t) - 1);
+         hw_asid_offset++) {
         hw_asid = armKSNextASID + ((hw_asid_t)hw_asid_offset);
         if (armKSHWASIDTable[hw_asid] == asidInvalid) {
             return hw_asid;
@@ -1229,7 +1229,7 @@ pde_t *pageTableMapped(asid_t asid, vptr_t vaddr, pte_t *pt)
     }
 
     if (pde_pde_small_ptr_get_present(lu_ret.pdSlot) &&
-            (pde_pde_small_ptr_get_pt_base_address(lu_ret.pdSlot) == pptr_to_paddr(pt))) {
+        (pde_pde_small_ptr_get_pt_base_address(lu_ret.pdSlot) == pptr_to_paddr(pt))) {
         return lu_ret.pdSlot;
     }
 
@@ -1296,7 +1296,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         }
 
         if (pte_ptr_get_present(lu_ret.ptSlot) &&
-                pte_ptr_get_page_base_address(lu_ret.ptSlot) == addr) {
+            pte_ptr_get_page_base_address(lu_ret.ptSlot) == addr) {
             *(lu_ret.ptSlot) = pte_invalid_new();
 
             cleanByVA_PoU((vptr_t)lu_ret.ptSlot, pptr_to_paddr(lu_ret.ptSlot));
@@ -1313,7 +1313,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         }
 
         if (pde_pde_large_ptr_get_present(lu_ret.pdSlot) &&
-                pde_pde_large_ptr_get_page_base_address(lu_ret.pdSlot) == addr) {
+            pde_pde_large_ptr_get_page_base_address(lu_ret.pdSlot) == addr) {
             *(lu_ret.pdSlot) = pde_invalid_new();
 
             cleanByVA_PoU((vptr_t)lu_ret.pdSlot, pptr_to_paddr(lu_ret.pdSlot));
@@ -1330,7 +1330,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         }
 
         if (pude_pude_1g_ptr_get_present(lu_ret.pudSlot) &&
-                pude_pude_1g_ptr_get_page_base_address(lu_ret.pudSlot) == addr) {
+            pude_pude_1g_ptr_get_page_base_address(lu_ret.pudSlot) == addr) {
             *(lu_ret.pudSlot) = pude_invalid_new();
 
             cleanByVA_PoU((vptr_t)lu_ret.pudSlot, pptr_to_paddr(lu_ret.pudSlot));
@@ -2118,7 +2118,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             }
 
             if (pde_pde_small_ptr_get_present(lu_ret.pdSlot) ||
-                    pde_pde_large_ptr_get_present(lu_ret.pdSlot)) {
+                pde_pde_large_ptr_get_present(lu_ret.pdSlot)) {
                 current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
             }
@@ -2137,7 +2137,7 @@ static exception_t decodeARMFrameInvocation(word_t invLabel, unsigned int length
             }
 
             if (pude_pude_pd_ptr_get_present(lu_ret.pudSlot) ||
-                    pude_pude_1g_ptr_get_present(lu_ret.pudSlot)) {
+                pude_pude_1g_ptr_get_present(lu_ret.pudSlot)) {
                 current_syscall_error.type = seL4_DeleteFirst;
                 return EXCEPTION_SYSCALL_ERROR;
             }
@@ -2365,7 +2365,7 @@ exception_t decodeARMMMUInvocation(word_t invLabel, word_t length, cptr_t cptr,
 
         if (unlikely(cap_get_capType(untyped) != cap_untyped_cap ||
                      cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits) ||
-                cap_untyped_cap_get_capIsDevice(untyped)) {
+            cap_untyped_cap_get_capIsDevice(untyped)) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 

@@ -433,7 +433,7 @@ static BOOT_CODE bool_t try_init_kernel(
     if (config_set(CONFIG_ARM_SMMU)) {
         ndks_boot.bi_frame->ioSpaceCaps = create_iospace_caps(root_cnode_cap);
         if (ndks_boot.bi_frame->ioSpaceCaps.start == 0 &&
-                ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
+            ndks_boot.bi_frame->ioSpaceCaps.end == 0) {
             return false;
         }
     } else {
@@ -511,11 +511,11 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* create all of the untypeds. Both devices and kernel window memory */
     if (!create_untypeds(
-                root_cnode_cap,
+            root_cnode_cap,
     (region_t) {
     kernelBase, (pptr_t)ki_boot_end
     } /* reusable boot code/data */
-            )) {
+        )) {
         return false;
     }
 

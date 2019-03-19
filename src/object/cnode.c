@@ -232,7 +232,7 @@ exception_t decodeCNodeInvocation(word_t invLabel, word_t length, cap_t cap,
         cap_t pivotRoot, srcRoot, newSrcCap, newPivotCap;
 
         if (length < 8 || excaps.excaprefs[0] == NULL
-                || excaps.excaprefs[1] == NULL) {
+            || excaps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -390,11 +390,11 @@ exception_t invokeCNodeSaveCaller(cte_t *destSlot)
 static void setUntypedCapAsFull(cap_t srcCap, cap_t newCap, cte_t *srcSlot)
 {
     if ((cap_get_capType(srcCap) == cap_untyped_cap)
-            && (cap_get_capType(newCap) == cap_untyped_cap)) {
+        && (cap_get_capType(newCap) == cap_untyped_cap)) {
         if ((cap_untyped_cap_get_capPtr(srcCap)
-                == cap_untyped_cap_get_capPtr(newCap))
-                && (cap_untyped_cap_get_capBlockSize(newCap)
-                    == cap_untyped_cap_get_capBlockSize(srcCap))) {
+             == cap_untyped_cap_get_capPtr(newCap))
+            && (cap_untyped_cap_get_capBlockSize(newCap)
+                == cap_untyped_cap_get_capBlockSize(srcCap))) {
             cap_untyped_cap_ptr_set_capFreeIndex(&(srcSlot->cap),
                                                  MAX_FREE_INDEX(cap_untyped_cap_get_capBlockSize(srcCap)));
         }
@@ -527,8 +527,8 @@ exception_t cteRevoke(cte_t *slot)
     /* there is no need to check for a NullCap as NullCaps are
        always accompanied by null mdb pointers */
     for (nextPtr = CTE_PTR(mdb_node_get_mdbNext(slot->cteMDBNode));
-            nextPtr && isMDBParentOf(slot, nextPtr);
-            nextPtr = CTE_PTR(mdb_node_get_mdbNext(slot->cteMDBNode))) {
+         nextPtr && isMDBParentOf(slot, nextPtr);
+         nextPtr = CTE_PTR(mdb_node_get_mdbNext(slot->cteMDBNode))) {
         status = cteDelete(nextPtr, true);
         if (status != EXCEPTION_NONE) {
             return status;
@@ -686,8 +686,8 @@ static exception_t reduceZombie(cte_t *slot, bool_t immediate)
                 (cte_t *)cap_zombie_cap_get_capZombiePtr(slot->cap);
 
             if (ptr == ptr2 &&
-                    cap_zombie_cap_get_capZombieNumber(slot->cap) == n &&
-                    cap_zombie_cap_get_capZombieType(slot->cap) == type) {
+                cap_zombie_cap_get_capZombieNumber(slot->cap) == n &&
+                cap_zombie_cap_get_capZombieType(slot->cap) == type) {
                 assert(cap_get_capType(endSlot->cap) == cap_null_cap);
                 slot->cap =
                     cap_zombie_cap_set_capZombieNumber(slot->cap, n - 1);

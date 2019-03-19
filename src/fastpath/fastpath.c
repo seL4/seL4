@@ -110,7 +110,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
     dom = maxDom ? ksCurDomain : 0;
     /* ensure only the idle thread or lower prio threads are present in the scheduler */
     if (likely(dest->tcbPriority < NODE_STATE(ksCurThread->tcbPriority)) &&
-            !isHighestPrio(dom, dest->tcbPriority)) {
+        !isHighestPrio(dom, dest->tcbPriority)) {
         slowpath(SysCall);
     }
 
@@ -231,7 +231,7 @@ void fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     /* Check there is nothing waiting on the notification */
     if (NODE_STATE(ksCurThread)->tcbBoundNotification &&
-            notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active) {
+        notification_ptr_get_state(NODE_STATE(ksCurThread)->tcbBoundNotification) == NtfnState_Active) {
         slowpath(SysReplyRecv);
     }
 

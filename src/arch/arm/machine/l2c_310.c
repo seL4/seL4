@@ -387,8 +387,8 @@ void plat_cleanL2Range(paddr_t start, paddr_t end)
     assert(((l2cc->id.cache_type >> 12) & 0x3) == 0x0);
 
     for (start = L2_LINE_START(start);
-            start != L2_LINE_START(end + L2_LINE_SIZE);
-            start += L2_LINE_SIZE) {
+         start != L2_LINE_START(end + L2_LINE_SIZE);
+         start += L2_LINE_SIZE) {
         l2cc->maintenance.clean_pa = start;
         /* do not need to wait for every invalidate as 310 is atomic */
     }
@@ -406,8 +406,8 @@ void plat_invalidateL2Range(paddr_t start, paddr_t end)
      * has already done the clean, so we just blindly invalidate all the lines */
 
     for (start = L2_LINE_START(start);
-            start != L2_LINE_START(end + L2_LINE_SIZE);
-            start += L2_LINE_SIZE) {
+         start != L2_LINE_START(end + L2_LINE_SIZE);
+         start += L2_LINE_SIZE) {
         l2cc->maintenance.inv_pa = start;
         /* do not need to wait for every invalidate as 310 is atomic */
     }
@@ -422,8 +422,8 @@ void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
     assert(((l2cc->id.cache_type >> 12) & 0x3) == 0x0);
 
     for (start = L2_LINE_START(start);
-            start != L2_LINE_START(end + L2_LINE_SIZE);
-            start += L2_LINE_SIZE) {
+         start != L2_LINE_START(end + L2_LINE_SIZE);
+         start += L2_LINE_SIZE) {
         /* Work around an errata and call the clean and invalidate separately */
         l2cc->maintenance.clean_pa = start;
         dmb();

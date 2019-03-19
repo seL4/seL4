@@ -110,7 +110,7 @@ exception_t decodeIRQHandlerInvocation(word_t invLabel, irq_t irq,
         slot = excaps.excaprefs[0];
 
         if (cap_get_capType(ntfnCap) != cap_notification_cap ||
-                !cap_notification_cap_get_capNtfnCanSend(ntfnCap)) {
+            !cap_notification_cap_get_capNtfnCanSend(ntfnCap)) {
             if (cap_get_capType(ntfnCap) != cap_notification_cap) {
                 userError("IRQSetHandler: provided cap is not an notification capability.");
             } else {
@@ -195,7 +195,7 @@ void handleInterrupt(irq_t irq)
         cap = intStateIRQNode[irq].cap;
 
         if (cap_get_capType(cap) == cap_notification_cap &&
-                cap_notification_cap_get_capNtfnCanSend(cap)) {
+            cap_notification_cap_get_capNtfnCanSend(cap)) {
             sendSignal(NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap)),
                        cap_notification_cap_get_capNtfnBadge(cap));
         } else {

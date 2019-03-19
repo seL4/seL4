@@ -86,7 +86,7 @@ void deleteASID(asid_t asid, vspace_root_t *vspace)
     if (poolPtr != NULL) {
         asid_map_t asid_map = poolPtr->array[asid & MASK(asidLowBits)];
         if (asid_map_get_type(asid_map) == asid_map_asid_map_vspace &&
-                (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) == vspace) {
+            (vspace_root_t *)asid_map_asid_map_vspace_get_vspace_root(asid_map) == vspace) {
             hwASIDInvalidate(asid, vspace);
             poolPtr->array[asid & MASK(asidLowBits)] = asid_map_asid_map_none_new();
             setVMRoot(NODE_STATE(ksCurThread));
@@ -623,7 +623,7 @@ lookupPTSlot_ret_t lookupPTSlot(vspace_root_t *vspace, vptr_t vptr)
         return ret;
     }
     if ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_pt) ||
-            !pde_pde_pt_ptr_get_present(pdSlot.pdSlot)) {
+        !pde_pde_pt_ptr_get_present(pdSlot.pdSlot)) {
         current_lookup_fault = lookup_fault_missing_capability_new(PAGE_BITS + PT_INDEX_BITS);
         ret.ptSlot = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
@@ -721,8 +721,8 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
             return;
         }
         if (!(pte_ptr_get_present(lu_ret.ptSlot)
-                && (pte_ptr_get_page_base_address(lu_ret.ptSlot)
-                    == pptr_to_paddr(pptr)))) {
+              && (pte_ptr_get_page_base_address(lu_ret.ptSlot)
+                  == pptr_to_paddr(pptr)))) {
             return;
         }
         *lu_ret.ptSlot = makeUserPTEInvalid();
@@ -735,9 +735,9 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
         }
         pde = pd_ret.pdSlot;
         if (!(pde_ptr_get_page_size(pde) == pde_pde_large
-                && pde_pde_large_ptr_get_present(pde)
-                && (pde_pde_large_ptr_get_page_base_address(pde)
-                    == pptr_to_paddr(pptr)))) {
+              && pde_pde_large_ptr_get_present(pde)
+              && (pde_pde_large_ptr_get_page_base_address(pde)
+                  == pptr_to_paddr(pptr)))) {
             return;
         }
         *pde = makeUserPDEInvalid();
@@ -775,8 +775,8 @@ void unmapPageTable(asid_t asid, vptr_t vaddr, pte_t *pt)
 
     /* check if the PD actually refers to the PT */
     if (!(pde_ptr_get_page_size(lu_ret.pdSlot) == pde_pde_pt &&
-            pde_pde_pt_ptr_get_present(lu_ret.pdSlot) &&
-            (pde_pde_pt_ptr_get_pt_base_address(lu_ret.pdSlot) == pptr_to_paddr(pt)))) {
+          pde_pde_pt_ptr_get_present(lu_ret.pdSlot) &&
+          (pde_pde_pt_ptr_get_pt_base_address(lu_ret.pdSlot) == pptr_to_paddr(pt)))) {
         return;
     }
 
@@ -921,7 +921,7 @@ static create_mapping_pde_return_t createSafeMappingEntries_PDE(paddr_t base, wo
 
     /* check for existing page table */
     if ((pde_ptr_get_page_size(ret.pdSlot) == pde_pde_pt) &&
-            (pde_pde_pt_ptr_get_present(ret.pdSlot))) {
+        (pde_pde_pt_ptr_get_present(ret.pdSlot))) {
         current_syscall_error.type = seL4_DeleteFirst;
         ret.status = EXCEPTION_SYSCALL_ERROR;
         return ret;
@@ -1346,7 +1346,7 @@ static exception_t decodeX86PageTableInvocation(
     }
 
     if (((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_pt) && pde_pde_pt_ptr_get_present(pdSlot.pdSlot)) ||
-            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) && pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+        ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) && pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
         current_syscall_error.type = seL4_DeleteFirst;
 
         return EXCEPTION_SYSCALL_ERROR;
@@ -1401,7 +1401,7 @@ exception_t decodeX86MMUInvocation(
         }
 
         if (length < 2 || excaps.excaprefs[0] == NULL
-                || excaps.excaprefs[1] == NULL) {
+            || excaps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -1426,8 +1426,8 @@ exception_t decodeX86MMUInvocation(
 
 
         if (cap_get_capType(untyped) != cap_untyped_cap ||
-                cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
-                cap_untyped_cap_get_capIsDevice(untyped)) {
+            cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
+            cap_untyped_cap_get_capIsDevice(untyped)) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 
@@ -1478,7 +1478,7 @@ exception_t decodeX86MMUInvocation(
         vspaceCap = vspaceCapSlot->cap;
 
         if (!(isVTableRoot(vspaceCap) || VTX_TERNARY(cap_get_capType(vspaceCap) == cap_ept_pml4_cap, 0))
-                || cap_get_capMappedASID(vspaceCap) != asidInvalid) {
+            || cap_get_capMappedASID(vspaceCap) != asidInvalid) {
             userError("X86ASIDPool: Invalid vspace root.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;

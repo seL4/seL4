@@ -407,7 +407,7 @@ BOOT_CODE bool_t acpi_fadt_scan(
             printf("ACPI: FADT flags=0x%x\n", acpi_fadt_mapped->flags);
 
             if (config_set(CONFIG_USE_LOGICAL_IDS) &&
-                    acpi_fadt_mapped->flags & BIT(19)) {
+                acpi_fadt_mapped->flags & BIT(19)) {
                 printf("system requires apic physical mode\n");
                 return false;
             }
@@ -484,7 +484,7 @@ BOOT_CODE void acpi_dmar_scan(
                     /* loop through all device scopes of this RMRR */
                     acpi_dmar_rmrr = (acpi_dmar_rmrr_t *)acpi_dmar_header;
                     if (acpi_dmar_rmrr->reg_base[1] != 0 ||
-                            acpi_dmar_rmrr->reg_limit[1] != 0) {
+                        acpi_dmar_rmrr->reg_limit[1] != 0) {
                         printf("ACPI: RMRR device above 4GiB, disabling IOMMU support\n");
                         *num_drhu = 0;
                         return ;

@@ -261,8 +261,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
 
         for (pt_vptr = ROUND_DOWN(it_v_reg.start, RISCV_GET_LVL_PGSIZE_BITS(i - 1));
-                pt_vptr < it_v_reg.end;
-                pt_vptr += RISCV_GET_LVL_PGSIZE(i - 1)) {
+             pt_vptr < it_v_reg.end;
+             pt_vptr += RISCV_GET_LVL_PGSIZE(i - 1)) {
             pt_pptr = alloc_region(PT_SIZE_BITS);
 
             if (!pt_pptr) {
@@ -549,7 +549,7 @@ void unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
     if (!pte_ptr_get_valid(lu_ret.ptSlot) || isPTEPageTable(lu_ret.ptSlot)
-            || (pte_ptr_get_ppn(lu_ret.ptSlot) << seL4_PageBits) != pptr_to_paddr((void *)pptr)) {
+        || (pte_ptr_get_ppn(lu_ret.ptSlot) << seL4_PageBits) != pptr_to_paddr((void *)pptr)) {
         return;
     }
 
@@ -616,11 +616,11 @@ exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 {
     if (vm_rights == VMReadOnly &&
-            seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
+        seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
         return VMReadOnly;
     }
     if (vm_rights == VMReadWrite &&
-            (seL4_CapRights_get_capAllowRead(cap_rights_mask) || seL4_CapRights_get_capAllowWrite(cap_rights_mask))) {
+        (seL4_CapRights_get_capAllowRead(cap_rights_mask) || seL4_CapRights_get_capAllowWrite(cap_rights_mask))) {
         if (!seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
             return VMReadOnly;
         } else if (!seL4_CapRights_get_capAllowRead(cap_rights_mask)) {
@@ -630,7 +630,7 @@ vm_rights_t CONST maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_right
         }
     }
     if (vm_rights == VMWriteOnly &&
-            seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
+        seL4_CapRights_get_capAllowWrite(cap_rights_mask)) {
         return VMWriteOnly;
     }
     if (vm_rights == VMKernelOnly) {
@@ -994,7 +994,7 @@ exception_t decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t c
         }
 
         if (length < 2 || extraCaps.excaprefs[0] == NULL
-                || extraCaps.excaprefs[1] == NULL) {
+            || extraCaps.excaprefs[1] == NULL) {
             current_syscall_error.type = seL4_TruncatedMessage;
             return EXCEPTION_SYSCALL_ERROR;
         }
@@ -1018,8 +1018,8 @@ exception_t decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t c
         asid_base = i << asidLowBits;
 
         if (cap_get_capType(untyped) != cap_untyped_cap ||
-                cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
-                cap_untyped_cap_get_capIsDevice(untyped)) {
+            cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
+            cap_untyped_cap_get_capIsDevice(untyped)) {
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
 

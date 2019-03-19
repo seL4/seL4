@@ -336,8 +336,8 @@ static BOOT_CODE bool_t try_init_kernel(
 
     /* convert the remaining free memory into UT objects and provide the caps */
     if (!create_untypeds(
-                root_cnode_cap,
-                boot_mem_reuse_reg)) {
+            root_cnode_cap,
+            boot_mem_reuse_reg)) {
         return false;
     }
 

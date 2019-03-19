@@ -203,7 +203,7 @@ static seL4_MessageInfo_t transferCaps(seL4_MessageInfo_t info, extra_caps_t cap
         cap_t cap = slot->cap;
 
         if (cap_get_capType(cap) == cap_endpoint_cap &&
-                EP_PTR(cap_endpoint_cap_get_capEPPtr(cap)) == endpoint) {
+            EP_PTR(cap_endpoint_cap_get_capEPPtr(cap)) == endpoint) {
             /* If this is a cap to the endpoint on which the message was sent,
              * only transfer the badge, not the cap. */
             setExtraBadge(receiveBuffer,
@@ -285,7 +285,7 @@ void schedule(void)
                 NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread)
                 || (candidate->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority);
             if (fastfail &&
-                    !isHighestPrio(ksCurDomain, candidate->tcbPriority)) {
+                !isHighestPrio(ksCurDomain, candidate->tcbPriority)) {
                 SCHED_ENQUEUE(candidate);
                 /* we can't, need to reschedule */
                 NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;
@@ -386,7 +386,7 @@ void setPriority(tcb_t *tptr, prio_t prio)
 void possibleSwitchTo(tcb_t *target)
 {
     if (ksCurDomain != target->tcbDomain
-            SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
+        SMP_COND_STATEMENT( || target->tcbAffinity != getCurrentCPUIndex())) {
         SCHED_ENQUEUE(target);
     } else if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread) {
         /* Too many threads want special treatment, use regular queues. */
@@ -406,8 +406,8 @@ void setThreadState(tcb_t *tptr, _thread_state_t ts)
 void scheduleTCB(tcb_t *tptr)
 {
     if (tptr == NODE_STATE(ksCurThread) &&
-            NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread &&
-            !isRunnable(tptr)) {
+        NODE_STATE(ksSchedulerAction) == SchedulerAction_ResumeCurrentThread &&
+        !isRunnable(tptr)) {
         rescheduleRequired();
     }
 }
@@ -417,8 +417,8 @@ void timerTick(void)
     if (likely(thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
                ThreadState_Running)
 #ifdef CONFIG_VTX
-            || thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
-            ThreadState_RunningVM
+        || thread_state_get_tsType(NODE_STATE(ksCurThread)->tcbState) ==
+        ThreadState_RunningVM
 #endif
        ) {
         if (NODE_STATE(ksCurThread)->tcbTimeSlice > 1) {
@@ -441,7 +441,7 @@ void timerTick(void)
 void rescheduleRequired(void)
 {
     if (NODE_STATE(ksSchedulerAction) != SchedulerAction_ResumeCurrentThread
-            && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread) {
+        && NODE_STATE(ksSchedulerAction) != SchedulerAction_ChooseNewThread) {
         SCHED_ENQUEUE(NODE_STATE(ksSchedulerAction));
     }
     NODE_STATE(ksSchedulerAction) = SchedulerAction_ChooseNewThread;

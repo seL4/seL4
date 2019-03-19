@@ -58,8 +58,8 @@ void plat_cleanL2Range(paddr_t start, paddr_t end)
     word_t index;
 
     for (index = L2_LINE_INDEX(start);
-            index < L2_LINE_INDEX(end) + 1;
-            index++) {
+         index < L2_LINE_INDEX(end) + 1;
+         index++) {
         line = index << L2_LINE_SIZE_BITS;
         imx31_l2cc_flush_regs->clean_by_pa = line;
     }
@@ -72,8 +72,8 @@ void plat_invalidateL2Range(paddr_t start, paddr_t end)
     word_t index;
 
     for (index = L2_LINE_INDEX(start);
-            index < L2_LINE_INDEX(end) + 1;
-            index++) {
+         index < L2_LINE_INDEX(end) + 1;
+         index++) {
         line = index << L2_LINE_SIZE_BITS;
         imx31_l2cc_flush_regs->inv_by_pa = line;
     }
@@ -87,8 +87,8 @@ void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end)
     word_t index;
 
     for (index = L2_LINE_INDEX(start);
-            index < L2_LINE_INDEX(end) + 1;
-            index++) {
+         index < L2_LINE_INDEX(end) + 1;
+         index++) {
         line = index << L2_LINE_SIZE_BITS;
         imx31_l2cc_flush_regs->clinv_by_pa = line;
     }

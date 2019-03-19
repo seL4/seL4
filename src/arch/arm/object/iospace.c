@@ -73,7 +73,7 @@ static lookupIOPTSlot_ret_t lookupIOPTSlot(iopde_t *iopd, word_t io_address)
     }
 
     if (!isIOPDEValid(pd_ret.iopdSlot) ||
-            iopde_ptr_get_page_size(pd_ret.iopdSlot) != iopde_iopde_pt) {
+        iopde_ptr_get_page_size(pd_ret.iopdSlot) != iopde_iopde_pt) {
         pt_ret.status = EXCEPTION_LOOKUP_FAULT;
         pt_ret.ioptSlot = 0;
         return pt_ret;
@@ -326,7 +326,7 @@ exception_t decodeARMIOMapInvocation(
                 );
     } else if (frame_cap_rights == VMReadWrite) {
         if (seL4_CapRights_get_capAllowRead(dma_cap_rights_mask) &&
-                !seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
+            !seL4_CapRights_get_capAllowWrite(dma_cap_rights_mask)) {
             /* read only */
             iopte = iopte_new(
                         1,      /* read         */
@@ -395,8 +395,8 @@ void deleteIOPageTable(cap_t io_pt_cap)
         }
 
         if (isIOPDEValid(lu_ret.iopdSlot) &&
-                iopde_ptr_get_page_size(lu_ret.iopdSlot) == iopde_iopde_pt &&
-                iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap)))) {
+            iopde_ptr_get_page_size(lu_ret.iopdSlot) == iopde_iopde_pt &&
+            iopde_iopde_pt_ptr_get_address(lu_ret.iopdSlot) != (pptr_to_paddr((void *)cap_io_page_table_cap_get_capIOPTBasePtr(io_pt_cap)))) {
             return;
         }
 

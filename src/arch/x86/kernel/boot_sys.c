@@ -174,11 +174,11 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
     p_region_t boot_mem_reuse_p_reg;
 
     if (!map_kernel_window(
-                boot_state.num_ioapic,
-                boot_state.ioapic_paddr,
-                boot_state.num_drhu,
-                boot_state.drhu_list
-            )) {
+            boot_state.num_ioapic,
+            boot_state.ioapic_paddr,
+            boot_state.num_drhu,
+            boot_state.drhu_list
+        )) {
         return false;
     }
     setCurrentVSpaceRoot(kpptr_to_paddr(X86_KERNEL_VSPACE_ROOT), 0);
@@ -203,19 +203,19 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
 
     /* initialise NDKS and kernel heap */
     if (!init_sys_state(
-                cpu_id,
-                boot_state.mem_p_regs,
-                boot_state.ui_info,
-                boot_mem_reuse_p_reg,
-                /* parameters below not modeled in abstract specification */
-                boot_state.num_drhu,
-                boot_state.drhu_list,
-                &boot_state.rmrr_list,
-                &boot_state.acpi_rsdp,
-                &boot_state.vbe_info,
-                &boot_state.mb_mmap_info,
-                &boot_state.fb_info
-            )) {
+            cpu_id,
+            boot_state.mem_p_regs,
+            boot_state.ui_info,
+            boot_mem_reuse_p_reg,
+            /* parameters below not modeled in abstract specification */
+            boot_state.num_drhu,
+            boot_state.drhu_list,
+            &boot_state.rmrr_list,
+            &boot_state.acpi_rsdp,
+            &boot_state.vbe_info,
+            &boot_state.mb_mmap_info,
+            &boot_state.fb_info
+        )) {
         return false;
     }
 

@@ -1141,7 +1141,7 @@ seL4_Fault_t handleUserLevelDebugException(word_t fault_vaddr)
     }
 
     if (method_of_entry != DEBUG_ENTRY_EXPLICIT_BKPT
-            && bp_reason != seL4_SingleStep) {
+        && bp_reason != seL4_SingleStep) {
         active_bp = getAndResetActiveBreakpoint(bp_vaddr,
                                                 bp_reason);
         assert(active_bp >= 0);
@@ -1269,7 +1269,7 @@ static void loadBreakpointState(tcb_t *t)
 
     for (i = 0; i < seL4_NumExclusiveWatchpoints; i++) {
         if (t->tcbArch.tcbContext.breakpointState.used_breakpoints_bf &
-                BIT(i + seL4_NumExclusiveBreakpoints)) {
+            BIT(i + seL4_NumExclusiveBreakpoints)) {
             writeWvrCp(i, readWvrContext(t, i));
             writeWcrCp(i, readWcrContext(t, i));
         } else {

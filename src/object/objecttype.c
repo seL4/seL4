@@ -275,7 +275,7 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     case cap_irq_control_cap:
         if (cap_get_capType(cap_b) == cap_irq_control_cap ||
-                cap_get_capType(cap_b) == cap_irq_handler_cap) {
+            cap_get_capType(cap_b) == cap_irq_handler_cap) {
             return true;
         }
         break;
@@ -289,7 +289,7 @@ bool_t CONST sameRegionAs(cap_t cap_a, cap_t cap_b)
 
     default:
         if (isArchCap(cap_a) &&
-                isArchCap(cap_b)) {
+            isArchCap(cap_b)) {
             return Arch_sameRegionAs(cap_a, cap_b);
         }
         break;
@@ -304,7 +304,7 @@ bool_t CONST sameObjectAs(cap_t cap_a, cap_t cap_b)
         return false;
     }
     if (cap_get_capType(cap_a) == cap_irq_control_cap &&
-            cap_get_capType(cap_b) == cap_irq_handler_cap) {
+        cap_get_capType(cap_b) == cap_irq_handler_cap) {
         return false;
     }
     if (isArchCap(cap_a) && isArchCap(cap_b)) {

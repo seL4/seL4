@@ -68,7 +68,7 @@ BOOT_CODE pptr_t alloc_region(word_t size_bits)
     for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
         /* Determine whether placing the region at the start or the end will create a bigger left over region */
         if (ROUND_UP(ndks_boot.freemem[i].start, size_bits) - ndks_boot.freemem[i].start <
-                ndks_boot.freemem[i].end - ROUND_DOWN(ndks_boot.freemem[i].end, size_bits)) {
+            ndks_boot.freemem[i].end - ROUND_DOWN(ndks_boot.freemem[i].end, size_bits)) {
             new_reg.start = ROUND_UP(ndks_boot.freemem[i].start, size_bits);
             new_reg.end = new_reg.start + BIT(size_bits);
         } else {
@@ -76,8 +76,8 @@ BOOT_CODE pptr_t alloc_region(word_t size_bits)
             new_reg.start = new_reg.end - BIT(size_bits);
         }
         if (new_reg.end > new_reg.start &&
-                new_reg.start >= ndks_boot.freemem[i].start &&
-                new_reg.end <= ndks_boot.freemem[i].end) {
+            new_reg.start >= ndks_boot.freemem[i].start &&
+            new_reg.end <= ndks_boot.freemem[i].end) {
             if (new_reg.start - ndks_boot.freemem[i].start < ndks_boot.freemem[i].end - new_reg.end) {
                 new_rem_small.start = ndks_boot.freemem[i].start;
                 new_rem_small.end = new_reg.start;
@@ -90,8 +90,8 @@ BOOT_CODE pptr_t alloc_region(word_t size_bits)
                 new_rem_small.end = ndks_boot.freemem[i].end;
             }
             if (is_reg_empty(reg) ||
-                    (reg_size(new_rem_small) < reg_size(rem_small)) ||
-                    (reg_size(new_rem_small) == reg_size(rem_small) && reg_size(new_rem_large) < reg_size(rem_large))) {
+                (reg_size(new_rem_small) < reg_size(rem_small)) ||
+                (reg_size(new_rem_small) == reg_size(rem_small) && reg_size(new_rem_large) < reg_size(rem_large))) {
                 reg = new_reg;
                 rem_small = new_rem_small;
                 rem_large = new_rem_large;
@@ -473,7 +473,7 @@ BOOT_CODE void init_core_state(tcb_t *scheduler_action)
     /* add initial threads to the debug queue */
     NODE_STATE(ksDebugTCBs) = NULL;
     if (scheduler_action != SchedulerAction_ResumeCurrentThread &&
-            scheduler_action != SchedulerAction_ChooseNewThread) {
+        scheduler_action != SchedulerAction_ChooseNewThread) {
         tcbDebugAppend(scheduler_action);
     }
     tcbDebugAppend(NODE_STATE(ksIdleThread));

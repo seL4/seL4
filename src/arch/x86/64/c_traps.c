@@ -194,7 +194,7 @@ void VISIBLE NORETURN restore_user_context(void)
     // There is a special case where if we would be returning from a sysenter,
     // but are current singlestepping, do a full return like an interrupt
     if (likely(cur_thread->tcbArch.tcbContext.registers[Error] == -1) &&
-            (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((cur_thread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
+        (!config_set(CONFIG_SYSENTER) || !config_set(CONFIG_HARDWARE_DEBUG_API) || ((cur_thread->tcbArch.tcbContext.registers[FLAGS] & FLAGS_TF) == 0))) {
         if (config_set(CONFIG_KERNEL_SKIM_WINDOW)) {
             /* if we are using the SKIM window then we are trying to hide kernel state from
              * the user in the case of Meltdown where the kernel region is effectively readable

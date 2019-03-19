@@ -317,7 +317,7 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     }
 
     if (unlikely(
-                thread_state_get_tsType(thread->tcbState) == ThreadState_Restart)) {
+            thread_state_get_tsType(thread->tcbState) == ThreadState_Restart)) {
         if (isCall) {
             replyFromKernel_success_empty(thread);
         }

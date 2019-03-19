@@ -29,7 +29,7 @@ BOOT_CODE static void update_logical_id_mappings(void)
 
     for (int i = 0; i < smp_aps_index; i++) {
         if (apic_get_cluster(cpu_mapping.index_to_logical_id[getCurrentCPUIndex()]) ==
-                apic_get_cluster(cpu_mapping.index_to_logical_id[i])) {
+            apic_get_cluster(cpu_mapping.index_to_logical_id[i])) {
 
             cpu_mapping.other_indexes_in_cluster[getCurrentCPUIndex()] |= BIT(i);
             cpu_mapping.other_indexes_in_cluster[i] |= BIT(getCurrentCPUIndex());

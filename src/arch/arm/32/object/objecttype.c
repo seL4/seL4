@@ -258,7 +258,7 @@ bool_t CONST Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
     case cap_small_frame_cap:
     case cap_frame_cap:
         if (cap_get_capType(cap_b) == cap_small_frame_cap ||
-                cap_get_capType(cap_b) == cap_frame_cap) {
+            cap_get_capType(cap_b) == cap_frame_cap) {
             word_t botA, botB, topA, topB;
             botA = generic_frame_cap_get_capFBasePtr(cap_a);
             botB = generic_frame_cap_get_capFBasePtr(cap_b);

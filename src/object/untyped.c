@@ -212,7 +212,7 @@ exception_t decodeUntypedInvocation(word_t invLabel, word_t length, cte_t *slot,
 
     deviceMemory = cap_untyped_cap_get_capIsDevice(cap);
     if ((deviceMemory && !Arch_isFrameType(newType))
-            && newType != seL4_UntypedObject) {
+        && newType != seL4_UntypedObject) {
         userError("Untyped Retype: Creating kernel objects with device untyped");
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 1;
@@ -256,7 +256,7 @@ static exception_t resetUntypedCap(cte_t *srcSlot)
         srcSlot->cap = cap_untyped_cap_set_capFreeIndex(prev_cap, 0);
     } else {
         for (offset = ROUND_DOWN(offset - 1, chunk);
-                offset != - BIT(chunk); offset -= BIT(chunk)) {
+             offset != - BIT(chunk); offset -= BIT(chunk)) {
             clearMemory(GET_OFFSET_FREE_PTR(regionBase, offset), chunk);
             srcSlot->cap = cap_untyped_cap_set_capFreeIndex(prev_cap, OFFSET_TO_FREE_INDEX(offset));
             status = preemptionPoint();

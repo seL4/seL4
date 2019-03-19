@@ -19,8 +19,8 @@ BOOT_CODE bool_t x2apic_is_enabled(void)
     apic_base_msr.words[0] = x86_rdmsr_low(IA32_APIC_BASE_MSR);
 
     if ((x86_cpuid_ecx(1, 0) & BIT(21)) &&
-            apic_base_msr_get_enabled(apic_base_msr) &&
-            apic_base_msr_get_x2apic(apic_base_msr)) {
+        apic_base_msr_get_enabled(apic_base_msr) &&
+        apic_base_msr_get_x2apic(apic_base_msr)) {
         return true;
     }
     return false;

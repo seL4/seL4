@@ -350,7 +350,7 @@ void remoteQueueUpdate(tcb_t *tcb)
 
         /* reschedule if the target core is idle or we are waking a higher priority thread */
         if (targetCurThread == NODE_STATE_ON_CORE(ksIdleThread, tcb->tcbAffinity)  ||
-                tcb->tcbPriority > targetCurThread->tcbPriority) {
+            tcb->tcbPriority > targetCurThread->tcbPriority) {
             ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
         }
     }
@@ -363,7 +363,7 @@ void remoteTCBStall(tcb_t *tcb)
 {
 
     if (tcb->tcbAffinity != getCurrentCPUIndex() &&
-            NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity) == tcb) {
+        NODE_STATE_ON_CORE(ksCurThread, tcb->tcbAffinity) == tcb) {
         doRemoteStall(tcb->tcbAffinity);
         ARCH_NODE_STATE(ipiReschedulePending) |= BIT(tcb->tcbAffinity);
     }
@@ -503,7 +503,7 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
             return EXCEPTION_SYSCALL_ERROR;
         }
         if (bp_num >= seL4_FirstWatchpoint
-                && seL4_FirstBreakpoint != seL4_FirstWatchpoint) {
+            && seL4_FirstBreakpoint != seL4_FirstWatchpoint) {
             userError("Debug: Can't specify a watchpoint ID with type seL4_InstructionBreakpoint.");
             current_syscall_error.type = seL4_InvalidArgument;
             current_syscall_error.invalidArgumentNumber = 2;
@@ -531,7 +531,7 @@ static exception_t decodeSetBreakpoint(cap_t cap, word_t *buffer)
     }
 
     if (rw != seL4_BreakOnRead && rw != seL4_BreakOnWrite
-            && rw != seL4_BreakOnReadWrite) {
+        && rw != seL4_BreakOnReadWrite) {
         userError("Debug: Unknown access-type %lu.", rw);
         current_syscall_error.type = seL4_InvalidArgument;
         current_syscall_error.invalidArgumentNumber = 3;
@@ -901,8 +901,8 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
     word_t cRootData, vRootData, bufferAddr;
 
     if (length < 4 || rootCaps.excaprefs[0] == NULL
-            || rootCaps.excaprefs[1] == NULL
-            || rootCaps.excaprefs[2] == NULL) {
+        || rootCaps.excaprefs[1] == NULL
+        || rootCaps.excaprefs[2] == NULL) {
         userError("TCB Configure: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -936,9 +936,9 @@ exception_t decodeTCBConfigure(cap_t cap, word_t length, cte_t *slot,
     }
 
     if (slotCapLongRunningDelete(
-                TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbCTable)) ||
-            slotCapLongRunningDelete(
-                TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbVTable))) {
+            TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbCTable)) ||
+        slotCapLongRunningDelete(
+            TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbVTable))) {
         userError("TCB Configure: CSpace or VSpace currently being deleted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1159,7 +1159,7 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
     deriveCap_ret_t dc_ret;
 
     if (length < 3 || excaps.excaprefs[0] == NULL
-            || excaps.excaprefs[1] == NULL) {
+        || excaps.excaprefs[1] == NULL) {
         userError("TCB SetSpace: Truncated message.");
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1175,9 +1175,9 @@ exception_t decodeSetSpace(cap_t cap, word_t length, cte_t *slot,
     vRootCap   = excaps.excaprefs[1]->cap;
 
     if (slotCapLongRunningDelete(
-                TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbCTable)) ||
-            slotCapLongRunningDelete(
-                TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbVTable))) {
+            TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbCTable)) ||
+        slotCapLongRunningDelete(
+            TCB_PTR_CTE_PTR(cap_thread_cap_get_capTCBPtr(cap), tcbVTable))) {
         userError("TCB SetSpace: CSpace or VSpace currently being deleted.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1306,7 +1306,7 @@ exception_t decodeBindNotification(cap_t cap, extra_caps_t excaps)
     }
 
     if ((tcb_t *)notification_ptr_get_ntfnQueue_head(ntfnPtr)
-            || (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr)) {
+        || (tcb_t *)notification_ptr_get_ntfnBoundTCB(ntfnPtr)) {
         userError("TCB BindNotification: Notification cannot be bound.");
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
@@ -1379,7 +1379,7 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
             return e;
         }
         if (sameObjectAs(cRoot_newCap, cRoot_srcSlot->cap) &&
-                sameObjectAs(tCap, slot->cap)) {
+            sameObjectAs(tCap, slot->cap)) {
             cteInsert(cRoot_newCap, cRoot_srcSlot, rootSlot);
         }
     }
@@ -1393,7 +1393,7 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
             return e;
         }
         if (sameObjectAs(vRoot_newCap, vRoot_srcSlot->cap) &&
-                sameObjectAs(tCap, slot->cap)) {
+            sameObjectAs(tCap, slot->cap)) {
             cteInsert(vRoot_newCap, vRoot_srcSlot, rootSlot);
         }
     }
@@ -1411,7 +1411,7 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
         Arch_setTCBIPCBuffer(target, bufferAddr);
 
         if (bufferSrcSlot && sameObjectAs(bufferCap, bufferSrcSlot->cap) &&
-                sameObjectAs(tCap, slot->cap)) {
+            sameObjectAs(tCap, slot->cap)) {
             cteInsert(bufferCap, bufferSrcSlot, bufferSlot);
         }
 
@@ -1516,13 +1516,13 @@ exception_t invokeTCB_ReadRegisters(tcb_t *tcb_src, bool_t suspendSource,
         j = i;
 
         for (i = 0; i < n_gpRegisters && i + n_frameRegisters < n
-                && i + n_frameRegisters < n_msgRegisters; i++) {
+             && i + n_frameRegisters < n_msgRegisters; i++) {
             setRegister(thread, msgRegisters[i + n_frameRegisters],
                         getRegister(tcb_src, gpRegisters[i]));
         }
 
         if (ipcBuffer != NULL && i < n_gpRegisters
-                && i + n_frameRegisters < n) {
+            && i + n_frameRegisters < n) {
             for (; i < n_gpRegisters && i + n_frameRegisters < n; i++) {
                 ipcBuffer[i + n_frameRegisters + 1] =
                     getRegister(tcb_src, gpRegisters[i]);

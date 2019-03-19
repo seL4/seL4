@@ -227,8 +227,8 @@ void unmapPageDirectory(asid_t asid, vptr_t vaddr, pde_t *pd)
 static exception_t performIA32PageDirectoryGetStatusBits(lookupPTSlot_ret_t ptSlot, lookupPDSlot_ret_t pdSlot, word_t *buffer)
 {
     if (pdSlot.status == EXCEPTION_NONE &&
-            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
-             pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+        ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
+         pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
 
         setMR(NODE_STATE(ksCurThread), buffer, 0, pde_pde_large_ptr_get_accessed(pdSlot.pdSlot));
         setMR(NODE_STATE(ksCurThread), buffer, 1, pde_pde_large_ptr_get_dirty(pdSlot.pdSlot));
@@ -285,10 +285,10 @@ exception_t decodeIA32PageDirectoryInvocation(
 
         /* need either a valid PD mapping or PT mapping */
         if ((pdSlot.status != EXCEPTION_NONE ||
-                ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_large) ||
-                 !pde_pde_large_ptr_get_present(pdSlot.pdSlot))) &&
-                (ptSlot.status != EXCEPTION_NONE ||
-                 (!pte_ptr_get_present(ptSlot.ptSlot)))) {
+             ((pde_ptr_get_page_size(pdSlot.pdSlot) != pde_pde_large) ||
+              !pde_pde_large_ptr_get_present(pdSlot.pdSlot))) &&
+            (ptSlot.status != EXCEPTION_NONE ||
+             (!pte_ptr_get_present(ptSlot.ptSlot)))) {
             userError("X86PageDirectoryGetStatusBits: No mapping found");
 
             current_syscall_error.type = seL4_InvalidArgument;
@@ -327,8 +327,8 @@ static readWordFromVSpace_ret_t readWordFromVSpace(vspace_root_t *vspace, word_t
 
     pdSlot = lookupPDSlot(vspace, vaddr);
     if (pdSlot.status == EXCEPTION_NONE &&
-            ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
-             pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
+        ((pde_ptr_get_page_size(pdSlot.pdSlot) == pde_pde_large) &&
+         pde_pde_large_ptr_get_present(pdSlot.pdSlot))) {
 
         paddr = pde_pde_large_ptr_get_page_base_address(pdSlot.pdSlot);
         offset = vaddr & MASK(seL4_LargePageBits);

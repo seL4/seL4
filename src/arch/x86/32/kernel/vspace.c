@@ -455,8 +455,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     /* create all PT objs and caps necessary to cover userland image */
 
     for (vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
-            vptr < it_v_reg.end;
-            vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
+         vptr < it_v_reg.end;
+         vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
         pptr = alloc_region(seL4_PageTableBits);
         if (!pptr) {
             return cap_null_cap_new();

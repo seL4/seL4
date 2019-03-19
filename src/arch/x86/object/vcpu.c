@@ -1198,7 +1198,7 @@ exception_t handleVmexit(void)
                      * bits that the VCPU owner has declared that they want to own (via the cr0_shadow)
                      */
                     if (!((value ^ NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_shadow) &
-                            NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_mask)) {
+                          NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_mask)) {
                         return EXCEPTION_NONE;
                     }
                 }
@@ -1223,7 +1223,7 @@ exception_t handleVmexit(void)
                  * the low 4 bits
                  */
                 if (!((value ^ NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_shadow) &
-                        NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_mask & MASK(4))) {
+                      NODE_STATE(ksCurThread)->tcbArch.tcbVCPU->cr0_mask & MASK(4))) {
                     return EXCEPTION_NONE;
                 }
                 break;
@@ -1283,7 +1283,7 @@ void VMCheckBoundNotification(tcb_t *tcb)
     assert(tcb->tcbAffinity == getCurrentCPUIndex());
     notification_t *ntfnPtr = tcb->tcbBoundNotification;
     if (thread_state_ptr_get_tsType(&tcb->tcbState) == ThreadState_RunningVM
-            && ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
+        && ntfnPtr && notification_ptr_get_state(ntfnPtr) == NtfnState_Active) {
 
         word_t badge = notification_ptr_get_ntfnMsgIdentifier(ntfnPtr);
         notification_ptr_set_state(ntfnPtr, NtfnState_Idle);
@@ -1315,7 +1315,7 @@ static void setEPTRoot(cap_t vmxSpace, vcpu_t *vcpu)
 {
     paddr_t ept_root;
     if (cap_get_capType(vmxSpace) != cap_ept_pml4_cap ||
-            !cap_ept_pml4_cap_get_capPML4IsMapped(vmxSpace)) {
+        !cap_ept_pml4_cap_get_capPML4IsMapped(vmxSpace)) {
         ept_root = kpptr_to_paddr(null_ept_space);
     } else {
         findEPTForASID_ret_t find_ret;
