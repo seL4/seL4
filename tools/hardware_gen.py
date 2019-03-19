@@ -772,6 +772,8 @@ HEADER_TEMPLATE = """
 {%- endif %}
 {%- endfor %}
 
+#ifndef __ASSEMBLER__
+
 static const kernel_frame_t BOOT_RODATA kernel_devices[] = {
 {% for reg in kernel %}{{ reg.get_macro_string() }}
     { /* {{ ' '.join(sorted(reg.names)) }} */
@@ -807,6 +809,8 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
     {%- endif %}
     {%- endfor %}
 };
+
+#endif /* !__ASSEMBLER__ */
 
 /* INTERRUPTS */
 {%- for irq in interrupts %}
