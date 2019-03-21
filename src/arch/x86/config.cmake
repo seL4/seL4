@@ -334,6 +334,13 @@ config_option(
     DEPENDS "KernelArchX86"
 )
 
+if(KernelSel4ArchIA32)
+    set(KernelSetTLSBaseSelf ON)
+endif()
+if(KernelSel4ArchX86_64 AND NOT KernelFSGSBaseInst)
+    set(KernelSetTLSBaseSelf ON)
+endif()
+
 add_sources(
     DEP "KernelArchX86"
     PREFIX src/arch/x86

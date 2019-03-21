@@ -241,6 +241,7 @@ endif()
 
 # Set defaults for common variables
 set(KernelHaveFPU OFF)
+set(KernelSetTLSBaseSelf OFF)
 
 include(src/arch/arm/config.cmake)
 include(src/arch/riscv/config.cmake)
@@ -550,5 +551,9 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelArchX86 OR KernelPlatformHikey"
 )
+
+# Builds the kernel with support for an invocation to set the TLS_BASE
+# of the currently running thread without a capability.
+config_set(KernelSetTLSBaseSelf SET_TLS_BASE_SELF ${KernelSetTLSBaseSelf})
 
 add_config_library(kernel "${configure_string}")

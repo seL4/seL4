@@ -62,5 +62,8 @@
         <config condition="defined CONFIG_VTX">
             <syscall name="VMEnter"/>
         </config>
+        <config condition="defined CONFIG_SET_TLS_BASE_SELF">
+            <syscall name="SetTLSBase"/>
+        </config>
     </debug>
 </syscalls>

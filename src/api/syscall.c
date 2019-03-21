@@ -219,6 +219,18 @@ exception_t handleUnknownSyscall(word_t w)
     }
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
+#ifdef CONFIG_SET_TLS_BASE_SELF
+    if (w == SysSetTLSBase) {
+        word_t tls_base = getRegister(NODE_STATE(ksCurThread), capRegister);
+        /*
+         * This updates the real register as opposed to the thread state
+         * value. For many architectures, the TLS variables only get
+         * updated on a thread switch.
+         */
+        return Arch_setTLSRegister(tls_base);
+    }
+#endif
+
     current_fault = seL4_Fault_UnknownSyscall_new(w);
     handleFault(NODE_STATE(ksCurThread));
 

@@ -76,6 +76,15 @@ static inline void Arch_finaliseInterrupt(void)
 {
 }
 
+/* Update the value of the actual regsiter to hold the expected value */
+static inline exception_t Arch_setTLSRegister(word_t tls_base)
+{
+    /* This register is saved and restored on kernel exit and entry so
+     * we only update it in the saved context. */
+    setRegister(NODE_STATE(ksCurThread), TLS_BASE, tls_base);
+    return EXCEPTION_NONE;
+}
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* __ARCH_MACHINE_H */

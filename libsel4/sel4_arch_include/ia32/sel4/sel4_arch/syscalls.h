@@ -660,4 +660,12 @@ LIBSEL4_INLINE_FUNC void seL4_BenchmarkResetThreadUtilisation(seL4_Word tcb_cptr
 #endif /* CONFIG_BENCHMARK_TRACK_UTILISATION */
 #endif /* CONFIG_ENABLE_BENCHMARKS */
 
+#ifdef CONFIG_SET_TLS_BASE_SELF
+LIBSEL4_INLINE_FUNC void seL4_SetTLSBase(seL4_Word tls_base)
+{
+    x86_sys_send_null(seL4_SysSetTLSBase, tls_base, 0);
+    asm volatile("" ::: "memory");
+}
+#endif /* CONFIG_SET_TLS_BASE_SELF */
+
 #endif

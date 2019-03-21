@@ -539,4 +539,22 @@ seL4_VMEnter(seL4_Word *sender);
 
 /** @} */
 
+#ifdef CONFIG_TLS_BASE_SELF
+/**
+ * @xmlonly <manual name="SetTLSBase" label="sel4_settlsbase"/> @endxmlonly
+ * @brief Set the TLS base address and register of the currently executing thread.
+ *
+ * This stores the base address of the TLS region in the register
+ * reserved for that purpose on the given platform.
+ *
+ * Each platform has a specific register reserved for tracking the
+ * base address of the TLS region (as sepcified in the ELF standard) in
+ * a manner compatible with the TLS method used with that architecture.
+ *
+ * @param tls_base The new base address to store in the register.
+ */
+LIBSEL4_INLINE_FUNC void
+seL4_SetTLSBase(seL4_Word tls_base);
+#endif
+
 #endif /* __LIBSEL4_SYSCALLS_H */

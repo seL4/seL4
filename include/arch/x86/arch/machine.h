@@ -368,6 +368,31 @@ static inline void Arch_finaliseInterrupt(void)
     ARCH_NODE_STATE(x86KScurInterrupt) = int_invalid;
 }
 
+static inline void x86_set_tls_segment_base(word_t tls_base);
+
+/* Update the value of the actual regsiter to hold the expected value */
+static inline exception_t Arch_setTLSRegister(word_t tls_base)
+{
+    word_t sanitised = Mode_sanitiseRegister(TLS_BASE, tls_base);
+
+    if (sanitised != tls_base) {
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+#ifndef CONFIG_FSGSBASE_INST
+    /*
+     * The context is only updated from the register on a context switch
+     * if the FSGS instructions are enabled. When they aren't it msut be
+     * manually stored here.
+     */
+    setRegister(NODE_STATE(ksCurThread), TLS_BASE, tls_base);
+#endif
+
+    x86_set_tls_segment_base(sanitised);
+
+    return EXCEPTION_NONE;
+}
+
 /* we do not cache the IBRS value as writing the enable bit is meaningful even if it
  * is already set. On some processors if the enable bit was set it must be 're-written'
  * in order for a higher privilege to correctly not have its branch predictions affected */

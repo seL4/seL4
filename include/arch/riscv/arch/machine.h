@@ -172,6 +172,13 @@ static inline paddr_t CONST kpptr_to_paddr(void *pptr)
     return (paddr_t)pptr - KERNEL_BASE_OFFSET;
 }
 
-#endif // !__ASSEMBLER__
+/* Update the value of the actual regsiter to hold the expected value */
+static inline void Arch_setTLSRegister(word_t tls_base)
+{
+    /* The register is always reloaded upon return from kernel. */
+    setRegister(NODE_STATE(ksCurThread), TLS_BASE, tls_base);
+}
+
+#endif // __ASSEMBLER__
 #endif
 
