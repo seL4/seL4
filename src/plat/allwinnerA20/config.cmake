@@ -19,13 +19,13 @@ if(KernelPlatformAllwinnerA20)
     config_set(KernelPlatform PLAT "allwinnerA20")
     set(KernelArmMach "allwinner" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/allwinnera20.dts")
+    list(APPEND KernelDTSList "src/plat/allwinnerA20/overlay-allwinnera20.dts")
 else()
     config_set(KernelPlatAllwinnerA20 PLAT_ALLWINNERA20 OFF)
 endif()
 
 add_sources(
     DEP "KernelPlatAllwinnerA20"
-    CFILES src/plat/allwinnerA20/machine/hardware.c
-           src/plat/allwinnerA20/machine/l2cache.c
+    CFILES src/plat/allwinnerA20/machine/l2cache.c
            src/arch/arm/machine/gic_pl390.c
 )

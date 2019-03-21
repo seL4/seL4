@@ -21,3 +21,4 @@ RegisterDriver(compatibility_strings "ti,omap3430-timer" PREFIX src/drivers/time
 RegisterDriver(compatibility_strings "arm,cortex-a9-twd-timer" PREFIX src/drivers/timer CFILES "priv_timer.c")
 RegisterDriver(compatibility_strings "arm,armv7-timer" PREFIX src/drivers/timer CFILES "generic_timer.c")
 RegisterDriver(compatibility_strings "arm,armv8-timer" PREFIX src/drivers/timer CFILES "generic_timer.c")
+RegisterDriver(compatibility_strings "allwinner,sun4i-a10-timer" PREFIX src/drivers/timer CFILES "allwinner-timer.c")
