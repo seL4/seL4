@@ -12,7 +12,7 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-macro(RegisterDriver compatibility_strings match_strings)
+macro(register_driver compatibility_strings match_strings)
     foreach(match_string IN ITEMS ${match_strings})
         list(FIND ${compatibility_strings} ${match_string} res)
         if(NOT (res EQUAL -1))

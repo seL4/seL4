@@ -55,10 +55,10 @@ endfunction()
 #  * Output is assumed to be in CMAKE_CURRENT_BINARY_DIR
 #  * Input is assumed to be in CMAKE_CURRENT_SOURCE_DIR if it resolves to a file that exists
 #    otherwise it is assumed to be in CMAKE_CURRENT_BINARY_DIR
-function(CPPFile output output_target input)
+function(cppfile output output_target input)
     cmake_parse_arguments(PARSE_ARGV 3 "CPP" "" "EXACT_NAME" "EXTRA_DEPS;EXTRA_FLAGS")
     if(NOT "${CPP_UNPARSED_ARGUMENTS}" STREQUAL "")
-        message(FATAL_ERROR "Unknown arguments to CPPFile: ${CPP_UNPARSED_ARGUMENTS}")
+        message(FATAL_ERROR "Unknown arguments to cppfile: ${CPP_UNPARSED_ARGUMENTS}")
     endif()
     get_absolute_source_or_binary(input "${input}")
     set(file_copy_name "${output_target}_temp.c")
@@ -87,7 +87,7 @@ function(CPPFile output output_target input)
         DEPENDS ${output_target}_temp_lib $<TARGET_OBJECTS:${output_target}_temp_lib>
     )
     add_custom_target(${output_target} DEPENDS ${output})
-endfunction(CPPFile)
+endfunction(cppfile)
 
 # Function to generate a custom command to process a bitfield file. The input
 # (pbf_path) is either a .bf file or, if you used pre-processor directives, a

@@ -327,7 +327,7 @@ add_custom_target(dummy_header_wrapper
     DEPENDS ${dummy_headers}
 )
 
-CPPFile(kernel_all_pp_prune.c kernel_all_pp_prune_wrapper kernel_all.c
+cppfile(kernel_all_pp_prune.c kernel_all_pp_prune_wrapper kernel_all.c
     EXTRA_FLAGS -CC "-I${CMAKE_CURRENT_BINARY_DIR}/generated_prune"
     EXTRA_DEPS kernel_all_c_wrapper dummy_header_wrapper xml_headers_target kernel_config_headers ${gen_files_list}
 )
@@ -349,7 +349,7 @@ foreach(bf_dec ${bf_declarations})
     string(REPLACE ".bf" "_proofs.thy" proofs_target "${bf_name}")
     set(pbf_name "generated/${bf_gen_dir}/${bf_name}.pbf")
     set(pbf_target "${bf_gen_target}_pbf")
-    CPPFile("${pbf_name}" "${pbf_target}" "${bf_file}"
+    cppfile("${pbf_name}" "${pbf_target}" "${bf_file}"
         EXTRA_FLAGS -P
         EXTRA_DEPS kernel_config_headers ${gen_files_list}
     )
@@ -378,11 +378,11 @@ set(CPPExtraFlags "-I${CMAKE_CURRENT_BINARY_DIR}/generated")
 # Kernel compilation
 ####################
 
-CPPFile(kernel_all.i kernel_i_wrapper kernel_all.c
+cppfile(kernel_all.i kernel_i_wrapper kernel_all.c
     EXTRA_DEPS kernel_all_c_wrapper kernel_headers ${gen_files_list}
     EXTRA_FLAGS -CC "${CPPExtraFlags}"
     # The circular_includes script relies upon parsing out exactly 'kernel_all_copy.c' as
-    # a special case so we must ask CPPFile to use this input name
+    # a special case so we must ask cppfile to use this input name
     EXACT_NAME kernel_all_copy.c
 )
 
@@ -397,7 +397,7 @@ endif()
 set(linker_lds_path "${CMAKE_CURRENT_BINARY_DIR}/linker.lds_pp")
 
 # Preprocess the linker script
-CPPFile("${linker_lds_path}" linker_ld_wrapper "${linker_source}"
+cppfile("${linker_lds_path}" linker_ld_wrapper "${linker_source}"
     EXTRA_DEPS kernel_headers ${gen_files_list}
     EXTRA_FLAGS -CC -P "${CPPExtraFlags}"
 )
