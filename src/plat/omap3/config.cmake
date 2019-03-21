@@ -23,7 +23,5 @@ endif()
 
 add_sources(
     DEP "KernelPlatformOMAP3"
-    CFILES
-        src/plat/omap3/machine/hardware.c
-        src/plat/omap3/machine/l2cache.c
+    CFILES src/plat/omap3/machine/hardware.c src/plat/omap3/machine/l2cache.c
 )

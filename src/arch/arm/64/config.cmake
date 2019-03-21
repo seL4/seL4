@@ -26,7 +26,5 @@ add_sources(
         idle.c
         kernel/thread.c
         kernel/vspace.c
-    ASMFILES
-        head.S
-        traps.S
+    ASMFILES head.S traps.S
 )

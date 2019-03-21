@@ -30,14 +30,28 @@ mark_as_advanced(${force} CSPEC_DIR SKIP_MODIFIES SORRY_BITFIELD_PROOFS UMM_TYPE
 # Use a custom target for collecting information during generation that we need during build
 add_custom_target(kernel_config_target)
 # Put our common top level types in
-set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
-    cte_C tcb_C endpoint_C notification_C asid_pool_C pte_C user_data_C user_data_device_C
+set_property(
+    TARGET kernel_config_target
+    APPEND
+    PROPERTY
+        TOPLEVELTYPES
+        cte_C
+        tcb_C
+        endpoint_C
+        notification_C
+        asid_pool_C
+        pte_C
+        user_data_C
+        user_data_device_C
 )
 
-########################
+#
 # Architecture selection
-########################
-config_choice(KernelArch ARCH "Architecture to use when building the kernel"
+#
+config_choice(
+    KernelArch
+    ARCH
+    "Architecture to use when building the kernel"
     "arm;KernelArchARM;ARCH_ARM"
     "riscv;KernelArchRiscV;ARCH_RISCV"
     "x86;KernelArchX86;ARCH_X86"
@@ -58,70 +72,75 @@ include(src/config.cmake)
 config_set(KernelHaveFPU HAVE_FPU "${KernelHaveFPU}")
 
 # System parameters
-config_string(KernelRootCNodeSizeBits ROOT_CNODE_SIZE_BITS
-    "Root CNode Size (2^n slots) \
+config_string(KernelRootCNodeSizeBits ROOT_CNODE_SIZE_BITS "Root CNode Size (2^n slots) \
     The acceptable range is 4-27, based on the kernel-supplied caps.\
     The root CNode needs at least enough space to contain up to\
     BI_CAP_DYN_START. Note that in practice your root CNode will need\
     to be several bits larger than 4 to fit untyped caps and\
-    cannot be 27 bits as it won't fit in memory."
-    DEFAULT 12
-    UNQUOTE
-)
+    cannot be 27 bits as it won't fit in memory." DEFAULT 12 UNQUOTE)
 
-config_string(KernelTimerTickMS TIMER_TICK_MS
-    "Timer tick period in milliseconds"
-    DEFAULT 2
-    UNQUOTE
-)
-config_string(KernelTimeSlice TIME_SLICE
-    "Number of timer ticks until a thread is preempted."
+config_string(KernelTimerTickMS TIMER_TICK_MS "Timer tick period in milliseconds" DEFAULT 2 UNQUOTE)
+config_string(
+    KernelTimeSlice TIME_SLICE "Number of timer ticks until a thread is preempted."
     DEFAULT 5
     UNQUOTE
 )
-config_string(KernelRetypeFanOutLimit RETYPE_FAN_OUT_LIMIT
+config_string(
+    KernelRetypeFanOutLimit RETYPE_FAN_OUT_LIMIT
     "Maximum number of objects that can be created in a single Retype() invocation."
     DEFAULT 256
     UNQUOTE
 )
-config_string(KernelMaxNumWorkUnitsPerPreemption MAX_NUM_WORK_UNITS_PER_PREEMPTION
+config_string(
+    KernelMaxNumWorkUnitsPerPreemption MAX_NUM_WORK_UNITS_PER_PREEMPTION
     "Maximum number of work units (delete/revoke iterations) until the kernel checks for\
     pending interrupts (and preempts the currently running syscall if interrupts are pending)."
     DEFAULT 100
     UNQUOTE
 )
-config_string(KernelResetChunkBits RESET_CHUNK_BITS
+config_string(
+    KernelResetChunkBits RESET_CHUNK_BITS
     "Maximum size in bits of chunks of memory to zero before checking a preemption point."
     DEFAULT 8
     UNQUOTE
 )
-config_string(KernelMaxNumBootinfoUntypedCaps MAX_NUM_BOOTINFO_UNTYPED_CAPS
+config_string(
+    KernelMaxNumBootinfoUntypedCaps MAX_NUM_BOOTINFO_UNTYPED_CAPS
     "Max number of bootinfo untyped caps"
     DEFAULT 230
     UNQUOTE
 )
 config_option(KernelFastpath FASTPATH "Enable IPC fastpath" DEFAULT ON)
 
-config_string(KernelNumDomains NUM_DOMAINS "The number of scheduler domains in the system" DEFAULT 1 UNQUOTE)
+config_string(
+    KernelNumDomains NUM_DOMAINS "The number of scheduler domains in the system"
+    DEFAULT 1
+    UNQUOTE
+)
 
-find_file(KernelDomainSchedule default_domain.c PATHS src/config CMAKE_FIND_ROOT_PATH_BOTH
+find_file(
+    KernelDomainSchedule default_domain.c
+    PATHS src/config
+    CMAKE_FIND_ROOT_PATH_BOTH
     DOC "A C file providing the symbols ksDomSchedule and ksDomeScheudleLength \
         to be linked with the kernel as a scheduling configuration."
 )
 
-config_string(KernelNumPriorities NUM_PRIORITIES
-    "The number of priority levels per domain. Valid range 1-256"
+config_string(
+    KernelNumPriorities NUM_PRIORITIES "The number of priority levels per domain. Valid range 1-256"
     DEFAULT 256
     UNQUOTE
 )
 
-config_string(KernelMaxNumNodes MAX_NUM_NODES "Max number of CPU cores to boot"
+config_string(
+    KernelMaxNumNodes MAX_NUM_NODES "Max number of CPU cores to boot"
     DEFAULT 1
     DEPENDS "${KernelNumDomains} EQUAL 1;NOT KernelArchRiscV"
     UNQUOTE
 )
 
-config_string(KernelStackBits KERNEL_STACK_BITS
+config_string(
+    KernelStackBits KERNEL_STACK_BITS
     "This describes the log2 size of the kernel stack. Great care should be taken as\
     there is no guard below the stack so setting this too small will cause random\
     memory corruption"
@@ -129,7 +148,8 @@ config_string(KernelStackBits KERNEL_STACK_BITS
     UNQUOTE
 )
 
-config_string(KernelFPUMaxRestoresSinceSwitch FPU_MAX_RESTORES_SINCE_SWITCH
+config_string(
+    KernelFPUMaxRestoresSinceSwitch FPU_MAX_RESTORES_SINCE_SWITCH
     "This option is a heuristic to attempt to detect when the FPU is no longer in use,\
     allowing the kernel to save the FPU state out so that the FPU does not have to be\
     enabled/disabled every thread swith. Every time we restore a thread and there is\
@@ -140,32 +160,40 @@ config_string(KernelFPUMaxRestoresSinceSwitch FPU_MAX_RESTORES_SINCE_SWITCH
     UNQUOTE
 )
 
-config_option(KernelVerificationBuild VERIFICATION_BUILD
+config_option(
+    KernelVerificationBuild VERIFICATION_BUILD
     "When enabled this configuration option prevents the usage of any other options that\
     would compromise the verification story of the kernel. Enabling this option does NOT\
     imply you are using a verified kernel."
     DEFAULT ON
 )
 
-config_option(KernelDebugBuild DEBUG_BUILD
-    "Enable debug facilities (symbols and assertions) in the kernel"
+config_option(
+    KernelDebugBuild DEBUG_BUILD "Enable debug facilities (symbols and assertions) in the kernel"
     DEFAULT ON
-    DEPENDS "NOT KernelVerificationBuild" DEFAULT_DISABLED OFF
+    DEPENDS "NOT KernelVerificationBuild"
+    DEFAULT_DISABLED OFF
 )
 
-config_option(HardwareDebugAPI HARDWARE_DEBUG_API
+config_option(
+    HardwareDebugAPI HARDWARE_DEBUG_API
     "Builds the kernel with support for a userspace debug API, which can \
     allows userspace processes to set breakpoints, watchpoints and to \
     single-step through thread execution."
     DEFAULT OFF
     DEPENDS "NOT KernelVerificationBuild"
 )
-config_option(KernelPrinting PRINTING
+config_option(
+    KernelPrinting PRINTING
     "Allow the kernel to print out messages to the serial console during bootup and execution."
     DEFAULT "${KernelDebugBuild}"
-    DEPENDS "NOT KernelVerificationBuild" DEFAULT_DISABLED OFF
+    DEPENDS "NOT KernelVerificationBuild"
+    DEFAULT_DISABLED OFF
 )
-config_choice(KernelBenchmarks KERNEL_BENCHMARK "Enable benchamrks including logging and tracing info. \
+config_choice(
+    KernelBenchmarks
+    KERNEL_BENCHMARK
+    "Enable benchamrks including logging and tracing info. \
     Setting this value > 1 enables a 1MB log buffer and functions for extracting data from it \
     at user level. NOTE this is only tested on the sabre and will not work on platforms with < 512mb memory. \
     This is not fully implemented for x86. \
@@ -186,7 +214,8 @@ if(NOT (KernelBenchmarks STREQUAL "none"))
 else()
     config_set(KernelEnableBenchmarks ENABLE_BENCHMARKS OFF)
 endif()
-config_string(KernelMaxNumTracePoints MAX_NUM_TRACE_POINTS
+config_string(
+    KernelMaxNumTracePoints MAX_NUM_TRACE_POINTS
     "Use TRACE_POINT_START(k) and TRACE_POINT_STOP(k) macros for recording data, \
     where k is an integer between 0 and this value - 1. The maximum number of \
     different trace point identifiers which can be used."
@@ -202,22 +231,27 @@ else()
     config_set(KernelBenchmarkUseKernelLogBuffer BENCHMARK_USE_KERNEL_LOG_BUFFER OFF)
 endif()
 
-config_option(KernelIRQReporting IRQ_REPORTING
+config_option(
+    KernelIRQReporting IRQ_REPORTING
     "seL4 does not properly check for and handle spurious interrupts. This can result \
     in unnecessary output from the kernel during debug builds. If you are CERTAIN these \
     messages are benign then use this config to turn them off."
     DEFAULT ON
-    DEPENDS "KernelPrinting" DEFAULT_DISABLED OFF
+    DEPENDS "KernelPrinting"
+    DEFAULT_DISABLED OFF
 )
-config_option(KernelColourPrinting COLOUR_PRINTING
+config_option(
+    KernelColourPrinting COLOUR_PRINTING
     "In debug mode, seL4 prints diagnostic messages to its serial output describing, \
     e.g., the cause of system call errors. This setting determines whether ANSI escape \
     codes are applied to colour code these error messages. You may wish to disable this \
     setting if your serial output is redirected to a file or pipe."
     DEFAULT ON
-    DEPENDS "KernelPrinting" DEFAULT_DISABLED OFF
+    DEPENDS "KernelPrinting"
+    DEFAULT_DISABLED OFF
 )
-config_string(KernelUserStackTraceLength USER_STACK_TRACE_LENGTH
+config_string(
+    KernelUserStackTraceLength USER_STACK_TRACE_LENGTH
     "On a double fault the kernel can try and print out the users stack to aid \
     debugging. This option determines how many words of stack should be printed."
     DEFAULT 16
@@ -225,28 +259,34 @@ config_string(KernelUserStackTraceLength USER_STACK_TRACE_LENGTH
     UNQUOTE
 )
 
-config_choice(KernelOptimisation KERNEL_OPT_LEVEL "Select the kernel optimisation level"
+config_choice(
+    KernelOptimisation
+    KERNEL_OPT_LEVEL
+    "Select the kernel optimisation level"
     "-O2;KerenlOptimisationO2;KERNEL_OPT_LEVEL_O2"
     "-Os;KerenlOptimisationOS;KERNEL_OPT_LEVEL_OS"
     "-O1;KerenlOptimisationO1;KERNEL_OPT_LEVEL_O1"
     "-O3;KerenlOptimisationO3;KERNEL_OPT_LEVEL_O3"
 )
 
-config_option(KernelFWholeProgram KERNEL_FWHOLE_PROGRAM
+config_option(
+    KernelFWholeProgram KERNEL_FWHOLE_PROGRAM
     "Enable -fwhole-program when linking kernel. This should work modulo gcc bugs, which \
     are not uncommon with -fwhole-program. Consider this feature experimental!"
     DEFAULT OFF
 )
 
-
-config_option(KernelDangerousCodeInjection DANGEROUS_CODE_INJECTION
+config_option(
+    KernelDangerousCodeInjection DANGEROUS_CODE_INJECTION
     "Adds a system call that allows users to specify code to be run in kernel mode. \
     Useful for profiling."
     DEFAULT OFF
-    DEPENDS "NOT KernelARMHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
+    DEPENDS
+        "NOT KernelARMHypervisorSupport;NOT KernelVerificationBuild;NOT KernelPlatformHikey;NOT KernelSkimWindow"
 )
 
-config_option(KernelDebugDisablePrefetchers DEBUG_DISABLE_PREFETCHERS
+config_option(
+    KernelDebugDisablePrefetchers DEBUG_DISABLE_PREFETCHERS
     "On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 adjacent \
     cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher. On the cortex \
     a53 this disables the L1 Data prefetcher."

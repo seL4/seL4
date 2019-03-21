@@ -21,10 +21,6 @@ if(KernelPlatformKZM)
     list(APPEND KernelDTSList "src/plat/imx31/overlay-kzm.dts")
 endif()
 
-add_sources(
-    DEP "KernelPlatformKZM"
-    CFILES
-        src/plat/imx31/machine/hardware.c
-)
+add_sources(DEP "KernelPlatformKZM" CFILES src/plat/imx31/machine/hardware.c)
 
 add_bf_source_old("KernelPlatformKZM" "hardware.bf" "include/plat/imx31" "plat/machine")

@@ -18,14 +18,17 @@ if(KernelPlatformSpike)
     config_set(KernelPlatform PLAT "spike")
 endif()
 
-config_choice(KernelSpikeInstance RISCV_SPIKE_INSTANCE "Select the instance for Spike to run on"
+config_choice(
+    KernelSpikeInstance
+    RISCV_SPIKE_INSTANCE
+    "Select the instance for Spike to run on"
     "qemu;KernelPlatformSpikeQemu;BUILD_SPIKE_QEMU;KernelArchRiscV"
     "rocket-chip-zedboard;KernelPlatformSpikeRocketChip;BUILD_ROCKET_CHIP_ZEDBOARD;KernelSel4ArchRiscV64"
     "hi-five-unleashed;KernelPlatformSpikeSiFiveFreedom;BUILD_HI_FIVE_UNLEASHED;KernelSel4ArchRiscV64"
 )
 
-config_string(KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ
-    "Frequency of Clock used for Scheduler"
+config_string(
+    KernelPlatformSpikeClockFrequency SPIKE_CLOCK_FREQ "Frequency of Clock used for Scheduler"
     DEFAULT 10000000
     UNQUOTE
 )
@@ -35,8 +38,4 @@ include(src/plat/spike/instance/qemu/config.cmake)
 include(src/plat/spike/instance/rocket-chip/config.cmake)
 include(src/plat/spike/instance/freedom/config.cmake)
 
-add_sources(
-    DEP "KernelPlatformSpike"
-    CFILES
-        src/plat/spike/machine/hardware.c
-)
+add_sources(DEP "KernelPlatformSpike" CFILES src/plat/spike/machine/hardware.c)

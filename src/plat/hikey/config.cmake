@@ -12,7 +12,8 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-config_string(KernelArmHikeyOutstandingPrefetchers ARM_HIKEY_OUTSTANDING_PREFETCHERS
+config_string(
+    KernelArmHikeyOutstandingPrefetchers ARM_HIKEY_OUTSTANDING_PREFETCHERS
     "Number of outstanding prefetch allowed \
     Cortex A53 has an L1 Data prefetcher. This config options allows \
     the number of outstanding prefetcher to be set from a number from \
@@ -23,7 +24,8 @@ config_string(KernelArmHikeyOutstandingPrefetchers ARM_HIKEY_OUTSTANDING_PREFETC
 )
 set_property(CACHE KernelArmHikeyOutstandingPrefetchers PROPERTY STRINGS "1;2;3;4;5;6;7")
 
-config_string(KernelArmHikeyPrefetcherStride ARM_HIKEY_PREFETCHER_STRIDE
+config_string(
+    KernelArmHikeyPrefetcherStride ARM_HIKEY_PREFETCHER_STRIDE
     "Number of strides before prefetcher is triggered \
     Number of strides before prefetcher is triggered. \
     Allowed values are 2 and 3. 2 is the reset value"
@@ -33,7 +35,8 @@ config_string(KernelArmHikeyPrefetcherStride ARM_HIKEY_PREFETCHER_STRIDE
 )
 set_property(CACHE KernelArmHikeyPrefetcherStride PROPERTY STRINGS "2;3")
 
-config_string(KernelArmHikeyPrefetcherNPFSTRM ARM_HIKEY_PREFETCHER_NPFSTRM
+config_string(
+    KernelArmHikeyPrefetcherNPFSTRM ARM_HIKEY_PREFETCHER_NPFSTRM
     "Number of indepedent prefetch streams \
     Number of indepedent prefetch streams. Allowed values are 1 to 4.\
     2 is the reset value"
@@ -43,14 +46,17 @@ config_string(KernelArmHikeyPrefetcherNPFSTRM ARM_HIKEY_PREFETCHER_NPFSTRM
 )
 set_property(CACHE KernelArmHikeyPrefetcherNPFSTRM PROPERTY STRINGS "1;2;3;4")
 
-config_option(KernelArmHikeyPrefetcherSTBPFDIS ARM_HIKEY_PREFETCHER_STBPFDIS
+config_option(
+    KernelArmHikeyPrefetcherSTBPFDIS ARM_HIKEY_PREFETCHER_STBPFDIS
     "Enable prefetch streams initated by STB access \
     Enable prefetch streams initated by STB access. Enabled is the reset value"
     DEFAULT ON
-    DEPENDS "KernelPlatformHikey; NOT KernelDebugDisablePrefetchers" DEFAULT_DISABLED OFF
+    DEPENDS "KernelPlatformHikey; NOT KernelDebugDisablePrefetchers"
+    DEFAULT_DISABLED OFF
 )
 
-config_option(KernelArmHikeyPrefetcherSTBPFRS ARM_HIKEY_PREFETCHER_STBPFRS
+config_option(
+    KernelArmHikeyPrefetcherSTBPFRS ARM_HIKEY_PREFETCHER_STBPFRS
     "Prefetcher to initated on a ReadUnique or ReadShared \
     Sets prefetcher to initated on a ReadUnique (n) or ReadShared (y) \
     ReadUnique is the reset value"
@@ -72,7 +78,5 @@ endif()
 
 add_sources(
     DEP "KernelPlatformHikey"
-    CFILES
-        src/arch/arm/machine/gic_pl390.c
-        src/arch/arm/machine/l2c_nop.c
+    CFILES src/arch/arm/machine/gic_pl390.c src/arch/arm/machine/l2c_nop.c
 )

@@ -25,8 +25,5 @@ add_sources(
         model/statedata.c
         machine/registerset.c
         smp/ipi.c
-    ASMFILES
-        machine_asm.S
-        traps.S
-        head.S
+    ASMFILES machine_asm.S traps.S head.S
 )

@@ -28,14 +28,12 @@ if(KernelPlatformZynqmp)
         set(KernelHaveFPU ON)
     endif()
 
-    if (NOT KernelPlatformUltra96)
+    if(NOT KernelPlatformUltra96)
         list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
     endif()
 endif()
 
 add_sources(
     DEP "KernelPlatformZynqmp"
-    CFILES
-        src/arch/arm/machine/gic_pl390.c
-        src/arch/arm/machine/l2c_nop.c
+    CFILES src/arch/arm/machine/gic_pl390.c src/arch/arm/machine/l2c_nop.c
 )

@@ -23,7 +23,5 @@ endif()
 
 add_sources(
     DEP "KernelPlatformAPQ8064"
-    CFILES
-        src/arch/arm/machine/gic_pl390.c
-        src/arch/arm/machine/l2c_nop.c
+    CFILES src/arch/arm/machine/gic_pl390.c src/arch/arm/machine/l2c_nop.c
 )

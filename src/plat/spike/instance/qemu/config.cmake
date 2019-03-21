@@ -9,5 +9,5 @@
 #
 
 if(KernelPlatformSpikeQemu)
-  set(KernelPlatformSpikeClockFrequency 10000000)
+    set(KernelPlatformSpikeClockFrequency 10000000)
 endif()

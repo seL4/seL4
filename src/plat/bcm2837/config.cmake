@@ -26,7 +26,5 @@ endif()
 
 add_sources(
     DEP "KernelPlatformRpi3"
-    CFILES
-        src/plat/bcm2837/machine/intc.c
-        src/arch/arm/machine/l2c_nop.c
+    CFILES src/plat/bcm2837/machine/intc.c src/arch/arm/machine/l2c_nop.c
 )

@@ -9,5 +9,5 @@
 #
 
 if(KernelPlatformSpikeRocketChip)
-  set(KernelPlatformSpikeClockFrequency 250000)
+    set(KernelPlatformSpikeClockFrequency 250000)
 endif()

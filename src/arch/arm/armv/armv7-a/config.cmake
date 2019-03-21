@@ -20,6 +20,5 @@ add_sources(
         cache.c
         user_access.c
         tlb.c
-    ASMFILES
-        machine_asm.S
+    ASMFILES machine_asm.S
 )

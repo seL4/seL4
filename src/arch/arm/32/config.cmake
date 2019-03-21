@@ -25,13 +25,7 @@ add_sources(
         idle.c
         kernel/thread.c
         kernel/vspace.c
-    ASMFILES
-        head.S
-        traps.S
-        hyp_traps.S
+    ASMFILES head.S traps.S hyp_traps.S
 )
 
-add_sources(
-    DEP "KernelSel4ArchAarch32;KernelDebugBuild"
-    CFILES src/arch/arm/32/machine/capdl.c
-)
+add_sources(DEP "KernelSel4ArchAarch32;KernelDebugBuild" CFILES src/arch/arm/32/machine/capdl.c)

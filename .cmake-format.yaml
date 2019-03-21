@@ -1,0 +1,49 @@
+#
+# Copyright 2019, Data61
+# Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+# ABN 41 687 119 230.
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(DATA61_GPL)
+#
+additional_commands:
+  add_sources:
+    kwargs:
+      ASMFILES: '*'
+      CFILES: '*'
+      DEP: '*'
+      PREFIX: '*'
+  config_option:
+    flags:
+    - UNQUOTE
+    kwargs:
+      DEFAULT: '*'
+      DEFAULT_DISABLED: '*'
+      DEPENDS: '*'
+  config_string:
+    flags:
+    - UNQUOTE
+    kwargs:
+      DEFAULT: '*'
+      DEPENDS: '*'
+  cpp_file:
+    kwargs:
+      EXACT_NAME: '*'
+      EXTRA_DEPS: '*'
+      EXTRA_FLAGS: '*'
+  gen_invocation_header:
+    flags:
+    - ARCH
+    - SEL4ARCH
+    - LIBSEL4
+    kwargs:
+      OUTPUT: '*'
+      XML: '*'
+  register_driver:
+    kwargs:
+      CFILES: '*'
+      PREFIX: '*'
+

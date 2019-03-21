@@ -16,34 +16,37 @@ cmake_minimum_required(VERSION 3.7.2)
 
 function(gen_invocation_header)
     cmake_parse_arguments(PARSE_ARGV 0 "GEN" "LIBSEL4;ARCH;SEL4ARCH" "OUTPUT;XML" "")
-    if (NOT "${GEN_UNPARSED_ARGUMENTS}" STREQUAL "")
+    if(NOT "${GEN_UNPARSED_ARGUMENTS}" STREQUAL "")
         message(FATAL_ERROR "Unknown arguments to gen_invocation_header: ${GEN_UNPARSED_ARGUMENTS}")
     endif()
     # Ensure only one of arch or sel4arch
-    if (GEN_ARCH AND GEN_SEL4ARCH)
+    if(GEN_ARCH AND GEN_SEL4ARCH)
         message(FATAL_ERROR "Can only specify one of ARCH or SEL4ARCH")
     endif()
     # OUTPUT and XML are required
-    if (("${GEN_OUTPUT}" STREQUAL "") OR ("${GEN_XML}" STREQUAL ""))
+    if(("${GEN_OUTPUT}" STREQUAL "") OR ("${GEN_XML}" STREQUAL ""))
         message(FATAL_ERROR "OUTPUT and XML must both be specified")
     endif()
     set(arch_setting "")
-    if (GEN_ARCH)
+    if(GEN_ARCH)
         set(arch_setting "--arch")
-    elseif (GEN_SEL4ARCH)
+    elseif(GEN_SEL4ARCH)
         set(arch_setting "--sel4_arch")
     endif()
     set(libsel4_setting "")
-    if (GEN_LIBSEL4)
+    if(GEN_LIBSEL4)
         set(libsel4_setting "--libsel4")
     endif()
     # Turn the input xml into an absolute path as we build commands that may be
     # be run with a working directory that is not the current source directory
     get_absolute_source_or_binary(xml_absolute "${GEN_XML}")
-    add_custom_command(OUTPUT "${GEN_OUTPUT}"
+    add_custom_command(
+        OUTPUT "${GEN_OUTPUT}"
         COMMAND rm -f "${GEN_OUTPUT}"
-        COMMAND "${PYTHON}" "${INVOCATION_ID_GEN_PATH}" --xml "${xml_absolute}"
-            ${libsel4_setting} ${arch_setting} --dest "${GEN_OUTPUT}"
+        COMMAND
+            "${PYTHON}" "${INVOCATION_ID_GEN_PATH}"
+            --xml "${xml_absolute}" ${libsel4_setting} ${arch_setting}
+            --dest "${GEN_OUTPUT}"
         DEPENDS "${xml_absolute}" "${INVOCATION_ID_GEN_PATH}"
         COMMENT "Generate invocation header ${GEN_OUTPUT}"
     )
@@ -81,7 +84,9 @@ endfunction(add_sources)
 # separate where the bf file is located in the source, versus where it will get
 # generated.
 function(add_bf_source_old dep file prefix path)
-    list_append_if(bf_declarations "${dep}" "${CMAKE_CURRENT_SOURCE_DIR}/${prefix}/${path}/${file}:${path}")
+    list_append_if(
+        bf_declarations "${dep}" "${CMAKE_CURRENT_SOURCE_DIR}/${prefix}/${path}/${file}:${path}"
+    )
 endfunction(add_bf_source_old)
 
 # Macro for allowing different archs etc to set the kernel type to 32-bit

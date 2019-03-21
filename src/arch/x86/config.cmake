@@ -12,16 +12,17 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-config_choice(KernelX86Sel4Arch X86_SEL4_ARCH "Architecture mode for building the kernel"
+config_choice(
+    KernelX86Sel4Arch
+    X86_SEL4_ARCH
+    "Architecture mode for building the kernel"
     "x86_64;KernelSel4ArchX86_64;ARCH_X86_64;KernelArchX86"
     "ia32;KernelSel4ArchIA32;ARCH_IA32;KernelArchX86"
 )
 
 # Add any top level types
 if(KernelSel4ArchX86_64)
-    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
-        pdpte_C pml4e_C
-    )
+    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pdpte_C pml4e_C)
 endif()
 
 if(KernelArchX86)
@@ -31,9 +32,7 @@ if(KernelArchX86)
     config_set(KernelSel4Arch SEL4_ARCH "${KernelX86Sel4Arch}")
     # x86 always has an FPU
     set(KernelHaveFPU ON)
-    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
-        pde_C
-    )
+    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
 else()
     config_set(KernelPlatPC99 PLAT_PC99 OFF)
 endif()
@@ -44,7 +43,10 @@ elseif(KernelSel4ArchIA32)
     set_kernel_32()
 endif()
 
-config_choice(KernelX86MicroArch KERNEL_X86_MICRO_ARCH "Select the x86 micro architecture"
+config_choice(
+    KernelX86MicroArch
+    KERNEL_X86_MICRO_ARCH
+    "Select the x86 micro architecture"
     "nehalem;KernelX86MicroArchNehalem;ARCH_X86_NEHALEM;KernelArchX86"
     "generic;KernelX86MicroArchGeneric;ARCH_X86_GENERIC;KernelArchX86"
     "westmere;KernelX86MicroArchWestmere;ARCH_X86_WESTMERE;KernelArchX86"
@@ -55,7 +57,9 @@ config_choice(KernelX86MicroArch KERNEL_X86_MICRO_ARCH "Select the x86 micro arc
     "skylake;KernelX86MicroArchSkylake;ARCH_X86_SKYLAKE;KernelArchX86"
 )
 
-config_choice(KernelIRQController KERNEL_IRQ_CONTROLLER
+config_choice(
+    KernelIRQController
+    KERNEL_IRQ_CONTROLLER
     "Select the IRQ controller seL4 will use. Code for others may still be included if \
     needed to disable at run time. \
     PIC -> Use the legacy PIC controller. \
@@ -64,7 +68,8 @@ config_choice(KernelIRQController KERNEL_IRQ_CONTROLLER
     "PIC;KernelIRQControllerPIC;IRQ_PIC;KernelArchX86"
 )
 
-config_string(KernelMaxNumIOAPIC MAX_NUM_IOAPIC
+config_string(
+    KernelMaxNumIOAPIC MAX_NUM_IOAPIC
     "Configure the maximum number of IOAPIC controllers that can be supported. SeL4 \
     will detect IOAPICs regardless of whether the IOAPIC will actually be used as \
     the final IRQ controller."
@@ -73,33 +78,37 @@ config_string(KernelMaxNumIOAPIC MAX_NUM_IOAPIC
     UNQUOTE
 )
 
-config_choice(KernelLAPICMode KERNEL_LAPIC_MODE
+config_choice(
+    KernelLAPICMode
+    KERNEL_LAPIC_MODE
     "Select the mode local APIC will use. Not all machines support X2APIC mode."
     "XAPIC;KernelLAPICModeXPAIC;XAPIC;KernelArchX86"
     "X2APIC;KernelLAPICModeX2APIC;X2APIC;KernelArchX86"
 )
 
-config_option(KernelUseLogcalIDs USE_LOGCAL_IDS
+config_option(
+    KernelUseLogcalIDs USE_LOGCAL_IDS
     "Use logical IDs to broadcast IPI between cores. Not all machines support logical \
     IDs. In xAPIC mode only 8 cores can be addressed using logical IDs."
     DEFAULT OFF
     DEPENDS "NOT ${KernelMaxNumNodes} EQUAL 1;KernelArchX86"
 )
 
-config_string(KernelCacheLnSz CACHE_LN_SZ
-    "Define cache line size for the current architecture"
+config_string(
+    KernelCacheLnSz CACHE_LN_SZ "Define cache line size for the current architecture"
     DEFAULT 64
     DEPENDS "KernelArchX86" UNDEF_DISABLED
     UNQUOTE
 )
 
-config_option(KernelVTX VTX
-    "VTX support"
+config_option(
+    KernelVTX VTX "VTX support"
     DEFAULT OFF
     DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
 )
 
-config_string(KernelMaxVPIDs MAX_VPIDS
+config_string(
+    KernelMaxVPIDs MAX_VPIDS
     "The kernel maintains a mapping of 16-bit VPIDs to VCPUs. This option should be \
     sized as small as possible to save memory, but be at least the number of VCPUs that \
     will be run for optimum performance."
@@ -108,18 +117,24 @@ config_string(KernelMaxVPIDs MAX_VPIDS
     UNQUOTE
 )
 
-config_option(KernelHugePage HUGE_PAGE
+config_option(
+    KernelHugePage HUGE_PAGE
     "Add support for 1GB huge page. Not all recent processor models support this feature."
     DEFAULT ON
-    DEPENDS "KernelSel4ArchX86_64" DEFAULT_DISABLED OFF
+    DEPENDS "KernelSel4ArchX86_64"
+    DEFAULT_DISABLED OFF
 )
-config_option(KernelSupportPCID SUPPORT_PCID
+config_option(
+    KernelSupportPCID SUPPORT_PCID
     "Add support for PCIDs (aka hardware ASIDs). Not all processor models support this feature."
     DEFAULT ON
-    DEPENDS "KernelSel4ArchX86_64" DEFAULT_DISABLED OFF
+    DEPENDS "KernelSel4ArchX86_64"
+    DEFAULT_DISABLED OFF
 )
 
-config_choice(KernelSyscall KERNEL_X86_SYSCALL
+config_choice(
+    KernelSyscall
+    KERNEL_X86_SYSCALL
     "The kernel only ever supports one method of performing syscalls at a time. This \
     config should be set to the most efficient one that is support by the hardware the \
     system will run on"
@@ -127,7 +142,10 @@ config_choice(KernelSyscall KERNEL_X86_SYSCALL
     "sysenter;KernelX86SyscallSysenter;SYSENTER;KernelArchX86"
 )
 
-config_choice(KernelFPU KERNEL_X86_FPU "Choose the method that FPU state is stored in. This \
+config_choice(
+    KernelFPU
+    KERNEL_X86_FPU
+    "Choose the method that FPU state is stored in. This \
     directly affects the method used to save and restore it. \
     FXSAVE -> This chooses the legacy 512-byte region used by the fxsave and fxrstor functions \
     XSAVE -> This chooses the variable xsave region, and enables the ability to use any \
@@ -137,7 +155,10 @@ config_choice(KernelFPU KERNEL_X86_FPU "Choose the method that FPU state is stor
     "FXSAVE;KernelFPUFXSave;FXSAVE;KernelArchX86"
 )
 
-config_choice(KernelXSave KERNEL_XSAVE "The XSAVE area supports multiple instructions to save
+config_choice(
+    KernelXSave
+    KERNEL_XSAVE
+    "The XSAVE area supports multiple instructions to save
         and restore to it. These instructions are dependent upon specific CPU support. See Chapter 13 of Volume \
         1 of the Intel Architectures SOftware Developers Manual for discussion on the init and modified \
         optimizations. \
@@ -153,7 +174,8 @@ config_choice(KernelXSave KERNEL_XSAVE "The XSAVE area supports multiple instruc
     "XSAVE;KernelXSaveXSave;XSAVE_XSAVE;KernelFPUXSave"
     "XSAVEC;KernelXSaveXSaveC;XSAVE_XSAVEC;KernelFPUXSave"
 )
-config_string(KernelXSaveFeatureSet XSAVE_FEATURE_SET
+config_string(
+    KernelXSaveFeatureSet XSAVE_FEATURE_SET
     "XSAVE can save and restore the state for various features \
     through the use of the feature mask. This config option represents the feature mask that we want to \
     support. The CPU must support all bits in this feature mask. Current known bits are \
@@ -172,7 +194,8 @@ else()
     set(default_xsave_size 512)
 endif()
 
-config_string(KernelXSaveSize XSAVE_SIZE
+config_string(
+    KernelXSaveSize XSAVE_SIZE
     "The size of the XSAVE region. This is dependent upon the features in \
     XSAVE_FEATURE_SET that have been requested. Default is 576 for the FPU and SSE
     state, unless XSAVE is not in use then it should be 512 for the legacy FXSAVE region."
@@ -181,7 +204,9 @@ config_string(KernelXSaveSize XSAVE_SIZE
     UNQUOTE
 )
 
-config_choice(KernelFSGSBase KERNEL_FSGS_BASE
+config_choice(
+    KernelFSGSBase
+    KERNEL_FSGS_BASE
     "There are three ways to to set FS/GS base addresses: \
     IA32_FS/GS_GDT, IA32_FS/GS_BASE_MSR, and fsgsbase instructions. \
     IA32_FS/GS_GDT and IA32_FS/GS_BASE_MSR are availble for 32-bit. \
@@ -191,7 +216,9 @@ config_choice(KernelFSGSBase KERNEL_FSGS_BASE
     "msr;KernelFSGSBaseMSR;FSGSBASE_MSR;KernelSel4ArchX86_64"
 )
 
-config_choice(KernelMultibootGFXMode KERNEL_MUTLTIBOOT_GFX_MODE
+config_choice(
+    KernelMultibootGFXMode
+    KERNEL_MUTLTIBOOT_GFX_MODE
     "The type of graphics mode to request from the boot loader. This is encoded into the \
     multiboot header and is merely a hint, the boot loader is free to ignore or set some \
     other mode"
@@ -200,7 +227,8 @@ config_choice(KernelMultibootGFXMode KERNEL_MUTLTIBOOT_GFX_MODE
     "linear;KernelMultibootGFXModeLinear;MULTIBOOT_GRAPHICS_MODE_LINEAR;KernelArchX86"
 )
 
-config_string(KernelMultibootGFXDepth MULTIBOOT_GRAPHICS_MODE_DEPTH
+config_string(
+    KernelMultibootGFXDepth MULTIBOOT_GRAPHICS_MODE_DEPTH
     "The bits per pixel of the linear graphics mode ot request. Value of zero indicates \
     no preference."
     DEFAULT 32
@@ -208,7 +236,8 @@ config_string(KernelMultibootGFXDepth MULTIBOOT_GRAPHICS_MODE_DEPTH
     UNQUOTE
 )
 
-config_string(KernelMultibootGFXWidth MULTIBOOT_GRAPHICS_MODE_WIDTH
+config_string(
+    KernelMultibootGFXWidth MULTIBOOT_GRAPHICS_MODE_WIDTH
     "The width of the graphics mode to request. For a linear graphics mode this is the \
     number of pixels. For a text mode this is the number of characters, value of zero \
     indicates no preference."
@@ -216,7 +245,8 @@ config_string(KernelMultibootGFXWidth MULTIBOOT_GRAPHICS_MODE_WIDTH
     DEPENDS "KernelMultibootGFXModeText OR KernelMultibootGFXModeLinear" UNDEF_DISABLED
     UNQUOTE
 )
-config_string(KernelMultibootGFXHeight MULTIBOOT_GRAPHICS_MODE_HEIGHT
+config_string(
+    KernelMultibootGFXHeight MULTIBOOT_GRAPHICS_MODE_HEIGHT
     "The height of the graphics mode to request. For a linear graphics mode this is the \
     number of pixels. For a text mode this is the number of characters, value of zero \
     indicates no preference."
@@ -225,20 +255,23 @@ config_string(KernelMultibootGFXHeight MULTIBOOT_GRAPHICS_MODE_HEIGHT
     UNQUOTE
 )
 
-config_option(KernelMultiboot1Header MULTIBOOT1_HEADER
+config_option(
+    KernelMultiboot1Header MULTIBOOT1_HEADER
     "Inserts a header that indicates to the bootloader that the kernel supports a multiboot 1 boot header"
     DEFAULT ON
     DEPENDS "KernelArchX86"
 )
 
-config_option(KernelMultiboot2Header MULTIBOOT2_HEADER
+config_option(
+    KernelMultiboot2Header MULTIBOOT2_HEADER
     "Inserts a header that indicates to the bootloader that the kernel supports a multiboot 2 boot header. \
     This is can be enabled together with a multiboot 1 header and the boot loader may use either one"
     DEFAULT ON
     DEPENDS "KernelArchX86"
 )
 
-config_option(KernelSkimWindow KERNEL_SKIM_WINDOW
+config_option(
+    KernelSkimWindow KERNEL_SKIM_WINDOW
     "Prevent against the Meltdown vulnerability by using a reduced Static Kernel
     Image and Micro-state window instead of having all kernel state in the kernel window.
     This only needs to be enabled if deploying to a vulnerable processor"
@@ -247,8 +280,8 @@ config_option(KernelSkimWindow KERNEL_SKIM_WINDOW
     DEFAULT_DISABLED OFF
 )
 
-config_option(KernelExportPMCUser EXPORT_PMC_USER
-    "Grant user access to the Performance Monitoring Counters.
+config_option(
+    KernelExportPMCUser EXPORT_PMC_USER "Grant user access to the Performance Monitoring Counters.
     This allows the user to read performance counters, although
     not control what the counters are and whether or not they
     are counting. Nevertheless whilst this is useful for
@@ -258,7 +291,8 @@ config_option(KernelExportPMCUser EXPORT_PMC_USER
     DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
 )
 
-config_option(KernelX86DangerousMSR KERNEL_X86_DANGEROUS_MSR
+config_option(
+    KernelX86DangerousMSR KERNEL_X86_DANGEROUS_MSR
     "rdmsr/wrmsr kernel interface. Provides a syscall interface for reading and writing arbitrary MSRs.
     This is extremely dangerous as no checks are performed and exists
     to aid debugging and benchmarking."
@@ -266,13 +300,15 @@ config_option(KernelX86DangerousMSR KERNEL_X86_DANGEROUS_MSR
     DEPENDS "KernelArchX86;NOT KernelVerificationBuild"
 )
 
-if (KernelArchX86 AND (NOT "${KernelMaxNumNodes}" EQUAL 1))
+if(KernelArchX86 AND (NOT "${KernelMaxNumNodes}" EQUAL 1))
     set(STIBDEP TRUE)
 else()
     set(STIBDEP FALSE)
 endif()
 
-config_choice(KernelX86IBRSMode KERNEL_X86_IBRS
+config_choice(
+    KernelX86IBRSMode
+    KERNEL_X86_IBRS
     "Indirect Branch Restricted Speculation mode
     Used to prevent a user from manipulating the branch predictor to manipulate speculative
     execution of other processes. On current processors IBRS has a prohibitive performance
@@ -289,14 +325,15 @@ config_choice(KernelX86IBRSMode KERNEL_X86_IBRS
     "ibrs_all;KernelX86IBRSAll;KERNEL_X86_IBRS_ALL;KernelArchX86"
 )
 
-if (KernelX86IBRSBasic OR KernelX86IBRSSTIBP)
+if(KernelX86IBRSBasic OR KernelX86IBRSSTIBP)
     # As the kernel has no function pointers or other indirect jumps except those
     # as generated by the compiler through switch statements we can disable jump
     # tables in order to prevent Spectre Variant 2 style attacks.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-jump-tables")
 endif()
 
-config_option(KernelX86IBPBOnContextSwitch KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
+config_option(
+    KernelX86IBPBOnContextSwitch KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
     "Performs a IBPB on every context switch to prevent Spectre attacks between user
     processes. This is extremely expensive and is recommended you only turn this on
     if absolutely necessary.
@@ -306,7 +343,8 @@ config_option(KernelX86IBPBOnContextSwitch KERNEL_X86_IBPB_ON_CONTEXT_SWITCH
     DEPENDS "KernelArchX86"
 )
 
-config_option(KernelX86RSBOnContextSwitch KERNEL_X86_RSB_ON_CONTEXT_SWITCH
+config_option(
+    KernelX86RSBOnContextSwitch KERNEL_X86_RSB_ON_CONTEXT_SWITCH
     "Flushes the RSB on context switch to prevent Spectre attacks between user processes.
     Whilst not nearly as expensive as an IBPB it is not enabled by default as it is
     largely pointless to flush the RSB without also doing an IBPB as the RSB is already
@@ -346,14 +384,10 @@ add_sources(
         machine/registerset.c
         benchmark/benchmark.c
         smp/ipi.c
-    ASMFILES
-        multiboot.S
+    ASMFILES multiboot.S
 )
 
-add_sources(
-    DEP "KernelArchX86;KernelDebugBuild"
-    CFILES src/arch/x86/machine/capdl.c
-)
+add_sources(DEP "KernelArchX86;KernelDebugBuild" CFILES src/arch/x86/machine/capdl.c)
 
 add_bf_source_old("KernelArchX86" "structures.bf" "include/arch/x86" "arch/object")
 

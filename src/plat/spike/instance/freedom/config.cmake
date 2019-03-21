@@ -9,5 +9,5 @@
 #
 
 if(KernelPlatformSpikeSiFiveFreedom)
-  set(KernelPlatformSpikeClockFrequency 1000000)
+    set(KernelPlatformSpikeClockFrequency 1000000)
 endif()

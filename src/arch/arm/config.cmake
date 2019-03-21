@@ -12,13 +12,19 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-config_choice(KernelArmSel4Arch ARM_SEL4_ARCH "Architecture mode for building the kernel"
+config_choice(
+    KernelArmSel4Arch
+    ARM_SEL4_ARCH
+    "Architecture mode for building the kernel"
     "aarch32;KernelSel4ArchAarch32;ARCH_AARCH32;KernelArchARM"
     "aarch64;KernelSel4ArchAarch64;ARCH_AARCH64;KernelArchARM"
     "arm_hyp;KernelSel4ArchArmHyp;ARCH_ARM_HYP;KernelArchARM;KernelArmHypervisorSupport"
 )
 
-config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architecture"
+config_choice(
+    KernelARMPlatform
+    ARM_PLAT
+    "Select the platform for the architecture"
     "sabre;KernelPlatformSabre;PLAT_SABRE;KernelSel4ArchAarch32"
     "kzm;KernelPlatformKZM;PLAT_KZM;KernelSel4ArchAarch32"
     "omap3;KernelPlatformOMAP3;PLAT_OMAP3;KernelSel4ArchAarch32"
@@ -43,9 +49,7 @@ config_choice(KernelARMPlatform ARM_PLAT "Select the platform for the architectu
 
 if(KernelArchARM)
     config_set(KernelSel4Arch SEL4_ARCH "${KernelArmSel4Arch}")
-    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES
-        pde_C
-    )
+    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
 endif()
 
 # arm-hyp masquerades as an aarch32 build
@@ -96,16 +100,19 @@ include(src/plat/tx2/config.cmake)
 include(src/plat/zynq7000/config.cmake)
 include(src/plat/zynqmp/config.cmake)
 
-if (DEFINED KernelDTSList)
+if(DEFINED KernelDTSList)
     set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")
-    set(KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb" CACHE INTERNAL "Location of kernel DTB file")
+    set(
+        KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb"
+        CACHE INTERNAL "Location of kernel DTB file"
+    )
     set(compatibility_outfile "${CMAKE_CURRENT_BINARY_DIR}/kernel_compat.txt")
     set(device_dest "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/devices_gen.h")
     set(config_file "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware.yml")
     set(config_schema "${CMAKE_CURRENT_SOURCE_DIR}/tools/hardware_schema.yml")
-        
+
     find_program(DTC_TOOL dtc)
-    if ("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
+    if("${DTC_TOOL}" STREQUAL "DTC_TOOL-NOTFOUND")
         message(FATAL_ERROR "Cannot find 'dtc' program.")
     endif()
 
@@ -116,34 +123,38 @@ if (DEFINED KernelDTSList)
 
     # Generate final DTS based on Linux DTS + seL4 overlay[s]
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/"
+        COMMAND
+            ${CMAKE_COMMAND} -E make_directory
+            "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/"
     )
-    execute_process(
-        COMMAND bash -c "cat ${dts_list} > ${KernelDTSIntermediate}.in"
-    )
+    execute_process(COMMAND bash -c "cat ${dts_list} > ${KernelDTSIntermediate}.in")
     configure_file(${KernelDTSIntermediate}.in ${KernelDTSIntermediate} COPYONLY)
 
     check_outfile_stale(regen ${KernelDTBPath} KernelDTSIntermediate)
-    if (regen)
+    if(regen)
         # Compile DTS to DTB
         execute_process(
-            COMMAND ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
+            COMMAND
+                ${DTC_TOOL} -q -I dts -O dtb -o ${KernelDTBPath} ${KernelDTSIntermediate}
         )
     endif()
 
     set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
     check_outfile_stale(regen ${device_dest} deps)
-    if (regen)
+    if(regen)
         # Generate devices_gen header based on DTB
         message(STATUS "${device_dest} is out of date. Regenerating...")
         execute_process(
-            COMMAND ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}" --schema "${config_schema}"
+            COMMAND
+                ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings
+                "${compatibility_outfile}" --output "${device_dest}" --config "${config_file}"
+                --schema "${config_schema}"
             INPUT_FILE /dev/stdin
             OUTPUT_FILE /dev/stdout
             ERROR_FILE /dev/stderr
             RESULT_VARIABLE error
         )
-        if (error)
+        if(error)
             message(FATAL_ERROR "Failed to generate: ${device_dest}")
         endif()
     endif()
@@ -151,7 +162,11 @@ if (DEFINED KernelDTSList)
 
     # Mark all file dependencies as CMake rerun dependencies.
     set(cmake_deps ${deps} ${KernelDTSIntermediate} ${KernelDTSList} ${compatibility_outfile})
-    set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${cmake_deps})
+    set_property(
+        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS ${cmake_deps}
+    )
 
     include(src/drivers/config.cmake)
 endif()
@@ -207,7 +222,9 @@ include(src/arch/arm/armv/armv6/config.cmake)
 include(src/arch/arm/armv/armv7-a/config.cmake)
 include(src/arch/arm/armv/armv8-a/config.cmake)
 
-config_choice(KernelIPCBufferLocation KERNEL_IPC_BUFFER_LOCATION
+config_choice(
+    KernelIPCBufferLocation
+    KERNEL_IPC_BUFFER_LOCATION
     "Controls how the location of the IPC buffer is provided to the user for aarch32 \
     globals_frame-> Put the address of the IPC buffer in a dedicated frame that is \
         read only at user level. This works on all ARM platforms \
@@ -218,7 +235,8 @@ config_choice(KernelIPCBufferLocation KERNEL_IPC_BUFFER_LOCATION
     "globals_frame;KernelIPCBufferGlobalsFrame;IPC_BUF_GLOBALS_FRAME;KernelSel4ArchAarch32"
 )
 
-config_option(KernelDangerousCodeInjectionOnUndefInstr DANGEROUS_CODE_INJECTION_ON_UNDEF_INSTR
+config_option(
+    KernelDangerousCodeInjectionOnUndefInstr DANGEROUS_CODE_INJECTION_ON_UNDEF_INSTR
     "Replaces the undefined instruction handler with a call to a function pointer in r8. \
     This is an alternative mechanism to the code injection syscall. On ARMv6 the syscall \
     interferes with the caches and branch predictor in such a way that it is unsuitable \
@@ -227,22 +245,26 @@ config_option(KernelDangerousCodeInjectionOnUndefInstr DANGEROUS_CODE_INJECTION_
     DEPENDS "KernelArchArmV6;NOT KernelVerificationBuild"
 )
 
-config_option(KernelDebugDisableL2Cache DEBUG_DISABLE_L2_CACHE
+config_option(
+    KernelDebugDisableL2Cache DEBUG_DISABLE_L2_CACHE
     "Do not enable the L2 cache on startup for debugging purposes."
     DEFAULT OFF
     DEPENDS "KernelArchARM"
 )
-config_option(KernelDebugDisableL1ICache DEBUG_DISABLE_L1_ICACHE
+config_option(
+    KernelDebugDisableL1ICache DEBUG_DISABLE_L1_ICACHE
     "Do not enable the L1 instruction cache on startup for debugging purposes."
     DEFAULT OFF
     DEPENDS "KernelArchARM;KernelDebugDisableL2Cache"
 )
-config_option(KernelDebugDisableL1DCache DEBUG_DISABLE_L1_DCACHE
+config_option(
+    KernelDebugDisableL1DCache DEBUG_DISABLE_L1_DCACHE
     "Do not enable the L1 data cache on startup for debugging purposes."
     DEFAULT OFF
     DEPENDS "KernelArchARM;KernelDebugDisableL2Cache"
 )
-config_option(KernelDebugDisableBranchPrediction DEBUG_DISABLE_BRANCH_PREDICTION
+config_option(
+    KernelDebugDisableBranchPrediction DEBUG_DISABLE_BRANCH_PREDICTION
     "Do not enable branch prediction (also called program flow control) on startup. \
     This makes execution time more deterministic at the expense of dramatically decreasing \
     performance. Primary use is for debugging."
@@ -250,23 +272,27 @@ config_option(KernelDebugDisableBranchPrediction DEBUG_DISABLE_BRANCH_PREDICTION
     DEPENDS "KernelArchARM"
 )
 
-config_option(KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
+config_option(
+    KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
     DEFAULT OFF
     DEPENDS "KernelArmCortexA15 OR KernelArmCortexA57"
 )
 
-config_option(KernelArmHypEnableVCPUCP14SaveAndRestore ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
+config_option(
+    KernelArmHypEnableVCPUCP14SaveAndRestore ARM_HYP_ENABLE_VCPU_CP14_SAVE_AND_RESTORE
     "Trap, but don't save/restore VCPUs' CP14 accesses \
     This allows us to turn off the save and restore of VCPU threads' CP14 \
     context for performance (or other) reasons, we can just turn them off \
     and trap them instead, and have the VCPUs' accesses to CP14 \
     intercepted and delivered to the VM Monitor as fault messages"
     DEFAULT ON
-    DEPENDS "KernelSel4ArmHypAarch32;NOT KernelVerificationBuild" DEFAULT_DISABLED OFF
+    DEPENDS "KernelSel4ArmHypAarch32;NOT KernelVerificationBuild"
+    DEFAULT_DISABLED OFF
 )
 
-config_option(KernelArmErrata430973 ARM_ERRATA_430973
+config_option(
+    KernelArmErrata430973 ARM_ERRATA_430973
     "Enable workaround for 430973 Cortex-A8 (r1p0..r1p2) erratum \
     Enables a workaround for the 430973 Cortex-A8 (r1p0..r1p2) erratum. Error occurs \
     if code containing ARM/Thumb interworking branch is replaced by different code \
@@ -275,23 +301,24 @@ config_option(KernelArmErrata430973 ARM_ERRATA_430973
     DEPENDS "KernelArchARM;KernelArmCortexA8"
 )
 
-config_option(KernelArmErrata773022 ARM_ERRATA_773022
+config_option(
+    KernelArmErrata773022 ARM_ERRATA_773022
     "Enable workaround for 773022 Cortex-A15 (r0p0..r0p4) erratum \
     Enables a workaround for the 773022 Cortex-A15 (r0p0..r0p4) erratum. Error occurs \
     on rare sequences of instructions and results in the loop buffer delivering \
     incorrect instructions. The work around is to disable the loop buffer"
     DEFAULT ON
-    DEPENDS "KernelArchARM;KernelArmCortexA15" DEFAULT_DISABLED OFF
+    DEPENDS "KernelArchARM;KernelArmCortexA15"
+    DEFAULT_DISABLED OFF
 )
 
-config_option(KernelArmSMMU ARM_SMMU
-    "Enable SystemMMU for the Tegra TK1 SoC"
+config_option(
+    KernelArmSMMU ARM_SMMU "Enable SystemMMU for the Tegra TK1 SoC"
     DEFAULT OFF
     DEPENDS "KernelPlatformTK1"
 )
 
-config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER
-    "Enable Cortex-A9 prefetcher \
+config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER "Enable Cortex-A9 prefetcher \
     Cortex-A9 has an L1 and L2 prefetcher. By default \
     they are disabled. This config options allows \
     them to be turned on. Enabling the prefetchers \
@@ -299,13 +326,10 @@ config_option(KernelArmEnableA9Prefetcher ENABLE_A9_PREFETCHER
     documents indicate that as of r4p1 version of \
     Cortex-A9 the bits used to enable the prefetchers \
     no longer exist, it is not clear if this is just \
-    a document error or not."
-    DEFAULT OFF
-    DEPENDS "KernelArmCortexA9"
-)
+    a document error or not." DEFAULT OFF DEPENDS "KernelArmCortexA9")
 
-config_option(KernelArmExportPMUUser EXPORT_PMU_USER
-    "PL0 access to PMU. \
+config_option(
+    KernelArmExportPMUUser EXPORT_PMU_USER "PL0 access to PMU. \
     Grant user access to Performance Monitoring Unit. \
     WARNING: While useful for evaluating performance, \
     this option opens timing and covert channels."
@@ -313,8 +337,8 @@ config_option(KernelArmExportPMUUser EXPORT_PMU_USER
     DEPENDS "KernelArchArmV7a OR KernelArchArmV8a;NOT KernelArmCortexA8"
 )
 
-config_option(KernelArmExportPCNTUser EXPORT_PCNT_USER
-    "PL0 access to generic timer CNTPCT and CNTFRQ. \
+config_option(
+    KernelArmExportPCNTUser EXPORT_PCNT_USER "PL0 access to generic timer CNTPCT and CNTFRQ. \
     Grant user access to physical counter and counter \
     frequency registers of the generic timer. \
     WARNING: selecting this option opens a timing \
@@ -323,8 +347,8 @@ config_option(KernelArmExportPCNTUser EXPORT_PCNT_USER
     DEPENDS "KernelArmCortexA15"
 )
 
-config_option(KernelArmExportVCNTUser EXPORT_VCNT_USER
-    "PL0 access to generic timer CNTVCT and CNTFRQ. \
+config_option(
+    KernelArmExportVCNTUser EXPORT_VCNT_USER "PL0 access to generic timer CNTVCT and CNTFRQ. \
     Grant user access to virtual counter and counter \
     frequency registers of the generic timer. \
     WARNING: selecting this option opens a timing \
@@ -333,19 +357,16 @@ config_option(KernelArmExportVCNTUser EXPORT_VCNT_USER
     DEPENDS "KernelArmCortexA15 OR KernelArmCortexA53"
 )
 
-config_option(KernelARMSMMUInterruptEnable SMMU_INTERRUPT_ENABLE
-    "Enable SMMU interrupts. \
+config_option(KernelARMSMMUInterruptEnable SMMU_INTERRUPT_ENABLE "Enable SMMU interrupts. \
     SMMU interrupts currently only serve a debug purpose as \
     they are not forwarded to user level. Enabling this will \
     cause some fault types to print out a message in the kernel. \
     WARNING: Printing fault information is slow and rapid faults \
     can result in all time spent in the kernel printing fault \
-    messages"
-    DEFAULT "${KernelDebugBuild}"
-    DEPENDS "KernelArmSMMU" DEFAULT_DISABLED OFF
-)
+    messages" DEFAULT "${KernelDebugBuild}" DEPENDS "KernelArmSMMU" DEFAULT_DISABLED OFF)
 
-config_option(KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWITCH
+config_option(
+    KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWITCH
     "Enable hardware VFP and SIMD context switch \
         This enables the VFP and SIMD context switch on platforms with \
         hardware support, allowing the user to execute hardware VFP and SIMD \
@@ -356,14 +377,14 @@ config_option(KernelAArch32FPUEnableContextSwitch AARCH32_FPU_ENABLE_CONTEXT_SWI
     DEFAULT_DISABLED OFF
 )
 
-config_option(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40
-    "Specify the physical address size to 40 bits"
+config_option(
+    KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "Specify the physical address size to 40 bits"
     DEFAULT ${KernelArmPASizeBits40}
     DEPENDS "KernelArmHypervisorSupport AND KernelArchArmV8a"
 )
 
-config_option(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44
-    "Specify the physical address size to 44 bits"
+config_option(
+    KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "Specify the physical address size to 44 bits"
     DEFAULT ${KernelArmPASizeBits44}
     DEPENDS "KernelArmHypervisorSupport AND KernelArchArmV8a"
 )
@@ -379,7 +400,6 @@ if(KernelBenchmarksTrackUtilisation AND KernelArchARM)
 else()
     config_set(KernelArmEnablePMUOverflowInterrupt ARM_ENABLE_PMU_OVERFLOW_INTERRUPT OFF)
 endif()
-
 
 add_sources(
     DEP "KernelArchARM"
