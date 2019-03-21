@@ -277,42 +277,6 @@ static inline void writeVBAR(word_t reg)
     MSR(REG_VBAR_EL1, reg);
 }
 
-static inline word_t readTPIDR_EL0(void)
-{
-    word_t reg;
-    MRS(REG_TPIDR_EL0, reg);
-    return reg;
-}
-
-static inline void writeTPIDR_EL0(word_t reg)
-{
-    MSR(REG_TPIDR_EL0, reg);
-}
-
-static inline word_t readTPIDR_EL1(void)
-{
-    word_t reg;
-    MRS(REG_TPIDR_EL1, reg);
-    return reg;
-}
-
-static inline void writeTPIDR_EL1(word_t reg)
-{
-    MSR(REG_TPIDR_EL1, reg);
-}
-
-static inline word_t readTPIDRRO_EL0(void)
-{
-    word_t reg;
-    MRS(REG_TPIDRRO_EL0, reg);
-    return reg;
-}
-
-static inline void writeTPIDRRO_EL0(word_t reg)
-{
-    MSR(REG_TPIDRRO_EL0, reg);
-}
-
 static inline word_t readSP_EL1(void)
 {
     word_t reg;
@@ -419,8 +383,6 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return readISR();
     case seL4_VCPUReg_VBAR:
         return readVBAR();
-    case seL4_VCPUReg_TPIDR_EL0:
-        return readTPIDR_EL0();
     case seL4_VCPUReg_TPIDR_EL1:
         return readTPIDR_EL1();
     case seL4_VCPUReg_TPIDRRO_EL0:
@@ -478,8 +440,6 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         return;
     case seL4_VCPUReg_VBAR:
         return writeVBAR(reg);
-    case seL4_VCPUReg_TPIDR_EL0:
-        return writeTPIDR_EL0(reg);
     case seL4_VCPUReg_TPIDR_EL1:
         return writeTPIDR_EL1(reg);
     case seL4_VCPUReg_TPIDRRO_EL0:

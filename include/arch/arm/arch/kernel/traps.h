@@ -12,41 +12,17 @@
 #define __KERNEL_ARM_TRAPS_H
 
 #include <config.h>
+#include <machine.h>
 #include <util.h>
 
 static inline void arch_c_entry_hook(void)
 {
-#ifndef CONFIG_ARCH_ARM_V6
-    /* If using the TPIDRURW register for the IPC buffer then
-     * there's no pointer in saving whatever the user put into
-     * it since we will overwrite it anyway next time we
-     * load the thread */
-    if (!config_set(CONFIG_IPC_BUF_TPIDRURW)) {
-        setRegister(NODE_STATE(ksCurThread), TPIDRURW, readTPIDRURW());
-    }
-#endif
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    if (NODE_STATE(ksCurThread)->tcbArch.tcbVCPU) {
-        /* Although the TPIDRURO register is user read only it *is* writeable
-         * by a thread running in supervisor mode and so in that case we need to
-         * save it here as it actually could have changed */
-#ifndef CONFIG_ARCH_AARCH64
-        setRegister(NODE_STATE(ksCurThread), TLS_BASE, readTPIDRURO());
-#endif
-        /* in the case where we are using TPIDRURW as the IPC buffer we still
-         * want to save the value of TPIDRURW (even though we skipped it just
-         * above) as a supervisor mode thread will not understand or appreciate
-         * seL4s desire that it be used as the IPC buffer and so we should respect
-         * its changes */
-        if (config_set(CONFIG_IPC_BUF_TPIDRURW)) {
-            setRegister(NODE_STATE(ksCurThread), TPIDRURW, readTPIDRURW());
-        }
-    }
-#endif
+    arm_save_thread_id(NODE_STATE(ksCurThread));
 }
 
 static inline void arch_c_exit_hook(void)
 {
+    arm_load_thread_id(NODE_STATE(ksCurThread));
 }
 
 void VISIBLE NORETURN restore_user_context(void);

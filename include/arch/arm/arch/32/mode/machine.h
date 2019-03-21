@@ -184,20 +184,22 @@ static inline void writeTTBCR(word_t val)
 
 static inline void writeTPIDRURW(word_t reg)
 {
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
+    armKSGlobalsFrame[GLOBALS_TPIDRURW] = reg;
+#else
     asm volatile("mcr p15, 0, %0, c13, c0, 2" :: "r"(reg));
+#endif
 }
 
 static inline word_t readTPIDRURW(void)
 {
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
+    return armKSGlobalsFrame[GLOBALS_TPIDRURW];
+#else
     word_t reg;
     asm volatile("mrc p15, 0, %0, c13, c0, 2" : "=r"(reg));
     return reg;
-}
-
-
-static inline void writeTPIDRURO(word_t reg)
-{
-    asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
+#endif
 }
 
 static inline void writeTPIDRPRW(word_t reg)
@@ -212,13 +214,18 @@ static inline word_t readTPIDRPRW(void)
     return reg;
 }
 
-static inline word_t readTPIDRURO(void)
+static void arm_save_thread_id(tcb_t *thread)
 {
-    word_t reg;
-    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
-    return reg;
+#ifndef CONFIG_KERNEL_GLOBALS_FRAME
+    /* TPIDRURW is writeable from EL0 but not with globals frame. */
+    setRegister(thread, TPIDRURW, readTPIDRURW());
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 }
 
+static void arm_load_thread_id(tcb_t *thread)
+{
+    writeTPIDRURW(getRegister(thread, TPIDRURW));
+}
 
 static inline word_t readMPIDR(void)
 {
@@ -259,7 +266,7 @@ static inline void setKernelStack(word_t stack_address)
      * Load the (per-core) kernel stack pointer to TPIDRPRW for faster reloads on traps.
      */
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        setHTPIDR(stack_address);
+        writeHTPIDR(stack_address);
     } else {
         writeTPIDRPRW(stack_address);
     }
@@ -270,7 +277,7 @@ static inline word_t getKernelStack(void)
 {
 #ifndef CONFIG_ARCH_ARM_V6
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        return getHTPIDR();
+        return readHTPIDR();
     } else {
         return readTPIDRPRW();
     }

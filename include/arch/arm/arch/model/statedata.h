@@ -34,4 +34,8 @@ NODE_STATE_END(archNodeState);
 extern user_breakpoint_state_t armKSNullBreakpointState VISIBLE;
 #endif
 
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
+extern word_t armKSGlobalsFrame[BIT(ARMSmallPageBits) / sizeof(word_t)];
+#endif
+
 #endif /* __ARCH_MODEL_STATEDATA_H */

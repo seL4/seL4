@@ -40,14 +40,9 @@ switchToThread_fp(tcb_t *thread, vspace_root_t *vroot, pde_t stored_hw_asid)
     asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
 
     armv_contextSwitch(vroot, asid);
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-    vcpu_switch(thread->tcbArch.tcbVCPU);
-    if (thread->tcbArch.tcbVCPU == NULL) {
-        writeTPIDRURO(thread->tcbIPCBuffer);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(thread->tcbArch.tcbVCPU);
     }
-#else
-    writeTPIDRURO(thread->tcbIPCBuffer);
-#endif
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
@@ -114,8 +109,6 @@ static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t
 #ifdef CONFIG_HAVE_FPU
     lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
-
-    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
 
     register word_t badge_reg asm("x0") = badge;
     register word_t msgInfo_reg asm("x1") = msgInfo;

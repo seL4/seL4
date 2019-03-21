@@ -42,9 +42,16 @@
 #define PT_SP               (13  * 4)
 #define PT_NextIP           (15 * 4)
 #define PT_ELR_hyp          (15 * 4)
-#define PT_TPIDRURW         (18 * 4)
 #define PT_FaultIP          (17 * 4)
+#define PT_TPIDRURW         (18 * 4)
 #define PT_R8               (8  * 4)
+
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
+/*
+ * Virtualise the TPIDRURW register in the globals frame.
+ */
+#define GLOBALS_TPIDRURW 0
+#endif
 
 #ifndef __ASSEMBLER__ /* C only definitions */
 
@@ -95,15 +102,11 @@ enum _register {
     CPSR = 16,
 
     FaultIP  = 17,
-    TLS_BASE = 18,
-#ifndef CONFIG_ARCH_ARM_V6
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
-    TPIDRURW = 19,
-    n_contextRegisters = 20,
-#else
+    TPIDRURW = 18,
+    TLS_BASE = TPIDRURW,
     n_contextRegisters = 19,
-#endif
 };
 
 #define NEXT_PC_REG NextIP
@@ -121,7 +124,7 @@ typedef word_t register_t;
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 10,
-    n_gpRegisters = 7,
+    n_gpRegisters = 8,
     n_exceptionMessage = 3,
     n_syscallMessage = 12,
 };

@@ -32,8 +32,6 @@ void VISIBLE NORETURN restore_user_context(void)
     lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
 
-    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
-
     asm volatile(
         "mov     sp, %0                     \n"
 

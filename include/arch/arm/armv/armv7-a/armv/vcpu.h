@@ -333,6 +333,8 @@ static word_t vcpu_hw_read_reg(word_t reg_index)
         return getCIDR();
     case seL4_VCPUReg_TPIDRPRW:
         return readTPIDRPRW();
+    case seL4_VCPUReg_TPIDRURO:
+        return readTPIDRURO();
     case seL4_VCPUReg_FPEXC:
         return reg;
     case seL4_VCPUReg_CNTV_TVAL:
@@ -434,6 +436,9 @@ static void vcpu_hw_write_reg(word_t reg_index, word_t reg)
         break;
     case seL4_VCPUReg_TPIDRPRW:
         writeTPIDRPRW(reg);
+        break;
+    case seL4_VCPUReg_TPIDRURO:
+        writeTPIDRURO(reg);
         break;
     case seL4_VCPUReg_FPEXC:
         break;

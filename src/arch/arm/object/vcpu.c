@@ -96,9 +96,11 @@ static inline void access_fpexc(vcpu_t *vcpu, bool_t write)
 static void vcpu_enable(vcpu_t *vcpu)
 {
 #ifdef CONFIG_ARCH_AARCH64
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_TPIDRRO_EL0);
     armv_vcpu_enable(vcpu);
 #else
     vcpu_restore_reg(vcpu, seL4_VCPUReg_SCTLR);
+    vcpu_restore_reg(vcpu, seL4_VCPUReg_TPIDRURO);
     setHCR(HCR_VCPU);
     isb();
 
@@ -175,11 +177,17 @@ static void vcpu_enable(vcpu_t *vcpu)
 static void vcpu_disable(vcpu_t *vcpu)
 {
 #ifdef CONFIG_ARCH_AARCH64
+    if (likely(vcpu)) {
+        vcpu_save_reg(vcpu, seL4_VCPUReg_TPIDRRO_EL0);
+        vcpu_hw_write_reg(seL4_VCPUReg_TPIDRRO_EL0, 0);
+    }
     armv_vcpu_disable(vcpu);
 #else
     uint32_t hcr;
     dsb();
     if (likely(vcpu)) {
+        vcpu_save_reg(vcpu, seL4_VCPUReg_TPIDRURO);
+        vcpu_hw_write_reg(seL4_VCPUReg_TPIDRURO, 0);
         hcr = get_gic_vcpu_ctrl_hcr();
         vcpu->vgic.hcr = hcr;
         vcpu_save_reg(vcpu, seL4_VCPUReg_SCTLR);

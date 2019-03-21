@@ -78,8 +78,8 @@
 #define PT_SP_EL0                   (31 * 8)
 #define PT_ELR_EL1                  (32 * 8)
 #define PT_SPSR_EL1                 (33 * 8)
-#define PT_TPIDRURW                 (35 * 8)
 #define PT_FaultIP                  (34 * 8)
+#define PT_TPIDR_EL0                (35 * 8)
 
 #ifndef __ASSEMBLER__ /* C only definitions */
 
@@ -142,8 +142,8 @@ enum _register {
     FaultIP                     = 34,   /* 0x110 */
     /* user readable/writable thread ID register.
      * name comes from the ARM manual */
-    TPIDRURW                    = 35,
-    TLS_BASE                    = 35,
+    TPIDR_EL0                   = 35,
+    TLS_BASE                    = TPIDR_EL0,
     n_contextRegisters          = 36,
 };
 
@@ -158,7 +158,7 @@ typedef word_t register_t;
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 17,
-    n_gpRegisters = 17,
+    n_gpRegisters = 18,
     n_exceptionMessage = 3,
     n_syscallMessage = 12,
 };

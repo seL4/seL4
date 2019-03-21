@@ -26,6 +26,8 @@ typedef struct seL4_UserContext_ {
     seL4_Word pc, sp, cpsr, r0, r1, r8, r9, r10, r11, r12;
     /* other integer registers */
     seL4_Word r2, r3, r4, r5, r6, r7, r14;
+    /* Thread ID registers */
+    seL4_Word tpidrurw;
 } seL4_UserContext;
 
 #endif /* __LIBSEL4_SEL4_ARCH_TYPES_H */

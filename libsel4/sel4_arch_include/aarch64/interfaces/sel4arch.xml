@@ -46,6 +46,7 @@
         <member name="x26"/>
         <member name="x27"/>
         <member name="x28"/>
+        <member name="tpidr_el0"/>
     </struct>
     <interface name="seL4_ARM_PageGlobalDirectory" manual_name="Page Global Directory">
         <method id="ARMPageGlobalDirectoryClean_Data" name="Clean_Data" manual_label="pgd_clean"

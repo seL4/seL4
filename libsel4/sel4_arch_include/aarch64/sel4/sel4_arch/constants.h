@@ -97,7 +97,6 @@ enum {
     seL4_VCPUReg_VBAR,
 
     /* thread pointer/ID registers EL0/EL1 */
-    seL4_VCPUReg_TPIDR_EL0,
     seL4_VCPUReg_TPIDR_EL1,
     seL4_VCPUReg_TPIDRRO_EL0,
 

@@ -38,11 +38,6 @@ void VISIBLE NORETURN restore_user_context(void)
     lazyFPURestore(NODE_STATE(ksCurThread));
 #endif /* CONFIG_HAVE_FPU */
 
-#ifndef CONFIG_ARCH_ARM_V6
-    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
-    writeTPIDRURO(getRegister(NODE_STATE(ksCurThread), TLS_BASE));
-#endif
-
     if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
         asm volatile(
             /* Set stack pointer to point at the r0 of the user context. */

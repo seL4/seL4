@@ -173,16 +173,28 @@ static inline void setSCTLR(word_t sctlr)
     asm volatile("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
 }
 
-static inline void setHTPIDR(word_t htpidr)
+static inline void writeTPIDRURO(word_t reg)
 {
-    asm volatile("mcr p15, 4, %0, c13, c0, 2" :: "r"(htpidr));
+    asm volatile("mcr p15, 0, %0, c13, c0, 3" :: "r"(reg));
 }
 
-static inline word_t getHTPIDR(void)
+static inline word_t readTPIDRURO(void)
 {
-    word_t HTPIDR;
-    asm volatile("mrc p15, 4, %0, c13, c0, 2" : "=r"(HTPIDR));
-    return HTPIDR;
+    word_t reg;
+    asm volatile("mrc p15, 0, %0, c13, c0, 3" : "=r"(reg));
+    return reg;
+}
+
+static inline void writeHTPIDR(word_t reg)
+{
+    asm volatile("mcr p15, 4, %0, c13, c0, 2" :: "r"(reg));
+}
+
+static inline word_t readHTPIDR(void)
+{
+    word_t reg;
+    asm volatile("mrc p15, 4, %0, c13, c0, 2" : "=r"(reg));
+    return reg;
 }
 
 #else
@@ -192,8 +204,8 @@ static inline void setCurrentPDPL2(paddr_t pa) {}
 static inline void invalidateHypTLB(void) {}
 static inline void writeContextIDPL2(word_t pd_val) {}
 static inline void writeContextIDAndPD(word_t id, word_t pd_val) {}
-static inline void setHTPIDR(word_t htpidr) {}
-static inline word_t getHTPIDR(void)
+static inline void writeHTPIDR(word_t htpidr) {}
+static inline word_t readHTPIDR(void)
 {
     return 0;
 }

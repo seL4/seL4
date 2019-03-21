@@ -59,10 +59,6 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pde_t *cap_pd, 
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
 
-#if defined(CONFIG_KERNEL_GLOBALS_FAME)
-    *armKSGlobalsFrame = thread->tcbIPCBuffer;
-    armKSGlobalsFrame[1] = getRegister(thread, TLS_BASE);
-#endif
     NODE_STATE(ksCurThread) = thread;
     clearExMonitor_fp();
 }
@@ -125,11 +121,6 @@ static inline void NORETURN fastpath_restore(word_t badge, word_t msgInfo, tcb_t
 
 #ifdef CONFIG_ARM_CP14_SAVE_AND_RESTORE_NATIVE_THREADS
     restore_user_debug_context(NODE_STATE(ksCurThread));
-#endif
-
-#ifndef CONFIG_ARCH_ARM_V6
-    writeTPIDRURW(getRegister(NODE_STATE(ksCurThread), TPIDRURW));
-    writeTPIDRURO(getRegister(NODE_STATE(ksCurThread), TLS_BASE));
 #endif
 
 #ifdef CONFIG_HAVE_FPU

@@ -68,37 +68,38 @@ static inline void writeAuxiliaryControlRegister(word_t acr)
     MSR("actlr_el1", acr);
 }
 
-static inline void writeTPIDRPRW(word_t reg)
-{
-    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
-        MSR("tpidr_el2", reg);
-    } else {
-        MSR("tpidr_el1", reg);
-    }
-}
-
-static inline void writeTPIDRURW(word_t reg)
+static inline void writeTPIDR_EL0(word_t reg)
 {
     MSR("tpidr_el0", reg);
 }
 
-static inline word_t readTPIDRURO(void)
-{
-    word_t reg;
-    MRS("tpidrro_el0", reg);
-    return reg;
-}
-
-static inline void writeTPIDRURO(word_t reg)
-{
-    MSR("tpidrro_el0", reg);
-}
-
-static inline word_t readTPIDRURW(void)
+static inline word_t readTPIDR_EL0(void)
 {
     word_t reg;
     MRS("tpidr_el0", reg);
     return reg;
+}
+
+static inline void writeTPIDR_EL1(word_t reg)
+{
+    MSR("tpidr_el1", reg);
+}
+
+static inline word_t readTPIDR_EL1(void)
+{
+    word_t reg;
+    MRS("tpidr_el1", reg);
+    return reg;
+}
+
+static void arm_save_thread_id(tcb_t *thread)
+{
+    setRegister(thread, TPIDR_EL0, readTPIDR_EL0());
+}
+
+static void arm_load_thread_id(tcb_t *thread)
+{
+    writeTPIDR_EL0(getRegister(thread, TPIDR_EL0));
 }
 
 #define TCR_EL2_RES1 (BIT(23) | BIT(31))
@@ -158,7 +159,11 @@ static inline word_t getVTTBR(void)
 
 static inline void setKernelStack(word_t stack_address)
 {
-    writeTPIDRPRW(stack_address);
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        writeTPIDR_EL2(stack_address);
+    } else {
+        writeTPIDR_EL1(stack_address);
+    }
 }
 
 static inline void setVtable(pptr_t addr)
