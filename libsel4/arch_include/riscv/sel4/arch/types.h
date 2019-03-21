@@ -42,20 +42,9 @@ typedef struct seL4_UserContext_ {
     seL4_Word ra;
     seL4_Word sp;
     seL4_Word gp;
-    seL4_Word tp;
-    seL4_Word t0;
-    seL4_Word t1;
-    seL4_Word t2;
+
     seL4_Word s0;
     seL4_Word s1;
-    seL4_Word a0;
-    seL4_Word a1;
-    seL4_Word a2;
-    seL4_Word a3;
-    seL4_Word a4;
-    seL4_Word a5;
-    seL4_Word a6;
-    seL4_Word a7;
     seL4_Word s2;
     seL4_Word s3;
     seL4_Word s4;
@@ -66,10 +55,25 @@ typedef struct seL4_UserContext_ {
     seL4_Word s9;
     seL4_Word s10;
     seL4_Word s11;
+
+    seL4_Word a0;
+    seL4_Word a1;
+    seL4_Word a2;
+    seL4_Word a3;
+    seL4_Word a4;
+    seL4_Word a5;
+    seL4_Word a6;
+    seL4_Word a7;
+
+    seL4_Word t0;
+    seL4_Word t1;
+    seL4_Word t2;
     seL4_Word t3;
     seL4_Word t4;
     seL4_Word t5;
     seL4_Word t6;
+
+    seL4_Word tp;
 } seL4_UserContext;
 
 typedef enum {

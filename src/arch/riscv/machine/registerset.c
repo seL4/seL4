@@ -16,17 +16,32 @@
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  */
 
+#include <assert.h>
 #include <arch/machine/registerset.h>
 
 const register_t msgRegisters[] = {
     a2, a3, a4, a5
 };
+compile_assert(
+    consistent_message_registers,
+    sizeof(msgRegisters) / sizeof(msgRegisters[0]) == n_msgRegisters
+);
 
 const register_t frameRegisters[] = {
-    FaultIP, ra, sp, gp, tp, t0, t1, t2, s0, s1, a0, a1, a2, a3, a4, a5, a6, a7,
-    s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, t3, t4, t5
+    FaultIP, ra, sp, gp,
+    s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11,
 };
+compile_assert(
+    consistent_frame_registers,
+    sizeof(frameRegisters) / sizeof(frameRegisters[0]) == n_frameRegisters
+);
 
 const register_t gpRegisters[] = {
-    t6
+    a0, a1, a2, a3, a4, a5, a6, a7,
+    t0, t1, t2, t3, t4, t5, t6,
+    tp,
 };
+compile_assert(
+    consistent_gp_registers,
+    sizeof(gpRegisters) / sizeof(gpRegisters[0]) == n_gpRegisters
+);

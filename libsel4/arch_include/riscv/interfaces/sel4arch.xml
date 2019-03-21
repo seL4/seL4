@@ -22,20 +22,8 @@
             <member name="ra"/>
             <member name="sp"/>
             <member name="gp"/>
-            <member name="tp"/>
-            <member name="t0"/>
-            <member name="t1"/>
-            <member name="t2"/>
             <member name="s0"/>
             <member name="s1"/>
-            <member name="a0"/>
-            <member name="a1"/>
-            <member name="a2"/>
-            <member name="a3"/>
-            <member name="a4"/>
-            <member name="a5"/>
-            <member name="a6"/>
-            <member name="a7"/>
             <member name="s2"/>
             <member name="s3"/>
             <member name="s4"/>
@@ -46,10 +34,22 @@
             <member name="s9"/>
             <member name="s10"/>
             <member name="s11"/>
+            <member name="a0"/>
+            <member name="a1"/>
+            <member name="a2"/>
+            <member name="a3"/>
+            <member name="a4"/>
+            <member name="a5"/>
+            <member name="a6"/>
+            <member name="a7"/>
+            <member name="t0"/>
+            <member name="t1"/>
+            <member name="t2"/>
             <member name="t3"/>
             <member name="t4"/>
             <member name="t5"/>
             <member name="t6"/>
+            <member name="tp"/>
     </struct>
     <interface name="seL4_RISCV_PageTable" manual_name="Page Table" cap_description="Capability to the page table to invoke.">
         <method id="RISCVPageTableMap" name="Map" manual_label="pagetable_map">
