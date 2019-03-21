@@ -21,41 +21,45 @@
  * you change anything in this enum!
  */
 enum _register {
+    /*
+     * To ensure that the stack use here correctly begins on a
+     * double-word boundary, Error + 1 must be an even number of words
+     * from the start.
+     */
+
     /* general purpose registers */
 
-    /* 0x00 */  EAX             = 0,
-    /* 0x04 */  EBX             = 1,
-    capRegister     = 1,
-    badgeRegister   = 1,
-    /* 0x08 */  ECX             = 2,
-    /* 0x0C */  EDX             = 3,
-    /* 0x10 */  ESI             = 4,
-    msgInfoRegister = 4,
-    /* 0x14 */  EDI             = 5,
-    /* 0x18 */  EBP             = 6,
-
-    /* segment registers */
-
-    /* 0x1C */  DS = 7,
-    /* 0x20 */  ES = 8,
-    /* 0x24 */  FS = 9,
-    /* 0x28 */  GS = 10,
+    /* 0x04 */  EAX             = 1,
+    /* 0x08 */  EBX             = 2,
+    capRegister     = EBX,
+    badgeRegister   = EBX,
+    /* 0x0C */  ECX             = 3,
+    /* 0x10 */  EDX             = 4,
+    /* 0x14 */  ESI             = 5,
+    msgInfoRegister = ESI,
+    /* 0x18 */  EDI             = 6,
+    /* 0x1C */  EBP             = 7,
 
     /* virtual registers (not actually present in hardware) */
 
-    /* 0x2C */  FaultIP  = 11,
-    /* 0x30 */  TLS_BASE = 12,
+    /* 0x20 */  FaultIP  = 8,
 
     /* values pushed by the CPU directly */
 
-    /* 0x34 */  Error    = 13,
-    /* 0x38 */  NextIP   = 14,
-    /* 0x3C */  CS       = 15,
-    /* 0x40 */  FLAGS   = 16,
-    /* 0x44 */  ESP      = 17,
-    /* 0x48 */  SS       = 18,
+    /* 0x24 */  Error    = 9,
+    /* 0x28 */  NextIP   = 10,
+    /* 0x2C */  CS       = 11,
+    /* 0x30 */  FLAGS    = 12,
+    /* 0x34 */  ESP      = 13,
+    /* 0x38 */  SS       = 14,
 
-    /* 0x4C */  n_contextRegisters = 19
+    /* 0x3C */  n_immContextRegisters = 15,
+
+    /* 0x3C */  FS_BASE = 15,
+    /* 0x40 */  GS_BASE = 16,
+    TLS_BASE = GS_BASE,
+
+    /* 0x44 */  n_contextRegisters = 17
 };
 
 typedef word_t register_t;
@@ -63,7 +67,7 @@ typedef word_t register_t;
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 10,
-    n_gpRegisters = 3,
+    n_gpRegisters = 2,
     n_exceptionMessage = 3,
     n_syscallMessage = 10
 };

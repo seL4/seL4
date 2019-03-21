@@ -150,37 +150,35 @@ BOOT_CODE void init_gdt(gdt_entry_t *gdt, tss_t *tss)
                        sizeof(tss_io_t) - 1         /* limit_low 16 bits    */
                    );
 
-    /* pre-init the userland data segment used for TLS */
-    gdt[GDT_TLS] = gdt_entry_gdt_data_new(
-                       0,      /* Base high 8 bits             */
-                       1,      /* Granularity                  */
-                       1,      /* Operation size               */
-                       0,      /* Available                    */
-                       0xf,    /* Segment limit high 4 bits    */
-                       1,      /* Present                      */
-                       3,      /* Descriptor privilege level   */
-                       1,      /* writable                     */
-                       1,      /* accessed                     */
-                       0,      /* Base middle 8 bits           */
-                       0,      /* Base low 16 bits             */
-                       0xffff  /* Segment limit low 16 bits    */
-                   );
+    gdt[GDT_FS] = gdt_entry_gdt_data_new(
+                      0,      /* Base high 8 bits             */
+                      1,      /* Granularity                  */
+                      1,      /* Operation size               */
+                      0,      /* Available                    */
+                      0xf,    /* Segment limit high 4 bits    */
+                      1,      /* Present                      */
+                      3,      /* Descriptor privilege level   */
+                      1,      /* writable                     */
+                      1,      /* accessed                     */
+                      0,      /* Base middle 8 bits           */
+                      0,      /* Base low 16 bits             */
+                      0xffff  /* Segment limit low 16 bits    */
+                  );
 
-    /* pre-init the userland data segment used for the IPC buffer */
-    gdt[GDT_IPCBUF] = gdt_entry_gdt_data_new(
-                          0,      /* Base high 8 bits             */
-                          1,      /* Granularity                  */
-                          1,      /* Operation size               */
-                          0,      /* Available                    */
-                          0xf,    /* Segment limit high 4 bits    */
-                          1,      /* Present                      */
-                          3,      /* Descriptor privilege level   */
-                          1,      /* writable                     */
-                          1,      /* accessed                     */
-                          0,      /* Base middle 8 bits           */
-                          0,      /* Base low 16 bits             */
-                          0xffff  /* Segment limit low 16 bits    */
-                      );
+    gdt[GDT_GS] = gdt_entry_gdt_data_new(
+                      0,      /* Base high 8 bits             */
+                      1,      /* Granularity                  */
+                      1,      /* Operation size               */
+                      0,      /* Available                    */
+                      0xf,    /* Segment limit high 4 bits    */
+                      1,      /* Present                      */
+                      3,      /* Descriptor privilege level   */
+                      1,      /* writable                     */
+                      1,      /* accessed                     */
+                      0,      /* Base middle 8 bits           */
+                      0,      /* Base low 16 bits             */
+                      0xffff  /* Segment limit low 16 bits    */
+                  );
 }
 
 /* initialise the Interrupt Descriptor Table (IDT) */
@@ -393,11 +391,6 @@ BOOT_CODE void init_dtrs(void)
 
     /* load TSS selector into Task Register (TR) */
     ia32_install_tss(SEL_TSS);
-
-    if (config_set(CONFIG_FSGSBASE_MSR)) {
-        ia32_load_gs(SEL_TLS);
-        ia32_load_fs(SEL_IPCBUF);
-    }
 }
 
 static BOOT_CODE cap_t create_it_page_table_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)

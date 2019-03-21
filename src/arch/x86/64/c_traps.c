@@ -169,22 +169,11 @@ void VISIBLE NORETURN restore_user_context(void)
 #endif
 
 #ifdef ENABLE_SMP_SUPPORT
-    cpu_id_t cpu = getCurrentCPUIndex();
 #ifdef CONFIG_KERNEL_SKIM_WINDOW
     word_t user_cr3 = MODE_NODE_STATE(x64KSCurrentUserCR3);
 #endif /* CONFIG_KERNEL_SKIM_WINDOW */
     swapgs();
 #endif /* ENABLE_SMP_SUPPORT */
-
-    /* Now that we have swapped back to the user gs we can safely
-     * update the GS base. We must *not* use any kernel functions
-     * that rely on having a kernel GS though. Most notably uses
-     * of NODE_STATE etc cannot be used beyond this point */
-    word_t base = getRegister(cur_thread, TLS_BASE);
-    x86_write_fs_base(base, SMP_TERNARY(cpu, 0));
-
-    base = cur_thread->tcbIPCBuffer;
-    x86_write_gs_base(base, SMP_TERNARY(cpu, 0));
 
     if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
         x86_disable_ibrs();
@@ -244,8 +233,8 @@ void VISIBLE NORETURN restore_user_context(void)
                 "addq $8, %%rsp\n"
                 // Restore RSP
                 "popq %%rcx\n"
-                // Skip TLS_BASE, FaultIP
-                "addq $16, %%rsp\n"
+                // Skip FaultIP
+                "addq $8, %%rsp\n"
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
                 "popq %%rsp\n"
                 "movq %%r11, %%cr3\n"
@@ -349,8 +338,8 @@ void VISIBLE NORETURN restore_user_context(void)
             "popq %%r8\n"
             "popq %%r9\n"
             "popq %%r15\n"
-            /* skip RFLAGS, Error NextIP RSP, TLS_BASE, FaultIP */
-            "addq $48, %%rsp\n"
+            /* skip RFLAGS, Error, NextIP, RSP, and FaultIP */
+            "addq $40, %%rsp\n"
             "popq %%r11\n"
 
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)

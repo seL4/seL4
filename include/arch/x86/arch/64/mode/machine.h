@@ -17,6 +17,7 @@
 #include <arch/model/statedata.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/smp.h>
+#include <arch/machine.h>
 #include <plat_mode/machine/hardware.h>
 
 static inline cr3_t makeCR3(paddr_t addr, word_t pcid)
@@ -256,16 +257,62 @@ static inline void x86_write_fs_base_impl(word_t base)
     asm volatile("wrfsbase %0"::"r"(base));
 }
 
-static inline void x86_write_gs_base_impl(word_t base)
-{
-    asm volatile("wrgsbase %0"::"r"(base));
-}
-
 static inline word_t x86_read_fs_base_impl(void)
 {
     word_t base = 0;
     asm volatile("rdfsbase %0":"=r"(base));
     return base;
+}
+
+static inline void x86_save_fsgs_base(tcb_t *thread, cpu_id_t cpu)
+{
+    /*
+     * Store the FS and GS base registers.
+     *
+     * These should only be accessed inside the kernel, between the
+     * entry and exit calls to swapgs if used.
+     */
+#ifdef CONFIG_VTX
+    if (thread_state_ptr_get_tsType(&thread->tcbState) == ThreadState_RunningVM) {
+        /*
+         * Never save the FS/GS of a thread running in a VM as it will
+         * be garbage values.
+         */
+        return;
+    }
+#endif
+    word_t cur_fs_base = x86_read_fs_base(cpu);
+    setRegister(thread, FS_BASE, cur_fs_base);
+    word_t cur_gs_base = x86_read_gs_base(cpu);
+    setRegister(thread, GS_BASE, cur_gs_base);
+}
+
+#endif
+
+#if defined(ENABLE_SMP_SUPPORT)
+
+/*
+ * Under x86_64 with SMP support, the GS.Base register and the
+ * IA32_KERNEL_GS_BASE MSR are swapped so the actual user-level copy of
+ * GS is stored in IA32_KERNEL_GS_BASE between the call to swapgs in the
+ * kernel entry and the call to swapgs in the user restore.
+ */
+
+static inline void x86_write_gs_base_impl(word_t base)
+{
+    x86_wrmsr(IA32_KERNEL_GS_BASE_MSR, base);
+}
+
+static inline word_t x86_read_gs_base_impl(void)
+{
+    return x86_rdmsr(IA32_KERNEL_GS_BASE_MSR);
+}
+
+#elif defined(CONFIG_FSGSBASE_INST)
+
+static inline void x86_write_gs_base_impl(word_t base)
+{
+    asm volatile("wrgsbase %0"::"r"(base));
 }
 
 static inline word_t x86_read_gs_base_impl(void)
@@ -275,6 +322,23 @@ static inline word_t x86_read_gs_base_impl(void)
     return base;
 }
 
+#elif defined(CONFIG_FSGSBASE_MSR)
+
+static inline void x86_write_gs_base_impl(word_t base)
+{
+    x86_wrmsr(IA32_GS_BASE_MSR, base);
+}
+
+static inline word_t x86_read_gs_base_impl(void)
+{
+    return x86_rdmsr(IA32_GS_BASE_MSR);
+}
+
 #endif
+
+static inline void x86_set_tls_segment_base(word_t tls_base)
+{
+    x86_write_fs_base(tls_base, SMP_TERNARY(getCurrentCPUIndex(), 0));
+}
 
 #endif /* __ARCH_MODE_MACHINE_H_ */

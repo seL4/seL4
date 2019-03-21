@@ -30,7 +30,8 @@
         <member name="r13"/>
         <member name="r14"/>
         <member name="r15"/>
-        <member name="tls_base"/>
+        <member name="fs_base"/>
+        <member name="gs_base"/>
     </struct>
 
     <interface name="seL4_X86_PDPT" manual_name="PDPT">

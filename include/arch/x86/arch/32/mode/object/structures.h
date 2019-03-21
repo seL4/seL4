@@ -20,8 +20,8 @@
 #define GDT_CS_3    3
 #define GDT_DS_3    4
 #define GDT_TSS     5
-#define GDT_TLS     6
-#define GDT_IPCBUF  7
+#define GDT_FS      6
+#define GDT_GS      7
 #define GDT_ENTRIES 8
 
 #define PDE_SIZE_BITS seL4_PageDirEntryBits

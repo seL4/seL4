@@ -88,9 +88,10 @@ unverified_compile_assert(fpu_state_alignment_valid,
 
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_ARCH_IA32)
 /* Ensure kernelSP is the first member following the registers. */
-unverified_compile_assert(kernelSP_alignment_valid,
-                          OFFSETOF(user_context_t, kernelSP) -
-                          OFFSETOF(user_context_t, registers) == 0x4C)
+unverified_compile_assert(
+    kernelSP_alignment_valid,
+    OFFSETOF(user_context_t, kernelSP) - OFFSETOF(user_context_t, registers) == sizeof(word_t) * n_contextRegisters
+)
 #endif
 
 #endif

@@ -64,18 +64,20 @@
  */
 #define MAYBE_SWAPGS swapgs
 #define LOAD_USER_CONTEXT movq %gs:16, %rsp
+/* The user context under SMP is always set to Error + 1 for the current
+ * thread */
 #define LOAD_USER_CONTEXT_OFFSET(x) LOAD_USER_CONTEXT; addq $((x) * 8), %rsp
 #define LOAD_KERNEL_STACK movq %gs:0, %rsp
 #define LOAD_IRQ_STACK(x) movq %gs:8, %x
 #else
-/* The location in the user context we want is in ksCurThread after the fpu
- * state (CONFIG_XSAVE_SIZE) and then the end of the user context is after
- * 23 words (23 == n_contextRegisters). By default (in the case of a fast
- * syscall trap) we skip 7 registers (SS, CS, RCX, R11, FaultIP, TLS_BASE
- * and RSP) and are ready to push Error.
+/* The location in the user context we want is in ksCurThread after the
+ * fpu state (CONFIG_XSAVE_SIZE) and then the end of the user context is
+ * after 22 words (22 == n_immContextRegisters). By default (in the case
+ * of a fast syscall trap) we skip 6 registers (SS, CS, RCX, R11,
+ * FaultIP, and RSP) and are ready to push Error.
  */
 #define MAYBE_SWAPGS
-#define LOAD_USER_CONTEXT_OFFSET(x) movq (ksCurThread), %rsp; addq $(CONFIG_XSAVE_SIZE + 23*8 - 7*8 + (x)*8), %rsp
+#define LOAD_USER_CONTEXT_OFFSET(x) movq (ksCurThread), %rsp; addq $(CONFIG_XSAVE_SIZE + 22*8 - 6*8 + (x)*8), %rsp
 #define LOAD_USER_CONTEXT LOAD_USER_CONTEXT_OFFSET(0)
 #define LOAD_KERNEL_STACK leaq    kernel_stack_alloc + (1 << CONFIG_KERNEL_STACK_BITS), %rsp
 #define LOAD_IRQ_STACK(x)  leaq    x64KSIRQStack, %x
@@ -106,8 +108,8 @@
    %rcx must be pushed beforehand */
 #define INT_SAVE_STATE                              \
     push    %r11;                                   \
-    /* skip FaultIP TLS_BASE, RSP, NextIP, Error, RFLAGS */ \
-    subq    $(6 * 8), %rsp;                         \
+    /* skip FaultIP, RSP, Error, NextIP, RFLAGS */  \
+    subq    $(5 * 8), %rsp;                         \
     push    %r15;                                   \
     push    %r9;                                    \
     push    %r8;                                    \
@@ -161,9 +163,9 @@ int_##number:                                       \
     jz      1f;                                     \
 2:                                                  \
     LOAD_KERNEL_AS(rsp)                             \
-    /* we need to not skip RSP, TLS_BASE, FaultIP, R11 and RCX for now */ \
+    /* we need to not skip RSP, FaultIP, R11 and RCX for now */ \
     MAYBE_SWAPGS;                                   \
-    LOAD_USER_CONTEXT_OFFSET(5);                    \
+    LOAD_USER_CONTEXT_OFFSET(4);                    \
     push    %rcx;                                   \
     movq    $0x##number, %rcx;                      \
     jmp     handle_interrupt;                       \
@@ -488,8 +490,8 @@ interrupt_return:
     popq %r8
     popq %r9
     popq %r15
-    /* skip RFLAGS, Error NextIP RSP, TLS_BASE, FaultIP */
-    addq $48, %rsp
+    /* skip RFLAGS, Error, NextIP, RSP, FaultIP */
+    addq $(5 * 8), %rsp
     popq %r11
     popq %rcx
     LOAD_IRQ_STACK(rsp)
@@ -550,8 +552,8 @@ BEGIN_FUNC(kernel_exception)
     popq %r8
     popq %r9
     popq %r15
-    /* skip RFLAGS, Error NextIP RSP, TLS_BASE, FaultIP */
-    addq $48, %rsp
+    /* skip RFLAGS, NextIP, Error, RSP, FaultIP */
+    addq $(5 * 8), %rsp
     popq %r11
     popq %rcx
     LOAD_IRQ_STACK(rsp)
@@ -631,10 +633,9 @@ BEGIN_FUNC(handle_syscall)
     /* We need to save r11, rdx TLS_BASE and RSP */
     LOAD_KERNEL_AS(rsp)
     MAYBE_SWAPGS
-    LOAD_USER_CONTEXT_OFFSET(4)
+    LOAD_USER_CONTEXT_OFFSET(3)
     push    %r11
     push    %rdx            # save FaultIP
-    subq    $8, %rsp        # skip TLS_BASE
     push    %rcx            # save RSP
     push    $-1             # set Error -1 to mean entry via syscall
     push    %rdx            # save FaultIP (which will need to be updated later)

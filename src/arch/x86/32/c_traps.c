@@ -145,12 +145,6 @@ void NORETURN VISIBLE restore_user_context(void)
     restore_user_debug_context(NODE_STATE(ksCurThread));
 #endif
 
-    word_t base = getRegister(NODE_STATE(ksCurThread), TLS_BASE);
-    x86_write_gs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
-
-    base = NODE_STATE(ksCurThread)->tcbIPCBuffer;
-    x86_write_fs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
-
     if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
         x86_disable_ibrs();
     }
@@ -173,32 +167,8 @@ void NORETURN VISIBLE restore_user_context(void)
             "popl %%edi\n"
             // message register
             "popl %%ebp\n"
-            //ds (if changed)
-            "cmpl $0x23, (%%esp)\n"
-            "je 1f\n"
-            "popl %%ds\n"
-            "jmp 2f\n"
-            "1: addl $4, %%esp\n"
-            "2:\n"
-            //es (if changed)
-            "cmpl $0x23, (%%esp)\n"
-            "je 1f\n"
-            "popl %%es\n"
-            "jmp 2f\n"
-            "1: addl $4, %%esp\n"
-            "2:\n"
-#if defined(CONFIG_FSGSBASE_GDT)
-            //have to reload other selectors
-            "popl %%fs\n"
-            "popl %%gs\n"
-            // skip FaultIP, tls_base and error (these are fake registers)
-            "addl $12, %%esp\n"
-#elif defined(CONFIG_FSGSBASE_MSR)
-            /* FS and GS are not touched if MSRs are used */
-            "addl $20, %%esp\n"
-#else
-#error "Invalid method to set IPCBUF/TLS"
-#endif
+            // skip FaultIP and Error (these are fake registers)
+            "addl $8, %%esp\n"
             // restore NextIP
             "popl %%edx\n"
             // skip cs
@@ -209,7 +179,7 @@ void NORETURN VISIBLE restore_user_context(void)
             "sti\n"
             "sysexit\n"
             :
-            : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers),
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[EAX]),
             [IFMASK]"i"(FLAGS_IF)
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
@@ -226,22 +196,11 @@ void NORETURN VISIBLE restore_user_context(void)
             "popl %%esi\n"
             "popl %%edi\n"
             "popl %%ebp\n"
-            "popl %%ds\n"
-            "popl %%es\n"
-#if defined(CONFIG_FSGSBASE_GDT)
-            "popl %%fs\n"
-            "popl %%gs\n"
-            // skip FaultIP, tls_base, error
-            "addl $12, %%esp\n"
-#elif defined(CONFIG_FSGSBASE_MSR)
-            /* skip fs,gs, faultip tls_base, error */
-            "addl $20, %%esp\n"
-#else
-#error "Invalid method to set IPCBUF/TLS"
-#endif
+            // skip FaultIP and Error
+            "addl $8, %%esp\n"
             "iret\n"
             :
-            : "r"(NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers)
+            : "r"(&NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[EAX])
             // Clobber memory so the compiler is forced to complete all stores
             // before running this assembler
             : "memory"

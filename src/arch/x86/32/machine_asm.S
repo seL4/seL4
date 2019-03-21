@@ -15,13 +15,15 @@
 BEGIN_FUNC(ia32_install_gdt)
     movl 4(%esp), %eax
     lgdt (%eax)             # load gdtr register with gdt pointer
-    movw $0x10, %ax         # load register ax with seg selector for kernel DS
+    movw $0x23, %ax         # load register ax with seg selector DS
     movw %ax,   %ds
     movw %ax,   %es
-    movw %ax,   %ss
-    movw $0x0,  %ax
+    movw $0x33, %ax         # load register ax with seg selector FS
     movw %ax,   %fs
+    movw $0x3b, %ax         # load register ax with seg selector GS
     movw %ax,   %gs
+    movw $0x10, %ax         # load register ax with seg selector for kernel DS
+    movw %ax,   %ss
     ljmp $0x08, $1f         # reload kernel CS with a far jump
 1:  ret
 END_FUNC(ia32_install_gdt)
@@ -41,19 +43,6 @@ BEGIN_FUNC(ia32_install_tss)
     ltr  4(%esp)
     ret
 END_FUNC(ia32_install_tss)
-
-
-BEGIN_FUNC(ia32_load_fs)
-    movl 4(%esp), %eax
-    movw %ax, %fs
-    ret
-END_FUNC(ia32_load_fs)
-
-BEGIN_FUNC(ia32_load_gs)
-    movl 4(%esp), %eax
-    movw %ax, %gs
-    ret
-END_FUNC(ia32_load_gs)
 
 BEGIN_FUNC(getCacheLineSize)
     pushl %ebx

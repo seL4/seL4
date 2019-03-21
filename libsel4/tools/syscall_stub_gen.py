@@ -321,7 +321,7 @@ def init_arch_types(wordsize):
             CapType("seL4_X86_EPTPD", wordsize),
             CapType("seL4_X86_EPTPT", wordsize),
             StructType("seL4_VCPUContext", wordsize * 7, wordsize),
-            StructType("seL4_UserContext", wordsize * 13, wordsize),
+            StructType("seL4_UserContext", wordsize * 12, wordsize),
         ],
 
         "x86_64": [
@@ -343,7 +343,7 @@ def init_arch_types(wordsize):
             CapType("seL4_X86_EPTPD", wordsize),
             CapType("seL4_X86_EPTPT", wordsize),
             StructType("seL4_VCPUContext", wordsize * 7, wordsize),
-            StructType("seL4_UserContext", wordsize * 19, wordsize),
+            StructType("seL4_UserContext", wordsize * 20, wordsize),
         ],
         "riscv32": [
             Type("seL4_RISCV_VMAttributes", wordsize, wordsize),

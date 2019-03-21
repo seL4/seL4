@@ -93,12 +93,6 @@ fastpath_mi_check(word_t msgInfo)
     return (msgInfo & MASK(seL4_MsgLengthBits + seL4_MsgExtraCapBits)) > 2;
 }
 
-static inline bool_t hasDefaultSelectors(tcb_t *thread)
-{
-    return thread->tcbArch.tcbContext.registers[DS] == SEL_DS_3   &&
-           thread->tcbArch.tcbContext.registers[ES] == SEL_DS_3;
-}
-
 static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     c_exit_hook();
@@ -113,79 +107,33 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 
     setKernelEntryStackPointer(cur_thread);
 
-    word_t base = getRegister(cur_thread, TLS_BASE);
-    x86_write_gs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
-
-    base = cur_thread->tcbIPCBuffer;
-    x86_write_fs_base(base, SMP_TERNARY(getCurrentCPUIndex(), 0));
-
     if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
         x86_disable_ibrs();
     }
 
     cur_thread->tcbArch.tcbContext.registers[FLAGS] &= ~FLAGS_IF;
-    if (likely(hasDefaultSelectors(cur_thread))) {
-        asm volatile(
-            "movl %%ecx, %%esp\n"
-            "popl %%edi \n"
-            "popl %%ebp \n"
-#if defined(CONFIG_FSGSBASE_GDT)
-            "addl $8, %%esp \n"
-            "popl %%fs \n"
-            "popl %%gs \n"
-            "addl $12, %%esp \n"
-#elif defined(CONFIG_FSGSBASE_MSR)
-            "addl $28, %%esp \n"
-#else
-#error "Invalid method to set IPCBUF/TLS"
-#endif
-            "popl %%edx \n"
-            "movl 8(%%esp), %%ecx \n"
-            "addl $4, %%esp \n"
-            "popfl \n"
-            "orl %[IFMASK], -4(%%esp)\n"
-            "sti\n"
-            "sysexit \n"
-            :
-            : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
-            "a"(cur_thread->tcbArch.tcbContext.registers[EAX]),
-            "b"(badge),
-            "S"(msgInfo),
-            [IFMASK]"i"(FLAGS_IF)
-            : "memory"
-        );
-    } else {
-        asm volatile(
-            "movl %%ecx, %%esp \n"
-            "popl %%edi \n"
-            "popl %%ebp \n"
-            "popl %%ds \n"
-            "popl %%es \n"
-#if defined(CONFIG_FSGSBASE_GDT)
-            "popl %%fs \n"
-            "popl %%gs \n"
-            "addl $12, %%esp \n"
-#elif defined(CONFIG_FSGSBASE_MSR)
-            "addl $20, %%esp \n"
-#else
-#error "Invalid method to set IPCBUF/TLS"
-#endif
-            "popl %%edx \n"
-            "movl 8(%%esp), %%ecx \n"
-            "addl $4, %%esp \n"
-            "popfl \n"
-            "orl %[IFMASK], -4(%%esp)\n"
-            "sti\n"
-            "sysexit \n"
-            :
-            : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
-            "a"(cur_thread->tcbArch.tcbContext.registers[EAX]),
-            "b"(badge),
-            "S"(msgInfo),
-            [IFMASK]"i"(FLAGS_IF)
-            : "memory"
-        );
-    }
+
+    asm volatile(
+        "movl %%ecx, %%esp\n"
+        "popl %%edi \n"
+        "popl %%ebp \n"
+        // Skip FaultIP and Error
+        "addl $8, %%esp \n"
+        "popl %%edx \n"
+        "movl 8(%%esp), %%ecx \n"
+        "addl $4, %%esp \n"
+        "popfl \n"
+        "orl %[IFMASK], -4(%%esp)\n"
+        "sti\n"
+        "sysexit \n"
+        :
+        : "c"(&cur_thread->tcbArch.tcbContext.registers[EDI]),
+        "a"(cur_thread->tcbArch.tcbContext.registers[EAX]),
+        "b"(badge),
+        "S"(msgInfo),
+        [IFMASK]"i"(FLAGS_IF)
+        : "memory"
+    );
 
     UNREACHABLE();
 }

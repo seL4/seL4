@@ -30,7 +30,7 @@ typedef seL4_CPtr seL4_X64_PML4;
 typedef struct seL4_UserContext_ {
     seL4_Word rip, rsp, rflags, rax, rbx, rcx, rdx, rsi, rdi, rbp,
               r8, r9, r10, r11, r12, r13, r14, r15;
-    seL4_Word tls_base;
+    seL4_Word fs_base, gs_base;
 } seL4_UserContext;
 
 #endif /* __LIBSEL4_SEL4_SEL4_ARCH_TYPES_H_ */

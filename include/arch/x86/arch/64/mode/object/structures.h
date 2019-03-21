@@ -25,8 +25,8 @@
 #define GDT_TSS     3 //TSS is two slots in x86-64
 #define GDT_CS_3    5
 #define GDT_DS_3    6
-#define GDT_TLS     7
-#define GDT_IPCBUF  8
+#define GDT_FS      7
+#define GDT_GS      8
 #define GDT_ENTRIES 9
 
 compile_assert(gdt_idt_ptr_packed,

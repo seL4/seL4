@@ -47,8 +47,8 @@ typedef struct arch_tcb {
 #define SEL_CS_3    ((GDT_CS_3 << 3) | 3)
 #define SEL_DS_3    ((GDT_DS_3 << 3) | 3)
 #define SEL_TSS     (GDT_TSS << 3)
-#define SEL_TLS     ((GDT_TLS << 3) | 3)
-#define SEL_IPCBUF  ((GDT_IPCBUF << 3) | 3)
+#define SEL_FS      ((GDT_FS << 3) | 3)
+#define SEL_GS      ((GDT_GS << 3) | 3)
 
 #define IDT_ENTRIES 256
 

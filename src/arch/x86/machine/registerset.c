@@ -16,7 +16,8 @@
 void Arch_initContext(user_context_t *context)
 {
     Mode_initContext(context);
-    context->registers[TLS_BASE] = 0;
+    context->registers[FS_BASE] = 0;
+    context->registers[GS_BASE] = 0;
     context->registers[Error] = 0;
     context->registers[FaultIP] = 0;
     context->registers[NextIP] = 0;            /* overwritten by setNextPC() later on */

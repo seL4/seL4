@@ -22,8 +22,7 @@
         <member name="esi"/>
         <member name="edi"/>
         <member name="ebp"/>
-        <member name="tls_base"/>
-        <member name="fs"/>
-        <member name="gs"/>
+        <member name="fs_base"/>
+        <member name="gs_base"/>
     </struct>
 </api>

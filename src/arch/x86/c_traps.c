@@ -190,22 +190,26 @@ void VISIBLE NORETURN c_handle_vmexit(void)
     /* We *always* need to flush the rsb as a guest may have been able to train the rsb with kernel addresses */
     x86_flush_rsb();
 
+    /* When we switched out of VMX mode the FS and GS registers were
+     * clobbered and set to potentially undefined values. we need to
+     * make sure we reload the correct values of FS and GS.
+     * Unfortunately our cached values in x86KSCurrent[FG]SBase now
+     * mismatch what is in the hardware. To force a reload to happen we
+     * set the cached value to something that is guaranteed to not be
+     * the target threads value, ensuring both the cache and the
+     * hardware get updated.
+     *
+     * This needs to happen before the entry hook which will try to
+     * restore the registers without having a means to determine whether
+     * they may have been dirtied by a VM exit. */
+    tcb_t *cur_thread = NODE_STATE(ksCurThread);
+    ARCH_NODE_STATE(x86KSCurrentGSBase) = -(word_t)1;
+    ARCH_NODE_STATE(x86KSCurrentFSBase) = -(word_t)1;
+    x86_load_fsgs_base(cur_thread, SMP_TERNARY(getCurrentCPUIndex(), 0));
+
     c_entry_hook();
     /* NODE_LOCK will get called in handleVmexit */
     handleVmexit();
-    /* When we switched out of VMX mode the FS and GS registers were clobbered
-     * and set to potentially undefined values. If we are going to switch back
-     * to VMX mode then this is fine, but if we are switching to user mode we
-     * need to make sure we reload the correct values of FS and GS. Unfortunately
-     * our cached values in x86KSCurrent[FG]SBase now mismatch what is in the
-     * hardware. To force a reload to happen we set the cached value to something
-     * that is guaranteed to not be the target threads value, ensuring both
-     * the cache and the hardware get updated */
-    tcb_t *cur_thread = NODE_STATE(ksCurThread);
-    if (thread_state_ptr_get_tsType(&cur_thread->tcbState) != ThreadState_RunningVM) {
-        ARCH_NODE_STATE(x86KSCurrentGSBase) = -(word_t)1;
-        ARCH_NODE_STATE(x86KSCurrentFSBase) = -(word_t)1;
-    }
     restore_user_context();
     UNREACHABLE();
 }

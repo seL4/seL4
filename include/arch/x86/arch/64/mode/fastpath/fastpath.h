@@ -154,21 +154,11 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
 #endif
 
 #ifdef ENABLE_SMP_SUPPORT
-    cpu_id_t cpu = getCurrentCPUIndex();
 #ifdef CONFIG_KERNEL_SKIM_WINDOW
     word_t next_cr3 = MODE_NODE_STATE(x64KSCurrentUserCR3);
 #endif
     swapgs();
 #endif /* ENABLE_SMP_SUPPORT */
-    /* Now that we have swapped back to the user gs we can safely
-     * update the GS base. We must *not* use any kernel functions
-     * that rely on having a kernel GS though. Most notably uses
-     * of NODE_STATE etc cannot be used beyond this point */
-    word_t base = getRegister(cur_thread, TLS_BASE);
-    x86_write_fs_base(base, SMP_TERNARY(cpu, 0));
-
-    base = cur_thread->tcbIPCBuffer;
-    x86_write_gs_base(base, SMP_TERNARY(cpu, 0));
 
     if (config_set(CONFIG_KERNEL_X86_IBRS_BASIC)) {
         x86_disable_ibrs();
@@ -204,8 +194,8 @@ static inline void NORETURN FORCE_INLINE fastpath_restore(word_t badge, word_t m
             "addq $8, %%rsp\n"
             // restore RSP
             "popq %%rcx\n"
-            // Skip TLS_BASE FaultIP
-            "addq $16, %%rsp\n"
+            // Skip FaultIP
+            "addq $8, %%rsp\n"
 #if defined(ENABLE_SMP_SUPPORT) && defined(CONFIG_KERNEL_SKIM_WINDOW)
             "popq %%rsp\n"
             "movq %%r11, %%cr3\n"

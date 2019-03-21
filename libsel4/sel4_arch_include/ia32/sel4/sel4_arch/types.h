@@ -27,7 +27,7 @@ typedef struct seL4_UserContext_ {
     /* frameRegisters */
     seL4_Word eip, esp, eflags, eax, ebx, ecx, edx, esi, edi, ebp;
     /* gpRegisters */
-    seL4_Word tls_base, fs, gs;
+    seL4_Word fs_base, gs_base;
 } seL4_UserContext;
 
 #endif

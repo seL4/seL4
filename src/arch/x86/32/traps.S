@@ -12,12 +12,12 @@
 #include <machine/assembler.h>
 
 /* From <arch/mode/machine/registerset.h> */
-#define Error              13
-#define NextIP             14
-#define CS                 15
-#define FLAGS              16
-#define ESP                17
-#define n_contextRegisters 19
+#define Error              9
+#define NextIP             10
+#define CS                 11
+#define FLAGS              12
+#define ESP                13
+#define n_contextRegisters 17
 
 # On kernel entry, ESP points to the end of the thread's registers array.
 # Hardware pushes onto the stack SS, ESP, EFLAGS, CS, NextIP and Error,
@@ -28,12 +28,7 @@
 .type int_##number, %function;               \
 int_##number:                                \
     error_code;                              \
-    subl  $4, %esp; /* skip TLS_BASE */      \
-    pushl 8(%esp); /* FaultIP := NextIP */   \
-    pushl %gs;                               \
-    pushl %fs;                               \
-    pushl %es;                               \
-    pushl %ds;                               \
+    pushl 4(%esp); /* FaultIP := NextIP */   \
     pushl %ebp;                              \
     pushl %edi;                              \
     pushl %esi;                              \
@@ -41,6 +36,7 @@ int_##number:                                \
     pushl %ecx;                              \
     pushl %ebx;                              \
     pushl %eax;                              \
+    pushl $0;                                \
     movl  $0x##number, %ecx;                 \
     jmp   handle_interrupt;                  \
     .size int_##number, .-int_##number;
@@ -374,6 +370,7 @@ not_idle_thread:
     andl $~0x200, (4 * Error)(%esp)
     # Return
 kernel_int_return:
+    addl    $4, %esp
     popl    %eax
     popl    %ebx
     popl    %ecx
@@ -381,10 +378,8 @@ kernel_int_return:
     popl    %esi
     popl    %edi
     popl    %ebp
-    /* skip segments */
-    addl $16, %esp
-    /* Skip FaultIP, TLS_BASE and error-code. */
-    addl    $12, %esp
+    /* Skip FaultIP and error-code. */
+    addl    $8, %esp
     iretl
 
 # Handle a kernel exception
@@ -426,6 +421,7 @@ BEGIN_FUNC(kernel_exception)
      * unexpected side effects because we are just immediately returning after
      * entering.
      */
+    addl    $4, %esp
     popl    %eax
     popl    %ebx
     popl    %ecx
@@ -433,12 +429,8 @@ BEGIN_FUNC(kernel_exception)
     popl    %esi
     popl    %edi
     popl    %ebp
-    popl    %ds
-    popl    %es
-    popl    %fs
-    popl    %gs
-    /* Skip FaultIP, TLS_BASE and error-code. */
-    addl    $12, %esp
+    /* Skip FaultIP and error-code. */
+    addl    $8, %esp
     iretl
 
 .not_eflags_tf:
@@ -471,13 +463,6 @@ BEGIN_FUNC(kernel_exception)
     jmp     kernel_int_return
 END_FUNC(kernel_exception)
 
-#define SET_SEL(sel, offset, val) \
-    cmpl $val, (offset)(%esp); \
-    je 1f; \
-    movl $val, %ecx; \
-    movl %ecx, %sel; \
-    1:
-
 # Handle vmexit
 # ESP points to the end of an array that just holds the general purpose registers
 #ifdef CONFIG_VTX
@@ -495,6 +480,10 @@ BEGIN_FUNC(handle_vmexit)
     movl $0x23, %ecx
     movl %ecx, %ds
     movl %ecx, %es
+    movl $0x33, %ecx         # load register cx with seg selector FS
+    movl %ecx,   %fs
+    movl $0x3b, %ecx         # load register cx with seg selector GS
+    movl %ecx,   %gs
 
     # switch to kernel stack
     SET_KERNEL_STACK_FROM(7 * 4)
@@ -522,12 +511,7 @@ BEGIN_FUNC(handle_syscall)
     subl    $4, %esp        # skip CS
     pushl   %edx            # NextIP := EDX
     pushl   $-1             # save Error (-1 means we entered via syscall)
-    subl    $4, %esp        # skip TLS_BASE
     pushl   %edx            # save FaultIP (passed in EDX)
-    pushl   %gs             # save GS
-    pushl   %fs             # save FS
-    pushl   %es             # save ES
-    pushl   %ds             # save DS
     pushl   %ebp            # save EBP (message register)
     pushl   %edi            # save EDI (message register)
     pushl   %esi            # save ESI (msgInfo register)
@@ -535,10 +519,13 @@ BEGIN_FUNC(handle_syscall)
     pushl   %ecx            # save ECX (contains ESP)
     pushl   %ebx            # save EBX (cap/badge register)
     pushl   %eax            # save EAX (syscall number)
+    pushl   $0
 
-    # set kernel data segments (ds and es) if necessary (set them to the user value though)
-    SET_SEL(ds, 7  * 4, 0x23)
-    SET_SEL(es, 8  * 4, 0x23)
+    # switch to the user data segments as the rest of our entry/exit code assumes that's
+    # what they will be
+    movl $0x23, %ecx
+    movl %ecx, %ds
+    movl %ecx, %es
 
     # switch to kernel stack
     SET_KERNEL_STACK

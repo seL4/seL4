@@ -33,11 +33,9 @@ BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
     setRegister(tcb, FLAGS, FLAGS_USER_DEFAULT);
     setRegister(tcb, NextIP, (word_t)idleThreadStart);
     setRegister(tcb, CS, SEL_CS_0);
-    setRegister(tcb, DS, SEL_DS_0);
-    setRegister(tcb, ES, SEL_DS_0);
-    setRegister(tcb, FS, SEL_DS_0);
-    setRegister(tcb, GS, SEL_DS_0);
     setRegister(tcb, SS, SEL_DS_0);
+    setRegister(tcb, FS_BASE, 0);
+    setRegister(tcb, GS_BASE, 0);
 }
 
 void Arch_switchToIdleThread(void)

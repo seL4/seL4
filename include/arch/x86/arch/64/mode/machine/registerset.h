@@ -55,17 +55,22 @@ enum _register {
     NextIP                  = 14,   /* 0x70 */
     // Same for the error code
     Error                   = 15,   /* 0x78 */
+    /* Kernel stack points here on kernel entry */
     RSP                     = 16,   /* 0x80 */
-    // For locality put these here as well
-    TLS_BASE                = 17,   /* 0x88 */
-    FaultIP                 = 18,   /* 0x90 */
+    FaultIP                 = 17,   /* 0x88 */
     // Now user Registers that get clobbered by syscall
-    R11                     = 19,   /* 0x98 */
-    RCX                     = 20,   /* 0xa0 */
-    CS                      = 21,   /* 0xa8 */
-    SS                      = 22,   /* 0xb0 */
+    R11                     = 18,   /* 0x90 */
+    RCX                     = 19,   /* 0x98 */
+    CS                      = 20,   /* 0xa0 */
+    SS                      = 21,   /* 0xa8 */
+    n_immContextRegisters   = 22,   /* 0xb0 */
 
-    n_contextRegisters      = 23    /* 0xb8 */
+    // For locality put these here as well
+    FS_BASE                 = 22,   /* 0xb0 */
+    TLS_BASE                = FS_BASE,
+    GS_BASE                 = 23,   /* 0xb8 */
+
+    n_contextRegisters      = 24    /* 0xc0 */
 };
 
 typedef uint32_t register_t;
@@ -73,7 +78,7 @@ typedef uint32_t register_t;
 enum messageSizes {
     n_msgRegisters = seL4_FastMessageRegisters,
     n_frameRegisters = 18,
-    n_gpRegisters = 1,
+    n_gpRegisters = 2,
     n_exceptionMessage = 3,
     n_syscallMessage = 18
 };

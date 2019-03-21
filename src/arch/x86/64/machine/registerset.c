@@ -10,6 +10,7 @@
  * @TAG(DATA61_GPL)
  */
 
+#include <assert.h>
 #include <arch/machine/registerset.h>
 #include <machine/fpu.h>
 #include <arch/object/structures.h>
@@ -17,15 +18,27 @@
 const register_t msgRegisters[] = {
     R10, R8, R9, R15
 };
+compile_assert(
+    consistent_message_registers,
+    sizeof(msgRegisters) / sizeof(msgRegisters[0]) == n_msgRegisters
+);
 
 const register_t frameRegisters[] = {
     FaultIP, RSP, FLAGS, RAX, RBX, RCX, RDX, RSI, RDI, RBP,
     R8, R9, R10, R11, R12, R13, R14, R15
 };
+compile_assert(
+    consistent_frame_registers,
+    sizeof(frameRegisters) / sizeof(frameRegisters[0]) == n_frameRegisters
+);
 
 const register_t gpRegisters[] = {
-    TLS_BASE
+    FS_BASE, GS_BASE
 };
+compile_assert(
+    consistent_gp_registers,
+    sizeof(gpRegisters) / sizeof(gpRegisters[0]) == n_gpRegisters
+);
 
 void Mode_initContext(user_context_t *context)
 {
@@ -49,7 +62,7 @@ void Mode_initContext(user_context_t *context)
 
 word_t Mode_sanitiseRegister(register_t reg, word_t v)
 {
-    if (reg == FaultIP || reg == NextIP) {
+    if (reg == FaultIP || reg == NextIP || reg == FS_BASE || reg == GS_BASE) {
         /* ensure instruction address is canonical */
         if (v > 0x00007fffffffffff && v < 0xffff800000000000) {
             /* no way to guess what the user wanted so give them zero */

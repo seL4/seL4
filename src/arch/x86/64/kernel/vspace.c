@@ -409,33 +409,33 @@ BOOT_CODE void init_gdt(gdt_entry_t *gdt, tss_t *tss)
                         0xffff
                     );
 
-    gdt[GDT_TLS] = gdt_entry_gdt_data_new(
-                       0,
-                       1,
-                       1,
-                       0,
-                       0xf,
-                       1,
-                       3,
-                       1,
-                       0,
-                       0,
-                       0xffff
-                   );
+    gdt[GDT_FS] = gdt_entry_gdt_data_new(
+                      0,
+                      1,
+                      1,
+                      0,
+                      0xf,
+                      1,
+                      3,
+                      1,
+                      0,
+                      0,
+                      0xffff
+                  );
 
-    gdt[GDT_IPCBUF] = gdt_entry_gdt_data_new(
-                          0,
-                          1,
-                          1,
-                          0,
-                          0xf,
-                          1,
-                          3,
-                          1,
-                          0,
-                          0,
-                          0xffff
-                      );
+    gdt[GDT_GS] = gdt_entry_gdt_data_new(
+                      0,
+                      1,
+                      1,
+                      0,
+                      0xf,
+                      1,
+                      3,
+                      1,
+                      0,
+                      0,
+                      0xffff
+                  );
 
     gdt_tss = gdt_tss_new(
                   tss_base >> 32,                     /* base 63 - 32 */

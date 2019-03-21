@@ -8,6 +8,7 @@
  * @TAG(GD_GPL)
  */
 
+#include <assert.h>
 #include <config.h>
 #include <sel4/arch/constants.h>
 #include <arch/machine/registerset.h>
@@ -18,14 +19,26 @@
 const register_t msgRegisters[] = {
     EDI, EBP
 };
+compile_assert(
+    consistent_message_registers,
+    sizeof(msgRegisters) / sizeof(msgRegisters[0]) == n_msgRegisters
+);
 
 const register_t frameRegisters[] = {
     FaultIP, ESP, FLAGS, EAX, EBX, ECX, EDX, ESI, EDI, EBP
 };
+compile_assert(
+    consistent_frame_registers,
+    sizeof(frameRegisters) / sizeof(frameRegisters[0]) == n_frameRegisters
+);
 
 const register_t gpRegisters[] = {
-    TLS_BASE, FS, GS
+    FS_BASE, GS_BASE
 };
+compile_assert(
+    consistent_gp_registers,
+    sizeof(gpRegisters) / sizeof(gpRegisters[0]) == n_gpRegisters
+);
 
 void Mode_initContext(user_context_t *context)
 {
@@ -36,19 +49,10 @@ void Mode_initContext(user_context_t *context)
     context->registers[ESI] = 0;
     context->registers[EDI] = 0;
     context->registers[EBP] = 0;
-    context->registers[DS] = SEL_DS_3;
-    context->registers[ES] = SEL_DS_3;
-    context->registers[FS] = SEL_IPCBUF;
-    context->registers[GS] = SEL_TLS;
     context->registers[ESP] = 0;
 }
 
 word_t Mode_sanitiseRegister(register_t reg, word_t v)
 {
-    if (reg == FS || reg == GS) {
-        if (v != SEL_TLS && v != SEL_IPCBUF) {
-            v = 0;
-        }
-    }
     return v;
 }

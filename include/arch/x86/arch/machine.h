@@ -238,6 +238,16 @@ x86_cpu_identity_t *x86_cpuid_get_model_info(void);
  */
 cpu_identity_t *x86_cpuid_get_identity(void);
 
+/*
+ * Forward declarations here as these may instead be later defined in
+ * mode-specific machine.h
+ */
+
+static inline void x86_write_fs_base_impl(word_t base);
+static inline word_t x86_read_fs_base_impl(void);
+static inline void x86_write_gs_base_impl(word_t base);
+static inline word_t x86_read_gs_base_impl(void);
+
 #ifdef CONFIG_FSGSBASE_MSR
 
 static inline void x86_write_fs_base_impl(word_t base)
@@ -245,22 +255,45 @@ static inline void x86_write_fs_base_impl(word_t base)
     x86_wrmsr(IA32_FS_BASE_MSR, base);
 }
 
-static inline void x86_write_gs_base_impl(word_t base)
-{
-    x86_wrmsr(IA32_GS_BASE_MSR, base);
-}
-
 static inline word_t x86_read_fs_base_impl(void)
 {
     return x86_rdmsr(IA32_FS_BASE_MSR);
 }
 
-static inline word_t x86_read_gs_base_impl(void)
+#endif
+
+
+#ifdef CONFIG_FSGSBASE_INST
+
+/*
+ * With fsgsbase, these registers can and are allowed to be changed from
+ * user-space.
+ *
+ * These calls are also cheap as they read from the hidden register
+ * state for the segment selectors rather than from the GDT.
+ */
+
+static inline void x86_write_fs_base(word_t base, cpu_id_t cpu)
 {
-    return x86_rdmsr(IA32_GS_BASE_MSR);
+    x86_write_fs_base_impl(base);
 }
 
-#endif
+static inline void x86_write_gs_base(word_t base, cpu_id_t cpu)
+{
+    x86_write_gs_base_impl(base);
+}
+
+static inline word_t x86_read_fs_base(cpu_id_t cpu)
+{
+    return x86_read_fs_base_impl();
+}
+
+static inline word_t x86_read_gs_base(cpu_id_t cpu)
+{
+    return x86_read_gs_base_impl();
+}
+
+#else
 
 /* Writing the fs/gs bases can be expensive (especially if it requires a MSR
    write), so we avoid actually writing them if they aren't actually changed. */
@@ -289,6 +322,23 @@ static inline word_t x86_read_fs_base(cpu_id_t cpu)
 static inline word_t x86_read_gs_base(cpu_id_t cpu)
 {
     return ARCH_NODE_STATE_ON_CORE(x86KSCurrentGSBase, cpu);
+}
+
+#endif
+
+
+static inline void x86_load_fsgs_base(tcb_t *thread, cpu_id_t cpu)
+{
+    /*
+     * Restore the FS and GS base registers.
+     *
+     * These should only be accessed inside the kernel, between the
+     * entry and exit calls to swapgs if used.
+     */
+    word_t fs_base = getRegister(thread, FS_BASE);
+    x86_write_fs_base(fs_base, cpu);
+    word_t gs_base = getRegister(thread, GS_BASE);
+    x86_write_gs_base(gs_base, cpu);
 }
 
 /* Cleaning memory before user-level access */

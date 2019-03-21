@@ -42,7 +42,8 @@ static inline void setKernelEntryStackPointer(tcb_t *target_thread)
                                               CONFIG_KERNEL_STACK_BITS) - 4);
     SMP_COND_STATEMENT(NODE_STATE(ksCurThread)->tcbArch.tcbContext.kernelSP = kernel_stack_top);
 
-    register_context_top = (word_t)&target_thread->tcbArch.tcbContext.registers[n_contextRegisters];
+    /* The first item to be pushed onto the stack should always be SS */
+    register_context_top = (word_t)&target_thread->tcbArch.tcbContext.registers[SS + 1];
 
     tss_ptr_set_esp0(&x86KSGlobalState[CURRENT_CPU_INDEX()].x86KStss.tss, register_context_top);
 

@@ -194,7 +194,7 @@ config_choice(
     IA32_FS/GS_BASE_MSR and fsgsbase instructions are available for 64-bit."
     "inst;KernelFSGSBaseInst;FSGSBASE_INST;KernelSel4ArchX86_64"
     "gdt;KernelFSGSBaseGDT;FSGSBASE_GDT;KernelSel4ArchIA32"
-    "msr;KernelFSGSBaseMSR;FSGSBASE_MSR;KernelSel4ArchX86_64"
+    "msr;KernelFSGSBaseMSR;FSGSBASE_MSR;KernelArchX86"
 )
 
 config_choice(
