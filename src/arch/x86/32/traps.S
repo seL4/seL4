@@ -11,6 +11,14 @@
 #include <config.h>
 #include <machine/assembler.h>
 
+/* From <arch/mode/machine/registerset.h> */
+#define Error              13
+#define NextIP             14
+#define CS                 15
+#define FLAGS              16
+#define ESP                17
+#define n_contextRegisters 19
+
 # On kernel entry, ESP points to the end of the thread's registers array.
 # Hardware pushes onto the stack SS, ESP, EFLAGS, CS, NextIP and Error,
 # leaving the stack pointer pointing to TLS_BASE. The kernel pushes the rest.
@@ -48,7 +56,7 @@ int_##number:                                \
     leal kernel_stack_alloc + (1 << CONFIG_KERNEL_STACK_BITS) - 4, %esp
 #endif
 
-#define SET_KERNEL_STACK SET_KERNEL_STACK_FROM(0x4c)
+#define SET_KERNEL_STACK SET_KERNEL_STACK_FROM(4 * n_contextRegisters)
 
 .section .text
 
@@ -331,7 +339,7 @@ handle_interrupt:
     movl    %edx,  %es
 
     # determine if we have a kernel exception
-    testl   $3, 60(%esp)     # extract CPL (current privilege level)
+    testl   $3, (4 * CS)(%esp)     # extract CPL (current privilege level)
     jz kernel_interrupt
 
 user_interrupt:
@@ -358,7 +366,7 @@ kernel_interrupt:
     call c_nested_interrupt
     addl $4, %esp
     # Disable the interrupt flag so that we do not take any additional interrupts
-    andl $~0x200, 0x40(%esp)
+    andl $~0x200, (4 * Error)(%esp)
     # Return
 kernel_int_return:
     popl    %eax
@@ -392,7 +400,7 @@ BEGIN_FUNC(kernel_exception)
      * setting EFLAGS.TF before SYSEXIT so that single-stepping resumes in the
      * userspace thread.
      */
-    movl    64(%esp), %eax
+    movl    (4 * FLAGS)(%esp), %eax
     movl    $(1<<8), %ebx
     testl   %ebx, %eax
     je      .not_eflags_tf
@@ -407,7 +415,7 @@ BEGIN_FUNC(kernel_exception)
      * So at this point we want to just unset EFLAGS.TF and IRET immediately.
      */
     andl    $~(1<<8), %eax
-    movl    %eax, 64(%esp)
+    movl    %eax, (4 * FLAGS)(%esp)
 
     /* Begin popping registers to IRET now. We don't need to consider any
      * unexpected side effects because we are just immediately returning after
@@ -432,11 +440,10 @@ BEGIN_FUNC(kernel_exception)
 #endif /* CONFIG_HARDWARE_DEBUG_API */
 
     # prepare debug info
-    movl    52(%esp), %eax # EAX contains Error Code
-    movl    56(%esp), %ebx # EBX contains EIP of the exception generating instruction
-    movl    64(%esp), %edx # EDX contains EFLAGS
-    movl    %esp,     %edi
-    addl    $68,      %edi # EDI contains ESP when exception happened
+    movl    (4 * Error)(%esp), %eax # EAX contains Error Code
+    movl    (4 * NextIP)(%esp), %ebx # EBX contains EIP of the exception generating instruction
+    movl    (4 * FLAGS)(%esp), %edx # EDX contains EFLAGS
+    leal    (4 * ESP)(%esp), %edi # EDI contains ESP when exception happened
 
     # call handleKernelException(vector, errcode, EIP, ESP, EFLAGS, CR0, CR2, CR3, CR4)
     movl    %cr4, %esi
@@ -455,7 +462,7 @@ BEGIN_FUNC(kernel_exception)
     call    handleKernelException
     addl    $36, %esp
     # Set EIP in the saved register context to the new IP returned from handleKernelException
-    movl    %eax, 56(%esp)
+    movl    %eax, (4 * NextIP)(%esp)
     jmp     kernel_int_return
 END_FUNC(kernel_exception)
 
