@@ -12,4 +12,4 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-add_bf_source_old("Kernel32" "shared_types.bf" "include/32" "mode/api")
+add_bf_source_old("Kernel32" "shared_types.bf" "libsel4/mode_include/32" "sel4")

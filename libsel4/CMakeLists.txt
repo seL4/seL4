@@ -90,7 +90,7 @@ endfunction(genbf)
 
 genbf("libsel4_shared_types_gen"
     "${CMAKE_CURRENT_BINARY_DIR}/generated/shared_types_gen/shared_types.pbf"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/sel4/shared_types_${KernelWordSize}.bf"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mode_include/${KernelWordSize}/sel4/shared_types.bf"
     "${CMAKE_CURRENT_BINARY_DIR}/include/sel4/shared_types_gen.h"
 )
 
