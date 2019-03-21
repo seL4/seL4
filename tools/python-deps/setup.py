@@ -37,12 +37,13 @@ DEPS = [
     'pexpect',
     'pyaml',
     'jsonschema',
-    'pyfdt'
+    'pyfdt',
+    'cmake-style'
 ]
 
 setup(
     name='sel4-deps',
-    version='0.1.4',
+    version='0.2.0',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     url="https://sel4.systems",
     licence='BSD2',
