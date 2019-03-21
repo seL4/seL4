@@ -19,7 +19,7 @@
 void Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
+#if defined(CONFIG_KERNEL_GLOBALS_FAME)
     *armKSGlobalsFrame = tcb->tcbIPCBuffer;
     armKSGlobalsFrame[1] = getRegister(tcb, TLS_BASE);
 #endif
@@ -41,10 +41,10 @@ void Arch_switchToIdleThread(void)
     /* Force the idle thread to run on kernel page table */
     setVMRoot(NODE_STATE(ksIdleThread));
 
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+#ifdef CONFIG_KERNEL_GLOBALS_FAME
     *armKSGlobalsFrame = 0;
     armKSGlobalsFrame[1] = 0;
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_KERNEL_GLOBALS_FAME */
 }
 
 void Arch_activateIdleThread(tcb_t *tcb)

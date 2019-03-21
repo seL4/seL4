@@ -59,7 +59,7 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pde_t *cap_pd, 
     benchmark_utilisation_switch(NODE_STATE(ksCurThread), thread);
 #endif
 
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
+#if defined(CONFIG_KERNEL_GLOBALS_FAME)
     *armKSGlobalsFrame = thread->tcbIPCBuffer;
     armKSGlobalsFrame[1] = getRegister(thread, TLS_BASE);
 #endif

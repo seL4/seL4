@@ -294,7 +294,7 @@ BOOT_CODE void map_kernel_window(void)
         )
     );
 
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
     /* map globals frame */
     map_kernel_frame(
         addrFromPPtr(armKSGlobalsFrame),
@@ -306,7 +306,7 @@ BOOT_CODE void map_kernel_window(void)
             true   /* armPageCacheable */
         )
     );
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
     map_kernel_devices();
 }
@@ -388,7 +388,7 @@ BOOT_CODE void map_kernel_window(void)
         )
     );
 
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
     /* map globals frame */
     map_kernel_frame(
         addrFromPPtr(armKSGlobalsFrame),
@@ -413,7 +413,7 @@ BOOT_CODE void map_kernel_window(void)
     memzero(armUSGlobalPT, 1 << seL4_PageTableBits);
     idx = (seL4_GlobalsFrame >> PAGE_BITS) & (MASK(PT_INDEX_BITS));
     armUSGlobalPT[idx] = pteS2;
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
     map_kernel_devices();
 }
@@ -1250,13 +1250,13 @@ void copyGlobalMappings(pde_t *newPD)
         }
     }
 #else
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
     /* Kernel and user MMUs are completely independent, however,
      * we still need to share the globals page. */
     pde_t pde;
     pde = pde_pde_coarse_new(addrFromPPtr(armUSGlobalPT));
     newPD[BIT(PD_INDEX_BITS) - 1] = pde;
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 #endif
 }
 

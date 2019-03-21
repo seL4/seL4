@@ -18,11 +18,11 @@
 #endif
 
 #ifndef __ASSEMBLER__
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
+#ifdef CONFIG_KERNEL_GLOBALS_FRAME
 enum {
     seL4_GlobalsFrame = 0xffffc000,
 };
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
+#endif /* CONFIG_KERNEL_GLOBALS_FRAME */
 
 /* format of an unknown syscall message */
 enum {
