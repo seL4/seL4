@@ -14,6 +14,8 @@
 #define __LIBSEL4_SYSCALLS_H
 #include <autoconf.h>
 
+#include <sel4/functions.h>
+
 /**
  * @defgroup SystemCalls System Calls
  * @{

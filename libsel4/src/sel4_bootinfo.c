@@ -12,6 +12,9 @@
 
 #include <sel4/sel4.h>
 
+/** Userland per-thread IPC buffer address **/
+__thread seL4_IPCBuffer *__sel4_ipc_buffer;
+
 /** Consider moving bootinfo into libsel4_startup */
 seL4_BootInfo *bootinfo;
 

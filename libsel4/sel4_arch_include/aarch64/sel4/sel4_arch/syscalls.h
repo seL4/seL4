@@ -14,7 +14,7 @@
 #define __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_H_
 
 #include <autoconf.h>
-#include <sel4/arch/functions.h>
+#include <sel4/functions.h>
 #include <sel4/types.h>
 
 /*

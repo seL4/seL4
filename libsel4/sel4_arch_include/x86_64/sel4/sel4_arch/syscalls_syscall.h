@@ -14,7 +14,7 @@
 #define __LIBSEL4_SEL4_SEL4_ARCH_SYSCALLS_SYSCALL_H_
 
 #include <autoconf.h>
-#include <sel4/arch/functions.h>
+#include <sel4/functions.h>
 #include <sel4/types.h>
 
 static inline void x64_sys_send(seL4_Word sys, seL4_Word dest, seL4_Word info, seL4_Word msg0, seL4_Word msg1,

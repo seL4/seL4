@@ -37,10 +37,3 @@ void Arch_migrateTCB(tcb_t *thread)
 #endif /* CONFIG_HAVE_FPU */
 }
 #endif /* ENABLE_SMP_SUPPORT */
-
-void Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
-{
-#if defined(CONFIG_IPC_BUF_TPIDRURW)
-    setRegister(thread, TPIDRURW, bufferAddr);
-#endif
-}

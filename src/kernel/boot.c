@@ -365,9 +365,6 @@ BOOT_CODE tcb_t *create_initial_thread(cap_t root_cnode_cap, cap_t it_pd_cap, vp
     );
     tcb->tcbIPCBuffer = ipcbuf_vptr;
 
-    /* Set the root thread's IPC buffer */
-    Arch_setTCBIPCBuffer(tcb, ipcbuf_vptr);
-
     setRegister(tcb, capRegister, bi_frame_vptr);
     setNextPC(tcb, ui_v_entry);
 

@@ -1408,8 +1408,6 @@ exception_t invokeTCB_ThreadControl(tcb_t *target, cte_t *slot,
         }
         target->tcbIPCBuffer = bufferAddr;
 
-        Arch_setTCBIPCBuffer(target, bufferAddr);
-
         if (bufferSrcSlot && sameObjectAs(bufferCap, bufferSrcSlot->cap) &&
             sameObjectAs(tCap, slot->cap)) {
             cteInsert(bufferCap, bufferSrcSlot, bufferSlot);

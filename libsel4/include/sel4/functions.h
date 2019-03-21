@@ -20,14 +20,21 @@
 #define __LIBSEL4_ARCH_FUNCTIONS_H
 
 #include <sel4/types.h>
+#include <sel4/syscalls.h>
+
+extern __thread seL4_IPCBuffer *__sel4_ipc_buffer;
+__thread __attribute__((weak)) seL4_IPCBuffer *__sel4_ipc_buffer;
+
+LIBSEL4_INLINE_FUNC void seL4_SetIPCBuffer(seL4_IPCBuffer *ipc_buffer)
+{
+    __sel4_ipc_buffer = ipc_buffer;
+    return;
+}
 
 LIBSEL4_INLINE_FUNC seL4_IPCBuffer *seL4_GetIPCBuffer(void)
 {
-    seL4_Word reg;
-    asm("mv %0, tp" : "=r"(reg));
-    return (seL4_IPCBuffer *)reg;
+    return __sel4_ipc_buffer;
 }
-
 
 LIBSEL4_INLINE_FUNC seL4_Word seL4_GetMR(int i)
 {

@@ -94,7 +94,3 @@ void Arch_migrateTCB(tcb_t *thread)
     }
 }
 #endif /* ENABLE_SMP_SUPPORT */
-
-void Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
-{
-}

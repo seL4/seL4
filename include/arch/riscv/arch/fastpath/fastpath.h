@@ -47,8 +47,6 @@ static inline void FORCE_INLINE switchToThread_fp(tcb_t *thread, pte_t *vroot, p
 
     setVSpaceRoot(addrFromPPtr(vroot), asid);
 
-    setRegister(thread, tp, thread->tcbIPCBuffer);
-
     NODE_STATE(ksCurThread) = thread;
 }
 

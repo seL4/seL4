@@ -151,6 +151,4 @@ void Arch_migrateTCB(tcb_t *thread);
 void setThreadName(tcb_t *thread, const char *name);
 #endif /* CONFIG_DEBUG_BUILD */
 
-void Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr);
-
 #endif

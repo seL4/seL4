@@ -28,7 +28,6 @@ extern char kernel_stack_alloc[CONFIG_MAX_NUM_NODES][BIT(CONFIG_KERNEL_STACK_BIT
 void Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
-    setRegister(tcb, tp, tcb->tcbIPCBuffer);
 }
 
 BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
