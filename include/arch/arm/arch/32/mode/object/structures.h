@@ -14,7 +14,7 @@
 #include <config.h>
 #include <assert.h>
 #include <util.h>
-#include <api/macros.h>
+#include <sel4/macros.h>
 #include <api/types.h>
 #include <arch/types.h>
 #include <arch/object/structures_gen.h>

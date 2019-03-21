@@ -13,7 +13,7 @@
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
 
 #include <machine/assembler.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
 
 /*** Hypervisor coprocessor registers ***/
 #define   HVBAR(reg)    p15, 4, reg, c12, c0, 0

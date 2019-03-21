@@ -13,8 +13,8 @@
 
 #include <config.h>
 #include <arch/benchmark.h>
-#include <benchmark/benchmark_track_types.h>
-#include <arch/api/constants.h>
+#include <sel4/benchmark_track_types.h>
+#include <sel4/arch/constants.h>
 #include <machine/io.h>
 #include <kernel/cspace.h>
 #include <model/statedata.h>

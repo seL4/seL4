@@ -21,7 +21,7 @@
 #include <plat/machine/hardware_gen.h>
 #include <plat/machine/smmu.h>
 #include <mode/machine/hardware.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
 #include <arch/benchmark_overflowHandler.h>
 
 #endif

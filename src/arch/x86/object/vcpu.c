@@ -25,7 +25,7 @@
 #include <arch/object/vcpu.h>
 #include <arch/object/ioport.h>
 #include <util.h>
-#include <arch/api/vmenter.h>
+#include <sel4/arch/vmenter.h>
 
 #define VMX_EXIT_QUAL_TYPE_MOV_CR 0
 #define VMX_EXIT_QUAL_TYPE_CLTS 2

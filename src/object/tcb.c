@@ -13,7 +13,7 @@
 #include <api/failures.h>
 #include <api/invocation.h>
 #include <api/syscall.h>
-#include <api/shared_types.h>
+#include <sel4/shared_types.h>
 #include <machine/io.h>
 #include <object/structures.h>
 #include <object/objecttype.h>

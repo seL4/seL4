@@ -15,7 +15,7 @@
 
 #include <config.h>
 #include <arch/machine/hardware.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

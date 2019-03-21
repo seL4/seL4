@@ -37,7 +37,7 @@ END_FUNC(arm_vector_table)
 #include <arch/machine/hardware.h>
 
 #include <arch/machine/registerset.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
 
 BEGIN_FUNC(arm_undefined_inst_exception)
     /* Full save/restore, documented in arm_swi_syscall */

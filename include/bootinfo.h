@@ -13,7 +13,7 @@
 
 #include <config.h>
 #include <types.h>
-#include <api/bootinfo_types.h>
+#include <sel4/bootinfo_types.h>
 
 #define BI_PTR(r) ((seL4_BootInfo*)(r))
 #define BI_REF(p) ((word_t)(p))

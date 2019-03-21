@@ -12,7 +12,7 @@
 #define __ARCH_MACHINE_HARDWARE_32_H
 
 #include <config.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
 
 #define PAGE_BITS seL4_PageBits
 

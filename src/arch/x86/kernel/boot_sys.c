@@ -25,7 +25,7 @@
 #include <plat/machine/devices.h>
 #include <plat/machine/pic.h>
 #include <plat/machine/ioapic.h>
-#include <arch/api/bootinfo_types.h>
+#include <sel4/arch/bootinfo_types.h>
 
 /* addresses defined in linker script */
 /* need a fake array to get the pointer from the linker script */

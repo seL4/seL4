@@ -325,4 +325,4 @@ tagged_union virq virqType {
 }
 #endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#include <arch/api/shared_types.bf>
+#include <sel4/arch/shared_types.bf>

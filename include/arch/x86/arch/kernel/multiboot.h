@@ -17,7 +17,7 @@
 #define MULTIBOOT_MAGIC 0x2BADB002
 
 #include <types.h>
-#include <arch/api/bootinfo_types.h>
+#include <sel4/arch/bootinfo_types.h>
 
 typedef struct multiboot_module {
     uint32_t  start;

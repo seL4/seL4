@@ -183,6 +183,17 @@ if(KernelArchRiscV)
     include_directories("include/plat/${KernelPlatform}/plat/${KernelWordSize}")
 endif()
 
+# Add libsel4 include directories.
+# These are explicitly added instead of calling target_link_libraries(${target} sel4)
+# because we don't want to inherit any other build options from libsel4.
+include_directories(
+    "libsel4/include"
+    "libsel4/arch_include/${KernelArch}"
+    "libsel4/sel4_arch_include/${KernelSel4Arch}"
+    "libsel4/sel4_plat_include/${KernelPlatform}"
+    "libsel4/mode_include/${KernelWordSize}"
+)
+
 ###################
 # Config generation
 ###################
@@ -262,7 +273,7 @@ gen_invocation_header(
 list(APPEND xml_headers "${header_dest}")
 list(APPEND gen_files_list "${header_dest}")
 
-set(syscall_xml_base "${CMAKE_CURRENT_SOURCE_DIR}/include/api")
+set(syscall_xml_base "${CMAKE_CURRENT_SOURCE_DIR}/libsel4/include/api")
 set(syscall_dest "gen_headers/arch/api/syscall.h")
 add_custom_command(OUTPUT ${syscall_dest}
     COMMAND "${XMLLINT_PATH}" --noout --schema "${syscall_xml_base}/syscall.xsd" "${syscall_xml_base}/syscall.xml"

@@ -13,7 +13,7 @@
 #define __PLAT_MODE_MACHINE_HARDWARE_H
 
 #include <config.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 
 /* This is the base of the kernel window, which is directly mapped to PADDR_BASE */
 #define PPTR_BASE  seL4_UserTop

@@ -18,7 +18,7 @@
 #include <mode/machine/debug.h>
 #include <arch/machine.h>
 #include <machine/registerset.h>
-#include <plat/api/constants.h> /* seL4_NumHWBReakpoints */
+#include <sel4/plat/api/constants.h> /* seL4_NumHWBReakpoints */
 
 /* Intel manual Vol3, 17.2.4 */
 #define X86_DEBUG_BP_SIZE_1B                (0x0u)

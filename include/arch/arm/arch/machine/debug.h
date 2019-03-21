@@ -15,7 +15,7 @@
 #include <util.h>
 #include <api/types.h>
 #include <arch/machine/debug_conf.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 #include <armv/debug.h>
 
 #ifdef ARM_BASE_CP14_SAVE_AND_RESTORE

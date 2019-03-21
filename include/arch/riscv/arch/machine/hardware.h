@@ -29,7 +29,7 @@
 #include <linker.h>
 
 #include <arch/types.h>
-#include <mode/api/constants.h>
+#include <sel4/sel4_arch/constants.h>
 
 #define PAGE_BITS seL4_PageBits
 

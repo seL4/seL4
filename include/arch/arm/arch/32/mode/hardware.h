@@ -16,7 +16,7 @@
 #include <config.h>
 #ifndef __ASSEMBLER__
 #include <arch/machine/hardware.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 #endif
 
 /*

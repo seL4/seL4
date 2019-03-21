@@ -11,7 +11,7 @@
 #include <config.h>
 #include <types.h>
 #include <api/failures.h>
-#include <api/constants.h>
+#include <sel4/constants.h>
 #include <machine/registerset.h>
 #include <object/structures.h>
 #include <arch/machine.h>

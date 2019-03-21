@@ -12,7 +12,7 @@
 #define __FAILURES_H
 
 #include <types.h>
-#include <api/errors.h>
+#include <sel4/errors.h>
 /* These datatypes differ markedly from haskell, due to the
  * different implementation of the various fault monads */
 

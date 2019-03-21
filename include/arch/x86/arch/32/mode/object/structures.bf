@@ -567,4 +567,4 @@ block cr3 {
     padding                         12
 }
 
-#include <arch/api/shared_types.bf>
+#include <sel4/arch/shared_types.bf>

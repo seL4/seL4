@@ -88,7 +88,7 @@
 #include <assert.h>
 #include <util.h>
 #include <arch/types.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 
 /* These are the indices of the registers in the saved thread context.
  * The values are determined by the order in which they're saved in the trap handler. */

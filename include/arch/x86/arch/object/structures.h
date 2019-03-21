@@ -15,12 +15,12 @@
 #include <config.h>
 #include <util.h>
 #include <api/types.h>
-#include <api/macros.h>
+#include <sel4/macros.h>
 #include <arch/types.h>
 #include <arch/object/structures_gen.h>
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
-#include <arch/api/constants.h>
+#include <sel4/arch/constants.h>
 
 enum tcb_arch_cnode_index {
 #ifdef CONFIG_VTX

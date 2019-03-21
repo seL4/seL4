@@ -54,7 +54,7 @@
 #include <util.h>
 #include <arch/types.h>
 #include <arch/machine/debug_conf.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 
 /* These are the indices of the registers in the
  * saved thread context.  The values are determined

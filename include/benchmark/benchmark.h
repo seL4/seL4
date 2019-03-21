@@ -13,9 +13,9 @@
 
 #include <arch/benchmark.h>
 #include <machine/io.h>
-#include <arch/api/constants.h>
+#include <sel4/arch/constants.h>
 #include <arch/machine/hardware.h>
-#include <benchmark/benchmark_tracepoints_types.h>
+#include <sel4/benchmark_tracepoints_types.h>
 #include <mode/hardware.h>
 
 #if CONFIG_MAX_NUM_TRACE_POINTS > 0

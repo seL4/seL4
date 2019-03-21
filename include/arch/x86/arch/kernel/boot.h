@@ -15,7 +15,7 @@
 #include <types.h>
 #include <plat/machine/acpi.h>
 #include <kernel/boot.h>
-#include <arch/api/bootinfo_types.h>
+#include <sel4/arch/bootinfo_types.h>
 
 typedef struct mem_p_regs {
     word_t count;

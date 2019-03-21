@@ -16,7 +16,7 @@
 #include <machine/debug.h>
 #include <arch/object/vcpu.h>
 #include <api/syscall.h>
-#include <arch/api/vmenter.h>
+#include <sel4/arch/vmenter.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>

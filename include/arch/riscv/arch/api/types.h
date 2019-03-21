@@ -18,9 +18,9 @@
 #define __ARCH_API_TYPES
 
 #include <config.h>
-#include <api/objecttype.h>
-#include <mode/api/objecttype.h>
-#include <arch/api/objecttype.h>
+#include <sel4/objecttype.h>
+#include <sel4/sel4_arch/objecttype.h>
+#include <sel4/arch/objecttype.h>
 
 
 #define pageType PageObject4K

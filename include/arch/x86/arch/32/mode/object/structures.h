@@ -12,7 +12,7 @@
 #define __MODE_OBJECT_STRUCTURES_H
 
 #include <config.h>
-#include <api/macros.h>
+#include <sel4/macros.h>
 
 #define GDT_NULL    0
 #define GDT_CS_0    1

@@ -16,8 +16,8 @@
 #include <stdint.h>
 #include <arch/object/structures_gen.h>
 #include <mode/types.h>
-#include <api/macros.h>
-#include <arch/api/constants.h>
+#include <sel4/macros.h>
+#include <sel4/arch/constants.h>
 #include <benchmark/benchmark_utilisation_.h>
 
 enum irq_state {

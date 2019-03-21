@@ -17,9 +17,9 @@
 #include <sel4/shared_types_gen.h>
 #include <arch/api/types.h>
 #include <arch/types.h>
-#include <api/macros.h>
-#include <api/constants.h>
-#include <api/shared_types.h>
+#include <sel4/macros.h>
+#include <sel4/constants.h>
+#include <sel4/shared_types.h>
 #include <machine/io.h>
 
 /* seL4_CapRights_t defined in mode/api/shared_types.bf */
