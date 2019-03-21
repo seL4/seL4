@@ -1,0 +1,25 @@
+/*
+ * Copyright 2019, Data61
+ * Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+ * ABN 41 687 119 230.
+ *
+ * This software may be distributed and modified according to the terms of
+ * the GNU General Public License version 2. Note that NO WARRANTY is provided.
+ * See "LICENSE_GPLv2.txt" for details.
+ *
+ * @TAG(DATA61_GPL)
+ */
+
+#ifndef __ARM_PLAT_H
+#define __ARM_PLAT_H
+
+#define TIMER_CLOCK_HZ @CONFIGURE_TIMER_FREQUENCY@
+enum IRQConstants {
+    maxIRQ                      = @CONFIGURE_MAX_IRQ@
+} platform_interrupt_t;
+
+
+#include <@CONFIGURE_INTERRUPT_CONTROLLER@>
+#include <@CONFIGURE_TIMER@>
+
+#endif /* !__ARM_PLAT_H */
