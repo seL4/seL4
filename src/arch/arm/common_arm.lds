@@ -13,7 +13,7 @@
 #include <config.h>
 #define __ASSEMBLER__
 #include <mode/hardware.h>
-#include <plat/api/constants.h>
+#include <sel4/plat/api/constants.h>
 #include <plat/machine/devices_gen.h>
 
 ENTRY(_start)
