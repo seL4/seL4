@@ -18,6 +18,7 @@
 #include <mode/types.h>
 #include <sel4/macros.h>
 #include <sel4/arch/constants.h>
+#include <sel4/sel4_arch/constants.h>
 #include <benchmark/benchmark_utilisation_.h>
 
 enum irq_state {
@@ -35,6 +36,11 @@ typedef struct dschedule {
     dom_t domain;
     word_t length;
 } dschedule_t;
+
+enum asidSizeConstants {
+    asidHighBits = seL4_NumASIDPoolsBits,
+    asidLowBits = seL4_ASIDPoolIndexBits
+};
 
 /* Arch-independent object types */
 enum endpoint_state {

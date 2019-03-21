@@ -50,11 +50,6 @@ typedef pde_t vspace_root_t;
 compile_assert(gdt_idt_ptr_packed,
                sizeof(gdt_idt_ptr_t) == sizeof(uint16_t) * 3)
 
-enum asidSizeConstants {
-    asidHighBits = 2,
-    asidLowBits = seL4_ASIDPoolIndexBits
-};
-
 struct asid_pool {
     asid_map_t array[BIT(asidLowBits)];
 };

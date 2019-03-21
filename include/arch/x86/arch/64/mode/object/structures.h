@@ -103,11 +103,6 @@ typedef pml4e_t vspace_root_t;
  * it contains 512 vroots.
  */
 
-enum asidSizeConstants {
-    asidHighBits = 3,
-    asidLowBits = seL4_ASIDPoolIndexBits
-};
-
 struct asid_pool {
     asid_map_t array[BIT(asidLowBits)];
 };

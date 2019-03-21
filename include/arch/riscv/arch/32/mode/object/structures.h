@@ -19,11 +19,4 @@
 #ifndef __ARCH_OBJECT_STRUCTURES_32_H
 #define __ARCH_OBJECT_STRUCTURES_32_H
 
-#include <config.h>
-
-enum asidSizeConstants {
-    asidHighBits = 5,
-    asidLowBits = seL4_ASIDPoolIndexBits
-};
-
 #endif /* __ARCH_OBJECT_STRUCTURES_32_H */

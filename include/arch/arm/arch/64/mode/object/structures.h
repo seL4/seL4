@@ -92,11 +92,6 @@ typedef pgde_t vspace_root_t;
 #define VCPU_PTR(r)       ((struct vcpu *)(r))
 #define VCPU_REF(p)       ((word_t)(p))
 
-enum asidSizeConstants {
-    asidHighBits = 7,
-    asidLowBits = seL4_ASIDPoolIndexBits
-};
-
 struct asid_pool {
     vspace_root_t *array[BIT(asidLowBits)];
 };

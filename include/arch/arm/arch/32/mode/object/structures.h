@@ -89,15 +89,6 @@ typedef word_t pde_type_t;
 #define LPAE_PT_PTR(r) ((lpae_pte_t *)r)
 #define LPAE_PT_REF(p) ((unsigned int)p)
 
-enum asidSizeConstants {
-#ifdef CONFIG_ARM_SMMU
-    asidHighBits = 6,
-#else
-    asidHighBits = 7,
-#endif
-    asidLowBits = seL4_ASIDPoolIndexBits
-};
-
 struct asid_pool {
     pde_t *array[BIT(asidLowBits)];
 };

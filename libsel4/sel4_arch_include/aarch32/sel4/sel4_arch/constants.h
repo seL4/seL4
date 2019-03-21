@@ -168,6 +168,11 @@ enum {
 
 #define seL4_PageDirBits 14
 
+#ifdef CONFIG_ARM_SMMU
+#define seL4_NumASIDPoolsBits 6
+#else
+#define seL4_NumASIDPoolsBits 7
+#endif
 #define seL4_ASIDPoolBits 12
 #define seL4_ASIDPoolIndexBits 10
 #define seL4_ARM_VCPUBits       12

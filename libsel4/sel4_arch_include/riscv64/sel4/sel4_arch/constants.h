@@ -43,6 +43,7 @@
 #define seL4_TeraPageBits      39
 #define seL4_PageTableBits     12
 
+#define seL4_NumASIDPoolsBits    6
 #define seL4_ASIDPoolIndexBits  10
 #define seL4_ASIDPoolBits       12
 
