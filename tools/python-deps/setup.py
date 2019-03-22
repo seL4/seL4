@@ -38,12 +38,12 @@ DEPS = [
     'pyaml',
     'jsonschema',
     'pyfdt',
-    'cmake-style'
+    'cmake-format'
 ]
 
 setup(
     name='sel4-deps',
-    version='0.2.0',
+    version='0.2.1',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     url="https://sel4.systems",
     licence='BSD2',
