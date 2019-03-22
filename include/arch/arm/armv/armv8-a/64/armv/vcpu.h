@@ -596,7 +596,7 @@ static inline bool_t armv_handleVCPUFault(word_t hsr)
 #endif
 
     if (hsr == UNKNOWN_FAULT) {
-        handleUserLevelFault(0, 0);
+        handleUserLevelFault(getESR(), 0);
         return true;
     }
 
