@@ -615,7 +615,7 @@ void createNewObjects(object_t t, cte_t *parent, slot_range_t slots,
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
                              extra_caps_t excaps, bool_t block, bool_t call,
-                             bool_t canDonate, word_t *buffer)
+                             bool_t canDonate, bool_t firstPhase, word_t *buffer)
 #else
 exception_t decodeInvocation(word_t invLabel, word_t length,
                              cptr_t capIndex, cte_t *slot, cap_t cap,
@@ -705,6 +705,14 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
 #endif
 
     case cap_thread_cap:
+#ifdef CONFIG_KERNEL_MCS
+        if (unlikely(firstPhase)) {
+            userError("Cannot invoke thread capabilities in the first phase of an invocation");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
         return decodeTCBInvocation(invLabel, length, cap,
                                    slot, excaps, call, buffer);
 
@@ -712,6 +720,14 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
         return decodeDomainInvocation(invLabel, length, excaps, buffer);
 
     case cap_cnode_cap:
+#ifdef CONFIG_KERNEL_MCS
+        if (unlikely(firstPhase)) {
+            userError("Cannot invoke cnode capabilities in the first phase of an invocation");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+#endif
         return decodeCNodeInvocation(invLabel, length, cap, excaps, buffer);
 
     case cap_untyped_cap:
@@ -728,6 +744,12 @@ exception_t decodeInvocation(word_t invLabel, word_t length,
 
 #ifdef CONFIG_KERNEL_MCS
     case cap_sched_control_cap:
+        if (unlikely(firstPhase)) {
+            userError("Cannot invoke sched control capabilities in the first phase of an invocation");
+            current_syscall_error.type = seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 0;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         return decodeSchedControlInvocation(invLabel, cap, length, excaps, buffer);
 
     case cap_sched_context_cap:

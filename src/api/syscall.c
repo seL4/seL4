@@ -303,7 +303,7 @@ exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
 
 
 #ifdef CONFIG_KERNEL_MCS
-static exception_t handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate, cptr_t cptr)
+static exception_t handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate, bool_t firstPhase, cptr_t cptr)
 #else
 static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
 #endif
@@ -357,7 +357,7 @@ static exception_t handleInvocation(bool_t isCall, bool_t isBlocking)
     status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
                               current_extra_caps, isBlocking, isCall,
-                              canDonate, buffer);
+                              canDonate, firstPhase, buffer);
 #else
     status = decodeInvocation(seL4_MessageInfo_get_label(info), length,
                               cptr, lu_ret.slot, lu_ret.cap,
@@ -525,7 +525,7 @@ static inline void mcsIRQ(irq_t irq)
 #else
 #define handleRecv(isBlocking, canReply) handleRecv(isBlocking)
 #define mcsIRQ(irq)
-#define handleInvocation(isCall, isBlocking, canDonate, cptr) handleInvocation(isCall, isBlocking)
+#define handleInvocation(isCall, isBlocking, canDonate, firstPhase, cptr) handleInvocation(isCall, isBlocking)
 #endif
 
 
@@ -551,7 +551,7 @@ exception_t handleSyscall(syscall_t syscall)
         switch (syscall)
         {
         case SysSend:
-            ret = handleInvocation(false, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
+            ret = handleInvocation(false, true, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
                 if (irq != irqInvalid) {
@@ -564,7 +564,7 @@ exception_t handleSyscall(syscall_t syscall)
             break;
 
         case SysNBSend:
-            ret = handleInvocation(false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
+            ret = handleInvocation(false, false, false, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
                 if (irq != irqInvalid) {
@@ -576,7 +576,7 @@ exception_t handleSyscall(syscall_t syscall)
             break;
 
         case SysCall:
-            ret = handleInvocation(true, true, true, getRegister(NODE_STATE(ksCurThread), capRegister));
+            ret = handleInvocation(true, true, true, false, getRegister(NODE_STATE(ksCurThread), capRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
                 if (irq != irqInvalid) {
@@ -610,7 +610,7 @@ exception_t handleSyscall(syscall_t syscall)
             break;
         case SysReplyRecv: {
             cptr_t reply = getRegister(NODE_STATE(ksCurThread), replyRegister);
-            ret = handleInvocation(false, false, true, reply);
+            ret = handleInvocation(false, false, true, true, reply);
             /* reply cannot error and is not preemptible */
             assert(ret == EXCEPTION_NONE);
             handleRecv(true, true);
@@ -619,7 +619,7 @@ exception_t handleSyscall(syscall_t syscall)
 
         case SysNBSendRecv: {
             cptr_t dest = getNBSendRecvDest();
-            ret = handleInvocation(false, false, true, dest);
+            ret = handleInvocation(false, false, true, true, dest);
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
                 if (irq != irqInvalid) {
@@ -634,7 +634,7 @@ exception_t handleSyscall(syscall_t syscall)
         }
 
         case SysNBSendWait:
-            ret = handleInvocation(false, false, true, getRegister(NODE_STATE(ksCurThread), replyRegister));
+            ret = handleInvocation(false, false, true, true, getRegister(NODE_STATE(ksCurThread), replyRegister));
             if (unlikely(ret != EXCEPTION_NONE)) {
                 irq = getActiveIRQ();
                 if (irq != irqInvalid) {
