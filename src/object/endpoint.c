@@ -404,8 +404,13 @@ void cancelBadgedSends(endpoint_t *epptr, word_t badge)
             /* senders do not have reply objects in their state, and we are only cancelling sends */
             assert(REPLY_PTR(thread_state_get_replyObject(thread->tcbState)) == NULL);
             if (b == badge) {
-                setThreadState(thread, ThreadState_Restart);
-                possibleSwitchTo(thread);
+                if (seL4_Fault_get_seL4_FaultType(thread->tcbFault) ==
+                    seL4_Fault_NullFault) {
+                    setThreadState(thread, ThreadState_Restart);
+                    possibleSwitchTo(thread);
+                } else {
+                    setThreadState(thread, ThreadState_Inactive);
+                }
                 queue = tcbEPDequeue(thread, queue);
             }
 #else
