@@ -278,6 +278,11 @@ void cancelIPC(tcb_t *tptr)
 {
     thread_state_t *state = &tptr->tcbState;
 
+#ifdef CONFIG_KERNEL_MCS
+    /* cancel ipc cancels all faults */
+    seL4_Fault_NullFault_ptr_new(&tptr->tcbFault);
+#endif
+
     switch (thread_state_ptr_get_tsType(state)) {
     case ThreadState_BlockedOnSend:
     case ThreadState_BlockedOnReceive: {
@@ -316,7 +321,6 @@ void cancelIPC(tcb_t *tptr)
 
     case ThreadState_BlockedOnReply: {
 #ifdef CONFIG_KERNEL_MCS
-        seL4_Fault_NullFault_ptr_new(&tptr->tcbFault);
         reply_remove_tcb(tptr);
 #else
         cte_t *slot, *callerCap;
