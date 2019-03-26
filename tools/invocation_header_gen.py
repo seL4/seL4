@@ -15,14 +15,14 @@
 # ============================
 
 from __future__ import print_function
+from jinja2 import Environment, BaseLoader
 import argparse
 import sys
 import xml.dom.minidom
-import pkg_resources;
+import pkg_resources
 # We require jinja2 to be at least version 2.10 as we use the 'namespace' feature from
 # that version
 pkg_resources.require("jinja2>=2.10")
-from jinja2 import Environment, BaseLoader
 
 
 COMMON_HEADER = """
@@ -159,22 +159,24 @@ enum arch_invocation_label {
 
 """
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Generate seL4 invocation API \
         constants and header files')
     parser.add_argument('--xml', type=argparse.FileType('r'),
-            help='Name of xml file with invocation definitions', required=True)
+                        help='Name of xml file with invocation definitions', required=True)
     parser.add_argument('--dest', type=argparse.FileType('w'),
-            help='Name of file to create', required=True)
+                        help='Name of file to create', required=True)
     parser.add_argument('--libsel4', action='store_true',
-        help='Is this being generated for libsel4?')
+                        help='Is this being generated for libsel4?')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--arch', action='store_true',
-            help='Is this being generated for the arch layer?')
+                       help='Is this being generated for the arch layer?')
     group.add_argument('--sel4_arch', action='store_true',
-            help='Is this being generated for the seL4 arch layer?')
+                       help='Is this being generated for the seL4 arch layer?')
 
     return parser.parse_args()
+
 
 def parse_xml(xml_file):
     try:
@@ -185,9 +187,11 @@ def parse_xml(xml_file):
 
     invocation_labels = []
     for method in doc.getElementsByTagName("method"):
-        invocation_labels.append((str(method.getAttribute("id")), str(method.getAttribute("condition"))))
+        invocation_labels.append((str(method.getAttribute("id")),
+                                  str(method.getAttribute("condition"))))
 
     return invocation_labels
+
 
 def generate(args, invocations):
 
@@ -203,10 +207,12 @@ def generate(args, invocations):
     else:
         template = Environment(loader=BaseLoader).from_string(INVOCATION_TEMPLATE)
 
-    data = template.render({'header_title': header_title, 'libsel4' : args.libsel4, 'invocations' : invocations, 'num_invocations' : len(invocations)})
+    data = template.render({'header_title': header_title, 'libsel4': args.libsel4,
+                            'invocations': invocations, 'num_invocations': len(invocations)})
     args.dest.write(data)
 
     args.dest.close()
+
 
 if __name__ == "__main__":
     args = parse_args()
@@ -215,4 +221,3 @@ if __name__ == "__main__":
     args.xml.close()
 
     generate(args, invocations)
-

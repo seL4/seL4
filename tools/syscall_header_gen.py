@@ -15,15 +15,15 @@
 # ==============================
 
 from __future__ import print_function
+from jinja2 import Environment, BaseLoader
 import argparse
 import re
 import sys
 import xml.dom.minidom
-import pkg_resources;
+import pkg_resources
 # We require jinja2 to be at least version 2.10 as we use the 'namespace' feature from
 # that version
 pkg_resources.require("jinja2>=2.10")
-from jinja2 import Environment, BaseLoader
 
 
 COMMON_HEADER = """
@@ -139,25 +139,27 @@ typedef enum {
 
 """
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="""Generate seL4 syscall API constants
                                                     and associated header files""")
     parser.add_argument('--xml', type=argparse.FileType('r'),
-            help='Name of xml file with syscall name definitions', required=True)
+                        help='Name of xml file with syscall name definitions', required=True)
     parser.add_argument('--kernel_header', type=argparse.FileType('w'),
-            help='Name of file to generate for kernel')
+                        help='Name of file to generate for kernel')
     parser.add_argument('--libsel4_header', type=argparse.FileType('w'),
-            help='Name of file to generate for libsel4')
+                        help='Name of file to generate for libsel4')
 
     result = parser.parse_args()
 
     if result.kernel_header is None and result.libsel4_header is None:
         print("Error: must provide either kernel_header or libsel4_header",
-                file=sys.stderr)
+              file=sys.stderr)
         parser.print_help()
         exit(-1)
 
     return result
+
 
 def parse_syscall_list(element):
     syscalls = []
@@ -186,18 +188,18 @@ def parse_xml(xml_file):
     api = doc.getElementsByTagName("api")
     if len(api) != 1:
         print("Error: malformed xml. Only one api element allowed",
-                file=sys.stderr)
+              file=sys.stderr)
         sys.exit(-1)
 
     configs = api[0].getElementsByTagName("config")
     if len(configs) != 1:
         print("Error: api element only supports 1 config element",
-                file=sys.stderr)
+              file=sys.stderr)
         sys.exit(-1)
 
     if len(configs[0].getAttribute("name")) != 0:
         print("Error: api element config only supports an empty name",
-                file=sys.stderr)
+              file=sys.stderr)
         sys.exit(-1)
 
     # debug elements are optional
@@ -212,18 +214,23 @@ def parse_xml(xml_file):
 
     return (api_elements, debug)
 
+
 def convert_to_assembler_format(s):
     words = re.findall('[A-Z][A-Z]?[^A-Z]*', s)
     return '_'.join(words).upper()
 
+
 def generate_kernel_file(kernel_header, api, debug):
-    template = Environment(loader=BaseLoader, trim_blocks=False, lstrip_blocks=False).from_string(KERNEL_HEADER_TEMPLATE)
-    data = template.render({'assembler': api, 'enum' : api + debug, 'upper' : convert_to_assembler_format})
+    template = Environment(loader=BaseLoader, trim_blocks=False,
+                           lstrip_blocks=False).from_string(KERNEL_HEADER_TEMPLATE)
+    data = template.render({'assembler': api, 'enum': api + debug,
+                            'upper': convert_to_assembler_format})
     kernel_header.write(data)
 
 
 def generate_libsel4_file(libsel4_header, syscalls):
-    template = Environment(loader=BaseLoader, trim_blocks=False, lstrip_blocks=False).from_string(LIBSEL4_HEADER_TEMPLATE )
+    template = Environment(loader=BaseLoader, trim_blocks=False,
+                           lstrip_blocks=False).from_string(LIBSEL4_HEADER_TEMPLATE)
     data = template.render({'enum': syscalls})
     libsel4_header.write(data)
 
@@ -241,4 +248,3 @@ if __name__ == "__main__":
     if (args.libsel4_header is not None):
         generate_libsel4_file(args.libsel4_header, api + debug)
         args.libsel4_header.close()
-

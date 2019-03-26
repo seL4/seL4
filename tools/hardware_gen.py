@@ -25,14 +25,18 @@ try:
     from jsonschema import validate
 except ImportError:
     logging.warning("Skipping hardware YAML validation, `pip install jsonschema` to validate")
+
     def validate(*args, **kwargs):
         pass
+
 
 def align_down(addr, boundary):
     return addr & ~(boundary - 1)
 
+
 def align_up(addr, boundary):
     return (addr + (boundary - 1)) & ~(boundary - 1)
+
 
 def make_number(cells, array):
     """ make a number with "cells" cells from the given list """
@@ -41,6 +45,7 @@ def make_number(cells, array):
         ret = (ret << 32)
         ret |= array.pop(0)
     return ret
+
 
 def parse_arm_gic_irq(self, child, by_phandle, data):
     # 3 cells:
@@ -51,11 +56,12 @@ def parse_arm_gic_irq(self, child, by_phandle, data):
     number = data.pop(0)
     flags = data.pop(0)
 
-    number += 16 # SGI takes 0-15
+    number += 16  # SGI takes 0-15
     if is_spi:
-        number += 16 # PPI is 16-31
+        number += 16  # PPI is 16-31
 
     return number
+
 
 def parse_raw_irq(self, child, by_phandle, data):
     # first cells is interrupt number, may have flags or other data
@@ -67,6 +73,7 @@ def parse_raw_irq(self, child, by_phandle, data):
         cells -= 1
     return num
 
+
 def parse_bcm2836_armctrl_irq(self, child, by_phandle, data):
     # two cells, first is bank, second is number within bank
     bank = data.pop(0)
@@ -75,11 +82,13 @@ def parse_bcm2836_armctrl_irq(self, child, by_phandle, data):
     bank += 1
     return (32 * bank) + num
 
+
 def parse_passthrough_irq(self, child, by_phandle, data):
     # IRQ just passes through to this node's interrupt-parent.
     parent = self.get_interrupt_parent(by_phandle)
 
     return parent.parse_interrupt(child, by_phandle, data)
+
 
 interrupt_controllers = {
     'arm,cortex-a15-gic': parse_arm_gic_irq,
@@ -88,7 +97,7 @@ interrupt_controllers = {
     'arm,gic-400': parse_arm_gic_irq,
     'arm,gic-v3': parse_arm_gic_irq,
     'brcm,bcm2836-l1-intc': parse_raw_irq,
-    'brcm,bcm2836-armctrl-ic': parse_bcm2836_armctrl_irq, # maybe not actually needed?
+    'brcm,bcm2836-armctrl-ic': parse_bcm2836_armctrl_irq,  # maybe not actually needed?
     'fsl,avic': parse_raw_irq,
     'fsl,imx6q-gpc': parse_passthrough_irq,
     'fsl,imx7d-gpc': parse_passthrough_irq,
@@ -97,6 +106,7 @@ interrupt_controllers = {
     'ti,am33xx-intc': parse_raw_irq,
     'ti,omap3-intc': parse_raw_irq,
 }
+
 
 class Interrupt:
     def __init__(self, num, name, macro=None, prio=0):
@@ -116,10 +126,11 @@ class Interrupt:
         return hash(self.num)
 
     def __str__(self):
-        return 'Interrupt(num=%d,name=%s,macro=%s)'%(self.num, self.name, self.macro)
+        return 'Interrupt(num=%d,name=%s,macro=%s)' % (self.num, self.name, self.macro)
 
     def __repr__(self):
         return str(self)
+
 
 @functools.total_ordering
 class Offset:
@@ -138,6 +149,7 @@ class Offset:
 
     def __gt__(self, other):
         return (self.base + self.offset) > (other.base + other.offset)
+
 
 class Region:
     def __init__(self, start, size, name, index=0, kaddr=0):
@@ -172,7 +184,7 @@ class Region:
         return hash((self.start, self.size))
 
     def __str__(self):
-        return '%s(0x%x-0x%x)'%('+'.join(sorted(self.names)), self.start, self.start + self.size - 1)
+        return '%s(0x%x-0x%x)' % ('+'.join(sorted(self.names)), self.start, self.start + self.size - 1)
 
     def __repr__(self):
         return str(self)
@@ -186,7 +198,7 @@ class Region:
         ostart = other.start
         oend = other.start + other.size
         return (sstart <= ostart and send > ostart) or \
-                (ostart <= sstart and oend > sstart)
+            (ostart <= sstart and oend > sstart)
 
     def get_macro_string(self, invert=False):
         ret = ''
@@ -361,7 +373,8 @@ class Device:
             if compat in interrupt_controllers:
                 return interrupt_controllers[compat](self, child, by_phandle, data)
 
-        logging.info('Unknown interrupt controller: "%s"'%'", "'.join(self.props['compatible'].strings))
+        logging.info('Unknown interrupt controller: "%s"' %
+                     '", "'.join(self.props['compatible'].strings))
         if '#interrupt-cells' in self.props:
             for i in range(self.props['#interrupt-cells'].words[0]):
                 data.pop(0)
@@ -403,7 +416,7 @@ class Device:
                 return self.parent.translate_child_address(addr - cbase + pbase)
         # if we get here, the device tree is probably wrong - print out a warning
         # but continue as though the address was identity-mapped.
-        logging.warning("Untranslatable address 0x%x in %s, not translating"%(addr, self.name))
+        logging.warning("Untranslatable address 0x%x in %s, not translating" % (addr, self.name))
         return self.parent.translate_child_address(addr)
 
     def is_memory(self):
@@ -423,7 +436,8 @@ class Device:
             base = make_number(addr_cells, data)
             length = make_number(size_cells, data)
 
-            regions.append(Region(self.parent.translate_child_address(base), length, self.node.get_name()))
+            regions.append(Region(self.parent.translate_child_address(
+                base), length, self.node.get_name()))
 
         if not self.is_memory() and 'compatible' in self.props:
             (user, kernel) = config.split_regions(self, regions, by_phandle)
@@ -438,6 +452,7 @@ class Device:
 
     def __contains__(self, key):
         return key in self.props
+
 
 class Config:
     def __init__(self, blob):
@@ -572,11 +587,11 @@ class Config:
                             num = 0
                     elif type(idx) is dict:
                         res = Interrupt(irqs[idx['defined']], irq, idx['macro'], prio)
-                        res.desc = "%s '%s' IRQ %d"%(device.name, compatible, idx['defined'])
+                        res.desc = "%s '%s' IRQ %d" % (device.name, compatible, idx['defined'])
                         ret.add(res)
 
                         res = Interrupt(irqs[idx['undefined']], irq, '!' + idx['macro'], prio)
-                        res.desc = "%s '%s' IRQ %d"%(device.name, compatible, idx['undefined'])
+                        res.desc = "%s '%s' IRQ %d" % (device.name, compatible, idx['undefined'])
                         ret.add(res)
                         continue
                     elif type(irq_rule) is int:
@@ -585,7 +600,7 @@ class Config:
                         num = idx
                     if num < len(irqs):
                         irq = Interrupt(irqs[num], irq, macro if macro != 'all' else None, prio)
-                        irq.desc = "%s '%s' IRQ %d"%(device.name, compatible, num)
+                        irq.desc = "%s '%s' IRQ %d" % (device.name, compatible, num)
                         ret.add(irq)
             if len(ret) > 0:
                 break
@@ -593,6 +608,7 @@ class Config:
 
     def get_matched_devices(self):
         return sorted(self.matched_devices)
+
 
 def is_compatible(node, compatibles):
     """ returns True if node matches a compatible in the given list """
@@ -604,6 +620,7 @@ def is_compatible(node, compatibles):
         if c in node[prop].strings:
             return True
     return False
+
 
 def should_parse_regions(root, node):
     """ returns True if we should parse regions found in this node. """
@@ -621,6 +638,7 @@ def should_parse_regions(root, node):
         return should_parse_regions(root, parent)
     except ValueError:
         return False
+
 
 def parse_reserved_memory(node, devices, cfg, by_phandle):
     regions = []
@@ -642,6 +660,7 @@ def parse_reserved_memory(node, devices, cfg, by_phandle):
 
     return regions
 
+
 def find_devices(dtb, cfg):
     devices = {}
     nodes = {}
@@ -653,7 +672,7 @@ def find_devices(dtb, cfg):
     root.path = '/'
     devices[root.name] = Device(root, None, '/')
     nodes[root.name] = devices[root.name]
-    for child in root.walk(): # walk every node in the whole tree
+    for child in root.walk():  # walk every node in the whole tree
         name = child[0]
         child = child[1]
         if not isinstance(child, pyfdt.pyfdt.FdtNode):
@@ -682,6 +701,7 @@ def find_devices(dtb, cfg):
     # the root node is not actually a device, so remove it.
     del devices[root.name]
     return devices, by_phandle
+
 
 def fixup_device_regions(regions, pagesz, merge=False):
     """ page align all regions and check for overlapping regions """
@@ -714,7 +734,7 @@ def fixup_device_regions(regions, pagesz, merge=False):
             # FIXME: this will break some proof invariants if conditional regions overlap
             # with unconditional regions. We don't handle this case for now.
             if (ret[i].user_macro and ret[i].get_macro_string()) or \
-                (ret[i-1].user_macro and ret[i-1].get_macro_string()):
+                    (ret[i-1].user_macro and ret[i-1].get_macro_string()):
                 i += 1
                 continue
             # check if this region overlaps with the previous region.
@@ -734,7 +754,6 @@ def fixup_device_regions(regions, pagesz, merge=False):
                 del ret[i]
             else:
                 i += 1
-
 
     return set(ret)
 
@@ -830,10 +849,12 @@ static const p_region_t BOOT_RODATA dev_p_regs[] = {
 #endif /* __PLAT_DEVICES_GEN_H */
 """
 
+
 def add_build_rules(devices, output):
     devices[-1] = devices[-1] + ";"
-    #print result to cmake variable
+    # print result to cmake variable
     print(';'.join(devices), file=output)
+
 
 def output_regions(args, devices, memory, kernel, irqs, fp):
     """ generate the device list for the C header file """
@@ -847,21 +868,21 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
         addr += 1 << args.page_bits
         if reg.size > (1 << args.page_bits) and reg.kernel_size == 0x0:
             # print out a warning if the region has more than one page and max size is not set
-            logging.warning('Only mapping 0x%x bytes of 0x%x for kernel region at 0x%x (%s), set "kernel_size" in YAML to silence'%
-                    (1 << args.page_bits, reg.size, reg.start, ' '.join(sorted(reg.names))))
+            logging.warning('Only mapping 0x%x bytes of 0x%x for kernel region at 0x%x (%s), set "kernel_size" in YAML to silence' %
+                            (1 << args.page_bits, reg.size, reg.start, ' '.join(sorted(reg.names))))
 
         size = 1 << args.page_bits
         while size < reg.kernel_size and size < reg.size:
             extra_kernel.append(Region(reg.start + size, 1 << args.page_bits,
-                'above region continued...', kaddr=addr))
+                                       'above region continued...', kaddr=addr))
             addr += 1 << args.page_bits
             size += 1 << args.page_bits
 
         for var in reg.kernel_var:
             var.base = reg.kaddr
             if var.base + var.offset in macros:
-                logging.warning('Multiple kernel device macros with the same address 0x%x (%s, %s), ignoring %s.'%
-                    (var.base + var.offset, var.name, macros[var.base + var.offset].name, var.name))
+                logging.warning('Multiple kernel device macros with the same address 0x%x (%s, %s), ignoring %s.' %
+                                (var.base + var.offset, var.name, macros[var.base + var.offset].name, var.name))
                 continue
             macros[var.base + var.offset] = var
         reg.var_names = sorted(i.name for i in reg.kernel_var)
@@ -874,7 +895,8 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
     memory[0].size -= paddr - memory[0].start
     memory[0].start = paddr
 
-    template = Environment(loader=BaseLoader, trim_blocks=False, lstrip_blocks=False).from_string(HEADER_TEMPLATE)
+    template = Environment(loader=BaseLoader, trim_blocks=False,
+                           lstrip_blocks=False).from_string(HEADER_TEMPLATE)
     data = template.render(dict(
         __builtins__.__dict__,
         **{
@@ -887,6 +909,7 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
             'macros': macros
         }))
     fp.write(data)
+
 
 def main(args):
     schema = yaml.load(args.schema)
@@ -906,7 +929,7 @@ def main(args):
     for d in devices.values():
         kernel_irqs.update(d.get_interrupts(cfg, by_phandle))
         if d.is_memory():
-            m, _ = d.regions(cfg, by_phandle) # second set is always empty for memory
+            m, _ = d.regions(cfg, by_phandle)  # second set is always empty for memory
             res = set()
             for e in m:
                 res.update(set(e.remove_subregions(rsvmem)))
@@ -936,19 +959,26 @@ def main(args):
     user = fixup_device_regions(user, 1 << args.page_bits, merge=True)
     kernel = fixup_device_regions(kernel, 1 << args.page_bits)
     output_regions(args, user, memory, kernel, kernel_irqs, args.output)
-  
-    #generate cmake
+
+    # generate cmake
     if args.compatibility_strings:
         add_build_rules(cfg.get_matched_devices(), args.compatibility_strings)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dtb', help='device tree blob to use for generation', required=True, type=argparse.FileType('rb'))
-    parser.add_argument('--output', help='output file for generated header', required=True, type=argparse.FileType('w'))
-    parser.add_argument('--compatibility-strings', help='File to write CMake list of compatibility strings', type=argparse.FileType('w'))
+    parser.add_argument('--dtb', help='device tree blob to use for generation',
+                        required=True, type=argparse.FileType('rb'))
+    parser.add_argument('--output', help='output file for generated header',
+                        required=True, type=argparse.FileType('w'))
+    parser.add_argument('--compatibility-strings',
+                        help='File to write CMake list of compatibility strings', type=argparse.FileType('w'))
     parser.add_argument('--page-bits', help='number of bits per page', default=12, type=int)
-    parser.add_argument('--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
-    parser.add_argument('--config', help='kernel device configuration', required=True, type=argparse.FileType())
-    parser.add_argument('--schema', help='config file schema for validation', required=True, type=argparse.FileType())
+    parser.add_argument(
+        '--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
+    parser.add_argument('--config', help='kernel device configuration',
+                        required=True, type=argparse.FileType())
+    parser.add_argument('--schema', help='config file schema for validation',
+                        required=True, type=argparse.FileType())
     args = parser.parse_args()
     main(args)

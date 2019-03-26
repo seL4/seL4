@@ -25,7 +25,7 @@ output_filename = sys.argv[1]
 
 # Fetch details about the current repo revision.
 p = subprocess.Popen(["git", "log", "-r", "HEAD", "-n", "1", "--pretty=format:%ci"],
-        stdout=subprocess.PIPE)
+                     stdout=subprocess.PIPE)
 commit_date_string = p.communicate()[0]
 
 # in python3, this is a bytes, so convert it to a str
@@ -54,4 +54,3 @@ if new_data != old_data:
 
 # Done!
 sys.exit(0)
-

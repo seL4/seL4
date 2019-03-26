@@ -20,6 +20,7 @@ import sys
 import re
 import argparse
 
+
 def main(parse_args):
     """
     Reads pre-processed sel4 source from standard input.
@@ -66,6 +67,7 @@ def main(parse_args):
                 file_stack.pop()
 
     return 0
+
 
 if __name__ == "__main__":
 
