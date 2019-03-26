@@ -39,12 +39,13 @@ DEPS = [
     'jsonschema',
     'pyfdt',
     'cmake-format',
-    'guardonce'
+    'guardonce',
+    'autopep8'
 ]
 
 setup(
     name='sel4-deps',
-    version='0.2.2',
+    version='0.2.3',
     description='Metapackage for downloading build dependencies for the seL4 microkernel',
     url="https://sel4.systems",
     licence='BSD2',
