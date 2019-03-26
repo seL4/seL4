@@ -39,6 +39,7 @@ Upcoming release: BREAKING
 * Add managed TLS register for all platforms
 * Add configurable system call allowing userspace to set TLS register without capability on all platforms.
 * Non-hyp support added for Arm GICv3 interrupt controller.
+* Add initial i.MX8M Quad evk 64-bit Support. Currently only AArch64 EL1 non-secure is supported.
 
 ## Upgrade Notes
 ---
