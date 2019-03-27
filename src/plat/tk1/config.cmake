@@ -34,15 +34,14 @@ if(KernelPlatformTK1)
     declare_default_headers(
         TIMER_FREQUENCY 12000000llu
         MAX_IRQ 191
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         TIMER drivers/timer/arm_generic.h SMMU plat/machine/smmu.h
     )
 endif()
 
 add_sources(
     DEP "KernelPlatformTK1"
-    CFILES
-        src/plat/tk1/machine/smmu.c src/arch/arm/machine/gic_pl390.c src/arch/arm/machine/l2c_nop.c
+    CFILES src/plat/tk1/machine/smmu.c src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )
 
 add_bf_source_old("KernelPlatformTK1" "hardware.bf" "include/plat/tk1" "plat/machine")

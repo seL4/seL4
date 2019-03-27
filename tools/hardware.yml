@@ -23,15 +23,15 @@ devices:
         # distributor
       - executeNever: true
         index: 0
-        kernel: GIC_PL390_DISTRIBUTOR_PPTR
+        kernel: GIC_V2_DISTRIBUTOR_PPTR
         # controller
       - executeNever: true
         index: 1
-        kernel: GIC_PL390_CONTROLLER_PPTR
+        kernel: GIC_V2_CONTROLLER_PPTR
         # GICV
       - executeNever: false
         index: 2
-        kernel: GIC_PL400_VCPUCTRL_PPTR
+        kernel: GIC_V2_VCPUCTRL_PPTR
         macro: CONFIG_ARM_HYPERVISOR_SUPPORT
         user: false # never expose to userspace, even if macro is false.
         # other regions (i.e. GICH)

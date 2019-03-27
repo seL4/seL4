@@ -26,11 +26,11 @@ if(KernelPlatformAllwinnerA20)
         TIMER_FREQUENCY 24000000llu
         MAX_IRQ 122
         TIMER drivers/timer/allwinner.h
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
     )
 endif()
 
 add_sources(
     DEP "KernelPlatformAllwinnerA20"
-    CFILES src/plat/allwinnerA20/machine/l2cache.c src/arch/arm/machine/gic_pl390.c
+    CFILES src/plat/allwinnerA20/machine/l2cache.c src/arch/arm/machine/gic_v2.c
 )

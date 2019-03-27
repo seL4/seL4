@@ -29,12 +29,12 @@ if(KernelPlatformTx2)
     declare_default_headers(
         TIMER_FREQUENCY 31250000llu
         MAX_IRQ 383
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         TIMER drivers/timer/arm_generic.h
     )
 endif()
 
 add_sources(
     DEP "KernelPlatformTx2"
-    CFILES src/arch/arm/machine/gic_pl390.c src/arch/arm/machine/l2c_nop.c
+    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )

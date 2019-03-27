@@ -43,12 +43,12 @@ if(KernelPlatImx6)
     declare_default_headers(
         TIMER_FREQUENCY 400000000llu
         MAX_IRQ 159
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
         TIMER drivers/timer/arm_priv.h
     )
 endif()
 
 add_sources(
     DEP "KernelPlatImx6"
-    CFILES src/arch/arm/machine/l2c_310.c src/arch/arm/machine/gic_pl390.c
+    CFILES src/arch/arm/machine/l2c_310.c src/arch/arm/machine/gic_v2.c
 )

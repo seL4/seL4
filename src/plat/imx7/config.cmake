@@ -26,7 +26,7 @@ if(KernelPlatImx7)
         TIMER_FREQUENCY 8000000llu
         MAX_IRQ 159
         TIMER drivers/timer/arm_generic.h
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
     )
 else()
     config_set(KernelPlatImx7 PLAT_IMX7 OFF)
@@ -34,5 +34,5 @@ endif()
 
 add_sources(
     DEP "KernelPlatImx7"
-    CFILES src/arch/arm/machine/gic_pl390.c src/arch/arm/machine/l2c_nop.c
+    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )

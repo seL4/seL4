@@ -26,11 +26,11 @@ if(KernelPlatformExynos4)
         TIMER_FREQUENCY 24000000llu
         MAX_IRQ 159
         TIMER drivers/timer/exynos4412-mct.h
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
     )
 endif()
 
 add_sources(
     DEP "KernelPlatformExynos4"
-    CFILES src/arch/arm/machine/l2c_310.c src/arch/arm/machine/gic_pl390.c
+    CFILES src/arch/arm/machine/l2c_310.c src/arch/arm/machine/gic_v2.c
 )

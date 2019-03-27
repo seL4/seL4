@@ -36,7 +36,7 @@ if(KernelPlatformHikey)
         TIMER_FREQUENCY 1200000llu
         MAX_IRQ 159
         TIMER drivers/timer/arm_generic.h
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
     )
 endif()
 
@@ -94,5 +94,5 @@ config_option(
 
 add_sources(
     DEP "KernelPlatformHikey"
-    CFILES src/arch/arm/machine/gic_pl390.c src/arch/arm/machine/l2c_nop.c
+    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )

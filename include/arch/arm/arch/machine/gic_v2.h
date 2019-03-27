@@ -11,8 +11,8 @@
 /*
  * ARM Generic Interrupt Controller PL-390
  */
-#ifndef __ARCH_MACHINE_GICPL390_H
-#define __ARCH_MACHINE_GICPL390_H
+#ifndef __ARCH_MACHINE_GIC_V2_H
+#define __ARCH_MACHINE_GIC_V2_H
 
 /* tell the kernel we have the set trigger feature */
 #define HAVE_SET_TRIGGER 1
@@ -321,4 +321,4 @@ static inline void set_gic_vcpu_ctrl_lr(int num, virq_t lr)
 
 #endif /* End of CONFIG_ARM_HYPERVISOR_SUPPORT */
 
-#endif /* !__ARCH_MACHINE_GICPL390_H */
+#endif /* !__ARCH_MACHINE_GIC_V2_H */

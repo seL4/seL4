@@ -25,11 +25,11 @@ if(KernelPlatformOdroidc2)
         TIMER_FREQUENCY 24000000llu
         MAX_IRQ 250
         TIMER drivers/timer/arm_generic.h
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        INTERRUPT_CONTROLLER arch/machine/gic_v2.h
     )
 endif()
 
 add_sources(
     DEP "KernelPlatformOdroidc2"
-    CFILES src/arch/arm/machine/gic_pl390.c src/arch/arm/machine/l2c_nop.c
+    CFILES src/arch/arm/machine/gic_v2.c src/arch/arm/machine/l2c_nop.c
 )
