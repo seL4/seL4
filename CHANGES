@@ -42,6 +42,11 @@ Upcoming release: BREAKING
 * Add initial i.MX8M Quad evk 64-bit Support. Currently only AArch64 EL1 non-secure is supported.
 * Add FVP platform with fixed configuration. This currently assumes A57 configuration described in tools/dts/fvp.dts.
 * Add new seL4_DebugSendIPI syscall to send arbitrary SGIs on ARM when SMP and DEBUG_BUILD are activated.
+* Support for aarch64-hyp configurations with 40-bit physical addresses (PA) added.
+    - The aarch64 api now refers to VSpaces rather than PageGlobalDirectories,
+      as depending on the PA the top level translation structure can change.
+    - all `seL4_ARM_PageGlobalDirectory` invocations are now `seL4_ARM_VSpace` invocations.
+    - new constants 'seL4_ARM_VSpaceObject` and `seL4_VSpaceIndexBits`.
 
 ## Upgrade Notes
 ---
