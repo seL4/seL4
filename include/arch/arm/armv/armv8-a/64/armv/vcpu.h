@@ -51,13 +51,13 @@
 #define ESR_EC_CPACR        0x18        /* Trap access to CPACR                        */
 #define ESR_EC(x)           (((x) & 0xfc000000) >> 26)
 
-#define VTCR_EL2_T0SZ(x)    (x)
-#define VTCR_EL2_SL0(x)     ((x) << 6)
-#define VTCR_EL2_IRGN0(x)   ((x) << 8)
-#define VTCR_EL2_ORGN0(x)   ((x) << 10)
-#define VTCR_EL2_SH0(x)     ((x) << 12)
-#define VTCR_EL2_TG0(x)     ((x) << 14)
-#define VTCR_EL2_PS(x)      ((x) << 16)
+#define VTCR_EL2_T0SZ(x)    ((x) & 0x3f)
+#define VTCR_EL2_SL0(x)     (((x) & 0x3) << 6)
+#define VTCR_EL2_IRGN0(x)   (((x) & 0x3) << 8)
+#define VTCR_EL2_ORGN0(x)   (((x) & 0x3) << 10)
+#define VTCR_EL2_SH0(x)     (((x) & 0x3) << 12)
+#define VTCR_EL2_TG0(x)     (((x) & 0x3) << 14)
+#define VTCR_EL2_PS(x)      (((x) & 0x7) << 16)
 
 /* Physical address size */
 #define PS_4G               0
