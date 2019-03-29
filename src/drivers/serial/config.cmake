@@ -39,3 +39,8 @@ register_driver(
     CFILES "msm-uartdm.c"
 )
 register_driver(compatibility_strings "xlnx,xuartps" PREFIX src/drivers/serial CFILES "xuartps.c")
+register_driver(
+    compatibility_strings "amlogic,meson-gx-uart"
+    PREFIX src/drivers/serial
+    CFILES "meson-gx-uart.c"
+)

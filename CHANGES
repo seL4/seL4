@@ -25,6 +25,7 @@ Upcoming release: BREAKING
 * Support for generating ARM machine header files (memory regions and interrupts) based on a device tree.
 * Support added for ARM kernel serial driver to be linked in at build time based on the device tree compatibility string.
 * Support added for compiling verified configurations of the kernel with Clang 7.
+* Support added for Hardkernel ODROID-C2.
 
 ## Upgrade Notes
 ---

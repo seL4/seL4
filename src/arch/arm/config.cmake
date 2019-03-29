@@ -45,6 +45,7 @@ config_choice(
     "rpi3;KernelPlatformRpi3;PLAT_BCM2837;KernelArchARM"
     "tx1;KernelPlatformTx1;PLAT_TX1;KernelSel4ArchAarch64"
     "tx2;KernelPlatformTx2;PLAT_TX2;KernelSel4ArchAarch64"
+    "odroidc2;KernelPlatformOdroidc2;PLAT_ODROIDC2;KernelSel4ArchAarch64"
 )
 
 if(KernelArchARM)
@@ -117,6 +118,7 @@ include(src/plat/tx1/config.cmake)
 include(src/plat/tx2/config.cmake)
 include(src/plat/zynq7000/config.cmake)
 include(src/plat/zynqmp/config.cmake)
+include(src/plat/odroidc2/config.cmake)
 
 if(DEFINED KernelDTSList)
     set(KernelDTSIntermediate "${CMAKE_CURRENT_BINARY_DIR}/kernel.dts")

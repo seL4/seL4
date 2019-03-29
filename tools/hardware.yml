@@ -215,6 +215,7 @@ devices:
         user: true
   # various serial consoles (`grep <compatible> serial/*`)
   - compatible:
+    - amlogic,meson-gx-uart
     - arm,pl011
     - brcm,bcm2835-aux-uart
     - fsl,imx31-uart
