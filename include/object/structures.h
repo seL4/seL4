@@ -213,62 +213,63 @@ static inline vm_attributes_t CONST vmAttributesFromWord(word_t w)
     return attr;
 }
 
-/* TCB: size 64 bytes + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
+/* TCB: size >= 18 words + sizeof(arch_tcb_t) (aligned to nearest power of 2) */
 struct tcb {
     /* arch specific tcb state (including context)*/
     arch_tcb_t tcbArch;
 
-    /* Thread state, 12 bytes */
+    /* Thread state, 3 words */
     thread_state_t tcbState;
 
     /* Notification that this TCB is bound to. If this is set, when this TCB waits on
      * any sync endpoint, it may receive a signal from a Notification object.
-     * 4 bytes*/
+     * 1 word*/
     notification_t *tcbBoundNotification;
 
-    /* Current fault, 8 bytes */
+    /* Current fault, 2 words */
     seL4_Fault_t tcbFault;
 
-    /* Current lookup failure, 8 bytes */
+    /* Current lookup failure, 2 words */
     lookup_fault_t tcbLookupFailure;
 
-    /* Domain, 1 byte (packed to 4) */
+    /* Domain, 1 byte (padded to 1 word) */
     dom_t tcbDomain;
 
-    /*  maximum controlled priority, 1 byte (packed to 4) */
+    /*  maximum controlled priority, 1 byte (padded to 1 word) */
     prio_t tcbMCP;
 
-    /* Priority, 1 byte (packed to 4) */
+    /* Priority, 1 byte (padded to 1 word) */
     prio_t tcbPriority;
 
-    /* Timeslice remaining, 4 bytes */
+    /* Timeslice remaining, 1 word */
     word_t tcbTimeSlice;
 
-    /* Capability pointer to thread fault handler, 4 bytes */
+    /* Capability pointer to thread fault handler, 1 word */
     cptr_t tcbFaultHandler;
 
-    /* userland virtual address of thread IPC buffer, 4 bytes */
+    /* userland virtual address of thread IPC buffer, 1 word */
     word_t tcbIPCBuffer;
 
 #ifdef ENABLE_SMP_SUPPORT
-    /* cpu ID this thread is running on */
+    /* cpu ID this thread is running on, 1 word */
     word_t tcbAffinity;
 #endif /* ENABLE_SMP_SUPPORT */
 
-    /* Previous and next pointers for scheduler queues , 8 bytes */
+    /* Previous and next pointers for scheduler queues , 2 words */
     struct tcb *tcbSchedNext;
     struct tcb *tcbSchedPrev;
-    /* Preivous and next pointers for endpoint and notification queues, 8 bytes */
+    /* Preivous and next pointers for endpoint and notification queues, 2 words */
     struct tcb *tcbEPNext;
     struct tcb *tcbEPPrev;
 
 #ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
+    /* 16 bytes (12 bytes aarch32) */
     benchmark_util_t benchmark;
 #endif
 
 #ifdef CONFIG_DEBUG_BUILD
     /* Pointers for list of all tcbs that is maintained
-     * when CONFIG_DEBUG_BUILD is enabled */
+     * when CONFIG_DEBUG_BUILD is enabled, 2 words */
     struct tcb *tcbDebugNext;
     struct tcb *tcbDebugPrev;
     /* Use any remaining space for a thread name */
