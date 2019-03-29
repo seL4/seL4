@@ -156,10 +156,21 @@ typedef struct debug_register_pair {
     word_t cr, vr;
 } debug_register_pair_t;
 
+/*
+ * This padding ensures that there is reasonable leeway when determining
+ * the size of the untyped needed for a TCB when watchpoint handling is
+ * involved.
+ */
+#define EXLUSIVE_WATCHPOINT_PADING 6
+#define EXLUSIVE_WATCHPOINT_PADDED \
+    (seL4_NumExclusiveWatchpoints > EXLUSIVE_WATCHPOINT_PADING) \
+        ? seL4_NumExclusiveWatchpoints \
+        : EXLUSIVE_WATCHPOINT_PADING
+
 typedef struct user_breakpoint_state {
     /* We don't use context comparisons. */
     debug_register_pair_t breakpoint[seL4_NumExclusiveBreakpoints],
-                          watchpoint[seL4_NumExclusiveWatchpoints];
+                          watchpoint[EXLUSIVE_WATCHPOINT_PADDED];
     uint32_t used_breakpoints_bf;
     word_t n_instructions;
     bool_t single_step_enabled;
