@@ -38,7 +38,7 @@
 /* This represents the physical address that the kernel image will be linked to. This needs to
  * be on a 1gb boundary as we currently require being able to creating a mapping to this address
  * as the largest frame size */
-#define PADDR_LOAD 0xC0000000lu
+#define PADDR_LOAD 0x84000000lu
 #endif
 
 /* The highest valid physical address that can be indexed in the kernel window */

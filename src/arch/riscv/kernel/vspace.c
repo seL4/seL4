@@ -38,6 +38,7 @@
 #include <arch/machine.h>
 #include <plat/machine/hardware.h>
 #include <kernel/stack.h>
+#include <util.h>
 
 struct resolve_ret {
     paddr_t frameBase;
@@ -107,7 +108,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
 
     /* first we map in memory from PADDR_BASE */
     word_t paddr = PADDR_BASE;
-    while (pptr < KERNEL_BASE) {
+    while (pptr < ROUND_DOWN(KERNEL_BASE, RISCV_GET_LVL_PGSIZE_BITS(1))) {
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
 
@@ -116,19 +117,25 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         pptr += RISCV_GET_LVL_PGSIZE(1);
         paddr += RISCV_GET_LVL_PGSIZE(1);
     }
-    /* now we should be mapping the 1GiB kernel base, starting again from PADDR_LOAD */
-    assert(pptr == KERNEL_BASE);
-    paddr = PADDR_LOAD;
+    /* now we should be mapping the 1GiB kernel base */
+    assert(pptr == ROUND_DOWN(KERNEL_BASE, RISCV_GET_LVL_PGSIZE_BITS(1)));
+    paddr = ROUND_DOWN(PADDR_LOAD, RISCV_GET_LVL_PGSIZE_BITS(1));
 
-#ifndef RISCV_KERNEL_WINDOW_LEVEL2_PT
+#if __riscv_xlen == 32
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] = pte_next(paddr, true);
     pptr += RISCV_GET_LVL_PGSIZE(1);
     paddr += RISCV_GET_LVL_PGSIZE(1);
 #else
     word_t index = 0;
+    /* The kernel image are mapped twice, locating the two indexes in the
+     * root page table, pointing them to the same second level page table.
+     */
+    kernel_root_pageTable[RISCV_GET_PT_INDEX(PADDR_LOAD + BASE_OFFSET, 1)] =
+        pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] =
         pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
-    while (pptr < KERNEL_BASE + RISCV_GET_LVL_PGSIZE(1)) {
+    while (pptr < ROUND_DOWN(KERNEL_BASE, RISCV_GET_LVL_PGSIZE_BITS(1)) +
+            RISCV_GET_LVL_PGSIZE(1)) {
         kernel_image_level2_pt[index] = pte_next(paddr, true);
         index++;
         pptr += RISCV_GET_LVL_PGSIZE(2);
