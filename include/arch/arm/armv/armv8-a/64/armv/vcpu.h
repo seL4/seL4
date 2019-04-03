@@ -61,32 +61,32 @@
 
 /* Physical address size */
 #define PS_4G               0
-#define PS_64G              0b001
-#define PS_1T               0b010
-#define PS_4T               0b011
-#define PS_16T              0b100
-#define PS_256T             0b101
+#define PS_64G              1
+#define PS_1T               2
+#define PS_4T               3
+#define PS_16T              4
+#define PS_256T             5
 
 /* Translation granule size */
 #define TG0_4K              0
-#define TG0_64K             0b01
-#define TG0_16K             0b10
+#define TG0_64K             1
+#define TG0_16K             2
 
 /* Shareability attributes */
 #define SH0_NONE            0
-#define SH0_OUTER           0b10
-#define SH0_INNER           0b11
+#define SH0_OUTER           2
+#define SH0_INNER           3
 
 /* Cacheability attributes */
 #define NORMAL_NON_CACHEABLE    0
-#define NORMAL_WB_WA_CACHEABLE  0b01 /* write-back, write-allocate      */
-#define NORMAL_WT_CACHEABLE     0b10 /* write-through                   */
-#define NORMAL_WB_NWA_CACHEABLE 0b11 /* write-back, no write-allocate   */
+#define NORMAL_WB_WA_CACHEABLE  1 /* write-back, write-allocate      */
+#define NORMAL_WT_CACHEABLE     2 /* write-through                   */
+#define NORMAL_WB_NWA_CACHEABLE 3 /* write-back, no write-allocate   */
 
 /* Start level  */
-#define SL0_4K_L2       0           /* 4K, start at level 2 */
-#define SL0_4K_L1       0b01        /* 4K, start at level 1 */
-#define SL0_4K_L0       0b10        /* 4K, start at level 0 */
+#define SL0_4K_L2       0         /* 4K, start at level 2 */
+#define SL0_4K_L1       1         /* 4K, start at level 1 */
+#define SL0_4K_L0       2         /* 4K, start at level 0 */
 
 #define REG_SCTLR_EL1       "sctlr_el1"
 #define REG_TTBR0_EL1       "ttbr0_el1"

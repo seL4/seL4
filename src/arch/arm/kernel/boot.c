@@ -89,11 +89,6 @@ BOOT_CODE static region_t get_reserved_region(int i, pptr_t res_reg_end)
     return res_reg;
 }
 
-BOOT_CODE static int get_num_reserved_region(void)
-{
-    return sizeof(mode_reserved_region) / sizeof(region_t);
-}
-
 BOOT_CODE static void init_freemem(region_t ui_reg)
 {
     word_t i;

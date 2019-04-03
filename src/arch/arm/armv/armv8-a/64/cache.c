@@ -62,21 +62,16 @@ void clean_D_PoU(void)
 {
     int clid = readCLID();
     int lou = LOUU(clid);
-    int l;
 
-    for (l = 0; l < lou; l++) {
+    for (int l = 0; l < lou; l++) {
         if (CTYPE(clid, l) > ARMCacheI) {
-            word_t s = readCacheSize(l, 0);
-            int lbits = LINEBITS(s);
-            int assoc = ASSOC(s);
+            word_t lsize = readCacheSize(l, 0);
+            int lbits = LINEBITS(lsize);
+            int assoc = ASSOC(lsize);
             int assoc_bits = wordBits - clzl(assoc - 1);
-            int nsets = NSETS(s);
-            int w;
-
-            for (w = 0; w < assoc; w++) {
-                int s;
-
-                for (s = 0; s < nsets; s++) {
+            int nsets = NSETS(lsize);
+            for (int w = 0; w < assoc; w++) {
+                for (int s = 0; s < nsets; s++) {
                     cleanByWSL((w << (32 - assoc_bits)) |
                                (s << lbits) | (l << 1));
                 }
@@ -89,21 +84,17 @@ void cleanInvalidate_D_PoC(void)
 {
     int clid = readCLID();
     int loc = LOC(clid);
-    int l;
 
-    for (l = 0; l < loc; l++) {
+    for (int l = 0; l < loc; l++) {
         if (CTYPE(clid, l) > ARMCacheI) {
-            word_t s = readCacheSize(l, 0);
-            int lbits = LINEBITS(s);
-            int assoc = ASSOC(s);
+            word_t lsize = readCacheSize(l, 0);
+            int lbits = LINEBITS(lsize);
+            int assoc = ASSOC(lsize);
             int assoc_bits = wordBits - clzl(assoc - 1);
-            int nsets = NSETS(s);
-            int w;
+            int nsets = NSETS(lsize);
 
-            for (w = 0; w < assoc; w++) {
-                int s;
-
-                for (s = 0; s < nsets; s++) {
+            for (int w = 0; w < assoc; w++) {
+                for (int s = 0; s < nsets; s++) {
                     cleanInvalidateByWSL((w << (32 - assoc_bits)) |
                                          (s << lbits) | (l << 1));
                 }

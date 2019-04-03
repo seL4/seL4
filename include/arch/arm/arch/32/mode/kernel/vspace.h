@@ -74,4 +74,9 @@ static const region_t BOOT_RODATA mode_reserved_region[] = {
     }
 };
 
+BOOT_CODE static inline int get_num_reserved_region(void)
+{
+    return sizeof(mode_reserved_region) / sizeof(region_t);
+}
+
 #endif /* __ARCH_MODE_KERNEL_VSPACE_H */

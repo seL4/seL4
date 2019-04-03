@@ -39,6 +39,7 @@
  * translation does not use full 48-bit.
  */
 #define PGD_VMID_SLOT   511
+#define RESERVED 3
 
 /*
  * Memory types are defined in Memory Attribute Indirection Register.
@@ -59,22 +60,22 @@ enum mair_types {
 
 /* Stage-2 translation memory attributes */
 enum mair_s2_types {
-    S2_DEVICE_nGnRnE = 0b0000,
-    S2_DEVICE_nGnRE = 0b0001,
-    S2_DEVICE_nGRE  = 0b0010,
-    S2_DEVICE_GRE = 0b0011,
+    S2_DEVICE_nGnRnE = 0,
+    S2_DEVICE_nGnRE = 1,
+    S2_DEVICE_nGRE  = 2,
+    S2_DEVICE_GRE = 3,
 
-    S2_NORMAL_INNER_NC_OUTER_NC = 0b0101,
-    S2_NORMAL_INNER_WTC_OUTER_NC = 0b0110,
-    S2_NORMAL_INNER_WBC_OUTER_NC = 0b0111,
+    S2_NORMAL_INNER_NC_OUTER_NC = 5,
+    S2_NORMAL_INNER_WTC_OUTER_NC = 6,
+    S2_NORMAL_INNER_WBC_OUTER_NC = 7,
 
-    S2_NORMAL_INNER_NC_OUTER_WTC = 0b1001,
-    S2_NORMAL_INNER_WTC_OUTER_WTC = 0b1010,
-    S2_NORMAL_INNER_WBC_OUTER_WTC = 0b1011,
+    S2_NORMAL_INNER_NC_OUTER_WTC = 9,
+    S2_NORMAL_INNER_WTC_OUTER_WTC = 10,
+    S2_NORMAL_INNER_WBC_OUTER_WTC = 11,
 
-    S2_NORMAL_INNER_NC_OUTER_WBC = 0b1101,
-    S2_NORMAL_INNER_WTC_OUTER_WBC = 0b1110,
-    S2_NORMAL_INNER_WBC_OUTER_WBC = 0b1111,
+    S2_NORMAL_INNER_NC_OUTER_WBC = 13,
+    S2_NORMAL_INNER_WTC_OUTER_WBC = 14,
+    S2_NORMAL_INNER_WBC_OUTER_WBC = 15,
 
     S2_NORMAL = S2_NORMAL_INNER_WBC_OUTER_WBC
 };
@@ -235,7 +236,7 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
                                                        SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
                                                        APFromVMRights(vm_rights),
                                                        NORMAL,
-                                                       0b11                        /* reserved */
+                                                       RESERVED
                                                    );
     } else {
         armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
@@ -250,7 +251,7 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
                                                        0,                          /* Ignored - Outter shareable */
                                                        APFromVMRights(vm_rights),
                                                        DEVICE_nGnRnE,
-                                                       0b11                        /* reserved */
+                                                       RESERVED
                                                    );
     }
 }
@@ -354,7 +355,7 @@ static BOOT_CODE void map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap, bool_t
 #else
                                      NORMAL,
 #endif
-                                     0b11                            /* reserved */
+                                     RESERVED
                                  );
 }
 
@@ -821,7 +822,7 @@ static pte_t makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attribute
 #else
                    NORMAL,
 #endif
-                   0b11                        /* reserved */
+                   RESERVED
                );
     } else {
         return pte_new(
@@ -841,7 +842,7 @@ static pte_t makeUser3rdLevel(paddr_t paddr, vm_rights_t vm_rights, vm_attribute
                    DEVICE_nGnRnE,
 #endif
 
-                   0b11                        /* reserved */
+                   RESERVED
                );
     }
 }

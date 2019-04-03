@@ -40,6 +40,13 @@ hw_asid_t getHWASID(asid_t asid);
 #endif
 
 /* Reserved memory ranges */
-static const region_t BOOT_RODATA mode_reserved_region[] = {};
+/** DONT_TRANSLATE */
+static const region_t BOOT_RODATA *mode_reserved_region = NULL;
+
+BOOT_CODE static inline int get_num_reserved_region(void)
+{
+    return 0;
+}
+
 
 #endif /* __ARCH_MODE_KERNEL_VSPACE_H_ */

@@ -257,7 +257,7 @@ static inline pde_t pde_invalid_new(void)
 
 static inline bool_t pte_ptr_get_present(pte_t *pt)
 {
-    return (pte_ptr_get_reserved(pt) == 0b11);
+    return (pte_ptr_get_reserved(pt) == 0x3);
 }
 
 static inline pte_t pte_invalid_new(void)
