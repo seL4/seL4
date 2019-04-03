@@ -345,7 +345,7 @@ BOOT_CODE void *map_temp_boot_page(void *entry, uint32_t large_pages)
     unsigned int virt_pd_start = (PPTR_BASE >> LARGE_PAGE_BITS) - large_pages;
     unsigned int virt_pg_start = PPTR_BASE - (large_pages << LARGE_PAGE_BITS);
 
-    for (i = 0; i < large_pages; ++i) {
+    for (i = 0; i < large_pages; i++) {
         unsigned int pg_offset = i << LARGE_PAGE_BITS; // num pages since start * page size
 
         *(get_boot_pd() + virt_pd_start + i) = pde_pde_large_new(

@@ -158,7 +158,6 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length, cte_
         x86_irq_state_t irqState;
         /* until we support msi interrupt remaping through vt-d we ignore the
          * vector and trust the user */
-        (void)vector;
 
         if (pci_bus > PCI_BUS_MAX) {
             current_syscall_error.type = seL4_RangeError;

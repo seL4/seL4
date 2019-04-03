@@ -161,7 +161,7 @@ BOOT_CODE bool_t add_allocated_p_region(p_region_t reg)
     return true;
 }
 
-BOOT_CODE void init_allocated_p_regions()
+BOOT_CODE void init_allocated_p_regions(void)
 {
     allocated_p_regions.cur_pos = 0;
 }

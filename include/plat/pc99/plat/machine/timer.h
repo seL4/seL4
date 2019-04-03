@@ -13,7 +13,7 @@
 #ifndef __PLAT_MACHINE_TIMER_H
 #define __PLAT_MACHINE_TIMER_H
 
-static inline void resetTimer()
+static inline void resetTimer(void)
 {
     /* nothing to do */
 }

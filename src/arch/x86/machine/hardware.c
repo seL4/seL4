@@ -88,7 +88,7 @@ void flushCacheRange(void *vaddr, uint32_t size_bits)
 }
 
 /* Disables as many prefetchers as possible */
-BOOT_CODE bool_t disablePrefetchers()
+BOOT_CODE bool_t disablePrefetchers(void)
 {
     x86_cpu_identity_t *model_info;
     uint32_t low, high;
