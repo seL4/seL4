@@ -42,4 +42,22 @@ static inline void isb(void)
     asm volatile("mcr p15, 0, %0, c7, c5, 4" : : "r"(0) : "memory");
 }
 
+#define MRC(cpreg, v)  asm volatile("mrc  " cpreg :  "=r"(v))
+#define MRRC(cpreg, v) asm volatile("mrrc " cpreg :  "=r"(v))
+#define MCR(cpreg, v)                               \
+    do {                                            \
+        word_t _v = v;                            \
+        asm volatile("mcr  " cpreg :: "r" (_v));    \
+    }while(0)
+#define MCRR(cpreg, v)                              \
+    do {                                            \
+        uint64_t _v = v;                            \
+        asm volatile("mcrr " cpreg :: "r" (_v));    \
+    }while(0)
+
+#define SYSTEM_WRITE_WORD(reg, v) MCR(reg, v)
+#define SYSTEM_READ_WORD(reg, v)  MRC(reg, v)
+#define SYSTEM_WRITE_64(reg, v)  MCRR(reg, v)
+#define SYSTEM_READ_64(reg, v)   MRRC(reg, v)
+
 #endif
