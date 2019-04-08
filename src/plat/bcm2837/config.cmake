@@ -22,6 +22,13 @@ if(KernelPlatformRpi3)
     endif()
     list(APPEND KernelDTSList "tools/dts/rpi3.dts")
     list(APPEND KernelDTSList "src/plat/bcm2837/overlay-rpi3.dts")
+
+    declare_default_headers(
+        TIMER_FREQUENCY 19200000llu
+        MAX_IRQ 127
+        TIMER arch/machine/generic_timer.h
+        INTERRUPT_CONTROLLER drivers/irq/bcm2836-armctrl-ic.h
+    )
 endif()
 
 add_sources(

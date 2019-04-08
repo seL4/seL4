@@ -10,15 +10,15 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __PLAT_MACHINE_H
-#define __PLAT_MACHINE_H
+#ifndef __DRIVERS_IRQ_BCM_H
+#define __DRIVERS_IRQ_BCM_H
 #include <plat/machine/devices_gen.h>
 #include <machine/io.h>
 
 #define BASIC_IRQ_OFFSET                32
 #define NORMAL_IRQ_OFFSET               (BASIC_IRQ_OFFSET + 32)
 
-enum IRQConstants {
+enum {
     INTERRUPT_CORE_CNTPSIRQ                  =  0,
     INTERRUPT_CORE_CNTPNSIRQ                 =  1,
     INTERRUPT_CORE_CNTHPIRQ                  =  2,
@@ -70,8 +70,7 @@ enum IRQConstants {
     INTERRUPT_IRQ_SPI                        = (NORMAL_IRQ_OFFSET + 54),
     INTERRUPT_IRQ_PCM                        = (NORMAL_IRQ_OFFSET + 55),
     INTERRUPT_IRQ_UART                       = (NORMAL_IRQ_OFFSET + 57),
-    maxIRQ = (32 + 32 + 64 - 1)
-} platform_interrupt_t;
+};
 
 #define FIQCTRL_FIQ_ENABLE                   BIT(7)
 #define FIQCTRL_FIQ_SRC_GPU_IRQ(x)           (x)
@@ -158,4 +157,4 @@ static inline void handleSpuriousIRQ(void)
     /* Nothing to do here */
 }
 
-#endif /* !__PLAT_MACHINE_H */
+#endif /* !__DRIVERS_IRQ_BCM_H */
