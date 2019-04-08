@@ -21,7 +21,12 @@ if(KernelPlatformTx1)
     set(KernelArmPASizeBits44 ON)
     list(APPEND KernelDTSList "tools/dts/tx1.dts")
     list(APPEND KernelDTSList "src/plat/tx1/overlay-tx1.dts")
-    declare_default_headers(19200000llu 224 arch/machine/gic_pl390.h arch/machine/generic_timer.h)
+    declare_default_headers(
+        TIMER_FREQUENCY 19200000llu
+        MAX_IRQ 224
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        TIMER arch/machine/generic_timer.h
+    )
 endif()
 
 add_sources(

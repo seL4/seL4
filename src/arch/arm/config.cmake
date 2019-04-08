@@ -66,11 +66,17 @@ elseif(KernelSel4ArchAarch64)
     set_kernel_64()
 endif()
 
-function(declare_default_headers timer_frequency max_irq irq_header timer_header)
-    set(CONFIGURE_TIMER_FREQUENCY "${timer_frequency}")
-    set(CONFIGURE_MAX_IRQ "${max_irq}")
-    set(CONFIGURE_INTERRUPT_CONTROLLER "${irq_header}")
-    set(CONFIGURE_TIMER "${timer_header}")
+function(declare_default_headers)
+    cmake_parse_arguments(
+        PARSE_ARGV
+        0
+        CONFIGURE
+        ""
+        "TIMER_FREQUENCY;MAX_IRQ;INTERRUPT_CONTROLLER;TIMER"
+        ""
+    )
+    # variables parsed by the above will be prepended with CONFIGURE_, so pipe them
+    # straight to configure_file
     configure_file(
         src/arch/arm/platform_gen.h.in ${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/platform_gen.h
         @ONLY

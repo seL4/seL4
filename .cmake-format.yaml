@@ -46,4 +46,9 @@ additional_commands:
     kwargs:
       CFILES: '*'
       PREFIX: '*'
-
+  declare_default_headers:
+    kwargs:
+        TIMER_FREQUENCY: '*'
+        MAX_IRQ: '*'
+        INTERRUPT_CONTROLLER: '*'
+        TIMER: '*'
