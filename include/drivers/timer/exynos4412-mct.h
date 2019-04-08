@@ -10,11 +10,14 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __PLAT_MACHINE_TIMER_H
-#define __PLAT_MACHINE_TIMER_H
+#ifndef __DRIVER_TIMER_MCT_EXYNOS4412_H
+#define __DRIVER_TIMER_MCT_EXYNOS4412_H
 
-#define TIMER_CLOCK_HZ 24000000llu
+#include <drivers/timer/mct.h>
 
-#include <arch/machine/generic_timer.h>
+static inline void resetTimer(void)
+{
+    mct_reset();
+}
 
-#endif /* !__PLAT_MACHINE_TIMER_H */
+#endif /* !__DRIVER_TIMER_MCT_EXYNOS4412_H */

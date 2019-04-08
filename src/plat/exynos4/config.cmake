@@ -18,6 +18,12 @@ if(KernelPlatformExynos4)
     config_set(KernelPlatform PLAT "exynos4")
     config_set(KernelArmMach MACH "exynos")
     list(APPEND KernelDTSList "tools/dts/exynos4.dts")
+    declare_default_headers(
+        TIMER_FREQUENCY 24000000llu
+        MAX_IRQ 159
+        TIMER drivers/timer/exynos4412-mct.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
 endif()
 
 add_sources(

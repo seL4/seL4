@@ -7,8 +7,8 @@
  *
  * @TAG(GD_GPL)
  */
-#ifndef __PLAT_MACHINE_MCT_H
-#define __PLAT_MACHINE_MCT_H
+#ifndef __DRIVERS_TIMER_MCT_H
+#define __DRIVERS_TIMER_MCT_H
 
 #include <stdint.h>
 
@@ -128,4 +128,4 @@ static inline void mct_clear_write_status(void)
     mct->global.wstat = mct->global.wstat;
     mct->global.cnt_wstat = mct->global.cnt_wstat;
 }
-#endif /* __PLAT_MACHINE_MCT_H */
+#endif /* __DRIVERS_TIMER_MCT_H */

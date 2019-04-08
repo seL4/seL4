@@ -26,6 +26,12 @@ if(KernelPlatformExynos5250 OR KernelPlatformExynos5410 OR KernelPlatformExynos5
 
     list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
     list(APPEND KernelDTSList "src/plat/exynos5/overlay-${KernelARMPlatform}.dts")
+    declare_default_headers(
+        TIMER_FREQUENCY 24000000llu
+        MAX_IRQ 232
+        TIMER arch/machine/generic_timer.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
 else()
     config_set(KernelPlatExynos5 PLAT_EXYNOS5 OFF)
     config_set(KernelPlatExynos54xx PLAT_EXYNOS54XX OFF)
