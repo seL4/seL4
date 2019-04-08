@@ -7,18 +7,18 @@
  *
  * @TAG(GD_GPL)
  */
-#ifndef __PLAT_MACHINE_INTERRUPT_H
-#define __PLAT_MACHINE_INTERRUPT_H
+#ifndef __DRIVERS_IRQ_AM335X_H
+#define __DRIVERS_IRQ_AM335X_H
 
 #include <config.h>
 #include <types.h>
 #include <armv/machine.h>
 
-#include <machine/io.h>
-#include <kernel/vspace.h>
-#include <arch/kernel/vspace.h>
-#include <plat/machine.h>
-#include <linker.h>
+typedef uint8_t interrupt_t;
+enum irqNumbers {
+    irqInvalid = 255
+};
+typedef uint8_t irq_t;
 
 #define CMPER_REG(base, off) ((volatile uint32_t *)((base) + (off)))
 #define CMPER_TIMER3_CLKCTRL    0x84
@@ -117,4 +117,4 @@ static inline void handleSpuriousIRQ(void)
     intc->intcps_control = INTCPS_CONTROL_NEWIRQAGR;
     dsb();
 }
-#endif /* __PLAT_MACHINE_INTERRUPT_H */
+#endif /* __DRIVERS_IRQ_AM335X_H */

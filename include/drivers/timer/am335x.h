@@ -10,12 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __PLAT_MACHINE_TIMER_H
-#define __PLAT_MACHINE_TIMER_H
-
-#include <plat/machine/interrupt.h>
-
-#define TIMER_CLOCK_HZ 32768llu // 32KHz
+#ifndef __DRIVER_TIMER_AM335X_H
+#define __DRIVER_TIMER_AM335X_H
 
 #define TISR_OVF_FLAG (BIT(0) | BIT(1) | BIT(2))
 
@@ -49,4 +45,4 @@ static inline void resetTimer(void)
     ackInterrupt(KERNEL_TIMER_IRQ);
 }
 
-#endif /* !__PLAT_MACHINE_TIMER_H */
+#define __DRIVER_TIMER_AM335X_H

@@ -10,15 +10,7 @@
 
 #include <config.h>
 #include <types.h>
-#include <machine/io.h>
-#include <kernel/vspace.h>
-#include <arch/machine.h>
-#include <arch/kernel/vspace.h>
-#include <plat/machine.h>
-#include <linker.h>
-#include <plat/machine/devices_gen.h>
 #include <plat/machine/hardware.h>
-#include <plat/machine/timer.h>
 
 BOOT_CODE void initIRQController(void)
 {

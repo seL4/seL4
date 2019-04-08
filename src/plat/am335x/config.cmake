@@ -18,6 +18,13 @@ if(KernelPlatformAM335X)
     config_set(KernelPlatform PLAT "am335x")
     list(APPEND KernelDTSList "tools/dts/am335x.dts")
     list(APPEND KernelDTSList "src/plat/am335x/overlay-am335x.dts")
+
+    declare_default_headers(
+        TIMER_FREQUENCY 32768llu
+        MAX_IRQ 127
+        TIMER drivers/timer/am335x.h
+        INTERRUPT_CONTROLLER drivers/irq/am335x.h
+    )
 endif()
 
 add_sources(
