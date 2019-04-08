@@ -74,6 +74,12 @@ if(KernelPlatformHikey)
     endif()
     list(APPEND KernelDTSList "tools/dts/hikey.dts")
     list(APPEND KernelDTSList "src/plat/hikey/overlay-hikey.dts")
+    declare_default_headers(
+        TIMER_FREQUENCY 1200000llu
+        MAX_IRQ 159
+        TIMER arch/machine/generic_timer.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
 endif()
 
 add_sources(
