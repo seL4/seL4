@@ -223,37 +223,27 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
 {
     assert(vaddr >= PPTR_TOP);
 
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t uxn = vm_attributes_get_armExecuteNever(attributes);
+#else
+    word_t uxn = 1; /* unprivileged execute never */
+#endif /* CONFIG_ARM_HYPERVISOR_SUPPORT */
+    word_t attr_index;
+    word_t shareable;
     if (vm_attributes_get_armPageCacheable(attributes)) {
-        armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                                       vm_attributes_get_armExecuteNever(attributes),
-#else
-                                                       1, /* unprivileged execute never */
-#endif
-                                                       paddr,
-                                                       0,                          /* global */
-                                                       1,                          /* access flag */
-                                                       SMP_TERNARY(SMP_SHARE, 0),          /* Inner-shareable if SMP enabled, otherwise unshared */
-                                                       APFromVMRights(vm_rights),
-                                                       NORMAL,
-                                                       RESERVED
-                                                   );
+        attr_index = NORMAL;
+        shareable = SMP_TERNARY(SMP_SHARE, 0);
     } else {
-        armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(
-#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
-                                                       vm_attributes_get_armExecuteNever(attributes),
-#else
-                                                       1, /* unprivileged execute never */
-#endif
-                                                       paddr,
-                                                       0,                          /* global */
-                                                       1,                          /* access flag */
-                                                       0,                          /* Ignored - Outter shareable */
-                                                       APFromVMRights(vm_rights),
-                                                       DEVICE_nGnRnE,
-                                                       RESERVED
-                                                   );
+        attr_index = DEVICE_nGnRnE;
+        shareable = 0;
     }
+    armKSGlobalKernelPT[GET_PT_INDEX(vaddr)] = pte_new(uxn, paddr,
+                                                       0, /* global */
+                                                       1, /* access flag */
+                                                       shareable,
+                                                       APFromVMRights(vm_rights),
+                                                       attr_index,
+                                                       RESERVED);
 }
 
 BOOT_CODE void map_kernel_window(void)

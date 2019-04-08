@@ -162,33 +162,24 @@ BOOT_CODE void map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_righ
 
     assert(vaddr >= PPTR_TOP); /* vaddr lies in the region the global PT covers */
 #ifndef CONFIG_ARM_HYPERVISOR_SUPPORT
+    word_t tex;
     if (vm_attributes_get_armPageCacheable(attributes)) {
-        armKSGlobalPT[idx] =
-            pte_pte_small_new(
-                paddr,
-                0, /* global */
-                SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
-                0, /* APX = 0, privileged full access */
-                5, /* TEX = 0b1(Cached)01(Outer Write Allocate) */
-                APFromVMRights(vm_rights),
-                0, /* C (Inner write allocate) */
-                1, /* B (Inner write allocate) */
-                0  /* executable */
-            );
+        tex = 5; /* TEX = 0b1(Cached)01(Outer Write Allocate) */
     } else {
-        armKSGlobalPT[idx] =
-            pte_pte_small_new(
-                paddr,
-                0, /* global */
-                SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
-                0, /* APX = 0, privileged full access */
-                0, /* TEX = 0 */
-                APFromVMRights(vm_rights),
-                0, /* Shared device */
-                1, /* Shared device */
-                0  /* executable */
-            );
+        tex = 0;
     }
+    armKSGlobalPT[idx] =
+        pte_pte_small_new(
+            paddr,
+            0, /* global */
+            SMP_TERNARY(1, 0), /* shareable if SMP enabled, otherwise unshared */
+            0, /* APX = 0, privileged full access */
+            tex,
+            APFromVMRights(vm_rights),
+            0, /* C (Inner write allocate) */
+            1, /* B (Inner write allocate) */
+            0  /* executable */
+        );
 #else /* CONFIG_ARM_HYPERVISOR_SUPPORT */
     armHSGlobalPT[idx] =
         pteS1_pteS1_small_new(
