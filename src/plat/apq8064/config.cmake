@@ -19,6 +19,13 @@ if(KernelPlatformAPQ8064)
     config_set(KernelPlatform PLAT "apq8064")
     list(APPEND KernelDTSList "tools/dts/apq8064.dts")
     list(APPEND KernelDTSList "src/plat/apq8064/overlay-apq8064.dts")
+
+    declare_default_headers(
+        TIMER_FREQUENCY 7000000llu
+        MAX_IRQ 283
+        TIMER arch/machine/generic_timer.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
 endif()
 
 add_sources(
