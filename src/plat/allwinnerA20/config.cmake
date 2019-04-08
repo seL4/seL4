@@ -20,6 +20,13 @@ if(KernelPlatformAllwinnerA20)
     set(KernelArmMach "allwinner" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/allwinnera20.dts")
     list(APPEND KernelDTSList "src/plat/allwinnerA20/overlay-allwinnera20.dts")
+
+    declare_default_headers(
+        TIMER_FREQUENCY 24000000llu
+        MAX_IRQ 122
+        TIMER drivers/timer/allwinner.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
 else()
     config_set(KernelPlatAllwinnerA20 PLAT_ALLWINNERA20 OFF)
 endif()
