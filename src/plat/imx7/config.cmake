@@ -20,6 +20,12 @@ if(KernelPlatformImx7Sabre)
     set(KernelArmMach "imx" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/imx7sabre.dts")
     list(APPEND KernelDTSList "src/plat/imx7/overlay-imx7sabre.dts")
+    declare_default_headers(
+        TIMER_FREQUENCY 8000000llu
+        MAX_IRQ 159
+        TIMER arch/machine/generic_timer.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
 else()
     config_set(KernelPlatImx7 PLAT_IMX7 OFF)
 endif()
