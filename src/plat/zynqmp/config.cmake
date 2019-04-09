@@ -31,6 +31,13 @@ if(KernelPlatformZynqmp)
     if(NOT KernelPlatformUltra96)
         list(APPEND KernelDTSList "tools/dts/zynqmp.dts")
     endif()
+
+    declare_default_headers(
+        TIMER_FREQUENCY 100000000llu
+        MAX_IRQ 187
+        TIMER arch/machine/generic_timer.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
 endif()
 
 add_sources(
