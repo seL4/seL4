@@ -135,6 +135,13 @@ SECTIONS
         . = ALIGN(4K);
     }
 
+    ._idle_thread . : AT(ADDR(._idle_thread) - KERNEL_OFFSET)
+    {
+	__idle_thread_start = .;
+        *(._idle_thread)
+	__idle_thread_end = .;
+    }
+
     . = ALIGN(4K);
     ki_end = .;
 

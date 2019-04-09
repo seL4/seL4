@@ -356,10 +356,15 @@ user_interrupt:
 kernel_interrupt:
     cmpl    $0x20, %ecx      # if interrupt vector is below 0x20, we have an exception
     jl kernel_exception
-    # Check the current ESP. If its above the kernel image then we came from
-    # the idle_thread and this is a normal interrupt.
-    cmpl    $(ki_end), %esp
-    jg      user_interrupt
+    # Check the current ESP. If this is within the bounds of __idle_thread_start and
+    # __idle_thread_end then this is the idle thread. Interrupts from the idle thread
+    # are handled like normal interrupts.
+    cmpl $__idle_thread_start, %esp
+    jb not_idle_thread
+    cmpl $__idle_thread_end, %esp
+    jae not_idle_thread
+    jmp user_interrupt
+not_idle_thread:
     # We got an interrupt from the kernel. Call into C to save
     # the IRQ number, then return back to where we were
     pushl %ecx

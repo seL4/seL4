@@ -356,12 +356,7 @@ BOOT_CODE bool_t create_idle_thread(void)
 #ifdef ENABLE_SMP_SUPPORT
     for (int i = 0; i < CONFIG_MAX_NUM_NODES; i++) {
 #endif /* ENABLE_SMP_SUPPORT */
-        pptr = alloc_region(seL4_TCBBits);
-        if (!pptr) {
-            printf("Kernel init failed: Unable to allocate tcb for idle thread\n");
-            return false;
-        }
-        memzero((void *)pptr, 1 << seL4_TCBBits);
+        pptr = (pptr_t) &ksIdleThreadTCB[SMP_TERNARY(i, 0)];
         NODE_STATE_ON_CORE(ksIdleThread, i) = TCB_PTR(pptr + TCB_OFFSET);
         configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, i));
 #ifdef CONFIG_DEBUG_BUILD
