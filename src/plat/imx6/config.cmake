@@ -31,7 +31,7 @@ if(KernelPlatformWandQ OR KernelPlatformSabre)
         TIMER_FREQUENCY 400000000llu
         MAX_IRQ 159
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
-        TIMER arch/machine/priv_timer.h
+        TIMER drivers/timer/arm_priv.h
     )
 else()
     config_set(KernelPlatImx6 PLAT_IMX6 OFF)

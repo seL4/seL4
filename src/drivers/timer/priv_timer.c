@@ -11,7 +11,7 @@
 /* A9 MPCORE private timer */
 #include <machine/timer.h>
 #include <arch/machine/timer.h>
-#include <arch/machine/priv_timer.h>
+#include <drivers/timer/arm_priv.h>
 
 timer_t *const priv_timer = (timer_t *) ARM_MP_PRIV_TIMER_PPTR;
 

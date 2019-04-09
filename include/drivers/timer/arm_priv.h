@@ -10,8 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_MACHINE_PRIV_TIMER_H_
-#define __ARCH_MACHINE_PRIV_TIMER_H_
+#ifndef __DRIVERS_TIMER_ARM_PRIV_H_
+#define __DRIVERS_TIMER_ARM_PRIV_H_
 
 #define TMR_INTS_EVENT       BIT(0)
 
@@ -30,4 +30,4 @@ static inline void resetTimer(void)
     priv_timer->ints = TMR_INTS_EVENT;
 }
 
-#endif /* __ARCH_MACHINE_PRIV_TIMER_H_ */
+#endif /* __DRIVERS_TIMER_ARM_PRIV_H_ */
