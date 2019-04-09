@@ -22,8 +22,6 @@
 #include <util.h>
 
 /* (node-local) state accessed only during bootstrapping */
-#define IRQ_CNODE_BITS (seL4_WordBits - clzl(maxIRQ * sizeof(cte_t)))
-
 ndks_boot_t ndks_boot BOOT_DATA;
 
 BOOT_CODE bool_t insert_region(region_t reg)
@@ -158,22 +156,6 @@ create_root_cnode(void)
     write_slot(SLOT_PTR(pptr, seL4_CapInitThreadCNode), cap);
 
     return cap;
-}
-
-
-BOOT_CODE bool_t create_irq_cnode(void)
-{
-    pptr_t pptr;
-    assert(BIT(IRQ_CNODE_BITS - seL4_SlotBits) > maxIRQ);
-    /* create an empty IRQ CNode */
-    pptr = alloc_region(IRQ_CNODE_BITS);
-    if (!pptr) {
-        printf("Kernel init failing: could not create irq cnode\n");
-        return false;
-    }
-    memzero((void *)pptr, 1 << IRQ_CNODE_BITS);
-    intStateIRQNode = (cte_t *)pptr;
-    return true;
 }
 
 /* Check domain scheduler assumptions. */

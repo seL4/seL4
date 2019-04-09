@@ -76,6 +76,18 @@ function(declare_default_headers)
         "TIMER_FREQUENCY;MAX_IRQ;INTERRUPT_CONTROLLER;TIMER;SMMU"
         ""
     )
+    # calculate the irq cnode size based on MAX_IRQ
+    set(BITS "0")
+    set(MAX "${CONFIGURE_MAX_IRQ}")
+    while(MAX GREATER "0")
+        math(EXPR BITS "${BITS} + 1")
+        math(EXPR MAX "${MAX} >> 1")
+    endwhile()
+    math(EXPR SLOTS "1 << ${BITS}")
+    if("${SLOTS}" LESS "${CONFIGURE_MAX_IRQ}")
+        math(EXPR BITS "${BITS} + 1")
+    endif()
+    set(CONFIGURE_IRQ_SLOT_BITS "${BITS}")
     # variables parsed by the above will be prepended with CONFIGURE_, so pipe them
     # straight to configure_file
     configure_file(

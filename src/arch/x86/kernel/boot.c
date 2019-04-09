@@ -313,11 +313,6 @@ BOOT_CODE bool_t init_sys_state(
     /* create the cap for managing thread domains */
     create_domain_cap(root_cnode_cap);
 
-    /* create the IRQ CNode */
-    if (!create_irq_cnode()) {
-        return false;
-    }
-
     /* initialise the IRQ states and provide the IRQ control cap */
     init_irqs(root_cnode_cap);
 

@@ -56,9 +56,12 @@ UP_STATE_DEFINE(tcb_t *, ksDebugTCBs);
  * pending interrupts */
 word_t ksWorkUnitsCompleted;
 
-/* CNode containing interrupt handler endpoints */
 irq_state_t intStateIRQTable[maxIRQ + 1];
-cte_t *intStateIRQNode;
+/* CNode containing interrupt handler endpoints - like all seL4 objects, this CNode needs to be
+ * of a size that is a power of 2 and aligned to its size. */
+static cte_t intStateIRQObj[BIT(IRQ_CNODE_SLOT_BITS)] ALIGN(BIT(IRQ_CNODE_SLOT_BITS + seL4_SlotBits));
+cte_t *intStateIRQNode = intStateIRQObj;
+compile_assert(irqCNodeSize, sizeof(intStateIRQObj) >= (maxIRQ *sizeof(cte_t)));
 
 /* Currently active domain */
 dom_t ksCurDomain;

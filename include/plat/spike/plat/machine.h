@@ -28,6 +28,7 @@ enum IRQConstants {
 } platform_interrupt_t;
 
 #define KERNEL_TIMER_IRQ INTERRUPT_TIMER
+#define IRQ_CNODE_SLOT_BITS 3
 
 enum irqNumbers {
     irqInvalid = 6
