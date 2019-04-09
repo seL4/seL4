@@ -12,7 +12,7 @@
 #define __ARCH_MODEL_STATEDATA_H
 
 #include <config.h>
-
+#include <arch/object/vcpu.h>
 #include <model/statedata.h>
 #include <arch/machine/debug_conf.h>
 #include <mode/machine/registerset.h>
