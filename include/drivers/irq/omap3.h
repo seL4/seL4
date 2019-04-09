@@ -7,18 +7,25 @@
  *
  * @TAG(GD_GPL)
  */
-#ifndef __PLAT_MACHINE_INTERRUPT_H
-#define __PLAT_MACHINE_INTERRUPT_H
+#ifndef __DRIVER_IRQ_OMAP3_H
+#define __DRIVER_IRQ_OMAP3_H
 
 #include <config.h>
 #include <types.h>
 #include <machine/io.h>
 #include <kernel/vspace.h>
 #include <arch/kernel/vspace.h>
-#include <plat/machine.h>
 #include <linker.h>
+#include <armv/machine.h>
 
 #define INTCPS_SIR_IRQ_SPURIOUSIRQFLAG 0xFF0000
+
+enum irqNumbers {
+    irqInvalid = 255
+};
+
+typedef uint8_t interrupt_t;
+typedef uint8_t irq_t;
 
 /*
  * The struct below is used to discourage the compiler from generating literals

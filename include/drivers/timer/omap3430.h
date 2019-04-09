@@ -10,12 +10,11 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __PLAT_MACHINE_TIMER_H
-#define __PLAT_MACHINE_TIMER_H
+#ifndef __DRIVER_TIMER_OMAP3_H
+#define __DRIVER_TIMER_OMAP3_H
 
-#include <plat/machine/interrupt.h>
+#include <plat/machine/devices_gen.h>
 
-#define TIMER_CLOCK_HZ 13000000llu
 #define TISR_OVF_FLAG       BIT(1)
 
 struct timer {
@@ -50,4 +49,4 @@ static inline void resetTimer(void)
     ackInterrupt(KERNEL_TIMER_IRQ);
 }
 
-#endif /* !__PLAT_MACHINE_TIMER_H */
+#endif /* !__DRIVER_TIMER_OMAP3_H */
