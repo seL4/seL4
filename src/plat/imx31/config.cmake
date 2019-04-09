@@ -19,8 +19,14 @@ if(KernelPlatformKZM)
     set(KernelArmMach "imx" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/kzm.dts")
     list(APPEND KernelDTSList "src/plat/imx31/overlay-kzm.dts")
+    declare_default_headers(
+        TIMER_FREQUENCY 32768llu
+        MAX_IRQ 63
+        INTERRUPT_CONTROLLER drivers/irq/imx31.h
+        TIMER drivers/timer/imx31-epit.h
+    )
 endif()
 
 add_sources(DEP "KernelPlatformKZM" CFILES src/plat/imx31/machine/hardware.c)
 
-add_bf_source_old("KernelPlatformKZM" "hardware.bf" "include/plat/imx31" "plat/machine")
+add_bf_source_old("KernelPlatformKZM" "imx31-epit.bf" "include" "drivers/timer")

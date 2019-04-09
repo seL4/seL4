@@ -10,10 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __PLAT_MACHINE_TIMER_H
-#define __PLAT_MACHINE_TIMER_H
-
-#define TIMER_CLOCK_HZ 32768llu
+#ifndef __DRIVERS_TIMER_IMX31_EPIT_H
+#define __DRIVERS_TIMER_IMX31_EPIT_H
 
 /* Memory map for EPIT (Enhanced Periodic Interrupt Timer). */
 struct timer {
@@ -32,4 +30,4 @@ static inline void resetTimer(void)
     /* Timer resets automatically */
 }
 
-#endif /* !__PLAT_MACHINE_TIMER_H */
+#endif /* !__DRIVERS_TIMER_IMX31_EPIT_H */

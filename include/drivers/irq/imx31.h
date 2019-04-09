@@ -8,13 +8,19 @@
  * @TAG(GD_GPL)
  */
 
-#ifndef __PLAT_MACHINE_INTERRUPT_H
-#define __PLAT_MACHINE_INTERRUPT_H
+#ifndef __DRIVER_IRQ_IMX31_H
+#define __DRIVER_IRQ_IMX31_H
 
 #include <config.h>
 #include <basic_types.h>
 #include <arch/benchmark_overflowHandler.h>
-#include <plat/machine.h>
+
+enum irqNumbers {
+    irqInvalid = 255
+};
+
+typedef word_t interrupt_t;
+typedef word_t irq_t;
 
 /* Memory map for AVIC (Advanced Vectored Interrupt Controller). */
 volatile struct avic_map {

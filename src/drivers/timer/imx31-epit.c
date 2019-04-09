@@ -14,13 +14,8 @@
 #include <kernel/vspace.h>
 #include <arch/machine.h>
 #include <arch/kernel/vspace.h>
-#include <plat/machine.h>
 #include <linker.h>
-#include <plat/machine/devices.h>
-#include <plat/machine/devices_gen.h>
-#include <plat/machine/hardware.h>
-#include <plat/machine/timer.h>
-#include <plat/machine/hardware_gen.h>
+#include <drivers/timer/imx31-epit_gen.h>
 #include <arch/benchmark_overflowHandler.h>
 
 #define L2_LINE_SIZE_BITS 5
