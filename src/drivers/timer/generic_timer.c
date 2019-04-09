@@ -11,7 +11,7 @@
  */
 
 #include <plat/machine/timer.h>
-#include <arch/machine/generic_timer.h>
+#include <drivers/timer/arm_generic.h>
 
 BOOT_CODE void initGenericTimer(void)
 {

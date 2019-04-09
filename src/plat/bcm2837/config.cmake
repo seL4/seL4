@@ -26,7 +26,7 @@ if(KernelPlatformRpi3)
     declare_default_headers(
         TIMER_FREQUENCY 19200000llu
         MAX_IRQ 127
-        TIMER arch/machine/generic_timer.h
+        TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER drivers/irq/bcm2836-armctrl-ic.h
     )
 endif()

@@ -10,8 +10,8 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_MACHINE_GENERIC_TIMER_H_
-#define __ARCH_MACHINE_GENERIC_TIMER_H_
+#ifndef __DRIVERS_TIMER_ARM_GENERIC_H_
+#define __DRIVERS_TIMER_ARM_GENERIC_H_
 
 #include <config.h>
 #include <arch/machine/timer.h>
@@ -27,4 +27,4 @@ static inline void resetTimer(void)
 
 BOOT_CODE void initGenericTimer(void);
 
-#endif /* __ARCH_MACHINE_GENERIC_TIMER_H_ */
+#endif /* __DRIVERS_TIMER_ARM_GENERIC_H_ */

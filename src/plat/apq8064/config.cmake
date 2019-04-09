@@ -23,7 +23,7 @@ if(KernelPlatformAPQ8064)
     declare_default_headers(
         TIMER_FREQUENCY 7000000llu
         MAX_IRQ 283
-        TIMER arch/machine/generic_timer.h
+        TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
     )
 endif()

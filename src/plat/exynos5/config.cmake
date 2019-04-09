@@ -29,7 +29,7 @@ if(KernelPlatformExynos5250 OR KernelPlatformExynos5410 OR KernelPlatformExynos5
     declare_default_headers(
         TIMER_FREQUENCY 24000000llu
         MAX_IRQ 232
-        TIMER arch/machine/generic_timer.h
+        TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
     )
 else()

@@ -23,7 +23,7 @@ if(KernelPlatformImx7Sabre)
     declare_default_headers(
         TIMER_FREQUENCY 8000000llu
         MAX_IRQ 159
-        TIMER arch/machine/generic_timer.h
+        TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
     )
 else()

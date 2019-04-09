@@ -28,7 +28,7 @@ if(KernelPlatformTx2)
         TIMER_FREQUENCY 31250000llu
         MAX_IRQ 383
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
-        TIMER arch/machine/generic_timer.h
+        TIMER drivers/timer/arm_generic.h
     )
 endif()
 

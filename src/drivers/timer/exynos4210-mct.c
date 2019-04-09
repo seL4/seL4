@@ -18,7 +18,7 @@
 #include <linker.h>
 #include <plat/machine/devices_gen.h>
 #include <plat/machine/hardware.h>
-#include <arch/machine/generic_timer.h>
+#include <drivers/timer/arm_generic.h>
 #include <drivers/timer/mct.h>
 
 timer_t *mct = (timer_t *) EXYNOS_MCT_PPTR;
