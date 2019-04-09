@@ -13,7 +13,6 @@
 #ifndef __ARCH_MACHINE_PRIV_TIMER_H_
 #define __ARCH_MACHINE_PRIV_TIMER_H_
 
-#define TIMER_CLOCK_HZ 400000000ULL
 #define TMR_INTS_EVENT       BIT(0)
 
 /* 32 bit down counter */

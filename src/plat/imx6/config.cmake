@@ -26,6 +26,13 @@ if(KernelPlatformWandQ OR KernelPlatformSabre)
         list(APPEND KernelDTSList "tools/dts/sabre.dts")
         list(APPEND KernelDTSList "src/plat/imx6/overlay-sabre.dts")
     endif()
+
+    declare_default_headers(
+        TIMER_FREQUENCY 400000000llu
+        MAX_IRQ 159
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+        TIMER arch/machine/priv_timer.h
+    )
 else()
     config_set(KernelPlatImx6 PLAT_IMX6 OFF)
 endif()
