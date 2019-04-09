@@ -18,6 +18,12 @@ if(KernelPlatformZynq7000)
     config_set(KernelPlatform PLAT "zynq7000")
     config_set(KernelArmMach MACH "zynq")
     list(APPEND KernelDTSList "tools/dts/zynq7000.dts")
+    declare_default_headers(
+        TIMER_FREQUENCY 400000000llu
+        MAX_IRQ 92
+        TIMER arch/machine/priv_timer.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
 endif()
 
 add_sources(
