@@ -19,5 +19,6 @@
 #define PPTR_BASE  seL4_UserTop
 /* This is the mapping of the kernel (mapped above the kernel window currently) */
 #define KERNEL_BASE 0xFF800000lu
+#define KERNEL_ELF_BASE KERNEL_BASE
 
 #endif

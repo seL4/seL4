@@ -108,7 +108,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
 
     /* first we map in memory from PADDR_BASE */
     word_t paddr = PADDR_BASE;
-    while (pptr < ROUND_DOWN(KERNEL_BASE, RISCV_GET_LVL_PGSIZE_BITS(1))) {
+    while (pptr < KERNEL_BASE) {
         assert(IS_ALIGNED(pptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
         assert(IS_ALIGNED(paddr, RISCV_GET_LVL_PGSIZE_BITS(1)));
 
@@ -118,7 +118,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         paddr += RISCV_GET_LVL_PGSIZE(1);
     }
     /* now we should be mapping the 1GiB kernel base */
-    assert(pptr == ROUND_DOWN(KERNEL_BASE, RISCV_GET_LVL_PGSIZE_BITS(1)));
+    assert(pptr == KERNEL_BASE);
     paddr = ROUND_DOWN(PADDR_LOAD, RISCV_GET_LVL_PGSIZE_BITS(1));
 
 #if __riscv_xlen == 32
@@ -134,8 +134,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
         pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] =
         pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
-    while (pptr < ROUND_DOWN(KERNEL_BASE, RISCV_GET_LVL_PGSIZE_BITS(1)) +
-           RISCV_GET_LVL_PGSIZE(1)) {
+    while (pptr < KERNEL_BASE + RISCV_GET_LVL_PGSIZE(1)) {
         kernel_image_level2_pt[index] = pte_next(paddr, true);
         index++;
         pptr += RISCV_GET_LVL_PGSIZE(2);

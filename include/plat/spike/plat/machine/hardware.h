@@ -45,10 +45,10 @@
 #define PADDR_TOP (KERNEL_BASE - PPTR_BASE + PADDR_BASE)
 /* The highest valid physical address that can be used for the kernel image. We offset by
  * PADDR_LOAD as the window for the kernel image is mapped started at PADDR_LOAD */
-#define PADDR_HIGH_TOP (-KERNEL_BASE + PADDR_LOAD)
+#define PADDR_HIGH_TOP (-KERNEL_ELF_BASE + PADDR_LOAD)
 
 /* Translates from a physical address and a value in the kernel image */
-#define KERNEL_BASE_OFFSET (KERNEL_BASE - PADDR_LOAD)
+#define KERNEL_BASE_OFFSET (KERNEL_ELF_BASE - PADDR_LOAD)
 
 /* Convert our values into general values expected by the common code */
 #define kernelBase KERNEL_BASE
