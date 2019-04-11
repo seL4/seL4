@@ -49,6 +49,7 @@
 #define seL4_NumASIDPoolsBits    5
 #define seL4_ASIDPoolIndexBits  4
 #define seL4_ASIDPoolBits       12
+#ifndef __ASSEMBLER__
 
 enum {
     seL4_VMFault_IP,
@@ -81,6 +82,7 @@ enum {
     seL4_UserException_Code,
     seL4_UserException_Length,
 } seL4_UserException_Msg;
+#endif /* __ASSEMBLER__ */
 
 /* First address in the virtual address space that is not accessible to user level */
 #define seL4_UserTop 0x80000000lu
