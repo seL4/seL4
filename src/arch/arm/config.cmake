@@ -115,6 +115,8 @@ config_set(KernelArchArmV6 ARCH_ARM_V6 "${KernelArchArmV6}")
 config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
 config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
+config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
+config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
 
 set(KernelArmCPU "" CACHE INTERNAL "")
 set(KernelArmArmV "" CACHE INTERNAL "")
@@ -307,18 +309,6 @@ config_option(
     DEFAULT ON
     DEPENDS "KernelSel4ArchAarch32;NOT KernelArchArmV6;NOT KernelVerificationBuild"
     DEFAULT_DISABLED OFF
-)
-
-config_option(
-    KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "Specify the physical address size to 40 bits"
-    DEFAULT ${KernelArmPASizeBits40}
-    DEPENDS "KernelArmHypervisorSupport AND KernelArchArmV8a"
-)
-
-config_option(
-    KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "Specify the physical address size to 44 bits"
-    DEFAULT ${KernelArmPASizeBits44}
-    DEPENDS "KernelArmHypervisorSupport AND KernelArchArmV8a"
 )
 
 if(KernelAArch32FPUEnableContextSwitch)
