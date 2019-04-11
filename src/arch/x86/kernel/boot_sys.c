@@ -224,13 +224,7 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
 
 static BOOT_CODE bool_t add_mem_p_regs(p_region_t reg)
 {
-    if (reg.end > PADDR_TOP) {
-        reg.end = PADDR_TOP;
-    }
-    if (reg.start > PADDR_TOP) {
-        reg.start = PADDR_TOP;
-    }
-    if (reg.start == reg.end) {
+    if (reg.end > PADDR_TOP && reg.start > PADDR_TOP) {
         /* Return true here as it's not an error for there to exist memory outside the kernel window,
          * we're just going to ignore it and leave it to be given out as device memory */
         return true;
