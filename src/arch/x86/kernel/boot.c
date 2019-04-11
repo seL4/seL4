@@ -27,6 +27,9 @@
 
 #include <plat/machine/intel-vtd.h>
 
+#define MAX_RESERVED 1
+BOOT_DATA static region_t reserved[MAX_RESERVED];
+
 /* functions exactly corresponding to abstract specification */
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
@@ -209,28 +212,11 @@ BOOT_CODE static bool_t create_untypeds(
     return true;
 }
 
-BOOT_CODE static void init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs)
+BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs)
 {
-    word_t i;
-    /* we are guaranteed that we started loading the user image after the kernel
-     * so we only include addresses above ui_info.p_reg.end */
-    pptr_t floor = ui_p_reg.end;
-    for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
-        ndks_boot.freemem[i] = REG_EMPTY;
-    }
-    for (i = 0; i < mem_p_regs.count; i++) {
-        pptr_t start = mem_p_regs.list[i].start;
-        pptr_t end = mem_p_regs.list[i].end;
-        if (start < floor) {
-            start = floor;
-        }
-        if (end < floor) {
-            end = floor;
-        }
-        insert_region(paddr_to_pptr_reg((p_region_t) {
-            start, end
-        }));
-    }
+    ui_p_reg.start = 0;
+    reserved[0] = paddr_to_pptr_reg(ui_p_reg);
+    init_freemem(mem_p_regs.count, mem_p_regs.list, MAX_RESERVED, reserved);
 }
 
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
@@ -299,7 +285,7 @@ BOOT_CODE bool_t init_sys_state(
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = ROUND_UP(extra_bi_frame_vptr + extra_bi_size, PAGE_BITS);
 
-    init_freemem(ui_info.p_reg, mem_p_regs);
+    arch_init_freemem(ui_info.p_reg, mem_p_regs);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();

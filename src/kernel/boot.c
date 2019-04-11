@@ -560,3 +560,90 @@ BOOT_CODE void bi_finalise(void)
         slot_pos_start, slot_pos_end
     };
 }
+
+static inline pptr_t ceiling_kernel_window(pptr_t p)
+{
+    /* Adjust address if it exceeds the kernel window
+     * Note that we compare physical address in case of overflow.
+     */
+    if (pptr_to_paddr((void *)p) > PADDR_TOP) {
+        p = PPTR_TOP;
+    }
+    return p;
+}
+
+/**
+ * Dynamically initialise the available memory on the platform.
+ * A region represents an area of memory.
+ */
+BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
+                            word_t n_reserved, region_t *reserved)
+{
+    /* Force ordering and exclusivity of reserved regions */
+    for (word_t i = 0; n_reserved > 0 && i < n_reserved - 1; i++) {
+        assert(reserved[i].start <= reserved[i].end);
+        assert(reserved[i].end <= reserved[i + 1].start);
+    }
+
+    /* Force ordering and exclusivity of available regions */
+    assert(n_available > 0);
+    for (word_t i = 0; i < n_available - 1; i++) {
+        assert(available[i].start < available[i].end);
+        assert(available[i].end <= available[i + 1].start);
+    }
+
+    for (word_t i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
+        ndks_boot.freemem[i] = REG_EMPTY;
+    }
+
+    /* convert the available regions to pptrs */
+    region_t avail_reg[n_available];
+    for (word_t i = 0; i < n_available; i++) {
+        avail_reg[i] = paddr_to_pptr_reg(available[i]);
+        avail_reg[i].end = ceiling_kernel_window(avail_reg[i].end);
+        avail_reg[i].start = ceiling_kernel_window(avail_reg[i].start);
+    }
+
+    word_t a = 0;
+    word_t r = 0;
+    /* Now iterate through the available regions, removing any reserved regions. */
+    while (a < n_available && r < n_reserved) {
+        if (reserved[r].start == reserved[r].end) {
+            /* reserved region is empty - skip it */
+            r++;
+        } else if (avail_reg[a].start >= avail_reg[a].end) {
+            /* skip the entire region - it's empty now after trimming */
+            a++;
+        } else if (reserved[r].end <= avail_reg[a].start) {
+            /* the reserved region is below the available region - skip it*/
+            r++;
+        } else if (reserved[r].start > avail_reg[a].end) {
+            /* the reserved region is above the available region - take the whole thing */
+            insert_region(avail_reg[a]);
+            a++;
+        } else {
+            /* the reserved region overlaps with the available region */
+            if (reserved[r].start <= avail_reg[a].start) {
+                /* the region overlaps with the start of the available region.
+                 * trim start of the available region */
+                avail_reg[a].start = reserved[r].end;
+                r++;
+            } else {
+                /* take the first chunk of the available region and move
+                 * the start to the end of the reserved region */
+                region_t m = avail_reg[a];
+                m.end = reserved[r].start;
+                insert_region(m);
+                avail_reg[a].start = reserved[r].end;
+                r++;
+            }
+        }
+    }
+
+    /* no more reserved regions - add the rest */
+    for (; a < n_available; a++) {
+        if (avail_reg[a].start < avail_reg[a].end) {
+            insert_region(avail_reg[a]);
+        }
+    }
+}

@@ -35,6 +35,9 @@ extern char ki_boot_end[1];
 /* pointer to end of kernel image */
 extern char ki_end[1];
 
+#define MAX_RESERVED 2
+BOOT_DATA static region_t res_reg[MAX_RESERVED];
+
 BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
 {
     seL4_SlotPos   slot_pos_before;
@@ -76,93 +79,16 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-/**
- * Split mem_reg about reserved_reg. If memory exists in the lower
- * segment, insert it. If memory exists in the upper segment, return it.
- */
-BOOT_CODE static region_t insert_region_excluded(region_t mem_reg, region_t reserved_reg)
+BOOT_CODE static void arch_init_freemem(region_t ui_reg)
 {
-    region_t residual_reg = mem_reg;
-    bool_t result UNUSED;
+    // This looks a bit awkward as our symbols are a reference in the kernel image window, but
+    // we want to do all allocations in terms of the main kernel window, so we do some translation
+    res_reg[0].start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)kernelBase));
+    res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
+    res_reg[1].start = ui_reg.start;
+    res_reg[1].end = ui_reg.end;
 
-    if (reserved_reg.start < mem_reg.start) {
-        /* Reserved region is below the provided mem_reg. */
-        mem_reg.end = 0;
-        mem_reg.start = 0;
-        /* Fit the residual around the reserved region */
-        if (reserved_reg.end > residual_reg.start) {
-            residual_reg.start = reserved_reg.end;
-        }
-    } else if (mem_reg.end > reserved_reg.start) {
-        /* Split mem_reg around reserved_reg */
-        mem_reg.end = reserved_reg.start;
-        residual_reg.start = reserved_reg.end;
-    } else {
-        /* reserved_reg is completely above mem_reg */
-        residual_reg.start = 0;
-        residual_reg.end = 0;
-    }
-    /* Add the lower region if it exists */
-    if (mem_reg.start < mem_reg.end) {
-        result = insert_region(mem_reg);
-        assert(result);
-    }
-    /* Validate the upper region */
-    if (residual_reg.start > residual_reg.end) {
-        residual_reg.start = residual_reg.end;
-    }
-
-    return residual_reg;
-}
-
-BOOT_CODE static void init_freemem(region_t ui_reg)
-{
-    unsigned int i;
-    bool_t result UNUSED;
-    region_t cur_reg;
-    region_t res_reg[] = {
-        {
-            // This looks a bit awkward as our symbols are a reference in the kernel image window, but
-            // we want to do all allocations in terms of the main kernel window, so we do some translation
-            .start = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)kernelBase)),
-            .end   = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end))
-        },
-        {
-            .start = ui_reg.start,
-            .end = ui_reg.end
-        }
-    };
-
-    for (i = 0; i < MAX_NUM_FREEMEM_REG; i++) {
-        ndks_boot.freemem[i] = REG_EMPTY;
-    }
-
-    /* Force ordering and exclusivity of reserved regions. */
-    assert(res_reg[0].start < res_reg[0].end);
-    assert(res_reg[1].start < res_reg[1].end);
-
-    assert(res_reg[0].end <= res_reg[1].start);
-
-    for (i = 0; i < get_num_avail_p_regs(); i++) {
-        cur_reg = paddr_to_pptr_reg(get_avail_p_reg(i));
-        /* Adjust region if it exceeds the kernel window
-         * Note that we compare physical address in case of overflow.
-         */
-        if (pptr_to_paddr((void *)cur_reg.end) > PADDR_TOP) {
-            cur_reg.end = PPTR_TOP;
-        }
-        if (pptr_to_paddr((void *)cur_reg.start) > PADDR_TOP) {
-            cur_reg.start = PPTR_TOP;
-        }
-
-        cur_reg = insert_region_excluded(cur_reg, res_reg[0]);
-        cur_reg = insert_region_excluded(cur_reg, res_reg[1]);
-
-        if (cur_reg.start != cur_reg.end) {
-            result = insert_region(cur_reg);
-            assert(result);
-        }
-    }
+    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), MAX_RESERVED, res_reg);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
@@ -247,7 +173,7 @@ static BOOT_CODE bool_t try_init_kernel(
     init_plat();
 
     /* make the free memory available to alloc_region() */
-    init_freemem(ui_reg);
+    arch_init_freemem(ui_reg);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();

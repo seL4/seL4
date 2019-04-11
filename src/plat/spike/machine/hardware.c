@@ -58,9 +58,9 @@ BOOT_CODE int get_num_avail_p_regs(void)
     return sizeof(avail_p_regs) / sizeof(p_region_t);
 }
 
-BOOT_CODE p_region_t get_avail_p_reg(word_t i)
+BOOT_CODE p_region_t *get_avail_p_regs(void)
 {
-    return avail_p_regs[i];
+    return avail_p_regs;
 }
 
 /**

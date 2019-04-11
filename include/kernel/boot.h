@@ -46,6 +46,8 @@ static inline bool_t is_reg_empty(region_t reg)
     return reg.start == reg.end;
 }
 
+void init_freemem(word_t n_available, const p_region_t *available,
+                  word_t n_reserved, region_t *reserved);
 pptr_t alloc_region(word_t size_bits);
 bool_t insert_region(region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);
