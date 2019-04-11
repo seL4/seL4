@@ -691,8 +691,7 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, unsigned int len
         current_syscall_error.type = seL4_TruncatedMessage;
         return EXCEPTION_SYSCALL_ERROR;
     }
-
-    if (unlikely(cap_page_table_cap_get_capPTMappedASID(cap) != asidInvalid)) {
+    if (unlikely(cap_page_table_cap_get_capPTIsMapped(cap))) {
         userError("RISCVPageTable: PageTable is already mapped.");
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 0;
