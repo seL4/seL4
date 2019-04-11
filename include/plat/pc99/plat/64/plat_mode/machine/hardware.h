@@ -48,6 +48,7 @@
 /* Below the main kernel window we have any slots for the TLB bitmap */
 #define TLBBITMAP_PML4_RESERVED (TLBBITMAP_ROOT_ENTRIES * BIT(PML4_INDEX_OFFSET))
 #define TLBBITMAP_PPTR (PPTR_BASE - TLBBITMAP_PML4_RESERVED)
+#define PPTR_TOP TLBBITMAP_PPTR
 
 /* Define PPTR_USER_TOP to be 1 before the last address before sign extension occurs.
  * This ensures that
