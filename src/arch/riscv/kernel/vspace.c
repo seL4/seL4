@@ -496,29 +496,26 @@ void unmapPageTable(asid_t asid, vptr_t vptr, pte_t *target_pt)
         /* nothing to do */
         return;
     }
-
-    pte_t *ptSlot = find_ret.vspace_root + RISCV_GET_PT_INDEX(vptr, 1);
+    /* We won't ever unmap a top level page table */
+    assert(find_ret.vspace_root != target_pt);
+    pte_t *ptSlot = NULL;
     pte_t *pt = find_ret.vspace_root;
 
-    for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
+    for (int i = 1; i < CONFIG_PT_LEVELS && pt != target_pt; i++) {
+        ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
         if (unlikely(!isPTEPageTable(ptSlot))) {
             /* couldn't find it */
             return;
         }
         pt = getPPtrFromHWPTE(ptSlot);
-        if (pt == target_pt) {
-            /* Found the PT Slot */
-            ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i - 1);
-            break;
-        }
-        ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
     }
 
     if (pt != target_pt) {
         /* didn't find it */
         return;
     }
-
+    /* If we found a pt then ptSlot won't be null */
+    assert(ptSlot != NULL);
     *ptSlot = pte_new(
                   0,  /* phy_address */
                   0,  /* sw */
