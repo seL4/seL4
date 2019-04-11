@@ -17,7 +17,6 @@ add_sources(
     PREFIX src/arch/arm/32
     CFILES
         object/objecttype.c
-        machine/hardware.c
         machine/registerset.c
         machine/fpu.c
         model/statedata.c

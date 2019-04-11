@@ -106,6 +106,8 @@ enum _register {
 #endif
 };
 
+#define NEXT_PC_REG LR_svc
+
 compile_assert(sp_offset_correct, SP *sizeof(word_t) == PT_SP)
 compile_assert(lr_svc_offset_correct, LR_svc *sizeof(word_t) == PT_LR_svc)
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT

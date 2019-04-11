@@ -147,6 +147,8 @@ enum _register {
     n_contextRegisters          = 36,
 };
 
+#define NEXT_PC_REG ELR_EL1
+
 compile_assert(sp_offset_correct, SP_EL0 *sizeof(word_t) == PT_SP_EL0)
 compile_assert(lr_svc_offset_correct, ELR_EL1 *sizeof(word_t) == PT_ELR_EL1)
 compile_assert(faultinstruction_offset_correct, FaultInstruction *sizeof(word_t) == PT_FaultInstruction)

@@ -444,6 +444,7 @@ add_sources(
         machine/cache.c
         machine/errata.c
         machine/debug.c
+        machine/hardware.c
         object/interrupt.c
         object/tcb.c
         object/iospace.c

@@ -18,7 +18,6 @@ add_sources(
     CFILES
         object/objecttype.c
         machine/capdl.c
-        machine/hardware.c
         machine/registerset.c
         machine/fpu.c
         model/statedata.c

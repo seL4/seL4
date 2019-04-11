@@ -20,7 +20,7 @@ word_t PURE getRestartPC(tcb_t *thread)
 
 void setNextPC(tcb_t *thread, word_t v)
 {
-    setRegister(thread, LR_svc, v);
+    setRegister(thread, NEXT_PC_REG, v);
 }
 
 BOOT_CODE int get_num_avail_p_regs(void)
