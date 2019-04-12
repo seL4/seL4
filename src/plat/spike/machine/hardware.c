@@ -60,7 +60,7 @@ BOOT_CODE int get_num_avail_p_regs(void)
 
 BOOT_CODE p_region_t *get_avail_p_regs(void)
 {
-    return avail_p_regs;
+    return (p_region_t *) avail_p_regs;
 }
 
 /**

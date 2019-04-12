@@ -40,7 +40,7 @@ BOOT_CODE p_region_t get_dev_p_reg(word_t i)
 
 BOOT_CODE const p_region_t *get_avail_p_regs(void)
 {
-    return avail_p_regs;
+    return (const p_region_t *) avail_p_regs;
 }
 
 BOOT_CODE void map_kernel_devices(void)

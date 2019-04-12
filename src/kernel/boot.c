@@ -597,7 +597,7 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
     }
 
     /* convert the available regions to pptrs */
-    region_t avail_reg[n_available];
+    region_t avail_reg[MAX_NUM_FREEMEM_REG];
     for (word_t i = 0; i < n_available; i++) {
         avail_reg[i] = paddr_to_pptr_reg(available[i]);
         avail_reg[i].end = ceiling_kernel_window(avail_reg[i].end);
