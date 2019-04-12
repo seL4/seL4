@@ -20,6 +20,7 @@ if(KernelPlatformTK1)
     config_set(KernelArmMach MACH "nvidia")
     list(APPEND KernelDTSList "tools/dts/tk1.dts")
     list(APPEND KernelDTSList "src/plat/tk1/overlay-tk1.dts")
+    declare_default_headers(12000000llu 191 arch/machine/gic_pl390.h arch/machine/generic_timer.h)
 endif()
 
 add_sources(
