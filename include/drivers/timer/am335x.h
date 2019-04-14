@@ -45,4 +45,4 @@ static inline void resetTimer(void)
     ackInterrupt(KERNEL_TIMER_IRQ);
 }
 
-#define __DRIVER_TIMER_AM335X_H
+#endif /* __DRIVER_TIMER_AM335X_H */
