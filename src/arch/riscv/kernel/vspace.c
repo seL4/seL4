@@ -135,7 +135,7 @@ BOOT_CODE VISIBLE void map_kernel_window(void)
     kernel_root_pageTable[RISCV_GET_PT_INDEX(pptr, 1)] =
         pte_next(kpptr_to_paddr(kernel_image_level2_pt), false);
     while (pptr < ROUND_DOWN(KERNEL_BASE, RISCV_GET_LVL_PGSIZE_BITS(1)) +
-            RISCV_GET_LVL_PGSIZE(1)) {
+           RISCV_GET_LVL_PGSIZE(1)) {
         kernel_image_level2_pt[index] = pte_next(paddr, true);
         index++;
         pptr += RISCV_GET_LVL_PGSIZE(2);
