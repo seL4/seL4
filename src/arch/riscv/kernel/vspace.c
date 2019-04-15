@@ -590,7 +590,7 @@ void setVMRoot(tcb_t *tcb)
 bool_t CONST isValidVTableRoot(cap_t cap)
 {
     return (cap_get_capType(cap) == cap_page_table_cap &&
-            cap_page_table_cap_get_capPTMappedASID(cap) != asidInvalid);
+            cap_page_table_cap_get_capPTIsMapped(cap));
 }
 
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap)
@@ -801,7 +801,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
         }
 
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
-                     cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) == asidInvalid)) {
+                     !cap_page_table_cap_get_capPTIsMapped(lvl1ptCap))) {
             userError("RISCVPageMap: Bad PageTable cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -879,7 +879,7 @@ static exception_t decodeRISCVFrameInvocation(word_t label, unsigned int length,
         vm_rights_t capVMRights = cap_frame_cap_get_capFVMRights(cap);
 
         if (unlikely(cap_get_capType(lvl1ptCap) != cap_page_table_cap ||
-                     cap_page_table_cap_get_capPTMappedASID(lvl1ptCap) == asidInvalid)) {
+                     !cap_page_table_cap_get_capPTIsMapped(lvl1ptCap))) {
             userError("RISCVPageRemap: Bad PageTable cap.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -1072,7 +1072,7 @@ exception_t decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t c
         vspaceCapSlot = extraCaps.excaprefs[0];
         vspaceCap = vspaceCapSlot->cap;
 
-        if (cap_page_table_cap_get_capPTMappedASID(vspaceCap) != asidInvalid) {
+        if (cap_page_table_cap_get_capPTIsMapped(vspaceCap)) {
             userError("RISCVASIDPool: Invalid vspace root.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;

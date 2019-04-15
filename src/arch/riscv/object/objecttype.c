@@ -94,16 +94,21 @@ finaliseCap_ret_t Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
     case cap_page_table_cap:
-        if (final) {
+        if (final && cap_page_table_cap_get_capPTIsMapped(cap)) {
+            /*
+             * This PageTable is either mapped as a vspace_root or otherwise exists
+             * as an entry in another PageTable. We check if it is a vspace_root and
+             * if it is delete the entry from the ASID pool otherwise we treat it as
+             * a mapped PageTable and unmap it from whatever page table it is mapped
+             * into.
+             */
             asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
-            if (asid != asidInvalid) {
-                findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
-                pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-                if (find_ret.status == EXCEPTION_NONE && find_ret.vspace_root == pte) {
-                    deleteASID(cap_page_table_cap_get_capPTMappedASID(cap), pte);
-                } else if (cap_page_table_cap_get_capPTIsMapped(cap)) {
-                    unmapPageTable(asid, cap_page_table_cap_get_capPTMappedAddress(cap), pte);
-                }
+            findVSpaceForASID_ret_t find_ret = findVSpaceForASID(asid);
+            pte_t *pte = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
+            if (find_ret.status == EXCEPTION_NONE && find_ret.vspace_root == pte) {
+                deleteASID(asid, pte);
+            } else {
+                unmapPageTable(asid, cap_page_table_cap_get_capPTMappedAddress(cap), pte);
             }
         }
         break;
