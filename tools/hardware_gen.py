@@ -30,6 +30,35 @@ except ImportError:
         pass
 
 
+# Python 2 has no built-in memoization support, so we need to roll our own.
+# See also https://wiki.python.org/moin/PythonDecoratorLibrary#Memoize.
+# Also `FdtNode` objects aren't hashable so we create a key based on calling str
+# on the objects. This implementation was taken from camkes-tool which uses the
+# same strategy for unhashable objects. This assumes that the objects are immutable.
+class memoized(object):
+    '''Decorator. Cache a function's return value each time it is called. If
+    called later with the same arguments, the cached value is returned (not
+    reevaluated).'''
+
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
+
+    def __call__(self, *args, **kwargs):
+        key = str(args) + str(kwargs)
+        if key not in self.cache:
+            self.cache[key] = self.func(*args, **kwargs)
+        return self.cache[key]
+
+    def __repr__(self):
+        '''Return the function's docstring.'''
+        return self.func.__doc__
+
+
+def memoize():
+    return memoized
+
+
 def align_down(addr, boundary):
     return addr & ~(boundary - 1)
 
@@ -622,6 +651,7 @@ def is_compatible(node, compatibles):
     return False
 
 
+@memoize()
 def should_parse_regions(root, node):
     """ returns True if we should parse regions found in this node. """
     parent = node.get_parent_node()
