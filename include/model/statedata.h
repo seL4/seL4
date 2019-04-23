@@ -86,7 +86,7 @@ extern word_t ksNumCPUs;
 
 extern word_t ksWorkUnitsCompleted;
 extern irq_state_t intStateIRQTable[];
-extern cte_t *intStateIRQNode;
+extern cte_t intStateIRQNode[];
 extern const dschedule_t ksDomSchedule[];
 extern const word_t ksDomScheduleLength;
 extern word_t ksDomScheduleIdx;
