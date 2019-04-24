@@ -24,7 +24,7 @@ if(KernelPlatformTK1)
         TIMER_FREQUENCY 12000000llu
         MAX_IRQ 191
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
-        TIMER drivers/timer/arm_generic.h
+        TIMER drivers/timer/arm_generic.h SMMU plat/machine/smmu.h
     )
 endif()
 

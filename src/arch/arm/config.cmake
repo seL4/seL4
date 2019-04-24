@@ -73,7 +73,7 @@ function(declare_default_headers)
         0
         CONFIGURE
         ""
-        "TIMER_FREQUENCY;MAX_IRQ;INTERRUPT_CONTROLLER;TIMER"
+        "TIMER_FREQUENCY;MAX_IRQ;INTERRUPT_CONTROLLER;TIMER;SMMU"
         ""
     )
     # variables parsed by the above will be prepended with CONFIGURE_, so pipe them

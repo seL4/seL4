@@ -22,4 +22,8 @@ enum IRQConstants {
 #include <@CONFIGURE_INTERRUPT_CONTROLLER@>
 #include <@CONFIGURE_TIMER@>
 
+#cmakedefine CONFIGURE_SMMU <@CONFIGURE_SMMU@>
+#if (defined(CONFIGURE_SMMU) && defined(CONFIG_ARM_SMMU))
+#include CONFIGURE_SMMU
+#endif
 #endif /* !__ARM_PLAT_H */
