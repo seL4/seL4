@@ -10,4 +10,5 @@
 
 if(KernelPlatformSpikeSiFiveFreedom)
     set(KernelPlatformSpikeClockFrequency 1000000)
+    set(DefaultFirstHartID 1)
 endif()

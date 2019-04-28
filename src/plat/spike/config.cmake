@@ -33,9 +33,16 @@ config_string(
     UNQUOTE
 )
 
+set(DefaultFirstHartID 0)
 # Include all of the different instances of the Spike platform
 include(src/plat/spike/instance/qemu/config.cmake)
 include(src/plat/spike/instance/rocket-chip/config.cmake)
 include(src/plat/spike/instance/freedom/config.cmake)
+
+config_string(
+    KernelPlatformSpikeFirstHartID FIRST_HART_ID "HART ID of the first kernel HART "
+    DEFAULT ${DefaultFirstHartID}
+    UNQUOTE
+)
 
 add_sources(DEP "KernelPlatformSpike" CFILES src/plat/spike/machine/hardware.c)
