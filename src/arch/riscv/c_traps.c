@@ -124,7 +124,7 @@ void VISIBLE NORETURN c_handle_exception(void)
         handleVMFaultEvent(scause);
         break;
     default:
-        handleUserLevelFault(scause, read_sbadaddr());
+        handleUserLevelFault(scause, 0);
         break;
     }
 
