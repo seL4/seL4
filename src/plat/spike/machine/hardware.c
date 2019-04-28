@@ -30,6 +30,13 @@
 
 #define MAX_AVAIL_P_REGS 2
 
+#define STIMER_IP 5
+#define STIMER_IE 5
+#define STIMER_CAUSE 5
+#define SEXTERNAL_IP 9
+#define SEXTERNAL_IE 9
+#define SEXTERNAL_CAUSE 9
+
 #define RESET_CYCLES ((CONFIG_SPIKE_CLOCK_FREQ / MS_IN_S) * CONFIG_TIMER_TICK_MS)
 
 /* Available physical memory regions on platform (RAM minus kernel image). */
@@ -75,7 +82,8 @@ interrupt_t getActiveIRQ(void)
 /* Check for pending IRQ */
 bool_t isIRQPending(void)
 {
-    return (getActiveIRQ() != irqInvalid);
+    word_t sip = read_sip();
+    return (sip & (BIT(STIMER_IP) | BIT(SEXTERNAL_IP)));
 }
 
 /* Enable or disable irq according to the 'disable' flag. */

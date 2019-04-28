@@ -84,6 +84,13 @@ static inline word_t read_sstatus(void)
     return temp;
 }
 
+static inline word_t read_sip(void)
+{
+    word_t temp;
+    asm volatile("csrr %0, sip" : "=r"(temp));
+    return temp;
+}
+
 static inline void set_sie_mask(word_t mask_high)
 {
     word_t temp;
@@ -94,12 +101,6 @@ static inline void clear_sie_mask(word_t mask_low)
 {
     word_t temp;
     asm volatile("csrrc %0, sie, %1" : "=r"(temp) : "rK"(mask_low));
-}
-
-static inline void clear_sip_mask(word_t mask_low)
-{
-    word_t temp;
-    asm volatile("csrrc %0, sip, %1" : "=r"(temp) : "rK"(mask_low));
 }
 
 #if CONFIG_PT_LEVELS == 2
