@@ -19,7 +19,7 @@
 #include <machine/io.h>
 #include <arch/sbi.h>
 
-#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG)
+#if defined(CONFIG_PRINTING) || defined(CONFIG_DEBUG_BUILD)
 void putDebugChar(unsigned char c)
 {
     sbi_console_putchar(c);
