@@ -265,6 +265,7 @@ config_choice(
     "Select the kernel optimisation level"
     "-O2;KerenlOptimisationO2;KERNEL_OPT_LEVEL_O2"
     "-Os;KerenlOptimisationOS;KERNEL_OPT_LEVEL_OS"
+    "-O0;KerenlOptimisationO0;KERNEL_OPT_LEVEL_O0"
     "-O1;KerenlOptimisationO1;KERNEL_OPT_LEVEL_O1"
     "-O3;KerenlOptimisationO3;KERNEL_OPT_LEVEL_O3"
 )
