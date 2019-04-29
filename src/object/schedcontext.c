@@ -169,8 +169,8 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
         assert(sc->scYieldFrom == NULL);
     }
     bool_t return_now = true;
-    refill_unblock_check(sc);
     if (isSchedulable(sc->scTcb)) {
+        refill_unblock_check(sc);
         assert(refill_sufficient(sc, 0) && refill_ready(sc));
         if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUIndex() ||)
             sc->scTcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
