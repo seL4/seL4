@@ -52,6 +52,7 @@
 #define seL4_PML4Bits           12
 #define seL4_PML4EntryBits      3
 #define seL4_PML4IndexBits      9
+#define seL4_VSpaceBits seL4_PML4Bits
 
 #define seL4_IOPageTableBits    12
 #define seL4_LargePageBits      21

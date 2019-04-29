@@ -175,6 +175,7 @@ enum {
 #endif
 
 #define seL4_PageDirBits 14
+#define seL4_VSpaceBits seL4_PageDirBits
 
 #ifdef CONFIG_ARM_SMMU
 #define seL4_NumASIDPoolsBits 6

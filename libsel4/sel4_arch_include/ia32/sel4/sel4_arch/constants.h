@@ -39,6 +39,7 @@
 #define seL4_PageDirBits     12
 #define seL4_PageDirEntryBits 2
 #define seL4_PageDirIndexBits 10
+#define seL4_VSpaceBits seL4_PageDirBits
 
 #define seL4_IOPageTableBits 12
 #define seL4_NumASIDPoolsBits 2
