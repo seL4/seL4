@@ -29,6 +29,7 @@ Upcoming release: BREAKING
 * Added extended bootinfo header for device tree (SEL4_BOOTINFO_HEADER_FDT).
 * Support added for passing a device tree from the bootloader to the root task on ARM.
 * Add seL4_VSpaceBits, the size of the top level page table.
+* The root cnode size is now a minimum of 4K.
 
 ## Upgrade Notes
 ---

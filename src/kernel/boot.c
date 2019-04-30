@@ -126,7 +126,8 @@ BOOT_CODE void write_slot(slot_ptr_t slot_ptr, cap_t cap)
  */
 compile_assert(root_cnode_size_valid,
                CONFIG_ROOT_CNODE_SIZE_BITS < 32 - seL4_SlotBits &&
-               (1U << CONFIG_ROOT_CNODE_SIZE_BITS) >= seL4_NumInitialCaps)
+               BIT(CONFIG_ROOT_CNODE_SIZE_BITS) >= seL4_NumInitialCaps &&
+               BIT(CONFIG_ROOT_CNODE_SIZE_BITS) >= (seL4_PageBits - seL4_SlotBits))
 
 BOOT_CODE cap_t
 create_root_cnode(void)

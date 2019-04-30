@@ -72,12 +72,13 @@ include(src/config.cmake)
 config_set(KernelHaveFPU HAVE_FPU "${KernelHaveFPU}")
 
 # System parameters
-config_string(KernelRootCNodeSizeBits ROOT_CNODE_SIZE_BITS "Root CNode Size (2^n slots) \
-    The acceptable range is 4-27, based on the kernel-supplied caps.\
-    The root CNode needs at least enough space to contain up to\
-    BI_CAP_DYN_START. Note that in practice your root CNode will need\
-    to be several bits larger than 4 to fit untyped caps and\
-    cannot be 27 bits as it won't fit in memory." DEFAULT 12 UNQUOTE)
+config_string(
+    KernelRootCNodeSizeBits ROOT_CNODE_SIZE_BITS "Root CNode Size (2^n slots) \
+    The acceptable range is 8-27 and 7-26, for 32-bit and 64-bit respectively. \
+    The root CNode needs at least enough space to contain up to BI_CAP_DYN_START."
+    DEFAULT 12
+    UNQUOTE
+)
 
 config_string(KernelTimerTickMS TIMER_TICK_MS "Timer tick period in milliseconds" DEFAULT 2 UNQUOTE)
 config_string(
