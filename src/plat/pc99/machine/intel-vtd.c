@@ -362,7 +362,6 @@ BOOT_CODE static void vtd_create_context_table(
         if (vtd_get_root_index(rmrr_list->entries[i].device) == bus) {
             uint32_t addr;
             for (addr = rmrr_list->entries[i].base; addr < rmrr_list->entries[i].limit; addr += BIT(seL4_PageBits)) {
-                (void)vtd_map_reserved_page;
                 vtd_map_reserved_page(vtd_context_table, vtd_get_context_index(rmrr_list->entries[i].device), addr);
             }
         }
