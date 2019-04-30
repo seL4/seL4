@@ -40,14 +40,12 @@ extern char ki_end[1];
 BOOT_DATA static volatile int node_boot_lock = 0;
 #endif /* ENABLE_SMP_SUPPORT */
 
-#define MAX_RESERVED 4
+#define ARCH_RESERVED 3 // kernel + user image + dtb
+#define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
 BOOT_DATA static region_t reserved[MAX_RESERVED];
 
 BOOT_CODE static void arch_init_freemem(region_t ui_reg, region_t dtb_reg)
 {
-    word_t n_reserved = get_num_reserved_region() + 2;
-    assert(n_reserved <= MAX_RESERVED);
-
     reserved[0].start = kernelBase;
     reserved[0].end = (pptr_t)ki_end;
     reserved[1].start = dtb_reg.start;
@@ -55,11 +53,11 @@ BOOT_CODE static void arch_init_freemem(region_t ui_reg, region_t dtb_reg)
     reserved[2].start = ui_reg.start;
     reserved[2].end = ui_reg.end;
 
-    for (word_t i = 0; i < get_num_reserved_region(); i++) {
-        reserved[i + 3] = mode_reserved_region[i];
+    for (word_t i = 0; i < MODE_RESERVED; i++) {
+        reserved[i + ARCH_RESERVED] = mode_reserved_region[i];
     }
 
-    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), n_reserved, reserved);
+    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), MAX_RESERVED, reserved);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
