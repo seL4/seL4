@@ -1010,19 +1010,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='transform device tree input to seL4 build configuration'
                     + ' artifacts')
+    parser.add_argument('--config', help='kernel device configuration',
+                        required=True, type=argparse.FileType())
     parser.add_argument('--dtb', help='device tree blob to use for generation',
                         required=True, type=argparse.FileType('rb'))
     parser.add_argument('--output', help='output file for generated header',
                         required=True, type=argparse.FileType('w'))
+    parser.add_argument('--schema', help='config file schema for validation',
+                        required=True, type=argparse.FileType())
     parser.add_argument('--compatibility-strings',
                         help='File to write CMake list of compatibility strings', type=argparse.FileType('w'))
     parser.add_argument('--page-bits', help='number of bits per page', default=12, type=int)
     parser.add_argument(
         '--phys-align', help='alignment in bits of the base address of the kernel', default=24, type=int)
-    parser.add_argument('--config', help='kernel device configuration',
-                        required=True, type=argparse.FileType())
-    parser.add_argument('--schema', help='config file schema for validation',
-                        required=True, type=argparse.FileType())
     args = parser.parse_args()
     main(args)
 else:
