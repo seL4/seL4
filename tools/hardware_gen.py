@@ -21,14 +21,6 @@ import pyfdt.pyfdt
 import yaml
 from jinja2 import Environment, BaseLoader
 
-try:
-    from jsonschema import validate
-except ImportError:
-    logging.warning("Skipping hardware YAML validation, `pip install jsonschema` to validate")
-
-    def validate(*args, **kwargs):
-        pass
-
 
 # Python 2 has no built-in memoization support, so we need to roll our own.
 # See also https://wiki.python.org/moin/PythonDecoratorLibrary#Memoize.
@@ -65,6 +57,24 @@ def align_down(addr, boundary):
 
 def align_up(addr, boundary):
     return (addr + (boundary - 1)) & ~(boundary - 1)
+
+
+def attempt_imports():
+    """
+    Attempt module imports that are not absolutely required.  This is in a
+    function instead of at the top level so that we don't spew the diagnostic
+    message in scenarios like `--help` or usage errors.
+    """
+    global validate
+
+    try:
+        from jsonschema import validate
+    except ImportError:
+        logging.warning('Skipping hardware YAML validation; `pip install'
+                        + ' jsonschema` to validate")')
+
+        def validate(*args, **kwargs):
+            pass
 
 
 def make_number(cells, array):
@@ -942,6 +952,7 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
 
 
 def main(args):
+    attempt_imports()
     schema = yaml.load(args.schema)
     kernel_devices = yaml.load(args.config)
     validate(kernel_devices, schema)
@@ -1014,3 +1025,5 @@ if __name__ == '__main__':
                         required=True, type=argparse.FileType())
     args = parser.parse_args()
     main(args)
+else:
+    attempt_imports()
