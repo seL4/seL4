@@ -931,9 +931,20 @@ def output_regions(args, devices, memory, kernel, irqs, fp):
     kernel.sort(key=lambda a: a.start)
     # make sure physBase is at least 16MB (supersection) aligned for the ELF loader's sake.
     # TODO: this may need to be larger for aarch64. It seems to work OK on currently supported platforms though.
+    #
+    # XXX: This also assumes that the kernel image is the first memory region
+    # described, and propgates that assumption forward.  What enforces that?
     paddr = align_up(memory[0].start, 1 << args.phys_align)
     memory[0].size -= paddr - memory[0].start
     memory[0].start = paddr
+
+    # Write out what we need to consume in YAML format.
+    yaml_out = {
+        'memory': [{'start': m.start, 'end': m.start + m.size} for m in memory],
+        'devices': [{'start': m.start, 'end': m.start + m.size} for m in devices],
+    }
+
+    yaml.dump(yaml_out, args.yaml, default_flow_style=False)
 
     template = Environment(loader=BaseLoader, trim_blocks=False,
                            lstrip_blocks=False).from_string(HEADER_TEMPLATE)
@@ -1018,6 +1029,8 @@ if __name__ == '__main__':
                         required=True, type=argparse.FileType('w'))
     parser.add_argument('--schema', help='config file schema for validation',
                         required=True, type=argparse.FileType())
+    parser.add_argument('--yaml', help='output file for generated YAML',
+                        required=True, type=argparse.FileType('w'))
     parser.add_argument('--compatibility-strings',
                         help='File to write CMake list of compatibility strings', type=argparse.FileType('w'))
     parser.add_argument('--page-bits', help='number of bits per page', default=12, type=int)
