@@ -168,10 +168,16 @@ static exception_t invokeSchedContext_YieldTo(sched_context_t *sc, word_t *buffe
         schedContext_completeYieldTo(sc->scYieldFrom);
         assert(sc->scYieldFrom == NULL);
     }
+
+    /* if the tcb is in the scheduler, it's ready and sufficient.
+     * Otherwise, check that it is ready and sufficient and if not,
+     * place the thread in the release queue. This way, from this point,
+     * if the thread isSchedulable, it is ready and sufficient.*/
+    schedContext_resume(sc);
+
     bool_t return_now = true;
     if (isSchedulable(sc->scTcb)) {
         refill_unblock_check(sc);
-        assert(refill_sufficient(sc, 0) && refill_ready(sc));
         if (SMP_COND_STATEMENT(sc->scCore != getCurrentCPUIndex() ||)
             sc->scTcb->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority) {
             tcbSchedDequeue(sc->scTcb);
