@@ -630,6 +630,7 @@ void chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault, wo
     NODE_STATE_ON_CORE(ksCurSC, core)->scConsumed += consumed;
     NODE_STATE_ON_CORE(ksConsumed, core) = 0;
     if (isCurCPU && likely(isRunnable(NODE_STATE_ON_CORE(ksCurThread, core)))) {
+        assert(NODE_STATE(ksCurThread)->tcbSchedContext == NODE_STATE(ksCurSC));
         endTimeslice(canTimeoutFault);
         rescheduleRequired();
         NODE_STATE(ksReprogram) = true;

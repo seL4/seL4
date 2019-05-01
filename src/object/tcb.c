@@ -1339,6 +1339,11 @@ exception_t decodeSetSchedParams(cap_t cap, word_t length, extra_caps_t excaps, 
         }
         break;
     case cap_null_cap:
+        if (tcb == NODE_STATE(ksCurThread)) {
+            userError("TCB SetSchedParams: Cannot change sched_context of current thread");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         break;
     default:
         userError("TCB Configure: sched context cap invalid.");

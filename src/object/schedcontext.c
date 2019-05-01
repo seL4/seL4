@@ -44,6 +44,11 @@ static exception_t decodeSchedContext_UnbindObject(sched_context_t *sc, extra_ca
             current_syscall_error.type = seL4_IllegalOperation;
             return EXCEPTION_SYSCALL_ERROR;
         }
+        if (sc->scTcb == NODE_STATE(ksCurThread)) {
+            userError("SchedContext UnbindObject: cannot unbind sc of current thread");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         break;
     case cap_notification_cap:
         if (sc->scNotification != NTFN_PTR(cap_notification_cap_get_capNtfnPtr(cap))) {
@@ -235,6 +240,11 @@ exception_t decodeSchedContextInvocation(word_t label, cap_t cap, extra_caps_t e
         return decodeSchedContext_UnbindObject(sc, extraCaps);
     case SchedContextUnbind:
         /* no decode */
+        if (sc->scTcb == NODE_STATE(ksCurThread)) {
+            userError("SchedContext UnbindObject: cannot unbind sc of current thread");
+            current_syscall_error.type = seL4_IllegalOperation;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return invokeSchedContext_Unbind(sc);
     case SchedContextYieldTo:
