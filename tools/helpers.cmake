@@ -619,23 +619,36 @@ endmacro(kernel_platforms_string)
 # Checks if a file is older than its dependencies
 # Will set `stale` to TRUE if outfile doesn't exist,
 # or if outfile is older than any file in `deps_list`.
+# Will also set `stale` to TRUE if the arguments given to this macro
+# change compared to the previous invocation.
 # stale: A variable to overwrite with TRUE or FALSE
 # outfile: A value that is a valid file path
 # deps_list: A variable that holds a list of file paths
+# arg_cache: A variable that holds a file to store arguments to
 # e.g:
-#  set(KernelDTSIntermediate "filea" "fileb" "filec")
+#  set(dts_list "filea" "fileb" "filec")
 #  set(KernelDTBPath "${CMAKE_CURRENT_BINARY_DIR}/kernel.dtb")
-#  check_outfile_stale(regen ${KernelDTBPath} KernelDTSIntermediate)
+#  check_outfile_stale(regen ${KernelDTBPath} dts_list ${CMAKE_CURRENT_BINARY_DIR}/dts.cmd
 #  if (regen)
 #    regen_file(${KernelDTBPath})
 #  endif()
 #
 # The above call will set regen to TRUE if the file referred
 # to by KernelDTBPath doesn't exist, or is older than any files
-# in KernelDTSIntermediate.
-macro(check_outfile_stale stale outfile deps_list)
-    set(${stale} TRUE)
-    if(EXISTS ${outfile})
+# in KernelDTSIntermediate or if regen, ${KernelDTBPath} and dts_list resolve to different files.
+macro(check_outfile_stale stale outfile deps_list arg_cache)
+    set(_outfile_command "${stale} ${outfile} ${${deps_list}}")
+    if(NOT EXISTS "${arg_cache}")
+        set(_prev_command "")
+    else()
+        file(READ "${arg_cache}" _prev_command)
+    endif()
+    if(NOT "${_outfile_command}" STREQUAL "${_prev_command}")
+        set(${stale} TRUE)
+    else()
+        set(${stale} FALSE)
+    endif()
+    if(EXISTS ${outfile} AND NOT ${stale})
         set(${stale} FALSE)
         foreach(dep IN LISTS ${deps_list})
             if("${dep}" IS_NEWER_THAN "${outfile}")
@@ -643,5 +656,10 @@ macro(check_outfile_stale stale outfile deps_list)
                 break()
             endif()
         endforeach()
+    else()
+        set(${stale} TRUE)
+    endif()
+    if(${stale})
+        file(WRITE "${arg_cache}" "${_outfile_command}")
     endif()
 endmacro()

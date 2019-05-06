@@ -148,22 +148,19 @@ if(DEFINED KernelDTSList)
         message(FATAL_ERROR "Cannot find 'dtc' program.")
     endif()
 
+    # Generate final DTS based on Linux DTS + seL4 overlay[s]
     foreach(entry ${KernelDTSList})
         get_absolute_source_or_binary(dts_tmp ${entry})
-        set(dts_list "${dts_list} ${dts_tmp}")
+        list(APPEND dts_list "${dts_tmp}")
     endforeach()
 
-    # Generate final DTS based on Linux DTS + seL4 overlay[s]
-    execute_process(
-        COMMAND
-            ${CMAKE_COMMAND} -E make_directory
-            "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/"
-    )
-    execute_process(COMMAND bash -c "cat ${dts_list} > ${KernelDTSIntermediate}.in")
-    configure_file(${KernelDTSIntermediate}.in ${KernelDTSIntermediate} COPYONLY)
-
-    check_outfile_stale(regen ${KernelDTBPath} KernelDTSIntermediate)
+    check_outfile_stale(regen ${KernelDTBPath} dts_list ${CMAKE_CURRENT_BINARY_DIR}/dts.cmd)
     if(regen)
+        file(REMOVE "${KernelDTSIntermediate}")
+        foreach(entry ${dts_list})
+            file(READ ${entry} CONTENTS)
+            file(APPEND "${KernelDTSIntermediate}" "${CONTENTS}")
+        endforeach()
         # Compile DTS to DTB
         execute_process(
             COMMAND
@@ -172,10 +169,11 @@ if(DEFINED KernelDTSList)
     endif()
 
     set(deps ${KernelDTBPath} ${config_file} ${config_schema} ${HARDWARE_GEN_PATH})
-    check_outfile_stale(regen ${device_dest} deps)
+    check_outfile_stale(regen ${device_dest} deps ${CMAKE_CURRENT_BINARY_DIR}/gen_header.cmd)
     if(regen)
         # Generate devices_gen header based on DTB
         message(STATUS "${device_dest} is out of date. Regenerating...")
+        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen_headers/plat/machine/")
         execute_process(
             COMMAND
                 ${PYTHON} "${HARDWARE_GEN_PATH}" --dtb "${KernelDTBPath}" --compatibility-strings
