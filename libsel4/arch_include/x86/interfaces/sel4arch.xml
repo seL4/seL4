@@ -6,15 +6,6 @@
 -->
 
 <api name="ObjectApiX86" label_prefix="x86_">
-    <struct name="seL4_VCPUContext">
-        <member name="eax"/>
-        <member name="ebx"/>
-        <member name="ecx"/>
-        <member name="edx"/>
-        <member name="esi"/>
-        <member name="edi"/>
-        <member name="ebp"/>
-    </struct>
     <interface name="seL4_X86_PageDirectory" manual_name="Page Directory"
         cap_description="Capability to the page directory being operated on.">
         <method id="X86PageDirectoryMap" name="Map">
