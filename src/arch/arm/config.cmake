@@ -70,21 +70,32 @@ endif()
 
 # Include all the platforms. For all of the common variables we set a default value here
 # and let the platforms override them.
-set(KernelArmMachFeatureModifiers "" CACHE INTERNAL "")
-set(KernelArmMach "" CACHE INTERNAL "")
-set(KernelArmCortexA7 OFF)
-set(KernelArmCortexA8 OFF)
-set(KernelArmCortexA9 OFF)
-set(KernelArmCortexA15 OFF)
-set(KernelArmCortexA53 OFF)
-set(KernelArmCortexA57 OFF)
-set(KernelArchArmV6 OFF)
-set(KernelArchArmV7a OFF)
-set(KernelArchArmV7ve OFF)
-set(KernelArchArmV8a OFF)
-set(KernelArm1136JF_S OFF)
-set(KernelArmPASizeBits40 OFF)
-set(KernelArmPASizeBits44 OFF)
+foreach(
+    var
+    IN
+    ITEMS
+    KernelArmCortexA7
+    KernelArmCortexA8
+    KernelArmCortexA9
+    KernelArmCortexA15
+    KernelArmCortexA53
+    KernelArmCortexA57
+    KernelArm1136JF_S
+    KernelArchArmV6
+    KernelArchArmV7a
+    KernelArchArmV7ve
+    KernelArchArmV8a
+    KernelArmPASizeBits40
+    KernelArmPASizeBits44
+)
+    unset(${var} CACHE)
+    set(${var} OFF)
+endforeach()
+unset(KernelArmMach CACHE)
+unset(KernelArmMachFeatureModifiers CACHE)
+unset(KernelArmCPU CACHE)
+unset(KernelArmArmV CACHE)
+
 include(src/plat/allwinnerA20/config.cmake)
 include(src/plat/imx6/config.cmake)
 include(src/plat/imx7/config.cmake)
@@ -117,9 +128,6 @@ config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
 config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
 config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
 config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
-
-set(KernelArmCPU "" CACHE INTERNAL "")
-set(KernelArmArmV "" CACHE INTERNAL "")
 
 # Check for v7ve before v7a as v7ve is a superset and we want to set the
 # actual armv to that, but leave armv7a config enabled for anything that
