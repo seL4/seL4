@@ -266,13 +266,9 @@ void schedContext_resume(sched_context_t *sc)
 {
     assert(!sc || sc->scTcb != NULL);
     if (likely(sc) && isSchedulable(sc->scTcb)) {
-        assert(sc->scTcb != NULL);
-
-        if (isRunnable(sc->scTcb) && sc->scRefillMax > 0) {
-            if (!(refill_ready(sc) && refill_sufficient(sc, 0))) {
-                assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
-                postpone(sc);
-            }
+        if (!(refill_ready(sc) && refill_sufficient(sc, 0))) {
+            assert(!thread_state_get_tcbQueued(sc->scTcb->tcbState));
+            postpone(sc);
         }
     }
 }
