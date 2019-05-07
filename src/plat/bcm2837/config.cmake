@@ -12,10 +12,23 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(bcm2837 KernelPlatformRpi3 PLAT_BCM2837 KernelArchARM)
+
 if(KernelPlatformRpi3)
+    if("${KernelSel4Arch}" STREQUAL aarch32)
+        declare_seL4_arch(aarch32)
+    elseif("${KernelSel4Arch}" STREQUAL aarch64)
+        declare_seL4_arch(aarch64)
+    else()
+        message(
+            STATUS "Selected platform bcm2837 supports multiple architectures but none were given"
+        )
+        message(STATUS "  Defaulting to aarch32")
+        declare_seL4_arch(aarch32)
+    endif()
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelPlatform PLAT "bcm2837")
+    config_set(KernelARMPlatform ARM_PLAT rpi3)
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/rpi3.dts")
     list(APPEND KernelDTSList "src/plat/bcm2837/overlay-rpi3.dts")

@@ -10,8 +10,8 @@
 # @TAG(DATA61_GPL)
 #
 
-set(KernelArch "x86" CACHE STRING "")
-set(KernelX86Sel4Arch "x86_64" CACHE STRING "")
+set(KernelPlatform "pc99" CACHE STRING "")
+set(KernelSel4Arch "x86_64" CACHE STRING "")
 set(KernelVerificationBuild ON CACHE BOOL "")
 set(KernelMaxNumNodes "1" CACHE STRING "")
 set(KernelOptimisation "-O2" CACHE STRING "")

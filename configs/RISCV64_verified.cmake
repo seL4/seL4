@@ -10,9 +10,8 @@
 # @TAG(DATA61_GPL)
 #
 
-set(KernelArch "riscv" CACHE STRING "")
-set(KernelRiscVSel4Arch "riscv64" CACHE STRING "")
-set(KernelRiscVPlatform "spike" CACHE STRING "")
+set(KernelSel4Arch "riscv64" CACHE STRING "")
+set(KernelPlatform "spike" CACHE STRING "")
 set(KernelPTLevels "3" CACHE STRING "")
 set(KernelVerificationBuild ON CACHE BOOL "")
 set(KernelMaxNumNodes "1" CACHE STRING "")

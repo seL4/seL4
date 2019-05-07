@@ -12,10 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(omap3 KernelPlatformOMAP3 PLAT_OMAP3 KernelSel4ArchAarch32)
+
 if(KernelPlatformOMAP3)
+    declare_seL4_arch(aarch32)
     set(KernelArmCortexA8 ON)
     set(KernelArchArmV7a ON)
-    config_set(KernelPlatform PLAT "omap3")
+    config_set(KernelARMPlatform ARM_PLAT omap3)
     config_set(KernelArmMach MACH "omap")
     list(APPEND KernelDTSList "tools/dts/omap3.dts")
     list(APPEND KernelDTSList "src/plat/omap3/overlay-omap3.dts")

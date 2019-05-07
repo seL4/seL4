@@ -12,10 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(zynq7000 KernelPlatformZynq7000 PLAT_ZYNQ7000 KernelSel4ArchAarch32)
+
 if(KernelPlatformZynq7000)
+    declare_seL4_arch(aarch32)
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
-    config_set(KernelPlatform PLAT "zynq7000")
+    config_set(KernelARMPlatform ARM_PLAT zynq7000)
     config_set(KernelArmMach MACH "zynq")
     list(APPEND KernelDTSList "tools/dts/zynq7000.dts")
     declare_default_headers(

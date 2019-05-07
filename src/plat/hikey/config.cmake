@@ -12,6 +12,34 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(hikey KernelPlatformHikey PLAT_HIKEY KernelArchARM)
+
+if(KernelPlatformHikey)
+    if("${KernelSel4Arch}" STREQUAL aarch32)
+        declare_seL4_arch(aarch32)
+    elseif("${KernelSel4Arch}" STREQUAL aarch64)
+        declare_seL4_arch(aarch64)
+    else()
+        message(
+            STATUS "Selected platform hikey supports multiple architectures but none were given"
+        )
+        message(STATUS "  Defaulting to aarch32")
+        declare_seL4_arch(aarch32)
+    endif()
+    set(KernelArmCortexA53 ON)
+    set(KernelArchArmV8a ON)
+    config_set(KernelARMPlatform ARM_PLAT hikey)
+    set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
+    list(APPEND KernelDTSList "tools/dts/hikey.dts")
+    list(APPEND KernelDTSList "src/plat/hikey/overlay-hikey.dts")
+    declare_default_headers(
+        TIMER_FREQUENCY 1200000llu
+        MAX_IRQ 159
+        TIMER drivers/timer/arm_generic.h
+        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
+    )
+endif()
+
 config_string(
     KernelArmHikeyOutstandingPrefetchers ARM_HIKEY_OUTSTANDING_PREFETCHERS
     "Number of outstanding prefetch allowed \
@@ -63,21 +91,6 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelPlatformHikey;NOT KernelDebugDisablePrefetchers"
 )
-
-if(KernelPlatformHikey)
-    set(KernelArmCortexA53 ON)
-    set(KernelArchArmV8a ON)
-    config_set(KernelPlatform PLAT "hikey")
-    set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
-    list(APPEND KernelDTSList "tools/dts/hikey.dts")
-    list(APPEND KernelDTSList "src/plat/hikey/overlay-hikey.dts")
-    declare_default_headers(
-        TIMER_FREQUENCY 1200000llu
-        MAX_IRQ 159
-        TIMER drivers/timer/arm_generic.h
-        INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
-    )
-endif()
 
 add_sources(
     DEP "KernelPlatformHikey"

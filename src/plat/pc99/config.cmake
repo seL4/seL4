@@ -12,6 +12,21 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(pc99 KernelPlatPC99 PLAT_PC99 KernelArchX86)
+
+if(KernelPlatPC99)
+    if("${KernelSel4Arch}" STREQUAL ia32)
+        declare_seL4_arch(ia32)
+    elseif("${KernelSel4Arch}" STREQUAL x86_64)
+        declare_seL4_arch(x86_64)
+    else()
+        message(STATUS "Selected platform pc99 supports multiple architectures but none were given")
+        message(STATUS "  Defaulting to x86_64")
+        declare_seL4_arch(x86_64)
+    endif()
+
+endif()
+
 config_option(
     KernelIOMMU IOMMU "IOMMU support for VT-d enabled chipset"
     DEFAULT ON

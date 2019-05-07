@@ -10,10 +10,8 @@
 # @TAG(DATA61_GPL)
 #
 
-set(KernelARMPlatform "tk1" CACHE STRING "")
-set(KernelArch "arm" CACHE STRING "")
-set(KernelArmSel4Arch "arm_hyp" CACHE STRING "")
-set(KernelArmHypervisorSupport ON CACHE BOOL "")
+set(KernelPlatform "tk1" CACHE STRING "")
+set(KernelSel4Arch "arm_hyp" CACHE STRING "")
 set(KernelVerificationBuild ON CACHE BOOL "")
 set(KernelIPCBufferLocation "threadID_register" CACHE STRING "")
 set(KernelMaxNumNodes "1" CACHE STRING "")

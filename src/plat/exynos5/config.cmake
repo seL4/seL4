@@ -12,16 +12,57 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelPlatformExynos5250 OR KernelPlatformExynos5410 OR KernelPlatformExynos5422)
+declare_platform(
+    exynos5
+    KernelPlatExynos5
+    PLAT_EXYNOS5
+    "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
+)
+
+set(cmake_configs KernelPlatformExynos5250 KernelPlatformExynos5410 KernelPlatformExynos5422)
+set(c_configs PLAT_EXYNOS5250 PLAT_EXYNOS5410 PLAT_EXYNOS5422)
+set(plat_lists exynos5250 exynos5410 exynos5422)
+foreach(config IN LISTS cmake_configs)
+    unset(${config} CACHE)
+endforeach()
+unset(KernelPlatExynos54xx CACHE)
+if(KernelPlatExynos5)
+    if("${KernelSel4Arch}" STREQUAL aarch32)
+        declare_seL4_arch(aarch32)
+    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
+        declare_seL4_arch(arm_hyp)
+    else()
+        message(
+            STATUS "Selected platform exynos5 supports multiple architectures but none were given"
+        )
+        message(STATUS "  Defaulting to aarch32")
+        declare_seL4_arch(aarch32)
+    endif()
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7ve ON)
     # v7ve is a superset of v7a, so we enable that as well
     set(KernelArchArmV7a ON)
-    config_set(KernelPlatform PLAT "exynos5")
     config_set(KernelArmMach MACH "exynos")
-    config_set(KernelPlatExynos5 PLAT_EXYNOS5 ON)
+    if("${KernelARMPlatform}" STREQUAL "")
+        message(
+            STATUS "Selected platform exynos5 supports multiple sub platforms but none were given"
+        )
+        message(STATUS "  Defaulting to exynos5250")
+        set(KernelARMPlatform exynos5250)
+    endif()
+
+    list(FIND plat_lists "${KernelARMPlatform}" index)
+    if("${index}" STREQUAL "-1")
+        message(FATAL_ERROR "Invalid exynos5 platform selected: \"${KernelARMPlatform}\"")
+    endif()
+    list(GET c_configs ${index} c_config)
+    list(GET cmake_configs ${index} cmake_config)
+    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
+    config_set(${cmake_config} ${c_config} ON)
     if(KernelPlatformExynos5410 OR KernelPlatformExynos5422)
         config_set(KernelPlatExynos54xx PLAT_EXYNOS54XX ON)
+    else()
+        config_set(KernelPlatExynos54xx PLAT_EXYNOS54XX OFF)
     endif()
 
     list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
@@ -32,9 +73,6 @@ if(KernelPlatformExynos5250 OR KernelPlatformExynos5410 OR KernelPlatformExynos5
         TIMER drivers/timer/arm_generic.h
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
     )
-else()
-    config_set(KernelPlatExynos5 PLAT_EXYNOS5 OFF)
-    config_set(KernelPlatExynos54xx PLAT_EXYNOS54XX OFF)
 endif()
 
 add_sources(

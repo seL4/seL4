@@ -12,10 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(odroidc2 KernelPlatformOdroidc2 PLAT_ODROIDC2 KernelSel4ArchAarch64)
+
 if(KernelPlatformOdroidc2)
+    declare_seL4_arch(aarch64)
     set(KernelArmCortexA53 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelPlatform PLAT "odroidc2")
+    config_set(KernelARMPlatform ARM_PLAT odroidc2)
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/odroidc2.dts")
     declare_default_headers(

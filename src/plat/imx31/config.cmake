@@ -12,10 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(imx31 KernelPlatformKZM PLAT_KZM KernelSel4ArchAarch32)
+
 if(KernelPlatformKZM)
+    declare_seL4_arch(aarch32)
     set(KernelArm1136JF_S ON)
     set(KernelArchArmV6 ON)
-    config_set(KernelPlatform PLAT "imx31")
+    config_set(KernelARMPlatform ARM_PLAT kzm)
     set(KernelArmMach "imx" CACHE INTERNAL "")
     list(APPEND KernelDTSList "tools/dts/kzm.dts")
     list(APPEND KernelDTSList "src/plat/imx31/overlay-kzm.dts")

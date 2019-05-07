@@ -12,10 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(exynos4 KernelPlatformExynos4 PLAT_EXYNOS4 KernelSel4ArchAarch32)
+
 if(KernelPlatformExynos4)
+    declare_seL4_arch(aarch32)
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
-    config_set(KernelPlatform PLAT "exynos4")
+    config_set(KernelARMPlatform ARM_PLAT exynos4)
     config_set(KernelArmMach MACH "exynos")
     list(APPEND KernelDTSList "tools/dts/exynos4.dts")
     list(APPEND KernelDTSList "src/plat/exynos4/overlay-exynos4.dts")

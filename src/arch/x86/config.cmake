@@ -12,35 +12,16 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-config_choice(
-    KernelX86Sel4Arch
-    X86_SEL4_ARCH
-    "Architecture mode for building the kernel"
-    "x86_64;KernelSel4ArchX86_64;ARCH_X86_64;KernelArchX86"
-    "ia32;KernelSel4ArchIA32;ARCH_IA32;KernelArchX86"
-)
+if(KernelArchX86)
+    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
+    # x86 always has an FPU
+    set(KernelHaveFPU ON)
+
+endif()
 
 # Add any top level types
 if(KernelSel4ArchX86_64)
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pdpte_C pml4e_C)
-endif()
-
-if(KernelArchX86)
-    # Only one platform so just force it to be set
-    config_set(KernelPlatform PLAT "pc99")
-    config_set(KernelPlatPC99 PLAT_PC99 ON)
-    config_set(KernelSel4Arch SEL4_ARCH "${KernelX86Sel4Arch}")
-    # x86 always has an FPU
-    set(KernelHaveFPU ON)
-    set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
-else()
-    config_set(KernelPlatPC99 PLAT_PC99 OFF)
-endif()
-
-if(KernelSel4ArchX86_64)
-    set_kernel_64()
-elseif(KernelSel4ArchIA32)
-    set_kernel_32()
 endif()
 
 config_choice(
@@ -390,8 +371,6 @@ add_sources(
 add_sources(DEP "KernelArchX86;KernelDebugBuild" CFILES src/arch/x86/machine/capdl.c)
 
 add_bf_source_old("KernelArchX86" "structures.bf" "include/arch/x86" "arch/object")
-
-include(src/plat/pc99/config.cmake)
 
 include(src/arch/x86/32/config.cmake)
 include(src/arch/x86/64/config.cmake)

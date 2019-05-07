@@ -12,152 +12,8 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-config_choice(
-    KernelArmSel4Arch
-    ARM_SEL4_ARCH
-    "Architecture mode for building the kernel"
-    "aarch32;KernelSel4ArchAarch32;ARCH_AARCH32;KernelArchARM"
-    "aarch64;KernelSel4ArchAarch64;ARCH_AARCH64;KernelArchARM"
-    "arm_hyp;KernelSel4ArchArmHyp;ARCH_ARM_HYP;KernelArchARM;KernelArmHypervisorSupport"
-)
-
-config_choice(
-    KernelARMPlatform
-    ARM_PLAT
-    "Select the platform for the architecture"
-    "sabre;KernelPlatformSabre;PLAT_SABRE;KernelSel4ArchAarch32"
-    "kzm;KernelPlatformKZM;PLAT_KZM;KernelSel4ArchAarch32"
-    "omap3;KernelPlatformOMAP3;PLAT_OMAP3;KernelSel4ArchAarch32"
-    "am335x-boneblack;KernelPlatformAM335XBoneBlack;PLAT_AM335X_BONEBLACK;KernelSel4ArchAarch32"
-    "am335x-boneblue;KernelPlatformAM335XBoneBlue;PLAT_AM335X_BONEBLUE;KernelSel4ArchAarch32"
-    "exynos4;KernelPlatformExynos4;PLAT_EXYNOS4;KernelSel4ArchAarch32"
-    "exynos5410;KernelPlatformExynos5410;PLAT_EXYNOS5410;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
-    "exynos5422;KernelPlatformExynos5422;PLAT_EXYNOS5422;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
-    "exynos5250;KernelPlatformExynos5250;PLAT_EXYNOS5250;KernelSel4ArchAarch32"
-    "apq8064;KernelPlatformAPQ8064;PLAT_APQ8064;KernelSel4ArchAarch32"
-    "wandq;KernelPlatformWandQ;PLAT_WANDQ;KernelSel4ArchAarch32"
-    "imx7sabre;KernelPlatformImx7Sabre;PLAT_IMX7_SABRE;KernelSel4ArchAarch32"
-    "zynq7000;KernelPlatformZynq7000;PLAT_ZYNQ7000;KernelSel4ArchAarch32"
-    "zynqmp;KernelPlatformZynqmp;PLAT_ZYNQMP;KernelArchARM"
-    "ultra96;KernelPlatformUltra96;PLAT_ULTRA96;KernelArchARM"
-    "allwinnera20;KernelPlatformAllwinnerA20;PLAT_ALLWINNERA20;KernelSel4ArchAarch32"
-    "tk1;KernelPlatformTK1;PLAT_TK1;KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp"
-    "hikey;KernelPlatformHikey;PLAT_HIKEY;KernelArchARM"
-    "rpi3;KernelPlatformRpi3;PLAT_BCM2837;KernelArchARM"
-    "tx1;KernelPlatformTx1;PLAT_TX1;KernelSel4ArchAarch64"
-    "tx2;KernelPlatformTx2;PLAT_TX2;KernelSel4ArchAarch64"
-    "odroidc2;KernelPlatformOdroidc2;PLAT_ODROIDC2;KernelSel4ArchAarch64"
-)
-
 if(KernelArchARM)
-    config_set(KernelSel4Arch SEL4_ARCH "${KernelArmSel4Arch}")
     set_property(TARGET kernel_config_target APPEND PROPERTY TOPLEVELTYPES pde_C)
-endif()
-
-# arm-hyp masquerades as an aarch32 build
-if(KernelSel4ArchArmHyp)
-    config_set(KernelSel4ArmHypAarch32 ARCH_AARCH32 ON)
-    set(KernelSel4ArchAarch32 ON CACHE INTERNAL "")
-else()
-    config_set(KernelSel4ArmHypAarch32 ARCH_AARCH32 OFF)
-endif()
-
-if(KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp)
-    set_kernel_32()
-elseif(KernelSel4ArchAarch64)
-    set_kernel_64()
-endif()
-
-# Include all the platforms. For all of the common variables we set a default value here
-# and let the platforms override them.
-foreach(
-    var
-    IN
-    ITEMS
-    KernelArmCortexA7
-    KernelArmCortexA8
-    KernelArmCortexA9
-    KernelArmCortexA15
-    KernelArmCortexA53
-    KernelArmCortexA57
-    KernelArm1136JF_S
-    KernelArchArmV6
-    KernelArchArmV7a
-    KernelArchArmV7ve
-    KernelArchArmV8a
-    KernelArmPASizeBits40
-    KernelArmPASizeBits44
-)
-    unset(${var} CACHE)
-    set(${var} OFF)
-endforeach()
-unset(KernelArmMach CACHE)
-unset(KernelArmMachFeatureModifiers CACHE)
-unset(KernelArmCPU CACHE)
-unset(KernelArmArmV CACHE)
-
-include(src/plat/allwinnerA20/config.cmake)
-include(src/plat/imx6/config.cmake)
-include(src/plat/imx7/config.cmake)
-include(src/plat/imx31/config.cmake)
-include(src/plat/omap3/config.cmake)
-include(src/plat/exynos4/config.cmake)
-include(src/plat/exynos5/config.cmake)
-include(src/plat/am335x/config.cmake)
-include(src/plat/hikey/config.cmake)
-include(src/plat/apq8064/config.cmake)
-include(src/plat/bcm2837/config.cmake)
-include(src/plat/tk1/config.cmake)
-include(src/plat/tx1/config.cmake)
-include(src/plat/tx2/config.cmake)
-include(src/plat/zynq7000/config.cmake)
-include(src/plat/zynqmp/config.cmake)
-include(src/plat/odroidc2/config.cmake)
-
-# Now enshrine all the common variables in the config
-config_set(KernelArmCortexA7 ARM_CORTEX_A7 "${KernelArmCortexA7}")
-config_set(KernelArmCortexA8 ARM_CORTEX_A8 "${KernelArmCortexA8}")
-config_set(KernelArmCortexA9 ARM_CORTEX_A9 "${KernelArmCortexA9}")
-config_set(KernelArmCortexA15 ARM_CORTEX_A15 "${KernelArmCortexA15}")
-config_set(KernelArmCortexA53 ARM_CORTEX_A53 "${KernelArmCortexA53}")
-config_set(KernelArmCortexA57 ARM_CORTEX_A57 "${KernelArmCortexA57}")
-config_set(KernelArm1136JF_S ARM1136JF_S "${KernelArm1136JF_S}")
-config_set(KernelArchArmV6 ARCH_ARM_V6 "${KernelArchArmV6}")
-config_set(KernelArchArmV7a ARCH_ARM_V7A "${KernelArchArmV7a}")
-config_set(KernelArchArmV7ve ARCH_ARM_V7VE "${KernelArchArmV7ve}")
-config_set(KernelArchArmV8a ARCH_ARM_V8A "${KernelArchArmV8a}")
-config_set(KernelArmPASizeBits40 ARM_PA_SIZE_BITS_40 "${KernelArmPASizeBits40}")
-config_set(KernelArmPASizeBits44 ARM_PA_SIZE_BITS_44 "${KernelArmPASizeBits44}")
-
-# Check for v7ve before v7a as v7ve is a superset and we want to set the
-# actual armv to that, but leave armv7a config enabled for anything that
-# checks directly against it
-if(KernelArchArmV7ve)
-    set(KernelArmArmV "armv7ve" CACHE INTERNAL "")
-elseif(KernelArchArmV7a)
-    set(KernelArmArmV "armv7-a" CACHE INTERNAL "")
-elseif(KernelArchArmV8a)
-    set(KernelArmArmV "armv8-a" CACHE INTERNAL "")
-elseif(KernelArchArmV6)
-    set(KernelArmArmV "armv6" CACHE INTERNAL "")
-endif()
-if(KernelArmCortexA7)
-    set(KernelArmCPU "cortex-a7" CACHE INTERNAL "")
-elseif(KernelArmCortexA8)
-    set(KernelArmCPU "cortex-a8" CACHE INTERNAL "")
-elseif(KernelArmCortexA9)
-    set(KernelArmCPU "cortex-a9" CACHE INTERNAL "")
-elseif(KernelArmCortexA15)
-    set(KernelArmCPU "cortex-a15" CACHE INTERNAL "")
-elseif(KernelArmCortexA53)
-    set(KernelArmCPU "cortex-a53" CACHE INTERNAL "")
-elseif(KernelArmCortexA57)
-    set(KernelArmCPU "cortex-a57" CACHE INTERNAL "")
-elseif(KernelArm1136JF_S)
-    set(KernelArmCPU "arm1136jf-s" CACHE INTERNAL "")
-endif()
-if(KernelArchARM)
-    config_set(KernelArmMach ARM_MACH "${KernelArmMach}")
 endif()
 
 include(src/arch/arm/armv/armv6/config.cmake)
@@ -213,11 +69,15 @@ config_option(
     DEFAULT OFF
     DEPENDS "KernelArchARM"
 )
-
+if(KernelSel4ArchArmHyp)
+    set(default_hyp_support ON)
+else()
+    set(default_hyp_support OFF)
+endif()
 config_option(
     KernelArmHypervisorSupport ARM_HYPERVISOR_SUPPORT
     "Build as Hypervisor. Utilise ARM virtualisation extensions to build the kernel as a hypervisor"
-    DEFAULT OFF
+    DEFAULT ${default_hyp_support}
     DEPENDS "KernelArmCortexA15 OR KernelArmCortexA57"
 )
 

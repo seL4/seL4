@@ -12,11 +12,22 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(tk1 KernelPlatformTK1 PLAT_TK1 "KernelSel4ArchAarch32 OR KernelSel4ArchArmHyp")
+
 if(KernelPlatformTK1)
+    if("${KernelSel4Arch}" STREQUAL aarch32)
+        declare_seL4_arch(aarch32)
+    elseif("${KernelSel4Arch}" STREQUAL arm_hyp)
+        declare_seL4_arch(arm_hyp)
+    else()
+        message(STATUS "Selected platform tk1 supports multiple architectures but none were given")
+        message(STATUS "  Defaulting to aarch32")
+        declare_seL4_arch(aarch32)
+    endif()
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7a ON)
     set(KernelArchArmV7ve ON)
-    config_set(KernelPlatform PLAT "tk1")
+    config_set(KernelARMPlatform ARM_PLAT tk1)
     config_set(KernelArmMach MACH "nvidia")
     list(APPEND KernelDTSList "tools/dts/tk1.dts")
     list(APPEND KernelDTSList "src/plat/tk1/overlay-tk1.dts")

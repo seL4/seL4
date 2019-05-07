@@ -12,12 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(allwinnera20 KernelPlatformAllwinnerA20 PLAT_ALLWINNERA20 KernelSel4ArchAarch32)
+
 if(KernelPlatformAllwinnerA20)
+    declare_seL4_arch(aarch32)
     set(KernelArmCortexA7 ON)
     set(KernelArchArmV7a ON)
-    config_set(KernelPlatAllwinnerA20 PLAT_ALLWINNERA20 ON)
-    config_set(KernelPlatform PLAT "allwinnerA20")
-    set(KernelArmMach "allwinner" CACHE INTERNAL "")
+    config_set(KernelARMPlatform ARM_PLAT allwinnera20)
     list(APPEND KernelDTSList "tools/dts/allwinnera20.dts")
     list(APPEND KernelDTSList "src/plat/allwinnerA20/overlay-allwinnera20.dts")
 
@@ -27,11 +28,9 @@ if(KernelPlatformAllwinnerA20)
         TIMER drivers/timer/allwinner.h
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
     )
-else()
-    config_set(KernelPlatAllwinnerA20 PLAT_ALLWINNERA20 OFF)
 endif()
 
 add_sources(
-    DEP "KernelPlatAllwinnerA20"
+    DEP "KernelPlatformAllwinnerA20"
     CFILES src/plat/allwinnerA20/machine/l2cache.c src/arch/arm/machine/gic_pl390.c
 )

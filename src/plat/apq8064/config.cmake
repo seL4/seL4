@@ -12,11 +12,14 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(apq8064 KernelPlatformAPQ8064 PLAT_APQ8064 KernelSel4ArchAarch32)
+
 if(KernelPlatformAPQ8064)
+    declare_seL4_arch(aarch32)
     set(KernelArmCortexA15 ON)
     set(KernelArchArmV7a ON)
     set(KernelArchArmV7ve ON)
-    config_set(KernelPlatform PLAT "apq8064")
+    config_set(KernelARMPlatform ARM_PLAT apq8064)
     list(APPEND KernelDTSList "tools/dts/apq8064.dts")
     list(APPEND KernelDTSList "src/plat/apq8064/overlay-apq8064.dts")
 

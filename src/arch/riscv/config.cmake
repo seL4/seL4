@@ -12,36 +12,6 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-config_choice(
-    KernelRiscVSel4Arch
-    RISCV_SEL4_ARCH
-    "Architecture mode for building the kernel"
-    "riscv32;KernelSel4ArchRiscV32;ARCH_RISCV32;KernelArchRiscV"
-    "riscv64;KernelSel4ArchRiscV64;ARCH_RISCV64;KernelArchRiscV"
-)
-
-config_choice(
-    KernelRiscVPlatform
-    RISCV_PLAT
-    "Select the platform for the architecture"
-    "spike;KernelPlatformSpike;PLAT_SPIKE;KernelArchRiscV"
-    "hifive;KernelPlatformHifive;PLAT_HIFIVE;KernelSel4ArchRiscV64"
-)
-
-# Include all the platforms.
-include(src/plat/spike/config.cmake)
-include(src/plat/hifive/config.cmake)
-
-if(KernelArchRiscV)
-    config_set(KernelSel4Arch SEL4_ARCH "${KernelRiscVSel4Arch}")
-endif()
-
-if(KernelSel4ArchRiscV32)
-    set_kernel_32()
-elseif(KernelSel4ArchRiscV64)
-    set_kernel_64()
-endif()
-
 config_string(
     KernelPTLevels PT_LEVELS "Number of page \
     table levels for RISC-V depends on the mode. For example there are: \

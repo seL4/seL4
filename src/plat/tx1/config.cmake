@@ -12,10 +12,13 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(tx1 KernelPlatformTx1 PLAT_TX1 KernelSel4ArchAarch64)
+
 if(KernelPlatformTx1)
+    declare_seL4_arch(aarch64)
     set(KernelArmCortexA57 ON)
     set(KernelArchArmV8a ON)
-    config_set(KernelPlatform PLAT "tx1")
+    config_set(KernelARMPlatform ARM_PLAT tx1)
     config_set(KernelArmMach MACH "nvidia")
     set(KernelArmPASizeBits44 ON)
     list(APPEND KernelDTSList "tools/dts/tx1.dts")

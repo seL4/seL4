@@ -14,8 +14,21 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
+declare_platform(spike KernelPlatformSpike PLAT_SPIKE KernelArchRiscV)
+
 if(KernelPlatformSpike)
-    config_set(KernelPlatform PLAT "spike")
+    if("${KernelSel4Arch}" STREQUAL riscv32)
+        declare_seL4_arch(riscv32)
+    elseif("${KernelSel4Arch}" STREQUAL riscv64)
+        declare_seL4_arch(riscv64)
+    else()
+        message(
+            STATUS "Selected platform spike supports multiple architectures but none were given"
+        )
+        message(STATUS "  Defaulting to riscv64")
+        declare_seL4_arch(riscv64)
+    endif()
+    config_set(KernelRiscVPlatform RISCV_PLAT "spike")
     config_set(KernelPlatformFirstHartID FIRST_HART_ID 0)
     if(KernelSel4ArchRiscV32)
         list(APPEND KernelDTSList "tools/dts/spike32.dts")
@@ -26,4 +39,6 @@ if(KernelPlatformSpike)
         TIMER_FREQUENCY 10000000llu PLIC_MAX_NUM_INT 0
         INTERRUPT_CONTROLLER arch/machine/plic.h
     )
+else()
+    unset(KernelPlatformFirstHartID CACHE)
 endif()

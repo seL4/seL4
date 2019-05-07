@@ -10,9 +10,7 @@
 # @TAG(DATA61_GPL)
 #
 
-set(KernelARMPlatform "sabre" CACHE STRING "")
-set(KernelArch "arm" CACHE STRING "")
-set(KernelArmSel4Arch "aarch32" CACHE STRING "")
+set(KernelPlatform "imx6" CACHE STRING "")
 set(KernelVerificationBuild ON CACHE BOOL "")
 set(KernelIPCBufferLocation "threadID_register" CACHE STRING "")
 set(KernelMaxNumNodes "1" CACHE STRING "")

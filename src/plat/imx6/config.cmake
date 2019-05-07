@@ -12,29 +12,40 @@
 
 cmake_minimum_required(VERSION 3.7.2)
 
-if(KernelPlatformWandQ OR KernelPlatformSabre)
+declare_platform(imx6 KernelPlatImx6 PLAT_IMX6 KernelSel4ArchAarch32)
+
+set(c_configs PLAT_SABRE PLAT_WANDQ)
+set(cmake_configs KernelPlatformSabre KernelPlatformWandQ)
+set(plat_lists sabre wandq)
+foreach(config IN LISTS cmake_configs)
+    unset(${config} CACHE)
+endforeach()
+if(KernelPlatImx6)
+    declare_seL4_arch(aarch32)
     set(KernelArmCortexA9 ON)
     set(KernelArchArmV7a ON)
-    config_set(KernelPlatImx6 PLAT_IMX6 ON)
-    config_set(KernelPlatform PLAT "imx6")
     set(KernelArmMach "imx" CACHE INTERNAL "")
-
-    if(KernelPlatformWandQ)
-        list(APPEND KernelDTSList "tools/dts/wandq.dts")
-        list(APPEND KernelDTSList "src/plat/imx6/overlay-wandq.dts")
-    else()
-        list(APPEND KernelDTSList "tools/dts/sabre.dts")
-        list(APPEND KernelDTSList "src/plat/imx6/overlay-sabre.dts")
+    if("${KernelARMPlatform}" STREQUAL "")
+        message(STATUS "Selected platform imx6 supports multiple sub platforms but none were given")
+        message(STATUS "  Defaulting to sabre")
+        set(KernelARMPlatform sabre)
     endif()
-
+    list(FIND plat_lists ${KernelARMPlatform} index)
+    if("${index}" STREQUAL "-1")
+        message(FATAL_ERROR "Which imx6 platform not specified")
+    endif()
+    list(GET c_configs ${index} c_config)
+    list(GET cmake_configs ${index} cmake_config)
+    config_set(KernelARMPlatform ARM_PLAT ${KernelARMPlatform})
+    config_set(${cmake_config} ${c_config} ON)
+    list(APPEND KernelDTSList "tools/dts/${KernelARMPlatform}.dts")
+    list(APPEND KernelDTSList "src/plat/imx6/overlay-${KernelARMPlatform}.dts")
     declare_default_headers(
         TIMER_FREQUENCY 400000000llu
         MAX_IRQ 159
         INTERRUPT_CONTROLLER arch/machine/gic_pl390.h
         TIMER drivers/timer/arm_priv.h
     )
-else()
-    config_set(KernelPlatImx6 PLAT_IMX6 OFF)
 endif()
 
 add_sources(
