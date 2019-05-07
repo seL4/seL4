@@ -311,7 +311,7 @@ config_option(
     DEFAULT_DISABLED OFF
 )
 
-if(KernelAArch32FPUEnableContextSwitch)
+if(KernelAArch32FPUEnableContextSwitch OR KernelSel4ArchAarch64)
     set(KernelHaveFPU ON)
 endif()
 

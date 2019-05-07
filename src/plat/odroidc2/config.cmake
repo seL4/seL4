@@ -17,9 +17,6 @@ if(KernelPlatformOdroidc2)
     set(KernelArchArmV8a ON)
     config_set(KernelPlatform PLAT "odroidc2")
     set(KernelArmMachFeatureModifiers "+crc" CACHE INTERNAL "")
-    if(KernelSel4ArchAarch64)
-        set(KernelHaveFPU ON)
-    endif()
     list(APPEND KernelDTSList "tools/dts/odroidc2.dts")
     declare_default_headers(
         TIMER_FREQUENCY 24000000llu

@@ -17,7 +17,6 @@ if(KernelPlatformTx2)
     set(KernelArchArmV8a ON)
     config_set(KernelPlatform PLAT "tx2")
     config_set(KernelArmMach MACH "nvidia")
-    set(KernelHaveFPU ON)
     # Note that the 44-bit PA is only for Cortex-A57 cores.
     # If we enable the Denver 2 cores, which support 40-bit PA,
     # KernelArmPASizeBits40 should be enabled instead.
