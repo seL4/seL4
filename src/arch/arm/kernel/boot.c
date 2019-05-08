@@ -282,7 +282,7 @@ static BOOT_CODE bool_t try_init_kernel(
         ui_p_reg_start, ui_p_reg_end
     });
     region_t dtb_reg;
-    word_t extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_addr_end - dtb_addr_start);
+    word_t extra_bi_size;
     region_t extra_bi_region;
     pptr_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
@@ -312,6 +312,7 @@ static BOOT_CODE bool_t try_init_kernel(
         dtb_reg = paddr_to_pptr_reg((p_region_t) {
             dtb_addr_start, ROUND_UP(dtb_addr_end, PAGE_BITS)
         });
+        extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
     }
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
