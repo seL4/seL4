@@ -34,7 +34,7 @@ cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t 
 
 bool_t init_sys_state(
     cpu_id_t      cpu_id,
-    mem_p_regs_t  mem_p_regs,
+    mem_p_regs_t  *mem_p_regs,
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */

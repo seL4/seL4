@@ -212,18 +212,18 @@ BOOT_CODE static bool_t create_untypeds(
     return true;
 }
 
-BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, mem_p_regs_t mem_p_regs)
+BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, mem_p_regs_t *mem_p_regs)
 {
     ui_p_reg.start = 0;
     reserved[0] = paddr_to_pptr_reg(ui_p_reg);
-    init_freemem(mem_p_regs.count, mem_p_regs.list, MAX_RESERVED, reserved);
+    init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED, reserved);
 }
 
 /* This function initialises a node's kernel state. It does NOT initialise the CPU. */
 
 BOOT_CODE bool_t init_sys_state(
     cpu_id_t      cpu_id,
-    mem_p_regs_t  mem_p_regs,
+    mem_p_regs_t  *mem_p_regs,
     ui_info_t     ui_info,
     p_region_t    boot_mem_reuse_p_reg,
     /* parameters below not modeled in abstract specification */

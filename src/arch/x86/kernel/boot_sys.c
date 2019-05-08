@@ -204,7 +204,7 @@ static BOOT_CODE bool_t try_boot_sys_node(cpu_id_t cpu_id)
     /* initialise NDKS and kernel heap */
     if (!init_sys_state(
             cpu_id,
-            boot_state.mem_p_regs,
+            &boot_state.mem_p_regs,
             boot_state.ui_info,
             boot_mem_reuse_p_reg,
             /* parameters below not modeled in abstract specification */
