@@ -457,23 +457,24 @@ static BOOT_CODE cap_t create_it_pud_cap(cap_t vspace_cap, pptr_t pptr, vptr_t v
     return cap;
 }
 
+BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
+{
+    return get_n_paging(it_v_reg, PGD_INDEX_OFFSET) +
+           get_n_paging(it_v_reg, PUD_INDEX_OFFSET) +
+           get_n_paging(it_v_reg, PD_INDEX_OFFSET);
+}
+
 BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      vspace_cap;
     vptr_t     vptr;
-    pptr_t     pptr;
     seL4_SlotPos slot_pos_before;
     seL4_SlotPos slot_pos_after;
 
     /* create the PGD */
-    pptr = alloc_region(seL4_PGDBits);
-    if (!pptr) {
-        return cap_null_cap_new();
-    }
-    memzero(PGD_PTR(pptr), BIT(seL4_PGDBits));
     vspace_cap = cap_page_global_directory_cap_new(
                      IT_ASID,        /* capPGDMappedASID */
-                     pptr,           /* capPGDBasePtr   */
+                     rootserver.vspace, /* capPGDBasePtr   */
                      1               /* capPGDIsMapped   */
                  );
     slot_pos_before = ndks_boot.slot_pos_cur;
@@ -483,12 +484,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     for (vptr = ROUND_DOWN(it_v_reg.start, PGD_INDEX_OFFSET);
          vptr < it_v_reg.end;
          vptr += BIT(PGD_INDEX_OFFSET)) {
-        pptr = alloc_region(seL4_PUDBits);
-        if (!pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PUD_PTR(pptr), BIT(seL4_PUDBits));
-        if (!provide_cap(root_cnode_cap, create_it_pud_cap(vspace_cap, pptr, vptr, IT_ASID))) {
+        if (!provide_cap(root_cnode_cap, create_it_pud_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))) {
             return cap_null_cap_new();
         }
     }
@@ -497,12 +493,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     for (vptr = ROUND_DOWN(it_v_reg.start, PUD_INDEX_OFFSET);
          vptr < it_v_reg.end;
          vptr += BIT(PUD_INDEX_OFFSET)) {
-        pptr = alloc_region(seL4_PageDirBits);
-        if (!pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PD_PTR(pptr), BIT(seL4_PageDirBits));
-        if (!provide_cap(root_cnode_cap, create_it_pd_cap(vspace_cap, pptr, vptr, IT_ASID))) {
+        if (!provide_cap(root_cnode_cap, create_it_pd_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))) {
             return cap_null_cap_new();
         }
     }
@@ -511,12 +502,7 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     for (vptr = ROUND_DOWN(it_v_reg.start, PD_INDEX_OFFSET);
          vptr < it_v_reg.end;
          vptr += BIT(PD_INDEX_OFFSET)) {
-        pptr = alloc_region(seL4_PageTableBits);
-        if (!pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PT_PTR(pptr), BIT(seL4_PageTableBits));
-        if (!provide_cap(root_cnode_cap, create_it_pt_cap(vspace_cap, pptr, vptr, IT_ASID))) {
+        if (!provide_cap(root_cnode_cap, create_it_pt_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))) {
             return cap_null_cap_new();
         }
     }

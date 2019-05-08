@@ -48,7 +48,6 @@ static inline bool_t is_reg_empty(region_t reg)
 
 void init_freemem(word_t n_available, const p_region_t *available,
                   word_t n_reserved, region_t *reserved);
-pptr_t alloc_region(word_t size_bits);
 bool_t insert_region(region_t reg);
 void write_slot(slot_ptr_t slot_ptr, cap_t cap);
 cap_t create_root_cnode(void);
@@ -62,12 +61,11 @@ bool_t create_kernel_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg,
 void bi_finalise(void);
 void create_domain_cap(cap_t root_cnode_cap);
 
-cap_t create_ipcbuf_frame(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
-
-region_t allocate_extra_bi_region(word_t extra_size);
-pptr_t allocate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr);
-
-void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, pptr_t pptr, vptr_t vptr);
+cap_t create_ipcbuf_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
+word_t calculate_extra_bi_size_bits(word_t extra_size);
+void populate_bi_frame(node_id_t node_id, word_t num_nodes, vptr_t ipcbuf_vptr,
+                       word_t extra_bi_size_bits);
+void create_bi_frame_cap(cap_t root_cnode_cap, cap_t pd_cap, vptr_t vptr);
 
 typedef struct create_frames_of_region_ret {
     seL4_SlotRegion region;
@@ -102,4 +100,45 @@ create_initial_thread(
 );
 
 void init_core_state(tcb_t *scheduler_action);
+
+/* state tracking the memory allocated for root server objects */
+typedef struct {
+    pptr_t cnode;
+    pptr_t vspace;
+    pptr_t asid_pool;
+    pptr_t ipc_buf;
+    pptr_t boot_info;
+    pptr_t extra_bi;
+    pptr_t tcb;
+    region_t paging;
+} rootserver_mem_t;
+
+extern rootserver_mem_t rootserver;
+
+/* get the number of paging structures required to cover it_v_reg, with
+ * the paging structure covering `bits` of the address range - for a 4k page
+ * `bits` would be 12 */
+static inline BOOT_CODE word_t get_n_paging(v_region_t v_reg, word_t bits)
+{
+    vptr_t start = ROUND_DOWN(v_reg.start, bits);
+    vptr_t end = ROUND_UP(v_reg.end, bits);
+    return (end - start) / BIT(bits);
+}
+
+/* allocate a page table sized structure from rootserver.paging */
+static inline BOOT_CODE pptr_t it_alloc_paging(void)
+{
+    pptr_t allocated = rootserver.paging.start;
+    rootserver.paging.start += BIT(seL4_PageTableBits);
+    assert(rootserver.paging.start <= rootserver.paging.end);
+    return allocated;
+}
+
+/* return the amount of paging structures required to cover v_reg */
+word_t arch_get_n_paging(v_region_t it_veg);
+
+/* Create pptrs for all root server objects, starting at pptr, to cover the
+ * virtual memory region v_reg, and any extra boot info.
+ * Return the region occupied by those objects.*/
+region_t create_rootserver_objects(pptr_t start, v_region_t v_reg, word_t extra_bi_size_bits);
 #endif

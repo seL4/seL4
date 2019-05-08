@@ -27,7 +27,7 @@
 
 #include <plat/machine/intel-vtd.h>
 
-#define MAX_RESERVED 1
+#define MAX_RESERVED 2
 BOOT_DATA static region_t reserved[MAX_RESERVED];
 
 /* functions exactly corresponding to abstract specification */
@@ -212,10 +212,12 @@ BOOT_CODE static bool_t create_untypeds(
     return true;
 }
 
-BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, mem_p_regs_t *mem_p_regs)
+BOOT_CODE static void arch_init_freemem(p_region_t ui_p_reg, v_region_t v_reg,
+                                        mem_p_regs_t *mem_p_regs, word_t extra_bi_size_bits)
 {
     ui_p_reg.start = 0;
     reserved[0] = paddr_to_pptr_reg(ui_p_reg);
+    reserved[1] = create_rootserver_objects(reserved[0].end, v_reg, extra_bi_size_bits);
     init_freemem(mem_p_regs->count, mem_p_regs->list, MAX_RESERVED, reserved);
 }
 
@@ -243,9 +245,7 @@ BOOT_CODE bool_t init_sys_state(
     cap_t         it_vspace_cap;
     cap_t         it_ap_cap;
     cap_t         ipcbuf_cap;
-    pptr_t        bi_frame_pptr;
     word_t        extra_bi_size = sizeof(seL4_BootInfoHeader);
-    region_t      extra_bi_region;
     pptr_t        extra_bi_offset = 0;
     uint32_t      tsc_freq;
     create_frames_of_region_ret_t create_frames_ret;
@@ -280,12 +280,19 @@ BOOT_CODE bool_t init_sys_state(
 
     // room for tsc frequency
     extra_bi_size += sizeof(seL4_BootInfoHeader) + 4;
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = ROUND_UP(extra_bi_frame_vptr + extra_bi_size, PAGE_BITS);
+#ifdef CONFIG_IOMMU
+    /* calculate the number of io pts before initialising memory */
+    if (!vtd_init_num_iopts(num_drhu)) {
+        return false;
+    }
+#endif /* CONFIG_IOMMU */
 
-    arch_init_freemem(ui_info.p_reg, mem_p_regs);
+    arch_init_freemem(ui_info.p_reg, it_v_reg, mem_p_regs, extra_bi_size_bits);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
@@ -304,22 +311,18 @@ BOOT_CODE bool_t init_sys_state(
 
     tsc_freq = tsc_init();
 
-    /* create the bootinfo frame */
-    bi_frame_pptr = allocate_bi_frame(0, ksNumCPUs, ipcbuf_vptr);
-    if (!bi_frame_pptr) {
-        return false;
-    }
-
-    extra_bi_region = allocate_extra_bi_region(extra_bi_size);
-    if (extra_bi_region.start == 0) {
-        return false;
-    }
+    /* populate the bootinfo frame */
+    populate_bi_frame(0, ksNumCPUs, ipcbuf_vptr, extra_bi_size);
+    region_t extra_bi_region = {
+        .start = rootserver.extra_bi,
+        .end = rootserver.extra_bi + BIT(extra_bi_size_bits)
+    };
 
     /* populate vbe info block */
     if (vbe->vbeMode != -1) {
         vbe->header.id = SEL4_BOOTINFO_HEADER_X86_VBE;
         vbe->header.len = sizeof(seL4_X86_BootInfo_VBE);
-        memcpy((void *)(extra_bi_region.start + extra_bi_offset), vbe, sizeof(seL4_X86_BootInfo_VBE));
+        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), vbe, sizeof(seL4_X86_BootInfo_VBE));
         extra_bi_offset += sizeof(seL4_X86_BootInfo_VBE);
     }
 
@@ -328,9 +331,9 @@ BOOT_CODE bool_t init_sys_state(
         seL4_BootInfoHeader header;
         header.id = SEL4_BOOTINFO_HEADER_X86_ACPI_RSDP;
         header.len = sizeof(header) + sizeof(*acpi_rsdp);
-        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
-        memcpy((void *)(extra_bi_region.start + extra_bi_offset), acpi_rsdp, sizeof(*acpi_rsdp));
+        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), acpi_rsdp, sizeof(*acpi_rsdp));
         extra_bi_offset += sizeof(*acpi_rsdp);
     }
 
@@ -339,16 +342,16 @@ BOOT_CODE bool_t init_sys_state(
         seL4_BootInfoHeader header;
         header.id = SEL4_BOOTINFO_HEADER_X86_FRAMEBUFFER;
         header.len = sizeof(header) + sizeof(*fb_info);
-        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
-        memcpy((void *)(extra_bi_region.start + extra_bi_offset), fb_info, sizeof(*fb_info));
+        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), fb_info, sizeof(*fb_info));
         extra_bi_offset += sizeof(*fb_info);
     }
 
     /* populate multiboot mmap block */
     mb_mmap->header.id = SEL4_BOOTINFO_HEADER_X86_MBMMAP;
     mb_mmap->header.len = mb_mmap_size;
-    memcpy((void *)(extra_bi_region.start + extra_bi_offset), mb_mmap, mb_mmap_size);
+    memcpy((void *)(rootserver.extra_bi + extra_bi_offset), mb_mmap, mb_mmap_size);
     extra_bi_offset += mb_mmap_size;
 
     /* populate tsc frequency block */
@@ -379,7 +382,6 @@ BOOT_CODE bool_t init_sys_state(
     create_bi_frame_cap(
         root_cnode_cap,
         it_vspace_cap,
-        bi_frame_pptr,
         bi_frame_vptr
     );
 
@@ -398,7 +400,7 @@ BOOT_CODE bool_t init_sys_state(
     ndks_boot.bi_frame->extraBIPages = extra_bi_ret.region;
 
     /* create the initial thread's IPC buffer */
-    ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_vspace_cap, ipcbuf_vptr);
+    ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_vspace_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
         return false;
     }
@@ -443,7 +445,7 @@ BOOT_CODE bool_t init_sys_state(
 
 #ifdef CONFIG_IOMMU
     /* initialise VTD-related data structures and the IOMMUs */
-    if (!vtd_init(cpu_id, num_drhu, rmrr_list)) {
+    if (!vtd_init(cpu_id, rmrr_list)) {
         return false;
     }
 
@@ -460,7 +462,6 @@ BOOT_CODE bool_t init_sys_state(
     if (!create_untypeds(root_cnode_cap, boot_mem_reuse_reg)) {
         return false;
     }
-    /* WARNING: alloc_region() must not be called anymore after here! */
 
     /* finalise the bootinfo frame */
     bi_finalise();

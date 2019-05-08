@@ -526,47 +526,38 @@ static BOOT_CODE cap_t create_it_page_table_cap(cap_t pd, pptr_t pptr, vptr_t vp
     return cap;
 }
 
+BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
+{
+    return get_n_paging(it_v_reg, PT_INDEX_BITS + PAGE_BITS);
+}
+
 /* Create an address space for the initial thread.
  * This includes page directory and page tables */
 BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
-    cap_t      pd_cap;
     vptr_t     pt_vptr;
-    pptr_t     pt_pptr;
     seL4_SlotPos slot_pos_before;
     seL4_SlotPos slot_pos_after;
-    pptr_t pd_pptr;
 
-    /* create PD obj and cap */
-    pd_pptr = alloc_region(seL4_PageDirBits);
-    if (!pd_pptr) {
-        return cap_null_cap_new();
-    }
-    memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
-    copyGlobalMappings(PDE_PTR(pd_pptr));
-    cleanCacheRange_PoU(pd_pptr, pd_pptr + (1 << seL4_PageDirBits) - 1,
-                        addrFromPPtr((void *)pd_pptr));
-    pd_cap =
+    /* create PD cap */
+    copyGlobalMappings(PDE_PTR(rootserver.vspace));
+    cleanCacheRange_PoU(rootserver.vspace, rootserver.vspace + (1 << seL4_PageDirBits) - 1,
+                        addrFromPPtr((void *)rootserver.vspace));
+    cap_t pd_cap =
         cap_page_directory_cap_new(
             true,    /* capPDIsMapped   */
             IT_ASID, /* capPDMappedASID */
-            pd_pptr  /* capPDBasePtr    */
+            rootserver.vspace  /* capPDBasePtr    */
         );
     slot_pos_before = ndks_boot.slot_pos_cur;
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
 
-    /* create all PT objs and caps necessary to cover userland image */
-
+    /* create all PT caps necessary to cover userland image */
     for (pt_vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
          pt_vptr < it_v_reg.end;
          pt_vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
-        pt_pptr = alloc_region(seL4_PageTableBits);
-        if (!pt_pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PTE_PTR(pt_pptr), 1 << seL4_PageTableBits);
         if (!provide_cap(root_cnode_cap,
-                         create_it_page_table_cap(pd_cap, pt_pptr, pt_vptr, IT_ASID))
+                         create_it_page_table_cap(pd_cap, it_alloc_paging(), pt_vptr, IT_ASID))
            ) {
             return cap_null_cap_new();
         }

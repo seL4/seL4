@@ -35,7 +35,7 @@ extern char ki_boot_end[1];
 /* pointer to end of kernel image */
 extern char ki_end[1];
 
-#define MAX_RESERVED 2
+#define MAX_RESERVED 3
 BOOT_DATA static region_t res_reg[MAX_RESERVED];
 
 BOOT_CODE static bool_t create_untypeds(cap_t root_cnode_cap, region_t boot_mem_reuse_reg)
@@ -91,7 +91,7 @@ BOOT_CODE cap_t create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vpt
     return cap;
 }
 
-BOOT_CODE static void arch_init_freemem(region_t ui_reg)
+BOOT_CODE static void arch_init_freemem(region_t ui_reg, v_region_t ui_v_reg)
 {
     // This looks a bit awkward as our symbols are a reference in the kernel image window, but
     // we want to do all allocations in terms of the main kernel window, so we do some translation
@@ -99,6 +99,7 @@ BOOT_CODE static void arch_init_freemem(region_t ui_reg)
     res_reg[0].end = (pptr_t)paddr_to_pptr(kpptr_to_paddr((void *)ki_end));
     res_reg[1].start = ui_reg.start;
     res_reg[1].end = ui_reg.end;
+    res_reg[2] = create_rootserver_objects(ui_reg.end, ui_v_reg, 0);
 
     init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), MAX_RESERVED, res_reg);
 }
@@ -161,7 +162,6 @@ static BOOT_CODE bool_t try_init_kernel(
     region_t ui_reg = paddr_to_pptr_reg((p_region_t) {
         ui_p_reg_start, ui_p_reg_end
     });
-    pptr_t bi_frame_pptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
     create_frames_of_region_ret_t create_frames_ret;
@@ -188,7 +188,7 @@ static BOOT_CODE bool_t try_init_kernel(
     init_plat();
 
     /* make the free memory available to alloc_region() */
-    arch_init_freemem(ui_reg);
+    arch_init_freemem(ui_reg, it_v_reg);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
@@ -203,10 +203,7 @@ static BOOT_CODE bool_t try_init_kernel(
     init_irqs(root_cnode_cap);
 
     /* create the bootinfo frame */
-    bi_frame_pptr = allocate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr);
-    if (!bi_frame_pptr) {
-        return false;
-    }
+    populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, 0);
 
     /* Construct an initial address space with enough virtual addresses
      * to cover the user image + ipc buffer and bootinfo frames */
@@ -219,12 +216,11 @@ static BOOT_CODE bool_t try_init_kernel(
     create_bi_frame_cap(
         root_cnode_cap,
         it_pd_cap,
-        bi_frame_pptr,
         bi_frame_vptr
     );
 
     /* create the initial thread's IPC buffer */
-    ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
+    ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
         return false;
     }

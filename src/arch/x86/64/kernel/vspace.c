@@ -17,6 +17,7 @@
 #include <model/statedata.h>
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/boot.h>
+#include <arch/kernel/boot_sys.h>
 #include <arch/api/invocation.h>
 #include <mode/kernel/tlb.h>
 #include <arch/kernel/tlb_bitmap.h>
@@ -680,25 +681,30 @@ static BOOT_CODE cap_t create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vp
     return cap;
 }
 
+
+BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
+{
+    word_t n = get_n_paging(it_v_reg, PD_INDEX_OFFSET);
+    n += get_n_paging(it_v_reg, PDPT_INDEX_OFFSET);
+    n += get_n_paging(it_v_reg, PML4_INDEX_OFFSET);
+#ifdef CONFIG_IOMMU
+    n += vtd_get_n_paging(&boot_state.rmrr_list);
+#endif
+    return n;
+}
+
 BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      vspace_cap;
     vptr_t     vptr;
-    pptr_t     pptr;
     seL4_SlotPos slot_pos_before;
     seL4_SlotPos slot_pos_after;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
-    /* create the PML4 */
-    pptr = alloc_region(seL4_PML4Bits);
-    if (!pptr) {
-        return cap_null_cap_new();
-    }
-    memzero(PML4_PTR(pptr), BIT(seL4_PML4Bits));
-    copyGlobalMappings(PML4_PTR(pptr));
+    copyGlobalMappings(PML4_PTR(rootserver.vspace));
     vspace_cap = cap_pml4_cap_new(
                      IT_ASID,        /* capPML4MappedASID */
-                     pptr,           /* capPML4BasePtr   */
+                     rootserver.vspace,           /* capPML4BasePtr   */
                      1               /* capPML4IsMapped   */
                  );
 
@@ -709,13 +715,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     for (vptr = ROUND_DOWN(it_v_reg.start, PML4_INDEX_OFFSET);
          vptr < it_v_reg.end;
          vptr += BIT(PML4_INDEX_OFFSET)) {
-        pptr = alloc_region(seL4_PDPTBits);
-        if (!pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PDPT_PTR(pptr), BIT(seL4_PDPTBits));
         if (!provide_cap(root_cnode_cap,
-                         create_it_pdpt_cap(vspace_cap, pptr, vptr, IT_ASID))
+                         create_it_pdpt_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))
            ) {
             return cap_null_cap_new();
         }
@@ -725,13 +726,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     for (vptr = ROUND_DOWN(it_v_reg.start, PDPT_INDEX_OFFSET);
          vptr < it_v_reg.end;
          vptr += BIT(PDPT_INDEX_OFFSET)) {
-        pptr = alloc_region(seL4_PageDirBits);
-        if (!pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PD_PTR(pptr), BIT(seL4_PageDirBits));
         if (!provide_cap(root_cnode_cap,
-                         create_it_pd_cap(vspace_cap, pptr, vptr, IT_ASID))
+                         create_it_pd_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))
            ) {
             return cap_null_cap_new();
         }
@@ -741,13 +737,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     for (vptr = ROUND_DOWN(it_v_reg.start, PD_INDEX_OFFSET);
          vptr < it_v_reg.end;
          vptr += BIT(PD_INDEX_OFFSET)) {
-        pptr = alloc_region(seL4_PageTableBits);
-        if (!pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PT_PTR(pptr), BIT(seL4_PageTableBits));
         if (!provide_cap(root_cnode_cap,
-                         create_it_pt_cap(vspace_cap, pptr, vptr, IT_ASID))
+                         create_it_pt_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))
            ) {
             return cap_null_cap_new();
         }

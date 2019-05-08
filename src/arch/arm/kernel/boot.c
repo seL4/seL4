@@ -39,24 +39,35 @@ extern char ki_end[1];
 BOOT_DATA static volatile int node_boot_lock = 0;
 #endif /* ENABLE_SMP_SUPPORT */
 
-#define ARCH_RESERVED 3 // kernel + user image + dtb
+#define ARCH_RESERVED 4 // kernel + user image + dtb + rootserver objects
 #define MAX_RESERVED (ARCH_RESERVED + MODE_RESERVED)
 BOOT_DATA static region_t reserved[MAX_RESERVED];
 
-BOOT_CODE static void arch_init_freemem(region_t ui_reg, region_t dtb_reg)
+BOOT_CODE static void arch_init_freemem(region_t ui_reg, region_t dtb_reg, v_region_t it_v_reg,
+                                        word_t extra_bi_size_bits)
 {
     reserved[0].start = kernelBase;
     reserved[0].end = (pptr_t)ki_end;
-    reserved[1].start = dtb_reg.start;
-    reserved[1].end = dtb_reg.end;
-    reserved[2].start = ui_reg.start;
-    reserved[2].end = ui_reg.end;
+
+    int index = 1;
+    if (dtb_reg.start) {
+        /* the dtb region could be empty */
+        reserved[index].start = dtb_reg.start;
+        reserved[index].end = dtb_reg.end;
+        index++;
+    }
+    reserved[index].start = ui_reg.start;
+    reserved[index].end = ui_reg.end;
+    index++;
+    reserved[index] = create_rootserver_objects(ui_reg.end, it_v_reg, extra_bi_size_bits);
+    index++;
 
     for (word_t i = 0; i < MODE_RESERVED; i++) {
-        reserved[i + ARCH_RESERVED] = mode_reserved_region[i];
+        reserved[i + index] = mode_reserved_region[i];
+        index++;
     }
 
-    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), MAX_RESERVED, reserved);
+    init_freemem(get_num_avail_p_regs(), get_avail_p_regs(), index, reserved);
 }
 
 BOOT_CODE static void init_irqs(cap_t root_cnode_cap)
@@ -283,10 +294,8 @@ static BOOT_CODE bool_t try_init_kernel(
     });
     region_t dtb_reg;
     word_t extra_bi_size;
-    region_t extra_bi_region;
     pptr_t extra_bi_offset = 0;
     vptr_t extra_bi_frame_vptr;
-    pptr_t bi_frame_pptr;
     vptr_t bi_frame_vptr;
     vptr_t ipcbuf_vptr;
     create_frames_of_region_ret_t create_frames_ret;
@@ -314,10 +323,11 @@ static BOOT_CODE bool_t try_init_kernel(
         });
         extra_bi_size = sizeof(seL4_BootInfoHeader) + (dtb_reg.end - dtb_reg.start);
     }
+    word_t extra_bi_size_bits = calculate_extra_bi_size_bits(extra_bi_size);
 
     /* The region of the initial thread is the user image + ipcbuf and boot info */
     it_v_reg.start = ui_v_reg.start;
-    it_v_reg.end = extra_bi_frame_vptr;
+    it_v_reg.end = extra_bi_frame_vptr + extra_bi_size;
 
     if (it_v_reg.end > kernelBase) {
         printf("Userland image virtual end address too high\n");
@@ -338,8 +348,8 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the platform */
     init_plat();
 
-    /* make the free memory available to alloc_region() */
-    arch_init_freemem(ui_reg, dtb_reg);
+
+    arch_init_freemem(ui_reg, dtb_reg, it_v_reg, extra_bi_size_bits);
 
     /* create the root cnode */
     root_cnode_cap = create_root_cnode();
@@ -353,42 +363,25 @@ static BOOT_CODE bool_t try_init_kernel(
     /* initialise the IRQ states and provide the IRQ control cap */
     init_irqs(root_cnode_cap);
 
-    /* create the bootinfo frame */
-    bi_frame_pptr = allocate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr);
-    if (!bi_frame_pptr) {
-        return false;
-    }
-
-    /* create extra bootinfo region - will return an empty allocation if extra_bi_size = 0 */
-    extra_bi_region = allocate_extra_bi_region(extra_bi_size);
-    if (extra_bi_region.start == 0) {
-        return false;
-    }
-
-    /* update initial thread virtual address range for extra bootinfo */
-    it_v_reg.end += extra_bi_region.end - extra_bi_region.start;
-    if (it_v_reg.end > kernelBase) {
-        printf("Userland extra bootinfo end address too high\n");
-        return false;
-    }
+    populate_bi_frame(0, CONFIG_MAX_NUM_NODES, ipcbuf_vptr, extra_bi_size);
 
     /* put DTB in the bootinfo block, if present. */
     seL4_BootInfoHeader header;
     if (dtb_reg.start) {
         header.id = SEL4_BOOTINFO_HEADER_FDT;
         header.len = sizeof(header) + dtb_reg.end - dtb_reg.start;
-        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
         extra_bi_offset += sizeof(header);
-        memcpy((void *)(extra_bi_region.start + extra_bi_offset), (void *)dtb_reg.start,
+        memcpy((void *)(rootserver.extra_bi + extra_bi_offset), (void *)dtb_reg.start,
                dtb_reg.end - dtb_reg.start);
-        extra_bi_offset += dtb_reg.end - dtb_reg.start;
+        extra_bi_offset += (dtb_reg.end - dtb_reg.start);
     }
 
-    if ((extra_bi_region.end - extra_bi_region.start) - extra_bi_offset > 0) {
+    if (extra_bi_size > extra_bi_offset) {
         /* provde a chunk for any leftover padding in the extended boot info */
         header.id = SEL4_BOOTINFO_HEADER_PADDING;
-        header.len = (extra_bi_region.end - extra_bi_region.start) - extra_bi_offset;
-        *(seL4_BootInfoHeader *)(extra_bi_region.start + extra_bi_offset) = header;
+        header.len = (extra_bi_size - extra_bi_offset);
+        *(seL4_BootInfoHeader *)(rootserver.extra_bi + extra_bi_offset) = header;
     }
 
     if (config_set(CONFIG_ARM_SMMU)) {
@@ -412,12 +405,15 @@ static BOOT_CODE bool_t try_init_kernel(
     create_bi_frame_cap(
         root_cnode_cap,
         it_pd_cap,
-        bi_frame_pptr,
         bi_frame_vptr
     );
 
     /* create and map extra bootinfo region */
     if (extra_bi_size > 0) {
+        region_t extra_bi_region = {
+            .start = rootserver.extra_bi,
+            .end = rootserver.extra_bi + extra_bi_size
+        };
         extra_bi_ret =
             create_frames_of_region(
                 root_cnode_cap,
@@ -433,7 +429,7 @@ static BOOT_CODE bool_t try_init_kernel(
     }
 
     /* create the initial thread's IPC buffer */
-    ipcbuf_cap = create_ipcbuf_frame(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
+    ipcbuf_cap = create_ipcbuf_frame_cap(root_cnode_cap, it_pd_cap, ipcbuf_vptr);
     if (cap_get_capType(ipcbuf_cap) == cap_null_cap) {
         return false;
     }

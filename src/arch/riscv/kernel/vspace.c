@@ -239,52 +239,43 @@ static BOOT_CODE cap_t create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vp
     return cap;
 }
 
+BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
+{
+    word_t n = 0;
+    for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
+        n += get_n_paging(it_v_reg, RISCV_GET_LVL_PGSIZE_BITS(i - 1));
+    }
+    return n;
+}
+
 /* Create an address space for the initial thread.
  * This includes page directory and page tables */
 BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      lvl1pt_cap;
     vptr_t     pt_vptr;
-    pptr_t     pt_pptr;
-    pptr_t lvl1pt_pptr;
 
-    /* create 1st level page table obj and cap */
-    lvl1pt_pptr = alloc_region(PT_SIZE_BITS);
-
-    if (!lvl1pt_pptr) {
-        return cap_null_cap_new();
-    }
-    memzero(PTE_PTR(lvl1pt_pptr), 1 << PT_SIZE_BITS);
-
-    copyGlobalMappings(PTE_PTR(lvl1pt_pptr));
+    copyGlobalMappings(PTE_PTR(rootserver.vspace));
 
     lvl1pt_cap =
         cap_page_table_cap_new(
             IT_ASID,               /* capPTMappedASID    */
-            (word_t) lvl1pt_pptr,  /* capPTBasePtr       */
+            (word_t) rootserver.vspace,  /* capPTBasePtr       */
             1,                     /* capPTIsMapped      */
-            (word_t) lvl1pt_pptr   /* capPTMappedAddress */
+            (word_t) rootserver.vspace   /* capPTMappedAddress */
         );
 
     seL4_SlotPos slot_pos_before = ndks_boot.slot_pos_cur;
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), lvl1pt_cap);
 
-    /* create all n level PT objs and caps necessary to cover userland image in 4KiB pages */
-
+    /* create all n level PT caps necessary to cover userland image in 4KiB pages */
     for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
 
         for (pt_vptr = ROUND_DOWN(it_v_reg.start, RISCV_GET_LVL_PGSIZE_BITS(i - 1));
              pt_vptr < it_v_reg.end;
              pt_vptr += RISCV_GET_LVL_PGSIZE(i - 1)) {
-            pt_pptr = alloc_region(PT_SIZE_BITS);
-
-            if (!pt_pptr) {
-                return cap_null_cap_new();
-            }
-
-            memzero(PTE_PTR(pt_pptr), 1 << PT_SIZE_BITS);
             if (!provide_cap(root_cnode_cap,
-                             create_it_pt_cap(lvl1pt_cap, pt_pptr, pt_vptr, IT_ASID))
+                             create_it_pt_cap(lvl1pt_cap, it_alloc_paging(), pt_vptr, IT_ASID))
                ) {
                 return cap_null_cap_new();
             }

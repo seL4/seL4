@@ -15,6 +15,7 @@
 #include <model/statedata.h>
 #include <arch/kernel/vspace.h>
 #include <arch/kernel/boot.h>
+#include <arch/kernel/boot_sys.h>
 #include <arch/api/invocation.h>
 #include <benchmark/benchmark_track.h>
 #include <arch/kernel/tlb_bitmap.h>
@@ -429,27 +430,27 @@ static BOOT_CODE cap_t create_it_page_directory_cap(cap_t vspace_cap, pptr_t ppt
     return cap;
 }
 
+BOOT_CODE word_t arch_get_n_paging(v_region_t it_v_reg)
+{
+    word_t n = get_n_paging(it_v_reg, PT_INDEX_BITS + PAGE_BITS);
+#ifdef CONFIG_IOMMU
+    n += vtd_get_n_paging(&boot_state.rmrr_list);
+#endif
+    return n;
+}
+
 /* Create an address space for the initial thread.
  * This includes page directory and page tables */
 BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 {
     cap_t      vspace_cap;
     vptr_t     vptr;
-    pptr_t     pptr;
     seL4_SlotPos slot_pos_before;
     seL4_SlotPos slot_pos_after;
 
     slot_pos_before = ndks_boot.slot_pos_cur;
-    cap_t pd_cap;
-    pptr_t pd_pptr;
-    /* just create single PD obj and cap */
-    pd_pptr = alloc_region(seL4_PageDirBits);
-    if (!pd_pptr) {
-        return cap_null_cap_new();
-    }
-    memzero(PDE_PTR(pd_pptr), 1 << seL4_PageDirBits);
-    copyGlobalMappings((vspace_root_t *)pd_pptr);
-    pd_cap = create_it_page_directory_cap(cap_null_cap_new(), pd_pptr, 0, IT_ASID);
+    copyGlobalMappings((vspace_root_t *)rootserver.vspace);
+    cap_t pd_cap = create_it_page_directory_cap(cap_null_cap_new(), rootserver.vspace, 0, IT_ASID);
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), pd_cap);
     vspace_cap = pd_cap;
 
@@ -458,13 +459,8 @@ BOOT_CODE cap_t create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_re
     for (vptr = ROUND_DOWN(it_v_reg.start, PT_INDEX_BITS + PAGE_BITS);
          vptr < it_v_reg.end;
          vptr += BIT(PT_INDEX_BITS + PAGE_BITS)) {
-        pptr = alloc_region(seL4_PageTableBits);
-        if (!pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PTE_PTR(pptr), 1 << seL4_PageTableBits);
         if (!provide_cap(root_cnode_cap,
-                         create_it_page_table_cap(vspace_cap, pptr, vptr, IT_ASID))
+                         create_it_page_table_cap(vspace_cap, it_alloc_paging(), vptr, IT_ASID))
            ) {
             return cap_null_cap_new();
         }
