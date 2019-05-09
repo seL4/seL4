@@ -209,14 +209,12 @@ void chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault, wo
  *
  * Should be called on every kernel entry
  * where threads can be billed.
- *
- * @pre (NODE_STATE(ksConsumed) == 0
  */
 static inline void updateTimestamp(void)
 {
     time_t prev = NODE_STATE(ksCurTime);
     NODE_STATE(ksCurTime) = getCurrentTime();
-    NODE_STATE(ksConsumed) = NODE_STATE(ksCurTime) - prev;
+    NODE_STATE(ksConsumed) += (NODE_STATE(ksCurTime) - prev);
 }
 
 /* Check if the current thread/domain budget has expired.

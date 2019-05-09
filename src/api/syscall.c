@@ -520,6 +520,11 @@ static void handleRecv(bool_t isBlocking)
 #ifdef CONFIG_KERNEL_MCS
 static inline void mcsIRQ(irq_t irq)
 {
+    if (irq == KERNEL_TIMER_IRQ) {
+        /* if this is a timer irq we must update the time as we need to reprogram the timer, and we
+         * can't lose the time that has just been used by the kernel. */
+        updateTimestamp();
+    }
     checkBudget();
 }
 #else
