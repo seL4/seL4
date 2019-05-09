@@ -137,6 +137,16 @@ static inline void rollbackTime(void)
     NODE_STATE(ksCurTime) -= NODE_STATE(ksConsumed);
     NODE_STATE(ksConsumed) = 0llu;
 }
+
+static inline bool_t PURE isSchedulable(const tcb_t *thread)
+{
+    return isRunnable(thread) &&
+           thread->tcbSchedContext != NULL &&
+           thread->tcbSchedContext->scRefillMax > 0 &&
+           !thread_state_get_tcbInReleaseQueue(thread->tcbState);
+}
+#else
+#define isSchedulable isRunnable
 #endif
 
 void configureIdleThread(tcb_t *tcb);

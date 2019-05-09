@@ -45,19 +45,6 @@ static inline bool_t PURE isBlocked(const tcb_t *thread)
     }
 }
 
-#ifdef CONFIG_KERNEL_MCS
-static inline bool_t PURE isSchedulable(const tcb_t *thread)
-{
-    return isRunnable(thread) &&
-           thread->tcbSchedContext != NULL &&
-           thread->tcbSchedContext->scRefillMax > 0 &&
-           !thread_state_get_tcbInReleaseQueue(thread->tcbState);
-}
-#else
-#define isSchedulable isRunnable
-#endif
-
-
 BOOT_CODE void configureIdleThread(tcb_t *tcb)
 {
     Arch_configureIdleThread(tcb);
