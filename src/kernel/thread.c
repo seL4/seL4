@@ -612,7 +612,7 @@ void chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault, wo
     assert(REFILL_HEAD(NODE_STATE_ON_CORE(ksCurSC, core)).rAmount >= MIN_BUDGET);
     NODE_STATE_ON_CORE(ksCurSC, core)->scConsumed += consumed;
     NODE_STATE_ON_CORE(ksConsumed, core) = 0;
-    if (isCurCPU && likely(isRunnable(NODE_STATE_ON_CORE(ksCurThread, core)))) {
+    if (isCurCPU && likely(isSchedulable(NODE_STATE_ON_CORE(ksCurThread, core)))) {
         assert(NODE_STATE(ksCurThread)->tcbSchedContext == NODE_STATE(ksCurSC));
         endTimeslice(canTimeoutFault);
         rescheduleRequired();
@@ -622,11 +622,6 @@ void chargeBudget(ticks_t capacity, ticks_t consumed, bool_t canTimeoutFault, wo
 
 void endTimeslice(bool_t can_timeout_fault)
 {
-    if (unlikely(NODE_STATE(ksCurThread) == NODE_STATE(ksIdleThread))) {
-        return;
-    }
-
-    assert(isRunnable(NODE_STATE(ksCurSC->scTcb)));
     if (can_timeout_fault && validTimeoutHandler(NODE_STATE(ksCurThread))) {
         current_fault = seL4_Fault_Timeout_new(NODE_STATE(ksCurSC)->scBadge);
         handleTimeout(NODE_STATE(ksCurThread));

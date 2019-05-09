@@ -301,7 +301,6 @@ exception_t handleVMFaultEvent(vm_fault_type_t vm_faultType)
     return EXCEPTION_NONE;
 }
 
-
 #ifdef CONFIG_KERNEL_MCS
 static exception_t handleInvocation(bool_t isCall, bool_t isBlocking, bool_t canDonate, bool_t firstPhase, cptr_t cptr)
 #else
@@ -525,14 +524,25 @@ static inline void mcsIRQ(irq_t irq)
          * can't lose the time that has just been used by the kernel. */
         updateTimestamp();
     }
-    checkBudget();
+
+    /* at this point we could be handling a timer interrupt which actually ends the current
+     * threads timeslice. However, preemption is possible on revoke, which could have deleted
+     * the current thread and/or the current scheduling context, rendering them invalid. */
+    if (isSchedulable(NODE_STATE(ksCurThread))) {
+        /* if the thread is schedulable, the tcb and scheduling context are still valid */
+        checkBudget();
+    } else if (NODE_STATE(ksCurSC)->scRefillMax) {
+        /* otherwise, if the thread is not schedulable, the SC could be valid - charge it if so */
+        ticks_t capacity = refill_capacity(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed));
+        chargeBudget(capacity, NODE_STATE(ksConsumed), false, CURRENT_CPU_INDEX(), true);
+    }
+
 }
 #else
 #define handleRecv(isBlocking, canReply) handleRecv(isBlocking)
 #define mcsIRQ(irq)
 #define handleInvocation(isCall, isBlocking, canDonate, firstPhase, cptr) handleInvocation(isCall, isBlocking)
 #endif
-
 
 static void handleYield(void)
 {
