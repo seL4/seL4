@@ -333,7 +333,7 @@ static void nextDomain(void)
 #ifdef CONFIG_KERNEL_MCS
 static void switchSchedContext(void)
 {
-    if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext)) {
+    if (unlikely(NODE_STATE(ksCurSC) != NODE_STATE(ksCurThread)->tcbSchedContext) && NODE_STATE(ksCurSC)->scRefillMax) {
         NODE_STATE(ksReprogram) = true;
         refill_unblock_check(NODE_STATE(ksCurThread->tcbSchedContext));
 
@@ -349,10 +349,6 @@ static void switchSchedContext(void)
         /* otherwise, we don't need to do anything - avoid reprogramming the timer */
         rollbackTime();
     }
-
-    /* if a thread doesn't have enough budget, it should not be in the scheduler */
-    assert((refill_ready(NODE_STATE(ksCurSC)) && refill_sufficient(NODE_STATE(ksCurSC), 0))
-           || !thread_state_get_tcbQueued(NODE_STATE(ksCurSC)->scTcb->tcbState));
 
     NODE_STATE(ksCurSC) = NODE_STATE(ksCurThread)->tcbSchedContext;
 }

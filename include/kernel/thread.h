@@ -99,24 +99,27 @@ static inline bool_t isCurDomainExpired(void)
 
 static inline void commitTime(void)
 {
-    if (likely(NODE_STATE(ksConsumed) > 0)) {
-        /* if this function is called the head refil must be sufficient to
-         * charge ksConsumed */
-        assert(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)));
-        /* and it must be ready to use */
-        assert(refill_ready(NODE_STATE(ksCurSC)));
+    if (NODE_STATE(ksCurSC)->scRefillMax) {
+        if (likely(NODE_STATE(ksConsumed) > 0)) {
+            /* if this function is called the head refil must be sufficient to
+             * charge ksConsumed */
+            assert(refill_sufficient(NODE_STATE(ksCurSC), NODE_STATE(ksConsumed)));
+            /* and it must be ready to use */
+            assert(refill_ready(NODE_STATE(ksCurSC)));
 
-        if (isRoundRobin(NODE_STATE(ksCurSC))) {
-            /* for round robin threads, there are only two refills: the HEAD, which is what
-             * we are consuming, and the tail, which is what we have consumed */
-            assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
-            REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount -= NODE_STATE(ksConsumed);
-            REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount += NODE_STATE(ksConsumed);
-        } else {
-            refill_split_check(NODE_STATE(ksConsumed));
+            if (isRoundRobin(NODE_STATE(ksCurSC))) {
+                /* for round robin threads, there are only two refills: the HEAD, which is what
+                 * we are consuming, and the tail, which is what we have consumed */
+                assert(refill_size(NODE_STATE(ksCurSC)) == MIN_REFILLS);
+                REFILL_HEAD(NODE_STATE(ksCurSC)).rAmount -= NODE_STATE(ksConsumed);
+                REFILL_TAIL(NODE_STATE(ksCurSC)).rAmount += NODE_STATE(ksConsumed);
+            } else {
+                refill_split_check(NODE_STATE(ksConsumed));
+            }
+            assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
+            assert(refill_ready(NODE_STATE(ksCurSC)));
         }
-        assert(refill_sufficient(NODE_STATE(ksCurSC), 0));
-        assert(refill_ready(NODE_STATE(ksCurSC)));
+        NODE_STATE(ksCurSC)->scConsumed += NODE_STATE(ksConsumed);
     }
     if (CONFIG_NUM_DOMAINS > 1) {
         assert(ksDomainTime > NODE_STATE(ksConsumed));
@@ -124,7 +127,6 @@ static inline void commitTime(void)
         ksDomainTime -= NODE_STATE(ksConsumed);
     }
 
-    NODE_STATE(ksCurSC)->scConsumed += NODE_STATE(ksConsumed);
     NODE_STATE(ksConsumed) = 0llu;
 }
 
