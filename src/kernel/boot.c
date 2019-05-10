@@ -572,6 +572,9 @@ static inline pptr_t ceiling_kernel_window(pptr_t p)
     return p;
 }
 
+/* we can't delcare arrays on the stack, so this is space for
+ * the below function to use. */
+static BOOT_DATA region_t avail_reg[MAX_NUM_FREEMEM_REG];
 /**
  * Dynamically initialise the available memory on the platform.
  * A region represents an area of memory.
@@ -597,7 +600,6 @@ BOOT_CODE void init_freemem(word_t n_available, const p_region_t *available,
     }
 
     /* convert the available regions to pptrs */
-    region_t avail_reg[MAX_NUM_FREEMEM_REG];
     for (word_t i = 0; i < n_available; i++) {
         avail_reg[i] = paddr_to_pptr_reg(available[i]);
         avail_reg[i].end = ceiling_kernel_window(avail_reg[i].end);
