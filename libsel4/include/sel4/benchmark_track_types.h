@@ -48,7 +48,8 @@ typedef struct SEL4_PACKED kernel_entry {
     seL4_Word path: 3;
     union {
         struct {
-            seL4_Word word: 29;
+            seL4_Word core: 3;
+            seL4_Word word: 26;
         };
         /* Tracked kernel entry info filled from outside this file */
         struct {
