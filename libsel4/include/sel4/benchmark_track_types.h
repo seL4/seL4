@@ -13,6 +13,8 @@
 #ifndef BENCHMARK_TRACK_TYPES_H
 #define BENCHMARK_TRACK_TYPES_H
 
+#include <stdint.h>
+
 #ifdef HAVE_AUTOCONF
 #include <autoconf.h>
 #endif
@@ -42,7 +44,7 @@ typedef enum {
  *
  * Encapsulates useful info about the cause of the kernel entry
  */
-typedef struct PACKED kernel_entry {
+typedef struct SEL4_PACKED kernel_entry {
     seL4_Word path: 3;
     union {
         struct {
