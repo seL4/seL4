@@ -10,6 +10,7 @@
 
 #include <types.h>
 #include <api/failures.h>
+#include <config.h>
 
 #include <arch/object/interrupt.h>
 
@@ -74,6 +75,47 @@ exception_t Arch_decodeIRQControlInvocation(word_t invLabel, word_t length,
 
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return Arch_invokeIRQControl(irq, destSlot, srcSlot, trigger);
+#ifdef ENABLE_SMP_SUPPORT
+    } else if (invLabel == ARMIRQIssueIRQHandlerTriggerCore) {
+        word_t irq_w = getSyscallArg(0, buffer);
+        irq_t irq = (irq_t) irq_w;
+        bool_t trigger = !!getSyscallArg(1, buffer);
+        word_t index = getSyscallArg(2, buffer);
+        word_t depth = getSyscallArg(3, buffer) & 0xfful;
+        seL4_Word target = getSyscallArg(4, buffer);
+        cap_t cnodeCap = excaps.excaprefs[0]->cap;
+        exception_t status = Arch_checkIRQ(irq_w);
+
+        if (status != EXCEPTION_NONE) {
+            return status;
+        }
+
+        if (isIRQActive(irq)) {
+            current_syscall_error.type = seL4_RevokeFirst;
+            userError("Rejecting request for IRQ %u. Already active.", (int)irq);
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        lookupSlot_ret_t lu_ret = lookupTargetSlot(cnodeCap, index, depth);
+        if (lu_ret.status != EXCEPTION_NONE) {
+            userError("Target slot for new IRQ Handler cap invalid: cap %lu, IRQ %u.",
+                      getExtraCPtr(buffer, 0), (int)irq);
+            return lu_ret.status;
+        }
+
+        cte_t *destSlot = lu_ret.slot;
+
+        status = ensureEmptySlot(destSlot);
+        if (status != EXCEPTION_NONE) {
+            userError("Target slot for new IRQ Handler cap not empty: cap %lu, IRQ %u.",
+                      getExtraCPtr(buffer, 0), (int)irq);
+            return status;
+        }
+
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        setIRQTarget(irq, target);
+        return Arch_invokeIRQControl(irq, destSlot, srcSlot, trigger);
+#endif /* ENABLE_SMP_SUPPORT */
     } else {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;

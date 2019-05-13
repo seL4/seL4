@@ -30,6 +30,13 @@ enum irqNumbers {
     irqInvalid = (irq_t) - 1
 };
 
+/* CPU specific IRQ's */
+#define SGI_START         0u
+#define PPI_START         16u
+
+/* Shared Peripheral Interrupts */
+#define SPI_START         32u
+
 /* Special IRQ's */
 #define SPECIAL_IRQ_START 1020u
 #define IRQ_NONE          1023u
@@ -237,6 +244,7 @@ void initIRQController(void);
 #ifdef ENABLE_SMP_SUPPORT
 void ipiBroadcast(irq_t irq, bool_t includeSelfCPU);
 void ipi_send_target(irq_t irq, word_t cpuTargetList);
+void setIRQTarget(irq_t irq, seL4_Word target);
 #endif /* ENABLE_SMP_SUPPORT */
 
 #ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
