@@ -20,6 +20,12 @@
 void Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
+#ifdef CONFIG_ARM_HYPERVISOR_SUPPORT
+    /* Do not overwrite the TPIDRRO_EL0 for a VCPU */
+    if (tcb->tcbArch.tcbVCPU) {
+        return;
+    }
+#endif
     writeTPIDRURO(tcb->tcbIPCBuffer);
 }
 
@@ -31,6 +37,9 @@ BOOT_CODE void Arch_configureIdleThread(tcb_t *tcb)
 
 void Arch_switchToIdleThread(void)
 {
+    if (config_set(CONFIG_ARM_HYPERVISOR_SUPPORT)) {
+        vcpu_switch(NULL);
+    }
     setCurrentUserVSpaceRoot(ttbr_new(0, pptr_to_paddr(armKSGlobalUserPGD)));
     writeTPIDRURO(0);
 }

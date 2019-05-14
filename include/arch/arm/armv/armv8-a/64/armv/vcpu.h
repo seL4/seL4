@@ -545,6 +545,7 @@ static inline void armv_vcpu_enable(vcpu_t *vcpu)
 #ifdef CONFIG_HAVE_FPU
     vcpu_hw_write_reg(seL4_VCPUReg_CPACR, vcpu->regs[seL4_VCPUReg_CPACR]);
 #endif
+    vcpu_hw_write_reg(seL4_VCPUReg_TPIDRRO_EL0, vcpu->regs[seL4_VCPUReg_TPIDRRO_EL0]);
 }
 
 static inline void armv_vcpu_disable(vcpu_t *vcpu)
@@ -559,6 +560,7 @@ static inline void armv_vcpu_disable(vcpu_t *vcpu)
 #ifdef CONFIG_HAVE_FPU
         vcpu->regs[seL4_VCPUReg_CPACR] = vcpu_hw_read_reg(seL4_VCPUReg_CPACR);
 #endif
+        vcpu->regs[seL4_VCPUReg_TPIDRRO_EL0] = vcpu_hw_read_reg(seL4_VCPUReg_TPIDRRO_EL0);
         isb();
     }
     /* Turn off the VGIC */

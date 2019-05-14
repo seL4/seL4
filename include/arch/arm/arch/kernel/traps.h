@@ -30,7 +30,9 @@ static inline void arch_c_entry_hook(void)
         /* Although the TPIDRURO register is user read only it *is* writeable
          * by a thread running in supervisor mode and so in that case we need to
          * save it here as it actually could have changed */
+#ifndef CONFIG_ARCH_AARCH64
         setRegister(NODE_STATE(ksCurThread), TLS_BASE, readTPIDRURO());
+#endif
         /* in the case where we are using TPIDRURW as the IPC buffer we still
          * want to save the value of TPIDRURW (even though we skipped it just
          * above) as a supervisor mode thread will not understand or appreciate
