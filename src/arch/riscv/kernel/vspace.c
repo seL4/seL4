@@ -676,8 +676,9 @@ static exception_t decodeRISCVPageTableInvocation(word_t label, unsigned int len
             current_syscall_error.type = seL4_RevokeFirst;
             return EXCEPTION_SYSCALL_ERROR;
         }
-        if (unlikely(cap_page_table_cap_get_capPTIsMapped(cap))) {
+        if (unlikely(!cap_page_table_cap_get_capPTIsMapped(cap))) {
             /* It is not an error to call unmap on a PT that is not already mapped. */
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return EXCEPTION_NONE;
         }
         asid_t asid = cap_page_table_cap_get_capPTMappedASID(cap);
